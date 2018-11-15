@@ -16,11 +16,10 @@
 
 package org.loopring.lightcone.biz.marketcap
 
-import org.loopring.lightcone.biz.model._
-
+import org.loopring.lightcone.proto.market_cap._
 import scala.concurrent.Future
 
 trait ExchangeTickerService {
-  def insert(exchangeTicker: ExchangeTicker): Unit
-  def queryExchangeTicker(symbol: String, market: String): Future[Seq[ExchangeTicker]]
+  def insert(exchangeTickerInfo: ExchangeTickerInfo): Unit
+  def queryExchangeTicker(symbol: String, market: String): Future[GetExchangeTickerInfoRes]
 }

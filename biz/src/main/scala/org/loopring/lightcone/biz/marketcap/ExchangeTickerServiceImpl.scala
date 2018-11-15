@@ -17,9 +17,9 @@
 package org.loopring.lightcone.biz.marketcap
 
 import com.google.inject.Inject
-import org.loopring.lightcone.biz.model.ExchangeTicker
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
+import org.loopring.lightcone.proto.market_cap._
 import scala.concurrent.Future
 
 class ExchangeTickerServiceImpl @Inject() (
@@ -29,7 +29,7 @@ class ExchangeTickerServiceImpl @Inject() (
 
   import session.profile.api._
 
-  implicit val saveExchangeTicker = (info: ExchangeTicker) ⇒
+  implicit val saveExchangeTickerInfo = (info: ExchangeTickerInfo) ⇒
     sqlu"""INSERT INTO t_exchange_ticker_info(symbol, market,
           exchange, price, price_usd, price_cny, volume_24h_usd, volume_24h,volume_24h_from,percent_change_utc0,alias,last_updated) VALUES(
           ${info.symbol}, ${info.market}, ${info.exchange}, ${info.price},
@@ -37,16 +37,16 @@ class ExchangeTickerServiceImpl @Inject() (
           price_usd=${info.priceUsd},price_cny=${info.priceCny},volume_24h_usd=${info.volume24HUsd},volume_24h=${info.volume24H},
           volume_24h_from=${info.volume24HFrom},percent_change_utc0=${info.percentChangeUtc0},alias=${info.alias},last_updated=${info.lastUpdated}"""
 
-  implicit val toGetExchangeTicker = (r: ResultRow) ⇒
-    ExchangeTicker(symbol = r <<, market = r <<, exchange = r <<,
+  implicit val toGetExchangeTickerInfo = (r: ResultRow) ⇒
+    ExchangeTickerInfo(symbol = r <<, market = r <<, exchange = r <<,
       price = r <<, priceUsd = r <<, priceCny = r <<, volume24HUsd = r <<,
       volume24HFrom = r <<, volume24H = r <<, percentChangeUtc0 = r <<, alias = r <<, lastUpdated = r <<)
 
-  override def insert(exchangeTicker: ExchangeTicker): Unit = {
-    saveOrUpdate(exchangeTicker)
+  override def insert(info: ExchangeTickerInfo): Unit = {
+    saveOrUpdate(info)
   }
 
-  override def queryExchangeTicker(symbol: String, market: String): Future[Seq[ExchangeTicker]] = {
+  override def queryExchangeTicker(symbol: String, market: String): Future[GetExchangeTickerInfoRes] = {
     sql"""select
               symbol,
               market,
@@ -64,7 +64,7 @@ class ExchangeTickerServiceImpl @Inject() (
              where symbol = ${symbol}
              and market = ${market}
           """
-      .list[ExchangeTicker]
+      .list[ExchangeTickerInfo].map(GetExchangeTickerInfoRes(_))
   }
 
 }
