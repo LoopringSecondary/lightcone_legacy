@@ -1,0 +1,31 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.loopring.lightcone.lib.time
+
+import java.sql.Timestamp
+import java.text.SimpleDateFormat
+
+trait TimeFormatter {
+  def format(timeMillis: Long): String
+  def format(timestamp: Timestamp): String = format(timestamp.getTime)
+}
+
+final class SimpleTimeFormatter extends TimeFormatter {
+  private val simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+
+  def format(timeMillis: Long) = simpleDateFormat.format(timeMillis)
+}

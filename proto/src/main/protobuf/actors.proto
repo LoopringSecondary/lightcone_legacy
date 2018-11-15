@@ -1,0 +1,179 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.loopring.lightcone.proto";
+package org.loopring.lightcone;
+
+message OrderState {
+    bytes amount_s = 1;
+    bytes amount_b = 2;
+    bytes amount_fee = 3;
+}
+
+enum OrderStatus {
+    NEW = 0;
+    PENDING = 1;
+    EXPIRED = 2;
+    COMPLETELY_FILLED = 3;
+    CANCELLED_BY_USER = 4;
+    CANCELLED_LOW_BALANCE = 5;
+    CANCELLED_LOW_FEE_BALANCE = 6;
+    CANCELLED_TOO_MANY_ORDERS = 7;
+    CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 8;
+}
+
+message Order {
+    string id = 1;
+    string token_s = 2;
+    string token_b = 3;
+    string token_fee = 4;
+    bytes amount_s = 5;
+    bytes amount_b = 6;
+    bytes amount_fee = 7;
+    int64 created_at = 8;
+    OrderStatus status = 9;
+    double wallet_split_percentage = 10;
+    OrderState outstanding = 11;
+    OrderState reserved = 12;
+    OrderState actual = 13;
+    OrderState matchable = 14;
+}
+
+message ExpectedFill {
+    Order order = 1;
+    OrderState pending = 2;
+    bytes amount_margin = 3;
+}
+
+message Ring {
+    ExpectedFill maker = 1;
+    ExpectedFill taker = 2;
+}
+
+///////////////////
+
+enum ErrorCode {
+    OK = 0;
+    ORDER_NOT_EXIST = 1;
+    ORDER_INVALID_AMOUNT_S = 2;
+    LOW_BALANCE = 3;
+    LOW_FEE_BALANCE = 4;
+    TOKEN_NOT_EXIST = 5;
+    TOO_MANY_ORDERS = 6;
+    TOO_MANY_FAILED_MATCHES = 7;
+}
+
+message BalanceAndAllowance {
+    bytes balance = 2;
+    bytes allowance = 3;
+}
+
+message GetBalanceAndAllowancesReq {
+    string address = 1;
+    repeated string tokens = 2;
+}
+
+message GetBalanceAndAllowancesRes {
+    string address = 1;
+    map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
+}
+
+message SubmitOrderReq {
+    Order order = 1;
+}
+
+message SubmitOrderRes {
+    ErrorCode error = 1;
+    Order order = 2;
+}
+
+// 由ethereum发送给orderManagingActor
+// 以太坊事件顺序根据blockID，tx&eventId来确定,由route汇聚到不同用户地址,然后按顺序逐个发送给orderManagingActor
+// 注意: cancelOrderReq 可能包含用户软取消,在orderManagerState软取消后用户链上数据继续变更不影响最终结果
+message CancelOrderReq {
+    string id = 1;
+    bool hard_cancel = 2; // 默认软取消
+}
+
+message CancelOrderRes {
+    string id = 1;
+    bool hard_cancel = 2; // 默认软取消
+    ErrorCode error = 3;
+}
+
+message UpdateFilledAmountReq {
+    string id = 1;
+    bytes order_filled_amount_s = 2;
+}
+
+message UpdateFilledAmountRes {
+    ErrorCode error = 1;
+}
+
+message GetFilledAmountReq {
+    repeated string order_ids = 1;
+}
+
+message GetFilledAmountRes {
+    map<string, bytes> filled_amount_s_map = 1;
+}
+
+message UpdateBalanceAndAllowanceReq {
+    string address = 1;
+    string token = 2;
+    BalanceAndAllowance balance_and_allowance = 3;
+}
+
+message UpdateBalanceAndAllowanceRes {
+    ErrorCode error = 1;
+    BalanceAndAllowance balance_and_allowance = 2;
+}
+
+message UpdatedGasPrice {
+    int64 gas_price = 1;
+}
+
+message SendRawTransaction {
+    bytes data = 1;
+}
+
+enum ExecutedStatus {
+    EXECUTED_STATUS_UNKNOW = 0;
+    EXECUTED_STATUS_FAILED = 1;
+    EXECUTED_STATUS_SUCCESS = 2;
+}
+
+message RingExecutedRes {
+    Ring ring = 1;
+    string tx_hash = 2;
+    ExecutedStatus status = 3;
+    bytes used_gas = 4;
+    int64 block_number = 5;
+}
+
+message SendRawTransactionRes {
+    int32 id = 1;
+    string jsonrpc = 2;
+    string result = 3;
+}
+
+message SubmitRingReq {
+  repeated Ring rings = 1;
+}
+
