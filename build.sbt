@@ -2,7 +2,7 @@ import Settings._
 import Dependencies._
 
 lazy val lib = (project in file("lib"))
-  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(AutomateHeaderPlugin, JavaAppPackaging)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Lib
@@ -17,7 +17,7 @@ lazy val proto = (project in file("proto"))
   )
 
 lazy val biz = (project in file("biz"))
-  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(AutomateHeaderPlugin, JavaAppPackaging)
   .dependsOn(proto, lib)
   .settings(
     basicSettings,
@@ -26,7 +26,7 @@ lazy val biz = (project in file("biz"))
 
 lazy val actors = (project in file("actors"))
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(proto, lib)
+  .dependsOn(proto, biz)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Actors,
