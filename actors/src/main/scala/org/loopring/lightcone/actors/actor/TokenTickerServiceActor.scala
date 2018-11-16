@@ -41,7 +41,7 @@ object TokenTickerServiceActor
 class TokenTickerServiceActor @Inject() (service: TokenTickerInfoService)(implicit
   system: ActorSystem,
   mat: ActorMaterializer,
-  session: SlickSession) extends DatabaseAccesser with Actor {
+  session: SlickSession) extends Actor {
 
   import system.dispatcher
 

@@ -42,7 +42,7 @@ class TokenInfoServiceActor @Inject() (service: TokenInfoService)(
   system: ActorSystem,
   mat: ActorMaterializer,
   session: SlickSession)
-  extends DatabaseAccesser with Actor with ActorLogging {
+  extends Actor with ActorLogging {
 
   import system.dispatcher
 
