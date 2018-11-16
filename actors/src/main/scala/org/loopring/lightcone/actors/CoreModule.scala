@@ -21,16 +21,14 @@ import akka.cluster.Cluster
 import com.google.inject.name.Named
 import com.google.inject.{ AbstractModule, Inject, Provides }
 import net.codingwell.scalaguice.ScalaModule
-import org.loopring.lightcone.biz.marketcap._
+import org.loopring.lightcone.biz.BizCoreModule
 import org.loopring.lightcone.core.{ TokenValueEstimator, TokenValueEstimatorImpl }
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
 //import akka.cluster._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.loopring.lightcone.actors.actor._
 import org.loopring.lightcone.actors.managing.ClusterManager
-import org.loopring.lightcone.core.{ DustOrderEvaluator, DustOrderEvaluatorImpl, MarketManager, MarketManagerImpl }
+import org.loopring.lightcone.core.{ DustOrderEvaluator, DustOrderEvaluatorImpl }
 //import slick.basic.DatabaseConfig
 //import slick.jdbc.JdbcProfile
 //import com.google.inject._
@@ -50,8 +48,6 @@ import com.typesafe.config.Config
 //import redis._
 import scala.concurrent._
 import scala.concurrent.duration._
-
-import akka.stream.alpakka.slick.scaladsl.SlickSession
 
 class CoreModule(config: Config)
   extends AbstractModule with ScalaModule {
@@ -106,25 +102,7 @@ class CoreModule(config: Config)
     implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimatorImpl
     bind[DustOrderEvaluator].toInstance(new DustOrderEvaluatorImpl(0))
 
-    bind[ExchangeTickerService].to[ExchangeTickerServiceImpl]
-    bind[TokenIcoInfoService].to[TokenIcoInfoServiceImpl]
-    bind[TokenInfoService].to[TokenInfoServiceImpl]
-    bind[TokenTickerInfoService].to[TokenTickerInfoServiceImpl]
-    //
-    //    bind[ByteArrayCache].to[ByteArrayRedisCache].in[Singleton]
-    //    bind[BalanceCache].to[cache.BalanceRedisCache]
-    //
-    //    bind[TokenList].toInstance(TokenList(list = Seq()))
-    //    bind[BlockAccessHelper].to[BlockAccessHelperImpl].in[Singleton]
-    //    bind[TransactionHelper].to[TransactionHelperImpl].in[Singleton]
-
-    // bind[JsonRpcServer].to[JsonRpcServerImpl].in[Singleton]
-
-    // for db session
-    val databaseConfig = DatabaseConfig.forConfig[JdbcProfile]("db.default", system.settings.config)
-    val session = SlickSession.forConfig(databaseConfig)
-    bind[SlickSession].toInstance(session)
-    system.registerOnTermination(() => session.close())
+    install(new BizCoreModule)
   }
 
   //  @Provides
