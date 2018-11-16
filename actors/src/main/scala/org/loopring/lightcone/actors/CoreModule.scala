@@ -22,6 +22,9 @@ import com.google.inject.name.Named
 import com.google.inject.{ AbstractModule, Inject, Provides }
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.biz.marketcap._
+import org.loopring.lightcone.core.{ TokenValueEstimator, TokenValueEstimatorImpl }
+import slick.basic.DatabaseConfig
+import slick.jdbc.JdbcProfile
 //import akka.cluster._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
@@ -47,6 +50,8 @@ import com.typesafe.config.Config
 //import redis._
 import scala.concurrent._
 import scala.concurrent.duration._
+
+import akka.stream.alpakka.slick.scaladsl.SlickSession
 
 class CoreModule(config: Config)
   extends AbstractModule with ScalaModule {
@@ -95,8 +100,12 @@ class CoreModule(config: Config)
     //    bind[OrderCache].to[cache.OrderRedisCache]
     //    bind[OrderAccessHelper].to[OrderAccessHelperImpl]
     bind[Double].annotatedWithName("dust_threshold").toInstance(double2Double(0.5))
-    bind[MarketManager].to[MarketManagerImpl]
-    bind[DustOrderEvaluator].to[DustOrderEvaluatorImpl]
+
+    // TODO(Toan) 这里启动报错 先这样处理
+    // bind[MarketManager].to[MarketManagerImpl]
+    implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimatorImpl
+    bind[DustOrderEvaluator].toInstance(new DustOrderEvaluatorImpl(0))
+
     bind[ExchangeTickerService].to[ExchangeTickerServiceImpl]
     bind[TokenIcoInfoService].to[TokenIcoInfoServiceImpl]
     bind[TokenInfoService].to[TokenInfoServiceImpl]
@@ -110,6 +119,12 @@ class CoreModule(config: Config)
     //    bind[TransactionHelper].to[TransactionHelperImpl].in[Singleton]
 
     // bind[JsonRpcServer].to[JsonRpcServerImpl].in[Singleton]
+
+    // for db session
+    val databaseConfig = DatabaseConfig.forConfig[JdbcProfile]("db.default", system.settings.config)
+    val session = SlickSession.forConfig(databaseConfig)
+    bind[SlickSession].toInstance(session)
+    system.registerOnTermination(() => session.close())
   }
 
   //  @Provides
@@ -133,13 +148,13 @@ class CoreModule(config: Config)
     Props(new EthereumAccessActor()) // .withDispatcher("ring-dispatcher")
   }
 
-  @Provides
-  @Named("market_managing_actor")
-  def getMarketManagingActorProps(manager: MarketManager)(implicit
-    @Named("system-dispatcher") ec: ExecutionContext,
-    timeout: Timeout) = {
-    Props(new MarketManagingActor(manager)) // .withDispatcher("ring-dispatcher")
-  }
+  //  @Provides
+  //  @Named("market_managing_actor")
+  //  def getMarketManagingActorProps(manager: MarketManager)(implicit
+  //    @Named("system-dispatcher") ec: ExecutionContext,
+  //    timeout: Timeout) = {
+  //    Props(new MarketManagingActor(manager)) // .withDispatcher("ring-dispatcher")
+  //  }
 
   @Provides
   @Named("order_fill_history_actor")
