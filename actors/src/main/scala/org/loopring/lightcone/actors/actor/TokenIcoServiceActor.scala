@@ -42,7 +42,7 @@ class TokenIcoServiceActor @Inject() (service: TokenIcoInfoService)(
   implicit
   system: ActorSystem,
   mat: ActorMaterializer,
-  session: SlickSession) extends DatabaseAccesser with Actor {
+  session: SlickSession) extends Actor {
 
   import system.dispatcher
 
