@@ -13,3 +13,4 @@ logs/
 .cache-tests
 node_modules/
 dist/
+log/
