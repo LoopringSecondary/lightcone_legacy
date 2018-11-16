@@ -16,18 +16,22 @@
 
 package org.loopring.lightcone.biz.marketcap
 
+import akka.actor.ActorSystem
 import com.google.inject.Inject
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import org.loopring.lightcone.proto.market_cap._
+
 import scala.concurrent.Future
 
 class ExchangeTickerServiceImpl @Inject() (
   implicit
+  system: ActorSystem,
   mat: ActorMaterializer,
   session: SlickSession) extends DatabaseAccesser with ExchangeTickerService {
 
   import session.profile.api._
+  import system.dispatcher
 
   implicit val saveExchangeTickerInfo = (info: ExchangeTickerInfo) ⇒
     sqlu"""INSERT INTO t_exchange_ticker_info(symbol, market,
@@ -42,7 +46,7 @@ class ExchangeTickerServiceImpl @Inject() (
       price = r <<, priceUsd = r <<, priceCny = r <<, volume24HUsd = r <<,
       volume24HFrom = r <<, volume24H = r <<, percentChangeUtc0 = r <<, alias = r <<, lastUpdated = r <<)
 
-  override def insert(info: ExchangeTickerInfo): Unit = {
+  override def saveOrUpdate(info: ExchangeTickerInfo) = {
     saveOrUpdate(info)
   }
 

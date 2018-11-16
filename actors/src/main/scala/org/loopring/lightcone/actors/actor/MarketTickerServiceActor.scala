@@ -21,11 +21,14 @@ import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import org.loopring.lightcone.actors.marketcap.DatabaseAccesser
 import org.loopring.lightcone.proto.market_cap._
+
 import scala.concurrent.Future
 import akka.pattern.pipe
+import com.google.inject.Inject
 import org.loopring.lightcone.actors.base
 import org.loopring.lightcone.actors.marketcap.{ CacherSettings, ProtoBufMessageCacher }
 import org.loopring.lightcone.proto.deployment.MarketTickerServiceSettings
+import org.loopring.lightcone.biz.marketcap._
 
 object MarketTickerServiceActor
   extends base.Deployable[MarketTickerServiceSettings] {
@@ -35,29 +38,14 @@ object MarketTickerServiceActor
     base.CommonSettings(None, s.roles, s.instances)
 }
 
-class MarketTickerServiceActor(
+class MarketTickerServiceActor @Inject() (service: ExchangeTickerService)(
   implicit
   system: ActorSystem,
   mat: ActorMaterializer,
-  session: SlickSession) extends DatabaseAccesser with Actor {
+  session: SlickSession) extends Actor {
 
-  import session.profile.api._
   import system.dispatcher
-
   implicit val settings = CacherSettings(system.settings.config)
-
-  implicit val saveExchangeTickerInfo = (info: ExchangeTickerInfo) ⇒
-    sqlu"""INSERT INTO t_exchange_ticker_info(symbol, market,
-          exchange, price, price_usd, price_cny, volume_24h_usd, volume_24h,volume_24h_from,percent_change_utc0,alias,last_updated) VALUES(
-          ${info.symbol}, ${info.market}, ${info.exchange}, ${info.price},
-          ${info.priceUsd}, ${info.priceCny}, ${info.volume24HUsd}, ${info.volume24H},${info.volume24HFrom},${info.percentChangeUtc0},${info.alias},${info.lastUpdated}) ON DUPLICATE KEY UPDATE price=${info.price},
-          price_usd=${info.priceUsd},price_cny=${info.priceCny},volume_24h_usd=${info.volume24HUsd},volume_24h=${info.volume24H},
-          volume_24h_from=${info.volume24HFrom},percent_change_utc0=${info.percentChangeUtc0},alias=${info.alias},last_updated=${info.lastUpdated}"""
-
-  implicit val toGetExchangeTickerInfo = (r: ResultRow) ⇒
-    ExchangeTickerInfo(symbol = r <<, market = r <<, exchange = r <<,
-      price = r <<, priceUsd = r <<, priceCny = r <<, volume24HUsd = r <<,
-      volume24HFrom = r <<, volume24H = r <<, percentChangeUtc0 = r <<, alias = r <<, lastUpdated = r <<)
 
   val cacherExchangeTickerInfo = new ProtoBufMessageCacher[GetExchangeTickerInfoRes]
   val exchangeTickerInfoKey = "EXCHANGE_TICKER_INFO_"
@@ -65,30 +53,16 @@ class MarketTickerServiceActor(
   override def receive: Receive = {
     case info: ExchangeTickerInfo ⇒
 
-      saveOrUpdate(info)
+      service.saveOrUpdate(info)
 
     case req: GetExchangeTickerInfoReq ⇒
+      //入参
+      val symbol = req.marketPair.split("-")(0)
+      val market = req.marketPair.split("-")(1)
+
       //优先查询缓存，缓存没有再查询数据表并存入缓存
-      val res = cacherExchangeTickerInfo.getOrElse(buildCacheKey(req.symbol, req.market), Some(600)) {
-        val resp: Future[GetExchangeTickerInfoRes] =
-          sql"""select
-              symbol,
-              market,
-              exchange,
-              price,
-              price_usd,
-              price_cny,
-              volume_24h_usd,
-              volume_24h,
-              volume_24h_from,
-              percent_change_utc0,
-              alias,
-              last_updated
-              from t_exchange_ticker_info
-             where symbol = ${req.symbol}
-             and market = ${req.market}
-          """
-            .list[ExchangeTickerInfo].map(GetExchangeTickerInfoRes(_))
+      val res = cacherExchangeTickerInfo.getOrElse(buildCacheKey(symbol, market), Some(600)) {
+        val resp: Future[GetExchangeTickerInfoRes] = service.queryExchangeTicker(symbol, market)
         resp.map(Some(_))
       }
 

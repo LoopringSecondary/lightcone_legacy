@@ -128,7 +128,7 @@ class TokenTickerCrawlerActor(tokenTickerServiceActor: ActorRef)(
     Quote(price, volume_24h, toDouble(percent_change_1h), toDouble(percent_change_24h), toDouble(percent_change_7d), toDouble(market_cap), last_updated)
   }
 
-  def convertTO(tickers: Seq[CMCTickerData]): SeqTpro[TokenTickerInfo] = {
+  def convertTO(tickers: Seq[CMCTickerData]): SeqTpro = {
     val f = tickers.flatMap {
       ticker ⇒
         val id = ticker.id

@@ -51,8 +51,7 @@ message GetTokenTickerInfoRes {
 }
 
 message GetExchangeTickerInfoReq{
-   string symbol = 1;
-   string market = 2;
+   string marketPair = 1;
 }
 
 message GetExchangeTickerInfoRes {

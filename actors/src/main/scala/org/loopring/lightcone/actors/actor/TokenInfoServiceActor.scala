@@ -20,11 +20,13 @@ import akka.actor.{ Actor, ActorLogging, ActorSystem }
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import akka.pattern.pipe
+import com.google.inject.Inject
 import org.loopring.lightcone.actors.base
 import org.loopring.lightcone.actors.marketcap.DatabaseAccesser
 import org.loopring.lightcone.proto.market_cap._
 import org.loopring.lightcone.actors.marketcap.{ CacherSettings, ProtoBufMessageCacher }
 import org.loopring.lightcone.proto.deployment.TokenInfoServiceSettings
+import org.loopring.lightcone.biz.marketcap._
 import scala.concurrent.Future
 
 object TokenInfoServiceActor
@@ -35,7 +37,7 @@ object TokenInfoServiceActor
     base.CommonSettings(None, s.roles, s.instances)
 }
 
-class TokenInfoServiceActor(
+class TokenInfoServiceActor @Inject() (service: TokenInfoService)(
   implicit
   system: ActorSystem,
   mat: ActorMaterializer,
@@ -43,12 +45,8 @@ class TokenInfoServiceActor(
   extends DatabaseAccesser with Actor with ActorLogging {
 
   import system.dispatcher
-  import session.profile.api._
 
   implicit val settings = CacherSettings(system.settings.config)
-
-  implicit val toTokenInfo = (r: ResultRow) ⇒
-    TokenInfo(protocol = r <<, deny = r <<, isMarket = r <<, symbol = r <<, source = r <<, decimals = r <<)
 
   val cacherTokenInfo = new ProtoBufMessageCacher[GetTokenListRes]
   val tokenInfoKey = "TOKEN_INFO_KEY"
@@ -58,11 +56,7 @@ class TokenInfoServiceActor(
     case req: GetTokenListReq ⇒
       //优先查询缓存，缓存没有再查询数据表并存入缓存
       val res = cacherTokenInfo.getOrElse(tokenInfoKey, Some(600)) {
-        val resp: Future[GetTokenListRes] =
-          sql"""select protocol,deny,is_market,symbol,source,decimals
-              from t_token_info
-          """.list[TokenInfo].map(GetTokenListRes(_))
-
+        val resp: Future[GetTokenListRes] = service.queryTokenInfo()
         resp.map(Some(_))
       }
 

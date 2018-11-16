@@ -19,7 +19,8 @@ package org.loopring.lightcone.biz.marketcap
 import org.loopring.lightcone.proto.market_cap._
 import scala.concurrent.Future
 
-trait ExchangeTickerService {
-  def saveOrUpdate(exchangeTickerInfo: ExchangeTickerInfo)
-  def queryExchangeTicker(symbol: String, market: String): Future[GetExchangeTickerInfoRes]
+trait TokenIcoInfoService {
+  def saveOrUpdate(iocInfo: TokenIcoInfo)
+  def queryTokenIcoInfo(): Future[GetTokenIcoInfoRes]
 }
+

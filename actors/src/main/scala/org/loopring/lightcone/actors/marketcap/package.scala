@@ -16,12 +16,13 @@
 
 package org.loopring.lightcone.actors
 
+import org.loopring.lightcone.proto.market_cap.TokenTickerInfo
+
 package object marketcap {
 
   type Bytes = Array[Byte]
 
   type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
 
-  case class SeqTpro[T](t: Seq[T])
-
+  case class SeqTpro(seq: Seq[TokenTickerInfo])
 }

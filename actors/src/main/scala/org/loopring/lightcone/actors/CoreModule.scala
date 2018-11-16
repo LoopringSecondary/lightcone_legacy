@@ -21,6 +21,7 @@ import akka.cluster.Cluster
 import com.google.inject.name.Named
 import com.google.inject.{ AbstractModule, Inject, Provides }
 import net.codingwell.scalaguice.ScalaModule
+import org.loopring.lightcone.biz.marketcap._
 //import akka.cluster._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
@@ -44,7 +45,6 @@ import com.typesafe.config.Config
 // import org.loopring.lightcone.lib.time._
 //import org.loopring.lightcone.proto.token._
 //import redis._
-
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -97,6 +97,10 @@ class CoreModule(config: Config)
     bind[Double].annotatedWithName("dust_threshold").toInstance(double2Double(0.5))
     bind[MarketManager].to[MarketManagerImpl]
     bind[DustOrderEvaluator].to[DustOrderEvaluatorImpl]
+    bind[ExchangeTickerService].to[ExchangeTickerServiceImpl]
+    bind[TokenIcoInfoService].to[TokenIcoInfoServiceImpl]
+    bind[TokenInfoService].to[TokenInfoServiceImpl]
+    bind[TokenTickerInfoService].to[TokenTickerInfoServiceImpl]
     //
     //    bind[ByteArrayCache].to[ByteArrayRedisCache].in[Singleton]
     //    bind[BalanceCache].to[cache.BalanceRedisCache]
