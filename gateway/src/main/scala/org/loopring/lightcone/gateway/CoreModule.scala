@@ -16,9 +16,9 @@
 
 package org.loopring.lightcone.gateway
 
-import akka.actor.{ ActorRef, ActorSystem }
+import akka.actor._
 import akka.cluster.Cluster
-import akka.cluster.singleton.{ ClusterSingletonProxy, ClusterSingletonProxySettings }
+import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import com.google.inject._
@@ -26,18 +26,20 @@ import com.google.inject.name.Named
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.gateway.api.HttpAndIOServer
-import org.loopring.lightcone.gateway.api.service.{ BalanceService, BalanceServiceImpl }
-import org.loopring.lightcone.gateway.inject.{ AssistedInjectFactoryScalaModule, ProxyActor, ProxyActorProvider }
-import org.loopring.lightcone.gateway.jsonrpc.{ JsonRpcServer, JsonRpcSettings }
-import org.loopring.lightcone.gateway.socketio.{ EventRegistering, SocketIOServer }
+import org.loopring.lightcone.gateway.api.service._
+import org.loopring.lightcone.gateway.inject._
+import org.loopring.lightcone.gateway.jsonrpc._
+import org.loopring.lightcone.gateway.socketio._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
 object CoreModule {
+  def apply(config: Config) = new CoreModule(config)
 
-  def apply(config: Config): CoreModule = new CoreModule(config)
-
-  class ActorMaterializerProvider @Inject() (system: ActorSystem) extends Provider[ActorMaterializer] {
+  class ActorMaterializerProvider @Inject() (
+      system: ActorSystem
+  )
+    extends Provider[ActorMaterializer] {
     override def get(): ActorMaterializer = ActorMaterializer()(system)
   }
 
@@ -79,8 +81,10 @@ class CoreModule(config: Config)
       system.actorOf(
         ClusterSingletonProxy.props(
           singletonManagerPath = s"/user/${named}",
-          settings = ClusterSingletonProxySettings(system)),
-        name = s"proxy_${named}")
+          settings = ClusterSingletonProxySettings(system)
+        ),
+        name = s"proxy_${named}"
+      )
     }
 
     config.getStringList("akka.cluster.routees").asScala.map { path ⇒
@@ -91,11 +95,13 @@ class CoreModule(config: Config)
   @Provides
   @Singleton
   def provideHttpAndIOServer(
-    proxy: ProxyActor)(
+    proxy: ProxyActor
+  )(
     implicit
     injector: Injector,
     system: ActorSystem,
-    mat: ActorMaterializer): HttpAndIOServer = {
+    mat: ActorMaterializer
+  ): HttpAndIOServer = {
     // 这里注册需要反射类
     val settings = JsonRpcSettings().register[BalanceServiceImpl]
 

@@ -17,12 +17,13 @@
 package org.loopring.lightcone.lib
 
 case class TransactionLog(
-  logIndex: Int = 0,
-  blockNumber: BigInt = 0,
-  blockHash: String = "0x",
-  transactionHash: String = "0x",
-  transactionIndex: Int = 0,
-  address: String = "0x",
-  data: String = "0x",
-  topics: Seq[String] = Seq(),
-  removed: Boolean = false)
+    logIndex: Int = 0,
+    blockNumber: BigInt = 0,
+    blockHash: String = "0x",
+    transactionHash: String = "0x",
+    transactionIndex: Int = 0,
+    address: String = "0x",
+    data: String = "0x",
+    topics: Seq[String] = Seq(),
+    removed: Boolean = false
+)

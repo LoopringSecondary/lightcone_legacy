@@ -137,19 +137,23 @@ class OrderAccessorImpl @Inject() (val module: OrderDatabase) extends OrderAcces
         case SoftCancelType.BY_OWNER ⇒
           Some(QueryCondition(
             owner = Some(condition.owner),
-            status = Seq(OrderStatus.NEW.toString)))
+            status = Seq(OrderStatus.NEW.toString)
+          ))
         case SoftCancelType.BY_HASH ⇒
           Some(QueryCondition(
             orderHashes = Seq(condition.hash),
-            status = Seq(OrderStatus.NEW.toString)))
+            status = Seq(OrderStatus.NEW.toString)
+          ))
         case SoftCancelType.BY_TIME ⇒
           Some(QueryCondition(
-            orderHashes = Seq(condition.hash)))
+            orderHashes = Seq(condition.hash)
+          ))
         case SoftCancelType.BY_MARKET ⇒
           Some(QueryCondition(
             owner = Some(condition.owner),
             market = Some(condition.market),
-            status = Seq(OrderStatus.NEW.toString)))
+            status = Seq(OrderStatus.NEW.toString)
+          ))
         case _ ⇒ None
 
       }
@@ -187,7 +191,8 @@ class OrderAccessorImpl @Inject() (val module: OrderDatabase) extends OrderAcces
       status = order.status.toString,
       updatedBlock = order.updatedBlock,
       createdAt = System.currentTimeMillis / 1000,
-      updatedAt = System.currentTimeMillis / 1000)
+      updatedAt = System.currentTimeMillis / 1000
+    )
   }
 
   private def wrapToQueryCondition(optOrderQuery: Option[OrderQuery]): QueryCondition = optOrderQuery match {
@@ -198,7 +203,8 @@ class OrderAccessorImpl @Inject() (val module: OrderDatabase) extends OrderAcces
       status = query.statuses.map(s ⇒ s.toString),
       orderHashes = query.hashes,
       orderType = if (query.orderTypeOpt.isEmpty) None else { Some(query.orderTypeOpt.get.toString) },
-      side = if (query.sideOpt.isEmpty) None else { Some(query.sideOpt.get.toString) })
+      side = if (query.sideOpt.isEmpty) None else { Some(query.sideOpt.get.toString) }
+    )
   }
 
   private def wrapToSkipAndTake(optPageInfo: Option[PaginationQuery]): (Int, Int) = optPageInfo match {

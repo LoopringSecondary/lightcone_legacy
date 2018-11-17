@@ -24,8 +24,7 @@ import org.loopring.lightcone.core.MarketId
 
 import scala.concurrent.ExecutionContext
 
-/**
- * 监听ring的执行情况，
+/** 监听ring的执行情况，
  *  1、执行状态发送给对应的marketmanager进行pendingpool的清除，
  *  2、记录执行状态并在订单与环路失败到一定次数后，永久删除订单
  *
@@ -34,9 +33,10 @@ import scala.concurrent.ExecutionContext
  *  @param timeout
  */
 class RingExecutedStatusActor()(
-  implicit
-  ec: ExecutionContext,
-  timeout: Timeout)
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
   extends Actor
   with ActorLogging {
 

@@ -37,11 +37,13 @@ object OrderManagingActor
 }
 
 class OrderManagingActor(
-  owner: Address)(
-  implicit
-  dustOrderEvaluator: DustOrderEvaluator,
-  ec: ExecutionContext,
-  timeout: Timeout)
+    owner: Address
+)(
+    implicit
+    dustOrderEvaluator: DustOrderEvaluator,
+    ec: ExecutionContext,
+    timeout: Timeout
+)
   extends Actor
   with ActorLogging {
 
@@ -65,7 +67,8 @@ class OrderManagingActor(
       for {
         _ ← Future.sequence(Seq(
           getTokenManagerAsFuture(reqOrder.tokenS),
-          getTokenManagerAsFuture(reqOrder.tokenFee)))
+          getTokenManagerAsFuture(reqOrder.tokenFee)
+        ))
         success = manager.submitOrder(reqOrder)
         order = updatedOrderReceiver.takeOrders.head
         _ = if (success) tellMarketManager(order)

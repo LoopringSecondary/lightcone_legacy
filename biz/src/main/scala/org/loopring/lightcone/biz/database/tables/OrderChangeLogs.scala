@@ -43,7 +43,8 @@ class OrderChangeLogs(tag: Tag)
     cancelledAmountS,
     cancelledAmountB,
     status,
-    updatedBlock) <> ((OrderChangeLogEntity.apply _).tupled, OrderChangeLogEntity.unapply)
+    updatedBlock
+  ) <> ((OrderChangeLogEntity.apply _).tupled, OrderChangeLogEntity.unapply)
 
   def idx = index("idx_order_hash", orderHash, unique = true)
 }

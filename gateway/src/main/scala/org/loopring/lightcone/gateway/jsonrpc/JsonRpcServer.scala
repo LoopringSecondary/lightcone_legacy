@@ -31,7 +31,8 @@ class JsonRpcServer(settings: JsonRpcSettings) {
 
   def handleRequest(json: String)(
     implicit
-    ex: ExecutionContext): Future[Option[String]] = {
+    ex: ExecutionContext
+  ): Future[Option[String]] = {
     handleRequest(parseJson(json))
   }
 
@@ -43,7 +44,8 @@ class JsonRpcServer(settings: JsonRpcSettings) {
   //  -32000到-32099	服务器端错误	保留给具体实现服务器端错误。
   def handleRequest(req: JsonRpcRequest)(
     implicit
-    ex: ExecutionContext): Future[Option[String]] = {
+    ex: ExecutionContext
+  ): Future[Option[String]] = {
 
     val futureValue = try {
 

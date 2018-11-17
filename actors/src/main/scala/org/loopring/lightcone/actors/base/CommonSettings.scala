@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.base
 
 case class CommonSettings(
-  id: Option[String],
-  roles: Seq[String],
-  instances: Int)
+    id: Option[String],
+    roles: Seq[String],
+    instances: Int
+)

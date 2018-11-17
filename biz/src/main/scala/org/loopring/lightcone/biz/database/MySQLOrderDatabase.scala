@@ -26,9 +26,10 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.ExecutionContext
 
 class MySQLOrderDatabase @Inject() (
-  val dbConfig: DatabaseConfig[JdbcProfile],
-  val timeProvider: TimeProvider,
-  @Named("db-execution-context") val dbec: ExecutionContext) extends OrderDatabase {
+    val dbConfig: DatabaseConfig[JdbcProfile],
+    val timeProvider: TimeProvider,
+    @Named("db-execution-context") val dbec: ExecutionContext
+) extends OrderDatabase {
 
   val orders = new OrdersDalImpl(this)
   val orderChangeLogs = new OrderChangeLogsDalImpl(this)
@@ -38,7 +39,8 @@ class MySQLOrderDatabase @Inject() (
     Seq(
       orders.createTable(),
       orderChangeLogs.createTable(),
-      blocks.createTable())
+      blocks.createTable()
+    )
   }
 
   def displayDDL(): Unit = {

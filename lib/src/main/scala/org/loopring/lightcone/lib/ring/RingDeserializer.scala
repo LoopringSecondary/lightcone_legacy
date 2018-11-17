@@ -74,7 +74,8 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
       sig = _sig,
       orders = _orders,
       ringOrderIndex = _rings,
-      transactionOrigin = "")
+      transactionOrigin = ""
+    )
   }
 
   private def setupOrders(tablesPtr: Int, numOrders: Int): Seq[Order] = {
@@ -156,7 +157,8 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
       tokenBFeePercentage = _tokenBFeePercentage,
       version = _version,
       tokenSpendableS = _tokenSpendableS,
-      tokenSpendableFee = _tokenSpendableFee)
+      tokenSpendableFee = _tokenSpendableFee
+    )
   }
 
   private def nextAddress: String = {

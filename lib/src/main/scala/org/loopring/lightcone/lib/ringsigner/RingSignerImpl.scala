@@ -21,11 +21,12 @@ import org.web3j.tx.ChainId
 import org.web3j.utils.Numeric
 
 class RingSignerImpl(
-  protocol: String = "",
-  chainId: Byte = 0.toByte,
-  privateKey: String = "0x",
-  feeReceipt: String = "",
-  lrcAddress: String = "0xef68e7c694f40c8202821edf525de3782458639f") extends RingSigner {
+    protocol: String = "",
+    chainId: Byte = 0.toByte,
+    privateKey: String = "0x",
+    feeReceipt: String = "",
+    lrcAddress: String = "0xef68e7c694f40c8202821edf525de3782458639f"
+) extends RingSigner {
   val credentials: Credentials = Credentials.create(privateKey)
 
   implicit val ringSerializer = new RingSerializerImpl(lrcAddress)
@@ -35,13 +36,15 @@ class RingSignerImpl(
   def generateInputData(ring: Ring): String = {
     val signatureData = Sign.signMessage(
       Numeric.hexStringToByteArray(ring.hash),
-      credentials.getEcKeyPair)
+      credentials.getEcKeyPair
+    )
     val sigBytes = signatureData.getR ++ signatureData.getS
 
     var lRing = ring.copy(
       feeReceipt = feeReceipt,
       miner = credentials.getAddress,
-      sig = Numeric.toHexString(sigBytes))
+      sig = Numeric.toHexString(sigBytes)
+    )
     lRing.getInputData()
   }
 
@@ -52,7 +55,8 @@ class RingSignerImpl(
       BigInt(0).bigInteger,
       protocol,
       BigInt(0).bigInteger,
-      inputData)
+      inputData
+    )
     signTx(rawTransaction)
   }
 

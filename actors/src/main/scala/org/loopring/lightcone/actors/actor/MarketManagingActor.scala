@@ -36,10 +36,12 @@ object MarketManagingActor
 }
 
 class MarketManagingActor(
-  manager: MarketManager)(
-  implicit
-  ec: ExecutionContext,
-  timeout: Timeout)
+    manager: MarketManager
+)(
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
   extends Actor
   with ActorLogging {
   var latestGasPrice = 0l

@@ -28,8 +28,9 @@ trait ProxyActor {
 }
 
 class ProxyActorProvider @Inject() (
-  @Assisted named: String,
-  @Named("cluster_proxy") proxyMap: Map[String, ActorRef]) {
+    @Assisted named: String,
+    @Named("cluster_proxy") proxyMap: Map[String, ActorRef]
+) {
 
   def get: ActorRef = proxyMap.get(named).get
 

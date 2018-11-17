@@ -60,13 +60,12 @@ private abstract class Helper[C <: Context, TFrom, TTo](val c: C) {
   private def toApplyMethod: MethodSymbol = {
     val applySymbol = toCompanion.typeSignature.declaration(newTermName("apply")) match {
       case NoSymbol ⇒ c.abort(c.enclosingPosition, s"No apply function found for $toTypeName")
-      case s ⇒ s
+      case s        ⇒ s
     }
     applySymbol.asMethod
   }
 
-  /**
-   * Creates the body of a mapValue method.
+  /** Creates the body of a mapValue method.
    */
   def mapValueBody: c.Expr[TTo] = {
     // get a reference to the companion's apply method
@@ -101,8 +100,7 @@ private abstract class Helper[C <: Context, TFrom, TTo](val c: C) {
     c.Expr(tree)
   }
 
-  /**
-   * Get the first parameter list from the constructor of a case class
+  /** Get the first parameter list from the constructor of a case class
    */
   private def caseClassParams(typ: c.Type): List[Symbol] = {
     val cTor = typ.declaration(nme.CONSTRUCTOR).asMethod
@@ -111,8 +109,7 @@ private abstract class Helper[C <: Context, TFrom, TTo](val c: C) {
     cTor.paramss.head
   }
 
-  /**
-   * Checks whether TTo is a subset of TFrom
+  /** Checks whether TTo is a subset of TFrom
    */
   def checkSubSuperSet = {
     // Retrieve the params for the From Type

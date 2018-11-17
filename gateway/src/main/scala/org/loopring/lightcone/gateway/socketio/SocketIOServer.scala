@@ -28,10 +28,12 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class SocketIOServer(
-  jsonRpcServer: JsonRpcServer,
-  eventRegistering: EventRegistering)(
-  implicit
-  system: ActorSystem) {
+    jsonRpcServer: JsonRpcServer,
+    eventRegistering: EventRegistering
+)(
+    implicit
+    system: ActorSystem
+) {
 
   implicit val ex = system.dispatcher
 
@@ -86,7 +88,8 @@ class SocketIOServer(
     router ! StartBroadcast(
       this,
       eventRegistering,
-      config.getInt("jsonrpc.socketio.pool"))
+      config.getInt("jsonrpc.socketio.pool")
+    )
 
     server.start
 

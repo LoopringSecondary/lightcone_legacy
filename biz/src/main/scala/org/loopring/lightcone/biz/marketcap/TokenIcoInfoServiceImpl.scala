@@ -25,10 +25,11 @@ import org.loopring.lightcone.proto.market_cap.{ GetTokenIcoInfoRes, TokenIcoInf
 import scala.concurrent.Future
 
 class TokenIcoInfoServiceImpl @Inject() (
-  implicit
-  system: ActorSystem,
-  mat: ActorMaterializer,
-  session: SlickSession) extends DatabaseAccesser with TokenIcoInfoService {
+    implicit
+    system: ActorSystem,
+    mat: ActorMaterializer,
+    session: SlickSession
+) extends DatabaseAccesser with TokenIcoInfoService {
 
   import session.profile.api._
   import system.dispatcher

@@ -20,12 +20,13 @@ import org.web3j.utils.Numeric
 import org.web3j.crypto.{ Hash ⇒ web3Hash }
 
 case class Ring(
-  feeReceipt: String,
-  miner: String,
-  sig: String,
-  ringOrderIndex: Seq[Seq[Int]], // todo change to map
-  orders: Seq[Order],
-  transactionOrigin: String) {
+    feeReceipt: String,
+    miner: String,
+    sig: String,
+    ringOrderIndex: Seq[Seq[Int]], // todo change to map
+    orders: Seq[Order],
+    transactionOrigin: String
+) {
 
   def hash = {
     val data = orders.foldLeft(Array[Byte]()) {

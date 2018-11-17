@@ -25,10 +25,11 @@ import org.loopring.lightcone.proto.market_cap._
 import scala.concurrent.Future
 
 class ExchangeTickerServiceImpl @Inject() (
-  implicit
-  system: ActorSystem,
-  mat: ActorMaterializer,
-  session: SlickSession) extends DatabaseAccesser with ExchangeTickerService {
+    implicit
+    system: ActorSystem,
+    mat: ActorMaterializer,
+    session: SlickSession
+) extends DatabaseAccesser with ExchangeTickerService {
 
   import session.profile.api._
   import system.dispatcher

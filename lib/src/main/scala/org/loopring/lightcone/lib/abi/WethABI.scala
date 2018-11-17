@@ -29,34 +29,36 @@ class WethABI(abiJson: String) extends ERC20ABI(abiJson) {
   override def decodeAndAssemble(tx: Transaction): Option[Any] = {
     val result = decode(tx.input)
     result.name match {
-      case FN_TRANSFER ⇒ Some(assembleTransferFunction(result.list, tx.from))
+      case FN_TRANSFER      ⇒ Some(assembleTransferFunction(result.list, tx.from))
       case FN_TRANSFER_FROM ⇒ Some(assembleTransferFromFunction(result.list))
-      case FN_APPROVE ⇒ Some(assembleApproveFunction(result.list, tx.from))
-      case FN_DEPOSIT ⇒ Some(assembleDepositFunction(tx.from, tx.value))
-      case FN_WITHDRAWAL ⇒ Some(assembleWithdrawalFunction(result.list, tx.from))
+      case FN_APPROVE       ⇒ Some(assembleApproveFunction(result.list, tx.from))
+      case FN_DEPOSIT       ⇒ Some(assembleDepositFunction(tx.from, tx.value))
+      case FN_WITHDRAWAL    ⇒ Some(assembleWithdrawalFunction(result.list, tx.from))
     }
   }
 
   override def decodeAndAssemble(tx: Transaction, log: TransactionLog): Option[Any] = {
     val result = decode(log)
     result.name match {
-      case EN_TRANSFER ⇒ Some(assembleTransferEvent(result.list))
-      case EN_APPROVAL ⇒ Some(assembleApprovalEvent(result.list))
-      case EN_DEPOSIT ⇒ Some(assembleDepositEvent(result.list))
+      case EN_TRANSFER   ⇒ Some(assembleTransferEvent(result.list))
+      case EN_APPROVAL   ⇒ Some(assembleApprovalEvent(result.list))
+      case EN_DEPOSIT    ⇒ Some(assembleDepositEvent(result.list))
       case EN_WITHDRAWAL ⇒ Some(assembleWithdrawalEvent(result.list))
     }
   }
 
   private[lib] def assembleDepositFunction(from: String, value: BigInt): Deposit = Deposit(
     owner = from,
-    amount = value)
+    amount = value
+  )
 
   private[lib] def assembleWithdrawalFunction(list: Seq[Any], from: String): Withdrawal = {
     assert(list.length == 1, "withdrawal function list length invalid")
 
     Withdrawal(
       owner = from,
-      amount = scalaAny2Bigint(list(0)))
+      amount = scalaAny2Bigint(list(0))
+    )
   }
 
   private[lib] def assembleDepositEvent(list: Seq[Any]): Deposit = {
@@ -64,7 +66,8 @@ class WethABI(abiJson: String) extends ERC20ABI(abiJson) {
 
     Deposit(
       owner = scalaAny2Hex(list(0)),
-      amount = scalaAny2Bigint(list(1)))
+      amount = scalaAny2Bigint(list(1))
+    )
   }
 
   // event  Withdrawal(address indexed src, uint wad);
@@ -73,7 +76,8 @@ class WethABI(abiJson: String) extends ERC20ABI(abiJson) {
 
     Withdrawal(
       owner = scalaAny2Hex(list(0)),
-      amount = scalaAny2Bigint(list(1)))
+      amount = scalaAny2Bigint(list(1))
+    )
   }
 
 }

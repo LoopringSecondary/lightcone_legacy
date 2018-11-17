@@ -30,9 +30,9 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
   def decodeAndAssemble(tx: Transaction): Option[Any] = {
     val result = decode(tx.input)
     result.name match {
-      case FN_TRANSFER ⇒ Some(assembleTransferFunction(result.list, tx.from))
+      case FN_TRANSFER      ⇒ Some(assembleTransferFunction(result.list, tx.from))
       case FN_TRANSFER_FROM ⇒ Some(assembleTransferFromFunction(result.list))
-      case FN_APPROVE ⇒ Some(assembleApproveFunction(result.list, tx.from))
+      case FN_APPROVE       ⇒ Some(assembleApproveFunction(result.list, tx.from))
     }
   }
 
@@ -50,7 +50,8 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
     Transfer(
       sender = from,
       receiver = scalaAny2Hex(list(0)),
-      amount = scalaAny2Bigint(list(1)))
+      amount = scalaAny2Bigint(list(1))
+    )
   }
 
   private[lib] def assembleTransferFromFunction(list: Seq[Any]): Transfer = {
@@ -59,7 +60,8 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
     Transfer(
       sender = scalaAny2Hex(list(0)),
       receiver = scalaAny2Hex(list(1)),
-      amount = scalaAny2Bigint(list(2)))
+      amount = scalaAny2Bigint(list(2))
+    )
   }
 
   private[lib] def assembleTransferEvent(list: Seq[Any]): Transfer = {
@@ -68,7 +70,8 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
     Transfer(
       sender = scalaAny2Hex(list(0)),
       receiver = scalaAny2Hex(list(1)),
-      amount = scalaAny2Bigint(list(2)))
+      amount = scalaAny2Bigint(list(2))
+    )
   }
 
   private[lib] def assembleApproveFunction(list: Seq[Any], from: String): Approve = {
@@ -77,7 +80,8 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
     Approve(
       owner = from,
       spender = scalaAny2Hex(list(0)),
-      amount = scalaAny2Bigint(list(1)))
+      amount = scalaAny2Bigint(list(1))
+    )
   }
 
   private[lib] def assembleApprovalEvent(list: Seq[Any]): Approve = {
@@ -86,7 +90,8 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
     Approve(
       owner = scalaAny2Hex(list(0)),
       spender = scalaAny2Hex(list(1)),
-      amount = scalaAny2Bigint(list(2)))
+      amount = scalaAny2Bigint(list(2))
+    )
   }
 
 }

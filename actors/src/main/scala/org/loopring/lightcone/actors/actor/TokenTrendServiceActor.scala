@@ -33,8 +33,9 @@ object TokenTrendServiceActor
 }
 
 class TokenTrendServiceActor(implicit
-  system: ActorSystem,
-  mat: ActorMaterializer) extends Actor {
+    system: ActorSystem,
+    mat: ActorMaterializer
+) extends Actor {
 
   import system.dispatcher
 
@@ -51,7 +52,7 @@ class TokenTrendServiceActor(implicit
 
       res.map {
         case Some(r) ⇒ r
-        case _ ⇒ throw new Exception("trend data in redis is null.")
+        case _       ⇒ throw new Exception("trend data in redis is null.")
       } pipeTo sender
 
   }

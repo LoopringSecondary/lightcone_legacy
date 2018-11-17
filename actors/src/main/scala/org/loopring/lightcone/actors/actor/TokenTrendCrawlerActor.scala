@@ -31,9 +31,10 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class TokenTrendCrawlerActor(tokenInfoServiceActor: ActorRef)(
-  implicit
-  val system: ActorSystem,
-  val mat: ActorMaterializer) extends Actor with HttpConnector with Timers with ActorLogging with SignatureUtil {
+    implicit
+    val system: ActorSystem,
+    val mat: ActorMaterializer
+) extends Actor with HttpConnector with Timers with ActorLogging with SignatureUtil {
 
   implicit val timeout = Timeout(5 seconds)
   implicit val ec = context.system.dispatcher

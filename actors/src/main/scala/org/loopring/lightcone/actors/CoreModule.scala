@@ -122,7 +122,8 @@ class CoreModule(config: Config)
   @Named("ethereum_access_actor")
   def getEthereumAccessActorProps()(implicit
     @Named("system-dispatcher") ec: ExecutionContext,
-    timeout: Timeout) = {
+    timeout: Timeout
+  ) = {
     Props(new EthereumAccessActor()) // .withDispatcher("ring-dispatcher")
   }
 
@@ -138,7 +139,8 @@ class CoreModule(config: Config)
   @Named("order_fill_history_actor")
   def getOrderFillHistoryActorProps()(implicit
     @Named("system-dispatcher") ec: ExecutionContext,
-    timeout: Timeout) = {
+    timeout: Timeout
+  ) = {
     Props(new OrderFillHistoryActor()) // .withDispatcher("ring-dispatcher")
   }
 
@@ -147,7 +149,8 @@ class CoreModule(config: Config)
   def getOrderManagingActorProps()(implicit
     @Named("system-dispatcher") ec: ExecutionContext,
     @Inject dustOrderEvaluator: DustOrderEvaluator,
-    timeout: Timeout) = {
+    timeout: Timeout
+  ) = {
     //TODO(xiaolu) confirm with others
     Props(new OrderManagingActor(""))
   }
@@ -156,7 +159,8 @@ class CoreModule(config: Config)
   @Named("ring_submit_actor")
   def getRingSubmitActorProps()(implicit
     @Named("system-dispatcher") ec: ExecutionContext,
-    timeout: Timeout) = {
+    timeout: Timeout
+  ) = {
     //TODO(xiaolu) confirm with others
     Props(new RingSubmitActor(""))
   }
@@ -165,7 +169,8 @@ class CoreModule(config: Config)
   @Named("cluster_manager")
   def getClusterManagerProps()(implicit
     @Named("system-dispatcher") ec: ExecutionContext,
-    timeout: Timeout) = {
+    timeout: Timeout
+  ) = {
     Props(new ClusterManager()) // .withDispatcher("ring-dispatcher")
   }
 }

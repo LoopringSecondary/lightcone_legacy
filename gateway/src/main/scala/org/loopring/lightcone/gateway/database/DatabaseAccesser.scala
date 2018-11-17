@@ -24,9 +24,10 @@ import slick.jdbc.{ GetResult, SQLActionBuilder }
 import scala.concurrent.Future
 
 abstract class DatabaseAccesser(
-  implicit
-  mat: ActorMaterializer,
-  session: SlickSession) {
+    implicit
+    mat: ActorMaterializer,
+    session: SlickSession
+) {
 
   type ResultRow = slick.jdbc.PositionedResult
   type ResultInt = slick.dbio.DBIO[Int]

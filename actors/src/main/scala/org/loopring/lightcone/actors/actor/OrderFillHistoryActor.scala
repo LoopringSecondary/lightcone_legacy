@@ -37,14 +37,15 @@ object OrderFillHistoryActor
 }
 
 class OrderFillHistoryActor()(
-  implicit
-  ec: ExecutionContext,
-  timeout: Timeout)
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
   extends Actor
   with ActorLogging {
 
   def receive() = LoggingReceive {
-    case req: GetFilledAmountReq ⇒ Routers.ethereumAccessActor forward req
+    case req: GetFilledAmountReq    ⇒ Routers.ethereumAccessActor forward req
     case req: UpdateFilledAmountReq ⇒ Routers.ethereumAccessActor forward req
 
     case SubmitOrderReq(orderOpt) if orderOpt.isEmpty ⇒
@@ -58,7 +59,8 @@ class OrderFillHistoryActor()(
         filledAmountS: BigInt = filledAmountSMap(order.id)
         updated = if (filledAmountS == 0) order else {
           val outstanding = order.outstanding.scaleBy(
-            Rational(order.amountS - filledAmountS, order.amountS))
+            Rational(order.amountS - filledAmountS, order.amountS)
+          )
           order.copy(_outstanding = Some(outstanding))
         }
       } yield {

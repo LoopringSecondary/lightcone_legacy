@@ -27,10 +27,11 @@ package object ethcube {
   type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
 
   private[ethcube] case class JsonRpcReqWrapped(
-    id: Int,
-    jsonrpc: String = "2.0",
-    method: String,
-    params: Any) {
+      id: Int,
+      jsonrpc: String = "2.0",
+      method: String,
+      params: Any
+  ) {
     self ⇒
     implicit val formats = Serialization.formats(NoTypeHints)
 
@@ -40,10 +41,11 @@ package object ethcube {
   }
 
   private[ethcube] case class JsonRpcResWrapped(
-    id: Any,
-    jsonrpc: String = "2.0",
-    result: Any,
-    error: Option[JsonRpcErr])
+      id: Any,
+      jsonrpc: String = "2.0",
+      result: Any,
+      error: Option[JsonRpcErr]
+  )
 
   private[ethcube] object JsonRpcResWrapped {
 

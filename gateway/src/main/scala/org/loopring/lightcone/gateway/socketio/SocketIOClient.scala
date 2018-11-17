@@ -28,7 +28,8 @@ object SocketIOClient {
       getClientByEvent(x ⇒
         x.event == event &&
           x.client == client).isEmpty,
-      s"event [$event] has bean registered")
+      s"event [$event] has bean registered"
+    )
 
     subscribers.add(SubscriberEvent(client, event, json))
   }

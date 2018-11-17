@@ -42,16 +42,18 @@ object OrderValidateConfig {
       config.getDouble("order.validate.min_token_s_usd_amount"),
       config.getLong("order.validate.max_valid_since_interval"),
       decodeMinTokenSAmount(config),
-      config.getString("order.validate.pow_difficulty"))
+      config.getString("order.validate.pow_difficulty")
+    )
   }
 }
 
 case class OrderValidateConfig(
-  minLrcFee: Long,
-  minLrcHold: Long,
-  minSplitPercentage: Double,
-  maxSplitPercentage: Double,
-  minTokenSUsdAmount: Double,
-  maxValidSinceInterval: Long,
-  minTokenSAmount: Map[String, String],
-  powDifficulty: String)
+    minLrcFee: Long,
+    minLrcHold: Long,
+    minSplitPercentage: Double,
+    maxSplitPercentage: Double,
+    minTokenSUsdAmount: Double,
+    maxValidSinceInterval: Long,
+    minTokenSAmount: Map[String, String],
+    powDifficulty: String
+)

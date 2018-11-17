@@ -28,10 +28,11 @@ import org.json4s.DefaultFormats
 import org.loopring.lightcone.eth_jsonrpc._
 
 private[actors] class ConnectionManager(
-  requestRouterActor: ActorRef,
-  connectorGroups: Seq[ActorRef],
-  checkIntervalSeconds: Int,
-  healthyThreshold: Float)
+    requestRouterActor: ActorRef,
+    connectorGroups: Seq[ActorRef],
+    checkIntervalSeconds: Int,
+    healthyThreshold: Float
+)
   extends Actor
   with ActorLogging {
 
@@ -47,7 +48,8 @@ private[actors] class ConnectionManager(
     checkIntervalSeconds.seconds,
     checkIntervalSeconds.seconds,
     self,
-    CheckBlockHeight())
+    CheckBlockHeight()
+  )
 
   def receive: Receive = {
 
@@ -57,12 +59,14 @@ private[actors] class ConnectionManager(
         id = Random.nextInt(100),
         jsonrpc = "2.0",
         method = "eth_syncing",
-        params = None)
+        params = None
+      )
       val blockNumJsonRpcReq = JsonRpcReqWrapped(
         id = Random.nextInt(100),
         jsonrpc = "2.0",
         method = "eth_blockNumber",
-        params = None)
+        params = None
+      )
       import JsonRpcResWrapped._
       for {
         resps: Seq[(ActorRef, CheckBlockHeightResp)] ← Future.sequence(
@@ -76,11 +80,13 @@ private[actors] class ConnectionManager(
                 .recover {
                   case e: TimeoutException ⇒
                     log.error(
-                      s"timeout on getting blockheight: $g: ${e.getMessage}")
+                      s"timeout on getting blockheight: $g: ${e.getMessage}"
+                    )
                     errCheckBlockHeightResp
                   case e: Throwable ⇒
                     log.error(
-                      s"exception on getting blockheight: $g: ${e.getMessage}")
+                      s"exception on getting blockheight: $g: ${e.getMessage}"
+                    )
                     errCheckBlockHeightResp
                 }
               // get each node block number
@@ -93,13 +99,16 @@ private[actors] class ConnectionManager(
             } yield {
               val heightBlock = Seq(syncingResp.heightBlock, blockNumResp).max
               log.info(
-                s"{ currentBlock: ${blockNumResp}, highestBlock: ${heightBlock} } @ ${g.path}")
+                s"{ currentBlock: ${blockNumResp}, highestBlock: ${heightBlock} } @ ${g.path}"
+              )
               (
                 g,
                 syncingResp
-                .copy(currentBlock = blockNumResp, heightBlock = heightBlock))
+                .copy(currentBlock = blockNumResp, heightBlock = heightBlock)
+              )
             }
-          })
+          }
+        )
         heightBNInGroup = resps.map(_._2.heightBlock).max
         goodGroupsOption = Seq(10, 20, 30)
           .map { i ⇒
@@ -123,7 +132,8 @@ private[actors] class ConnectionManager(
 
         log.info(
           s"GoodGroups: ${goodGroupsOption.map(_.size).getOrElse(0)} connectorGroup are still in good shape, " +
-            s"in connectorGroup height block number: ${heightBNInGroup}, end scheduler")
+            s"in connectorGroup height block number: ${heightBNInGroup}, end scheduler"
+        )
       }
   }
 
@@ -141,7 +151,7 @@ private[actors] class ConnectionManager(
 
   def anyHexToInt: PartialFunction[Any, Int] = {
     case s: String ⇒ BigInt(s.replace("0x", ""), 16).toInt
-    case _ ⇒ 0
+    case _         ⇒ 0
   }
 
 }

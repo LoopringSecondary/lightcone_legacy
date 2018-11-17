@@ -145,11 +145,11 @@ private[lib] class RingSerializerHelper(lrcAddress: String, ring: Ring) {
 
     orderSpendableSMap.get(order.hash) match {
       case Some(x: Int) ⇒ tablestream.addUint16(x.intValue())
-      case _ ⇒ throw new Exception("ringGenerator get " + order.hash + "orderSpendableS failed")
+      case _            ⇒ throw new Exception("ringGenerator get " + order.hash + "orderSpendableS failed")
     }
     orderSpendableFeeMap.get(order.hash) match {
       case Some(x: Int) ⇒ tablestream.addUint16(x.intValue())
-      case _ ⇒ throw new Exception("ringGenerator get " + order.hash + "orderSpendableFee failed")
+      case _            ⇒ throw new Exception("ringGenerator get " + order.hash + "orderSpendableFee failed")
     }
 
     if (order.dualAuthAddress.nonEmpty) {

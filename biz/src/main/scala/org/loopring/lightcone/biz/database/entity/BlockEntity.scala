@@ -19,11 +19,12 @@ package org.loopring.lightcone.biz.database.entity
 import org.loopring.lightcone.biz.database.base.BaseEntity
 
 case class BlockEntity(
-  id: Long,
-  updatedAt: Long,
-  createdAt: Long,
-  blockHash: String,
-  blockNumber: Long,
-  parentHash: String,
-  fork: Boolean) extends BaseEntity
+    id: Long,
+    updatedAt: Long,
+    createdAt: Long,
+    blockHash: String,
+    blockNumber: Long,
+    parentHash: String,
+    fork: Boolean
+) extends BaseEntity
 
