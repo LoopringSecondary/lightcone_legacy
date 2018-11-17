@@ -16,25 +16,17 @@
 
 package org.loopring.lightcone.gateway.socketio
 
-case class EventRegister(
+case class EventBinding(
     event: String,
     interval: Long,
     replyTo: String
 )
 
-object EventRegistering {
-  def apply() = new EventRegistering(Nil)
-}
+class EventBindings(val bindings: Seq[EventBinding] = Nil) {
+  def bind(event: String, interval: Long, replyTo: String): EventBindings =
+    bind(EventBinding(event, interval, replyTo))
 
-class EventRegistering(val events: Seq[EventRegister]) {
-
-  def append(event: String, interval: Long, replyTo: String): EventRegistering = {
-    append(EventRegister(event, interval, replyTo))
-  }
-
-  def append(event: EventRegister): EventRegistering = {
-    new EventRegistering(events :+ event)
-  }
-
+  def bind(binding: EventBinding): EventBindings =
+    new EventBindings(bindings :+ binding)
 }
 

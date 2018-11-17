@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.api
+package org.loopring.lightcone.gateway
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -23,6 +23,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.loopring.lightcone.gateway.jsonrpc._
+import org.loopring.lightcone.gateway.api._
 import org.loopring.lightcone.gateway.socketio.SocketIOServer
 import org.slf4s.Logging
 

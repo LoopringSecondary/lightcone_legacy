@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.inject
+package org.loopring.lightcone.gateway
 
 import akka.actor._
 import akka.cluster.Cluster
@@ -25,9 +25,11 @@ import com.google.inject._
 import com.google.inject.name.Named
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
-import org.loopring.lightcone.gateway.api.HttpAndIOServer
+import org.loopring.lightcone.gateway.api._
 import org.loopring.lightcone.gateway.api.service._
 import org.loopring.lightcone.gateway.jsonrpc._
+import org.loopring.lightcone.gateway.api.service._
+import org.loopring.lightcone.gateway.inject._
 import org.loopring.lightcone.gateway.socketio._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
@@ -86,9 +88,11 @@ class CoreModule(config: Config)
       )
     }
 
-    config.getStringList("akka.cluster.routees").asScala.map { path ⇒
-      path → proxy(path, system)
-    }.toMap
+    config.
+      getStringList("akka.cluster.routees")
+      .asScala
+      .map { path ⇒ path → proxy(path, system) }
+      .toMap
   }
 
   // QUESTION(Doan): proxy参数好像没用起来
@@ -103,8 +107,11 @@ class CoreModule(config: Config)
     // 这里注册需要反射类
     val settings = JsonRpcSettings().register[TokenSpendablesServiceImpl]
     val jsonRpcServer = new JsonRpcServer(settings)
-    val ioServer = new SocketIOServer(jsonRpcServer, EventRegistering()
-      .append("getBalance", 10000, "balance"))
+
+    val eventBindings = new EventBindings()
+      .bind("getBalance", 10000, "balance")
+
+    val ioServer = new SocketIOServer(jsonRpcServer, eventBindings)
 
     new HttpAndIOServer(jsonRpcServer, ioServer)
   }

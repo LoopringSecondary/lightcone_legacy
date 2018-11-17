@@ -25,7 +25,7 @@ package object socketio {
 
   case class SubscriberEvent(client: IOClient, event: String, json: String)
 
-  case class StartBroadcast(server: SocketIOServer, eventRegistering: EventRegistering, pool: Int)
+  case class StartBroadcast(server: SocketIOServer, eventRegistering: EventBindings, pool: Int)
 
   case class BroadcastMessage(server: SocketIOServer, event: String, replyTo: String)
 
