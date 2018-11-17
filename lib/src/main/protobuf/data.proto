@@ -4,8 +4,9 @@ option java_multiple_files = true;
 option java_package = "org.loopring.lightcone.lib";
 package org.loopring.lightcone.lib;
 
-message OrderState {
+message XXX {
     bytes amount_s = 1;
-    bytes amount_b = 2;
-    bytes amount_fee = 3;
+
 }
+
+
