@@ -24,7 +24,7 @@ import org.loopring.lightcone.biz.marketcap._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
-class BizCoreModule extends AbstractModule with ScalaModule {
+class CoreModule extends AbstractModule with ScalaModule {
 
   override def configure(): Unit = {
 
@@ -32,7 +32,6 @@ class BizCoreModule extends AbstractModule with ScalaModule {
     bind[TokenIcoInfoService].to[TokenIcoInfoServiceImpl]
     bind[TokenInfoService].to[TokenInfoServiceImpl]
     bind[TokenTickerInfoService].to[TokenTickerInfoServiceImpl]
-
   }
 
   @Provides

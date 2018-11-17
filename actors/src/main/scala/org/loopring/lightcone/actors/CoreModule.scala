@@ -21,14 +21,13 @@ import akka.cluster.Cluster
 import com.google.inject.name.Named
 import com.google.inject.{ AbstractModule, Inject, Provides }
 import net.codingwell.scalaguice.ScalaModule
-import org.loopring.lightcone.biz.BizCoreModule
-import org.loopring.lightcone.core.{ TokenValueEstimator, TokenValueEstimatorImpl }
+import org.loopring.lightcone.biz
+import org.loopring.lightcone.core._
 //import akka.cluster._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.loopring.lightcone.actors.actor._
 import org.loopring.lightcone.actors.managing.ClusterManager
-import org.loopring.lightcone.core.{ DustOrderEvaluator, DustOrderEvaluatorImpl }
 //import slick.basic.DatabaseConfig
 //import slick.jdbc.JdbcProfile
 //import com.google.inject._
@@ -102,7 +101,7 @@ class CoreModule(config: Config)
     implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimatorImpl
     bind[DustOrderEvaluator].toInstance(new DustOrderEvaluatorImpl(0))
 
-    install(new BizCoreModule)
+    install(new biz.CoreModule)
   }
 
   //  @Provides
