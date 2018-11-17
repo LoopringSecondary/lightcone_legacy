@@ -16,18 +16,20 @@
 
 package org.loopring.lightcone.gateway.socketio
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor._
 
-class SocketIOServerActor extends Actor with ActorLogging {
+class SocketIOServerActor()
+  extends Actor
+  with ActorLogging {
 
   override def receive: Receive = {
+
     case BroadcastMessage(server, event, replyTo) ⇒
-
-      log.info(s"${context.self.path} for event:${event} broadcast to clients")
-
       SocketIOClient.getClients(_ == event).foreach {
         case SubscriberEvent(client, _, json: String) ⇒
           server.invoke(json).foreach(client.sendEvent(replyTo, _))
       }
+      log.debug(s"${context.self.path} for event:${event} broadcast to clients")
+
   }
 }

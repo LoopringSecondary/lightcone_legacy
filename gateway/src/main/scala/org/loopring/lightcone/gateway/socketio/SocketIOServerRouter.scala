@@ -41,7 +41,7 @@ class SocketIOServerRouter
             s"socket_timer_${event}_${getNextId}"
           )
 
-          // QUESTION(Toan): IOClient 好像不能序列化吧？这样的消息无法通过actor发送。
+          // QUESTION(Toan): IOClient 好像不能序列化吧？这样的消息无法通过actor跨网络发送。
           context.system.scheduler.schedule(
             5 seconds,
             interval seconds,
