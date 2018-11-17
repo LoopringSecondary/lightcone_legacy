@@ -33,7 +33,8 @@ abstract class NullConfigDeployable extends Deployable[NullConfig] {
 
   def deploy(injector: Injector)(
     implicit
-    cluster: Cluster): Map[String, ActorRef] =
+    cluster: Cluster
+  ): Map[String, ActorRef] =
     deploy(injector, Seq(NullConfig()))
 }
 

@@ -41,7 +41,7 @@ class BizCoreModule extends AbstractModule with ScalaModule {
     // for db session
     val databaseConfig = DatabaseConfig.forConfig[JdbcProfile]("db.default", system.settings.config)
     val session = SlickSession.forConfig(databaseConfig)
-    system.registerOnTermination(() => session.close())
+    system.registerOnTermination(() ⇒ session.close())
     session
   }
 

@@ -25,10 +25,11 @@ import redis.{ ByteStringDeserializer, ByteStringSerializer }
 import scala.concurrent.Future
 
 class ProtoBufMessageCacher[T <: ProtoBuf[T]](
-  implicit
-  settings: CacherSettings,
-  system: ActorSystem,
-  c: scalapb.GeneratedMessageCompanion[T]) {
+    implicit
+    settings: CacherSettings,
+    system: ActorSystem,
+    c: scalapb.GeneratedMessageCompanion[T]
+) {
 
   implicit val ec = system.dispatcher
 
@@ -98,14 +99,15 @@ final class SeqAnyByteStringDeserializer[T] extends ByteStringDeserializer[Seq[T
 
     value match {
       case vs: Seq[_] ⇒ vs.map(_.asInstanceOf[T])
-      case _ ⇒ throw new Exception("can not deserializer to Seq")
+      case _          ⇒ throw new Exception("can not deserializer to Seq")
     }
   }
 }
 
 final class ProtoBufByteStringDeserializer[T <: ProtoBuf[T]](
-  implicit
-  c: scalapb.GeneratedMessageCompanion[T])
+    implicit
+    c: scalapb.GeneratedMessageCompanion[T]
+)
   extends ByteStringDeserializer[T] {
 
   override def deserialize(bs: ByteString): T = c.parseFrom(bs.toArray)

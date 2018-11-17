@@ -22,8 +22,9 @@ import akka.stream.ActorMaterializer
 import org.loopring.lightcone.eth_jsonrpc._
 
 class EthereumProxyActor(settings: EthereumProxySettings)(
-  implicit
-  materilizer: ActorMaterializer) extends Actor
+    implicit
+    materilizer: ActorMaterializer
+) extends Actor
   with ActorLogging {
 
   private val connectorGroups: Seq[ActorRef] = settings.nodes.zipWithIndex.map {
@@ -34,13 +35,15 @@ class EthereumProxyActor(settings: EthereumProxySettings)(
 
       context.actorOf(
         RoundRobinPool(settings.poolSize).props(props),
-        s"connector_group_$index")
+        s"connector_group_$index"
+      )
   }
 
   // 这里相当于添加了 ActorSelectionRoutee
   private val requestRouterActor = context.actorOf(
     RoundRobinGroup(connectorGroups.map(_.path.toString).toList).props(),
-    "request_router_actor")
+    "request_router_actor"
+  )
 
   private val manager = context.actorOf(
     Props(
@@ -48,8 +51,11 @@ class EthereumProxyActor(settings: EthereumProxySettings)(
         requestRouterActor,
         connectorGroups,
         settings.checkIntervalSeconds,
-        settings.healthyThreshold)),
-    "ethereum_connector_manager")
+        settings.healthyThreshold
+      )
+    ),
+    "ethereum_connector_manager"
+  )
 
   def receive: Receive = {
     case m: JsonRpcReq ⇒

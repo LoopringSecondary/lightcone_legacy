@@ -34,10 +34,12 @@ import org.loopring.lightcone.actors.actor.OrderManagingActor
 
 @Singleton
 class NodeManager(
-  injector: Injector,
-  config: Config)(implicit
-  cluster: Cluster,
-  materializer: ActorMaterializer)
+    injector: Injector,
+    config: Config
+)(implicit
+    cluster: Cluster,
+    materializer: ActorMaterializer
+)
   extends Actor
   with ActorLogging
   with Timers {
@@ -69,23 +71,28 @@ class NodeManager(
 
       Routers.setRouters(
         EthereumAccessActor.name,
-        EthereumAccessActor.deploy(injector, settings.ethereumAccessorSettings))
+        EthereumAccessActor.deploy(injector, settings.ethereumAccessorSettings)
+      )
 
       Routers.setRouters(
         MarketManagingActor.name,
-        MarketManagingActor.deploy(injector, settings.orderBookManagerSettingsSeq))
+        MarketManagingActor.deploy(injector, settings.orderBookManagerSettingsSeq)
+      )
 
       Routers.setRouters(
         OrderFillHistoryActor.name,
-        OrderFillHistoryActor.deploy(injector, settings.orderFillSettings))
+        OrderFillHistoryActor.deploy(injector, settings.orderFillSettings)
+      )
 
       Routers.setRouters(
         OrderManagingActor.name,
-        OrderManagingActor.deploy(injector, settings.orderManagerSettings))
+        OrderManagingActor.deploy(injector, settings.orderManagerSettings)
+      )
 
       Routers.setRouters(
         RingSubmitActor.name,
-        RingSubmitActor.deploy(injector, settings.ringSubmitSettings))
+        RingSubmitActor.deploy(injector, settings.ringSubmitSettings)
+      )
 
   }
 

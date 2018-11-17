@@ -31,9 +31,10 @@ import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 
 class TokenTickerCrawlerActor(tokenTickerServiceActor: ActorRef)(
-  implicit
-  val system: ActorSystem,
-  val mat: ActorMaterializer) extends Actor with HttpConnector with Timers with ActorLogging {
+    implicit
+    val system: ActorSystem,
+    val mat: ActorMaterializer
+) extends Actor with HttpConnector with Timers with ActorLogging {
 
   implicit val timeout = Timeout(5 seconds)
   implicit val ec = context.system.dispatcher

@@ -94,31 +94,31 @@ abstract class AbiWrap(abiJson: String) {
   // 这里比较特殊 涉及到任意类型的强制转换 只有abi转换时用到 所以放到该接口
   def javaObj2Hex(src: Object): String = src match {
     case bs: Array[Byte] ⇒ Numeric.toHexString(bs)
-    case _ ⇒ throw new Exception("java object convert to scala string error")
+    case _               ⇒ throw new Exception("java object convert to scala string error")
   }
 
   def javaObj2Bigint(src: Object): BigInt = src match {
     case bs: BigInteger ⇒ BigInt(bs)
-    case _ ⇒ throw new Exception("java object convert to scala bigint error")
+    case _              ⇒ throw new Exception("java object convert to scala bigint error")
   }
 
   def javaObj2Boolean(src: Object): Boolean = src match {
     case b: jbool ⇒ b
-    case _ ⇒ throw new Exception("java object convert to scala boolean error")
+    case _        ⇒ throw new Exception("java object convert to scala boolean error")
   }
 
   def scalaAny2Hex(src: Any): String = src match {
     case bs: Array[Byte] ⇒ Numeric.toHexString(bs)
-    case _ ⇒ throw new Exception("scala any convert to scala array byte error")
+    case _               ⇒ throw new Exception("scala any convert to scala array byte error")
   }
 
   def scalaAny2Bigint(src: Any): BigInt = src match {
     case b: BigInteger ⇒ b
-    case _ ⇒ throw new Exception("scala any convert to scala bigint error")
+    case _             ⇒ throw new Exception("scala any convert to scala bigint error")
   }
 
   def scalaAny2Bool(src: Any): Boolean = src match {
     case b: Boolean ⇒ b
-    case _ ⇒ throw new Exception("scala any convert to scala bool error")
+    case _          ⇒ throw new Exception("scala any convert to scala bool error")
   }
 }

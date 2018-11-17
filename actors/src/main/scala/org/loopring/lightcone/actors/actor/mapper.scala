@@ -37,12 +37,14 @@ package object actor {
   implicit def bigIntToByteString(bi: BigInt): ByteString = bi.toByteArray
 
   implicit def mapOfStringToBigInt2mapOfStringToByteString(
-    m: Map[String, BigInt]): Map[String, ByteString] = m.map {
+    m: Map[String, BigInt]
+  ): Map[String, ByteString] = m.map {
     case (k, v) ⇒ k -> bigIntToByteString(v)
   }
 
   implicit def mapOfStringToByteString2MapOfStringToBigInt(
-    m: Map[String, ByteString]): Map[String, BigInt] = m.map {
+    m: Map[String, ByteString]
+  ): Map[String, BigInt] = m.map {
     case (k, v) ⇒ k -> byteString2BigInt(v)
   }
 
@@ -85,14 +87,16 @@ package object actor {
     def toPojo(): COrderState = COrderState(
       state.amountS,
       state.amountB,
-      state.amountFee)
+      state.amountFee
+    )
   }
 
   implicit class RichCOrderState(state: COrderState) {
     def toProto(): OrderState = OrderState(
       state.amountS,
       state.amountB,
-      state.amountFee)
+      state.amountFee
+    )
   }
 
   implicit class RichOrder(order: Order) {
@@ -110,7 +114,8 @@ package object actor {
       order.outstanding.map(_.toPojo),
       order.reserved.map(_.toPojo),
       order.actual.map(_.toPojo),
-      order.matchable.map(_.toPojo))
+      order.matchable.map(_.toPojo)
+    )
   }
 
   implicit class RichCOrder(order: COrder) {
@@ -128,33 +133,38 @@ package object actor {
       order._outstanding.map(_.toProto),
       order._reserved.map(_.toProto),
       order._actual.map(_.toProto),
-      order._matchable.map(_.toProto))
+      order._matchable.map(_.toProto)
+    )
   }
 
   implicit class RichExpectedFill(ef: ExpectedFill) {
     def toPojo(): CExpectedFill = CExpectedFill(
       ef.order.map(_.toPojo).getOrElse(null),
       ef.pending.map(_.toPojo).getOrElse(null),
-      ef.amountMargin)
+      ef.amountMargin
+    )
   }
 
   implicit class RichCExpectedFill(ef: CExpectedFill) {
     def toProto(): ExpectedFill = ExpectedFill(
       Some(ef.order.toProto),
       Some(ef.pending.toProto),
-      ef.amountMargin)
+      ef.amountMargin
+    )
   }
 
   implicit class RichCRing(ring: CRing) {
     def toProto(): Ring = Ring(
       Some(ring.maker.toProto),
-      Some(ring.taker.toProto))
+      Some(ring.taker.toProto)
+    )
   }
 
   implicit class RichRing(ring: Ring) {
     def toPojo(): CRing = CRing(
       ring.getMaker.toPojo,
-      ring.getTaker.toPojo)
+      ring.getTaker.toPojo
+    )
   }
 
   implicit class RichMarketId(src: MarketId) {

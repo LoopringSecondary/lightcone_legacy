@@ -39,9 +39,10 @@ object TokenTickerServiceActor
 }
 
 class TokenTickerServiceActor @Inject() (service: TokenTickerInfoService)(implicit
-  system: ActorSystem,
-  mat: ActorMaterializer,
-  session: SlickSession) extends Actor {
+    system: ActorSystem,
+    mat: ActorMaterializer,
+    session: SlickSession
+) extends Actor {
 
   import system.dispatcher
 
@@ -68,7 +69,7 @@ class TokenTickerServiceActor @Inject() (service: TokenTickerInfoService)(implic
 
       res.map {
         case Some(r) ⇒ r
-        case _ ⇒ throw new Exception("data in table is null. Please find the reason!")
+        case _       ⇒ throw new Exception("data in table is null. Please find the reason!")
       } pipeTo sender
 
   }

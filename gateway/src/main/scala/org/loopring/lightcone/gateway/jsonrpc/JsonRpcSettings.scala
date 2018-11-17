@@ -54,13 +54,15 @@ class JsonRpcSettings(ps: Map[String, MethodMirror]) {
 
   def register[T: Manifest](
     implicit
-    injector: Injector): JsonRpcSettings = {
+    injector: Injector
+  ): JsonRpcSettings = {
     register(injector.instance[T])
   }
 
   def register[T: Manifest](named: String)(
     implicit
-    injector: Injector): JsonRpcSettings = {
+    injector: Injector
+  ): JsonRpcSettings = {
     register(injector.instance[T](Names.named(named)))
   }
 

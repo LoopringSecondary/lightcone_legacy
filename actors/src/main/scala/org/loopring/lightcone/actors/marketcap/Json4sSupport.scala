@@ -30,7 +30,7 @@ private class EmptyValueSerializer
   extends CustomSerializer[String](
     _ ⇒
       ({
-        case JNull ⇒ ""
+        case JNull      ⇒ ""
         case JString(x) ⇒ x
         case JObject(x) ⇒
           import org.json4s.JsonDSL._
@@ -39,6 +39,7 @@ private class EmptyValueSerializer
           compact(render(x))
       }, {
         case "" ⇒ JNull
-      }))
+      })
+  )
 
 private object EmptyValueSerializer extends EmptyValueSerializer

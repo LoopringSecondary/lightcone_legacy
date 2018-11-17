@@ -37,7 +37,8 @@ class SocketIOServerRouter extends Actor with Timers with ActorLogging {
 
         routees = context.actorOf(
           RoundRobinPool(pool).props(Props[SocketIOServerActor]),
-          s"socket_timer_${event}_${Random.nextInt()}")
+          s"socket_timer_${event}_${Random.nextInt()}"
+        )
 
         msg = BroadcastMessage(server, event, replyTo)
 

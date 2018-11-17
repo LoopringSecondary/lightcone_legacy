@@ -31,8 +31,9 @@ object ClusterManager extends base.NullConfigDeployable {
 }
 
 class ClusterManager()(implicit
-  ec: ExecutionContext,
-  timeout: Timeout)
+    ec: ExecutionContext,
+    timeout: Timeout
+)
   extends Actor {
 
   val mediator = DistributedPubSub(context.system).mediator

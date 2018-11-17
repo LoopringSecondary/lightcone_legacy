@@ -29,11 +29,13 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.duration._
 
 class HttpAndIOServer(
-  jsonRpcServer: JsonRpcServer,
-  ioServer: SocketIOServer)(
-  implicit
-  system: ActorSystem,
-  mat: ActorMaterializer) extends Json4sSupport {
+    jsonRpcServer: JsonRpcServer,
+    ioServer: SocketIOServer
+)(
+    implicit
+    system: ActorSystem,
+    mat: ActorMaterializer
+) extends Json4sSupport {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
 
@@ -59,7 +61,8 @@ class HttpAndIOServer(
       HttpResponse(
         StatusCodes.OK,
         entity =
-          HttpEntity(ContentTypes.`application/json`, s))
+          HttpEntity(ContentTypes.`application/json`, s)
+      )
   }
 
   try ioServer.start
@@ -71,7 +74,7 @@ class HttpAndIOServer(
 
   bind onComplete {
     case scala.util.Success(value) ⇒ logger.info(s"http server has started @ $value")
-    case scala.util.Failure(ex) ⇒ logger.error("http server failed", ex)
+    case scala.util.Failure(ex)    ⇒ logger.error("http server failed", ex)
   }
 
 }

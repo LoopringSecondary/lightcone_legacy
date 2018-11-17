@@ -34,9 +34,10 @@ object EthereumAccessActor
 }
 
 class EthereumAccessActor()(
-  implicit
-  ec: ExecutionContext,
-  timeout: Timeout)
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
   extends Actor
   with ActorLogging {
 

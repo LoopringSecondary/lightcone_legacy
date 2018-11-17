@@ -25,8 +25,8 @@ import org.loopring.lightcone.proto.market_cap._
 import scala.concurrent.duration._
 
 class TokenIcoCrawlerActor(
-  tokenIcoServiceActor: ActorRef, // TokenIcoServiceActor
-  tokenInfoServiceActor: ActorRef // TokenInfoServiceActor
+    tokenIcoServiceActor: ActorRef, // TokenIcoServiceActor
+    tokenInfoServiceActor: ActorRef // TokenInfoServiceActor
 ) extends Actor with Timers {
 
   implicit val timeout = Timeout(5 seconds)
@@ -77,7 +77,8 @@ class TokenIcoCrawlerActor(
         softCap = softCap,
         tokenRaised = raised,
         icoPrice = icoPrice,
-        country = country)
+        country = country
+      )
 
       tokenIcoServiceActor ! tokenIcoInfo
     }

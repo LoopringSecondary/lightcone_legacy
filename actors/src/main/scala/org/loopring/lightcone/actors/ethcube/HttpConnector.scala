@@ -32,8 +32,9 @@ import org.loopring.lightcone.eth_jsonrpc._
 import scalapb.json4s.JsonFormat
 
 private[actors] class HttpConnector(node: EthereumProxySettings.Node)(
-  implicit
-  val mat: ActorMaterializer) extends Actor
+    implicit
+    val mat: ActorMaterializer
+) extends Actor
   with ActorLogging
   with Json4sSupport {
 
@@ -52,7 +53,8 @@ private[actors] class HttpConnector(node: EthereumProxySettings.Node)(
   private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
       host = node.host,
-      port = node.port)
+      port = node.port
+    )
   }
 
   log.info(s"connecting Ethereum at ${node.host}:${node.port}")
@@ -61,11 +63,12 @@ private[actors] class HttpConnector(node: EthereumProxySettings.Node)(
     Source
       .queue[(HttpRequest, Promise[HttpResponse])](
         100,
-        OverflowStrategy.backpressure)
+        OverflowStrategy.backpressure
+      )
       .via(poolClientFlow)
       .toMat(Sink.foreach({
         case (Success(resp), p) ⇒ p.success(resp)
-        case (Failure(e), p) ⇒ p.failure(e)
+        case (Failure(e), p)    ⇒ p.failure(e)
       }))(Keep.left)
       .run()(mat)
 
@@ -90,7 +93,8 @@ private[actors] class HttpConnector(node: EthereumProxySettings.Node)(
   private def post(entity: RequestEntity): Future[String] = {
     for {
       httpResp ← request(
-        HttpRequest(method = HttpMethods.POST, entity = entity))
+        HttpRequest(method = HttpMethods.POST, entity = entity)
+      )
       jsonStr ← httpResp.entity.dataBytes.map(_.utf8String).runReduce(_ + _)
     } yield jsonStr
   }
@@ -100,7 +104,8 @@ private[actors] class HttpConnector(node: EthereumProxySettings.Node)(
       id = Random.nextInt(100),
       jsonrpc = "2.0",
       method = method,
-      params = params)
+      params = params
+    )
     log.info(s"reqeust: ${org.json4s.native.Serialization.write(jsonRpc)}")
 
     for {
@@ -298,5 +303,6 @@ private class EmptyValueSerializer
         case JNull ⇒ ""
       }, {
         case "" ⇒ JNothing
-      }))
+      })
+  )
 

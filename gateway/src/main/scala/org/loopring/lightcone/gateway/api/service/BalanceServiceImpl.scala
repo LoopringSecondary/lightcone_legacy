@@ -31,11 +31,13 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class BalanceServiceImpl @Inject() (
-  proxy: ProxyActor)(
-  implicit
-  system: ActorSystem,
-  session: SlickSession,
-  mat: ActorMaterializer) extends DatabaseAccesser with BalanceService {
+    proxy: ProxyActor
+)(
+    implicit
+    system: ActorSystem,
+    session: SlickSession,
+    mat: ActorMaterializer
+) extends DatabaseAccesser with BalanceService {
 
   // import session.profile.api._
 

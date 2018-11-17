@@ -25,10 +25,11 @@ import org.loopring.lightcone.proto.market_cap.{ GetTokenTickerInfoRes, TokenTic
 import scala.concurrent.Future
 
 class TokenTickerInfoServiceImpl @Inject() (
-  implicit
-  system: ActorSystem,
-  mat: ActorMaterializer,
-  session: SlickSession) extends DatabaseAccesser with TokenTickerInfoService {
+    implicit
+    system: ActorSystem,
+    mat: ActorMaterializer,
+    session: SlickSession
+) extends DatabaseAccesser with TokenTickerInfoService {
   import session.profile.api._
   import system.dispatcher
 

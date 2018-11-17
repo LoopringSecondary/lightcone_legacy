@@ -39,10 +39,11 @@ object MarketTickerServiceActor
 }
 
 class MarketTickerServiceActor @Inject() (service: ExchangeTickerService)(
-  implicit
-  system: ActorSystem,
-  mat: ActorMaterializer,
-  session: SlickSession) extends Actor {
+    implicit
+    system: ActorSystem,
+    mat: ActorMaterializer,
+    session: SlickSession
+) extends Actor {
 
   import system.dispatcher
   implicit val settings = CacherSettings(system.settings.config)
@@ -68,7 +69,7 @@ class MarketTickerServiceActor @Inject() (service: ExchangeTickerService)(
 
       res.map {
         case Some(r) ⇒ r
-        case _ ⇒ throw new Exception("data in table is null. Please find the reason!")
+        case _       ⇒ throw new Exception("data in table is null. Please find the reason!")
       } pipeTo sender
 
   }

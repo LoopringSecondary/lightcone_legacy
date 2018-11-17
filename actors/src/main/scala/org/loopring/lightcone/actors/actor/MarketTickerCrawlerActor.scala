@@ -31,11 +31,13 @@ import scalapb.json4s.Parser
 import scala.concurrent.duration._
 
 class MarketTickerCrawlerActor(
-  marketTickerServiceActor: ActorRef,
-  tokenInfoServiceActor: ActorRef)(
-  implicit
-  val system: ActorSystem,
-  val mat: ActorMaterializer) extends Actor with HttpConnector with Timers with ActorLogging with SignatureUtil {
+    marketTickerServiceActor: ActorRef,
+    tokenInfoServiceActor: ActorRef
+)(
+    implicit
+    val system: ActorSystem,
+    val mat: ActorMaterializer
+) extends Actor with HttpConnector with Timers with ActorLogging with SignatureUtil {
 
   implicit val timeout = Timeout(5 seconds)
 

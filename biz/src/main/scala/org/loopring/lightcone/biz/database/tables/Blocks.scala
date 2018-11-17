@@ -33,6 +33,7 @@ class Blocks(tag: Tag) extends BaseTable[BlockEntity](tag, "BLOCKS") {
     blockHash,
     blockNumber,
     parentHash,
-    fork) <> ((BlockEntity.apply _).tupled, BlockEntity.unapply)
+    fork
+  ) <> ((BlockEntity.apply _).tupled, BlockEntity.unapply)
 
 }

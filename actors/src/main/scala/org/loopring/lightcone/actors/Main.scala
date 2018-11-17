@@ -23,12 +23,13 @@ import com.google.inject._
 object Main {
 
   case class CmdOptions(
-    port: Int = 0,
-    managerPort: Int = 8081,
-    rpcPort: Int = 8083,
-    seeds: Seq[String] = Seq.empty[String],
-    roles: Seq[String] = Seq.empty[String],
-    configFile: String = "")
+      port: Int = 0,
+      managerPort: Int = 8081,
+      rpcPort: Int = 8083,
+      seeds: Seq[String] = Seq.empty[String],
+      roles: Seq[String] = Seq.empty[String],
+      configFile: String = ""
+  )
 
   def main(args: Array[String]): Unit = {
 
@@ -96,7 +97,8 @@ object Main {
             akka.remote.netty.tcp.hostname=$hostname
             akka.cluster.roles=$roles
             akka.cluster.seed-nodes=$seedNodes
-            """)
+            """
+          )
           .withFallback(fallback)
 
         // Deploying NodeManager

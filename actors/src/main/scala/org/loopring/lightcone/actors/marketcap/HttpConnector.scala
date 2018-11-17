@@ -43,18 +43,22 @@ trait HttpConnector extends Json4sSupport {
   def https(
     host: String,
     port: Int = 443,
-    proxy: Option[Boolean] = None)(
+    proxy: Option[Boolean] = None
+  )(
     implicit
-    system: ActorSystem): Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] = {
+    system: ActorSystem
+  ): Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] = {
     Http().outgoingConnectionHttps(host, port, settings = getSettings(proxy))
   }
 
   def http(
     host: String,
     port: Int = 80,
-    proxy: Option[Boolean] = None)(
+    proxy: Option[Boolean] = None
+  )(
     implicit
-    system: ActorSystem): Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] = {
+    system: ActorSystem
+  ): Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] = {
     Http().outgoingConnection(host, port, settings = getSettings(proxy))
   }
 
@@ -62,7 +66,8 @@ trait HttpConnector extends Json4sSupport {
     proxy match {
       case Some(true) ⇒
         val httpsProxy = ClientTransport.httpsProxy(
-          InetSocketAddress.createUnresolved("127.0.0.1", 1087))
+          InetSocketAddress.createUnresolved("127.0.0.1", 1087)
+        )
         ClientConnectionSettings(system).withTransport(httpsProxy)
       case _ ⇒ ClientConnectionSettings(system)
     }

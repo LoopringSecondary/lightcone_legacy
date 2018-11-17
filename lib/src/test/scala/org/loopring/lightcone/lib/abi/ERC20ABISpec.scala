@@ -78,8 +78,7 @@ class ERC20ABISpec extends FlatSpec with Matchers {
     val topics = Seq(
       "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
       "0x0000000000000000000000000681d8db095565fe8a346fa0277bffde9c0edbbf",
-      "0x000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc509"
-    )
+      "0x000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc509")
 
     val tx = Transaction(from = from, input = input)
     val log = TransactionLog(data = data, topics = topics)
@@ -122,8 +121,7 @@ class ERC20ABISpec extends FlatSpec with Matchers {
     val topics = Seq(
       "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
       "0x00000000000000000000000085194623225c1a0576abf8e2bdc0951351fcddda",
-      "0x0000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7"
-    )
+      "0x0000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7")
 
     val tx = Transaction(from = from, input = input)
     val log = TransactionLog(data = data, topics = topics)
@@ -167,8 +165,7 @@ class ERC20ABISpec extends FlatSpec with Matchers {
     val data = "0x000000000000000000000000000000000000000000000000002386f26fc10000"
     val topics = Seq(
       "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c",
-      "0x0000000000000000000000009d30f9d302989ca1df6e4db8361fc2535997cfb7"
-    )
+      "0x0000000000000000000000009d30f9d302989ca1df6e4db8361fc2535997cfb7")
     val tx = Transaction(from = from, input = input, value = value)
     val log = TransactionLog(data = data, topics = topics)
 
@@ -207,8 +204,7 @@ class ERC20ABISpec extends FlatSpec with Matchers {
     val data = "0x000000000000000000000000000000000000000000000000001d18c2f9116d80"
     val topics = Seq(
       "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65",
-      "0x000000000000000000000000da9bf8e3e67882ba59e291b6897e3db114cf6bde"
-    )
+      "0x000000000000000000000000da9bf8e3e67882ba59e291b6897e3db114cf6bde")
 
     val tx = Transaction(from = from, input = input)
     val log = TransactionLog(data = data, topics = topics)
