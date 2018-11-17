@@ -20,13 +20,25 @@ import com.corundumstudio.socketio.SocketIOServer
 package object socketio {
 
   type IOServer = com.corundumstudio.socketio.SocketIOServer
-
   type IOClient = com.corundumstudio.socketio.SocketIOClient
 
-  case class SubscriberEvent(client: IOClient, event: String, json: String)
+  // QUESTION(Toan): IOClient 好像不能序列化吧？这样的消息无法通过actor发送。
+  case class SubscriberEvent(
+      client: IOClient,
+      event: String,
+      json: String
+  )
 
-  case class StartBroadcast(server: SocketIOServer, eventRegistering: EventBindings, pool: Int)
+  case class StartBroadcast(
+      server: SocketIOServer,
+      eventRegistering: EventBindings,
+      pool: Int
+  )
 
-  case class BroadcastMessage(server: SocketIOServer, event: String, replyTo: String)
+  case class BroadcastMessage(
+      server: SocketIOServer,
+      event: String,
+      replyTo: String
+  )
 
 }

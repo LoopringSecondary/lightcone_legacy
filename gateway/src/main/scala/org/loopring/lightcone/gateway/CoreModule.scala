@@ -109,7 +109,7 @@ class CoreModule(config: Config)
     val jsonRpcServer = new JsonRpcServer(settings)
 
     val eventBindings = new EventBindings()
-      .bind("getBalance", 10000, "balance")
+      .add("getBalance", 10000, "balance")
 
     val ioServer = new SocketIOServer(jsonRpcServer, eventBindings)
 
