@@ -17,7 +17,6 @@
 package org.loopring.lightcone.lib
 
 import java.sql.Timestamp
-
 import org.joda.time.Period
 
 package object time {

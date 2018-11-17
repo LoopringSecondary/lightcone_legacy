@@ -16,20 +16,9 @@
 
 package org.loopring.lightcone.lib
 
-import org.web3j.utils.Numeric
+case class Transfer(sender: String, receiver: String, amount: BigInt)
+case class Approve(owner: String, spender: String, amount: BigInt)
 
-// todo lib里面是否需要定义amount,address,hash等数据结构,与core项目的amount等该如何调用
+case class Deposit(owner: String, amount: BigInt)
+case class Withdrawal(owner: String, amount: BigInt)
 
-package object data {
-
-  implicit def bytes2BigInt(bytes: Array[Byte]): BigInt = Numeric.toBigInt(bytes)
-  implicit def hexString2BigInt(hex: String): BigInt = Numeric.toBigInt(hex)
-
-  implicit class RichString(src: String) {
-
-    def eqCaseInsensitive(that: String): Boolean = src.toLowerCase == that.toLowerCase
-
-    def neqCaseInsensitive(that: String): Boolean = src.toLowerCase != that.toLowerCase
-
-  }
-}

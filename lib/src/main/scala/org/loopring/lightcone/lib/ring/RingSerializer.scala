@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
+package org.loopring.lightcone.lib.data
 
 import scala.collection.mutable.{ HashMap ⇒ MMap }
 
@@ -112,19 +112,19 @@ private[lib] class RingSerializerHelper(lrcAddress: String, ring: Ring) {
     val transactionOrigin = if (ring.transactionOrigin.nonEmpty) ring.transactionOrigin else ring.miner
     val feeRecipient = if (ring.feeReceipt.nonEmpty) ring.feeReceipt else transactionOrigin
 
-    if (feeRecipient safeneq transactionOrigin) {
+    if (feeRecipient neqCaseInsensitive transactionOrigin) {
       insertOffset(datastream.addAddress(ring.feeReceipt))
     } else {
       insertDefault()
     }
 
-    if (ring.miner safeneq feeRecipient) {
+    if (ring.miner neqCaseInsensitive feeRecipient) {
       insertOffset(datastream.addAddress(ring.miner))
     } else {
       insertDefault()
     }
 
-    if (ring.sig.nonEmpty && (ring.miner safeneq transactionOrigin)) {
+    if (ring.sig.nonEmpty && (ring.miner neqCaseInsensitive transactionOrigin)) {
       insertOffset(datastream.addHex(createBytes(ring.sig)))
       addPadding()
     } else {
@@ -193,7 +193,7 @@ private[lib] class RingSerializerHelper(lrcAddress: String, ring: Ring) {
     val allOrNone = if (order.allOrNone) 1 else 0
     tablestream.addUint16(allOrNone)
 
-    if (order.feeToken.nonEmpty && (order.feeToken safeneq lrcAddress)) {
+    if (order.feeToken.nonEmpty && (order.feeToken neqCaseInsensitive lrcAddress)) {
       insertOffset(datastream.addAddress(order.feeToken))
     } else {
       insertDefault()
@@ -214,7 +214,7 @@ private[lib] class RingSerializerHelper(lrcAddress: String, ring: Ring) {
     val tokenBFeePercentage = if (order.tokenBFeePercentage > 0) order.tokenBFeePercentage else 0
     tablestream.addUint16(tokenBFeePercentage)
 
-    if (order.tokenReceipt.nonEmpty && (order.tokenReceipt safeneq order.owner)) {
+    if (order.tokenReceipt.nonEmpty && (order.tokenReceipt neqCaseInsensitive order.owner)) {
       insertOffset(datastream.addAddress(order.tokenReceipt))
     } else {
       insertDefault()

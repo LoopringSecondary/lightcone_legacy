@@ -16,8 +16,7 @@
 
 package org.loopring.lightcone.lib
 
-case class Deposit(owner: String, amount: BigInt)
-case class Withdrawal(owner: String, amount: BigInt)
+import org.loopring.lightcone.lib.data._
 
 class WethABI(abiJson: String) extends ERC20ABI(abiJson) {
 
@@ -47,12 +46,10 @@ class WethABI(abiJson: String) extends ERC20ABI(abiJson) {
     }
   }
 
-  private[lib] def assembleDepositFunction(from: String, value: BigInt): Deposit = Deposit(
-    owner = from,
-    amount = value
-  )
+  private[lib] def assembleDepositFunction(from: String, value: BigInt) =
+    Deposit(from, value)
 
-  private[lib] def assembleWithdrawalFunction(list: Seq[Any], from: String): Withdrawal = {
+  private[lib] def assembleWithdrawalFunction(list: Seq[Any], from: String) = {
     assert(list.length == 1, "withdrawal function list length invalid")
 
     Withdrawal(
@@ -79,5 +76,4 @@ class WethABI(abiJson: String) extends ERC20ABI(abiJson) {
       amount = scalaAny2Bigint(list(1))
     )
   }
-
 }

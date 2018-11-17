@@ -156,20 +156,20 @@ class RingDataSpec extends FlatSpec with Matchers {
   }
 
   private def compare(src: Order, dst: Order): Boolean = {
-    (src.owner safeeq dst.owner) &&
-      (src.tokenS safeeq dst.tokenS) &&
-      (src.tokenB safeeq dst.tokenB) &&
+    (src.owner eqCaseInsensitive dst.owner) &&
+      (src.tokenS eqCaseInsensitive dst.tokenS) &&
+      (src.tokenB eqCaseInsensitive dst.tokenB) &&
       (src.amountS == dst.amountS) &&
       (src.amountB == dst.amountB) &&
       (src.feeAmount == dst.feeAmount) &&
-      (src.feeToken safeeq dst.feeToken) &&
-      (src.dualAuthAddress safeeq dst.dualAuthAddress) &&
+      (src.feeToken eqCaseInsensitive dst.feeToken) &&
+      (src.dualAuthAddress eqCaseInsensitive dst.dualAuthAddress) &&
       (src.allOrNone == dst.allOrNone) &&
       (src.validSince == dst.validSince) &&
       (src.validUntil == dst.validUntil) &&
-      (src.wallet safeeq dst.wallet) &&
+      (src.wallet eqCaseInsensitive dst.wallet) &&
       (src.walletSplitPercentage == dst.walletSplitPercentage) &&
-      (src.tokenReceipt safeeq dst.tokenReceipt) &&
+      (src.tokenReceipt eqCaseInsensitive dst.tokenReceipt) &&
       (src.sig == dst.sig) &&
       (src.dualAuthSig == dst.dualAuthSig)
   }

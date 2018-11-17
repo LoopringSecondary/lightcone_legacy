@@ -25,19 +25,19 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.routing.Routers
 import org.loopring.lightcone.proto.actors.{Order, SubmitRingReq, Ring, SendRawTransaction}
-import org.loopring.lightcone.lib.{Order => LOrder, Ring => LRing, _}
+import org.loopring.lightcone.lib.data.{Order => LOrder, Ring => LRing, _}
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.deployment.RingSubmitterSettings
-import org.loopring.lightcone.actors.base
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, _}
 
 object RingSubmitActor
-  extends base.Deployable[RingSubmitterSettings] {
+  extends Deployable[RingSubmitterSettings] {
   val name = "ring_submit_actor"
 
   def getCommon(s: RingSubmitterSettings) =
-    base.CommonSettings(None, Seq(), 1)
+    CommonSettings(None, Seq(), 1)
 }
 
 class RingSubmitActor(

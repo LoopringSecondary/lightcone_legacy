@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.lib
 
+import org.loopring.lightcone.lib.data._
+
 trait RingSigner {
   def generateInputData(ring: Ring): String
   def generateTxData(inputData: String, nonce: BigInt): Array[Byte]

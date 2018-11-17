@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
+package org.loopring.lightcone.lib.data
 
 import org.web3j.utils.Numeric
 import org.web3j.crypto.{ Hash ⇒ web3Hash }

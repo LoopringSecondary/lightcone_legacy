@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.lib
 
+import org.loopring.lightcone.lib.data._
+
 import org.web3j.crypto._
 import org.web3j.tx.ChainId
 import org.web3j.utils.Numeric
