@@ -22,6 +22,12 @@ import org.web3j.utils.Numeric
 
 package object data {
 
+  case class Transfer(sender: String, receiver: String, amount: BigInt)
+  case class Approve(owner: String, spender: String, amount: BigInt)
+
+  case class Deposit(owner: String, amount: BigInt)
+  case class Withdrawal(owner: String, amount: BigInt)
+
   implicit def bytes2BigInt(bytes: Array[Byte]): BigInt = Numeric.toBigInt(bytes)
   implicit def hexString2BigInt(hex: String): BigInt = Numeric.toBigInt(hex)
 

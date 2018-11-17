@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
+package org.loopring.lightcone.lib.abi
 
 import org.loopring.lightcone.lib.data._
 
@@ -31,8 +31,8 @@ abstract class AbiWrap(abiJson: String) {
 
   def getTransactionHeader(txInput: String): BigInt = Numeric.decodeQuantity(txInput)
 
-  protected var supportedFunctions = Map.empty[String, SABI.Function]
-  protected var supportedEventLogs = Map.empty[String, SABI.Event]
+  private[lib] var supportedFunctions = Map.empty[String, SABI.Function]
+  private[lib] var supportedEventLogs = Map.empty[String, SABI.Event]
 
   abi.toArray.foreach {
     _ match {

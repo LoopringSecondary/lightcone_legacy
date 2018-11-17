@@ -16,24 +16,20 @@
 
 package org.loopring.lightcone.lib.data
 
-import scala.collection.mutable.{ HashMap ⇒ MMap }
-
 trait RingSerializer {
 
   // 根据环路信息组装合约data
   def serialize(ring: Ring): String
-
 }
 
 class RingSerializerImpl(lrcAddress: String) extends RingSerializer {
 
-  def serialize(ring: Ring): String = {
+  def serialize(ring: Ring) = {
     ring.orders.foreach(o ⇒ assert(o.hash.nonEmpty))
 
     val helper = new RingSerializerHelper(lrcAddress, ring)
     helper.assemble()
   }
-
 }
 
 // warning: 代码顺序不能调整！！！！！！
@@ -41,40 +37,40 @@ private[lib] class RingSerializerHelper(lrcAddress: String, ring: Ring) {
   val ORDER_VERSION = 0
   val SERIALIZATION_VERSION = 0
 
-  val datastream = ByteStream()
-  val tablestream = ByteStream()
-  val orderSpendableSMap = MMap.empty[String, Int]
-  val orderSpendableFeeMap = MMap.empty[String, Int]
+  private val dataPacker = new BytesPacker()
+  private val tablePacker = new BytesPacker()
+  private var orderSpendableSMap = Map.empty[String, Int]
+  private var orderSpendableFeeMap = Map.empty[String, Int]
 
   def assemble(): String = {
-    val numSpendables = setupSpendables
+    val numSpendables = setupSpendables()
 
-    datastream.addUint(0)
+    dataPacker.addUint(0)
     createMiningTable()
     ring.orders.foreach(createOrderTable)
 
-    val stream = ByteStream()
-    stream.addUint16(SERIALIZATION_VERSION)
-    stream.addUint16(ring.orders.length)
-    stream.addUint16(ring.ringOrderIndex.length)
-    stream.addUint16(numSpendables)
-    stream.addHex(tablestream.getData)
+    val Packer = new BytesPacker()
+    Packer.addUint16(SERIALIZATION_VERSION)
+    Packer.addUint16(ring.orders.length)
+    Packer.addUint16(ring.ringOrderIndex.length)
+    Packer.addUint16(numSpendables)
+    Packer.addHex(tablePacker.getPackedString)
 
     ring.ringOrderIndex.map(orderIdxs ⇒ {
-      stream.addUint8(orderIdxs.length)
-      orderIdxs.map(o ⇒ stream.addUint8(o))
-      stream.addX(0, 8 - orderIdxs.length)
+      Packer.addUint8(orderIdxs.length)
+      orderIdxs.map(o ⇒ Packer.addUint8(o))
+      Packer.addX(0, 8 - orderIdxs.length)
     })
 
-    stream.addUint(0)
-    stream.addHex(datastream.getData)
+    Packer.addUint(0)
+    Packer.addHex(dataPacker.getPackedString)
 
-    stream.getData
+    Packer.getPackedString
   }
 
-  def setupSpendables: Int = {
+  private def setupSpendables(): Int = {
     var numSpendables = 0
-    var ownerTokens = MMap.empty[String, Int]
+    var ownerTokens = Map.empty[String, Int]
 
     ring.orders.foreach { order ⇒
       assert(order.hash.nonEmpty)
@@ -106,54 +102,63 @@ private[lib] class RingSerializerHelper(lrcAddress: String, ring: Ring) {
 
   // 注意:
   // 1. 对于relay来说miner就是transactionOrigin
-  def createMiningTable(): Unit = {
+  private def createMiningTable(): Unit = {
     require(ring.miner.nonEmpty)
 
-    val transactionOrigin = if (ring.transactionOrigin.nonEmpty) ring.transactionOrigin else ring.miner
-    val feeRecipient = if (ring.feeReceipt.nonEmpty) ring.feeReceipt else transactionOrigin
+    val transactionOrigin =
+      if (ring.transactionOrigin.nonEmpty) ring.transactionOrigin
+      else ring.miner
+
+    val feeRecipient =
+      if (ring.feeReceipt.nonEmpty) ring.feeReceipt
+      else transactionOrigin
 
     if (feeRecipient neqCaseInsensitive transactionOrigin) {
-      insertOffset(datastream.addAddress(ring.feeReceipt))
+      insertOffset(dataPacker.addAddress(ring.feeReceipt))
     } else {
       insertDefault()
     }
 
     if (ring.miner neqCaseInsensitive feeRecipient) {
-      insertOffset(datastream.addAddress(ring.miner))
+      insertOffset(dataPacker.addAddress(ring.miner))
     } else {
       insertDefault()
     }
 
     if (ring.sig.nonEmpty && (ring.miner neqCaseInsensitive transactionOrigin)) {
-      insertOffset(datastream.addHex(createBytes(ring.sig)))
+      insertOffset(dataPacker.addHex(createBytes(ring.sig)))
       addPadding()
     } else {
       insertDefault()
     }
   }
 
-  def createOrderTable(order: Order): Unit = {
+  private def createOrderTable(order: Order): Unit = {
     addPadding()
 
     insertOffset(ORDER_VERSION)
-    insertOffset(datastream.addAddress(order.owner))
-    insertOffset(datastream.addAddress(order.tokenS))
-    insertOffset(datastream.addAddress(order.tokenB))
-    insertOffset(datastream.addUint(order.amountS, false))
-    insertOffset(datastream.addUint(order.amountB, false))
-    insertOffset(datastream.addUint32(order.validSince, false))
+    insertOffset(dataPacker.addAddress(order.owner))
+    insertOffset(dataPacker.addAddress(order.tokenS))
+    insertOffset(dataPacker.addAddress(order.tokenB))
+    insertOffset(dataPacker.addUint(order.amountS, false))
+    insertOffset(dataPacker.addUint(order.amountB, false))
+    insertOffset(dataPacker.addUint32(order.validSince, false))
 
     orderSpendableSMap.get(order.hash) match {
-      case Some(x: Int) ⇒ tablestream.addUint16(x.intValue())
-      case _            ⇒ throw new Exception("ringGenerator get " + order.hash + "orderSpendableS failed")
+      case Some(x: Int) ⇒
+        tablePacker.addUint16(x.intValue())
+      case _ ⇒
+        throw new Exception(s"ringGenerator get ${order.hash} orderSpendableS failed")
     }
     orderSpendableFeeMap.get(order.hash) match {
-      case Some(x: Int) ⇒ tablestream.addUint16(x.intValue())
-      case _            ⇒ throw new Exception("ringGenerator get " + order.hash + "orderSpendableFee failed")
+      case Some(x: Int) ⇒
+        tablePacker.addUint16(x.intValue())
+      case _ ⇒
+        throw new Exception(s"ringGenerator get ${order.hash} orderSpendableFee failed")
     }
 
     if (order.dualAuthAddress.nonEmpty) {
-      insertOffset(datastream.addAddress(order.dualAuthAddress))
+      insertOffset(dataPacker.addAddress(order.dualAuthAddress))
     } else {
       insertDefault()
     }
@@ -165,84 +170,98 @@ private[lib] class RingSerializerHelper(lrcAddress: String, ring: Ring) {
     insertDefault()
 
     if (order.wallet.nonEmpty) {
-      insertOffset(datastream.addAddress(order.wallet))
+      insertOffset(dataPacker.addAddress(order.wallet))
     } else {
       insertDefault()
     }
 
     if (order.validUntil > 0) {
-      insertOffset(datastream.addUint32(order.validUntil, false))
+      insertOffset(dataPacker.addUint32(order.validUntil, false))
     } else {
       insertDefault()
     }
 
     if (order.sig.nonEmpty) {
-      insertOffset(datastream.addHex(createBytes(order.sig), false))
+      insertOffset(dataPacker.addHex(createBytes(order.sig), false))
       addPadding()
     } else {
       insertDefault()
     }
 
     if (order.dualAuthSig.nonEmpty) {
-      insertOffset(datastream.addHex(createBytes(order.dualAuthSig), false))
+      insertOffset(dataPacker.addHex(createBytes(order.dualAuthSig), false))
       addPadding()
     } else {
       insertDefault()
     }
 
     val allOrNone = if (order.allOrNone) 1 else 0
-    tablestream.addUint16(allOrNone)
+    tablePacker.addUint16(allOrNone)
 
-    if (order.feeToken.nonEmpty && (order.feeToken neqCaseInsensitive lrcAddress)) {
-      insertOffset(datastream.addAddress(order.feeToken))
+    if (order.feeToken.nonEmpty &&
+      (order.feeToken neqCaseInsensitive lrcAddress)) {
+      insertOffset(dataPacker.addAddress(order.feeToken))
     } else {
       insertDefault()
     }
 
     if (order.feeAmount.signum > 0) {
-      insertOffset(datastream.addUint(order.feeAmount, false))
+      insertOffset(dataPacker.addUint(order.feeAmount, false))
     } else {
       insertDefault()
     }
 
-    val waiveFeePercentage = if (order.waiveFeePercentage > 0) order.waiveFeePercentage else 0
-    tablestream.addUint16(waiveFeePercentage)
+    val waiveFeePercentage =
+      if (order.waiveFeePercentage > 0) order.waiveFeePercentage
+      else 0
 
-    val tokenSFeePercentage = if (order.tokenSFeePercentage > 0) order.tokenSFeePercentage else 0
-    tablestream.addUint16(tokenSFeePercentage)
+    tablePacker.addUint16(waiveFeePercentage)
 
-    val tokenBFeePercentage = if (order.tokenBFeePercentage > 0) order.tokenBFeePercentage else 0
-    tablestream.addUint16(tokenBFeePercentage)
+    val tokenSFeePercentage =
+      if (order.tokenSFeePercentage > 0) order.tokenSFeePercentage
+      else 0
 
-    if (order.tokenReceipt.nonEmpty && (order.tokenReceipt neqCaseInsensitive order.owner)) {
-      insertOffset(datastream.addAddress(order.tokenReceipt))
+    tablePacker.addUint16(tokenSFeePercentage)
+
+    val tokenBFeePercentage =
+      if (order.tokenBFeePercentage > 0) order.tokenBFeePercentage
+      else 0
+
+    tablePacker.addUint16(tokenBFeePercentage)
+
+    if (order.tokenReceipt.nonEmpty &&
+      (order.tokenReceipt neqCaseInsensitive order.owner)) {
+      insertOffset(dataPacker.addAddress(order.tokenReceipt))
     } else {
       insertDefault()
     }
 
-    val walletSplitPercentage = if (order.walletSplitPercentage > 0) order.walletSplitPercentage else 0
-    tablestream.addUint16(walletSplitPercentage)
+    val walletSplitPercentage =
+      if (order.walletSplitPercentage > 0) order.walletSplitPercentage
+      else 0
+
+    tablePacker.addUint16(walletSplitPercentage)
   }
 
   private def createBytes(data: String): String = {
-    val bitstream = ByteStream()
-    bitstream.addUint((data.length - 2) / 2)
-    bitstream.addRawBytes(data)
-    bitstream.getData
+    val bitPacker = new BytesPacker()
+    bitPacker.addUint((data.length - 2) / 2)
+    bitPacker.addRawBytes(data)
+    bitPacker.getPackedString
   }
 
   private def insertOffset(offset: Int): Unit = {
     assert(offset % 4 == 0)
-    tablestream.addUint16(offset / 4)
+    tablePacker.addUint16(offset / 4)
   }
 
   private def insertDefault(): Unit = {
-    tablestream.addUint16(0)
+    tablePacker.addUint16(0)
   }
 
   private def addPadding(): Unit = {
-    if (datastream.length % 4 != 0) {
-      datastream.addX(0, 4 - (datastream.length % 4))
+    if (dataPacker.length % 4 != 0) {
+      dataPacker.addX(0, 4 - (dataPacker.length % 4))
     }
   }
 }

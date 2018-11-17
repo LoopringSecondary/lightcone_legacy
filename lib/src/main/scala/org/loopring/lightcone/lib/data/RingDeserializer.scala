@@ -36,7 +36,7 @@ class RingDeserializerImpl(lrcAddress: String) extends RingDeserializer {
 
 private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
 
-  val dataparser: ByteParser = ByteParser(encoded)
+  val dataparser: BytesExtractor = new BytesExtractor(encoded)
   var dataOffset: Int = 0
   var tableOffset: Int = 0
   var spendableList = Seq.empty[String]
@@ -83,7 +83,10 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     (1 to numOrders).map(_ ⇒ assembleOrder())
   }
 
-  private def assembleRings(numRings: Int, originOffset: Int, orders: Seq[Order]): Seq[Seq[Int]] = {
+  private def assembleRings(
+    numRings: Int,
+    originOffset: Int, orders: Seq[Order]
+  ): Seq[Seq[Int]] = {
     var offset = originOffset
 
     (1 to numRings).map { _ ⇒
@@ -94,7 +97,11 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     }
   }
 
-  private def assembleRing(ringsize: Int, originOffset: Int, orders: Seq[Order]): Seq[Int] = {
+  private def assembleRing(
+    ringsize: Int,
+    originOffset: Int,
+    orders: Seq[Order]
+  ): Seq[Int] = {
     var offset = originOffset
     (1 to ringsize).map { _ ⇒
       val orderidx = dataparser.extractUint8(offset)
@@ -129,8 +136,13 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     val _tokenRecipient = nextAddress
     val _walletSplitPercentage = nextUint16
 
-    val finalFeeToken = if (_feeToken.equals(undefined)) lrcAddress else _feeToken
-    val finalTokenRecipient = if (_tokenRecipient.equals(undefined)) _owner else _tokenRecipient
+    val finalFeeToken =
+      if (_feeToken.equals(undefined)) lrcAddress
+      else _feeToken
+
+    val finalTokenRecipient =
+      if (_tokenRecipient.equals(undefined)) _owner
+      else _tokenRecipient
 
     Order(
       owner = _owner,

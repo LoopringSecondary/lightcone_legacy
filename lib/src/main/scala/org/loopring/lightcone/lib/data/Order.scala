@@ -32,7 +32,7 @@ case class Order(
     tokenReceipt: String,
     sig: String,
     dualAuthSig: String,
-    // option
+    // optional
     hash: String = "",
     validUntil: Long = 0,
     wallet: String = "0x0",
@@ -50,28 +50,28 @@ case class Order(
     brokerSpendableFee: BigInt = 0,
 ) {
 
-  def generateHash: String = {
-    val data = ByteStream()
-    data.addUint(amountS)
-    data.addUint(amountB)
-    data.addUint(feeAmount)
-    data.addUint(BigInt(validSince))
-    data.addUint(BigInt(validUntil))
-    data.addAddress(owner, true)
-    data.addAddress(tokenS, true)
-    data.addAddress(tokenB, true)
-    data.addAddress(dualAuthAddress, true)
-    data.addAddress(broker,true)
-    data.addAddress(orderInterceptor, true)
-    data.addAddress(wallet, true)
-    data.addAddress(tokenReceipt, true)
-    data.addAddress(feeToken, true)
-    data.addUint16(walletSplitPercentage)
-    data.addUint16(tokenSFeePercentage)
-    data.addUint16(tokenBFeePercentage)
-    data.addBoolean(allOrNone)
+  lazy val cryptoHash = {
+    val packer = new BytesPacker()
+    packer.addUint(amountS)
+    packer.addUint(amountB)
+    packer.addUint(feeAmount)
+    packer.addUint(BigInt(validSince))
+    packer.addUint(BigInt(validUntil))
+    packer.addAddress(owner, true)
+    packer.addAddress(tokenS, true)
+    packer.addAddress(tokenB, true)
+    packer.addAddress(dualAuthAddress, true)
+    packer.addAddress(broker,true)
+    packer.addAddress(orderInterceptor, true)
+    packer.addAddress(wallet, true)
+    packer.addAddress(tokenReceipt, true)
+    packer.addAddress(feeToken, true)
+    packer.addUint16(walletSplitPercentage)
+    packer.addUint16(tokenSFeePercentage)
+    packer.addUint16(tokenBFeePercentage)
+    packer.addBoolean(allOrNone)
 
-    Numeric.toHexString(web3Hash.sha3(data.getBytes))
+    Numeric.toHexString(web3Hash.sha3(packer.getPackedBytes))
   }
 
 }

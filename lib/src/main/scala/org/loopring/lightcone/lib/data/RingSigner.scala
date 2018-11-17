@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
+package org.loopring.lightcone.lib.data
 
-case class Transfer(sender: String, receiver: String, amount: BigInt)
-case class Approve(owner: String, spender: String, amount: BigInt)
+import org.loopring.lightcone.lib.data._
 
-case class Deposit(owner: String, amount: BigInt)
-case class Withdrawal(owner: String, amount: BigInt)
-
+trait RingSigner {
+  def generateInputData(ring: Ring): String
+  def generateTxData(inputData: String, nonce: BigInt): Array[Byte]
+  def getSignerAddress(): String
+}

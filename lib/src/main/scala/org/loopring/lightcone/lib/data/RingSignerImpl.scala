@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
-
-import org.loopring.lightcone.lib.data._
+package org.loopring.lightcone.lib.data
 
 import org.web3j.crypto._
 import org.web3j.tx.ChainId
