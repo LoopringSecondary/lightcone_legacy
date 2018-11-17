@@ -16,47 +16,46 @@
 
 package org.loopring.lightcone.gateway.api.service
 
+import scala.concurrent.Future
+import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
-import com.google.inject.Inject
-import org.loopring.lightcone.gateway.api.model.{ BalanceReq, BalanceResp, TokenBalance }
-import org.loopring.lightcone.gateway.database.DatabaseAccesser
-//import org.loopring.lightcone.proto.actors.{ GetBalanceAndAllowancesReq, GetBalanceAndAllowancesRes }
 import akka.pattern.ask
 import akka.util.Timeout
+import com.google.inject.Inject
+import org.loopring.lightcone.gateway.api.model._
+import org.loopring.lightcone.gateway.database.DatabaseAccessor
 import org.loopring.lightcone.gateway.inject.ProxyActor
+//import org.loopring.lightcone.proto.actors.{ GetBalanceAndAllowancesReq, GetBalanceAndAllowancesRes }
 
-import scala.concurrent.Future
-import scala.concurrent.duration._
-
-class BalanceServiceImpl @Inject() (
-    proxy: ProxyActor
-)(
+class TokenSpendablesServiceImpl @Inject() (proxy: ProxyActor)(
     implicit
-    system: ActorSystem,
-    session: SlickSession,
-    mat: ActorMaterializer
-) extends DatabaseAccesser with BalanceService {
+    val system: ActorSystem,
+    val session: SlickSession,
+    val mat: ActorMaterializer
+) extends TokenSpendablesService
+  with DatabaseAccessor {
 
   // import session.profile.api._
 
   implicit val ex = system.dispatcher
 
+  // TODO(Duan): inject this timeout
   implicit val timeout = Timeout(5 seconds)
 
   implicit val toTokenInfo = (r: ResultRow) ⇒
-    BalanceResp(delegateAddress = r <<, owner = r <<, tokens = Seq.empty)
+    TokenSpendablesResp(owner = r <<, delegateAddress = r <<, tokens = Seq.empty)
 
   // {"jsonrpc": "2.0", "method": "getBalance", "params": {"owner": "haha", "delegateAddress":"dudud"}, "id": 1}
-  override def getBalance(req: BalanceReq): Future[BalanceResp] = {
+  override def getSpendables(req: TokenSpendablesReq): Future[TokenSpendablesResp] = {
 
-    val accessActor = proxy.ref("ethereum_access_actor").get
+    val accessActor = proxy.providerOf("ethereum_access_actor").get
 
     //    val ff = (accessActor ? GetBalanceAndAllowancesReq(address = "hahahhahaha", tokens = Seq("aa", "bb"))).mapTo[GetBalanceAndAllowancesRes]
     //
     //    ff.map { _ ⇒
-    //      BalanceResp(delegateAddress = "", owner = req.owner, tokens = Seq(TokenBalance("111", "2222", "333333")))
+    //      TokenSpendablesResp( owner = req.owner, delegateAddress = "",tokens = Seq(TokenSpendables("111", "2222", "333333")))
     //    }
 
     ???

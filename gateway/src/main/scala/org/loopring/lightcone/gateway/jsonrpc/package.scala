@@ -18,7 +18,12 @@ package org.loopring.lightcone.gateway
 
 package object jsonrpc {
 
-  case class JsonRpcRequest(id: Any, method: String, jsonrpc: String, params: Any)
+  case class JsonRpcRequest(
+      id: Any,
+      method: String,
+      jsonrpc: String,
+      params: Any
+  )
 
   case class JsonRpcResponse(
       id: Option[Any] = None.orNull,
@@ -58,5 +63,8 @@ package object jsonrpc {
       id: Option[Any] = None
   )
     extends AbstractJsonRpcException(-32603, message, id)
+
+  class BalanceException(message: String)
+    extends AbstractJsonRpcException(-32007, message)
 
 }

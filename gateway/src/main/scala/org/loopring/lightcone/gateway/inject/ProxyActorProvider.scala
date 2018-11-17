@@ -14,8 +14,19 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.api.exception
+package org.loopring.lightcone.gateway.inject
 
-import org.loopring.lightcone.gateway.jsonrpc.AbstractJsonRpcException
+import akka.actor.ActorRef
+import com.google.inject.Inject
+import com.google.inject.assistedinject.Assisted
+import com.google.inject.name.Named
 
-class BalanceException(message: String) extends AbstractJsonRpcException(-32007, message)
+class ProxyActorProvider @Inject() (
+    @Assisted name: String,
+    @Named("cluster_proxy") proxyMap: Map[String, ActorRef]
+) {
+
+  def get(): ActorRef = proxyMap.get(name).get
+  def option(): Option[ActorRef] = proxyMap.get(name)
+}
+

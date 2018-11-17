@@ -22,7 +22,7 @@ import com.corundumstudio.socketio.{ AckRequest, Configuration }
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.loopring.lightcone.gateway.jsonrpc.JsonRpcServer
-import org.slf4j.LoggerFactory
+import org.slf4s.Logging
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -33,11 +33,9 @@ class SocketIOServer(
 )(
     implicit
     system: ActorSystem
-) {
+) extends Object with Logging {
 
   implicit val ex = system.dispatcher
-
-  lazy val logger = LoggerFactory.getLogger(getClass)
 
   private lazy val config = system.settings.config
 
@@ -76,7 +74,7 @@ class SocketIOServer(
 
         val json = mapper.writeValueAsString(data)
 
-        logger.info(s"client: ${client.getRemoteAddress}, request: ${data}")
+        log.info(s"client: ${client.getRemoteAddress}, request: ${data}")
 
         SocketIOClient.add(client, event, json)
 
@@ -93,7 +91,7 @@ class SocketIOServer(
 
     server.start
 
-    logger.info(s"socketio server started @ ${port}")
+    log.info(s"socketio server started @ ${port}")
   }
 
   def invoke(json: String) = {
@@ -101,7 +99,7 @@ class SocketIOServer(
     Await.result(jsonRpcServer.handleRequest(json), Duration.Inf).map {
       resp ⇒
         val respMap = mapper.readValue(resp, classOf[java.util.Map[String, Any]])
-        logger.info(s"socketio rpc response: ${respMap}")
+        log.info(s"socketio rpc response: ${respMap}")
         respMap
     }
   }

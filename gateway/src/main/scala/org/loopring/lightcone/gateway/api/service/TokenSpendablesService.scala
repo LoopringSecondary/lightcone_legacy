@@ -16,10 +16,9 @@
 
 package org.loopring.lightcone.gateway.api.service
 
-import org.loopring.lightcone.gateway.api.model.{ BalanceReq, BalanceResp }
-
+import org.loopring.lightcone.gateway.api.model._
 import scala.concurrent.Future
 
-trait BalanceService {
-  def getBalance(req: BalanceReq): Future[BalanceResp]
+trait TokenSpendablesService {
+  def getSpendables(req: TokenSpendablesReq): Future[TokenSpendablesResp]
 }

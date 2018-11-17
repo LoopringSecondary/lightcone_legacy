@@ -15,6 +15,7 @@
  */
 
 package org.loopring.lightcone.gateway
+import com.corundumstudio.socketio.SocketIOServer
 
 package object socketio {
 
