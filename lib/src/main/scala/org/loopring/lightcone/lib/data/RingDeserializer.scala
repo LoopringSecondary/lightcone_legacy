@@ -173,7 +173,7 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     )
   }
 
-  private def nextAddress: String = {
+  private def nextAddress(): String = {
     val offset = tupple4GetNextOffset
     if (offset != 0) {
       dataparser.extractAddress(dataOffset + offset)
@@ -182,7 +182,7 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     }
   }
 
-  private def nextUint: BigInt = {
+  private def nextUint(): BigInt = {
     val offset = tupple4GetNextOffset
     if (offset != 0) {
       dataparser.extractUint(dataOffset + offset)
@@ -191,11 +191,11 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     }
   }
 
-  private def nextUint16: Int = {
+  private def nextUint16(): Int = {
     getNextOffset
   }
 
-  private def nextUint32: Int = {
+  private def nextUint32(): Int = {
     val offset = tupple4GetNextOffset
     if (offset != 0) {
       dataparser.extractUint32(dataOffset + offset)
@@ -204,7 +204,7 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     }
   }
 
-  private def nextBytes: String = {
+  private def nextBytes(): String = {
     val offset = tupple4GetNextOffset
     if (offset != 0) {
       val len = dataparser.extractUint(dataOffset + offset).intValue()
@@ -218,11 +218,11 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     x.intValue()
   }
 
-  private def tupple4GetNextOffset: Int = {
+  private def tupple4GetNextOffset(): Int = {
     getNextOffset * 4
   }
 
-  private def getNextOffset: Int = {
+  private def getNextOffset(): Int = {
     val offset = dataparser.extractUint16(tableOffset)
     tableOffset += 2
     offset

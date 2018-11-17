@@ -18,6 +18,11 @@ package org.loopring.lightcone.lib.data
 
 import org.loopring.lightcone.lib.data._
 
+// QUESTION(fukun):
+// 这几个方法没有体现出签名，是不是应该改名为：
+// getSignedTxInputData,
+// getSignedTxData,
+// 这几个方法说明意思和目的从签名上看不出来。
 trait RingSigner {
   def generateInputData(ring: Ring): String
   def generateTxData(inputData: String, nonce: BigInt): Array[Byte]
