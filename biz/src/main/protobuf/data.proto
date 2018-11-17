@@ -6,7 +6,40 @@ package org.loopring.lightcone.biz;
 
 message XXX {
     bytes amount_s = 1;
-
 }
 
+enum MarketSide {
+    SELL =0;
+    BUY = 1;
+}
 
+enum OrderSaveResult {
+  SUBMIT_SUCCESS = 0;
+  SUBMIT_FAILED = 1;
+  ORDER_EXIST = 2;
+}
+
+enum OrderStatus {
+  NEW = 0;
+  PENDING = 1;
+  EXPIRED = 2;
+  COMPLETELY_FILLED = 3; // 完全成交
+  CANCELLED_BY_USER = 4;
+  CANCELLED_LOW_BALANCE = 5;
+  CANCELLED_LOW_FEE_BALANCE = 6;
+  CANCELLED_TOO_MANY_ORDERS = 7;
+  CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 8;
+}
+
+enum OrderType {
+  UNKNOWN = 0;
+  MARKET = 1;
+  P2P = 2;
+}
+
+enum SoftCancelType {
+  BY_HASH= 0;
+  BY_OWNER= 1;
+  BY_TIME= 2;
+  BY_MARKET= 3;
+}

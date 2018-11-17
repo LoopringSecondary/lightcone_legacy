@@ -17,8 +17,8 @@
 package org.loopring.lightcone.biz.order
 
 import com.google.inject.Inject
-import org.loopring.lightcone.biz.enum.MarketSide.MarketSide
-import org.loopring.lightcone.biz.model.{ Order, SoftCancelSign }
+import org.loopring.lightcone.biz.data._
+import org.loopring.lightcone.biz.model._
 
 class OrderWriteHelperImpl @Inject() (validator: OrderValidator) extends OrderWriteHelper {
 

@@ -22,8 +22,7 @@ import org.loopring.lightcone.biz.database.dals.QueryCondition
 import org.loopring.lightcone.biz.database.entity.OrderEntity
 import org.loopring.lightcone.biz.database.entity.OrderChangeLogEntity
 import org.loopring.lightcone.biz.database.tables.Orders
-import org.loopring.lightcone.biz.enum.{ OrderSaveResult, OrderStatus, SoftCancelType }
-import org.loopring.lightcone.biz.enum.OrderSaveResult.OrderSaveResult
+import org.loopring.lightcone.biz.data._
 import org.loopring.lightcone.biz.model._
 import slick.jdbc.JdbcProfile
 import slick.sql.FixedSqlAction
@@ -33,7 +32,8 @@ import scala.util.{ Failure, Success }
 import scala.concurrent.duration._
 import slick.dbio.Effect.Write
 
-class OrderAccessorImpl @Inject() (val module: OrderDatabase) extends OrderAccessor {
+class OrderAccessorImpl @Inject() (val module: OrderDatabase)
+  extends OrderAccessor {
 
   implicit val profile: JdbcProfile = module.profile
   implicit val executor: ExecutionContext = module.dbec

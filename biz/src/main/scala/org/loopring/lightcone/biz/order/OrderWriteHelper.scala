@@ -16,8 +16,8 @@
 
 package org.loopring.lightcone.biz.order
 
-import org.loopring.lightcone.biz.enum.MarketSide.MarketSide
-import org.loopring.lightcone.biz.model.{ Order, SoftCancelSign }
+import org.loopring.lightcone.biz.data._
+import org.loopring.lightcone.biz.model._
 
 trait OrderWriteHelper {
   def generateHash(order: Order): String

@@ -16,11 +16,7 @@
 
 package org.loopring.lightcone.biz.model
 
-import org.loopring.lightcone.biz.enum.MarketSide.MarketSide
-import org.loopring.lightcone.biz.enum.OrderStatus
-import org.loopring.lightcone.biz.enum.OrderStatus._
-import org.loopring.lightcone.biz.enum.OrderType.OrderType
-import org.loopring.lightcone.biz.enum.SoftCancelType.SoftCancelType
+import org.loopring.lightcone.biz.data._
 
 case class OrderQuery(statuses: Seq[OrderStatus], owner: String, market: String, hashes: Seq[String], sideOpt: Option[MarketSide], orderTypeOpt: Option[OrderType])
 

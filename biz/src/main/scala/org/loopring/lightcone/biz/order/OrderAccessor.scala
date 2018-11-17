@@ -16,14 +16,20 @@
 
 package org.loopring.lightcone.biz.order
 
-import org.loopring.lightcone.biz.enum.OrderSaveResult.OrderSaveResult
+import org.loopring.lightcone.biz.data._
 import org.loopring.lightcone.biz.model._
 
 import scala.concurrent.Future
 
 trait OrderAccessor {
   def saveOrder(order: Order): Future[OrderSaveResult]
+
   def getOrderByHash(orderHash: String): Future[Option[Order]]
-  def pageQueryOrders(optOrderQuery: Option[OrderQuery], optPage: Option[PaginationQuery]): Future[PaginationResult]
+
+  def pageQueryOrders(
+    optOrderQuery: Option[OrderQuery],
+    optPage: Option[PaginationQuery]
+  ): Future[PaginationResult]
+
   def softCancelOrders(cancelOrderOption: Option[CancelOrderOption]): Future[Seq[Order]]
 }
