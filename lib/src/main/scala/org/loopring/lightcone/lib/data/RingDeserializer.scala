@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
+package org.loopring.lightcone.lib.data
 
 import org.web3j.utils.Numeric
 
@@ -36,7 +36,7 @@ class RingDeserializerImpl(lrcAddress: String) extends RingDeserializer {
 
 private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
 
-  val dataparser: ByteParser = ByteParser(encoded)
+  val dataparser: BytesExtractor = new BytesExtractor(encoded)
   var dataOffset: Int = 0
   var tableOffset: Int = 0
   var spendableList = Seq.empty[String]
@@ -83,7 +83,10 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     (1 to numOrders).map(_ ⇒ assembleOrder())
   }
 
-  private def assembleRings(numRings: Int, originOffset: Int, orders: Seq[Order]): Seq[Seq[Int]] = {
+  private def assembleRings(
+    numRings: Int,
+    originOffset: Int, orders: Seq[Order]
+  ): Seq[Seq[Int]] = {
     var offset = originOffset
 
     (1 to numRings).map { _ ⇒
@@ -94,7 +97,11 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     }
   }
 
-  private def assembleRing(ringsize: Int, originOffset: Int, orders: Seq[Order]): Seq[Int] = {
+  private def assembleRing(
+    ringsize: Int,
+    originOffset: Int,
+    orders: Seq[Order]
+  ): Seq[Int] = {
     var offset = originOffset
     (1 to ringsize).map { _ ⇒
       val orderidx = dataparser.extractUint8(offset)
@@ -129,8 +136,13 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     val _tokenRecipient = nextAddress
     val _walletSplitPercentage = nextUint16
 
-    val finalFeeToken = if (_feeToken.equals(undefined)) lrcAddress else _feeToken
-    val finalTokenRecipient = if (_tokenRecipient.equals(undefined)) _owner else _tokenRecipient
+    val finalFeeToken =
+      if (_feeToken.equals(undefined)) lrcAddress
+      else _feeToken
+
+    val finalTokenRecipient =
+      if (_tokenRecipient.equals(undefined)) _owner
+      else _tokenRecipient
 
     Order(
       owner = _owner,
@@ -161,7 +173,7 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     )
   }
 
-  private def nextAddress: String = {
+  private def nextAddress(): String = {
     val offset = tupple4GetNextOffset
     if (offset != 0) {
       dataparser.extractAddress(dataOffset + offset)
@@ -170,7 +182,7 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     }
   }
 
-  private def nextUint: BigInt = {
+  private def nextUint(): BigInt = {
     val offset = tupple4GetNextOffset
     if (offset != 0) {
       dataparser.extractUint(dataOffset + offset)
@@ -179,11 +191,11 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     }
   }
 
-  private def nextUint16: Int = {
+  private def nextUint16(): Int = {
     getNextOffset
   }
 
-  private def nextUint32: Int = {
+  private def nextUint32(): Int = {
     val offset = tupple4GetNextOffset
     if (offset != 0) {
       dataparser.extractUint32(dataOffset + offset)
@@ -192,7 +204,7 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     }
   }
 
-  private def nextBytes: String = {
+  private def nextBytes(): String = {
     val offset = tupple4GetNextOffset
     if (offset != 0) {
       val len = dataparser.extractUint(dataOffset + offset).intValue()
@@ -206,11 +218,11 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     x.intValue()
   }
 
-  private def tupple4GetNextOffset: Int = {
+  private def tupple4GetNextOffset(): Int = {
     getNextOffset * 4
   }
 
-  private def getNextOffset: Int = {
+  private def getNextOffset(): Int = {
     val offset = dataparser.extractUint16(tableOffset)
     tableOffset += 2
     offset

@@ -14,31 +14,28 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
-
+package org.loopring.lightcone.lib.data
 import org.web3j.utils.Numeric
 
-case class ByteParser(x: String) {
+class BytesExtractor(x: String) {
+  private val data = Numeric.cleanHexPrefix(x)
+  def length(): Int = data.length / 2
 
-  val data = Numeric.cleanHexPrefix(x)
+  def extractUint8(offset: Int) = extractNumber(offset, 1).intValue
+  def extractUint16(offset: Int) = extractNumber(offset, 2).intValue
+  def extractUint32(offset: Int) = extractNumber(offset, 4).intValue
+  def extractUint(offset: Int) = extractNumber(offset, 32)
 
-  def extractUint8(offset: Int): Int = extractNumber(offset, 1).intValue()
+  def extractBytes1(offset: Int) = extractBytesX(offset, 1)
+  def extractBytes32(offset: Int) = extractBytesX(offset, 32)
 
-  def extractUint16(offset: Int): Int = extractNumber(offset, 2).intValue()
+  def extractAddress(offset: Int) =
+    Numeric.toHexString(extractBytesX(offset, 20))
 
-  def extractUint32(offset: Int): Int = extractNumber(offset, 4).intValue()
+  def extractNumber(offset: Int, length: Int) =
+    Numeric.toBigInt(extractBytesX(offset, length))
 
-  def extractUint(offset: Int): BigInt = extractNumber(offset, 32)
-
-  def extractAddress(offset: Int): String = Numeric.toHexString(extractBytesX(offset, 20))
-
-  def extractBytes1(offset: Int): Array[Byte] = extractBytesX(offset, 1)
-
-  def extractBytes32(offset: Int): Array[Byte] = extractBytesX(offset, 32)
-
-  def extractNumber(offset: Int, length: Int): BigInt = BigInt(Numeric.toBigInt(extractBytesX(offset, length)))
-
-  def extractBytesX(offset: Int, length: Int): Array[Byte] = {
+  def extractBytesX(offset: Int, length: Int) = {
     val start = offset * 2
     val end = start + length * 2
     if (data.length < end) {
@@ -47,9 +44,4 @@ case class ByteParser(x: String) {
     val str = data.slice(start, end)
     Numeric.hexStringToByteArray(str)
   }
-
-  def length(): Int = {
-    data.length / 2
-  }
-
 }

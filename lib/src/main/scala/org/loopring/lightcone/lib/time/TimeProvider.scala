@@ -29,7 +29,7 @@ final class LocalSystemTimeProvider extends TimeProvider {
 }
 
 final class DifferenceAssuredLocalSystemTimeProvider extends TimeProvider {
-  private var lastTimestamp = System.currentTimeMillis
+  private var lastTimestamp = 0L
 
   def getTimeMillis = {
     val now = System.currentTimeMillis

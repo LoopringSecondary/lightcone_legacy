@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
+package org.loopring.lightcone.lib.data
 
-case class TransactionLog(
-    logIndex: Int = 0,
-    blockNumber: BigInt = 0,
-    blockHash: String = "0x",
-    transactionHash: String = "0x",
-    transactionIndex: Int = 0,
-    address: String = "0x",
-    data: String = "0x",
-    topics: Seq[String] = Seq(),
-    removed: Boolean = false
-)
+import org.loopring.lightcone.lib.data._
+
+// QUESTION(fukun):
+// 这几个方法没有体现出签名，是不是应该改名为：
+// getSignedTxInputData,
+// getSignedTxData,
+// 这几个方法说明意思和目的从签名上看不出来。
+trait RingSigner {
+  def generateInputData(ring: Ring): String
+  def generateTxData(inputData: String, nonce: BigInt): Array[Byte]
+  def getSignerAddress(): String
+}

@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
+package org.loopring.lightcone.lib.abi
+
+import org.loopring.lightcone.lib.data._
 
 import java.math.BigInteger
 import java.lang.{ Boolean ⇒ jbool }
@@ -22,30 +24,33 @@ import java.lang.{ Boolean ⇒ jbool }
 import org.web3j.utils.{ Numeric, Strings }
 import org.loopring.lightcone.lib.solidity.{ SolidityAbi ⇒ SABI }
 
-import scala.collection.mutable.{ HashMap ⇒ MMap }
-
 abstract class AbiWrap(abiJson: String) {
 
-  val abi: SABI = SABI.fromJson(abiJson)
-  val functionSignatureLength = 8
+  protected val abi = SABI.fromJson(abiJson)
+  protected val functionSignatureLength = 8
 
-  def getTransactionHeader(txInput: String): BigInt = {
-    Numeric.decodeQuantity(txInput)
-  }
+  def getTransactionHeader(txInput: String): BigInt = Numeric.decodeQuantity(txInput)
 
-  val supportedFunctions: MMap[String, SABI.Function] = MMap.empty[String, SABI.Function]
-  val supportedEventLogs: MMap[String, SABI.Event] = MMap.empty[String, SABI.Event]
+  private[lib] var supportedFunctions = Map.empty[String, SABI.Function]
+  private[lib] var supportedEventLogs = Map.empty[String, SABI.Event]
 
-  abi.toArray().foreach {
+  abi.toArray.foreach {
     _ match {
       case x: SABI.Function ⇒
         val sig = x.encodeSignature()
-        val key = Numeric.toHexStringWithPrefixZeroPadded(sig.bigInteger, functionSignatureLength)
-        supportedFunctions += key.toLowerCase → x
+        val key = Numeric.toHexStringWithPrefixZeroPadded(
+          sig.bigInteger,
+          functionSignatureLength
+        ).toLowerCase
+
+        supportedFunctions += key → x
+
       case x: SABI.Event ⇒
         val sig = x.encodeSignature()
-        val key = Numeric.toHexString(sig)
-        supportedEventLogs += key.toLowerCase -> x
+        val key = Numeric.toHexString(sig).toLowerCase
+
+        supportedEventLogs += key -> x
+
       case _ ⇒
     }
   }
@@ -61,30 +66,30 @@ abstract class AbiWrap(abiJson: String) {
     supportedEventLogs.get(key)
   }
 
-  case class decodeResult(name: String, list: Seq[Any])
+  case class DecodeResult(name: String, list: Seq[Any])
 
-  def decode(input: String): decodeResult = {
+  def decode(input: String): DecodeResult = {
     getFunction(input) match {
       case Some(function) ⇒
         val cleanInput = Numeric.cleanHexPrefix(input).substring(functionSignatureLength)
         val str = Strings.zeros(functionSignatureLength) + cleanInput
         val bytes = Numeric.hexStringToByteArray(str)
         val seq = function.decode(bytes).toArray().toSeq
-        decodeResult(function.name, seq)
+        DecodeResult(function.name, seq)
 
-      case _ ⇒ decodeResult("", Seq.empty)
+      case _ ⇒ DecodeResult("", Seq.empty)
     }
   }
 
-  def decode(log: TransactionLog): decodeResult = {
+  def decode(log: TransactionLog): DecodeResult = {
     getEvent(log.topics.head) match {
       case Some(event) ⇒
         val decodeddata = Numeric.hexStringToByteArray(log.data)
         val decodedtopics = log.topics.map(x ⇒ Numeric.hexStringToByteArray(x)).toArray
         val seq = event.decode(decodeddata, decodedtopics).toArray().toSeq
-        decodeResult(event.name, seq)
+        DecodeResult(event.name, seq)
 
-      case _ ⇒ decodeResult("", Seq.empty)
+      case _ ⇒ DecodeResult("", Seq.empty)
     }
   }
 

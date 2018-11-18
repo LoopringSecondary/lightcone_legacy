@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone
+package org.loopring.lightcone.lib.data
 
-import org.web3j.utils.Numeric
+// TODO(fukun): should we move this to proto file?
 
-// todo lib里面是否需要定义amount,address,hash等数据结构,与core项目的amount等该如何调用
-
-package object lib {
-
-  implicit def bytes2BigInt(bytes: Array[Byte]): BigInt = Numeric.toBigInt(bytes)
-  implicit def hexString2BigInt(hex: String): BigInt = Numeric.toBigInt(hex)
-
-  implicit class RichString(src: String) {
-
-    def safeeq(that: String): Boolean = src.toLowerCase == that.toLowerCase
-
-    def safeneq(that: String): Boolean = src.toLowerCase != that.toLowerCase
-
-  }
-}
+case class Transaction(
+    hash: String = "0x",
+    blockHash: String = "0x",
+    blockNumber: BigInt = 0,
+    transactionIndex: Int = 0,
+    from: String = "0x",
+    to: String = "0x",
+    value: BigInt = 0,
+    gasPrice: BigInt = 0,
+    gas: BigInt = 0,
+    input: String = "0x",
+    r: String = "0x",
+    s: String = "0x",
+    v: String = "0x"
+)
