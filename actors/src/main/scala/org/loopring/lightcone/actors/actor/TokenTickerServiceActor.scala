@@ -52,7 +52,7 @@ class TokenTickerServiceActor @Inject() (service: TokenTickerInfoService)(implic
   val tokenTickerInfoKey = "TOKEN_TICKER_INFO_"
 
   override def receive: Receive = {
-    case info: TokenTickerInfo ⇒
+    case info: XTokenTickerInfo ⇒
 
       service.saveOrUpdate(info)
 

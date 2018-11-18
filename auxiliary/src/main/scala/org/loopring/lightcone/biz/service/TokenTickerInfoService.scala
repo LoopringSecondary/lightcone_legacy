@@ -20,7 +20,7 @@ import org.loopring.lightcone.proto.auxiliary._
 import scala.concurrent.Future
 
 trait TokenTickerInfoService {
-  def saveOrUpdate(tokenTicker: TokenTickerInfo)
-  def batchSaveOrUpdate(seq: Seq[TokenTickerInfo])
+  def saveOrUpdate(tokenTicker: XTokenTickerInfo)
+  def batchSaveOrUpdate(seq: Seq[XTokenTickerInfo])
   def queryTokenTicker(market: String): Future[XGetTokenTickerInfoRes]
 }

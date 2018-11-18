@@ -1,8 +1,8 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "org.loopring.lightcone.proto.auxiliary";
-package org.loopring.lightcone.proto.auxiliary;
+option java_package = "org.loopring.lightcone.proto";
+package org.loopring.lightcone.proto;
 
 enum XMarketSide {
     SELL =0;
@@ -83,7 +83,7 @@ message XGetTokenTickerInfoReq{
 }
 
 message XGetTokenTickerInfoRes {
-   repeated TokenTickerInfo list = 1;
+   repeated XTokenTickerInfo list = 1;
 }
 
 message XGetExchangeTickerInfoReq{

@@ -153,7 +153,7 @@ class TokenTickerCrawlerActor(tokenTickerServiceActor: ActorRef)(
             val percentChange7d = quote.percentChange7D
             val utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS Z")
             val lastUpdated = utcFormat.parse(quote.lastUpdated.replace("Z", " UTC")).getTime / 1000
-            TokenTickerInfo(id, name, symbol, websiteSlug, market, rank, circulatingSupply, totalSupply, maxSupply,
+            XTokenTickerInfo(id, name, symbol, websiteSlug, market, rank, circulatingSupply, totalSupply, maxSupply,
               price, volume24h, marketCap, percentChange1h, percentChange24h, percentChange7d, lastUpdated)
         }
     }
