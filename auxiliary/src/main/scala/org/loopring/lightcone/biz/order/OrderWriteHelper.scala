@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.auxiliary.order
 
-import org.loopring.lightcone.proto.auxiliary._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.auxiliary.model._
 
 trait OrderWriteHelper {

@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.proto.auxiliary.XTokenTickerInfo
+import org.loopring.lightcone.proto.XTokenTickerInfo
 
 package object marketcap {
 

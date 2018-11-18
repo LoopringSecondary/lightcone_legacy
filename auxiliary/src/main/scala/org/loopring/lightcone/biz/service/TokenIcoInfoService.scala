@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.auxiliary.service
 
-import org.loopring.lightcone.proto.auxiliary._
+import org.loopring.lightcone.proto._
 import scala.concurrent.Future
 
 trait TokenIcoInfoService {
