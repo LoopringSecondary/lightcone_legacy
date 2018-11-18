@@ -23,7 +23,7 @@ import slick.jdbc.{ GetResult, SQLActionBuilder }
 
 import scala.concurrent.Future
 
-class DatabaseAccesser(
+private[service] class DatabaseAccesser(
     implicit
     mat: ActorMaterializer,
     session: SlickSession
@@ -33,11 +33,12 @@ class DatabaseAccesser(
   type ResultInt = slick.dbio.DBIO[Int]
 
   def saveOrUpdate[T](params: T*)(implicit fallback: T ⇒ ResultInt): Future[Int] = {
-    Source[T](params.to[collection.immutable.Seq]).via(Slick.flow(fallback)) runReduce (_ + _)
+    Source[T](params.to[collection.immutable.Seq])
+      .via(Slick.flow(fallback))
+      .runReduce(_ + _)
   }
 
   implicit class SQL(sql: SQLActionBuilder) {
-
     def list[T](implicit fallback: ResultRow ⇒ T): Future[Seq[T]] = {
       implicit val result: GetResult[T] = GetResult(fallback)
       Slick.source(sql.as[T]).runWith(Sink.seq)
@@ -47,7 +48,5 @@ class DatabaseAccesser(
       implicit val result: GetResult[T] = GetResult(fallback)
       Slick.source(sql.as[T]).runWith(Sink.head)
     }
-
   }
-
 }
