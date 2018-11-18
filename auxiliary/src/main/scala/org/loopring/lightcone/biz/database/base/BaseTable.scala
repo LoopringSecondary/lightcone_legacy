@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.auxiliary.database.base
 
-import org.loopring.lightcone.auxiliary.data.TokenTickerInfo
+import slick.jdbc.MySQLProfile.api._
+import slick.lifted.Tag
 
-package object marketcap {
-
-  type Bytes = Array[Byte]
-
-  type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
-
-  case class SeqTpro(seq: Seq[TokenTickerInfo])
+abstract class BaseTable[T](tag: Tag, name: String)
+  extends Table[T](tag, "LC_" + name) {
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def createdAt = column[Long]("created_at", O.Default(System.currentTimeMillis))
+  def updatedAt = column[Long]("updated_at", O.Default(System.currentTimeMillis))
 }

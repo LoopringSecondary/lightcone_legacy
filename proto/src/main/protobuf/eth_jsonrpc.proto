@@ -18,7 +18,7 @@ syntax = "proto3";
 
 option java_multiple_files = true;
 option java_package = "org.loopring.lightcone";
-package org.loopring.lightcone;
+package org.loopring.lightcone.proto;
 
 message EthereumProxySettings {
     message Node {

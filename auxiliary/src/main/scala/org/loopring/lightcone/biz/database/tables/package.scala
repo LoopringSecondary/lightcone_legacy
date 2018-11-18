@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.auxiliary.database
 
-import org.loopring.lightcone.auxiliary.data.TokenTickerInfo
+import slick.jdbc.MySQLProfile.api._
 
-package object marketcap {
-
-  type Bytes = Array[Byte]
-
-  type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
-
-  case class SeqTpro(seq: Seq[TokenTickerInfo])
+package object tables {
+  val ordersQ = TableQuery[Orders]
+  val orderChangeLogsQ = TableQuery[OrderChangeLogs]
+  val blocksQ = TableQuery[Blocks]
 }

@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.auxiliary.database.entity
 
-import org.loopring.lightcone.auxiliary.data.TokenTickerInfo
+import org.loopring.lightcone.auxiliary.database.base.BaseEntity
 
-package object marketcap {
+case class OrderChangeLogEntity(
+    id: Long = 0,
+    updatedAt: Long = 0,
+    createdAt: Long = 0,
+    preChangeId: Long = 0,
+    orderHash: String = "",
+    dealtAmountS: String = "",
+    dealtAmountB: String = "",
+    cancelledAmountS: String = "",
+    cancelledAmountB: String = "",
+    status: String = "",
+    updatedBlock: Long = 0
+) extends BaseEntity
 
-  type Bytes = Array[Byte]
-
-  type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
-
-  case class SeqTpro(seq: Seq[TokenTickerInfo])
-}

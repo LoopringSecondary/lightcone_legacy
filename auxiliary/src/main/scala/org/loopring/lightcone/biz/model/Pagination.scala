@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.auxiliary.model
 
-import org.loopring.lightcone.auxiliary.data.TokenTickerInfo
+case class PaginationQuery(index: Int, size: Int)
+case class Pagination(index: Int, size: Int, total: Int)
+case class PaginationResult(pagination: Pagination, data: Any)
 
-package object marketcap {
-
-  type Bytes = Array[Byte]
-
-  type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
-
-  case class SeqTpro(seq: Seq[TokenTickerInfo])
-}

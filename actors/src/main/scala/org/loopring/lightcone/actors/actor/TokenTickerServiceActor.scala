@@ -21,9 +21,9 @@ import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import org.loopring.lightcone.actors.marketcap.SeqTpro
 import org.loopring.lightcone.actors.marketcap.DatabaseAccesser
-import org.loopring.lightcone.proto.market_cap._
+import org.loopring.lightcone.auxiliary.data._
 import org.loopring.lightcone.proto.deployment.TokenTickerServiceSettings
-import org.loopring.lightcone.biz.marketcap._
+import org.loopring.lightcone.auxiliary.service._
 import scala.concurrent.Future
 import akka.pattern.pipe
 import com.google.inject.Inject

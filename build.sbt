@@ -2,7 +2,8 @@ import Settings._
 import Dependencies._
 
 lazy val lib = (project in file("lib"))
-  .enablePlugins(AutomateHeaderPlugin, JavaAppPackaging)
+  .enablePlugins(JavaAppPackaging)
+  .enablePlugins(AutomateHeaderPlugin)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Lib)
@@ -13,16 +14,20 @@ lazy val proto = (project in file("proto"))
     PB.targets in Compile := Seq(
       scalapb.gen() -> (sourceManaged in Compile).value))
 
-lazy val biz = (project in file("biz"))
-  .enablePlugins(AutomateHeaderPlugin, JavaAppPackaging)
+lazy val auxiliary = (project in file("auxiliary"))
+  .enablePlugins(JavaAppPackaging)
+  .enablePlugins(AutomateHeaderPlugin)
   .dependsOn(proto, lib)
   .settings(
     basicSettings,
-    libraryDependencies ++= dependency4Biz)
+    libraryDependencies ++= dependency4Biz,
+    libraryDependencies ++= scalapbDependency,
+    PB.targets in Compile := Seq(
+      scalapb.gen() -> (sourceManaged in Compile).value))
 
 lazy val actors = (project in file("actors"))
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(proto, biz)
+  .dependsOn(proto, auxiliary)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Actors,
@@ -33,12 +38,11 @@ lazy val gateway = (project in file("gateway"))
   .dependsOn(proto)
   .settings(
     basicSettings,
-    libraryDependencies ++= dependency4Gateway)
-  .settings(
+    libraryDependencies ++= dependency4Gateway,
     libraryDependencies ++= scalapbDependency,
     PB.targets in Compile := Seq(
       scalapb.gen() -> (sourceManaged in Compile).value))
 
 lazy val all = (project in file("."))
-  .aggregate(proto, lib, biz, actors, gateway)
+  .aggregate(proto, lib, auxiliary, actors, gateway)
   .withId("lightcone")

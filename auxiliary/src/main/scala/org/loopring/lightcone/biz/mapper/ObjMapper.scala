@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.auxiliary.mapper
 
-import org.loopring.lightcone.auxiliary.data.TokenTickerInfo
+// Maps a value from the type A to B
+trait ObjMapper[A, B] {
+  def mapValue(obj: A): B
+}
 
-package object marketcap {
+object ObjMapper {
 
-  type Bytes = Array[Byte]
-
-  type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
-
-  case class SeqTpro(seq: Seq[TokenTickerInfo])
+  @inline
+  def mapValue[A, B](obj: A)(implicit mapper: ObjMapper[A, B]): B = {
+    mapper.mapValue(obj)
+  }
 }

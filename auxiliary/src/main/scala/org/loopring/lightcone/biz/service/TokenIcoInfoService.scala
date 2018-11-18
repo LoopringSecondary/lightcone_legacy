@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.auxiliary.service
 
-import org.loopring.lightcone.auxiliary.data.TokenTickerInfo
+import org.loopring.lightcone.auxiliary.data._
+import scala.concurrent.Future
 
-package object marketcap {
-
-  type Bytes = Array[Byte]
-
-  type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
-
-  case class SeqTpro(seq: Seq[TokenTickerInfo])
+trait TokenIcoInfoService {
+  def saveOrUpdate(iocInfo: TokenIcoInfo)
+  def queryTokenIcoInfo(): Future[GetTokenIcoInfoRes]
 }
+

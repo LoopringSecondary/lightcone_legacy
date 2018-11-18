@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.auxiliary.order
 
-import org.loopring.lightcone.auxiliary.data.TokenTickerInfo
+import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.auxiliary.model._
 
-package object marketcap {
+import scala.concurrent.Future
 
-  type Bytes = Array[Byte]
+trait OrderAccessor {
+  def saveOrder(order: Order): Future[OrderSaveResult]
 
-  type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
+  def getOrderByHash(orderHash: String): Future[Option[Order]]
 
-  case class SeqTpro(seq: Seq[TokenTickerInfo])
+  def pageQueryOrders(
+    optOrderQuery: Option[OrderQuery],
+    optPage: Option[PaginationQuery]
+  ): Future[PaginationResult]
+
+  def softCancelOrders(cancelOrderOption: Option[CancelOrderOption]): Future[Seq[Order]]
 }
