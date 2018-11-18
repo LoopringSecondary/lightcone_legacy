@@ -22,36 +22,27 @@ import com.corundumstudio.socketio.{ AckRequest, Configuration }
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.loopring.lightcone.gateway.jsonrpc.JsonRpcServer
-import org.slf4j.LoggerFactory
+import org.slf4s.Logging
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class SocketIOServer(
     jsonRpcServer: JsonRpcServer,
-    eventRegistering: EventRegistering
+    eventBindings: EventBindings
 )(
     implicit
     system: ActorSystem
-) {
+) extends Object with Logging {
 
   implicit val ex = system.dispatcher
 
-  lazy val logger = LoggerFactory.getLogger(getClass)
+  private val config = system.settings.config
+  private val port = config.getInt("jsonrpc.socketio.port")
+  private val pathName = config.getString("jsonrpc.socketio.path")
+  private val mapper = new ObjectMapper().registerModule(DefaultScalaModule)
 
-  private lazy val config = system.settings.config
-
-  private lazy val port = config.getInt("jsonrpc.socketio.port")
-
-  private lazy val pathName = config.getString("jsonrpc.socketio.path")
-
-  private lazy val mapper = {
-    val _mapper = new ObjectMapper()
-    _mapper.registerModule(DefaultScalaModule)
-    _mapper
-  }
-
-  private lazy val ioConfig = {
+  private val ioConfig = {
     val _config = new Configuration
     _config.setHostname("0.0.0.0")
     _config.setPort(port)
@@ -61,50 +52,56 @@ class SocketIOServer(
     _config
   }
 
-  private lazy val router = system.actorOf(Props[SocketIOServerRouter], "socketio_router")
+  private val router = system.actorOf(
+    Props[SocketIOServerRouter],
+    "socketio_router"
+  )
 
-  def start: Unit = {
-
+  def start() {
     val server = new IOServer(ioConfig)
     server.addConnectListener(new ConnectionListener)
     server.addDisconnectListener(new DisconnectionListener)
 
-    server.addEventListener(pathName, classOf[java.util.Map[String, Any]], new DataListener[java.util.Map[String, Any]] {
-      override def onData(client: IOClient, data: java.util.Map[String, Any], ackSender: AckRequest): Unit = {
+    server.addEventListener(
+      pathName,
+      classOf[java.util.Map[String, Any]],
+      new DataListener[java.util.Map[String, Any]] {
 
-        val event = data.get("method").toString
-
-        val json = mapper.writeValueAsString(data)
-
-        logger.info(s"client: ${client.getRemoteAddress}, request: ${data}")
-
-        SocketIOClient.add(client, event, json)
-
-        invoke(json).foreach(ackSender.sendAckData(_))
-
+        override def onData(
+          client: IOClient,
+          data: java.util.Map[String, Any],
+          ackSender: AckRequest
+        ) {
+          val event = data.get("method").toString
+          val json = mapper.writeValueAsString(data)
+          log.info(s"client: ${client.getRemoteAddress}, request: ${data}")
+          SocketIOClient.add(client, event, json)
+          invoke(json).foreach(ackSender.sendAckData(_))
+        }
       }
-    })
+    )
 
     router ! StartBroadcast(
       this,
-      eventRegistering,
+      eventBindings,
       config.getInt("jsonrpc.socketio.pool")
     )
 
     server.start
-
-    logger.info(s"socketio server started @ ${port}")
+    log.info(s"socketio server started @ ${port}")
   }
 
-  def invoke(json: String) = {
-
-    Await.result(jsonRpcServer.handleRequest(json), Duration.Inf).map {
-      resp ⇒
-        val respMap = mapper.readValue(resp, classOf[java.util.Map[String, Any]])
-        logger.info(s"socketio rpc response: ${respMap}")
-        respMap
+  private[socketio] def invoke(json: String) = Await.result(
+    jsonRpcServer.handleRequest(json),
+    Duration.Inf
+  ).map { resp ⇒
+      val respMap = mapper.readValue(
+        resp,
+        classOf[java.util.Map[String, Any]]
+      )
+      log.trace(s"socketio rpc response: ${respMap}")
+      respMap
     }
-  }
 
 }
 

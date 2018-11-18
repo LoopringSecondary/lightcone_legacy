@@ -14,8 +14,5 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.api.exception
+package org.loopring.lightcone.gateway.data
 
-import org.loopring.lightcone.gateway.jsonrpc.AbstractJsonRpcException
-
-class BalanceException(message: String) extends AbstractJsonRpcException(-32007, message)

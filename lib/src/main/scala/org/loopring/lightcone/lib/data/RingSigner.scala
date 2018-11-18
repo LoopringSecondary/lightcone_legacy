@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.api.model
+package org.loopring.lightcone.lib.data
 
-case class BalanceReq(owner: String = "", delegateAddress: String = "") {
-  def this() = this("", "")
+import org.loopring.lightcone.lib.data._
+
+// QUESTION(fukun):
+// 这几个方法没有体现出签名，是不是应该改名为：
+// getSignedTxInputData,
+// getSignedTxData,
+// 这几个方法说明意思和目的从签名上看不出来。
+trait RingSigner {
+  def generateInputData(ring: Ring): String
+  def generateTxData(inputData: String, nonce: BigInt): Array[Byte]
+  def getSignerAddress(): String
 }
-
-case class TokenBalance(symbol: String, balance: String, allowance: String)
-
-case class BalanceResp(delegateAddress: String, owner: String, tokens: Seq[TokenBalance])

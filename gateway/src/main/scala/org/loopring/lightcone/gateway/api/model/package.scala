@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
+package org.loopring.lightcone.gateway.api
 
-case class Transaction(
-    hash: String = "0x",
-    blockHash: String = "0x",
-    blockNumber: BigInt = 0,
-    transactionIndex: Int = 0,
-    from: String = "0x",
-    to: String = "0x",
-    value: BigInt = 0,
-    gasPrice: BigInt = 0,
-    gas: BigInt = 0,
-    input: String = "0x",
-    r: String = "0x",
-    s: String = "0x",
-    v: String = "0x"
-)
+package object model {
+
+  case class TokenSpendables(
+      symbol: String,
+      balance: String,
+      allowance: String
+  )
+
+  // QUESTION(Doan): 是不是要加一个token的列表？
+  case class TokenSpendablesReq(
+      owner: String,
+      delegateAddress: String
+  )
+
+  case class TokenSpendablesResp(
+      owner: String,
+      delegateAddress: String,
+      tokens: Seq[TokenSpendables]
+  )
+}

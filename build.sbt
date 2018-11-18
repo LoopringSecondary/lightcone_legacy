@@ -38,7 +38,10 @@ lazy val gateway = (project in file("gateway"))
   .dependsOn(proto)
   .settings(
     basicSettings,
-    libraryDependencies ++= dependency4Gateway)
+    libraryDependencies ++= dependency4Gateway,
+    libraryDependencies ++= scalapbDependency,
+    PB.targets in Compile := Seq(
+      scalapb.gen() -> (sourceManaged in Compile).value))
 
 lazy val all = (project in file("."))
   .aggregate(proto, lib, auxiliary, actors, gateway)

@@ -14,24 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.socketio
+package org.loopring.lightcone.gateway.api.service
 
-object EventRegistering {
+import org.loopring.lightcone.gateway.api.model._
+import scala.concurrent.Future
 
-  def apply(): EventRegistering = new EventRegistering(Seq.empty)
-
+trait TokenSpendablesService {
+  def getSpendables(req: TokenSpendablesReq): Future[TokenSpendablesResp]
 }
-
-class EventRegistering(val events: Seq[EventRegister]) {
-
-  def registering(event: String, interval: Long, replyTo: String): EventRegistering = {
-    registering(EventRegister(event, interval, replyTo))
-  }
-
-  def registering(event: EventRegister): EventRegistering = {
-    new EventRegistering(events :+ event)
-  }
-
-}
-
-case class EventRegister(event: String, interval: Long, replyTo: String)

@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
+package org.loopring.lightcone.lib.data
 
-case class TransactionLog(
-    logIndex: Int = 0,
-    blockNumber: BigInt = 0,
+// TODO(fukun): should we move this to proto file?
+
+case class Transaction(
+    hash: String = "0x",
     blockHash: String = "0x",
-    transactionHash: String = "0x",
+    blockNumber: BigInt = 0,
     transactionIndex: Int = 0,
-    address: String = "0x",
-    data: String = "0x",
-    topics: Seq[String] = Seq(),
-    removed: Boolean = false
+    from: String = "0x",
+    to: String = "0x",
+    value: BigInt = 0,
+    gasPrice: BigInt = 0,
+    gas: BigInt = 0,
+    input: String = "0x",
+    r: String = "0x",
+    s: String = "0x",
+    v: String = "0x"
 )
