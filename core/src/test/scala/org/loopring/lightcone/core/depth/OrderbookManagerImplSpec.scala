@@ -41,23 +41,23 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
   "OrderbookManagerImplSpec" should "process very small slot" in {
     obm.processUpdate(XOrderbookUpdate(Seq(
-      XOrderbookSlot(1, 10, 100)
+      XOrderbookUpdate.XSlot(1, 10, 100)
     ), Nil))
 
     obm.getXOrderbook(0, 100) should be(XOrderbook(Seq(
-      XOrderbookItem("0.00001", "10.00", "100.0")
+      XOrderbook.XItem("0.00001", "10.00", "100.0")
     ), Nil))
 
     obm.getXOrderbook(1, 100) should be(XOrderbook(Seq(
-      XOrderbookItem("0.0001", "10.00", "100.0")
+      XOrderbook.XItem("0.0001", "10.00", "100.0")
     ), Nil))
   }
 
   "OrderbookManagerImplSpec" should "skip 0 value slots" in {
     obm.processUpdate(XOrderbookUpdate(Seq(
-      XOrderbookSlot(0, 10, 100)
+      XOrderbookUpdate.XSlot(0, 10, 100)
     ), Seq(
-      XOrderbookSlot(0, 10, 100)
+      XOrderbookUpdate.XSlot(0, 10, 100)
     )))
     obm.getXOrderbook(0, 100) should be(XOrderbook(Nil, Nil))
     obm.getXOrderbook(1, 100) should be(XOrderbook(Nil, Nil))
@@ -65,69 +65,69 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
   "OrderbookManagerImplSpec" should "process sell slot and round up" in {
     obm.processUpdate(XOrderbookUpdate(Seq(
-      XOrderbookSlot(12344, 10, 100)
+      XOrderbookUpdate.XSlot(12344, 10, 100)
     ), Nil))
     obm.getXOrderbook(0, 100) should be(XOrderbook(Seq(
-      XOrderbookItem("0.12344", "10.00", "100.0")
+      XOrderbook.XItem("0.12344", "10.00", "100.0")
     ), Nil))
 
     obm.getXOrderbook(1, 100) should be(XOrderbook(Seq(
-      XOrderbookItem("0.1235", "10.00", "100.0")
+      XOrderbook.XItem("0.1235", "10.00", "100.0")
     ), Nil))
   }
 
   "OrderbookManagerImplSpec" should "process buy slot and round down" in {
     obm.processUpdate(XOrderbookUpdate(Nil, Seq(
-      XOrderbookSlot(12344, 10, 100)
+      XOrderbookUpdate.XSlot(12344, 10, 100)
     )))
     obm.getXOrderbook(0, 100) should be(XOrderbook(Nil, Seq(
-      XOrderbookItem("0.12344", "10.00", "100.0")
+      XOrderbook.XItem("0.12344", "10.00", "100.0")
     )))
 
     obm.getXOrderbook(1, 100) should be(XOrderbook(Nil, Seq(
-      XOrderbookItem("0.1234", "10.00", "100.0")
+      XOrderbook.XItem("0.1234", "10.00", "100.0")
     )))
   }
 
   "OrderbookManagerImplSpec" should "process sell slot with new lower values" in {
     obm.processUpdate(XOrderbookUpdate(Seq(
-      XOrderbookSlot(12344, 10, 100),
-      XOrderbookSlot(12345, 20, 200)
+      XOrderbookUpdate.XSlot(12344, 10, 100),
+      XOrderbookUpdate.XSlot(12345, 20, 200)
     ), Nil))
 
     obm.processUpdate(XOrderbookUpdate(Seq(
-      XOrderbookSlot(12344, 5, 40),
-      XOrderbookSlot(12345, 10, 80)
+      XOrderbookUpdate.XSlot(12344, 5, 40),
+      XOrderbookUpdate.XSlot(12345, 10, 80)
     ), Nil))
 
     obm.getXOrderbook(0, 100) should be(XOrderbook(Seq(
-      XOrderbookItem("0.12344", "5.00", "40.0"),
-      XOrderbookItem("0.12345", "10.00", "80.0")
+      XOrderbook.XItem("0.12344", "5.00", "40.0"),
+      XOrderbook.XItem("0.12345", "10.00", "80.0")
     ), Nil))
 
     obm.getXOrderbook(1, 100) should be(XOrderbook(Seq(
-      XOrderbookItem("0.1235", "15.00", "120.0")
+      XOrderbook.XItem("0.1235", "15.00", "120.0")
     ), Nil))
   }
 
   "OrderbookManagerImplSpec" should "process buy slot with new lower values" in {
     obm.processUpdate(XOrderbookUpdate(Nil, Seq(
-      XOrderbookSlot(12344, 10, 100),
-      XOrderbookSlot(12345, 20, 200)
+      XOrderbookUpdate.XSlot(12344, 10, 100),
+      XOrderbookUpdate.XSlot(12345, 20, 200)
     )))
 
     obm.processUpdate(XOrderbookUpdate(Nil, Seq(
-      XOrderbookSlot(12344, 5, 40),
-      XOrderbookSlot(12345, 10, 80)
+      XOrderbookUpdate.XSlot(12344, 5, 40),
+      XOrderbookUpdate.XSlot(12345, 10, 80)
     )))
 
     obm.getXOrderbook(0, 100) should be(XOrderbook(Nil, Seq(
-      XOrderbookItem("0.12345", "10.00", "80.0"),
-      XOrderbookItem("0.12344", "5.00", "40.0")
+      XOrderbook.XItem("0.12345", "10.00", "80.0"),
+      XOrderbook.XItem("0.12344", "5.00", "40.0")
     )))
 
     obm.getXOrderbook(1, 100) should be(XOrderbook(Nil, Seq(
-      XOrderbookItem("0.1234", "15.00", "120.0")
+      XOrderbook.XItem("0.1234", "15.00", "120.0")
     )))
   }
 }

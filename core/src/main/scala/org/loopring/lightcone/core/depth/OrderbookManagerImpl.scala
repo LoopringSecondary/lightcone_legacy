@@ -74,14 +74,14 @@ class OrderbookManagerImpl(config: XOrderbookConfig)
     }
 
     trait ConverstionSupport { self: OrderbookSide ⇒
-      private def slotToItem(slot: XOrderbookSlot) =
-        XOrderbookItem(
+      private def slotToItem(slot: XOrderbookUpdate.XSlot) =
+        XOrderbook.XItem(
           priceFormat.format(slot.slot / priceScaling),
           amountFormat.format(slot.amount),
           totalFormat.format(slot.total)
         )
 
-      def getDepth(num: Int): Seq[XOrderbookItem] =
+      def getDepth(num: Int): Seq[XOrderbook.XItem] =
         getSlots(num)
           .filter(_.slot != 0)
           .map(slotToItem(_))
