@@ -18,7 +18,12 @@ package org.loopring.lightcone.gateway
 
 package object jsonrpc {
 
-  case class JsonRpcRequest(id: Any, method: String, jsonrpc: String, params: Any)
+  case class JsonRpcRequest(
+      id: Any,
+      method: String,
+      jsonrpc: String,
+      params: Any
+  )
 
   case class JsonRpcResponse(
       id: Option[Any] = None.orNull,
@@ -45,18 +50,26 @@ package object jsonrpc {
   //  -32603	Internal error内部错误	JSON-RPC内部错误。
   //  -32000 to -32099	Server error服务端错误	预留用于自定义的服务器错误。
 
-  case object JsonRpcParseException extends AbstractJsonRpcException(-32700, "Json parse failed")
+  case object JsonRpcParseException
+    extends AbstractJsonRpcException(-32700, "Json parse failed")
 
-  case object JsonRpcInvalidException extends AbstractJsonRpcException(-32600, "Invalid request")
+  case object JsonRpcInvalidException
+    extends AbstractJsonRpcException(-32600, "Invalid request")
 
-  case object JsonRpcMethodException extends AbstractJsonRpcException(-32601, "Method not found")
+  case object JsonRpcMethodException
+    extends AbstractJsonRpcException(-32601, "Method not found")
 
-  case object JsonRpcParamsException extends AbstractJsonRpcException(-32602, "Parameters invalid")
+  case object JsonRpcParamsException
+    extends AbstractJsonRpcException(-32602, "Parameters invalid")
 
   case class JsonRpcInternalException(
       message: String = "Internal error",
       id: Option[Any] = None
   )
     extends AbstractJsonRpcException(-32603, message, id)
+
+  // TODO(Duan): move this one to other package.
+  class TokenSpendableException(message: String)
+    extends AbstractJsonRpcException(-32007, message)
 
 }

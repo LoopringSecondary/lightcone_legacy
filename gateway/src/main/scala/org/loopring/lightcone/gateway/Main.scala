@@ -21,10 +21,10 @@ import akka.stream.ActorMaterializer
 import com.google.inject.Guice
 import com.typesafe.config.ConfigFactory
 import net.codingwell.scalaguice.InjectorExtensions._
-import org.loopring.lightcone.gateway.api.HttpAndIOServer
-import org.loopring.lightcone.gateway.api.service.BalanceServiceImpl
+import org.loopring.lightcone.gateway.api.service._
 import org.loopring.lightcone.gateway.jsonrpc._
 import org.loopring.lightcone.gateway.socketio._
+import org.loopring.lightcone.gateway.inject._
 
 object Main extends App {
 

@@ -18,14 +18,13 @@ package org.loopring.lightcone.gateway.jsonrpc
 
 import org.json4s._
 import org.json4s.jackson.Serialization
-import org.slf4j.LoggerFactory
+import org.slf4s.Logging
 
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
 
-class JsonRpcServer(settings: JsonRpcSettings) {
-
-  private[jsonrpc] lazy val logger = LoggerFactory.getLogger(getClass)
+class JsonRpcServer(settings: JsonRpcSettings)
+  extends Object with Logging {
 
   private[jsonrpc] implicit val formats = DefaultFormats
 
@@ -59,10 +58,10 @@ class JsonRpcServer(settings: JsonRpcSettings) {
 
     } catch {
       case e: JsonRpcException ⇒
-        logger.error(s"${e.code} @ ${e.message}", e)
+        log.error(s"${e.code} @ ${e.message}", e)
         Future(JsonRpcResponse(id = e.id, error = Some(e.copy(id = None))))
       case e: Exception ⇒
-        logger.error(s"failed @ ${e.getMessage}", e)
+        log.error(s"failed @ ${e.getMessage}", e)
         Future(JsonRpcResponse(error = Some(JsonRpcInternalException(e.getMessage))))
     }
 

@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.socketio
+package org.loopring.lightcone.gateway.api
 
-object EventRegistering {
+package object model {
 
-  def apply(): EventRegistering = new EventRegistering(Seq.empty)
+  case class TokenSpendables(
+      symbol: String,
+      balance: String,
+      allowance: String
+  )
 
+  // QUESTION(Doan): 是不是要加一个token的列表？
+  case class TokenSpendablesReq(
+      owner: String,
+      delegateAddress: String
+  )
+
+  case class TokenSpendablesResp(
+      owner: String,
+      delegateAddress: String,
+      tokens: Seq[TokenSpendables]
+  )
 }
-
-class EventRegistering(val events: Seq[EventRegister]) {
-
-  def registering(event: String, interval: Long, replyTo: String): EventRegistering = {
-    registering(EventRegister(event, interval, replyTo))
-  }
-
-  def registering(event: EventRegister): EventRegistering = {
-    new EventRegistering(events :+ event)
-  }
-
-}
-
-case class EventRegister(event: String, interval: Long, replyTo: String)

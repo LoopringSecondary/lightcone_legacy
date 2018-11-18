@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.api
+package org.loopring.lightcone.gateway.api.service
 
-import de.heikoseeberger.akkahttpjson4s.{ Json4sSupport ⇒ J4s }
+import org.loopring.lightcone.gateway.api.model._
+import scala.concurrent.Future
 
-trait Json4sSupport extends J4s {
-  implicit val serialization = org.json4s.native.Serialization
-  implicit val formats = org.json4s.DefaultFormats
+trait TokenSpendablesService {
+  def getSpendables(req: TokenSpendablesReq): Future[TokenSpendablesResp]
 }

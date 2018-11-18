@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.api
+package org.loopring.lightcone.gateway.socketio
 
-import de.heikoseeberger.akkahttpjson4s.{ Json4sSupport ⇒ J4s }
+case class EventBinding(
+    event: String,
+    interval: Long,
+    replyTo: String
+)
 
-trait Json4sSupport extends J4s {
-  implicit val serialization = org.json4s.native.Serialization
-  implicit val formats = org.json4s.DefaultFormats
+class EventBindings(val bindings: Seq[EventBinding] = Nil) {
+  def add(event: String, interval: Long, replyTo: String): EventBindings =
+    add(EventBinding(event, interval, replyTo))
+
+  def add(binding: EventBinding): EventBindings =
+    new EventBindings(bindings :+ binding)
 }
+

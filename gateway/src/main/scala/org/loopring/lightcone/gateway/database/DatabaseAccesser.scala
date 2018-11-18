@@ -17,17 +17,14 @@
 package org.loopring.lightcone.gateway.database
 
 import akka.stream.ActorMaterializer
-import akka.stream.alpakka.slick.scaladsl.{ Slick, SlickSession }
-import akka.stream.scaladsl.{ Sink, Source }
-import slick.jdbc.{ GetResult, SQLActionBuilder }
-
+import akka.stream.alpakka.slick.scaladsl._
+import akka.stream.scaladsl._
+import slick.jdbc._
 import scala.concurrent.Future
 
-abstract class DatabaseAccesser(
-    implicit
-    mat: ActorMaterializer,
-    session: SlickSession
-) {
+trait DatabaseAccessor {
+  implicit val mat: ActorMaterializer
+  implicit val session: SlickSession
 
   type ResultRow = slick.jdbc.PositionedResult
   type ResultInt = slick.dbio.DBIO[Int]
@@ -47,7 +44,5 @@ abstract class DatabaseAccesser(
       implicit val result: GetResult[T] = GetResult(fallback)
       Slick.source(sql.as[T]).runWith(Sink.head)
     }
-
   }
-
 }

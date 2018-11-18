@@ -14,12 +14,5 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.api.model
+package org.loopring.lightcone.gateway.data
 
-case class BalanceReq(owner: String = "", delegateAddress: String = "") {
-  def this() = this("", "")
-}
-
-case class TokenBalance(symbol: String, balance: String, allowance: String)
-
-case class BalanceResp(delegateAddress: String, owner: String, tokens: Seq[TokenBalance])
