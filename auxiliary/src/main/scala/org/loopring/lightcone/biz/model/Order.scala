@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.auxiliary.model
 
-import org.loopring.lightcone.auxiliary.data.{ OrderStatus, OrderType, _ }
+import org.loopring.lightcone.proto.auxiliary.{ OrderStatus, OrderType, _ }
 
 case class OrderQuery(
     statuses: Seq[OrderStatus],

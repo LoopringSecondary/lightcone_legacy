@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.auxiliary.service
 
-import org.loopring.lightcone.auxiliary.data.GetTokenListRes
+import org.loopring.lightcone.proto.auxiliary.GetTokenListRes
 
 import scala.concurrent.Future
 

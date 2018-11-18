@@ -22,7 +22,7 @@ import org.loopring.lightcone.auxiliary.database.dals.QueryCondition
 import org.loopring.lightcone.auxiliary.database.entity.OrderEntity
 import org.loopring.lightcone.auxiliary.database.entity.OrderChangeLogEntity
 import org.loopring.lightcone.auxiliary.database.tables.Orders
-import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.proto.auxiliary._
 import org.loopring.lightcone.auxiliary.model._
 import slick.jdbc.JdbcProfile
 import slick.sql.FixedSqlAction

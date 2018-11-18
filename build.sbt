@@ -23,7 +23,8 @@ lazy val auxiliary = (project in file("auxiliary"))
     libraryDependencies ++= dependency4Biz,
     libraryDependencies ++= scalapbDependency,
     PB.targets in Compile := Seq(
-      scalapb.gen() -> (sourceManaged in Compile).value))
+      scalapb.gen(flatPackage = true) -> (sourceManaged in Compile).value))
+// flatPackage
 
 lazy val actors = (project in file("actors"))
   .enablePlugins(AutomateHeaderPlugin)

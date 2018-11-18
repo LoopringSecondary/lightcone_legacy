@@ -23,7 +23,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.loopring.lightcone.actors.marketcap.SignatureUtil
 import org.loopring.lightcone.actors.marketcap.HttpConnector
-import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.proto.auxiliary._
 import org.loopring.lightcone.actors.marketcap.{ CacherSettings, ProtoBufMessageCacher }
 import scalapb.json4s.Parser
 

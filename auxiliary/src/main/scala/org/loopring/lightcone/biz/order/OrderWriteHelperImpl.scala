@@ -17,7 +17,7 @@
 package org.loopring.lightcone.auxiliary.order
 
 import com.google.inject.Inject
-import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.proto.auxiliary._
 import org.loopring.lightcone.auxiliary.model._
 
 class OrderWriteHelperImpl @Inject() (validator: OrderValidator) extends OrderWriteHelper {

@@ -20,7 +20,7 @@ import akka.actor.{ Actor, ActorSystem }
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import org.loopring.lightcone.actors.marketcap.DatabaseAccesser
-import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.proto.auxiliary._
 
 import scala.concurrent.Future
 import akka.pattern.pipe
