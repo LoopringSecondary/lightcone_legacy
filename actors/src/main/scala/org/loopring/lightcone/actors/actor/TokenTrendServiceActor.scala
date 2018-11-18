@@ -20,7 +20,7 @@ import akka.actor._
 import akka.stream.ActorMaterializer
 import akka.pattern.pipe
 import org.loopring.lightcone.actors.base
-import org.loopring.lightcone.proto.market_cap._
+import org.loopring.lightcone.biz.data._
 import org.loopring.lightcone.actors.marketcap.{ CacherSettings, ProtoBufMessageCacher }
 import org.loopring.lightcone.proto.deployment.TokenTrendServiceSettings
 

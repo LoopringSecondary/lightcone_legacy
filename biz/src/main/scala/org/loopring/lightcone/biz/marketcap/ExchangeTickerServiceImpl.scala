@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import com.google.inject.Inject
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
-import org.loopring.lightcone.proto.market_cap._
+import org.loopring.lightcone.biz.data._
 
 import scala.concurrent.Future
 

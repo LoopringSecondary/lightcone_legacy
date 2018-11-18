@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import com.google.inject.Inject
-import org.loopring.lightcone.proto.market_cap.{ GetTokenTickerInfoRes, TokenTickerInfo }
+import org.loopring.lightcone.biz.data.{ GetTokenTickerInfoRes, TokenTickerInfo }
 
 import scala.concurrent.Future
 

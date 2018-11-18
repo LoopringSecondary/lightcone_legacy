@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.biz.marketcap
 
-import org.loopring.lightcone.proto.market_cap.GetTokenListRes
+import org.loopring.lightcone.biz.data.GetTokenListRes
 
 import scala.concurrent.Future
 
