@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.loopring.lightcone.actors";
+package org.loopring.lightcone.actors;
+
+message XXX {
+    bytes amount_s = 1;
+}

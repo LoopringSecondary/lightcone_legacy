@@ -31,7 +31,10 @@ lazy val actors = (project in file("actors"))
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Actors,
-    libraryDependencies += "org.loopring" %% "lightcone-core" % "0.1.1-SNAPSHOT")
+    libraryDependencies += "org.loopring" %% "lightcone-core" % "0.1.1-SNAPSHOT",
+    libraryDependencies ++= scalapbDependency,
+    PB.targets in Compile := Seq(
+      scalapb.gen() -> (sourceManaged in Compile).value))
 
 lazy val gateway = (project in file("gateway"))
   .enablePlugins(AutomateHeaderPlugin)
