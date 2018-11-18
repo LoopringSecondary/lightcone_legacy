@@ -9,9 +9,9 @@ object Dependencies {
 
   lazy val testDependency = Seq(
     "org.scalatest" %% "scalatest" % "3.0.5" % Test,
+    "org.scalamock" %% "scalamock" % "4.1.0" % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
-    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
-    "org.scalamock" %% "scalamock" % "4.1.0")
+    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test)
 
   lazy val commonDependency = Seq(
     "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -58,23 +58,27 @@ object Dependencies {
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion,
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf")
 
-  lazy val dependency4Biz = commonDependency ++
+  lazy val dependency4Aux = commonDependency ++
     driverDependency ++
     guiceDependency ++
+    testDependency
+
+  lazy val dependency4Core = commonDependency ++
+    ethereumDependency ++
     testDependency
 
   lazy val dependency4Lib = commonDependency ++
     ethereumDependency ++
     testDependency
 
-  lazy val dependency4Actors = dependency4Biz ++
+  lazy val dependency4Actors = dependency4Aux ++
     httpDependency ++
     akkaDependency ++
     json4sDependency ++
     testDependency ++
     Seq("org.jsoup" % "jsoup" % "1.11.3")
 
-  lazy val dependency4Gateway = dependency4Biz ++
+  lazy val dependency4Gateway = dependency4Aux ++
     httpDependency ++
     akkaDependency ++
     json4sDependency ++
