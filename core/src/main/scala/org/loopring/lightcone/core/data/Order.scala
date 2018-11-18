@@ -16,9 +16,8 @@
 
 package org.loopring.lightcone.core.data
 
-import org.loopring.lightcone.common.data._
 import org.loopring.lightcone.core.base._
-
+import org.loopring.lightcone.proto.core._
 import XOrderStatus._
 
 case class OrderState(

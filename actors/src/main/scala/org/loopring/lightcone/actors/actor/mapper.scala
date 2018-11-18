@@ -22,7 +22,7 @@ import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.core.MarketId
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.core.{ MarketId, ExpectedFill ⇒ CExpectedFill, Order ⇒ COrder, OrderState ⇒ COrderState, OrderStatus ⇒ COrderStatus, Ring ⇒ CRing }
+import org.loopring.lightcone.core.{ MarketId, ExpectedFill ⇒ CExpectedFill, Order ⇒ COrder, OrderState ⇒ COrderState, XOrderStatus ⇒ CXOrderStatus, Ring ⇒ CRing }
 
 package object actor {
   type Amount = BigInt
@@ -53,32 +53,32 @@ package object actor {
     Numeric.toHexString(market.toByteArray)
   }
 
-  implicit class RichOrderStatus(status: OrderStatus) {
-    def toPojo(): COrderStatus.Value = status match {
-      case OrderStatus.NEW ⇒ COrderStatus.NEW
-      case OrderStatus.PENDING ⇒ COrderStatus.PENDING
-      case OrderStatus.EXPIRED ⇒ COrderStatus.EXPIRED
-      case OrderStatus.CANCELLED_BY_USER ⇒ COrderStatus.CANCELLED_BY_USER
-      case OrderStatus.COMPLETELY_FILLED ⇒ COrderStatus.COMPLETELY_FILLED
-      case OrderStatus.CANCELLED_LOW_BALANCE ⇒ COrderStatus.CANCELLED_LOW_BALANCE
-      case OrderStatus.CANCELLED_LOW_FEE_BALANCE ⇒ COrderStatus.CANCELLED_LOW_FEE_BALANCE
-      case OrderStatus.CANCELLED_TOO_MANY_ORDERS ⇒ COrderStatus.CANCELLED_TOO_MANY_ORDERS
-      case OrderStatus.CANCELLED_TOO_MANY_FAILED_SETTLEMENTS ⇒ COrderStatus.CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
+  implicit class RichXOrderStatus(status: XOrderStatus) {
+    def toPojo(): CXOrderStatus.Value = status match {
+      case XOrderStatus.NEW ⇒ CXOrderStatus.NEW
+      case XOrderStatus.PENDING ⇒ CXOrderStatus.PENDING
+      case XOrderStatus.EXPIRED ⇒ CXOrderStatus.EXPIRED
+      case XOrderStatus.CANCELLED_BY_USER ⇒ CXOrderStatus.CANCELLED_BY_USER
+      case XOrderStatus.COMPLETELY_FILLED ⇒ CXOrderStatus.COMPLETELY_FILLED
+      case XOrderStatus.CANCELLED_LOW_BALANCE ⇒ CXOrderStatus.CANCELLED_LOW_BALANCE
+      case XOrderStatus.CANCELLED_LOW_FEE_BALANCE ⇒ CXOrderStatus.CANCELLED_LOW_FEE_BALANCE
+      case XOrderStatus.CANCELLED_TOO_MANY_ORDERS ⇒ CXOrderStatus.CANCELLED_TOO_MANY_ORDERS
+      case XOrderStatus.CANCELLED_TOO_MANY_FAILED_SETTLEMENTS ⇒ CXOrderStatus.CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
       case v ⇒ throw new IllegalArgumentException(s"$v not suppported")
     }
   }
 
-  implicit class RichCOrderStatus(status: COrderStatus.Value) {
-    def toProto(): OrderStatus = status match {
-      case COrderStatus.NEW ⇒ OrderStatus.NEW
-      case COrderStatus.PENDING ⇒ OrderStatus.PENDING
-      case COrderStatus.EXPIRED ⇒ OrderStatus.EXPIRED
-      case COrderStatus.COMPLETELY_FILLED ⇒ OrderStatus.COMPLETELY_FILLED
-      case COrderStatus.CANCELLED_BY_USER ⇒ OrderStatus.CANCELLED_BY_USER
-      case COrderStatus.CANCELLED_LOW_BALANCE ⇒ OrderStatus.CANCELLED_LOW_BALANCE
-      case COrderStatus.CANCELLED_LOW_FEE_BALANCE ⇒ OrderStatus.CANCELLED_LOW_FEE_BALANCE
-      case COrderStatus.CANCELLED_TOO_MANY_ORDERS ⇒ OrderStatus.CANCELLED_TOO_MANY_ORDERS
-      case COrderStatus.CANCELLED_TOO_MANY_FAILED_SETTLEMENTS ⇒ OrderStatus.CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
+  implicit class RichCXOrderStatus(status: CXOrderStatus.Value) {
+    def toProto(): XOrderStatus = status match {
+      case CXOrderStatus.NEW ⇒ XOrderStatus.NEW
+      case CXOrderStatus.PENDING ⇒ XOrderStatus.PENDING
+      case CXOrderStatus.EXPIRED ⇒ XOrderStatus.EXPIRED
+      case CXOrderStatus.COMPLETELY_FILLED ⇒ XOrderStatus.COMPLETELY_FILLED
+      case CXOrderStatus.CANCELLED_BY_USER ⇒ XOrderStatus.CANCELLED_BY_USER
+      case CXOrderStatus.CANCELLED_LOW_BALANCE ⇒ XOrderStatus.CANCELLED_LOW_BALANCE
+      case CXOrderStatus.CANCELLED_LOW_FEE_BALANCE ⇒ XOrderStatus.CANCELLED_LOW_FEE_BALANCE
+      case CXOrderStatus.CANCELLED_TOO_MANY_ORDERS ⇒ XOrderStatus.CANCELLED_TOO_MANY_ORDERS
+      case CXOrderStatus.CANCELLED_TOO_MANY_FAILED_SETTLEMENTS ⇒ XOrderStatus.CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
       case v ⇒ throw new IllegalArgumentException(s"$v not suppported")
     }
   }

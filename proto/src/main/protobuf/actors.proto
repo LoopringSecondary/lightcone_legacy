@@ -17,26 +17,14 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.actors.data;
+package org.loopring.lightcone.proto.actors;
 
-import "common.proto";
+import "core.proto";
 
 message OrderState {
     bytes amount_s = 1;
     bytes amount_b = 2;
     bytes amount_fee = 3;
-}
-
-enum OrderStatus {
-    NEW = 0;
-    PENDING = 1;
-    EXPIRED = 2;
-    COMPLETELY_FILLED = 3;
-    CANCELLED_BY_USER = 4;
-    CANCELLED_LOW_BALANCE = 5;
-    CANCELLED_LOW_FEE_BALANCE = 6;
-    CANCELLED_TOO_MANY_ORDERS = 7;
-    CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 8;
 }
 
 message Order {
@@ -48,7 +36,7 @@ message Order {
     bytes amount_b = 6;
     bytes amount_fee = 7;
     int64 created_at = 8;
-    OrderStatus status = 9;
+    core.XOrderStatus status = 9;
     double wallet_split_percentage = 10;
     OrderState outstanding = 11;
     OrderState reserved = 12;

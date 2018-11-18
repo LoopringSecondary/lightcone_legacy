@@ -21,7 +21,7 @@ import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
 import org.loopring.lightcone.actors.routing.Routers
-import org.loopring.lightcone.proto.actors.{ CancelOrderReq, CancelOrderRes, ErrorCode, GetBalanceAndAllowancesReq, GetBalanceAndAllowancesRes, OrderStatus, SubmitOrderReq, SubmitOrderRes, UpdateBalanceAndAllowanceReq, UpdateBalanceAndAllowanceRes, UpdateFilledAmountReq, UpdateFilledAmountRes }
+import org.loopring.lightcone.proto.actors.{ CancelOrderReq, CancelOrderRes, ErrorCode, GetBalanceAndAllowancesReq, GetBalanceAndAllowancesRes, XOrderStatus, SubmitOrderReq, SubmitOrderRes, UpdateBalanceAndAllowanceReq, UpdateBalanceAndAllowanceRes, UpdateFilledAmountReq, UpdateFilledAmountRes }
 import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
 import org.loopring.lightcone.proto.deployment.OrderManagerSettings
 import org.loopring.lightcone.actors.base
@@ -136,11 +136,11 @@ class OrderManagingActor(
     Routers.marketManagingActor ! SubmitOrderReq(Some(order.toProto()))
   }
 
-  implicit private def orderStatus2ErrorCode(status: OrderStatus): ErrorCode = status match {
-    case OrderStatus.CANCELLED_LOW_BALANCE ⇒ ErrorCode.LOW_BALANCE
-    case OrderStatus.CANCELLED_LOW_FEE_BALANCE ⇒ ErrorCode.LOW_FEE_BALANCE
-    case OrderStatus.CANCELLED_TOO_MANY_ORDERS ⇒ ErrorCode.TOO_MANY_ORDERS
-    case OrderStatus.CANCELLED_TOO_MANY_FAILED_SETTLEMENTS ⇒ ErrorCode.TOO_MANY_FAILED_MATCHES
+  implicit private def orderStatus2ErrorCode(status: XOrderStatus): ErrorCode = status match {
+    case XOrderStatus.CANCELLED_LOW_BALANCE ⇒ ErrorCode.LOW_BALANCE
+    case XOrderStatus.CANCELLED_LOW_FEE_BALANCE ⇒ ErrorCode.LOW_FEE_BALANCE
+    case XOrderStatus.CANCELLED_TOO_MANY_ORDERS ⇒ ErrorCode.TOO_MANY_ORDERS
+    case XOrderStatus.CANCELLED_TOO_MANY_FAILED_SETTLEMENTS ⇒ ErrorCode.TOO_MANY_FAILED_MATCHES
     case _ ⇒ ErrorCode.OK
   }
 }

@@ -16,10 +16,10 @@
 
 package org.loopring.lightcone.core.market
 
-import org.loopring.lightcone.common.data._
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.core.data.XMatchingFailure._
+import org.loopring.lightcone.proto.core._
 import org.slf4s.Logging
+import XMatchingFailure._
 
 class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
   extends RingMatcher with Logging {

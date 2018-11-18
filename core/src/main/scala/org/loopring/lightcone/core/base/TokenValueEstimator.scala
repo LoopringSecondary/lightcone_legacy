@@ -16,8 +16,8 @@
 
 package org.loopring.lightcone.core.base
 
-import org.loopring.lightcone.common.data._
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.proto.core._
 
 class TokenValueEstimator()(implicit tmm: TokenMetadataManager) {
   def getEstimatedValue(token: String, amount: BigInt): Double = {

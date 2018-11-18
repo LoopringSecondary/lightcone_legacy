@@ -20,7 +20,7 @@ import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.actors.routing.Routers
-import org.loopring.lightcone.proto.actors.{ OrderStatus ⇒ _, _ }
+import org.loopring.lightcone.proto.actors.{ XOrderStatus ⇒ _, _ }
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto.deployment.OrderBookManagerSettings
 import org.loopring.lightcone.actors.base
@@ -49,7 +49,7 @@ class MarketManagingActor(
   def receive() = LoggingReceive {
     case SubmitOrderReq(Some(order)) ⇒
       order.status match {
-        case OrderStatus.PENDING | OrderStatus.NEW ⇒
+        case XOrderStatus.PENDING | XOrderStatus.NEW ⇒
           val res = manager.submitOrder(order.toPojo)
           val rings = res.rings map (_.toProto)
           if (rings.nonEmpty) {
