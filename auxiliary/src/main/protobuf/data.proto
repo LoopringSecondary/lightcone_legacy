@@ -99,7 +99,7 @@ message XGetTokenTrendDataReq{
   string period = 2;
 }
 
-message TokenTickerInfo {
+message XTokenTickerInfo {
      int32 tokenId = 1;
     string name = 2;
     string symbol = 3;
