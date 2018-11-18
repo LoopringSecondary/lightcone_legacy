@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.biz.marketcap
+package org.loopring.lightcone.biz.service
 
-import org.loopring.lightcone.biz.data._
+import org.loopring.lightcone.biz.data.GetTokenListRes
+
 import scala.concurrent.Future
 
-trait ExchangeTickerService {
-  def saveOrUpdate(exchangeTickerInfo: ExchangeTickerInfo)
-  def queryExchangeTicker(symbol: String, market: String): Future[GetExchangeTickerInfoRes]
+trait TokenInfoService {
+  def queryTokenInfo(): Future[GetTokenListRes]
 }

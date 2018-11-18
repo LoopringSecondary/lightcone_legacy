@@ -22,7 +22,6 @@
             <pattern>%date{yyyy-MM-dd} %X{akkaTimestamp} %-5level[%-45thread] %-60X{akkaSource}[%-45logger{1}] - %msg%n</pattern>
         </encoder>
     </appender>
-
     <appender name="ERROR-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <filter class="org.loopring.lightcone.actors.utils.LogFilter" />
         <File>log/lightcone_error.log</File>
@@ -39,13 +38,11 @@
             <pattern>%date{yyyy-MM-dd} %X{akkaTimestamp} %-5level[%-45thread] %-60X{akkaSource}[%-45logger{1}] - %msg%n</pattern>
         </encoder>
     </appender>
-
-
-    <logger name="akka" level="INFO"/>
+    <logger name="akka" level="INFO" />
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE"/>
-        <appender-ref ref="ERROR-FILE"/>
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="ERROR-FILE" />
         <!-- <appender-ref ref="FILE-BACKUP"/> -->
     </root>
 </configuration>

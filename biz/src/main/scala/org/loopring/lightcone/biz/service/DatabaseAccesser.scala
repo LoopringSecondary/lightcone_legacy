@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.biz.marketcap
+package org.loopring.lightcone.biz.service
 
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.{ Slick, SlickSession }

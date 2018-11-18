@@ -24,7 +24,7 @@ import com.google.inject.Inject
 import org.loopring.lightcone.actors.base
 import org.loopring.lightcone.actors.marketcap.DatabaseAccesser
 import org.loopring.lightcone.actors.marketcap.{ CacherSettings, ProtoBufMessageCacher }
-import org.loopring.lightcone.biz.marketcap._
+import org.loopring.lightcone.biz.service._
 import org.loopring.lightcone.biz.data._
 import org.loopring.lightcone.proto.deployment.TokenIcoServiceSettings
 

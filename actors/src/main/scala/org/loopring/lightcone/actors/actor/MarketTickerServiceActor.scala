@@ -28,7 +28,7 @@ import com.google.inject.Inject
 import org.loopring.lightcone.actors.base
 import org.loopring.lightcone.actors.marketcap.{ CacherSettings, ProtoBufMessageCacher }
 import org.loopring.lightcone.proto.deployment.MarketTickerServiceSettings
-import org.loopring.lightcone.biz.marketcap._
+import org.loopring.lightcone.biz.service._
 
 object MarketTickerServiceActor
   extends base.Deployable[MarketTickerServiceSettings] {

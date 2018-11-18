@@ -26,7 +26,7 @@ import org.loopring.lightcone.actors.marketcap.DatabaseAccesser
 import org.loopring.lightcone.biz.data._
 import org.loopring.lightcone.actors.marketcap.{ CacherSettings, ProtoBufMessageCacher }
 import org.loopring.lightcone.proto.deployment.TokenInfoServiceSettings
-import org.loopring.lightcone.biz.marketcap._
+import org.loopring.lightcone.biz.service._
 import scala.concurrent.Future
 
 object TokenInfoServiceActor

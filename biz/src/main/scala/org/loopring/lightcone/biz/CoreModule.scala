@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import com.google.inject.{ AbstractModule, Provides, Singleton }
 import net.codingwell.scalaguice.ScalaModule
-import org.loopring.lightcone.biz.marketcap._
+import org.loopring.lightcone.biz.service._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 

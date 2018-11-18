@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.biz.marketcap
+package org.loopring.lightcone.biz.service
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer

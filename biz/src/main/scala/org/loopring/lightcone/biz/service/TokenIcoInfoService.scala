@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.biz.marketcap
+package org.loopring.lightcone.biz.service
 
-import org.loopring.lightcone.biz.data.GetTokenListRes
-
+import org.loopring.lightcone.biz.data._
 import scala.concurrent.Future
 
-trait TokenInfoService {
-  def queryTokenInfo(): Future[GetTokenListRes]
+trait TokenIcoInfoService {
+  def saveOrUpdate(iocInfo: TokenIcoInfo)
+  def queryTokenIcoInfo(): Future[GetTokenIcoInfoRes]
 }
+
