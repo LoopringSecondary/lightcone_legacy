@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import com.google.inject.Inject
-import org.loopring.lightcone.auxiliary.data.{ GetTokenTickerInfoRes, TokenTickerInfo }
+import org.loopring.lightcone.proto.auxiliary._
 
 import scala.concurrent.Future
 
@@ -34,7 +34,7 @@ class TokenTickerInfoServiceImpl @Inject() (
   import session.profile.api._
   import system.dispatcher
 
-  implicit val saveTokenTickerInfo = (info: TokenTickerInfo) ⇒
+  implicit val saveTokenTickerInfo = (info: XTokenTickerInfo) ⇒
     sqlu"""
     INSERT INTO t_token_ticker_info (
       token_id,
@@ -88,7 +88,7 @@ class TokenTickerInfoServiceImpl @Inject() (
     """
 
   implicit val toGetTokenTickerInfo = (r: ResultRow) ⇒
-    TokenTickerInfo(
+    XTokenTickerInfo(
       tokenId = r <<,
       name = r <<,
       symbol = r <<,
@@ -129,10 +129,10 @@ class TokenTickerInfoServiceImpl @Inject() (
     FROM t_token_ticker_info
     WHERE market = ${market}
     """
-      .list[TokenTickerInfo]
-      .map(GetTokenTickerInfoRes(_))
+      .list[XTokenTickerInfo]
+      .map(XGetTokenTickerInfoRes(_))
   }
 
-  def saveOrUpdate(tokenTicker: TokenTickerInfo) = saveOrUpdate(tokenTicker)
-  def batchSaveOrUpdate(seq: Seq[TokenTickerInfo]) = saveOrUpdate(seq: _*)
+  def saveOrUpdate(tokenTicker: XTokenTickerInfo) = saveOrUpdate(tokenTicker)
+  def batchSaveOrUpdate(seq: Seq[XTokenTickerInfo]) = saveOrUpdate(seq: _*)
 }

@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import com.google.inject.Inject
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
-import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.proto.auxiliary._
 
 import scala.concurrent.Future
 
@@ -35,8 +35,8 @@ class ExchangeTickerServiceImpl @Inject() (
   import session.profile.api._
   import system.dispatcher
 
-  private implicit lazy val saveExchangeTickerInfo =
-    (info: ExchangeTickerInfo) ⇒ sqlu"""
+  private implicit lazy val saveXExchangeTickerInfo =
+    (info: XExchangeTickerInfo) ⇒ sqlu"""
     INSERT INTO t_exchange_ticker_info (
       symbol,
       market,
@@ -75,8 +75,8 @@ class ExchangeTickerServiceImpl @Inject() (
       last_updated=${info.lastUpdated}
     """
 
-  private implicit lazy val toGetExchangeTickerInfo =
-    (r: ResultRow) ⇒ ExchangeTickerInfo(
+  private implicit lazy val toGetXExchangeTickerInfo =
+    (r: ResultRow) ⇒ XExchangeTickerInfo(
       symbol = r <<,
       market = r <<,
       exchange = r <<,
@@ -91,7 +91,7 @@ class ExchangeTickerServiceImpl @Inject() (
       lastUpdated = r <<
     )
 
-  def saveOrUpdate(info: ExchangeTickerInfo) = saveOrUpdate(info)
+  def saveOrUpdate(info: XExchangeTickerInfo) = saveOrUpdate(info)
 
   def queryExchangeTicker(symbol: String, market: String) = {
     sql"""
@@ -112,8 +112,8 @@ class ExchangeTickerServiceImpl @Inject() (
     WHERE symbol = ${symbol}
       AND market = ${market}
     """
-      .list[ExchangeTickerInfo]
-      .map(GetExchangeTickerInfoRes(_))
+      .list[XExchangeTickerInfo]
+      .map(XGetExchangeTickerInfoRes(_))
   }
 
 }

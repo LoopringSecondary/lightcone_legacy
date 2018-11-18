@@ -16,10 +16,10 @@
 
 package org.loopring.lightcone.auxiliary.service
 
-import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.proto.auxiliary._
 import scala.concurrent.Future
 
 trait ExchangeTickerService {
-  def saveOrUpdate(exchangeTickerInfo: ExchangeTickerInfo)
-  def queryExchangeTicker(symbol: String, market: String): Future[GetExchangeTickerInfoRes]
+  def saveOrUpdate(exchangeTickerInfo: XExchangeTickerInfo)
+  def queryExchangeTicker(symbol: String, market: String): Future[XGetExchangeTickerInfoRes]
 }

@@ -22,7 +22,7 @@ import org.loopring.lightcone.auxiliary.database.dals.QueryCondition
 import org.loopring.lightcone.auxiliary.database.entity.OrderEntity
 import org.loopring.lightcone.auxiliary.database.entity.OrderChangeLogEntity
 import org.loopring.lightcone.auxiliary.database.tables.Orders
-import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.proto.auxiliary._
 import org.loopring.lightcone.auxiliary.model._
 import slick.jdbc.JdbcProfile
 import slick.sql.FixedSqlAction
@@ -51,17 +51,17 @@ class OrderAccessorImpl @Inject() (val module: OrderDatabase)
     Order(rawOrder, broadcastTime = orderEntity.broadcastTime)
   }
 
-  override def saveOrder(order: Order): Future[OrderSaveResult] = {
+  override def saveOrder(order: Order): Future[XOrderSaveResult] = {
 
     if (order.rawOrder == null) {
-      return Future(OrderSaveResult.SUBMIT_FAILED)
+      return Future(XOrderSaveResult.SUBMIT_FAILED)
     }
 
     val getOrderRst = getOrderByHash(order.rawOrder.rawOrderEssential.hash)
     val optOrder = Await.result(getOrderRst, 10 seconds)
     println("get order by hash result is " + optOrder)
     if (optOrder.isDefined) {
-      return Future(OrderSaveResult.ORDER_EXIST)
+      return Future(XOrderSaveResult.ORDER_EXIST)
     }
 
     //TODO(xiaolu) add init method
@@ -77,8 +77,8 @@ class OrderAccessorImpl @Inject() (val module: OrderDatabase)
         // print log info
         //        println(e)
         // DBIO.failed(e)
-        DBIO.successful(OrderSaveResult.SUBMIT_FAILED)
-      case Success(_) ⇒ DBIO.successful(OrderSaveResult.SUBMIT_SUCCESS)
+        DBIO.successful(XOrderSaveResult.SUBMIT_FAILED)
+      case Success(_) ⇒ DBIO.successful(XOrderSaveResult.SUBMIT_SUCCESS)
     }
     module.db.run(withErrorHandling)
   }
@@ -134,25 +134,25 @@ class OrderAccessorImpl @Inject() (val module: OrderDatabase)
   def getSoftCancelOrdersAction(cancelOption: Option[CancelOrderOption]): Option[Query[Orders, OrderEntity, Seq]] = {
     val qc = cancelOption match {
       case Some(condition) ⇒ condition.cancelType match {
-        case SoftCancelType.BY_OWNER ⇒
+        case XSoftCancelType.BY_OWNER ⇒
           Some(QueryCondition(
             owner = Some(condition.owner),
-            status = Seq(OrderStatus.NEW.toString)
+            status = Seq(XOrderStatus.NEW.toString)
           ))
-        case SoftCancelType.BY_HASH ⇒
+        case XSoftCancelType.BY_HASH ⇒
           Some(QueryCondition(
             orderHashes = Seq(condition.hash),
-            status = Seq(OrderStatus.NEW.toString)
+            status = Seq(XOrderStatus.NEW.toString)
           ))
-        case SoftCancelType.BY_TIME ⇒
+        case XSoftCancelType.BY_TIME ⇒
           Some(QueryCondition(
             orderHashes = Seq(condition.hash)
           ))
-        case SoftCancelType.BY_MARKET ⇒
+        case XSoftCancelType.BY_MARKET ⇒
           Some(QueryCondition(
             owner = Some(condition.owner),
             market = Some(condition.market),
-            status = Seq(OrderStatus.NEW.toString)
+            status = Seq(XOrderStatus.NEW.toString)
           ))
         case _ ⇒ None
 
@@ -168,13 +168,13 @@ class OrderAccessorImpl @Inject() (val module: OrderDatabase)
 
   def getSoftCancelAction(condition: CancelOrderOption): FixedSqlAction[Int, NoStream, Write] =
     condition.cancelType match {
-      case SoftCancelType.BY_OWNER ⇒
+      case XSoftCancelType.BY_OWNER ⇒
         module.orders.softCancelByOwner(condition.owner)
-      case SoftCancelType.BY_HASH ⇒
+      case XSoftCancelType.BY_HASH ⇒
         module.orders.softCancelByHash(condition.hash)
-      case SoftCancelType.BY_TIME ⇒
+      case XSoftCancelType.BY_TIME ⇒
         module.orders.softCancelByTime(condition.owner, condition.cutoffTime)
-      case SoftCancelType.BY_MARKET ⇒
+      case XSoftCancelType.BY_MARKET ⇒
         module.orders.softCancelByHash(condition.hash)
       case m ⇒ throw new Exception(s"unknown CancelOrderOption $m")
     }

@@ -16,11 +16,11 @@
 
 package org.loopring.lightcone.auxiliary.service
 
-import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.proto.auxiliary._
 import scala.concurrent.Future
 
 trait TokenIcoInfoService {
-  def saveOrUpdate(iocInfo: TokenIcoInfo)
-  def queryTokenIcoInfo(): Future[GetTokenIcoInfoRes]
+  def saveOrUpdate(iocInfo: XTokenIcoInfo)
+  def queryXTokenIcoInfo(): Future[XGetTokenIcoInfoReq]
 }
 

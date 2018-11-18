@@ -16,11 +16,11 @@
 
 package org.loopring.lightcone.auxiliary.service
 
-import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.proto.auxiliary._
 import scala.concurrent.Future
 
 trait TokenTickerInfoService {
-  def saveOrUpdate(tokenTicker: TokenTickerInfo)
-  def batchSaveOrUpdate(seq: Seq[TokenTickerInfo])
-  def queryTokenTicker(market: String): Future[GetTokenTickerInfoRes]
+  def saveOrUpdate(tokenTicker: XTokenTickerInfo)
+  def batchSaveOrUpdate(seq: Seq[XTokenTickerInfo])
+  def queryTokenTicker(market: String): Future[XGetTokenTickerInfoRes]
 }

@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.auxiliary.order
 
-import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.proto.auxiliary._
 import org.loopring.lightcone.auxiliary.model._
 
 trait OrderWriteHelper {
@@ -25,7 +25,7 @@ trait OrderWriteHelper {
   def validateOrder(order: Order): ValidateResult
   def isOrderExist(order: Order): Boolean
   def getMarket(order: Order): String
-  def getSide(order: Order): MarketSide
+  def getSide(order: Order): XMarketSide
   def getPrice(order: Order): Double
   def validateSoftCancelSign(optSign: Option[SoftCancelSign]): ValidateResult
 }

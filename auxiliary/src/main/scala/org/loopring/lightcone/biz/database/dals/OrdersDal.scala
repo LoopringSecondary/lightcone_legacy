@@ -20,7 +20,7 @@ import org.loopring.lightcone.auxiliary.database.OrderDatabase
 import org.loopring.lightcone.auxiliary.database.base._
 import org.loopring.lightcone.auxiliary.database.entity.OrderEntity
 import org.loopring.lightcone.auxiliary.database.tables._
-import org.loopring.lightcone.auxiliary.data.OrderStatus
+import org.loopring.lightcone.proto.auxiliary.XOrderStatus
 import slick.dbio.Effect
 import slick.jdbc.MySQLProfile.api._
 import slick.sql.FixedSqlAction
@@ -97,34 +97,34 @@ class OrdersDalImpl(val module: OrderDatabase) extends OrdersDal {
     query
       .filter(_.owner === owner)
       .filter(_.market === market)
-      .filter(_.status === OrderStatus.NEW.toString)
+      .filter(_.status === XOrderStatus.NEW.toString)
       .map(o ⇒ (o.status, o.updatedAt))
-      .update(OrderStatus.CANCELLED_BY_USER.toString, System.currentTimeMillis / 1000)
+      .update(XOrderStatus.CANCELLED_BY_USER.toString, System.currentTimeMillis / 1000)
   }
 
   def softCancelByOwner(owner: String): FixedSqlAction[Int, NoStream, Effect.Write] = {
     query
       .filter(_.owner === owner)
-      .filter(_.status === OrderStatus.NEW.toString)
+      .filter(_.status === XOrderStatus.NEW.toString)
       .map(o ⇒ (o.status, o.updatedAt))
-      .update(OrderStatus.CANCELLED_BY_USER.toString, System.currentTimeMillis / 1000)
+      .update(XOrderStatus.CANCELLED_BY_USER.toString, System.currentTimeMillis / 1000)
   }
 
   def softCancelByTime(owner: String, cutoff: Long): FixedSqlAction[Int, NoStream, Effect.Write] = {
     query
       .filter(_.owner === owner)
       .filter(_.validUntil >= cutoff)
-      .filter(_.status === OrderStatus.NEW.toString)
+      .filter(_.status === XOrderStatus.NEW.toString)
       .map(o ⇒ (o.status, o.updatedAt))
-      .update(OrderStatus.CANCELLED_BY_USER.toString, System.currentTimeMillis / 1000)
+      .update(XOrderStatus.CANCELLED_BY_USER.toString, System.currentTimeMillis / 1000)
   }
 
   def softCancelByHash(orderHash: String): FixedSqlAction[Int, NoStream, Effect.Write] = {
     query
       .filter(_.hash === orderHash)
-      .filter(_.status === OrderStatus.NEW.toString)
+      .filter(_.status === XOrderStatus.NEW.toString)
       .map(o ⇒ (o.status, o.updatedAt))
-      .update(OrderStatus.CANCELLED_BY_USER.toString, System.currentTimeMillis / 1000)
+      .update(XOrderStatus.CANCELLED_BY_USER.toString, System.currentTimeMillis / 1000)
   }
 
   override def unwrapCondition(condition: QueryCondition): Query[Orders, OrderEntity, Seq] = {

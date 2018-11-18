@@ -16,13 +16,13 @@
 
 package org.loopring.lightcone.auxiliary.order
 
-import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.proto.auxiliary._
 import org.loopring.lightcone.auxiliary.model._
 
 import scala.concurrent.Future
 
 trait OrderAccessor {
-  def saveOrder(order: Order): Future[OrderSaveResult]
+  def saveOrder(order: Order): Future[XOrderSaveResult]
 
   def getOrderByHash(orderHash: String): Future[Option[Order]]
 

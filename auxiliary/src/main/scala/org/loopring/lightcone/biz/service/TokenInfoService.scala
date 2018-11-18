@@ -16,10 +16,10 @@
 
 package org.loopring.lightcone.auxiliary.service
 
-import org.loopring.lightcone.auxiliary.data.GetTokenListRes
+import org.loopring.lightcone.proto.auxiliary.XGetTokenListRes
 
 import scala.concurrent.Future
 
 trait TokenInfoService {
-  def queryTokenInfo(): Future[GetTokenListRes]
+  def queryTokenInfo(): Future[XGetTokenListRes]
 }
