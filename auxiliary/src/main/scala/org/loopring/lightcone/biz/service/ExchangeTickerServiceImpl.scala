@@ -113,7 +113,7 @@ class ExchangeTickerServiceImpl @Inject() (
       AND market = ${market}
     """
       .list[XExchangeTickerInfo]
-      .map(XGetXExchangeTickerInfoRes(_))
+      .map(XGetExchangeTickerInfoRes(_))
   }
 
 }

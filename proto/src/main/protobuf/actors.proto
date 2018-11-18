@@ -21,13 +21,13 @@ package org.loopring.lightcone.proto.actors;
 
 import "core.proto";
 
-message OrderState {
+message XOrderState {
     bytes amount_s = 1;
     bytes amount_b = 2;
     bytes amount_fee = 3;
 }
 
-message Order {
+message XOrder {
     string id = 1;
     string token_s = 2;
     string token_b = 3;
@@ -38,26 +38,26 @@ message Order {
     int64 created_at = 8;
     core.XOrderStatus status = 9;
     double wallet_split_percentage = 10;
-    OrderState outstanding = 11;
-    OrderState reserved = 12;
-    OrderState actual = 13;
-    OrderState matchable = 14;
+    XOrderState outstanding = 11;
+    XOrderState reserved = 12;
+    XOrderState actual = 13;
+    XOrderState matchable = 14;
 }
 
-message ExpectedFill {
-    Order order = 1;
-    OrderState pending = 2;
+message XExpectedFill {
+    XOrder order = 1;
+    XOrderState pending = 2;
     bytes amount_margin = 3;
 }
 
-message Ring {
-    ExpectedFill maker = 1;
-    ExpectedFill taker = 2;
+message XRing {
+    XExpectedFill maker = 1;
+    XExpectedFill taker = 2;
 }
 
 ///////////////////
 
-enum ErrorCode {
+enum XErrorCode {
     OK = 0;
     ORDER_NOT_EXIST = 1;
     ORDER_INVALID_AMOUNT_S = 2;
@@ -84,12 +84,12 @@ message GetBalanceAndAllowancesRes {
 }
 
 message SubmitOrderReq {
-    Order order = 1;
+    XOrder order = 1;
 }
 
 message SubmitOrderRes {
-    ErrorCode error = 1;
-    Order order = 2;
+    XErrorCode error = 1;
+    XOrder order = 2;
 }
 
 // 由ethereum发送给orderManagingActor
@@ -103,7 +103,7 @@ message CancelOrderReq {
 message CancelOrderRes {
     string id = 1;
     bool hard_cancel = 2; // 默认软取消
-    ErrorCode error = 3;
+    XErrorCode error = 3;
 }
 
 message UpdateFilledAmountReq {
@@ -112,7 +112,7 @@ message UpdateFilledAmountReq {
 }
 
 message UpdateFilledAmountRes {
-    ErrorCode error = 1;
+    XErrorCode error = 1;
 }
 
 message GetFilledAmountReq {
@@ -130,7 +130,7 @@ message UpdateBalanceAndAllowanceReq {
 }
 
 message UpdateBalanceAndAllowanceRes {
-    ErrorCode error = 1;
+    XErrorCode error = 1;
     BalanceAndAllowance balance_and_allowance = 2;
 }
 
@@ -149,7 +149,7 @@ enum ExecutedStatus {
 }
 
 message RingExecutedRes {
-    Ring ring = 1;
+    XRing ring = 1;
     string tx_hash = 2;
     ExecutedStatus status = 3;
     bytes used_gas = 4;
@@ -163,6 +163,6 @@ message SendRawTransactionRes {
 }
 
 message SubmitRingReq {
-  repeated Ring rings = 1;
+  repeated XRing rings = 1;
 }
 

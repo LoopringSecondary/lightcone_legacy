@@ -105,15 +105,15 @@ message XGetTokenTickerInfoRes {
    repeated XTokenTickerInfo list = 1;
 }
 
-message XGetXExchangeTickerInfoReq{
+message XGetExchangeTickerInfoReq{
    string marketPair = 1;
 }
 
-message XGetXExchangeTickerInfoRes {
+message XGetExchangeTickerInfoRes {
    repeated XExchangeTickerInfo list = 1;
 }
 
-message XGetXTokenTrendDataReq{
+message XGetTokenTrendDataReq{
   string symbol = 1;
   string period = 2;
 }

@@ -21,5 +21,5 @@ import scala.concurrent.Future
 
 trait ExchangeTickerService {
   def saveOrUpdate(exchangeTickerInfo: XExchangeTickerInfo)
-  def queryExchangeTicker(symbol: String, market: String): Future[XGetXExchangeTickerInfoRes]
+  def queryExchangeTicker(symbol: String, market: String): Future[XGetExchangeTickerInfoRes]
 }
