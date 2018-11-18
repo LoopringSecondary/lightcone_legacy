@@ -79,14 +79,14 @@ class TokenTickerCrawlerActor(tokenTickerServiceActor: ActorRef)(
       val fixGroup = result.grouped(20)
       fixGroup.foreach {
         group ⇒
-          tokenTickerServiceActor ! convertTO(group)
+          tokenTickerServiceActor ! convertTo(group)
       }
 
       //todo 待cmc会员充值开通后，单独获取cny的ticker可以去掉
       Thread.sleep(50)
       getTokenTickers("CNY").foreach {
         _.grouped(100).foreach {
-          batch ⇒ tokenTickerServiceActor ! convertTO(batch)
+          batch ⇒ tokenTickerServiceActor ! convertTo(batch)
         }
       }
 
@@ -106,7 +106,7 @@ class TokenTickerCrawlerActor(tokenTickerServiceActor: ActorRef)(
   }
 
   //找到市场代币对USD的priceQuote
-  def getMarketUSDQuote(tickers: Seq[XCMCTickerData]): Seq[(String, Quote)] = {
+  def getMarketUSDQuote(tickers: Seq[XCMCTickerData]): Seq[(String, XQuote)] = {
     markets.map { s ⇒
       val priceQuote = tickers.find(_.symbol == s).flatMap(_.quote.get("USD"))
       require(priceQuote.isDefined, s"can not found ${s} / USD")
@@ -118,7 +118,7 @@ class TokenTickerCrawlerActor(tokenTickerServiceActor: ActorRef)(
   lazy val markets = Seq("LRC", "ETH", "TUSD", "USDT")
 
   //锚定市场币的priceQuote换算
-  def convertQuote(tokenQuote: Quote, marketQuote: Quote): Quote = {
+  def convertQuote(tokenQuote: XQuote, marketQuote: XQuote): XQuote = {
     val price = toDouble(BigDecimal(tokenQuote.price / marketQuote.price))
     val volume_24h = toDouble(BigDecimal(tokenQuote.volume24H / tokenQuote.price) * price)
     val market_cap = toDouble(BigDecimal(tokenQuote.marketCap / tokenQuote.price) * price)
@@ -126,10 +126,10 @@ class TokenTickerCrawlerActor(tokenTickerServiceActor: ActorRef)(
     val percent_change_24h = BigDecimal(1 + tokenQuote.percentChange24H) / BigDecimal(1 + marketQuote.percentChange24H) - 1
     val percent_change_7d = BigDecimal(1 + tokenQuote.percentChange7D) / BigDecimal(1 + marketQuote.percentChange7D) - 1
     val last_updated = marketQuote.lastUpdated
-    Quote(price, volume_24h, toDouble(percent_change_1h), toDouble(percent_change_24h), toDouble(percent_change_7d), toDouble(market_cap), last_updated)
+    XQuote(price, volume_24h, toDouble(percent_change_1h), toDouble(percent_change_24h), toDouble(percent_change_7d), toDouble(market_cap), last_updated)
   }
 
-  def convertTO(tickers: Seq[XCMCTickerData]): SeqTpro = {
+  def convertTo(tickers: Seq[XCMCTickerData]): SeqTpro = {
     val f = tickers.flatMap {
       ticker ⇒
         val id = ticker.id

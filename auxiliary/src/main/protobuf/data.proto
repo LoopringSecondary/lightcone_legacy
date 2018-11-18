@@ -6,8 +6,8 @@ package org.loopring.lightcone.proto;
 
 // TODO(xiaolu/xuyun): 有的数据定义应该放到父结构中，不应作为顶层数据结构
 enum XMarketSide {
-    SELL =0;
-    BUY = 1;
+  SELL =0;
+  BUY = 1;
 }
 
 enum XOrderSaveResult {
@@ -46,23 +46,23 @@ enum XSoftCancelType {
 
 
 message XTokenInfo {
-    string protocol = 1;
-    bool deny = 2;
-    bool isMarket = 3;
-    string symbol = 4;
-    string source = 5;
-    int32 decimals = 6;
+  string protocol = 1;
+  bool deny = 2;
+  bool isMarket = 3;
+  string symbol = 4;
+  string source = 5;
+  int32 decimals = 6;
 }
 
 message XTokenIcoInfo {
-    string tokenAddress = 1;
-    string icoStartDate = 2;
-    string icoEndDate = 3;
-    string hardCap = 4;
-    string softCap = 5;
-    string tokenRaised = 6;
-    string icoPrice = 7;
-    string country = 8;
+  string tokenAddress = 1;
+  string icoStartDate = 2;
+  string icoEndDate = 3;
+  string hardCap = 4;
+  string softCap = 5;
+  string tokenRaised = 6;
+  string icoPrice = 7;
+  string country = 8;
 }
 
 // for token list
@@ -110,13 +110,13 @@ message XTokenTickerInfo {
   double circulatingSupply = 7;
   double totalSupply = 8;
   double maxSupply = 9;
-    double price = 10;
-    double volume24h = 11;
-    double marketCap = 12;
-    double percentChange1h = 13;
-    double percentChange24h = 14;
-    double percentChange7d = 15;
-     int64 lastUpdated = 16;
+  double price = 10;
+  double volume24h = 11;
+  double marketCap = 12;
+  double percentChange1h = 13;
+  double percentChange24h = 14;
+  double percentChange7d = 15;
+  int64 lastUpdated = 16;
 }
 
 message XCMCTickerData {
@@ -131,10 +131,10 @@ message XCMCTickerData {
   int32 num_market_pairs = 9;
   int32 cmc_rank = 10;
   string last_updated = 11;
-  map<string, Quote> quote = 12;
+  map<string, XQuote> quote = 12;
 }
 
-message Quote {
+message XQuote {
   double price = 1;
   double volume_24h = 2;
   double percent_change_1h = 3;
@@ -158,43 +158,43 @@ message XTickerDataInfo {
 }
 
 message XExchangeTickerInfo {
- string symbol = 1;
- string market = 2;
- string exchange = 3;
- double price = 4;
- double priceUsd = 5;
- double priceCny = 6;
- double volume24hUsd = 7;
- double volume24hFrom = 8;
- double volume24h = 9;
- double percentChangeUtc0 = 10;
- string alias = 11;
- int64 lastUpdated = 12;
+  string symbol = 1;
+  string market = 2;
+  string exchange = 3;
+  double price = 4;
+  double priceUsd = 5;
+  double priceCny = 6;
+  double volume24hUsd = 7;
+  double volume24hFrom = 8;
+  double volume24h = 9;
+  double percentChangeUtc0 = 10;
+  string alias = 11;
+  int64 lastUpdated = 12;
 }
 
 message XMarketPair {
-string market_name = 1;
-string symbol = 2;
-string anchor = 3;
-string price = 4;
-string price_cny = 5;
-string price_usd = 6;
-string volume_24h_usd = 7;
-string volume_24h = 8;
-string volume_24h_from = 9;
-string percent_change_utc0 = 10;
-string alias = 11;
+  string market_name = 1;
+  string symbol = 2;
+  string anchor = 3;
+  string price = 4;
+  string price_cny = 5;
+  string price_usd = 6;
+  string volume_24h_usd = 7;
+  string volume_24h = 8;
+  string volume_24h_from = 9;
+  string percent_change_utc0 = 10;
+  string alias = 11;
 }
 
 message XMarketPairData {
-repeated XMarketPair market_list = 1;
+  repeated XMarketPair market_list = 1;
 }
 
 message MarketTickData {
-int32 code = 1;
-string message = 2;
-int64 timestamp = 3;
-XMarketPairData data = 4;
+  int32 code = 1;
+  string message = 2;
+  int64 timestamp = 3;
+  XMarketPairData data = 4;
 }
 
 message XTokenTrendData {
