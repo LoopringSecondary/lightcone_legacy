@@ -87,6 +87,8 @@ class MarketTickerCrawlerActor(
 
           marketTickData.data.foreach {
             _.marketList.foreach {
+              // TODO()：不要展开，用：
+              // case pair: XMarketPair =>
               case XMarketPair(exchange, symbol, market,
                 price, priceCny, priceUsd,
                 volume24hUsd, volume24h, volume24hFrom,

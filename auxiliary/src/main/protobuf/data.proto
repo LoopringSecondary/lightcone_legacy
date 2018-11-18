@@ -67,7 +67,6 @@ message XTokenIcoInfo {
 
 // for token list
 message XGetTokenListReq {
-
 }
 
 message XGetTokenListRes {
@@ -172,6 +171,9 @@ message XExchangeTickerInfo {
   int64 lastUpdated = 12;
 }
 
+// TODO(xuyun): move XMarketPair inside MarketTickData
+// and change `XMarketPairData data = 4;` to
+// `repeated XMarketPair market_list = 4;`
 message XMarketPair {
   string market_name = 1;
   string symbol = 2;
