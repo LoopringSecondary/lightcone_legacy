@@ -2,4 +2,4 @@
 
 ## About
 
-Only common data structures shared among multiple sub-projects should be put here.
+All messages and enum should be start with an "X"!!!
