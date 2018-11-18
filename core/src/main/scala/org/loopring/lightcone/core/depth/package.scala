@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.core
 
+import org.loopring.lightcone.common.data._
 import org.loopring.lightcone.core.data._
 
 package object depth {

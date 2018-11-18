@@ -19,6 +19,8 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.actors.data;
 
+import "common.proto";
+
 message OrderState {
     bytes amount_s = 1;
     bytes amount_b = 2;

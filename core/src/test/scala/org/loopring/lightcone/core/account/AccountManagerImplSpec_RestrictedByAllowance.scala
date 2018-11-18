@@ -17,6 +17,7 @@
 package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.core.OrderAwareSpec
+import org.loopring.lightcone.common.data._
 import org.loopring.lightcone.core.data._
 import org.scalatest._
 

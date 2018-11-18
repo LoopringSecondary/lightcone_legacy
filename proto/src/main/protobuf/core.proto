@@ -19,6 +19,8 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.core.data;
 
+import "common.proto";
+
 enum XMatchingFailure {
     NO_ERROR = 0;
     ORDERS_NOT_TRADABLE = 1;
@@ -29,33 +31,8 @@ enum XMatchingFailure {
     INVALID_TAKER_ORDER = 6;
 }
 
-enum XOrderStatus {
-    NEW = 0;
-    PENDING = 1;
-    EXPIRED = 2;
-    DUST_ORDER = 3;
-    PARTIALLY_FILLED = 4;
-    COMPLETELY_FILLED = 5; // 完全成交
-    INVALID_DATA = 6;
-    UNSUPPORTED_MARKET = 7;
-    CANCELLED_BY_USER = 8;
-    CANCELLED_LOW_BALANCE = 9;
-    CANCELLED_LOW_FEE_BALANCE = 10;
-    CANCELLED_TOO_MANY_ORDERS = 11;
-    CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 12;
-}
-
 
 // For ABC/XYZ market, ABC is secondary, XYZ is primary
-message XMarketId {
-    string primary = 1;
-    string secondary = 2;
-}
-
-message XMarketManagerConfig {
-    int32 maxNumbersOfOrders = 1;
-    int32 priceDecimals = 2;
-}
 
 message MarketMetadata {
     int32 numBuys = 1;

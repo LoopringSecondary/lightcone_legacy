@@ -17,6 +17,7 @@
 package org.loopring.lightcone.auxiliary.order
 
 import com.google.inject.Inject
+import org.loopring.lightcone.common.data._
 import org.loopring.lightcone.auxiliary.data._
 import org.loopring.lightcone.auxiliary.model._
 
