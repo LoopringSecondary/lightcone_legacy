@@ -25,7 +25,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.loopring.lightcone.actors.marketcap.HttpConnector
 import org.loopring.lightcone.actors.marketcap.SeqTpro
-import org.loopring.lightcone.biz.data._
+import org.loopring.lightcone.auxiliary.data._
 import scalapb.json4s.{ Parser }
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._

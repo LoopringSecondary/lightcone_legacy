@@ -21,7 +21,7 @@ import akka.cluster.Cluster
 import com.google.inject.name.Named
 import com.google.inject.{ AbstractModule, Inject, Provides }
 import net.codingwell.scalaguice.ScalaModule
-import org.loopring.lightcone.biz
+import org.loopring.lightcone.auxiliary
 import org.loopring.lightcone.core._
 //import akka.cluster._
 import akka.stream.ActorMaterializer
@@ -101,7 +101,7 @@ class CoreModule(config: Config)
     implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimatorImpl
     bind[DustOrderEvaluator].toInstance(new DustOrderEvaluatorImpl(0))
 
-    install(new biz.CoreModule)
+    install(new auxiliary.CoreModule)
   }
 
   //  @Provides

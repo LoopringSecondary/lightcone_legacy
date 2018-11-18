@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.auxiliary.mapper
 
-import org.loopring.lightcone.auxiliary.data.TokenTickerInfo
+import language.experimental.macros
 
-package object marketcap {
-
-  type Bytes = Array[Byte]
-
-  type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
-
-  case class SeqTpro(seq: Seq[TokenTickerInfo])
+object Macros {
+  def objMapper[A, B](): ObjMapper[A, B] = macro MacrosImpl.objMapperImpl[A, B]
 }

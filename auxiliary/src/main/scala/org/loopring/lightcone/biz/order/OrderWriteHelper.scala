@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.auxiliary.order
 
-import org.loopring.lightcone.auxiliary.data.TokenTickerInfo
+import org.loopring.lightcone.auxiliary.data._
+import org.loopring.lightcone.auxiliary.model._
 
-package object marketcap {
-
-  type Bytes = Array[Byte]
-
-  type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
-
-  case class SeqTpro(seq: Seq[TokenTickerInfo])
+trait OrderWriteHelper {
+  def generateHash(order: Order): String
+  def fillInOrder(order: Order): Order
+  def validateOrder(order: Order): ValidateResult
+  def isOrderExist(order: Order): Boolean
+  def getMarket(order: Order): String
+  def getSide(order: Order): MarketSide
+  def getPrice(order: Order): Double
+  def validateSoftCancelSign(optSign: Option[SoftCancelSign]): ValidateResult
 }

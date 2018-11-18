@@ -20,7 +20,7 @@ import akka.actor.{ Actor, ActorRef, Timers }
 import akka.pattern.{ ask }
 import akka.util.Timeout
 import org.jsoup.Jsoup
-import org.loopring.lightcone.biz.data._
+import org.loopring.lightcone.auxiliary.data._
 
 import scala.concurrent.duration._
 

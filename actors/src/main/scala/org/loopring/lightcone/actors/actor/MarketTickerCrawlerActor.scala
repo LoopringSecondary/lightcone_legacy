@@ -21,7 +21,7 @@ import akka.http.scaladsl.model.{ HttpMethods, HttpRequest, HttpResponse, Status
 import akka.util.Timeout
 import akka.stream.ActorMaterializer
 import org.loopring.lightcone.actors.marketcap.HttpConnector
-import org.loopring.lightcone.biz.data._
+import org.loopring.lightcone.auxiliary.data._
 import org.loopring.lightcone.actors.marketcap.SignatureUtil
 
 import scala.concurrent.Future

@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.auxiliary.order
 
-import org.loopring.lightcone.auxiliary.data.TokenTickerInfo
+import org.loopring.lightcone.auxiliary.model.Order
 
-package object marketcap {
+case class ValidateResult(pass: Boolean = false, rejectReason: String = "")
 
-  type Bytes = Array[Byte]
-
-  type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
-
-  case class SeqTpro(seq: Seq[TokenTickerInfo])
+trait OrderValidator {
+  def validate(order: Order): ValidateResult
 }
