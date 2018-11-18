@@ -29,17 +29,33 @@ class TokenInfoServiceImpl @Inject() (
     system: ActorSystem,
     mat: ActorMaterializer,
     session: SlickSession
-) extends DatabaseAccesser with TokenInfoService {
+) extends DatabaseAccesser
+  with TokenInfoService {
   import system.dispatcher
   import session.profile.api._
 
-  implicit val toTokenInfo = (r: ResultRow) ⇒
-    TokenInfo(protocol = r <<, deny = r <<, isMarket = r <<, symbol = r <<, source = r <<, decimals = r <<)
+  implicit val toTokenInfo = (r: ResultRow) ⇒ TokenInfo(
+    protocol = r <<,
+    deny = r <<,
+    isMarket = r <<,
+    symbol = r <<,
+    source = r <<,
+    decimals = r <<
+  )
 
   override def queryTokenInfo(): Future[GetTokenListRes] = {
-    sql"""select protocol,deny,is_market,symbol,source,decimals
-              from t_token_info
-          """.list[TokenInfo].map(GetTokenListRes(_))
+    sql"""
+    SELECT
+      protocol,
+      deny,
+      is_market,
+      symbol,
+      source,
+      decimals
+    FROM t_token_info
+    """
+      .list[TokenInfo]
+      .map(GetTokenListRes(_))
   }
 
 }

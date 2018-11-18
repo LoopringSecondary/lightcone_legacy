@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import com.google.inject.Inject
-import org.loopring.lightcone.biz.data.{ GetTokenIcoInfoRes, TokenIcoInfo }
+import org.loopring.lightcone.biz.data._
 
 import scala.concurrent.Future
 
@@ -29,31 +29,71 @@ class TokenIcoInfoServiceImpl @Inject() (
     system: ActorSystem,
     mat: ActorMaterializer,
     session: SlickSession
-) extends DatabaseAccesser with TokenIcoInfoService {
+) extends DatabaseAccesser
+  with TokenIcoInfoService {
 
   import session.profile.api._
   import system.dispatcher
 
-  implicit val saveTokenIcoInfo = (info: TokenIcoInfo) ⇒
-    sqlu"""INSERT INTO t_token_ico_info(token_address, ico_start_date,
-          ico_end_date, hard_cap, soft_cap, token_raised, ico_price, from_country) VALUES(
-          ${info.tokenAddress}, ${info.icoStartDate}, ${info.icoEndDate}, ${info.hardCap},
-          ${info.softCap}, ${info.tokenRaised}, ${info.icoPrice}, ${info.country}) ON DUPLICATE KEY UPDATE ico_start_date=${info.icoStartDate},
-          ico_end_date=${info.icoEndDate},hard_cap=${info.hardCap},soft_cap=${info.softCap},token_raised=${info.tokenRaised},
-          ico_price=${info.icoPrice},from_country=${info.country}"""
+  private implicit lazy val saveTokenIcoInfo =
+    (info: TokenIcoInfo) ⇒ sqlu"""
+    INSERT INTO t_token_ico_info (
+      token_address,
+      ico_start_date,
+      ico_end_date,
+      hard_cap,
+      soft_cap,
+      token_raised,
+      ico_price,
+      from_country
+    ) VALUES (
+      ${info.tokenAddress},
+      ${info.icoStartDate},
+      ${info.icoEndDate},
+      ${info.hardCap},
+      ${info.softCap},
+      ${info.tokenRaised},
+      ${info.icoPrice},
+      ${info.country}
+    ) ON DUPLICATE KEY UPDATE
+      ico_start_date=${info.icoStartDate},
+      ico_end_date=${info.icoEndDate},
+      hard_cap=${info.hardCap},
+      soft_cap=${info.softCap},
+      token_raised=${info.tokenRaised},
+      ico_price=${info.icoPrice},
+      from_country=${info.country}
+    """
 
-  implicit val toGetTokenIcoInfo = (r: ResultRow) ⇒
-    TokenIcoInfo(tokenAddress = r <<, icoStartDate = r <<, icoEndDate = r <<,
-      hardCap = r <<, softCap = r <<, tokenRaised = r <<, icoPrice = r <<, country = r <<)
+  private implicit lazy val toGetTokenIcoInfo =
+    (r: ResultRow) ⇒ TokenIcoInfo(
+      tokenAddress = r <<,
+      icoStartDate = r <<,
+      icoEndDate = r <<,
+      hardCap = r <<,
+      softCap = r <<,
+      tokenRaised = r <<,
+      icoPrice = r <<,
+      country = r <<
+    )
 
-  override def saveOrUpdate(iocInfo: TokenIcoInfo) = {
-    saveOrUpdate(iocInfo)
-  }
+  def saveOrUpdate(iocInfo: TokenIcoInfo) = saveOrUpdate(iocInfo)
 
-  override def queryTokenIcoInfo(): Future[GetTokenIcoInfoRes] = {
-    sql"""SELECT token_address, ico_start_date, ico_end_date, hard_cap, soft_cap, token_raised,ico_price, from_country
-             from t_token_ico_info
-          """.list[TokenIcoInfo].map(GetTokenIcoInfoRes(_))
+  override def queryTokenIcoInfo() = {
+    sql"""
+    SELECT
+      token_address,
+      ico_start_date,
+      ico_end_date,
+      hard_cap,
+      soft_cap,
+      token_raised,
+      ico_price,
+      from_country
+    FROM t_token_ico_info
+    """
+      .list[TokenIcoInfo]
+      .map(GetTokenIcoInfoRes(_))
   }
 
 }

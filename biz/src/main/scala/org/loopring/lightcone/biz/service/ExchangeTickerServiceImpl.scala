@@ -37,7 +37,7 @@ class ExchangeTickerServiceImpl @Inject() (
 
   private implicit lazy val saveExchangeTickerInfo =
     (info: ExchangeTickerInfo) ⇒ sqlu"""
-    INSERT INTO t_exchange_ticker_info(
+    INSERT INTO t_exchange_ticker_info (
       symbol,
       market,
       exchange,
@@ -50,13 +50,13 @@ class ExchangeTickerServiceImpl @Inject() (
       percent_change_utc0,
       alias,
       last_updated
-    ) VALUES(
+    ) VALUES (
       ${info.symbol},
       ${info.market},
       ${info.exchange},
       ${info.price},
-      ${info.priceUsd}, 
-      ${info.priceCny}, 
+      ${info.priceUsd},
+      ${info.priceCny},
       ${info.volume24HUsd},
       ${info.volume24H},
       ${info.volume24HFrom},
@@ -93,12 +93,9 @@ class ExchangeTickerServiceImpl @Inject() (
 
   def saveOrUpdate(info: ExchangeTickerInfo) = saveOrUpdate(info)
 
-  def queryExchangeTicker(
-    symbol: String,
-    market: String
-  ): Future[GetExchangeTickerInfoRes] = {
+  def queryExchangeTicker(symbol: String, market: String) = {
     sql"""
-    select
+    SELECT
       symbol,
       market,
       exchange,
@@ -111,9 +108,9 @@ class ExchangeTickerServiceImpl @Inject() (
       percent_change_utc0,
       alias,
       last_updated
-      from t_exchange_ticker_info
-      where symbol = ${symbol}
-      and market = ${market}
+    FROM t_exchange_ticker_info
+    WHERE symbol = ${symbol}
+      AND market = ${market}
     """
       .list[ExchangeTickerInfo]
       .map(GetExchangeTickerInfoRes(_))
