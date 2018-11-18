@@ -16,14 +16,15 @@
 
 package org.loopring.lightcone.biz.mapper
 
-trait ObjMapper[TFrom, TTo] {
-  def mapValue(obj: TFrom): TTo
+// Maps a value from the type A to B
+trait ObjMapper[A, B] {
+  def mapValue(obj: A): B
 }
+
 object ObjMapper {
-  /** Maps a value from the type TFrom to TTo
-   */
+
   @inline
-  def mapValue[TFrom, TTo](obj: TFrom)(implicit mapper: ObjMapper[TFrom, TTo]): TTo = {
+  def mapValue[A, B](obj: A)(implicit mapper: ObjMapper[A, B]): B = {
     mapper.mapValue(obj)
   }
 }

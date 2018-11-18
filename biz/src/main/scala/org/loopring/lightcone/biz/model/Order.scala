@@ -16,11 +16,24 @@
 
 package org.loopring.lightcone.biz.model
 
-import org.loopring.lightcone.biz.data._
+import org.loopring.lightcone.biz.data.{ OrderStatus, OrderType, _ }
 
-case class OrderQuery(statuses: Seq[OrderStatus], owner: String, market: String, hashes: Seq[String], sideOpt: Option[MarketSide], orderTypeOpt: Option[OrderType])
+case class OrderQuery(
+    statuses: Seq[OrderStatus],
+    owner: String,
+    market: String,
+    hashes: Seq[String],
+    sideOpt: Option[MarketSide],
+    orderTypeOpt: Option[OrderType]
+)
 
-case class CancelOrderOption(hash: String, cutoffTime: Long, market: String, cancelType: SoftCancelType, owner: String)
+case class CancelOrderOption(
+    hash: String,
+    cutoffTime: Long,
+    market: String,
+    cancelType: SoftCancelType,
+    owner: String
+)
 
 case class Order(
     var rawOrder: RawOrder = RawOrder(),
@@ -64,7 +77,6 @@ case class RawOrderEssential(
     wallet: String = "",
     validUntil: Long = 0,
     allOrNone: Boolean = false,
-
     feeToken: String = "",
     feeAmount: String = "",
     feePercentage: Int = 0,
@@ -75,3 +87,10 @@ case class RawOrderEssential(
     hash: String = ""
 )
 
+case class SoftCancelSign(
+    timestamp: Long,
+    v: Int,
+    r: String,
+    s: String,
+    owner: String
+)

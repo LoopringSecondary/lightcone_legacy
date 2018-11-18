@@ -27,7 +27,7 @@ import slick.jdbc.JdbcProfile
 class CoreModule extends AbstractModule with ScalaModule {
 
   override def configure(): Unit = {
-
+    // TODO(xiaolu): enable Redis-cache for these services
     bind[ExchangeTickerService].to[ExchangeTickerServiceImpl]
     bind[TokenIcoInfoService].to[TokenIcoInfoServiceImpl]
     bind[TokenInfoService].to[TokenInfoServiceImpl]

@@ -17,17 +17,20 @@
 package org.loopring.lightcone.biz.mapper
 
 import language.experimental.macros
-
-import reflect.macros.Context
+import scala.reflect.macros.blackbox.Context
 
 object MacrosImpl {
 
-  private def mkHelper[TFrom: c.WeakTypeTag, TTo: c.WeakTypeTag](c: Context) = new Helper[c.type, TFrom, TTo](c) {
+  private def mkHelper[TFrom: c.WeakTypeTag, TTo: c.WeakTypeTag](
+    c: Context
+  ) = new Helper[c.type, TFrom, TTo](c) {
     val fromType = c.weakTypeOf[TFrom]
     val toType = c.weakTypeOf[TTo]
   }
 
-  def objMapperImpl[TFrom: c.WeakTypeTag, TTo: c.WeakTypeTag](c: Context)(): c.Expr[ObjMapper[TFrom, TTo]] = {
+  def objMapperImpl[TFrom: c.WeakTypeTag, TTo: c.WeakTypeTag](
+    c: Context
+  )(): c.Expr[ObjMapper[TFrom, TTo]] = {
     import c.universe._
     val helper = mkHelper[TFrom, TTo](c)
     //    helper.checkSubSuperSet
@@ -48,19 +51,18 @@ private abstract class Helper[C <: Context, TFrom, TTo](val c: C) {
   import c.universe._
 
   protected def fromType: c.Type
-
   protected def toType: c.Type
 
   private def fromTypeName = fromType.typeSymbol.name
-
   private def toTypeName = toType.typeSymbol.name
 
-  private def toCompanion = toType.typeSymbol.companionSymbol
+  private def toCompanion = toType.typeSymbol.companion
 
   private def toApplyMethod: MethodSymbol = {
-    val applySymbol = toCompanion.typeSignature.declaration(newTermName("apply")) match {
-      case NoSymbol ⇒ c.abort(c.enclosingPosition, s"No apply function found for $toTypeName")
-      case s        ⇒ s
+    val applySymbol = toCompanion.typeSignature.decl(TermName("apply")) match {
+      case NoSymbol ⇒
+        c.abort(c.enclosingPosition, s"No apply function found for $toTypeName")
+      case s ⇒ s
     }
     applySymbol.asMethod
   }
@@ -74,21 +76,24 @@ private abstract class Helper[C <: Context, TFrom, TTo](val c: C) {
 
     // select the apply method from the companion object
     // we need the tree which you would've typed yourself, we cant just use the methodSymbol (for some reason)
-    val constructorTree: Tree = Select(Ident(newTermName(toCompanion.name.toString)), newTermName("apply"))
+    val constructorTree: Tree = Select(
+      Ident(TermName(toCompanion.name.toString)),
+      TermName("apply")
+    )
 
     // The list of trees will pass as arguments to the constructor
     val values: List[Tree] = {
       // we only support constructors with 1 parameterlist, this is already checked in checkSuperSet
-      val params: List[Symbol] = cTor.paramss.head
+      val params: List[Symbol] = cTor.paramLists.head
 
       // a reference to the TFrom object
-      val obj = Ident(newTermName("obj"))
+      val obj = Ident(TermName("obj"))
 
       // for each of the parameters to TTo.apply, make a tree that Selects the values with the same name
       // from the TFrom object
       params.map {
         param ⇒
-          Select(obj, newTermName(param.name.toString))
+          Select(obj, TermName(param.name.toString))
       }
     }
 
@@ -103,10 +108,13 @@ private abstract class Helper[C <: Context, TFrom, TTo](val c: C) {
   /** Get the first parameter list from the constructor of a case class
    */
   private def caseClassParams(typ: c.Type): List[Symbol] = {
-    val cTor = typ.declaration(nme.CONSTRUCTOR).asMethod
-    if (cTor.paramss.size != 1)
-      c.abort(c.enclosingPosition, "ObjMapper only supports case classes with 1 parameter list")
-    cTor.paramss.head
+    val cTor = typ.decl(termNames.CONSTRUCTOR).asMethod
+    if (cTor.paramLists.size != 1)
+      c.abort(
+        c.enclosingPosition,
+        "ObjMapper only supports case classes with 1 parameter list"
+      )
+    cTor.paramLists.head
   }
 
   /** Checks whether TTo is a subset of TFrom
@@ -123,14 +131,18 @@ private abstract class Helper[C <: Context, TFrom, TTo](val c: C) {
       toParam ⇒
         val hasFromBrother = fromParams.exists {
           fromParam ⇒
-            toParam.name.equals(fromParam.name) && toParam.typeSignature.equals(fromParam.typeSignature)
+            toParam.name.equals(fromParam.name) &&
+              toParam.typeSignature.equals(fromParam.typeSignature)
         }
         !hasFromBrother
     }
 
     if (!wrongProperties.isEmpty) {
       val wrongPropertieNames = wrongProperties.map(_.name).mkString(",")
-      c.abort(c.enclosingPosition, s"Could not create ObjMapper[$fromTypeName, $toTypeName], properties from $toTypeName don't match: ${wrongPropertieNames}")
+      c.abort(
+        c.enclosingPosition,
+        s"Could not create ObjMapper[$fromTypeName, $toTypeName], properties from $toTypeName don't match: ${wrongPropertieNames}"
+      )
     }
   }
 }

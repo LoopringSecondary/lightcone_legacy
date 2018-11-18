@@ -25,9 +25,11 @@ import org.loopring.lightcone.biz.data.{ GetTokenTickerInfoRes, TokenTickerInfo 
 import scala.concurrent.Future
 
 class TokenTickerInfoServiceImpl @Inject() (
-  implicit system: ActorSystem,
-  mat: ActorMaterializer,
-  session: SlickSession) extends DatabaseAccesser
+    implicit
+    system: ActorSystem,
+    mat: ActorMaterializer,
+    session: SlickSession
+) extends DatabaseAccesser
   with TokenTickerInfoService {
   import session.profile.api._
   import system.dispatcher
@@ -102,7 +104,8 @@ class TokenTickerInfoServiceImpl @Inject() (
       percentChange1H = r <<,
       percentChange24H = r <<,
       percentChange7D = r <<,
-      lastUpdated = r <<)
+      lastUpdated = r <<
+    )
 
   def queryTokenTicker(market: String) = {
     sql"""

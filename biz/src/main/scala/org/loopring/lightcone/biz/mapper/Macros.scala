@@ -19,7 +19,5 @@ package org.loopring.lightcone.biz.mapper
 import language.experimental.macros
 
 object Macros {
-
-  def objMapper[TFrom, TTo](): ObjMapper[TFrom, TTo] = macro MacrosImpl.objMapperImpl[TFrom, TTo]
-
+  def objMapper[A, B](): ObjMapper[A, B] = macro MacrosImpl.objMapperImpl[A, B]
 }
