@@ -20,7 +20,7 @@ import org.loopring.lightcone.auxiliary.database.OrderDatabase
 import org.loopring.lightcone.auxiliary.database.base._
 import org.loopring.lightcone.auxiliary.database.entity.OrderEntity
 import org.loopring.lightcone.auxiliary.database.tables._
-import org.loopring.lightcone.auxiliary.data.XOrderStatus
+import org.loopring.lightcone.proto.auxiliary.XOrderStatus
 import slick.dbio.Effect
 import slick.jdbc.MySQLProfile.api._
 import slick.sql.FixedSqlAction
