@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import com.google.inject.Inject
-import org.loopring.lightcone.proto.{ XGetTokenListRes, XTokenInfo }
+import org.loopring.lightcone.auxiliary.data._
 
 import scala.concurrent.Future
 

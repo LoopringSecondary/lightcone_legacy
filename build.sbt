@@ -12,7 +12,7 @@ lazy val proto = (project in file("proto"))
   .settings(
     libraryDependencies ++= scalapbDependency,
     PB.targets in Compile := Seq(
-      scalapb.gen() -> (sourceManaged in Compile).value))
+      scalapb.gen(flatPackage = true) -> (sourceManaged in Compile).value))
 
 lazy val auxiliary = (project in file("auxiliary"))
   .enablePlugins(JavaAppPackaging)
@@ -21,10 +21,7 @@ lazy val auxiliary = (project in file("auxiliary"))
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Biz,
-    libraryDependencies ++= scalapbDependency,
-    PB.targets in Compile := Seq(
-      scalapb.gen(flatPackage = true) -> (sourceManaged in Compile).value))
-// flatPackage
+    libraryDependencies ++= scalapbDependency)
 
 lazy val actors = (project in file("actors"))
   .enablePlugins(AutomateHeaderPlugin)
