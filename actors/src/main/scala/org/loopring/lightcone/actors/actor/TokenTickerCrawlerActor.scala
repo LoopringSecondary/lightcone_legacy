@@ -93,7 +93,7 @@ class TokenTickerCrawlerActor(tokenTickerServiceActor: ActorRef)(
   }
 
   //获取cmc's token对锚定币convertCurrency的价格
-  def getTokenTickers(convertCurrency: String): Future[Seq[CMCTickerData]] = {
+  def getTokenTickers(convertCurrency: String): Future[Seq[XCMCTickerData]] = {
     val uri = s"/v1/cryptocurrency/listings/latest?start=1&limit=${limitSize}&convert=${convertCurrency}"
     get(HttpRequest(uri = uri, method = HttpMethods.GET).withHeaders(rawHeader)) {
       case HttpResponse(StatusCodes.OK, _, entity, _) ⇒
@@ -101,12 +101,12 @@ class TokenTickerCrawlerActor(tokenTickerServiceActor: ActorRef)(
 
       case _ ⇒
         log.error("get ticker data from coinmarketcap failed")
-        Future.successful(Seq[CMCTickerData]())
+        Future.successful(Seq[XCMCTickerData]())
     }
   }
 
   //找到市场代币对USD的priceQuote
-  def getMarketUSDQuote(tickers: Seq[CMCTickerData]): Seq[(String, Quote)] = {
+  def getMarketUSDQuote(tickers: Seq[XCMCTickerData]): Seq[(String, Quote)] = {
     markets.map { s ⇒
       val priceQuote = tickers.find(_.symbol == s).flatMap(_.quote.get("USD"))
       require(priceQuote.isDefined, s"can not found ${s} / USD")
@@ -129,7 +129,7 @@ class TokenTickerCrawlerActor(tokenTickerServiceActor: ActorRef)(
     Quote(price, volume_24h, toDouble(percent_change_1h), toDouble(percent_change_24h), toDouble(percent_change_7d), toDouble(market_cap), last_updated)
   }
 
-  def convertTO(tickers: Seq[CMCTickerData]): SeqTpro = {
+  def convertTO(tickers: Seq[XCMCTickerData]): SeqTpro = {
     val f = tickers.flatMap {
       ticker ⇒
         val id = ticker.id

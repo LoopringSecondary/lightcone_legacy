@@ -118,42 +118,42 @@ message XTokenTickerInfo {
      int64 lastUpdated = 16;
 }
 
-message CMCTickerData {
- int32 id = 1;
- string name = 2;
- string symbol = 3;
- string slug = 4;
- double circulating_supply = 5;
- double total_supply = 6;
- double max_supply = 7;
- string date_added = 8;
+message XCMCTickerData {
+  int32 id = 1;
+  string name = 2;
+  string symbol = 3;
+  string slug = 4;
+  double circulating_supply = 5;
+  double total_supply = 6;
+  double max_supply = 7;
+  string date_added = 8;
   int32 num_market_pairs = 9;
   int32 cmc_rank = 10;
- string last_updated = 11;
- map<string, Quote> quote = 12;
+  string last_updated = 11;
+  map<string, Quote> quote = 12;
 }
 
 message Quote {
- double price = 1;
- double volume_24h = 2;
- double percent_change_1h = 3;
- double percent_change_24h = 4;
- double percent_change_7d = 5;
- double market_cap = 6;
- string last_updated = 7;
+  double price = 1;
+  double volume_24h = 2;
+  double percent_change_1h = 3;
+  double percent_change_24h = 4;
+  double percent_change_7d = 5;
+  double market_cap = 6;
+  string last_updated = 7;
 }
 
-message TickerStatus {
- string timestamp = 1;
- int32 error_code  = 2;
- string error_message = 3;
- int32 elapsed = 4;
- int32 credit_count = 5;
+message XTickerStatus {
+  string timestamp = 1;
+  int32 error_code  = 2;
+  string error_message = 3;
+  int32 elapsed = 4;
+  int32 credit_count = 5;
 }
 
 message TickerDataInfo {
-TickerStatus status = 1;
-repeated CMCTickerData data = 2;
+  XTickerStatus status = 1;
+  repeated XCMCTickerData data = 2;
 }
 
 message ExchangeTickerInfo {
