@@ -38,7 +38,7 @@ object TokenIcoServiceActor
     base.CommonSettings(None, s.roles, s.instances)
 }
 
-class TokenIcoServiceActor @Inject() (service: TokenIcoInfoService)(
+class TokenIcoServiceActor @Inject() (service: XTokenIcoInfoService)(
     implicit
     system: ActorSystem,
     mat: ActorMaterializer,
@@ -49,18 +49,17 @@ class TokenIcoServiceActor @Inject() (service: TokenIcoInfoService)(
 
   implicit val settings = CacherSettings(system.settings.config)
 
-  val cacherTokenIcoInfo = new ProtoBufMessageCacher[GetTokenIcoInfoRes]
+  val cacherXTokenIcoInfo = new ProtoBufMessageCacher[GetXTokenIcoInfoRes]
   val tokenIcoInfoKey = "TOKEN_ICO_KEY"
 
   override def receive: Receive = {
-    case info: TokenIcoInfo ⇒
-
+    case info: XTokenIcoInfo ⇒
       service.saveOrUpdate(info)
 
-    case req: GetTokenIcoInfoReq ⇒
+    case req: GetXTokenIcoInfoReq ⇒
       //优先查询缓存，缓存没有再查询数据表并存入缓存
-      val res = cacherTokenIcoInfo.getOrElse(tokenIcoInfoKey, Some(600)) {
-        val resp: Future[GetTokenIcoInfoRes] = service.queryTokenIcoInfo()
+      val res = cacherXTokenIcoInfo.getOrElse(tokenIcoInfoKey, Some(600)) {
+        val resp: Future[GetXTokenIcoInfoRes] = service.queryXTokenIcoInfo()
         resp.map(Some(_))
       }
 

@@ -30,6 +30,7 @@ import scalapb.json4s.Parser
 
 import scala.concurrent.duration._
 
+// TODO(xiaolu): This actor should be initialized in a different system.
 class MarketTickerCrawlerActor(
     marketTickerServiceActor: ActorRef,
     tokenInfoServiceActor: ActorRef
@@ -64,7 +65,7 @@ class MarketTickerCrawlerActor(
       }
   }
 
-  private def crawlMarketPairTicker(tokenInfo: TokenInfo): Unit = {
+  private def crawlMarketPairTicker(tokenInfo: XTokenInfo): Unit = {
 
     val (name_id, symbol, anchor) = if (tokenInfo.symbol == "ETH" || tokenInfo.symbol == "WETH") {
       ("ethereum", "eth", "usd")

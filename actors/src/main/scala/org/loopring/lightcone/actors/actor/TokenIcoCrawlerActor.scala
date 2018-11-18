@@ -36,7 +36,7 @@ class TokenIcoCrawlerActor(
 
   override def preStart(): Unit = {
     //daliy schedule token's ico info
-    timers.startPeriodicTimer("cronSyncTokenIcoInfo", "syncTokenIcoInfo", 24 hours)
+    timers.startPeriodicTimer("cronSyncXTokenIcoInfo", "syncXTokenIcoInfo", 24 hours)
   }
 
   override def receive: Receive = {
@@ -44,12 +44,12 @@ class TokenIcoCrawlerActor(
       val f = (tokenInfoServiceActor ? GetTokenListReq()).mapTo[GetTokenListRes]
       f.foreach {
         _.list.foreach { tokenInfo ⇒
-          crawlTokenIcoInfo(tokenInfo.protocol)
+          crawlXTokenIcoInfo(tokenInfo.protocol)
         }
       }
   }
 
-  private def crawlTokenIcoInfo(tokenAddress: String): Unit = {
+  private def crawlXTokenIcoInfo(tokenAddress: String): Unit = {
     import collection.JavaConverters._
 
     val doc = get(s"https://etherscan.io/token/$tokenAddress#tokenInfo")
@@ -69,7 +69,7 @@ class TokenIcoCrawlerActor(
       val icoPrice = tdsMap.get("ICO Price").getOrElse("")
       val country = tdsMap.get("Country").getOrElse("")
 
-      val tokenIcoInfo = TokenIcoInfo(
+      val tokenIcoInfo = XTokenIcoInfo(
         tokenAddress = tokenAddress,
         icoStartDate = icoStartDate,
         icoEndDate = icoEndDate,

@@ -29,7 +29,7 @@ class CoreModule extends AbstractModule with ScalaModule {
   override def configure(): Unit = {
     // TODO(xiaolu): enable Redis-cache for these services
     bind[ExchangeTickerService].to[ExchangeTickerServiceImpl]
-    bind[TokenIcoInfoService].to[TokenIcoInfoServiceImpl]
+    bind[XTokenIcoInfoService].to[XTokenIcoInfoServiceImpl]
     bind[TokenInfoService].to[TokenInfoServiceImpl]
     bind[TokenTickerInfoService].to[TokenTickerInfoServiceImpl]
   }

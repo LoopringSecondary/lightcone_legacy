@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.auxiliary.model
 
-import org.loopring.lightcone.proto.auxiliary.{ XOrderStatus, OrderType, _ }
+import org.loopring.lightcone.proto.auxiliary.{ XOrderStatus, XOrderType, _ }
 
 case class OrderQuery(
     statuses: Seq[XOrderStatus],
@@ -24,14 +24,14 @@ case class OrderQuery(
     market: String,
     hashes: Seq[String],
     sideOpt: Option[XMarketSide],
-    orderTypeOpt: Option[OrderType]
+    orderTypeOpt: Option[XOrderType]
 )
 
 case class CancelOrderOption(
     hash: String,
     cutoffTime: Long,
     market: String,
-    cancelType: SoftCancelType,
+    cancelType: XSoftCancelType,
     owner: String
 )
 

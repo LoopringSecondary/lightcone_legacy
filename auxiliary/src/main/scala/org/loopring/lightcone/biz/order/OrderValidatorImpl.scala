@@ -64,7 +64,7 @@ class OrderValidatorImpl @Inject() (config: Config) extends OrderValidator {
       // case o if isProtocolMatched =>  PROTOCOL_AND_DELEGATE_ADDRESS_NOT_MATCH
       // market order must apply auth private key
       //todo:
-      //      case o if o.orderType == OrderType.MARKET && o.rawOrder.get.dualPrivateKey.isEmpty ⇒ MARKET_ORDER_MUST_HAVE_PRIVATE_KEY
+      //      case o if o.orderType == XOrderType.MARKET && o.rawOrder.get.dualPrivateKey.isEmpty ⇒ MARKET_ORDER_MUST_HAVE_PRIVATE_KEY
       //TODO(xiaolu) token s min amount check, need apply token amount convert method
       //      case o if (o.rawOrder.get.amountS).toBigInt < validateConfig.minAmountS[o.rawOrder.get.TokenS] =>
       //TODO(xiaolu) token s and token b if in the supported token list

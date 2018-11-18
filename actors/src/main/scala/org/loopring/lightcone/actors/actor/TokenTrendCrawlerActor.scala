@@ -70,7 +70,7 @@ class TokenTrendCrawlerActor(tokenInfoServiceActor: ActorRef)(
       }
   }
 
-  private def crawlTokenTrendData(tokenInfo: TokenInfo): Unit = {
+  private def crawlTokenTrendData(tokenInfo: XTokenInfo): Unit = {
 
     val symbol = tokenInfo.symbol
 

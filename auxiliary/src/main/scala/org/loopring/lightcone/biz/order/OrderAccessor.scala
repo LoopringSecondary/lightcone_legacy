@@ -22,7 +22,7 @@ import org.loopring.lightcone.auxiliary.model._
 import scala.concurrent.Future
 
 trait OrderAccessor {
-  def saveOrder(order: Order): Future[OrderSaveResult]
+  def saveOrder(order: Order): Future[XOrderSaveResult]
 
   def getOrderByHash(orderHash: String): Future[Option[Order]]
 

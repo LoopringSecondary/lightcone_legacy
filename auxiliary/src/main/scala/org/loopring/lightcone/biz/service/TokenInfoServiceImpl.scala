@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import com.google.inject.Inject
-import org.loopring.lightcone.proto.auxiliary.{ GetTokenListRes, TokenInfo }
+import org.loopring.lightcone.proto.auxiliary.{ GetTokenListRes, XTokenInfo }
 
 import scala.concurrent.Future
 
@@ -34,7 +34,7 @@ class TokenInfoServiceImpl @Inject() (
   import system.dispatcher
   import session.profile.api._
 
-  implicit val toTokenInfo = (r: ResultRow) ⇒ TokenInfo(
+  implicit val toTokenInfo = (r: ResultRow) ⇒ XTokenInfo(
     protocol = r <<,
     deny = r <<,
     isMarket = r <<,
@@ -54,7 +54,7 @@ class TokenInfoServiceImpl @Inject() (
       decimals
     FROM t_token_info
     """
-      .list[TokenInfo]
+      .list[XTokenInfo]
       .map(GetTokenListRes(_))
   }
 

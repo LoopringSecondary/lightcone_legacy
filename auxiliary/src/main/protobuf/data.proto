@@ -9,7 +9,7 @@ enum XMarketSide {
     BUY = 1;
 }
 
-enum OrderSaveResult {
+enum XOrderSaveResult {
   SUBMIT_SUCCESS = 0;
   SUBMIT_FAILED = 1;
   ORDER_EXIST = 2;
@@ -27,13 +27,13 @@ enum XOrderStatus {
   CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 8;
 }
 
-enum OrderType {
+enum XOrderType {
   UNKNOWN = 0;
   MARKET = 1;
   P2P = 2;
 }
 
-enum SoftCancelType {
+enum XSoftCancelType {
   BY_HASH= 0;
   BY_OWNER= 1;
   BY_TIME= 2;
@@ -44,7 +44,7 @@ enum SoftCancelType {
 //////////
 
 
-message TokenInfo {
+message XTokenInfo {
     string protocol = 1;
     bool deny = 2;
     bool isMarket = 3;
@@ -53,7 +53,7 @@ message TokenInfo {
     int32 decimals = 6;
 }
 
-message TokenIcoInfo {
+message XTokenIcoInfo {
     string tokenAddress = 1;
     string icoStartDate = 2;
     string icoEndDate = 3;
@@ -70,15 +70,15 @@ message GetTokenListReq {
 }
 
 message GetTokenListRes {
-   repeated TokenInfo list = 1;
+   repeated XTokenInfo list = 1;
 }
 
-message GetTokenIcoInfoReq {
+message GetXTokenIcoInfoReq {
 
 }
 
-message GetTokenIcoInfoRes {
-   repeated TokenIcoInfo list = 1;
+message GetXTokenIcoInfoRes {
+   repeated XTokenIcoInfo list = 1;
 }
 
 message GetTokenTickerInfoReq{

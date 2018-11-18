@@ -19,8 +19,8 @@ package org.loopring.lightcone.auxiliary.service
 import org.loopring.lightcone.proto.auxiliary._
 import scala.concurrent.Future
 
-trait TokenIcoInfoService {
-  def saveOrUpdate(iocInfo: TokenIcoInfo)
-  def queryTokenIcoInfo(): Future[GetTokenIcoInfoRes]
+trait XTokenIcoInfoService {
+  def saveOrUpdate(iocInfo: XTokenIcoInfo)
+  def queryXTokenIcoInfo(): Future[GetXTokenIcoInfoRes]
 }
 

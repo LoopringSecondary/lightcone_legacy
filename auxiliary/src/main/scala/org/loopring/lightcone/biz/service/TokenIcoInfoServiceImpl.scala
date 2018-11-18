@@ -24,19 +24,19 @@ import org.loopring.lightcone.proto.auxiliary._
 
 import scala.concurrent.Future
 
-class TokenIcoInfoServiceImpl @Inject() (
+class XTokenIcoInfoServiceImpl @Inject() (
     implicit
     system: ActorSystem,
     mat: ActorMaterializer,
     session: SlickSession
 ) extends DatabaseAccesser
-  with TokenIcoInfoService {
+  with XTokenIcoInfoService {
 
   import session.profile.api._
   import system.dispatcher
 
-  private implicit lazy val saveTokenIcoInfo =
-    (info: TokenIcoInfo) ⇒ sqlu"""
+  private implicit lazy val saveXTokenIcoInfo =
+    (info: XTokenIcoInfo) ⇒ sqlu"""
     INSERT INTO t_token_ico_info (
       token_address,
       ico_start_date,
@@ -65,8 +65,8 @@ class TokenIcoInfoServiceImpl @Inject() (
       from_country=${info.country}
     """
 
-  private implicit lazy val toGetTokenIcoInfo =
-    (r: ResultRow) ⇒ TokenIcoInfo(
+  private implicit lazy val toGetXTokenIcoInfo =
+    (r: ResultRow) ⇒ XTokenIcoInfo(
       tokenAddress = r <<,
       icoStartDate = r <<,
       icoEndDate = r <<,
@@ -77,9 +77,9 @@ class TokenIcoInfoServiceImpl @Inject() (
       country = r <<
     )
 
-  def saveOrUpdate(iocInfo: TokenIcoInfo) = saveOrUpdate(iocInfo)
+  def saveOrUpdate(iocInfo: XTokenIcoInfo) = saveOrUpdate(iocInfo)
 
-  override def queryTokenIcoInfo() = {
+  override def queryXTokenIcoInfo() = {
     sql"""
     SELECT
       token_address,
@@ -92,8 +92,8 @@ class TokenIcoInfoServiceImpl @Inject() (
       from_country
     FROM t_token_ico_info
     """
-      .list[TokenIcoInfo]
-      .map(GetTokenIcoInfoRes(_))
+      .list[XTokenIcoInfo]
+      .map(GetXTokenIcoInfoRes(_))
   }
 
 }
