@@ -48,22 +48,22 @@ class MarketTickerServiceActor @Inject() (service: ExchangeTickerService)(
   import system.dispatcher
   implicit val settings = CacherSettings(system.settings.config)
 
-  val cacherExchangeTickerInfo = new ProtoBufMessageCacher[XGetExchangeTickerInfoRes]
+  val cacherXExchangeTickerInfo = new ProtoBufMessageCacher[XGetXExchangeTickerInfoRes]
   val exchangeTickerInfoKey = "EXCHANGE_TICKER_INFO_"
 
   override def receive: Receive = {
-    case info: ExchangeTickerInfo ⇒
+    case info: XExchangeTickerInfo ⇒
 
       service.saveOrUpdate(info)
 
-    case req: XGetExchangeTickerInfoReq ⇒
+    case req: XGetXExchangeTickerInfoReq ⇒
       //入参
       val symbol = req.marketPair.split("-")(0)
       val market = req.marketPair.split("-")(1)
 
       //优先查询缓存，缓存没有再查询数据表并存入缓存
-      val res = cacherExchangeTickerInfo.getOrElse(buildCacheKey(symbol, market), Some(600)) {
-        val resp: Future[XGetExchangeTickerInfoRes] = service.queryExchangeTicker(symbol, market)
+      val res = cacherXExchangeTickerInfo.getOrElse(buildCacheKey(symbol, market), Some(600)) {
+        val resp: Future[XGetXExchangeTickerInfoRes] = service.queryExchangeTicker(symbol, market)
         resp.map(Some(_))
       }
 

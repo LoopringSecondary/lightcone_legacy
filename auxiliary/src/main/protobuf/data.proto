@@ -4,6 +4,7 @@ option java_multiple_files = true;
 option java_package = "org.loopring.lightcone.proto";
 package org.loopring.lightcone.proto;
 
+// TODO(xiaolu/xuyun): 有的数据定义应该放到父结构中，不应作为顶层数据结构
 enum XMarketSide {
     SELL =0;
     BUY = 1;
@@ -86,29 +87,29 @@ message XGetTokenTickerInfoRes {
    repeated XTokenTickerInfo list = 1;
 }
 
-message XGetExchangeTickerInfoReq{
+message XGetXExchangeTickerInfoReq{
    string marketPair = 1;
 }
 
-message XGetExchangeTickerInfoRes {
-   repeated ExchangeTickerInfo list = 1;
+message XGetXExchangeTickerInfoRes {
+   repeated XExchangeTickerInfo list = 1;
 }
 
-message XGetTokenTrendDataReq{
+message XGetXTokenTrendDataReq{
   string symbol = 1;
   string period = 2;
 }
 
 message XTokenTickerInfo {
-     int32 tokenId = 1;
-    string name = 2;
-    string symbol = 3;
-    string websiteSlug = 4;
-    string market= 5;
-     int32 rank = 6;
-    double circulatingSupply = 7;
-    double totalSupply = 8;
-    double maxSupply = 9;
+  int32 tokenId = 1;
+  string name = 2;
+  string symbol = 3;
+  string websiteSlug = 4;
+  string market= 5;
+  int32 rank = 6;
+  double circulatingSupply = 7;
+  double totalSupply = 8;
+  double maxSupply = 9;
     double price = 10;
     double volume24h = 11;
     double marketCap = 12;
@@ -151,12 +152,12 @@ message XTickerStatus {
   int32 credit_count = 5;
 }
 
-message TickerDataInfo {
+message XTickerDataInfo {
   XTickerStatus status = 1;
   repeated XCMCTickerData data = 2;
 }
 
-message ExchangeTickerInfo {
+message XExchangeTickerInfo {
  string symbol = 1;
  string market = 2;
  string exchange = 3;
@@ -169,9 +170,9 @@ message ExchangeTickerInfo {
  double percentChangeUtc0 = 10;
  string alias = 11;
  int64 lastUpdated = 12;
- }
+}
 
-message MarketPair {
+message XMarketPair {
 string market_name = 1;
 string symbol = 2;
 string anchor = 3;
@@ -185,29 +186,30 @@ string percent_change_utc0 = 10;
 string alias = 11;
 }
 
-message PairData {
-repeated MarketPair market_list = 1;
+message XMarketPairData {
+repeated XMarketPair market_list = 1;
 }
 
 message MarketTickData {
 int32 code = 1;
 string message = 2;
 int64 timestamp = 3;
-PairData data = 4;
+XMarketPairData data = 4;
 }
 
-message TokenTrendData {
-int32 code = 1;
-string message = 2;
-TrendData data = 3;
+message XTokenTrendData {
+  int32 code = 1;
+  string message = 2;
+  XTrendData data = 3;
+
+  message XTrendData {
+    repeated XTrend trend = 1;
+  }
+
+  message XTrend {
+    int64 time = 1;
+    string price = 2;
+    double volume_to = 3;
+  }
 }
 
-message TrendData {
-repeated Trend trend = 1;
-}
-
-message Trend {
-int64 time = 1;
-string price = 2;
-double volume_to = 3;
-}

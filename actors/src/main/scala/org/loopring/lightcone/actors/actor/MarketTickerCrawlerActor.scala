@@ -59,13 +59,13 @@ class MarketTickerCrawlerActor(
       val f = (tokenInfoServiceActor ? XGetTokenListReq()).mapTo[XGetTokenListRes]
       f.foreach {
         _.list.foreach { tokenInfo ⇒
-          crawlMarketPairTicker(tokenInfo)
+          crawlXMarketPairTicker(tokenInfo)
           Thread.sleep(50)
         }
       }
   }
 
-  private def crawlMarketPairTicker(tokenInfo: XTokenInfo): Unit = {
+  private def crawlXMarketPairTicker(tokenInfo: XTokenInfo): Unit = {
 
     val (name_id, symbol, anchor) = if (tokenInfo.symbol == "ETH" || tokenInfo.symbol == "WETH") {
       ("ethereum", "eth", "usd")
@@ -87,12 +87,12 @@ class MarketTickerCrawlerActor(
 
           marketTickData.data.foreach {
             _.marketList.foreach {
-              case MarketPair(exchange, symbol, market,
+              case XMarketPair(exchange, symbol, market,
                 price, priceCny, priceUsd,
                 volume24hUsd, volume24h, volume24hFrom,
                 percentChangeUtc0, alias) ⇒
 
-                marketTickerServiceActor ! ExchangeTickerInfo(symbol, market, exchange,
+                marketTickerServiceActor ! XExchangeTickerInfo(symbol, market, exchange,
                   price.toDouble, priceUsd.toDouble, priceCny.toDouble,
                   volume24hUsd.toDouble, volume24hFrom.toDouble, volume24h.toDouble,
                   percentChangeUtc0.toDouble, alias, lastUpdated)

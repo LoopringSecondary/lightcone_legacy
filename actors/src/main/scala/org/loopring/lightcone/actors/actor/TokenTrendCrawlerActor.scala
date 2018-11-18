@@ -51,7 +51,7 @@ class TokenTrendCrawlerActor(tokenInfoServiceActor: ActorRef)(
 
   val parser = new Parser(preservingProtoFieldNames = true) //protobuf 序列化为json不使用驼峰命名
 
-  val cacherTokenTrend = new ProtoBufMessageCacher[Trend]
+  val cacherTokenTrend = new ProtoBufMessageCacher[XTokenTrendData.XTrend]
 
   override def preStart(): Unit = {
     //daliy schedule market's ticker info
@@ -64,13 +64,13 @@ class TokenTrendCrawlerActor(tokenInfoServiceActor: ActorRef)(
       val f = (tokenInfoServiceActor ? XGetTokenListReq()).mapTo[XGetTokenListRes]
       f.foreach {
         _.list.foreach { tokenInfo ⇒
-          crawlTokenTrendData(tokenInfo)
+          crawlXTokenTrendData(tokenInfo)
           Thread.sleep(50)
         }
       }
   }
 
-  private def crawlTokenTrendData(tokenInfo: XTokenInfo): Unit = {
+  private def crawlXTokenTrendData(tokenInfo: XTokenInfo): Unit = {
 
     val symbol = tokenInfo.symbol
 
@@ -89,7 +89,7 @@ class TokenTrendCrawlerActor(tokenInfoServiceActor: ActorRef)(
       case HttpResponse(StatusCodes.OK, _, entity, _) ⇒
         entity.dataBytes.map(_.utf8String).runReduce(_ + _).map { dataInfoStr ⇒
 
-          val dataInfo = parser.fromJsonString[TokenTrendData](dataInfoStr)
+          val dataInfo = parser.fromJsonString[XTokenTrendData](dataInfoStr)
           dataInfo.data.foreach {
             trendData ⇒
               //set in redis cache

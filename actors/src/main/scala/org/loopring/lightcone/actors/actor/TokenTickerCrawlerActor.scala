@@ -97,7 +97,7 @@ class TokenTickerCrawlerActor(tokenTickerServiceActor: ActorRef)(
     val uri = s"/v1/cryptocurrency/listings/latest?start=1&limit=${limitSize}&convert=${convertCurrency}"
     get(HttpRequest(uri = uri, method = HttpMethods.GET).withHeaders(rawHeader)) {
       case HttpResponse(StatusCodes.OK, _, entity, _) ⇒
-        entity.dataBytes.map(_.utf8String).runReduce(_ + _).map(parser.fromJsonString[TickerDataInfo]).map(_.data)
+        entity.dataBytes.map(_.utf8String).runReduce(_ + _).map(parser.fromJsonString[XTickerDataInfo]).map(_.data)
 
       case _ ⇒
         log.error("get ticker data from coinmarketcap failed")

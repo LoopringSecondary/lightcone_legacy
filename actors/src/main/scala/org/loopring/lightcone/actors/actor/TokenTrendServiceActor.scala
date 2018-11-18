@@ -41,14 +41,14 @@ class TokenTrendServiceActor(implicit
 
   implicit val settings = CacherSettings(system.settings.config)
 
-  val cacherTokenTrendData = new ProtoBufMessageCacher[Trend]
+  val cacherXTokenTrendData = new ProtoBufMessageCacher[XTokenTrendData.XTrend]
   val trendKey = "TOKEN_TREND_"
 
   override def receive: Receive = {
 
-    case req: XGetTokenTrendDataReq ⇒
+    case req: XGetXTokenTrendDataReq ⇒
       //这里只需查询缓存
-      val res = cacherTokenTrendData.getSeq(buildCacheKey(req.symbol, req.period))
+      val res = cacherXTokenTrendData.getSeq(buildCacheKey(req.symbol, req.period))
 
       res.map {
         case Some(r) ⇒ r
