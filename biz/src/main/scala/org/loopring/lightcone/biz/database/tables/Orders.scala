@@ -37,13 +37,19 @@ class Orders(tag: Tag) extends BaseTable[OrderEntity](tag, "ORDERS") {
   def validSince = column[Long]("valid_since")
 
   def tokenSpendableS = column[String]("token_spendable_s", O.SqlType("VARCHAR(64)"))
+
   def tokenSpendableFee = column[String]("token_spendable_fee", O.SqlType("VARCHAR(64)"))
+
   def dualAuthAddress = column[String]("dual_auth_address", O.SqlType("VARCHAR(64)"))
 
   def broker = column[String]("broker", O.SqlType("VARCHAR(64)"))
+
   def brokerSpendableS = column[String]("broker_spendable_s", O.SqlType("VARCHAR(64)"))
+
   def brokerSpendableFee = column[String]("broker_spendable_fee", O.SqlType("VARCHAR(64)"))
+
   def orderInterceptor = column[String]("order_interceptor", O.SqlType("VARCHAR(64)"))
+
   def wallet = column[String]("wallet", O.SqlType("VARCHAR(64)"))
 
   def validUntil = column[Long]("valid_until")

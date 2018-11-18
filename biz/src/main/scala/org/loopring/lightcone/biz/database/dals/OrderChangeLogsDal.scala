@@ -24,12 +24,14 @@ import slick.jdbc.MySQLProfile.api._
 
 import scala.concurrent.Future
 
-trait OrderChangeLogsDal extends BaseDalImpl[OrderChangeLogs, OrderChangeLogEntity] {
+trait OrderChangeLogsDal
+  extends BaseDalImpl[OrderChangeLogs, OrderChangeLogEntity] {
   def addChangeLog(change: OrderChangeLogEntity): Future[Int]
   def getLogsByHash(orderHash: String): Future[Seq[OrderChangeLogEntity]]
 }
 
-class OrderChangeLogsDalImpl(val module: OrderDatabase) extends OrderChangeLogsDal {
+class OrderChangeLogsDalImpl(val module: OrderDatabase)
+  extends OrderChangeLogsDal {
   val query = orderChangeLogsQ
 
   override def update(row: OrderChangeLogEntity): Future[Int] = {

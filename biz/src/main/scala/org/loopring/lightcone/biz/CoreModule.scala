@@ -38,7 +38,10 @@ class CoreModule extends AbstractModule with ScalaModule {
   @Singleton
   def provideSlickSession(system: ActorSystem): SlickSession = {
     // for db session
-    val databaseConfig = DatabaseConfig.forConfig[JdbcProfile]("db.default", system.settings.config)
+    val databaseConfig = DatabaseConfig.forConfig[JdbcProfile](
+      "db.default",
+      system.settings.config
+    )
     val session = SlickSession.forConfig(databaseConfig)
     system.registerOnTermination(() ⇒ session.close())
     session

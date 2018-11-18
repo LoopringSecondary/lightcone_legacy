@@ -29,11 +29,15 @@ import scala.concurrent.Future
 
 case class QueryCondition(
     owner: Option[String] = None,
-    market: Option[String] = None, status: Seq[String] = Seq(), orderHashes: Seq[String] = Seq(),
-    orderType: Option[String] = None, side: Option[String] = None
+    market: Option[String] = None,
+    status: Seq[String] = Seq(),
+    orderHashes: Seq[String] = Seq(),
+    orderType: Option[String] = None,
+    side: Option[String] = None
 )
 
-trait OrdersDal extends BaseDalImpl[Orders, OrderEntity] {
+trait OrdersDal
+  extends BaseDalImpl[Orders, OrderEntity] {
   def getOrder(orderHash: String): Future[Option[OrderEntity]]
   def getOrders(condition: QueryCondition, skip: Int, take: Int): Future[Seq[OrderEntity]]
   def count(condition: QueryCondition): Future[Int]

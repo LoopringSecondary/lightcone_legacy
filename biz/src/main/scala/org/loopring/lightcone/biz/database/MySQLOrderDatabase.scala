@@ -35,18 +35,15 @@ class MySQLOrderDatabase @Inject() (
   val orderChangeLogs = new OrderChangeLogsDalImpl(this)
   val blocks = new BlocksDalImpl(this)
 
-  def generateDDL(): Unit = {
-    Seq(
-      orders.createTable(),
-      orderChangeLogs.createTable(),
-      blocks.createTable()
-    )
-  }
+  def generateDDL(): Unit = Seq(
+    orders.createTable(),
+    orderChangeLogs.createTable(),
+    blocks.createTable()
+  )
 
   def displayDDL(): Unit = {
     orders.displayTableSchema()
     orderChangeLogs.displayTableSchema()
     blocks.displayTableSchema()
   }
-
 }
