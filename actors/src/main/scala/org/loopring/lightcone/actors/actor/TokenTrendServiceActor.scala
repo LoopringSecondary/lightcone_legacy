@@ -46,7 +46,7 @@ class TokenTrendServiceActor(implicit
 
   override def receive: Receive = {
 
-    case req: GetTokenTrendDataReq ⇒
+    case req: XGetTokenTrendDataReq ⇒
       //这里只需查询缓存
       val res = cacherTokenTrendData.getSeq(buildCacheKey(req.symbol, req.period))
 

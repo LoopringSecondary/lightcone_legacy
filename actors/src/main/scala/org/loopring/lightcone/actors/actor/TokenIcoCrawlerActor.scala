@@ -41,7 +41,7 @@ class TokenIcoCrawlerActor(
 
   override def receive: Receive = {
     case _: String ⇒
-      val f = (tokenInfoServiceActor ? GetTokenListReq()).mapTo[GetTokenListRes]
+      val f = (tokenInfoServiceActor ? XGetTokenListReq()).mapTo[XGetTokenListRes]
       f.foreach {
         _.list.foreach { tokenInfo ⇒
           crawlXTokenIcoInfo(tokenInfo.protocol)

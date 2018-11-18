@@ -61,7 +61,7 @@ class TokenTrendCrawlerActor(tokenInfoServiceActor: ActorRef)(
   override def receive: Receive = {
     case _: String ⇒
       //load AllTokens
-      val f = (tokenInfoServiceActor ? GetTokenListReq()).mapTo[GetTokenListRes]
+      val f = (tokenInfoServiceActor ? XGetTokenListReq()).mapTo[XGetTokenListRes]
       f.foreach {
         _.list.foreach { tokenInfo ⇒
           crawlTokenTrendData(tokenInfo)

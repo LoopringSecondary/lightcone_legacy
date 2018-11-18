@@ -48,7 +48,7 @@ class TokenTickerServiceActor @Inject() (service: TokenTickerInfoService)(implic
 
   implicit val settings = CacherSettings(system.settings.config)
 
-  val cacherTokenTickerInfo = new ProtoBufMessageCacher[GetTokenTickerInfoRes]
+  val cacherTokenTickerInfo = new ProtoBufMessageCacher[XGetTokenTickerInfoRes]
   val tokenTickerInfoKey = "TOKEN_TICKER_INFO_"
 
   override def receive: Receive = {
@@ -60,10 +60,10 @@ class TokenTickerServiceActor @Inject() (service: TokenTickerInfoService)(implic
 
       service.batchSaveOrUpdate(info.seq)
 
-    case req: GetTokenTickerInfoReq ⇒
+    case req: XGetTokenTickerInfoReq ⇒
       //优先查询缓存，缓存没有再查询数据表并存入缓存
       val res = cacherTokenTickerInfo.getOrElse(buildCacheKey(req.market), Some(600)) {
-        val resp: Future[GetTokenTickerInfoRes] = service.queryTokenTicker(req.market)
+        val resp: Future[XGetTokenTickerInfoRes] = service.queryTokenTicker(req.market)
         resp.map(Some(_))
       }
 

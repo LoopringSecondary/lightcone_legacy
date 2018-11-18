@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import com.google.inject.Inject
-import org.loopring.lightcone.proto.auxiliary.{ GetTokenListRes, XTokenInfo }
+import org.loopring.lightcone.proto.auxiliary.{ XGetTokenListRes, XTokenInfo }
 
 import scala.concurrent.Future
 
@@ -43,7 +43,7 @@ class TokenInfoServiceImpl @Inject() (
     decimals = r <<
   )
 
-  override def queryTokenInfo(): Future[GetTokenListRes] = {
+  override def queryTokenInfo(): Future[XGetTokenListRes] = {
     sql"""
     SELECT
       protocol,
@@ -55,7 +55,7 @@ class TokenInfoServiceImpl @Inject() (
     FROM t_token_info
     """
       .list[XTokenInfo]
-      .map(GetTokenListRes(_))
+      .map(XGetTokenListRes(_))
   }
 
 }

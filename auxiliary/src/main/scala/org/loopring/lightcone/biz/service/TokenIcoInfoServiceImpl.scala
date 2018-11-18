@@ -24,13 +24,13 @@ import org.loopring.lightcone.proto.auxiliary._
 
 import scala.concurrent.Future
 
-class XTokenIcoInfoServiceImpl @Inject() (
+class TokenIcoInfoServiceImpl @Inject() (
     implicit
     system: ActorSystem,
     mat: ActorMaterializer,
     session: SlickSession
 ) extends DatabaseAccesser
-  with XTokenIcoInfoService {
+  with TokenIcoInfoService {
 
   import session.profile.api._
   import system.dispatcher
@@ -93,7 +93,7 @@ class XTokenIcoInfoServiceImpl @Inject() (
     FROM t_token_ico_info
     """
       .list[XTokenIcoInfo]
-      .map(GetXTokenIcoInfoRes(_))
+      .map(XGetTokenIcoInfoReq(_))
   }
 
 }

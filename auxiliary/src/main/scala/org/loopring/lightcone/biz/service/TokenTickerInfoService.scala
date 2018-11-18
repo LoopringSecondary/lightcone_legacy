@@ -22,5 +22,5 @@ import scala.concurrent.Future
 trait TokenTickerInfoService {
   def saveOrUpdate(tokenTicker: TokenTickerInfo)
   def batchSaveOrUpdate(seq: Seq[TokenTickerInfo])
-  def queryTokenTicker(market: String): Future[GetTokenTickerInfoRes]
+  def queryTokenTicker(market: String): Future[XGetTokenTickerInfoRes]
 }

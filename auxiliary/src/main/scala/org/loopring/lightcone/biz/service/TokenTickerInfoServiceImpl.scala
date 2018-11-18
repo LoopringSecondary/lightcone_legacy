@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import com.google.inject.Inject
-import org.loopring.lightcone.proto.auxiliary.{ GetTokenTickerInfoRes, TokenTickerInfo }
+import org.loopring.lightcone.proto.auxiliary.{ XGetTokenTickerInfoRes, TokenTickerInfo }
 
 import scala.concurrent.Future
 
@@ -130,7 +130,7 @@ class TokenTickerInfoServiceImpl @Inject() (
     WHERE market = ${market}
     """
       .list[TokenTickerInfo]
-      .map(GetTokenTickerInfoRes(_))
+      .map(XGetTokenTickerInfoRes(_))
   }
 
   def saveOrUpdate(tokenTicker: TokenTickerInfo) = saveOrUpdate(tokenTicker)

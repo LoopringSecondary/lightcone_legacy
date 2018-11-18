@@ -65,39 +65,36 @@ message XTokenIcoInfo {
 }
 
 // for token list
-message GetTokenListReq {
+message XGetTokenListReq {
 
 }
 
-message GetTokenListRes {
+message XGetTokenListRes {
    repeated XTokenInfo list = 1;
 }
 
-message GetXTokenIcoInfoReq {
 
-}
-
-message GetXTokenIcoInfoRes {
+message XGetTokenIcoInfoReq {
    repeated XTokenIcoInfo list = 1;
 }
 
-message GetTokenTickerInfoReq{
+message XGetTokenTickerInfoReq{
    string market = 1;
 }
 
-message GetTokenTickerInfoRes {
+message XGetTokenTickerInfoRes {
    repeated TokenTickerInfo list = 1;
 }
 
-message GetExchangeTickerInfoReq{
+message XGetExchangeTickerInfoReq{
    string marketPair = 1;
 }
 
-message GetExchangeTickerInfoRes {
+message XGetExchangeTickerInfoRes {
    repeated ExchangeTickerInfo list = 1;
 }
 
-message GetTokenTrendDataReq{
+message XGetTokenTrendDataReq{
   string symbol = 1;
   string period = 2;
 }

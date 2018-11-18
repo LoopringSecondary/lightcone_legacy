@@ -49,15 +49,15 @@ class TokenInfoServiceActor @Inject() (service: TokenInfoService)(
 
   implicit val settings = CacherSettings(system.settings.config)
 
-  val cacherTokenInfo = new ProtoBufMessageCacher[GetTokenListRes]
+  val cacherTokenInfo = new ProtoBufMessageCacher[XGetTokenListRes]
   val tokenInfoKey = "TOKEN_INFO_KEY"
 
   override def receive: Receive = {
 
-    case req: GetTokenListReq ⇒
+    case req: XGetTokenListReq ⇒
       //优先查询缓存，缓存没有再查询数据表并存入缓存
       val res = cacherTokenInfo.getOrElse(tokenInfoKey, Some(600)) {
-        val resp: Future[GetTokenListRes] = service.queryTokenInfo()
+        val resp: Future[XGetTokenListRes] = service.queryTokenInfo()
         resp.map(Some(_))
       }
 
