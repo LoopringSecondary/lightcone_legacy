@@ -25,7 +25,7 @@ trait OrderWriteHelper {
   def validateOrder(order: Order): ValidateResult
   def isOrderExist(order: Order): Boolean
   def getMarket(order: Order): String
-  def getSide(order: Order): MarketSide
+  def getSide(order: Order): XMarketSide
   def getPrice(order: Order): Double
   def validateSoftCancelSign(optSign: Option[SoftCancelSign]): ValidateResult
 }

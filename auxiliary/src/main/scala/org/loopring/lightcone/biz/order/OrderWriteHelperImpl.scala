@@ -37,7 +37,7 @@ class OrderWriteHelperImpl @Inject() (validator: OrderValidator) extends OrderWr
 
   override def getMarket(order: Order): String = ???
 
-  override def getSide(order: Order): MarketSide = ???
+  override def getSide(order: Order): XMarketSide = ???
 
   override def getPrice(order: Order): Double = ???
 

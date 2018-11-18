@@ -137,12 +137,12 @@ class OrderAccessorImpl @Inject() (val module: OrderDatabase)
         case SoftCancelType.BY_OWNER ⇒
           Some(QueryCondition(
             owner = Some(condition.owner),
-            status = Seq(OrderStatus.NEW.toString)
+            status = Seq(XOrderStatus.NEW.toString)
           ))
         case SoftCancelType.BY_HASH ⇒
           Some(QueryCondition(
             orderHashes = Seq(condition.hash),
-            status = Seq(OrderStatus.NEW.toString)
+            status = Seq(XOrderStatus.NEW.toString)
           ))
         case SoftCancelType.BY_TIME ⇒
           Some(QueryCondition(
@@ -152,7 +152,7 @@ class OrderAccessorImpl @Inject() (val module: OrderDatabase)
           Some(QueryCondition(
             owner = Some(condition.owner),
             market = Some(condition.market),
-            status = Seq(OrderStatus.NEW.toString)
+            status = Seq(XOrderStatus.NEW.toString)
           ))
         case _ ⇒ None
 

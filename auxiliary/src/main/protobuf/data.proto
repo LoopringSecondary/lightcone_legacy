@@ -4,7 +4,7 @@ option java_multiple_files = true;
 option java_package = "org.loopring.lightcone.proto.auxiliary";
 package org.loopring.lightcone.proto.auxiliary;
 
-enum MarketSide {
+enum XMarketSide {
     SELL =0;
     BUY = 1;
 }
@@ -15,7 +15,7 @@ enum OrderSaveResult {
   ORDER_EXIST = 2;
 }
 
-enum OrderStatus {
+enum XOrderStatus {
   NEW = 0;
   PENDING = 1;
   EXPIRED = 2;

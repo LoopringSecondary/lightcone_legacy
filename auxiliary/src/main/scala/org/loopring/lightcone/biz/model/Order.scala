@@ -16,14 +16,14 @@
 
 package org.loopring.lightcone.auxiliary.model
 
-import org.loopring.lightcone.proto.auxiliary.{ OrderStatus, OrderType, _ }
+import org.loopring.lightcone.proto.auxiliary.{ XOrderStatus, OrderType, _ }
 
 case class OrderQuery(
-    statuses: Seq[OrderStatus],
+    statuses: Seq[XOrderStatus],
     owner: String,
     market: String,
     hashes: Seq[String],
-    sideOpt: Option[MarketSide],
+    sideOpt: Option[XMarketSide],
     orderTypeOpt: Option[OrderType]
 )
 
@@ -42,7 +42,7 @@ case class Order(
     dealtAmountB: String = "",
     cancelledAmountS: String = "",
     cancelledAmountB: String = "",
-    status: OrderStatus = OrderStatus.NEW,
+    status: XOrderStatus = XOrderStatus.NEW,
     broadcastTime: Int = 0,
     powNonce: Long = 0,
     market: String = "",
