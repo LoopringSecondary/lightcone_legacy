@@ -31,6 +31,7 @@ object AccountBalanceActor {
   val name = "account_balance"
 }
 
+// TODO(fukun): implement this class.
 class AccountBalanceActor()(
     implicit
     ec: ExecutionContext,

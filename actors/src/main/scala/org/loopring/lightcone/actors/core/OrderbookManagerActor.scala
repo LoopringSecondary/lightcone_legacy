@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{ Actor, ActorLogging }
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import akka.pattern.pipe
@@ -31,20 +31,13 @@ object OrderbookManagerActor {
   def name = "orderbook_manager"
 }
 
-class OrderbookManagerActor(
-  manager:OrderbookManager
-)(
-  implicit
-  ec: ExecutionContext,
-  timeout: Timeout,
-)
-  extends Actor
-    with ActorLogging {
+class OrderbookManagerActor(manager: OrderbookManager)
+  extends Actor with ActorLogging {
 
   def receive: Receive = LoggingReceive {
     case req: XOrderbookUpdate ⇒
       manager.processUpdate(req)
-      
+
     case req: GetXOrderbookReq ⇒
       sender ! manager.getOrderbook(req.level, req.size)
   }

@@ -30,8 +30,8 @@ class Routers {
 
 object Routers {
 
-  def gasPriceProviderActor()(implicit routers: Routers): ActorRef =
-    routers.getActor(s"/user/${GasPriceProviderActor.name}")
+  def gasPriceActor()(implicit routers: Routers): ActorRef =
+    routers.getActor(s"/user/${GasPriceActor.name}")
 
   def orderbookManagerActor()(implicit routers: Routers): ActorRef =
     routers.getActor(s"/user/${OrderbookManagerActor.name}")

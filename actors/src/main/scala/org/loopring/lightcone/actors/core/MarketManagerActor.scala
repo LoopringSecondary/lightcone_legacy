@@ -36,16 +36,16 @@ object MarketManagerActor {
 class MarketManagerActor(
     marketId: XMarketId,
     config: XMarketManagerConfig,
-    dustOrderEvaluator: DustOrderEvaluator,
-    gasPriceProviderActor: ActorRef,
+    gasPriceActor: ActorRef,
     orderbookManagerActor: ActorRef
 )(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,
-    tve: TokenValueEstimator,
-    rie: RingIncomeEstimator,
     timeProvider: TimeProvider,
+    tokenValueEstimator: TokenValueEstimator,
+    ringIncomeEstimator: RingIncomeEstimator,
+    dustOrderEvaluator: DustOrderEvaluator,
     tokenMetadataManager: TokenMetadataManager
 )
   extends Actor
@@ -106,11 +106,11 @@ class MarketManagerActor(
   }
 
   private def getCostOfSingleRing() = for {
-    res ← (gasPriceProviderActor ? XGetGasPriceReq())
+    res ← (gasPriceActor ? XGetGasPriceReq())
       .mapTo[XGetGasPriceRes]
     costedEth = BigInt(400000) * BigInt(res.gasPrice)
     //todo:eth的标识符
-    cost = tve.getEstimatedValue("ETH", costedEth)
+    cost = tokenValueEstimator.getEstimatedValue("ETH", costedEth)
   } yield cost
 
 }

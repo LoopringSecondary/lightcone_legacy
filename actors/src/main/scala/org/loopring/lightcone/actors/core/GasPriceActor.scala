@@ -23,11 +23,11 @@ import org.loopring.lightcone.actors.data._
 
 import scala.concurrent.ExecutionContext
 
-object GasPriceProviderActor {
-  def name = "gasprice_provider"
+object GasPriceActor {
+  val name = "gas_price"
 }
 
-class GasPriceProviderActor()(
+class GasPriceActor()(
     implicit
     ec: ExecutionContext,
     timeout: Timeout

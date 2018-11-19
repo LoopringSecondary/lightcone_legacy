@@ -26,14 +26,14 @@ import org.loopring.lightcone.proto.actors._
 import scala.concurrent.{ ExecutionContext, Future }
 
 object TokenMetadataSyncActor {
-  def name = "token_meta_data"
+  val name = "token_metadata_sync"
 }
 
 class TokenMetadataSyncActor()(
     implicit
-    tmm: TokenMetadataManager,
     ec: ExecutionContext,
-    timeout: Timeout
+    timeout: Timeout,
+    tmm: TokenMetadataManager
 )
   extends RepeatedJobActor
   with ActorLogging {
