@@ -42,7 +42,7 @@ class TokenMetadataSyncActor()(
     id = 1,
     name = "syncTokenValue",
     scheduleDelay = 5 * 60 * 1000,
-    callMethod = syncMarketCap _
+    run = syncMarketCap _
   )
   initAndStartNextRound(syncJob)
 

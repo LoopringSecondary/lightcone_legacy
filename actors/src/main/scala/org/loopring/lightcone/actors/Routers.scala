@@ -36,6 +36,12 @@ object Routers {
   def orderbookManagerActor()(implicit routers: Routers): ActorRef =
     routers.getActor(s"/user/${OrderbookManagerActor.name}")
 
+  def accountBalanceActor()(implicit routers: Routers): ActorRef =
+    routers.getActor(s"/user/${AccountBalanceActor.name}")
+
+  def accountManagerActor()(implicit routers: Routers): ActorRef =
+    routers.getActor(s"/user/${AccountManagerActor.name}")
+
   def marketManagerActor()(implicit routers: Routers): ActorRef =
     routers.getActor(s"/user/${MarketManagerActor.name}")
 

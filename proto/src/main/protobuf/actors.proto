@@ -56,7 +56,7 @@ message XRing {
 }
 
 ///////////////////
-
+// TODO(hongyu): add a prefix as ERR_
 enum XErrorCode {
     OK = 0;
     ORDER_NOT_EXIST = 1;
@@ -72,19 +72,19 @@ enum XErrorCode {
     UNKNOWN_ERROR = 100;
 }
 
-message BalanceAndAllowance {
+message XBalanceAndAllowance {
     bytes balance = 2;
     bytes allowance = 3;
 }
 
-message GetBalanceAndAllowancesReq {
+message XGetBalanceAndAllowancesReq {
     string address = 1;
     repeated string tokens = 2;
 }
 
-message GetBalanceAndAllowancesRes {
+message XGetBalanceAndAllowancesRes {
     string address = 1;
-    map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
+    map<string, XBalanceAndAllowance> balance_and_allowance_map = 2;
 }
 
 message XSubmitOrderReq {
@@ -95,6 +95,19 @@ message XSubmitOrderRes {
     XErrorCode error = 1;
     XOrder order = 2;
 }
+
+message XAddressBalanceUpdated {
+    string address = 1;
+    string token = 2;
+    bytes balance = 3;
+}
+
+message XAddressAllowanceUpdated {
+    string address = 1;
+    string token = 2;
+    bytes balance = 3;
+}
+
 
 // 由ethereum发送给orderManagingActor
 // 以太坊事件顺序根据blockID，tx&eventId来确定,由route汇聚到不同用户地址,然后按顺序逐个发送给orderManagingActor
@@ -127,15 +140,15 @@ message GetFilledAmountRes {
     map<string, bytes> filled_amount_s_map = 1;
 }
 
-message UpdateBalanceAndAllowanceReq {
+message XUpdateBalanceAndAllowanceReq {
     string address = 1;
     string token = 2;
-    BalanceAndAllowance balance_and_allowance = 3;
+    XBalanceAndAllowance balance_and_allowance = 3;
 }
 
-message UpdateBalanceAndAllowanceRes {
+message XUpdateBalanceAndAllowanceRes {
     XErrorCode error = 1;
-    BalanceAndAllowance balance_and_allowance = 2;
+    XBalanceAndAllowance balance_and_allowance = 2;
 }
 
 message XUpdatedGasPrice {

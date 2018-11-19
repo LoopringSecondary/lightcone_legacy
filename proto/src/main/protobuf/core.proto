@@ -19,6 +19,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto.core;
 
+// TODO(dongw): add a prefix as STATUS_
 enum XOrderStatus {
     NEW = 0;
     PENDING = 1;
@@ -47,6 +48,7 @@ message XMarketManagerConfig {
 }
 
 
+// TODO(dongw): add a prefix as MATCH_FAILURE_
 enum XMatchingFailure {
     NO_ERROR = 0;
     ORDERS_NOT_TRADABLE = 1;

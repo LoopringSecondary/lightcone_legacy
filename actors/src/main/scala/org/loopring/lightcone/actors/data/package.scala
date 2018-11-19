@@ -18,12 +18,24 @@ package org.loopring.lightcone.actors
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XOrder
+import org.loopring.lightcone.proto.actors._
+import com.google.protobuf.ByteString
 
 // TODO(hongyu): implement this
-package object conversions {
-  implicit def xOrderToOrder(xorder: XOrder): Order = ???
-  implicit def orderToXOrder(order: Order): XOrder = ???
+package object data {
+
+  case class BalanceAndAllowance(balance: BigInt, allowance: BigInt)
+
+  ///////////
+
+  implicit def byteString2BigInt(bytes: ByteString): BigInt = ???
+  implicit def bigInt2ByteString(b: BigInt): ByteString = ???
+
+  implicit def xBalanceAndAlowance2BalanceAndAlowance(ba: XBalanceAndAllowance): BalanceAndAllowance = ???
+  implicit def balanceAndAlowance2XBalanceAndAlowance(ba: BalanceAndAllowance): XBalanceAndAllowance = ???
+
+  implicit def xOrder2Order(xorder: XOrder): Order = ???
+  implicit def order2XOrder(order: Order): XOrder = ???
 
   implicit def byteArray2ByteString(bytes: Array[Byte]) = ByteString.copyFrom(bytes)
 }
