@@ -30,10 +30,10 @@ object TokenMetadataSyncActor {
 }
 
 class TokenMetadataSyncActor()(
-  implicit
-  tmm: TokenMetadataManager,
-  ec: ExecutionContext,
-  timeout: Timeout
+    implicit
+    tmm: TokenMetadataManager,
+    ec: ExecutionContext,
+    timeout: Timeout
 )
   extends RepeatedJobActor
   with ActorLogging {
@@ -42,7 +42,7 @@ class TokenMetadataSyncActor()(
     id = 1,
     name = "syncTokenValue",
     scheduleDelay = 5 * 60 * 1000,
-    callMethod = syncMarketCap _
+    run = syncMarketCap _
   )
   initAndStartNextRound(syncJob)
 
@@ -50,7 +50,6 @@ class TokenMetadataSyncActor()(
   override def receive: Receive = super.receive orElse LoggingReceive {
     case req: UpdatedTokenBurnRate ⇒ tmm.updateBurnRate(req.token, req.burnRate)
     //todo:update price && decimals
-    case _ ⇒
   }
 
   def syncMarketCap: Future[Unit] = {

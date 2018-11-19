@@ -21,32 +21,31 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 case class Job(
-  id:Int,
-  name: String,
-  scheduleDelay:Long,
-  callMethod: () ⇒ Future[Unit],
+    id: Int,
+    name: String,
+    scheduleDelay: Long,
+    run: () ⇒ Future[Unit]
 )
 
-class JobWithStatus(j:Job) {
-  var cancel:Option[Cancellable] = None
-  var lastRunTime:Long = 0
+class JobWithStatus(j: Job) {
+  var cancel: Option[Cancellable] = None
+  var lastRunTime: Long = 0
   var job: Job = j
 }
 
 trait RepeatedJobActor extends Actor {
   import context.dispatcher
 
-  def initAndStartNextRound(jobs:Job*): Unit = {
-    jobs.foreach{
-      job ⇒
-        nextRun(new JobWithStatus(job))
+  def initAndStartNextRound(jobs: Job*): Unit = {
+    jobs.foreach { job ⇒
+      nextRun(new JobWithStatus(job))
     }
   }
 
   def nextRun(jobWithStatus: JobWithStatus) = {
     jobWithStatus.cancel.map(_.cancel())
     val delay = jobWithStatus.job.scheduleDelay -
-        (System.currentTimeMillis - jobWithStatus.lastRunTime)
+      (System.currentTimeMillis - jobWithStatus.lastRunTime)
     if (delay > 0) {
       jobWithStatus.cancel = Some(
         context.system.scheduler.scheduleOnce(
@@ -62,9 +61,9 @@ trait RepeatedJobActor extends Actor {
   }
 
   def receive: Receive = {
-    case jobWithStatus:JobWithStatus ⇒ for {
+    case jobWithStatus: JobWithStatus ⇒ for {
       lastTime ← Future.successful(System.currentTimeMillis)
-      _ ← jobWithStatus.job.callMethod()
+      _ ← jobWithStatus.job.run()
     } yield {
       jobWithStatus.lastRunTime = lastTime
       jobWithStatus.cancel = None

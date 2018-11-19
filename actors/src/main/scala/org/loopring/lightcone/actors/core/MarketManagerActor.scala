@@ -21,11 +21,11 @@ import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.Routers
-import org.loopring.lightcone.actors.base.data._
 import org.loopring.lightcone.core.base.TokenValueEstimator
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.actors.data._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -34,41 +34,58 @@ object MarketManagerActor {
 }
 
 class MarketManagerActor(
-  manager: MarketManager
+    manager: MarketManager
 )(
-  implicit
-  ec: ExecutionContext,
-  timeout: Timeout,
-  tve: TokenValueEstimator,
-  routers: Routers
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout,
+    tve: TokenValueEstimator,
+    routers: Routers
 )
   extends Actor
   with ActorLogging {
 
+  val gasPriceProviderActor = Routers.gasPriceProviderActor()
+  val orderbookManagerActor = Routers.orderbookManagerActor()
+
   def receive: Receive = LoggingReceive {
-    case order: XOrder ⇒
+
+    // TODO(hongyu): send a response to the sender
+    case XSubmitOrderReq(Some(order)) ⇒
       order.status match {
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒ for {
-          gasPriceRes ← (Routers.gasPriceProviderActor ? GetGasPriceReq()).mapTo[GetGasPriceRes]
-          res = manager.submitOrder(order, getCostBySingleRing(BigInt(gasPriceRes.gasPrice)))
-        } yield {
-          Routers.orderbookManagerActor() ! res.orderbookUpdate
+          gasPriceRes ← (gasPriceProviderActor ? XGetGasPriceReq())
+            .mapTo[XGetGasPriceRes]
+          res = manager.submitOrder(
+            order,
+            getCostBySingleRing(BigInt(gasPriceRes.gasPrice))
+          )
+          _ = orderbookManagerActor ! res.orderbookUpdate
+        } yield Unit
+
+        case s ⇒
+          log.error(s"unexpected order status in XSubmitOrderReq: $s")
+      }
+
+    case XCancelOrderReq(orderId, hardCancel) ⇒
+      manager.cancelOrder(orderId)
+
+    case updatedGasPrce: XUpdatedGasPrice ⇒
+      for {
+        gasPriceRes ← (gasPriceProviderActor ? XGetGasPriceReq())
+          .mapTo[XGetGasPriceRes]
+        resOpt = manager.triggerMatch(
+          true,
+          getCostBySingleRing(BigInt(gasPriceRes.gasPrice))
+        )
+      } yield {
+        resOpt foreach { res ⇒
+          gasPriceProviderActor ! res.orderbookUpdate
         }
-        case _ ⇒ manager.cancelOrder(order.id)
       }
-    case req: CancelOrderReq ⇒ manager.cancelOrder(req.id)
-    case updatedGasPrce: UpdatedGasPrice ⇒ for {
-      gasPriceRes ← (Routers.gasPriceProviderActor ? GetGasPriceReq()).mapTo[GetGasPriceRes]
-      resOpt = manager.triggerMatch(true, getCostBySingleRing(BigInt(gasPriceRes.gasPrice)))
-    } yield {
-      resOpt foreach {
-        res ⇒ Routers.orderbookManagerActor() ! res.orderbookUpdate
-      }
-    }
-    case _ ⇒
   }
 
-  def getCostBySingleRing(gasPrice: BigInt) = {
+  private def getCostBySingleRing(gasPrice: BigInt) = {
     val costedEth = BigInt(400000) * gasPrice
     //todo:eth的标识符
     tve.getEstimatedValue("ETH", costedEth)

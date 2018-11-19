@@ -30,9 +30,21 @@ class Routers {
 
 object Routers {
 
-  def gasPriceProviderActor()(implicit routers: Routers): ActorRef = routers.getActor(s"/user/${GasPriceProviderActor.name}")
-  def orderbookManagerActor()(implicit routers: Routers): ActorRef = routers.getActor(s"/user/${OrderbookManagerActor.name}")
-  def marketManagerActor()(implicit routers: Routers): ActorRef = routers.getActor(s"/user/${MarketManagerActor.name}")
+  def gasPriceProviderActor()(implicit routers: Routers): ActorRef =
+    routers.getActor(s"/user/${GasPriceProviderActor.name}")
+
+  def orderbookManagerActor()(implicit routers: Routers): ActorRef =
+    routers.getActor(s"/user/${OrderbookManagerActor.name}")
+
+  def accountBalanceActor()(implicit routers: Routers): ActorRef =
+    routers.getActor(s"/user/${AccountBalanceActor.name}")
+
+  def accountManagerActor()(implicit routers: Routers): ActorRef =
+    routers.getActor(s"/user/${AccountManagerActor.name}")
+
+  def marketManagerActor()(implicit routers: Routers): ActorRef =
+    routers.getActor(s"/user/${MarketManagerActor.name}")
+
   //  def ethereumAccessActor()(implicit routers: Routers): ActorRef = routers.getActor("/user/ethereum_access")
   //  def ringSubmitterActor()(implicit routers: Routers): ActorRef = routers.getActor(s"/user/${RingSubmitterActor.name}")
   //  def tokenMetadataSyncActor()(implicit routers: Routers): ActorRef = routers.getActor(s"/user/${TokenMetadataSyncActor.name}")
