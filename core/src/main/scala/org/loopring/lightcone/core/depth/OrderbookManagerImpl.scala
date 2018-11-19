@@ -32,8 +32,8 @@ class OrderbookManagerImpl(config: XOrderbookConfig)
     viewMap.values.foreach(_.processUpdate(diff))
   }
 
-  def getOrderbook(level: Int, size: Int) = viewMap.get(level) match {
-    case Some(view) ⇒ view.getOrderbook(size)
+  def getXOrderbook(level: Int, size: Int) = viewMap.get(level) match {
+    case Some(view) ⇒ view.getXOrderbook(size)
     case None       ⇒ XOrderbook(Nil, Nil)
   }
 
@@ -65,7 +65,7 @@ class OrderbookManagerImpl(config: XOrderbookConfig)
       )
     }
 
-    def getOrderbook(size: Int) =
+    def getXOrderbook(size: Int) =
       XOrderbook(sellSide.getDepth(size), buySide.getDepth(size))
 
     def reset() {

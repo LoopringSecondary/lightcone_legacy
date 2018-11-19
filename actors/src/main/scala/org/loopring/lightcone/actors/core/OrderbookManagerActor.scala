@@ -39,6 +39,6 @@ class OrderbookManagerActor(config: XOrderbookConfig)
       manager.processUpdate(req)
 
     case req: GetXOrderbookReq ⇒
-      sender ! manager.getOrderbook(req.level, req.size)
+      sender ! manager.getXOrderbook(req.level, req.size)
   }
 }

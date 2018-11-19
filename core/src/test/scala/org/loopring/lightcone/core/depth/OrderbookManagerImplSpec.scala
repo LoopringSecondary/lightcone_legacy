@@ -35,8 +35,8 @@ class OrderbookManagerImplSpec extends CommonSpec {
   }
 
   "OrderbookManagerImplSpec" should "return empty order book after initialized" in {
-    obm.getOrderbook(0, 100) should be(XOrderbook(Nil, Nil))
-    obm.getOrderbook(1, 100) should be(XOrderbook(Nil, Nil))
+    obm.getXOrderbook(0, 100) should be(XOrderbook(Nil, Nil))
+    obm.getXOrderbook(1, 100) should be(XOrderbook(Nil, Nil))
   }
 
   "OrderbookManagerImplSpec" should "process very small slot" in {
@@ -44,11 +44,11 @@ class OrderbookManagerImplSpec extends CommonSpec {
       XOrderbookUpdate.XSlot(1, 10, 100)
     ), Nil))
 
-    obm.getOrderbook(0, 100) should be(XOrderbook(Seq(
+    obm.getXOrderbook(0, 100) should be(XOrderbook(Seq(
       XOrderbook.XItem("0.00001", "10.00", "100.0")
     ), Nil))
 
-    obm.getOrderbook(1, 100) should be(XOrderbook(Seq(
+    obm.getXOrderbook(1, 100) should be(XOrderbook(Seq(
       XOrderbook.XItem("0.0001", "10.00", "100.0")
     ), Nil))
   }
@@ -59,19 +59,19 @@ class OrderbookManagerImplSpec extends CommonSpec {
     ), Seq(
       XOrderbookUpdate.XSlot(0, 10, 100)
     )))
-    obm.getOrderbook(0, 100) should be(XOrderbook(Nil, Nil))
-    obm.getOrderbook(1, 100) should be(XOrderbook(Nil, Nil))
+    obm.getXOrderbook(0, 100) should be(XOrderbook(Nil, Nil))
+    obm.getXOrderbook(1, 100) should be(XOrderbook(Nil, Nil))
   }
 
   "OrderbookManagerImplSpec" should "process sell slot and round up" in {
     obm.processUpdate(XOrderbookUpdate(Seq(
       XOrderbookUpdate.XSlot(12344, 10, 100)
     ), Nil))
-    obm.getOrderbook(0, 100) should be(XOrderbook(Seq(
+    obm.getXOrderbook(0, 100) should be(XOrderbook(Seq(
       XOrderbook.XItem("0.12344", "10.00", "100.0")
     ), Nil))
 
-    obm.getOrderbook(1, 100) should be(XOrderbook(Seq(
+    obm.getXOrderbook(1, 100) should be(XOrderbook(Seq(
       XOrderbook.XItem("0.1235", "10.00", "100.0")
     ), Nil))
   }
@@ -80,11 +80,11 @@ class OrderbookManagerImplSpec extends CommonSpec {
     obm.processUpdate(XOrderbookUpdate(Nil, Seq(
       XOrderbookUpdate.XSlot(12344, 10, 100)
     )))
-    obm.getOrderbook(0, 100) should be(XOrderbook(Nil, Seq(
+    obm.getXOrderbook(0, 100) should be(XOrderbook(Nil, Seq(
       XOrderbook.XItem("0.12344", "10.00", "100.0")
     )))
 
-    obm.getOrderbook(1, 100) should be(XOrderbook(Nil, Seq(
+    obm.getXOrderbook(1, 100) should be(XOrderbook(Nil, Seq(
       XOrderbook.XItem("0.1234", "10.00", "100.0")
     )))
   }
@@ -100,12 +100,12 @@ class OrderbookManagerImplSpec extends CommonSpec {
       XOrderbookUpdate.XSlot(12345, 10, 80)
     ), Nil))
 
-    obm.getOrderbook(0, 100) should be(XOrderbook(Seq(
+    obm.getXOrderbook(0, 100) should be(XOrderbook(Seq(
       XOrderbook.XItem("0.12344", "5.00", "40.0"),
       XOrderbook.XItem("0.12345", "10.00", "80.0")
     ), Nil))
 
-    obm.getOrderbook(1, 100) should be(XOrderbook(Seq(
+    obm.getXOrderbook(1, 100) should be(XOrderbook(Seq(
       XOrderbook.XItem("0.1235", "15.00", "120.0")
     ), Nil))
   }
@@ -121,12 +121,12 @@ class OrderbookManagerImplSpec extends CommonSpec {
       XOrderbookUpdate.XSlot(12345, 10, 80)
     )))
 
-    obm.getOrderbook(0, 100) should be(XOrderbook(Nil, Seq(
+    obm.getXOrderbook(0, 100) should be(XOrderbook(Nil, Seq(
       XOrderbook.XItem("0.12345", "10.00", "80.0"),
       XOrderbook.XItem("0.12344", "5.00", "40.0")
     )))
 
-    obm.getOrderbook(1, 100) should be(XOrderbook(Nil, Seq(
+    obm.getXOrderbook(1, 100) should be(XOrderbook(Nil, Seq(
       XOrderbook.XItem("0.1234", "15.00", "120.0")
     )))
   }
