@@ -34,29 +34,34 @@ class OrderbookAggregatorImpl(priceDecimals: Int)
   def increaseSell(
     price: Double,
     amount: Double,
-    total: Double) = adjustAmount(true, true, price, amount, total)
+    total: Double
+  ) = adjustAmount(true, true, price, amount, total)
 
   def decreaseSell(
     price: Double,
     amount: Double,
-    total: Double) = adjustAmount(true, false, price, amount, total)
+    total: Double
+  ) = adjustAmount(true, false, price, amount, total)
 
   def increaseBuy(
     price: Double,
     amount: Double,
-    total: Double) = adjustAmount(false, true, price, amount, total)
+    total: Double
+  ) = adjustAmount(false, true, price, amount, total)
 
   def decreaseBuy(
     price: Double,
     amount: Double,
-    total: Double) = adjustAmount(false, false, price, amount, total)
+    total: Double
+  ) = adjustAmount(false, false, price, amount, total)
 
   def adjustAmount(
     isSell: Boolean,
     increase: Boolean,
     price: Double,
     amount: Double,
-    total: Double) {
+    total: Double
+  ) {
     if (price > 0 && amount > 0 && total > 0) {
       val side = if (isSell) sells else buys
       if (increase) side.increase(price, amount, total)
