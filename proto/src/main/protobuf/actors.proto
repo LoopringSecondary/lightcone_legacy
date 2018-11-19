@@ -66,6 +66,10 @@ enum XErrorCode {
     TOKEN_NOT_EXIST = 5;
     TOO_MANY_ORDERS = 6;
     TOO_MANY_FAILED_MATCHES = 7;
+    INVALID_ORDER_DATA = 8;
+    INVALID_MARKET = 9;
+    ORDER_ALREADY_EXIST = 10;
+    UNKNOWN_ERROR = 100;
 }
 
 message BalanceAndAllowance {
@@ -83,11 +87,11 @@ message GetBalanceAndAllowancesRes {
     map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
 }
 
-message SubmitOrderReq {
+message XSubmitOrderReq {
     XOrder order = 1;
 }
 
-message SubmitOrderRes {
+message XSubmitOrderRes {
     XErrorCode error = 1;
     XOrder order = 2;
 }
@@ -95,12 +99,12 @@ message SubmitOrderRes {
 // 由ethereum发送给orderManagingActor
 // 以太坊事件顺序根据blockID，tx&eventId来确定,由route汇聚到不同用户地址,然后按顺序逐个发送给orderManagingActor
 // 注意: cancelOrderReq 可能包含用户软取消,在orderManagerState软取消后用户链上数据继续变更不影响最终结果
-message CancelOrderReq {
+message XCancelOrderReq {
     string id = 1;
     bool hard_cancel = 2; // 默认软取消
 }
 
-message CancelOrderRes {
+message XCancelOrderRes {
     string id = 1;
     bool hard_cancel = 2; // 默认软取消
     XErrorCode error = 3;
@@ -134,7 +138,7 @@ message UpdateBalanceAndAllowanceRes {
     BalanceAndAllowance balance_and_allowance = 2;
 }
 
-message UpdatedGasPrice {
+message XUpdatedGasPrice {
     int64 gas_price = 1;
 }
 
@@ -176,9 +180,9 @@ message SubmitRingReq {
   string gas_price = 3;
 }
 
-message GetGasPriceReq {}
+message XGetGasPriceReq {}
 
-message GetGasPriceRes {
+message XGetGasPriceRes {
   string gas_price = 1;
 }
 

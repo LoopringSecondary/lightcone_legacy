@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.base
+package org.loopring.lightcone.actors
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XOrder
 
-package object data {
-
+// TODO(hongyu): implement this
+package object conversions {
   implicit def xOrderToOrder(xorder: XOrder): Order = ???
+  implicit def orderToXOrder(order: Order): XOrder = ???
 
   implicit def byteArray2ByteString(bytes: Array[Byte]) = ByteString.copyFrom(bytes)
 }

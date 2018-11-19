@@ -16,9 +16,10 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{ Actor, ActorLogging }
 import akka.util.Timeout
-import org.loopring.lightcone.proto.actors.{GetGasPriceReq, GetGasPriceRes}
+import org.loopring.lightcone.proto.actors.{ XGetGasPriceReq, XGetGasPriceRes }
+import org.loopring.lightcone.actors.conversions._
 
 import scala.concurrent.ExecutionContext
 
@@ -27,15 +28,16 @@ object GasPriceProviderActor {
 }
 
 class GasPriceProviderActor()(
-  implicit
-  ec: ExecutionContext,
-  timeout: Timeout,
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
 )
   extends Actor
-    with ActorLogging {
+  with ActorLogging {
 
   def receive: Receive = {
-    case req: GetGasPriceReq ⇒ GetGasPriceRes(gasPrice = "10000000000") //todo:需要较为准确的gasprice, 10G
+    case req: XGetGasPriceReq ⇒
+      XGetGasPriceRes(gasPrice = "10000000000") //todo:需要较为准确的gasprice, 10G
   }
 
 }

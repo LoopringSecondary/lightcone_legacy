@@ -30,10 +30,10 @@ object TokenMetadataSyncActor {
 }
 
 class TokenMetadataSyncActor()(
-  implicit
-  tmm: TokenMetadataManager,
-  ec: ExecutionContext,
-  timeout: Timeout
+    implicit
+    tmm: TokenMetadataManager,
+    ec: ExecutionContext,
+    timeout: Timeout
 )
   extends RepeatedJobActor
   with ActorLogging {

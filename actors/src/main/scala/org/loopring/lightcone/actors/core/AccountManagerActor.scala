@@ -21,38 +21,72 @@ import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.actors.Routers
 import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.actors.base.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
-import org.loopring.lightcone.proto.actors.{ CancelOrderReq, SubmitOrderReq }
+import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core.XOrderStatus._
+import org.loopring.lightcone.actors.conversions._
 
 import scala.concurrent.ExecutionContext
 
-class AccountManagerActor(
-  manager: AccountManager
-)(
-  implicit
-  ec: ExecutionContext,
-  timeout: Timeout,
-  routers: Routers,
-  orderPool: AccountOrderPool,
-  dustEvaluator: DustOrderEvaluator
+class AccountManagerActor()(
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout,
+    routers: Routers,
+    dustEvaluator: DustOrderEvaluator
 )
   extends Actor
   with ActorLogging {
 
+  implicit val orderPool = new AccountOrderPoolImpl()
+  val manager = AccountManager.default()
+  val marketManagerActor = Routers.marketManagerActor()
+
+  // TODO(hongyu): 需要处理下列事件：
+  // 1. allowance变化
+  // 2. balance变化
   def receive: Receive = LoggingReceive {
-    case req: SubmitOrderReq ⇒
+
+    case req: XSubmitOrderReq ⇒
       val order = req.getOrder
       if (!manager.hasTokenManager(order.tokenS)) {
-        val tm = new AccountTokenManagerImpl(order.tokenS)
+        // TODO(dong): read from config
+        val tm = new AccountTokenManagerImpl(order.tokenS, 1000)
+        // TODO(dong): do it asyncly
+        tm.setBalanceAndAllowance(0, 0)
         manager.addTokenManager(tm)
       }
-      if (manager.submitOrder(order)) {
-        Routers.marketManagerActor() ! order
+
+      if (!manager.hasTokenManager(order.tokenFee)) {
+        // TODO(dong): read from config
+        val tm = new AccountTokenManagerImpl(order.tokenFee, 1000)
+        // TODO(dong): do it asyncly
+        tm.setBalanceAndAllowance(0, 0)
+        manager.addTokenManager(tm)
       }
-    case req: CancelOrderReq ⇒
+
+      val successful = manager.submitOrder(order)
+      val updatedOrders = orderPool.takeUpdatedOrdersAsMap()
+      val xOrder: XOrder = updatedOrders(order.id)
+
+      if (successful) {
+        log.debug(s"submitting order to market manager actor: $xOrder")
+        marketManagerActor ! XSubmitOrderReq(Some(xOrder))
+        sender ! XSubmitOrderRes(order = Some(xOrder))
+      } else {
+        val error = xOrder.status match {
+          case INVALID_DATA ⇒ XErrorCode.INVALID_ORDER_DATA
+          case UNSUPPORTED_MARKET ⇒ XErrorCode.INVALID_MARKET
+          case CANCELLED_TOO_MANY_ORDERS ⇒ XErrorCode.TOO_MANY_ORDERS
+          case CANCELLED_DUPLICIATE ⇒ XErrorCode.ORDER_ALREADY_EXIST
+          case _ ⇒ XErrorCode.UNKNOWN_ERROR
+        }
+        sender ! XSubmitOrderRes(error = error)
+      }
+
+    case req: XCancelOrderReq ⇒
       if (manager.cancelOrder(req.id)) {
-        Routers.marketManagerActor() ! req
+        marketManagerActor ! req
       }
   }
 
