@@ -33,6 +33,7 @@ final private[core] class AccountManagerImpl()(
   def hasTokenManager(token: String): Boolean = {
     tokens.contains(token)
   }
+
   def addTokenManager(tm: AccountTokenManager) = {
     assert(!hasTokenManager(tm.token))
     tokens += tm.token -> tm

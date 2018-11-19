@@ -37,11 +37,9 @@ object MarketManagerActor {
 class MarketManagerActor(
     marketId: XMarketId,
     config: XMarketManagerConfig,
-    tokenMetadataManager: TokenMetadataManager,
     dustOrderEvaluator: DustOrderEvaluator,
     gasPriceProviderActor: ActorRef,
-    orderbookManagerActor: ActorRef,
-    manager: MarketManager
+    orderbookManagerActor: ActorRef
 )(
     implicit
     ec: ExecutionContext,
@@ -49,33 +47,26 @@ class MarketManagerActor(
     tve: TokenValueEstimator,
     rie: RingIncomeEstimator,
     timeProvider: TimeProvider,
+    tokenMetadataManager: TokenMetadataManager
 )
   extends Actor
   with ActorLogging {
 
-  // val ringMatcher = new RingMatcherImpl()
-  // val pendingRingPool = new PendingRingPoolImpl()
-  // val aggregator = new OrderAwareOrderbookAggregatorImpl(0) // TODO
-  // // class MarketManagerImpl(
-  // //     val marketId: XMarketId,
-  // //     val config: XMarketManagerConfig,
-  // //     val tokenMetadataManager: TokenMetadataManager,
-  // //     val ringMatcher: RingMatcher,
-  // //     val pendingRingPool: PendingRingPool,
-  // //     val dustOrderEvaluator: DustOrderEvaluator,
-  // //     val aggregator: OrderAwareOrderbookAggregator
-  // // ) extends MarketManager with Logging {
+  private implicit val marketId_ = marketId
 
-  // private val manager: MarketManager =
-  //   new MarketManagerImpl(
-  //     marketId,
-  //     config,
-  //     tokenMetadataManager,
-  //     ringMatcher,
-  //     pendingRingPool,
-  //     dustOrderEvaluator,
-  //     aggregator
-  //   )
+  private val ringMatcher = new RingMatcherImpl()
+  private val pendingRingPool = new PendingRingPoolImpl()
+  private val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
+
+  private val manager: MarketManager = new MarketManagerImpl(
+    marketId,
+    config,
+    tokenMetadataManager,
+    ringMatcher,
+    pendingRingPool,
+    dustOrderEvaluator,
+    aggregator
+  )
 
   def receive: Receive = LoggingReceive {
 
