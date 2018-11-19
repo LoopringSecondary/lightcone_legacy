@@ -30,11 +30,9 @@ object TokenMetadataSyncActor {
 }
 
 class TokenMetadataSyncActor()(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout,
-    tmm: TokenMetadataManager
-)
+  implicit ec: ExecutionContext,
+  timeout: Timeout,
+  tmm: TokenMetadataManager)
   extends RepeatedJobActor
   with ActorLogging {
 
@@ -42,8 +40,7 @@ class TokenMetadataSyncActor()(
     id = 1,
     name = "syncTokenValue",
     scheduleDelay = 5 * 60 * 1000,
-    run = syncMarketCap _
-  )
+    run = syncMarketCap _)
   initAndStartNextRound(syncJob)
 
   //todo：初始化

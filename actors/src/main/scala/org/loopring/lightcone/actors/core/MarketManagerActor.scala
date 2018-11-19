@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
+<<<<<<< HEAD
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern._
@@ -25,6 +26,16 @@ import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.deployment._
+=======
+import akka.actor.{ Actor, ActorLogging }
+import akka.event.LoggingReceive
+import akka.pattern._
+import akka.util.Timeout
+import org.loopring.lightcone.actors.Routers
+import org.loopring.lightcone.core.base.TokenValueEstimator
+import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.proto.actors._
+>>>>>>> 47fa07cc1040592431fb90a841c2af2afdd6ed23
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.actors.data._
 

@@ -17,28 +17,27 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor.{ Actor, ActorLogging }
-import akka.event.LoggingReceive
 import akka.util.Timeout
-import akka.pattern.pipe
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.depth._
-import org.loopring.lightcone.core.market._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.actors.{ XGetGasPriceReq, XGetGasPriceRes }
+import org.loopring.lightcone.actors.data._
+
 import scala.concurrent.ExecutionContext
 
-object OrderbookManagerActor {
-  def name = "orderbook_manager"
+object GasPriceProviderActor {
+  def name = "gasprice_provider"
 }
 
-class OrderbookManagerActor(config: XOrderbookConfig)
-  extends Actor with ActorLogging {
+class GasPriceProviderActor()(
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
+  extends Actor
+  with ActorLogging {
 
-  val manager: OrderbookManager = new OrderbookManagerImpl(config)
-  def receive: Receive = LoggingReceive {
-    case req: XOrderbookUpdate ⇒
-      manager.processUpdate(req)
-
-    case req: GetXOrderbookReq ⇒
-      sender ! manager.getOrderbook(req.level, req.size)
+  def receive: Receive = {
+    case req: XGetGasPriceReq ⇒
+      XGetGasPriceRes(gasPrice = "10000000000") //todo:需要较为准确的gasprice, 10G
   }
+
 }

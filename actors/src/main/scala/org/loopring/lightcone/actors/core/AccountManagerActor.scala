@@ -38,11 +38,9 @@ object AccountManagerActor {
 }
 
 class AccountManagerActor()(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout,
-    dustEvaluator: DustOrderEvaluator
-)
+  implicit ec: ExecutionContext,
+  timeout: Timeout,
+  dustEvaluator: DustOrderEvaluator)
   extends Actor
   with ActorLogging {
 
@@ -126,8 +124,7 @@ class AccountManagerActor()(
   private def updateBalanceOrAllowance(
     token: String,
     amount: BigInt,
-    method: (AccountTokenManager, BigInt) ⇒ Unit
-  ) = for {
+    method: (AccountTokenManager, BigInt) ⇒ Unit) = for {
     tm ← getTokenManager(token)
     _ = method(tm, amount)
     updatedOrders = orderPool.takeUpdatedOrders()
