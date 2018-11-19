@@ -29,14 +29,13 @@ import org.loopring.lightcone.actors.data._
 import scala.concurrent._
 
 object AccountBalanceActor {
-  def name = "account_balance"
+  val name = "account_balance"
 }
 
 class AccountBalanceActor()(
     implicit
     ec: ExecutionContext,
-    timeout: Timeout,
-    routers: Routers
+    timeout: Timeout
 )
   extends Actor
   with ActorLogging {

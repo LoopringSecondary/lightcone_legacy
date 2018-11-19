@@ -16,12 +16,13 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.Routers
-import org.loopring.lightcone.core.base.TokenValueEstimator
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
@@ -30,23 +31,51 @@ import org.loopring.lightcone.actors.data._
 import scala.concurrent.{ ExecutionContext, Future }
 
 object MarketManagerActor {
-  def name = "market_manager"
+  val name = "market_manager"
 }
 
 class MarketManagerActor(
+    marketId: XMarketId,
+    config: XMarketManagerConfig,
+    tokenMetadataManager: TokenMetadataManager,
+    dustOrderEvaluator: DustOrderEvaluator,
+    gasPriceProviderActor: ActorRef,
+    orderbookManagerActor: ActorRef,
     manager: MarketManager
 )(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,
     tve: TokenValueEstimator,
-    routers: Routers
+    rie: RingIncomeEstimator,
+    timeProvider: TimeProvider,
 )
   extends Actor
   with ActorLogging {
 
-  val gasPriceProviderActor = Routers.gasPriceProviderActor()
-  val orderbookManagerActor = Routers.orderbookManagerActor()
+  // val ringMatcher = new RingMatcherImpl()
+  // val pendingRingPool = new PendingRingPoolImpl()
+  // val aggregator = new OrderAwareOrderbookAggregatorImpl(0) // TODO
+  // // class MarketManagerImpl(
+  // //     val marketId: XMarketId,
+  // //     val config: XMarketManagerConfig,
+  // //     val tokenMetadataManager: TokenMetadataManager,
+  // //     val ringMatcher: RingMatcher,
+  // //     val pendingRingPool: PendingRingPool,
+  // //     val dustOrderEvaluator: DustOrderEvaluator,
+  // //     val aggregator: OrderAwareOrderbookAggregator
+  // // ) extends MarketManager with Logging {
+
+  // private val manager: MarketManager =
+  //   new MarketManagerImpl(
+  //     marketId,
+  //     config,
+  //     tokenMetadataManager,
+  //     ringMatcher,
+  //     pendingRingPool,
+  //     dustOrderEvaluator,
+  //     aggregator
+  //   )
 
   def receive: Receive = LoggingReceive {
 

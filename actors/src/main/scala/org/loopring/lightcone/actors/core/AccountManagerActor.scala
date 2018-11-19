@@ -34,23 +34,23 @@ import XOrderStatus._
 import XErrorCode._
 
 object AccountManagerActor {
-  def name = "account_manager"
+  val name = "account_manager"
 }
 
 class AccountManagerActor(
-  accountBalanceActor: ActorRef,
-  marketManagerActor: ActorRef)(
-    implicit ec: ExecutionContext,
+    accountBalanceActor: ActorRef,
+    marketManagerActor: ActorRef
+)(
+    implicit
+    ec: ExecutionContext,
     timeout: Timeout,
-    routers: Routers,
-    dustEvaluator: DustOrderEvaluator)
+    dustEvaluator: DustOrderEvaluator
+)
   extends Actor
   with ActorLogging {
 
-  implicit val orderPool = new AccountOrderPoolImpl()
-  val manager = AccountManager.default()
-  val accountBalanceActor: ActorRef = Routers.accountBalanceActor()
-  val marketManagerActor: ActorRef = Routers.marketManagerActor()
+  private implicit val orderPool = new AccountOrderPoolImpl()
+  private val manager = AccountManager.default
 
   def receive: Receive = LoggingReceive {
 
@@ -115,7 +115,8 @@ class AccountManagerActor(
   private def updateBalanceOrAllowance(
     token: String,
     amount: BigInt,
-    method: (AccountTokenManager, BigInt) ⇒ Unit) = for {
+    method: (AccountTokenManager, BigInt) ⇒ Unit
+  ) = for {
     tm ← getTokenManager(token)
     _ = method(tm, amount)
     updatedOrders = orderPool.takeUpdatedOrders()
