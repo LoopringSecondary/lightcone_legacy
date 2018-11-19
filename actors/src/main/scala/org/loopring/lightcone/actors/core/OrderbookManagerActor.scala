@@ -20,11 +20,10 @@ import akka.actor.{Actor, ActorLogging}
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import akka.pattern.pipe
-import org.loopring.lightcone.actors.Routers
-import org.loopring.lightcone.core.base.TokenValueEstimator
-import org.loopring.lightcone.core.depth.OrderbookManager
-import org.loopring.lightcone.core.market.MarketManager
-import org.loopring.lightcone.proto.core.{GetXOrderbookReq, XOrderbookUpdate}
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.depth._
+import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.proto.core._
 
 import scala.concurrent.ExecutionContext
 
@@ -45,8 +44,9 @@ class OrderbookManagerActor(
   def receive: Receive = LoggingReceive {
     case req: XOrderbookUpdate ⇒
       manager.processUpdate(req)
+      
     case req: GetXOrderbookReq ⇒
-      sender ! manager.getXOrderbook(req.level, req.size)
+      sender ! manager.getOrderbook(req.level, req.size)
   }
 
 }

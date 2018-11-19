@@ -31,7 +31,7 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
 
     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getXOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     marketManager.submitOrder(buy1, 0)
     marketManager.submitOrder(buy2, 0)
@@ -40,8 +40,7 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
     marketManager.getBuyOrders(5) should be(Seq(
       buy3.copy(status = PENDING),
       buy2.copy(status = PENDING),
-      buy1.copy(status = PENDING)
-    ))
+      buy1.copy(status = PENDING)))
 
     val sell1 = actualNotDust(sellGTO(110000, 100))
 
@@ -70,8 +69,7 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
     result should be(MarketManager.MatchResult(
       Seq(ring3, ring2, ring1),
       sell1.copy(status = PENDING),
-      XOrderbookUpdate()
-    ))
+      XOrderbookUpdate()))
 
     (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
       .verify(*, *, *)

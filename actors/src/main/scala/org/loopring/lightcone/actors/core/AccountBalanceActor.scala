@@ -19,11 +19,10 @@ package org.loopring.lightcone.actors.core
 import akka.actor.{ Actor, ActorLogging }
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.actors.Routers
 import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base.DustOrderEvaluator
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XOrderStatus
+import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._

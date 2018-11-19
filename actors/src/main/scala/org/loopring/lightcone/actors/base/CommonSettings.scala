@@ -14,30 +14,10 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.core
+package org.loopring.lightcone.actors.base
 
-import akka.actor._
-import akka.util.Timeout
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.actors.data._
-
-import scala.concurrent.ExecutionContext
-
-object GasPriceProviderActor {
-  def name = "gasprice_provider"
-}
-
-class GasPriceProviderActor()(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout
+case class CommonSettings(
+    id: Option[String],
+    roles: Seq[String],
+    instances: Int
 )
-  extends Actor
-  with ActorLogging {
-
-  def receive: Receive = {
-    case req: XGetGasPriceReq ⇒
-      XGetGasPriceRes(gasPrice = "10000000000") //todo:需要较为准确的gasprice, 10G
-  }
-
-}
