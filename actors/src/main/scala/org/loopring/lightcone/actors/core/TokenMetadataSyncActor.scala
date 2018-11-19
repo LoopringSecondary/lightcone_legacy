@@ -50,7 +50,6 @@ class TokenMetadataSyncActor()(
   override def receive: Receive = super.receive orElse LoggingReceive {
     case req: UpdatedTokenBurnRate ⇒ tmm.updateBurnRate(req.token, req.burnRate)
     //todo:update price && decimals
-    case _ ⇒
   }
 
   def syncMarketCap: Future[Unit] = {
