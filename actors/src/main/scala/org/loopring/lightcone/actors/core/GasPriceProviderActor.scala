@@ -14,10 +14,30 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib.data
+package org.loopring.lightcone.actors.core
 
-trait RingSigner {
-  def getInputData(ring: Ring): String
-  def getSignedTxData(inputData: String, nonce: BigInt, gasLimit: BigInt, gasPrice: BigInt): Array[Byte]
-  def getSignerAddress(): String
+import akka.actor.{Actor, ActorLogging}
+import akka.util.Timeout
+import org.loopring.lightcone.proto.actors.{GetGasPriceReq, GetGasPriceRes}
+
+import scala.concurrent.ExecutionContext
+
+object GasPriceProviderActor {
+  def name = "gasprice_provider"
+}
+
+class GasPriceProviderActor()(
+  implicit
+  ec: ExecutionContext,
+  timeout: Timeout,
+)
+  extends Actor
+    with ActorLogging {
+
+  def receive: Receive = {
+    case req: GetGasPriceReq ⇒
+      //todo:需要较为准确的gasprice, 10G
+      GetGasPriceRes(gasPrice = "10000000000")
+  }
+
 }

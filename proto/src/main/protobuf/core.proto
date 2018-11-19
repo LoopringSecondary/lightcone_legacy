@@ -97,6 +97,15 @@ message XOrderbookUpdate {
     repeated XSlot buys = 2;
 }
 
+message GetXOrderbookReq {
+   int32 level = 1;
+   int32 size = 2;
+}
+
+message GetXOrderbookRes {
+   XOrderbook orderbook = 1;
+}
+
 message XTokenMetadata {
     string address = 1;
     int32 decimals = 2;

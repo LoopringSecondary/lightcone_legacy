@@ -138,8 +138,16 @@ message UpdatedGasPrice {
     int64 gas_price = 1;
 }
 
-message SendRawTransaction {
+message SendRawTxReq {
     bytes data = 1;
+}
+
+message SendRawTxRes {
+    SendStatus status = 1;
+    enum SendStatus {
+        SEND_STATUS_UNKNOW = 0;
+        SEND_STATUS_SUCCESS = 1;
+    }
 }
 
 enum ExecutedStatus {
@@ -164,5 +172,17 @@ message SendRawTransactionRes {
 
 message SubmitRingReq {
   repeated XRing rings = 1;
+  string gas_limit = 2;
+  string gas_price = 3;
 }
 
+message GetGasPriceReq {}
+
+message GetGasPriceRes {
+  string gas_price = 1;
+}
+
+message UpdatedTokenBurnRate {
+    string token = 1;
+    double burnRate = 2;
+}

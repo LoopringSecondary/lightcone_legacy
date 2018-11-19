@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib.data
+package org.loopring.lightcone.actors.base
 
-trait RingSigner {
-  def getInputData(ring: Ring): String
-  def getSignedTxData(inputData: String, nonce: BigInt, gasLimit: BigInt, gasPrice: BigInt): Array[Byte]
-  def getSignerAddress(): String
+import com.google.protobuf.ByteString
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.actors.XOrder
+
+package object data {
+
+  implicit def xOrderToOrder(xorder: XOrder): Order = ???
+
+  implicit def byteArray2ByteString(bytes: Array[Byte]) = ByteString.copyFrom(bytes)
 }
