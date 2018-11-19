@@ -44,6 +44,7 @@ final private[core] class AccountManagerImpl()(
     tokens(token)
   }
 
+  //TODO(litao): What if an order is re-submitted?
   def submitOrder(order: Order): Boolean = {
     if (order.amountS <= 0) {
       orderPool += order.as(INVALID_DATA)

@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib.data
+package org.loopring.lightcone.actors
 
-trait RingSigner {
-  def getInputData(ring: Ring): String
-  def getSignedTxData(inputData: String, nonce: BigInt, gasLimit: BigInt, gasPrice: BigInt): Array[Byte]
-  def getSignerAddress(): String
+object Main {
+
+  def main(args: Array[String]): Unit = {
+    val routers = new Routers()
+  }
+
 }

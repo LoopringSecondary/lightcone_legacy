@@ -19,6 +19,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto.core;
 
+// TODO(dongw): add a prefix as STATUS_
 enum XOrderStatus {
     NEW = 0;
     PENDING = 1;
@@ -33,6 +34,7 @@ enum XOrderStatus {
     CANCELLED_LOW_FEE_BALANCE = 10;
     CANCELLED_TOO_MANY_ORDERS = 11;
     CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 12;
+    CANCELLED_DUPLICIATE = 13;
 }
 
 message XMarketId {
@@ -46,6 +48,7 @@ message XMarketManagerConfig {
 }
 
 
+// TODO(dongw): add a prefix as MATCH_FAILURE_
 enum XMatchingFailure {
     NO_ERROR = 0;
     ORDERS_NOT_TRADABLE = 1;
@@ -95,6 +98,15 @@ message XOrderbookUpdate {
     }
     repeated XSlot sells = 1;
     repeated XSlot buys = 2;
+}
+
+message GetXOrderbookReq {
+   int32 level = 1;
+   int32 size = 2;
+}
+
+message GetXOrderbookRes {
+   XOrderbook orderbook = 1;
 }
 
 message XTokenMetadata {

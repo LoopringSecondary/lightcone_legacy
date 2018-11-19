@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib.data
+package org.loopring.lightcone.actors.utils
 
-trait RingSigner {
-  def getInputData(ring: Ring): String
-  def getSignedTxData(inputData: String, nonce: BigInt, gasLimit: BigInt, gasPrice: BigInt): Array[Byte]
-  def getSignerAddress(): String
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.filter.Filter
+import ch.qos.logback.core.spi.FilterReply
+
+class LogFilter extends Filter[ILoggingEvent] {
+  def decide(event: ILoggingEvent) = {
+    event.getLoggerName() match {
+      case "akka.cluster.ClusterHeartbeatSender" ⇒ FilterReply.DENY
+      case "org.hbase.async.RegionClient" ⇒ FilterReply.DENY
+      case _ ⇒ FilterReply.ACCEPT
+    }
+  }
 }
