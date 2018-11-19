@@ -24,6 +24,7 @@ lazy val auxiliary = (project in file("auxiliary"))
 
 lazy val core = (project in file("core"))
   .enablePlugins(AutomateHeaderPlugin)
+  .dependsOn(proto)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Core)
