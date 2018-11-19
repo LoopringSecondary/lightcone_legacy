@@ -19,37 +19,37 @@ package org.loopring.lightcone.actors.core
 import akka.actor.ActorLogging
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.actors.base.{Job, RepeatedJobActor}
+import org.loopring.lightcone.actors.base.{ Job, RepeatedJobActor }
 import org.loopring.lightcone.core.base.TokenMetadataManager
 import org.loopring.lightcone.proto.actors.UpdatedTokenBurnRate
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 object TokenMetadataSyncActor {
   def name = "token_meta_data"
 }
 
 class TokenMetadataSyncActor()(
-    implicit
-    val tmm: TokenMetadataManager,
-    ec: ExecutionContext,
-    timeout: Timeout
+  implicit
+  tmm: TokenMetadataManager,
+  ec: ExecutionContext,
+  timeout: Timeout
 )
   extends RepeatedJobActor
   with ActorLogging {
 
-  val resubmitJob = Job(
+  val syncJob = Job(
     id = 1,
     name = "syncTokenValue",
     scheduleDelay = 5 * 60 * 1000,
     callMethod = syncMarketCap _
   )
-  initAndStartNextRound(resubmitJob)
+  initAndStartNextRound(syncJob)
 
   //todo：初始化
   override def receive: Receive = super.receive orElse LoggingReceive {
-    case req: UpdatedTokenBurnRate   ⇒ tmm.updateBurnRate(req.token, req.burnRate)
-      //todo:update price && decimals
+    case req: UpdatedTokenBurnRate ⇒ tmm.updateBurnRate(req.token, req.burnRate)
+    //todo:update price && decimals
     case _ ⇒
   }
 

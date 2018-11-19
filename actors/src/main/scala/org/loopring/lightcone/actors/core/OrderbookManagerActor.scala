@@ -33,12 +33,12 @@ object OrderbookManagerActor {
 }
 
 class OrderbookManagerActor(
-                           manager:OrderbookManager
-                           )(
-                             implicit
-                             ec: ExecutionContext,
-                             timeout: Timeout,
-                           )
+  manager:OrderbookManager
+)(
+  implicit
+  ec: ExecutionContext,
+  timeout: Timeout,
+)
   extends Actor
     with ActorLogging {
 

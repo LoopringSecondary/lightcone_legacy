@@ -34,13 +34,13 @@ object MarketManagerActor {
 }
 
 class MarketManagerActor(
-    manager: MarketManager
+  manager: MarketManager
 )(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout,
-    tve: TokenValueEstimator,
-    routers: Routers
+  implicit
+  ec: ExecutionContext,
+  timeout: Timeout,
+  tve: TokenValueEstimator,
+  routers: Routers
 )
   extends Actor
   with ActorLogging {
@@ -58,13 +58,13 @@ class MarketManagerActor(
       }
     case req: CancelOrderReq ⇒ manager.cancelOrder(req.id)
     case updatedGasPrce: UpdatedGasPrice ⇒ for {
-        gasPriceRes ← (Routers.gasPriceProviderActor ? GetGasPriceReq()).mapTo[GetGasPriceRes]
-        resOpt = manager.triggerMatch(true, getCostBySingleRing(BigInt(gasPriceRes.gasPrice)))
-      } yield {
-        resOpt foreach {
-          res ⇒ Routers.orderbookManagerActor() ! res.orderbookUpdate
-        }
+      gasPriceRes ← (Routers.gasPriceProviderActor ? GetGasPriceReq()).mapTo[GetGasPriceRes]
+      resOpt = manager.triggerMatch(true, getCostBySingleRing(BigInt(gasPriceRes.gasPrice)))
+    } yield {
+      resOpt foreach {
+        res ⇒ Routers.orderbookManagerActor() ! res.orderbookUpdate
       }
+    }
     case _ ⇒
   }
 

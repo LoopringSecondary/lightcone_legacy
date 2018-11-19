@@ -26,7 +26,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth.OrderAwareOrderbookAggregatorImpl
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors.XOrder
-import org.loopring.lightcone.proto.core.{XMarketId, XMarketManagerConfig}
+import org.loopring.lightcone.proto.core.{ XMarketId, XMarketManagerConfig }
 import org.scalatest._
 
 import scala.concurrent.duration._
@@ -38,26 +38,26 @@ class MarketManagerSpec() extends TestKit(ActorSystem("marketManagerSpec", Confi
     TestKit.shutdownActorSystem(system)
   }
 
-    implicit val marketId = XMarketId()
-    implicit val tmm = new TokenMetadataManager()
-    implicit  val tve = new TokenValueEstimator()
-    implicit val ringIncomeEstimator = new RingIncomeEstimatorImpl()
-    implicit val timeProvider = new SystemTimeProvider()
-    val config = XMarketManagerConfig()
+  implicit val marketId = XMarketId()
+  implicit val tmm = new TokenMetadataManager()
+  implicit val tve = new TokenValueEstimator()
+  implicit val ringIncomeEstimator = new RingIncomeEstimatorImpl()
+  implicit val timeProvider = new SystemTimeProvider()
+  val config = XMarketManagerConfig()
 
-    val ringMatcher = new RingMatcherImpl()
-    val pendingRingPool = new PendingRingPoolImpl()
-    val dustOrderEvaluator = new DustOrderEvaluator()
-    val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
-    var marketManager = new MarketManagerImpl(
-      marketId,
-      config,
-      tmm,
-      ringMatcher,
-      pendingRingPool,
-      dustOrderEvaluator,
-      aggregator
-    )
+  val ringMatcher = new RingMatcherImpl()
+  val pendingRingPool = new PendingRingPoolImpl()
+  val dustOrderEvaluator = new DustOrderEvaluator()
+  val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
+  var marketManager = new MarketManagerImpl(
+    marketId,
+    config,
+    tmm,
+    ringMatcher,
+    pendingRingPool,
+    dustOrderEvaluator,
+    aggregator
+  )
   implicit val ec = system.dispatcher
   implicit val timeout = Timeout(5 second)
   implicit val routers = new Routers()

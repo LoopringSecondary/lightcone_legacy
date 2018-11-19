@@ -35,9 +35,7 @@ class GasPriceProviderActor()(
     with ActorLogging {
 
   def receive: Receive = {
-    case req: GetGasPriceReq ⇒
-      //todo:需要较为准确的gasprice, 10G
-      GetGasPriceRes(gasPrice = "10000000000")
+    case req: GetGasPriceReq ⇒ GetGasPriceRes(gasPrice = "10000000000") //todo:需要较为准确的gasprice, 10G
   }
 
 }

@@ -16,26 +16,26 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{ Actor, ActorLogging }
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.actors.Routers
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.actors.base.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
-import org.loopring.lightcone.proto.actors.{CancelOrderReq, SubmitOrderReq}
+import org.loopring.lightcone.proto.actors.{ CancelOrderReq, SubmitOrderReq }
 
 import scala.concurrent.ExecutionContext
 
 class AccountManagerActor(
-    manager: AccountManager
+  manager: AccountManager
 )(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout,
-    routers: Routers,
-    orderPool: AccountOrderPool,
-    dustEvaluator: DustOrderEvaluator
+  implicit
+  ec: ExecutionContext,
+  timeout: Timeout,
+  routers: Routers,
+  orderPool: AccountOrderPool,
+  dustEvaluator: DustOrderEvaluator
 )
   extends Actor
   with ActorLogging {
