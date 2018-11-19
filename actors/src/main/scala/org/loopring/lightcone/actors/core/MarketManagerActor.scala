@@ -56,7 +56,9 @@ class MarketManagerActor(
 
   private val ringMatcher = new RingMatcherImpl()
   private val pendingRingPool = new PendingRingPoolImpl()
-  private val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
+  private val aggregator = new OrderAwareOrderbookAggregatorImpl(
+    config.priceDecimals
+  )
 
   private val manager: MarketManager = new MarketManagerImpl(
     marketId,
@@ -74,14 +76,14 @@ class MarketManagerActor(
     case XSubmitOrderReq(Some(order)) ⇒
       order.status match {
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒ for {
-          gasPriceRes ← (gasPriceProviderActor ? XGetGasPriceReq())
-            .mapTo[XGetGasPriceRes]
-          res = manager.submitOrder(
-            order,
-            getCostBySingleRing(BigInt(gasPriceRes.gasPrice))
-          )
-          _ = orderbookManagerActor ! res.orderbookUpdate
-        } yield Unit
+          cost ← getCostOfSingleRing()
+          res = manager.submitOrder(order, cost)
+          ou = res.orderbookUpdate
+        } yield {
+          if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
+            orderbookManagerActor ! ou
+          }
+        }
 
         case s ⇒
           log.error(s"unexpected order status in XSubmitOrderReq: $s")
@@ -92,23 +94,24 @@ class MarketManagerActor(
 
     case updatedGasPrce: XUpdatedGasPrice ⇒
       for {
-        gasPriceRes ← (gasPriceProviderActor ? XGetGasPriceReq())
-          .mapTo[XGetGasPriceRes]
-        resOpt = manager.triggerMatch(
-          true,
-          getCostBySingleRing(BigInt(gasPriceRes.gasPrice))
-        )
+        cost ← getCostOfSingleRing()
+        resultOpt = manager.triggerMatch(true, cost)
       } yield {
-        resOpt foreach { res ⇒
-          gasPriceProviderActor ! res.orderbookUpdate
+        resultOpt foreach { result ⇒
+          val ou = result.orderbookUpdate
+          if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
+            orderbookManagerActor ! ou
+          }
         }
       }
   }
 
-  private def getCostBySingleRing(gasPrice: BigInt) = {
-    val costedEth = BigInt(400000) * gasPrice
+  private def getCostOfSingleRing() = for {
+    res ← (gasPriceProviderActor ? XGetGasPriceReq())
+      .mapTo[XGetGasPriceRes]
+    costedEth = BigInt(400000) * BigInt(res.gasPrice)
     //todo:eth的标识符
-    tve.getEstimatedValue("ETH", costedEth)
-  }
+    cost = tve.getEstimatedValue("ETH", costedEth)
+  } yield cost
 
 }
