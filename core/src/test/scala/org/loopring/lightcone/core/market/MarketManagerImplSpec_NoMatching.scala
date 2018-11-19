@@ -50,7 +50,7 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     var order2 = actualNotDust(sellGTO(100000, 101))
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getXOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     var result = marketManager.submitOrder(order1, 0)
     result should be(emptyMatchingResult(order1, PENDING))
@@ -66,12 +66,10 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
 
     marketManager.getSellOrders(3) should be(Seq(
       order1.copy(status = PENDING),
-      order2.copy(status = PENDING)
-    ))
+      order2.copy(status = PENDING)))
 
     marketManager.getSellOrders(1) should be(Seq(
-      order1.copy(status = PENDING)
-    ))
+      order1.copy(status = PENDING)))
 
     marketManager.getBuyOrders(100) should be(Nil)
   }
@@ -81,7 +79,7 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     var order2 = actualNotDust(buyGTO(101, 100000))
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getXOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     var result = marketManager.submitOrder(order1, 0)
     result should be(emptyMatchingResult(order1, PENDING))
@@ -97,12 +95,10 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
 
     marketManager.getBuyOrders(3) should be(Seq(
       order2.copy(status = PENDING),
-      order1.copy(status = PENDING)
-    ))
+      order1.copy(status = PENDING)))
 
     marketManager.getBuyOrders(1) should be(Seq(
-      order2.copy(status = PENDING)
-    ))
+      order2.copy(status = PENDING)))
 
     marketManager.getSellOrders(100) should be(Nil)
   }

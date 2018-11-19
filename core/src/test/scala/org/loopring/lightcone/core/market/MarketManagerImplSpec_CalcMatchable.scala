@@ -31,7 +31,7 @@ class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(sellOrder.id).returns(555)
     (fakePendingRingPool.getOrderPendingAmountS _).when(buyOrder.id).returns(666)
-    (fakeAggregator.getXOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     val ring = OrderRing(null, null)
     (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
@@ -44,13 +44,10 @@ class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
     (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
       .verify(
         buyOrder.asPending.withActualAsOriginal.copy(_matchable = Some(
-          OrderState(99334, 99, 0)
-        )),
+          OrderState(99334, 99, 0))),
         sellOrder.asPending.withActualAsOriginal.copy(_matchable = Some(
-          OrderState(99445, 100, 0)
-        )),
-        2.0
-      )
+          OrderState(99445, 100, 0))),
+        2.0)
       .once
   }
 
