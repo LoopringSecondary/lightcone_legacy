@@ -34,8 +34,10 @@ object AccountBalanceActor {
 
 // TODO(fukun): implement this class.
 class AccountBalanceActor()(
-  implicit ec: ExecutionContext,
-  timeout: Timeout)
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
   extends Actor
   with ActorLogging {
 

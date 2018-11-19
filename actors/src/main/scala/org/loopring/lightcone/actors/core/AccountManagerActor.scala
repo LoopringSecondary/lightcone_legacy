@@ -61,6 +61,9 @@ class AccountManagerActor()(
       context.become(functional)
   }
 
+  // TODO(hongyu): handle the following messages:
+  // - XQueryBalance: (this should query AccountBalanceActor first,
+  //   then query unreserved allowance)
   def functional: Receive = LoggingReceive {
     case XSubmitOrderReq(Some(xorder)) ⇒
       for {

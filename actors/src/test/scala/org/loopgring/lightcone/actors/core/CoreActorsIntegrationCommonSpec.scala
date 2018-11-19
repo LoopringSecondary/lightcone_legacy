@@ -32,11 +32,11 @@ import org.scalatest._
 
 import scala.concurrent.duration._
 
-class CoreIntegration_Scenario1
+abstract class CoreActorsIntegrationCommonSpec
   extends TestKit(ActorSystem("test"))
   with ImplicitSender
-  with WordSpecLike
   with Matchers
+  with WordSpecLike
   with BeforeAndAfterAll {
 
   override def afterAll: Unit = {
@@ -72,28 +72,16 @@ class CoreIntegration_Scenario1
     new MarketManagerActor(marketId, config)
   )
 
-  accountManagerActor ! ActorDependencyReady(
-    Seq(
-      accountBalanceActor.path.toString,
-      marketManagerActor.path.toString
-    )
-  )
+  accountManagerActor ! ActorDependencyReady(Seq(
+    accountBalanceActor.path.toString,
+    marketManagerActor.path.toString
+  ))
 
-  marketManagerActor ! ActorDependencyReady(
-    Seq(
-      gasPriceActor.path.toString,
-      orderbookManagerActor.path.toString
-    )
-  )
+  marketManagerActor ! ActorDependencyReady(Seq(
+    gasPriceActor.path.toString,
+    orderbookManagerActor.path.toString
+  ))
 
   val clientProbe = TestProbe("client")
   val clientActor = clientProbe.ref
-
-  "submitOrder" must {
-
-    "send orderUpdateEvent to orderbookManagerActor" in {
-
-    }
-
-  }
 }
