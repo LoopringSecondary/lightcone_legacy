@@ -19,7 +19,6 @@ package org.loopring.lightcone.actors
 object Main {
 
   def main(args: Array[String]): Unit = {
-    val routers = new Routers()
   }
 
 }
