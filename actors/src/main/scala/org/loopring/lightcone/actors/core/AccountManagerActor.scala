@@ -25,6 +25,7 @@ import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.deployment._
 import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._
@@ -36,10 +37,7 @@ object AccountManagerActor {
   val name = "account_manager"
 }
 
-class AccountManagerActor(
-    accountBalanceActor: ActorRef,
-    marketManagerActor: ActorRef
-)(
+class AccountManagerActor()(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,
@@ -48,11 +46,22 @@ class AccountManagerActor(
   extends Actor
   with ActorLogging {
 
-  private implicit val orderPool = new AccountOrderPoolImpl()
-  private val manager = AccountManager.default
+  implicit val orderPool = new AccountOrderPoolImpl()
+  val manager = AccountManager.default
+
+  private var accountBalanceActor: ActorSelection = _
+  private var marketManagerActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
+    case ActorDependencyReady(paths) ⇒
+      log.info(s"actor dependency ready: $paths")
+      assert(paths.size == 2)
+      accountBalanceActor = context.actorSelection(paths(0))
+      marketManagerActor = context.actorSelection(paths(1))
+      context.become(functional)
+  }
 
+  def functional: Receive = LoggingReceive {
     case XSubmitOrderReq(Some(xorder)) ⇒
       for {
         _ ← getTokenManager(xorder.tokenS)

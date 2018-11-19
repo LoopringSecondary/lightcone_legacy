@@ -31,9 +31,10 @@ object OrderbookManagerActor {
   def name = "orderbook_manager"
 }
 
-class OrderbookManagerActor(manager: OrderbookManager)
+class OrderbookManagerActor(config: XOrderbookConfig)
   extends Actor with ActorLogging {
 
+  val manager: OrderbookManager = new OrderbookManagerImpl(config)
   def receive: Receive = LoggingReceive {
     case req: XOrderbookUpdate ⇒
       manager.processUpdate(req)
@@ -41,5 +42,4 @@ class OrderbookManagerActor(manager: OrderbookManager)
     case req: GetXOrderbookReq ⇒
       sender ! manager.getOrderbook(req.level, req.size)
   }
-
 }

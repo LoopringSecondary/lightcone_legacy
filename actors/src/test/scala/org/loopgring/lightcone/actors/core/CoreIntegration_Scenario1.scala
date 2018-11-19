@@ -23,49 +23,71 @@ import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.Routers
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.depth.OrderAwareOrderbookAggregatorImpl
+import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors.XOrder
-import org.loopring.lightcone.proto.core.{ XMarketId, XMarketManagerConfig }
+import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.deployment._
 import org.scalatest._
 
 import scala.concurrent.duration._
 
-class MarketManagerSpec() extends TestKit(ActorSystem("marketManagerSpec", ConfigFactory.load())) with ImplicitSender
-  with WordSpecLike with Matchers with BeforeAndAfterAll {
+class CoreIntegration_Scenario1
+  extends TestKit(ActorSystem("test"))
+  with ImplicitSender
+  with WordSpecLike
+  with Matchers
+  with BeforeAndAfterAll {
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
   }
 
-  implicit val marketId = XMarketId()
-  implicit val tmm = new TokenMetadataManager()
-  implicit val tve = new TokenValueEstimator()
+  implicit val marketId = XMarketId("LRC", "WETH")
+  implicit val tokenMetadataManager = new TokenMetadataManager()
+  implicit val tokenValueEstimator = new TokenValueEstimator()
+  implicit val dustOrderEvaluator = new DustOrderEvaluator()
   implicit val ringIncomeEstimator = new RingIncomeEstimatorImpl()
   implicit val timeProvider = new SystemTimeProvider()
-  val config = XMarketManagerConfig()
+  implicit val timeout = Timeout(5 second)
+  implicit val ec = system.dispatcher
 
+  val config = XMarketManagerConfig()
+  val orderbookConfig = XOrderbookConfig()
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
-  val dustOrderEvaluator = new DustOrderEvaluator()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
-  var marketManager = new MarketManagerImpl(
-    marketId,
-    config,
-    tmm,
-    ringMatcher,
-    pendingRingPool,
-    dustOrderEvaluator,
-    aggregator
+
+  val accountBalanceProbe = TestProbe("accountBalanceActor")
+  val accountBalanceActor = accountBalanceProbe.ref
+
+  val gasPriceActor = TestActorRef(new GasPriceActor)
+  val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
+
+  val accountManagerActor: ActorRef = TestActorRef(
+    new AccountManagerActor()
   )
-  implicit val ec = system.dispatcher
-  implicit val timeout = Timeout(5 second)
-  implicit val routers = new Routers()
 
-  val ethereumAccessActor = TestActorRef(TestActors.blackholeProps)
-  routers.actors += GasPriceProviderActor.name → system.actorOf(Props(new GasPriceProviderActor()))
+  val marketManagerActor: ActorRef = TestActorRef(
+    new MarketManagerActor(marketId, config)
+  )
 
-  val marketManagerActor = system.actorOf(Props(new MarketManagerActor(marketManager)))
+  accountManagerActor ! ActorDependencyReady(
+    Seq(
+      accountBalanceActor.path.toString,
+      marketManagerActor.path.toString
+    )
+  )
+
+  marketManagerActor ! ActorDependencyReady(
+    Seq(
+      gasPriceActor.path.toString,
+      orderbookManagerActor.path.toString
+    )
+  )
+
+  val clientProbe = TestProbe("client")
+  val clientActor = clientProbe.ref
 
   "submitOrder" must {
 

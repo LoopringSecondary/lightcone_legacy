@@ -24,6 +24,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.deployment._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.actors.data._
 
@@ -35,9 +36,7 @@ object MarketManagerActor {
 
 class MarketManagerActor(
     marketId: XMarketId,
-    config: XMarketManagerConfig,
-    gasPriceActor: ActorRef,
-    orderbookManagerActor: ActorRef
+    config: XMarketManagerConfig
 )(
     implicit
     ec: ExecutionContext,
@@ -69,7 +68,19 @@ class MarketManagerActor(
     aggregator
   )
 
+  private var gasPriceActor: ActorSelection = _
+  private var orderbookManagerActor: ActorSelection = _
+
   def receive: Receive = LoggingReceive {
+    case ActorDependencyReady(paths) ⇒
+      log.info(s"actor dependency ready: $paths")
+      assert(paths.size == 2)
+      gasPriceActor = context.actorSelection(paths(0))
+      orderbookManagerActor = context.actorSelection(paths(1))
+      context.become(functional)
+  }
+
+  def functional: Receive = LoggingReceive {
 
     // TODO(hongyu): send a response to the sender
     case XSubmitOrderReq(Some(order)) ⇒

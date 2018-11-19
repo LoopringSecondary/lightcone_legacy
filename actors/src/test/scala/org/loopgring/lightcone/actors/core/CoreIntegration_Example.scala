@@ -22,8 +22,12 @@ import akka.testkit._
 import org.scalatest._
 
 // https://doc.akka.io/docs/akka/2.5/testing.html
-class MySpec() extends TestKit(ActorSystem("MySpec")) with ImplicitSender
-  with WordSpecLike with Matchers with BeforeAndAfterAll {
+class MySpec()
+  extends TestKit(ActorSystem("test"))
+  with ImplicitSender
+  with WordSpecLike
+  with Matchers
+  with BeforeAndAfterAll {
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)

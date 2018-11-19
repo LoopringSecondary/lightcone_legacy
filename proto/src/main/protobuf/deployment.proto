@@ -19,237 +19,239 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto.deployment;
 
-
 import "google/protobuf/any.proto";
 
 
-message Msg {
-    string name = 1;
+message ActorDependencyReady {
+    repeated string paths = 1;
 }
+// message Msg {
+//     string name = 1;
+// }
 
-message LocalStats {
-    message ActorGroup {
-        string group = 1;
-        repeated string actors = 2;
-    }
+// message LocalStats {
+//     message ActorGroup {
+//         string group = 1;
+//         repeated string actors = 2;
+//     }
 
-    repeated string roles = 1;
-    repeated ActorGroup groups = 2;
-}
+//     repeated string roles = 1;
+//     repeated ActorGroup groups = 2;
+// }
 
-message UploadDynamicSettings {
-    DynamicSettings settings = 1;
-}
+// message UploadDynamicSettings {
+//     DynamicSettings settings = 1;
+// }
 
-message ProcessDynamicSettings {
-    DynamicSettings settings = 1;
-}
+// message ProcessDynamicSettings {
+//     DynamicSettings settings = 1;
+// }
 
-message BalanceCacherSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message BalanceCacherSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message BalanceManagerSettings {
-    string id = 1;  //address prefix or other sharding key
-    repeated string roles = 2;
-    int32 instances = 3;
-}
+// message BalanceManagerSettings {
+//     string id = 1;  //address prefix or other sharding key
+//     repeated string roles = 2;
+//     int32 instances = 3;
+// }
 
-message BalanceReaderSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message BalanceReaderSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message BlockchainEventExtractorSettings {
-    repeated string roles = 1;
-    int64 scheduleDelay = 2;
-}
+// message BlockchainEventExtractorSettings {
+//     repeated string roles = 1;
+//     int64 scheduleDelay = 2;
+// }
 
-message CacheObsoleterSettings {
-    repeated string roles = 1;
-    int32 deadTime = 2;
-}
+// message CacheObsoleterSettings {
+//     repeated string roles = 1;
+//     int32 deadTime = 2;
+// }
 
-message EthereumAccessorSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message EthereumAccessorSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message OrderFillSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message OrderFillSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message OrderAccessorSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message OrderAccessorSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message OrderBookManagerSettings {
-    string id = 1;
-    repeated string roles = 2;
-    string delegate = 3;
-}
+// message OrderBookManagerSettings {
+//     string id = 1;
+//     repeated string roles = 2;
+//     string delegate = 3;
+// }
 
-message OrderBookReaderSettings {
-    string id = 1;
-    repeated string roles = 2;
-    int32 instances = 3;
-}
+// message OrderBookReaderSettings {
+//     string id = 1;
+//     repeated string roles = 2;
+//     int32 instances = 3;
+// }
 
-message OrderCacherSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message OrderCacherSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message OrderDBAccessorSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message OrderDBAccessorSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message OrderReadCoordinatorSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message OrderReadCoordinatorSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message OrderReaderSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message OrderReaderSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message OrderUpdateCoordinatorSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message OrderUpdateCoordinatorSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message OrderUpdaterSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-    string lrc_address = 3;
-}
+// message OrderUpdaterSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+//     string lrc_address = 3;
+// }
 
-message OrderWriterSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-    OrderValidationSettings order_validation_settings = 3;
-}
+// message OrderWriterSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+//     OrderValidationSettings order_validation_settings = 3;
+// }
 
-message OrderValidationSettings {
-    bytes min_lrc_fee = 1;
-    bytes min_lrc_hold = 2;
-    bytes max_price = 3;
-    map<string, bytes> min_token_s_amount = 4;
-    double min_token_fiat_amount = 5;
-    int64 max_valid_since_interval = 6;
-    bytes pow_difficulty = 7;
-}
+// message OrderValidationSettings {
+//     bytes min_lrc_fee = 1;
+//     bytes min_lrc_hold = 2;
+//     bytes max_price = 3;
+//     map<string, bytes> min_token_s_amount = 4;
+//     double min_token_fiat_amount = 5;
+//     int64 max_valid_since_interval = 6;
+//     bytes pow_difficulty = 7;
+// }
 
-message OrderManagerSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-    repeated string market_ids = 3;
-}
+// message OrderManagerSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+//     repeated string market_ids = 3;
+// }
 
-message CommonSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message CommonSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message MarketConfig {
-    string tokenA = 1;
-    string tokenB = 2;
-}
+// message MarketConfig {
+//     string tokenA = 1;
+//     string tokenB = 2;
+// }
 
-message RingFinderSettings {
-    string id = 1;
-    repeated string roles = 2;
-    int64 scheduleDelay = 3;
-}
+// message RingFinderSettings {
+//     string id = 1;
+//     repeated string roles = 2;
+//     int64 scheduleDelay = 3;
+// }
 
-message RingSubmitterSettings {
-    string keystore_pwd = 1;
-    string keystore_file = 2;
-    int32 chain_id = 3;
-    string contract = 4;
-}
+// message RingSubmitterSettings {
+//     string keystore_pwd = 1;
+//     string keystore_file = 2;
+//     int32 chain_id = 3;
+//     string contract = 4;
+// }
 
-message RingEvaluatorSettings {
-    int64 wallet_split = 1;
-    map<int32, int32> gas_used_of_orders = 2;
-}
+// message RingEvaluatorSettings {
+//     int64 wallet_split = 1;
+//     map<int32, int32> gas_used_of_orders = 2;
+// }
 
-message RingMinerSettings {
-    string address = 1;
-    repeated string roles = 2;
-    repeated string market_ids = 3;
-    int64 schedule_delay = 4;
-    RingSubmitterSettings submitter_settings = 5;
-    RingEvaluatorSettings evaluator_settings = 6;
-}
+// message RingMinerSettings {
+//     string address = 1;
+//     repeated string roles = 2;
+//     repeated string market_ids = 3;
+//     int64 schedule_delay = 4;
+//     RingSubmitterSettings submitter_settings = 5;
+//     RingEvaluatorSettings evaluator_settings = 6;
+// }
 
-message MarketTickerServiceSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message MarketTickerServiceSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message TokenIcoServiceSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message TokenIcoServiceSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message TokenInfoServiceSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message TokenInfoServiceSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message TokenTickerServiceSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message TokenTickerServiceSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-message TokenTrendServiceSettings {
-    repeated string roles = 1;
-    int32 instances = 2;
-}
+// message TokenTrendServiceSettings {
+//     repeated string roles = 1;
+//     int32 instances = 2;
+// }
 
-// todo
-message TokenRegistrySettings {
+// // todo
+// message TokenRegistrySettings {
 
-}
+// }
 
 
-message DynamicSettings {
-    BalanceCacherSettings balance_cacher_settings = 2;
-    BalanceManagerSettings balance_manager_settings = 3;
-    BalanceReaderSettings balance_reader_settings = 4;
-    BlockchainEventExtractorSettings blockchain_event_extractor_settings = 5;
-    CacheObsoleterSettings cache_obsoleter_settings = 6;
-    EthereumAccessorSettings ethereum_accessor_settings = 7;
-    OrderCacherSettings order_cacher_settings = 8;
-    OrderDBAccessorSettings order_db_accessor_settings = 9;
-    OrderReadCoordinatorSettings order_read_coordinator_settings = 10;
-    OrderReaderSettings order_reader_settings = 11;
-    OrderUpdateCoordinatorSettings order_update_coordinator_settings = 12;
-    OrderUpdaterSettings order_updater_settings = 13;
-    OrderWriterSettings order_writer_settings = 14;
-    OrderAccessorSettings order_accessor_settings = 15;
-    OrderFillSettings order_fill_settings = 16;
-    OrderManagerSettings order_manager_settings = 17;
-    RingSubmitterSettings ring_submit_settings = 18;
-    MarketTickerServiceSettings  market_ticker_service_settings = 19;
-    TokenIcoServiceSettings  token_ico_service_settings = 20;
-    TokenInfoServiceSettings  token_info_service_setting = 21;
-    TokenTickerServiceSettings  token_ticker_service_setting = 22;
-    TokenTrendServiceSettings   token_trend_service_setting = 23;
+// message DynamicSettings {
+//     BalanceCacherSettings balance_cacher_settings = 2;
+//     BalanceManagerSettings balance_manager_settings = 3;
+//     BalanceReaderSettings balance_reader_settings = 4;
+//     BlockchainEventExtractorSettings blockchain_event_extractor_settings = 5;
+//     CacheObsoleterSettings cache_obsoleter_settings = 6;
+//     EthereumAccessorSettings ethereum_accessor_settings = 7;
+//     OrderCacherSettings order_cacher_settings = 8;
+//     OrderDBAccessorSettings order_db_accessor_settings = 9;
+//     OrderReadCoordinatorSettings order_read_coordinator_settings = 10;
+//     OrderReaderSettings order_reader_settings = 11;
+//     OrderUpdateCoordinatorSettings order_update_coordinator_settings = 12;
+//     OrderUpdaterSettings order_updater_settings = 13;
+//     OrderWriterSettings order_writer_settings = 14;
+//     OrderAccessorSettings order_accessor_settings = 15;
+//     OrderFillSettings order_fill_settings = 16;
+//     OrderManagerSettings order_manager_settings = 17;
+//     RingSubmitterSettings ring_submit_settings = 18;
+//     MarketTickerServiceSettings  market_ticker_service_settings = 19;
+//     TokenIcoServiceSettings  token_ico_service_settings = 20;
+//     TokenInfoServiceSettings  token_info_service_setting = 21;
+//     TokenTickerServiceSettings  token_ticker_service_setting = 22;
+//     TokenTrendServiceSettings   token_trend_service_setting = 23;
 
-    repeated OrderBookManagerSettings order_book_manager_settings_seq = 102;
-    repeated OrderBookReaderSettings order_book_reader_settings_seq = 103;
-    repeated RingFinderSettings ring_finder_settings_seq = 104;
-    repeated RingMinerSettings ring_miner_settings_seq = 105;
-    map<string, MarketConfig> markets_settings = 106;
+//     repeated OrderBookManagerSettings order_book_manager_settings_seq = 102;
+//     repeated OrderBookReaderSettings order_book_reader_settings_seq = 103;
+//     repeated RingFinderSettings ring_finder_settings_seq = 104;
+//     repeated RingMinerSettings ring_miner_settings_seq = 105;
+//     map<string, MarketConfig> markets_settings = 106;
 
-}
+// }
 
 
 

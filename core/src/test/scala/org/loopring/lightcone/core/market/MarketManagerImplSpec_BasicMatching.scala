@@ -82,13 +82,16 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     buyResult should be(MarketManager.MatchResult(
       Seq(ring),
       buyOrder.asPending,
-      XOrderbookUpdate()))
+      XOrderbookUpdate()
+    ))
 
     marketManager.getSellOrders(100) should be(Seq(
-      sellOrder.asPending))
+      sellOrder.asPending
+    ))
 
     marketManager.getBuyOrders(100) should be(Seq(
-      buyOrder.asPending))
+      buyOrder.asPending
+    ))
 
     (fakePendingRingPool.addRing _).verify(ring).once
   }
@@ -112,7 +115,8 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     sellResult should be(MarketManager.MatchResult(
       Seq(ring),
       sellOrder.asPending,
-      XOrderbookUpdate()))
+      XOrderbookUpdate()
+    ))
 
     marketManager.getSellOrders(100) should be(Seq(sellOrder.asPending))
     marketManager.getBuyOrders(100) should be(Seq(buyOrder.asPending))

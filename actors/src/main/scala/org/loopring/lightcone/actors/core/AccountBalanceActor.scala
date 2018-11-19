@@ -23,6 +23,7 @@ import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.deployment.ActorDependencyReady
 import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._
@@ -33,15 +34,18 @@ object AccountBalanceActor {
 
 // TODO(fukun): implement this class.
 class AccountBalanceActor()(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout
-)
+  implicit ec: ExecutionContext,
+  timeout: Timeout)
   extends Actor
   with ActorLogging {
 
   def receive: Receive = LoggingReceive {
+    case ActorDependencyReady(paths) ⇒
+      log.info(s"actor dependency ready: $paths")
+      context.become(functional)
+  }
 
+  def functional: Receive = LoggingReceive {
     case req: XGetBalanceAndAllowancesReq ⇒
 
   }
