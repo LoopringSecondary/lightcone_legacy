@@ -46,7 +46,7 @@ class OrderbookManagerActor(
     case req: XOrderbookUpdate ⇒
       manager.processUpdate(req)
     case req: GetXOrderbookReq ⇒
-      sender ! manager.getXOrderbook(req.level, req.size)
+      sender ! manager.getOrderbook(req.level, req.size)
   }
 
 }

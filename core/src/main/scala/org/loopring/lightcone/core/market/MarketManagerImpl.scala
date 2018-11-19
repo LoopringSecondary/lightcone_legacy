@@ -100,14 +100,14 @@ class MarketManagerImpl(
     getOrder(orderId).map { order ⇒
       removeFromSide(orderId)
       pendingRingPool.deleteOrder(orderId)
-      aggregator.getXOrderbookUpdate()
+      aggregator.getOrderbookUpdate()
     }
   }
 
   def deletePendingRing(ringId: String): Option[XOrderbookUpdate] = {
     if (pendingRingPool.hasRing(ringId)) {
       pendingRingPool.deleteRing(ringId)
-      Some(aggregator.getXOrderbookUpdate())
+      Some(aggregator.getOrderbookUpdate())
     } else None
   }
 
@@ -195,7 +195,7 @@ class MarketManagerImpl(
       MatchResult(
         rings,
         taker.resetMatchable,
-        aggregator.getXOrderbookUpdate()
+        aggregator.getOrderbookUpdate()
       )
     }
   }
