@@ -16,37 +16,44 @@
 
 package org.loopring.lightcone.gateway.socketio
 
-import akka.actor.{ Actor, ActorLogging, Props, Timers }
+import akka.actor._
 import akka.routing.RoundRobinPool
-
 import scala.concurrent.duration._
-
 import scala.util.Random
 
-class SocketIOServerRouter extends Actor with Timers with ActorLogging {
+class SocketIOServerRouter
+  extends Actor
+  with Timers
+  with ActorLogging {
 
   implicit val ex = context.system.dispatcher
+  private var prevId = 0
 
   override def receive: Receive = {
-    case StartBroadcast(server, eventRegistering, pool) ⇒
 
+    case StartBroadcast(server, eventBindings, pool) ⇒
       log.info("start check broadcast message")
 
-      for {
-        EventRegister(event, interval, replyTo) ← eventRegistering.events
+      eventBindings.bindings.foreach {
+        case EventBinding(event, interval, replyTo) ⇒
+          val routees = context.actorOf(
+            RoundRobinPool(pool).props(Props[SocketIOServerActor]),
+            s"socket_timer_${event}_${getNextId}"
+          )
 
-        routees = context.actorOf(
-          RoundRobinPool(pool).props(Props[SocketIOServerActor]),
-          s"socket_timer_${event}_${Random.nextInt()}")
-
-        msg = BroadcastMessage(server, event, replyTo)
-
-      } yield {
-
-        context.system.scheduler.schedule(5 seconds, interval seconds, routees, msg)
-
+          // QUESTION(Toan): IOClient 好像不能序列化吧？这样的消息无法通过actor跨网络发送。
+          context.system.scheduler.schedule(
+            5 seconds,
+            interval seconds,
+            routees,
+            BroadcastMessage(server, event, replyTo)
+          )
       }
+  }
 
+  private def getNextId = {
+    prevId += 1
+    prevId
   }
 
 }

@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib
+package org.loopring.lightcone.lib.abi
+
+import org.loopring.lightcone.lib.data._
 
 import java.math.BigInteger
 import java.lang.{ Boolean ⇒ jbool }
@@ -22,30 +24,33 @@ import java.lang.{ Boolean ⇒ jbool }
 import org.web3j.utils.{ Numeric, Strings }
 import org.loopring.lightcone.lib.solidity.{ SolidityAbi ⇒ SABI }
 
-import scala.collection.mutable.{ HashMap ⇒ MMap }
-
 abstract class AbiWrap(abiJson: String) {
 
-  val abi: SABI = SABI.fromJson(abiJson)
-  val functionSignatureLength = 8
+  protected val abi = SABI.fromJson(abiJson)
+  protected val functionSignatureLength = 8
 
-  def getTransactionHeader(txInput: String): BigInt = {
-    Numeric.decodeQuantity(txInput)
-  }
+  def getTransactionHeader(txInput: String): BigInt = Numeric.decodeQuantity(txInput)
 
-  val supportedFunctions: MMap[String, SABI.Function] = MMap.empty[String, SABI.Function]
-  val supportedEventLogs: MMap[String, SABI.Event] = MMap.empty[String, SABI.Event]
+  private[lib] var supportedFunctions = Map.empty[String, SABI.Function]
+  private[lib] var supportedEventLogs = Map.empty[String, SABI.Event]
 
-  abi.toArray().foreach {
+  abi.toArray.foreach {
     _ match {
       case x: SABI.Function ⇒
         val sig = x.encodeSignature()
-        val key = Numeric.toHexStringWithPrefixZeroPadded(sig.bigInteger, functionSignatureLength)
-        supportedFunctions += key.toLowerCase → x
+        val key = Numeric.toHexStringWithPrefixZeroPadded(
+          sig.bigInteger,
+          functionSignatureLength
+        ).toLowerCase
+
+        supportedFunctions += key → x
+
       case x: SABI.Event ⇒
         val sig = x.encodeSignature()
-        val key = Numeric.toHexString(sig)
-        supportedEventLogs += key.toLowerCase -> x
+        val key = Numeric.toHexString(sig).toLowerCase
+
+        supportedEventLogs += key -> x
+
       case _ ⇒
     }
   }
@@ -61,30 +66,30 @@ abstract class AbiWrap(abiJson: String) {
     supportedEventLogs.get(key)
   }
 
-  case class decodeResult(name: String, list: Seq[Any])
+  case class DecodeResult(name: String, list: Seq[Any])
 
-  def decode(input: String): decodeResult = {
+  def decode(input: String): DecodeResult = {
     getFunction(input) match {
       case Some(function) ⇒
         val cleanInput = Numeric.cleanHexPrefix(input).substring(functionSignatureLength)
         val str = Strings.zeros(functionSignatureLength) + cleanInput
         val bytes = Numeric.hexStringToByteArray(str)
         val seq = function.decode(bytes).toArray().toSeq
-        decodeResult(function.name, seq)
+        DecodeResult(function.name, seq)
 
-      case _ ⇒ decodeResult("", Seq.empty)
+      case _ ⇒ DecodeResult("", Seq.empty)
     }
   }
 
-  def decode(log: TransactionLog): decodeResult = {
+  def decode(log: TransactionLog): DecodeResult = {
     getEvent(log.topics.head) match {
       case Some(event) ⇒
         val decodeddata = Numeric.hexStringToByteArray(log.data)
         val decodedtopics = log.topics.map(x ⇒ Numeric.hexStringToByteArray(x)).toArray
         val seq = event.decode(decodeddata, decodedtopics).toArray().toSeq
-        decodeResult(event.name, seq)
+        DecodeResult(event.name, seq)
 
-      case _ ⇒ decodeResult("", Seq.empty)
+      case _ ⇒ DecodeResult("", Seq.empty)
     }
   }
 
@@ -94,31 +99,31 @@ abstract class AbiWrap(abiJson: String) {
   // 这里比较特殊 涉及到任意类型的强制转换 只有abi转换时用到 所以放到该接口
   def javaObj2Hex(src: Object): String = src match {
     case bs: Array[Byte] ⇒ Numeric.toHexString(bs)
-    case _ ⇒ throw new Exception("java object convert to scala string error")
+    case _               ⇒ throw new Exception("java object convert to scala string error")
   }
 
   def javaObj2Bigint(src: Object): BigInt = src match {
     case bs: BigInteger ⇒ BigInt(bs)
-    case _ ⇒ throw new Exception("java object convert to scala bigint error")
+    case _              ⇒ throw new Exception("java object convert to scala bigint error")
   }
 
   def javaObj2Boolean(src: Object): Boolean = src match {
     case b: jbool ⇒ b
-    case _ ⇒ throw new Exception("java object convert to scala boolean error")
+    case _        ⇒ throw new Exception("java object convert to scala boolean error")
   }
 
   def scalaAny2Hex(src: Any): String = src match {
     case bs: Array[Byte] ⇒ Numeric.toHexString(bs)
-    case _ ⇒ throw new Exception("scala any convert to scala array byte error")
+    case _               ⇒ throw new Exception("scala any convert to scala array byte error")
   }
 
   def scalaAny2Bigint(src: Any): BigInt = src match {
     case b: BigInteger ⇒ b
-    case _ ⇒ throw new Exception("scala any convert to scala bigint error")
+    case _             ⇒ throw new Exception("scala any convert to scala bigint error")
   }
 
   def scalaAny2Bool(src: Any): Boolean = src match {
     case b: Boolean ⇒ b
-    case _ ⇒ throw new Exception("scala any convert to scala bool error")
+    case _          ⇒ throw new Exception("scala any convert to scala bool error")
   }
 }

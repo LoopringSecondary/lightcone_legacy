@@ -31,7 +31,8 @@ private[jsonrpc] object JsonRpcProxy {
 
   def invoke(request: JsonRpcRequest, methodMirror: MethodMirror)(
     implicit
-    ex: ExecutionContext): Future[JsonRpcResponse] = {
+    ex: ExecutionContext
+  ): Future[JsonRpcResponse] = {
 
     val methodName = methodMirror.symbol.name.encodedName.toString
 
@@ -50,7 +51,7 @@ private[jsonrpc] object JsonRpcProxy {
             } else {
               arr.children match {
                 case (a0: JValue) :: Nil ⇒ methodMirror(convertString2Parameter(a0, head))
-                case _ ⇒ throw JsonRpcInternalException(s"params not match Array", id = Some(request.id))
+                case _                   ⇒ throw JsonRpcInternalException(s"params not match Array", id = Some(request.id))
               }
             }
 
@@ -64,7 +65,7 @@ private[jsonrpc] object JsonRpcProxy {
 
     (responseAny match {
       case f: Future[_] ⇒ f.map(resp ⇒ JsonRpcResponse(id = Some(request.id), result = resp))
-      case x ⇒ Future.successful(JsonRpcResponse(id = Some(request.id), result = x))
+      case x            ⇒ Future.successful(JsonRpcResponse(id = Some(request.id), result = x))
     })
 
   }

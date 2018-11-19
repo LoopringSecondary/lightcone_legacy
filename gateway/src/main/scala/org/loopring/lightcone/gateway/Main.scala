@@ -21,43 +21,49 @@ import akka.stream.ActorMaterializer
 import com.google.inject.Guice
 import com.typesafe.config.ConfigFactory
 import net.codingwell.scalaguice.InjectorExtensions._
-import org.loopring.lightcone.gateway.api.HttpAndIOServer
-import org.loopring.lightcone.gateway.api.service.BalanceServiceImpl
-import org.loopring.lightcone.gateway.jsonrpc.{ JsonRpcServer, JsonRpcSettings }
-import org.loopring.lightcone.gateway.socketio.{ EventRegistering, SocketIOServer }
+import org.loopring.lightcone.gateway.api.service._
+import org.loopring.lightcone.gateway.jsonrpc._
+import org.loopring.lightcone.gateway.socketio._
+import org.loopring.lightcone.gateway.inject._
 
 object Main extends App {
 
-  case class CommandSettings(
-    port: Int = 9277,
-    ioPort: Int = 9278,
-    seeds: Seq[String] = Seq.empty)
+  // QUESTION(dongw):
+  // 这里的port和ioPort是akka的，还是jsonrpc的？
+  case class AppSettings(
+      port: Int = 9277,
+      ioPort: Int = 9278,
+      seeds: Seq[String] = Seq.empty
+  )
 
-  lazy val systemName = "Lightcone"
+  val systemName = "lightcone_gateway"
+  val systemPrefix = s"akka.tcp://${systemName}@"
 
-  lazy val systemPrefix = s"akka.tcp://${systemName}@"
+  new scopt.OptionParser[AppSettings](systemName) {
+    head("systemName")
 
-  new scopt.OptionParser[CommandSettings]("scopt") {
-    head("lightcone-gateway", "1.0")
-
-    opt[Int]('p', "port").action((x, c) => {
+    opt[Int]('p', "port").action((x, c) ⇒ {
       c.copy(port = x)
     }).text("http server port")
 
-    opt[Int]('i', "ioserver").action((x, c) => {
+    opt[Int]('i', "ioserver").action((x, c) ⇒ {
       c.copy(port = x)
     }).text("socketio server port")
 
-    opt[Seq[String]]('s', "seeds").action((x, c) => {
+    opt[Seq[String]]('s', "seeds").action((x, c) ⇒ {
       c.copy(seeds = x)
     }).text("cluster seeds")
 
-  }.parse(args, CommandSettings()) match {
+  }.parse(args, AppSettings()) match {
+    case None ⇒ println("Unable to parse args")
     case Some(settings) ⇒
 
-      // TODO(Toan) 这里的配置还没有测试
-      val seeds = settings.seeds.map(s ⇒ s""""${systemPrefix}${s.trim}"""").mkString(",")
+      val seeds = settings.seeds
+        .map(systemPrefix + _.trim)
+        .mkString("\"", "\",\"", "\"")
 
+      // TODO(Toan) 这里的配置还没有测试
+      // QUESTION(dongw): should we change akka port, hostname, and seed-nodes?
       val config = ConfigFactory
         .parseString(
           s"""
@@ -66,16 +72,11 @@ object Main extends App {
              |akka.cluster.seed-nodes=["akka.tcp://Lightcone@127.0.0.1:2555"]
              |jsonrpc.http.port=${settings.port}
              |jsonrpc.socketio.port=${settings.ioPort}
-           """.stripMargin)
+           """.stripMargin
+        )
         .withFallback(ConfigFactory.load())
 
       val injector = Guice.createInjector(CoreModule(config))
-
-      import net.codingwell.scalaguice.InjectorExtensions._
-
       injector.instance[HttpAndIOServer]
-
-    case _ ⇒ println("http and socketio settings failed")
   }
-
 }

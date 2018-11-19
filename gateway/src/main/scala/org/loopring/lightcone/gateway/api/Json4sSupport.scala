@@ -16,9 +16,9 @@
 
 package org.loopring.lightcone.gateway.api
 
-trait Json4sSupport extends de.heikoseeberger.akkahttpjson4s.Json4sSupport {
+import de.heikoseeberger.akkahttpjson4s.{ Json4sSupport ⇒ J4s }
 
+trait Json4sSupport extends J4s {
   implicit val serialization = org.json4s.native.Serialization
   implicit val formats = org.json4s.DefaultFormats
-
 }

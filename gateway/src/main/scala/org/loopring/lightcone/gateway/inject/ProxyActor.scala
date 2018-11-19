@@ -16,23 +16,6 @@
 
 package org.loopring.lightcone.gateway.inject
 
-import akka.actor.ActorRef
-import com.google.inject.Inject
-import com.google.inject.assistedinject.Assisted
-import com.google.inject.name.Named
-
 trait ProxyActor {
-
-  def ref(named: String): ProxyActorProvider
-
-}
-
-class ProxyActorProvider @Inject() (
-  @Assisted named: String,
-  @Named("cluster_proxy") proxyMap: Map[String, ActorRef]) {
-
-  def get: ActorRef = proxyMap.get(named).get
-
-  def option: Option[ActorRef] = proxyMap.get(named)
-
+  def providerOf(name: String): ProxyActorProvider
 }
