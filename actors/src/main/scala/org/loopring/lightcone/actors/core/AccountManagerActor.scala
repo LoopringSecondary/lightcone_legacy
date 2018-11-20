@@ -73,21 +73,23 @@ class AccountManagerActor(address: String)(
         _ ← getTokenManager(xorder.tokenFee)
         order: Order = xorder
         _ = log.debug(s"submitting order to AccountManager: $order")
-        successful = manager.submitOrder(xorder)
+        successful = manager.submitOrder(order)
         _ = log.debug("orderPool updatdOrders: " + orderPool.getUpdatedOrders)
         updatedOrders = orderPool.takeUpdatedOrdersAsMap()
         //todo: 该处获取的updatedOrders为空，但是我没看明白UpdatedOrdersTracing是如何使用的
-        xOrderOpt = updatedOrders.get(order.id)
+        orderOpt = updatedOrders.get(order.id)
+        _ = assert(orderOpt.nonEmpty)
+        order_ = orderOpt.get
+        xorder_ : XOrder = xorder
       } yield {
-        xOrderOpt foreach { xorder ⇒
-          if (successful) {
-            log.debug(s"submitting order to market manager actor: $xorder⇒")
-            marketManagerActor ! XSubmitOrderReq(Some(xorder))
-            XSubmitOrderRes(order = Some(xorder))
-          } else {
-            val error = convertOrderStatusToErrorCode(xorder.status)
-            XSubmitOrderRes(error = error)
-          }
+
+        if (successful) {
+          log.debug(s"submitting order to market manager actor: $order_")
+          marketManagerActor ! XSubmitOrderReq(Some(xorder_))
+          XSubmitOrderRes(order = Some(xorder_))
+        } else {
+          val error = convertOrderStatusToErrorCode(order.status)
+          XSubmitOrderRes(error = error)
         }
       }).pipeTo(sender)
 
