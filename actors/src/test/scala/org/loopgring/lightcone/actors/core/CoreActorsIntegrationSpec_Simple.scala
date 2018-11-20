@@ -49,7 +49,7 @@ class CoreActorsIntegrationSpec_Simple
   // def setBalanceActorReply(balanceMap: Map[String, XBalanceAndAllowance]) =
   //   accountBalanceProbe.expectUpdate(balanceMap)
 
-  "submitOrder to accountManagerActor" must {
+  "submitOrder to accountManagerActor1" must {
 
     "send Order to marketManagerActor" in {
 
@@ -83,8 +83,8 @@ class CoreActorsIntegrationSpec_Simple
         status = XOrderStatus.NEW
       )
 
-      accountManagerActor ! XSubmitOrderReq(Some(maker1))
-      accountManagerActor ! XSubmitOrderReq(Some(taker1))
+      accountManagerActor1 ! XSubmitOrderReq(Some(maker1))
+      accountManagerActor1 ! XSubmitOrderReq(Some(taker1))
       Thread.sleep(10000)
     }
 

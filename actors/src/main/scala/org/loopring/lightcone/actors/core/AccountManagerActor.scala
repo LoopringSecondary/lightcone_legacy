@@ -37,7 +37,7 @@ object AccountManagerActor {
   val name = "account_manager"
 }
 
-class AccountManagerActor()(
+class AccountManagerActor(address: String)(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,

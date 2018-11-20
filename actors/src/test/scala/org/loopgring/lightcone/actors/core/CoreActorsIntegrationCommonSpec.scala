@@ -95,15 +95,27 @@ abstract class CoreActorsIntegrationCommonSpec
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
 
-  val accountManagerActor: ActorRef = TestActorRef(
-    new AccountManagerActor()
+  val address1 = "address_1"
+  val address2 = "address_2"
+
+  val accountManagerActor1: ActorRef = TestActorRef(
+    new AccountManagerActor(address1)
+  )
+
+  val accountManagerActor2: ActorRef = TestActorRef(
+    new AccountManagerActor(address2)
   )
 
   val marketManagerActor: ActorRef = TestActorRef(
     new MarketManagerActor(marketId, config)
   )
 
-  accountManagerActor ! ActorDependencyReady(Seq(
+  accountManagerActor1 ! ActorDependencyReady(Seq(
+    accountBalanceActor.path.toString,
+    marketManagerActor.path.toString
+  ))
+
+  accountManagerActor2 ! ActorDependencyReady(Seq(
     accountBalanceActor.path.toString,
     marketManagerActor.path.toString
   ))
