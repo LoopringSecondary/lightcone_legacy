@@ -33,7 +33,7 @@ class RingSignerImpl(
 
   def getSignerAddress(): String = credentials.getAddress
 
-  def generateInputData(ring: Ring): String = {
+  def getInputData(ring: Ring): String = {
     val signatureData = Sign.signMessage(
       Numeric.hexStringToByteArray(ring.hash),
       credentials.getEcKeyPair
@@ -48,11 +48,11 @@ class RingSignerImpl(
     lRing.getInputData()
   }
 
-  def generateTxData(inputData: String, nonce: BigInt): Array[Byte] = {
+  def getSignedTxData(inputData: String, nonce: BigInt, gasLimit: BigInt, gasPrice: BigInt): Array[Byte] = {
     val rawTransaction = RawTransaction.createTransaction(
       nonce.bigInteger,
-      BigInt(0).bigInteger, //todo:需要确定gasprice和gaslimit
-      BigInt(0).bigInteger,
+      gasPrice.bigInteger,
+      gasLimit.bigInteger,
       protocol,
       BigInt(0).bigInteger,
       inputData

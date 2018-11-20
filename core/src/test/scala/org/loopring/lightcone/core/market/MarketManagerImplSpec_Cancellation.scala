@@ -33,7 +33,7 @@ class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
     "and should put order inside the orderbook" in {
       var order = actualNotDust(sellGTO(100000, 101))
       (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-      (fakeAggregator.getXOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+      (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
       val result = marketManager.submitOrder(order, 0)
       result should be(emptyMatchingResult(order, PENDING))

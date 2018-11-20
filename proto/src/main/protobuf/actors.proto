@@ -56,7 +56,7 @@ message XRing {
 }
 
 ///////////////////
-
+// TODO(hongyu): add a prefix as ERR_
 enum XErrorCode {
     OK = 0;
     ORDER_NOT_EXIST = 1;
@@ -66,41 +66,58 @@ enum XErrorCode {
     TOKEN_NOT_EXIST = 5;
     TOO_MANY_ORDERS = 6;
     TOO_MANY_FAILED_MATCHES = 7;
+    INVALID_ORDER_DATA = 8;
+    INVALID_MARKET = 9;
+    ORDER_ALREADY_EXIST = 10;
+    UNKNOWN_ERROR = 100;
 }
 
-message BalanceAndAllowance {
+message XBalanceAndAllowance {
     bytes balance = 2;
     bytes allowance = 3;
 }
 
-message GetBalanceAndAllowancesReq {
+message XGetBalanceAndAllowancesReq {
     string address = 1;
     repeated string tokens = 2;
 }
 
-message GetBalanceAndAllowancesRes {
+message XGetBalanceAndAllowancesRes {
     string address = 1;
-    map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
+    map<string, XBalanceAndAllowance> balance_and_allowance_map = 2;
 }
 
-message SubmitOrderReq {
+message XSubmitOrderReq {
     XOrder order = 1;
 }
 
-message SubmitOrderRes {
+message XSubmitOrderRes {
     XErrorCode error = 1;
     XOrder order = 2;
 }
 
+message XAddressBalanceUpdated {
+    string address = 1;
+    string token = 2;
+    bytes balance = 3;
+}
+
+message XAddressAllowanceUpdated {
+    string address = 1;
+    string token = 2;
+    bytes balance = 3;
+}
+
+
 // 由ethereum发送给orderManagingActor
 // 以太坊事件顺序根据blockID，tx&eventId来确定,由route汇聚到不同用户地址,然后按顺序逐个发送给orderManagingActor
 // 注意: cancelOrderReq 可能包含用户软取消,在orderManagerState软取消后用户链上数据继续变更不影响最终结果
-message CancelOrderReq {
+message XCancelOrderReq {
     string id = 1;
     bool hard_cancel = 2; // 默认软取消
 }
 
-message CancelOrderRes {
+message XCancelOrderRes {
     string id = 1;
     bool hard_cancel = 2; // 默认软取消
     XErrorCode error = 3;
@@ -123,23 +140,31 @@ message GetFilledAmountRes {
     map<string, bytes> filled_amount_s_map = 1;
 }
 
-message UpdateBalanceAndAllowanceReq {
+message XUpdateBalanceAndAllowanceReq {
     string address = 1;
     string token = 2;
-    BalanceAndAllowance balance_and_allowance = 3;
+    XBalanceAndAllowance balance_and_allowance = 3;
 }
 
-message UpdateBalanceAndAllowanceRes {
+message XUpdateBalanceAndAllowanceRes {
     XErrorCode error = 1;
-    BalanceAndAllowance balance_and_allowance = 2;
+    XBalanceAndAllowance balance_and_allowance = 2;
 }
 
-message UpdatedGasPrice {
+message XUpdatedGasPrice {
     int64 gas_price = 1;
 }
 
-message SendRawTransaction {
+message SendRawTxReq {
     bytes data = 1;
+}
+
+message SendRawTxRes {
+    SendStatus status = 1;
+    enum SendStatus {
+        SEND_STATUS_UNKNOW = 0;
+        SEND_STATUS_SUCCESS = 1;
+    }
 }
 
 enum ExecutedStatus {
@@ -164,5 +189,17 @@ message SendRawTransactionRes {
 
 message SubmitRingReq {
   repeated XRing rings = 1;
+  string gas_limit = 2;
+  string gas_price = 3;
 }
 
+message XGetGasPriceReq {}
+
+message XGetGasPriceRes {
+  string gas_price = 1;
+}
+
+message UpdatedTokenBurnRate {
+    string token = 1;
+    double burnRate = 2;
+}

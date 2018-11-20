@@ -33,6 +33,7 @@ final private[core] class AccountManagerImpl()(
   def hasTokenManager(token: String): Boolean = {
     tokens.contains(token)
   }
+
   def addTokenManager(tm: AccountTokenManager) = {
     assert(!hasTokenManager(tm.token))
     tokens += tm.token -> tm
@@ -44,6 +45,7 @@ final private[core] class AccountManagerImpl()(
     tokens(token)
   }
 
+  //TODO(litao): What if an order is re-submitted?
   def submitOrder(order: Order): Boolean = {
     if (order.amountS <= 0) {
       orderPool += order.as(INVALID_DATA)

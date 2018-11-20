@@ -14,24 +14,18 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.base
+package org.loopring.lightcone.actors.utils
 
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.filter.Filter
+import ch.qos.logback.core.spi.FilterReply
 
-class TokenValueEstimator()(implicit tmm: TokenMetadataManager) {
-
-  def getEstimatedValue(token: String, amount: BigInt): Double = {
-    if (amount.signum <= 0) 0
-    else tmm.getToken(token) match {
-      case None ⇒ 0
-      case Some(metadata) ⇒
-        val scaling = Math.pow(10, metadata.decimals)
-        (Rational(metadata.currentPrice) *
-          Rational(amount) /
-          Rational(scaling)).doubleValue
+class LogFilter extends Filter[ILoggingEvent] {
+  def decide(event: ILoggingEvent) = {
+    event.getLoggerName() match {
+      case "akka.cluster.ClusterHeartbeatSender" ⇒ FilterReply.DENY
+      case "org.hbase.async.RegionClient" ⇒ FilterReply.DENY
+      case _ ⇒ FilterReply.ACCEPT
     }
   }
-
 }
-
