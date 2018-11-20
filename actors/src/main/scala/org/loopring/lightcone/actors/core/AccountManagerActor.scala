@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.core
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import akka.pattern.ask
+import akka.pattern.{ ask, pipe }
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
@@ -66,30 +66,30 @@ class AccountManagerActor()(
   // - XQueryBalance: (this should query AccountBalanceActor first,
   //   then query unreserved allowance)
   def functional: Receive = LoggingReceive {
+
     case XSubmitOrderReq(Some(xorder)) ⇒
-      val sender1 = sender()
-      val f = for {
+      (for {
         _ ← getTokenManager(xorder.tokenS)
         _ ← getTokenManager(xorder.tokenFee)
-        order = xorder
+        order: Order = xorder
         _ = log.debug(s"submitting order to AccountManager: $order")
-        successful = manager.submitOrder(order)
+        successful = manager.submitOrder(xorder)
+        _ = log.debug("orderPool updatdOrders: " + orderPool.getUpdatedOrders)
         updatedOrders = orderPool.takeUpdatedOrdersAsMap()
         //todo: 该处获取的updatedOrders为空，但是我没看明白UpdatedOrdersTracing是如何使用的
         xOrderOpt = updatedOrders.get(order.id)
       } yield {
-        xOrderOpt foreach {
-          xorder_ ⇒
-            if (successful) {
-              log.debug(s"submitting order to market manager actor: $xorder_")
-              marketManagerActor forward XSubmitOrderReq(Some(xorder_))
-            } else {
-              val error = convertOrderStatusToErrorCode(xorder_.status)
-              sender1 ! XSubmitOrderRes(error = error)
-            }
+        xOrderOpt foreach { xorder ⇒
+          if (successful) {
+            log.debug(s"submitting order to market manager actor: $xorder⇒")
+            marketManagerActor ! XSubmitOrderReq(Some(xorder))
+            XSubmitOrderRes(order = Some(xorder))
+          } else {
+            val error = convertOrderStatusToErrorCode(xorder.status)
+            XSubmitOrderRes(error = error)
+          }
         }
-      }
-      Await.result(f.mapTo[Unit], timeout.duration)
+      }).pipeTo(sender)
 
     case req: XCancelOrderReq ⇒
       if (manager.cancelOrder(req.id)) {

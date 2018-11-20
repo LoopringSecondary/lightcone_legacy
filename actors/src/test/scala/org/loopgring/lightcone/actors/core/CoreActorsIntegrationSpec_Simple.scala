@@ -28,22 +28,37 @@ import scala.concurrent.{ Await, Future }
 class CoreActorsIntegrationSpec_Simple
   extends CoreActorsIntegrationCommonSpec {
 
-  def setBalanceActorReply(req: Any): Future[Unit] = for {
-    _ ← Future.successful()
-  } yield {
-    accountBalanceProbe.expectUpdate(req)
-  }
+  // val accountBalanceProbe = new TestProbe(system) {
+  //   def expectUpdate(x: Any) = {
+  //     expectMsgPF() {
+  //       case req: XGetBalanceAndAllowancesReq ⇒
+  //         val ba = req.tokens map {
+  //           token ⇒
+  //             token → XBalanceAndAllowance(
+  //               BigInt("10000000000000000"),
+  //               BigInt("10000000000000000")
+  //             )
+  //         }
+  //         sender ! XGetBalanceAndAllowancesRes(req.address, ba.toMap)
+  //     }
+  //   }
+  // }
+
+  // val accountBalanceActor = accountBalanceProbe.ref
+
+  // def setBalanceActorReply(balanceMap: Map[String, XBalanceAndAllowance]) =
+  //   accountBalanceProbe.expectUpdate(balanceMap)
 
   "submitOrder to accountManagerActor" must {
 
     "send Order to marketManagerActor" in {
 
-      setBalanceActorReply()
-      setBalanceActorReply()
-      setBalanceActorReply()
-      setBalanceActorReply()
-      setBalanceActorReply()
-      setBalanceActorReply()
+      // setBalanceActorReply()
+      // setBalanceActorReply()
+      // setBalanceActorReply()
+      // setBalanceActorReply()
+      // setBalanceActorReply()
+      // setBalanceActorReply()
 
       val maker1 = XOrder(
         id = "maker1",

@@ -73,20 +73,24 @@ abstract class CoreActorsIntegrationCommonSpec
   val pendingRingPool = new PendingRingPoolImpl()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
-  val accountBalanceProbe = new TestProbe(system) {
-    def expectUpdate(x: Any) = {
-      expectMsgPF() {
-        case req: XGetBalanceAndAllowancesReq ⇒
-          val ba = req.tokens map {
-            token ⇒
-              token → XBalanceAndAllowance(BigInt("10000000000000000"), BigInt("10000000000000000"))
-          }
-          sender ! XGetBalanceAndAllowancesRes(req.address, ba.toMap)
-      }
-
-    }
-  }
+  val accountBalanceProbe = TestProbe("accountBalance")
   val accountBalanceActor = accountBalanceProbe.ref
+  //  {
+  //   def expectUpdate(balanceMap: Map[String, XBalanceAndAllowance]) = {
+  //     expectMsgPF() {
+  //       case req: XGetBalanceAndAllowancesReq ⇒
+  //         // val ba = req.tokens map {
+  //         //   token ⇒
+  //         //     token → XBalanceAndAllowance(
+  //         //       BigInt("10000000000000000"),
+  //         //       BigInt("10000000000000000")
+  //         //     )
+  //         // }
+  //         sender ! XGetBalanceAndAllowancesRes(req.address, balanceMap)
+  //     }
+
+  //   }
+  // }
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
@@ -108,7 +112,4 @@ abstract class CoreActorsIntegrationCommonSpec
     gasPriceActor.path.toString,
     orderbookManagerActor.path.toString
   ))
-
-  val clientProbe = TestProbe("client")
-  val clientActor = clientProbe.ref
 }

@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.event.LoggingReceive
-import akka.pattern._
+import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
@@ -70,33 +70,31 @@ class MarketManagerActor(
 
   private var gasPriceActor: ActorSelection = _
   private var orderbookManagerActor: ActorSelection = _
+  private var settlementActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
     case ActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 2)
+      assert(paths.size == 3)
       gasPriceActor = context.actorSelection(paths(0))
       orderbookManagerActor = context.actorSelection(paths(1))
+      settlementActor = context.actorSelection(paths(3))
       context.become(functional)
   }
 
   def functional: Receive = LoggingReceive {
 
+    // TODO(hongyu): convert res to settlement and send it to settlementActor
     case XSubmitOrderReq(Some(order)) ⇒
       order.status match {
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
-          val sender1 = sender()
-          val f = for {
+          for {
             cost ← getCostOfSingleRing()
             res = manager.submitOrder(order, cost)
             ou = res.orderbookUpdate
-          } yield {
-            if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-              orderbookManagerActor ! ou
-            }
-            sender1 ! XSubmitOrderRes(error = XErrorCode.ERR_OK)
-          }
-          Await.result(f.mapTo[Unit], timeout.duration)
+            _ = log.debug(ou.toString)
+            _ = orderbookManagerActor ! ou if ou.sells.nonEmpty || ou.buys.nonEmpty
+          } yield Unit
 
         case s ⇒
           log.error(s"unexpected order status in XSubmitOrderReq: $s")
