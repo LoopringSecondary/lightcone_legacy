@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.core.data.{ Order, OrderState }
 import org.loopring.lightcone.proto.actors._
 import com.google.protobuf.ByteString
 
@@ -26,7 +26,11 @@ package object data {
 
   ///////////
 
-  implicit def byteString2BigInt(bytes: ByteString): BigInt = BigInt(bytes.toByteArray)
+  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
+    if (bytes.size() > 0)
+      BigInt(bytes.toByteArray)
+    else BigInt(0)
+  }
   implicit def bigInt2ByteString(b: BigInt): ByteString = ByteString.copyFrom(b.toByteArray)
 
   implicit def xBalanceAndAlowance2BalanceAndAlowance(xba: XBalanceAndAllowance): BalanceAndAllowance = {
@@ -53,7 +57,11 @@ package object data {
       amountFee = xorder.amountFee,
       createdAt = xorder.createdAt,
       status = xorder.status,
-      walletSplitPercentage = xorder.walletSplitPercentage
+      walletSplitPercentage = xorder.walletSplitPercentage,
+      _outstanding = Some(xorder.getOutstanding),
+      _reserved = Some(xorder.getReserved),
+      _actual = Some(xorder.getActual),
+      _matchable = Some(xorder.getMatchable)
     )
   }
   implicit def order2XOrder(order: Order): XOrder = {
@@ -67,7 +75,26 @@ package object data {
       amountFee = order.amountFee,
       createdAt = order.createdAt,
       status = order.status,
-      walletSplitPercentage = order.walletSplitPercentage
+      walletSplitPercentage = order.walletSplitPercentage,
+      outstanding = Some(order.outstanding),
+      reserved = Some(order.reserved),
+      actual = Some(order.actual),
+      matchable = Some(order.matchable)
+    )
+  }
+
+  implicit def XOrderStateToOrderState(xOrderState: XOrderState): OrderState = {
+    OrderState(
+      amountS = xOrderState.amountS,
+      amountB = xOrderState.amountB,
+      amountFee = xOrderState.amountFee
+    )
+  }
+  implicit def OrderStateToXOrderState(orderState: OrderState): XOrderState = {
+    XOrderState(
+      amountS = orderState.amountS,
+      amountB = orderState.amountB,
+      amountFee = orderState.amountFee
     )
   }
 

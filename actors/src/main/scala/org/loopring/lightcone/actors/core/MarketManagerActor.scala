@@ -28,7 +28,7 @@ import org.loopring.lightcone.proto.deployment._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.actors.data._
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent._
 
 object MarketManagerActor {
   val name = "market_manager"
@@ -82,25 +82,30 @@ class MarketManagerActor(
 
   def functional: Receive = LoggingReceive {
 
-    // TODO(hongyu): send a response to the sender
     case XSubmitOrderReq(Some(order)) ⇒
       order.status match {
-        case XOrderStatus.NEW | XOrderStatus.PENDING ⇒ for {
-          cost ← getCostOfSingleRing()
-          res = manager.submitOrder(order, cost)
-          ou = res.orderbookUpdate
-        } yield {
-          if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-            orderbookManagerActor ! ou
+        case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
+          val sender1 = sender()
+          val f = for {
+            cost ← getCostOfSingleRing()
+            res = manager.submitOrder(order, cost)
+            ou = res.orderbookUpdate
+          } yield {
+            if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
+              orderbookManagerActor ! ou
+            }
+            sender1 ! XSubmitOrderRes(error = XErrorCode.ERR_OK)
           }
-        }
+          Await.result(f.mapTo[Unit], timeout.duration)
 
         case s ⇒
           log.error(s"unexpected order status in XSubmitOrderReq: $s")
+          sender ! XSubmitOrderRes(error = XErrorCode.ERR_ORDER_ALREADY_EXIST)
       }
 
     case XCancelOrderReq(orderId, hardCancel) ⇒
       manager.cancelOrder(orderId)
+      sender ! XCancelOrderRes(id = orderId, error = XErrorCode.ERR_OK)
 
     case updatedGasPrce: XUpdatedGasPrice ⇒
       for {

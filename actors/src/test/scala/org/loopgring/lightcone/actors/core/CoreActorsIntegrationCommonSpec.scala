@@ -24,11 +24,11 @@ import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
-import org.loopring.lightcone.proto.actors.XOrder
+import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.deployment._
 import org.scalatest._
-
+import org.loopring.lightcone.actors.data._
 import scala.concurrent.duration._
 
 abstract class CoreActorsIntegrationCommonSpec
@@ -42,8 +42,19 @@ abstract class CoreActorsIntegrationCommonSpec
     TestKit.shutdownActorSystem(system)
   }
 
-  implicit val marketId = XMarketId("LRC", "WETH")
+  val LRC = "LRC"
+  val WETH = "WETH"
+  val ETH = "ETH"
+
+  val LRC_TOKEN = XTokenMetadata(LRC, 0, 0.1, 1.0)
+  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
+  val ETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
+
+  implicit val marketId = XMarketId(LRC, WETH)
   implicit val tokenMetadataManager = new TokenMetadataManager()
+  tokenMetadataManager.addToken(LRC_TOKEN)
+  tokenMetadataManager.addToken(WETH_TOKEN)
+  tokenMetadataManager.addToken(ETH_TOKEN)
   implicit val tokenValueEstimator = new TokenValueEstimator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
   implicit val ringIncomeEstimator = new RingIncomeEstimatorImpl()
@@ -52,12 +63,29 @@ abstract class CoreActorsIntegrationCommonSpec
   implicit val ec = system.dispatcher
 
   val config = XMarketManagerConfig()
-  val orderbookConfig = XOrderbookConfig()
+  val orderbookConfig = XOrderbookConfig(
+    levels = 2,
+    priceDecimals = 5,
+    precisionForAmount = 2,
+    precisionForTotal = 1
+  )
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
-  val accountBalanceProbe = TestProbe("accountBalanceActor")
+  val accountBalanceProbe = new TestProbe(system) {
+    def expectUpdate(x: Any) = {
+      expectMsgPF() {
+        case req: XGetBalanceAndAllowancesReq ⇒
+          val ba = req.tokens map {
+            token ⇒
+              token → XBalanceAndAllowance(BigInt("10000000000000000"), BigInt("10000000000000000"))
+          }
+          sender ! XGetBalanceAndAllowancesRes(req.address, ba.toMap)
+      }
+
+    }
+  }
   val accountBalanceActor = accountBalanceProbe.ref
 
   val gasPriceActor = TestActorRef(new GasPriceActor)

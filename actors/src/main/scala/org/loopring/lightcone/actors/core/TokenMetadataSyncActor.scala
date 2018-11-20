@@ -48,7 +48,7 @@ class TokenMetadataSyncActor()(
 
   //todo：初始化
   override def receive: Receive = super.receive orElse LoggingReceive {
-    case req: UpdatedTokenBurnRate ⇒ tmm.updateBurnRate(req.token, req.burnRate)
+    case req: XUpdatedTokenBurnRate ⇒ tmm.updateBurnRate(req.token, req.burnRate)
     //todo:update price && decimals
   }
 

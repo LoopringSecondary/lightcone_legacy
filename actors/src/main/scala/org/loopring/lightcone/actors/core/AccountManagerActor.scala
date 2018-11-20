@@ -62,35 +62,40 @@ class AccountManagerActor()(
   }
 
   // TODO(hongyu): handle the following messages:
+  // 没理解这个message的用途
   // - XQueryBalance: (this should query AccountBalanceActor first,
   //   then query unreserved allowance)
   def functional: Receive = LoggingReceive {
     case XSubmitOrderReq(Some(xorder)) ⇒
-      for {
+      val sender1 = sender()
+      val f = for {
         _ ← getTokenManager(xorder.tokenS)
         _ ← getTokenManager(xorder.tokenFee)
-        order: Order = xorder
+        order = xorder
         _ = log.debug(s"submitting order to AccountManager: $order")
         successful = manager.submitOrder(order)
         updatedOrders = orderPool.takeUpdatedOrdersAsMap()
-        xorder_ : XOrder = updatedOrders(order.id)
+        //todo: 该处获取的updatedOrders为空，但是我没看明白UpdatedOrdersTracing是如何使用的
+        xOrderOpt = updatedOrders.get(order.id)
       } yield {
-        if (successful) {
-          log.debug(s"submitting order to market manager actor: $xorder_")
-          // TODO(hongyu): Make sure marketManagerActor send response to sender
-          marketManagerActor forward XSubmitOrderReq(Some(xorder_))
-        } else {
-          val error = convertOrderStatusToErrorCode(xorder_.status)
-          sender ! XSubmitOrderRes(error = error)
+        xOrderOpt foreach {
+          xorder_ ⇒
+            if (successful) {
+              log.debug(s"submitting order to market manager actor: $xorder_")
+              marketManagerActor forward XSubmitOrderReq(Some(xorder_))
+            } else {
+              val error = convertOrderStatusToErrorCode(xorder_.status)
+              sender1 ! XSubmitOrderRes(error = error)
+            }
         }
       }
+      Await.result(f.mapTo[Unit], timeout.duration)
 
     case req: XCancelOrderReq ⇒
       if (manager.cancelOrder(req.id)) {
-        // TODO(hongyu): Make sure marketManagerActor send response to sender
         marketManagerActor forward req
       } else {
-        sender ! XCancelOrderRes(error = ORDER_NOT_EXIST)
+        sender ! XCancelOrderRes(error = ERR_ORDER_NOT_EXIST)
       }
 
     case XAddressBalanceUpdated(_, token, newBalance) ⇒
@@ -98,21 +103,24 @@ class AccountManagerActor()(
 
     case XAddressAllowanceUpdated(_, token, newBalance) ⇒
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
+
+    case req: XQueryBalance ⇒
+    case _                  ⇒
   }
 
   private def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode = status match {
-    case INVALID_DATA ⇒ INVALID_ORDER_DATA
-    case UNSUPPORTED_MARKET ⇒ INVALID_MARKET
-    case CANCELLED_TOO_MANY_ORDERS ⇒ TOO_MANY_ORDERS
-    case CANCELLED_DUPLICIATE ⇒ ORDER_ALREADY_EXIST
-    case _ ⇒ UNKNOWN_ERROR
+    case INVALID_DATA ⇒ ERR_INVALID_ORDER_DATA
+    case UNSUPPORTED_MARKET ⇒ ERR_INVALID_MARKET
+    case CANCELLED_TOO_MANY_ORDERS ⇒ ERR_TOO_MANY_ORDERS
+    case CANCELLED_DUPLICIATE ⇒ ERR_ORDER_ALREADY_EXIST
+    case _ ⇒ ERR_UNKNOWN
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
     if (manager.hasTokenManager(token))
       Future.successful(manager.getTokenManager(token))
     else for {
-      res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq)
+      res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq("addr", Seq(token)))
         .mapTo[XGetBalanceAndAllowancesRes]
       tm = new AccountTokenManagerImpl(token, 1000)
       ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)

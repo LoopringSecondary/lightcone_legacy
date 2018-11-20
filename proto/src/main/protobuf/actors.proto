@@ -56,20 +56,19 @@ message XRing {
 }
 
 ///////////////////
-// TODO(hongyu): add a prefix as ERR_
 enum XErrorCode {
-    OK = 0;
-    ORDER_NOT_EXIST = 1;
-    ORDER_INVALID_AMOUNT_S = 2;
-    LOW_BALANCE = 3;
-    LOW_FEE_BALANCE = 4;
-    TOKEN_NOT_EXIST = 5;
-    TOO_MANY_ORDERS = 6;
-    TOO_MANY_FAILED_MATCHES = 7;
-    INVALID_ORDER_DATA = 8;
-    INVALID_MARKET = 9;
-    ORDER_ALREADY_EXIST = 10;
-    UNKNOWN_ERROR = 100;
+    ERR_UNKNOWN = 0;
+    ERR_OK = 1;
+    ERR_ORDER_NOT_EXIST = 2;
+    ERR_ORDER_INVALID_AMOUNT_S = 3;
+    ERR_LOW_BALANCE = 4;
+    ERR_LOW_FEE_BALANCE = 5;
+    ERR_TOKEN_NOT_EXIST = 6;
+    ERR_TOO_MANY_ORDERS = 7;
+    ERR_TOO_MANY_FAILED_MATCHES = 8;
+    ERR_INVALID_ORDER_DATA = 9;
+    ERR_INVALID_MARKET = 10;
+    ERR_ORDER_ALREADY_EXIST = 11;
 }
 
 message XBalanceAndAllowance {
@@ -155,11 +154,11 @@ message XUpdatedGasPrice {
     int64 gas_price = 1;
 }
 
-message SendRawTxReq {
+message XSendRawTxReq {
     bytes data = 1;
 }
 
-message SendRawTxRes {
+message XSendRawTxRes {
     SendStatus status = 1;
     enum SendStatus {
         SEND_STATUS_UNKNOW = 0;
@@ -167,13 +166,13 @@ message SendRawTxRes {
     }
 }
 
-enum ExecutedStatus {
+enum XExecutedStatus {
     EXECUTED_STATUS_UNKNOW = 0;
     EXECUTED_STATUS_FAILED = 1;
     EXECUTED_STATUS_SUCCESS = 2;
 }
 
-message RingExecutedRes {
+message XRingExecutedRes {
     XRing ring = 1;
     string tx_hash = 2;
     ExecutedStatus status = 3;
@@ -181,13 +180,13 @@ message RingExecutedRes {
     int64 block_number = 5;
 }
 
-message SendRawTransactionRes {
+message XSendRawTransactionRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
 }
 
-message SubmitRingReq {
+message XSubmitRingReq {
   repeated XRing rings = 1;
   string gas_limit = 2;
   string gas_price = 3;
@@ -199,7 +198,10 @@ message XGetGasPriceRes {
   string gas_price = 1;
 }
 
-message UpdatedTokenBurnRate {
+message XUpdatedTokenBurnRate {
     string token = 1;
     double burnRate = 2;
+}
+
+message XQueryBalance {
 }
