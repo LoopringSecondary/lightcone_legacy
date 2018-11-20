@@ -91,14 +91,17 @@ class MarketManagerActor(
             cost ← getCostOfSingleRing()
             res = manager.submitOrder(order, cost)
             rings = res.rings
-            _ = {
-
-              // TODO(hongyu): convert rings to settlement and send it to settlementActor
-              // settlementActor ! xsettlement
-            } if rings.nonEmpty
+            // update order book (depth)
             ou = res.orderbookUpdate
             _ = log.debug(ou.toString)
             _ = orderbookManagerActor ! ou if ou.sells.nonEmpty || ou.buys.nonEmpty
+
+            // send out settlement
+            // TODO(hongyu): convert rings to settlement and send it to settlementActor
+            _ = {
+
+              // settlementActor ! xsettlement
+            } if rings.nonEmpty
 
           } yield Unit
 
