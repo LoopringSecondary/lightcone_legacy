@@ -14,28 +14,32 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.core
+package org.loopgring.lightcone.actors.core
 
-import scala.concurrent.duration._
 import akka.actor._
 import akka.testkit._
+import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
+import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.depth._
+import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.proto.actors.XOrder
+import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.deployment._
 import org.scalatest._
 
-// https://doc.akka.io/docs/akka/2.5/testing.html
-class MySpec() extends TestKit(ActorSystem("MySpec")) with ImplicitSender
-  with WordSpecLike with Matchers with BeforeAndAfterAll {
+import scala.concurrent.duration._
 
-  override def afterAll: Unit = {
-    TestKit.shutdownActorSystem(system)
-  }
+class CoreActorsIntegrationSpec_Simple
+  extends CoreActorsIntegrationCommonSpec {
 
-  "An Echo actor" must {
+  "submitOrder" must {
 
-    "send back messages unchanged" in {
-      // val echo = system.actorOf(TestActors.echoActorProps)
-      val echo = TestActorRef(TestActors.echoActorProps)
-      echo ! "hello world"
-      expectMsg("hello world")
+    "send orderUpdateEvent to orderbookManagerActor" in {
+
+      accountManagerActor ! "something"
+
     }
 
   }

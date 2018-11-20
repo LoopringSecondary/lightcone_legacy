@@ -16,52 +16,84 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
-import org.loopring.lightcone.actors.Routers
-import org.loopring.lightcone.core.base.TokenValueEstimator
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.deployment._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.actors.data._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
 object MarketManagerActor {
-  def name = "market_manager"
+  val name = "market_manager"
 }
 
 class MarketManagerActor(
-    manager: MarketManager
+    marketId: XMarketId,
+    config: XMarketManagerConfig
 )(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,
-    tve: TokenValueEstimator,
-    routers: Routers
+    timeProvider: TimeProvider,
+    tokenValueEstimator: TokenValueEstimator,
+    ringIncomeEstimator: RingIncomeEstimator,
+    dustOrderEvaluator: DustOrderEvaluator,
+    tokenMetadataManager: TokenMetadataManager
 )
   extends Actor
   with ActorLogging {
 
-  val gasPriceProviderActor = Routers.gasPriceProviderActor()
-  val orderbookManagerActor = Routers.orderbookManagerActor()
+  private implicit val marketId_ = marketId
+
+  private val ringMatcher = new RingMatcherImpl()
+  private val pendingRingPool = new PendingRingPoolImpl()
+  private val aggregator = new OrderAwareOrderbookAggregatorImpl(
+    config.priceDecimals
+  )
+
+  private val manager: MarketManager = new MarketManagerImpl(
+    marketId,
+    config,
+    tokenMetadataManager,
+    ringMatcher,
+    pendingRingPool,
+    dustOrderEvaluator,
+    aggregator
+  )
+
+  private var gasPriceActor: ActorSelection = _
+  private var orderbookManagerActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
+    case ActorDependencyReady(paths) ⇒
+      log.info(s"actor dependency ready: $paths")
+      assert(paths.size == 2)
+      gasPriceActor = context.actorSelection(paths(0))
+      orderbookManagerActor = context.actorSelection(paths(1))
+      context.become(functional)
+  }
+
+  def functional: Receive = LoggingReceive {
 
     // TODO(hongyu): send a response to the sender
     case XSubmitOrderReq(Some(order)) ⇒
       order.status match {
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒ for {
-          gasPriceRes ← (gasPriceProviderActor ? XGetGasPriceReq())
-            .mapTo[XGetGasPriceRes]
-          res = manager.submitOrder(
-            order,
-            getCostBySingleRing(BigInt(gasPriceRes.gasPrice))
-          )
-          _ = orderbookManagerActor ! res.orderbookUpdate
-        } yield Unit
+          cost ← getCostOfSingleRing()
+          res = manager.submitOrder(order, cost)
+          ou = res.orderbookUpdate
+        } yield {
+          if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
+            orderbookManagerActor ! ou
+          }
+        }
 
         case s ⇒
           log.error(s"unexpected order status in XSubmitOrderReq: $s")
@@ -72,23 +104,24 @@ class MarketManagerActor(
 
     case updatedGasPrce: XUpdatedGasPrice ⇒
       for {
-        gasPriceRes ← (gasPriceProviderActor ? XGetGasPriceReq())
-          .mapTo[XGetGasPriceRes]
-        resOpt = manager.triggerMatch(
-          true,
-          getCostBySingleRing(BigInt(gasPriceRes.gasPrice))
-        )
+        cost ← getCostOfSingleRing()
+        resultOpt = manager.triggerMatch(true, cost)
       } yield {
-        resOpt foreach { res ⇒
-          gasPriceProviderActor ! res.orderbookUpdate
+        resultOpt foreach { result ⇒
+          val ou = result.orderbookUpdate
+          if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
+            orderbookManagerActor ! ou
+          }
         }
       }
   }
 
-  private def getCostBySingleRing(gasPrice: BigInt) = {
-    val costedEth = BigInt(400000) * gasPrice
+  private def getCostOfSingleRing() = for {
+    res ← (gasPriceActor ? XGetGasPriceReq())
+      .mapTo[XGetGasPriceRes]
+    costedEth = BigInt(400000) * BigInt(res.gasPrice)
     //todo:eth的标识符
-    tve.getEstimatedValue("ETH", costedEth)
-  }
+    cost = tokenValueEstimator.getEstimatedValue("ETH", costedEth)
+  } yield cost
 
 }

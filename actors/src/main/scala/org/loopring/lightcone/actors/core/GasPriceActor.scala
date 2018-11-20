@@ -14,24 +14,30 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.base
+package org.loopring.lightcone.actors.core
 
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import akka.actor._
+import akka.util.Timeout
+import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.actors.data._
 
-class TokenValueEstimator()(implicit tmm: TokenMetadataManager) {
+import scala.concurrent.ExecutionContext
 
-  def getEstimatedValue(token: String, amount: BigInt): Double = {
-    if (amount.signum <= 0) 0
-    else tmm.getToken(token) match {
-      case None ⇒ 0
-      case Some(metadata) ⇒
-        val scaling = Math.pow(10, metadata.decimals)
-        (Rational(metadata.currentPrice) *
-          Rational(amount) /
-          Rational(scaling)).doubleValue
-    }
+object GasPriceActor {
+  val name = "gas_price"
+}
+
+class GasPriceActor()(
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
+  extends Actor
+  with ActorLogging {
+
+  def receive: Receive = {
+    case req: XGetGasPriceReq ⇒
+      XGetGasPriceRes(gasPrice = "10000000000") //todo:需要较为准确的gasprice, 10G
   }
 
 }
-

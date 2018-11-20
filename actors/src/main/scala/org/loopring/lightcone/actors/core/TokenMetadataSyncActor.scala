@@ -19,21 +19,21 @@ package org.loopring.lightcone.actors.core
 import akka.actor.ActorLogging
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.actors.base.{ Job, RepeatedJobActor }
-import org.loopring.lightcone.core.base.TokenMetadataManager
-import org.loopring.lightcone.proto.actors.UpdatedTokenBurnRate
+import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.proto.actors._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
 object TokenMetadataSyncActor {
-  def name = "token_meta_data"
+  val name = "token_metadata_sync"
 }
 
 class TokenMetadataSyncActor()(
     implicit
-    tmm: TokenMetadataManager,
     ec: ExecutionContext,
-    timeout: Timeout
+    timeout: Timeout,
+    tmm: TokenMetadataManager
 )
   extends RepeatedJobActor
   with ActorLogging {

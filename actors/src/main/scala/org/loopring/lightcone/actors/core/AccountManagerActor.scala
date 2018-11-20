@@ -20,12 +20,12 @@ import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import akka.pattern.ask
-import org.loopring.lightcone.actors.Routers
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base.DustOrderEvaluator
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.deployment._
 import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._
@@ -34,26 +34,37 @@ import XOrderStatus._
 import XErrorCode._
 
 object AccountManagerActor {
-  def name = "account_manager"
+  val name = "account_manager"
 }
 
 class AccountManagerActor()(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,
-    routers: Routers,
     dustEvaluator: DustOrderEvaluator
 )
   extends Actor
   with ActorLogging {
 
   implicit val orderPool = new AccountOrderPoolImpl()
-  val manager = AccountManager.default()
-  val accountBalanceActor: ActorRef = Routers.accountBalanceActor()
-  val marketManagerActor: ActorRef = Routers.marketManagerActor()
+  val manager = AccountManager.default
+
+  private var accountBalanceActor: ActorSelection = _
+  private var marketManagerActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
+    case ActorDependencyReady(paths) ⇒
+      log.info(s"actor dependency ready: $paths")
+      assert(paths.size == 2)
+      accountBalanceActor = context.actorSelection(paths(0))
+      marketManagerActor = context.actorSelection(paths(1))
+      context.become(functional)
+  }
 
+  // TODO(hongyu): handle the following messages:
+  // - XQueryBalance: (this should query AccountBalanceActor first,
+  //   then query unreserved allowance)
+  def functional: Receive = LoggingReceive {
     case XSubmitOrderReq(Some(xorder)) ⇒
       for {
         _ ← getTokenManager(xorder.tokenS)
