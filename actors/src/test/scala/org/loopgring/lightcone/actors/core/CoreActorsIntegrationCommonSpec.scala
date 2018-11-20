@@ -75,6 +75,9 @@ abstract class CoreActorsIntegrationCommonSpec
 
   val accountBalanceProbe = TestProbe("accountBalance")
   val accountBalanceActor = accountBalanceProbe.ref
+
+  val settlementProbe = TestProbe("settlement")
+  val settlementActor = settlementProbe.ref
   //  {
   //   def expectUpdate(balanceMap: Map[String, XBalanceAndAllowance]) = {
   //     expectMsgPF() {
@@ -122,6 +125,7 @@ abstract class CoreActorsIntegrationCommonSpec
 
   marketManagerActor ! ActorDependencyReady(Seq(
     gasPriceActor.path.toString,
-    orderbookManagerActor.path.toString
+    orderbookManagerActor.path.toString,
+    settlementActor.path.toString
   ))
 }
