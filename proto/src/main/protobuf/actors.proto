@@ -175,7 +175,7 @@ enum XExecutedStatus {
 message XRingExecutedRes {
     XRing ring = 1;
     string tx_hash = 2;
-    ExecutedStatus status = 3;
+    XExecutedStatus status = 3;
     bytes used_gas = 4;
     int64 block_number = 5;
 }
