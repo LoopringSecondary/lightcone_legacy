@@ -59,13 +59,13 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
   def getOrderPendingAmountS(orderId: String): BigInt =
     orderMap.get(orderId).map(_.pendingAmountS).getOrElse(0)
 
-  def deleteOrder(orderId: String) = synchronized {
+  def deleteOrder(orderId: String) = this.synchronized {
     val result = orderMap.contains(orderId)
     orderMap -= orderId
     result
   }
 
-  def deleteRing(ringId: String): Boolean = synchronized {
+  def deleteRing(ringId: String): Boolean = this.synchronized {
     ringMap.get(ringId) match {
       case Some(ringInfo) ⇒
         ringMap -= ringId
@@ -88,7 +88,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
 
   def hasRing(ringId: String) = ringMap.contains(ringId)
 
-  def addRing(ring: OrderRing) = synchronized {
+  def addRing(ring: OrderRing) = this.synchronized {
     ringMap.get(ring.id) match {
       case Some(_) ⇒
       case None ⇒
@@ -116,12 +116,12 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
     }
   }
 
-  def deleteAllRings() = synchronized {
+  def deleteAllRings() = this.synchronized {
     orderMap = Map.empty[String, OrderInfo]
     ringMap = Map.empty[String, RingInfo]
   }
 
-  def deleteRingsBefore(timestamp: Long) = synchronized {
+  def deleteRingsBefore(timestamp: Long) = this.synchronized {
     ringMap.filter {
       case (_, ringInfo) ⇒ ringInfo.timestamp < timestamp
     }.keys.foreach(deleteRing)
@@ -130,7 +130,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
   def deleteRingsOlderThan(age: Long) =
     deleteRingsBefore(time.getCurrentTimeMillis - age)
 
-  def deleteRingsContainingOrder(orderId: String) = synchronized {
+  def deleteRingsContainingOrder(orderId: String) = this.synchronized {
     ringMap.filter {
       case (_, ringInfo) ⇒
         ringInfo.takerId == orderId || ringInfo.makerId == orderId

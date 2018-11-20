@@ -61,15 +61,15 @@ class AccountTokenManagerImpl(
   // Initlize the balance and allowance and triger rebalancing.
   // Returns the ids of orders to delete
 
-  def setBalance(balance: BigInt) = synchronized {
+  def setBalance(balance: BigInt) = this.synchronized {
     setBalanceAndAllowance(balance, this.allowance)
   }
 
-  def setAllowance(allowance: BigInt) = synchronized {
+  def setAllowance(allowance: BigInt) = this.synchronized {
     setBalanceAndAllowance(this.balance, allowance)
   }
 
-  def setBalanceAndAllowance(balance: BigInt, allowance: BigInt): Set[String] = synchronized {
+  def setBalanceAndAllowance(balance: BigInt, allowance: BigInt): Set[String] = this.synchronized {
     val cursor1 =
       if (balance >= this.balance) cursor
       else {
@@ -96,7 +96,7 @@ class AccountTokenManagerImpl(
   }
 
   // Reserve balance/allowance for an order.
-  def reserve(orderId: String): Set[String] = synchronized {
+  def reserve(orderId: String): Set[String] = this.synchronized {
     if (!orderPool.contains(orderId)) Set.empty[String]
     else {
       indexMap.get(orderId) match {
@@ -111,7 +111,7 @@ class AccountTokenManagerImpl(
   }
 
   // Release balance/allowance for an order.
-  def release(orderId: String): Set[String] = synchronized {
+  def release(orderId: String): Set[String] = this.synchronized {
     indexMap.get(orderId) match {
       case None ⇒ Set.empty
       case Some(idx) ⇒
@@ -124,7 +124,7 @@ class AccountTokenManagerImpl(
   }
 
   // Rebalance due to change of an order.
-  def adjust(orderId: String): Set[String] = synchronized {
+  def adjust(orderId: String): Set[String] = this.synchronized {
     indexMap.get(orderId) match {
       case None ⇒ Set.empty
       case Some(idx) ⇒

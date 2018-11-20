@@ -27,7 +27,7 @@ class OrderbookManagerImpl(config: XOrderbookConfig)
     level ⇒ level -> new View(level)
   }.toMap
 
-  def processUpdate(update: XOrderbookUpdate) = synchronized {
+  def processUpdate(update: XOrderbookUpdate) = this.synchronized {
     val diff = viewMap(0).getDiff(update)
     viewMap.values.foreach(_.processUpdate(diff))
   }
@@ -37,7 +37,7 @@ class OrderbookManagerImpl(config: XOrderbookConfig)
     case None       ⇒ XOrderbook(Nil, Nil)
   }
 
-  def reset() = synchronized {
+  def reset() = this.synchronized {
     viewMap.values.foreach(_.reset)
   }
 

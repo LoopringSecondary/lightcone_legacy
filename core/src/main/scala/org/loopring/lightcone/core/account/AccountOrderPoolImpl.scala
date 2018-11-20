@@ -32,15 +32,15 @@ class AccountOrderPoolImpl()
   def contains(id: String) = orderMap.contains(id)
   def size: Int = orderMap.size
 
-  def addCallback(callback: Callback) = synchronized {
+  def addCallback(callback: Callback) = this.synchronized {
     callbacks += callback
   }
 
-  def removeCallback(callback: Callback) = synchronized {
+  def removeCallback(callback: Callback) = this.synchronized {
     callbacks -= callback
   }
 
-  def +=(order: Order) = synchronized {
+  def +=(order: Order) = this.synchronized {
     getOrder(order.id) match {
       case Some(existing) if existing == order ⇒
 

@@ -42,17 +42,17 @@ trait UpdatedOrdersTracing {
   def getUpdatedOrdersAsMap() = updatedOrders
   def getUpdatedOrders() = updatedOrders.values
 
-  def clearUpdatedOrders() = synchronized {
+  def clearUpdatedOrders() = this.synchronized {
     updatedOrders = Map.empty
   }
 
-  def takeUpdatedOrders() = synchronized {
+  def takeUpdatedOrders() = this.synchronized {
     val orders = getUpdatedOrders
     clearUpdatedOrders()
     orders
   }
 
-  def takeUpdatedOrdersAsMap() = synchronized {
+  def takeUpdatedOrdersAsMap() = this.synchronized {
     val orders = getUpdatedOrdersAsMap
     clearUpdatedOrders()
     orders
