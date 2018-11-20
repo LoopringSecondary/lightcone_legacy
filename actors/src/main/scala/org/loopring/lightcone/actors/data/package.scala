@@ -27,26 +27,33 @@ package object data {
   ///////////
 
   implicit def byteString2BigInt(bytes: ByteString): BigInt = {
-    if (bytes.size() > 0)
-      BigInt(bytes.toByteArray)
+    if (bytes.size() > 0) BigInt(bytes.toByteArray)
     else BigInt(0)
   }
-  implicit def bigInt2ByteString(b: BigInt): ByteString = ByteString.copyFrom(b.toByteArray)
 
-  implicit def xBalanceAndAlowance2BalanceAndAlowance(xba: XBalanceAndAllowance): BalanceAndAllowance = {
+  implicit def bigInt2ByteString(b: BigInt): ByteString =
+    ByteString.copyFrom(b.toByteArray)
+
+  implicit def byteArray2ByteString(bytes: Array[Byte]) =
+    ByteString.copyFrom(bytes)
+
+  implicit def xBalanceAndAlowance2BalanceAndAlowance(
+    xba: XBalanceAndAllowance
+  ): BalanceAndAllowance =
     BalanceAndAllowance(
       balance = xba.balance,
       allowance = xba.allowance
     )
-  }
-  implicit def balanceAndAlowance2XBalanceAndAlowance(ba: BalanceAndAllowance): XBalanceAndAllowance = {
+
+  implicit def balanceAndAlowance2XBalanceAndAlowance(
+    ba: BalanceAndAllowance
+  ): XBalanceAndAllowance =
     XBalanceAndAllowance(
       balance = ba.balance,
       allowance = ba.allowance
     )
-  }
 
-  implicit def xOrder2Order(xorder: XOrder): Order = {
+  implicit def xOrder2Order(xorder: XOrder): Order =
     Order(
       id = xorder.id,
       tokenS = xorder.tokenS,
@@ -63,8 +70,8 @@ package object data {
       _actual = Some(xorder.getActual),
       _matchable = Some(xorder.getMatchable)
     )
-  }
-  implicit def order2XOrder(order: Order): XOrder = {
+
+  implicit def order2XOrder(order: Order): XOrder =
     XOrder(
       id = order.id,
       tokenS = order.tokenS,
@@ -81,22 +88,18 @@ package object data {
       actual = Some(order.actual),
       matchable = Some(order.matchable)
     )
-  }
 
-  implicit def XOrderStateToOrderState(xOrderState: XOrderState): OrderState = {
+  implicit def XOrderStateToOrderState(xOrderState: XOrderState): OrderState =
     OrderState(
       amountS = xOrderState.amountS,
       amountB = xOrderState.amountB,
       amountFee = xOrderState.amountFee
     )
-  }
-  implicit def OrderStateToXOrderState(orderState: OrderState): XOrderState = {
+
+  implicit def OrderStateToXOrderState(orderState: OrderState): XOrderState =
     XOrderState(
       amountS = orderState.amountS,
       amountB = orderState.amountB,
       amountFee = orderState.amountFee
     )
-  }
-
-  implicit def byteArray2ByteString(bytes: Array[Byte]) = ByteString.copyFrom(bytes)
 }

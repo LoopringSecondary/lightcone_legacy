@@ -44,6 +44,7 @@ class CoreActorsIntegrationSpec_Simple
       setBalanceActorReply()
       setBalanceActorReply()
       setBalanceActorReply()
+
       val maker1 = XOrder(
         id = "maker1",
         tokenS = WETH,
