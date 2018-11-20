@@ -61,7 +61,7 @@ class OrderbookAggregatorImpl(priceDecimals: Int)
     price: Double,
     amount: Double,
     total: Double
-  ) {
+  ) = synchronized {
     if (price > 0 && amount > 0 && total > 0) {
       val side = if (isSell) sells else buys
       if (increase) side.increase(price, amount, total)

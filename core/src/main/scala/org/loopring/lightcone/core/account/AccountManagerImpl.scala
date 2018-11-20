@@ -34,7 +34,7 @@ final private[core] class AccountManagerImpl()(
     tokens.contains(token)
   }
 
-  def addTokenManager(tm: AccountTokenManager) = {
+  def addTokenManager(tm: AccountTokenManager) = synchronized {
     assert(!hasTokenManager(tm.token))
     tokens += tm.token -> tm
     tm
@@ -46,7 +46,7 @@ final private[core] class AccountManagerImpl()(
   }
 
   //TODO(litao): What if an order is re-submitted?
-  def submitOrder(order: Order): Boolean = {
+  def submitOrder(order: Order): Boolean = synchronized {
     if (order.amountS <= 0) {
       orderPool += order.as(INVALID_DATA)
       return false
@@ -74,7 +74,7 @@ final private[core] class AccountManagerImpl()(
     return true
   }
 
-  def cancelOrder(orderId: String): Boolean = {
+  def cancelOrder(orderId: String): Boolean = synchronized {
     orderPool.getOrder(orderId) match {
       case None ⇒ false
       case Some(order) ⇒
@@ -88,7 +88,7 @@ final private[core] class AccountManagerImpl()(
   }
 
   // adjust order's outstanding size
-  def adjustOrder(orderId: String, outstandingAmountS: BigInt): Boolean = {
+  def adjustOrder(orderId: String, outstandingAmountS: BigInt): Boolean = synchronized {
     orderPool.getOrder(orderId) match {
       case None ⇒ false
       case Some(order) ⇒

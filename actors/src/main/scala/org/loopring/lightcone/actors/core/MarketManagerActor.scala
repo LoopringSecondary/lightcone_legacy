@@ -84,16 +84,22 @@ class MarketManagerActor(
 
   def functional: Receive = LoggingReceive {
 
-    // TODO(hongyu): convert res to settlement and send it to settlementActor
     case XSubmitOrderReq(Some(order)) ⇒
       order.status match {
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
           for {
             cost ← getCostOfSingleRing()
             res = manager.submitOrder(order, cost)
+            rings = res.rings
+            _ = {
+
+              // TODO(hongyu): convert rings to settlement and send it to settlementActor
+              // settlementActor ! xsettlement
+            } if rings.nonEmpty
             ou = res.orderbookUpdate
             _ = log.debug(ou.toString)
             _ = orderbookManagerActor ! ou if ou.sells.nonEmpty || ou.buys.nonEmpty
+
           } yield Unit
 
         case s ⇒

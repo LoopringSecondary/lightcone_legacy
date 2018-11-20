@@ -90,13 +90,13 @@ class MarketManagerImpl(
     else order.map(updateOrderMatchable)
   }
 
-  def submitOrder(order: Order, minFiatValue: Double = 0): MatchResult = {
+  def submitOrder(order: Order, minFiatValue: Double = 0): MatchResult = synchronized {
     // Allow re-submission of an existing order.
     removeFromSide(order.id)
     matchOrders(order, minFiatValue)
   }
 
-  def cancelOrder(orderId: String): Option[XOrderbookUpdate] = {
+  def cancelOrder(orderId: String): Option[XOrderbookUpdate] = synchronized {
     getOrder(orderId).map { order ⇒
       removeFromSide(orderId)
       pendingRingPool.deleteOrder(orderId)
@@ -104,7 +104,7 @@ class MarketManagerImpl(
     }
   }
 
-  def deletePendingRing(ringId: String): Option[XOrderbookUpdate] = {
+  def deletePendingRing(ringId: String): Option[XOrderbookUpdate] = synchronized {
     if (pendingRingPool.hasRing(ringId)) {
       pendingRingPool.deleteRing(ringId)
       Some(aggregator.getOrderbookUpdate())
@@ -115,7 +115,7 @@ class MarketManagerImpl(
     sellOrderAsTaker: Boolean,
     minFiatValue: Double = 0,
     offset: Int = 0
-  ): Option[MatchResult] = {
+  ): Option[MatchResult] = synchronized {
     val side = if (sellOrderAsTaker) sells else buys
     val takerOption = side.drop(offset).headOption
     takerOption.map(submitOrder(_, minFiatValue))

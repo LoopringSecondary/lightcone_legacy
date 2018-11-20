@@ -82,7 +82,6 @@ class AccountManagerActor(address: String)(
         order_ = orderOpt.get
         xorder_ : XOrder = xorder
       } yield {
-
         if (successful) {
           log.debug(s"submitting order to market manager actor: $order_")
           marketManagerActor ! XSubmitOrderReq(Some(xorder_))
