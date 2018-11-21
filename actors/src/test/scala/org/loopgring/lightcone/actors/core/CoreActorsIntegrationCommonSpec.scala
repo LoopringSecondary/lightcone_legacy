@@ -30,6 +30,7 @@ import org.loopring.lightcone.proto.deployment._
 import org.scalatest._
 import org.loopring.lightcone.actors.data._
 import scala.concurrent.duration._
+import org.slf4s.Logging
 
 abstract class CoreActorsIntegrationCommonSpec
   extends TestKit(ActorSystem("test", ConfigFactory.parseString(
@@ -47,7 +48,8 @@ abstract class CoreActorsIntegrationCommonSpec
   with Matchers
   with WordSpecLike
   with BeforeAndAfterEach
-  with BeforeAndAfterAll {
+  with BeforeAndAfterAll
+  with Logging {
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)

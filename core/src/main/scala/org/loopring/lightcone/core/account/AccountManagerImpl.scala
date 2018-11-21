@@ -53,7 +53,6 @@ final private[core] class AccountManagerImpl()(
       _matchable = None
     )
 
-    println("-----: " + order)
     if (order.amountS <= 0) {
       orderPool += order.as(INVALID_DATA)
       return false

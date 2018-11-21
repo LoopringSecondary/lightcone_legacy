@@ -19,6 +19,7 @@ package org.loopgring.lightcone.actors.core
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core.XOrderStatus
+import org.loopring.lightcone.core.data.Order
 import akka.pattern._
 import akka.testkit.TestProbe
 
@@ -30,8 +31,8 @@ import XErrorCode._
 class CoreActorsIntegrationSpec_Simple
   extends CoreActorsIntegrationCommonSpec {
 
-  "submitOrder to accountManagerActor1" must {
-    "send Order to marketManagerActor" in {
+  "submitOrder" must {
+    "succeed if the trader has sufficient balance and allowance" in {
       val order = XOrder(
         id = "order",
         tokenS = WETH,
@@ -54,7 +55,9 @@ class CoreActorsIntegrationSpec_Simple
       // gasPriceProb ? XGetGasPriceReq
 
       expectMsgPF() {
-        case XSubmitOrderRes(ERR_OK, _) ⇒
+        case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+          val order: Order = xorder
+          log.info(s"order submitted: $order")
       }
     }
 

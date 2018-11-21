@@ -65,10 +65,10 @@ package object data {
       createdAt = xorder.createdAt,
       status = xorder.status,
       walletSplitPercentage = xorder.walletSplitPercentage,
-      _outstanding = Some(xorder.getOutstanding),
-      _reserved = Some(xorder.getReserved),
-      _actual = Some(xorder.getActual),
-      _matchable = Some(xorder.getMatchable)
+      _outstanding = xorder.outstanding.map(xorderState2OrderState),
+      _reserved = xorder.reserved.map(xorderState2OrderState),
+      _actual = xorder.actual.map(xorderState2OrderState),
+      _matchable = xorder.matchable.map(xorderState2OrderState),
     )
 
   implicit def order2XOrder(order: Order): XOrder =
@@ -83,20 +83,20 @@ package object data {
       createdAt = order.createdAt,
       status = order.status,
       walletSplitPercentage = order.walletSplitPercentage,
-      outstanding = Some(order.outstanding),
-      reserved = Some(order.reserved),
-      actual = Some(order.actual),
-      matchable = Some(order.matchable)
+      outstanding = order._outstanding.map(orderState2XOrderState),
+      reserved = order._reserved.map(orderState2XOrderState),
+      actual = order._actual.map(orderState2XOrderState),
+      matchable = order._matchable.map(orderState2XOrderState),
     )
 
-  implicit def XOrderStateToOrderState(xOrderState: XOrderState): OrderState =
+  implicit def xorderState2OrderState(xOrderState: XOrderState): OrderState =
     OrderState(
       amountS = xOrderState.amountS,
       amountB = xOrderState.amountB,
       amountFee = xOrderState.amountFee
     )
 
-  implicit def OrderStateToXOrderState(orderState: OrderState): XOrderState =
+  implicit def orderState2XOrderState(orderState: OrderState): XOrderState =
     XOrderState(
       amountS = orderState.amountS,
       amountB = orderState.amountB,
