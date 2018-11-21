@@ -42,7 +42,8 @@ class CoreActorsIntegrationSpec_Simple
         amountB = BigInt(10),
         amountFee = BigInt(10),
         walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW)
+        status = XOrderStatus.NEW
+      )
 
       accountManagerActor1 ! XSubmitOrderReq(Some(order))
 
@@ -51,8 +52,6 @@ class CoreActorsIntegrationSpec_Simple
 
       accountBalanceProbe.expectQuery(ADDRESS_1, LRC)
       accountBalanceProbe.replyWith(LRC, BigInt("500000"), BigInt("300000"))
-
-      // gasPriceProb ? XGetGasPriceReq
 
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
