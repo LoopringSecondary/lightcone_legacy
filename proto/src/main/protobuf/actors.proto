@@ -246,3 +246,10 @@ message XUpdatedTokenBurnRate {
     string token = 1;
     double burnRate = 2;
 }
+
+message XOrderHistoryReq {
+    string order_id = 1;
+    bytes filled_amount_s = 2;
+}
+
+message XOrderHistoryRes {}
