@@ -91,9 +91,10 @@ class MarketManagerActor(
   def functional: Receive = LoggingReceive {
 
     case XSubmitOrderReq(Some(xorder)) ⇒
-      println("!!!!!!" + xorder)
+
       assert(xorder.actual.nonEmpty, "order in XSubmitOrderReq miss `actual` field")
       val order: Order = xorder
+      println("!!!!!!---" + order)
       xorder.status match {
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒ for {
           // get ring settlement cost

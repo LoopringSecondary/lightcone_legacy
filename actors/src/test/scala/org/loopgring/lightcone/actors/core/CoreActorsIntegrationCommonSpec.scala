@@ -33,7 +33,18 @@ import scala.concurrent.duration._
 import org.slf4s.Logging
 import scala.math.BigInt
 
-abstract class CoreActorsIntegrationCommonSpec
+object CoreActorsIntegrationCommonSpec {
+
+  val GTO = "GTO"
+  val WETH = "WETH"
+  val LRC = "LRC"
+
+  val GTO_TOKEN = XTokenMetadata(LRC, 10, 0.1, 1.0)
+  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
+  val LRC_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
+}
+
+abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
   extends TestKit(ActorSystem("test", ConfigFactory.parseString(
     """akka {
          loglevel = "DEBUG"
@@ -52,19 +63,13 @@ abstract class CoreActorsIntegrationCommonSpec
   with BeforeAndAfterAll
   with Logging {
 
+  import CoreActorsIntegrationCommonSpec._
+
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
   }
 
-  val GTO = "GTO"
-  val WETH = "WETH"
-  val LRC = "LRC"
-
-  val GTO_TOKEN = XTokenMetadata(LRC, 10, 0.1, 1.0)
-  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
-  val LRC_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
-
-  implicit val marketId = XMarketId(LRC, WETH)
+  implicit val marketId_ = marketId
   implicit val tokenMetadataManager = new TokenMetadataManager()
   tokenMetadataManager.addToken(GTO_TOKEN)
   tokenMetadataManager.addToken(WETH_TOKEN)

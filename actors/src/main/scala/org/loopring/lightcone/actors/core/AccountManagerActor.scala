@@ -102,7 +102,7 @@ class AccountManagerActor(address: String)(
         updatedOrders = orderPool.takeUpdatedOrdersAsMap()
         _ = assert(updatedOrders.contains(_order.id))
         order_ = updatedOrders(_order.id)
-        xorder_ : XOrder = order_
+        xorder_ : XOrder = order_.copy(_reserved = None, _outstanding = None)
       } yield {
         if (successful) {
           log.debug(s"submitting order to market manager actor: $order_")
