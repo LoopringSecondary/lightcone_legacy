@@ -92,12 +92,18 @@ class MarketManagerActor(
       xorder.status match {
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
           for {
+            // get ring settlement cost
             cost ← getCostOfSingleRing()
+
+            // get order fill history
             orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
               .mapTo[XGetOrderFilledAmountRes]
             _ = log.debug(s"order history: orderHistoryRes")
+
+            // scale the order
             _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
 
+            // submit order to reserve balance and allowance
             matchResult = manager.submitOrder(_order, cost)
 
             // update order book (depth)
@@ -108,10 +114,6 @@ class MarketManagerActor(
             // TODO(hongyu): convert rings to settlement and send it to settlementActor
             rings = matchResult.rings
             _ = log.debug(s"rings: $rings")
-            _ = {
-
-              // settlementActor ! xsettlement
-            } if rings.nonEmpty
 
           } yield Unit
 
