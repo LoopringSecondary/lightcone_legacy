@@ -16,30 +16,51 @@
 
 package org.loopgring.lightcone.actors.core
 
-import akka.actor._
-import akka.testkit._
-import akka.util.Timeout
-import com.typesafe.config.ConfigFactory
-import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.depth._
-import org.loopring.lightcone.core.market._
-import org.loopring.lightcone.proto.actors.XOrder
-import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment._
-import org.scalatest._
+import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core.XOrderStatus
+import org.loopring.lightcone.core.data.Order
+import akka.pattern._
+import akka.testkit.TestProbe
 
 import scala.concurrent.duration._
+import scala.concurrent.{ Await, Future }
+
+import XErrorCode._
 
 class CoreActorsIntegrationSpec_Simple
   extends CoreActorsIntegrationCommonSpec {
 
   "submitOrder" must {
+    "succeed if the trader has sufficient balance and allowance" in {
+      val order = XOrder(
+        id = "order",
+        tokenS = WETH,
+        tokenB = LRC,
+        tokenFee = LRC,
+        amountS = BigInt(100),
+        amountB = BigInt(10),
+        amountFee = BigInt(10),
+        walletSplitPercentage = 0.2,
+        status = XOrderStatus.NEW
+      )
 
-    "send orderUpdateEvent to orderbookManagerActor" in {
+      accountManagerActor1 ! XSubmitOrderReq(Some(order))
 
-      accountManagerActor ! "something"
+      accountBalanceProbe.expectQuery(ADDRESS_1, WETH)
+      accountBalanceProbe.replyWith(WETH, BigInt("1000000"), BigInt("2000000"))
 
+      accountBalanceProbe.expectQuery(ADDRESS_1, LRC)
+      accountBalanceProbe.replyWith(LRC, BigInt("500000"), BigInt("300000"))
+
+      orderHistoryProbe.expectQuery(order.id)
+      orderHistoryProbe.replyWith(order.id, BigInt("0"))
+
+      expectMsgPF() {
+        case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+          val order: Order = xorder
+          log.info(s"order submitted: $order")
+      }
     }
 
   }

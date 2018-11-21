@@ -31,6 +31,6 @@ trait AccountManager {
 object AccountManager {
   def default()(
     implicit
-    orderPool: AccountOrderPoolWithUpdatedOrdersTracing
+    orderPool: AccountOrderPool
   ): AccountManager = new AccountManagerImpl()
 }

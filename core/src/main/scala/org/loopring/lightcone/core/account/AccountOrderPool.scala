@@ -39,24 +39,25 @@ trait UpdatedOrdersTracing {
   self: AccountOrderPool ⇒
   private var updatedOrders = Map.empty[String, Order]
 
-  def clearUpdatedOrders() = { updatedOrders = Map.empty }
+  addCallback((order: Order) ⇒
+    updatedOrders += order.id -> order)
 
   def getUpdatedOrdersAsMap() = updatedOrders
   def getUpdatedOrders() = updatedOrders.values
 
-  def takeUpdatedOrders() = {
+  def clearUpdatedOrders() = this.synchronized {
+    updatedOrders = Map.empty
+  }
+
+  def takeUpdatedOrders() = this.synchronized {
     val orders = getUpdatedOrders
     clearUpdatedOrders()
     orders
   }
 
-  def takeUpdatedOrdersAsMap() = {
+  def takeUpdatedOrdersAsMap() = this.synchronized {
     val orders = getUpdatedOrdersAsMap
     clearUpdatedOrders()
     orders
   }
 }
-
-trait AccountOrderPoolWithUpdatedOrdersTracing
-  extends AccountOrderPool
-  with UpdatedOrdersTracing

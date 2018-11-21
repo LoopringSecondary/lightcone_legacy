@@ -43,7 +43,7 @@ trait OrderAwareSpec extends CommonSpec {
   implicit val tve = new TokenValueEstimator
   implicit val dustEvaluator = new DustOrderEvaluator
 
-  implicit var orderPool: AccountOrderPoolWithUpdatedOrdersTracing = _
+  implicit var orderPool: AccountOrderPool with UpdatedOrdersTracing = _
   var orderManager: AccountManager = _
   var lrc: AccountTokenManager = _
   var gto: AccountTokenManager = _
@@ -54,7 +54,7 @@ trait OrderAwareSpec extends CommonSpec {
 
   override def beforeEach() {
     nextId = 1
-    orderPool = new AccountOrderPoolImpl()
+    orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
     updatedOrders = Map.empty[String, Order]
     orderPool.addCallback { order ⇒
       updatedOrders += order.id -> order

@@ -23,7 +23,7 @@ import org.slf4s.Logging
 
 final private[core] class AccountManagerImpl()(
     implicit
-    orderPool: AccountOrderPoolWithUpdatedOrdersTracing
+    orderPool: AccountOrderPool
 ) extends AccountManager with Logging {
   import XOrderStatus._
 
@@ -34,7 +34,7 @@ final private[core] class AccountManagerImpl()(
     tokens.contains(token)
   }
 
-  def addTokenManager(tm: AccountTokenManager) = {
+  def addTokenManager(tm: AccountTokenManager) = this.synchronized {
     assert(!hasTokenManager(tm.token))
     tokens += tm.token -> tm
     tm
@@ -46,7 +46,13 @@ final private[core] class AccountManagerImpl()(
   }
 
   //TODO(litao): What if an order is re-submitted?
-  def submitOrder(order: Order): Boolean = {
+  def submitOrder(_order: Order): Boolean = this.synchronized {
+    val order = _order.copy(
+      _reserved = None,
+      _actual = None,
+      _matchable = None
+    )
+
     if (order.amountS <= 0) {
       orderPool += order.as(INVALID_DATA)
       return false
@@ -74,7 +80,7 @@ final private[core] class AccountManagerImpl()(
     return true
   }
 
-  def cancelOrder(orderId: String): Boolean = {
+  def cancelOrder(orderId: String): Boolean = this.synchronized {
     orderPool.getOrder(orderId) match {
       case None ⇒ false
       case Some(order) ⇒
@@ -88,7 +94,7 @@ final private[core] class AccountManagerImpl()(
   }
 
   // adjust order's outstanding size
-  def adjustOrder(orderId: String, outstandingAmountS: BigInt): Boolean = {
+  def adjustOrder(orderId: String, outstandingAmountS: BigInt): Boolean = this.synchronized {
     orderPool.getOrder(orderId) match {
       case None ⇒ false
       case Some(order) ⇒

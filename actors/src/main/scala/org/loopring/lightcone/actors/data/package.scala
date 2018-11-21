@@ -16,26 +16,90 @@
 
 package org.loopring.lightcone.actors
 
-import com.google.protobuf.ByteString
-import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.core.data.{ Order, OrderState }
 import org.loopring.lightcone.proto.actors._
 import com.google.protobuf.ByteString
 
-// TODO(hongyu): implement this
 package object data {
 
   case class BalanceAndAllowance(balance: BigInt, allowance: BigInt)
 
   ///////////
 
-  implicit def byteString2BigInt(bytes: ByteString): BigInt = ???
-  implicit def bigInt2ByteString(b: BigInt): ByteString = ???
+  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
+    if (bytes.size() > 0) BigInt(bytes.toByteArray)
+    else BigInt(0)
+  }
 
-  implicit def xBalanceAndAlowance2BalanceAndAlowance(ba: XBalanceAndAllowance): BalanceAndAllowance = ???
-  implicit def balanceAndAlowance2XBalanceAndAlowance(ba: BalanceAndAllowance): XBalanceAndAllowance = ???
+  implicit def bigInt2ByteString(b: BigInt): ByteString =
+    ByteString.copyFrom(b.toByteArray)
 
-  implicit def xOrder2Order(xorder: XOrder): Order = ???
-  implicit def order2XOrder(order: Order): XOrder = ???
+  implicit def byteArray2ByteString(bytes: Array[Byte]) =
+    ByteString.copyFrom(bytes)
 
-  implicit def byteArray2ByteString(bytes: Array[Byte]) = ByteString.copyFrom(bytes)
+  implicit def xBalanceAndAlowance2BalanceAndAlowance(
+    xba: XBalanceAndAllowance
+  ): BalanceAndAllowance =
+    BalanceAndAllowance(
+      balance = xba.balance,
+      allowance = xba.allowance
+    )
+
+  implicit def balanceAndAlowance2XBalanceAndAlowance(
+    ba: BalanceAndAllowance
+  ): XBalanceAndAllowance =
+    XBalanceAndAllowance(
+      balance = ba.balance,
+      allowance = ba.allowance
+    )
+
+  implicit def xOrder2Order(xorder: XOrder): Order =
+    Order(
+      id = xorder.id,
+      tokenS = xorder.tokenS,
+      tokenB = xorder.tokenB,
+      tokenFee = xorder.tokenFee,
+      amountS = xorder.amountS,
+      amountB = xorder.amountB,
+      amountFee = xorder.amountFee,
+      createdAt = xorder.createdAt,
+      status = xorder.status,
+      walletSplitPercentage = xorder.walletSplitPercentage,
+      _outstanding = xorder.outstanding.map(xorderState2OrderState),
+      _reserved = xorder.reserved.map(xorderState2OrderState),
+      _actual = xorder.actual.map(xorderState2OrderState),
+      _matchable = xorder.matchable.map(xorderState2OrderState),
+    )
+
+  implicit def order2XOrder(order: Order): XOrder =
+    XOrder(
+      id = order.id,
+      tokenS = order.tokenS,
+      tokenB = order.tokenB,
+      tokenFee = order.tokenFee,
+      amountS = order.amountS,
+      amountB = order.amountB,
+      amountFee = order.amountFee,
+      createdAt = order.createdAt,
+      status = order.status,
+      walletSplitPercentage = order.walletSplitPercentage,
+      outstanding = order._outstanding.map(orderState2XOrderState),
+      reserved = order._reserved.map(orderState2XOrderState),
+      actual = order._actual.map(orderState2XOrderState),
+      matchable = order._matchable.map(orderState2XOrderState),
+    )
+
+  implicit def xorderState2OrderState(xOrderState: XOrderState): OrderState =
+    OrderState(
+      amountS = xOrderState.amountS,
+      amountB = xOrderState.amountB,
+      amountFee = xOrderState.amountFee
+    )
+
+  implicit def orderState2XOrderState(orderState: OrderState): XOrderState =
+    XOrderState(
+      amountS = orderState.amountS,
+      amountB = orderState.amountB,
+      amountFee = orderState.amountFee
+    )
 }

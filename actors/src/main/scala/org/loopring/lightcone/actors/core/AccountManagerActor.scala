@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.core
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import akka.pattern.ask
+import akka.pattern.{ ask, pipe }
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
@@ -37,7 +37,7 @@ object AccountManagerActor {
   val name = "account_manager"
 }
 
-class AccountManagerActor()(
+class AccountManagerActor(address: String)(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,
@@ -46,7 +46,7 @@ class AccountManagerActor()(
   extends Actor
   with ActorLogging {
 
-  implicit val orderPool = new AccountOrderPoolImpl()
+  implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
   private var accountBalanceActor: ActorSelection = _
@@ -61,36 +61,55 @@ class AccountManagerActor()(
       context.become(functional)
   }
 
-  // TODO(hongyu): handle the following messages:
-  // - XQueryBalance: (this should query AccountBalanceActor first,
-  //   then query unreserved allowance)
   def functional: Receive = LoggingReceive {
+
+    case XGetBalanceAndAllowancesReq(addr, tokens) ⇒
+      assert(addr == address)
+
+      (for {
+        managers ← Future.sequence(tokens.map(getTokenManager))
+        _ = assert(tokens.size == managers.size)
+        balanceAndAllowanceMap = tokens.zip(managers).toMap.map {
+          case (token, manager) ⇒ token -> XBalanceAndAllowance(
+            manager.getBalance(),
+            manager.getAllowance(),
+            manager.getAvailableBalance(),
+            manager.getAvailableAllowance()
+          )
+        }
+      } yield {
+        XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
+      }).pipeTo(sender)
+
     case XSubmitOrderReq(Some(xorder)) ⇒
-      for {
-        _ ← getTokenManager(xorder.tokenS)
-        _ ← getTokenManager(xorder.tokenFee)
-        order: Order = xorder
+      val order: Order = xorder
+      (for {
+        _ ← getTokenManager(order.tokenS)
+        _ ← getTokenManager(order.tokenFee) if order.amountFee > 0 && order.tokenS != order.tokenFee
         _ = log.debug(s"submitting order to AccountManager: $order")
         successful = manager.submitOrder(order)
+        _ = log.info(s"successful: $successful")
+        _ = log.info("orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
         updatedOrders = orderPool.takeUpdatedOrdersAsMap()
-        xorder_ : XOrder = updatedOrders(order.id)
+        _ = assert(updatedOrders.contains(order.id))
+        order_ = updatedOrders(order.id)
+        xorder_ : XOrder = xorder
       } yield {
         if (successful) {
-          log.debug(s"submitting order to market manager actor: $xorder_")
-          // TODO(hongyu): Make sure marketManagerActor send response to sender
-          marketManagerActor forward XSubmitOrderReq(Some(xorder_))
+          log.debug(s"submitting order to market manager actor: $order_")
+          marketManagerActor ! XSubmitOrderReq(Some(xorder_))
+          XSubmitOrderRes(order = Some(xorder_))
         } else {
-          val error = convertOrderStatusToErrorCode(xorder_.status)
-          sender ! XSubmitOrderRes(error = error)
+          val error = convertOrderStatusToErrorCode(order.status)
+          XSubmitOrderRes(error = error)
         }
-      }
+      }).pipeTo(sender)
 
     case req: XCancelOrderReq ⇒
       if (manager.cancelOrder(req.id)) {
-        // TODO(hongyu): Make sure marketManagerActor send response to sender
         marketManagerActor forward req
       } else {
-        sender ! XCancelOrderRes(error = ORDER_NOT_EXIST)
+        sender ! XCancelOrderRes(error = ERR_ORDER_NOT_EXIST)
       }
 
     case XAddressBalanceUpdated(_, token, newBalance) ⇒
@@ -98,29 +117,30 @@ class AccountManagerActor()(
 
     case XAddressAllowanceUpdated(_, token, newBalance) ⇒
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
+
+    case req: XQueryBalance ⇒
+    case _                  ⇒
   }
 
   private def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode = status match {
-    case INVALID_DATA ⇒ INVALID_ORDER_DATA
-    case UNSUPPORTED_MARKET ⇒ INVALID_MARKET
-    case CANCELLED_TOO_MANY_ORDERS ⇒ TOO_MANY_ORDERS
-    case CANCELLED_DUPLICIATE ⇒ ORDER_ALREADY_EXIST
-    case _ ⇒ UNKNOWN_ERROR
+    case INVALID_DATA ⇒ ERR_INVALID_ORDER_DATA
+    case UNSUPPORTED_MARKET ⇒ ERR_INVALID_MARKET
+    case CANCELLED_TOO_MANY_ORDERS ⇒ ERR_TOO_MANY_ORDERS
+    case CANCELLED_DUPLICIATE ⇒ ERR_ORDER_ALREADY_EXIST
+    case _ ⇒ ERR_UNKNOWN
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
     if (manager.hasTokenManager(token))
       Future.successful(manager.getTokenManager(token))
     else for {
-      res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq)
+      res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
         .mapTo[XGetBalanceAndAllowancesRes]
       tm = new AccountTokenManagerImpl(token, 1000)
       ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
       _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
-      _ = manager.addTokenManager(tm)
-    } yield {
-      manager.getTokenManager(token)
-    }
+      tokenManager = manager.addTokenManager(tm)
+    } yield tokenManager
   }
 
   private def updateBalanceOrAllowance(
