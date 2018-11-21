@@ -71,6 +71,15 @@ enum XErrorCode {
     ERR_UNKNOWN = 1000;
 }
 
+message XGetOrderFilledAmountReq {
+    string order_id = 1;
+}
+
+message XGetOrderFilledAmountRes {
+    string order_id = 1;
+    bytes filled_amount_s = 2;
+}
+
 message XBalanceAndAllowance {
     bytes balance = 2;
     bytes allowance = 3;

@@ -86,7 +86,8 @@ abstract class CoreActorsIntegrationCommonSpec
   val pendingRingPool = new PendingRingPoolImpl()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
-  val accountBalanceProbe = new TestProbe(system, "accountBalance") {
+  // Simulating an AccountBalanceActor
+  val accountBalanceProbe = new TestProbe(system, "account_balance") {
     def expectQuery(address: String, token: String) = expectMsgPF() {
       case XGetBalanceAndAllowancesReq(addr, tokens) if addr == address && tokens == Seq(token) ⇒
     }
@@ -99,25 +100,27 @@ abstract class CoreActorsIntegrationCommonSpec
   }
   val accountBalanceActor = accountBalanceProbe.ref
 
-  val orderHistoryProbe = new TestProbe(system, "orderHistory") {
+  // Simulating an OrderHistoryProbe
+  val orderHistoryProbe = new TestProbe(system, "order_history") {
     def expectQuery(orderId: String) = expectMsgPF() {
-      case _ ⇒ // TODO(hongyu)
+      case XGetOrderFilledAmountReq(id) if id == orderId ⇒
     }
 
-    def replyWith(order: String, filledAmount: BigInt) = reply(
-      "TODO" // TODO(hognyu)
+    def replyWith(orderId: String, filledAmountS: BigInt) = reply(
+      XGetOrderFilledAmountRes(orderId, filledAmountS)
     )
   }
   val orderHistoryActor = orderHistoryProbe.ref
 
-  val settlementProbe = TestProbe("settlement")
+  // Simulating an SettlementActor
+  val settlementProbe = new TestProbe(system, "settlement")
   val settlementActor = settlementProbe.ref
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
 
-  val ADDRESS_1 = "address_1"
-  val ADDRESS_2 = "address_2"
+  val ADDRESS_1 = "address_111111111111111111111"
+  val ADDRESS_2 = "address_222222222222222222222"
 
   val accountManagerActor1: ActorRef = TestActorRef(
     new AccountManagerActor(ADDRESS_1)
