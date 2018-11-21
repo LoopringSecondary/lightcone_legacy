@@ -52,7 +52,7 @@ class MarketManagerActor(
   extends Actor
   with ActorLogging {
 
-  private val gasLimitBySingleRing = BigInt(400000)
+  private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
 
   private implicit val marketId_ = marketId
 
@@ -96,7 +96,11 @@ class MarketManagerActor(
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
           for {
             // get ring settlement cost
-            (gasPrice, cost) ← getCostOfSingleRing()
+            res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
+            gasPrice: BigInt = res.gasPrice
+            costinEth = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * gasPrice
+            //todo:eth的标识符
+            costInFiat = tokenValueEstimator.getEstimatedValue("ETH", costinEth)
 
             //TODO:xorder是由accountmanager传递过来的，在accountmanager里计算了一遍了，此处需要再次计算？
             // get order fill history
@@ -108,9 +112,9 @@ class MarketManagerActor(
             _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
 
             // submit order to reserve balance and allowance
-            matchResult = manager.submitOrder(_order, cost)
+            matchResult = manager.submitOrder(_order, costInFiat)
             //settlement matchResult and update orderbook
-            _ ← settlementRings(matchResult, gasPrice)
+            _ ← settleRingsAndUpdateOrderbook(matchResult, gasPrice)
           } yield Unit
 
         case s ⇒
@@ -120,22 +124,29 @@ class MarketManagerActor(
 
     case XCancelOrderReq(orderId, hardCancel) ⇒
       manager.cancelOrder(orderId)
-      sender ! XCancelOrderRes(id = orderId, error = XErrorCode.ERR_OK)
+      sender ! XCancelOrderRes(id = orderId)
 
-    case updatedGasPrce: XUpdatedGasPrice ⇒
-      for {
-        (gasPrice, cost) ← getCostOfSingleRing()
-        resultOpt = manager.triggerMatch(true, cost)
-        _ ← settlementRings(resultOpt.get, gasPrice) if resultOpt.nonEmpty
-      } yield Unit
+    case XGasPriceUpdated(_gasPrice) ⇒
+      val gasPrice: BigInt = _gasPrice
+      val costinEth = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * gasPrice
+      val costInFiat = tokenValueEstimator.getEstimatedValue("ETH", costinEth)
+
+      manager.triggerMatch(true, costInFiat) foreach { matchResult ⇒
+        settleRingsAndUpdateOrderbook(matchResult, gasPrice)
+      }
   }
 
-  private def settlementRings(matchResult: MatchResult, gasPrice: BigInt): Future[Unit] =
-    if (matchResult.rings.nonEmpty) {
+  private def settleRingsAndUpdateOrderbook(
+    matchResult: MatchResult,
+    gasPrice: BigInt
+  ): Future[Unit] = {
+    if (matchResult.rings.isEmpty) {
+      Future.successful(Unit)
+    } else {
       for {
         _ ← settlementActor ? XSettleRingsReq(
           rings = matchResult.rings,
-          gasLimit = gasLimitBySingleRing * matchResult.rings.size,
+          gasLimit = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * matchResult.rings.size,
           gasPrice = gasPrice
         )
         _ = log.debug(s"rings: ${matchResult.rings}")
@@ -143,17 +154,7 @@ class MarketManagerActor(
         ou = matchResult.orderbookUpdate
         _ = orderbookManagerActor ! ou if ou.sells.nonEmpty || ou.buys.nonEmpty
       } yield Unit
-    } else {
-      Future.successful()
     }
-
-  private def getCostOfSingleRing() = for {
-    res ← (gasPriceActor ? XGetGasPriceReq())
-      .mapTo[XGetGasPriceRes]
-    gasPrice: BigInt = res.gasPrice
-    costedEth = gasLimitBySingleRing * gasPrice
-    //todo:eth的标识符
-    cost = tokenValueEstimator.getEstimatedValue("ETH", costedEth)
-  } yield (gasPrice, cost)
+  }
 
 }

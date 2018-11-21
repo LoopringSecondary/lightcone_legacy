@@ -191,7 +191,7 @@ message XUpdateBalanceAndAllowanceRes {
     XBalanceAndAllowance balance_and_allowance = 2;
 }
 
-message XUpdatedGasPrice {
+message XGasPriceUpdated {
     int64 gas_price = 1;
 }
 
