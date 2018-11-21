@@ -72,9 +72,8 @@ class AccountManagerActor(address: String)(
         _ = log.info(s"successful: $successful")
         _ = log.info("orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
         updatedOrders = orderPool.takeUpdatedOrdersAsMap()
-        orderOpt = updatedOrders.get(order.id)
-        _ = assert(orderOpt.nonEmpty)
-        order_ = orderOpt.get
+        _ = assert(updatedOrders.contains(order.id))
+        order_ = updatedOrders(order.id)
         xorder_ : XOrder = xorder
       } yield {
         if (successful) {
