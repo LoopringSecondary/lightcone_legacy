@@ -26,6 +26,7 @@ import org.loopring.lightcone.actors.base.RepeatedJobActor
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.deployment.ActorDependencyReady
 
 import scala.annotation.tailrec
 import scala.concurrent.{ ExecutionContext, Future }
@@ -42,12 +43,21 @@ class SettlementActor(
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)
-  val ringSigner = new RingSignerImpl(submitterPrivateKey)
+  val ringSigner = new RingSignerImpl(privateKey = submitterPrivateKey)
 
   private var ethereumAccessActor: ActorSelection = _
   private var gasPriceActor: ActorSelection = _
 
   override def receive: Receive = super.receive orElse LoggingReceive {
+    case ActorDependencyReady(paths) ⇒
+      log.info(s"actor dependency ready: $paths")
+      assert(paths.size == 2)
+      gasPriceActor = context.actorSelection(paths(0))
+      ethereumAccessActor = context.actorSelection(paths(1))
+      context.become(functional)
+  }
+
+  def functional: Receive = super.receive orElse LoggingReceive {
     case req: XSettlementReq ⇒
       val rings = generateRings(req.rings)
       rings.foreach {
