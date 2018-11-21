@@ -18,8 +18,8 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.util.Timeout
-import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.proto.actors._
 
 import scala.concurrent.ExecutionContext
 
@@ -37,7 +37,7 @@ class GasPriceActor()(
 
   def receive: Receive = {
     case req: XGetGasPriceReq ⇒
-      sender ! XGetGasPriceRes(gasPrice = "10000000000") //todo:需要较为准确的gasprice, 10G
+      sender ! XGetGasPriceRes(gasPrice = BigInt("10000000000")) //todo:需要较为准确的gasprice, 10G
   }
 
 }

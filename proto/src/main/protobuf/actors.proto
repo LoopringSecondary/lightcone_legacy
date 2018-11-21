@@ -27,6 +27,35 @@ message XOrderState {
     bytes amount_fee = 3;
 }
 
+message XRawOrder {
+  string owner = 1;
+  string token_s = 2;
+  string token_b = 3;
+  bytes amount_s = 4;
+  bytes amount_b = 5;
+  int64 valid_since = 6;
+  bool all_or_none = 7;
+  string fee_token = 8;
+  bytes fee_amount = 9;
+  string sig = 10;
+  string dual_auth_sig = 11;
+  string hash = 12;
+  string valid_until = 13;
+  string wallet = 14;
+  string dual_auth_address = 15;
+  string broker = 16;
+  string order_interceptor = 17;
+  int32 version = 18;
+  int32 wallet_split_percentage = 19;
+  int32 token_s_fee_percentage = 20;
+  int32 token_b_fee_percentage = 21;
+  int32 waive_fee_percentage = 22;
+  bytes token_spendable_s = 23;
+  bytes token_spendable_fee = 24;
+  bytes broker_spendable_s = 25;
+  bytes broker_spendable_fee = 26;
+}
+
 message XOrder {
     string id = 1;
     string token_s = 2;
@@ -50,7 +79,7 @@ message XExpectedFill {
     bytes amount_margin = 3;
 }
 
-message XRing {
+message XOrderRing {
     XExpectedFill maker = 1;
     XExpectedFill taker = 2;
 }
@@ -184,11 +213,15 @@ enum XExecutedStatus {
 }
 
 message XRingExecutedRes {
-    XRing ring = 1;
+    XOrderRing ring = 1;
     string tx_hash = 2;
     XExecutedStatus status = 3;
     bytes used_gas = 4;
     int64 block_number = 5;
+}
+
+message XSendRawTransaction {
+    bytes data = 1;
 }
 
 message XSendRawTransactionRes {
@@ -197,16 +230,16 @@ message XSendRawTransactionRes {
     string result = 3;
 }
 
-message XSubmitRingReq {
-  repeated XRing rings = 1;
-  string gas_limit = 2;
-  string gas_price = 3;
+message XSettlementReq {
+  repeated XOrderRing rings = 1;
+  bytes gas_limit = 2;
+  bytes gas_price = 3;
 }
 
 message XGetGasPriceReq {}
 
 message XGetGasPriceRes {
-  string gas_price = 1;
+  bytes gas_price = 1;
 }
 
 message XUpdatedTokenBurnRate {
@@ -214,5 +247,9 @@ message XUpdatedTokenBurnRate {
     double burnRate = 2;
 }
 
-message XQueryBalance {
+message XOrderHistoryReq {
+    string order_id = 1;
+    bytes filled_amount_s = 2;
 }
+
+message XOrderHistoryRes {}

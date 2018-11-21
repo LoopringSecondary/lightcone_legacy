@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core.data.{ Order, OrderState }
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.actors._
 import com.google.protobuf.ByteString
 
@@ -102,4 +102,50 @@ package object data {
       amountB = orderState.amountB,
       amountFee = orderState.amountFee
     )
+
+  implicit def orderRing2XOrderRing(orderRing:OrderRing): XOrderRing =
+    XOrderRing(
+      maker = Some(orderRing.maker),
+      taker = Some(orderRing.taker)
+    )
+
+  implicit def xOrderRing2OrderRing(xOrderRing:XOrderRing): OrderRing =
+    OrderRing(
+      maker = xOrderRing.getMaker,
+      taker = xOrderRing.getTaker
+    )
+
+  implicit def seqOrderRing2XOrderRing(orderRings:Seq[OrderRing]): Seq[XOrderRing] =
+    orderRings map {
+      orderRing ⇒ XOrderRing(
+        maker = Some(orderRing.maker),
+        taker = Some(orderRing.taker)
+      )
+    }
+
+  implicit def seqXOrderRing2OrderRing(xOrderRings:Seq[XOrderRing]): Seq[OrderRing] =
+    xOrderRings map {
+      xOrderRing ⇒
+        OrderRing(
+          maker = xOrderRing.getMaker,
+          taker = xOrderRing.getTaker
+        )
+    }
+
+
+  implicit def expectFill2XEcpectFill(expectedFill:ExpectedFill): XExpectedFill =
+    XExpectedFill(
+      order = Some(expectedFill.order),
+      pending = Some(expectedFill.pending),
+      amountMargin = expectedFill.amountMargin
+    )
+
+  implicit def xexpectFill2EcpectFill(xExpectedFill:XExpectedFill): ExpectedFill =
+    ExpectedFill(
+      order = xExpectedFill.getOrder,
+      pending = xExpectedFill.getPending,
+      amountMargin = xExpectedFill.amountMargin
+    )
+
+
 }

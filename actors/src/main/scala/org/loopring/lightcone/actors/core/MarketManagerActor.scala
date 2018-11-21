@@ -18,16 +18,17 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.event.LoggingReceive
-import akka.pattern.{ ask, pipe }
+import akka.pattern.ask
 import akka.util.Timeout
-import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.depth._
+import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.deployment._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.proto.deployment._
 
 import scala.concurrent._
 
@@ -50,6 +51,8 @@ class MarketManagerActor(
 )
   extends Actor
   with ActorLogging {
+
+  private val gasLimitBySingleRing = BigInt(400000)
 
   private implicit val marketId_ = marketId
 
@@ -93,8 +96,9 @@ class MarketManagerActor(
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
           for {
             // get ring settlement cost
-            cost ← getCostOfSingleRing()
+            (gasPrice, cost) ← getCostOfSingleRing()
 
+            //TODO:xorder是由accountmanager传递过来的，在accountmanager里计算了一遍了，此处需要再次计算？
             // get order fill history
             orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
               .mapTo[XGetOrderFilledAmountRes]
@@ -105,16 +109,8 @@ class MarketManagerActor(
 
             // submit order to reserve balance and allowance
             matchResult = manager.submitOrder(_order, cost)
-
-            // update order book (depth)
-            ou = matchResult.orderbookUpdate
-            _ = log.debug(ou.toString)
-            _ = orderbookManagerActor ! ou if ou.sells.nonEmpty || ou.buys.nonEmpty
-
-            // TODO(hongyu): convert rings to settlement and send it to settlementActor
-            rings = matchResult.rings
-            _ = log.debug(s"rings: $rings")
-
+            //settlement matchResult and update orderbook
+            _ ← settlementRings(matchResult, gasPrice)
           } yield Unit
 
         case s ⇒
@@ -128,24 +124,36 @@ class MarketManagerActor(
 
     case updatedGasPrce: XUpdatedGasPrice ⇒
       for {
-        cost ← getCostOfSingleRing()
+        (gasPrice, cost) ← getCostOfSingleRing()
         resultOpt = manager.triggerMatch(true, cost)
-      } yield {
-        resultOpt foreach { result ⇒
-          val ou = result.orderbookUpdate
-          if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-            orderbookManagerActor ! ou
-          }
-        }
-      }
+        _ ← settlementRings(resultOpt.get, gasPrice) if resultOpt.nonEmpty
+      } yield Unit
   }
+
+  private def settlementRings(matchResult: MatchResult, gasPrice: BigInt): Future[Unit] =
+    if (matchResult.rings.nonEmpty) {
+      for {
+        _ ← settlementActor ? XSettlementReq(
+          rings = matchResult.rings,
+          gasLimit = gasLimitBySingleRing * matchResult.rings.size,
+          gasPrice = gasPrice
+        )
+        _ = log.debug(s"rings: ${matchResult.rings}")
+        // update order book (depth)
+        ou = matchResult.orderbookUpdate
+        _ = orderbookManagerActor ! ou if ou.sells.nonEmpty || ou.buys.nonEmpty
+      } yield Unit
+    } else {
+      Future.successful()
+    }
 
   private def getCostOfSingleRing() = for {
     res ← (gasPriceActor ? XGetGasPriceReq())
       .mapTo[XGetGasPriceRes]
-    costedEth = BigInt(400000) * BigInt(res.gasPrice)
+    gasPrice: BigInt = res.gasPrice
+    costedEth = gasLimitBySingleRing * gasPrice
     //todo:eth的标识符
     cost = tokenValueEstimator.getEstimatedValue("ETH", costedEth)
-  } yield cost
+  } yield (gasPrice, cost)
 
 }

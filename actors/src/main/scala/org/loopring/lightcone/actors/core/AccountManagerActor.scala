@@ -18,20 +18,19 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.event.LoggingReceive
-import akka.util.Timeout
 import akka.pattern.{ ask, pipe }
-import org.loopring.lightcone.core.data.Order
+import akka.util.Timeout
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.deployment._
-import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._
-
-import XOrderStatus._
-import XErrorCode._
 
 object AccountManagerActor {
   val name = "account_manager"
@@ -118,8 +117,7 @@ class AccountManagerActor(address: String)(
     case XAddressAllowanceUpdated(_, token, newBalance) ⇒
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
 
-    case req: XQueryBalance ⇒
-    case _                  ⇒
+    case _ ⇒
   }
 
   private def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode = status match {
@@ -131,6 +129,7 @@ class AccountManagerActor(address: String)(
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
+    log.info(s"exec getTokenManager $token")
     if (manager.hasTokenManager(token))
       Future.successful(manager.getTokenManager(token))
     else for {

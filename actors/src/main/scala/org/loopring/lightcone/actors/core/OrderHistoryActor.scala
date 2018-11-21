@@ -19,12 +19,7 @@ package org.loopring.lightcone.actors.core
 import akka.actor.{ Actor, ActorLogging }
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment.ActorDependencyReady
-import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._
 
@@ -33,6 +28,7 @@ object OrderHistoryActor {
 }
 
 // TODO(hongyu): implement this class.
+// 该类是不是需要将history保存在数据库，从数据库获取？稍后再实现
 class OrderHistoryActor()(
     implicit
     ec: ExecutionContext,
@@ -42,8 +38,8 @@ class OrderHistoryActor()(
   with ActorLogging {
 
   def receive: Receive = LoggingReceive {
-    case XGetOrderFilledAmountReq(orderId) ⇒
-
+    case XGetOrderFilledAmountReq(orderId) ⇒ //从数据库获取
+    case req: XOrderHistoryReq             ⇒ //保存在数据库
   }
 
 }

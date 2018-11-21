@@ -113,8 +113,10 @@ abstract class CoreActorsIntegrationCommonSpec
   val orderHistoryActor = orderHistoryProbe.ref
 
   // Simulating an SettlementActor
-  val settlementProbe = new TestProbe(system, "settlement")
-  val settlementActor = settlementProbe.ref
+  val ethereumProbe = new TestProbe(system, "ethereum")
+  val ethereumActor = ethereumProbe.ref
+
+  val settlementActor = TestActorRef(new SettlementActor("0xa1"))
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
@@ -149,5 +151,10 @@ abstract class CoreActorsIntegrationCommonSpec
     orderHistoryActor.path.toString,
     orderbookManagerActor.path.toString,
     settlementActor.path.toString
+  ))
+
+  settlementActor ! ActorDependencyReady(Seq(
+    gasPriceActor.path.toString,
+    ethereumActor.path.toString
   ))
 }
