@@ -99,7 +99,6 @@ class MarketManagerActor(
             res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
             gasPrice: BigInt = res.gasPrice
             costinEth = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * gasPrice
-            //todo:eth的标识符
             costInFiat = tokenValueEstimator.getEstimatedValue("ETH", costinEth)
 
             //TODO:xorder是由accountmanager传递过来的，在accountmanager里计算了一遍了，此处需要再次计算？
@@ -134,6 +133,10 @@ class MarketManagerActor(
       manager.triggerMatch(true, costInFiat) foreach { matchResult ⇒
         settleRingsAndUpdateOrderbook(matchResult, gasPrice)
       }
+
+    case XTriggerRematchReq(sellOrderAsTaker, offset) ⇒
+    // TODO(hognyu)
+
   }
 
   private def settleRingsAndUpdateOrderbook(
