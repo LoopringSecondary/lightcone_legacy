@@ -31,6 +31,7 @@ import org.scalatest._
 import org.loopring.lightcone.actors.data._
 import scala.concurrent.duration._
 import org.slf4s.Logging
+import scala.math.BigInt
 
 abstract class CoreActorsIntegrationCommonSpec
   extends TestKit(ActorSystem("test", ConfigFactory.parseString(
@@ -55,19 +56,19 @@ abstract class CoreActorsIntegrationCommonSpec
     TestKit.shutdownActorSystem(system)
   }
 
-  val LRC = "LRC"
+  val GTO = "GTO"
   val WETH = "WETH"
-  val ETH = "ETH"
+  val LRC = "LRC"
 
-  val LRC_TOKEN = XTokenMetadata(LRC, 0, 0.1, 1.0)
+  val GTO_TOKEN = XTokenMetadata(LRC, 10, 0.1, 1.0)
   val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
-  val ETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
+  val LRC_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
 
   implicit val marketId = XMarketId(LRC, WETH)
   implicit val tokenMetadataManager = new TokenMetadataManager()
-  tokenMetadataManager.addToken(LRC_TOKEN)
+  tokenMetadataManager.addToken(GTO_TOKEN)
   tokenMetadataManager.addToken(WETH_TOKEN)
-  tokenMetadataManager.addToken(ETH_TOKEN)
+  tokenMetadataManager.addToken(LRC_TOKEN)
   implicit val tokenValueEstimator = new TokenValueEstimator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
   implicit val ringIncomeEstimator = new RingIncomeEstimatorImpl()
@@ -158,4 +159,8 @@ abstract class CoreActorsIntegrationCommonSpec
     gasPriceActor.path.toString,
     ethereumActor.path.toString
   ))
+
+  implicit class RichString(s: String) {
+    def zeros(size: Int): BigInt = BigInt(s + "0" * size)
+  }
 }

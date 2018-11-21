@@ -30,84 +30,89 @@ import XErrorCode._
 class CoreActorsIntegrationSpec_Simple
   extends CoreActorsIntegrationCommonSpec {
 
-  "submitOrder to accountManager" must {
-    "succeed if the trader has sufficient balance and allowance" in {
-      val order = XOrder(
-        id = "order",
+  // "submitOrder to accountManager" must {
+  //   "succeed if the trader has sufficient balance and allowance" in {
+  //     val order = XOrder(
+  //       id = "order",
+  //       tokenS = WETH,
+  //       tokenB = LRC,
+  //       tokenFee = LRC,
+  //       amountS = BigInt(100),
+  //       amountB = BigInt(10),
+  //       amountFee = BigInt(10),
+  //       walletSplitPercentage = 0.2,
+  //       status = XOrderStatus.NEW
+  //     )
+
+  //     accountManagerActor1 ! XSubmitOrderReq(Some(order))
+
+  //     accountBalanceProbe.expectQuery(ADDRESS_1, WETH)
+  //     accountBalanceProbe.replyWith(WETH, BigInt("1000000"), BigInt("2000000"))
+
+  //     accountBalanceProbe.expectQuery(ADDRESS_1, LRC)
+  //     accountBalanceProbe.replyWith(LRC, BigInt("500000"), BigInt("300000"))
+
+  //     orderHistoryProbe.expectQuery(order.id)
+  //     orderHistoryProbe.replyWith(order.id, BigInt("0"))
+
+  //     expectMsgPF() {
+  //       case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+  //         val order: Order = xorder
+  //         log.debug(s"order submitted: $order")
+  //     }
+  //   }
+  // }
+
+  "submitOrder to marketManagerActor" must {
+    "generate a ring, send it to settlementActor and orderbookManager receive two messages" in {
+      val maker = XOrder(
+        id = "maker",
         tokenS = WETH,
-        tokenB = LRC,
+        tokenB = GTO,
         tokenFee = LRC,
-        amountS = BigInt(100),
-        amountB = BigInt(10),
-        amountFee = BigInt(10),
+        amountS = "10".zeros(18),
+        amountB = "100".zeros(10),
+        amountFee = "10".zeros(18),
         walletSplitPercentage = 0.2,
         status = XOrderStatus.NEW
       )
 
-      accountManagerActor1 ! XSubmitOrderReq(Some(order))
+      // val taker = XOrder(
+      //   id = "taker",
+      //   tokenS = GTO,
+      //   tokenB = WETH,
+      //   tokenFee = LRC,
+      //   amountS = BigInt("100".zeros(10)),
+      //   amountB = BigInt("10".zeros(18)),
+      //   amountFee = BigInt("10".zeros(18)),
+      //   walletSplitPercentage = 0.2,
+      //   status = XOrderStatus.NEW)
 
+      accountManagerActor1 ! XSubmitOrderReq(Some(maker))
       accountBalanceProbe.expectQuery(ADDRESS_1, WETH)
-      accountBalanceProbe.replyWith(WETH, BigInt("1000000"), BigInt("2000000"))
+      accountBalanceProbe.replyWith(WETH, "10".zeros(18), "10".zeros(18))
 
       accountBalanceProbe.expectQuery(ADDRESS_1, LRC)
-      accountBalanceProbe.replyWith(LRC, BigInt("500000"), BigInt("300000"))
+      accountBalanceProbe.replyWith(LRC, "10".zeros(18), "10".zeros(18))
 
-      orderHistoryProbe.expectQuery(order.id)
-      orderHistoryProbe.replyWith(order.id, BigInt("0"))
+      orderHistoryProbe.expectQuery(maker.id)
+      orderHistoryProbe.replyWith(maker.id, "0".zeros(0))
 
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
           val order: Order = xorder
           log.debug(s"order submitted: $order")
       }
-    }
-  }
 
-  "submitOrder to marketManagerActor" must {
-    "generate a ring, send it to settlementActor and orderbookManager receive two messages" in {
-      var zeros = "0" * 18
+      // Thread.sleep(3000)
+      orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
-      val maker = XOrder(
-        id = "maker",
-        tokenS = WETH,
-        tokenB = LRC,
-        tokenFee = LRC,
-        amountS = BigInt("10" + zeros),
-        amountB = BigInt("100" + zeros),
-        amountFee = BigInt("10" + zeros),
-        walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW
-      )
-
-      val taker = XOrder(
-        id = "taker",
-        tokenS = LRC,
-        tokenB = WETH,
-        tokenFee = LRC,
-        amountS = BigInt("100" + zeros),
-        amountB = BigInt("10" + zeros),
-        amountFee = BigInt("10" + zeros),
-        walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW
-      )
-
-      for {
-        _ ← accountManagerActor1 ? XSubmitOrderReq(Some(maker))
-
-        orderbook1 ← orderbookManagerActor ? XGetOrderbookReq()
-
-        _ = println("======: orderbook1 " + orderbook1)
-
-        _ ← accountManagerActor2 ? XSubmitOrderReq(Some(taker))
-
-        orderbook ← orderbookManagerActor ? XGetOrderbookReq()
-
-        _ = println("======: orderbook2 " + orderbook)
-      } yield {
-        orderbook
+      expectMsgPF() {
+        case x ⇒
+          println(s"============= $x")
       }
 
-      Thread.sleep(10000)
+      Thread.sleep(5000)
 
     }
   }
