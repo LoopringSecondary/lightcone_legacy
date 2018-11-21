@@ -23,7 +23,7 @@ import org.slf4s.Logging
 
 final private[core] class AccountManagerImpl()(
     implicit
-    orderPool: AccountOrderPoolWithUpdatedOrdersTracing
+    orderPool: AccountOrderPool
 ) extends AccountManager with Logging {
   import XOrderStatus._
 
@@ -46,7 +46,14 @@ final private[core] class AccountManagerImpl()(
   }
 
   //TODO(litao): What if an order is re-submitted?
-  def submitOrder(order: Order): Boolean = this.synchronized {
+  def submitOrder(_order: Order): Boolean = this.synchronized {
+    val order = _order.copy(
+      _reserved = None,
+      _actual = None,
+      _matchable = None
+    )
+
+    println("-----: " + order)
     if (order.amountS <= 0) {
       orderPool += order.as(INVALID_DATA)
       return false

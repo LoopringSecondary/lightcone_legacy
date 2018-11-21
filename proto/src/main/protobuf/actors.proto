@@ -57,8 +57,8 @@ message XRing {
 
 ///////////////////
 enum XErrorCode {
-    ERR_UNKNOWN = 0;
-    ERR_OK = 1;
+    ERR_OK = 0;
+    ERR_ORDER_ALREADY_EXIST = 1;
     ERR_ORDER_NOT_EXIST = 2;
     ERR_ORDER_INVALID_AMOUNT_S = 3;
     ERR_LOW_BALANCE = 4;
@@ -68,7 +68,7 @@ enum XErrorCode {
     ERR_TOO_MANY_FAILED_MATCHES = 8;
     ERR_INVALID_ORDER_DATA = 9;
     ERR_INVALID_MARKET = 10;
-    ERR_ORDER_ALREADY_EXIST = 11;
+    ERR_UNKNOWN = 1000;
 }
 
 message XBalanceAndAllowance {

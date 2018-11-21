@@ -25,43 +25,15 @@ import akka.testkit.TestProbe
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
 
+import XErrorCode._
+
 class CoreActorsIntegrationSpec_Simple
   extends CoreActorsIntegrationCommonSpec {
 
-  // val accountBalanceProbe = new TestProbe(system) {
-  //   def expectUpdate(x: Any) = {
-  //     expectMsgPF() {
-  //       case req: XGetBalanceAndAllowancesReq ⇒
-  //         val ba = req.tokens map {
-  //           token ⇒
-  //             token → XBalanceAndAllowance(
-  //               BigInt("10000000000000000"),
-  //               BigInt("10000000000000000")
-  //             )
-  //         }
-  //         sender ! XGetBalanceAndAllowancesRes(req.address, ba.toMap)
-  //     }
-  //   }
-  // }
-
-  // val accountBalanceActor = accountBalanceProbe.ref
-
-  // def setBalanceActorReply(balanceMap: Map[String, XBalanceAndAllowance]) =
-  //   accountBalanceProbe.expectUpdate(balanceMap)
-
   "submitOrder to accountManagerActor1" must {
-
     "send Order to marketManagerActor" in {
-
-      // setBalanceActorReply()
-      // setBalanceActorReply()
-      // setBalanceActorReply()
-      // setBalanceActorReply()
-      // setBalanceActorReply()
-      // setBalanceActorReply()
-
-      val maker1 = XOrder(
-        id = "maker1",
+      val order = XOrder(
+        id = "order",
         tokenS = WETH,
         tokenB = LRC,
         tokenFee = LRC,
@@ -69,68 +41,21 @@ class CoreActorsIntegrationSpec_Simple
         amountB = BigInt(10),
         amountFee = BigInt(10),
         walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW
-      )
-      val taker1 = XOrder(
-        id = "taker1",
-        tokenS = LRC,
-        tokenB = WETH,
-        tokenFee = LRC,
-        amountS = BigInt(10),
-        amountB = BigInt(100),
-        amountFee = BigInt(10),
-        walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW
-      )
+        status = XOrderStatus.NEW)
 
-      accountManagerActor1 ! XSubmitOrderReq(Some(maker1))
-      accountManagerActor1 ! XSubmitOrderReq(Some(taker1))
-      Thread.sleep(10000)
-    }
+      accountManagerActor1 ! XSubmitOrderReq(Some(order))
 
-  }
-  "submitOrder to marketManagerActor" must {
+      accountBalanceProbe.expectQuery(ADDRESS_1, WETH)
+      accountBalanceProbe.replyWith(WETH, BigInt("1000000"), BigInt("2000000"))
 
-    "create ring" in {
-      var decimal = "000000000000000000000000000000".substring(0, 18)
-      val maker1 = XOrder(
-        id = "maker1",
-        tokenS = WETH,
-        tokenB = LRC,
-        tokenFee = LRC,
-        amountS = BigInt("10" + decimal),
-        amountB = BigInt("100" + decimal),
-        amountFee = BigInt("10" + decimal),
-        walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW,
-        actual = Some(XOrderState(BigInt("10" + decimal), BigInt("100" + decimal), BigInt("10" + decimal))),
-        matchable = Some(XOrderState(BigInt("10" + decimal), BigInt("100" + decimal), BigInt("10" + decimal)))
-      )
+      accountBalanceProbe.expectQuery(ADDRESS_1, LRC)
+      accountBalanceProbe.replyWith(LRC, BigInt("500000"), BigInt("300000"))
 
-      val taker1 = XOrder(
-        id = "taker1",
-        tokenS = LRC,
-        tokenB = WETH,
-        tokenFee = LRC,
-        amountS = BigInt("100" + decimal),
-        amountB = BigInt("10" + decimal),
-        amountFee = BigInt("10" + decimal),
-        walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW,
-        actual = Some(XOrderState(BigInt("100" + decimal), BigInt("10" + decimal), BigInt("10" + decimal))),
-        matchable = Some(XOrderState(BigInt("100" + decimal), BigInt("10" + decimal), BigInt("10" + decimal)))
-      )
+      // gasPriceProb ? XGetGasPriceReq
 
-      val maker1Future = marketManagerActor ? XSubmitOrderReq(Some(maker1))
-      val taker1Future = marketManagerActor ? XSubmitOrderReq(Some(taker1))
-      val maker1Res = Await.result(maker1Future.mapTo[XSubmitOrderRes], timeout.duration)
-      val taker1Res = Await.result(taker1Future.mapTo[XSubmitOrderRes], timeout.duration)
-      info(maker1Res.error.toString())
-      info(taker1Res.error.toString())
-      val orderbookPpobe = TestProbe()
-      orderbookPpobe watch orderbookManagerActor
-      orderbookPpobe.receiveOne(1 seconds)
-      Thread.sleep(10000)
+      expectMsgPF() {
+        case XSubmitOrderRes(ERR_OK, _) ⇒
+      }
     }
 
   }

@@ -69,15 +69,17 @@ class MarketManagerActor(
   )
 
   private var gasPriceActor: ActorSelection = _
+  private var orderHistoryActor: ActorSelection = _
   private var orderbookManagerActor: ActorSelection = _
   private var settlementActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
     case ActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 3)
+      assert(paths.size == 4)
       gasPriceActor = context.actorSelection(paths(0))
-      orderbookManagerActor = context.actorSelection(paths(1))
+      orderHistoryActor = context.actorSelection(paths(1))
+      orderbookManagerActor = context.actorSelection(paths(2))
       settlementActor = context.actorSelection(paths(3))
       context.become(functional)
   }
@@ -89,6 +91,8 @@ class MarketManagerActor(
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
           for {
             cost ← getCostOfSingleRing()
+            // TODO(hongyu): Implement this
+            //(filledAmountS <- orderHistoryActor ! ..._)
             res = manager.submitOrder(order, cost)
             rings = res.rings
             // update order book (depth)

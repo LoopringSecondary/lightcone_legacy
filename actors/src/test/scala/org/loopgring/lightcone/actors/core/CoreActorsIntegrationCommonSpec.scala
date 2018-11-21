@@ -32,10 +32,21 @@ import org.loopring.lightcone.actors.data._
 import scala.concurrent.duration._
 
 abstract class CoreActorsIntegrationCommonSpec
-  extends TestKit(ActorSystem("test"))
+  extends TestKit(ActorSystem("test", ConfigFactory.parseString(
+    """akka {
+         loglevel = "DEBUG"
+         actor {
+           debug {
+             receive = on
+             lifecycle = off
+           }
+         }
+       }"""
+  ).withFallback(ConfigFactory.load())))
   with ImplicitSender
   with Matchers
   with WordSpecLike
+  with BeforeAndAfterEach
   with BeforeAndAfterAll {
 
   override def afterAll: Unit = {
@@ -73,40 +84,45 @@ abstract class CoreActorsIntegrationCommonSpec
   val pendingRingPool = new PendingRingPoolImpl()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
-  val accountBalanceProbe = TestProbe("accountBalance")
+  val accountBalanceProbe = new TestProbe(system, "accountBalance") {
+    def expectQuery(address: String, token: String) = expectMsgPF() {
+      case XGetBalanceAndAllowancesReq(addr, tokens) if addr == address && tokens == Seq(token) ⇒
+    }
+
+    def replyWith(token: String, balance: BigInt, allowance: BigInt) = reply(
+      XGetBalanceAndAllowancesRes(
+        ADDRESS_1, Map(token -> XBalanceAndAllowance(balance, allowance))
+      )
+    )
+  }
   val accountBalanceActor = accountBalanceProbe.ref
+
+  val orderHistoryProbe = new TestProbe(system, "orderHistory") {
+    def expectQuery(orderId: String) = expectMsgPF() {
+      case _ ⇒ // TODO(hongyu)
+    }
+
+    def replyWith(order: String, filledAmount: BigInt) = reply(
+      "TODO" // TODO(hognyu)
+    )
+  }
+  val orderHistoryActor = orderHistoryProbe.ref
 
   val settlementProbe = TestProbe("settlement")
   val settlementActor = settlementProbe.ref
-  //  {
-  //   def expectUpdate(balanceMap: Map[String, XBalanceAndAllowance]) = {
-  //     expectMsgPF() {
-  //       case req: XGetBalanceAndAllowancesReq ⇒
-  //         // val ba = req.tokens map {
-  //         //   token ⇒
-  //         //     token → XBalanceAndAllowance(
-  //         //       BigInt("10000000000000000"),
-  //         //       BigInt("10000000000000000")
-  //         //     )
-  //         // }
-  //         sender ! XGetBalanceAndAllowancesRes(req.address, balanceMap)
-  //     }
-
-  //   }
-  // }
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
 
-  val address1 = "address_1"
-  val address2 = "address_2"
+  val ADDRESS_1 = "address_1"
+  val ADDRESS_2 = "address_2"
 
   val accountManagerActor1: ActorRef = TestActorRef(
-    new AccountManagerActor(address1)
+    new AccountManagerActor(ADDRESS_1)
   )
 
   val accountManagerActor2: ActorRef = TestActorRef(
-    new AccountManagerActor(address2)
+    new AccountManagerActor(ADDRESS_2)
   )
 
   val marketManagerActor: ActorRef = TestActorRef(
@@ -125,6 +141,7 @@ abstract class CoreActorsIntegrationCommonSpec
 
   marketManagerActor ! ActorDependencyReady(Seq(
     gasPriceActor.path.toString,
+    orderHistoryActor.path.toString,
     orderbookManagerActor.path.toString,
     settlementActor.path.toString
   ))

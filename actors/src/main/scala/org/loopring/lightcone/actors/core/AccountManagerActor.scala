@@ -46,7 +46,7 @@ class AccountManagerActor(address: String)(
   extends Actor
   with ActorLogging {
 
-  implicit val orderPool = new AccountOrderPoolImpl()
+  implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
   private var accountBalanceActor: ActorSelection = _
@@ -67,6 +67,7 @@ class AccountManagerActor(address: String)(
   //   then query unreserved allowance)
   def functional: Receive = LoggingReceive {
 
+    // TODO(hongyu): 需要问一下另一个actor，这个订单已经成交了多少。
     case XSubmitOrderReq(Some(xorder)) ⇒
       (for {
         _ ← getTokenManager(xorder.tokenS)
@@ -74,7 +75,8 @@ class AccountManagerActor(address: String)(
         order: Order = xorder
         _ = log.debug(s"submitting order to AccountManager: $order")
         successful = manager.submitOrder(order)
-        _ = log.debug("orderPool updatdOrders: " + orderPool.getUpdatedOrders)
+        _ = log.info(s"successful: $successful")
+        _ = log.info("orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
         updatedOrders = orderPool.takeUpdatedOrdersAsMap()
         //todo: 该处获取的updatedOrders为空，但是我没看明白UpdatedOrdersTracing是如何使用的
         orderOpt = updatedOrders.get(order.id)
@@ -121,15 +123,13 @@ class AccountManagerActor(address: String)(
     if (manager.hasTokenManager(token))
       Future.successful(manager.getTokenManager(token))
     else for {
-      res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq("addr", Seq(token)))
+      res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
         .mapTo[XGetBalanceAndAllowancesRes]
       tm = new AccountTokenManagerImpl(token, 1000)
       ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
       _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
-      _ = manager.addTokenManager(tm)
-    } yield {
-      manager.getTokenManager(token)
-    }
+      tokenManager = manager.addTokenManager(tm)
+    } yield tokenManager
   }
 
   private def updateBalanceOrAllowance(

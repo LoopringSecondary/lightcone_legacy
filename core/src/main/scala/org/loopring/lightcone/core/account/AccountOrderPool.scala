@@ -39,6 +39,9 @@ trait UpdatedOrdersTracing {
   self: AccountOrderPool ⇒
   private var updatedOrders = Map.empty[String, Order]
 
+  addCallback((order: Order) ⇒
+    updatedOrders += order.id -> order)
+
   def getUpdatedOrdersAsMap() = updatedOrders
   def getUpdatedOrders() = updatedOrders.values
 
@@ -58,7 +61,3 @@ trait UpdatedOrdersTracing {
     orders
   }
 }
-
-trait AccountOrderPoolWithUpdatedOrdersTracing
-  extends AccountOrderPool
-  with UpdatedOrdersTracing

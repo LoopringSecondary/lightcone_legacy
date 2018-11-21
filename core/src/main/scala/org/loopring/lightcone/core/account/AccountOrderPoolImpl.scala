@@ -21,7 +21,7 @@ import org.loopring.lightcone.proto.core._
 import org.slf4s.Logging
 
 class AccountOrderPoolImpl()
-  extends AccountOrderPoolWithUpdatedOrdersTracing
+  extends AccountOrderPool
   with Logging {
 
   private var callbacks = Set.empty[Callback]
