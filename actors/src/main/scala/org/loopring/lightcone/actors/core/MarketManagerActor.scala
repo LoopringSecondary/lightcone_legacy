@@ -93,8 +93,6 @@ class MarketManagerActor(
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
           for {
             cost ← getCostOfSingleRing()
-            // TODO(hongyu): Implement this
-            //(filledAmountS <- orderHistoryActor ! ..._)
             orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
               .mapTo[XGetOrderFilledAmountRes]
             _ = log.debug(s"order history: orderHistoryRes")
