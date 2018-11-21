@@ -114,7 +114,7 @@ class MarketManagerActor(
           } yield Unit
 
         case s ⇒
-          log.error(s"unexpected order status in XSubmitOrderReq: $s")
+          log.error(s"unexpected order status in XSubmitOrderReq: $xorder")
           sender ! XSubmitOrderRes(error = XErrorCode.ERR_ORDER_ALREADY_EXIST)
       }
 
@@ -133,7 +133,7 @@ class MarketManagerActor(
   private def settlementRings(matchResult: MatchResult, gasPrice: BigInt): Future[Unit] =
     if (matchResult.rings.nonEmpty) {
       for {
-        _ ← settlementActor ? XSettlementReq(
+        _ ← settlementActor ? XSettleRingsReq(
           rings = matchResult.rings,
           gasLimit = gasLimitBySingleRing * matchResult.rings.size,
           gasPrice = gasPrice

@@ -58,7 +58,7 @@ class SettlementActor(
   }
 
   def functional: Receive = super.receive orElse LoggingReceive {
-    case req: XSettlementReq ⇒
+    case req: XSettleRingsReq ⇒
       val rings = generateRings(req.rings)
       rings.foreach {
         ring ⇒

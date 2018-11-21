@@ -30,19 +30,6 @@ import XErrorCode._
 class CoreActorsIntegrationSpec_Simple
   extends CoreActorsIntegrationCommonSpec {
 
-  def setBalanceActorReply(order: XOrder): Future[Unit] = for {
-    _ ← Future.successful()
-  } yield {
-    accountBalanceProbe.expectQuery(ADDRESS_1, WETH)
-    accountBalanceProbe.replyWith(WETH, BigInt("1000000"), BigInt("2000000"))
-
-    accountBalanceProbe.expectQuery(ADDRESS_1, LRC)
-    accountBalanceProbe.replyWith(LRC, BigInt("500000"), BigInt("300000"))
-
-    orderHistoryProbe.expectQuery(order.id)
-    orderHistoryProbe.replyWith(order.id, BigInt("0"))
-  }
-
   "submitOrder to accountManager" must {
     "succeed if the trader has sufficient balance and allowance" in {
       val order = XOrder(
@@ -71,76 +58,50 @@ class CoreActorsIntegrationSpec_Simple
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
           val order: Order = xorder
-          log.info(s"order submitted: $order")
+          log.debug(s"order submitted: $order")
       }
-    }
-  }
-
-  "submit two orders in the same time" must {
-    "success if two order has been processed in the same time" in {
-      val order = XOrder(
-        id = "order",
-        tokenS = WETH,
-        tokenB = LRC,
-        tokenFee = LRC,
-        amountS = BigInt(100),
-        amountB = BigInt(10),
-        amountFee = BigInt(10),
-        walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW
-      )
-
-      setBalanceActorReply(order)
-      setBalanceActorReply(order)
-      EventFilter.info(pattern = s"getTokenManager $WETH", occurrences = 2) intercept {
-        accountManagerActor2 ! XSubmitOrderReq(Some(order))
-        accountManagerActor2 ! XSubmitOrderReq(Some(order))
-      }
-
     }
   }
 
   "submitOrder to marketManagerActor" must {
-
     "generate a ring, send it to settlementActor and orderbookManager receive two messages" in {
-      var decimal = "000000000000000000000000000000".substring(0, 18)
-      val maker1 = XOrder(
-        id = "maker1",
+      var zeros = "0" * 18
+      val maker = XOrder(
+        id = "maker",
         tokenS = WETH,
         tokenB = LRC,
         tokenFee = LRC,
-        amountS = BigInt("10" + decimal),
-        amountB = BigInt("100" + decimal),
-        amountFee = BigInt("10" + decimal),
+        amountS = BigInt("10" + zeros),
+        amountB = BigInt("100" + zeros),
+        amountFee = BigInt("10" + zeros),
         walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW,
-        actual = Some(XOrderState(BigInt("10" + decimal), BigInt("100" + decimal), BigInt("10" + decimal))),
-        matchable = Some(XOrderState(BigInt("10" + decimal), BigInt("100" + decimal), BigInt("10" + decimal)))
+        status = XOrderStatus.NEW
       )
 
-      val taker1 = XOrder(
-        id = "taker1",
+      val taker = XOrder(
+        id = "taker",
         tokenS = LRC,
         tokenB = WETH,
         tokenFee = LRC,
-        amountS = BigInt("100" + decimal),
-        amountB = BigInt("10" + decimal),
-        amountFee = BigInt("10" + decimal),
+        amountS = BigInt("100" + zeros),
+        amountB = BigInt("10" + zeros),
+        amountFee = BigInt("10" + zeros),
         walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW,
-        actual = Some(XOrderState(BigInt("100" + decimal), BigInt("10" + decimal), BigInt("10" + decimal))),
-        matchable = Some(XOrderState(BigInt("100" + decimal), BigInt("10" + decimal), BigInt("10" + decimal)))
+        status = XOrderStatus.NEW
       )
 
-      val orderbookPpobe = TestProbe()
-      orderbookPpobe watch orderbookManagerActor
+      val orderbookProbe = TestProbe()
+      orderbookProbe watch orderbookManagerActor
+
       val settlementProbe = TestProbe()
       settlementProbe watch settlementActor
 
-      marketManagerActor ! XSubmitOrderReq(Some(maker1))
-      orderbookPpobe.receiveOne(1 seconds)
-      marketManagerActor ! XSubmitOrderReq(Some(taker1))
-      orderbookPpobe.receiveOne(1 seconds)
+      marketManagerActor ! XSubmitOrderReq(Some(maker))
+      orderbookProbe.receiveOne(1 seconds)
+
+      marketManagerActor ! XSubmitOrderReq(Some(taker))
+      orderbookProbe.receiveOne(1 seconds)
+
       settlementProbe.receiveOne(1 seconds)
       ethereumProbe.receiveOne(1 seconds)
       //      val maker1Res = Await.result(maker1Future.mapTo[XSubmitOrderRes], timeout.duration)

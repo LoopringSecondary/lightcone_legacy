@@ -39,7 +39,7 @@ class OrderHistoryActor()(
 
   def receive: Receive = LoggingReceive {
     case XGetOrderFilledAmountReq(orderId) ⇒ //从数据库获取
-    case req: XOrderHistoryReq             ⇒ //保存在数据库
+    case XPersistOrderHistoryReq           ⇒ //保存在数据库
   }
 
 }

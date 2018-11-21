@@ -129,7 +129,6 @@ class AccountManagerActor(address: String)(
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
-    log.info(s"exec getTokenManager $token")
     if (manager.hasTokenManager(token))
       Future.successful(manager.getTokenManager(token))
     else for {
