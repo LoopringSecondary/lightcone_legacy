@@ -81,8 +81,10 @@ message XGetOrderFilledAmountRes {
 }
 
 message XBalanceAndAllowance {
-    bytes balance = 2;
-    bytes allowance = 3;
+    bytes balance = 1;
+    bytes allowance = 2;
+    bytes availableBalance = 3;
+    bytes availableAllowance = 4;
 }
 
 message XGetBalanceAndAllowancesReq {

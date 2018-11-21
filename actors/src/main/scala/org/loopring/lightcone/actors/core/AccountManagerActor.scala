@@ -62,6 +62,25 @@ class AccountManagerActor(address: String)(
   }
 
   def functional: Receive = LoggingReceive {
+
+    case XGetBalanceAndAllowancesReq(addr, tokens) ⇒
+      assert(addr == address)
+
+      (for {
+        managers ← Future.sequence(tokens.map(getTokenManager))
+        _ = assert(tokens.size == managers.size)
+        balanceAndAllowanceMap = tokens.zip(managers).toMap.map {
+          case (token, manager) ⇒ token -> XBalanceAndAllowance(
+            manager.getBalance(),
+            manager.getAllowance(),
+            manager.getAvailableBalance(),
+            manager.getAvailableAllowance()
+          )
+        }
+      } yield {
+        XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
+      }).pipeTo(sender)
+
     case XSubmitOrderReq(Some(xorder)) ⇒
       val order: Order = xorder
       (for {

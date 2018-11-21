@@ -48,6 +48,7 @@ class AccountBalanceActor()(
   }
 
   def functional: Receive = LoggingReceive {
+    // TODO(dongw): even if the token is not supported, we still need to return 0s.
     case req: XGetBalanceAndAllowancesReq ⇒
 
   }
