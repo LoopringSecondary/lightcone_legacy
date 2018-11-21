@@ -18,13 +18,13 @@ package org.loopgring.lightcone.actors.core
 
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XOrderStatus
+import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.core.data.Order
 import akka.pattern._
 import akka.testkit.{ EventFilter, TestProbe }
-
+import akka.pattern.ask
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future }
+import scala.concurrent._
 import XErrorCode._
 
 class CoreActorsIntegrationSpec_Simple
@@ -66,6 +66,7 @@ class CoreActorsIntegrationSpec_Simple
   "submitOrder to marketManagerActor" must {
     "generate a ring, send it to settlementActor and orderbookManager receive two messages" in {
       var zeros = "0" * 18
+
       val maker = XOrder(
         id = "maker",
         tokenS = WETH,
@@ -90,26 +91,24 @@ class CoreActorsIntegrationSpec_Simple
         status = XOrderStatus.NEW
       )
 
-      val orderbookProbe = TestProbe()
-      orderbookProbe watch orderbookManagerActor
+      for {
+        _ ← accountManagerActor1 ? XSubmitOrderReq(Some(maker))
 
-      val settlementProbe = TestProbe()
-      settlementProbe watch settlementActor
+        orderbook1 ← orderbookManagerActor ? XGetOrderbookReq()
 
-      marketManagerActor ! XSubmitOrderReq(Some(maker))
-      orderbookProbe.receiveOne(1 seconds)
+        _ = println("======: orderbook1 " + orderbook1)
 
-      marketManagerActor ! XSubmitOrderReq(Some(taker))
-      orderbookProbe.receiveOne(1 seconds)
+        _ ← accountManagerActor2 ? XSubmitOrderReq(Some(taker))
 
-      settlementProbe.receiveOne(1 seconds)
-      ethereumProbe.receiveOne(1 seconds)
-      //      val maker1Res = Await.result(maker1Future.mapTo[XSubmitOrderRes], timeout.duration)
-      //      val taker1Res = Await.result(taker1Future.mapTo[XSubmitOrderRes], timeout.duration)
-      //      info(maker1Res.error.toString())
-      //      info(taker1Res.error.toString())
+        orderbook ← orderbookManagerActor ? XGetOrderbookReq()
+
+        _ = println("======: orderbook2 " + orderbook)
+      } yield {
+        orderbook
+      }
+
       Thread.sleep(10000)
-    }
 
+    }
   }
 }

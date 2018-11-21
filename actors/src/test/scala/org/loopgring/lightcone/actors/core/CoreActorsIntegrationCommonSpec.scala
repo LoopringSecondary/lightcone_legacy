@@ -138,17 +138,18 @@ abstract class CoreActorsIntegrationCommonSpec
 
   accountManagerActor1 ! ActorDependencyReady(Seq(
     accountBalanceActor.path.toString,
+    orderHistoryActor.path.toString,
     marketManagerActor.path.toString
   ))
 
   accountManagerActor2 ! ActorDependencyReady(Seq(
     accountBalanceActor.path.toString,
+    orderHistoryActor.path.toString,
     marketManagerActor.path.toString
   ))
 
   marketManagerActor ! ActorDependencyReady(Seq(
     gasPriceActor.path.toString,
-    orderHistoryActor.path.toString,
     orderbookManagerActor.path.toString,
     settlementActor.path.toString
   ))

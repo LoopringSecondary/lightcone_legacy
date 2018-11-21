@@ -49,14 +49,16 @@ class AccountManagerActor(address: String)(
   val manager = AccountManager.default
 
   private var accountBalanceActor: ActorSelection = _
+  private var orderHistoryActor: ActorSelection = _
   private var marketManagerActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
     case ActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 2)
+      assert(paths.size == 3)
       accountBalanceActor = context.actorSelection(paths(0))
-      marketManagerActor = context.actorSelection(paths(1))
+      orderHistoryActor = context.actorSelection(paths(1))
+      marketManagerActor = context.actorSelection(paths(2))
       context.become(functional)
   }
 
@@ -85,14 +87,22 @@ class AccountManagerActor(address: String)(
       (for {
         _ ← getTokenManager(order.tokenS)
         _ ← getTokenManager(order.tokenFee) if order.amountFee > 0 && order.tokenS != order.tokenFee
-        _ = log.debug(s"submitting order to AccountManager: $order")
-        successful = manager.submitOrder(order)
+
+        // Update the order's _outstanding field.
+        orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
+          .mapTo[XGetOrderFilledAmountRes]
+        _ = log.debug(s"order history: orderHistoryRes")
+
+        _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
+
+        _ = log.debug(s"submitting order to AccountManager: ${_order}")
+        successful = manager.submitOrder(_order)
         _ = log.info(s"successful: $successful")
         _ = log.info("orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
         updatedOrders = orderPool.takeUpdatedOrdersAsMap()
-        _ = assert(updatedOrders.contains(order.id))
-        order_ = updatedOrders(order.id)
-        xorder_ : XOrder = xorder
+        _ = assert(updatedOrders.contains(_order.id))
+        order_ = updatedOrders(_order.id)
+        xorder_ : XOrder = order_
       } yield {
         if (successful) {
           log.debug(s"submitting order to market manager actor: $order_")

@@ -73,27 +73,26 @@ class MarketManagerActor(
   )
 
   private var gasPriceActor: ActorSelection = _
-  private var orderHistoryActor: ActorSelection = _
   private var orderbookManagerActor: ActorSelection = _
   private var settlementActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
     case ActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 4)
+      assert(paths.size == 3)
       gasPriceActor = context.actorSelection(paths(0))
-      orderHistoryActor = context.actorSelection(paths(1))
-      orderbookManagerActor = context.actorSelection(paths(2))
-      settlementActor = context.actorSelection(paths(3))
+      orderbookManagerActor = context.actorSelection(paths(1))
+      settlementActor = context.actorSelection(paths(2))
       context.become(functional)
   }
 
   def functional: Receive = LoggingReceive {
 
     case XSubmitOrderReq(Some(xorder)) ⇒
+      assert(xorder.actual.nonEmpty, "order in XSubmitOrderReq miss `actual` field")
       val order: Order = xorder
       xorder.status match {
-        case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
+        case XOrderStatus.NEW ⇒
           for {
             // get ring settlement cost
             res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
@@ -101,24 +100,14 @@ class MarketManagerActor(
             costinEth = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * gasPrice
             costInFiat = tokenValueEstimator.getEstimatedValue("ETH", costinEth)
 
-            //TODO:xorder是由accountmanager传递过来的，在accountmanager里计算了一遍了，此处需要再次计算？
-            // get order fill history
-            orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
-              .mapTo[XGetOrderFilledAmountRes]
-            _ = log.debug(s"order history: orderHistoryRes")
-
-            // scale the order
-            _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
-
             // submit order to reserve balance and allowance
-            matchResult = manager.submitOrder(_order, costInFiat)
+            matchResult = manager.submitOrder(order, costInFiat)
             //settlement matchResult and update orderbook
             _ ← settleRingsAndUpdateOrderbook(matchResult, gasPrice)
           } yield Unit
 
         case s ⇒
-          log.error(s"unexpected order status in XSubmitOrderReq: $xorder")
-          sender ! XSubmitOrderRes(error = XErrorCode.ERR_ORDER_ALREADY_EXIST)
+          log.error(s"unexpected order status in XSubmitOrderReq: $s")
       }
 
     case XCancelOrderReq(orderId, hardCancel) ⇒
