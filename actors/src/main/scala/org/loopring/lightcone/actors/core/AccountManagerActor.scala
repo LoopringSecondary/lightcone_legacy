@@ -63,10 +63,10 @@ class AccountManagerActor(address: String)(
 
   def functional: Receive = LoggingReceive {
     case XSubmitOrderReq(Some(xorder)) ⇒
+      val order: Order = xorder
       (for {
-        _ ← getTokenManager(xorder.tokenS)
-        _ ← getTokenManager(xorder.tokenFee)
-        order: Order = xorder
+        _ ← getTokenManager(order.tokenS)
+        _ ← getTokenManager(order.tokenFee) if order.amountFee > 0
         _ = log.debug(s"submitting order to AccountManager: $order")
         successful = manager.submitOrder(order)
         _ = log.info(s"successful: $successful")
