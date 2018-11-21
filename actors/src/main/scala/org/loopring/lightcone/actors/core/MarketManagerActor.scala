@@ -20,6 +20,7 @@ import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
+import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
@@ -86,22 +87,29 @@ class MarketManagerActor(
 
   def functional: Receive = LoggingReceive {
 
-    case XSubmitOrderReq(Some(order)) ⇒
-      order.status match {
+    case XSubmitOrderReq(Some(xorder)) ⇒
+      val order: Order = xorder
+      xorder.status match {
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
           for {
             cost ← getCostOfSingleRing()
             // TODO(hongyu): Implement this
             //(filledAmountS <- orderHistoryActor ! ..._)
-            res = manager.submitOrder(order, cost)
-            rings = res.rings
+            orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
+              .mapTo[XGetOrderFilledAmountRes]
+            _ = log.debug(s"order history: orderHistoryRes")
+            _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
+
+            matchResult = manager.submitOrder(_order, cost)
+
             // update order book (depth)
-            ou = res.orderbookUpdate
+            ou = matchResult.orderbookUpdate
             _ = log.debug(ou.toString)
             _ = orderbookManagerActor ! ou if ou.sells.nonEmpty || ou.buys.nonEmpty
 
-            // send out settlement
             // TODO(hongyu): convert rings to settlement and send it to settlementActor
+            rings = matchResult.rings
+            _ = log.debug(s"rings: $rings")
             _ = {
 
               // settlementActor ! xsettlement

@@ -53,6 +53,9 @@ class CoreActorsIntegrationSpec_Simple
       accountBalanceProbe.expectQuery(ADDRESS_1, LRC)
       accountBalanceProbe.replyWith(LRC, BigInt("500000"), BigInt("300000"))
 
+      orderHistoryProbe.expectQuery(order.id)
+      orderHistoryProbe.replyWith(order.id, BigInt("0"))
+
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
           val order: Order = xorder

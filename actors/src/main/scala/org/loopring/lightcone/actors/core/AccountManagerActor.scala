@@ -61,13 +61,7 @@ class AccountManagerActor(address: String)(
       context.become(functional)
   }
 
-  // TODO(hongyu): handle the following messages:
-  // 没理解这个message的用途
-  // - XQueryBalance: (this should query AccountBalanceActor first,
-  //   then query unreserved allowance)
   def functional: Receive = LoggingReceive {
-
-    // TODO(hongyu): 需要问一下另一个actor，这个订单已经成交了多少。
     case XSubmitOrderReq(Some(xorder)) ⇒
       (for {
         _ ← getTokenManager(xorder.tokenS)
@@ -78,7 +72,6 @@ class AccountManagerActor(address: String)(
         _ = log.info(s"successful: $successful")
         _ = log.info("orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
         updatedOrders = orderPool.takeUpdatedOrdersAsMap()
-        //todo: 该处获取的updatedOrders为空，但是我没看明白UpdatedOrdersTracing是如何使用的
         orderOpt = updatedOrders.get(order.id)
         _ = assert(orderOpt.nonEmpty)
         order_ = orderOpt.get
