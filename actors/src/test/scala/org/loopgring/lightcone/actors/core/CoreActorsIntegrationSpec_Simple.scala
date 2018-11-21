@@ -31,7 +31,7 @@ import XErrorCode._
 class CoreActorsIntegrationSpec_Simple
   extends CoreActorsIntegrationCommonSpec {
 
-  "submitOrder" must {
+  "submitOrder to accountManager" must {
     "succeed if the trader has sufficient balance and allowance" in {
       val order = XOrder(
         id = "order",
@@ -63,5 +63,11 @@ class CoreActorsIntegrationSpec_Simple
       }
     }
 
+  }
+
+  "submitOrder to marketManager" must {
+    "succeed if the trader has sufficient balance and allowance" in {
+
+    }
   }
 }
