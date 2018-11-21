@@ -59,10 +59,13 @@ case class Order(
   // rate is the price of this sell-order
   lazy val rate = Rational(amountB, amountS)
 
-  def withOutstandingAmountS(v: BigInt) = {
-    val r = Rational(v, amountS)
+  def withOutstandingAmountS(outstandingAmountS: BigInt) = {
+    val r = Rational(outstandingAmountS, amountS)
     copy(_outstanding = Some(original.scaleBy(r)))
   }
+
+  def withFilledAmountS(filledAmountS: BigInt) =
+    withOutstandingAmountS((amountS - filledAmountS).max(0))
 
   // Advance methods with implicit contextual arguments
   private[core] def requestedAmount()(implicit token: String): BigInt =

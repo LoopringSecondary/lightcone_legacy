@@ -28,12 +28,12 @@ import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._
 
-object AccountBalanceActor {
-  val name = "account_balance"
+object OrderHistoryActor {
+  val name = "order_history"
 }
 
-// TODO(fukun): implement this class.
-class AccountBalanceActor()(
+// TODO(hongyu): implement this class.
+class OrderHistoryActor()(
     implicit
     ec: ExecutionContext,
     timeout: Timeout
@@ -42,14 +42,7 @@ class AccountBalanceActor()(
   with ActorLogging {
 
   def receive: Receive = LoggingReceive {
-    case ActorDependencyReady(paths) ⇒
-      log.info(s"actor dependency ready: $paths")
-      context.become(functional)
-  }
-
-  def functional: Receive = LoggingReceive {
-    // TODO(dongw): even if the token is not supported, we still need to return 0s.
-    case req: XGetBalanceAndAllowancesReq ⇒
+    case XGetOrderFilledAmountReq(orderId) ⇒
 
   }
 

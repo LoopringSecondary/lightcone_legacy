@@ -18,8 +18,9 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.event.LoggingReceive
-import akka.pattern._
+import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
+import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
@@ -69,34 +70,52 @@ class MarketManagerActor(
   )
 
   private var gasPriceActor: ActorSelection = _
+  private var orderHistoryActor: ActorSelection = _
   private var orderbookManagerActor: ActorSelection = _
+  private var settlementActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
     case ActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 2)
+      assert(paths.size == 4)
       gasPriceActor = context.actorSelection(paths(0))
-      orderbookManagerActor = context.actorSelection(paths(1))
+      orderHistoryActor = context.actorSelection(paths(1))
+      orderbookManagerActor = context.actorSelection(paths(2))
+      settlementActor = context.actorSelection(paths(3))
       context.become(functional)
   }
 
   def functional: Receive = LoggingReceive {
 
-    case XSubmitOrderReq(Some(order)) ⇒
-      order.status match {
+    case XSubmitOrderReq(Some(xorder)) ⇒
+      val order: Order = xorder
+      xorder.status match {
         case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
-          val sender1 = sender()
-          val f = for {
+          for {
+            // get ring settlement cost
             cost ← getCostOfSingleRing()
-            res = manager.submitOrder(order, cost)
-            ou = res.orderbookUpdate
-          } yield {
-            if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-              orderbookManagerActor ! ou
-            }
-            sender1 ! XSubmitOrderRes(error = XErrorCode.ERR_OK)
-          }
-          Await.result(f.mapTo[Unit], timeout.duration)
+
+            // get order fill history
+            orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
+              .mapTo[XGetOrderFilledAmountRes]
+            _ = log.debug(s"order history: orderHistoryRes")
+
+            // scale the order
+            _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
+
+            // submit order to reserve balance and allowance
+            matchResult = manager.submitOrder(_order, cost)
+
+            // update order book (depth)
+            ou = matchResult.orderbookUpdate
+            _ = log.debug(ou.toString)
+            _ = orderbookManagerActor ! ou if ou.sells.nonEmpty || ou.buys.nonEmpty
+
+            // TODO(hongyu): convert rings to settlement and send it to settlementActor
+            rings = matchResult.rings
+            _ = log.debug(s"rings: $rings")
+
+          } yield Unit
 
         case s ⇒
           log.error(s"unexpected order status in XSubmitOrderReq: $s")

@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.core
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import akka.pattern.ask
+import akka.pattern.{ ask, pipe }
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
@@ -37,7 +37,7 @@ object AccountManagerActor {
   val name = "account_manager"
 }
 
-class AccountManagerActor()(
+class AccountManagerActor(address: String)(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,
@@ -46,7 +46,7 @@ class AccountManagerActor()(
   extends Actor
   with ActorLogging {
 
-  implicit val orderPool = new AccountOrderPoolImpl()
+  implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
   private var accountBalanceActor: ActorSelection = _
@@ -61,35 +61,49 @@ class AccountManagerActor()(
       context.become(functional)
   }
 
-  // TODO(hongyu): handle the following messages:
-  // 没理解这个message的用途
-  // - XQueryBalance: (this should query AccountBalanceActor first,
-  //   then query unreserved allowance)
   def functional: Receive = LoggingReceive {
+
+    case XGetBalanceAndAllowancesReq(addr, tokens) ⇒
+      assert(addr == address)
+
+      (for {
+        managers ← Future.sequence(tokens.map(getTokenManager))
+        _ = assert(tokens.size == managers.size)
+        balanceAndAllowanceMap = tokens.zip(managers).toMap.map {
+          case (token, manager) ⇒ token -> XBalanceAndAllowance(
+            manager.getBalance(),
+            manager.getAllowance(),
+            manager.getAvailableBalance(),
+            manager.getAvailableAllowance()
+          )
+        }
+      } yield {
+        XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
+      }).pipeTo(sender)
+
     case XSubmitOrderReq(Some(xorder)) ⇒
-      val sender1 = sender()
-      val f = for {
-        _ ← getTokenManager(xorder.tokenS)
-        _ ← getTokenManager(xorder.tokenFee)
-        order = xorder
+      val order: Order = xorder
+      (for {
+        _ ← getTokenManager(order.tokenS)
+        _ ← getTokenManager(order.tokenFee) if order.amountFee > 0 && order.tokenS != order.tokenFee
         _ = log.debug(s"submitting order to AccountManager: $order")
         successful = manager.submitOrder(order)
+        _ = log.info(s"successful: $successful")
+        _ = log.info("orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
         updatedOrders = orderPool.takeUpdatedOrdersAsMap()
-        //todo: 该处获取的updatedOrders为空，但是我没看明白UpdatedOrdersTracing是如何使用的
-        xOrderOpt = updatedOrders.get(order.id)
+        _ = assert(updatedOrders.contains(order.id))
+        order_ = updatedOrders(order.id)
+        xorder_ : XOrder = xorder
       } yield {
-        xOrderOpt foreach {
-          xorder_ ⇒
-            if (successful) {
-              log.debug(s"submitting order to market manager actor: $xorder_")
-              marketManagerActor forward XSubmitOrderReq(Some(xorder_))
-            } else {
-              val error = convertOrderStatusToErrorCode(xorder_.status)
-              sender1 ! XSubmitOrderRes(error = error)
-            }
+        if (successful) {
+          log.debug(s"submitting order to market manager actor: $order_")
+          marketManagerActor ! XSubmitOrderReq(Some(xorder_))
+          XSubmitOrderRes(order = Some(xorder_))
+        } else {
+          val error = convertOrderStatusToErrorCode(order.status)
+          XSubmitOrderRes(error = error)
         }
-      }
-      Await.result(f.mapTo[Unit], timeout.duration)
+      }).pipeTo(sender)
 
     case req: XCancelOrderReq ⇒
       if (manager.cancelOrder(req.id)) {
@@ -120,15 +134,13 @@ class AccountManagerActor()(
     if (manager.hasTokenManager(token))
       Future.successful(manager.getTokenManager(token))
     else for {
-      res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq("addr", Seq(token)))
+      res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
         .mapTo[XGetBalanceAndAllowancesRes]
       tm = new AccountTokenManagerImpl(token, 1000)
       ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
       _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
-      _ = manager.addTokenManager(tm)
-    } yield {
-      manager.getTokenManager(token)
-    }
+      tokenManager = manager.addTokenManager(tm)
+    } yield tokenManager
   }
 
   private def updateBalanceOrAllowance(

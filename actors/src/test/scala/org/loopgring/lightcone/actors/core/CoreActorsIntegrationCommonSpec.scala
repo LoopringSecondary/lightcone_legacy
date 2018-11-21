@@ -30,13 +30,26 @@ import org.loopring.lightcone.proto.deployment._
 import org.scalatest._
 import org.loopring.lightcone.actors.data._
 import scala.concurrent.duration._
+import org.slf4s.Logging
 
 abstract class CoreActorsIntegrationCommonSpec
-  extends TestKit(ActorSystem("test"))
+  extends TestKit(ActorSystem("test", ConfigFactory.parseString(
+    """akka {
+         loglevel = "DEBUG"
+         actor {
+           debug {
+             receive = on
+             lifecycle = off
+           }
+         }
+       }"""
+  ).withFallback(ConfigFactory.load())))
   with ImplicitSender
   with Matchers
   with WordSpecLike
-  with BeforeAndAfterAll {
+  with BeforeAndAfterEach
+  with BeforeAndAfterAll
+  with Logging {
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
@@ -73,42 +86,68 @@ abstract class CoreActorsIntegrationCommonSpec
   val pendingRingPool = new PendingRingPoolImpl()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
-  val accountBalanceProbe = new TestProbe(system) {
-    def expectUpdate(x: Any) = {
-      expectMsgPF() {
-        case req: XGetBalanceAndAllowancesReq ⇒
-          val ba = req.tokens map {
-            token ⇒
-              token → XBalanceAndAllowance(BigInt("10000000000000000"), BigInt("10000000000000000"))
-          }
-          sender ! XGetBalanceAndAllowancesRes(req.address, ba.toMap)
-      }
-
+  // Simulating an AccountBalanceActor
+  val accountBalanceProbe = new TestProbe(system, "account_balance") {
+    def expectQuery(address: String, token: String) = expectMsgPF() {
+      case XGetBalanceAndAllowancesReq(addr, tokens) if addr == address && tokens == Seq(token) ⇒
     }
+
+    def replyWith(token: String, balance: BigInt, allowance: BigInt) = reply(
+      XGetBalanceAndAllowancesRes(
+        ADDRESS_1, Map(token -> XBalanceAndAllowance(balance, allowance))
+      )
+    )
   }
   val accountBalanceActor = accountBalanceProbe.ref
+
+  // Simulating an OrderHistoryProbe
+  val orderHistoryProbe = new TestProbe(system, "order_history") {
+    def expectQuery(orderId: String) = expectMsgPF() {
+      case XGetOrderFilledAmountReq(id) if id == orderId ⇒
+    }
+
+    def replyWith(orderId: String, filledAmountS: BigInt) = reply(
+      XGetOrderFilledAmountRes(orderId, filledAmountS)
+    )
+  }
+  val orderHistoryActor = orderHistoryProbe.ref
+
+  // Simulating an SettlementActor
+  val settlementProbe = new TestProbe(system, "settlement")
+  val settlementActor = settlementProbe.ref
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
 
-  val accountManagerActor: ActorRef = TestActorRef(
-    new AccountManagerActor()
+  val ADDRESS_1 = "address_111111111111111111111"
+  val ADDRESS_2 = "address_222222222222222222222"
+
+  val accountManagerActor1: ActorRef = TestActorRef(
+    new AccountManagerActor(ADDRESS_1)
+  )
+
+  val accountManagerActor2: ActorRef = TestActorRef(
+    new AccountManagerActor(ADDRESS_2)
   )
 
   val marketManagerActor: ActorRef = TestActorRef(
     new MarketManagerActor(marketId, config)
   )
 
-  accountManagerActor ! ActorDependencyReady(Seq(
+  accountManagerActor1 ! ActorDependencyReady(Seq(
+    accountBalanceActor.path.toString,
+    marketManagerActor.path.toString
+  ))
+
+  accountManagerActor2 ! ActorDependencyReady(Seq(
     accountBalanceActor.path.toString,
     marketManagerActor.path.toString
   ))
 
   marketManagerActor ! ActorDependencyReady(Seq(
     gasPriceActor.path.toString,
-    orderbookManagerActor.path.toString
+    orderHistoryActor.path.toString,
+    orderbookManagerActor.path.toString,
+    settlementActor.path.toString
   ))
-
-  val clientProbe = TestProbe("client")
-  val clientActor = clientProbe.ref
 }

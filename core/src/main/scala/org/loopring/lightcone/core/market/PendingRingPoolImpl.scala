@@ -59,13 +59,13 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
   def getOrderPendingAmountS(orderId: String): BigInt =
     orderMap.get(orderId).map(_.pendingAmountS).getOrElse(0)
 
-  def deleteOrder(orderId: String) = {
+  def deleteOrder(orderId: String) = this.synchronized {
     val result = orderMap.contains(orderId)
     orderMap -= orderId
     result
   }
 
-  def deleteRing(ringId: String): Boolean =
+  def deleteRing(ringId: String): Boolean = this.synchronized {
     ringMap.get(ringId) match {
       case Some(ringInfo) ⇒
         ringMap -= ringId
@@ -84,10 +84,11 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
         true
       case None ⇒ false
     }
+  }
 
   def hasRing(ringId: String) = ringMap.contains(ringId)
 
-  def addRing(ring: OrderRing) = {
+  def addRing(ring: OrderRing) = this.synchronized {
     ringMap.get(ring.id) match {
       case Some(_) ⇒
       case None ⇒
@@ -115,22 +116,26 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
     }
   }
 
-  def deleteAllRings() {
+  def deleteAllRings() = this.synchronized {
     orderMap = Map.empty[String, OrderInfo]
     ringMap = Map.empty[String, RingInfo]
   }
 
-  def deleteRingsBefore(timestamp: Long) = ringMap.filter {
-    case (_, ringInfo) ⇒ ringInfo.timestamp < timestamp
-  }.keys.foreach(deleteRing)
+  def deleteRingsBefore(timestamp: Long) = this.synchronized {
+    ringMap.filter {
+      case (_, ringInfo) ⇒ ringInfo.timestamp < timestamp
+    }.keys.foreach(deleteRing)
+  }
 
   def deleteRingsOlderThan(age: Long) =
     deleteRingsBefore(time.getCurrentTimeMillis - age)
 
-  def deleteRingsContainingOrder(orderId: String) = ringMap.filter {
-    case (_, ringInfo) ⇒
-      ringInfo.takerId == orderId || ringInfo.makerId == orderId
-  }.keys.foreach(deleteRing)
+  def deleteRingsContainingOrder(orderId: String) = this.synchronized {
+    ringMap.filter {
+      case (_, ringInfo) ⇒
+        ringInfo.takerId == orderId || ringInfo.makerId == orderId
+    }.keys.foreach(deleteRing)
+  }
 
   // Private methods
   private def decrementOrderPendingAmountS(
@@ -145,7 +150,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
     }
   }
 
-  def incrementOrderPendingAmountS(
+  private def incrementOrderPendingAmountS(
     orderId: String,
     ringId: String,
     pendingAmountS: BigInt

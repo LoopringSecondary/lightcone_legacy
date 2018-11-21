@@ -21,7 +21,7 @@ import org.loopring.lightcone.proto.core._
 import org.slf4s.Logging
 
 class AccountOrderPoolImpl()
-  extends AccountOrderPoolWithUpdatedOrdersTracing
+  extends AccountOrderPool
   with Logging {
 
   private var callbacks = Set.empty[Callback]
@@ -32,15 +32,15 @@ class AccountOrderPoolImpl()
   def contains(id: String) = orderMap.contains(id)
   def size: Int = orderMap.size
 
-  def addCallback(callback: Callback) {
+  def addCallback(callback: Callback) = this.synchronized {
     callbacks += callback
   }
 
-  def removeCallback(callback: Callback) {
+  def removeCallback(callback: Callback) = this.synchronized {
     callbacks -= callback
   }
 
-  def +=(order: Order) = {
+  def +=(order: Order) = this.synchronized {
     getOrder(order.id) match {
       case Some(existing) if existing == order ⇒
 
