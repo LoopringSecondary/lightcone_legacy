@@ -37,9 +37,11 @@ object AccountManagerActor {
 }
 
 class AccountManagerActor(address: String)(
-  implicit ec: ExecutionContext,
-  timeout: Timeout,
-  dustEvaluator: DustOrderEvaluator)
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout,
+    dustEvaluator: DustOrderEvaluator
+)
   extends Actor
   with ActorLogging {
 
@@ -73,7 +75,8 @@ class AccountManagerActor(address: String)(
             manager.getBalance(),
             manager.getAllowance(),
             manager.getAvailableBalance(),
-            manager.getAvailableAllowance())
+            manager.getAvailableAllowance()
+          )
         }
       } yield {
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
@@ -151,7 +154,8 @@ class AccountManagerActor(address: String)(
   private def updateBalanceOrAllowance(
     token: String,
     amount: BigInt,
-    method: (AccountTokenManager, BigInt) ⇒ Unit) = for {
+    method: (AccountTokenManager, BigInt) ⇒ Unit
+  ) = for {
     tm ← getTokenManager(token)
     _ = method(tm, amount)
     updatedOrders = orderPool.takeUpdatedOrders()
@@ -163,7 +167,7 @@ class AccountManagerActor(address: String)(
         case PENDING ⇒
           //allowance的改变需要更新到marketManager
           marketManagerActor ! XSubmitOrderReq(Some(order))
-        case s =>
+        case s ⇒
           log.error(s"unexpected order status caused by balance/allowance upate: $s")
       }
     }
