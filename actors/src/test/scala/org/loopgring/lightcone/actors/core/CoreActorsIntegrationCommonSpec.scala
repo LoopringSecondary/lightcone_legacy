@@ -67,6 +67,7 @@ abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
+    Thread.sleep(3000)
   }
 
   implicit val marketId_ = marketId

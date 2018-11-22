@@ -65,12 +65,13 @@ message XOrder {
     bytes amount_b = 6;
     bytes amount_fee = 7;
     int64 created_at = 8;
-    core.XOrderStatus status = 9;
-    double wallet_split_percentage = 10;
-    XOrderState outstanding = 11;
-    XOrderState reserved = 12;
-    XOrderState actual = 13;
-    XOrderState matchable = 14;
+    int64 updated_at = 9;
+    core.XOrderStatus status = 10;
+    double wallet_split_percentage = 11;
+    XOrderState outstanding = 12;
+    XOrderState reserved = 13;
+    XOrderState actual = 14;
+    XOrderState matchable = 15;
 }
 
 message XExpectedFill {
@@ -209,6 +210,16 @@ message XSendRawTxRes {
         SEND_STATUS_UNKNOW = 0;
         SEND_STATUS_SUCCESS = 1;
     }
+}
+
+message XRestoreOrdersReq {
+    int64 updated_since = 1;
+    int32 num = 2;
+}
+
+message XRestoreOrdersRes {
+    repeated XOrder orders = 1;
+    bool has_more = 2;
 }
 
 enum XExecutedStatus {
