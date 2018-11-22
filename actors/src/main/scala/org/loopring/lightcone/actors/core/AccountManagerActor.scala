@@ -53,7 +53,7 @@ class AccountManagerActor(address: String)(
   private var marketManagerActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
-    case ActorDependencyReady(paths) ⇒
+    case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
       assert(paths.size == 3)
       accountBalanceActor = context.actorSelection(paths(0))

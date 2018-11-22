@@ -14,14 +14,28 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.actors.core
 
-option java_multiple_files = true;
-package org.loopring.lightcone.proto.deployment;
+import akka.actor._
+import akka.util.Timeout
+import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.proto.actors._
 
-import "google/protobuf/any.proto";
+import scala.concurrent.ExecutionContext
 
+object OrderDbManagerActor {
+  val name = "order_db_manager"
+}
 
-message XActorDependencyReady {
-    repeated string paths = 1;
+class OrderDbManagerActor()(
+  implicit ec: ExecutionContext,
+  timeout: Timeout)
+  extends Actor
+  with ActorLogging {
+
+  def receive: Receive = {
+
+    case _ =>
+  }
+
 }

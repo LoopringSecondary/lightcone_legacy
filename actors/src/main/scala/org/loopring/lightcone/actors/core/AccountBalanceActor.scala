@@ -23,7 +23,7 @@ import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment.ActorDependencyReady
+import org.loopring.lightcone.proto.deployment.XActorDependencyReady
 import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._
@@ -42,7 +42,7 @@ class AccountBalanceActor()(
   with ActorLogging {
 
   def receive: Receive = LoggingReceive {
-    case ActorDependencyReady(paths) ⇒
+    case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
       context.become(functional)
   }
