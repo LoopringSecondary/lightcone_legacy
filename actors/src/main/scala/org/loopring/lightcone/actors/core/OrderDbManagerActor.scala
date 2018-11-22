@@ -28,14 +28,16 @@ object OrderDbManagerActor {
 }
 
 class OrderDbManagerActor()(
-  implicit ec: ExecutionContext,
-  timeout: Timeout)
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
   extends Actor
   with ActorLogging {
 
   def receive: Receive = {
 
-    case _ =>
+    case _ ⇒
   }
 
 }

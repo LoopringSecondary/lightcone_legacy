@@ -102,6 +102,7 @@ class MarketManagerActor(
       for {
         _ ← Future.sequence(xorders.map(submitOrder))
         lastOne = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
+        _ = context.unbecome()
         _ = context.become(functional) if lastOne == 0 || xorders.size < config.recoverBatchSize
         _ = marketRecoveringActor ! XRestoreMarketOrdersReq(lastOne, config.recoverBatchSize)
       } yield Unit
