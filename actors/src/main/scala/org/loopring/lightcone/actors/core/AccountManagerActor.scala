@@ -179,10 +179,13 @@ class AccountManagerActor(
       order.status match {
         case CANCELLED_LOW_BALANCE | CANCELLED_LOW_FEE_BALANCE ⇒
           marketManagerActor ! XCancelOrderReq(order.id)
-        case s ⇒
+
+        case PENDING ⇒
           //allowance的改变需要更新到marketManager
           marketManagerActor ! XSubmitOrderReq(Some(order))
-        //          log.error(s"unexpected order status caused by balance/allowance upate: $s")
+
+        case status ⇒
+          log.error(s"unexpected order status caused by balance/allowance upate: $status")
       }
     }
   }
@@ -190,3 +193,4 @@ class AccountManagerActor(
   protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
 
 }
+
