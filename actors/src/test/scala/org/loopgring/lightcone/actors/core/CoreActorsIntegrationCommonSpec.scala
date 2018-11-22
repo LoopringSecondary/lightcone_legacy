@@ -35,13 +35,13 @@ import scala.math.BigInt
 
 object CoreActorsIntegrationCommonSpec {
 
-  val GTO = "GTO"
-  val WETH = "WETH"
-  val LRC = "LRC"
+  val GTO = "0x00000000001"
+  val WETH = "0x00000000004"
+  val LRC = "0x00000000002"
 
-  val GTO_TOKEN = XTokenMetadata(GTO, "0x1", 10, 0.1, 1.0)
-  val WETH_TOKEN = XTokenMetadata(WETH, "0x2", 18, 0.4, 1000)
-  val LRC_TOKEN = XTokenMetadata(LRC, "0x3", 18, 0.4, 1000)
+  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.1, 1.0, "GTO")
+  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000, "WETH")
+  val LRC_TOKEN = XTokenMetadata(LRC, 18, 0.4, 1000, "LRC")
 }
 
 abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)

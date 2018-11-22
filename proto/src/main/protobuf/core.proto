@@ -111,11 +111,11 @@ message GetXOrderbookRes {
 }
 
 message XTokenMetadata {
-    string symbol = 1;
-    string address = 2;
-    int32 decimals = 3;
-    double burnRate = 4;
-    double currentPrice = 5;
+    string address = 1;
+    int32 decimals = 2;
+    double burnRate = 3;
+    double currentPrice = 4;
+    string symbol = 5;
 }
 
 
