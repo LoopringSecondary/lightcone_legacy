@@ -105,7 +105,7 @@ class MarketManagerActor(
 
     case XCancelOrderReq(orderId, hardCancel) ⇒
       manager.cancelOrder(orderId) foreach {
-        orderUpdate ⇒ orderbookManagerActor ! orderUpdate
+        orderbookUpdate ⇒ orderbookManagerActor ! orderbookUpdate
       }
       sender ! XCancelOrderRes(id = orderId)
 

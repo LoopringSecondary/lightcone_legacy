@@ -64,4 +64,3 @@ trait OrderDatabaseManager {
 
   def updateOrderStatus(actualState: XOrderState, status: XOrderStatus): Boolean
 }
-
