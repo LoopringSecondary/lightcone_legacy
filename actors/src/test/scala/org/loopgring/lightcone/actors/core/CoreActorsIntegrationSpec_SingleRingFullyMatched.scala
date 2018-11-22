@@ -28,7 +28,6 @@ import scala.concurrent._
 import XErrorCode._
 import CoreActorsIntegrationCommonSpec._
 
-// TODO(hongyu): implement this
 class CoreActorsIntegrationSpec_SingleRingFullyMatched
   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
@@ -65,14 +64,7 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
         matchable = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18)))
       )
 
-      val orderbookPpobe = TestProbe()
-      orderbookPpobe watch orderbookManagerActor
-
-      val settlementProbe = TestProbe()
-      settlementProbe watch settlementActor
-
       marketManagerActor ! XSubmitOrderReq(Some(maker1))
-      orderbookPpobe.receiveOne(1 seconds)
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
@@ -82,9 +74,8 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
       }
 
       marketManagerActor ! XSubmitOrderReq(Some(taker1))
-      orderbookPpobe.receiveOne(1 seconds)
-      settlementProbe.receiveOne(1 seconds)
-      ethereumProbe.receiveOne(1 seconds)
+
+      ethereumProbe.receiveN(1, 1 seconds)
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
