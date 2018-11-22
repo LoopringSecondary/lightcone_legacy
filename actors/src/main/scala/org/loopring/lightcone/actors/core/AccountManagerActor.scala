@@ -167,10 +167,8 @@ class AccountManagerActor(address: String)(
         case PENDING ⇒
           //allowance的改变需要更新到marketManager
           marketManagerActor ! XSubmitOrderReq(Some(order))
-        case s ⇒
-          //allowance的改变需要更新到marketManager
-          marketManagerActor ! XSubmitOrderReq(Some(order))
-//          log.error(s"unexpected order status caused by balance/allowance upate: $s")
+        case status ⇒
+          log.error(s"unexpected order status caused by balance/allowance upate: $status")
       }
     }
   }
