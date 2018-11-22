@@ -100,7 +100,7 @@ message XOrderbookUpdate {
     repeated XSlot buys = 2;
 }
 
-message GetXOrderbookReq {
+message XGetOrderbookReq {
    int32 level = 1;
    int32 size = 2;
 }

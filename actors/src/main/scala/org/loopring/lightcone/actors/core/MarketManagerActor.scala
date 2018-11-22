@@ -34,8 +34,10 @@ import scala.concurrent._
 
 object MarketManagerActor {
   val name = "market_manager"
+  val wethTokenAddress = "WETH" // TODO
 }
 
+// TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
 class MarketManagerActor(
     marketId: XMarketId,
     config: XMarketManagerConfig
@@ -52,7 +54,7 @@ class MarketManagerActor(
   extends Actor
   with ActorLogging {
 
-  private val gasLimitBySingleRing = BigInt(400000)
+  private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
 
   private implicit val marketId_ = marketId
 
@@ -73,87 +75,92 @@ class MarketManagerActor(
   )
 
   private var gasPriceActor: ActorSelection = _
-  private var orderHistoryActor: ActorSelection = _
   private var orderbookManagerActor: ActorSelection = _
   private var settlementActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
     case ActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 4)
+      assert(paths.size == 3)
       gasPriceActor = context.actorSelection(paths(0))
-      orderHistoryActor = context.actorSelection(paths(1))
-      orderbookManagerActor = context.actorSelection(paths(2))
-      settlementActor = context.actorSelection(paths(3))
+      orderbookManagerActor = context.actorSelection(paths(1))
+      settlementActor = context.actorSelection(paths(2))
       context.become(functional)
   }
 
   def functional: Receive = LoggingReceive {
 
     case XSubmitOrderReq(Some(xorder)) ⇒
+
+      assert(xorder.actual.nonEmpty, "order in XSubmitOrderReq miss `actual` field")
       val order: Order = xorder
+      println("!!!!!!---" + order)
       xorder.status match {
-        case XOrderStatus.NEW | XOrderStatus.PENDING ⇒
-          for {
-            // get ring settlement cost
-            (gasPrice, cost) ← getCostOfSingleRing()
+        case XOrderStatus.NEW | XOrderStatus.PENDING ⇒ for {
+          // get ring settlement cost
+          res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
 
-            //TODO:xorder是由accountmanager传递过来的，在accountmanager里计算了一遍了，此处需要再次计算？
-            // get order fill history
-            orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
-              .mapTo[XGetOrderFilledAmountRes]
-            _ = log.debug(s"order history: orderHistoryRes")
+          gasPrice: BigInt = res.gasPrice
+          minRequiredIncome = getRequiredMinimalIncome(gasPrice)
 
-            // scale the order
-            _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
+          _ = println(".............+ " + minRequiredIncome)
 
-            // submit order to reserve balance and allowance
-            matchResult = manager.submitOrder(_order, cost)
-            //settlement matchResult and update orderbook
-            _ ← settlementRings(matchResult, gasPrice)
-          } yield Unit
+          // submit order to reserve balance and allowance
+          matchResult = manager.submitOrder(order, minRequiredIncome)
+          _ = println(".....||" + matchResult)
+
+          //settlement matchResult and update orderbook
+          _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
+        } yield Unit
 
         case s ⇒
           log.error(s"unexpected order status in XSubmitOrderReq: $s")
-          sender ! XSubmitOrderRes(error = XErrorCode.ERR_ORDER_ALREADY_EXIST)
       }
 
     case XCancelOrderReq(orderId, hardCancel) ⇒
       manager.cancelOrder(orderId)
-      sender ! XCancelOrderRes(id = orderId, error = XErrorCode.ERR_OK)
+      sender ! XCancelOrderRes(id = orderId)
 
-    case updatedGasPrce: XUpdatedGasPrice ⇒
-      for {
-        (gasPrice, cost) ← getCostOfSingleRing()
-        resultOpt = manager.triggerMatch(true, cost)
-        _ ← settlementRings(resultOpt.get, gasPrice) if resultOpt.nonEmpty
-      } yield Unit
+    case XGasPriceUpdated(_gasPrice) ⇒
+      val gasPrice: BigInt = _gasPrice
+      manager.triggerMatch(true, getRequiredMinimalIncome(gasPrice)) foreach {
+        matchResult ⇒
+          updateOrderbookAndSettleRings(matchResult, gasPrice)
+      }
+
+    case XTriggerRematchReq(sellOrderAsTaker, offset) ⇒ for {
+      res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
+      gasPrice: BigInt = res.gasPrice
+      minRequiredIncome = getRequiredMinimalIncome(gasPrice)
+      _ = manager.triggerMatch(sellOrderAsTaker, minRequiredIncome, offset)
+        .foreach { updateOrderbookAndSettleRings(_, gasPrice) }
+    } yield Unit
+
   }
 
-  private def settlementRings(matchResult: MatchResult, gasPrice: BigInt): Future[Unit] =
-    if (matchResult.rings.nonEmpty) {
-      for {
-        _ ← settlementActor ? XSettlementReq(
-          rings = matchResult.rings,
-          gasLimit = gasLimitBySingleRing * matchResult.rings.size,
-          gasPrice = gasPrice
-        )
-        _ = log.debug(s"rings: ${matchResult.rings}")
-        // update order book (depth)
-        ou = matchResult.orderbookUpdate
-        _ = orderbookManagerActor ! ou if ou.sells.nonEmpty || ou.buys.nonEmpty
-      } yield Unit
-    } else {
-      Future.successful()
+  private def getRequiredMinimalIncome(gasPrice: BigInt): Double = {
+    val costinEth = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * gasPrice
+    tokenValueEstimator.getEstimatedValue(MarketManagerActor.wethTokenAddress, costinEth)
+  }
+
+  private def updateOrderbookAndSettleRings(matchResult: MatchResult, gasPrice: BigInt) {
+    // Update order book (depth)
+    val ou = matchResult.orderbookUpdate
+    println("________--1" + ou)
+    if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
+      orderbookManagerActor ! ou
     }
 
-  private def getCostOfSingleRing() = for {
-    res ← (gasPriceActor ? XGetGasPriceReq())
-      .mapTo[XGetGasPriceRes]
-    gasPrice: BigInt = res.gasPrice
-    costedEth = gasLimitBySingleRing * gasPrice
-    //todo:eth的标识符
-    cost = tokenValueEstimator.getEstimatedValue("ETH", costedEth)
-  } yield (gasPrice, cost)
+    // Settle rings
+    if (matchResult.rings.nonEmpty) {
+      log.debug(s"rings: ${matchResult.rings}")
+
+      settlementActor ! XSettleRingsReq(
+        rings = matchResult.rings,
+        gasLimit = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * matchResult.rings.size,
+        gasPrice = gasPrice
+      )
+    }
+  }
 
 }
