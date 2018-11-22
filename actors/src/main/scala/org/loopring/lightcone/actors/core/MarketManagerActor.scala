@@ -81,7 +81,7 @@ class MarketManagerActor(
 
   def receive: Receive = LoggingReceive {
 
-    case ActorDependencyReady(paths) ⇒
+    case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
       assert(paths.size == 4)
       marketRecoveringActor = context.actorSelection(paths(0))
@@ -92,25 +92,25 @@ class MarketManagerActor(
       context.become(recovering)
 
       log.info(s"start recovering for market: $marketId")
-      marketRecoveringActor ! XRestoreOrdersReq(0, config.recoverBatchSize)
+      marketRecoveringActor ! XRestoreMarketOrdersReq(0, config.recoverBatchSize)
   }
 
   def recovering: Receive = {
 
-    case XRestoreOrdersRes(xorders, hasMore) ⇒
+    case XRestoreMarketOrdersRes(xorders, hasMore) ⇒
       log.info(s"recovering batch (size = ${xorders.size})")
       for {
         _ ← Future.sequence(xorders.map(submitOrder))
         lastOne = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
         _ = context.become(functional) if lastOne == 0 || xorders.size < config.recoverBatchSize
-        _ = marketRecoveringActor ! XRestoreOrdersReq(lastOne, config.recoverBatchSize)
+        _ = marketRecoveringActor ! XRestoreMarketOrdersReq(lastOne, config.recoverBatchSize)
       } yield Unit
 
   }
 
   def functional: Receive = LoggingReceive {
 
-    case XRestoreOrdersRes(xorders, _) ⇒
+    case XRestoreMarketOrdersRes(xorders, _) ⇒
       log.info(s"recovering last batch (size = ${xorders.size})")
       Future.sequence(xorders.map(submitOrder))
 

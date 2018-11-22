@@ -212,12 +212,12 @@ message XSendRawTxRes {
     }
 }
 
-message XRestoreOrdersReq {
+message XRestoreMarketOrdersReq {
     int64 updated_since = 1;
     int32 num = 2;
 }
 
-message XRestoreOrdersRes {
+message XRestoreMarketOrdersRes {
     repeated XOrder orders = 1;
     bool has_more = 2;
 }
