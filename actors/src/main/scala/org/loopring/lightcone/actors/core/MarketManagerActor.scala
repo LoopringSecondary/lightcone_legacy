@@ -41,7 +41,8 @@ object MarketManagerActor {
 // TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
 class MarketManagerActor(
     val marketId: XMarketId,
-    val config: XMarketManagerConfig
+    val config: XMarketManagerConfig,
+    val skipRecovery: Boolean = false
 )(
     implicit
     val ec: ExecutionContext,

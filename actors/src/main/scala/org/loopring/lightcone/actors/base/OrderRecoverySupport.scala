@@ -38,6 +38,7 @@ trait OrderRecoverySupport {
   implicit val ec: ExecutionContext
   implicit val timeout: Timeout
 
+  val skipRecovery: Boolean // for testing purpose
   val recoverBatchSize: Int
   val ownerOfOrders: Option[String]
   private var batch = 1
@@ -49,13 +50,13 @@ trait OrderRecoverySupport {
   protected def functional: Receive
 
   protected def startOrderRecovery() = {
-    context.become(recovering)
-    log.info(s"actor recovering started: ${self.path}")
-    self ! XRecoverOrdersReq(
-      ownerOfOrders.getOrElse(""),
-      0L,
-      recoverBatchSize
-    )
+    if (skipRecovery) {
+      context.become(functional)
+    } else {
+      context.become(recovering)
+      log.info(s"actor recovering started: ${self.path}")
+      self ! XRecoverOrdersReq(ownerOfOrders.getOrElse(""), 0L, recoverBatchSize)
+    }
   }
 
   def recovering: Receive = {

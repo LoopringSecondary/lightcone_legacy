@@ -39,7 +39,8 @@ object AccountManagerActor {
 
 class AccountManagerActor(
     val address: String,
-    val recoverBatchSize: Int
+    val recoverBatchSize: Int,
+    val skipRecovery: Boolean = false
 )(
     implicit
     val ec: ExecutionContext,
