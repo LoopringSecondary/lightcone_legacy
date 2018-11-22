@@ -31,15 +31,17 @@ object AccountManagerActorDeployer {
 
 // TODO(dongw): Leave this to me to implement.
 class AccountManagerActorDeployer(shard: Shard)(
-  implicit ec: ExecutionContext,
-  timeout: Timeout)
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
   extends Actor
   with ActorLogging {
 
   private var actors = Map.empty[String, ActorRef]
 
   def receive: Receive = {
-    case msg: AnyRef =>
+    case msg: AnyRef ⇒
 
   }
 }
