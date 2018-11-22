@@ -127,6 +127,10 @@ message XGetBalanceAndAllowancesRes {
     map<string, XBalanceAndAllowance> balance_and_allowance_map = 2;
 }
 
+message XSubmitRawOrderReq {
+    XRawOrder order = 1;
+}
+
 message XSubmitOrderReq {
     XOrder order = 1;
 }
@@ -148,6 +152,15 @@ message XAddressAllowanceUpdated {
     bytes balance = 3;
 }
 
+
+message XUpdateOrderStateAndStatusReq {
+    XOrderState actuals = 1;
+    core.XOrderStatus status = 2;
+}
+
+message XUpdateOrderStateAndStatusRes {
+    bool result =1;
+}
 
 // 由ethereum发送给orderManagingActor
 // 以太坊事件顺序根据blockID，tx&eventId来确定,由route汇聚到不同用户地址,然后按顺序逐个发送给orderManagingActor

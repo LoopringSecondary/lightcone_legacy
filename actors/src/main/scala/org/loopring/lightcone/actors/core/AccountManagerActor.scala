@@ -55,7 +55,7 @@ class AccountManagerActor(
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
-  protected var orderDbManagerActor: ActorSelection = _
+  protected var orderDatabaseAccessActor: ActorSelection = _
   protected var accountBalanceActor: ActorSelection = _
   protected var orderHistoryActor: ActorSelection = _
   protected var marketManagerActor: ActorSelection = _
@@ -65,7 +65,7 @@ class AccountManagerActor(
     case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
       assert(paths.size == 4)
-      orderDbManagerActor = context.actorSelection(paths(0))
+      orderDatabaseAccessActor = context.actorSelection(paths(0))
       accountBalanceActor = context.actorSelection(paths(1))
       orderHistoryActor = context.actorSelection(paths(2))
       marketManagerActor = context.actorSelection(paths(3))

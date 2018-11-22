@@ -80,7 +80,7 @@ class MarketManagerActor(
     aggregator
   )
 
-  protected var orderDbManagerActor: ActorSelection = _
+  protected var orderDatabaseAccessActor: ActorSelection = _
   protected var gasPriceActor: ActorSelection = _
   protected var orderbookManagerActor: ActorSelection = _
   protected var settlementActor: ActorSelection = _
@@ -90,7 +90,7 @@ class MarketManagerActor(
     case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
       assert(paths.size == 4)
-      orderDbManagerActor = context.actorSelection(paths(0))
+      orderDatabaseAccessActor = context.actorSelection(paths(0))
       gasPriceActor = context.actorSelection(paths(1))
       orderbookManagerActor = context.actorSelection(paths(2))
       settlementActor = context.actorSelection(paths(3))

@@ -97,7 +97,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
           ring.taker.pending.amountS,
           ring.maker.id,
           ring.maker.pending.amountS,
-          time.getCurrentTimeMillis()
+          time.getTimeMillis()
         )
 
         incrementOrderPendingAmountS(
@@ -128,7 +128,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
   }
 
   def deleteRingsOlderThan(age: Long) =
-    deleteRingsBefore(time.getCurrentTimeMillis - age)
+    deleteRingsBefore(time.getTimeMillis - age)
 
   def deleteRingsContainingOrder(orderId: String) = this.synchronized {
     ringMap.filter {

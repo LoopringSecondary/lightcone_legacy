@@ -24,11 +24,11 @@ trait TimeProvider {
   def getTimestamp = new Timestamp(getTimeMillis)
 }
 
-final class LocalSystemTimeProvider extends TimeProvider {
+final class SystemTimeProvider extends TimeProvider {
   def getTimeMillis = System.currentTimeMillis()
 }
 
-final class DifferenceAssuredLocalSystemTimeProvider extends TimeProvider {
+final class DifferenceAssuredSystemTimeProvider extends TimeProvider {
   private var lastTimestamp = 0L
 
   def getTimeMillis = {

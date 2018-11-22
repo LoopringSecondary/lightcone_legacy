@@ -97,7 +97,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
   // Simulating an AccountBalanceActor
-  val orderDdManagerProbe = new TestProbe(system, "order_db_manager") {
+  val orderDdManagerProbe = new TestProbe(system, "order_db_access") {
   }
   val orderDdManagerActor = orderDdManagerProbe.ref
 
