@@ -165,7 +165,9 @@ class AccountManagerActor(address: String)(
         case CANCELLED_LOW_BALANCE | CANCELLED_LOW_FEE_BALANCE ⇒
           marketManagerActor ! XCancelOrderReq(order.id)
         case s ⇒
-          log.error(s"unexpected order status caused by balance/allowance upate: $s")
+          //allowance的改变需要更新到marketManager
+          marketManagerActor ! XSubmitOrderReq(Some(order))
+//          log.error(s"unexpected order status caused by balance/allowance upate: $s")
       }
     }
   }
