@@ -39,18 +39,15 @@ object MarketManagerActor {
 
 // TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
 class MarketManagerActor(
-    marketId: XMarketId,
-    config: XMarketManagerConfig
-)(
-    implicit
-    ec: ExecutionContext,
+  marketId: XMarketId,
+  config: XMarketManagerConfig)(
+    implicit ec: ExecutionContext,
     timeout: Timeout,
     timeProvider: TimeProvider,
     tokenValueEstimator: TokenValueEstimator,
     ringIncomeEstimator: RingIncomeEstimator,
     dustOrderEvaluator: DustOrderEvaluator,
-    tokenMetadataManager: TokenMetadataManager
-)
+    tokenMetadataManager: TokenMetadataManager)
   extends Actor
   with ActorLogging {
 
@@ -61,8 +58,7 @@ class MarketManagerActor(
   private val ringMatcher = new RingMatcherImpl()
   private val pendingRingPool = new PendingRingPoolImpl()
   private val aggregator = new OrderAwareOrderbookAggregatorImpl(
-    config.priceDecimals
-  )
+    config.priceDecimals)
 
   private val manager: MarketManager = new MarketManagerImpl(
     marketId,
@@ -71,8 +67,7 @@ class MarketManagerActor(
     ringMatcher,
     pendingRingPool,
     dustOrderEvaluator,
-    aggregator
-  )
+    aggregator)
 
   private var gasPriceActor: ActorSelection = _
   private var orderbookManagerActor: ActorSelection = _
@@ -119,7 +114,7 @@ class MarketManagerActor(
 
     case XCancelOrderReq(orderId, hardCancel) ⇒
       manager.cancelOrder(orderId) foreach {
-        orderUpdate ⇒ orderbookManagerActor ! orderUpdate
+        orderbookUpdate ⇒ orderbookManagerActor ! orderbookUpdate
       }
       sender ! XCancelOrderRes(id = orderId)
 
@@ -160,8 +155,7 @@ class MarketManagerActor(
       settlementActor ! XSettleRingsReq(
         rings = matchResult.rings,
         gasLimit = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * matchResult.rings.size,
-        gasPrice = gasPrice
-      )
+        gasPrice = gasPrice)
     }
   }
 
