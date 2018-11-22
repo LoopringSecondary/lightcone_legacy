@@ -29,10 +29,10 @@ trait OrderAwareSpec extends CommonSpec {
   val DAI = "DAI"
   val WETH = "WETH"
 
-  val LRC_TOKEN = XTokenMetadata(LRC, 0, 0.1, 1.0)
-  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.2, 1400.0)
-  val DAI_TOKEN = XTokenMetadata(DAI, 20, 0.3, 7.0)
-  val WETH_TOKEN = XTokenMetadata(WETH, 23, 0.4, 0.5)
+  val LRC_TOKEN = XTokenMetadata(LRC, "0x1", 0, 0.1, 1.0)
+  val GTO_TOKEN = XTokenMetadata(GTO, "0x2", 10, 0.2, 1400.0)
+  val DAI_TOKEN = XTokenMetadata(DAI, "0x3", 20, 0.3, 7.0)
+  val WETH_TOKEN = XTokenMetadata(WETH, "0x4", 23, 0.4, 0.5)
 
   implicit val tmm = new TokenMetadataManager()
   tmm.addToken(LRC_TOKEN)

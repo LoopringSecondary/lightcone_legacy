@@ -145,7 +145,8 @@ class SettlementActor(
       feeAmount = xOrder.amountFee,
       tokenReceipt = "",
       sig = "",
-      dualAuthSig = ""
+      dualAuthSig = "",
+      hash = xOrder.id
     )
   }
 

@@ -20,15 +20,9 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.core.data.Order
-import akka.pattern._
-import akka.testkit.{ EventFilter, TestProbe }
-import akka.pattern.ask
-import scala.concurrent.duration._
-import scala.concurrent._
 import XErrorCode._
 import CoreActorsIntegrationCommonSpec._
 
-// TODO(hongyu): implement this
 class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
   extends CoreActorsIntegrationCommonSpec(XMarketId(LRC, WETH)) {
 
@@ -36,9 +30,9 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
     "succeed and make change to orderbook" in {
       val order = XOrder(
         id = "buy_lrc",
-        tokenS = WETH,
-        tokenB = LRC,
-        tokenFee = LRC,
+        tokenS = WETH_TOKEN.address,
+        tokenB = LRC_TOKEN.address,
+        tokenFee = LRC_TOKEN.address,
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
         amountFee = "10".zeros(18),
@@ -48,11 +42,11 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
 
       accountManagerActor1 ! XSubmitOrderReq(Some(order))
 
-      accountBalanceProbe.expectQuery(ADDRESS_1, WETH)
-      accountBalanceProbe.replyWith(WETH, "100".zeros(18), "100".zeros(18))
+      accountBalanceProbe.expectQuery(ADDRESS_1, WETH_TOKEN.address)
+      accountBalanceProbe.replyWith(WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
 
-      accountBalanceProbe.expectQuery(ADDRESS_1, LRC)
-      accountBalanceProbe.replyWith(LRC, "0".zeros(0), "0".zeros(0))
+      accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
+      accountBalanceProbe.replyWith(LRC_TOKEN.address, "0".zeros(0), "0".zeros(0))
 
       orderHistoryProbe.expectQuery(order.id)
       orderHistoryProbe.replyWith(order.id, "0".zeros(0))
@@ -61,6 +55,7 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
           val order: Order = xorder
           log.debug(s"order submitted: $order")
+        case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
       }
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
