@@ -45,6 +45,7 @@ message XMarketId {
 message XMarketManagerConfig {
     int32 maxNumbersOfOrders = 1;
     int32 priceDecimals = 2;
+    int32 recover_batch_size = 3;
 }
 
 

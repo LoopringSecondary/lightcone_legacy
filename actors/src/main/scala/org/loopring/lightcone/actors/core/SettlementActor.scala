@@ -26,7 +26,7 @@ import org.loopring.lightcone.actors.base.RepeatedJobActor
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.deployment.ActorDependencyReady
+import org.loopring.lightcone.proto.deployment.XActorDependencyReady
 
 import scala.annotation.tailrec
 import scala.concurrent.{ ExecutionContext, Future }
@@ -49,7 +49,7 @@ class SettlementActor(
   private var gasPriceActor: ActorSelection = _
 
   override def receive: Receive = super.receive orElse LoggingReceive {
-    case ActorDependencyReady(paths) ⇒
+    case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
       assert(paths.size == 2)
       gasPriceActor = context.actorSelection(paths(0))
