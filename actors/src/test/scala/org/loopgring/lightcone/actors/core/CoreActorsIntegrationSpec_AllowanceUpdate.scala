@@ -70,7 +70,7 @@ class CoreActorsIntegrationSpec_AllowanceUpdate
 
       accountManagerActor1 ! XAddressAllowanceUpdated(ADDRESS_1, WETH_TOKEN.address, "45".zeros(18))
 
-      //等待accountMaanger执行完毕
+      //等待accountManager执行完毕
       Thread.sleep(1000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
