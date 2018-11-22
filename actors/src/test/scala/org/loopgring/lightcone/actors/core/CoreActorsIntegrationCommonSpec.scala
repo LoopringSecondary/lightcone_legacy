@@ -44,7 +44,11 @@ object CoreActorsIntegrationCommonSpec {
   val LRC_TOKEN = XTokenMetadata(LRC, 18, 0.4, 1000, "LRC")
 }
 
-abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
+abstract class CoreActorsIntegrationCommonSpec(
+    marketId: XMarketId,
+    skipAccountManagerActorRecovery: Boolean = true,
+    skipMarketManagerActorRecovery: Boolean = true
+)
   extends TestKit(ActorSystem("test", ConfigFactory.parseString(
     """akka {
          loglevel = "DEBUG"
@@ -139,7 +143,7 @@ abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
     new AccountManagerActor(
       address = ADDRESS_1,
       recoverBatchSize = 5,
-      skipRecovery = true
+      skipRecovery = skipAccountManagerActorRecovery
     )
   )
 
@@ -147,7 +151,7 @@ abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
     new AccountManagerActor(
       address = ADDRESS_2,
       recoverBatchSize = 5,
-      skipRecovery = true
+      skipRecovery = skipAccountManagerActorRecovery
     )
   )
 
@@ -155,7 +159,7 @@ abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
     new MarketManagerActor(
       marketId,
       config,
-      skipRecovery = true
+      skipRecovery = skipMarketManagerActorRecovery
     )
   )
 
