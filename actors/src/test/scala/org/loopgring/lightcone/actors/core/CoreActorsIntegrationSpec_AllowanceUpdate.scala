@@ -16,26 +16,27 @@
 
 package org.loopgring.lightcone.actors.core
 
+import org.loopgring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.core.data.Order
-import XErrorCode._
-import CoreActorsIntegrationCommonSpec._
 
-class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
-  extends CoreActorsIntegrationCommonSpec(XMarketId(LRC, WETH)) {
+class CoreActorsIntegrationSpec_AllowanceUpdate
+  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
-  "submit a single order" must {
-    "succeed and make change to orderbook" in {
+  "update allowance after submit an order" must {
+    "received by marketManager, orderbookManager if the actual changed" in {
       val order = XOrder(
-        id = "buy_lrc",
+        id = "order",
         tokenS = WETH_TOKEN.address,
-        tokenB = LRC_TOKEN.address,
+        tokenB = GTO_TOKEN.address,
         tokenFee = LRC_TOKEN.address,
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
         amountFee = "10".zeros(18),
+        walletSplitPercentage = 0.2,
         status = XOrderStatus.NEW
       )
 
@@ -45,7 +46,7 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
       accountBalanceProbe.replyWith(WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
 
       accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
-      accountBalanceProbe.replyWith(LRC_TOKEN.address, "0".zeros(0), "0".zeros(0))
+      accountBalanceProbe.replyWith(LRC_TOKEN.address, "10".zeros(18), "10".zeros(18))
 
       orderHistoryProbe.expectQuery(order.id)
       orderHistoryProbe.replyWith(order.id, "0".zeros(0))
@@ -53,15 +54,31 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
           val order: Order = xorder
-          log.debug(s"order submitted: $order")
+          info(s"submitted an order: $order")
         case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
+          info(s"occurs ERR_UNKNOWN when submitting order:$order")
       }
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          println("----orderbook: " + a)
+          a.sells.nonEmpty should be(true)
+          a.sells.head.amount should be("50.00")
+          info("----orderbook status after submit an order: " + a)
+      }
+
+      accountManagerActor1 ! XAddressAllowanceUpdated(ADDRESS_1, WETH_TOKEN.address, "45".zeros(18))
+
+      //等待accountManager执行完毕
+      Thread.sleep(1000)
+      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+      expectMsgPF() {
+        case a: XOrderbook ⇒
+          //          a.sells.nonEmpty should be(true)
+          //          a.sells.head.amount should be("45.00")
+          info("----orderbook status after cancel this order: " + a)
       }
     }
   }

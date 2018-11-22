@@ -16,26 +16,32 @@
 
 package org.loopgring.lightcone.actors.core
 
+import akka.actor.Kill
+import akka.testkit.TestProbe
+import org.loopgring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.core.data.Order
-import XErrorCode._
-import CoreActorsIntegrationCommonSpec._
 
-class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
-  extends CoreActorsIntegrationCommonSpec(XMarketId(LRC, WETH)) {
+import scala.concurrent.Future
+import scala.concurrent.duration._
 
-  "submit a single order" must {
-    "succeed and make change to orderbook" in {
+class CoreActorsIntegrationSpec_CancelOrder
+  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
+
+  "cancel an order to generate a cancel event" must {
+    "received by marketManager, orderbookManager" in {
       val order = XOrder(
-        id = "buy_lrc",
+        id = "order",
         tokenS = WETH_TOKEN.address,
-        tokenB = LRC_TOKEN.address,
+        tokenB = GTO_TOKEN.address,
         tokenFee = LRC_TOKEN.address,
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
         amountFee = "10".zeros(18),
+        walletSplitPercentage = 0.2,
         status = XOrderStatus.NEW
       )
 
@@ -45,7 +51,7 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
       accountBalanceProbe.replyWith(WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
 
       accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
-      accountBalanceProbe.replyWith(LRC_TOKEN.address, "0".zeros(0), "0".zeros(0))
+      accountBalanceProbe.replyWith(LRC_TOKEN.address, "10".zeros(18), "10".zeros(18))
 
       orderHistoryProbe.expectQuery(order.id)
       orderHistoryProbe.replyWith(order.id, "0".zeros(0))
@@ -53,15 +59,29 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
           val order: Order = xorder
-          log.debug(s"order submitted: $order")
+          info(s"submitted an order: $order")
         case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
+          info(s"occurs ERR_UNKNOWN when submitting order:$order")
       }
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          println("----orderbook: " + a)
+          info("----orderbook status after submit an order: " + a)
+      }
+
+      accountManagerActor1 ! XCancelOrderReq(order.id, false)
+      expectMsgPF() {
+        case res: XCancelOrderRes ⇒
+          info(s"-- canceled this order: $res")
+      }
+
+      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+      expectMsgPF() {
+        case a: XOrderbook ⇒
+          info("----orderbook status after cancel this order: " + a)
       }
     }
   }

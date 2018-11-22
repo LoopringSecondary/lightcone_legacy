@@ -74,51 +74,53 @@ class MarketManagerActor(
     aggregator
   )
 
+  private var marketRecoveringActor: ActorSelection = _
   private var gasPriceActor: ActorSelection = _
   private var orderbookManagerActor: ActorSelection = _
   private var settlementActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
-    case ActorDependencyReady(paths) ⇒
+
+    case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 3)
-      gasPriceActor = context.actorSelection(paths(0))
-      orderbookManagerActor = context.actorSelection(paths(1))
-      settlementActor = context.actorSelection(paths(2))
-      context.become(functional)
+      assert(paths.size == 4)
+      marketRecoveringActor = context.actorSelection(paths(0))
+      gasPriceActor = context.actorSelection(paths(1))
+      orderbookManagerActor = context.actorSelection(paths(2))
+      settlementActor = context.actorSelection(paths(3))
+
+      context.become(recovering)
+
+      log.info(s"start recovering for market: $marketId")
+      marketRecoveringActor ! XRestoreMarketOrdersReq(0, config.recoverBatchSize)
+  }
+
+  def recovering: Receive = {
+
+    case XRestoreMarketOrdersRes(xorders, hasMore) ⇒
+      log.info(s"recovering batch (size = ${xorders.size})")
+      for {
+        _ ← Future.sequence(xorders.map(submitOrder))
+        lastOne = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
+        _ = context.become(functional) if lastOne == 0 || xorders.size < config.recoverBatchSize
+        _ = marketRecoveringActor ! XRestoreMarketOrdersReq(lastOne, config.recoverBatchSize)
+      } yield Unit
+
   }
 
   def functional: Receive = LoggingReceive {
 
+    case XRestoreMarketOrdersRes(xorders, _) ⇒
+      log.info(s"recovering last batch (size = ${xorders.size})")
+      Future.sequence(xorders.map(submitOrder))
+
     case XSubmitOrderReq(Some(xorder)) ⇒
-
-      assert(xorder.actual.nonEmpty, "order in XSubmitOrderReq miss `actual` field")
-      val order: Order = xorder
-      println("!!!!!!---" + order)
-      xorder.status match {
-        case XOrderStatus.NEW | XOrderStatus.PENDING ⇒ for {
-          // get ring settlement cost
-          res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
-
-          gasPrice: BigInt = res.gasPrice
-          minRequiredIncome = getRequiredMinimalIncome(gasPrice)
-
-          _ = println(".............+ " + minRequiredIncome)
-
-          // submit order to reserve balance and allowance
-          matchResult = manager.submitOrder(order, minRequiredIncome)
-          _ = println(".....||" + matchResult)
-
-          //settlement matchResult and update orderbook
-          _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
-        } yield Unit
-
-        case s ⇒
-          log.error(s"unexpected order status in XSubmitOrderReq: $s")
-      }
+      submitOrder(xorder)
 
     case XCancelOrderReq(orderId, hardCancel) ⇒
-      manager.cancelOrder(orderId)
+      manager.cancelOrder(orderId) foreach {
+        orderUpdate ⇒ orderbookManagerActor ! orderUpdate
+      }
       sender ! XCancelOrderRes(id = orderId)
 
     case XGasPriceUpdated(_gasPrice) ⇒
@@ -136,6 +138,33 @@ class MarketManagerActor(
         .foreach { updateOrderbookAndSettleRings(_, gasPrice) }
     } yield Unit
 
+  }
+
+  private def submitOrder(xorder: XOrder): Future[Unit] = {
+    assert(xorder.actual.nonEmpty, "order in XSubmitOrderReq miss `actual` field")
+    val order: Order = xorder
+    xorder.status match {
+      case XOrderStatus.NEW | XOrderStatus.PENDING ⇒ for {
+        // get ring settlement cost
+        res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
+
+        gasPrice: BigInt = res.gasPrice
+        minRequiredIncome = getRequiredMinimalIncome(gasPrice)
+
+        _ = println(".............+ " + minRequiredIncome)
+
+        // submit order to reserve balance and allowance
+        matchResult = manager.submitOrder(order, minRequiredIncome)
+        _ = println(".....||" + matchResult)
+
+        //settlement matchResult and update orderbook
+        _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
+      } yield Unit
+
+      case s ⇒
+        log.error(s"unexpected order status in XSubmitOrderReq: $s")
+        Future.successful(Unit)
+    }
   }
 
   private def getRequiredMinimalIncome(gasPrice: BigInt): Double = {
