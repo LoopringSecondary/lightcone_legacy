@@ -118,7 +118,9 @@ class MarketManagerActor(
       submitOrder(xorder)
 
     case XCancelOrderReq(orderId, hardCancel) ⇒
-      manager.cancelOrder(orderId)
+      manager.cancelOrder(orderId) foreach {
+        orderUpdate ⇒ orderbookManagerActor ! orderUpdate
+      }
       sender ! XCancelOrderRes(id = orderId)
 
     case XGasPriceUpdated(_gasPrice) ⇒

@@ -39,9 +39,9 @@ object CoreActorsIntegrationCommonSpec {
   val WETH = "WETH"
   val LRC = "LRC"
 
-  val GTO_TOKEN = XTokenMetadata(LRC, 10, 0.1, 1.0)
-  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
-  val LRC_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
+  val GTO_TOKEN = XTokenMetadata(GTO, "0x1", 10, 0.1, 1.0)
+  val WETH_TOKEN = XTokenMetadata(WETH, "0x2", 18, 0.4, 1000)
+  val LRC_TOKEN = XTokenMetadata(LRC, "0x3", 18, 0.4, 1000)
 }
 
 abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
