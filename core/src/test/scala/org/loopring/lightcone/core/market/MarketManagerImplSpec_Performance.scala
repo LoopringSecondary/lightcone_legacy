@@ -97,14 +97,14 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
     val sells = marketManager.getSellOrders(100)
     val buys = marketManager.getBuyOrders(100)
 
-    println(s"""
-      -----------
-      sells: ${sells.mkString("\n", "\n\n", "\n")}
+    // println(s"""
+    //   -----------
+    //   sells: ${sells.mkString("\n", "\n\n", "\n")}
 
-      -----------
-      buys: ${buys.mkString("\n", "\n\n", "\n")}
+    //   -----------
+    //   buys: ${buys.mkString("\n", "\n\n", "\n")}
 
-      """)
+    //   """)
 
     println(s"""
       number of orders :${marketManager.getNumOfOrders}

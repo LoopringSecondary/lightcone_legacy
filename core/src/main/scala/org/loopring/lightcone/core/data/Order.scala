@@ -42,6 +42,7 @@ case class Order(
     amountB: BigInt = 0,
     amountFee: BigInt = 0,
     createdAt: Long = -1,
+    updatedAt: Long = -1,
     status: XOrderStatus = NEW,
     walletSplitPercentage: Double = 0,
     _outstanding: Option[OrderState] = None,

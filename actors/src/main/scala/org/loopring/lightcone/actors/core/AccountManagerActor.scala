@@ -53,7 +53,7 @@ class AccountManagerActor(address: String)(
   private var marketManagerActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
-    case ActorDependencyReady(paths) ⇒
+    case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
       assert(paths.size == 3)
       accountBalanceActor = context.actorSelection(paths(0))
@@ -168,7 +168,9 @@ class AccountManagerActor(address: String)(
           //allowance的改变需要更新到marketManager
           marketManagerActor ! XSubmitOrderReq(Some(order))
         case s ⇒
-          log.error(s"unexpected order status caused by balance/allowance upate: $s")
+          //allowance的改变需要更新到marketManager
+          marketManagerActor ! XSubmitOrderReq(Some(order))
+//          log.error(s"unexpected order status caused by balance/allowance upate: $s")
       }
     }
   }

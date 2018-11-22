@@ -22,6 +22,6 @@ package org.loopring.lightcone.proto.deployment;
 import "google/protobuf/any.proto";
 
 
-message ActorDependencyReady {
+message XActorDependencyReady {
     repeated string paths = 1;
 }
