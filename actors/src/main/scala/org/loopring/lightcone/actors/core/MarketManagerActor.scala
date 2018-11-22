@@ -21,6 +21,7 @@ import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.depth._
@@ -93,15 +94,10 @@ class MarketManagerActor(
       orderbookManagerActor = context.actorSelection(paths(2))
       settlementActor = context.actorSelection(paths(3))
 
-      startRecover()
+      startOrderRecovery()
   }
 
-  def functional: Receive = LoggingReceive {
-
-    case XRecoverOrdersRes(xraworders) ⇒
-      log.info(s"recovering last batch (size = ${xraworders.size})")
-      val xorders = xraworders.map(convertXRawOrderToXOrder)
-      Future.sequence(xorders.map(submitOrder))
+  def functional: Receive = functionalBase orElse LoggingReceive {
 
     case XSubmitOrderReq(Some(xorder)) ⇒
       submitOrder(xorder)
@@ -128,8 +124,6 @@ class MarketManagerActor(
     } yield Unit
 
   }
-
-  def recoverOrder(xorder: XOrder): Future[Unit] = submitOrder(xorder)
 
   private def submitOrder(xorder: XOrder): Future[Unit] = {
     assert(xorder.actual.nonEmpty, "order in XSubmitOrderReq miss `actual` field")
@@ -183,4 +177,5 @@ class MarketManagerActor(
     }
   }
 
+  protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
 }

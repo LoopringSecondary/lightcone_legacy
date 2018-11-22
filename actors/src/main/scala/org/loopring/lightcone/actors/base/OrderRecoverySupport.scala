@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.core
+package org.loopring.lightcone.actors.base
 
 import akka.actor._
 import akka.event.LoggingReceive
@@ -32,7 +32,7 @@ import org.loopring.lightcone.proto.deployment._
 
 import scala.concurrent._
 
-private[core] trait OrderRecoverySupport {
+trait OrderRecoverySupport {
   self: Actor with ActorLogging ⇒
 
   implicit val ec: ExecutionContext
@@ -40,26 +40,32 @@ private[core] trait OrderRecoverySupport {
 
   val recoverBatchSize: Int
   val ownerOfOrders: Option[String]
+  private var batch = 1
 
   protected var orderDbManagerActor: ActorSelection
 
-  def recoverOrder(xorder: XOrder): Future[Unit]
+  protected def recoverOrder(xorder: XOrder): Future[Any]
 
-  def functional: Receive
+  protected def functional: Receive
 
-  def startRecover() = {
+  protected def startOrderRecovery() = {
     context.become(recovering)
     log.info(s"actor recovering started: ${self.path}")
-    self ! XRecoverOrdersReq(ownerOfOrders.getOrElse(""), 0, recoverBatchSize)
+    self ! XRecoverOrdersReq(
+      ownerOfOrders.getOrElse(""),
+      0L,
+      recoverBatchSize
+    )
   }
 
   def recovering: Receive = {
+
     case XRecoverOrdersRes(xraworders) ⇒
-      log.info(s"recovering batch (size = ${xraworders.size})")
+      log.info(s"recovering batch $batch (size = ${xraworders.size})")
+      batch += 1
 
       val xorders = xraworders.map(convertXRawOrderToXOrder)
       for {
-
         _ ← Future.sequence(xorders.map(recoverOrder))
         lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
         recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
@@ -72,10 +78,11 @@ private[core] trait OrderRecoverySupport {
       } yield Unit
 
     case msg ⇒
-      log.debug(s"ignored msg during recovery: $msg")
+      log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
   }
 
   def functionalBase: Receive = LoggingReceive {
+
     case XRecoverOrdersRes(xraworders) ⇒
       log.info(s"recovering last batch (size = ${xraworders.size})")
       val xorders = xraworders.map(convertXRawOrderToXOrder)
