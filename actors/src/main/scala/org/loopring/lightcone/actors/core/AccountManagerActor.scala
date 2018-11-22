@@ -36,24 +36,30 @@ object AccountManagerActor {
   val name = "account_manager"
 }
 
-class AccountManagerActor(address: String)(
+class AccountManagerActor(
+    val address: String,
+    val recoverBatchSize: Int
+)(
     implicit
-    ec: ExecutionContext,
-    timeout: Timeout,
-    dustEvaluator: DustOrderEvaluator
+    val ec: ExecutionContext,
+    val timeout: Timeout,
+    val dustEvaluator: DustOrderEvaluator
 )
   extends Actor
-  with ActorLogging {
+  with ActorLogging
+  with OrderRecoverySupport {
+  val ownerOfOrders = Some(address)
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
-  private var orderDbManagerActor: ActorSelection = _
-  private var accountBalanceActor: ActorSelection = _
-  private var orderHistoryActor: ActorSelection = _
-  private var marketManagerActor: ActorSelection = _
+  protected var orderDbManagerActor: ActorSelection = _
+  protected var accountBalanceActor: ActorSelection = _
+  protected var orderHistoryActor: ActorSelection = _
+  protected var marketManagerActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
+
     case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
       assert(paths.size == 4)
@@ -61,10 +67,11 @@ class AccountManagerActor(address: String)(
       accountBalanceActor = context.actorSelection(paths(1))
       orderHistoryActor = context.actorSelection(paths(2))
       marketManagerActor = context.actorSelection(paths(3))
-      context.become(functional)
+
+      startRecover()
   }
 
-  def functional: Receive = LoggingReceive {
+  def functional: Receive = functionalBase orElse LoggingReceive {
 
     case XGetBalanceAndAllowancesReq(addr, tokens) ⇒
       assert(addr == address)
@@ -131,6 +138,10 @@ class AccountManagerActor(address: String)(
 
     case _ ⇒
   }
+
+  def recoverOrder(xorder: XOrder): Future[Unit] = submitOrder(xorder)
+
+  private def submitOrder(xorder: XOrder): Future[Unit] = ???
 
   private def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode = status match {
     case INVALID_DATA ⇒ ERR_INVALID_ORDER_DATA

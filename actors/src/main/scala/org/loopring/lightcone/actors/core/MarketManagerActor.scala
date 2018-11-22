@@ -39,20 +39,24 @@ object MarketManagerActor {
 
 // TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
 class MarketManagerActor(
-    marketId: XMarketId,
-    config: XMarketManagerConfig
+    val marketId: XMarketId,
+    val config: XMarketManagerConfig
 )(
     implicit
-    ec: ExecutionContext,
-    timeout: Timeout,
-    timeProvider: TimeProvider,
-    tokenValueEstimator: TokenValueEstimator,
-    ringIncomeEstimator: RingIncomeEstimator,
-    dustOrderEvaluator: DustOrderEvaluator,
-    tokenMetadataManager: TokenMetadataManager
+    val ec: ExecutionContext,
+    val timeout: Timeout,
+    val timeProvider: TimeProvider,
+    val tokenValueEstimator: TokenValueEstimator,
+    val ringIncomeEstimator: RingIncomeEstimator,
+    val dustOrderEvaluator: DustOrderEvaluator,
+    val tokenMetadataManager: TokenMetadataManager
 )
   extends Actor
-  with ActorLogging {
+  with ActorLogging
+  with OrderRecoverySupport {
+
+  val ownerOfOrders = None
+  val recoverBatchSize = config.recoverBatchSize
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
 
@@ -74,10 +78,10 @@ class MarketManagerActor(
     aggregator
   )
 
-  private var orderDbManagerActor: ActorSelection = _
-  private var gasPriceActor: ActorSelection = _
-  private var orderbookManagerActor: ActorSelection = _
-  private var settlementActor: ActorSelection = _
+  protected var orderDbManagerActor: ActorSelection = _
+  protected var gasPriceActor: ActorSelection = _
+  protected var orderbookManagerActor: ActorSelection = _
+  protected var settlementActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
 
@@ -89,29 +93,14 @@ class MarketManagerActor(
       orderbookManagerActor = context.actorSelection(paths(2))
       settlementActor = context.actorSelection(paths(3))
 
-      context.become(recovering)
-
-      log.info(s"start recovering for market: $marketId")
-      orderDbManagerActor ! XRestoreMarketOrdersReq(0, config.recoverBatchSize)
-  }
-
-  def recovering: Receive = {
-
-    case XRestoreMarketOrdersRes(xorders, hasMore) ⇒
-      log.info(s"recovering batch (size = ${xorders.size})")
-      for {
-        _ ← Future.sequence(xorders.map(submitOrder))
-        lastOne = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
-        _ = context.become(functional) if lastOne == 0 || xorders.size < config.recoverBatchSize
-        _ = orderDbManagerActor ! XRestoreMarketOrdersReq(lastOne, config.recoverBatchSize)
-      } yield Unit
-
+      startRecover()
   }
 
   def functional: Receive = LoggingReceive {
 
-    case XRestoreMarketOrdersRes(xorders, _) ⇒
-      log.info(s"recovering last batch (size = ${xorders.size})")
+    case XRecoverOrdersRes(xraworders) ⇒
+      log.info(s"recovering last batch (size = ${xraworders.size})")
+      val xorders = xraworders.map(convertXRawOrderToXOrder)
       Future.sequence(xorders.map(submitOrder))
 
     case XSubmitOrderReq(Some(xorder)) ⇒
@@ -139,6 +128,8 @@ class MarketManagerActor(
     } yield Unit
 
   }
+
+  def recoverOrder(xorder: XOrder): Future[Unit] = submitOrder(xorder)
 
   private def submitOrder(xorder: XOrder): Future[Unit] = {
     assert(xorder.actual.nonEmpty, "order in XSubmitOrderReq miss `actual` field")
