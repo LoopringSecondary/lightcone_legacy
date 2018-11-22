@@ -14,32 +14,21 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.core
+package org.loopgring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
-import akka.event.LoggingReceive
-import akka.util.Timeout
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
-
+import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.core.data.Order
+import akka.pattern._
+import akka.testkit.{ EventFilter, TestProbe }
+import akka.pattern.ask
+import scala.concurrent.duration._
 import scala.concurrent._
+import XErrorCode._
+import CoreActorsIntegrationCommonSpec._
 
-object OrderHistoryActor {
-  val name = "order_history"
-}
-
-// TODO(hongyu): implement this class.
-// 该类是不是需要将history保存在数据库，从数据库获取？稍后再实现
-class OrderHistoryActor()(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout
-)
-  extends Actor
-  with ActorLogging {
-
-  def receive: Receive = LoggingReceive {
-    case XGetOrderFilledAmountReq(orderId) ⇒ //从数据库获取
-    case XPersistOrderHistoryReq           ⇒ //保存在数据库
-  }
+class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsAnotherToken
+  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO, WETH)) {
 
 }

@@ -34,6 +34,7 @@ lazy val actors = (project in file("actors"))
   .enablePlugins(AutomateHeaderPlugin)
   .dependsOn(proto, core, auxiliary)
   .settings(
+    parallelExecution in Test := false,
     basicSettings,
     libraryDependencies ++= dependency4Actors)
 

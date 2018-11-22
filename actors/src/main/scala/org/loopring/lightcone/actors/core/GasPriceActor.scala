@@ -18,8 +18,8 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.util.Timeout
-import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.proto.actors._
 
 import scala.concurrent.ExecutionContext
 
@@ -27,17 +27,23 @@ object GasPriceActor {
   val name = "gas_price"
 }
 
-class GasPriceActor()(
+class GasPriceActor(defaultGasPrice: BigInt = BigInt("10000000000"))(
     implicit
     ec: ExecutionContext,
     timeout: Timeout
 )
   extends Actor
   with ActorLogging {
+  private var gasPrice = defaultGasPrice
 
   def receive: Receive = {
+
+    case XSetGasPriceReq(price) ⇒
+      sender ! XSetGasPriceRes(gasPrice)
+      gasPrice = price
+
     case req: XGetGasPriceReq ⇒
-      sender ! XGetGasPriceRes(gasPrice = "10000000000") //todo:需要较为准确的gasprice, 10G
+      sender ! XGetGasPriceRes(gasPrice)
   }
 
 }

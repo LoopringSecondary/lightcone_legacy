@@ -31,8 +31,20 @@ import org.scalatest._
 import org.loopring.lightcone.actors.data._
 import scala.concurrent.duration._
 import org.slf4s.Logging
+import scala.math.BigInt
 
-abstract class CoreActorsIntegrationCommonSpec
+object CoreActorsIntegrationCommonSpec {
+
+  val GTO = "GTO"
+  val WETH = "WETH"
+  val LRC = "LRC"
+
+  val GTO_TOKEN = XTokenMetadata(LRC, 10, 0.1, 1.0)
+  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
+  val LRC_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
+}
+
+abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
   extends TestKit(ActorSystem("test", ConfigFactory.parseString(
     """akka {
          loglevel = "DEBUG"
@@ -51,23 +63,17 @@ abstract class CoreActorsIntegrationCommonSpec
   with BeforeAndAfterAll
   with Logging {
 
+  import CoreActorsIntegrationCommonSpec._
+
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
   }
 
-  val LRC = "LRC"
-  val WETH = "WETH"
-  val ETH = "ETH"
-
-  val LRC_TOKEN = XTokenMetadata(LRC, 0, 0.1, 1.0)
-  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
-  val ETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
-
-  implicit val marketId = XMarketId(LRC, WETH)
+  implicit val marketId_ = marketId
   implicit val tokenMetadataManager = new TokenMetadataManager()
-  tokenMetadataManager.addToken(LRC_TOKEN)
+  tokenMetadataManager.addToken(GTO_TOKEN)
   tokenMetadataManager.addToken(WETH_TOKEN)
-  tokenMetadataManager.addToken(ETH_TOKEN)
+  tokenMetadataManager.addToken(LRC_TOKEN)
   implicit val tokenValueEstimator = new TokenValueEstimator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
   implicit val ringIncomeEstimator = new RingIncomeEstimatorImpl()
@@ -113,8 +119,10 @@ abstract class CoreActorsIntegrationCommonSpec
   val orderHistoryActor = orderHistoryProbe.ref
 
   // Simulating an SettlementActor
-  val settlementProbe = new TestProbe(system, "settlement")
-  val settlementActor = settlementProbe.ref
+  val ethereumProbe = new TestProbe(system, "ethereum")
+  val ethereumActor = ethereumProbe.ref
+
+  val settlementActor = TestActorRef(new SettlementActor("0xa1"))
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
@@ -136,18 +144,28 @@ abstract class CoreActorsIntegrationCommonSpec
 
   accountManagerActor1 ! ActorDependencyReady(Seq(
     accountBalanceActor.path.toString,
+    orderHistoryActor.path.toString,
     marketManagerActor.path.toString
   ))
 
   accountManagerActor2 ! ActorDependencyReady(Seq(
     accountBalanceActor.path.toString,
+    orderHistoryActor.path.toString,
     marketManagerActor.path.toString
   ))
 
   marketManagerActor ! ActorDependencyReady(Seq(
     gasPriceActor.path.toString,
-    orderHistoryActor.path.toString,
     orderbookManagerActor.path.toString,
     settlementActor.path.toString
   ))
+
+  settlementActor ! ActorDependencyReady(Seq(
+    gasPriceActor.path.toString,
+    ethereumActor.path.toString
+  ))
+
+  implicit class RichString(s: String) {
+    def zeros(size: Int): BigInt = BigInt(s + "0" * size)
+  }
 }
