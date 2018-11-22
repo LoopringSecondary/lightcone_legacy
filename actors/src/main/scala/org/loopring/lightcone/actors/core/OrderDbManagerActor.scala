@@ -16,10 +16,15 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor._
+import akka.actor.{ Actor, ActorLogging }
+import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.account._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.deployment.XActorDependencyReady
+import org.loopring.lightcone.actors.data._
 
 import scala.concurrent.ExecutionContext
 
@@ -27,15 +32,36 @@ object OrderDbManagerActor {
   val name = "order_db_manager"
 }
 
-class OrderDbManagerActor()(
-  implicit ec: ExecutionContext,
-  timeout: Timeout)
+// TODO(hongyu): implement this actor to support AMA and MMA.
+class OrderDbManagerActor(databaseManager: OrderDatabaseManager)(
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
   extends Actor
   with ActorLogging {
 
-  def receive: Receive = {
+  def receive: Receive = LoggingReceive {
+    case _ ⇒
 
-    case _ =>
   }
 
 }
+
+// TODO(litao): move this to auxiliary sub project and implement the logic
+
+trait OrderDatabaseManager {
+
+  def validateOrder(xorder: XRawOrder): Option[XErrorCode]
+
+  def saveOrder(xorder: XRawOrder): XRawOrder
+
+  def getOrder(orderId: String): Option[XRawOrder]
+
+  def getOrders(orderIds: Seq[String]): Seq[XRawOrder]
+
+  def getOrdersForRecovery(since: Long, num: Int, owner: Option[String]): Seq[XRawOrder]
+
+  def updateOrderStatus(actualState: XOrderState, status: XOrderStatus): Boolean
+}
+

@@ -48,6 +48,7 @@ class AccountManagerActor(address: String)(
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
+  private var orderDbManagerActor: ActorSelection = _
   private var accountBalanceActor: ActorSelection = _
   private var orderHistoryActor: ActorSelection = _
   private var marketManagerActor: ActorSelection = _
@@ -55,10 +56,11 @@ class AccountManagerActor(address: String)(
   def receive: Receive = LoggingReceive {
     case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 3)
-      accountBalanceActor = context.actorSelection(paths(0))
-      orderHistoryActor = context.actorSelection(paths(1))
-      marketManagerActor = context.actorSelection(paths(2))
+      assert(paths.size == 4)
+      orderDbManagerActor = context.actorSelection(paths(0))
+      accountBalanceActor = context.actorSelection(paths(1))
+      orderHistoryActor = context.actorSelection(paths(2))
+      marketManagerActor = context.actorSelection(paths(3))
       context.become(functional)
   }
 
@@ -167,7 +169,7 @@ class AccountManagerActor(address: String)(
         case s ⇒
           //allowance的改变需要更新到marketManager
           marketManagerActor ! XSubmitOrderReq(Some(order))
-//          log.error(s"unexpected order status caused by balance/allowance upate: $s")
+        //          log.error(s"unexpected order status caused by balance/allowance upate: $s")
       }
     }
   }

@@ -74,7 +74,7 @@ class MarketManagerActor(
     aggregator
   )
 
-  private var marketRecoveringActor: ActorSelection = _
+  private var orderDbManagerActor: ActorSelection = _
   private var gasPriceActor: ActorSelection = _
   private var orderbookManagerActor: ActorSelection = _
   private var settlementActor: ActorSelection = _
@@ -84,7 +84,7 @@ class MarketManagerActor(
     case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
       assert(paths.size == 4)
-      marketRecoveringActor = context.actorSelection(paths(0))
+      orderDbManagerActor = context.actorSelection(paths(0))
       gasPriceActor = context.actorSelection(paths(1))
       orderbookManagerActor = context.actorSelection(paths(2))
       settlementActor = context.actorSelection(paths(3))
@@ -92,7 +92,7 @@ class MarketManagerActor(
       context.become(recovering)
 
       log.info(s"start recovering for market: $marketId")
-      marketRecoveringActor ! XRestoreMarketOrdersReq(0, config.recoverBatchSize)
+      orderDbManagerActor ! XRestoreMarketOrdersReq(0, config.recoverBatchSize)
   }
 
   def recovering: Receive = {
@@ -103,7 +103,7 @@ class MarketManagerActor(
         _ ← Future.sequence(xorders.map(submitOrder))
         lastOne = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
         _ = context.become(functional) if lastOne == 0 || xorders.size < config.recoverBatchSize
-        _ = marketRecoveringActor ! XRestoreMarketOrdersReq(lastOne, config.recoverBatchSize)
+        _ = orderDbManagerActor ! XRestoreMarketOrdersReq(lastOne, config.recoverBatchSize)
       } yield Unit
 
   }
