@@ -53,9 +53,9 @@ trait OrderRecoverySupport {
     if (skipRecovery) {
       context.become(functional)
     } else {
-      //      context.become(recovering)
       log.info(s"actor recovering started: ${self.path}")
       orderDatabaseAccessActor ! XRecoverOrdersReq(ownerOfOrders.getOrElse(null), 0L, recoverBatchSize)
+      context.become(recovering)
     }
   }
 
@@ -70,12 +70,17 @@ trait OrderRecoverySupport {
         _ ← Future.sequence(xorders.map(recoverOrder))
         lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
         recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-        _ = if (recoverEnded) context.become(functional)
+
         _ = orderDatabaseAccessActor ! XRecoverOrdersReq(
           ownerOfOrders.getOrElse(null),
           lastUpdatdTimestamp,
           recoverBatchSize
         )
+
+        _ = if (recoverEnded) {
+          context.unbecome()
+          context.become(functional)
+        }
       } yield Unit
 
     case msg ⇒
