@@ -60,7 +60,9 @@ class AccountManagerActor(
   protected var orderHistoryActor: ActorSelection = _
   protected var marketManagerActor: ActorSelection = _
 
-  def receive: Receive = LoggingReceive {
+  def receive: Receive = initializing
+
+  def initializing: Receive = LoggingReceive {
 
     case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")

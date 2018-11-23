@@ -85,7 +85,9 @@ class MarketManagerActor(
   protected var orderbookManagerActor: ActorSelection = _
   protected var settlementActor: ActorSelection = _
 
-  def receive: Receive = LoggingReceive {
+  def receive: Receive = initializing
+
+  def initializing: Receive = LoggingReceive {
 
     case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
