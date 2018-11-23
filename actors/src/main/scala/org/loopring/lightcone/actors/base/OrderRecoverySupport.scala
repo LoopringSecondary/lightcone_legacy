@@ -77,10 +77,7 @@ trait OrderRecoverySupport {
           recoverBatchSize
         )
 
-        _ = if (recoverEnded) {
-          context.unbecome()
-          context.become(functional)
-        }
+        _ = if (recoverEnded) context.become(functional)
       } yield Unit
 
     case msg ⇒

@@ -27,7 +27,11 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.deployment.XActorDependencyReady
 
 class CoreActorsIntegrationSpec_AccountManagerRecovery
-  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
+  extends CoreActorsIntegrationCommonSpec(
+    XMarketId(GTO_TOKEN.address, WETH_TOKEN.address),
+    skipAccountManagerActorRecovery = false,
+    skipMarketManagerActorRecovery = true
+  ) {
 
   "when an accountManager starts" must {
     "first recover it and then receive order" in {
