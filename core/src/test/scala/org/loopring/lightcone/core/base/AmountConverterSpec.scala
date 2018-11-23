@@ -22,8 +22,8 @@ import org.loopring.lightcone.core._
 
 class AmountConverterSpec extends CommonSpec {
 
-  val GTO = "GTO"
-  val GTO_TOKEN = XTokenMetadata(GTO, "0x11", 7, 0.2, 1400.0)
+  val GTO = "0x00000000001"
+  val GTO_TOKEN = XTokenMetadata(GTO, 7, 0.2, 1400.0, "GTO")
   implicit val tmm = new TokenMetadataManager()
   tmm.addToken(GTO_TOKEN)
 
