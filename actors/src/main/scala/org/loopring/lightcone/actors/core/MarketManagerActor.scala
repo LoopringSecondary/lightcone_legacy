@@ -42,6 +42,10 @@ object MarketManagerActor {
 class MarketManagerActor(
     val marketId: XMarketId,
     val config: XMarketManagerConfig,
+    val orderDatabaseAccessActorPath: String,
+    val gasPriceActorPath: String,
+    val orderbookManagerActorPath: String,
+    val settlementActorPath: String,
     val skipRecovery: Boolean = false
 )(
     implicit
@@ -55,6 +59,7 @@ class MarketManagerActor(
 )
   extends Actor
   with ActorLogging
+  with ActorResolutionSupport
   with OrderRecoverySupport {
 
   val ownerOfOrders = None
@@ -80,25 +85,15 @@ class MarketManagerActor(
     aggregator
   )
 
-  protected var orderDatabaseAccessActor: ActorSelection = _
-  protected var gasPriceActor: ActorSelection = _
-  protected var orderbookManagerActor: ActorSelection = _
-  protected var settlementActor: ActorSelection = _
+  protected var orderDatabaseAccessActor: ActorRef = null
+  protected var gasPriceActor: ActorRef = null
+  protected var orderbookManagerActor: ActorRef = null
+  protected var settlementActor: ActorRef = null
 
-  def receive: Receive = initializing
-
-  def initializing: Receive = LoggingReceive {
-
-    case XActorDependencyReady(paths) ⇒
-      log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 4)
-      orderDatabaseAccessActor = context.actorSelection(paths(0))
-      gasPriceActor = context.actorSelection(paths(1))
-      orderbookManagerActor = context.actorSelection(paths(2))
-      settlementActor = context.actorSelection(paths(3))
-
-      startOrderRecovery()
-  }
+  resolveActor(orderDatabaseAccessActorPath, orderDatabaseAccessActor = _)
+  resolveActor(gasPriceActorPath, gasPriceActor = _)
+  resolveActor(orderbookManagerActorPath, orderbookManagerActor = _)
+  resolveActor(settlementActorPath, settlementActor = _)
 
   def functional: Receive = functionalBase orElse LoggingReceive {
 
@@ -139,11 +134,8 @@ class MarketManagerActor(
         gasPrice: BigInt = res.gasPrice
         minRequiredIncome = getRequiredMinimalIncome(gasPrice)
 
-        _ = println(".............+ " + minRequiredIncome)
-
         // submit order to reserve balance and allowance
         matchResult = manager.submitOrder(order, minRequiredIncome)
-        _ = println(".....||" + matchResult)
 
         //settlement matchResult and update orderbook
         _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
@@ -163,7 +155,6 @@ class MarketManagerActor(
   private def updateOrderbookAndSettleRings(matchResult: MatchResult, gasPrice: BigInt) {
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
-    println("________--1" + ou)
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
       orderbookManagerActor ! ou
     }
@@ -181,4 +172,5 @@ class MarketManagerActor(
   }
 
   protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
+  override def afterInitialization = startOrderRecovery
 }

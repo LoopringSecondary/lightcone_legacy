@@ -40,6 +40,10 @@ object AccountManagerActor {
 class AccountManagerActor(
     val address: String,
     val recoverBatchSize: Int,
+    val orderDatabaseAccessActorPath: String,
+    val accountBalanceActorPath: String,
+    val orderHistoryActorPath: String,
+    val marketManagerActorPath: String,
     val skipRecovery: Boolean = false
 )(
     implicit
@@ -49,31 +53,22 @@ class AccountManagerActor(
 )
   extends Actor
   with ActorLogging
+  with ActorResolutionSupport
   with OrderRecoverySupport {
   val ownerOfOrders = Some(address)
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
-  protected var orderDatabaseAccessActor: ActorSelection = _
-  protected var accountBalanceActor: ActorSelection = _
-  protected var orderHistoryActor: ActorSelection = _
-  protected var marketManagerActor: ActorSelection = _
+  protected var orderDatabaseAccessActor: ActorRef = null
+  protected var accountBalanceActor: ActorRef = null
+  protected var orderHistoryActor: ActorRef = null
+  protected var marketManagerActor: ActorRef = null
 
-  def receive: Receive = initializing
-
-  def initializing: Receive = LoggingReceive {
-
-    case XActorDependencyReady(paths) ⇒
-      log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 4)
-      orderDatabaseAccessActor = context.actorSelection(paths(0))
-      accountBalanceActor = context.actorSelection(paths(1))
-      orderHistoryActor = context.actorSelection(paths(2))
-      marketManagerActor = context.actorSelection(paths(3))
-
-      startOrderRecovery()
-  }
+  resolveActor(orderDatabaseAccessActorPath, orderDatabaseAccessActor = _)
+  resolveActor(accountBalanceActorPath, accountBalanceActor = _)
+  resolveActor(orderHistoryActorPath, orderHistoryActor = _)
+  resolveActor(marketManagerActorPath, marketManagerActor = _)
 
   def functional: Receive = functionalBase orElse LoggingReceive {
 
@@ -193,6 +188,6 @@ class AccountManagerActor(
   }
 
   protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
-
+  override def afterInitialization = startOrderRecovery
 }
 

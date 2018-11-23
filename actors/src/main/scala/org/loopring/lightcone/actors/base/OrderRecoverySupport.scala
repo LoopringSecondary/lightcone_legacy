@@ -43,7 +43,7 @@ trait OrderRecoverySupport {
   val ownerOfOrders: Option[String]
   private var batch = 1
 
-  protected var orderDatabaseAccessActor: ActorSelection
+  protected var orderDatabaseAccessActor: ActorRef
 
   protected def recoverOrder(xorder: XOrder): Future[Any]
 
