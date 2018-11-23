@@ -60,6 +60,16 @@ class BytesPacker() {
   def addHex(str: String, forceAppend: Boolean = true) =
     insert(Numeric.cleanHexPrefix(str), forceAppend)
 
+  def addPadHex(str: String, numBytes: Int = 32, forceAppend: Boolean = true) = {
+    insert(
+      Numeric.toHexStringNoPrefixZeroPadded(
+        Numeric.toBigInt(str),
+        numBytes * 2
+      ),
+      forceAppend
+    )
+  }
+
   def addRawBytes(str: String, forceAppend: Boolean = true) =
     insert(Numeric.cleanHexPrefix(str), forceAppend)
 

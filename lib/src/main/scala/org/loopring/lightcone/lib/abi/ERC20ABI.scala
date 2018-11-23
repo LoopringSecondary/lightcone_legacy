@@ -31,21 +31,25 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
   // 另外如何chuli  `case _`情况？
   def decodeAndAssemble(tx: Transaction): Option[Any] = {
     val result = decode(tx.input)
-    result.name match {
-      case FN_TRANSFER      ⇒ Some(assembleTransferFunction(result.list, tx.from))
-      case FN_TRANSFER_FROM ⇒ Some(assembleTransferFromFunction(result.list))
-      case FN_APPROVE       ⇒ Some(assembleApproveFunction(result.list, tx.from))
+    val data = result.name match {
+      case FN_TRANSFER      ⇒ assembleTransferFunction(result.list, tx.from)
+      case FN_TRANSFER_FROM ⇒ assembleTransferFromFunction(result.list)
+      case FN_APPROVE       ⇒ assembleApproveFunction(result.list, tx.from)
+      case _                ⇒ None
     }
+    Option(data)
   }
 
   // QUESTION(fukun): 这个方法的返回值和实现对不上，实现用的是match，不是map！
   // 另外如何chuli  `case _`情况？
   def decodeAndAssemble(tx: Transaction, log: TransactionLog): Option[Any] = {
     val result = decode(log)
-    result.name match {
-      case EN_TRANSFER ⇒ Some(assembleTransferEvent(result.list))
-      case EN_APPROVAL ⇒ Some(assembleApprovalEvent(result.list))
+    val data = result.name match {
+      case EN_TRANSFER ⇒ assembleTransferEvent(result.list)
+      case EN_APPROVAL ⇒ assembleApprovalEvent(result.list)
+      case _           ⇒ None
     }
+    Some(data)
   }
 
   private[lib] def assembleTransferFunction(list: Seq[Any], from: String) = {

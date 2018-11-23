@@ -27,23 +27,27 @@ class WethABI(abiJson: String) extends ERC20ABI(abiJson) {
 
   override def decodeAndAssemble(tx: Transaction): Option[Any] = {
     val result = decode(tx.input)
-    result.name match {
-      case FN_TRANSFER      ⇒ Some(assembleTransferFunction(result.list, tx.from))
-      case FN_TRANSFER_FROM ⇒ Some(assembleTransferFromFunction(result.list))
-      case FN_APPROVE       ⇒ Some(assembleApproveFunction(result.list, tx.from))
-      case FN_DEPOSIT       ⇒ Some(assembleDepositFunction(tx.from, tx.value))
-      case FN_WITHDRAWAL    ⇒ Some(assembleWithdrawalFunction(result.list, tx.from))
+    val data = result.name match {
+      case FN_TRANSFER      ⇒ assembleTransferFunction(result.list, tx.from)
+      case FN_TRANSFER_FROM ⇒ assembleTransferFromFunction(result.list)
+      case FN_APPROVE       ⇒ assembleApproveFunction(result.list, tx.from)
+      case FN_DEPOSIT       ⇒ assembleDepositFunction(tx.from, tx.value)
+      case FN_WITHDRAWAL    ⇒ assembleWithdrawalFunction(result.list, tx.from)
+      case _                ⇒ None
     }
+    Some(data)
   }
 
   override def decodeAndAssemble(tx: Transaction, log: TransactionLog): Option[Any] = {
     val result = decode(log)
-    result.name match {
-      case EN_TRANSFER   ⇒ Some(assembleTransferEvent(result.list))
-      case EN_APPROVAL   ⇒ Some(assembleApprovalEvent(result.list))
-      case EN_DEPOSIT    ⇒ Some(assembleDepositEvent(result.list))
-      case EN_WITHDRAWAL ⇒ Some(assembleWithdrawalEvent(result.list))
+    val data = result.name match {
+      case EN_TRANSFER   ⇒ assembleTransferEvent(result.list)
+      case EN_APPROVAL   ⇒ assembleApprovalEvent(result.list)
+      case EN_DEPOSIT    ⇒ assembleDepositEvent(result.list)
+      case EN_WITHDRAWAL ⇒ assembleWithdrawalEvent(result.list)
+      case _             ⇒ None
     }
+    Some(data)
   }
 
   private[lib] def assembleDepositFunction(from: String, value: BigInt) =

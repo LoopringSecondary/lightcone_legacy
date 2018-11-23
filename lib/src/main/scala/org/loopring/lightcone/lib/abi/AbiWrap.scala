@@ -17,10 +17,10 @@
 package org.loopring.lightcone.lib.abi
 
 import org.loopring.lightcone.lib.data._
-
 import java.math.BigInteger
 import java.lang.{ Boolean ⇒ jbool }
 
+import org.apache.commons.collections4.Predicate
 import org.web3j.utils.{ Numeric, Strings }
 import org.loopring.lightcone.lib.solidity.{ SolidityAbi ⇒ SABI }
 
@@ -65,6 +65,10 @@ abstract class AbiWrap(abiJson: String) {
     val key = firstTopic.toLowerCase
     supportedEventLogs.get(key)
   }
+
+  private[lib] def predicate[T <: SABI.Entry](name: String): Predicate[T] = (x) ⇒ x.name.equals(name)
+  def findFunctionByName(name: String): SABI.Function = abi.findFunction(predicate(name))
+  def findEventByName(name: String): SABI.Event = abi.findEvent(predicate(name))
 
   case class DecodeResult(name: String, list: Seq[Any])
 

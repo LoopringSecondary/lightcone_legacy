@@ -28,8 +28,19 @@ package object data {
   case class Deposit(owner: String, amount: BigInt)
   case class Withdrawal(owner: String, amount: BigInt)
 
+  case class BrokerRegistered(owner: String, broker: String, interceptor: String)
+  case class BrokerUnregistered(owner: String, broker: String, interceptor: String)
+  case class AllBrokersUnregistered(owner: String)
+
+  object SignAlgorithm extends Enumeration {
+    type AlgorithmType = Value
+    val ALGORITHM_ETHEREUM = Value(0)
+    val ALGORITHM_EIP712 = Value(1)
+  }
+
   implicit def bytes2BigInt(bytes: Array[Byte]): BigInt = Numeric.toBigInt(bytes)
   implicit def hexString2BigInt(hex: String): BigInt = Numeric.toBigInt(hex)
+  implicit def byte2BigInt(byte: Byte): BigInt = bytes2BigInt(Array[Byte](byte))
 
   implicit class RichString(src: String) {
 

@@ -32,7 +32,7 @@ object Dependencies {
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.7")
 
   lazy val ethereumDependency = Seq(
-    "org.web3j" % "core" % "3.4.0",
+    "org.web3j" % "core" % "4.0.0",
     "org.ethereum" % "ethereumj-core" % "1.8.2-RELEASE")
 
   lazy val akkaDependency = Seq(

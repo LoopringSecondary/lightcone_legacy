@@ -14,10 +14,29 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.lib.data
+package org.loopring.lightcone.lib.abi
 
-trait RingSigner {
-  def getInputData(ring: Ring): String
-  def getSignedTxData(inputData: String, nonce: BigInt, gasLimit: BigInt, gasPrice: BigInt): Array[Byte]
-  def getSignerAddress(): String
+import org.loopring.lightcone.lib.data._
+
+class RingSubmitterABI(jsonStr: String) extends AbiWrap(jsonStr) {
+
+  val FN_SUBMIT_RING = "submitRings"
+  val EN_RING_MINED = "RingMined"
+
+  val submitRing = findFunctionByName(FN_SUBMIT_RING)
+
+  def decodeAndAssemble(tx: Transaction): Option[Any] = {
+    val result = decode(tx.input)
+    result.name match {
+      case _ ⇒ None
+    }
+  }
+
+  def decodeAndAssemble(tx: Transaction, log: TransactionLog): Option[Any] = {
+    val result = decode(log)
+    result.name match {
+      case _ ⇒ None
+    }
+  }
+
 }

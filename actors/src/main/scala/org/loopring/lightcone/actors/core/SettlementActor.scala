@@ -43,7 +43,7 @@ class SettlementActor(
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)
-  val ringSigner = new RingSignerImpl(privateKey = submitterPrivateKey)
+  val ringSigner = new Signer(privateKey = submitterPrivateKey)
 
   private var ethereumAccessActor: ActorSelection = _
   private var gasPriceActor: ActorSelection = _

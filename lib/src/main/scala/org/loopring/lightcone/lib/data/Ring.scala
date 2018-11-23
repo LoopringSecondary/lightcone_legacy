@@ -19,6 +19,8 @@ package org.loopring.lightcone.lib.data
 import org.web3j.utils.Numeric
 import org.web3j.crypto.{ Hash ⇒ web3Hash }
 
+import org.loopring.lightcone.lib.abi.RingSubmitterABI
+
 case class Ring(
     feeReceipt: String,
     miner: String,
@@ -28,18 +30,30 @@ case class Ring(
     transactionOrigin: String
 ) {
 
-  def hash = {
-    val data = orders.foldLeft(Array[Byte]()) {
-      (res, order) ⇒
-        res ++
-          Numeric.hexStringToByteArray(order.hash) ++
-          Numeric.toBytesPadded(BigInt(order.waiveFeePercentage).bigInteger, 2)
+  lazy val cryptoHash = {
+    val stream = new BytesPacker()
+    orders.foreach { order ⇒
+      stream.addPadHex(order.hash)
+      stream.addUint16(order.waiveFeePercentage)
     }
-    Numeric.toHexString(web3Hash.sha3(data))
+    Numeric.toHexString(web3Hash.sha3(stream.getPackedBytes()))
   }
 
-  def getInputData()(implicit serializer: RingSerializer) = {
-    serializer.serialize(this)
+  def getInputData(algorithm: SignAlgorithm.Value)(implicit serializer: RingSerializer, abi: RingSubmitterABI, signer: Signer): String = {
+    val ringHash = this.cryptoHash
+
+    val signatureData = signer.signHash(algorithm, ringHash)
+
+    val lRing = this.copy(
+      feeReceipt = feeReceipt,
+      miner = signer.address,
+      sig = signatureData
+    )
+
+    val data = serializer.serialize(lRing)
+    val bytes = Numeric.hexStringToByteArray(data)
+    val encode = abi.submitRing.encode(bytes)
+    Numeric.toHexString(encode)
   }
 
 }

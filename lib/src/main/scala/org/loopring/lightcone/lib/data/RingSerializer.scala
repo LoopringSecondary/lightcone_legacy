@@ -103,30 +103,30 @@ private[lib] class RingSerializerHelper(lrcAddress: String, ring: Ring) {
   // 注意:
   // 1. 对于relay来说miner就是transactionOrigin
   private def createMiningTable(): Unit = {
-    require(ring.miner.nonEmpty)
-
-    val transactionOrigin =
-      if (ring.transactionOrigin.nonEmpty) ring.transactionOrigin
-      else ring.miner
+    require(ring.transactionOrigin.nonEmpty)
 
     val feeRecipient =
       if (ring.feeReceipt.nonEmpty) ring.feeReceipt
-      else transactionOrigin
+      else ring.transactionOrigin
 
-    if (feeRecipient neqCaseInsensitive transactionOrigin) {
+    val miner =
+      if (ring.miner.nonEmpty) ring.miner
+      else feeRecipient
+
+    if (feeRecipient neqCaseInsensitive ring.transactionOrigin) {
       insertOffset(dataPacker.addAddress(ring.feeReceipt))
     } else {
       insertDefault()
     }
 
-    if (ring.miner neqCaseInsensitive feeRecipient) {
+    if (miner neqCaseInsensitive feeRecipient) {
       insertOffset(dataPacker.addAddress(ring.miner))
     } else {
       insertDefault()
     }
 
-    if (ring.sig.nonEmpty && (ring.miner neqCaseInsensitive transactionOrigin)) {
-      insertOffset(dataPacker.addHex(createBytes(ring.sig)))
+    if (ring.sig.nonEmpty && (miner neqCaseInsensitive ring.transactionOrigin)) {
+      insertOffset(dataPacker.addHex(createBytes(ring.sig), false))
       addPadding()
     } else {
       insertDefault()
@@ -163,11 +163,18 @@ private[lib] class RingSerializerHelper(lrcAddress: String, ring: Ring) {
       insertDefault()
     }
 
-    // order.broker 默认占位
-    insertDefault()
+    if (order.broker.nonEmpty) {
+      insertOffset(dataPacker.addAddress(order.broker))
+    } else {
+      insertDefault()
+    }
 
     // order.interceptor默认占位
-    insertDefault()
+    if (order.orderInterceptor.nonEmpty) {
+      insertOffset(dataPacker.addAddress(order.orderInterceptor))
+    } else {
+      insertDefault()
+    }
 
     if (order.wallet.nonEmpty) {
       insertOffset(dataPacker.addAddress(order.wallet))
