@@ -186,7 +186,8 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   settlementActor ! XActorDependencyReady(Seq(
     gasPriceActor.path.toString,
-    ethereumActor.path.toString
+    ethereumActor.path.toString,
+    orderDdManagerActor.path.toString
   ))
 
   implicit class RichString(s: String) {

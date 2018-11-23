@@ -47,13 +47,15 @@ class SettlementActor(
 
   private var ethereumAccessActor: ActorSelection = _
   private var gasPriceActor: ActorSelection = _
+  private var orderDbAccessActor: ActorSelection = _
 
   override def receive: Receive = super.receive orElse LoggingReceive {
     case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 2)
+      assert(paths.size == 3)
       gasPriceActor = context.actorSelection(paths(0))
       ethereumAccessActor = context.actorSelection(paths(1))
+      orderDbAccessActor = context.actorSelection(paths(2))
       context.become(functional)
   }
 
