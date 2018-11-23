@@ -20,6 +20,8 @@ import akka.testkit.TestActorRef
 import org.loopgring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.core.AccountManagerActor
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.deployment.XActorDependencyReady
@@ -62,7 +64,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
       ))
 
       accountBalanceProbe.expectQuery(Address_3, WETH_TOKEN.address)
-      accountBalanceProbe.replyWith(WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
+      accountBalanceProbe.replyWith(WETH_TOKEN.address, "1000".zeros(18), "1000".zeros(18))
 
       accountBalanceProbe.expectQuery(Address_3, GTO_TOKEN.address)
       accountBalanceProbe.replyWith(GTO_TOKEN.address, "100".zeros(18), "100".zeros(18))
@@ -75,7 +77,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          info("----orderbook status after submit an order: " + a)
+          info("----orderbook status after first XRecoverOrdersRes: " + a)
       }
 
       orderDdManagerProbe.expectQuery()
@@ -90,11 +92,32 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          info("----orderbook status after submit an order: " + a)
+          info("----orderbook status after second XRecoverOrdersRes: " + a)
       }
       orderDdManagerProbe.expectQuery()
       orderDdManagerProbe.replyWith(Seq())
 
+      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+      expectMsgPF() {
+        case a: XOrderbook ⇒
+          info("----orderbook status after last XRecoverOrdersRes: " + a)
+      }
+
+      accountManagerActor3 ! XSubmitOrderReq(Some(order))
+
+      orderHistoryProbe.expectQuery(order.hash)
+      orderHistoryProbe.replyWith(order.hash, "0".zeros(0))
+
+      expectMsgPF() {
+        case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+          val order: Order = xorder
+          info(s"submitted an order: $order")
+        case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
+          info(s"occurs ERR_UNKNOWN when submitting order:$order")
+      }
+
+      Thread.sleep(1000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {

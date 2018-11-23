@@ -178,13 +178,10 @@ class AccountManagerActor(
       _ ← Future.successful(println(s"####getTokenManager0 ${token}"))
       res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
         .mapTo[XGetBalanceAndAllowancesRes]
-      _ ← Future.successful(println(s"####getTokenManager1 ${token}"))
       tm = new AccountTokenManagerImpl(token, 1000)
       ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
-      _ ← Future.successful(println(s"####getTokenManager2 ${token}"))
       _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
       tokenManager = manager.addTokenManager(tm)
-      _ ← Future.successful(println(s"####getTokenManager3 ${token}"))
     } yield tokenManager
   }
 
@@ -212,10 +209,7 @@ class AccountManagerActor(
     }
   }
 
-  protected def recoverOrder(xorder: XOrder): Future[Any] = {
-    println(s"####recoverOrder ${xorder}")
-    submitOrder(xorder)
-  }
+  protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
 
 }
 
