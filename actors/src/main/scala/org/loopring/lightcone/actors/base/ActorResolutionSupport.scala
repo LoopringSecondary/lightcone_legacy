@@ -41,24 +41,22 @@ trait ActorResolutionSupport {
     dependencyMap += name -> method
   }
 
-  def receive: Receive = initializing
-
-  def initializing: Receive = LoggingReceive {
+  def receive: Receive = LoggingReceive {
     case XActorDependencyReady ⇒
       dependencyMap.foreach {
-        case (k, v) ⇒ context.actorSelection(k.toString) ! Identify(k)
+        case (k, _) ⇒ context.actorSelection(k.toString) ! Identify(k)
       }
 
     case ActorIdentity(path: String, Some(ref)) ⇒
       dependencyMap.get(path) match {
-        case Some(method) ⇒
-          method(ref)
+        case Some(assign) ⇒
+          assign(ref)
           dependencyMap -= path
         case None ⇒ log.error(s"not expected: $path")
       }
 
       if (dependencyMap.isEmpty) {
-        afterInitialization()
+        afterActorResolution()
       }
 
     case ai: ActorIdentity ⇒
@@ -66,5 +64,5 @@ trait ActorResolutionSupport {
       context.stop(self)
   }
 
-  def afterInitialization(): Unit = {}
+  def afterActorResolution(): Unit
 }

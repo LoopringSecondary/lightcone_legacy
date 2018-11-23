@@ -16,15 +16,20 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor._
 import akka.event.LoggingReceive
+import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
+import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment.XActorDependencyReady
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.proto.deployment._
 
 import scala.concurrent._
 
@@ -39,15 +44,10 @@ class AccountBalanceActor()(
     timeout: Timeout
 )
   extends Actor
+  with ActorResolutionSupport
   with ActorLogging {
 
-  def receive: Receive = initializing
-
-  def initializing: Receive = LoggingReceive {
-    case XActorDependencyReady(paths) ⇒
-      log.info(s"actor dependency ready: $paths")
-      context.become(functional)
-  }
+  def afterActorResolution = context.become(functional)
 
   def functional: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.

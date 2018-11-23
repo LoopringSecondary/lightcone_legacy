@@ -188,6 +188,6 @@ class AccountManagerActor(
   }
 
   protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
-  override def afterInitialization = startOrderRecovery
+  def afterActorResolution = startOrderRecovery
 }
 
