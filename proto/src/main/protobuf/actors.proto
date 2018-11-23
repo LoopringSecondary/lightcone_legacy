@@ -20,6 +20,9 @@ option java_multiple_files = true;
 package org.loopring.lightcone.proto.actors;
 
 import "core.proto";
+import "auxiliary.proto";
+
+import "google/protobuf/wrappers.proto";
 
 message XOrderState {
     bytes amount_s = 1;
@@ -28,32 +31,35 @@ message XOrderState {
 }
 
 message XRawOrder {
-  string owner = 1;
-  string token_s = 2;
-  string token_b = 3;
-  bytes amount_s = 4;
-  bytes amount_b = 5;
-  int64 valid_since = 6;
-  bool all_or_none = 7;
-  string fee_token = 8;
-  bytes fee_amount = 9;
-  string sig = 10;
-  string dual_auth_sig = 11;
-  string hash = 12;
-  string valid_until = 13;
-  string wallet = 14;
-  string dual_auth_address = 15;
-  string broker = 16;
-  string order_interceptor = 17;
-  int32 version = 18;
-  int32 wallet_split_percentage = 19;
-  int32 token_s_fee_percentage = 20;
-  int32 token_b_fee_percentage = 21;
-  int32 waive_fee_percentage = 22;
-  bytes token_spendable_s = 23;
-  bytes token_spendable_fee = 24;
-  bytes broker_spendable_s = 25;
-  bytes broker_spendable_fee = 26;
+    string owner = 1;
+    string token_s = 2;
+    string token_b = 3;
+    bytes amount_s = 4;
+    bytes amount_b = 5;
+    int64 valid_since = 6;
+    bool all_or_none = 7;
+    string fee_token = 8;
+    bytes fee_amount = 9;
+    string sig = 10;
+    string dual_auth_sig = 11;
+    string hash = 12;
+    int64 valid_until = 13;
+    string wallet = 14;
+    string dual_auth_address = 15;
+    string broker = 16;
+    string order_interceptor = 17;
+    string version = 18;
+    int32 wallet_split_percentage = 19;
+    int32 token_s_fee_percentage = 20;
+    int32 token_b_fee_percentage = 21;
+    int32 waive_fee_percentage = 22;
+    int32 fee_percentage = 23;
+    bytes token_spendable_s = 24;
+    bytes token_spendable_fee = 25;
+    bytes broker_spendable_s = 26;
+    bytes broker_spendable_fee = 27;
+    string token_recipient = 28;
+    string dual_private_key = 29;
 }
 
 message XOrder {
@@ -147,7 +153,6 @@ message XAddressAllowanceUpdated {
     string token = 2;
     bytes balance = 3;
 }
-
 
 // 由ethereum发送给orderManagingActor
 // 以太坊事件顺序根据blockID，tx&eventId来确定,由route汇聚到不同用户地址,然后按顺序逐个发送给orderManagingActor
@@ -252,7 +257,8 @@ message XSettleRingsReq {
     bytes gas_price = 3;
 }
 
-message XGetGasPriceReq {}
+message XGetGasPriceReq {
+}
 
 message XGetGasPriceRes {
     bytes gas_price = 1;
@@ -277,4 +283,58 @@ message XPersistOrderHistoryReq {
     bytes filled_amount_s = 2;
 }
 
-message XPersistOrderHistoryRes {}
+message XPersistOrderHistoryRes {
+}
+
+// for XRawOrder db manager
+message XRawOrderSaveOrUpdateReq {
+    XRawOrder xraw_order = 1;
+    int32 updatedBlock = 2;
+    string dealt_amount_s = 3;
+    string dealt_amount_b = 4;
+    string cancelled_amount_s = 5;
+    string cancelled_amount_b = 6;
+    core.XOrderStatus status = 7;
+    int32 broadcast_time = 8;
+    int32 pow_nonce = 9;
+    string market = 10;
+    string side = 11;
+    int32 price = 12;
+    string order_type = 13;
+}
+
+message XRawOrderQryByHashReq {
+    string order_hash = 1;
+}
+
+message XRawOrderQryByPagingReq {
+
+    //OrderQuery
+    message XRawOrderQuery {
+        repeated core.XOrderStatus statuses = 1;
+        string owner = 2;
+        string market = 3;
+        repeated string hashes = 4;
+        auxiliary.XMarketSide side = 5;
+        auxiliary.XOrderType order_type = 6;
+    }
+
+    message XRawOrderPaging {
+        int32 offset = 1;
+        int32 limit = 2;
+    }
+
+    XRawOrderQuery query = 1;
+
+    XRawOrderPaging paging = 2;
+
+}
+
+message XRawOrderSoftCancelReq {
+    string hash = 1;
+    int64 cutoffTime = 2;
+    string market = 3;
+    auxiliary.XSoftCancelType cancelType = 4;
+    string owner = 5;
+}
+// for XRawOrder db manager ended
