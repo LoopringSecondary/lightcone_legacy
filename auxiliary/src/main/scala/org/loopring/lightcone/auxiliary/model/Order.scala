@@ -17,6 +17,7 @@
 package org.loopring.lightcone.auxiliary.model
 
 import org.loopring.lightcone.proto.auxiliary._
+import org.loopring.lightcone.proto.core.XOrderStatus
 
 case class OrderQuery(
     statuses: Seq[XOrderStatus],

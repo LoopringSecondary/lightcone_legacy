@@ -24,6 +24,7 @@ import org.loopring.lightcone.auxiliary.database.entity.OrderChangeLogEntity
 import org.loopring.lightcone.auxiliary.database.tables.Orders
 import org.loopring.lightcone.proto.auxiliary._
 import org.loopring.lightcone.auxiliary.model._
+import org.loopring.lightcone.proto.core.XOrderStatus
 import slick.jdbc.JdbcProfile
 import slick.sql.FixedSqlAction
 
