@@ -158,9 +158,11 @@ package object data {
       amountS = xraworder.amountS,
       amountB = xraworder.amountB,
       amountFee = xraworder.feeAmount,
-//      createdAt = xraworder.
+      //todo:该数据需要在xrawOrder中，暂时默认，等待结构确定
+      createdAt = System.currentTimeMillis(),
+      updatedAt = System.currentTimeMillis(),
 //      status = XOrderStatus.NEW,
-      walletSplitPercentage = xraworder.waiveFeePercentage
+      walletSplitPercentage = xraworder.waiveFeePercentage/1000.0
     )
 
 }

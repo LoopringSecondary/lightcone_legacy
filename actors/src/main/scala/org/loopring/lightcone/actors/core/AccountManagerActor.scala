@@ -71,6 +71,24 @@ class AccountManagerActor(
       marketManagerActor = context.actorSelection(paths(3))
 
       startOrderRecovery()
+
+    case XRecoverOrdersRes(xraworders) ⇒
+      log.info(s"recovering batch (size = ${xraworders.size})")
+
+      val xorders = xraworders.map(convertXRawOrderToXOrder)
+      for {
+        _ ← Future.sequence(xorders.map(recoverOrder))
+        lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
+        recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
+        _ = if (recoverEnded) context.become(functional)
+        _ = orderDatabaseAccessActor ! XRecoverOrdersReq(
+          ownerOfOrders.getOrElse(null),
+          lastUpdatdTimestamp,
+          recoverBatchSize
+        )
+      } yield Unit
+
+    case msg ⇒ println(s"######## msg ${msg}")
   }
 
   def functional: Receive = functionalBase orElse LoggingReceive {
@@ -109,7 +127,7 @@ class AccountManagerActor(
     case XAddressAllowanceUpdated(_, token, newBalance) ⇒
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
 
-    case _ ⇒
+    case msg ⇒ println(s"unknown msg ${msg}")
   }
 
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
@@ -157,12 +175,16 @@ class AccountManagerActor(
     if (manager.hasTokenManager(token))
       Future.successful(manager.getTokenManager(token))
     else for {
+      _ ← Future.successful(println(s"####getTokenManager0 ${token}"))
       res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
         .mapTo[XGetBalanceAndAllowancesRes]
+      _ ← Future.successful(println(s"####getTokenManager1 ${token}"))
       tm = new AccountTokenManagerImpl(token, 1000)
       ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
+      _ ← Future.successful(println(s"####getTokenManager2 ${token}"))
       _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
       tokenManager = manager.addTokenManager(tm)
+      _ ← Future.successful(println(s"####getTokenManager3 ${token}"))
     } yield tokenManager
   }
 
@@ -190,7 +212,10 @@ class AccountManagerActor(
     }
   }
 
-  protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
+  protected def recoverOrder(xorder: XOrder): Future[Any] = {
+    println(s"####recoverOrder ${xorder}")
+    submitOrder(xorder)
+  }
 
 }
 
