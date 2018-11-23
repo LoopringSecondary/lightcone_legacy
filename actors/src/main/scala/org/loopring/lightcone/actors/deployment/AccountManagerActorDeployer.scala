@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.core
+package org.loopring.lightcone.actors.deployment
 
 import akka.actor._
 import akka.util.Timeout
@@ -23,19 +23,25 @@ import org.loopring.lightcone.proto.actors._
 
 import scala.concurrent.ExecutionContext
 
-object OrderDbManagerActor {
-  val name = "order_db_manager"
+case class Shard(index: Int, totalShards: Int)
+
+object AccountManagerActorDeployer {
+  val name = "ama_deployer"
 }
 
-class OrderDbManagerActor()(
-  implicit ec: ExecutionContext,
-  timeout: Timeout)
+// TODO(dongw): Leave this to me to implement.
+class AccountManagerActorDeployer(shard: Shard)(
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
   extends Actor
   with ActorLogging {
 
+  private var actors = Map.empty[String, ActorRef]
+
   def receive: Receive = {
+    case msg: AnyRef ⇒
 
-    case _ =>
   }
-
 }

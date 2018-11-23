@@ -35,16 +35,20 @@ import scala.math.BigInt
 
 object CoreActorsIntegrationCommonSpec {
 
-  val GTO = "GTO"
-  val WETH = "WETH"
-  val LRC = "LRC"
+  val GTO = "0x00000000001"
+  val WETH = "0x00000000004"
+  val LRC = "0x00000000002"
 
-  val GTO_TOKEN = XTokenMetadata(GTO, "0x1", 10, 0.1, 1.0)
-  val WETH_TOKEN = XTokenMetadata(WETH, "0x2", 18, 0.4, 1000)
-  val LRC_TOKEN = XTokenMetadata(LRC, "0x3", 18, 0.4, 1000)
+  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.1, 1.0, "GTO")
+  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000, "WETH")
+  val LRC_TOKEN = XTokenMetadata(LRC, 18, 0.4, 1000, "LRC")
 }
 
-abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
+abstract class CoreActorsIntegrationCommonSpec(
+    marketId: XMarketId,
+    skipAccountManagerActorRecovery: Boolean = true,
+    skipMarketManagerActorRecovery: Boolean = true
+)
   extends TestKit(ActorSystem("test", ConfigFactory.parseString(
     """akka {
          loglevel = "DEBUG"
@@ -93,6 +97,11 @@ abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
   // Simulating an AccountBalanceActor
+  val orderDdManagerProbe = new TestProbe(system, "order_db_access") {
+  }
+  val orderDdManagerActor = orderDdManagerProbe.ref
+
+  // Simulating an AccountBalanceActor
   val accountBalanceProbe = new TestProbe(system, "account_balance") {
     def expectQuery(address: String, token: String) = expectMsgPF() {
       case XGetBalanceAndAllowancesReq(addr, tokens) if addr == address && tokens == Seq(token) ⇒
@@ -131,30 +140,45 @@ abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
   val ADDRESS_2 = "address_222222222222222222222"
 
   val accountManagerActor1: ActorRef = TestActorRef(
-    new AccountManagerActor(ADDRESS_1)
+    new AccountManagerActor(
+      address = ADDRESS_1,
+      recoverBatchSize = 5,
+      skipRecovery = skipAccountManagerActorRecovery
+    )
   )
 
   val accountManagerActor2: ActorRef = TestActorRef(
-    new AccountManagerActor(ADDRESS_2)
+    new AccountManagerActor(
+      address = ADDRESS_2,
+      recoverBatchSize = 5,
+      skipRecovery = skipAccountManagerActorRecovery
+    )
   )
 
   val marketManagerActor: ActorRef = TestActorRef(
-    new MarketManagerActor(marketId, config)
+    new MarketManagerActor(
+      marketId,
+      config,
+      skipRecovery = skipMarketManagerActorRecovery
+    )
   )
 
   accountManagerActor1 ! XActorDependencyReady(Seq(
+    orderDdManagerActor.path.toString,
     accountBalanceActor.path.toString,
     orderHistoryActor.path.toString,
     marketManagerActor.path.toString
   ))
 
   accountManagerActor2 ! XActorDependencyReady(Seq(
+    orderDdManagerActor.path.toString,
     accountBalanceActor.path.toString,
     orderHistoryActor.path.toString,
     marketManagerActor.path.toString
   ))
 
   marketManagerActor ! XActorDependencyReady(Seq(
+    orderDdManagerActor.path.toString,
     gasPriceActor.path.toString,
     orderbookManagerActor.path.toString,
     settlementActor.path.toString

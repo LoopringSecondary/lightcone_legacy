@@ -149,5 +149,7 @@ package object data {
       amountMargin = xExpectedFill.amountMargin
     )
 
+// TODO(hongyu): implement this
+implicit def convertXRawOrderToXOrder(xraworder: XRawOrder): XOrder = ???
 
 }
