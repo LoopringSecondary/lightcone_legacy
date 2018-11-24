@@ -21,6 +21,7 @@ import akka.cluster._
 import akka.routing._
 import akka.cluster.singleton._
 import akka.cluster.routing._
+import org.slf4s.Logging
 
 case class NodeDeploymentSettings(
     settingsMap: Map[String, ActorDeploymentSettings] = Map.empty
@@ -33,10 +34,13 @@ case class ActorDeploymentSettings(
     numOfInstances: Int
 )
 
-class ActorDeployer(actorLookup: ActorLookup)(
+class ActorDeployer(
+    actorLookup: ActorLookup,
+    propsLookup: PropsLookup
+)(
     implicit
     cluster: Cluster
-) {
+) extends Object with Logging {
 
   private var lastInstanceId: Int = 0
   private def nextInstanceId = {
@@ -44,6 +48,7 @@ class ActorDeployer(actorLookup: ActorLookup)(
     lastInstanceId
   }
 
+  private val system = cluster.system
   private var nodeDeploymentSettings = NodeDeploymentSettings()
 
   def deploy(newNodeDeploymentSettings: NodeDeploymentSettings) = {
@@ -55,10 +60,7 @@ class ActorDeployer(actorLookup: ActorLookup)(
       val oldSettings = nodeDeploymentSettings.settingsMap.get(name)
       val newSettings = newNodeDeploymentSettings.settingsMap.get(name)
 
-      deployActors(name, oldSettings, newSettings).foreach {
-        router ⇒ actorLookup.addActor(name, router)
-      }
-
+      deployActors(name, oldSettings, newSettings)
     }
 
     nodeDeploymentSettings = newNodeDeploymentSettings
@@ -69,46 +71,74 @@ class ActorDeployer(actorLookup: ActorLookup)(
     name: String,
     oldSettings: Option[ActorDeploymentSettings],
     newSettings: Option[ActorDeploymentSettings]
-  ): Option[ActorRef] = this.synchronized {
-    null
+  ) = this.synchronized {
+
+    // Step 1: (re)deploy routers
+    if (newSettings.isEmpty) {
+      destroyActorRouter(name)
+    }
+
   }
 
-  // def deploy(settings: ActorDeploymentSettings) = this.synchronized {
-  //   val name = settings.name.toLowerCase()
-  //   val previousSettingsOpt = settingsMap.get(name)
-  //   settingsMap += name -> settings
+  private def deployActorRouter(name: String) = {
+    val router = system.actorOf(
+      ClusterRouterGroup(
+        RoundRobinGroup(Nil),
+        ClusterRouterGroupSettings(
+          totalInstances = Int.MaxValue,
+          routeesPaths = List(s"/user/${name}_*"),
+          allowLocalRoutees = true
+        )
+      ).props,
+      name = s"r_${name}"
+    )
+    actorLookup.addActor(name, router)
+    log.info(s"--------> deployed router for singleton: ${router.path}")
+  }
 
-  //   // Step 1: (re)deploy routers
-  //   if (Option(settings) != previousSettingsOpt) {
-  //     val selectionPattern = s"/user/r_${name}_*"
-  //     println(s"--------> killing router: ${selectionPattern}")
-  //     cluster.system.actorSelection(selectionPattern) ! PoisonPill
-  //   }
+  private def deploySingletonActorRouter(name: String) = {
+    val router = system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = s"/user/${name}_0",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"r_${name}"
+    )
+    actorLookup.addActor(name, router)
+    log.info(s"--------> deployed router: ${router.path}")
+  }
 
-  //   val routerRef = if (settings.isSingleton) {
-  //     cluster.system.actorOf(
-  //       ClusterSingletonProxy.props(
-  //         singletonManagerPath = s"/user/${name}_0",
-  //         settings = ClusterSingletonProxySettings(cluster.system)
-  //       ),
-  //       name = s"r_${name}"
-  //     )
-  //   } else {
-  //     cluster.system.actorOf(
-  //       ClusterRouterGroup(
-  //         RoundRobinGroup(Nil),
-  //         ClusterRouterGroupSettings(
-  //           totalInstances = Int.MaxValue,
-  //           routeesPaths = List(s"/user/${name}_*"),
-  //           allowLocalRoutees = true
-  //         )
-  //       ).props,
-  //       name = s"r_${name}_${nextInstanceId}"
-  //     )
-  //   }
+  private def destroyActorRouter(name: String) = {
+    val selectionPattern = s"/user/r_${name}"
+    log.info(s"--------> killing router: ${selectionPattern}")
+    system.actorSelection(selectionPattern) ! PoisonPill
+    actorLookup.removeActor(name)
+  }
 
-  //   println("--------> deployed router: " + routerRef.path)
-  //   actorLookup.addActor(settings.name, routerRef)
-  // }
+  private def deployActor(name: String) = {
+    val actor = cluster.system.actorOf(
+      propsLookup.getProps(name),
+      name = s"${name}_${nextInstanceId}"
+    )
+    log.info(s"--------> deployed actor: ${actor.path}")
+  }
+
+  private def deploySingletonActor(name: String) = {
+    val actor = cluster.system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = propsLookup.getProps(name),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system)
+      ),
+      name = s"${name}_0"
+    )
+    log.info(s"--------> deployed singleton actor: ${actor.path}")
+  }
+
+  private def destroyActor(name: String) = {
+    val selectionPattern = s"/user/${name}_*"
+    log.info(s"--------> killing actor: ${selectionPattern}")
+    system.actorSelection(selectionPattern) ! PoisonPill
+  }
 }
 
