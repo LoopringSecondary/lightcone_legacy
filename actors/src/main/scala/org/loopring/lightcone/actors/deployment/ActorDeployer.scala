@@ -35,8 +35,8 @@ case class ActorDeploymentSettings(
 )
 
 class ActorDeployer(
-    actorLookup: ActorLookup,
-    propsLookup: PropsLookup
+    actorLookup: Lookup[ActorRef],
+    propsLookup: Lookup[Props]
 )(
     implicit
     cluster: Cluster
@@ -92,7 +92,7 @@ class ActorDeployer(
       ).props,
       name = s"r_${name}"
     )
-    actorLookup.addActor(name, router)
+    actorLookup.add(name, router)
     log.info(s"--------> deployed router for singleton: ${router.path}")
   }
 
@@ -104,7 +104,7 @@ class ActorDeployer(
       ),
       name = s"r_${name}"
     )
-    actorLookup.addActor(name, router)
+    actorLookup.add(name, router)
     log.info(s"--------> deployed router: ${router.path}")
   }
 
@@ -112,12 +112,12 @@ class ActorDeployer(
     val selectionPattern = s"/user/r_${name}"
     log.info(s"--------> killing router: ${selectionPattern}")
     system.actorSelection(selectionPattern) ! PoisonPill
-    actorLookup.removeActor(name)
+    actorLookup.del(name)
   }
 
   private def deployActor(name: String) = {
     val actor = cluster.system.actorOf(
-      propsLookup.getProps(name),
+      propsLookup.get(name),
       name = s"${name}_${nextInstanceId}"
     )
     log.info(s"--------> deployed actor: ${actor.path}")
@@ -126,7 +126,7 @@ class ActorDeployer(
   private def deploySingletonActor(name: String) = {
     val actor = cluster.system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = propsLookup.getProps(name),
+        singletonProps = propsLookup.get(name),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system)
       ),

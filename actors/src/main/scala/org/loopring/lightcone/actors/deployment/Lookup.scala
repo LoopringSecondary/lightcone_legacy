@@ -16,29 +16,27 @@
 
 package org.loopring.lightcone.actors.deployment
 
-import akka.actor._
-
-trait PropsLookup {
-  def getProps(name: String): Props
-  def addProps(name: String, ref: Props): Unit
-  def removeProps(name: String): Unit
+trait Lookup[T] {
+  def get(name: String): T
+  def add(name: String, ref: T): Unit
+  def del(name: String): Unit
 }
 
-class MapBasedPropsLookup extends PropsLookup {
+class MapBasedLookup[T] extends Lookup[T] {
 
-  private var actors = Map.empty[String, Props]
+  private var items = Map.empty[String, T]
 
-  def getProps(name: String) = {
-    assert(actors.contains(name))
-    actors(name)
+  def get(name: String) = {
+    assert(items.contains(name))
+    items(name)
   }
 
-  def addProps(name: String, ref: Props) = {
-    assert(!actors.contains(name))
-    actors += name -> ref
+  def add(name: String, item: T) = {
+    assert(!items.contains(name))
+    items += name -> item
   }
 
-  def removeProps(name: String) = {
-    actors -= name
+  def del(name: String) = {
+    items -= name
   }
 }
