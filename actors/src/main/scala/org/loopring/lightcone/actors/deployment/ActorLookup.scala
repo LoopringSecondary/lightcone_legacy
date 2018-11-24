@@ -20,6 +20,7 @@ import akka.actor._
 
 trait ActorLookup {
   def getActor(name: String): ActorRef
+  def addActor(name: String, ref: ActorRef): Unit
 }
 
 class MapBasedActorLookup extends ActorLookup {
@@ -31,7 +32,7 @@ class MapBasedActorLookup extends ActorLookup {
     actors(name)
   }
 
-  def addActor(name: String, ref: ActorRef) = {
+  def addActor(name: String, ref: ActorRef): Unit = {
     assert(!actors.contains(name))
     actors += name -> ref
   }
