@@ -24,39 +24,39 @@ import net.codingwell.scalaguice.InjectorExtensions._
 import org.loopring.lightcone.actors.deployment._
 import org.loopring.lightcone.core.base._
 
-class MyActor @Inject() (timeProvider: TimeProvider) extends Actor {
-  def receive: Receive = {
-    case _ ⇒
-  }
-}
+// class MyActor @Inject() (timeProvider: TimeProvider) extends Actor {
+//   def receive: Receive = {
+//     case _ ⇒
+//   }
+// }
 
-class PropsCollection @Inject() (
-  propsLookup: Lookup[Props],
-  myActor: MyActor) {
-  propsLookup.add("actor1", Props(myActor))
-}
+// class PropsCollection @Inject() (
+//   propsLookup: Lookup[Props],
+//   myActor: MyActor) {
+//   propsLookup.add("actor1", Props(myActor))
+// }
 
-class DeploymentModule extends BaseDeploymentModule {
+// class DeploymentModule extends BaseDeploymentModule {
 
-  override def configure(): Unit = {
-    super.configure()
+//   override def configure(): Unit = {
+//     super.configure()
 
-    bind[TimeProvider].to[DifferenceAssuredSystemTimeProvider]
+//     bind[TimeProvider].to[DifferenceAssuredSystemTimeProvider]
 
-    bind[MyActor]
-    bind[PropsCollection].in[Singleton]
-  }
-}
+//     bind[MyActor]
+//     bind[PropsCollection].in[Singleton]
+//   }
+// }
 
-object Main2 extends App {
+// object Main2 extends App {
 
-  val injector = Guice.createInjector(new DeploymentModule)
-  val propsFactory = injector.instance[PropsCollection]
+//   val injector = Guice.createInjector(new DeploymentModule)
+//   val propsFactory = injector.instance[PropsCollection]
 
-  val propsLookup = injector.instance[Lookup[Props]]
-  assert(propsLookup.size > 0)
+//   val propsLookup = injector.instance[Lookup[Props]]
+//   assert(propsLookup.size > 0)
 
-  val deployer = injector.instance[ActorDeployer]
+//   val deployer = injector.instance[ActorDeployer]
 
-  propsLookup.clear()
-}
+//   propsLookup.clear()
+// }

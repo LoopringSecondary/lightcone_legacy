@@ -30,7 +30,3 @@ message XNodeDeploymentSettings {
 
     map<string, XActorSettings> settings_map = 1;
 }
-
-message XActorDependencyReady {
-    repeated string paths = 1;
-}

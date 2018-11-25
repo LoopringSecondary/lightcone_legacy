@@ -20,6 +20,7 @@ import akka.actor._
 import akka.testkit._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
@@ -85,6 +86,8 @@ abstract class CoreActorsIntegrationCommonSpec(
   implicit val timeout = Timeout(5 second)
   implicit val ec = system.dispatcher
 
+  val actors = new MapBasedLookup[ActorRef]()
+
   val config = XMarketManagerConfig()
   val orderbookConfig = XOrderbookConfig(
     levels = 2,
@@ -131,7 +134,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   val ethereumProbe = new TestProbe(system, "ethereum")
   val ethereumActor = ethereumProbe.ref
 
-  val settlementActor = TestActorRef(new SettlementActor("0xa1"))
+  val settlementActor = TestActorRef(new SettlementActor(actors, "0xa1"))
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
@@ -141,6 +144,7 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   val accountManagerActor1: ActorRef = TestActorRef(
     new AccountManagerActor(
+      actors,
       address = ADDRESS_1,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
@@ -149,6 +153,7 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   val accountManagerActor2: ActorRef = TestActorRef(
     new AccountManagerActor(
+      actors,
       address = ADDRESS_2,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
@@ -157,37 +162,38 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   val marketManagerActor: ActorRef = TestActorRef(
     new MarketManagerActor(
+      actors,
       marketId,
       config,
       skipRecovery = skipMarketManagerActorRecovery
     )
   )
 
-  accountManagerActor1 ! XActorDependencyReady(Seq(
-    orderDdManagerActor.path.toString,
-    accountBalanceActor.path.toString,
-    orderHistoryActor.path.toString,
-    marketManagerActor.path.toString
-  ))
+  // accountManagerActor1 ! XActorDependencyReady(Seq(
+  //   orderDdManagerActor.path.toString,
+  //   accountBalanceActor.path.toString,
+  //   orderHistoryActor.path.toString,
+  //   marketManagerActor.path.toString
+  // ))
 
-  accountManagerActor2 ! XActorDependencyReady(Seq(
-    orderDdManagerActor.path.toString,
-    accountBalanceActor.path.toString,
-    orderHistoryActor.path.toString,
-    marketManagerActor.path.toString
-  ))
+  // accountManagerActor2 ! XActorDependencyReady(Seq(
+  //   orderDdManagerActor.path.toString,
+  //   accountBalanceActor.path.toString,
+  //   orderHistoryActor.path.toString,
+  //   marketManagerActor.path.toString
+  // ))
 
-  marketManagerActor ! XActorDependencyReady(Seq(
-    orderDdManagerActor.path.toString,
-    gasPriceActor.path.toString,
-    orderbookManagerActor.path.toString,
-    settlementActor.path.toString
-  ))
+  // marketManagerActor ! XActorDependencyReady(Seq(
+  //   orderDdManagerActor.path.toString,
+  //   gasPriceActor.path.toString,
+  //   orderbookManagerActor.path.toString,
+  //   settlementActor.path.toString
+  // ))
 
-  settlementActor ! XActorDependencyReady(Seq(
-    gasPriceActor.path.toString,
-    ethereumActor.path.toString
-  ))
+  // settlementActor ! XActorDependencyReady(Seq(
+  //   gasPriceActor.path.toString,
+  //   ethereumActor.path.toString
+  // ))
 
   implicit class RichString(s: String) {
     def zeros(size: Int): BigInt = BigInt(s + "0" * size)
