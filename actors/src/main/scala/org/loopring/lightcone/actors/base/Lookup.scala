@@ -31,7 +31,9 @@ class MapBasedLookup[T] extends Lookup[T] {
   def size() = items.size
 
   def get(name: String) = {
-    assert(items.contains(name))
+    if (!items.contains(name)) {
+      throw new IllegalStateException(s"Cannot find item with name $name")
+    }
     items(name)
   }
 

@@ -29,13 +29,15 @@ import com.google.inject.Inject
 trait ActorDeployer {
   def deploy(
     newXNodeDeploymentSettings: XNodeDeploymentSettings,
-    actorConfigMap: Map[String, AnyRef]): Unit
+    actorConfigMap: Map[String, AnyRef]
+  ): Unit
 }
 
 class ActorDeployerImpl @Inject() (
-  cluster: Cluster,
-  actorLookup: Lookup[ActorRef],
-  propsLookup: Lookup[Props]) extends ActorDeployer with Logging {
+    cluster: Cluster,
+    actorLookup: Lookup[ActorRef],
+    propsLookup: Lookup[Props]
+) extends ActorDeployer with Logging {
 
   implicit val cluster_ = cluster
 
@@ -50,7 +52,8 @@ class ActorDeployerImpl @Inject() (
 
   def deploy(
     newXNodeDeploymentSettings: XNodeDeploymentSettings,
-    actorConfigMap: Map[String, AnyRef]) = {
+    actorConfigMap: Map[String, AnyRef]
+  ) = {
     val names = nodeDeploymentSettings.settingsMap.keys ++
       newXNodeDeploymentSettings.settingsMap.keys
 
@@ -79,7 +82,8 @@ class ActorDeployerImpl @Inject() (
   private def deployActors(
     name: String,
     oldSettings: Option[XNodeDeploymentSettings.XActorSettings],
-    newSettings: Option[XNodeDeploymentSettings.XActorSettings]): Seq[ActorRef] = this.synchronized {
+    newSettings: Option[XNodeDeploymentSettings.XActorSettings]
+  ): Seq[ActorRef] = this.synchronized {
 
     // deploy actor routers
     if (newSettings.isEmpty) {
@@ -114,8 +118,11 @@ class ActorDeployerImpl @Inject() (
         ClusterRouterGroupSettings(
           totalInstances = Int.MaxValue,
           routeesPaths = List(s"/user/${name}_*"),
-          allowLocalRoutees = true)).props,
-      name = s"r_${name}")
+          allowLocalRoutees = true
+        )
+      ).props,
+      name = s"r_${name}"
+    )
     actorLookup.add(name, router)
     log.info(s"--------> deployed router for singleton: ${router.path}")
   }
@@ -124,8 +131,10 @@ class ActorDeployerImpl @Inject() (
     val router = system.actorOf(
       ClusterSingletonProxy.props(
         singletonManagerPath = s"/user/${name}_0",
-        settings = ClusterSingletonProxySettings(system)),
-      name = s"r_${name}")
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"r_${name}"
+    )
     actorLookup.add(name, router)
     log.info(s"--------> deployed router: ${router.path}")
   }
@@ -140,7 +149,8 @@ class ActorDeployerImpl @Inject() (
   private def deployActor(name: String): ActorRef = {
     val actor = cluster.system.actorOf(
       propsLookup.get(name),
-      name = s"${name}_${nextInstanceId}")
+      name = s"${name}_${nextInstanceId}"
+    )
     log.info(s"--------> deployed actor: ${actor.path}")
     actor
   }
@@ -150,8 +160,10 @@ class ActorDeployerImpl @Inject() (
       ClusterSingletonManager.props(
         singletonProps = propsLookup.get(name),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system)),
-      name = s"${name}_0")
+        settings = ClusterSingletonManagerSettings(system)
+      ),
+      name = s"${name}_0"
+    )
     log.info(s"--------> deployed singleton actor: ${actor.path}")
     actor
   }

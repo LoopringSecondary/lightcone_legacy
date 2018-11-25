@@ -50,8 +50,8 @@ class SettlementActor(
   val ringSigner = new RingSignerImpl(privateKey = submitterPrivateKey)
 
   // TODO()
-  private var ethereumAccessActor = actors.get("EthereumAccessActor.name")
-  private var gasPriceActor = actors.get(GasPriceActor.name)
+  private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
+  private def gasPriceActor = actors.get(GasPriceActor.name)
 
   override def receive: Receive = super.receive orElse LoggingReceive {
     case req: XSettleRingsReq ⇒

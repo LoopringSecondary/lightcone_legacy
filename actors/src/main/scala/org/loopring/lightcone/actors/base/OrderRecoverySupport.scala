@@ -51,16 +51,13 @@ trait OrderRecoverySupport {
 
   protected def startOrderRecovery() = {
     if (skipRecovery) {
+      log.info(s"actor recovering skipped: ${self.path}")
       context.become(functional)
     } else {
       context.become(recovering)
       log.info(s"actor recovering started: ${self.path}")
       self ! XRecoverOrdersReq(ownerOfOrders.getOrElse(null), 0L, recoverBatchSize)
     }
-  }
-
-  def receive: Receive = {
-    case _ ⇒
   }
 
   def recovering: Receive = {

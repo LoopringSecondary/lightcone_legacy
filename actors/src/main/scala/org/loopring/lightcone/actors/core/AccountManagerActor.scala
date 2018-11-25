@@ -61,7 +61,10 @@ class AccountManagerActor(
   protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
-  startOrderRecovery()
+  def receive: Receive = {
+    case XStart ⇒
+      startOrderRecovery()
+  }
 
   def functional: Receive = functionalBase orElse LoggingReceive {
 
