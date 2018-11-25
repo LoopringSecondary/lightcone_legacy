@@ -23,14 +23,22 @@ import akka.cluster.singleton._
 import akka.cluster.routing._
 import org.slf4s.Logging
 import org.loopring.lightcone.proto.deployment._
+import com.google.inject.Inject
 
-class ActorDeployer(
+trait ActorDeployer {
+  def deploy(
+    newXNodeDeploymentSettings: XNodeDeploymentSettings,
+    actorConfigMap: Map[String, AnyRef]
+  ): Unit
+}
+
+class ActorDeployerImpl @Inject() (
+    cluster: Cluster,
     actorLookup: Lookup[ActorRef],
     propsLookup: Lookup[Props]
-)(
-    implicit
-    cluster: Cluster
-) extends Object with Logging {
+) extends ActorDeployer with Logging {
+
+  implicit val cluster_ = cluster
 
   private var lastInstanceId: Int = 0
   private def nextInstanceId = {
@@ -56,6 +64,8 @@ class ActorDeployer(
     }
 
     nodeDeploymentSettings = newXNodeDeploymentSettings
+    // release all used and unused props
+    propsLookup.clear()
   }
 
   // Return an optional router to the new actors

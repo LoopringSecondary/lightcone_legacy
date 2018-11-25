@@ -16,35 +16,21 @@
 
 package org.loopring.lightcone.actors.deployment
 
-trait Lookup[T] {
-  def size(): Int
-  def get(name: String): T
-  def add(name: String, ref: T): Unit
-  def del(name: String): Unit
-  def clear(): Unit
-}
+import akka.actor._
+import akka.cluster.Cluster
+import com.google.inject.{ AbstractModule, PrivateModule, Singleton }
+import net.codingwell.scalaguice.{ ScalaModule, ScalaPrivateModule }
 
-class MapBasedLookup[T] extends Lookup[T] {
+class BaseDeploymentModule extends AbstractModule with ScalaModule {
+  override def configure(): Unit = {
+    super.configure()
 
-  private var items = Map.empty[String, T]
+    val system = ActorSystem()
+    bind[ActorSystem].toInstance(system)
+    bind[Cluster].toInstance(Cluster(system))
 
-  def size() = items.size
-
-  def get(name: String) = {
-    assert(items.contains(name))
-    items(name)
-  }
-
-  def add(name: String, item: T) = {
-    assert(!items.contains(name))
-    items += name -> item
-  }
-
-  def del(name: String) = {
-    items -= name
-  }
-
-  def clear() = {
-    items = Map.empty
+    bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
+    bind[Lookup[Props]].toInstance(new MapBasedLookup[Props]())
+    bind[ActorDeployer].to[ActorDeployerImpl].in[Singleton]
   }
 }
