@@ -21,6 +21,15 @@ package org.loopring.lightcone.proto.deployment;
 
 import "google/protobuf/any.proto";
 
+message XNodeDeploymentSettings {
+    message XActorSettings {
+        bool is_singleton = 1;
+        repeated string roles = 2;
+        int32 num_of_instances = 3;
+    }
+
+    map<string, XActorSettings> settings_map = 1;
+}
 
 message XActorDependencyReady {
     repeated string paths = 1;

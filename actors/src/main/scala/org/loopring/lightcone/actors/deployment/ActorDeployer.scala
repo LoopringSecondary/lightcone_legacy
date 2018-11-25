@@ -22,17 +22,7 @@ import akka.routing._
 import akka.cluster.singleton._
 import akka.cluster.routing._
 import org.slf4s.Logging
-
-case class NodeDeploymentSettings(
-    settingsMap: Map[String, ActorDeploymentSettings] = Map.empty
-)
-
-case class ActorDeploymentSettings(
-    isSingleton: Boolean,
-    props: Props,
-    roles: Set[String],
-    numOfInstances: Int
-)
+import org.loopring.lightcone.proto.deployment._
 
 class ActorDeployer(
     actorLookup: Lookup[ActorRef],
@@ -49,30 +39,30 @@ class ActorDeployer(
   }
 
   private val system = cluster.system
-  private var nodeDeploymentSettings = NodeDeploymentSettings()
+  private var nodeDeploymentSettings = XNodeDeploymentSettings()
 
   def deploy(
-    newNodeDeploymentSettings: NodeDeploymentSettings,
+    newXNodeDeploymentSettings: XNodeDeploymentSettings,
     actorConfigMap: Map[String, AnyRef]
   ) = {
     val names = nodeDeploymentSettings.settingsMap.keys ++
-      newNodeDeploymentSettings.settingsMap.keys
+      newXNodeDeploymentSettings.settingsMap.keys
 
     names.foreach { name ⇒
       val oldSettings = nodeDeploymentSettings.settingsMap.get(name)
-      val newSettings = newNodeDeploymentSettings.settingsMap.get(name)
+      val newSettings = newXNodeDeploymentSettings.settingsMap.get(name)
       val config = actorConfigMap.get(name)
       deployActors(name, oldSettings, newSettings, config)
     }
 
-    nodeDeploymentSettings = newNodeDeploymentSettings
+    nodeDeploymentSettings = newXNodeDeploymentSettings
   }
 
   // Return an optional router to the new actors
-  def deployActors(
+  private def deployActors(
     name: String,
-    oldSettings: Option[ActorDeploymentSettings],
-    newSettings: Option[ActorDeploymentSettings],
+    oldSettings: Option[XNodeDeploymentSettings.XActorSettings],
+    newSettings: Option[XNodeDeploymentSettings.XActorSettings],
     configOpt: Option[AnyRef]
   ) = this.synchronized {
 
@@ -173,8 +163,8 @@ class ActorDeployer(
     }
   }
 
-  private def getNumInstance(settings: ActorDeploymentSettings) = {
-    if (cluster.selfRoles.intersect(settings.roles).isEmpty) 0
+  private def getNumInstance(settings: XNodeDeploymentSettings.XActorSettings) = {
+    if (cluster.selfRoles.intersect(settings.roles.toSet).isEmpty) 0
     else if (settings.isSingleton) 1
     else settings.numOfInstances
   }
