@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopgring.lightcone.actors.core
+package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.testkit._
@@ -46,9 +46,10 @@ object CoreActorsIntegrationCommonSpec {
 }
 
 abstract class CoreActorsIntegrationCommonSpec(
-  marketId: XMarketId,
-  skipAccountManagerActorRecovery: Boolean = true,
-  skipMarketManagerActorRecovery: Boolean = true)
+    marketId: XMarketId,
+    skipAccountManagerActorRecovery: Boolean = true,
+    skipMarketManagerActorRecovery: Boolean = true
+)
   extends TestKit(ActorSystem("test", ConfigFactory.parseString(
     """akka {
          loglevel = "DEBUG"
@@ -58,7 +59,8 @@ abstract class CoreActorsIntegrationCommonSpec(
              lifecycle = off
            }
          }
-       }""").withFallback(ConfigFactory.load())))
+       }"""
+  ).withFallback(ConfigFactory.load())))
   with ImplicitSender
   with Matchers
   with WordSpecLike
@@ -91,15 +93,15 @@ abstract class CoreActorsIntegrationCommonSpec(
     levels = 2,
     priceDecimals = 5,
     precisionForAmount = 2,
-    precisionForTotal = 1)
+    precisionForTotal = 1
+  )
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
   // Simulating an AccountBalanceActor
-  val orderDdManagerProbe = new TestProbe(system, "order_db_access") {
-  }
-  val orderDatabaseAccessActor = orderDdManagerProbe.ref
+  val orderDatabaseAccessProbe = new TestProbe(system, "order_db_access")
+  val orderDatabaseAccessActor = orderDatabaseAccessProbe.ref
 
   // Simulating an AccountBalanceActor
   val accountBalanceProbe = new TestProbe(system, "account_balance") {
@@ -109,7 +111,9 @@ abstract class CoreActorsIntegrationCommonSpec(
 
     def replyWith(token: String, balance: BigInt, allowance: BigInt) = reply(
       XGetBalanceAndAllowancesRes(
-        ADDRESS_1, Map(token -> XBalanceAndAllowance(balance, allowance))))
+        ADDRESS_1, Map(token -> XBalanceAndAllowance(balance, allowance))
+      )
+    )
   }
   val accountBalanceActor = accountBalanceProbe.ref
 
@@ -120,7 +124,8 @@ abstract class CoreActorsIntegrationCommonSpec(
     }
 
     def replyWith(orderId: String, filledAmountS: BigInt) = reply(
-      XGetOrderFilledAmountRes(orderId, filledAmountS))
+      XGetOrderFilledAmountRes(orderId, filledAmountS)
+    )
   }
   val orderHistoryActor = orderHistoryProbe.ref
 
@@ -141,21 +146,27 @@ abstract class CoreActorsIntegrationCommonSpec(
       actors,
       address = ADDRESS_1,
       recoverBatchSize = 5,
-      skipRecovery = skipAccountManagerActorRecovery))
+      skipRecovery = skipAccountManagerActorRecovery
+    )
+  )
 
   val accountManagerActor2: ActorRef = TestActorRef(
     new AccountManagerActor(
       actors,
       address = ADDRESS_2,
       recoverBatchSize = 5,
-      skipRecovery = skipAccountManagerActorRecovery))
+      skipRecovery = skipAccountManagerActorRecovery
+    )
+  )
 
   val marketManagerActor: ActorRef = TestActorRef(
     new MarketManagerActor(
       actors,
       marketId,
       config,
-      skipRecovery = skipMarketManagerActorRecovery))
+      skipRecovery = skipMarketManagerActorRecovery
+    )
+  )
 
   actors.add(OrderDatabaseAccessActor.name, orderDatabaseAccessActor)
   actors.add(AccountBalanceActor.name, accountBalanceActor)

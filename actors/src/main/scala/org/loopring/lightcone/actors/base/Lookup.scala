@@ -15,6 +15,7 @@
  */
 
 package org.loopring.lightcone.actors.base
+import org.slf4s.Logging
 
 trait Lookup[T] {
   def size(): Int
@@ -24,7 +25,7 @@ trait Lookup[T] {
   def clear(): Unit
 }
 
-class MapBasedLookup[T] extends Lookup[T] {
+class MapBasedLookup[T] extends Lookup[T] with Logging {
 
   private var items = Map.empty[String, T]
 
@@ -32,7 +33,9 @@ class MapBasedLookup[T] extends Lookup[T] {
 
   def get(name: String) = {
     if (!items.contains(name)) {
-      throw new IllegalStateException(s"Cannot find item with name $name")
+      val err = s"Cannot find item with name $name"
+      log.error(err)
+      throw new IllegalStateException(err)
     }
     items(name)
   }
