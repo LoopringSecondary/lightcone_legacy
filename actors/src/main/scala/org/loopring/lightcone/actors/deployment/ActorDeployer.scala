@@ -51,16 +51,18 @@ class ActorDeployer(
   private val system = cluster.system
   private var nodeDeploymentSettings = NodeDeploymentSettings()
 
-  def deploy(newNodeDeploymentSettings: NodeDeploymentSettings) = {
-
+  def deploy(
+    newNodeDeploymentSettings: NodeDeploymentSettings,
+    actorConfigMap: Map[String, AnyRef]
+  ) = {
     val names = nodeDeploymentSettings.settingsMap.keys ++
       newNodeDeploymentSettings.settingsMap.keys
 
     names.foreach { name ⇒
       val oldSettings = nodeDeploymentSettings.settingsMap.get(name)
       val newSettings = newNodeDeploymentSettings.settingsMap.get(name)
-
-      deployActors(name, oldSettings, newSettings)
+      val config = actorConfigMap.get(name)
+      deployActors(name, oldSettings, newSettings, config)
     }
 
     nodeDeploymentSettings = newNodeDeploymentSettings
@@ -70,14 +72,36 @@ class ActorDeployer(
   def deployActors(
     name: String,
     oldSettings: Option[ActorDeploymentSettings],
-    newSettings: Option[ActorDeploymentSettings]
+    newSettings: Option[ActorDeploymentSettings],
+    configOpt: Option[AnyRef]
   ) = this.synchronized {
 
-    // Step 1: (re)deploy routers
+    // deploy actor routers
     if (newSettings.isEmpty) {
       destroyActorRouter(name)
+    } else {
+      if (newSettings.get.isSingleton) deploySingletonActorRouter(name)
+      else deployActorRouter(name)
     }
 
+    // deploy actors
+    val oldNumOfInstances = oldSettings.map(getNumInstance).getOrElse(0)
+    val newNumOfInstances = newSettings.map(getNumInstance).getOrElse(0)
+
+    val extraNumOfInstance =
+      if (oldNumOfInstances > newNumOfInstances) {
+        destroyActor(name)
+        newNumOfInstances
+      } else {
+        newNumOfInstances - oldNumOfInstances
+      }
+
+    (0 to extraNumOfInstance) foreach { _ ⇒
+      if (newSettings.get.isSingleton) deploySingletonActor(name)
+      else deployActor(name)
+    }
+
+    reconfigActor(name, configOpt)
   }
 
   private def deployActorRouter(name: String) = {
@@ -139,6 +163,20 @@ class ActorDeployer(
     val selectionPattern = s"/user/${name}_*"
     log.info(s"--------> killing actor: ${selectionPattern}")
     system.actorSelection(selectionPattern) ! PoisonPill
+  }
+
+  private def reconfigActor(name: String, configOpt: Option[AnyRef]) = {
+    configOpt.foreach { config ⇒
+      val selectionPattern = s"/user/${name}_*"
+      log.info(s"--------> reconfig actor: ${selectionPattern}")
+      system.actorSelection(selectionPattern) ! config
+    }
+  }
+
+  private def getNumInstance(settings: ActorDeploymentSettings) = {
+    if (cluster.selfRoles.intersect(settings.roles).isEmpty) 0
+    else if (settings.isSingleton) 1
+    else settings.numOfInstances
   }
 }
 
