@@ -42,12 +42,6 @@ class AccountBalanceActor()(
   with ActorLogging {
 
   def receive: Receive = LoggingReceive {
-    case XActorDependencyReady(paths) ⇒
-      log.info(s"actor dependency ready: $paths")
-      context.become(functional)
-  }
-
-  def functional: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.
     case req: XGetBalanceAndAllowancesReq ⇒
 

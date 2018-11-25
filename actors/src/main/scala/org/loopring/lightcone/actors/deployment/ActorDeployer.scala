@@ -22,6 +22,7 @@ import akka.routing._
 import akka.cluster.singleton._
 import akka.cluster.routing._
 import org.slf4s.Logging
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.proto.deployment._
 import com.google.inject.Inject
 

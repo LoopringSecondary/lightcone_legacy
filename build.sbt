@@ -1,5 +1,6 @@
 import Settings._
 import Dependencies._
+import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 
 lazy val lib = (project in file("lib"))
   .enablePlugins(JavaAppPackaging)
@@ -34,6 +35,7 @@ lazy val actors = (project in file("actors"))
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
+  .settings(multiJvmSettings: _*)
   .dependsOn(proto, core, auxiliary)
   .settings(
     parallelExecution in Test := false,

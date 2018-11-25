@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.deployment
 
 import akka.actor._
 import akka.cluster.Cluster
@@ -31,9 +31,8 @@ class MyActor @Inject() (timeProvider: TimeProvider) extends Actor {
 }
 
 class PropsCollection @Inject() (
-    propsLookup: Lookup[Props],
-    myActor: MyActor
-) {
+  propsLookup: Lookup[Props],
+  myActor: MyActor) {
   propsLookup.add("actor1", Props(myActor))
 }
 

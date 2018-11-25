@@ -31,6 +31,10 @@ import org.loopring.lightcone.proto.deployment.XActorDependencyReady
 import scala.annotation.tailrec
 import scala.concurrent.{ ExecutionContext, Future }
 
+object SettlementActor {
+  val name = "settlement"
+}
+
 class SettlementActor(
     submitterPrivateKey: String
 )(

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.deployment
+package org.loopring.lightcone.actors.base
 
 trait Lookup[T] {
   def size(): Int

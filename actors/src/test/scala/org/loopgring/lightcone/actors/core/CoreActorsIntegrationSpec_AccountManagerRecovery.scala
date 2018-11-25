@@ -30,7 +30,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
   extends CoreActorsIntegrationCommonSpec(
     XMarketId(GTO_TOKEN.address, WETH_TOKEN.address),
     skipAccountManagerActorRecovery = false,
-    skipMarketManagerActorRecovery = true) {
+    skipMarketManagerActorRecovery = true
+  ) {
 
   "when an accountManager starts" must {
     "first recover it and then receive order" in {
@@ -39,7 +40,9 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
         new AccountManagerActor(
           address = Address_3,
           recoverBatchSize = 1,
-          skipRecovery = false))
+          skipRecovery = false
+        )
+      )
       val order = XRawOrder(
         hash = "order",
         tokenS = WETH_TOKEN.address,
@@ -48,18 +51,21 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
         feeAmount = "10".zeros(18),
-        walletSplitPercentage = 100)
+        walletSplitPercentage = 100
+      )
 
       accountManagerActor3 ! XActorDependencyReady(Seq(
         orderDdManagerActor.path.toString,
         accountBalanceActor.path.toString,
         orderHistoryActor.path.toString,
-        marketManagerActor.path.toString))
+        marketManagerActor.path.toString
+      ))
 
       var orderIds = (0 to 6) map ("order" + _)
       orderDdManagerProbe.expectQuery()
       orderDdManagerProbe.replyWith(Seq(
-        order.copy(hash = orderIds(0))))
+        order.copy(hash = orderIds(0))
+      ))
 
       accountBalanceProbe.expectQuery(Address_3, WETH_TOKEN.address)
       accountBalanceProbe.replyWith(WETH_TOKEN.address, "1000".zeros(18), "1000".zeros(18))
@@ -80,7 +86,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
 
       orderDdManagerProbe.expectQuery()
       orderDdManagerProbe.replyWith(Seq(
-        order.copy(hash = orderIds(1))))
+        order.copy(hash = orderIds(1))
+      ))
 
       orderHistoryProbe.expectQuery(orderIds(1))
       orderHistoryProbe.replyWith(orderIds(1), "0".zeros(0))

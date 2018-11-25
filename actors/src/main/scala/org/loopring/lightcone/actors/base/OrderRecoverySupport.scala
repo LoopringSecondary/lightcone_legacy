@@ -43,7 +43,7 @@ trait OrderRecoverySupport {
   val ownerOfOrders: Option[String]
   private var batch = 1
 
-  protected var orderDatabaseAccessActor: ActorSelection
+  protected def orderDatabaseAccessActor: ActorRef
 
   protected def recoverOrder(xorder: XOrder): Future[Any]
 
@@ -57,6 +57,10 @@ trait OrderRecoverySupport {
       log.info(s"actor recovering started: ${self.path}")
       self ! XRecoverOrdersReq(ownerOfOrders.getOrElse(null), 0L, recoverBatchSize)
     }
+  }
+
+  def receive: Receive = {
+    case _ ⇒
   }
 
   def recovering: Receive = {

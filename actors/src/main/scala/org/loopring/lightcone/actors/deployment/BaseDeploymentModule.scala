@@ -20,6 +20,7 @@ import akka.actor._
 import akka.cluster.Cluster
 import com.google.inject.{ AbstractModule, PrivateModule, Singleton }
 import net.codingwell.scalaguice.{ ScalaModule, ScalaPrivateModule }
+import org.loopring.lightcone.actors.base._
 
 class BaseDeploymentModule extends AbstractModule with ScalaModule {
   override def configure(): Unit = {

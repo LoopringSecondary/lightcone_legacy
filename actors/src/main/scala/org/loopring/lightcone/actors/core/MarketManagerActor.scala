@@ -40,6 +40,7 @@ object MarketManagerActor {
 
 // TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
 class MarketManagerActor(
+    val actors: Lookup[ActorRef],
     val marketId: XMarketId,
     val config: XMarketManagerConfig,
     val skipRecovery: Boolean = false
@@ -80,23 +81,12 @@ class MarketManagerActor(
     aggregator
   )
 
-  protected var orderDatabaseAccessActor: ActorSelection = _
-  protected var gasPriceActor: ActorSelection = _
-  protected var orderbookManagerActor: ActorSelection = _
-  protected var settlementActor: ActorSelection = _
+  protected def orderDatabaseAccessActor = actors.get(OrderDatabaseAccessActor.name)
+  protected def gasPriceActor = actors.get(GasPriceActor.name)
+  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  protected def settlementActor = actors.get(SettlementActor.name)
 
-  def receive: Receive = LoggingReceive {
-
-    case XActorDependencyReady(paths) ⇒
-      log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 4)
-      orderDatabaseAccessActor = context.actorSelection(paths(0))
-      gasPriceActor = context.actorSelection(paths(1))
-      orderbookManagerActor = context.actorSelection(paths(2))
-      settlementActor = context.actorSelection(paths(3))
-
-      startOrderRecovery()
-  }
+  startOrderRecovery()
 
   def functional: Receive = functionalBase orElse LoggingReceive {
 
