@@ -38,16 +38,13 @@ object AccountManagerActor {
 }
 
 class AccountManagerActor(
-    val actors: Lookup[ActorRef],
-    val address: String,
-    val recoverBatchSize: Int,
-    val skipRecovery: Boolean = false
-)(
-    implicit
-    val ec: ExecutionContext,
+  val actors: Lookup[ActorRef],
+  val address: String,
+  val recoverBatchSize: Int,
+  val skipRecovery: Boolean = false)(
+    implicit val ec: ExecutionContext,
     val timeout: Timeout,
-    val dustEvaluator: DustOrderEvaluator
-)
+    val dustEvaluator: DustOrderEvaluator)
   extends Actor
   with ActorLogging
   with OrderRecoverySupport {
@@ -62,8 +59,7 @@ class AccountManagerActor(
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
   def receive: Receive = {
-    case XStart ⇒
-      startOrderRecovery()
+    case XStart ⇒ startOrderRecovery()
   }
 
   def functional: Receive = functionalBase orElse LoggingReceive {
@@ -79,8 +75,7 @@ class AccountManagerActor(
             manager.getBalance(),
             manager.getAllowance(),
             manager.getAvailableBalance(),
-            manager.getAvailableAllowance()
-          )
+            manager.getAvailableAllowance())
         }
       } yield {
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
@@ -162,8 +157,7 @@ class AccountManagerActor(
   private def updateBalanceOrAllowance(
     token: String,
     amount: BigInt,
-    method: (AccountTokenManager, BigInt) ⇒ Unit
-  ) = for {
+    method: (AccountTokenManager, BigInt) ⇒ Unit) = for {
     tm ← getTokenManager(token)
     _ = method(tm, amount)
     updatedOrders = orderPool.takeUpdatedOrders()
