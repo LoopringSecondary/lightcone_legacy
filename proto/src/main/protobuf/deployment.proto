@@ -30,3 +30,6 @@ message XNodeDeploymentSettings {
 
     map<string, XActorSettings> settings_map = 1;
 }
+
+message XStart{}
+message XStop{}
