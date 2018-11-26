@@ -29,7 +29,7 @@ class TokenInfoServiceImpl @Inject() (
     system: ActorSystem,
     mat: ActorMaterializer,
     session: SlickSession
-) extends DatabaseAccesser
+) extends DatabaseAccessor
   with TokenInfoService {
   import system.dispatcher
   import session.profile.api._

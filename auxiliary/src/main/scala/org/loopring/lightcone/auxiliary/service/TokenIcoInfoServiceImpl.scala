@@ -29,7 +29,7 @@ class TokenIcoInfoServiceImpl @Inject() (
     system: ActorSystem,
     mat: ActorMaterializer,
     session: SlickSession
-) extends DatabaseAccesser
+) extends DatabaseAccessor
   with TokenIcoInfoService {
 
   import session.profile.api._

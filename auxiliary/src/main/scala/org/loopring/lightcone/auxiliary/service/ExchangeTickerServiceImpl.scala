@@ -29,7 +29,7 @@ class ExchangeTickerServiceImpl @Inject() (
     system: ActorSystem,
     mat: ActorMaterializer,
     session: SlickSession
-) extends DatabaseAccesser
+) extends DatabaseAccessor
   with ExchangeTickerService {
 
   import session.profile.api._

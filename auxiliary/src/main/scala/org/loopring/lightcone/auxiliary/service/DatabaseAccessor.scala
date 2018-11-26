@@ -23,7 +23,7 @@ import slick.jdbc.{ GetResult, SQLActionBuilder }
 
 import scala.concurrent.Future
 
-private[service] class DatabaseAccesser(
+private[service] class DatabaseAccessor(
     implicit
     mat: ActorMaterializer,
     session: SlickSession
