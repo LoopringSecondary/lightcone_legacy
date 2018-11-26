@@ -36,6 +36,7 @@ object SettlementActor {
   val name = "settlement"
 }
 
+//TODO protocol, chainId,
 class SettlementActor(
     actors: Lookup[ActorRef],
     submitterPrivateKey: String,
