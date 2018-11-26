@@ -36,7 +36,8 @@ trait ActorDeployer {
 class ActorDeployerImpl @Inject() (
     cluster: Cluster,
     actorLookup: Lookup[ActorRef],
-    propsLookup: Lookup[Props]
+    propsLookup: Lookup[Props],
+    startMsg: AnyRef
 ) extends ActorDeployer with Logging {
 
   implicit val cluster_ = cluster
@@ -65,7 +66,7 @@ class ActorDeployerImpl @Inject() (
 
     newlyDeployedActors.foreach { actor ⇒
       log.info(s"--------> starting actor: ${actor.path}")
-      actor ! XStart
+      actor ! startMsg
     }
 
     names.foreach { name ⇒

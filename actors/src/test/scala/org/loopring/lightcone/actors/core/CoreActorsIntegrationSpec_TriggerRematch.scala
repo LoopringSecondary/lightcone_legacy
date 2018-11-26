@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopgring.lightcone.actors.core
+package org.loopring.lightcone.actors.core
 
-import org.loopgring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
+import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._

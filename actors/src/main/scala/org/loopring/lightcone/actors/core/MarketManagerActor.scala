@@ -161,7 +161,6 @@ class MarketManagerActor(
 
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
-    println("________--1" + ou)
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
       orderbookManagerActor ! ou
     }

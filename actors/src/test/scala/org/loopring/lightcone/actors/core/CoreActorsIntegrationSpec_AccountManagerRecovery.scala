@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopgring.lightcone.actors.core
+package org.loopring.lightcone.actors.core
 
 import akka.testkit.TestActorRef
-import org.loopgring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
-import org.loopring.lightcone.actors.core.AccountManagerActor
+import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment.XActorDependencyReady
+import org.loopring.lightcone.proto.deployment._
 
 class CoreActorsIntegrationSpec_AccountManagerRecovery
   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
@@ -32,13 +31,16 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
   "when an accountManager starts" must {
     "first recover it and then receive order" in {
       val Address_3 = "0xaddress_3"
+
       val accountManagerActor3 = TestActorRef(
         new AccountManagerActor(
+          actors,
           address = Address_3,
           recoverBatchSize = 1,
           skipRecovery = false
         )
       )
+
       val order = XRawOrder(
         hash = "order",
         tokenS = WETH_TOKEN.address,
@@ -50,16 +52,11 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
         walletSplitPercentage = 100
       )
 
-      accountManagerActor3 ! XActorDependencyReady(Seq(
-        orderDdManagerActor.path.toString,
-        accountBalanceActor.path.toString,
-        orderHistoryActor.path.toString,
-        marketManagerActor.path.toString
-      ))
+      accountManagerActor3 ! XStart
 
       var orderIds = (0 to 6) map ("order" + _)
-      orderDdManagerProbe.expectQuery()
-      orderDdManagerProbe.replyWith(Seq(
+      orderDatabaseAccessProbe.expectQuery()
+      orderDatabaseAccessProbe.replyWith(Seq(
         order.copy(hash = orderIds(0))
       ))
 
@@ -80,8 +77,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
           info("----orderbook status after first XRecoverOrdersRes: " + a)
       }
 
-      orderDdManagerProbe.expectQuery()
-      orderDdManagerProbe.replyWith(Seq(
+      orderDatabaseAccessProbe.expectQuery()
+      orderDatabaseAccessProbe.replyWith(Seq(
         order.copy(hash = orderIds(1))
       ))
 
@@ -94,8 +91,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
         case a: XOrderbook ⇒
           info("----orderbook status after second XRecoverOrdersRes: " + a)
       }
-      orderDdManagerProbe.expectQuery()
-      orderDdManagerProbe.replyWith(Seq())
+      orderDatabaseAccessProbe.expectQuery()
+      orderDatabaseAccessProbe.replyWith(Seq())
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
