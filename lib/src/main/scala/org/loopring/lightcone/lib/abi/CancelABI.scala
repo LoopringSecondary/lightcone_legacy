@@ -36,11 +36,21 @@ class CancelABI(jsonStr: String) extends AbiWrap(jsonStr) {
   def decodeAndAssemble(tx: Transaction): Option[Any] = {
     val result = decode(tx.input)
     val data = result.name match {
-      case FN_CANCEL_ORDERS ⇒ assembleCancelOrdersFunction(result.list, tx.from)
-      case FN_CANCEL_ALL_ORDERS_FOR_TRADING_PAIR ⇒ assembleCancelAllOrdersForTradingPairFunction(result.list, tx.from)
-      case FN_CANCEL_ALL_ORDERS ⇒ assembleCancelAllOrdersFunction(result.list, tx.from)
-      case FN_CANCEL_ALL_ORDERS_FOR_TRADING_PAIR_OF_OWNER ⇒ assembleCancelAllOrdersForTradingPairOfOwnerFunction(result.list, tx.from)
-      case FN_CANCEL_ALL_ORDERS_OF_OWNER ⇒ assembleCancelAllOrdersOfOwnerFunction(result.list, tx.from)
+      case FN_CANCEL_ORDERS ⇒
+        assembleCancelOrdersFunction(result.list, tx.from)
+
+      case FN_CANCEL_ALL_ORDERS_FOR_TRADING_PAIR ⇒
+        assembleCancelAllOrdersForTradingPairFunction(result.list, tx.from)
+
+      case FN_CANCEL_ALL_ORDERS ⇒
+        assembleCancelAllOrdersFunction(result.list, tx.from)
+
+      case FN_CANCEL_ALL_ORDERS_FOR_TRADING_PAIR_OF_OWNER ⇒
+        assembleCancelAllOrdersForTradingPairOfOwnerFunction(result.list, tx.from)
+
+      case FN_CANCEL_ALL_ORDERS_OF_OWNER ⇒
+        assembleCancelAllOrdersOfOwnerFunction(result.list, tx.from)
+
       case _ ⇒ None
     }
     Option(data)
@@ -49,12 +59,24 @@ class CancelABI(jsonStr: String) extends AbiWrap(jsonStr) {
   def decodeAndAssemble(tx: Transaction, log: TransactionLog): Option[Any] = {
     val result = decode(log)
     val data = result.name match {
-      case EN_ORDERS_CANCELLED ⇒ assembleOrdersCancelledEvent(result.list)
-      case EN_ALL_ORDERS_CANCELLED_FOR_TRADING_PAIR ⇒ assembleAllOrdersCancelledForTradingPairEvent(result.list)
-      case EN_ALL_ORDERS_CANCELLED ⇒ assembleAllOrdersCancelledEvent(result.list)
-      case EN_ORDERS_CANCELLED_BY_BROKER ⇒ assembleOrdersCancelledByBrokerEvent(result.list)
-      case EN_ALL_ORDERS_CANCELLED_FOR_TRADING_PAIR_BY_BROKER ⇒ assembleAllOrdersCancelledForTradingPairByBrokerEvent(result.list)
-      case EN_ALL_ORDERS_CANCELLED_BY_BROKER ⇒ assembleAllOrdersCancelledByBrokerEvent(result.list)
+      case EN_ORDERS_CANCELLED ⇒
+        assembleOrdersCancelledEvent(result.list)
+
+      case EN_ALL_ORDERS_CANCELLED_FOR_TRADING_PAIR ⇒
+        assembleAllOrdersCancelledForTradingPairEvent(result.list)
+
+      case EN_ALL_ORDERS_CANCELLED ⇒
+        assembleAllOrdersCancelledEvent(result.list)
+
+      case EN_ORDERS_CANCELLED_BY_BROKER ⇒
+        assembleOrdersCancelledByBrokerEvent(result.list)
+
+      case EN_ALL_ORDERS_CANCELLED_FOR_TRADING_PAIR_BY_BROKER ⇒
+        assembleAllOrdersCancelledForTradingPairByBrokerEvent(result.list)
+
+      case EN_ALL_ORDERS_CANCELLED_BY_BROKER ⇒
+        assembleAllOrdersCancelledByBrokerEvent(result.list)
+
       case _ ⇒ None
     }
     Some(data)

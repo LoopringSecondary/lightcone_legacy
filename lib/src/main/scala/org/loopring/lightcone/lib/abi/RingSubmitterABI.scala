@@ -40,7 +40,7 @@ class RingSubmitterABI(jsonStr: String) extends AbiWrap(jsonStr) {
   }
 
   private[lib] def assembleRingMinedEvent(list: Seq[Any]) = {
-    assert(list.length == 3, "length of RingMined event invalid")
+    assert(list.length == 4, "length of RingMined event invalid")
 
     val fills = list(3) match {
       case l: Array[Object] ⇒ l.map(_ match {

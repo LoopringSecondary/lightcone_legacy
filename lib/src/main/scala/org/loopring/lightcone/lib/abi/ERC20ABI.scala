@@ -49,7 +49,7 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
       case EN_APPROVAL ⇒ assembleApprovalEvent(result.list)
       case _           ⇒ None
     }
-    Some(data)
+    Option(data)
   }
 
   private[lib] def assembleTransferFunction(list: Seq[Any], from: String) = {
