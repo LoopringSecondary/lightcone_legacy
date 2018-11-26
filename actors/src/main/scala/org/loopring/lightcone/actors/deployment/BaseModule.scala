@@ -17,31 +17,21 @@
 package org.loopring.lightcone.actors.deployment
 
 import akka.actor._
-import akka.util.Timeout
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.proto.actors._
+import akka.cluster.Cluster
+import com.google.inject.{ AbstractModule, PrivateModule, Singleton }
+import net.codingwell.scalaguice.{ ScalaModule, ScalaPrivateModule }
+import org.loopring.lightcone.actors.base._
 
-import scala.concurrent.ExecutionContext
+class BaseModule extends AbstractModule with ScalaModule {
+  override def configure(): Unit = {
+    super.configure()
 
-case class Shard(index: Int, totalShards: Int)
+    val system = ActorSystem()
+    bind[ActorSystem].toInstance(system)
+    bind[Cluster].toInstance(Cluster(system))
 
-object AccountManagerActorDeployer {
-  val name = "ama_deployer"
-}
-
-// TODO(dongw): Leave this to me to implement.
-class AccountManagerActorDeployer(shard: Shard)(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout
-)
-  extends Actor
-  with ActorLogging {
-
-  private var actors = Map.empty[String, ActorRef]
-
-  def receive: Receive = {
-    case msg: AnyRef ⇒
-
+    bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
+    bind[Lookup[Props]].toInstance(new MapBasedLookup[Props]())
+    bind[ActorDeployer].to[ActorDeployerImpl].in[Singleton]
   }
 }
