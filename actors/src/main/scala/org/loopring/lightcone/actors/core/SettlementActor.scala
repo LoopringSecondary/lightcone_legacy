@@ -49,7 +49,6 @@ class SettlementActor(
   private var nonce = new AtomicInteger(0)
   val ringSigner = new RingSignerImpl(privateKey = submitterPrivateKey)
 
-  // TODO()
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)
 

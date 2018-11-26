@@ -148,12 +148,6 @@ class MarketManagerActor(
   }
 
   private def updateOrderbookAndSettleRings(matchResult: MatchResult, gasPrice: BigInt) {
-    // Update order book (depth)
-    val ou = matchResult.orderbookUpdate
-    if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerActor ! ou
-    }
-
     // Settle rings
     if (matchResult.rings.nonEmpty) {
       log.debug(s"rings: ${matchResult.rings}")
@@ -163,6 +157,13 @@ class MarketManagerActor(
         gasLimit = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * matchResult.rings.size,
         gasPrice = gasPrice
       )
+    }
+
+    // Update order book (depth)
+    val ou = matchResult.orderbookUpdate
+    println("________--1" + ou)
+    if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
+      orderbookManagerActor ! ou
     }
   }
 

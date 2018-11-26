@@ -100,7 +100,17 @@ abstract class CoreActorsIntegrationCommonSpec(
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
   // Simulating an AccountBalanceActor
-  val orderDatabaseAccessProbe = new TestProbe(system, "order_db_access")
+  val orderDatabaseAccessProbe = new TestProbe(system, "order_db_access") {
+    def expectQuery() {
+      expectMsgPF() {
+        case req: XRecoverOrdersReq ⇒
+          println(s"ordermanagerProbe receive: $req, sender:${sender()}")
+      }
+    }
+    def replyWith(xorders: Seq[XRawOrder]) = reply(
+      XRecoverOrdersRes(orders = xorders)
+    )
+  }
   val orderDatabaseAccessActor = orderDatabaseAccessProbe.ref
 
   // Simulating an AccountBalanceActor

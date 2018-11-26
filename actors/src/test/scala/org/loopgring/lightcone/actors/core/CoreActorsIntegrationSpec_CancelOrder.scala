@@ -85,4 +85,22 @@ class CoreActorsIntegrationSpec_CancelOrder
       }
     }
   }
+  "cancel an order that not existed" must {
+    "return ERR_ORDER_NOT_EXIST" in {
+
+      accountManagerActor1 ! XCancelOrderReq("not-exists-order-id", false)
+      expectMsgPF() {
+        case res: XCancelOrderRes ⇒
+          info(s"-- canceled this order: $res")
+          res.error should be(XErrorCode.ERR_ORDER_NOT_EXIST)
+      }
+
+      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+      expectMsgPF() {
+        case a: XOrderbook ⇒
+          info("----orderbook status after cancel this order: " + a)
+      }
+    }
+  }
 }
