@@ -35,8 +35,8 @@ package object ethcube {
     self ⇒
     implicit val formats = Serialization.formats(NoTypeHints)
 
-    def toPB: JsonRpcReq = {
-      JsonRpcReq(write(self))
+    def toPB: XJsonRpcReq = {
+      XJsonRpcReq(write(self))
     }
   }
 
@@ -44,15 +44,15 @@ package object ethcube {
       id: Any,
       jsonrpc: String = "2.0",
       result: Any,
-      error: Option[JsonRpcErr]
+      error: Option[XJsonRpcErr]
   )
 
   private[ethcube] object JsonRpcResWrapped {
 
     implicit val formats = DefaultFormats
 
-    def toJsonRpcResWrapped: PartialFunction[JsonRpcRes, JsonRpcResWrapped] = {
-      case j: JsonRpcRes ⇒ parse(j.json).extract[JsonRpcResWrapped]
+    def toJsonRpcResWrapped: PartialFunction[XJsonRpcRes, JsonRpcResWrapped] = {
+      case j: XJsonRpcRes ⇒ parse(j.json).extract[JsonRpcResWrapped]
     }
   }
 

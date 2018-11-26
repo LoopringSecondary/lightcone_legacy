@@ -25,7 +25,7 @@ import jnr.unixsocket._
 import org.loopring.lightcone.proto.ethrpc._
 import scalapb.json4s.JsonFormat
 
-private[actors] class IpcConnector(node: EthereumProxySettings.Node)
+private[actors] class IpcConnector(node: XEthereumProxySettings.XNode)
   extends Actor
   with ActorLogging {
 
@@ -36,7 +36,7 @@ private[actors] class IpcConnector(node: EthereumProxySettings.Node)
   val reader = new InputStreamReader(Channels.newInputStream(channel))
 
   def receive: Receive = {
-    case req: JsonRpcReq ⇒
+    case req: XJsonRpcReq ⇒
       try {
         writer.print(JsonFormat.toJsonString(req))
         writer.flush()
@@ -47,7 +47,7 @@ private[actors] class IpcConnector(node: EthereumProxySettings.Node)
         log.debug(s"ipc response raw: ${result}")
 
         // val response = JsonFormat.fromJsonString[JsonRpcRes](result.toString)
-        sender ! JsonRpcRes(result.toString())
+        sender ! XJsonRpcRes(result.toString())
       } catch {
         case e: Throwable ⇒ log.error(e.getMessage)
       }

@@ -44,18 +44,18 @@ private[actors] class ConnectionManager(
   implicit val formats = DefaultFormats
 
   private val errCheckBlockHeightResp =
-    CheckBlockHeightResp(currentBlock = 1, heightBlock = 0)
+    XCheckBlockHeightResp(currentBlock = 1, heightBlock = 0)
 
   context.system.scheduler.schedule(
     checkIntervalSeconds.seconds,
     checkIntervalSeconds.seconds,
     self,
-    CheckBlockHeight()
+    XCheckBlockHeight()
   )
 
   def receive: Receive = {
 
-    case _: CheckBlockHeight ⇒
+    case _: XCheckBlockHeight ⇒
       log.info("start scheduler check highest block...")
       val syncingJsonRpcReq = JsonRpcReqWrapped(
         id = Random.nextInt(100),
@@ -71,11 +71,11 @@ private[actors] class ConnectionManager(
       )
       import JsonRpcResWrapped._
       for {
-        resps: Seq[(ActorRef, CheckBlockHeightResp)] ← Future.sequence(
+        resps: Seq[(ActorRef, XCheckBlockHeightResp)] ← Future.sequence(
           connectorGroups.map { g ⇒
             for {
               syncingResp ← (g ? syncingJsonRpcReq.toPB)
-                .mapTo[JsonRpcRes]
+                .mapTo[XJsonRpcRes]
                 .map(toJsonRpcResWrapped)
                 .map(_.result)
                 .map(toCheckBlockHeightResp)
@@ -93,7 +93,7 @@ private[actors] class ConnectionManager(
                 }
               // get each node block number
               blockNumResp ← (g ? blockNumJsonRpcReq.toPB)
-                .mapTo[JsonRpcRes]
+                .mapTo[XJsonRpcRes]
                 .map(toJsonRpcResWrapped)
                 .map(_.result)
                 .map(anyHexToInt)
@@ -139,15 +139,15 @@ private[actors] class ConnectionManager(
       }
   }
 
-  def toCheckBlockHeightResp: PartialFunction[Any, CheckBlockHeightResp] = {
+  def toCheckBlockHeightResp: PartialFunction[Any, XCheckBlockHeightResp] = {
     case m: Map[_, _] ⇒
       val currentBlock =
         m.find(_._1 == "currentBlock").map(_._2).map(anyHexToInt).getOrElse(0)
       val heightBlock =
         m.find(_._1 == "highestBlock").map(_._2).map(anyHexToInt).getOrElse(10)
-      CheckBlockHeightResp(currentBlock, heightBlock)
+      XCheckBlockHeightResp(currentBlock, heightBlock)
     case b: Boolean ⇒
-      if (b) errCheckBlockHeightResp else CheckBlockHeightResp(1, 10)
+      if (b) errCheckBlockHeightResp else XCheckBlockHeightResp(1, 10)
     case _ ⇒ errCheckBlockHeightResp
   }
 

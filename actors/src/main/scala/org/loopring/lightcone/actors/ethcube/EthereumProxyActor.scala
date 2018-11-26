@@ -22,7 +22,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.loopring.lightcone.proto.ethrpc._
 
-class EthereumProxyActor(settings: EthereumProxySettings)(
+class EthereumProxyActor(settings: XEthereumProxySettings)(
     implicit
     materilizer: ActorMaterializer,
     timeout: Timeout
@@ -60,7 +60,7 @@ class EthereumProxyActor(settings: EthereumProxySettings)(
   )
 
   def receive: Receive = {
-    case m: JsonRpcReq ⇒
+    case m: XJsonRpcReq ⇒
       // 路由为空 这里是 timeout
       requestRouterActor.forward(m)
     case req: ProtoBuf[_] ⇒

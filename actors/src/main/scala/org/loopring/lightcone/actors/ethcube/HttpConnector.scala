@@ -32,7 +32,7 @@ import scalapb.json4s.JsonFormat
 import scala.concurrent._
 import scala.util._
 
-private[actors] class HttpConnector(node: EthereumProxySettings.Node)(
+private[actors] class HttpConnector(node: XEthereumProxySettings.XNode)(
     implicit
     val mat: ActorMaterializer
 ) extends Actor
@@ -49,7 +49,7 @@ private[actors] class HttpConnector(node: EthereumProxySettings.Node)(
   val DEBUG_TRACER = "callTracer"
   val ETH_CALL = "eth_call"
 
-  val emptyError = EthResError(code = 500, error = "result is empty")
+  val emptyError = XEthResError(code = 500, error = "result is empty")
 
   private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
@@ -128,110 +128,110 @@ private[actors] class HttpConnector(node: EthereumProxySettings.Node)(
   private def hex2BigInt(s: String) = BigInt(s.replace("0x", ""), 16)
 
   def receive: Receive = {
-    case req: JsonRpcReq ⇒ post(req.json).map(JsonRpcRes(_)) pipeTo sender
-    case _: EthBlockNumberReq ⇒
+    case req: XJsonRpcReq ⇒ post(req.json).map(XJsonRpcRes(_)) pipeTo sender
+    case _: XEthBlockNumberReq ⇒
       sendMessage("eth_blockNumber") {
         Seq.empty
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            EthBlockNumberRes().withJsonrpc("2.0")
+            XEthBlockNumberRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[EthBlockNumberRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XEthBlockNumberRes](json)
         }
       } pipeTo sender
 
-    case r: EthGetBalanceReq ⇒
+    case r: XEthGetBalanceReq ⇒
       sendMessage("eth_getBalance") {
         Seq(r.address, r.tag)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            EthGetBalanceRes().withJsonrpc("2.0")
+            XEthGetBalanceRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[EthGetBalanceRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XEthGetBalanceRes](json)
 
         }
       } pipeTo sender
 
-    case r: GetTransactionByHashReq ⇒
+    case r: XGetTransactionByHashReq ⇒
       sendMessage("eth_getTransactionByHash") {
         Seq(r.hash)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            GetTransactionByHashRes().withJsonrpc("2.0")
+            XGetTransactionByHashRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[GetTransactionByHashRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XGetTransactionByHashRes](json)
         }
       } pipeTo sender
 
-    case r: GetTransactionReceiptReq ⇒
+    case r: XGetTransactionReceiptReq ⇒
       sendMessage("eth_getTransactionReceipt") {
         Seq(r.hash)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            GetTransactionReceiptRes().withJsonrpc("2.0")
+            XGetTransactionReceiptRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[GetTransactionReceiptRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XGetTransactionReceiptRes](json)
         }
       } pipeTo sender
-    case r: GetBlockWithTxHashByNumberReq ⇒
+    case r: XGetBlockWithTxHashByNumberReq ⇒
       sendMessage("eth_getBlockByNumber") {
         Seq(r.blockNumber, false)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            GetBlockWithTxHashByNumberRes().withJsonrpc("2.0")
+            XGetBlockWithTxHashByNumberRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[GetBlockWithTxHashByNumberRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XGetBlockWithTxHashByNumberRes](json)
         }
       } pipeTo sender
-    case r: GetBlockWithTxObjectByNumberReq ⇒
+    case r: XGetBlockWithTxObjectByNumberReq ⇒
       sendMessage("eth_getBlockByNumber") {
         Seq(r.blockNumber, true)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            GetBlockWithTxObjectByNumberRes().withJsonrpc("2.0")
+            XGetBlockWithTxObjectByNumberRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[GetBlockWithTxObjectByNumberRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XGetBlockWithTxObjectByNumberRes](json)
 
         }
       } pipeTo sender
-    case r: GetBlockWithTxHashByHashReq ⇒
+    case r: XGetBlockWithTxHashByHashReq ⇒
       sendMessage("eth_getBlockByHash") {
         Seq(r.blockHash, false)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            GetBlockWithTxHashByHashRes().withJsonrpc("2.0")
+            XGetBlockWithTxHashByHashRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[GetBlockWithTxHashByHashRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XGetBlockWithTxHashByHashRes](json)
         }
       } pipeTo sender
-    case r: GetBlockWithTxObjectByHashReq ⇒
+    case r: XGetBlockWithTxObjectByHashReq ⇒
       sendMessage("eth_getBlockByHash") {
         Seq(r.blockHash, true)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            GetBlockWithTxObjectByHashRes().withJsonrpc("2.0")
+            XGetBlockWithTxObjectByHashRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[GetBlockWithTxObjectByHashRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XGetBlockWithTxObjectByHashRes](json)
         }
       } pipeTo sender
-    case r: TraceTransactionReq ⇒
+    case r: XTraceTransactionReq ⇒
       sendMessage("debug_traceTransaction") {
         val debugParams = DebugParams(DEBUG_TIMEOUT_STR, DEBUG_TRACER)
         Seq(r.txhash, debugParams)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            TraceTransactionRes().withJsonrpc("2.0")
+            XTraceTransactionRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[TraceTransactionRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XTraceTransactionRes](json)
         }
       } pipeTo sender
     // 这里因为 SendRawTransactionReq 在 actors 里面定义 暂时注释掉
@@ -246,49 +246,49 @@ private[actors] class HttpConnector(node: EthereumProxySettings.Node)(
     //          case _ ⇒ JsonFormat.fromJsonString[SendRawTransactionRes](json)
     //        }
     //      } pipeTo sender
-    case r: GetEstimatedGasReq ⇒
+    case r: XGetEstimatedGasReq ⇒
       sendMessage("eth_estimateGas") {
-        val args = TransactionParam().withTo(r.to).withData(r.data)
+        val args = XTransactionParam().withTo(r.to).withData(r.data)
         Seq(args)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            GetEstimatedGasRes().withJsonrpc("2.0")
+            XGetEstimatedGasRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[GetEstimatedGasRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XGetEstimatedGasRes](json)
         }
       } pipeTo sender
-    case r: GetNonceReq ⇒
+    case r: XGetNonceReq ⇒
       sendMessage("eth_getTransactionCount") {
         Seq(r.owner, r.tag)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            GetNonceRes().withJsonrpc("2.0")
+            XGetNonceRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[GetNonceRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XGetNonceRes](json)
         }
       } pipeTo sender
-    case r: GetBlockTransactionCountReq ⇒
+    case r: XGetBlockTransactionCountReq ⇒
       sendMessage("eth_getBlockTransactionCountByHash") {
         Seq(r.blockHash)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            GetBlockTransactionCountRes().withJsonrpc("2.0")
+            XGetBlockTransactionCountRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[GetBlockTransactionCountRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XGetBlockTransactionCountRes](json)
         }
       } pipeTo sender
-    case r: EthCallReq ⇒
+    case r: XEthCallReq ⇒
       sendMessage("eth_call") {
         Seq(r.param, r.tag)
       } map { json ⇒
         (checkResponseWrapped compose toResponseWrapped)(json) match {
           case true ⇒
-            EthCallRes().withJsonrpc("2.0")
+            XEthCallRes().withJsonrpc("2.0")
               .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[EthCallRes](json)
+          case _ ⇒ JsonFormat.fromJsonString[XEthCallRes](json)
         }
       } pipeTo sender
   }
