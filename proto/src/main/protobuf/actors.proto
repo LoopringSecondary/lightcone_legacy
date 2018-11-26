@@ -65,12 +65,13 @@ message XOrder {
     bytes amount_b = 6;
     bytes amount_fee = 7;
     int64 created_at = 8;
-    core.XOrderStatus status = 9;
-    double wallet_split_percentage = 10;
-    XOrderState outstanding = 11;
-    XOrderState reserved = 12;
-    XOrderState actual = 13;
-    XOrderState matchable = 14;
+    int64 updated_at = 9;
+    core.XOrderStatus status = 10;
+    double wallet_split_percentage = 11;
+    XOrderState outstanding = 12;
+    XOrderState reserved = 13;
+    XOrderState actual = 14;
+    XOrderState matchable = 15;
 }
 
 message XExpectedFill {
@@ -126,6 +127,10 @@ message XGetBalanceAndAllowancesRes {
     map<string, XBalanceAndAllowance> balance_and_allowance_map = 2;
 }
 
+message XSubmitRawOrderReq {
+    XRawOrder order = 1;
+}
+
 message XSubmitOrderReq {
     XOrder order = 1;
 }
@@ -147,6 +152,15 @@ message XAddressAllowanceUpdated {
     bytes balance = 3;
 }
 
+
+message XUpdateOrderStateAndStatusReq {
+    XOrderState actuals = 1;
+    core.XOrderStatus status = 2;
+}
+
+message XUpdateOrderStateAndStatusRes {
+    bool result =1;
+}
 
 // 由ethereum发送给orderManagingActor
 // 以太坊事件顺序根据blockID，tx&eventId来确定,由route汇聚到不同用户地址,然后按顺序逐个发送给orderManagingActor
@@ -190,8 +204,13 @@ message XUpdateBalanceAndAllowanceRes {
     XBalanceAndAllowance balance_and_allowance = 2;
 }
 
-message XUpdatedGasPrice {
+message XGasPriceUpdated {
     int64 gas_price = 1;
+}
+
+message XTriggerRematchReq {
+    bool sell_order_as_taker = 1;
+    int32 offset = 2;
 }
 
 message XSendRawTxReq {
@@ -204,6 +223,16 @@ message XSendRawTxRes {
         SEND_STATUS_UNKNOW = 0;
         SEND_STATUS_SUCCESS = 1;
     }
+}
+
+message XRecoverOrdersReq {
+    string address = 1;
+    int64 updated_since = 2;
+    int32 num = 3;
+}
+
+message XRecoverOrdersRes {
+    repeated XRawOrder orders = 1;
 }
 
 enum XExecutedStatus {
@@ -230,26 +259,35 @@ message XSendRawTransactionRes {
     string result = 3;
 }
 
-message XSettlementReq {
-  repeated XOrderRing rings = 1;
-  bytes gas_limit = 2;
-  bytes gas_price = 3;
+message XSettleRingsReq {
+    repeated XOrderRing rings = 1;
+    bytes gas_limit = 2;
+    bytes gas_price = 3;
 }
 
 message XGetGasPriceReq {}
 
 message XGetGasPriceRes {
-  bytes gas_price = 1;
+    bytes gas_price = 1;
 }
+
+message XSetGasPriceReq {
+    bytes gas_price = 1;
+}
+
+message XSetGasPriceRes {
+    bytes gas_price = 1;
+}
+
 
 message XUpdatedTokenBurnRate {
     string token = 1;
     double burnRate = 2;
 }
 
-message XOrderHistoryReq {
+message XPersistOrderHistoryReq {
     string order_id = 1;
     bytes filled_amount_s = 2;
 }
 
-message XOrderHistoryRes {}
+message XPersistOrderHistoryRes {}

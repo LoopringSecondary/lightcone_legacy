@@ -21,6 +21,7 @@ import akka.event.LoggingReceive
 import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -36,31 +37,43 @@ object AccountManagerActor {
   val name = "account_manager"
 }
 
-class AccountManagerActor(address: String)(
+class AccountManagerActor(
+    val address: String,
+    val recoverBatchSize: Int,
+    val skipRecovery: Boolean = false
+)(
     implicit
-    ec: ExecutionContext,
-    timeout: Timeout,
-    dustEvaluator: DustOrderEvaluator
+    val ec: ExecutionContext,
+    val timeout: Timeout,
+    val dustEvaluator: DustOrderEvaluator
 )
   extends Actor
-  with ActorLogging {
+  with ActorLogging
+  with OrderRecoverySupport {
+  val ownerOfOrders = Some(address)
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
-  private var accountBalanceActor: ActorSelection = _
-  private var marketManagerActor: ActorSelection = _
+  protected var orderDatabaseAccessActor: ActorSelection = _
+  protected var accountBalanceActor: ActorSelection = _
+  protected var orderHistoryActor: ActorSelection = _
+  protected var marketManagerActor: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
-    case ActorDependencyReady(paths) ⇒
+
+    case XActorDependencyReady(paths) ⇒
       log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 2)
-      accountBalanceActor = context.actorSelection(paths(0))
-      marketManagerActor = context.actorSelection(paths(1))
-      context.become(functional)
+      assert(paths.size == 4)
+      orderDatabaseAccessActor = context.actorSelection(paths(0))
+      accountBalanceActor = context.actorSelection(paths(1))
+      orderHistoryActor = context.actorSelection(paths(2))
+      marketManagerActor = context.actorSelection(paths(3))
+
+      startOrderRecovery()
   }
 
-  def functional: Receive = LoggingReceive {
+  def functional: Receive = functionalBase orElse LoggingReceive {
 
     case XGetBalanceAndAllowancesReq(addr, tokens) ⇒
       assert(addr == address)
@@ -81,28 +94,7 @@ class AccountManagerActor(address: String)(
       }).pipeTo(sender)
 
     case XSubmitOrderReq(Some(xorder)) ⇒
-      val order: Order = xorder
-      (for {
-        _ ← getTokenManager(order.tokenS)
-        _ ← getTokenManager(order.tokenFee) if order.amountFee > 0 && order.tokenS != order.tokenFee
-        _ = log.debug(s"submitting order to AccountManager: $order")
-        successful = manager.submitOrder(order)
-        _ = log.info(s"successful: $successful")
-        _ = log.info("orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
-        updatedOrders = orderPool.takeUpdatedOrdersAsMap()
-        _ = assert(updatedOrders.contains(order.id))
-        order_ = updatedOrders(order.id)
-        xorder_ : XOrder = xorder
-      } yield {
-        if (successful) {
-          log.debug(s"submitting order to market manager actor: $order_")
-          marketManagerActor ! XSubmitOrderReq(Some(xorder_))
-          XSubmitOrderRes(order = Some(xorder_))
-        } else {
-          val error = convertOrderStatusToErrorCode(order.status)
-          XSubmitOrderRes(error = error)
-        }
-      }).pipeTo(sender)
+      submitOrder(xorder).pipeTo(sender)
 
     case req: XCancelOrderReq ⇒
       if (manager.cancelOrder(req.id)) {
@@ -120,6 +112,39 @@ class AccountManagerActor(address: String)(
     case _ ⇒
   }
 
+  private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
+    val order: Order = xorder
+    for {
+      _ ← getTokenManager(order.tokenS)
+      _ ← getTokenManager(order.tokenFee) if order.amountFee > 0 && order.tokenS != order.tokenFee
+
+      // Update the order's _outstanding field.
+      orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
+        .mapTo[XGetOrderFilledAmountRes]
+      _ = log.debug(s"order history: orderHistoryRes")
+
+      _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
+
+      _ = log.debug(s"submitting order to AccountManager: ${_order}")
+      successful = manager.submitOrder(_order)
+      _ = log.info(s"successful: $successful")
+      _ = log.info("orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
+      updatedOrders = orderPool.takeUpdatedOrdersAsMap()
+      _ = assert(updatedOrders.contains(_order.id))
+      order_ = updatedOrders(_order.id)
+      xorder_ : XOrder = order_.copy(_reserved = None, _outstanding = None)
+    } yield {
+      if (successful) {
+        log.debug(s"submitting order to market manager actor: $order_")
+        marketManagerActor ! XSubmitOrderReq(Some(xorder_))
+        XSubmitOrderRes(order = Some(xorder_))
+      } else {
+        val error = convertOrderStatusToErrorCode(order.status)
+        XSubmitOrderRes(error = error)
+      }
+    }
+  }
+
   private def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode = status match {
     case INVALID_DATA ⇒ ERR_INVALID_ORDER_DATA
     case UNSUPPORTED_MARKET ⇒ ERR_INVALID_MARKET
@@ -129,7 +154,6 @@ class AccountManagerActor(address: String)(
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
-    log.info(s"exec getTokenManager $token")
     if (manager.hasTokenManager(token))
       Future.successful(manager.getTokenManager(token))
     else for {
@@ -155,9 +179,18 @@ class AccountManagerActor(address: String)(
       order.status match {
         case CANCELLED_LOW_BALANCE | CANCELLED_LOW_FEE_BALANCE ⇒
           marketManagerActor ! XCancelOrderReq(order.id)
-        case s ⇒
-          log.error(s"unexpected order status caused by balance/allowance upate: $s")
+
+        case PENDING ⇒
+          //allowance的改变需要更新到marketManager
+          marketManagerActor ! XSubmitOrderReq(Some(order))
+
+        case status ⇒
+          log.error(s"unexpected order status caused by balance/allowance upate: $status")
       }
     }
   }
+
+  protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
+
 }
+

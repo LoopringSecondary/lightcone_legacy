@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.core
+package org.loopring.lightcone.actors.deployment
 
-import akka.actor.{ Actor, ActorLogging }
-import akka.event.LoggingReceive
+import akka.actor._
 import akka.util.Timeout
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
 
-import scala.concurrent._
+import scala.concurrent.ExecutionContext
 
-object OrderHistoryActor {
-  val name = "order_history"
+case class Shard(index: Int, totalShards: Int)
+
+object AccountManagerActorDeployer {
+  val name = "ama_deployer"
 }
 
-// TODO(hongyu): implement this class.
-// 该类是不是需要将history保存在数据库，从数据库获取？稍后再实现
-class OrderHistoryActor()(
+// TODO(dongw): Leave this to me to implement.
+class AccountManagerActorDeployer(shard: Shard)(
     implicit
     ec: ExecutionContext,
     timeout: Timeout
@@ -37,9 +38,10 @@ class OrderHistoryActor()(
   extends Actor
   with ActorLogging {
 
-  def receive: Receive = LoggingReceive {
-    case XGetOrderFilledAmountReq(orderId) ⇒ //从数据库获取
-    case XPersistOrderHistoryReq           ⇒ //保存在数据库
-  }
+  private var actors = Map.empty[String, ActorRef]
 
+  def receive: Receive = {
+    case msg: AnyRef ⇒
+
+  }
 }

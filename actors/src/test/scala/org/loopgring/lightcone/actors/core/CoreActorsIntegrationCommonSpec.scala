@@ -31,8 +31,24 @@ import org.scalatest._
 import org.loopring.lightcone.actors.data._
 import scala.concurrent.duration._
 import org.slf4s.Logging
+import scala.math.BigInt
 
-abstract class CoreActorsIntegrationCommonSpec
+object CoreActorsIntegrationCommonSpec {
+
+  val GTO = "0x00000000001"
+  val WETH = "0x00000000004"
+  val LRC = "0x00000000002"
+
+  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.1, 1.0, "GTO")
+  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000, "WETH")
+  val LRC_TOKEN = XTokenMetadata(LRC, 18, 0.4, 1000, "LRC")
+}
+
+abstract class CoreActorsIntegrationCommonSpec(
+    marketId: XMarketId,
+    skipAccountManagerActorRecovery: Boolean = true,
+    skipMarketManagerActorRecovery: Boolean = true
+)
   extends TestKit(ActorSystem("test", ConfigFactory.parseString(
     """akka {
          loglevel = "DEBUG"
@@ -51,23 +67,17 @@ abstract class CoreActorsIntegrationCommonSpec
   with BeforeAndAfterAll
   with Logging {
 
+  import CoreActorsIntegrationCommonSpec._
+
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
   }
 
-  val LRC = "LRC"
-  val WETH = "WETH"
-  val ETH = "ETH"
-
-  val LRC_TOKEN = XTokenMetadata(LRC, 0, 0.1, 1.0)
-  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
-  val ETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000)
-
-  implicit val marketId = XMarketId(LRC, WETH)
+  implicit val marketId_ = marketId
   implicit val tokenMetadataManager = new TokenMetadataManager()
-  tokenMetadataManager.addToken(LRC_TOKEN)
+  tokenMetadataManager.addToken(GTO_TOKEN)
   tokenMetadataManager.addToken(WETH_TOKEN)
-  tokenMetadataManager.addToken(ETH_TOKEN)
+  tokenMetadataManager.addToken(LRC_TOKEN)
   implicit val tokenValueEstimator = new TokenValueEstimator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
   implicit val ringIncomeEstimator = new RingIncomeEstimatorImpl()
@@ -85,6 +95,11 @@ abstract class CoreActorsIntegrationCommonSpec
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
+
+  // Simulating an AccountBalanceActor
+  val orderDdManagerProbe = new TestProbe(system, "order_db_access") {
+  }
+  val orderDdManagerActor = orderDdManagerProbe.ref
 
   // Simulating an AccountBalanceActor
   val accountBalanceProbe = new TestProbe(system, "account_balance") {
@@ -125,36 +140,56 @@ abstract class CoreActorsIntegrationCommonSpec
   val ADDRESS_2 = "address_222222222222222222222"
 
   val accountManagerActor1: ActorRef = TestActorRef(
-    new AccountManagerActor(ADDRESS_1)
+    new AccountManagerActor(
+      address = ADDRESS_1,
+      recoverBatchSize = 5,
+      skipRecovery = skipAccountManagerActorRecovery
+    )
   )
 
   val accountManagerActor2: ActorRef = TestActorRef(
-    new AccountManagerActor(ADDRESS_2)
+    new AccountManagerActor(
+      address = ADDRESS_2,
+      recoverBatchSize = 5,
+      skipRecovery = skipAccountManagerActorRecovery
+    )
   )
 
   val marketManagerActor: ActorRef = TestActorRef(
-    new MarketManagerActor(marketId, config)
+    new MarketManagerActor(
+      marketId,
+      config,
+      skipRecovery = skipMarketManagerActorRecovery
+    )
   )
 
-  accountManagerActor1 ! ActorDependencyReady(Seq(
+  accountManagerActor1 ! XActorDependencyReady(Seq(
+    orderDdManagerActor.path.toString,
     accountBalanceActor.path.toString,
-    marketManagerActor.path.toString
-  ))
-
-  accountManagerActor2 ! ActorDependencyReady(Seq(
-    accountBalanceActor.path.toString,
-    marketManagerActor.path.toString
-  ))
-
-  marketManagerActor ! ActorDependencyReady(Seq(
-    gasPriceActor.path.toString,
     orderHistoryActor.path.toString,
+    marketManagerActor.path.toString
+  ))
+
+  accountManagerActor2 ! XActorDependencyReady(Seq(
+    orderDdManagerActor.path.toString,
+    accountBalanceActor.path.toString,
+    orderHistoryActor.path.toString,
+    marketManagerActor.path.toString
+  ))
+
+  marketManagerActor ! XActorDependencyReady(Seq(
+    orderDdManagerActor.path.toString,
+    gasPriceActor.path.toString,
     orderbookManagerActor.path.toString,
     settlementActor.path.toString
   ))
 
-  settlementActor ! ActorDependencyReady(Seq(
+  settlementActor ! XActorDependencyReady(Seq(
     gasPriceActor.path.toString,
     ethereumActor.path.toString
   ))
+
+  implicit class RichString(s: String) {
+    def zeros(size: Int): BigInt = BigInt(s + "0" * size)
+  }
 }

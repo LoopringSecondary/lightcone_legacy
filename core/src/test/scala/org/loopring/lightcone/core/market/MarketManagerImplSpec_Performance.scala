@@ -43,7 +43,7 @@ import XMatchingFailure._
 class MarketManagerImplSpec_Performance extends OrderAwareSpec {
 
   implicit var timeProvider = new TimeProvider {
-    def getCurrentTimeMillis = -1
+    def getTimeMillis = -1
   }
 
   implicit val marketId = XMarketId(primary = WETH, secondary = GTO)
@@ -97,14 +97,14 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
     val sells = marketManager.getSellOrders(100)
     val buys = marketManager.getBuyOrders(100)
 
-    println(s"""
-      -----------
-      sells: ${sells.mkString("\n", "\n\n", "\n")}
+    // println(s"""
+    //   -----------
+    //   sells: ${sells.mkString("\n", "\n\n", "\n")}
 
-      -----------
-      buys: ${buys.mkString("\n", "\n\n", "\n")}
+    //   -----------
+    //   buys: ${buys.mkString("\n", "\n\n", "\n")}
 
-      """)
+    //   """)
 
     println(s"""
       number of orders :${marketManager.getNumOfOrders}

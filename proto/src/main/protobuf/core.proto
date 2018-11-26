@@ -45,6 +45,7 @@ message XMarketId {
 message XMarketManagerConfig {
     int32 maxNumbersOfOrders = 1;
     int32 priceDecimals = 2;
+    int32 recover_batch_size = 3;
 }
 
 
@@ -100,7 +101,7 @@ message XOrderbookUpdate {
     repeated XSlot buys = 2;
 }
 
-message GetXOrderbookReq {
+message XGetOrderbookReq {
    int32 level = 1;
    int32 size = 2;
 }
@@ -114,6 +115,7 @@ message XTokenMetadata {
     int32 decimals = 2;
     double burnRate = 3;
     double currentPrice = 4;
+    string symbol = 5;
 }
 
 

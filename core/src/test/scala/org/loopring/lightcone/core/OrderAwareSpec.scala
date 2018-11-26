@@ -24,15 +24,16 @@ import org.loopring.lightcone.core.account._
 trait OrderAwareSpec extends CommonSpec {
   var nextId = 1
 
-  val LRC = "LRC"
-  val GTO = "GTO"
-  val DAI = "DAI"
-  val WETH = "WETH"
+  // These are the addresses, not symbols
+  val LRC = "0x00000000002"
+  val GTO = "0x00000000001"
+  val DAI = "0x00000000003"
+  val WETH = "0x00000000004"
 
-  val LRC_TOKEN = XTokenMetadata(LRC, 0, 0.1, 1.0)
-  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.2, 1400.0)
-  val DAI_TOKEN = XTokenMetadata(DAI, 20, 0.3, 7.0)
-  val WETH_TOKEN = XTokenMetadata(WETH, 23, 0.4, 0.5)
+  val LRC_TOKEN = XTokenMetadata(LRC, 0, 0.1, 1.0, "LRC")
+  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.2, 1400.0, "GTO")
+  val DAI_TOKEN = XTokenMetadata(DAI, 20, 0.3, 7.0, "DAI")
+  val WETH_TOKEN = XTokenMetadata(WETH, 23, 0.4, 0.5, "WETH")
 
   implicit val tmm = new TokenMetadataManager()
   tmm.addToken(LRC_TOKEN)

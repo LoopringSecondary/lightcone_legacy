@@ -63,6 +63,7 @@ package object data {
       amountB = xorder.amountB,
       amountFee = xorder.amountFee,
       createdAt = xorder.createdAt,
+      updatedAt = xorder.updatedAt,
       status = xorder.status,
       walletSplitPercentage = xorder.walletSplitPercentage,
       _outstanding = xorder.outstanding.map(xorderState2OrderState),
@@ -81,6 +82,7 @@ package object data {
       amountB = order.amountB,
       amountFee = order.amountFee,
       createdAt = order.createdAt,
+      updatedAt = order.updatedAt,
       status = order.status,
       walletSplitPercentage = order.walletSplitPercentage,
       outstanding = order._outstanding.map(orderState2XOrderState),
@@ -147,5 +149,7 @@ package object data {
       amountMargin = xExpectedFill.amountMargin
     )
 
+// TODO(hongyu): implement this
+implicit def convertXRawOrderToXOrder(xraworder: XRawOrder): XOrder = ???
 
 }
