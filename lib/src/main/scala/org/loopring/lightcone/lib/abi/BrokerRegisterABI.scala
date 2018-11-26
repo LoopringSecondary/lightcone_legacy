@@ -54,7 +54,7 @@ class BrokerRegisterABI(jsonStr: String) extends AbiWrap(jsonStr) {
     Some(data)
   }
 
-  private[lib] def assembleRegisterBrokerFunction(list: Seq[Any], from: String): BrokerRegistered = {
+  private[lib] def assembleRegisterBrokerFunction(list: Seq[Any], from: String) = {
     assert(list.length == 2, "length of register broker function invalid")
 
     BrokerRegistered(
@@ -64,7 +64,7 @@ class BrokerRegisterABI(jsonStr: String) extends AbiWrap(jsonStr) {
     )
   }
 
-  private[lib] def assembleRegisterBrokerEvent(list: Seq[Any]): BrokerRegistered = {
+  private[lib] def assembleRegisterBrokerEvent(list: Seq[Any]) = {
     assert(list.length == 3, "length of register broker event invalid")
 
     BrokerRegistered(
@@ -74,7 +74,7 @@ class BrokerRegisterABI(jsonStr: String) extends AbiWrap(jsonStr) {
     )
   }
 
-  private[lib] def assembleUnRegisterBrokerFunction(list: Seq[Any], from: String): BrokerUnregistered = {
+  private[lib] def assembleUnRegisterBrokerFunction(list: Seq[Any], from: String) = {
     assert(list.length == 1, "length of unregister broker function invalid")
 
     BrokerUnregistered(
@@ -84,7 +84,7 @@ class BrokerRegisterABI(jsonStr: String) extends AbiWrap(jsonStr) {
     )
   }
 
-  private[lib] def assembleUnRegisterBrokerEvent(list: Seq[Any]): BrokerUnregistered = {
+  private[lib] def assembleUnRegisterBrokerEvent(list: Seq[Any]) = {
     assert(list.length == 3, "length of unregister broker event invalid")
 
     BrokerUnregistered(
@@ -94,7 +94,7 @@ class BrokerRegisterABI(jsonStr: String) extends AbiWrap(jsonStr) {
     )
   }
 
-  private[lib] def assembleUnRegisterAllBrokerFunction(list: Seq[Any], from: String): AllBrokersUnregistered = {
+  private[lib] def assembleUnRegisterAllBrokerFunction(list: Seq[Any], from: String) = {
     assert(list.length == 1, "length of unregister broker function invalid")
 
     AllBrokersUnregistered(
@@ -102,7 +102,7 @@ class BrokerRegisterABI(jsonStr: String) extends AbiWrap(jsonStr) {
     )
   }
 
-  private[lib] def assembleUnRegisterAllBrokerEvent(list: Seq[Any]): AllBrokersUnregistered = {
+  private[lib] def assembleUnRegisterAllBrokerEvent(list: Seq[Any]) = {
     assert(list.length == 1, "length of unregister broker event invalid")
 
     AllBrokersUnregistered(

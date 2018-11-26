@@ -32,6 +32,13 @@ package object data {
   case class BrokerUnregistered(owner: String, broker: String, interceptor: String)
   case class AllBrokersUnregistered(owner: String)
 
+  case class OrdersCancelled(broker: String, orderhashs: Seq[String])
+  case class AllOrdersCancelledForTradingPair(broker: String, token1: String, token2: String, cutoff: BigInt)
+  case class AllOrdersCancelled(broker: String, cutoff: BigInt)
+  case class OrdersCancelledByBroker(broker: String, owner: String, orderhashs: Seq[String])
+  case class AllOrdersCancelledByBroker(broker: String, owner: String, cutoff: BigInt)
+  case class AllOrdersCancelledForTradingPairByBroker(broker: String, owner: String, token1: String, token2: String, cutoff: BigInt)
+
   object SignAlgorithm extends Enumeration {
     type AlgorithmType = Value
     val ALGORITHM_ETHEREUM = Value(0)
