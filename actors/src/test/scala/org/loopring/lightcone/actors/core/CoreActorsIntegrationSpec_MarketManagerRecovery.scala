@@ -16,34 +16,15 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
-import akka.event.LoggingReceive
-import akka.util.Timeout
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
+import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.actors.data._
 
-import scala.concurrent._
-
-object AccountBalanceActor {
-  val name = "account_balance"
-}
-
-// TODO(fukun): implement this class.
-class AccountBalanceActor()(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout
-)
-  extends Actor
-  with ActorLogging {
-
-  def receive: Receive = LoggingReceive {
-    // TODO(dongw): even if the token is not supported, we still need to return 0s.
-    case req: XGetBalanceAndAllowancesReq ⇒
-
-  }
+//todo: impl it after tested accountMangerRecovery
+class CoreActorsIntegrationSpec_MarketManagerRecovery
+  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
 }
