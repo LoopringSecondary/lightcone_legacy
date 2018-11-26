@@ -21,13 +21,13 @@ import org.web3j.utils.Numeric
 trait RingDeserializer {
 
   // 将合约环路data解析为ring
-  def deserialize(encoded: String): Ring
+  def deserialize(encoded: String): CRing
 
 }
 
 class RingDeserializerImpl(lrcAddress: String) extends RingDeserializer {
 
-  def deserialize(encoded: String): Ring = {
+  def deserialize(encoded: String): CRing = {
     val helper = new RingDeserializerHelper(lrcAddress, encoded)
     helper.dissemble()
   }
@@ -43,7 +43,7 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
 
   val undefined = "0x0"
 
-  def dissemble(): Ring = {
+  def dissemble(): CRing = {
     val version = dataparser.extractUint16(0)
     val numOrders = dataparser.extractUint16(2)
     val numRings = dataparser.extractUint16(4)
@@ -68,7 +68,7 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     val _orders = setupOrders(orderDataPtr, numOrders)
     val _rings = assembleRings(numRings, ringDataPtr, _orders)
 
-    Ring(
+    CRing(
       miner = _miner,
       feeReceipt = _feeRecipient,
       sig = _sig,
@@ -78,14 +78,14 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     )
   }
 
-  private def setupOrders(tablesPtr: Int, numOrders: Int): Seq[Order] = {
+  private def setupOrders(tablesPtr: Int, numOrders: Int): Seq[COrder] = {
     tableOffset = tablesPtr
     (1 to numOrders).map(_ ⇒ assembleOrder())
   }
 
   private def assembleRings(
     numRings: Int,
-    originOffset: Int, orders: Seq[Order]
+    originOffset: Int, orders: Seq[COrder]
   ): Seq[Seq[Int]] = {
     var offset = originOffset
 
@@ -100,7 +100,7 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
   private def assembleRing(
     ringsize: Int,
     originOffset: Int,
-    orders: Seq[Order]
+    orders: Seq[COrder]
   ): Seq[Int] = {
     var offset = originOffset
     (1 to ringsize).map { _ ⇒
@@ -110,7 +110,7 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
     }
   }
 
-  private def assembleOrder(): Order = {
+  private def assembleOrder(): COrder = {
     val _version = nextUint16
     val _owner = nextAddress
     val _tokenS = nextAddress
@@ -144,7 +144,7 @@ private[lib] class RingDeserializerHelper(lrcAddress: String, encoded: String) {
       if (_tokenRecipient.equals(undefined)) _owner
       else _tokenRecipient
 
-    Order(
+    COrder(
       owner = _owner,
       tokenS = _tokenS,
       tokenB = _tokenB,

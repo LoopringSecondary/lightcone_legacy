@@ -21,12 +21,14 @@ import org.web3j.crypto.{ Hash ⇒ web3Hash }
 
 import org.loopring.lightcone.lib.abi.RingSubmitterABI
 
-case class Ring(
+// contract Ring 避免数据结构命名重复
+// lib里的数据结构原则上不参与数据传输
+case class CRing(
     feeReceipt: String,
     miner: String,
     sig: String,
     ringOrderIndex: Seq[Seq[Int]], // todo change to map
-    orders: Seq[Order],
+    orders: Seq[COrder],
     transactionOrigin: String
 ) {
 

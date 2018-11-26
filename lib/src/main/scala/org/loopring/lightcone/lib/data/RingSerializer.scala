@@ -19,12 +19,12 @@ package org.loopring.lightcone.lib.data
 trait RingSerializer {
 
   // 根据环路信息组装合约data
-  def serialize(ring: Ring): String
+  def serialize(ring: CRing): String
 }
 
 class RingSerializerImpl(lrcAddress: String) extends RingSerializer {
 
-  def serialize(ring: Ring) = {
+  def serialize(ring: CRing) = {
     ring.orders.foreach(o ⇒ assert(o.hash.nonEmpty))
 
     val helper = new RingSerializerHelper(lrcAddress, ring)
@@ -33,7 +33,7 @@ class RingSerializerImpl(lrcAddress: String) extends RingSerializer {
 }
 
 // warning: 代码顺序不能调整！！！！！！
-private[lib] class RingSerializerHelper(lrcAddress: String, ring: Ring) {
+private[lib] class RingSerializerHelper(lrcAddress: String, ring: CRing) {
   val ORDER_VERSION = 0
   val SERIALIZATION_VERSION = 0
 
@@ -133,7 +133,7 @@ private[lib] class RingSerializerHelper(lrcAddress: String, ring: Ring) {
     }
   }
 
-  private def createOrderTable(order: Order): Unit = {
+  private def createOrderTable(order: COrder): Unit = {
     addPadding()
 
     insertOffset(ORDER_VERSION)

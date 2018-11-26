@@ -21,7 +21,7 @@ import org.web3j.crypto.RawTransaction
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.lib.data._
 
-class RingSubmitterSpec extends FlatSpec with Matchers {
+class CRingSubmitterSpec extends FlatSpec with Matchers {
 
   val debug = true
 
@@ -56,7 +56,7 @@ class RingSubmitterSpec extends FlatSpec with Matchers {
     info("[sbt lib/'testOnly *SubmitRingSpec -- -z simpleTest1']")
 
     // curl https://relay1.loopring.io/rpc/v2/ -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"loopring_getNonce","params":[{"owner":"0xdb88d20527332ad9bab730769891285dc62ba092"}],"id":64}'
-    val raworder1 = Order(
+    val raworder1 = COrder(
       tokenS = lrcAddress,
       tokenB = wethAddress,
       amountS = one * 100,
@@ -75,7 +75,7 @@ class RingSubmitterSpec extends FlatSpec with Matchers {
     )
     val order1 = fullOrder(raworder1, account1PrivateKey)
 
-    val raworder2 = Order(
+    val raworder2 = COrder(
       tokenS = wethAddress,
       tokenB = lrcAddress,
       amountS = one / 100,
@@ -94,7 +94,7 @@ class RingSubmitterSpec extends FlatSpec with Matchers {
     )
     val order2 = fullOrder(raworder2, account2PrivateKey)
 
-    val ring = Ring(
+    val ring = CRing(
       orders = Seq(order1, order2),
       miner = miner,
       feeReceipt = miner,
@@ -107,7 +107,7 @@ class RingSubmitterSpec extends FlatSpec with Matchers {
     info(Numeric.toHexString(tx))
   }
 
-  private def fullOrder(raworder: Order, privKey: String): Order = {
+  private def fullOrder(raworder: COrder, privKey: String): COrder = {
     val hash = raworder.cryptoHash
     val signer = new Signer(privKey)
     val sig = signer.signHash(SignAlgorithm.ALGORITHM_EIP712, hash)

@@ -19,7 +19,9 @@ package org.loopring.lightcone.lib.data
 import org.web3j.crypto.{Hash ⇒ web3Hash}
 import org.web3j.utils.Numeric
 
-case class Order(
+// contract order 避免数据结构在全项目命名重复
+// lib上的数据结构原则上不参与传输 因此不定义在proto
+case class COrder(
     owner: String,
     tokenS: String,
     tokenB: String,

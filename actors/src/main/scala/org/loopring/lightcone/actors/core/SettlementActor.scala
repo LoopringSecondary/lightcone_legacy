@@ -24,26 +24,35 @@ import akka.pattern._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base.RepeatedJobActor
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.lib.abi.RingSubmitterABI
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.deployment.XActorDependencyReady
+import org.web3j.crypto.RawTransaction
 
 import scala.annotation.tailrec
 import scala.concurrent.{ ExecutionContext, Future }
 
+// todo protocol, chainId,
 class SettlementActor(
-    submitterPrivateKey: String
+    submitterPrivateKey: String,
+    chainId: BigInt,
+    protocol: String,
+    algorithm: SignAlgorithm.Value,
+    lrcAddress: String
 )(
     implicit
     ec: ExecutionContext,
-    timeout: Timeout
+    timeout: Timeout,
+    submitRingAbi: RingSubmitterABI
 )
   extends RepeatedJobActor
   with ActorLogging {
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)
-  val ringSigner = new Signer(privateKey = submitterPrivateKey)
+  implicit val ringSerializer = new RingSerializerImpl(lrcAddress)
+  implicit val ringSigner = new Signer(privateKey = submitterPrivateKey)
 
   private var ethereumAccessActor: ActorSelection = _
   private var gasPriceActor: ActorSelection = _
@@ -62,7 +71,7 @@ class SettlementActor(
       val rings = generateRings(req.rings)
       rings.foreach {
         ring ⇒
-          val inputData = ringSigner.getInputData(ring)
+          val inputData = ring.getInputData(algorithm)
           signAndSubmitTx(inputData, req.gasLimit, req.gasPrice)
       }
   }
@@ -70,7 +79,8 @@ class SettlementActor(
   def signAndSubmitTx(inputData: String, gasLimit: BigInt, gasPrice: BigInt) = {
     var hasSended = false
     while (!hasSended) {
-      val txData = ringSigner.getSignedTxData(inputData, nonce.get(), gasLimit, gasPrice)
+      val rawTx = getRawTransaction(inputData, nonce.get(), gasLimit, gasPrice)
+      val txData = ringSigner.signTx(rawTx, chainId)
       val sendFuture = ethereumAccessActor ? XSendRawTransaction(txData)
       //todo:需要等待提交被确认才提交下一个
       nonce.getAndIncrement()
@@ -95,19 +105,19 @@ class SettlementActor(
     }
   } yield Unit
 
-  private def generateRings(rings: Seq[XOrderRing]): Seq[Ring] = {
+  private def generateRings(rings: Seq[XOrderRing]): Seq[CRing] = {
     @tailrec
-    def generateRingRec(rings: Seq[XOrderRing], res: Seq[Ring]): Seq[Ring] = {
+    def generateRingRec(rings: Seq[XOrderRing], res: Seq[CRing]): Seq[CRing] = {
       if (rings.isEmpty) {
         return res
       }
       val (toSubmit, remained) = rings.splitAt(maxRingsInOneTx)
-      var ring = Ring(
-        ringSigner.getSignerAddress(),
-        ringSigner.getSignerAddress(),
+      var ring = CRing(
+        ringSigner.address,
+        ringSigner.address,
         "",
         Seq.empty[Seq[Int]],
-        Seq.empty[Order],
+        Seq.empty[COrder],
         ""
       )
       val orders = rings.flatMap {
@@ -128,12 +138,12 @@ class SettlementActor(
       generateRingRec(remained, res :+ ring)
     }
 
-    generateRingRec(rings, Seq.empty[Ring])
+    generateRingRec(rings, Seq.empty[CRing])
   }
 
-  private def convertToOrder(xOrder: XOrder): Order = {
+  private def convertToOrder(xOrder: XOrder): COrder = {
     //todo:need to get From db
-    Order(
+    COrder(
       owner = "0x0",
       tokenS = xOrder.tokenS,
       tokenB = xOrder.tokenB,
@@ -147,6 +157,18 @@ class SettlementActor(
       sig = "",
       dualAuthSig = "",
       hash = xOrder.id
+    )
+  }
+
+  // todo: 统一放置到ethereum模块
+  private def getRawTransaction(inputData: String, nonce: BigInt, gasLimit: BigInt, gasPrice: BigInt) = {
+    RawTransaction.createTransaction(
+      nonce.bigInteger,
+      gasPrice.bigInteger,
+      gasLimit.bigInteger,
+      protocol,
+      BigInt(0).bigInteger,
+      inputData
     )
   }
 
