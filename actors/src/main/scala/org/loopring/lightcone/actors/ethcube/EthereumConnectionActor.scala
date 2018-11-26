@@ -22,7 +22,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.loopring.lightcone.proto.ethrpc._
 
-class EthereumProxyActor(settings: XEthereumProxySettings)(
+class EthereumConnectionActor(settings: XEthereumProxySettings)(
     implicit
     materilizer: ActorMaterializer,
     timeout: Timeout
