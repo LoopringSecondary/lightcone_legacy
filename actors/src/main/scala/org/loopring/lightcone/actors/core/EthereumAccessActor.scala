@@ -16,23 +16,18 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
-import akka.event.LoggingReceive
+import akka.actor._
 import akka.util.Timeout
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.proto.actors._
 
-import scala.concurrent._
+import scala.concurrent.ExecutionContext
 
-object AccountBalanceActor {
-  val name = "account_balance"
+object EthereumAccessActor {
+  val name = "ethereum_access"
 }
 
-// TODO(fukun): implement this class.
-class AccountBalanceActor()(
+class EthereumAccessActor()(
     implicit
     ec: ExecutionContext,
     timeout: Timeout
@@ -40,10 +35,8 @@ class AccountBalanceActor()(
   extends Actor
   with ActorLogging {
 
-  def receive: Receive = LoggingReceive {
-    // TODO(dongw): even if the token is not supported, we still need to return 0s.
-    case req: XGetBalanceAndAllowancesReq ⇒
-
+  def receive: Receive = {
+    case _ ⇒
   }
 
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopgring.lightcone.actors.core
+package org.loopring.lightcone.actors.core
 
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
@@ -23,19 +23,20 @@ import org.loopring.lightcone.core.data.Order
 import XErrorCode._
 import CoreActorsIntegrationCommonSpec._
 
-class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
-  extends CoreActorsIntegrationCommonSpec(XMarketId(LRC, WETH)) {
+class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsAnotherToken
+  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO, WETH)) {
 
   "submit a single order" must {
     "succeed and make change to orderbook" in {
       val order = XOrder(
-        id = "buy_lrc",
+        id = "order",
         tokenS = WETH_TOKEN.address,
-        tokenB = LRC_TOKEN.address,
+        tokenB = GTO_TOKEN.address,
         tokenFee = LRC_TOKEN.address,
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
         amountFee = "10".zeros(18),
+        walletSplitPercentage = 0.2,
         status = XOrderStatus.NEW
       )
 
@@ -45,7 +46,7 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
       accountBalanceProbe.replyWith(ADDRESS_1, WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
 
       accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
-      accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "0".zeros(0), "0".zeros(0))
+      accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "10".zeros(18), "10".zeros(18))
 
       orderHistoryProbe.expectQuery(order.id)
       orderHistoryProbe.replyWith(order.id, "0".zeros(0))
@@ -55,14 +56,16 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
           val order: Order = xorder
           log.debug(s"order submitted: $order")
         case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
+          log.debug(s"occurs ERR_UNKNOWN when submitting order:$order")
       }
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          println("----orderbook: " + a)
+          info("----orderbook: " + a)
       }
     }
   }
+
 }

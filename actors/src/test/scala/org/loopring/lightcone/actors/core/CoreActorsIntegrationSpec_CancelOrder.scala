@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-package org.loopgring.lightcone.actors.core
+package org.loopring.lightcone.actors.core
 
-import org.loopgring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
+import akka.actor.Kill
+import akka.testkit.TestProbe
+import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 
-class CoreActorsIntegrationSpec_AllowanceUpdate
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
+class CoreActorsIntegrationSpec_CancelOrder
   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
-  "update allowance after submit an order" must {
-    "received by marketManager, orderbookManager if the actual changed" in {
+  "cancel an order to generate a cancel event" must {
+    "received by marketManager, orderbookManager" in {
       val order = XOrder(
         id = "order",
         tokenS = WETH_TOKEN.address,
@@ -63,21 +68,37 @@ class CoreActorsIntegrationSpec_AllowanceUpdate
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          a.sells.nonEmpty should be(true)
-          a.sells.head.amount should be("50.00")
           info("----orderbook status after submit an order: " + a)
       }
 
-      accountManagerActor1 ! XAddressAllowanceUpdated(ADDRESS_1, WETH_TOKEN.address, "45".zeros(18))
+      accountManagerActor1 ! XCancelOrderReq(order.id, false)
+      expectMsgPF() {
+        case res: XCancelOrderRes ⇒
+          info(s"-- canceled this order: $res")
+      }
 
-      //等待accountManager执行完毕
-      Thread.sleep(1000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          a.sells.nonEmpty should be(true)
-          a.sells.head.amount should be("45.00")
+          info("----orderbook status after cancel this order: " + a)
+      }
+    }
+  }
+  "cancel an order that not existed" must {
+    "return ERR_ORDER_NOT_EXIST" in {
+
+      accountManagerActor1 ! XCancelOrderReq("not-exists-order-id", false)
+      expectMsgPF() {
+        case res: XCancelOrderRes ⇒
+          info(s"-- canceled this order: $res")
+          res.error should be(XErrorCode.ERR_ORDER_NOT_EXIST)
+      }
+
+      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+      expectMsgPF() {
+        case a: XOrderbook ⇒
           info("----orderbook status after cancel this order: " + a)
       }
     }

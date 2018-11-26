@@ -18,20 +18,24 @@ package org.loopring.lightcone.actors.core
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import akka.actor.{ ActorLogging, ActorSelection }
+import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
-import org.loopring.lightcone.actors.base.RepeatedJobActor
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.deployment.XActorDependencyReady
 
 import scala.annotation.tailrec
 import scala.concurrent.{ ExecutionContext, Future }
 
+object SettlementActor {
+  val name = "settlement"
+}
+
 class SettlementActor(
+    actors: Lookup[ActorRef],
     submitterPrivateKey: String
 )(
     implicit
@@ -45,21 +49,10 @@ class SettlementActor(
   private var nonce = new AtomicInteger(0)
   val ringSigner = new RingSignerImpl(privateKey = submitterPrivateKey)
 
-  private var ethereumAccessActor: ActorSelection = _
-  private var gasPriceActor: ActorSelection = _
-  private var orderDbAccessActor: ActorSelection = _
+  private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
+  private def gasPriceActor = actors.get(GasPriceActor.name)
 
   override def receive: Receive = super.receive orElse LoggingReceive {
-    case XActorDependencyReady(paths) ⇒
-      log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 3)
-      gasPriceActor = context.actorSelection(paths(0))
-      ethereumAccessActor = context.actorSelection(paths(1))
-      orderDbAccessActor = context.actorSelection(paths(2))
-      context.become(functional)
-  }
-
-  def functional: Receive = super.receive orElse LoggingReceive {
     case req: XSettleRingsReq ⇒
       val rings = generateRings(req.rings)
       rings.foreach {

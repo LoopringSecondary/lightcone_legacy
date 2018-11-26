@@ -43,7 +43,7 @@ trait OrderRecoverySupport {
   val ownerOfOrders: Option[String]
   private var batch = 1
 
-  protected var orderDatabaseAccessActor: ActorSelection
+  protected def orderDatabaseAccessActor: ActorRef
 
   protected def recoverOrder(xorder: XOrder): Future[Any]
 
@@ -51,6 +51,7 @@ trait OrderRecoverySupport {
 
   protected def startOrderRecovery() = {
     if (skipRecovery) {
+      log.info(s"actor recovering skipped: ${self.path}")
       context.become(functional)
     } else {
       context.become(recovering)
@@ -74,7 +75,7 @@ trait OrderRecoverySupport {
         _ ← Future.sequence(xorders.map(recoverOrder))
         lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
         recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-        _ = println(s"@@@@@, ${recoverEnded}, $lastUpdatdTimestamp, ${xorders.size}, ${recoverBatchSize}")
+        _ = if (recoverEnded) context.become(functional)
         _ = orderDatabaseAccessActor ! XRecoverOrdersReq(
           ownerOfOrders.getOrElse(null),
           lastUpdatdTimestamp,
