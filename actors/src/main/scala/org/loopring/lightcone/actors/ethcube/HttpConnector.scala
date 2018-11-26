@@ -234,18 +234,7 @@ private[actors] class HttpConnector(node: XEthereumProxySettings.XNode)(
           case _ ⇒ JsonFormat.fromJsonString[XTraceTransactionRes](json)
         }
       } pipeTo sender
-    // 这里因为 SendRawTransactionReq 在 actors 里面定义 暂时注释掉
-    //    case r: SendRawTransactionReq ⇒
-    //      sendMessage("eth_sendRawTransaction") {
-    //        Seq(r.data)
-    //      } map { json ⇒
-    //        (checkResponseWrapped compose toResponseWrapped)(json) match {
-    //          case true ⇒
-    //            SendRawTransactionRes().withJsonrpc("2.0")
-    //              .withError(emptyError)
-    //          case _ ⇒ JsonFormat.fromJsonString[SendRawTransactionRes](json)
-    //        }
-    //      } pipeTo sender
+
     case r: XGetEstimatedGasReq ⇒
       sendMessage("eth_estimateGas") {
         val args = XTransactionParam().withTo(r.to).withData(r.data)

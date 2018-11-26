@@ -29,6 +29,19 @@ class EthereumConnectionActor(settings: XEthereumProxySettings)(
 ) extends Actor
   with ActorLogging {
 
+  // 块高度检测
+  context.actorOf(
+    Props(
+      new EthereumClientManager(
+        requestRouterActor,
+        connectorGroups,
+        settings.checkIntervalSeconds,
+        settings.healthyThreshold
+      )
+    ),
+    "ethereum_connector_manager"
+  )
+
   private val connectorGroups: Seq[ActorRef] = settings.nodes.zipWithIndex.map {
     case (node, index) ⇒
       val props =
@@ -45,18 +58,6 @@ class EthereumConnectionActor(settings: XEthereumProxySettings)(
   private val requestRouterActor = context.actorOf(
     RoundRobinGroup(connectorGroups.map(_.path.toString).toList).props(),
     "request_router_actor"
-  )
-
-  private val manager = context.actorOf(
-    Props(
-      new ConnectionManager(
-        requestRouterActor,
-        connectorGroups,
-        settings.checkIntervalSeconds,
-        settings.healthyThreshold
-      )
-    ),
-    "ethereum_connector_manager"
   )
 
   def receive: Receive = {

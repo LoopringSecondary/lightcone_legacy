@@ -27,7 +27,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.Random
 
-private[actors] class ConnectionManager(
+private[actors] class EthereumClientManager(
     requestRouterActor: ActorRef,
     connectorGroups: Seq[ActorRef],
     checkIntervalSeconds: Int,
