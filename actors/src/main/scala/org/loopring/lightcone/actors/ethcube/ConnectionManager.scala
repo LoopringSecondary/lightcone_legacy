@@ -32,12 +32,14 @@ private[actors] class ConnectionManager(
     connectorGroups: Seq[ActorRef],
     checkIntervalSeconds: Int,
     healthyThreshold: Float
+)(
+    implicit
+    timeout: Timeout
 )
   extends Actor
   with ActorLogging {
 
   implicit val ec = context.system.dispatcher
-  implicit val timeout: Timeout = Timeout(1 seconds)
   private val size = connectorGroups.size
   implicit val formats = DefaultFormats
 

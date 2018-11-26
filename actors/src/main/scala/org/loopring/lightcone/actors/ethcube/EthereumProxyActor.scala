@@ -19,11 +19,13 @@ package org.loopring.lightcone.actors.ethcube
 import akka.actor._
 import akka.routing._
 import akka.stream.ActorMaterializer
+import akka.util.Timeout
 import org.loopring.lightcone.proto.ethrpc._
 
 class EthereumProxyActor(settings: EthereumProxySettings)(
     implicit
-    materilizer: ActorMaterializer
+    materilizer: ActorMaterializer,
+    timeout: Timeout
 ) extends Actor
   with ActorLogging {
 
