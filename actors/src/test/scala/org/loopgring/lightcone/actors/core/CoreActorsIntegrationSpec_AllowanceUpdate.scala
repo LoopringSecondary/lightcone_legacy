@@ -76,8 +76,8 @@ class CoreActorsIntegrationSpec_AllowanceUpdate
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          //          a.sells.nonEmpty should be(true)
-          //          a.sells.head.amount should be("45.00")
+          a.sells.nonEmpty should be(true)
+          a.sells.head.amount should be("45.00")
           info("----orderbook status after cancel this order: " + a)
       }
     }

@@ -71,6 +71,8 @@ class AccountManagerActor(
       marketManagerActor = context.actorSelection(paths(3))
 
       startOrderRecovery()
+
+    case msg ⇒ println(s"######## msg ${msg}")
   }
 
   def functional: Receive = functionalBase orElse LoggingReceive {
@@ -109,7 +111,7 @@ class AccountManagerActor(
     case XAddressAllowanceUpdated(_, token, newBalance) ⇒
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
 
-    case _ ⇒
+    case msg ⇒ println(s"unknown msg ${msg}")
   }
 
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
@@ -157,6 +159,7 @@ class AccountManagerActor(
     if (manager.hasTokenManager(token))
       Future.successful(manager.getTokenManager(token))
     else for {
+      _ ← Future.successful(println(s"####getTokenManager0 ${token}"))
       res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
         .mapTo[XGetBalanceAndAllowancesRes]
       tm = new AccountTokenManagerImpl(token, 1000)
