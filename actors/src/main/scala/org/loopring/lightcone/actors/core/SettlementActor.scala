@@ -30,7 +30,7 @@ import org.loopring.lightcone.proto.actors._
 import org.web3j.crypto.RawTransaction
 
 import scala.annotation.tailrec
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 object SettlementActor {
   val name = "settlement"
@@ -39,10 +39,11 @@ object SettlementActor {
 class SettlementActor(
     actors: Lookup[ActorRef],
     submitterPrivateKey: String,
-      chainId: BigInt,
-protocol: String,
-algorithm: SignAlgorithm.Value,
-lrcAddress: String)(
+    chainId: BigInt,
+    protocol: String,
+    algorithm: SignAlgorithm.Value,
+    lrcAddress: String
+)(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,
