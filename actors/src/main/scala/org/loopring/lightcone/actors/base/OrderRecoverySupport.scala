@@ -66,27 +66,36 @@ trait OrderRecoverySupport {
       batch += 1
 
       val xorders = xraworders.map(convertXRawOrderToXOrder)
+      //      val xorders = xraworders.map(convertXRawOrderToXOrder).par
+      //      xorders.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(1))
+      //      val pf = Future.sequence(xorders.map(recoverOrder).toList)
+      //      Await.ready(pf, timeout.duration)
       for {
         _ ← Future.sequence(xorders.map(recoverOrder))
         lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
         recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-        _ = if (recoverEnded) context.become(functional)
+        _ = println(s"@@@@@, ${recoverEnded}, $lastUpdatdTimestamp, ${xorders.size}, ${recoverBatchSize}")
         _ = orderDatabaseAccessActor ! XRecoverOrdersReq(
           ownerOfOrders.getOrElse(null),
           lastUpdatdTimestamp,
           recoverBatchSize
         )
-      } yield Unit
+      } yield {
+        if (recoverEnded) context.become(functional)
+      }
+    //      Await.ready(f, timeout.duration)
 
     case msg ⇒
       log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
   }
 
   def functionalBase: Receive = LoggingReceive {
-
-    case XRecoverOrdersRes(xraworders) ⇒
-      log.info(s"recovering last batch (size = ${xraworders.size})")
-      val xorders = xraworders.map(convertXRawOrderToXOrder)
-      Future.sequence(xorders.map(recoverOrder))
+    case s: String ⇒ println(s"###:sssss ${s}")
+    //    case XRecoverOrdersRes(xraworders) ⇒
+    //      log.info(s"recovering last batch (size = ${xraworders.size})")
+    //      val xorders = xraworders.map(convertXRawOrderToXOrder).par
+    //      xorders.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(1))
+    //      val pf = Future.sequence(xorders.map(recoverOrder).toList)
+    //      Await.ready(pf, timeout.duration)
   }
 }

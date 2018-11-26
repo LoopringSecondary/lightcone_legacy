@@ -42,10 +42,10 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
       accountManagerActor1 ! XSubmitOrderReq(Some(order))
 
       accountBalanceProbe.expectQuery(ADDRESS_1, WETH_TOKEN.address)
-      accountBalanceProbe.replyWith(WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
+      accountBalanceProbe.replyWith(ADDRESS_1, WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
 
       accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
-      accountBalanceProbe.replyWith(LRC_TOKEN.address, "0".zeros(0), "0".zeros(0))
+      accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "0".zeros(0), "0".zeros(0))
 
       orderHistoryProbe.expectQuery(order.id)
       orderHistoryProbe.replyWith(order.id, "0".zeros(0))

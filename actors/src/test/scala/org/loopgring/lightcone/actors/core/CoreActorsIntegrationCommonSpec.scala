@@ -114,11 +114,12 @@ abstract class CoreActorsIntegrationCommonSpec(
   val accountBalanceProbe = new TestProbe(system, "account_balance") {
     def expectQuery(address: String, token: String) = expectMsgPF() {
       case XGetBalanceAndAllowancesReq(addr, tokens) if addr == address && tokens == Seq(token) ⇒
+        println(s"accountBalanceProbe, ${addr}, ${tokens}, ${sender()}")
     }
 
-    def replyWith(token: String, balance: BigInt, allowance: BigInt) = reply(
+    def replyWith(addr: String, token: String, balance: BigInt, allowance: BigInt) = reply(
       XGetBalanceAndAllowancesRes(
-        ADDRESS_1, Map(token -> XBalanceAndAllowance(balance, allowance))
+        addr, Map(token -> XBalanceAndAllowance(balance, allowance))
       )
     )
   }
@@ -128,6 +129,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   val orderHistoryProbe = new TestProbe(system, "order_history") {
     def expectQuery(orderId: String) = expectMsgPF() {
       case XGetOrderFilledAmountReq(id) if id == orderId ⇒
+        println(s"#####, orderHistoryProbe, ${sender()}, ${id}")
     }
 
     def replyWith(orderId: String, filledAmountS: BigInt) = reply(
@@ -140,10 +142,10 @@ abstract class CoreActorsIntegrationCommonSpec(
   val ethereumProbe = new TestProbe(system, "ethereum")
   val ethereumActor = ethereumProbe.ref
 
-  val settlementActor = TestActorRef(new SettlementActor("0xa1"))
+  val settlementActor = TestActorRef(new SettlementActor("0xa1"), "settlementActor")
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
-  val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
+  val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig), "orderbookManagerActor")
 
   val ADDRESS_1 = "address_111111111111111111111"
   val ADDRESS_2 = "address_222222222222222222222"
@@ -153,7 +155,8 @@ abstract class CoreActorsIntegrationCommonSpec(
       address = ADDRESS_1,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
-    )
+    ),
+    "accountManagerActor1"
   )
 
   val accountManagerActor2: ActorRef = TestActorRef(
@@ -161,7 +164,8 @@ abstract class CoreActorsIntegrationCommonSpec(
       address = ADDRESS_2,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
-    )
+    ),
+    "accountManagerActor2"
   )
 
   val marketManagerActor: ActorRef = TestActorRef(
@@ -169,7 +173,8 @@ abstract class CoreActorsIntegrationCommonSpec(
       marketId,
       config,
       skipRecovery = skipMarketManagerActorRecovery
-    )
+    ),
+    "marketManagerActor"
   )
 
   accountManagerActor1 ! XActorDependencyReady(Seq(
