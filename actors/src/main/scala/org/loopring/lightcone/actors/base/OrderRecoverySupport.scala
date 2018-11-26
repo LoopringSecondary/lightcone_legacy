@@ -43,7 +43,7 @@ trait OrderRecoverySupport {
   val ownerOfOrders: Option[String]
   private var batch = 1
 
-  protected var orderDatabaseAccessActor: ActorSelection
+  protected def orderDatabaseAccessActor: ActorRef
 
   protected def recoverOrder(xorder: XOrder): Future[Any]
 
@@ -51,6 +51,7 @@ trait OrderRecoverySupport {
 
   protected def startOrderRecovery() = {
     if (skipRecovery) {
+      log.info(s"actor recovering skipped: ${self.path}")
       context.become(functional)
     } else {
       context.become(recovering)
