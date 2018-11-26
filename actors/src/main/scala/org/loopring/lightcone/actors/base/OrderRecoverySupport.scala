@@ -33,7 +33,7 @@ import org.loopring.lightcone.proto.deployment._
 import scala.concurrent._
 
 trait OrderRecoverySupport {
-  self: Actor with ActorLogging ⇒
+  actor: Actor with ActorLogging ⇒
 
   implicit val ec: ExecutionContext
   implicit val timeout: Timeout
@@ -53,7 +53,7 @@ trait OrderRecoverySupport {
     if (skipRecovery) {
       context.become(functional)
     } else {
-      //      context.become(recovering)
+      context.become(recovering)
       log.info(s"actor recovering started: ${self.path}")
       orderDatabaseAccessActor ! XRecoverOrdersReq(ownerOfOrders.getOrElse(null), 0L, recoverBatchSize)
     }

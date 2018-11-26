@@ -72,22 +72,6 @@ class AccountManagerActor(
 
       startOrderRecovery()
 
-    case XRecoverOrdersRes(xraworders) ⇒
-      log.info(s"recovering batch (size = ${xraworders.size})")
-
-      val xorders = xraworders.map(convertXRawOrderToXOrder)
-      for {
-        _ ← Future.sequence(xorders.map(recoverOrder))
-        lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
-        recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-        _ = if (recoverEnded) context.become(functional)
-        _ = orderDatabaseAccessActor ! XRecoverOrdersReq(
-          ownerOfOrders.getOrElse(null),
-          lastUpdatdTimestamp,
-          recoverBatchSize
-        )
-      } yield Unit
-
     case msg ⇒ println(s"######## msg ${msg}")
   }
 
