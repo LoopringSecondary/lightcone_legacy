@@ -33,11 +33,15 @@ package object data {
   case class AllBrokersUnregistered(owner: String)
 
   case class OrdersCancelled(broker: String, orderhashs: Seq[String])
-  case class AllOrdersCancelledForTradingPair(broker: String, token1: String, token2: String, cutoff: BigInt)
   case class AllOrdersCancelled(broker: String, cutoff: BigInt)
   case class OrdersCancelledByBroker(broker: String, owner: String, orderhashs: Seq[String])
   case class AllOrdersCancelledByBroker(broker: String, owner: String, cutoff: BigInt)
+  case class AllOrdersCancelledForTradingPair(broker: String, token1: String, token2: String, cutoff: BigInt)
   case class AllOrdersCancelledForTradingPairByBroker(broker: String, owner: String, token1: String, token2: String, cutoff: BigInt)
+
+  case class Fill(orderhash: String, owner: String, tokenS: String, amountS: BigInt, split: BigInt, feeAmount: BigInt, feeAmountS: BigInt, feeAmountB: BigInt)
+  case class RingMined(ringIndex: BigInt, ringhash: String, feeRecipient: String, fills: Seq[Fill])
+  case class InvalidRing(ringhash: String)
 
   object SignAlgorithm extends Enumeration {
     type AlgorithmType = Value
