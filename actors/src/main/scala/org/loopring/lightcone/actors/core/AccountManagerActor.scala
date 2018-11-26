@@ -38,6 +38,7 @@ object AccountManagerActor {
 }
 
 class AccountManagerActor(
+    val actors: Lookup[ActorRef],
     val address: String,
     val recoverBatchSize: Int,
     val skipRecovery: Boolean = false
@@ -55,22 +56,13 @@ class AccountManagerActor(
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
-  protected var orderDatabaseAccessActor: ActorSelection = _
-  protected var accountBalanceActor: ActorSelection = _
-  protected var orderHistoryActor: ActorSelection = _
-  protected var marketManagerActor: ActorSelection = _
+  protected def orderDatabaseAccessActor = actors.get(OrderDatabaseAccessActor.name)
+  protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
+  protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
+  protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
-  def receive: Receive = LoggingReceive {
-
-    case XActorDependencyReady(paths) ⇒
-      log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 4)
-      orderDatabaseAccessActor = context.actorSelection(paths(0))
-      accountBalanceActor = context.actorSelection(paths(1))
-      orderHistoryActor = context.actorSelection(paths(2))
-      marketManagerActor = context.actorSelection(paths(3))
-
-      startOrderRecovery()
+  def receive: Receive = {
+    case XStart ⇒ startOrderRecovery()
   }
 
   def functional: Receive = functionalBase orElse LoggingReceive {
@@ -109,7 +101,7 @@ class AccountManagerActor(
     case XAddressAllowanceUpdated(_, token, newBalance) ⇒
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
 
-    case _ ⇒
+    case msg ⇒ println(s"unknown msg ${msg}")
   }
 
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
@@ -157,6 +149,7 @@ class AccountManagerActor(
     if (manager.hasTokenManager(token))
       Future.successful(manager.getTokenManager(token))
     else for {
+      _ ← Future.successful(println(s"####getTokenManager0 ${token}"))
       res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
         .mapTo[XGetBalanceAndAllowancesRes]
       tm = new AccountTokenManagerImpl(token, 1000)

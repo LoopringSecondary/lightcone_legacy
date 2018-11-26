@@ -1,5 +1,6 @@
 import Settings._
 import Dependencies._
+import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 
 lazy val lib = (project in file("lib"))
   .enablePlugins(JavaAppPackaging)
@@ -32,6 +33,9 @@ lazy val core = (project in file("core"))
 
 lazy val actors = (project in file("actors"))
   .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(MultiJvmPlugin)
+  .configs(MultiJvm)
+  .settings(multiJvmSettings: _*)
   .dependsOn(proto, core, auxiliary)
   .settings(
     parallelExecution in Test := false,
@@ -45,7 +49,7 @@ lazy val gateway = (project in file("gateway"))
     basicSettings,
     libraryDependencies ++= dependency4Gateway)
 
-// lazy val all = (project in file("."))
-//   .aggregate(proto, lib, core, auxiliary, actors, gateway)
-//   // .settings(headerLicense := None)
-//   .withId("lightcone")
+lazy val all = (project in file("."))
+  .aggregate(lib, proto, auxiliary, core, actors, gateway)
+  // .settings(headerLicense := None)
+  .withId("lightcone")

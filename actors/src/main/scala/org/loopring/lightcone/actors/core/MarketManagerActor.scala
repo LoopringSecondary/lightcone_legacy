@@ -40,6 +40,7 @@ object MarketManagerActor {
 
 // TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
 class MarketManagerActor(
+    val actors: Lookup[ActorRef],
     val marketId: XMarketId,
     val config: XMarketManagerConfig,
     val skipRecovery: Boolean = false
@@ -80,22 +81,13 @@ class MarketManagerActor(
     aggregator
   )
 
-  protected var orderDatabaseAccessActor: ActorSelection = _
-  protected var gasPriceActor: ActorSelection = _
-  protected var orderbookManagerActor: ActorSelection = _
-  protected var settlementActor: ActorSelection = _
+  protected def orderDatabaseAccessActor = actors.get(OrderDatabaseAccessActor.name)
+  protected def gasPriceActor = actors.get(GasPriceActor.name)
+  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  protected def settlementActor = actors.get(SettlementActor.name)
 
-  def receive: Receive = LoggingReceive {
-
-    case XActorDependencyReady(paths) ⇒
-      log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 4)
-      orderDatabaseAccessActor = context.actorSelection(paths(0))
-      gasPriceActor = context.actorSelection(paths(1))
-      orderbookManagerActor = context.actorSelection(paths(2))
-      settlementActor = context.actorSelection(paths(3))
-
-      startOrderRecovery()
+  def receive: Receive = {
+    case XStart ⇒ startOrderRecovery()
   }
 
   def functional: Receive = functionalBase orElse LoggingReceive {
@@ -137,11 +129,8 @@ class MarketManagerActor(
         gasPrice: BigInt = res.gasPrice
         minRequiredIncome = getRequiredMinimalIncome(gasPrice)
 
-        _ = println(".............+ " + minRequiredIncome)
-
         // submit order to reserve balance and allowance
         matchResult = manager.submitOrder(order, minRequiredIncome)
-        _ = println(".....||" + matchResult)
 
         //settlement matchResult and update orderbook
         _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
@@ -159,13 +148,6 @@ class MarketManagerActor(
   }
 
   private def updateOrderbookAndSettleRings(matchResult: MatchResult, gasPrice: BigInt) {
-    // Update order book (depth)
-    val ou = matchResult.orderbookUpdate
-    println("________--1" + ou)
-    if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerActor ! ou
-    }
-
     // Settle rings
     if (matchResult.rings.nonEmpty) {
       log.debug(s"rings: ${matchResult.rings}")
@@ -175,6 +157,12 @@ class MarketManagerActor(
         gasLimit = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * matchResult.rings.size,
         gasPrice = gasPrice
       )
+    }
+
+    // Update order book (depth)
+    val ou = matchResult.orderbookUpdate
+    if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
+      orderbookManagerActor ! ou
     }
   }
 
