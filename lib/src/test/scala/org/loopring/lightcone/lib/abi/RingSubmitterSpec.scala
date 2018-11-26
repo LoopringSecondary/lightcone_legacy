@@ -21,7 +21,7 @@ import org.web3j.crypto.RawTransaction
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.lib.data._
 
-class CRingSubmitterSpec extends FlatSpec with Matchers {
+class RingSubmitterSpec extends FlatSpec with Matchers {
 
   val debug = true
 
