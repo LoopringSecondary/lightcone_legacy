@@ -16,31 +16,56 @@
 
 package org.loopring.lightcone.actors.core
 
+import akka.actor.{ Actor, ActorLogging }
+import akka.event.LoggingReceive
 import akka.testkit.TestActorRef
-import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
+import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment._
+import CoreActorsIntegrationCommonSpec._
+import org.loopring.lightcone.proto.deployment.XStart
+
+import scala.concurrent.ExecutionContext
 
 class CoreActorsIntegrationSpec_AccountManagerRecovery
   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
+  class AccountBalanceForTestActor()(
+      implicit
+      ec: ExecutionContext,
+      timeout: Timeout
+  )
+    extends Actor
+    with ActorLogging {
+
+    def receive: Receive = LoggingReceive {
+      case req: XGetBalanceAndAllowancesReq ⇒
+        sender !
+          XGetBalanceAndAllowancesRes(
+            req.address,
+            Map(req.tokens(0) -> XBalanceAndAllowance(BigInt("1000000000000000000000000"), BigInt("1000000000000000000000000")))
+          )
+
+    }
+  }
+  val accountBalanceActor3 = TestActorRef(new AccountBalanceForTestActor())
+
   "when an accountManager starts" must {
     "first recover it and then receive order" in {
-      val Address_3 = "0xaddress_3"
-
+      val ADDRESS_3 = "0xaddress_3"
+      actors.add(AccountBalanceActor.name, accountBalanceActor3)
       val accountManagerActor3 = TestActorRef(
         new AccountManagerActor(
           actors,
-          address = Address_3,
+          address = ADDRESS_3,
           recoverBatchSize = 1,
           skipRecovery = false
-        )
+        ),
+        "accountManagerActor3"
       )
-
       val order = XRawOrder(
         hash = "order",
         tokenS = WETH_TOKEN.address,
@@ -60,11 +85,11 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
         order.copy(hash = orderIds(0))
       ))
 
-      accountBalanceProbe.expectQuery(Address_3, WETH_TOKEN.address)
-      accountBalanceProbe.replyWith(WETH_TOKEN.address, "1000".zeros(18), "1000".zeros(18))
-
-      accountBalanceProbe.expectQuery(Address_3, GTO_TOKEN.address)
-      accountBalanceProbe.replyWith(GTO_TOKEN.address, "100".zeros(18), "100".zeros(18))
+      //      accountBalanceProbe.expectQuery(ADDRESS_3, WETH_TOKEN.address)
+      //      accountBalanceProbe.replyWith(ADDRESS_3, WETH_TOKEN.address, "1000".zeros(18), "1000".zeros(18))
+      //
+      //      accountBalanceProbe.expectQuery(ADDRESS_3, GTO_TOKEN.address)
+      //      accountBalanceProbe.replyWith(ADDRESS_3, GTO_TOKEN.address, "100".zeros(18), "100".zeros(18))
 
       orderHistoryProbe.expectQuery(orderIds(0))
       orderHistoryProbe.replyWith(orderIds(0), "0".zeros(0))

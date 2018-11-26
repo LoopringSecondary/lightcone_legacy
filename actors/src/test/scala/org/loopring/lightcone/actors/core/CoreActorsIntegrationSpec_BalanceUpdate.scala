@@ -16,12 +16,12 @@
 
 package org.loopring.lightcone.actors.core
 
-import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
+import CoreActorsIntegrationCommonSpec._
 
 class CoreActorsIntegrationSpec_BalanceUpdate
   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
@@ -43,10 +43,10 @@ class CoreActorsIntegrationSpec_BalanceUpdate
       accountManagerActor1 ! XSubmitOrderReq(Some(order))
 
       accountBalanceProbe.expectQuery(ADDRESS_1, WETH_TOKEN.address)
-      accountBalanceProbe.replyWith(WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
+      accountBalanceProbe.replyWith(ADDRESS_1, WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
 
       accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
-      accountBalanceProbe.replyWith(LRC_TOKEN.address, "10".zeros(18), "10".zeros(18))
+      accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "10".zeros(18), "10".zeros(18))
 
       orderHistoryProbe.expectQuery(order.id)
       orderHistoryProbe.replyWith(order.id, "0".zeros(0))
