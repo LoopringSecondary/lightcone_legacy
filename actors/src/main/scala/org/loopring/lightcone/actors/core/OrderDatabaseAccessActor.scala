@@ -19,11 +19,8 @@ package org.loopring.lightcone.actors.core
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.auxiliary.order.OrderDatabaseManager
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._
 
@@ -76,22 +73,3 @@ class OrderDatabaseAccessActor(databaseManager: OrderDatabaseManager)(
   }
 
 }
-
-// TODO(litao): move this to auxiliary sub project and implement the logic
-// and probably move XRawOrder definition to auxiliary.proto
-trait OrderDatabaseManager {
-
-  def validateOrder(xraworder: XRawOrder): Either[XErrorCode, XRawOrder]
-
-  def saveOrder(xraworder: XRawOrder): Future[XRawOrder]
-
-  def getOrdersForRecovery(since: Long, num: Int, owner: Option[String]): Future[Seq[XRawOrder]]
-
-  def updateOrderStateAndStatus(actualState: XOrderState, status: XOrderStatus): Future[Boolean]
-
-  // TODO(litao): design more flexibale order reading APIs
-  def getOrder(orderId: String): Future[Option[XRawOrder]]
-
-  def getOrders(orderIds: Seq[String]): Future[Seq[XRawOrder]]
-}
-
