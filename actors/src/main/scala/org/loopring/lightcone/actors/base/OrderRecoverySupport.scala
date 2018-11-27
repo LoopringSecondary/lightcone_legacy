@@ -78,6 +78,22 @@ trait OrderRecoverySupport {
           recoverBatchSize
         )
 
+    //      for {
+    //        _ ← Future.sequence(xorders.map(recoverOrder))
+    //        lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
+    //        recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
+    //        _ = println(s"###,recoverEnded ${recoverEnded} ")
+    //      } yield {
+    //        if (recoverEnded)
+    //          context.become(functional)
+    //        else
+    //          orderDatabaseAccessActor ! XRecoverOrdersReq(
+    //            ownerOfOrders.getOrElse(null),
+    //            lastUpdatdTimestamp,
+    //            recoverBatchSize
+    //          )
+    //      }
+
     case msg ⇒
       log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
   }

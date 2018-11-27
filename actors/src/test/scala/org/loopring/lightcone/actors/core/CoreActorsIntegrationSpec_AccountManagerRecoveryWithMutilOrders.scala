@@ -52,7 +52,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
         walletSplitPercentage = 100
       )
 
-      val batchOrders1 = (0 to 500) map {
+      val batchOrders1 = (0 until 500) map {
         i ⇒ order.copy(hash = "order1" + i)
       }
       orderDatabaseAccessProbe.expectQuery()
@@ -66,7 +66,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
           info("----orderbook status after first XRecoverOrdersRes: " + a)
       }
 
-      val batchOrders2 = (0 to 500) map {
+      val batchOrders2 = (0 until 500) map {
         i ⇒ order.copy(hash = "order2" + i)
       }
       orderDatabaseAccessProbe.expectQuery()
