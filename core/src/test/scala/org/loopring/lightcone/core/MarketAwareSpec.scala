@@ -28,7 +28,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
   type MR = MarketManager.MatchResult
 
   implicit var timeProvider = new TimeProvider {
-    def getCurrentTimeMillis = -1
+    def getTimeMillis = -1
   }
 
   var marketId = XMarketId(primary = WETH, secondary = GTO)

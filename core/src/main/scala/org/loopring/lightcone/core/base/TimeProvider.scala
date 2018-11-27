@@ -16,10 +16,26 @@
 
 package org.loopring.lightcone.core.base
 
+import java.sql.Timestamp
+
 trait TimeProvider {
-  def getCurrentTimeMillis(): Long
+  def getTimeMillis(): Long
+  def getTimeSeconds(): Long = getTimeMillis / 1000
+  def getTimestamp() = new Timestamp(getTimeMillis)
 }
 
 final class SystemTimeProvider extends TimeProvider {
-  def getCurrentTimeMillis() = System.currentTimeMillis
+  def getTimeMillis = System.currentTimeMillis()
+}
+
+final class DifferenceAssuredSystemTimeProvider extends TimeProvider {
+  private var lastTimestamp = 0L
+
+  def getTimeMillis = {
+    val now = System.currentTimeMillis
+    if (now > lastTimestamp) lastTimestamp = now
+    else lastTimestamp += 1
+
+    lastTimestamp
+  }
 }

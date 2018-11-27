@@ -133,6 +133,10 @@ message XGetBalanceAndAllowancesRes {
     map<string, XBalanceAndAllowance> balance_and_allowance_map = 2;
 }
 
+message XSubmitRawOrderReq {
+    XRawOrder order = 1;
+}
+
 message XSubmitOrderReq {
     XOrder order = 1;
 }
@@ -152,6 +156,15 @@ message XAddressAllowanceUpdated {
     string address = 1;
     string token = 2;
     bytes balance = 3;
+}
+
+message XUpdateOrderStateAndStatusReq {
+    XOrderState actuals = 1;
+    core.XOrderStatus status = 2;
+}
+
+message XUpdateOrderStateAndStatusRes {
+    bool result =1;
 }
 
 // 由ethereum发送给orderManagingActor
@@ -217,14 +230,14 @@ message XSendRawTxRes {
     }
 }
 
-message XRestoreMarketOrdersReq {
-    int64 updated_since = 1;
-    int32 num = 2;
+message XRecoverOrdersReq {
+    string address = 1;
+    int64 updated_since = 2;
+    int32 num = 3;
 }
 
-message XRestoreMarketOrdersRes {
-    repeated XOrder orders = 1;
-    bool has_more = 2;
+message XRecoverOrdersRes {
+    repeated XRawOrder orders = 1;
 }
 
 enum XExecutedStatus {

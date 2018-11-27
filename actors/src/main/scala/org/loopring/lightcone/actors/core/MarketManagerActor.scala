@@ -21,6 +21,7 @@ import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.depth._
@@ -39,20 +40,26 @@ object MarketManagerActor {
 
 // TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
 class MarketManagerActor(
-    marketId: XMarketId,
-    config: XMarketManagerConfig
+    val actors: Lookup[ActorRef],
+    val marketId: XMarketId,
+    val config: XMarketManagerConfig,
+    val skipRecovery: Boolean = false
 )(
     implicit
-    ec: ExecutionContext,
-    timeout: Timeout,
-    timeProvider: TimeProvider,
-    tokenValueEstimator: TokenValueEstimator,
-    ringIncomeEstimator: RingIncomeEstimator,
-    dustOrderEvaluator: DustOrderEvaluator,
-    tokenMetadataManager: TokenMetadataManager
+    val ec: ExecutionContext,
+    val timeout: Timeout,
+    val timeProvider: TimeProvider,
+    val tokenValueEstimator: TokenValueEstimator,
+    val ringIncomeEstimator: RingIncomeEstimator,
+    val dustOrderEvaluator: DustOrderEvaluator,
+    val tokenMetadataManager: TokenMetadataManager
 )
   extends Actor
-  with ActorLogging {
+  with ActorLogging
+  with OrderRecoverySupport {
+
+  val ownerOfOrders = None
+  val recoverBatchSize = config.recoverBatchSize
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
 
@@ -74,45 +81,16 @@ class MarketManagerActor(
     aggregator
   )
 
-  private var marketRecoveringActor: ActorSelection = _
-  private var gasPriceActor: ActorSelection = _
-  private var orderbookManagerActor: ActorSelection = _
-  private var settlementActor: ActorSelection = _
+  protected def orderDatabaseAccessActor = actors.get(OrderDatabaseAccessActor.name)
+  protected def gasPriceActor = actors.get(GasPriceActor.name)
+  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  protected def settlementActor = actors.get(SettlementActor.name)
 
-  def receive: Receive = LoggingReceive {
-
-    case XActorDependencyReady(paths) ⇒
-      log.info(s"actor dependency ready: $paths")
-      assert(paths.size == 4)
-      marketRecoveringActor = context.actorSelection(paths(0))
-      gasPriceActor = context.actorSelection(paths(1))
-      orderbookManagerActor = context.actorSelection(paths(2))
-      settlementActor = context.actorSelection(paths(3))
-
-      context.become(recovering)
-
-      log.info(s"start recovering for market: $marketId")
-      marketRecoveringActor ! XRestoreMarketOrdersReq(0, config.recoverBatchSize)
+  def receive: Receive = {
+    case XStart ⇒ startOrderRecovery()
   }
 
-  def recovering: Receive = {
-
-    case XRestoreMarketOrdersRes(xorders, hasMore) ⇒
-      log.info(s"recovering batch (size = ${xorders.size})")
-      for {
-        _ ← Future.sequence(xorders.map(submitOrder))
-        lastOne = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
-        _ = context.become(functional) if lastOne == 0 || xorders.size < config.recoverBatchSize
-        _ = marketRecoveringActor ! XRestoreMarketOrdersReq(lastOne, config.recoverBatchSize)
-      } yield Unit
-
-  }
-
-  def functional: Receive = LoggingReceive {
-
-    case XRestoreMarketOrdersRes(xorders, _) ⇒
-      log.info(s"recovering last batch (size = ${xorders.size})")
-      Future.sequence(xorders.map(submitOrder))
+  def functional: Receive = functionalBase orElse LoggingReceive {
 
     case XSubmitOrderReq(Some(xorder)) ⇒
       submitOrder(xorder)
@@ -151,11 +129,8 @@ class MarketManagerActor(
         gasPrice: BigInt = res.gasPrice
         minRequiredIncome = getRequiredMinimalIncome(gasPrice)
 
-        _ = println(".............+ " + minRequiredIncome)
-
         // submit order to reserve balance and allowance
         matchResult = manager.submitOrder(order, minRequiredIncome)
-        _ = println(".....||" + matchResult)
 
         //settlement matchResult and update orderbook
         _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
@@ -173,13 +148,6 @@ class MarketManagerActor(
   }
 
   private def updateOrderbookAndSettleRings(matchResult: MatchResult, gasPrice: BigInt) {
-    // Update order book (depth)
-    val ou = matchResult.orderbookUpdate
-    println("________--1" + ou)
-    if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerActor ! ou
-    }
-
     // Settle rings
     if (matchResult.rings.nonEmpty) {
       log.debug(s"rings: ${matchResult.rings}")
@@ -190,6 +158,13 @@ class MarketManagerActor(
         gasPrice = gasPrice
       )
     }
+
+    // Update order book (depth)
+    val ou = matchResult.orderbookUpdate
+    if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
+      orderbookManagerActor ! ou
+    }
   }
 
+  protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
 }

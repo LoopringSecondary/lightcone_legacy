@@ -43,7 +43,7 @@ import XMatchingFailure._
 class MarketManagerImplSpec_Performance extends OrderAwareSpec {
 
   implicit var timeProvider = new TimeProvider {
-    def getCurrentTimeMillis = -1
+    def getTimeMillis = -1
   }
 
   implicit val marketId = XMarketId(primary = WETH, secondary = GTO)

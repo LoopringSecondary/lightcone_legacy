@@ -36,11 +36,9 @@ class OrderbookManagerActor(config: XOrderbookConfig)
   val manager: OrderbookManager = new OrderbookManagerImpl(config)
   def receive: Receive = LoggingReceive {
     case req: XOrderbookUpdate ⇒
-      println("______>>>" + req)
       manager.processUpdate(req)
 
     case x @ XGetOrderbookReq(level, size) ⇒
-      println("______2_" + x)
       sender ! manager.getOrderbook(level, size)
   }
 }

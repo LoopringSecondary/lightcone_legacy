@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopgring.lightcone.actors.core
+package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.testkit._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
@@ -35,16 +36,20 @@ import scala.math.BigInt
 
 object CoreActorsIntegrationCommonSpec {
 
-  val GTO = "GTO"
-  val WETH = "WETH"
-  val LRC = "LRC"
+  val GTO = "0x00000000001"
+  val WETH = "0x00000000004"
+  val LRC = "0x00000000002"
 
-  val GTO_TOKEN = XTokenMetadata(GTO, "0x1", 10, 0.1, 1.0)
-  val WETH_TOKEN = XTokenMetadata(WETH, "0x2", 18, 0.4, 1000)
-  val LRC_TOKEN = XTokenMetadata(LRC, "0x3", 18, 0.4, 1000)
+  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.1, 1.0, "GTO")
+  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000, "WETH")
+  val LRC_TOKEN = XTokenMetadata(LRC, 18, 0.4, 1000, "LRC")
 }
 
-abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
+abstract class CoreActorsIntegrationCommonSpec(
+    marketId: XMarketId,
+    skipAccountManagerActorRecovery: Boolean = true,
+    skipMarketManagerActorRecovery: Boolean = true
+)
   extends TestKit(ActorSystem("test", ConfigFactory.parseString(
     """akka {
          loglevel = "DEBUG"
@@ -81,6 +86,8 @@ abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
   implicit val timeout = Timeout(5 second)
   implicit val ec = system.dispatcher
 
+  val actors = new MapBasedLookup[ActorRef]()
+
   val config = XMarketManagerConfig()
   val orderbookConfig = XOrderbookConfig(
     levels = 2,
@@ -91,6 +98,20 @@ abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
+
+  // Simulating an AccountBalanceActor
+  val orderDatabaseAccessProbe = new TestProbe(system, "order_db_access") {
+    def expectQuery() {
+      expectMsgPF() {
+        case req: XRecoverOrdersReq ⇒
+          println(s"ordermanagerProbe receive: $req, sender:${sender()}")
+      }
+    }
+    def replyWith(xorders: Seq[XRawOrder]) = reply(
+      XRecoverOrdersRes(orders = xorders)
+    )
+  }
+  val orderDatabaseAccessActor = orderDatabaseAccessProbe.ref
 
   // Simulating an AccountBalanceActor
   val accountBalanceProbe = new TestProbe(system, "account_balance") {
@@ -119,10 +140,10 @@ abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
   val orderHistoryActor = orderHistoryProbe.ref
 
   // Simulating an SettlementActor
-  val ethereumProbe = new TestProbe(system, "ethereum")
-  val ethereumActor = ethereumProbe.ref
+  val ethereumAccessProbe = new TestProbe(system, "ethereum_access")
+  val ethereumAccessActor = ethereumAccessProbe.ref
 
-  val settlementActor = TestActorRef(new SettlementActor("0xa1"))
+  val settlementActor = TestActorRef(new SettlementActor(actors, "0xa1"))
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
@@ -131,39 +152,45 @@ abstract class CoreActorsIntegrationCommonSpec(marketId: XMarketId)
   val ADDRESS_2 = "address_222222222222222222222"
 
   val accountManagerActor1: ActorRef = TestActorRef(
-    new AccountManagerActor(ADDRESS_1)
+    new AccountManagerActor(
+      actors,
+      address = ADDRESS_1,
+      recoverBatchSize = 5,
+      skipRecovery = skipAccountManagerActorRecovery
+    )
   )
 
   val accountManagerActor2: ActorRef = TestActorRef(
-    new AccountManagerActor(ADDRESS_2)
+    new AccountManagerActor(
+      actors,
+      address = ADDRESS_2,
+      recoverBatchSize = 5,
+      skipRecovery = skipAccountManagerActorRecovery
+    )
   )
 
   val marketManagerActor: ActorRef = TestActorRef(
-    new MarketManagerActor(marketId, config)
+    new MarketManagerActor(
+      actors,
+      marketId,
+      config,
+      skipRecovery = skipMarketManagerActorRecovery
+    )
   )
 
-  accountManagerActor1 ! XActorDependencyReady(Seq(
-    accountBalanceActor.path.toString,
-    orderHistoryActor.path.toString,
-    marketManagerActor.path.toString
-  ))
+  actors.add(OrderDatabaseAccessActor.name, orderDatabaseAccessActor)
+  actors.add(AccountBalanceActor.name, accountBalanceActor)
+  actors.add(OrderHistoryActor.name, orderHistoryActor)
+  actors.add(MarketManagerActor.name, marketManagerActor)
+  actors.add(GasPriceActor.name, gasPriceActor)
+  actors.add(OrderbookManagerActor.name, orderbookManagerActor)
+  actors.add(SettlementActor.name, settlementActor)
+  actors.add(EthereumAccessActor.name, ethereumAccessActor)
 
-  accountManagerActor2 ! XActorDependencyReady(Seq(
-    accountBalanceActor.path.toString,
-    orderHistoryActor.path.toString,
-    marketManagerActor.path.toString
-  ))
-
-  marketManagerActor ! XActorDependencyReady(Seq(
-    gasPriceActor.path.toString,
-    orderbookManagerActor.path.toString,
-    settlementActor.path.toString
-  ))
-
-  settlementActor ! XActorDependencyReady(Seq(
-    gasPriceActor.path.toString,
-    ethereumActor.path.toString
-  ))
+  accountManagerActor1 ! XStart
+  accountManagerActor2 ! XStart
+  marketManagerActor ! XStart
+  settlementActor ! XStart
 
   implicit class RichString(s: String) {
     def zeros(size: Int): BigInt = BigInt(s + "0" * size)
