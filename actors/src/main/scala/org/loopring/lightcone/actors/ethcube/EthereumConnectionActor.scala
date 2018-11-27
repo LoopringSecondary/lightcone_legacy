@@ -23,9 +23,9 @@ import akka.util.Timeout
 import org.loopring.lightcone.proto.ethrpc._
 
 class EthereumConnectionActor(settings: XEthereumProxySettings)(
-  implicit
-  materilizer: ActorMaterializer,
-  timeout: Timeout
+    implicit
+    materilizer: ActorMaterializer,
+    timeout: Timeout
 ) extends Actor
   with ActorLogging {
 
