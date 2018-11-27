@@ -21,7 +21,7 @@ import akka.testkit._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
@@ -29,9 +29,9 @@ import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.deployment._
 import org.scalatest._
-import org.loopring.lightcone.actors.data._
-import scala.concurrent.duration._
 import org.slf4s.Logging
+
+import scala.concurrent.duration._
 import scala.math.BigInt
 
 object CoreActorsIntegrationCommonSpec {

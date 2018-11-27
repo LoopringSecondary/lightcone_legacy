@@ -18,9 +18,9 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor.ActorRef
 import akka.testkit.TestActorRef
+import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.deployment.XStart
-import CoreActorsIntegrationCommonSpec._
 
 class CoreActorsIntegrationSpec_MarketManagerRecovery
   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {

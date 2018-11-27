@@ -16,8 +16,8 @@
 
 package org.loopring.lightcone.actors.core
 
+import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.proto.core._
-import CoreActorsIntegrationCommonSpec._
 
 //todo:impl it after tested accountMangerRecovery
 class CoreActorsIntegrationSpec_TriggerRematch

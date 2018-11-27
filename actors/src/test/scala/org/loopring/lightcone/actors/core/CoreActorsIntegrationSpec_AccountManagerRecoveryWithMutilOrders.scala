@@ -16,14 +16,14 @@
 
 package org.loopring.lightcone.actors.core
 
+import akka.testkit.TestActorRef
+import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.deployment.XStart
-import CoreActorsIntegrationCommonSpec._
-import akka.testkit.TestActorRef
 
 class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
   extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
