@@ -37,6 +37,7 @@ trait OrderRecoverySupport {
 
   protected def orderDatabaseAccessActor: ActorRef
 
+  //暂时将recovery更改为同步的
   protected def recoverOrder(xorder: XOrder): Any
 
   protected def functional: Receive
@@ -62,7 +63,7 @@ trait OrderRecoverySupport {
       xorders.map(recoverOrder)
       val lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
       val recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-      println(s"###,recoverEnded ${recoverEnded} ")
+      log.debug(s"${self.path.toString} -- recoverEnded: ${recoverEnded} ")
       orderDatabaseAccessActor ! XRecoverOrdersReq(
         ownerOfOrders.getOrElse(null),
         lastUpdatdTimestamp,
@@ -76,21 +77,6 @@ trait OrderRecoverySupport {
           lastUpdatdTimestamp,
           recoverBatchSize
         )
-    //      val f = for {
-    //        _ ← Future.successful()
-    //        _ = xorders.map(recoverOrder)
-    //        lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
-    //        recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-    //        _ = println(s"###,recoverEnded ${recoverEnded} ")
-    //        _ = orderDatabaseAccessActor ! XRecoverOrdersReq(
-    //          ownerOfOrders.getOrElse(null),
-    //          lastUpdatdTimestamp,
-    //          recoverBatchSize
-    //        )
-    //      } yield {
-    //        if (recoverEnded) context.become(functional)
-    //      }
-    //      Await.ready(f, timeout.duration)
 
     case msg ⇒
       log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
