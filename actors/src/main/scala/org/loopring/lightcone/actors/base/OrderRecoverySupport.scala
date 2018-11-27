@@ -59,7 +59,7 @@ trait OrderRecoverySupport {
       log.info(s"recovering batch $batch (size = ${xraworders.size})")
       batch += 1
 
-      val xorders = xraworders.map(convertXRawOrderToXOrder)
+      val xorders = xraworders.map(xRawOrderToXOrder)
       xorders.foreach(recoverOrder)
       val lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
       val recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
@@ -102,7 +102,7 @@ trait OrderRecoverySupport {
     case XRecoverOrdersRes(xraworders) ⇒
       log.info(s"recovering last batch (size = ${xraworders.size})")
       xraworders
-        .map(convertXRawOrderToXOrder)
+        .map(xRawOrderToXOrder)
         .foreach(recoverOrder)
   }
 }
