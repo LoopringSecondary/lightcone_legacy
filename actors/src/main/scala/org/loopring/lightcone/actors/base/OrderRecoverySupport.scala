@@ -83,10 +83,10 @@ trait OrderRecoverySupport {
   }
 
   def functionalBase: Receive = LoggingReceive {
-        case XRecoverOrdersRes(xraworders) ⇒
-          log.info(s"recovering last batch (size = ${xraworders.size})")
-          xraworders
-            .map(convertXRawOrderToXOrder)
-            .foreach(recoverOrder)
+    case XRecoverOrdersRes(xraworders) ⇒
+      log.info(s"recovering last batch (size = ${xraworders.size})")
+      xraworders
+        .map(convertXRawOrderToXOrder)
+        .foreach(recoverOrder)
   }
 }
