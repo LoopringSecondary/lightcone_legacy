@@ -83,12 +83,10 @@ trait OrderRecoverySupport {
   }
 
   def functionalBase: Receive = LoggingReceive {
-    case s: String ⇒ println(s"###:sssss ${s}")
-    //    case XRecoverOrdersRes(xraworders) ⇒
-    //      log.info(s"recovering last batch (size = ${xraworders.size})")
-    //      val xorders = xraworders.map(convertXRawOrderToXOrder).par
-    //      xorders.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(1))
-    //      val pf = Future.sequence(xorders.map(recoverOrder).toList)
-    //      Await.ready(pf, timeout.duration)
+        case XRecoverOrdersRes(xraworders) ⇒
+          log.info(s"recovering last batch (size = ${xraworders.size})")
+          xraworders
+            .map(convertXRawOrderToXOrder)
+            .foreach(recoverOrder)
   }
 }

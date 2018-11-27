@@ -52,7 +52,6 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
       )
       var orderIds = (0 to 6) map ("order" + _)
 
-      Thread.sleep(500)
       orderDatabaseAccessProbe.expectQuery()
       orderDatabaseAccessProbe.replyWith(Seq(
         order.copy(hash = orderIds(0))

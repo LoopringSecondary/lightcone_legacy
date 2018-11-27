@@ -110,6 +110,7 @@ class AccountManagerActor(
     for {
       _ ← getTokenManager(order.tokenS)
       _ ← getTokenManager(order.tokenFee) if order.amountFee > 0 && order.tokenS != order.tokenFee
+
       // Update the order's _outstanding field.
       orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
         .mapTo[XGetOrderFilledAmountRes]
@@ -117,6 +118,7 @@ class AccountManagerActor(
       _ = log.debug(s"order history: orderHistoryRes")
 
       _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
+
       _ = log.debug(s"submitting order to AccountManager: ${_order}")
       successful = manager.submitOrder(_order)
       _ = log.info(s"successful: $successful")
