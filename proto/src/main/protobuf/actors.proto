@@ -60,6 +60,20 @@ message XRawOrder {
     bytes broker_spendable_fee = 27;
     string token_recipient = 28;
     string dual_private_key = 29;
+
+    // additional
+    int64 updated_block = 30;
+    string dealt_amount_s = 31;
+    string dealt_amount_b = 32;
+    string cancelled_amount_s = 33;
+    string cancelled_amount_b = 34;
+    core.XOrderStatus status = 35;
+    int32 broadcast_time = 36;
+    int64 pow_nonce = 37;
+    string market = 38;
+    string side = 39;
+    double price = 40;
+    string order_type = 41;
 }
 
 message XOrder {
@@ -164,7 +178,7 @@ message XUpdateOrderStateAndStatusReq {
 }
 
 message XUpdateOrderStateAndStatusRes {
-    bool result =1;
+    bool result = 1;
 }
 
 // 由ethereum发送给orderManagingActor
