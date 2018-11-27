@@ -60,7 +60,7 @@ trait OrderRecoverySupport {
       batch += 1
 
       val xorders = xraworders.map(convertXRawOrderToXOrder)
-      xorders.map(recoverOrder)
+      xorders.foreach(recoverOrder)
       val lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
       val recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
       log.debug(s"${self.path.toString} -- recoverEnded: ${recoverEnded} ")
