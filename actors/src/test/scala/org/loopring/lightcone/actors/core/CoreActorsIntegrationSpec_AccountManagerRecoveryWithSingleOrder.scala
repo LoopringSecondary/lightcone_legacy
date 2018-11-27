@@ -36,7 +36,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
           address = ADDRESS_RECOVERY,
           recoverBatchSize = 1,
           skipRecovery = false
-        ), "accountManagerActor3"
+        ), "accountManagerActorRecovery"
       )
       accountManagerRecoveryActor ! XStart
 

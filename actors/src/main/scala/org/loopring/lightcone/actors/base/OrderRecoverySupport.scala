@@ -20,16 +20,8 @@ import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XOrderStatus._
-import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment._
 
-import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent._
 
 trait OrderRecoverySupport {
@@ -45,7 +37,7 @@ trait OrderRecoverySupport {
 
   protected def orderDatabaseAccessActor: ActorRef
 
-  protected def recoverOrder(xorder: XOrder): Future[Any]
+  protected def recoverOrder(xorder: XOrder): Any
 
   protected def functional: Receive
 
@@ -67,24 +59,37 @@ trait OrderRecoverySupport {
       batch += 1
 
       val xorders = xraworders.map(convertXRawOrderToXOrder)
-      //      val xorders = xraworders.map(convertXRawOrderToXOrder).par
-      //      xorders.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(1))
-      //      val pf = Future.sequence(xorders.map(recoverOrder).toList)
-      //      Await.ready(pf, timeout.duration)
-      for {
-        _ ← Future.sequence(xorders.map(recoverOrder))
-        //        _ ← Future.successful()
-        lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
-        recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-        _ = println(s"###,recoverEnded ${recoverEnded} ")
-        _ = orderDatabaseAccessActor ! XRecoverOrdersReq(
+      xorders.map(recoverOrder)
+      val lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
+      val recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
+      println(s"###,recoverEnded ${recoverEnded} ")
+      orderDatabaseAccessActor ! XRecoverOrdersReq(
+        ownerOfOrders.getOrElse(null),
+        lastUpdatdTimestamp,
+        recoverBatchSize
+      )
+      if (recoverEnded)
+        context.become(functional)
+      else
+        orderDatabaseAccessActor ! XRecoverOrdersReq(
           ownerOfOrders.getOrElse(null),
           lastUpdatdTimestamp,
           recoverBatchSize
         )
-      } yield {
-        if (recoverEnded) context.become(functional)
-      }
+    //      val f = for {
+    //        _ ← Future.successful()
+    //        _ = xorders.map(recoverOrder)
+    //        lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
+    //        recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
+    //        _ = println(s"###,recoverEnded ${recoverEnded} ")
+    //        _ = orderDatabaseAccessActor ! XRecoverOrdersReq(
+    //          ownerOfOrders.getOrElse(null),
+    //          lastUpdatdTimestamp,
+    //          recoverBatchSize
+    //        )
+    //      } yield {
+    //        if (recoverEnded) context.become(functional)
+    //      }
     //      Await.ready(f, timeout.duration)
 
     case msg ⇒

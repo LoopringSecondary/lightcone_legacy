@@ -86,7 +86,7 @@ class AccountManagerActor(
       }).pipeTo(sender)
 
     case XSubmitOrderReq(Some(xorder)) ⇒
-      submitOrder(xorder).pipeTo(sender)
+      sender ! submitOrder(xorder)
 
     case req: XCancelOrderReq ⇒
       if (manager.cancelOrder(req.id)) {
@@ -104,9 +104,9 @@ class AccountManagerActor(
     case msg ⇒ println(s"unknown msg ${msg}")
   }
 
-  private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
+  private def submitOrder(xorder: XOrder): XSubmitOrderRes = {
     val order: Order = xorder
-    for {
+    val f = for {
       _ ← getTokenManager(order.tokenS)
       _ ← getTokenManager(order.tokenFee) if order.amountFee > 0 && order.tokenS != order.tokenFee
 
@@ -139,6 +139,8 @@ class AccountManagerActor(
         XSubmitOrderRes(error = error)
       }
     }
+
+    Await.result(f.mapTo[XSubmitOrderRes], timeout.duration)
   }
 
   private def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode = status match {
@@ -195,12 +197,12 @@ class AccountManagerActor(
     }
   }
 
-  protected def recoverOrder(xorder: XOrder): Future[Any] = {
+  protected def recoverOrder(xorder: XOrder): Any = {
     println(s"@@@@@, recoverOrder, ${self.path.toString},${orderHistoryActor.path.toString}, ${xorder}")
-    //    submitOrder(xorder)
-    val f = submitOrder(xorder)
-    Await.ready(f.mapTo[XSubmitOrderRes], timeout.duration)
-    Future.successful(Unit)
+    submitOrder(xorder)
+    //    val f = submitOrder(xorder)
+    //    Await.ready(f.mapTo[XSubmitOrderRes], timeout.duration)
+    //    Future.successful(Unit)
   }
 
 }

@@ -35,9 +35,9 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
         new AccountManagerActor(
           actors,
           address = ADDRESS_RECOVERY,
-          recoverBatchSize = 2,
+          recoverBatchSize = 500,
           skipRecovery = false
-        ), "accountManagerActor3"
+        ), "accountManagerActorRecovery"
       )
       accountManagerRecoveryActor ! XStart
 
@@ -52,14 +52,13 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
         walletSplitPercentage = 100
       )
 
-      var orderIds = (0 to 6) map ("order" + _)
+      val batchOrders1 = (0 to 500) map {
+        i ⇒ order.copy(hash = "order1" + i)
+      }
       orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(Seq(
-        order.copy(hash = orderIds(0)),
-        order.copy(hash = orderIds(1))
-      ))
+      orderDatabaseAccessProbe.replyWith(batchOrders1)
 
-      Thread.sleep(1000)
+      Thread.sleep(2000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {
@@ -67,12 +66,13 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
           info("----orderbook status after first XRecoverOrdersRes: " + a)
       }
 
+      val batchOrders2 = (0 to 500) map {
+        i ⇒ order.copy(hash = "order2" + i)
+      }
       orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(Seq(
-        order.copy(hash = orderIds(2)),
-        order.copy(hash = orderIds(3))
-      ))
+      orderDatabaseAccessProbe.replyWith(batchOrders2)
 
+      Thread.sleep(2000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {
