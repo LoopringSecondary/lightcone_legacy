@@ -30,22 +30,22 @@ object OrderDatabaseAccessActor {
 
 // TODO(hongyu): implement this actor to support AMA and MMA.
 class OrderDatabaseAccessActor(databaseManager: OrderDatabaseManager)(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout
+  implicit
+  ec: ExecutionContext,
+  timeout: Timeout
 )
   extends Actor
-  with ActorLogging {
+    with ActorLogging {
 
   protected var accountManagerRouter: ActorSelection = _
 
   def receive: Receive = LoggingReceive {
     case XRecoverOrdersReq(address, updatedSince, num) ⇒
       for {
-        orders ← databaseManager.getOrdersForRecovery(
-          updatedSince, num, Option(address)
+        orders ← databaseManager.getOrderByHash(
+          "order_hash"
         )
-        _ = sender ! XRecoverOrdersRes(orders)
+        // _ = sender ! XRecoverOrdersRes(orders)
       } yield Unit
 
     case XSubmitRawOrderReq(Some(xraworder)) ⇒
@@ -56,17 +56,19 @@ class OrderDatabaseAccessActor(databaseManager: OrderDatabaseManager)(
 
         case Right(xraworder) ⇒
           for {
-            xraworder ← databaseManager.saveOrder(xraworder)
-            xorder: XOrder = xraworder
-            _ = accountManagerRouter forward XSubmitOrderReq(Some(xorder))
+            xraworder ← databaseManager.saveOrUpdate(xraworder)
+            // TODO compile failed
+            //            xorder: XOrder = xraworder
+            //            _ = accountManagerRouter forward XSubmitOrderReq(Some(xorder))
           } yield Unit
       }
 
     case XUpdateOrderStateAndStatusReq(Some(actualState), status) ⇒
-      for {
-        result ← databaseManager.updateOrderStateAndStatus(actualState, status)
-        _ = sender ! XUpdateOrderStateAndStatusRes(result)
-      } yield Unit
+    // TODO 可以使用 saveOrUpdate
+    //      for {
+    //        result ← databaseManager.updateOrderStateAndStatus(actualState, status)
+    //        _ = sender ! XUpdateOrderStateAndStatusRes(result)
+    //      } yield Unit
 
     // case XGetOrders(orderIds) =>
 
