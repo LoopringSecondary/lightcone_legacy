@@ -16,10 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
-import akka.event.LoggingReceive
 import akka.testkit.TestActorRef
-import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
@@ -28,44 +25,22 @@ import org.loopring.lightcone.proto.core._
 import CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.proto.deployment.XStart
 
-import scala.concurrent.ExecutionContext
 
-class CoreActorsIntegrationSpec_AccountManagerRecovery
-  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
-
-  class AccountBalanceForTestActor()(
-      implicit
-      ec: ExecutionContext,
-      timeout: Timeout
-  )
-    extends Actor
-    with ActorLogging {
-
-    def receive: Receive = LoggingReceive {
-      case req: XGetBalanceAndAllowancesReq ⇒
-        sender !
-          XGetBalanceAndAllowancesRes(
-            req.address,
-            Map(req.tokens(0) -> XBalanceAndAllowance(BigInt("1000000000000000000000000"), BigInt("1000000000000000000000000")))
-          )
-
-    }
-  }
-  val accountBalanceActor3 = TestActorRef(new AccountBalanceForTestActor())
+class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
+  extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
   "when an accountManager starts" must {
     "first recover it and then receive order" in {
-      val ADDRESS_3 = "0xaddress_3"
-      actors.add(AccountBalanceActor.name, accountBalanceActor3)
-      val accountManagerActor3 = TestActorRef(
+      val accountManagerRecoveryActor = TestActorRef(
         new AccountManagerActor(
           actors,
-          address = ADDRESS_3,
+          address = ADDRESS_RECOVERY,
           recoverBatchSize = 1,
           skipRecovery = false
-        ),
-        "accountManagerActor3"
+        ), "accountManagerActor3"
       )
+      accountManagerRecoveryActor ! XStart
+
       val order = XRawOrder(
         hash = "order",
         tokenS = WETH_TOKEN.address,
@@ -76,23 +51,13 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
         feeAmount = "10".zeros(18),
         walletSplitPercentage = 100
       )
-
-      accountManagerActor3 ! XStart
-
       var orderIds = (0 to 6) map ("order" + _)
+
+      Thread.sleep(500)
       orderDatabaseAccessProbe.expectQuery()
       orderDatabaseAccessProbe.replyWith(Seq(
         order.copy(hash = orderIds(0))
       ))
-
-      //      accountBalanceProbe.expectQuery(ADDRESS_3, WETH_TOKEN.address)
-      //      accountBalanceProbe.replyWith(ADDRESS_3, WETH_TOKEN.address, "1000".zeros(18), "1000".zeros(18))
-      //
-      //      accountBalanceProbe.expectQuery(ADDRESS_3, GTO_TOKEN.address)
-      //      accountBalanceProbe.replyWith(ADDRESS_3, GTO_TOKEN.address, "100".zeros(18), "100".zeros(18))
-
-      orderHistoryProbe.expectQuery(orderIds(0))
-      orderHistoryProbe.replyWith(orderIds(0), "0".zeros(0))
 
       Thread.sleep(1000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
@@ -106,9 +71,6 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
       orderDatabaseAccessProbe.replyWith(Seq(
         order.copy(hash = orderIds(1))
       ))
-
-      orderHistoryProbe.expectQuery(orderIds(1))
-      orderHistoryProbe.replyWith(orderIds(1), "0".zeros(0))
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
@@ -126,10 +88,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
           info("----orderbook status after last XRecoverOrdersRes: " + a)
       }
 
-      accountManagerActor3 ! XSubmitOrderReq(Some(order))
-
-      orderHistoryProbe.expectQuery(order.hash)
-      orderHistoryProbe.replyWith(order.hash, "0".zeros(0))
+      accountManagerRecoveryActor ! XSubmitOrderReq(Some(order))
 
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒

@@ -196,7 +196,7 @@ class AccountManagerActor(
   }
 
   protected def recoverOrder(xorder: XOrder): Future[Any] = {
-    println(s"@@@@@, recoverOrder, ${xorder}")
+    println(s"@@@@@, recoverOrder, ${self.path.toString},${orderHistoryActor.path.toString}, ${xorder}")
     //    submitOrder(xorder)
     val f = submitOrder(xorder)
     Await.ready(f.mapTo[XSubmitOrderRes], timeout.duration)

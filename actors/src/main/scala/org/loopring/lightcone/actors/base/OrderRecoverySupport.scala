@@ -18,7 +18,6 @@ package org.loopring.lightcone.actors.base
 
 import akka.actor._
 import akka.event.LoggingReceive
-import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
@@ -30,6 +29,7 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.deployment._
 
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent._
 
 trait OrderRecoverySupport {
@@ -73,9 +73,10 @@ trait OrderRecoverySupport {
       //      Await.ready(pf, timeout.duration)
       for {
         _ ← Future.sequence(xorders.map(recoverOrder))
+        //        _ ← Future.successful()
         lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
         recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-        _ = if (recoverEnded) context.become(functional)
+        _ = println(s"###,recoverEnded ${recoverEnded} ")
         _ = orderDatabaseAccessActor ! XRecoverOrdersReq(
           ownerOfOrders.getOrElse(null),
           lastUpdatdTimestamp,
