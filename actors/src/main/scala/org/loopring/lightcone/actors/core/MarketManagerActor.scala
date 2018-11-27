@@ -90,7 +90,7 @@ class MarketManagerActor(
     case XStart ⇒ startOrderRecovery()
   }
 
-  def functional: Receive = functionalBase orElse LoggingReceive {
+  def functional: Receive = LoggingReceive {
 
     case XSubmitOrderReq(Some(xorder)) ⇒
       submitOrder(xorder)

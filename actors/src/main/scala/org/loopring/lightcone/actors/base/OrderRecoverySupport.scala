@@ -49,6 +49,10 @@ trait OrderRecoverySupport {
 
   protected def functional: Receive
 
+  private var lastUpdatdTimestamp: Long = 0
+  private var recoverEnded: Boolean = false
+  private var xordersToRecover: Seq[XOrder] = Nil
+
   protected def startOrderRecovery() = {
     if (skipRecovery) {
       log.info(s"actor recovering skipped: ${self.path}")
@@ -66,28 +70,34 @@ trait OrderRecoverySupport {
       log.info(s"recovering batch $batch (size = ${xraworders.size})")
       batch += 1
 
-      val xorders = xraworders.map(convertXRawOrderToXOrder)
-      for {
-        _ ← Future.sequence(xorders.map(recoverOrder))
-        lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
-        recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-        _ = if (recoverEnded) context.become(functional)
-        _ = orderDatabaseAccessActor ! XRecoverOrdersReq(
-          ownerOfOrders.getOrElse(null),
-          lastUpdatdTimestamp,
-          recoverBatchSize
-        )
-      } yield Unit
+      val xordersToRecover = xraworders.map(convertXRawOrderToXOrder)
+      lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
+      recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverBatchSize
+
+      self ! XRecoverNextOrder()
+
+    case XRecoverNextOrder ⇒
+      xordersToRecover match {
+        case head :: tail ⇒ for {
+          _ ← recoverOrder(head)
+          _ = self ! XRecoverNextOrder()
+        } yield {
+          this.xordersToRecover = tail
+        }
+
+        case Nil if !recoverEnded ⇒
+          orderDatabaseAccessActor ! XRecoverOrdersReq(
+            ownerOfOrders.getOrElse(null),
+            lastUpdatdTimestamp,
+            recoverBatchSize
+          )
+
+        case _ ⇒
+          log.info("order recovery completed")
+      }
 
     case msg ⇒
       log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
   }
 
-  def functionalBase: Receive = LoggingReceive {
-
-    case XRecoverOrdersRes(xraworders) ⇒
-      log.info(s"recovering last batch (size = ${xraworders.size})")
-      val xorders = xraworders.map(convertXRawOrderToXOrder)
-      Future.sequence(xorders.map(recoverOrder))
-  }
 }
