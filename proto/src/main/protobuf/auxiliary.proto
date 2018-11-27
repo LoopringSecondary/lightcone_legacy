@@ -94,7 +94,11 @@ message XGetTokenListRes {
 
 
 message XGetTokenIcoInfoReq {
-   repeated XTokenIcoInfo list = 1;
+   string tokenAddress = 1;
+}
+
+message XGetTokenIcoInfoRes {
+  repeated XTokenIcoInfo list = 1;
 }
 
 message XGetTokenTickerInfoReq{
@@ -211,7 +215,7 @@ message XMarketPairData {
   repeated XMarketPair market_list = 1;
 }
 
-message MarketTickData {
+message XMarketTickData {
   int32 code = 1;
   string message = 2;
   int64 timestamp = 3;
