@@ -22,56 +22,82 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.loopring.lightcone.proto.ethrpc._
 
-class EthereumConnectionActor(settings: XEthereumProxySettings)(
+class EthereumConnectionActor(
+    settings: XEthereumProxySettings
+)(
     implicit
     materilizer: ActorMaterializer,
     timeout: Timeout
 ) extends Actor
   with ActorLogging {
 
-  // 块高度检测
-  context.actorOf(
-    Props(
-      new EthereumClientMonitor(
-        requestRouterActor,
-        connectorGroups,
-        settings.checkIntervalSeconds,
-        settings.healthyThreshold
-      )
-    ),
-    "ethereum_connector_monitor"
-  )
+  private var monitor: ActorRef = _
+  private var router: ActorRef = _
+  private var connectorGroups: Seq[ActorRef] = Nil
+  private var currentSettings: Option[XEthereumProxySettings] = None
 
-  private val connectorGroups: Seq[ActorRef] = settings.nodes.zipWithIndex.map {
-    case (node, index) ⇒
-      val ipc = node.ipcPath.nonEmpty
-      val nodeName =
-        if (ipc) s"ethereum_connector_ipc_$index"
-        else s"ethereum_connector_http_$index"
-
-      val props =
-        if (ipc) Props(new IpcConnector(node))
-        else Props(new HttpConnector(node))
-
-      context.actorOf(RoundRobinPool(settings.poolSize).props(props), nodeName)
-  }
-
-  // 这里相当于添加了 ActorSelectionRoutee
-  private val requestRouterActor = context.actorOf(
-    RoundRobinGroup(connectorGroups.map(_.path.toString).toList).props(),
-    "r_ethereum_connector"
-  )
+  updateSettings(settings)
 
   def receive: Receive = {
+    case settings: XEthereumProxySettings ⇒
+      updateSettings(settings)
+
     case m: XJsonRpcReq ⇒
       // 路由为空 这里是 timeout
-      requestRouterActor.forward(m)
+      router.forward(m)
 
     case req: ProtoBuf[_] ⇒
-      requestRouterActor.forward(req)
+      router.forward(req)
 
     case msg ⇒
       log.error(s"unsupported request to EthereumConnectionActor: $msg")
+  }
+
+  def updateSettings(settings: XEthereumProxySettings) {
+    if (router != null) {
+      context.stop(router)
+    }
+    connectorGroups.foreach(context.stop(_))
+
+    connectorGroups = settings.nodes.zipWithIndex.map {
+      case (node, index) ⇒
+        val ipc = node.ipcPath.nonEmpty
+
+        val nodeName =
+          if (ipc) s"ethereum_connector_ipc_$index"
+          else s"ethereum_connector_http_$index"
+
+        val props =
+          if (ipc) Props(new IpcConnector(node))
+          else Props(new HttpConnector(node))
+
+        context.actorOf(
+          RoundRobinPool(
+            settings.poolSize
+          ).props(props),
+          nodeName
+        )
+    }
+
+    // 这里相当于添加了 ActorSelectionRoutee
+    router = context.actorOf(
+      RoundRobinGroup(connectorGroups.map(_.path.toString).toList).props(),
+      "r_ethereum_connector"
+    )
+
+    monitor = context.actorOf(
+      Props(
+        new EthereumClientMonitor(
+          router,
+          connectorGroups,
+          settings.checkIntervalSeconds,
+          settings.healthyThreshold
+        )
+      ),
+      "ethereum_connector_monitor"
+    )
+
+    currentSettings = Some(settings)
   }
 }
 
