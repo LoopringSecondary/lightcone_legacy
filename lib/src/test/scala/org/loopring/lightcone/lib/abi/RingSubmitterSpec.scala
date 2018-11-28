@@ -17,7 +17,7 @@
 package org.loopring.lightcone.lib.abi
 
 import org.scalatest._
-import org.web3j.crypto.RawTransaction
+import org.web3j.crypto.{ Sign, RawTransaction, ECDSASignature }
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.lib.data._
 
@@ -34,7 +34,7 @@ class RingSubmitterSpec extends FlatSpec with Matchers {
   val wethAddress = "0xf079E0612E869197c5F4c7D0a95DF570B163232b"
   implicit val serializer: RingSerializer = new RingSerializerImpl(lrcAddress)
 
-  val ringSubmitterAbiJsonStr = "[{\"constant\":false,\"inputs\":[{\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"submitRings\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"FEE_PERCENTAGE_BASE\",\"outputs\":[{\"name\":\"\",\"type\":\"uint16\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_ringIndex\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"_ringHash\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"_feeRecipient\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_fills\",\"type\":\"bytes\"}],\"name\":\"RingMined\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_ringHash\",\"type\":\"bytes32\"}],\"name\":\"InvalidRing\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"num\",\"type\":\"uint256\"}],\"name\":\"LogInfoNumber\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"bs\",\"type\":\"bytes32\"}],\"name\":\"LogInfoBytes32\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"LogInfoAddress\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"log\",\"type\":\"string\"}],\"name\":\"LogInfoString\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"bs\",\"type\":\"bytes\"}],\"name\":\"LogInfoBytes\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"valid\",\"type\":\"bool\"}],\"name\":\"LogInfoBool\",\"type\":\"event\"}]"
+  val ringSubmitterAbiJsonStr = "[{\"constant\":false,\"inputs\":[{\"name\":\"signer\",\"type\":\"address\"},{\"name\":\"plaintext\",\"type\":\"bytes32\"},{\"name\":\"multihash\",\"type\":\"bytes\"}],\"name\":\"testSig\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"submitRings\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"FEE_PERCENTAGE_BASE\",\"outputs\":[{\"name\":\"\",\"type\":\"uint16\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_ringIndex\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"_ringHash\",\"type\":\"bytes32\"},{\"indexed\":true,\"name\":\"_feeRecipient\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_fills\",\"type\":\"bytes\"}],\"name\":\"RingMined\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_ringHash\",\"type\":\"bytes32\"}],\"name\":\"InvalidRing\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"num\",\"type\":\"uint256\"}],\"name\":\"LogInfoNumber\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"bs\",\"type\":\"bytes32\"}],\"name\":\"LogInfoBytes32\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"LogInfoAddress\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"log\",\"type\":\"string\"}],\"name\":\"LogInfoString\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"bs\",\"type\":\"bytes\"}],\"name\":\"LogInfoBytes\",\"type\":\"event\"}]"
   implicit val ringSubmitterAbi = new RingSubmitterABI(ringSubmitterAbiJsonStr)
 
   val methodId = Numeric.toHexString(ringSubmitterAbi.submitRing.encodeSignature())
@@ -49,11 +49,11 @@ class RingSubmitterSpec extends FlatSpec with Matchers {
   val validUntil = 1543955503
 
   //////////////////// used for debug
-  val protocol = "0xbc39240947290033afe9eb2d07ec31cff683913e"
-  val nonce = BigInt(5987)
+  val protocol = "0x97e7c0d3d0cdb2d01a1adc93e100e15ad289a484"
+  val nonce = BigInt(6115)
 
   "submitRingTxInfo" should "serialize ring and create transaction input data" in {
-    info("[sbt lib/'testOnly *SubmitRingSpec -- -z simpleTest1']")
+    info("[sbt lib/'testOnly *RingSubmitterSpec -- -z simpleTest1']")
 
     // curl https://relay1.loopring.io/rpc/v2/ -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"loopring_getNonce","params":[{"owner":"0xdb88d20527332ad9bab730769891285dc62ba092"}],"id":64}'
     val raworder1 = COrder(
@@ -104,6 +104,23 @@ class RingSubmitterSpec extends FlatSpec with Matchers {
     )
     val input = ring.getInputData(SignAlgorithm.ALGORITHM_EIP712)
     val tx = generateTxData(input)
+    info(Numeric.toHexString(tx))
+  }
+
+  "testSig" should "test sig" in {
+    info("[sbt lib/'testOnly *RingSubmitterSpec -- -z testSig']")
+
+    val testSig = ringSubmitterAbi.findFunctionByName("testSig")
+
+    val broker = "0x1c7e4dc380e5f3b4f833f73d6ba13f2d9524f7ee"
+    val hash = "0x74fb9d6967d6911e2edbf02567630c4dd2fb6207df3f4099d808bd4a1b0a6796"
+    val sig = "0x00411b743cef12886038db7dfc1918f7a6e6f12b675d0d7dd023be99adfb0f41a0c17c515a4f7f07fbe1fcee807dd6cf1abaaf549bb0ec654cdc74937cd129852b6069"
+    val input = testSig.encode(
+      broker,
+      Numeric.hexStringToByteArray(hash),
+      Numeric.hexStringToByteArray(sig)
+    )
+    val tx = generateTxData(Numeric.toHexString(input))
     info(Numeric.toHexString(tx))
   }
 

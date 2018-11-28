@@ -17,6 +17,8 @@
 package org.loopring.lightcone.lib.data
 
 import org.scalatest._
+import org.web3j.crypto.{ ECDSASignature, Keys, Sign }
+import org.web3j.utils.Numeric
 
 class SignerSpec extends FlatSpec with Matchers {
 
@@ -95,6 +97,28 @@ class SignerSpec extends FlatSpec with Matchers {
 
     val sig = signer.signHash(SignAlgorithm.ALGORITHM_ETHEREUM, hash)
     sig should be(encode)
+  }
+
+  "recoverSig" should "recover sig" in {
+    info("[sbt lib/'testOnly *SignerSpec -- -z recoverSig']")
+
+    val hash = "0x46589263a355627eae2d38f140bedfd4a17ab645f71d42a0b4fe4784c3c5c3dd"
+    val v = 27
+    val r = "0x743cef12886038db7dfc1918f7a6e6f12b675d0d7dd023be99adfb0f41a0c17c"
+    val s = "0x515a4f7f07fbe1fcee807dd6cf1abaaf549bb0ec654cdc74937cd129852b6069"
+
+    val recId = v.toInt - 27
+    val hashBytes = Numeric.hexStringToByteArray(hash)
+    val ecdsa = new ECDSASignature(
+      Numeric.toBigInt(r),
+      Numeric.toBigInt(s)
+    )
+
+    val recValue = Sign.recoverFromSignature(recId, ecdsa, hashBytes)
+    val publicKey = "0x" + Keys.getAddress(recValue)
+
+    info(publicKey)
+    publicKey should be("0x1c7e4dc380e5f3b4f833f73d6ba13f2d9524f7ee")
   }
 
   "eipAlgorithmTest3" should "be able to verify signed data" in {
