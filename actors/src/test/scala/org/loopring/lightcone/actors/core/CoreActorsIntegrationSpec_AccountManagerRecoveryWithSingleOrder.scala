@@ -38,7 +38,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
           skipRecovery = false
         ), "accountManagerActorRecovery"
       )
-      accountManagerRecoveryActor ! XStart
+      accountManagerRecoveryActor ! XStart()
 
       val order = XRawOrder(
         hash = "order",
