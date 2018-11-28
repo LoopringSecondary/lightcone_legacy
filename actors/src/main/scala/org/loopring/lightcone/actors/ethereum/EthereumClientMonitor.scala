@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.ethcube
+package org.loopring.lightcone.actors.ethereum
 
 import akka.actor._
 import akka.pattern.ask
@@ -27,7 +27,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.Random
 
-private[actors] class EthereumClientManager(
+private[ethereum] class EthereumClientMonitor(
     requestRouterActor: ActorRef,
     connectorGroups: Seq[ActorRef],
     checkIntervalSeconds: Int,
@@ -74,7 +74,7 @@ private[actors] class EthereumClientManager(
         resps: Seq[(ActorRef, XCheckBlockHeightResp)] ← Future.sequence(
           connectorGroups.map { g ⇒
             for {
-              syncingResp ← (g ? syncingJsonRpcReq.toPB)
+              syncingResp ← (g ? syncingJsonRpcReq.toProto)
                 .mapTo[XJsonRpcRes]
                 .map(toJsonRpcResWrapped)
                 .map(_.result)
@@ -92,7 +92,7 @@ private[actors] class EthereumClientManager(
                     errCheckBlockHeightResp
                 }
               // get each node block number
-              blockNumResp ← (g ? blockNumJsonRpcReq.toPB)
+              blockNumResp ← (g ? blockNumJsonRpcReq.toProto)
                 .mapTo[XJsonRpcRes]
                 .map(toJsonRpcResWrapped)
                 .map(_.result)
@@ -105,8 +105,10 @@ private[actors] class EthereumClientManager(
               )
               (
                 g,
-                syncingResp
-                .copy(currentBlock = blockNumResp, heightBlock = heightBlock)
+                syncingResp.copy(
+                  currentBlock = blockNumResp,
+                  heightBlock = heightBlock
+                )
               )
             }
           }
