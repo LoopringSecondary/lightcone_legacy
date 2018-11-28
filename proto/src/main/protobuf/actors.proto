@@ -235,6 +235,8 @@ message XRecoverOrdersRes {
     repeated XRawOrder orders = 1;
 }
 
+message XRecoverNextOrder {}
+
 enum XExecutedStatus {
     EXECUTED_STATUS_UNKNOW = 0;
     EXECUTED_STATUS_FAILED = 1;

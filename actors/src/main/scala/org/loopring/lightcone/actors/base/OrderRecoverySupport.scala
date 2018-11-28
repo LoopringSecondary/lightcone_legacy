@@ -33,14 +33,18 @@ trait OrderRecoverySupport {
   val skipRecovery: Boolean // for testing purpose
   val recoverBatchSize: Int
   val ownerOfOrders: Option[String]
-  private var batch = 1
+  private var processed = 0
 
   protected def orderDatabaseAccessActor: ActorRef
 
   //暂时将recovery更改为同步的
-  protected def recoverOrder(xorder: XOrder): Any
+  protected def recoverOrder(xorder: XOrder): Future[Any]
 
   protected def functional: Receive
+
+  private var lastUpdatdTimestamp: Long = 0
+  private var recoverEnded: Boolean = false
+  private var xordersToRecover: Seq[XOrder] = Nil
 
   protected def startOrderRecovery() = {
     if (skipRecovery) {
@@ -49,60 +53,51 @@ trait OrderRecoverySupport {
     } else {
       context.become(recovering)
       log.info(s"actor recovering started: ${self.path}")
-      orderDatabaseAccessActor ! XRecoverOrdersReq(ownerOfOrders.getOrElse(null), 0L, recoverBatchSize)
+      orderDatabaseAccessActor ! XRecoverOrdersReq(
+        ownerOfOrders.getOrElse(null),
+        0L,
+        recoverBatchSize
+      )
     }
   }
 
   def recovering: Receive = {
 
     case XRecoverOrdersRes(xraworders) ⇒
-      log.info(s"recovering batch $batch (size = ${xraworders.size})")
-      batch += 1
+      val size = xraworders.size
+      log.info(s"recovering next ${size} orders")
+      processed += size
 
-      val xorders = xraworders.map(xRawOrderToXOrder)
-      xorders.foreach(recoverOrder)
-      val lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
-      val recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-      log.debug(s"${self.path.toString} -- recoverEnded: ${recoverEnded} ")
-      orderDatabaseAccessActor ! XRecoverOrdersReq(
-        ownerOfOrders.getOrElse(null),
-        lastUpdatdTimestamp,
-        recoverBatchSize
-      )
-      if (recoverEnded)
-        context.become(functional)
-      else
-        orderDatabaseAccessActor ! XRecoverOrdersReq(
-          ownerOfOrders.getOrElse(null),
-          lastUpdatdTimestamp,
-          recoverBatchSize
-        )
+      xordersToRecover = xraworders.map(xRawOrderToXOrder).toList
+      lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
+      recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverBatchSize
 
-    //      for {
-    //        _ ← Future.sequence(xorders.map(recoverOrder))
-    //        lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
-    //        recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-    //        _ = println(s"###,recoverEnded ${recoverEnded} ")
-    //      } yield {
-    //        if (recoverEnded)
-    //          context.become(functional)
-    //        else
-    //          orderDatabaseAccessActor ! XRecoverOrdersReq(
-    //            ownerOfOrders.getOrElse(null),
-    //            lastUpdatdTimestamp,
-    //            recoverBatchSize
-    //          )
-    //      }
+      self ! XRecoverNextOrder()
+
+    case _: XRecoverNextOrder ⇒
+      xordersToRecover match {
+        case head :: tail ⇒ for {
+          _ ← recoverOrder(head)
+        } yield {
+          xordersToRecover = tail
+          self ! XRecoverNextOrder()
+        }
+
+        case Nil ⇒
+          if (!recoverEnded) {
+            orderDatabaseAccessActor ! XRecoverOrdersReq(
+              ownerOfOrders.getOrElse(null),
+              lastUpdatdTimestamp,
+              recoverBatchSize
+            )
+          } else {
+            log.info(s"recovering completed with $processed orders")
+            context.become(functional)
+          }
+        case _ ⇒ log.info(s"not match xorders: ${xordersToRecover.getClass.getName}")
+      }
 
     case msg ⇒
       log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
-  }
-
-  def functionalBase: Receive = LoggingReceive {
-    case XRecoverOrdersRes(xraworders) ⇒
-      log.info(s"recovering last batch (size = ${xraworders.size})")
-      xraworders
-        .map(xRawOrderToXOrder)
-        .foreach(recoverOrder)
   }
 }
