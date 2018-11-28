@@ -17,7 +17,7 @@
 package org.loopring.lightcone.lib.abi
 
 import org.scalatest._
-import org.web3j.crypto.{ Sign, RawTransaction, ECDSASignature }
+import org.web3j.crypto.RawTransaction
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.lib.data._
 
@@ -49,8 +49,8 @@ class RingSubmitterSpec extends FlatSpec with Matchers {
   val validUntil = 1543955503
 
   //////////////////// used for debug
-  val protocol = "0x97e7c0d3d0cdb2d01a1adc93e100e15ad289a484"
-  val nonce = BigInt(6115)
+  val protocol = "0x0ff34db87235712f53c3cf1c390a369ec973646c"
+  val nonce = BigInt(6162)
 
   "submitRingTxInfo" should "serialize ring and create transaction input data" in {
     info("[sbt lib/'testOnly *RingSubmitterSpec -- -z simpleTest1']")
