@@ -149,7 +149,7 @@ package object data {
       amountMargin = xExpectedFill.amountMargin
     )
 
-  implicit def convertXRawOrderToXOrder(xraworder: XRawOrder): XOrder =
+  implicit def xRawOrderToXOrder(xraworder: XRawOrder): XOrder =
     XOrder(
       id = xraworder.hash,
       tokenS = xraworder.tokenS,
