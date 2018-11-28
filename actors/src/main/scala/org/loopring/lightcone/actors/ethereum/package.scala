@@ -22,35 +22,29 @@ import org.json4s.native.Serialization
 import org.json4s.native.Serialization.write
 import org.loopring.lightcone.proto.ethrpc._
 
-package object ethcube {
+package object ethereum {
 
   type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
 
-  private[ethcube] case class JsonRpcReqWrapped(
+  private[ethereum] case class JsonRpcReqWrapped(
       id: Int,
       jsonrpc: String = "2.0",
       method: String,
       params: Any
   ) {
-    self ⇒
-    implicit val formats = Serialization.formats(NoTypeHints)
-
-    def toPB: XJsonRpcReq = {
-      XJsonRpcReq(write(self))
-    }
+    private implicit val formats = Serialization.formats(NoTypeHints)
+    def toProto: XJsonRpcReq = XJsonRpcReq(write(this))
   }
 
-  private[ethcube] case class JsonRpcResWrapped(
+  private[ethereum] case class JsonRpcResWrapped(
       id: Any,
       jsonrpc: String = "2.0",
       result: Any,
       error: Option[XJsonRpcErr]
   )
 
-  private[ethcube] object JsonRpcResWrapped {
-
-    implicit val formats = DefaultFormats
-
+  private[ethereum] object JsonRpcResWrapped {
+    private implicit val formats = DefaultFormats
     def toJsonRpcResWrapped: PartialFunction[XJsonRpcRes, JsonRpcResWrapped] = {
       case j: XJsonRpcRes ⇒ parse(j.json).extract[JsonRpcResWrapped]
     }

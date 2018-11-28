@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.ethcube
+package org.loopring.lightcone.actors.ethereum
 
 import akka.actor._
 import akka.routing._
@@ -23,49 +23,55 @@ import akka.util.Timeout
 import org.loopring.lightcone.proto.ethrpc._
 
 class EthereumConnectionActor(settings: XEthereumProxySettings)(
-  implicit
-  materilizer: ActorMaterializer,
-  timeout: Timeout
+    implicit
+    materilizer: ActorMaterializer,
+    timeout: Timeout
 ) extends Actor
   with ActorLogging {
 
   // 块高度检测
   context.actorOf(
     Props(
-      new EthereumClientManager(
+      new EthereumClientMonitor(
         requestRouterActor,
         connectorGroups,
         settings.checkIntervalSeconds,
         settings.healthyThreshold
       )
     ),
-    "ethereum_connector_manager"
+    "ethereum_connector_monitor"
   )
 
   private val connectorGroups: Seq[ActorRef] = settings.nodes.zipWithIndex.map {
     case (node, index) ⇒
+      val ipc = node.ipcPath.nonEmpty
+      val nodeName =
+        if (ipc) s"ethereum_connector_ipc_$index"
+        else s"ethereum_connector_http_$index"
+
       val props =
-        if (node.ipcPath.nonEmpty) Props(new IpcConnector(node))
+        if (ipc) Props(new IpcConnector(node))
         else Props(new HttpConnector(node))
 
-      context.actorOf(
-        RoundRobinPool(settings.poolSize).props(props),
-        s"connector_group_$index"
-      )
+      context.actorOf(RoundRobinPool(settings.poolSize).props(props), nodeName)
   }
 
   // 这里相当于添加了 ActorSelectionRoutee
   private val requestRouterActor = context.actorOf(
     RoundRobinGroup(connectorGroups.map(_.path.toString).toList).props(),
-    "request_router_actor"
+    "r_ethereum_connector"
   )
 
   def receive: Receive = {
     case m: XJsonRpcReq ⇒
       // 路由为空 这里是 timeout
       requestRouterActor.forward(m)
+
     case req: ProtoBuf[_] ⇒
       requestRouterActor.forward(req)
+
+    case msg ⇒
+      log.error(s"unsupported request to EthereumConnectionActor: $msg")
   }
 }
 

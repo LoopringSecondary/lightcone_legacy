@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.ethcube
+package org.loopring.lightcone.actors.ethereum
 
 import java.io._
 import java.nio.CharBuffer
@@ -25,7 +25,7 @@ import jnr.unixsocket._
 import org.loopring.lightcone.proto.ethrpc._
 import scalapb.json4s.JsonFormat
 
-private[actors] class IpcConnector(node: XEthereumProxySettings.XNode)
+private[ethereum] class IpcConnector(node: XEthereumProxySettings.XNode)
   extends Actor
   with ActorLogging {
 
