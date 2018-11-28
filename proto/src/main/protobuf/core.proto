@@ -80,8 +80,9 @@ message XOrderbook {
         string amount = 2;
         string total = 3;
     }
-    repeated XItem sells = 1;
-    repeated XItem buys = 2;
+    double latestPrice = 1;
+    repeated XItem sells = 2;
+    repeated XItem buys = 3;
 }
 
 message XOrderbookConfig {
@@ -101,13 +102,14 @@ message XOrderbookUpdate {
     repeated XSlot buys = 2;
 }
 
-message XGetOrderbookReq {
-   int32 level = 1;
-   int32 size = 2;
+
+message XUpdateLatestTradingPrice {
+    double price = 1;
 }
 
-message GetXOrderbookRes {
-   XOrderbook orderbook = 1;
+message XGetOrderbookReq {
+    int32 level = 1;
+    int32 size = 2;
 }
 
 message XTokenMetadata {
