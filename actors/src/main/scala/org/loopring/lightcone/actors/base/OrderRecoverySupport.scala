@@ -71,20 +71,22 @@ trait OrderRecoverySupport {
       xordersToRecover = xraworders.map(xRawOrderToXOrder)
       lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
       recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverBatchSize
-
-      self ! XRecoverNextOrder()
+      log.info(s"###2 XRecoverOrdersRes  ${recoverEnded}, ${xordersToRecover.size}, $recoverBatchSize")
+      self ! XRecoverNextOrder
 
     case XRecoverNextOrder ⇒
       xordersToRecover match {
         case head :: tail ⇒ for {
           _ ← recoverOrder(head)
+          _ = println(s"## recoverOrder ${head}, ${tail} ")
         } yield {
           xordersToRecover = tail
-          self ! XRecoverNextOrder()
+          self ! XRecoverNextOrder
         }
 
         case Nil ⇒
           if (!recoverEnded) {
+            log.info(s"### nextBatch recoverEnded ${recoverEnded}")
             orderDatabaseAccessActor ! XRecoverOrdersReq(
               ownerOfOrders.getOrElse(null),
               lastUpdatdTimestamp,
