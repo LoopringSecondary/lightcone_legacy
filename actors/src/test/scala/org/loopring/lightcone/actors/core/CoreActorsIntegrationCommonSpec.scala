@@ -192,10 +192,10 @@ abstract class CoreActorsIntegrationCommonSpec(
   actors.add(SettlementActor.name, settlementActor)
   actors.add(EthereumAccessActor.name, ethereumAccessActor)
 
-  accountManagerActor1 ! XStart
-  accountManagerActor2 ! XStart
-  marketManagerActor ! XStart
-  settlementActor ! XStart
+  accountManagerActor1 ! XStart()
+  accountManagerActor2 ! XStart()
+  marketManagerActor ! XStart()
+  settlementActor ! XStart()
 
   implicit class RichString(s: String) {
     def zeros(size: Int): BigInt = BigInt(s + "0" * size)

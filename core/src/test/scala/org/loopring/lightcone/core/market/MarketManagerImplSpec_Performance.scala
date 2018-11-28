@@ -80,7 +80,7 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
     (fackRingIncomeEstimator.isProfitable(_: OrderRing, _: Double)).when(*, *).returns(true)
   }
 
-  "a" should "b" in {
+  "MarketManagingImpl" should "match 100 orders per second per thread" in {
     val now = System.currentTimeMillis
     val num = 100
     var rings = 0
