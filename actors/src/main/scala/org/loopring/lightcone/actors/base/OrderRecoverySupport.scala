@@ -73,7 +73,7 @@ trait OrderRecoverySupport {
       recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverBatchSize
       self ! XRecoverNextOrder
 
-    case XRecoverNextOrder ⇒
+    case XRecoverNextOrder | XRecoverNextOrder() ⇒
       xordersToRecover match {
         case head :: tail ⇒ for {
           _ ← recoverOrder(head)
