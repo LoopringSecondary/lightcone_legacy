@@ -23,23 +23,23 @@ import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment._
+import org.loopring.lightcone.proto.deployment.XStart
 
-class CoreActorsIntegrationSpec_AccountManagerRecovery
-  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
+class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
+  extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
   "when an accountManager starts" must {
     "first recover it and then receive order" in {
-      val Address_3 = "0xaddress_3"
 
-      val accountManagerActor3 = TestActorRef(
+      val accountManagerRecoveryActor = TestActorRef(
         new AccountManagerActor(
           actors,
-          address = Address_3,
-          recoverBatchSize = 1,
+          address = ADDRESS_RECOVERY,
+          recoverBatchSize = 500,
           skipRecovery = false
-        )
+        ), "accountManagerActorRecovery"
       )
+      accountManagerRecoveryActor ! XStart
 
       val order = XRawOrder(
         hash = "order",
@@ -52,24 +52,13 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
         walletSplitPercentage = 100
       )
 
-      accountManagerActor3 ! XStart
-
-      var orderIds = (0 to 6) map ("order" + _)
+      val batchOrders1 = (0 until 500) map {
+        i ⇒ order.copy(hash = "order1" + i)
+      }
       orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(Seq(
-        order.copy(hash = orderIds(0))
-      ))
+      orderDatabaseAccessProbe.replyWith(batchOrders1)
 
-      accountBalanceProbe.expectQuery(Address_3, WETH_TOKEN.address)
-      accountBalanceProbe.replyWith(WETH_TOKEN.address, "1000".zeros(18), "1000".zeros(18))
-
-      accountBalanceProbe.expectQuery(Address_3, GTO_TOKEN.address)
-      accountBalanceProbe.replyWith(GTO_TOKEN.address, "100".zeros(18), "100".zeros(18))
-
-      orderHistoryProbe.expectQuery(orderIds(0))
-      orderHistoryProbe.replyWith(orderIds(0), "0".zeros(0))
-
-      Thread.sleep(1000)
+      Thread.sleep(2000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {
@@ -77,14 +66,13 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
           info("----orderbook status after first XRecoverOrdersRes: " + a)
       }
 
+      val batchOrders2 = (0 until 500) map {
+        i ⇒ order.copy(hash = "order2" + i)
+      }
       orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(Seq(
-        order.copy(hash = orderIds(1))
-      ))
+      orderDatabaseAccessProbe.replyWith(batchOrders2)
 
-      orderHistoryProbe.expectQuery(orderIds(1))
-      orderHistoryProbe.replyWith(orderIds(1), "0".zeros(0))
-
+      Thread.sleep(2000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {
@@ -101,10 +89,9 @@ class CoreActorsIntegrationSpec_AccountManagerRecovery
           info("----orderbook status after last XRecoverOrdersRes: " + a)
       }
 
-      accountManagerActor3 ! XSubmitOrderReq(Some(order))
-
-      orderHistoryProbe.expectQuery(order.hash)
-      orderHistoryProbe.replyWith(order.hash, "0".zeros(0))
+      //不能立即发送请求，否则可能会失败，需要等待future执行完毕
+      Thread.sleep(1000)
+      accountManagerRecoveryActor ! XSubmitOrderReq(Some(order.copy(hash = "order---1")))
 
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒

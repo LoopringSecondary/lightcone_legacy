@@ -16,15 +16,30 @@
 
 package org.loopring.lightcone.actors.core
 
+import akka.actor.ActorRef
+import akka.testkit.TestActorRef
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
-import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.deployment.XStart
 
-//todo: impl it after tested accountMangerRecovery
+//todo:impl it after tested accountMangerRecovery
 class CoreActorsIntegrationSpec_MarketManagerRecovery
   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
+  "when an marketManager starts" must {
+    "first recover it and then receive order" in {
+
+      val marketManagerActorRecovery: ActorRef = TestActorRef(
+        new MarketManagerActor(
+          actors,
+          XMarketId(GTO_TOKEN.address, WETH_TOKEN.address),
+          config,
+          skipRecovery = false
+        )
+      )
+
+      marketManagerActorRecovery ! XStart
+
+    }
+  }
 }
