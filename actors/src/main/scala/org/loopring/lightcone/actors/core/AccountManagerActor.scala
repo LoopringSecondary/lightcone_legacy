@@ -187,11 +187,9 @@ class AccountManagerActor(
     }
   }
 
-  protected def recoverOrder(xorder: XOrder): Any = {
+  protected def recoverOrder(xorder: XOrder) = {
     log.debug(s"recoverOrder, ${self.path.toString}, ${orderHistoryActor.path.toString}, ${xorder}")
-    val f = submitOrder(xorder)
-    //todo:暂时以Await等待,
-    Await.result(f.mapTo[XSubmitOrderRes], timeout.duration)
+    submitOrder(xorder)
   }
 
 }

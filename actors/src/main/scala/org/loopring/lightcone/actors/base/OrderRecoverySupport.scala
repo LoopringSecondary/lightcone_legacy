@@ -33,12 +33,12 @@ trait OrderRecoverySupport {
   val skipRecovery: Boolean // for testing purpose
   val recoverBatchSize: Int
   val ownerOfOrders: Option[String]
-  private var batch = 1
+  private var processed = 0
 
   protected def orderDatabaseAccessActor: ActorRef
 
   //暂时将recovery更改为同步的
-  protected def recoverOrder(xorder: XOrder): Any
+  protected def recoverOrder(xorder: XOrder): Future[Any]
 
   protected def functional: Receive
 
@@ -53,17 +53,22 @@ trait OrderRecoverySupport {
     } else {
       context.become(recovering)
       log.info(s"actor recovering started: ${self.path}")
-      orderDatabaseAccessActor ! XRecoverOrdersReq(ownerOfOrders.getOrElse(null), 0L, recoverBatchSize)
+      orderDatabaseAccessActor ! XRecoverOrdersReq(
+        ownerOfOrders.getOrElse(null),
+        0L,
+        recoverBatchSize
+      )
     }
   }
 
   def recovering: Receive = {
 
     case XRecoverOrdersRes(xraworders) ⇒
-      log.info(s"recovering batch $batch (size = ${xraworders.size})")
-      batch += 1
+      val size = xraworders.size
+      log.info(s"recovering next ${size} orders")
+      processed += size
 
-      val xordersToRecover = xraworders.map(convertXRawOrderToXOrder)
+      xordersToRecover = xraworders.map(xRawOrderToXOrder)
       lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
       recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverBatchSize
 
@@ -73,20 +78,22 @@ trait OrderRecoverySupport {
       xordersToRecover match {
         case head :: tail ⇒ for {
           _ ← recoverOrder(head)
-          _ = self ! XRecoverNextOrder()
         } yield {
-          this.xordersToRecover = tail
+          xordersToRecover = tail
+          self ! XRecoverNextOrder()
         }
 
-        case Nil if !recoverEnded ⇒
-          orderDatabaseAccessActor ! XRecoverOrdersReq(
-            ownerOfOrders.getOrElse(null),
-            lastUpdatdTimestamp,
-            recoverBatchSize
-          )
-
-        case _ ⇒
-          log.info("order recovery completed")
+        case Nil ⇒
+          if (!recoverEnded) {
+            orderDatabaseAccessActor ! XRecoverOrdersReq(
+              ownerOfOrders.getOrElse(null),
+              lastUpdatdTimestamp,
+              recoverBatchSize
+            )
+          } else {
+            log.info(s"recovering completed with $processed orders")
+            context.become(functional)
+          }
       }
 
     case msg ⇒
