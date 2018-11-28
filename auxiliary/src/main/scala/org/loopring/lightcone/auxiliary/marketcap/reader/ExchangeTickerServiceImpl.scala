@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.auxiliary.service
+package org.loopring.lightcone.auxiliary.marketcap.reader
 
 import akka.actor.ActorSystem
-import com.google.inject.Inject
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
+import com.google.inject.Inject
 import org.loopring.lightcone.proto.auxiliary._
-
-import scala.concurrent.Future
 
 class ExchangeTickerServiceImpl @Inject() (
     implicit
     system: ActorSystem,
     mat: ActorMaterializer,
     session: SlickSession
-) extends DatabaseAccesser
+) extends DatabaseAccessor
   with ExchangeTickerService {
 
   import session.profile.api._

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.auxiliary.service
+package org.loopring.lightcone.auxiliary.marketcap.reader
 
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.{ Slick, SlickSession }
@@ -23,7 +23,7 @@ import slick.jdbc.{ GetResult, SQLActionBuilder }
 
 import scala.concurrent.Future
 
-private[service] class DatabaseAccesser(
+private[marketcap] class DatabaseAccessor(
     implicit
     mat: ActorMaterializer,
     session: SlickSession

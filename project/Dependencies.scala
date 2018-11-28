@@ -29,7 +29,8 @@ object Dependencies {
     "org.json4s" %% "json4s-native" % json4sVersion,
     "org.json4s" %% "json4s-jackson" % json4sVersion,
     "com.thesamet.scalapb" %% "scalapb-json4s" % "0.7.1",
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.7")
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.7",
+    "org.jsoup" % "jsoup" % "1.11.3")
 
   lazy val ethereumDependency = Seq(
     "org.web3j" % "core" % "3.4.0",
@@ -61,6 +62,8 @@ object Dependencies {
   lazy val dependency4Aux = commonDependency ++
     driverDependency ++
     guiceDependency ++
+    httpDependency ++
+    json4sDependency ++
     testDependency
 
   lazy val dependency4Core = commonDependency ++
@@ -69,6 +72,8 @@ object Dependencies {
 
   lazy val dependency4Lib = commonDependency ++
     ethereumDependency ++
+    driverDependency ++
+    guiceDependency ++
     testDependency
 
   lazy val dependency4Actors = dependency4Aux ++

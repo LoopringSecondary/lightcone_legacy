@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.auxiliary.service
+package org.loopring.lightcone.auxiliary.marketcap.reader
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -22,14 +22,12 @@ import akka.stream.alpakka.slick.scaladsl.SlickSession
 import com.google.inject.Inject
 import org.loopring.lightcone.proto.auxiliary._
 
-import scala.concurrent.Future
-
 class TokenTickerInfoServiceImpl @Inject() (
     implicit
     system: ActorSystem,
     mat: ActorMaterializer,
     session: SlickSession
-) extends DatabaseAccesser
+) extends DatabaseAccessor
   with TokenTickerInfoService {
   import session.profile.api._
   import system.dispatcher

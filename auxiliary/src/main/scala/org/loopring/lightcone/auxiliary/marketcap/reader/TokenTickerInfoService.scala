@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.auxiliary.service
+package org.loopring.lightcone.auxiliary.marketcap.reader
 
-import org.loopring.lightcone.proto.auxiliary._
+import org.loopring.lightcone.proto.auxiliary.{ XGetTokenTickerInfoRes, XTokenTickerInfo }
+
 import scala.concurrent.Future
 
-trait TokenIcoInfoService {
-  def saveOrUpdate(iocInfo: XTokenIcoInfo)
-  def queryXTokenIcoInfo(): Future[XGetTokenIcoInfoReq]
+trait TokenTickerInfoService {
+  def saveOrUpdate(tokenTicker: XTokenTickerInfo)
+  def batchSaveOrUpdate(seq: Seq[XTokenTickerInfo])
+  def queryTokenTicker(market: String): Future[XGetTokenTickerInfoRes]
 }
-

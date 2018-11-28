@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.auxiliary.service
+package org.loopring.lightcone.auxiliary.marketcap.crawler
 
-import org.loopring.lightcone.proto.auxiliary.XGetTokenListRes
+import org.loopring.lightcone.proto.auxiliary.XTokenInfo
 
-import scala.concurrent.Future
-
-trait TokenInfoService {
-  def queryTokenInfo(): Future[XGetTokenListRes]
+trait TokenTrendCrawler {
+  def crawlTokenTrendData(tokenInfo: XTokenInfo): Unit
 }
+
