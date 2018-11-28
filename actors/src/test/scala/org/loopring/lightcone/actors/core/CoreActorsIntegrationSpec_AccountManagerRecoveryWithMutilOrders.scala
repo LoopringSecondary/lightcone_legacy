@@ -29,7 +29,9 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
   extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
     XMarketId(
       GTO_TOKEN.address,
-      WETH_TOKEN.address)) {
+      WETH_TOKEN.address
+    )
+  ) {
 
   "when an accountManager starts" must {
     "first recover it and then receive order" in {
@@ -39,7 +41,9 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
           actors,
           address = ADDRESS_RECOVERY,
           recoverBatchSize = 500,
-          skipRecovery = false), "accountManagerActorRecovery")
+          skipRecovery = false
+        ), "accountManagerActorRecovery"
+      )
       accountManagerRecoveryActor ! XStart
 
       val order = XRawOrder(
@@ -50,7 +54,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
         feeAmount = "10".zeros(18),
-        walletSplitPercentage = 100)
+        walletSplitPercentage = 100
+      )
 
       val batchOrders1 = (0 until 500) map {
         i ⇒ order.copy(hash = "order1" + i)

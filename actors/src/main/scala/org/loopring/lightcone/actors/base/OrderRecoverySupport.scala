@@ -68,19 +68,18 @@ trait OrderRecoverySupport {
       log.info(s"recovering next ${size} orders")
       processed += size
 
-      xordersToRecover = xraworders.map(xRawOrderToXOrder)
+      xordersToRecover = xraworders.map(xRawOrderToXOrder).toList
       lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
       recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverBatchSize
+      self ! XRecoverNextOrder
 
-      self ! XRecoverNextOrder()
-
-    case XRecoverNextOrder ⇒
+    case XRecoverNextOrder | XRecoverNextOrder() ⇒
       xordersToRecover match {
         case head :: tail ⇒ for {
           _ ← recoverOrder(head)
         } yield {
           xordersToRecover = tail
-          self ! XRecoverNextOrder()
+          self ! XRecoverNextOrder
         }
 
         case Nil ⇒
@@ -94,6 +93,7 @@ trait OrderRecoverySupport {
             log.info(s"recovering completed with $processed orders")
             context.become(functional)
           }
+        case _ ⇒ log.info(s"not match xorders: ${xordersToRecover.getClass.getName}")
       }
 
     case msg ⇒
