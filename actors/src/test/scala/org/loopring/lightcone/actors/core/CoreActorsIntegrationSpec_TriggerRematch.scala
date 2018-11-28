@@ -21,6 +21,7 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 
+import org.loopring.lightcone.proto.core._
 import scala.concurrent.duration._
 
 //todo:impl it after tested accountMangerRecovery

@@ -21,7 +21,7 @@ import akka.testkit._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
@@ -29,9 +29,9 @@ import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.deployment._
 import org.scalatest._
-import org.loopring.lightcone.actors.data._
-import scala.concurrent.duration._
 import org.slf4s.Logging
+
+import scala.concurrent.duration._
 import scala.math.BigInt
 
 object CoreActorsIntegrationCommonSpec {
@@ -117,11 +117,12 @@ abstract class CoreActorsIntegrationCommonSpec(
   val accountBalanceProbe = new TestProbe(system, "account_balance") {
     def expectQuery(address: String, token: String) = expectMsgPF() {
       case XGetBalanceAndAllowancesReq(addr, tokens) if addr == address && tokens == Seq(token) ⇒
+        println(s"accountBalanceProbe, ${addr}, ${tokens}, ${sender()}")
     }
 
-    def replyWith(token: String, balance: BigInt, allowance: BigInt) = reply(
+    def replyWith(addr: String, token: String, balance: BigInt, allowance: BigInt) = reply(
       XGetBalanceAndAllowancesRes(
-        ADDRESS_1, Map(token -> XBalanceAndAllowance(balance, allowance))
+        addr, Map(token -> XBalanceAndAllowance(balance, allowance))
       )
     )
   }
@@ -131,6 +132,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   val orderHistoryProbe = new TestProbe(system, "order_history") {
     def expectQuery(orderId: String) = expectMsgPF() {
       case XGetOrderFilledAmountReq(id) if id == orderId ⇒
+        println(s"#####, orderHistoryProbe, ${sender()}, ${id}")
     }
 
     def replyWith(orderId: String, filledAmountS: BigInt) = reply(
@@ -146,7 +148,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   val settlementActor = TestActorRef(new SettlementActor(actors, "0xa1"))
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
-  val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
+  val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig), "orderbookManagerActor")
 
   val ADDRESS_1 = "address_111111111111111111111"
   val ADDRESS_2 = "address_222222222222222222222"
@@ -157,7 +159,8 @@ abstract class CoreActorsIntegrationCommonSpec(
       address = ADDRESS_1,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
-    )
+    ),
+    "accountManagerActor1"
   )
 
   val accountManagerActor2: ActorRef = TestActorRef(
@@ -166,7 +169,8 @@ abstract class CoreActorsIntegrationCommonSpec(
       address = ADDRESS_2,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
-    )
+    ),
+    "accountManagerActor2"
   )
 
   val marketManagerActor: ActorRef = TestActorRef(
@@ -175,7 +179,8 @@ abstract class CoreActorsIntegrationCommonSpec(
       marketId,
       config,
       skipRecovery = skipMarketManagerActorRecovery
-    )
+    ),
+    "marketManagerActor"
   )
 
   actors.add(OrderDatabaseAccessActor.name, orderDatabaseAccessActor)

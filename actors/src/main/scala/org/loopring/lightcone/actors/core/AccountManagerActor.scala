@@ -101,9 +101,10 @@ class AccountManagerActor(
     case XAddressAllowanceUpdated(_, token, newBalance) ⇒
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
 
-    case msg ⇒ println(s"unknown msg ${msg}")
+    case msg ⇒ log.debug(s"unknown msg ${msg}")
   }
 
+  //todo:返回Future时，会有并发问题，需要处理下，暂时将recovery更改为同步
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
     val order: Order = xorder
     for {
@@ -113,6 +114,7 @@ class AccountManagerActor(
       // Update the order's _outstanding field.
       orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
         .mapTo[XGetOrderFilledAmountRes]
+
       _ = log.debug(s"order history: orderHistoryRes")
 
       _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
@@ -149,13 +151,15 @@ class AccountManagerActor(
     if (manager.hasTokenManager(token))
       Future.successful(manager.getTokenManager(token))
     else for {
-      _ ← Future.successful(println(s"####getTokenManager0 ${token}"))
+      _ ← Future.successful(log.debug(s"getTokenManager0 ${token}"))
       res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
         .mapTo[XGetBalanceAndAllowancesRes]
       tm = new AccountTokenManagerImpl(token, 1000)
       ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
       _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
       tokenManager = manager.addTokenManager(tm)
+      _ ← Future.successful(log.debug(s"getTokenManager5 ${token}"))
+
     } yield tokenManager
   }
 
@@ -183,7 +187,12 @@ class AccountManagerActor(
     }
   }
 
-  protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
+  protected def recoverOrder(xorder: XOrder): Any = {
+    log.debug(s"recoverOrder, ${self.path.toString}, ${orderHistoryActor.path.toString}, ${xorder}")
+    val f = submitOrder(xorder)
+    //todo:暂时以Await等待,
+    Await.result(f.mapTo[XSubmitOrderRes], timeout.duration)
+  }
 
 }
 

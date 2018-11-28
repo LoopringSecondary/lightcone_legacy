@@ -18,17 +18,9 @@ package org.loopring.lightcone.actors.base
 
 import akka.actor._
 import akka.event.LoggingReceive
-import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XOrderStatus._
-import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment._
 
 import scala.concurrent._
 
@@ -45,7 +37,8 @@ trait OrderRecoverySupport {
 
   protected def orderDatabaseAccessActor: ActorRef
 
-  protected def recoverOrder(xorder: XOrder): Future[Any]
+  //暂时将recovery更改为同步的
+  protected def recoverOrder(xorder: XOrder): Any
 
   protected def functional: Receive
 
@@ -99,5 +92,4 @@ trait OrderRecoverySupport {
     case msg ⇒
       log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
   }
-
 }
