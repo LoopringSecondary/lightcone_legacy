@@ -3,6 +3,7 @@ resolvers += "ethereumlibrepository" at "https://dl.bintray.com/ethereum/maven/"
 resolvers += "JFrog" at "https://oss.jfrog.org/libs-release/"
 resolvers += "bintray" at "https://dl.bintray.com/ethereum/maven/"
 resolvers += Resolver.bintrayRepo("hseeberger", "maven")
+resolvers += Resolver.url("scoverage-bintray", url("https://dl.bintray.com/sksamuel/sbt-plugins/"))(Resolver.ivyStylePatterns)
 
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.7.4"
 
@@ -15,3 +16,4 @@ addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.18")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.9")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.3")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.2-1")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
