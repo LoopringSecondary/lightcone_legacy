@@ -30,12 +30,12 @@ object OrderDatabaseAccessActor {
 
 // TODO(hongyu): implement this actor to support AMA and MMA.
 class OrderDatabaseAccessActor(databaseManager: OrderDatabaseManager)(
-  implicit
-  ec: ExecutionContext,
-  timeout: Timeout
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
 )
   extends Actor
-    with ActorLogging {
+  with ActorLogging {
 
   protected var accountManagerRouter: ActorSelection = _
 

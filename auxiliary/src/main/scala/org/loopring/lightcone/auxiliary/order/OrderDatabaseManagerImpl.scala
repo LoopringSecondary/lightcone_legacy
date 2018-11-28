@@ -27,12 +27,12 @@ import org.slf4s.Logging
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class OrderDatabaseManagerImpl @Inject()(
-  orderAccessor: OrderAccessor,
-  orderWriteHelper: OrderWriteHelper
+class OrderDatabaseManagerImpl @Inject() (
+    orderAccessor: OrderAccessor,
+    orderWriteHelper: OrderWriteHelper
 )(
-  implicit
-  ex: ExecutionContext
+    implicit
+    ex: ExecutionContext
 ) extends OrderDatabaseManager with Logging {
 
   implicit def str2ByteString(str: String): ByteString = ByteString.copyFrom(str, "UTF-8")
@@ -53,7 +53,7 @@ class OrderDatabaseManagerImpl @Inject()(
 
   override def saveOrUpdate(xraworder: XRawOrder): Future[Option[XRawOrder]] = {
 
-    // TODO(litao, xiaolu) 这里的返回值我修改为 Future[Option[XRawOrder]]
+    // TODO(litao) 这里的返回值我修改为 Future[Option[XRawOrder]]
     orderAccessor.saveOrder(toOrder(xraworder)).map {
       case XOrderSaveResult.SUBMIT_SUCCESS ⇒ Some(xraworder)
       case _ ⇒
@@ -128,7 +128,6 @@ class OrderDatabaseManagerImpl @Inject()(
       )
   }
 
-
   private def toXRawOrder: PartialFunction[Order, XRawOrder] = {
     case order: Order ⇒
       XRawOrder(
@@ -176,6 +175,5 @@ class OrderDatabaseManagerImpl @Inject()(
         orderType = order.orderType
       )
   }
-
 
 }
