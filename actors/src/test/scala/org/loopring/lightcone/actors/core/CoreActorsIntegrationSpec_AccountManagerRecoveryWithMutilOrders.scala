@@ -40,7 +40,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
         new AccountManagerActor(
           actors,
           address = ADDRESS_RECOVERY,
-          recoverBatchSize = 2,
+          recoverBatchSize = 500,
           skipRecovery = false
         ), "accountManagerActorRecovery"
       )
@@ -57,7 +57,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
         walletSplitPercentage = 100
       )
 
-      val batchOrders1 = (0 until 2) map {
+      val batchOrders1 = (0 until 500) map {
         i ⇒ order.copy(hash = "order1" + i)
       }
       orderDatabaseAccessProbe.expectQuery()
@@ -71,7 +71,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
           info("----orderbook status after first XRecoverOrdersRes: " + a)
       }
 
-      val batchOrders2 = (0 until 2) map {
+      val batchOrders2 = (0 until 500) map {
         i ⇒ order.copy(hash = "order2" + i)
       }
       orderDatabaseAccessProbe.expectQuery()
