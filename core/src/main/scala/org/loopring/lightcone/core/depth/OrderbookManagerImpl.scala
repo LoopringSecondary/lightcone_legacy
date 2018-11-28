@@ -32,10 +32,10 @@ class OrderbookManagerImpl(config: XOrderbookConfig)
     viewMap.values.foreach(_.processUpdate(diff))
   }
 
-  def getOrderbook(level: Int, size: Int, middlePrice: Option[Double] = None) =
+  def getOrderbook(level: Int, size: Int, latestPrice: Option[Double] = None) =
     viewMap.get(level) match {
-      case Some(view) ⇒ view.getOrderbook(size, middlePrice)
-      case None       ⇒ XOrderbook(middlePrice.getOrElse(0), Nil, Nil)
+      case Some(view) ⇒ view.getOrderbook(size, latestPrice)
+      case None       ⇒ XOrderbook(latestPrice.getOrElse(0), Nil, Nil)
     }
 
   def reset() = this.synchronized {
@@ -68,11 +68,11 @@ class OrderbookManagerImpl(config: XOrderbookConfig)
       )
     }
 
-    def getOrderbook(size: Int, middlePrice: Option[Double]) =
+    def getOrderbook(size: Int, latestPrice: Option[Double]) =
       XOrderbook(
-        middlePrice.getOrElse(0),
-        sellSide.getDepth(size, middlePrice),
-        buySide.getDepth(size, middlePrice)
+        latestPrice.getOrElse(0),
+        sellSide.getDepth(size, latestPrice),
+        buySide.getDepth(size, latestPrice)
       )
 
     def reset() {
@@ -88,9 +88,9 @@ class OrderbookManagerImpl(config: XOrderbookConfig)
           totalFormat.format(slot.total)
         )
 
-      def getDepth(num: Int, middlePrice: Option[Double]): Seq[XOrderbook.XItem] = {
-        val startSlotOpt = middlePrice.map { p ⇒ (p * priceScaling).toLong }
-        getSlots(num, startSlotOpt).map(slotToItem(_))
+      def getDepth(num: Int, latestPrice: Option[Double]): Seq[XOrderbook.XItem] = {
+        val latestPriceSlot = latestPrice.map { p ⇒ (p * priceScaling).toLong }
+        getSlots(num, latestPriceSlot).map(slotToItem(_))
       }
     }
   }
