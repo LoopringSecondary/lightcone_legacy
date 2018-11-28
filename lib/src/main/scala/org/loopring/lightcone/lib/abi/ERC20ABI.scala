@@ -27,6 +27,11 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
   val EN_TRANSFER = "Transfer"
   val EN_APPROVAL = "Approval"
 
+  val approve = findFunctionByName(FN_APPROVE)
+  val transfer = findFunctionByName(FN_TRANSFER)
+  val balanceOf = findFunctionByName("balanceOf")
+  val allowance = findFunctionByName("allowance")
+  
   // QUESTION(fukun): 这个方法的返回值和实现对不上，实现用的是match，不是map！
   // 另外如何chuli  `case _`情况？
   def decodeAndAssemble(tx: Transaction): Option[Any] = {
