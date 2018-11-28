@@ -18,22 +18,14 @@ package org.loopring.lightcone.actors.base
 
 import akka.actor._
 import akka.event.LoggingReceive
-import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XOrderStatus._
-import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment._
 
 import scala.concurrent._
 
 trait OrderRecoverySupport {
-  self: Actor with ActorLogging ⇒
+  actor: Actor with ActorLogging ⇒
 
   implicit val ec: ExecutionContext
   implicit val timeout: Timeout
@@ -41,52 +33,71 @@ trait OrderRecoverySupport {
   val skipRecovery: Boolean // for testing purpose
   val recoverBatchSize: Int
   val ownerOfOrders: Option[String]
-  private var batch = 1
+  private var processed = 0
 
-  protected var orderDatabaseAccessActor: ActorSelection
+  protected def orderDatabaseAccessActor: ActorRef
 
+  //暂时将recovery更改为同步的
   protected def recoverOrder(xorder: XOrder): Future[Any]
 
   protected def functional: Receive
 
+  private var lastUpdatdTimestamp: Long = 0
+  private var recoverEnded: Boolean = false
+  private var xordersToRecover: Seq[XOrder] = Nil
+
   protected def startOrderRecovery() = {
     if (skipRecovery) {
+      log.info(s"actor recovering skipped: ${self.path}")
       context.become(functional)
     } else {
       context.become(recovering)
       log.info(s"actor recovering started: ${self.path}")
-      self ! XRecoverOrdersReq(ownerOfOrders.getOrElse(null), 0L, recoverBatchSize)
+      orderDatabaseAccessActor ! XRecoverOrdersReq(
+        ownerOfOrders.getOrElse(null),
+        0L,
+        recoverBatchSize
+      )
     }
   }
 
   def recovering: Receive = {
 
     case XRecoverOrdersRes(xraworders) ⇒
-      log.info(s"recovering batch $batch (size = ${xraworders.size})")
-      batch += 1
+      val size = xraworders.size
+      log.info(s"recovering next ${size} orders")
+      processed += size
 
-      val xorders = xraworders.map(convertXRawOrderToXOrder)
-      for {
-        _ ← Future.sequence(xorders.map(recoverOrder))
-        lastUpdatdTimestamp = xorders.lastOption.map(_.updatedAt).getOrElse(0L)
-        recoverEnded = lastUpdatdTimestamp == 0 || xorders.size < recoverBatchSize
-        _ = context.become(functional) if recoverEnded
-        _ = orderDatabaseAccessActor ! XRecoverOrdersReq(
-          ownerOfOrders.getOrElse(null),
-          lastUpdatdTimestamp,
-          recoverBatchSize
-        )
-      } yield Unit
+      xordersToRecover = xraworders.map(xRawOrderToXOrder).toList
+      lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
+      recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverBatchSize
+
+      self ! XRecoverNextOrder()
+
+    case _: XRecoverNextOrder ⇒
+      xordersToRecover match {
+        case head :: tail ⇒ for {
+          _ ← recoverOrder(head)
+        } yield {
+          xordersToRecover = tail
+          self ! XRecoverNextOrder()
+        }
+
+        case Nil ⇒
+          if (!recoverEnded) {
+            orderDatabaseAccessActor ! XRecoverOrdersReq(
+              ownerOfOrders.getOrElse(null),
+              lastUpdatdTimestamp,
+              recoverBatchSize
+            )
+          } else {
+            log.info(s"recovering completed with $processed orders")
+            context.become(functional)
+          }
+        case _ ⇒ log.info(s"not match xorders: ${xordersToRecover.getClass.getName}")
+      }
 
     case msg ⇒
       log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
-  }
-
-  def functionalBase: Receive = LoggingReceive {
-
-    case XRecoverOrdersRes(xraworders) ⇒
-      log.info(s"recovering last batch (size = ${xraworders.size})")
-      val xorders = xraworders.map(convertXRawOrderToXOrder)
-      Future.sequence(xorders.map(recoverOrder))
   }
 }

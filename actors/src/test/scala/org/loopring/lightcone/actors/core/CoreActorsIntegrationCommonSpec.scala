@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopgring.lightcone.actors.core
+package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.testkit._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
@@ -28,9 +29,9 @@ import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.deployment._
 import org.scalatest._
-import org.loopring.lightcone.actors.data._
-import scala.concurrent.duration._
 import org.slf4s.Logging
+
+import scala.concurrent.duration._
 import scala.math.BigInt
 
 object CoreActorsIntegrationCommonSpec {
@@ -85,6 +86,8 @@ abstract class CoreActorsIntegrationCommonSpec(
   implicit val timeout = Timeout(5 second)
   implicit val ec = system.dispatcher
 
+  val actors = new MapBasedLookup[ActorRef]()
+
   val config = XMarketManagerConfig()
   val orderbookConfig = XOrderbookConfig(
     levels = 2,
@@ -97,19 +100,29 @@ abstract class CoreActorsIntegrationCommonSpec(
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
   // Simulating an AccountBalanceActor
-  val orderDdManagerProbe = new TestProbe(system, "order_db_access") {
+  val orderDatabaseAccessProbe = new TestProbe(system, "order_db_access") {
+    def expectQuery() {
+      expectMsgPF() {
+        case req: XRecoverOrdersReq ⇒
+          println(s"ordermanagerProbe receive: $req, sender:${sender()}")
+      }
+    }
+    def replyWith(xorders: Seq[XRawOrder]) = reply(
+      XRecoverOrdersRes(orders = xorders)
+    )
   }
-  val orderDdManagerActor = orderDdManagerProbe.ref
+  val orderDatabaseAccessActor = orderDatabaseAccessProbe.ref
 
   // Simulating an AccountBalanceActor
   val accountBalanceProbe = new TestProbe(system, "account_balance") {
     def expectQuery(address: String, token: String) = expectMsgPF() {
       case XGetBalanceAndAllowancesReq(addr, tokens) if addr == address && tokens == Seq(token) ⇒
+        println(s"accountBalanceProbe, ${addr}, ${tokens}, ${sender()}")
     }
 
-    def replyWith(token: String, balance: BigInt, allowance: BigInt) = reply(
+    def replyWith(addr: String, token: String, balance: BigInt, allowance: BigInt) = reply(
       XGetBalanceAndAllowancesRes(
-        ADDRESS_1, Map(token -> XBalanceAndAllowance(balance, allowance))
+        addr, Map(token -> XBalanceAndAllowance(balance, allowance))
       )
     )
   }
@@ -119,6 +132,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   val orderHistoryProbe = new TestProbe(system, "order_history") {
     def expectQuery(orderId: String) = expectMsgPF() {
       case XGetOrderFilledAmountReq(id) if id == orderId ⇒
+        println(s"#####, orderHistoryProbe, ${sender()}, ${id}")
     }
 
     def replyWith(orderId: String, filledAmountS: BigInt) = reply(
@@ -128,66 +142,60 @@ abstract class CoreActorsIntegrationCommonSpec(
   val orderHistoryActor = orderHistoryProbe.ref
 
   // Simulating an SettlementActor
-  val ethereumProbe = new TestProbe(system, "ethereum")
-  val ethereumActor = ethereumProbe.ref
+  val ethereumAccessProbe = new TestProbe(system, "ethereum_access")
+  val ethereumAccessActor = ethereumAccessProbe.ref
 
-  val settlementActor = TestActorRef(new SettlementActor("0xa1"))
+  val settlementActor = TestActorRef(new SettlementActor(actors, "0xa1"))
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
-  val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig))
+  val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig), "orderbookManagerActor")
 
   val ADDRESS_1 = "address_111111111111111111111"
   val ADDRESS_2 = "address_222222222222222222222"
 
   val accountManagerActor1: ActorRef = TestActorRef(
     new AccountManagerActor(
+      actors,
       address = ADDRESS_1,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
-    )
+    ),
+    "accountManagerActor1"
   )
 
   val accountManagerActor2: ActorRef = TestActorRef(
     new AccountManagerActor(
+      actors,
       address = ADDRESS_2,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
-    )
+    ),
+    "accountManagerActor2"
   )
 
   val marketManagerActor: ActorRef = TestActorRef(
     new MarketManagerActor(
+      actors,
       marketId,
       config,
       skipRecovery = skipMarketManagerActorRecovery
-    )
+    ),
+    "marketManagerActor"
   )
 
-  accountManagerActor1 ! XActorDependencyReady(Seq(
-    orderDdManagerActor.path.toString,
-    accountBalanceActor.path.toString,
-    orderHistoryActor.path.toString,
-    marketManagerActor.path.toString
-  ))
+  actors.add(OrderDatabaseAccessActor.name, orderDatabaseAccessActor)
+  actors.add(AccountBalanceActor.name, accountBalanceActor)
+  actors.add(OrderHistoryActor.name, orderHistoryActor)
+  actors.add(MarketManagerActor.name, marketManagerActor)
+  actors.add(GasPriceActor.name, gasPriceActor)
+  actors.add(OrderbookManagerActor.name, orderbookManagerActor)
+  actors.add(SettlementActor.name, settlementActor)
+  actors.add(EthereumAccessActor.name, ethereumAccessActor)
 
-  accountManagerActor2 ! XActorDependencyReady(Seq(
-    orderDdManagerActor.path.toString,
-    accountBalanceActor.path.toString,
-    orderHistoryActor.path.toString,
-    marketManagerActor.path.toString
-  ))
-
-  marketManagerActor ! XActorDependencyReady(Seq(
-    orderDdManagerActor.path.toString,
-    gasPriceActor.path.toString,
-    orderbookManagerActor.path.toString,
-    settlementActor.path.toString
-  ))
-
-  settlementActor ! XActorDependencyReady(Seq(
-    gasPriceActor.path.toString,
-    ethereumActor.path.toString
-  ))
+  accountManagerActor1 ! XStart()
+  accountManagerActor2 ! XStart()
+  marketManagerActor ! XStart()
+  settlementActor ! XStart()
 
   implicit class RichString(s: String) {
     def zeros(size: Int): BigInt = BigInt(s + "0" * size)

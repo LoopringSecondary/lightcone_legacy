@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopgring.lightcone.actors.core
+package org.loopring.lightcone.actors.core
 
+import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.core.data.Order
-import akka.pattern._
-import akka.testkit.{ EventFilter, TestProbe }
-import akka.pattern.ask
+
 import scala.concurrent.duration._
-import scala.concurrent._
-import XErrorCode._
-import CoreActorsIntegrationCommonSpec._
 
 class CoreActorsIntegrationSpec_SingleRingFullyMatched
   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
@@ -75,7 +70,7 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
 
       marketManagerActor ! XSubmitOrderReq(Some(taker1))
 
-      ethereumProbe.receiveN(1, 1 seconds)
+      ethereumAccessProbe.receiveN(1, 1 seconds)
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 

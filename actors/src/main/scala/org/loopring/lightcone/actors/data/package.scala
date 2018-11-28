@@ -149,7 +149,20 @@ package object data {
       amountMargin = xExpectedFill.amountMargin
     )
 
-// TODO(hongyu): implement this
-implicit def convertXRawOrderToXOrder(xraworder: XRawOrder): XOrder = ???
+  implicit def xRawOrderToXOrder(xraworder: XRawOrder): XOrder =
+    XOrder(
+      id = xraworder.hash,
+      tokenS = xraworder.tokenS,
+      tokenB = xraworder.tokenB,
+      tokenFee = xraworder.feeToken,
+      amountS = xraworder.amountS,
+      amountB = xraworder.amountB,
+      amountFee = xraworder.feeAmount,
+      //todo:该数据需要在xrawOrder中，暂时默认，等待结构确定
+      createdAt = System.currentTimeMillis(),
+      updatedAt = System.currentTimeMillis(),
+//      status = XOrderStatus.NEW,
+      walletSplitPercentage = xraworder.waiveFeePercentage/1000.0
+    )
 
 }
