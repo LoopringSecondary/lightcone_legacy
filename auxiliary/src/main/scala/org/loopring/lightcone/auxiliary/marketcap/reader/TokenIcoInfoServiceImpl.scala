@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.auxiliary.service
+package org.loopring.lightcone.auxiliary.marketcap.reader
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -22,14 +22,12 @@ import akka.stream.alpakka.slick.scaladsl.SlickSession
 import com.google.inject.Inject
 import org.loopring.lightcone.proto.auxiliary._
 
-import scala.concurrent.Future
-
 class TokenIcoInfoServiceImpl @Inject() (
     implicit
     system: ActorSystem,
     mat: ActorMaterializer,
     session: SlickSession
-) extends DatabaseAccesser
+) extends DatabaseAccessor
   with TokenIcoInfoService {
 
   import session.profile.api._
@@ -79,7 +77,25 @@ class TokenIcoInfoServiceImpl @Inject() (
 
   def saveOrUpdate(iocInfo: XTokenIcoInfo) = saveOrUpdate(iocInfo)
 
-  override def queryXTokenIcoInfo() = {
+  override def queryXTokenIcoInfo(tokenAddress: Option[String]) = {
+    sql"""
+    SELECT
+      token_address,
+      ico_start_date,
+      ico_end_date,
+      hard_cap,
+      soft_cap,
+      token_raised,
+      ico_price,
+      from_country
+    FROM t_token_ico_info
+    WHERE token_address like concat('%', ${tokenAddress.getOrElse("")}, '%')
+    """
+      .list[XTokenIcoInfo]
+      .map(XGetTokenIcoInfoRes(_))
+  }
+
+  override def queryAllXTokenIcoInfo() = {
     sql"""
     SELECT
       token_address,
@@ -93,7 +109,7 @@ class TokenIcoInfoServiceImpl @Inject() (
     FROM t_token_ico_info
     """
       .list[XTokenIcoInfo]
-      .map(XGetTokenIcoInfoReq(_))
+      .map(XGetTokenIcoInfoRes(_))
   }
 
 }

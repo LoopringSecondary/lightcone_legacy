@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.auxiliary.service
+package org.loopring.lightcone.auxiliary.marketcap.reader
 
-import org.loopring.lightcone.proto.auxiliary._
+import org.loopring.lightcone.proto.auxiliary.{ XExchangeTickerInfo, XGetExchangeTickerInfoRes }
+
 import scala.concurrent.Future
 
 trait ExchangeTickerService {

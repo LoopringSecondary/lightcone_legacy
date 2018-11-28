@@ -1,6 +1,6 @@
 # lightcone
 
-
 ## Testing
 
-run `sbt testQuick`
+To generate test coverage report, run `sbt coverageReport`
+

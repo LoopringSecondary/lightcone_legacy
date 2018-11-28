@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.auxiliary.service
+package org.loopring.lightcone.auxiliary.marketcap.crawler
 
-import org.loopring.lightcone.proto.auxiliary._
+import org.loopring.lightcone.auxiliary.marketcap.SeqTpro
+import org.loopring.lightcone.proto.auxiliary.XCMCTickerData
+
 import scala.concurrent.Future
 
-trait TokenTickerInfoService {
-  def saveOrUpdate(tokenTicker: XTokenTickerInfo)
-  def batchSaveOrUpdate(seq: Seq[XTokenTickerInfo])
-  def queryTokenTicker(market: String): Future[XGetTokenTickerInfoRes]
+trait TokenTickerCrawler {
+  def crawlTokenTickers(): Seq[XCMCTickerData]
+  def getTokenTickers(convertCurrency: String): Future[Seq[XCMCTickerData]]
+  def convertTO(tickers: Seq[XCMCTickerData]): SeqTpro
 }
