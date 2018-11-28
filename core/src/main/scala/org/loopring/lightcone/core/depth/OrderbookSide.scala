@@ -96,8 +96,17 @@ private[depth] trait OrderbookSide {
     oldSlots = Map.empty
     updatedSlots = Map.empty
   }
-  def getSlots(num: Int): Seq[XOrderbookUpdate.XSlot] =
-    slotMap.take(num).values.toList
+  def getSlots(num: Int, latestPriceSlot: Option[Long]): Seq[XOrderbookUpdate.XSlot] = {
+    val items = latestPriceSlot match {
+      case None ⇒ slotMap.values
+      case Some(limit) ⇒ if (isSell) {
+        slotMap.values.dropWhile(_.slot <= limit)
+      } else {
+        slotMap.values.dropWhile(_.slot > limit)
+      }
+    }
+    items.filter(_.slot != 0).take(num).toList
+  }
 
   def takeUpdatedSlots(): Seq[XOrderbookUpdate.XSlot] = {
     if (!maintainUpdatedSlots) {
