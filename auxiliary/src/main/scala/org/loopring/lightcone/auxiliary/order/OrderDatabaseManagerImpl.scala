@@ -43,10 +43,10 @@ class OrderDatabaseManagerImpl @Inject() (
 
     // TODO(litao, xiaolu) validateOrder 返回值需要修改, 这里需要一个错误类型
     orderWriteHelper.validateOrder(toOrder(xraworder)) match {
-      case ValidateResult(true, _) ⇒ Right(xraworder)
-      case ValidateResult(_, reason) ⇒
+      case ValidateResult(true, _, _) ⇒ Right(xraworder)
+      case ValidateResult(false, errorCode, reason) ⇒
         log.error(s"xraworder is invalid, reason: ${reason}")
-        Left(XErrorCode.ERR_UNKNOWN)
+        Left(XErrorCode.fromName(errorCode).getOrElse(XErrorCode.ERR_UNKNOWN))
     }
 
   }

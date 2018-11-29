@@ -19,6 +19,7 @@ package org.loopring.lightcone.auxiliary.order
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.auxiliary.model.Order
+import org.loopring.lightcone.proto.actors.XErrorCode
 
 class OrderValidatorImpl @Inject() (config: Config) extends OrderValidator {
 
@@ -27,16 +28,16 @@ class OrderValidatorImpl @Inject() (config: Config) extends OrderValidator {
   val hashLength = 32
   val validateConfig: OrderValidateConfig = OrderValidateConfig.fromConfig(config)
 
-  val ORDER_IS_EMPTY = ValidateResult(constFalse, "order is empty")
-  val MARKET_ORDER_MUST_HAVE_PRIVATE_KEY = ValidateResult(constFalse, "market order must have private key")
-  val ORDER_HASH_LENGTH_INCORRECT = ValidateResult(constFalse, s"order hash length is less than $hashLength")
-  val TOKEN_S_AND_TOKEN_B_SAME = ValidateResult(constFalse, "tokenS and tokenB can't be same")
-  val VALID_SINCE_TOO_FAR = ValidateResult(constFalse, s"order must be valid before ${now - validateConfig.maxValidSinceInterval} second timestamp")
-  val VALID_UNTIL_BEFORE_NOW = ValidateResult(constFalse, "valid until is early than now")
-  val MARGIN_SPLIT_OUT_OF_RANGE = ValidateResult(constFalse, s"margin split percentage must be from ${validateConfig.minSplitPercentage} to ${validateConfig.maxSplitPercentage}")
-  val PROTOCOL_AND_DELEGATE_ADDRESS_NOT_MATCH = ValidateResult(constFalse, "protocol not match with delegateAddress")
-  val LESS_LRC_HOLD_THAN_THRESHOLD = ValidateResult(constFalse, s"user hold lrc less than ${validateConfig.minLrcHold}")
-  def lengthUnCorrectErr(src: String) = ValidateResult(constFalse, s"$src length is less than $addrLength")
+  val ORDER_IS_EMPTY = ValidateResult(constFalse, XErrorCode.ERR_ORDER_NOT_EXIST.toString, "order is empty")
+  val MARKET_ORDER_MUST_HAVE_PRIVATE_KEY = ValidateResult(constFalse, XErrorCode.ERR_MARKET_ORDER_MUST_HAVE_PRIVATE_KEY.toString, "market order must have private key")
+  val ORDER_HASH_LENGTH_INCORRECT = ValidateResult(constFalse, XErrorCode.ERR_ORDER_HASH_LENGTH_INCORRECT.toString, s"order hash length is less than $hashLength")
+  val TOKEN_S_AND_TOKEN_B_SAME = ValidateResult(constFalse, XErrorCode.ERR_TOKEN_S_AND_TOKEN_B_SAME.toString, "tokenS and tokenB can't be same")
+  val VALID_SINCE_TOO_FAR = ValidateResult(constFalse, XErrorCode.ERR_VALID_SINCE_TOO_FAR.toString, s"order must be valid before ${now - validateConfig.maxValidSinceInterval} second timestamp")
+  val VALID_UNTIL_BEFORE_NOW = ValidateResult(constFalse, XErrorCode.ERR_VALID_UNTIL_BEFORE_NOW.toString, "valid until is early than now")
+  val MARGIN_SPLIT_OUT_OF_RANGE = ValidateResult(constFalse, XErrorCode.ERR_MARGIN_SPLIT_OUT_OF_RANGE.toString, s"margin split percentage must be from ${validateConfig.minSplitPercentage} to ${validateConfig.maxSplitPercentage}")
+  val PROTOCOL_AND_DELEGATE_ADDRESS_NOT_MATCH = ValidateResult(constFalse, XErrorCode.ERR_PROTOCOL_AND_DELEGATE_ADDRESS_NOT_MATCH.toString, "protocol not match with delegateAddress")
+  val LESS_LRC_HOLD_THAN_THRESHOLD = ValidateResult(constFalse, XErrorCode.ERR_LESS_LRC_HOLD_THAN_THRESHOLD.toString, s"user hold lrc less than ${validateConfig.minLrcHold}")
+  def lengthUnCorrectErr(src: String) = ValidateResult(constFalse, XErrorCode.ERR_ADDRESS_LENGTH_UNCORRECT.toString, s"$src length is less than $addrLength")
   def now(): Long = System.currentTimeMillis / 1000
 
   override def validate(order: Order): ValidateResult = {
