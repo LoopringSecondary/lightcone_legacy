@@ -24,51 +24,84 @@ import org.apache.commons.collections4.Predicate
 import org.web3j.utils.{ Numeric, Strings }
 import org.loopring.lightcone.lib.solidity.{ SolidityAbi ⇒ SABI }
 
+trait AbiFunction[P, R] {
+  val entry: SABI.Function
+
+  //todo：与原函数区分，使用pack与unpack
+  def pack(t: P): Array[Byte]
+  def unpackInput(data: Array[Byte]): Option[P]
+  def unpackResult(data: Array[Byte]): Option[R]
+}
+
+trait AbiEvent[R] {
+  val entry: SABI.Event
+
+  def unpack(log: TransactionLog): Option[R]
+}
+
+//todo:最好是再彻底重写Abi,不再使用SolidityAbi
 abstract class AbiWrap(abiJson: String) {
 
-  protected val abi = SABI.fromJson(abiJson)
+  protected var abi = SABI.fromJson(abiJson)
+  //初始化所有的functions和events
+  init()
+
   protected val functionSignatureLength = 8
 
   def getTransactionHeader(txInput: String): BigInt = Numeric.decodeQuantity(txInput)
 
-  private[lib] var supportedFunctions = Map.empty[String, SABI.Function]
-  private[lib] var supportedEventLogs = Map.empty[String, SABI.Event]
+  private[lib] var functions = Seq[AbiFunction]()
+  private[lib] var events = Seq[AbiEvent]()
 
-  abi.toArray.foreach {
-    _ match {
-      case x: SABI.Function ⇒
-        val sig = x.encodeSignature()
-        val key = Numeric.toHexStringWithPrefixZeroPadded(
-          sig.bigInteger,
-          functionSignatureLength
-        ).toLowerCase
+  def init():Unit
+//  abi.toArray.foreach {
+//    _ match {
+//      case x: SABI.Function ⇒
+//        val sig = x.encodeSignature()
+//        val key = Numeric.toHexStringWithPrefixZeroPadded(
+//          sig.bigInteger,
+//          functionSignatureLength
+//        ).toLowerCase
+//
+//        supportedFunctions += key → x
+//
+//      case x: SABI.Event ⇒
+//        val sig = x.encodeSignature()
+//        val key = Numeric.toHexString(sig).toLowerCase
+//
+//        supportedEventLogs += key -> x
+//
+//      case _ ⇒
+//    }
+//  }
 
-        supportedFunctions += key → x
+//  def getFunction(input: String): Option[SABI.Function] = {
+//    val sig = input.slice(0, functionSignatureLength + 2)
+//    val key = sig.toLowerCase
+//    supportedFunctions.get(key)
+//  }
+//
+//  def getEvent(firstTopic: String): Option[SABI.Event] = {
+//    val key = firstTopic.toLowerCase
+//    supportedEventLogs.get(key)
+//  }
 
-      case x: SABI.Event ⇒
-        val sig = x.encodeSignature()
-        val key = Numeric.toHexString(sig).toLowerCase
+  private[lib] def searchByName[T <: SABI.Entry](name: String): Predicate[T] = x ⇒ x.name.equals(name)
+  //todo: test 字节数组的相等
+  private[lib] def searchBySignature[T <: SABI.Entry](signature: Array[Byte]): Predicate[T] = x ⇒ x.encodeSignature().equals(signature)
 
-        supportedEventLogs += key -> x
+  def findFunctionByName(name: String) = functions.find(_.entry.name == name)
 
-      case _ ⇒
-    }
+  def findEventByName(name: String) = {
+    events.find(_.entry.name == name)
   }
 
-  def getFunction(input: String): Option[SABI.Function] = {
-    val sig = input.slice(0, functionSignatureLength + 2)
-    val key = sig.toLowerCase
-    supportedFunctions.get(key)
+  def findFunctionBySignature(signature: Array[Byte]): Option[AbiFunction] = {
+    functions.find(_.entry.encodeSignature() sameElements signature)
   }
-
-  def getEvent(firstTopic: String): Option[SABI.Event] = {
-    val key = firstTopic.toLowerCase
-    supportedEventLogs.get(key)
+  def findEventBySignature(signature: Array[Byte]): Option[AbiEvent]  = {
+    events.find(_.entry.encodeSignature() sameElements signature)
   }
-
-  private[lib] def predicate[T <: SABI.Entry](name: String): Predicate[T] = (x) ⇒ x.name.equals(name)
-  def findFunctionByName(name: String): SABI.Function = abi.findFunction(predicate(name))
-  def findEventByName(name: String): SABI.Event = abi.findEvent(predicate(name))
 
   case class DecodeResult(name: String, list: Seq[Any])
 

@@ -16,90 +16,122 @@
 
 package org.loopring.lightcone.lib.abi
 
-import org.loopring.lightcone.lib.data._
+import org.loopring.lightcone.lib.data.{Transfer, _}
+import org.ethereum.solidity.{Abi ⇒ SABI}
+
+object TransferFunction {
+
+  case class Parms(
+                    to: String,
+                    amount: BigInt)
+
+  case class Result()
+
+  val name = "transfer"
+
+  def apply(function: SABI.Function): TransferFunction = new TransferFunction(function)
+}
+
+class TransferFunction(function: SABI.Function) extends AbiFunction[TransferFunction.Parms, TransferFunction.Result] {
+  val entry = function
+
+  def pack(p: TransferFunction.Parms): Array[Byte] = {
+    entry.encode(p.to, p.amount)
+  }
+
+  def unpackInput(data: Array[Byte]): Option[TransferFunction.Parms] = {
+    val list = entry.decode(data)
+    if (list.isEmpty)
+      None
+    else
+      Some(TransferFunction.Parms(to = scalaAny2Hex(list.get(0)), amount = scalaAny2Bigint(list.get(1))))
+  }
+
+  def unpackResult(data: Array[Byte]): Option[TransferFunction.Result] = None
+}
+
+object TransferEvent {
+  val name = "Transfer"
+
+  def apply(event: SABI.Event): TransferEvent = new TransferEvent(event)
+
+  case class Result()
+
+}
+
+class TransferEvent(event: SABI.Event) extends AbiEvent[TransferEvent.Result] {
+  val entry = event
+
+  def unpack(log: TransactionLog): Option[TransferEvent.Result] = ???
+
+}
+
+object ERC20ABI {
+  val erc20jsonstr = "[{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"tx_from\",\"type\":\"address\"},{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"who\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"tx_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"}]"
+
+  def apply(): ERC20ABI = new ERC20ABI(erc20jsonstr)
+}
 
 class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
 
-  val FN_TRANSFER = "transfer"
-  val FN_TRANSFER_FROM = "transferFrom"
-  val FN_APPROVE = "approve"
+  val transfer: TransferFunction = TransferFunction(abi.findFunction(searchByName(TransferFunction.name)))
 
-  val EN_TRANSFER = "Transfer"
-  val EN_APPROVAL = "Approval"
+  val transferEvent: TransferEvent = TransferEvent(abi.findEvent(searchByName(TransferEvent.name)))
 
-  // QUESTION(fukun): 这个方法的返回值和实现对不上，实现用的是match，不是map！
-  // 另外如何chuli  `case _`情况？
-  def decodeAndAssemble(tx: Transaction): Option[Any] = {
-    val result = decode(tx.input)
-    val data = result.name match {
-      case FN_TRANSFER      ⇒ assembleTransferFunction(result.list, tx.from)
-      case FN_TRANSFER_FROM ⇒ assembleTransferFromFunction(result.list)
-      case FN_APPROVE       ⇒ assembleApproveFunction(result.list, tx.from)
-      case _                ⇒ None
-    }
-    Option(data)
-  }
+  //  functions = Seq(transfer)
+  //  events = Seq(transferEvent)
 
-  // QUESTION(fukun): 这个方法的返回值和实现对不上，实现用的是match，不是map！
-  // 另外如何chuli  `case _`情况？
-  def decodeAndAssemble(tx: Transaction, log: TransactionLog): Option[Any] = {
-    val result = decode(log)
-    val data = result.name match {
-      case EN_TRANSFER ⇒ assembleTransferEvent(result.list)
-      case EN_APPROVAL ⇒ assembleApprovalEvent(result.list)
-      case _           ⇒ None
-    }
-    Option(data)
-  }
 
-  private[lib] def assembleTransferFunction(list: Seq[Any], from: String) = {
-    assert(list.length == 2, "length of transfer function invalid")
+  //  object ApproveFunction {
+  //    def apply: ApproveFunction = new ApproveFunction()
+  //
+  //    case class Parms()
+  //    case class Result()
+  //  }
+  //  class ApproveFunction extends AbiFunction[ApproveFunction.Parms, ApproveFunction.Result] {
+  //    val entry = abi.findFunction(searchByName("approve"))
+  //
+  //    def pack(t: ApproveFunction.Parms): Array[Byte] = ???
+  //
+  //    def unpackInput(data: Array[Byte]): Option[ApproveFunction.Parms] = ???
+  //
+  //    def unpackResult(data: Array[Byte]): Option[ApproveFunction.Result] = ???
+  //  }
+  //
+  //  object TransferFromFunction {
+  //    val name = "transferFrom"
+  //
+  //    def apply: TransferFromFunction = new TransferFromFunction()
+  //
+  //    case class Parms(owner: String)
+  //    case class Result()
+  //  }
+  //
+  //    class TransferFromFunction extends AbiFunction[TransferFromFunction.Parms, TransferFromFunction.Result] {
+  //
+  //      val entry = abi.findFunction(searchByName(TransferFromFunction.name))
+  //
+  //      def pack(t: TransferFromFunction.Parms): Array[Byte] = ???
+  //
+  //      def unpackInput(data: Array[Byte]): Option[TransferFromFunction.Parms] = ???
+  //
+  //      def unpackResult(data: Array[Byte]): Option[TransferFromFunction.Result] = ???
+  //    }
 
-    Transfer(
-      sender = from,
-      receiver = scalaAny2Hex(list(0)),
-      amount = scalaAny2Bigint(list(1))
-    )
-  }
 
-  private[lib] def assembleTransferFromFunction(list: Seq[Any]) = {
-    assert(list.length == 3, "length of transfer from function invalid")
-
-    Transfer(
-      sender = scalaAny2Hex(list(0)),
-      receiver = scalaAny2Hex(list(1)),
-      amount = scalaAny2Bigint(list(2))
-    )
-  }
-
-  private[lib] def assembleTransferEvent(list: Seq[Any]) = {
-    assert(list.length == 3, "length of transfer event invalid")
-
-    Transfer(
-      sender = scalaAny2Hex(list(0)),
-      receiver = scalaAny2Hex(list(1)),
-      amount = scalaAny2Bigint(list(2))
-    )
-  }
-
-  private[lib] def assembleApproveFunction(list: Seq[Any], from: String) = {
-    assert(list.length == 2, "length of approve function invalid")
-
-    Approve(
-      owner = from,
-      spender = scalaAny2Hex(list(0)),
-      amount = scalaAny2Bigint(list(1))
-    )
-  }
-
-  private[lib] def assembleApprovalEvent(list: Seq[Any]) = {
-    assert(list.length == 3, "length of approve event invalid")
-
-    Approve(
-      owner = scalaAny2Hex(list(0)),
-      spender = scalaAny2Hex(list(1)),
-      amount = scalaAny2Bigint(list(2))
-    )
-  }
+  //
+  //  object ApprovalEvent {
+  //
+  //    val name = "Approval"
+  //
+  //    def apply: ApprovalEvent = new ApprovalEvent()
+  //
+  //    case class Result()
+  //
+  //  }
+  //    class ApprovalEvent extends AbiEvent[ApprovalEvent.Result] {
+  //      val entry = abi.findEvent(searchByName("Approval"))
+  //      def unpack(log: TransactionLog): Option[ApprovalEvent.Result] = ???
+  //    }
 
 }
