@@ -49,6 +49,10 @@ enum XMatchingFailure {
     MATCHING_ERR_INVALID_TAKER_ORDER = 6;
 }
 
+enum XOrderValidationError {
+    ORDER_VALIDATION_ERR_NONE = 0;
+}
+
 // TODO(kongliang): Define these structures
 // use string to represent big0numbers and addresses
 message LoopringOrder {
