@@ -19,7 +19,6 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto.core;
 
-// TODO(dongw): add a prefix as STATUS_
 enum XOrderStatus {
     STATUS_NEW = 0;
     STATUS_PENDING = 1;
