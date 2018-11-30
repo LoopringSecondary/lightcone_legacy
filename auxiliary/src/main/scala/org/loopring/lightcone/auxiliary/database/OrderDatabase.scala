@@ -17,7 +17,7 @@
 package org.loopring.lightcone.auxiliary.database
 
 import org.loopring.lightcone.auxiliary.database.dals._
-import org.loopring.lightcone.lib.time.TimeProvider
+import org.loopring.lightcone.ethereum.time.TimeProvider
 import slick.basic._
 import slick.jdbc.JdbcProfile
 

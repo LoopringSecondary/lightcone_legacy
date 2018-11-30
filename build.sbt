@@ -2,7 +2,7 @@ import Settings._
 import Dependencies._
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 
-lazy val lib = (project in file("lib"))
+lazy val ethereum = (project in file("ethereum"))
   .enablePlugins(JavaAppPackaging)
   .enablePlugins(AutomateHeaderPlugin)
   .settings(
@@ -18,7 +18,7 @@ lazy val proto = (project in file("proto"))
 lazy val auxiliary = (project in file("auxiliary"))
   .enablePlugins(JavaAppPackaging)
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(proto, lib)
+  .dependsOn(proto, ethereum)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Aux)
@@ -50,6 +50,6 @@ lazy val gateway = (project in file("gateway"))
     libraryDependencies ++= dependency4Gateway)
 
 lazy val all = (project in file("."))
-  .aggregate(lib, proto, auxiliary, core, actors, gateway)
+  .aggregate(ethereum, proto, auxiliary, core, actors, gateway)
   // .settings(headerLicense := None)
   .withId("lightcone")
