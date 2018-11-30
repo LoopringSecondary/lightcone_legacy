@@ -23,7 +23,6 @@ import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment.XStart
 
 class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
   extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(

@@ -29,7 +29,6 @@ import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment._
 
 import scala.concurrent._
 

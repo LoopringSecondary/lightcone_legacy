@@ -29,7 +29,6 @@ import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment._
 
 import scala.concurrent._
 

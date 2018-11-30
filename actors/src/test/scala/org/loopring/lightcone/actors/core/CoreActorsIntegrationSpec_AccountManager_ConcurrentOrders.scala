@@ -23,7 +23,6 @@ import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment.XStart
 import akka.pattern._
 
 import scala.concurrent.Await
