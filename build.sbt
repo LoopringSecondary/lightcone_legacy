@@ -13,7 +13,7 @@ lazy val ethereum = (project in file("ethereum"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(
     basicSettings,
-    libraryDependencies ++= dependency4Lib)
+    libraryDependencies ++= dependency4Ethereum)
 
 lazy val persistence = (project in file("persistence"))
   .enablePlugins(JavaAppPackaging)
@@ -21,7 +21,7 @@ lazy val persistence = (project in file("persistence"))
   .dependsOn(proto, ethereum)
   .settings(
     basicSettings,
-    libraryDependencies ++= dependency4DB)
+    libraryDependencies ++= dependency4Persistence)
 
 lazy val core = (project in file("core"))
   .enablePlugins(AutomateHeaderPlugin)
