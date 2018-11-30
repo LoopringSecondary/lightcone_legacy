@@ -18,7 +18,11 @@ package org.loopring.lightcone.ethereum.abi
 
 object Serialization {
 
-    def serialize[T <: {def unapply(): Seq[Object]}](t: T): Seq[Object] = {
-      t.unapply()
-    }
+  //  def serialize[T](t: T{def unapply(): Option[]})(implicit mf: Manifest[T]): Seq[Object] = {
+  //    val argsIdx = getContractAnnontationIdx[T]()
+  //    val rm = runtimeMirror(this.getClass.getClassLoader)
+  //    val reflectT = rm.reflect(t)
+  //    t.def unapply(arg: Serialization): Option[] =
+  //    return Seq()
+  //  }
 }
