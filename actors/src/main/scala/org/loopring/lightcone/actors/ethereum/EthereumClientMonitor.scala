@@ -21,7 +21,7 @@ import akka.pattern.ask
 import akka.routing._
 import akka.util.Timeout
 import org.json4s.DefaultFormats
-import org.loopring.lightcone.proto.ethrpc._
+import org.loopring.lightcone.proto.ethereum._
 
 import scala.concurrent._
 import scala.concurrent.duration._

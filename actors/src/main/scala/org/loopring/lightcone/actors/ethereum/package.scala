@@ -20,7 +20,7 @@ import org.json4s.{ DefaultFormats, NoTypeHints }
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.write
-import org.loopring.lightcone.proto.ethrpc._
+import org.loopring.lightcone.proto.ethereum._
 
 package object ethereum {
 
