@@ -48,7 +48,12 @@ class RingSignerImpl(
     lRing.getInputData()
   }
 
-  def getSignedTxData(inputData: String, nonce: BigInt, gasLimit: BigInt, gasPrice: BigInt): Array[Byte] = {
+  def getSignedTxData(
+    inputData: String,
+    nonce: BigInt,
+    gasLimit: BigInt,
+    gasPrice: BigInt
+  ): Array[Byte] = {
     val rawTransaction = RawTransaction.createTransaction(
       nonce.bigInteger,
       gasPrice.bigInteger,
@@ -61,10 +66,11 @@ class RingSignerImpl(
   }
 
   private def signTx(rawTransaction: RawTransaction): Array[Byte] = {
-    if (chainId > ChainId.NONE)
+    if (chainId > ChainId.NONE) {
       TransactionEncoder.signMessage(rawTransaction, chainId, credentials)
-    else
+    } else {
       TransactionEncoder.signMessage(rawTransaction, credentials)
+    }
   }
 
 }

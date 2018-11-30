@@ -23,7 +23,7 @@ import org.ethereum.solidity.{ Abi ⇒ SABI }
 import org.web3j.utils.{ Numeric, Strings }
 
 import scala.annotation.StaticAnnotation
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.reflect.Manifest
 
 case class ContractAnnotation(name: String, idx: Int) extends StaticAnnotation
@@ -35,19 +35,15 @@ trait AbiFunction[P, R] {
   def pack(t: P): Array[Byte] = ???
 
   def unpackInput(data: Array[Byte])(implicit mf: Manifest[P]): Option[P] = {
-    val list = entry.decode(data).toList
-    if (list.isEmpty)
-      None
-    else
-      Some(Deserialization.deserialize[P](list))
+    val list = entry.decode(data).asScala.toList
+    if (list.isEmpty) None
+    else Some(Deserialization.deserialize[P](list))
   }
 
   def unpackResult(data: Array[Byte])(implicit mf: Manifest[R]): Option[R] = {
-    val list = entry.decode(data).toList
-    if (list.isEmpty)
-      None
-    else
-      Some(Deserialization.deserialize[R](list))
+    val list = entry.decode(data).asScala.toList
+    if (list.isEmpty) None
+    else Some(Deserialization.deserialize[R](list))
   }
 }
 
@@ -55,11 +51,9 @@ trait AbiEvent[R] {
   val entry: SABI.Event
 
   def unpack(data: Array[Byte], topics: Array[Array[Byte]])(implicit mf: Manifest[R]): Option[R] = {
-    val list = entry.decode(data, topics).toList
-    if (list.isEmpty)
-      None
-    else
-      Some(Deserialization.deserialize[R](list))
+    val list = entry.decode(data, topics).asScala.toList
+    if (list.isEmpty) None
+    else Some(Deserialization.deserialize[R](list))
   }
 }
 
