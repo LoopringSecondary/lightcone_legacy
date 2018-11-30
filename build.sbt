@@ -2,26 +2,26 @@ import Settings._
 import Dependencies._
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 
-lazy val lib = (project in file("lib"))
-  .enablePlugins(JavaAppPackaging)
-  .enablePlugins(AutomateHeaderPlugin)
-  .settings(
-    basicSettings,
-    libraryDependencies ++= dependency4Lib)
-
 lazy val proto = (project in file("proto"))
   .settings(
     libraryDependencies ++= scalapbDependency,
     PB.targets in Compile := Seq(
       scalapb.gen(flatPackage = true) -> (sourceManaged in Compile).value))
 
-lazy val auxiliary = (project in file("auxiliary"))
+lazy val ethereum = (project in file("ethereum"))
   .enablePlugins(JavaAppPackaging)
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(proto, lib)
   .settings(
     basicSettings,
-    libraryDependencies ++= dependency4Aux)
+    libraryDependencies ++= dependency4Ethereum)
+
+lazy val persistence = (project in file("persistence"))
+  .enablePlugins(JavaAppPackaging)
+  .enablePlugins(AutomateHeaderPlugin)
+  .dependsOn(proto, ethereum)
+  .settings(
+    basicSettings,
+    libraryDependencies ++= dependency4Persistence)
 
 lazy val core = (project in file("core"))
   .enablePlugins(AutomateHeaderPlugin)
@@ -36,7 +36,7 @@ lazy val actors = (project in file("actors"))
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
-  .dependsOn(proto, core, auxiliary)
+  .dependsOn(proto, core, persistence)
   .settings(
     parallelExecution in Test := false,
     basicSettings,
@@ -50,6 +50,5 @@ lazy val gateway = (project in file("gateway"))
     libraryDependencies ++= dependency4Gateway)
 
 lazy val all = (project in file("."))
-  .aggregate(lib, proto, auxiliary, core, actors, gateway)
-  // .settings(headerLicense := None)
+  .aggregate(proto, ethereum, persistence, core, actors, gateway)
   .withId("lightcone")

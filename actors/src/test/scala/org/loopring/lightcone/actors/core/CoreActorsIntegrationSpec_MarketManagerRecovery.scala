@@ -38,7 +38,7 @@ class CoreActorsIntegrationSpec_MarketManagerRecovery
         )
       )
 
-      marketManagerActorRecovery ! XStart
+      marketManagerActorRecovery ! XStart()
 
     }
   }

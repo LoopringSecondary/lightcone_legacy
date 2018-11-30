@@ -41,7 +41,7 @@ class CoreActorsIntegrationSpec_AccountManager_ConcurrentOrders
           skipRecovery = true
         ), "accountManagerActorConcurrenetOrders"
       )
-      accountManagerRecoveryActor ! XStart
+      accountManagerRecoveryActor ! XStart()
 
       val order = XOrder(
         id = "order",

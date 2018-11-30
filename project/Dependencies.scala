@@ -10,6 +10,7 @@ object Dependencies {
   lazy val testDependency = Seq(
     "org.scalatest" %% "scalatest" % "3.0.5" % Test,
     "org.scalamock" %% "scalamock" % "4.1.0" % Test,
+    "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test)
 
@@ -29,7 +30,8 @@ object Dependencies {
     "org.json4s" %% "json4s-native" % json4sVersion,
     "org.json4s" %% "json4s-jackson" % json4sVersion,
     "com.thesamet.scalapb" %% "scalapb-json4s" % "0.7.1",
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.7")
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.7",
+    "org.jsoup" % "jsoup" % "1.11.3")
 
   lazy val ethereumDependency = Seq(
     "org.web3j" % "core" % "3.4.0",
@@ -58,27 +60,31 @@ object Dependencies {
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion,
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf")
 
-  lazy val dependency4Aux = commonDependency ++
-    driverDependency ++
-    guiceDependency ++
-    testDependency
-
   lazy val dependency4Core = commonDependency ++
     ethereumDependency ++
     testDependency
 
-  lazy val dependency4Lib = commonDependency ++
+  lazy val dependency4Ethereum = commonDependency ++
     ethereumDependency ++
+    driverDependency ++
+    guiceDependency ++
     testDependency
 
-  lazy val dependency4Actors = dependency4Aux ++
+  lazy val dependency4Persistence = commonDependency ++
+    driverDependency ++
+    guiceDependency ++
+    httpDependency ++
+    json4sDependency ++
+    testDependency
+
+  lazy val dependency4Actors = dependency4Persistence ++
     httpDependency ++
     akkaDependency ++
     json4sDependency ++
     testDependency ++
     Seq("org.jsoup" % "jsoup" % "1.11.3")
 
-  lazy val dependency4Gateway = dependency4Aux ++
+  lazy val dependency4Gateway = dependency4Persistence ++
     httpDependency ++
     akkaDependency ++
     json4sDependency ++

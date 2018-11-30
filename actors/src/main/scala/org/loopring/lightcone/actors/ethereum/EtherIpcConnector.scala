@@ -22,7 +22,7 @@ import java.nio.channels.Channels
 
 import akka.actor._
 import jnr.unixsocket._
-import org.loopring.lightcone.proto.ethrpc._
+import org.loopring.lightcone.proto.ethereum._
 import scalapb.json4s.JsonFormat
 
 private[ethereum] class IpcConnector(node: XEthereumProxySettings.XNode)

@@ -10,6 +10,7 @@ import sbtrelease.ReleasePlugin.autoImport._
 import com.typesafe.sbt.SbtScalariform.autoImport._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
+import scoverage.ScoverageKeys._
 
 object Settings {
   lazy val basicSettings: Seq[Setting[_]] = Seq(
@@ -81,5 +82,6 @@ object Settings {
       .setPreference(MultilineScaladocCommentsStartOnFirstLine, true)
       .setPreference(DanglingCloseParenthesis, Force)
       .setPreference(FirstArgumentOnNewline, Force)
-      .setPreference(AllowParamGroupsOnNewlines, true))
+      .setPreference(AllowParamGroupsOnNewlines, true),
+    coverageEnabled := true)
 }

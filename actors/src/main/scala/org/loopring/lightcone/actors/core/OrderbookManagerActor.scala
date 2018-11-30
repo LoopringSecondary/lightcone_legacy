@@ -34,11 +34,18 @@ class OrderbookManagerActor(config: XOrderbookConfig)
   extends Actor with ActorLogging {
 
   val manager: OrderbookManager = new OrderbookManagerImpl(config)
+  private var latestPrice: Option[Double] = None
+
   def receive: Receive = LoggingReceive {
+
+    // TODO(dongw): market manager should send this message
+    case XUpdateLatestTradingPrice(price) ⇒
+      latestPrice = Some(price)
+
     case req: XOrderbookUpdate ⇒
       manager.processUpdate(req)
 
     case x @ XGetOrderbookReq(level, size) ⇒
-      sender ! manager.getOrderbook(level, size)
+      sender ! manager.getOrderbook(level, size, latestPrice)
   }
 }

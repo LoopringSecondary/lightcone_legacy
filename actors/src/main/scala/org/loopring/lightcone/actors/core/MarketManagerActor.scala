@@ -87,7 +87,7 @@ class MarketManagerActor(
   protected def settlementActor = actors.get(SettlementActor.name)
 
   def receive: Receive = {
-    case XStart ⇒ startOrderRecovery()
+    case _: XStart ⇒ startOrderRecovery()
   }
 
   def functional: Receive = LoggingReceive {

@@ -28,7 +28,7 @@ class OrderbookAggregatorImpl(priceDecimals: Int)
 
   def getOrderbookUpdate(num: Int = 0): XOrderbookUpdate = {
     if (num == 0) XOrderbookUpdate(sells.takeUpdatedSlots, buys.takeUpdatedSlots)
-    else XOrderbookUpdate(sells.getSlots(num), buys.getSlots(num))
+    else XOrderbookUpdate(sells.getSlots(num, None), buys.getSlots(num, None))
   }
 
   def increaseSell(
