@@ -34,7 +34,7 @@ class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
     submitOrder(order) should be(false)
     updatedOrders.size should be(1)
     orderPool.size == dai.maxNumOrders
-    updatedOrders(order.id).status should be(XOrderStatus.CANCELLED_TOO_MANY_ORDERS)
+    updatedOrders(order.id).status should be(XOrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS)
   }
 
   "submit order" should "fail when max orders received for tokenFee" in {
@@ -56,6 +56,6 @@ class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
     submitOrder(order) should be(false)
     updatedOrders.size should be(1)
     orderPool.size == lrc.maxNumOrders
-    updatedOrders(order.id).status should be(XOrderStatus.CANCELLED_TOO_MANY_ORDERS)
+    updatedOrders(order.id).status should be(XOrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS)
   }
 }

@@ -43,7 +43,7 @@ case class Order(
     amountFee: BigInt = 0,
     createdAt: Long = -1,
     updatedAt: Long = -1,
-    status: XOrderStatus = NEW,
+    status: XOrderStatus = STATUS_NEW,
     walletSplitPercentage: Double = 0,
     _outstanding: Option[OrderState] = None,
     _reserved: Option[OrderState] = None,
@@ -117,7 +117,7 @@ case class Order(
 
   // Private methods
   private[core] def as(status: XOrderStatus) = {
-    assert(status != PENDING)
+    assert(status != STATUS_PENDING)
     copy(
       status = status,
       _reserved = None,

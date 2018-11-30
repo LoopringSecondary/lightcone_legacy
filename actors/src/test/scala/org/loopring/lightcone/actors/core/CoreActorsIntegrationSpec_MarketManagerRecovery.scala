@@ -20,7 +20,7 @@ import akka.actor.ActorRef
 import akka.testkit.TestActorRef
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment.XStart
+import org.loopring.lightcone.proto.actors.XStart
 
 //todo:impl it after tested accountMangerRecovery
 class CoreActorsIntegrationSpec_MarketManagerRecovery

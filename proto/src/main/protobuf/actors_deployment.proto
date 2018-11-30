@@ -14,28 +14,22 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.time
+syntax = "proto3";
 
-import java.sql.Timestamp
+option java_multiple_files = true;
+package org.loopring.lightcone.proto.actors;
 
-trait TimeProvider {
-  def getTimeMillis: Long
-  def getTimeSeconds: Long = getTimeMillis / 1000
-  def getTimestamp = new Timestamp(getTimeMillis)
+import "google/protobuf/any.proto";
+
+message XNodeDeploymentSettings {
+    message XActorSettings {
+        bool is_singleton = 1;
+        repeated string roles = 2;
+        int32 num_of_instances = 3;
+    }
+
+    map<string, XActorSettings> settings_map = 1;
 }
 
-final class SystemTimeProvider extends TimeProvider {
-  def getTimeMillis = System.currentTimeMillis()
-}
-
-final class DifferenceAssuredSystemTimeProvider extends TimeProvider {
-  private var lastTimestamp = 0L
-
-  def getTimeMillis = {
-    val now = System.currentTimeMillis
-    if (now > lastTimestamp) lastTimestamp = now
-    else lastTimestamp += 1
-
-    lastTimestamp
-  }
-}
+message XStart{}
+message XStop{}

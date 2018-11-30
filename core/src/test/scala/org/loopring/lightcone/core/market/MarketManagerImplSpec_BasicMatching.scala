@@ -25,7 +25,7 @@ import XMatchingFailure._
 
 class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
 
-  "MarketManager" should "not generate ring when ring matcher returns INCOME_TOO_SMALL error " +
+  "MarketManager" should "not generate ring when ring matcher returns MATCHING_ERR_INCOME_TOO_SMALL error " +
     "and should put order inside the orderbook" in {
       var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
       var buyOrder = actualNotDust(sellGTO(100000, 100)) // price =  100000/100.0 = 1000.00
@@ -35,16 +35,16 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
 
       (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
         .when(*, *, *)
-        .returns(Left(INCOME_TOO_SMALL))
+        .returns(Left(MATCHING_ERR_INCOME_TOO_SMALL))
 
       val sellResult = marketManager.submitOrder(sellOrder, 1)
-      sellResult should be(emptyMatchingResult(sellOrder, PENDING))
+      sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
       val buyResult = marketManager.submitOrder(buyOrder, 2)
-      buyResult should be(emptyMatchingResult(buyOrder, PENDING))
+      buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
     }
 
-  "MarketManager" should "not generate ring when ring matcher returns ORDERS_NOT_TRADABLE error " +
+  "MarketManager" should "not generate ring when ring matcher returns MATCHING_ERR_ORDERS_NOT_TRADABLE error " +
     "and should put order inside the orderbook" in {
       var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
       var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
@@ -54,13 +54,13 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
 
       (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
         .when(*, *, *)
-        .returns(Left(ORDERS_NOT_TRADABLE))
+        .returns(Left(MATCHING_ERR_ORDERS_NOT_TRADABLE))
 
       val sellResult = marketManager.submitOrder(sellOrder, 1)
-      sellResult should be(emptyMatchingResult(sellOrder, PENDING))
+      sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
       val buyResult = marketManager.submitOrder(buyOrder, 2)
-      buyResult should be(emptyMatchingResult(buyOrder, PENDING))
+      buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
     }
 
   "MarketManager" should "generate a ring for sell order as taker" in {
@@ -76,7 +76,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
       .returns(Right(ring))
 
     val sellResult = marketManager.submitOrder(sellOrder, 1)
-    sellResult should be(emptyMatchingResult(sellOrder, PENDING))
+    sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
     val buyResult = marketManager.submitOrder(buyOrder, 2)
     buyResult should be(MarketManager.MatchResult(
@@ -109,7 +109,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
       .returns(Right(ring))
 
     val buyResult = marketManager.submitOrder(buyOrder, 1)
-    buyResult should be(emptyMatchingResult(buyOrder, PENDING))
+    buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
 
     val sellResult = marketManager.submitOrder(sellOrder, 2)
     sellResult should be(MarketManager.MatchResult(

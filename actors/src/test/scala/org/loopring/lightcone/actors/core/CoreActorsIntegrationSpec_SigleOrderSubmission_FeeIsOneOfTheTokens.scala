@@ -36,7 +36,7 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
         amountFee = "10".zeros(18),
-        status = XOrderStatus.NEW
+        status = XOrderStatus.STATUS_NEW
       )
 
       accountManagerActor1 ! XSubmitOrderReq(Some(order))
