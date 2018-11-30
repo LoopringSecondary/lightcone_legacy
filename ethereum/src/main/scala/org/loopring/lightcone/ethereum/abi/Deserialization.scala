@@ -40,6 +40,7 @@ object Deserialization {
       }
     }
 
+  //todo:最好去掉反射，可以使用接口或其他的实现方式
   def deserialize[T](list: List[_])(implicit mf: Manifest[T]): T = {
     val rm = runtimeMirror(this.getClass.getClassLoader)
     val classSymbol: ClassSymbol = rm.classSymbol(mf.runtimeClass)
