@@ -51,7 +51,7 @@ class CoreActorsIntegrationSpec_AccountManager_ConcurrentOrders
         amountB = "10000".zeros(18),
         amountFee = "10".zeros(18),
         walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW
+        status = XOrderStatus.STATUS_NEW
       )
 
       (0 until 100) foreach {

@@ -160,11 +160,11 @@ class AccountTokenManagerImpl(
       val requestedAmount = order.requestedAmount
 
       val status =
-        if (availableBalance >= requestedAmount) XOrderStatus.PENDING
-        else if (token == order.tokenS) XOrderStatus.CANCELLED_LOW_BALANCE
-        else XOrderStatus.CANCELLED_LOW_FEE_BALANCE
+        if (availableBalance >= requestedAmount) XOrderStatus.STATUS_PENDING
+        else if (token == order.tokenS) XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
+        else XOrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE
 
-      if (status != XOrderStatus.PENDING) {
+      if (status != XOrderStatus.STATUS_PENDING) {
         ordersToDelete += order.id
         indexMap -= order.id
 

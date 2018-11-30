@@ -38,10 +38,10 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
         .returns(Left(INCOME_TOO_SMALL))
 
       val sellResult = marketManager.submitOrder(sellOrder, 1)
-      sellResult should be(emptyMatchingResult(sellOrder, PENDING))
+      sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
       val buyResult = marketManager.submitOrder(buyOrder, 2)
-      buyResult should be(emptyMatchingResult(buyOrder, PENDING))
+      buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
     }
 
   "MarketManager" should "not generate ring when ring matcher returns ORDERS_NOT_TRADABLE error " +
@@ -57,10 +57,10 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
         .returns(Left(ORDERS_NOT_TRADABLE))
 
       val sellResult = marketManager.submitOrder(sellOrder, 1)
-      sellResult should be(emptyMatchingResult(sellOrder, PENDING))
+      sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
       val buyResult = marketManager.submitOrder(buyOrder, 2)
-      buyResult should be(emptyMatchingResult(buyOrder, PENDING))
+      buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
     }
 
   "MarketManager" should "generate a ring for sell order as taker" in {
@@ -76,7 +76,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
       .returns(Right(ring))
 
     val sellResult = marketManager.submitOrder(sellOrder, 1)
-    sellResult should be(emptyMatchingResult(sellOrder, PENDING))
+    sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
     val buyResult = marketManager.submitOrder(buyOrder, 2)
     buyResult should be(MarketManager.MatchResult(
@@ -109,7 +109,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
       .returns(Right(ring))
 
     val buyResult = marketManager.submitOrder(buyOrder, 1)
-    buyResult should be(emptyMatchingResult(buyOrder, PENDING))
+    buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
 
     val sellResult = marketManager.submitOrder(sellOrder, 2)
     sellResult should be(MarketManager.MatchResult(

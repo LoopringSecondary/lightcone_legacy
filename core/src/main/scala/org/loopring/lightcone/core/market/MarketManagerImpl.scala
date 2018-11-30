@@ -125,17 +125,17 @@ class MarketManagerImpl(
     if (dustOrderEvaluator.isOriginalDust(order)) {
       MatchResult(
         Nil,
-        order.copy(status = DUST_ORDER),
+        order.copy(status = STATUS_DUST_ORDER),
         XOrderbookUpdate(Nil, Nil)
       )
     } else if (dustOrderEvaluator.isActualDust(order)) {
       MatchResult(
         Nil,
-        order.copy(status = COMPLETELY_FILLED),
+        order.copy(status = STATUS_COMPLETELY_FILLED),
         XOrderbookUpdate(Nil, Nil)
       )
     } else {
-      var taker = order.copy(status = PENDING)
+      var taker = order.copy(status = STATUS_PENDING)
       var rings = Seq.empty[OrderRing]
       var ordersToAddBack = Seq.empty[Order]
 
@@ -163,7 +163,7 @@ class MarketManagerImpl(
         } match {
           case None ⇒ // to maker to trade with
           case Some((maker, matchResult)) ⇒
-            // we alsways need to add maker back even if it is PENDING-fully-matched.
+            // we alsways need to add maker back even if it is STATUS_PENDING-fully-matched.
             ordersToAddBack :+= maker
             matchResult match {
               case Left(
@@ -186,7 +186,7 @@ class MarketManagerImpl(
 
       recursivelyMatchOrders()
 
-      // we alsways need to add the taker back even if it is PENDING-fully-matched.
+      // we alsways need to add the taker back even if it is STATUS_PENDING-fully-matched.
       ordersToAddBack :+= taker
 
       // add each skipped maker orders back

@@ -139,10 +139,10 @@ class AccountManagerActor(
   }
 
   private def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode = status match {
-    case INVALID_DATA ⇒ ERR_INVALID_ORDER_DATA
-    case UNSUPPORTED_MARKET ⇒ ERR_INVALID_MARKET
-    case CANCELLED_TOO_MANY_ORDERS ⇒ ERR_TOO_MANY_ORDERS
-    case CANCELLED_DUPLICIATE ⇒ ERR_ORDER_ALREADY_EXIST
+    case STATUS_INVALID_DATA ⇒ ERR_INVALID_ORDER_DATA
+    case STATUS_UNSUPPORTED_MARKET ⇒ ERR_INVALID_MARKET
+    case STATUS_CANCELLED_TOO_MANY_ORDERS ⇒ ERR_TOO_MANY_ORDERS
+    case STATUS_CANCELLED_DUPLICIATE ⇒ ERR_ORDER_ALREADY_EXIST
     case _ ⇒ ERR_UNKNOWN
   }
 
@@ -173,10 +173,10 @@ class AccountManagerActor(
   } yield {
     updatedOrders.foreach { order ⇒
       order.status match {
-        case CANCELLED_LOW_BALANCE | CANCELLED_LOW_FEE_BALANCE ⇒
+        case STATUS_CANCELLED_LOW_BALANCE | STATUS_CANCELLED_LOW_FEE_BALANCE ⇒
           marketManagerActor ! XCancelOrderReq(order.id)
 
-        case PENDING ⇒
+        case STATUS_PENDING ⇒
           //allowance的改变需要更新到marketManager
           marketManagerActor ! XSubmitOrderReq(Some(order))
 

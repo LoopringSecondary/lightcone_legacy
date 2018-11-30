@@ -162,7 +162,7 @@ trait OrderAwareSpec extends CommonSpec {
   }
 
   implicit class RichOrder(order: Order) {
-    def asPending() = order.copy(status = XOrderStatus.PENDING)
+    def asPending() = order.copy(status = XOrderStatus.STATUS_PENDING)
     def withActualAsOriginal() = order.copy(_actual = Some(order.original))
     def withMatchableAsActual() = order.copy(_matchable = Some(order.actual))
     def matchableAsOriginal() = order.copy(_matchable = Some(order.original))

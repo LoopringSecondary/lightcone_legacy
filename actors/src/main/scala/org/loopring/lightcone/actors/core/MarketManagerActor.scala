@@ -121,7 +121,7 @@ class MarketManagerActor(
     assert(xorder.actual.nonEmpty, "order in XSubmitOrderReq miss `actual` field")
     val order: Order = xorder
     xorder.status match {
-      case XOrderStatus.NEW | XOrderStatus.PENDING ⇒ for {
+      case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING ⇒ for {
         // get ring settlement cost
         res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
 

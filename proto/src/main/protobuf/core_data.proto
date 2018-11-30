@@ -1,0 +1,50 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+package org.loopring.lightcone.proto.core;
+
+// TODO(dongw): add a prefix as STATUS_
+enum XOrderStatus {
+    STATUS_NEW = 0;
+    STATUS_PENDING = 1;
+    STATUS_EXPIRED = 2;
+    STATUS_DUST_ORDER = 3;
+    STATUS_PARTIALLY_FILLED = 4;
+    STATUS_COMPLETELY_FILLED = 5; // 完全成交
+    STATUS_CANCELLED_BY_USER = 8;
+    STATUS_CANCELLED_LOW_BALANCE = 9;
+    STATUS_CANCELLED_LOW_FEE_BALANCE = 10;
+    STATUS_CANCELLED_TOO_MANY_ORDERS = 11;
+    STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 12;
+
+    STATUS_CANCELLED_DUPLICIATE = 101; // TODO(dongw): this should be a error code
+    STATUS_INVALID_DATA = 102;  // TODO(dongw): this should be a error code
+    STATUS_UNSUPPORTED_MARKET = 103;  // TODO(dongw): this should be a error code
+}
+
+enum XMatchingFailure {
+    NO_ERROR = 0;
+    ORDERS_NOT_TRADABLE = 1;
+    INCOME_TOO_SMALL = 2;
+    MAKER_COMPLETELY_FILLED = 3;
+    TAKER_COMPLETELY_FILLED = 4;
+    INVALID_MAKER_ORDER = 5;
+    INVALID_TAKER_ORDER = 6;
+}
+

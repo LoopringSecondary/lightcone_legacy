@@ -38,9 +38,9 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
     marketManager.submitOrder(buy3, 0)
 
     marketManager.getBuyOrders(5) should be(Seq(
-      buy3.copy(status = PENDING),
-      buy2.copy(status = PENDING),
-      buy1.copy(status = PENDING)
+      buy3.copy(status = STATUS_PENDING),
+      buy2.copy(status = STATUS_PENDING),
+      buy1.copy(status = STATUS_PENDING)
     ))
 
     (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
@@ -63,18 +63,18 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
 
     result should be(MarketManager.MatchResult(
       Nil,
-      sell1.copy(status = PENDING),
+      sell1.copy(status = STATUS_PENDING),
       XOrderbookUpdate()
     ))
 
     marketManager.getSellOrders(100) should be(Seq(
-      sell1.copy(status = PENDING)
+      sell1.copy(status = STATUS_PENDING)
     ))
 
     marketManager.getBuyOrders(5) should be(Seq(
-      buy3.copy(status = PENDING),
-      buy2.copy(status = PENDING),
-      buy1.copy(status = PENDING)
+      buy3.copy(status = STATUS_PENDING),
+      buy2.copy(status = STATUS_PENDING),
+      buy1.copy(status = STATUS_PENDING)
     ))
 
     (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
