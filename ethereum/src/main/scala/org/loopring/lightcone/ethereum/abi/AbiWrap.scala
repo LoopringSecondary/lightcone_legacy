@@ -16,114 +16,63 @@
 
 package org.loopring.lightcone.ethereum.abi
 
-import org.loopring.lightcone.ethereum.data._
-
 import java.math.BigInteger
-import java.lang.{ Boolean ⇒ jbool }
 
+import org.apache.commons.collections4.Predicate
+import org.ethereum.solidity.{ Abi ⇒ SABI }
 import org.web3j.utils.{ Numeric, Strings }
-import org.loopring.lightcone.ethereum.solidity.{ SolidityAbi ⇒ SABI }
 
+import scala.annotation.StaticAnnotation
+import scala.collection.JavaConversions._
+import scala.reflect.Manifest
+
+case class ContractAnnotation(name: String, idx: Int) extends StaticAnnotation
+
+trait AbiFunction[P, R] {
+  val entry: SABI.Function
+
+  //与原函数区分，使用pack与unpack
+  def pack(t: P): Array[Byte] = ???
+
+  def unpackInput(data: Array[Byte])(implicit mf: Manifest[P]): Option[P] = {
+    val list = entry.decode(data).toList
+    if (list.isEmpty)
+      None
+    else
+      Some(Deserialization.deserialize[P](list))
+  }
+
+  def unpackResult(data: Array[Byte])(implicit mf: Manifest[R]): Option[R] = {
+    val list = entry.decode(data).toList
+    if (list.isEmpty)
+      None
+    else
+      Some(Deserialization.deserialize[R](list))
+  }
+}
+
+trait AbiEvent[R] {
+  val entry: SABI.Event
+
+  def unpack(data: Array[Byte], topics: Array[Array[Byte]])(implicit mf: Manifest[R]): Option[R] = {
+    val list = entry.decode(data, topics).toList
+    if (list.isEmpty)
+      None
+    else
+      Some(Deserialization.deserialize[R](list))
+  }
+}
+
+//todo:最好是再彻底重写Abi,不再使用SolidityAbi
 abstract class AbiWrap(abiJson: String) {
 
-  protected val abi = SABI.fromJson(abiJson)
-  protected val functionSignatureLength = 8
+  protected var abi = SABI.fromJson(abiJson)
 
   def getTransactionHeader(txInput: String): BigInt = Numeric.decodeQuantity(txInput)
 
-  private[ethereum] var supportedFunctions = Map.empty[String, SABI.Function]
-  private[ethereum] var supportedEventLogs = Map.empty[String, SABI.Event]
+  private[abi] def searchByName[T <: SABI.Entry](name: String): Predicate[T] = x ⇒ x.name.equals(name)
 
-  abi.toArray.foreach {
-    _ match {
-      case x: SABI.Function ⇒
-        val sig = x.encodeSignature()
-        val key = Numeric.toHexStringWithPrefixZeroPadded(
-          sig.bigInteger,
-          functionSignatureLength
-        ).toLowerCase
+  //todo: test 字节数组的相等
+  private[abi] def searchBySignature[T <: SABI.Entry](signature: Array[Byte]): Predicate[T] = x ⇒ x.encodeSignature().equals(signature)
 
-        supportedFunctions += key → x
-
-      case x: SABI.Event ⇒
-        val sig = x.encodeSignature()
-        val key = Numeric.toHexString(sig).toLowerCase
-
-        supportedEventLogs += key -> x
-
-      case _ ⇒
-    }
-  }
-
-  def getFunction(input: String): Option[SABI.Function] = {
-    val sig = input.slice(0, functionSignatureLength + 2)
-    val key = sig.toLowerCase
-    supportedFunctions.get(key)
-  }
-
-  def getEvent(firstTopic: String): Option[SABI.Event] = {
-    val key = firstTopic.toLowerCase
-    supportedEventLogs.get(key)
-  }
-
-  case class DecodeResult(name: String, list: Seq[Any])
-
-  def decode(input: String): DecodeResult = {
-    getFunction(input) match {
-      case Some(function) ⇒
-        val cleanInput = Numeric.cleanHexPrefix(input).substring(functionSignatureLength)
-        val str = Strings.zeros(functionSignatureLength) + cleanInput
-        val bytes = Numeric.hexStringToByteArray(str)
-        val seq = function.decode(bytes).toArray().toSeq
-        DecodeResult(function.name, seq)
-
-      case _ ⇒ DecodeResult("", Seq.empty)
-    }
-  }
-
-  def decode(log: TransactionLog): DecodeResult = {
-    getEvent(log.topics.head) match {
-      case Some(event) ⇒
-        val decodeddata = Numeric.hexStringToByteArray(log.data)
-        val decodedtopics = log.topics.map(x ⇒ Numeric.hexStringToByteArray(x)).toArray
-        val seq = event.decode(decodeddata, decodedtopics).toArray().toSeq
-        DecodeResult(event.name, seq)
-
-      case _ ⇒ DecodeResult("", Seq.empty)
-    }
-  }
-
-  def decodeAndAssemble(tx: Transaction): Option[Any]
-  def decodeAndAssemble(tx: Transaction, log: TransactionLog): Option[Any]
-
-  // 这里比较特殊 涉及到任意类型的强制转换 只有abi转换时用到 所以放到该接口
-  def javaObj2Hex(src: Object): String = src match {
-    case bs: Array[Byte] ⇒ Numeric.toHexString(bs)
-    case _               ⇒ throw new Exception("java object convert to scala string error")
-  }
-
-  def javaObj2Bigint(src: Object): BigInt = src match {
-    case bs: BigInteger ⇒ BigInt(bs)
-    case _              ⇒ throw new Exception("java object convert to scala bigint error")
-  }
-
-  def javaObj2Boolean(src: Object): Boolean = src match {
-    case b: jbool ⇒ b
-    case _        ⇒ throw new Exception("java object convert to scala boolean error")
-  }
-
-  def scalaAny2Hex(src: Any): String = src match {
-    case bs: Array[Byte] ⇒ Numeric.toHexString(bs)
-    case _               ⇒ throw new Exception("scala any convert to scala array byte error")
-  }
-
-  def scalaAny2Bigint(src: Any): BigInt = src match {
-    case b: BigInteger ⇒ b
-    case _             ⇒ throw new Exception("scala any convert to scala bigint error")
-  }
-
-  def scalaAny2Bool(src: Any): Boolean = src match {
-    case b: Boolean ⇒ b
-    case _          ⇒ throw new Exception("scala any convert to scala bool error")
-  }
 }

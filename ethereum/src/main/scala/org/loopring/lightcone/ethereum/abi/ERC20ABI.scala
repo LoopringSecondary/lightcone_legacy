@@ -16,86 +16,105 @@
 
 package org.loopring.lightcone.ethereum.abi
 
-import org.loopring.lightcone.ethereum.data._
+import org.ethereum.solidity.{ Abi ⇒ SABI }
+
+import scala.annotation.meta.field
+
+object ERC20ABI {
+  val erc20jsonstr = "[{\"constant\":false,\"inputs\":[{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"tx_from\",\"type\":\"address\"},{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"who\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"tx_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"}]"
+
+  def apply(): ERC20ABI = new ERC20ABI(erc20jsonstr)
+
+  def apply(jsonstr: String) = new ERC20ABI(jsonstr)
+}
 
 class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
 
-  val FN_TRANSFER = "transfer"
-  val FN_TRANSFER_FROM = "transferFrom"
-  val FN_APPROVE = "approve"
+  val transfer = TransferFunction(abi.findFunction(searchByName(TransferFunction.name)))
+  val transferFrom = TransferFunction(abi.findFunction(searchByName(TransferFromFunction.name)))
+  val approve = ApproveFunction(abi.findFunction(searchByName(ApproveFunction.name)))
 
-  val EN_TRANSFER = "Transfer"
-  val EN_APPROVAL = "Approval"
-
-  // QUESTION(fukun): 这个方法的返回值和实现对不上，实现用的是match，不是map！
-  // 另外如何chuli  `case _`情况？
-  def decodeAndAssemble(tx: Transaction): Option[Any] = {
-    val result = decode(tx.input)
-    result.name match {
-      case FN_TRANSFER      ⇒ Some(assembleTransferFunction(result.list, tx.from))
-      case FN_TRANSFER_FROM ⇒ Some(assembleTransferFromFunction(result.list))
-      case FN_APPROVE       ⇒ Some(assembleApproveFunction(result.list, tx.from))
-    }
-  }
-
-  // QUESTION(fukun): 这个方法的返回值和实现对不上，实现用的是match，不是map！
-  // 另外如何chuli  `case _`情况？
-  def decodeAndAssemble(tx: Transaction, log: TransactionLog): Option[Any] = {
-    val result = decode(log)
-    result.name match {
-      case EN_TRANSFER ⇒ Some(assembleTransferEvent(result.list))
-      case EN_APPROVAL ⇒ Some(assembleApprovalEvent(result.list))
-    }
-  }
-
-  private[ethereum] def assembleTransferFunction(list: Seq[Any], from: String) = {
-    assert(list.length == 2, "length of transfer function invalid")
-
-    Transfer(
-      sender = from,
-      receiver = scalaAny2Hex(list(0)),
-      amount = scalaAny2Bigint(list(1))
-    )
-  }
-
-  private[ethereum] def assembleTransferFromFunction(list: Seq[Any]) = {
-    assert(list.length == 3, "length of transfer from function invalid")
-
-    Transfer(
-      sender = scalaAny2Hex(list(0)),
-      receiver = scalaAny2Hex(list(1)),
-      amount = scalaAny2Bigint(list(2))
-    )
-  }
-
-  private[ethereum] def assembleTransferEvent(list: Seq[Any]) = {
-    assert(list.length == 3, "length of transfer event invalid")
-
-    Transfer(
-      sender = scalaAny2Hex(list(0)),
-      receiver = scalaAny2Hex(list(1)),
-      amount = scalaAny2Bigint(list(2))
-    )
-  }
-
-  private[ethereum] def assembleApproveFunction(list: Seq[Any], from: String) = {
-    assert(list.length == 2, "length of approve function invalid")
-
-    Approve(
-      owner = from,
-      spender = scalaAny2Hex(list(0)),
-      amount = scalaAny2Bigint(list(1))
-    )
-  }
-
-  private[ethereum] def assembleApprovalEvent(list: Seq[Any]) = {
-    assert(list.length == 3, "length of approve event invalid")
-
-    Approve(
-      owner = scalaAny2Hex(list(0)),
-      spender = scalaAny2Hex(list(1)),
-      amount = scalaAny2Bigint(list(2))
-    )
-  }
+  val transferEvent = TransferEvent(abi.findEvent(searchByName(TransferEvent.name)))
+  val approvalEvent = ApprovalEvent(abi.findEvent(searchByName(ApprovalEvent.name)))
 
 }
+
+//-------- define of contract's method and event
+object TransferFunction {
+
+  case class Parms(
+      @(ContractAnnotation @field)("to", 0) to: String,
+      @(ContractAnnotation @field)("amount", 1) amount: BigInt
+  )
+
+  case class Result()
+
+  val name = "transfer"
+
+  def apply(function: SABI.Function): TransferFunction = new TransferFunction(function)
+}
+
+class TransferFunction(val entry: SABI.Function) extends AbiFunction[TransferFunction.Parms, TransferFunction.Result]
+
+object TransferFromFunction {
+
+  case class Parms(
+      @(ContractAnnotation @field)("tx_from", 0) txFrom: String,
+      @(ContractAnnotation @field)("to", 1) to: String,
+      @(ContractAnnotation @field)("amount", 2) amount: BigInt
+  )
+
+  case class Result()
+
+  val name = "transferFrom"
+
+  def apply(function: SABI.Function): TransferFromFunction = new TransferFromFunction(function)
+}
+
+class TransferFromFunction(val entry: SABI.Function) extends AbiFunction[TransferFromFunction.Parms, TransferFromFunction.Result]
+
+object ApproveFunction {
+
+  case class Parms(
+      @(ContractAnnotation @field)("spender", 0) spender: String,
+      @(ContractAnnotation @field)("amount", 1) amount: BigInt
+  )
+
+  case class Result()
+
+  val name = "approve"
+
+  def apply(function: SABI.Function): ApproveFunction = new ApproveFunction(function)
+}
+
+class ApproveFunction(val entry: SABI.Function) extends AbiFunction[ApproveFunction.Parms, ApproveFunction.Result]
+
+object TransferEvent {
+  val name = "Transfer"
+
+  def apply(event: SABI.Event): TransferEvent = new TransferEvent(event)
+
+  case class Result(
+      @(ContractAnnotation @field)("to", 0) sender: String,
+      @(ContractAnnotation @field)("receiver", 1) receiver: String,
+      @(ContractAnnotation @field)("amount", 2) amount: BigInt
+  )
+
+}
+
+class TransferEvent(val entry: SABI.Event) extends AbiEvent[TransferEvent.Result]
+
+object ApprovalEvent {
+  val name = "Approval"
+
+  def apply(event: SABI.Event): ApprovalEvent = new ApprovalEvent(event)
+
+  case class Result(
+      @(ContractAnnotation @field)("owner", 0) owner: String,
+      @(ContractAnnotation @field)("spender", 1) spender: String,
+      @(ContractAnnotation @field)("amount", 2) amount: BigInt
+  )
+}
+
+class ApprovalEvent(val entry: SABI.Event) extends AbiEvent[ApprovalEvent.Result]
+
