@@ -45,13 +45,13 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
 
     (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
       .when(*, buy3.asPending.withMatchableAsActual, *)
-      .returns(Left(INCOME_TOO_SMALL))
+      .returns(Left(ERROR_INCOME_TOO_SMALL))
 
     (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
       .when(*, buy2.asPending.copy(_matchable =
         Some(OrderState(30, 100040 * 3 / 10, 0))), // scale actual based on original ratio
         *)
-      .returns(Left(INCOME_TOO_SMALL))
+      .returns(Left(ERROR_INCOME_TOO_SMALL))
 
     val ring = OrderRing(null, null)
     (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))

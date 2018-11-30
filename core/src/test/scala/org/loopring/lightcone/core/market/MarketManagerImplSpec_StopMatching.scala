@@ -45,7 +45,7 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
 
     (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
       .when(*, buy3.asPending.withMatchableAsActual.withActualAsOriginal, *)
-      .returns(Left(ORDERS_NOT_TRADABLE))
+      .returns(Left(ERROR_ORDERS_NOT_TRADABLE))
 
     val ring = OrderRing(null, null)
 
