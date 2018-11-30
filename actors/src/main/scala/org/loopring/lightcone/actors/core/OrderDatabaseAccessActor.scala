@@ -77,8 +77,8 @@ class OrderDatabaseAccessActor(databaseManager: OrderDatabaseManager)(
 
 }
 
-// TODO(litao): move this to auxiliary sub project and implement the logic
-// and probably move XRawOrder definition to auxiliary.proto
+// TODO(litao): move this to persistence sub project and implement the logic
+// and probably move XRawOrder definition to persistence.proto
 trait OrderDatabaseManager {
 
   def validateOrder(xraworder: XRawOrder): Either[XErrorCode, XRawOrder]

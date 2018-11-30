@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.auxiliary.marketcap
+package org.loopring.lightcone.actors.persistence.marketcap
 
 import akka.actor.{ Actor, ActorSystem }
 import akka.pattern.pipe
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import javax.inject.Inject
-import org.loopring.lightcone.auxiliary.marketcap.reader.TokenIcoInfoService
+import org.loopring.lightcone.persistence.marketcap.reader.TokenIcoInfoService
 import org.loopring.lightcone.ethereum.cache.ProtoBufMessageCacher
-import org.loopring.lightcone.proto.auxiliary.{ XGetTokenIcoInfoReq, XGetTokenIcoInfoRes, XTokenIcoInfo }
+import org.loopring.lightcone.proto.persistence.{ XGetTokenIcoInfoReq, XGetTokenIcoInfoRes, XTokenIcoInfo }
 import redis.RedisCluster
 
 class TokenIcoServiceActor @Inject() (tokenIcoInfoService: TokenIcoInfoService)(

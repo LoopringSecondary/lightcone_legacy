@@ -60,7 +60,7 @@ object Dependencies {
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion,
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf")
 
-  lazy val dependency4Aux = commonDependency ++
+  lazy val dependency4DB = commonDependency ++
     driverDependency ++
     guiceDependency ++
     httpDependency ++
@@ -77,14 +77,14 @@ object Dependencies {
     guiceDependency ++
     testDependency
 
-  lazy val dependency4Actors = dependency4Aux ++
+  lazy val dependency4Actors = dependency4DB ++
     httpDependency ++
     akkaDependency ++
     json4sDependency ++
     testDependency ++
     Seq("org.jsoup" % "jsoup" % "1.11.3")
 
-  lazy val dependency4Gateway = dependency4Aux ++
+  lazy val dependency4Gateway = dependency4DB ++
     httpDependency ++
     akkaDependency ++
     json4sDependency ++

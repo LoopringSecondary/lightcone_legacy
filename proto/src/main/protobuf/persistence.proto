@@ -1,0 +1,240 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+package org.loopring.lightcone.proto.persistence;
+
+// TODO(xiaolu/xuyun): 有的数据定义应该放到父结构中，不应作为顶层数据结构
+
+
+enum XMarketSide {
+  SELL =0;
+  BUY = 1;
+}
+
+
+
+enum XOrderSaveResult {
+  SUBMIT_SUCCESS = 0;
+  SUBMIT_FAILED = 1;
+  ORDER_EXIST = 2;
+}
+
+enum XOrderStatus {
+  NEW = 0;
+  PENDING = 1;
+  EXPIRED = 2;
+  COMPLETELY_FILLED = 3; // 完全成交
+  CANCELLED_BY_USER = 4;
+  CANCELLED_LOW_BALANCE = 5;
+  CANCELLED_LOW_FEE_BALANCE = 6;
+  CANCELLED_TOO_MANY_ORDERS = 7;
+  CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 8;
+}
+
+enum XOrderType {
+  UNKNOWN = 0;
+  MARKET = 1;
+  P2P = 2;
+}
+
+enum XSoftCancelType {
+  BY_HASH= 0;
+  BY_OWNER= 1;
+  BY_TIME= 2;
+  BY_MARKET= 3;
+}
+
+
+//////////
+
+
+message XTokenInfo {
+  string protocol = 1;
+  bool deny = 2;
+  bool isMarket = 3;
+  string symbol = 4;
+  string source = 5;
+  int32 decimals = 6;
+}
+
+message XTokenIcoInfo {
+  string tokenAddress = 1;
+  string icoStartDate = 2;
+  string icoEndDate = 3;
+  string hardCap = 4;
+  string softCap = 5;
+  string tokenRaised = 6;
+  string icoPrice = 7;
+  string country = 8;
+}
+
+// for token list
+message XGetTokenListReq {
+}
+
+message XGetTokenListRes {
+   repeated XTokenInfo list = 1;
+}
+
+
+message XGetTokenIcoInfoReq {
+   string tokenAddress = 1;
+}
+
+message XGetTokenIcoInfoRes {
+  repeated XTokenIcoInfo list = 1;
+}
+
+message XGetTokenTickerInfoReq{
+   string market = 1;
+}
+
+message XGetTokenTickerInfoRes {
+   repeated XTokenTickerInfo list = 1;
+}
+
+message XGetExchangeTickerInfoReq{
+   string marketPair = 1;
+}
+
+message XGetExchangeTickerInfoRes {
+   repeated XExchangeTickerInfo list = 1;
+}
+
+message XGetTokenTrendDataReq{
+  string symbol = 1;
+  string period = 2;
+}
+
+message XTokenTickerInfo {
+  int32 tokenId = 1;
+  string name = 2;
+  string symbol = 3;
+  string websiteSlug = 4;
+  string market= 5;
+  int32 rank = 6;
+  double circulatingSupply = 7;
+  double totalSupply = 8;
+  double maxSupply = 9;
+  double price = 10;
+  double volume24h = 11;
+  double marketCap = 12;
+  double percentChange1h = 13;
+  double percentChange24h = 14;
+  double percentChange7d = 15;
+  int64 lastUpdated = 16;
+}
+
+message XCMCTickerData {
+  int32 id = 1;
+  string name = 2;
+  string symbol = 3;
+  string slug = 4;
+  double circulating_supply = 5;
+  double total_supply = 6;
+  double max_supply = 7;
+  string date_added = 8;
+  int32 num_market_pairs = 9;
+  int32 cmc_rank = 10;
+  string last_updated = 11;
+  map<string, XQuote> quote = 12;
+}
+
+message XQuote {
+  double price = 1;
+  double volume_24h = 2;
+  double percent_change_1h = 3;
+  double percent_change_24h = 4;
+  double percent_change_7d = 5;
+  double market_cap = 6;
+  string last_updated = 7;
+}
+
+message XTickerStatus {
+  string timestamp = 1;
+  int32 error_code  = 2;
+  string error_message = 3;
+  int32 elapsed = 4;
+  int32 credit_count = 5;
+}
+
+message XTickerDataInfo {
+  XTickerStatus status = 1;
+  repeated XCMCTickerData data = 2;
+}
+
+message XExchangeTickerInfo {
+  string symbol = 1;
+  string market = 2;
+  string exchange = 3;
+  double price = 4;
+  double priceUsd = 5;
+  double priceCny = 6;
+  double volume24hUsd = 7;
+  double volume24hFrom = 8;
+  double volume24h = 9;
+  double percentChangeUtc0 = 10;
+  string alias = 11;
+  int64 lastUpdated = 12;
+}
+
+// TODO(xuyun): move XMarketPair inside MarketTickData
+// and change `XMarketPairData data = 4;` to
+// `repeated XMarketPair market_list = 4;`
+message XMarketPair {
+  string market_name = 1;
+  string symbol = 2;
+  string anchor = 3;
+  string price = 4;
+  string price_cny = 5;
+  string price_usd = 6;
+  string volume_24h_usd = 7;
+  string volume_24h = 8;
+  string volume_24h_from = 9;
+  string percent_change_utc0 = 10;
+  string alias = 11;
+}
+
+message XMarketPairData {
+  repeated XMarketPair market_list = 1;
+}
+
+message XMarketTickData {
+  int32 code = 1;
+  string message = 2;
+  int64 timestamp = 3;
+  XMarketPairData data = 4;
+}
+
+message XTokenTrendData {
+  int32 code = 1;
+  string message = 2;
+  XTrendData data = 3;
+
+  message XTrendData {
+    repeated XTrend trend = 1;
+  }
+
+  message XTrend {
+    int64 time = 1;
+    string price = 2;
+    double volume_to = 3;
+  }
+}
+
