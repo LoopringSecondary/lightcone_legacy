@@ -19,7 +19,7 @@ package org.loopring.lightcone.auxiliary.database
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.auxiliary.database.dals._
-import org.loopring.lightcone.lib.time.TimeProvider
+import org.loopring.lightcone.ethereum.time.TimeProvider
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 

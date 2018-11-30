@@ -21,7 +21,7 @@ import akka.http.scaladsl.model.{ HttpMethods, HttpRequest, HttpResponse, Status
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.loopring.lightcone.auxiliary.marketcap.util.{ HttpConnector, SignatureUtil }
-import org.loopring.lightcone.lib.cache.ProtoBufMessageCacher
+import org.loopring.lightcone.ethereum.cache.ProtoBufMessageCacher
 import org.loopring.lightcone.proto.auxiliary.XTokenTrendData.XTrend
 import org.loopring.lightcone.proto.auxiliary._
 import redis.RedisCluster

@@ -24,7 +24,7 @@ import akka.pattern._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.lib.data._
+import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.proto.actors._
 
 import scala.annotation.tailrec

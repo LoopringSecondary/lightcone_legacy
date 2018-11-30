@@ -22,7 +22,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.alpakka.slick.scaladsl.SlickSession
 import javax.inject.Inject
 import org.loopring.lightcone.auxiliary.marketcap.reader.TokenIcoInfoService
-import org.loopring.lightcone.lib.cache.ProtoBufMessageCacher
+import org.loopring.lightcone.ethereum.cache.ProtoBufMessageCacher
 import org.loopring.lightcone.proto.auxiliary.{ XGetTokenIcoInfoReq, XGetTokenIcoInfoRes, XTokenIcoInfo }
 import redis.RedisCluster
 

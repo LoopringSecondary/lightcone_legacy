@@ -22,7 +22,7 @@ import com.google.inject.{ AbstractModule, Provides, Singleton }
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.auxiliary.marketcap._
 import org.loopring.lightcone.auxiliary.marketcap.reader._
-import org.loopring.lightcone.lib.cache.RedisClusterProvider
+import org.loopring.lightcone.ethereum.cache.RedisClusterProvider
 import redis.RedisCluster
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
