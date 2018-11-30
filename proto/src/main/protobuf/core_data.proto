@@ -49,3 +49,34 @@ enum XMatchingFailure {
     MATCHING_ERR_INVALID_TAKER_ORDER = 6;
 }
 
+message XRawOrder {
+    int32  version      = 100;
+    string hash         = 1;
+    string owner        = 2;
+    string token_s      = 3;
+    string token_b      = 4;
+    string amount_s     = 5;
+    string amount_b     = 6;
+    int64  valid_since  = 7;
+    int64  valid_until  = 8;
+    bool   all_or_none  = 9;
+
+
+
+    string fee_token    = 10;
+    string fee_amount   = 11;
+    string signature        = 13;
+    string dual_auth_pub_key    = 14;
+    string dual_auth_priv_key   = 15;
+    string wallet_addr          = 16;
+    string broker_addr          = 17;
+    string fee_recipient_addr   = 18;
+    string order_interceptor    = 19;
+
+    int32 wallet_split_percentage = 101;
+    int32 token_s_fee_percentage = 102;
+    int32 token_b_fee_percentage = 103;
+}
+
+
+
