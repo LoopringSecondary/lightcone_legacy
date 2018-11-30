@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.auxiliary.marketcap
+package org.loopring.lightcone.actors.persistence.marketcap
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Timers}
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import org.loopring.lightcone.auxiliary.marketcap.crawler.TokenTrendCrawler
-import org.loopring.lightcone.proto.auxiliary._
+import org.loopring.lightcone.persistence.marketcap.crawler.TokenTrendCrawler
+import org.loopring.lightcone.proto.persistence._
 
 import scala.concurrent.duration._
 
