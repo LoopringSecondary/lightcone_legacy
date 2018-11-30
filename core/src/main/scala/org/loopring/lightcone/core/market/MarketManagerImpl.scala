@@ -150,7 +150,7 @@ class MarketManagerImpl(
           val maker = updateOrderMatchable(order)
 
           val matchResult =
-            if (dustOrderEvaluator.isMatchableDust(maker)) Left(ERROR_INCOME_TOO_SMALL)
+            if (dustOrderEvaluator.isMatchableDust(maker)) Left(MATCHING_ERR_INCOME_TOO_SMALL)
             else ringMatcher.matchOrders(taker, maker, minFiatValue)
 
           log.debug(
@@ -167,10 +167,10 @@ class MarketManagerImpl(
             ordersToAddBack :+= maker
             matchResult match {
               case Left(
-                ERROR_ORDERS_NOT_TRADABLE |
-                ERROR_TAKER_COMPLETELY_FILLED |
-                ERROR_INVALID_TAKER_ORDER |
-                ERROR_INVALID_MAKER_ORDER) ⇒ // stop redursive matching
+                MATCHING_ERR_ORDERS_NOT_TRADABLE |
+                MATCHING_ERR_TAKER_COMPLETELY_FILLED |
+                MATCHING_ERR_INVALID_TAKER_ORDER |
+                MATCHING_ERR_INVALID_MAKER_ORDER) ⇒ // stop redursive matching
 
               case Left(error) ⇒
                 recursivelyMatchOrders()
