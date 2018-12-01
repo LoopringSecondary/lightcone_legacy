@@ -60,7 +60,6 @@ message XSaveOrderPersistentReq {
 message XSaveOrderPersistentRes {
     XErrorCode code = 1;
     string order_hash = 2;
-    int64 id = 3;
 }
 
 message XGetRawOrderByHashReq {
@@ -93,6 +92,14 @@ message XGetRawOrdersReq {
 }
 
 message XGetRawOrdersRes {
+    repeated core.XRawOrder raw_orders = 1;
+}
+
+message XGetRawOrdersByHashReq {
+    repeated string order_hashes = 1;
+}
+
+message XGetRawOrdersByHashRes {
     repeated core.XRawOrder raw_orders = 1;
 }
 
@@ -150,7 +157,6 @@ message XSaveFillPersistenceReq {
 
 message XSaveFillPersistenceRes {
     XErrorCode code = 1;
-    repeated int64 ids = 2;
 }
 
 message XGetFillsReq {
@@ -186,6 +192,8 @@ message XRingPersistence {
     string delegate_address = 4;
     int32 trade_amount = 5;
     string miner = 6;
+//    bytes gas_price = 7;
+//    bytes gas_used = 8;
     int64 created_at = 7;
     int64 updated_at = 8;
     int64 block_no = 9;
@@ -193,12 +201,11 @@ message XRingPersistence {
 }
 
 message XSaveRingPersistenceReq {
-    XRingPersistence ring = 1;
+    repeated XRingPersistence ring = 1;
 }
 
 message XSaveRingPersistenceRes {
     XErrorCode code = 1;
-    int64 id = 2;
 }
 
 message XGetRingReq {
@@ -211,8 +218,9 @@ message XGetRingRes {
 }
 
 message XGetRingsReq {
-    int32 page_index = 1;
-    int32 page_size = 2;
+    string tx_hash = 1;
+    int32 page_index = 2;
+    int32 page_size = 3;
 }
 
 message XGetRingsRes {
