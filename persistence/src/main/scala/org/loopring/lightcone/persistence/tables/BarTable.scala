@@ -17,7 +17,7 @@
 package org.loopring.lightcone.persistence.table
 
 import slick.jdbc.MySQLProfile.api._
-import org.loopring.lightcone.proto.core.Bar
+import org.loopring.lightcone.proto.persistence.Bar
 
 class BarTable(tag: Tag)
   extends BaseTable[Bar](tag, "TABLE_BAR") {
