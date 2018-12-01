@@ -60,7 +60,7 @@ class OrderDatabaseAccessActor(databaseManager: OrderDatabaseManager)(
         case Right(xraworder) ⇒
           for {
             xraworder ← databaseManager.saveOrder(xraworder)
-            xorder: XOrder = xraworder
+            xorder: XOrderSnippet = xraworder
             _ = accountManagerRouter forward XSubmitOrderReq(Some(xorder))
           } yield Unit
       }

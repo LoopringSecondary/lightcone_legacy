@@ -28,7 +28,7 @@ class CoreActorsIntegrationSpec_CancelOrder
 
   "cancel an order to generate a cancel event" must {
     "received by marketManager, orderbookManager" in {
-      val order = XOrder(
+      val order = XOrderSnippet(
         id = "order",
         tokenS = WETH_TOKEN.address,
         tokenB = GTO_TOKEN.address,

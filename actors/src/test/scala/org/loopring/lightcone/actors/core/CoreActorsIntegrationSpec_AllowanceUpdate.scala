@@ -28,7 +28,7 @@ class CoreActorsIntegrationSpec_AllowanceUpdate
 
   "update allowance after submit an order" must {
     "received by marketManager, orderbookManager if the actual changed" in {
-      val order = XOrder(
+      val order = XOrderSnippet(
         id = "order",
         tokenS = WETH_TOKEN.address,
         tokenB = GTO_TOKEN.address,

@@ -104,7 +104,7 @@ class AccountManagerActor(
   }
 
   //todo:返回Future时，会有并发问题，需要处理下，暂时将recovery更改为同步
-  private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
+  private def submitOrder(xorder: XOrderSnippet): Future[XSubmitOrderRes] = {
     val order: Order = xorder
     for {
       _ ← getTokenManager(order.tokenS)
@@ -125,7 +125,7 @@ class AccountManagerActor(
       updatedOrders = orderPool.takeUpdatedOrdersAsMap()
       _ = assert(updatedOrders.contains(_order.id))
       order_ = updatedOrders(_order.id)
-      xorder_ : XOrder = order_.copy(_reserved = None, _outstanding = None)
+      xorder_ : XOrderSnippet = order_.copy(_reserved = None, _outstanding = None)
     } yield {
       if (successful) {
         log.debug(s"submitting order to market manager actor: $order_")
@@ -186,7 +186,7 @@ class AccountManagerActor(
     }
   }
 
-  protected def recoverOrder(xorder: XOrder) = {
+  protected def recoverOrder(xorder: XOrderSnippet) = {
     log.debug(s"recoverOrder, ${self.path.toString}, ${orderHistoryActor.path.toString}, ${xorder}")
     submitOrder(xorder)
   }

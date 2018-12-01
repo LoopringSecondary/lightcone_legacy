@@ -126,7 +126,7 @@ class SettlementActor(
     generateRingRec(rings, Seq.empty[Ring])
   }
 
-  private def convertToOrder(xOrder: XOrder): Order = {
+  private def convertToOrder(xOrder: XOrderSnippet): Order = {
     //todo:need to get From db
     Order(
       owner = "0x0",

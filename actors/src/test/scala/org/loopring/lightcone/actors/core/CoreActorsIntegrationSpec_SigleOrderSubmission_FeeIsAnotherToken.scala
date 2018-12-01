@@ -28,7 +28,7 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsAnotherToken
 
   "submit a single order" must {
     "succeed and make change to orderbook" in {
-      val order = XOrder(
+      val order = XOrderSnippet(
         id = "order",
         tokenS = WETH_TOKEN.address,
         tokenB = GTO_TOKEN.address,

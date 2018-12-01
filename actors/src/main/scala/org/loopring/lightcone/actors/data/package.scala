@@ -54,7 +54,7 @@ package object data {
       allowance = ba.allowance
     )
 
-  implicit def xOrder2Order(xorder: XOrder): Order =
+  implicit def xOrder2Order(xorder: XOrderSnippet): Order =
     Order(
       id = xorder.id,
       tokenS = xorder.tokenS,
@@ -71,8 +71,8 @@ package object data {
       _matchable = xorder.matchable.map(xorderState2OrderState),
     )
 
-  implicit def order2XOrder(order: Order): XOrder =
-    XOrder(
+  implicit def order2XOrder(order: Order): XOrderSnippet =
+    XOrderSnippet(
       id = order.id,
       tokenS = order.tokenS,
       tokenB = order.tokenB,
@@ -146,8 +146,8 @@ package object data {
       amountMargin = xExpectedFill.amountMargin
     )
 
-  implicit def xRawOrderToXOrder(xraworder: XRawOrder): XOrder =
-    XOrder(
+  implicit def xRawOrderToXOrder(xraworder: XRawOrder): XOrderSnippet =
+    XOrderSnippet(
       id = xraworder.hash,
       tokenS = xraworder.tokenS,
       tokenB = xraworder.tokenB,

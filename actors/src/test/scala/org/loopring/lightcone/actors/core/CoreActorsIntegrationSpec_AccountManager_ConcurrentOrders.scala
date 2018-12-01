@@ -42,7 +42,7 @@ class CoreActorsIntegrationSpec_AccountManager_ConcurrentOrders
       )
       accountManagerRecoveryActor ! XStart()
 
-      val order = XOrder(
+      val order = XOrderSnippet(
         id = "order",
         tokenS = WETH_TOKEN.address,
         tokenB = GTO_TOKEN.address,

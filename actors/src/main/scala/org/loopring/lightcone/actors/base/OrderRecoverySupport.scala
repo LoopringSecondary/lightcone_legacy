@@ -38,13 +38,13 @@ trait OrderRecoverySupport {
   protected def orderDatabaseAccessActor: ActorRef
 
   //暂时将recovery更改为同步的
-  protected def recoverOrder(xorder: XOrder): Future[Any]
+  protected def recoverOrder(xorder: XOrderSnippet): Future[Any]
 
   protected def functional: Receive
 
   private var lastUpdatdTimestamp: Long = 0
   private var recoverEnded: Boolean = false
-  private var xordersToRecover: Seq[XOrder] = Nil
+  private var xordersToRecover: Seq[XOrderSnippet] = Nil
 
   protected def startOrderRecovery() = {
     if (skipRecovery) {

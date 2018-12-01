@@ -28,7 +28,7 @@ message XOrderState {
     bytes amount_fee = 3;
 }
 
-message XOrder {
+message XOrderSnippet {
     string id = 1;
     string token_s = 2;
     string token_b = 3;
@@ -45,7 +45,7 @@ message XOrder {
 }
 
 message XExpectedFill {
-    XOrder order = 1;
+    XOrderSnippet order = 1;
     XOrderState pending = 2;
     bytes amount_margin = 3;
 }
@@ -102,12 +102,12 @@ message XSubmitRawOrderReq {
 }
 
 message XSubmitOrderReq {
-    XOrder order = 1;
+    XOrderSnippet order = 1;
 }
 
 message XSubmitOrderRes {
     XErrorCode error = 1;
-    XOrder order = 2;
+    XOrderSnippet order = 2;
 }
 
 message XAddressBalanceUpdated {

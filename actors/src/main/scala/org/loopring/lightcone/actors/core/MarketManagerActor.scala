@@ -117,7 +117,7 @@ class MarketManagerActor(
 
   }
 
-  private def submitOrder(xorder: XOrder): Future[Unit] = {
+  private def submitOrder(xorder: XOrderSnippet): Future[Unit] = {
     assert(xorder.actual.nonEmpty, "order in XSubmitOrderReq miss `actual` field")
     val order: Order = xorder
     xorder.status match {
@@ -165,5 +165,5 @@ class MarketManagerActor(
     }
   }
 
-  protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
+  protected def recoverOrder(xorder: XOrderSnippet): Future[Any] = submitOrder(xorder)
 }

@@ -28,7 +28,7 @@ class CoreActorsIntegrationSpec_BalanceUpdate
 
   "update balance after submit an order" must {
     "cancel order if balance < amount_s" in {
-      val order = XOrder(
+      val order = XOrderSnippet(
         id = "order",
         tokenS = WETH_TOKEN.address,
         tokenB = GTO_TOKEN.address,

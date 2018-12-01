@@ -28,7 +28,7 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
 
   "submiting two orders with exact the same price and amount" must {
     "generate ring then send events to settlement, orderbookManager, ethereum" in {
-      val maker1 = XOrder(
+      val maker1 = XOrderSnippet(
         id = "maker1",
         tokenS = WETH_TOKEN.address,
         tokenB = GTO_TOKEN.address,
@@ -43,7 +43,7 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
         actual = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
         matchable = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18)))
       )
-      val taker1 = XOrder(
+      val taker1 = XOrderSnippet(
         id = "taker1",
         tokenS = GTO_TOKEN.address,
         tokenB = WETH_TOKEN.address,
