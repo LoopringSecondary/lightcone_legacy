@@ -18,7 +18,7 @@ package org.loopring.lightcone.ethereum.data
 
 import org.loopring.lightcone.proto.core._
 
-trait LoopringOrderValidator {
-  def calculateOrderHash(order: LoopringOrder): String
-  def validate(order: LoopringOrder): Either[XOrderValidationError, LoopringOrder]
+trait XRawOrderValidator {
+  def calculateOrderHash(order: XRawOrder): String
+  def validate(order: XRawOrder): Either[XOrderValidationError, XRawOrder]
 }

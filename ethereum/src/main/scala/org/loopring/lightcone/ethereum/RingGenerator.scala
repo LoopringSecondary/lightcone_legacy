@@ -18,6 +18,6 @@ package org.loopring.lightcone.ethereum.data
 
 import org.loopring.lightcone.proto.core._
 
-trait LoopringRingGenerator {
-  def createRing(orders: Seq[LoopringOrder]): LoopringRing
+trait RingGenerator {
+  def createRings(orders: Seq[Seq[XRawOrder]]): XRingBatch
 }
