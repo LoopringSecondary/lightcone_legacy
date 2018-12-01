@@ -139,3 +139,4 @@ message XRingBatch {
     string hash                     = 7;
     string transaction_origin       = 8;
 }
+
