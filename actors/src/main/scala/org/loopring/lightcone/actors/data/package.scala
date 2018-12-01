@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core._
 import com.google.protobuf.ByteString
 
 package object data {
@@ -88,7 +89,7 @@ package object data {
       outstanding = order._outstanding.map(orderState2XOrderState),
       reserved = order._reserved.map(orderState2XOrderState),
       actual = order._actual.map(orderState2XOrderState),
-      matchable = order._matchable.map(orderState2XOrderState),
+      matchable = order._matchable.map(orderState2XOrderState)
     )
 
   implicit def xorderState2OrderState(xOrderState: XOrderState): OrderState =
