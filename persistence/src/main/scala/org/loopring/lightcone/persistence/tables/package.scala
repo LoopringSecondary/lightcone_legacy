@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.persistence
 
-option java_multiple_files = true;
-option java_package = "org.loopring.lightcone.gateway";
-package org.loopring.lightcone.gateway;
+import slick.jdbc.H2Profile.api._
+
+package object table {
+  val bars = TableQuery[BarTable]
+
+  val schema = bars.schema //++ suppliers.schema
+}

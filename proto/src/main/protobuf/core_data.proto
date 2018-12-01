@@ -49,3 +49,9 @@ enum XMatchingFailure {
     MATCHING_ERR_INVALID_TAKER_ORDER = 6;
 }
 
+message Bar {
+    string a = 1;
+    string b = 2;
+    string c = 3;
+    int64 d = 4;
+}

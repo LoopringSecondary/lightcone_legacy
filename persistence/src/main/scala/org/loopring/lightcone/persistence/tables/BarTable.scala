@@ -14,8 +14,26 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.persistence.table
 
-option java_multiple_files = true;
-option java_package = "org.loopring.lightcone.gateway";
-package org.loopring.lightcone.gateway;
+import slick.jdbc.MySQLProfile.api._
+import org.loopring.lightcone.proto.core.Bar
+
+class BarTable(tag: Tag)
+  extends BaseTable[Bar](tag, "TABLE_BAR") {
+
+  def a = column[String]("A", O.SqlType("VARCHAR(64)"), O.PrimaryKey)
+  def b = columnAddress("B")
+  def c = columnAmount("C")
+  def d = column[Long]("D")
+
+  // indexes
+  def idx_c = index("idx_c", (c), unique = false)
+
+  def * = (
+    a,
+    b,
+    c,
+    d
+  ) <> ((Bar.apply _).tupled, Bar.unapply)
+}
