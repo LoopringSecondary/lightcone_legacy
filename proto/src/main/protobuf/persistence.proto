@@ -23,19 +23,146 @@ import "core_data.proto";
 import "core_messages.proto";
 import "actors_core.proto";
 
-enum OrderType {
-    BUY = 0;
-    SELL = 1;
+enum XOrderSide {
+    ORDER_SIDE_BUY = 0;
+    ORDER_SIDE_SELL = 1;
 }
 
-message Order {
-    int64 id = 1;
-    string hash = 2;
-    string owner = 3;
-    string delegateAddress = 4;
-    string side = 5;
-    OrderType orderType = 6;
-    core.XMarketId market = 7;
-    core.XOrderStatus status = 8;
+enum XOrderType {
+    ORDER_TYPE_MARKET = 0;
+    ORDER_TYPE_P2P = 1;
+}
 
+message XOrderPersistent {
+    /* copy from core.XRawOrder */
+    int32  version      = 1;
+
+    // required fields
+    string owner        = 2;
+    string token_s      = 3;
+    string token_b      = 4;
+    bytes  amount_s     = 5;
+    bytes  amount_b     = 6;
+    int32  valid_since  = 7; // in seconds
+
+    // optional fields
+    string dual_auth_addr          = 20;
+    string broker                  = 21;
+    string order_interceptor       = 22;
+    string wallet                  = 23;
+    int32  valid_until             = 24; // in seconds
+    string sig                     = 25;
+    string dual_auth_sig           = 26;
+    bool   all_or_none             = 27;
+    string fee_token               = 28;
+    bytes  fee_amount              = 29;
+    int32  waive_fee_percentage    = 30;
+    int32  token_s_fee_percentage  = 31;
+    int32  token_b_fee_percentage  = 32;
+    string token_recipient         = 33;
+    int32  wallet_split_percentage = 34;
+
+
+    // ERC1400 support:
+    core.XTokenStandard token_standard_s   = 50;
+    core.XTokenStandard token_standard_b   = 51;
+    core.XTokenStandard token_standard_fee = 52;
+
+    string    tranche_s         = 53;
+    string    tranche_b         = 54;
+    string    transfer_data_s   = 55;
+
+    // The following fieds are not part of Loopring's order definition but
+    // will be provided as metadata
+
+    string hash                 = 100;
+    int64 created_at            = 101;
+    int64 updated_at            = 102;
+    int64 matched_at            = 103;
+    int64 updated_at_block      = 104;
+    core.XOrderStatus status         = 105;
+
+    bytes actual_amount_s       = 200;
+    bytes actual_amount_b       = 201;
+    bytes actual_amount_fee     = 202;
+    bytes matchable_amount_s    = 203;
+    bytes matchable_amount_b    = 204;
+    bytes matchable_amount_fee  = 205;
+
+    /* additional data */
+    int64 id                  = 300;
+    XOrderSide side           = 301;
+    XOrderType orderType      = 302;
+    core.XMarketId market     = 303;
+    actors.XOrderState outstanding   = 304;
+    actors.XOrderState reserved      = 305;
+    actors.XOrderState actual        = 306;
+    actors.XOrderState matchable     = 307;
+}
+
+enum XErrorCode {
+    DB_SUCC = 0;
+    DB_DUMPLICATE = 1;
+}
+
+message XSaveDbOrderReq {
+    XOrderPersistent order = 1;
+}
+
+message XSaveOrderRes {
+    XErrorCode code = 1;
+    string orderHash = 2;
+    int64 id = 3;
+}
+
+message XGetRawOrderByHashReq {
+    string hash = 1;
+}
+
+message XGetRawOrderByHashRes {
+    core.XRawOrder rawOrder = 1;
+}
+
+message XGetRawOrdersReq {
+    string owner = 1;
+    string orderHash = 2;
+    string delegateAddress = 3;
+    XOrderSide side = 4;
+    XOrderType orderType = 5;
+    core.XMarketId market = 6;
+    int32 pageIndex = 7;
+    int32 pageSize = 8;
+}
+
+message XGetRawOrdersRes {
+    repeated core.XRawOrder rawOrders = 1;
+}
+
+message XUpdateOrderStateReq {
+    string orderHash = 1;
+    actors.XOrderState outstanding = 2;
+    actors.XOrderState reserved = 3;
+    actors.XOrderState actual = 4;
+    actors.XOrderState matchable = 5;
+    core.XOrderStatus status = 6;
+}
+
+message XUpdateOrderStateRes {
+    XErrorCode code = 1;
+}
+
+message XUpdateOrderStatusReq {
+    string orderHash = 1;
+    core.XOrderStatus status = 2;
+}
+
+message XUpdateOrderStatusRes {
+    XErrorCode code = 1;
+}
+
+message Bar {
+    string a = 1;
+    string b = 2;
+    string c = 3;
+    int64 d = 4;
 }

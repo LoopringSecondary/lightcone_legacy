@@ -14,26 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.table
+package org.loopring.lightcone.ethereum.data
 
-import slick.jdbc.MySQLProfile.api._
-import org.loopring.lightcone.proto.persistence.Bar
+import org.loopring.lightcone.proto.core._
 
-class BarTable(tag: Tag)
-  extends BaseTable[Bar](tag, "TABLE_BAR") {
+trait RingBatchGenerator {
+  def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch
+}
 
-  def a = column[String]("A", O.SqlType("VARCHAR(64)"), O.PrimaryKey)
-  def b = columnAddress("B")
-  def c = columnAmount("C")
-  def d = column[Long]("D")
-
-  // indexes
-  def idx_c = index("idx_c", (c), unique = false)
-
-  def * = (
-    a,
-    b,
-    c,
-    d
-  ) <> ((Bar.apply _).tupled, Bar.unapply)
+// TODO(kongliang): implement and test this class
+class RingBatchGeneratorImpl()
+  extends RingBatchGenerator {
+  def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch = ???
 }

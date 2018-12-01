@@ -11,6 +11,7 @@ lazy val proto = (project in file("proto"))
 lazy val ethereum = (project in file("ethereum"))
   .enablePlugins(JavaAppPackaging)
   .enablePlugins(AutomateHeaderPlugin)
+  .dependsOn(proto)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Ethereum)
