@@ -49,9 +49,78 @@ enum XMatchingFailure {
     MATCHING_ERR_INVALID_TAKER_ORDER = 6;
 }
 
-message Bar {
-    string a = 1;
-    string b = 2;
-    string c = 3;
-    int64 d = 4;
+enum XOrderValidationError {
+    ORDER_VALIDATION_ERR_NONE = 0;
+}
+
+enum TokenType {
+    ERC20   = 0;
+    ERC1400 = 1;
+}
+
+// use string to represent big0numbers and addresses
+message LoopringOrder {
+    int32  version      = 1;
+
+    // required fields
+    string owner        = 2;
+    string token_s      = 3;
+    string token_b      = 4;
+    string amount_s     = 5;
+    string amount_b     = 6;
+    int32  valid_since  = 7; // in seconds
+
+    // optional fields
+    string dual_auth_addr          = 20;
+    string broker                  = 21;
+    string order_interceptor       = 22;
+    string wallet                  = 23;
+    int32  valid_until             = 24; // in seconds
+    string sig                     = 25;
+    string dual_auth_sig           = 26;
+    bool   all_or_none             = 27;
+    string fee_token               = 28;
+    string fee_amount              = 29;
+    int32  waive_fee_percentage    = 30;
+    int32  token_s_fee_percentage  = 31;
+    int32  token_b_fee_percentage  = 32;
+    string token_recipient         = 33;
+    int32  wallet_split_percentage = 34;
+
+    // ERC1400 support:
+    TokenType token_type_s    = 50;
+    TokenType token_type_b    = 51;
+    TokenType token_type_fee  = 52;
+    string    tranche_s       = 53;
+    string    tranche_b       = 54;
+    string    transfer_data_s = 55;
+
+    // The following fieds are not part of Loopring's order definition but
+    // will be provided as metadata
+    int64 created_at = 101;
+    int64 updated_at = 102;
+    int64 matched_at = 103;
+    int64 updated_at_block = 104;
+}
+
+message LoopringRing {
+    repeated int32 order_indexes = 1;
+}
+
+enum SignAlgorithm {
+    ETHEREUM = 0;
+    EIP712   = 1;
+    
+    NONE     = 15;
+}
+
+message LoopringRings {
+    string fee_recipient          = 1;
+    string miner                  = 2;
+    string sig                    = 3;
+    repeated LoopringRing rings   = 4;
+    repeated LoopringOrder orders = 5;
+    SignAlgorithm sign_algorithm  = 6;
+    string hash                   = 7;
+    string transaction_origin     = 8;
 }
