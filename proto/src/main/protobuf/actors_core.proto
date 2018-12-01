@@ -265,3 +265,40 @@ message XPersistOrderHistoryReq {
 }
 
 message XPersistOrderHistoryRes {}
+
+/// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
+/// 解析合约事件得到下面的数据：
+message XOrderFilled {
+    string order_hash = 1;
+    bytes  filled     = 2;
+}
+
+message XOrderCancelled {
+    string order_owner = 1;
+    string order_hash  = 2;
+    bool   cancelled   = 3;
+}
+
+message XCutoffs {
+    string broker = 1;
+    int32  cutoff = 2; // in seconds.
+}
+
+message XOwnerCutoffs {
+    string broker = 1;
+    string owner  = 2;
+    int32  cutoff = 3; // in seconds.
+}
+
+message XTradingPairCutoffs {
+    string broker       = 1;
+    string trading_pair = 2;
+    int32  cutoff       = 3; // in seconds.
+}
+
+message XOwnerTradingPairCutoffs {
+    string broker       = 1;
+    string owner        = 2;
+    string trading_pair = 3;
+    int32  cutoff       = 4; // in seconds.
+}
