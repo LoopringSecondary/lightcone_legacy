@@ -95,9 +95,9 @@ message XRawOrder {
 
 
     // ERC1400 support:
-    TokenStandard token_type_s   = 50;
-    TokenStandard token_type_b   = 51;
-    TokenStandard token_type_fee = 52;
+    TokenStandard token_standard_s   = 50;
+    TokenStandard token_standard_b   = 51;
+    TokenStandard token_standard_fee = 52;
 
     string    tranche_s         = 53;
     string    tranche_b         = 54;
