@@ -22,6 +22,6 @@ package org.loopring.lightcone.proto.persistence;
 message Bar {
     string a = 1;
     string b = 2;
-    string c = 3;
+    bytes c = 3;
     int64 d = 4;
 }

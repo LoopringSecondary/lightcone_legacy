@@ -18,6 +18,7 @@ package org.loopring.lightcone.persistence.table
 
 import slick.jdbc.MySQLProfile.api._
 import slick.ast.ColumnOption
+import com.google.protobuf.ByteString
 
 abstract class BaseTable[T](tag: Tag, name: String)
   extends Table[T](tag, name) {
@@ -28,6 +29,12 @@ abstract class BaseTable[T](tag: Tag, name: String)
   def columnAddress(name: String, options: ColumnOption[String]*) =
     column[String](name, (Seq(O.SqlType("VARCHAR(64)")) ++ options): _*)
 
-  def columnAmount(name: String, options: ColumnOption[String]*) =
-    column[String](name, (Seq(O.SqlType("VARCHAR(64)")) ++ options): _*)
+  def columnAmount(name: String, options: ColumnOption[ByteString]*) =
+    column[ByteString](name, options: _*)
+
+  implicit val boolColumnType: BaseColumnType[ByteString] =
+    MappedColumnType.base[ByteString, String](
+      bs ⇒ bs.toString,
+      str ⇒ ByteString.copyFrom(str.getBytes)
+    )
 }
