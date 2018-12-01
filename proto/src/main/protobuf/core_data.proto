@@ -55,3 +55,32 @@ message Bar {
     string c = 3;
     int64 d = 4;
 }
+
+message XRawOrder {
+  string owner = 1;
+  string token_s = 2;
+  string token_b = 3;
+  bytes amount_s = 4;
+  bytes amount_b = 5;
+  int64 valid_since = 6;
+  bool all_or_none = 7;
+  string fee_token = 8;
+  bytes fee_amount = 9;
+  string sig = 10;
+  string dual_auth_sig = 11;
+  string hash = 12;
+  string valid_until = 13;
+  string wallet = 14;
+  string dual_auth_address = 15;
+  string broker = 16;
+  string order_interceptor = 17;
+  int32 version = 18;
+  int32 wallet_split_percentage = 19;
+  int32 token_s_fee_percentage = 20;
+  int32 token_b_fee_percentage = 21;
+  int32 waive_fee_percentage = 22;
+  bytes token_spendable_s = 23;
+  bytes token_spendable_fee = 24;
+  bytes broker_spendable_s = 25;
+  bytes broker_spendable_fee = 26;
+}
