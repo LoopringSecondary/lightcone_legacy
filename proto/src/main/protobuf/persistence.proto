@@ -18,3 +18,24 @@ syntax = "proto3";
 
 option java_multiple_files = true;
 package org.loopring.lightcone.proto.persistence;
+
+import "core_data.proto";
+import "core_messages.proto";
+import "actors_core.proto";
+
+enum OrderType {
+    BUY = 0;
+    SELL = 1;
+}
+
+message Order {
+    int64 id = 1;
+    string hash = 2;
+    string owner = 3;
+    string delegateAddress = 4;
+    string side = 5;
+    OrderType orderType = 6;
+    core.XMarketId market = 7;
+    core.XOrderStatus status = 8;
+
+}
