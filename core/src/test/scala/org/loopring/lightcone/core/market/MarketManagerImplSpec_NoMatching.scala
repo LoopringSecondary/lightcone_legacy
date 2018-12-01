@@ -29,7 +29,7 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     (fakeDustOrderEvaluator.isOriginalDust _).when(order).returns(true)
 
     val result = marketManager.submitOrder(order, 0)
-    result should be(emptyMatchingResult(order, DUST_ORDER))
+    result should be(emptyMatchingResult(order, STATUS_DUST_ORDER))
 
     noMatchingActivity()
   }
@@ -40,7 +40,7 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     (fakeDustOrderEvaluator.isActualDust _).when(order).returns(true)
 
     val result = marketManager.submitOrder(order, 0)
-    result should be(emptyMatchingResult(order, COMPLETELY_FILLED))
+    result should be(emptyMatchingResult(order, STATUS_COMPLETELY_FILLED))
 
     noMatchingActivity()
   }
@@ -53,10 +53,10 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     var result = marketManager.submitOrder(order1, 0)
-    result should be(emptyMatchingResult(order1, PENDING))
+    result should be(emptyMatchingResult(order1, STATUS_PENDING))
 
     result = marketManager.submitOrder(order2, 0)
-    result should be(emptyMatchingResult(order2, PENDING))
+    result should be(emptyMatchingResult(order2, STATUS_PENDING))
 
     noMatchingActivity()
 
@@ -65,12 +65,12 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     marketManager.getNumOfOrders() should be(2)
 
     marketManager.getSellOrders(3) should be(Seq(
-      order1.copy(status = PENDING),
-      order2.copy(status = PENDING)
+      order1.copy(status = STATUS_PENDING),
+      order2.copy(status = STATUS_PENDING)
     ))
 
     marketManager.getSellOrders(1) should be(Seq(
-      order1.copy(status = PENDING)
+      order1.copy(status = STATUS_PENDING)
     ))
 
     marketManager.getBuyOrders(100) should be(Nil)
@@ -84,10 +84,10 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     var result = marketManager.submitOrder(order1, 0)
-    result should be(emptyMatchingResult(order1, PENDING))
+    result should be(emptyMatchingResult(order1, STATUS_PENDING))
 
     result = marketManager.submitOrder(order2, 0)
-    result should be(emptyMatchingResult(order2, PENDING))
+    result should be(emptyMatchingResult(order2, STATUS_PENDING))
 
     noMatchingActivity()
 
@@ -96,12 +96,12 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     marketManager.getNumOfOrders() should be(2)
 
     marketManager.getBuyOrders(3) should be(Seq(
-      order2.copy(status = PENDING),
-      order1.copy(status = PENDING)
+      order2.copy(status = STATUS_PENDING),
+      order1.copy(status = STATUS_PENDING)
     ))
 
     marketManager.getBuyOrders(1) should be(Seq(
-      order2.copy(status = PENDING)
+      order2.copy(status = STATUS_PENDING)
     ))
 
     marketManager.getSellOrders(100) should be(Nil)

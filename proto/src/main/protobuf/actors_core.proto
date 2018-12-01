@@ -19,7 +19,8 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto.actors;
 
-import "core.proto";
+import "core_data.proto";
+import "core_messages.proto";
 
 message XOrderState {
     bytes amount_s = 1;

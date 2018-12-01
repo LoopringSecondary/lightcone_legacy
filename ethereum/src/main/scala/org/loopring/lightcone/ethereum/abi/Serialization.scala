@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum
+package org.loopring.lightcone.ethereum.abi
 
-import java.sql.Timestamp
-import org.joda.time.Period
+object Serialization {
 
-package object time {
-  implicit class RichSqlTimestamp(timestamp: Timestamp) {
-    def +(millis: Long) = new Timestamp(timestamp.getTime + millis)
-    def -(millis: Long) = new Timestamp(timestamp.getTime - millis)
-
-    def +(p: Period) = new Timestamp(timestamp.getTime + p.getMillis)
-    def -(p: Period) = new Timestamp(timestamp.getTime - p.getMillis)
-  }
+  //  def serialize[T](t: T{def unapply(): Option[]})(implicit mf: Manifest[T]): Seq[Object] = {
+  //    val argsIdx = getContractAnnontationIdx[T]()
+  //    val rm = runtimeMirror(this.getClass.getClassLoader)
+  //    val reflectT = rm.reflect(t)
+  //    t.def unapply(arg: Serialization): Option[] =
+  //    return Seq()
+  //  }
 }

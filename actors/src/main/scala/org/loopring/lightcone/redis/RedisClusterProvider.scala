@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.cache
+package org.loopring.lightcone.actors.redis
 
 import collection.JavaConverters._
 import akka.actor.ActorSystem

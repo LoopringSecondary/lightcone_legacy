@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.time
+package org.loopring.lightcone.persistence.table
 
-import java.sql.Timestamp
+import slick.jdbc.MySQLProfile.api._
+import org.loopring.lightcone.proto.core.Bar
 
-trait TimeProvider {
-  def getTimeMillis: Long
-  def getTimeSeconds: Long = getTimeMillis / 1000
-  def getTimestamp = new Timestamp(getTimeMillis)
-}
+class BarTable(tag: Tag)
+  extends BaseTable[Bar](tag, "TABLE_BAR") {
 
-final class SystemTimeProvider extends TimeProvider {
-  def getTimeMillis = System.currentTimeMillis()
-}
+  def a = column[String]("A", O.SqlType("VARCHAR(64)"), O.PrimaryKey)
+  def b = columnAddress("B")
+  def c = columnAmount("C")
+  def d = column[Long]("D")
 
-final class DifferenceAssuredSystemTimeProvider extends TimeProvider {
-  private var lastTimestamp = 0L
+  // indexes
+  def idx_c = index("idx_c", (c), unique = false)
 
-  def getTimeMillis = {
-    val now = System.currentTimeMillis
-    if (now > lastTimestamp) lastTimestamp = now
-    else lastTimestamp += 1
-
-    lastTimestamp
-  }
+  def * = (
+    a,
+    b,
+    c,
+    d
+  ) <> ((Bar.apply _).tupled, Bar.unapply)
 }

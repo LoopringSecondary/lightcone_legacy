@@ -41,5 +41,4 @@ case class Ring(
   def getInputData()(implicit serializer: RingSerializer) = {
     serializer.serialize(this)
   }
-
 }

@@ -23,7 +23,6 @@ import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.deployment.XStart
 import akka.pattern._
 
 import scala.concurrent.Await
@@ -52,7 +51,7 @@ class CoreActorsIntegrationSpec_AccountManager_ConcurrentOrders
         amountB = "10000".zeros(18),
         amountFee = "10".zeros(18),
         walletSplitPercentage = 0.2,
-        status = XOrderStatus.NEW
+        status = XOrderStatus.STATUS_NEW
       )
 
       (0 until 100) foreach {

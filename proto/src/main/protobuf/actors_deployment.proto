@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.time
+syntax = "proto3";
 
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
+option java_multiple_files = true;
+package org.loopring.lightcone.proto.actors;
 
-trait TimeFormatter {
-  def format(timeMillis: Long): String
-  def format(timestamp: Timestamp): String = format(timestamp.getTime)
+import "google/protobuf/any.proto";
+
+message XNodeDeploymentSettings {
+    message XActorSettings {
+        bool is_singleton = 1;
+        repeated string roles = 2;
+        int32 num_of_instances = 3;
+    }
+
+    map<string, XActorSettings> settings_map = 1;
 }
 
-final class SimpleTimeFormatter extends TimeFormatter {
-  private val simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-
-  def format(timeMillis: Long) = simpleDateFormat.format(timeMillis)
-}
+message XStart{}
+message XStop{}

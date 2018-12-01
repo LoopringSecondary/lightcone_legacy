@@ -27,7 +27,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     val order = sellDAI(100, 1)
     submitOrder(order) should be(false)
     orderPool.size should be(0)
-    updatedOrders(order.id).status should be(XOrderStatus.CANCELLED_LOW_BALANCE)
+    updatedOrders(order.id).status should be(XOrderStatus.STATUS_CANCELLED_LOW_BALANCE)
   }
 
   "submit order" should "fail when tokenFee balance is low" in {
@@ -35,7 +35,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     val order = sellDAI(100, 1000, 10)
     submitOrder(order) should be(false)
     orderPool.size should be(0)
-    updatedOrders(order.id).status should be(XOrderStatus.CANCELLED_LOW_FEE_BALANCE)
+    updatedOrders(order.id).status should be(XOrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE)
   }
 
   "submit order" should "succeed when order consumes all tokenS but only part of tokenFee" in {
@@ -92,7 +92,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     val order = sellDAI(0, 1000, 20)
     submitOrder(order) should be(false)
     orderPool.size should be(0)
-    updatedOrders(order.id).status should be(XOrderStatus.INVALID_DATA)
+    updatedOrders(order.id).status should be(XOrderStatus.STATUS_INVALID_DATA)
   }
 
   "submit order" should "fail if tokenS is not supported" in {
@@ -101,7 +101,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     val order = new Order("id", "XYZ", WETH, LRC, BigInt(10), BigInt(10), BigInt(10))
     submitOrder(order) should be(false)
     orderPool.size should be(0)
-    updatedOrders(order.id).status should be(XOrderStatus.UNSUPPORTED_MARKET)
+    updatedOrders(order.id).status should be(XOrderStatus.STATUS_UNSUPPORTED_MARKET)
   }
 
   "submit order" should "fail if tokenFee is not supported" in {
@@ -110,6 +110,6 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     val order = Order("id", DAI, WETH, "XYZ", BigInt(10), BigInt(10), BigInt(10))
     submitOrder(order) should be(false)
     orderPool.size should be(0)
-    updatedOrders(order.id).status should be(XOrderStatus.UNSUPPORTED_MARKET)
+    updatedOrders(order.id).status should be(XOrderStatus.STATUS_UNSUPPORTED_MARKET)
   }
 }

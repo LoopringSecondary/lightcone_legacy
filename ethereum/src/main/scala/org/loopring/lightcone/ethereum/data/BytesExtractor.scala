@@ -15,6 +15,7 @@
  */
 
 package org.loopring.lightcone.ethereum.data
+
 import org.web3j.utils.Numeric
 
 class BytesExtractor(x: String) {

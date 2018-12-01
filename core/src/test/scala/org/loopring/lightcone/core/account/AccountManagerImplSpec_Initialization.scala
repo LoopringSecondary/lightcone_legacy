@@ -34,7 +34,7 @@ class AccountManagerImplSpec_Initialization extends OrderAwareSpec {
     updatedOrders.size should be(6)
 
     updatedOrders foreach {
-      case (id, order) ⇒ order.status should be(XOrderStatus.CANCELLED_LOW_BALANCE)
+      case (id, order) ⇒ order.status should be(XOrderStatus.STATUS_CANCELLED_LOW_BALANCE)
     }
   }
 
@@ -51,7 +51,7 @@ class AccountManagerImplSpec_Initialization extends OrderAwareSpec {
     updatedOrders.size should be(6)
 
     updatedOrders foreach {
-      case (id, order) ⇒ order.status should be(XOrderStatus.CANCELLED_LOW_FEE_BALANCE)
+      case (id, order) ⇒ order.status should be(XOrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE)
     }
   }
 
@@ -68,7 +68,7 @@ class AccountManagerImplSpec_Initialization extends OrderAwareSpec {
 
     updatedOrders foreach {
       case (id, order) ⇒
-        order.status should be(XOrderStatus.PENDING)
+        order.status should be(XOrderStatus.STATUS_PENDING)
         order.reserved should be(orderState(0, 0, 0))
         order.actual should be(orderState(0, 0, 0))
     }
@@ -88,7 +88,7 @@ class AccountManagerImplSpec_Initialization extends OrderAwareSpec {
 
     updatedOrders foreach {
       case (id, order) ⇒
-        order.status should be(XOrderStatus.PENDING)
+        order.status should be(XOrderStatus.STATUS_PENDING)
         order.reserved should be(orderState(100, 0, 0))
         order.actual should be(orderState(0, 0, 0))
     }

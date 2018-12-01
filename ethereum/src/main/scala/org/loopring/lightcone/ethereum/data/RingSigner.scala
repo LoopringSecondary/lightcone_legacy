@@ -18,6 +18,13 @@ package org.loopring.lightcone.ethereum.data
 
 trait RingSigner {
   def getInputData(ring: Ring): String
-  def getSignedTxData(inputData: String, nonce: BigInt, gasLimit: BigInt, gasPrice: BigInt): Array[Byte]
+
+  def getSignedTxData(
+    inputData: String,
+    nonce: BigInt,
+    gasLimit: BigInt,
+    gasPrice: BigInt
+  ): Array[Byte]
+
   def getSignerAddress(): String
 }

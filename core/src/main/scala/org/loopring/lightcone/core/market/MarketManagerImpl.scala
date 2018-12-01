@@ -125,17 +125,17 @@ class MarketManagerImpl(
     if (dustOrderEvaluator.isOriginalDust(order)) {
       MatchResult(
         Nil,
-        order.copy(status = DUST_ORDER),
+        order.copy(status = STATUS_DUST_ORDER),
         XOrderbookUpdate(Nil, Nil)
       )
     } else if (dustOrderEvaluator.isActualDust(order)) {
       MatchResult(
         Nil,
-        order.copy(status = COMPLETELY_FILLED),
+        order.copy(status = STATUS_COMPLETELY_FILLED),
         XOrderbookUpdate(Nil, Nil)
       )
     } else {
-      var taker = order.copy(status = PENDING)
+      var taker = order.copy(status = STATUS_PENDING)
       var rings = Seq.empty[OrderRing]
       var ordersToAddBack = Seq.empty[Order]
 
@@ -150,7 +150,7 @@ class MarketManagerImpl(
           val maker = updateOrderMatchable(order)
 
           val matchResult =
-            if (dustOrderEvaluator.isMatchableDust(maker)) Left(INCOME_TOO_SMALL)
+            if (dustOrderEvaluator.isMatchableDust(maker)) Left(MATCHING_ERR_INCOME_TOO_SMALL)
             else ringMatcher.matchOrders(taker, maker, minFiatValue)
 
           log.debug(
@@ -163,14 +163,14 @@ class MarketManagerImpl(
         } match {
           case None ⇒ // to maker to trade with
           case Some((maker, matchResult)) ⇒
-            // we alsways need to add maker back even if it is PENDING-fully-matched.
+            // we alsways need to add maker back even if it is STATUS_PENDING-fully-matched.
             ordersToAddBack :+= maker
             matchResult match {
               case Left(
-                ORDERS_NOT_TRADABLE |
-                TAKER_COMPLETELY_FILLED |
-                INVALID_TAKER_ORDER |
-                INVALID_MAKER_ORDER) ⇒ // stop redursive matching
+                MATCHING_ERR_ORDERS_NOT_TRADABLE |
+                MATCHING_ERR_TAKER_COMPLETELY_FILLED |
+                MATCHING_ERR_INVALID_TAKER_ORDER |
+                MATCHING_ERR_INVALID_MAKER_ORDER) ⇒ // stop redursive matching
 
               case Left(error) ⇒
                 recursivelyMatchOrders()
@@ -186,7 +186,7 @@ class MarketManagerImpl(
 
       recursivelyMatchOrders()
 
-      // we alsways need to add the taker back even if it is PENDING-fully-matched.
+      // we alsways need to add the taker back even if it is STATUS_PENDING-fully-matched.
       ordersToAddBack :+= taker
 
       // add each skipped maker orders back

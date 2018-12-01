@@ -54,29 +54,29 @@ final private[core] class AccountManagerImpl()(
     )
 
     if (order.amountS <= 0) {
-      orderPool += order.as(INVALID_DATA)
+      orderPool += order.as(STATUS_INVALID_DATA)
       return false
     }
 
     if (!tokens.contains(order.tokenS) ||
       !tokens.contains(order.tokenFee)) {
-      orderPool += order.as(UNSUPPORTED_MARKET)
+      orderPool += order.as(STATUS_UNSUPPORTED_MARKET)
       return false
     }
 
     if (order.callOnTokenS(_.hasTooManyOrders) ||
       order.callOnTokenFee(_.hasTooManyOrders)) {
-      orderPool += order.as(CANCELLED_TOO_MANY_ORDERS)
+      orderPool += order.as(STATUS_CANCELLED_TOO_MANY_ORDERS)
       return false
     }
 
-    orderPool += order.as(NEW)
+    orderPool += order.as(STATUS_NEW)
 
     if (order.callOnTokenSAndTokenFee(_.reserve(order.id))) {
       return false
     }
 
-    orderPool += orderPool(order.id).copy(status = PENDING)
+    orderPool += orderPool(order.id).copy(status = STATUS_PENDING)
     return true
   }
 
@@ -85,7 +85,7 @@ final private[core] class AccountManagerImpl()(
       case None ⇒ false
       case Some(order) ⇒
         orderPool.getOrder(orderId) map { order ⇒
-          orderPool += order.as(CANCELLED_BY_USER)
+          orderPool += order.as(STATUS_CANCELLED_BY_USER)
         }
 
         order.callOnTokenSAndTokenFee(_.release(order.id))

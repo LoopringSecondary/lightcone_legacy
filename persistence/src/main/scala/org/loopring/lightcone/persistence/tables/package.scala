@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum
+package org.loopring.lightcone.persistence
 
-package object cache {
-  type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
+import slick.jdbc.H2Profile.api._
+
+package object table {
+  val bars = TableQuery[BarTable]
+
+  val schema = bars.schema //++ suppliers.schema
 }

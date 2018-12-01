@@ -36,7 +36,7 @@ class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
       (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
       val result = marketManager.submitOrder(order, 0)
-      result should be(emptyMatchingResult(order, PENDING))
+      result should be(emptyMatchingResult(order, STATUS_PENDING))
       marketManager.getNumOfSellOrders() should be(1)
 
       marketManager.cancelOrder(order.id) should be(Some(XOrderbookUpdate()))
