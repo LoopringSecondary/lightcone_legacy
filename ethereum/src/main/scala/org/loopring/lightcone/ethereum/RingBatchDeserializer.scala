@@ -18,6 +18,6 @@ package org.loopring.lightcone.ethereum.data
 
 import org.loopring.lightcone.proto.core._
 
-trait RingGenerator {
-  def createRings(orders: Seq[Seq[XRawOrder]]): XRingBatch
+trait RingBatchDeserializer {
+  def deserialize(encoded: String): Either[XDeserializationError, XRingBatch]
 }

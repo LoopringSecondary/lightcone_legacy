@@ -18,7 +18,12 @@ package org.loopring.lightcone.ethereum.data
 
 import org.loopring.lightcone.proto.core._
 
-trait XRawOrderValidator {
-  def calculateOrderHash(order: XRawOrder): String
-  def validate(order: XRawOrder): Either[XOrderValidationError, XRawOrder]
+trait RingBatchGenerator {
+  def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch
+}
+
+// TODO(kongliang): implement and test this class
+class RingBatchGeneratorImpl()
+  extends RingBatchGenerator {
+  def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch = ???
 }
