@@ -24,8 +24,15 @@ class ERC20ABISpec extends FlatSpec with Matchers {
 
   val erc20abi = ERC20ABI()
 
+  "encodeTransferFunction" should "encode class Parms of Transfer to function input" in {
+    info("[sbt ethereum/'testOnly *ERC20ABISpec -- -z encodeTransferFunction']")
+    val parms = TransferFunction.Parms(to = "0xf105c622edc68b9e4e813e631cb534940f5cc509", amount = BigInt("29558242000000000000000"))
+    val fileds = Serialization.serialize(parms)
+    println(fileds)
+  }
+
   "decodeTransferFunction" should "decode function input and assemble to class Transfer" in {
-    info("[sbt lib/'testOnly *ERC20ABISpec -- -z decodeTransferFunction']")
+    info("[sbt ethereum/'testOnly *ERC20ABISpec -- -z decodeTransferFunction']")
 
     val from = "0x0681d8db095565fe8a346fa0277bffde9c0edbbf"
     val input = "0xa9059cbb000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc5090000000000000000000000000000000000000000000006425b02acb8d7bd0000"
