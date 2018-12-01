@@ -36,8 +36,6 @@ message XOrder {
     bytes amount_s = 5;
     bytes amount_b = 6;
     bytes amount_fee = 7;
-    int64 created_at = 8;
-    int64 updated_at = 9;
     core.XOrderStatus status = 10;
     double wallet_split_percentage = 11;
     XOrderState outstanding = 12;

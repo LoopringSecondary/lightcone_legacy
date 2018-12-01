@@ -63,8 +63,6 @@ package object data {
       amountS = xorder.amountS,
       amountB = xorder.amountB,
       amountFee = xorder.amountFee,
-      createdAt = xorder.createdAt,
-      updatedAt = xorder.updatedAt,
       status = xorder.status,
       walletSplitPercentage = xorder.walletSplitPercentage,
       _outstanding = xorder.outstanding.map(xorderState2OrderState),
@@ -82,8 +80,6 @@ package object data {
       amountS = order.amountS,
       amountB = order.amountB,
       amountFee = order.amountFee,
-      createdAt = order.createdAt,
-      updatedAt = order.updatedAt,
       status = order.status,
       walletSplitPercentage = order.walletSplitPercentage,
       outstanding = order._outstanding.map(orderState2XOrderState),
@@ -160,8 +156,6 @@ package object data {
       amountB = xraworder.amountB,
       amountFee = xraworder.feeAmount,
       //todo:该数据需要在xrawOrder中，暂时默认，等待结构确定
-      createdAt = System.currentTimeMillis(),
-      updatedAt = System.currentTimeMillis(),
 //      status = XOrderStatus.STATUS_NEW,
       walletSplitPercentage = xraworder.waiveFeePercentage/1000.0
     )
