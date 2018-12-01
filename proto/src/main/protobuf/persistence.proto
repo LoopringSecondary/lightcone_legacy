@@ -33,85 +33,33 @@ enum XOrderType {
     ORDER_TYPE_P2P = 1;
 }
 
-message XOrderPersistent {
-    /* copy from core.XRawOrder */
-    int32  version      = 1;
-
-    // required fields
-    string owner        = 2;
-    string token_s      = 3;
-    string token_b      = 4;
-    bytes  amount_s     = 5;
-    bytes  amount_b     = 6;
-    int32  valid_since  = 7; // in seconds
-
-    // optional fields
-    string dual_auth_addr          = 20;
-    string broker                  = 21;
-    string order_interceptor       = 22;
-    string wallet                  = 23;
-    int32  valid_until             = 24; // in seconds
-    string sig                     = 25;
-    string dual_auth_sig           = 26;
-    bool   all_or_none             = 27;
-    string fee_token               = 28;
-    bytes  fee_amount              = 29;
-    int32  waive_fee_percentage    = 30;
-    int32  token_s_fee_percentage  = 31;
-    int32  token_b_fee_percentage  = 32;
-    string token_recipient         = 33;
-    int32  wallet_split_percentage = 34;
-
-
-    // ERC1400 support:
-    core.XTokenStandard token_standard_s   = 50;
-    core.XTokenStandard token_standard_b   = 51;
-    core.XTokenStandard token_standard_fee = 52;
-
-    string    tranche_s         = 53;
-    string    tranche_b         = 54;
-    string    transfer_data_s   = 55;
-
-    // The following fieds are not part of Loopring's order definition but
-    // will be provided as metadata
-
-    string hash                 = 100;
-    int64 created_at            = 101;
-    int64 updated_at            = 102;
-    int64 matched_at            = 103;
-    int64 updated_at_block      = 104;
-    core.XOrderStatus status         = 105;
-
-    bytes actual_amount_s       = 200;
-    bytes actual_amount_b       = 201;
-    bytes actual_amount_fee     = 202;
-    bytes matchable_amount_s    = 203;
-    bytes matchable_amount_b    = 204;
-    bytes matchable_amount_fee  = 205;
-
-    /* additional data */
-    int64 id                  = 300;
-    XOrderSide side           = 301;
-    XOrderType orderType      = 302;
-    core.XMarketId market     = 303;
-    actors.XOrderState outstanding   = 304;
-    actors.XOrderState reserved      = 305;
-    actors.XOrderState actual        = 306;
-    actors.XOrderState matchable     = 307;
-}
-
 enum XErrorCode {
     DB_SUCC = 0;
-    DB_DUMPLICATE = 1;
+    DB_DUPLICATED = 1;
 }
 
-message XSaveDbOrderReq {
+/*************  order start  ***************/
+message XOrderPersistent {
+    core.XRawOrder raw_order = 1;
+
+    /* additional columns */
+    int64 id = 2;
+    XOrderSide side = 3;
+    XOrderType order_type = 4;
+    core.XMarketId market = 5;
+    actors.XOrderState outstanding = 6;
+    actors.XOrderState reserved = 7;
+    actors.XOrderState actual = 8;
+    actors.XOrderState matchable = 9;
+}
+
+message XSaveOrderPersistentReq {
     XOrderPersistent order = 1;
 }
 
-message XSaveOrderRes {
+message XSaveOrderPersistentRes {
     XErrorCode code = 1;
-    string orderHash = 2;
+    string order_hash = 2;
     int64 id = 3;
 }
 
@@ -120,26 +68,36 @@ message XGetRawOrderByHashReq {
 }
 
 message XGetRawOrderByHashRes {
-    core.XRawOrder rawOrder = 1;
+    core.XRawOrder raw_order = 1;
 }
 
+message XGetOrderByHashReq {
+    string hash = 1;
+}
+
+message XGetOrderByHashRes {
+    actors.XOrder order = 1;
+}
+
+//TODO du(汇总一个接口，还是拆分成多个接口？)
+// 如果传入参数，就作为查询条件
 message XGetRawOrdersReq {
     string owner = 1;
-    string orderHash = 2;
-    string delegateAddress = 3;
+    string order_hash = 2;
+    string delegate_address = 3;
     XOrderSide side = 4;
-    XOrderType orderType = 5;
+    XOrderType order_type = 5;
     core.XMarketId market = 6;
-    int32 pageIndex = 7;
-    int32 pageSize = 8;
+    int32 page_index = 7;
+    int32 page_size = 8;
 }
 
 message XGetRawOrdersRes {
-    repeated core.XRawOrder rawOrders = 1;
+    repeated core.XRawOrder raw_orders = 1;
 }
 
 message XUpdateOrderStateReq {
-    string orderHash = 1;
+    string order_hash = 1;
     actors.XOrderState outstanding = 2;
     actors.XOrderState reserved = 3;
     actors.XOrderState actual = 4;
@@ -152,13 +110,125 @@ message XUpdateOrderStateRes {
 }
 
 message XUpdateOrderStatusReq {
-    string orderHash = 1;
+    string order_hash = 1;
     core.XOrderStatus status = 2;
 }
 
 message XUpdateOrderStatusRes {
     XErrorCode code = 1;
 }
+
+/*************  order end  ***************/
+
+/*************  fill start  ***************/
+
+message XOrderFillPersistence {
+    int64 id = 1;
+    string delegate_address = 2;
+    string owner = 3;
+    string order_hash = 4;
+    string ring_hash = 5;
+    int32 ring_index = 6;
+    string tx_hash = 7;
+    XOrderType order_type = 8;
+    bytes  amount_s = 9;
+    bytes  amount_b = 10;
+    string token_s = 11;
+    string token_b = 12;
+    bytes amount_margin = 13;
+    bytes amount_fee = 14;
+    string token_fee = 15;
+    int64 created_at = 16;
+    int64 updated_at = 17;
+    int64 block_no = 18;
+    bool is_valid = 19;
+}
+
+message XSaveFillPersistenceReq {
+    repeated XOrderFillPersistence fills = 1;
+}
+
+message XSaveFillPersistenceRes {
+    XErrorCode code = 1;
+    repeated int64 ids = 2;
+}
+
+message XGetFillsReq {
+    string owner = 1;
+    string order_hash = 2;
+    string delegate_address = 3;
+    XOrderType order_type = 4;
+    core.XMarketId market = 5;
+    int32 page_index = 6;
+    int32 page_size = 7;
+}
+
+message XGetFillsRes {
+    repeated XOrderFillPersistence raw_fills = 1;
+}
+
+message XUpdateFilledInvalidReq {
+    int64 block_no = 1;
+}
+
+message XUpdateFilledInvalidRes {
+    XErrorCode code = 1;
+}
+
+/*************  fill end  ***************/
+
+/*************  ring start  ***************/
+
+message XRingPersistence {
+    int64 id = 1;
+    string ring_hash = 2;
+    string tx_hash = 3;
+    string delegate_address = 4;
+    int32 trade_amount = 5;
+    string miner = 6;
+    int64 created_at = 7;
+    int64 updated_at = 8;
+    int64 block_no = 9;
+    bool is_valid = 10;
+}
+
+message XSaveRingPersistenceReq {
+    XRingPersistence ring = 1;
+}
+
+message XSaveRingPersistenceRes {
+    XErrorCode code = 1;
+    int64 id = 2;
+}
+
+message XGetRingReq {
+    string ring_hash = 1;
+    string tx_hash = 2;
+}
+
+message XGetRingRes {
+    XRingPersistence ring = 1;
+}
+
+message XGetRingsReq {
+    int32 page_index = 1;
+    int32 page_size = 2;
+}
+
+message XGetRingsRes {
+    repeated XRingPersistence rings = 1;
+}
+
+message XUpdateRingsInvalidReq {
+    int64 block_no = 1;
+}
+
+message XUpdateRingsInvalidRes {
+    XErrorCode code = 1;
+}
+
+/*************  ring start  ***************/
+
 
 message Bar {
     string a = 1;
