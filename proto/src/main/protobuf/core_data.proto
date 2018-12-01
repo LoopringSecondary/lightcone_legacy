@@ -95,21 +95,30 @@ message XRawOrder {
 
 
     // ERC1400 support:
-    TokenStandard token_type_s    = 50;
-    TokenStandard token_type_b    = 51;
-    TokenStandard token_type_fee  = 52;
-    string    tranche_s       = 53;
-    string    tranche_b       = 54;
-    string    transfer_data_s = 55;
+    TokenStandard token_type_s   = 50;
+    TokenStandard token_type_b   = 51;
+    TokenStandard token_type_fee = 52;
+
+    string    tranche_s         = 53;
+    string    tranche_b         = 54;
+    string    transfer_data_s   = 55;
 
     // The following fieds are not part of Loopring's order definition but
     // will be provided as metadata
 
-    string hash         = 100;
-    int64 created_at    = 101;
-    int64 updated_at    = 102;
-    int64 matched_at    = 103;
-    int64 updated_at_block = 104;
+    string hash                 = 100;
+    int64 created_at            = 101;
+    int64 updated_at            = 102;
+    int64 matched_at            = 103;
+    int64 updated_at_block      = 104;
+    XOrderStatus status         = 105;
+
+    bytes actual_amount_s       = 200;
+    bytes actual_amount_b       = 201;
+    bytes actual_amount_fee     = 202;
+    bytes matchable_amount_s    = 203;
+    bytes matchable_amount_b    = 204;
+    bytes matchable_amount_fee  = 205;
 }
 
 message XRingBatch {
@@ -117,12 +126,12 @@ message XRingBatch {
         repeated int32 order_indexes = 1;
     }
 
-    string fee_recipient          = 1;
-    string miner                  = 2;
-    string sig                    = 3;
-    repeated XRing rings   = 4;
-    repeated XRawOrder orders = 5;
-    SigningAlgorithm sign_algorithm  = 6;
-    string hash                   = 7;
-    string transaction_origin     = 8;
+    string fee_recipient            = 1;
+    string miner                    = 2;
+    string sig                      = 3;
+    repeated XRing rings            = 4;
+    repeated XRawOrder orders       = 5;
+    SigningAlgorithm sign_algorithm = 6;
+    string hash                     = 7;
+    string transaction_origin       = 8;
 }
