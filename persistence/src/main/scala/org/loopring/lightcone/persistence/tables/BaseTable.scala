@@ -27,14 +27,14 @@ abstract class BaseTable[T](tag: Tag, name: String)
     column[String](name, (Seq(O.SqlType("VARCHAR(64)")) ++ options): _*)
 
   def columnAddress(name: String, options: ColumnOption[String]*) =
-    column[String](name, (Seq(O.SqlType("VARCHAR(64)")) ++ options): _*)
+    column[String](name, (Seq(O.SqlType("VARCHAR(42)")) ++ options): _*)
 
   def columnAmount(name: String, options: ColumnOption[ByteString]*) =
     column[ByteString](name, options: _*)
 
   implicit val boolColumnType: BaseColumnType[ByteString] =
-    MappedColumnType.base[ByteString, String](
-      bs ⇒ bs.toString,
-      str ⇒ ByteString.copyFrom(str.getBytes)
+    MappedColumnType.base[ByteString, Array[Byte]](
+      bs ⇒ bs.toByteArray(),
+      bytes ⇒ ByteString.copyFrom(bytes)
     )
 }
