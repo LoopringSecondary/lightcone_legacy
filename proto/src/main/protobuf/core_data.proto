@@ -81,7 +81,7 @@ message XRawOrder {
     int32  valid_since  = 7; // in seconds
 
     // optional fields
-    string dual_auth_addr          = 20;
+    string dual_auth_address       = 20;
     string broker                  = 21;
     string order_interceptor       = 22;
     string wallet                  = 23;
@@ -140,3 +140,8 @@ message XRingBatch {
     string transaction_origin       = 8;
 }
 
+message XRingBatchContext {
+    string fee_recipient            = 1;
+    string miner                    = 2;
+    string transaction_origin       = 3;
+}
