@@ -81,6 +81,7 @@ message XRawOrder {
         string sig                     = 6;
         string dual_auth_sig           = 7;
         bool   all_or_none             = 8;
+        
     }
 
     message FeeParams {
@@ -99,12 +100,27 @@ message XRawOrder {
         string    transfer_data_s   = 55;
     }
 
-  
+    // // The following fieds are not part of Loopring's order definition but
+    // // will be provided as metadata
+    message State {
+        int64 created_at            = 101;
+        int64 updated_at            = 102;
+        int64 matched_at            = 103;
+        int64 updated_at_block      = 104;
+        XOrderStatus status         = 105;
+
+        bytes actual_amount_s       = 200;
+        bytes actual_amount_b       = 201;
+        bytes actual_amount_fee     = 202;
+        bytes matchable_amount_s    = 203;
+        bytes matchable_amount_b    = 204;
+        bytes matchable_amount_fee  = 205;
+    }
+
     // XTokenStandard token_standard_s   = 50;
     // XTokenStandard token_standard_b   = 51;
     // XTokenStandard token_standard_fee = 52;
 
-  
 
     string hash         = 1;
     int32  version      = 2;
@@ -114,29 +130,12 @@ message XRawOrder {
     bytes  amount_s     = 6;
     bytes  amount_b     = 7;
     int32  valid_since  = 8; // in seconds
-    Params params               = 9;
-    FeeParams fee_params        = 10;
-    ERC1400Params erc1400_params = 11;
+    Params params                   = 9;
+    FeeParams fee_params            = 10;
+    ERC1400Params erc1400_params    = 11;
+    State state                     = 12;
 
 
-
-
-    // // The following fieds are not part of Loopring's order definition but
-    // // will be provided as metadata
-
-    // string hash                 = 100;
-    // int64 created_at            = 101;
-    // int64 updated_at            = 102;
-    // int64 matched_at            = 103;
-    // int64 updated_at_block      = 104;
-    // XOrderStatus status         = 105;
-
-    // bytes actual_amount_s       = 200;
-    // bytes actual_amount_b       = 201;
-    // bytes actual_amount_fee     = 202;
-    // bytes matchable_amount_s    = 203;
-    // bytes matchable_amount_b    = 204;
-    // bytes matchable_amount_fee  = 205;
 }
 
 message XRingBatch {

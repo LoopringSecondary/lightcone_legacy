@@ -20,6 +20,8 @@ import slick.jdbc.MySQLProfile.api._
 import slick.ast.ColumnOption
 import com.google.protobuf.ByteString
 
+import org.loopring.lightcone.proto.core.XOrderStatus
+
 abstract class BaseTable[T](tag: Tag, name: String)
   extends Table[T](tag, name) {
 
@@ -36,5 +38,11 @@ abstract class BaseTable[T](tag: Tag, name: String)
     MappedColumnType.base[ByteString, Array[Byte]](
       bs ⇒ bs.toByteArray(),
       bytes ⇒ ByteString.copyFrom(bytes)
+    )
+
+  implicit val boolCxolumnType: BaseColumnType[XOrderStatus] =
+    MappedColumnType.base[XOrderStatus, Int](
+      enum ⇒ enum.value,
+      int ⇒ XOrderStatus.fromValue(int)
     )
 }

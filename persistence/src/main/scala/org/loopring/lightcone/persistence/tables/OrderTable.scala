@@ -94,21 +94,20 @@ abstract class OrderTable(tag: Tag)
   def trancheB = column[String]("tranche_b")
   def trancheDataS = column[String]("transfer_data_s")
 
-  // // XState
+  // State
+  def createdAt = column[Long]("created_at")
+  def updatedAt = column[Long]("updated_at")
+  def matchedAt = column[Long]("matched_at")
+  def updatedAtBlock = column[Long]("updated_at_block")
+  def status = column[XOrderStatus]("status")
 
-  // def createdAt = column[Long]("created_at")
-  // def updatedAt = column[Long]("updated_at")
-  // def matchedAt = column[Long]("matched_at")
-  // def updatedAtBlock = column[Long]("updated_at_block")
-  // // def status = column[Int]("status")
+  def outstandingAmountS = columnAmount("outstanding_amount_s")
+  def outstandingAmountB = columnAmount("outstanding_amount_b")
+  def outstandingAmountFee = columnAmount("outstanding_amount_fee")
 
-  // def outstandingAmountS = columnAmount("outstanding_amount_s")
-  // def outstandingAmountB = columnAmount("outstanding_amount_b")
-  // def outstandingAmountFee = columnAmount("outstanding_amount_fee")
-
-  // def matchableAmountS = columnAmount("matchable_amount_s")
-  // def matchableAmountB = columnAmount("matchable_amount_b")
-  // def matchableAmountFee = columnAmount("matchable_amount_fee")
+  def matchableAmountS = columnAmount("matchable_amount_s")
+  def matchableAmountB = columnAmount("matchable_amount_b")
+  def matchableAmountFee = columnAmount("matchable_amount_fee")
 
   // indexes
   // def idx_c = index("idx_c", (c), unique = false)
@@ -170,6 +169,30 @@ abstract class OrderTable(tag: Tag)
       }
     )
 
+  def stateProjection = (
+    createdAt,
+    updatedAt,
+    matchedAt,
+    updatedAtBlock,
+    status,
+    outstandingAmountS,
+    outstandingAmountB,
+    outstandingAmountFee,
+    matchableAmountS,
+    matchableAmountB,
+    matchableAmountFee
+  ) <> (
+      {
+        tuple ⇒
+          Option((XRawOrder.State.apply _).tupled(tuple))
+      },
+      {
+        paramsOpt: Option[XRawOrder.State] ⇒
+          val params = paramsOpt.getOrElse(XRawOrder.State())
+          XRawOrder.State.unapply(params)
+      }
+    )
+
   def * = (
     hash,
     version,
@@ -181,7 +204,8 @@ abstract class OrderTable(tag: Tag)
     validSince,
     paramsProjection,
     feeParamsProjection,
-    erc1400ParamsProjection
+    erc1400ParamsProjection,
+    stateProjection
   ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
 
 }
