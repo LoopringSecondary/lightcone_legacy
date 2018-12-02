@@ -16,46 +16,12 @@
 
 package org.loopring.lightcone.persistence.table
 
+import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.persistence._
 
-// message XRawOrder {
-
-//     message XState {
-//         int64 created_at               = 1;
-//         int64 updated_at               = 2;
-//         int64 matched_at               = 3;
-//         int64 updated_at_block         = 4;
-//         // XOrderStatus status         = 105;
-
-//         bytes outstanding_amount_s      = 6;
-//         bytes outstanding_amount_b      = 7;
-//         bytes outstanding_amount_fee    = 8;
-//         bytes matchable_amount_s        = 9;
-//         bytes matchable_amount_b        = 10;
-//         bytes matchable_amount_fee      = 11;
-//     }
-
-//     string hash          = 1;
-//     int32  version       = 2;
-//     string owner         = 3;
-//     string token_s       = 4;
-//     string token_b       = 5;
-//     bytes  amount_s      = 6;
-//     bytes  amount_b      = 7;
-
-//     // XTokenStandard token_standard_s   = 10;
-//     // XTokenStandard token_standard_b   = 11;
-//     // XTokenStandard token_standard_fee = 12;
-
-//     Params params        = 20;
-//     FeeParams fee_params = 21;
-//     ERC1400 erc1400      = 22;
-//     XState state         = 23;
-// }
-
-abstract class OrderTable(tag: Tag)
+class OrderTable(tag: Tag)
   extends BaseTable[XRawOrder](tag, "TABLE_ORDER") {
 
   implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
@@ -113,7 +79,15 @@ abstract class OrderTable(tag: Tag)
   def matchableAmountFee = columnAmount("matchable_amount_fee")
 
   // indexes
-  // def idx_c = index("idx_c", (c), unique = false)
+  def idx_updated_at = index("idx_updated_at", (updatedAt), unique = false)
+  def idx_token_s = index("idx_token_s", (tokenS), unique = false)
+  def idx_token_b = index("idx_token_b", (tokenB), unique = false)
+  def idx_fee_token = index("idx_fee_token", (feeToken), unique = false)
+  def idx_valid_since = index("idx_valid_since", (validSince), unique = false)
+  def idx_valid_until = index("idx_valid_until", (validUntil), unique = false)
+  def idx_owner = index("idx_owner", (owner), unique = false)
+  def idx_status = index("idx_status", (status), unique = false)
+  def idx_wallet = index("idx_wallet", (wallet), unique = false)
 
   def paramsProjection = (
     dualAuthAddr,
