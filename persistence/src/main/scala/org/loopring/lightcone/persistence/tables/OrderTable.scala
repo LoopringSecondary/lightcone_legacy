@@ -69,11 +69,9 @@ class OrderTable(tag: Tag)
   def matchedAt = column[Long]("matched_at")
   def updatedAtBlock = column[Long]("updated_at_block")
   def status = column[XOrderStatus]("status")
-
   def outstandingAmountS = columnAmount("outstanding_amount_s")
   def outstandingAmountB = columnAmount("outstanding_amount_b")
   def outstandingAmountFee = columnAmount("outstanding_amount_fee")
-
   def matchableAmountS = columnAmount("matchable_amount_s")
   def matchableAmountB = columnAmount("matchable_amount_b")
   def matchableAmountFee = columnAmount("matchable_amount_fee")
@@ -100,8 +98,7 @@ class OrderTable(tag: Tag)
     allOrNone,
     tokenStandardS,
     tokenStandardB,
-    tokenStandardFee
-  ) <> (
+    tokenStandardFee) <> (
       {
         tuple ⇒
           Option((XRawOrder.Params.apply _).tupled(tuple))
@@ -110,8 +107,7 @@ class OrderTable(tag: Tag)
         paramsOpt: Option[XRawOrder.Params] ⇒
           val params = paramsOpt.getOrElse(XRawOrder.Params())
           XRawOrder.Params.unapply(params)
-      }
-    )
+      })
 
   def feeParamsProjection = (
     feeToken,
@@ -120,8 +116,7 @@ class OrderTable(tag: Tag)
     tokenSFeePercentage,
     tokenBFeePercentage,
     tokenRecipient,
-    walletSplitPercentage
-  ) <> (
+    walletSplitPercentage) <> (
       {
         tuple ⇒
           Option((XRawOrder.FeeParams.apply _).tupled(tuple))
@@ -130,14 +125,12 @@ class OrderTable(tag: Tag)
         paramsOpt: Option[XRawOrder.FeeParams] ⇒
           val params = paramsOpt.getOrElse(XRawOrder.FeeParams())
           XRawOrder.FeeParams.unapply(params)
-      }
-    )
+      })
 
   def erc1400ParamsProjection = (
     trancheS,
     trancheB,
-    trancheDataS
-  ) <> (
+    trancheDataS) <> (
       {
         tuple ⇒
           Option((XRawOrder.ERC1400Params.apply _).tupled(tuple))
@@ -146,8 +139,7 @@ class OrderTable(tag: Tag)
         paramsOpt: Option[XRawOrder.ERC1400Params] ⇒
           val params = paramsOpt.getOrElse(XRawOrder.ERC1400Params())
           XRawOrder.ERC1400Params.unapply(params)
-      }
-    )
+      })
 
   def stateProjection = (
     createdAt,
@@ -160,8 +152,7 @@ class OrderTable(tag: Tag)
     outstandingAmountFee,
     matchableAmountS,
     matchableAmountB,
-    matchableAmountFee
-  ) <> (
+    matchableAmountFee) <> (
       {
         tuple ⇒
           Option((XRawOrder.State.apply _).tupled(tuple))
@@ -170,8 +161,7 @@ class OrderTable(tag: Tag)
         paramsOpt: Option[XRawOrder.State] ⇒
           val params = paramsOpt.getOrElse(XRawOrder.State())
           XRawOrder.State.unapply(params)
-      }
-    )
+      })
 
   def * = (
     hash,
@@ -185,8 +175,7 @@ class OrderTable(tag: Tag)
     paramsProjection,
     feeParamsProjection,
     erc1400ParamsProjection,
-    stateProjection
-  ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
+    stateProjection) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
 
 }
 
