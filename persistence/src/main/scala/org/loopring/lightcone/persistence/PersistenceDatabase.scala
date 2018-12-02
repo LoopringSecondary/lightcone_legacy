@@ -29,9 +29,8 @@ class PersistenceDatabase @Inject() (
     @Named("db-execution-context") implicit val ec: ExecutionContext
 ) extends base.BaseDatabaseModule {
 
-  val bars: BarsDal = new BarsDalImpl()
   val orders: OrdersDal = new OrdersDalImpl()
 
-  val tables = Seq(bars, orders)
+  val tables = Seq(orders)
 
 }

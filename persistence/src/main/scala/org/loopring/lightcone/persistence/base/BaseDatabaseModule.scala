@@ -25,7 +25,7 @@ trait BaseDatabaseModule {
   val dbConfig: DatabaseConfig[JdbcProfile]
   // val timeProvider: TimeProvider
 
-  implicit val db: BasicProfile#Backend#Database = dbConfig.db
+  implicit val db = dbConfig.db
   implicit val ec: ExecutionContext
 
   val tables: Seq[BaseDal[_, _, _]]

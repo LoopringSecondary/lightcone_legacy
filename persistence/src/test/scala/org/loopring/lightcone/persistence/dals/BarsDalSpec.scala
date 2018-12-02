@@ -16,21 +16,43 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.persistence.Bar
-import org.loopring.lightcone.proto.core._
+import scala.concurrent.duration._
+import scala.concurrent.Await
+import slick.jdbc.meta._
 import slick.jdbc.MySQLProfile.api._
-import slick.basic._
+import org.loopring.lightcone.proto.persistence.Bar
+import com.google.protobuf.ByteString
 import scala.concurrent._
+import org.loopring.lightcone.persistence.base._
 
-trait BarsDal extends BaseDalImpl[BarTable, Bar] {
+private[dals] class BarTable(tag: Tag)
+  extends BaseTable[Bar](tag, "TABLE_BAR") {
+
+  def id = column[String]("id", O.SqlType("VARCHAR(64)"), O.PrimaryKey)
+  def a = column[String]("A")
+  def b = columnAddress("B")
+  def c = columnAmount("C")
+  def d = column[Long]("D")
+
+  // indexes
+  def idx_c = index("idx_c", (c), unique = false)
+
+  def * = (
+    id,
+    a,
+    b,
+    c,
+    d
+  ) <> ((Bar.apply _).tupled, Bar.unapply)
+}
+
+private[dals] trait BarsDal extends BaseDalImpl[BarTable, Bar] {
 
 }
 
-class BarsDalImpl()(
+private[dals] class BarsDalImpl()(
     implicit
-    val db: BasicProfile#Backend#Database,
+    val db: Database,
     implicit val ec: ExecutionContext
 ) extends BarsDal {
   val query = TableQuery[BarTable]
@@ -41,5 +63,16 @@ class BarsDalImpl()(
 
   def update(rows: Seq[Bar]): Future[Unit] = {
     db.run(DBIO.seq(rows.map(r ⇒ query.filter(_.id === r.id).update(r)): _*))
+  }
+}
+
+class BarsDalSpec extends DalSpec[BarsDal] {
+  val dal = new BarsDalImpl()
+
+  "A" must "b" in {
+    println("========>>" + dal.tableName)
+    val bar = Bar("a", "b", "c", ByteString.copyFrom("d".getBytes), 12L)
+
+    Await.result(dal.insert(bar), 1 second)
   }
 }

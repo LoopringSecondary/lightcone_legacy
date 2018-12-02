@@ -18,12 +18,11 @@ package org.loopring.lightcone.persistence.base
 
 import slick.jdbc.MySQLProfile.api._
 import slick.lifted.CanBeQueryCondition
-import slick.basic._
 import slick.jdbc.JdbcProfile
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A, String] {
-  implicit val db: BasicProfile#Backend#Database
+  implicit val db: Database
   implicit val ec: ExecutionContext
 
   def insert(row: A): Future[String] = {
@@ -56,11 +55,11 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A, String] {
 
   def createTable(): Future[Any] = {
     query.schema.create.statements.foreach(println)
-    db.run(DBIO.seq(query.schema.create))
+    db.run(query.schema.create)
   }
 
   def dropTable(): Future[Any] = {
-    db.run(DBIO.seq(query.schema.drop))
+    db.run(query.schema.drop)
   }
 
   def displayTableSchema() = {

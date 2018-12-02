@@ -29,7 +29,7 @@ trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
 }
 
 class OrdersDalImpl()(implicit
-    val db: BasicProfile#Backend#Database,
+    val db: Database,
     val ec: ExecutionContext
 ) extends OrdersDal {
 

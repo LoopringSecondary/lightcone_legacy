@@ -14,34 +14,30 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence
+package org.loopring.lightcone.persistence.dals
 
+import org.loopring.lightcone.persistence.base._
 import org.scalatest.{ BeforeAndAfterAll, FlatSpec }
 import scala.concurrent.duration._
-import scala.concurrent.Await
+import scala.concurrent._
 import slick.jdbc.meta._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.MySQLProfile.backend.Database
 
-trait TableSpec[T <: base.BaseTable[A], A] extends FlatSpec with BeforeAndAfterAll {
+trait DalSpec[D <: BaseDal[_, _, _]] extends FlatSpec with BeforeAndAfterAll {
   override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = true
-  var db: Database = _
-  val query: TableQuery[T]
+  implicit var db: Database = _
+  implicit val ec = ExecutionContext.global
+  val dal: D
 
   override def beforeAll = {
     println(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
     db = Database.forConfig("db_test")
-
-    val setup = DBIO.seq(
-      // query.schema.drop,
-      query.schema.create
-    )
-
-    Await.result(db.run(setup), 4.second)
+    Await.result(dal.dropTable(), 1.second)
+    Await.result(dal.createTable(), 1.second)
   }
 
   override def afterAll = {
     db.close()
   }
-
 }
