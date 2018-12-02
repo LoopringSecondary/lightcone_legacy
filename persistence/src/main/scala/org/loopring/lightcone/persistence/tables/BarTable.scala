@@ -26,6 +26,7 @@ private[persistence] class BarTable(tag: Tag)
   extends BaseTable[Bar](tag, "T_BAR") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def hash = columnHash("hash")
   def a = column[String]("A")
   def b = columnAddress("B")
   def c = columnAmount("C")
@@ -36,6 +37,7 @@ private[persistence] class BarTable(tag: Tag)
 
   def * = (
     id,
+    hash,
     a,
     b,
     c,
