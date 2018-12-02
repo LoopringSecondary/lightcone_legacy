@@ -14,9 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.persistence
 
-trait EthereumTxDBService {
+import com.google.inject.Inject
+import com.google.inject.name.Named
+import org.loopring.lightcone.persistence.dals._
+import slick.basic._
+import slick.jdbc.JdbcProfile
+import scala.concurrent._
+
+class DatabaseModule @Inject() (
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
+    @Named("db-execution-context") val ec: ExecutionContext
+) extends base.BaseDatabaseModule {
+
+  val orders: OrdersDal = new OrdersDalImpl()
+
+  val tables = Seq(orders)
 
 }
-

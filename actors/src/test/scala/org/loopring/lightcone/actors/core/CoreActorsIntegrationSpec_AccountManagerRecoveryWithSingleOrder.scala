@@ -51,11 +51,11 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
           walletSplitPercentage = 100
         ))
       )
-      var orderIds = (0 to 6) map ("order" + _)
+      var orderHashes = (0 to 6) map ("order" + _)
 
       orderDatabaseAccessProbe.expectQuery()
       orderDatabaseAccessProbe.replyWith(Seq(
-        order.copy(hash = orderIds(0))
+        order.copy(hash = orderHashes(0))
       ))
 
       Thread.sleep(1000)
@@ -68,7 +68,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
 
       orderDatabaseAccessProbe.expectQuery()
       orderDatabaseAccessProbe.replyWith(Seq(
-        order.copy(hash = orderIds(1))
+        order.copy(hash = orderHashes(1))
       ))
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)

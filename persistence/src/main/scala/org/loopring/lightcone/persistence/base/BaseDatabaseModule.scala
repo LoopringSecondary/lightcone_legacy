@@ -14,9 +14,28 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.persistence.base
 
-trait EthereumScannerDBService {
+import slick.basic._
+import slick.jdbc.JdbcProfile
+import scala.concurrent.duration._
+import scala.concurrent._
 
+trait BaseDatabaseModule {
+  val dbConfig: DatabaseConfig[JdbcProfile]
+  implicit val ec: ExecutionContext
+
+  val tables: Seq[BaseDal[_, _]]
+
+  def createTables() = Await.result(
+    Future.sequence(tables.map(_.createTable)),
+    10.second
+  )
+
+  def dropTables() = Await.result(
+    Future.sequence(tables.map(_.dropTable)),
+    10.second
+  )
+
+  def displayTableSchemas() = tables.map(_.displayTableSchema)
 }
-

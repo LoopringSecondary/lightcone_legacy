@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.table
+package org.loopring.lightcone.persistence.base
 
 import slick.jdbc.MySQLProfile.api._
 import slick.ast.ColumnOption
 import scala.reflect.ClassTag
 import com.google.protobuf.ByteString
-
-import org.loopring.lightcone.proto.core.XOrderStatus
 
 abstract class BaseTable[T](tag: Tag, name: String)
   extends Table[T](tag, name) {
@@ -34,6 +32,9 @@ abstract class BaseTable[T](tag: Tag, name: String)
 
   def columnAmount(name: String, options: ColumnOption[ByteString]*) =
     column[ByteString](name, options: _*)
+
+  def id: slick.lifted.Rep[Long]
+  def hash: slick.lifted.Rep[String]
 
   implicit val byteStringColumnType: BaseColumnType[ByteString] =
     MappedColumnType.base[ByteString, Array[Byte]](

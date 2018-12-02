@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.table
+package org.loopring.lightcone.persistence.tables
 
+import org.loopring.lightcone.persistence.base._
 import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.persistence._
 
 class OrderTable(tag: Tag)
-  extends BaseTable[XRawOrder](tag, "TABLE_ORDER") {
+  extends BaseTable[XRawOrder](tag, "T_ORDER") {
 
   implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
   implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
 
-  def hash = columnHash("hash", O.PrimaryKey)
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def hash = columnHash("hash")
   def version = column[Int]("version")
   def owner = columnAddress("owner")
   def tokenS = columnAddress("token_s")
@@ -77,6 +79,7 @@ class OrderTable(tag: Tag)
   def matchableAmountFee = columnAmount("matchable_amount_fee")
 
   // indexes
+  def idx_hash = index("idx_hash", (hash), unique = true)
   def idx_updated_at = index("idx_updated_at", (updatedAt), unique = false)
   def idx_token_s = index("idx_token_s", (tokenS), unique = false)
   def idx_token_b = index("idx_token_b", (tokenB), unique = false)
@@ -172,6 +175,7 @@ class OrderTable(tag: Tag)
     )
 
   def * = (
+    id,
     hash,
     version,
     owner,
