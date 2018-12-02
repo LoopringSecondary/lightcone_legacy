@@ -21,8 +21,8 @@ import slick.lifted.CanBeQueryCondition
 import slick.lifted.AbstractTable
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait BaseDal[T <: AbstractTable[_], A, I] {
-  protected val query: TableQuery[T]
+trait BaseDal[T <: AbstractTable[_], A, I] extends TableQuery[T] {
+  // protected val query: TableQuery[T]
 
   def insert(row: A): Future[I]
   def insert(rows: Seq[A]): Future[Seq[I]]

@@ -36,15 +36,15 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A, String] {
   }
 
   def insert(rows: Seq[A]): Future[Seq[String]] = {
-    db.run(query returning query.map(_.id) ++= rows)
+    db.run(this returning this.map(_.id) ++= rows)
   }
 
   def findById(id: String): Future[Option[A]] = {
-    db.run(query.filter(_.id === id).result.headOption)
+    db.run(this.filter(_.id === id).result.headOption)
   }
 
   def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]] = {
-    db.run(query.withFilter(f).result)
+    db.run(this.withFilter(f).result)
   }
 
   def deleteById(id: String): Future[Int] = {
@@ -52,20 +52,20 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A, String] {
   }
 
   def deleteById(ids: Seq[String]): Future[Int] = {
-    db.run(query.filter(_.id.inSet(ids)).delete)
+    db.run(this.filter(_.id.inSet(ids)).delete)
   }
 
   def deleteByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Int] = {
-    db.run(query.withFilter(f).delete)
+    db.run(this.withFilter(f).delete)
   }
 
   def createTable(): Future[Unit] = {
-    query.schema.create.statements.foreach(println)
-    db.run(DBIO.seq(query.schema.create))
+    this.schema.create.statements.foreach(println)
+    db.run(DBIO.seq(this.schema.create))
   }
 
   def displayTableSchema() = {
-    query.schema.create.statements.foreach(println)
+    this.schema.create.statements.foreach(println)
   }
 
 }

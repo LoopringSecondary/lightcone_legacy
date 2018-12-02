@@ -26,11 +26,11 @@ import slick.sql.FixedSqlAction
 
 import scala.concurrent.Future
 
-trait BarsDal extends BaseDalImpl[BarTable, Bar] {
+trait BarsDal extends BaseDalImpl[BarTable, Bar] with TableQuery[BarTable] {
 
 }
 
-class BarsDalImpl(val module: BaseDatabaseModule) extends BarsDal {
+class BarsDalImpl(val module: BaseDatabaseModule) extends BarsDal with TableQuery[BarTable] {
   val query = TableQuery[BarTable]
 
   def update(row: Bar): Future[Int] = {
