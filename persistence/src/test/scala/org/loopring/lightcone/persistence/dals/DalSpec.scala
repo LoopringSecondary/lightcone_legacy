@@ -21,23 +21,26 @@ import org.scalatest.{ BeforeAndAfterAll, FlatSpec }
 import scala.concurrent.duration._
 import scala.concurrent._
 import slick.jdbc.meta._
+import slick.basic._
 import slick.jdbc.MySQLProfile.api._
-import slick.jdbc.MySQLProfile.backend.Database
+import slick.jdbc.JdbcProfile
 
 trait DalSpec[D <: BaseDal[_, _, _]] extends FlatSpec with BeforeAndAfterAll {
   override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = true
-  implicit var db: Database = _
   implicit val ec = ExecutionContext.global
-  val dal: D
+  implicit var dbConfig: DatabaseConfig[JdbcProfile] = _
+  def dal: D
 
   override def beforeAll = {
     println(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
-    db = Database.forConfig("db_test")
-    Await.result(dal.dropTable(), 1.second)
+    lazy val dbConfig = DatabaseConfig.forConfig[JdbcProfile]("db_test")
+
+    // db = Database.forConfig("db_test")
+    // Await.result(dal.dropTable(), 1.second)
     Await.result(dal.createTable(), 1.second)
   }
 
   override def afterAll = {
-    db.close()
+    dbConfig.db.close()
   }
 }

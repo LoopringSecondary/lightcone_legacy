@@ -20,13 +20,15 @@ import scala.concurrent.duration._
 import scala.concurrent.Await
 import slick.jdbc.meta._
 import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.JdbcProfile
+import slick.basic._
 import org.loopring.lightcone.proto.persistence.Bar
 import com.google.protobuf.ByteString
 import scala.concurrent._
 import org.loopring.lightcone.persistence.base._
 
 private[dals] class BarTable(tag: Tag)
-  extends BaseTable[Bar](tag, "TABLE_BAR") {
+  extends BaseTable[Bar](tag, "T_BAR") {
 
   def id = column[String]("id", O.SqlType("VARCHAR(64)"), O.PrimaryKey)
   def a = column[String]("A")
@@ -52,8 +54,8 @@ private[dals] trait BarsDal extends BaseDalImpl[BarTable, Bar] {
 
 private[dals] class BarsDalImpl()(
     implicit
-    val db: Database,
-    implicit val ec: ExecutionContext
+    val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext
 ) extends BarsDal {
   val query = TableQuery[BarTable]
 
@@ -73,6 +75,6 @@ class BarsDalSpec extends DalSpec[BarsDal] {
     println("========>>" + dal.tableName)
     val bar = Bar("a", "b", "c", ByteString.copyFrom("d".getBytes), 12L)
 
-    Await.result(dal.insert(bar), 1 second)
+    // Await.result(dal.insert(bar), 1 second)
   }
 }
