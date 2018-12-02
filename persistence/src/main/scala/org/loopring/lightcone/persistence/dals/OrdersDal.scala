@@ -26,7 +26,6 @@ import scala.concurrent._
 import slick.basic._
 
 trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
-
 }
 
 class OrdersDalImpl()(
@@ -34,14 +33,6 @@ class OrdersDalImpl()(
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
 ) extends OrdersDal {
-
   val query = TableQuery[OrderTable]
-
-  def update(row: XRawOrder): Future[Int] = {
-    db.run(query.filter(_.id === row.id).update(row))
-  }
-
-  def update(rows: Seq[XRawOrder]): Future[Unit] = {
-    db.run(DBIO.seq(rows.map(r ⇒ query.filter(_.id === r.id).update(r)): _*))
-  }
+  def getRowHash(row: XRawOrder) = row.hash
 }

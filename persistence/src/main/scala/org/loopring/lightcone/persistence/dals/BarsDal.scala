@@ -35,12 +35,6 @@ private[dals] class BarsDalImpl()(
     val ec: ExecutionContext
 ) extends BarsDal {
   val query = TableQuery[BarTable]
+  def getRowHash(row: Bar) = row.hash
 
-  def update(row: Bar): Future[Int] = {
-    db.run(query.filter(_.id === row.id).update(row))
-  }
-
-  def update(rows: Seq[Bar]): Future[Unit] = {
-    db.run(DBIO.seq(rows.map(r ⇒ query.filter(_.id === r.id).update(r)): _*))
-  }
 }
