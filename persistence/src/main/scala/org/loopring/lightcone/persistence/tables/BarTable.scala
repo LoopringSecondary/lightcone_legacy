@@ -17,23 +17,27 @@
 package org.loopring.lightcone.persistence.tables
 
 import org.loopring.lightcone.persistence.base._
+import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
-import org.loopring.lightcone.proto.persistence.Bar
+import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.persistence._
 
-class BarTable(tag: Tag)
-  extends BaseTable[Bar](tag, "TABLE_BAR") {
+private[persistence] class BarTable(tag: Tag)
+  extends BaseTable[Bar](tag, "T_BAR") {
 
-  def id = column[String]("id", O.SqlType("VARCHAR(64)"), O.PrimaryKey)
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def hash = columnHash("hash")
   def a = column[String]("A")
   def b = columnAddress("B")
   def c = columnAmount("C")
   def d = column[Long]("D")
 
   // indexes
-  def idx_c = index("idx_c", (c), unique = false)
+  // def idx_a = index("idx_c", (a), unique = false)
 
   def * = (
     id,
+    hash,
     a,
     b,
     c,

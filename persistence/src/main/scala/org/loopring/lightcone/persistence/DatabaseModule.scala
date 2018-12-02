@@ -19,27 +19,18 @@ package org.loopring.lightcone.persistence
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals._
-// import org.loopring.lightcone.lib.time.TimeProvider
-import slick.basic.DatabaseConfig
+import slick.basic._
 import slick.jdbc.JdbcProfile
+import scala.concurrent._
 
-import scala.concurrent.ExecutionContext
-
-class PersistenceDatabase @Inject() (
+class DatabaseModule @Inject() (
+    implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext
 ) extends base.BaseDatabaseModule {
 
-  val bars: BarsDal = new BarsDalImpl(this)
-  val orders: OrdersDal = new OrdersDalImpl(this)
+  val orders: OrdersDal = new OrdersDalImpl()
 
-  def generateDDL(): Unit = {
-    bars.createTable()
-    orders.createTable()
-  }
+  val tables = Seq(orders)
 
-  def displayDDL(): Unit = {
-    bars.displayTableSchema()
-    orders.displayTableSchema()
-  }
 }

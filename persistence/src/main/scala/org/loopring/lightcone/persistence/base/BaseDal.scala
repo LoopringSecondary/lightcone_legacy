@@ -18,19 +18,34 @@ package org.loopring.lightcone.persistence.base
 
 import slick.jdbc.MySQLProfile.api._
 import slick.lifted.CanBeQueryCondition
+import scala.concurrent._
 
-import scala.concurrent.{ ExecutionContext, Future }
+trait BaseDal[T <: BaseTable[A], A] {
+  def query: TableQuery[T]
+  def getRowHash(row: A): String
 
-trait BaseDal[T, A, I] {
-  def insert(row: A): Future[I]
-  def insert(rows: Seq[A]): Future[Seq[I]]
+  def tableName = query.baseTableRow.tableName
+
+  def insert(row: A): Future[Long]
+  def insert(rows: Seq[A]): Future[Seq[Long]]
+
   def update(row: A): Future[Int]
   def update(rows: Seq[A]): Future[Unit]
-  def findById(id: I): Future[Option[A]]
+
   def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]]
-  def deleteById(id: I): Future[Int]
-  def deleteById(ids: Seq[I]): Future[Int]
   def deleteByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Int]
-  def createTable(): Future[Unit]
-  def displayTableSchema()
+
+  def findById(id: Long): Future[Option[A]]
+  def deleteById(id: Long): Future[Int]
+  def deleteById(ids: Seq[Long]): Future[Int]
+
+  def findByHash(hash: String): Future[Option[A]]
+  def deleteByHash(id: String): Future[Int]
+  def deleteByHash(ids: Seq[String]): Future[Int]
+
+  def createTable(): Future[Any]
+
+  def dropTable(): Future[Any]
+
+  def displayTableSchema(): Unit
 }

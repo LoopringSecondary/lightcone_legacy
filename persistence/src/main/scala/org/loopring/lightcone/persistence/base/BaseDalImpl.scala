@@ -16,52 +16,69 @@
 
 package org.loopring.lightcone.persistence.base
 
-import slick.jdbc.MySQLProfile.api._
 import slick.lifted.CanBeQueryCondition
+import slick.basic._
+import slick.jdbc.JdbcProfile
+import scala.concurrent._
 
-import scala.concurrent.{ ExecutionContext, Future }
+trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
+  implicit val ec: ExecutionContext
+  val dbConfig: DatabaseConfig[JdbcProfile]
 
-trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A, String] {
-  protected val query: TableQuery[T]
-  protected val module: BaseDatabaseModule
-
-  implicit lazy val db = module.db
-  implicit lazy val profile = module.profile
-  implicit lazy val ec = module.ec
+  val profile = dbConfig.profile
+  val db: JdbcProfile#Backend#Database = dbConfig.db
 
   import profile.api._
 
-  def insert(row: A): Future[String] = {
+  def insert(row: A): Future[Long] = {
     insert(Seq(row)).map(_.head)
   }
 
-  def insert(rows: Seq[A]): Future[Seq[String]] = {
+  def insert(rows: Seq[A]): Future[Seq[Long]] = {
     db.run(query returning query.map(_.id) ++= rows)
   }
 
-  def findById(id: String): Future[Option[A]] = {
-    db.run(query.filter(_.id === id).result.headOption)
+  def update(row: A): Future[Int] = {
+    db.run(query.filter(_.hash === getRowHash(row)).update(row))
+  }
+
+  def update(rows: Seq[A]): Future[Unit] = {
+    db.run(DBIO.seq(rows.map(r ⇒ query.filter(_.hash === getRowHash(r)).update(r)): _*))
   }
 
   def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]] = {
     db.run(query.withFilter(f).result)
   }
 
-  def deleteById(id: String): Future[Int] = {
-    deleteById(Seq(id))
-  }
-
-  def deleteById(ids: Seq[String]): Future[Int] = {
-    db.run(query.filter(_.id.inSet(ids)).delete)
-  }
-
   def deleteByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Int] = {
     db.run(query.withFilter(f).delete)
   }
 
-  def createTable(): Future[Unit] = {
-    query.schema.create.statements.foreach(println)
+  def findById(id: Long): Future[Option[A]] = {
+    db.run(query.filter(_.id === id).result.headOption)
+  }
+
+  def deleteById(id: Long): Future[Int] = deleteById(Seq(id))
+
+  def deleteById(ids: Seq[Long]): Future[Int] =
+    db.run(query.filter(_.id.inSet(ids)).delete)
+
+  def findByHash(hash: String): Future[Option[A]] = {
+    db.run(query.filter(_.hash === hash).result.headOption)
+  }
+  def deleteByHash(hash: String): Future[Int] =
+    deleteByHash(Seq(hash))
+
+  def deleteByHash(hashes: Seq[String]): Future[Int] =
+    db.run(query.filter(_.hash.inSet(hashes)).delete)
+
+  def createTable(): Future[Any] = {
+    // query.schma.create.statements.foreach(println)
     db.run(DBIO.seq(query.schema.create))
+  }
+
+  def dropTable(): Future[Any] = {
+    db.run(DBIO.seq(query.schema.drop))
   }
 
   def displayTableSchema() = {

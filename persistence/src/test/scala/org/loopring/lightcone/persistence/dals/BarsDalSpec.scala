@@ -16,23 +16,25 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.persistence.Bar
-import org.loopring.lightcone.proto.core._
+import scala.concurrent.duration._
+import scala.concurrent.Await
+import slick.jdbc.meta._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
-import scala.concurrent._
 import slick.basic._
+import org.loopring.lightcone.proto.persistence.Bar
+import com.google.protobuf.ByteString
+import scala.concurrent._
+import org.loopring.lightcone.persistence.base._
 
-trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
-}
+class BarsDalSpec extends DalSpec[BarsDal] {
+  val dal = new BarsDalImpl()
 
-class OrdersDalImpl()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends OrdersDal {
-  val query = TableQuery[OrderTable]
-  def getRowHash(row: XRawOrder) = row.hash
+  "BarsDal" must "create table and index correctly" in {
+    var bar = Bar(id = 100, hash = "hash", a = "b", b = "c", c = ByteString.copyFrom("d".getBytes), d = 12L)
+    Await.result(dal.insert(bar), 5.second)
+
+    bar = Bar(id = 100, hash = "hash2", a = "b", b = "c", c = ByteString.copyFrom("d".getBytes), d = 12L)
+    Await.result(dal.insert(bar), 5.second)
+  }
 }

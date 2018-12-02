@@ -17,22 +17,27 @@
 package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.persistence.Bar
-import org.loopring.lightcone.proto.core._
+import org.scalatest.{ BeforeAndAfterAll, FlatSpec }
+import scala.concurrent.duration._
+import scala.concurrent._
+import slick.jdbc.meta._
+import slick.basic._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
-import scala.concurrent._
-import slick.basic._
 
-trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
-}
+trait DalSpec[D <: BaseDal[_, _]] extends FlatSpec with BeforeAndAfterAll {
+  override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = true
+  implicit val ec = ExecutionContext.global
+  implicit var dbConfig = DatabaseConfig.forConfig[JdbcProfile]("db_test")
+  val dal: D
 
-class OrdersDalImpl()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends OrdersDal {
-  val query = TableQuery[OrderTable]
-  def getRowHash(row: XRawOrder) = row.hash
+  override def beforeAll = {
+    println(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
+    Await.result(dal.dropTable(), 5.second)
+    Await.result(dal.createTable(), 5.second)
+  }
+
+  override def afterAll = {
+    dbConfig.db.close()
+  }
 }

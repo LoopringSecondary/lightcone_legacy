@@ -20,24 +20,21 @@ import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto.persistence.Bar
 import org.loopring.lightcone.proto.core._
-import slick.dbio.Effect
 import slick.jdbc.MySQLProfile.api._
-import slick.sql.FixedSqlAction
+import slick.jdbc.JdbcProfile
+import scala.concurrent._
+import slick.basic._
 
-import scala.concurrent.Future
-
-trait BarsDal extends BaseDalImpl[BarTable, Bar] {
+private[dals] trait BarsDal extends BaseDalImpl[BarTable, Bar] {
 
 }
 
-class BarsDalImpl(val module: BaseDatabaseModule) extends BarsDal {
+private[dals] class BarsDalImpl()(
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext
+) extends BarsDal {
   val query = TableQuery[BarTable]
+  def getRowHash(row: Bar) = row.hash
 
-  def update(row: Bar): Future[Int] = {
-    db.run(query.filter(_.id === row.id).update(row))
-  }
-
-  def update(rows: Seq[Bar]): Future[Unit] = {
-    db.run(DBIO.seq(rows.map(r ⇒ query.filter(_.id === r.id).update(r)): _*))
-  }
 }
