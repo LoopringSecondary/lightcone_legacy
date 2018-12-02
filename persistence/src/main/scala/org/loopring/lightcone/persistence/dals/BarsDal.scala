@@ -14,29 +14,30 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.tables
+package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
-import slick.jdbc.MySQLProfile.api._
+import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto.persistence.Bar
+import org.loopring.lightcone.proto.core._
+import slick.dbio.Effect
+import slick.jdbc.MySQLProfile.api._
+import slick.sql.FixedSqlAction
 
-class BarTable(tag: Tag)
-  extends BaseTable[Bar](tag, "TABLE_BAR") {
+import scala.concurrent.Future
 
-  def id = column[String]("id", O.SqlType("VARCHAR(64)"), O.PrimaryKey)
-  def a = column[String]("A")
-  def b = columnAddress("B")
-  def c = columnAmount("C")
-  def d = column[Long]("D")
+trait BarsDal extends BaseDalImpl[BarTable, Bar] {
 
-  // indexes
-  def idx_c = index("idx_c", (c), unique = false)
+}
 
-  def * = (
-    id,
-    a,
-    b,
-    c,
-    d
-  ) <> ((Bar.apply _).tupled, Bar.unapply)
+class BarsDalImpl(val module: BaseDatabaseModule) extends BarsDal {
+  val query = TableQuery[BarTable]
+
+  def update(row: Bar): Future[Int] = {
+    db.run(query.filter(_.id === row.id).update(row))
+  }
+
+  def update(rows: Seq[Bar]): Future[Unit] = {
+    db.run(DBIO.seq(rows.map(r ⇒ query.filter(_.id === r.id).update(r)): _*))
+  }
 }

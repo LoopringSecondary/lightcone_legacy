@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.persistence.dals
 
-trait TokenMarketStatusDBService {
+trait EthereumTxsDal {
 
 }
+
