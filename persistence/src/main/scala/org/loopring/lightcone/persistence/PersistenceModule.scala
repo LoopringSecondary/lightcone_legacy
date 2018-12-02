@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 - 2017 Dong Wang <dong77@gmail.com> - all rights reserved.
+ * Copyright 2018 Loopring Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.loopring.lightcone.persistence
 
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import slick.basic.BasicProfile
 import com.google.inject.Inject
-import org.loopring.lightcone.persistence.dals.{OrdersDal, OrdersDalImpl}
+import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.utils.time.TimeProvider
 
 import scala.concurrent.ExecutionContext
@@ -27,7 +28,6 @@ import scala.util._
 
 trait PersistenceModule {
   val dbConfig: DatabaseConfig[JdbcProfile]
-  val timeProvider: TimeProvider
 
   def profile: JdbcProfile = dbConfig.profile
   def db: BasicProfile#Backend#Database = dbConfig.db
@@ -36,23 +36,22 @@ trait PersistenceModule {
   def generateDDL(): Unit
 
   // table dal
-  val orders: OrdersDal
+  val order: OrderDal
 }
 
 class PersistenceModuleImpl (
   val dbConfig: DatabaseConfig[JdbcProfile],
-  val timeProvider: TimeProvider,
   val dbec: ExecutionContext) extends PersistenceModule {
 
-  val orders = new OrdersDalImpl(this)
+  val order = new OrderDalImpl(this)
 
   def generateDDL(): Unit = {
     Seq(
-      orders.createTable(),
+      order.createTable(),
     )
   }
 
   def displayDDL(): Unit = {
-    orders.displayTableSchema()
+    order.displayTableSchema()
   }
 }

@@ -26,16 +26,12 @@ import slick.sql.FixedSqlAction
 
 import scala.concurrent.Future
 
-case class QueryCondition(delegateAddress: String = "", owner: Option[String] = None,
-    market: Option[String] = None, status: Seq[String] = Seq(), orderHashes: Seq[String] = Seq(),
-    orderType: Option[String] = None, side: Option[String] = None)
-
-trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
+trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
   def getOrder(orderHash: String): Future[Option[XRawOrder]]
   def saveOrder(order: XRawOrder): Future[Int]
 }
 
-class OrdersDalImpl(val module: PersistenceModule) extends OrdersDal {
+class OrderDalImpl(val module: PersistenceModule) extends OrderDal {
   val query = orderTableQ
 
   def saveOrder(order: XRawOrder): Future[Int] = module.db.run(query += order)

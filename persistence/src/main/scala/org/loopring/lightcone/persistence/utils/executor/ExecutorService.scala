@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.base
+package org.loopring.lightcone.persistence.utils.executor
 
-trait BaseEntity {
-  val id: Long
-  def isValid: Boolean = true
+import java.util.concurrent.ForkJoinPool
+
+import scala.concurrent.ExecutionContext
+
+object ExecutorService {
+
+  implicit val dbio = ExecutionContext.fromExecutor(ForkJoinPool.commonPool())
 }
