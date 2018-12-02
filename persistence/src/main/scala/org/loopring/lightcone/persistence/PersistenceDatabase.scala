@@ -30,8 +30,8 @@ class PersistenceDatabase @Inject() (
     @Named("db-execution-context") val ec: ExecutionContext
 ) extends base.BaseDatabaseModule {
 
-  val orders: OrdersDal = new OrdersDalImpl(this)
   val bars: BarsDal = new BarsDalImpl(this)
+  val orders: OrdersDal = new OrdersDalImpl(this)
 
   def generateDDL(): Unit = {
     bars.createTable()

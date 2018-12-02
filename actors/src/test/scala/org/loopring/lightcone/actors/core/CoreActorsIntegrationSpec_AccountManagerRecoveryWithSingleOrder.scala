@@ -40,20 +40,22 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
       accountManagerRecoveryActor ! XStart()
 
       val order = XRawOrder(
-        hash = "order",
+        id = "order",
         tokenS = WETH_TOKEN.address,
         tokenB = GTO_TOKEN.address,
-        feeToken = GTO_TOKEN.address,
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
-        feeAmount = "10".zeros(18),
-        walletSplitPercentage = 100
+        feeParams = Some(XRawOrder.FeeParams(
+          feeToken = GTO_TOKEN.address,
+          feeAmount = "10".zeros(18),
+          walletSplitPercentage = 100
+        ))
       )
       var orderIds = (0 to 6) map ("order" + _)
 
       orderDatabaseAccessProbe.expectQuery()
       orderDatabaseAccessProbe.replyWith(Seq(
-        order.copy(hash = orderIds(0))
+        order.copy(id = orderIds(0))
       ))
 
       Thread.sleep(1000)
@@ -66,7 +68,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
 
       orderDatabaseAccessProbe.expectQuery()
       orderDatabaseAccessProbe.replyWith(Seq(
-        order.copy(hash = orderIds(1))
+        order.copy(id = orderIds(1))
       ))
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
