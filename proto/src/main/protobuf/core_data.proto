@@ -122,7 +122,7 @@ message XRawOrder {
 
 
 
-    string hash         = 1;
+    string id           = 1; // order hash
     int32  version      = 2;
     string owner        = 3;
     string token_s      = 4;

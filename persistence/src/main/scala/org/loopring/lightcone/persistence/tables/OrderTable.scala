@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.table
+package org.loopring.lightcone.persistence.tables
 
+import org.loopring.lightcone.persistence.base._
 import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto.core._
@@ -27,7 +28,7 @@ class OrderTable(tag: Tag)
   implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
   implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
 
-  def hash = columnHash("hash", O.PrimaryKey)
+  def id = columnHash("hash", O.PrimaryKey)
   def version = column[Int]("version")
   def owner = columnAddress("owner")
   def tokenS = columnAddress("token_s")
@@ -98,7 +99,8 @@ class OrderTable(tag: Tag)
     allOrNone,
     tokenStandardS,
     tokenStandardB,
-    tokenStandardFee) <> (
+    tokenStandardFee
+  ) <> (
       {
         tuple ⇒
           Option((XRawOrder.Params.apply _).tupled(tuple))
@@ -107,7 +109,8 @@ class OrderTable(tag: Tag)
         paramsOpt: Option[XRawOrder.Params] ⇒
           val params = paramsOpt.getOrElse(XRawOrder.Params())
           XRawOrder.Params.unapply(params)
-      })
+      }
+    )
 
   def feeParamsProjection = (
     feeToken,
@@ -116,7 +119,8 @@ class OrderTable(tag: Tag)
     tokenSFeePercentage,
     tokenBFeePercentage,
     tokenRecipient,
-    walletSplitPercentage) <> (
+    walletSplitPercentage
+  ) <> (
       {
         tuple ⇒
           Option((XRawOrder.FeeParams.apply _).tupled(tuple))
@@ -125,12 +129,14 @@ class OrderTable(tag: Tag)
         paramsOpt: Option[XRawOrder.FeeParams] ⇒
           val params = paramsOpt.getOrElse(XRawOrder.FeeParams())
           XRawOrder.FeeParams.unapply(params)
-      })
+      }
+    )
 
   def erc1400ParamsProjection = (
     trancheS,
     trancheB,
-    trancheDataS) <> (
+    trancheDataS
+  ) <> (
       {
         tuple ⇒
           Option((XRawOrder.ERC1400Params.apply _).tupled(tuple))
@@ -139,7 +145,8 @@ class OrderTable(tag: Tag)
         paramsOpt: Option[XRawOrder.ERC1400Params] ⇒
           val params = paramsOpt.getOrElse(XRawOrder.ERC1400Params())
           XRawOrder.ERC1400Params.unapply(params)
-      })
+      }
+    )
 
   def stateProjection = (
     createdAt,
@@ -152,7 +159,8 @@ class OrderTable(tag: Tag)
     outstandingAmountFee,
     matchableAmountS,
     matchableAmountB,
-    matchableAmountFee) <> (
+    matchableAmountFee
+  ) <> (
       {
         tuple ⇒
           Option((XRawOrder.State.apply _).tupled(tuple))
@@ -161,10 +169,11 @@ class OrderTable(tag: Tag)
         paramsOpt: Option[XRawOrder.State] ⇒
           val params = paramsOpt.getOrElse(XRawOrder.State())
           XRawOrder.State.unapply(params)
-      })
+      }
+    )
 
   def * = (
-    hash,
+    id,
     version,
     owner,
     tokenS,
@@ -175,6 +184,7 @@ class OrderTable(tag: Tag)
     paramsProjection,
     feeParamsProjection,
     erc1400ParamsProjection,
-    stateProjection) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
+    stateProjection
+  ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
 }
 

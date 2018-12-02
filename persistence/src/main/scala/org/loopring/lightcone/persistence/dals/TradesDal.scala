@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.persistence.dals
 
-trait TradeDBService {
+trait TradesDal {
 
 }

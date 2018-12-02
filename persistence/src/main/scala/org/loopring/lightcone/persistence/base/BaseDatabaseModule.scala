@@ -14,9 +14,21 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.persistence.base
 
-trait EthereumScannerDBService {
+import slick.basic._
+import slick.jdbc.JdbcProfile
 
+import scala.concurrent.ExecutionContext
+
+trait BaseDatabaseModule {
+  val dbConfig: DatabaseConfig[JdbcProfile]
+  // val timeProvider: TimeProvider
+
+  def profile: JdbcProfile = dbConfig.profile
+  def db: BasicProfile#Backend#Database = dbConfig.db
+  def ec: ExecutionContext
+
+  def displayDDL(): Unit
+  def generateDDL(): Unit
 }
-
