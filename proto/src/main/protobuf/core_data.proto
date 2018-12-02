@@ -70,59 +70,72 @@ enum XDeserializationError {
 
 // use bytes to represent big-numbers and string for addresses
 message XRawOrder {
-    int32  version      = 1;
-
-    // required fields
-    string owner        = 2;
-    string token_s      = 3;
-    string token_b      = 4;
-    bytes  amount_s     = 5;
-    bytes  amount_b     = 6;
-    int32  valid_since  = 7; // in seconds
-
-    // optional fields
-    string dual_auth_addr          = 20;
-    string broker                  = 21;
-    string order_interceptor       = 22;
-    string wallet                  = 23;
-    int32  valid_until             = 24; // in seconds
-    string sig                     = 25;
-    string dual_auth_sig           = 26;
-    bool   all_or_none             = 27;
-    string fee_token               = 28;
-    bytes  fee_amount              = 29;
-    int32  waive_fee_percentage    = 30;
-    int32  token_s_fee_percentage  = 31;
-    int32  token_b_fee_percentage  = 32;
-    string token_recipient         = 33;
-    int32  wallet_split_percentage = 34;
 
 
-    // ERC1400 support:
-    XTokenStandard token_standard_s   = 50;
-    XTokenStandard token_standard_b   = 51;
-    XTokenStandard token_standard_fee = 52;
+    message Params {
+        string dual_auth_addr          = 1;
+        string broker                  = 2;
+        string order_interceptor       = 3;
+        string wallet                  = 4;
+        int32  valid_until             = 5; // in seconds
+        string sig                     = 6;
+        string dual_auth_sig           = 7;
+        bool   all_or_none             = 8;
+        XTokenStandard token_standard_s   = 9;
+        XTokenStandard token_standard_b   = 10;
+        XTokenStandard token_standard_fee = 11;
+    }
 
-    string    tranche_s         = 53;
-    string    tranche_b         = 54;
-    string    transfer_data_s   = 55;
+    message FeeParams {
+        string fee_token               = 1;
+        bytes  fee_amount              = 2;
+        int32  waive_fee_percentage    = 3;
+        int32  token_s_fee_percentage  = 4;
+        int32  token_b_fee_percentage  = 5;
+        string token_recipient         = 6;
+        int32  wallet_split_percentage = 7;
+    }
 
-    // The following fieds are not part of Loopring's order definition but
-    // will be provided as metadata
+    message ERC1400Params {
+        string    tranche_s         = 53;
+        string    tranche_b         = 54;
+        string    transfer_data_s   = 55;
+    }
 
-    string hash                 = 100;
-    int64 created_at            = 101;
-    int64 updated_at            = 102;
-    int64 matched_at            = 103;
-    int64 updated_at_block      = 104;
-    XOrderStatus status         = 105;
+    // // The following fieds are not part of Loopring's order definition but
+    // // will be provided as metadata
+    message State {
+        int64 created_at            = 101;
+        int64 updated_at            = 102;
+        int64 matched_at            = 103;
+        int64 updated_at_block      = 104;
+        XOrderStatus status         = 105;
 
-    bytes actual_amount_s       = 200;
-    bytes actual_amount_b       = 201;
-    bytes actual_amount_fee     = 202;
-    bytes matchable_amount_s    = 203;
-    bytes matchable_amount_b    = 204;
-    bytes matchable_amount_fee  = 205;
+        bytes actual_amount_s       = 200;
+        bytes actual_amount_b       = 201;
+        bytes actual_amount_fee     = 202;
+        bytes matchable_amount_s    = 203;
+        bytes matchable_amount_b    = 204;
+        bytes matchable_amount_fee  = 205;
+    }
+
+
+
+
+    string hash         = 1;
+    int32  version      = 2;
+    string owner        = 3;
+    string token_s      = 4;
+    string token_b      = 5;
+    bytes  amount_s     = 6;
+    bytes  amount_b     = 7;
+    int32  valid_since  = 8; // in seconds
+    Params params                   = 9;
+    FeeParams fee_params            = 10;
+    ERC1400Params erc1400_params    = 11;
+    State state                     = 12;
+
+
 }
 
 message XRingBatch {
