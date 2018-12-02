@@ -150,20 +150,22 @@ package object data {
       amountMargin = xExpectedFill.amountMargin
     )
 
-  implicit def xRawOrderToXOrder(xraworder: XRawOrder): XOrder =
+  implicit def xRawOrderToXOrder(xraworder: XRawOrder): XOrder = {
+
+    val feeParams = xraworder.feeParams.getOrElse(XRawOrder.FeeParams())
     XOrder(
       id = xraworder.hash,
       tokenS = xraworder.tokenS,
       tokenB = xraworder.tokenB,
-      tokenFee = xraworder.feeToken,
+      tokenFee = feeParams.feeToken,
       amountS = xraworder.amountS,
       amountB = xraworder.amountB,
-      amountFee = xraworder.feeAmount,
+      amountFee = feeParams.feeAmount,
       //todo:该数据需要在xrawOrder中，暂时默认，等待结构确定
       createdAt = System.currentTimeMillis(),
       updatedAt = System.currentTimeMillis(),
       //      status = XOrderStatus.STATUS_NEW,
-      walletSplitPercentage = xraworder.waiveFeePercentage / 1000.0
+      walletSplitPercentage = feeParams.waiveFeePercentage / 1000.0
     )
-
+  }
 }

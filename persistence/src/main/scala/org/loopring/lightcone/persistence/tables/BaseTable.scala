@@ -24,7 +24,7 @@ abstract class BaseTable[T](tag: Tag, name: String)
   extends Table[T](tag, name) {
 
   def columnHash(name: String, options: ColumnOption[String]*) =
-    column[String](name, (Seq(O.SqlType("VARCHAR(64)")) ++ options): _*)
+    column[String](name, (Seq(O.SqlType("VARCHAR(66)")) ++ options): _*)
 
   def columnAddress(name: String, options: ColumnOption[String]*) =
     column[String](name, (Seq(O.SqlType("VARCHAR(42)")) ++ options): _*)
