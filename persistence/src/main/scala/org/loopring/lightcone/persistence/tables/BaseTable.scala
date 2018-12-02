@@ -18,6 +18,7 @@ package org.loopring.lightcone.persistence.table
 
 import slick.jdbc.MySQLProfile.api._
 import slick.ast.ColumnOption
+import scala.reflect.ClassTag
 import com.google.protobuf.ByteString
 
 import org.loopring.lightcone.proto.core.XOrderStatus
@@ -34,15 +35,17 @@ abstract class BaseTable[T](tag: Tag, name: String)
   def columnAmount(name: String, options: ColumnOption[ByteString]*) =
     column[ByteString](name, options: _*)
 
-  implicit val boolColumnType: BaseColumnType[ByteString] =
+  implicit val byteStringColumnType: BaseColumnType[ByteString] =
     MappedColumnType.base[ByteString, Array[Byte]](
       bs ⇒ bs.toByteArray(),
       bytes ⇒ ByteString.copyFrom(bytes)
     )
 
-  implicit val boolCxolumnType: BaseColumnType[XOrderStatus] =
-    MappedColumnType.base[XOrderStatus, Int](
+  protected def enumColumnType[T <: scalapb.GeneratedEnum: ClassTag](
+    enumCompanion: scalapb.GeneratedEnumCompanion[T]
+  ): BaseColumnType[T] =
+    MappedColumnType.base[T, Int](
       enum ⇒ enum.value,
-      int ⇒ XOrderStatus.fromValue(int)
+      int ⇒ enumCompanion.fromValue(int)
     )
 }

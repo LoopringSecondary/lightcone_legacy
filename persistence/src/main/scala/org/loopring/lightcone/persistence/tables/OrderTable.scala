@@ -57,6 +57,10 @@ import org.loopring.lightcone.proto.persistence._
 
 abstract class OrderTable(tag: Tag)
   extends BaseTable[XRawOrder](tag, "TABLE_ORDER") {
+
+  implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
+  implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
+
   def hash = columnHash("hash", O.PrimaryKey)
   def version = column[Int]("version")
   def owner = columnAddress("owner")
@@ -65,10 +69,6 @@ abstract class OrderTable(tag: Tag)
   def amountS = columnAmount("amount_s")
   def amountB = columnAmount("amount_b")
   def validSince = column[Int]("valid_since")
-
-  // def tokenStandardS = column[Int]("token_standard_s")
-  // def tokenStandardB = column[Int]("token_standard_b")
-  // def tokenStandardFee = column[Int]("token_standard_fee") // XTokenStandard
 
   // Params
   def dualAuthAddr = columnAddress("dual_auth_addr")
@@ -79,6 +79,9 @@ abstract class OrderTable(tag: Tag)
   def sig = column[String]("sig")
   def dualAuthPrivKey = column[String]("dual_auth_priv_key")
   def allOrNone = column[Boolean]("all_or_none")
+  def tokenStandardS = column[XTokenStandard]("token_standard_s")
+  def tokenStandardB = column[XTokenStandard]("token_standard_b")
+  def tokenStandardFee = column[XTokenStandard]("token_standard_fee")
 
   // FeeParams
   def feeToken = columnAddress("fee_token")
@@ -120,7 +123,10 @@ abstract class OrderTable(tag: Tag)
     validUntil,
     sig,
     dualAuthPrivKey,
-    allOrNone
+    allOrNone,
+    tokenStandardS,
+    tokenStandardB,
+    tokenStandardFee
   ) <> (
       {
         tuple ⇒

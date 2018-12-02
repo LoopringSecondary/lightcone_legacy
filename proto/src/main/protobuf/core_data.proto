@@ -81,7 +81,9 @@ message XRawOrder {
         string sig                     = 6;
         string dual_auth_sig           = 7;
         bool   all_or_none             = 8;
-        
+        XTokenStandard token_standard_s   = 9;
+        XTokenStandard token_standard_b   = 10;
+        XTokenStandard token_standard_fee = 11;
     }
 
     message FeeParams {
@@ -117,9 +119,7 @@ message XRawOrder {
         bytes matchable_amount_fee  = 205;
     }
 
-    // XTokenStandard token_standard_s   = 50;
-    // XTokenStandard token_standard_b   = 51;
-    // XTokenStandard token_standard_fee = 52;
+
 
 
     string hash         = 1;
