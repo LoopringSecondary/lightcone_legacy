@@ -176,6 +176,5 @@ class OrderTable(tag: Tag)
     feeParamsProjection,
     erc1400ParamsProjection,
     stateProjection) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
-
 }
 
