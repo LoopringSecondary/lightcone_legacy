@@ -43,11 +43,13 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
         hash = "order",
         tokenS = WETH_TOKEN.address,
         tokenB = GTO_TOKEN.address,
-        feeToken = GTO_TOKEN.address,
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
-        feeAmount = "10".zeros(18),
-        walletSplitPercentage = 100
+        feeParams = Some(XRawOrder.FeeParams(
+          feeToken = GTO_TOKEN.address,
+          feeAmount = "10".zeros(18),
+          walletSplitPercentage = 100
+        ))
       )
       var orderIds = (0 to 6) map ("order" + _)
 
