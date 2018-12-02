@@ -122,18 +122,19 @@ message XRawOrder {
 
 
 
-    string id           = 1; // order hash
-    int32  version      = 2;
-    string owner        = 3;
-    string token_s      = 4;
-    string token_b      = 5;
-    bytes  amount_s     = 6;
-    bytes  amount_b     = 7;
-    int32  valid_since  = 8; // in seconds
-    Params params                   = 9;
-    FeeParams fee_params            = 10;
-    ERC1400Params erc1400_params    = 11;
-    State state                     = 12;
+    int64  id           = 1; // order hash
+    string hash         = 2;
+    int32  version      = 3;
+    string owner        = 4;
+    string token_s      = 5;
+    string token_b      = 6;
+    bytes  amount_s     = 7;
+    bytes  amount_b     = 8;
+    int32  valid_since  = 9; // in seconds
+    Params params                   = 10;
+    FeeParams fee_params            = 11;
+    ERC1400Params erc1400_params    = 12;
+    State state                     = 13;
 
 
 }

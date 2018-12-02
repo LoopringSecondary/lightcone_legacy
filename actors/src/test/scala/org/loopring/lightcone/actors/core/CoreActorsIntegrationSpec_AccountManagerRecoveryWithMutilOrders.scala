@@ -46,7 +46,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
       accountManagerRecoveryActor ! XStart()
 
       val order = XRawOrder(
-        id = "order",
+        hash = "order",
         tokenS = WETH_TOKEN.address,
         tokenB = GTO_TOKEN.address,
         amountS = "50".zeros(18),
@@ -59,7 +59,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
       )
 
       val batchOrders1 = (0 until 500) map {
-        i ⇒ order.copy(id = "order1" + i)
+        i ⇒ order.copy(hash = "order1" + i)
       }
       orderDatabaseAccessProbe.expectQuery()
       orderDatabaseAccessProbe.replyWith(batchOrders1)
@@ -73,7 +73,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
       }
 
       val batchOrders2 = (0 until 500) map {
-        i ⇒ order.copy(id = "order2" + i)
+        i ⇒ order.copy(hash = "order2" + i)
       }
       orderDatabaseAccessProbe.expectQuery()
       orderDatabaseAccessProbe.replyWith(batchOrders2)
@@ -97,7 +97,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
 
       //不能立即发送请求，否则可能会失败，需要等待future执行完毕
       Thread.sleep(1000)
-      accountManagerRecoveryActor ! XSubmitOrderReq(Some(order.copy(id = "order---1")))
+      accountManagerRecoveryActor ! XSubmitOrderReq(Some(order.copy(hash = "order---1")))
 
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒

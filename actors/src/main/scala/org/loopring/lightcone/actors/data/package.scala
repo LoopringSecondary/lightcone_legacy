@@ -154,7 +154,7 @@ package object data {
 
     val feeParams = xraworder.feeParams.getOrElse(XRawOrder.FeeParams())
     XOrder(
-      id = xraworder.id,
+      id = xraworder.hash,
       tokenS = xraworder.tokenS,
       tokenB = xraworder.tokenB,
       tokenFee = feeParams.feeToken,

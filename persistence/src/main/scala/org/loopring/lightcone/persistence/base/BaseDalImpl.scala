@@ -21,7 +21,7 @@ import slick.basic._
 import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
-trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A, String] {
+trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
   implicit val ec: ExecutionContext
   val dbConfig: DatabaseConfig[JdbcProfile]
 
@@ -30,15 +30,15 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A, String] {
 
   import profile.api._
 
-  def insert(row: A): Future[String] = {
+  def insert(row: A): Future[Long] = {
     insert(Seq(row)).map(_.head)
   }
 
-  def insert(rows: Seq[A]): Future[Seq[String]] = {
+  def insert(rows: Seq[A]): Future[Seq[Long]] = {
     db.run(query returning query.map(_.id) ++= rows)
   }
 
-  def findById(id: String): Future[Option[A]] = {
+  def findById(id: Long): Future[Option[A]] = {
     db.run(query.filter(_.id === id).result.headOption)
   }
 
@@ -46,11 +46,11 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A, String] {
     db.run(query.withFilter(f).result)
   }
 
-  def deleteById(id: String): Future[Int] = {
+  def deleteById(id: Long): Future[Int] = {
     deleteById(Seq(id))
   }
 
-  def deleteById(ids: Seq[String]): Future[Int] = {
+  def deleteById(ids: Seq[Long]): Future[Int] = {
     db.run(query.filter(_.id.inSet(ids)).delete)
   }
 

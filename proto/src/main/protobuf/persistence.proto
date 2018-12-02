@@ -20,7 +20,7 @@ option java_multiple_files = true;
 package org.loopring.lightcone.proto.persistence;
 
 message Bar {
-    string id = 5;
+    int64 id = 5;
     string a = 1;
     string b = 2;
     bytes c = 3;

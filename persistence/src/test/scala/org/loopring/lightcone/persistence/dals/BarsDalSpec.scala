@@ -27,54 +27,13 @@ import com.google.protobuf.ByteString
 import scala.concurrent._
 import org.loopring.lightcone.persistence.base._
 
-private[dals] class BarTable(tag: Tag)
-  extends BaseTable[Bar](tag, "T_BAR") {
-
-  def id = column[String]("id", O.SqlType("VARCHAR(64)"), O.PrimaryKey)
-  def a = column[String]("A")
-  def b = columnAddress("B")
-  def c = columnAmount("C")
-  def d = column[Long]("D")
-
-  // indexes
-  def idx_c = index("idx_c", (c), unique = false)
-
-  def * = (
-    id,
-    a,
-    b,
-    c,
-    d
-  ) <> ((Bar.apply _).tupled, Bar.unapply)
-}
-
-private[dals] trait BarsDal extends BaseDalImpl[BarTable, Bar] {
-
-}
-
-private[dals] class BarsDalImpl()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends BarsDal {
-  val query = TableQuery[BarTable]
-
-  def update(row: Bar): Future[Int] = {
-    db.run(query.filter(_.id === row.id).update(row))
-  }
-
-  def update(rows: Seq[Bar]): Future[Unit] = {
-    db.run(DBIO.seq(rows.map(r ⇒ query.filter(_.id === r.id).update(r)): _*))
-  }
-}
-
 class BarsDalSpec extends DalSpec[BarsDal] {
   val dal = new BarsDalImpl()
 
-  "A" must "b" in {
+  "BarsDal" must "create table and index correctly" in {
     println("========>>" + dal.tableName)
-    val bar = Bar("a", "b", "c", ByteString.copyFrom("d".getBytes), 12L)
+    val bar = Bar(123L, "b", "c", ByteString.copyFrom("d".getBytes), 12L)
 
-    // Await.result(dal.insert(bar), 1 second)
+    Await.result(dal.insert(bar), 5.second)
   }
 }

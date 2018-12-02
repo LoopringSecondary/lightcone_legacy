@@ -25,7 +25,7 @@ trait BaseDatabaseModule {
   val dbConfig: DatabaseConfig[JdbcProfile]
   implicit val ec: ExecutionContext
 
-  val tables: Seq[BaseDal[_, _, _]]
+  val tables: Seq[BaseDal[_, _]]
 
   def createTables() = Await.result(
     Future.sequence(tables.map(_.createTable)),
