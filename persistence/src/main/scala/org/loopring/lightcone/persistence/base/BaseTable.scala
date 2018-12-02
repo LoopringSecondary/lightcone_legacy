@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence
+package org.loopring.lightcone.persistence.base
 
-import slick.jdbc.H2Profile.api._
+import slick.jdbc.MySQLProfile.api._
+import slick.lifted.Tag
 
-package object table {
-  val bars = TableQuery[BarTable]
-  val orderTableQ: TableQuery[OrderTable] = TableQuery[OrderTable]
-
-  val schema = bars.schema //++ suppliers.schema
+abstract class BaseTable[T](tag: Tag, name: String) extends Table[T](tag, "LC_" + name) {
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def createdAt = column[Long]("created_at", O.Default(System.currentTimeMillis))
+  def updatedAt = column[Long]("updated_at", O.Default(System.currentTimeMillis))
 }

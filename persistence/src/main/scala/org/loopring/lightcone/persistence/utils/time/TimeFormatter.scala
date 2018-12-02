@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence
+package org.loopring.lightcone.persistence.utils.time
 
-import slick.jdbc.H2Profile.api._
+import java.sql.Timestamp
+import java.text.SimpleDateFormat
 
-package object table {
-  val bars = TableQuery[BarTable]
-  val orderTableQ: TableQuery[OrderTable] = TableQuery[OrderTable]
+trait TimeFormatter {
+  def format(timeMillis: Long): String
+  def format(timestamp: Timestamp): String = format(timestamp.getTime)
+}
 
-  val schema = bars.schema //++ suppliers.schema
+final class SimpleTimeFormatter extends TimeFormatter {
+  private val simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+
+  def format(timeMillis: Long) = simpleDateFormat.format(timeMillis)
 }

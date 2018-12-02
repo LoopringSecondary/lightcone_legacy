@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence
+package org.loopring.lightcone.persistence.utils
 
-import slick.jdbc.H2Profile.api._
+import java.sql.Timestamp
 
-package object table {
-  val bars = TableQuery[BarTable]
-  val orderTableQ: TableQuery[OrderTable] = TableQuery[OrderTable]
+import org.joda.time.Period
 
-  val schema = bars.schema //++ suppliers.schema
+package object time {
+  implicit class RichSqlTimestamp(timestamp: Timestamp) {
+    def +(millis: Long) = new Timestamp(timestamp.getTime + millis)
+    def -(millis: Long) = new Timestamp(timestamp.getTime - millis)
+
+    def +(p: Period) = new Timestamp(timestamp.getTime + p.getMillis)
+    def -(p: Period) = new Timestamp(timestamp.getTime - p.getMillis)
+  }
 }

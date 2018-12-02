@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence
+package org.loopring.lightcone.persistence.base
 
-import slick.jdbc.H2Profile.api._
-
-package object table {
-  val bars = TableQuery[BarTable]
-  val orderTableQ: TableQuery[OrderTable] = TableQuery[OrderTable]
-
-  val schema = bars.schema //++ suppliers.schema
+trait BaseEntity {
+  val id: Long
+  def isValid: Boolean = true
 }

@@ -1,0 +1,47 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.loopring.lightcone.persistence.dals
+
+import org.loopring.lightcone.persistence.PersistenceModule
+import org.loopring.lightcone.persistence.base.BaseDalImpl
+import org.loopring.lightcone.persistence.table._
+import org.loopring.lightcone.proto.core.XRawOrder
+import slick.dbio.Effect
+import slick.jdbc.MySQLProfile.api._
+import slick.sql.FixedSqlAction
+
+import scala.concurrent.Future
+
+case class QueryCondition(delegateAddress: String = "", owner: Option[String] = None,
+    market: Option[String] = None, status: Seq[String] = Seq(), orderHashes: Seq[String] = Seq(),
+    orderType: Option[String] = None, side: Option[String] = None)
+
+trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
+  def getOrder(orderHash: String): Future[Option[XRawOrder]]
+  def saveOrder(order: XRawOrder): Future[Int]
+}
+
+class OrdersDalImpl(val module: PersistenceModule) extends OrdersDal {
+  val query = orderTableQ
+
+  def saveOrder(order: XRawOrder): Future[Int] = module.db.run(query += order)
+
+  def getOrder(orderHash: String): Future[Option[XRawOrder]] = {
+    findByFilter(_.hash === orderHash).map(_.headOption)
+  }
+
+}
