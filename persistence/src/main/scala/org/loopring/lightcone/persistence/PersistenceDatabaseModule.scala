@@ -24,7 +24,7 @@ import slick.jdbc.JdbcProfile
 
 import scala.concurrent._
 
-class PersistenceDatabase @Inject() (
+class PersistenceDatabaseModule @Inject() (
     val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") implicit val ec: ExecutionContext
 ) extends base.BaseDatabaseModule {
