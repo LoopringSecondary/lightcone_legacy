@@ -21,8 +21,8 @@ import slick.lifted.CanBeQueryCondition
 import slick.lifted.AbstractTable
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait BaseDal[T <: AbstractTable[_], A, I] extends TableQuery[T] {
-  // protected val query: TableQuery[T]
+trait BaseDal[T <: AbstractTable[_], A, I] {
+  val query: TableQuery[T]
 
   def insert(row: A): Future[I]
   def insert(rows: Seq[A]): Future[Seq[I]]
@@ -33,6 +33,7 @@ trait BaseDal[T <: AbstractTable[_], A, I] extends TableQuery[T] {
   def deleteById(id: I): Future[Int]
   def deleteById(ids: Seq[I]): Future[Int]
   def deleteByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Int]
-  def createTable(): Future[Unit]
+  def createTable(): Future[Any]
+  def dropTable(): Future[Any]
   def displayTableSchema()
 }

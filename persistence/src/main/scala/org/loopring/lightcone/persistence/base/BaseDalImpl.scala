@@ -18,33 +18,28 @@ package org.loopring.lightcone.persistence.base
 
 import slick.jdbc.MySQLProfile.api._
 import slick.lifted.CanBeQueryCondition
-
+import slick.basic._
+import slick.jdbc.JdbcProfile
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A, String] {
-
-  protected val module: BaseDatabaseModule
-
-  implicit lazy val db = module.db
-  implicit lazy val profile = module.profile
-  implicit lazy val ec = module.ec
-
-  import profile.api._
+  implicit val db: BasicProfile#Backend#Database
+  implicit val ec: ExecutionContext
 
   def insert(row: A): Future[String] = {
     insert(Seq(row)).map(_.head)
   }
 
   def insert(rows: Seq[A]): Future[Seq[String]] = {
-    db.run(this returning this.map(_.id) ++= rows)
+    db.run(query returning query.map(_.id) ++= rows)
   }
 
   def findById(id: String): Future[Option[A]] = {
-    db.run(this.filter(_.id === id).result.headOption)
+    db.run(query.filter(_.id === id).result.headOption)
   }
 
   def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]] = {
-    db.run(this.withFilter(f).result)
+    db.run(query.withFilter(f).result)
   }
 
   def deleteById(id: String): Future[Int] = {
@@ -52,20 +47,24 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A, String] {
   }
 
   def deleteById(ids: Seq[String]): Future[Int] = {
-    db.run(this.filter(_.id.inSet(ids)).delete)
+    db.run(query.filter(_.id.inSet(ids)).delete)
   }
 
   def deleteByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Int] = {
-    db.run(this.withFilter(f).delete)
+    db.run(query.withFilter(f).delete)
   }
 
-  def createTable(): Future[Unit] = {
-    this.schema.create.statements.foreach(println)
-    db.run(DBIO.seq(this.schema.create))
+  def createTable(): Future[Any] = {
+    query.schema.create.statements.foreach(println)
+    db.run(DBIO.seq(query.schema.create))
+  }
+
+  def dropTable(): Future[Any] = {
+    db.run(DBIO.seq(query.schema.drop))
   }
 
   def displayTableSchema() = {
-    this.schema.create.statements.foreach(println)
+    query.schema.create.statements.foreach(println)
   }
 
 }

@@ -19,7 +19,6 @@ package org.loopring.lightcone.persistence
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals._
-// import org.loopring.lightcone.lib.time.TimeProvider
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -30,16 +29,9 @@ class PersistenceDatabase @Inject() (
     @Named("db-execution-context") implicit val ec: ExecutionContext
 ) extends base.BaseDatabaseModule {
 
-  val bars: BarsDal = new BarsDalImpl(this)
-  val orders: OrdersDal = new OrdersDalImpl(this)
+  val bars: BarsDal = new BarsDalImpl()
+  val orders: OrdersDal = new OrdersDalImpl()
 
-  def createTables() = Future.sequence(Seq(
-    bars.createTable(),
-    orders.createTable()
-  ))
+  val tables = Seq(bars, orders)
 
-  def displayTableSchemas() = {
-    bars.displayTableSchema()
-    orders.displayTableSchema()
-  }
 }

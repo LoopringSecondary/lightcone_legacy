@@ -18,18 +18,20 @@ package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto.persistence.Bar
 import org.loopring.lightcone.proto.core._
-import slick.dbio.Effect
 import slick.jdbc.MySQLProfile.api._
-import slick.sql.FixedSqlAction
-
-import scala.concurrent.Future
+import slick.basic._
+import scala.concurrent._
 
 trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
 
 }
 
-class OrdersDalImpl(val module: BaseDatabaseModule) extends OrdersDal {
+class OrdersDalImpl()(implicit
+    val db: BasicProfile#Backend#Database,
+    val ec: ExecutionContext
+) extends OrdersDal {
 
   val query = TableQuery[OrderTable]
 

@@ -18,17 +18,27 @@ package org.loopring.lightcone.persistence.base
 
 import slick.basic._
 import slick.jdbc.JdbcProfile
-
+import scala.concurrent.duration._
 import scala.concurrent._
 
 trait BaseDatabaseModule {
   val dbConfig: DatabaseConfig[JdbcProfile]
   // val timeProvider: TimeProvider
 
-  def profile: JdbcProfile = dbConfig.profile
-  def db: BasicProfile#Backend#Database = dbConfig.db
-  def ec: ExecutionContext
+  implicit val db: BasicProfile#Backend#Database = dbConfig.db
+  implicit val ec: ExecutionContext
 
-  def createTables(): Future[Any]
-  def displayTableSchemas()
+  val tables: Seq[BaseDal[_, _, _]]
+
+  def createTables() = Await.result(
+    Future.sequence(tables.map(_.createTable)),
+    10.second
+  )
+
+  def dropTables() = Await.result(
+    Future.sequence(tables.map(_.dropTable)),
+    10.second
+  )
+
+  def displayTableSchemas() = tables.map(_.displayTableSchema)
 }
