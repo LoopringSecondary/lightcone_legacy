@@ -31,9 +31,7 @@ class BarsDalSpec extends DalSpec[BarsDal] {
   val dal = new BarsDalImpl()
 
   "BarsDal" must "create table and index correctly" in {
-    println("========>>" + dal.tableName)
     val bar = Bar(123L, "b", "c", ByteString.copyFrom("d".getBytes), 12L)
-
     Await.result(dal.insert(bar), 5.second)
   }
 }
