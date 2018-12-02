@@ -19,7 +19,7 @@ package org.loopring.lightcone.persistence.base
 import slick.basic._
 import slick.jdbc.JdbcProfile
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent._
 
 trait BaseDatabaseModule {
   val dbConfig: DatabaseConfig[JdbcProfile]
@@ -29,6 +29,6 @@ trait BaseDatabaseModule {
   def db: BasicProfile#Backend#Database = dbConfig.db
   def ec: ExecutionContext
 
-  def displayDDL(): Unit
-  def generateDDL(): Unit
+  def createTables(): Future[Any]
+  def displayTableSchemas()
 }

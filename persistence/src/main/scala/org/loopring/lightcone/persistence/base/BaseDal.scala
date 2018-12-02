@@ -18,10 +18,12 @@ package org.loopring.lightcone.persistence.base
 
 import slick.jdbc.MySQLProfile.api._
 import slick.lifted.CanBeQueryCondition
-
+import slick.lifted.AbstractTable
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait BaseDal[T, A, I] {
+trait BaseDal[T <: AbstractTable[_], A, I] {
+  protected val query: TableQuery[T]
+
   def insert(row: A): Future[I]
   def insert(rows: Seq[A]): Future[Seq[I]]
   def update(row: A): Future[Int]

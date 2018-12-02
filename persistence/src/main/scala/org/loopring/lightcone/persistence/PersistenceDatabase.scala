@@ -23,22 +23,22 @@ import org.loopring.lightcone.persistence.dals._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent._
 
 class PersistenceDatabase @Inject() (
     val dbConfig: DatabaseConfig[JdbcProfile],
-    @Named("db-execution-context") val ec: ExecutionContext
+    @Named("db-execution-context") implicit val ec: ExecutionContext
 ) extends base.BaseDatabaseModule {
 
   val bars: BarsDal = new BarsDalImpl(this)
   val orders: OrdersDal = new OrdersDalImpl(this)
 
-  def generateDDL(): Unit = {
-    bars.createTable()
+  def createTables() = Future.sequence(Seq(
+    bars.createTable(),
     orders.createTable()
-  }
+  ))
 
-  def displayDDL(): Unit = {
+  def displayTableSchemas() = {
     bars.displayTableSchema()
     orders.displayTableSchema()
   }

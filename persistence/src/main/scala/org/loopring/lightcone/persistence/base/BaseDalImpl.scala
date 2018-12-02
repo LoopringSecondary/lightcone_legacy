@@ -22,7 +22,7 @@ import slick.lifted.CanBeQueryCondition
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A, String] {
-  protected val query: TableQuery[T]
+
   protected val module: BaseDatabaseModule
 
   implicit lazy val db = module.db
