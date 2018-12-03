@@ -75,7 +75,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
 
       Thread.sleep(1000)
       accountManagerRecoveryActor ! XStart()
-      Thread.sleep(10000)
+      Thread.sleep(7000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {
