@@ -50,9 +50,7 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId:
         ))
       case res: XRecoverOrdersRes ⇒
         recoveryOrders = recoveryOrders :+ res
-        println("####", recoveryOrders)
       case req: XRecoverOrdersReq ⇒
-        println("####111", recoveryOrders)
         val res = recoveryOrders.head
         recoveryOrders = recoveryOrders.drop(1)
         sender ! res

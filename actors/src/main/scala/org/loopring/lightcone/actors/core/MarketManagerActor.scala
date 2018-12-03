@@ -57,7 +57,12 @@ class MarketManagerActor(
   extends Actor
   with ActorLogging
   with OrderRecoverySupport {
-  val recoverySettings = OrderRecoverySettings(skipRecovery, config.recoverBatchSize, None, Some(marketId))
+  val recoverySettings = OrderRecoverySettings(
+    skipRecovery,
+    config.recoverBatchSize,
+    None,
+    Some(marketId)
+  )
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
 

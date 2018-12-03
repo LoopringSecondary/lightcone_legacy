@@ -28,7 +28,7 @@ import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence.{ XGetOrderByHashReq, XGetOrderByHashRes }
+import org.loopring.lightcone.proto.persistence._
 import org.scalatest._
 import org.slf4s.Logging
 
@@ -105,7 +105,7 @@ abstract class CoreActorsIntegrationCommonSpec(
     def expectQuery() {
       expectMsgPF() {
         case req: XRecoverOrdersReq ⇒
-          println(s"ordermanagerProbe receive: $req, sender:${sender()}")
+          info(s"ordermanagerProbe receive: $req, sender:${sender()}")
       }
     }
     def replyWith(xorders: Seq[XRawOrder]) = reply(
@@ -114,7 +114,7 @@ abstract class CoreActorsIntegrationCommonSpec(
 
     def expectQuery(orderId: String) = expectMsgPF() {
       case XGetOrderByHashReq(id) if id == orderId ⇒
-        println(s"#####, ordermanagerProbe, ${sender()}, ${id}")
+        info(s"#####, ordermanagerProbe, ${sender()}, ${id}")
     }
 
     def replyWith(orderId: String, filledAmountS: BigInt) = reply(
@@ -132,7 +132,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   val accountBalanceProbe = new TestProbe(system, "account_balance") {
     def expectQuery(address: String, token: String) = expectMsgPF() {
       case XGetBalanceAndAllowancesReq(addr, tokens) if addr == address && tokens == Seq(token) ⇒
-        println(s"accountBalanceProbe, ${addr}, ${tokens}, ${sender()}")
+        info(s"accountBalanceProbe, ${addr}, ${tokens}, ${sender()}")
     }
 
     def replyWith(addr: String, token: String, balance: BigInt, allowance: BigInt) = reply(
