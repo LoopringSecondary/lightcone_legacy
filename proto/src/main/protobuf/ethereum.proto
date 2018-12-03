@@ -18,3 +18,74 @@ syntax = "proto3";
 
 option java_multiple_files = true;
 package org.loopring.lightcone.proto.ethereum;
+
+message XBlockData {
+    int64  id                   = 1;
+    int64  height               = 2;
+    int64  timestamp            = 3;
+    int32  num_tx               = 4;
+    string hash                 = 5;
+    string parent_hash          = 6;
+    string sha3_uncles          = 7;
+    string mined_by             = 8;
+    bytes  difficulty           = 9;
+    bytes  total_difficulty     = 10;
+    int64  size                 = 11;
+    bytes  gas_used             = 12;
+    bytes  gas_limit            = 13;
+    int64  avg_gas_price        = 14;
+    int64  nonce                = 15;
+    bytes  block_reward         = 16;
+    bytes  uncle_reward         = 17;
+    bytes  extra_data           = 18;
+}
+
+message XTokenTransferData {
+    int64  id                   = 1;
+    string block_height         = 2;
+    string tx_hash              = 3;
+    int64  timestamp            = 4;
+    string from                 = 5;
+    string to                   = 6;
+    bytes  amount               = 7;
+    string token                = 8;
+}
+
+message XEventLogData {
+    int64  id                   = 1;
+    string block_height         = 2;
+    string tx_hash              = 3;
+    int64  timestamp            = 4;
+    string address              = 5;
+    string name                 = 6;
+    bytes  data                 = 7;
+    bytes  topics               = 8;
+}
+
+message XTransactionData {
+    int64  id                   = 1;
+    string block_height         = 2;
+    string tx_hash              = 3;
+    int64  timestamp            = 4;
+    string from                 = 5;
+    string to                   = 6;
+    bytes  amount               = 7;
+    int32  tx_receipt_status    = 8;
+    bytes  gas_used             = 9;
+    bytes  gas_limit            = 10;
+    int64  gas_price            = 11;
+    bytes  tx_fee               = 12;
+    int64  nonce                = 13;
+    bytes  input_data           = 14;
+}
+
+message XAddressData {
+    int64  id                   = 1;
+    bytes  eth_balance          = 2;
+    double eth_balance_value    = 3;
+    int64  num_tx               = 4;
+    string creator_address      = 5;
+    string creator_tx           = 6;
+    int64  updated_at_block     = 7;
+
+}

@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.persistence._
 
 private[persistence] class BarTable(tag: Tag)
-  extends BaseTable[Bar](tag, "T_BAR") {
+  extends BaseTable[Bar](tag, "T_BARS") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def hash = columnHash("hash")
