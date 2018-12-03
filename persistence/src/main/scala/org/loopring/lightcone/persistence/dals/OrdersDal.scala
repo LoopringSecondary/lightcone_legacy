@@ -88,6 +88,20 @@ trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
     sortedByUpdatedAt: Boolean = true
   ): Future[Seq[XRawOrder]]
 
+  // Get some orders between updatedSince and updatedUntil. The orders are sorted by updated_at
+  // indicatd by the sortedByUpdatedAt param.
+  def getOrdersByUpdatedAt(
+    num: Int,
+    statuses: Set[XOrderStatus],
+    owners: Set[String] = Set.empty,
+    tokenSSet: Set[String] = Set.empty,
+    tokenBSet: Set[String] = Set.empty,
+    feeTokenSet: Set[String] = Set.empty,
+    updatedSince: Option[Long] = None,
+    updatedUntil: Option[Long] = None,
+    sortedByUpdatedAt: Boolean = true
+  ): Future[Seq[XRawOrder]]
+
   // Count the number of orders
   def countOrders(
     statuses: Set[XOrderStatus],
@@ -134,6 +148,18 @@ class OrdersDalImpl()(
     sinceId: Option[Long] = None,
     tillId: Option[Long] = None,
     sortedByUpdatedAt: Boolean = true
+  ): Future[Seq[XRawOrder]] = ???
+
+  def getOrdersByUpdatedAt(
+    num: Int,
+    statuses: Set[XOrderStatus],
+    owners: Set[String],
+    tokenSSet: Set[String],
+    tokenBSet: Set[String],
+    feeTokenSet: Set[String],
+    updatedSince: Option[Long],
+    updatedUntil: Option[Long],
+    sortedByUpdatedAt: Boolean
   ): Future[Seq[XRawOrder]] = ???
 
   def countOrders(
