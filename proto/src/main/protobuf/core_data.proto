@@ -39,7 +39,7 @@ enum XOrderStatus {
     STATUS_UNSUPPORTED_MARKET = 202;
 }
 
-enum XMatchingFailure 
+enum XMatchingFailure {
     MATCHING_ERR_NONE = 0;
     MATCHING_ERR_ORDERS_NOT_TRADABLE = 1;
     MATCHING_ERR_INCOME_TOO_SMALL = 2;
