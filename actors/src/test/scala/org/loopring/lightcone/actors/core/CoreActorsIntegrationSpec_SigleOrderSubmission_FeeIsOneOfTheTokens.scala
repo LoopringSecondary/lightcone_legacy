@@ -47,8 +47,8 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
       accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
       accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "0".zeros(0), "0".zeros(0))
 
-      orderHistoryProbe.expectQuery(order.id)
-      orderHistoryProbe.replyWith(order.id, "0".zeros(0))
+      ordersDalActorProbe.expectQuery(order.id)
+      ordersDalActorProbe.replyWith(order.id, "0".zeros(0))
 
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒

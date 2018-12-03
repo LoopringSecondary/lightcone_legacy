@@ -48,8 +48,8 @@ class CoreActorsIntegrationSpec_AllowanceUpdate
       accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
       accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "10".zeros(18), "10".zeros(18))
 
-      orderHistoryProbe.expectQuery(order.id)
-      orderHistoryProbe.replyWith(order.id, "0".zeros(0))
+      ordersDalActorProbe.expectQuery(order.id)
+      ordersDalActorProbe.replyWith(order.id, "0".zeros(0))
 
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒

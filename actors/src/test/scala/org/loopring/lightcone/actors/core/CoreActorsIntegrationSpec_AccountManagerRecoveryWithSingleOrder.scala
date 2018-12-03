@@ -17,8 +17,10 @@
 package org.loopring.lightcone.actors.core
 
 import akka.testkit.TestActorRef
+import akka.pattern._
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.persistence.OrdersDalActor
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
@@ -37,7 +39,6 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
           skipRecovery = false
         ), "accountManagerActorRecovery"
       )
-      accountManagerRecoveryActor ! XStart()
 
       val order = XRawOrder(
         hash = "order",
@@ -53,38 +54,32 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
       )
       var orderHashes = (0 to 6) map ("order" + _)
 
-      orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(Seq(
-        order.copy(hash = orderHashes(0))
-      ))
+      val recoveryOrders1 = XRecoverOrdersRes(
+        Seq(
+          order.copy(hash = orderHashes(0))
+        )
+      )
+      actors.get(OrdersDalActor.name) ! recoveryOrders1
+      val recoveryOrders2 = XRecoverOrdersRes(
+        Seq(
+          order.copy(hash = orderHashes(1))
+        )
+      )
+      actors.get(OrdersDalActor.name) ! recoveryOrders2
+      val recoveryOrders3 = XRecoverOrdersRes(
+        Seq()
+      )
+      actors.get(OrdersDalActor.name) ! recoveryOrders3
 
       Thread.sleep(1000)
+      accountManagerRecoveryActor ! XStart()
+
+      Thread.sleep(3000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          info("----orderbook status after first XRecoverOrdersRes: " + a)
-      }
-
-      orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(Seq(
-        order.copy(hash = orderHashes(1))
-      ))
-
-      orderbookManagerActor ! XGetOrderbookReq(0, 100)
-
-      expectMsgPF() {
-        case a: XOrderbook ⇒
-          info("----orderbook status after second XRecoverOrdersRes: " + a)
-      }
-      orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(Seq())
-
-      orderbookManagerActor ! XGetOrderbookReq(0, 100)
-
-      expectMsgPF() {
-        case a: XOrderbook ⇒
-          info("----orderbook status after last XRecoverOrdersRes: " + a)
+          info("----orderbook status after recovery: " + a)
       }
 
       accountManagerRecoveryActor ! XSubmitOrderReq(Some(order))

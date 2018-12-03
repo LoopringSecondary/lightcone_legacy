@@ -21,8 +21,10 @@ import akka.event.LoggingReceive
 import akka.testkit.TestActorRef
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.persistence.OrdersDalActor
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XMarketId
+import org.loopring.lightcone.proto.core.{ XMarketId, XRawOrder }
+import org.loopring.lightcone.proto.persistence.{ XGetOrderByHashReq, XGetOrderByHashRes }
 
 import scala.concurrent.ExecutionContext
 
@@ -37,9 +39,23 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId:
     extends Actor
     with ActorLogging {
 
+    var recoveryOrders = Seq.empty[XRecoverOrdersRes]
     def receive: Receive = LoggingReceive {
-      case XGetOrderFilledAmountReq(orderId) ⇒
-        sender ! XGetOrderFilledAmountRes(orderId, BigInt(0))
+      case XGetOrderByHashReq(orderId) ⇒
+        sender ! XGetOrderByHashRes(Some(
+          XRawOrder(
+            hash = orderId,
+            state = Some(XRawOrder.State(outstandingAmountS = BigInt(0)))
+          )
+        ))
+      case res: XRecoverOrdersRes ⇒
+        recoveryOrders = recoveryOrders :+ res
+        println("####", recoveryOrders)
+      case req: XRecoverOrdersReq ⇒
+        println("####111", recoveryOrders)
+        val res = recoveryOrders.head
+        recoveryOrders = recoveryOrders.drop(1)
+        sender ! res
     }
   }
 
@@ -58,15 +74,15 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId:
             req.address,
             Map(req.tokens(0) -> XBalanceAndAllowance(BigInt("100000000000000000000000000"), BigInt("100000000000000000000000000")))
           )
+
     }
   }
 
   val orderHistoryRecoveryActor = TestActorRef(new OrderHistoryForRecoveryTestActor())
   val accountBalanceRecoveryActor = TestActorRef(new AccountBalanceForRecoveryTestActor())
   val ADDRESS_RECOVERY = "0xaddress_3"
-  actors.del(OrderHistoryActor.name)
   actors.del(AccountBalanceActor.name)
-  actors.add(OrderHistoryActor.name, orderHistoryRecoveryActor)
   actors.add(AccountBalanceActor.name, accountBalanceRecoveryActor)
-
+  actors.del(OrdersDalActor.name)
+  actors.add(OrdersDalActor.name, orderHistoryRecoveryActor)
 }

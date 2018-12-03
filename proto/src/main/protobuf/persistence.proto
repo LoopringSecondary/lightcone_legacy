@@ -71,7 +71,7 @@ message XGetOrderByHashReq {
 }
 
 message XGetOrderByHashRes {
-    core.XRawOrder orders = 1;
+    core.XRawOrder order = 1;
     XPersistenceError error = 2;
 }
 

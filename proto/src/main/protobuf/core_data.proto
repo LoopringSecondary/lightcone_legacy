@@ -114,9 +114,9 @@ message XRawOrder {
         bytes actual_amount_s       = 200;
         bytes actual_amount_b       = 201;
         bytes actual_amount_fee     = 202;
-        bytes matchable_amount_s    = 203;
-        bytes matchable_amount_b    = 204;
-        bytes matchable_amount_fee  = 205;
+        bytes outstanding_amount_s    = 203;
+        bytes outstanding_amount_b    = 204;
+        bytes outstanding_amount_fee  = 205;
     }
 
     int64  id           = 1; // order hash

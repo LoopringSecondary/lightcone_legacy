@@ -116,7 +116,7 @@ class AccountManagerActor(
 
       _ = log.debug(s"order history: orderHistoryRes")
 
-      _order = order.withFilledAmountS(orderRes.getOrders.getOutstanding.amountS)
+      _order = order.withFilledAmountS(orderRes.getOrder.getState.outstandingAmountS)
 
       _ = log.debug(s"submitting order to AccountManager: ${_order}")
       successful = manager.submitOrder(_order)
