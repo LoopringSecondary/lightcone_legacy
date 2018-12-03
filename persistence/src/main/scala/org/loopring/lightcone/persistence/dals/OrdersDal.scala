@@ -23,11 +23,11 @@ import org.loopring.lightcone.proto.core._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
-import slick.lifted.Query
+import slick.lifted.{CanBeQueryCondition, Query}
 import com.mysql.jdbc.exceptions.jdbc4._
 
 import scala.concurrent._
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
 
@@ -194,7 +194,11 @@ class OrdersDalImpl()(
   ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.id > 0l)
     // TODO du: 待解决的filter查询条件
-    // if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
+//    implicit val XOrderStatusCanBeQueryCondition : CanBeQueryCondition[XOrderStatus] =
+//      new CanBeQueryCondition[XOrderStatus] {
+//        def apply(value: XOrderStatus) = new LiteralColumn(value)
+//      }
+//     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
     if (tokenBSet.nonEmpty) filters = filters.filter(_.tokenB inSet tokenBSet)
