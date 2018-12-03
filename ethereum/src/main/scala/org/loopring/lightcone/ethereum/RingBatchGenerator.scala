@@ -27,7 +27,7 @@ trait RingBatchGenerator {
 class RingBatchGeneratorImpl(context: XRingBatchContext)
   extends RingBatchGenerator {
 
-  def sign(xRingBatch: XRingBatch) = {
+  private def sign(xRingBatch: XRingBatch) = {
     xRingBatch
   }
 
@@ -41,14 +41,25 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     val ordersDistinctedSeq = ordersDistinctedMap
       .map(_._2)
       .map(OrderHelper.sign)
+      .toSeq
 
     val ordersHashIndexMap = ordersDistinctedSeq
+      .map(_.hash)
       .zipWithIndex
       .toMap
+
+    val xrings = orders.map(orders ⇒ {
+      val orderIndexes = orders.map(order ⇒ ordersHashIndexMap(order.hash))
+      new XRingBatch.XRing(orderIndexes)
+    })
 
     val xringBatch = new XRingBatch()
       .withFeeRecipient(context.feeRecipient)
       .withMiner(context.miner)
+      .withRings(xrings)
+      .withOrders(ordersDistinctedSeq)
+      .withSignAlgorithm(XSigningAlgorithm.ALGO_ETHEREUM)
+      .withTransactionOrigin(context.transactionOrigin)
 
     sign(xringBatch)
   }
