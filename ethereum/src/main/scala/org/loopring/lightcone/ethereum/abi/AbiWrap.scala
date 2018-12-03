@@ -17,7 +17,7 @@
 package org.loopring.lightcone.ethereum.abi
 
 import org.apache.commons.collections4.Predicate
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.{ Abi ⇒ SABI }
 import org.web3j.utils.Numeric
 
 import scala.annotation.StaticAnnotation
