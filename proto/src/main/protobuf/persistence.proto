@@ -77,4 +77,5 @@ message XGetOrderByHashRes {
 
 enum XPersistenceError {
     PERS_ERR_NONE       = 0;
+    PERS_ERR_INVALID_DATA = 1;
 }

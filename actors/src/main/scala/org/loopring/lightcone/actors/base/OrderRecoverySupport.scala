@@ -17,7 +17,6 @@
 package org.loopring.lightcone.actors.base
 
 import akka.actor._
-import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
@@ -26,7 +25,7 @@ import org.loopring.lightcone.proto.core.XMarketId
 import scala.concurrent._
 
 case class OrderRecoverySettings(
-    skipRecovery: Boolean,
+    skipRecovery: Boolean, // for testing purpose
     batchSize: Int,
     ownerOfOrders: Option[String] = None,
     marketId: Option[XMarketId] = None
