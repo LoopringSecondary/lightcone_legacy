@@ -38,14 +38,6 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
     db.run(query returning query.map(_.id) ++= rows)
   }
 
-  def update(row: A): Future[Int] = {
-    db.run(query.filter(_.hash === getRowHash(row)).update(row))
-  }
-
-  def update(rows: Seq[A]): Future[Unit] = {
-    db.run(DBIO.seq(rows.map(r ⇒ query.filter(_.hash === getRowHash(r)).update(r)): _*))
-  }
-
   def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]] = {
     db.run(query.withFilter(f).result)
   }
@@ -62,15 +54,6 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
 
   def deleteById(ids: Seq[Long]): Future[Int] =
     db.run(query.filter(_.id.inSet(ids)).delete)
-
-  def findByHash(hash: String): Future[Option[A]] = {
-    db.run(query.filter(_.hash === hash).result.headOption)
-  }
-  def deleteByHash(hash: String): Future[Int] =
-    deleteByHash(Seq(hash))
-
-  def deleteByHash(hashes: Seq[String]): Future[Int] =
-    db.run(query.filter(_.hash.inSet(hashes)).delete)
 
   def createTable(): Future[Any] = {
     // query.schma.create.statements.foreach(println)

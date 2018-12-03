@@ -17,26 +17,11 @@
 package org.loopring.lightcone.persistence.base
 
 import slick.jdbc.MySQLProfile.api._
-import slick.lifted.CanBeQueryCondition
-import scala.concurrent._
+import slick.ast.ColumnOption
+import scala.reflect.ClassTag
+import com.google.protobuf.ByteString
 
-trait BaseDal[T <: BaseTable[A], A] {
-  def query: TableQuery[T]
-  def getRowHash(row: A): String
-
-  def tableName = query.baseTableRow.tableName
-
-  def insert(row: A): Future[Long]
-  def insert(rows: Seq[A]): Future[Seq[Long]]
-
-  def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]]
-  def deleteByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Int]
-
-  def findById(id: Long): Future[Option[A]]
-  def deleteById(id: Long): Future[Int]
-  def deleteById(ids: Seq[Long]): Future[Int]
-
-  def createTable(): Future[Any]
-  def dropTable(): Future[Any]
-  def displayTableSchema(): Unit
+abstract class UniqueHashTable[T](tag: Tag, name: String)
+  extends BaseTable[T](tag, name) {
+  def hash: slick.lifted.Rep[String]
 }

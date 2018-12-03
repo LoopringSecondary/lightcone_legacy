@@ -25,7 +25,7 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
+trait OrdersDal extends UniqueHashDalImpl[OrderTable, XRawOrder] {
 
   // Save a order to the database and returns the saved order and indicate
   // whether the order was perviously saved or not.

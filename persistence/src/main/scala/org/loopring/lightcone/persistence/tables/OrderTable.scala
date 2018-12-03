@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.persistence._
 
 class OrderTable(tag: Tag)
-  extends BaseTable[XRawOrder](tag, "T_ORDERS") {
+  extends UniqueHashTable[XRawOrder](tag, "T_ORDERS") {
 
   implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
   implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)

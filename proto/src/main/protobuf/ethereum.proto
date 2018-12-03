@@ -53,7 +53,7 @@ message XTokenTransferData {
 
 message XEventLogData {
     int64  id                   = 1;
-    string height               = 2;
+    int64 height               = 2;
     string tx_hash              = 3;
     int64  timestamp            = 4;
     string address              = 5;
@@ -64,8 +64,8 @@ message XEventLogData {
 
 message XTransactionData {
     int64  id                   = 1;
-    string height               = 2;
-    string tx_hash              = 3;
+    int64  height               = 2;
+    string hash                 = 3;
     int64  timestamp            = 4;
     string from                 = 5;
     string to                   = 6;
