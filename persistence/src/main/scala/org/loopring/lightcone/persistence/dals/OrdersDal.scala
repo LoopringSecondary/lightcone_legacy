@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.table
+package org.loopring.lightcone.persistence.dals
 
+import org.loopring.lightcone.persistence.base._
+import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto.persistence.Bar
+import org.loopring.lightcone.proto.core._
 import slick.jdbc.MySQLProfile.api._
-import slick.ast.ColumnOption
+import slick.jdbc.JdbcProfile
+import scala.concurrent._
+import slick.basic._
 
-abstract class BaseTable[T](tag: Tag, name: String)
-  extends Table[T](tag, name) {
+trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
+}
 
-  def columnHash(name: String, options: ColumnOption[String]*) =
-    column[String](name, (Seq(O.SqlType("VARCHAR(64)")) ++ options): _*)
-
-  def columnAddress(name: String, options: ColumnOption[String]*) =
-    column[String](name, (Seq(O.SqlType("VARCHAR(64)")) ++ options): _*)
-
-  def columnAmount(name: String, options: ColumnOption[String]*) =
-    column[String](name, (Seq(O.SqlType("VARCHAR(64)")) ++ options): _*)
+class OrdersDalImpl()(
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext
+) extends OrdersDal {
+  val query = TableQuery[OrderTable]
+  def getRowHash(row: XRawOrder) = row.hash
 }

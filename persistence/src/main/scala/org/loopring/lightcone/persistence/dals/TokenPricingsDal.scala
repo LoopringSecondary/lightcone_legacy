@@ -14,16 +14,8 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.persistence.dals
 
-option java_multiple_files = true;
-package org.loopring.lightcone.proto.persistence;
+trait TokenPricingsDal {
 
-message Bar {
-    int64 id = 5;
-    string hash = 6;
-    string a = 1;
-    string b = 2;
-    bytes c = 3;
-    int64 d = 4;
 }

@@ -14,16 +14,28 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.persistence.base
 
-option java_multiple_files = true;
-package org.loopring.lightcone.proto.persistence;
+import slick.basic._
+import slick.jdbc.JdbcProfile
+import scala.concurrent.duration._
+import scala.concurrent._
 
-message Bar {
-    int64 id = 5;
-    string hash = 6;
-    string a = 1;
-    string b = 2;
-    bytes c = 3;
-    int64 d = 4;
+trait BaseDatabaseModule {
+  val dbConfig: DatabaseConfig[JdbcProfile]
+  implicit val ec: ExecutionContext
+
+  val tables: Seq[BaseDal[_, _]]
+
+  def createTables() = Await.result(
+    Future.sequence(tables.map(_.createTable)),
+    10.second
+  )
+
+  def dropTables() = Await.result(
+    Future.sequence(tables.map(_.dropTable)),
+    10.second
+  )
+
+  def displayTableSchemas() = tables.map(_.displayTableSchema)
 }
