@@ -73,15 +73,6 @@ enum XErrorCode {
     ERR_UNKNOWN = 1000;
 }
 
-message XGetOrderFilledAmountReq {
-    string order_id = 1;
-}
-
-message XGetOrderFilledAmountRes {
-    string order_id = 1;
-    bytes filled_amount_s = 2;
-}
-
 message XBalanceAndAllowance {
     bytes balance = 1;
     bytes allowance = 2;
@@ -97,10 +88,6 @@ message XGetBalanceAndAllowancesReq {
 message XGetBalanceAndAllowancesRes {
     string address = 1;
     map<string, XBalanceAndAllowance> balance_and_allowance_map = 2;
-}
-
-message XSubmitRawOrderReq {
-    core.XRawOrder order = 1;
 }
 
 message XSubmitOrderReq {
@@ -122,16 +109,6 @@ message XAddressAllowanceUpdated {
     string address = 1;
     string token = 2;
     bytes balance = 3;
-}
-
-
-message XUpdateOrderStateAndStatusReq {
-    XOrderState actuals = 1;
-    core.XOrderStatus status = 2;
-}
-
-message XUpdateOrderStateAndStatusRes {
-    bool result =1;
 }
 
 // 由ethereum发送给orderManagingActor
@@ -199,8 +176,10 @@ message XSendRawTxRes {
 
 message XRecoverOrdersReq {
     string address = 1;
-    int64 updated_since = 2;
-    int32 num = 3;
+    string token_s = 2;
+    string token_b = 3;
+    int64 updated_since = 4;
+    int32 num = 5;
 }
 
 message XRecoverOrdersRes {
@@ -258,13 +237,6 @@ message XUpdatedTokenBurnRate {
     string token = 1;
     double burnRate = 2;
 }
-
-message XPersistOrderHistoryReq {
-    string order_id = 1;
-    bytes filled_amount_s = 2;
-}
-
-message XPersistOrderHistoryRes {}
 
 /// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
 /// 解析合约事件得到下面的数据：

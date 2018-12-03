@@ -57,9 +57,7 @@ class MarketManagerActor(
   extends Actor
   with ActorLogging
   with OrderRecoverySupport {
-
-  val ownerOfOrders = None
-  val recoverBatchSize = config.recoverBatchSize
+  val recoverySettings = OrderRecoverySettings(skipRecovery, config.recoverBatchSize, None, Some(marketId))
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
 
@@ -81,7 +79,7 @@ class MarketManagerActor(
     aggregator
   )
 
-  protected def orderDatabaseAccessActor = actors.get(OrdersDalActor.name)
+  protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   protected def settlementActor = actors.get(SettlementActor.name)

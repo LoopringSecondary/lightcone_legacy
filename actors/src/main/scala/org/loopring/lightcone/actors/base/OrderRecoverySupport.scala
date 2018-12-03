@@ -21,8 +21,16 @@ import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core.XMarketId
 
 import scala.concurrent._
+
+case class OrderRecoverySettings(
+    skipRecovery: Boolean,
+    batchSize: Int,
+    ownerOfOrders: Option[String] = None,
+    marketId: Option[XMarketId] = None
+)
 
 trait OrderRecoverySupport {
   actor: Actor with ActorLogging ⇒
@@ -30,14 +38,11 @@ trait OrderRecoverySupport {
   implicit val ec: ExecutionContext
   implicit val timeout: Timeout
 
-  val skipRecovery: Boolean // for testing purpose
-  val recoverBatchSize: Int
-  val ownerOfOrders: Option[String]
+  val recoverySettings: OrderRecoverySettings
   private var processed = 0
 
-  protected def orderDatabaseAccessActor: ActorRef
+  protected def ordersDalActor: ActorRef
 
-  //暂时将recovery更改为同步的
   protected def recoverOrder(xorder: XOrder): Future[Any]
 
   protected def functional: Receive
@@ -47,16 +52,19 @@ trait OrderRecoverySupport {
   private var xordersToRecover: Seq[XOrder] = Nil
 
   protected def startOrderRecovery() = {
-    if (skipRecovery) {
+    if (recoverySettings.skipRecovery) {
       log.info(s"actor recovering skipped: ${self.path}")
       context.become(functional)
     } else {
       context.become(recovering)
       log.info(s"actor recovering started: ${self.path}")
-      orderDatabaseAccessActor ! XRecoverOrdersReq(
-        ownerOfOrders.getOrElse(null),
+      val marketId = recoverySettings.marketId
+      ordersDalActor ! XRecoverOrdersReq(
+        recoverySettings.ownerOfOrders.orNull,
+        if (marketId.isEmpty) null else marketId.get.primary,
+        if (marketId.isEmpty) null else marketId.get.secondary,
         0L,
-        recoverBatchSize
+        recoverySettings.batchSize
       )
     }
   }
@@ -70,7 +78,7 @@ trait OrderRecoverySupport {
 
       xordersToRecover = xraworders.map(xRawOrderToXOrder).toList
       lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
-      recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverBatchSize
+      recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverySettings.batchSize
 
       self ! XRecoverNextOrder()
 
@@ -85,10 +93,13 @@ trait OrderRecoverySupport {
 
         case Nil ⇒
           if (!recoverEnded) {
-            orderDatabaseAccessActor ! XRecoverOrdersReq(
-              ownerOfOrders.getOrElse(null),
+            val marketId = recoverySettings.marketId
+            ordersDalActor ! XRecoverOrdersReq(
+              recoverySettings.ownerOfOrders.orNull,
+              if (marketId.isEmpty) null else marketId.get.primary,
+              if (marketId.isEmpty) null else marketId.get.secondary,
               lastUpdatdTimestamp,
-              recoverBatchSize
+              recoverySettings.batchSize
             )
           } else {
             log.info(s"recovering completed with $processed orders")

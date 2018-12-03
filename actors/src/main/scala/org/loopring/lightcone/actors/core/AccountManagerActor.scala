@@ -30,6 +30,7 @@ import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.persistence._
 
 import scala.concurrent._
 
@@ -51,14 +52,13 @@ class AccountManagerActor(
   extends Actor
   with ActorLogging
   with OrderRecoverySupport {
-  val ownerOfOrders = Some(address)
+  val recoverySettings = OrderRecoverySettings(skipRecovery, recoverBatchSize, Some(address))
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
-  protected def orderDatabaseAccessActor = actors.get(OrdersDalActor.name)
+  protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
-  protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
   def receive: Receive = {
@@ -104,7 +104,6 @@ class AccountManagerActor(
     case msg ⇒ log.debug(s"unknown msg ${msg}")
   }
 
-  //todo:返回Future时，会有并发问题，需要处理下，暂时将recovery更改为同步
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
     val order: Order = xorder
     for {
@@ -112,12 +111,12 @@ class AccountManagerActor(
       _ ← getTokenManager(order.tokenFee) if order.amountFee > 0 && order.tokenS != order.tokenFee
 
       // Update the order's _outstanding field.
-      orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
-        .mapTo[XGetOrderFilledAmountRes]
+      orderRes ← (ordersDalActor ? XGetOrderByHashReq(order.id))
+        .mapTo[XGetOrderByHashRes]
 
       _ = log.debug(s"order history: orderHistoryRes")
 
-      _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
+      _order = order.withFilledAmountS(orderRes.getOrders.getOutstanding.amountS)
 
       _ = log.debug(s"submitting order to AccountManager: ${_order}")
       successful = manager.submitOrder(_order)
@@ -188,7 +187,7 @@ class AccountManagerActor(
   }
 
   protected def recoverOrder(xorder: XOrder) = {
-    log.debug(s"recoverOrder, ${self.path.toString}, ${orderHistoryActor.path.toString}, ${xorder}")
+    log.debug(s"recoverOrder, ${self.path.toString}, ${ordersDalActor.path.toString}, ${xorder}")
     submitOrder(xorder)
   }
 
