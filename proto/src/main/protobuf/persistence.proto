@@ -40,4 +40,5 @@ enum XPersistenceError {
     PERS_ERR_NONE       = 0;
     PERS_ERROR_DUPLICATE_INSERT  = 1;
     PERS_ERROR_UPDATE_FAILED = 2;
+    PERS_ERROR_INTERNAL = 3;
 }

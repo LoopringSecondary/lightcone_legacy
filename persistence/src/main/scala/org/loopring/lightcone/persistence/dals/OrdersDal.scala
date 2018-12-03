@@ -24,6 +24,7 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
 import slick.lifted.Query
+import com.mysql.jdbc.exceptions.jdbc4._
 
 import scala.concurrent._
 import scala.util.{ Failure, Success }
@@ -112,17 +113,17 @@ class OrdersDalImpl()(
   def getRowHash(row: XRawOrder) = row.hash
 
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
-    val saved = insert(order)
-    saved.onComplete {
-      case Success(r) ⇒ {
-        println("Created MySQL tables " + r)
+    db.run((query returning query.map(_.id) ++= Seq(order)).asTry).map {
+      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
+        XSaveOrderResult(error = XPersistenceError.PERS_ERROR_DUPLICATE_INSERT, order = Some(order), alreadyExist = true)
       }
-      case Failure(e) ⇒
-        println("Failed to create MySQL tables: " + e.getMessage)
-        System.exit(0)
+      case Failure(ex) ⇒ {
+        // TODO du: print some log
+        // log(s"error : ${ex.getMessage}")
+        XSaveOrderResult(error = XPersistenceError.PERS_ERROR_INTERNAL, order = Some(order))
+      }
+      case Success(x) ⇒ XSaveOrderResult(error = XPersistenceError.PERS_ERR_NONE, order = Some(order.copy(id = x.head)))
     }
-    // TODO du:待解决catch sql异常
-    Future.successful(XSaveOrderResult())
   }
 
   def getOrderByHash(hash: String): Future[Option[XRawOrder]] = {
@@ -147,8 +148,8 @@ class OrdersDalImpl()(
     changeUpdatedAtField: Boolean = true
   ): Future[Either[XPersistenceError, String]] = for {
     _ ← Future.unit
-    // TODO du: 1. 排除updateAt字段的更新未解决 2.是否应该传入updateToState(作为update的值), fromState(作为where条件)
-    stateProjection = if (changeUpdatedAtField) state else state.copy(updatedAt = 0l)
+    // TODO du: 1. 排除updateAt字段的更新未解决 2.是否应该传入updateToState(作为update的值), fromState(作为where条件) 3.公用的timeProvider
+    stateProjection = if (changeUpdatedAtField) state.copy(updatedAt = System.currentTimeMillis()) else state.copy(updatedAt = 0l)
     result ← db.run(query
       .filter(_.hash === hash)
       .map(c ⇒ c.stateProjection)
@@ -162,7 +163,18 @@ class OrdersDalImpl()(
     hash: String,
     status: XOrderStatus,
     changeUpdatedAtField: Boolean = true
-  ): Future[Either[XPersistenceError, String]] = ???
+  ): Future[Either[XPersistenceError, String]] = for {
+    _ ← Future.unit
+    stateProjection = if (changeUpdatedAtField) XRawOrder.State().copy(updatedAt = System.currentTimeMillis(), status = status)
+    //TODO du: 和上面同样的问题，待解决只更新一个字段
+    else XRawOrder.State().copy(status = status)
+    result ← db.run(query
+      .map(_.stateProjection)
+      .update(Some(stateProjection)))
+  } yield {
+    if (result >= 1) Right(hash)
+    else Left(XPersistenceError.PERS_ERROR_UPDATE_FAILED)
+  }
 
   def queryOrderFilters(
     statuses: Set[XOrderStatus],
@@ -175,7 +187,7 @@ class OrdersDalImpl()(
   ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.id > 0l)
     // TODO du: 待解决的filter查询条件
-    // if(statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
+    // if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
     if (tokenBSet.nonEmpty) filters = filters.filter(_.tokenB inSet tokenBSet)
@@ -201,18 +213,16 @@ class OrdersDalImpl()(
       Future.successful(Seq.empty)
     } else {
       val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId)
-      if(sortedByUpdatedAt) {
+      if (sortedByUpdatedAt) {
         db.run(filters
           .sortBy(_.updatedAt.desc)
           .take(num)
-          .result
-        )
+          .result)
       } else {
         db.run(filters
           .sortBy(_.createdAt.desc)
           .take(num)
-          .result
-        )
+          .result)
       }
     }
   }
@@ -234,8 +244,7 @@ class OrdersDalImpl()(
       db.run(filters
         .sortBy(_.updatedAt.desc)
         .size
-        .result
-      )
+        .result)
     }
   }
 }

@@ -19,7 +19,7 @@ package org.loopring.lightcone.persistence.dals
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto.actors.XOrderState
 import org.loopring.lightcone.proto.core.XRawOrder
-import org.loopring.lightcone.proto.persistence.Bar
+import org.loopring.lightcone.proto.persistence.{ Bar, XSaveOrderResult }
 import org.loopring.lightcone.proto.core._
 import org.web3j.utils.Numeric
 
@@ -31,7 +31,12 @@ class OrdersDalSpec extends DalSpec[OrdersDal] {
 
   "addOrder" must "insert a order" in {
     // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
-    var order = XRawOrder(hash = "0x123")
+    var order = XRawOrder(hash = "0x128")
+    for {
+      result ← dal.saveOrder(order)
+    } yield {
+      println(result.error)
+    }
     Await.result(dal.saveOrder(order), 5.second)
   }
 
@@ -41,13 +46,18 @@ class OrdersDalSpec extends DalSpec[OrdersDal] {
     Await.result(dal.getOrders(orders), 5.second)
   }
 
-  "updateOrderStatusByHash" must "update a order" in {
+  "updateOrderStateByHash" must "update a order" in {
     // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
     val state = XRawOrder.State(createdAt = 1l, updatedAt = 5l, matchedAt = 3l, updatedAtBlock = 4l, status = XOrderStatus.STATUS_CANCELLED_BY_USER,
       actualAmountS = ByteString.copyFrom("11", "UTF-8"), actualAmountB = ByteString.copyFrom("12", "UTF-8"),
       actualAmountFee = ByteString.copyFrom("13", "UTF-8"), outstandingAmountS = ByteString.copyFrom("14", "UTF-8"),
       outstandingAmountB = ByteString.copyFrom("15", "UTF-8"), outstandingAmountFee = ByteString.copyFrom("16", "UTF-8"))
     Await.result(dal.updateOrderState("0x123", state, false), 5.second)
+  }
+
+  "updateOrderStatus" must "update a order" in {
+    // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
+    Await.result(dal.updateOrderStatus("0x123", XOrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS, false), 5.second)
   }
 
   "getOrders" must "get some orders" in {
@@ -60,7 +70,19 @@ class OrdersDalSpec extends DalSpec[OrdersDal] {
     val sinceId: Option[Long] = Some(8000l)
     val tillId: Option[Long] = Some(9000l)
     val sortedByUpdatedAt: Boolean = true
-
     Await.result(dal.getOrders(100, statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId, true), 5.second)
+  }
+
+  "countOrders" must "get orders count" in {
+    // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
+    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_CANCELLED_BY_USER, XOrderStatus.STATUS_CANCELLED_LOW_BALANCE).toSet
+    val owners: Set[String] = Seq("0x11", "0x22").toSet
+    val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
+    val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
+    val feeTokenSet: Set[String] = Seq("0x11", "0x22").toSet
+    val sinceId: Option[Long] = Some(8000l)
+    val tillId: Option[Long] = Some(9000l)
+    val sortedByUpdatedAt: Boolean = true
+    Await.result(dal.countOrders(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId), 5.second)
   }
 }
