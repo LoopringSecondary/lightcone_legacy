@@ -23,52 +23,47 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.ethereum._
 import com.google.protobuf.ByteString
 
-class BlockDataTable(tag: Tag)
-  extends UniqueHashTable[XBlockData](tag, "T_ETH_BLOCKS") {
+class TransactionTable(tag: Tag)
+  extends UniqueHashTable[XTransactionData](tag, "T_TRANSACTIONS") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def height = column[Long]("height")
-  def timestamp = column[Long]("timestamp")
-  def numTx = column[Int]("num_tx")
   def hash = columnHash("hash")
-  def parentHash = columnHash("parent_hash")
-  def sha3Uncles = columnHash("sha3_uncles")
-  def minedBy = columnAddress("mined_by")
-  def difficulty = columnAmount("difficulty")
-  def totalDifficulty = columnAmount("total_difficulty")
-  def size = column[Long]("size")
+  def blockHash = columnHash("block_hash")
+  def timestamp = column[Long]("timestamp")
+  def from = columnAddress("from")
+  def to = columnAddress("to")
+  def amount = columnAmount("amount")
+  def txReceiptStatus = column[Int]("tx_receipt_status")
   def gasUsed = columnAmount("gas_used")
   def gasLimit = columnAmount("gas_limit")
-  def avgGasPrice = column[Long]("avg_gas_price")
+  def gasPrice = column[Long]("gas_price")
+  def txFee = columnAmount("tx_fee")
   def nonce = column[Long]("nonce")
-  def blockReward = columnAmount("block_reward")
-  def uncleReward = columnAmount("uncle_reward")
-  def extraData = column[ByteString]("extra_data")
+  def inputData = column[ByteString]("input_data")
 
   // indexes
-  def idx_hash = index("idx_hash", (hash), unique = true)
-  def idx_parent_hash = index("idx_parent_hash", (parentHash), unique = false)
   def idx_height = index("idx_height", (height), unique = false)
-  def idx_mined_by = index("idx_mined_by", (minedBy), unique = false)
+  def idx_hash = index("idx_hash", (hash), unique = true)
+  def idx_block_hash = index("idx_block_hash", (blockHash), unique = false)
+  def idx_from = index("idx_from", (from), unique = false)
+  def idx_to = index("idx_to", (to), unique = false)
 
   def * = (
     id,
     height,
-    timestamp,
-    numTx,
     hash,
-    parentHash,
-    sha3Uncles,
-    minedBy,
-    difficulty,
-    totalDifficulty,
-    size,
+    blockHash,
+    timestamp,
+    from,
+    to,
+    amount,
+    txReceiptStatus,
     gasUsed,
     gasLimit,
-    avgGasPrice,
+    gasPrice,
+    txFee,
     nonce,
-    blockReward,
-    uncleReward,
-    extraData
-  ) <> ((XBlockData.apply _).tupled, XBlockData.unapply)
+    inputData
+  ) <> ((XTransactionData.apply _).tupled, XTransactionData.unapply)
 }

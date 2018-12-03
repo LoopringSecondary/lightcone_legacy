@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.persistence.dals
 
-trait TradesDal {
+trait MarketConfigDal {
 
 }
+

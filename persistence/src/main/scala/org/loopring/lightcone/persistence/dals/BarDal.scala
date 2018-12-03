@@ -16,6 +16,25 @@
 
 package org.loopring.lightcone.persistence.dals
 
-trait TokenPricingsDal {
+import org.loopring.lightcone.persistence.base._
+import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto.persistence.Bar
+import org.loopring.lightcone.proto.core._
+import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.JdbcProfile
+import scala.concurrent._
+import slick.basic._
+
+private[dals] trait BarDal extends UniqueHashDalImpl[BarTable, Bar] {
+
+}
+
+private[dals] class BarDalImpl()(
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext
+) extends BarDal {
+  val query = TableQuery[BarTable]
+  def getRowHash(row: Bar) = row.hash
 
 }

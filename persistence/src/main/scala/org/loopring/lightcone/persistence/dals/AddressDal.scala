@@ -25,8 +25,8 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait AddressDataDal
-  extends BaseDalImpl[AddressDataTable, XAddressData] {
+trait AddresDal
+  extends BaseDalImpl[AddressTable, XAddressData] {
 
   def update(row: XAddressData): Future[Int]
   def update(rows: Seq[XAddressData]): Future[Unit]
@@ -36,12 +36,12 @@ trait AddressDataDal
   def deleteAddress(addresses: Seq[String]): Future[Int]
 }
 
-class AddressDataDalImpl()(
+class AddresDalImpl()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
-) extends AddressDataDal {
-  val query = TableQuery[AddressDataTable]
+) extends AddresDal {
+  val query = TableQuery[AddressTable]
 
   def update(row: XAddressData): Future[Int] = {
     db.run(query.filter(_.address === row.address).update(row))

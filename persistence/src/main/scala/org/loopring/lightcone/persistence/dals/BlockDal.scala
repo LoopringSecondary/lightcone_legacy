@@ -25,15 +25,16 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait TokenTransferDataDal
-  extends BaseDalImpl[TokenTransferDataTable, XTokenTransferData] {
+trait BlockDal
+  extends UniqueHashDalImpl[BlockTable, XBlockData] {
 
 }
 
-class TokenTransferDataDalImpl()(
+class BlockDalImpl()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
-) extends TokenTransferDataDal {
-  val query = TableQuery[TokenTransferDataTable]
+) extends BlockDal {
+  val query = TableQuery[BlockTable]
+  def getRowHash(row: XBlockData) = row.hash
 }

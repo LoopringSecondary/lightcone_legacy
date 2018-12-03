@@ -23,8 +23,8 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.ethereum._
 import com.google.protobuf.ByteString
 
-class EventLogDataTable(tag: Tag)
-  extends BaseTable[XEventLogData](tag, "T_ETH_EVENT_LOGS") {
+class EventLogTable(tag: Tag)
+  extends BaseTable[XEventLogData](tag, "T_EVENT_LOGS") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def height = column[Long]("height")

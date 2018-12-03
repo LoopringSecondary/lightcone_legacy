@@ -23,33 +23,28 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.ethereum._
 import com.google.protobuf.ByteString
 
-class TokenTransferDataTable(tag: Tag)
-  extends BaseTable[XTokenTransferData](tag, "T_ETH_TOKEN_TRANSFERS") {
+class AddressTable(tag: Tag)
+  extends BaseTable[XAddressData](tag, "T_ADDRESS") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def height = column[Long]("height")
-  def hash = columnHash("hash")
-  def timestamp = column[Long]("timestamp")
-  def from = columnAddress("from")
-  def to = columnAddress("to")
-  def amount = columnAmount("amount")
-  def token = columnAddress("token")
+  def address = columnAddress("address")
+  def balance = columnAmount("balance")
+  def numTx = column[Long]("num_tx")
+  def creatorAddress = columnAddress("creator_address")
+  def creatorTx = columnHash("creator_tx")
+  def updatedAtBlock = column[Long]("updated_at_block")
 
   // indexes
-  def idx_height = index("idx_height", (height), unique = false)
-  def idx_tx_hash = index("idx_tx_hash", (hash), unique = false)
-  def idx_from = index("idx_from", (from), unique = false)
-  def idx_to = index("idx_to", (to), unique = false)
-  def idx_token = index("idx_token", (token), unique = false)
+  def idx_address = index("idx_address", (address), unique = true)
+  def idx_updated_at_block = index("idx_updated_at_block", (updatedAtBlock), unique = false)
 
   def * = (
     id,
-    height,
-    hash,
-    timestamp,
-    from,
-    to,
-    amount,
-    token
-  ) <> ((XTokenTransferData.apply _).tupled, XTokenTransferData.unapply)
+    address,
+    balance,
+    numTx,
+    creatorAddress,
+    creatorTx,
+    updatedAtBlock
+  ) <> ((XAddressData.apply _).tupled, XAddressData.unapply)
 }

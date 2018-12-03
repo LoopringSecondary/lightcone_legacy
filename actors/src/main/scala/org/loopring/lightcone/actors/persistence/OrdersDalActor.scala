@@ -36,7 +36,7 @@ object OrdersDalActor {
 
 // TODO(hongyu): remove databaseManager and use OrdersDal
 class OrdersDalActor(
-    ordersDal: OrdersDal,
+    orderDal: OrderDal,
     databaseManager: OrderDatabaseManager
 )(
     implicit

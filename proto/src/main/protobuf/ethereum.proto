@@ -53,7 +53,7 @@ message XTokenTransferData {
 
 message XEventLogData {
     int64  id                   = 1;
-    int64 height               = 2;
+    int64  height               = 2;
     string tx_hash              = 3;
     int64  timestamp            = 4;
     string address              = 5;
@@ -66,17 +66,18 @@ message XTransactionData {
     int64  id                   = 1;
     int64  height               = 2;
     string hash                 = 3;
-    int64  timestamp            = 4;
-    string from                 = 5;
-    string to                   = 6;
-    bytes  amount               = 7;
-    int32  tx_receipt_status    = 8;
-    bytes  gas_used             = 9;
-    bytes  gas_limit            = 10;
-    int64  gas_price            = 11;
-    bytes  tx_fee               = 12;
-    int64  nonce                = 13;
-    bytes  input_data           = 14;
+    string block_hash           = 4;
+    int64  timestamp            = 5;
+    string from                 = 6;
+    string to                   = 7;
+    bytes  amount               = 8;
+    int32  tx_receipt_status    = 9;
+    bytes  gas_used             = 10;
+    bytes  gas_limit            = 11;
+    int64  gas_price            = 12;
+    bytes  tx_fee               = 13;
+    int64  nonce                = 14;
+    bytes  input_data           = 15;
 }
 
 message XAddressData {
@@ -87,4 +88,17 @@ message XAddressData {
     string creator_address      = 5;
     string creator_tx           = 6;
     int64  updated_at_block     = 7;
+}
+
+// TODO(kongliang): for 2.0, we should add some other fields.
+message XTradeData {
+    int64  id                   = 1;
+    int64  height               = 2;
+    string block_hash           = 3;
+    string tx_hash              = 4;
+    string order_hash           = 5;
+    int64  timestamp            = 6;
+    // bytes amount_s              = 7;
+    // bytes amount_b              = 8;
+    // bytes amount_fee            = 9;
 }

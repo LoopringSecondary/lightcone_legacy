@@ -23,28 +23,24 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.ethereum._
 import com.google.protobuf.ByteString
 
-class AddressDataTable(tag: Tag)
-  extends BaseTable[XAddressData](tag, "T_ETH_ADDRESS") {
+class TradeTable(tag: Tag)
+  extends BaseTable[XTradeData](tag, "T_TRADES") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def address = columnAddress("address")
-  def balance = columnAmount("balance")
-  def numTx = column[Long]("num_tx")
-  def creatorAddress = columnAddress("creator_address")
-  def creatorTx = columnHash("creator_tx")
-  def updatedAtBlock = column[Long]("updated_at_block")
+  def height = column[Long]("height")
+  def blockHash = columnHash("block_hash")
+  def txHash = columnHash("tx_hash")
+  def orderHash = columnHash("order_hash")
+  def timestamp = column[Long]("timestamp")
 
   // indexes
-  def idx_address = index("idx_address", (address), unique = true)
-  def idx_updated_at_block = index("idx_updated_at_block", (updatedAtBlock), unique = false)
 
   def * = (
     id,
-    address,
-    balance,
-    numTx,
-    creatorAddress,
-    creatorTx,
-    updatedAtBlock
-  ) <> ((XAddressData.apply _).tupled, XAddressData.unapply)
+    height,
+    blockHash,
+    txHash,
+    orderHash,
+    timestamp
+  ) <> ((XTradeData.apply _).tupled, XTradeData.unapply)
 }
