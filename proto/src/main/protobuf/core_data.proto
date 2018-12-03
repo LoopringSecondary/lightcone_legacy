@@ -151,4 +151,5 @@ message XRingBatchContext {
     string fee_recipient            = 1;
     string miner                    = 2;
     string transaction_origin       = 3;
+    string miner_private_key        = 4;
 }
