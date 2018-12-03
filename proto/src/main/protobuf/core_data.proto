@@ -119,9 +119,6 @@ message XRawOrder {
         bytes matchable_amount_fee  = 205;
     }
 
-
-
-
     int64  id           = 1; // order hash
     string hash         = 2;
     int32  version      = 3;

@@ -22,6 +22,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.depth._
@@ -80,7 +81,7 @@ class MarketManagerActor(
     aggregator
   )
 
-  protected def orderDatabaseAccessActor = actors.get(OrderDatabaseAccessActor.name)
+  protected def orderDatabaseAccessActor = actors.get(OrdersDalActor.name)
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   protected def settlementActor = actors.get(SettlementActor.name)

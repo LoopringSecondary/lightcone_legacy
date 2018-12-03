@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.core
+package org.loopring.lightcone.actors.persistence
 
 import akka.actor._
 import akka.event.LoggingReceive
@@ -23,16 +23,21 @@ import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.persistence._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.persistence.dals._
 
 import scala.concurrent._
 
-object OrderDatabaseAccessActor {
-  val name = "order_db_access"
+object OrdersDalActor {
+  val name = "orders_dal"
 }
 
-// TODO(hongyu): implement this actor to support AMA and MMA.
-class OrderDatabaseAccessActor(databaseManager: OrderDatabaseManager)(
+// TODO(hongyu): remove databaseManager and use OrdersDal
+class OrdersDalActor(
+    ordersDal: OrdersDal,
+    databaseManager: OrderDatabaseManager
+)(
     implicit
     ec: ExecutionContext,
     timeout: Timeout
