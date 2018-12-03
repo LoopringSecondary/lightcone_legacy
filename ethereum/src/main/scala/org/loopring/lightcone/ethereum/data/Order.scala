@@ -47,7 +47,7 @@ case class Order(
     tokenSpendableS: BigInt = 0,
     tokenSpendableFee: BigInt = 0,
     brokerSpendableS: BigInt = 0,
-    brokerSpendableFee: BigInt = 0,
+    brokerSpendableFee: BigInt = 0
 ) {
 
   lazy val cryptoHash = {
@@ -61,7 +61,7 @@ case class Order(
     packer.addAddress(tokenS, true)
     packer.addAddress(tokenB, true)
     packer.addAddress(dualAuthAddress, true)
-    packer.addAddress(broker,true)
+    packer.addAddress(broker, true)
     packer.addAddress(orderInterceptor, true)
     packer.addAddress(wallet, true)
     packer.addAddress(tokenReceipt, true)

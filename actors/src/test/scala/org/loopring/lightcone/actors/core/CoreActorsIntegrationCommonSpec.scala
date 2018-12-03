@@ -22,6 +22,7 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
@@ -182,7 +183,7 @@ abstract class CoreActorsIntegrationCommonSpec(
     "marketManagerActor"
   )
 
-  actors.add(OrderDatabaseAccessActor.name, orderDatabaseAccessActor)
+  actors.add(OrdersDalActor.name, orderDatabaseAccessActor)
   actors.add(AccountBalanceActor.name, accountBalanceActor)
   actors.add(OrderHistoryActor.name, orderHistoryActor)
   actors.add(MarketManagerActor.name, marketManagerActor)

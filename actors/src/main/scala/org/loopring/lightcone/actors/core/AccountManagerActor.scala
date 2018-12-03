@@ -22,6 +22,7 @@ import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -55,7 +56,7 @@ class AccountManagerActor(
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
-  protected def orderDatabaseAccessActor = actors.get(OrderDatabaseAccessActor.name)
+  protected def orderDatabaseAccessActor = actors.get(OrdersDalActor.name)
   protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
   protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)

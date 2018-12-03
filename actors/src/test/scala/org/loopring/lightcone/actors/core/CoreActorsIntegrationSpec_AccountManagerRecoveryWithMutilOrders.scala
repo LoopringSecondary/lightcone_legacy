@@ -49,11 +49,13 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
         hash = "order",
         tokenS = WETH_TOKEN.address,
         tokenB = GTO_TOKEN.address,
-        feeToken = GTO_TOKEN.address,
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
-        feeAmount = "10".zeros(18),
-        walletSplitPercentage = 100
+        feeParams = Some(XRawOrder.FeeParams(
+          feeToken = GTO_TOKEN.address,
+          feeAmount = "10".zeros(18),
+          walletSplitPercentage = 100
+        ))
       )
 
       val batchOrders1 = (0 until 500) map {

@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence
+package org.loopring.lightcone.persistence.dals
 
-import slick.jdbc.H2Profile.api._
+trait TokenConfigsDal {
 
-package object table {
-  val bars = TableQuery[BarTable]
-
-  val schema = bars.schema //++ suppliers.schema
 }
+
