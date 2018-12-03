@@ -16,11 +16,9 @@
 
 package org.loopring.lightcone.ethereum.abi
 
-import java.math.BigInteger
-
 import org.apache.commons.collections4.Predicate
 import org.ethereum.solidity.{ Abi ⇒ SABI }
-import org.web3j.utils.{ Numeric, Strings }
+import org.web3j.utils.Numeric
 
 import scala.annotation.StaticAnnotation
 import scala.collection.JavaConverters._
@@ -32,7 +30,10 @@ trait AbiFunction[P, R] {
   val entry: SABI.Function
 
   //与原函数区分，使用pack与unpack
-  def pack(t: P): Array[Byte] = ???
+  def pack(t: P)(implicit mf: Manifest[P]): Array[Byte] = {
+    val inputs = Serialization.serialize(t)
+    entry.encode(inputs: _*)
+  }
 
   def unpackInput(data: Array[Byte])(implicit mf: Manifest[P]): Option[P] = {
     val list = entry.decode(data).asScala.toList
