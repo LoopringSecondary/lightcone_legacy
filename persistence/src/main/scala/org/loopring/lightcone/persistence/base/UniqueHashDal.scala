@@ -21,10 +21,12 @@ import slick.lifted.CanBeQueryCondition
 import scala.concurrent._
 
 trait UniqueHashDal[T <: UniqueHashTable[A], A] extends BaseDal[T, A] {
+  def getRowHash(row: A): String
+
   def update(row: A): Future[Int]
   def update(rows: Seq[A]): Future[Unit]
 
   def findByHash(hash: String): Future[Option[A]]
-  def deleteByHash(id: String): Future[Int]
-  def deleteByHash(ids: Seq[String]): Future[Int]
+  def deleteByHash(hash: String): Future[Int]
+  def deleteByHash(hashes: Seq[String]): Future[Int]
 }
