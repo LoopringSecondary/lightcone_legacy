@@ -51,6 +51,8 @@ enum XMatchingFailure {
 
 enum XOrderValidationError {
     ORDER_VALIDATION_ERR_NONE = 0;
+    ORDER_VALIDATION_ERR_INVALID_OWNER = 1;
+    ORDER_VALIDATION_ERR_INVALID_TOKENS = 2;
 }
 
 enum XTokenStandard {
