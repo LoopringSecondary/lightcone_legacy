@@ -42,17 +42,21 @@ class OrdersDalActor(
   with ActorLogging {
 
   def receive: Receive = LoggingReceive {
-    case XRecoverOrdersReq(address, tokenS, tokenB, updatedSince, num) ⇒
+    case XRecoverOrdersReq(address, marketIdOpt, updatedSince, num) ⇒
+      var tokenes = Set.empty[String] //recovery 时，需要不区分买卖方向
+      marketIdOpt foreach {
+        marketId ⇒ tokenes = tokenes ++ Set(marketId.primary, marketId.secondary)
+      }
       (for {
         orders ← ordersDal.getOrdersByUpdatedAt(
           num = num,
           statuses = Set(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING),
-          tokenSSet = if ("" != tokenS) Set(tokenS) else Set.empty,
-          tokenBSet = if ("" != tokenB) Set(tokenS) else Set.empty,
+          tokenSSet = tokenes,
+          tokenBSet = tokenes,
           owners = if ("" != address) Set(address) else Set.empty,
           updatedSince = Some(updatedSince)
         )
-      } yield XRecoverOrdersRes(orders)) pipeTo (sender)
+      } yield XRecoverOrdersRes(orders)) pipeTo sender
 
     case XSaveOrderReq(Some(xraworder)) ⇒
       ordersDal.saveOrder(xraworder)

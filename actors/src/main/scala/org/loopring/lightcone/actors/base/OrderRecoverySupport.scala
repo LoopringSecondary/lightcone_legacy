@@ -61,8 +61,7 @@ trait OrderRecoverySupport {
       val marketId = recoverySettings.marketId
       ordersDalActor ! XRecoverOrdersReq(
         recoverySettings.ownerOfOrders.orNull,
-        if (marketId.isEmpty) null else marketId.get.primary,
-        if (marketId.isEmpty) null else marketId.get.secondary,
+        marketId,
         0L,
         recoverySettings.batchSize
       )
@@ -96,8 +95,7 @@ trait OrderRecoverySupport {
             val marketId = recoverySettings.marketId
             ordersDalActor ! XRecoverOrdersReq(
               recoverySettings.ownerOfOrders.orNull,
-              if (marketId.isEmpty) null else marketId.get.primary,
-              if (marketId.isEmpty) null else marketId.get.secondary,
+              marketId,
               lastUpdatdTimestamp,
               recoverySettings.batchSize
             )

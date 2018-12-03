@@ -176,10 +176,9 @@ message XSendRawTxRes {
 
 message XRecoverOrdersReq {
     string address = 1;
-    string token_s = 2;
-    string token_b = 3;
-    int64 updated_since = 4;
-    int32 num = 5;
+    core.XMarketId marketId = 2;
+    int64 updated_since = 3;
+    int32 num = 4;
 }
 
 message XRecoverOrdersRes {
