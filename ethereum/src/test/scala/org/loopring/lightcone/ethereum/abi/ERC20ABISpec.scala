@@ -24,7 +24,7 @@ class ERC20ABISpec extends FlatSpec with Matchers {
 
   val erc20abi = ERC20ABI()
 
-  "encodeTransferFunction" should "encode class Parms of Transfer to function input" in {
+  "encodeTransferFunction" should "encode class Parms of transfer function to  input" in {
     info("[sbt ethereum/'testOnly *ERC20ABISpec -- -z encodeTransferFunction']")
     val parms = TransferFunction.Parms(to = "0xf105c622edc68b9e4e813e631cb534940f5cc509", amount = BigInt("29558242000000000000000"))
     val input = erc20abi.transfer.pack(parms)
@@ -62,6 +62,15 @@ class ERC20ABISpec extends FlatSpec with Matchers {
         transfer.amount should be(BigInt("29558242000000000000000"))
     }
   }
+
+  "encodeApproveFunction" should "encode class Parms of approve function to  input" in {
+    info("[sbt ethereum/'testOnly *ERC20ABISpec -- -z encodeApproveFunction']")
+    val parms = ApproveFunction.Parms(spender = "0x8fd3121013a07c57f0d69646e86e7a4880b467b7", amount = BigInt("90071992547409900000000000"))
+    val input = erc20abi.approve.pack(parms)
+    println(Numeric.toHexString(input))
+    Numeric.toHexString(input) should be("0x095ea7b30000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b70000000000000000000000000000000000000000004a817c7ffffffb57e83800")
+  }
+
   //
   "decodeApproveFunction" should "decode function input and assemble to class Approve" in {
     info("[sbt ethereum/'testOnly *ERC20ABISpec -- -z decodeApproveFunction']")
@@ -76,6 +85,22 @@ class ERC20ABISpec extends FlatSpec with Matchers {
         approve.spender should be("0x8fd3121013a07c57f0d69646e86e7a4880b467b7")
         approve.amount should be(BigInt("90071992547409900000000000"))
     }
+  }
+
+  "encodeBalanceOfFunction" should "encode class Parms of balaceOf function to  input" in {
+    info("[sbt ethereum/'testOnly *ERC20ABISpec -- -z encodeBalanceOfFunction']")
+    val parms = BalanceOfFunction.Parms(_owner = "0x8fd3121013a07c57f0d69646e86e7a4880b467b7")
+    val input = erc20abi.balanceOf.pack(parms)
+    println(Numeric.toHexString(input))
+    Numeric.toHexString(input) should be("0x70a082310000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7")
+  }
+
+  "encodeAllowanceFunction" should "encode class Parms of allowance function to  input" in {
+    info("[sbt ethereum/'testOnly *ERC20ABISpec -- -z encodeAllowanceFunction']")
+    val parms = AllowanceFunction.Parms(_owner = "0x8fd3121013a07c57f0d69646e86e7a4880b467b7", _spender = "0xf105c622edc68b9e4e813e631cb534940f5cc509")
+    val input = erc20abi.allowance.pack(parms)
+    println(Numeric.toHexString(input))
+    Numeric.toHexString(input) should be("0xdd62ed3e0000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc509")
   }
 
   "decodeApproveEvent" should "decode event data and assemble to class Approve" in {
