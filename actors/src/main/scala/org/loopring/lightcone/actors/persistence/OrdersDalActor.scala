@@ -47,8 +47,7 @@ class OrdersDalActor(
       marketIdOpt foreach {
         marketId ⇒ tokenes = tokenes ++ Set(marketId.primary, marketId.secondary)
       }
-      (
-        for {
+      (for {
           orders ← ordersDal.getOrdersByUpdatedAt(
             num = num,
             statuses = Set(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING),
@@ -57,35 +56,28 @@ class OrdersDalActor(
             owners = if ("" != address) Set(address) else Set.empty,
             updatedSince = Some(updatedSince)
           )
-        } yield XRecoverOrdersRes(orders)
-      ) pipeTo sender
+        } yield XRecoverOrdersRes(orders)) pipeTo sender
 
     case XSaveOrderReq(Some(xraworder)) ⇒
       ordersDal.saveOrder(xraworder) pipeTo sender
 
     case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
-      (
-        stateOpt match {
+      (stateOpt match {
           case Some(state) ⇒ ordersDal.updateOrderState(hash, state, changeUpdatedAtField)
           case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
-        }
-      ) pipeTo sender
+        }) pipeTo sender
 
     case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
       ordersDal.updateOrderStatus(hash, status, changeUpdatedAtField) pipeTo sender
 
     case XGetOrdersByHashesReq(hashes) ⇒
-      (
-        for {
+      (for {
           orders ← ordersDal.getOrders(hashes)
-        } yield XGetOrdersByHashesRes(orders)
-      ) pipeTo sender
+        } yield XGetOrdersByHashesRes(orders)) pipeTo sender
     case XGetOrderByHashReq(hash) ⇒
-      (
-        for {
+      (for {
           order ← ordersDal.getOrder(hash)
-        } yield XGetOrderByHashRes(order)
-      ) pipeTo sender
+        } yield XGetOrderByHashRes(order)) pipeTo sender
 
   }
 }
