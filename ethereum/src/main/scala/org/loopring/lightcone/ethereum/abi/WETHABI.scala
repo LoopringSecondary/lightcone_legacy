@@ -16,10 +16,8 @@
 
 package org.loopring.lightcone.ethereum.abi
 
-
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.{ Abi ⇒ SABI }
 import scala.annotation.meta.field
-
 
 object WETHABI {
 
@@ -36,7 +34,7 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
   val withdraw = WithdrawFunction(abi.findFunction(searchByName(WithdrawFunction.name)))
 
   val depositEvent = DepositEvent(abi.findEvent(searchByName(DepositEvent.name)))
-  val withdrawalEvent =  WithdrawalEvent(abi.findEvent(searchByName(WithdrawalEvent.name)))
+  val withdrawalEvent = WithdrawalEvent(abi.findEvent(searchByName(WithdrawalEvent.name)))
 }
 
 object DepositFunction {
@@ -55,8 +53,8 @@ class DepositFunction(val entry: SABI.Function) extends AbiFunction[DepositFunct
 object WithdrawFunction {
 
   case class Parms(
-                    @(ContractAnnotation@field)("wad", 0) wad: BigInt,
-                  )
+      @(ContractAnnotation @field)("wad", 0) wad: BigInt
+  )
 
   val name = "withdraw"
 
@@ -74,9 +72,9 @@ object DepositEvent {
   val name = "Deposit"
 
   case class Result(
-                     @(ContractAnnotation@field)("dst", 0) dst: String,
-                     @(ContractAnnotation@field)("wad", 1) wad: BigInt,
-                   )
+      @(ContractAnnotation @field)("dst", 0) dst: String,
+      @(ContractAnnotation @field)("wad", 1) wad: BigInt
+  )
 
   def apply(entry: SABI.Event): DepositEvent = new DepositEvent(entry)
 }
@@ -90,9 +88,9 @@ object WithdrawalEvent {
   val name = "Withdrawal"
 
   case class Result(
-                     @(ContractAnnotation@field)("src", 0) src: String,
-                     @(ContractAnnotation@field)("wad", 1) wad: BigInt,
-                   )
+      @(ContractAnnotation @field)("src", 0) src: String,
+      @(ContractAnnotation @field)("wad", 1) wad: BigInt
+  )
 
   def apply(entry: SABI.Event): WithdrawalEvent = new WithdrawalEvent(entry)
 }
