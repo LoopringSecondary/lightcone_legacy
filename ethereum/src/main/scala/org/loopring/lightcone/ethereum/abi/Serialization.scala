@@ -17,7 +17,7 @@
 package org.loopring.lightcone.ethereum.abi
 
 object Serialization {
-  def serialize[T](t: T)(implicit mf: Manifest[T]): Seq[Any] = {
+  def serialize[T](t: T)(implicit mf: Manifest[T]): Seq[Object] = {
     val argsIdx = getContractAnnontationIdx[T]()
     val fields = t.getClass.getDeclaredFields.toList.map(i ⇒ {
       i.setAccessible(true)

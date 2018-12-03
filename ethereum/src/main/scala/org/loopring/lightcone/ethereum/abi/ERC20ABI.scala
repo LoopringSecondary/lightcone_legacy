@@ -45,8 +45,8 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
 object TransferFunction {
 
   case class Parms(
-      @(ContractAnnotation @field)("to", 1) to: String,
-      @(ContractAnnotation @field)("amount", 0) amount: BigInt
+      @(ContractAnnotation @field)("to", 0) to: String,
+      @(ContractAnnotation @field)("amount", 1) amount: BigInt
   )
 
   case class Result()
