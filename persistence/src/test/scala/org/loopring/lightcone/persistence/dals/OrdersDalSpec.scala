@@ -23,7 +23,8 @@ import org.loopring.lightcone.proto.persistence.{ Bar, XSaveOrderResult }
 import org.loopring.lightcone.proto.core._
 import org.web3j.utils.Numeric
 
-import scala.concurrent.Await
+import scala.concurrent.{ Await, Future }
+import scala.util.{ Failure, Success }
 import scala.concurrent.duration._
 
 class OrdersDalSpec extends DalSpec[OrdersDal] {
@@ -31,13 +32,14 @@ class OrdersDalSpec extends DalSpec[OrdersDal] {
 
   "addOrder" must "insert a order" in {
     // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
-    var order = XRawOrder(hash = "0x128")
-    for {
-      result ← dal.saveOrder(order)
-    } yield {
-      println(result.error)
+    var order = XRawOrder(hash = "0x129", version = 1, owner = "0x99", tokenS = "0x1", tokenB = "0x2", amountS = ByteString.copyFrom("11", "UTF-8"),
+      amountB = ByteString.copyFrom("12", "UTF-8"), validSince = 999)
+    val result: Future[XSaveOrderResult] = dal.saveOrder(order)
+    result onComplete {
+      case Success(idx) ⇒ println("success: " + idx)
+      case Failure(t)   ⇒ println("failed: " + t.getMessage)
     }
-    Await.result(dal.saveOrder(order), 5.second)
+    Await.result(result, 5.second)
   }
 
   "getOrderByHashes" must "get a order" in {

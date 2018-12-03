@@ -113,16 +113,23 @@ class OrdersDalImpl()(
   def getRowHash(row: XRawOrder) = row.hash
 
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
-    db.run((query returning query.map(_.id) ++= Seq(order)).asTry).map {
-      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
-        XSaveOrderResult(error = XPersistenceError.PERS_ERROR_DUPLICATE_INSERT, order = Some(order), alreadyExist = true)
+    if (order.hash.isEmpty || order.version <= 0 || order.owner.isEmpty || order.tokenS.isEmpty || order.tokenB.isEmpty ||
+      order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0 || order.id > 0 || order.state.nonEmpty) {
+      Future.successful(XSaveOrderResult(error = XPersistenceError.PERS_INVALID_PARAMTERS, order = Some(order)))
+    } else {
+      val now = System.currentTimeMillis()
+      val state = XRawOrder.State(createdAt = now, updatedAt = now, status = XOrderStatus.STATUS_NEW)
+      db.run((query returning query.map(_.id) ++= Seq(order.copy(state = Some(state)))).asTry).map {
+        case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
+          XSaveOrderResult(error = XPersistenceError.PERS_ERROR_DUPLICATE_INSERT, order = Some(order), alreadyExist = true)
+        }
+        case Failure(ex) ⇒ {
+          // TODO du: print some log
+          // log(s"error : ${ex.getMessage}")
+          XSaveOrderResult(error = XPersistenceError.PERS_ERROR_INTERNAL, order = Some(order))
+        }
+        case Success(x) ⇒ XSaveOrderResult(error = XPersistenceError.PERS_ERR_NONE, order = Some(order.copy(id = x.head)))
       }
-      case Failure(ex) ⇒ {
-        // TODO du: print some log
-        // log(s"error : ${ex.getMessage}")
-        XSaveOrderResult(error = XPersistenceError.PERS_ERROR_INTERNAL, order = Some(order))
-      }
-      case Success(x) ⇒ XSaveOrderResult(error = XPersistenceError.PERS_ERR_NONE, order = Some(order.copy(id = x.head)))
     }
   }
 
