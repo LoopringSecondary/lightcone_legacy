@@ -16,12 +16,9 @@
 
 package org.loopring.lightcone.ethereum.abi
 
-import java.math.BigInteger
-import java.util
-
 import org.apache.commons.collections4.Predicate
-import org.ethereum.solidity.{ Abi ⇒ SABI }
-import org.web3j.utils.{ Numeric, Strings }
+import org.ethereum.solidity.{Abi => SABI}
+import org.web3j.utils.Numeric
 
 import scala.annotation.StaticAnnotation
 import scala.collection.JavaConverters._
