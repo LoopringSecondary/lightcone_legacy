@@ -43,6 +43,17 @@ lazy val actors = (project in file("actors"))
     basicSettings,
     libraryDependencies ++= dependency4Actors)
 
+lazy val indexer = (project in file("indexer"))
+  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(MultiJvmPlugin)
+  .configs(MultiJvm)
+  .settings(multiJvmSettings: _*)
+  .dependsOn(ethereum, persistence)
+  .settings(
+    parallelExecution in Test := false,
+    basicSettings,
+    libraryDependencies ++= dependency4Indexer)
+
 lazy val gateway = (project in file("gateway"))
   .enablePlugins(AutomateHeaderPlugin)
   .dependsOn(proto)
@@ -51,5 +62,5 @@ lazy val gateway = (project in file("gateway"))
     libraryDependencies ++= dependency4Gateway)
 
 lazy val all = (project in file("."))
-  .aggregate(proto, ethereum, persistence, core, actors, gateway)
+  .aggregate(proto, ethereum, persistence, core, actors, gateway, indexer)
   .withId("lightcone")
