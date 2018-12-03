@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.base
+package org.loopring.lightcone.persistence.dals
 
+import org.loopring.lightcone.persistence.base._
+import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto.ethereum._
+import org.loopring.lightcone.proto.core._
 import slick.jdbc.MySQLProfile.api._
-import slick.lifted.CanBeQueryCondition
+import slick.jdbc.JdbcProfile
+import slick.basic._
 import scala.concurrent._
 
-trait BaseDal[T <: BaseTable[A], A] {
-  def query: TableQuery[T]
+trait BlockDataDal
+  extends UniqueHashDalImpl[BlockDataTable, XBlockData] {
 
-  def tableName = query.baseTableRow.tableName
+}
 
-  def insert(row: A): Future[Long]
-  def insert(rows: Seq[A]): Future[Seq[Long]]
-
-  def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]]
-  def deleteByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Int]
-
-  def findById(id: Long): Future[Option[A]]
-  def deleteById(id: Long): Future[Int]
-  def deleteById(ids: Seq[Long]): Future[Int]
-
-  def createTable(): Future[Any]
-  def dropTable(): Future[Any]
-  def displayTableSchema(): Unit
+class BlockDataDalImpl()(
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext
+) extends BlockDataDal {
+  val query = TableQuery[BlockDataTable]
+  def getRowHash(row: XBlockData) = row.hash
 }

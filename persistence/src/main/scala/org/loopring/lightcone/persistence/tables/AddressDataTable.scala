@@ -20,27 +20,31 @@ import org.loopring.lightcone.persistence.base._
 import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
+import org.loopring.lightcone.proto.ethereum._
+import com.google.protobuf.ByteString
 
-private[persistence] class BarTable(tag: Tag)
-  extends UniqueHashTable[Bar](tag, "T_BARS") {
+class AddressDataTable(tag: Tag)
+  extends BaseTable[XAddressData](tag, "T_ETH_ADDRESS") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def hash = columnHash("hash")
-  def a = column[String]("A")
-  def b = columnAddress("B")
-  def c = columnAmount("C")
-  def d = column[Long]("D")
+  def address = columnAddress("address")
+  def balance = columnAmount("balance")
+  def numTx = column[Long]("num_tx")
+  def creatorAddress = columnAddress("creator_address")
+  def creatorTx = columnHash("creator_tx")
+  def updatedAtBlock = column[Long]("updated_at_block")
 
   // indexes
-  // def idx_a = index("idx_c", (a), unique = false)
+  def idx_address = index("idx_address", (address), unique = true)
+  def idx_updated_at_block = index("idx_updated_at_block", (updatedAtBlock), unique = false)
 
   def * = (
     id,
-    hash,
-    a,
-    b,
-    c,
-    d
-  ) <> ((Bar.apply _).tupled, Bar.unapply)
+    address,
+    balance,
+    numTx,
+    creatorAddress,
+    creatorTx,
+    updatedAtBlock
+  ) <> ((XAddressData.apply _).tupled, XAddressData.unapply)
 }

@@ -20,27 +20,36 @@ import org.loopring.lightcone.persistence.base._
 import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
+import org.loopring.lightcone.proto.ethereum._
+import com.google.protobuf.ByteString
 
-private[persistence] class BarTable(tag: Tag)
-  extends UniqueHashTable[Bar](tag, "T_BARS") {
+class TokenTransferDataTable(tag: Tag)
+  extends BaseTable[XTokenTransferData](tag, "T_ETH_TOKEN_TRANSFERS") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def height = column[Long]("height")
   def hash = columnHash("hash")
-  def a = column[String]("A")
-  def b = columnAddress("B")
-  def c = columnAmount("C")
-  def d = column[Long]("D")
+  def timestamp = column[Long]("timestamp")
+  def from = columnAddress("from")
+  def to = columnAddress("to")
+  def amount = columnAmount("amount")
+  def token = columnAddress("token")
 
   // indexes
-  // def idx_a = index("idx_c", (a), unique = false)
+  def idx_height = index("idx_height", (height), unique = false)
+  def idx_tx_hash = index("idx_tx_hash", (hash), unique = false)
+  def idx_from = index("idx_from", (from), unique = false)
+  def idx_to = index("idx_to", (to), unique = false)
+  def idx_token = index("idx_token", (token), unique = false)
 
   def * = (
     id,
+    height,
     hash,
-    a,
-    b,
-    c,
-    d
-  ) <> ((Bar.apply _).tupled, Bar.unapply)
+    timestamp,
+    from,
+    to,
+    amount,
+    token
+  ) <> ((XTokenTransferData.apply _).tupled, XTokenTransferData.unapply)
 }
