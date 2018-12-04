@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.persistence
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.proto.actors._

@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.core
 import akka.actor._
 import akka.cluster.sharding._
 import akka.event.LoggingReceive
-import akka.pattern.{ask, pipe}
+import akka.pattern._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
@@ -39,34 +39,37 @@ object AccountManagerActor {
 
   //todo: sharding配置，发送给AccountManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
   val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg@XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-//    case msg@XSubmitOrderReq(address, _) ⇒ "" //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
+    //    case msg@XSubmitOrderReq(address, _) ⇒ "" //todo:该数据结构并没有包含sharding信息，无法sharding
   }
 
   val extractShardId: ShardRegion.ExtractShardId = {
     case XGetBalanceAndAllowancesReq(address, _) ⇒ address
   }
 
-  def start(actors: Lookup[ActorRef],
-   address: String,
-   recoverBatchSize: Int,
-   skipRecovery: Boolean = false)(implicit context: ActorContext,
-              ec: ExecutionContext,
-               timeout: Timeout,
-              dustEvaluator: DustOrderEvaluator
-  ):ActorRef = {
-    ClusterSharding(context.system).start(
+  def createShardActor(
+    actors: Lookup[ActorRef],
+    recoverBatchSize: Int,
+    skipRecovery: Boolean = false
+  )(
+    implicit
+    system: ActorSystem,
+    ec: ExecutionContext,
+    timeout: Timeout,
+    dustEvaluator: DustOrderEvaluator
+  ): ActorRef = {
+    ClusterSharding(system).start(
       typeName = "AccountManagerActor",
-      entityProps = Props(new AccountManagerActor(actors, address, recoverBatchSize, skipRecovery)),
-      settings = ClusterShardingSettings(context.system),
+      entityProps = Props(new AccountManagerActor(actors, recoverBatchSize, skipRecovery)),
+      settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
   }
 }
 
 class AccountManagerActor(
     val actors: Lookup[ActorRef],
-    val address: String,
     val recoverBatchSize: Int,
     val skipRecovery: Boolean = false
 )(
@@ -78,15 +81,10 @@ class AccountManagerActor(
   extends Actor
   with ActorLogging
   with OrderRecoverySupport {
-  val recoverySettings = XOrderRecoverySettings(
-    skipRecovery,
-    recoverBatchSize,
-    address,
-    None
-  )
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
+  private var address: String = _
 
   protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
@@ -94,7 +92,16 @@ class AccountManagerActor(
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
   def receive: Receive = {
-    case _: XStart ⇒ startOrderRecovery()
+    case XStart(shardEntityId) ⇒ {
+      address = shardEntityId
+      val recoverySettings = XOrderRecoverySettings(
+        skipRecovery,
+        recoverBatchSize,
+        address,
+        None
+      )
+      startOrderRecovery(recoverySettings)
+    }
   }
 
   def functional: Receive = LoggingReceive {
