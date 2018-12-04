@@ -18,7 +18,6 @@ package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
 import org.scalatest._
-
 import scala.concurrent.duration._
 import scala.concurrent._
 import slick.jdbc.meta._

@@ -26,8 +26,6 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import slick.lifted.Query
 import com.mysql.jdbc.exceptions.jdbc4._
-import com.google.protobuf.ByteString
-
 import scala.concurrent._
 import scala.util.{ Failure, Success }
 
