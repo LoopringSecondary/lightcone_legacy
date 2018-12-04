@@ -64,6 +64,7 @@ class AccountManagerActor(
 
   protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
+  protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
   def receive: Receive = {
@@ -116,12 +117,12 @@ class AccountManagerActor(
       _ ← getTokenManager(order.tokenFee) if order.amountFee > 0 && order.tokenS != order.tokenFee
 
       // Update the order's _outstanding field.
-      orderRes ← (ordersDalActor ? XGetOrderByHashReq(order.id))
-        .mapTo[XGetOrderByHashRes]
+      orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
+        .mapTo[XGetOrderFilledAmountRes]
 
       _ = log.debug(s"order history: orderHistoryRes")
 
-      _order = order.withFilledAmountS(orderRes.getOrder.getState.outstandingAmountS)
+      _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
 
       _ = log.debug(s"submitting order to AccountManager: ${_order}")
       successful = manager.submitOrder(_order)
@@ -192,7 +193,7 @@ class AccountManagerActor(
   }
 
   protected def recoverOrder(xorder: XOrder) = {
-    log.debug(s"recoverOrder, ${self.path.toString}, ${ordersDalActor.path.toString}, ${xorder}")
+    log.debug(s"recoverOrder, ${self.path.toString}, ${orderHistoryActor.path.toString}, ${xorder}")
     submitOrder(xorder)
   }
 

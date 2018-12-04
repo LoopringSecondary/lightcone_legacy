@@ -44,6 +44,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
           skipRecovery = false
         ), "accountManagerActorRecovery"
       )
+      accountManagerRecoveryActor ! XStart()
 
       val order = XRawOrder(
         hash = "order",
@@ -61,26 +62,38 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
       val batchOrders1 = (0 until 500) map {
         i ⇒ order.copy(hash = "order1" + i)
       }
-      val recoveryOrders1 = XRecoverOrdersRes(batchOrders1)
-      actors.get(OrdersDalActor.name) ! recoveryOrders1
+      ordersDalActorProbe.expectQuery()
+      ordersDalActorProbe.replyWith(batchOrders1)
 
-      val batchOrders2 = (0 until 500) map {
-        i ⇒ order.copy(hash = "order2" + i)
-      }
-      val recoveryOrders2 = XRecoverOrdersRes(batchOrders2)
-      actors.get(OrdersDalActor.name) ! recoveryOrders2
-
-      val recoveryOrders3 = XRecoverOrdersRes(Seq.empty)
-      actors.get(OrdersDalActor.name) ! recoveryOrders3
-
-      Thread.sleep(1000)
-      accountManagerRecoveryActor ! XStart()
-      Thread.sleep(7000)
+      Thread.sleep(2000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          info("----orderbook status after recovery: " + a)
+          info("----orderbook status after first XRecoverOrdersRes: " + a)
+      }
+
+      val batchOrders2 = (0 until 500) map {
+        i ⇒ order.copy(hash = "order2" + i)
+      }
+      ordersDalActorProbe.expectQuery()
+      ordersDalActorProbe.replyWith(batchOrders2)
+
+      Thread.sleep(2000)
+      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+      expectMsgPF() {
+        case a: XOrderbook ⇒
+          info("----orderbook status after second XRecoverOrdersRes: " + a)
+      }
+      ordersDalActorProbe.expectQuery()
+      ordersDalActorProbe.replyWith(Seq())
+
+      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+      expectMsgPF() {
+        case a: XOrderbook ⇒
+          info("----orderbook status after last XRecoverOrdersRes: " + a)
       }
 
       //不能立即发送请求，否则可能会失败，需要等待future执行完毕

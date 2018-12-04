@@ -28,7 +28,6 @@ import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
 import org.scalatest._
 import org.slf4s.Logging
 
@@ -111,20 +110,6 @@ abstract class CoreActorsIntegrationCommonSpec(
     def replyWith(xorders: Seq[XRawOrder]) = reply(
       XRecoverOrdersRes(orders = xorders)
     )
-
-    def expectQuery(orderId: String) = expectMsgPF() {
-      case XGetOrderByHashReq(id) if id == orderId ⇒
-        info(s"#####, ordermanagerProbe, ${sender()}, ${id}")
-    }
-
-    def replyWith(orderId: String, filledAmountS: BigInt) = reply(
-      XGetOrderByHashRes(Some(
-        XRawOrder(
-          hash = orderId,
-          state = Some(XRawOrder.State(outstandingAmountS = filledAmountS))
-        )
-      ))
-    )
   }
   val ordersDalActor = ordersDalActorProbe.ref
 
@@ -142,6 +127,19 @@ abstract class CoreActorsIntegrationCommonSpec(
     )
   }
   val accountBalanceActor = accountBalanceProbe.ref
+
+  // Simulating an OrderHistoryProbe
+  val orderHistoryProbe = new TestProbe(system, "order_history") {
+    def expectQuery(orderId: String) = expectMsgPF() {
+      case XGetOrderFilledAmountReq(id) if id == orderId ⇒
+        println(s"#####, orderHistoryProbe, ${sender()}, ${id}")
+    }
+
+    def replyWith(orderId: String, filledAmountS: BigInt) = reply(
+      XGetOrderFilledAmountRes(orderId, filledAmountS)
+    )
+  }
+  val orderHistoryActor = orderHistoryProbe.ref
 
   // Simulating an SettlementActor
   val ethereumAccessProbe = new TestProbe(system, "ethereum_access")
@@ -187,6 +185,7 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   actors.add(OrdersDalActor.name, ordersDalActor)
   actors.add(AccountBalanceActor.name, accountBalanceActor)
+  actors.add(OrderHistoryActor.name, orderHistoryActor)
   actors.add(MarketManagerActor.name, marketManagerActor)
   actors.add(GasPriceActor.name, gasPriceActor)
   actors.add(OrderbookManagerActor.name, orderbookManagerActor)

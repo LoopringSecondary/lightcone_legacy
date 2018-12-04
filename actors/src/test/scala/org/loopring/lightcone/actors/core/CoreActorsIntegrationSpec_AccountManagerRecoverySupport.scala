@@ -39,21 +39,9 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId:
     extends Actor
     with ActorLogging {
 
-    var recoveryOrders = Seq.empty[XRecoverOrdersRes]
     def receive: Receive = LoggingReceive {
-      case XGetOrderByHashReq(hash) ⇒
-        sender ! XGetOrderByHashRes(Some(
-          XRawOrder(
-            hash = hash,
-            state = Some(XRawOrder.State(outstandingAmountS = BigInt(0)))
-          )
-        ))
-      case res: XRecoverOrdersRes ⇒
-        recoveryOrders = recoveryOrders :+ res
-      case req: XRecoverOrdersReq ⇒
-        val res = recoveryOrders.head
-        recoveryOrders = recoveryOrders.drop(1)
-        sender ! res
+      case XGetOrderFilledAmountReq(orderId) ⇒
+        sender ! XGetOrderFilledAmountRes(orderId, BigInt(0))
     }
   }
 
@@ -72,15 +60,15 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId:
             req.address,
             Map(req.tokens(0) -> XBalanceAndAllowance(BigInt("100000000000000000000000000"), BigInt("100000000000000000000000000")))
           )
-
     }
   }
 
   val orderHistoryRecoveryActor = TestActorRef(new OrderHistoryForRecoveryTestActor())
   val accountBalanceRecoveryActor = TestActorRef(new AccountBalanceForRecoveryTestActor())
   val ADDRESS_RECOVERY = "0xaddress_3"
+  actors.del(OrderHistoryActor.name)
   actors.del(AccountBalanceActor.name)
+  actors.add(OrderHistoryActor.name, orderHistoryRecoveryActor)
   actors.add(AccountBalanceActor.name, accountBalanceRecoveryActor)
-  actors.del(OrdersDalActor.name)
-  actors.add(OrdersDalActor.name, orderHistoryRecoveryActor)
+
 }
