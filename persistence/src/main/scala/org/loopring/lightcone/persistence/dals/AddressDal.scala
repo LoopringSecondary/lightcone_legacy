@@ -27,13 +27,6 @@ import scala.concurrent._
 
 trait AddressDal
   extends BaseDalImpl[AddressTable, XAddressData] {
-
-  def update(row: XAddressData): Future[Int]
-  def update(rows: Seq[XAddressData]): Future[Unit]
-
-  def findAddress(address: String): Future[Option[XAddressData]]
-  def deleteAddress(address: String): Future[Int]
-  def deleteAddress(addresses: Seq[String]): Future[Int]
 }
 
 class AddressDalImpl()(
@@ -42,22 +35,4 @@ class AddressDalImpl()(
     val ec: ExecutionContext
 ) extends AddressDal {
   val query = TableQuery[AddressTable]
-
-  def update(row: XAddressData): Future[Int] = {
-    db.run(query.filter(_.address === row.address).update(row))
-  }
-
-  def update(rows: Seq[XAddressData]): Future[Unit] = {
-    db.run(DBIO.seq(rows.map(r ⇒ query.filter(_.address === r.address).update(r)): _*))
-  }
-
-  def findAddress(address: String): Future[Option[XAddressData]] = {
-    db.run(query.filter(_.address === address).result.headOption)
-  }
-  def deleteAddress(address: String): Future[Int] =
-    deleteAddress(Seq(address))
-
-  def deleteAddress(addresses: Seq[String]): Future[Int] =
-    db.run(query.filter(_.address.inSet(addresses)).delete)
-
 }

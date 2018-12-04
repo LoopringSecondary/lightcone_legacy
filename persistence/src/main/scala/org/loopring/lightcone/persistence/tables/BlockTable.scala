@@ -24,13 +24,13 @@ import org.loopring.lightcone.proto.ethereum._
 import com.google.protobuf.ByteString
 
 class BlockTable(tag: Tag)
-  extends UniqueHashTable[XBlockData](tag, "T_BLOCKS") {
+  extends BaseTable[XBlockData](tag, "T_BLOCKS") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def id = hash
+  def hash = columnHash("hash", O.PrimaryKey)
   def height = column[Long]("height")
   def timestamp = column[Long]("timestamp")
   def numTx = column[Int]("num_tx")
-  def hash = columnHash("hash")
   def parentHash = columnHash("parent_hash")
   def sha3Uncles = columnHash("sha3_uncles")
   def minedBy = columnAddress("mined_by")
@@ -46,17 +46,15 @@ class BlockTable(tag: Tag)
   def extraData = column[ByteString]("extra_data")
 
   // indexes
-  def idx_hash = index("idx_hash", (hash), unique = true)
   def idx_parent_hash = index("idx_parent_hash", (parentHash), unique = false)
   def idx_height = index("idx_height", (height), unique = false)
-  def idx_mined_by = index("idx_mined_by", (minedBy), unique = false)
+  // def idx_mined_by = index("idx_mined_by", (minedBy), unique = false)
 
   def * = (
-    id,
+    hash,
     height,
     timestamp,
     numTx,
-    hash,
     parentHash,
     sha3Uncles,
     minedBy,
