@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.core
+package org.loopring.lightcone.actors.persistence
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor.{Actor, ActorLogging}
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.proto.actors._
 
 import scala.concurrent._
 
-object OrderHistoryActor {
+object OrderStateActor {
   val name = "order_history"
 }
 
 // TODO(hongyu): implement this class. 根据变更可能需要从数据库读取
-class OrderHistoryActor()(
+class OrderStateActor()(
     implicit
     ec: ExecutionContext,
     timeout: Timeout
