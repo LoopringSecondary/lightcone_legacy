@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.ethereum
 
 import akka.actor._
 import akka.util.Timeout
-import org.loopring.lightcone.proto.actors.{ XJsonRpcErr, XJsonRpcReq, XNodeBlockHeight, XRpcReqWithHeight }
+import org.loopring.lightcone.proto.actors._
 
 import scala.util._
 
