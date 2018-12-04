@@ -34,8 +34,12 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
     insert(Seq(row)).map(_.head)
   }
 
-  def insert(rows: Seq[A]): Future[Seq[Unit]] = {
-    db.run(query returning query.map(_.id) ++= rows)
+  def insert(rows: Seq[A]): Future[Seq[String]] = {
+    db.run((query returning query.map(_.id)) ++= rows)
+  }
+
+  def insertOrUpdate(row: A): Future[Int] = {
+    db.run(query.insertOrUpdate(row))
   }
 
   def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]] = {
