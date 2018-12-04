@@ -18,23 +18,29 @@ package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.persistence.Bar
+import org.loopring.lightcone.proto.ethereum._
 import org.loopring.lightcone.proto.core._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
-import scala.concurrent._
 import slick.basic._
+import scala.concurrent._
 
-private[dals] trait BarsDal extends BaseDalImpl[BarTable, Bar] {
-
+trait TokenBalanceDal
+  extends BaseDalImpl[TokenBalanceTable, XTokenBalance] {
+  def getBalances(address: String): Future[Seq[XTokenBalance]]
+  def getBalance(address: String, token: String): Future[Option[XTokenBalance]]
 }
 
-private[dals] class BarsDalImpl()(
+class TokenBalanceDalImpl()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
-) extends BarsDal {
-  val query = TableQuery[BarTable]
-  def getRowHash(row: Bar) = row.hash
+) extends TokenBalanceDal {
+  val query = TableQuery[TokenBalanceTable]
 
+  def getBalances(address: String) =
+    findByFilter(_.address === address)
+
+  def getBalance(address: String, token: String) =
+    findByFilter(r ⇒ r.address === address && r.token === token).map(_.headOption)
 }
