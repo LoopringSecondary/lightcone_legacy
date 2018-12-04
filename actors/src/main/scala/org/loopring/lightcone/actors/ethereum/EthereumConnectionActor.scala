@@ -79,6 +79,7 @@ class EthereumConnectionActor(
         )
     }
 
+    // 尤其节点的块高度不统一，不能直接做
     // 这里相当于添加了 ActorSelectionRoutee
     router = context.actorOf(
       RoundRobinGroup(connectorGroups.map(_.path.toString).toList).props(),
