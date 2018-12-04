@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.dals
+package org.loopring.lightcone.persistence.base
 
-trait MarketConfigsDal {
+import slick.jdbc.MySQLProfile.api._
+import slick.ast.ColumnOption
+import scala.reflect.ClassTag
+import com.google.protobuf.ByteString
 
+abstract class UniqueHashTable[T](tag: Tag, name: String)
+  extends BaseTable[T](tag, name) {
+  def hash: slick.lifted.Rep[String]
 }
-

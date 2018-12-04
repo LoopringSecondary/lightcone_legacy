@@ -14,32 +14,19 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.persistence.base
 
-option java_multiple_files = true;
-package org.loopring.lightcone.proto.persistence;
+import slick.jdbc.MySQLProfile.api._
+import slick.lifted.CanBeQueryCondition
+import scala.concurrent._
 
-import "core_data.proto";
+trait UniqueHashDal[T <: UniqueHashTable[A], A] extends BaseDal[T, A] {
+  def getRowHash(row: A): String
 
-message Bar {
-    int64 id = 5;
-    string hash = 6;
-    string a = 1;
-    string b = 2;
-    bytes c = 3;
-    int64 d = 4;
-}
+  def update(row: A): Future[Int]
+  def update(rows: Seq[A]): Future[Unit]
 
-message XSaveOrderResult {
-    core.XRawOrder order    = 1;
-    bool already_exist      = 2;
-    XPersistenceError error = 3;
-}
-
-enum XPersistenceError {
-    PERS_ERR_NONE       = 0;
-    PERS_INVALID_PARAMTERS = 1;
-    PERS_ERROR_DUPLICATE_INSERT  = 2;
-    PERS_ERROR_UPDATE_FAILED = 3;
-    PERS_ERROR_INTERNAL = 4;
+  def findByHash(hash: String): Future[Option[A]]
+  def deleteByHash(hash: String): Future[Int]
+  def deleteByHash(hashes: Seq[String]): Future[Int]
 }

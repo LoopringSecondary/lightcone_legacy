@@ -24,6 +24,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.persistence._
+import org.loopring.lightcone.actors._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.persistence.dals._
 
@@ -35,7 +36,7 @@ object OrdersDalActor {
 
 // TODO(hongyu): remove databaseManager and use OrdersDal
 class OrdersDalActor(
-    ordersDal: OrdersDal,
+    orderDal: OrderDal,
     databaseManager: OrderDatabaseManager
 )(
     implicit

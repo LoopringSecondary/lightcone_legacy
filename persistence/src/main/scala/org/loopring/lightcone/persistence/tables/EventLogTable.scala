@@ -20,27 +20,33 @@ import org.loopring.lightcone.persistence.base._
 import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
+import org.loopring.lightcone.proto.ethereum._
+import com.google.protobuf.ByteString
 
-private[persistence] class BarTable(tag: Tag)
-  extends UniqueHashTable[Bar](tag, "T_BARS") {
+class EventLogTable(tag: Tag)
+  extends BaseTable[XEventLogData](tag, "T_EVENT_LOGS") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def hash = columnHash("hash")
-  def a = column[String]("A")
-  def b = columnAddress("B")
-  def c = columnAmount("C")
-  def d = column[Long]("D")
+  def height = column[Long]("height")
+  def txHash = columnHash("tx_hash")
+  def timestamp = column[Long]("timestamp")
+  def address = columnAddress("address")
+  def name = column[String]("name")
+  def data = column[ByteString]("data")
+  def topics = column[ByteString]("topics")
 
   // indexes
-  // def idx_a = index("idx_c", (a), unique = false)
+  def idx_height = index("idx_height", (height), unique = false)
+  def idx_tx_hash = index("idx_tx_hash", (txHash), unique = false)
 
   def * = (
     id,
-    hash,
-    a,
-    b,
-    c,
-    d
-  ) <> ((Bar.apply _).tupled, Bar.unapply)
+    height,
+    txHash,
+    timestamp,
+    address,
+    name,
+    data,
+    topics
+  ) <> ((XEventLogData.apply _).tupled, XEventLogData.unapply)
 }

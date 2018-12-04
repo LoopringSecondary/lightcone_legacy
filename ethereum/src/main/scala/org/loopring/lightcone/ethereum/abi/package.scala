@@ -37,7 +37,7 @@ package object abi {
         val name = getAnnotationValue[String](annArgs(0))
         val idx = getAnnotationValue[Int](annArgs(1))
         idx
-    }).toSeq.sortWith(_ < _)
+    }).toSeq.reverse
   }
 
 }
