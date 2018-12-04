@@ -26,9 +26,10 @@ import com.google.protobuf.ByteString
 class TokenTransferTable(tag: Tag)
   extends BaseTable[XTokenTransferData](tag, "T_TOKEN_TRANSFERS") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  // how to generate the id???
+  def id = column[String]("id", O.PrimaryKey)
   def height = column[Long]("height")
-  def hash = columnHash("hash")
+  def txHash = columnHash("tx_hash")
   def timestamp = column[Long]("timestamp")
   def from = columnAddress("from")
   def to = columnAddress("to")
@@ -37,7 +38,7 @@ class TokenTransferTable(tag: Tag)
 
   // indexes
   def idx_height = index("idx_height", (height), unique = false)
-  def idx_tx_hash = index("idx_tx_hash", (hash), unique = false)
+  def idx_tx_hash = index("idx_tx_hash", (txHash), unique = false)
   def idx_from = index("idx_from", (from), unique = false)
   def idx_to = index("idx_to", (to), unique = false)
   def idx_token = index("idx_token", (token), unique = false)
@@ -45,7 +46,7 @@ class TokenTransferTable(tag: Tag)
   def * = (
     id,
     height,
-    hash,
+    txHash,
     timestamp,
     from,
     to,

@@ -24,11 +24,11 @@ import org.loopring.lightcone.proto.ethereum._
 import com.google.protobuf.ByteString
 
 class TransactionTable(tag: Tag)
-  extends UniqueHashTable[XTransactionData](tag, "T_TRANSACTIONS") {
+  extends BaseTable[XTransactionData](tag, "T_TRANSACTIONS") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def id = hash
+  def hash = columnHash("hash", O.PrimaryKey)
   def height = column[Long]("height")
-  def hash = columnHash("hash")
   def blockHash = columnHash("block_hash")
   def timestamp = column[Long]("timestamp")
   def from = columnAddress("from")
@@ -50,9 +50,8 @@ class TransactionTable(tag: Tag)
   def idx_to = index("idx_to", (to), unique = false)
 
   def * = (
-    id,
-    height,
     hash,
+    height,
     blockHash,
     timestamp,
     from,

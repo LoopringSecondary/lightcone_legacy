@@ -26,7 +26,8 @@ import com.google.protobuf.ByteString
 class TradeTable(tag: Tag)
   extends BaseTable[XTradeData](tag, "T_TRADES") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  // How to generate id???
+  def id = column[String]("id", O.PrimaryKey)
   def height = column[Long]("height")
   def blockHash = columnHash("block_hash")
   def txHash = columnHash("tx_hash")

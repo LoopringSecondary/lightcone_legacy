@@ -17,9 +17,8 @@
 package org.loopring.lightcone.persistence.dals
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.proto.actors.XOrderState
+import org.loopring.lightcone.proto.actors.{ XOrderState, XSaveOrderResult }
 import org.loopring.lightcone.proto.core.XRawOrder
-import org.loopring.lightcone.proto.persistence.{ Bar, XSaveOrderResult }
 import org.loopring.lightcone.proto.core._
 import org.web3j.utils.Numeric
 

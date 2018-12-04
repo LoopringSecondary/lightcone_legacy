@@ -35,7 +35,11 @@ import com.google.protobuf.ByteString
 class TokenBalanceTable(tag: Tag)
   extends BaseTable[XTokenBalance](tag, "T_TOKEN_BALANCES") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  // Do not support id-based operations
+  def id = throw new UnsupportedOperationException(
+    s"${getClass.getName} does not support id-based operations"
+  )
+
   def address = columnAddress("address")
   def token = columnAddress("address")
   def balance = columnAmount("balance")
@@ -45,9 +49,9 @@ class TokenBalanceTable(tag: Tag)
   // indexes
   def idx_address = index("idx_address", (address), unique = false)
   def idx_token = index("idx_token", (token), unique = false)
+  def pk = primaryKey("pk", (address, token))
 
   def * = (
-    id,
     address,
     token,
     balance,

@@ -23,13 +23,13 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.persistence._
 
 class OrderTable(tag: Tag)
-  extends UniqueHashTable[XRawOrder](tag, "T_ORDERS") {
+  extends BaseTable[XRawOrder](tag, "T_ORDERS") {
 
   implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
   implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def hash = columnHash("hash")
+  def id = hash
+  def hash = columnHash("hash", O.PrimaryKey)
   def version = column[Int]("version")
   def owner = columnAddress("owner")
   def tokenS = columnAddress("token_s")
@@ -175,7 +175,6 @@ class OrderTable(tag: Tag)
     )
 
   def * = (
-    id,
     hash,
     version,
     owner,

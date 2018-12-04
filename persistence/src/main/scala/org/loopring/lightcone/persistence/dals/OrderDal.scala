@@ -18,12 +18,13 @@ package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.persistence._
 import org.loopring.lightcone.proto.core._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
-import slick.lifted.{ CanBeQueryCondition, Query }
+import slick.lifted.Query
 import com.mysql.jdbc.exceptions.jdbc4._
 import com.google.protobuf.ByteString
 
@@ -31,7 +32,7 @@ import scala.concurrent._
 import scala.util.{ Failure, Success }
 
 trait OrderDal
-  extends UniqueHashDalImpl[OrderTable, XRawOrder] {
+  extends BaseDalImpl[OrderTable, XRawOrder] {
 
   // Save a order to the database and returns the saved order and indicate
   // whether the order was perviously saved or not.
@@ -94,6 +95,20 @@ trait OrderDal
     sortedByUpdatedAt: Boolean = true
   ): Future[Seq[XRawOrder]]
 
+  // Get some orders between updatedSince and updatedUntil. The orders are sorted by updated_at
+  // indicatd by the sortedByUpdatedAt param.
+  def getOrdersByUpdatedAt(
+    num: Int,
+    statuses: Set[XOrderStatus],
+    owners: Set[String] = Set.empty,
+    tokenSSet: Set[String] = Set.empty,
+    tokenBSet: Set[String] = Set.empty,
+    feeTokenSet: Set[String] = Set.empty,
+    updatedSince: Option[Long] = None,
+    updatedUntil: Option[Long] = None,
+    sortedByUpdatedAt: Boolean = true
+  ): Future[Seq[XRawOrder]]
+
   // Count the number of orders
   def countOrders(
     statuses: Set[XOrderStatus],
@@ -126,8 +141,8 @@ class OrderDalImpl()(
 
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
     if (order.hash.isEmpty || order.version <= 0 || order.owner.isEmpty || order.tokenS.isEmpty || order.tokenB.isEmpty ||
-      order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0 || order.id > 0 || order.state.nonEmpty) {
-      Future.successful(XSaveOrderResult(error = XPersistenceError.PERS_INVALID_PARAMTERS, order = Some(order)))
+      order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0 || order.state.nonEmpty) {
+      Future.successful(XSaveOrderResult(error = XPersistenceError.PERS_ERR_INVALID_DATA, order = Some(order)))
     } else {
       val now = System.currentTimeMillis()
       val state = XRawOrder.State(createdAt = now, updatedAt = now, status = XOrderStatus.STATUS_NEW)
@@ -140,7 +155,7 @@ class OrderDalImpl()(
           // log(s"error : ${ex.getMessage}")
           XSaveOrderResult(error = XPersistenceError.PERS_ERROR_INTERNAL, order = Some(order))
         }
-        case Success(x) ⇒ XSaveOrderResult(error = XPersistenceError.PERS_ERR_NONE, order = Some(order.copy(id = x.head)))
+        case Success(x) ⇒ XSaveOrderResult(error = XPersistenceError.PERS_ERR_NONE, order = Some(order))
       }
     }
   }
@@ -217,7 +232,7 @@ class OrderDalImpl()(
     sinceId: Option[Long] = None,
     tillId: Option[Long] = None
   ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
-    var filters = query.filter(_.id > 0l)
+    var filters = query.filter(_.createdAt > 0l)
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
@@ -257,6 +272,18 @@ class OrderDalImpl()(
       }
     }
   }
+
+  def getOrdersByUpdatedAt(
+    num: Int,
+    statuses: Set[XOrderStatus],
+    owners: Set[String],
+    tokenSSet: Set[String],
+    tokenBSet: Set[String],
+    feeTokenSet: Set[String],
+    updatedSince: Option[Long],
+    updatedUntil: Option[Long],
+    sortedByUpdatedAt: Boolean
+  ): Future[Seq[XRawOrder]] = ???
 
   def countOrders(
     statuses: Set[XOrderStatus],
