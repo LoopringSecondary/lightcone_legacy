@@ -102,3 +102,12 @@ message XTradeData {
     // bytes amount_b              = 8;
     // bytes amount_fee            = 9;
 }
+
+message XTokenBalance {
+    int64  id                   = 1;
+    string address              = 2;
+    string token                = 3;
+    bytes  balance              = 4;
+    bytes  allowance            = 5;
+    int64  updated_at_block     = 7;
+}

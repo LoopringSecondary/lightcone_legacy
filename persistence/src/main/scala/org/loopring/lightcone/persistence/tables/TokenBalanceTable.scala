@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
+// message XTokenBalance {
+//     int64  id                   = 1;
+//     string address              = 2;
+//     string token                = 3;
+//     bytes  balance              = 4;
+//     bytes  allowance            = 5;
+//     int64  updated_at_block     = 7;
+// }
+
 package org.loopring.lightcone.persistence.tables
 
 import org.loopring.lightcone.persistence.base._
@@ -23,28 +32,26 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.ethereum._
 import com.google.protobuf.ByteString
 
-class AddressTable(tag: Tag)
-  extends BaseTable[XAddressData](tag, "T_ADDRESSES") {
+class TokenBalanceTable(tag: Tag)
+  extends BaseTable[XTokenBalance](tag, "T_TOKEN_BALANCES") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def address = columnAddress("address")
+  def token = columnAddress("address")
   def balance = columnAmount("balance")
-  def numTx = column[Long]("num_tx")
-  def creatorAddress = columnAddress("creator_address")
-  def creatorTx = columnHash("creator_tx")
+  def allowance = columnAmount("allowance")
   def updatedAtBlock = column[Long]("updated_at_block")
 
   // indexes
-  def idx_address = index("idx_address", (address), unique = true)
-  def idx_updated_at_block = index("idx_updated_at_block", (updatedAtBlock), unique = false)
+  def idx_address = index("idx_address", (address), unique = false)
+  def idx_token = index("idx_token", (token), unique = false)
 
   def * = (
     id,
     address,
+    token,
     balance,
-    numTx,
-    creatorAddress,
-    creatorTx,
+    allowance,
     updatedAtBlock
-  ) <> ((XAddressData.apply _).tupled, XAddressData.unapply)
+  ) <> ((XTokenBalance.apply _).tupled, XTokenBalance.unapply)
 }

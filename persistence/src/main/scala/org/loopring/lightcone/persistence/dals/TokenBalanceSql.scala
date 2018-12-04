@@ -25,39 +25,22 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait AddressDal
-  extends BaseDalImpl[AddressTable, XAddressData] {
-
-  def update(row: XAddressData): Future[Int]
-  def update(rows: Seq[XAddressData]): Future[Unit]
-
-  def findAddress(address: String): Future[Option[XAddressData]]
-  def deleteAddress(address: String): Future[Int]
-  def deleteAddress(addresses: Seq[String]): Future[Int]
+trait TokenBalanceDal
+  extends BaseDalImpl[TokenBalanceTable, XTokenBalance] {
+  def getBalances(address: String): Future[Seq[XTokenBalance]]
+  def getBalance(address: String, token: String): Future[Option[XTokenBalance]]
 }
 
-class AddressDalImpl()(
+class TokenBalanceDalImpl()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
-) extends AddressDal {
-  val query = TableQuery[AddressTable]
+) extends TokenBalanceDal {
+  val query = TableQuery[TokenBalanceTable]
 
-  def update(row: XAddressData): Future[Int] = {
-    db.run(query.filter(_.address === row.address).update(row))
-  }
+  def getBalances(address: String) =
+    findByFilter(_.address === address)
 
-  def update(rows: Seq[XAddressData]): Future[Unit] = {
-    db.run(DBIO.seq(rows.map(r ⇒ query.filter(_.address === r.address).update(r)): _*))
-  }
-
-  def findAddress(address: String): Future[Option[XAddressData]] = {
-    db.run(query.filter(_.address === address).result.headOption)
-  }
-  def deleteAddress(address: String): Future[Int] =
-    deleteAddress(Seq(address))
-
-  def deleteAddress(addresses: Seq[String]): Future[Int] =
-    db.run(query.filter(_.address.inSet(addresses)).delete)
-
+  def getBalance(address: String, token: String) =
+    findByFilter(r ⇒ r.address === address && r.token === token).map(_.headOption)
 }

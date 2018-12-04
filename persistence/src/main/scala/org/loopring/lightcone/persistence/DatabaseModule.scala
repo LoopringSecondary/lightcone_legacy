@@ -31,7 +31,8 @@ class DatabaseModule @Inject() (
 
   val orders: OrderDal = new OrderDalImpl()
   val trades: TradeDal = new TradeDalImpl()
-  val addresses: AddresDal = new AddresDalImpl()
+  val addresses: AddressDal = new AddressDalImpl()
+  val tokenBalances: TokenBalanceDal = new TokenBalanceDalImpl()
   val blocks: BlockDal = new BlockDalImpl()
   val transactions: TransactionDal = new TransactionDalImpl()
   val evengLogs: EventLogDal = new EventLogDalImpl()
@@ -39,7 +40,9 @@ class DatabaseModule @Inject() (
 
   val tables = Seq(
     orders,
+    trades,
     addresses,
+    tokenBalances,
     blocks,
     transactions,
     evengLogs,
