@@ -20,7 +20,7 @@ import akka.actor._
 import akka.routing._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.actors.{ XJsonRpcReq, _ }
 
 class EthereumConnectionActor(
     settings: XEthereumProxySettings
@@ -42,22 +42,15 @@ class EthereumConnectionActor(
     case settings: XEthereumProxySettings ⇒
       updateSettings(settings)
 
-    case m: XJsonRpcReq ⇒
-      // 路由为空 这里是 timeout
-      router.forward(m)
-
-    case req: ProtoBuf[_] ⇒
+    case req ⇒
       router.forward(req)
-
-    case msg ⇒
-      log.error(s"unsupported request to EthereumConnectionActor: $msg")
   }
 
   def updateSettings(settings: XEthereumProxySettings) {
     if (router != null) {
       context.stop(router)
     }
-    connectorGroups.foreach(context.stop(_))
+    connectorGroups.foreach(context.stop)
 
     connectorGroups = settings.nodes.zipWithIndex.map {
       case (node, index) ⇒
@@ -82,7 +75,7 @@ class EthereumConnectionActor(
     // 尤其节点的块高度不统一，不能直接做
     // 这里相当于添加了 ActorSelectionRoutee
     router = context.actorOf(
-      RoundRobinGroup(connectorGroups.map(_.path.toString).toList).props(),
+      Props(new EthereumServiceRouter(connectorGroups)),
       "r_ethereum_connector"
     )
 
@@ -91,8 +84,7 @@ class EthereumConnectionActor(
         new EthereumClientMonitor(
           router,
           connectorGroups,
-          settings.checkIntervalSeconds,
-          settings.healthyThreshold
+          settings.checkIntervalSeconds
         )
       ),
       "ethereum_connector_monitor"
