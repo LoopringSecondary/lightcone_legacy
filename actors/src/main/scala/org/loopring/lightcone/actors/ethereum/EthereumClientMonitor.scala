@@ -37,7 +37,7 @@ private[ethereum] class EthereumClientMonitor(
   implicit val formats = DefaultFormats
 
   context.system.scheduler.schedule(
-    checkIntervalSeconds.seconds,
+    0.seconds,
     checkIntervalSeconds.seconds,
     self,
     XCheckBlockHeight()
@@ -66,7 +66,7 @@ private[ethereum] class EthereumClientMonitor(
                 -1
             }
         } yield {
-          router ! g -> blockNumResp
+          router ! XNodeBlockHeight(path = g.path.toString, height = blockNumResp)
         }
       }
   }

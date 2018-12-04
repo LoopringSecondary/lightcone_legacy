@@ -20,7 +20,7 @@ import akka.actor._
 import akka.routing._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import org.loopring.lightcone.proto.actors.{ XJsonRpcReq, _ }
+import org.loopring.lightcone.proto.actors._
 
 class EthereumConnectionActor(
     settings: XEthereumProxySettings
@@ -72,10 +72,8 @@ class EthereumConnectionActor(
         )
     }
 
-    // 尤其节点的块高度不统一，不能直接做
-    // 这里相当于添加了 ActorSelectionRoutee
     router = context.actorOf(
-      Props(new EthereumServiceRouter(connectorGroups)),
+      Props(new EthereumServiceRouter(connectorGroups.map(_.path.toString))),
       "r_ethereum_connector"
     )
 
