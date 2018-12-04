@@ -52,10 +52,11 @@ class AccountManagerActor(
   extends Actor
   with ActorLogging
   with OrderRecoverySupport {
-  val recoverySettings = OrderRecoverySettings(
+  val recoverySettings = XOrderRecoverySettings(
     skipRecovery,
     recoverBatchSize,
-    Some(address)
+    address,
+    None
   )
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing

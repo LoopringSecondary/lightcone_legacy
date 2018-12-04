@@ -57,10 +57,10 @@ class MarketManagerActor(
   extends Actor
   with ActorLogging
   with OrderRecoverySupport {
-  val recoverySettings = OrderRecoverySettings(
+  val recoverySettings = XOrderRecoverySettings(
     skipRecovery,
     config.recoverBatchSize,
-    None,
+    "",
     Some(marketId)
   )
 

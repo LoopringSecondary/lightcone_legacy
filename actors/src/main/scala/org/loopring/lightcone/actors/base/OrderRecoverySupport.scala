@@ -20,16 +20,9 @@ import akka.actor._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XMarketId
+import org.loopring.lightcone.proto.core._
 
 import scala.concurrent._
-
-case class OrderRecoverySettings(
-    skipRecovery: Boolean, // for testing purpose
-    batchSize: Int,
-    ownerOfOrders: Option[String] = None,
-    marketId: Option[XMarketId] = None
-)
 
 trait OrderRecoverySupport {
   actor: Actor with ActorLogging ⇒
@@ -37,7 +30,7 @@ trait OrderRecoverySupport {
   implicit val ec: ExecutionContext
   implicit val timeout: Timeout
 
-  val recoverySettings: OrderRecoverySettings
+  val recoverySettings: XOrderRecoverySettings
   private var processed = 0
 
   protected def ordersDalActor: ActorRef
@@ -57,10 +50,9 @@ trait OrderRecoverySupport {
     } else {
       context.become(recovering)
       log.info(s"actor recovering started: ${self.path}")
-      val marketId = recoverySettings.marketId
       ordersDalActor ! XRecoverOrdersReq(
-        recoverySettings.ownerOfOrders.orNull,
-        marketId,
+        recoverySettings.orderOwner,
+        recoverySettings.marketId,
         0L,
         recoverySettings.batchSize
       )
@@ -91,10 +83,9 @@ trait OrderRecoverySupport {
 
         case Nil ⇒
           if (!recoverEnded) {
-            val marketId = recoverySettings.marketId
             ordersDalActor ! XRecoverOrdersReq(
-              recoverySettings.ownerOfOrders.orNull,
-              marketId,
+              recoverySettings.orderOwner,
+              recoverySettings.marketId,
               lastUpdatdTimestamp,
               recoverySettings.batchSize
             )

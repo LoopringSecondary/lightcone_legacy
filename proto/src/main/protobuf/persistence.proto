@@ -30,51 +30,6 @@ message Bar {
     int64 d = 4;
 }
 
-message XSaveOrderResult {
-    core.XRawOrder order    = 1;
-    bool already_exist      = 2;
-    XPersistenceError error = 3;
-}
-
-message XSaveOrderReq {
-    core.XRawOrder order    = 1;
-}
-
-message XUpdateOrderStateReq {
-    string hash = 1;
-    core.XRawOrder.State state = 2;
-    bool changeUpdatedAtField = 3;
-}
-message XUpdateOrderStateRes {
-    XPersistenceError error = 1;
-}
-message XUpdateOrderStatusReq {
-    string hash = 1;
-    core.XOrderStatus status = 2;
-    bool changeUpdatedAtField = 3;
-}
-message XUpdateOrderStatusRes {
-    XPersistenceError error = 1;
-}
-
-message XGetOrdersByHashesReq {
-    repeated string hashes = 1;
-}
-
-message XGetOrdersByHashesRes {
-    repeated core.XRawOrder orders = 1;
-    XPersistenceError error = 2;
-}
-
-message XGetOrderByHashReq {
-    string hash = 1;
-}
-
-message XGetOrderByHashRes {
-    core.XRawOrder order = 1;
-    XPersistenceError error = 2;
-}
-
 enum XPersistenceError {
     PERS_ERR_NONE       = 0;
     PERS_ERR_INVALID_DATA = 1;

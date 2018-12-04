@@ -111,6 +111,13 @@ message XAddressAllowanceUpdated {
     bytes balance = 3;
 }
 
+message XOrderRecoverySettings {
+    bool skip_recovery = 1;
+    int32 batch_size = 2;
+    string order_owner = 3;
+    core.XMarketId market_id = 4;
+}
+
 // 由ethereum发送给orderManagingActor
 // 以太坊事件顺序根据blockID，tx&eventId来确定,由route汇聚到不同用户地址,然后按顺序逐个发送给orderManagingActor
 // 注意: cancelOrderReq 可能包含用户软取消,在orderManagerState软取消后用户链上数据继续变更不影响最终结果
@@ -176,7 +183,7 @@ message XSendRawTxRes {
 
 message XRecoverOrdersReq {
     string address = 1;
-    core.XMarketId marketId = 2;
+    core.XMarketId market_id = 2;
     int64 updated_since = 3;
     int32 num = 4;
 }

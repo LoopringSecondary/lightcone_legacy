@@ -23,8 +23,8 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.persistence.OrdersDalActor
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.{ XMarketId, XRawOrder }
-import org.loopring.lightcone.proto.persistence.{ XGetOrderByHashReq, XGetOrderByHashRes }
+import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.actors._
 
 import scala.concurrent.ExecutionContext
 
@@ -41,10 +41,10 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId:
 
     var recoveryOrders = Seq.empty[XRecoverOrdersRes]
     def receive: Receive = LoggingReceive {
-      case XGetOrderByHashReq(orderId) ⇒
+      case XGetOrderByHashReq(hash) ⇒
         sender ! XGetOrderByHashRes(Some(
           XRawOrder(
-            hash = orderId,
+            hash = hash,
             state = Some(XRawOrder.State(outstandingAmountS = BigInt(0)))
           )
         ))
