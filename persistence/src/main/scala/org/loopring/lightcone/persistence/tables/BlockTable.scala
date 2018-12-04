@@ -26,7 +26,7 @@ import com.google.protobuf.ByteString
 class BlockTable(tag: Tag)
   extends UniqueHashTable[XBlockData](tag, "T_BLOCKS") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def id = column[String]("id", O.PrimaryKey)
   def height = column[Long]("height")
   def timestamp = column[Long]("timestamp")
   def numTx = column[Int]("num_tx")

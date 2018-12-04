@@ -25,15 +25,15 @@ trait BaseDal[T <: BaseTable[A], A] {
 
   def tableName = query.baseTableRow.tableName
 
-  def insert(row: A): Future[Long]
-  def insert(rows: Seq[A]): Future[Seq[Long]]
+  def insert(row: A): Future[String]
+  def insert(rows: Seq[A]): Future[Seq[String]]
 
   def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]]
   def deleteByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Int]
 
-  def findById(id: Long): Future[Option[A]]
-  def deleteById(id: Long): Future[Int]
-  def deleteById(ids: Seq[Long]): Future[Int]
+  def findById(id: String): Future[Option[A]]
+  def deleteById(id: String): Future[Int]
+  def deleteById(ids: Seq[String]): Future[Int]
 
   def createTable(): Future[Any]
   def dropTable(): Future[Any]

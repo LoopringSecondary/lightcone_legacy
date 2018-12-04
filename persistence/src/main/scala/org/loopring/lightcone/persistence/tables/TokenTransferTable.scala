@@ -26,7 +26,7 @@ import com.google.protobuf.ByteString
 class TokenTransferTable(tag: Tag)
   extends BaseTable[XTokenTransferData](tag, "T_TOKEN_TRANSFERS") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def id = column[String]("id", O.PrimaryKey)
   def height = column[Long]("height")
   def hash = columnHash("hash")
   def timestamp = column[Long]("timestamp")

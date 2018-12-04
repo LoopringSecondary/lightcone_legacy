@@ -25,7 +25,7 @@ import org.loopring.lightcone.proto.persistence._
 private[persistence] class BarTable(tag: Tag)
   extends UniqueHashTable[Bar](tag, "T_BARS") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def id = column[String]("id", O.PrimaryKey)
   def hash = columnHash("hash")
   def a = column[String]("A")
   def b = columnAddress("B")

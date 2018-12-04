@@ -28,7 +28,7 @@ class OrderTable(tag: Tag)
   implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
   implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def id = column[String]("id", O.PrimaryKey)
   def hash = columnHash("hash")
   def version = column[Int]("version")
   def owner = columnAddress("owner")

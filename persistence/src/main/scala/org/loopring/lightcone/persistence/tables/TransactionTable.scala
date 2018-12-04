@@ -26,7 +26,7 @@ import com.google.protobuf.ByteString
 class TransactionTable(tag: Tag)
   extends UniqueHashTable[XTransactionData](tag, "T_TRANSACTIONS") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def id = column[String]("id", O.PrimaryKey)
   def height = column[Long]("height")
   def hash = columnHash("hash")
   def blockHash = columnHash("block_hash")

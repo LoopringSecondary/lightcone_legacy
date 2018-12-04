@@ -22,7 +22,7 @@ package org.loopring.lightcone.proto.persistence;
 import "core_data.proto";
 
 message Bar {
-    int64 id = 5;
+    string id = 5;
     string hash = 6;
     string a = 1;
     string b = 2;

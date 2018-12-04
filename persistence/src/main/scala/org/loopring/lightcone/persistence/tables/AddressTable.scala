@@ -26,7 +26,7 @@ import com.google.protobuf.ByteString
 class AddressTable(tag: Tag)
   extends BaseTable[XAddressData](tag, "T_ADDRESSES") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def id = column[String]("id", O.PrimaryKey)
   def address = columnAddress("address")
   def balance = columnAmount("balance")
   def numTx = column[Long]("num_tx")

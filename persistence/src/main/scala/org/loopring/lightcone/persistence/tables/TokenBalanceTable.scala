@@ -35,7 +35,7 @@ import com.google.protobuf.ByteString
 class TokenBalanceTable(tag: Tag)
   extends BaseTable[XTokenBalance](tag, "T_TOKEN_BALANCES") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def id = column[String]("id", O.PrimaryKey)
   def address = columnAddress("address")
   def token = columnAddress("address")
   def balance = columnAmount("balance")
