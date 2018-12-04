@@ -30,12 +30,10 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
 
   import profile.api._
 
-  def insert(row: A): Future[String] = {
-    insert(Seq(row)).map(_.head)
-  }
+  def insert(row: A): Future[Int] = insert(Seq(row))
 
-  def insert(rows: Seq[A]): Future[Seq[String]] = {
-    db.run((query returning query.map(_.id)) ++= rows)
+  def insert(rows: Seq[A]): Future[Int] = {
+    db.run(query ++= rows).map(_.getOrElse(0))
   }
 
   def insertOrUpdate(row: A): Future[Int] = {
@@ -71,5 +69,8 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
   def displayTableSchema() = {
     query.schema.create.statements.foreach(println)
   }
+
+  def take(size: Int, skip: Int = 0): Future[Seq[A]] =
+    db.run(query.drop(skip).take(size).result)
 
 }
