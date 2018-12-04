@@ -22,12 +22,15 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.loopring.lightcone.proto.actors._
 
+import scala.concurrent.ExecutionContextExecutor
+
 class EthereumConnectionActor(
     settings: XEthereumProxySettings
 )(
     implicit
     materilizer: ActorMaterializer,
-    timeout: Timeout
+    timeout: Timeout,
+    ec: ExecutionContextExecutor
 ) extends Actor
   with ActorLogging {
 

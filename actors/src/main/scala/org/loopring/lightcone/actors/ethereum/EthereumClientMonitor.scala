@@ -22,6 +22,7 @@ import akka.util.Timeout
 import org.json4s.DefaultFormats
 import org.loopring.lightcone.proto.actors._
 
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 import scala.util.Random
 
@@ -29,12 +30,12 @@ private[ethereum] class EthereumClientMonitor(
     router: ActorRef,
     connectionPools: Seq[ActorRef],
     checkIntervalSeconds: Int
-)(implicit timeout: Timeout)
+)(implicit
+    timeout: Timeout,
+    ec: ExecutionContextExecutor
+)
   extends Actor
   with ActorLogging {
-
-  implicit val ec = context.system.dispatcher
-  implicit val formats = DefaultFormats
 
   context.system.scheduler.schedule(
     0.seconds,
@@ -44,7 +45,6 @@ private[ethereum] class EthereumClientMonitor(
   )
 
   def receive: Receive = {
-
     case _: XCheckBlockHeight ⇒
       log.info("start scheduler check highest block...")
       val blockNumJsonRpcReq = JsonRpcReqWrapped(
