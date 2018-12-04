@@ -74,9 +74,9 @@ class OrderTable(tag: Tag)
   def outstandingAmountS = columnAmount("outstanding_amount_s")
   def outstandingAmountB = columnAmount("outstanding_amount_b")
   def outstandingAmountFee = columnAmount("outstanding_amount_fee")
-  def actualAmountS = columnAmount("matchable_amount_s")
-  def actualAmountB = columnAmount("matchable_amount_b")
-  def actualAmountFee = columnAmount("matchable_amount_fee")
+  def actualAmountS = columnAmount("actual_amount_s")
+  def actualAmountB = columnAmount("actual_amount_b")
+  def actualAmountFee = columnAmount("actual_amount_fee")
 
   // indexes
   def idx_hash = index("idx_hash", (hash), unique = true)
@@ -156,12 +156,12 @@ class OrderTable(tag: Tag)
     matchedAt,
     updatedAtBlock,
     status,
-    outstandingAmountS,
-    outstandingAmountB,
-    outstandingAmountFee,
     actualAmountS,
     actualAmountB,
-    actualAmountFee
+    actualAmountFee,
+    outstandingAmountS,
+    outstandingAmountB,
+    outstandingAmountFee
   ) <> (
       {
         tuple ⇒

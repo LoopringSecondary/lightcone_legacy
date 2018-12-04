@@ -23,11 +23,12 @@ import org.loopring.lightcone.proto.core._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
-import slick.lifted.{CanBeQueryCondition, Query}
+import slick.lifted.{ CanBeQueryCondition, Query }
 import com.mysql.jdbc.exceptions.jdbc4._
+import com.google.protobuf.ByteString
 
 import scala.concurrent._
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 trait OrderDal
   extends UniqueHashDalImpl[OrderTable, XRawOrder] {
@@ -113,6 +114,16 @@ class OrderDalImpl()(
   val query = TableQuery[OrderTable]
   def getRowHash(row: XRawOrder) = row.hash
 
+  implicit val StatusTypeMapper = MappedColumnType.base[XOrderStatus, Int](
+    s ⇒ s.value,
+    s ⇒ XOrderStatus.fromValue(s)
+  )
+
+  implicit val ByteStringTypeMapper = MappedColumnType.base[ByteString, String](
+    s ⇒ s.toStringUtf8,
+    s ⇒ ByteString.copyFrom(s, "utf-8")
+  )
+
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
     if (order.hash.isEmpty || order.version <= 0 || order.owner.isEmpty || order.tokenS.isEmpty || order.tokenB.isEmpty ||
       order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0 || order.id > 0 || order.state.nonEmpty) {
@@ -155,13 +166,22 @@ class OrderDalImpl()(
     state: XRawOrder.State,
     changeUpdatedAtField: Boolean = true
   ): Future[Either[XPersistenceError, String]] = for {
-    _ ← Future.unit
-    // TODO du: 1. 排除updateAt字段的更新未解决 2.是否应该传入updateToState(作为update的值), fromState(作为where条件) 3.公用的timeProvider
-    stateProjection = if (changeUpdatedAtField) state.copy(updatedAt = System.currentTimeMillis()) else state.copy(updatedAt = 0l)
-    result ← db.run(query
-      .filter(_.hash === hash)
-      .map(c ⇒ c.stateProjection)
-      .update(Some(stateProjection)))
+    result ← if (changeUpdatedAtField) {
+      db.run(query
+        .filter(_.hash === hash)
+        .map(c ⇒ (c.updatedAt, c.matchedAt, c.updatedAtBlock, c.status, c.actualAmountS, c.actualAmountB,
+          c.actualAmountFee, c.outstandingAmountS, c.outstandingAmountB, c.outstandingAmountFee))
+        .update(System.currentTimeMillis(), state.matchedAt, state.updatedAtBlock, state.status, state.actualAmountS,
+          state.actualAmountB, state.actualAmountFee, state.outstandingAmountS, state.outstandingAmountB,
+          state.outstandingAmountFee))
+    } else {
+      db.run(query
+        .filter(_.hash === hash)
+        .map(c ⇒ (c.matchedAt, c.updatedAtBlock, c.status, c.actualAmountS, c.actualAmountB, c.actualAmountFee,
+          c.outstandingAmountS, c.outstandingAmountB, c.outstandingAmountFee))
+        .update(state.matchedAt, state.updatedAtBlock, state.status, state.actualAmountS, state.actualAmountB,
+          state.actualAmountFee, state.outstandingAmountS, state.outstandingAmountB, state.outstandingAmountFee))
+    }
   } yield {
     if (result >= 1) Right(hash)
     else Left(XPersistenceError.PERS_ERROR_UPDATE_FAILED)
@@ -172,13 +192,17 @@ class OrderDalImpl()(
     status: XOrderStatus,
     changeUpdatedAtField: Boolean = true
   ): Future[Either[XPersistenceError, String]] = for {
-    _ ← Future.unit
-    stateProjection = if (changeUpdatedAtField) XRawOrder.State().copy(updatedAt = System.currentTimeMillis(), status = status)
-    //TODO du: 和上面同样的问题，待解决只更新一个字段
-    else XRawOrder.State().copy(status = status)
-    result ← db.run(query
-      .map(_.stateProjection)
-      .update(Some(stateProjection)))
+    result ← if (changeUpdatedAtField) {
+      db.run(query
+        .filter(_.hash === hash)
+        .map(c ⇒ (c.status, c.updatedAt))
+        .update(status, System.currentTimeMillis()))
+    } else {
+      db.run(query
+        .filter(_.hash === hash)
+        .map(_.status)
+        .update(status))
+    }
   } yield {
     if (result >= 1) Right(hash)
     else Left(XPersistenceError.PERS_ERROR_UPDATE_FAILED)
@@ -194,12 +218,7 @@ class OrderDalImpl()(
     tillId: Option[Long] = None
   ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.id > 0l)
-    // TODO du: 待解决的filter查询条件
-//    implicit val XOrderStatusCanBeQueryCondition : CanBeQueryCondition[XOrderStatus] =
-//      new CanBeQueryCondition[XOrderStatus] {
-//        def apply(value: XOrderStatus) = new LiteralColumn(value)
-//      }
-//     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
+    if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
     if (tokenBSet.nonEmpty) filters = filters.filter(_.tokenB inSet tokenBSet)
