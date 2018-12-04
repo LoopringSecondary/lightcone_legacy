@@ -59,37 +59,10 @@ class RawOrderValidatorImpl extends RawOrderValidator {
       isValidAddress(order.tokenS) -> ORDER_VALIDATION_ERR_INVALID_TOKENS
     )
 
-    val initVal: Either[XOrderValidationError, XRawOrder] = Right(order)
-    // checklist.foldLeft()(check)
-    // checklist.foldLeft(initVal) {
-    //   (checkItem: (Boolean, XOrderValidationError), res: Either[XOrderValidationError, XRawOrder]) ⇒
-    //     {
-    //       res match {
-    //         case Left(x) ⇒ res
-    //         case Right(x) ⇒
-    //           val condition = checkItem._1
-    //           if (condition) {
-    //             res
-    //           } else {
-    //             Left(checkItem._2)
-    //           }
-    //       }
-    //     }
-    // }
-
-    ???
-
-  }
-
-  private def check(checkItem: (Boolean, XOrderValidationError), res: Either[XOrderValidationError, XRawOrder]) = res match {
-    case Left(x) ⇒ res
-    case Right(x) ⇒
-      val condition = checkItem._1
-      if (condition) {
-        res
-      } else {
-        Left(checkItem._2)
-      }
+    checklist.span(_._1)._2 match {
+      case List() ⇒ Right(order)
+      case tail   ⇒ Left(tail.head._2)
+    }
   }
 
 }
