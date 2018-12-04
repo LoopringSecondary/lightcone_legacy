@@ -26,7 +26,7 @@ import slick.basic._
 import scala.concurrent._
 
 trait BlockDal
-  extends UniqueHashDalImpl[BlockTable, XBlockData] {
+  extends BaseDalImpl[BlockTable, XBlockData] {
 
 }
 

@@ -23,20 +23,17 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.persistence._
 
 private[persistence] class BarTable(tag: Tag)
-  extends UniqueHashTable[Bar](tag, "T_BARS") {
+  extends BaseTable[Bar](tag, "T_BARS") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def hash = columnHash("hash")
+  def id = hash
+
+  def hash = columnHash("hash", O.PrimaryKey)
   def a = column[String]("A")
   def b = columnAddress("B")
   def c = columnAmount("C")
   def d = column[Long]("D")
 
-  // indexes
-  // def idx_a = index("idx_c", (a), unique = false)
-
   def * = (
-    id,
     hash,
     a,
     b,

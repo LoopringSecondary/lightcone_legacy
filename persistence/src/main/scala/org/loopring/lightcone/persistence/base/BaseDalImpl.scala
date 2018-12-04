@@ -30,12 +30,14 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
 
   import profile.api._
 
-  def insert(row: A): Future[Long] = {
-    insert(Seq(row)).map(_.head)
+  def insert(row: A): Future[Int] = insert(Seq(row))
+
+  def insert(rows: Seq[A]): Future[Int] = {
+    db.run(query ++= rows).map(_.getOrElse(0))
   }
 
-  def insert(rows: Seq[A]): Future[Seq[Long]] = {
-    db.run(query returning query.map(_.id) ++= rows)
+  def insertOrUpdate(row: A): Future[Int] = {
+    db.run(query.insertOrUpdate(row))
   }
 
   def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]] = {
@@ -46,13 +48,13 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
     db.run(query.withFilter(f).delete)
   }
 
-  def findById(id: Long): Future[Option[A]] = {
+  def findById(id: String): Future[Option[A]] = {
     db.run(query.filter(_.id === id).result.headOption)
   }
 
-  def deleteById(id: Long): Future[Int] = deleteById(Seq(id))
+  def deleteById(id: String): Future[Int] = deleteById(Seq(id))
 
-  def deleteById(ids: Seq[Long]): Future[Int] =
+  def deleteById(ids: Seq[String]): Future[Int] =
     db.run(query.filter(_.id.inSet(ids)).delete)
 
   def createTable(): Future[Any] = {
@@ -67,5 +69,8 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
   def displayTableSchema() = {
     query.schema.create.statements.foreach(println)
   }
+
+  def take(size: Int, skip: Int = 0): Future[Seq[A]] =
+    db.run(query.drop(skip).take(size).result)
 
 }

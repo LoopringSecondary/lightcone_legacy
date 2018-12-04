@@ -26,7 +26,7 @@ import com.google.protobuf.ByteString
 class EventLogTable(tag: Tag)
   extends BaseTable[XEventLogData](tag, "T_EVENT_LOGS") {
 
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def id = column[String]("id", O.PrimaryKey)
   def height = column[Long]("height")
   def txHash = columnHash("tx_hash")
   def timestamp = column[Long]("timestamp")
