@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
+import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
@@ -36,6 +37,41 @@ import scala.concurrent._
 object MarketManagerActor {
   val name = "market_manager"
   val wethTokenAddress = "WETH" // TODO
+
+  //todo：sharding配置，发送给MarketManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
+  val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg@XSubmitOrderReq(Some(xorder)) ⇒
+      val marketId = (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
+      (marketId, msg)
+  }
+
+  val extractShardId: ShardRegion.ExtractShardId = {
+    case XSubmitOrderReq(Some(xorder)) ⇒
+      (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
+  }
+
+  def start(
+   actors: Lookup[ActorRef],
+   marketId: XMarketId,
+   config: XMarketManagerConfig,
+   skipRecovery: Boolean = false
+  )(
+  implicit
+   ec: ExecutionContext,
+   timeout: Timeout,
+   timeProvider: TimeProvider,
+   tokenValueEstimator: TokenValueEstimator,
+   ringIncomeEstimator: RingIncomeEstimator,
+   dustOrderEvaluator: DustOrderEvaluator,
+   tokenMetadataManager: TokenMetadataManager,
+  context: ActorContext):ActorRef = {
+    ClusterSharding(context.system).start(
+      typeName = "MarketManagerActor",
+      entityProps = Props(new MarketManagerActor(actors, marketId, config, skipRecovery)),
+      settings = ClusterShardingSettings(context.system),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId)
+  }
 }
 
 // TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.

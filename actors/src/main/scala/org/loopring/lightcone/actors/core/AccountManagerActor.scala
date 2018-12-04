@@ -17,8 +17,9 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
+import akka.cluster.sharding._
 import akka.event.LoggingReceive
-import akka.pattern.{ ask, pipe }
+import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
@@ -30,12 +31,37 @@ import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
 
 import scala.concurrent._
 
 object AccountManagerActor {
   val name = "account_manager"
+
+  //todo: sharding配置，发送给AccountManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
+  val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg@XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
+//    case msg@XSubmitOrderReq(address, _) ⇒ "" //todo:该数据结构并没有包含sharding信息，无法sharding
+  }
+
+  val extractShardId: ShardRegion.ExtractShardId = {
+    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
+  }
+
+  def start(actors: Lookup[ActorRef],
+   address: String,
+   recoverBatchSize: Int,
+   skipRecovery: Boolean = false)(implicit context: ActorContext,
+              ec: ExecutionContext,
+               timeout: Timeout,
+              dustEvaluator: DustOrderEvaluator
+  ):ActorRef = {
+    ClusterSharding(context.system).start(
+      typeName = "AccountManagerActor",
+      entityProps = Props(new AccountManagerActor(actors, address, recoverBatchSize, skipRecovery)),
+      settings = ClusterShardingSettings(context.system),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId)
+  }
 }
 
 class AccountManagerActor(
