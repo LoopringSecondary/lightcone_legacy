@@ -283,7 +283,29 @@ class OrderDalImpl()(
     updatedSince: Option[Long],
     updatedUntil: Option[Long],
     sortedByUpdatedAt: Boolean
-  ): Future[Seq[XRawOrder]] = ???
+  ): Future[Seq[XRawOrder]] = {
+    if (num <= 0 || updatedSince.isEmpty || updatedUntil.isEmpty || updatedUntil.get < 0 || updatedUntil.get < updatedSince.get
+      || (statuses.isEmpty && owners.isEmpty && tokenSSet.isEmpty && tokenBSet.isEmpty && feeTokenSet.isEmpty)) {
+      Future.successful(Seq.empty)
+    } else {
+      val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, None, None)
+      if (sortedByUpdatedAt) {
+        db.run(filters
+          .filter(_.updatedAt >= updatedSince.get)
+          .filter(_.updatedAt <= updatedUntil.get)
+          .sortBy(_.updatedAt.desc)
+          .take(num)
+          .result)
+      } else {
+        db.run(filters
+          .filter(_.updatedAt >= updatedSince.get)
+          .filter(_.updatedAt <= updatedUntil.get)
+          .sortBy(_.createdAt.desc)
+          .take(num)
+          .result)
+      }
+    }
+  }
 
   def countOrders(
     statuses: Set[XOrderStatus],

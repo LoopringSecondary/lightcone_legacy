@@ -118,4 +118,29 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
     }
     Await.result(result, 5.second)
   }
+
+  "getOrderByUpdateAt" must "get some orders or empty" in {
+    // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
+    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_CANCELLED_BY_USER, XOrderStatus.STATUS_CANCELLED_LOW_BALANCE).toSet
+    val owners: Set[String] = Seq("0x11", "0x22").toSet
+    val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
+    val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
+    val feeTokenSet: Set[String] = Seq("0x11", "0x22").toSet
+    val sinceId: Option[Long] = Some(8000l)
+    val tillId: Option[Long] = Some(9000l)
+    val sortedByUpdatedAt: Boolean = true
+    val result = dal.getOrdersByUpdatedAt(100, statuses, owners, tokenSSet, tokenBSet, feeTokenSet, Some(1000l), Some(99999l), true)
+    result onComplete {
+      case Success(orders) ⇒ {
+        orders.foreach { order ⇒
+          println("order:" + order)
+          println("status:" + order.state.get.status)
+          println("actualAmountB:" + order.state.get.actualAmountB.toStringUtf8 + " actualAmountS:" + order.state.get.actualAmountS.toStringUtf8 + " actualAmountFee:" + order.state.get.actualAmountFee.toStringUtf8
+            + "outAmountB:" + order.state.get.outstandingAmountB.toStringUtf8 + " outAmountS:" + order.state.get.outstandingAmountS.toStringUtf8 + " outAmountFee:" + order.state.get.outstandingAmountFee.toStringUtf8)
+        }
+      }
+      case Failure(e) ⇒ println("=== Failed: " + e.getMessage)
+    }
+    Await.result(result, 5.second)
+  }
 }
