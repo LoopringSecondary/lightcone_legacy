@@ -129,33 +129,42 @@ class OrderDalImpl()(
   val query = TableQuery[OrderTable]
   def getRowHash(row: XRawOrder) = row.hash
 
-  implicit val StatusTypeMapper = MappedColumnType.base[XOrderStatus, Int](
-    s ⇒ s.value,
-    s ⇒ XOrderStatus.fromValue(s)
-  )
-
-  implicit val ByteStringTypeMapper = MappedColumnType.base[ByteString, String](
-    s ⇒ s.toStringUtf8,
-    s ⇒ ByteString.copyFrom(s, "utf-8")
-  )
-
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
-    if (order.hash.isEmpty || order.version <= 0 || order.owner.isEmpty || order.tokenS.isEmpty || order.tokenB.isEmpty ||
-      order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0 || order.state.nonEmpty) {
-      Future.successful(XSaveOrderResult(error = XPersistenceError.PERS_ERR_INVALID_DATA, order = Some(order)))
+    if (order.hash.isEmpty || order.version <= 0 || order.owner.isEmpty || order.tokenS.isEmpty || order.tokenB.isEmpty
+      || order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0 || order.state.nonEmpty) {
+      Future.successful(
+        XSaveOrderResult(
+          error = XPersistenceError.PERS_ERR_INVALID_DATA,
+          order = Some(order)
+        )
+      )
     } else {
       val now = System.currentTimeMillis()
-      val state = XRawOrder.State(createdAt = now, updatedAt = now, status = XOrderStatus.STATUS_NEW)
+      val state = XRawOrder.State(
+        createdAt = now,
+        updatedAt = now,
+        status = XOrderStatus.STATUS_NEW
+      )
       db.run((query returning query.map(_.id) ++= Seq(order.copy(state = Some(state)))).asTry).map {
         case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
-          XSaveOrderResult(error = XPersistenceError.PERS_ERROR_DUPLICATE_INSERT, order = Some(order), alreadyExist = true)
+          XSaveOrderResult(
+            error = XPersistenceError.PERS_ERROR_DUPLICATE_INSERT,
+            order = Some(order),
+            alreadyExist = true
+          )
         }
         case Failure(ex) ⇒ {
           // TODO du: print some log
           // log(s"error : ${ex.getMessage}")
-          XSaveOrderResult(error = XPersistenceError.PERS_ERROR_INTERNAL, order = Some(order))
+          XSaveOrderResult(
+            error = XPersistenceError.PERS_ERROR_INTERNAL,
+            order = Some(order)
+          )
         }
-        case Success(x) ⇒ XSaveOrderResult(error = XPersistenceError.PERS_ERR_NONE, order = Some(order))
+        case Success(x) ⇒ XSaveOrderResult(
+          error = XPersistenceError.PERS_ERR_NONE,
+          order = Some(order)
+        )
       }
     }
   }
@@ -184,18 +193,55 @@ class OrderDalImpl()(
     result ← if (changeUpdatedAtField) {
       db.run(query
         .filter(_.hash === hash)
-        .map(c ⇒ (c.updatedAt, c.matchedAt, c.updatedAtBlock, c.status, c.actualAmountS, c.actualAmountB,
-          c.actualAmountFee, c.outstandingAmountS, c.outstandingAmountB, c.outstandingAmountFee))
-        .update(System.currentTimeMillis(), state.matchedAt, state.updatedAtBlock, state.status, state.actualAmountS,
-          state.actualAmountB, state.actualAmountFee, state.outstandingAmountS, state.outstandingAmountB,
-          state.outstandingAmountFee))
+        .map(c ⇒ (
+          c.updatedAt,
+          c.matchedAt,
+          c.updatedAtBlock,
+          c.status,
+          c.actualAmountS,
+          c.actualAmountB,
+          c.actualAmountFee,
+          c.outstandingAmountS,
+          c.outstandingAmountB,
+          c.outstandingAmountFee
+        ))
+        .update(
+          System.currentTimeMillis(),
+          state.matchedAt,
+          state.updatedAtBlock,
+          state.status,
+          state.actualAmountS,
+          state.actualAmountB,
+          state.actualAmountFee,
+          state.outstandingAmountS,
+          state.outstandingAmountB,
+          state.outstandingAmountFee
+        ))
     } else {
       db.run(query
         .filter(_.hash === hash)
-        .map(c ⇒ (c.matchedAt, c.updatedAtBlock, c.status, c.actualAmountS, c.actualAmountB, c.actualAmountFee,
-          c.outstandingAmountS, c.outstandingAmountB, c.outstandingAmountFee))
-        .update(state.matchedAt, state.updatedAtBlock, state.status, state.actualAmountS, state.actualAmountB,
-          state.actualAmountFee, state.outstandingAmountS, state.outstandingAmountB, state.outstandingAmountFee))
+        .map(c ⇒ (
+          c.matchedAt,
+          c.updatedAtBlock,
+          c.status,
+          c.actualAmountS,
+          c.actualAmountB,
+          c.actualAmountFee,
+          c.outstandingAmountS,
+          c.outstandingAmountB,
+          c.outstandingAmountFee
+        ))
+        .update(
+          state.matchedAt,
+          state.updatedAtBlock,
+          state.status,
+          state.actualAmountS,
+          state.actualAmountB,
+          state.actualAmountFee,
+          state.outstandingAmountS,
+          state.outstandingAmountB,
+          state.outstandingAmountFee
+        ))
     }
   } yield {
     if (result >= 1) Right(hash)

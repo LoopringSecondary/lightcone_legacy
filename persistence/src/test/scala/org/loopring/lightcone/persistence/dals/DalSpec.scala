@@ -17,7 +17,8 @@
 package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
-import org.scalatest.{ BeforeAndAfterAll, FlatSpec }
+import org.scalatest._
+
 import scala.concurrent.duration._
 import scala.concurrent._
 import slick.jdbc.meta._
@@ -25,7 +26,7 @@ import slick.basic._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 
-trait DalSpec[D <: BaseDal[_, _]] extends FlatSpec with BeforeAndAfterAll {
+trait DalSpec[D <: BaseDal[_, _]] extends FlatSpec with Matchers with BeforeAndAfterAll {
   override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = true
   implicit val ec = ExecutionContext.global
   implicit var dbConfig = DatabaseConfig.forConfig[JdbcProfile]("db_test")
