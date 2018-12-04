@@ -25,7 +25,7 @@ object OrderHelper {
     val bitstream = new Bitstream
     bitstream.addUintStr(order.amountS.toString)
     bitstream.addUintStr(order.amountB.toString)
-    bitstream.addUintStr(order.feeParams.get.feeAmount.toString)
+    bitstream.addUintStr(order.feeParams.get.amountFee.toString)
     bitstream.addUint(BigInt(order.validSince))
     bitstream.addUint(BigInt(order.params.get.validUntil))
     bitstream.addAddress(order.owner, true)
@@ -36,7 +36,7 @@ object OrderHelper {
     bitstream.addAddress(order.params.get.orderInterceptor, true)
     bitstream.addAddress(order.params.get.wallet, true)
     bitstream.addAddress(order.feeParams.get.tokenRecipient, true)
-    bitstream.addAddress(order.feeParams.get.feeToken, true)
+    bitstream.addAddress(order.feeParams.get.tokenFee, true)
     bitstream.addUint16(order.feeParams.get.walletSplitPercentage)
     bitstream.addUint16(order.feeParams.get.tokenSFeePercentage)
     bitstream.addUint16(order.feeParams.get.tokenBFeePercentage)

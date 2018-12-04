@@ -27,13 +27,13 @@ import slick.basic._
 import slick.lifted.Query
 import com.mysql.jdbc.exceptions.jdbc4._
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.persistence._
+import org.loopring.lightcone.persistence.DatabaseModule
 
 import scala.concurrent._
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
-trait OrderDal
-  extends BaseDalImpl[OrderTable, XRawOrder] {
+trait OrderStateDal
+  extends BaseDalImpl[OrderStateTable, XOrderPersState] {
 
   // Save a order to the database and returns the saved order and indicate
   // whether the order was perviously saved or not.
@@ -58,11 +58,11 @@ trait OrderDal
   // also, if the order is NEW, the status field needs to save as NEW
   // and the created_at and updated_at fileds should both be the current timestamp;
   // if the order already exists, no field should be changed.
-  def saveOrder(order: XRawOrder): Future[XSaveOrderResult]
+  def saveOrder(order: XOrderPersState): Future[Either[XPersistenceError, String]
 
   // Returns orders with given hashes
-  def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]]
-  def getOrder(hash: String): Future[Option[XRawOrder]] = getOrders(Seq(hash)).map(_.headOption)
+  def getOrders(hashes: Seq[String]): Future[Seq[XOrderPersState]]
+  def getOrder(hash: String): Future[Option[XOrderPersState]] = getOrders(Seq(hash)).map(_.headOption)
 
   // Save order's state information, this should not change orther's other values.
   // Note that the update_at field should be updated to the current timestamp if
@@ -70,7 +70,7 @@ trait OrderDal
   // Returns Left(error) if this operation fails, or Right(string) the order's hash.
   def updateOrderState(
     hash: String,
-    state: XRawOrder.State,
+    state: XOrderPersState.State,
     changeUpdatedAtField: Boolean = true
   ): Future[Either[XPersistenceError, String]]
 
@@ -122,50 +122,26 @@ trait OrderDal
   ): Future[Int]
 }
 
-class OrderDalImpl()(
-    val databaseModule: DatabaseModule,
+class OrderStateDalImpl()(
+    val databaseModule: BaseDatabaseModule,
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
-) extends OrderDal {
-  val query = TableQuery[OrderTable]
-  def getRowHash(row: XRawOrder) = row.hash
+) extends OrderStateDal {
+  val query = TableQuery[OrderStateTable]
+  def getRowHash(row: XOrderPersState) = row.hash
 
-  //  implicit val StatusTypeMapper = MappedColumnType.base[XOrderStatus, Int](
-  //    s ⇒ s.value,
-  //    s ⇒ XOrderStatus.fromValue(s)
-  //  )
-  //
-  //  implicit val ByteStringTypeMapper = MappedColumnType.base[ByteString, String](
-  //    s ⇒ s.toStringUtf8,
-  //    s ⇒ ByteString.copyFrom(s, "utf-8")
-  //  )
-
-  def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
-    if (order.hash.isEmpty || order.version <= 0 || order.owner.isEmpty || order.tokenS.isEmpty || order.tokenB.isEmpty
-      || order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0 || order.state.nonEmpty) {
-      Future.successful(
-        XSaveOrderResult(
-          error = XPersistenceError.PERS_ERR_INVALID_DATA,
-          order = Some(order)
-        )
-      )
+  def saveOrder(order: XOrderPersState): Future[Either[XPersistenceError, String]] = {
+    if (order.hash.isEmpty || order.tokenS.isEmpty || order.tokenB.isEmpty
+      || order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0) {
+      Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
     } else {
       val now = System.currentTimeMillis()
-      val state = XOrderPersState.State(
+      val state = XOrderPersState.State (
         createdAt = now,
         updatedAt = now,
         status = XOrderStatus.STATUS_NEW
       )
-      val a = (for {
-        mainId <- query returning query.map(_.id) ++= Seq(order)
-        databaseModule.o
-        detailId <- module.addressDal.insertDBIO(address.copy(groupId = targetGroupId))
-        _ <- if (tags.nonEmpty) module.addressTagDal.insertDBIOs(tags)
-        else DBIOAction.successful(0)
-      } yield detailId).transactionally
-      db.run(a)
-
       db.run((query returning query.map(_.id) ++= Seq(order.copy(state = Some(state)))).asTry).map {
         case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
           XSaveOrderResult(

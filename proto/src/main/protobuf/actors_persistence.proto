@@ -34,7 +34,7 @@ message XSaveOrderReq {
 
 message XUpdateOrderStateReq {
     string hash = 1;
-    core.XRawOrder.State state = 2;
+    core.XOrderPersState.State state = 2;
     bool changeUpdatedAtField = 3;
 }
 

@@ -34,8 +34,9 @@ trait DalSpec[D <: BaseDal[_, _]] extends FlatSpec with Matchers with BeforeAndA
 
   override def beforeAll = {
     println(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
-    Await.result(dal.dropTable(), 5.second)
-    Await.result(dal.createTable(), 5.second)
+    //TODO du:test
+    //Await.result(dal.dropTable(), 5.second)
+    //Await.result(dal.createTable(), 5.second)
   }
 
   override def afterAll = {

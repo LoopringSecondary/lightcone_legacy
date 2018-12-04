@@ -20,7 +20,7 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto.core.XOrderStatus
 import slick.jdbc.MySQLProfile.api._
 
-package object tables {
+package object dals {
 
   implicit val StatusTypeMapper = MappedColumnType.base[XOrderStatus, Int](
     s ⇒ s.value,

@@ -30,6 +30,7 @@ class DatabaseModule @Inject() (
 ) extends base.BaseDatabaseModule {
 
   val orders: OrderDal = new OrderDalImpl()
+  val orderStates: OrderStateDal = new OrderStateDalImpl(this)
   val trades: TradeDal = new TradeDalImpl()
   val addresses: AddressDal = new AddressDalImpl()
   val tokenBalances: TokenBalanceDal = new TokenBalanceDalImpl()
