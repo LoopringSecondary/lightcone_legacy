@@ -100,24 +100,24 @@ abstract class CoreActorsIntegrationCommonSpec(
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
   // Simulating an AccountBalanceActor
-  val orderDatabaseAccessProbe = new TestProbe(system, "order_db_access") {
+  val ordersDalActorProbe = new TestProbe(system, "order_db_access") {
     def expectQuery() {
       expectMsgPF() {
         case req: XRecoverOrdersReq ⇒
-          println(s"ordermanagerProbe receive: $req, sender:${sender()}")
+          info(s"ordermanagerProbe receive: $req, sender:${sender()}")
       }
     }
     def replyWith(xorders: Seq[XRawOrder]) = reply(
       XRecoverOrdersRes(orders = xorders)
     )
   }
-  val orderDatabaseAccessActor = orderDatabaseAccessProbe.ref
+  val ordersDalActor = ordersDalActorProbe.ref
 
   // Simulating an AccountBalanceActor
   val accountBalanceProbe = new TestProbe(system, "account_balance") {
     def expectQuery(address: String, token: String) = expectMsgPF() {
       case XGetBalanceAndAllowancesReq(addr, tokens) if addr == address && tokens == Seq(token) ⇒
-        println(s"accountBalanceProbe, ${addr}, ${tokens}, ${sender()}")
+        info(s"accountBalanceProbe, ${addr}, ${tokens}, ${sender()}")
     }
 
     def replyWith(addr: String, token: String, balance: BigInt, allowance: BigInt) = reply(
@@ -183,9 +183,9 @@ abstract class CoreActorsIntegrationCommonSpec(
     "marketManagerActor"
   )
 
-  actors.add(OrdersDalActor.name, orderDatabaseAccessActor)
+  actors.add(OrdersDalActor.name, ordersDalActor)
   actors.add(AccountBalanceActor.name, accountBalanceActor)
-  actors.add(OrderHistoryActor.name, orderHistoryActor)
+  actors.add(OrderStateActor.name, orderHistoryActor)
   actors.add(MarketManagerActor.name, marketManagerActor)
   actors.add(GasPriceActor.name, gasPriceActor)
   actors.add(OrderbookManagerActor.name, orderbookManagerActor)

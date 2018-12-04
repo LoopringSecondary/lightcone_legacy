@@ -18,15 +18,12 @@ package org.loopring.lightcone.actors.persistence
 
 import akka.actor._
 import akka.event.LoggingReceive
+import akka.pattern._
 import akka.util.Timeout
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.persistence._
-import org.loopring.lightcone.actors._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.persistence.dals._
 
 import scala.concurrent._
 
@@ -34,10 +31,8 @@ object OrdersDalActor {
   val name = "orders_dal"
 }
 
-// TODO(hongyu): remove databaseManager and use OrdersDal
 class OrdersDalActor(
-    orderDal: OrderDal,
-    databaseManager: OrderDatabaseManager
+    ordersDal: OrderDal
 )(
     implicit
     ec: ExecutionContext,
@@ -46,58 +41,44 @@ class OrdersDalActor(
   extends Actor
   with ActorLogging {
 
-  protected var accountManagerRouter: ActorSelection = _
-
   def receive: Receive = LoggingReceive {
-    case XRecoverOrdersReq(address, updatedSince, num) ⇒
-      for {
-        orders ← databaseManager.getOrdersForRecovery(
-          updatedSince, num, Option(address)
+    case XRecoverOrdersReq(address, marketIdOpt, updatedSince, num) ⇒
+      val tokenes = (marketIdOpt match {
+        case Some(marketId) ⇒ Set(marketId.primary, marketId.secondary)
+        case None           ⇒ Seq.empty[String]
+      }).toSet
+      (for {
+        orders ← ordersDal.getOrdersByUpdatedAt(
+          num = num,
+          statuses = Set(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING),
+          tokenSSet = tokenes,
+          tokenBSet = tokenes,
+          owners = if ("" != address) Set(address) else Set.empty,
+          updatedSince = Some(updatedSince)
         )
-        _ = sender ! XRecoverOrdersRes(orders)
-      } yield Unit
+      } yield XRecoverOrdersRes(orders)) pipeTo sender
 
-    case XSubmitRawOrderReq(Some(xraworder)) ⇒
-      databaseManager.validateOrder(xraworder) match {
-        case Left(error) ⇒
-          assert(error != XErrorCode.ERR_OK)
-          sender ! XSubmitOrderRes(error = error)
+    case XSaveOrderReq(Some(xraworder)) ⇒
+      ordersDal.saveOrder(xraworder) pipeTo sender
 
-        case Right(xraworder) ⇒
-          for {
-            xraworder ← databaseManager.saveOrder(xraworder)
-            xorder: XOrder = xraworder
-            _ = accountManagerRouter forward XSubmitOrderReq(Some(xorder))
-          } yield Unit
-      }
+    case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
+      (stateOpt match {
+        case Some(state) ⇒ ordersDal.updateOrderState(hash, state, changeUpdatedAtField)
+        case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
+      }) pipeTo sender
 
-    case XUpdateOrderStateAndStatusReq(Some(actualState), status) ⇒
-      for {
-        result ← databaseManager.updateOrderStateAndStatus(actualState, status)
-        _ = sender ! XUpdateOrderStateAndStatusRes(result)
-      } yield Unit
+    case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
+      ordersDal.updateOrderStatus(hash, status, changeUpdatedAtField) pipeTo sender
 
-    // case XGetOrders(orderIds) =>
+    case XGetOrdersByHashesReq(hashes) ⇒
+      (for {
+        orders ← ordersDal.getOrders(hashes)
+      } yield XGetOrdersByHashesRes(orders)) pipeTo sender
+    case XGetOrderByHashReq(hash) ⇒
+      (for {
+        order ← ordersDal.getOrder(hash)
+      } yield XGetOrderByHashRes(order)) pipeTo sender
 
   }
-
-}
-
-// TODO(litao): move this to persistence sub project and implement the logic
-// and probably move XRawOrder definition to persistence.proto
-trait OrderDatabaseManager {
-
-  def validateOrder(xraworder: XRawOrder): Either[XErrorCode, XRawOrder]
-
-  def saveOrder(xraworder: XRawOrder): Future[XRawOrder]
-
-  def getOrdersForRecovery(since: Long, num: Int, owner: Option[String]): Future[Seq[XRawOrder]]
-
-  def updateOrderStateAndStatus(actualState: XOrderState, status: XOrderStatus): Future[Boolean]
-
-  // TODO(litao): design more flexibale order reading APIs
-  def getOrder(orderId: String): Future[Option[XRawOrder]]
-
-  def getOrders(orderIds: Seq[String]): Future[Seq[XRawOrder]]
 }
 
