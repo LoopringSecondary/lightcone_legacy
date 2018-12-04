@@ -26,7 +26,7 @@ import slick.basic._
 import scala.concurrent._
 
 trait TransactionDal
-  extends UniqueHashDalImpl[TransactionTable, XTransactionData] {
+  extends BaseDalImpl[TransactionTable, XTransactionData] {
 
 }
 

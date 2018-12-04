@@ -26,8 +26,8 @@ import com.google.protobuf.ByteString
 class AddressTable(tag: Tag)
   extends BaseTable[XAddressData](tag, "T_ADDRESSES") {
 
-  def id = column[String]("id", O.PrimaryKey)
-  def address = columnAddress("address")
+  def id = address
+  def address = columnAddress("address", O.PrimaryKey)
   def balance = columnAmount("balance")
   def numTx = column[Long]("num_tx")
   def creatorAddress = columnAddress("creator_address")
@@ -35,11 +35,9 @@ class AddressTable(tag: Tag)
   def updatedAtBlock = column[Long]("updated_at_block")
 
   // indexes
-  def idx_address = index("idx_address", (address), unique = true)
   def idx_updated_at_block = index("idx_updated_at_block", (updatedAtBlock), unique = false)
 
   def * = (
-    id,
     address,
     balance,
     numTx,

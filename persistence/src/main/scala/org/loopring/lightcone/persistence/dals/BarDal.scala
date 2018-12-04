@@ -25,7 +25,7 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent._
 import slick.basic._
 
-private[dals] trait BarDal extends UniqueHashDalImpl[BarTable, Bar] {
+private[dals] trait BarDal extends BaseDalImpl[BarTable, Bar] {
 
 }
 
