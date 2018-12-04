@@ -29,34 +29,63 @@ trait RawOrderValidator {
 
 // TODO(kongliang): implement and test this class
 class RawOrderValidatorImpl extends RawOrderValidator {
+  // TODO this field should be configurable somewhere.
+  val feePercentageBase = 1000
+
   def calculateOrderHash(order: XRawOrder): String = {
     val bitstream = new Bitstream
+    val feeParams = order.feeParams.get
+    val optionalParams = order.params.get
     bitstream.addUintStr(order.amountS.toString)
     bitstream.addUintStr(order.amountB.toString)
-    bitstream.addUintStr(order.feeParams.get.feeAmount.toString)
+    bitstream.addUintStr(feeParams.feeAmount.toString)
     bitstream.addUint(BigInt(order.validSince))
-    bitstream.addUint(BigInt(order.params.get.validUntil))
+    bitstream.addUint(BigInt(optionalParams.validUntil))
     bitstream.addAddress(order.owner, true)
     bitstream.addAddress(order.tokenS, true)
     bitstream.addAddress(order.tokenB, true)
-    bitstream.addAddress(order.params.get.dualAuthAddr, true)
-    bitstream.addAddress(order.params.get.broker, true)
-    bitstream.addAddress(order.params.get.orderInterceptor, true)
-    bitstream.addAddress(order.params.get.wallet, true)
-    bitstream.addAddress(order.feeParams.get.tokenRecipient, true)
-    bitstream.addAddress(order.feeParams.get.feeToken, true)
-    bitstream.addUint16(order.feeParams.get.walletSplitPercentage)
-    bitstream.addUint16(order.feeParams.get.tokenSFeePercentage)
-    bitstream.addUint16(order.feeParams.get.tokenBFeePercentage)
-    bitstream.addBoolean(order.params.get.allOrNone)
+    bitstream.addAddress(optionalParams.dualAuthAddr, true)
+    bitstream.addAddress(optionalParams.broker, true)
+    bitstream.addAddress(optionalParams.orderInterceptor, true)
+    bitstream.addAddress(optionalParams.wallet, true)
+    bitstream.addAddress(feeParams.tokenRecipient, true)
+    bitstream.addAddress(feeParams.feeToken, true)
+    bitstream.addUint16(feeParams.walletSplitPercentage)
+    bitstream.addUint16(feeParams.tokenSFeePercentage)
+    bitstream.addUint16(feeParams.tokenBFeePercentage)
+    bitstream.addBoolean(optionalParams.allOrNone)
 
     Numeric.toHexString(Hash.sha3(bitstream.getPackedBytes))
   }
 
   def validate(order: XRawOrder): Either[XOrderValidationError, XRawOrder] = {
-    val checklist = Seq(
+    def checkDualAuthSig = {
+      if (isValidAddress(order.params.get.dualAuthAddr)) {
+        val authSig = order.params.get.dualAuthSig
+        authSig != null && authSig.length > 0
+      } else {
+        true
+      }
+    }
+
+    val checklist = Seq[(Boolean, XOrderValidationError)](
+      (order.version == 0) -> ORDER_VALIDATION_ERR_UNSUPPORTED_VERSION,
       isValidAddress(order.owner) -> ORDER_VALIDATION_ERR_INVALID_OWNER,
-      isValidAddress(order.tokenS) -> ORDER_VALIDATION_ERR_INVALID_TOKENS
+      isValidAddress(order.tokenS) -> ORDER_VALIDATION_ERR_INVALID_TOKENS,
+      isValidAddress(order.tokenB) -> ORDER_VALIDATION_ERR_INVALID_TOKENB,
+      (BigInt(order.amountS.toString, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
+      (BigInt(order.amountB.toString, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
+      (BigInt(order.feeParams.get.waiveFeePercentage) <= feePercentageBase)
+        -> ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE,
+      (BigInt(order.feeParams.get.waiveFeePercentage) >= -feePercentageBase)
+        -> ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE,
+      (BigInt(order.feeParams.get.tokenSFeePercentage) <= feePercentageBase)
+        -> ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE,
+      (BigInt(order.feeParams.get.tokenBFeePercentage) <= feePercentageBase)
+        -> ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE,
+      (BigInt(order.feeParams.get.walletSplitPercentage) <= 100)
+        -> ORDER_VALIDATION_ERR_INVALID_WALLET_SPLIT_PERCENTAGE,
+      checkDualAuthSig -> ORDER_VALIDATION_ERR_INVALID_MISSING_DUALAUTH_SIG
     )
 
     checklist.span(_._1)._2 match {
