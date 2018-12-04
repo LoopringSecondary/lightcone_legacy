@@ -25,16 +25,16 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait TransactionDataDal
-  extends UniqueHashDalImpl[TransactionDataTable, XTransactionData] {
+trait TransactionDal
+  extends UniqueHashDalImpl[TransactionTable, XTransactionData] {
 
 }
 
-class TransactionDataDalImpl()(
+class TransactionDalImpl()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
-) extends TransactionDataDal {
-  val query = TableQuery[TransactionDataTable]
+) extends TransactionDal {
+  val query = TableQuery[TransactionTable]
   def getRowHash(row: XTransactionData) = row.hash
 }

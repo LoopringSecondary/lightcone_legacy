@@ -23,44 +23,24 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.ethereum._
 import com.google.protobuf.ByteString
 
-class TransactionDataTable(tag: Tag)
-  extends UniqueHashTable[XTransactionData](tag, "T_ETH_TRANSACTIONS") {
+class TradeTable(tag: Tag)
+  extends BaseTable[XTradeData](tag, "T_TRADES") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def height = column[Long]("height")
-  def hash = columnHash("hash")
+  def blockHash = columnHash("block_hash")
+  def txHash = columnHash("tx_hash")
+  def orderHash = columnHash("order_hash")
   def timestamp = column[Long]("timestamp")
-  def from = columnAddress("from")
-  def to = columnAddress("to")
-  def amount = columnAmount("amount")
-  def txReceiptStatus = column[Int]("tx_receipt_status")
-  def gasUsed = columnAmount("gas_used")
-  def gasLimit = columnAmount("gas_limit")
-  def gasPrice = column[Long]("gas_price")
-  def txFee = columnAmount("tx_fee")
-  def nonce = column[Long]("nonce")
-
-  def inputData = column[ByteString]("input_data")
 
   // indexes
-  def idx_height = index("idx_height", (height), unique = false)
-  def idx_hash = index("idx_hash", (hash), unique = true)
-  def idx_from = index("idx_from", (from), unique = false)
-  def idx_to = index("idx_to", (to), unique = false)
 
   def * = (
     id,
     height,
-    hash,
-    timestamp,
-    from,
-    to,
-    amount,
-    txReceiptStatus,
-    gasUsed,
-    gasLimit,
-    gasPrice,
-    txFee,
-    nonce, inputData
-  ) <> ((XTransactionData.apply _).tupled, XTransactionData.unapply)
+    blockHash,
+    txHash,
+    orderHash,
+    timestamp
+  ) <> ((XTradeData.apply _).tupled, XTradeData.unapply)
 }

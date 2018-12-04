@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
+// message XTokenBalance {
+//     int64  id                   = 1;
+//     string address              = 2;
+//     string token                = 3;
+//     bytes  balance              = 4;
+//     bytes  allowance            = 5;
+//     int64  updated_at_block     = 7;
+// }
+
 package org.loopring.lightcone.persistence.tables
 
 import org.loopring.lightcone.persistence.base._
@@ -23,30 +32,26 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.ethereum._
 import com.google.protobuf.ByteString
 
-class EventLogDataTable(tag: Tag)
-  extends BaseTable[XEventLogData](tag, "T_ETH_EVENT_LOGS") {
+class TokenBalanceTable(tag: Tag)
+  extends BaseTable[XTokenBalance](tag, "T_TOKEN_BALANCES") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def height = column[Long]("height")
-  def txHash = columnHash("tx_hash")
-  def timestamp = column[Long]("timestamp")
   def address = columnAddress("address")
-  def name = column[String]("name")
-  def data = column[ByteString]("data")
-  def topics = column[ByteString]("topics")
+  def token = columnAddress("address")
+  def balance = columnAmount("balance")
+  def allowance = columnAmount("allowance")
+  def updatedAtBlock = column[Long]("updated_at_block")
 
   // indexes
-  def idx_height = index("idx_height", (height), unique = false)
-  def idx_tx_hash = index("idx_tx_hash", (txHash), unique = false)
+  def idx_address = index("idx_address", (address), unique = false)
+  def idx_token = index("idx_token", (token), unique = false)
 
   def * = (
     id,
-    height,
-    txHash,
-    timestamp,
     address,
-    name,
-    data,
-    topics
-  ) <> ((XEventLogData.apply _).tupled, XEventLogData.unapply)
+    token,
+    balance,
+    allowance,
+    updatedAtBlock
+  ) <> ((XTokenBalance.apply _).tupled, XTokenBalance.unapply)
 }

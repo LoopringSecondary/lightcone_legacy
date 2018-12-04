@@ -23,33 +23,30 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.ethereum._
 import com.google.protobuf.ByteString
 
-class TokenTransferDataTable(tag: Tag)
-  extends BaseTable[XTokenTransferData](tag, "T_ETH_TOKEN_TRANSFERS") {
+class EventLogTable(tag: Tag)
+  extends BaseTable[XEventLogData](tag, "T_EVENT_LOGS") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def height = column[Long]("height")
-  def hash = columnHash("hash")
+  def txHash = columnHash("tx_hash")
   def timestamp = column[Long]("timestamp")
-  def from = columnAddress("from")
-  def to = columnAddress("to")
-  def amount = columnAmount("amount")
-  def token = columnAddress("token")
+  def address = columnAddress("address")
+  def name = column[String]("name")
+  def data = column[ByteString]("data")
+  def topics = column[ByteString]("topics")
 
   // indexes
   def idx_height = index("idx_height", (height), unique = false)
-  def idx_tx_hash = index("idx_tx_hash", (hash), unique = false)
-  def idx_from = index("idx_from", (from), unique = false)
-  def idx_to = index("idx_to", (to), unique = false)
-  def idx_token = index("idx_token", (token), unique = false)
+  def idx_tx_hash = index("idx_tx_hash", (txHash), unique = false)
 
   def * = (
     id,
     height,
-    hash,
+    txHash,
     timestamp,
-    from,
-    to,
-    amount,
-    token
-  ) <> ((XTokenTransferData.apply _).tupled, XTokenTransferData.unapply)
+    address,
+    name,
+    data,
+    topics
+  ) <> ((XEventLogData.apply _).tupled, XEventLogData.unapply)
 }

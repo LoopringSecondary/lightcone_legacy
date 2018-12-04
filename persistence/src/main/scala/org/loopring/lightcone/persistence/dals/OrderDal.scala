@@ -25,7 +25,7 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait OrdersDal
+trait OrderDal
   extends UniqueHashDalImpl[OrderTable, XRawOrder] {
 
   // Save a order to the database and returns the saved order and indicate
@@ -101,11 +101,11 @@ trait OrdersDal
   ): Future[Int]
 }
 
-class OrdersDalImpl()(
+class OrderDalImpl()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
-) extends OrdersDal {
+) extends OrderDal {
   val query = TableQuery[OrderTable]
   def getRowHash(row: XRawOrder) = row.hash
 

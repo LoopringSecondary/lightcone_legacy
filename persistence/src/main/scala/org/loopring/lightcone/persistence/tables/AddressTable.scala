@@ -23,8 +23,8 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.ethereum._
 import com.google.protobuf.ByteString
 
-class AddressDataTable(tag: Tag)
-  extends BaseTable[XAddressData](tag, "T_ETH_ADDRESS") {
+class AddressTable(tag: Tag)
+  extends BaseTable[XAddressData](tag, "T_ADDRESSES") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def address = columnAddress("address")
