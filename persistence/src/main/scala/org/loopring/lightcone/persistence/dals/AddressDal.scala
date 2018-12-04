@@ -16,7 +16,23 @@
 
 package org.loopring.lightcone.persistence.dals
 
-trait EthereumTxsDal {
+import org.loopring.lightcone.persistence.base._
+import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto.ethereum._
+import org.loopring.lightcone.proto.core._
+import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.JdbcProfile
+import slick.basic._
+import scala.concurrent._
 
+trait AddressDal
+  extends BaseDalImpl[AddressTable, XAddressData] {
 }
 
+class AddressDalImpl()(
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext
+) extends AddressDal {
+  val query = TableQuery[AddressTable]
+}

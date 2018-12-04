@@ -84,6 +84,13 @@ object Dependencies {
     testDependency ++
     Seq("org.jsoup" % "jsoup" % "1.11.3")
 
+  lazy val dependency4Indexer = dependency4Persistence ++
+    httpDependency ++
+    akkaDependency ++
+    json4sDependency ++
+    testDependency ++
+    Seq("org.jsoup" % "jsoup" % "1.11.3")
+
   lazy val dependency4Gateway = dependency4Persistence ++
     httpDependency ++
     akkaDependency ++

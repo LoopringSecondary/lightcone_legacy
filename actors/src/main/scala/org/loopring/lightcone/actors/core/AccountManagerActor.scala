@@ -20,8 +20,8 @@ import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
@@ -30,6 +30,7 @@ import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.persistence._
 
 import scala.concurrent._
 
@@ -51,14 +52,19 @@ class AccountManagerActor(
   extends Actor
   with ActorLogging
   with OrderRecoverySupport {
-  val ownerOfOrders = Some(address)
+  val recoverySettings = XOrderRecoverySettings(
+    skipRecovery,
+    recoverBatchSize,
+    address,
+    None
+  )
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
 
-  protected def orderDatabaseAccessActor = actors.get(OrdersDalActor.name)
+  protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
-  protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
+  protected def orderHistoryActor = actors.get(OrderStateActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
   def receive: Receive = {
@@ -104,7 +110,6 @@ class AccountManagerActor(
     case msg ⇒ log.debug(s"unknown msg ${msg}")
   }
 
-  //todo:返回Future时，会有并发问题，需要处理下，暂时将recovery更改为同步
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
     val order: Order = xorder
     for {

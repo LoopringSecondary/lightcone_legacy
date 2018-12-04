@@ -14,22 +14,9 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.persistence.dals
 
-option java_multiple_files = true;
-package org.loopring.lightcone.proto.persistence;
+trait BlockchainScanRecordDal {
 
-import "core_data.proto";
-
-message Bar {
-    string  hash = 1;
-    string  a = 2;
-    string  b = 3;
-    bytes   c = 4;
-    int64   d = 5;
 }
 
-enum XPersistenceError {
-    PERS_ERR_NONE       = 0;
-    PERS_ERR_INVALID_DATA = 1;
-}

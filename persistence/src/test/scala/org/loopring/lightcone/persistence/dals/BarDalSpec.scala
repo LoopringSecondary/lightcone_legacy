@@ -16,25 +16,27 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.persistence.Bar
-import org.loopring.lightcone.proto.core._
+import scala.concurrent.duration._
+import scala.concurrent.Await
+import slick.jdbc.meta._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
-import scala.concurrent._
 import slick.basic._
+import org.loopring.lightcone.proto.persistence.Bar
+import com.google.protobuf.ByteString
+import scala.concurrent._
+import org.loopring.lightcone.persistence.base._
 
-private[dals] trait BarsDal extends BaseDalImpl[BarTable, Bar] {
+class BarDalSpec extends DalSpec[BarDal] {
+  val dal = new BarDalImpl()
 
-}
+  "BarsDal" must "create table and index correctly" in {
+    var bar = Bar(hash = "hash", a = "b", b = "c", c = ByteString.copyFrom("d".getBytes), d = 12L)
+    Await.result(dal.insertOrUpdate(bar), 5.second)
 
-private[dals] class BarsDalImpl()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends BarsDal {
-  val query = TableQuery[BarTable]
-  def getRowHash(row: Bar) = row.hash
+    bar = Bar(hash = "hash", a = "b", b = "c", c = ByteString.copyFrom("d".getBytes), d = 12L)
+    Await.result(dal.insertOrUpdate(bar), 5.second)
 
+    Await.result(dal.take(10).map(_.map(println)), 5.second)
+  }
 }

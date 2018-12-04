@@ -14,30 +14,27 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.tables
+package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
-import scala.reflect.ClassTag
-import slick.jdbc.MySQLProfile.api._
+import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto.ethereum._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
+import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.JdbcProfile
+import slick.basic._
+import scala.concurrent._
 
-private[persistence] class BarTable(tag: Tag)
-  extends BaseTable[Bar](tag, "T_BARS") {
+trait BlockDal
+  extends BaseDalImpl[BlockTable, XBlockData] {
 
-  def id = hash
+}
 
-  def hash = columnHash("hash", O.PrimaryKey)
-  def a = column[String]("A")
-  def b = columnAddress("B")
-  def c = columnAmount("C")
-  def d = column[Long]("D")
-
-  def * = (
-    hash,
-    a,
-    b,
-    c,
-    d
-  ) <> ((Bar.apply _).tupled, Bar.unapply)
+class BlockDalImpl()(
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext
+) extends BlockDal {
+  val query = TableQuery[BlockTable]
+  def getRowHash(row: XBlockData) = row.hash
 }

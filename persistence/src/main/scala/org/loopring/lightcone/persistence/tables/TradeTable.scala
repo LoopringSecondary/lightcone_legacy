@@ -20,24 +20,28 @@ import org.loopring.lightcone.persistence.base._
 import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
+import org.loopring.lightcone.proto.ethereum._
+import com.google.protobuf.ByteString
 
-private[persistence] class BarTable(tag: Tag)
-  extends BaseTable[Bar](tag, "T_BARS") {
+class TradeTable(tag: Tag)
+  extends BaseTable[XTradeData](tag, "T_TRADES") {
 
-  def id = hash
+  // How to generate id???
+  def id = column[String]("id", O.PrimaryKey)
+  def height = column[Long]("height")
+  def blockHash = columnHash("block_hash")
+  def txHash = columnHash("tx_hash")
+  def orderHash = columnHash("order_hash")
+  def timestamp = column[Long]("timestamp")
 
-  def hash = columnHash("hash", O.PrimaryKey)
-  def a = column[String]("A")
-  def b = columnAddress("B")
-  def c = columnAmount("C")
-  def d = column[Long]("D")
+  // indexes
 
   def * = (
-    hash,
-    a,
-    b,
-    c,
-    d
-  ) <> ((Bar.apply _).tupled, Bar.unapply)
+    id,
+    height,
+    blockHash,
+    txHash,
+    orderHash,
+    timestamp
+  ) <> ((XTradeData.apply _).tupled, XTradeData.unapply)
 }
