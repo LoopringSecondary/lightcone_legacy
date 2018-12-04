@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.persistence.dals
 
-trait EthereumTxsDal {
+trait MarketConfigDal {
 
 }
 

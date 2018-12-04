@@ -33,6 +33,8 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
   val transfer = TransferFunction(abi.findFunction(searchByName(TransferFunction.name)))
   val transferFrom = TransferFunction(abi.findFunction(searchByName(TransferFromFunction.name)))
   val approve = ApproveFunction(abi.findFunction(searchByName(ApproveFunction.name)))
+  val balanceOf = BalanceOfFunction(abi.findFunction(searchByName(BalanceOfFunction.name)))
+  val allowance = AllowanceFunction(abi.findFunction(searchByName(AllowanceFunction.name)))
 
   val transferEvent = TransferEvent(abi.findEvent(searchByName(TransferEvent.name)))
   val approvalEvent = ApprovalEvent(abi.findEvent(searchByName(ApprovalEvent.name)))
@@ -88,6 +90,37 @@ object ApproveFunction {
 }
 
 class ApproveFunction(val entry: SABI.Function) extends AbiFunction[ApproveFunction.Parms, ApproveFunction.Result]
+
+object BalanceOfFunction {
+  case class Parms(
+      @(ContractAnnotation @field)("_owner", 0) _owner: String
+  )
+  val name = "balanceOf"
+
+  case class Result(
+      @(ContractAnnotation @field)("balance", 0) balance: BigInt
+  )
+
+  def apply(entry: SABI.Function): BalanceOfFunction = new BalanceOfFunction(entry)
+}
+
+class BalanceOfFunction(val entry: SABI.Function) extends AbiFunction[BalanceOfFunction.Parms, BalanceOfFunction.Result]
+
+object AllowanceFunction {
+
+  case class Parms(
+      @(ContractAnnotation @field)("_owner", 0) _owner: String,
+      @(ContractAnnotation @field)("_spender", 1) _spender: String
+  )
+  val name = "allowance"
+  case class Result(
+      @(ContractAnnotation @field)("allowance", 0) allowance: BigInt
+  )
+
+  def apply(entry: SABI.Function): AllowanceFunction = new AllowanceFunction(entry)
+}
+
+class AllowanceFunction(val entry: SABI.Function) extends AbiFunction[AllowanceFunction.Parms, AllowanceFunction.Result]
 
 object TransferEvent {
   val name = "Transfer"

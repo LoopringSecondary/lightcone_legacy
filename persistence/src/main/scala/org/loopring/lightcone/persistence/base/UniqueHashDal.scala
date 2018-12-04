@@ -20,22 +20,13 @@ import slick.jdbc.MySQLProfile.api._
 import slick.lifted.CanBeQueryCondition
 import scala.concurrent._
 
-trait BaseDal[T <: BaseTable[A], A] {
-  def query: TableQuery[T]
+trait UniqueHashDal[T <: UniqueHashTable[A], A] extends BaseDal[T, A] {
+  def getRowHash(row: A): String
 
-  def tableName = query.baseTableRow.tableName
+  def update(row: A): Future[Int]
+  def update(rows: Seq[A]): Future[Unit]
 
-  def insert(row: A): Future[Long]
-  def insert(rows: Seq[A]): Future[Seq[Long]]
-
-  def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]]
-  def deleteByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Int]
-
-  def findById(id: Long): Future[Option[A]]
-  def deleteById(id: Long): Future[Int]
-  def deleteById(ids: Seq[Long]): Future[Int]
-
-  def createTable(): Future[Any]
-  def dropTable(): Future[Any]
-  def displayTableSchema(): Unit
+  def findByHash(hash: String): Future[Option[A]]
+  def deleteByHash(hash: String): Future[Int]
+  def deleteByHash(hashes: Seq[String]): Future[Int]
 }

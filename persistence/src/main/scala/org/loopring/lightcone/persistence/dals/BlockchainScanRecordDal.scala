@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package org.loopring.lightcone.persistence.dals
 
-object Serialization {
-  def serialize[T](t: T)(implicit mf: Manifest[T]): Seq[Object] = {
-    val argsIdx = getContractAnnontationIdx[T]()
-    val fields = t.getClass.getDeclaredFields.toList.map(i ⇒ {
-      i.setAccessible(true)
-      i.get(t)
-    })
-    assert(fields.size == argsIdx.size)
-    (argsIdx zip fields).sortWith(_._1 < _._1).map(_._2)
-  }
+trait BlockchainScanRecordDal {
+
 }
+
