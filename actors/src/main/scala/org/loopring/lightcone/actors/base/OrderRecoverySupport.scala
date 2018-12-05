@@ -30,7 +30,7 @@ trait OrderRecoverySupport {
   implicit val ec: ExecutionContext
   implicit val timeout: Timeout
 
-  val recoverySettings: XOrderRecoverySettings
+  var recoverySettings: XOrderRecoverySettings = _
   private var processed = 0
 
   protected def ordersDalActor: ActorRef
@@ -43,7 +43,8 @@ trait OrderRecoverySupport {
   private var recoverEnded: Boolean = false
   private var xordersToRecover: Seq[XOrder] = Nil
 
-  protected def startOrderRecovery() = {
+  protected def startOrderRecovery(settings: XOrderRecoverySettings) = {
+    recoverySettings = settings
     if (recoverySettings.skipRecovery) {
       log.info(s"actor recovering skipped: ${self.path}")
       context.become(functional)

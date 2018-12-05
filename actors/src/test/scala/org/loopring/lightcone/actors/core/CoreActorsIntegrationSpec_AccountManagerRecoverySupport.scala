@@ -21,7 +21,7 @@ import akka.event.LoggingReceive
 import akka.testkit.TestActorRef
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence.OrdersDalActor
+import org.loopring.lightcone.actors.persistence.{ OrderStateActor, OrdersDalActor }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.actors._
@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext
 abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId: XMarketId)
   extends CoreActorsIntegrationCommonSpec(marketId) {
 
-  class OrderHistoryForRecoveryTestActor()(
+  class OrderStateForRecoveryTestActor()(
       implicit
       ec: ExecutionContext,
       timeout: Timeout
@@ -63,12 +63,12 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId:
     }
   }
 
-  val orderHistoryRecoveryActor = TestActorRef(new OrderHistoryForRecoveryTestActor())
+  val orderStateRecoveryActor = TestActorRef(new OrderStateForRecoveryTestActor())
   val accountBalanceRecoveryActor = TestActorRef(new AccountBalanceForRecoveryTestActor())
   val ADDRESS_RECOVERY = "0xaddress_3"
-  actors.del(OrderHistoryActor.name)
+  actors.del(OrderStateActor.name)
   actors.del(AccountBalanceActor.name)
-  actors.add(OrderHistoryActor.name, orderHistoryRecoveryActor)
+  actors.add(OrderStateActor.name, orderStateRecoveryActor)
   actors.add(AccountBalanceActor.name, accountBalanceRecoveryActor)
 
 }

@@ -22,6 +22,7 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core.XTokenMetadata
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -41,7 +42,7 @@ class TokenMetadataSyncActor()(
   val syncJob = Job(
     id = 1,
     name = "syncTokenValue",
-    scheduleDelay = 5 * 60 * 1000,
+    scheduleDelay = 10000,
     run = syncMarketCap _
   )
   initAndStartNextRound(syncJob)
@@ -54,7 +55,18 @@ class TokenMetadataSyncActor()(
 
   def syncMarketCap: Future[Unit] = {
     //todo:测试暂不实现，需要实现获取token以及marketcap的方法
-    log.info("TokenValueSync...")
+    //todo:测试deploy
+    val GTO = "0x00000000001"
+    val WETH = "0x00000000004"
+    val LRC = "0x00000000002"
+
+    val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.1, 1.0, "GTO")
+    val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000, "WETH")
+    val LRC_TOKEN = XTokenMetadata(LRC, 18, 0.4, 1000, "LRC")
+    tmm.addToken(GTO_TOKEN)
+    tmm.addToken(WETH_TOKEN)
+    tmm.addToken(LRC_TOKEN)
+    log.info(s"syncMarketCap ${tmm}")
     Future.successful(Unit)
   }
 

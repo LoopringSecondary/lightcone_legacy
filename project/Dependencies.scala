@@ -45,7 +45,8 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
-    "com.typesafe.akka" %% "akka-slf4j" % akkaVersion)
+    "com.typesafe.akka" %% "akka-cluster-sharding" % akkaVersion
+    )
 
   lazy val httpDependency = Seq(
     "com.typesafe.akka" %% "akka-http" % "10.1.5",
