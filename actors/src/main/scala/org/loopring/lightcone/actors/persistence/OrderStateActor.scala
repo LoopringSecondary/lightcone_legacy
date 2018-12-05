@@ -16,15 +16,16 @@
 
 package org.loopring.lightcone.actors.persistence
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._
 
 object OrderStateActor {
-  val name = "order_history"
+  val name = "order_state"
 }
 
 // TODO(hongyu): implement this class. 根据变更可能需要从数据库读取
@@ -38,6 +39,8 @@ class OrderStateActor()(
 
   def receive: Receive = LoggingReceive {
     case XGetOrderFilledAmountReq(hash) ⇒ //从以太坊读取
+      //todo: 测试deploy
+      sender ! XGetOrderFilledAmountRes(hash, BigInt(0))
   }
 
 }
