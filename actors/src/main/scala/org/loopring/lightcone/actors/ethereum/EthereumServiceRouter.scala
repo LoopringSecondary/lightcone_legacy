@@ -20,45 +20,42 @@ import akka.actor._
 import akka.util.Timeout
 import org.loopring.lightcone.proto.actors._
 
-import scala.util._
-
 class EthereumServiceRouter(
-    connectionActors: Seq[String]
-)(
     implicit
     timeout: Timeout
 ) extends Actor with ActorLogging {
 
-  var httpConnectionPools: Seq[(String, Int)] = connectionActors.map(_ → 0)
+  var currentNode: String = ""
+  var currentHeight: Int = 0
 
   override def receive: Receive = {
     case node: XNodeBlockHeight ⇒
-      httpConnectionPools =
-        (httpConnectionPools.toMap + (node.path → node.height)).toSeq.sortWith(_._2 > _._2)
+      currentNode = node.path
+      currentHeight = node.height
 
     case req: XRpcReqWithHeight ⇒
-      val validPools = httpConnectionPools.filter(_._2 >= req.height)
-      if (validPools.nonEmpty) {
-        context.actorSelection(validPools(Random.nextInt(validPools.size))._1).forward(req.req)
+      if (currentHeight >= req.height) {
+        context.actorSelection(currentNode).forward(req.req)
       } else {
         sender() ! XJsonRpcErr(message = "No accessible Ethereum node service")
       }
 
     case msg: XJsonRpcReq ⇒ {
-      if (httpConnectionPools.nonEmpty) {
-        context.actorSelection(httpConnectionPools.head._1).forward(msg)
+      if (currentNode.nonEmpty) {
+        context.actorSelection(currentNode).forward(msg)
       } else {
         sender() ! XJsonRpcErr(message = "No accessible Ethereum node service")
       }
     }
 
     case msg: ProtoBuf[_] ⇒ {
-      if (httpConnectionPools.nonEmpty) {
-        context.actorSelection(httpConnectionPools.head._1).forward(msg)
+      if (currentNode.nonEmpty) {
+        context.actorSelection(currentNode).forward(msg)
       } else {
         sender() ! XJsonRpcErr(message = "No accessible Ethereum node service")
       }
     }
+
     case msg ⇒
       log.error(s"unsupported request to EthereumServiceRouter: $msg")
   }

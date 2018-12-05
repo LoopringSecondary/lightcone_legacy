@@ -19,12 +19,11 @@ package org.loopring.lightcone.actors.ethereum
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
-import org.json4s.DefaultFormats
 import org.loopring.lightcone.proto.actors._
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ ExecutionContextExecutor, Future }
 import scala.concurrent.duration._
-import scala.util.Random
+import scala.util._
 
 private[ethereum] class EthereumClientMonitor(
     router: ActorRef,
@@ -53,7 +52,7 @@ private[ethereum] class EthereumClientMonitor(
         params = None
       )
       import JsonRpcResWrapped._
-      connectionPools.map { g ⇒
+      Future.sequence(connectionPools.map { g ⇒
         for {
           blockNumResp: Int ← (g ? blockNumJsonRpcReq.toProto)
             .mapTo[XJsonRpcRes]
@@ -66,8 +65,16 @@ private[ethereum] class EthereumClientMonitor(
                 -1
             }
         } yield {
-          router ! XNodeBlockHeight(path = g.path.toString, height = blockNumResp)
+          XNodeBlockHeight(path = g.path.toString, height = blockNumResp)
         }
+      }).onComplete {
+        case Success(nodes) ⇒
+          val accessibleNodes = nodes.filter(_.height < 0).sortWith(_.height > _.height)
+          router ! accessibleNodes.head
+
+        case Failure(e) ⇒
+          log.error(s"check Ethereum node height failed: ${e.getMessage}")
+          router ! XNodeBlockHeight()
       }
   }
   def anyHexToInt: PartialFunction[Any, Int] = {
