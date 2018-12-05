@@ -174,7 +174,7 @@ class OrderDalImpl()(
 
   def getOrder(hash: String): Future[Option[XRawOrder]] = getOrdersByHash(Seq(hash)).map(_.headOption)
 
-  // TODO du:拆分state表后改为saveOrderState,去掉changeUpdatedAtField参数
+  // TODO du:拆分state表后改为saveOrderState
   def updateOrderState(
     hash: String,
     state: XRawOrder.State,
@@ -272,15 +272,10 @@ class OrderDalImpl()(
     tillId: Option[Long] = None,
     sortedBy: Option[XOrderSortBy] = None
   ): Future[Seq[XRawOrder]] = {
-    if (num <= 0 || (statuses.isEmpty && owners.isEmpty && tokenSSet.isEmpty && tokenBSet.isEmpty
-      && feeTokenSet.isEmpty && sinceId.isEmpty && tillId.isEmpty)) {
-      Future.successful(Seq.empty)
-    } else {
-      val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId, sortedBy)
-      db.run(filters
-        .take(num)
-        .result)
-    }
+    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId, sortedBy)
+    db.run(filters
+      .take(num)
+      .result)
   }
 
   def getOrdersByUpdatedAt(
@@ -294,17 +289,12 @@ class OrderDalImpl()(
     updatedUntil: Option[Long],
     sortedBy: Option[XOrderSortBy] = None
   ): Future[Seq[XRawOrder]] = {
-    if (num <= 0 || updatedSince.isEmpty || updatedUntil.isEmpty || updatedUntil.get < 0 || updatedUntil.get < updatedSince.get
-      || (statuses.isEmpty && owners.isEmpty && tokenSSet.isEmpty && tokenBSet.isEmpty && feeTokenSet.isEmpty)) {
-      Future.successful(Seq.empty)
-    } else {
-      val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, None, None, sortedBy)
-      db.run(filters
-        .filter(_.updatedAt >= updatedSince.get)
-        .filter(_.updatedAt <= updatedUntil.get)
-        .take(num)
-        .result)
-    }
+    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, None, None, sortedBy)
+    db.run(filters
+      .filter(_.updatedAt >= updatedSince.get)
+      .filter(_.updatedAt <= updatedUntil.get)
+      .take(num)
+      .result)
   }
 
   def countOrders(
