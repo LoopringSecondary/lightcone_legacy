@@ -46,7 +46,7 @@ class OrdersDalActor(
       ordersDal.saveOrder(xraworder) pipeTo sender
     case XGetOrdersByHashesReq(hashes) ⇒
       (for {
-        orders ← ordersDal.getOrdersByHash(hashes)
+        orders ← ordersDal.getOrders(hashes)
       } yield XGetOrdersByHashesRes(orders)) pipeTo sender
     case XGetOrderByHashReq(hash) ⇒
       (for {

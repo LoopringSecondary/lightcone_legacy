@@ -63,16 +63,16 @@ trait OrderRecoverySupport {
   def recovering: Receive = {
 
     case XRecoverOrdersRes(xraworders) ⇒
-      //TODO du: XOrder 和 XOrderPersState
-//      val size = xraworders.size
-//      log.info(s"recovering next ${size} orders")
-//      processed += size
-//
-//      xordersToRecover = xraworders.map(xRawOrderToXOrder).toList
-//      lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
-//      recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverySettings.batchSize
-//
-//      self ! XRecoverNextOrder()
+    //TODO du: XOrder 和 XOrderPersState
+    //      val size = xraworders.size
+    //      log.info(s"recovering next ${size} orders")
+    //      processed += size
+    //
+    //      xordersToRecover = xraworders.map(xRawOrderToXOrder).toList
+    //      lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
+    //      recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverySettings.batchSize
+    //
+    //      self ! XRecoverNextOrder()
 
     case _: XRecoverNextOrder ⇒
       xordersToRecover match {
