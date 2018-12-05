@@ -41,7 +41,7 @@ class JsonrpcSpec extends FlatSpec with Matchers {
             info(s"#### $r")
           case resp: JsonRpcResp ⇒
             info(s"#### $resp")
-            resp.result should be("Some(test)")
+            resp.result should be(Some("test"))
         }
     }
   }
