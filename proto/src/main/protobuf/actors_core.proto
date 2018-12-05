@@ -198,7 +198,7 @@ message XRecoverOrdersReq {
 }
 
 message XRecoverOrdersRes {
-    repeated core.XRawOrder orders = 1;
+    repeated core.XOrderPersState orders = 1;
 }
 
 message XRecoverNextOrder {}

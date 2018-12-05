@@ -34,7 +34,7 @@ message XSaveOrderReq {
 
 message XUpdateOrderStateReq {
     string hash = 1;
-    core.XRawOrder.State state = 2;
+    core.XOrderPersState.State state = 2;
     bool changeUpdatedAtField = 3;
 }
 
@@ -68,4 +68,13 @@ message XGetOrderByHashReq {
 message XGetOrderByHashRes {
     core.XRawOrder order = 1;
     persistence.XPersistenceError error = 2;
+}
+
+message XSaveOrderStateResult {
+    core.XOrderPersState state    = 1;
+    persistence.XPersistenceError error = 3;
+}
+
+message XSaveOrderStateReq {
+    core.XOrderPersState state    = 1;
 }

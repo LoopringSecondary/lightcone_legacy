@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.persistence.base
 
+import org.loopring.lightcone.persistence.dals.OrderStateDal
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import scala.concurrent.duration._
@@ -38,4 +39,6 @@ trait BaseDatabaseModule {
   )
 
   def displayTableSchemas() = tables.map(_.displayTableSchema)
+
+  val orderStates: OrderStateDal
 }

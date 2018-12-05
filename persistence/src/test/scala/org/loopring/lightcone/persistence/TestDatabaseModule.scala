@@ -18,15 +18,18 @@ package org.loopring.lightcone.persistence
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
+import org.loopring.lightcone.persistence.base.BaseDal
 import org.loopring.lightcone.persistence.dals._
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import scala.concurrent._
+import org.loopring.lightcone.persistence.dals.OrderStateDal
+import scala.concurrent.duration._
 
-class DatabaseModule @Inject() (
+class TestDatabaseModule()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
-    @Named("db-execution-context") val ec: ExecutionContext
+    val ec: ExecutionContext
 ) extends base.BaseDatabaseModule {
 
   val orders: OrderDal = new OrderDalImpl(this)
