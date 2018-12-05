@@ -41,6 +41,18 @@ lazy val actors = (project in file("actors"))
   .settings(
     parallelExecution in Test := false,
     basicSettings,
+    libraryDependencies ++= dependency4Per)
+
+// Dong's testing sub-proj to use akka-persistence
+lazy val per = (project in file("per"))
+  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(MultiJvmPlugin)
+  .configs(MultiJvm)
+  .settings(multiJvmSettings: _*)
+  .dependsOn(proto, core, persistence)
+  .settings(
+    parallelExecution in Test := false,
+    basicSettings,
     libraryDependencies ++= dependency4Actors)
 
 lazy val indexer = (project in file("indexer"))
@@ -62,5 +74,5 @@ lazy val gateway = (project in file("gateway"))
     libraryDependencies ++= dependency4Gateway)
 
 lazy val all = (project in file("."))
-  .aggregate(proto, ethereum, persistence, core, actors, gateway, indexer)
+  .aggregate(proto, ethereum, persistence, core, actors, gateway, indexer, per)
   .withId("lightcone")

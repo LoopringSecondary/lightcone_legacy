@@ -45,7 +45,9 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
-    "com.typesafe.akka" %% "akka-slf4j" % akkaVersion)
+    "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
+    "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
+    "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8")
 
   lazy val httpDependency = Seq(
     "com.typesafe.akka" %% "akka-http" % "10.1.5",
@@ -78,6 +80,13 @@ object Dependencies {
     testDependency
 
   lazy val dependency4Actors = dependency4Persistence ++
+    httpDependency ++
+    akkaDependency ++
+    json4sDependency ++
+    testDependency ++
+    Seq("org.jsoup" % "jsoup" % "1.11.3")
+
+  lazy val dependency4Per = dependency4Persistence ++
     httpDependency ++
     akkaDependency ++
     json4sDependency ++
