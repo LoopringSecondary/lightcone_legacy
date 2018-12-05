@@ -27,22 +27,23 @@ import org.json4s.jackson.Serialization
 import org.json4s.JsonDSL._
 import scala.concurrent.{ ExecutionContext, Future }
 
-class JsonrpcServer @Inject() (@Named("apiService") service: ApiService)(implicit val ec: ExecutionContext) {
-
+class JsonrpcServer @Inject() (
+    @Named("apiService") service: ApiService
+)(
+    implicit
+    val ec: ExecutionContext
+) {
   implicit val formats = DefaultFormats
 
   def handle(json: String): Future[JsonRpcResp] = {
     val rpcReq = parse(json).extract[JsonRpcReq]
     val resp = JsonRpcResp(id = rpcReq.id, jsonrpc = rpcReq.jsonrpc)
 
-    val resAny = service.handle(rpcReq)
-
-    //todo:需要充分测试json4s
-    resAny match {
+    //TODO(hongyu): 需要充分测试json4s
+    service.handle(rpcReq) match {
       case resFuture: Future[Any] ⇒
         resFuture map {
-          res ⇒
-            resp.copy(result = Some(res.toString))
+          res ⇒ resp.copy(result = Some(res.toString))
         }
       case resNoFuture: Any ⇒
         Future.successful(
