@@ -116,13 +116,38 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
     } yield jsonStr
 
   }
+  private def batchSendMessages(methodList: Seq[BatchMethod]): Future[String] = {
+    val jsonRpcList = methodList.map { x ⇒
+      JsonRpcReqWrapped(
+        id = Random.nextInt(100),
+        jsonrpc = "2.0",
+        method = x.method,
+        params = x.params
+      )
+    }
+
+    for {
+      entity ← Marshal(jsonRpcList).to[RequestEntity]
+      jsonStr ← post(entity)
+    } yield jsonStr
+  }
+
 
   private def toResponseWrapped: PartialFunction[String, JsonRpcResWrapped] = {
     case json: String ⇒ parse(json).extract[JsonRpcResWrapped]
   }
 
+  private def toResponseListWrapped: PartialFunction[String, Seq[JsonRpcResWrapped]] = {
+    case json: String ⇒ parse(json).extract[Seq[JsonRpcResWrapped]]
+  }
+
   private def checkResponseWrapped: PartialFunction[JsonRpcResWrapped, Boolean] = {
     case res: JsonRpcResWrapped ⇒ res.result.toString.isEmpty
+  }
+
+  // TODO(fukun): batchRequstTransaction/batchRequstTransactionReceipt还需单独检查每个字段
+  private def checkResponseListWrapped: PartialFunction[Seq[JsonRpcResWrapped], Boolean] = {
+    case res: Seq[JsonRpcResWrapped] ⇒ res.isEmpty
   }
 
   private def hex2BigInt(s: String) = BigInt(s.replace("0x", ""), 16)
@@ -135,7 +160,7 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
       sendMessage("eth_blockNumber") {
         Seq.empty
       } map { json ⇒
-        (checkResponseWrapped compose toResponseWrapped)(json) match {
+        (checkResponseWrapped compose toResponseWrapped)(json) {
           case true ⇒
             XEthBlockNumberRes()
               .withJsonrpc("2.0")
@@ -148,7 +173,7 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
       sendMessage("eth_getBalance") {
         Seq(r.address, r.tag)
       } map { json ⇒
-        (checkResponseWrapped compose toResponseWrapped)(json) match {
+        (checkResponseWrapped compose toResponseWrapped)(json) {
           case true ⇒
             XEthGetBalanceRes()
               .withJsonrpc("2.0")
@@ -162,7 +187,7 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
       sendMessage("eth_getTransactionByHash") {
         Seq(r.hash)
       } map { json ⇒
-        (checkResponseWrapped compose toResponseWrapped)(json) match {
+        (checkResponseWrapped compose toResponseWrapped)(json) {
           case true ⇒
             XGetTransactionByHashRes()
               .withJsonrpc("2.0")
