@@ -43,11 +43,13 @@ object MarketManagerActor {
     case msg @ XSubmitOrderReq(Some(xorder)) ⇒
       val marketId = (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
       (marketId, msg)
+    case msg @ XStart(_) ⇒ ("0x00000000004-0x00000000002", msg) //todo:测试deploy
   }
 
   val extractShardId: ShardRegion.ExtractShardId = {
     case XSubmitOrderReq(Some(xorder)) ⇒
       (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
+    case XStart(_) ⇒ "0x00000000004-0x00000000002"
   }
 
   def createShardActor(

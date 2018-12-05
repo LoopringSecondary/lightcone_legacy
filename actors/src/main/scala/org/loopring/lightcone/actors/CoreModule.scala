@@ -24,9 +24,11 @@ import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.persistence.{ OrderStateActor, OrdersDalActor }
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
-import org.loopring.lightcone.proto.core.XMarketManagerConfig
+import org.loopring.lightcone.persistence.dals.OrderDalImpl
+import org.loopring.lightcone.proto.core.{ XMarketManagerConfig, XOrderbookConfig }
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -35,6 +37,7 @@ import scala.concurrent.duration._
 
 class CoreModule(config: Config)
   extends AbstractModule with ScalaModule {
+
   override def configure(): Unit = {
     implicit val system = ActorSystem("Lightcone", config)
     implicit val ec = system.dispatcher
@@ -58,13 +61,39 @@ class CoreModule(config: Config)
     implicit val ringIncomeEstimator = new RingIncomeEstimatorImpl()
     implicit val timeProvider = new SystemTimeProvider()
 
-
     //-----------deploy actors-----------
     //启动时都需要 TokenMetadataSyncActor
-    system.actorOf(Props[TokenMetadataSyncActor], TokenMetadataSyncActor.name)
-    deployCoreAccountManager(actors, 100, false)
+    system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name)
+    val accountManagerShardActor = deployCoreAccountManager(actors, 100, true)
     val marketsConfig = XMarketManagerConfig()
-    deployCoreMarketManager(actors, marketsConfig, false)
+    val marketManagerShardActor = deployCoreMarketManager(actors, marketsConfig, true)
+
+    actors.add(AccountManagerActor.name, accountManagerShardActor)
+    actors.add(MarketManagerActor.name, marketManagerShardActor)
+
+    val orderbookConfig = XOrderbookConfig(
+      levels = 2,
+      priceDecimals = 5,
+      precisionForAmount = 2,
+      precisionForTotal = 1
+    )
+    val orderbookManagerActor = system.actorOf(
+      Props(new OrderbookManagerActor(orderbookConfig)),
+      OrderbookManagerActor.name
+    )
+    actors.add(OrderbookManagerActor.name, orderbookManagerActor)
+
+    val accountBalanceActor = system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
+    actors.add(AccountBalanceActor.name, accountBalanceActor)
+    val orderStateActor = system.actorOf(Props(new OrderStateActor()), OrderStateActor.name)
+    actors.add(OrderStateActor.name, orderStateActor)
+    val dal = new OrderDalImpl()
+    val orderDalActor = system.actorOf(Props(new OrdersDalActor(dal)), OrdersDalActor.name)
+    actors.add(OrdersDalActor.name, orderDalActor)
+
+    println(s"#### accountmanager ${accountManagerShardActor.path.address.toString}")
+    println(s"#### orderbookManagerActor ${cluster.selfRoles}${orderbookManagerActor}, ${orderbookManagerActor.path.toString}")
+
   }
 
   def deployCoreAccountManager(

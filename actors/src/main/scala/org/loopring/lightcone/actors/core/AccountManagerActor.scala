@@ -40,11 +40,14 @@ object AccountManagerActor {
   //todo: sharding配置，发送给AccountManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
   val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    //    case msg@XSubmitOrderReq(address, _) ⇒ "" //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
   }
 
   val extractShardId: ShardRegion.ExtractShardId = {
     case XGetBalanceAndAllowancesReq(address, _) ⇒ address
+    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
+    case XStart(_) ⇒ "address_1"
   }
 
   def createShardActor(
@@ -124,8 +127,10 @@ class AccountManagerActor(
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).pipeTo(sender)
 
-    case XSubmitOrderReq(Some(xorder)) ⇒
+    case XSubmitOrderReq(Some(xorder)) ⇒ {
+      println("### accountXSubmitOrderReq")
       submitOrder(xorder).pipeTo(sender)
+    }
 
     case req: XCancelOrderReq ⇒
       if (manager.cancelOrder(req.id)) {
