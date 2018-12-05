@@ -16,19 +16,23 @@
 
 package org.loopring.lightcone.persistence
 
-import com.google.protobuf.ByteString
-import org.loopring.lightcone.proto.core.XOrderStatus
 import slick.jdbc.MySQLProfile.api._
+import scala.reflect.ClassTag
+import com.google.protobuf.ByteString
 
-package object dals {
+package object base {
 
-  implicit val StatusTypeMapper = MappedColumnType.base[XOrderStatus, Int](
-    s ⇒ s.value,
-    s ⇒ XOrderStatus.fromValue(s)
-  )
+  implicit val byteStringColumnType: BaseColumnType[ByteString] =
+    MappedColumnType.base[ByteString, Array[Byte]](
+      bs ⇒ bs.toByteArray(),
+      bytes ⇒ ByteString.copyFrom(bytes)
+    )
 
-  implicit val ByteStringTypeMapper = MappedColumnType.base[ByteString, String](
-    s ⇒ s.toStringUtf8,
-    s ⇒ ByteString.copyFrom(s, "utf-8")
-  )
+  def enumColumnType[T <: scalapb.GeneratedEnum: ClassTag](
+    enumCompanion: scalapb.GeneratedEnumCompanion[T]
+  ): BaseColumnType[T] =
+    MappedColumnType.base[T, Int](
+      enum ⇒ enum.value,
+      int ⇒ enumCompanion.fromValue(int)
+    )
 }

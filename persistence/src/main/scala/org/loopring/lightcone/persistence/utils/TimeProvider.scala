@@ -14,16 +14,28 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.persistence.utils
 
-import com.google.inject.Guice
-import com.typesafe.config.ConfigFactory
+import java.sql.Timestamp
 
-object Main {
+trait TimeProvider {
+  def getTimeMillis(): Long
+  def getTimeSeconds(): Long = getTimeMillis / 1000
+  def getTimestamp() = new Timestamp(getTimeMillis)
+}
 
-  def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.load()
-    val injector = Guice.createInjector(new CoreModule(config))
+final class SystemTimeProvider extends TimeProvider {
+  def getTimeMillis = System.currentTimeMillis()
+}
+
+final class DifferenceAssuredSystemTimeProvider extends TimeProvider {
+  private var lastTimestamp = 0L
+
+  def getTimeMillis = {
+    val now = System.currentTimeMillis
+    if (now > lastTimestamp) lastTimestamp = now
+    else lastTimestamp += 1
+
+    lastTimestamp
   }
-
 }

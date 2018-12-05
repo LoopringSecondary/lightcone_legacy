@@ -32,13 +32,12 @@ class CoreActorsIntegrationSpec_MarketManagerRecovery
       val marketManagerActorRecovery: ActorRef = TestActorRef(
         new MarketManagerActor(
           actors,
-          XMarketId(GTO_TOKEN.address, WETH_TOKEN.address),
           config,
           skipRecovery = false
         )
       )
 
-      marketManagerActorRecovery ! XStart()
+      marketManagerActorRecovery ! XStart(marketId_.primary + "-" + marketId_.secondary)
 
     }
   }

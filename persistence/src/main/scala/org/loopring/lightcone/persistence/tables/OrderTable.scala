@@ -17,10 +17,8 @@
 package org.loopring.lightcone.persistence.tables
 
 import org.loopring.lightcone.persistence.base._
-import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
 
 class OrderTable(tag: Tag)
   extends BaseTable[XRawOrder](tag, "T_ORDERS") {
@@ -64,6 +62,8 @@ class OrderTable(tag: Tag)
   def trancheS = column[String]("tranche_s")
   def trancheB = column[String]("tranche_b")
   def trancheDataS = column[String]("transfer_data_s")
+
+  def createdAt = column[Long]("created_at")
 
   // indexes
   def idx_hash = index("idx_hash", (hash), unique = true)
@@ -147,6 +147,7 @@ class OrderTable(tag: Tag)
     paramsProjection,
     feeParamsProjection,
     erc1400ParamsProjection,
+    createdAt,
   ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
 }
 

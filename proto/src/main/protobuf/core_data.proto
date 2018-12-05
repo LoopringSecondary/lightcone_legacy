@@ -51,6 +51,15 @@ enum XMatchingFailure {
 
 enum XOrderValidationError {
     ORDER_VALIDATION_ERR_NONE = 0;
+    ORDER_VALIDATION_ERR_INVALID_OWNER = 1;
+    ORDER_VALIDATION_ERR_INVALID_TOKENS = 2;
+    ORDER_VALIDATION_ERR_INVALID_TOKENB = 3;
+    ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT = 4;
+    ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE = 5;
+    ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE = 6;
+    ORDER_VALIDATION_ERR_INVALID_WALLET_SPLIT_PERCENTAGE = 7;
+    ORDER_VALIDATION_ERR_INVALID_MISSING_DUALAUTH_SIG = 8;
+    ORDER_VALIDATION_ERR_UNSUPPORTED_VERSION = 9;
 }
 
 enum XTokenStandard {
@@ -112,6 +121,7 @@ message XRawOrder {
     Params params                   = 10;
     FeeParams fee_params            = 11;
     ERC1400Params erc1400_params    = 12;
+    int64 created_at            = 13;
 }
 
 message XOrderPersState {
@@ -134,16 +144,17 @@ message XOrderPersState {
     }
 
     string hash = 1;
-    string token_s = 2;
-    string token_b = 3;
-    string token_fee = 4;
-    bytes amount_s = 5;
-    bytes amount_b = 6;
-    bytes amount_fee = 7;
-    int32  valid_since             = 8;
-    int32  valid_until             = 9;
-    double wallet_split_percentage = 10;
-    State state = 11;
+    string owner = 2;
+    string token_s = 3;
+    string token_b = 4;
+    string token_fee = 5;
+    bytes amount_s = 6;
+    bytes amount_b = 7;
+    bytes amount_fee = 8;
+    int32  valid_since             = 9;
+    int32  valid_until             = 10;
+    double wallet_split_percentage = 11;
+    State state = 12;
 }
 
 message XRingBatch {

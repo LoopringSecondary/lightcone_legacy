@@ -28,6 +28,7 @@ class OrderStateTable(tag: Tag)
 
   def id = hash
   def hash = columnHash("hash", O.PrimaryKey)
+  def owner = columnAddress("owner")
   def tokenS = columnAddress("token_s")
   def tokenB = columnAddress("token_b")
   def tokenFee = columnAddress("token_fee")
@@ -87,6 +88,7 @@ class OrderStateTable(tag: Tag)
 
   def * = (
     hash,
+    owner,
     tokenS,
     tokenB,
     tokenFee,

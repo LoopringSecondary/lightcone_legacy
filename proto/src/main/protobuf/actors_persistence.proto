@@ -69,3 +69,12 @@ message XGetOrderByHashRes {
     core.XRawOrder order = 1;
     persistence.XPersistenceError error = 2;
 }
+
+message XSaveOrderStateResult {
+    core.XOrderPersState state    = 1;
+    persistence.XPersistenceError error = 3;
+}
+
+message XSaveOrderStateReq {
+    core.XOrderPersState state    = 1;
+}

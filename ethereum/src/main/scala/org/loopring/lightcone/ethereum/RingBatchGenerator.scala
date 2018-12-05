@@ -22,14 +22,48 @@ import org.loopring.lightcone.proto.core._
 
 trait RingBatchGenerator {
   def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch
+  def toSubmitableParamStr(xRingBatch: XRingBatch): String
 }
 
 // TODO(kongliang): implement and test this class
 class RingBatchGeneratorImpl(context: XRingBatchContext)
   extends RingBatchGenerator {
 
-  private def isNullOrEmpty(str: String) = {
-    str == null || str.length == 0
+  def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch = {
+    val orderValidator = new RawOrderValidatorImpl
+
+    val ordersDistinctedMap = orders
+      .flatten
+      .map(o ⇒ orderValidator.calculateOrderHash(o) -> o)
+      .toMap
+
+    val ordersDistinctedSeq = ordersDistinctedMap
+      .map(_._2)
+      .toSeq
+
+    val ordersHashIndexMap = ordersDistinctedSeq
+      .map(_.hash)
+      .zipWithIndex
+      .toMap
+
+    val xrings = orders.map(orders ⇒ {
+      val orderIndexes = orders.map(o ⇒ ordersHashIndexMap(o.hash))
+      new XRingBatch.XRing(orderIndexes)
+    })
+
+    val xRingBatch = new XRingBatch()
+      .withFeeRecipient(context.feeRecipient)
+      .withMiner(context.miner)
+      .withRings(xrings)
+      .withOrders(ordersDistinctedSeq)
+      .withSignAlgorithm(XSigningAlgorithm.ALGO_ETHEREUM)
+      .withTransactionOrigin(context.transactionOrigin)
+
+    sign(xRingBatch)
+  }
+
+  def toSubmitableParamStr(xRingBatch: XRingBatch): String = {
+    ""
   }
 
   private def ringBatchHash(xRingBatch: XRingBatch) = {
@@ -86,36 +120,4 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     xRingBatch.copy(hash = hash, sig = sig)
   }
 
-  def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch = {
-    val ordersDistinctedMap = orders
-      .flatten
-      .map(OrderHelper.calculateHash)
-      .map(o ⇒ o.hash -> o)
-      .toMap
-
-    val ordersDistinctedSeq = ordersDistinctedMap
-      .map(_._2)
-      .map(OrderHelper.sign)
-      .toSeq
-
-    val ordersHashIndexMap = ordersDistinctedSeq
-      .map(_.hash)
-      .zipWithIndex
-      .toMap
-
-    val xrings = orders.map(orders ⇒ {
-      val orderIndexes = orders.map(o ⇒ ordersHashIndexMap(o.hash))
-      new XRingBatch.XRing(orderIndexes)
-    })
-
-    val xRingBatch = new XRingBatch()
-      .withFeeRecipient(context.feeRecipient)
-      .withMiner(context.miner)
-      .withRings(xrings)
-      .withOrders(ordersDistinctedSeq)
-      .withSignAlgorithm(XSigningAlgorithm.ALGO_ETHEREUM)
-      .withTransactionOrigin(context.transactionOrigin)
-
-    sign(xRingBatch)
-  }
 }

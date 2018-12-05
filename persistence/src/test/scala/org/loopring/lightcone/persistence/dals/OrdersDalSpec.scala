@@ -20,9 +20,7 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto.actors.{ XOrderState, XSaveOrderResult }
 import org.loopring.lightcone.proto.core.XRawOrder
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence.XPersistenceError
-import org.web3j.utils.Numeric
-
+import org.loopring.lightcone.proto.persistence.{ XOrderSortBy, XPersistenceError }
 import scala.concurrent.{ Await, Future }
 import scala.util.{ Failure, Success }
 import scala.concurrent.duration._
@@ -46,7 +44,7 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
   "getOrderByHashes" must "get a order" in {
     // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
     var orders = Seq("0x111")
-    val result = dal.getOrders(orders)
+    val result = dal.getOrdersByHash(orders)
     result onComplete {
       case Success(orders) ⇒ {
         orders.foreach { order ⇒
@@ -68,13 +66,13 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
       actualAmountS = ByteString.copyFrom("888", "UTF-8"), actualAmountB = ByteString.copyFrom("999", "UTF-8"),
       actualAmountFee = ByteString.copyFrom("13", "UTF-8"), outstandingAmountS = ByteString.copyFrom("14", "UTF-8"),
       outstandingAmountB = ByteString.copyFrom("15", "UTF-8"), outstandingAmountFee = ByteString.copyFrom("16", "UTF-8"))
-    val result = dal.updateOrderState("0x111", state, true)
+    val result = dal.updateOrderState("0x111", state)
     result onComplete {
       case Success(r) ⇒ info("=== Success: " + r)
       case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
     }
     val res = Await.result(result.mapTo[Either[XPersistenceError, String]], 5.second)
-    res.isRight should be
+    res.isRight should be(true)
   }
 
   "updateOrderStatus" must "update a order" in {
@@ -85,7 +83,7 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
       case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
     }
     val res = Await.result(result.mapTo[Either[XPersistenceError, String]], 5.second)
-    res.isRight should be
+    res.isRight should be(true)
   }
 
   "getOrders" must "get some orders" in {
@@ -98,7 +96,12 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
     val sinceId: Option[Long] = Some(8000l)
     val tillId: Option[Long] = Some(9000l)
     val sortedByUpdatedAt: Boolean = true
-    val result = dal.getOrders(100, statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId, true)
+    val sortBy = if (sortedByUpdatedAt) {
+      XOrderSortBy().withUpdatedAt(true)
+    } else {
+      XOrderSortBy().withCreatedAt(true)
+    }
+    val result = dal.getOrders(100, statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId, Some(sortBy))
     result onComplete {
       case Success(r) ⇒ info("=== Success: " + r)
       case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
@@ -136,7 +139,12 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
     val sinceId: Option[Long] = Some(8000l)
     val tillId: Option[Long] = Some(9000l)
     val sortedByUpdatedAt: Boolean = true
-    val result = dal.getOrdersByUpdatedAt(100, statuses, owners, tokenSSet, tokenBSet, feeTokenSet, Some(1000l), Some(99999l), true)
+    val sortBy = if (sortedByUpdatedAt) {
+      XOrderSortBy().withUpdatedAt(true)
+    } else {
+      XOrderSortBy().withCreatedAt(true)
+    }
+    val result = dal.getOrdersByUpdatedAt(100, statuses, owners, tokenSSet, tokenBSet, feeTokenSet, Some(1000l), Some(99999l), Some(sortBy))
     result onComplete {
       case Success(orders) ⇒ {
         orders.foreach { order ⇒

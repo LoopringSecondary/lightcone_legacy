@@ -42,37 +42,11 @@ class OrdersDalActor(
   with ActorLogging {
 
   def receive: Receive = LoggingReceive {
-    case XRecoverOrdersReq(address, marketIdOpt, updatedSince, num) ⇒
-      val tokenes = (marketIdOpt match {
-        case Some(marketId) ⇒ Set(marketId.primary, marketId.secondary)
-        case None           ⇒ Seq.empty[String]
-      }).toSet
-      (for {
-        orders ← ordersDal.getOrdersByUpdatedAt(
-          num = num,
-          statuses = Set(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING),
-          tokenSSet = tokenes,
-          tokenBSet = tokenes,
-          owners = if ("" != address) Set(address) else Set.empty,
-          updatedSince = Some(updatedSince)
-        )
-      } yield XRecoverOrdersRes(orders)) pipeTo sender
-
     case XSaveOrderReq(Some(xraworder)) ⇒
       ordersDal.saveOrder(xraworder) pipeTo sender
-
-    case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
-      (stateOpt match {
-        case Some(state) ⇒ ordersDal.updateOrderState(hash, state, changeUpdatedAtField)
-        case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
-      }) pipeTo sender
-
-    case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
-      ordersDal.updateOrderStatus(hash, status, changeUpdatedAtField) pipeTo sender
-
     case XGetOrdersByHashesReq(hashes) ⇒
       (for {
-        orders ← ordersDal.getOrders(hashes)
+        orders ← ordersDal.getOrdersByHash(hashes)
       } yield XGetOrdersByHashesRes(orders)) pipeTo sender
     case XGetOrderByHashReq(hash) ⇒
       (for {
