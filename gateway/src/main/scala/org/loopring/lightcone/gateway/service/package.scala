@@ -65,6 +65,5 @@ package object service {
   case class JsonRpcInternalException(
       message: String = "Internal error",
       id: Option[Any] = None
-  )
-    extends AbstractJsonRpcException(-32603, message, id)
+  ) extends AbstractJsonRpcException(-32603, message, id)
 }

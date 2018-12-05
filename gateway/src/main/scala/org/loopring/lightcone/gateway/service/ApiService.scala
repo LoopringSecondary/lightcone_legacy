@@ -27,7 +27,8 @@ import scala.reflect.runtime.universe._
 class ApiService @Inject() (
     @Named("entry-point") val entryPointActor: ActorRef
 )(implicit val timeout: Timeout)
-  extends AccountService
+  extends Object
+  with AccountService
   with MarketService
   with OrderService {
 
@@ -37,9 +38,8 @@ class ApiService @Inject() (
 
   val rm = runtimeMirror(this.getClass.getClassLoader)
   val thisMirror = rm.reflect(this)
-  val methodMap = (thisMirror.symbol.toType.decls.filter(_.isMethod) map {
-    m ⇒
-      m.name.toString → thisMirror.reflectMethod(m.asMethod)
+  val methodMap = (thisMirror.symbol.toType.decls.filter(_.isMethod).map {
+    m ⇒ m.name.toString → thisMirror.reflectMethod(m.asMethod)
   }).toMap
 
   def handle(req: JsonRpcReq) =
