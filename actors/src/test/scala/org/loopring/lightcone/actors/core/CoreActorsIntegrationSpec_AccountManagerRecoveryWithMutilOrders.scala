@@ -39,12 +39,11 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
       val accountManagerRecoveryActor = TestActorRef(
         new AccountManagerActor(
           actors,
-          address = ADDRESS_RECOVERY,
           recoverBatchSize = 500,
           skipRecovery = false
         ), "accountManagerActorRecovery"
       )
-      accountManagerRecoveryActor ! XStart()
+      accountManagerRecoveryActor ! XStart(ADDRESS_RECOVERY)
 
       val order = XRawOrder(
         hash = "order",

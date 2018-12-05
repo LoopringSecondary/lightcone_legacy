@@ -156,7 +156,6 @@ abstract class CoreActorsIntegrationCommonSpec(
   val accountManagerActor1: ActorRef = TestActorRef(
     new AccountManagerActor(
       actors,
-      address = ADDRESS_1,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
     ),
@@ -166,7 +165,6 @@ abstract class CoreActorsIntegrationCommonSpec(
   val accountManagerActor2: ActorRef = TestActorRef(
     new AccountManagerActor(
       actors,
-      address = ADDRESS_2,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
     ),
@@ -176,7 +174,6 @@ abstract class CoreActorsIntegrationCommonSpec(
   val marketManagerActor: ActorRef = TestActorRef(
     new MarketManagerActor(
       actors,
-      marketId,
       config,
       skipRecovery = skipMarketManagerActorRecovery
     ),
@@ -192,9 +189,9 @@ abstract class CoreActorsIntegrationCommonSpec(
   actors.add(SettlementActor.name, settlementActor)
   actors.add(EthereumAccessActor.name, ethereumAccessActor)
 
-  accountManagerActor1 ! XStart()
-  accountManagerActor2 ! XStart()
-  marketManagerActor ! XStart()
+  accountManagerActor1 ! XStart(ADDRESS_1)
+  accountManagerActor2 ! XStart(ADDRESS_2)
+  marketManagerActor ! XStart(marketId.primary + "-" + marketId.secondary)
   settlementActor ! XStart()
 
   implicit class RichString(s: String) {

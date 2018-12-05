@@ -43,7 +43,12 @@ class AccountBalanceActor()(
   def receive: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.
     case req: XGetBalanceAndAllowancesReq ⇒
-
+      //todo: 测试deploy
+      sender !
+        XGetBalanceAndAllowancesRes(
+          req.address,
+          Map(req.tokens(0) -> XBalanceAndAllowance(BigInt("100000000000000000000000000"), BigInt("100000000000000000000000000")))
+        )
   }
 
 }
