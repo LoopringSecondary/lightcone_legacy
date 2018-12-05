@@ -259,7 +259,7 @@ class OrderStateDalImpl()(
       db.run(query
         .filter(_.hash === hash)
         .map(c ⇒ (c.status, c.updatedAt))
-        .update(status, System.currentTimeMillis()))
+        .update(status, timeProvider.getTimeMillis))
     } else {
       db.run(query
         .filter(_.hash === hash)
