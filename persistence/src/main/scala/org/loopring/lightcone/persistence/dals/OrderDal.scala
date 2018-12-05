@@ -28,6 +28,8 @@ import slick.lifted.Query
 import com.mysql.jdbc.exceptions.jdbc4._
 import scala.concurrent._
 import scala.util.{ Failure, Success }
+import org.loopring.lightcone.persistence.utils._
+import org.loopring.lightcone.proto.persistence.XOrderSortBy.Sort
 
 trait OrderDal
   extends BaseDalImpl[OrderTable, XRawOrder] {
@@ -58,8 +60,8 @@ trait OrderDal
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult]
 
   // Returns orders with given hashes
-  def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]]
-  def getOrder(hash: String): Future[Option[XRawOrder]] = getOrders(Seq(hash)).map(_.headOption)
+  def getOrdersByHash(hashes: Seq[String]): Future[Seq[XRawOrder]]
+  def getOrder(hash: String): Future[Option[XRawOrder]]
 
   // Save order's state information, this should not change orther's other values.
   // Note that the update_at field should be updated to the current timestamp if
@@ -90,7 +92,7 @@ trait OrderDal
     feeTokenSet: Set[String] = Set.empty,
     sinceId: Option[Long] = None,
     tillId: Option[Long] = None,
-    sortedByUpdatedAt: Boolean = true
+    sortedBy: Option[XOrderSortBy] = None
   ): Future[Seq[XRawOrder]]
 
   // Get some orders between updatedSince and updatedUntil. The orders are sorted by updated_at
@@ -104,7 +106,7 @@ trait OrderDal
     feeTokenSet: Set[String] = Set.empty,
     updatedSince: Option[Long] = None,
     updatedUntil: Option[Long] = None,
-    sortedByUpdatedAt: Boolean = true
+    sortedBy: Option[XOrderSortBy] = None
   ): Future[Seq[XRawOrder]]
 
   // Count the number of orders
@@ -126,54 +128,41 @@ class OrderDalImpl()(
 ) extends OrderDal {
   val query = TableQuery[OrderTable]
   def getRowHash(row: XRawOrder) = row.hash
+  val timeProvider = new SystemTimeProvider()
+  implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
+  implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
 
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
-    if (order.hash.isEmpty || order.version <= 0 || order.owner.isEmpty || order.tokenS.isEmpty || order.tokenB.isEmpty
-      || order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0 || order.state.nonEmpty) {
-      Future.successful(
+    val now = timeProvider.getTimeMillis
+    val state = XRawOrder.State(
+      createdAt = now,
+      updatedAt = now,
+      status = XOrderStatus.STATUS_NEW
+    )
+    db.run((query ++= Seq(order.copy(state = Some(state)))).asTry).map {
+      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
         XSaveOrderResult(
-          error = XPersistenceError.PERS_ERR_INVALID_DATA,
-          order = Some(order)
-        )
-      )
-    } else {
-      val now = System.currentTimeMillis()
-      val state = XRawOrder.State(
-        createdAt = now,
-        updatedAt = now,
-        status = XOrderStatus.STATUS_NEW
-      )
-      db.run((query returning query.map(_.id) ++= Seq(order.copy(state = Some(state)))).asTry).map {
-        case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
-          XSaveOrderResult(
-            error = XPersistenceError.PERS_ERROR_DUPLICATE_INSERT,
-            order = Some(order),
-            alreadyExist = true
-          )
-        }
-        case Failure(ex) ⇒ {
-          // TODO du: print some log
-          // log(s"error : ${ex.getMessage}")
-          XSaveOrderResult(
-            error = XPersistenceError.PERS_ERROR_INTERNAL,
-            order = Some(order)
-          )
-        }
-        case Success(x) ⇒ XSaveOrderResult(
-          error = XPersistenceError.PERS_ERR_NONE,
-          order = Some(order)
+          error = XPersistenceError.PERS_ERR_DUPLICATE_INSERT,
+          order = Some(order),
+          alreadyExist = true
         )
       }
+      case Failure(ex) ⇒ {
+        // TODO du: print some log
+        // log(s"error : ${ex.getMessage}")
+        XSaveOrderResult(
+          error = XPersistenceError.PERS_ERR_INTERNAL,
+          order = None
+        )
+      }
+      case Success(x) ⇒ XSaveOrderResult(
+        error = XPersistenceError.PERS_ERR_NONE,
+        order = Some(order)
+      )
     }
   }
 
-  def getOrderByHash(hash: String): Future[Option[XRawOrder]] = {
-    val queries = query
-      .filter(_.hash === hash)
-    db.run(queries.result.headOption)
-  }
-
-  def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]] = {
+  def getOrdersByHash(hashes: Seq[String]): Future[Seq[XRawOrder]] = {
     if (hashes.isEmpty) {
       Future.successful(Seq.empty)
     } else {
@@ -183,67 +172,43 @@ class OrderDalImpl()(
     }
   }
 
+  def getOrder(hash: String): Future[Option[XRawOrder]] = getOrdersByHash(Seq(hash)).map(_.headOption)
+
+  // TODO du:拆分state表后改为saveOrderState,去掉changeUpdatedAtField参数
   def updateOrderState(
     hash: String,
     state: XRawOrder.State,
     changeUpdatedAtField: Boolean = true
   ): Future[Either[XPersistenceError, String]] = for {
-    result ← if (changeUpdatedAtField) {
-      db.run(query
-        .filter(_.hash === hash)
-        .map(c ⇒ (
-          c.updatedAt,
-          c.matchedAt,
-          c.updatedAtBlock,
-          c.status,
-          c.actualAmountS,
-          c.actualAmountB,
-          c.actualAmountFee,
-          c.outstandingAmountS,
-          c.outstandingAmountB,
-          c.outstandingAmountFee
-        ))
-        .update(
-          System.currentTimeMillis(),
-          state.matchedAt,
-          state.updatedAtBlock,
-          state.status,
-          state.actualAmountS,
-          state.actualAmountB,
-          state.actualAmountFee,
-          state.outstandingAmountS,
-          state.outstandingAmountB,
-          state.outstandingAmountFee
-        ))
-    } else {
-      db.run(query
-        .filter(_.hash === hash)
-        .map(c ⇒ (
-          c.matchedAt,
-          c.updatedAtBlock,
-          c.status,
-          c.actualAmountS,
-          c.actualAmountB,
-          c.actualAmountFee,
-          c.outstandingAmountS,
-          c.outstandingAmountB,
-          c.outstandingAmountFee
-        ))
-        .update(
-          state.matchedAt,
-          state.updatedAtBlock,
-          state.status,
-          state.actualAmountS,
-          state.actualAmountB,
-          state.actualAmountFee,
-          state.outstandingAmountS,
-          state.outstandingAmountB,
-          state.outstandingAmountFee
-        ))
-    }
+    result ← db.run(query
+      .filter(_.hash === hash)
+      .map(c ⇒ (
+        c.updatedAt,
+        c.matchedAt,
+        c.updatedAtBlock,
+        c.status,
+        c.actualAmountS,
+        c.actualAmountB,
+        c.actualAmountFee,
+        c.outstandingAmountS,
+        c.outstandingAmountB,
+        c.outstandingAmountFee
+      ))
+      .update(
+        timeProvider.getTimeMillis,
+        state.matchedAt,
+        state.updatedAtBlock,
+        state.status,
+        state.actualAmountS,
+        state.actualAmountB,
+        state.actualAmountFee,
+        state.outstandingAmountS,
+        state.outstandingAmountB,
+        state.outstandingAmountFee
+      ))
   } yield {
     if (result >= 1) Right(hash)
-    else Left(XPersistenceError.PERS_ERROR_UPDATE_FAILED)
+    else Left(XPersistenceError.PERS_ERR_UPDATE_FAILED)
   }
 
   def updateOrderStatus(
@@ -255,7 +220,7 @@ class OrderDalImpl()(
       db.run(query
         .filter(_.hash === hash)
         .map(c ⇒ (c.status, c.updatedAt))
-        .update(status, System.currentTimeMillis()))
+        .update(status, timeProvider.getTimeMillis))
     } else {
       db.run(query
         .filter(_.hash === hash)
@@ -264,17 +229,18 @@ class OrderDalImpl()(
     }
   } yield {
     if (result >= 1) Right(hash)
-    else Left(XPersistenceError.PERS_ERROR_UPDATE_FAILED)
+    else Left(XPersistenceError.PERS_ERR_UPDATE_FAILED)
   }
 
-  def queryOrderFilters(
+  private def queryOrderFilters(
     statuses: Set[XOrderStatus],
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     sinceId: Option[Long] = None,
-    tillId: Option[Long] = None
+    tillId: Option[Long] = None,
+    sortBy: Option[XOrderSortBy] = None
   ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.createdAt > 0l)
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
@@ -284,6 +250,14 @@ class OrderDalImpl()(
     if (feeTokenSet.nonEmpty) filters = filters.filter(_.feeToken inSet feeTokenSet)
     if (sinceId.nonEmpty) filters = filters.filter(_.validSince >= sinceId.get.toInt)
     if (tillId.nonEmpty) filters = filters.filter(_.validUntil >= tillId.get.toInt)
+    filters = sortBy match {
+      case Some(sort) ⇒ sort.sort match {
+        case XOrderSortBy.Sort.CreatedAt(value) ⇒ filters.sortBy(_.createdAt.desc)
+        case XOrderSortBy.Sort.UpdatedAt(value) ⇒ filters.sortBy(_.updatedAt.desc)
+        case _ ⇒ filters
+      }
+      case None ⇒ filters
+    }
     filters
   }
 
@@ -296,24 +270,16 @@ class OrderDalImpl()(
     feeTokenSet: Set[String] = Set.empty,
     sinceId: Option[Long] = None,
     tillId: Option[Long] = None,
-    sortedByUpdatedAt: Boolean = true
+    sortedBy: Option[XOrderSortBy] = None
   ): Future[Seq[XRawOrder]] = {
     if (num <= 0 || (statuses.isEmpty && owners.isEmpty && tokenSSet.isEmpty && tokenBSet.isEmpty
       && feeTokenSet.isEmpty && sinceId.isEmpty && tillId.isEmpty)) {
       Future.successful(Seq.empty)
     } else {
-      val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId)
-      if (sortedByUpdatedAt) {
-        db.run(filters
-          .sortBy(_.updatedAt.desc)
-          .take(num)
-          .result)
-      } else {
-        db.run(filters
-          .sortBy(_.createdAt.desc)
-          .take(num)
-          .result)
-      }
+      val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId, sortedBy)
+      db.run(filters
+        .take(num)
+        .result)
     }
   }
 
@@ -326,28 +292,18 @@ class OrderDalImpl()(
     feeTokenSet: Set[String],
     updatedSince: Option[Long],
     updatedUntil: Option[Long],
-    sortedByUpdatedAt: Boolean
+    sortedBy: Option[XOrderSortBy] = None
   ): Future[Seq[XRawOrder]] = {
     if (num <= 0 || updatedSince.isEmpty || updatedUntil.isEmpty || updatedUntil.get < 0 || updatedUntil.get < updatedSince.get
       || (statuses.isEmpty && owners.isEmpty && tokenSSet.isEmpty && tokenBSet.isEmpty && feeTokenSet.isEmpty)) {
       Future.successful(Seq.empty)
     } else {
-      val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, None, None)
-      if (sortedByUpdatedAt) {
-        db.run(filters
-          .filter(_.updatedAt >= updatedSince.get)
-          .filter(_.updatedAt <= updatedUntil.get)
-          .sortBy(_.updatedAt.desc)
-          .take(num)
-          .result)
-      } else {
-        db.run(filters
-          .filter(_.updatedAt >= updatedSince.get)
-          .filter(_.updatedAt <= updatedUntil.get)
-          .sortBy(_.createdAt.desc)
-          .take(num)
-          .result)
-      }
+      val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, None, None, sortedBy)
+      db.run(filters
+        .filter(_.updatedAt >= updatedSince.get)
+        .filter(_.updatedAt <= updatedUntil.get)
+        .take(num)
+        .result)
     }
   }
 
@@ -360,15 +316,9 @@ class OrderDalImpl()(
     sinceId: Option[Long] = None,
     tillId: Option[Long] = None
   ): Future[Int] = {
-    if (statuses.isEmpty && owners.isEmpty && tokenSSet.isEmpty && tokenBSet.isEmpty && feeTokenSet.isEmpty
-      && sinceId.isEmpty && tillId.isEmpty) {
-      Future.successful(0)
-    } else {
-      val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId)
-      db.run(filters
-        .sortBy(_.updatedAt.desc)
-        .size
-        .result)
-    }
+    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId, None)
+    db.run(filters
+      .size
+      .result)
   }
 }

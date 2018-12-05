@@ -14,32 +14,28 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.persistence.utils
 
-option java_multiple_files = true;
-package org.loopring.lightcone.proto.persistence;
+import java.sql.Timestamp
 
-import "core_data.proto";
-
-message Bar {
-    string  hash = 1;
-    string  a = 2;
-    string  b = 3;
-    bytes   c = 4;
-    int64   d = 5;
+trait TimeProvider {
+  def getTimeMillis(): Long
+  def getTimeSeconds(): Long = getTimeMillis / 1000
+  def getTimestamp() = new Timestamp(getTimeMillis)
 }
 
-enum XPersistenceError {
-    PERS_ERR_NONE       = 0;
-    PERS_ERR_INVALID_DATA = 1;
-    PERS_ERR_DUPLICATE_INSERT  = 2;
-    PERS_ERR_UPDATE_FAILED = 3;
-    PERS_ERR_INTERNAL = 4;
+final class SystemTimeProvider extends TimeProvider {
+  def getTimeMillis = System.currentTimeMillis()
 }
 
-message XOrderSortBy {
-    oneof sort {
-        bool created_at = 1;
-        bool updated_at = 2;
-    }
+final class DifferenceAssuredSystemTimeProvider extends TimeProvider {
+  private var lastTimestamp = 0L
+
+  def getTimeMillis = {
+    val now = System.currentTimeMillis
+    if (now > lastTimestamp) lastTimestamp = now
+    else lastTimestamp += 1
+
+    lastTimestamp
+  }
 }

@@ -72,7 +72,7 @@ class OrdersDalActor(
 
     case XGetOrdersByHashesReq(hashes) ⇒
       (for {
-        orders ← ordersDal.getOrders(hashes)
+        orders ← ordersDal.getOrdersByHash(hashes)
       } yield XGetOrdersByHashesRes(orders)) pipeTo sender
     case XGetOrderByHashReq(hash) ⇒
       (for {

@@ -18,7 +18,6 @@ package org.loopring.lightcone.persistence.base
 
 import slick.jdbc.MySQLProfile.api._
 import slick.ast.ColumnOption
-import scala.reflect.ClassTag
 import com.google.protobuf.ByteString
 
 abstract class BaseTable[T](tag: Tag, name: String)
@@ -34,18 +33,4 @@ abstract class BaseTable[T](tag: Tag, name: String)
     column[ByteString](name, options: _*)
 
   def id: slick.lifted.Rep[String]
-
-  implicit val byteStringColumnType: BaseColumnType[ByteString] =
-    MappedColumnType.base[ByteString, Array[Byte]](
-      bs ⇒ bs.toByteArray(),
-      bytes ⇒ ByteString.copyFrom(bytes)
-    )
-
-  protected def enumColumnType[T <: scalapb.GeneratedEnum: ClassTag](
-    enumCompanion: scalapb.GeneratedEnumCompanion[T]
-  ): BaseColumnType[T] =
-    MappedColumnType.base[T, Int](
-      enum ⇒ enum.value,
-      int ⇒ enumCompanion.fromValue(int)
-    )
 }
