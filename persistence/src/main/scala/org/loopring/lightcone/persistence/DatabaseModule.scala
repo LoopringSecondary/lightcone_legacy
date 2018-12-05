@@ -29,8 +29,8 @@ class DatabaseModule @Inject() (
     @Named("db-execution-context") val ec: ExecutionContext
 ) extends base.BaseDatabaseModule {
 
-  val orders: OrderDal = new OrderDalImpl()
-  val orderStates: OrderStateDal = new OrderStateDalImpl(this)
+  val orders: OrderDal = new OrderDalImpl(this)
+  val orderStates: OrderStateDal = new OrderStateDalImpl()
   val trades: TradeDal = new TradeDalImpl()
   val addresses: AddressDal = new AddressDalImpl()
   val tokenBalances: TokenBalanceDal = new TokenBalanceDalImpl()

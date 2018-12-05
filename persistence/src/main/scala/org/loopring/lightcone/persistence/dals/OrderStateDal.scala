@@ -28,6 +28,8 @@ import slick.lifted.Query
 import com.mysql.jdbc.exceptions.jdbc4._
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.persistence.DatabaseModule
+import slick.dbio.Effect
+import slick.sql.FixedSqlAction
 
 import scala.concurrent._
 import scala.util.{Failure, Success}
@@ -58,7 +60,9 @@ trait OrderStateDal
   // also, if the order is NEW, the status field needs to save as NEW
   // and the created_at and updated_at fileds should both be the current timestamp;
   // if the order already exists, no field should be changed.
-  def saveOrder(order: XOrderPersState): Future[Either[XPersistenceError, String]
+  def saveState(order: XOrderPersState): Future[Either[XPersistenceError, String]]
+
+  def saveStateDBIO(order: XOrderPersState): FixedSqlAction[Seq[String], NoStream, Effect.Write]
 
   // Returns orders with given hashes
   def getOrders(hashes: Seq[String]): Future[Seq[XOrderPersState]]
@@ -123,7 +127,6 @@ trait OrderStateDal
 }
 
 class OrderStateDalImpl()(
-    val databaseModule: BaseDatabaseModule,
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
@@ -131,7 +134,7 @@ class OrderStateDalImpl()(
   val query = TableQuery[OrderStateTable]
   def getRowHash(row: XOrderPersState) = row.hash
 
-  def saveOrder(order: XOrderPersState): Future[Either[XPersistenceError, String]] = {
+  def saveState(order: XOrderPersState): Future[Either[XPersistenceError, String]] = {
     if (order.hash.isEmpty || order.tokenS.isEmpty || order.tokenB.isEmpty
       || order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0) {
       Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
@@ -164,6 +167,10 @@ class OrderStateDalImpl()(
         )
       }
     }
+  }
+
+  def saveStateDBIO(order: XOrderPersState): FixedSqlAction[Seq[String], NoStream, Effect.Write] = {
+    query returning query.map(_.id) ++= Seq(order)
   }
 
   def getOrderByHash(hash: String): Future[Option[XRawOrder]] = {

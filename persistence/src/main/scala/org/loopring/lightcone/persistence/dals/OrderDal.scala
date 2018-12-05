@@ -122,8 +122,7 @@ trait OrderDal
   ): Future[Int]
 }
 
-class OrderDalImpl()(
-    val databaseModule: DatabaseModule,
+class OrderDalImpl(val databaseModule: BaseDatabaseModule)(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
@@ -131,19 +130,9 @@ class OrderDalImpl()(
   val query = TableQuery[OrderTable]
   def getRowHash(row: XRawOrder) = row.hash
 
-  //  implicit val StatusTypeMapper = MappedColumnType.base[XOrderStatus, Int](
-  //    s ⇒ s.value,
-  //    s ⇒ XOrderStatus.fromValue(s)
-  //  )
-  //
-  //  implicit val ByteStringTypeMapper = MappedColumnType.base[ByteString, String](
-  //    s ⇒ s.toStringUtf8,
-  //    s ⇒ ByteString.copyFrom(s, "utf-8")
-  //  )
-
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
     if (order.hash.isEmpty || order.version <= 0 || order.owner.isEmpty || order.tokenS.isEmpty || order.tokenB.isEmpty
-      || order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0 || order.state.nonEmpty) {
+      || order.amountS.isEmpty || order.amountB.isEmpty || order.validSince <= 0) {
       Future.successful(
         XSaveOrderResult(
           error = XPersistenceError.PERS_ERR_INVALID_DATA,
@@ -159,7 +148,7 @@ class OrderDalImpl()(
       )
       val a = (for {
         mainId <- query returning query.map(_.id) ++= Seq(order)
-        databaseModule.o
+        databaseModule.orderStates.saveStateDBIO()
         detailId <- module.addressDal.insertDBIO(address.copy(groupId = targetGroupId))
         _ <- if (tags.nonEmpty) module.addressTagDal.insertDBIOs(tags)
         else DBIOAction.successful(0)
