@@ -33,8 +33,7 @@ abstract class BaseTable[T](tag: Tag, name: String)
   def columnAmount(name: String, options: ColumnOption[ByteString]*) =
     column[ByteString](name, options: _*)
 
-  def id: slick.lifted.Rep[Long]
-  def hash: slick.lifted.Rep[String]
+  def id: slick.lifted.Rep[String]
 
   implicit val byteStringColumnType: BaseColumnType[ByteString] =
     MappedColumnType.base[ByteString, Array[Byte]](

@@ -18,6 +18,7 @@ package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.persistence._
 import org.loopring.lightcone.proto.core._
 import slick.jdbc.MySQLProfile.api._
@@ -25,7 +26,8 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
+trait OrderDal
+  extends BaseDalImpl[OrderTable, XRawOrder] {
 
   // Save a order to the database and returns the saved order and indicate
   // whether the order was perviously saved or not.
@@ -88,6 +90,20 @@ trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
     sortedByUpdatedAt: Boolean = true
   ): Future[Seq[XRawOrder]]
 
+  // Get some orders between updatedSince and updatedUntil. The orders are sorted by updated_at
+  // indicatd by the sortedByUpdatedAt param.
+  def getOrdersByUpdatedAt(
+    num: Int,
+    statuses: Set[XOrderStatus],
+    owners: Set[String] = Set.empty,
+    tokenSSet: Set[String] = Set.empty,
+    tokenBSet: Set[String] = Set.empty,
+    feeTokenSet: Set[String] = Set.empty,
+    updatedSince: Option[Long] = None,
+    updatedUntil: Option[Long] = None,
+    sortedByUpdatedAt: Boolean = true
+  ): Future[Seq[XRawOrder]]
+
   // Count the number of orders
   def countOrders(
     statuses: Set[XOrderStatus],
@@ -100,11 +116,11 @@ trait OrdersDal extends BaseDalImpl[OrderTable, XRawOrder] {
   ): Future[Int]
 }
 
-class OrdersDalImpl()(
+class OrderDalImpl()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
-) extends OrdersDal {
+) extends OrderDal {
   val query = TableQuery[OrderTable]
   def getRowHash(row: XRawOrder) = row.hash
 
@@ -134,6 +150,18 @@ class OrdersDalImpl()(
     sinceId: Option[Long] = None,
     tillId: Option[Long] = None,
     sortedByUpdatedAt: Boolean = true
+  ): Future[Seq[XRawOrder]] = ???
+
+  def getOrdersByUpdatedAt(
+    num: Int,
+    statuses: Set[XOrderStatus],
+    owners: Set[String],
+    tokenSSet: Set[String],
+    tokenBSet: Set[String],
+    feeTokenSet: Set[String],
+    updatedSince: Option[Long],
+    updatedUntil: Option[Long],
+    sortedByUpdatedAt: Boolean
   ): Future[Seq[XRawOrder]] = ???
 
   def countOrders(

@@ -14,22 +14,12 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.indexer
 
-option java_multiple_files = true;
-package org.loopring.lightcone.proto.persistence;
+// The Ethereum indexer
+object Main {
 
-import "core_data.proto";
+  def main(args: Array[String]): Unit = {
+  }
 
-message Bar {
-    string  hash = 1;
-    string  a = 2;
-    string  b = 3;
-    bytes   c = 4;
-    int64   d = 5;
-}
-
-enum XPersistenceError {
-    PERS_ERR_NONE       = 0;
-    PERS_ERR_INVALID_DATA = 1;
 }

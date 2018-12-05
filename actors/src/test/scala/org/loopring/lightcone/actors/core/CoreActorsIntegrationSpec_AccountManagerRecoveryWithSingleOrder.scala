@@ -17,8 +17,10 @@
 package org.loopring.lightcone.actors.core
 
 import akka.testkit.TestActorRef
+import akka.pattern._
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.persistence.OrdersDalActor
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
@@ -53,8 +55,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
       )
       var orderHashes = (0 to 6) map ("order" + _)
 
-      orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(Seq(
+      ordersDalActorProbe.expectQuery()
+      ordersDalActorProbe.replyWith(Seq(
         order.copy(hash = orderHashes(0))
       ))
 
@@ -66,8 +68,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
           info("----orderbook status after first XRecoverOrdersRes: " + a)
       }
 
-      orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(Seq(
+      ordersDalActorProbe.expectQuery()
+      ordersDalActorProbe.replyWith(Seq(
         order.copy(hash = orderHashes(1))
       ))
 
@@ -77,8 +79,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
         case a: XOrderbook ⇒
           info("----orderbook status after second XRecoverOrdersRes: " + a)
       }
-      orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(Seq())
+      ordersDalActorProbe.expectQuery()
+      ordersDalActorProbe.replyWith(Seq())
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 

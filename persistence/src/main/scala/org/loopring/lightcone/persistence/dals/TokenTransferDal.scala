@@ -16,7 +16,24 @@
 
 package org.loopring.lightcone.persistence.dals
 
-trait MarketConfigsDal {
+import org.loopring.lightcone.persistence.base._
+import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto.ethereum._
+import org.loopring.lightcone.proto.core._
+import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.JdbcProfile
+import slick.basic._
+import scala.concurrent._
+
+trait TokenTransferDal
+  extends BaseDalImpl[TokenTransferTable, XTokenTransferData] {
 
 }
 
+class TokenTransferDalImpl()(
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext
+) extends TokenTransferDal {
+  val query = TableQuery[TokenTransferTable]
+}
