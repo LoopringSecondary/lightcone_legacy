@@ -14,8 +14,19 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.gateway_bak.socketio
 
-object Main {
+case class EventBinding(
+    event: String,
+    interval: Long,
+    replyTo: String
+)
 
+class EventBindings(val bindings: Seq[EventBinding] = Nil) {
+  def add(event: String, interval: Long, replyTo: String): EventBindings =
+    add(EventBinding(event, interval, replyTo))
+
+  def add(binding: EventBinding): EventBindings =
+    new EventBindings(bindings :+ binding)
 }
+

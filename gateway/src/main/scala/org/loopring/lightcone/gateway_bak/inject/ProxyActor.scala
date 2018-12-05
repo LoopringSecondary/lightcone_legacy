@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.gateway_bak.inject
 
-object Main {
-
+trait ProxyActor {
+  def providerOf(name: String): ProxyActorProvider
 }

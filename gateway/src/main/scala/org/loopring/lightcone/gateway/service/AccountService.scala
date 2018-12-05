@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.gateway.service
 
-object Main {
+import akka.pattern._
+import org.loopring.lightcone.proto.actors._
+
+import scala.concurrent.Future
+
+trait AccountService {
+  self: ApiService ⇒
+
+  //todo：是否与actors等使用同一个proto，或者重新定义在gateway.proto
+  def getBalanceAndAllowance(req: XGetBalanceAndAllowancesReq): Future[XGetBalanceAndAllowancesRes] =
+    (self.entryPointActor ? req).mapTo[XGetBalanceAndAllowancesRes]
 
 }
