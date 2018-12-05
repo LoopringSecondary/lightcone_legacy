@@ -19,9 +19,10 @@ package org.loopring.lightcone.actors.ethereum
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
+import org.json4s.DefaultFormats
 import org.loopring.lightcone.proto.actors._
 
-import scala.concurrent.{ ExecutionContextExecutor, Future }
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util._
 
@@ -35,6 +36,8 @@ private[ethereum] class EthereumClientMonitor(
 )
   extends Actor
   with ActorLogging {
+
+  implicit val formats = DefaultFormats
 
   context.system.scheduler.schedule(
     0.seconds,

@@ -37,14 +37,14 @@ class EthereumServiceRouter(
       if (currentHeight >= req.height) {
         context.actorSelection(currentNode).forward(req.req)
       } else {
-        sender() ! XJsonRpcErr(message = "No accessible Ethereum node service")
+        sender ! XJsonRpcErr(message = "No accessible Ethereum node service")
       }
 
     case msg: XJsonRpcReq ⇒ {
       if (currentNode.nonEmpty) {
         context.actorSelection(currentNode).forward(msg)
       } else {
-        sender() ! XJsonRpcErr(message = "No accessible Ethereum node service")
+        sender ! XJsonRpcErr(message = "No accessible Ethereum node service")
       }
     }
 
@@ -52,7 +52,7 @@ class EthereumServiceRouter(
       if (currentNode.nonEmpty) {
         context.actorSelection(currentNode).forward(msg)
       } else {
-        sender() ! XJsonRpcErr(message = "No accessible Ethereum node service")
+        sender ! XJsonRpcErr(message = "No accessible Ethereum node service")
       }
     }
 
