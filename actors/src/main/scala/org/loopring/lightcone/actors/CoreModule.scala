@@ -86,9 +86,9 @@ class CoreModule(config: Config)
 
     val accountBalanceActor = system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
     actors.add(AccountBalanceActor.name, accountBalanceActor)
-    val orderStateActor = system.actorOf(Props(new OrderStateActor()), OrderStateActor.name)
-    actors.add(OrderStateActor.name, orderStateActor)
-    // TODO du:actor需要通过inject方式获取dbModule
+    // TODO hongyu:actor需要通过inject方式获取dbModule
+    // val orderStateActor = system.actorOf(Props(new OrderStateActor()), OrderStateActor.name)
+    // actors.add(OrderStateActor.name, orderStateActor)
     // val orderDalActor = system.actorOf(Props(new OrdersDalActor(dbModule.orders)), OrdersDalActor.name)
     // actors.add(OrdersDalActor.name, orderDalActor)
 

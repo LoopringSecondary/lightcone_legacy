@@ -23,8 +23,9 @@ import akka.pattern._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.persistence.dals.OrderStateDal
-import org.loopring.lightcone.proto.core.XOrderStatus
+import org.loopring.lightcone.proto.core.{ XOrderPersState, XOrderStatus }
 import org.loopring.lightcone.proto.persistence.XPersistenceError
+
 import scala.concurrent._
 
 object OrderStateActor {
@@ -61,12 +62,12 @@ class OrderStateActor(
           updatedSince = Some(updatedSince)
         )
       } yield XRecoverOrdersRes(orders)) pipeTo sender
+    //TODO hongyu:改成saveOrUpdate
     case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
       (stateOpt match {
-        case Some(state) ⇒ orderStateDal.updateOrderStatus(hash, state, changeUpdatedAtField)
+        case Some(state) ⇒ orderStateDal.saveOrUpdate(XOrderPersState())
         case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
       }) pipeTo sender
-
     case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
       orderStateDal.updateOrderStatus(hash, status, changeUpdatedAtField) pipeTo sender
   }

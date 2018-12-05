@@ -137,11 +137,10 @@ class OrderStateDalImpl()(
   def saveOrUpdate(order: XOrderPersState): Future[XSaveOrderStateResult] = for {
     _ ← Future.unit
     now = timeProvider.getTimeMillis
-    state = XOrderPersState.State(
+    state = order.state.getOrElse(XOrderPersState.State(
       createdAt = now,
-      updatedAt = now,
-      status = XOrderStatus.STATUS_NEW
-    )
+      updatedAt = now
+    ))
     r ← insertOrUpdate(order.copy(state = Some(state)))
   } yield {
     if (r == 1) {
@@ -169,7 +168,7 @@ class OrderStateDalImpl()(
     }
   }
 
-  def getOrder(hash: String): Future[Option[XOrderPersState]] = getOrders(Seq(hash)).map(_.headOption)
+  def getOrder(hash: String): Future[Option[XOrderPersState]] = db.run(query.filter(_.hash === hash).result.headOption)
 
   private def queryOrderFilters(
     statuses: Set[XOrderStatus],
@@ -213,7 +212,6 @@ class OrderStateDalImpl()(
   ): Future[Seq[XOrderPersState]] = {
     val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId, sortedBy)
     db.run(filters
-      .sortBy(_.updatedAt.desc)
       .take(num)
       .result)
   }
@@ -229,18 +227,12 @@ class OrderStateDalImpl()(
     updatedUntil: Option[Long],
     sortedBy: Option[XOrderSortBy] = None
   ): Future[Seq[XOrderPersState]] = {
-    if (num <= 0 || updatedSince.isEmpty || updatedUntil.isEmpty || updatedUntil.get < 0 || updatedUntil.get < updatedSince.get
-      || (statuses.isEmpty && owners.isEmpty && tokenSSet.isEmpty && tokenBSet.isEmpty && feeTokenSet.isEmpty)) {
-      Future.successful(Seq.empty)
-    } else {
-      val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, None, None, sortedBy)
-      db.run(filters
-        .filter(_.updatedAt >= updatedSince.get)
-        .filter(_.updatedAt <= updatedUntil.get)
-        .sortBy(_.updatedAt.desc)
-        .take(num)
-        .result)
-    }
+    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, None, None, sortedBy)
+    db.run(filters
+      .filter(_.updatedAt >= updatedSince.get)
+      .filter(_.updatedAt <= updatedUntil.get)
+      .take(num)
+      .result)
   }
 
   def countOrders(

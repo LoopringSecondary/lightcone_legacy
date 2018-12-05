@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import java.sql.BatchUpdateException
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto.actors._
@@ -28,7 +29,7 @@ import com.mysql.jdbc.exceptions.jdbc4._
 import scala.concurrent._
 import scala.util.{ Failure, Success }
 import org.loopring.lightcone.persistence.utils._
-import com.google.protobuf.ByteString
+import org.loopring.lightcone.proto.core.XRawOrder._
 
 trait OrderDal
   extends BaseDalImpl[OrderTable, XRawOrder] {
@@ -59,7 +60,7 @@ trait OrderDal
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult]
 
   // Returns orders with given hashes
-  def getOrdersByHash(hashes: Seq[String]): Future[Seq[XRawOrder]]
+  def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]]
   def getOrder(hash: String): Future[Option[XRawOrder]]
 }
 
@@ -81,31 +82,25 @@ class OrderDalImpl(val databaseModule: BaseDatabaseModule)(
       updatedAt = now,
       status = XOrderStatus.STATUS_NEW
     )
-    val feeParams = order.feeParams match {
-      case Some(v) ⇒ (v.tokenFee, v.amountFee, v.walletSplitPercentage)
-      case None    ⇒ ("", ByteString.EMPTY, 0)
-    }
-    val validUntil = order.params match {
-      case Some(v) ⇒ v.validUntil
-      case None    ⇒ 0
-    }
+    val feeParams = order.feeParams.getOrElse(FeeParams())
+    val validUntil = order.params.getOrElse(Params())
     val persState = XOrderPersState(
       hash = order.hash,
       tokenS = order.tokenS,
       tokenB = order.tokenB,
-      tokenFee = feeParams._1,
+      tokenFee = feeParams.tokenFee,
       amountS = order.amountS,
       amountB = order.amountB,
-      amountFee = feeParams._2,
+      amountFee = feeParams.amountFee,
       validSince = order.validSince,
-      validUntil = validUntil,
-      walletSplitPercentage = feeParams._3,
+      validUntil = validUntil.validUntil,
+      walletSplitPercentage = feeParams.walletSplitPercentage,
       state = Some(state)
     )
     val a = (for {
-      _ ← query ++= Seq(order)
+      raw ← query ++= Seq(order)
       state ← databaseModule.orderStates.saveDBIO(persState)
-    } yield state).transactionally
+    } yield (raw, state)).transactionally
     db.run(a.asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
         XSaveOrderResult(
@@ -113,6 +108,21 @@ class OrderDalImpl(val databaseModule: BaseDatabaseModule)(
           order = None,
           alreadyExist = true
         )
+      }
+      case Failure(e: BatchUpdateException) ⇒ {
+        if (e.getErrorCode == 1062) {
+          XSaveOrderResult(
+            error = XPersistenceError.PERS_ERR_DUPLICATE_INSERT,
+            order = None,
+            alreadyExist = true
+          )
+        } else {
+          XSaveOrderResult(
+            error = XPersistenceError.PERS_ERR_INTERNAL,
+            order = None,
+            alreadyExist = true
+          )
+        }
       }
       case Failure(ex) ⇒ {
         // TODO du: print some log
@@ -129,7 +139,7 @@ class OrderDalImpl(val databaseModule: BaseDatabaseModule)(
     }
   }
 
-  def getOrdersByHash(hashes: Seq[String]): Future[Seq[XRawOrder]] = {
+  def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]] = {
     if (hashes.isEmpty) {
       Future.successful(Seq.empty)
     } else {
@@ -137,5 +147,5 @@ class OrderDalImpl(val databaseModule: BaseDatabaseModule)(
     }
   }
 
-  def getOrder(hash: String): Future[Option[XRawOrder]] = getOrdersByHash(Seq(hash)).map(_.headOption)
+  def getOrder(hash: String): Future[Option[XRawOrder]] = db.run(query.filter(_.hash === hash).result.headOption)
 }
