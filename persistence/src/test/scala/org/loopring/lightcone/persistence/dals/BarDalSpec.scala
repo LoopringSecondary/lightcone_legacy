@@ -36,7 +36,6 @@ class BarDalSpec extends DalSpec[BarDal] {
 
     bar = Bar(hash = "hash", a = "b", b = "c", c = ByteString.copyFrom("d".getBytes), d = 12L)
     Await.result(dal.insertOrUpdate(bar), 5.second)
-
     Await.result(dal.take(10).map(_.map(println)), 5.second)
   }
 }
