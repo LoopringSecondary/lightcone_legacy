@@ -87,7 +87,7 @@ trait OrderStateDal
     sortedBy: Option[XOrderSortBy] = None
   ): Future[Seq[XOrderPersState]]
 
-  def getOrders(
+  def getRangeOrders(
     statuses: Set[XOrderStatus],
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
@@ -223,7 +223,7 @@ class OrderStateDalImpl()(
       .result)
   }
 
-  def getOrders(
+  def getRangeOrders(
     statuses: Set[XOrderStatus],
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,

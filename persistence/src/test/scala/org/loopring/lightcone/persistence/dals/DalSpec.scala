@@ -24,20 +24,42 @@ import slick.jdbc.meta._
 import slick.basic._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
+import com.wix.mysql.config.MysqldConfig
+import com.wix.mysql.EmbeddedMysql
+import com.wix.mysql.distribution.Version
+import com.wix.mysql.config.Charset.UTF8
+import java.util.concurrent.TimeUnit
 
 trait DalSpec[D <: BaseDal[_, _]] extends FlatSpec with Matchers with BeforeAndAfterAll {
   override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = true
   implicit val ec = ExecutionContext.global
+
+  val config: MysqldConfig = MysqldConfig.aMysqldConfig(Version.v5_7_latest)
+    .withCharset(UTF8)
+    .withPort(13300)
+    .withServerVariable("bind-address", "localhost")
+    .withUser("test", "test")
+    .withTimeout(2, TimeUnit.MINUTES)
+    .build()
+
+  val mysql: EmbeddedMysql = EmbeddedMysql.anEmbeddedMysql(config)
+    .addSchema("lightcone_test")
+    .start()
+
   implicit var dbConfig = DatabaseConfig.forConfig[JdbcProfile]("db_test")
   val dal: D
 
   override def beforeAll = {
     println(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
-    Await.result(dal.dropTable(), 5.second)
+    try {
+      Await.result(dal.dropTable(), 5.second)
+    } catch {
+      case _: Throwable ⇒
+    }
     Await.result(dal.createTable(), 5.second)
   }
 
   override def afterAll = {
-    dbConfig.db.close()
+    mysql.stop
   }
 }

@@ -117,7 +117,31 @@ class OrderStateDalSpec extends DalSpec[OrderStateDal] {
     } else {
       XOrderSortBy().withCreatedAt(true)
     }
-    val result = dal.getOrders(100, statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId, Some(sortBy))
+    val result = dal.getOrders(100, statuses, owners, tokenSSet, tokenBSet, feeTokenSet, Some(sortBy))
+    result onComplete {
+      case Success(r) ⇒ info("=== Success: " + r)
+      case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
+    }
+    val res = Await.result(result.mapTo[Seq[XOrderPersState]], 5.second)
+    res should not be empty
+  }
+
+  "getRangeOrders" must "get some orders" in {
+    // sbt persistence/'testOnly *OrdersDalSpec -- -z getOrders'
+    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_CANCELLED_BY_USER, XOrderStatus.STATUS_CANCELLED_LOW_BALANCE).toSet
+    val owners: Set[String] = Seq("0x11", "0x22").toSet
+    val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
+    val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
+    val feeTokenSet: Set[String] = Seq("0x11", "0x22").toSet
+    val sinceId: Option[Long] = Some(8000l)
+    val tillId: Option[Long] = Some(9000l)
+    val sortedByUpdatedAt: Boolean = true
+    val sortBy = if (sortedByUpdatedAt) {
+      XOrderSortBy().withUpdatedAt(true)
+    } else {
+      XOrderSortBy().withCreatedAt(true)
+    }
+    val result = dal.getRangeOrders(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId, Some(sortBy))
     result onComplete {
       case Success(r) ⇒ info("=== Success: " + r)
       case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
