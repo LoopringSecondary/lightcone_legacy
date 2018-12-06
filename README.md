@@ -3,6 +3,7 @@
 ## Compiling
 * Compile all, run `sbt test:compile`
 * Compile subproject, run `sbt $projectName/test:compile`
+> Make sure to use `test:compile` instead of `compile` so all tests compile.
 
 ## Testing
 * You need to install docker to run all tests
