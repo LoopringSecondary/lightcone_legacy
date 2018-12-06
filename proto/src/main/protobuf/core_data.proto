@@ -162,3 +162,42 @@ message XRingBatchContext {
     string transaction_origin       = 3;
     string miner_private_key        = 4;
 }
+
+message XAddressTransaction {
+    string from = 1;
+    string to = 2;
+    string tx_type = 3; // transfer
+    bytes amount = 4;
+    string token = 5;
+    int64  nonce = 6;
+    string block_hash = 7;
+    int64 block_height = 8;
+    string tx_hash = 9;
+    int64 timestamp = 10;
+    bytes gas_used = 11;
+    bytes gas_limit = 12;
+    string sender = 13; // tx发起方，标识gas消耗地址
+    int64 created_at = 14;
+    int64 updated_at = 15;
+}
+
+message XOrderTrade {
+    int64 id = 1;
+    string delegate_address = 2;
+    string owner = 3;
+    string order_hash = 4;
+    string ring_hash = 5;
+    int32 ring_index = 6;
+    string tx_hash = 7;
+    bytes  amount_s = 9;
+    bytes  amount_b = 10;
+    string token_s = 11;
+    string token_b = 12;
+    bytes amount_margin = 13;
+    bytes amount_fee = 14;
+    string token_fee = 15;
+    int64 created_at = 16;
+    int64 updated_at = 17;
+    int64 block_no = 18;
+    bool is_valid = 19;
+}
