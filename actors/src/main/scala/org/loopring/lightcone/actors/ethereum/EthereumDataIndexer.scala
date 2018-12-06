@@ -22,6 +22,7 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.proto.actors._
 
+import scala.annotation.tailrec
 import scala.util._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -56,7 +57,7 @@ class EthereumDataIndexer(
     case "start" ⇒ process()
   }
 
-  def process(): Unit = {
+  private def process(): Unit = {
     (ethereumConnectionActor ? XEthBlockNumberReq())
       .map {
         case XEthBlockNumberRes(_, _, result, None) ⇒
@@ -68,6 +69,7 @@ class EthereumDataIndexer(
                 } else {
                   handleFork(currentBlockNumber - 1)
                 }
+              case _ ⇒ process()
             }
           } else if (currentBlockNumber.equals(hex2BigInt(result))) {
             (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(currentBlockNumber))
@@ -79,11 +81,13 @@ class EthereumDataIndexer(
                   } else {
                     handleFork(currentBlockNumber - 1)
                   }
+                case _ ⇒ process()
               }
           } else {
             // 如果最新高度低于已处理的高度说明分叉了
             handleFork(result - 1)
           }
+        case _ ⇒ process()
       }
 
   }
