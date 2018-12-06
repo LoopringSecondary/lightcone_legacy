@@ -55,7 +55,7 @@ private[ethereum] class EthereumClientMonitor(
         params = None
       )
       import JsonRpcResWrapped._
-      Future.sequence(connectionPools.map { g ⇒
+      connectionPools.map { g ⇒
         for {
           blockNumResp: Int ← (g ? blockNumJsonRpcReq.toProto)
             .mapTo[XJsonRpcRes]
@@ -68,16 +68,8 @@ private[ethereum] class EthereumClientMonitor(
                 -1
             }
         } yield {
-          XNodeBlockHeight(path = g.path.toString, height = blockNumResp)
+          router ! XNodeBlockHeight(path = g.path.toString, height = blockNumResp)
         }
-      }).onComplete {
-        case Success(nodes) ⇒
-          val accessibleNodes = nodes.filter(_.height < 0).sortWith(_.height > _.height)
-          router ! accessibleNodes.head
-
-        case Failure(e) ⇒
-          log.error(s"check Ethereum node height failed: ${e.getMessage}")
-          router ! XNodeBlockHeight()
       }
   }
   def anyHexToInt: PartialFunction[Any, Int] = {

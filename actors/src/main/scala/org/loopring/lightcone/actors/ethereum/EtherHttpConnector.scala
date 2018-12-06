@@ -239,7 +239,7 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
         XBatchContractCallRes(resps = callResps)
       } pipeTo sender
 
-    case batchR:XBatchGetTransactionReceiptsReq ⇒
+    case batchR: XBatchGetTransactionReceiptsReq ⇒
       val batchReqs = batchR.reqs.map { singleReq ⇒
         BatchMethod(
           method = "eth_getTransactionReceipt",
@@ -256,7 +256,7 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
         XBatchGetTransactionReceiptsRes(resps = receiptResps)
       } pipeTo sender
 
-    case batchR:XBatchGetTransactionsReq ⇒
+    case batchR: XBatchGetTransactionsReq ⇒
       val batchReqs = batchR.reqs.map { singleReq ⇒
         BatchMethod(
           method = "eth_getTransactionByHash",
