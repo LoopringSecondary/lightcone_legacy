@@ -1,8 +1,8 @@
 # lightcone
 
 ## Compiling
-* Compile all, run `sbt compile`
-* Compile subproject, run `sbt $projectName/compile`
+* Compile all, run `sbt test:compile`
+* Compile subproject, run `sbt $projectName/test:compile`
 
 ## Testing
 * You need to install docker to run all tests
