@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.gateway.service
 
-object Main {
+import akka.pattern._
+import org.loopring.lightcone.proto.actors._
+
+import scala.concurrent.Future
+
+trait OrderService {
+  self: ApiService ⇒
+
+  //是否需要验证操作
+  def submitOrder(req: XSubmitOrderReq): Future[XSubmitOrderRes] =
+    (self.entryPointActor ? req).mapTo[XSubmitOrderRes]
 
 }

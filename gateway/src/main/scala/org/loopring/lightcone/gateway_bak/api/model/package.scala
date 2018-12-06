@@ -14,8 +14,25 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.gateway_bak.api
 
-object Main {
+package object model {
 
+  case class TokenSpendables(
+      symbol: String,
+      balance: String,
+      allowance: String
+  )
+
+  // QUESTION(Doan): 是不是要加一个token的列表？
+  case class TokenSpendablesReq(
+      owner: String,
+      delegateAddress: String
+  )
+
+  case class TokenSpendablesResp(
+      owner: String,
+      delegateAddress: String,
+      tokens: Seq[TokenSpendables]
+  )
 }

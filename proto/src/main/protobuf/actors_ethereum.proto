@@ -39,8 +39,19 @@ message XCheckBlockHeightResp {
     int32 height_block = 2;
 }
 
+message XNodeBlockHeight{
+    string path = 1;
+    int32 height = 2;
+}
+
+
 message XJsonRpcReq {
     string json = 1;
+}
+
+message XRpcReqWithHeight{
+    XJsonRpcReq req = 1;
+    uint32 height = 2;
 }
 
 message XJsonRpcErr {

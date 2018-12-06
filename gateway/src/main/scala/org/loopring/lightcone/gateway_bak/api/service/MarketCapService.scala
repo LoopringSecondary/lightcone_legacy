@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.gateway_bak.api.service
 
-object Main {
+import scala.concurrent.Future
 
+trait MarketCapService {
+  def getPriceQuote(orderHash: String): Future[String]
 }
