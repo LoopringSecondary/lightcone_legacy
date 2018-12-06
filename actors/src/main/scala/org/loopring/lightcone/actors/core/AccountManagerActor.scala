@@ -33,6 +33,7 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 
 import scala.concurrent._
+import scala.concurrent.duration._
 
 object AccountManagerActor {
   val name = "account_manager"
@@ -63,7 +64,7 @@ object AccountManagerActor {
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = "AccountManagerActor",
-      entityProps = Props(new AccountManagerActor(actors, recoverBatchSize, skipRecovery)),
+      entityProps = Props(new AccountManagerActor(actors)),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -72,9 +73,7 @@ object AccountManagerActor {
 }
 
 class AccountManagerActor(
-    val actors: Lookup[ActorRef],
-    val recoverBatchSize: Int,
-    val skipRecovery: Boolean = false
+    val actors: Lookup[ActorRef]
 )(
     implicit
     val ec: ExecutionContext,
@@ -82,32 +81,28 @@ class AccountManagerActor(
     val dustEvaluator: DustOrderEvaluator
 )
   extends Actor
-  with ActorLogging
-  with OrderRecoverySupport {
+  with ActorLogging {
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
-  private var address: String = _
+  private var address: String = _ //todo:创建该actor的请求中的地址
+  private var recoveryEnd: Boolean = false //todo:创建该actor后，是否已经恢复过，否则先执行恢复逻辑，这期间的消息都放到stash中
 
-  protected def ordersDalActor = actors.get(OrdersDalActor.name)
+  protected def ordersRecoveryActor = actors.get(OrdersRecoveryActor.name)
+  protected def ordersDalActor = actors.get(OrdersDalActor.name) //todo:订单的更新、余额引起的取消等都需要写入数据库
   protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
   protected def orderHistoryActor = actors.get(OrderStateActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
+  protected def accountManagerMonitor = actors.get(AccountManagerMonitorActor.name)
 
-  def receive: Receive = {
-    case XStart(shardEntityId) ⇒ {
-      address = shardEntityId
-      val recoverySettings = XOrderRecoverySettings(
-        skipRecovery,
-        recoverBatchSize,
-        address,
-        None
-      )
-      startOrderRecovery(recoverySettings)
-    }
-  }
+  context.system.scheduler.schedule(
+    100 millis,
+    10000 millis,
+    accountManagerMonitor,
+    XHeatbeat()
+  )
 
-  def functional: Receive = LoggingReceive {
+  def receive: Receive = LoggingReceive {
 
     case XGetBalanceAndAllowancesReq(addr, tokens) ⇒
       assert(addr == address)
@@ -127,10 +122,8 @@ class AccountManagerActor(
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).pipeTo(sender)
 
-    case XSubmitOrderReq(Some(xorder)) ⇒ {
-      println("### accountXSubmitOrderReq")
+    case XSubmitOrderReq(Some(xorder)) ⇒
       submitOrder(xorder).pipeTo(sender)
-    }
 
     case req: XCancelOrderReq ⇒
       if (manager.cancelOrder(req.id)) {

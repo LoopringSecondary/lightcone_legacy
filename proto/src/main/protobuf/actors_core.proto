@@ -253,6 +253,8 @@ message XUpdatedTokenBurnRate {
     double burnRate = 2;
 }
 
+message XHeatbeat{}
+
 /// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
 /// 解析合约事件得到下面的数据：
 message XOrderFilled {

@@ -93,51 +93,39 @@ class MarketManagerActor(
     val tokenMetadataManager: TokenMetadataManager
 )
   extends Actor
-  with ActorLogging
-  with OrderRecoverySupport {
+  with ActorLogging {
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
 
-  private var marketId: XMarketId = _
+  private var marketId: XMarketId = _ //todo:每次被请求创建的请求中的marketid
+  private var recoveryEnd: Boolean = false //todo:创建该actor后，是否已经恢复过，否则先执行恢复逻辑，这期间的消息都放到stash中
 
   private val ringMatcher = new RingMatcherImpl()
   private val pendingRingPool = new PendingRingPoolImpl()
 
   private var manager: MarketManager = _
 
-  protected def ordersDalActor = actors.get(OrdersDalActor.name)
+  protected def ordersRecoveryActor = actors.get(OrdersRecoveryActor.name)
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   protected def settlementActor = actors.get(SettlementActor.name)
 
-  def receive: Receive = {
-    case XStart(shardEntityId) ⇒ {
-      val tokens = shardEntityId.split("-")
-      marketId = XMarketId(tokens(0), tokens(1))
-      implicit val marketId_ = marketId
-      implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-        config.priceDecimals
-      )
-      manager = new MarketManagerImpl(
-        marketId,
-        config,
-        tokenMetadataManager,
-        ringMatcher,
-        pendingRingPool,
-        dustOrderEvaluator,
-        aggregator
-      )
-      val recoverySettings = XOrderRecoverySettings(
-        skipRecovery,
-        config.recoverBatchSize,
-        "",
-        Some(marketId)
-      )
-      startOrderRecovery(recoverySettings)
-    }
-  }
+  //todo:需要marketid初始化执行该动作
+  implicit val marketId_ = marketId
+  implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
+    config.priceDecimals
+  )
+  manager = new MarketManagerImpl(
+    marketId,
+    config,
+    tokenMetadataManager,
+    ringMatcher,
+    pendingRingPool,
+    dustOrderEvaluator,
+    aggregator
+  )
 
-  def functional: Receive = LoggingReceive {
+  def receive: Receive = LoggingReceive {
 
     case XSubmitOrderReq(Some(xorder)) ⇒
       submitOrder(xorder)

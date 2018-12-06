@@ -33,7 +33,7 @@ trait OrderRecoverySupport {
   var recoverySettings: XOrderRecoverySettings = _
   private var processed = 0
 
-  protected def ordersDalActor: ActorRef
+  protected def ordersRecoveryActor: ActorRef
 
   protected def recoverOrder(xorder: XOrder): Future[Any]
 
@@ -51,7 +51,7 @@ trait OrderRecoverySupport {
     } else {
       context.become(recovering)
       log.info(s"actor recovering started: ${self.path}")
-      ordersDalActor ! XRecoverOrdersReq(
+      ordersRecoveryActor ! XRecoverOrdersReq(
         recoverySettings.orderOwner,
         recoverySettings.marketId,
         0L,
@@ -75,10 +75,19 @@ trait OrderRecoverySupport {
 
     case _: XRecoverNextOrder ⇒
       //不为空，并且已经发送完成了，才会变为正常的接受订单
-      if (xordersToRecover.isEmpty && recoverEnded) {
-        log.info(s"recovering completed with $processed orders")
-        context.become(functional)
-      } else if (xordersToRecover.nonEmpty) {
+      if (xordersToRecover.isEmpty) {
+        if (!recoverEnded) {
+          ordersRecoveryActor ! XRecoverOrdersReq(
+            recoverySettings.orderOwner,
+            recoverySettings.marketId,
+            lastUpdatdTimestamp,
+            recoverySettings.batchSize
+          )
+        } else {
+          log.info(s"recovering completed with $processed orders")
+          context.become(functional)
+        }
+      } else {
         for {
           _ ← recoverOrder(xordersToRecover.dequeue())
         } yield {
