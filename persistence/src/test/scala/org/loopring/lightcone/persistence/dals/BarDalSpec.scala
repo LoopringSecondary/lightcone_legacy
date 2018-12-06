@@ -28,7 +28,7 @@ import scala.concurrent._
 import org.loopring.lightcone.persistence.base._
 
 class BarDalSpec extends DalSpec[BarDal] {
-  val dal = new BarDalImpl()
+  def getDal = new BarDalImpl()
 
   "BarsDal" must "create table and index correctly" in {
     var bar = Bar(hash = "hash", a = "b", b = "c", c = ByteString.copyFrom("d".getBytes), d = 12L)

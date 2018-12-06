@@ -11,6 +11,8 @@ object Dependencies {
     "org.scalatest" %% "scalatest" % "3.0.5" % Test,
     "org.scalamock" %% "scalamock" % "4.1.0" % Test,
     "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
+    "com.dimafeng" %% "testcontainers-scala" % "0.21.0" % Test,
+    "org.testcontainers" % "mysql" % "1.10.1" % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test)
 
@@ -54,7 +56,6 @@ object Dependencies {
   lazy val driverDependency = Seq(
     "com.github.etaty" %% "rediscala" % "1.8.0",
     "com.lightbend.akka" %% "akka-stream-alpakka-slick" % "0.20",
-    "com.wix" % "wix-embedded-mysql" % "4.2.0",
     "mysql" % "mysql-connector-java" % "5.1.47")
 
   lazy val scalapbDependency = Seq(
