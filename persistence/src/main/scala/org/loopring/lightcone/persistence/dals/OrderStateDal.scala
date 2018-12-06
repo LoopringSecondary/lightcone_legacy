@@ -130,6 +130,17 @@ trait OrderStateDal
     status: XOrderStatus,
     changeUpdatedAtField: Boolean = true
   ): Future[Either[XPersistenceError, String]]
+
+  def updateFailed(
+    hash: String,
+    status: XOrderStatus
+  ): Future[Either[XPersistenceError, String]]
+
+  def updateAmount(
+    hash: String,
+    state: XOrderPersState.State,
+    changeUpdatedAtField: Boolean = true
+  ): Future[Either[XPersistenceError, String]]
 }
 
 class OrderStateDalImpl()(
@@ -287,6 +298,82 @@ class OrderStateDalImpl()(
         .filter(_.hash === hash)
         .map(_.status)
         .update(status))
+    }
+  } yield {
+    if (result >= 1) Right(hash)
+    else Left(XPersistenceError.PERS_ERR_UPDATE_FAILED)
+  }
+
+  def updateFailed(
+    hash: String,
+    status: XOrderStatus
+  ): Future[Either[XPersistenceError, String]] = for {
+    _ ← Future.unit
+    failedStatus = Seq(
+      XOrderStatus.STATUS_CANCELLED_BY_USER,
+      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE,
+      XOrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE,
+      XOrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
+      XOrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
+    )
+    result ← if (!failedStatus.contains(status)) {
+      Future.successful(0)
+    } else {
+      db.run(query
+        .filter(_.hash === hash)
+        .map(c ⇒ (c.status, c.updatedAt))
+        .update(status, timeProvider.getTimeMillis))
+    }
+  } yield {
+    if (result >= 1) Right(hash)
+    else Left(XPersistenceError.PERS_ERR_UPDATE_FAILED)
+  }
+
+  def updateAmount(
+    hash: String,
+    state: XOrderPersState.State,
+    changeUpdatedAtField: Boolean = true
+  ): Future[Either[XPersistenceError, String]] = for {
+    result ← if (changeUpdatedAtField) {
+      db.run(query
+        .filter(_.hash === hash)
+        .map(c ⇒ (
+          c.actualAmountS,
+          c.actualAmountB,
+          c.actualAmountFee,
+          c.outstandingAmountS,
+          c.outstandingAmountB,
+          c.outstandingAmountFee,
+          c.updatedAt
+        ))
+        .update(
+          state.actualAmountS,
+          state.actualAmountB,
+          state.actualAmountFee,
+          state.outstandingAmountS,
+          state.outstandingAmountB,
+          state.outstandingAmountFee,
+          timeProvider.getTimeMillis
+        ))
+    } else {
+      db.run(query
+        .filter(_.hash === hash)
+        .map(c ⇒ (
+          c.actualAmountS,
+          c.actualAmountB,
+          c.actualAmountFee,
+          c.outstandingAmountS,
+          c.outstandingAmountB,
+          c.outstandingAmountFee
+        ))
+        .update(
+          state.actualAmountS,
+          state.actualAmountB,
+          state.actualAmountFee,
+          state.outstandingAmountS,
+          state.outstandingAmountB,
+          state.outstandingAmountFee
+        ))
     }
   } yield {
     if (result >= 1) Right(hash)
