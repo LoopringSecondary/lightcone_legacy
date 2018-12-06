@@ -27,7 +27,6 @@ lazy val core = (project in file("core"))
   .dependsOn(proto)
   .settings(
     basicSettings,
-
     libraryDependencies ++= dependency4Core)
   .dependsOn(proto)
 
