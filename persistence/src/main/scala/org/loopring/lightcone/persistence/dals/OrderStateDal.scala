@@ -84,6 +84,15 @@ trait OrderStateDal
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
+    sortedBy: Option[XOrderSortBy] = None
+  ): Future[Seq[XOrderPersState]]
+
+  def getOrders(
+    statuses: Set[XOrderStatus],
+    owners: Set[String] = Set.empty,
+    tokenSSet: Set[String] = Set.empty,
+    tokenBSet: Set[String] = Set.empty,
+    feeTokenSet: Set[String] = Set.empty,
     sinceId: Option[Long] = None,
     tillId: Option[Long] = None,
     sortedBy: Option[XOrderSortBy] = None
@@ -186,8 +195,8 @@ class OrderStateDalImpl()(
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
     if (tokenBSet.nonEmpty) filters = filters.filter(_.tokenB inSet tokenBSet)
     if (feeTokenSet.nonEmpty) filters = filters.filter(_.tokenFee inSet feeTokenSet)
-    if (sinceId.nonEmpty) filters = filters.filter(_.validSince >= sinceId.get.toInt)
-    if (tillId.nonEmpty) filters = filters.filter(_.validUntil >= tillId.get.toInt)
+    if (sinceId.nonEmpty) filters = filters.filter(_.sequenceId >= sinceId.get)
+    if (tillId.nonEmpty) filters = filters.filter(_.sequenceId <= tillId.get)
     filters = sortBy match {
       case Some(sort) ⇒ sort.sort match {
         case XOrderSortBy.Sort.CreatedAt(value) ⇒ filters.sortBy(_.createdAt.desc)
@@ -206,13 +215,26 @@ class OrderStateDalImpl()(
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
+    sortedBy: Option[XOrderSortBy] = None
+  ): Future[Seq[XOrderPersState]] = {
+    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, None, None, sortedBy)
+    db.run(filters
+      .take(num)
+      .result)
+  }
+
+  def getOrders(
+    statuses: Set[XOrderStatus],
+    owners: Set[String] = Set.empty,
+    tokenSSet: Set[String] = Set.empty,
+    tokenBSet: Set[String] = Set.empty,
+    feeTokenSet: Set[String] = Set.empty,
     sinceId: Option[Long] = None,
     tillId: Option[Long] = None,
     sortedBy: Option[XOrderSortBy] = None
   ): Future[Seq[XOrderPersState]] = {
     val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, sinceId, tillId, sortedBy)
     db.run(filters
-      .take(num)
       .result)
   }
 

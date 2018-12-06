@@ -155,6 +155,7 @@ message XOrderPersState {
     int32  valid_until             = 10;
     double wallet_split_percentage = 11;
     State state = 12;
+    int64 sequence_id   = 13;
 }
 
 message XRingBatch {

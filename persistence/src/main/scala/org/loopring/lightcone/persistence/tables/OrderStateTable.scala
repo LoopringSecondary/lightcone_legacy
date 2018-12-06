@@ -27,7 +27,7 @@ class OrderStateTable(tag: Tag)
   implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
 
   def id = hash
-  def hash = columnHash("hash", O.PrimaryKey)
+  def hash = columnHash("hash", O.Unique)
   def owner = columnAddress("owner")
   def tokenS = columnAddress("token_s")
   def tokenB = columnAddress("token_b")
@@ -51,6 +51,7 @@ class OrderStateTable(tag: Tag)
   def actualAmountS = columnAmount("actual_amount_s")
   def actualAmountB = columnAmount("actual_amount_b")
   def actualAmountFee = columnAmount("actual_amount_fee")
+  def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
 
   // indexes
   def idx_hash = index("idx_hash", (hash), unique = true)
@@ -98,7 +99,8 @@ class OrderStateTable(tag: Tag)
     validSince,
     validUntil,
     walletSplitPercentage,
-    stateProjection
+    stateProjection,
+    sequenceId
   ) <> ((XOrderPersState.apply _).tupled, XOrderPersState.unapply)
 }
 
