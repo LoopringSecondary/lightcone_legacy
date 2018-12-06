@@ -20,10 +20,8 @@ import com.google.inject.Guice
 import com.typesafe.config.ConfigFactory
 
 object Main {
-
   def main(args: Array[String]): Unit = {
     val config = ConfigFactory.load()
     val injector = Guice.createInjector(new CoreModule(config))
   }
-
 }
