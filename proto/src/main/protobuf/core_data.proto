@@ -196,10 +196,10 @@ message XOrderTrade {
     message Fees {
         string token_fee               = 1;
         bytes  amount_fee              = 2;
-        string amount_s_token          = 3;
-        bytes  amount_s_fee            = 4;
-        string amount_b_token          = 5;
-        bytes  amount_b_fee            = 6;
+        string token_amount_s          = 3;
+        bytes  fee_amount_s            = 4;
+        string token_amount_b          = 5;
+        bytes  fee_amount_b            = 6;
         string fee_recipient = 7;
     }
     int64 id = 1;
