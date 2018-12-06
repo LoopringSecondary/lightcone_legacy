@@ -20,8 +20,8 @@ import akka.actor._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core._
 
+import scala.collection.mutable.Queue
 import scala.concurrent._
 
 trait OrderRecoverySupport {
@@ -41,7 +41,7 @@ trait OrderRecoverySupport {
 
   private var lastUpdatdTimestamp: Long = 0
   private var recoverEnded: Boolean = false
-  private var xordersToRecover: Seq[XOrder] = Nil
+  private var xordersToRecover = Queue.empty[XOrder]
 
   protected def startOrderRecovery(settings: XOrderRecoverySettings) = {
     recoverySettings = settings
@@ -67,34 +67,23 @@ trait OrderRecoverySupport {
       log.info(s"recovering next ${size} orders")
       processed += size
 
-      xordersToRecover = xraworders.map(xRawOrderToXOrder).toList
+      xordersToRecover ++= xraworders.map(xRawOrderToXOrder)
       lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
       recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverySettings.batchSize
 
       self ! XRecoverNextOrder()
 
     case _: XRecoverNextOrder ⇒
-      xordersToRecover match {
-        case head :: tail ⇒ for {
-          _ ← recoverOrder(head)
+      //不为空，并且已经发送完成了，才会变为正常的接受订单
+      if (xordersToRecover.isEmpty && recoverEnded) {
+        log.info(s"recovering completed with $processed orders")
+        context.become(functional)
+      } else if (xordersToRecover.nonEmpty) {
+        for {
+          _ ← recoverOrder(xordersToRecover.dequeue())
         } yield {
-          xordersToRecover = tail
           self ! XRecoverNextOrder()
         }
-
-        case Nil ⇒
-          if (!recoverEnded) {
-            ordersDalActor ! XRecoverOrdersReq(
-              recoverySettings.orderOwner,
-              recoverySettings.marketId,
-              lastUpdatdTimestamp,
-              recoverySettings.batchSize
-            )
-          } else {
-            log.info(s"recovering completed with $processed orders")
-            context.become(functional)
-          }
-        case _ ⇒ log.info(s"not match xorders: ${xordersToRecover.getClass.getName}")
       }
 
     case msg ⇒
