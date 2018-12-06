@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.gateway_bak.api.service
 
-object Main {
+import org.loopring.lightcone.gateway_bak.api.model._
+import scala.concurrent.Future
 
+trait TokenSpendablesService {
+  def getSpendables(req: TokenSpendablesReq): Future[TokenSpendablesResp]
 }

@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.gateway.service
 
-object Main {
+trait MarketService {
+  self: ApiService ⇒
+
+  def getAllMarkets() = ???
 
 }
