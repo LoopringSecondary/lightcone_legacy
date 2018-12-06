@@ -9,7 +9,6 @@ lazy val proto = (project in file("proto"))
       scalapb.gen(flatPackage = true) -> (sourceManaged in Compile).value))
 
 lazy val ethereum = (project in file("ethereum"))
-  .enablePlugins(JavaAppPackaging)
   .enablePlugins(AutomateHeaderPlugin)
   .dependsOn(proto)
   .settings(
@@ -17,7 +16,6 @@ lazy val ethereum = (project in file("ethereum"))
     libraryDependencies ++= dependency4Ethereum)
 
 lazy val persistence = (project in file("persistence"))
-  .enablePlugins(JavaAppPackaging)
   .enablePlugins(AutomateHeaderPlugin)
   .dependsOn(proto, ethereum)
   .settings(
@@ -29,19 +27,22 @@ lazy val core = (project in file("core"))
   .dependsOn(proto)
   .settings(
     basicSettings,
+
     libraryDependencies ++= dependency4Core)
   .dependsOn(proto)
 
 lazy val actors = (project in file("actors"))
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(DockerComposePlugin)
+  .enablePlugins(sbtdocker.DockerPlugin)
+  .enablePlugins(JavaServerAppPackaging)
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
   .dependsOn(proto, core, persistence)
   .settings(
-    parallelExecution in Test := false,
     basicSettings,
+    dockerSettings,
     libraryDependencies ++= dependency4Actors)
 
 lazy val indexer = (project in file("indexer"))
@@ -51,7 +52,6 @@ lazy val indexer = (project in file("indexer"))
   .settings(multiJvmSettings: _*)
   .dependsOn(ethereum, persistence)
   .settings(
-    parallelExecution in Test := false,
     basicSettings,
     libraryDependencies ++= dependency4Indexer)
 
