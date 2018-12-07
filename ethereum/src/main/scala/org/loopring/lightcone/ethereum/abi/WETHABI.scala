@@ -54,9 +54,7 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
   }
 
   override def unpackFunctionInput(data: Array[Byte]): Any = {
-    val hexData = Numeric.toHexStringNoPrefix(data)
-    val funSig = Numeric.hexStringToByteArray(hexData.substring(0, 8))
-    val func = abi.findFunction(searchBySignature(funSig))
+    val func = abi.findFunction(searchBySignature(data.toSeq.take(4).toArray))
 
     func.name match {
       case TransferFunction.name ⇒

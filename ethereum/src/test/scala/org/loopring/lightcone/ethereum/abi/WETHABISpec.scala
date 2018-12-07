@@ -30,15 +30,15 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   "encodeDepositFunction" should "encode class Parms of deposit function to  input" in {
     val parms = DepositFunction.Parms()
     val input = weth.deposit.pack(parms)
-    info(Numeric.toHexString(input))
-    Numeric.toHexString(input) should be("0xd0e30db0")
+    info(input)
+    input should be("0xd0e30db0")
   }
 
   "encodeWithdrawFunction" should "encode class Parms of withdraw function to  input" in {
     val parms = WithdrawFunction.Parms(wad = BigInt("29558242000000000000000"))
     val input = weth.withdraw.pack(parms)
-    info(Numeric.toHexString(input))
-    Numeric.toHexString(input) should be("0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000")
+    info(input)
+    input should be("0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000")
   }
 
   "decodeDepositEvent" should "decode event data and assemble to class Deposit" in {
@@ -68,7 +68,7 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     }
   }
 
-  "decodeEvent" should "decode event data and assemble to class Deposit" in {
+  "decodeEventOfDeposit" should "decode event data and assemble to class Deposit" in {
     val data = Numeric.hexStringToByteArray("0x0000000000000000000000000000000000000000000000000de0b6b3a7640000")
     val topics = Array(
       Numeric.hexStringToByteArray("0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c"),
@@ -84,7 +84,7 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     }
   }
 
-  "decodeFunction" should "decode event data and assemble to class Withdraw" in {
+  "decodeFunctionOfWithdrawal" should "decode event data and assemble to class Withdraw" in {
     val data = Numeric.hexStringToByteArray("0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000")
     val withdrawOpt = weth.unpackFunctionInput(data)
     info(withdrawOpt.toString)

@@ -30,8 +30,8 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   "encodeTransferFunction" should "encode class Parms of transfer function to  input" in {
     val parms = TransferFunction.Parms(to = "0xf105c622edc68b9e4e813e631cb534940f5cc509", amount = BigInt("29558242000000000000000"))
     val input = erc20abi.transfer.pack(parms)
-    info(Numeric.toHexString(input))
-    Numeric.toHexString(input) should be("0xa9059cbb000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc5090000000000000000000000000000000000000000000006425b02acb8d7bd0000")
+    info(input)
+    input should be("0xa9059cbb000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc5090000000000000000000000000000000000000000000006425b02acb8d7bd0000")
   }
 
   "decodeTransferFunction" should "decode function input and assemble to class Transfer" in {
@@ -64,8 +64,8 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   "encodeApproveFunction" should "encode class Parms of approve function to  input" in {
     val parms = ApproveFunction.Parms(spender = "0x8fd3121013a07c57f0d69646e86e7a4880b467b7", amount = BigInt("90071992547409900000000000"))
     val input = erc20abi.approve.pack(parms)
-    info(Numeric.toHexString(input))
-    Numeric.toHexString(input) should be("0x095ea7b30000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b70000000000000000000000000000000000000000004a817c7ffffffb57e83800")
+    info(input)
+    input should be("0x095ea7b30000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b70000000000000000000000000000000000000000004a817c7ffffffb57e83800")
   }
 
   //
@@ -85,15 +85,15 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   "encodeBalanceOfFunction" should "encode class Parms of balaceOf function to  input" in {
     val parms = BalanceOfFunction.Parms(_owner = "0x8fd3121013a07c57f0d69646e86e7a4880b467b7")
     val input = erc20abi.balanceOf.pack(parms)
-    info(Numeric.toHexString(input))
-    Numeric.toHexString(input) should be("0x70a082310000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7")
+    info(input)
+    input should be("0x70a082310000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7")
   }
 
   "encodeAllowanceFunction" should "encode class Parms of allowance function to  input" in {
     val parms = AllowanceFunction.Parms(_owner = "0x8fd3121013a07c57f0d69646e86e7a4880b467b7", _spender = "0xf105c622edc68b9e4e813e631cb534940f5cc509")
     val input = erc20abi.allowance.pack(parms)
-    info(Numeric.toHexString(input))
-    Numeric.toHexString(input) should be("0xdd62ed3e0000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc509")
+    info(input)
+    input should be("0xdd62ed3e0000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc509")
   }
 
   "decodeApproveEvent" should "decode event data and assemble to class Approve" in {

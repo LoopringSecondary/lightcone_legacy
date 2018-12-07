@@ -32,9 +32,9 @@ trait AbiFunction[P, R] {
   val entry: SABI.Function
 
   //与原函数区分，使用pack与unpack
-  def pack(t: P)(implicit mf: Manifest[P]): Array[Byte] = {
+  def pack(t: P)(implicit mf: Manifest[P]): String = {
     val inputs = Serialization.serialize(t)
-    entry.encode(inputs: _*)
+    Numeric.toHexString(entry.encode(inputs: _*))
   }
 
   def unpackInput(data: Array[Byte])(implicit mf: Manifest[P]): Option[P] = {
