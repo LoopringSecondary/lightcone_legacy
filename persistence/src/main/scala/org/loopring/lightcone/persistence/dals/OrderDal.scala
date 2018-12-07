@@ -75,7 +75,7 @@ trait OrderDal
     sortedBy: Option[XOrderSortBy] = None
   ): Future[Seq[XRawOrder]]
 
-  def getRangeOrders(
+  def getOrdersBySequence(
     statuses: Set[XOrderStatus],
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
@@ -195,7 +195,7 @@ class OrderDalImpl()(
     tillId: Option[Long] = None,
     sortBy: Option[XOrderSortBy] = None
   ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
-    var filters = query.filter(_.createdAt > 0l)
+    var filters = query.filter(_.sequenceId > 0l)
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
@@ -229,7 +229,7 @@ class OrderDalImpl()(
       .result)
   }
 
-  def getRangeOrders(
+  def getOrdersBySequence(
     statuses: Set[XOrderStatus],
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,

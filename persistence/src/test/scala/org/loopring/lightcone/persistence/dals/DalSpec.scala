@@ -17,49 +17,53 @@
 package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
-import org.scalatest._
+import org.scalatest.{ BeforeAndAfterAll, FlatSpec }
 import scala.concurrent.duration._
 import scala.concurrent._
 import slick.jdbc.meta._
 import slick.basic._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
-import com.wix.mysql.config.MysqldConfig
-import com.wix.mysql.EmbeddedMysql
-import com.wix.mysql.distribution.Version
-import com.wix.mysql.config.Charset.UTF8
-import java.util.concurrent.TimeUnit
+import com.dimafeng.testcontainers._
+import com.typesafe.config._
 
-trait DalSpec[D <: BaseDal[_, _]] extends FlatSpec with Matchers with BeforeAndAfterAll {
-  override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = true
+trait DalSpec[D <: BaseDal[_, _]]
+  extends FlatSpec
+  with ForAllTestContainer
+  with BeforeAndAfterAll {
   implicit val ec = ExecutionContext.global
 
-  val config: MysqldConfig = MysqldConfig.aMysqldConfig(Version.v5_7_latest)
-    .withCharset(UTF8)
-    .withPort(13300)
-    .withServerVariable("bind-address", "localhost")
-    .withUser("test", "test")
-    .withTimeout(2, TimeUnit.MINUTES)
-    .build()
+  override val container = new MySQLContainer(
+    mysqlImageVersion = Some("mysql:5.7.18"),
+    databaseName = Some("lightcone_test"),
+    mysqlUsername = Some("test"),
+    mysqlPassword = Some("test")
+  )
 
-  val mysql: EmbeddedMysql = EmbeddedMysql.anEmbeddedMysql(config)
-    .addSchema("lightcone_test")
-    .start()
+  Class.forName(container.driverClassName)
 
-  implicit var dbConfig = DatabaseConfig.forConfig[JdbcProfile]("db_test")
-  val dal: D
+  implicit var dbConfig: DatabaseConfig[JdbcProfile] = _
+  def getDal(): D
+  var dal: D = _
 
-  override def beforeAll = {
-    println(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
-    try {
-      Await.result(dal.dropTable(), 5.second)
-    } catch {
-      case _: Throwable ⇒
-    }
+  override def afterStart(): Unit = {
+    dbConfig = DatabaseConfig.forConfig[JdbcProfile](
+      "",
+      ConfigFactory.parseString(s"""
+        profile = "slick.jdbc.MySQLProfile$$"
+        db {
+          url="${container.jdbcUrl}"
+          user="${container.username}"
+          password="${container.password}"
+          driver="${container.driverClassName}"
+          maxThreads = 1
+        }""")
+    )
+    dal = getDal()
     Await.result(dal.createTable(), 5.second)
   }
 
-  override def afterAll = {
-    mysql.stop
+  override def beforeAll = {
+    println(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 }

@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.persistence
 
+import com.google.protobuf.ByteString
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern._
@@ -52,6 +53,37 @@ class OrdersDalActor(
       (for {
         order ← ordersDal.getOrder(hash)
       } yield XGetOrderByHashRes(order)) pipeTo sender
+    case XGetOrderFilledAmountReq(hash) ⇒ //从以太坊读取
+      //todo: 测试deploy
+      sender ! XGetOrderFilledAmountRes(hash, ByteString.copyFrom("111", "utf-8"))
+    case XRecoverOrdersReq(address, marketIdOpt, updatedSince, num) ⇒
+      val tokenes = (marketIdOpt match {
+        case Some(marketId) ⇒ Set(marketId.primary, marketId.secondary)
+        case None           ⇒ Seq.empty[String]
+      }).toSet
+      (for {
+        orders ← ordersDal.getOrdersByUpdatedAt(
+          num = num,
+          statuses = Set(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING),
+          tokenSSet = tokenes,
+          tokenBSet = tokenes,
+          owners = if ("" != address) Set(address) else Set.empty,
+          updatedSince = Some(updatedSince)
+        )
+        states <- if(orders.isEmpty){
+          Future.successful(Seq.empty)
+        } else {
+          orders.map {_.state}
+        }
+      } yield XRecoverOrdersRes(states)) pipeTo sender
+    //TODO hongyu:改成updateStatus | updateAmount
+//    case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
+//      (stateOpt match {
+//        case Some(state) ⇒ ordersDal.saveOrUpdate(XOrderPersState())
+//        case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
+//      }) pipeTo sender
+    case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
+      ordersDal.updateOrderStatus(hash, status, changeUpdatedAtField) pipeTo sender
 
   }
 }
