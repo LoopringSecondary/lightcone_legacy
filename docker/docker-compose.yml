@@ -1,0 +1,14 @@
+version: '2'
+services:
+  # seed:
+  #   image: jsonprocessor:v1.0
+  #   environment:
+  #     CLUSTER_PORT: 9090
+  #     CLUSTER_IP: seed
+  #     SEED_PORT_1600_TCP_ADDR: seed
+  # c1:
+  #   image: jsonsub:v1.0
+  #   environment:
+  #     CLUSTER_IP: c1
+  #     CLUSTER_PORT: 9091
+  #     SEED_PORT_1600_TCP_ADDR: seed
