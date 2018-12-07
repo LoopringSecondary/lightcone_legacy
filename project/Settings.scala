@@ -100,12 +100,12 @@ object Settings {
     },
     imageNames in docker := Seq(
       // Sets the latest tag
-      ImageName(s"${organization.value}/lightcone:latest"),
+      ImageName(s"${organization.value}/${name.value}:latest"),
 
       // Sets a name with a tag that contains the project version
       ImageName(
         namespace = Some(organization.value),
-        repository = "lightcone",
+        repository = name.value,
         tag = Some("v" + version.value))),
     buildOptions in docker := BuildOptions(
       cache = false,

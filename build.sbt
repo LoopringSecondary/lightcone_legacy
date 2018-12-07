@@ -42,10 +42,14 @@ lazy val actors = (project in file("actors"))
   .settings(
     basicSettings,
     dockerSettings,
+    dockerImageCreationTask := docker.value,
     libraryDependencies ++= dependency4Actors)
 
 lazy val indexer = (project in file("indexer"))
   .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(DockerComposePlugin)
+  .enablePlugins(sbtdocker.DockerPlugin)
+  .enablePlugins(JavaServerAppPackaging)
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
@@ -56,6 +60,12 @@ lazy val indexer = (project in file("indexer"))
 
 lazy val gateway = (project in file("gateway"))
   .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(DockerComposePlugin)
+  .enablePlugins(sbtdocker.DockerPlugin)
+  .enablePlugins(JavaServerAppPackaging)
+  .enablePlugins(MultiJvmPlugin)
+  .configs(MultiJvm)
+  .settings(multiJvmSettings: _*)
   .dependsOn(proto)
   .settings(
     basicSettings,
