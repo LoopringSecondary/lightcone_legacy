@@ -70,13 +70,7 @@ class OrdersDalActor(
           owners = if ("" != address) Set(address) else Set.empty,
           updatedSince = Some(updatedSince)
         )
-      } yield {
-        if (orders.isEmpty) {
-          XRecoverOrdersRes()
-        } else {
-          XRecoverOrdersRes(orders.map { _.state.orNull })
-        }
-      }) pipeTo sender
+      } yield XRecoverOrdersRes(orders)) pipeTo sender
     //TODO hongyu:改成updateStatus | updateAmount
     //    case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
     //      (stateOpt match {
