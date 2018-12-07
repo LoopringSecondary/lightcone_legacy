@@ -28,7 +28,7 @@ import scala.concurrent.duration._
 
 class OrdersDalSpec extends DalSpec[OrderDal] {
   val module = new TestDatabaseModule()
-  val dal = new OrderDalImpl()
+  def getDal = new OrderDalImpl()
 
   "batchSaveOrder" must "try insert some orders" in {
     val result = for (i ← 0 to 100) {

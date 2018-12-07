@@ -22,10 +22,9 @@ import akka.util.Timeout
 import akka.pattern._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.persistence.dals.OrderStateDal
-import org.loopring.lightcone.proto.core.{ XOrderPersState, XOrderStatus }
+import org.loopring.lightcone.persistence.dals.OrderDal
+import org.loopring.lightcone.proto.core.{ XOrderStatus }
 import org.loopring.lightcone.proto.persistence.XPersistenceError
-
 import scala.concurrent._
 
 object OrderStateActor {
@@ -34,7 +33,7 @@ object OrderStateActor {
 
 // TODO(hongyu): implement this class. 根据变更可能需要从数据库读取
 class OrderStateActor(
-    orderStateDal: OrderStateDal
+    orderStateDal: OrderDal
 )(
     implicit
     ec: ExecutionContext,
@@ -48,26 +47,26 @@ class OrderStateActor(
       //todo: 测试deploy
       sender ! XGetOrderFilledAmountRes(hash, BigInt(0))
     case XRecoverOrdersReq(address, marketIdOpt, updatedSince, num) ⇒
-      val tokenes = (marketIdOpt match {
-        case Some(marketId) ⇒ Set(marketId.primary, marketId.secondary)
-        case None           ⇒ Seq.empty[String]
-      }).toSet
-      (for {
-        orders ← orderStateDal.getOrdersByUpdatedAt(
-          num = num,
-          statuses = Set(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING),
-          tokenSSet = tokenes,
-          tokenBSet = tokenes,
-          owners = if ("" != address) Set(address) else Set.empty,
-          updatedSince = Some(updatedSince)
-        )
-      } yield XRecoverOrdersRes(orders)) pipeTo sender
+    //      val tokenes = (marketIdOpt match {
+    //        case Some(marketId) ⇒ Set(marketId.primary, marketId.secondary)
+    //        case None           ⇒ Seq.empty[String]
+    //      }).toSet
+    //      (for {
+    //        orders ← orderStateDal.getOrdersByUpdatedAt(
+    //          num = num,
+    //          statuses = Set(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING),
+    //          tokenSSet = tokenes,
+    //          tokenBSet = tokenes,
+    //          owners = if ("" != address) Set(address) else Set.empty,
+    //          updatedSince = Some(updatedSince)
+    //        )
+    //      } yield XRecoverOrdersRes(orders)) pipeTo sender
     //TODO hongyu:改成saveOrUpdate
     case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
-      (stateOpt match {
-        case Some(state) ⇒ orderStateDal.saveOrUpdate(XOrderPersState())
-        case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
-      }) pipeTo sender
+    //      (stateOpt match {
+    //        case Some(state) ⇒ orderStateDal.saveOrUpdate(XOrderPersState())
+    //        case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
+    //      }) pipeTo sender
     case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
       orderStateDal.updateOrderStatus(hash, status, changeUpdatedAtField) pipeTo sender
   }

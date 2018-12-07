@@ -70,18 +70,19 @@ class OrdersDalActor(
           owners = if ("" != address) Set(address) else Set.empty,
           updatedSince = Some(updatedSince)
         )
-        states <- if(orders.isEmpty){
-          Future.successful(Seq.empty)
+      } yield {
+        if (orders.isEmpty) {
+          XRecoverOrdersRes()
         } else {
-          orders.map {_.state}
+          XRecoverOrdersRes(orders.map { _.state.orNull })
         }
-      } yield XRecoverOrdersRes(states)) pipeTo sender
+      }) pipeTo sender
     //TODO hongyu:改成updateStatus | updateAmount
-//    case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
-//      (stateOpt match {
-//        case Some(state) ⇒ ordersDal.saveOrUpdate(XOrderPersState())
-//        case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
-//      }) pipeTo sender
+    //    case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
+    //      (stateOpt match {
+    //        case Some(state) ⇒ ordersDal.saveOrUpdate(XOrderPersState())
+    //        case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
+    //      }) pipeTo sender
     case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
       ordersDal.updateOrderStatus(hash, status, changeUpdatedAtField) pipeTo sender
 

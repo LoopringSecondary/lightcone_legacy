@@ -107,7 +107,7 @@ abstract class CoreActorsIntegrationCommonSpec(
           info(s"ordermanagerProbe receive: $req, sender:${sender()}")
       }
     }
-    def replyWith(xorders: Seq[XRawOrder]) = reply(
+    def replyWith(xorders: Seq[XRawOrder.State]) = reply(
       XRecoverOrdersRes(orders = xorders)
     )
   }
