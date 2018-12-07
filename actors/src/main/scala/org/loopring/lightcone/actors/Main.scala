@@ -23,28 +23,32 @@ import akka.cluster.pubsub._
 import scala.concurrent.duration._
 import DistributedPubSubMediator._
 import akka.cluster.Cluster
+import org.slf4s.Logging
 
-object Main {
+object Main extends App with Logging {
+  val config = ConfigFactory.load()
 
-  def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.load()
+  val configItems = Seq(
+    "akka.remote.artery.canonical.hostname",
+    "akka.remote.artery.canonical.port",
+    "akka.remote.bind.hostname",
+    "akka.remote.bind.port"
+  )
 
-    println("akka.remote.artery.canonical.hostname = " + config.getString("akka.remote.artery.canonical.hostname"))
-    println("akka.remote.artery.canonical.port = " + config.getString("akka.remote.artery.canonical.port"))
-    println("akka.remote.bind.hostname = " + config.getString("akka.remote.bind.hostname"))
-    println("akka.remote.bind.port = " + config.getString("akka.remote.bind.port"))
-
-    val injector = Guice.createInjector(new CoreModule(config))
-    // implicit val system = ActorSystem("Lightcone", config)
-    // implicit val ec = system.dispatcher
-    // implicit val cluster = Cluster(system)
-
-    // val a = system.actorOf(Props(classOf[MyActor]))
-
+  configItems foreach { i ⇒
+    log.info(s"--> $i = ${config.getString(i)}")
   }
+
+  val injector = Guice.createInjector(new CoreModule(config))
+  // implicit val system = ActorSystem("Lightcone", config)
+  // implicit val ec = system.dispatcher
+  // implicit val cluster = Cluster(system)
+
+  // val a = system.actorOf(Props(classOf[MyActor]))
+
 }
 
-// TODO: remove this
+// TODO: remove this after docker compose works
 class MyActor extends Actor with ActorLogging {
   import context.dispatcher
   val mediator = DistributedPubSub(context.system).mediator
