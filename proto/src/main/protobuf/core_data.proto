@@ -178,7 +178,7 @@ message XTransaction {
 
     string from                 = 1;
     string to                   = 2;
-    XType tx_type    = 3;
+    XType  tx_type              = 3;
     bytes  amount               = 4;
     string token                = 5;
     int64  nonce                = 6;
