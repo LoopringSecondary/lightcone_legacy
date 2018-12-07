@@ -71,12 +71,11 @@ class OrdersDalActor(
           updatedSince = Some(updatedSince)
         )
       } yield XRecoverOrdersRes(orders)) pipeTo sender
-    //TODO hongyu:改成updateStatus | updateAmount
-    //    case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
-    //      (stateOpt match {
-    //        case Some(state) ⇒ ordersDal.saveOrUpdate(XOrderPersState())
-    //        case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
-    //      }) pipeTo sender
+    case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
+      (stateOpt match {
+        case Some(state) ⇒ ordersDal.updateAmount(hash, state, true)
+        case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
+      }) pipeTo sender
     case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
       ordersDal.updateOrderStatus(hash, status, changeUpdatedAtField) pipeTo sender
 
