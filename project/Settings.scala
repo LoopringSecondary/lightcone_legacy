@@ -13,6 +13,7 @@ import scoverage.ScoverageKeys._
 import sbtdocker.mutable.Dockerfile
 import sbtdocker.{ BuildOptions, DockerPlugin, ImageName }
 import sbtdocker.DockerKeys._
+import com.tapad.docker.DockerComposeKeys._
 
 object Settings {
   lazy val basicSettings: Seq[Setting[_]] = Seq(
@@ -88,6 +89,7 @@ object Settings {
     coverageEnabled := true)
 
   lazy val dockerSettings = Seq(
+    dockerImageCreationTask := docker.value,
     dockerfile in docker := {
       val appDir = stage.value
       val targetDir = "/app"

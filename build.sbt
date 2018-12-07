@@ -42,7 +42,6 @@ lazy val actors = (project in file("actors"))
   .settings(
     basicSettings,
     dockerSettings,
-    dockerImageCreationTask := docker.value,
     libraryDependencies ++= dependency4Actors)
 
 lazy val indexer = (project in file("indexer"))
@@ -56,6 +55,7 @@ lazy val indexer = (project in file("indexer"))
   .dependsOn(ethereum, persistence)
   .settings(
     basicSettings,
+    dockerSettings,
     libraryDependencies ++= dependency4Indexer)
 
 lazy val gateway = (project in file("gateway"))
@@ -69,6 +69,7 @@ lazy val gateway = (project in file("gateway"))
   .dependsOn(proto)
   .settings(
     basicSettings,
+    dockerSettings,
     libraryDependencies ++= dependency4Gateway)
 
 lazy val all = (project in file("."))
