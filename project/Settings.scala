@@ -1,6 +1,5 @@
 import sbt._
 import Keys._
-
 import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.Keys._
 import com.typesafe.sbt.packager.MappingsHelper._
@@ -11,6 +10,9 @@ import com.typesafe.sbt.SbtScalariform.autoImport._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 import scoverage.ScoverageKeys._
+import sbtdocker.mutable.Dockerfile
+import sbtdocker.{ BuildOptions, DockerPlugin, ImageName }
+import sbtdocker.DockerKeys._
 
 object Settings {
   lazy val basicSettings: Seq[Setting[_]] = Seq(
@@ -84,4 +86,29 @@ object Settings {
       .setPreference(FirstArgumentOnNewline, Force)
       .setPreference(AllowParamGroupsOnNewlines, true),
     coverageEnabled := true)
+
+  lazy val dockerSettings = Seq(
+    dockerfile in docker := {
+      val appDir = stage.value
+      val targetDir = "/app"
+
+      new Dockerfile {
+        from("openjdk:8-jre")
+        entryPoint(s"$targetDir/bin/${executableScriptName.value}")
+        copy(appDir, targetDir, chown = "daemon:daemon")
+      }
+    },
+    imageNames in docker := Seq(
+      // Sets the latest tag
+      ImageName(s"${organization.value}/lightcone:latest"),
+
+      // Sets a name with a tag that contains the project version
+      ImageName(
+        namespace = Some(organization.value),
+        repository = "lightcone",
+        tag = Some("v" + version.value))),
+    buildOptions in docker := BuildOptions(
+      cache = false,
+      removeIntermediateContainers = BuildOptions.Remove.Always,
+      pullBaseImage = BuildOptions.Pull.Always))
 }
