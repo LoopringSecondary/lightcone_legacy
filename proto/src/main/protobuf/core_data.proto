@@ -164,7 +164,7 @@ message XRingBatchContext {
 }
 
 message XTransaction {
-    enum XTransactionType {
+    enum XType {
         TRANSFER           = 0;
         TRADE_BUY          = 1;
         TRADE_SELL         = 2;
@@ -178,7 +178,7 @@ message XTransaction {
 
     string from                 = 1;
     string to                   = 2;
-    XTransactionType tx_type    = 3;
+    XType tx_type    = 3;
     bytes  amount               = 4;
     string token                = 5;
     int64  nonce                = 6;
