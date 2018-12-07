@@ -37,14 +37,16 @@ trait AbiFunction[P, R] {
     Numeric.toHexString(entry.encode(inputs: _*))
   }
 
-  def unpackInput(data: Array[Byte])(implicit mf: Manifest[P]): Option[P] = {
-    val list = entry.decode(data).asScala.toList
+  def unpackInput(data: String)(implicit mf: Manifest[P]): Option[P] = {
+    val dataBytes = Numeric.hexStringToByteArray(data)
+    val list = entry.decode(dataBytes).asScala.toList
     if (list.isEmpty) None
     else Some(Deserialization.deserialize[P](list))
   }
 
-  def unpackResult(data: Array[Byte])(implicit mf: Manifest[R]): Option[R] = {
-    val list = entry.decode(data).asScala.toList
+  def unpackResult(data: String)(implicit mf: Manifest[R]): Option[R] = {
+    val dataBytes = Numeric.hexStringToByteArray(data)
+    val list = entry.decode(dataBytes).asScala.toList
     if (list.isEmpty) None
     else Some(Deserialization.deserialize[R](list))
   }
@@ -53,8 +55,10 @@ trait AbiFunction[P, R] {
 trait AbiEvent[R] {
   val entry: SABI.Event
 
-  def unpack(data: Array[Byte], topics: Array[Array[Byte]])(implicit mf: Manifest[R]): Option[R] = {
-    val list = entry.decode(data, topics).asScala.toList
+  def unpack(data: String, topics: Array[String])(implicit mf: Manifest[R]): Option[R] = {
+    val dataBytes = Numeric.hexStringToByteArray(data)
+    val topicBytes = topics.map(Numeric.hexStringToByteArray)
+    val list = entry.decode(dataBytes, topicBytes).asScala.toList
     if (list.isEmpty) None
     else Some(Deserialization.deserialize[R](list))
   }

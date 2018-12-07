@@ -37,18 +37,18 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   "decodeTransferFunction" should "decode function input and assemble to class Transfer" in {
     val from = "0x0681d8db095565fe8a346fa0277bffde9c0edbbf"
     val input = "0xa9059cbb000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc5090000000000000000000000000000000000000000000006425b02acb8d7bd0000"
-    val transfer = erc20abi.transfer.unpackInput(Numeric.hexStringToByteArray(input))
+    val transfer = erc20abi.transfer.unpackInput(input)
     info(transfer.toString)
   }
 
   "decodeTransferEvent" should "decode event data and assemble to class Transfer" in {
     val from = "0x0681d8db095565fe8a346fa0277bffde9c0edbbf"
     val input = Numeric.hexStringToByteArray("0xa9059cbb000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc5090000000000000000000000000000000000000000000006425b02acb8d7bd0000")
-    val data = Numeric.hexStringToByteArray("0x0000000000000000000000000000000000000000000006425b02acb8d7bd0000")
+    val data = "0x0000000000000000000000000000000000000000000006425b02acb8d7bd0000"
     val topics = Seq(
-      Numeric.hexStringToByteArray("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"),
-      Numeric.hexStringToByteArray("0x0000000000000000000000000681d8db095565fe8a346fa0277bffde9c0edbbf"),
-      Numeric.hexStringToByteArray("0x000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc509")
+      "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+      "0x0000000000000000000000000681d8db095565fe8a346fa0277bffde9c0edbbf",
+      "0x000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc509"
     )
 
     val transferOpt = erc20abi.transferEvent.unpack(data, topics.toArray)
@@ -71,7 +71,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   //
   "decodeApproveFunction" should "decode function input and assemble to class Approve" in {
     val from = "0x85194623225c1a0576abf8e2bdc0951351fcddda"
-    val input = Numeric.hexStringToByteArray("0x095ea7b30000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b70000000000000000000000000000000000000000004a817c7ffffffb57e83800")
+    val input = "0x095ea7b30000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b70000000000000000000000000000000000000000004a817c7ffffffb57e83800"
     val approveOpt = erc20abi.approve.unpackInput(input)
 
     approveOpt match {
@@ -99,11 +99,11 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   "decodeApproveEvent" should "decode event data and assemble to class Approve" in {
     val from = "0x85194623225c1a0576abf8e2bdc0951351fcddda"
     val input = "0x095ea7b30000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b70000000000000000000000000000000000000000004a817c7ffffffb57e83800"
-    val data = Numeric.hexStringToByteArray("0x0000000000000000000000000000000000000000004a817c7ffffffb57e83800")
+    val data = "0x0000000000000000000000000000000000000000004a817c7ffffffb57e83800"
     val topics = Array(
-      Numeric.hexStringToByteArray("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"),
-      Numeric.hexStringToByteArray("0x00000000000000000000000085194623225c1a0576abf8e2bdc0951351fcddda"),
-      Numeric.hexStringToByteArray("0x0000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7")
+      "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+      "0x00000000000000000000000085194623225c1a0576abf8e2bdc0951351fcddda",
+      "0x0000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7"
     )
 
     val approveOpt = erc20abi.approvalEvent.unpack(data, topics)
@@ -121,11 +121,11 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   "decodeEventOfApproval" should "decode event data and assemble to class object" in {
     val from = "0x85194623225c1a0576abf8e2bdc0951351fcddda"
     val input = "0x095ea7b30000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b70000000000000000000000000000000000000000004a817c7ffffffb57e83800"
-    val data = Numeric.hexStringToByteArray("0x0000000000000000000000000000000000000000004a817c7ffffffb57e83800")
+    val data = "0x0000000000000000000000000000000000000000004a817c7ffffffb57e83800"
     val topics = Array(
-      Numeric.hexStringToByteArray("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"),
-      Numeric.hexStringToByteArray("0x00000000000000000000000085194623225c1a0576abf8e2bdc0951351fcddda"),
-      Numeric.hexStringToByteArray("0x0000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7")
+      "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+      "0x00000000000000000000000085194623225c1a0576abf8e2bdc0951351fcddda",
+      "0x0000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b7"
     )
 
     val eventOpt = erc20abi.unpackEvent(data, topics)
@@ -141,7 +141,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   //decode Approve Function
   "decodeFunctionOfApprove" should "decode function input and assemble to class Object" in {
     val from = "0x85194623225c1a0576abf8e2bdc0951351fcddda"
-    val input = Numeric.hexStringToByteArray("0x095ea7b30000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b70000000000000000000000000000000000000000004a817c7ffffffb57e83800")
+    val input = "0x095ea7b30000000000000000000000008fd3121013a07c57f0d69646e86e7a4880b467b70000000000000000000000000000000000000000004a817c7ffffffb57e83800"
     val funcOpt = erc20abi.unpackFunctionInput(input)
 
     funcOpt match {
@@ -155,7 +155,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   "decoderFunctionOfTransfer" should "decode function input and assemble to class Transfer" in {
     val from = "0x0681d8db095565fe8a346fa0277bffde9c0edbbf"
     val input = "0xa9059cbb000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc5090000000000000000000000000000000000000000000006425b02acb8d7bd0000"
-    val transferOpt = erc20abi.unpackFunctionInput(Numeric.hexStringToByteArray(input))
+    val transferOpt = erc20abi.unpackFunctionInput(input)
     info(transferOpt.toString)
     transferOpt match {
       case Some(tranfer: TransferFunction.Parms) ⇒
@@ -166,12 +166,12 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
   "decodeEventOfTransfer" should "decode event data and assemble to class Transfer" in {
     val from = "0x0681d8db095565fe8a346fa0277bffde9c0edbbf"
-    val input = Numeric.hexStringToByteArray("0xa9059cbb000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc5090000000000000000000000000000000000000000000006425b02acb8d7bd0000")
-    val data = Numeric.hexStringToByteArray("0x0000000000000000000000000000000000000000000006425b02acb8d7bd0000")
+    val input = "0xa9059cbb000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc5090000000000000000000000000000000000000000000006425b02acb8d7bd0000"
+    val data = "0x0000000000000000000000000000000000000000000006425b02acb8d7bd0000"
     val topics = Seq(
-      Numeric.hexStringToByteArray("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"),
-      Numeric.hexStringToByteArray("0x0000000000000000000000000681d8db095565fe8a346fa0277bffde9c0edbbf"),
-      Numeric.hexStringToByteArray("0x000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc509")
+      "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+      "0x0000000000000000000000000681d8db095565fe8a346fa0277bffde9c0edbbf",
+      "0x000000000000000000000000f105c622edc68b9e4e813e631cb534940f5cc509"
     )
 
     val transferOpt = erc20abi.unpackEvent(data, topics.toArray)

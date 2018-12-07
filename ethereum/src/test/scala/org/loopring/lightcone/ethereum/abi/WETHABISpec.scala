@@ -42,10 +42,10 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   "decodeDepositEvent" should "decode event data and assemble to class Deposit" in {
-    val data = Numeric.hexStringToByteArray("0x0000000000000000000000000000000000000000000000000de0b6b3a7640000")
+    val data = "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
     val topics = Array(
-      Numeric.hexStringToByteArray("0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c"),
-      Numeric.hexStringToByteArray("0x00000000000000000000000033debb5ee65549ffa71116957da6db17a9d8fe57")
+      "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c",
+      "0x00000000000000000000000033debb5ee65549ffa71116957da6db17a9d8fe57"
     )
     val depositOpt = weth.depositEvent.unpack(data, topics)
     info(depositOpt.toString)
@@ -58,7 +58,7 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   "decodeWithdrawFunction" should "decode event data and assemble to class Withdraw" in {
-    val data = Numeric.hexStringToByteArray("0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000")
+    val data = "0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000"
     val withdrawOpt = weth.withdraw.unpackInput(data)
     info(withdrawOpt.toString)
     withdrawOpt match {
@@ -69,10 +69,10 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   "decodeEventOfDeposit" should "decode event data and assemble to class Deposit" in {
-    val data = Numeric.hexStringToByteArray("0x0000000000000000000000000000000000000000000000000de0b6b3a7640000")
+    val data = "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
     val topics = Array(
-      Numeric.hexStringToByteArray("0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c"),
-      Numeric.hexStringToByteArray("0x00000000000000000000000033debb5ee65549ffa71116957da6db17a9d8fe57")
+      "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c",
+      "0x00000000000000000000000033debb5ee65549ffa71116957da6db17a9d8fe57"
     )
     val eventOpt = weth.unpackEvent(data, topics)
     info(eventOpt.toString)
@@ -85,7 +85,7 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   "decodeFunctionOfWithdrawal" should "decode event data and assemble to class Withdraw" in {
-    val data = Numeric.hexStringToByteArray("0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000")
+    val data = "0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000"
     val withdrawOpt = weth.unpackFunctionInput(data)
     info(withdrawOpt.toString)
     withdrawOpt match {

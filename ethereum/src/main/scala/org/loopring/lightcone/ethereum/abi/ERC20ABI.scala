@@ -42,8 +42,8 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
   val transferEvent = TransferEvent(abi.findEvent(searchByName(TransferEvent.name)))
   val approvalEvent = ApprovalEvent(abi.findEvent(searchByName(ApprovalEvent.name)))
 
-  def unpackEvent(data: Array[Byte], topics: Array[Array[Byte]]): Any = {
-    val event: SABI.Event = abi.findEvent(searchBySignature(topics.head))
+  def unpackEvent(data: String, topics: Array[String]): Any = {
+    val event: SABI.Event = abi.findEvent(searchBySignature(Numeric.hexStringToByteArray(topics.head)))
     event.name match {
       case ApprovalEvent.name ⇒
         approvalEvent.unpack(data, topics)
@@ -53,8 +53,9 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
     }
   }
 
-  def unpackFunctionInput(data: Array[Byte]): Any = {
-    val func = abi.findFunction(searchBySignature(data.toSeq.take(4).toArray))
+  def unpackFunctionInput(data: String): Any = {
+    val funSig = Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
+    val func = abi.findFunction(searchBySignature(funSig))
 
     func.name match {
       case TransferFunction.name ⇒
