@@ -86,7 +86,8 @@ class CoreModule(config: Config)
 
     val accountBalanceActor = system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
     actors.add(AccountBalanceActor.name, accountBalanceActor)
-    val orderDalActor = system.actorOf(Props(new OrdersDalActor()), OrdersDalActor.name)
+    val dal = new OrderDalImpl()
+    val orderDalActor = system.actorOf(Props(new OrdersDalActor(dal)), OrdersDalActor.name)
     actors.add(OrdersDalActor.name, orderDalActor)
 
     println(s"#### accountmanager ${accountManagerShardActor.path.address.toString}")
