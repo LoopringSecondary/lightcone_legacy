@@ -20,10 +20,11 @@ import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
+import org.loopring.lightcone.ethereum.abi.{ERC20ABI, WETHABI}
 import org.loopring.lightcone.proto.actors._
 
 import scala.util._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 class EthereumDataIndexer(
@@ -36,6 +37,8 @@ class EthereumDataIndexer(
 
   val ethereumConnectionActor: ActorRef = actors.get("ethereum_connection")
 
+  val erc20Abi = ERC20ABI()
+  val wethAbi  = WETHABI()
 
   var currentBlockNumber: BigInt = BigInt(-1)
   var currentBlockHash: String = _
@@ -108,9 +111,13 @@ class EthereumDataIndexer(
         .map(_.resps)
       txWithReceipts = txs zip txReceipts.map(_.result.get)
     } yield {
-      txWithReceipts.foreach(t ⇒ {
-        t._2.status
-
+      txWithReceipts.map(t ⇒ {
+        //针对ETH的变化，暂时把token地址定位""
+        val addresses = List(t._1.from → "")
+        t._2.logs.foreach(log ⇒ {
+          erc20Abi
+        })
+        addresses
       })
     }
     Future.successful((BigInt(0), ""))
