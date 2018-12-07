@@ -26,44 +26,40 @@ import akka.cluster.Cluster
 
 object Main {
 
-  class MyActor extends Actor with ActorLogging {
-    import context.dispatcher
-    val mediator = DistributedPubSub(context.system).mediator
-    context.system.scheduler.schedule(0 seconds, 10 seconds, self, "TICK")
-
-    mediator ! Subscribe("topic", self)
-    var i = 0L
-
-    def receive = {
-      case "TICK" ⇒
-        log.error("hello")
-        mediator ! Publish("topic", "event-" + i)
-        i += 1
-
-      case x ⇒
-        log.error("===> " + x)
-    }
-  }
-
   def main(args: Array[String]): Unit = {
     val config = ConfigFactory.load()
 
-    println("==== akka.remote.artery.canonical.hostname = " +
-      config.getString("akka.remote.artery.canonical.hostname"))
-    println("==== akka.remote.artery.canonical.port = " +
-      config.getString("akka.remote.artery.canonical.port"))
+    println("akka.remote.artery.canonical.hostname = " + config.getString("akka.remote.artery.canonical.hostname"))
+    println("akka.remote.artery.canonical.port = " + config.getString("akka.remote.artery.canonical.port"))
+    println("akka.remote.bind.hostname = " + config.getString("akka.remote.bind.hostname"))
+    println("akka.remote.bind.port = " + config.getString("akka.remote.bind.port"))
 
-    println("==== akka.remote.bind.hostname = " +
-      config.getString("akka.remote.bind.hostname"))
-    println("==== akka.remote.bind.port = " +
-      config.getString("akka.remote.bind.port"))
-
-    // val injector = Guice.createInjector(new CoreModule(config))
+    val injector = Guice.createInjector(new CoreModule(config))
     // implicit val system = ActorSystem("Lightcone", config)
     // implicit val ec = system.dispatcher
     // implicit val cluster = Cluster(system)
 
     // val a = system.actorOf(Props(classOf[MyActor]))
 
+  }
+}
+
+// TODO: remove this
+class MyActor extends Actor with ActorLogging {
+  import context.dispatcher
+  val mediator = DistributedPubSub(context.system).mediator
+  context.system.scheduler.schedule(0 seconds, 10 seconds, self, "TICK")
+
+  mediator ! Subscribe("topic", self)
+  var i = 0L
+
+  def receive = {
+    case "TICK" ⇒
+      log.error("hello")
+      mediator ! Publish("topic", "event-" + i)
+      i += 1
+
+    case x ⇒
+      log.error("===> " + x)
   }
 }
