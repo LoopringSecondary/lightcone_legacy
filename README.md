@@ -7,6 +7,7 @@
 
 ## Dockerize
 
+Please make sure you have docker installed and started.
 * To create a docker iamge file for the runnable program (in subproject actors), run `sbt docker`.
 * To publish the docker image, use `sbt dockerPush`.
 
