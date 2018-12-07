@@ -16,7 +16,10 @@
 
 package org.loopring.lightcone.ethereum.abi
 
+import java.util
+
 import org.ethereum.solidity.{ Abi ⇒ SABI }
+import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
 
@@ -38,6 +41,37 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
 
   val transferEvent = TransferEvent(abi.findEvent(searchByName(TransferEvent.name)))
   val approvalEvent = ApprovalEvent(abi.findEvent(searchByName(ApprovalEvent.name)))
+
+  def unpackEvent(data: Array[Byte], topics: Array[Array[Byte]]): Any = {
+    val event: SABI.Event = abi.findEvent(searchBySignature(topics.head))
+    event.name match {
+      case ApprovalEvent.name ⇒
+        approvalEvent.unpack(data, topics)
+      case TransferEvent.name ⇒
+        transferEvent.unpack(data, topics)
+      case _ ⇒
+    }
+  }
+
+  def unpackFunctionInput(data: Array[Byte]): Any = {
+    val hexData = Numeric.toHexStringNoPrefix(data)
+    val funSig = Numeric.hexStringToByteArray(hexData.substring(0, 8))
+    val func = abi.findFunction(searchBySignature(funSig))
+
+    func.name match {
+      case TransferFunction.name ⇒
+        transfer.unpackInput(data)
+      case TransferFromFunction.name ⇒
+        transferFrom.unpackInput(data)
+      case ApproveFunction.name ⇒
+        approve.unpackInput(data)
+      case BalanceOfFunction.name ⇒
+        balanceOf.unpackInput(data)
+      case AllowanceFunction.name ⇒
+        allowance.unpackInput(data)
+      case _ ⇒
+    }
+  }
 
 }
 

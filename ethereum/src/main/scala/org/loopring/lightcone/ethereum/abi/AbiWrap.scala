@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.ethereum.abi
 
+import java.util
+
 import org.apache.commons.collections4.Predicate
 import org.ethereum.solidity.{ Abi ⇒ SABI }
 import org.web3j.utils.Numeric
@@ -68,6 +70,6 @@ abstract class AbiWrap(abiJson: String) {
   private[abi] def searchByName[T <: SABI.Entry](name: String): Predicate[T] = x ⇒ x.name.equals(name)
 
   //todo: test 字节数组的相等
-  private[abi] def searchBySignature[T <: SABI.Entry](signature: Array[Byte]): Predicate[T] = x ⇒ x.encodeSignature().equals(signature)
-
+  private[abi] def searchBySignature[T <: SABI.Entry](signature: Array[Byte]): Predicate[T] =
+    x ⇒ util.Arrays.equals(x.encodeSignature(), signature)
 }
