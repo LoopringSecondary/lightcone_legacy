@@ -22,7 +22,6 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.proto.actors._
 
-import scala.annotation.tailrec
 import scala.util._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -42,22 +41,24 @@ class EthereumDataIndexer(
   override def preStart(): Unit = {
     ethereumConnectionActor ? XEthBlockNumberReq() onComplete {
       case Success(XEthBlockNumberRes(_, _, result, None)) ⇒
-        currentBlockNumber = result
-
+        ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(result) onComplete {
+          case Success(XGetBlockWithTxHashByNumberRes(_, _, block, None)) ⇒
+            currentBlockNumber = result
+            currentBlockHash = block.get.hash
+        }
       case Success(XEthBlockNumberRes(_, _, _, error)) ⇒
         log.error(s"fail to get the current blockNumber:${error.get.error}")
 
       case Failure(e) ⇒
         log.error(s"fail to get the current blockNumber:${e.getMessage}")
     }
-
   }
 
   override def receive: Receive = {
     case "start" ⇒ process()
   }
 
-  private def process(): Unit = {
+  def process(): Unit = {
     (ethereumConnectionActor ? XEthBlockNumberReq())
       .map {
         case XEthBlockNumberRes(_, _, result, None) ⇒
@@ -69,7 +70,6 @@ class EthereumDataIndexer(
                 } else {
                   handleFork(currentBlockNumber - 1)
                 }
-              case _ ⇒ process()
             }
           } else if (currentBlockNumber.equals(hex2BigInt(result))) {
             (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(currentBlockNumber))
@@ -77,20 +77,34 @@ class EthereumDataIndexer(
                 case XGetBlockWithTxHashByNumberRes(_, _, res, None) if res.nonEmpty ⇒
                   if (res.get.hash.equals(currentBlockHash)) {
                     //当前高度已经是最高高度，15秒以后执行下一次请求
-                    context.system.scheduler.scheduleOnce(15 seconds)(process())
+                    Thread.sleep(15000)
                   } else {
                     handleFork(currentBlockNumber - 1)
                   }
-                case _ ⇒ process()
               }
-          } else {
-            // 如果最新高度低于已处理的高度说明分叉了
-            handleFork(result - 1)
           }
-        case _ ⇒ process()
-      }
+      }.onComplete(_ ⇒ process())
 
   }
+
+  def test():Unit = {
+
+    for {
+     res: XEthBlockNumberRes ← (ethereumConnectionActor ? XEthBlockNumberReq()).mapTo[XEthBlockNumberRes]
+
+
+
+
+    }yield {
+
+    }
+
+
+
+  }
+
+
+
 
   // find the fork height
   def handleFork(blockNum: BigInt): Unit = {
