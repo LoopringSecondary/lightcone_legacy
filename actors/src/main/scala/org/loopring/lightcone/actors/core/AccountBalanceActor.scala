@@ -55,13 +55,15 @@ class AccountBalanceActor(
     //TODO(yadong) 如果是ETH这里token如何表示，如何做特殊的处理
     case req: XGetBalanceAndAllowancesReq ⇒
       val balanceCallReqs = req.tokens.map(token ⇒ {
-        val param = XTransactionParam(to = token, data = erc20ABI.balanceOf.pack(BalanceOfFunction.Parms(req.address)))
+        val data = erc20ABI.balanceOf.pack(BalanceOfFunction.Parms(req.address))
+        val param = XTransactionParam(to = token, data = data)
         XEthCallReq(Some(param), tag = "latest")
       })
       val batchBalanceReq = XBatchContractCallReq(balanceCallReqs)
       val allowanceCallReqs = req.tokens.map(token ⇒ {
         //TODO(yadong) 授权地址暂时写死，等后续定获取方式修改
-        val data = erc20ABI.allowance.pack(AllowanceFunction.Parms(_spender = "0x17233e07c67d086464fD408148c3ABB56245FA64", _owner = req.address))
+        val data = erc20ABI.allowance.pack(
+          AllowanceFunction.Parms(_spender = "0x17233e07c67d086464fD408148c3ABB56245FA64", _owner = req.address))
         val param = XTransactionParam(to = token, data = data)
         XEthCallReq(Some(param), tag = "latest")
       })
