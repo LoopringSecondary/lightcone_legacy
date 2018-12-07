@@ -30,6 +30,8 @@ object OrderEntryActor {
   val name = "order_entry"
 }
 
+/** 用户请求core的入口
+ */
 class OrderEntryActor()(
     implicit
     val ec: ExecutionContext,
@@ -40,7 +42,7 @@ class OrderEntryActor()(
   with ActorLogging {
 
   private def ordersDalActor: ActorRef = actors.get(OrdersDalActor.name)
-  private def accountManagerActor: ActorRef = actors.get(AccountManagerActor.name)
+  private def accountManagerActor: ActorRef = actors.get(AccountManagerShardingActor.name)
 
   //todo：重新整理保存order的层次与结构
   /** 1、提交订单
@@ -50,10 +52,20 @@ class OrderEntryActor()(
     case req: XSaveOrderReq ⇒ //提交订单
       (for {
         _ ← ordersDalActor ? req //保存到数据库
-        res ← accountManagerActor ? XSubmitOrderReq(Some(req.getOrder)) //然后发送到accountmanager
+        res ← accountManagerActor ? XAccountMsgWrap(
+          req.getOrder.owner,
+          XAccountMsgWrap.Data.SubmitOrder(XSubmitOrderReq(Some(req.getOrder)))
+        ) //然后发送到accountmanager
       } yield res) pipeTo sender
     case req: XCancelOrderReq ⇒ //取消订单
-      accountManagerActor forward req
+      (for {
+        order ← (ordersDalActor ? XGetOrderByHashReq(req.id))
+          .mapTo[XGetOrderByHashRes]
+        res ← accountManagerActor ? XAccountMsgWrap(
+          order.getOrder.owner,
+          XAccountMsgWrap.Data.CancelOrder(req)
+        )
+      } yield res) pipeTo sender
   }
 
 }

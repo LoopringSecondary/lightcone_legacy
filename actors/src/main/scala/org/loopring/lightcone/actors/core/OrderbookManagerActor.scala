@@ -18,18 +18,14 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor.{ Actor, ActorLogging }
 import akka.event.LoggingReceive
-import akka.util.Timeout
-import akka.pattern.pipe
-import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
-import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.core._
-import scala.concurrent.ExecutionContext
 
 object OrderbookManagerActor {
   def name = "orderbook_manager"
 }
 
+//todo:OrderbookManager 的恢复，有问题的，MarketManager需要再发送当前的状态
 class OrderbookManagerActor(config: XOrderbookConfig)
   extends Actor with ActorLogging {
 

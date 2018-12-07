@@ -16,8 +16,8 @@
 
 package org.loopring.lightcone.actors.core
 
+import akka.actor.SupervisorStrategy.Escalate
 import akka.actor._
-import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
@@ -35,44 +35,12 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-object AccountManagerActor {
-  val name = "account_manager"
-
-  //todo: sharding配置，发送给AccountManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
-  val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
-    case XStart(_) ⇒ "address_1"
-  }
-
-  def createShardActor(
-    actors: Lookup[ActorRef],
-    recoverBatchSize: Int,
-    skipRecovery: Boolean = false
-  )(
-    implicit
-    system: ActorSystem,
-    ec: ExecutionContext,
-    timeout: Timeout,
-    dustEvaluator: DustOrderEvaluator
-  ): ActorRef = {
-    ClusterSharding(system).start(
-      typeName = "AccountManagerActor",
-      entityProps = Props(new AccountManagerActor(actors)),
-      settings = ClusterShardingSettings(system),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
-    )
-  }
+//仅在core中使用，只能被AccountManagerSharding初始化
+private[core] object AccountManagerActor {
+  val name: String = "account_manager"
 }
 
-class AccountManagerActor(
+private[core] class AccountManagerActor(
     val actors: Lookup[ActorRef]
 )(
     implicit
@@ -82,6 +50,12 @@ class AccountManagerActor(
 )
   extends Actor
   with ActorLogging {
+
+  //作为ShardingActor的子Actor，遇到异常时要将错误抛给父Actor，由父Actor重启所有的子Actor
+  override val supervisorStrategy =
+    AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
+      case _: Exception ⇒ Escalate //所有异常都抛给上层监管者，shardingActor
+    }
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
@@ -93,14 +67,7 @@ class AccountManagerActor(
   protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
   protected def orderHistoryActor = actors.get(OrderStateActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
-  protected def accountManagerMonitor = actors.get(AccountManagerMonitorActor.name)
-
-  context.system.scheduler.schedule(
-    100 millis,
-    10000 millis,
-    accountManagerMonitor,
-    XHeatbeat()
-  )
+  protected def accountManagerSharding = actors.get(AccountManagerShardingActor.name)
 
   def receive: Receive = LoggingReceive {
 

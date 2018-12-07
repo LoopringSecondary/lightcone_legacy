@@ -23,7 +23,6 @@ import akka.pattern.ask
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.depth._
@@ -34,6 +33,7 @@ import org.loopring.lightcone.proto.core._
 
 import scala.concurrent._
 
+//todo：MarketManager应该不需要一个ShardingActor
 object MarketManagerActor {
   val name = "market_manager"
   val wethTokenAddress = "WETH" // TODO

@@ -17,18 +17,20 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor.{ Actor, ActorLogging, ActorRef }
-import akka.util.Timeout
 import akka.pattern._
+import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
+import org.loopring.lightcone.actors.persistence.OrdersDalActor
 import org.loopring.lightcone.proto.actors._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-object OrdersRecoveryActor {
+//recovery只会被AccountManagerSharding以及MarketManagerSharding请求
+private[core] object OrdersRecoveryActor {
   val name = "orders_recovery"
 }
 
-class OrdersRecoveryActor()(
+private[core] class OrdersRecoveryActor()(
     implicit
     val ec: ExecutionContext,
     val timeout: Timeout,
@@ -37,7 +39,7 @@ class OrdersRecoveryActor()(
   extends Actor
   with ActorLogging {
 
-  private def orderEntryActor: ActorRef = actors.get(OrderEntryActor.name)
+  private def ordersDalActor: ActorRef = actors.get(OrdersDalActor.name)
   private def accountManagerActor: ActorRef = actors.get(AccountManagerActor.name)
 
   /** 1、重启时，读取并返回所有的有效订单
@@ -46,7 +48,7 @@ class OrdersRecoveryActor()(
   //todo:job合并有难度，而且不是业务必须的，可以稍后作为优化项
   def receive: Receive = {
     case req: XRecoverOrdersReq ⇒ for {
-      res ← (orderEntryActor ? req).mapTo[XRecoverOrdersRes]
+      res ← (ordersDalActor ? req).mapTo[XRecoverOrdersRes]
       _ ← Future.sequence(res.orders.map {
         order ⇒ accountManagerActor ? XSubmitOrderReq() //todo:整理proto的返回值等, 并且future的数量需要控制
       })

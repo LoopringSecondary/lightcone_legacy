@@ -247,13 +247,19 @@ message XSetGasPriceRes {
     bytes gas_price = 1;
 }
 
-
 message XUpdatedTokenBurnRate {
     string token = 1;
     double burnRate = 2;
 }
 
-message XHeatbeat{}
+message XAccountMsgWrap {
+    string address = 1;
+    oneof data {
+        XSubmitOrderReq submitOrder = 101;
+        XGetBalanceAndAllowancesReq balanceAndAllowancesReq = 102;
+        XCancelOrderReq cancelOrder = 103;
+    }
+}
 
 /// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
 /// 解析合约事件得到下面的数据：

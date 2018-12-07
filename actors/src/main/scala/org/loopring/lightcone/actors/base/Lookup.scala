@@ -22,6 +22,7 @@ trait Lookup[T] {
   def get(name: String): T
   def add(name: String, ref: T): Unit
   def del(name: String): Unit
+  def contains(name: String): Boolean
   def clear(): Unit
 }
 
@@ -40,8 +41,12 @@ class MapBasedLookup[T] extends Lookup[T] with Logging {
     items(name)
   }
 
+  def contains(name: String): Boolean = {
+    items.contains(name)
+  }
+
   def add(name: String, item: T) = {
-    assert(!items.contains(name))
+    assert(!contains(name))
     items += name -> item
   }
 

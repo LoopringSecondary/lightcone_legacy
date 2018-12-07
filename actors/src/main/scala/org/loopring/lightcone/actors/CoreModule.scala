@@ -68,7 +68,7 @@ class CoreModule(config: Config)
     val marketsConfig = XMarketManagerConfig()
     val marketManagerShardActor = deployCoreMarketManager(actors, marketsConfig, true)
 
-    actors.add(AccountManagerActor.name, accountManagerShardActor)
+    //    actors.add(AccountManagerActor.name, accountManagerShardActor)
     actors.add(MarketManagerActor.name, marketManagerShardActor)
 
     val orderbookConfig = XOrderbookConfig(
@@ -107,7 +107,8 @@ class CoreModule(config: Config)
     timeout: Timeout,
     dustEvaluator: DustOrderEvaluator
   ): ActorRef = {
-    AccountManagerActor.createShardActor(actors, recoverBatchSize, skipRecovery)
+    Actor.noSender
+    //    AccountManagerActor.createShardActor(actors, recoverBatchSize, skipRecovery)
   }
 
   def deployCoreMarketManager(

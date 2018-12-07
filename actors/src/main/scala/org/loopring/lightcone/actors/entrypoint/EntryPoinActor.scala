@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.entrypoint
 import akka.actor._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.actors.core.{ AccountManagerActor, OrderbookManagerActor }
+import org.loopring.lightcone.actors.core.OrderbookManagerActor
 import org.loopring.lightcone.proto.actors.XSubmitOrderReq
 import org.loopring.lightcone.proto.core.XGetOrderbookReq
 
@@ -34,7 +34,7 @@ class EntryPoinActor(actors: Lookup[ActorRef])(
   with ActorLogging {
 
   override def preStart(): Unit = {
-    log.info(s"####, entry ${actors.get(AccountManagerActor.name)}, ${actors.get(OrderbookManagerActor.name)}")
+    log.info(s"####, entry ${actors.get(OrderbookManagerActor.name)}")
     super.preStart()
   }
 
@@ -42,7 +42,7 @@ class EntryPoinActor(actors: Lookup[ActorRef])(
   def receive: Receive = {
     case req: XSubmitOrderReq ⇒ {
       log.info(s"####### entry XSubmitOrderReq ${req}")
-      actors.get(AccountManagerActor.name) forward req
+      //      actors.get(AccountManagerActor.name) forward req
     }
     case req: XGetOrderbookReq ⇒ actors.get(OrderbookManagerActor.name) forward req
     case _                     ⇒
