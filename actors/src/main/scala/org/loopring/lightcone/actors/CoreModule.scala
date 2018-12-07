@@ -89,6 +89,8 @@ class CoreModule(config: Config)
     val dal = new OrderDalImpl()
     val orderDalActor = system.actorOf(Props(new OrdersDalActor(dal)), OrdersDalActor.name)
     actors.add(OrdersDalActor.name, orderDalActor)
+    val orderHistoryActor = system.actorOf(Props(new OrderHistoryActor()), OrderHistoryActor.name)
+    actors.add(OrderHistoryActor.name, orderHistoryActor)
 
     println(s"#### accountmanager ${accountManagerShardActor.path.address.toString}")
     println(s"#### orderbookManagerActor ${cluster.selfRoles}${orderbookManagerActor}, ${orderbookManagerActor.path.toString}")
