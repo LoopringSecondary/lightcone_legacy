@@ -35,10 +35,13 @@ class EthereumDataIndexer(
   extends Actor with ActorLogging {
 
   val ethereumConnectionActor: ActorRef = actors.get("ethereum_connection")
+
+
   var currentBlockNumber: BigInt = BigInt(-1)
   var currentBlockHash: String = _
 
   override def preStart(): Unit = {
+    //
     ethereumConnectionActor ? XEthBlockNumberReq() onComplete {
       case Success(XEthBlockNumberRes(_, _, result, None)) ⇒
         (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(result)) onComplete {
@@ -51,6 +54,7 @@ class EthereumDataIndexer(
 
       case Failure(e) ⇒
         log.error(s"fail to get the current blockNumber:${e.getMessage}")
+        context.stop(self)
     }
   }
 
@@ -96,6 +100,19 @@ class EthereumDataIndexer(
 
   // index block
   def indexBlock(block: XBlockWithTxObject): Future[(BigInt, String)] = {
+    val txs = block.transactions
+    val txReceiptReqs = txs.map(tx ⇒ XGetTransactionReceiptReq(tx.hash))
+    for {
+      txReceipts ← (ethereumConnectionActor ? XBatchGetTransactionReceiptsReq(txReceiptReqs))
+        .mapTo[XBatchGetTransactionReceiptsRes]
+        .map(_.resps)
+      txWithReceipts = txs zip txReceipts.map(_.result.get)
+    } yield {
+      txWithReceipts.foreach(t ⇒ {
+        t._2.status
+
+      })
+    }
     Future.successful((BigInt(0), ""))
   }
 
