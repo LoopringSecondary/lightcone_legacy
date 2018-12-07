@@ -109,23 +109,6 @@ message XRawOrder {
         string    transfer_data_s   = 55;
     }
 
-    // string  id          = 1; // order hash
-    string hash         = 2;
-    int32  version      = 3;
-    string owner        = 4;
-    string token_s      = 5;
-    string token_b      = 6;
-    bytes  amount_s     = 7;
-    bytes  amount_b     = 8;
-    int32  valid_since  = 9; // in seconds
-    Params params                   = 10;
-    FeeParams fee_params            = 11;
-    ERC1400Params erc1400_params    = 12;
-    int64 created_at            = 13;
-}
-
-message XOrderPersState {
-
     // // The following fieds are not part of Loopring's order definition but
     // // will be provided as metadata
     message State {
@@ -143,19 +126,20 @@ message XOrderPersState {
         bytes outstanding_amount_fee  = 205;
     }
 
-    string hash = 1;
-    string owner = 2;
-    string token_s = 3;
-    string token_b = 4;
-    string token_fee = 5;
-    bytes amount_s = 6;
-    bytes amount_b = 7;
-    bytes amount_fee = 8;
-    int32  valid_since             = 9;
-    int32  valid_until             = 10;
-    double wallet_split_percentage = 11;
-    State state = 12;
-    int64 sequence_id   = 13;
+    // string  id          = 1; // order hash
+    string hash         = 2;
+    int32  version      = 3;
+    string owner        = 4;
+    string token_s      = 5;
+    string token_b      = 6;
+    bytes  amount_s     = 7;
+    bytes  amount_b     = 8;
+    int32  valid_since  = 9; // in seconds
+    Params params                   = 10;
+    FeeParams fee_params            = 11;
+    ERC1400Params erc1400_params    = 12;
+    State state            = 13;
+    int64 sequence_id      = 14;
 }
 
 message XRingBatch {

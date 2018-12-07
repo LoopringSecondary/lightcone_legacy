@@ -50,4 +50,9 @@ package object ethereum {
     }
   }
 
+  private[ethereum] case class BatchMethod(
+      method: String,
+      params: Seq[Any]
+  )
+
 }

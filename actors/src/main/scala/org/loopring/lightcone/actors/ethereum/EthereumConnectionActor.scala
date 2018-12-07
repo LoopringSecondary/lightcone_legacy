@@ -95,3 +95,7 @@ class EthereumConnectionActor(
   }
 }
 
+object EthereumConnectionActor {
+  val name = "ethereum_connection"
+}
+

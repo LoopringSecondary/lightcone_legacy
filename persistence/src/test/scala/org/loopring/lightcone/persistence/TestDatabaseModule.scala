@@ -23,7 +23,6 @@ import org.loopring.lightcone.persistence.dals._
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import scala.concurrent._
-import org.loopring.lightcone.persistence.dals.OrderStateDal
 import scala.concurrent.duration._
 
 class TestDatabaseModule()(
@@ -32,8 +31,7 @@ class TestDatabaseModule()(
     val ec: ExecutionContext
 ) extends base.BaseDatabaseModule {
 
-  val orders: OrderDal = new OrderDalImpl(this)
-  val orderStates: OrderStateDal = new OrderStateDalImpl()
+  val orders: OrderDal = new OrderDalImpl()
   val trades: TradeDal = new TradeDalImpl()
   val addresses: AddressDal = new AddressDalImpl()
   val tokenBalances: TokenBalanceDal = new TokenBalanceDalImpl()

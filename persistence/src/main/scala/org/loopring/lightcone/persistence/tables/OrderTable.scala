@@ -27,7 +27,7 @@ class OrderTable(tag: Tag)
   implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
 
   def id = hash
-  def hash = columnHash("hash", O.PrimaryKey)
+  def hash = columnHash("hash")
   def version = column[Int]("version")
   def owner = columnAddress("owner")
   def tokenS = columnAddress("token_s")
@@ -63,10 +63,25 @@ class OrderTable(tag: Tag)
   def trancheB = column[String]("tranche_b")
   def trancheDataS = column[String]("transfer_data_s")
 
+  // State
   def createdAt = column[Long]("created_at")
+  def updatedAt = column[Long]("updated_at")
+  def matchedAt = column[Long]("matched_at")
+  def updatedAtBlock = column[Long]("updated_at_block")
+  def status = column[XOrderStatus]("status")
+  def outstandingAmountS = columnAmount("outstanding_amount_s")
+  def outstandingAmountB = columnAmount("outstanding_amount_b")
+  def outstandingAmountFee = columnAmount("outstanding_amount_fee")
+  def actualAmountS = columnAmount("actual_amount_s")
+  def actualAmountB = columnAmount("actual_amount_b")
+  def actualAmountFee = columnAmount("actual_amount_fee")
+
+  def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
 
   // indexes
   def idx_hash = index("idx_hash", (hash), unique = true)
+  def idx_updated_at = index("idx_updated_at", (updatedAt), unique = false)
+  def idx_status = index("idx_status", (status), unique = false)
   def idx_token_s = index("idx_token_s", (tokenS), unique = false)
   def idx_token_b = index("idx_token_b", (tokenB), unique = false)
   def idx_token_fee = index("idx_token_fee", (tokenFee), unique = false)
@@ -74,6 +89,7 @@ class OrderTable(tag: Tag)
   def idx_valid_until = index("idx_valid_until", (validUntil), unique = false)
   def idx_owner = index("idx_owner", (owner), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
+  // def idx_sequence = index("idx_sequence", (sequenceId), unique = true)
 
   def paramsProjection = (
     dualAuthAddr,
@@ -135,6 +151,30 @@ class OrderTable(tag: Tag)
       }
     )
 
+  def stateProjection = (
+    createdAt,
+    updatedAt,
+    matchedAt,
+    updatedAtBlock,
+    status,
+    actualAmountS,
+    actualAmountB,
+    actualAmountFee,
+    outstandingAmountS,
+    outstandingAmountB,
+    outstandingAmountFee
+  ) <> (
+      {
+        tuple ⇒
+          Option((XRawOrder.State.apply _).tupled(tuple))
+      },
+      {
+        paramsOpt: Option[XRawOrder.State] ⇒
+          val params = paramsOpt.getOrElse(XRawOrder.State())
+          XRawOrder.State.unapply(params)
+      }
+    )
+
   def * = (
     hash,
     version,
@@ -147,7 +187,8 @@ class OrderTable(tag: Tag)
     paramsProjection,
     feeParamsProjection,
     erc1400ParamsProjection,
-    createdAt,
+    stateProjection,
+    sequenceId
   ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
 }
 

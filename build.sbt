@@ -34,6 +34,7 @@ lazy val core = (project in file("core"))
 
 lazy val actors = (project in file("actors"))
   .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(DockerComposePlugin)
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
