@@ -2,8 +2,9 @@
 
 ## Compile
 
-* Compile all, run `sbt compile`.
-* Compile certain subproject, run `sbt "project $projectName" compile`.
+* Compile all, run `sbt test:compile`
+* Compile subproject, run `sbt $projectName/test:compile`
+> Make sure to use `test:compile` instead of `compile` so all tests compile.
 
 ## Dockerize
 
@@ -11,8 +12,10 @@ Please make sure you have docker installed and started.
 * To create a docker iamge file for the runnable program (in subproject actors), run `sbt docker`.
 * To publish the docker image, use `sbt dockerPush`.
 
-## Test
 
-* To generate test coverage report, run `sbt coverageReport`.
-* Run test under specific subproject, run `sbt "project $projectName" test`, i.e. `sbt "project ethereum" test`.
+## Test
+* You need to install docker to run all tests
+* To run tests under specific subproject, run `sbt $projectName/test`
+* To run only modified and failed tests, run `sbt testQuick`
+* To generate test coverage report, run `sbt coverageReport`
 
