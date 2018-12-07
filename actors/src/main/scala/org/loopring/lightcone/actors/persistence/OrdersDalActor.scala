@@ -73,7 +73,7 @@ class OrdersDalActor(
       } yield XRecoverOrdersRes(orders)) pipeTo sender
     case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
       (stateOpt match {
-        case Some(state) ⇒ ordersDal.updateAmount(hash, state, true)
+        case Some(state) ⇒ ordersDal.updateAmount(hash, state, changeUpdatedAtField)
         case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
       }) pipeTo sender
     case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
