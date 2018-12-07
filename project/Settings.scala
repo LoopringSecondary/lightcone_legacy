@@ -87,26 +87,22 @@ object Settings {
       .setPreference(AllowParamGroupsOnNewlines, true),
     coverageEnabled := true)
 
-  lazy val dockerSettings = Seq(
+  lazy val dockerSettings: Seq[Setting[_]] = Seq(
     dockerfile in docker := {
       val appDir = stage.value
       val targetDir = "/app"
 
+      // TODO(dongw): set this up.
       new Dockerfile {
         from("openjdk:8-jre")
         entryPoint(s"$targetDir/bin/${executableScriptName.value}")
         copy(appDir, targetDir, chown = "daemon:daemon")
       }
     },
+    // dockerImageCreationTask := docker.value,
     imageNames in docker := Seq(
-      // Sets the latest tag
-      ImageName(s"${organization.value}/lightcone:latest"),
-
-      // Sets a name with a tag that contains the project version
-      ImageName(
-        namespace = Some(organization.value),
-        repository = "lightcone",
-        tag = Some("v" + version.value))),
+      ImageName(s"${organization.value}/lightcone_${name.value}:latest"),
+      ImageName(s"${organization.value}/lightcone_${name.value}:v${version.value}")),
     buildOptions in docker := BuildOptions(
       cache = false,
       removeIntermediateContainers = BuildOptions.Remove.Always,

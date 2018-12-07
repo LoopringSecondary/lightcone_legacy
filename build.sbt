@@ -1,6 +1,9 @@
+import sbt._
+import Keys._
 import Settings._
 import Dependencies._
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
+import com.tapad.docker.DockerComposeKeys
 
 lazy val proto = (project in file("proto"))
   .settings(
@@ -46,21 +49,40 @@ lazy val actors = (project in file("actors"))
 
 lazy val indexer = (project in file("indexer"))
   .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(DockerComposePlugin)
+  .enablePlugins(sbtdocker.DockerPlugin)
+  .enablePlugins(JavaServerAppPackaging)
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
   .dependsOn(ethereum, persistence)
   .settings(
     basicSettings,
+    dockerSettings,
     libraryDependencies ++= dependency4Indexer)
 
 lazy val gateway = (project in file("gateway"))
   .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(DockerComposePlugin)
+  .enablePlugins(sbtdocker.DockerPlugin)
+  .enablePlugins(JavaServerAppPackaging)
+  .enablePlugins(MultiJvmPlugin)
+  .configs(MultiJvm)
+  .settings(multiJvmSettings: _*)
   .dependsOn(proto)
   .settings(
     basicSettings,
+    dockerSettings,
     libraryDependencies ++= dependency4Gateway)
 
 lazy val all = (project in file("."))
+  .enablePlugins(DockerComposePlugin)
+  .settings(
+    docker := {
+      (docker in actors).value
+      (docker in indexer).value
+      (docker in gateway).value
+    },
+    DockerComposeKeys.dockerImageCreationTask := docker.value)
   .aggregate(proto, ethereum, persistence, core, actors, gateway, indexer)
   .withId("lightcone")
