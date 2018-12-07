@@ -103,6 +103,10 @@ message XSubmitOrderReq {
     XOrder order = 1;
 }
 
+message XSubmitRawOrderReq {
+    core.XRawOrder raw_order = 1;
+}
+
 message XSubmitOrderRes {
     XErrorCode error = 1;
     XOrder order = 2;
@@ -133,6 +137,7 @@ message XOrderRecoverySettings {
 message XCancelOrderReq {
     string id = 1;
     bool hard_cancel = 2; // 默认软取消
+    core.XOrderStatus status = 3; //取消的类型
 }
 
 message XCancelOrderRes {

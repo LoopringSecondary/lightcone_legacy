@@ -131,12 +131,14 @@ private[core] class AccountManagerActor(
       order_ = updatedOrders(_order.id)
       xorder_ : XOrder = order_.copy(_reserved = None, _outstanding = None)
     } yield {
+      //todo:order_与updatedOrders都需要判断是否需要取消的，因为如果没有successful，说明订单取消，但是需要尝试向MMA发送消息尝试取消的
       if (successful) {
         log.debug(s"submitting order to market manager actor: $order_")
         marketManagerActor ! XSubmitOrderReq(Some(xorder_))
         XSubmitOrderRes(order = Some(xorder_))
       } else {
         val error = convertOrderStatusToErrorCode(order.status)
+        marketManagerActor ! XCancelOrderReq(xorder_.id, false, order.status)
         XSubmitOrderRes(error = error)
       }
     }
@@ -178,7 +180,7 @@ private[core] class AccountManagerActor(
     updatedOrders.foreach { order ⇒
       order.status match {
         case STATUS_CANCELLED_LOW_BALANCE | STATUS_CANCELLED_LOW_FEE_BALANCE ⇒
-          marketManagerActor ! XCancelOrderReq(order.id)
+          marketManagerActor ! XCancelOrderReq(order.id, false, order.status)
 
         case STATUS_PENDING ⇒
           //allowance的改变需要更新到marketManager

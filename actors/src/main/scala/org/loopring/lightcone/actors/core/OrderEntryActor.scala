@@ -23,6 +23,7 @@ import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.persistence.OrdersDalActor
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core.XOrderStatus
 
 import scala.concurrent.ExecutionContext
 
@@ -49,12 +50,12 @@ class OrderEntryActor()(
    *  2、取消订单
    */
   def receive: Receive = {
-    case req: XSaveOrderReq ⇒ //提交订单
+    case req: XSubmitRawOrderReq ⇒ //提交订单
       (for {
         _ ← ordersDalActor ? req //保存到数据库
         res ← accountManagerActor ? XAccountMsgWrap(
-          req.getOrder.owner,
-          XAccountMsgWrap.Data.SubmitOrder(XSubmitOrderReq(Some(req.getOrder)))
+          req.getRawOrder.owner,
+          XAccountMsgWrap.Data.SubmitOrder(XSubmitOrderReq(Some(req.getRawOrder)))
         ) //然后发送到accountmanager
       } yield res) pipeTo sender
     case req: XCancelOrderReq ⇒ //取消订单
@@ -63,7 +64,7 @@ class OrderEntryActor()(
           .mapTo[XGetOrderByHashRes]
         res ← accountManagerActor ? XAccountMsgWrap(
           order.getOrder.owner,
-          XAccountMsgWrap.Data.CancelOrder(req)
+          XAccountMsgWrap.Data.CancelOrder(req.copy(status = XOrderStatus.STATUS_CANCELLED_BY_USER))
         )
       } yield res) pipeTo sender
   }
