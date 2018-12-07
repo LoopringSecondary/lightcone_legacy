@@ -29,8 +29,23 @@ class DatabaseModule @Inject() (
     @Named("db-execution-context") val ec: ExecutionContext
 ) extends base.BaseDatabaseModule {
 
-  val orders: OrdersDal = new OrdersDalImpl()
+  val orders: OrderDal = new OrderDalImpl()
+  val trades: TradeDal = new TradeDalImpl()
+  val addresses: AddressDal = new AddressDalImpl()
+  val tokenBalances: TokenBalanceDal = new TokenBalanceDalImpl()
+  val blocks: BlockDal = new BlockDalImpl()
+  val transactions: TransactionDal = new TransactionDalImpl()
+  val evengLogs: EventLogDal = new EventLogDalImpl()
+  val tokenTransfers: TokenTransferDal = new TokenTransferDalImpl()
 
-  val tables = Seq(orders)
-
+  val tables = Seq(
+    orders,
+    trades,
+    addresses,
+    tokenBalances,
+    blocks,
+    transactions,
+    evengLogs,
+    tokenTransfers
+  )
 }

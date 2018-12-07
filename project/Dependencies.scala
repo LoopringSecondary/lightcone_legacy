@@ -45,7 +45,7 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
-    "com.typesafe.akka" %% "akka-slf4j" % akkaVersion)
+    "com.typesafe.akka" %% "akka-cluster-sharding" % akkaVersion)
 
   lazy val httpDependency = Seq(
     "com.typesafe.akka" %% "akka-http" % "10.1.5",
@@ -54,6 +54,7 @@ object Dependencies {
   lazy val driverDependency = Seq(
     "com.github.etaty" %% "rediscala" % "1.8.0",
     "com.lightbend.akka" %% "akka-stream-alpakka-slick" % "0.20",
+    "com.wix" % "wix-embedded-mysql" % "4.2.0",
     "mysql" % "mysql-connector-java" % "5.1.47")
 
   lazy val scalapbDependency = Seq(
@@ -78,6 +79,13 @@ object Dependencies {
     testDependency
 
   lazy val dependency4Actors = dependency4Persistence ++
+    httpDependency ++
+    akkaDependency ++
+    json4sDependency ++
+    testDependency ++
+    Seq("org.jsoup" % "jsoup" % "1.11.3")
+
+  lazy val dependency4Indexer = dependency4Persistence ++
     httpDependency ++
     akkaDependency ++
     json4sDependency ++

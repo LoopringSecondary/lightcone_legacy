@@ -22,20 +22,14 @@ package org.loopring.lightcone.proto.persistence;
 import "core_data.proto";
 
 message Bar {
-    int64 id = 5;
-    string hash = 6;
-    string a = 1;
-    string b = 2;
-    bytes c = 3;
-    int64 d = 4;
-}
-
-message XSaveOrderResult {
-    core.XRawOrder order    = 1;
-    bool already_exist      = 2;
-    XPersistenceError error = 3;
+    string  hash = 1;
+    string  a = 2;
+    string  b = 3;
+    bytes   c = 4;
+    int64   d = 5;
 }
 
 enum XPersistenceError {
     PERS_ERR_NONE       = 0;
+    PERS_ERR_INVALID_DATA = 1;
 }
