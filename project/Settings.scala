@@ -88,8 +88,7 @@ object Settings {
       .setPreference(AllowParamGroupsOnNewlines, true),
     coverageEnabled := true)
 
-  lazy val dockerSettings = Seq(
-    dockerImageCreationTask := docker.value,
+  lazy val dockerSettings: Seq[Setting[_]] = Seq(
     dockerfile in docker := {
       val appDir = stage.value
       val targetDir = "/app"
@@ -100,11 +99,9 @@ object Settings {
         copy(appDir, targetDir, chown = "daemon:daemon")
       }
     },
+    dockerImageCreationTask := docker.value,
     imageNames in docker := Seq(
-      // Sets the latest tag
       ImageName(s"${organization.value}/${name.value}:latest"),
-
-      // Sets a name with a tag that contains the project version
       ImageName(
         namespace = Some(organization.value),
         repository = name.value,

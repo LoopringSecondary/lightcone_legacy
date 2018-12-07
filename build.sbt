@@ -1,3 +1,5 @@
+import sbt._
+import Keys._
 import Settings._
 import Dependencies._
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
@@ -74,9 +76,14 @@ lazy val gateway = (project in file("gateway"))
     libraryDependencies ++= dependency4Gateway)
 
 lazy val all = (project in file("."))
-  .aggregate(proto, ethereum, persistence, core, actors, gateway, indexer)
-  .withId("lightcone")
-  .enablePlugins(sbtdocker.DockerPlugin)
   .enablePlugins(DockerComposePlugin)
   .settings(
+    docker <<= (
+      docker in actors,
+      docker in indexer,
+      docker in gateway) map { (image, _, _) =>
+        image
+      },
     DockerComposeKeys.dockerImageCreationTask := docker.value)
+  .aggregate(proto, ethereum, persistence, core, actors, gateway, indexer)
+  .withId("lightcone")
