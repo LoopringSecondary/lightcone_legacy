@@ -16,13 +16,18 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{Actor, ActorLogging}
+import java.math.BigInteger
+
+import akka.actor.{ Actor, ActorLogging, ActorRef }
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import com.google.protobuf.ByteString
-import org.loopring.lightcone.ethereum.abi.{BalanceOfFunction, ERC20ABI}
+import akka.pattern.ask
+import org.loopring.lightcone.actors.base.Lookup
+import org.loopring.lightcone.ethereum.abi.{ AllowanceFunction, BalanceOfFunction, ERC20ABI }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.ethereum.EthereumConnectionActor
+import org.web3j.utils.Numeric
 
 import scala.concurrent._
 
@@ -31,7 +36,9 @@ object AccountBalanceActor {
 }
 
 // TODO(fukun): implement this class.
-class AccountBalanceActor()(
+class AccountBalanceActor(
+    val actors: Lookup[ActorRef]
+)(
     implicit
     ec: ExecutionContext,
     timeout: Timeout
@@ -39,26 +46,45 @@ class AccountBalanceActor()(
   extends Actor
   with ActorLogging {
 
+  protected def ethereumConnectionActor: ActorRef = actors.get(EthereumConnectionActor.name)
+
   val erc20ABI = ERC20ABI()
 
   def receive: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.
+    //TODO(yadong) 如果是ETH这里token如何表示，如何做特殊的处理
     case req: XGetBalanceAndAllowancesReq ⇒
-
-      val balanceCallReqs  = req.tokens.map(token ⇒ {
-        XTransactionParam(to = token,data = ByteString.copyFrom(erc20ABI.balanceOf.pack(BalanceOfFunction.Parms(req.address))))
+      val balanceCallReqs = req.tokens.map(token ⇒ {
+        val param = XTransactionParam(to = token, data = erc20ABI.balanceOf.pack(BalanceOfFunction.Parms(req.address)))
+        XEthCallReq(Some(param), tag = "latest")
       })
+      val batchBalanceReq = XBatchContractCallReq(balanceCallReqs)
+      val allowanceCallReqs = req.tokens.map(token ⇒ {
+        //TODO(yadong) 授权地址暂时写死，等后续定获取方式修改
+        val data = erc20ABI.allowance.pack(AllowanceFunction.Parms(_spender = "0x17233e07c67d086464fD408148c3ABB56245FA64", _owner = req.address))
+        val param = XTransactionParam(to = token, data = data)
+        XEthCallReq(Some(param), tag = "latest")
+      })
+      val batchAllowanceReq = XBatchContractCallReq(allowanceCallReqs)
+      for {
+        balances ← (ethereumConnectionActor ? batchBalanceReq)
+          .mapTo[XBatchContractCallRes]
+          .map(_.resps)
+          .map(_.map(res ⇒ BigInt(Numeric.toBigInt(res.result))))
+        allowances ← (ethereumConnectionActor ? batchAllowanceReq)
+          .mapTo[XBatchContractCallRes]
+          .map(_.resps)
+          .map(_.map(res ⇒ BigInt(Numeric.toBigInt(res.result))))
+      } yield {
+        val balanceAndAllowance =
+          (balances zip allowances)
+            .map(ba ⇒ XBalanceAndAllowance(ba._1, ba._2))
 
-      val batchBalanceReq = XBatchContractCallReq(XEthCallReq())
-
-      sender !
-        XGetBalanceAndAllowancesRes(
+        sender ! XGetBalanceAndAllowancesRes(
           req.address,
-          Map(req.tokens(0) -> XBalanceAndAllowance(BigInt("100000000000000000000000000"), BigInt("100000000000000000000000000")))
+          (req.tokens zip balanceAndAllowance).toMap
         )
+      }
   }
-
-
-
 
 }

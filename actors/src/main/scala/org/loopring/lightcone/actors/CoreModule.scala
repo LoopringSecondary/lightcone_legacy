@@ -83,7 +83,7 @@ class CoreModule(config: Config)
     )
     actors.add(OrderbookManagerActor.name, orderbookManagerActor)
 
-    val accountBalanceActor = system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
+    val accountBalanceActor = system.actorOf(Props(new AccountBalanceActor(actors)), AccountBalanceActor.name)
     actors.add(AccountBalanceActor.name, accountBalanceActor)
     val orderStateActor = system.actorOf(Props(new OrderStateActor()), OrderStateActor.name)
     actors.add(OrderStateActor.name, orderStateActor)
