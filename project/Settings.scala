@@ -13,7 +13,6 @@ import scoverage.ScoverageKeys._
 import sbtdocker.mutable.Dockerfile
 import sbtdocker.{ BuildOptions, DockerPlugin, ImageName }
 import sbtdocker.DockerKeys._
-// import com.tapad.docker.DockerComposeKeys._
 
 object Settings {
   lazy val basicSettings: Seq[Setting[_]] = Seq(
@@ -93,19 +92,17 @@ object Settings {
       val appDir = stage.value
       val targetDir = "/app"
 
+      // TODO(dongw): set this up.
       new Dockerfile {
         from("openjdk:8-jre")
         entryPoint(s"$targetDir/bin/${executableScriptName.value}")
-        copy(appDir, targetDir /*, chown = "daemon:daemon"*/ )
+        copy(appDir, targetDir, chown = "daemon:daemon")
       }
     },
     // dockerImageCreationTask := docker.value,
     imageNames in docker := Seq(
       ImageName(s"${organization.value}/lightcone_${name.value}:latest"),
-      ImageName(
-        namespace = Some(organization.value),
-        repository = "lightcone_" + name.value,
-        tag = Some("v" + version.value))),
+      ImageName(s"${organization.value}/lightcone_${name.value}:v${version.value}")),
     buildOptions in docker := BuildOptions(
       cache = false,
       removeIntermediateContainers = BuildOptions.Remove.Always,
