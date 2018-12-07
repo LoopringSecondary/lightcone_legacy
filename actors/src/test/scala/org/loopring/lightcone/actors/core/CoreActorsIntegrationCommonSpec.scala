@@ -100,24 +100,24 @@ abstract class CoreActorsIntegrationCommonSpec(
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
 
   // Simulating an AccountBalanceActor
-  val orderDatabaseAccessProbe = new TestProbe(system, "order_db_access") {
+  val ordersDalActorProbe = new TestProbe(system, "order_db_access") {
     def expectQuery() {
       expectMsgPF() {
         case req: XRecoverOrdersReq ⇒
-          println(s"ordermanagerProbe receive: $req, sender:${sender()}")
+          info(s"ordermanagerProbe receive: $req, sender:${sender()}")
       }
     }
     def replyWith(xorders: Seq[XRawOrder]) = reply(
       XRecoverOrdersRes(orders = xorders)
     )
   }
-  val orderDatabaseAccessActor = orderDatabaseAccessProbe.ref
+  val ordersDalActor = ordersDalActorProbe.ref
 
   // Simulating an AccountBalanceActor
   val accountBalanceProbe = new TestProbe(system, "account_balance") {
     def expectQuery(address: String, token: String) = expectMsgPF() {
       case XGetBalanceAndAllowancesReq(addr, tokens) if addr == address && tokens == Seq(token) ⇒
-        println(s"accountBalanceProbe, ${addr}, ${tokens}, ${sender()}")
+        info(s"accountBalanceProbe, ${addr}, ${tokens}, ${sender()}")
     }
 
     def replyWith(addr: String, token: String, balance: BigInt, allowance: BigInt) = reply(
@@ -156,7 +156,6 @@ abstract class CoreActorsIntegrationCommonSpec(
   val accountManagerActor1: ActorRef = TestActorRef(
     new AccountManagerActor(
       actors,
-      address = ADDRESS_1,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
     ),
@@ -166,7 +165,6 @@ abstract class CoreActorsIntegrationCommonSpec(
   val accountManagerActor2: ActorRef = TestActorRef(
     new AccountManagerActor(
       actors,
-      address = ADDRESS_2,
       recoverBatchSize = 5,
       skipRecovery = skipAccountManagerActorRecovery
     ),
@@ -176,25 +174,24 @@ abstract class CoreActorsIntegrationCommonSpec(
   val marketManagerActor: ActorRef = TestActorRef(
     new MarketManagerActor(
       actors,
-      marketId,
       config,
       skipRecovery = skipMarketManagerActorRecovery
     ),
     "marketManagerActor"
   )
 
-  actors.add(OrdersDalActor.name, orderDatabaseAccessActor)
+  actors.add(OrdersDalActor.name, ordersDalActor)
   actors.add(AccountBalanceActor.name, accountBalanceActor)
-  actors.add(OrderHistoryActor.name, orderHistoryActor)
+  actors.add(OrderStateActor.name, orderHistoryActor)
   actors.add(MarketManagerActor.name, marketManagerActor)
   actors.add(GasPriceActor.name, gasPriceActor)
   actors.add(OrderbookManagerActor.name, orderbookManagerActor)
   actors.add(SettlementActor.name, settlementActor)
   actors.add(EthereumAccessActor.name, ethereumAccessActor)
 
-  accountManagerActor1 ! XStart()
-  accountManagerActor2 ! XStart()
-  marketManagerActor ! XStart()
+  accountManagerActor1 ! XStart(ADDRESS_1)
+  accountManagerActor2 ! XStart(ADDRESS_2)
+  marketManagerActor ! XStart(marketId.primary + "-" + marketId.secondary)
   settlementActor ! XStart()
 
   implicit class RichString(s: String) {

@@ -35,12 +35,11 @@ class CoreActorsIntegrationSpec_AccountManager_ConcurrentOrders
       val accountManagerRecoveryActor = TestActorRef(
         new AccountManagerActor(
           actors,
-          address = ADDRESS_RECOVERY,
           recoverBatchSize = 2,
           skipRecovery = true
         ), "accountManagerActorConcurrenetOrders"
       )
-      accountManagerRecoveryActor ! XStart()
+      accountManagerRecoveryActor ! XStart(ADDRESS_RECOVERY)
 
       val order = XOrder(
         id = "order",

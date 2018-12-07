@@ -39,8 +39,19 @@ message XCheckBlockHeightResp {
     int32 height_block = 2;
 }
 
+message XNodeBlockHeight{
+    string path = 1;
+    int32 height = 2;
+}
+
+
 message XJsonRpcReq {
     string json = 1;
+}
+
+message XRpcReqWithHeight{
+    XJsonRpcReq req = 1;
+    uint32 height = 2;
 }
 
 message XJsonRpcErr {
@@ -343,4 +354,27 @@ message XSendRawTransactionReq {
     string data = 1;
 }
 
+message XBatchContractCallReq {
+    repeated XEthCallReq reqs = 1;
+}
+
+message XBatchContractCallRes {
+    repeated XEthCallRes resps = 1;
+}
+
+message XBatchGetTransactionsReq {
+    repeated XGetTransactionByHashReq reqs = 1;
+}
+
+message XBatchGetTransactionsRes {
+    repeated XGetTransactionByHashRes resps = 1;
+}
+
+message XBatchGetTransactionReceiptsReq {
+    repeated XGetTransactionReceiptReq reqs = 1;
+}
+
+message XBatchGetTransactionReceiptsRes {
+    repeated XGetTransactionReceiptRes resps = 1;
+}
 

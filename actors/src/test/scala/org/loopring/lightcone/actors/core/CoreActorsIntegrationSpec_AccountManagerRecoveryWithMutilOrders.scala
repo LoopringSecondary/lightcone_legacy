@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors.core
 import akka.testkit.TestActorRef
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.persistence.OrdersDalActor
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
@@ -38,12 +39,11 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
       val accountManagerRecoveryActor = TestActorRef(
         new AccountManagerActor(
           actors,
-          address = ADDRESS_RECOVERY,
           recoverBatchSize = 500,
           skipRecovery = false
         ), "accountManagerActorRecovery"
       )
-      accountManagerRecoveryActor ! XStart()
+      accountManagerRecoveryActor ! XStart(ADDRESS_RECOVERY)
 
       val order = XRawOrder(
         hash = "order",
@@ -61,8 +61,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
       val batchOrders1 = (0 until 500) map {
         i ⇒ order.copy(hash = "order1" + i)
       }
-      orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(batchOrders1)
+      ordersDalActorProbe.expectQuery()
+      ordersDalActorProbe.replyWith(batchOrders1)
 
       Thread.sleep(2000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
@@ -75,8 +75,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
       val batchOrders2 = (0 until 500) map {
         i ⇒ order.copy(hash = "order2" + i)
       }
-      orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(batchOrders2)
+      ordersDalActorProbe.expectQuery()
+      ordersDalActorProbe.replyWith(batchOrders2)
 
       Thread.sleep(2000)
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
@@ -85,8 +85,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
         case a: XOrderbook ⇒
           info("----orderbook status after second XRecoverOrdersRes: " + a)
       }
-      orderDatabaseAccessProbe.expectQuery()
-      orderDatabaseAccessProbe.replyWith(Seq())
+      ordersDalActorProbe.expectQuery()
+      ordersDalActorProbe.replyWith(Seq())
 
       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 

@@ -17,11 +17,12 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
+import akka.cluster.sharding._
 import akka.event.LoggingReceive
-import akka.pattern.{ ask, pipe }
+import akka.pattern._
 import akka.util.Timeout
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
@@ -35,11 +36,43 @@ import scala.concurrent._
 
 object AccountManagerActor {
   val name = "account_manager"
+
+  //todo: sharding配置，发送给AccountManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
+  val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
+    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+  }
+
+  val extractShardId: ShardRegion.ExtractShardId = {
+    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
+    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
+    case XStart(_) ⇒ "address_1"
+  }
+
+  def createShardActor(
+    actors: Lookup[ActorRef],
+    recoverBatchSize: Int,
+    skipRecovery: Boolean = false
+  )(
+    implicit
+    system: ActorSystem,
+    ec: ExecutionContext,
+    timeout: Timeout,
+    dustEvaluator: DustOrderEvaluator
+  ): ActorRef = {
+    ClusterSharding(system).start(
+      typeName = "AccountManagerActor",
+      entityProps = Props(new AccountManagerActor(actors, recoverBatchSize, skipRecovery)),
+      settings = ClusterShardingSettings(system),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
+    )
+  }
 }
 
 class AccountManagerActor(
     val actors: Lookup[ActorRef],
-    val address: String,
     val recoverBatchSize: Int,
     val skipRecovery: Boolean = false
 )(
@@ -51,18 +84,27 @@ class AccountManagerActor(
   extends Actor
   with ActorLogging
   with OrderRecoverySupport {
-  val ownerOfOrders = Some(address)
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
+  private var address: String = _
 
-  protected def orderDatabaseAccessActor = actors.get(OrdersDalActor.name)
+  protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
-  protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
+  protected def orderHistoryActor = actors.get(OrderStateActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
   def receive: Receive = {
-    case _: XStart ⇒ startOrderRecovery()
+    case XStart(shardEntityId) ⇒ {
+      address = shardEntityId
+      val recoverySettings = XOrderRecoverySettings(
+        skipRecovery,
+        recoverBatchSize,
+        address,
+        None
+      )
+      startOrderRecovery(recoverySettings)
+    }
   }
 
   def functional: Receive = LoggingReceive {
@@ -85,8 +127,10 @@ class AccountManagerActor(
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).pipeTo(sender)
 
-    case XSubmitOrderReq(Some(xorder)) ⇒
+    case XSubmitOrderReq(Some(xorder)) ⇒ {
+      println("### accountXSubmitOrderReq")
       submitOrder(xorder).pipeTo(sender)
+    }
 
     case req: XCancelOrderReq ⇒
       if (manager.cancelOrder(req.id)) {
@@ -104,7 +148,6 @@ class AccountManagerActor(
     case msg ⇒ log.debug(s"unknown msg ${msg}")
   }
 
-  //todo:返回Future时，会有并发问题，需要处理下，暂时将recovery更改为同步
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
     val order: Order = xorder
     for {

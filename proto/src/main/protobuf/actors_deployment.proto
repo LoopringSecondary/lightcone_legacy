@@ -31,5 +31,7 @@ message XNodeDeploymentSettings {
     map<string, XActorSettings> settings_map = 1;
 }
 
-message XStart{}
+message XStart{
+    string shard_entity_id = 1;
+}
 message XStop{}
