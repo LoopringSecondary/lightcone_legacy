@@ -101,10 +101,10 @@ object Settings {
     },
     // dockerImageCreationTask := docker.value,
     imageNames in docker := Seq(
-      ImageName(s"${organization.value}/${name.value}:latest"),
+      ImageName(s"${organization.value}/lightcone_${name.value}:latest"),
       ImageName(
         namespace = Some(organization.value),
-        repository = name.value,
+        repository = "lightcone_" + name.value,
         tag = Some("v" + version.value))),
     buildOptions in docker := BuildOptions(
       cache = false,
