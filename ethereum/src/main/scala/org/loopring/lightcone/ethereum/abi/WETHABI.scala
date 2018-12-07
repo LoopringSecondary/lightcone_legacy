@@ -17,6 +17,8 @@
 package org.loopring.lightcone.ethereum.abi
 
 import org.ethereum.solidity.{ Abi ⇒ SABI }
+import org.web3j.utils.Numeric
+
 import scala.annotation.meta.field
 
 object WETHABI {
@@ -35,6 +37,46 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
 
   val depositEvent = DepositEvent(abi.findEvent(searchByName(DepositEvent.name)))
   val withdrawalEvent = WithdrawalEvent(abi.findEvent(searchByName(WithdrawalEvent.name)))
+
+  override def unpackEvent(data: String, topics: Array[String]): Any = {
+    val event: SABI.Event = abi.findEvent(searchBySignature(Numeric.hexStringToByteArray(topics.head)))
+    event.name match {
+      case ApprovalEvent.name ⇒
+        approvalEvent.unpack(data, topics)
+      case TransferEvent.name ⇒
+        transferEvent.unpack(data, topics)
+      case DepositEvent.name ⇒
+        depositEvent.unpack(data, topics)
+      case WithdrawalEvent.name ⇒
+        withdrawalEvent.unpack(data, topics)
+      case _ ⇒
+    }
+  }
+
+  override def unpackFunctionInput(data: String): Any = {
+    val funSig = Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
+    val func = abi.findFunction(searchBySignature(funSig))
+
+    func.name match {
+      case TransferFunction.name ⇒
+        transfer.unpackInput(data)
+      case TransferFromFunction.name ⇒
+        transferFrom.unpackInput(data)
+      case ApproveFunction.name ⇒
+        approve.unpackInput(data)
+      case BalanceOfFunction.name ⇒
+        balanceOf.unpackInput(data)
+      case AllowanceFunction.name ⇒
+        allowance.unpackInput(data)
+      case DepositFunction.name ⇒
+        deposit.unpackInput(data)
+      case WithdrawFunction.name ⇒
+        withdraw.unpackInput(data)
+      case _ ⇒
+    }
+
+  }
+
 }
 
 object DepositFunction {
