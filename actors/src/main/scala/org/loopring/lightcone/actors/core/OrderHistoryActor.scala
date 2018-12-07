@@ -20,7 +20,7 @@ import akka.actor.{ Actor, ActorLogging }
 import org.loopring.lightcone.proto.actors.XGetOrderFilledAmountReq
 
 object OrderHistoryActor {
-  val name = "orders_history"
+  val name = "order_history"
 }
 
 class OrderHistoryActor extends Actor with ActorLogging {
