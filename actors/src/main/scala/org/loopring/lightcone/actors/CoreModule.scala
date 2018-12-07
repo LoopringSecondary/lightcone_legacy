@@ -24,7 +24,7 @@ import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.persistence.{ OrderStateActor, OrdersDalActor }
+import org.loopring.lightcone.actors.persistence.OrdersDalActor
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.persistence.base.BaseDatabaseModule
