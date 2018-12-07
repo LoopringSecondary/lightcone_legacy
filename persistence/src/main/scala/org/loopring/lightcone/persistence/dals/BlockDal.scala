@@ -29,7 +29,7 @@ import scala.concurrent._
 trait BlockDal
   extends BaseDalImpl[BlockTable, XBlockData] {
 
-  def saveOrder(block: XBlockData): Future[XPersistenceError]
+  def saveBlock(block: XBlockData): Future[XPersistenceError]
   def findByHash(hash: String): Future[Option[XBlockData]]
   def findByHeight(height: Long): Future[Option[XBlockData]]
   def findMaxHeight(): Future[Option[Long]]
@@ -46,7 +46,7 @@ class BlockDalImpl()(
   val query = TableQuery[BlockTable]
   def getRowHash(row: XBlockData) = row.hash
 
-  def saveOrder(block: XBlockData): Future[XPersistenceError] = for {
+  def saveBlock(block: XBlockData): Future[XPersistenceError] = for {
     result ← db.run(query.insertOrUpdate(block))
   } yield {
     if (result == 1) {
