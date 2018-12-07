@@ -16,13 +16,12 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor.{Actor, ActorLogging}
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
+import com.google.protobuf.ByteString
+import org.loopring.lightcone.ethereum.abi.{BalanceOfFunction, ERC20ABI}
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._
@@ -40,15 +39,26 @@ class AccountBalanceActor()(
   extends Actor
   with ActorLogging {
 
+  val erc20ABI = ERC20ABI()
+
   def receive: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.
     case req: XGetBalanceAndAllowancesReq ⇒
-      //todo: 测试deploy
+
+      val balanceCallReqs  = req.tokens.map(token ⇒ {
+        XTransactionParam(to = token,data = ByteString.copyFrom(erc20ABI.balanceOf.pack(BalanceOfFunction.Parms(req.address))))
+      })
+
+      val batchBalanceReq = XBatchContractCallReq(XEthCallReq())
+
       sender !
         XGetBalanceAndAllowancesRes(
           req.address,
           Map(req.tokens(0) -> XBalanceAndAllowance(BigInt("100000000000000000000000000"), BigInt("100000000000000000000000000")))
         )
   }
+
+
+
 
 }
