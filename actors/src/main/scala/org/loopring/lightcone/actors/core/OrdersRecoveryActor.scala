@@ -30,11 +30,12 @@ private[core] object OrdersRecoveryActor {
   val name = "orders_recovery"
 }
 
-private[core] class OrdersRecoveryActor()(
+private[core] class OrdersRecoveryActor(
+    actors: Lookup[ActorRef]
+)(
     implicit
     val ec: ExecutionContext,
-    val timeout: Timeout,
-    actors: Lookup[ActorRef]
+    val timeout: Timeout
 )
   extends Actor
   with ActorLogging {
