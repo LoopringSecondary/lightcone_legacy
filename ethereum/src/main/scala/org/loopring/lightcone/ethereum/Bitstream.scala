@@ -42,6 +42,9 @@ class Bitstream() {
   def addUint16(num: BigInt, forceAppend: Boolean = true) =
     addBigInt(num, 2, forceAppend)
 
+  def addUint16(num: Int, forceAppend: Boolean) =
+    addBigInt(BigInt(num), 2, forceAppend)
+
   def addUint32(num: BigInt, forceAppend: Boolean = true) =
     addBigInt(num, 4, forceAppend)
 
@@ -51,7 +54,7 @@ class Bitstream() {
   def addUintStr(numStr: String, forceAppend: Boolean = true) =
     addBigIntStr(numStr, 32, forceAppend)
 
-  def addX(num: BigInt, numBytes: Int, forceAppend: Boolean = true) =
+  def addNumber(num: BigInt, numBytes: Int, forceAppend: Boolean = true) =
     addBigInt(num, numBytes, forceAppend)
 
   def addBoolean(b: Boolean, forceAppend: Boolean = true) =

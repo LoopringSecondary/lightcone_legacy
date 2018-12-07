@@ -18,6 +18,8 @@ package org.loopring.lightcone.ethereum.data
 
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
+import org.web3j.crypto.WalletUtils.isValidAddress
+
 import org.loopring.lightcone.proto.core._
 
 trait RingBatchGenerator {
@@ -28,6 +30,7 @@ trait RingBatchGenerator {
 // TODO(kongliang): implement and test this class
 class RingBatchGeneratorImpl(context: XRingBatchContext)
   extends RingBatchGenerator {
+  val OrderVersion = 0
 
   def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch = {
     val orderValidator = new RawOrderValidatorImpl
@@ -63,7 +66,153 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
   }
 
   def toSubmitableParamStr(xRingBatch: XRingBatch): String = {
+    val tokenSpendables = xRingBatch.orders.map(order ⇒
+      Seq((order.owner + order.tokenS), (order.owner + order.feeParams.get.feeToken)))
+      .flatten
+      .distinct
+      .zipWithIndex
+      .toMap
+
+    val data = new Bitstream
+    val tables = new Bitstream
+
+    data.addUint(BigInt(0), true)
+    setupMiningInfo(xRingBatch, data, tables)
+
+    xRingBatch.orders.foreach(order ⇒ setupOrderInfo(data, tables, order, tokenSpendables))
+
     ""
+  }
+
+  private def setupMiningInfo(xRingBatch: XRingBatch, data: Bitstream, tables: Bitstream) {
+    val feeRecipient = if (isValidAddress(xRingBatch.feeRecipient)) xRingBatch.feeRecipient else xRingBatch.transactionOrigin
+    val miner = if (isValidAddress(xRingBatch.miner)) xRingBatch.miner else feeRecipient
+    if (feeRecipient != xRingBatch.transactionOrigin) {
+      insertOffset(tables, data.addAddress(feeRecipient, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    if (miner != feeRecipient) {
+      insertOffset(tables, data.addAddress(miner, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    if (xRingBatch.sig != null && xRingBatch.sig.length > 0
+      && miner != xRingBatch.transactionOrigin) {
+      insertOffset(tables, data.addHex(xRingBatch.sig, false))
+      addPadding(data)
+    } else {
+      insertDefault(tables)
+    }
+  }
+
+  private def setupOrderInfo(data: Bitstream, tables: Bitstream,
+    order: XRawOrder, tokenSpendables: Map[String, Int]) {
+    addPadding(data)
+    insertOffset(tables, OrderVersion)
+    insertOffset(tables, data.addAddress(order.owner, false))
+    insertOffset(tables, data.addAddress(order.tokenS, false))
+    insertOffset(tables, data.addAddress(order.tokenB, false))
+    insertOffset(tables, data.addUintStr(order.amountS.toString, false))
+    insertOffset(tables, data.addUintStr(order.amountB.toString, false))
+    insertOffset(tables, data.addUint32(order.validSince, false))
+
+    val spendableSIndex = tokenSpendables(order.owner + order.tokenS)
+    val spendableFeeIndex = tokenSpendables(order.owner + order.feeParams.get.feeToken)
+    tables.addUint16(spendableSIndex)
+    tables.addUint16(spendableFeeIndex)
+
+    if (isValidAddress(order.params.get.dualAuthAddr)) {
+      insertOffset(tables, data.addAddress(order.params.get.dualAuthAddr, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    if (isValidAddress(order.params.get.broker)) {
+      insertOffset(tables, data.addAddress(order.params.get.broker, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    if (isValidAddress(order.params.get.orderInterceptor)) {
+      insertOffset(tables, data.addAddress(order.params.get.orderInterceptor, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    if (isValidAddress(order.params.get.wallet)) {
+      insertOffset(tables, data.addAddress(order.params.get.wallet, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    if (order.params.get.validUntil > 0) {
+      insertOffset(tables, data.addUint32(order.params.get.validUntil, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    val orderSig = order.params.get.sig
+    if (orderSig != null && orderSig.length > 0) {
+      insertOffset(tables, data.addHex(orderSig, false))
+      addPadding(data)
+    } else {
+      insertDefault(tables)
+    }
+
+    val dualAuthSig = order.params.get.dualAuthSig
+    if (dualAuthSig != null && dualAuthSig.length > 0) {
+      insertOffset(tables, data.addHex(dualAuthSig, false))
+      addPadding(data)
+    } else {
+      insertDefault(tables)
+    }
+
+    val allOrNoneInt = if (order.params.get.allOrNone) 1 else 0
+    tables.addUint16(allOrNoneInt)
+
+    val feeToken = order.feeParams.get.feeToken
+    if (feeToken.length > 0 && feeToken != context.lrcAddress) {
+      insertOffset(tables, data.addAddress(feeToken, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    val feeAmount = BigInt(order.feeParams.get.feeAmount.toString, 16)
+    if (feeAmount > 0) {
+      insertOffset(tables, data.addUint(feeAmount, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    tables.addUint16(order.feeParams.get.waiveFeePercentage)
+    tables.addUint16(order.feeParams.get.tokenSFeePercentage)
+    tables.addUint16(order.feeParams.get.tokenBFeePercentage)
+
+    val tokenRecipient = order.feeParams.get.tokenRecipient
+    if (tokenRecipient.length > 0 && tokenRecipient != order.owner) {
+      insertOffset(tables, data.addAddress(tokenRecipient, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    tables.addUint16(order.feeParams.get.walletSplitPercentage)
+  }
+
+  private def insertOffset(tables: Bitstream, offset: Int) {
+    assert(offset % 4 == 0)
+    tables.addUint16(offset / 4)
+  }
+
+  private def insertDefault(tables: Bitstream) = tables.addUint16(0)
+
+  private def addPadding(data: Bitstream) {
+    val paddingLength = data.length % 4
+    if (paddingLength > 0) {
+      data.addNumber(BigInt(0), 4 - paddingLength)
+    }
   }
 
   private def ringBatchHash(xRingBatch: XRingBatch) = {
