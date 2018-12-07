@@ -78,12 +78,11 @@ lazy val gateway = (project in file("gateway"))
 lazy val all = (project in file("."))
   .enablePlugins(DockerComposePlugin)
   .settings(
-    docker <<= (
-      docker in actors,
-      docker in indexer,
-      docker in gateway) map { (image, _, _) =>
-        image
-      },
+    docker := {
+      (docker in actors).value
+      (docker in indexer).value
+      (docker in gateway).value
+    },
     DockerComposeKeys.dockerImageCreationTask := docker.value)
   .aggregate(proto, ethereum, persistence, core, actors, gateway, indexer)
   .withId("lightcone")
