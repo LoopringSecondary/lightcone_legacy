@@ -62,22 +62,23 @@ class OrdersDalActor(
         case None           ⇒ Seq.empty[String]
       }).toSet
       (for {
-        orders ← ordersDal.getOrdersByUpdatedAt(
-          num = num,
+        //TODO du:等recover逻辑确定后修改查询逻辑(skip)，XRecoverOrdersReq的数据结构(updatedSince)
+        orders ← ordersDal.getOrdersForRecover(
           statuses = Set(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING),
+          owners = if ("" != address) Set(address) else Set.empty,
           tokenSSet = tokenes,
           tokenBSet = tokenes,
-          owners = if ("" != address) Set(address) else Set.empty,
-          updatedSince = Some(updatedSince)
+          sort = Some(XSort.ASC),
+          skip = Some(XSkip(skip = 1, take = num))
         )
       } yield XRecoverOrdersRes(orders)) pipeTo sender
     case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
       (stateOpt match {
-        case Some(state) ⇒ ordersDal.updateAmount(hash, state, changeUpdatedAtField)
+        case Some(state) ⇒ ordersDal.updateAmount(hash, state)
         case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
       }) pipeTo sender
     case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
-      ordersDal.updateOrderStatus(hash, status, changeUpdatedAtField) pipeTo sender
+      ordersDal.updateOrderStatus(hash, status) pipeTo sender
 
   }
 }

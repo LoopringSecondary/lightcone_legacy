@@ -37,9 +37,12 @@ enum XPersistenceError {
     PERS_ERR_INTERNAL = 4;
 }
 
-message XOrderSortBy {
-    oneof sort {
-        bool created_at = 1;
-        bool updated_at = 2;
-    }
+enum XSort {
+    ASC  = 0;
+    DESC = 1;
+}
+
+message XSkip {
+    int64 skip = 1; // 忽略的记录
+    int32 take = 2; // 拉取的记录数
 }
