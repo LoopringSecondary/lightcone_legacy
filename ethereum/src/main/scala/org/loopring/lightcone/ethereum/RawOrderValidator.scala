@@ -55,7 +55,7 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     bitstream.addUint16(feeParams.tokenBFeePercentage)
     bitstream.addBoolean(optionalParams.allOrNone)
 
-    Numeric.toHexString(Hash.sha3(bitstream.getPackedBytes))
+    Numeric.toHexString(Hash.sha3(bitstream.getBytes))
   }
 
   def validate(order: XRawOrder): Either[XOrderValidationError, XRawOrder] = {

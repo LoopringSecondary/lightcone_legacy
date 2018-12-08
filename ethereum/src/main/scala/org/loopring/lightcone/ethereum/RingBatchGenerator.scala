@@ -31,6 +31,7 @@ trait RingBatchGenerator {
 class RingBatchGeneratorImpl(context: XRingBatchContext)
   extends RingBatchGenerator {
   val OrderVersion = 0
+  val SerializationVersion = 0
 
   def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch = {
     val orderValidator = new RawOrderValidatorImpl
@@ -81,7 +82,24 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
 
     xRingBatch.orders.foreach(order ⇒ setupOrderInfo(data, tables, order, tokenSpendables))
 
-    ""
+    val paramStream = new Bitstream
+    paramStream.addUint16(SerializationVersion)
+    paramStream.addUint16(xRingBatch.orders.length)
+    paramStream.addUint16(xRingBatch.rings.length)
+    paramStream.addUint16(tokenSpendables.size)
+
+    paramStream.addHex(tables.getData)
+    xRingBatch.rings.foreach(ring ⇒ {
+      val orderIndexes = ring.orderIndexes
+      paramStream.addNumber(BigInt(orderIndexes.length), 1, true)
+      orderIndexes.foreach(i ⇒ paramStream.addNumber(BigInt(i), 1, true))
+      paramStream.addNumber(BigInt(0), 8 - orderIndexes.length, true)
+    })
+
+    paramStream.addUint(BigInt(0))
+    paramStream.addHex(data.getData)
+
+    return paramStream.getData
   }
 
   private def setupMiningInfo(xRingBatch: XRingBatch, data: Bitstream, tables: Bitstream) {
@@ -224,7 +242,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
           bitstream.addHex(o.hash)
           bitstream.addUint16(o.feeParams.get.waiveFeePercentage)
         })
-        Numeric.toHexString(Hash.sha3(bitstream.getPackedBytes))
+        Numeric.toHexString(Hash.sha3(bitstream.getBytes))
       }
     )
 
@@ -252,7 +270,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     ringBatchBits.addAddress(miner, true)
     ringBatchBits.addHex(ringHashesXor)
 
-    Numeric.toHexString(Hash.sha3(ringBatchBits.getPackedBytes))
+    Numeric.toHexString(Hash.sha3(ringBatchBits.getBytes))
   }
 
   private def sign(xRingBatch: XRingBatch) = {

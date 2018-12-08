@@ -22,12 +22,12 @@ class Bitstream() {
   private val ADDRESS_LENGTH = 20
   private var data: String = ""
 
-  def getPackedString() = {
+  def getData = {
     if (data.length.equals(0)) "0x0"
     else "0x" + data
   }
 
-  def getPackedBytes() = Numeric.hexStringToByteArray(data)
+  def getBytes = Numeric.hexStringToByteArray(data)
   def length() = data.length / 2
 
   def addAddress(x: String, forceAppend: Boolean = false) =
