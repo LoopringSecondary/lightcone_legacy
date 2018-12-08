@@ -93,6 +93,7 @@ private[core] class AccountManagerActor(
       submitOrder(xorder).pipeTo(sender)
 
     case req: XCancelOrderReq ⇒
+      //todo:恢复时，需要直接发送到marketmanager
       if (manager.cancelOrder(req.id)) {
         marketManagerActor forward req
       } else {
