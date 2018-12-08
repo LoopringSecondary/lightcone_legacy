@@ -17,14 +17,27 @@
 package org.loopring.lightcone.ethereum.data
 
 import org.scalatest._
+import org.web3j.utils.Numeric
 
 class AddressSpec extends FlatSpec with Matchers {
 
-  "string address" should "be canonicalized" in {
+  "stringAddress" should "be canonicalized" in {
     val addr1 = Address("0x000ee35D70AD6331000E370F079aD7df52E75005")
     val addr2 = Address("0x00000ee35d70ad6331000e370f079ad7df52e75005")
-    println(addr1.toString)
+    info(addr1.toString)
     assert(addr1.equals(addr2))
+  }
+
+  "byteArrayAddress" should "be canonicalized" in {
+    val bytes = Numeric.hexStringToByteArray("0x000ee35D70AD6331000E370F079aD7df52E75005")
+    val address = Address(bytes)
+    info(address.toString)
+  }
+
+  "bigIntAddress" should "be canonicalized" in {
+    val bigIntAdd = BigInt(Numeric.cleanHexPrefix("0x000ee35D70AD6331000E370F079aD7df52E75005"), 16)
+    val address = Address(bigIntAdd)
+    info(address.toString)
   }
 
 }
