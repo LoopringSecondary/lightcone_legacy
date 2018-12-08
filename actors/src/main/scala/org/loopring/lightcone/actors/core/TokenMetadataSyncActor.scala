@@ -66,7 +66,7 @@ class TokenMetadataSyncActor()(
     tmm.addToken(GTO_TOKEN)
     tmm.addToken(WETH_TOKEN)
     tmm.addToken(LRC_TOKEN)
-    log.info(s"syncMarketCap ${tmm}")
+    log.debug(s"syncMarketCap ${tmm}")
     Future.successful(Unit)
   }
 

@@ -17,7 +17,6 @@
 package org.loopring.lightcone.persistence.tables
 
 import org.loopring.lightcone.persistence.base._
-import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.ethereum._
@@ -44,6 +43,7 @@ class BlockTable(tag: Tag)
   def blockReward = columnAmount("block_reward")
   def uncleReward = columnAmount("uncle_reward")
   def extraData = column[ByteString]("extra_data")
+  def isValid = column[Int]("is_valid")
 
   // indexes
   def idx_parent_hash = index("idx_parent_hash", (parentHash), unique = false)
@@ -67,6 +67,7 @@ class BlockTable(tag: Tag)
     nonce,
     blockReward,
     uncleReward,
-    extraData
+    extraData,
+    isValid
   ) <> ((XBlockData.apply _).tupled, XBlockData.unapply)
 }
