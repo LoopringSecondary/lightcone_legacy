@@ -19,26 +19,34 @@ package org.loopring.lightcone.actors.ethereum
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.ethereum.abi.{ERC20ABI, WETHABI}
+import org.loopring.lightcone.actors.core.AccountManagerActor
+import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto.actors._
 
+import scala.collection.mutable.ListBuffer
 import scala.util._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
 
-class EthereumDataIndexer(
+class EthereumDataIndexer @Inject() (
     val actors: Lookup[ActorRef]
 )(implicit
+
     ec: ExecutionContext,
-    timeout: Timeout
+    timeout: Timeout,
+    @Named("delegate-address") val delegateAddress: String
 )
   extends Actor with ActorLogging {
 
-  val ethereumConnectionActor: ActorRef = actors.get("ethereum_connection")
+  def ethereumConnectionActor: ActorRef = actors.get(EthereumConnectionActor.name)
+  def accountManager: ActorRef = actors.get(AccountManagerActor.name)
 
   val erc20Abi = ERC20ABI()
-  val wethAbi  = WETHABI()
+  val wethAbi = WETHABI()
+  val zeroAdd = "0x" + "0" * 40
 
   var currentBlockNumber: BigInt = BigInt(-1)
   var currentBlockHash: String = _
@@ -108,19 +116,48 @@ class EthereumDataIndexer(
     for {
       txReceipts ← (ethereumConnectionActor ? XBatchGetTransactionReceiptsReq(txReceiptReqs))
         .mapTo[XBatchGetTransactionReceiptsRes]
-        .map(_.resps)
-      txWithReceipts = txs zip txReceipts.map(_.result.get)
-    } yield {
-      txWithReceipts.map(t ⇒ {
-        //针对ETH的变化，暂时把token地址定位""
-        val addresses = List(t._1.from → "")
-        t._2.logs.foreach(log ⇒ {
-          erc20Abi
+        .map(_.resps.map(_.result.get))
+      balanceAddresses = ListBuffer.empty[(String, String)]
+      allowanceAddresses = ListBuffer.empty[(String, String)]
+      _ = txReceipts.foreach(receipt ⇒ {
+        balanceAddresses.append(receipt.from → zeroAdd)
+        receipt.logs.foreach(log ⇒ {
+          wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+            case Some(transfer: TransferEvent.Result) ⇒
+              balanceAddresses.append(transfer.sender → log.address, transfer.receiver → log.address)
+            case Some(approval: ApprovalEvent.Result) ⇒
+              if (approval.spender.equalsIgnoreCase(delegateAddress))
+                allowanceAddresses.append(approval.owner → log.address)
+            case Some(deposit: DepositEvent.Result) ⇒
+              balanceAddresses.append(deposit.dst → log.address)
+            case Some(withrawal: WithdrawalEvent.Result) ⇒
+              balanceAddresses.append(withrawal.src → log.address)
+            case _ ⇒
+          }
         })
-        addresses
       })
-    }
-    Future.successful((BigInt(0), ""))
+      balanceReqs = balanceAddresses.unzip._1.toSet.map((add: String) ⇒ {
+        XGetBalanceReq(add, balanceAddresses.find(_._1.equalsIgnoreCase(add)).unzip._2.toSet.toSeq)
+      })
+      allowanceReqs = allowanceAddresses.unzip._1.toSet.map((add: String) ⇒ {
+        XGetAllowanceReq(add, allowanceAddresses.find(_._1.equalsIgnoreCase(add)).unzip._2.toSet.toSeq)
+      })
+      balanceRes ← Future.sequence(balanceReqs.map(req ⇒
+        (ethereumConnectionActor ? req).mapTo[XGetBalanceRes]))
+      allowanceRes ← Future.sequence(allowanceReqs.map(req ⇒
+        (ethereumConnectionActor ? req).mapTo[XGetAllowanceRes]))
+      _ = balanceRes
+        .foreach(res ⇒ {
+          res.balanceMap.foreach(item ⇒
+            sender ! XAddressBalanceUpdated(res.address, token = item._1, balance = item._2))
+        })
+      _ = allowanceRes.foreach(res ⇒ {
+        res.allowanceMap.foreach(item ⇒ {
+          sender ! XAddressAllowanceUpdated(res.address, token = item._1, item._2)
+        })
+      })
+    } yield hex2BigInt(block.number) → block.hash
+
   }
 
   implicit def hex2BigInt(hex: String): BigInt = {
