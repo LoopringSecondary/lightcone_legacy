@@ -128,7 +128,7 @@ class AccountManagerActor(
       }).pipeTo(sender)
 
     case XSubmitOrderReq(Some(xorder)) ⇒ {
-      println("### accountXSubmitOrderReq")
+      // println("### accountXSubmitOrderReq")
       submitOrder(xorder).pipeTo(sender)
     }
 
@@ -164,8 +164,8 @@ class AccountManagerActor(
 
       _ = log.debug(s"submitting order to AccountManager: ${_order}")
       successful = manager.submitOrder(_order)
-      _ = log.info(s"successful: $successful")
-      _ = log.info("orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
+      _ = log.debug(s"successful: $successful")
+      _ = log.debug("orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
       updatedOrders = orderPool.takeUpdatedOrdersAsMap()
       _ = assert(updatedOrders.contains(_order.id))
       order_ = updatedOrders(_order.id)

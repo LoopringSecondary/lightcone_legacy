@@ -63,7 +63,7 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsAnotherToken
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          info("----orderbook: " + a)
+          log.debug("----orderbook: " + a)
       }
     }
   }

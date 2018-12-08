@@ -52,7 +52,7 @@ trait DalSpec[D <: BaseDal[_, _]]
       ConfigFactory.parseString(s"""
         profile = "slick.jdbc.MySQLProfile$$"
         db {
-          url="${container.jdbcUrl}"
+          url="${container.jdbcUrl}?useSSL=false"
           user="${container.username}"
           password="${container.password}"
           driver="${container.driverClassName}"
