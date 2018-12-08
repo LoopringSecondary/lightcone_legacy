@@ -44,6 +44,8 @@ class CoreModule(config: Config)
     implicit val cluster = Cluster(system)
     implicit val timeout = Timeout(5 second)
 
+    //todo: test docker
+    system.actorOf(Props[MyActor], "myactor")
     bind[Config].toInstance(config)
 
     implicit val dbConfig: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig("db.default", config)

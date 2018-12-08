@@ -59,11 +59,11 @@ class MyActor extends Actor with ActorLogging {
 
   def receive = {
     case "TICK" ⇒
-      log.error("hello")
+      log.info("hello")
       mediator ! Publish("topic", "event-" + i)
       i += 1
 
     case x ⇒
-      log.error("===> " + x)
+      log.info("===> " + x)
   }
 }
