@@ -25,7 +25,6 @@ class BlockDalSpec extends DalSpec[BlockDal] {
   def getDal = new BlockDalImpl()
 
   "saveBlock" must "save a block with hash 0x111" in {
-    // sbt persistence/'testOnly *BlockDalSpec -- -z saveBlock'
     val block = XBlockData(hash = "0x111", height = 1l, isValid = 1)
     val result = dal.saveBlock(block)
     val res = Await.result(result.mapTo[XPersistenceError], 5.second)

@@ -17,21 +17,29 @@
 package org.loopring.lightcone.persistence.dals
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.persistence.utils.SystemTimeProvider
-import org.loopring.lightcone.proto.actors.{ XOrderState, XSaveOrderResult, XSaveOrderStateResult }
-import org.loopring.lightcone.proto.core.{ XOrderStatus, XRawOrder }
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.persistence._
 import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.util.{ Failure, Success }
 import scala.concurrent.duration._
 
-class OrdersDalSpec extends DalSpec[OrderDal] {
+class OrderDalSpec extends DalSpec[OrderDal] {
   def getDal = new OrderDalImpl()
 
   "saveOrder" must "save a order with hash 0x111" in {
-    // sbt persistence/'testOnly *OrdersDalSpec -- -z saveOrder'
-    var order = XRawOrder(hash = "0x111", version = 1, owner = "0x99", tokenS = "0x1", tokenB = "0x2", amountS = ByteString.copyFrom("11", "UTF-8"),
-      amountB = ByteString.copyFrom("12", "UTF-8"), validSince = 999)
+    var order = XRawOrder(
+      hash = "0x111",
+      version = 1,
+      owner = "0x99",
+      tokenS = "0x1",
+      tokenB = "0x2",
+      amountS = ByteString.copyFrom("11", "UTF-8"),
+      amountB = ByteString.copyFrom("12", "UTF-8"),
+      validSince = 999
+    )
+
     val result: Future[XSaveOrderResult] = dal.saveOrder(order)
     result onComplete {
       case Success(r) ⇒ info("=== Success: " + r)
@@ -42,7 +50,6 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
   }
 
   "getOrdersByHash" must "get some orders's with hashes [0x111]" in {
-    // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
     val result = dal.getOrders(Seq("0x111"))
     result onComplete {
       case Success(orders) ⇒ {
@@ -57,13 +64,23 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
   }
 
   "getOrders" must "get some orders with many query parameters" in {
-    // sbt persistence/'testOnly *OrdersDalSpec -- -z getOrders'
-    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_CANCELLED_BY_USER, XOrderStatus.STATUS_CANCELLED_LOW_BALANCE).toSet
+    val statuses: Set[XOrderStatus] = Seq(
+      XOrderStatus.STATUS_CANCELLED_BY_USER,
+      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
+    ).toSet
     val owners: Set[String] = Seq("0x11", "0x22").toSet
     val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
     val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
     val feeTokenSet: Set[String] = Seq("0x11", "0x22").toSet
-    val result = dal.getOrders(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, Some(XSort.ASC), Some(XSkip(0, 100)))
+    val result = dal.getOrders(
+      statuses,
+      owners,
+      tokenSSet,
+      tokenBSet,
+      feeTokenSet,
+      Some(XSort.ASC),
+      Some(XSkip(0, 100))
+    )
     result onComplete {
       case Success(r) ⇒ info("=== Success: " + r)
       case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
@@ -73,7 +90,6 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
   }
 
   "getOrder" must "get a order with hash 0x111" in {
-    // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
     val result = dal.getOrder("0x111")
     result onComplete {
       case Success(orders) ⇒ {
@@ -88,13 +104,23 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
   }
 
   "getOrdersForUse" must "get some orders with many query parameters" in {
-    // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
-    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_CANCELLED_BY_USER, XOrderStatus.STATUS_CANCELLED_LOW_BALANCE).toSet
+    val statuses: Set[XOrderStatus] = Seq(
+      XOrderStatus.STATUS_CANCELLED_BY_USER,
+      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
+    ).toSet
     val owners: Set[String] = Seq("0x11", "0x22").toSet
     val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
     val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
     val feeTokenSet: Set[String] = Seq("0x11", "0x22").toSet
-    val result = dal.getOrdersForUser(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, Some(XSort.ASC), Some(XSkip(0, 100)))
+    val result = dal.getOrdersForUser(
+      statuses,
+      owners,
+      tokenSSet,
+      tokenBSet,
+      feeTokenSet,
+      Some(XSort.ASC),
+      Some(XSkip(0, 100))
+    )
     result onComplete {
       case Success(orders) ⇒ {
         orders.foreach { order ⇒
@@ -108,8 +134,10 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
   }
 
   "countOrders" must "get orders count with many query parameters" in {
-    // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
-    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_CANCELLED_BY_USER, XOrderStatus.STATUS_CANCELLED_LOW_BALANCE).toSet
+    val statuses: Set[XOrderStatus] = Seq(
+      XOrderStatus.STATUS_CANCELLED_BY_USER,
+      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
+    ).toSet
     val owners: Set[String] = Seq("0x111", "0x22").toSet
     val tokenSSet: Set[String] = Seq("0x1", "0x22").toSet
     val tokenBSet: Set[String] = Seq("0x11", "0x2").toSet
@@ -124,12 +152,22 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
   }
 
   "getOrdersForRecover" must "get some orders to recover" in {
-    // sbt persistence/'testOnly *OrdersDalSpec -- -z getOrders'
-    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_CANCELLED_BY_USER, XOrderStatus.STATUS_CANCELLED_LOW_BALANCE).toSet
+    val statuses: Set[XOrderStatus] = Seq(
+      XOrderStatus.STATUS_CANCELLED_BY_USER,
+      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
+    ).toSet
     val owners: Set[String] = Seq("0x11", "0x22").toSet
     val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
     val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
-    val result = dal.getOrdersForRecover(statuses, owners, tokenSSet, tokenBSet, None, Some(XSort.ASC), Some(XSkip(0, 100)))
+    val result = dal.getOrdersForRecover(
+      statuses,
+      owners,
+      tokenSSet,
+      tokenBSet,
+      None,
+      Some(XSort.ASC),
+      Some(XSkip(0, 100))
+    )
     result onComplete {
       case Success(r) ⇒ info("=== Success: " + r)
       case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
@@ -139,7 +177,6 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
   }
 
   "updateOrderStatus" must "update order's status with hash 0x111" in {
-    // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
     val result = dal.updateOrderStatus("0x111", XOrderStatus.STATUS_CANCELLED_BY_USER)
     result onComplete {
       case Success(r) ⇒ info("=== Success: " + r)
@@ -150,7 +187,6 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
   }
 
   "updateAmount" must "update order's amount state with hash 0x111" in {
-    // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
     val timeProvider = new SystemTimeProvider()
     val now = timeProvider.getTimeMillis
     val state = XRawOrder.State(
@@ -174,7 +210,6 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
   }
 
   "updateFailed" must "update order's status to failed with hash 0x111" in {
-    // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
     val result = dal.updateFailed("0x111", XOrderStatus.STATUS_CANCELLED_BY_USER)
     result onComplete {
       case Success(r) ⇒ info("=== Success: " + r)

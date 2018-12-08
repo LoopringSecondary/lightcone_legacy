@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto.actors._
@@ -27,7 +28,6 @@ import slick.basic._
 import com.mysql.jdbc.exceptions.jdbc4._
 import scala.concurrent._
 import scala.util.{ Failure, Success }
-import org.loopring.lightcone.persistence.utils._
 import slick.lifted.Query
 
 trait OrderDal
