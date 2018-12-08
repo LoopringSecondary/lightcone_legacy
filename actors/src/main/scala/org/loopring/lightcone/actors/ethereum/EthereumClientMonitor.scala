@@ -48,7 +48,7 @@ private[ethereum] class EthereumClientMonitor(
 
   def receive: Receive = {
     case _: XCheckBlockHeight ⇒
-      log.info("start scheduler check highest block...")
+      log.debug("start scheduler check highest block...")
       val blockNumJsonRpcReq = JsonRpcReqWrapped(
         id = Random.nextInt(100),
         method = "eth_blockNumber",

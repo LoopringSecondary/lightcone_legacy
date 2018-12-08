@@ -25,7 +25,7 @@ class ConnectionListener
 
   override def onConnect(client: IOClient): Unit = {
     val addr = client.getRemoteAddress
-    log.info(s"SocketIO: remote $addr has connected")
+    log.debug(s"SocketIO: remote $addr has connected")
   }
 }
 
@@ -36,7 +36,7 @@ class DisconnectionListener
   override def onDisconnect(client: IOClient): Unit = {
     SocketIOClient.remove(client)
     val addr = client.getRemoteAddress
-    log.info(s"SocketIO: remote $addr has disconnected")
+    log.debug(s"SocketIO: remote $addr has disconnected")
   }
 }
 

@@ -69,7 +69,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          info("----orderbook status after first XRecoverOrdersRes: " + a)
+          log.debug("----orderbook status after first XRecoverOrdersRes: " + a)
       }
 
       val batchOrders2 = (0 until 500) map {
@@ -83,7 +83,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          info("----orderbook status after second XRecoverOrdersRes: " + a)
+          log.debug("----orderbook status after second XRecoverOrdersRes: " + a)
       }
       ordersDalActorProbe.expectQuery()
       ordersDalActorProbe.replyWith(Seq())
@@ -92,7 +92,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          info("----orderbook status after last XRecoverOrdersRes: " + a)
+          log.debug("----orderbook status after last XRecoverOrdersRes: " + a)
       }
 
       //不能立即发送请求，否则可能会失败，需要等待future执行完毕
@@ -102,9 +102,9 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
       expectMsgPF() {
         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
           val order: Order = xorder
-          info(s"submitted an order: $order")
+          log.debug(s"submitted an order: $order")
         case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
-          info(s"occurs ERR_UNKNOWN when submitting order:$order")
+          log.debug(s"occurs ERR_UNKNOWN when submitting order:$order")
       }
 
       Thread.sleep(1000)
@@ -112,7 +112,7 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
 
       expectMsgPF() {
         case a: XOrderbook ⇒
-          info("----orderbook status after submit an order: " + a)
+          log.debug("----orderbook status after submit an order: " + a)
       }
 
     }

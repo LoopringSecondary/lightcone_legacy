@@ -76,7 +76,7 @@ class HttpAndIOServer(
   }
 
   Http().bindAndHandle(route, "localhost", port) onComplete {
-    case Success(value) ⇒ log.info(s"http server has started @ $value")
+    case Success(value) ⇒ log.debug(s"http server has started @ $value")
     case Failure(ex)    ⇒ log.error("http server failed", ex)
   }
 }

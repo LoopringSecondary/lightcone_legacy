@@ -27,7 +27,9 @@ import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 
 class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
-  extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
+  extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
+    XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)
+  ) {
 
   "when an accountManager starts" must {
     "first recover it and then receive order" in {

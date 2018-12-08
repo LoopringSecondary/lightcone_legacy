@@ -34,14 +34,14 @@ class EntryPoinActor(actors: Lookup[ActorRef])(
   with ActorLogging {
 
   override def preStart(): Unit = {
-    log.info(s"####, entry ${actors.get(AccountManagerActor.name)}, ${actors.get(OrderbookManagerActor.name)}")
+    log.debug(s"####, entry ${actors.get(AccountManagerActor.name)}, ${actors.get(OrderbookManagerActor.name)}")
     super.preStart()
   }
 
   //todo: 暂时测试，需要再对请求封装或者继续完善
   def receive: Receive = {
     case req: XSubmitOrderReq ⇒ {
-      log.info(s"####### entry XSubmitOrderReq ${req}")
+      log.debug(s"####### entry XSubmitOrderReq ${req}")
       actors.get(AccountManagerActor.name) forward req
     }
     case req: XGetOrderbookReq ⇒ actors.get(OrderbookManagerActor.name) forward req

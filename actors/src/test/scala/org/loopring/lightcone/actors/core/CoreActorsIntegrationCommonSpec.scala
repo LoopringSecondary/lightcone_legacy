@@ -20,6 +20,7 @@ import akka.actor._
 import akka.testkit._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.persistence._
@@ -50,17 +51,7 @@ abstract class CoreActorsIntegrationCommonSpec(
     skipAccountManagerActorRecovery: Boolean = true,
     skipMarketManagerActorRecovery: Boolean = true
 )
-  extends TestKit(ActorSystem("test", ConfigFactory.parseString(
-    """akka {
-         loglevel = "DEBUG"
-         actor {
-           debug {
-             receive = on
-             lifecycle = off
-           }
-         }
-       }"""
-  ).withFallback(ConfigFactory.load())))
+  extends TestKit(ActorSystem("test", ConfigFactory.load()))
   with ImplicitSender
   with Matchers
   with WordSpecLike
@@ -132,7 +123,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   val orderHistoryProbe = new TestProbe(system, "order_history") {
     def expectQuery(orderId: String) = expectMsgPF() {
       case XGetOrderFilledAmountReq(id) if id == orderId ⇒
-        println(s"#####, orderHistoryProbe, ${sender()}, ${id}")
+        log.debug(s"orderHistoryProbe, ${sender()}, ${id}")
     }
 
     def replyWith(orderId: String, filledAmountS: BigInt) = reply(

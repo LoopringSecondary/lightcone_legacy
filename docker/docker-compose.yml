@@ -1,0 +1,14 @@
+version: '2'
+services:
+  seed:
+    image: org.loopring/lightcone_actors:latest
+    environment:
+      CLUSTER_IP: seed
+      CLUSTER_PORT: 9090
+  c1:
+    image: org.loopring/lightcone_actors:latest
+    environment:
+      CLUSTER_IP: c1
+      CLUSTER_PORT: 9091
+      SEED_IP: seed
+      SEED_PORT: 9090
