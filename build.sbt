@@ -11,23 +11,29 @@ lazy val proto = (project in file("proto"))
     PB.targets in Compile := Seq(
       scalapb.gen(flatPackage = true) -> (sourceManaged in Compile).value))
 
+lazy val lib = (project in file("lib"))
+  .enablePlugins(AutomateHeaderPlugin)
+  .settings(
+    basicSettings,
+    libraryDependencies ++= dependency4Lib)
+
 lazy val ethereum = (project in file("ethereum"))
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(proto)
+  .dependsOn(proto, lib)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Ethereum)
 
 lazy val persistence = (project in file("persistence"))
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(proto, ethereum)
+  .dependsOn(proto, lib, ethereum)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Persistence)
 
 lazy val core = (project in file("core"))
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(proto)
+  .dependsOn(proto, lib)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Core)
@@ -41,7 +47,7 @@ lazy val actors = (project in file("actors"))
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
-  .dependsOn(proto, core, persistence)
+  .dependsOn(proto, lib, core, persistence)
   .settings(
     basicSettings,
     dockerSettings,
@@ -55,7 +61,7 @@ lazy val indexer = (project in file("indexer"))
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
-  .dependsOn(ethereum, persistence)
+  .dependsOn(proto, lib, persistence)
   .settings(
     basicSettings,
     dockerSettings,
@@ -69,7 +75,7 @@ lazy val gateway = (project in file("gateway"))
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
-  .dependsOn(proto)
+  .dependsOn(proto, lib, persistence)
   .settings(
     basicSettings,
     dockerSettings,
@@ -84,5 +90,5 @@ lazy val all = (project in file("."))
       (docker in gateway).value
     },
     DockerComposeKeys.dockerImageCreationTask := docker.value)
-  .aggregate(proto, ethereum, persistence, core, actors, gateway, indexer)
+  .aggregate(proto, lib, ethereum, persistence, core, actors, gateway, indexer)
   .withId("lightcone")

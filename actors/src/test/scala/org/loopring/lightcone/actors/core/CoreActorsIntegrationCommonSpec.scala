@@ -20,6 +20,7 @@ import akka.actor._
 import akka.testkit._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.persistence._
