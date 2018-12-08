@@ -65,7 +65,7 @@ class ActorDeployerImpl @Inject() (
     }.flatten
 
     newlyDeployedActors.foreach { actor ⇒
-      log.info(s"--------> starting actor: ${actor.path}")
+      log.debug(s"--------> starting actor: ${actor.path}")
       actor ! startMsg
     }
 
@@ -125,7 +125,7 @@ class ActorDeployerImpl @Inject() (
       name = s"r_${name}"
     )
     actorLookup.add(name, router)
-    log.info(s"--------> deployed router for singleton: ${router.path}")
+    log.debug(s"--------> deployed router for singleton: ${router.path}")
   }
 
   private def deploySingletonActorRouter(name: String) = {
@@ -137,12 +137,12 @@ class ActorDeployerImpl @Inject() (
       name = s"r_${name}"
     )
     actorLookup.add(name, router)
-    log.info(s"--------> deployed router: ${router.path}")
+    log.debug(s"--------> deployed router: ${router.path}")
   }
 
   private def destroyActorRouter(name: String) = {
     val selectionPattern = s"/user/r_${name}"
-    log.info(s"--------> killing router: ${selectionPattern}")
+    log.debug(s"--------> killing router: ${selectionPattern}")
     system.actorSelection(selectionPattern) ! PoisonPill
     actorLookup.del(name)
   }
@@ -152,7 +152,7 @@ class ActorDeployerImpl @Inject() (
       propsLookup.get(name),
       name = s"${name}_${nextInstanceId}"
     )
-    log.info(s"--------> deployed actor: ${actor.path}")
+    log.debug(s"--------> deployed actor: ${actor.path}")
     actor
   }
 
@@ -165,20 +165,20 @@ class ActorDeployerImpl @Inject() (
       ),
       name = s"${name}_0"
     )
-    log.info(s"--------> deployed singleton actor: ${actor.path}")
+    log.debug(s"--------> deployed singleton actor: ${actor.path}")
     actor
   }
 
   private def destroyActor(name: String) = {
     val selectionPattern = s"/user/${name}_*"
-    log.info(s"--------> killing actor: ${selectionPattern}")
+    log.debug(s"--------> killing actor: ${selectionPattern}")
     system.actorSelection(selectionPattern) ! PoisonPill
   }
 
   private def reconfigActor(name: String, configOpt: Option[AnyRef]) = {
     configOpt.foreach { config ⇒
       val selectionPattern = s"/user/${name}_*"
-      log.info(s"--------> reconfig actor: ${selectionPattern}")
+      log.debug(s"--------> reconfig actor: ${selectionPattern}")
       system.actorSelection(selectionPattern) ! config
     }
   }

@@ -74,7 +74,7 @@ class SocketIOServer(
         ) {
           val event = data.get("method").toString
           val json = mapper.writeValueAsString(data)
-          log.info(s"client: ${client.getRemoteAddress}, request: ${data}")
+          log.debug(s"client: ${client.getRemoteAddress}, request: ${data}")
           SocketIOClient.add(client, event, json)
           invoke(json).foreach(ackSender.sendAckData(_))
         }
@@ -88,7 +88,7 @@ class SocketIOServer(
     )
 
     server.start
-    log.info(s"socketio server started @ ${port}")
+    log.debug(s"socketio server started @ ${port}")
   }
 
   private[socketio] def invoke(json: String) = Await.result(

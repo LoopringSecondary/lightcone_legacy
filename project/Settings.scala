@@ -92,7 +92,7 @@ object Settings {
       val appDir = stage.value
       val targetDir = "/app"
 
-      // TODO(dongw): set this up.
+      // TODO(dongw): set this upt.
       new Dockerfile {
         from("openjdk:8-jre")
         entryPoint(s"$targetDir/bin/${executableScriptName.value}")

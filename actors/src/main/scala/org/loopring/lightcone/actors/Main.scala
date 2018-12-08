@@ -36,7 +36,7 @@ object Main extends App with Logging {
   )
 
   configItems foreach { i ⇒
-    log.info(s"--> $i = ${config.getString(i)}")
+    log.debug(s"--> $i = ${config.getString(i)}")
   }
 
   val injector = Guice.createInjector(new CoreModule(config))
