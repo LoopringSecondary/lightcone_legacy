@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto.core._
 import org.slf4s.Logging
 
 class AccountTokenManagerImpl(
-    val token: String,
+    val token: TokenHash,
     val maxNumOrders: Int = 1000
 )(
     implicit

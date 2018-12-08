@@ -23,8 +23,8 @@ import "core_data.proto";
 
 // For ABC/XYZ market, ABC is secondary, XYZ is primary
 message XMarketId {
-    string primary = 1;
-    string secondary = 2;
+    int64 primary = 1;
+    int64 secondary = 2;
 }
 
 message XMarketManagerConfig {
@@ -82,11 +82,5 @@ message XGetOrderbookReq {
     int32 size = 2;
 }
 
-message XTokenMetadata {
-    string address = 1;
-    int32 decimals = 2;
-    double burnRate = 3;
-    double currentPrice = 4;
-    string symbol = 5;
-}
+
 

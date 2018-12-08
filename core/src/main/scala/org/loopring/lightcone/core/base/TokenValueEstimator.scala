@@ -21,7 +21,7 @@ import org.loopring.lightcone.proto.core._
 
 class TokenValueEstimator()(implicit tmm: TokenMetadataManager) {
 
-  def getEstimatedValue(token: String, amount: BigInt): Double = {
+  def getEstimatedValue(token: TokenHash, amount: BigInt): Double = {
     if (amount.signum <= 0) 0
     else tmm.getToken(token) match {
       case None ⇒ 0

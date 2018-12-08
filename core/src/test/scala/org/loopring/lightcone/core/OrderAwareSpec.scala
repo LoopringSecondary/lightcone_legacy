@@ -26,15 +26,16 @@ trait OrderAwareSpec extends CommonSpec {
   var nextId = 1
 
   // These are the addresses, not symbols
-  val LRC = "0x00000000002"
-  val GTO = "0x00000000001"
-  val DAI = "0x00000000003"
-  val WETH = "0x00000000004"
+  val LRC = 100000L
+  val GTO = 100002L
+  val DAI = 100003L
+  val WETH = 100004L
+  val XYZ = 100005L
 
-  val LRC_TOKEN = XTokenMetadata(LRC, 0, 0.1, 1.0, "LRC")
-  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.2, 1400.0, "GTO")
-  val DAI_TOKEN = XTokenMetadata(DAI, 20, 0.3, 7.0, "DAI")
-  val WETH_TOKEN = XTokenMetadata(WETH, 23, 0.4, 0.5, "WETH")
+  val LRC_TOKEN = XTokenMetadata(LRC.toString, LRC, 0, 0.1, 1.0, "LRC")
+  val GTO_TOKEN = XTokenMetadata(GTO.toString, GTO, 10, 0.2, 1400.0, "GTO")
+  val DAI_TOKEN = XTokenMetadata(DAI.toString, DAI, 20, 0.3, 7.0, "DAI")
+  val WETH_TOKEN = XTokenMetadata(WETH.toString, WETH, 23, 0.4, 0.5, "WETH")
 
   implicit val tmm = new TokenMetadataManager()
   tmm.addToken(LRC_TOKEN)
@@ -113,9 +114,9 @@ trait OrderAwareSpec extends CommonSpec {
   ) = newOrder(WETH, GTO, LRC, amountS, amountB, amountFee)
 
   def newOrder(
-    tokenS: String,
-    tokenB: String,
-    tokenFee: String,
+    tokenS: TokenHash,
+    tokenB: TokenHash,
+    tokenFee: TokenHash,
     amountS: BigInt,
     amountB: BigInt,
     amountFee: BigInt = 0

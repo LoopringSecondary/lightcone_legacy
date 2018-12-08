@@ -20,6 +20,8 @@ import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 
 package object data {
+  type TokenHash = Long
+
   implicit class RichBigInt(this_ : BigInt) {
     def min(that: BigInt): BigInt = if (this_ < that) this_ else that
     def max(that: BigInt): BigInt = if (this_ > that) this_ else that
@@ -43,7 +45,7 @@ package object data {
 
     //中间价格，可以在显示深度价格时使用,简单的中间价
     //根据计价token来计算中间价格
-    def middleRate(feeToken: String): Double = {
+    def middleRate(feeToken: TokenHash): Double = {
       val makerSellPrice = Rational(
         raw.maker.order.amountS,
         raw.maker.order.amountB

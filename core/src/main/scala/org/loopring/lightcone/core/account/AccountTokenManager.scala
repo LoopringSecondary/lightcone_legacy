@@ -30,7 +30,7 @@ import XOrderStatus._
  */
 
 trait AccountTokenManager {
-  val token: String
+  val token: TokenHash
   val maxNumOrders: Int
 
   def getBalance(): BigInt

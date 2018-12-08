@@ -77,6 +77,15 @@ enum XDeserializationError {
     DES_ERR_NONE    = 0;
 }
 
+message XTokenMetadata {
+    string address = 1;
+    int64 hash = 2;
+    int32 decimals = 3;
+    double burnRate = 4;
+    double currentPrice = 5;
+    string symbol = 6;
+}
+
 // use bytes to represent big-numbers and string for addresses
 message XRawOrder {
     message Params {

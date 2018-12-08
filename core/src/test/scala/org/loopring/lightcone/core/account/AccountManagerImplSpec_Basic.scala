@@ -98,7 +98,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
   "submit order" should "fail if tokenS is not supported" in {
     dai.setBalanceAndAllowance(100, 100)
     lrc.setBalanceAndAllowance(100, 100)
-    val order = new Order("id", "XYZ", WETH, LRC, BigInt(10), BigInt(10), BigInt(10))
+    val order = new Order("id", XYZ, WETH, LRC, BigInt(10), BigInt(10), BigInt(10))
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(XOrderStatus.STATUS_UNSUPPORTED_MARKET)
@@ -107,7 +107,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
   "submit order" should "fail if tokenFee is not supported" in {
     dai.setBalanceAndAllowance(100, 100)
     lrc.setBalanceAndAllowance(100, 100)
-    val order = Order("id", DAI, WETH, "XYZ", BigInt(10), BigInt(10), BigInt(10))
+    val order = Order("id", DAI, WETH, XYZ, BigInt(10), BigInt(10), BigInt(10))
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(XOrderStatus.STATUS_UNSUPPORTED_MARKET)

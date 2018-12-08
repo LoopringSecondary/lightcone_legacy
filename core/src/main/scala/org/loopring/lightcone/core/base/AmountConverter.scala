@@ -17,14 +17,15 @@
 package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.core.data.Rational
+import org.loopring.lightcone.core.data._
 
 object AmountConverter {
-  def apply(token: String)(implicit tmm: TokenMetadataManager) =
+  def apply(token: TokenHash)(implicit tmm: TokenMetadataManager) =
     new AmountConverter(token)
 }
 
 class AmountConverter(
-    token: String
+    token: TokenHash
 )(implicit tmm: TokenMetadataManager) {
   assert(tmm.hasToken(token))
   lazy val meta = tmm.getToken(token).get

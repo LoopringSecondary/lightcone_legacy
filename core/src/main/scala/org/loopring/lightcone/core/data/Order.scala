@@ -35,9 +35,9 @@ case class OrderState(
 // 注意!!!! 收益不能保证时,合约等比例计算,分母中不包含amountB
 case class Order(
     id: String,
-    tokenS: String,
-    tokenB: String,
-    tokenFee: String,
+    tokenS: TokenHash,
+    tokenB: TokenHash,
+    tokenFee: TokenHash,
     amountS: BigInt = 0,
     amountB: BigInt = 0,
     amountFee: BigInt = 0,
@@ -69,7 +69,7 @@ case class Order(
     withOutstandingAmountS((amountS - filledAmountS).max(0))
 
   // Advance methods with implicit contextual arguments
-  private[core] def requestedAmount()(implicit token: String): BigInt =
+  private[core] def requestedAmount()(implicit token: TokenHash): BigInt =
     if (token == tokenS && tokenFee == tokenS) {
       outstanding.amountS + outstanding.amountFee
     } else if (token == tokenS && tokenFee != tokenS) {
@@ -82,7 +82,7 @@ case class Order(
       outstanding.amountFee
     }
 
-  private[core] def reservedAmount()(implicit token: String) =
+  private[core] def reservedAmount()(implicit token: TokenHash) =
     if (token == tokenS && tokenFee == tokenS) {
       reserved.amountS + reserved.amountFee
     } else if (token == tokenS && tokenFee != tokenS) {
@@ -94,7 +94,7 @@ case class Order(
     }
 
   // 注意: v < requestBigInt
-  private[core] def withReservedAmount(v: BigInt)(implicit token: String) =
+  private[core] def withReservedAmount(v: BigInt)(implicit token: TokenHash) =
     if (token == tokenS && tokenFee == tokenS) {
       val r = Rational(amountS, amountFee + amountS)
       val reservedAmountS = (Rational(v) * r).bigintValue()
@@ -180,7 +180,7 @@ case class Order(
     copy(_actual = Some(original.scaleBy(r)))
   }
 
-  private def calcDisplayableAmount(token: String, amount: BigInt)(
+  private def calcDisplayableAmount(token: TokenHash, amount: BigInt)(
     implicit
     tokenMetadataManager: TokenMetadataManager
   ) = {

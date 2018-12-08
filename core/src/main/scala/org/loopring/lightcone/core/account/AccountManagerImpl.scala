@@ -28,9 +28,9 @@ final private[core] class AccountManagerImpl()(
   import XOrderStatus._
 
   private[core] implicit var tokens =
-    Map.empty[String, AccountTokenManager]
+    Map.empty[TokenHash, AccountTokenManager]
 
-  def hasTokenManager(token: String): Boolean = {
+  def hasTokenManager(token: TokenHash): Boolean = {
     tokens.contains(token)
   }
 
@@ -40,7 +40,7 @@ final private[core] class AccountManagerImpl()(
     tm
   }
 
-  def getTokenManager(token: String): AccountTokenManager = {
+  def getTokenManager(token: TokenHash): AccountTokenManager = {
     assert(hasTokenManager(token))
     tokens(token)
   }

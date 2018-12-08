@@ -21,21 +21,21 @@ import org.loopring.lightcone.proto.core._
 
 class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
 
-  private var tokens = Map.empty[String, XTokenMetadata]
+  private var tokens = Map.empty[TokenHash, XTokenMetadata]
 
-  private var decimalsMap = Map.empty[String, Int]
-  private var priceMap = Map.empty[String, Double]
-  private var burnRateMap = Map.empty[String, Double]
+  private var decimalsMap = Map.empty[TokenHash, Int]
+  private var priceMap = Map.empty[TokenHash, Double]
+  private var burnRateMap = Map.empty[TokenHash, Double]
 
   def addToken(token: XTokenMetadata) {
-    tokens += token.address -> token
+    tokens += token.hash -> token
   }
 
-  def hasToken(token: String) = tokens.contains(token)
+  def hasToken(token: TokenHash) = tokens.contains(token)
 
-  def getToken(token: String) = tokens.get(token)
+  def getToken(token: TokenHash) = tokens.get(token)
 
-  def updatePrices(priceMap: Map[String, Double]) {
+  def updatePrices(priceMap: Map[TokenHash, Double]) {
     tokens = tokens.map {
       case (address, token) ⇒ priceMap.get(address) match {
         case Some(price) ⇒ (address, token.copy(currentPrice = price))
@@ -44,10 +44,10 @@ class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
     }
   }
 
-  def getBurnRate(token: String) =
+  def getBurnRate(token: TokenHash) =
     tokens.get(token).map(_.burnRate).getOrElse(defaultBurnRate)
 
-  def updateBurnRate(token: String, rate: Double) =
+  def updateBurnRate(token: TokenHash, rate: Double) =
     tokens.get(token) match {
       case None ⇒
       case Some(meta) ⇒

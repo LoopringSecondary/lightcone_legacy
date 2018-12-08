@@ -35,7 +35,7 @@ class DustOrderEvaluator(threshold: Double = 0.0)(
   def isMatchableDust(order: Order) =
     isDust(order.tokenS, order.matchable.amountS)
 
-  private def isDust(tokenS: String, amountS: BigInt): Boolean = {
+  private def isDust(tokenS: TokenHash, amountS: BigInt): Boolean = {
     tve.getEstimatedValue(tokenS, amountS) < threshold
   }
 }
