@@ -61,6 +61,8 @@ class CoreModule(config: Config)
     implicit val ringIncomeEstimator = new RingIncomeEstimatorImpl()
     implicit val timeProvider = new SystemTimeProvider()
 
+    //TODO 暂时保证可用
+    implicit val delegateAddress = "0x17233e07c67d086464fD408148c3ABB56245FA64"
     //-----------deploy actors-----------
     //启动时都需要 TokenMetadataSyncActor
     system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name)
