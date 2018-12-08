@@ -57,6 +57,7 @@ class OrderTable(tag: Tag)
   def tokenBFeePercentage = column[Int]("token_b_fee_percentage")
   def tokenRecipient = columnAddress("token_recipient") // ???
   def walletSplitPercentage = column[Int]("wallet_split_percentage")
+  def tokenFeeHash = column[Long]("token_fee_hash")
 
   // ERC1400
   def trancheS = column[String]("tranche_s")
@@ -77,6 +78,9 @@ class OrderTable(tag: Tag)
   def actualAmountFee = columnAmount("actual_amount_fee")
 
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
+  def tokenSHash = column[Long]("token_s_hash")
+  def tokenBHash = column[Long]("token_b_hash")
+  def marketHash = column[Long]("market_hash")
 
   // indexes
   def idx_hash = index("idx_hash", (hash), unique = true)
@@ -85,10 +89,16 @@ class OrderTable(tag: Tag)
   def idx_token_s = index("idx_token_s", (tokenS), unique = false)
   def idx_token_b = index("idx_token_b", (tokenB), unique = false)
   def idx_token_fee = index("idx_token_fee", (tokenFee), unique = false)
+
+  def idx_token_s_hash = index("idx_token_s_hash", (tokenSHash), unique = false)
+  def idx_token_b_hash = index("idx_token_b_hash", (tokenBHash), unique = false)
+  def idx_token_fee_hash = index("idx_token_fee_hash", (tokenFeeHash), unique = false)
+
   def idx_valid_since = index("idx_valid_since", (validSince), unique = false)
   def idx_valid_until = index("idx_valid_until", (validUntil), unique = false)
   def idx_owner = index("idx_owner", (owner), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
+  def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
   // def idx_sequence = index("idx_sequence", (sequenceId), unique = true)
 
   def paramsProjection = (
@@ -122,7 +132,8 @@ class OrderTable(tag: Tag)
     tokenSFeePercentage,
     tokenBFeePercentage,
     tokenRecipient,
-    walletSplitPercentage
+    walletSplitPercentage,
+    tokenFeeHash
   ) <> (
       {
         tuple ⇒
@@ -188,7 +199,10 @@ class OrderTable(tag: Tag)
     feeParamsProjection,
     erc1400ParamsProjection,
     stateProjection,
-    sequenceId
+    sequenceId,
+    tokenSHash,
+    tokenBHash,
+    marketHash
   ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
 }
 
