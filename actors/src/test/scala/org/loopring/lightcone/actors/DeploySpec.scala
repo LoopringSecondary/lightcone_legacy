@@ -24,6 +24,7 @@ import akka.pattern._
 import akka.routing.RoundRobinGroup
 import akka.util.Timeout
 import com.typesafe.config.{ Config, ConfigFactory }
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base.{ Lookup, MapBasedLookup }
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.proto.core._

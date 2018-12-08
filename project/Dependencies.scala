@@ -63,6 +63,9 @@ object Dependencies {
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion,
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf")
 
+  lazy val dependency4Lib = commonDependency ++
+    testDependency
+
   lazy val dependency4Core = commonDependency ++
     ethereumDependency ++
     testDependency

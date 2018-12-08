@@ -21,6 +21,7 @@ import akka.cluster.Cluster
 import com.google.inject._
 import net.codingwell.scalaguice._
 import net.codingwell.scalaguice.InjectorExtensions._
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.deployment._
 import org.loopring.lightcone.core.base._
 
