@@ -103,8 +103,8 @@ message XRawOrder {
     }
 
     message FeeParams {
-        string fee_token               = 1;
-        bytes  fee_amount              = 2;
+        string token_fee               = 1;
+        bytes  amount_fee             = 2;
         int32  waive_fee_percentage    = 3;
         int32  token_s_fee_percentage  = 4;
         int32  token_b_fee_percentage  = 5;
@@ -147,7 +147,8 @@ message XRawOrder {
     Params params                   = 10;
     FeeParams fee_params            = 11;
     ERC1400Params erc1400_params    = 12;
-    State state                     = 13;
+    State state            = 13;
+    int64 sequence_id      = 14;
 }
 
 message XRingBatch {

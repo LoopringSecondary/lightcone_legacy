@@ -173,7 +173,7 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   actors.add(OrdersDalActor.name, ordersDalActor)
   actors.add(AccountBalanceActor.name, accountBalanceActor)
-  actors.add(OrderStateActor.name, orderHistoryActor)
+  actors.add(OrderHistoryActor.name, orderHistoryActor)
   actors.add(MarketManagerActor.name, marketManagerActor)
   actors.add(GasPriceActor.name, gasPriceActor)
   actors.add(OrderbookManagerActor.name, orderbookManagerActor)

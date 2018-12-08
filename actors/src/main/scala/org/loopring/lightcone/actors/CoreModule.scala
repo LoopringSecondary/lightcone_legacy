@@ -25,14 +25,15 @@ import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.persistence.{ OrderStateActor, OrdersDalActor }
+import org.loopring.lightcone.actors.persistence.OrdersDalActor
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.persistence.base.BaseDatabaseModule
 import org.loopring.lightcone.persistence.dals.OrderDalImpl
+import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.proto.core.{ XMarketManagerConfig, XOrderbookConfig }
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
@@ -86,11 +87,11 @@ class CoreModule(config: Config)
 
     val accountBalanceActor = system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
     actors.add(AccountBalanceActor.name, accountBalanceActor)
-    val orderStateActor = system.actorOf(Props(new OrderStateActor()), OrderStateActor.name)
-    actors.add(OrderStateActor.name, orderStateActor)
     val dal = new OrderDalImpl()
     val orderDalActor = system.actorOf(Props(new OrdersDalActor(dal)), OrdersDalActor.name)
     actors.add(OrdersDalActor.name, orderDalActor)
+    val orderHistoryActor = system.actorOf(Props(new OrderHistoryActor()), OrderHistoryActor.name)
+    actors.add(OrderHistoryActor.name, orderHistoryActor)
 
     println(s"#### accountmanager ${accountManagerShardActor.path.address.toString}")
     println(s"#### orderbookManagerActor ${cluster.selfRoles}${orderbookManagerActor}, ${orderbookManagerActor.path.toString}")
