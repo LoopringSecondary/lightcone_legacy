@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ie.ucd.murmur;
+package org.loopring.lightcone.lib;
 
 /**
  * murmur hash 2.0.
