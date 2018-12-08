@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.base
+package org.loopring.lightcone.persistence
 
 import slick.jdbc.MySQLProfile.api._
-import slick.ast.ColumnOption
+import scala.reflect.ClassTag
 import com.google.protobuf.ByteString
 
-abstract class BaseTable[T](tag: Tag, name: String)
-  extends Table[T](tag, name) {
+package object base {
 
-  def columnHash(name: String, options: ColumnOption[String]*) =
-    column[String](name, (Seq(O.SqlType("VARCHAR(66)")) ++ options): _*)
+  implicit val byteStringColumnType: BaseColumnType[ByteString] =
+    MappedColumnType.base[ByteString, Array[Byte]](
+      bs ⇒ bs.toByteArray(),
+      bytes ⇒ ByteString.copyFrom(bytes)
+    )
 
-  def columnAddress(name: String, options: ColumnOption[String]*) =
-    column[String](name, (Seq(O.SqlType("VARCHAR(42)")) ++ options): _*)
-
-  def columnAmount(name: String, options: ColumnOption[ByteString]*) =
-    column[ByteString](name, options: _*)
-
-  def id: slick.lifted.Rep[String]
+  def enumColumnType[T <: scalapb.GeneratedEnum: ClassTag](
+    enumCompanion: scalapb.GeneratedEnumCompanion[T]
+  ): BaseColumnType[T] =
+    MappedColumnType.base[T, Int](
+      enum ⇒ enum.value,
+      int ⇒ enumCompanion.fromValue(int)
+    )
 }

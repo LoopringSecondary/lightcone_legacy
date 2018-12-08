@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.persistence
 
+import com.google.protobuf.ByteString
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern._
@@ -42,34 +43,8 @@ class OrdersDalActor(
   with ActorLogging {
 
   def receive: Receive = LoggingReceive {
-    case XRecoverOrdersReq(address, marketIdOpt, updatedSince, num) ⇒
-      val tokenes = (marketIdOpt match {
-        case Some(marketId) ⇒ Set(marketId.primary, marketId.secondary)
-        case None           ⇒ Seq.empty[String]
-      }).toSet
-      (for {
-        orders ← ordersDal.getOrdersByUpdatedAt(
-          num = num,
-          statuses = Set(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING),
-          tokenSSet = tokenes,
-          tokenBSet = tokenes,
-          owners = if ("" != address) Set(address) else Set.empty,
-          updatedSince = Some(updatedSince)
-        )
-      } yield XRecoverOrdersRes(orders)) pipeTo sender
-
     case XSaveOrderReq(Some(xraworder)) ⇒
       ordersDal.saveOrder(xraworder) pipeTo sender
-
-    case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
-      (stateOpt match {
-        case Some(state) ⇒ ordersDal.updateOrderState(hash, state, changeUpdatedAtField)
-        case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
-      }) pipeTo sender
-
-    case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
-      ordersDal.updateOrderStatus(hash, status, changeUpdatedAtField) pipeTo sender
-
     case XGetOrdersByHashesReq(hashes) ⇒
       (for {
         orders ← ordersDal.getOrders(hashes)
@@ -78,6 +53,32 @@ class OrdersDalActor(
       (for {
         order ← ordersDal.getOrder(hash)
       } yield XGetOrderByHashRes(order)) pipeTo sender
+    case XGetOrderFilledAmountReq(hash) ⇒ //从以太坊读取
+      //todo: 测试deploy
+      sender ! XGetOrderFilledAmountRes(hash, ByteString.copyFrom("111", "utf-8"))
+    case XRecoverOrdersReq(address, marketIdOpt, updatedSince, num) ⇒
+      val tokenes = (marketIdOpt match {
+        case Some(marketId) ⇒ Set(marketId.primary, marketId.secondary)
+        case None           ⇒ Seq.empty[String]
+      }).toSet
+      (for {
+        //TODO du:等recover逻辑确定后修改查询逻辑(skip)，XRecoverOrdersReq的数据结构(updatedSince)
+        orders ← ordersDal.getOrdersForRecover(
+          statuses = Set(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING),
+          owners = if ("" != address) Set(address) else Set.empty,
+          tokenSSet = tokenes,
+          tokenBSet = tokenes,
+          sort = Some(XSort.ASC),
+          skip = Some(XSkip(skip = 1, take = num))
+        )
+      } yield XRecoverOrdersRes(orders)) pipeTo sender
+    case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
+      (stateOpt match {
+        case Some(state) ⇒ ordersDal.updateAmount(hash, state)
+        case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
+      }) pipeTo sender
+    case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
+      ordersDal.updateOrderStatus(hash, status) pipeTo sender
 
   }
 }

@@ -49,8 +49,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
         feeParams = Some(XRawOrder.FeeParams(
-          feeToken = GTO_TOKEN.address,
-          feeAmount = "10".zeros(18),
+          tokenFee = GTO_TOKEN.address,
+          amountFee = "10".zeros(18),
           walletSplitPercentage = 100
         ))
       )

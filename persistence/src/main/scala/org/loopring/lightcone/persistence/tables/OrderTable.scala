@@ -17,10 +17,8 @@
 package org.loopring.lightcone.persistence.tables
 
 import org.loopring.lightcone.persistence.base._
-import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
 
 class OrderTable(tag: Tag)
   extends BaseTable[XRawOrder](tag, "T_ORDERS") {
@@ -29,7 +27,7 @@ class OrderTable(tag: Tag)
   implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
 
   def id = hash
-  def hash = columnHash("hash", O.PrimaryKey)
+  def hash = columnHash("hash")
   def version = column[Int]("version")
   def owner = columnAddress("owner")
   def tokenS = columnAddress("token_s")
@@ -52,8 +50,8 @@ class OrderTable(tag: Tag)
   def tokenStandardFee = column[XTokenStandard]("token_standard_fee")
 
   // FeeParams
-  def feeToken = columnAddress("fee_token")
-  def feeAmount = columnAmount("fee_amount")
+  def tokenFee = columnAddress("token_fee")
+  def amountFee = columnAmount("amount_fee")
   def waiveFeePercentage = column[Int]("waive_fee_percentage")
   def tokenSFeePercentage = column[Int]("token_s_fee_percentage")
   def tokenBFeePercentage = column[Int]("token_b_fee_percentage")
@@ -74,21 +72,24 @@ class OrderTable(tag: Tag)
   def outstandingAmountS = columnAmount("outstanding_amount_s")
   def outstandingAmountB = columnAmount("outstanding_amount_b")
   def outstandingAmountFee = columnAmount("outstanding_amount_fee")
-  def matchableAmountS = columnAmount("matchable_amount_s")
-  def matchableAmountB = columnAmount("matchable_amount_b")
-  def matchableAmountFee = columnAmount("matchable_amount_fee")
+  def actualAmountS = columnAmount("actual_amount_s")
+  def actualAmountB = columnAmount("actual_amount_b")
+  def actualAmountFee = columnAmount("actual_amount_fee")
+
+  def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
 
   // indexes
   def idx_hash = index("idx_hash", (hash), unique = true)
   def idx_updated_at = index("idx_updated_at", (updatedAt), unique = false)
+  def idx_status = index("idx_status", (status), unique = false)
   def idx_token_s = index("idx_token_s", (tokenS), unique = false)
   def idx_token_b = index("idx_token_b", (tokenB), unique = false)
-  def idx_fee_token = index("idx_fee_token", (feeToken), unique = false)
+  def idx_token_fee = index("idx_token_fee", (tokenFee), unique = false)
   def idx_valid_since = index("idx_valid_since", (validSince), unique = false)
   def idx_valid_until = index("idx_valid_until", (validUntil), unique = false)
   def idx_owner = index("idx_owner", (owner), unique = false)
-  def idx_status = index("idx_status", (status), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
+  // def idx_sequence = index("idx_sequence", (sequenceId), unique = true)
 
   def paramsProjection = (
     dualAuthAddr,
@@ -115,8 +116,8 @@ class OrderTable(tag: Tag)
     )
 
   def feeParamsProjection = (
-    feeToken,
-    feeAmount,
+    tokenFee,
+    amountFee,
     waiveFeePercentage,
     tokenSFeePercentage,
     tokenBFeePercentage,
@@ -156,12 +157,12 @@ class OrderTable(tag: Tag)
     matchedAt,
     updatedAtBlock,
     status,
+    actualAmountS,
+    actualAmountB,
+    actualAmountFee,
     outstandingAmountS,
     outstandingAmountB,
-    outstandingAmountFee,
-    matchableAmountS,
-    matchableAmountB,
-    matchableAmountFee
+    outstandingAmountFee
   ) <> (
       {
         tuple ⇒
@@ -186,7 +187,8 @@ class OrderTable(tag: Tag)
     paramsProjection,
     feeParamsProjection,
     erc1400ParamsProjection,
-    stateProjection
+    stateProjection,
+    sequenceId
   ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
 }
 

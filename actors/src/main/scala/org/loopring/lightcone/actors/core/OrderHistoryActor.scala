@@ -14,35 +14,20 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.actors.core
 
-option java_multiple_files = true;
-package org.loopring.lightcone.proto.persistence;
+import akka.actor.{ Actor, ActorLogging }
+import org.loopring.lightcone.proto.actors.XGetOrderFilledAmountReq
 
-import "core_data.proto";
-
-message Bar {
-    string  hash = 1;
-    string  a = 2;
-    string  b = 3;
-    bytes   c = 4;
-    int64   d = 5;
+object OrderHistoryActor {
+  val name = "order_history"
 }
 
-enum XPersistenceError {
-    PERS_ERR_NONE       = 0;
-    PERS_ERR_INVALID_DATA = 1;
-    PERS_ERR_DUPLICATE_INSERT  = 2;
-    PERS_ERR_UPDATE_FAILED = 3;
-    PERS_ERR_INTERNAL = 4;
-}
+class OrderHistoryActor extends Actor with ActorLogging {
 
-enum XSort {
-    ASC  = 0;
-    DESC = 1;
-}
+  override def receive: Receive = {
+    case XGetOrderFilledAmountReq ⇒ {
 
-message XSkip {
-    int64 skip = 1; // 忽略的记录
-    int32 take = 2; // 拉取的记录数
+    }
+  }
 }
