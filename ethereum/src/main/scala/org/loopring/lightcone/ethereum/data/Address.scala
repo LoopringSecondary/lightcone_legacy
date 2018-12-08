@@ -28,12 +28,12 @@ class Address(val value: BigInt) {
     "0x" + "0" * (40 - valueHex.length) + value.toString(16)
   }
 
-  def toBigInt = {
+  def toBigInt: BigInt = {
     this.value
   }
 
-  def toBytes = {
-    this.value.toByteArray
+  def toBytes: Array[Byte] = {
+    Numeric.hexStringToByteArray(this.value.toString(16))
   }
 
   def toByteString: ByteString = {
@@ -51,7 +51,7 @@ class Address(val value: BigInt) {
 
 object Address {
   def apply(bytes: Array[Byte]): Address = {
-    assert(bytes.length <= 80)
+    assert(bytes.length <= 20)
     new Address(Numeric.toBigInt(bytes))
   }
 

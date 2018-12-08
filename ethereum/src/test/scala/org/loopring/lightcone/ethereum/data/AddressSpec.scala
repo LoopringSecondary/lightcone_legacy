@@ -29,9 +29,11 @@ class AddressSpec extends FlatSpec with Matchers {
   }
 
   "byteArrayAddress" should "be canonicalized" in {
-    val bytes = Numeric.hexStringToByteArray("0x000ee35D70AD6331000E370F079aD7df52E75005")
+    val bytes = Numeric.hexStringToByteArray("f" * 40)
+    info(bytes.length.toString)
     val address = Address(bytes)
     info(address.toString)
+    info(address.toBytes.length.toString)
   }
 
   "bigIntAddress" should "be canonicalized" in {
@@ -39,5 +41,4 @@ class AddressSpec extends FlatSpec with Matchers {
     val address = Address(bigIntAdd)
     info(address.toString)
   }
-
 }
