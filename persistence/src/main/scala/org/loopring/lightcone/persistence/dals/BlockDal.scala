@@ -52,8 +52,7 @@ class BlockDalImpl()(
     if (result == 1) {
       XPersistenceError.PERS_ERR_NONE
     } else {
-      //TODO du: 改成order分支已定义的错误码
-      XPersistenceError.PERS_ERR_INVALID_DATA
+      XPersistenceError.PERS_ERR_INTERNAL
     }
   }
   def findByHash(hash: String): Future[Option[XBlockData]] = {
