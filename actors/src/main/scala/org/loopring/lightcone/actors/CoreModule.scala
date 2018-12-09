@@ -82,45 +82,14 @@ class CoreModule(config: Config)
     bind[DatabaseModule].toInstance(dbModule)
 
     //-----------deploy actors-----------
-    actors.add(
-      TokenMetadataActor.name,
-      TokenMetadataActor.startShardRegion
-    )
-
-    actors.add(
-      AccountManagerActor.name,
-      AccountManagerActor.startShardRegion
-    )
-
-    actors.add(
-      MarketManagerActor.name,
-      MarketManagerActor.startShardRegion
-    )
-
-    actors.add(
-      AccountBalanceActor.name,
-      AccountBalanceActor.startShardRegion
-    )
-
-    actors.add(
-      EthereumAccessActor.name,
-      EthereumAccessActor.startShardRegion
-    )
-
-    actors.add(
-      OrderbookManagerActor.name,
-      OrderbookManagerActor.startShardRegion
-    )
-
-    actors.add(
-      OrderHistoryActor.name,
-      OrderHistoryActor.startShardRegion
-    )
-
-    actors.add(
-      RingSettlementActor.name,
-      RingSettlementActor.startShardRegion("xyz")
-    )
+    actors.add(TokenMetadataActor.name, TokenMetadataActor.startShardRegion)
+    actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
+    actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
+    actors.add(AccountBalanceActor.name, AccountBalanceActor.startShardRegion)
+    actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
+    actors.add(OrderbookManagerActor.name, OrderbookManagerActor.startShardRegion)
+    actors.add(OrderHistoryActor.name, OrderHistoryActor.startShardRegion)
+    actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
 
     actors.add(
       EntryPointActor.name,

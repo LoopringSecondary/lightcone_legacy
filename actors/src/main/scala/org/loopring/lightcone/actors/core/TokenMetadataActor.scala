@@ -69,7 +69,6 @@ object TokenMetadataActor {
       extractShardId = extractShardId
     )
   }
-
 }
 
 class TokenMetadataActor()(

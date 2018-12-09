@@ -53,7 +53,7 @@ object RingSettlementActor {
     case XStart(_) ⇒ "address_1"
   }
 
-  def startShardRegion(submitterPrivateKey: String)(
+  def startShardRegion()(
     implicit
     system: ActorSystem,
     config: Config,
