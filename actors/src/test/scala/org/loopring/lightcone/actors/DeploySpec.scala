@@ -30,7 +30,7 @@ import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.proto.core._
 import org.scalatest.{ FlatSpec, Matchers }
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.entrypoint.EntryPoinActor
+import org.loopring.lightcone.actors.entrypoint.EntryPointActor
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market.RingIncomeEstimatorImpl
 import org.loopring.lightcone.proto.actors._

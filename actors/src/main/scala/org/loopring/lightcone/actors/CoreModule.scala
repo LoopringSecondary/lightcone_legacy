@@ -107,15 +107,9 @@ class CoreModule(config: Config)
       EthereumAccessActor.startShardRegion
     )
 
-    val orderbookConfig = XOrderbookConfig(
-      levels = 2,
-      priceDecimals = 5,
-      precisionForAmount = 2,
-      precisionForTotal = 1
-    )
     actors.add(
       OrderbookManagerActor.name,
-      OrderbookManagerActor.startShardRegion(orderbookConfig)
+      OrderbookManagerActor.startShardRegion(config.getConfig("orderbook"))
     )
 
     actors.add(

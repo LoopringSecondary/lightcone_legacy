@@ -81,12 +81,13 @@ abstract class CoreActorsIntegrationCommonSpec(
   implicit val actors = new MapBasedLookup[ActorRef]()
 
   val config = XMarketManagerConfig()
-  val orderbookConfig = XOrderbookConfig(
-    levels = 2,
-    priceDecimals = 5,
-    precisionForAmount = 2,
-    precisionForTotal = 1
-  )
+  val orderbookConfig = ConfigFactory.parseString("""
+    orderbookManagerActor {
+    levels = 2
+    price-decimals = 5
+    precision-for-amount = 2
+    precision-for-total = 1
+  }""")
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
@@ -140,7 +141,10 @@ abstract class CoreActorsIntegrationCommonSpec(
   val settlementActor = TestActorRef(new RingSettlementActor("0xa1"))
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
-  val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig), "orderbookManagerActor")
+  val orderbookManagerActor = TestActorRef(
+    new OrderbookManagerActor(orderbookConfig),
+    "orderbookManagerActor"
+  )
 
   val ADDRESS_1 = "address_111111111111111111111"
   val ADDRESS_2 = "address_222222222222222222222"

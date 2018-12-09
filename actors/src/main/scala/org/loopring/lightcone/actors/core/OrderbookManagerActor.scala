@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
+import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
@@ -38,7 +39,7 @@ object OrderbookManagerActor {
   def name = "orderbook_manager"
 
   def startShardRegion(
-    config: XOrderbookConfig
+    config: Config
   )(
     implicit
     system: ActorSystem,
@@ -69,10 +70,20 @@ object OrderbookManagerActor {
   }
 }
 
-class OrderbookManagerActor(config: XOrderbookConfig)
+class OrderbookManagerActor(config: Config)
   extends Actor with ActorLogging {
 
-  val manager: OrderbookManager = new OrderbookManagerImpl(config)
+  val conf = config.getConfig(self.path.name)
+  log.info(s"Orderbook config for ${self.path.name} = ${conf}")
+
+  val xorderbookConfig = XOrderbookConfig(
+    levels = conf.getInt("levels"),
+    priceDecimals = conf.getInt("price-decimals"),
+    precisionForAmount = conf.getInt("precision-for-amount"),
+    precisionForTotal = conf.getInt("precision-for-total")
+  )
+
+  val manager: OrderbookManager = new OrderbookManagerImpl(xorderbookConfig)
   private var latestPrice: Option[Double] = None
 
   def receive: Receive = LoggingReceive {
