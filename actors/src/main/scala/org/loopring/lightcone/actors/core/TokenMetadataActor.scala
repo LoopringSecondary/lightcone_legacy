@@ -44,9 +44,9 @@ object TokenMetadataActor {
     system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
-    actors: Lookup[ActorRef],
     timeProvider: TimeProvider,
     timeout: Timeout,
+    actors: Lookup[ActorRef],
     dbModule: DatabaseModule
   ): ActorRef = {
     ClusterSharding(system).start(
@@ -73,12 +73,12 @@ object TokenMetadataActor {
 
 class TokenMetadataActor()(
     implicit
-    config: Config,
-    ec: ExecutionContext,
-    actors: Lookup[ActorRef],
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    dbModule: DatabaseModule
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
+    val dbModule: DatabaseModule
 ) extends RepeatedJobActor
   with ActorLogging {
   private val tokenMetadata = dbModule.tokenMetadata

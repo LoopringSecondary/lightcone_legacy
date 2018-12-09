@@ -72,11 +72,11 @@ object AccountBalanceActor {
 // TODO(fukun): implement this class.
 class AccountBalanceActor()(
     implicit
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
 )
   extends Actor
   with ActorLogging {

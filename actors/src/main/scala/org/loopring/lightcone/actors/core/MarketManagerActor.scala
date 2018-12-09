@@ -58,8 +58,8 @@ object MarketManagerActor {
     system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
-    timeout: Timeout,
     timeProvider: TimeProvider,
+    timeout: Timeout,
     actors: Lookup[ActorRef],
     tokenValueEstimator: TokenValueEstimator,
     ringIncomeEstimator: RingIncomeEstimator,
@@ -79,10 +79,10 @@ object MarketManagerActor {
 // TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
 class MarketManagerActor()(
     implicit
-    val ec: ExecutionContext,
     val config: Config,
-    val timeout: Timeout,
+    val ec: ExecutionContext,
     val timeProvider: TimeProvider,
+    val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val tokenValueEstimator: TokenValueEstimator,
     val ringIncomeEstimator: RingIncomeEstimator,

@@ -71,11 +71,11 @@ object OrderbookManagerActor {
 
 class OrderbookManagerActor()(
     implicit
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
 ) extends Actor with ActorLogging {
 
   val conf = config.getConfig(self.path.name)

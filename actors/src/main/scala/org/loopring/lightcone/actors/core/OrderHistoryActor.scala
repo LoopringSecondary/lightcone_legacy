@@ -43,9 +43,9 @@ object OrderHistoryActor {
     system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
-    actors: Lookup[ActorRef],
     timeProvider: TimeProvider,
-    timeout: Timeout
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
@@ -72,11 +72,11 @@ object OrderHistoryActor {
 
 class OrderHistoryActor()(
     implicit
-    config: Config,
-    ec: ExecutionContext,
-    actors: Lookup[ActorRef],
-    timeProvider: TimeProvider,
-    timeout: Timeout
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
 )
   extends Actor with ActorLogging {
 

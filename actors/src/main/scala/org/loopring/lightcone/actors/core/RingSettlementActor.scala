@@ -46,9 +46,9 @@ object RingSettlementActor {
     system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
-    actors: Lookup[ActorRef],
     timeProvider: TimeProvider,
-    timeout: Timeout
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
@@ -74,10 +74,11 @@ object RingSettlementActor {
 
 class RingSettlementActor()(
     implicit
-    config: Config,
-    ec: ExecutionContext,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
 ) extends RepeatedJobActor
   with ActorLogging {
   //防止一个tx中的订单过多，超过 gaslimit
