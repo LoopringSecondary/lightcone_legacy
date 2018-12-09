@@ -79,7 +79,7 @@ class OrderbookManagerActor()(
 ) extends Actor with ActorLogging {
 
   val conf = config.getConfig(OrderbookManagerActor.name)
-  val thisConfig = conf.getConfig(self.path.name)
+  val thisConfig = conf.getConfig(self.path.name).withFallback(conf)
   log.info(s"config for ${self.path.name} = $thisConfig")
 
   val xorderbookConfig = XOrderbookConfig(

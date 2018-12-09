@@ -84,7 +84,7 @@ class AccountManagerActor()(
   with OrderRecoverySupport {
 
   val conf = config.getConfig(AccountManagerActor.name)
-  val thisConfig = conf.getConfig(self.path.name)
+  val thisConfig = conf.getConfig(self.path.name).withFallback(conf)
   log.info(s"config for ${self.path.name} = $thisConfig")
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing

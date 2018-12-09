@@ -81,7 +81,7 @@ class AccountBalanceActor()(
   with ActorLogging {
 
   val conf = config.getConfig(AccountBalanceActor.name)
-  val thisConfig = conf.getConfig(self.path.name)
+  val thisConfig = conf.getConfig(self.path.name).withFallback(conf)
   log.info(s"config for ${self.path.name} = $thisConfig")
 
   def receive: Receive = LoggingReceive {
