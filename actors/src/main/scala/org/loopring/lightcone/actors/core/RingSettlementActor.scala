@@ -81,6 +81,11 @@ class RingSettlementActor()(
     val actors: Lookup[ActorRef]
 ) extends RepeatedJobActor
   with ActorLogging {
+
+  val conf = config.getConfig("ring-settlement-actors")
+  val thisConfig = conf.getConfig(self.path.name)
+  log.info(s"config for ${self.path.name} = $thisConfig")
+
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)

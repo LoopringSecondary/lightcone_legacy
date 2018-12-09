@@ -78,6 +78,10 @@ class OrderHistoryActor()(
     val actors: Lookup[ActorRef]
 ) extends Actor with ActorLogging {
 
+  val conf = config.getConfig("orderbook-history-actors")
+  val thisConfig = conf.getConfig(self.path.name)
+  log.info(s"config for ${self.path.name} = $thisConfig")
+
   override def receive: Receive = {
     case XGetOrderFilledAmountReq ⇒ {
 

@@ -83,6 +83,10 @@ class AccountManagerActor()(
   with ActorLogging
   with OrderRecoverySupport {
 
+  val conf = config.getConfig("account-manager-actors")
+  val thisConfig = conf.getConfig(self.path.name)
+  log.info(s"config for ${self.path.name} = $thisConfig")
+
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
   private var address: String = _

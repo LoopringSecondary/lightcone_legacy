@@ -82,6 +82,11 @@ class TokenMetadataActor()(
     val dbModule: DatabaseModule
 ) extends RepeatedJobActor
   with ActorLogging {
+
+  val conf = config.getConfig("token-metadata-actors")
+  val thisConfig = conf.getConfig(self.path.name)
+  log.info(s"config for ${self.path.name} = $thisConfig")
+
   private val tokenMetadata = dbModule.tokenMetadata
   val syncJob = Job(
     id = 1,

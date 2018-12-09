@@ -81,6 +81,10 @@ class AccountBalanceActor()(
 ) extends Actor
   with ActorLogging {
 
+  val conf = config.getConfig("account-balance-actors")
+  val thisConfig = conf.getConfig(self.path.name)
+  log.info(s"config for ${self.path.name} = $thisConfig")
+
   def receive: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.
     case req: XGetBalanceAndAllowancesReq ⇒

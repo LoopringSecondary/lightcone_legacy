@@ -92,7 +92,10 @@ class MarketManagerActor()(
   with ActorLogging
   with OrderRecoverySupport {
 
-  // TODO
+  val conf = config.getConfig("market-manager-actors")
+  val thisConfig = conf.getConfig(self.path.name)
+  log.info(s"config for ${self.path.name} = $thisConfig")
+
   val xmarketManagerConfig = XMarketManagerConfig()
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)

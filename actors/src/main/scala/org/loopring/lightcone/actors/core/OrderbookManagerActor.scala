@@ -78,14 +78,15 @@ class OrderbookManagerActor()(
     val actors: Lookup[ActorRef]
 ) extends Actor with ActorLogging {
 
-  val conf = config.getConfig("orderbook-managers").getConfig(self.path.name)
-  log.info(s"Orderbook config for ${self.path.name} = ${conf}")
+  val conf = config.getConfig("orderbook-manager-actors")
+  val thisConfig = conf.getConfig(self.path.name)
+  log.info(s"config for ${self.path.name} = $thisConfig")
 
   val xorderbookConfig = XOrderbookConfig(
-    levels = conf.getInt("levels"),
-    priceDecimals = conf.getInt("price-decimals"),
-    precisionForAmount = conf.getInt("precision-for-amount"),
-    precisionForTotal = conf.getInt("precision-for-total")
+    levels = thisConfig.getInt("levels"),
+    priceDecimals = thisConfig.getInt("price-decimals"),
+    precisionForAmount = thisConfig.getInt("precision-for-amount"),
+    precisionForTotal = thisConfig.getInt("precision-for-total")
   )
 
   val manager: OrderbookManager = new OrderbookManagerImpl(xorderbookConfig)
