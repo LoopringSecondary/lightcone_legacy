@@ -30,7 +30,7 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
 
   "saveOrder" must "save a order with hash 0x111" in {
     // sbt persistence/'testOnly *OrdersDalSpec -- -z saveOrder'
-    var order = XRawOrder(hash = "0x111", version = 1, owner = "0x99", tokenS = "0x1", tokenB = "0x2", amountS = ByteString.copyFrom("11", "UTF-8"),
+    var order = XRawOrder(hash = "0x111", version = 1, owner = "0x111", tokenS = "0x1", tokenB = "0x2", amountS = ByteString.copyFrom("11", "UTF-8"),
       amountB = ByteString.copyFrom("12", "UTF-8"), validSince = 999)
     val result: Future[XSaveOrderResult] = dal.saveOrder(order)
     result onComplete {
@@ -58,12 +58,12 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
 
   "getOrders" must "get some orders with many query parameters" in {
     // sbt persistence/'testOnly *OrdersDalSpec -- -z getOrders'
-    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_CANCELLED_BY_USER, XOrderStatus.STATUS_CANCELLED_LOW_BALANCE).toSet
-    val owners: Set[String] = Seq("0x11", "0x22").toSet
+    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_NEW).toSet
+    val owners: Set[String] = Seq("0x111").toSet
     val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
     val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
     val feeTokenSet: Set[String] = Seq("0x11", "0x22").toSet
-    val result = dal.getOrders(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, Some(XSort.ASC), Some(XSkip(0, 100)))
+    val result = dal.getOrders(Set.empty, owners, Set.empty, Set.empty, Set.empty, Some(XSort.ASC), None)
     result onComplete {
       case Success(r) ⇒ info("=== Success: " + r)
       case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
@@ -89,12 +89,12 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
 
   "getOrdersForUse" must "get some orders with many query parameters" in {
     // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
-    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_CANCELLED_BY_USER, XOrderStatus.STATUS_CANCELLED_LOW_BALANCE).toSet
-    val owners: Set[String] = Seq("0x11", "0x22").toSet
+    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_NEW).toSet
+    val owners: Set[String] = Seq("0x111").toSet
     val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
     val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
     val feeTokenSet: Set[String] = Seq("0x11", "0x22").toSet
-    val result = dal.getOrdersForUser(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, Some(XSort.ASC), Some(XSkip(0, 100)))
+    val result = dal.getOrdersForUser(Set.empty, owners, Set.empty, Set.empty, Set.empty, Some(XSort.ASC), None)
     result onComplete {
       case Success(orders) ⇒ {
         orders.foreach { order ⇒
@@ -109,12 +109,12 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
 
   "countOrders" must "get orders count with many query parameters" in {
     // sbt persistence/'testOnly *OrdersDalSpec -- -z addOrder'
-    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_CANCELLED_BY_USER, XOrderStatus.STATUS_CANCELLED_LOW_BALANCE).toSet
-    val owners: Set[String] = Seq("0x111", "0x22").toSet
+    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_NEW).toSet
+    val owners: Set[String] = Seq("0x111").toSet
     val tokenSSet: Set[String] = Seq("0x1", "0x22").toSet
     val tokenBSet: Set[String] = Seq("0x11", "0x2").toSet
     //val feeTokenSet: Set[String] = Seq("0x11", "0x22").toSet
-    val result = dal.countOrders(statuses, owners, tokenSSet, tokenBSet, Set.empty)
+    val result = dal.countOrders(Set.empty, owners, Set.empty, Set.empty, Set.empty)
     result onComplete {
       case Success(r) ⇒ info("=== Success: " + r)
       case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
@@ -125,11 +125,11 @@ class OrdersDalSpec extends DalSpec[OrderDal] {
 
   "getOrdersForRecover" must "get some orders to recover" in {
     // sbt persistence/'testOnly *OrdersDalSpec -- -z getOrders'
-    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_CANCELLED_BY_USER, XOrderStatus.STATUS_CANCELLED_LOW_BALANCE).toSet
-    val owners: Set[String] = Seq("0x11", "0x22").toSet
+    val statuses: Set[XOrderStatus] = Seq(XOrderStatus.STATUS_NEW).toSet
+    val owners: Set[String] = Seq("0x111").toSet
     val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
     val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
-    val result = dal.getOrdersForRecover(statuses, owners, tokenSSet, tokenBSet, None, Some(XSort.ASC), Some(XSkip(0, 100)))
+    val result = dal.getOrdersForRecover(statuses, owners, Set.empty, Set.empty, None, Some(XSort.ASC), None)
     result onComplete {
       case Success(r) ⇒ info("=== Success: " + r)
       case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
