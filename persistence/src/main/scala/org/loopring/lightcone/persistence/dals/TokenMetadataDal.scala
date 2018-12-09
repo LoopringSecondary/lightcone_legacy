@@ -24,6 +24,7 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
+import org.slf4s.Logging
 
 trait TokenMetadataDal
   extends BaseDalImpl[TokenMetadataTable, XTokenMetadata] {
@@ -34,7 +35,7 @@ class TokenMetadataDalImpl()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
-) extends TokenMetadataDal {
+) extends TokenMetadataDal with Logging {
   val query = TableQuery[TokenMetadataTable]
 
   private var tokens: Seq[XTokenMetadata] = Nil
@@ -43,6 +44,7 @@ class TokenMetadataDalImpl()(
     if (reloadFromDatabase || tokens.isEmpty) {
       db.run(query.take(Int.MaxValue).result).map { tokens_ ⇒
         tokens = tokens_
+        log.info(s"token metadata retrieved>> ${tokens.mkString("\n", "\n", "\n")}")
         tokens
       }
     } else {
