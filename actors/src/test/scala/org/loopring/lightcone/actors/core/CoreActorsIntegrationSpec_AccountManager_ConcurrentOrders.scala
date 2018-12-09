@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
+import com.typesafe.config.ConfigFactory
 import akka.testkit.TestActorRef
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
@@ -32,12 +33,15 @@ class CoreActorsIntegrationSpec_AccountManager_ConcurrentOrders
 
   "submit several orders at the same time" must {
     "submit success and depth contains right value" in {
+
+      implicit val config = ConfigFactory.parseString(s"""
+    account_manager {
+      skip-recovery = yes
+      recover-batch-size = 2
+    } """)
+
       val accountManagerRecoveryActor = TestActorRef(
-        new AccountManagerActor(
-          actors,
-          recoverBatchSize = 2,
-          skipRecovery = true
-        ), "accountManagerActorConcurrenetOrders"
+        new AccountManagerActor(), "accountManagerActorConcurrenetOrders"
       )
       accountManagerRecoveryActor ! XStart(ADDRESS_RECOVERY)
 

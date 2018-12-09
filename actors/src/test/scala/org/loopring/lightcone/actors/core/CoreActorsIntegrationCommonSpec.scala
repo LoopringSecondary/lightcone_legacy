@@ -80,7 +80,17 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   implicit val actors = new MapBasedLookup[ActorRef]()
 
-  implicit val config = ConfigFactory.parseString("""
+  implicit val config = ConfigFactory.parseString(s"""
+    account_manager {
+      skip-recovery = ${skipAccountManagerActorRecovery}
+      recover-batch-size = 5
+    }
+
+    market_manager {
+      skip-recovery = ${skipMarketManagerActorRecovery}
+      recover-batch-size = 5
+    }
+
     orderbook_manager {
       levels = 2
       price-decimals = 5
@@ -95,7 +105,7 @@ abstract class CoreActorsIntegrationCommonSpec(
     """)
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
-  val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
+  val aggregator = new OrderAwareOrderbookAggregatorImpl(config.getInt("orderbook_manager.price-decimals"))
 
   // Simulating an AccountBalanceActor
   val ordersDalActorProbe = new TestProbe(system, "order_db_access") {
@@ -147,7 +157,7 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(
-    new OrderbookManagerActor(orderbookConfig),
+    new OrderbookManagerActor(),
     "orderbookManagerActor"
   )
 
@@ -155,29 +165,15 @@ abstract class CoreActorsIntegrationCommonSpec(
   val ADDRESS_2 = "address_222222222222222222222"
 
   val accountManagerActor1: ActorRef = TestActorRef(
-    new AccountManagerActor(
-      actors,
-      recoverBatchSize = 5,
-      skipRecovery = skipAccountManagerActorRecovery
-    ),
-    "accountManagerActor1"
+    new AccountManagerActor(), "accountManagerActor1"
   )
 
   val accountManagerActor2: ActorRef = TestActorRef(
-    new AccountManagerActor(
-      actors,
-      recoverBatchSize = 5,
-      skipRecovery = skipAccountManagerActorRecovery
-    ),
-    "accountManagerActor2"
+    new AccountManagerActor(), "accountManagerActor2"
   )
 
   val marketManagerActor: ActorRef = TestActorRef(
-    new MarketManagerActor(
-      config,
-      skipRecovery = skipMarketManagerActorRecovery
-    ),
-    "marketManagerActor"
+    new MarketManagerActor(), "marketManagerActor"
   )
 
   actors.add(OrdersDalActor.name, ordersDalActor)

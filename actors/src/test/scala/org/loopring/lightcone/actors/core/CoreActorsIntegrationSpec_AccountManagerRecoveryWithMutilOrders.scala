@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
+import com.typesafe.config.ConfigFactory
 import akka.testkit.TestActorRef
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
@@ -36,12 +37,14 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
   "when an accountManager starts" must {
     "first recover it and then receive order" in {
 
+      implicit val config = ConfigFactory.parseString(s"""
+    account_manager {
+      skip-recovery = no
+      recover-batch-size = 500
+    } """)
+
       val accountManagerRecoveryActor = TestActorRef(
-        new AccountManagerActor(
-          actors,
-          recoverBatchSize = 500,
-          skipRecovery = false
-        ), "accountManagerActorRecovery"
+        new AccountManagerActor(), "accountManagerActorRecovery"
       )
       accountManagerRecoveryActor ! XStart(ADDRESS_RECOVERY)
 

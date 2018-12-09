@@ -93,7 +93,11 @@ class MarketManagerActor()(
   with OrderRecoverySupport {
 
   val conf = config.getConfig(MarketManagerActor.name)
-  val thisConfig = conf.getConfig(self.path.name).withFallback(conf)
+  val thisConfig = try {
+    conf.getConfig(self.path.name)
+  } catch {
+    case e: Throwable ⇒ conf
+  }
   log.info(s"config for ${self.path.name} = $thisConfig")
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)

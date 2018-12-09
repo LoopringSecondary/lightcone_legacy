@@ -80,7 +80,11 @@ class EthereumAccessActor()(
   with ActorLogging {
 
   val conf = config.getConfig(EthereumAccessActor.name)
-  val thisConfig = conf.getConfig(self.path.name).withFallback(conf)
+  val thisConfig = try {
+    conf.getConfig(self.path.name)
+  } catch {
+    case e: Throwable ⇒ conf
+  }
   log.info(s"config for ${self.path.name} = $thisConfig")
 
   def receive: Receive = {

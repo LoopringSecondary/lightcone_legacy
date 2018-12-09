@@ -83,7 +83,11 @@ class RingSettlementActor()(
   with ActorLogging {
 
   val conf = config.getConfig(RingSettlementActor.name)
-  val thisConfig = conf.getConfig(self.path.name).withFallback(conf)
+  val thisConfig = try {
+    conf.getConfig(self.path.name)
+  } catch {
+    case e: Throwable ⇒ conf
+  }
   log.info(s"config for ${self.path.name} = $thisConfig")
 
   //防止一个tx中的订单过多，超过 gaslimit
