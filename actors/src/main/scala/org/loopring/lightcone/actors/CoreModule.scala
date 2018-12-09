@@ -129,8 +129,8 @@ class CoreModule(config: Config)
     )
 
     actors.add(
-      EntryPoinActor.name,
-      system.actorOf(Props(new EntryPoinActor()))
+      EntryPointActor.name,
+      system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
     )
   }
 }

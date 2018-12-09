@@ -25,11 +25,11 @@ import org.loopring.lightcone.proto.core._
 
 import scala.concurrent.ExecutionContext
 
-object EntryPoinActor {
+object EntryPointActor {
   val name = "entry-point"
 }
 
-class EntryPoinActor()(
+class EntryPointActor()(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,

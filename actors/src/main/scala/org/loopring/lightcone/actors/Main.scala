@@ -18,13 +18,11 @@ package org.loopring.lightcone.actors
 
 import com.google.inject.Guice
 import com.typesafe.config.ConfigFactory
-import akka.actor._
-import akka.cluster.pubsub._
-import akka.cluster.sharding._
-import scala.concurrent.duration._
-import DistributedPubSubMediator._
-import akka.cluster.Cluster
+import org.loopring.lightcone.actors.entrypoint.EntryPointActor
+import org.loopring.lightcone.actors.base.Lookup
 import org.slf4s.Logging
+import net.codingwell.scalaguice.InjectorExtensions._
+import akka.actor.ActorRef
 
 object Main extends App with Logging {
   val config = ConfigFactory.load()
@@ -41,6 +39,7 @@ object Main extends App with Logging {
   }
 
   val injector = Guice.createInjector(new CoreModule(config))
-
+  val actors = injector.instance[Lookup[ActorRef]]
+  actors.get(EntryPointActor.name)
 }
 
