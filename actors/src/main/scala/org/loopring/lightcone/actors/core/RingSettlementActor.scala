@@ -54,37 +54,32 @@ object RingSettlementActor {
   }
 
   def startShardRegion()(
-    implicit
-    system: ActorSystem,
+    implicit system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+    actors: Lookup[ActorRef]): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new RingSettlementActor()),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId
-    )
+      extractShardId = extractShardId)
   }
 }
 
 class RingSettlementActor()(
-    implicit
-    val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends RepeatedJobActor
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeProvider: TimeProvider,
+  val timeout: Timeout,
+  val actors: Lookup[ActorRef]) extends RepeatedJobActor
   with ActorLogging {
 
   val conf = config.getConfig(RingSettlementActor.name)
   val thisConfig = try {
-    conf.getConfig(self.path.name)
+    conf.getConfig(self.path.name).withFallback(conf)
   } catch {
     case e: Throwable ⇒ conf
   }
@@ -94,8 +89,7 @@ class RingSettlementActor()(
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)
   val ringSigner = new RingSignerImpl(
-    privateKey = thisConfig.getString("submitter-private-key")
-  )
+    privateKey = thisConfig.getString("submitter-private-key"))
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)
@@ -133,8 +127,7 @@ class RingSettlementActor()(
         signAndSubmitTx(
           ringWithGasLimit._1,
           ringWithGasLimit._2,
-          gasPriceRes.gasPrice
-        )
+          gasPriceRes.gasPrice)
     }
   } yield Unit
 
@@ -151,8 +144,7 @@ class RingSettlementActor()(
         "",
         Seq.empty[Seq[Int]],
         Seq.empty[Order],
-        ""
-      )
+        "")
       val orders = rings.flatMap {
         ring ⇒
           Set(ring.getMaker.getOrder, ring.getTaker.getOrder)
@@ -161,13 +153,11 @@ class RingSettlementActor()(
         ring ⇒
           Seq(
             orders.indexOf(ring.getTaker.getOrder),
-            orders.indexOf(ring.getMaker.getOrder)
-          )
+            orders.indexOf(ring.getMaker.getOrder))
       }
       ring = ring.copy(
         orders = orders.map(convertToOrder), //todo:
-        ringOrderIndex = orderIndexes
-      )
+        ringOrderIndex = orderIndexes)
       generateRingRec(remained, res :+ ring)
     }
 
@@ -189,8 +179,7 @@ class RingSettlementActor()(
       tokenReceipt = "",
       sig = "",
       dualAuthSig = "",
-      hash = xOrder.id
-    )
+      hash = xOrder.id)
   }
 
 }

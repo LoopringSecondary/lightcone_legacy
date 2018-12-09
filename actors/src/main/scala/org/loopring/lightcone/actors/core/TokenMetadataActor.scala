@@ -52,42 +52,36 @@ object TokenMetadataActor {
   }
 
   def startShardRegion()(
-    implicit
-    system: ActorSystem,
+    implicit system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef],
     dbModule: DatabaseModule,
-    tokenMetadataManager: TokenMetadataManager
-  ): ActorRef = {
+    tokenMetadataManager: TokenMetadataManager): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new TokenMetadataActor()),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId
-    )
+      extractShardId = extractShardId)
   }
 }
 
-// TODO(dongw): initialize tokenMetadataManager
 class TokenMetadataActor()(
-    implicit
-    val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule,
-    val tokenMetadataManager: TokenMetadataManager
-) extends RepeatedJobActor
-  with ActorLogging {
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeProvider: TimeProvider,
+  val timeout: Timeout,
+  val actors: Lookup[ActorRef],
+  val dbModule: DatabaseModule,
+  val tokenMetadataManager: TokenMetadataManager)
+  extends RepeatedJobActor with ActorLogging {
 
   val conf = config.getConfig(TokenMetadataActor.name)
   val thisConfig = try {
-    conf.getConfig(self.path.name)
+    conf.getConfig(self.path.name).withFallback(conf)
   } catch {
     case e: Throwable ⇒ conf
   }
@@ -100,8 +94,7 @@ class TokenMetadataActor()(
     scheduleDelay = 10000,
     run = () ⇒ tokenMetadata.getTokens(true).map {
       _.foreach(tokenMetadataManager.addToken)
-    }
-  )
+    })
   initAndStartNextRound(syncJob)
 
   override def receive: Receive = super.receive orElse LoggingReceive {
