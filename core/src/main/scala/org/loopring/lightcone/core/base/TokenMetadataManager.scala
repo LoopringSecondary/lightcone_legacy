@@ -18,6 +18,7 @@ package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.persistence._
 
 class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
 
@@ -35,14 +36,14 @@ class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
 
   def getToken(token: String) = tokens.get(token)
 
-  def updatePrices(priceMap: Map[String, Double]) {
-    tokens = tokens.map {
-      case (address, token) ⇒ priceMap.get(address) match {
-        case Some(price) ⇒ (address, token.copy(currentPrice = price))
-        case None        ⇒ (address, token)
-      }
-    }
-  }
+  // def updatePrices(priceMap: Map[String, Double]) {
+  //   tokens = tokens.map {
+  //     case (address, token) ⇒ priceMap.get(address) match {
+  //       case Some(price) ⇒ (address, token.copy(currentPrice = price))
+  //       case None        ⇒ (address, token)
+  //     }
+  //   }
+  // }
 
   def getBurnRate(token: String) =
     tokens.get(token).map(_.burnRate).getOrElse(defaultBurnRate)

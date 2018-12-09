@@ -22,7 +22,7 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XTokenMetadata
+import org.loopring.lightcone.proto.persistence._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -60,9 +60,9 @@ class TokenMetadataSyncActor()(
     val WETH = "0x00000000004"
     val LRC = "0x00000000002"
 
-    val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.1, 1.0, "GTO")
-    val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000, "WETH")
-    val LRC_TOKEN = XTokenMetadata(LRC, 18, 0.4, 1000, "LRC")
+    val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.1, "GTO", 1.0)
+    val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, "WETH", 100)
+    val LRC_TOKEN = XTokenMetadata(LRC, 18, 0.4, "LRC", 100)
     tmm.addToken(GTO_TOKEN)
     tmm.addToken(WETH_TOKEN)
     tmm.addToken(LRC_TOKEN)

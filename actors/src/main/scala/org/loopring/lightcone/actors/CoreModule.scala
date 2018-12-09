@@ -119,10 +119,10 @@ class CoreModule(config: Config)
     bind[DatabaseModule].toInstance(dbModule)
 
     // TODO : remove this actor
-    actors.add(
-      OrdersDalActor.name,
-      system.actorOf(Props(new OrdersDalActor(dbModule.orders)), OrdersDalActor.name)
-    )
+    // actors.add(
+    //   OrdersDalActor.name,
+    //   system.actorOf(Props(new OrdersDalActor(dbModule.orders)), OrdersDalActor.name)
+    // )
 
     actors.add(
       OrderHistoryActor.name,
