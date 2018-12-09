@@ -20,6 +20,7 @@ import akka.actor._
 import akka.cluster.Cluster
 import akka.util.Timeout
 import com.google.inject.AbstractModule
+import com.google.inject.name.Names
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.lib._
@@ -28,14 +29,14 @@ import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.persistence.OrdersDalActor
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
-import org.loopring.lightcone.persistence.base.BaseDatabaseModule
-import org.loopring.lightcone.persistence.dals.OrderDalImpl
+import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.proto.core.{ XMarketManagerConfig, XOrderbookConfig }
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class CoreModule(config: Config)
   extends AbstractModule with ScalaModule {
@@ -47,6 +48,9 @@ class CoreModule(config: Config)
     implicit val timeout = Timeout(5 second)
 
     bind[Config].toInstance(config)
+    bind[ActorSystem].toInstance(system)
+    bind[Cluster].toInstance(cluster)
+    bind(classOf[ExecutionContext]).annotatedWith(Names.named("db-execution-context")).toInstance(global)
 
     implicit val dbConfig: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig("db.default", config)
     bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
@@ -71,43 +75,46 @@ class CoreModule(config: Config)
 
     //-----------deploy actors-----------
     //启动时都需要 TokenMetadataSyncActor
-    actors.add(
-      TokenMetadataSyncActor.name,
-      system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name)
-    )
+    {
+      val actor = system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name)
+      actors.add(TokenMetadataSyncActor.name, actor)
+      bind[ActorRef].annotatedWith(Names.named("token-metadata")).toInstance(actor)
+    }
+    {
+      val actor = AccountManagerActor.startShardRegion(100, true)
+      actors.add(AccountManagerActor.name, actor)
+      bind[ActorRef].annotatedWith(Names.named("account-manager")).toInstance(actor)
+    }
+    {
+      val marketsConfig = XMarketManagerConfig()
+      val actor = MarketManagerActor.startShardRegion(marketsConfig, true)
+      actors.add(MarketManagerActor.name, actor)
+      bind[ActorRef].annotatedWith(Names.named("market-manager")).toInstance(actor)
+    }
 
-    actors.add(
-      AccountManagerActor.name,
-      AccountManagerActor.startShardRegion(100, true)
-    )
+    {
+      val orderbookConfig = XOrderbookConfig(
+        levels = 2,
+        priceDecimals = 5,
+        precisionForAmount = 2,
+        precisionForTotal = 1
+      )
+      val actor = system.actorOf(Props(new OrderbookManagerActor(orderbookConfig)), OrderbookManagerActor.name)
+      actors.add(OrderbookManagerActor.name, actor)
+      bind[ActorRef].annotatedWith(Names.named("orderbook-manager")).toInstance(actor)
+    }
+    {
+      val actor = system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
+      actors.add(AccountBalanceActor.name, actor)
+      bind[ActorRef].annotatedWith(Names.named("account-balance")).toInstance(actor)
+    }
 
-    val marketsConfig = XMarketManagerConfig()
-    actors.add(
-      MarketManagerActor.name,
-      MarketManagerActor.startShardRegion(marketsConfig, true)
-    )
-
-    val orderbookConfig = XOrderbookConfig(
-      levels = 2,
-      priceDecimals = 5,
-      precisionForAmount = 2,
-      precisionForTotal = 1
-    )
-    actors.add(
-      OrderbookManagerActor.name,
-      system.actorOf(Props(new OrderbookManagerActor(orderbookConfig)), OrderbookManagerActor.name)
-    )
-
-    actors.add(
-      AccountBalanceActor.name,
-      system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
-    )
-
-    val dal = new OrderDalImpl()
+    val dbModule = new DatabaseModule()
+    bind[DatabaseModule].toInstance(dbModule)
 
     actors.add(
       OrdersDalActor.name,
-      system.actorOf(Props(new OrdersDalActor(dal)), OrdersDalActor.name)
+      system.actorOf(Props(new OrdersDalActor(dbModule.orders)), OrdersDalActor.name)
     )
 
     actors.add(

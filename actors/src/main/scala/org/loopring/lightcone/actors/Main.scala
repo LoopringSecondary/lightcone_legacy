@@ -20,6 +20,7 @@ import com.google.inject.Guice
 import com.typesafe.config.ConfigFactory
 import akka.actor._
 import akka.cluster.pubsub._
+import akka.cluster.sharding._
 import scala.concurrent.duration._
 import DistributedPubSubMediator._
 import akka.cluster.Cluster
@@ -39,17 +40,38 @@ object Main extends App with Logging {
     log.debug(s"--> $i = ${config.getString(i)}")
   }
 
-  val injector = Guice.createInjector(new CoreModule(config))
-  // implicit val system = ActorSystem("Lightcone", config)
-  // implicit val ec = system.dispatcher
-  // implicit val cluster = Cluster(system)
+  // val injector = Guice.createInjector(new CoreModule(config))
+  implicit val system = ActorSystem("Lightcone", config)
+  implicit val ec = system.dispatcher
+  implicit val cluster = Cluster(system)
 
-  // val a = system.actorOf(Props(classOf[MyActor]))
+  val extractEntityId: ShardRegion.ExtractEntityId = {
+    case "a" ⇒ ("entity_a", "a")
+    case _   ⇒ ("entity_b", "b")
+  }
 
+  val numberOfShards = 100
+
+  val extractShardId: ShardRegion.ExtractShardId = {
+    case "a" ⇒ "1111"
+    case "b" ⇒ "2222"
+  }
+
+  val counterRegion: ActorRef = ClusterSharding(system).start(
+    typeName = "Counter",
+    entityProps = Props[MyActor],
+    settings = ClusterShardingSettings(system),
+    extractEntityId = extractEntityId,
+    extractShardId = extractShardId
+  )
+
+  counterRegion ! "a"
+  counterRegion ! "b"
 }
 
 // TODO: remove this after docker compose works
 class MyActor extends Actor with ActorLogging {
+  println("=====》 " + self.path.name)
   import context.dispatcher
   val mediator = DistributedPubSub(context.system).mediator
   context.system.scheduler.schedule(0 seconds, 10 seconds, self, "TICK")
