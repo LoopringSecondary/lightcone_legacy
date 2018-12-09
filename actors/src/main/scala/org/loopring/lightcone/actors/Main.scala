@@ -40,52 +40,7 @@ object Main extends App with Logging {
     log.debug(s"--> $i = ${config.getString(i)}")
   }
 
-  // val injector = Guice.createInjector(new CoreModule(config))
-  implicit val system = ActorSystem("Lightcone", config)
-  implicit val ec = system.dispatcher
-  implicit val cluster = Cluster(system)
+  val injector = Guice.createInjector(new CoreModule(config))
 
-  val extractEntityId: ShardRegion.ExtractEntityId = {
-    case "a" ⇒ ("entity_a", "a")
-    case _   ⇒ ("entity_b", "b")
-  }
-
-  val numberOfShards = 100
-
-  val extractShardId: ShardRegion.ExtractShardId = {
-    case "a" ⇒ "1111"
-    case "b" ⇒ "2222"
-  }
-
-  val counterRegion: ActorRef = ClusterSharding(system).start(
-    typeName = "Counter",
-    entityProps = Props[MyActor],
-    settings = ClusterShardingSettings(system),
-    extractEntityId = extractEntityId,
-    extractShardId = extractShardId
-  )
-
-  counterRegion ! "a"
-  counterRegion ! "b"
 }
 
-// TODO: remove this after docker compose works
-class MyActor extends Actor with ActorLogging {
-  println("=====》 " + self.path.name)
-  import context.dispatcher
-  val mediator = DistributedPubSub(context.system).mediator
-  context.system.scheduler.schedule(0 seconds, 10 seconds, self, "TICK")
-
-  mediator ! Subscribe("topic", self)
-  var i = 0L
-
-  def receive = {
-    case "TICK" ⇒
-      log.error("hello")
-      mediator ! Publish("topic", "event-" + i)
-      i += 1
-
-    case x ⇒
-      log.error("===> " + x)
-  }
-}
