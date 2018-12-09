@@ -27,10 +27,10 @@ import scala.concurrent.duration._
 class OrderDalSpec extends DalSpec[OrderDal] {
   def getDal = new OrderDalImpl()
 
-  private def testSave(): Future[XSaveOrderResult] = {
+  private def testSave(hash: String, owner: String): Future[XSaveOrderResult] = {
     var order = XRawOrder(
-      owner = "0x111",
-      hash = "0x111",
+      owner = owner,
+      hash = hash,
       version = 1,
       tokenS = "0x1",
       tokenB = "0x2",
@@ -43,7 +43,7 @@ class OrderDalSpec extends DalSpec[OrderDal] {
 
   "saveOrder" must "save a order with hash 0x111" in {
     val result = for {
-      _ ← testSave()
+      _ ← testSave("0x111", "0x111")
       query ← dal.getOrder("0x111")
     } yield query
     val res = Await.result(result.mapTo[Option[XRawOrder]], 5.second)
@@ -52,8 +52,8 @@ class OrderDalSpec extends DalSpec[OrderDal] {
 
   "getOrders" must "get some orders with many query parameters" in {
     val result = for {
-      _ ← testSave()
-      query ← dal.getOrders(Set.empty, Set("0x111"), Set.empty, Set.empty, Set.empty, Some(XSort.ASC), None)
+      _ ← testSave("0x222", "0x222")
+      query ← dal.getOrders(Set.empty, Set("0x222"), Set.empty, Set.empty, Set.empty, Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res should not be empty
@@ -61,8 +61,8 @@ class OrderDalSpec extends DalSpec[OrderDal] {
 
   "getOrder" must "get a order with hash 0x111" in {
     val result = for {
-      _ ← testSave()
-      query ← dal.getOrder("0x111")
+      _ ← testSave("0x333", "0x333")
+      query ← dal.getOrder("0x333")
     } yield query
     val res = Await.result(result.mapTo[Option[XRawOrder]], 5.second)
     res should not be empty
@@ -70,8 +70,8 @@ class OrderDalSpec extends DalSpec[OrderDal] {
 
   "getOrdersForUse" must "get some orders with many query parameters" in {
     val result = for {
-      _ ← testSave()
-      query ← dal.getOrdersForUser(Set.empty, Set("0x111"), Set.empty, Set.empty, Set.empty, Some(XSort.ASC), None)
+      _ ← testSave("0x444", "0x444")
+      query ← dal.getOrdersForUser(Set.empty, Set("0x444"), Set.empty, Set.empty, Set.empty, Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res should not be empty
@@ -79,8 +79,8 @@ class OrderDalSpec extends DalSpec[OrderDal] {
 
   "countOrders" must "get orders count with many query parameters" in {
     val result = for {
-      _ ← testSave()
-      query ← dal.countOrders(Set.empty, Set("0x111"), Set.empty, Set.empty, Set.empty)
+      _ ← testSave("0x555", "0x555")
+      query ← dal.countOrders(Set.empty, Set("0x555"), Set.empty, Set.empty, Set.empty)
     } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
     res should be >= 0
@@ -88,8 +88,8 @@ class OrderDalSpec extends DalSpec[OrderDal] {
 
   "getOrdersForRecover" must "get some orders to recover" in {
     val result = for {
-      _ ← testSave()
-      query ← dal.getOrdersForRecover(Set(XOrderStatus.STATUS_NEW), Set("0x111"), Set.empty, Set.empty, None, Some(XSort.ASC), None)
+      _ ← testSave("0x666", "0x666")
+      query ← dal.getOrdersForRecover(Set(XOrderStatus.STATUS_NEW), Set("0x666"), Set.empty, Set.empty, None, Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res should not be empty
@@ -97,8 +97,8 @@ class OrderDalSpec extends DalSpec[OrderDal] {
 
   "updateOrderStatus" must "update order's status with hash 0x111" in {
     val result = for {
-      _ ← testSave()
-      query ← dal.updateOrderStatus("0x111", XOrderStatus.STATUS_CANCELLED_BY_USER)
+      _ ← testSave("0x777", "0x777")
+      query ← dal.updateOrderStatus("0x777", XOrderStatus.STATUS_CANCELLED_BY_USER)
     } yield query
     val res = Await.result(result.mapTo[Either[XPersistenceError, String]], 5.second)
     res.isRight should be(true)
@@ -119,8 +119,8 @@ class OrderDalSpec extends DalSpec[OrderDal] {
       outstandingAmountFee = ByteString.copyFrom("116", "UTF-8")
     )
     val result = for {
-      _ ← testSave()
-      query ← dal.updateAmount("0x111", state)
+      _ ← testSave("0x888", "0x888")
+      query ← dal.updateAmount("0x888", state)
     } yield query
     val res = Await.result(result.mapTo[Either[XPersistenceError, String]], 5.second)
     res.isRight should be(true)
@@ -128,8 +128,8 @@ class OrderDalSpec extends DalSpec[OrderDal] {
 
   "updateFailed" must "update order's status to failed with hash 0x111" in {
     val result = for {
-      _ ← testSave()
-      query ← dal.updateFailed("0x111", XOrderStatus.STATUS_CANCELLED_BY_USER)
+      _ ← testSave("0x999", "0x999")
+      query ← dal.updateFailed("0x999", XOrderStatus.STATUS_CANCELLED_BY_USER)
     } yield query
     val res = Await.result(result.mapTo[Either[XPersistenceError, String]], 5.second)
     res.isRight should be(true)
