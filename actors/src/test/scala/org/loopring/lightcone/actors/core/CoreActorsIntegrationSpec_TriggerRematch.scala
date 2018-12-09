@@ -25,7 +25,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent.duration._
 
 //todo:impl it after tested accountMangerRecovery
-class CoreActorsIntegrationSpec_TriggerRematch
-  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
+// class CoreActorsIntegrationSpec_TriggerRematch
+//   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
-}
+// }

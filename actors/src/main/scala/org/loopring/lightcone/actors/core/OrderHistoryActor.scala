@@ -51,27 +51,32 @@ object OrderHistoryActor {
   }
 
   def startShardRegion()(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]): ActorRef = {
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderHistoryActor()),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
   }
 }
 
 class OrderHistoryActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef]) extends Actor with ActorLogging {
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends Actor with ActorLogging {
 
   val conf = config.getConfig(OrderHistoryActor.name)
   val thisConfig = try {

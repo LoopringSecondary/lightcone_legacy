@@ -58,7 +58,10 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId:
         sender !
           XGetBalanceAndAllowancesRes(
             req.address,
-            Map(req.tokens(0) -> XBalanceAndAllowance(BigInt("100000000000000000000000000"), BigInt("100000000000000000000000000")))
+            Map(req.tokens(0) -> XBalanceAndAllowance(
+              BigInt("100000000000000000000000000"),
+              BigInt("100000000000000000000000000")
+            ))
           )
     }
   }

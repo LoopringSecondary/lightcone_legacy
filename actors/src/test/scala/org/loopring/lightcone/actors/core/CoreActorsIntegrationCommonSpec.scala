@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.core
 import akka.actor._
 import akka.testkit._
 import akka.util.Timeout
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
@@ -60,6 +60,8 @@ abstract class CoreActorsIntegrationCommonSpec(
   with BeforeAndAfterAll
   with Logging {
 
+  implicit val config: Config
+
   import CoreActorsIntegrationCommonSpec._
 
   override def afterAll: Unit = {
@@ -80,29 +82,6 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   implicit val actors = new MapBasedLookup[ActorRef]()
 
-  implicit val config = ConfigFactory.parseString(s"""
-    account_manager {
-      skip-recovery = ${skipAccountManagerActorRecovery}
-      recover-batch-size = 5
-    }
-
-    market_manager {
-      skip-recovery = ${skipMarketManagerActorRecovery}
-      recover-batch-size = 5
-    }
-
-    orderbook_manager {
-      levels = 2
-      price-decimals = 5
-      precision-for-amount = 2
-      precision-for-total = 1
-    }
-
-    ring_settlement {
-      submitter-private-key = "0xa1"
-    }
-
-    """)
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.getInt("orderbook_manager.price-decimals"))

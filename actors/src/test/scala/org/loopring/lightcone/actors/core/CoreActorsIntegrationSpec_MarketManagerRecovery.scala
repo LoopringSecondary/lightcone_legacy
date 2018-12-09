@@ -23,16 +23,16 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.actors.XStart
 
 //todo:impl it after tested accountMangerRecovery
-class CoreActorsIntegrationSpec_MarketManagerRecovery
-  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
+// class CoreActorsIntegrationSpec_MarketManagerRecovery
+//   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
-  "when an marketManager starts" must {
-    "first recover it and then receive order" in {
+//   "when an marketManager starts" must {
+//     "first recover it and then receive order" in {
 
-      val marketManagerActorRecovery: ActorRef = TestActorRef(new MarketManagerActor())
+//       val marketManagerActorRecovery: ActorRef = TestActorRef(new MarketManagerActor())
 
-      marketManagerActorRecovery ! XStart(marketId_.primary + "-" + marketId_.secondary)
+//       marketManagerActorRecovery ! XStart(marketId_.primary + "-" + marketId_.secondary)
 
-    }
-  }
-}
+//     }
+//   }
+// }

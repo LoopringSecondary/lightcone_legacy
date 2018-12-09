@@ -51,27 +51,32 @@ object OrderbookManagerActor {
   }
 
   def startShardRegion()(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]): ActorRef = {
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderbookManagerActor()),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
   }
 }
 
 class OrderbookManagerActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef]) extends Actor with ActorLogging {
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends Actor with ActorLogging {
 
   val conf = config.getConfig(OrderbookManagerActor.name)
   val thisConfig = try {
@@ -85,7 +90,8 @@ class OrderbookManagerActor()(
     levels = thisConfig.getInt("levels"),
     priceDecimals = thisConfig.getInt("price-decimals"),
     precisionForAmount = thisConfig.getInt("precision-for-amount"),
-    precisionForTotal = thisConfig.getInt("precision-for-total"))
+    precisionForTotal = thisConfig.getInt("precision-for-total")
+  )
 
   val manager: OrderbookManager = new OrderbookManagerImpl(xorderbookConfig)
   private var latestPrice: Option[Double] = None

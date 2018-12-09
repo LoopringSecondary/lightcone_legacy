@@ -51,27 +51,32 @@ object EthereumAccessActor {
   }
 
   def startShardRegion()(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]): ActorRef = {
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new EthereumAccessActor()),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
   }
 }
 
 class EthereumAccessActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef]) extends Actor
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends Actor
   with ActorLogging {
 
   val conf = config.getConfig(EthereumAccessActor.name)

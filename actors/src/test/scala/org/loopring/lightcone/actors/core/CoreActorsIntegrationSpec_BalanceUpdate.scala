@@ -23,62 +23,62 @@ import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 
-class CoreActorsIntegrationSpec_BalanceUpdate
-  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
+// class CoreActorsIntegrationSpec_BalanceUpdate
+//   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
-  "update balance after submit an order" must {
-    "cancel order if balance < amount_s" in {
-      val order = XOrder(
-        id = "order",
-        tokenS = WETH_TOKEN.address,
-        tokenB = GTO_TOKEN.address,
-        tokenFee = LRC_TOKEN.address,
-        amountS = "50".zeros(18),
-        amountB = "10000".zeros(18),
-        amountFee = "10".zeros(18),
-        walletSplitPercentage = 0.2,
-        status = XOrderStatus.STATUS_NEW
-      )
+//   "update balance after submit an order" must {
+//     "cancel order if balance < amount_s" in {
+//       val order = XOrder(
+//         id = "order",
+//         tokenS = WETH_TOKEN.address,
+//         tokenB = GTO_TOKEN.address,
+//         tokenFee = LRC_TOKEN.address,
+//         amountS = "50".zeros(18),
+//         amountB = "10000".zeros(18),
+//         amountFee = "10".zeros(18),
+//         walletSplitPercentage = 0.2,
+//         status = XOrderStatus.STATUS_NEW
+//       )
 
-      accountManagerActor1 ! XSubmitOrderReq(Some(order))
+//       accountManagerActor1 ! XSubmitOrderReq(Some(order))
 
-      accountBalanceProbe.expectQuery(ADDRESS_1, WETH_TOKEN.address)
-      accountBalanceProbe.replyWith(ADDRESS_1, WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
+//       accountBalanceProbe.expectQuery(ADDRESS_1, WETH_TOKEN.address)
+//       accountBalanceProbe.replyWith(ADDRESS_1, WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
 
-      accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
-      accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "10".zeros(18), "10".zeros(18))
+//       accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
+//       accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "10".zeros(18), "10".zeros(18))
 
-      orderHistoryProbe.expectQuery(order.id)
-      orderHistoryProbe.replyWith(order.id, "0".zeros(0))
+//       orderHistoryProbe.expectQuery(order.id)
+//       orderHistoryProbe.replyWith(order.id, "0".zeros(0))
 
-      expectMsgPF() {
-        case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
-          val order: Order = xorder
-          info(s"submitted an order: $order")
-        case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
-          info(s"occurs ERR_UNKNOWN when submitting order:$order")
-      }
+//       expectMsgPF() {
+//         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+//           val order: Order = xorder
+//           info(s"submitted an order: $order")
+//         case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
+//           info(s"occurs ERR_UNKNOWN when submitting order:$order")
+//       }
 
-      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
-      expectMsgPF() {
-        case a: XOrderbook ⇒
-          a.sells.nonEmpty should be(true)
-          a.sells.head.amount should be("50.00")
-          info("----orderbook status after submit an order: " + a)
-      }
+//       expectMsgPF() {
+//         case a: XOrderbook ⇒
+//           a.sells.nonEmpty should be(true)
+//           a.sells.head.amount should be("50.00")
+//           info("----orderbook status after submit an order: " + a)
+//       }
 
-      accountManagerActor1 ! XAddressBalanceUpdated(ADDRESS_1, WETH_TOKEN.address, "45".zeros(18))
+//       accountManagerActor1 ! XAddressBalanceUpdated(ADDRESS_1, WETH_TOKEN.address, "45".zeros(18))
 
-      //等待accountManager执行完毕
-      Thread.sleep(1000)
-      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+//       //等待accountManager执行完毕
+//       Thread.sleep(1000)
+//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
-      expectMsgPF() {
-        case a: XOrderbook ⇒
-          a.sells.isEmpty should be(true)
-          info("----orderbook status after cancel this order: " + a)
-      }
-    }
-  }
-}
+//       expectMsgPF() {
+//         case a: XOrderbook ⇒
+//           a.sells.isEmpty should be(true)
+//           info("----orderbook status after cancel this order: " + a)
+//       }
+//     }
+//   }
+// }

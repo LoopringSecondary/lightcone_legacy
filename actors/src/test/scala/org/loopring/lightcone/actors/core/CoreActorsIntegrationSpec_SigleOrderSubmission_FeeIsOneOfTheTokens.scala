@@ -23,46 +23,46 @@ import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 
-class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
-  extends CoreActorsIntegrationCommonSpec(XMarketId(LRC, WETH)) {
+// class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
+//   extends CoreActorsIntegrationCommonSpec(XMarketId(LRC, WETH)) {
 
-  "submit a single order" must {
-    "succeed and make change to orderbook" in {
-      val order = XOrder(
-        id = "buy_lrc",
-        tokenS = WETH_TOKEN.address,
-        tokenB = LRC_TOKEN.address,
-        tokenFee = LRC_TOKEN.address,
-        amountS = "50".zeros(18),
-        amountB = "10000".zeros(18),
-        amountFee = "10".zeros(18),
-        status = XOrderStatus.STATUS_NEW
-      )
+//   "submit a single order" must {
+//     "succeed and make change to orderbook" in {
+//       val order = XOrder(
+//         id = "buy_lrc",
+//         tokenS = WETH_TOKEN.address,
+//         tokenB = LRC_TOKEN.address,
+//         tokenFee = LRC_TOKEN.address,
+//         amountS = "50".zeros(18),
+//         amountB = "10000".zeros(18),
+//         amountFee = "10".zeros(18),
+//         status = XOrderStatus.STATUS_NEW
+//       )
 
-      accountManagerActor1 ! XSubmitOrderReq(Some(order))
+//       accountManagerActor1 ! XSubmitOrderReq(Some(order))
 
-      accountBalanceProbe.expectQuery(ADDRESS_1, WETH_TOKEN.address)
-      accountBalanceProbe.replyWith(ADDRESS_1, WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
+//       accountBalanceProbe.expectQuery(ADDRESS_1, WETH_TOKEN.address)
+//       accountBalanceProbe.replyWith(ADDRESS_1, WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
 
-      accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
-      accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "0".zeros(0), "0".zeros(0))
+//       accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
+//       accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "0".zeros(0), "0".zeros(0))
 
-      orderHistoryProbe.expectQuery(order.id)
-      orderHistoryProbe.replyWith(order.id, "0".zeros(0))
+//       orderHistoryProbe.expectQuery(order.id)
+//       orderHistoryProbe.replyWith(order.id, "0".zeros(0))
 
-      expectMsgPF() {
-        case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
-          val order: Order = xorder
-          log.debug(s"order submitted: $order")
-        case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
-      }
+//       expectMsgPF() {
+//         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+//           val order: Order = xorder
+//           log.debug(s"order submitted: $order")
+//         case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
+//       }
 
-      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
-      expectMsgPF() {
-        case a: XOrderbook ⇒
-          log.debug("----orderbook: " + a)
-      }
-    }
-  }
-}
+//       expectMsgPF() {
+//         case a: XOrderbook ⇒
+//           log.debug("----orderbook: " + a)
+//       }
+//     }
+//   }
+// }

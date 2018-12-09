@@ -23,62 +23,62 @@ import org.loopring.lightcone.proto.core._
 
 import scala.concurrent.duration._
 
-class CoreActorsIntegrationSpec_SingleRingFullyMatched
-  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
+// class CoreActorsIntegrationSpec_SingleRingFullyMatched
+//   extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
 
-  "submiting two orders with exact the same price and amount" must {
-    "generate ring then send events to settlement, orderbookManager, ethereum" in {
-      val maker1 = XOrder(
-        id = "maker1",
-        tokenS = WETH_TOKEN.address,
-        tokenB = GTO_TOKEN.address,
-        tokenFee = LRC_TOKEN.address,
-        amountS = "10".zeros(18),
-        amountB = "100".zeros(10),
-        amountFee = "10".zeros(18),
-        walletSplitPercentage = 0.2,
-        status = XOrderStatus.STATUS_NEW,
-        reserved = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
-        outstanding = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
-        actual = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
-        matchable = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18)))
-      )
-      val taker1 = XOrder(
-        id = "taker1",
-        tokenS = GTO_TOKEN.address,
-        tokenB = WETH_TOKEN.address,
-        tokenFee = LRC_TOKEN.address,
-        amountS = "100".zeros(10),
-        amountB = "10".zeros(18),
-        amountFee = "10".zeros(18),
-        walletSplitPercentage = 0.2,
-        status = XOrderStatus.STATUS_NEW,
-        outstanding = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
-        reserved = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
-        actual = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
-        matchable = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18)))
-      )
+//   "submiting two orders with exact the same price and amount" must {
+//     "generate ring then send events to settlement, orderbookManager, ethereum" in {
+//       val maker1 = XOrder(
+//         id = "maker1",
+//         tokenS = WETH_TOKEN.address,
+//         tokenB = GTO_TOKEN.address,
+//         tokenFee = LRC_TOKEN.address,
+//         amountS = "10".zeros(18),
+//         amountB = "100".zeros(10),
+//         amountFee = "10".zeros(18),
+//         walletSplitPercentage = 0.2,
+//         status = XOrderStatus.STATUS_NEW,
+//         reserved = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
+//         outstanding = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
+//         actual = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
+//         matchable = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18)))
+//       )
+//       val taker1 = XOrder(
+//         id = "taker1",
+//         tokenS = GTO_TOKEN.address,
+//         tokenB = WETH_TOKEN.address,
+//         tokenFee = LRC_TOKEN.address,
+//         amountS = "100".zeros(10),
+//         amountB = "10".zeros(18),
+//         amountFee = "10".zeros(18),
+//         walletSplitPercentage = 0.2,
+//         status = XOrderStatus.STATUS_NEW,
+//         outstanding = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
+//         reserved = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
+//         actual = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
+//         matchable = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18)))
+//       )
 
-      marketManagerActor ! XSubmitOrderReq(Some(maker1))
+//       marketManagerActor ! XSubmitOrderReq(Some(maker1))
 
-      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
-      expectMsgPF() {
-        case a: XOrderbook ⇒
-          info("----orderbook status after submitted first order : " + a)
-      }
+//       expectMsgPF() {
+//         case a: XOrderbook ⇒
+//           info("----orderbook status after submitted first order : " + a)
+//       }
 
-      marketManagerActor ! XSubmitOrderReq(Some(taker1))
+//       marketManagerActor ! XSubmitOrderReq(Some(taker1))
 
-      ethereumAccessProbe.receiveN(1, 1 seconds)
+//       ethereumAccessProbe.receiveN(1, 1 seconds)
 
-      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
-      expectMsgPF() {
-        case a: XOrderbook ⇒
-          info("----orderbook status after submitted second order: " + a)
-      }
+//       expectMsgPF() {
+//         case a: XOrderbook ⇒
+//           info("----orderbook status after submitted second order: " + a)
+//       }
 
-    }
-  }
-}
+//     }
+//   }
+// }
