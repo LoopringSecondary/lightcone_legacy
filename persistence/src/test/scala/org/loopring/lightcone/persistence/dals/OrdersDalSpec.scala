@@ -17,7 +17,7 @@
 package org.loopring.lightcone.persistence.dals
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.persistence.utils.SystemTimeProvider
+import org.loopring.lightcone.lib.SystemTimeProvider
 import org.loopring.lightcone.proto.actors.{ XOrderState, XSaveOrderResult, XSaveOrderStateResult }
 import org.loopring.lightcone.proto.core.{ XOrderStatus, XRawOrder }
 import org.loopring.lightcone.proto.persistence._
