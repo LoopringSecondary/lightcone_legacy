@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.persistence._
@@ -45,6 +46,7 @@ object AccountManagerActor {
     system: ActorSystem,
     ec: ExecutionContext,
     actors: Lookup[ActorRef],
+    timeProvider: TimeProvider,
     timeout: Timeout,
     dustEvaluator: DustOrderEvaluator
   ): ActorRef = {

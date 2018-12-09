@@ -43,13 +43,15 @@ class CoreModule(config: Config)
 
   override def configure(): Unit = {
     implicit val system = ActorSystem("Lightcone", config)
-    implicit val ec = system.dispatcher
     implicit val cluster = Cluster(system)
-    implicit val timeout = Timeout(5 second)
+    implicit val timeout = Timeout(2 second)
+    implicit val ec = system.dispatcher
 
     bind[Config].toInstance(config)
     bind[ActorSystem].toInstance(system)
     bind[Cluster].toInstance(cluster)
+    bind[Timeout].toInstance(timeout)
+    bind(classOf[ExecutionContext]).toInstance(global)
     bind(classOf[ExecutionContext]).annotatedWith(Names.named("db-execution-context")).toInstance(global)
 
     implicit val dbConfig: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig("db.default", config)

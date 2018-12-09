@@ -58,15 +58,15 @@ object MarketManagerActor {
     skipRecovery: Boolean = false
   )(
     implicit
+    system: ActorSystem,
     ec: ExecutionContext,
     actors: Lookup[ActorRef],
-    timeout: Timeout,
     timeProvider: TimeProvider,
+    timeout: Timeout,
     tokenValueEstimator: TokenValueEstimator,
     ringIncomeEstimator: RingIncomeEstimator,
     dustOrderEvaluator: DustOrderEvaluator,
-    tokenMetadataManager: TokenMetadataManager,
-    system: ActorSystem
+    tokenMetadataManager: TokenMetadataManager
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = "MarketManagerActor",
