@@ -30,30 +30,28 @@ import scala.concurrent.Await
 
 class CoreActorsIntegrationSpec_AccountManagerConcurrentOrders
   extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
-    XMarketId(GTO, WETH)
-  ) {
-
-  implicit val config = ConfigFactory.parseString(s"""
+    XMarketId(GTO, WETH),
+    """
     account_manager {
       skip-recovery = yes
       recover-batch-size = 2
     }
-
     market_manager {
       skip-recovery = yes
+      price-decimals = 5
       recover-batch-size = 5
     }
-
     orderbook_manager {
       levels = 2
       price-decimals = 5
       precision-for-amount = 2
       precision-for-total = 1
     }
-
     ring_settlement {
       submitter-private-key = "0xa1"
-    } """)
+    }
+    """
+  ) {
 
   "submit several orders at the same time" must {
     "submit success and depth contains right value" in {

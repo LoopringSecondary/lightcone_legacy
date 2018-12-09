@@ -49,8 +49,7 @@ object CoreActorsIntegrationCommonSpec {
 
 abstract class CoreActorsIntegrationCommonSpec(
     marketId: XMarketId,
-    skipAccountManagerActorRecovery: Boolean = true,
-    skipMarketManagerActorRecovery: Boolean = true
+    configStr: String
 )
   extends TestKit(ActorSystem("test", ConfigFactory.load()))
   with ImplicitSender
@@ -60,7 +59,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   with BeforeAndAfterAll
   with Logging {
 
-  implicit val config: Config
+  implicit val config_ = ConfigFactory.parseString(configStr)
 
   import CoreActorsIntegrationCommonSpec._
 
@@ -84,7 +83,6 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
-  val aggregator = new OrderAwareOrderbookAggregatorImpl(config.getInt("orderbook_manager.price-decimals"))
 
   // Simulating an AccountBalanceActor
   val ordersDalActorProbe = new TestProbe(system, "order_db_access") {
@@ -136,23 +134,22 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(
-    new OrderbookManagerActor(),
-    "orderbookManagerActor"
+    new OrderbookManagerActor()
   )
 
   val ADDRESS_1 = "address_111111111111111111111"
   val ADDRESS_2 = "address_222222222222222222222"
 
   val accountManagerActor1: ActorRef = TestActorRef(
-    new AccountManagerActor(), "accountManagerActor1"
+    new AccountManagerActor()
   )
 
   val accountManagerActor2: ActorRef = TestActorRef(
-    new AccountManagerActor(), "accountManagerActor2"
+    new AccountManagerActor()
   )
 
   val marketManagerActor: ActorRef = TestActorRef(
-    new MarketManagerActor(), "marketManagerActor"
+    new MarketManagerActor()
   )
 
   actors.add(OrdersDalActor.name, ordersDalActor)

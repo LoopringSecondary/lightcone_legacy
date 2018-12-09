@@ -28,8 +28,11 @@ import org.loopring.lightcone.proto.actors._
 
 import scala.concurrent.ExecutionContext
 
-abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId: XMarketId)
-  extends CoreActorsIntegrationCommonSpec(marketId) {
+abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
+    marketId: XMarketId,
+    configStr: String
+)
+  extends CoreActorsIntegrationCommonSpec(marketId, configStr) {
 
   class OrderStateForRecoveryTestActor()(
       implicit
