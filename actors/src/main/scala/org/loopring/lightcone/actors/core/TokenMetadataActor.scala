@@ -26,7 +26,8 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.persistence._
-import org.loopring.lightcone.core.depth._
+import org.loopring.lightcone.persistence._
+import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.actors.XErrorCode._
@@ -35,8 +36,8 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
-object OrderbookManagerActor {
-  def name = "orderbook_manager"
+object TokenMetadataActor {
+  val name = "token_metadata"
 
   private val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
@@ -57,11 +58,13 @@ object OrderbookManagerActor {
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]
+    actors: Lookup[ActorRef],
+    dbModule: DatabaseModule,
+    tokenMetadataManager: TokenMetadataManager
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new OrderbookManagerActor()),
+      entityProps = Props(new TokenMetadataActor()),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -69,16 +72,19 @@ object OrderbookManagerActor {
   }
 }
 
-class OrderbookManagerActor()(
+class TokenMetadataActor()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends Actor with ActorLogging {
+    val actors: Lookup[ActorRef],
+    val dbModule: DatabaseModule,
+    val tokenMetadataManager: TokenMetadataManager
+)
+  extends RepeatedJobActor with ActorLogging {
 
-  val conf = config.getConfig(OrderbookManagerActor.name)
+  val conf = config.getConfig(TokenMetadataActor.name)
   val thisConfig = try {
     conf.getConfig(self.path.name).withFallback(conf)
   } catch {
@@ -86,26 +92,18 @@ class OrderbookManagerActor()(
   }
   log.info(s"config for ${self.path.name} = $thisConfig")
 
-  val xorderbookConfig = XOrderbookConfig(
-    levels = thisConfig.getInt("levels"),
-    priceDecimals = thisConfig.getInt("price-decimals"),
-    precisionForAmount = thisConfig.getInt("precision-for-amount"),
-    precisionForTotal = thisConfig.getInt("precision-for-total")
+  private val tokenMetadata = dbModule.tokenMetadata
+  val syncJob = Job(
+    id = 1,
+    name = "syncTokenValue",
+    scheduleDelay = 10000,
+    run = () ⇒ tokenMetadata.getTokens(true).map {
+      _.foreach(tokenMetadataManager.addToken)
+    }
   )
+  initAndStartNextRound(syncJob)
 
-  val manager: OrderbookManager = new OrderbookManagerImpl(xorderbookConfig)
-  private var latestPrice: Option[Double] = None
-
-  def receive: Receive = LoggingReceive {
-
-    // TODO(dongw): market manager should send this message
-    case XUpdateLatestTradingPrice(price) ⇒
-      latestPrice = Some(price)
-
-    case req: XOrderbookUpdate ⇒
-      manager.processUpdate(req)
-
-    case x @ XGetOrderbookReq(level, size) ⇒
-      sender ! manager.getOrderbook(level, size, latestPrice)
+  override def receive: Receive = super.receive orElse LoggingReceive {
+    case _ ⇒
   }
 }

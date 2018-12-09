@@ -28,8 +28,11 @@ import org.loopring.lightcone.proto.actors._
 
 import scala.concurrent.ExecutionContext
 
-abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId: XMarketId)
-  extends CoreActorsIntegrationCommonSpec(marketId) {
+abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
+    marketId: XMarketId,
+    configStr: String
+)
+  extends CoreActorsIntegrationCommonSpec(marketId, configStr) {
 
   class OrderStateForRecoveryTestActor()(
       implicit
@@ -58,7 +61,10 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(marketId:
         sender !
           XGetBalanceAndAllowancesRes(
             req.address,
-            Map(req.tokens(0) -> XBalanceAndAllowance(BigInt("100000000000000000000000000"), BigInt("100000000000000000000000000")))
+            Map(req.tokens(0) -> XBalanceAndAllowance(
+              BigInt("100000000000000000000000000"),
+              BigInt("100000000000000000000000000")
+            ))
           )
     }
   }

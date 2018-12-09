@@ -19,33 +19,32 @@ package org.loopring.lightcone.actors.entrypoint
 import akka.actor._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.actors.core.{ AccountManagerActor, OrderbookManagerActor }
-import org.loopring.lightcone.proto.actors.XSubmitOrderReq
-import org.loopring.lightcone.proto.core.XGetOrderbookReq
+import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core._
 
 import scala.concurrent.ExecutionContext
 
-class EntryPoinActor(actors: Lookup[ActorRef])(
-    implicit
-    val ec: ExecutionContext,
-    val timeout: Timeout
-)
-  extends Actor
-  with ActorLogging {
+object EntryPointActor {
+  val name = "entry-point"
+}
 
-  override def preStart(): Unit = {
-    log.debug(s"####, entry ${actors.get(AccountManagerActor.name)}, ${actors.get(OrderbookManagerActor.name)}")
-    super.preStart()
-  }
+class EntryPointActor()(
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
+)
+  extends Actor with ActorLogging {
 
   //todo: 暂时测试，需要再对请求封装或者继续完善
   def receive: Receive = {
-    case req: XSubmitOrderReq ⇒ {
-      log.debug(s"####### entry XSubmitOrderReq ${req}")
+    case req: XSubmitOrderReq ⇒
       actors.get(AccountManagerActor.name) forward req
-    }
-    case req: XGetOrderbookReq ⇒ actors.get(OrderbookManagerActor.name) forward req
-    case _                     ⇒
+
+    case req: XGetOrderbookReq ⇒
+      actors.get(OrderbookManagerActor.name) forward req
+
   }
 
 }

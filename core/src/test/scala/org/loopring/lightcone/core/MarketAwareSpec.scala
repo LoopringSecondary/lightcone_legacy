@@ -33,10 +33,6 @@ trait MarketAwareSpec extends OrderAwareSpec {
   }
 
   var marketId = XMarketId(primary = WETH, secondary = GTO)
-  var config = XMarketManagerConfig(
-    maxNumbersOfOrders = 100, /* unsupported */
-    priceDecimals = 5
-  )
 
   var fackRingMatcher: RingMatcher = _
   var fakeDustOrderEvaluator: DustOrderEvaluator = _
@@ -53,7 +49,6 @@ trait MarketAwareSpec extends OrderAwareSpec {
 
     marketManager = new MarketManagerImpl(
       marketId,
-      config,
       tmm,
       fackRingMatcher,
       fakePendingRingPool,

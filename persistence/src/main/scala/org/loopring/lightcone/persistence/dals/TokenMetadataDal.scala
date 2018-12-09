@@ -18,23 +18,37 @@ package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.persistence.Bar
+import org.loopring.lightcone.proto.persistence._
 import org.loopring.lightcone.proto.core._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
-import scala.concurrent._
 import slick.basic._
+import scala.concurrent._
+import org.slf4s.Logging
 
-private[dals] trait BarDal extends BaseDalImpl[BarTable, Bar] {
-
+trait TokenMetadataDal
+  extends BaseDalImpl[TokenMetadataTable, XTokenMetadata] {
+  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[XTokenMetadata]]
 }
 
-private[dals] class BarDalImpl()(
+class TokenMetadataDalImpl()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext
-) extends BarDal {
-  val query = TableQuery[BarTable]
-  def getRowHash(row: Bar) = row.hash
+) extends TokenMetadataDal with Logging {
+  val query = TableQuery[TokenMetadataTable]
 
+  private var tokens: Seq[XTokenMetadata] = Nil
+
+  def getTokens(reloadFromDatabase: Boolean = false) = {
+    if (reloadFromDatabase || tokens.isEmpty) {
+      db.run(query.take(Int.MaxValue).result).map { tokens_ ⇒
+        tokens = tokens_
+        log.info(s"token metadata retrieved>> ${tokens.mkString("\n", "\n", "\n")}")
+        tokens
+      }
+    } else {
+      Future.successful(tokens)
+    }
+  }
 }

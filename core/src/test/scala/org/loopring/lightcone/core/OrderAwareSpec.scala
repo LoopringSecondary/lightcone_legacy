@@ -20,6 +20,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.persistence._
 import org.loopring.lightcone.core.account._
 
 trait OrderAwareSpec extends CommonSpec {
@@ -31,10 +32,10 @@ trait OrderAwareSpec extends CommonSpec {
   val DAI = "0x00000000003"
   val WETH = "0x00000000004"
 
-  val LRC_TOKEN = XTokenMetadata(LRC, 0, 0.1, 1.0, "LRC")
-  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.2, 1400.0, "GTO")
-  val DAI_TOKEN = XTokenMetadata(DAI, 20, 0.3, 7.0, "DAI")
-  val WETH_TOKEN = XTokenMetadata(WETH, 23, 0.4, 0.5, "WETH")
+  val LRC_TOKEN = XTokenMetadata(LRC, 0, 0.1, "LRC", 1.0)
+  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.2, "GTO", 1400.0)
+  val DAI_TOKEN = XTokenMetadata(DAI, 20, 0.3, "DAI", 7.0)
+  val WETH_TOKEN = XTokenMetadata(WETH, 23, 0.4, "WETH", 0.5)
 
   implicit val tmm = new TokenMetadataManager()
   tmm.addToken(LRC_TOKEN)
