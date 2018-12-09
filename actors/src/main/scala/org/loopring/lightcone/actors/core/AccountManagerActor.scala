@@ -38,13 +38,13 @@ object AccountManagerActor {
   val name = "account_manager"
 
   def startShardRegion(
-    actors: Lookup[ActorRef],
     recoverBatchSize: Int,
     skipRecovery: Boolean = false
   )(
     implicit
     system: ActorSystem,
     ec: ExecutionContext,
+    actors: Lookup[ActorRef],
     timeout: Timeout,
     dustEvaluator: DustOrderEvaluator
   ): ActorRef = {

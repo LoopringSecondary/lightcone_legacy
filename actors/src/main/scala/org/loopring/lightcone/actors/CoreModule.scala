@@ -51,31 +51,40 @@ class CoreModule(config: Config)
     implicit val dbConfig: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig("db.default", config)
     bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
 
-    //同时需要启动actor并开始同步，
     implicit val tmm = new TokenMetadataManager()
     bind[TokenMetadataManager].toInstance(tmm)
 
     implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimator()
+    bind[TokenValueEstimator].toInstance(tokenValueEstimator)
+
     implicit val dustEvaluator: DustOrderEvaluator = new DustOrderEvaluator()
-    val actors = new MapBasedLookup[ActorRef]()
+    bind[DustOrderEvaluator].toInstance(dustEvaluator)
+
+    implicit val actors = new MapBasedLookup[ActorRef]()
     bind[Lookup[ActorRef]].toInstance(actors)
 
-    implicit val ringIncomeEstimator = new RingIncomeEstimatorImpl()
-    implicit val timeProvider = new SystemTimeProvider()
+    implicit val ringIncomeEstimator: RingIncomeEstimator = new RingIncomeEstimatorImpl()
+    bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
+
+    implicit val timeProvider: TimeProvider = new SystemTimeProvider()
+    bind[TimeProvider].toInstance(timeProvider)
 
     //-----------deploy actors-----------
     //启动时都需要 TokenMetadataSyncActor
-    system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name)
+    actors.add(
+      TokenMetadataSyncActor.name,
+      system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name)
+    )
 
     actors.add(
       AccountManagerActor.name,
-      AccountManagerActor.startShardRegion(actors, 100, true)
+      AccountManagerActor.startShardRegion(100, true)
     )
 
     val marketsConfig = XMarketManagerConfig()
     actors.add(
       MarketManagerActor.name,
-      MarketManagerActor.startShardRegion(actors, marketsConfig, true)
+      MarketManagerActor.startShardRegion(marketsConfig, true)
     )
 
     val orderbookConfig = XOrderbookConfig(

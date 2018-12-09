@@ -54,12 +54,12 @@ object MarketManagerActor {
   }
 
   def startShardRegion(
-    actors: Lookup[ActorRef],
     config: XMarketManagerConfig,
     skipRecovery: Boolean = false
   )(
     implicit
     ec: ExecutionContext,
+    actors: Lookup[ActorRef],
     timeout: Timeout,
     timeProvider: TimeProvider,
     tokenValueEstimator: TokenValueEstimator,
