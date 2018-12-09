@@ -82,7 +82,7 @@ class RingSettlementActor()(
 ) extends RepeatedJobActor
   with ActorLogging {
 
-  val conf = config.getConfig("ring-settlement-actors")
+  val conf = config.getConfig(RingSettlementActor.name)
   val thisConfig = conf.getConfig(self.path.name)
   log.info(s"config for ${self.path.name} = $thisConfig")
 
@@ -90,7 +90,7 @@ class RingSettlementActor()(
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)
   val ringSigner = new RingSignerImpl(
-    privateKey = config.getString("submitter-private-key")
+    privateKey = thisConfig.getString("submitter-private-key")
   )
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)

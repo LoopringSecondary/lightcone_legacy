@@ -78,7 +78,7 @@ class OrderbookManagerActor()(
     val actors: Lookup[ActorRef]
 ) extends Actor with ActorLogging {
 
-  val conf = config.getConfig("orderbook-manager-actors")
+  val conf = config.getConfig(OrderbookManagerActor.name)
   val thisConfig = conf.getConfig(self.path.name)
   log.info(s"config for ${self.path.name} = $thisConfig")
 

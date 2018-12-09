@@ -79,7 +79,7 @@ class EthereumAccessActor()(
 ) extends Actor
   with ActorLogging {
 
-  val conf = config.getConfig("ethereum-access-actors")
+  val conf = config.getConfig(EthereumAccessActor.name)
   val thisConfig = conf.getConfig(self.path.name)
   log.info(s"config for ${self.path.name} = $thisConfig")
 

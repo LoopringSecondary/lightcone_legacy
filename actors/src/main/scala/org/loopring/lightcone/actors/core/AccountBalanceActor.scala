@@ -80,7 +80,7 @@ class AccountBalanceActor()(
 ) extends Actor
   with ActorLogging {
 
-  val conf = config.getConfig("account-balance-actors")
+  val conf = config.getConfig(AccountBalanceActor.name)
   val thisConfig = conf.getConfig(self.path.name)
   log.info(s"config for ${self.path.name} = $thisConfig")
 

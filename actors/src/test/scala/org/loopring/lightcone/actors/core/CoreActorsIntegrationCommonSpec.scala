@@ -80,14 +80,19 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   implicit val actors = new MapBasedLookup[ActorRef]()
 
-  val config = XMarketManagerConfig()
-  val orderbookConfig = ConfigFactory.parseString("""
-    orderbookManagerActor {
-    levels = 2
-    price-decimals = 5
-    precision-for-amount = 2
-    precision-for-total = 1
-  }""")
+  implicit val config = ConfigFactory.parseString("""
+    orderbook_manager {
+      levels = 2
+      price-decimals = 5
+      precision-for-amount = 2
+      precision-for-total = 1
+    }
+
+    ring_settlement {
+      submitter-private-key = "0xa1"
+    }
+
+    """)
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
   val aggregator = new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
@@ -138,7 +143,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   val ethereumAccessProbe = new TestProbe(system, "ethereum_access")
   val ethereumAccessActor = ethereumAccessProbe.ref
 
-  val settlementActor = TestActorRef(new RingSettlementActor("0xa1"))
+  val settlementActor = TestActorRef(new RingSettlementActor())
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(

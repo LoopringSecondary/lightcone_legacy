@@ -48,10 +48,6 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
   }
 
   implicit val marketId = XMarketId(primary = WETH, secondary = GTO)
-  var config = XMarketManagerConfig(
-    maxNumbersOfOrders = 100, /* unsupported */
-    priceDecimals = 5
-  )
 
   implicit var fakeDustOrderEvaluator: DustOrderEvaluator = _
   implicit var fackRingIncomeEstimator: RingIncomeEstimator = _
@@ -64,12 +60,11 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
 
     marketManager = new MarketManagerImpl(
       marketId,
-      config,
       new TokenMetadataManager,
       new RingMatcherImpl,
       new PendingRingPoolImpl,
       fakeDustOrderEvaluator,
-      new OrderAwareOrderbookAggregatorImpl(config.priceDecimals)
+      new OrderAwareOrderbookAggregatorImpl(priceDecimals = 5)
     )
 
     (fakeDustOrderEvaluator.isOriginalDust _).when(*).returns(false)
@@ -98,21 +93,11 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
     val sells = marketManager.getSellOrders(100)
     val buys = marketManager.getBuyOrders(100)
 
-    // println(s"""
-    //   -----------
-    //   sells: ${sells.mkString("\n", "\n\n", "\n")}
-
-    //   -----------
-    //   buys: ${buys.mkString("\n", "\n\n", "\n")}
-
-    //   """)
-
     println(s"""
       number of orders :${marketManager.getNumOfOrders}
       time cost for $num orders: $cost ($avg/second)
       num of rings: $rings
       """)
-
   }
 
   private def createGTOSellOrder(price: Double, amount: Double) = {

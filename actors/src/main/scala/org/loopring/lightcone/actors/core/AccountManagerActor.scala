@@ -83,7 +83,7 @@ class AccountManagerActor()(
   with ActorLogging
   with OrderRecoverySupport {
 
-  val conf = config.getConfig("account-manager-actors")
+  val conf = config.getConfig(AccountManagerActor.name)
   val thisConfig = conf.getConfig(self.path.name)
   log.info(s"config for ${self.path.name} = $thisConfig")
 
@@ -100,8 +100,8 @@ class AccountManagerActor()(
     case XStart(shardEntityId) ⇒ {
       address = shardEntityId
       val recoverySettings = XOrderRecoverySettings(
-        config.getBoolean("account-managers.skip-recovery"),
-        config.getInt("account-managers.recover-batch-size"),
+        conf.getBoolean("skip-recovery"),
+        conf.getInt("recover-batch-size"),
         address,
         None
       )
