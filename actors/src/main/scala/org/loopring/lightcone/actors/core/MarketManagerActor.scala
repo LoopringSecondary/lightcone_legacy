@@ -32,7 +32,6 @@ import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-
 import scala.concurrent._
 
 object MarketManagerActor {
@@ -109,7 +108,7 @@ class MarketManagerActor(
   protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  protected def settlementActor = actors.get(SettlementActor.name)
+  protected def settlementActor = actors.get(RingSettlementActor.name)
 
   def receive: Receive = {
     case XStart(shardEntityId) ⇒ {

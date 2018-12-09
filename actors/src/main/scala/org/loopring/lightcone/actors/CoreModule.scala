@@ -26,12 +26,12 @@ import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.persistence.OrdersDalActor
+import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence._
-import org.loopring.lightcone.proto.core.{ XMarketManagerConfig, XOrderbookConfig }
+import org.loopring.lightcone.proto.core._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.ExecutionContext
@@ -51,6 +51,7 @@ class CoreModule(config: Config)
     bind[ActorSystem].toInstance(system)
     bind[Cluster].toInstance(cluster)
     bind[Timeout].toInstance(timeout)
+
     bind(classOf[ExecutionContext]).toInstance(global)
     bind(classOf[ExecutionContext]).annotatedWith(Names.named("db-execution-context")).toInstance(global)
 
@@ -83,13 +84,24 @@ class CoreModule(config: Config)
     )
 
     actors.add(
-      AccountManagerActor.name, AccountManagerActor.startShardRegion(100, true)
+      AccountManagerActor.name,
+      AccountManagerActor.startShardRegion(100, true)
     )
 
     val marketsConfig = XMarketManagerConfig()
     actors.add(
       MarketManagerActor.name,
       MarketManagerActor.startShardRegion(marketsConfig, true)
+    )
+
+    actors.add(
+      AccountBalanceActor.name,
+      AccountBalanceActor.startShardRegion()
+    )
+
+    actors.add(
+      EthereumAccessActor.name,
+      EthereumAccessActor.startShardRegion()
     )
 
     val orderbookConfig = XOrderbookConfig(
@@ -100,17 +112,13 @@ class CoreModule(config: Config)
     )
     actors.add(
       OrderbookManagerActor.name,
-      system.actorOf(Props(new OrderbookManagerActor(orderbookConfig)), OrderbookManagerActor.name)
-    )
-
-    actors.add(
-      AccountBalanceActor.name,
-      system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
+      OrderbookManagerActor.startShardRegion(orderbookConfig)
     )
 
     val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)
 
+    // TODO : remove this actor
     actors.add(
       OrdersDalActor.name,
       system.actorOf(Props(new OrdersDalActor(dbModule.orders)), OrdersDalActor.name)
@@ -118,8 +126,12 @@ class CoreModule(config: Config)
 
     actors.add(
       OrderHistoryActor.name,
-      system.actorOf(Props(new OrderHistoryActor()), OrderHistoryActor.name)
+      OrderHistoryActor.startShardRegion()
     )
 
+    actors.add(
+      RingSettlementActor.name,
+      RingSettlementActor.startShardRegion("xyz")
+    )
   }
 }

@@ -19,30 +19,65 @@ package org.loopring.lightcone.actors.core
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor._
+import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.ethereum.data._
+import org.loopring.lightcone.actors.persistence._
+import org.loopring.lightcone.core.account._
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.proto.actors.XErrorCode._
+import org.loopring.lightcone.proto.core.XOrderStatus._
+import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.actors._
-
+import org.loopring.lightcone.ethereum.data._
+import scala.concurrent._
 import scala.annotation.tailrec
-import scala.concurrent.{ ExecutionContext, Future }
 
-object SettlementActor {
-  val name = "settlement"
+object RingSettlementActor {
+  val name = "ring_settlement"
+
+  def startShardRegion(submitterPrivateKey: String)(
+    implicit
+    system: ActorSystem,
+    ec: ExecutionContext,
+    actors: Lookup[ActorRef],
+    timeProvider: TimeProvider,
+    timeout: Timeout
+  ): ActorRef = {
+    ClusterSharding(system).start(
+      typeName = name,
+      entityProps = Props(new RingSettlementActor(submitterPrivateKey)),
+      settings = ClusterShardingSettings(system),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
+    )
+  }
+
+  val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
+    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+  }
+
+  val extractShardId: ShardRegion.ExtractShardId = {
+    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
+    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
+    case XStart(_) ⇒ "address_1"
+  }
 }
 
-class SettlementActor(
-    actors: Lookup[ActorRef],
+class RingSettlementActor(
     submitterPrivateKey: String
 )(
     implicit
     ec: ExecutionContext,
-    timeout: Timeout
-)
-  extends RepeatedJobActor
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
+) extends RepeatedJobActor
   with ActorLogging {
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
