@@ -83,7 +83,7 @@ class CoreModule(config: Config)
     //启动时都需要 TokenMetadataSyncActor
     actors.add(
       TokenMetadataActor.name,
-      system.actorOf(Props(new TokenMetadataActor()), TokenMetadataActor.name)
+      TokenMetadataActor.startShardRegion
     )
 
     actors.add(
@@ -99,12 +99,12 @@ class CoreModule(config: Config)
 
     actors.add(
       AccountBalanceActor.name,
-      AccountBalanceActor.startShardRegion()
+      AccountBalanceActor.startShardRegion
     )
 
     actors.add(
       EthereumAccessActor.name,
-      EthereumAccessActor.startShardRegion()
+      EthereumAccessActor.startShardRegion
     )
 
     val orderbookConfig = XOrderbookConfig(
@@ -126,7 +126,7 @@ class CoreModule(config: Config)
 
     actors.add(
       OrderHistoryActor.name,
-      OrderHistoryActor.startShardRegion()
+      OrderHistoryActor.startShardRegion
     )
 
     actors.add(
