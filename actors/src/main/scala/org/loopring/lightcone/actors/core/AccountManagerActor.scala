@@ -37,20 +37,7 @@ import scala.concurrent._
 object AccountManagerActor {
   val name = "account_manager"
 
-  //todo: sharding配置，发送给AccountManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
-  val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
-    case XStart(_) ⇒ "address_1"
-  }
-
-  def createShardActor(
+  def startShardRegion(
     actors: Lookup[ActorRef],
     recoverBatchSize: Int,
     skipRecovery: Boolean = false
@@ -62,12 +49,25 @@ object AccountManagerActor {
     dustEvaluator: DustOrderEvaluator
   ): ActorRef = {
     ClusterSharding(system).start(
-      typeName = "AccountManagerActor",
+      typeName = name,
       entityProps = Props(new AccountManagerActor(actors, recoverBatchSize, skipRecovery)),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
+
+  }
+
+  val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
+    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+  }
+
+  val extractShardId: ShardRegion.ExtractShardId = {
+    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
+    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
+    case XStart(_) ⇒ "address_1"
   }
 }
 

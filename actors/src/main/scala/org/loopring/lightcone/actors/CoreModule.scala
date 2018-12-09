@@ -66,12 +66,17 @@ class CoreModule(config: Config)
     //-----------deploy actors-----------
     //启动时都需要 TokenMetadataSyncActor
     system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name)
-    val accountManagerShardActor = deployCoreAccountManager(actors, 100, true)
-    val marketsConfig = XMarketManagerConfig()
-    val marketManagerShardActor = deployCoreMarketManager(actors, marketsConfig, true)
 
-    actors.add(AccountManagerActor.name, accountManagerShardActor)
-    actors.add(MarketManagerActor.name, marketManagerShardActor)
+    actors.add(
+      AccountManagerActor.name,
+      AccountManagerActor.startShardRegion(actors, 100, true)
+    )
+
+    val marketsConfig = XMarketManagerConfig()
+    actors.add(
+      MarketManagerActor.name,
+      MarketManagerActor.startShardRegion(actors, marketsConfig, true)
+    )
 
     val orderbookConfig = XOrderbookConfig(
       levels = 2,
@@ -79,55 +84,27 @@ class CoreModule(config: Config)
       precisionForAmount = 2,
       precisionForTotal = 1
     )
-    val orderbookManagerActor = system.actorOf(
-      Props(new OrderbookManagerActor(orderbookConfig)),
-      OrderbookManagerActor.name
+    actors.add(
+      OrderbookManagerActor.name,
+      system.actorOf(Props(new OrderbookManagerActor(orderbookConfig)), OrderbookManagerActor.name)
     )
-    actors.add(OrderbookManagerActor.name, orderbookManagerActor)
 
-    val accountBalanceActor = system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
-    actors.add(AccountBalanceActor.name, accountBalanceActor)
+    actors.add(
+      AccountBalanceActor.name,
+      system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
+    )
+
     val dal = new OrderDalImpl()
-    val orderDalActor = system.actorOf(Props(new OrdersDalActor(dal)), OrdersDalActor.name)
-    actors.add(OrdersDalActor.name, orderDalActor)
-    val orderHistoryActor = system.actorOf(Props(new OrderHistoryActor()), OrderHistoryActor.name)
-    actors.add(OrderHistoryActor.name, orderHistoryActor)
 
-    println(s"#### accountmanager ${accountManagerShardActor.path.address.toString}")
-    println(s"#### orderbookManagerActor ${cluster.selfRoles}${orderbookManagerActor}, ${orderbookManagerActor.path.toString}")
+    actors.add(
+      OrdersDalActor.name,
+      system.actorOf(Props(new OrdersDalActor(dal)), OrdersDalActor.name)
+    )
+
+    actors.add(
+      OrderHistoryActor.name,
+      system.actorOf(Props(new OrderHistoryActor()), OrderHistoryActor.name)
+    )
 
   }
-
-  def deployCoreAccountManager(
-    actors: Lookup[ActorRef],
-    recoverBatchSize: Int,
-    skipRecovery: Boolean = false
-  )(
-    implicit
-    system: ActorSystem,
-    ec: ExecutionContext,
-    timeout: Timeout,
-    dustEvaluator: DustOrderEvaluator
-  ): ActorRef = {
-    AccountManagerActor.createShardActor(actors, recoverBatchSize, skipRecovery)
-  }
-
-  def deployCoreMarketManager(
-    actors: Lookup[ActorRef],
-    config: XMarketManagerConfig,
-    skipRecovery: Boolean = false
-  )(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout,
-    timeProvider: TimeProvider,
-    tokenValueEstimator: TokenValueEstimator,
-    ringIncomeEstimator: RingIncomeEstimator,
-    dustOrderEvaluator: DustOrderEvaluator,
-    tokenMetadataManager: TokenMetadataManager,
-    system: ActorSystem
-  ): ActorRef = {
-    MarketManagerActor.createShardActor(actors, config, skipRecovery)
-  }
-
 }

@@ -53,7 +53,7 @@ object MarketManagerActor {
     case XStart(_) ⇒ "0x00000000004-0x00000000002"
   }
 
-  def createShardActor(
+  def startShardRegion(
     actors: Lookup[ActorRef],
     config: XMarketManagerConfig,
     skipRecovery: Boolean = false
