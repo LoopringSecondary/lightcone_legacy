@@ -17,171 +17,89 @@
 package org.loopring.lightcone.persistence.dals
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.lib._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.lib.SystemTimeProvider
+import org.loopring.lightcone.proto.actors.{ XOrderState, XSaveOrderResult, XSaveOrderStateResult }
+import org.loopring.lightcone.proto.core.{ XOrderStatus, XRawOrder }
 import org.loopring.lightcone.proto.persistence._
 import scala.concurrent.{ Await, ExecutionContext, Future }
-import scala.util.{ Failure, Success }
 import scala.concurrent.duration._
 
 class OrderDalSpec extends DalSpec[OrderDal] {
   def getDal = new OrderDalImpl()
 
-  "saveOrder" must "save a order with hash 0x111" in {
+  private def testSave(hash: String, owner: String): Future[XSaveOrderResult] = {
     var order = XRawOrder(
-      hash = "0x111",
+      owner = owner,
+      hash = hash,
       version = 1,
-      owner = "0x99",
       tokenS = "0x1",
       tokenB = "0x2",
       amountS = ByteString.copyFrom("11", "UTF-8"),
       amountB = ByteString.copyFrom("12", "UTF-8"),
       validSince = 999
     )
-
-    val result: Future[XSaveOrderResult] = dal.saveOrder(order)
-    result onComplete {
-      case Success(r) ⇒ info("=== Success: " + r)
-      case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
-    }
-    val res = Await.result(result.mapTo[XSaveOrderResult], 5.second)
-    res.error should be(XPersistenceError.PERS_ERR_NONE)
+    dal.saveOrder(order)
   }
 
-  "getOrdersByHash" must "get some orders's with hashes [0x111]" in {
-    val result = dal.getOrders(Seq("0x111"))
-    result onComplete {
-      case Success(orders) ⇒ {
-        orders.foreach { order ⇒
-          info("order:" + order)
-        }
-      }
-      case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
-    }
-    val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
+  "saveOrder" must "save a order with hash 0x111" in {
+    val result = for {
+      _ ← testSave("0x111", "0x111")
+      query ← dal.getOrder("0x111")
+    } yield query
+    val res = Await.result(result.mapTo[Option[XRawOrder]], 5.second)
     res should not be empty
   }
 
   "getOrders" must "get some orders with many query parameters" in {
-    val statuses: Set[XOrderStatus] = Seq(
-      XOrderStatus.STATUS_CANCELLED_BY_USER,
-      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
-    ).toSet
-    val owners: Set[String] = Seq("0x11", "0x22").toSet
-    val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
-    val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
-    val feeTokenSet: Set[String] = Seq("0x11", "0x22").toSet
-    val result = dal.getOrders(
-      statuses,
-      owners,
-      tokenSSet,
-      tokenBSet,
-      feeTokenSet,
-      Some(XSort.ASC),
-      Some(XSkip(0, 100))
-    )
-    result onComplete {
-      case Success(r) ⇒ info("=== Success: " + r)
-      case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
-    }
+    val result = for {
+      _ ← testSave("0x222", "0x222")
+      query ← dal.getOrders(Set.empty, Set("0x222"), Set.empty, Set.empty, Set.empty, Some(XSort.ASC), None)
+    } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res should not be empty
   }
 
   "getOrder" must "get a order with hash 0x111" in {
-    val result = dal.getOrder("0x111")
-    result onComplete {
-      case Success(orders) ⇒ {
-        orders.foreach { order ⇒
-          info("order:" + order)
-        }
-      }
-      case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
-    }
+    val result = for {
+      _ ← testSave("0x333", "0x333")
+      query ← dal.getOrder("0x333")
+    } yield query
     val res = Await.result(result.mapTo[Option[XRawOrder]], 5.second)
     res should not be empty
   }
 
   "getOrdersForUse" must "get some orders with many query parameters" in {
-    val statuses: Set[XOrderStatus] = Seq(
-      XOrderStatus.STATUS_CANCELLED_BY_USER,
-      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
-    ).toSet
-    val owners: Set[String] = Seq("0x11", "0x22").toSet
-    val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
-    val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
-    val feeTokenSet: Set[String] = Seq("0x11", "0x22").toSet
-    val result = dal.getOrdersForUser(
-      statuses,
-      owners,
-      tokenSSet,
-      tokenBSet,
-      feeTokenSet,
-      Some(XSort.ASC),
-      Some(XSkip(0, 100))
-    )
-    result onComplete {
-      case Success(orders) ⇒ {
-        orders.foreach { order ⇒
-          info("order:" + order)
-        }
-      }
-      case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
-    }
+    val result = for {
+      _ ← testSave("0x444", "0x444")
+      query ← dal.getOrdersForUser(Set.empty, Set("0x444"), Set.empty, Set.empty, Set.empty, Some(XSort.ASC), None)
+    } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res should not be empty
   }
 
   "countOrders" must "get orders count with many query parameters" in {
-    val statuses: Set[XOrderStatus] = Seq(
-      XOrderStatus.STATUS_CANCELLED_BY_USER,
-      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
-    ).toSet
-    val owners: Set[String] = Seq("0x111", "0x22").toSet
-    val tokenSSet: Set[String] = Seq("0x1", "0x22").toSet
-    val tokenBSet: Set[String] = Seq("0x11", "0x2").toSet
-    //val feeTokenSet: Set[String] = Seq("0x11", "0x22").toSet
-    val result = dal.countOrders(statuses, owners, tokenSSet, tokenBSet, Set.empty)
-    result onComplete {
-      case Success(r) ⇒ info("=== Success: " + r)
-      case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
-    }
+    val result = for {
+      _ ← testSave("0x555", "0x555")
+      query ← dal.countOrders(Set.empty, Set("0x555"), Set.empty, Set.empty, Set.empty)
+    } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
     res should be >= 0
   }
 
   "getOrdersForRecover" must "get some orders to recover" in {
-    val statuses: Set[XOrderStatus] = Seq(
-      XOrderStatus.STATUS_CANCELLED_BY_USER,
-      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
-    ).toSet
-    val owners: Set[String] = Seq("0x11", "0x22").toSet
-    val tokenSSet: Set[String] = Seq("0x11", "0x22").toSet
-    val tokenBSet: Set[String] = Seq("0x11", "0x22").toSet
-    val result = dal.getOrdersForRecover(
-      statuses,
-      owners,
-      tokenSSet,
-      tokenBSet,
-      None,
-      Some(XSort.ASC),
-      Some(XSkip(0, 100))
-    )
-    result onComplete {
-      case Success(r) ⇒ info("=== Success: " + r)
-      case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
-    }
+    val result = for {
+      _ ← testSave("0x666", "0x666")
+      query ← dal.getOrdersForRecover(Set(XOrderStatus.STATUS_NEW), Set("0x666"), Set.empty, Set.empty, None, Some(XSort.ASC), None)
+    } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res should not be empty
   }
 
   "updateOrderStatus" must "update order's status with hash 0x111" in {
-    val result = dal.updateOrderStatus("0x111", XOrderStatus.STATUS_CANCELLED_BY_USER)
-    result onComplete {
-      case Success(r) ⇒ info("=== Success: " + r)
-      case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
-    }
+    val result = for {
+      _ ← testSave("0x777", "0x777")
+      query ← dal.updateOrderStatus("0x777", XOrderStatus.STATUS_CANCELLED_BY_USER)
+    } yield query
     val res = Await.result(result.mapTo[Either[XPersistenceError, String]], 5.second)
     res.isRight should be(true)
   }
@@ -200,21 +118,19 @@ class OrderDalSpec extends DalSpec[OrderDal] {
       outstandingAmountS = ByteString.copyFrom("115", "UTF-8"),
       outstandingAmountFee = ByteString.copyFrom("116", "UTF-8")
     )
-    val result = dal.updateAmount("0x111", state)
-    result onComplete {
-      case Success(r) ⇒ info("=== Success: " + r)
-      case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
-    }
+    val result = for {
+      _ ← testSave("0x888", "0x888")
+      query ← dal.updateAmount("0x888", state)
+    } yield query
     val res = Await.result(result.mapTo[Either[XPersistenceError, String]], 5.second)
     res.isRight should be(true)
   }
 
   "updateFailed" must "update order's status to failed with hash 0x111" in {
-    val result = dal.updateFailed("0x111", XOrderStatus.STATUS_CANCELLED_BY_USER)
-    result onComplete {
-      case Success(r) ⇒ info("=== Success: " + r)
-      case Failure(e) ⇒ info("=== Failed: " + e.getMessage)
-    }
+    val result = for {
+      _ ← testSave("0x999", "0x999")
+      query ← dal.updateFailed("0x999", XOrderStatus.STATUS_CANCELLED_BY_USER)
+    } yield query
     val res = Await.result(result.mapTo[Either[XPersistenceError, String]], 5.second)
     res.isRight should be(true)
   }
