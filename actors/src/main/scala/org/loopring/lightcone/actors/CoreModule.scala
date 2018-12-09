@@ -75,52 +75,41 @@ class CoreModule(config: Config)
 
     //-----------deploy actors-----------
     //启动时都需要 TokenMetadataSyncActor
-    {
-      val actor = system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name)
-      actors.add(TokenMetadataSyncActor.name, actor)
-      bind[ActorRef].annotatedWith(Names.named("token-metadata")).toInstance(actor)
-    }
-    {
-      val actor = AccountManagerActor.startShardRegion(100, true)
-      actors.add(AccountManagerActor.name, actor)
-      bind[ActorRef].annotatedWith(Names.named("account-manager")).toInstance(actor)
-    }
-    {
-      val marketsConfig = XMarketManagerConfig()
-      val actor = MarketManagerActor.startShardRegion(marketsConfig, true)
-      actors.add(MarketManagerActor.name, actor)
-      bind[ActorRef].annotatedWith(Names.named("market-manager")).toInstance(actor)
-    }
+    actors.add(
+      TokenMetadataSyncActor.name,
+      system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name))
 
-    {
-      val orderbookConfig = XOrderbookConfig(
-        levels = 2,
-        priceDecimals = 5,
-        precisionForAmount = 2,
-        precisionForTotal = 1
-      )
-      val actor = system.actorOf(Props(new OrderbookManagerActor(orderbookConfig)), OrderbookManagerActor.name)
-      actors.add(OrderbookManagerActor.name, actor)
-      bind[ActorRef].annotatedWith(Names.named("orderbook-manager")).toInstance(actor)
-    }
-    {
-      val actor = system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
-      actors.add(AccountBalanceActor.name, actor)
-      bind[ActorRef].annotatedWith(Names.named("account-balance")).toInstance(actor)
-    }
+    actors.add(
+      AccountManagerActor.name, AccountManagerActor.startShardRegion(100, true))
+
+    val marketsConfig = XMarketManagerConfig()
+    actors.add(
+      MarketManagerActor.name,
+      MarketManagerActor.startShardRegion(marketsConfig, true))
+
+    val orderbookConfig = XOrderbookConfig(
+      levels = 2,
+      priceDecimals = 5,
+      precisionForAmount = 2,
+      precisionForTotal = 1)
+    actors.add(
+      OrderbookManagerActor.name,
+      system.actorOf(Props(new OrderbookManagerActor(orderbookConfig)), OrderbookManagerActor.name))
+
+    actors.add(
+      AccountBalanceActor.name,
+      system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name))
 
     val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)
 
     actors.add(
       OrdersDalActor.name,
-      system.actorOf(Props(new OrdersDalActor(dbModule.orders)), OrdersDalActor.name)
-    )
+      system.actorOf(Props(new OrdersDalActor(dbModule.orders)), OrdersDalActor.name))
 
     actors.add(
       OrderHistoryActor.name,
-      system.actorOf(Props(new OrderHistoryActor()), OrderHistoryActor.name)
-    )
+      system.actorOf(Props(new OrderHistoryActor()), OrderHistoryActor.name))
 
   }
 }
