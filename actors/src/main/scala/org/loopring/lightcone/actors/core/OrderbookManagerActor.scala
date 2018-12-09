@@ -38,19 +38,18 @@ import scala.concurrent._
 object OrderbookManagerActor {
   def name = "orderbook_manager"
 
-  def startShardRegion(
-    config: Config
-  )(
+  def startShardRegion()(
     implicit
     system: ActorSystem,
+    config: Config,
     ec: ExecutionContext,
-    actors: Lookup[ActorRef],
     timeProvider: TimeProvider,
-    timeout: Timeout
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new OrderbookManagerActor(config)),
+      entityProps = Props(new OrderbookManagerActor()),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -70,8 +69,14 @@ object OrderbookManagerActor {
   }
 }
 
-class OrderbookManagerActor(config: Config)
-  extends Actor with ActorLogging {
+class OrderbookManagerActor()(
+    implicit
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
+) extends Actor with ActorLogging {
 
   val conf = config.getConfig(self.path.name)
   log.info(s"Orderbook config for ${self.path.name} = ${conf}")

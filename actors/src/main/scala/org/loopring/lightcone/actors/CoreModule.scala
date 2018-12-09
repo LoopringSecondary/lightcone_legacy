@@ -47,6 +47,7 @@ class CoreModule(config: Config)
     implicit val cluster = Cluster(system)
     implicit val timeout = Timeout(2 second)
     implicit val ec = system.dispatcher
+    implicit val c_ = config
 
     bind[Config].toInstance(config)
     bind[ActorSystem].toInstance(system)
@@ -88,13 +89,12 @@ class CoreModule(config: Config)
 
     actors.add(
       AccountManagerActor.name,
-      AccountManagerActor.startShardRegion(100, true)
+      AccountManagerActor.startShardRegion
     )
 
-    val marketsConfig = XMarketManagerConfig()
     actors.add(
       MarketManagerActor.name,
-      MarketManagerActor.startShardRegion(marketsConfig, true)
+      MarketManagerActor.startShardRegion
     )
 
     actors.add(
@@ -109,7 +109,7 @@ class CoreModule(config: Config)
 
     actors.add(
       OrderbookManagerActor.name,
-      OrderbookManagerActor.startShardRegion(config.getConfig("orderbook"))
+      OrderbookManagerActor.startShardRegion
     )
 
     actors.add(

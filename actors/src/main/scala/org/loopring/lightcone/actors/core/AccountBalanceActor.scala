@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
+import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
@@ -40,10 +41,11 @@ object AccountBalanceActor {
   def startShardRegion()(
     implicit
     system: ActorSystem,
+    config: Config,
     ec: ExecutionContext,
-    actors: Lookup[ActorRef],
     timeProvider: TimeProvider,
-    timeout: Timeout
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
@@ -52,7 +54,6 @@ object AccountBalanceActor {
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
-
   }
 
   val extractEntityId: ShardRegion.ExtractEntityId = {
@@ -71,7 +72,9 @@ object AccountBalanceActor {
 // TODO(fukun): implement this class.
 class AccountBalanceActor()(
     implicit
+    config: Config,
     ec: ExecutionContext,
+    timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef]
 )

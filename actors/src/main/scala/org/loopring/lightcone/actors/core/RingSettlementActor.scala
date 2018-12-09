@@ -23,6 +23,7 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
+import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
@@ -43,6 +44,7 @@ object RingSettlementActor {
   def startShardRegion(submitterPrivateKey: String)(
     implicit
     system: ActorSystem,
+    config: Config,
     ec: ExecutionContext,
     actors: Lookup[ActorRef],
     timeProvider: TimeProvider,
@@ -50,7 +52,7 @@ object RingSettlementActor {
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new RingSettlementActor(submitterPrivateKey)),
+      entityProps = Props(new RingSettlementActor()),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -70,10 +72,9 @@ object RingSettlementActor {
   }
 }
 
-class RingSettlementActor(
-    submitterPrivateKey: String
-)(
+class RingSettlementActor()(
     implicit
+    config: Config,
     ec: ExecutionContext,
     timeout: Timeout,
     actors: Lookup[ActorRef]
@@ -82,7 +83,9 @@ class RingSettlementActor(
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)
-  val ringSigner = new RingSignerImpl(privateKey = submitterPrivateKey)
+  val ringSigner = new RingSignerImpl(
+    privateKey = config.getString("submitter-private-key")
+  )
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)

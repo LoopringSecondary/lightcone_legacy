@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
+import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
@@ -37,21 +38,19 @@ import scala.concurrent._
 object AccountManagerActor {
   val name = "account_manager"
 
-  def startShardRegion(
-    recoverBatchSize: Int,
-    skipRecovery: Boolean = false
-  )(
+  def startShardRegion()(
     implicit
     system: ActorSystem,
+    config: Config,
     ec: ExecutionContext,
-    actors: Lookup[ActorRef],
     timeProvider: TimeProvider,
     timeout: Timeout,
+    actors: Lookup[ActorRef],
     dustEvaluator: DustOrderEvaluator
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new AccountManagerActor(actors, recoverBatchSize, skipRecovery)),
+      entityProps = Props(new AccountManagerActor()),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -72,14 +71,13 @@ object AccountManagerActor {
   }
 }
 
-class AccountManagerActor(
-    val actors: Lookup[ActorRef],
-    val recoverBatchSize: Int,
-    val skipRecovery: Boolean = false
-)(
+class AccountManagerActor()(
     implicit
+    val config: Config,
     val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
     val timeout: Timeout,
+    val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator
 )
   extends Actor
@@ -99,8 +97,8 @@ class AccountManagerActor(
     case XStart(shardEntityId) ⇒ {
       address = shardEntityId
       val recoverySettings = XOrderRecoverySettings(
-        skipRecovery,
-        recoverBatchSize,
+        config.getBoolean("skip-recovery"),
+        config.getInt("recover-batch-size"),
         address,
         None
       )

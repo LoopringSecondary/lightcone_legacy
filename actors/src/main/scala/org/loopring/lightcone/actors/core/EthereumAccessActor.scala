@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
+import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
@@ -40,6 +41,7 @@ object EthereumAccessActor {
   def startShardRegion()(
     implicit
     system: ActorSystem,
+    config: Config,
     ec: ExecutionContext,
     actors: Lookup[ActorRef],
     timeProvider: TimeProvider,
@@ -69,6 +71,7 @@ object EthereumAccessActor {
 
 class EthereumAccessActor()(
     implicit
+    config: Config,
     ec: ExecutionContext,
     timeout: Timeout
 )
