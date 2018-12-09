@@ -77,39 +77,47 @@ class CoreModule(config: Config)
     //启动时都需要 TokenMetadataSyncActor
     actors.add(
       TokenMetadataSyncActor.name,
-      system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name))
+      system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name)
+    )
 
     actors.add(
-      AccountManagerActor.name, AccountManagerActor.startShardRegion(100, true))
+      AccountManagerActor.name, AccountManagerActor.startShardRegion(100, true)
+    )
 
     val marketsConfig = XMarketManagerConfig()
     actors.add(
       MarketManagerActor.name,
-      MarketManagerActor.startShardRegion(marketsConfig, true))
+      MarketManagerActor.startShardRegion(marketsConfig, true)
+    )
 
     val orderbookConfig = XOrderbookConfig(
       levels = 2,
       priceDecimals = 5,
       precisionForAmount = 2,
-      precisionForTotal = 1)
+      precisionForTotal = 1
+    )
     actors.add(
       OrderbookManagerActor.name,
-      system.actorOf(Props(new OrderbookManagerActor(orderbookConfig)), OrderbookManagerActor.name))
+      system.actorOf(Props(new OrderbookManagerActor(orderbookConfig)), OrderbookManagerActor.name)
+    )
 
     actors.add(
       AccountBalanceActor.name,
-      system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name))
+      system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
+    )
 
     val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)
 
     actors.add(
       OrdersDalActor.name,
-      system.actorOf(Props(new OrdersDalActor(dbModule.orders)), OrdersDalActor.name))
+      system.actorOf(Props(new OrdersDalActor(dbModule.orders)), OrdersDalActor.name)
+    )
 
     actors.add(
       OrderHistoryActor.name,
-      system.actorOf(Props(new OrderHistoryActor()), OrderHistoryActor.name))
+      system.actorOf(Props(new OrderHistoryActor()), OrderHistoryActor.name)
+    )
 
   }
 }
