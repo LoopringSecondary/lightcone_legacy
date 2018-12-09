@@ -80,7 +80,6 @@ class CoreModule(config: Config)
     bind[DatabaseModule].toInstance(dbModule)
 
     //-----------deploy actors-----------
-    //启动时都需要 TokenMetadataSyncActor
     actors.add(
       TokenMetadataActor.name,
       TokenMetadataActor.startShardRegion
@@ -117,12 +116,6 @@ class CoreModule(config: Config)
       OrderbookManagerActor.name,
       OrderbookManagerActor.startShardRegion(orderbookConfig)
     )
-
-    // TODO : remove this actor
-    // actors.add(
-    //   OrdersDalActor.name,
-    //   system.actorOf(Props(new OrdersDalActor(dbModule.orders)), OrdersDalActor.name)
-    // )
 
     actors.add(
       OrderHistoryActor.name,

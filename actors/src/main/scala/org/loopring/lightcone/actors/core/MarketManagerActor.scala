@@ -59,17 +59,17 @@ object MarketManagerActor {
     implicit
     system: ActorSystem,
     ec: ExecutionContext,
-    actors: Lookup[ActorRef],
-    timeProvider: TimeProvider,
     timeout: Timeout,
+    timeProvider: TimeProvider,
+    actors: Lookup[ActorRef],
     tokenValueEstimator: TokenValueEstimator,
     ringIncomeEstimator: RingIncomeEstimator,
     dustOrderEvaluator: DustOrderEvaluator,
     tokenMetadataManager: TokenMetadataManager
   ): ActorRef = {
     ClusterSharding(system).start(
-      typeName = "MarketManagerActor",
-      entityProps = Props(new MarketManagerActor(actors, config, skipRecovery)),
+      typeName = name,
+      entityProps = Props(new MarketManagerActor(config, false)),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -79,7 +79,6 @@ object MarketManagerActor {
 
 // TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
 class MarketManagerActor(
-    val actors: Lookup[ActorRef],
     val config: XMarketManagerConfig,
     val skipRecovery: Boolean = false
 )(
@@ -87,6 +86,7 @@ class MarketManagerActor(
     val ec: ExecutionContext,
     val timeout: Timeout,
     val timeProvider: TimeProvider,
+    val actors: Lookup[ActorRef],
     val tokenValueEstimator: TokenValueEstimator,
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
