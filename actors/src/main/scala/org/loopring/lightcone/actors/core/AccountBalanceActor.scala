@@ -67,7 +67,6 @@ object AccountBalanceActor {
       extractShardId = extractShardId
     )
   }
-
 }
 
 // TODO(fukun): implement this class.

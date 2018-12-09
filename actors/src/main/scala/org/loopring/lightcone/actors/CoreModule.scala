@@ -57,6 +57,9 @@ class CoreModule(config: Config)
     bind(classOf[ExecutionContext]).toInstance(global)
     bind(classOf[ExecutionContext]).annotatedWith(Names.named("db-execution-context")).toInstance(global)
 
+    implicit val timeProvider: TimeProvider = new SystemTimeProvider()
+    bind[TimeProvider].toInstance(timeProvider)
+
     implicit val dbConfig: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig("db.default", config)
     bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
 
@@ -74,9 +77,6 @@ class CoreModule(config: Config)
 
     implicit val ringIncomeEstimator: RingIncomeEstimator = new RingIncomeEstimatorImpl()
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
-
-    implicit val timeProvider: TimeProvider = new SystemTimeProvider()
-    bind[TimeProvider].toInstance(timeProvider)
 
     implicit val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)

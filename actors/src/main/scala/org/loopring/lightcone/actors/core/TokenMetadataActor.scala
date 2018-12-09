@@ -59,7 +59,8 @@ object TokenMetadataActor {
     timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef],
-    dbModule: DatabaseModule
+    dbModule: DatabaseModule,
+    tokenMetadataManager: TokenMetadataManager
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
@@ -71,6 +72,7 @@ object TokenMetadataActor {
   }
 }
 
+// TODO(dongw): initialize tokenMetadataManager
 class TokenMetadataActor()(
     implicit
     val config: Config,
@@ -78,7 +80,8 @@ class TokenMetadataActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule
+    val dbModule: DatabaseModule,
+    val tokenMetadataManager: TokenMetadataManager
 ) extends RepeatedJobActor
   with ActorLogging {
 
@@ -91,7 +94,9 @@ class TokenMetadataActor()(
     id = 1,
     name = "syncTokenValue",
     scheduleDelay = 10000,
-    run = () ⇒ tokenMetadata.getTokens(true)
+    run = () ⇒ tokenMetadata.getTokens(true).map {
+      _.foreach(tokenMetadataManager.addToken)
+    }
   )
   initAndStartNextRound(syncJob)
 
