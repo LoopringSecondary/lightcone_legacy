@@ -28,6 +28,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.persistence._
 import org.loopring.lightcone.proto.core._
 import org.scalatest._
 import org.slf4s.Logging
@@ -41,9 +42,9 @@ object CoreActorsIntegrationCommonSpec {
   val WETH = "0x00000000004"
   val LRC = "0x00000000002"
 
-  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.1, 1.0, "GTO")
-  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, 1000, "WETH")
-  val LRC_TOKEN = XTokenMetadata(LRC, 18, 0.4, 1000, "LRC")
+  val GTO_TOKEN = XTokenMetadata(GTO, 10, 0.1, "GTO", 1.0)
+  val WETH_TOKEN = XTokenMetadata(WETH, 18, 0.4, "WETH", 1000)
+  val LRC_TOKEN = XTokenMetadata(LRC, 18, 0.4, "LRC", 1000)
 }
 
 abstract class CoreActorsIntegrationCommonSpec(
@@ -77,7 +78,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   implicit val timeout = Timeout(5 second)
   implicit val ec = system.dispatcher
 
-  val actors = new MapBasedLookup[ActorRef]()
+  implicit val actors = new MapBasedLookup[ActorRef]()
 
   val config = XMarketManagerConfig()
   val orderbookConfig = XOrderbookConfig(
@@ -132,11 +133,11 @@ abstract class CoreActorsIntegrationCommonSpec(
   }
   val orderHistoryActor = orderHistoryProbe.ref
 
-  // Simulating an SettlementActor
+  // Simulating an RingSettlementActor
   val ethereumAccessProbe = new TestProbe(system, "ethereum_access")
   val ethereumAccessActor = ethereumAccessProbe.ref
 
-  val settlementActor = TestActorRef(new SettlementActor(actors, "0xa1"))
+  val settlementActor = TestActorRef(new RingSettlementActor("0xa1"))
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(new OrderbookManagerActor(orderbookConfig), "orderbookManagerActor")
@@ -164,7 +165,6 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   val marketManagerActor: ActorRef = TestActorRef(
     new MarketManagerActor(
-      actors,
       config,
       skipRecovery = skipMarketManagerActorRecovery
     ),
@@ -177,7 +177,7 @@ abstract class CoreActorsIntegrationCommonSpec(
   actors.add(MarketManagerActor.name, marketManagerActor)
   actors.add(GasPriceActor.name, gasPriceActor)
   actors.add(OrderbookManagerActor.name, orderbookManagerActor)
-  actors.add(SettlementActor.name, settlementActor)
+  actors.add(RingSettlementActor.name, settlementActor)
   actors.add(EthereumAccessActor.name, ethereumAccessActor)
 
   accountManagerActor1 ! XStart(ADDRESS_1)

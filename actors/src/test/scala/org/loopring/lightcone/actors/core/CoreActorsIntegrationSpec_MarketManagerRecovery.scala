@@ -31,7 +31,6 @@ class CoreActorsIntegrationSpec_MarketManagerRecovery
 
       val marketManagerActorRecovery: ActorRef = TestActorRef(
         new MarketManagerActor(
-          actors,
           config,
           skipRecovery = false
         )
