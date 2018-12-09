@@ -76,11 +76,14 @@ class CoreModule(config: Config)
     implicit val timeProvider: TimeProvider = new SystemTimeProvider()
     bind[TimeProvider].toInstance(timeProvider)
 
+    implicit val dbModule = new DatabaseModule()
+    bind[DatabaseModule].toInstance(dbModule)
+
     //-----------deploy actors-----------
     //启动时都需要 TokenMetadataSyncActor
     actors.add(
-      TokenMetadataSyncActor.name,
-      system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name)
+      TokenMetadataActor.name,
+      system.actorOf(Props(new TokenMetadataActor()), TokenMetadataActor.name)
     )
 
     actors.add(
@@ -114,9 +117,6 @@ class CoreModule(config: Config)
       OrderbookManagerActor.name,
       OrderbookManagerActor.startShardRegion(orderbookConfig)
     )
-
-    val dbModule = new DatabaseModule()
-    bind[DatabaseModule].toInstance(dbModule)
 
     // TODO : remove this actor
     // actors.add(
