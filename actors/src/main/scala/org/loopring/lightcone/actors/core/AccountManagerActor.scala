@@ -38,6 +38,18 @@ import scala.concurrent._
 object AccountManagerActor {
   val name = "account_manager"
 
+  private val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
+    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+  }
+
+  private val extractShardId: ShardRegion.ExtractShardId = {
+    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
+    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
+    case XStart(_) ⇒ "address_1"
+  }
+
   def startShardRegion()(
     implicit
     system: ActorSystem,
@@ -57,18 +69,6 @@ object AccountManagerActor {
     )
 
   }
-
-  val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
-    case XStart(_) ⇒ "address_1"
-  }
 }
 
 class AccountManagerActor()(
@@ -79,8 +79,7 @@ class AccountManagerActor()(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator
-)
-  extends Actor
+) extends Actor
   with ActorLogging
   with OrderRecoverySupport {
 
@@ -97,8 +96,8 @@ class AccountManagerActor()(
     case XStart(shardEntityId) ⇒ {
       address = shardEntityId
       val recoverySettings = XOrderRecoverySettings(
-        config.getBoolean("skip-recovery"),
-        config.getInt("recover-batch-size"),
+        config.getBoolean("account-managers.skip-recovery"),
+        config.getInt("account-managers.recover-batch-size"),
         address,
         None
       )

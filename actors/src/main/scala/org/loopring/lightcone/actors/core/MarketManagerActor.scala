@@ -40,14 +40,14 @@ object MarketManagerActor {
   val wethTokenAddress = "WETH" // TODO
 
   //todo：sharding配置，发送给MarketManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
-  val extractEntityId: ShardRegion.ExtractEntityId = {
+  private val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg @ XSubmitOrderReq(Some(xorder)) ⇒
       val marketId = (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
       (marketId, msg)
     case msg @ XStart(_) ⇒ ("0x00000000004-0x00000000002", msg) //todo:测试deploy
   }
 
-  val extractShardId: ShardRegion.ExtractShardId = {
+  private val extractShardId: ShardRegion.ExtractShardId = {
     case XSubmitOrderReq(Some(xorder)) ⇒
       (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
     case XStart(_) ⇒ "0x00000000004-0x00000000002"
@@ -88,11 +88,11 @@ class MarketManagerActor()(
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenMetadataManager: TokenMetadataManager
-)
-  extends Actor
+) extends Actor
   with ActorLogging
   with OrderRecoverySupport {
 
+  // TODO
   val xmarketManagerConfig = XMarketManagerConfig()
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
@@ -127,7 +127,7 @@ class MarketManagerActor()(
         aggregator
       )
       val recoverySettings = XOrderRecoverySettings(
-        config.getBoolean("skip-recovery"),
+        config.getBoolean("market-managers.skip-recovery"),
         xmarketManagerConfig.recoverBatchSize,
         "",
         Some(marketId)
