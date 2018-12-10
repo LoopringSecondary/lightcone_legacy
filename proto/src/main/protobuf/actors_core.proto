@@ -82,6 +82,11 @@ message XGetOrderFilledAmountRes {
     bytes filled_amount_s = 2;
 }
 
+message XError{
+    int32 code = 1;
+    string error = 2;
+}
+
 message XBalanceAndAllowance {
     bytes balance = 1;
     bytes allowance = 2;
@@ -97,6 +102,7 @@ message XGetBalanceAndAllowancesReq {
 message XGetBalanceAndAllowancesRes {
     string address = 1;
     map<string, XBalanceAndAllowance> balance_and_allowance_map = 2;
+    XError error = 3;
 }
 
 message XGetBalanceReq{
@@ -106,6 +112,7 @@ message XGetBalanceReq{
 message XGetBalanceRes {
     string address = 1;
     map<string, bytes> balance_map = 2;
+    XError error = 3;
 }
 
 message XGetAllowanceReq{
@@ -115,6 +122,7 @@ message XGetAllowanceReq{
 message XGetAllowanceRes {
     string address = 1;
     map<string, bytes> allowance_map = 2;
+    XError error = 3;
 }
 
 message XSubmitOrderReq {

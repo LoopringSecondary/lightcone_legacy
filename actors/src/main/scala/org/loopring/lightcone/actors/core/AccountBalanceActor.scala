@@ -32,7 +32,6 @@ import org.loopring.lightcone.proto.actors._
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.ethereum.data.Address
 
-
 import scala.concurrent._
 
 object AccountBalanceActor {
@@ -88,10 +87,12 @@ class AccountBalanceActor(
   def receive: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.
     case req: XGetBalanceAndAllowancesReq ⇒
-      if(!Address.isValid(req.address)  || !req.tokens.forall(Address.isValid)){
+      if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
         log.error(s"invalid XGetBalanceAndAllowancesReq:$req caused by invalid ethereum address")
         sender ! XGetBalanceAndAllowancesRes()
-      }else {
+          .withAddress(req.address)
+          .withError(XError(error = "invalid address"))
+      } else {
         val tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
         val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
 
@@ -109,7 +110,7 @@ class AccountBalanceActor(
           XEthCallReq(Some(param), tag = "latest")
         })
         val batchAllowanceReq = XBatchContractCallReq(allowanceCallReqs)
-        for {
+        (for {
           balances ← (ethereumConnectionActor ? batchBalanceReq)
             .mapTo[XBatchContractCallRes]
             .map(_.resps)
@@ -129,91 +130,104 @@ class AccountBalanceActor(
           val balanceAndAllowance =
             (balances zip allowances)
               .map(ba ⇒ XBalanceAndAllowance(ba._1, ba._2))
-
           ethBalance match {
             case Some(ether) ⇒
-              sender ! XGetBalanceAndAllowancesRes(
+              XGetBalanceAndAllowancesRes(
                 req.address,
                 (tokens zip balanceAndAllowance).toMap + (ethToken.get → XBalanceAndAllowance(ether, BigInt(0)))
               )
             case None ⇒
-              sender ! XGetBalanceAndAllowancesRes(
+              XGetBalanceAndAllowancesRes(
                 req.address,
                 (tokens zip balanceAndAllowance).toMap
               )
           }
-        }
+        }) pipeTo sender
       }
     case req: XGetBalanceReq ⇒
-      val tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
-      val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
-      val balanceCallReqs = tokens.map(token ⇒ {
-        val data = erc20ABI.balanceOf.pack(BalanceOfFunction.Parms(Address(req.address).toString))
-        val param = XTransactionParam(to = Address(token).toString, data = data)
-        XEthCallReq(Some(param), tag = "latest")
-      })
-      val batchBalanceReq = XBatchContractCallReq(balanceCallReqs)
-      for {
-        balances ← (ethereumConnectionActor ? batchBalanceReq)
-          .mapTo[XBatchContractCallRes]
-          .map(_.resps)
-          .map(_.map(res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))))
-        ethBalance ← ethToken match {
-          case Some(_) ⇒ (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
-            .mapTo[XEthGetBalanceRes]
-            .map(res ⇒ Some(BigInt(Numeric.toBigInt(res.result))))
-          case None ⇒
-            Future.successful(None)
-        }
-      } yield {
-        ethBalance match {
-          case Some(ether) ⇒
-            sender ! XGetBalanceRes(
-              req.address,
-              (tokens zip balances).toMap + (ethToken.get → ether)
-            )
-          case None ⇒
-            sender ! XGetBalanceRes(
-              req.address,
-              (req.tokens zip balances).toMap
-            )
-        }
+      if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
+        log.error(s"invalid XGetBalanceReq:$req caused by invalid ethereum address")
+        sender ! XGetBalanceRes()
+          .withAddress(req.address)
+          .withError(XError(error = "invalid address"))
+      } else {
+        val tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
+        val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
+        val balanceCallReqs = tokens.map(token ⇒ {
+          val data = erc20ABI.balanceOf.pack(BalanceOfFunction.Parms(Address(req.address).toString))
+          val param = XTransactionParam(to = Address(token).toString, data = data)
+          XEthCallReq(Some(param), tag = "latest")
+        })
+        val batchBalanceReq = XBatchContractCallReq(balanceCallReqs)
+        (for {
+          balances ← (ethereumConnectionActor ? batchBalanceReq)
+            .mapTo[XBatchContractCallRes]
+            .map(_.resps)
+            .map(_.map(res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))))
+          ethBalance ← ethToken match {
+            case Some(_) ⇒ (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
+              .mapTo[XEthGetBalanceRes]
+              .map(res ⇒ Some(BigInt(Numeric.toBigInt(res.result))))
+            case None ⇒
+              Future.successful(None)
+          }
+        } yield {
+          ethBalance match {
+            case Some(ether) ⇒
+              XGetBalanceRes(
+                req.address,
+                (tokens zip balances).toMap + (ethToken.get → ether)
+              )
+            case None ⇒
+              XGetBalanceRes(
+                req.address,
+                (req.tokens zip balances).toMap
+              )
+          }
+        }) pipeTo sender
       }
     case req: XGetAllowanceReq ⇒
-      val tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
-      val ethToken: Option[String] = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
+      if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
+        log.error(s"invalid XGetAllowanceReq:$req caused by invalid ethereum address")
+        sender ! XGetBalanceRes()
+          .withAddress(req.address)
+          .withError(XError(error = "invalid address"))
+      } else {
+        val tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
+        val ethToken: Option[String] = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
 
-      val allowanceCallReqs = tokens.map(token ⇒ {
-        val data = erc20ABI.allowance.pack(
-          AllowanceFunction.Parms(_spender = delegateAddress, _owner = Address(req.address).toString)
-        )
-        val param = XTransactionParam(to = Address(token).toString, data = data)
-        XEthCallReq(Some(param), tag = "latest")
-      })
-      val batchAllowanceReq = XBatchContractCallReq(allowanceCallReqs)
-      for {
-        allowances ← (ethereumConnectionActor ? batchAllowanceReq)
-          .mapTo[XBatchContractCallRes]
-          .map(_.resps)
-          .map(_.map(res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))))
-      } yield {
-        ethToken match {
-          case Some(address) ⇒
-            sender ! XGetAllowanceRes(
-              req.address,
-              (req.tokens zip allowances).toMap + (address → BigInt(0))
-            )
-          case None ⇒
-            sender ! XGetAllowanceRes(
-              req.address,
-              (req.tokens zip allowances).toMap
-            )
-        }
+        val allowanceCallReqs = tokens.map(token ⇒ {
+          val data = erc20ABI.allowance.pack(
+            AllowanceFunction.Parms(_spender = delegateAddress, _owner = Address(req.address).toString)
+          )
+          val param = XTransactionParam(to = Address(token).toString, data = data)
+          XEthCallReq(Some(param), tag = "latest")
+        })
+        val batchAllowanceReq = XBatchContractCallReq(allowanceCallReqs)
+        (for {
+          allowances ← (ethereumConnectionActor ? batchAllowanceReq)
+            .mapTo[XBatchContractCallRes]
+            .map(_.resps)
+            .map(_.map(res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))))
+        } yield {
+          ethToken match {
+            case Some(address) ⇒
+              XGetAllowanceRes(
+                req.address,
+                (req.tokens zip allowances).toMap + (address → BigInt(0))
+              )
+            case None ⇒
+              XGetAllowanceRes(
+                req.address,
+                (req.tokens zip allowances).toMap
+              )
+          }
 
+        }) pipeTo sender
       }
-
     case msg ⇒
-      log.error(s"unsupported msg send to AccountBalanceActor:${msg}")
+      log.error(s"unsupported msg send to AccountBalanceActor:$msg")
+      sender ! XError(error = s"unsupported msg send to AccountBalanceActor:$msg")
   }
 
 }
