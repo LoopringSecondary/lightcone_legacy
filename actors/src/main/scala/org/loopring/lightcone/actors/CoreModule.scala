@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors
 
 import akka.actor._
 import akka.cluster.Cluster
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.google.inject.AbstractModule
 import com.google.inject.name.Names
@@ -28,6 +29,7 @@ import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.persistence._
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.persistence.DatabaseModule
@@ -36,8 +38,9 @@ import org.loopring.lightcone.proto.core._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 class CoreModule(config: Config)
   extends AbstractModule with ScalaModule {
@@ -45,6 +48,7 @@ class CoreModule(config: Config)
   override def configure(): Unit = {
     implicit val system = ActorSystem("Lightcone", config)
     implicit val cluster = Cluster(system)
+    implicit val materializer = ActorMaterializer()(system)
     implicit val timeout = Timeout(2 second)
     implicit val ec = system.dispatcher
     implicit val c_ = config
@@ -52,10 +56,13 @@ class CoreModule(config: Config)
     bind[Config].toInstance(config)
     bind[ActorSystem].toInstance(system)
     bind[Cluster].toInstance(cluster)
+    bind[ActorMaterializer].toInstance(materializer)
     bind[Timeout].toInstance(timeout)
 
-    bind(classOf[ExecutionContext]).toInstance(global)
-    bind(classOf[ExecutionContext]).annotatedWith(Names.named("db-execution-context")).toInstance(global)
+    bind[ExecutionContextExecutor].toInstance(system.dispatcher)
+    bind[ExecutionContext].toInstance(system.dispatcher)
+    bind[ExecutionContext].annotatedWithName("db-execution-context")
+      .toInstance(system.dispatchers.lookup("db-execution-context"))
 
     implicit val actors = new MapBasedLookup[ActorRef]()
     bind[Lookup[ActorRef]].toInstance(actors)
@@ -63,7 +70,8 @@ class CoreModule(config: Config)
     implicit val timeProvider: TimeProvider = new SystemTimeProvider()
     bind[TimeProvider].toInstance(timeProvider)
 
-    implicit val dbConfig: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig("db.default", config)
+    implicit val dbConfig: DatabaseConfig[JdbcProfile] =
+      DatabaseConfig.forConfig("db.default", config)
     bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
 
     implicit val dbModule = new DatabaseModule()
