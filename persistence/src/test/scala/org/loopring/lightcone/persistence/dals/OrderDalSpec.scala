@@ -111,15 +111,23 @@ class OrderDalSpec extends DalSpec[OrderDal] {
       "0x-getorders-state1-03",
       "0x-getorders-state1-04"
     )
+    val mockToken = Set(
+      "0x-getorders-token-01",
+      "0x-getorders-token-02",
+      "0x-getorders-token-03",
+      "0x-getorders-token-04"
+    )
     val result = for {
       _ ← testSaves(hashes, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       _ ← testSaves(mockState, XOrderStatus.STATUS_PARTIALLY_FILLED, tokenS, tokenB, validSince, validUntil.toInt)
-      _ ← testSaves(hashes, XOrderStatus.STATUS_PARTIALLY_FILLED, "0x-mock-tokens", "0x-mock-tokenb", 200, 300)
+      _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0x-mock-tokens", "0x-mock-tokenb", 200, 300)
       query ← dal.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set(tokenS), Set(tokenB),
         Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set(tokenFee), Some(XSort.ASC), None)
-    } yield query
-    val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
-    res.length should be(hashes.size)
+      count ← dal.countOrders(Set.empty, Set.empty, Set.empty, Set.empty, Set.empty)
+    } yield (query, count)
+    val res = Await.result(result.mapTo[(Seq[XRawOrder], Int)], 5.second)
+    val x = res._1.length === hashes.size && res._2 >= 13 // 之前的测试方法可能有插入
+    x should be(true)
   }
 
   "getOrder" must "get a order with hash 0x111" in {
