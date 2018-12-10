@@ -49,16 +49,9 @@ class TokenMetadataActor()(
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule,
     val tokenMetadataManager: TokenMetadataManager
-)
-  extends RepeatedJobActor with ActorLogging {
-
-  val conf = config.getConfig(TokenMetadataActor.name)
-  val thisConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
-  } catch {
-    case e: Throwable ⇒ conf
-  }
-  log.info(s"config for ${self.path.name} = $thisConfig")
+) extends Actor
+  with ActorLogging
+  with RepeatedJobActor {
 
   private val tokenMetadata = dbModule.tokenMetadata
   val syncJob = Job(

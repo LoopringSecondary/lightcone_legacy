@@ -88,17 +88,8 @@ class MarketManagerActor()(
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenMetadataManager: TokenMetadataManager
-) extends Actor
-  with ActorLogging
+) extends ConfiggedActor(MarketManagerActor.name)
   with OrderRecoverSupport {
-
-  val conf = config.getConfig(MarketManagerActor.name)
-  val thisConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
-  } catch {
-    case e: Throwable ⇒ conf
-  }
-  log.info(s"config for ${self.path.name} = $thisConfig")
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
 
@@ -120,7 +111,7 @@ class MarketManagerActor()(
       marketId = XMarketId(tokens(0), tokens(1))
       implicit val marketId_ = marketId
       implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-        thisConfig.getInt("price-decimals")
+        selfConfig.getInt("price-decimals")
       )
       manager = new MarketManagerImpl(
         marketId,
@@ -131,8 +122,8 @@ class MarketManagerActor()(
         aggregator
       )
       val recoverySettings = XOrderRecoverySettings(
-        conf.getBoolean("skip-recovery"),
-        conf.getInt("recover-batch-size"),
+        selfConfig.getBoolean("skip-recovery"),
+        selfConfig.getInt("recover-batch-size"),
         "",
         Some(marketId)
       )

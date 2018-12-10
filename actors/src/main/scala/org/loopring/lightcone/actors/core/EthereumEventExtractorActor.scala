@@ -35,18 +35,14 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
-object GasPriceActor {
-  val name = "gas_price"
+object EthereumEventExtractorActor {
+  val name = "ethereum_event_extractor"
 
   private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
     case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
   }
 
   private val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
     case XStart(_) ⇒ "address_1"
   }
 
@@ -61,7 +57,7 @@ object GasPriceActor {
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new GasPriceActor()),
+      entityProps = Props(new EthereumEventExtractorActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -69,25 +65,17 @@ object GasPriceActor {
   }
 }
 
-class GasPriceActor()(
+class EthereumEventExtractorActor()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(MarketManagerActor.name) {
-
-  private var gasPrice = BigInt(selfConfig.getString("default"))
+) extends ConfiggedActor(EthereumEventExtractorActor.name) {
 
   def receive: Receive = {
-
-    case XSetGasPriceReq(price) ⇒
-      sender ! XSetGasPriceRes(gasPrice)
-      gasPrice = price
-
-    case req: XGetGasPriceReq ⇒
-      sender ! XGetGasPriceRes(gasPrice)
+    case _ ⇒
   }
 
 }

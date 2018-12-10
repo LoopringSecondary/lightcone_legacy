@@ -75,16 +75,7 @@ class AccountBalanceActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends Actor
-  with ActorLogging {
-
-  val conf = config.getConfig(AccountBalanceActor.name)
-  val thisConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
-  } catch {
-    case e: Throwable ⇒ conf
-  }
-  log.info(s"config for ${self.path.name} = $thisConfig")
+) extends ConfiggedActor(AccountBalanceActor.name) {
 
   def receive: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.

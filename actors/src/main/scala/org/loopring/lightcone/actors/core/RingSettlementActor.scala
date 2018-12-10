@@ -80,22 +80,14 @@ class RingSettlementActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends RepeatedJobActor
-  with ActorLogging {
-
-  val conf = config.getConfig(RingSettlementActor.name)
-  val thisConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
-  } catch {
-    case e: Throwable ⇒ conf
-  }
-  log.info(s"config for ${self.path.name} = $thisConfig")
+) extends ConfiggedActor(RingSettlementActor.name)
+  with RepeatedJobActor {
 
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)
   val ringSigner = new RingSignerImpl(
-    privateKey = thisConfig.getString("submitter-private-key")
+    privateKey = selfConfig.getString("submitter-private-key")
   )
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
