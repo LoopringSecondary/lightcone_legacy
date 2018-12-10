@@ -107,30 +107,35 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     solidityType: String,
     dataBits: Bitstream,
     tablesBits: Bitstream,
-    dataForceAppend: Boolean)
-  {
-    solidityType match {
-      case "uint8" =>
+    dataForceAppend: Boolean
+  ) {
+    val offset = solidityType match {
+      case "uint8" ⇒
         val dataInt = data.asInstanceOf[Int]
-        val offset = dataBits.addNumber(BigInt(dataInt), 1, dataForceAppend)
-        insertOffset(tablesBits, offset)
-      case "uint16" =>
+        dataBits.addNumber(BigInt(dataInt), 1, dataForceAppend)
+      case "uint16" ⇒
         val dataInt = data.asInstanceOf[Int]
-        val offset = dataBits.addNumber(BigInt(dataInt), 1, dataForceAppend)
-        insertOffset(tablesBits, offset)
-      case "uint32" =>
+        dataBits.addNumber(BigInt(dataInt), 2, dataForceAppend)
+      case "uint32" ⇒
         val dataInt = data.asInstanceOf[Int]
-        val offset = dataBits.addNumber(BigInt(dataInt), 1, dataForceAppend)
-        insertOffset(tablesBits, offset)
-      case "uint" | "uint256" =>
-        val dataStr = data.asInstanceOf[]
-        val offset = dataBits.addNumber(BigInt(dataInt), 1, dataForceAppend)
-        insertOffset(tablesBits, offset)
-      case "address" => ???
-      case "bytes32" => ???
-      case "bytes" => ???
-      case _ => ???
+        dataBits.addNumber(BigInt(dataInt), 4, dataForceAppend)
+      case "uint" | "uint256" ⇒
+        val dataStr = data.asInstanceOf[String]
+        dataBits.addUint(dataStr, dataForceAppend)
+      case "address" ⇒
+        val dataStr = data.asInstanceOf[String]
+        dataBits.addAddress(dataStr, dataForceAppend)
+      case "bytes32" ⇒
+        val dataStr = data.asInstanceOf[String]
+        dataBits.addHex(dataStr, dataForceAppend)
+      case "bytes" ⇒
+        val dataStr = data.asInstanceOf[String]
+        dataBits.addHex(dataStr, dataForceAppend)
+      case _ ⇒
+        throw new IllegalArgumentException(s"unsupported solidity type: $solidityType")
     }
+
+    insertOffset(tablesBits, offset)
   }
 
   private def setupMiningInfo(xRingBatch: XRingBatch, data: Bitstream, tables: Bitstream) {
@@ -164,8 +169,8 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     insertOffset(tables, data.addAddress(order.owner, false))
     insertOffset(tables, data.addAddress(order.tokenS, false))
     insertOffset(tables, data.addAddress(order.tokenB, false))
-    insertOffset(tables, data.addUintStr(order.amountS.toString, false))
-    insertOffset(tables, data.addUintStr(order.amountB.toString, false))
+    insertOffset(tables, data.addUint(order.amountS.toString, false))
+    insertOffset(tables, data.addUint(order.amountB.toString, false))
     insertOffset(tables, data.addUint32(order.validSince, false))
 
     val spendableSIndex = tokenSpendables(order.owner + order.tokenS)

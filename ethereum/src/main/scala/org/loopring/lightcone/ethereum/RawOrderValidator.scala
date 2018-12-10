@@ -36,11 +36,11 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     val bitstream = new Bitstream
     val feeParams = order.feeParams.get
     val optionalParams = order.params.get
-    bitstream.addUintStr(order.amountS.toString)
-    bitstream.addUintStr(order.amountB.toString)
-    bitstream.addUintStr(feeParams.feeAmount.toString)
-    bitstream.addUint(BigInt(order.validSince))
-    bitstream.addUint(BigInt(optionalParams.validUntil))
+    bitstream.addUint(order.amountS.toString, true)
+    bitstream.addUint(order.amountB.toString, true)
+    bitstream.addUint(feeParams.feeAmount.toString, true)
+    bitstream.addUint(BigInt(order.validSince), true)
+    bitstream.addUint(BigInt(optionalParams.validUntil), true)
     bitstream.addAddress(order.owner, true)
     bitstream.addAddress(order.tokenS, true)
     bitstream.addAddress(order.tokenB, true)

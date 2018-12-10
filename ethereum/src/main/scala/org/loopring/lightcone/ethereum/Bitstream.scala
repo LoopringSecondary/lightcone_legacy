@@ -51,8 +51,8 @@ class Bitstream() {
   def addUint(num: BigInt, forceAppend: Boolean = true) =
     addBigInt(num, 32, forceAppend)
 
-  def addUintStr(numStr: String, forceAppend: Boolean = true) =
-    addBigIntStr(numStr, 32, forceAppend)
+  def addUint(numStr: String, forceAppend: Boolean) =
+    addBigInt(BigInt(Numeric.cleanHexPrefix(numStr), 16), 32, forceAppend)
 
   def addNumber(num: BigInt, numBytes: Int, forceAppend: Boolean = true) =
     addBigInt(num, numBytes, forceAppend)
@@ -65,16 +65,6 @@ class Bitstream() {
 
   def addRawBytes(str: String, forceAppend: Boolean = true) =
     insert(Numeric.cleanHexPrefix(str), forceAppend)
-
-  private def padString(str: String, numBytes: Int) = {
-    val cleanStr = Numeric.cleanHexPrefix(str)
-    val targetLen = numBytes * 2
-    if (cleanStr.length > targetLen) {
-      throw new IllegalArgumentException(str + " is too long for padding")
-    }
-    val paddingLen = targetLen - cleanStr.length
-    "0" * paddingLen + cleanStr
-  }
 
   // TODO(kongliang): 负数问题
   private def addBigInt(
@@ -89,14 +79,6 @@ class Bitstream() {
       ),
       forceAppend
     )
-
-  private def addBigIntStr(
-    numStr: String,
-    numBytes: Int,
-    forceAppend: Boolean = true
-  ) = {
-    insert(padString(numStr, numBytes), forceAppend)
-  }
 
   private def insert(x: String, forceAppend: Boolean): Int = {
     var offset = length()
