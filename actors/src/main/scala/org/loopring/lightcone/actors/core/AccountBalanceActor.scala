@@ -27,7 +27,6 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.ethereum.EthereumConnectionActor
 import org.loopring.lightcone.ethereum.EthReqManger
-import org.loopring.lightcone.ethereum.abi.{ AllowanceFunction, BalanceOfFunction, ERC20ABI }
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.actors._
 import org.web3j.utils.Numeric
