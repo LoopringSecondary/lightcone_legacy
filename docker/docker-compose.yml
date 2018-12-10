@@ -3,12 +3,16 @@ services:
   seed:
     image: org.loopring/lightcone_actors:latest
     shm_size: 400m
+    volumes:
+      - ".log:/log"
     environment:
       CLUSTER_IP: seed
       CLUSTER_PORT: 9090
   c1:
     image: org.loopring/lightcone_actors:latest
     shm_size: 400m
+    volumes:
+      - "./log:/log"
     environment:
       CLUSTER_IP: c1
       CLUSTER_PORT: 9091
