@@ -48,6 +48,9 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders
     ring_settlement {
       submitter-private-key = "0xa1"
     }
+    gas_price {
+      default = "10000000000"
+    }
     """
   ) {
 

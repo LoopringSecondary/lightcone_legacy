@@ -25,10 +25,10 @@ abstract class ConfiggedActor(val name: String) extends Actor with ActorLogging 
 
   private val conf = config.getConfig(name)
 
-  val selfConfig = try {
+  lazy val selfConfig = try {
     conf.getConfig(self.path.name).withFallback(conf)
   } catch {
     case e: Throwable ⇒ conf
   }
-  log.info(s"config for ${self.path.name} = $selfConfig")
+  // log.info(s"config for ${self.path.name} = $selfConfig")
 }
