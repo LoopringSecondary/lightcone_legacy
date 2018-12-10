@@ -35,23 +35,23 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
+// main owner: 李亚东
 object AccountBalanceActor {
   val name = "account_balance"
 
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
+  val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
     case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
     case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
   }
 
-  private val extractShardId: ShardRegion.ExtractShardId = {
+  val extractShardId: ShardRegion.ExtractShardId = {
     case XGetBalanceAndAllowancesReq(address, _) ⇒ address
     case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
     case XStart(_) ⇒ "address_1"
   }
 
-  def startShardRegion()(
-    implicit
+  def startShardRegion()(implicit
     system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
@@ -62,14 +62,13 @@ object AccountBalanceActor {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new AccountBalanceActor()),
-      settings = ClusterShardingSettings(system),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
   }
 }
 
-// TODO(fukun): implement this class.
 class AccountBalanceActor()(
     implicit
     val config: Config,
@@ -77,16 +76,7 @@ class AccountBalanceActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends Actor
-  with ActorLogging {
-
-  val conf = config.getConfig(AccountBalanceActor.name)
-  val thisConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
-  } catch {
-    case e: Throwable ⇒ conf
-  }
-  log.info(s"config for ${self.path.name} = $thisConfig")
+) extends ConfiggedActor(AccountBalanceActor.name) {
 
   def receive: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.

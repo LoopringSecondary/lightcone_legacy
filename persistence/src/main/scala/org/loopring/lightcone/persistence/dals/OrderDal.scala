@@ -179,7 +179,8 @@ class OrderDalImpl()(
     }
   }
 
-  def getOrder(hash: String): Future[Option[XRawOrder]] = db.run(query.filter(_.hash === hash).result.headOption)
+  def getOrder(hash: String): Future[Option[XRawOrder]] =
+    db.run(query.filter(_.hash === hash).result.headOption)
 
   private def queryOrderFilters(
     statuses: Set[XOrderStatus],
@@ -224,7 +225,9 @@ class OrderDalImpl()(
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
   ): Future[Seq[XRawOrder]] = {
-    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, marketHashSet, feeTokenSet, None, sort, skip)
+    val filters = queryOrderFilters(
+      statuses, owners, tokenSSet, tokenBSet,
+      marketHashSet, feeTokenSet, None, sort, skip)
     db.run(filters.result)
   }
 
@@ -238,7 +241,9 @@ class OrderDalImpl()(
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
   ): Future[Seq[XRawOrder]] = {
-    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, marketHashSet, feeTokenSet, None, sort, skip)
+    val filters = queryOrderFilters(
+      statuses, owners, tokenSSet, tokenBSet,
+      marketHashSet, feeTokenSet, None, sort, skip)
     db.run(filters.result)
   }
 
@@ -250,7 +255,9 @@ class OrderDalImpl()(
     marketHashSet: Set[Long] = Set.empty,
     feeTokenSet: Set[String] = Set.empty
   ): Future[Int] = {
-    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, marketHashSet, feeTokenSet, None, None, None)
+    val filters = queryOrderFilters(
+      statuses, owners, tokenSSet, tokenBSet,
+      marketHashSet, feeTokenSet, None, None, None)
     db.run(filters.size.result)
   }
 
@@ -266,7 +273,9 @@ class OrderDalImpl()(
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
   ): Future[Seq[XRawOrder]] = {
-    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, marketHashSet, Set.empty, validTime, sort, skip)
+    val filters = queryOrderFilters(
+      statuses, owners, tokenSSet, tokenBSet,
+      marketHashSet, Set.empty, validTime, sort, skip)
     db.run(filters.result)
   }
 
