@@ -57,7 +57,6 @@ class CoreModule(config: Config)
     bind(classOf[ExecutionContext]).toInstance(global)
     bind(classOf[ExecutionContext]).annotatedWith(Names.named("db-execution-context")).toInstance(global)
 
-
     implicit val timeProvider: TimeProvider = new SystemTimeProvider()
     bind[TimeProvider].toInstance(timeProvider)
 
