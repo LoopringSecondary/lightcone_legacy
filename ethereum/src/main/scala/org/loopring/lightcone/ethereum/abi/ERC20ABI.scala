@@ -16,8 +16,6 @@
 
 package org.loopring.lightcone.ethereum.abi
 
-import java.util
-
 import org.ethereum.solidity.{ Abi ⇒ SABI }
 import org.web3j.utils.Numeric
 
