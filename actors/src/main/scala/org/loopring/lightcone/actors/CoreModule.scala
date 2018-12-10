@@ -57,14 +57,26 @@ class CoreModule(config: Config)
     bind(classOf[ExecutionContext]).toInstance(global)
     bind(classOf[ExecutionContext]).annotatedWith(Names.named("db-execution-context")).toInstance(global)
 
+    implicit val actors = new MapBasedLookup[ActorRef]()
+    bind[Lookup[ActorRef]].toInstance(actors)
+
     implicit val timeProvider: TimeProvider = new SystemTimeProvider()
     bind[TimeProvider].toInstance(timeProvider)
 
     implicit val dbConfig: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig("db.default", config)
     bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
 
+    implicit val dbModule = new DatabaseModule()
+    bind[DatabaseModule].toInstance(dbModule)
+
     implicit val tmm = new TokenMetadataManager()
     bind[TokenMetadataManager].toInstance(tmm)
+
+    // This actor must be deployed on every node for TokenMetadataManager
+    actors.add(
+      TokenMetadataActor.name,
+      system.actorOf(Props(new TokenMetadataActor), TokenMetadataActor.name)
+    )
 
     implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimator()
     bind[TokenValueEstimator].toInstance(tokenValueEstimator)
@@ -72,17 +84,10 @@ class CoreModule(config: Config)
     implicit val dustEvaluator: DustOrderEvaluator = new DustOrderEvaluator()
     bind[DustOrderEvaluator].toInstance(dustEvaluator)
 
-    implicit val actors = new MapBasedLookup[ActorRef]()
-    bind[Lookup[ActorRef]].toInstance(actors)
-
     implicit val ringIncomeEstimator: RingIncomeEstimator = new RingIncomeEstimatorImpl()
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
-    implicit val dbModule = new DatabaseModule()
-    bind[DatabaseModule].toInstance(dbModule)
-
     //-----------deploy actors-----------
-    actors.add(TokenMetadataActor.name, TokenMetadataActor.startShardRegion)
     actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
     actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
     actors.add(AccountBalanceActor.name, AccountBalanceActor.startShardRegion)
