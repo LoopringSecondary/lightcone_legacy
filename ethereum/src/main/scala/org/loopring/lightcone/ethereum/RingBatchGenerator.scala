@@ -102,6 +102,11 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     return paramStream.getData
   }
 
+  private def orderSetupDefault(order: XRawOrder) = {
+
+    order
+  }
+
   private def addDataAndOffset(
     data: Any,
     solidityType: String,
