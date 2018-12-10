@@ -51,30 +51,35 @@ object AccountManagerActor {
   }
 
   def startShardRegion()(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef],
-    dustEvaluator: DustOrderEvaluator): ActorRef = {
+    dustEvaluator: DustOrderEvaluator
+  ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new AccountManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
 
   }
 }
 
 class AccountManagerActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef],
-  val dustEvaluator: DustOrderEvaluator) extends Actor
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
+    val dustEvaluator: DustOrderEvaluator
+) extends Actor
   with ActorLogging
   with OrderRecoverSupport {
 
@@ -102,7 +107,8 @@ class AccountManagerActor()(
         conf.getBoolean("skip-recovery"),
         conf.getInt("recover-batch-size"),
         address,
-        None)
+        None
+      )
       startOrderRecovery(recoverySettings)
     }
   }
@@ -120,7 +126,8 @@ class AccountManagerActor()(
             manager.getBalance(),
             manager.getAllowance(),
             manager.getAvailableBalance(),
-            manager.getAvailableAllowance())
+            manager.getAvailableAllowance()
+          )
         }
       } yield {
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
@@ -208,7 +215,8 @@ class AccountManagerActor()(
   private def updateBalanceOrAllowance(
     token: String,
     amount: BigInt,
-    method: (AccountTokenManager, BigInt) ⇒ Unit) = for {
+    method: (AccountTokenManager, BigInt) ⇒ Unit
+  ) = for {
     tm ← getTokenManager(token)
     _ = method(tm, amount)
     updatedOrders = orderPool.takeUpdatedOrders()

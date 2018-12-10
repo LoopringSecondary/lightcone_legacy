@@ -55,7 +55,8 @@ trait OrderRecoverSupport {
         recoverySettings.orderOwner,
         recoverySettings.marketId,
         0L,
-        recoverySettings.batchSize)
+        recoverySettings.batchSize
+      )
     }
   }
 
@@ -87,7 +88,8 @@ trait OrderRecoverSupport {
               recoverySettings.orderOwner,
               recoverySettings.marketId,
               lastUpdatdTimestamp,
-              recoverySettings.batchSize)
+              recoverySettings.batchSize
+            )
           } else {
             log.debug(s"recovering completed with $processed orders")
             context.become(functional)
