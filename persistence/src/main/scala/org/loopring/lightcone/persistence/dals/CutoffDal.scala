@@ -41,6 +41,13 @@ trait CutoffDal
     skip: Option[XSkip] = None
   ): Future[Seq[XCutoff]]
 
+  def hasCutoffs(
+    cutoffType: Option[XCutoff.XType] = None,
+    cutoffBy: Option[XCutoffBy] = None,
+    tradingPair: Option[String] = None,
+    time: Option[Long] // in seconds, where cutoff > time
+  ): Future[Boolean]
+
   def obsolete(height: Long): Future[Unit]
 }
 
@@ -97,6 +104,24 @@ class CutoffDalImpl()(
       case None    ⇒ filters
     }
     db.run(filters.result)
+  }
+
+  def hasCutoffs(
+    cutoffType: Option[XCutoff.XType] = None,
+    cutoffBy: Option[XCutoffBy] = None,
+    tradingPair: Option[String] = None,
+    time: Option[Long]
+  ): Future[Boolean] = {
+    var filters = query.filter(_.isValid === true)
+    if (cutoffType.nonEmpty) filters = filters.filter(_.cutoffType === cutoffType.get)
+    filters = cutoffBy match {
+      case Some(XCutoffBy(XCutoffBy.Value.Broker(value))) ⇒ filters.filter(_.broker === value)
+      case Some(XCutoffBy(XCutoffBy.Value.Owner(value))) ⇒ filters.filter(_.owner === value)
+      case _ ⇒ filters
+    }
+    if (tradingPair.nonEmpty) filters = filters.filter(_.tradingPair === tradingPair.get)
+    if (time.nonEmpty) filters = filters.filter(_.cutoff > time.get)
+    db.run(filters.size.result).map(_ > 0)
   }
 
   def obsolete(height: Long): Future[Unit] = {
