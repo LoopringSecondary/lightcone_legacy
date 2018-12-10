@@ -19,7 +19,11 @@ package org.loopring.lightcone.ethereum.data
 import org.scalatest._
 import org.web3j.utils.Numeric
 
-class AddressSpec extends FlatSpec with Matchers {
+class AddressSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
+
+  override def beforeAll() {
+    info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
+  }
 
   "stringAddress" should "be canonicalized" in {
     val addr1 = Address("0x000ee35D70AD6331000E370F079aD7df52E75005")

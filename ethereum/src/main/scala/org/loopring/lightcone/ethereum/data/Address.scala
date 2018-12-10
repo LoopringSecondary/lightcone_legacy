@@ -16,24 +16,20 @@
 
 package org.loopring.lightcone.ethereum.data
 
-import java.math.BigInteger
-
 import com.google.protobuf.ByteString
 import org.web3j.utils.Numeric
 
 class Address(val value: BigInt) {
 
-  override def toString = {
-    val valueHex = value.toString(16)
-    "0x" + "0" * (40 - valueHex.length) + value.toString(16)
-  }
+  override def toString =
+    Numeric.toHexStringWithPrefixZeroPadded(value.bigInteger, 40)
 
   def toBigInt: BigInt = {
     this.value
   }
 
   def toBytes: Array[Byte] = {
-    Numeric.hexStringToByteArray(this.value.toString(16))
+    Numeric.toBytesPadded(value.bigInteger, 20)
   }
 
   def toByteString: ByteString = {
@@ -50,6 +46,8 @@ class Address(val value: BigInt) {
 }
 
 object Address {
+  val maxAddress: BigInt = BigInt("f" * 40, 16)
+
   def apply(bytes: Array[Byte]): Address = {
     assert(bytes.length <= 20)
     new Address(Numeric.toBigInt(bytes))
@@ -60,11 +58,11 @@ object Address {
   }
 
   def apply(value: BigInt): Address = {
-    assert(value.<=(BigInt("f" * 40, 16)))
+    assert(value <= maxAddress)
     new Address(value)
   }
 
   def apply(addr: String): Address =
-    apply(BigInt(Numeric.cleanHexPrefix(addr), 16))
+    apply(Numeric.toBigInt(addr))
 
 }
