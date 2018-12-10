@@ -25,10 +25,8 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
 import com.mysql.jdbc.exceptions.jdbc4._
-import org.loopring.lightcone.proto.persistence.XCutoffBy.Value.Broker
-
 import scala.concurrent._
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 trait CutoffDal
   extends BaseDalImpl[CutoffTable, XCutoff] {
@@ -84,9 +82,9 @@ class CutoffDalImpl()(
     var filters = query.filter(_.isValid === true)
     if (cutoffType.nonEmpty) filters = filters.filter(_.cutoffType === cutoffType.get)
     filters = cutoffBy match {
-      case Some(XCutoffBy(XCutoffBy.Value.Broker(value))) => filters.filter(_.broker === value)
-      case Some(XCutoffBy(XCutoffBy.Value.Owner(value)))  => filters.filter(_.owner === value)
-      case _ => filters
+      case Some(XCutoffBy(XCutoffBy.Value.Broker(value))) ⇒ filters.filter(_.broker === value)
+      case Some(XCutoffBy(XCutoffBy.Value.Owner(value))) ⇒ filters.filter(_.owner === value)
+      case _ ⇒ filters
     }
     if (tradingPair.nonEmpty) filters = filters.filter(_.tradingPair === tradingPair.get)
     if (sort.nonEmpty) filters = sort.get match {
