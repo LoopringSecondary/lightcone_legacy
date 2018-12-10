@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
+import com.typesafe.config._
 import akka.testkit.TestActorRef
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
@@ -27,18 +28,35 @@ import akka.pattern._
 
 import scala.concurrent.Await
 
-class CoreActorsIntegrationSpec_AccountManager_ConcurrentOrders
-  extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(XMarketId(GTO, WETH)) {
+class CoreActorsIntegrationSpec_AccountManagerConcurrentOrders
+  extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
+    XMarketId(GTO, WETH),
+    """
+    account_manager {
+      skip-recovery = yes
+      recover-batch-size = 2
+    }
+    market_manager {
+      skip-recovery = yes
+      price-decimals = 5
+      recover-batch-size = 5
+    }
+    orderbook_manager {
+      levels = 2
+      price-decimals = 5
+      precision-for-amount = 2
+      precision-for-total = 1
+    }
+    ring_settlement {
+      submitter-private-key = "0xa1"
+    }
+    """
+  ) {
 
   "submit several orders at the same time" must {
     "submit success and depth contains right value" in {
-      val accountManagerRecoveryActor = TestActorRef(
-        new AccountManagerActor(
-          actors,
-          recoverBatchSize = 2,
-          skipRecovery = true
-        ), "accountManagerActorConcurrenetOrders"
-      )
+
+      val accountManagerRecoveryActor = TestActorRef(new AccountManagerActor())
       accountManagerRecoveryActor ! XStart(ADDRESS_RECOVERY)
 
       val order = XOrder(

@@ -77,6 +77,7 @@ class OrderTable(tag: Tag)
   def actualAmountFee = columnAmount("actual_amount_fee")
 
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
+  def marketHash = column[Long]("market_hash")
 
   // indexes
   def idx_hash = index("idx_hash", (hash), unique = true)
@@ -89,7 +90,7 @@ class OrderTable(tag: Tag)
   def idx_valid_until = index("idx_valid_until", (validUntil), unique = false)
   def idx_owner = index("idx_owner", (owner), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
-  // def idx_sequence = index("idx_sequence", (sequenceId), unique = true)
+  def idx_market_hash = index("idx_market_hash", (marketHash), unique = true)
 
   def paramsProjection = (
     dualAuthAddr,
@@ -188,7 +189,8 @@ class OrderTable(tag: Tag)
     feeParamsProjection,
     erc1400ParamsProjection,
     stateProjection,
-    sequenceId
+    sequenceId,
+    marketHash
   ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
 }
 

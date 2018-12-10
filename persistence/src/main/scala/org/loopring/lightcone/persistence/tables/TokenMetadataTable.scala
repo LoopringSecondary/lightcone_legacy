@@ -21,23 +21,23 @@ import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.persistence._
+import com.google.protobuf.ByteString
 
-private[persistence] class BarTable(tag: Tag)
-  extends BaseTable[Bar](tag, "T_BARS") {
+class TokenMetadataTable(tag: Tag)
+  extends BaseTable[XTokenMetadata](tag, "T_TOKEN_METADATA") {
 
-  def id = hash
-
-  def hash = columnHash("hash", O.PrimaryKey)
-  def a = column[String]("A")
-  def b = columnAddress("B")
-  def c = columnAmount("C")
-  def d = column[Long]("D")
+  def id = address
+  def address = columnAddress("address")
+  def decimals = column[Int]("decimals")
+  def burnRate = column[Double]("burn_rate")
+  def symbol = column[String]("symbol")
+  def currentPrice = column[Double]("current_price")
 
   def * = (
-    hash,
-    a,
-    b,
-    c,
-    d
-  ) <> ((Bar.apply _).tupled, Bar.unapply)
+    address,
+    decimals,
+    burnRate,
+    symbol,
+    currentPrice
+  ) <> ((XTokenMetadata.apply _).tupled, XTokenMetadata.unapply)
 }

@@ -18,12 +18,11 @@ package org.loopring.lightcone.actors
 
 import com.google.inject.Guice
 import com.typesafe.config.ConfigFactory
-import akka.actor._
-import akka.cluster.pubsub._
-import scala.concurrent.duration._
-import DistributedPubSubMediator._
-import akka.cluster.Cluster
+import org.loopring.lightcone.actors.entrypoint.EntryPointActor
+import org.loopring.lightcone.actors.base.Lookup
 import org.slf4s.Logging
+import net.codingwell.scalaguice.InjectorExtensions._
+import akka.actor.ActorRef
 
 object Main extends App with Logging {
   val config = ConfigFactory.load()
@@ -40,30 +39,7 @@ object Main extends App with Logging {
   }
 
   val injector = Guice.createInjector(new CoreModule(config))
-  // implicit val system = ActorSystem("Lightcone", config)
-  // implicit val ec = system.dispatcher
-  // implicit val cluster = Cluster(system)
-
-  // val a = system.actorOf(Props(classOf[MyActor]))
-
+  val actors = injector.instance[Lookup[ActorRef]]
+  actors.get(EntryPointActor.name)
 }
 
-// TODO: remove this after docker compose works
-class MyActor extends Actor with ActorLogging {
-  import context.dispatcher
-  val mediator = DistributedPubSub(context.system).mediator
-  context.system.scheduler.schedule(0 seconds, 10 seconds, self, "TICK")
-
-  mediator ! Subscribe("topic", self)
-  var i = 0L
-
-  def receive = {
-    case "TICK" ⇒
-      log.error("hello")
-      mediator ! Publish("topic", "event-" + i)
-      i += 1
-
-    case x ⇒
-      log.error("===> " + x)
-  }
-}

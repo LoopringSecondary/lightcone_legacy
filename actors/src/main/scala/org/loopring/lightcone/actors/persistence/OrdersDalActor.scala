@@ -44,18 +44,23 @@ class OrdersDalActor(
 
   def receive: Receive = LoggingReceive {
     case XSaveOrderReq(Some(xraworder)) ⇒
+      assert(xraworder.marketHash != 0)
       ordersDal.saveOrder(xraworder) pipeTo sender
+
     case XGetOrdersByHashesReq(hashes) ⇒
       (for {
         orders ← ordersDal.getOrders(hashes)
       } yield XGetOrdersByHashesRes(orders)) pipeTo sender
+
     case XGetOrderByHashReq(hash) ⇒
       (for {
         order ← ordersDal.getOrder(hash)
       } yield XGetOrderByHashRes(order)) pipeTo sender
+
     case XGetOrderFilledAmountReq(hash) ⇒ //从以太坊读取
       //todo: 测试deploy
       sender ! XGetOrderFilledAmountRes(hash, ByteString.copyFrom("111", "utf-8"))
+
     case XRecoverOrdersReq(address, marketIdOpt, updatedSince, num) ⇒
       val tokenes = (marketIdOpt match {
         case Some(marketId) ⇒ Set(marketId.primary, marketId.secondary)
@@ -72,11 +77,13 @@ class OrdersDalActor(
           skip = Some(XSkip(skip = 1, take = num))
         )
       } yield XRecoverOrdersRes(orders)) pipeTo sender
+
     case XUpdateOrderStateReq(hash, stateOpt, changeUpdatedAtField) ⇒
       (stateOpt match {
         case Some(state) ⇒ ordersDal.updateAmount(hash, state)
         case None        ⇒ Future.successful(Left(XPersistenceError.PERS_ERR_INVALID_DATA))
       }) pipeTo sender
+
     case XUpdateOrderStatusReq(hash, status, changeUpdatedAtField) ⇒
       ordersDal.updateOrderStatus(hash, status) pipeTo sender
 

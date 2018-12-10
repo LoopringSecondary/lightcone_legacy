@@ -29,6 +29,7 @@ class DatabaseModule @Inject() (
     @Named("db-execution-context") val ec: ExecutionContext
 ) extends base.BaseDatabaseModule {
 
+  val tokenMetadata: TokenMetadataDal = new TokenMetadataDalImpl()
   val orders: OrderDal = new OrderDalImpl()
   val trades: TradeDal = new TradeDalImpl()
   val addresses: AddressDal = new AddressDalImpl()
@@ -39,6 +40,7 @@ class DatabaseModule @Inject() (
   val tokenTransfers: TokenTransferDal = new TokenTransferDalImpl()
 
   val tables = Seq(
+    tokenMetadata,
     orders,
     trades,
     addresses,
