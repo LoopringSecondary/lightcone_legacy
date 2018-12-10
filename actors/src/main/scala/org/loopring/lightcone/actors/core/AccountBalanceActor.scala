@@ -16,33 +16,65 @@
 
 package org.loopring.lightcone.actors.core
 
+
 import akka.actor._
+import akka.cluster.sharding._
 import akka.event.LoggingReceive
+import akka.pattern._
 import akka.util.Timeout
-import akka.pattern.ask
-import com.google.inject.Inject
-import com.google.inject.name.Named
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.ethereum.abi._
-import org.loopring.lightcone.proto.actors._
+import com.typesafe.config.Config
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.ethereum.EthereumConnectionActor
+import org.loopring.lightcone.ethereum.abi.{AllowanceFunction, BalanceOfFunction, ERC20ABI}
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.proto.actors._
 import org.web3j.utils.Numeric
 
 import scala.concurrent._
 
 object AccountBalanceActor {
   val name = "account_balance"
+
+  private val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
+    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+  }
+
+  private val extractShardId: ShardRegion.ExtractShardId = {
+    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
+    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
+    case XStart(_) ⇒ "address_1"
+  }
+
+  def startShardRegion(delegateAddress:String)(
+    implicit
+    system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
+    ClusterSharding(system).start(
+      typeName = name,
+      entityProps = Props(new AccountBalanceActor(actors,delegateAddress)),
+      settings = ClusterShardingSettings(system),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
+    )
+  }
 }
 
-class AccountBalanceActor @Inject() (
-    val actors: Lookup[ActorRef]
+class AccountBalanceActor (
+    val actors: Lookup[ActorRef],
+    val delegateAddress: String
 )(
     implicit
     ec: ExecutionContext,
-    timeout: Timeout,
-    @Named("delegate-address") val delegateAddress: String
+    timeout: Timeout
 )
   extends Actor
   with ActorLogging {
@@ -96,7 +128,7 @@ class AccountBalanceActor @Inject() (
           case Some(ether) ⇒
             sender ! XGetBalanceAndAllowancesRes(
               req.address,
-              (tokens zip balanceAndAllowance).toMap.+(ethToken.get → XBalanceAndAllowance(ether, BigInt(0)))
+              (tokens zip balanceAndAllowance).toMap + (ethToken.get → XBalanceAndAllowance(ether, BigInt(0)))
             )
           case None ⇒
             sender ! XGetBalanceAndAllowancesRes(

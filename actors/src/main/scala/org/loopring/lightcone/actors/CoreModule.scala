@@ -57,6 +57,7 @@ class CoreModule(config: Config)
     bind(classOf[ExecutionContext]).toInstance(global)
     bind(classOf[ExecutionContext]).annotatedWith(Names.named("db-execution-context")).toInstance(global)
 
+
     implicit val timeProvider: TimeProvider = new SystemTimeProvider()
     bind[TimeProvider].toInstance(timeProvider)
 
@@ -85,7 +86,7 @@ class CoreModule(config: Config)
     actors.add(TokenMetadataActor.name, TokenMetadataActor.startShardRegion)
     actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
     actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
-    actors.add(AccountBalanceActor.name, AccountBalanceActor.startShardRegion)
+    actors.add(AccountBalanceActor.name, AccountBalanceActor.startShardRegion(config.getString("loopring-protocol.delegate-address")))
     actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
     actors.add(OrderbookManagerActor.name, OrderbookManagerActor.startShardRegion)
     actors.add(OrderHistoryActor.name, OrderHistoryActor.startShardRegion)
