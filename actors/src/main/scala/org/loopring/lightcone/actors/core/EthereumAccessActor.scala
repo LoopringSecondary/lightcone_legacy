@@ -62,7 +62,7 @@ object EthereumAccessActor {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new EthereumAccessActor()),
-      settings = ClusterShardingSettings(system),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )

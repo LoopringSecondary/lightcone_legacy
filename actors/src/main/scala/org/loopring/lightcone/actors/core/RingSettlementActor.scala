@@ -65,7 +65,7 @@ object RingSettlementActor {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new RingSettlementActor()),
-      settings = ClusterShardingSettings(system),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )

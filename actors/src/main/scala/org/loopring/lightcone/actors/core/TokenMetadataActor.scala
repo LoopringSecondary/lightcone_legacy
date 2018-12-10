@@ -65,7 +65,7 @@ object TokenMetadataActor {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new TokenMetadataActor()),
-      settings = ClusterShardingSettings(system),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )

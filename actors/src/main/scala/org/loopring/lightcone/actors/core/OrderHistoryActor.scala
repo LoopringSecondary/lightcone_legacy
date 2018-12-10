@@ -62,7 +62,7 @@ object OrderHistoryActor {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderHistoryActor()),
-      settings = ClusterShardingSettings(system),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
