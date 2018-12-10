@@ -24,7 +24,7 @@ import org.loopring.lightcone.proto.core._
 
 import scala.concurrent._
 
-trait OrderRecoverySupport {
+trait OrderRecoverSupport {
   actor: Actor with ActorLogging ⇒
 
   implicit val ec: ExecutionContext
@@ -55,8 +55,7 @@ trait OrderRecoverySupport {
         recoverySettings.orderOwner,
         recoverySettings.marketId,
         0L,
-        recoverySettings.batchSize
-      )
+        recoverySettings.batchSize)
     }
   }
 
@@ -88,8 +87,7 @@ trait OrderRecoverySupport {
               recoverySettings.orderOwner,
               recoverySettings.marketId,
               lastUpdatdTimestamp,
-              recoverySettings.batchSize
-            )
+              recoverySettings.batchSize)
           } else {
             log.debug(s"recovering completed with $processed orders")
             context.become(functional)
