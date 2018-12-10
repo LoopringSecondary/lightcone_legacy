@@ -18,12 +18,28 @@ package org.loopring.lightcone.actors
 
 import com.google.inject.Guice
 import com.typesafe.config.ConfigFactory
+import org.loopring.lightcone.actors.entrypoint.EntryPointActor
+import org.loopring.lightcone.actors.base.Lookup
+import org.slf4s.Logging
+import net.codingwell.scalaguice.InjectorExtensions._
+import akka.actor.ActorRef
 
-object Main {
+object Main extends App with Logging {
+  val config = ConfigFactory.load()
 
-  def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.load()
-    val injector = Guice.createInjector(new CoreModule(config))
+  val configItems = Seq(
+    "akka.remote.artery.canonical.hostname",
+    "akka.remote.artery.canonical.port",
+    "akka.remote.bind.hostname",
+    "akka.remote.bind.port"
+  )
+
+  configItems foreach { i ⇒
+    log.debug(s"--> $i = ${config.getString(i)}")
   }
 
+  val injector = Guice.createInjector(new CoreModule(config))
+  val actors = injector.instance[Lookup[ActorRef]]
+  actors.get(EntryPointActor.name)
 }
+

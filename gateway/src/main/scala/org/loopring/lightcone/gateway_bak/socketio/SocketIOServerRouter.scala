@@ -32,7 +32,7 @@ class SocketIOServerRouter
   override def receive: Receive = {
 
     case StartBroadcast(server, eventBindings, pool) ⇒
-      log.info("start check broadcast message")
+      log.debug("start check broadcast message")
 
       eventBindings.bindings.foreach {
         case EventBinding(event, interval, replyTo) ⇒

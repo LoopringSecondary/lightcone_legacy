@@ -24,7 +24,7 @@ case class Job(
     id: Int,
     name: String,
     scheduleDelay: Long,
-    run: () ⇒ Future[Unit]
+    run: () ⇒ Future[Any]
 )
 
 class JobWithStatus(j: Job) {

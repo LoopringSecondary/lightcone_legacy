@@ -46,11 +46,11 @@ trait OrderRecoverySupport {
   protected def startOrderRecovery(settings: XOrderRecoverySettings) = {
     recoverySettings = settings
     if (recoverySettings.skipRecovery) {
-      log.info(s"actor recovering skipped: ${self.path}")
+      log.warning(s"actor recovering skipped: ${self.path}")
       context.become(functional)
     } else {
       context.become(recovering)
-      log.info(s"actor recovering started: ${self.path}")
+      log.debug(s"actor recovering started: ${self.path}")
       ordersDalActor ! XRecoverOrdersReq(
         recoverySettings.orderOwner,
         recoverySettings.marketId,
@@ -64,7 +64,7 @@ trait OrderRecoverySupport {
 
     case XRecoverOrdersRes(xraworders) ⇒
       val size = xraworders.size
-      log.info(s"recovering next ${size} orders")
+      log.debug(s"recovering next ${size} orders")
       processed += size
 
       xordersToRecover = xraworders.map(xRawOrderToXOrder).toList
@@ -91,10 +91,10 @@ trait OrderRecoverySupport {
               recoverySettings.batchSize
             )
           } else {
-            log.info(s"recovering completed with $processed orders")
+            log.debug(s"recovering completed with $processed orders")
             context.become(functional)
           }
-        case _ ⇒ log.info(s"not match xorders: ${xordersToRecover.getClass.getName}")
+        case _ ⇒ log.error(s"not match xorders: ${xordersToRecover.getClass.getName}")
       }
 
     case msg ⇒

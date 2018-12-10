@@ -82,11 +82,5 @@ message XGetOrderbookReq {
     int32 size = 2;
 }
 
-message XTokenMetadata {
-    string address = 1;
-    int32 decimals = 2;
-    double burnRate = 3;
-    double currentPrice = 4;
-    string symbol = 5;
-}
+
 

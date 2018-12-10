@@ -19,35 +19,83 @@ package org.loopring.lightcone.actors.core
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor._
+import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
+import com.typesafe.config.Config
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.ethereum.data._
+import org.loopring.lightcone.actors.persistence._
+import org.loopring.lightcone.core.account._
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.proto.actors.XErrorCode._
+import org.loopring.lightcone.proto.core.XOrderStatus._
+import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.actors._
-
+import org.loopring.lightcone.ethereum.data._
+import scala.concurrent._
 import scala.annotation.tailrec
-import scala.concurrent.{ ExecutionContext, Future }
 
-object SettlementActor {
-  val name = "settlement"
+object RingSettlementActor {
+  val name = "ring_settlement"
+
+  private val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
+    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+  }
+
+  private val extractShardId: ShardRegion.ExtractShardId = {
+    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
+    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
+    case XStart(_) ⇒ "address_1"
+  }
+
+  def startShardRegion()(
+    implicit
+    system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
+    ClusterSharding(system).start(
+      typeName = name,
+      entityProps = Props(new RingSettlementActor()),
+      settings = ClusterShardingSettings(system),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
+    )
+  }
 }
 
-class SettlementActor(
-    actors: Lookup[ActorRef],
-    submitterPrivateKey: String
-)(
+class RingSettlementActor()(
     implicit
-    ec: ExecutionContext,
-    timeout: Timeout
-)
-  extends RepeatedJobActor
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends RepeatedJobActor
   with ActorLogging {
+
+  val conf = config.getConfig(RingSettlementActor.name)
+  val thisConfig = try {
+    conf.getConfig(self.path.name).withFallback(conf)
+  } catch {
+    case e: Throwable ⇒ conf
+  }
+  log.info(s"config for ${self.path.name} = $thisConfig")
+
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)
-  val ringSigner = new RingSignerImpl(privateKey = submitterPrivateKey)
+  val ringSigner = new RingSignerImpl(
+    privateKey = thisConfig.getString("submitter-private-key")
+  )
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)

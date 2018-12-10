@@ -16,24 +16,84 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor._
+import akka.cluster.sharding._
 import akka.event.LoggingReceive
+import akka.pattern._
 import akka.util.Timeout
-import akka.pattern.pipe
-import org.loopring.lightcone.core.base._
+import com.typesafe.config.Config
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.depth._
-import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.actors.XErrorCode._
+import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
-import scala.concurrent.ExecutionContext
+import scala.concurrent._
 
 object OrderbookManagerActor {
   def name = "orderbook_manager"
+
+  private val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
+    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+  }
+
+  private val extractShardId: ShardRegion.ExtractShardId = {
+    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
+    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
+    case XStart(_) ⇒ "address_1"
+  }
+
+  def startShardRegion()(
+    implicit
+    system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
+    ClusterSharding(system).start(
+      typeName = name,
+      entityProps = Props(new OrderbookManagerActor()),
+      settings = ClusterShardingSettings(system),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
+    )
+  }
 }
 
-class OrderbookManagerActor(config: XOrderbookConfig)
-  extends Actor with ActorLogging {
+class OrderbookManagerActor()(
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends Actor with ActorLogging {
 
-  val manager: OrderbookManager = new OrderbookManagerImpl(config)
+  val conf = config.getConfig(OrderbookManagerActor.name)
+  val thisConfig = try {
+    conf.getConfig(self.path.name).withFallback(conf)
+  } catch {
+    case e: Throwable ⇒ conf
+  }
+  log.info(s"config for ${self.path.name} = $thisConfig")
+
+  val xorderbookConfig = XOrderbookConfig(
+    levels = thisConfig.getInt("levels"),
+    priceDecimals = thisConfig.getInt("price-decimals"),
+    precisionForAmount = thisConfig.getInt("precision-for-amount"),
+    precisionForTotal = thisConfig.getInt("precision-for-total")
+  )
+
+  val manager: OrderbookManager = new OrderbookManagerImpl(xorderbookConfig)
   private var latestPrice: Option[Double] = None
 
   def receive: Receive = LoggingReceive {
