@@ -96,6 +96,7 @@ class CoreModule(config: Config)
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
     //-----------deploy actors-----------
+    actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
     actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
     actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
     actors.add(AccountBalanceActor.name, AccountBalanceActor.startShardRegion)
