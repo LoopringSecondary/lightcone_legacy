@@ -30,7 +30,7 @@ trait RawOrderValidator {
 // TODO(kongliang): implement and test this class
 class RawOrderValidatorImpl extends RawOrderValidator {
   // TODO this field should be configurable somewhere.
-  val feePercentageBase = 1000
+  val FeePercentageBase = 1000
 
   def calculateOrderHash(order: XRawOrder): String = {
     val bitstream = new Bitstream
@@ -75,13 +75,13 @@ class RawOrderValidatorImpl extends RawOrderValidator {
       isValidAddress(order.tokenB) -> ORDER_VALIDATION_ERR_INVALID_TOKENB,
       (BigInt(order.amountS.toString, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
       (BigInt(order.amountB.toString, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
-      (BigInt(order.feeParams.get.waiveFeePercentage) <= feePercentageBase)
+      (BigInt(order.feeParams.get.waiveFeePercentage) <= FeePercentageBase)
         -> ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE,
-      (BigInt(order.feeParams.get.waiveFeePercentage) >= -feePercentageBase)
+      (BigInt(order.feeParams.get.waiveFeePercentage) >= -FeePercentageBase)
         -> ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE,
-      (BigInt(order.feeParams.get.tokenSFeePercentage) <= feePercentageBase)
+      (BigInt(order.feeParams.get.tokenSFeePercentage) <= FeePercentageBase)
         -> ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE,
-      (BigInt(order.feeParams.get.tokenBFeePercentage) <= feePercentageBase)
+      (BigInt(order.feeParams.get.tokenBFeePercentage) <= FeePercentageBase)
         -> ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE,
       (BigInt(order.feeParams.get.walletSplitPercentage) <= 100)
         -> ORDER_VALIDATION_ERR_INVALID_WALLET_SPLIT_PERCENTAGE,

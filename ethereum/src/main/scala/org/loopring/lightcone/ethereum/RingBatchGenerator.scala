@@ -102,6 +102,37 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     return paramStream.getData
   }
 
+  private def addDataAndOffset(
+    data: Any,
+    solidityType: String,
+    dataBits: Bitstream,
+    tablesBits: Bitstream,
+    dataForceAppend: Boolean)
+  {
+    solidityType match {
+      case "uint8" =>
+        val dataInt = data.asInstanceOf[Int]
+        val offset = dataBits.addNumber(BigInt(dataInt), 1, dataForceAppend)
+        insertOffset(tablesBits, offset)
+      case "uint16" =>
+        val dataInt = data.asInstanceOf[Int]
+        val offset = dataBits.addNumber(BigInt(dataInt), 1, dataForceAppend)
+        insertOffset(tablesBits, offset)
+      case "uint32" =>
+        val dataInt = data.asInstanceOf[Int]
+        val offset = dataBits.addNumber(BigInt(dataInt), 1, dataForceAppend)
+        insertOffset(tablesBits, offset)
+      case "uint" | "uint256" =>
+        val dataStr = data.asInstanceOf[]
+        val offset = dataBits.addNumber(BigInt(dataInt), 1, dataForceAppend)
+        insertOffset(tablesBits, offset)
+      case "address" => ???
+      case "bytes32" => ???
+      case "bytes" => ???
+      case _ => ???
+    }
+  }
+
   private def setupMiningInfo(xRingBatch: XRingBatch, data: Bitstream, tables: Bitstream) {
     val feeRecipient = if (isValidAddress(xRingBatch.feeRecipient)) xRingBatch.feeRecipient else xRingBatch.transactionOrigin
     val miner = if (isValidAddress(xRingBatch.miner)) xRingBatch.miner else feeRecipient
