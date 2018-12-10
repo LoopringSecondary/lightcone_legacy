@@ -35,6 +35,7 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
+// main owner: 杜永丰
 object OrderRecoverActor {
   val name = "order_recover"
 

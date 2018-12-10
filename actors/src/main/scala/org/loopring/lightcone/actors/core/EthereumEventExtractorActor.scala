@@ -35,6 +35,7 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
+// main owner: 李亚东
 object EthereumEventExtractorActor {
   val name = "ethereum_event_extractor"
 

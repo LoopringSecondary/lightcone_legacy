@@ -35,6 +35,7 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
+// main owner: 于红雨
 object AccountManagerActor {
   val name = "account_manager"
 

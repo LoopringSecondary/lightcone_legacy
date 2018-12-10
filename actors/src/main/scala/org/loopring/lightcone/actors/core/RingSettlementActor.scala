@@ -39,6 +39,7 @@ import org.loopring.lightcone.ethereum.data._
 import scala.concurrent._
 import scala.annotation.tailrec
 
+// main owner: 李亚东
 object RingSettlementActor {
   val name = "ring_settlement"
 

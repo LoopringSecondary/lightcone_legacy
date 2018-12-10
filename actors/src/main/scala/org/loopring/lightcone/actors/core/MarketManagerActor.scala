@@ -35,6 +35,7 @@ import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
+// main owner: 于红雨
 object MarketManagerActor {
   val name = "market_manager"
   val wethTokenAddress = "WETH" // TODO
@@ -76,7 +77,6 @@ object MarketManagerActor {
   }
 }
 
-// TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
 class MarketManagerActor()(
     implicit
     val config: Config,
