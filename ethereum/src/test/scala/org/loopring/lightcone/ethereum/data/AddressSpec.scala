@@ -67,7 +67,11 @@ class AddressSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     Address.isValid(Numeric.hexStringToByteArray(add2)) should be(true)
     Address.isValid(Numeric.hexStringToByteArray(add3)) should be(false)
 
-    info(Address(add1).hashCode().toString)
+    //ByteString
+    Address.isValid(ByteString.copyFrom(Numeric.hexStringToByteArray(add1))) should be(true)
+    Address.isValid(ByteString.copyFrom(Numeric.hexStringToByteArray(add2))) should be(true)
+    Address.isValid(ByteString.copyFrom(Numeric.hexStringToByteArray(add3))) should be(false)
+
   }
 
 }
