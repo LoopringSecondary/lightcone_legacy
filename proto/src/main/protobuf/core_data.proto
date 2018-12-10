@@ -226,3 +226,22 @@ message XTrade {
     int64  block_height      = 17;
     bool  is_valid           = 18;
 }
+
+message XCutoff {
+    enum XType {
+        BROKER               = 0;
+        OWNER                = 1;
+        BROKER_TRADING_PAIR  = 2;
+        OWNER_TRADING_PAIR   = 3;
+    }
+
+    string tx_hash         = 1;
+    XType  cutoff_type     = 2;
+    string broker          = 3;
+    string owner           = 4;
+    string trading_pair    = 5;
+    int64  cutoff          = 6; // in seconds.
+    int64  created_at      = 7;
+    int64  block_height    = 8;
+    bool   is_valid        = 9;
+}

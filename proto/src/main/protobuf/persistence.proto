@@ -46,3 +46,10 @@ message XTokenMetadata {
     string symbol = 4;
     double currentPrice = 5;
 }
+
+message XCutoffBy {
+    oneof value {
+        string broker  = 1;
+        string owner   = 2;
+    }
+}
