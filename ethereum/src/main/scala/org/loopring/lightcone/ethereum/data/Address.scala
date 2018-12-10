@@ -18,6 +18,7 @@ package org.loopring.lightcone.ethereum.data
 
 import com.google.protobuf.ByteString
 import org.web3j.utils.Numeric
+import org.web3j.crypto.WalletUtils
 
 class Address(val value: BigInt) {
 
@@ -43,6 +44,10 @@ class Address(val value: BigInt) {
       case _ ⇒
         false
     }
+
+  override def hashCode(): Int = {
+    this.value.hashCode()
+  }
 }
 
 object Address {
@@ -64,5 +69,20 @@ object Address {
 
   def apply(addr: String): Address =
     apply(Numeric.toBigInt(addr))
+
+  def isValid(obj: Any): Boolean = {
+    obj match {
+      case add: String ⇒
+        Numeric.hexStringToByteArray(add).length <= 20
+      case add: Array[Byte] ⇒
+        add.length <= 20
+      case add: BigInt ⇒
+        add <= maxAddress
+      case add: ByteString ⇒
+        add.size() <= 20
+      case _ ⇒
+        false
+    }
+  }
 
 }

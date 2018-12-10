@@ -18,6 +18,7 @@ package org.loopring.lightcone.ethereum.data
 
 import org.scalatest._
 import org.web3j.utils.Numeric
+import com.google.protobuf.ByteString
 
 class AddressSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
@@ -45,4 +46,28 @@ class AddressSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val address = Address(bigIntAdd)
     info(address.toString)
   }
+
+  "addressValid" should "correctly check validity" in {
+    val add1 = "0x000ee35D70AD6331000E370F079aD7df52E75005"
+    val add2 = "0x1"
+    val add3 = "0x" + "0" * 41
+
+    // String address
+    Address.isValid(add1) should be(true)
+    Address.isValid(add2) should be(true)
+    Address.isValid(add3) should be(false)
+
+    //BigInt
+    Address.isValid(BigInt(Numeric.toBigInt(add1))) should be(true)
+    Address.isValid(BigInt(Numeric.toBigInt(add2))) should be(true)
+    Address.isValid(BigInt(Numeric.toBigInt(add3))) should be(true)
+
+    //Array[Byte]
+    Address.isValid(Numeric.hexStringToByteArray(add1)) should be(true)
+    Address.isValid(Numeric.hexStringToByteArray(add2)) should be(true)
+    Address.isValid(Numeric.hexStringToByteArray(add3)) should be(false)
+
+    info(Address(add1).hashCode().toString)
+  }
+
 }
