@@ -17,27 +17,28 @@
 package org.loopring.lightcone.actors.ethereum
 
 import akka.actor._
-import akka.pattern.ask
+import akka.pattern._
 import akka.util.Timeout
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core.AccountManagerActor
 import org.loopring.lightcone.ethereum.abi._
+import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.actors._
 
 import scala.collection.mutable.ListBuffer
-import scala.util._
-import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
+import scala.concurrent._
+import scala.util.{ Failure, Success }
 
-class EthereumDataIndexer @Inject() (
-    val actors: Lookup[ActorRef]
+class EthereumDataIndexer(
+    val actors: Lookup[ActorRef],
+    val delegateAddress: String,
+    val blockDal: BlockDal
 )(implicit
-
     ec: ExecutionContext,
-    timeout: Timeout,
-    @Named("delegate-address") val delegateAddress: String
+    timeout: Timeout
 )
   extends Actor with ActorLogging {
 
@@ -46,48 +47,45 @@ class EthereumDataIndexer @Inject() (
 
   val erc20Abi = ERC20ABI()
   val wethAbi = WETHABI()
-  val zeroAdd = "0x" + "0" * 40
+  val zeroAdd: String = "0x" + "0" * 40
 
   var currentBlockNumber: BigInt = BigInt(-1)
   var currentBlockHash: String = _
 
   override def preStart(): Unit = {
-    //
-    ethereumConnectionActor ? XEthBlockNumberReq() onComplete {
-      case Success(XEthBlockNumberRes(_, _, result, None)) ⇒
-        (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(result)) onComplete {
-          case Success(XGetBlockWithTxHashByNumberRes(_, _, block, None)) ⇒
-            currentBlockNumber = result
-            currentBlockHash = block.get.hash
-        }
-      case Success(XEthBlockNumberRes(_, _, _, error)) ⇒
-        log.error(s"fail to get the current blockNumber:${error.get.error}")
-
-      case Failure(e) ⇒
-        log.error(s"fail to get the current blockNumber:${e.getMessage}")
-        context.stop(self)
+    for {
+      maxBlock: Option[Long] ← blockDal.findMaxHeight()
+      blockNum ← maxBlock match {
+        case Some(_) ⇒ Future.successful(BigInt(maxBlock.get))
+        case _ ⇒ (ethereumConnectionActor ? XEthBlockNumberReq())
+          .mapTo[XEthBlockNumberRes]
+          .map(res ⇒ BigInt(res.result))
+      }
+      blockHash ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(bigInt2Hex(blockNum)))
+        .mapTo[XGetBlockWithTxHashByNumberRes]
+        .map(_.result.get.hash)
+    } yield {
+      currentBlockNumber = blockNum
+      currentBlockHash = blockHash
     }
   }
 
   override def receive: Receive = {
-    case XStart ⇒ process()
-    case XStop  ⇒ context.stop(self)
+    case _: XStart ⇒ process()
+
   }
   def process(): Unit = {
     for {
       taskNum ← (ethereumConnectionActor ? XEthBlockNumberReq())
         .mapTo[XEthBlockNumberRes]
         .map(_.result)
-
       block ← if (taskNum > currentBlockNumber)
         (ethereumConnectionActor ? XGetBlockWithTxObjectByNumberReq(currentBlockNumber + 1))
           .mapTo[XGetBlockWithTxObjectByNumberRes]
-      //没有更高的块则等待
-      else
-        Future {
-          Thread.sleep(15000)
-        }
-      nextTask ← block match {
+      else {
+        Future.successful()
+      }
+      handledTask ← block match {
         case XGetBlockWithTxObjectByNumberRes(_, _, Some(result), _) ⇒
           if (result.parentHash.equals(currentBlockHash))
             indexBlock(result)
@@ -97,26 +95,25 @@ class EthereumDataIndexer @Inject() (
           Future.successful(currentBlockNumber, currentBlockHash)
       }
     } yield {
-      currentBlockNumber = nextTask._1
-      currentBlockHash = nextTask._2
-      self ! XStart
+      if (currentBlockHash.equals(handledTask._2)) {
+        context.system.scheduler.scheduleOnce(15 seconds, self, XStart())
+      } else {
+        currentBlockNumber = handledTask._1
+        currentBlockHash = handledTask._2
+        self ! XStart()
+      }
     }
   }
 
   // find the fork height
   def handleFork(blockNum: BigInt): Future[(BigInt, String)] = {
-
     Future.successful((BigInt(0), ""))
   }
 
   // index block
   def indexBlock(block: XBlockWithTxObject): Future[(BigInt, String)] = {
-    val txs = block.transactions
-    val txReceiptReqs = txs.map(tx ⇒ XGetTransactionReceiptReq(tx.hash))
     for {
-      txReceipts ← (ethereumConnectionActor ? XBatchGetTransactionReceiptsReq(txReceiptReqs))
-        .mapTo[XBatchGetTransactionReceiptsRes]
-        .map(_.resps.map(_.result.get))
+      txReceipts ← getAllTxReceipts(block.transactions.map(_.hash))
       balanceAddresses = ListBuffer.empty[(String, String)]
       allowanceAddresses = ListBuffer.empty[(String, String)]
       _ = txReceipts.foreach(receipt ⇒ {
@@ -130,8 +127,8 @@ class EthereumDataIndexer @Inject() (
                 allowanceAddresses.append(approval.owner → log.address)
             case Some(deposit: DepositEvent.Result) ⇒
               balanceAddresses.append(deposit.dst → log.address)
-            case Some(withrawal: WithdrawalEvent.Result) ⇒
-              balanceAddresses.append(withrawal.src → log.address)
+            case Some(withdrawal: WithdrawalEvent.Result) ⇒
+              balanceAddresses.append(withdrawal.src → log.address)
             case _ ⇒
           }
         })
@@ -146,18 +143,35 @@ class EthereumDataIndexer @Inject() (
         (ethereumConnectionActor ? req).mapTo[XGetBalanceRes]))
       allowanceRes ← Future.sequence(allowanceReqs.map(req ⇒
         (ethereumConnectionActor ? req).mapTo[XGetAllowanceRes]))
-      _ = balanceRes
-        .foreach(res ⇒ {
-          res.balanceMap.foreach(item ⇒
-            sender ! XAddressBalanceUpdated(res.address, token = item._1, balance = item._2))
-        })
-      _ = allowanceRes.foreach(res ⇒ {
+    } yield {
+      balanceRes.foreach(res ⇒ {
+        res.balanceMap.foreach(item ⇒
+          accountManager ! XAddressBalanceUpdated(res.address, token = item._1, balance = item._2))
+      })
+      allowanceRes.foreach(res ⇒ {
         res.allowanceMap.foreach(item ⇒ {
-          sender ! XAddressAllowanceUpdated(res.address, token = item._1, item._2)
+          accountManager ! XAddressAllowanceUpdated(res.address, token = item._1, item._2)
         })
       })
-    } yield hex2BigInt(block.number) → block.hash
+      hex2BigInt(block.number) → block.hash
+    }
+  }
 
+  def getAllTxReceipts(txHashs: Seq[String]): Future[Seq[XTransactionReceipt]] = {
+
+    val taskPromise = Promise[Seq[XTransactionReceipt]]()
+
+    val txReceipts = Map.empty[String, XTransactionReceipt]
+    while (txReceipts.size < txHashs.size) {
+      val txReceiptReqs = txHashs.filterNot(txReceipts.contains).map(hash ⇒ XGetTransactionReceiptReq(hash))
+      val resp = (ethereumConnectionActor ? XBatchGetTransactionReceiptsReq(txReceiptReqs))
+        .mapTo[XBatchGetTransactionReceiptsRes]
+        .map(_.resps.map(_.result))
+      val txReceiptOpts = Await.result(resp, 10 seconds)
+      val receipts = txReceiptOpts.filter(_.nonEmpty)
+      txReceipts.++(receipts.map(receipt ⇒ receipt.get.transactionHash → receipt.get))
+    }
+    taskPromise.future
   }
 
   implicit def hex2BigInt(hex: String): BigInt = {
@@ -168,7 +182,7 @@ class EthereumDataIndexer @Inject() (
     }
   }
 
-  implicit def BigInt2Hex(num: BigInt): String = {
+  implicit def bigInt2Hex(num: BigInt): String = {
     "0x" + num.toString(16)
   }
 
