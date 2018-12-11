@@ -51,13 +51,13 @@ class CoreActorsIntegrationSpec_MarketManagerRecovery
     """
   ) {
 
-  "when an marketManager starts" must {
-    "first recover it and then receive order" in {
+  // "when an marketManager starts" must {
+  //   "first recover it and then receive order" in {
 
-      val marketManagerActorRecovery: ActorRef = TestActorRef(new MarketManagerActor())
+  //     val marketManagerActorRecovery: ActorRef = TestActorRef(new MarketManagerActor())
 
-      marketManagerActorRecovery ! XStart(marketId_.primary + "-" + marketId_.secondary)
+  //     marketManagerActorRecovery ! XStart(marketId_.primary + "-" + marketId_.secondary)
 
-    }
-  }
+  //   }
+  // }
 }

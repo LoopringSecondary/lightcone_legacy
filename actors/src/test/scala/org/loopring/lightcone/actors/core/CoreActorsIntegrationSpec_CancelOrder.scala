@@ -51,76 +51,76 @@ class CoreActorsIntegrationSpec_CancelOrder
     """
   ) {
 
-  "cancel an order to generate a cancel event" must {
-    "received by marketManager, orderbookManager" in {
-      val order = XOrder(
-        id = "order",
-        tokenS = WETH_TOKEN.address,
-        tokenB = GTO_TOKEN.address,
-        tokenFee = LRC_TOKEN.address,
-        amountS = "50".zeros(18),
-        amountB = "10000".zeros(18),
-        amountFee = "10".zeros(18),
-        walletSplitPercentage = 0.2,
-        status = XOrderStatus.STATUS_NEW
-      )
+  // "cancel an order to generate a cancel event" must {
+  //   "received by marketManager, orderbookManager" in {
+  //     val order = XOrder(
+  //       id = "order",
+  //       tokenS = WETH_TOKEN.address,
+  //       tokenB = GTO_TOKEN.address,
+  //       tokenFee = LRC_TOKEN.address,
+  //       amountS = "50".zeros(18),
+  //       amountB = "10000".zeros(18),
+  //       amountFee = "10".zeros(18),
+  //       walletSplitPercentage = 0.2,
+  //       status = XOrderStatus.STATUS_NEW
+  //     )
 
-      accountManagerActor1 ! XSubmitOrderReq(Some(order))
+  //     accountManagerActor1 ! XSubmitOrderReq(Some(order))
 
-      accountBalanceProbe.expectQuery(ADDRESS_1, WETH_TOKEN.address)
-      accountBalanceProbe.replyWith(ADDRESS_1, WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
+  //     accountBalanceProbe.expectQuery(ADDRESS_1, WETH_TOKEN.address)
+  //     accountBalanceProbe.replyWith(ADDRESS_1, WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
 
-      accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
-      accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "10".zeros(18), "10".zeros(18))
+  //     accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
+  //     accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "10".zeros(18), "10".zeros(18))
 
-      orderHistoryProbe.expectQuery(order.id)
-      orderHistoryProbe.replyWith(order.id, "0".zeros(0))
+  //     orderHistoryProbe.expectQuery(order.id)
+  //     orderHistoryProbe.replyWith(order.id, "0".zeros(0))
 
-      expectMsgPF() {
-        case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
-          val order: Order = xorder
-          info(s"submitted an order: $order")
-        case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
-          info(s"occurs ERR_UNKNOWN when submitting order:$order")
-      }
+  //     expectMsgPF() {
+  //       case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+  //         val order: Order = xorder
+  //         info(s"submitted an order: $order")
+  //       case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
+  //         info(s"occurs ERR_UNKNOWN when submitting order:$order")
+  //     }
 
-      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+  //     orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
-      expectMsgPF() {
-        case a: XOrderbook ⇒
-          info("----orderbook status after submit an order: " + a)
-      }
+  //     expectMsgPF() {
+  //       case a: XOrderbook ⇒
+  //         info("----orderbook status after submit an order: " + a)
+  //     }
 
-      accountManagerActor1 ! XCancelOrderReq(order.id, false)
-      expectMsgPF() {
-        case res: XCancelOrderRes ⇒
-          info(s"-- canceled this order: $res")
-      }
+  //     accountManagerActor1 ! XCancelOrderReq(order.id, false)
+  //     expectMsgPF() {
+  //       case res: XCancelOrderRes ⇒
+  //         info(s"-- canceled this order: $res")
+  //     }
 
-      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+  //     orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
-      expectMsgPF() {
-        case a: XOrderbook ⇒
-          info("----orderbook status after cancel this order: " + a)
-      }
-    }
-  }
-  "cancel an order that not existed" must {
-    "return ERR_ORDER_NOT_EXIST" in {
+  //     expectMsgPF() {
+  //       case a: XOrderbook ⇒
+  //         info("----orderbook status after cancel this order: " + a)
+  //     }
+  //   }
+  // }
+  // "cancel an order that not existed" must {
+  //   "return ERR_ORDER_NOT_EXIST" in {
 
-      accountManagerActor1 ! XCancelOrderReq("not-exists-order-id", false)
-      expectMsgPF() {
-        case res: XCancelOrderRes ⇒
-          info(s"-- canceled this order: $res")
-          res.error should be(XErrorCode.ERR_ORDER_NOT_EXIST)
-      }
+  //     accountManagerActor1 ! XCancelOrderReq("not-exists-order-id", false)
+  //     expectMsgPF() {
+  //       case res: XCancelOrderRes ⇒
+  //         info(s"-- canceled this order: $res")
+  //         res.error should be(XErrorCode.ERR_ORDER_NOT_EXIST)
+  //     }
 
-      orderbookManagerActor ! XGetOrderbookReq(0, 100)
+  //     orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
-      expectMsgPF() {
-        case a: XOrderbook ⇒
-          info("----orderbook status after cancel this order: " + a)
-      }
-    }
-  }
+  //     expectMsgPF() {
+  //       case a: XOrderbook ⇒
+  //         info("----orderbook status after cancel this order: " + a)
+  //     }
+  //   }
+  // }
 }
