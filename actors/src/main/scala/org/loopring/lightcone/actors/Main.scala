@@ -16,14 +16,19 @@
 
 package org.loopring.lightcone.actors
 
+import java.net.NetworkInterface
+
+import akka.actor._
+import akka.cluster.Cluster
+import akka.cluster.ClusterEvent.{ ClusterDomainEvent, MemberUp }
+import akka.cluster.pubsub.DistributedPubSubMediator._
+import akka.cluster.pubsub._
 import com.google.inject.Guice
 import com.typesafe.config.ConfigFactory
-import akka.actor._
-import akka.cluster.pubsub._
-import scala.concurrent.duration._
-import DistributedPubSubMediator._
-import akka.cluster.Cluster
 import org.slf4s.Logging
+
+import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
 object Main extends App with Logging {
   val config = ConfigFactory.load()
@@ -51,19 +56,23 @@ object Main extends App with Logging {
 // TODO: remove this after docker compose works
 class MyActor extends Actor with ActorLogging {
   import context.dispatcher
+  override def preStart = Cluster(context.system).subscribe(self, classOf[ClusterDomainEvent])
   val mediator = DistributedPubSub(context.system).mediator
   context.system.scheduler.schedule(0 seconds, 10 seconds, self, "TICK")
 
   mediator ! Subscribe("topic", self)
   var i = 0L
 
-  def receive = {
-    case "TICK" ⇒
-      log.info("hello")
-      mediator ! Publish("topic", "event-" + i)
-      i += 1
+  val nifs = NetworkInterface.getNetworkInterfaces.asScala.toSeq
 
+  log.info(s"this node, ${context.system.settings.config.getString("clustering.hostname")}, ${nifs(0).getInetAddresses}, ${nifs(0).getInterfaceAddresses}")
+  def receive = {
+    case MemberUp(member) ⇒ log.info("memberUp={}", member.address)
+    case "TICK" ⇒
+      log.info("receive TICK")
+      mediator ! Publish("topic", "event-sender:" + nifs(0).getInterfaceAddresses + "-" + i)
+      i += 1
     case x ⇒
-      log.info("===> " + x)
+      log.info("===> receiver:" + nifs(0).getInterfaceAddresses + " msg:" + x)
   }
 }

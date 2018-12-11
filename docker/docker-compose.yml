@@ -2,19 +2,26 @@ version: '2'
 services:
   seed:
     image: org.loopring/lightcone_actors:latest
-    shm_size: 400m
+    shm_size: 800m  #shm_size指定
+    ports:    #端口映射
+      - "2552:2552"
     volumes:
-      - ".log:/log"
+      - "./log:/log"   #映射log目录
     environment:
       CLUSTER_IP: seed
-      CLUSTER_PORT: 9090
-  c1:
+      CLUSTER_PORT: 2552
+      SEED_IP: seed
+  worker:
     image: org.loopring/lightcone_actors:latest
-    shm_size: 400m
+    shm_size: 500m
     volumes:
       - "./log:/log"
     environment:
-      CLUSTER_IP: c1
-      CLUSTER_PORT: 9091
+      CLUSTER_IP: ""  #为空，选择随机ip
+      CLUSTER_PORT: 2552  #为空,可以选择随机端口
       SEED_IP: seed
-      SEED_PORT: 9090
+
+#可以选择docker内网地址
+#networks:
+#  app_net:
+#    driver: bridge
