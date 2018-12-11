@@ -26,15 +26,14 @@ import akka.actor.ActorRef
 import java.io.File
 
 object Main extends App with Logging {
-  val baseConfig = ConfigFactory.load()
-  val pathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
+  val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
+  log.info(s"--> config_path = ${configPathOpt}")
 
-  val config = pathOpt match {
+  val baseConfig = ConfigFactory.load()
+  val config = configPathOpt match {
     case Some(path) if path.nonEmpty ⇒
-      log.info(s"configurations loaded form file ${path}")
       ConfigFactory.parseFile(new File(path)).withFallback(baseConfig)
     case _ ⇒
-      log.info("no configuration file provided, using the default.")
       baseConfig
   }
 
