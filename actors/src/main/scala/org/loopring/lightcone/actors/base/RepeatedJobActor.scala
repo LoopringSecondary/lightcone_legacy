@@ -51,8 +51,9 @@ trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
           if (job.delayBetweenStartAndFinish) 0
           else (System.currentTimeMillis - now) / 1000
 
+        val delay = Math.max(job.dalayInSeconds - timeTook, 0)
         context.system.scheduler.scheduleOnce(
-          (job.dalayInSeconds - timeTook).seconds,
+          delay.seconds,
           self,
           job
         )
