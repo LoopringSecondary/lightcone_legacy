@@ -101,7 +101,8 @@ class AccountBalanceActor()(
             .map(_.resps)
             .map(_.map(res ⇒ BigInt(Numeric.toBigInt(res.result))))
           ethBalance ← ethToken match {
-            case Some(_) ⇒ (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
+            case Some(_) ⇒ (ethereumConnectionActor ?
+              XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
               .mapTo[XEthGetBalanceRes]
               .map(res ⇒ Some(BigInt(Numeric.toBigInt(res.result))))
             case None ⇒
@@ -140,7 +141,9 @@ class AccountBalanceActor()(
           balances ← (ethereumConnectionActor ? batchBalanceReq)
             .mapTo[XBatchContractCallRes]
             .map(_.resps)
-            .map(_.map { res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res.result)) })
+            .map(_.map { res ⇒
+              ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+            })
           ethBalance ← ethToken match {
             case Some(_) ⇒ (ethereumConnectionActor ?
               XEthGetBalanceReq(
@@ -148,7 +151,9 @@ class AccountBalanceActor()(
                 tag = "latest"
               ))
               .mapTo[XEthGetBalanceRes]
-              .map { res ⇒ Some(BigInt(Numeric.toBigInt(res.result))) }
+              .map { res ⇒
+                Some(BigInt(Numeric.toBigInt(res.result)))
+              }
             case None ⇒
               Future.successful(None)
           }
@@ -181,7 +186,9 @@ class AccountBalanceActor()(
           allowances ← (ethereumConnectionActor ? batchAllowanceReq)
             .mapTo[XBatchContractCallRes]
             .map(_.resps)
-            .map(_.map(res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))))
+            .map(_.map { res ⇒
+              ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+            })
           result = ethToken match {
             case Some(address) ⇒
               XGetAllowanceRes(
