@@ -57,7 +57,7 @@ class TokenMetadataActor()(
 
   val repeatedJobs = Seq(Job(
     name = "syncTokenValue",
-    dalayInSeconds = 10,
+    dalayInSeconds = 10 * 60, // 10 minutes
     run = () ⇒ tokenMetadata.getTokens(true).map {
       _.foreach(tokenMetadataManager.addToken)
     }
