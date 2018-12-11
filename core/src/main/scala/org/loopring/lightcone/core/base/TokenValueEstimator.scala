@@ -23,7 +23,7 @@ class TokenValueEstimator()(implicit tmm: TokenMetadataManager) {
 
   def getEstimatedValue(token: String, amount: BigInt): Double = {
     if (amount.signum <= 0) 0
-    else tmm.getToken(token) match {
+    else tmm.getTokenByAddress(token) match {
       case None ⇒ 0
       case Some(metadata) ⇒
         val scaling = Math.pow(10, metadata.decimals)

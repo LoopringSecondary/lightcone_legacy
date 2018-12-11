@@ -29,7 +29,7 @@ trait EvenlySharded extends Sharded {
   private def hashed(msg: Any, max: Int) = Math.abs(msg.hashCode % max)
 
   private def getShardId(msg: Any) = "shard_" + hashed(msg, numOfShards)
-  private def getEntitityId(msg: Any) = name + "_" + hashed(msg, numOfShards * numOfShards)
+  private def getEntitityId(msg: Any) = name + "_" + hashed(msg, numOfShards * entitiesPerShard)
 
   protected val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg ⇒ (getEntitityId(msg), msg)

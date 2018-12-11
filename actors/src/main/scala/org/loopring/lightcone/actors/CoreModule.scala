@@ -80,10 +80,7 @@ class CoreModule(config: Config)
     bind[TokenMetadataManager].toInstance(tmm)
 
     // This actor must be deployed on every node for TokenMetadataManager
-    actors.add(
-      TokenMetadataActor.name,
-      system.actorOf(Props(new TokenMetadataActor), TokenMetadataActor.name)
-    )
+    val tokenMetadataActor = system.actorOf(Props(new TokenMetadataActor), TokenMetadataActor.name)
 
     implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimator()
     bind[TokenValueEstimator].toInstance(tokenValueEstimator)

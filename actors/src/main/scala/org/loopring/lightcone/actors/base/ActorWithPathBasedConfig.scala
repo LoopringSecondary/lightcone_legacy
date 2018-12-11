@@ -27,24 +27,27 @@ trait NamedBasedConfig {
   val selfConfig = selfConfig_
 }
 
-abstract class ActorWithPathBasedConfig(val name: String)
+abstract class ActorWithPathBasedConfig(
+    val name: String,
+    val extractEntityName: String ⇒ String = Predef.identity
+)
   extends Actor
   with ActorLogging
   with NamedBasedConfig {
+  protected val entityName = extractEntityName(self.path.name).replace("$", "")
 
   override val selfConfig = try {
-    val str = self.path.name.replace("$", "")
-    selfConfig_.getConfig(str).withFallback(selfConfig_)
+    selfConfig_.getConfig(entityName).withFallback(selfConfig_)
   } catch {
     case e: Throwable ⇒
-      log.warning(s"NO CONFIG FOUND for actor with path: ${self.path.name}, use parent config")
+      log.warning(s"NO CONFIG FOUND for actor with path: ${self.path.name}")
       selfConfig_
   }
 
   log.info(s"""
 
     ---------------->>>
-    ${getClass.getSimpleName} actor created (${self.path.name}) with config =
+    ${getClass.getSimpleName} actor created (entity name: ${entityName}) with config =
     ${selfConfig}
     <<<----------------
 

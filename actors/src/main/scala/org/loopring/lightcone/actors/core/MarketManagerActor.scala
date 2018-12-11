@@ -39,18 +39,19 @@ object MarketManagerActor {
   val name = "market_manager"
   val wethTokenAddress = "WETH" // TODO
 
-  //todo：sharding配置，发送给MarketManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒
-      val marketId = (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
-      (marketId, msg)
-    case msg @ XStart(_) ⇒ ("0x00000000004-0x00000000002", msg) //todo:测试deploy
+  def extractEntityName(actorName: String) = actorName.split("_").last
+
+  protected var instancesPerMarket: Int = 1
+  private def hashed(msg: Any, max: Int) = Math.abs(msg.hashCode % max)
+  private def getShardId(msg: Any) = "default"
+  private def getEntitityId(msg: Any) = "${name}_${getMarketId(msg)}"
+
+  protected val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg ⇒ (getEntitityId(msg), msg)
   }
 
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XSubmitOrderReq(Some(xorder)) ⇒
-      (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
-    case XStart(_) ⇒ "0x00000000004-0x00000000002"
+  protected val extractShardId: ShardRegion.ExtractShardId = {
+    case msg ⇒ getShardId(msg)
   }
 
   def startShardRegion()(
@@ -74,6 +75,8 @@ object MarketManagerActor {
       extractShardId = extractShardId
     )
   }
+
+  private def getMarketId(msg: Any): String = ???
 }
 
 class MarketManagerActor()(

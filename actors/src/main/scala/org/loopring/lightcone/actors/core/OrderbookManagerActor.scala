@@ -35,8 +35,23 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderbookManagerActor extends EvenlySharded {
+object OrderbookManagerActor {
   val name = "orderbook_manager"
+
+  def extractEntityName(actorName: String) = actorName.split("_").last
+
+  protected var instancesPerMarket: Int = 1
+  private def hashed(msg: Any, max: Int) = Math.abs(msg.hashCode % max)
+  private def getShardId(msg: Any) = "shard_" + hashed(msg, instancesPerMarket)
+  private def getEntitityId(msg: Any) = "${name}_${hashed(msg, instancesPerMarket)}_${getMarketId(msg)}"
+
+  protected val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg ⇒ (getEntitityId(msg), msg)
+  }
+
+  protected val extractShardId: ShardRegion.ExtractShardId = {
+    case msg ⇒ getShardId(msg)
+  }
 
   def startShardRegion()(
     implicit
@@ -45,12 +60,12 @@ object OrderbookManagerActor extends EvenlySharded {
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]
+    actors: Lookup[ActorRef],
+    tokenMetadataManager: TokenMetadataManager
   ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shareds")
-    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+    instancesPerMarket = selfConfig.getInt("num-of-shards")
 
     ClusterSharding(system).start(
       typeName = name,
@@ -60,6 +75,8 @@ object OrderbookManagerActor extends EvenlySharded {
       extractShardId = extractShardId
     )
   }
+
+  private def getMarketId(msg: Any): String = ???
 }
 
 class OrderbookManagerActor()(
@@ -68,9 +85,14 @@ class OrderbookManagerActor()(
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(OrderbookManagerActor.name) {
+    val actors: Lookup[ActorRef],
+    val tokenMetadataManager: TokenMetadataManager
+) extends ActorWithPathBasedConfig(
+  OrderbookManagerActor.name,
+  OrderbookManagerActor.extractEntityName
+) {
 
+  val marketId = entityName
   val xorderbookConfig = XOrderbookConfig(
     levels = selfConfig.getInt("levels"),
     priceDecimals = selfConfig.getInt("price-decimals"),

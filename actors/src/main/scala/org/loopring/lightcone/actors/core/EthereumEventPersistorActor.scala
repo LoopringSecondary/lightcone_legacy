@@ -49,7 +49,7 @@ object EthereumEventPersistorActor extends EvenlySharded {
   ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shareds")
+    numOfShards = selfConfig.getInt("num-of-shards")
     entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
     ClusterSharding(system).start(
