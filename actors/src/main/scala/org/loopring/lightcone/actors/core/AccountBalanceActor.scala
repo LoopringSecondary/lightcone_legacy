@@ -25,7 +25,7 @@ import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.ethereum.EthereumConnectionActor
+import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.actors._
@@ -34,34 +34,34 @@ import org.loopring.lightcone.ethereum.data.Address
 
 import scala.concurrent._
 
+// main owner: 李亚东
 object AccountBalanceActor {
   val name = "account_balance"
 
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
+  val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
     case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
     case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
   }
 
-  private val extractShardId: ShardRegion.ExtractShardId = {
+  val extractShardId: ShardRegion.ExtractShardId = {
     case XGetBalanceAndAllowancesReq(address, _) ⇒ address
     case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
     case XStart(_) ⇒ "address_1"
   }
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
+  def startShardRegion()(implicit
+                         system: ActorSystem,
+                         config: Config,
+                         ec: ExecutionContext,
+                         timeProvider: TimeProvider,
+                         timeout: Timeout,
+                         actors: Lookup[ActorRef]
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new AccountBalanceActor(actors, config.getString("loopring-protocol.delegate-address"))),
-      settings = ClusterShardingSettings(system),
+      entityProps = Props(new AccountBalanceActor(config.getString("loopring-protocol.delegate-address"))),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
@@ -69,17 +69,17 @@ object AccountBalanceActor {
 }
 
 class AccountBalanceActor(
-    val actors: Lookup[ActorRef],
     val delegateAddress: String
 )(
     implicit
     ec: ExecutionContext,
-    timeout: Timeout
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
 )
   extends Actor
   with ActorLogging {
 
-  protected def ethereumConnectionActor: ActorRef = actors.get(EthereumConnectionActor.name)
+  protected def ethereumConnectionActor: ActorRef = actors.get(EthereumAccessActor.name)
 
   val erc20Abi = ERC20ABI()
   val zeroAddress: String = "0x" + "0" * 40
