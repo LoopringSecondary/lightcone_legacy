@@ -40,20 +40,10 @@ object MarketManagerActor {
 
   def extractEntityName(actorName: String) = actorName.split("_").last
 
-  private def getShardId(msg: Any) = "singleton"
+  private def extractEntityId(msg: Any): Option[(String, Any)] =
+    getMarketId(msg).map { marketId ⇒ ("${name}_singleton_${marketId}}", msg) }
 
-  private def getEntitityId(msg: Any) = getMarketId(msg) match {
-    case Some(marketId) ⇒ "${name}_singleton_${marketId}}"
-    case None           ⇒ "${name}_default"
-  }
-
-  protected val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg ⇒ (getEntitityId(msg), msg)
-  }
-
-  protected val extractShardId: ShardRegion.ExtractShardId = {
-    case msg ⇒ getShardId(msg)
-  }
+  private def extractShardId(msg: Any): Option[String] = Some("singleton")
 
   def startShardRegion()(
     implicit
@@ -72,8 +62,8 @@ object MarketManagerActor {
       typeName = name,
       entityProps = Props(new MarketManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      extractEntityId = Function.unlift(extractEntityId),
+      extractShardId = Function.unlift(extractShardId)
     )
   }
 

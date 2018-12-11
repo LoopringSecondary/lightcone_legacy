@@ -46,18 +46,10 @@ object OrderbookManagerActor {
 
   private def getShardId(msg: Any) = "shard_" + hashed(msg)
 
-  private def getEntitityId(msg: Any) = getMarketId(msg) match {
-    case Some(marketId) if marketId.nonEmpty ⇒ "${name}_${hashed(msg)}_${marketId}"
-    case None ⇒ "${name}_default"
-  }
+  private def extractEntityId(msg: Any): Option[(String, Any)] =
+    getMarketId(msg).map { marketId ⇒ ("${name}_${hashed(msg)}_${marketId}", msg) }
 
-  protected val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg ⇒ (getEntitityId(msg), msg)
-  }
-
-  protected val extractShardId: ShardRegion.ExtractShardId = {
-    case msg ⇒ getShardId(msg)
-  }
+  private def extractShardId(msg: Any): Option[String] = Some(getShardId(msg))
 
   def startShardRegion()(
     implicit
@@ -77,8 +69,8 @@ object OrderbookManagerActor {
       typeName = name,
       entityProps = Props(new OrderbookManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      extractEntityId = Function.unlift(extractEntityId),
+      extractShardId = Function.unlift(extractShardId)
     )
   }
 
