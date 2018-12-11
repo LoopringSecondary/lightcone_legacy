@@ -227,7 +227,8 @@ class OrderDalImpl()(
   ): Future[Seq[XRawOrder]] = {
     val filters = queryOrderFilters(
       statuses, owners, tokenSSet, tokenBSet,
-      marketHashSet, feeTokenSet, None, sort, skip)
+      marketHashSet, feeTokenSet, None, sort, skip
+    )
     db.run(filters.result)
   }
 
@@ -243,7 +244,8 @@ class OrderDalImpl()(
   ): Future[Seq[XRawOrder]] = {
     val filters = queryOrderFilters(
       statuses, owners, tokenSSet, tokenBSet,
-      marketHashSet, feeTokenSet, None, sort, skip)
+      marketHashSet, feeTokenSet, None, sort, skip
+    )
     db.run(filters.result)
   }
 
@@ -257,7 +259,8 @@ class OrderDalImpl()(
   ): Future[Int] = {
     val filters = queryOrderFilters(
       statuses, owners, tokenSSet, tokenBSet,
-      marketHashSet, feeTokenSet, None, None, None)
+      marketHashSet, feeTokenSet, None, None, None
+    )
     db.run(filters.size.result)
   }
 
@@ -275,7 +278,8 @@ class OrderDalImpl()(
   ): Future[Seq[XRawOrder]] = {
     val filters = queryOrderFilters(
       statuses, owners, tokenSSet, tokenBSet,
-      marketHashSet, Set.empty, validTime, sort, skip)
+      marketHashSet, Set.empty, validTime, sort, skip
+    )
     db.run(filters.result)
   }
 

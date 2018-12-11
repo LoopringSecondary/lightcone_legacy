@@ -104,17 +104,25 @@ class CutoffDalSpec extends DalSpec[CutoffDal] {
       _ ← testCutoffByBrokers(brokers2, "AAA-WETH", timeProvider.getTimeSeconds(), 1l)
       _ ← testCutoffByOwners(owners, "OMG-LRC", timeProvider.getTimeSeconds(), 1l)
       queryBrokers ← dal.getCutoffs(Some(XCutoff.XType.BROKER), None, None)
-      queryBroker ← dal.getCutoffs(Some(XCutoff.XType.BROKER),
-        Some(XCutoffBy(XCutoffBy.Value.Broker("0x-savecutoff-broker4"))), None)
-      queryBrokerPair ← dal.getCutoffs(Some(XCutoff.XType.BROKER),
-        Some(XCutoffBy(XCutoffBy.Value.Broker("0x-savecutoff-broker8"))), Some("XYZ-WETH"))
-      queryOwner ← dal.getCutoffs(Some(XCutoff.XType.OWNER),
-        Some(XCutoffBy(XCutoffBy.Value.Owner("0x-savecutoff-owner9"))))
+      queryBroker ← dal.getCutoffs(
+        Some(XCutoff.XType.BROKER),
+        Some(XCutoffBy(XCutoffBy.Value.Broker("0x-savecutoff-broker4"))), None
+      )
+      queryBrokerPair ← dal.getCutoffs(
+        Some(XCutoff.XType.BROKER),
+        Some(XCutoffBy(XCutoffBy.Value.Broker("0x-savecutoff-broker8"))), Some("XYZ-WETH")
+      )
+      queryOwner ← dal.getCutoffs(
+        Some(XCutoff.XType.OWNER),
+        Some(XCutoffBy(XCutoffBy.Value.Owner("0x-savecutoff-owner9")))
+      )
       queryPair ← dal.getCutoffs(None, None, Some("LRC-WETH"))
       _ ← dal.obsolete(0l) // clear datas for next spec method
     } yield (queryBrokers, queryBroker, queryBrokerPair, queryOwner, queryPair)
-    val res = Await.result(result.mapTo[(Seq[XCutoff], Seq[XCutoff], Seq[XCutoff], Seq[XCutoff], Seq[XCutoff])],
-      5.second)
+    val res = Await.result(
+      result.mapTo[(Seq[XCutoff], Seq[XCutoff], Seq[XCutoff], Seq[XCutoff], Seq[XCutoff])],
+      5.second
+    )
     val x = res._1.length === 16 && res._2.length === 1 && res._3.length === 0 && res._4.length === 1 &&
       res._5.length === 8
     x should be(true)
@@ -160,11 +168,15 @@ class CutoffDalSpec extends DalSpec[CutoffDal] {
       queryBrokers ← dal.hasCutoffs(Some(XCutoff.XType.BROKER), None, None, None)
       queryBrokerTime ← dal.hasCutoffs(Some(XCutoff.XType.BROKER), None, None,
         Some(timeProvider.getTimeSeconds() - 100))
-      queryBrokerPair ← dal.hasCutoffs(Some(XCutoff.XType.BROKER),
+      queryBrokerPair ← dal.hasCutoffs(
+        Some(XCutoff.XType.BROKER),
         Some(XCutoffBy(XCutoffBy.Value.Broker("0x-hasCutoff-broker8"))),
-        Some("LRC-WETH"), Some(timeProvider.getTimeSeconds() - 100))
-      queryOwner ← dal.hasCutoffs(Some(XCutoff.XType.OWNER),
-        Some(XCutoffBy(XCutoffBy.Value.Owner("0x-hasCutoff-owner9"))), None, None)
+        Some("LRC-WETH"), Some(timeProvider.getTimeSeconds() - 100)
+      )
+      queryOwner ← dal.hasCutoffs(
+        Some(XCutoff.XType.OWNER),
+        Some(XCutoffBy(XCutoffBy.Value.Owner("0x-hasCutoff-owner9"))), None, None
+      )
       queryPair ← dal.hasCutoffs(None, None, Some("LRC-WETH"), None)
       _ ← dal.obsolete(0l) // clear datas for next spec method
     } yield (queryBrokers, queryBrokerTime, queryBrokerPair, queryOwner, queryPair)
