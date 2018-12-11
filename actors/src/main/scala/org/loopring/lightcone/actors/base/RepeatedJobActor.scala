@@ -22,12 +22,13 @@ import scala.concurrent.duration._
 import org.loopring.lightcone.proto.actors.XRunNamedJob
 
 final case class Job(
-  name: String,
-  dalayInSeconds: Int,
-  run: () ⇒ Future[Any],
-  initialDalayInSeconds: Int = 0,
-  delayBetweenStartAndFinish: Boolean = true,
-  private[base] var sequence: Long = 0)
+    name: String,
+    dalayInSeconds: Int,
+    run: () ⇒ Future[Any],
+    initialDalayInSeconds: Int = 0,
+    delayBetweenStartAndFinish: Boolean = true,
+    private[base] var sequence: Long = 0
+)
 
 trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
   import context.dispatcher
@@ -41,7 +42,8 @@ trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
     context.system.scheduler.scheduleOnce(
       job.initialDalayInSeconds.seconds,
       self,
-      XRunNamedJob(job.name))
+      XRunNamedJob(job.name)
+    )
   }
 
   def receive: Receive = {
@@ -59,7 +61,8 @@ trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
           context.system.scheduler.scheduleOnce(
             delay.seconds,
             self,
-            XRunNamedJob(name))
+            XRunNamedJob(name)
+          )
         }
       }
   }
