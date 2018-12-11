@@ -84,7 +84,7 @@ class EthereumDataIndexer(
         (ethereumConnectionActor ? XGetBlockWithTxObjectByNumberReq(currentBlockNumber + 1))
           .mapTo[XGetBlockWithTxObjectByNumberRes]
       else {
-        Future.successful()
+        Future.successful(XGetBlockWithTxObjectByNumberRes())
       }
     } yield {
       block match {
