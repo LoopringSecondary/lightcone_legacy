@@ -33,7 +33,7 @@ class JobWithStatus(j: Job) {
   var job: Job = j
 }
 
-trait RepeatedJobActor extends Actor {
+trait RepeatedJobActor { actor: Actor ⇒
   import context.dispatcher
 
   def initAndStartNextRound(jobs: Job*): Unit = {

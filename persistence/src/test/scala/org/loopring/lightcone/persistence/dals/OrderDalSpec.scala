@@ -17,7 +17,7 @@
 package org.loopring.lightcone.persistence.dals
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.lib.SystemTimeProvider
+import org.loopring.lightcone.lib.{ MurmurHash, SystemTimeProvider }
 import org.loopring.lightcone.proto.actors.{ XOrderState, XSaveOrderResult, XSaveOrderStateResult }
 import org.loopring.lightcone.proto.core.{ XOrderStatus, XRawOrder }
 import org.loopring.lightcone.proto.persistence._
@@ -26,91 +26,217 @@ import scala.concurrent.duration._
 
 class OrderDalSpec extends DalSpec[OrderDal] {
   def getDal = new OrderDalImpl()
+  val timeProvider = new SystemTimeProvider()
+  val tokenS = "0x-tokens"
+  val tokenB = "0x-tokenb"
+  val tokenFee = "0x-fee-token"
+  val validSince = 1
+  val validUntil = timeProvider.getTimeSeconds()
 
-  private def testSave(hash: String, owner: String): Future[XSaveOrderResult] = {
+  private def testSave(
+    hash: String,
+    owner: String,
+    status: XOrderStatus,
+    tokenS: String,
+    tokenB: String,
+    validSince: Int,
+    validUntil: Int
+  ): Future[XSaveOrderResult] = {
+    val now = timeProvider.getTimeMillis
+    val state = XRawOrder.State(
+      createdAt = now,
+      updatedAt = now,
+      status = status
+    )
+    val fee = XRawOrder.FeeParams(
+      tokenFee = tokenFee,
+      amountFee = ByteString.copyFrom("111", "utf-8")
+    )
+    val param = XRawOrder.Params(
+      validUntil = validUntil
+    )
     var order = XRawOrder(
       owner = owner,
       hash = hash,
       version = 1,
-      tokenS = "0x1",
-      tokenB = "0x2",
+      tokenS = tokenS,
+      tokenB = tokenB,
       amountS = ByteString.copyFrom("11", "UTF-8"),
       amountB = ByteString.copyFrom("12", "UTF-8"),
-      validSince = 999
+      validSince = validSince,
+      state = Some(state),
+      feeParams = Some(fee),
+      params = Some(param),
+      marketHash = MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)
     )
     dal.saveOrder(order)
   }
 
+  private def testSaves(
+    hashes: Set[String],
+    status: XOrderStatus,
+    tokenS: String,
+    tokenB: String,
+    validSince: Int,
+    validUntil: Int
+  ): Future[Set[XSaveOrderResult]] = {
+    for {
+      result ← Future.sequence(hashes.map { hash ⇒
+        testSave(hash, hash, status, tokenS, tokenB, validSince, validUntil)
+      })
+    } yield result
+  }
+
   "saveOrder" must "save a order with hash 0x111" in {
+    val hash = "0x-saveorder-state0-01"
     val result = for {
-      _ ← testSave("0x111", "0x111")
-      query ← dal.getOrder("0x111")
+      _ ← testSave(hash, hash, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      query ← dal.getOrder(hash)
     } yield query
     val res = Await.result(result.mapTo[Option[XRawOrder]], 5.second)
     res should not be empty
   }
 
   "getOrders" must "get some orders with many query parameters" in {
+    val hashes = Set(
+      "0x-getorders-state0-01",
+      "0x-getorders-state0-02",
+      "0x-getorders-state0-03",
+      "0x-getorders-state0-04",
+      "0x-getorders-state0-05"
+    )
+    val mockState = Set(
+      "0x-getorders-state1-01",
+      "0x-getorders-state1-02",
+      "0x-getorders-state1-03",
+      "0x-getorders-state1-04"
+    )
+    val mockToken = Set(
+      "0x-getorders-token-01",
+      "0x-getorders-token-02",
+      "0x-getorders-token-03",
+      "0x-getorders-token-04"
+    )
+    val tokenS = "0x-getorders-tokens"
+    val tokenB = "0x-getorders-tokenb"
     val result = for {
-      _ ← testSave("0x222", "0x222")
-      query ← dal.getOrders(Set.empty, Set("0x222"), Set.empty, Set.empty, Set.empty, Some(XSort.ASC), None)
-    } yield query
-    val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
-    res should not be empty
+      _ ← testSaves(hashes, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      _ ← testSaves(mockState, XOrderStatus.STATUS_PARTIALLY_FILLED, tokenS, tokenB, validSince, validUntil.toInt)
+      _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0x-mock-tokens", "0x-mock-tokenb", 200, 300)
+      query ← dal.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set(tokenS), Set(tokenB),
+        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set(tokenFee), Some(XSort.ASC), None)
+      queryStatus ← dal.getOrders(Set(XOrderStatus.STATUS_PARTIALLY_FILLED), Set.empty, Set.empty, Set.empty, Set.empty,
+        Set.empty, Some(XSort.ASC), None)
+      queryToken ← dal.getOrders(Set(XOrderStatus.STATUS_NEW), mockToken, Set("0x-mock-tokens"), Set("0x-mock-tokenb"), Set.empty,
+        Set(tokenFee), Some(XSort.ASC), None)
+      queryMarket ← dal.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set.empty, Set.empty,
+        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set.empty, Some(XSort.ASC), None)
+      count ← dal.countOrders(Set.empty, Set.empty, Set.empty, Set.empty, Set.empty)
+    } yield (query, queryStatus, queryToken, queryMarket, count)
+    val res = Await.result(result.mapTo[(Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Int)], 5.second)
+    val x = res._1.length === hashes.size && res._2.length === 0 && res._3.length === 4 && res._4.length === 5 && res._5 >= 13 // 之前的测试方法可能有插入
+    x should be(true)
   }
 
   "getOrder" must "get a order with hash 0x111" in {
+    val owner = "0x-getorder-state0-01"
     val result = for {
-      _ ← testSave("0x333", "0x333")
-      query ← dal.getOrder("0x333")
+      _ ← testSave(owner, owner, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      query ← dal.getOrder(owner)
     } yield query
     val res = Await.result(result.mapTo[Option[XRawOrder]], 5.second)
     res should not be empty
   }
 
-  "getOrdersForUse" must "get some orders with many query parameters" in {
+  "getOrdersForUser" must "get some orders with many query parameters" in {
+    val owners = Set(
+      "0x-getordersfouser-01",
+      "0x-getordersfouser-02",
+      "0x-getordersfouser-03",
+      "0x-getordersfouser-04",
+      "0x-getordersfouser-05"
+    )
     val result = for {
-      _ ← testSave("0x444", "0x444")
-      query ← dal.getOrdersForUser(Set.empty, Set("0x444"), Set.empty, Set.empty, Set.empty, Some(XSort.ASC), None)
+      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      query ← dal.getOrdersForUser(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
+        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), Set(tokenFee), Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
-    res should not be empty
+    res.length should be(owners.size)
   }
 
   "countOrders" must "get orders count with many query parameters" in {
+    val owners = Set(
+      "0x-countorders-01",
+      "0x-countorders-02",
+      "0x-countorders-03",
+      "0x-countorders-04",
+      "0x-countorders-05",
+      "0x-countorders-06"
+    )
     val result = for {
-      _ ← testSave("0x555", "0x555")
-      query ← dal.countOrders(Set.empty, Set("0x555"), Set.empty, Set.empty, Set.empty)
+      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      query ← dal.countOrders(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
+        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)))
     } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
-    res should be >= 0
+    res should be(owners.size)
   }
 
   "getOrdersForRecover" must "get some orders to recover" in {
+    val owners = Set(
+      "0x-getordersforrecover-01",
+      "0x-getordersforrecover-02",
+      "0x-getordersforrecover-03",
+      "0x-getordersforrecover-04",
+      "0x-getordersforrecover-05",
+      "0x-getordersforrecover-06"
+    )
     val result = for {
-      _ ← testSave("0x666", "0x666")
-      query ← dal.getOrdersForRecover(Set(XOrderStatus.STATUS_NEW), Set("0x666"), Set.empty, Set.empty, None, Some(XSort.ASC), None)
+      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      query ← dal.getOrdersForRecover(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
+        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), None, Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
-    res should not be empty
+    res.length should be(owners.size)
   }
 
   "updateOrderStatus" must "update order's status with hash 0x111" in {
+    val owners = Set(
+      "0x-updateorderstatus-01",
+      "0x-updateorderstatus-02",
+      "0x-updateorderstatus-03",
+      "0x-updateorderstatus-04",
+      "0x-updateorderstatus-05",
+      "0x-updateorderstatus-06"
+    )
+    val owner = "0x-updateorderstatus-03"
     val result = for {
-      _ ← testSave("0x777", "0x777")
-      query ← dal.updateOrderStatus("0x777", XOrderStatus.STATUS_CANCELLED_BY_USER)
-    } yield query
-    val res = Await.result(result.mapTo[Either[XPersistenceError, String]], 5.second)
-    res.isRight should be(true)
+      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      update ← dal.updateOrderStatus(owner, XOrderStatus.STATUS_CANCELLED_BY_USER)
+      query ← dal.getOrder(owner)
+    } yield (update, query)
+    val res = Await.result(result.mapTo[(Either[XPersistenceError, String], Option[XRawOrder])], 5.second)
+    val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_CANCELLED_BY_USER
+    x should be(true)
   }
 
   "updateAmount" must "update order's amount state with hash 0x111" in {
+    val owners = Set(
+      "0x-updateamount-01",
+      "0x-updateamount-02",
+      "0x-updateamount-03",
+      "0x-updateamount-04",
+      "0x-updateamount-05",
+      "0x-updateamount-06"
+    )
+    val hash = "0x-updateamount-03"
     val timeProvider = new SystemTimeProvider()
     val now = timeProvider.getTimeMillis
     val state = XRawOrder.State(
       createdAt = now,
       updatedAt = now,
-      status = XOrderStatus.STATUS_NEW,
+      status = XOrderStatus.STATUS_PARTIALLY_FILLED,
       actualAmountB = ByteString.copyFrom("111", "UTF-8"),
       actualAmountS = ByteString.copyFrom("112", "UTF-8"),
       actualAmountFee = ByteString.copyFrom("113", "UTF-8"),
@@ -119,19 +245,33 @@ class OrderDalSpec extends DalSpec[OrderDal] {
       outstandingAmountFee = ByteString.copyFrom("116", "UTF-8")
     )
     val result = for {
-      _ ← testSave("0x888", "0x888")
-      query ← dal.updateAmount("0x888", state)
-    } yield query
-    val res = Await.result(result.mapTo[Either[XPersistenceError, String]], 5.second)
-    res.isRight should be(true)
+      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      update ← dal.updateAmount(hash, state)
+      query ← dal.getOrder(hash)
+    } yield (update, query)
+    val res = Await.result(result.mapTo[(Either[XPersistenceError, String], Option[XRawOrder])], 5.second)
+    val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_NEW &&
+      res._2.get.state.get.actualAmountB === ByteString.copyFrom("111", "UTF-8")
+    x should be(true)
   }
 
   "updateFailed" must "update order's status to failed with hash 0x111" in {
+    val owners = Set(
+      "0x-updatefailed-01",
+      "0x-updatefailed-02",
+      "0x-updatefailed-03",
+      "0x-updatefailed-04",
+      "0x-updatefailed-05",
+      "0x-updatefailed-06"
+    )
+    val hash = "0x-updatefailed-05"
     val result = for {
-      _ ← testSave("0x999", "0x999")
-      query ← dal.updateFailed("0x999", XOrderStatus.STATUS_CANCELLED_BY_USER)
-    } yield query
-    val res = Await.result(result.mapTo[Either[XPersistenceError, String]], 5.second)
-    res.isRight should be(true)
+      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      update ← dal.updateFailed(hash, XOrderStatus.STATUS_CANCELLED_BY_USER)
+      query ← dal.getOrder(hash)
+    } yield (update, query)
+    val res = Await.result(result.mapTo[(Either[XPersistenceError, String], Option[XRawOrder])], 5.second)
+    val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_CANCELLED_BY_USER
+    x should be(true)
   }
 }

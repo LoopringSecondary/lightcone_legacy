@@ -69,6 +69,7 @@ trait OrderDal
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
+    marketHashSet: Set[Long] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
@@ -79,6 +80,7 @@ trait OrderDal
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
+    marketHashSet: Set[Long] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
@@ -91,6 +93,7 @@ trait OrderDal
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
+    marketHashSet: Set[Long] = Set.empty,
     validTime: Option[Int] = None,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
@@ -102,6 +105,7 @@ trait OrderDal
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
+    marketHashSet: Set[Long] = Set.empty,
     feeTokenSet: Set[String] = Set.empty
   ): Future[Int]
 
@@ -141,7 +145,10 @@ class OrderDalImpl()(
       updatedAt = now,
       status = XOrderStatus.STATUS_NEW
     )
-    db.run((query += order.copy(state = Some(state))).asTry).map {
+    db.run((query += order.copy(
+      state = Some(state),
+      marketHash = MurmurHash.hash64(order.tokenS) ^ MurmurHash.hash64(order.tokenB)
+    )).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
         XSaveOrderResult(
           error = XPersistenceError.PERS_ERR_DUPLICATE_INSERT,
@@ -172,13 +179,15 @@ class OrderDalImpl()(
     }
   }
 
-  def getOrder(hash: String): Future[Option[XRawOrder]] = db.run(query.filter(_.hash === hash).result.headOption)
+  def getOrder(hash: String): Future[Option[XRawOrder]] =
+    db.run(query.filter(_.hash === hash).result.headOption)
 
   private def queryOrderFilters(
     statuses: Set[XOrderStatus],
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
+    marketHashSet: Set[Long] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     validTime: Option[Int] = None,
     sort: Option[XSort] = None,
@@ -189,6 +198,7 @@ class OrderDalImpl()(
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
     if (tokenBSet.nonEmpty) filters = filters.filter(_.tokenB inSet tokenBSet)
+    if (marketHashSet.nonEmpty) filters = filters.filter(_.marketHash inSet marketHashSet)
     if (feeTokenSet.nonEmpty) filters = filters.filter(_.tokenFee inSet feeTokenSet)
     if (validTime.nonEmpty) filters = filters
       .filter(_.validSince >= validTime.get)
@@ -210,11 +220,14 @@ class OrderDalImpl()(
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
+    marketHashSet: Set[Long] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
   ): Future[Seq[XRawOrder]] = {
-    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, None, sort, skip)
+    val filters = queryOrderFilters(
+      statuses, owners, tokenSSet, tokenBSet,
+      marketHashSet, feeTokenSet, None, sort, skip)
     db.run(filters.result)
   }
 
@@ -223,11 +236,14 @@ class OrderDalImpl()(
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
+    marketHashSet: Set[Long] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
   ): Future[Seq[XRawOrder]] = {
-    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, None, sort, skip)
+    val filters = queryOrderFilters(
+      statuses, owners, tokenSSet, tokenBSet,
+      marketHashSet, feeTokenSet, None, sort, skip)
     db.run(filters.result)
   }
 
@@ -236,9 +252,12 @@ class OrderDalImpl()(
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
+    marketHashSet: Set[Long] = Set.empty,
     feeTokenSet: Set[String] = Set.empty
   ): Future[Int] = {
-    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, feeTokenSet, None, None, None)
+    val filters = queryOrderFilters(
+      statuses, owners, tokenSSet, tokenBSet,
+      marketHashSet, feeTokenSet, None, None, None)
     db.run(filters.size.result)
   }
 
@@ -249,17 +268,20 @@ class OrderDalImpl()(
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
+    marketHashSet: Set[Long] = Set.empty,
     validTime: Option[Int] = None,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
   ): Future[Seq[XRawOrder]] = {
-    val filters = queryOrderFilters(statuses, owners, tokenSSet, tokenBSet, Set.empty, validTime, sort, skip)
+    val filters = queryOrderFilters(
+      statuses, owners, tokenSSet, tokenBSet,
+      marketHashSet, Set.empty, validTime, sort, skip)
     db.run(filters.result)
   }
 
   def updateOrderStatus(
     hash: String,
-    status: XOrderStatus,
+    status: XOrderStatus
   ): Future[Either[XPersistenceError, String]] = for {
     result ← db.run(query
       .filter(_.hash === hash)

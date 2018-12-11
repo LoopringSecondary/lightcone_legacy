@@ -28,7 +28,7 @@ class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
   private var priceMap = Map.empty[String, Double]
   private var burnRateMap = Map.empty[String, Double]
 
-  def addToken(token: XTokenMetadata) {
+  def addToken(token: XTokenMetadata) = this.synchronized {
     tokens += token.address -> token
   }
 
@@ -36,23 +36,15 @@ class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
 
   def getToken(token: String) = tokens.get(token)
 
-  // def updatePrices(priceMap: Map[String, Double]) {
-  //   tokens = tokens.map {
-  //     case (address, token) ⇒ priceMap.get(address) match {
-  //       case Some(price) ⇒ (address, token.copy(currentPrice = price))
-  //       case None        ⇒ (address, token)
-  //     }
-  //   }
-  // }
-
   def getBurnRate(token: String) =
     tokens.get(token).map(_.burnRate).getOrElse(defaultBurnRate)
 
-  def updateBurnRate(token: String, rate: Double) =
+  def updateBurnRate(token: String, rate: Double) = this.synchronized {
     tokens.get(token) match {
       case None ⇒
       case Some(meta) ⇒
         tokens += token → meta.copy(burnRate = rate)
     }
+  }
 }
 

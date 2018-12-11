@@ -35,6 +35,7 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
+// main owner: 于红雨
 object AccountManagerActor {
   val name = "account_manager"
 
@@ -63,7 +64,7 @@ object AccountManagerActor {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new AccountManagerActor()),
-      settings = ClusterShardingSettings(system),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
@@ -79,17 +80,8 @@ class AccountManagerActor()(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator
-) extends Actor
-  with ActorLogging
-  with OrderRecoverySupport {
-
-  val conf = config.getConfig(AccountManagerActor.name)
-  val thisConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
-  } catch {
-    case e: Throwable ⇒ conf
-  }
-  log.info(s"config for ${self.path.name} = $thisConfig")
+) extends ConfiggedActor(AccountManagerActor.name)
+  with OrderRecoverSupport {
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
@@ -104,8 +96,8 @@ class AccountManagerActor()(
     case XStart(shardEntityId) ⇒ {
       address = shardEntityId
       val recoverySettings = XOrderRecoverySettings(
-        conf.getBoolean("skip-recovery"),
-        conf.getInt("recover-batch-size"),
+        selfConfig.getBoolean("skip-recovery"),
+        selfConfig.getInt("recover-batch-size"),
         address,
         None
       )
