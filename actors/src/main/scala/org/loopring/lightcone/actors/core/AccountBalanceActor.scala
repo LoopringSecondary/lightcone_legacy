@@ -26,7 +26,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.ethereum.EthereumConnectionActor
-import org.loopring.lightcone.ethereum.EthReqManger
+import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.actors._
 import org.web3j.utils.Numeric
@@ -49,7 +49,7 @@ object AccountBalanceActor {
     case XStart(_) ⇒ "address_1"
   }
 
-  def startShardRegion(delegateAddress: String)(
+  def startShardRegion()(
     implicit
     system: ActorSystem,
     config: Config,
@@ -60,7 +60,7 @@ object AccountBalanceActor {
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new AccountBalanceActor(actors, delegateAddress)),
+      entityProps = Props(new AccountBalanceActor(actors, config.getString("loopring-protocol.delegate-address"))),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -81,7 +81,7 @@ class AccountBalanceActor(
 
   protected def ethereumConnectionActor: ActorRef = actors.get(EthereumConnectionActor.name)
 
-  val ethReqManger = EthReqManger()
+  val erc20Abi = ERC20ABI()
   val zeroAddress: String = "0x" + "0" * 40
 
   def receive: Receive = LoggingReceive {
@@ -95,8 +95,8 @@ class AccountBalanceActor(
       } else {
         val tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
         val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
-        val batchBalanceReq = ethReqManger.packBatchBalanceCallReq(Address(req.address), tokens.map(Address(_)))
-        val batchAllowanceReq = ethReqManger.packBatchAllowanceCallReq(Address(req.address), tokens.map(Address(_)), _spender = Address(delegateAddress))
+        val batchBalanceReq = packBatchBalanceCallReq(Address(req.address), tokens.map(Address(_)))
+        val batchAllowanceReq = packBatchAllowanceCallReq(Address(req.address), tokens.map(Address(_)))
         (for {
           balances ← (ethereumConnectionActor ? batchBalanceReq)
             .mapTo[XBatchContractCallRes]
@@ -140,7 +140,7 @@ class AccountBalanceActor(
       } else {
         val tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
         val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
-        val batchBalanceReq = ethReqManger.packBatchBalanceCallReq(Address(req.address), tokens.map(Address(_)))
+        val batchBalanceReq = packBatchBalanceCallReq(Address(req.address), tokens.map(Address(_)))
         (for {
           balances ← (ethereumConnectionActor ? batchBalanceReq)
             .mapTo[XBatchContractCallRes]
@@ -177,7 +177,7 @@ class AccountBalanceActor(
       } else {
         val tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
         val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
-        val batchAllowanceReq = ethReqManger.packBatchAllowanceCallReq(Address(req.address), tokens.map(Address(_)), _spender = Address(delegateAddress))
+        val batchAllowanceReq = packBatchAllowanceCallReq(Address(req.address), tokens.map(Address(_)))
         (for {
           allowances ← (ethereumConnectionActor ? batchAllowanceReq)
             .mapTo[XBatchContractCallRes]
@@ -201,6 +201,26 @@ class AccountBalanceActor(
     case msg ⇒
       log.error(s"unsupported msg send to AccountBalanceActor:$msg")
       sender ! XError(error = s"unsupported msg send to AccountBalanceActor:$msg")
+  }
+
+
+  def packBatchBalanceCallReq(owner: Address, tokens: Seq[Address], tag: String = "latest"): XBatchContractCallReq = {
+    val balanceCallReqs = tokens.map(token ⇒
+    {val data = erc20Abi.balanceOf.pack(BalanceOfFunction.Parms(_owner = owner.toString))
+    val param = XTransactionParam(to = token.toString, data = data)
+    XEthCallReq(Some(param), tag)})
+    XBatchContractCallReq(balanceCallReqs)
+  }
+
+  def packBatchAllowanceCallReq(owner: Address, tokens: Seq[Address], tag: String = "latest"): XBatchContractCallReq = {
+    val allowanceCallReqs = tokens.map(token ⇒{
+      val data = erc20Abi.allowance.pack(
+        AllowanceFunction.Parms(_spender = Address(delegateAddress).toString, _owner = owner.toString)
+      )
+      val param = XTransactionParam(to = token.toString, data = data)
+      XEthCallReq(Some(param), tag)
+    })
+    XBatchContractCallReq(allowanceCallReqs)
   }
 
 }
