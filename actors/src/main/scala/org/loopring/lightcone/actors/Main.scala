@@ -43,7 +43,8 @@ object Main extends App with Logging {
     "akka.remote.artery.canonical.port",
     "akka.remote.bind.hostname",
     "akka.remote.bind.port",
-    "akka.cluster.roles")
+    "akka.cluster.roles"
+  )
 
   configItems foreach { i ⇒
     log.info(s"--> $i = ${config.getString(i)}")
