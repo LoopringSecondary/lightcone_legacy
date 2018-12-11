@@ -42,12 +42,12 @@ object AccountBalanceActor extends EvenlySharded {
   val name = "account_balance"
 
   def startShardRegion()(implicit
-                         system: ActorSystem,
-                         config: Config,
-                         ec: ExecutionContext,
-                         timeProvider: TimeProvider,
-                         timeout: Timeout,
-                         actors: Lookup[ActorRef]
+    system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
   ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -198,17 +198,18 @@ class AccountBalanceActor(
       sender ! XError(error = s"unsupported msg send to AccountBalanceActor:$msg")
   }
 
-
   def packBatchBalanceCallReq(owner: Address, tokens: Seq[Address], tag: String = "latest"): XBatchContractCallReq = {
     val balanceCallReqs = tokens.map(token ⇒
-    {val data = erc20Abi.balanceOf.pack(BalanceOfFunction.Parms(_owner = owner.toString))
-    val param = XTransactionParam(to = token.toString, data = data)
-    XEthCallReq(Some(param), tag)})
+      {
+        val data = erc20Abi.balanceOf.pack(BalanceOfFunction.Parms(_owner = owner.toString))
+        val param = XTransactionParam(to = token.toString, data = data)
+        XEthCallReq(Some(param), tag)
+      })
     XBatchContractCallReq(balanceCallReqs)
   }
 
   def packBatchAllowanceCallReq(owner: Address, tokens: Seq[Address], tag: String = "latest"): XBatchContractCallReq = {
-    val allowanceCallReqs = tokens.map(token ⇒{
+    val allowanceCallReqs = tokens.map(token ⇒ {
       val data = erc20Abi.allowance.pack(
         AllowanceFunction.Parms(_spender = Address(delegateAddress).toString, _owner = owner.toString)
       )
