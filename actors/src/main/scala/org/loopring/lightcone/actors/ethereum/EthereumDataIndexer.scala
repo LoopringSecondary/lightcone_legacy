@@ -39,7 +39,7 @@ class EthereumDataIndexer(
 )
   extends Actor with ActorLogging {
 
-  def ethereumConnectionActor: ActorRef = actors.get(EthereumConnectionActor.name)
+  def ethereumConnectionActor: ActorRef = actors.get(EthereumAccessActor.name)
   def accountManager: ActorRef = actors.get(AccountManagerActor.name)
 
   val erc20Abi = ERC20ABI()
