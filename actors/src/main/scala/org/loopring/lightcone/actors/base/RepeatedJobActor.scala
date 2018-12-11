@@ -25,7 +25,7 @@ final case class Job(
     dalayInSeconds: Int,
     run: () ⇒ Future[Any],
     initialDalayInSeconds: Int = 0,
-    delayBetweenStartAndFinish: Boolean = false
+    delayBetweenStartAndFinish: Boolean = true
 )
 
 trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
