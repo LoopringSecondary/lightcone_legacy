@@ -83,6 +83,8 @@ class RingSettlementActor()(
     privateKey = selfConfig.getString("submitter-private-key")
   )
 
+  val repeatedJobs = Nil
+
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)
 

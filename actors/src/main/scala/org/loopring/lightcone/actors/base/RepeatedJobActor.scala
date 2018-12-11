@@ -21,53 +21,47 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 case class Job(
-    id: Int,
     name: String,
-    scheduleDelay: Long,
-    run: () ⇒ Future[Any]
+    dalayInSeconds: Int,
+    run: () ⇒ Future[Any],
+    initialDalayInSeconds: Int = 0,
+    delayBetweenStartAndFinish: Boolean = false
 )
 
 class JobWithStatus(j: Job) {
-  var cancel: Option[Cancellable] = None
+  var cancellable: Option[Cancellable] = None
   var lastRunTime: Long = 0
   var job: Job = j
 }
 
-trait RepeatedJobActor { actor: Actor ⇒
+trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
   import context.dispatcher
 
-  def initAndStartNextRound(jobs: Job*): Unit = {
-    jobs.foreach { job ⇒
-      nextRun(new JobWithStatus(job))
-    }
-  }
+  val repeatedJobs: Seq[Job]
 
-  def nextRun(jobWithStatus: JobWithStatus) = {
-    jobWithStatus.cancel.map(_.cancel())
-    val delay = jobWithStatus.job.scheduleDelay -
-      (System.currentTimeMillis - jobWithStatus.lastRunTime)
-    if (delay > 0) {
-      jobWithStatus.cancel = Some(
-        context.system.scheduler.scheduleOnce(
-          delay millis,
-          self,
-          jobWithStatus
-        )
-      )
-    } else {
-      jobWithStatus.cancel = None
-      self ! jobWithStatus
-    }
+  repeatedJobs.foreach { job ⇒
+    context.system.scheduler.scheduleOnce(
+      job.initialDalayInSeconds.seconds,
+      self,
+      job
+    )
   }
 
   def receive: Receive = {
-    case jobWithStatus: JobWithStatus ⇒ for {
-      lastTime ← Future.successful(System.currentTimeMillis)
-      _ ← jobWithStatus.job.run()
-    } yield {
-      jobWithStatus.lastRunTime = lastTime
-      jobWithStatus.cancel = None
-      nextRun(jobWithStatus)
-    }
+
+    case job: Job ⇒
+      log.debug(s"running repeated job ${job.name}")
+      val now = System.currentTimeMillis
+      job.run().map { _ ⇒
+        val timeTook =
+          if (job.delayBetweenStartAndFinish) 0
+          else (System.currentTimeMillis - now) / 1000
+
+        context.system.scheduler.scheduleOnce(
+          (job.dalayInSeconds - timeTook).seconds,
+          self,
+          job
+        )
+      }
   }
 }

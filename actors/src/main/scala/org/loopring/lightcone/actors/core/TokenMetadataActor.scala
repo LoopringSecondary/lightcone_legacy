@@ -54,15 +54,14 @@ class TokenMetadataActor()(
   with RepeatedJobActor {
 
   private val tokenMetadata = dbModule.tokenMetadata
-  val syncJob = Job(
-    id = 1,
+
+  val repeatedJobs = Seq(Job(
     name = "syncTokenValue",
-    scheduleDelay = 10000,
+    dalayInSeconds = 10,
     run = () ⇒ tokenMetadata.getTokens(true).map {
       _.foreach(tokenMetadataManager.addToken)
     }
-  )
-  initAndStartNextRound(syncJob)
+  ))
 
   override def receive: Receive = super.receive orElse LoggingReceive {
     case _ ⇒
