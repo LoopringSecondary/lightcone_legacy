@@ -72,7 +72,8 @@ class OrderHandlerActor()(
 ) extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
   def receive: Receive = {
-    case XSubmitRawOrder(Some(order)) ⇒
+    case _ ⇒
+    // case XSubmitRawOrder(Some(order)) ⇒
   }
 
 }

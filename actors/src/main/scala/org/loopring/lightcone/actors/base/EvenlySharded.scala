@@ -19,24 +19,23 @@ package org.loopring.lightcone.actors.base
 import akka.cluster.sharding._
 
 trait Sharded {
+  val name: String
   protected var numOfShards: Int = 1
 }
 
 trait EvenlySharded extends Sharded {
   protected var entitiesPerShard: Int = 1
 
-  private def getShardId(msg: Any) = s"s${Math.abs(msg.hashCode % numOfShards)}"
+  private def hashed(msg: Any, max: Int) = Math.abs(msg.hashCode % max)
 
-  private def getEntitityId(msg: Any) = {
-    val entityId = Math.abs(msg.hashCode % entitiesPerShard)
-    s"${getShardId(msg)}_e${entityId}"
-  }
+  private def getShardId(msg: Any) = "shard_" + hashed(msg, numOfShards)
+  private def getEntitityId(msg: Any) = name + "_" + hashed(msg, numOfShards * numOfShards)
 
-  protected lazy val extractEntityId: ShardRegion.ExtractEntityId = {
+  protected val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg ⇒ (getEntitityId(msg), msg)
   }
 
-  protected lazy val extractShardId: ShardRegion.ExtractShardId = {
+  protected val extractShardId: ShardRegion.ExtractShardId = {
     case msg ⇒ getShardId(msg)
   }
 }

@@ -50,12 +50,12 @@ class EntryPointActor()(
   }
 
   def findDestination(msg: Any): Option[String] = msg match {
-    case _@ (XSubmitRawOrder) ⇒
-      Some(OrderHandlerActor.name)
+    case _@ (
+      XSubmitRawOrderReq |
+      XCancelOrderReq) ⇒ Some(OrderHandlerActor.name)
 
     case _@ (
-      XSubmitOrderReq |
-      XGetOrderbookReq) ⇒ Some(AccountManagerActor.name)
+      XGetOrderbookReq) ⇒ Some(OrderbookManagerActor.name)
 
     case _ ⇒ None
   }

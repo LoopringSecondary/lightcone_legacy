@@ -78,8 +78,8 @@ message XUpdateLatestTradingPrice {
 }
 
 message XGetOrderbookReq {
-    int32 level = 1;
-    int32 size = 2;
+    int32 level = 2;
+    int32 size = 3;
 }
 
 

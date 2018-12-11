@@ -37,7 +37,7 @@ abstract class ActorWithPathBasedConfig(val name: String)
     selfConfig_.getConfig(str).withFallback(selfConfig_)
   } catch {
     case e: Throwable ⇒
-      log.warning(s"NO CONFIG FOUND for actor with path: ${self.path.name}: ${e.getMessage}")
+      log.warning(s"NO CONFIG FOUND for actor with path: ${self.path.name}, use parent config")
       selfConfig_
   }
 

@@ -38,10 +38,9 @@ object Main extends App with Logging {
   }
 
   val configItems = Seq(
-    "akka.remote.artery.canonical.hostname",
-    "akka.remote.artery.canonical.port",
-    "akka.remote.bind.hostname",
-    "akka.remote.bind.port",
+    "akka.remote.netty.tcp.hostname",
+    "akka.remote.netty.tcp.port",
+    "akka.cluster.seed-nodes",
     "akka.cluster.roles"
   )
 

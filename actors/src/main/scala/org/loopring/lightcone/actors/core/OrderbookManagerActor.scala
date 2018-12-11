@@ -36,7 +36,7 @@ import scala.concurrent._
 
 // main owner: 于红雨
 object OrderbookManagerActor extends EvenlySharded {
-  def name = "orderbook_manager"
+  val name = "orderbook_manager"
 
   def startShardRegion()(
     implicit
@@ -83,14 +83,13 @@ class OrderbookManagerActor()(
 
   def receive: Receive = LoggingReceive {
 
-    // TODO(dongw): market manager should send this message
     case XUpdateLatestTradingPrice(price) ⇒
       latestPrice = Some(price)
 
     case req: XOrderbookUpdate ⇒
       manager.processUpdate(req)
 
-    case x @ XGetOrderbookReq(level, size) ⇒
+    case XGetOrderbookReq(level, size) ⇒
       sender ! manager.getOrderbook(level, size, latestPrice)
   }
 }

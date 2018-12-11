@@ -20,6 +20,7 @@ option java_multiple_files = true;
 package org.loopring.lightcone.proto.actors;
 
 import "google/protobuf/any.proto";
+import "actors_core.proto";
 import "core_data.proto";
 
 message XRunNamedJob {
@@ -32,6 +33,21 @@ message XStart{
 message XStop{}
 
 
-message XSubmitRawOrder {
+message XSubmitRawOrderReq {
     core.XRawOrder raw_order = 1;
+}
+
+message XSubmitRawOrderResp {
+    core.XRawOrder raw_order = 1;
+}
+
+message XCancelOrderReq {
+    string id = 1;
+    bool hard_cancel = 2; // 默认软取消
+}
+
+message XCancelOrderRes {
+    string id = 1;
+    bool hard_cancel = 2; // 默认软取消
+    actors.XErrorCode error = 3;
 }
