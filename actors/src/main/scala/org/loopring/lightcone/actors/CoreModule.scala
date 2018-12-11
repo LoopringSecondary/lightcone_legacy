@@ -81,7 +81,10 @@ class CoreModule(config: Config)
     bind[TokenMetadataManager].toInstance(tmm)
 
     // This actor must be deployed on every node for TokenMetadataManager
-    val refresher = system.actorOf(Props(new TokenMetadataRefresher), "token_metadata_refresher")
+    val refresher = system.actorOf(
+      Props(new TokenMetadataRefresher),
+      "token_metadata_refresher"
+    )
 
     implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimator()
     bind[TokenValueEstimator].toInstance(tokenValueEstimator)
