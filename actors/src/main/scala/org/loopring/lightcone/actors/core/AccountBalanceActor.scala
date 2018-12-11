@@ -36,20 +36,10 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 李亚东
-object AccountBalanceActor {
+object AccountBalanceActor extends EventlySharded {
+  val numOfShards = 2
+  val entitiesPerShard = 1
   val name = "account_balance"
-
-  val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
-    case XStart(_) ⇒ "address_1"
-  }
 
   def startShardRegion()(implicit
     system: ActorSystem,

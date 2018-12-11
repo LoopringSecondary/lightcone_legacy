@@ -24,7 +24,6 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.ethereum._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
@@ -153,7 +152,6 @@ abstract class CoreActorsIntegrationCommonSpec(
     new MarketManagerActor()
   )
 
-  actors.add(OrdersDalActor.name, ordersDalActor)
   actors.add(AccountBalanceActor.name, accountBalanceActor)
   actors.add(OrderHistoryActor.name, orderHistoryActor)
   actors.add(MarketManagerActor.name, marketManagerActor)
