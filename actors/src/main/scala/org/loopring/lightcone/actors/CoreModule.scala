@@ -51,8 +51,6 @@ class CoreModule(config: Config)
     implicit val ec = system.dispatcher
     implicit val c_ = config
 
-    //todo: test docker
-    system.actorOf(Props[MyActor], "myactor")
     bind[Config].toInstance(config)
     bind[ActorSystem].toInstance(system)
     bind[Cluster].toInstance(cluster)
