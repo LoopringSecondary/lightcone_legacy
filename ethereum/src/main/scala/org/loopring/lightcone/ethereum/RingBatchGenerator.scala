@@ -72,7 +72,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
 
   def toSubmitableParamStr(xRingBatch: XRingBatch): String = {
     val tokenSpendables = xRingBatch.orders.map(order ⇒
-      Seq((order.owner + order.tokenS), (order.owner + order.feeParams.get.feeToken)))
+      Seq((order.owner + order.tokenS), (order.owner + order.feeParams.get.tokenFee)))
       .flatten
       .distinct
       .zipWithIndex
@@ -129,14 +129,14 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     )
 
     feeParams = feeParams.copy(
-      feeAmount = uint256GetOrDefault(feeParams.feeAmount),
+      amountFee = uint256GetOrDefault(feeParams.amountFee),
       tokenRecipient = addressGetOrDefault(feeParams.tokenRecipient)
     )
 
-    if (feeParams.feeToken.length == 0
-      || feeParams.feeToken == defaultAddr
-      || feeParams.feeToken == fullZeroAddr) {
-      feeParams = feeParams.copy(feeToken = context.lrcAddress)
+    if (feeParams.tokenFee.length == 0
+      || feeParams.tokenFee == defaultAddr
+      || feeParams.tokenFee == fullZeroAddr) {
+      feeParams = feeParams.copy(tokenFee = context.lrcAddress)
     }
 
     order.copy(
@@ -218,7 +218,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     insertOffset(tables, data.addUint32(order.validSince, false))
 
     val spendableSIndex = tokenSpendables(order.owner + order.tokenS)
-    val spendableFeeIndex = tokenSpendables(order.owner + order.feeParams.get.feeToken)
+    val spendableFeeIndex = tokenSpendables(order.owner + order.feeParams.get.tokenFee)
     tables.addUint16(spendableSIndex)
     tables.addUint16(spendableFeeIndex)
 
@@ -271,16 +271,16 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     val allOrNoneInt = if (order.params.get.allOrNone) 1 else 0
     tables.addUint16(allOrNoneInt)
 
-    val feeToken = order.feeParams.get.feeToken
-    if (feeToken.length > 0 && feeToken != context.lrcAddress) {
-      insertOffset(tables, data.addAddress(feeToken, false))
+    val tokenFee = order.feeParams.get.tokenFee
+    if (tokenFee.length > 0 && tokenFee != context.lrcAddress) {
+      insertOffset(tables, data.addAddress(tokenFee, false))
     } else {
       insertDefault(tables)
     }
 
-    val feeAmount = BigInt(order.feeParams.get.feeAmount.toStringUtf8, 16)
-    if (feeAmount > 0) {
-      insertOffset(tables, data.addUint(feeAmount, false))
+    val amountFee = BigInt(order.feeParams.get.amountFee.toStringUtf8, 16)
+    if (amountFee > 0) {
+      insertOffset(tables, data.addUint(amountFee, false))
     } else {
       insertDefault(tables)
     }
