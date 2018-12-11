@@ -1,0 +1,83 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.loopring.lightcone.ethereum.abi
+
+import org.ethereum.solidity.{ Abi ⇒ SABI }
+
+import scala.annotation.meta.field
+import scala.io.Source
+
+class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
+  val orderSubmitted = OrderSubmittedFunction(abi.findFunction(searchByName(OrderSubmittedFunction.name)))
+  val submitOrder = SubmitOrderFunction(abi.findFunction(searchByName(SubmitOrderFunction.name)))
+
+  val orderSubmittedEvent = OrderSubmittedEvent(abi.findEvent(searchByName(OrderSubmittedEvent.name)))
+}
+
+object OrderBookAbi {
+  val abiJsonStr: String = Source.fromFile("ethereum/src/main/resources/version20/IOrderBook.abi").getLines().next()
+  def apply(abiJson: String): OrderBookAbi = new OrderBookAbi(abiJson)
+
+  def apply(): OrderBookAbi = new OrderBookAbi(abiJsonStr)
+
+}
+
+object OrderSubmittedFunction {
+  case class Parms(
+      @(ContractAnnotation @field)("hash", 0) hash: Array[Byte]
+  )
+
+  case class Result(
+      @(ContractAnnotation @field)("submitted", 0) submitted: Boolean
+  )
+
+  val name = "orderSubmitted"
+
+  def apply(entry: SABI.Function): OrderSubmittedFunction = new OrderSubmittedFunction(entry)
+
+}
+
+class OrderSubmittedFunction(val entry: SABI.Function) extends AbiFunction[OrderSubmittedFunction.Parms, OrderSubmittedFunction.Result]
+
+object SubmitOrderFunction {
+  case class Parms(
+      @(ContractAnnotation @field)("orderData", 0) orderData: Array[Byte]
+  )
+
+  case class Result()
+
+  val name = "submitOrder"
+
+  def apply(entry: SABI.Function): SubmitOrderFunction = new SubmitOrderFunction(entry)
+}
+
+class SubmitOrderFunction(val entry: SABI.Function) extends AbiFunction[SubmitOrderFunction.Parms, SubmitOrderFunction.Result]
+
+object OrderSubmittedEvent {
+
+  case class Result(
+      @(ContractAnnotation @field)("orderHash", 0) orderHash: String,
+      @(ContractAnnotation @field)("orderData", 1) orderData: String
+  )
+
+  val name = "OrderSubmitted"
+
+  def apply(entry: SABI.Event): OrderSubmittedEvent = new OrderSubmittedEvent(entry)
+
+}
+
+class OrderSubmittedEvent(val entry: SABI.Event) extends AbiEvent[OrderSubmittedEvent.Result]

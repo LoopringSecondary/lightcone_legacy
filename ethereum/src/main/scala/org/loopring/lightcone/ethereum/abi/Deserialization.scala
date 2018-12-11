@@ -38,6 +38,14 @@ object Deserialization {
         case b: BigInteger   ⇒ BigInt(b)
         case _               ⇒ BigInt(0)
       }
+    } else if (r =:= typeOf[Boolean]) {
+      p match {
+        case b: Boolean      ⇒ b
+        case bs: Array[Byte] ⇒ BigInt(bs) == 1
+        case b: BigInt       ⇒ b == 1
+        case b: BigInteger   ⇒ BigInt(b) == 1
+        case b: String       ⇒ BigInt(Numeric.toBigInt(b)) == 1
+      }
     }
 
   def deserialize[T](list: List[_])(implicit mf: Manifest[T]): T = {
@@ -46,7 +54,6 @@ object Deserialization {
     val classMirror: ClassMirror = rm.reflectClass(classSymbol)
     val constructors = classSymbol.typeSignature.members.filter(_.isConstructor).toList
     val constructorMirror = classMirror.reflectConstructor(constructors.head.asMethod)
-
     val argsIdx = getContractAnnontationIdx[T]()
     assert(list.size == argsIdx.size)
     val params = constructorMirror.symbol.paramLists(0)

@@ -46,7 +46,12 @@ trait AbiFunction[P, R] {
 
   def unpackResult(data: String)(implicit mf: Manifest[R]): Option[R] = {
     val dataBytes = Numeric.hexStringToByteArray(data)
-    val list = entry.decode(dataBytes).asScala.toList
+    val list = entry.decodeResult(dataBytes).asScala.toList
+    list.foreach {
+      case bytes: Array[Byte] ⇒
+        println(Numeric.toHexString(bytes))
+      case _ ⇒
+    }
     if (list.isEmpty) None
     else Some(Deserialization.deserialize[R](list))
   }
