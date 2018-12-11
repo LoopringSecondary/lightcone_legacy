@@ -35,18 +35,15 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
-object EthereumAccessActor {
-  val name = "ethereum_access"
+// main owner: 杜永丰
+object EthereumEventPersistorActor {
+  val name = "ethereum_event_persister"
 
   private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
     case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
   }
 
   private val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
     case XStart(_) ⇒ "address_1"
   }
 
@@ -61,31 +58,22 @@ object EthereumAccessActor {
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new EthereumAccessActor()),
-      settings = ClusterShardingSettings(system),
+      entityProps = Props(new EthereumEventPersistorActor()),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
   }
 }
 
-class EthereumAccessActor()(
+class EthereumEventPersistorActor()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends Actor
-  with ActorLogging {
-
-  val conf = config.getConfig(EthereumAccessActor.name)
-  val thisConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
-  } catch {
-    case e: Throwable ⇒ conf
-  }
-  log.info(s"config for ${self.path.name} = $thisConfig")
+) extends ConfiggedActor(EthereumEventPersistorActor.name) {
 
   def receive: Receive = {
     case _ ⇒

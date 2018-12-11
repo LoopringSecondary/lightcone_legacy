@@ -24,7 +24,7 @@ import org.loopring.lightcone.proto.core._
 
 import scala.concurrent._
 
-trait OrderRecoverySupport {
+trait OrderRecoverSupport {
   actor: Actor with ActorLogging ⇒
 
   implicit val ec: ExecutionContext

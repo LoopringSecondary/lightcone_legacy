@@ -37,14 +37,17 @@ class EntryPointActor()(
 )
   extends Actor with ActorLogging {
 
-  //todo: 暂时测试，需要再对请求封装或者继续完善
   def receive: Receive = {
-    case req: XSubmitOrderReq ⇒
-      actors.get(AccountManagerActor.name) forward req
+    case msg: Any ⇒ findDestination(msg) foreach { dest ⇒
+      actors.get(dest) forward msg
+    }
+  }
 
-    case req: XGetOrderbookReq ⇒
-      actors.get(OrderbookManagerActor.name) forward req
-
+  def findDestination(msg: Any): Option[String] = msg match {
+    case _@ (
+      XSubmitOrderReq |
+      XGetOrderbookReq) ⇒ Some(AccountManagerActor.name)
+    case _ ⇒ None
   }
 
 }

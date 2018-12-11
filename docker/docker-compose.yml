@@ -5,6 +5,7 @@ services:
     environment:
       CLUSTER_IP: seed
       CLUSTER_PORT: 9090
+      NODE_ROLES: '["a", "b", "c"]'
   c1:
     image: org.loopring/lightcone_actors:latest
     environment:
@@ -12,3 +13,4 @@ services:
       CLUSTER_PORT: 9091
       SEED_IP: seed
       SEED_PORT: 9090
+      NODE_ROLES: '["a", "b", "c"]'

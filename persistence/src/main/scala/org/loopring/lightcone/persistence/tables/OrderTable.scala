@@ -90,7 +90,7 @@ class OrderTable(tag: Tag)
   def idx_valid_until = index("idx_valid_until", (validUntil), unique = false)
   def idx_owner = index("idx_owner", (owner), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
-  def idx_market_hash = index("idx_market_hash", (marketHash), unique = true)
+  def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
 
   def paramsProjection = (
     dualAuthAddr,
