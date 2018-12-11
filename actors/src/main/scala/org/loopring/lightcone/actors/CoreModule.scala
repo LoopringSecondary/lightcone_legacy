@@ -28,7 +28,6 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
@@ -98,6 +97,7 @@ class CoreModule(config: Config)
     //-----------deploy actors-----------
     actors.add(AccountBalanceActor.name, AccountBalanceActor.startShardRegion)
     actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
+    actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
     actors.add(EthereumEventExtractorActor.name, EthereumEventExtractorActor.startShardRegion)
     actors.add(EthereumEventPersistorActor.name, EthereumEventPersistorActor.startShardRegion)
     actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
