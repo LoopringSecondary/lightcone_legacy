@@ -34,16 +34,19 @@ trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
   import context.dispatcher
 
   val repeatedJobs: Seq[Job]
+  private var jobMap = Map.empty[String, Job]
 
-  private val jobMap = repeatedJobs.map(j ⇒ (j.name, j)).toMap
-  assert(jobMap.size == repeatedJobs.size, "job name not unique")
+  override def preStart(): Unit = {
+    jobMap = repeatedJobs.map(j ⇒ (j.name, j)).toMap
+    assert(jobMap.size == repeatedJobs.size, "job name not unique")
 
-  repeatedJobs.foreach { job ⇒
-    context.system.scheduler.scheduleOnce(
-      job.initialDalayInSeconds.seconds,
-      self,
-      XRunNamedJob(job.name)
-    )
+    repeatedJobs.foreach { job ⇒
+      context.system.scheduler.scheduleOnce(
+        job.initialDalayInSeconds.seconds,
+        self,
+        XRunNamedJob(job.name)
+      )
+    }
   }
 
   def receive: Receive = {

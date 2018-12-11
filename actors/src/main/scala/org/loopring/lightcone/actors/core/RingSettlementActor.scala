@@ -95,7 +95,7 @@ class RingSettlementActor()(
     //       val inputData = ringSigner.getInputData(ring)
     //       signAndSubmitTx(inputData, req.gasLimit, req.gasPrice)
     //   }
-    ???
+    case _ ⇒
   }
 
   def signAndSubmitTx(inputData: String, gasLimit: BigInt, gasPrice: BigInt) = {
@@ -107,7 +107,7 @@ class RingSettlementActor()(
     //   nonce.getAndIncrement()
     //   hasSended = true
     // }
-    ???
+
   }
 
   //未被提交的交易需要使用新的gas和gasprice重新提交
