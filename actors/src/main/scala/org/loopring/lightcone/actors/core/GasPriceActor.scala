@@ -17,24 +17,61 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
+import akka.cluster.sharding._
+import akka.event.LoggingReceive
+import akka.pattern._
 import akka.util.Timeout
+import com.typesafe.config.Config
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.account._
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core.XOrderStatus._
+import org.loopring.lightcone.proto.core._
+import scala.concurrent._
 
-import scala.concurrent.ExecutionContext
-
-object GasPriceActor {
+// main owner: 李亚东
+object GasPriceActor extends EvenlySharded {
   val name = "gas_price"
+
+  def startShardRegion()(
+    implicit
+    system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
+    ClusterSharding(system).start(
+      typeName = name,
+      entityProps = Props(new GasPriceActor()),
+      settings = ClusterShardingSettings(system).withRole(name),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
+    )
+  }
 }
 
-class GasPriceActor(defaultGasPrice: BigInt = BigInt("10000000000"))(
+class GasPriceActor()(
     implicit
-    ec: ExecutionContext,
-    timeout: Timeout
-)
-  extends Actor
-  with ActorLogging {
-  private var gasPrice = defaultGasPrice
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends ActorWithPathBasedConfig(GasPriceActor.name) {
+
+  private var gasPrice = BigInt(selfConfig.getString("default"))
 
   def receive: Receive = {
 

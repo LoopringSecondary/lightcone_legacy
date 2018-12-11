@@ -24,7 +24,32 @@ import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 
 class CoreActorsIntegrationSpec_CancelOrder
-  extends CoreActorsIntegrationCommonSpec(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
+  extends CoreActorsIntegrationCommonSpec(
+    XMarketId(GTO_TOKEN.address, WETH_TOKEN.address),
+    """
+    account_manager {
+      skip-recovery = yes
+      recover-batch-size = 2
+    }
+    market_manager {
+      skip-recovery = yes
+      price-decimals = 5
+      recover-batch-size = 5
+    }
+    orderbook_manager {
+      levels = 2
+      price-decimals = 5
+      precision-for-amount = 2
+      precision-for-total = 1
+    }
+    ring_settlement {
+      submitter-private-key = "0xa1"
+    }
+    gas_price {
+      default = "10000000000"
+    }
+    """
+  ) {
 
   "cancel an order to generate a cancel event" must {
     "received by marketManager, orderbookManager" in {

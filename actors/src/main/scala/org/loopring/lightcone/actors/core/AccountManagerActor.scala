@@ -21,9 +21,10 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
+import com.typesafe.config.Config
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -31,75 +32,69 @@ import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
-
 import scala.concurrent._
 
+// main owner: 于红雨
 object AccountManagerActor {
   val name = "account_manager"
 
-  //todo: sharding配置，发送给AccountManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
-  val extractEntityId: ShardRegion.ExtractEntityId = {
+  private val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
     case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
     case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
   }
 
-  val extractShardId: ShardRegion.ExtractShardId = {
+  private val extractShardId: ShardRegion.ExtractShardId = {
     case XGetBalanceAndAllowancesReq(address, _) ⇒ address
     case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
     case XStart(_) ⇒ "address_1"
   }
 
-  def createShardActor(
-    actors: Lookup[ActorRef],
-    recoverBatchSize: Int,
-    skipRecovery: Boolean = false
-  )(
+  def startShardRegion()(
     implicit
     system: ActorSystem,
+    config: Config,
     ec: ExecutionContext,
+    timeProvider: TimeProvider,
     timeout: Timeout,
+    actors: Lookup[ActorRef],
     dustEvaluator: DustOrderEvaluator
   ): ActorRef = {
     ClusterSharding(system).start(
-      typeName = "AccountManagerActor",
-      entityProps = Props(new AccountManagerActor(actors, recoverBatchSize, skipRecovery)),
-      settings = ClusterShardingSettings(system),
+      typeName = name,
+      entityProps = Props(new AccountManagerActor()),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
   }
 }
 
-class AccountManagerActor(
-    val actors: Lookup[ActorRef],
-    val recoverBatchSize: Int,
-    val skipRecovery: Boolean = false
-)(
+class AccountManagerActor()(
     implicit
+    val config: Config,
     val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
     val timeout: Timeout,
+    val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator
-)
-  extends Actor
-  with ActorLogging
-  with OrderRecoverySupport {
+) extends ActorWithPathBasedConfig(AccountManagerActor.name)
+  with OrderRecoverSupport {
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
   private var address: String = _
 
-  protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
-  protected def orderHistoryActor = actors.get(OrderStateActor.name)
+  protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
   def receive: Receive = {
     case XStart(shardEntityId) ⇒ {
       address = shardEntityId
       val recoverySettings = XOrderRecoverySettings(
-        skipRecovery,
-        recoverBatchSize,
+        selfConfig.getBoolean("skip-recovery"),
+        selfConfig.getInt("recover-batch-size"),
         address,
         None
       )

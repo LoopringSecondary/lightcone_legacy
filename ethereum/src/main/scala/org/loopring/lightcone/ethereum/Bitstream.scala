@@ -22,25 +22,30 @@ class Bitstream() {
   private val ADDRESS_LENGTH = 20
   private var data: String = ""
 
-  def getPackedString() = {
+  def getData = {
     if (data.length.equals(0)) "0x0"
     else "0x" + data
   }
 
-  def getPackedBytes() = Numeric.hexStringToByteArray(data)
+  def getBytes = Numeric.hexStringToByteArray(data)
   def length() = data.length / 2
 
-  def addAddress(x: String, forceAppend: Boolean = false) =
+  def addAddress(x: String, forceAppend: Boolean = false) = {
+    val _x = if (x.length == 0) "0" else x
     insert(
       Numeric.toHexStringNoPrefixZeroPadded(
-        Numeric.toBigInt(x),
+        Numeric.toBigInt(_x),
         ADDRESS_LENGTH * 2
       ),
       forceAppend
     )
+  }
 
   def addUint16(num: BigInt, forceAppend: Boolean = true) =
     addBigInt(num, 2, forceAppend)
+
+  def addUint16(num: Int, forceAppend: Boolean) =
+    addBigInt(BigInt(num), 2, forceAppend)
 
   def addUint32(num: BigInt, forceAppend: Boolean = true) =
     addBigInt(num, 4, forceAppend)
@@ -48,10 +53,12 @@ class Bitstream() {
   def addUint(num: BigInt, forceAppend: Boolean = true) =
     addBigInt(num, 32, forceAppend)
 
-  def addUintStr(numStr: String, forceAppend: Boolean = true) =
-    addBigIntStr(numStr, 32, forceAppend)
+  def addUint(numStr: String, forceAppend: Boolean) = {
+    val _numStr = if (numStr.length > 0) numStr else "0"
+    addBigInt(BigInt(Numeric.cleanHexPrefix(_numStr), 16), 32, forceAppend)
+  }
 
-  def addX(num: BigInt, numBytes: Int, forceAppend: Boolean = true) =
+  def addNumber(num: BigInt, numBytes: Int, forceAppend: Boolean = true) =
     addBigInt(num, numBytes, forceAppend)
 
   def addBoolean(b: Boolean, forceAppend: Boolean = true) =
@@ -62,16 +69,6 @@ class Bitstream() {
 
   def addRawBytes(str: String, forceAppend: Boolean = true) =
     insert(Numeric.cleanHexPrefix(str), forceAppend)
-
-  private def padString(str: String, numBytes: Int) = {
-    val cleanStr = Numeric.cleanHexPrefix(str)
-    val targetLen = numBytes * 2
-    if (cleanStr.length > targetLen) {
-      throw new IllegalArgumentException(str + " is too long for padding")
-    }
-    val paddingLen = targetLen - cleanStr.length
-    "0" * paddingLen + cleanStr
-  }
 
   // TODO(kongliang): 负数问题
   private def addBigInt(
@@ -86,14 +83,6 @@ class Bitstream() {
       ),
       forceAppend
     )
-
-  private def addBigIntStr(
-    numStr: String,
-    numBytes: Int,
-    forceAppend: Boolean = true
-  ) = {
-    insert(padString(numStr, numBytes), forceAppend)
-  }
 
   private def insert(x: String, forceAppend: Boolean): Int = {
     var offset = length()

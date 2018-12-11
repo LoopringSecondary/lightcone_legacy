@@ -16,29 +16,59 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor._
+import akka.cluster.sharding._
 import akka.event.LoggingReceive
+import akka.pattern._
 import akka.util.Timeout
+import com.typesafe.config.Config
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.actors.data._
-
 import scala.concurrent._
 
-object AccountBalanceActor {
+// main owner: 李亚东
+object AccountBalanceActor extends EvenlySharded {
   val name = "account_balance"
+
+  def startShardRegion()(implicit
+    system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
+    ClusterSharding(system).start(
+      typeName = name,
+      entityProps = Props(new AccountBalanceActor()),
+      settings = ClusterShardingSettings(system).withRole(name),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
+    )
+  }
 }
 
-// TODO(fukun): implement this class.
 class AccountBalanceActor()(
     implicit
-    ec: ExecutionContext,
-    timeout: Timeout
-)
-  extends Actor
-  with ActorLogging {
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends ActorWithPathBasedConfig(AccountBalanceActor.name) {
 
   def receive: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.
@@ -47,7 +77,11 @@ class AccountBalanceActor()(
       sender !
         XGetBalanceAndAllowancesRes(
           req.address,
-          Map(req.tokens(0) -> XBalanceAndAllowance(BigInt("100000000000000000000000000"), BigInt("100000000000000000000000000")))
+          Map(req.tokens(0) ->
+            XBalanceAndAllowance(
+              BigInt("100000000000000000000000000"),
+              BigInt("100000000000000000000000000")
+            ))
         )
   }
 

@@ -39,7 +39,6 @@ object MarketManagerImpl {
 
 class MarketManagerImpl(
     val marketId: XMarketId,
-    val config: XMarketManagerConfig,
     val tokenMetadataManager: TokenMetadataManager,
     val ringMatcher: RingMatcher,
     val pendingRingPool: PendingRingPool,

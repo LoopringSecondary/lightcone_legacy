@@ -21,9 +21,10 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
+import com.typesafe.config.Config
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.depth._
@@ -31,70 +32,63 @@ import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-
 import scala.concurrent._
 
+// main owner: 于红雨
 object MarketManagerActor {
   val name = "market_manager"
   val wethTokenAddress = "WETH" // TODO
 
   //todo：sharding配置，发送给MarketManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
-  val extractEntityId: ShardRegion.ExtractEntityId = {
+  private val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg @ XSubmitOrderReq(Some(xorder)) ⇒
       val marketId = (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
       (marketId, msg)
     case msg @ XStart(_) ⇒ ("0x00000000004-0x00000000002", msg) //todo:测试deploy
   }
 
-  val extractShardId: ShardRegion.ExtractShardId = {
+  private val extractShardId: ShardRegion.ExtractShardId = {
     case XSubmitOrderReq(Some(xorder)) ⇒
       (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
     case XStart(_) ⇒ "0x00000000004-0x00000000002"
   }
 
-  def createShardActor(
-    actors: Lookup[ActorRef],
-    config: XMarketManagerConfig,
-    skipRecovery: Boolean = false
-  )(
+  def startShardRegion()(
     implicit
+    system: ActorSystem,
+    config: Config,
     ec: ExecutionContext,
-    timeout: Timeout,
     timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
     tokenValueEstimator: TokenValueEstimator,
     ringIncomeEstimator: RingIncomeEstimator,
     dustOrderEvaluator: DustOrderEvaluator,
-    tokenMetadataManager: TokenMetadataManager,
-    system: ActorSystem
+    tokenMetadataManager: TokenMetadataManager
   ): ActorRef = {
     ClusterSharding(system).start(
-      typeName = "MarketManagerActor",
-      entityProps = Props(new MarketManagerActor(actors, config, skipRecovery)),
-      settings = ClusterShardingSettings(system),
+      typeName = name,
+      entityProps = Props(new MarketManagerActor()),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
   }
 }
 
-// TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
-class MarketManagerActor(
-    val actors: Lookup[ActorRef],
-    val config: XMarketManagerConfig,
-    val skipRecovery: Boolean = false
-)(
+class MarketManagerActor()(
     implicit
+    val config: Config,
     val ec: ExecutionContext,
-    val timeout: Timeout,
     val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
     val tokenValueEstimator: TokenValueEstimator,
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenMetadataManager: TokenMetadataManager
-)
-  extends Actor
-  with ActorLogging
-  with OrderRecoverySupport {
+) extends ActorWithPathBasedConfig(MarketManagerActor.name)
+  with OrderRecoverSupport {
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
 
@@ -105,10 +99,9 @@ class MarketManagerActor(
 
   private var manager: MarketManager = _
 
-  protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  protected def settlementActor = actors.get(SettlementActor.name)
+  protected def settlementActor = actors.get(RingSettlementActor.name)
 
   def receive: Receive = {
     case XStart(shardEntityId) ⇒ {
@@ -116,11 +109,10 @@ class MarketManagerActor(
       marketId = XMarketId(tokens(0), tokens(1))
       implicit val marketId_ = marketId
       implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-        config.priceDecimals
+        selfConfig.getInt("price-decimals")
       )
       manager = new MarketManagerImpl(
         marketId,
-        config,
         tokenMetadataManager,
         ringMatcher,
         pendingRingPool,
@@ -128,8 +120,8 @@ class MarketManagerActor(
         aggregator
       )
       val recoverySettings = XOrderRecoverySettings(
-        skipRecovery,
-        config.recoverBatchSize,
+        selfConfig.getBoolean("skip-recovery"),
+        selfConfig.getInt("recover-batch-size"),
         "",
         Some(marketId)
       )

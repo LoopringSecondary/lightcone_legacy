@@ -18,21 +18,27 @@ package org.loopring.lightcone.actors
 
 import akka.actor._
 import akka.cluster.Cluster
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.google.inject.AbstractModule
+import com.google.inject.name.Names
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.persistence.{ OrderStateActor, OrdersDalActor }
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
-import org.loopring.lightcone.persistence.dals.OrderDalImpl
-import org.loopring.lightcone.proto.core.{ XMarketManagerConfig, XOrderbookConfig }
+import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.persistence._
+import org.loopring.lightcone.proto.core._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-
 import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 class CoreModule(config: Config)
@@ -40,94 +46,74 @@ class CoreModule(config: Config)
 
   override def configure(): Unit = {
     implicit val system = ActorSystem("Lightcone", config)
-    implicit val ec = system.dispatcher
     implicit val cluster = Cluster(system)
-    implicit val timeout = Timeout(5 second)
+    implicit val materializer = ActorMaterializer()(system)
+    implicit val timeout = Timeout(2 second)
+    implicit val ec = system.dispatcher
+    implicit val c_ = config
 
     //todo: test docker
     system.actorOf(Props[MyActor], "myactor")
     bind[Config].toInstance(config)
+    bind[ActorSystem].toInstance(system)
+    bind[Cluster].toInstance(cluster)
+    bind[ActorMaterializer].toInstance(materializer)
+    bind[Timeout].toInstance(timeout)
 
-    implicit val dbConfig: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig("db.default", config)
+    bind[ExecutionContextExecutor].toInstance(system.dispatcher)
+    bind[ExecutionContext].toInstance(system.dispatcher)
+    bind[ExecutionContext].annotatedWithName("db-execution-context")
+      .toInstance(system.dispatchers.lookup("db-execution-context"))
+
+    implicit val actors = new MapBasedLookup[ActorRef]()
+    bind[Lookup[ActorRef]].toInstance(actors)
+
+    implicit val timeProvider: TimeProvider = new SystemTimeProvider()
+    bind[TimeProvider].toInstance(timeProvider)
+
+    implicit val dbConfig: DatabaseConfig[JdbcProfile] =
+      DatabaseConfig.forConfig("db.default", config)
     bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
 
-    //同时需要启动actor并开始同步，
+    implicit val dbModule = new DatabaseModule()
+    bind[DatabaseModule].toInstance(dbModule)
+
     implicit val tmm = new TokenMetadataManager()
     bind[TokenMetadataManager].toInstance(tmm)
 
-    implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimator()
-    implicit val dustEvaluator: DustOrderEvaluator = new DustOrderEvaluator()
-    val actors = new MapBasedLookup[ActorRef]()
-    bind[Lookup[ActorRef]].toInstance(actors)
+    // This actor must be deployed on every node for TokenMetadataManager
+    actors.add(
+      TokenMetadataActor.name,
+      system.actorOf(Props(new TokenMetadataActor), TokenMetadataActor.name)
+    )
 
-    implicit val ringIncomeEstimator = new RingIncomeEstimatorImpl()
-    implicit val timeProvider = new SystemTimeProvider()
+    implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimator()
+    bind[TokenValueEstimator].toInstance(tokenValueEstimator)
+
+    implicit val dustEvaluator: DustOrderEvaluator = new DustOrderEvaluator()
+    bind[DustOrderEvaluator].toInstance(dustEvaluator)
+
+    implicit val ringIncomeEstimator: RingIncomeEstimator = new RingIncomeEstimatorImpl()
+    bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
     //-----------deploy actors-----------
-    //启动时都需要 TokenMetadataSyncActor
-    system.actorOf(Props(new TokenMetadataSyncActor()), TokenMetadataSyncActor.name)
-    val accountManagerShardActor = deployCoreAccountManager(actors, 100, true)
-    val marketsConfig = XMarketManagerConfig()
-    val marketManagerShardActor = deployCoreMarketManager(actors, marketsConfig, true)
+    actors.add(AccountBalanceActor.name, AccountBalanceActor.startShardRegion)
+    actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
+    actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
+    actors.add(EthereumEventExtractorActor.name, EthereumEventExtractorActor.startShardRegion)
+    actors.add(EthereumEventPersistorActor.name, EthereumEventPersistorActor.startShardRegion)
+    actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
+    actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
+    actors.add(OrderbookManagerActor.name, OrderbookManagerActor.startShardRegion)
+    actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
+    actors.add(OrderHistoryActor.name, OrderHistoryActor.startShardRegion)
+    actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
+    actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
+    actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
 
-    actors.add(AccountManagerActor.name, accountManagerShardActor)
-    actors.add(MarketManagerActor.name, marketManagerShardActor)
-
-    val orderbookConfig = XOrderbookConfig(
-      levels = 2,
-      priceDecimals = 5,
-      precisionForAmount = 2,
-      precisionForTotal = 1
+    actors.add(
+      EntryPointActor.name,
+      system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
     )
-    val orderbookManagerActor = system.actorOf(
-      Props(new OrderbookManagerActor(orderbookConfig)),
-      OrderbookManagerActor.name
-    )
-    actors.add(OrderbookManagerActor.name, orderbookManagerActor)
-
-    val accountBalanceActor = system.actorOf(Props(new AccountBalanceActor()), AccountBalanceActor.name)
-    actors.add(AccountBalanceActor.name, accountBalanceActor)
-    val orderStateActor = system.actorOf(Props(new OrderStateActor()), OrderStateActor.name)
-    actors.add(OrderStateActor.name, orderStateActor)
-    val dal = new OrderDalImpl()
-    val orderDalActor = system.actorOf(Props(new OrdersDalActor(dal)), OrdersDalActor.name)
-    actors.add(OrdersDalActor.name, orderDalActor)
-
-    println(s"#### accountmanager ${accountManagerShardActor.path.address.toString}")
-    println(s"#### orderbookManagerActor ${cluster.selfRoles}${orderbookManagerActor}, ${orderbookManagerActor.path.toString}")
-
   }
-
-  def deployCoreAccountManager(
-    actors: Lookup[ActorRef],
-    recoverBatchSize: Int,
-    skipRecovery: Boolean = false
-  )(
-    implicit
-    system: ActorSystem,
-    ec: ExecutionContext,
-    timeout: Timeout,
-    dustEvaluator: DustOrderEvaluator
-  ): ActorRef = {
-    AccountManagerActor.createShardActor(actors, recoverBatchSize, skipRecovery)
-  }
-
-  def deployCoreMarketManager(
-    actors: Lookup[ActorRef],
-    config: XMarketManagerConfig,
-    skipRecovery: Boolean = false
-  )(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout,
-    timeProvider: TimeProvider,
-    tokenValueEstimator: TokenValueEstimator,
-    ringIncomeEstimator: RingIncomeEstimator,
-    dustOrderEvaluator: DustOrderEvaluator,
-    tokenMetadataManager: TokenMetadataManager,
-    system: ActorSystem
-  ): ActorRef = {
-    MarketManagerActor.createShardActor(actors, config, skipRecovery)
-  }
-
 }
