@@ -25,7 +25,6 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -36,20 +35,8 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderbookManagerActor {
+object OrderbookManagerActor extends EvenlySharded {
   def name = "orderbook_manager"
-
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
-    case XStart(_) ⇒ "address_1"
-  }
 
   def startShardRegion()(
     implicit
@@ -60,6 +47,11 @@ object OrderbookManagerActor {
     timeout: Timeout,
     actors: Lookup[ActorRef]
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderbookManagerActor()),
@@ -77,7 +69,7 @@ class OrderbookManagerActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(OrderbookManagerActor.name) {
+) extends ActorWithPathBasedConfig(OrderbookManagerActor.name) {
 
   val xorderbookConfig = XOrderbookConfig(
     levels = selfConfig.getInt("levels"),

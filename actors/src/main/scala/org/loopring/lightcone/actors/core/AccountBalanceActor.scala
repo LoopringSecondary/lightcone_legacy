@@ -25,7 +25,6 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -36,20 +35,8 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 李亚东
-object AccountBalanceActor {
+object AccountBalanceActor extends EvenlySharded {
   val name = "account_balance"
-
-  val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
-    case XStart(_) ⇒ "address_1"
-  }
 
   def startShardRegion()(implicit
     system: ActorSystem,
@@ -59,6 +46,11 @@ object AccountBalanceActor {
     timeout: Timeout,
     actors: Lookup[ActorRef]
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new AccountBalanceActor()),
@@ -76,7 +68,7 @@ class AccountBalanceActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(AccountBalanceActor.name) {
+) extends ActorWithPathBasedConfig(AccountBalanceActor.name) {
 
   def receive: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.

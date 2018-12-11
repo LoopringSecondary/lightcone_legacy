@@ -27,7 +27,6 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
@@ -40,20 +39,8 @@ import scala.concurrent._
 import scala.annotation.tailrec
 
 // main owner: 李亚东
-object RingSettlementActor {
+object RingSettlementActor extends EvenlySharded {
   val name = "ring_settlement"
-
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
-    case XStart(_) ⇒ "address_1"
-  }
 
   def startShardRegion()(
     implicit
@@ -64,6 +51,11 @@ object RingSettlementActor {
     timeout: Timeout,
     actors: Lookup[ActorRef]
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new RingSettlementActor()),
@@ -81,7 +73,7 @@ class RingSettlementActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(RingSettlementActor.name)
+) extends ActorWithPathBasedConfig(RingSettlementActor.name)
   with RepeatedJobActor {
 
   //防止一个tx中的订单过多，超过 gaslimit

@@ -25,7 +25,6 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -73,7 +72,7 @@ class EthereumEventExtractorActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(EthereumEventExtractorActor.name) {
+) extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
 
   def receive: Receive = {
     case _ ⇒

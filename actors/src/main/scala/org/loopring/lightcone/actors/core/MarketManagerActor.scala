@@ -25,7 +25,6 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.depth._
@@ -88,7 +87,7 @@ class MarketManagerActor()(
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenMetadataManager: TokenMetadataManager
-) extends ConfiggedActor(MarketManagerActor.name)
+) extends ActorWithPathBasedConfig(MarketManagerActor.name)
   with OrderRecoverSupport {
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
@@ -100,7 +99,6 @@ class MarketManagerActor()(
 
   private var manager: MarketManager = _
 
-  protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   protected def settlementActor = actors.get(RingSettlementActor.name)

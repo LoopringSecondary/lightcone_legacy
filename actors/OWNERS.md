@@ -11,6 +11,7 @@
     - TokenMetadataActor
     - OrderRecoverActor
     - EthereumEventPersistorActor
+    - DatabaseQueryActor
     - All database tabels and dals
 
 - 亚东：

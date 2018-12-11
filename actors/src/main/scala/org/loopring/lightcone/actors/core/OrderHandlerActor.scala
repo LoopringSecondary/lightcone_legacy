@@ -25,7 +25,6 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -36,16 +35,8 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderHandlerActor {
+object OrderHandlerActor extends EvenlySharded {
   val name = "order_handler"
-
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XStart(_) ⇒ "address_1"
-  }
 
   def startShardRegion()(
     implicit
@@ -56,6 +47,11 @@ object OrderHandlerActor {
     timeout: Timeout,
     actors: Lookup[ActorRef]
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderHandlerActor()),
@@ -73,10 +69,10 @@ class OrderHandlerActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(OrderHandlerActor.name) {
+) extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
   def receive: Receive = {
-    case _ ⇒
+    case XSubmitRawOrder(Some(order)) ⇒
   }
 
 }
