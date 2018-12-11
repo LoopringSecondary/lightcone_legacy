@@ -20,6 +20,7 @@ object Dependencies {
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "tv.cntt" %% "slf4s-api" % "1.7.25",
     "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
+    "ch.qos.logback" % "logback-classic" % logbackVersion,
     "com.github.scopt" %% "scopt" % "3.7.0",
     "com.github.nscala-time" %% "nscala-time" % "2.20.0")
 
@@ -61,6 +62,9 @@ object Dependencies {
   lazy val scalapbDependency = Seq(
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion,
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf")
+
+  lazy val dependency4Lib = commonDependency ++
+    testDependency
 
   lazy val dependency4Core = commonDependency ++
     ethereumDependency ++

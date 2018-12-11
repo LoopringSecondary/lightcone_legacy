@@ -21,6 +21,8 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
+import com.typesafe.config.Config
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.persistence._
@@ -31,7 +33,6 @@ import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
-
 import scala.concurrent._
 
 object MarketManagerActor {
@@ -39,37 +40,35 @@ object MarketManagerActor {
   val wethTokenAddress = "WETH" // TODO
 
   //todo：sharding配置，发送给MarketManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
-  val extractEntityId: ShardRegion.ExtractEntityId = {
+  private val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg @ XSubmitOrderReq(Some(xorder)) ⇒
       val marketId = (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
       (marketId, msg)
     case msg @ XStart(_) ⇒ ("0x00000000004-0x00000000002", msg) //todo:测试deploy
   }
 
-  val extractShardId: ShardRegion.ExtractShardId = {
+  private val extractShardId: ShardRegion.ExtractShardId = {
     case XSubmitOrderReq(Some(xorder)) ⇒
       (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
     case XStart(_) ⇒ "0x00000000004-0x00000000002"
   }
 
-  def createShardActor(
-    actors: Lookup[ActorRef],
-    config: XMarketManagerConfig,
-    skipRecovery: Boolean = false
-  )(
+  def startShardRegion()(
     implicit
+    system: ActorSystem,
+    config: Config,
     ec: ExecutionContext,
-    timeout: Timeout,
     timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
     tokenValueEstimator: TokenValueEstimator,
     ringIncomeEstimator: RingIncomeEstimator,
     dustOrderEvaluator: DustOrderEvaluator,
-    tokenMetadataManager: TokenMetadataManager,
-    system: ActorSystem
+    tokenMetadataManager: TokenMetadataManager
   ): ActorRef = {
     ClusterSharding(system).start(
-      typeName = "MarketManagerActor",
-      entityProps = Props(new MarketManagerActor(actors, config, skipRecovery)),
+      typeName = name,
+      entityProps = Props(new MarketManagerActor()),
       settings = ClusterShardingSettings(system),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -78,23 +77,28 @@ object MarketManagerActor {
 }
 
 // TODO(hongyu): schedule periodical job to send self a XTriggerRematchReq message.
-class MarketManagerActor(
-    val actors: Lookup[ActorRef],
-    val config: XMarketManagerConfig,
-    val skipRecovery: Boolean = false
-)(
+class MarketManagerActor()(
     implicit
+    val config: Config,
     val ec: ExecutionContext,
-    val timeout: Timeout,
     val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
     val tokenValueEstimator: TokenValueEstimator,
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenMetadataManager: TokenMetadataManager
-)
-  extends Actor
+) extends Actor
   with ActorLogging
   with OrderRecoverySupport {
+
+  val conf = config.getConfig(MarketManagerActor.name)
+  val thisConfig = try {
+    conf.getConfig(self.path.name).withFallback(conf)
+  } catch {
+    case e: Throwable ⇒ conf
+  }
+  log.info(s"config for ${self.path.name} = $thisConfig")
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
 
@@ -108,7 +112,7 @@ class MarketManagerActor(
   protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  protected def settlementActor = actors.get(SettlementActor.name)
+  protected def settlementActor = actors.get(RingSettlementActor.name)
 
   def receive: Receive = {
     case XStart(shardEntityId) ⇒ {
@@ -116,11 +120,10 @@ class MarketManagerActor(
       marketId = XMarketId(tokens(0), tokens(1))
       implicit val marketId_ = marketId
       implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-        config.priceDecimals
+        thisConfig.getInt("price-decimals")
       )
       manager = new MarketManagerImpl(
         marketId,
-        config,
         tokenMetadataManager,
         ringMatcher,
         pendingRingPool,
@@ -128,8 +131,8 @@ class MarketManagerActor(
         aggregator
       )
       val recoverySettings = XOrderRecoverySettings(
-        skipRecovery,
-        config.recoverBatchSize,
+        conf.getBoolean("skip-recovery"),
+        conf.getInt("recover-batch-size"),
         "",
         Some(marketId)
       )

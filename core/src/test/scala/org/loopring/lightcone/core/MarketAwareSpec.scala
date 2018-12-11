@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.core
 
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.core._
@@ -32,10 +33,6 @@ trait MarketAwareSpec extends OrderAwareSpec {
   }
 
   var marketId = XMarketId(primary = WETH, secondary = GTO)
-  var config = XMarketManagerConfig(
-    maxNumbersOfOrders = 100, /* unsupported */
-    priceDecimals = 5
-  )
 
   var fackRingMatcher: RingMatcher = _
   var fakeDustOrderEvaluator: DustOrderEvaluator = _
@@ -52,7 +49,6 @@ trait MarketAwareSpec extends OrderAwareSpec {
 
     marketManager = new MarketManagerImpl(
       marketId,
-      config,
       tmm,
       fackRingMatcher,
       fakePendingRingPool,

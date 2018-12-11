@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
+import com.typesafe.config.ConfigFactory
 import akka.testkit.TestActorRef
 import akka.pattern._
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
@@ -27,16 +28,35 @@ import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.core._
 
 class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
-  extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address)) {
+  extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
+    XMarketId(GTO_TOKEN.address, WETH_TOKEN.address),
+    """
+    account_manager {
+      skip-recovery = no
+      recover-batch-size = 1
+    }
+    market_manager {
+      skip-recovery = yes
+      price-decimals = 5
+      recover-batch-size = 5
+    }
+    orderbook_manager {
+      levels = 2
+      price-decimals = 5
+      precision-for-amount = 2
+      precision-for-total = 1
+    }
+    ring_settlement {
+      submitter-private-key = "0xa1"
+    }
+    """
+  ) {
 
   "when an accountManager starts" must {
     "first recover it and then receive order" in {
+
       val accountManagerRecoveryActor = TestActorRef(
-        new AccountManagerActor(
-          actors,
-          recoverBatchSize = 1,
-          skipRecovery = false
-        ), "accountManagerActorRecovery"
+        new AccountManagerActor(), "accountManagerActorRecovery"
       )
       accountManagerRecoveryActor ! XStart(ADDRESS_RECOVERY)
 
@@ -47,8 +67,8 @@ class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
         feeParams = Some(XRawOrder.FeeParams(
-          feeToken = GTO_TOKEN.address,
-          feeAmount = "10".zeros(18),
+          tokenFee = GTO_TOKEN.address,
+          amountFee = "10".zeros(18),
           walletSplitPercentage = 100
         ))
       )

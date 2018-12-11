@@ -16,29 +16,77 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor._
+import akka.cluster.sharding._
 import akka.event.LoggingReceive
+import akka.pattern._
 import akka.util.Timeout
+import com.typesafe.config.Config
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.actors.data._
-
 import scala.concurrent._
 
 object AccountBalanceActor {
   val name = "account_balance"
+
+  private val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
+    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+  }
+
+  private val extractShardId: ShardRegion.ExtractShardId = {
+    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
+    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
+    case XStart(_) ⇒ "address_1"
+  }
+
+  def startShardRegion()(
+    implicit
+    system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
+    ClusterSharding(system).start(
+      typeName = name,
+      entityProps = Props(new AccountBalanceActor()),
+      settings = ClusterShardingSettings(system),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
+    )
+  }
 }
 
 // TODO(fukun): implement this class.
 class AccountBalanceActor()(
     implicit
-    ec: ExecutionContext,
-    timeout: Timeout
-)
-  extends Actor
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends Actor
   with ActorLogging {
+
+  val conf = config.getConfig(AccountBalanceActor.name)
+  val thisConfig = try {
+    conf.getConfig(self.path.name).withFallback(conf)
+  } catch {
+    case e: Throwable ⇒ conf
+  }
+  log.info(s"config for ${self.path.name} = $thisConfig")
 
   def receive: Receive = LoggingReceive {
     // TODO(dongw): even if the token is not supported, we still need to return 0s.
@@ -47,7 +95,11 @@ class AccountBalanceActor()(
       sender !
         XGetBalanceAndAllowancesRes(
           req.address,
-          Map(req.tokens(0) -> XBalanceAndAllowance(BigInt("100000000000000000000000000"), BigInt("100000000000000000000000000")))
+          Map(req.tokens(0) ->
+            XBalanceAndAllowance(
+              BigInt("100000000000000000000000000"),
+              BigInt("100000000000000000000000000")
+            ))
         )
   }
 

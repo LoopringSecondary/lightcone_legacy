@@ -49,7 +49,7 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     bitstream.addAddress(optionalParams.orderInterceptor, true)
     bitstream.addAddress(optionalParams.wallet, true)
     bitstream.addAddress(feeParams.tokenRecipient, true)
-    bitstream.addAddress(feeParams.feeToken, true)
+    bitstream.addAddress(feeParams.tokenFee, true)
     bitstream.addUint16(feeParams.walletSplitPercentage)
     bitstream.addUint16(feeParams.tokenSFeePercentage)
     bitstream.addUint16(feeParams.tokenBFeePercentage)

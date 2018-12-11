@@ -157,10 +157,10 @@ package object data {
       id = xraworder.hash,
       tokenS = xraworder.tokenS,
       tokenB = xraworder.tokenB,
-      tokenFee = feeParams.feeToken,
+      tokenFee = feeParams.tokenFee,
       amountS = xraworder.amountS,
       amountB = xraworder.amountB,
-      amountFee = feeParams.feeAmount,
+      amountFee = feeParams.amountFee,
       //todo:该数据需要在xrawOrder中，暂时默认，等待结构确定
       createdAt = System.currentTimeMillis(),
       updatedAt = System.currentTimeMillis(),

@@ -17,7 +17,7 @@
 package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
-import org.scalatest.{ BeforeAndAfterAll, FlatSpec }
+import org.scalatest._
 import scala.concurrent.duration._
 import scala.concurrent._
 import slick.jdbc.meta._
@@ -30,7 +30,8 @@ import com.typesafe.config._
 trait DalSpec[D <: BaseDal[_, _]]
   extends FlatSpec
   with ForAllTestContainer
-  with BeforeAndAfterAll {
+  with BeforeAndAfterAll
+  with Matchers {
   implicit val ec = ExecutionContext.global
 
   override val container = new MySQLContainer(
@@ -52,7 +53,7 @@ trait DalSpec[D <: BaseDal[_, _]]
       ConfigFactory.parseString(s"""
         profile = "slick.jdbc.MySQLProfile$$"
         db {
-          url="${container.jdbcUrl}"
+          url="${container.jdbcUrl}?useSSL=false"
           user="${container.username}"
           password="${container.password}"
           driver="${container.driverClassName}"

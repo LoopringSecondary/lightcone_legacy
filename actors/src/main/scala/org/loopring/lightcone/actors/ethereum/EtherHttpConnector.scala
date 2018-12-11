@@ -59,7 +59,7 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
     )
   }
 
-  log.info(s"connecting Ethereum at ${node.host}:${node.port}")
+  log.debug(s"connecting Ethereum at ${node.host}:${node.port}")
 
   private val queue: SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])] =
     Source
@@ -108,12 +108,12 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
       method = method,
       params = params
     )
-    log.info(s"reqeust: ${org.json4s.native.Serialization.write(jsonRpc)}")
+    log.debug(s"reqeust: ${org.json4s.native.Serialization.write(jsonRpc)}")
 
     for {
       entity ← Marshal(jsonRpc).to[RequestEntity]
       jsonStr ← post(entity)
-      _ = log.info(s"response: $jsonStr")
+      _ = log.debug(s"response: $jsonStr")
     } yield jsonStr
 
   }
