@@ -38,12 +38,15 @@ import scala.concurrent._
 object OrderbookManagerActor {
   val name = "orderbook_manager"
 
-  def extractEntityName(actorName: String) = actorName.split("_").last
+  def extractEntityName(actorName: String) = actorName.split("_").dropRight(1).last
 
   protected var instancesPerMarket: Int = 1
   private def hashed(msg: Any, max: Int) = Math.abs(msg.hashCode % max)
   private def getShardId(msg: Any) = "shard_" + hashed(msg, instancesPerMarket)
-  private def getEntitityId(msg: Any) = "${name}_${hashed(msg, instancesPerMarket)}_${getMarketId(msg)}"
+  private def getEntitityId(msg: Any) = {
+    val marketId = getMarketId(msg).getOrElse("invalid")
+    "${name}_${marketId}_${hashed(msg, instancesPerMarket)}"
+  }
 
   protected val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg ⇒ (getEntitityId(msg), msg)
@@ -65,7 +68,7 @@ object OrderbookManagerActor {
   ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
-    instancesPerMarket = selfConfig.getInt("num-of-shards")
+    instancesPerMarket = selfConfig.getInt("instances-per-market")
 
     ClusterSharding(system).start(
       typeName = name,
@@ -76,7 +79,7 @@ object OrderbookManagerActor {
     )
   }
 
-  private def getMarketId(msg: Any): String = ???
+  private def getMarketId(msg: Any): Option[String] = ???
 }
 
 class OrderbookManagerActor()(

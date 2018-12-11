@@ -37,13 +37,9 @@ import scala.concurrent._
 // main owner: 于红雨
 object MarketManagerActor {
   val name = "market_manager"
-  val wethTokenAddress = "WETH" // TODO
 
   def extractEntityName(actorName: String) = actorName.split("_").last
-
-  protected var instancesPerMarket: Int = 1
-  private def hashed(msg: Any, max: Int) = Math.abs(msg.hashCode % max)
-  private def getShardId(msg: Any) = "default"
+  private def getShardId(msg: Any) = "singleton_shard"
   private def getEntitityId(msg: Any) = "${name}_${getMarketId(msg)}"
 
   protected val extractEntityId: ShardRegion.ExtractEntityId = {
@@ -93,7 +89,8 @@ class MarketManagerActor()(
 ) extends ActorWithPathBasedConfig(MarketManagerActor.name)
   with OrderRecoverSupport {
 
-  private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
+  val wethTokenAddress = config.getString("weth.address")
+  val gasLimitPerRingV2 = BigInt(config.getString("loopring-protocol.gas-limit-per-ring-v2"))
 
   private var marketId: XMarketId = _
 
@@ -185,8 +182,8 @@ class MarketManagerActor()(
   }
 
   private def getRequiredMinimalIncome(gasPrice: BigInt): Double = {
-    val costinEth = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * gasPrice
-    tokenValueEstimator.getEstimatedValue(MarketManagerActor.wethTokenAddress, costinEth)
+    val costinEth = gasLimitPerRingV2 * gasPrice
+    tokenValueEstimator.getEstimatedValue(wethTokenAddress, costinEth)
   }
 
   private def updateOrderbookAndSettleRings(matchResult: MatchResult, gasPrice: BigInt) {
@@ -196,7 +193,7 @@ class MarketManagerActor()(
 
       settlementActor ! XSettleRingsReq(
         rings = matchResult.rings,
-        gasLimit = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * matchResult.rings.size,
+        gasLimit = gasLimitPerRingV2 * matchResult.rings.size,
         gasPrice = gasPrice
       )
     }
