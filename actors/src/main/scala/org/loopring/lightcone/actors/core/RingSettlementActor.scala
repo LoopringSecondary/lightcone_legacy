@@ -28,6 +28,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.persistence._
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.actors.XErrorCode._
@@ -38,6 +39,7 @@ import org.loopring.lightcone.ethereum.data._
 import scala.concurrent._
 import scala.annotation.tailrec
 
+// main owner: 李亚东
 object RingSettlementActor {
   val name = "ring_settlement"
 
@@ -65,7 +67,7 @@ object RingSettlementActor {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new RingSettlementActor()),
-      settings = ClusterShardingSettings(system),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
@@ -79,22 +81,14 @@ class RingSettlementActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends RepeatedJobActor
-  with ActorLogging {
-
-  val conf = config.getConfig(RingSettlementActor.name)
-  val thisConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
-  } catch {
-    case e: Throwable ⇒ conf
-  }
-  log.info(s"config for ${self.path.name} = $thisConfig")
+) extends ConfiggedActor(RingSettlementActor.name)
+  with RepeatedJobActor {
 
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)
   val ringSigner = new RingSignerImpl(
-    privateKey = thisConfig.getString("submitter-private-key")
+    privateKey = selfConfig.getString("submitter-private-key")
   )
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)

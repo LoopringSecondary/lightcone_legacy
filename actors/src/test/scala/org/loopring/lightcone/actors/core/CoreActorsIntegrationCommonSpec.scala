@@ -23,6 +23,7 @@ import com.typesafe.config._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._

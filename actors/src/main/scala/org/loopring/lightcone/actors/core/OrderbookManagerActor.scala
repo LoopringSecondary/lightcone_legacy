@@ -35,6 +35,7 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
+// main owner: 于红雨
 object OrderbookManagerActor {
   def name = "orderbook_manager"
 
@@ -62,7 +63,7 @@ object OrderbookManagerActor {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderbookManagerActor()),
-      settings = ClusterShardingSettings(system),
+      settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
@@ -76,21 +77,13 @@ class OrderbookManagerActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends Actor with ActorLogging {
-
-  val conf = config.getConfig(OrderbookManagerActor.name)
-  val thisConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
-  } catch {
-    case e: Throwable ⇒ conf
-  }
-  log.info(s"config for ${self.path.name} = $thisConfig")
+) extends ConfiggedActor(OrderbookManagerActor.name) {
 
   val xorderbookConfig = XOrderbookConfig(
-    levels = thisConfig.getInt("levels"),
-    priceDecimals = thisConfig.getInt("price-decimals"),
-    precisionForAmount = thisConfig.getInt("precision-for-amount"),
-    precisionForTotal = thisConfig.getInt("precision-for-total")
+    levels = selfConfig.getInt("levels"),
+    priceDecimals = selfConfig.getInt("price-decimals"),
+    precisionForAmount = selfConfig.getInt("precision-for-amount"),
+    precisionForTotal = selfConfig.getInt("precision-for-total")
   )
 
   val manager: OrderbookManager = new OrderbookManagerImpl(xorderbookConfig)
