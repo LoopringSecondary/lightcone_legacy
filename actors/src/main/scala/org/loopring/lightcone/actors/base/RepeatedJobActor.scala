@@ -19,55 +19,51 @@ package org.loopring.lightcone.actors.base
 import akka.actor._
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import org.loopring.lightcone.proto.actors.XRunNamedJob
 
-case class Job(
-    id: Int,
+final case class Job(
     name: String,
-    scheduleDelay: Long,
-    run: () ⇒ Future[Any]
+    dalayInSeconds: Int,
+    run: () ⇒ Future[Any],
+    initialDalayInSeconds: Int = 0,
+    delayBetweenStartAndFinish: Boolean = true,
+    private[base] var sequence: Long = 0
 )
 
-class JobWithStatus(j: Job) {
-  var cancel: Option[Cancellable] = None
-  var lastRunTime: Long = 0
-  var job: Job = j
-}
-
-trait RepeatedJobActor { actor: Actor ⇒
+trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
   import context.dispatcher
 
-  def initAndStartNextRound(jobs: Job*): Unit = {
-    jobs.foreach { job ⇒
-      nextRun(new JobWithStatus(job))
-    }
-  }
+  val repeatedJobs: Seq[Job]
 
-  def nextRun(jobWithStatus: JobWithStatus) = {
-    jobWithStatus.cancel.map(_.cancel())
-    val delay = jobWithStatus.job.scheduleDelay -
-      (System.currentTimeMillis - jobWithStatus.lastRunTime)
-    if (delay > 0) {
-      jobWithStatus.cancel = Some(
-        context.system.scheduler.scheduleOnce(
-          delay millis,
-          self,
-          jobWithStatus
-        )
-      )
-    } else {
-      jobWithStatus.cancel = None
-      self ! jobWithStatus
-    }
+  private val jobMap = repeatedJobs.map(j ⇒ (j.name, j)).toMap
+  assert(jobMap.size == repeatedJobs.size, "job name not unique")
+
+  repeatedJobs.foreach { job ⇒
+    context.system.scheduler.scheduleOnce(
+      job.initialDalayInSeconds.seconds,
+      self,
+      XRunNamedJob(job.name)
+    )
   }
 
   def receive: Receive = {
-    case jobWithStatus: JobWithStatus ⇒ for {
-      lastTime ← Future.successful(System.currentTimeMillis)
-      _ ← jobWithStatus.job.run()
-    } yield {
-      jobWithStatus.lastRunTime = lastTime
-      jobWithStatus.cancel = None
-      nextRun(jobWithStatus)
-    }
+    case XRunNamedJob(name) ⇒
+      jobMap.get(name) foreach { job ⇒
+        job.sequence += 1
+        log.debug(s"running repeated job ${job.name}#${job.sequence}")
+        val now = System.currentTimeMillis
+        job.run().map { _ ⇒
+          val timeTook =
+            if (job.delayBetweenStartAndFinish) 0
+            else (System.currentTimeMillis - now) / 1000
+
+          val delay = Math.max(job.dalayInSeconds - timeTook, 0)
+          context.system.scheduler.scheduleOnce(
+            delay.seconds,
+            self,
+            XRunNamedJob(name)
+          )
+        }
+      }
   }
 }
