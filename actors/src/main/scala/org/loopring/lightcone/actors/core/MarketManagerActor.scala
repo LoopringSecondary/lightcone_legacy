@@ -86,8 +86,10 @@ class MarketManagerActor()(
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenMetadataManager: TokenMetadataManager
-) extends ActorWithPathBasedConfig(MarketManagerActor.name)
-  with OrderRecoverSupport {
+) extends ActorWithPathBasedConfig(
+  MarketManagerActor.name,
+  MarketManagerActor.extractEntityName
+) with OrderRecoverSupport {
 
   val wethTokenAddress = config.getString("weth.address")
   val gasLimitPerRingV2 = BigInt(config.getString("loopring-protocol.gas-limit-per-ring-v2"))
