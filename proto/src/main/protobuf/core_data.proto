@@ -163,6 +163,7 @@ message XRingBatchContext {
     string miner                    = 2;
     string transaction_origin       = 3;
     string miner_private_key        = 4;
+    string lrc_address              = 5;
 }
 
 message XTransaction {
