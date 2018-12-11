@@ -29,6 +29,7 @@ import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.persistence.DatabaseModule
@@ -80,7 +81,7 @@ class CoreModule(config: Config)
     bind[TokenMetadataManager].toInstance(tmm)
 
     // This actor must be deployed on every node for TokenMetadataManager
-    val tokenMetadataActor = system.actorOf(Props(new TokenMetadataActor), TokenMetadataActor.name)
+    val refresher = system.actorOf(Props(new TokenMetadataRefresher), "token_metadata_refresher")
 
     implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimator()
     bind[TokenValueEstimator].toInstance(tokenValueEstimator)
@@ -110,5 +111,9 @@ class CoreModule(config: Config)
       EntryPointActor.name,
       system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
     )
+
+    val listener = system.actorOf(Props[BadMessageListener], "bad_message_listener")
+    system.eventStream.subscribe(listener, classOf[UnhandledMessage])
+    system.eventStream.subscribe(listener, classOf[DeadLetter])
   }
 }

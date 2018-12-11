@@ -47,8 +47,8 @@ object OrderbookManagerActor {
   private def getShardId(msg: Any) = "shard_" + hashed(msg)
 
   private def getEntitityId(msg: Any) = getMarketId(msg) match {
-    case Some(marketId) ⇒ "${name}_${hashed(msg)}_${marketId}"
-    case None           ⇒ "${name}_default"
+    case Some(marketId) if marketId.nonEmpty ⇒ "${name}_${hashed(msg)}_${marketId}"
+    case None ⇒ "${name}_default"
   }
 
   protected val extractEntityId: ShardRegion.ExtractEntityId = {
