@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 李亚东
-object AccountBalanceActor extends EventlySharded {
+object AccountBalanceActor extends EvenlySharded {
   val numOfShards = 2
   val entitiesPerShard = 1
   val name = "account_balance"

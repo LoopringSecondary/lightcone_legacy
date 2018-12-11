@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object EthereumEventPersistorActor extends EventlySharded {
+object EthereumEventPersistorActor extends EvenlySharded {
   val numOfShards = 5
   val entitiesPerShard = 1
   val name = "ethereum_event_persister"

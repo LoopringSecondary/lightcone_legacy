@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 李亚东
-object GasPriceActor extends EventlySharded {
+object GasPriceActor extends EvenlySharded {
   val numOfShards = 2
   val entitiesPerShard = 1
   val name = "gas_price"

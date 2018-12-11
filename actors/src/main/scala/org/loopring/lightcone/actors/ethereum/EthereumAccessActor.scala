@@ -36,7 +36,7 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
-object EthereumAccessActor extends EventlySharded {
+object EthereumAccessActor extends EvenlySharded {
   val numOfShards = 2
   val entitiesPerShard = 1
   val name = "ethereum_access"

@@ -22,7 +22,7 @@ trait Sharded {
   val numOfShards: Int
 }
 
-trait EventlySharded extends Sharded {
+trait EvenlySharded extends Sharded {
   val entitiesPerShard: Int
 
   private def getShardId(msg: Any) = Math.abs(msg.hashCode % numOfShards).toString

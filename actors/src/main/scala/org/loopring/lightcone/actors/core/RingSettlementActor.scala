@@ -39,7 +39,7 @@ import scala.concurrent._
 import scala.annotation.tailrec
 
 // main owner: 李亚东
-object RingSettlementActor extends EventlySharded {
+object RingSettlementActor extends EvenlySharded {
   val numOfShards = 2
   val entitiesPerShard = 1
   val name = "ring_settlement"

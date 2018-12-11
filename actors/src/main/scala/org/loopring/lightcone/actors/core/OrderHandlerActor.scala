@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderHandlerActor extends EventlySharded {
+object OrderHandlerActor extends EvenlySharded {
   val numOfShards = 10
   val entitiesPerShard = 2
   val name = "order_handler"

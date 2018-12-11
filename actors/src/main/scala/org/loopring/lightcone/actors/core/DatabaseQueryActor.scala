@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object DatabaseQueryActor extends EventlySharded {
+object DatabaseQueryActor extends EvenlySharded {
   val numOfShards = 10
   val entitiesPerShard = 1
   val name = "database_query"
