@@ -40,8 +40,6 @@ import scala.annotation.tailrec
 
 // main owner: 李亚东
 object RingSettlementActor extends EvenlySharded {
-  val numOfShards = 2
-  val entitiesPerShard = 1
   val name = "ring_settlement"
 
   def startShardRegion()(
@@ -53,6 +51,11 @@ object RingSettlementActor extends EvenlySharded {
     timeout: Timeout,
     actors: Lookup[ActorRef]
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new RingSettlementActor()),

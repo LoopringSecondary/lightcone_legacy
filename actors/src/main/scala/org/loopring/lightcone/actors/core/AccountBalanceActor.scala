@@ -36,8 +36,6 @@ import scala.concurrent._
 
 // main owner: 李亚东
 object AccountBalanceActor extends EvenlySharded {
-  val numOfShards = 2
-  val entitiesPerShard = 1
   val name = "account_balance"
 
   def startShardRegion()(implicit
@@ -48,6 +46,11 @@ object AccountBalanceActor extends EvenlySharded {
     timeout: Timeout,
     actors: Lookup[ActorRef]
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new AccountBalanceActor()),

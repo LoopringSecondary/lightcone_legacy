@@ -36,8 +36,6 @@ import scala.concurrent._
 
 // main owner: 李亚东
 object GasPriceActor extends EvenlySharded {
-  val numOfShards = 2
-  val entitiesPerShard = 1
   val name = "gas_price"
 
   def startShardRegion()(
@@ -49,6 +47,11 @@ object GasPriceActor extends EvenlySharded {
     timeout: Timeout,
     actors: Lookup[ActorRef]
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new GasPriceActor()),

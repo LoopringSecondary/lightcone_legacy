@@ -36,8 +36,6 @@ import scala.concurrent._
 
 // main owner: 杜永丰
 object DatabaseQueryActor extends EvenlySharded {
-  val numOfShards = 10
-  val entitiesPerShard = 1
   val name = "database_query"
 
   def startShardRegion()(implicit
@@ -48,6 +46,11 @@ object DatabaseQueryActor extends EvenlySharded {
     timeout: Timeout,
     actors: Lookup[ActorRef]
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new DatabaseQueryActor()),

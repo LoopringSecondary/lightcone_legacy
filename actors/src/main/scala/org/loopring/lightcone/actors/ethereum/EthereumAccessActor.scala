@@ -37,8 +37,6 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 object EthereumAccessActor extends EvenlySharded {
-  val numOfShards = 2
-  val entitiesPerShard = 1
   val name = "ethereum_access"
 
   def startShardRegion()(
@@ -52,6 +50,11 @@ object EthereumAccessActor extends EvenlySharded {
     ma: ActorMaterializer,
     ece: ExecutionContextExecutor
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new EthereumAccessActor()),

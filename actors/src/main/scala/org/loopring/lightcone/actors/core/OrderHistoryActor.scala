@@ -36,8 +36,6 @@ import scala.concurrent._
 
 // main owner: 李亚东
 object OrderHistoryActor extends EvenlySharded {
-  val numOfShards = 10
-  val entitiesPerShard = 2
   val name = "order_history"
 
   def startShardRegion()(
@@ -49,6 +47,11 @@ object OrderHistoryActor extends EvenlySharded {
     timeout: Timeout,
     actors: Lookup[ActorRef]
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderHistoryActor()),

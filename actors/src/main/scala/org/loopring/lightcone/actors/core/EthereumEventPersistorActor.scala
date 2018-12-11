@@ -36,8 +36,6 @@ import scala.concurrent._
 
 // main owner: 杜永丰
 object EthereumEventPersistorActor extends EvenlySharded {
-  val numOfShards = 5
-  val entitiesPerShard = 1
   val name = "ethereum_event_persister"
 
   def startShardRegion()(
@@ -49,6 +47,11 @@ object EthereumEventPersistorActor extends EvenlySharded {
     timeout: Timeout,
     actors: Lookup[ActorRef]
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shareds")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new EthereumEventPersistorActor()),
