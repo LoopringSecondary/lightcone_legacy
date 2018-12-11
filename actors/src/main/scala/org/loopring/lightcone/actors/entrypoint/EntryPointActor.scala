@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.entrypoint
 
 import akka.actor._
 import akka.util.Timeout
+import akka.event.LoggingReceive
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.proto.actors._
@@ -26,7 +27,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent.ExecutionContext
 
 object EntryPointActor {
-  val name = "entry-point"
+  val name = "entrypoint"
 }
 
 class EntryPointActor()(
@@ -34,19 +35,28 @@ class EntryPointActor()(
     ec: ExecutionContext,
     timeout: Timeout,
     actors: Lookup[ActorRef]
-)
-  extends Actor with ActorLogging {
+) extends Actor with ActorLogging {
 
-  def receive: Receive = {
-    case msg: Any ⇒ findDestination(msg) foreach { dest ⇒
-      actors.get(dest) forward msg
-    }
+  def receive = LoggingReceive {
+    case msg: Any ⇒
+      findDestination(msg) match {
+        case Some(dest) ⇒
+          actors.get(dest) forward msg
+        case None ⇒
+          // TODO(liyadong): reply this error back to sender
+          //  sender ! XError()
+          log.debug(s"Unsupported message: $msg")
+      }
   }
 
   def findDestination(msg: Any): Option[String] = msg match {
+    case _@ (XSubmitRawOrder) ⇒
+      Some(OrderHandlerActor.name)
+
     case _@ (
       XSubmitOrderReq |
       XGetOrderbookReq) ⇒ Some(AccountManagerActor.name)
+
     case _ ⇒ None
   }
 

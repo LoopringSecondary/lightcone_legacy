@@ -30,17 +30,17 @@ trait RawOrderValidator {
 // TODO(kongliang): implement and test this class
 class RawOrderValidatorImpl extends RawOrderValidator {
   // TODO this field should be configurable somewhere.
-  val feePercentageBase = 1000
+  val FeePercentageBase = 1000
 
   def calculateOrderHash(order: XRawOrder): String = {
     val bitstream = new Bitstream
     val feeParams = order.feeParams.get
     val optionalParams = order.params.get
-    bitstream.addUintStr(order.amountS.toString)
-    bitstream.addUintStr(order.amountB.toString)
-    bitstream.addUintStr(feeParams.amountFee.toString)
-    bitstream.addUint(BigInt(order.validSince))
-    bitstream.addUint(BigInt(optionalParams.validUntil))
+    bitstream.addUint(order.amountS.toStringUtf8, true)
+    bitstream.addUint(order.amountB.toStringUtf8, true)
+    bitstream.addUint(feeParams.amountFee.toStringUtf8, true)
+    bitstream.addUint(BigInt(order.validSince), true)
+    bitstream.addUint(BigInt(optionalParams.validUntil), true)
     bitstream.addAddress(order.owner, true)
     bitstream.addAddress(order.tokenS, true)
     bitstream.addAddress(order.tokenB, true)
@@ -55,7 +55,7 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     bitstream.addUint16(feeParams.tokenBFeePercentage)
     bitstream.addBoolean(optionalParams.allOrNone)
 
-    Numeric.toHexString(Hash.sha3(bitstream.getPackedBytes))
+    Numeric.toHexString(Hash.sha3(bitstream.getBytes))
   }
 
   def validate(order: XRawOrder): Either[XOrderValidationError, XRawOrder] = {
@@ -73,15 +73,15 @@ class RawOrderValidatorImpl extends RawOrderValidator {
       isValidAddress(order.owner) -> ORDER_VALIDATION_ERR_INVALID_OWNER,
       isValidAddress(order.tokenS) -> ORDER_VALIDATION_ERR_INVALID_TOKENS,
       isValidAddress(order.tokenB) -> ORDER_VALIDATION_ERR_INVALID_TOKENB,
-      (BigInt(order.amountS.toString, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
-      (BigInt(order.amountB.toString, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
-      (BigInt(order.feeParams.get.waiveFeePercentage) <= feePercentageBase)
+      (BigInt(order.amountS.toStringUtf8, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
+      (BigInt(order.amountB.toStringUtf8, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
+      (BigInt(order.feeParams.get.waiveFeePercentage) <= FeePercentageBase)
         -> ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE,
-      (BigInt(order.feeParams.get.waiveFeePercentage) >= -feePercentageBase)
+      (BigInt(order.feeParams.get.waiveFeePercentage) >= -FeePercentageBase)
         -> ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE,
-      (BigInt(order.feeParams.get.tokenSFeePercentage) <= feePercentageBase)
+      (BigInt(order.feeParams.get.tokenSFeePercentage) <= FeePercentageBase)
         -> ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE,
-      (BigInt(order.feeParams.get.tokenBFeePercentage) <= feePercentageBase)
+      (BigInt(order.feeParams.get.tokenBFeePercentage) <= FeePercentageBase)
         -> ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE,
       (BigInt(order.feeParams.get.walletSplitPercentage) <= 100)
         -> ORDER_VALIDATION_ERR_INVALID_WALLET_SPLIT_PERCENTAGE,

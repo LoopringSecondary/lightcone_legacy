@@ -25,7 +25,6 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -68,7 +67,6 @@ object AccountManagerActor {
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
-
   }
 }
 
@@ -80,14 +78,13 @@ class AccountManagerActor()(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator
-) extends ConfiggedActor(AccountManagerActor.name)
+) extends ActorWithPathBasedConfig(AccountManagerActor.name)
   with OrderRecoverSupport {
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
   private var address: String = _
 
-  protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
   protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)

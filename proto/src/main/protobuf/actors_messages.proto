@@ -14,18 +14,24 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+syntax = "proto3";
 
-// TODO(fukun): should we move this to proto file?
+option java_multiple_files = true;
+package org.loopring.lightcone.proto.actors;
 
-case class TransactionLog(
-    logIndex: Int = 0,
-    blockNumber: BigInt = 0,
-    blockHash: String = "0x",
-    transactionHash: String = "0x",
-    transactionIndex: Int = 0,
-    address: String = "0x",
-    data: String = "0x",
-    topics: Seq[String] = Seq(),
-    removed: Boolean = false
-)
+import "google/protobuf/any.proto";
+import "core_data.proto";
+
+message XRunNamedJob {
+    string name = 1;
+}
+
+message XStart{
+    string shard_entity_id = 1;
+}
+message XStop{}
+
+
+message XSubmitRawOrder {
+    core.XRawOrder raw_order = 1;
+}

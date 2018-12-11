@@ -35,11 +35,10 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object EthereumEventPersistorActor extends EvenlySharded {
-  val name = "ethereum_event_persister"
+object DatabaseQueryActor extends EvenlySharded {
+  val name = "database_query"
 
-  def startShardRegion()(
-    implicit
+  def startShardRegion()(implicit
     system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
@@ -54,7 +53,7 @@ object EthereumEventPersistorActor extends EvenlySharded {
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new EthereumEventPersistorActor()),
+      entityProps = Props(new DatabaseQueryActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -62,16 +61,16 @@ object EthereumEventPersistorActor extends EvenlySharded {
   }
 }
 
-class EthereumEventPersistorActor()(
+class DatabaseQueryActor()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(EthereumEventPersistorActor.name) {
+) extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
 
-  def receive: Receive = {
+  def receive: Receive = LoggingReceive {
     case _ ⇒
   }
 

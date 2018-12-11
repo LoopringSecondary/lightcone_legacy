@@ -25,7 +25,6 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
@@ -55,15 +54,14 @@ class TokenMetadataActor()(
   with RepeatedJobActor {
 
   private val tokenMetadata = dbModule.tokenMetadata
-  val syncJob = Job(
-    id = 1,
+
+  val repeatedJobs = Seq(Job(
     name = "syncTokenValue",
-    scheduleDelay = 10000,
+    dalayInSeconds = 10 * 60, // 10 minutes
     run = () ⇒ tokenMetadata.getTokens(true).map {
       _.foreach(tokenMetadataManager.addToken)
     }
-  )
-  initAndStartNextRound(syncJob)
+  ))
 
   override def receive: Receive = super.receive orElse LoggingReceive {
     case _ ⇒
