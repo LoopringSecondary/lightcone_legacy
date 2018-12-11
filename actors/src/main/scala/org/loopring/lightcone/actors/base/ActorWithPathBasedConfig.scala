@@ -39,5 +39,13 @@ abstract class ActorWithPathBasedConfig(val name: String)
       log.warning(s"NO CONFIG FOUND for actor with path: ${self.path.name}: ${e.getMessage}")
       selfConfig_
   }
-  log.info(s"config for ${self.path.name} = $selfConfig")
+
+  log.info(s"""
+
+    ---------------->>>
+    ${getClass.getSimpleName} actor created (${self.path.name}) with config =
+    ${selfConfig}
+    <<<----------------
+
+  """)
 }
