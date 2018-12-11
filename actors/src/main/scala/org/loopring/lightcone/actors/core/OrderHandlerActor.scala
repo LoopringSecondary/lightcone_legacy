@@ -36,16 +36,10 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderHandlerActor {
+object OrderHandlerActor extends EventlySharded {
+  val numOfShards = 10
+  val entitiesPerShard = 2
   val name = "order_handler"
-
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XStart(_) ⇒ "address_1"
-  }
 
   def startShardRegion()(
     implicit
@@ -76,7 +70,7 @@ class OrderHandlerActor()(
 ) extends ConfiggedActor(OrderHandlerActor.name) {
 
   def receive: Receive = {
-    case _ ⇒
+    case XSubmitRawOrder(Some(order)) ⇒
   }
 
 }

@@ -96,14 +96,18 @@ class CoreModule(config: Config)
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
     //-----------deploy actors-----------
-    actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
-    actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
-    actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
     actors.add(AccountBalanceActor.name, AccountBalanceActor.startShardRegion)
-    actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
+    actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
+    actors.add(EthereumEventExtractorActor.name, EthereumEventExtractorActor.startShardRegion)
+    actors.add(EthereumEventPersistorActor.name, EthereumEventPersistorActor.startShardRegion)
+    actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
+    actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
     actors.add(OrderbookManagerActor.name, OrderbookManagerActor.startShardRegion)
+    actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
     actors.add(OrderHistoryActor.name, OrderHistoryActor.startShardRegion)
+    actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
     actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
+    actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
 
     actors.add(
       EntryPointActor.name,

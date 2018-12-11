@@ -44,10 +44,16 @@ class EntryPointActor()(
   }
 
   def findDestination(msg: Any): Option[String] = msg match {
+    case _@ (XSubmitRawOrder) ⇒
+      Some(OrderHandlerActor.name)
+
     case _@ (
       XSubmitOrderReq |
       XGetOrderbookReq) ⇒ Some(AccountManagerActor.name)
-    case _ ⇒ None
+
+    case msg ⇒
+      log.debug(s"Unsupported message: $msg")
+      None
   }
 
 }

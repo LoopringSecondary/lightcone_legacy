@@ -36,16 +36,10 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object EthereumEventPersistorActor {
+object EthereumEventPersistorActor extends EventlySharded {
+  val numOfShards = 5
+  val entitiesPerShard = 1
   val name = "ethereum_event_persister"
-
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XStart(_) ⇒ "address_1"
-  }
 
   def startShardRegion()(
     implicit

@@ -68,7 +68,6 @@ object AccountManagerActor {
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
-
   }
 }
 

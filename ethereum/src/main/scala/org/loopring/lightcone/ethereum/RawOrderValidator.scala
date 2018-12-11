@@ -23,8 +23,8 @@ import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.core.XOrderValidationError._
 
 trait RawOrderValidator {
-  def validate(  def calculateOrderHash(order: XRawOrder): String
-order: XRawOrder): Either[XOrderValidationError, XRawOrder]
+  def calculateOrderHash(order: XRawOrder): String
+  def validate(order: XRawOrder): Either[XOrderValidationError, XRawOrder]
 }
 
 // TODO(kongliang): implement and test this class
