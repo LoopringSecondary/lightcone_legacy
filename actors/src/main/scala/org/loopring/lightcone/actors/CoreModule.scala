@@ -24,7 +24,6 @@ import com.google.inject.AbstractModule
 import com.google.inject.name.Names
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
