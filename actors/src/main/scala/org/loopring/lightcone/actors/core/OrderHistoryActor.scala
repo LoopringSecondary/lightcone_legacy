@@ -66,7 +66,7 @@ class OrderHistoryActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(OrderHistoryActor.name) {
+) extends ActorWithPathBasedConfig(OrderHistoryActor.name) {
 
   override def receive: Receive = {
     case XGetOrderFilledAmountReq ⇒ {

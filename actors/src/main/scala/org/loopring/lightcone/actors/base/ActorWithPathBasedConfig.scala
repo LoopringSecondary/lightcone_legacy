@@ -20,15 +20,24 @@ import akka.actor._
 import com.typesafe.config.Config
 import scala.concurrent._
 
-abstract class ConfiggedActor(val name: String) extends Actor with ActorLogging {
-  val config: Config
+trait NamedBasedConfig {
+  val name: String
+  val config: Config // the global config
+  protected val selfConfig_ = config.getConfig(name)
+  val selfConfig = selfConfig_
+}
 
-  private val conf = config.getConfig(name)
+abstract class ActorWithPathBasedConfig(val name: String)
+  extends Actor
+  with ActorLogging
+  with NamedBasedConfig {
 
-  lazy val selfConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
+  override val selfConfig = try {
+    selfConfig_.getConfig(self.path.name).withFallback(selfConfig_)
   } catch {
-    case e: Throwable ⇒ conf
+    case e: Throwable ⇒
+      log.warning(s"NO CONFIG FOUND for actor with path: ${self.path.name}: ${e.getMessage}")
+      selfConfig_
   }
   log.info(s"config for ${self.path.name} = $selfConfig")
 }

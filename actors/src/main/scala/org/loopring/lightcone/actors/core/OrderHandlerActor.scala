@@ -66,7 +66,7 @@ class OrderHandlerActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(OrderHandlerActor.name) {
+) extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
   def receive: Receive = {
     case XSubmitRawOrder(Some(order)) ⇒

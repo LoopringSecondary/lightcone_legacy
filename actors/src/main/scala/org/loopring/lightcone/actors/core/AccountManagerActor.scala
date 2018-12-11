@@ -78,7 +78,7 @@ class AccountManagerActor()(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator
-) extends ConfiggedActor(AccountManagerActor.name)
+) extends ActorWithPathBasedConfig(AccountManagerActor.name)
   with OrderRecoverSupport {
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing

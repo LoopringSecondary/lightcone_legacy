@@ -70,7 +70,7 @@ class RingSettlementActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(RingSettlementActor.name)
+) extends ActorWithPathBasedConfig(RingSettlementActor.name)
   with RepeatedJobActor {
 
   //防止一个tx中的订单过多，超过 gaslimit

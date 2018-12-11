@@ -66,7 +66,7 @@ class GasPriceActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(GasPriceActor.name) {
+) extends ActorWithPathBasedConfig(GasPriceActor.name) {
 
   private var gasPrice = BigInt(selfConfig.getString("default"))
 

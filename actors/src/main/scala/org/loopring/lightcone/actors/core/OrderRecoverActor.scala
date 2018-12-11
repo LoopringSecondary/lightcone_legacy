@@ -72,7 +72,7 @@ class OrderRecoverActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(OrderRecoverActor.name) {
+) extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   def receive: Receive = {
     case _ ⇒

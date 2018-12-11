@@ -65,7 +65,7 @@ class DatabaseQueryActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(DatabaseQueryActor.name) {
+) extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
 
   def receive: Receive = LoggingReceive {
     case _ ⇒

@@ -72,7 +72,7 @@ class EthereumEventExtractorActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(EthereumEventExtractorActor.name) {
+) extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
 
   def receive: Receive = {
     case _ ⇒

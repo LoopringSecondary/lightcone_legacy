@@ -66,7 +66,7 @@ class OrderbookManagerActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(OrderbookManagerActor.name) {
+) extends ActorWithPathBasedConfig(OrderbookManagerActor.name) {
 
   val xorderbookConfig = XOrderbookConfig(
     levels = selfConfig.getInt("levels"),

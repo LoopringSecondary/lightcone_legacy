@@ -66,7 +66,7 @@ class EthereumEventPersistorActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(EthereumEventPersistorActor.name) {
+) extends ActorWithPathBasedConfig(EthereumEventPersistorActor.name) {
 
   def receive: Receive = {
     case _ ⇒

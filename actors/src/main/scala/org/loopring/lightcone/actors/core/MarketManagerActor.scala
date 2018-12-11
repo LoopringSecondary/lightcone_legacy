@@ -87,7 +87,7 @@ class MarketManagerActor()(
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenMetadataManager: TokenMetadataManager
-) extends ConfiggedActor(MarketManagerActor.name)
+) extends ActorWithPathBasedConfig(MarketManagerActor.name)
   with OrderRecoverSupport {
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
