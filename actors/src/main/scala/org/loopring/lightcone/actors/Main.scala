@@ -27,17 +27,16 @@ import java.io.File
 
 object Main extends App with Logging {
   val baseConfig = ConfigFactory.load()
-  val path = System.getenv("LIGHTCONE_CONFIG_PATH")
+  val pathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
 
-  val config =
-    Option(System.getenv("LIGHTCONE_CONFIG_PATH")) match {
-      case Some(path) if path.trim.nonEmpty ⇒
-        log.info(s"configurations loaded form file ${path.trim}")
-        ConfigFactory.parseFile(new File(path.trim)).withFallback(baseConfig)
-      case _ ⇒
-        log.info("no configuration file provided, using the default.")
-        baseConfig
-    }
+  val config = pathOpt match {
+    case Some(path) if path.nonEmpty ⇒
+      log.info(s"configurations loaded form file ${path}")
+      ConfigFactory.parseFile(new File(path)).withFallback(baseConfig)
+    case _ ⇒
+      log.info("no configuration file provided, using the default.")
+      baseConfig
+  }
 
   val configItems = Seq(
     "akka.remote.artery.canonical.hostname",
