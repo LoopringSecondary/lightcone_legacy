@@ -42,10 +42,10 @@ class EntryPointActor()(
       findDestination(msg) match {
         case Some(dest) ⇒
           actors.get(dest) forward msg
+
         case None ⇒
-          // TODO(liyadong): reply this error back to sender
-          //  sender ! XError()
-          log.debug(s"Unsupported message: $msg")
+          sender ! XError(error = s"unsupported message: $msg")
+          log.debug(s"unsupported msg: $msg")
       }
   }
 

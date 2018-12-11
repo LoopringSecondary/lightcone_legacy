@@ -56,7 +56,7 @@ object AccountBalanceActor extends EvenlySharded {
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new AccountBalanceActor(config.getString("loopring-protocol.delegate-address"))),
+      entityProps = Props(new AccountBalanceActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -64,9 +64,7 @@ object AccountBalanceActor extends EvenlySharded {
   }
 }
 
-class AccountBalanceActor(
-    val delegateAddress: String
-)(
+class AccountBalanceActor()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -75,12 +73,13 @@ class AccountBalanceActor(
     val actors: Lookup[ActorRef]
 ) extends ActorWithPathBasedConfig(AccountBalanceActor.name) {
 
-  protected def ethereumConnectionActor = actors.get(EthereumAccessActor.name)
+  val delegateAddress = config.getString("loopring-protocol.delegate-address")
   val erc20Abi = ERC20ABI()
   val zeroAddress: String = "0x" + "0" * 40
 
-  def receive: Receive = LoggingReceive {
-    // TODO(dongw): even if the token is not supported, we still need to return 0s.
+  protected def ethereumConnectionActor = actors.get(EthereumAccessActor.name)
+
+  def receive = LoggingReceive {
     case req: XGetBalanceAndAllowancesReq ⇒
       if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
         log.error(s"invalid XGetBalanceAndAllowancesReq:$req caused by invalid ethereum address")
@@ -108,15 +107,15 @@ class AccountBalanceActor(
             case None ⇒
               Future.successful(None)
           }
-        } yield {
-          val balanceAndAllowance =
-            (balances zip allowances)
-              .map(ba ⇒ XBalanceAndAllowance(ba._1, ba._2))
-          ethBalance match {
+          balanceAndAllowance = (balances zip allowances).map {
+            ba ⇒ XBalanceAndAllowance(ba._1, ba._2)
+          }
+          result = ethBalance match {
             case Some(ether) ⇒
               XGetBalanceAndAllowancesRes(
                 req.address,
-                (tokens zip balanceAndAllowance).toMap + (ethToken.get → XBalanceAndAllowance(ether, BigInt(0)))
+                (tokens zip balanceAndAllowance).toMap +
+                  (ethToken.get → XBalanceAndAllowance(ether, BigInt(0)))
               )
             case None ⇒
               XGetBalanceAndAllowancesRes(
@@ -124,8 +123,9 @@ class AccountBalanceActor(
                 (tokens zip balanceAndAllowance).toMap
               )
           }
-        }) pipeTo sender
+        } yield result) pipeTo sender
       }
+
     case req: XGetBalanceReq ⇒
       if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
         log.error(s"invalid XGetBalanceReq:$req caused by invalid ethereum address")
@@ -140,16 +140,19 @@ class AccountBalanceActor(
           balances ← (ethereumConnectionActor ? batchBalanceReq)
             .mapTo[XBatchContractCallRes]
             .map(_.resps)
-            .map(_.map(res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))))
+            .map(_.map { res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res.result)) })
           ethBalance ← ethToken match {
-            case Some(_) ⇒ (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
+            case Some(_) ⇒ (ethereumConnectionActor ?
+              XEthGetBalanceReq(
+                address = Address(req.address).toString,
+                tag = "latest"
+              ))
               .mapTo[XEthGetBalanceRes]
-              .map(res ⇒ Some(BigInt(Numeric.toBigInt(res.result))))
+              .map { res ⇒ Some(BigInt(Numeric.toBigInt(res.result))) }
             case None ⇒
               Future.successful(None)
           }
-        } yield {
-          ethBalance match {
+          result = ethBalance match {
             case Some(ether) ⇒
               XGetBalanceRes(
                 req.address,
@@ -161,8 +164,9 @@ class AccountBalanceActor(
                 (req.tokens zip balances).toMap
               )
           }
-        }) pipeTo sender
+        } yield result) pipeTo sender
       }
+
     case req: XGetAllowanceReq ⇒
       if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
         log.error(s"invalid XGetAllowanceReq:$req caused by invalid ethereum address")
@@ -178,8 +182,7 @@ class AccountBalanceActor(
             .mapTo[XBatchContractCallRes]
             .map(_.resps)
             .map(_.map(res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))))
-        } yield {
-          ethToken match {
+          result = ethToken match {
             case Some(address) ⇒
               XGetAllowanceRes(
                 req.address,
@@ -191,27 +194,37 @@ class AccountBalanceActor(
                 (req.tokens zip allowances).toMap
               )
           }
-        }) pipeTo sender
+        } yield result) pipeTo sender
       }
-    case msg ⇒
-      log.error(s"unsupported msg send to AccountBalanceActor:$msg")
-      sender ! XError(error = s"unsupported msg send to AccountBalanceActor:$msg")
   }
 
-  def packBatchBalanceCallReq(owner: Address, tokens: Seq[Address], tag: String = "latest"): XBatchContractCallReq = {
+  private def packBatchBalanceCallReq(
+    owner: Address,
+    tokens: Seq[Address],
+    tag: String = "latest"
+  ): XBatchContractCallReq = {
     val balanceCallReqs = tokens.map(token ⇒
       {
-        val data = erc20Abi.balanceOf.pack(BalanceOfFunction.Parms(_owner = owner.toString))
+        val data = erc20Abi.balanceOf.pack(
+          BalanceOfFunction.Parms(_owner = owner.toString)
+        )
         val param = XTransactionParam(to = token.toString, data = data)
         XEthCallReq(Some(param), tag)
       })
     XBatchContractCallReq(balanceCallReqs)
   }
 
-  def packBatchAllowanceCallReq(owner: Address, tokens: Seq[Address], tag: String = "latest"): XBatchContractCallReq = {
+  private def packBatchAllowanceCallReq(
+    owner: Address,
+    tokens: Seq[Address],
+    tag: String = "latest"
+  ): XBatchContractCallReq = {
     val allowanceCallReqs = tokens.map(token ⇒ {
       val data = erc20Abi.allowance.pack(
-        AllowanceFunction.Parms(_spender = Address(delegateAddress).toString, _owner = owner.toString)
+        AllowanceFunction.Parms(
+          _spender = Address(delegateAddress).toString,
+          _owner = owner.toString
+        )
       )
       val param = XTransactionParam(to = token.toString, data = data)
       XEthCallReq(Some(param), tag)
