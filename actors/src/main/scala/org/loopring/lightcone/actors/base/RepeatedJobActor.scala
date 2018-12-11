@@ -19,16 +19,15 @@ package org.loopring.lightcone.actors.base
 import akka.actor._
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import org.loopring.lightcone.proto.actors.XRepeatedJobNamed
+import org.loopring.lightcone.proto.actors.XRunNamedJob
 
 final case class Job(
-    name: String,
-    dalayInSeconds: Int,
-    run: () ⇒ Future[Any],
-    initialDalayInSeconds: Int = 0,
-    delayBetweenStartAndFinish: Boolean = true,
-    private[base] var sequence: Long = 0
-)
+  name: String,
+  dalayInSeconds: Int,
+  run: () ⇒ Future[Any],
+  initialDalayInSeconds: Int = 0,
+  delayBetweenStartAndFinish: Boolean = true,
+  private[base] var sequence: Long = 0)
 
 trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
   import context.dispatcher
@@ -42,12 +41,11 @@ trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
     context.system.scheduler.scheduleOnce(
       job.initialDalayInSeconds.seconds,
       self,
-      XRepeatedJobNamed(job.name)
-    )
+      XRunNamedJob(job.name))
   }
 
   def receive: Receive = {
-    case XRepeatedJobNamed(name) ⇒
+    case XRunNamedJob(name) ⇒
       jobMap.get(name) foreach { job ⇒
         job.sequence += 1
         log.debug(s"running repeated job ${job.name}#${job.sequence}")
@@ -61,8 +59,7 @@ trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
           context.system.scheduler.scheduleOnce(
             delay.seconds,
             self,
-            XRepeatedJobNamed(name)
-          )
+            XRunNamedJob(name))
         }
       }
   }
