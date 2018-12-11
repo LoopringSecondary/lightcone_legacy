@@ -20,19 +20,13 @@ import akka.actor._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-case class Job(
+final case class Job(
     name: String,
     dalayInSeconds: Int,
     run: () ⇒ Future[Any],
     initialDalayInSeconds: Int = 0,
     delayBetweenStartAndFinish: Boolean = false
 )
-
-class JobWithStatus(j: Job) {
-  var cancellable: Option[Cancellable] = None
-  var lastRunTime: Long = 0
-  var job: Job = j
-}
 
 trait RepeatedJobActor { actor: Actor with ActorLogging ⇒
   import context.dispatcher
