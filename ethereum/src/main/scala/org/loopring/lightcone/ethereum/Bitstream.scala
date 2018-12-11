@@ -30,14 +30,16 @@ class Bitstream() {
   def getBytes = Numeric.hexStringToByteArray(data)
   def length() = data.length / 2
 
-  def addAddress(x: String, forceAppend: Boolean = false) =
+  def addAddress(x: String, forceAppend: Boolean = false) = {
+    val _x = if (x.length == 0) "0" else x
     insert(
       Numeric.toHexStringNoPrefixZeroPadded(
-        Numeric.toBigInt(x),
+        Numeric.toBigInt(_x),
         ADDRESS_LENGTH * 2
       ),
       forceAppend
     )
+  }
 
   def addUint16(num: BigInt, forceAppend: Boolean = true) =
     addBigInt(num, 2, forceAppend)
@@ -51,8 +53,10 @@ class Bitstream() {
   def addUint(num: BigInt, forceAppend: Boolean = true) =
     addBigInt(num, 32, forceAppend)
 
-  def addUint(numStr: String, forceAppend: Boolean) =
-    addBigInt(BigInt(Numeric.cleanHexPrefix(numStr), 16), 32, forceAppend)
+  def addUint(numStr: String, forceAppend: Boolean) = {
+    val _numStr = if (numStr.length > 0) numStr else "0"
+    addBigInt(BigInt(Numeric.cleanHexPrefix(_numStr), 16), 32, forceAppend)
+  }
 
   def addNumber(num: BigInt, numBytes: Int, forceAppend: Boolean = true) =
     addBigInt(num, numBytes, forceAppend)

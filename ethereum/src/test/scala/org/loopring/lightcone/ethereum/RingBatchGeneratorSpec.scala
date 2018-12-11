@@ -43,6 +43,8 @@ class MyConfig(val fileNameOption: Option[String] = None) {
 class RingBatchGeneratorSpec extends FlatSpec with Matchers {
   val ethereumConf = new MyConfig(Some("ethereum.conf"))
 
+  println(s"ethereumConf: $ethereumConf")
+
   "simple 2 tradable orders" should "be able to generate a ring" in {
     val lrcAddress = ethereumConf.envOrElseConfig("contracts.LRC")
     val wethAddress = ethereumConf.envOrElseConfig("contracts.WETH")
@@ -53,33 +55,41 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
 
     val miner = ethereumConf.envOrElseConfig("accounts.a3.addr")
     val minerPrivKey = ethereumConf.envOrElseConfig("accounts.a3.privKey")
+
+    // println(s"lrcAddress: $lrcAddress, $wethAddress, $miner, $minerPrivKey")
+
     val xRingBatchContext = (new XRingBatchContext).withFeeRecipient(miner)
       .withMiner(miner)
       .withTransactionOrigin(miner)
       .withMinerPrivateKey(minerPrivKey)
       .withLrcAddress(lrcAddress)
 
+    println(s"xRingBatchContext: $xRingBatchContext")
+
     val ringBatchGenerator = new RingBatchGeneratorImpl(xRingBatchContext)
 
-    val order1 = new XRawOrder
-    order1.withVersion(0)
+    val order1 = (new XRawOrder)
+      .withVersion(0)
       .withOwner(order1Owner)
       .withTokenS(lrcAddress)
       .withTokenB(wethAddress)
       .withAmountS(ByteString.copyFromUtf8(1000e18.toLong.toHexString))
       .withAmountB(ByteString.copyFromUtf8(1e18.toLong.toHexString))
 
-    val order2 = new XRawOrder
-    order2.withVersion(0)
+    val order2 = (new XRawOrder)
+      .withVersion(0)
       .withOwner(order2Owner)
       .withTokenS(wethAddress)
       .withTokenB(lrcAddress)
       .withAmountS(ByteString.copyFromUtf8(1e18.toLong.toHexString))
-      .withAmountB(ByteString.copyFromUtf8("1000e18.toLong.toHexString"))
+      .withAmountB(ByteString.copyFromUtf8(1000e18.toLong.toHexString))
 
     val orders = Seq(Seq(order1, order2))
     val xRingBatch = ringBatchGenerator.generateAndSignRingBatch(orders)
     println(s"xRingBatch: $xRingBatch")
+
+    val param = ringBatchGenerator.toSubmitableParamStr(xRingBatch)
+    println(s"param str: $param")
 
   }
 }

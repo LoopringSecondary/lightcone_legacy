@@ -19,6 +19,7 @@ package org.loopring.lightcone.ethereum.data
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress
+import com.google.protobuf.ByteString
 
 import org.loopring.lightcone.proto.core._
 
@@ -34,10 +35,13 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
   val SerializationVersion = 0
 
   def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch = {
+    orders.flatten.foreach(println)
+
     val orderValidator = new RawOrderValidatorImpl
 
     val ordersDistinctedMap = orders
       .flatten
+      .map(o ⇒ setupOrderDefaults(o))
       .map(o ⇒ orderValidator.calculateOrderHash(o) -> o)
       .toMap
 
@@ -102,9 +106,44 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     return paramStream.getData
   }
 
-  private def orderSetupDefault(order: XRawOrder) = {
+  private def setupOrderDefaults(order: XRawOrder) = {
+    val defaultAddr = "0x0"
+    val fullZeroAddr = "0x" + "0" * 40
+    val defaultUint256 = ByteString.copyFromUtf8("0")
 
-    order
+    val addressGetOrDefault = (addr: String) => if (isValidAddress(addr)) addr else defaultAddr
+
+    val uint256GetOrDefault = (uint256Bs: ByteString) => {
+      if (uint256Bs.isEmpty) defaultUint256 else uint256Bs
+    }
+
+    var params = order.params.getOrElse(new XRawOrder.Params)
+    var feeParams = order.feeParams.getOrElse(new XRawOrder.FeeParams)
+    var erc1400Params = order.erc1400Params.getOrElse(new XRawOrder.ERC1400Params)
+
+    params = params.copy(
+      dualAuthAddr = addressGetOrDefault(params.dualAuthAddr),
+      broker = addressGetOrDefault(params.broker),
+      orderInterceptor = addressGetOrDefault(params.orderInterceptor),
+      wallet = addressGetOrDefault(params.wallet)
+    )
+
+    feeParams = feeParams.copy(
+      feeAmount = uint256GetOrDefault(feeParams.feeAmount),
+      tokenRecipient = addressGetOrDefault(feeParams.tokenRecipient)
+    )
+
+    if (feeParams.feeToken.length == 0
+      || feeParams.feeToken == defaultAddr
+      || feeParams.feeToken == fullZeroAddr) {
+      feeParams = feeParams.copy(feeToken = context.lrcAddress)
+    }
+
+    order.copy(
+      params = Option(params),
+      feeParams = Option(feeParams),
+      erc1400Params = Option(erc1400Params),
+    )
   }
 
   private def addDataAndOffset(
@@ -174,8 +213,8 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     insertOffset(tables, data.addAddress(order.owner, false))
     insertOffset(tables, data.addAddress(order.tokenS, false))
     insertOffset(tables, data.addAddress(order.tokenB, false))
-    insertOffset(tables, data.addUint(order.amountS.toString, false))
-    insertOffset(tables, data.addUint(order.amountB.toString, false))
+    insertOffset(tables, data.addUint(order.amountS.toStringUtf8, false))
+    insertOffset(tables, data.addUint(order.amountB.toStringUtf8, false))
     insertOffset(tables, data.addUint32(order.validSince, false))
 
     val spendableSIndex = tokenSpendables(order.owner + order.tokenS)
@@ -239,7 +278,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
       insertDefault(tables)
     }
 
-    val feeAmount = BigInt(order.feeParams.get.feeAmount.toString, 16)
+    val feeAmount = BigInt(order.feeParams.get.feeAmount.toStringUtf8, 16)
     if (feeAmount > 0) {
       insertOffset(tables, data.addUint(feeAmount, false))
     } else {

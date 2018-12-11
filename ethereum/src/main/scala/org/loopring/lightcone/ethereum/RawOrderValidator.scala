@@ -36,9 +36,9 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     val bitstream = new Bitstream
     val feeParams = order.feeParams.get
     val optionalParams = order.params.get
-    bitstream.addUint(order.amountS.toString, true)
-    bitstream.addUint(order.amountB.toString, true)
-    bitstream.addUint(feeParams.feeAmount.toString, true)
+    bitstream.addUint(order.amountS.toStringUtf8, true)
+    bitstream.addUint(order.amountB.toStringUtf8, true)
+    bitstream.addUint(feeParams.feeAmount.toStringUtf8, true)
     bitstream.addUint(BigInt(order.validSince), true)
     bitstream.addUint(BigInt(optionalParams.validUntil), true)
     bitstream.addAddress(order.owner, true)
@@ -73,8 +73,8 @@ class RawOrderValidatorImpl extends RawOrderValidator {
       isValidAddress(order.owner) -> ORDER_VALIDATION_ERR_INVALID_OWNER,
       isValidAddress(order.tokenS) -> ORDER_VALIDATION_ERR_INVALID_TOKENS,
       isValidAddress(order.tokenB) -> ORDER_VALIDATION_ERR_INVALID_TOKENB,
-      (BigInt(order.amountS.toString, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
-      (BigInt(order.amountB.toString, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
+      (BigInt(order.amountS.toStringUtf8, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
+      (BigInt(order.amountB.toStringUtf8, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
       (BigInt(order.feeParams.get.waiveFeePercentage) <= FeePercentageBase)
         -> ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE,
       (BigInt(order.feeParams.get.waiveFeePercentage) >= -FeePercentageBase)
