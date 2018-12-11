@@ -45,11 +45,10 @@ abstract class ActorWithPathBasedConfig(
   }
 
   log.info(s"""
-
-    ---------------->>>
-    ${getClass.getSimpleName} actor created (entity name: ${entityName}) with config =
-    ${selfConfig}
-    <<<----------------
-
+    >>> ----------------
+    >>> actor created: ${self.path.name}
+    >>> entity name: ${entityName}
+    >>> config: ${selfConfig}
+    >>> ----------------
   """)
 }

@@ -75,7 +75,9 @@ object MarketManagerActor {
   private def getMarketId(msg: Any): String = ???
 }
 
-class MarketManagerActor()(
+class MarketManagerActor(
+    extractEntityName: String ⇒ String = OrderbookManagerActor.extractEntityName
+)(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -88,7 +90,7 @@ class MarketManagerActor()(
     val tokenMetadataManager: TokenMetadataManager
 ) extends ActorWithPathBasedConfig(
   MarketManagerActor.name,
-  MarketManagerActor.extractEntityName
+  extractEntityName
 ) with OrderRecoverSupport {
 
   val wethTokenAddress = config.getString("weth.address")

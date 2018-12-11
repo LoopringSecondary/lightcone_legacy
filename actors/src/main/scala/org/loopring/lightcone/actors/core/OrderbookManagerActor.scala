@@ -82,7 +82,9 @@ object OrderbookManagerActor {
   private def getMarketId(msg: Any): Option[String] = ???
 }
 
-class OrderbookManagerActor()(
+class OrderbookManagerActor(
+    extractEntityName: String ⇒ String = OrderbookManagerActor.extractEntityName
+)(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -92,7 +94,7 @@ class OrderbookManagerActor()(
     val tokenMetadataManager: TokenMetadataManager
 ) extends ActorWithPathBasedConfig(
   OrderbookManagerActor.name,
-  OrderbookManagerActor.extractEntityName
+  extractEntityName
 ) {
 
   val marketId = entityName
