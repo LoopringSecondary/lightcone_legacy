@@ -87,6 +87,16 @@ message XError{
     string error = 2;
 }
 
+message XForkBlock{
+    int32 height = 1;
+}
+
+message XBlockJob{
+    int32 height = 1;
+    string hash = 2;
+    repeated string txhashes = 3;
+}
+
 message XBalanceAndAllowance {
     bytes balance = 1;
     bytes allowance = 2;

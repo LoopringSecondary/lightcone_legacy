@@ -19,8 +19,6 @@ package org.loopring.lightcone.actors.ethereum
 import akka.actor._
 import akka.pattern._
 import akka.util.Timeout
-import com.google.inject.Inject
-import com.google.inject.name.Named
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core.AccountManagerActor
 import org.loopring.lightcone.ethereum.abi._
@@ -28,9 +26,8 @@ import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.actors._
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.duration._
 import scala.concurrent._
-import scala.util.{ Failure, Success }
+import scala.concurrent.duration._
 
 class EthereumDataIndexer(
     val actors: Lookup[ActorRef],
@@ -71,8 +68,12 @@ class EthereumDataIndexer(
   }
 
   override def receive: Receive = {
-    case _: XStart ⇒ process()
-
+    case _: XStart ⇒
+      process()
+    case forkBlock: XForkBlock ⇒
+      handleFork(forkBlock)
+    case job: XBlockJob ⇒
+      indexBlock(job)
   }
   def process(): Unit = {
     for {
@@ -85,40 +86,52 @@ class EthereumDataIndexer(
       else {
         Future.successful()
       }
-      handledTask ← block match {
+    } yield {
+      block match {
         case XGetBlockWithTxObjectByNumberRes(_, _, Some(result), _) ⇒
           if (result.parentHash.equals(currentBlockHash))
-            indexBlock(result)
+            self ! XBlockJob()
+              .withHeight(hex2BigInt(result.number).intValue())
+              .withHash(result.hash)
+              .withTxhashes(result.transactions.map(_.hash))
           else
-            handleFork(currentBlockNumber - 1)
+            self ! XForkBlock((currentBlockNumber - 1).intValue())
         case _ ⇒
-          Future.successful(currentBlockNumber, currentBlockHash)
-      }
-    } yield {
-      if (currentBlockHash.equals(handledTask._2)) {
-        context.system.scheduler.scheduleOnce(15 seconds, self, XStart())
-      } else {
-        currentBlockNumber = handledTask._1
-        currentBlockHash = handledTask._2
-        self ! XStart()
+          context.system.scheduler.scheduleOnce(15 seconds, self, XStart())
       }
     }
   }
 
   // find the fork height
-  def handleFork(blockNum: BigInt): Future[(BigInt, String)] = {
-    Future.successful((BigInt(0), ""))
+  def handleFork(forkBlock: XForkBlock): Unit = {
+    for {
+      dbBlockData ← blockDal.findByHeight(forkBlock.height.longValue()).map(_.get)
+      nodeBlockData ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(bigInt2Hex(forkBlock.height)))
+        .mapTo[XGetBlockWithTxHashByNumberRes]
+        .map(_.result.get)
+      task ← if (dbBlockData.hash.equals(nodeBlockData.hash)) {
+        currentBlockNumber = forkBlock.height
+        currentBlockHash = nodeBlockData.hash
+        blockDal.obsolete((forkBlock.height + 1).longValue()).map(_ ⇒ XStart())
+      } else {
+        Future.successful(XForkBlock((forkBlock.height - 1).intValue()))
+      }
+    } yield self ! task
   }
 
   // index block
-  def indexBlock(block: XBlockWithTxObject): Future[(BigInt, String)] = {
+  def indexBlock(job: XBlockJob):Unit = {
     for {
-      txReceipts ← getAllTxReceipts(block.transactions.map(_.hash))
+      txReceipts ← (ethereumConnectionActor ? XBatchGetTransactionReceiptsReq(job.txhashes.map(XGetTransactionReceiptReq(_))))
+        .mapTo[XBatchGetTransactionReceiptsRes]
+        .map(_.resps.map(_.result))
+      allGet = txReceipts.forall(_.nonEmpty)
       balanceAddresses = ListBuffer.empty[(String, String)]
       allowanceAddresses = ListBuffer.empty[(String, String)]
-      _ = txReceipts.foreach(receipt ⇒ {
-        balanceAddresses.append(receipt.from → zeroAdd)
-        receipt.logs.foreach(log ⇒ {
+      _ =  if(allGet) {txReceipts.foreach(receipt ⇒ {
+        balanceAddresses.append(receipt.get.from → zeroAdd)
+        balanceAddresses.append(receipt.get.to → zeroAdd)
+        receipt.get.logs.foreach(log ⇒ {
           wethAbi.unpackEvent(log.data, log.topics.toArray) match {
             case Some(transfer: TransferEvent.Result) ⇒
               balanceAddresses.append(transfer.sender → log.address, transfer.receiver → log.address)
@@ -132,7 +145,7 @@ class EthereumDataIndexer(
             case _ ⇒
           }
         })
-      })
+      })}
       balanceReqs = balanceAddresses.unzip._1.toSet.map((add: String) ⇒ {
         XGetBalanceReq(add, balanceAddresses.find(_._1.equalsIgnoreCase(add)).unzip._2.toSet.toSeq)
       })
@@ -144,35 +157,25 @@ class EthereumDataIndexer(
       allowanceRes ← Future.sequence(allowanceReqs.map(req ⇒
         (ethereumConnectionActor ? req).mapTo[XGetAllowanceRes]))
     } yield {
-      balanceRes.foreach(res ⇒ {
-        res.balanceMap.foreach(item ⇒
-          accountManager ! XAddressBalanceUpdated(res.address, token = item._1, balance = item._2))
-      })
-      allowanceRes.foreach(res ⇒ {
-        res.allowanceMap.foreach(item ⇒ {
-          accountManager ! XAddressAllowanceUpdated(res.address, token = item._1, item._2)
+      if(allGet){
+        balanceRes.foreach(res ⇒ {
+          res.balanceMap.foreach(item ⇒
+            accountManager ! XAddressBalanceUpdated(res.address, token = item._1, balance = item._2))
         })
-      })
-      hex2BigInt(block.number) → block.hash
+        allowanceRes.foreach(res ⇒ {
+          res.allowanceMap.foreach(item ⇒ {
+            accountManager ! XAddressAllowanceUpdated(res.address, token = item._1, item._2)
+          })
+        })
+        currentBlockNumber = job.height
+        currentBlockHash  = job.hash
+        self ! XStart()
+      }else{
+        context.system.scheduler.scheduleOnce(30 seconds, self, XStart())
+      }
     }
   }
 
-  def getAllTxReceipts(txHashs: Seq[String]): Future[Seq[XTransactionReceipt]] = {
-
-    val taskPromise = Promise[Seq[XTransactionReceipt]]()
-
-    val txReceipts = Map.empty[String, XTransactionReceipt]
-    while (txReceipts.size < txHashs.size) {
-      val txReceiptReqs = txHashs.filterNot(txReceipts.contains).map(hash ⇒ XGetTransactionReceiptReq(hash))
-      val resp = (ethereumConnectionActor ? XBatchGetTransactionReceiptsReq(txReceiptReqs))
-        .mapTo[XBatchGetTransactionReceiptsRes]
-        .map(_.resps.map(_.result))
-      val txReceiptOpts = Await.result(resp, 10 seconds)
-      val receipts = txReceiptOpts.filter(_.nonEmpty)
-      txReceipts.++(receipts.map(receipt ⇒ receipt.get.transactionHash → receipt.get))
-    }
-    taskPromise.future
-  }
 
   implicit def hex2BigInt(hex: String): BigInt = {
     if (hex.startsWith("0x")) {

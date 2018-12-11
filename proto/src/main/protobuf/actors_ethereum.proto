@@ -47,12 +47,6 @@ message XNodeBlockHeight{
     int32 height = 2;
 }
 
-message XBlockJob{
-    int32 height = 1;
-    repeated string txhashes = 2;
-}
-
-
 message XJsonRpcReq {
     string json = 1;
 }
