@@ -39,8 +39,13 @@ object MarketManagerActor {
   val name = "market_manager"
 
   def extractEntityName(actorName: String) = actorName.split("_").last
-  private def getShardId(msg: Any) = "singleton_shard"
-  private def getEntitityId(msg: Any) = "${name}_${getMarketId(msg)}"
+
+  private def getShardId(msg: Any) = "singleton"
+
+  private def getEntitityId(msg: Any) = getMarketId(msg) match {
+    case Some(marketId) ⇒ "${name}_singleton_${marketId}}"
+    case None           ⇒ "${name}_default"
+  }
 
   protected val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg ⇒ (getEntitityId(msg), msg)
@@ -72,11 +77,11 @@ object MarketManagerActor {
     )
   }
 
-  private def getMarketId(msg: Any): String = ???
+  private def getMarketId(msg: Any): Option[String] = ???
 }
 
 class MarketManagerActor(
-    extractEntityName: String ⇒ String = OrderbookManagerActor.extractEntityName
+    extractEntityName: String ⇒ String = MarketManagerActor.extractEntityName
 )(
     implicit
     val config: Config,

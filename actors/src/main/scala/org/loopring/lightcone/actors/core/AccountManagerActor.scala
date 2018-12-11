@@ -38,16 +38,20 @@ import scala.concurrent._
 object AccountManagerActor {
   val name = "account_manager"
 
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+  protected var numOfShards: Int = 10
+
+  private def hashed(msg: Any) = Math.abs(getAddress(msg).hashCode % numOfShards)
+
+  private def getShardId(msg: Any) = "shard_" + hashed(msg)
+
+  private def getEntitityId(msg: Any) = s"${name}_${hashed(msg)}_singleton"
+
+  protected val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg ⇒ (getEntitityId(msg), msg)
   }
 
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
-    case XStart(_) ⇒ "address_1"
+  protected val extractShardId: ShardRegion.ExtractShardId = {
+    case msg ⇒ getShardId(msg)
   }
 
   def startShardRegion()(
@@ -68,6 +72,8 @@ object AccountManagerActor {
       extractShardId = extractShardId
     )
   }
+
+  private def getAddress(msg: Any): String = ???
 }
 
 class AccountManagerActor()(
@@ -80,6 +86,8 @@ class AccountManagerActor()(
     val dustEvaluator: DustOrderEvaluator
 ) extends ActorWithPathBasedConfig(AccountManagerActor.name)
   with OrderRecoverSupport {
+
+  override val entityName = AccountManagerActor.name
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default

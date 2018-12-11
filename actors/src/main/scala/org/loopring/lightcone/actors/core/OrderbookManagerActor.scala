@@ -38,14 +38,17 @@ import scala.concurrent._
 object OrderbookManagerActor {
   val name = "orderbook_manager"
 
-  def extractEntityName(actorName: String) = actorName.split("_").dropRight(1).last
+  def extractEntityName(actorName: String) = actorName.split("_").last
 
   protected var instancesPerMarket: Int = 1
-  private def hashed(msg: Any, max: Int) = Math.abs(msg.hashCode % max)
-  private def getShardId(msg: Any) = "shard_" + hashed(msg, instancesPerMarket)
-  private def getEntitityId(msg: Any) = {
-    val marketId = getMarketId(msg).getOrElse("invalid")
-    "${name}_${marketId}_${hashed(msg, instancesPerMarket)}"
+
+  private def hashed(msg: Any) = Math.abs(msg.hashCode % instancesPerMarket)
+
+  private def getShardId(msg: Any) = "shard_" + hashed(msg)
+
+  private def getEntitityId(msg: Any) = getMarketId(msg) match {
+    case Some(marketId) ⇒ "${name}_${hashed(msg)}_${marketId}"
+    case None           ⇒ "${name}_default"
   }
 
   protected val extractEntityId: ShardRegion.ExtractEntityId = {
