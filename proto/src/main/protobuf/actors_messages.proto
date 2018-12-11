@@ -22,10 +22,15 @@ package org.loopring.lightcone.proto.actors;
 import "google/protobuf/any.proto";
 import "core_data.proto";
 
+message XRunNamedJob {
+    string name = 1;
+}
+
 message XStart{
     string shard_entity_id = 1;
 }
 message XStop{}
+
 
 message XSubmitRawOrder {
     core.XRawOrder raw_order = 1;

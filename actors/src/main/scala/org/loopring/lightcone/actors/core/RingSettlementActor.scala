@@ -34,7 +34,6 @@ import org.loopring.lightcone.proto.actors.XErrorCode._
 import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.ethereum.data._
 import scala.concurrent._
 import scala.annotation.tailrec
 
@@ -79,32 +78,35 @@ class RingSettlementActor()(
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)
-  val ringSigner = new RingSignerImpl(
-    privateKey = selfConfig.getString("submitter-private-key")
-  )
+  // val ringSigner = new RingSignerImpl(
+  //   privateKey = selfConfig.getString("submitter-private-key")
+  // )
+
+  val repeatedJobs = Nil
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)
 
   override def receive: Receive = super.receive orElse LoggingReceive {
-    case req: XSettleRingsReq ⇒
-      val rings = generateRings(req.rings)
-      rings.foreach {
-        ring ⇒
-          val inputData = ringSigner.getInputData(ring)
-          signAndSubmitTx(inputData, req.gasLimit, req.gasPrice)
-      }
+    // case req: XSettleRingsReq ⇒
+    //   val rings = generateRings(req.rings)
+    //   rings.foreach {
+    //     ring ⇒
+    //       val inputData = ringSigner.getInputData(ring)
+    //       signAndSubmitTx(inputData, req.gasLimit, req.gasPrice)
+    //   }
+    case _ ⇒
   }
 
   def signAndSubmitTx(inputData: String, gasLimit: BigInt, gasPrice: BigInt) = {
-    var hasSended = false
-    while (!hasSended) {
-      val txData = ringSigner.getSignedTxData(inputData, nonce.get(), gasLimit, gasPrice)
-      val sendFuture = ethereumAccessActor ? XSendRawTransaction(txData)
-      //todo:需要等待提交被确认才提交下一个
-      nonce.getAndIncrement()
-      hasSended = true
-    }
+    // var hasSended = false
+    // while (!hasSended) {
+    //   val txData = ringSigner.getSignedTxData(inputData, nonce.get(), gasLimit, gasPrice)
+    //   val sendFuture = ethereumAccessActor ? XSendRawTransaction(txData)
+    //   //todo:需要等待提交被确认才提交下一个
+    //   nonce.getAndIncrement()
+    //   hasSended = true
+    // }
 
   }
 
@@ -124,59 +126,61 @@ class RingSettlementActor()(
     }
   } yield Unit
 
-  private def generateRings(rings: Seq[XOrderRing]): Seq[Ring] = {
-    @tailrec
-    def generateRingRec(rings: Seq[XOrderRing], res: Seq[Ring]): Seq[Ring] = {
-      if (rings.isEmpty) {
-        return res
-      }
-      val (toSubmit, remained) = rings.splitAt(maxRingsInOneTx)
-      var ring = Ring(
-        ringSigner.getSignerAddress(),
-        ringSigner.getSignerAddress(),
-        "",
-        Seq.empty[Seq[Int]],
-        Seq.empty[Order],
-        ""
-      )
-      val orders = rings.flatMap {
-        ring ⇒
-          Set(ring.getMaker.getOrder, ring.getTaker.getOrder)
-      }.distinct
-      val orderIndexes = rings.map {
-        ring ⇒
-          Seq(
-            orders.indexOf(ring.getTaker.getOrder),
-            orders.indexOf(ring.getMaker.getOrder)
-          )
-      }
-      ring = ring.copy(
-        orders = orders.map(convertToOrder), //todo:
-        ringOrderIndex = orderIndexes
-      )
-      generateRingRec(remained, res :+ ring)
-    }
+  // private def generateRings(rings: Seq[XOrderRing]): Seq[Ring] = {
+  //   // @tailrec
+  //   // def generateRingRec(rings: Seq[XOrderRing], res: Seq[Ring]): Seq[Ring] = {
+  //   //   if (rings.isEmpty) {
+  //   //     return res
+  //   //   }
+  //   //   val (toSubmit, remained) = rings.splitAt(maxRingsInOneTx)
+  //   //   var ring = Ring(
+  //   //     ringSigner.getSignerAddress(),
+  //   //     ringSigner.getSignerAddress(),
+  //   //     "",
+  //   //     Seq.empty[Seq[Int]],
+  //   //     Seq.empty[Order],
+  //   //     ""
+  //   //   )
+  //   //   val orders = rings.flatMap {
+  //   //     ring ⇒
+  //   //       Set(ring.getMaker.getOrder, ring.getTaker.getOrder)
+  //   //   }.distinct
+  //   //   val orderIndexes = rings.map {
+  //   //     ring ⇒
+  //   //       Seq(
+  //   //         orders.indexOf(ring.getTaker.getOrder),
+  //   //         orders.indexOf(ring.getMaker.getOrder)
+  //   //       )
+  //   //   }
+  //   //   ring = ring.copy(
+  //   //     orders = orders.map(convertToOrder), //todo:
+  //   //     ringOrderIndex = orderIndexes
+  //   //   )
+  //   //   generateRingRec(remained, res :+ ring)
+  //   // }
 
-    generateRingRec(rings, Seq.empty[Ring])
-  }
+  //   // generateRingRec(rings, Seq.empty[Ring])
+  //   ???
+  // }
 
-  private def convertToOrder(xOrder: XOrder): Order = {
-    //todo:need to get From db
-    Order(
-      owner = "0x0",
-      tokenS = xOrder.tokenS,
-      tokenB = xOrder.tokenB,
-      amountS = xOrder.amountS,
-      amountB = xOrder.amountB,
-      validSince = 0,
-      allOrNone = false,
-      feeToken = xOrder.tokenFee,
-      feeAmount = xOrder.amountFee,
-      tokenReceipt = "",
-      sig = "",
-      dualAuthSig = "",
-      hash = xOrder.id
-    )
-  }
+  // private def convertToOrder(xOrder: XOrder): Order = {
+  //   // //todo:need to get From db
+  //   // Order(
+  //   //   owner = "0x0",
+  //   //   tokenS = xOrder.tokenS,
+  //   //   tokenB = xOrder.tokenB,
+  //   //   amountS = xOrder.amountS,
+  //   //   amountB = xOrder.amountB,
+  //   //   validSince = 0,
+  //   //   allOrNone = false,
+  //   //   feeToken = xOrder.tokenFee,
+  //   //   feeAmount = xOrder.amountFee,
+  //   //   tokenReceipt = "",
+  //   //   sig = "",
+  //   //   dualAuthSig = "",
+  //   //   hash = xOrder.id
+  //   // )
+  //   ???
+  // }
 
 }

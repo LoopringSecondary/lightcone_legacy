@@ -33,11 +33,20 @@ abstract class ActorWithPathBasedConfig(val name: String)
   with NamedBasedConfig {
 
   override val selfConfig = try {
-    selfConfig_.getConfig(self.path.name).withFallback(selfConfig_)
+    val str = self.path.name.replace("$", "")
+    selfConfig_.getConfig(str).withFallback(selfConfig_)
   } catch {
     case e: Throwable ⇒
       log.warning(s"NO CONFIG FOUND for actor with path: ${self.path.name}: ${e.getMessage}")
       selfConfig_
   }
-  log.info(s"config for ${self.path.name} = $selfConfig")
+
+  log.info(s"""
+
+    ---------------->>>
+    ${getClass.getSimpleName} actor created (${self.path.name}) with config =
+    ${selfConfig}
+    <<<----------------
+
+  """)
 }

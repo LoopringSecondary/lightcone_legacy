@@ -95,7 +95,7 @@ message XRawOrder {
 
     message FeeParams {
         string token_fee               = 1;
-        bytes  amount_fee             = 2;
+        bytes  amount_fee              = 2;
         int32  waive_fee_percentage    = 3;
         int32  token_s_fee_percentage  = 4;
         int32  token_b_fee_percentage  = 5;
@@ -163,6 +163,7 @@ message XRingBatchContext {
     string miner                    = 2;
     string transaction_origin       = 3;
     string miner_private_key        = 4;
+    string lrc_address              = 5;
 }
 
 message XTransaction {
