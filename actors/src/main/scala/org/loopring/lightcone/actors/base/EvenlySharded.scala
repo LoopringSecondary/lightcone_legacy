@@ -32,11 +32,11 @@ trait EvenlySharded extends Sharded {
     s"${getShardId(msg)}_e${entityId}"
   }
 
-  protected val extractEntityId: ShardRegion.ExtractEntityId = {
+  protected lazy val extractEntityId: ShardRegion.ExtractEntityId = {
     case msg ⇒ (getEntitityId(msg), msg)
   }
 
-  protected val extractShardId: ShardRegion.ExtractShardId = {
+  protected lazy val extractShardId: ShardRegion.ExtractShardId = {
     case msg ⇒ getShardId(msg)
   }
 }
