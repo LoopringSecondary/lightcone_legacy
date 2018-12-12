@@ -206,6 +206,7 @@ class EthereumQueryActor()(
           }
         } yield result) pipeTo sender
       }
+    case req:GetFilledAmountReq ⇒ //todo：订单的成交金额
   }
 
   private def packBatchBalanceCallReq(
