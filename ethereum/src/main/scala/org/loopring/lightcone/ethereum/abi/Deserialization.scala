@@ -46,6 +46,18 @@ object Deserialization {
         case b: BigInteger   ⇒ BigInt(b) == 1
         case b: String       ⇒ BigInt(Numeric.toBigInt(b)) == 1
       }
+    } else if (r =:= typeOf[Array[String]]) {
+      p match {
+        case r: Array[Any] ⇒
+          r.map {
+            case bytes: Array[Byte] ⇒ Numeric.toHexString(bytes)
+            case str: String        ⇒ str
+            case _                  ⇒ ""
+          }
+        case _ ⇒ Seq.empty[String].toArray
+      }
+    } else {
+      p
     }
 
   def deserialize[T](list: List[_])(implicit mf: Manifest[T]): T = {
