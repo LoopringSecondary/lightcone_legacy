@@ -16,14 +16,17 @@
 
 package org.loopring.lightcone.actors.validator
 
+import com.typesafe.config.Config
 import org.loopring.lightcone.proto._
 
 object OrderHandlerMessageValidator {
   val name = "order_handler_validator"
 }
 
-final class OrderHandlerMessageValidator()
-  extends MessageValidator {
+final class OrderHandlerMessageValidator()(
+    implicit
+    val config: Config
+) extends MessageValidator {
   def validate = {
     case x ⇒ Right(x)
   }

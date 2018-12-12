@@ -47,9 +47,13 @@ class MessageValidationActor(
 
   override def receive: Receive = {
     case msg ⇒ validate(msg) match {
-      case Some(Left(err)) ⇒ sender ! err
-      case Some(Right(validatedMsg)) ⇒ destinationActor forward validatedMsg
-      case None ⇒ sender ! XError(ERR_UNSUPPORTED_MESSAGE)
+      case Some(Left(err)) ⇒
+        log.debug(s"validation error $err for msg: $msg")
+        sender ! err
+      case Some(Right(validatedMsg)) ⇒
+        log.debug(s"request rewrote from $msg to $validatedMsg")
+        destinationActor forward validatedMsg
+      case msg ⇒ destinationActor forward msg // unvalidated message are forward as-is
     }
   }
 }

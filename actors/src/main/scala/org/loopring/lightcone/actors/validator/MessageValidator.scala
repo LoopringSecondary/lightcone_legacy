@@ -22,6 +22,3 @@ trait MessageValidator {
   def validate: PartialFunction[Any, Either[XError, Any]]
 }
 
-final class IdentityValidator extends MessageValidator {
-  def validate = { case x ⇒ Right(x) }
-}

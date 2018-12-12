@@ -108,7 +108,8 @@ class CoreModule(config: Config)
 
     //-----------deploy local actors-----------
     actors.add(
-      AccountManagerMessageValidator.name, MessageValidationActor(
+      AccountManagerMessageValidator.name,
+      MessageValidationActor(
         AccountManagerMessageValidator.name,
         new AccountManagerMessageValidator(),
         AccountManagerActor.name
@@ -116,7 +117,8 @@ class CoreModule(config: Config)
     )
 
     actors.add(
-      DatabaseQueryMessageValidator.name, MessageValidationActor(
+      DatabaseQueryMessageValidator.name,
+      MessageValidationActor(
         DatabaseQueryMessageValidator.name,
         new DatabaseQueryMessageValidator(),
         DatabaseQueryActor.name
@@ -124,7 +126,8 @@ class CoreModule(config: Config)
     )
 
     actors.add(
-      MarketManagerMessageValidator.name, MessageValidationActor(
+      MarketManagerMessageValidator.name,
+      MessageValidationActor(
         MarketManagerMessageValidator.name,
         new MarketManagerMessageValidator(),
         MarketManagerActor.name
@@ -132,7 +135,8 @@ class CoreModule(config: Config)
     )
 
     actors.add(
-      OrderbookManagerMessageValidator.name, MessageValidationActor(
+      OrderbookManagerMessageValidator.name,
+      MessageValidationActor(
         OrderbookManagerMessageValidator.name,
         new OrderbookManagerMessageValidator(),
         OrderbookManagerActor.name
@@ -140,7 +144,8 @@ class CoreModule(config: Config)
     )
 
     actors.add(
-      OrderHandlerMessageValidator.name, MessageValidationActor(
+      OrderHandlerMessageValidator.name,
+      MessageValidationActor(
         OrderHandlerMessageValidator.name,
         new OrderHandlerMessageValidator(),
         OrderHandlerActor.name

@@ -16,14 +16,18 @@
 
 package org.loopring.lightcone.actors.validator
 
+import com.typesafe.config.Config
 import org.loopring.lightcone.proto._
 
 object DatabaseQueryMessageValidator {
   val name = "database_query_validator"
 }
 
-final class DatabaseQueryMessageValidator()
-  extends MessageValidator {
+final class DatabaseQueryMessageValidator()(
+    implicit
+    val config: Config
+) extends MessageValidator {
+
   def validate = {
     case x ⇒ Right(x)
   }

@@ -16,14 +16,19 @@
 
 package org.loopring.lightcone.actors.validator
 
+import com.typesafe.config.Config
 import org.loopring.lightcone.proto._
 
 object MarketManagerMessageValidator {
   val name = "market_manager_validator"
 }
 
-final class MarketManagerMessageValidator()
+final class MarketManagerMessageValidator()(
+    implicit
+    val config: Config
+)
   extends MessageValidator {
+
   def validate = {
     case x ⇒ Right(x)
   }
