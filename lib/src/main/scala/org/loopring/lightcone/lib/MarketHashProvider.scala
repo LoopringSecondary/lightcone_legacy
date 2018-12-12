@@ -20,12 +20,12 @@ object MarketHashProvider {
 
   def convert2BigInt(address1: String, address2: String): BigInt = {
     val a1 = if (address1.startsWith("0x")) {
-      address1.substring(2).trim
+      address1.substring(2)
     } else {
       address1
     }
     val a2 = if (address2.startsWith("0x")) {
-      address2.substring(2).trim
+      address2.substring(2)
     } else {
       address2
     }
