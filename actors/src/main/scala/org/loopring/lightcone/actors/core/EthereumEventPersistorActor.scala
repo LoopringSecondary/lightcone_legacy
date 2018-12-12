@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object EthereumEventPersistorActor extends EvenlySharded {
+object EthereumEventPersistorActor extends ShardedEvenly {
   val name = "ethereum_event_persister"
 
   def startShardRegion()(

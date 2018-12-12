@@ -61,6 +61,7 @@ object AccountManagerActor extends ShardedByAddress {
     )
   }
 
+  // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
     case x: Any ⇒ "abc"
   }

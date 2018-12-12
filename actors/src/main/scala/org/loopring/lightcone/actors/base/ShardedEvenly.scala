@@ -25,7 +25,7 @@ trait Sharded {
   protected def hashed(msg: Any, max: Int) = Math.abs(msg.hashCode % max)
 }
 
-trait EvenlySharded extends Sharded {
+trait ShardedEvenly extends Sharded {
   protected var entitiesPerShard: Int = 1
 
   private def getShardId(msg: Any) = "shard_" + hashed(msg, numOfShards)

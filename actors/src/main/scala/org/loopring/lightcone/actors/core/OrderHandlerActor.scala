@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderHandlerActor extends EvenlySharded {
+object OrderHandlerActor extends ShardedEvenly {
   val name = "order_handler"
 
   def startShardRegion()(

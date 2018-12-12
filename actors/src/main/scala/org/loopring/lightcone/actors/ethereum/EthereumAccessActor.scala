@@ -36,7 +36,7 @@ import org.loopring.lightcone.proto.core.XOrderStatus._
 import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
-object EthereumAccessActor extends EvenlySharded {
+object EthereumAccessActor extends ShardedEvenly {
   val name = "ethereum_access"
 
   def startShardRegion()(

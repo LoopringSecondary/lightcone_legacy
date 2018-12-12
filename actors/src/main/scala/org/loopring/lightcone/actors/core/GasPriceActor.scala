@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 李亚东
-object GasPriceActor extends EvenlySharded {
+object GasPriceActor extends ShardedEvenly {
   val name = "gas_price"
 
   def startShardRegion()(

@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 李亚东
-object OrderHistoryActor extends EvenlySharded {
+object OrderHistoryActor extends ShardedEvenly {
   val name = "order_history"
 
   def startShardRegion()(

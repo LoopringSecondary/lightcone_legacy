@@ -38,7 +38,7 @@ import scala.concurrent._
 import scala.annotation.tailrec
 
 // main owner: 李亚东
-object RingSettlementActor extends EvenlySharded {
+object RingSettlementActor extends ShardedEvenly {
   val name = "ring_settlement"
 
   def startShardRegion()(

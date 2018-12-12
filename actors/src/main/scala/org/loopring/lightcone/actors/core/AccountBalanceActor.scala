@@ -38,7 +38,7 @@ import org.web3j.utils.Numeric
 import scala.concurrent._
 
 // main owner: 李亚东
-object AccountBalanceActor extends EvenlySharded {
+object AccountBalanceActor extends ShardedEvenly {
   val name = "account_balance"
 
   def startShardRegion()(implicit

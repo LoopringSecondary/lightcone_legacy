@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderbookManagerActor extends ShardedByMarket {
+object OrderbookManagerActor extends ShardedByMarketId {
   val name = "orderbook_manager"
 
   def startShardRegion()(
@@ -61,6 +61,7 @@ object OrderbookManagerActor extends ShardedByMarket {
     )
   }
 
+  // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
   val extractMarketId: PartialFunction[Any, String] = {
     case _ ⇒ ""
   }

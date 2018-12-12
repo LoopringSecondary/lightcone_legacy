@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object DatabaseQueryActor extends EvenlySharded {
+object DatabaseQueryActor extends ShardedEvenly {
   val name = "database_query"
 
   def startShardRegion()(implicit
