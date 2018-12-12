@@ -51,6 +51,8 @@ class EntryPointActor()(
       }
   }
 
+  //TODO: 这里的问题是，如果原始数据，比如地址，不符合规范，那么可能被分配到错误的shard
+  // 有一个做法是在每个sharding之前，有个前置的actor，专门做validaition。
   val findDestination: PartialFunction[Any, String] = {
     case _@ (
       XSubmitRawOrderReq |
