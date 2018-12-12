@@ -26,8 +26,8 @@ class BlockDalSpec extends DalSpec[BlockDal] {
   "saveBlock" must "save a block with hash 0x111" in {
     val block = XBlockData(hash = "0x111", height = 1l, isValid = 1)
     val result = dal.saveBlock(block)
-    val res = Await.result(result.mapTo[XPersistenceError], 5.second)
-    res should be(XPersistenceError.PERS_ERR_NONE)
+    val res = Await.result(result.mapTo[XErrorCode], 5.second)
+    res should be(XErrorCode.ERR_NONE)
   }
 
   "findByHash" must "find a block with hash 0x111" in {
