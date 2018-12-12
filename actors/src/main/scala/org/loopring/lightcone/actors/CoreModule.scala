@@ -21,25 +21,21 @@ import akka.cluster.Cluster
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.google.inject.AbstractModule
-import com.google.inject.name.Names
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
-import org.loopring.lightcone.lib._
-import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.persistence._
-import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-import scala.concurrent.ExecutionContext
-import scala.concurrent.ExecutionContextExecutor
-import scala.concurrent.ExecutionContext.Implicits.global
+
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
 import scala.concurrent.duration._
 
 class CoreModule(config: Config)
@@ -96,7 +92,7 @@ class CoreModule(config: Config)
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
     //-----------deploy actors-----------
-    actors.add(AccountBalanceActor.name, AccountBalanceActor.startShardRegion)
+    actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
     actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
     actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
     actors.add(EthereumEventExtractorActor.name, EthereumEventExtractorActor.startShardRegion)
@@ -105,7 +101,6 @@ class CoreModule(config: Config)
     actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
     actors.add(OrderbookManagerActor.name, OrderbookManagerActor.startShardRegion)
     actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
-    actors.add(OrderHistoryActor.name, OrderHistoryActor.startShardRegion)
     actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
     actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
     actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
