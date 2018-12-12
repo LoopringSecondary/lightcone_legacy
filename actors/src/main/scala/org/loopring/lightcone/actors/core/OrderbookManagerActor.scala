@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderbookManagerActor extends ShardedByMarketId {
+object OrderbookManagerActor extends ShardedByMarket {
   val name = "orderbook_manager"
 
   def startShardRegion()(
@@ -62,8 +62,8 @@ object OrderbookManagerActor extends ShardedByMarketId {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketId: PartialFunction[Any, String] = {
-    case _ ⇒ ""
+  val extractMarketName: PartialFunction[Any, String] = {
+    case XGetOrderbookReq(_, _, marketName) ⇒ marketName
   }
 }
 
@@ -81,9 +81,11 @@ class OrderbookManagerActor(
   OrderbookManagerActor.name,
   extractEntityName
 ) {
+  val marketName = entityName
 
-  val marketId = entityName
-  val xorderbookConfig = XOrderbookConfig(
+  // TODO(yongfeng): load marketconfig from database throught a service interface
+  // based on marketName
+  val xorderbookConfig = XMarketConfig(
     levels = selfConfig.getInt("levels"),
     priceDecimals = selfConfig.getInt("price-decimals"),
     precisionForAmount = selfConfig.getInt("precision-for-amount"),
@@ -101,7 +103,7 @@ class OrderbookManagerActor(
     case req: XOrderbookUpdate ⇒
       manager.processUpdate(req)
 
-    case XGetOrderbookReq(level, size) ⇒
+    case XGetOrderbookReq(level, size, marketName) if marketName == marketName ⇒
       sender ! manager.getOrderbook(level, size, latestPrice)
   }
 }

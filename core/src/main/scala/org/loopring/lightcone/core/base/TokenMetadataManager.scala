@@ -25,9 +25,10 @@ class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
   private var addressMap = Map.empty[String, XTokenMetadata]
   private var symbolMap = Map.empty[String, XTokenMetadata]
 
-  def reset() = this.synchronized {
+  def reset(tokens: Seq[XTokenMetadata]) = this.synchronized {
     addressMap = Map.empty
     symbolMap = Map.empty
+    tokens.foreach(addToken)
   }
 
   def addToken(token: XTokenMetadata) = this.synchronized {

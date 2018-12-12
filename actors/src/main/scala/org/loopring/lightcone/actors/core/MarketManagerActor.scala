@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object MarketManagerActor extends ShardedByMarketId {
+object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
   def startShardRegion()(
@@ -62,7 +62,7 @@ object MarketManagerActor extends ShardedByMarketId {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketId: PartialFunction[Any, String] = {
+  val extractMarketName: PartialFunction[Any, String] = {
     case _ ⇒ ""
   }
 
@@ -85,9 +85,19 @@ class MarketManagerActor(
   MarketManagerActor.name,
   extractEntityName
 ) with OrderRecoverSupport {
+  val marketName = entityName
 
   val wethTokenAddress = config.getString("weth.address")
   val gasLimitPerRingV2 = BigInt(config.getString("loopring-protocol.gas-limit-per-ring-v2"))
+
+  // TODO(yongfeng): load marketconfig from database throught a service interface
+  // based on marketName
+  val xorderbookConfig = XMarketConfig(
+    levels = selfConfig.getInt("levels"),
+    priceDecimals = selfConfig.getInt("price-decimals"),
+    precisionForAmount = selfConfig.getInt("precision-for-amount"),
+    precisionForTotal = selfConfig.getInt("precision-for-total")
+  )
 
   private var marketId: XMarketId = _
 

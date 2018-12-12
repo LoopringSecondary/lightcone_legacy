@@ -18,13 +18,13 @@ package org.loopring.lightcone.actors.base
 
 import akka.cluster.sharding._
 
-trait ShardedByMarketId extends Sharded {
-  val extractMarketId: PartialFunction[Any, String]
+trait ShardedByMarket extends Sharded {
+  val extractMarketName: PartialFunction[Any, String]
 
   private def hashed(msg: Any) = Math.abs(msg.hashCode % numOfShards)
 
   private def _extractEntityId(msg: Any): Option[(String, Any)] =
-    (extractMarketId.lift)(msg).map { marketId ⇒ ("${name}_${hashed(msg)}_${marketId}", msg) }
+    (extractMarketName.lift)(msg).map { marketId ⇒ ("${name}_${hashed(msg)}_${marketId}", msg) }
 
   private def _extractShardId(msg: Any): Option[String] = Some("shard_" + hashed(msg))
 
