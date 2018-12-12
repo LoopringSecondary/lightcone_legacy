@@ -22,15 +22,16 @@ import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.core.depth._
+import org.loopring.lightcone.core.depth.OrderAwareOrderbookAggregatorImpl
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
+
 import scala.concurrent._
 
 // main owner: 于红雨
@@ -89,6 +90,10 @@ class MarketManagerActor(
   val wethTokenAddress = config.getString("weth.address")
   val gasLimitPerRingV2 = BigInt(config.getString("loopring-protocol.gas-limit-per-ring-v2"))
 
+  protected def gasPriceActor = actors.get(GasPriceActor.name)
+  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  protected def settlementActor = actors.get(RingSettlementActor.name)
+
   // TODO(yongfeng): load marketconfig from database throught a service interface
   // based on marketName
   val xorderbookConfig = XMarketConfig(
@@ -98,49 +103,39 @@ class MarketManagerActor(
     precisionForTotal = selfConfig.getInt("precision-for-total")
   )
 
-  private var marketId: XMarketId = _
+  //todo: need refactor
+  val shardId = self.path.toString.split("/").last //todo：如何获取shardId
+
+  implicit var marketId: XMarketId = XMarketId("token1", "token2") //todo:如何通过shardId得到marketId
 
   private val ringMatcher = new RingMatcherImpl()
   private val pendingRingPool = new PendingRingPoolImpl()
 
-  private var manager: MarketManager = _
+  implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
+    selfConfig.getInt("price-decimals")
+  )
+  private val manager = new MarketManagerImpl(
+    marketId,
+    tokenMetadataManager,
+    ringMatcher,
+    pendingRingPool,
+    dustOrderEvaluator,
+    aggregator
+  )
+  recoverySettings = XOrderRecoverySettings(
+    selfConfig.getBoolean("skip-recovery"),
+    selfConfig.getInt("recover-batch-size"),
+    "",
+    Some(marketId)
+  )
+  startOrderRecovery(recoverySettings)
 
-  protected def gasPriceActor = actors.get(GasPriceActor.name)
-  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  protected def settlementActor = actors.get(RingSettlementActor.name)
+  def receive: Receive = LoggingReceive {
 
-  def receive: Receive = {
-    case XStart(shardEntityId) ⇒ {
-      val tokens = shardEntityId.split("-")
-      marketId = XMarketId(tokens(0), tokens(1))
-      implicit val marketId_ = marketId
-      implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-        selfConfig.getInt("price-decimals")
-      )
-      manager = new MarketManagerImpl(
-        marketId,
-        tokenMetadataManager,
-        ringMatcher,
-        pendingRingPool,
-        dustOrderEvaluator,
-        aggregator
-      )
-      val recoverySettings = XOrderRecoverySettings(
-        selfConfig.getBoolean("skip-recovery"),
-        selfConfig.getInt("recover-batch-size"),
-        "",
-        Some(marketId)
-      )
-      startOrderRecovery(recoverySettings)
-    }
-  }
-
-  def functional: Receive = LoggingReceive {
-
-    case XSubmitOrderReq(Some(xorder)) ⇒
+    case XSubmitOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder)
 
-    case XCancelOrderReq(orderId, hardCancel) ⇒
+    case XCancelOrderReq(orderId, hardCancel, _) ⇒
       manager.cancelOrder(orderId) foreach {
         orderbookUpdate ⇒ orderbookManagerActor ! orderbookUpdate
       }
@@ -211,5 +206,5 @@ class MarketManagerActor(
     }
   }
 
-  protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
+  protected def recoverOrder(xraworder: XRawOrder): Future[Any] = submitOrder(xraworder)
 }

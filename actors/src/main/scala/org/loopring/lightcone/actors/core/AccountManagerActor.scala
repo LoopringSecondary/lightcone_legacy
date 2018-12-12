@@ -16,54 +16,28 @@
 
 package org.loopring.lightcone.actors.core
 
+import akka.actor.SupervisorStrategy.Escalate
 import akka.actor._
-import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
+
 import scala.concurrent._
+import scala.concurrent.duration._
 
 // main owner: 于红雨
-object AccountManagerActor extends ShardedByAddress {
+object AccountManagerActor {
   val name = "account_manager"
-
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    dustEvaluator: DustOrderEvaluator
-  ): ActorRef = {
-
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shards")
-
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new AccountManagerActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
-    )
-  }
-
-  // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
-  val extractAddress: PartialFunction[Any, String] = {
-    case x: Any ⇒ "abc"
-  }
 }
 
 class AccountManagerActor()(
@@ -74,8 +48,13 @@ class AccountManagerActor()(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator
-) extends ActorWithPathBasedConfig(AccountManagerActor.name)
-  with OrderRecoverSupport {
+)
+  extends ActorWithPathBasedConfig(AccountManagerActor.name) {
+
+  override val supervisorStrategy =
+    AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
+      case _: Exception ⇒ Escalate //所有异常都抛给上层监管者，shardingActor
+    }
 
   override val entityName = AccountManagerActor.name
 
@@ -87,20 +66,7 @@ class AccountManagerActor()(
   protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
-  def receive: Receive = {
-    case XStart(shardEntityId) ⇒ {
-      address = shardEntityId
-      val recoverySettings = XOrderRecoverySettings(
-        selfConfig.getBoolean("skip-recovery"),
-        selfConfig.getInt("recover-batch-size"),
-        address,
-        None
-      )
-      startOrderRecovery(recoverySettings)
-    }
-  }
-
-  def functional: Receive = LoggingReceive {
+  def receive: Receive = LoggingReceive {
 
     case XGetBalanceAndAllowancesReq(addr, tokens) ⇒
       assert(addr == address)
@@ -120,10 +86,8 @@ class AccountManagerActor()(
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).pipeTo(sender)
 
-    case XSubmitOrderReq(Some(xorder)) ⇒ {
-      // println("### accountXSubmitOrderReq")
+    case XSubmitOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder).pipeTo(sender)
-    }
 
     case req: XCancelOrderReq ⇒
       if (manager.cancelOrder(req.id)) {
@@ -166,7 +130,7 @@ class AccountManagerActor()(
     } yield {
       if (successful) {
         log.debug(s"submitting order to market manager actor: $order_")
-        marketManagerActor ! XSubmitOrderReq(Some(xorder_))
+        marketManagerActor ! XSubmitOrderReq("", Some(xorder_))
         XSubmitOrderRes(order = Some(xorder_))
       } else {
         val error = convertOrderStatusToErrorCode(order.status)
@@ -215,7 +179,7 @@ class AccountManagerActor()(
 
         case STATUS_PENDING ⇒
           //allowance的改变需要更新到marketManager
-          marketManagerActor ! XSubmitOrderReq(Some(order))
+          marketManagerActor ! XSubmitOrderReq("", Some(order))
 
         case status ⇒
           log.error(s"unexpected order status caused by balance/allowance upate: $status")

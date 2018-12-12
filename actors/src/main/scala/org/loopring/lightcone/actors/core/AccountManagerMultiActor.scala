@@ -1,0 +1,117 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.loopring.lightcone.actors.core
+import akka.actor.SupervisorStrategy.Restart
+import akka.actor.{ ActorLogging, ActorRef, ActorSystem, AllForOneStrategy, Props }
+import akka.cluster.sharding.{ ClusterSharding, ClusterShardingSettings }
+import akka.pattern._
+import akka.util.Timeout
+import com.typesafe.config.Config
+import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.base.DustOrderEvaluator
+import org.loopring.lightcone.lib.TimeProvider
+import org.loopring.lightcone.proto._
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+
+object AccountManagerMultiActor extends ShardedByAddress {
+  val name = "account_manager_multi"
+
+  def startShardRegion()(
+    implicit
+    system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    dustEvaluator: DustOrderEvaluator
+  ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shards")
+
+    ClusterSharding(system).start(
+      typeName = name,
+      entityProps = Props(new AccountManagerMultiActor()),
+      settings = ClusterShardingSettings(system).withRole(name),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
+    )
+  }
+
+  // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
+  val extractAddress: PartialFunction[Any, String] = {
+    case x: Any ⇒ "abc"
+  }
+}
+
+class AccountManagerMultiActor()(
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
+    val dustEvaluator: DustOrderEvaluator
+)
+  extends ActorWithPathBasedConfig(AccountManagerMultiActor.name)
+  with OrderRecoverSupport
+  with ActorLogging {
+
+  val shardId = self.path.toString.split("/").last //todo：如何获取shardId
+  override val supervisorStrategy =
+    AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
+      case _: Exception ⇒ Restart //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
+    }
+
+  val accountManagerActors = new MapBasedLookup[ActorRef]()
+
+  startOrderRecovery(XOrderRecoverySettings(
+    selfConfig.getBoolean("skip-recovery"),
+    selfConfig.getInt("recover-batch-size"),
+    shardId,
+    None
+  ))
+
+  def receive: Receive = {
+    case req: XSubmitOrderReq ⇒
+      getAccountActorOrElse(req.address) forward req
+    case req: XGetBalanceAndAllowancesReq ⇒
+      getAccountActorOrElse(req.address) forward req
+    case req: XCancelOrderReq ⇒
+      getAccountActorOrElse(req.address) forward req
+    case x ⇒
+      log.info(s"receive wrong msg: $x")
+  }
+
+  def getAccountActorOrElse(address: String): ActorRef = {
+    val actorName = address
+    if (!accountManagerActors.contains(actorName)) {
+      val newAccountActor = context.actorOf(Props(new AccountManagerActor()), actorName)
+      accountManagerActors.add(actorName, newAccountActor)
+    }
+    accountManagerActors.get(actorName)
+  }
+
+  protected def recoverOrder(xraworder: XRawOrder) = {
+    getAccountActorOrElse(xraworder.owner) ? XSubmitOrderReq(xraworder.owner, Some(xraworder))
+  }
+
+}
