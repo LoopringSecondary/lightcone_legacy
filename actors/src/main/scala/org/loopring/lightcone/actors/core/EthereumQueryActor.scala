@@ -16,8 +16,8 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor._
-import akka.cluster.sharding._
+import akka.actor.{ ActorRef, ActorSystem, Props, _ }
+import akka.cluster.sharding.{ ClusterSharding, ClusterShardingSettings }
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
@@ -28,19 +28,17 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
-import scala.concurrent._
 
-// main owner: 李亚东
-object AccountBalanceActor extends ShardedEvenly {
-  val name = "account_balance"
+import scala.concurrent.{ ExecutionContext, Future }
 
-  def startShardRegion()(implicit
+object EthereumQueryActor extends ShardedEvenly {
+  val name = "ethereum_query"
+
+  def startShardRegion()(
+    implicit
     system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
@@ -55,7 +53,7 @@ object AccountBalanceActor extends ShardedEvenly {
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new AccountBalanceActor()),
+      entityProps = Props(new EthereumQueryActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -63,14 +61,14 @@ object AccountBalanceActor extends ShardedEvenly {
   }
 }
 
-class AccountBalanceActor()(
+class EthereumQueryActor()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(AccountBalanceActor.name) {
+) extends ActorWithPathBasedConfig(EthereumQueryActor.name) {
 
   val delegateAddress = config.getString("loopring-protocol.delegate-address")
   val erc20Abi = ERC20ABI()
