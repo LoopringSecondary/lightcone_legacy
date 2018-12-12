@@ -97,7 +97,7 @@ class CutoffDalImpl()(
     if (sort.nonEmpty) filters = sort.get match {
       case XSort.ASC  ⇒ filters.sortBy(_.createdAt.asc)
       case XSort.DESC ⇒ filters.sortBy(_.createdAt.desc)
-      case _          ⇒ filters.sortBy(_.createdAt.desc)
+      case _          ⇒ filters.sortBy(_.createdAt.asc)
     }
     filters = skip match {
       case Some(s) ⇒ filters.drop(s.skip).take(s.take)
@@ -127,7 +127,7 @@ class CutoffDalImpl()(
   def obsolete(height: Long): Future[Unit] = {
     val q = for {
       c ← query if c.blockHeight >= height
-    } yield c.isValid
-    db.run(q.update(false)).map(_ > 0)
+    } yield (c.isValid, c.updatedAt)
+    db.run(q.update(false, timeProvider.getTimeSeconds())).map(_ > 0)
   }
 }

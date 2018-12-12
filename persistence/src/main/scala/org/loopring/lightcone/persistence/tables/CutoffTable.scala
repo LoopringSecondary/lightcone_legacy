@@ -33,6 +33,7 @@ class CutoffTable(tag: Tag)
   def tradingPair = column[String]("trading_pair", O.Length(100))
   def cutoff = column[Long]("cutoff")
   def createdAt = column[Long]("created_at")
+  def updatedAt = column[Long]("updated_at")
   def blockHeight = column[Long]("block_height")
   def isValid = column[Boolean]("is_valid")
 
@@ -54,6 +55,7 @@ class CutoffTable(tag: Tag)
     tradingPair,
     cutoff,
     createdAt,
+    updatedAt,
     blockHeight,
     isValid
   ) <> ((XCutoff.apply _).tupled, XCutoff.unapply)
