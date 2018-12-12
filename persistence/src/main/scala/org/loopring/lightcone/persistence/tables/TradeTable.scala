@@ -19,8 +19,7 @@ package org.loopring.lightcone.persistence.tables
 import org.loopring.lightcone.persistence.base._
 import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
-import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.ethereum._
+import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
 class TradeTable(tag: Tag)

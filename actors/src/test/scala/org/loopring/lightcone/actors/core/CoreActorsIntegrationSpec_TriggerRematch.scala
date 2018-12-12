@@ -18,39 +18,43 @@ package org.loopring.lightcone.actors.core
 
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core._
-
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
 
 //todo:impl it after tested accountMangerRecovery
-class CoreActorsIntegrationSpec_TriggerRematch
-  extends CoreActorsIntegrationCommonSpec(
-    XMarketId(GTO_TOKEN.address, WETH_TOKEN.address),
-    """
-    account_manager {
-      skip-recovery = yes
-      recover-batch-size = 2
-    }
-    market_manager {
-      skip-recovery = yes
-      price-decimals = 5
-      recover-batch-size = 5
-    }
-    orderbook_manager {
-      levels = 2
-      price-decimals = 5
-      precision-for-amount = 2
-      precision-for-total = 1
-    }
-    ring_settlement {
-      submitter-private-key = "0xa1"
-    }
-    gas_price {
-      default = "10000000000"
-    }
-    """
-  ) {
+// class CoreActorsIntegrationSpec_TriggerRematch
+//   extends CoreActorsIntegrationCommonSpec(
+//     XMarketId(GTO_TOKEN.address, WETH_TOKEN.address),
+//     """
+//     weth {
+//       address = "something"
+//     }
+//     loopring-protocol {
+//       address = "0x8d8812b72d1e4ffCeC158D25f56748b7d67c1e78",
+//       delegate-address ="0x17233e07c67d086464fD408148c3ABB56245FA64"
+//       gas-limit-per-ring-v2 = "1000000"
+//     }
+//     account_manager {
+//       skip-recovery = yes
+//       recover-batch-size = 2
+//     }
+//     market_manager {
+//       skip-recovery = yes
+//       price-decimals = 5
+//       recover-batch-size = 5
+//     }
+//     orderbook_manager {
+//       levels = 2
+//       price-decimals = 5
+//       precision-for-amount = 2
+//       precision-for-total = 1
+//     }
+//     ring_settlement {
+//       submitter-private-key = "0xa1"
+//     }
+//     gas_price {
+//       default = "10000000000"
+//     }
+//     """) {
 
-}
+// }

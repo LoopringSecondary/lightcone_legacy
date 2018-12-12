@@ -17,7 +17,7 @@
 package org.loopring.lightcone.core.depth
 
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import scala.collection.SortedMap
 
 private[depth] object OrderbookSide {

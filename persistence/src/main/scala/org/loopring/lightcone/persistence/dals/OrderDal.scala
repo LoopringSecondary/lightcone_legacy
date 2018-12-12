@@ -19,9 +19,7 @@ package org.loopring.lightcone.persistence.dals
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.persistence._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
@@ -114,17 +112,17 @@ trait OrderDal
   def updateOrderStatus(
     hash: String,
     status: XOrderStatus
-  ): Future[Either[XPersistenceError, String]]
+  ): Future[Either[XErrorCode, String]]
 
   def updateFailed(
     hash: String,
     status: XOrderStatus
-  ): Future[Either[XPersistenceError, String]]
+  ): Future[Either[XErrorCode, String]]
 
   def updateAmount(
     hash: String,
     state: XRawOrder.State
-  ): Future[Either[XPersistenceError, String]]
+  ): Future[Either[XErrorCode, String]]
 }
 
 class OrderDalImpl()(
@@ -151,7 +149,7 @@ class OrderDalImpl()(
     )).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
         XSaveOrderResult(
-          error = XPersistenceError.PERS_ERR_DUPLICATE_INSERT,
+          error = XErrorCode.PERS_ERR_DUPLICATE_INSERT,
           order = None,
           alreadyExist = true
         )
@@ -160,12 +158,12 @@ class OrderDalImpl()(
         // TODO du: print some log
         // log(s"error : ${ex.getMessage}")
         XSaveOrderResult(
-          error = XPersistenceError.PERS_ERR_INTERNAL,
+          error = XErrorCode.PERS_ERR_INTERNAL,
           order = None
         )
       }
       case Success(x) ⇒ XSaveOrderResult(
-        error = XPersistenceError.PERS_ERR_NONE,
+        error = XErrorCode.ERR_NONE,
         order = Some(order)
       )
     }
@@ -286,20 +284,20 @@ class OrderDalImpl()(
   def updateOrderStatus(
     hash: String,
     status: XOrderStatus
-  ): Future[Either[XPersistenceError, String]] = for {
+  ): Future[Either[XErrorCode, String]] = for {
     result ← db.run(query
       .filter(_.hash === hash)
       .map(c ⇒ (c.status, c.updatedAt))
       .update(status, timeProvider.getTimeMillis))
   } yield {
     if (result >= 1) Right(hash)
-    else Left(XPersistenceError.PERS_ERR_UPDATE_FAILED)
+    else Left(XErrorCode.PERS_ERR_UPDATE_FAILED)
   }
 
   def updateFailed(
     hash: String,
     status: XOrderStatus
-  ): Future[Either[XPersistenceError, String]] = for {
+  ): Future[Either[XErrorCode, String]] = for {
     _ ← Future.unit
     failedStatus = Seq(
       XOrderStatus.STATUS_CANCELLED_BY_USER,
@@ -318,13 +316,13 @@ class OrderDalImpl()(
     }
   } yield {
     if (result >= 1) Right(hash)
-    else Left(XPersistenceError.PERS_ERR_UPDATE_FAILED)
+    else Left(XErrorCode.PERS_ERR_UPDATE_FAILED)
   }
 
   def updateAmount(
     hash: String,
     state: XRawOrder.State
-  ): Future[Either[XPersistenceError, String]] = for {
+  ): Future[Either[XErrorCode, String]] = for {
     result ← db.run(query
       .filter(_.hash === hash)
       .map(c ⇒ (
@@ -347,6 +345,6 @@ class OrderDalImpl()(
       ))
   } yield {
     if (result >= 1) Right(hash)
-    else Left(XPersistenceError.PERS_ERR_UPDATE_FAILED)
+    else Left(XErrorCode.PERS_ERR_UPDATE_FAILED)
   }
 }

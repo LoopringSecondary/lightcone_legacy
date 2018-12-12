@@ -24,13 +24,10 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.ethereum._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.persistence._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import org.scalatest._
 import org.slf4s.Logging
 
@@ -52,7 +49,7 @@ abstract class CoreActorsIntegrationCommonSpec(
     marketId: XMarketId,
     configStr: String
 )
-  extends TestKit(ActorSystem("test", ConfigFactory.load()))
+  extends TestKit(ActorSystem("lightcone_test", ConfigFactory.load()))
   with ImplicitSender
   with Matchers
   with WordSpecLike
@@ -65,7 +62,8 @@ abstract class CoreActorsIntegrationCommonSpec(
   import CoreActorsIntegrationCommonSpec._
 
   override def afterAll: Unit = {
-    TestKit.shutdownActorSystem(system)
+    super.afterAll()
+    TestKit.shutdownActorSystem(system, 10.seconds, false)
   }
 
   implicit val marketId_ = marketId
@@ -153,7 +151,6 @@ abstract class CoreActorsIntegrationCommonSpec(
     new MarketManagerActor()
   )
 
-  actors.add(OrdersDalActor.name, ordersDalActor)
   actors.add(AccountBalanceActor.name, accountBalanceActor)
   actors.add(OrderHistoryActor.name, orderHistoryActor)
   actors.add(MarketManagerActor.name, marketManagerActor)

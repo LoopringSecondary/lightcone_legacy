@@ -17,10 +17,10 @@
 package org.loopring.lightcone.core.depth
 
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import scala.collection.SortedMap
 
-class OrderbookManagerImpl(config: XOrderbookConfig)
+class OrderbookManagerImpl(config: XMarketConfig)
   extends OrderbookManager {
 
   private[depth] val viewMap = (0 until config.levels).map {

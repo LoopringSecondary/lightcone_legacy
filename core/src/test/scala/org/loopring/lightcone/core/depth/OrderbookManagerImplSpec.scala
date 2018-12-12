@@ -17,13 +17,13 @@
 package org.loopring.lightcone.core.depth
 
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.CommonSpec
 import org.scalatest._
 
 class OrderbookManagerImplSpec extends CommonSpec {
   var obm: OrderbookManager = _
-  val config = XOrderbookConfig(
+  val config = XMarketConfig(
     levels = 2,
     priceDecimals = 5,
     precisionForAmount = 2,

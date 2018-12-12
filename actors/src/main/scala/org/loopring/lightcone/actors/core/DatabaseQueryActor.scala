@@ -25,47 +25,52 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
-import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XOrderStatus._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object TokenMetadataActor {
-  val name = "token_metadata"
+object DatabaseQueryActor extends ShardedEvenly {
+  val name = "database_query"
+
+  def startShardRegion()(implicit
+    system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shards")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
+    ClusterSharding(system).start(
+      typeName = name,
+      entityProps = Props(new DatabaseQueryActor()),
+      settings = ClusterShardingSettings(system).withRole(name),
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
+    )
+  }
 }
 
-class TokenMetadataActor()(
+class DatabaseQueryActor()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule,
-    val tokenMetadataManager: TokenMetadataManager
-) extends Actor
-  with ActorLogging
-  with RepeatedJobActor {
+    val actors: Lookup[ActorRef]
+) extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
 
-  private val tokenMetadata = dbModule.tokenMetadata
-  val syncJob = Job(
-    id = 1,
-    name = "syncTokenValue",
-    scheduleDelay = 10000,
-    run = () ⇒ tokenMetadata.getTokens(true).map {
-      _.foreach(tokenMetadataManager.addToken)
-    }
-  )
-  initAndStartNextRound(syncJob)
-
-  override def receive: Receive = super.receive orElse LoggingReceive {
+  def receive: Receive = LoggingReceive {
     case _ ⇒
   }
+
 }

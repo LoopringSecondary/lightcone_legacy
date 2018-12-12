@@ -18,7 +18,7 @@ package org.loopring.lightcone.core.market
 
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 
 trait RingIncomeEstimator {
   def getRingIncome(ring: OrderRing): Double
@@ -54,7 +54,7 @@ final class RingIncomeEstimatorImpl()(
     // when we do not know the price of tokenS, try to use tokenB's price to calculate
     // the price.
     val fiatMargin =
-      if (tmm.hasToken(order.tokenS)) {
+      if (tmm.hasTokenByAddress(order.tokenS)) {
         tve.getEstimatedValue(order.tokenS, amountMargin)
       } else {
         tve.getEstimatedValue(
