@@ -35,24 +35,8 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object AccountManagerActor {
+object AccountManagerActor extends ShardedByAddress {
   val name = "account_manager"
-
-  protected var numOfShards: Int = 10
-
-  private def hashed(msg: Any) = Math.abs(getAddress(msg).hashCode % numOfShards)
-
-  private def getShardId(msg: Any) = "shard_" + hashed(msg)
-
-  private def getEntitityId(msg: Any) = s"${name}_${hashed(msg)}_singleton"
-
-  protected val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg ⇒ (getEntitityId(msg), msg)
-  }
-
-  protected val extractShardId: ShardRegion.ExtractShardId = {
-    case msg ⇒ getShardId(msg)
-  }
 
   def startShardRegion()(
     implicit
@@ -64,6 +48,10 @@ object AccountManagerActor {
     actors: Lookup[ActorRef],
     dustEvaluator: DustOrderEvaluator
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shards")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new AccountManagerActor()),
@@ -73,7 +61,9 @@ object AccountManagerActor {
     )
   }
 
-  private def getAddress(msg: Any): String = ???
+  val extractAddress: PartialFunction[Any, String] = {
+    case x: Any ⇒ "abc"
+  }
 }
 
 class AccountManagerActor()(

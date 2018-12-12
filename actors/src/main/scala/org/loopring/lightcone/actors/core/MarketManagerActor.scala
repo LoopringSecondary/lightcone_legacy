@@ -35,15 +35,8 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object MarketManagerActor {
+object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
-
-  def extractEntityName(actorName: String) = actorName.split("_").last
-
-  private def extractEntityId(msg: Any): Option[(String, Any)] =
-    getMarketId(msg).map { marketId ⇒ ("${name}_singleton_${marketId}}", msg) }
-
-  private def extractShardId(msg: Any): Option[String] = Some("singleton")
 
   def startShardRegion()(
     implicit
@@ -58,16 +51,20 @@ object MarketManagerActor {
     dustOrderEvaluator: DustOrderEvaluator,
     tokenMetadataManager: TokenMetadataManager
   ): ActorRef = {
+    numOfShards = 1
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new MarketManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = Function.unlift(extractEntityId),
-      extractShardId = Function.unlift(extractShardId)
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
     )
   }
 
-  private def getMarketId(msg: Any): Option[String] = ???
+  val extractMarketId: PartialFunction[Any, String] = {
+    case _ ⇒ ""
+  }
+
 }
 
 class MarketManagerActor(

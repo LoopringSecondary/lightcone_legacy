@@ -18,25 +18,19 @@ package org.loopring.lightcone.actors.base
 
 import akka.cluster.sharding._
 
-trait Sharded {
-  val name: String
-  protected var numOfShards: Int = 1
+trait ShardedByMarket extends Sharded {
+  val extractMarketId: PartialFunction[Any, String]
 
-  protected def hashed(msg: Any, max: Int) = Math.abs(msg.hashCode % max)
-}
+  private def hashed(msg: Any) = Math.abs(msg.hashCode % numOfShards)
 
-trait EvenlySharded extends Sharded {
-  protected var entitiesPerShard: Int = 1
+  private def _extractEntityId(msg: Any): Option[(String, Any)] =
+    (extractMarketId.lift)(msg).map { marketId ⇒ ("${name}_${hashed(msg)}_${marketId}", msg) }
 
-  private def getShardId(msg: Any) = "shard_" + hashed(msg, numOfShards)
-  private def getEntitityId(msg: Any) = name + "_" + hashed(msg, numOfShards * entitiesPerShard)
+  private def _extractShardId(msg: Any): Option[String] = Some("shard_" + hashed(msg))
 
-  protected val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg ⇒ (getEntitityId(msg), msg)
-  }
+  val extractEntityId: ShardRegion.ExtractEntityId = Function.unlift(_extractEntityId)
+  val extractShardId: ShardRegion.ExtractShardId = Function.unlift(_extractShardId)
 
-  protected val extractShardId: ShardRegion.ExtractShardId = {
-    case msg ⇒ getShardId(msg)
-  }
+  def extractEntityName(actorName: String) = actorName.split("_").last
 }
 

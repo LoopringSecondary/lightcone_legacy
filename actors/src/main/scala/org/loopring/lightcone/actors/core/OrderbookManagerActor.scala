@@ -35,21 +35,8 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderbookManagerActor {
+object OrderbookManagerActor extends ShardedByMarket {
   val name = "orderbook_manager"
-
-  def extractEntityName(actorName: String) = actorName.split("_").last
-
-  protected var instancesPerMarket: Int = 1
-
-  private def hashed(msg: Any) = Math.abs(msg.hashCode % instancesPerMarket)
-
-  private def getShardId(msg: Any) = "shard_" + hashed(msg)
-
-  private def extractEntityId(msg: Any): Option[(String, Any)] =
-    getMarketId(msg).map { marketId ⇒ ("${name}_${hashed(msg)}_${marketId}", msg) }
-
-  private def extractShardId(msg: Any): Option[String] = Some(getShardId(msg))
 
   def startShardRegion()(
     implicit
@@ -63,18 +50,20 @@ object OrderbookManagerActor {
   ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
-    instancesPerMarket = selfConfig.getInt("instances-per-market")
+    numOfShards = selfConfig.getInt("instances-per-market")
 
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderbookManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = Function.unlift(extractEntityId),
-      extractShardId = Function.unlift(extractShardId)
+      extractEntityId = extractEntityId,
+      extractShardId = extractShardId
     )
   }
 
-  private def getMarketId(msg: Any): Option[String] = ???
+  val extractMarketId: PartialFunction[Any, String] = {
+    case _ ⇒ ""
+  }
 }
 
 class OrderbookManagerActor(
