@@ -16,8 +16,8 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ ActorRef, ActorSystem, Props, _ }
-import akka.cluster.sharding.{ ClusterSharding, ClusterShardingSettings }
+import akka.actor._
+import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
