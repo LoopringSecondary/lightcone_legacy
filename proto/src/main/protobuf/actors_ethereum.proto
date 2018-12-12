@@ -382,7 +382,7 @@ message XBatchGetTransactionReceiptsRes {
 }
 
 message XSaveBlockReq {
-    ethereum.XBlockData block_data = 1;
+    XBlockData block_data = 1;
 }
 
 message XSaveBlockRes {

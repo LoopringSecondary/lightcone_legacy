@@ -16,7 +16,6 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.proto.ethereum.XBlockData
 import org.loopring.lightcone.proto._
 import scala.concurrent.Await
 import scala.concurrent.duration._
