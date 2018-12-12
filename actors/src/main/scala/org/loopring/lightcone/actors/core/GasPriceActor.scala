@@ -38,12 +38,14 @@ object GasPriceActor extends EvenlySharded {
   val name = "gas_price"
 
   def startShardRegion()(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]): ActorRef = {
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shareds")
@@ -54,16 +56,19 @@ object GasPriceActor extends EvenlySharded {
       entityProps = Props(new GasPriceActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
   }
 }
 
 class GasPriceActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef]) extends ActorWithPathBasedConfig(GasPriceActor.name) {
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends ActorWithPathBasedConfig(GasPriceActor.name) {
 
   private var gasPrice = BigInt(selfConfig.getString("default"))
 

@@ -38,12 +38,14 @@ object OrderbookManagerActor extends EvenlySharded {
   def name = "orderbook_manager"
 
   def startShardRegion()(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]): ActorRef = {
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shareds")
@@ -54,22 +56,26 @@ object OrderbookManagerActor extends EvenlySharded {
       entityProps = Props(new OrderbookManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
   }
 }
 
 class OrderbookManagerActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef]) extends ActorWithPathBasedConfig(OrderbookManagerActor.name) {
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends ActorWithPathBasedConfig(OrderbookManagerActor.name) {
 
   val xorderbookConfig = XOrderbookConfig(
     levels = selfConfig.getInt("levels"),
     priceDecimals = selfConfig.getInt("price-decimals"),
     precisionForAmount = selfConfig.getInt("precision-for-amount"),
-    precisionForTotal = selfConfig.getInt("precision-for-total"))
+    precisionForTotal = selfConfig.getInt("precision-for-total")
+  )
 
   val manager: OrderbookManager = new OrderbookManagerImpl(xorderbookConfig)
   private var latestPrice: Option[Double] = None

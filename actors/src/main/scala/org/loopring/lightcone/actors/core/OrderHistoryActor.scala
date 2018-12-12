@@ -38,12 +38,14 @@ object OrderHistoryActor extends EvenlySharded {
   val name = "order_history"
 
   def startShardRegion()(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]): ActorRef = {
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shareds")
@@ -54,16 +56,19 @@ object OrderHistoryActor extends EvenlySharded {
       entityProps = Props(new OrderHistoryActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
   }
 }
 
 class OrderHistoryActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef]) extends ActorWithPathBasedConfig(OrderHistoryActor.name) {
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends ActorWithPathBasedConfig(OrderHistoryActor.name) {
 
   override def receive: Receive = {
     case XGetOrderFilledAmountReq ⇒ {

@@ -37,12 +37,14 @@ import scala.concurrent._
 object DatabaseQueryActor extends EvenlySharded {
   val name = "database_query"
 
-  def startShardRegion()(implicit system: ActorSystem,
+  def startShardRegion()(implicit
+    system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]): ActorRef = {
+    actors: Lookup[ActorRef]
+  ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shareds")
@@ -53,16 +55,19 @@ object DatabaseQueryActor extends EvenlySharded {
       entityProps = Props(new DatabaseQueryActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
   }
 }
 
 class DatabaseQueryActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef]) extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef]
+) extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
 
   def receive: Receive = LoggingReceive {
     case _ ⇒
