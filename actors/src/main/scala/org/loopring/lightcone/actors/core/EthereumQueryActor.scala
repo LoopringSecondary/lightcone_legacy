@@ -110,10 +110,7 @@ class EthereumQueryActor()(
         log.error(s"invalid $req caused by invalid ethereum address")
         sender ! XGetBalanceRes()
           .withAddress(req.address)
-          .withError(XError(
-            XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-            s"invalid address in $req"
-          ))
+          .withError(XError(ERR_ETHEREUM_ILLEGAL_ADDRESS, s"invalid address in $req"))
       } else {
         val batchReqs: XBatchContractCallReq = req
         val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
