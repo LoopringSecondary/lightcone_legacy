@@ -32,8 +32,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode._
-import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 import scala.concurrent._
 

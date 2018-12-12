@@ -17,7 +17,7 @@
 package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 
 class TokenValueEstimator()(implicit tmm: TokenMetadataManager) {
 

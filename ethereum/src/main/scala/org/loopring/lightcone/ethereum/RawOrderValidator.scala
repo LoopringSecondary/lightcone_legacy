@@ -19,8 +19,8 @@ package org.loopring.lightcone.ethereum.data
 import org.web3j.crypto.Hash
 import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.core.XOrderValidationError._
+import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XOrderValidationError._
 
 trait RawOrderValidator {
   def calculateOrderHash(order: XRawOrder): String

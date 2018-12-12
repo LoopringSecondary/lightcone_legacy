@@ -21,7 +21,7 @@ import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress
 import com.google.protobuf.ByteString
 
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 
 trait RingBatchGenerator {
   def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch

@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.proto.actors;
+package org.loopring.lightcone.proto;
 
 import "core_data.proto";
 import "core_messages.proto";
@@ -38,7 +38,7 @@ message XOrder {
     bytes amount_fee = 7;
     int64 created_at = 8;
     int64 updated_at = 9;
-    core.XOrderStatus status = 10;
+    XOrderStatus status = 10;
     double wallet_split_percentage = 11;
     XOrderState outstanding = 12;
     XOrderState reserved = 13;
@@ -150,7 +150,7 @@ message XOrderRecoverySettings {
     bool skip_recovery = 1;
     int32 batch_size = 2;
     string order_owner = 3;
-    core.XMarketId market_id = 4;
+    XMarketId market_id = 4;
 }
 
 // 由ethereum发送给orderManagingActor
@@ -218,13 +218,13 @@ message XSendRawTxRes {
 
 message XRecoverOrdersReq {
     string address = 1;
-    core.XMarketId market_id = 2;
+    XMarketId market_id = 2;
     int64 updated_since = 3;
     int32 num = 4;
 }
 
 message XRecoverOrdersRes {
-    repeated core.XRawOrder orders = 1;
+    repeated XRawOrder orders = 1;
 }
 
 message XRecoverNextOrder {}
