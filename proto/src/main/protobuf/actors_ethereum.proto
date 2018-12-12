@@ -20,7 +20,7 @@ option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
 import "ethereum.proto";
-import "persistence.proto";
+import "core_data.proto";
 
 message XEthereumProxySettings {
     message XNode {
@@ -386,5 +386,5 @@ message XSaveBlockReq {
 }
 
 message XSaveBlockRes {
-    XPersistenceError error = 1;
+    XError error = 1;
 }

@@ -57,22 +57,6 @@ message XOrderRing {
     XExpectedFill taker = 2;
 }
 
-///////////////////
-enum XErrorCode {
-    ERR_OK = 0;
-    ERR_ORDER_ALREADY_EXIST = 1;
-    ERR_ORDER_NOT_EXIST = 2;
-    ERR_ORDER_INVALID_AMOUNT_S = 3;
-    ERR_LOW_BALANCE = 4;
-    ERR_LOW_FEE_BALANCE = 5;
-    ERR_TOKEN_NOT_EXIST = 6;
-    ERR_TOO_MANY_ORDERS = 7;
-    ERR_TOO_MANY_FAILED_MATCHES = 8;
-    ERR_INVALID_ORDER_DATA = 9;
-    ERR_INVALID_MARKET = 10;
-    ERR_UNKNOWN = 1000;
-}
-
 message XGetOrderFilledAmountReq {
     string order_id = 1;
 }
@@ -80,11 +64,6 @@ message XGetOrderFilledAmountReq {
 message XGetOrderFilledAmountRes {
     string order_id = 1;
     bytes filled_amount_s = 2;
-}
-
-message XError{
-    int32 code = 1;
-    string error = 2;
 }
 
 message XBalanceAndAllowance {

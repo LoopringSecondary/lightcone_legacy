@@ -39,7 +39,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core._
 import XOrderStatus._
-import XMatchingFailure._
+import XErrorCode._
 
 class MarketManagerImplSpec_Performance extends OrderAwareSpec {
 

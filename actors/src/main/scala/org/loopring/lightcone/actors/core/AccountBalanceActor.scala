@@ -84,7 +84,9 @@ class AccountBalanceActor()(
         log.error(s"invalid XGetBalanceAndAllowancesReq:$req caused by invalid ethereum address")
         sender ! XGetBalanceAndAllowancesRes()
           .withAddress(req.address)
-          .withError(XError(error = s"invalid address in XGetBalanceAndAllowancesReq:$req"))
+          .withError(XError()
+            .withCode(XErrorCode.ETHEREUM_ERR_ILLEGAL_ADDRESS)
+            .withMessage(s"invalid address in XGetBalanceAndAllowancesReq:$req"))
       } else {
         val tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
         val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
@@ -131,7 +133,9 @@ class AccountBalanceActor()(
         log.error(s"invalid XGetBalanceReq:$req caused by invalid ethereum address")
         sender ! XGetBalanceRes()
           .withAddress(req.address)
-          .withError(XError(error = s"invalid address in XGetBalanceReq:$req"))
+          .withError(XError()
+            .withCode(XErrorCode.ETHEREUM_ERR_ILLEGAL_ADDRESS)
+            .withMessage(s"invalid address in XGetBalanceAndAllowancesReq:$req"))
       } else {
         val tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
         val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
@@ -176,7 +180,9 @@ class AccountBalanceActor()(
         log.error(s"invalid XGetAllowanceReq:$req caused by invalid ethereum address")
         sender ! XGetAllowanceRes()
           .withAddress(req.address)
-          .withError(XError(error = s"invalid address in XGetAllowanceReq:$req"))
+          .withError(XError()
+            .withCode(XErrorCode.ETHEREUM_ERR_ILLEGAL_ADDRESS)
+            .withMessage(s"invalid address in XGetBalanceAndAllowancesReq:$req"))
       } else {
         val tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
         val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))

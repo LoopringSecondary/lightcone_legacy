@@ -21,14 +21,6 @@ package org.loopring.lightcone.proto;
 
 import "core_data.proto";
 
-enum XPersistenceError {
-    PERS_ERR_NONE       = 0;
-    PERS_ERR_INVALID_DATA = 1;
-    PERS_ERR_DUPLICATE_INSERT  = 2;
-    PERS_ERR_UPDATE_FAILED = 3;
-    PERS_ERR_INTERNAL = 4;
-}
-
 enum XSort {
     ASC  = 0;
     DESC = 1;
