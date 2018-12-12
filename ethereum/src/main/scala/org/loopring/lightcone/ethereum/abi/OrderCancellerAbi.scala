@@ -17,12 +17,26 @@
 package org.loopring.lightcone.ethereum.abi
 
 import scala.io.Source
-import org.ethereum.solidity.{Abi, Abi ⇒ SABI}
+import org.ethereum.solidity.{ Abi ⇒ SABI }
 
 import scala.annotation.meta.field
 
 class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
+  val cancelAllOrdersForTradingPairOfOwner =
+    CancelAllOrdersForTradingPairOfOwnerFunction(abi.findFunction(searchByName(CancelAllOrdersForTradingPairOfOwnerFunction.name)))
+  val cancelAllOrdersOfOwner =
+    CancelAllOrdersOfOwnerFunction(abi.findFunction(searchByName(CancelAllOrdersOfOwnerFunction.name)))
+  val cancelOrders = CancelOrdersFunction(abi.findFunction(searchByName(CancelOrdersFunction.name)))
+  val cancelAllOrdersFunction = CancelAllOrdersFunction(abi.findFunction(searchByName(CancelAllOrdersFunction.name)))
 
+  val ordersCancelledEvent = OrdersCancelledEvent(abi.findEvent(searchByName(OrdersCancelledEvent.name)))
+  val allOrdersCancelledForTradingPairEvent =
+    AllOrdersCancelledForTradingPairEvent(abi.findEvent(searchByName(AllOrdersCancelledForTradingPairEvent.name)))
+  val allOrdersCancelledEvent = AllOrdersCancelledEvent(abi.findEvent(searchByName(AllOrdersCancelledEvent.name)))
+  val ordersCancelledByBrokerEvent = OrdersCancelledByBrokerEvent(abi.findEvent(searchByName(OrdersCancelledByBrokerEvent.name)))
+  val allOrdersCancelledForTradingPairByBrokerEvent =
+    AllOrdersCancelledForTradingPairByBrokerEvent(abi.findEvent(searchByName(AllOrdersCancelledForTradingPairByBrokerEvent.name)))
+  val allOrdersCancelledByBrokerEvent = AllOrdersCancelledByBrokerEvent(abi.findEvent(searchByName(AllOrdersCancelledByBrokerEvent.name)))
 }
 
 object OrderCancellerAbi {
@@ -52,136 +66,134 @@ object CancelAllOrdersForTradingPairOfOwnerFunction {
   def apply(entry: SABI.Function): CancelAllOrdersForTradingPairOfOwnerFunction = new CancelAllOrdersForTradingPairOfOwnerFunction(entry)
 }
 
-class CancelAllOrdersOfOwnerFunction(val entry:SABI.Function) extends AbiFunction[CancelAllOrdersOfOwnerFunction.Params,CancelAllOrdersOfOwnerFunction.Result]
+class CancelAllOrdersOfOwnerFunction(val entry: SABI.Function) extends AbiFunction[CancelAllOrdersOfOwnerFunction.Params, CancelAllOrdersOfOwnerFunction.Result]
 
-object CancelAllOrdersOfOwnerFunction{
+object CancelAllOrdersOfOwnerFunction {
 
   val name = "cancelAllOrdersOfOwner"
 
   case class Params(
-                     @(ContractAnnotation @field)("owner", 0) owner: String,
-                     @(ContractAnnotation @field)("cutoff", 1) cutoff: BigInt
-                   )
+      @(ContractAnnotation @field)("owner", 0) owner: String,
+      @(ContractAnnotation @field)("cutoff", 1) cutoff: BigInt
+  )
 
   case class Result()
 
   def apply(entry: SABI.Function): CancelAllOrdersOfOwnerFunction = new CancelAllOrdersOfOwnerFunction(entry)
 }
 
+class CancelOrdersFunction(val entry: SABI.Function) extends AbiFunction[CancelOrdersFunction.Params, CancelOrdersFunction.Result]
 
-class CancelOrdersFunction(val entry:SABI.Function) extends AbiFunction[CancelOrdersFunction.Params,CancelOrdersFunction.Result]
-
-object CancelOrdersFunction{
+object CancelOrdersFunction {
   val name = "cancelOrders"
 
   case class Params(
-                     @(ContractAnnotation @field)("orderHashes", 0) orderHashes: Array[Byte]
-                   )
+      @(ContractAnnotation @field)("orderHashes", 0) orderHashes: Array[Byte]
+  )
 
   case class Result()
 
-  def apply(entry: Abi.Function): CancelOrdersFunction = new CancelOrdersFunction(entry)
+  def apply(entry: SABI.Function): CancelOrdersFunction = new CancelOrdersFunction(entry)
 }
 
-class CancelAllOrdersFunction(val entry:SABI.Function) extends AbiFunction[CancelAllOrdersFunction.Params,CancelAllOrdersFunction.Params]
+class CancelAllOrdersFunction(val entry: SABI.Function) extends AbiFunction[CancelAllOrdersFunction.Params, CancelAllOrdersFunction.Params]
 
-object CancelAllOrdersFunction{
+object CancelAllOrdersFunction {
   val name = "cancelAllOrders"
 
   case class Params(
-                     @(ContractAnnotation @field)("cutoff", 0) cutoff: BigInt
-                   )
+      @(ContractAnnotation @field)("cutoff", 0) cutoff: BigInt
+  )
 
   case class Result()
 
   def apply(entry: SABI.Function): CancelAllOrdersFunction = new CancelAllOrdersFunction(entry)
 }
 
+class OrdersCancelledEvent(val entry: SABI.Event) extends AbiEvent[OrdersCancelledEvent.Result]
 
-class OrdersCancelledEvent(val entry:SABI.Event) extends  AbiEvent[OrdersCancelledEvent.Result]
-
-object OrdersCancelledEvent{
+object OrdersCancelledEvent {
   val name = "OrdersCancelled"
   case class Result(
-                     @(ContractAnnotation @field)("address", 0) address: String,
-                     @(ContractAnnotation @field)("_orderHashes", 1) _orderHashes: Seq[String]
-                   )
+      @(ContractAnnotation @field)("address", 0) address: String,
+      @(ContractAnnotation @field)("_orderHashes", 1) _orderHashes: Seq[String]
+  )
 
   def apply(entry: SABI.Event): OrdersCancelledEvent = new OrdersCancelledEvent(entry)
 }
 
-class AllOrdersCancelledForTradingPairEvent(val entry:SABI.Event) extends AbiEvent[AllOrdersCancelledForTradingPairEvent.Result]
+class AllOrdersCancelledForTradingPairEvent(val entry: SABI.Event) extends AbiEvent[AllOrdersCancelledForTradingPairEvent.Result]
 
-object AllOrdersCancelledForTradingPairEvent{
+object AllOrdersCancelledForTradingPairEvent {
 
   val name = "AllOrdersCancelledForTradingPair"
 
   case class Result(
-                     @(ContractAnnotation @field)("_broker", 0) _broker: String,
-                     @(ContractAnnotation @field)("_token1", 1) _token1: String,
-                     @(ContractAnnotation @field)("_token2", 2) _token2: String,
-                     @(ContractAnnotation @field)("_cutoff", 3) _cutoff: BigInt
-                   )
+      @(ContractAnnotation @field)("_broker", 0) _broker: String,
+      @(ContractAnnotation @field)("_token1", 1) _token1: String,
+      @(ContractAnnotation @field)("_token2", 2) _token2: String,
+      @(ContractAnnotation @field)("_cutoff", 3) _cutoff: BigInt
+  )
 
   def apply(entry: SABI.Event): AllOrdersCancelledForTradingPairEvent =
     new AllOrdersCancelledForTradingPairEvent(entry)
 }
 
-class AllOrdersCancelledEvent(val entry:SABI.Event) extends AbiEvent[AllOrdersCancelledEvent.Result]
+class AllOrdersCancelledEvent(val entry: SABI.Event) extends AbiEvent[AllOrdersCancelledEvent.Result]
 
 object AllOrdersCancelledEvent {
   val name = "AllOrdersCancelled"
 
   case class Result(
-                     @(ContractAnnotation @field)("_broker", 0) _broker: String,
-                     @(ContractAnnotation @field)("_cutoff", 1) _cutoff: BigInt
-                   )
+      @(ContractAnnotation @field)("_broker", 0) _broker: String,
+      @(ContractAnnotation @field)("_cutoff", 1) _cutoff: BigInt
+  )
 
   def apply(entry: SABI.Event): AllOrdersCancelledEvent = new AllOrdersCancelledEvent(entry)
 }
 
-class OrdersCancelledByBrokerEvent(val entry:SABI.Event)extends AbiEvent[OrdersCancelledByBrokerEvent.Result]
+class OrdersCancelledByBrokerEvent(val entry: SABI.Event) extends AbiEvent[OrdersCancelledByBrokerEvent.Result]
 
-object OrdersCancelledByBrokerEvent{
-  val name ="OrdersCancelledByBroker"
+object OrdersCancelledByBrokerEvent {
+  val name = "OrdersCancelledByBroker"
   case class Result(
-                     @(ContractAnnotation @field)("_broker", 0) _broker: String,
-                     @(ContractAnnotation @field)("_owner", 1) _owner: String,
-                     @(ContractAnnotation @field)("_orderHashes", 2) _orderHashes: Seq[String]
-                   )
+      @(ContractAnnotation @field)("_broker", 0) _broker: String,
+      @(ContractAnnotation @field)("_owner", 1) _owner: String,
+      @(ContractAnnotation @field)("_orderHashes", 2) _orderHashes: Seq[String]
+  )
 
   def apply(entry: SABI.Event): OrdersCancelledByBrokerEvent = new OrdersCancelledByBrokerEvent(entry)
 }
 
-class AllOrdersCancelledForTradingPairByBrokerEvent(val entry:SABI.Event)
+class AllOrdersCancelledForTradingPairByBrokerEvent(val entry: SABI.Event)
   extends AbiEvent[AllOrdersCancelledForTradingPairByBrokerEvent.Result]
 
-object AllOrdersCancelledForTradingPairByBrokerEvent{
+object AllOrdersCancelledForTradingPairByBrokerEvent {
 
-  val name ="AllOrdersCancelledForTradingPairByBroker"
+  val name = "AllOrdersCancelledForTradingPairByBroker"
 
   case class Result(
-                     @(ContractAnnotation @field)("_broker", 0) _broker: String,
-                     @(ContractAnnotation @field)("_owner", 1) _owner: String,
-                     @(ContractAnnotation @field)("_token1", 2) _token1: String,
-                     @(ContractAnnotation @field)("_token2", 3) _token2: String,
-                     @(ContractAnnotation @field)("_cutoff", 4) _cutoff: BigInt
-                   )
+      @(ContractAnnotation @field)("_broker", 0) _broker: String,
+      @(ContractAnnotation @field)("_owner", 1) _owner: String,
+      @(ContractAnnotation @field)("_token1", 2) _token1: String,
+      @(ContractAnnotation @field)("_token2", 3) _token2: String,
+      @(ContractAnnotation @field)("_cutoff", 4) _cutoff: BigInt
+  )
 
-  def apply(entry: Abi.Event): AllOrdersCancelledForTradingPairByBrokerEvent =
+  def apply(entry: SABI.Event): AllOrdersCancelledForTradingPairByBrokerEvent =
     new AllOrdersCancelledForTradingPairByBrokerEvent(entry)
 }
 
-class AllOrdersCancelledByBrokerEvent(val entry:SABI.Event) extends AbiEvent[AllOrdersCancelledByBrokerEvent.Result]
+class AllOrdersCancelledByBrokerEvent(val entry: SABI.Event) extends AbiEvent[AllOrdersCancelledByBrokerEvent.Result]
 
-object AllOrdersCancelledByBrokerEvent{
+object AllOrdersCancelledByBrokerEvent {
   val name = "AllOrdersCancelledByBroker"
   case class Result(
-                     @(ContractAnnotation @field)("_broker", 0) _broker: String,
-                     @(ContractAnnotation @field)("_owner", 1) _owner: String,
-                     @(ContractAnnotation @field)("_cutoff", 2) _cutoff: BigInt
-                   )
+      @(ContractAnnotation @field)("_broker", 0) _broker: String,
+      @(ContractAnnotation @field)("_owner", 1) _owner: String,
+      @(ContractAnnotation @field)("_cutoff", 2) _cutoff: BigInt
+  )
 
-  def apply(entry: Abi.Event): AllOrdersCancelledByBrokerEvent =
+  def apply(entry: SABI.Event): AllOrdersCancelledByBrokerEvent =
     new AllOrdersCancelledByBrokerEvent(entry)
 }
