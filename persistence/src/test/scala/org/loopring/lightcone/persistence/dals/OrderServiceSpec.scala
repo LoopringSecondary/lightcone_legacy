@@ -220,7 +220,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       update ← service.updateOrderStatus(owner, XOrderStatus.STATUS_CANCELLED_BY_USER)
       query ← service.getOrder(owner)
     } yield (update, query)
-    val res = Await.result(result.mapTo[(Either[XPersistenceError, String], Option[XRawOrder])], 5.second)
+    val res = Await.result(result.mapTo[(Either[XErrorCode, String], Option[XRawOrder])], 5.second)
     val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_CANCELLED_BY_USER
     x should be(true)
   }
@@ -253,7 +253,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       update ← service.updateAmount(hash, state)
       query ← service.getOrder(hash)
     } yield (update, query)
-    val res = Await.result(result.mapTo[(Either[XPersistenceError, String], Option[XRawOrder])], 5.second)
+    val res = Await.result(result.mapTo[(Either[XErrorCode, String], Option[XRawOrder])], 5.second)
     val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_NEW &&
       res._2.get.state.get.actualAmountB === ByteString.copyFrom("111", "UTF-8")
     x should be(true)
