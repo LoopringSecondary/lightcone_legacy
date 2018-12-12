@@ -48,7 +48,7 @@ class MarketManagerImpl(
 
   import MarketManager._
   import MarketManagerImpl._
-  import XMatchingFailure._
+  import XErrorCode._
   import XOrderStatus._
 
   private implicit val marketId_ = marketId

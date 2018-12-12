@@ -43,7 +43,7 @@ class EntryPointActor()(
           actors.get(dest) forward msg
 
         case None ⇒
-          sender ! XError(error = s"unsupported message: $msg")
+          sender ! XError(code = XErrorCode.ERR_UNSUPPORTED_MES,message = s"unsupported message: $msg")
           log.debug(s"unsupported msg: $msg")
       }
   }

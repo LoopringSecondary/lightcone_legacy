@@ -83,12 +83,12 @@ trait OrderService {
   def updateOrderStatus(
     hash: String,
     status: XOrderStatus
-  ): Future[Either[XPersistenceError, String]]
+  ): Future[Either[XErrorCode, String]]
 
   def updateAmount(
     hash: String,
     state: XRawOrder.State
-  ): Future[Either[XPersistenceError, String]]
+  ): Future[Either[XErrorCode, String]]
 }
 
 class OrderServiceImpl @Inject() (
@@ -155,7 +155,7 @@ class OrderServiceImpl @Inject() (
   def updateOrderStatus(
     hash: String,
     status: XOrderStatus
-  ): Future[Either[XPersistenceError, String]] = {
+  ): Future[Either[XErrorCode, String]] = {
     // TODO du: 验证订单状态 从[new, partially] -> pending， 从cancel不能更新其他
     orderDal.updateOrderStatus(hash, status)
   }
@@ -163,5 +163,5 @@ class OrderServiceImpl @Inject() (
   def updateAmount(
     hash: String,
     state: XRawOrder.State
-  ): Future[Either[XPersistenceError, String]] = orderDal.updateAmount(hash, state)
+  ): Future[Either[XErrorCode, String]] = orderDal.updateAmount(hash, state)
 }
