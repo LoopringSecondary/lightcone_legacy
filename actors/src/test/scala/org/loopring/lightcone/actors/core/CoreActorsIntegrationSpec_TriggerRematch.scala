@@ -19,8 +19,6 @@ package org.loopring.lightcone.actors.core
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto._
-
-import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
 
 //todo:impl it after tested accountMangerRecovery
@@ -49,7 +47,6 @@ class CoreActorsIntegrationSpec_TriggerRematch
     gas_price {
       default = "10000000000"
     }
-    """
-  ) {
+    """) {
 
 }
