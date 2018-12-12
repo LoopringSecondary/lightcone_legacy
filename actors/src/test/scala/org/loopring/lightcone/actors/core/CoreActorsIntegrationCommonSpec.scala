@@ -49,7 +49,7 @@ abstract class CoreActorsIntegrationCommonSpec(
     marketId: XMarketId,
     configStr: String
 )
-  extends TestKit(ActorSystem("test", ConfigFactory.load()))
+  extends TestKit(ActorSystem("lightcone_test", ConfigFactory.load()))
   with ImplicitSender
   with Matchers
   with WordSpecLike
@@ -62,7 +62,8 @@ abstract class CoreActorsIntegrationCommonSpec(
   import CoreActorsIntegrationCommonSpec._
 
   override def afterAll: Unit = {
-    TestKit.shutdownActorSystem(system)
+    super.afterAll()
+    TestKit.shutdownActorSystem(system, 10.seconds, false)
   }
 
   implicit val marketId_ = marketId

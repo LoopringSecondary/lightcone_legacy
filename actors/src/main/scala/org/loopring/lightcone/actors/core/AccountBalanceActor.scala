@@ -37,7 +37,7 @@ import org.web3j.utils.Numeric
 import scala.concurrent._
 
 // main owner: 李亚东
-object AccountBalanceActor extends EvenlySharded {
+object AccountBalanceActor extends ShardedEvenly {
   val name = "account_balance"
 
   def startShardRegion()(implicit
@@ -50,7 +50,7 @@ object AccountBalanceActor extends EvenlySharded {
   ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shareds")
+    numOfShards = selfConfig.getInt("num-of-shards")
     entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
     ClusterSharding(system).start(

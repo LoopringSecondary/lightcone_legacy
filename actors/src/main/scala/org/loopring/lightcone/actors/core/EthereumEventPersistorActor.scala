@@ -34,7 +34,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object EthereumEventPersistorActor extends EvenlySharded {
+object EthereumEventPersistorActor extends ShardedEvenly {
   val name = "ethereum_event_persister"
 
   def startShardRegion()(
@@ -48,7 +48,7 @@ object EthereumEventPersistorActor extends EvenlySharded {
   ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shareds")
+    numOfShards = selfConfig.getInt("num-of-shards")
     entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
     ClusterSharding(system).start(

@@ -34,7 +34,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderHandlerActor extends EvenlySharded {
+object OrderHandlerActor extends ShardedEvenly {
   val name = "order_handler"
 
   def startShardRegion()(
@@ -48,7 +48,7 @@ object OrderHandlerActor extends EvenlySharded {
   ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shareds")
+    numOfShards = selfConfig.getInt("num-of-shards")
     entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
     ClusterSharding(system).start(
@@ -71,7 +71,8 @@ class OrderHandlerActor()(
 ) extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
   def receive: Receive = {
-    case XSubmitRawOrder(Some(order)) ⇒
+    case _ ⇒
+    // case XSubmitRawOrder(Some(order)) ⇒
   }
 
 }

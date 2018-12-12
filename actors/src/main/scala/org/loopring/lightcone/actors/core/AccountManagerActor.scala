@@ -34,20 +34,8 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 于红雨
-object AccountManagerActor {
+object AccountManagerActor extends ShardedByAddress {
   val name = "account_manager"
-
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
-    case XStart(_) ⇒ "address_1"
-  }
 
   def startShardRegion()(
     implicit
@@ -59,6 +47,10 @@ object AccountManagerActor {
     actors: Lookup[ActorRef],
     dustEvaluator: DustOrderEvaluator
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shards")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new AccountManagerActor()),
@@ -66,6 +58,11 @@ object AccountManagerActor {
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
+  }
+
+  // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
+  val extractAddress: PartialFunction[Any, String] = {
+    case x: Any ⇒ "abc"
   }
 }
 
@@ -79,6 +76,8 @@ class AccountManagerActor()(
     val dustEvaluator: DustOrderEvaluator
 ) extends ActorWithPathBasedConfig(AccountManagerActor.name)
   with OrderRecoverSupport {
+
+  override val entityName = AccountManagerActor.name
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default

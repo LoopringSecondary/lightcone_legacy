@@ -29,6 +29,14 @@ import org.loopring.lightcone.proto._
 //   extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
 //     XMarketId(GTO_TOKEN.address, WETH_TOKEN.address),
 //     """
+//     weth {
+//       address = "something"
+//     }
+//     loopring-protocol {
+//       address = "0x8d8812b72d1e4ffCeC158D25f56748b7d67c1e78",
+//       delegate-address ="0x17233e07c67d086464fD408148c3ABB56245FA64"
+//       gas-limit-per-ring-v2 = "1000000"
+//     }
 //     account_manager {
 //       skip-recovery = no
 //       recover-batch-size = 1
@@ -50,84 +58,83 @@ import org.loopring.lightcone.proto._
 //     gas_price {
 //       default = "10000000000"
 //     }
-//     """
-//   ) {
+//     """) {
 
-//   "when an accountManager starts" must {
-//     "first recover it and then receive order" in {
+//     "when an accountManager starts" must {
+//       "first recover it and then receive order" in {
 
-//       val accountManagerRecoveryActor = TestActorRef(
-//         new AccountManagerActor(), "accountManagerActorRecovery"
-//       )
-//       accountManagerRecoveryActor ! XStart(ADDRESS_RECOVERY)
+//         val accountManagerRecoveryActor = TestActorRef(
+//           new AccountManagerActor(), "accountManagerActorRecovery"
+//         )
+//         accountManagerRecoveryActor ! XStart(ADDRESS_RECOVERY)
 
-//       val order = XRawOrder(
-//         hash = "order",
-//         tokenS = WETH_TOKEN.address,
-//         tokenB = GTO_TOKEN.address,
-//         amountS = "50".zeros(18),
-//         amountB = "10000".zeros(18),
-//         feeParams = Some(XRawOrder.FeeParams(
-//           tokenFee = GTO_TOKEN.address,
-//           amountFee = "10".zeros(18),
-//           walletSplitPercentage = 100
+//         val order = XRawOrder(
+//           hash = "order",
+//           tokenS = WETH_TOKEN.address,
+//           tokenB = GTO_TOKEN.address,
+//           amountS = "50".zeros(18),
+//           amountB = "10000".zeros(18),
+//           feeParams = Some(XRawOrder.FeeParams(
+//             tokenFee = GTO_TOKEN.address,
+//             amountFee = "10".zeros(18),
+//             walletSplitPercentage = 100
+//           ))
+//         )
+//         var orderHashes = (0 to 6) map ("order" + _)
+
+//         ordersDalActorProbe.expectQuery()
+//         ordersDalActorProbe.replyWith(Seq(
+//           order.copy(hash = orderHashes(0))
 //         ))
-//       )
-//       var orderHashes = (0 to 6) map ("order" + _)
 
-//       ordersDalActorProbe.expectQuery()
-//       ordersDalActorProbe.replyWith(Seq(
-//         order.copy(hash = orderHashes(0))
-//       ))
+//         Thread.sleep(1000)
+//         orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
-//       Thread.sleep(1000)
-//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
+//         expectMsgPF() {
+//           case a: XOrderbook ⇒
+//             info("----orderbook status after first XRecoverOrdersRes: " + a)
+//         }
 
-//       expectMsgPF() {
-//         case a: XOrderbook ⇒
-//           info("----orderbook status after first XRecoverOrdersRes: " + a)
+//         ordersDalActorProbe.expectQuery()
+//         ordersDalActorProbe.replyWith(Seq(
+//           order.copy(hash = orderHashes(1))
+//         ))
+
+//         orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+//         expectMsgPF() {
+//           case a: XOrderbook ⇒
+//             info("----orderbook status after second XRecoverOrdersRes: " + a)
+//         }
+//         ordersDalActorProbe.expectQuery()
+//         ordersDalActorProbe.replyWith(Seq())
+
+//         orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+//         expectMsgPF() {
+//           case a: XOrderbook ⇒
+//             info("----orderbook status after last XRecoverOrdersRes: " + a)
+//         }
+
+//         accountManagerRecoveryActor ! XSubmitOrderReq(Some(order))
+
+//         expectMsgPF() {
+//           case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+//             val order: Order = xorder
+//             info(s"submitted an order: $order")
+//           case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
+//             info(s"occurs ERR_UNKNOWN when submitting order:$order")
+//         }
+
+//         Thread.sleep(1000)
+//         orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+//         expectMsgPF() {
+//           case a: XOrderbook ⇒
+//             info("----orderbook status after submit an order: " + a)
+//         }
+
 //       }
-
-//       ordersDalActorProbe.expectQuery()
-//       ordersDalActorProbe.replyWith(Seq(
-//         order.copy(hash = orderHashes(1))
-//       ))
-
-//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
-
-//       expectMsgPF() {
-//         case a: XOrderbook ⇒
-//           info("----orderbook status after second XRecoverOrdersRes: " + a)
-//       }
-//       ordersDalActorProbe.expectQuery()
-//       ordersDalActorProbe.replyWith(Seq())
-
-//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
-
-//       expectMsgPF() {
-//         case a: XOrderbook ⇒
-//           info("----orderbook status after last XRecoverOrdersRes: " + a)
-//       }
-
-//       accountManagerRecoveryActor ! XSubmitOrderReq(Some(order))
-
-//       expectMsgPF() {
-//         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
-//           val order: Order = xorder
-//           info(s"submitted an order: $order")
-//         case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
-//           info(s"occurs ERR_UNKNOWN when submitting order:$order")
-//       }
-
-//       Thread.sleep(1000)
-//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
-
-//       expectMsgPF() {
-//         case a: XOrderbook ⇒
-//           info("----orderbook status after submit an order: " + a)
-//       }
-
 //     }
-//   }
 
 // }

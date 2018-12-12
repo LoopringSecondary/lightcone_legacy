@@ -28,6 +28,14 @@ import org.loopring.lightcone.proto._
 //   extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
 //     XMarketId(GTO_TOKEN.address, WETH_TOKEN.address),
 //     """
+//     weth {
+//       address = "something"
+//     }
+//     loopring-protocol {
+//       address = "0x8d8812b72d1e4ffCeC158D25f56748b7d67c1e78",
+//       delegate-address ="0x17233e07c67d086464fD408148c3ABB56245FA64"
+//       gas-limit-per-ring-v2 = "1000000"
+//     }
 //     account_manager {
 //       skip-recovery = no
 //       recover-batch-size = 500
@@ -49,88 +57,87 @@ import org.loopring.lightcone.proto._
 //     gas_price {
 //       default = "10000000000"
 //     }
-//     """
-//   ) {
+//     """) {
 
-//   "when an accountManager starts" must {
-//     "first recover it and then receive order" in {
+//     "when an accountManager starts" must {
+//       "first recover it and then receive order" in {
 
-//       val accountManagerRecoveryActor = TestActorRef(
-//         new AccountManagerActor(), "accountManagerActorRecovery"
-//       )
-//       accountManagerRecoveryActor ! XStart(ADDRESS_RECOVERY)
+//         val accountManagerRecoveryActor = TestActorRef(
+//           new AccountManagerActor(), "accountManagerActorRecovery"
+//         )
+//         accountManagerRecoveryActor ! XStart(ADDRESS_RECOVERY)
 
-//       val order = XRawOrder(
-//         hash = "order",
-//         tokenS = WETH_TOKEN.address,
-//         tokenB = GTO_TOKEN.address,
-//         amountS = "50".zeros(18),
-//         amountB = "10000".zeros(18),
-//         feeParams = Some(XRawOrder.FeeParams(
-//           tokenFee = GTO_TOKEN.address,
-//           amountFee = "10".zeros(18),
-//           walletSplitPercentage = 100
-//         ))
-//       )
+//         val order = XRawOrder(
+//           hash = "order",
+//           tokenS = WETH_TOKEN.address,
+//           tokenB = GTO_TOKEN.address,
+//           amountS = "50".zeros(18),
+//           amountB = "10000".zeros(18),
+//           feeParams = Some(XRawOrder.FeeParams(
+//             tokenFee = GTO_TOKEN.address,
+//             amountFee = "10".zeros(18),
+//             walletSplitPercentage = 100
+//           ))
+//         )
 
-//       val batchOrders1 = (0 until 500) map {
-//         i ⇒ order.copy(hash = "order1" + i)
+//         val batchOrders1 = (0 until 500) map {
+//           i ⇒ order.copy(hash = "order1" + i)
+//         }
+//         ordersDalActorProbe.expectQuery()
+//         ordersDalActorProbe.replyWith(batchOrders1)
+
+//         Thread.sleep(2000)
+//         orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+//         expectMsgPF() {
+//           case a: XOrderbook ⇒
+//             log.debug("----orderbook status after first XRecoverOrdersRes: " + a)
+//         }
+
+//         val batchOrders2 = (0 until 500) map {
+//           i ⇒ order.copy(hash = "order2" + i)
+//         }
+//         ordersDalActorProbe.expectQuery()
+//         ordersDalActorProbe.replyWith(batchOrders2)
+
+//         Thread.sleep(2000)
+//         orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+//         expectMsgPF() {
+//           case a: XOrderbook ⇒
+//             log.debug("----orderbook status after second XRecoverOrdersRes: " + a)
+//         }
+//         ordersDalActorProbe.expectQuery()
+//         ordersDalActorProbe.replyWith(Seq())
+
+//         orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+//         expectMsgPF() {
+//           case a: XOrderbook ⇒
+//             log.debug("----orderbook status after last XRecoverOrdersRes: " + a)
+//         }
+
+//         //不能立即发送请求，否则可能会失败，需要等待future执行完毕
+//         Thread.sleep(1000)
+//         accountManagerRecoveryActor ! XSubmitOrderReq(Some(order.copy(hash = "order---1")))
+
+//         expectMsgPF() {
+//           case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+//             val order: Order = xorder
+//             log.debug(s"submitted an order: $order")
+//           case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
+//             log.debug(s"occurs ERR_UNKNOWN when submitting order:$order")
+//         }
+
+//         Thread.sleep(1000)
+//         orderbookManagerActor ! XGetOrderbookReq(0, 100)
+
+//         expectMsgPF() {
+//           case a: XOrderbook ⇒
+//             log.debug("----orderbook status after submit an order: " + a)
+//         }
+
 //       }
-//       ordersDalActorProbe.expectQuery()
-//       ordersDalActorProbe.replyWith(batchOrders1)
-
-//       Thread.sleep(2000)
-//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
-
-//       expectMsgPF() {
-//         case a: XOrderbook ⇒
-//           log.debug("----orderbook status after first XRecoverOrdersRes: " + a)
-//       }
-
-//       val batchOrders2 = (0 until 500) map {
-//         i ⇒ order.copy(hash = "order2" + i)
-//       }
-//       ordersDalActorProbe.expectQuery()
-//       ordersDalActorProbe.replyWith(batchOrders2)
-
-//       Thread.sleep(2000)
-//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
-
-//       expectMsgPF() {
-//         case a: XOrderbook ⇒
-//           log.debug("----orderbook status after second XRecoverOrdersRes: " + a)
-//       }
-//       ordersDalActorProbe.expectQuery()
-//       ordersDalActorProbe.replyWith(Seq())
-
-//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
-
-//       expectMsgPF() {
-//         case a: XOrderbook ⇒
-//           log.debug("----orderbook status after last XRecoverOrdersRes: " + a)
-//       }
-
-//       //不能立即发送请求，否则可能会失败，需要等待future执行完毕
-//       Thread.sleep(1000)
-//       accountManagerRecoveryActor ! XSubmitOrderReq(Some(order.copy(hash = "order---1")))
-
-//       expectMsgPF() {
-//         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
-//           val order: Order = xorder
-//           log.debug(s"submitted an order: $order")
-//         case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
-//           log.debug(s"occurs ERR_UNKNOWN when submitting order:$order")
-//       }
-
-//       Thread.sleep(1000)
-//       orderbookManagerActor ! XGetOrderbookReq(0, 100)
-
-//       expectMsgPF() {
-//         case a: XOrderbook ⇒
-//           log.debug("----orderbook status after submit an order: " + a)
-//       }
-
 //     }
-//   }
 
 // }

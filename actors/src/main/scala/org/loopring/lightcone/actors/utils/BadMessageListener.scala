@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.base
+package org.loopring.lightcone.actors.utils
 
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
+import akka.actor._
+import akka.cluster.sharding._
+import akka.event.LoggingReceive
+import akka.pattern._
+import akka.util.Timeout
+import org.loopring.lightcone.proto.XError
 
-class TokenValueEstimator()(implicit tmm: TokenMetadataManager) {
+class BadMessageListener extends Actor with ActorLogging {
+  def receive = {
+    case u: UnhandledMessage ⇒
+      log.debug(s"invalid request: $u")
+      sender ! XError(error = "invalid request")
 
-  def getEstimatedValue(token: String, amount: BigInt): Double = {
-    if (amount.signum <= 0) 0
-    else tmm.getTokenByAddress(token) match {
-      case None ⇒ 0
-      case Some(metadata) ⇒
-        val scaling = Math.pow(10, metadata.decimals)
-        (Rational(metadata.currentPrice) *
-          Rational(amount) /
-          Rational(scaling)).doubleValue
-    }
+    case d: DeadLetter ⇒
+      log.warning(s"failed to handle request: $d")
+      sender ! XError(error = "failed to handle request")
   }
-
 }
-

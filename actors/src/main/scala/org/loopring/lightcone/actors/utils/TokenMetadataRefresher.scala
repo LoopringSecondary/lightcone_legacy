@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.core
+package org.loopring.lightcone.actors.utils
 
 import akka.actor._
 import akka.cluster.sharding._
@@ -35,11 +35,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object TokenMetadataActor {
-  val name = "token_metadata"
-}
-
-class TokenMetadataActor()(
+class TokenMetadataRefresher()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -55,10 +51,10 @@ class TokenMetadataActor()(
   private val tokenMetadata = dbModule.tokenMetadata
 
   val repeatedJobs = Seq(Job(
-    name = "syncTokenValue",
+    name = "sync-token-metadata",
     dalayInSeconds = 10 * 60, // 10 minutes
-    run = () ⇒ tokenMetadata.getTokens(true).map {
-      _.foreach(tokenMetadataManager.addToken)
+    run = () ⇒ tokenMetadata.getTokens(true).map { tokens ⇒
+      tokenMetadataManager.reset(tokens)
     }
   ))
 

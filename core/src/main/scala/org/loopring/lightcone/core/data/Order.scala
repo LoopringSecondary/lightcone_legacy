@@ -184,10 +184,10 @@ case class Order(
     implicit
     tokenMetadataManager: TokenMetadataManager
   ) = {
-    if (!tokenMetadataManager.hasToken(token)) {
+    if (!tokenMetadataManager.hasTokenByAddress(token)) {
       throw new IllegalStateException(s"no metadata available for token $token")
     }
-    val metadata = tokenMetadataManager.getToken(token).get
+    val metadata = tokenMetadataManager.getTokenByAddress(token).get
     val decimals = metadata.decimals
     (Rational(amount) / Rational(Math.pow(10, decimals))).doubleValue
   }

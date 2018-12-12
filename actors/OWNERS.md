@@ -5,10 +5,11 @@
     - OrderbookManagerActor
     - MarketManagerActor
     - AccountManagerActor
+    - BadMessageListener
     - all deployment and docker
 
 - 永丰：
-    - TokenMetadataActor
+    - TokenMetadataRefresher
     - OrderRecoverActor
     - EthereumEventPersistorActor
     - DatabaseQueryActor
