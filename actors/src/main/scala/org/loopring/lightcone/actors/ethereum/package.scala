@@ -16,11 +16,15 @@
 
 package org.loopring.lightcone.actors
 
+import com.google.protobuf.ByteString
 import org.json4s.{ DefaultFormats, NoTypeHints }
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.write
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.ethereum.abi._
+import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.proto.{ XBatchContractCallRes, _ }
+import org.web3j.utils.Numeric
 
 package object ethereum {
 
@@ -51,8 +55,131 @@ package object ethereum {
   }
 
   private[ethereum] case class BatchMethod(
+      id: Int,
       method: String,
       params: Seq[Any]
   )
 
+  val erc20Abi = ERC20ABI()
+
+  implicit def xGetBalanceAndAllowanceToBatchReq(
+    delegateAddress: Address,
+    req: XGetBalanceAndAllowancesReq
+  ): XBatchContractCallReq = {
+    val owner = Address(req.address)
+    val tokens = req.tokens.map(Address(_))
+    val allowanceCallReqs = batchErc20AllowanceReq(delegateAddress, owner, tokens)
+    val balanceCallReqs = batchErc20BalanceReq(owner, tokens)
+    XBatchContractCallReq(allowanceCallReqs ++ balanceCallReqs)
+  }
+
+  implicit def xGetBalanceToBatchReq(req: XGetBalanceReq): XBatchContractCallReq = {
+    val owner = Address(req.address)
+    val tokens = req.tokens.map(Address(_))
+    val balanceCallReqs = batchErc20BalanceReq(owner, tokens)
+    XBatchContractCallReq(balanceCallReqs)
+  }
+
+  implicit def xGetAllowanceToBatchReq(
+    delegateAddress: Address, req: XGetAllowanceReq
+  ): XBatchContractCallReq = {
+    val owner = Address(req.address)
+    val tokens = req.tokens.map(Address(_))
+    val allowanceCallReqs = batchErc20AllowanceReq(delegateAddress, owner, tokens)
+    XBatchContractCallReq(allowanceCallReqs)
+  }
+
+  implicit def xBatchContractCallResToBalanceAndAllowance(
+    address: String,
+    tokens: Seq[String],
+    batchRes: XBatchContractCallRes
+  ): XGetBalanceAndAllowancesRes = {
+
+    val allowances = batchRes.resps.filter(_.id % 2 == 0).map {
+      res ⇒
+        ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+    }
+    val balances = batchRes.resps.filter(_.id % 2 == 1).map {
+      res ⇒
+        ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+    }
+
+    val balanceAndAllowance = (balances zip allowances).map {
+      ba ⇒ XBalanceAndAllowance(ba._1, ba._2)
+    }
+
+    XGetBalanceAndAllowancesRes(
+      address,
+      (tokens zip balanceAndAllowance).toMap
+    )
+
+  }
+
+  implicit def xBatchContractCallResToBalance(
+    address: String,
+    tokens: Seq[String],
+    batchRes: XBatchContractCallRes
+  ): XGetBalanceRes = {
+    val balances = batchRes.resps.filter(_.id % 2 == 1).map {
+      res ⇒
+        ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+    }
+
+    XGetBalanceRes(
+      address,
+      (tokens zip balances).toMap
+    )
+
+  }
+
+  implicit def xBatchContractCallResToAllowance(
+    address: String,
+    tokens: Seq[String],
+    batchRes: XBatchContractCallRes
+  ): XGetAllowanceRes = {
+
+    val allowances = batchRes.resps.filter(_.id % 2 == 0).map {
+      res ⇒
+        ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+    }
+
+    XGetAllowanceRes(
+      address,
+      (tokens zip allowances).toMap
+    )
+  }
+
+  private def batchErc20AllowanceReq(
+    delegateAddress: Address,
+    owner: Address,
+    tokens: Seq[Address],
+    tag: String = "latest"
+  ) = {
+    tokens.zipWithIndex.map(token ⇒ {
+      val data = erc20Abi.allowance.pack(
+        AllowanceFunction.Parms(
+          _spender = delegateAddress.toString,
+          _owner = owner.toString
+        )
+      )
+      val param = XTransactionParam(to = token._1.toString, data = data)
+      XEthCallReq(token._2 * 2, Some(param), tag)
+    })
+  }
+
+  private def batchErc20BalanceReq(
+    owner: Address,
+    tokens: Seq[Address],
+    tag: String = "latest"
+  ) = {
+    tokens.zipWithIndex.map { token ⇒
+
+      val data = erc20Abi.balanceOf.pack(
+        BalanceOfFunction.Parms(_owner = owner.toString)
+      )
+      val param = XTransactionParam(to = token._1.toString, data = data)
+      XEthCallReq(1 + token._2 * 2, Some(param), tag)
+    }
+
+  }
 }
