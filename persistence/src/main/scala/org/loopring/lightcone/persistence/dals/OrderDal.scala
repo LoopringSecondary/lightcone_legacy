@@ -149,7 +149,7 @@ class OrderDalImpl()(
     )).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
         XSaveOrderResult(
-          error = XErrorCode.PERS_ERR_DUPLICATE_INSERT,
+          error = XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT,
           order = None,
           alreadyExist = true
         )
@@ -158,7 +158,7 @@ class OrderDalImpl()(
         // TODO du: print some log
         // log(s"error : ${ex.getMessage}")
         XSaveOrderResult(
-          error = XErrorCode.PERS_ERR_INTERNAL,
+          error = XErrorCode.ERR_PERSISTENCE_INTERNAL,
           order = None
         )
       }
@@ -291,7 +291,7 @@ class OrderDalImpl()(
       .update(status, timeProvider.getTimeMillis))
   } yield {
     if (result >= 1) Right(hash)
-    else Left(XErrorCode.PERS_ERR_UPDATE_FAILED)
+    else Left(XErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
   }
 
   def updateFailed(
@@ -316,7 +316,7 @@ class OrderDalImpl()(
     }
   } yield {
     if (result >= 1) Right(hash)
-    else Left(XErrorCode.PERS_ERR_UPDATE_FAILED)
+    else Left(XErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
   }
 
   def updateAmount(
@@ -345,6 +345,6 @@ class OrderDalImpl()(
       ))
   } yield {
     if (result >= 1) Right(hash)
-    else Left(XErrorCode.PERS_ERR_UPDATE_FAILED)
+    else Left(XErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
   }
 }

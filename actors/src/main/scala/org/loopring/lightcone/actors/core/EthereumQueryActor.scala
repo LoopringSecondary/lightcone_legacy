@@ -30,6 +30,7 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.actors.ethereum._
 
@@ -85,7 +86,7 @@ class EthereumQueryActor()(
         sender ! XGetBalanceAndAllowancesRes()
           .withAddress(req.address)
           .withError(XError()
-            .withCode(XErrorCode.ETHEREUM_ERR_ILLEGAL_ADDRESS)
+            .withCode(XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS)
             .withMessage(s"invalid address in XGetBalanceAndAllowancesReq:$req"))
       } else {
         val batchReqs: XBatchContractCallReq = xGetBalanceAndAllowanceToBatchReq(Address(delegateAddress), req)
@@ -109,7 +110,7 @@ class EthereumQueryActor()(
         sender ! XGetBalanceRes()
           .withAddress(req.address)
           .withError(XError()
-            .withCode(XErrorCode.ETHEREUM_ERR_ILLEGAL_ADDRESS)
+            .withCode(XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS)
             .withMessage(s"invalid address in XGetBalanceAndAllowancesReq:$req"))
       } else {
         val batchReqs: XBatchContractCallReq = req
@@ -133,7 +134,7 @@ class EthereumQueryActor()(
         sender ! XGetAllowanceRes()
           .withAddress(req.address)
           .withError(XError()
-            .withCode(XErrorCode.ETHEREUM_ERR_ILLEGAL_ADDRESS)
+            .withCode(XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS)
             .withMessage(s"invalid address in XGetBalanceAndAllowancesReq:$req"))
       } else {
         val batchReqs: XBatchContractCallReq = xGetAllowanceToBatchReq(Address(delegateAddress), req)

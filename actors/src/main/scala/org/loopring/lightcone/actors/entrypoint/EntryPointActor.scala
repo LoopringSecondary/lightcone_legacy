@@ -23,6 +23,7 @@ import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 
 import scala.concurrent.ExecutionContext
 

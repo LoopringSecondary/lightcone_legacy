@@ -50,7 +50,7 @@ class BlockDalImpl()(
     if (result == 1) {
       XErrorCode.ERR_NONE
     } else {
-      XErrorCode.PERS_ERR_INTERNAL
+      XErrorCode.ERR_PERSISTENCE_INTERNAL
     }
   }
   def findByHash(hash: String): Future[Option[XBlockData]] = {
