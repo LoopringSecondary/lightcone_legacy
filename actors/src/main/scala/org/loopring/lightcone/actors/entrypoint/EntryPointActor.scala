@@ -54,10 +54,12 @@ class EntryPointActor()(
   val findDestination: PartialFunction[Any, String] = {
     case _@ (
       XSubmitRawOrderReq |
-      XCancelOrderReq) ⇒ OrderHandlerActor.name
+      XCancelOrderReq
+      ) ⇒ OrderHandlerActor.name
 
     case _@ (
-      XGetOrderbookReq) ⇒ OrderbookManagerActor.name
+      XGetOrderbookReq
+      ) ⇒ OrderbookManagerActor.name
   }
 
 }
