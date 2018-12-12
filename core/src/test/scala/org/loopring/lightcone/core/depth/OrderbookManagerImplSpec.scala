@@ -23,7 +23,7 @@ import org.scalatest._
 
 class OrderbookManagerImplSpec extends CommonSpec {
   var obm: OrderbookManager = _
-  val config = XOrderbookConfig(
+  val config = XMarketConfig(
     levels = 2,
     priceDecimals = 5,
     precisionForAmount = 2,

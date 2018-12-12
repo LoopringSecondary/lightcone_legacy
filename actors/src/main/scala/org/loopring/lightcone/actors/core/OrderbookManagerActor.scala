@@ -81,9 +81,11 @@ class OrderbookManagerActor(
   OrderbookManagerActor.name,
   extractEntityName
 ) {
+  val marketName = entityName
 
-  val marketId = entityName
-  val xorderbookConfig = XOrderbookConfig(
+  // TODO(yongfeng): load marketconfig from database throught a service interface
+  // based on marketName
+  val xorderbookConfig = XMarketConfig(
     levels = selfConfig.getInt("levels"),
     priceDecimals = selfConfig.getInt("price-decimals"),
     precisionForAmount = selfConfig.getInt("precision-for-amount"),

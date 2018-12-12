@@ -85,9 +85,19 @@ class MarketManagerActor(
   MarketManagerActor.name,
   extractEntityName
 ) with OrderRecoverSupport {
+  val marketName = entityName
 
   val wethTokenAddress = config.getString("weth.address")
   val gasLimitPerRingV2 = BigInt(config.getString("loopring-protocol.gas-limit-per-ring-v2"))
+
+  // TODO(yongfeng): load marketconfig from database throught a service interface
+  // based on marketName
+  val xorderbookConfig = XMarketConfig(
+    levels = selfConfig.getInt("levels"),
+    priceDecimals = selfConfig.getInt("price-decimals"),
+    precisionForAmount = selfConfig.getInt("precision-for-amount"),
+    precisionForTotal = selfConfig.getInt("precision-for-total")
+  )
 
   private var marketId: XMarketId = _
 

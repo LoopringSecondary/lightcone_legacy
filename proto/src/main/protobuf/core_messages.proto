@@ -27,10 +27,14 @@ message XMarketId {
     string secondary = 2;
 }
 
-message XMarketManagerConfig {
+message XMarketConfig {
     int32 maxNumbersOfOrders = 1;
     int32 priceDecimals = 2;
     int32 recover_batch_size = 3;
+
+    int32 levels = 10;
+    int32 precisionForAmount = 12;
+    int32 precisionForTotal = 13;
 }
 
 message MarketMetadata {
@@ -55,12 +59,7 @@ message XOrderbook {
     repeated XItem buys = 3;
 }
 
-message XOrderbookConfig {
-    int32 levels = 1;
-    int32 priceDecimals = 2;
-    int32 precisionForAmount = 3;
-    int32 precisionForTotal = 4;
-}
+
 
 message XOrderbookUpdate {
     message XSlot {
