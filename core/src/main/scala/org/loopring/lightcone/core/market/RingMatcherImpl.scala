@@ -32,22 +32,22 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
     val ringOpt = makeRing(maker, taker)
     ringOpt match {
       case Right(ring) if !rie.isProfitable(ring, minFiatValue) ⇒
-        Left(MATCHING_ERR_INCOME_TOO_SMALL)
+        Left(ERR_MATCHING_INCOME_TOO_SMALL)
       case other ⇒ other
     }
   }
 
   private def makeRing(maker: Order, taker: Order): Either[XErrorCode, OrderRing] = {
     if (taker.amountB <= 0 || taker.amountS <= 0) {
-      Left(MATCHING_ERR_INVALID_TAKER_ORDER)
+      Left(ERR_MATCHING_INVALID_TAKER_ORDER)
     } else if (maker.amountB <= 0 || maker.amountS <= 0) {
-      Left(MATCHING_ERR_INVALID_MAKER_ORDER)
+      Left(ERR_MATCHING_INVALID_MAKER_ORDER)
     } else if (taker.matchable.amountS <= 0 || taker.matchable.amountB <= 0) {
-      Left(MATCHING_ERR_TAKER_COMPLETELY_FILLED)
+      Left(ERR_MATCHING_TAKER_COMPLETELY_FILLED)
     } else if (maker.matchable.amountS <= 0 || maker.matchable.amountB <= 0) {
-      Left(MATCHING_ERR_MAKER_COMPLETELY_FILLED)
+      Left(ERR_MATCHING_MAKER_COMPLETELY_FILLED)
     } else if (maker.amountS * taker.amountS < maker.amountB * taker.amountB) {
-      Left(MATCHING_ERR_ORDERS_NOT_TRADABLE)
+      Left(ERR_MATCHING_ORDERS_NOT_TRADABLE)
     } else {
       /*合约逻辑：
     取小的成交量计算，按照订单顺序，如果下一单的卖需要缩减，则第一单为最小单
