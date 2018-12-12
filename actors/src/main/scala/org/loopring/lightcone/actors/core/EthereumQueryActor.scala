@@ -77,6 +77,7 @@ class EthereumQueryActor()(
 
   protected def ethereumConnectionActor = actors.get(EthereumAccessActor.name)
 
+  //todo:还需要继续优化下
   def receive = LoggingReceive {
     case req: XGetBalanceAndAllowancesReq ⇒
       if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
@@ -87,7 +88,6 @@ class EthereumQueryActor()(
             .withCode(XErrorCode.ETHEREUM_ERR_ILLEGAL_ADDRESS)
             .withMessage(s"invalid address in XGetBalanceAndAllowancesReq:$req"))
       } else {
-        //todo:eth 需要单独处理下
         val batchReqs: XBatchContractCallReq = xGetBalanceAndAllowanceToBatchReq(Address(delegateAddress), req)
         val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
         (for {
@@ -103,7 +103,6 @@ class EthereumQueryActor()(
         }) pipeTo sender
       }
 
-    //todo:eth 需要单独处理下
     case req: XGetBalanceReq ⇒
       if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
         log.error(s"invalid XGetBalanceReq:$req caused by invalid ethereum address")
