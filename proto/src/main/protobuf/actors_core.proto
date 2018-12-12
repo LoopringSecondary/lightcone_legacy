@@ -66,11 +66,6 @@ message XGetOrderFilledAmountRes {
     bytes filled_amount_s = 2;
 }
 
-message XError{
-    int32 code = 1;
-    string error = 2;
-}
-
 message XBalanceAndAllowance {
     bytes balance = 1;
     bytes allowance = 2;

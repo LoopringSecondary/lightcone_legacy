@@ -20,11 +20,11 @@ import org.web3j.crypto.Hash
 import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.XOrderValidationError._
+import org.loopring.lightcone.proto.XErrorCode._
 
 trait RawOrderValidator {
   def calculateOrderHash(order: XRawOrder): String
-  def validate(order: XRawOrder): Either[XOrderValidationError, XRawOrder]
+  def validate(order: XRawOrder): Either[XErrorCode, XRawOrder]
 }
 
 // TODO(kongliang): implement and test this class
@@ -58,7 +58,7 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     Numeric.toHexString(Hash.sha3(bitstream.getBytes))
   }
 
-  def validate(order: XRawOrder): Either[XOrderValidationError, XRawOrder] = {
+  def validate(order: XRawOrder): Either[XErrorCode, XRawOrder] = {
     def checkDualAuthSig = {
       if (isValidAddress(order.params.get.dualAuthAddr)) {
         val authSig = order.params.get.dualAuthSig
@@ -68,7 +68,7 @@ class RawOrderValidatorImpl extends RawOrderValidator {
       }
     }
 
-    val checklist = Seq[(Boolean, XOrderValidationError)](
+    val checklist = Seq[(Boolean, XErrorCode)](
       (order.version == 0) -> ORDER_VALIDATION_ERR_UNSUPPORTED_VERSION,
       isValidAddress(order.owner) -> ORDER_VALIDATION_ERR_INVALID_OWNER,
       isValidAddress(order.tokenS) -> ORDER_VALIDATION_ERR_INVALID_TOKENS,

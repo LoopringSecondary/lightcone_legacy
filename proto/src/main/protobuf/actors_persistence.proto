@@ -25,7 +25,7 @@ import "persistence.proto";
 message XSaveOrderResult {
     XRawOrder order    = 1;
     bool already_exist      = 2;
-    XPersistenceError error = 3;
+    XErrorCode error = 3;
 }
 
 message XSaveOrderReq {
@@ -39,7 +39,7 @@ message XUpdateOrderStateReq {
 }
 
 message XUpdateOrderStateRes {
-    XPersistenceError error = 1;
+    XErrorCode error = 1;
 }
 
 message XUpdateOrderStatusReq {
@@ -49,7 +49,7 @@ message XUpdateOrderStatusReq {
 }
 
 message XUpdateOrderStatusRes {
-    XPersistenceError error = 1;
+    XErrorCode error = 1;
 }
 
 message XGetOrdersByHashesReq {
@@ -58,7 +58,7 @@ message XGetOrdersByHashesReq {
 
 message XGetOrdersByHashesRes {
     repeated XRawOrder orders = 1;
-    XPersistenceError error = 2;
+    XErrorCode error = 2;
 }
 
 message XGetOrderByHashReq {
@@ -67,12 +67,12 @@ message XGetOrderByHashReq {
 
 message XGetOrderByHashRes {
     XRawOrder order = 1;
-    XPersistenceError error = 2;
+    XErrorCode error = 2;
 }
 
 message XSaveOrderStateResult {
     XRawOrder state    = 1;
-    XPersistenceError error = 3;
+    XErrorCode error = 3;
 }
 
 message XSaveOrderStateReq {

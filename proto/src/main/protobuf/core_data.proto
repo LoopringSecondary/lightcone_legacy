@@ -79,6 +79,9 @@ enum XErrorCode{
     PERS_ERR_DUPLICATE_INSERT  = 3002;
     PERS_ERR_UPDATE_FAILED = 3003;
     PERS_ERR_INTERNAL = 3004;
+
+    //4001 -- 5000 ethereum Error
+    ETHEREUM_ERR_ILLEGAL_ADDRESS = 4001;
 }
 
 message XError{
