@@ -25,10 +25,16 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.dals.{BlockDal, BlockDalImpl}
+import org.loopring.lightcone.persistence.dals.{ BlockDal, BlockDalImpl }
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.proto.ethereum.XBlockData
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.account._
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
 import scala.collection.mutable.ListBuffer
@@ -73,7 +79,7 @@ class EthereumEventExtractorActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(EthereumEventExtractorActor.name) {
+) extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
 
   def ethereumConnectionActor: ActorRef = actors.get(EthereumAccessActor.name)
   def accountManager: ActorRef = actors.get(AccountManagerActor.name)
@@ -131,10 +137,10 @@ class EthereumEventExtractorActor()(
             //TODO(yadong)是否要存block的全量数据
             val blockData = XBlockData()
               .withHash(result.hash)
-                .withHeight(hex2BigInt(result.number).longValue())
-                .withGasLimit(hex2BigInt(result.gasLimit))
-                .withGasUsed(hex2BigInt(result.gasUsed))
-                .withDifficulty(hex2BigInt(result.difficulty))
+              .withHeight(hex2BigInt(result.number).longValue())
+              .withGasLimit(hex2BigInt(result.gasLimit))
+              .withGasUsed(hex2BigInt(result.gasUsed))
+              .withDifficulty(hex2BigInt(result.difficulty))
 
             blockDal.saveBlock(blockData)
             self ! XBlockJob()
@@ -148,7 +154,6 @@ class EthereumEventExtractorActor()(
       }
     }
   }
-
 
   // find the fork height
   def handleFork(forkBlock: XForkBlock): Unit = {
@@ -225,7 +230,6 @@ class EthereumEventExtractorActor()(
       }
     }
   }
-
 
   implicit def hex2BigInt(hex: String): BigInt = {
     if (hex.startsWith("0x")) {

@@ -25,31 +25,17 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XOrderStatus._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 于红雨
-object AccountManagerActor {
+object AccountManagerActor extends ShardedByAddress {
   val name = "account_manager"
-
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
-    case XStart(_) ⇒ "address_1"
-  }
 
   def startShardRegion()(
     implicit
@@ -61,6 +47,10 @@ object AccountManagerActor {
     actors: Lookup[ActorRef],
     dustEvaluator: DustOrderEvaluator
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shards")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new AccountManagerActor()),
@@ -68,7 +58,11 @@ object AccountManagerActor {
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )
+  }
 
+  // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
+  val extractAddress: PartialFunction[Any, String] = {
+    case x: Any ⇒ "abc"
   }
 }
 
@@ -80,14 +74,15 @@ class AccountManagerActor()(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator
-) extends ConfiggedActor(AccountManagerActor.name)
+) extends ActorWithPathBasedConfig(AccountManagerActor.name)
   with OrderRecoverSupport {
+
+  override val entityName = AccountManagerActor.name
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
   private var address: String = _
 
-  protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
   protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)

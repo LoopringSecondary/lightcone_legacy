@@ -17,12 +17,12 @@
 package org.loopring.lightcone.core.market
 
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 
 trait RingMatcher {
   def matchOrders(
     taker: Order,
     maker: Order,
     minFiatValue: Double
-  ): Either[XMatchingFailure, OrderRing]
+  ): Either[XErrorCode, OrderRing]
 }

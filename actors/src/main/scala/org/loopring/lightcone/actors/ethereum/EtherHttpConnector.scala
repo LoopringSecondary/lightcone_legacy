@@ -27,7 +27,7 @@ import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s._
 import org.json4s.native.JsonMethods.parse
 import org.json4s.jackson.Serialization
-import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto._
 import scalapb.json4s.JsonFormat
 
 import scala.concurrent._

@@ -17,8 +17,7 @@
 package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
 package object data {

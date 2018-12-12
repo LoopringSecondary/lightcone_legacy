@@ -25,14 +25,12 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XOrderStatus._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 杜永丰
@@ -73,7 +71,7 @@ class OrderRecoverActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(OrderRecoverActor.name) {
+) extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   def receive: Receive = {
     case _ ⇒

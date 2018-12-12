@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.proto.core;
+package org.loopring.lightcone.proto;
 
 enum XOrderStatus {
     STATUS_NEW = 0;
@@ -39,27 +39,57 @@ enum XOrderStatus {
     STATUS_UNSUPPORTED_MARKET = 202;
 }
 
-enum XMatchingFailure {
-    MATCHING_ERR_NONE = 0;
-    MATCHING_ERR_ORDERS_NOT_TRADABLE = 1;
-    MATCHING_ERR_INCOME_TOO_SMALL = 2;
-    MATCHING_ERR_MAKER_COMPLETELY_FILLED = 3;
-    MATCHING_ERR_TAKER_COMPLETELY_FILLED = 4;
-    MATCHING_ERR_INVALID_MAKER_ORDER = 5;
-    MATCHING_ERR_INVALID_TAKER_ORDER = 6;
+enum XErrorCode{
+    // 0 NONE ERROR
+    ERR_NONE = 0;
+   //1 -- 1000 Matching Error
+   MATCHING_ERR_ORDERS_NOT_TRADABLE = 1;
+   MATCHING_ERR_INCOME_TOO_SMALL = 2;
+   MATCHING_ERR_MAKER_COMPLETELY_FILLED = 3;
+   MATCHING_ERR_TAKER_COMPLETELY_FILLED = 4;
+   MATCHING_ERR_INVALID_MAKER_ORDER = 5;
+   MATCHING_ERR_INVALID_TAKER_ORDER = 6;
+
+   // 1001 -- 2000 Order Error
+   ORDER_VALIDATION_ERR_INVALID_OWNER = 1001;
+   ORDER_VALIDATION_ERR_INVALID_TOKENS = 1002;
+   ORDER_VALIDATION_ERR_INVALID_TOKENB = 1003;
+   ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT = 1004;
+   ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE = 1005;
+   ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE = 1006;
+   ORDER_VALIDATION_ERR_INVALID_WALLET_SPLIT_PERCENTAGE = 1007;
+   ORDER_VALIDATION_ERR_INVALID_MISSING_DUALAUTH_SIG = 1008;
+   ORDER_VALIDATION_ERR_UNSUPPORTED_VERSION = 1009;
+
+   //2001 -- 3000 core actors error
+    ERR_ORDER_ALREADY_EXIST = 2001;
+    ERR_ORDER_NOT_EXIST = 2002;
+    ERR_ORDER_INVALID_AMOUNT_S = 2003;
+    ERR_LOW_BALANCE = 2004;
+    ERR_LOW_FEE_BALANCE = 2005;
+    ERR_TOKEN_NOT_EXIST = 2006;
+    ERR_TOO_MANY_ORDERS = 2007;
+    ERR_TOO_MANY_FAILED_MATCHES = 2008;
+    ERR_INVALID_ORDER_DATA = 2009;
+    ERR_INVALID_MARKET = 2010;
+    ERR_INVALID_REQ = 2011;
+    ERR_UNSUPPORTED_MES = 2012;
+    ERR_FAILED_HANDLE_MES = 2013;
+    ERR_UNKNOWN = 3000;
+
+   //3001 -- 4000 persistence Error
+    PERS_ERR_INVALID_DATA = 3001;
+    PERS_ERR_DUPLICATE_INSERT  = 3002;
+    PERS_ERR_UPDATE_FAILED = 3003;
+    PERS_ERR_INTERNAL = 3004;
+
+    //4001 -- 5000 ethereum Error
+    ETHEREUM_ERR_ILLEGAL_ADDRESS = 4001;
 }
 
-enum XOrderValidationError {
-    ORDER_VALIDATION_ERR_NONE = 0;
-    ORDER_VALIDATION_ERR_INVALID_OWNER = 1;
-    ORDER_VALIDATION_ERR_INVALID_TOKENS = 2;
-    ORDER_VALIDATION_ERR_INVALID_TOKENB = 3;
-    ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT = 4;
-    ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE = 5;
-    ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE = 6;
-    ORDER_VALIDATION_ERR_INVALID_WALLET_SPLIT_PERCENTAGE = 7;
-    ORDER_VALIDATION_ERR_INVALID_MISSING_DUALAUTH_SIG = 8;
-    ORDER_VALIDATION_ERR_UNSUPPORTED_VERSION = 9;
+message XError{
+    XErrorCode code = 1;
+    string message = 2;
 }
 
 enum XTokenStandard {
@@ -95,7 +125,7 @@ message XRawOrder {
 
     message FeeParams {
         string token_fee               = 1;
-        bytes  amount_fee             = 2;
+        bytes  amount_fee              = 2;
         int32  waive_fee_percentage    = 3;
         int32  token_s_fee_percentage  = 4;
         int32  token_b_fee_percentage  = 5;
@@ -163,39 +193,7 @@ message XRingBatchContext {
     string miner                    = 2;
     string transaction_origin       = 3;
     string miner_private_key        = 4;
-}
-
-message XTransaction {
-    enum XType {
-        TRANSFER           = 0;
-        TRADE_BUY          = 1;
-        TRADE_SELL         = 2;
-        ETH_TO_WETH        = 3;
-        WETH_TO_ETH        = 4;
-        APPROVE            = 5;
-        CANCEL_ORDER       = 6;
-        SET_CUTOFF         = 7;
-        SET_MARKET_CUTOFF  = 8;
-    }
-
-    string from                 = 1;
-    string to                   = 2;
-    XType  tx_type              = 3;
-    bytes  amount               = 4;
-    string token                = 5;
-    int64  nonce                = 6;
-    string block_hash           = 7;
-    int64  block_height         = 8;
-    string tx_hash              = 9;
-    int64  block_timestamp      = 10;
-    bytes  gas_used             = 11;
-    bytes  gas_limit            = 12;
-    bytes  gas_price            = 13;
-    string sender               = 14; // tx发起方，标识gas消耗地址
-    bool   status               = 15; // tx执行成功还是失败
-    int64  created_at           = 16;
-    int64  updated_at           = 17;
-    bool   is_valid             = 18;
+    string lrc_address              = 5;
 }
 
 message XTrade {

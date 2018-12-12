@@ -17,5 +17,40 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "org.loopring.lightcone.gateway";
-package org.loopring.lightcone.gateway;
+package org.loopring.lightcone.proto;
+
+import "google/protobuf/any.proto";
+import "actors_core.proto";
+import "core_data.proto";
+
+message XRunNamedJob {
+    string name = 1;
+}
+
+message XStart{
+    string shard_entity_id = 1;
+}
+message XStop{}
+
+message XSubmitRawOrderReq {
+    XRawOrder raw_order = 1;
+}
+
+message XSubmitRawOrderResp {
+    XRawOrder raw_order = 1;
+}
+
+message XCancelOrderReq {
+    string id = 1;
+    bool hard_cancel = 2; // 默认软取消
+}
+
+message XCancelOrderRes {
+    string id = 1;
+    bool hard_cancel = 2; // 默认软取消
+    XErrorCode error = 3;
+}
+
+message XSubmitRawOrder {
+    XRawOrder raw_order = 1;
+}

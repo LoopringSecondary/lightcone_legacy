@@ -17,10 +17,10 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.proto.actors;
+package org.loopring.lightcone.proto;
 
 import "ethereum.proto";
-import "persistence.proto";
+import "core_data.proto";
 
 message XEthereumProxySettings {
     message XNode {
@@ -381,9 +381,9 @@ message XBatchGetTransactionReceiptsRes {
 }
 
 message XSaveBlockReq {
-    ethereum.XBlockData block_data = 1;
+    XBlockData block_data = 1;
 }
 
 message XSaveBlockRes {
-    persistence.XPersistenceError error = 1;
+    XError error = 1;
 }

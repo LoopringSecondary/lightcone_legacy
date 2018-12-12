@@ -17,34 +17,30 @@
 package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
+import org.loopring.lightcone.proto._
 
 class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
 
-  private var tokens = Map.empty[String, XTokenMetadata]
+  private var addressMap = Map.empty[String, XTokenMetadata]
+  private var symbolMap = Map.empty[String, XTokenMetadata]
 
-  private var decimalsMap = Map.empty[String, Int]
-  private var priceMap = Map.empty[String, Double]
-  private var burnRateMap = Map.empty[String, Double]
+  def reset(tokens: Seq[XTokenMetadata]) = this.synchronized {
+    addressMap = Map.empty
+    symbolMap = Map.empty
+    tokens.foreach(addToken)
+  }
 
   def addToken(token: XTokenMetadata) = this.synchronized {
-    tokens += token.address -> token
+    addressMap += token.address -> token
   }
 
-  def hasToken(token: String) = tokens.contains(token)
+  def hasTokenByAddress(token: String) = addressMap.contains(token)
+  def getTokenByAddress(token: String) = addressMap.get(token)
 
-  def getToken(token: String) = tokens.get(token)
+  def hasTokenBySymbol(symbol: String) = symbolMap.contains(symbol)
+  def getTokenBySymbbol(symbol: String) = symbolMap.get(symbol)
 
   def getBurnRate(token: String) =
-    tokens.get(token).map(_.burnRate).getOrElse(defaultBurnRate)
-
-  def updateBurnRate(token: String, rate: Double) = this.synchronized {
-    tokens.get(token) match {
-      case None ⇒
-      case Some(meta) ⇒
-        tokens += token → meta.copy(burnRate = rate)
-    }
-  }
+    addressMap.get(token).map(_.burnRate).getOrElse(defaultBurnRate)
 }
 
