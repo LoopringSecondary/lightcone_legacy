@@ -40,14 +40,16 @@ object EthereumAccessActor extends EvenlySharded {
   val name = "ethereum_access"
 
   def startShardRegion()(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef],
     ma: ActorMaterializer,
-    ece: ExecutionContextExecutor): ActorRef = {
+    ece: ExecutionContextExecutor
+  ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shareds")
@@ -58,18 +60,21 @@ object EthereumAccessActor extends EvenlySharded {
       entityProps = Props(new EthereumAccessActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
   }
 }
 
 class EthereumAccessActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef],
-  val ma: ActorMaterializer,
-  val ece: ExecutionContextExecutor) extends Actor
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
+    val ma: ActorMaterializer,
+    val ece: ExecutionContextExecutor
+) extends Actor
   with ActorLogging {
 
   val conf = config.getConfig(EthereumAccessActor.name)
@@ -89,8 +94,10 @@ class EthereumAccessActor()(
       XEthereumProxySettings.XNode(
         host = c.getString("host"),
         port = c.getInt("port"),
-        ipcPath = c.getString("ipc-path"))
-    })
+        ipcPath = c.getString("ipc-path")
+      )
+    }
+  )
 
   private var monitor: ActorRef = _
   private var router: ActorRef = _
@@ -127,21 +134,27 @@ class EthereumAccessActor()(
 
         context.actorOf(
           RoundRobinPool(
-            settings.poolSize).props(props),
-          nodeName)
+            settings.poolSize
+          ).props(props),
+          nodeName
+        )
     }
 
     router = context.actorOf(
       Props(new EthereumServiceRouter()),
-      "r_ethereum_connector")
+      "r_ethereum_connector"
+    )
 
     monitor = context.actorOf(
       Props(
         new EthereumClientMonitor(
           router,
           connectorGroups,
-          settings.checkIntervalSeconds)),
-      "ethereum_connector_monitor")
+          settings.checkIntervalSeconds
+        )
+      ),
+      "ethereum_connector_monitor"
+    )
     currentSettings = Some(settings)
   }
 }

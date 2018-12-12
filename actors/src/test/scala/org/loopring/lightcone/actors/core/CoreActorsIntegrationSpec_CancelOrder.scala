@@ -47,7 +47,8 @@ class CoreActorsIntegrationSpec_CancelOrder
     gas_price {
       default = "10000000000"
     }
-    """) {
+    """
+  ) {
 
   "cancel an order to generate a cancel event" must {
     "received by marketManager, orderbookManager" in {
@@ -60,7 +61,8 @@ class CoreActorsIntegrationSpec_CancelOrder
         amountB = "10000".zeros(18),
         amountFee = "10".zeros(18),
         walletSplitPercentage = 0.2,
-        status = XOrderStatus.STATUS_NEW)
+        status = XOrderStatus.STATUS_NEW
+      )
 
       accountManagerActor1 ! XSubmitOrderReq(Some(order))
 

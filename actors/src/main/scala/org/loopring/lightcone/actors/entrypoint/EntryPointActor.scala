@@ -30,9 +30,11 @@ object EntryPointActor {
 }
 
 class EntryPointActor()(
-  implicit ec: ExecutionContext,
-  timeout: Timeout,
-  actors: Lookup[ActorRef]) extends Actor with ActorLogging {
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout,
+    actors: Lookup[ActorRef]
+) extends Actor with ActorLogging {
 
   def receive = LoggingReceive {
     case msg: Any ⇒

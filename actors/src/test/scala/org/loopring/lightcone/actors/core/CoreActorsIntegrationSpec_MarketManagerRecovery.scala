@@ -47,7 +47,8 @@ class CoreActorsIntegrationSpec_MarketManagerRecovery
     gas_price {
       default = "10000000000"
     }
-    """) {
+    """
+  ) {
 
   "when an marketManager starts" must {
     "first recover it and then receive order" in {

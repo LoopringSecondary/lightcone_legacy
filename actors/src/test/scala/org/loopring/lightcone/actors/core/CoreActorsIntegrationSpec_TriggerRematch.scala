@@ -49,6 +49,7 @@ class CoreActorsIntegrationSpec_TriggerRematch
     gas_price {
       default = "10000000000"
     }
-    """) {
+    """
+  ) {
 
 }

@@ -52,7 +52,8 @@ class CoreActorsIntegrationSpec_AccountManagerConcurrentOrders
     gas_price {
       default = "10000000000"
     }
-    """) {
+    """
+  ) {
 
   "submit several orders at the same time" must {
     "submit success and depth contains right value" in {
@@ -69,7 +70,8 @@ class CoreActorsIntegrationSpec_AccountManagerConcurrentOrders
         amountB = "10000".zeros(18),
         amountFee = "10".zeros(18),
         walletSplitPercentage = 0.2,
-        status = XOrderStatus.STATUS_NEW)
+        status = XOrderStatus.STATUS_NEW
+      )
 
       (0 until 100) foreach {
         i ⇒ accountManagerActor1 ! XSubmitOrderReq(Some(order.copy(id = "order" + i)))

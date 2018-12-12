@@ -38,16 +38,20 @@ package object data {
     ByteString.copyFrom(bytes)
 
   implicit def xBalanceAndAlowance2BalanceAndAlowance(
-    xba: XBalanceAndAllowance): BalanceAndAllowance =
+    xba: XBalanceAndAllowance
+  ): BalanceAndAllowance =
     BalanceAndAllowance(
       balance = xba.balance,
-      allowance = xba.allowance)
+      allowance = xba.allowance
+    )
 
   implicit def balanceAndAlowance2XBalanceAndAlowance(
-    ba: BalanceAndAllowance): XBalanceAndAllowance =
+    ba: BalanceAndAllowance
+  ): XBalanceAndAllowance =
     XBalanceAndAllowance(
       balance = ba.balance,
-      allowance = ba.allowance)
+      allowance = ba.allowance
+    )
 
   implicit def xOrder2Order(xorder: XOrder): Order =
     Order(
@@ -65,7 +69,8 @@ package object data {
       _outstanding = xorder.outstanding.map(xorderState2OrderState),
       _reserved = xorder.reserved.map(xorderState2OrderState),
       _actual = xorder.actual.map(xorderState2OrderState),
-      _matchable = xorder.matchable.map(xorderState2OrderState))
+      _matchable = xorder.matchable.map(xorderState2OrderState)
+    )
 
   implicit def order2XOrder(order: Order): XOrder =
     XOrder(
@@ -83,36 +88,42 @@ package object data {
       outstanding = order._outstanding.map(orderState2XOrderState),
       reserved = order._reserved.map(orderState2XOrderState),
       actual = order._actual.map(orderState2XOrderState),
-      matchable = order._matchable.map(orderState2XOrderState))
+      matchable = order._matchable.map(orderState2XOrderState)
+    )
 
   implicit def xorderState2OrderState(xOrderState: XOrderState): OrderState =
     OrderState(
       amountS = xOrderState.amountS,
       amountB = xOrderState.amountB,
-      amountFee = xOrderState.amountFee)
+      amountFee = xOrderState.amountFee
+    )
 
   implicit def orderState2XOrderState(orderState: OrderState): XOrderState =
     XOrderState(
       amountS = orderState.amountS,
       amountB = orderState.amountB,
-      amountFee = orderState.amountFee)
+      amountFee = orderState.amountFee
+    )
 
   implicit def orderRing2XOrderRing(orderRing: OrderRing): XOrderRing =
     XOrderRing(
       maker = Some(orderRing.maker),
-      taker = Some(orderRing.taker))
+      taker = Some(orderRing.taker)
+    )
 
   implicit def xOrderRing2OrderRing(xOrderRing: XOrderRing): OrderRing =
     OrderRing(
       maker = xOrderRing.getMaker,
-      taker = xOrderRing.getTaker)
+      taker = xOrderRing.getTaker
+    )
 
   implicit def seqOrderRing2XOrderRing(orderRings: Seq[OrderRing]): Seq[XOrderRing] =
     orderRings map {
       orderRing ⇒
         XOrderRing(
           maker = Some(orderRing.maker),
-          taker = Some(orderRing.taker))
+          taker = Some(orderRing.taker)
+        )
     }
 
   implicit def seqXOrderRing2OrderRing(xOrderRings: Seq[XOrderRing]): Seq[OrderRing] =
@@ -120,20 +131,23 @@ package object data {
       xOrderRing ⇒
         OrderRing(
           maker = xOrderRing.getMaker,
-          taker = xOrderRing.getTaker)
+          taker = xOrderRing.getTaker
+        )
     }
 
   implicit def expectFill2XEcpectFill(expectedFill: ExpectedFill): XExpectedFill =
     XExpectedFill(
       order = Some(expectedFill.order),
       pending = Some(expectedFill.pending),
-      amountMargin = expectedFill.amountMargin)
+      amountMargin = expectedFill.amountMargin
+    )
 
   implicit def xexpectFill2EcpectFill(xExpectedFill: XExpectedFill): ExpectedFill =
     ExpectedFill(
       order = xExpectedFill.getOrder,
       pending = xExpectedFill.getPending,
-      amountMargin = xExpectedFill.amountMargin)
+      amountMargin = xExpectedFill.amountMargin
+    )
 
   implicit def xRawOrderToXOrder(xraworder: XRawOrder): XOrder = {
 
@@ -150,6 +164,7 @@ package object data {
       createdAt = System.currentTimeMillis(),
       updatedAt = System.currentTimeMillis(),
       //      status = XOrderStatus.STATUS_NEW,
-      walletSplitPercentage = feeParams.waiveFeePercentage / 1000.0)
+      walletSplitPercentage = feeParams.waiveFeePercentage / 1000.0
+    )
   }
 }

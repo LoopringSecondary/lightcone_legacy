@@ -47,7 +47,8 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsAnotherToken
     gas_price {
       default = "10000000000"
     }
-    """) {
+    """
+  ) {
 
   "submit a single order" must {
     "succeed and make change to orderbook" in {
@@ -60,7 +61,8 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsAnotherToken
         amountB = "10000".zeros(18),
         amountFee = "10".zeros(18),
         walletSplitPercentage = 0.2,
-        status = XOrderStatus.STATUS_NEW)
+        status = XOrderStatus.STATUS_NEW
+      )
 
       accountManagerActor1 ! XSubmitOrderReq(Some(order))
 

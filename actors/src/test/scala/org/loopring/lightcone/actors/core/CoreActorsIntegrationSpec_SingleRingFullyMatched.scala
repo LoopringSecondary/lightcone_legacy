@@ -47,7 +47,8 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
     gas_price {
       default = "10000000000"
     }
-    """) {
+    """
+  ) {
 
   "submiting two orders with exact the same price and amount" must {
     "generate ring then send events to settlement, orderbookManager, ethereum" in {
@@ -64,7 +65,8 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
         reserved = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
         outstanding = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
         actual = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
-        matchable = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))))
+        matchable = Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18)))
+      )
       val taker1 = XOrder(
         id = "taker1",
         tokenS = GTO_TOKEN.address,
@@ -78,7 +80,8 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
         outstanding = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
         reserved = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
         actual = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
-        matchable = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))))
+        matchable = Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18)))
+      )
 
       marketManagerActor ! XSubmitOrderReq(Some(maker1))
 

@@ -53,7 +53,8 @@ object MarketManagerActor {
   }
 
   def startShardRegion()(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
@@ -62,26 +63,30 @@ object MarketManagerActor {
     tokenValueEstimator: TokenValueEstimator,
     ringIncomeEstimator: RingIncomeEstimator,
     dustOrderEvaluator: DustOrderEvaluator,
-    tokenMetadataManager: TokenMetadataManager): ActorRef = {
+    tokenMetadataManager: TokenMetadataManager
+  ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new MarketManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
   }
 }
 
 class MarketManagerActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef],
-  val tokenValueEstimator: TokenValueEstimator,
-  val ringIncomeEstimator: RingIncomeEstimator,
-  val dustOrderEvaluator: DustOrderEvaluator,
-  val tokenMetadataManager: TokenMetadataManager) extends ActorWithPathBasedConfig(MarketManagerActor.name)
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
+    val tokenValueEstimator: TokenValueEstimator,
+    val ringIncomeEstimator: RingIncomeEstimator,
+    val dustOrderEvaluator: DustOrderEvaluator,
+    val tokenMetadataManager: TokenMetadataManager
+) extends ActorWithPathBasedConfig(MarketManagerActor.name)
   with OrderRecoverSupport {
 
   private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
@@ -103,19 +108,22 @@ class MarketManagerActor()(
       marketId = XMarketId(tokens(0), tokens(1))
       implicit val marketId_ = marketId
       implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-        selfConfig.getInt("price-decimals"))
+        selfConfig.getInt("price-decimals")
+      )
       manager = new MarketManagerImpl(
         marketId,
         tokenMetadataManager,
         ringMatcher,
         pendingRingPool,
         dustOrderEvaluator,
-        aggregator)
+        aggregator
+      )
       val recoverySettings = XOrderRecoverySettings(
         selfConfig.getBoolean("skip-recovery"),
         selfConfig.getInt("recover-batch-size"),
         "",
-        Some(marketId))
+        Some(marketId)
+      )
       startOrderRecovery(recoverySettings)
     }
   }
@@ -185,7 +193,8 @@ class MarketManagerActor()(
       settlementActor ! XSettleRingsReq(
         rings = matchResult.rings,
         gasLimit = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * matchResult.rings.size,
-        gasPrice = gasPrice)
+        gasPrice = gasPrice
+      )
     }
 
     // Update order book (depth)

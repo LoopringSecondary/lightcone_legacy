@@ -41,13 +41,15 @@ object TokenMetadataActor {
 }
 
 class TokenMetadataActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef],
-  val dbModule: DatabaseModule,
-  val tokenMetadataManager: TokenMetadataManager) extends Actor
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
+    val dbModule: DatabaseModule,
+    val tokenMetadataManager: TokenMetadataManager
+) extends Actor
   with ActorLogging
   with RepeatedJobActor {
 
@@ -58,7 +60,8 @@ class TokenMetadataActor()(
     dalayInSeconds = 10 * 60, // 10 minutes
     run = () ⇒ tokenMetadata.getTokens(true).map {
       _.foreach(tokenMetadataManager.addToken)
-    }))
+    }
+  ))
 
   override def receive: Receive = super.receive orElse LoggingReceive {
     case _ ⇒
