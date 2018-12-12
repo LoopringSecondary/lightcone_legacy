@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.base
 import akka.actor._
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import org.loopring.lightcone.proto.actors.XRunNamedJob
+import org.loopring.lightcone.proto.XRunNamedJob
 
 final case class Job(
     name: String,

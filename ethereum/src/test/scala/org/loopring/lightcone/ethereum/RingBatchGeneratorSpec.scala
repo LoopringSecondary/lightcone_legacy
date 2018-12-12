@@ -22,7 +22,7 @@ import org.scalatest._
 import com.typesafe.config.ConfigFactory
 import com.google.protobuf.ByteString
 
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 
 class MyConfig(val fileNameOption: Option[String] = None) {
 

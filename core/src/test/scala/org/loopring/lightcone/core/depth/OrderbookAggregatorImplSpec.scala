@@ -18,7 +18,7 @@ package org.loopring.lightcone.core.depth
 
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.CommonSpec
 import org.scalatest._
 

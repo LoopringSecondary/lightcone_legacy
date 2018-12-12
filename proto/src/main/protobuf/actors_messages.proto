@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.proto.actors;
+package org.loopring.lightcone.proto;
 
 import "google/protobuf/any.proto";
 import "actors_core.proto";
@@ -32,13 +32,12 @@ message XStart{
 }
 message XStop{}
 
-
 message XSubmitRawOrderReq {
-    core.XRawOrder raw_order = 1;
+    XRawOrder raw_order = 1;
 }
 
 message XSubmitRawOrderResp {
-    core.XRawOrder raw_order = 1;
+    XRawOrder raw_order = 1;
 }
 
 message XCancelOrderReq {
@@ -49,5 +48,9 @@ message XCancelOrderReq {
 message XCancelOrderRes {
     string id = 1;
     bool hard_cancel = 2; // 默认软取消
-    actors.XErrorCode error = 3;
+    XErrorCode error = 3;
+}
+
+message XSubmitRawOrder {
+    XRawOrder raw_order = 1;
 }

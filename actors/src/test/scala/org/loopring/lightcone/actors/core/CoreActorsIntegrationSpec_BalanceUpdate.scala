@@ -19,9 +19,8 @@ package org.loopring.lightcone.actors.core
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode.{ ERR_OK, ERR_UNKNOWN }
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto._
 
 // class CoreActorsIntegrationSpec_BalanceUpdate
 //   extends CoreActorsIntegrationCommonSpec(

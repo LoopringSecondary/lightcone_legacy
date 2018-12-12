@@ -21,7 +21,7 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
-import org.loopring.lightcone.proto.actors.XError
+import org.loopring.lightcone.proto.XError
 
 class BadMessageListener extends Actor with ActorLogging {
   def receive = {
