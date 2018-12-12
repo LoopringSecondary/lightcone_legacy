@@ -18,7 +18,6 @@ package org.loopring.lightcone.persistence.dals
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib.{ MurmurHash, SystemTimeProvider }
-import org.loopring.lightcone.proto.actors.{ XOrderState, XSaveOrderResult, XSaveOrderStateResult }
 import org.loopring.lightcone.proto.core.{ XOrderStatus, XRawOrder }
 import org.loopring.lightcone.proto._
 import scala.concurrent.{ Await, ExecutionContext, Future }

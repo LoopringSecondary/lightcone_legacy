@@ -20,7 +20,7 @@ import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import org.json4s.DefaultFormats
-import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto._
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 import scala.concurrent.duration._

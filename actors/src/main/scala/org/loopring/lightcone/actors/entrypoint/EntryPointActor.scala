@@ -21,7 +21,7 @@ import akka.util.Timeout
 import akka.event.LoggingReceive
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.core._
 
 import scala.concurrent.ExecutionContext

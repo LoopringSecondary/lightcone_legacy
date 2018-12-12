@@ -21,8 +21,8 @@ import akka.testkit.TestActorRef
 import org.loopring.lightcone.actors.core.CoreActorsIntegrationCommonSpec._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode._
-import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.core._
 
 // class CoreActorsIntegrationSpec_AccountManagerRecoveryWithMutilOrders

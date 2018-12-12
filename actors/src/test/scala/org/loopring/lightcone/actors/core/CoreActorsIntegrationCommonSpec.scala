@@ -27,7 +27,7 @@ import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
-import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.core._
 import org.scalatest._
