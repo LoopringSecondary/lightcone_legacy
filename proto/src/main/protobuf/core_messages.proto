@@ -78,8 +78,10 @@ message XUpdateLatestTradingPrice {
 
 message XGetOrderbookReq {
     int32 level = 2;
-    int32 size = 3;
+    int32 size = 1;
+    string market_name = 3;
 }
+
 
 
 

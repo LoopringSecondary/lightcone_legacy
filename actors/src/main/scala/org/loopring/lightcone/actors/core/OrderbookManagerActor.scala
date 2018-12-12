@@ -62,8 +62,8 @@ object OrderbookManagerActor extends ShardedByMarketId {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketId: PartialFunction[Any, String] = {
-    case _ ⇒ ""
+  val extractMarketName: PartialFunction[Any, String] = {
+    case XGetOrderbookReq(_, _, marketName) ⇒ marketName
   }
 }
 
@@ -103,7 +103,7 @@ class OrderbookManagerActor(
     case req: XOrderbookUpdate ⇒
       manager.processUpdate(req)
 
-    case XGetOrderbookReq(level, size) ⇒
+    case XGetOrderbookReq(level, size, marketName) if marketName == marketName ⇒
       sender ! manager.getOrderbook(level, size, latestPrice)
   }
 }

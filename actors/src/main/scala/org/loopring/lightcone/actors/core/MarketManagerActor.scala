@@ -62,7 +62,7 @@ object MarketManagerActor extends ShardedByMarketId {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketId: PartialFunction[Any, String] = {
+  val extractMarketName: PartialFunction[Any, String] = {
     case _ ⇒ ""
   }
 
