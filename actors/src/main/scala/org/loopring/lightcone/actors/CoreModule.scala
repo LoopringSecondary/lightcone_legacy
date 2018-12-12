@@ -126,6 +126,15 @@ class CoreModule(config: Config)
     )
 
     actors.add(
+      EthereumQueryMessageValidator.name,
+      MessageValidationActor(
+        EthereumQueryMessageValidator.name,
+        new EthereumQueryMessageValidator(),
+        EthereumQueryActor.name
+      )
+    )
+
+    actors.add(
       MarketManagerMessageValidator.name,
       MessageValidationActor(
         MarketManagerMessageValidator.name,

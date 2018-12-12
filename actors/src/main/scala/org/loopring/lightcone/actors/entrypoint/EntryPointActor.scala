@@ -46,7 +46,7 @@ class EntryPointActor()(
 
         case None ⇒
           sender ! XError(
-            XErrorCode.ERR_UNSUPPORTED_MESSAGE,
+            ERR_UNSUPPORTED_MESSAGE,
             s"unsupported message: $msg"
           )
           log.debug(s"unsupported msg: $msg")
