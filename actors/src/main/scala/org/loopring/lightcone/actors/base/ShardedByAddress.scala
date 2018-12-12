@@ -36,6 +36,5 @@ trait ShardedByAddress extends Sharded {
   val extractShardId: ShardRegion.ExtractShardId = Function.unlift(_extractShardId)
 
   def extractEntityName(actorName: String) = actorName.split("_").last
-
 }
 
