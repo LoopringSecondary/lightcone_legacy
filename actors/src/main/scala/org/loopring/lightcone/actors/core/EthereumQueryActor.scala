@@ -81,68 +81,41 @@ class EthereumQueryActor()(
   //todo:还需要继续优化下
   def receive = LoggingReceive {
     case req: XGetBalanceAndAllowancesReq ⇒
-      if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
-        log.error(s"invalid $req caused by invalid ethereum address")
-        sender ! XGetBalanceAndAllowancesRes()
-          .withAddress(req.address)
-          .withError(XError(
-            ERR_ETHEREUM_ILLEGAL_ADDRESS,
-            s"invalid address in $req"
-          ))
-      } else {
-        val batchReqs: XBatchContractCallReq = xGetBalanceAndAllowanceToBatchReq(Address(delegateAddress), req)
-        val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
-        (for {
-          callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
-          ethRes ← (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
-            .mapTo[XEthGetBalanceRes]
-          res: XGetBalanceAndAllowancesRes = xBatchContractCallResToBalanceAndAllowance(req.address, req.tokens, callRes)
-        } yield {
-          res.copy(
-            balanceAndAllowanceMap = res.balanceAndAllowanceMap +
-              (zeroAddress → XBalanceAndAllowance(BigInt(Numeric.toBigInt(ethRes.result)), BigInt(0)))
-          )
-        }) pipeTo sender
-      }
+      val batchReqs: XBatchContractCallReq = xGetBalanceAndAllowanceToBatchReq(Address(delegateAddress), req)
+      val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
+      (for {
+        callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
+        ethRes ← (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
+          .mapTo[XEthGetBalanceRes]
+        res: XGetBalanceAndAllowancesRes = xBatchContractCallResToBalanceAndAllowance(req.address, req.tokens, callRes)
+      } yield {
+        res.copy(
+          balanceAndAllowanceMap = res.balanceAndAllowanceMap +
+            (zeroAddress → XBalanceAndAllowance(BigInt(Numeric.toBigInt(ethRes.result)), BigInt(0)))
+        )
+      }) pipeTo sender
 
     case req: XGetBalanceReq ⇒
-      if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
-        log.error(s"invalid $req caused by invalid ethereum address")
-        sender ! XGetBalanceRes()
-          .withAddress(req.address)
-          .withError(XError(ERR_ETHEREUM_ILLEGAL_ADDRESS, s"invalid address in $req"))
-      } else {
-        val batchReqs: XBatchContractCallReq = req
-        val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
-        (for {
-          callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
-          ethRes ← (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
-            .mapTo[XEthGetBalanceRes]
-          res: XGetBalanceRes = xBatchContractCallResToBalance(req.address, req.tokens, callRes)
-        } yield {
-          res.copy(
-            balanceMap = res.balanceMap +
-              (zeroAddress → BigInt(Numeric.toBigInt(ethRes.result)))
-          )
-        }) pipeTo sender
-      }
+      val batchReqs: XBatchContractCallReq = req
+      val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
+      (for {
+        callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
+        ethRes ← (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
+          .mapTo[XEthGetBalanceRes]
+        res: XGetBalanceRes = xBatchContractCallResToBalance(req.address, req.tokens, callRes)
+      } yield {
+        res.copy(
+          balanceMap = res.balanceMap +
+            (zeroAddress → BigInt(Numeric.toBigInt(ethRes.result)))
+        )
+      }) pipeTo sender
 
     case req: XGetAllowanceReq ⇒
-      if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
-        log.error(s"invalid $req caused by invalid ethereum address")
-        sender ! XGetAllowanceRes()
-          .withAddress(req.address)
-          .withError(XError(
-            ERR_ETHEREUM_ILLEGAL_ADDRESS,
-            s"invalid address in $req"
-          ))
-      } else {
-        val batchReqs: XBatchContractCallReq = xGetAllowanceToBatchReq(Address(delegateAddress), req)
-        (for {
-          callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
-          res: XGetAllowanceRes = xBatchContractCallResToAllowance(req.address, req.tokens, callRes)
-        } yield res) pipeTo sender
-      }
+      val batchReqs: XBatchContractCallReq = xGetAllowanceToBatchReq(Address(delegateAddress), req)
+      (for {
+        callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
+        res: XGetAllowanceRes = xBatchContractCallResToAllowance(req.address, req.tokens, callRes)
+      } yield res) pipeTo sender
 
     case req: GetFilledAmountReq ⇒ //todo：订单的成交金额
   }
