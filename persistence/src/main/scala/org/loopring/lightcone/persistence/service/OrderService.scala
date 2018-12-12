@@ -31,7 +31,7 @@ trait OrderService {
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
@@ -42,7 +42,7 @@ trait OrderService {
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
@@ -55,7 +55,7 @@ trait OrderService {
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     validTime: Option[Int] = None,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
@@ -67,7 +67,7 @@ trait OrderService {
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty
   ): Future[Int]
 

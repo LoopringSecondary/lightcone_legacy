@@ -57,7 +57,7 @@ class OrderServiceImpl @Inject() ()(
     owners: Set[String],
     tokenSSet: Set[String],
     tokenBSet: Set[String],
-    marketHashSet: Set[Long],
+    marketHashSet: Set[String],
     feeTokenSet: Set[String],
     sort: Option[XSort],
     skip: Option[XSkip]
@@ -69,7 +69,7 @@ class OrderServiceImpl @Inject() ()(
     owners: Set[String],
     tokenSSet: Set[String],
     tokenBSet: Set[String],
-    marketHashSet: Set[Long],
+    marketHashSet: Set[String],
     feeTokenSet: Set[String],
     sort: Option[XSort],
     skip: Option[XSkip]
@@ -81,7 +81,7 @@ class OrderServiceImpl @Inject() ()(
     owners: Set[String],
     tokenSSet: Set[String],
     tokenBSet: Set[String],
-    marketHashSet: Set[Long],
+    marketHashSet: Set[String],
     validTime: Option[Int],
     sort: Option[XSort],
     skip: Option[XSkip]
@@ -93,7 +93,7 @@ class OrderServiceImpl @Inject() ()(
     owners: Set[String],
     tokenSSet: Set[String],
     tokenBSet: Set[String],
-    marketHashSet: Set[Long],
+    marketHashSet: Set[String],
     feeTokenSet: Set[String]
   ): Future[Int] = orderDal.countOrders(statuses, owners, tokenSSet, tokenBSet, marketHashSet, feeTokenSet)
 
