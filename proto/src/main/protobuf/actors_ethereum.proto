@@ -386,5 +386,5 @@ message XSaveBlockReq {
 }
 
 message XSaveBlockRes {
-    persistence.XPersistenceError error = 1;
+    XPersistenceError error = 1;
 }
