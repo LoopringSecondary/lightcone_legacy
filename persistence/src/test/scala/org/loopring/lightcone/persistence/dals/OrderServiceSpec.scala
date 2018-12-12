@@ -21,7 +21,7 @@ import org.loopring.lightcone.lib.{ MurmurHash, SystemTimeProvider }
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto.actors.XSaveOrderResult
 import org.loopring.lightcone.proto.core.{ XOrderStatus, XRawOrder }
-import org.loopring.lightcone.proto.persistence._
+import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
 

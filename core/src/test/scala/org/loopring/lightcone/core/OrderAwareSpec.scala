@@ -20,7 +20,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.account._
 
 trait OrderAwareSpec extends CommonSpec {

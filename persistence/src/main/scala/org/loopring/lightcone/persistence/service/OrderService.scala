@@ -21,7 +21,7 @@ import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals.{ OrderDal, OrderDalImpl }
 import org.loopring.lightcone.proto.actors.XSaveOrderResult
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
+import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent._

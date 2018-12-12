@@ -18,7 +18,7 @@ package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.persistence._
+import org.loopring.lightcone.proto._
 
 class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
 
