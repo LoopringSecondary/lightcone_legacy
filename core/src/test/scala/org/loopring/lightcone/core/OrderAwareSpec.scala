@@ -19,7 +19,6 @@ package org.loopring.lightcone.core
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.account._
 
@@ -80,38 +79,32 @@ trait OrderAwareSpec extends CommonSpec {
   def sellLRC(
     amountS: BigInt,
     amountB: BigInt,
-    amountFee: BigInt = 0
-  ) = newOrder(LRC, WETH, LRC, amountS, amountB, amountFee)
+    amountFee: BigInt = 0) = newOrder(LRC, WETH, LRC, amountS, amountB, amountFee)
 
   def buyLRC(
     amountS: BigInt,
     amountB: BigInt,
-    amountFee: BigInt = 0
-  ) = newOrder(WETH, LRC, LRC, amountS, amountB, amountFee)
+    amountFee: BigInt = 0) = newOrder(WETH, LRC, LRC, amountS, amountB, amountFee)
 
   def sellDAI(
     amountS: BigInt,
     amountB: BigInt,
-    amountFee: BigInt = 0
-  ) = newOrder(DAI, WETH, LRC, amountS, amountB, amountFee)
+    amountFee: BigInt = 0) = newOrder(DAI, WETH, LRC, amountS, amountB, amountFee)
 
   def buyDAI(
     amountS: BigInt,
     amountB: BigInt,
-    amountFee: BigInt = 0
-  ) = newOrder(WETH, DAI, LRC, amountS, amountB, amountFee)
+    amountFee: BigInt = 0) = newOrder(WETH, DAI, LRC, amountS, amountB, amountFee)
 
   def sellGTO(
     amountS: BigInt,
     amountB: BigInt,
-    amountFee: BigInt = 0
-  ) = newOrder(GTO, WETH, LRC, amountS, amountB, amountFee)
+    amountFee: BigInt = 0) = newOrder(GTO, WETH, LRC, amountS, amountB, amountFee)
 
   def buyGTO(
     amountS: BigInt,
     amountB: BigInt,
-    amountFee: BigInt = 0
-  ) = newOrder(WETH, GTO, LRC, amountS, amountB, amountFee)
+    amountFee: BigInt = 0) = newOrder(WETH, GTO, LRC, amountS, amountB, amountFee)
 
   def newOrder(
     tokenS: String,
@@ -119,22 +112,19 @@ trait OrderAwareSpec extends CommonSpec {
     tokenFee: String,
     amountS: BigInt,
     amountB: BigInt,
-    amountFee: BigInt = 0
-  ) = Order(
+    amountFee: BigInt = 0) = Order(
     getNextId(),
     tokenS,
     tokenB,
     tokenFee,
     amountS,
     amountB,
-    amountFee
-  )
+    amountFee)
 
   def orderState(
     amountS: Long,
     amountB: Long,
-    amountFee: Long
-  ) = OrderState(BigInt(amountS), BigInt(amountB), BigInt(amountFee))
+    amountFee: Long) = OrderState(BigInt(amountS), BigInt(amountB), BigInt(amountFee))
 
   def submitOrder(order: Order) = {
     updatedOrders = Map.empty[String, Order]

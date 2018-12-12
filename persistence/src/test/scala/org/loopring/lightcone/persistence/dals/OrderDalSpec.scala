@@ -17,10 +17,9 @@
 package org.loopring.lightcone.persistence.dals
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.lib.{ MurmurHash, SystemTimeProvider }
-import org.loopring.lightcone.proto.core.{ XOrderStatus, XRawOrder }
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent._
 import scala.concurrent.duration._
 
 class OrderDalSpec extends DalSpec[OrderDal] {

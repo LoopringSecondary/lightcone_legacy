@@ -22,22 +22,17 @@ import akka.testkit.TestActorRef
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto._
 
 import scala.concurrent.ExecutionContext
 
 abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
-    marketId: XMarketId,
-    configStr: String
-)
+  marketId: XMarketId,
+  configStr: String)
   extends CoreActorsIntegrationCommonSpec(marketId, configStr) {
 
   class OrderStateForRecoveryTestActor()(
-      implicit
-      ec: ExecutionContext,
-      timeout: Timeout
-  )
+    implicit ec: ExecutionContext,
+    timeout: Timeout)
     extends Actor
     with ActorLogging {
 
@@ -48,10 +43,8 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
   }
 
   class AccountBalanceForRecoveryTestActor()(
-      implicit
-      ec: ExecutionContext,
-      timeout: Timeout
-  )
+    implicit ec: ExecutionContext,
+    timeout: Timeout)
     extends Actor
     with ActorLogging {
 
@@ -62,9 +55,7 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
             req.address,
             Map(req.tokens(0) -> XBalanceAndAllowance(
               BigInt("100000000000000000000000000"),
-              BigInt("100000000000000000000000000")
-            ))
-          )
+              BigInt("100000000000000000000000000"))))
     }
   }
 

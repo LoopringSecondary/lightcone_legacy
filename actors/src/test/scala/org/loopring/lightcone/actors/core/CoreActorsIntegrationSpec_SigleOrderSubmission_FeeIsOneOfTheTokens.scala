@@ -21,7 +21,6 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.core._
 
 class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
   extends CoreActorsIntegrationCommonSpec(
@@ -48,8 +47,7 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
     gas_price {
       default = "10000000000"
     }
-    """
-  ) {
+    """) {
 
   "submit a single order" must {
     "succeed and make change to orderbook" in {
@@ -61,8 +59,7 @@ class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsOneOfTheTokens
         amountS = "50".zeros(18),
         amountB = "10000".zeros(18),
         amountFee = "10".zeros(18),
-        status = XOrderStatus.STATUS_NEW
-      )
+        status = XOrderStatus.STATUS_NEW)
 
       accountManagerActor1 ! XSubmitOrderReq(Some(order))
 

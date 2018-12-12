@@ -30,8 +30,8 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.core.XOrderStatus._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 杜永丰
@@ -47,32 +47,27 @@ object OrderRecoverActor {
   }
 
   def startShardRegion()(
-    implicit
-    system: ActorSystem,
+    implicit system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+    actors: Lookup[ActorRef]): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderRecoverActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId
-    )
+      extractShardId = extractShardId)
   }
 }
 
 class OrderRecoverActor()(
-    implicit
-    val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeProvider: TimeProvider,
+  val timeout: Timeout,
+  val actors: Lookup[ActorRef]) extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   def receive: Receive = {
     case _ ⇒

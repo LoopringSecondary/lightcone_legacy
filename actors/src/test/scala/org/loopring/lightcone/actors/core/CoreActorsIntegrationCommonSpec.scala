@@ -28,8 +28,6 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.core._
 import org.scalatest._
 import org.slf4s.Logging
 
@@ -48,9 +46,8 @@ object CoreActorsIntegrationCommonSpec {
 }
 
 abstract class CoreActorsIntegrationCommonSpec(
-    marketId: XMarketId,
-    configStr: String
-)
+  marketId: XMarketId,
+  configStr: String)
   extends TestKit(ActorSystem("test", ConfigFactory.load()))
   with ImplicitSender
   with Matchers
@@ -93,8 +90,7 @@ abstract class CoreActorsIntegrationCommonSpec(
       }
     }
     def replyWith(xorders: Seq[XRawOrder]) = reply(
-      XRecoverOrdersRes(orders = xorders)
-    )
+      XRecoverOrdersRes(orders = xorders))
   }
   val ordersDalActor = ordersDalActorProbe.ref
 
@@ -107,9 +103,7 @@ abstract class CoreActorsIntegrationCommonSpec(
 
     def replyWith(addr: String, token: String, balance: BigInt, allowance: BigInt) = reply(
       XGetBalanceAndAllowancesRes(
-        addr, Map(token -> XBalanceAndAllowance(balance, allowance))
-      )
-    )
+        addr, Map(token -> XBalanceAndAllowance(balance, allowance))))
   }
   val accountBalanceActor = accountBalanceProbe.ref
 
@@ -121,8 +115,7 @@ abstract class CoreActorsIntegrationCommonSpec(
     }
 
     def replyWith(orderId: String, filledAmountS: BigInt) = reply(
-      XGetOrderFilledAmountRes(orderId, filledAmountS)
-    )
+      XGetOrderFilledAmountRes(orderId, filledAmountS))
   }
   val orderHistoryActor = orderHistoryProbe.ref
 
@@ -134,23 +127,19 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
   val orderbookManagerActor = TestActorRef(
-    new OrderbookManagerActor()
-  )
+    new OrderbookManagerActor())
 
   val ADDRESS_1 = "address_111111111111111111111"
   val ADDRESS_2 = "address_222222222222222222222"
 
   val accountManagerActor1: ActorRef = TestActorRef(
-    new AccountManagerActor()
-  )
+    new AccountManagerActor())
 
   val accountManagerActor2: ActorRef = TestActorRef(
-    new AccountManagerActor()
-  )
+    new AccountManagerActor())
 
   val marketManagerActor: ActorRef = TestActorRef(
-    new MarketManagerActor()
-  )
+    new MarketManagerActor())
 
   actors.add(AccountBalanceActor.name, accountBalanceActor)
   actors.add(OrderHistoryActor.name, orderHistoryActor)

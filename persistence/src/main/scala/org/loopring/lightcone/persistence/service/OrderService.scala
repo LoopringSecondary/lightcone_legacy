@@ -19,7 +19,6 @@ package org.loopring.lightcone.persistence.service
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals.{ OrderDal, OrderDalImpl }
-import org.loopring.lightcone.proto.core._
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile

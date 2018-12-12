@@ -22,7 +22,6 @@ import akka.event.LoggingReceive
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.core._
 
 import scala.concurrent.ExecutionContext
 
@@ -31,11 +30,9 @@ object EntryPointActor {
 }
 
 class EntryPointActor()(
-    implicit
-    ec: ExecutionContext,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
-) extends Actor with ActorLogging {
+  implicit ec: ExecutionContext,
+  timeout: Timeout,
+  actors: Lookup[ActorRef]) extends Actor with ActorLogging {
 
   def receive = LoggingReceive {
     case msg: Any ⇒

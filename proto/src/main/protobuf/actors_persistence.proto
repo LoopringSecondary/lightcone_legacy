@@ -23,18 +23,18 @@ import "core_data.proto";
 import "persistence.proto";
 
 message XSaveOrderResult {
-    core.XRawOrder order    = 1;
+    XRawOrder order    = 1;
     bool already_exist      = 2;
     XPersistenceError error = 3;
 }
 
 message XSaveOrderReq {
-    core.XRawOrder order    = 1;
+    XRawOrder order    = 1;
 }
 
 message XUpdateOrderStateReq {
     string hash = 1;
-    core.XRawOrder.State state = 2;
+    XRawOrder.State state = 2;
     bool changeUpdatedAtField = 3;
 }
 
@@ -44,7 +44,7 @@ message XUpdateOrderStateRes {
 
 message XUpdateOrderStatusReq {
     string hash = 1;
-    core.XOrderStatus status = 2;
+    XOrderStatus status = 2;
     bool changeUpdatedAtField = 3;
 }
 
@@ -57,7 +57,7 @@ message XGetOrdersByHashesReq {
 }
 
 message XGetOrdersByHashesRes {
-    repeated core.XRawOrder orders = 1;
+    repeated XRawOrder orders = 1;
     XPersistenceError error = 2;
 }
 
@@ -66,15 +66,15 @@ message XGetOrderByHashReq {
 }
 
 message XGetOrderByHashRes {
-    core.XRawOrder order = 1;
+    XRawOrder order = 1;
     XPersistenceError error = 2;
 }
 
 message XSaveOrderStateResult {
-    core.XRawOrder state    = 1;
+    XRawOrder state    = 1;
     XPersistenceError error = 3;
 }
 
 message XSaveOrderStateReq {
-    core.XRawOrder state    = 1;
+    XRawOrder state    = 1;
 }

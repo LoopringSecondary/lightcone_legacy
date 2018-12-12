@@ -31,8 +31,7 @@ import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.core.XOrderStatus._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.annotation.tailrec
@@ -42,14 +41,12 @@ object RingSettlementActor extends EvenlySharded {
   val name = "ring_settlement"
 
   def startShardRegion()(
-    implicit
-    system: ActorSystem,
+    implicit system: ActorSystem,
     config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+    actors: Lookup[ActorRef]): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shareds")
@@ -60,19 +57,16 @@ object RingSettlementActor extends EvenlySharded {
       entityProps = Props(new RingSettlementActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId
-    )
+      extractShardId = extractShardId)
   }
 }
 
 class RingSettlementActor()(
-    implicit
-    val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(RingSettlementActor.name)
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeProvider: TimeProvider,
+  val timeout: Timeout,
+  val actors: Lookup[ActorRef]) extends ActorWithPathBasedConfig(RingSettlementActor.name)
   with RepeatedJobActor {
 
   //防止一个tx中的订单过多，超过 gaslimit
@@ -121,8 +115,7 @@ class RingSettlementActor()(
         signAndSubmitTx(
           ringWithGasLimit._1,
           ringWithGasLimit._2,
-          gasPriceRes.gasPrice
-        )
+          gasPriceRes.gasPrice)
     }
   } yield Unit
 

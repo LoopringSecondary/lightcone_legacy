@@ -24,7 +24,6 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.core._
 
 // class CoreActorsIntegrationSpec_AccountManagerRecoveryWithSingleOrder
 //   extends CoreActorsIntegrationSpec_AccountManagerRecoverySupport(

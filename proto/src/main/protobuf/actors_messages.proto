@@ -33,5 +33,5 @@ message XStop{}
 
 
 message XSubmitRawOrder {
-    core.XRawOrder raw_order = 1;
+    XRawOrder raw_order = 1;
 }

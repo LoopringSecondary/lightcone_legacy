@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.proto.core;
+package org.loopring.lightcone.proto;
 
 enum XOrderStatus {
     STATUS_NEW = 0;
@@ -166,38 +166,38 @@ message XRingBatchContext {
     string lrc_address              = 5;
 }
 
-message XTransaction {
-    enum XType {
-        TRANSFER           = 0;
-        TRADE_BUY          = 1;
-        TRADE_SELL         = 2;
-        ETH_TO_WETH        = 3;
-        WETH_TO_ETH        = 4;
-        APPROVE            = 5;
-        CANCEL_ORDER       = 6;
-        SET_CUTOFF         = 7;
-        SET_MARKET_CUTOFF  = 8;
-    }
+// message XTransaction {
+//     enum XType {
+//         TRANSFER           = 0;
+//         TRADE_BUY          = 1;
+//         TRADE_SELL         = 2;
+//         ETH_TO_WETH        = 3;
+//         WETH_TO_ETH        = 4;
+//         APPROVE            = 5;
+//         CANCEL_ORDER       = 6;
+//         SET_CUTOFF         = 7;
+//         SET_MARKET_CUTOFF  = 8;
+//     }
 
-    string from                 = 1;
-    string to                   = 2;
-    XType  tx_type              = 3;
-    bytes  amount               = 4;
-    string token                = 5;
-    int64  nonce                = 6;
-    string block_hash           = 7;
-    int64  block_height         = 8;
-    string tx_hash              = 9;
-    int64  block_timestamp      = 10;
-    bytes  gas_used             = 11;
-    bytes  gas_limit            = 12;
-    bytes  gas_price            = 13;
-    string sender               = 14; // tx发起方，标识gas消耗地址
-    bool   status               = 15; // tx执行成功还是失败
-    int64  created_at           = 16;
-    int64  updated_at           = 17;
-    bool   is_valid             = 18;
-}
+//     string from                 = 1;
+//     string to                   = 2;
+//     XType  tx_type              = 3;
+//     bytes  amount               = 4;
+//     string token                = 5;
+//     int64  nonce                = 6;
+//     string block_hash           = 7;
+//     int64  block_height         = 8;
+//     string tx_hash              = 9;
+//     int64  block_timestamp      = 10;
+//     bytes  gas_used             = 11;
+//     bytes  gas_limit            = 12;
+//     bytes  gas_price            = 13;
+//     string sender               = 14; // tx发起方，标识gas消耗地址
+//     bool   status               = 15; // tx执行成功还是失败
+//     int64  created_at           = 16;
+//     int64  updated_at           = 17;
+//     bool   is_valid             = 18;
+// }
 
 message XTrade {
     message Fees {

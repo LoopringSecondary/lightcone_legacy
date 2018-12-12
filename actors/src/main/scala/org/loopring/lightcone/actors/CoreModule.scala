@@ -33,7 +33,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.ExecutionContext
@@ -82,8 +82,7 @@ class CoreModule(config: Config)
     // This actor must be deployed on every node for TokenMetadataManager
     actors.add(
       TokenMetadataActor.name,
-      system.actorOf(Props(new TokenMetadataActor), TokenMetadataActor.name)
-    )
+      system.actorOf(Props(new TokenMetadataActor), TokenMetadataActor.name))
 
     implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimator()
     bind[TokenValueEstimator].toInstance(tokenValueEstimator)
@@ -111,7 +110,6 @@ class CoreModule(config: Config)
 
     actors.add(
       EntryPointActor.name,
-      system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
-    )
+      system.actorOf(Props(new EntryPointActor()), EntryPointActor.name))
   }
 }

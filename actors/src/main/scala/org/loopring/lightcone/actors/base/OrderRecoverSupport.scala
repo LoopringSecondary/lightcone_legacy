@@ -20,7 +20,6 @@ import akka.actor._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.core._
 
 import scala.concurrent._
 
