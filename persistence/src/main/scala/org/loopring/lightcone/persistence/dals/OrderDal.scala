@@ -19,9 +19,7 @@ package org.loopring.lightcone.persistence.dals
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.persistence._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
@@ -227,7 +225,8 @@ class OrderDalImpl()(
   ): Future[Seq[XRawOrder]] = {
     val filters = queryOrderFilters(
       statuses, owners, tokenSSet, tokenBSet,
-      marketHashSet, feeTokenSet, None, sort, skip)
+      marketHashSet, feeTokenSet, None, sort, skip
+    )
     db.run(filters.result)
   }
 
@@ -243,7 +242,8 @@ class OrderDalImpl()(
   ): Future[Seq[XRawOrder]] = {
     val filters = queryOrderFilters(
       statuses, owners, tokenSSet, tokenBSet,
-      marketHashSet, feeTokenSet, None, sort, skip)
+      marketHashSet, feeTokenSet, None, sort, skip
+    )
     db.run(filters.result)
   }
 
@@ -257,7 +257,8 @@ class OrderDalImpl()(
   ): Future[Int] = {
     val filters = queryOrderFilters(
       statuses, owners, tokenSSet, tokenBSet,
-      marketHashSet, feeTokenSet, None, None, None)
+      marketHashSet, feeTokenSet, None, None, None
+    )
     db.run(filters.size.result)
   }
 
@@ -275,7 +276,8 @@ class OrderDalImpl()(
   ): Future[Seq[XRawOrder]] = {
     val filters = queryOrderFilters(
       statuses, owners, tokenSSet, tokenBSet,
-      marketHashSet, Set.empty, validTime, sort, skip)
+      marketHashSet, Set.empty, validTime, sort, skip
+    )
     db.run(filters.result)
   }
 

@@ -16,19 +16,29 @@
 
 package org.loopring.lightcone.actors.base
 
-import akka.actor._
-import com.typesafe.config.Config
-import scala.concurrent._
+import akka.cluster.sharding._
 
-abstract class ConfiggedActor(val name: String) extends Actor with ActorLogging {
-  val config: Config
-
-  private val conf = config.getConfig(name)
-
-  lazy val selfConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
-  } catch {
-    case e: Throwable ⇒ conf
-  }
-  // log.info(s"config for ${self.path.name} = $selfConfig")
+trait Sharded {
+  val name: String
+  protected var numOfShards: Int = 1
+  protected def hashed(msg: Any, max: Int) = Math.abs(msg.hashCode % max)
 }
+
+trait ShardedEvenly extends Sharded {
+  protected var entitiesPerShard: Int = 1
+
+  private def getShardId(msg: Any) =
+    "shard_" + hashed(msg, numOfShards)
+
+  private def getEntitityId(msg: Any) =
+    name + "_" + hashed(msg, numOfShards * entitiesPerShard)
+
+  protected val extractEntityId: ShardRegion.ExtractEntityId = {
+    case msg ⇒ (getEntitityId(msg), msg)
+  }
+
+  protected val extractShardId: ShardRegion.ExtractShardId = {
+    case msg ⇒ getShardId(msg)
+  }
+}
+

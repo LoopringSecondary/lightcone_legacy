@@ -17,39 +17,39 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.proto.actors;
+package org.loopring.lightcone.proto;
 
 import "core_data.proto";
 import "persistence.proto";
 
 message XSaveOrderResult {
-    core.XRawOrder order    = 1;
+    XRawOrder order    = 1;
     bool already_exist      = 2;
-    persistence.XPersistenceError error = 3;
+    XPersistenceError error = 3;
 }
 
 message XSaveOrderReq {
-    core.XRawOrder order    = 1;
+    XRawOrder order    = 1;
 }
 
 message XUpdateOrderStateReq {
     string hash = 1;
-    core.XRawOrder.State state = 2;
+    XRawOrder.State state = 2;
     bool changeUpdatedAtField = 3;
 }
 
 message XUpdateOrderStateRes {
-    persistence.XPersistenceError error = 1;
+    XPersistenceError error = 1;
 }
 
 message XUpdateOrderStatusReq {
     string hash = 1;
-    core.XOrderStatus status = 2;
+    XOrderStatus status = 2;
     bool changeUpdatedAtField = 3;
 }
 
 message XUpdateOrderStatusRes {
-    persistence.XPersistenceError error = 1;
+    XPersistenceError error = 1;
 }
 
 message XGetOrdersByHashesReq {
@@ -57,8 +57,8 @@ message XGetOrdersByHashesReq {
 }
 
 message XGetOrdersByHashesRes {
-    repeated core.XRawOrder orders = 1;
-    persistence.XPersistenceError error = 2;
+    repeated XRawOrder orders = 1;
+    XPersistenceError error = 2;
 }
 
 message XGetOrderByHashReq {
@@ -66,15 +66,15 @@ message XGetOrderByHashReq {
 }
 
 message XGetOrderByHashRes {
-    core.XRawOrder order = 1;
-    persistence.XPersistenceError error = 2;
+    XRawOrder order = 1;
+    XPersistenceError error = 2;
 }
 
 message XSaveOrderStateResult {
-    core.XRawOrder state    = 1;
-    persistence.XPersistenceError error = 3;
+    XRawOrder state    = 1;
+    XPersistenceError error = 3;
 }
 
 message XSaveOrderStateReq {
-    core.XRawOrder state    = 1;
+    XRawOrder state    = 1;
 }

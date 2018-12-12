@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.proto.actors;
+package org.loopring.lightcone.proto;
 
 import "core_data.proto";
 import "core_messages.proto";
@@ -38,7 +38,7 @@ message XOrder {
     bytes amount_fee = 7;
     int64 created_at = 8;
     int64 updated_at = 9;
-    core.XOrderStatus status = 10;
+    XOrderStatus status = 10;
     double wallet_split_percentage = 11;
     XOrderState outstanding = 12;
     XOrderState reserved = 13;
@@ -66,6 +66,11 @@ message XGetOrderFilledAmountRes {
     bytes filled_amount_s = 2;
 }
 
+message XError{
+    int32 code = 1;
+    string error = 2;
+}
+
 message XBalanceAndAllowance {
     bytes balance = 1;
     bytes allowance = 2;
@@ -81,6 +86,27 @@ message XGetBalanceAndAllowancesReq {
 message XGetBalanceAndAllowancesRes {
     string address = 1;
     map<string, XBalanceAndAllowance> balance_and_allowance_map = 2;
+    XError error = 3;
+}
+
+message XGetBalanceReq{
+    string address = 1;
+    repeated string tokens = 2;
+}
+message XGetBalanceRes {
+    string address = 1;
+    map<string, bytes> balance_map = 2;
+    XError error = 3;
+}
+
+message XGetAllowanceReq{
+    string address = 1;
+    repeated string tokens = 2;
+}
+message XGetAllowanceRes {
+    string address = 1;
+    map<string, bytes> allowance_map = 2;
+    XError error = 3;
 }
 
 message XSubmitOrderReq {
@@ -108,22 +134,10 @@ message XOrderRecoverySettings {
     bool skip_recovery = 1;
     int32 batch_size = 2;
     string order_owner = 3;
-    core.XMarketId market_id = 4;
+    XMarketId market_id = 4;
 }
 
-// 由ethereum发送给orderManagingActor
-// 以太坊事件顺序根据blockID，tx&eventId来确定,由route汇聚到不同用户地址,然后按顺序逐个发送给orderManagingActor
-// 注意: cancelOrderReq 可能包含用户软取消,在orderManagerState软取消后用户链上数据继续变更不影响最终结果
-message XCancelOrderReq {
-    string id = 1;
-    bool hard_cancel = 2; // 默认软取消
-}
 
-message XCancelOrderRes {
-    string id = 1;
-    bool hard_cancel = 2; // 默认软取消
-    XErrorCode error = 3;
-}
 
 message UpdateFilledAmountReq {
     string id = 1;
@@ -176,13 +190,13 @@ message XSendRawTxRes {
 
 message XRecoverOrdersReq {
     string address = 1;
-    core.XMarketId market_id = 2;
+    XMarketId market_id = 2;
     int64 updated_since = 3;
     int32 num = 4;
 }
 
 message XRecoverOrdersRes {
-    repeated core.XRawOrder orders = 1;
+    repeated XRawOrder orders = 1;
 }
 
 message XRecoverNextOrder {}

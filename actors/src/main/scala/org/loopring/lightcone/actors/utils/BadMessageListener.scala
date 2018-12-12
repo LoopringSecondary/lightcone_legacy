@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.actors.utils
 
-// TODO(fukun): should we move this to proto file?
+import akka.actor._
+import akka.cluster.sharding._
+import akka.event.LoggingReceive
+import akka.pattern._
+import akka.util.Timeout
+import org.loopring.lightcone.proto.XError
 
-case class TransactionLog(
-    logIndex: Int = 0,
-    blockNumber: BigInt = 0,
-    blockHash: String = "0x",
-    transactionHash: String = "0x",
-    transactionIndex: Int = 0,
-    address: String = "0x",
-    data: String = "0x",
-    topics: Seq[String] = Seq(),
-    removed: Boolean = false
-)
+class BadMessageListener extends Actor with ActorLogging {
+  def receive = {
+    case u: UnhandledMessage ⇒
+      log.debug(s"invalid request: $u")
+      sender ! XError(error = "invalid request")
+
+    case d: DeadLetter ⇒
+      log.warning(s"failed to handle request: $d")
+      sender ! XError(error = "failed to handle request")
+  }
+}

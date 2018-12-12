@@ -23,19 +23,29 @@ import org.loopring.lightcone.actors.base.Lookup
 import org.slf4s.Logging
 import net.codingwell.scalaguice.InjectorExtensions._
 import akka.actor.ActorRef
+import java.io.File
 
 object Main extends App with Logging {
-  val config = ConfigFactory.load()
+  val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
+  log.info(s"--> config_path = ${configPathOpt}")
+
+  val baseConfig = ConfigFactory.load()
+  val config = configPathOpt match {
+    case Some(path) if path.nonEmpty ⇒
+      ConfigFactory.parseFile(new File(path)).withFallback(baseConfig)
+    case _ ⇒
+      baseConfig
+  }
 
   val configItems = Seq(
-    "akka.remote.artery.canonical.hostname",
-    "akka.remote.artery.canonical.port",
-    "akka.remote.bind.hostname",
-    "akka.remote.bind.port"
+    "akka.remote.netty.tcp.hostname",
+    "akka.remote.netty.tcp.port",
+    "akka.cluster.seed-nodes",
+    "akka.cluster.roles"
   )
 
   configItems foreach { i ⇒
-    log.debug(s"--> $i = ${config.getString(i)}")
+    log.info(s"--> $i = ${config.getString(i)}")
   }
 
   val injector = Guice.createInjector(new CoreModule(config))
