@@ -145,7 +145,7 @@ class OrderDalImpl()(
     )
     db.run((query += order.copy(
       state = Some(state),
-      marketHash = MurmurHash.hash64(order.tokenS) ^ MurmurHash.hash64(order.tokenB)
+      marketHash = MarketHashProvider.convert2Hex(order.tokenS, order.tokenB)
     )).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
         XSaveOrderResult(
@@ -196,7 +196,8 @@ class OrderDalImpl()(
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
     if (tokenBSet.nonEmpty) filters = filters.filter(_.tokenB inSet tokenBSet)
-    if (marketHashSet.nonEmpty) filters = filters.filter(_.marketHash inSet marketHashSet)
+    // TODO du：等order service分支合并后修改marketHash为string
+    // if (marketHashSet.nonEmpty) filters = filters.filter(_.marketHash inSet marketHashSet)
     if (feeTokenSet.nonEmpty) filters = filters.filter(_.tokenFee inSet feeTokenSet)
     if (validTime.nonEmpty) filters = filters
       .filter(_.validSince >= validTime.get)
