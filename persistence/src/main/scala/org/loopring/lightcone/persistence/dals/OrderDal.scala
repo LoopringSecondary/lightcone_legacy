@@ -205,7 +205,7 @@ class OrderDalImpl()(
     if (sort.nonEmpty) filters = sort.get match {
       case XSort.ASC  ⇒ filters.sortBy(_.sequenceId.asc)
       case XSort.DESC ⇒ filters.sortBy(_.sequenceId.desc)
-      case _          ⇒ filters.sortBy(_.sequenceId.desc)
+      case _          ⇒ filters.sortBy(_.sequenceId.asc)
     }
     filters = skip match {
       case Some(s) ⇒ filters.drop(s.skip).take(s.take)

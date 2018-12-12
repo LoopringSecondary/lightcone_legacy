@@ -16,17 +16,25 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
+import org.loopring.lightcone.lib.SystemTimeProvider
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
+import slick.lifted.Query
 import scala.concurrent._
+import scala.util.{Failure, Success}
 
 trait TradeDal
-  extends BaseDalImpl[TradeTable, XTradeData] {
+  extends BaseDalImpl[TradeTable, XTrade] {
 
+  def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]]
+  def getTrades(request: XGetTradesReq): Future[Seq[XTrade]]
+  def countTrades(request: XGetTradesReq): Future[Int]
+  def obsolete(height: Long): Future[Unit]
 }
 
 class TradeDalImpl()(
@@ -35,4 +43,71 @@ class TradeDalImpl()(
     val ec: ExecutionContext
 ) extends TradeDal {
   val query = TableQuery[TradeTable]
+  val timeProvider = new SystemTimeProvider()
+
+  def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]] = {
+    db.run((query += trade.copy(createdAt = timeProvider.getTimeSeconds())).asTry).map {
+      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ Left(XErrorCode.PERS_ERR_DUPLICATE_INSERT)
+      case Failure(ex) ⇒ {
+        // TODO du: print some log
+        // log(s"error : ${ex.getMessage}")
+        Left(XErrorCode.PERS_ERR_INTERNAL)
+      }
+      case Success(x) ⇒ Right(trade.txHash)
+    }
+  }
+
+  private def queryFilters(
+    owner: Option[String] = None,
+    tokenS: Option[String] = None,
+    tokenB: Option[String] = None,
+    marketHash: Option[String] = None,
+    sort: Option[XSort] = None,
+    skip: Option[XSkip] = None
+  ): Query[TradeTable, TradeTable#TableElementType, Seq] = {
+    var filters = query.filter(_.sequenceId > 0l)
+    if (owner.nonEmpty) filters = filters.filter(_.owner === owner.get)
+    if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS.get)
+    if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB.get)
+    if (marketHash.nonEmpty) filters = filters.filter(_.marketHash === marketHash.get)
+    if (sort.nonEmpty) filters = sort.get match {
+      case XSort.ASC  ⇒ filters.sortBy(_.sequenceId.asc)
+      case XSort.DESC ⇒ filters.sortBy(_.sequenceId.desc)
+      case _          ⇒ filters.sortBy(_.sequenceId.asc)
+    }
+    filters = skip match {
+      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+      case None    ⇒ filters
+    }
+    filters
+  }
+
+  def getTrades(request: XGetTradesReq): Future[Seq[XTrade]] = {
+    val owner = if(request.owner.isEmpty) None else Some(request.owner)
+    val (tokenS, tokenB, marketHash) = request.market match {
+      case XGetTradesReq.Market.MarketHash(v) => (None, None, Some(v))
+      case XGetTradesReq.Market.Pair(v)       => (Some(v.tokenS), Some(v.tokenB), None)
+      case _                                  => (None, None, None)
+    }
+    val filters = queryFilters(owner, tokenS, tokenB, marketHash, Some(request.sort), request.skip)
+    db.run(filters.result)
+  }
+
+  def countTrades(request: XGetTradesReq): Future[Int] = {
+    val owner = if(request.owner.isEmpty) None else Some(request.owner)
+    val (tokenS, tokenB, marketHash) = request.market match {
+      case XGetTradesReq.Market.MarketHash(v) => (None, None, Some(v))
+      case XGetTradesReq.Market.Pair(v)       => (Some(v.tokenS), Some(v.tokenB), None)
+      case _                                  => (None, None, None)
+    }
+    val filters = queryFilters(owner, tokenS, tokenB, marketHash, Some(request.sort), request.skip)
+    db.run(filters.size.result)
+  }
+
+  def obsolete(height: Long): Future[Unit] = {
+    val q = for {
+      c ← query if c.blockHeight >= height
+    } yield (c.isValid, c.updatedAt)
+    db.run(q.update(false, timeProvider.getTimeSeconds())).map(_ > 0)
+  }
 }
