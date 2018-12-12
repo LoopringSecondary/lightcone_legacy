@@ -28,6 +28,6 @@ final class OrderbookManagerMessageValidator()(
     val config: Config
 ) extends MessageValidator {
   def validate = {
-    case x ⇒ Right(x)
+    case msg: XGetOrderbookReq ⇒ Right(msg)
   }
 }

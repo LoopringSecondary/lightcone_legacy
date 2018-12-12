@@ -53,7 +53,7 @@ class MessageValidationActor(
       case Some(Right(validatedMsg)) ⇒
         log.debug(s"request rewrote from $msg to $validatedMsg")
         destinationActor forward validatedMsg
-      case msg ⇒ destinationActor forward msg // unvalidated message are forward as-is
+      case None ⇒ destinationActor forward msg // unvalidated message are forward as-is
     }
   }
 }
