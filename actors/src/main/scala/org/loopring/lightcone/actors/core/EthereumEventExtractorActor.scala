@@ -26,14 +26,6 @@ import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.dals.{ BlockDal, BlockDalImpl }
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.ethereum.XBlockData
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
@@ -138,9 +130,6 @@ class EthereumEventExtractorActor()(
             val blockData = XBlockData()
               .withHash(result.hash)
               .withHeight(hex2BigInt(result.number).longValue())
-              .withGasLimit(hex2BigInt(result.gasLimit))
-              .withGasUsed(hex2BigInt(result.gasUsed))
-              .withDifficulty(hex2BigInt(result.difficulty))
 
             blockDal.saveBlock(blockData)
             self ! XBlockJob()
