@@ -26,8 +26,8 @@ import scala.concurrent._
 class OrderServiceSpec extends ServiceSpec[OrderService] {
   def getService = new OrderServiceImpl()
   val timeProvider = new SystemTimeProvider()
-  val tokenS = "0x-tokens"
-  val tokenB = "0x-tokenb"
+  val tokenS = "0xaaaaaaaa1"
+  val tokenB = "0xaaaaaaaa2"
   val tokenFee = "0x-fee-token"
   val validSince = 1
   val validUntil = timeProvider.getTimeSeconds()
@@ -121,17 +121,17 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       "0x-getorders-token-03",
       "0x-getorders-token-04"
     )
-    val tokenS = "0x-getorders-tokens"
-    val tokenB = "0x-getorders-tokenb"
+    val tokenS = "0xbbbbbbbb1"
+    val tokenB = "0xbbbbbbbb2"
     val result = for {
       _ ← testSaves(hashes, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       _ ← testSaves(mockState, XOrderStatus.STATUS_PARTIALLY_FILLED, tokenS, tokenB, validSince, validUntil.toInt)
-      _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0x-mock-tokens", "0x-mock-tokenb", 200, 300)
+      _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0xccccccccc1", "0xccccccccc2", 200, 300)
       query ← service.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set(tokenS), Set(tokenB),
         Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), Set(tokenFee), Some(XSort.ASC), None)
       queryStatus ← service.getOrders(Set(XOrderStatus.STATUS_PARTIALLY_FILLED), Set.empty, Set.empty, Set.empty, Set.empty,
         Set.empty, Some(XSort.ASC), None)
-      queryToken ← service.getOrders(Set(XOrderStatus.STATUS_NEW), mockToken, Set("0x-mock-tokens"), Set("0x-mock-tokenb"), Set.empty,
+      queryToken ← service.getOrders(Set(XOrderStatus.STATUS_NEW), mockToken, Set("0xccccccccc1"), Set("0xccccccccc2"), Set.empty,
         Set(tokenFee), Some(XSort.ASC), None)
       queryMarket ← service.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set.empty, Set.empty,
         Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), Set.empty, Some(XSort.ASC), None)
