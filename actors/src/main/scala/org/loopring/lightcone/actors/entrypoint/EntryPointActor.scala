@@ -38,7 +38,7 @@ class EntryPointActor()(
 
   def receive = LoggingReceive {
     case msg: Any ⇒
-      findDestination(msg) match {
+      (findDestination.lift)(msg) match {
         case Some(dest) ⇒
           actors.get(dest) forward msg
 
@@ -51,15 +51,13 @@ class EntryPointActor()(
       }
   }
 
-  def findDestination(msg: Any): Option[String] = msg match {
+  val findDestination: PartialFunction[Any, String] = {
     case _@ (
       XSubmitRawOrderReq |
-      XCancelOrderReq) ⇒ Some(OrderHandlerActor.name)
+      XCancelOrderReq) ⇒ OrderHandlerActor.name
 
     case _@ (
-      XGetOrderbookReq) ⇒ Some(OrderbookManagerActor.name)
-
-    case _ ⇒ None
+      XGetOrderbookReq) ⇒ OrderbookManagerActor.name
   }
 
 }
