@@ -26,6 +26,14 @@ import org.loopring.lightcone.proto._
 //   extends CoreActorsIntegrationCommonSpec(
 //     XMarketId(GTO_TOKEN.address, WETH_TOKEN.address),
 //     """
+//     weth {
+//       address = "something"
+//     }
+//     loopring-protocol {
+//       address = "0x8d8812b72d1e4ffCeC158D25f56748b7d67c1e78",
+//       delegate-address ="0x17233e07c67d086464fD408148c3ABB56245FA64"
+//       gas-limit-per-ring-v2 = "1000000"
+//     }
 //     account_manager {
 //       skip-recovery = yes
 //       recover-batch-size = 2
@@ -47,8 +55,7 @@ import org.loopring.lightcone.proto._
 //     gas_price {
 //       default = "10000000000"
 //     }
-//     """
-//   ) {
+//     """) {
 
 //   "update balance after submit an order" must {
 //     "cancel order if balance < amount_s" in {
