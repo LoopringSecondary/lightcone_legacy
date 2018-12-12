@@ -21,16 +21,16 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
-import org.loopring.lightcone.proto.XError
+import org.loopring.lightcone.proto._
 
 class BadMessageListener extends Actor with ActorLogging {
   def receive = {
     case u: UnhandledMessage ⇒
       log.debug(s"invalid request: $u")
-      sender ! XError(message = "invalid request")
+      sender ! XError(code= XErrorCode.ERR_INVALID_REQ ,message = "invalid request")
 
     case d: DeadLetter ⇒
       log.warning(s"failed to handle request: $d")
-      sender ! XError(message = "failed to handle request")
+      sender ! XError(code = XErrorCode.ERR_FAILED_HANDLE_MES, message = "failed to handle request")
   }
 }
