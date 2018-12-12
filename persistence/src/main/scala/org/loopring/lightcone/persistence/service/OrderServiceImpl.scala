@@ -32,14 +32,21 @@ class OrderServiceImpl @Inject() ()(
   val orderDal: OrderDal = new OrderDalImpl()
 
   // Save order to database, if the order already exist, return an error code.
-  def saveOrder(order: XRawOrder): Future[Either[XRawOrder, XErrorCode]] = ???
-  // def submitOrder(order: XRawOrder): Future[XSaveOrderResult] = {
-  //   //TODO du：验证订单有效，更新状态
-  //   orderDal.saveOrder(order)
-  // }
+  def saveOrder(order: XRawOrder): Future[Either[XRawOrder, XErrorCode]] = for {
+    //TODO du：验证订单有效，更新状态
+    result ← orderDal.saveOrder(order)
+  } yield {
+    if (result.error == XErrorCode.ERR_NONE || result.error == XErrorCode.PERS_ERR_DUPLICATE_INSERT) {
+      Left(result.order.get)
+    } else {
+      Right(result.error)
+    }
+  }
 
   // Mark the order as soft-cancelled. Returns error code if the order does not exist.
-  def markOrderSoftCancelled(orderHashes: Seq[String]): Future[Seq[XErrorCode]] = ???
+  def markOrderSoftCancelled(orderHashes: Seq[String]): Future[Seq[Either[XErrorCode, String]]] = {
+    Future.sequence(orderHashes.map(orderDal.updateOrderStatus(_, XOrderStatus.STATUS_CANCELLED_BY_USER)))
+  }
 
   def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]] = orderDal.getOrders(hashes)
 

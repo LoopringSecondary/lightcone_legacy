@@ -150,7 +150,7 @@ class OrderDalImpl()(
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
         XSaveOrderResult(
           error = XErrorCode.PERS_ERR_DUPLICATE_INSERT,
-          order = None,
+          order = Some(order),
           alreadyExist = true
         )
       }

@@ -91,7 +91,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     } yield result
   }
 
-  "submitOrder" must "save a order with hash 0x111" in {
+  "saveOrder" must "save a order with hash 0x111" in {
     val hash = "0x-saveorder-state0-01"
     val result = for {
       _ ← testSave(hash, hash, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
@@ -257,5 +257,27 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_NEW &&
       res._2.get.state.get.actualAmountB === ByteString.copyFrom("111", "UTF-8")
     x should be(true)
+  }
+
+  "markOrderSoftCancelled" must "update order's status to canceled-by-user" in {
+    val owners = Set(
+      "0x-markordersoftcancel-01",
+      "0x-markordersoftcancel-02",
+      "0x-markordersoftcancel-03",
+      "0x-markordersoftcancel-04",
+      "0x-markordersoftcancel-05",
+      "0x-markordersoftcancel-06"
+    )
+    val queryOwners = Seq(
+      "0x-markordersoftcancel-03",
+      "0x-markordersoftcancel-01"
+    )
+    val result = for {
+      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      update ← service.markOrderSoftCancelled(queryOwners)
+      count ← service.countOrders(Set(XOrderStatus.STATUS_CANCELLED_BY_USER), queryOwners.toSet, Set.empty, Set.empty, Set.empty)
+    } yield (update, count)
+    val res = Await.result(result.mapTo[(Seq[Either[XErrorCode, String]], Int)], 5.second)
+    res._2 should be(2)
   }
 }
