@@ -35,7 +35,7 @@ import org.loopring.lightcone.proto.core._
 import scala.concurrent._
 
 // main owner: 于红雨
-object MarketManagerActor extends ShardedByMarketId {
+object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
   def startShardRegion()(
