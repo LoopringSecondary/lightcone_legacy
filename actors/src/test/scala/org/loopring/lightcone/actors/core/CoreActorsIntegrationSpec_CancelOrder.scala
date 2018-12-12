@@ -118,7 +118,7 @@ import org.loopring.lightcone.proto._
 //       expectMsgPF() {
 //         case res: XCancelOrderRes ⇒
 //           info(s"-- canceled this order: $res")
-//           res.error should be(XErrorCode.ERR_ORDER_NOT_EXIST)
+//           res.error should be(ERR_ORDER_NOT_EXIST)
 //       }
 
 //       orderbookManagerActor ! XGetOrderbookReq(0, 100)

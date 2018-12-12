@@ -30,6 +30,7 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.actors.ethereum._
 
@@ -81,12 +82,13 @@ class EthereumQueryActor()(
   def receive = LoggingReceive {
     case req: XGetBalanceAndAllowancesReq ⇒
       if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
-        log.error(s"invalid XGetBalanceAndAllowancesReq:$req caused by invalid ethereum address")
+        log.error(s"invalid $req caused by invalid ethereum address")
         sender ! XGetBalanceAndAllowancesRes()
           .withAddress(req.address)
-          .withError(XError()
-            .withCode(XErrorCode.ETHEREUM_ERR_ILLEGAL_ADDRESS)
-            .withMessage(s"invalid address in XGetBalanceAndAllowancesReq:$req"))
+          .withError(XError(
+            ERR_ETHEREUM_ILLEGAL_ADDRESS,
+            s"invalid address in $req"
+          ))
       } else {
         val batchReqs: XBatchContractCallReq = xGetBalanceAndAllowanceToBatchReq(Address(delegateAddress), req)
         val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
@@ -105,12 +107,10 @@ class EthereumQueryActor()(
 
     case req: XGetBalanceReq ⇒
       if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
-        log.error(s"invalid XGetBalanceReq:$req caused by invalid ethereum address")
+        log.error(s"invalid $req caused by invalid ethereum address")
         sender ! XGetBalanceRes()
           .withAddress(req.address)
-          .withError(XError()
-            .withCode(XErrorCode.ETHEREUM_ERR_ILLEGAL_ADDRESS)
-            .withMessage(s"invalid address in XGetBalanceAndAllowancesReq:$req"))
+          .withError(XError(ERR_ETHEREUM_ILLEGAL_ADDRESS, s"invalid address in $req"))
       } else {
         val batchReqs: XBatchContractCallReq = req
         val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
@@ -129,12 +129,13 @@ class EthereumQueryActor()(
 
     case req: XGetAllowanceReq ⇒
       if (!Address.isValid(req.address) || !req.tokens.forall(Address.isValid)) {
-        log.error(s"invalid XGetAllowanceReq:$req caused by invalid ethereum address")
+        log.error(s"invalid $req caused by invalid ethereum address")
         sender ! XGetAllowanceRes()
           .withAddress(req.address)
-          .withError(XError()
-            .withCode(XErrorCode.ETHEREUM_ERR_ILLEGAL_ADDRESS)
-            .withMessage(s"invalid address in XGetBalanceAndAllowancesReq:$req"))
+          .withError(XError(
+            ERR_ETHEREUM_ILLEGAL_ADDRESS,
+            s"invalid address in $req"
+          ))
       } else {
         val batchReqs: XBatchContractCallReq = xGetAllowanceToBatchReq(Address(delegateAddress), req)
         (for {
