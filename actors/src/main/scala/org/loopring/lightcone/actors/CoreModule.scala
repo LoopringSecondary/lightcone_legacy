@@ -21,7 +21,6 @@ import akka.cluster.Cluster
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.google.inject.AbstractModule
-import com.google.inject.name.Names
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.lib._
@@ -33,12 +32,9 @@ import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.persistence._
-import org.loopring.lightcone.persistence.service.{ OrderService, OrderServiceImpl }
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.persistence.service._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -76,9 +72,11 @@ class CoreModule(config: Config)
       DatabaseConfig.forConfig("db.default", config)
     bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
 
-    // TODO du:implicit or inject into actors
+    // TODO du: implicit or bind and inject into actors
     implicit val orderService: OrderService = new OrderServiceImpl()
+    implicit val tradeService: TradeService = new TradeServiceImpl()
     bind[OrderService].toInstance(orderService)
+    bind[TradeService].toInstance(tradeService)
 
     implicit val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)
