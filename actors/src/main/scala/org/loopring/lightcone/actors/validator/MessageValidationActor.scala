@@ -42,8 +42,8 @@ class MessageValidationActor(
 ) extends Actor
   with ActorLogging {
 
-  val destinationActor = actors.get(destinationName)
-  val validate = validator.validate.lift
+  private val destinationActor = actors.get(destinationName)
+  private val validate = validator.validate.lift
 
   override def receive: Receive = {
     case msg ⇒ validate(msg) match {
@@ -51,7 +51,7 @@ class MessageValidationActor(
         log.debug(s"validation error $err for msg: $msg")
         sender ! err
       case Some(Right(validatedMsg)) ⇒
-        log.debug(s"request rewrote from $msg to $validatedMsg")
+        log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
         destinationActor forward validatedMsg
       case None ⇒ destinationActor forward msg // unvalidated message are forward as-is
     }
