@@ -103,16 +103,13 @@ package object ethereum {
       res ⇒
         ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
     }
-
     val balanceAndAllowance = (balances zip allowances).map {
       ba ⇒ XBalanceAndAllowance(ba._1, ba._2)
     }
-
     XGetBalanceAndAllowancesRes(
       address,
       (tokens zip balanceAndAllowance).toMap
     )
-
   }
 
   implicit def xBatchContractCallResToBalance(
@@ -124,12 +121,10 @@ package object ethereum {
       res ⇒
         ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
     }
-
     XGetBalanceRes(
       address,
       (tokens zip balances).toMap
     )
-
   }
 
   implicit def xBatchContractCallResToAllowance(
@@ -137,12 +132,10 @@ package object ethereum {
     tokens: Seq[String],
     batchRes: XBatchContractCallRes
   ): XGetAllowanceRes = {
-
     val allowances = batchRes.resps.filter(_.id % 2 == 0).map {
       res ⇒
         ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
     }
-
     XGetAllowanceRes(
       address,
       (tokens zip allowances).toMap
@@ -173,7 +166,6 @@ package object ethereum {
     tag: String = "latest"
   ) = {
     tokens.zipWithIndex.map { token ⇒
-
       val data = erc20Abi.balanceOf.pack(
         BalanceOfFunction.Parms(_owner = owner.toString)
       )
