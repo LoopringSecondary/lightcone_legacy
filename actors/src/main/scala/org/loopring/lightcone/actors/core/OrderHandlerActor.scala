@@ -70,9 +70,8 @@ class OrderHandlerActor()(
     val actors: Lookup[ActorRef]
 ) extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
-  def receive: Receive = {
-    case _ ⇒
-    // case XSubmitRawOrder(Some(order)) ⇒
+  def receive = LoggingReceive {
+    case msg @ XSubmitRawOrderReq(Some(raworder)) ⇒
   }
 
 }

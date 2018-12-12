@@ -45,7 +45,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     tokenB: String,
     validSince: Int,
     validUntil: Int
-  ): Future[XSaveOrderResult] = {
+  ): Future[Either[XRawOrder, XErrorCode]] = {
     val now = timeProvider.getTimeMillis
     val state = XRawOrder.State(
       createdAt = now,
@@ -73,7 +73,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       params = Some(param),
       marketHash = MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)
     )
-    service.submitOrder(order)
+    service.saveOrder(order)
   }
 
   private def testSaves(
@@ -83,7 +83,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     tokenB: String,
     validSince: Int,
     validUntil: Int
-  ): Future[Set[XSaveOrderResult]] = {
+  ): Future[Set[Either[XRawOrder, XErrorCode]]] = {
     for {
       result ← Future.sequence(hashes.map { hash ⇒
         testSave(hash, hash, status, tokenS, tokenB, validSince, validUntil)
