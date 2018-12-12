@@ -98,7 +98,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val marketHash1 = MarketHashProvider.convert2BigInt(address1, address2)
     val marketHash2 = MarketHashProvider.convert2BigInt(address2, address1)
     val t = MarketHashProvider.convert2Hex(address1, address2)
-    marketHash1.equals(marketHash2) should be(true)
+    marketHash1.equals(marketHash2) && t === "0x3d6ede5134aa557420825295bf6c2d96b8f101e2" should be(true)
   }
 
   "submitOrder" must "save a order with hash" in {

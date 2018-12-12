@@ -18,18 +18,16 @@ package org.loopring.lightcone.lib
 
 object MarketHashProvider {
 
+  private def removePrefix(address: String): String = {
+    if (address.startsWith("0x")) {
+      address.substring(2).trim
+    } else {
+      address.trim
+    }
+  }
+
   def convert2BigInt(address1: String, address2: String): BigInt = {
-    val a1 = if (address1.startsWith("0x")) {
-      address1.substring(2)
-    } else {
-      address1
-    }
-    val a2 = if (address2.startsWith("0x")) {
-      address2.substring(2)
-    } else {
-      address2
-    }
-    BigInt(a1.trim, 16) ^ BigInt(a2.trim, 16)
+    BigInt(removePrefix(address1), 16) ^ BigInt(removePrefix(address2), 16)
   }
 
   def convert2Hex(address1: String, address2: String): String = {
