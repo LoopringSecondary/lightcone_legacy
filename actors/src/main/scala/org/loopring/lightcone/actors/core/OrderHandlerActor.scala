@@ -28,16 +28,18 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.data._
 import scala.concurrent._
 
 // main owner: 于红雨
 object OrderHandlerActor extends ShardedEvenly {
   val name = "order_handler"
 
-  def startShardRegion()(
+  def startShardRegion(orderService: OrderService)(
     implicit
     system: ActorSystem,
     config: Config,
@@ -53,7 +55,7 @@ object OrderHandlerActor extends ShardedEvenly {
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new OrderHandlerActor()),
+      entityProps = Props(new OrderHandlerActor(orderService)),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -61,7 +63,7 @@ object OrderHandlerActor extends ShardedEvenly {
   }
 }
 
-class OrderHandlerActor()(
+class OrderHandlerActor(orderService: OrderService)(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -70,9 +72,45 @@ class OrderHandlerActor()(
     val actors: Lookup[ActorRef]
 ) extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
-  def receive: Receive = {
-    case _ ⇒
-    // case XSubmitRawOrder(Some(order)) ⇒
-  }
+  def accountManagerActor = actors.get(AccountManagerActor.name)
 
+  //save order to db first, then send to AccountManager
+  def receive: Receive = {
+    case req: XCancelOrderReq ⇒
+      (for {
+        saveRes ← orderService.updateOrderStatus(req.id, req.status)
+      } yield {
+        saveRes match {
+          case Left(value) ⇒
+            XCancelOrderRes(req.id, req.hardCancel, value, req.status)
+          case Right(value) ⇒
+            accountManagerActor forward req
+        }
+      }) pipeTo sender
+
+    case XSubmitRawOrderReq(Some(raworder)) ⇒
+      (for {
+        saveRes ← orderService.submitOrder(raworder)
+        //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
+        res ← saveRes.error match {
+          case XErrorCode.ERR_NONE | XErrorCode.PERS_ERR_DUPLICATE_INSERT ⇒
+            for {
+              submitRes ← accountManagerActor ? XSubmitOrderReq(Some(raworder))
+            } yield {
+              submitRes match {
+                case XSubmitOrderRes(XErrorCode.ERR_NONE, _) ⇒
+                  XSubmitRawOrderRes(raworder.hash, XErrorCode.ERR_NONE)
+                case XSubmitOrderRes(err, _) ⇒
+                  XSubmitRawOrderRes(raworder.hash, err)
+                case _ ⇒
+                  XSubmitRawOrderRes(raworder.hash, XErrorCode.ERR_UNKNOWN)
+              }
+            }
+          case err ⇒
+            Future.successful(XSubmitRawOrderRes(raworder.hash, saveRes.error))
+        }
+
+      } yield res) pipeTo sender
+
+  }
 }

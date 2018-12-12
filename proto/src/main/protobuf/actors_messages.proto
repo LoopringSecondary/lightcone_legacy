@@ -36,21 +36,20 @@ message XSubmitRawOrderReq {
     XRawOrder raw_order = 1;
 }
 
-message XSubmitRawOrderResp {
-    XRawOrder raw_order = 1;
+message XSubmitRawOrderRes {
+    string id = 1;
+    XErrorCode error = 2;
 }
 
 message XCancelOrderReq {
     string id = 1;
     bool hard_cancel = 2; // 默认软取消
+    XOrderStatus status = 3; //取消的类型
 }
 
 message XCancelOrderRes {
     string id = 1;
     bool hard_cancel = 2; // 默认软取消
     XErrorCode error = 3;
-}
-
-message XSubmitRawOrder {
-    XRawOrder raw_order = 1;
+    XOrderStatus status = 4; //取消的类型
 }

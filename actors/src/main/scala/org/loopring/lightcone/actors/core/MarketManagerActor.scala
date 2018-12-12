@@ -140,7 +140,7 @@ class MarketManagerActor(
     case XSubmitOrderReq(Some(xorder)) ⇒
       submitOrder(xorder)
 
-    case XCancelOrderReq(orderId, hardCancel) ⇒
+    case XCancelOrderReq(orderId, hardCancel, _) ⇒
       manager.cancelOrder(orderId) foreach {
         orderbookUpdate ⇒ orderbookManagerActor ! orderbookUpdate
       }

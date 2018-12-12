@@ -34,9 +34,11 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence._
+import org.loopring.lightcone.persistence.service.{ OrderService, OrderServiceImpl }
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -77,6 +79,9 @@ class CoreModule(config: Config)
     implicit val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)
 
+    val orderService = new OrderServiceImpl()
+    bind[OrderService].toInstance(orderService)
+
     implicit val tmm = new TokenMetadataManager()
     bind[TokenMetadataManager].toInstance(tmm)
 
@@ -104,7 +109,7 @@ class CoreModule(config: Config)
     actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
     actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
     actors.add(OrderbookManagerActor.name, OrderbookManagerActor.startShardRegion)
-    actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
+    actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion(orderService))
     actors.add(OrderHistoryActor.name, OrderHistoryActor.startShardRegion)
     actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
     actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
