@@ -17,7 +17,7 @@
 package org.loopring.lightcone.persistence.dals
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
-import org.loopring.lightcone.lib.SystemTimeProvider
+import org.loopring.lightcone.lib.{ MarketHashProvider, SystemTimeProvider }
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
@@ -26,12 +26,13 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import slick.lifted.Query
 import scala.concurrent._
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 trait TradeDal
   extends BaseDalImpl[TradeTable, XTrade] {
 
   def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]]
+  def saveTrades(trades: Seq[XTrade]): Future[Seq[Either[XErrorCode, String]]]
   def getTrades(request: XGetTradesReq): Future[Seq[XTrade]]
   def countTrades(request: XGetTradesReq): Future[Int]
   def obsolete(height: Long): Future[Unit]
@@ -46,7 +47,11 @@ class TradeDalImpl()(
   val timeProvider = new SystemTimeProvider()
 
   def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]] = {
-    db.run((query += trade.copy(createdAt = timeProvider.getTimeSeconds())).asTry).map {
+    db.run((query += trade.copy(
+      marketHash = MarketHashProvider.convert2Hex(trade.tokenS, trade.tokenB),
+      createdAt = timeProvider.getTimeSeconds(),
+      isValid = true
+    )).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ Left(XErrorCode.PERS_ERR_DUPLICATE_INSERT)
       case Failure(ex) ⇒ {
         // TODO du: print some log
@@ -57,6 +62,8 @@ class TradeDalImpl()(
     }
   }
 
+  def saveTrades(trades: Seq[XTrade]): Future[Seq[Either[XErrorCode, String]]] = Future.sequence(trades.map(saveTrade))
+
   private def queryFilters(
     owner: Option[String] = None,
     tokenS: Option[String] = None,
@@ -65,7 +72,7 @@ class TradeDalImpl()(
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
   ): Query[TradeTable, TradeTable#TableElementType, Seq] = {
-    var filters = query.filter(_.sequenceId > 0l)
+    var filters = query.filter(_.isValid === true)
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner.get)
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS.get)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB.get)
@@ -83,22 +90,22 @@ class TradeDalImpl()(
   }
 
   def getTrades(request: XGetTradesReq): Future[Seq[XTrade]] = {
-    val owner = if(request.owner.isEmpty) None else Some(request.owner)
+    val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
-      case XGetTradesReq.Market.MarketHash(v) => (None, None, Some(v))
-      case XGetTradesReq.Market.Pair(v)       => (Some(v.tokenS), Some(v.tokenB), None)
-      case _                                  => (None, None, None)
+      case XGetTradesReq.Market.MarketHash(v) ⇒ (None, None, Some(v))
+      case XGetTradesReq.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
+      case _ ⇒ (None, None, None)
     }
     val filters = queryFilters(owner, tokenS, tokenB, marketHash, Some(request.sort), request.skip)
     db.run(filters.result)
   }
 
   def countTrades(request: XGetTradesReq): Future[Int] = {
-    val owner = if(request.owner.isEmpty) None else Some(request.owner)
+    val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
-      case XGetTradesReq.Market.MarketHash(v) => (None, None, Some(v))
-      case XGetTradesReq.Market.Pair(v)       => (Some(v.tokenS), Some(v.tokenB), None)
-      case _                                  => (None, None, None)
+      case XGetTradesReq.Market.MarketHash(v) ⇒ (None, None, Some(v))
+      case XGetTradesReq.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
+      case _ ⇒ (None, None, None)
     }
     val filters = queryFilters(owner, tokenS, tokenB, marketHash, Some(request.sort), request.skip)
     db.run(filters.size.result)

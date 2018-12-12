@@ -34,9 +34,11 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence._
+import org.loopring.lightcone.persistence.service.{ OrderService, OrderServiceImpl }
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -73,6 +75,10 @@ class CoreModule(config: Config)
     implicit val dbConfig: DatabaseConfig[JdbcProfile] =
       DatabaseConfig.forConfig("db.default", config)
     bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
+
+    // TODO du:implicit or inject into actors
+    implicit val orderService: OrderService = new OrderServiceImpl()
+    bind[OrderService].toInstance(orderService)
 
     implicit val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)

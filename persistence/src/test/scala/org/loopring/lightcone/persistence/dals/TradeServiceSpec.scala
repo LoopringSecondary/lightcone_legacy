@@ -16,251 +16,160 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent._
 import scala.concurrent.duration._
 
 class TradeServiceSpec extends ServiceSpec[TradeService] {
   def getService = new TradeServiceImpl()
+  val tokenS = "0xaaaaaa1"
+  val tokenB = "0xbbbbbb1"
 
   def createTables(): Future[Any] = for {
-    _ ← new OrderDalImpl().createTable()
-    r ← new BlockDalImpl().createTable()
+    r ← new TradeDalImpl().createTable()
   } yield r
 
   private def testSave(
-    hash: String,
+    txHash: String,
     owner: String,
-    status: XOrderStatus,
     tokenS: String,
     tokenB: String,
-    validSince: Int,
-    validUntil: Int
-  ): Future[XSaveOrderResult] = {
-    val now = timeProvider.getTimeMillis
-    val state = XRawOrder.State(
-      createdAt = now,
-      updatedAt = now,
-      status = status
-    )
-    val fee = XRawOrder.FeeParams(
-      tokenFee = tokenFee,
-      amountFee = ByteString.copyFrom("111", "utf-8")
-    )
-    val param = XRawOrder.Params(
-      validUntil = validUntil
-    )
-    var order = XRawOrder(
+    blockHeight: Long
+  ): Future[Either[XErrorCode, String]] = {
+    service.saveTrade(XTrade(
+      txHash = txHash,
       owner = owner,
-      hash = hash,
-      version = 1,
-      tokenS = tokenS,
       tokenB = tokenB,
-      amountS = ByteString.copyFrom("11", "UTF-8"),
-      amountB = ByteString.copyFrom("12", "UTF-8"),
-      validSince = validSince,
-      state = Some(state),
-      feeParams = Some(fee),
-      params = Some(param),
-      marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
-    )
-    service.submitOrder(order)
+      tokenS = tokenS,
+      blockHeight = blockHeight
+    ))
   }
 
-  private def testSaves(
-    hashes: Set[String],
-    status: XOrderStatus,
-    tokenS: String,
-    tokenB: String,
-    validSince: Int,
-    validUntil: Int
-  ): Future[Set[XSaveOrderResult]] = {
-    for {
-      result ← Future.sequence(hashes.map { hash ⇒
-        testSave(hash, hash, status, tokenS, tokenB, validSince, validUntil)
-      })
-    } yield result
-  }
-
-  "marketHash" must "calculate a market hash by two address" in {
-    val address1 = "0x50689da538c80f32f46fb224af5d9d06c3309633"
-    val address2 = "0x6d0643f40c625a46d4ede0b11031b0907bc197d1"
-    MarketHashProvider.convert2BigInt(address1, address2)
-    val marketHash1 = MarketHashProvider.convert2BigInt(address1, address2)
-    val marketHash2 = MarketHashProvider.convert2BigInt(address2, address1)
-    val t = MarketHashProvider.convert2Hex(address1, address2)
-    marketHash1.equals(marketHash2) should be(true)
-  }
-
-  "submitOrder" must "save a order with hash" in {
-    val hash = "0x-saveorder-state0-01"
+  "saveTrade" must "save a trade with hash" in {
+    val hash = "0x-savetrade-01"
     val result = for {
-      _ ← testSave(hash, hash, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.getOrder(hash)
+      _ ← testSave(hash, hash, tokenS, tokenB, 1l)
+      _ ← testSave("0x-mock-01", "0x-mock-01", tokenS, tokenB, 1l)
+      _ ← testSave("0x-mock-02", "0x-mock-02", tokenS, tokenB, 1l)
+      query ← service.getTrades(XGetTradesReq(
+        owner = hash,
+        market = XGetTradesReq.Market.Pair(MarketPair(tokenB = tokenB, tokenS = tokenS))
+      ))
     } yield query
-    val res = Await.result(result.mapTo[Option[XRawOrder]], 5.second)
-    res should not be empty
+    val res = Await.result(result.mapTo[Seq[XTrade]], 5.second)
+    res.length == 1 should be(true)
   }
 
-  "getOrders" must "get some orders with many query parameters" in {
+  "getTrades" must "get some trades with many query parameters" in {
     val hashes = Set(
-      "0x-getorders-state0-01",
-      "0x-getorders-state0-02",
-      "0x-getorders-state0-03",
-      "0x-getorders-state0-04",
-      "0x-getorders-state0-05"
-    )
-    val mockState = Set(
-      "0x-getorders-state1-01",
-      "0x-getorders-state1-02",
-      "0x-getorders-state1-03",
-      "0x-getorders-state1-04"
+      "0x-gettrades-state0-01",
+      "0x-gettrades-state0-02",
+      "0x-gettrades-state0-03",
+      "0x-gettrades-state0-04",
+      "0x-gettrades-state0-05"
     )
     val mockToken = Set(
-      "0x-getorders-token-01",
-      "0x-getorders-token-02",
-      "0x-getorders-token-03",
-      "0x-getorders-token-04"
+      "0x-gettrades-token-01",
+      "0x-gettrades-token-02",
+      "0x-gettrades-token-03",
+      "0x-gettrades-token-04"
     )
     val tokenS = "0xaaaaaaa2"
     val tokenB = "0xbbbbbbb2"
     val result = for {
-      _ ← testSaves(hashes, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      _ ← testSaves(mockState, XOrderStatus.STATUS_PARTIALLY_FILLED, tokenS, tokenB, validSince, validUntil.toInt)
-      _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0xcccccccc1", "0xccccccccc2", 200, 300)
-      query ← service.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set(tokenFee), Some(XSort.ASC), None)
-      queryStatus ← service.getOrders(Set(XOrderStatus.STATUS_PARTIALLY_FILLED), Set.empty, Set.empty, Set.empty, Set.empty,
-        Set.empty, Some(XSort.ASC), None)
-      queryToken ← service.getOrders(Set(XOrderStatus.STATUS_NEW), mockToken, Set("0xcccccccc1"), Set("0xccccccccc2"), Set.empty,
-        Set(tokenFee), Some(XSort.ASC), None)
-      queryMarket ← service.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set.empty, Set.empty,
-        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set.empty, Some(XSort.ASC), None)
-      count ← service.countOrders(Set.empty, Set.empty, Set.empty, Set.empty, Set.empty)
-    } yield (query, queryStatus, queryToken, queryMarket, count)
-    val res = Await.result(result.mapTo[(Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Int)], 5.second)
-    val x = res._1.length === hashes.size && res._2.length === 0 && res._3.length === 4 && res._4.length === 5 && res._5 >= 13 // 之前的测试方法可能有插入
+      _ ← Future.sequence(hashes.map { hash ⇒
+        testSave(hash, hash, tokenS, tokenB, 1l)
+      })
+      _ ← Future.sequence(mockToken.map { hash ⇒
+        testSave(hash, hash, "0x00001", "0x00002", 1l)
+      })
+      query1 ← service.getTrades(XGetTradesReq(
+        owner = "0x-gettrades-state0-02",
+        market = XGetTradesReq.Market.MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+      ))
+      query2 ← service.getTrades(XGetTradesReq(
+        owner = "0x-gettrades-token-02",
+        market = XGetTradesReq.Market.Pair(MarketPair(tokenB = "0x00002", tokenS = "0x00001"))
+      ))
+    } yield (query1, query2)
+    val res = Await.result(result.mapTo[(Seq[XTrade], Seq[XTrade])], 5.second)
+    val x = res._1.length === 1 && res._2.length === 1
     x should be(true)
   }
 
-  "getOrder" must "get a order with hash" in {
-    val owner = "0x-getorder-state0-01"
-    val result = for {
-      _ ← testSave(owner, owner, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.getOrder(owner)
-    } yield query
-    val res = Await.result(result.mapTo[Option[XRawOrder]], 5.second)
-    res should not be empty
-  }
-
-  "getOrdersForUser" must "get some orders with many query parameters" in {
+  "countTrades" must "get trades count with many query parameters" in {
     val owners = Set(
-      "0x-getordersfouser-01",
-      "0x-getordersfouser-02",
-      "0x-getordersfouser-03",
-      "0x-getordersfouser-04",
-      "0x-getordersfouser-05"
+      "0x-counttrades-01",
+      "0x-counttrades-02",
+      "0x-counttrades-03",
+      "0x-counttrades-04",
+      "0x-counttrades-05",
+      "0x-counttrades-06"
     )
     val result = for {
-      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.getOrdersForUser(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), Set(tokenFee), Some(XSort.ASC), None)
-    } yield query
-    val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
-    res.length should be(owners.size)
-  }
-
-  "countOrders" must "get orders count with many query parameters" in {
-    val owners = Set(
-      "0x-countorders-01",
-      "0x-countorders-02",
-      "0x-countorders-03",
-      "0x-countorders-04",
-      "0x-countorders-05",
-      "0x-countorders-06"
-    )
-    val result = for {
-      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.countOrders(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)))
+      _ ← Future.sequence(owners.map { hash ⇒
+        testSave(hash, hash, tokenS, tokenB, 1l)
+      })
+      query ← service.countTrades(XGetTradesReq(
+        owner = "0x-counttrades-02",
+        market = XGetTradesReq.Market.MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+      ))
     } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
-    res should be(owners.size)
+    res should be(1)
   }
 
-  "getOrdersForRecover" must "get some orders to recover" in {
-    val owners = Set(
-      "0x-getordersforrecover-01",
-      "0x-getordersforrecover-02",
-      "0x-getordersforrecover-03",
-      "0x-getordersforrecover-04",
-      "0x-getordersforrecover-05",
-      "0x-getordersforrecover-06"
+  "obsolete" must "obsolete some trades" in {
+    val txHashes1 = Set(
+      "0x-obsolete-01",
+      "0x-obsolete-02",
+      "0x-obsolete-03",
+      "0x-obsolete-04",
+      "0x-obsolete-05",
+      "0x-obsolete-06",
+      "0x-obsolete-07",
+      "0x-obsolete-08",
+      "0x-obsolete-09",
+      "0x-obsolete-10",
+      "0x-obsolete-11",
+      "0x-obsolete-12"
     )
+    val txHashes2 = Set(
+      "0x-obsolete-101",
+      "0x-obsolete-102",
+      "0x-obsolete-103",
+      "0x-obsolete-104",
+      "0x-obsolete-105",
+      "0x-obsolete-106",
+      "0x-obsolete-107",
+      "0x-obsolete-108",
+      "0x-obsolete-109",
+      "0x-obsolete-110",
+      "0x-obsolete-111",
+      "0x-obsolete-112"
+    )
+    val owner = "0x-fixed-owner-01"
     val result = for {
-      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.getOrdersForRecover(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), None, Some(XSort.ASC), None)
-    } yield query
-    val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
-    res.length should be(owners.size)
-  }
-
-  "updateOrderStatus" must "update order's status with hash" in {
-    val owners = Set(
-      "0x-updateorderstatus-01",
-      "0x-updateorderstatus-02",
-      "0x-updateorderstatus-03",
-      "0x-updateorderstatus-04",
-      "0x-updateorderstatus-05",
-      "0x-updateorderstatus-06"
-    )
-    val owner = "0x-updateorderstatus-03"
-    val result = for {
-      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      update ← service.updateOrderStatus(owner, XOrderStatus.STATUS_CANCELLED_BY_USER)
-      query ← service.getOrder(owner)
-    } yield (update, query)
-    val res = Await.result(result.mapTo[(Either[XErrorCode, String], Option[XRawOrder])], 5.second)
-    val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_CANCELLED_BY_USER
-    x should be(true)
-  }
-
-  "updateAmount" must "update order's amount state with hash" in {
-    val owners = Set(
-      "0x-updateamount-01",
-      "0x-updateamount-02",
-      "0x-updateamount-03",
-      "0x-updateamount-04",
-      "0x-updateamount-05",
-      "0x-updateamount-06"
-    )
-    val hash = "0x-updateamount-03"
-    val timeProvider = new SystemTimeProvider()
-    val now = timeProvider.getTimeMillis
-    val state = XRawOrder.State(
-      createdAt = now,
-      updatedAt = now,
-      status = XOrderStatus.STATUS_PARTIALLY_FILLED,
-      actualAmountB = ByteString.copyFrom("111", "UTF-8"),
-      actualAmountS = ByteString.copyFrom("112", "UTF-8"),
-      actualAmountFee = ByteString.copyFrom("113", "UTF-8"),
-      outstandingAmountB = ByteString.copyFrom("114", "UTF-8"),
-      outstandingAmountS = ByteString.copyFrom("115", "UTF-8"),
-      outstandingAmountFee = ByteString.copyFrom("116", "UTF-8")
-    )
-    val result = for {
-      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      update ← service.updateAmount(hash, state)
-      query ← service.getOrder(hash)
-    } yield (update, query)
-    val res = Await.result(result.mapTo[(Either[XErrorCode, String], Option[XRawOrder])], 5.second)
-    val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_NEW &&
-      res._2.get.state.get.actualAmountB === ByteString.copyFrom("111", "UTF-8")
+      _ ← Future.sequence(txHashes1.map { hash ⇒
+        testSave(hash, owner, tokenS, tokenB, 100l)
+      })
+      _ ← Future.sequence(txHashes2.map { hash ⇒
+        testSave(hash, owner, tokenS, tokenB, 20l)
+      })
+      count1 ← service.countTrades(XGetTradesReq(
+        owner = owner,
+        market = XGetTradesReq.Market.MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+      ))
+      _ ← service.obsolete(30l)
+      count2 ← service.countTrades(XGetTradesReq(
+        owner = owner,
+        market = XGetTradesReq.Market.MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+      ))
+    } yield (count1, count2)
+    val res = Await.result(result.mapTo[(Int, Int)], 5.second)
+    val x = res._1 == 24 && res._2 == 12
     x should be(true)
   }
 }
