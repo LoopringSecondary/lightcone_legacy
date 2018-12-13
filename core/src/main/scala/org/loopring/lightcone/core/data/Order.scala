@@ -18,6 +18,7 @@ package org.loopring.lightcone.core.data
 
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 import XOrderStatus._
 
 case class OrderState(
@@ -185,7 +186,10 @@ case class Order(
     tokenMetadataManager: TokenMetadataManager
   ) = {
     if (!tokenMetadataManager.hasTokenByAddress(token)) {
-      throw new IllegalStateException(s"no metadata available for token $token")
+      throw ErrorException(
+        ERR_MATCHING_TOKEN_METADATA_UNAVAILABLE,
+        s"no metadata available for token $token"
+      )
     }
     val metadata = tokenMetadataManager.getTokenByAddress(token).get
     val decimals = metadata.decimals
