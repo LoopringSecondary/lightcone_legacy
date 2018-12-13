@@ -99,7 +99,7 @@ class EthereumEventExtractorActor()(
           .mapTo[XEthBlockNumberRes]
           .map(res ⇒ BigInt(res.result))
       }
-      blockHash ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(bigInt2Hex(blockNum)))
+      blockHash ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(blockNum.toString(16)))
         .mapTo[XGetBlockWithTxHashByNumberRes]
         .map(_.result.get.hash)
     } yield {
@@ -133,10 +133,10 @@ class EthereumEventExtractorActor()(
           if (result.parentHash.equals(currentBlockHash)) {
             val blockData = XBlockData()
               .withHash(result.hash)
-              .withHeight(hex2BigInt(result.number).longValue())
+              .withHeight(result.number.longValue())
             blockDal.saveBlock(blockData)
             self ! XBlockJob()
-              .withHeight(hex2BigInt(result.number).intValue())
+              .withHeight(result.number.intValue())
               .withHash(result.hash)
               .withTxhashes(result.transactions.map(_.hash))
           } else
@@ -151,7 +151,7 @@ class EthereumEventExtractorActor()(
   def handleFork(forkBlock: XForkBlock): Unit = {
     for {
       dbBlockData ← blockDal.findByHeight(forkBlock.height.longValue()).map(_.get)
-      nodeBlockData ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(bigInt2Hex(forkBlock.height)))
+      nodeBlockData ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(forkBlock.height.toHexString))
         .mapTo[XGetBlockWithTxHashByNumberRes]
         .map(_.result.get)
       task ← if (dbBlockData.hash.equals(nodeBlockData.hash)) {
@@ -229,10 +229,6 @@ class EthereumEventExtractorActor()(
     } else {
       BigInt(hex, 16)
     }
-  }
-
-  implicit def bigInt2Hex(num: BigInt): String = {
-    "0x" + num.toString(16)
   }
 
 }

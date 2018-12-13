@@ -73,7 +73,9 @@ message XForkBlock{
 message XBlockJob{
     int32 height = 1;
     string hash = 2;
-    repeated string txhashes = 3;
+    string miner = 3;
+    repeated string uncles = 4;
+    repeated string txhashes = 5;
 }
 
 message XBalanceAndAllowance {
