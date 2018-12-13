@@ -84,7 +84,7 @@ message MarketPair {
     string token_b  = 2;
 }
 
-message XGetOrdersReq {
+message XGetOrdersForUserReq {
     oneof market {
         MarketPair pair        = 1; // tokenS -> tokenB
         string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
@@ -95,9 +95,17 @@ message XGetOrdersReq {
     XSkip    skip                  = 6;
 }
 
-message XGetOrdersResult {
+message XGetOrdersForUserResult {
     repeated XRawOrder orders = 1;
     XErrorCode error = 2;
+}
+
+message XUserCancelOrderReq {
+    repeated string order_hashes = 1;
+}
+
+message XUserCancelOrderResult {
+    repeated string updated_order_hashes = 1;
 }
 
 message XGetTradesReq {

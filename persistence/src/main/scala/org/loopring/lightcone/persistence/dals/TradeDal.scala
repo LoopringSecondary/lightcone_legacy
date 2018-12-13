@@ -52,11 +52,11 @@ class TradeDalImpl()(
       createdAt = timeProvider.getTimeSeconds(),
       isValid = true
     )).asTry).map {
-      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ Left(XErrorCode.PERS_ERR_DUPLICATE_INSERT)
+      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ Left(XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
       case Failure(ex) ⇒ {
         // TODO du: print some log
         // log(s"error : ${ex.getMessage}")
-        Left(XErrorCode.PERS_ERR_INTERNAL)
+        Left(XErrorCode.ERR_PERSISTENCE_INTERNAL)
       }
       case Success(x) ⇒ Right(trade.txHash)
     }

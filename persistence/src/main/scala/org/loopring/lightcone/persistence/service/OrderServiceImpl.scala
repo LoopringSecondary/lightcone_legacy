@@ -36,7 +36,7 @@ class OrderServiceImpl @Inject() (
     //TODO du：验证订单有效，更新状态
     result ← orderDal.saveOrder(order)
   } yield {
-    if (result.error == XErrorCode.ERR_NONE || result.error == XErrorCode.PERS_ERR_DUPLICATE_INSERT) {
+    if (result.error == XErrorCode.ERR_NONE) {
       Left(result.order.get)
     } else {
       Right(result.error)
