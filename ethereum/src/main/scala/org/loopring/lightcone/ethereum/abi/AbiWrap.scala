@@ -76,4 +76,8 @@ abstract class AbiWrap(abiJson: String) {
   //todo: test 字节数组的相等
   private[abi] def searchBySignature[T <: SABI.Entry](signature: Array[Byte]): Predicate[T] =
     x ⇒ util.Arrays.equals(x.encodeSignature(), signature)
+
+  def unpackEvent(data: String, topics: Array[String]): Option[Any] = ???
+
+  def unpackFunctionInput(data: String): Option[Any] = None
 }

@@ -18,6 +18,7 @@ package org.loopring.lightcone.ethereum.abi
 
 import scala.io.Source
 import org.ethereum.solidity.{ Abi ⇒ SABI }
+import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
 
@@ -39,6 +40,50 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
   val allOrdersCancelledForTradingPairByBrokerEvent =
     AllOrdersCancelledForTradingPairByBrokerEvent(abi.findEvent(searchByName(AllOrdersCancelledForTradingPairByBrokerEvent.name)))
   val allOrdersCancelledByBrokerEvent = AllOrdersCancelledByBrokerEvent(abi.findEvent(searchByName(AllOrdersCancelledByBrokerEvent.name)))
+
+  override def unpackEvent(data: String, topics: Array[String]): Option[Any] = {
+    val event: SABI.Event = abi.findEvent(searchBySignature(Numeric.hexStringToByteArray(topics.head)))
+
+    event match {
+      case _: SABI.Event ⇒
+        event.name match {
+          case OrdersCancelledEvent.name ⇒
+            ordersCancelledEvent.unpack(data, topics)
+          case AllOrdersCancelledForTradingPairEvent.name ⇒
+            allOrdersCancelledForTradingPairEvent.unpack(data, topics)
+          case AllOrdersCancelledEvent.name ⇒
+            allOrdersCancelledEvent.unpack(data, topics)
+          case AllOrdersCancelledForTradingPairByBrokerEvent.name ⇒
+            allOrdersCancelledForTradingPairByBrokerEvent.unpack(data, topics)
+          case AllOrdersCancelledByBrokerEvent.name ⇒
+            allOrdersCancelledByBrokerEvent.unpack(data, topics)
+          case _ ⇒ None
+        }
+      case _ ⇒ None
+    }
+  }
+
+  override def unpackFunctionInput(data: String): Option[Any] = {
+    val funSig = Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
+    val func = abi.findFunction(searchBySignature(funSig))
+    func match {
+      case _: SABI.Function ⇒
+        func.name match {
+          case CancelAllOrdersForTradingPairFunction.name ⇒
+            cancelAllOrdersForTradingPair.unpackInput(data)
+          case CancelAllOrdersForTradingPairOfOwnerFunction.name ⇒
+            cancelAllOrdersForTradingPairOfOwner.unpackInput(data)
+          case CancelAllOrdersOfOwnerFunction.name ⇒
+            cancelAllOrdersOfOwner.unpackInput(data)
+          case CancelOrdersFunction.name ⇒
+            cancelOrders.unpackInput(data)
+          case CancelAllOrdersFunction.name ⇒
+            cancelAllOrdersFunction.unpackInput(data)
+          case _ ⇒ None
+        }
+      case _ ⇒ None
+    }
+  }
 }
 
 object OrderCancellerAbi {

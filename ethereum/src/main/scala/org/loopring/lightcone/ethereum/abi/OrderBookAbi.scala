@@ -17,6 +17,7 @@
 package org.loopring.lightcone.ethereum.abi
 
 import org.ethereum.solidity.{ Abi ⇒ SABI }
+import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
 import scala.io.Source
@@ -26,6 +27,32 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
   val submitOrder = SubmitOrderFunction(abi.findFunction(searchByName(SubmitOrderFunction.name)))
 
   val orderSubmittedEvent = OrderSubmittedEvent(abi.findEvent(searchByName(OrderSubmittedEvent.name)))
+
+  override def unpackEvent(data: String, topics: Array[String]): Option[Any] = {
+    val event: SABI.Event = abi.findEvent(searchBySignature(Numeric.hexStringToByteArray(topics.head)))
+    event match {
+      case _: SABI.Event if event.name.equals(OrderSubmittedEvent.name) ⇒
+        orderSubmittedEvent.unpack(data, topics)
+      case _ ⇒ None
+    }
+  }
+
+  override def unpackFunctionInput(data: String): Option[Any] = {
+    val funSig = Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
+    val func = abi.findFunction(searchBySignature(funSig))
+    func match {
+      case _: SABI.Function ⇒
+        func.name match {
+          case OrderSubmittedFunction.name ⇒
+            orderSubmitted.unpackInput(data)
+          case SubmitOrderFunction.name ⇒
+            submitOrder.unpackInput(data)
+          case _ ⇒ None
+        }
+      case _ ⇒ None
+    }
+  }
+
 }
 
 object OrderBookAbi {

@@ -17,6 +17,7 @@
 package org.loopring.lightcone.ethereum.abi
 
 import org.ethereum.solidity.{ Abi ⇒ SABI }
+import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
 import scala.io.Source
@@ -27,6 +28,21 @@ class BurnRateTableAbi(abiJson: String) extends AbiWrap(abiJson) {
   val burn_BASE_PERCENTAGE = BURN_BASE_PERCENTAGEFunction(abi.findFunction(searchByName(BURN_BASE_PERCENTAGEFunction.name)))
 
   val tokenTierUpgradedEvent = TokenTierUpgradedEvent(abi.findEvent(searchByName(TokenTierUpgradedEvent.name)))
+
+  override def unpackEvent(data: String, topics: Array[String]): Option[Any] = {
+    val event: SABI.Event = abi.findEvent(searchBySignature(Numeric.hexStringToByteArray(topics.head)))
+    event match {
+      case _: SABI.Event ⇒
+        event.name match {
+          case TokenTierUpgradedEvent.name ⇒
+            tokenTierUpgradedEvent.unpack(data, topics)
+          case _ ⇒ None
+        }
+      case _ ⇒ None
+    }
+  }
+
+  override def unpackFunctionInput(data: String): Option[Any] = None
 
 }
 

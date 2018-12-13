@@ -17,11 +17,35 @@
 package org.loopring.lightcone.ethereum.abi
 
 import org.ethereum.solidity.{ Abi ⇒ SABI }
+import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
 import scala.io.Source
 
-class AuthorizableAbi(abiJson: String) extends AbiWrap(abiJson)
+class AuthorizableAbi(abiJson: String) extends AbiWrap(abiJson) {
+
+  val isAddressAuthorizedFunction = IsAddressAuthorizedFunction(abi.findFunction(searchByName(IsAddressAuthorizedFunction.name)))
+
+  val addressAuthorizedEvent = AddressAuthorizedEvent(abi.findEvent(searchByName(AddressAuthorizedEvent.name)))
+  val addressDeauthorizedEvent = AddressDeauthorizedEvent(abi.findEvent(searchByName(AddressDeauthorizedEvent.name)))
+
+  override def unpackEvent(data: String, topics: Array[String]): Option[Any] = {
+    val event: SABI.Event = abi.findEvent(searchBySignature(Numeric.hexStringToByteArray(topics.head)))
+    event match {
+      case _: SABI.Event ⇒
+        event.name match {
+          case AddressAuthorizedEvent.name ⇒
+            addressAuthorizedEvent.unpack(data, topics)
+          case AddressDeauthorizedEvent.name ⇒
+            addressDeauthorizedEvent.unpack(data, topics)
+          case _ ⇒ None
+        }
+      case _ ⇒ None
+    }
+  }
+
+  override def unpackFunctionInput(data: String): Option[Any] = None
+}
 
 object AuthorizableAbi {
 
