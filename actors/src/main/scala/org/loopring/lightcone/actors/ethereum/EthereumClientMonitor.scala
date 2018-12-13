@@ -21,7 +21,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import org.json4s.DefaultFormats
 import org.loopring.lightcone.proto._
-
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 import scala.concurrent.duration._
 import scala.util._
@@ -58,7 +58,7 @@ private[ethereum] class EthereumClientMonitor(
       connectionPools.map { g ⇒
         for {
           blockNumResp: Int ← (g ? blockNumJsonRpcReq.toProto)
-            .mapTo[XJsonRpcRes]
+            .mapAs[XJsonRpcRes]
             .map(toJsonRpcResWrapped)
             .map(_.result)
             .map(anyHexToInt)

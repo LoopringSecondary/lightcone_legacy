@@ -33,6 +33,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -84,38 +85,38 @@ class EthereumQueryActor()(
       val batchReqs: XBatchContractCallReq = xGetBalanceAndAllowanceToBatchReq(Address(delegateAddress), req)
       val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
       (for {
-        callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
+        callRes ← (ethereumConnectionActor ? batchReqs).mapAs[XBatchContractCallRes]
         ethRes ← (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
-          .mapTo[XEthGetBalanceRes]
+          .mapAs[XEthGetBalanceRes]
         res: XGetBalanceAndAllowancesRes = xBatchContractCallResToBalanceAndAllowance(req.address, req.tokens, callRes)
       } yield {
         res.copy(
           balanceAndAllowanceMap = res.balanceAndAllowanceMap +
             (zeroAddress → XBalanceAndAllowance(BigInt(Numeric.toBigInt(ethRes.result)), BigInt(0)))
         )
-      }) pipeTo sender
+      }) sendTo sender
 
     case req: XGetBalanceReq ⇒
       val batchReqs: XBatchContractCallReq = req
       val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
       (for {
-        callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
+        callRes ← (ethereumConnectionActor ? batchReqs).mapAs[XBatchContractCallRes]
         ethRes ← (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
-          .mapTo[XEthGetBalanceRes]
+          .mapAs[XEthGetBalanceRes]
         res: XGetBalanceRes = xBatchContractCallResToBalance(req.address, req.tokens, callRes)
       } yield {
         res.copy(
           balanceMap = res.balanceMap +
             (zeroAddress → BigInt(Numeric.toBigInt(ethRes.result)))
         )
-      }) pipeTo sender
+      }) sendTo sender
 
     case req: XGetAllowanceReq ⇒
       val batchReqs: XBatchContractCallReq = xGetAllowanceToBatchReq(Address(delegateAddress), req)
       (for {
-        callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
+        callRes ← (ethereumConnectionActor ? batchReqs).mapAs[XBatchContractCallRes]
         res: XGetAllowanceRes = xBatchContractCallResToAllowance(req.address, req.tokens, callRes)
-      } yield res) pipeTo sender
+      } yield res) sendTo sender
 
     case req: GetFilledAmountReq ⇒ //todo：订单的成交金额
   }

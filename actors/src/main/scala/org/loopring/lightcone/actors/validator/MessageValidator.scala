@@ -20,14 +20,6 @@ import org.loopring.lightcone.proto.XError
 import org.loopring.lightcone.proto.XErrorCode._
 
 trait MessageValidator {
-
-  protected def normalizeRequest[T](req: T)(func: ⇒ T): Either[XError, T] = {
-    try { Right(func) } catch {
-      case e: Throwable ⇒
-        Left(XError(ERR_INVALID_REQ, e.getMessage))
-    }
-  }
-
-  def validate: PartialFunction[Any, Either[XError, Any]]
+  def validate: PartialFunction[Any, Any]
 }
 
