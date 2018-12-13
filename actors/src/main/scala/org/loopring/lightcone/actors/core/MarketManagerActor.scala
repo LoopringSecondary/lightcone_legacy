@@ -26,11 +26,12 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.core.depth.OrderAwareOrderbookAggregatorImpl
+import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent._
 
@@ -149,7 +150,7 @@ class MarketManagerActor(
       }
 
     case XTriggerRematchReq(sellOrderAsTaker, offset) ⇒ for {
-      res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
+      res ← (gasPriceActor ? XGetGasPriceReq()).mapAs[XGetGasPriceRes]
       gasPrice: BigInt = res.gasPrice
       minRequiredIncome = getRequiredMinimalIncome(gasPrice)
       _ = manager.triggerMatch(sellOrderAsTaker, minRequiredIncome, offset)
@@ -164,7 +165,7 @@ class MarketManagerActor(
     xorder.status match {
       case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING ⇒ for {
         // get ring settlement cost
-        res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
+        res ← (gasPriceActor ? XGetGasPriceReq()).mapAs[XGetGasPriceRes]
 
         gasPrice: BigInt = res.gasPrice
         minRequiredIncome = getRequiredMinimalIncome(gasPrice)

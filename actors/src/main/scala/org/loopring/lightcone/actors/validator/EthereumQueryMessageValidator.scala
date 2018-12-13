@@ -35,20 +35,17 @@ final class EthereumQueryMessageValidator()(
   private def normalizeAddress(address: String): String = address
 
   def validate = {
-    case req: XGetBalanceAndAllowancesReq ⇒ normalizeRequest(req) {
+    case req: XGetBalanceAndAllowancesReq ⇒
       req.copy(tokens = req.tokens.map(normalizeAddress))
         .copy(address = normalizeAddress(req.address))
-    }
 
-    case req: XGetBalanceReq ⇒ normalizeRequest(req) {
+    case req: XGetBalanceReq ⇒
       req.copy(tokens = req.tokens.map(normalizeAddress))
         .copy(address = normalizeAddress(req.address))
-    }
 
-    case req: XGetAllowanceReq ⇒ normalizeRequest(req) {
+    case req: XGetAllowanceReq ⇒
       req.copy(tokens = req.tokens.map(normalizeAddress))
         .copy(address = normalizeAddress(req.address))
-    }
 
     // case req: GetFilledAmountReq ⇒
   }

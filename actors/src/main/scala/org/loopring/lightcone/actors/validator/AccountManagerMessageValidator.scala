@@ -28,6 +28,6 @@ final class AccountManagerMessageValidator()(
     val config: Config
 ) extends MessageValidator {
   def validate = {
-    case x ⇒ Right(x)
+    case x ⇒ x
   }
 }
