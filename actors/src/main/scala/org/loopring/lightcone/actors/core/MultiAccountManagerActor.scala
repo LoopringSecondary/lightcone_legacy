@@ -30,8 +30,8 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
-object AccountManagerMultiActor extends ShardedByAddress {
-  val name = "account_manager_multi"
+object MultiAccountManagerActor extends ShardedByAddress {
+  val name = "multi_account_manager"
 
   def startShardRegion()(
     implicit
@@ -49,7 +49,7 @@ object AccountManagerMultiActor extends ShardedByAddress {
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new AccountManagerMultiActor()),
+      entityProps = Props(new MultiAccountManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -58,11 +58,15 @@ object AccountManagerMultiActor extends ShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
-    case x: Any ⇒ "abc"
+    case req: XCancelOrderReq             ⇒ req.address
+    case req: XSubmitOrderReq             ⇒ req.address
+    case req: XGetBalanceAndAllowancesReq ⇒ req.address
+    case req: XAddressBalanceUpdated      ⇒ req.address
+    case req: XAddressAllowanceUpdated    ⇒ req.address
   }
 }
 
-class AccountManagerMultiActor()(
+class MultiAccountManagerActor()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -71,37 +75,41 @@ class AccountManagerMultiActor()(
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator
 )
-  extends ActorWithPathBasedConfig(AccountManagerMultiActor.name)
+  extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
   with OrderRecoverSupport
   with ActorLogging {
 
-  val shardId = self.path.toString.split("/").last //todo：如何获取shardId
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
-      case _: Exception ⇒ Restart //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
+      //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
+      case _: Exception ⇒ Restart
     }
 
   val accountManagerActors = new MapBasedLookup[ActorRef]()
 
-  startOrderRecovery(XOrderRecoverySettings(
+  requestOrderRecovery(XOrderRecoverySettings(
     selfConfig.getBoolean("skip-recovery"),
     selfConfig.getInt("recover-batch-size"),
-    shardId,
+    entityName,
     None
   ))
 
   def receive: Receive = {
     case req: XSubmitOrderReq ⇒
-      getAccountActorOrElse(req.address) forward req
+      getManagerActorForAccountManager(req.address) forward req
     case req: XGetBalanceAndAllowancesReq ⇒
-      getAccountActorOrElse(req.address) forward req
+      getManagerActorForAccountManager(req.address) forward req
     case req: XCancelOrderReq ⇒
-      getAccountActorOrElse(req.address) forward req
+      getManagerActorForAccountManager(req.address) forward req
+    case req: XAddressBalanceUpdated ⇒
+      getManagerActorForAccountManager(req.address) forward req
+    case req: XAddressAllowanceUpdated ⇒
+      getManagerActorForAccountManager(req.address) forward req
     case x ⇒
       log.info(s"receive wrong msg: $x")
   }
 
-  def getAccountActorOrElse(address: String): ActorRef = {
+  def getManagerActorForAccountManager(address: String): ActorRef = {
     val actorName = address
     if (!accountManagerActors.contains(actorName)) {
       val newAccountActor = context.actorOf(Props(new AccountManagerActor()), actorName)
@@ -111,7 +119,7 @@ class AccountManagerMultiActor()(
   }
 
   protected def recoverOrder(xraworder: XRawOrder) = {
-    getAccountActorOrElse(xraworder.owner) ? XSubmitOrderReq(xraworder.owner, Some(xraworder))
+    getManagerActorForAccountManager(xraworder.owner) ? XSubmitOrderReq(xraworder.owner, Some(xraworder))
   }
 
 }

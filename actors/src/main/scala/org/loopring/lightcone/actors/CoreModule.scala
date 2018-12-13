@@ -94,7 +94,7 @@ class CoreModule(config: Config)
 
     //-----------deploy sharded actors-----------
     actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
-    actors.add(AccountManagerMultiActor.name, AccountManagerMultiActor.startShardRegion)
+    actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.startShardRegion)
     actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
     actors.add(EthereumEventExtractorActor.name, EthereumEventExtractorActor.startShardRegion)
     actors.add(EthereumEventPersistorActor.name, EthereumEventPersistorActor.startShardRegion)

@@ -128,7 +128,7 @@ class MarketManagerActor(
     "",
     Some(marketId)
   )
-  startOrderRecovery(recoverySettings)
+  requestOrderRecovery(recoverySettings)
 
   def receive: Receive = LoggingReceive {
 

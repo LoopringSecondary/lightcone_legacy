@@ -42,7 +42,7 @@ trait OrderRecoverSupport {
   private var recoverEnded: Boolean = false
   private var xordersToRecover = Queue.empty[XRawOrder]
 
-  protected def startOrderRecovery(settings: XOrderRecoverySettings) = {
+  protected def requestOrderRecovery(settings: XOrderRecoverySettings) = {
     recoverySettings = settings
     if (recoverySettings.skipRecovery) {
       log.warning(s"actor recovering skipped: ${self.path}")
