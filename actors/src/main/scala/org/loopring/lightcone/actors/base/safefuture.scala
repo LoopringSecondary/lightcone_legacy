@@ -52,7 +52,7 @@ object safefuture {
         case Success(r) ⇒ recipient forward r
         case Failure(f) ⇒ f match {
           case e: ErrorException ⇒ sender ! e.error
-          case t: Throwable      ⇒ sender ! XError(ERR_INTERNAL_UNKNOWN, t.getMessage)
+          case e: Throwable      ⇒ throw e
         }
       }
       f
@@ -67,7 +67,7 @@ object safefuture {
         case Success(r) ⇒ recipient ! r
         case Failure(f) ⇒ f match {
           case e: ErrorException ⇒ sender ! e.error
-          case t: Throwable      ⇒ sender ! XError(ERR_INTERNAL_UNKNOWN, t.getMessage)
+          case e: Throwable      ⇒ throw e
         }
       }
       f

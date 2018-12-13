@@ -29,7 +29,7 @@ final class OrderHandlerMessageValidator()(
 ) extends MessageValidator {
 
   def validate = {
-    case msg: XSubmitRawOrderReq ⇒ msg
+    case msg: XSubmitRawOrderReq ⇒
     case msg: XCancelOrderReq    ⇒ msg
   }
 }
