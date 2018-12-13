@@ -18,7 +18,6 @@ package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.persistence.dals.CancelOrderOnChainDal
 import org.loopring.lightcone.proto.{ XCancelOrderOnChain, XErrorCode }
-
 import scala.concurrent.Future
 
 trait CancelOrderOnChainService {
