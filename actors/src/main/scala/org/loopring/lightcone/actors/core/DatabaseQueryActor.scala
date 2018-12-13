@@ -38,14 +38,15 @@ import scala.concurrent._
 object DatabaseQueryActor extends ShardedEvenly {
   val name = "database_query"
 
-  def startShardRegion()(implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef]
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -61,17 +62,17 @@ object DatabaseQueryActor extends ShardedEvenly {
   }
 }
 
-class DatabaseQueryActor()(
-    implicit
-    val config: Config,
+class DatabaseQueryActor(
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
+    val actors: Lookup[ActorRef])
+    extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
 
   def receive: Receive = LoggingReceive {
-    case _ ⇒
+    case _ =>
   }
 
 }

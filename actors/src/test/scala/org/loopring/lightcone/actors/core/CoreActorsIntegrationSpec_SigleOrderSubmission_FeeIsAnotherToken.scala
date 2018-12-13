@@ -83,17 +83,17 @@ import org.loopring.lightcone.proto._
 //       orderHistoryProbe.replyWith(order.id, "0".zeros(0))
 
 //       expectMsgPF() {
-//         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+//         case XSubmitOrderRes(ERR_OK, Some(xorder)) =>
 //           val order: Order = xorder
 //           log.debug(s"order submitted: $order")
-//         case XSubmitOrderRes(ERR_INTERNAL_UNKNOWN, None) ⇒
+//         case XSubmitOrderRes(ERR_INTERNAL_UNKNOWN, None) =>
 //           log.debug(s"occurs ERR_INTERNAL_UNKNOWN when submitting order:$order")
 //       }
 
 //       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //       expectMsgPF() {
-//         case a: XOrderbook ⇒
+//         case a: XOrderbook =>
 //           log.debug("----orderbook: " + a)
 //       }
 //     }

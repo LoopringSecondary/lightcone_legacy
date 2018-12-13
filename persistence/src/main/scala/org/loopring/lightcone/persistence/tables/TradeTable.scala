@@ -22,8 +22,7 @@ import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
-class TradeTable(tag: Tag)
-  extends BaseTable[XTradeData](tag, "T_TRADES") {
+class TradeTable(tag: Tag) extends BaseTable[XTradeData](tag, "T_TRADES") {
 
   // How to generate id???
   def id = column[String]("id", O.PrimaryKey)
@@ -35,12 +34,13 @@ class TradeTable(tag: Tag)
 
   // indexes
 
-  def * = (
-    id,
-    height,
-    blockHash,
-    txHash,
-    orderHash,
-    timestamp
-  ) <> ((XTradeData.apply _).tupled, XTradeData.unapply)
+  def * =
+    (
+      id,
+      height,
+      blockHash,
+      txHash,
+      orderHash,
+      timestamp
+    ) <> ((XTradeData.apply _).tupled, XTradeData.unapply)
 }

@@ -19,10 +19,12 @@ package org.loopring.lightcone.core.base
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
-class DustOrderEvaluator(threshold: Double = 0.0)(
+class DustOrderEvaluator(
+    threshold: Double = 0.0
+  )(
     implicit
-    tve: TokenValueEstimator
-) {
+    tve: TokenValueEstimator) {
+
   def isOriginalDust(order: Order) =
     isDust(order.tokenS, order.original.amountS)
 
@@ -35,7 +37,10 @@ class DustOrderEvaluator(threshold: Double = 0.0)(
   def isMatchableDust(order: Order) =
     isDust(order.tokenS, order.matchable.amountS)
 
-  private def isDust(tokenS: String, amountS: BigInt): Boolean = {
+  private def isDust(
+      tokenS: String,
+      amountS: BigInt
+    ): Boolean = {
     tve.getEstimatedValue(tokenS, amountS) < threshold
   }
 }

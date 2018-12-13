@@ -22,20 +22,28 @@ import org.loopring.lightcone.proto._
 
 trait RingIncomeEstimator {
   def getRingIncome(ring: OrderRing): Double
-  def isProfitable(ring: OrderRing, fiatValueThreshold: Double): Boolean
+
+  def isProfitable(
+      ring: OrderRing,
+      fiatValueThreshold: Double
+    ): Boolean
 }
 
-final class RingIncomeEstimatorImpl()(
+final class RingIncomeEstimatorImpl(
+  )(
     implicit
     tmm: TokenMetadataManager,
-    tve: TokenValueEstimator
-) extends RingIncomeEstimator {
+    tve: TokenValueEstimator)
+    extends RingIncomeEstimator {
 
   def getRingIncome(ring: OrderRing) =
     getExpectedFillIncomeFiatValue(ring.maker) +
       getExpectedFillIncomeFiatValue(ring.taker)
 
-  def isProfitable(ring: OrderRing, fiatValueThreshold: Double) =
+  def isProfitable(
+      ring: OrderRing,
+      fiatValueThreshold: Double
+    ) =
     getRingIncome(ring) >= fiatValueThreshold
 
   private def getExpectedFillIncomeFiatValue(fill: ExpectedFill) = {

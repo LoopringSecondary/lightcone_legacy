@@ -30,10 +30,11 @@ object Main extends App with Logging {
   log.info(s"--> config_path = ${configPathOpt}")
 
   val baseConfig = ConfigFactory.load()
+
   val config = configPathOpt match {
-    case Some(path) if path.nonEmpty ⇒
+    case Some(path) if path.nonEmpty =>
       ConfigFactory.parseFile(new File(path)).withFallback(baseConfig)
-    case _ ⇒
+    case _ =>
       baseConfig
   }
 
@@ -44,7 +45,7 @@ object Main extends App with Logging {
     "akka.cluster.roles"
   )
 
-  configItems foreach { i ⇒
+  configItems foreach { i =>
     log.info(s"--> $i = ${config.getString(i)}")
   }
 
@@ -52,4 +53,3 @@ object Main extends App with Logging {
   val actors = injector.instance[Lookup[ActorRef]]
   actors.get(EntryPointActor.name)
 }
-

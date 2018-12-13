@@ -16,9 +16,9 @@
 
 package org.loopring.lightcone.gateway_bak.socketio
 
-import akka.actor.{ ActorSystem, Props }
+import akka.actor.{ActorSystem, Props}
 import com.corundumstudio.socketio.listener.DataListener
-import com.corundumstudio.socketio.{ AckRequest, Configuration }
+import com.corundumstudio.socketio.{AckRequest, Configuration}
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.loopring.lightcone.gateway_bak.jsonrpc.JsonRpcServer
@@ -30,10 +30,10 @@ import scala.concurrent.duration.Duration
 class SocketIOServer(
     jsonRpcServer: JsonRpcServer,
     eventBindings: EventBindings
-)(
-    implicit
-    system: ActorSystem
-) extends Object with Logging {
+  )(
+    implicit system: ActorSystem)
+    extends Object
+    with Logging {
 
   implicit val ex = system.dispatcher
 
@@ -52,10 +52,8 @@ class SocketIOServer(
     _config
   }
 
-  private val router = system.actorOf(
-    Props[SocketIOServerRouter],
-    "socketio_router"
-  )
+  private val router =
+    system.actorOf(Props[SocketIOServerRouter], "socketio_router")
 
   def start() {
     val server = new IOServer(ioConfig)
@@ -68,10 +66,10 @@ class SocketIOServer(
       new DataListener[java.util.Map[String, Any]] {
 
         override def onData(
-          client: IOClient,
-          data: java.util.Map[String, Any],
-          ackSender: AckRequest
-        ) {
+            client: IOClient,
+            data: java.util.Map[String, Any],
+            ackSender: AckRequest
+          ) {
           val event = data.get("method").toString
           val json = mapper.writeValueAsString(data)
           log.debug(s"client: ${client.getRemoteAddress}, request: ${data}")
@@ -91,17 +89,14 @@ class SocketIOServer(
     log.debug(s"socketio server started @ ${port}")
   }
 
-  private[socketio] def invoke(json: String) = Await.result(
-    jsonRpcServer.handleRequest(json),
-    Duration.Inf
-  ).map { resp ⇒
-      val respMap = mapper.readValue(
-        resp,
-        classOf[java.util.Map[String, Any]]
-      )
-      log.trace(s"socketio rpc response: ${respMap}")
-      respMap
-    }
+  private[socketio] def invoke(json: String) =
+    Await
+      .result(jsonRpcServer.handleRequest(json), Duration.Inf)
+      .map { resp =>
+        val respMap =
+          mapper.readValue(resp, classOf[java.util.Map[String, Any]])
+        log.trace(s"socketio rpc response: ${respMap}")
+        respMap
+      }
 
 }
-

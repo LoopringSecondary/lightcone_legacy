@@ -22,10 +22,12 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.Future
 
 trait AccountService {
-  self: ApiService ⇒
+  self: ApiService =>
 
   //todo：是否与actors等使用同一个proto，或者重新定义在gateway.proto
-  def getBalanceAndAllowance(req: XGetBalanceAndAllowancesReq): Future[XGetBalanceAndAllowancesRes] =
+  def getBalanceAndAllowance(
+      req: XGetBalanceAndAllowancesReq
+    ): Future[XGetBalanceAndAllowancesRes] =
     (self.entryPointActor ? req).mapTo[XGetBalanceAndAllowancesRes]
 
 }

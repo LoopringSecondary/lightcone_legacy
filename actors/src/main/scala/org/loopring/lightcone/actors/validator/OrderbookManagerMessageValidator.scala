@@ -23,11 +23,10 @@ object OrderbookManagerMessageValidator {
   val name = "orderbook_manager_validator"
 }
 
-final class OrderbookManagerMessageValidator()(
-    implicit
-    val config: Config
-) extends MessageValidator {
+final class OrderbookManagerMessageValidator()(implicit val config: Config)
+    extends MessageValidator {
+
   def validate = {
-    case msg: XGetOrderbookReq ⇒ msg
+    case msg: XGetOrderbookReq => msg
   }
 }

@@ -46,15 +46,14 @@ object CoreActorsIntegrationCommonSpec {
 
 abstract class CoreActorsIntegrationCommonSpec(
     marketId: XMarketId,
-    configStr: String
-)
-  extends TestKit(ActorSystem("lightcone_test", ConfigFactory.load()))
-  with ImplicitSender
-  with Matchers
-  with WordSpecLike
-  with BeforeAndAfterEach
-  with BeforeAndAfterAll
-  with Logging {
+    configStr: String)
+    extends TestKit(ActorSystem("lightcone_test", ConfigFactory.load()))
+    with ImplicitSender
+    with Matchers
+    with WordSpecLike
+    with BeforeAndAfterEach
+    with BeforeAndAfterAll
+    with Logging {
 
   implicit val config_ = ConfigFactory.parseString(configStr)
 
@@ -84,43 +83,58 @@ abstract class CoreActorsIntegrationCommonSpec(
 
   // Simulating an AccountBalanceActor
   val ordersDalActorProbe = new TestProbe(system, "order_db_access") {
+
     def expectQuery() {
       expectMsgPF() {
-        case req: XRecoverOrdersReq ⇒
+        case req: XRecoverOrdersReq =>
           info(s"ordermanagerProbe receive: $req, sender:${sender()}")
       }
     }
-    def replyWith(xorders: Seq[XRawOrder]) = reply(
-      XRecoverOrdersRes(orders = xorders)
-    )
+
+    def replyWith(xorders: Seq[XRawOrder]) =
+      reply(XRecoverOrdersRes(orders = xorders))
   }
   val ordersDalActor = ordersDalActorProbe.ref
 
   // Simulating an AccountBalanceActor
   val ethereumQueryProbe = new TestProbe(system, "account_balance") {
-    def expectQuery(address: String, token: String) = expectMsgPF() {
-      case XGetBalanceAndAllowancesReq(addr, tokens) if addr == address && tokens == Seq(token) ⇒
+
+    def expectQuery(
+        address: String,
+        token: String
+      ) = expectMsgPF() {
+      case XGetBalanceAndAllowancesReq(addr, tokens)
+          if addr == address && tokens == Seq(token) =>
         info(s"accountBalanceProbe, ${addr}, ${tokens}, ${sender()}")
     }
 
-    def replyWith(addr: String, token: String, balance: BigInt, allowance: BigInt) = reply(
-      XGetBalanceAndAllowancesRes(
-        addr, Map(token -> XBalanceAndAllowance(balance, allowance))
+    def replyWith(
+        addr: String,
+        token: String,
+        balance: BigInt,
+        allowance: BigInt
+      ) =
+      reply(
+        XGetBalanceAndAllowancesRes(
+          addr,
+          Map(token -> XBalanceAndAllowance(balance, allowance))
+        )
       )
-    )
   }
   val ethereumQueryActor = ethereumQueryProbe.ref
 
   // Simulating an OrderHistoryProbe
   val orderHistoryProbe = new TestProbe(system, "order_history") {
+
     def expectQuery(orderId: String) = expectMsgPF() {
-      case XGetOrderFilledAmountReq(id) if id == orderId ⇒
+      case XGetOrderFilledAmountReq(id) if id == orderId =>
         log.debug(s"orderHistoryProbe, ${sender()}, ${id}")
     }
 
-    def replyWith(orderId: String, filledAmountS: BigInt) = reply(
-      XGetOrderFilledAmountRes(orderId, filledAmountS)
-    )
+    def replyWith(
+        orderId: String,
+        filledAmountS: BigInt
+      ) = reply(XGetOrderFilledAmountRes(orderId, filledAmountS))
   }
   val orderHistoryActor = orderHistoryProbe.ref
 
@@ -131,24 +145,17 @@ abstract class CoreActorsIntegrationCommonSpec(
   val settlementActor = TestActorRef(new RingSettlementActor())
 
   val gasPriceActor = TestActorRef(new GasPriceActor)
-  val orderbookManagerActor = TestActorRef(
-    new OrderbookManagerActor()
-  )
+
+  val orderbookManagerActor = TestActorRef(new OrderbookManagerActor())
 
   val ADDRESS_1 = "address_111111111111111111111"
   val ADDRESS_2 = "address_222222222222222222222"
 
-  val accountManagerActor1: ActorRef = TestActorRef(
-    new AccountManagerActor()
-  )
+  val accountManagerActor1: ActorRef = TestActorRef(new AccountManagerActor())
 
-  val accountManagerActor2: ActorRef = TestActorRef(
-    new AccountManagerActor()
-  )
+  val accountManagerActor2: ActorRef = TestActorRef(new AccountManagerActor())
 
-  val marketManagerActor: ActorRef = TestActorRef(
-    new MarketManagerActor()
-  )
+  val marketManagerActor: ActorRef = TestActorRef(new MarketManagerActor())
 
   actors.add(EthereumQueryActor.name, ethereumQueryActor)
   actors.add(MarketManagerActor.name, marketManagerActor)

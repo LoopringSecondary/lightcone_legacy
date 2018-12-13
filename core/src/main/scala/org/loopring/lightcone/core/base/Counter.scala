@@ -17,8 +17,16 @@
 package org.loopring.lightcone.core.base
 
 trait Counter[T] {
-  def incr(key: T, delta: Long = 1): Long
-  def decr(key: T, delta: Long = 1): Long
+
+  def incr(
+      key: T,
+      delta: Long = 1
+    ): Long
+
+  def decr(
+      key: T,
+      delta: Long = 1
+    ): Long
   def get(keuy: T): Long
   def remove(key: T): Unit
   def clear(): Unit
@@ -27,13 +35,19 @@ trait Counter[T] {
 class SimpleCounter[T] extends Counter[T] {
   private var counts = Map.empty[T, Long]
 
-  def incr(key: T, delta: Long = 1) = {
+  def incr(
+      key: T,
+      delta: Long = 1
+    ) = {
     val count = get(key) + delta
     counts += (key -> count)
     count
   }
 
-  def decr(key: T, delta: Long = 1) = incr(key, -delta)
+  def decr(
+      key: T,
+      delta: Long = 1
+    ) = incr(key, -delta)
   def get(key: T) = counts.getOrElse(key, 0)
   def remove(key: T) = { counts -= key }
   def clear() { counts = Map.empty }
