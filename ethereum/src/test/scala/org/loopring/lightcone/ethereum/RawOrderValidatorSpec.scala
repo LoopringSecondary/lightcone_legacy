@@ -16,33 +16,21 @@
 
 package org.loopring.lightcone.ethereum.data
 
+import scala.util.Properties
 import org.scalatest._
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto._
 
-class RingBatchGeneratorSpec extends FlatSpec with Matchers {
-  "simple 2 tradable orders" should "be able to generate a ring" in {
+class RawOrderValidatorSpec extends FlatSpec with Matchers {
+  val validator: RawOrderValidator = new RawOrderValidatorImpl
+
+  "user" should "be able to get hash of an order" in {
     val lrcAddress = TestConfig.envOrElseConfig("contracts.LRC")
     val wethAddress = TestConfig.envOrElseConfig("contracts.WETH")
     val gtoAddress = TestConfig.envOrElseConfig("contracts.GTO")
 
     val order1Owner = TestConfig.envOrElseConfig("accounts.a1.addr")
     val order2Owner = TestConfig.envOrElseConfig("accounts.a2.addr")
-
-    val miner = TestConfig.envOrElseConfig("accounts.a3.addr")
-    val minerPrivKey = TestConfig.envOrElseConfig("accounts.a3.privKey")
-
-    // println(s"lrcAddress: $lrcAddress, $wethAddress, $miner, $minerPrivKey")
-
-    val xRingBatchContext = (new XRingBatchContext).withFeeRecipient(miner)
-      .withMiner(miner)
-      .withTransactionOrigin(miner)
-      .withMinerPrivateKey(minerPrivKey)
-      .withLrcAddress(lrcAddress)
-
-    println(s"xRingBatchContext: $xRingBatchContext")
-
-    val ringBatchGenerator = new RingBatchGeneratorImpl(xRingBatchContext)
 
     val order1 = (new XRawOrder)
       .withVersion(0)
@@ -51,21 +39,12 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
       .withTokenB(wethAddress)
       .withAmountS(ByteString.copyFromUtf8(1000e18.toLong.toHexString))
       .withAmountB(ByteString.copyFromUtf8(1e18.toLong.toHexString))
+    println(s"order1: $order1")
 
-    val order2 = (new XRawOrder)
-      .withVersion(0)
-      .withOwner(order2Owner)
-      .withTokenS(wethAddress)
-      .withTokenB(lrcAddress)
-      .withAmountS(ByteString.copyFromUtf8(1e18.toLong.toHexString))
-      .withAmountB(ByteString.copyFromUtf8(1000e18.toLong.toHexString))
+    val order1WithDefault = validator.setupEmptyFieldsWithDefaults(order1, lrcAddress)
+    println(s"order1WithDefault: $order1WithDefault")
 
-    val orders = Seq(Seq(order1, order2))
-    val xRingBatch = ringBatchGenerator.generateAndSignRingBatch(orders)
-    println(s"xRingBatch: $xRingBatch")
-
-    val param = ringBatchGenerator.toSubmitableParamStr(xRingBatch)
-    println(s"param str: $param")
-
+    val validateResult = validator.validate(order1WithDefault)
+    println(s"validateResult: $validateResult")
   }
 }

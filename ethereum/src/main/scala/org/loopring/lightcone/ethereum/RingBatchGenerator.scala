@@ -28,7 +28,6 @@ trait RingBatchGenerator {
   def toSubmitableParamStr(xRingBatch: XRingBatch): String
 }
 
-// TODO(kongliang): implement and test this class
 class RingBatchGeneratorImpl(context: XRingBatchContext)
   extends RingBatchGenerator {
   val OrderVersion = 0
@@ -41,7 +40,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
 
     val ordersDistinctedMap = orders
       .flatten
-      .map(o ⇒ setupOrderDefaults(o))
+      .map(o ⇒ orderValidator.setupEmptyFieldsWithDefaults(o, context.lrcAddress))
       .map(o ⇒ orderValidator.calculateOrderHash(o) -> o)
       .toMap
 
@@ -104,46 +103,6 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     paramStream.addHex(data.getData)
 
     return paramStream.getData
-  }
-
-  private def setupOrderDefaults(order: XRawOrder) = {
-    val defaultAddr = "0x0"
-    val fullZeroAddr = "0x" + "0" * 40
-    val defaultUint256 = ByteString.copyFromUtf8("0")
-
-    val addressGetOrDefault = (addr: String) => if (isValidAddress(addr)) addr else defaultAddr
-
-    val uint256GetOrDefault = (uint256Bs: ByteString) => {
-      if (uint256Bs.isEmpty) defaultUint256 else uint256Bs
-    }
-
-    var params = order.params.getOrElse(new XRawOrder.Params)
-    var feeParams = order.feeParams.getOrElse(new XRawOrder.FeeParams)
-    var erc1400Params = order.erc1400Params.getOrElse(new XRawOrder.ERC1400Params)
-
-    params = params.copy(
-      dualAuthAddr = addressGetOrDefault(params.dualAuthAddr),
-      broker = addressGetOrDefault(params.broker),
-      orderInterceptor = addressGetOrDefault(params.orderInterceptor),
-      wallet = addressGetOrDefault(params.wallet)
-    )
-
-    feeParams = feeParams.copy(
-      amountFee = uint256GetOrDefault(feeParams.amountFee),
-      tokenRecipient = addressGetOrDefault(feeParams.tokenRecipient)
-    )
-
-    if (feeParams.tokenFee.length == 0
-      || feeParams.tokenFee == defaultAddr
-      || feeParams.tokenFee == fullZeroAddr) {
-      feeParams = feeParams.copy(tokenFee = context.lrcAddress)
-    }
-
-    order.copy(
-      params = Option(params),
-      feeParams = Option(feeParams),
-      erc1400Params = Option(erc1400Params),
-    )
   }
 
   private def addDataAndOffset(
