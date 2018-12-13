@@ -86,7 +86,7 @@ class AccountManagerActor()(
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case XSubmitOrderReq(_,Some(xorder)) ⇒ {
+    case XSubmitOrderReq(_, Some(xorder)) ⇒ {
       // println("### accountXSubmitOrderReq")
       submitOrder(xorder).sendTo(sender)
     }
