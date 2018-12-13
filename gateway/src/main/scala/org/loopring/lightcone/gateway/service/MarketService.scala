@@ -17,7 +17,7 @@
 package org.loopring.lightcone.gateway.service
 
 trait MarketService {
-  self: ApiService ⇒
+  self: ApiService =>
 
   def getAllMarkets() = ???
 

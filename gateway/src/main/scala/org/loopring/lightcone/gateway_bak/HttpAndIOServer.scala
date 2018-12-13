@@ -33,11 +33,11 @@ import scala.util._
 class HttpAndIOServer(
     jsonRpcServer: JsonRpcServer,
     ioServer: SocketIOServer
-)(
-    implicit
-    system: ActorSystem,
-    mat: ActorMaterializer
-) extends Json4sSupport with Logging {
+  )(
+    implicit system: ActorSystem,
+    mat: ActorMaterializer)
+    extends Json4sSupport
+    with Logging {
 
   // TODO(Duan): Inject this and make it confiburable
   implicit val timeout = Timeout(3 seconds)
@@ -51,7 +51,7 @@ class HttpAndIOServer(
     pathPrefix(pathName) {
       pathEnd {
         post {
-          entity(as[JsonRpcRequest]) { req ⇒
+          entity(as[JsonRpcRequest]) { req =>
             val f = jsonRpcServer
               .handleRequest(req)
               .map(toJsonResp)
@@ -62,7 +62,7 @@ class HttpAndIOServer(
     }
 
   private def toJsonResp: PartialFunction[Option[String], HttpResponse] = {
-    case Some(str) ⇒
+    case Some(str) =>
       HttpResponse(
         StatusCodes.OK,
         entity = HttpEntity(ContentTypes.`application/json`, str)
@@ -72,11 +72,11 @@ class HttpAndIOServer(
   try {
     ioServer.start
   } catch {
-    case t: Throwable ⇒ log.error("socketio started failed!", t)
+    case t: Throwable => log.error("socketio started failed!", t)
   }
 
   Http().bindAndHandle(route, "localhost", port) onComplete {
-    case Success(value) ⇒ log.debug(s"http server has started @ $value")
-    case Failure(ex)    ⇒ log.error("http server failed", ex)
+    case Success(value) => log.debug(s"http server has started @ $value")
+    case Failure(ex)    => log.error("http server failed", ex)
   }
 }

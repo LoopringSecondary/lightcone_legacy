@@ -31,21 +31,22 @@ import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
 // main owner: 于红雨
 object OrderHandlerActor extends ShardedEvenly {
   val name = "order_handler"
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef]
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -61,18 +62,18 @@ object OrderHandlerActor extends ShardedEvenly {
   }
 }
 
-class OrderHandlerActor()(
-    implicit
-    val config: Config,
+class OrderHandlerActor(
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
+    val actors: Lookup[ActorRef])
+    extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
   def receive: Receive = {
-    case _ ⇒
-    // case XSubmitRawOrder(Some(order)) ⇒
+    case _ =>
+    // case XSubmitRawOrder(Some(order)) =>
   }
 
 }

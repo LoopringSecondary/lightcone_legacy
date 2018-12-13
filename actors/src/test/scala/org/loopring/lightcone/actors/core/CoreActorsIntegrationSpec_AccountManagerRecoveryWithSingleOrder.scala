@@ -91,7 +91,7 @@ import org.loopring.lightcone.proto._
 //         orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //         expectMsgPF() {
-//           case a: XOrderbook ⇒
+//           case a: XOrderbook =>
 //             info("----orderbook status after first XRecoverOrdersRes: " + a)
 //         }
 
@@ -103,7 +103,7 @@ import org.loopring.lightcone.proto._
 //         orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //         expectMsgPF() {
-//           case a: XOrderbook ⇒
+//           case a: XOrderbook =>
 //             info("----orderbook status after second XRecoverOrdersRes: " + a)
 //         }
 //         ordersDalActorProbe.expectQuery()
@@ -112,25 +112,25 @@ import org.loopring.lightcone.proto._
 //         orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //         expectMsgPF() {
-//           case a: XOrderbook ⇒
+//           case a: XOrderbook =>
 //             info("----orderbook status after last XRecoverOrdersRes: " + a)
 //         }
 
 //         accountManagerRecoveryActor ! XSubmitOrderReq(Some(order))
 
 //         expectMsgPF() {
-//           case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+//           case XSubmitOrderRes(ERR_OK, Some(xorder)) =>
 //             val order: Order = xorder
 //             info(s"submitted an order: $order")
-//           case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
-//             info(s"occurs ERR_UNKNOWN when submitting order:$order")
+//           case XSubmitOrderRes(ERR_INTERNAL_UNKNOWN, None) =>
+//             info(s"occurs ERR_INTERNAL_UNKNOWN when submitting order:$order")
 //         }
 
 //         Thread.sleep(1000)
 //         orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //         expectMsgPF() {
-//           case a: XOrderbook ⇒
+//           case a: XOrderbook =>
 //             info("----orderbook status after submit an order: " + a)
 //         }
 

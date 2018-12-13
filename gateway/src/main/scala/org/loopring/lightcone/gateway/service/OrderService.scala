@@ -22,7 +22,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.Future
 
 trait OrderService {
-  self: ApiService ⇒
+  self: ApiService =>
 
   //是否需要验证操作
   def submitOrder(req: XSubmitOrderReq): Future[XSubmitOrderRes] =

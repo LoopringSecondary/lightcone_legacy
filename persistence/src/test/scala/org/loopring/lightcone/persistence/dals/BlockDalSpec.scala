@@ -17,6 +17,7 @@
 package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -24,10 +25,10 @@ class BlockDalSpec extends DalSpec[BlockDal] {
   def getDal = new BlockDalImpl()
 
   "saveBlock" must "save a block with hash 0x111" in {
-    val block = XBlockData(hash = "0x111", height = 1l, isValid = 1)
+    val block = XBlockData(hash = "0x111", height = 1L, isValid = 1)
     val result = dal.saveBlock(block)
     val res = Await.result(result.mapTo[XErrorCode], 5.second)
-    res should be(XErrorCode.ERR_NONE)
+    res should be(ERR_NONE)
   }
 
   "findByHash" must "find a block with hash 0x111" in {
@@ -37,7 +38,7 @@ class BlockDalSpec extends DalSpec[BlockDal] {
   }
 
   "findByHeight" must "find a block with height 1" in {
-    val result = dal.findByHeight(1l)
+    val result = dal.findByHeight(1L)
     val res = Await.result(result.mapTo[Option[XBlockData]], 5.second)
     res should not be empty
   }
@@ -49,7 +50,7 @@ class BlockDalSpec extends DalSpec[BlockDal] {
   }
 
   "findBlocksInHeightRange" must "find blocks between height 1 and 10" in {
-    val result = dal.findBlocksInHeightRange(1l, 10l)
+    val result = dal.findBlocksInHeightRange(1L, 10L)
     val res = Await.result(result.mapTo[Seq[(Long, String)]], 5.second)
     res should not be empty
   }
@@ -61,7 +62,7 @@ class BlockDalSpec extends DalSpec[BlockDal] {
   }
 
   "obsolete" must "obsolete blocks above height 1" in {
-    val result = dal.obsolete(1l)
+    val result = dal.obsolete(1L)
     Await.result(result.mapTo[Unit], 5.second)
   }
 }

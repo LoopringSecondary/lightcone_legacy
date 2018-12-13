@@ -25,43 +25,45 @@ import XErrorCode._
 
 class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
 
-  "MarketManager" should "not generate ring when ring matcher returns MATCHING_ERR_INCOME_TOO_SMALL error " +
+  "MarketManager" should "not generate ring when ring matcher returns ERR_MATCHING_INCOME_TOO_SMALL error " +
     "and should put order inside the orderbook" in {
-      var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
-      var buyOrder = actualNotDust(sellGTO(100000, 100)) // price =  100000/100.0 = 1000.00
+    var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
+    var buyOrder = actualNotDust(sellGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
-      (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-      (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
-      (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
-        .when(*, *, *)
-        .returns(Left(MATCHING_ERR_INCOME_TOO_SMALL))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
+      .when(*, *, *)
+      .returns(Left(ERR_MATCHING_INCOME_TOO_SMALL))
 
-      val sellResult = marketManager.submitOrder(sellOrder, 1)
-      sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
+    val sellResult = marketManager.submitOrder(sellOrder, 1)
+    sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
-      val buyResult = marketManager.submitOrder(buyOrder, 2)
-      buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
-    }
+    val buyResult = marketManager.submitOrder(buyOrder, 2)
+    buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
+  }
 
-  "MarketManager" should "not generate ring when ring matcher returns MATCHING_ERR_ORDERS_NOT_TRADABLE error " +
+  "MarketManager" should "not generate ring when ring matcher returns ERR_MATCHING_ORDERS_NOT_TRADABLE error " +
     "and should put order inside the orderbook" in {
-      var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
-      var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
+    var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
+    var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
-      (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-      (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
-      (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
-        .when(*, *, *)
-        .returns(Left(MATCHING_ERR_ORDERS_NOT_TRADABLE))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
+      .when(*, *, *)
+      .returns(Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
 
-      val sellResult = marketManager.submitOrder(sellOrder, 1)
-      sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
+    val sellResult = marketManager.submitOrder(sellOrder, 1)
+    sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
-      val buyResult = marketManager.submitOrder(buyOrder, 2)
-      buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
-    }
+    val buyResult = marketManager.submitOrder(buyOrder, 2)
+    buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
+  }
 
   "MarketManager" should "generate a ring for sell order as taker" in {
     var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
@@ -71,7 +73,8 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     val ring = OrderRing(null, null)
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .when(*, *, *)
       .returns(Right(ring))
 
@@ -79,19 +82,25 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
     val buyResult = marketManager.submitOrder(buyOrder, 2)
-    buyResult should be(MarketManager.MatchResult(
-      Seq(ring),
-      buyOrder.asPending,
-      XOrderbookUpdate()
-    ))
+    buyResult should be(
+      MarketManager.MatchResult(
+        Seq(ring),
+        buyOrder.asPending,
+        XOrderbookUpdate()
+      )
+    )
 
-    marketManager.getSellOrders(100) should be(Seq(
-      sellOrder.asPending
-    ))
+    marketManager.getSellOrders(100) should be(
+      Seq(
+        sellOrder.asPending
+      )
+    )
 
-    marketManager.getBuyOrders(100) should be(Seq(
-      buyOrder.asPending
-    ))
+    marketManager.getBuyOrders(100) should be(
+      Seq(
+        buyOrder.asPending
+      )
+    )
 
     (fakePendingRingPool.addRing _).verify(ring).once
   }
@@ -104,7 +113,8 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     val ring = OrderRing(null, null)
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .when(*, *, *)
       .returns(Right(ring))
 
@@ -112,11 +122,13 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
 
     val sellResult = marketManager.submitOrder(sellOrder, 2)
-    sellResult should be(MarketManager.MatchResult(
-      Seq(ring),
-      sellOrder.asPending,
-      XOrderbookUpdate()
-    ))
+    sellResult should be(
+      MarketManager.MatchResult(
+        Seq(ring),
+        sellOrder.asPending,
+        XOrderbookUpdate()
+      )
+    )
 
     marketManager.getSellOrders(100) should be(Seq(sellOrder.asPending))
     marketManager.getBuyOrders(100) should be(Seq(buyOrder.asPending))

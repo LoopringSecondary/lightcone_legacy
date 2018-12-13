@@ -22,14 +22,16 @@ import org.scalamock.scalatest._
 import org.slf4s.Logging
 
 trait CommonSpec
-  extends FlatSpec
-  with BeforeAndAfterEach
-  with BeforeAndAfterAll
-  with Matchers
-  with MockFactory
-  with Logging {
+    extends FlatSpec
+    with BeforeAndAfterEach
+    with BeforeAndAfterAll
+    with Matchers
+    with MockFactory
+    with Logging {
 
   override def beforeAll() {
-    println(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
+    println(
+      s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
+    )
   }
 }

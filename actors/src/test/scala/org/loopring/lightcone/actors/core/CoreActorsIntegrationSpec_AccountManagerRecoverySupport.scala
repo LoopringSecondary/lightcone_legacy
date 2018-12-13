@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor.{Actor, ActorLogging}
 import akka.event.LoggingReceive
 import akka.testkit.TestActorRef
 import akka.util.Timeout
@@ -27,51 +27,38 @@ import scala.concurrent.ExecutionContext
 
 abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
     marketId: XMarketId,
-    configStr: String
-)
-  extends CoreActorsIntegrationCommonSpec(marketId, configStr) {
+    configStr: String)
+    extends CoreActorsIntegrationCommonSpec(marketId, configStr) {
 
-  class OrderStateForRecoveryTestActor()(
-      implicit
-      ec: ExecutionContext,
-      timeout: Timeout
-  )
-    extends Actor
-    with ActorLogging {
+  class EthereumQueryForRecoveryTestActor(
+    )(
+      implicit ec: ExecutionContext,
+      timeout: Timeout)
+      extends Actor
+      with ActorLogging {
 
     def receive: Receive = LoggingReceive {
-      case XGetOrderFilledAmountReq(orderId) ⇒
+      case req: XGetBalanceAndAllowancesReq =>
+        sender !
+          XGetBalanceAndAllowancesRes(
+            req.address,
+            Map(
+              req.tokens(0) -> XBalanceAndAllowance(
+                BigInt("100000000000000000000000000"),
+                BigInt("100000000000000000000000000")
+              )
+            )
+          )
+      case XGetOrderFilledAmountReq(orderId) =>
         sender ! XGetOrderFilledAmountRes(orderId, BigInt(0))
     }
   }
 
-  class AccountBalanceForRecoveryTestActor()(
-      implicit
-      ec: ExecutionContext,
-      timeout: Timeout
+  val ethereumQueryRecoveryActor = TestActorRef(
+    new EthereumQueryForRecoveryTestActor()
   )
-    extends Actor
-    with ActorLogging {
-
-    def receive: Receive = LoggingReceive {
-      case req: XGetBalanceAndAllowancesReq ⇒
-        sender !
-          XGetBalanceAndAllowancesRes(
-            req.address,
-            Map(req.tokens(0) -> XBalanceAndAllowance(
-              BigInt("100000000000000000000000000"),
-              BigInt("100000000000000000000000000")
-            ))
-          )
-    }
-  }
-
-  val orderStateRecoveryActor = TestActorRef(new OrderStateForRecoveryTestActor())
-  val accountBalanceRecoveryActor = TestActorRef(new AccountBalanceForRecoveryTestActor())
   val ADDRESS_RECOVERY = "0xaddress_3"
-  actors.del(OrderHistoryActor.name)
-  actors.del(AccountBalanceActor.name)
-  actors.add(OrderHistoryActor.name, orderStateRecoveryActor)
-  actors.add(AccountBalanceActor.name, accountBalanceRecoveryActor)
+  actors.del(EthereumQueryActor.name)
+  actors.add(EthereumQueryActor.name, ethereumQueryRecoveryActor)
 
 }

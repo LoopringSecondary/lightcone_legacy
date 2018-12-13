@@ -37,23 +37,28 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
     marketManager.submitOrder(buy2, 0)
     marketManager.submitOrder(buy3, 0)
 
-    marketManager.getBuyOrders(5) should be(Seq(
-      buy3.copy(status = STATUS_PENDING),
-      buy2.copy(status = STATUS_PENDING),
-      buy1.copy(status = STATUS_PENDING)
-    ))
+    marketManager.getBuyOrders(5) should be(
+      Seq(
+        buy3.copy(status = STATUS_PENDING),
+        buy2.copy(status = STATUS_PENDING),
+        buy1.copy(status = STATUS_PENDING)
+      )
+    )
 
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .when(*, buy3.asPending.withMatchableAsActual.withActualAsOriginal, *)
-      .returns(Left(MATCHING_ERR_ORDERS_NOT_TRADABLE))
+      .returns(Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
 
     val ring = OrderRing(null, null)
 
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .when(*, buy2.asPending.withMatchableAsActual.withActualAsOriginal, *)
       .returns(Right(ring))
 
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .when(*, buy1.asPending.withMatchableAsActual.withActualAsOriginal, *)
       .returns(Right(ring))
 
@@ -61,23 +66,30 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
     val sell1 = actualNotDust(sellGTO(110000, 100))
     val result = marketManager.submitOrder(sell1, 0)
 
-    result should be(MarketManager.MatchResult(
-      Nil,
-      sell1.copy(status = STATUS_PENDING),
-      XOrderbookUpdate()
-    ))
+    result should be(
+      MarketManager.MatchResult(
+        Nil,
+        sell1.copy(status = STATUS_PENDING),
+        XOrderbookUpdate()
+      )
+    )
 
-    marketManager.getSellOrders(100) should be(Seq(
-      sell1.copy(status = STATUS_PENDING)
-    ))
+    marketManager.getSellOrders(100) should be(
+      Seq(
+        sell1.copy(status = STATUS_PENDING)
+      )
+    )
 
-    marketManager.getBuyOrders(5) should be(Seq(
-      buy3.copy(status = STATUS_PENDING),
-      buy2.copy(status = STATUS_PENDING),
-      buy1.copy(status = STATUS_PENDING)
-    ))
+    marketManager.getBuyOrders(5) should be(
+      Seq(
+        buy3.copy(status = STATUS_PENDING),
+        buy2.copy(status = STATUS_PENDING),
+        buy1.copy(status = STATUS_PENDING)
+      )
+    )
 
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .verify(*, *, *)
       .repeated(1)
   }

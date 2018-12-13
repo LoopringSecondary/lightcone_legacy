@@ -16,19 +16,19 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import com.dimafeng.testcontainers.{ ForAllTestContainer, MySQLContainer }
+import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import slick.basic.DatabaseConfig
 import scala.concurrent.duration._
 import slick.jdbc.JdbcProfile
-import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait ServiceSpec[S]
-  extends FlatSpec
-  with ForAllTestContainer
-  with BeforeAndAfterAll
-  with Matchers {
+    extends FlatSpec
+    with ForAllTestContainer
+    with BeforeAndAfterAll
+    with Matchers {
 
   override val container = new MySQLContainer(
     mysqlImageVersion = Some("mysql:5.7.18"),
@@ -62,6 +62,8 @@ trait ServiceSpec[S]
   }
 
   override def beforeAll = {
-    println(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
+    println(
+      s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
+    )
   }
 }

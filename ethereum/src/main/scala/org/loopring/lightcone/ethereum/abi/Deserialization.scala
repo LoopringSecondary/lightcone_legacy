@@ -25,18 +25,21 @@ import scala.reflect.runtime.universe._
 
 object Deserialization {
 
-  def getMethodParam(p: Any, r: Type) =
+  def getMethodParam(
+      p: Any,
+      r: Type
+    ) =
     if (r =:= typeOf[String]) {
       p match {
-        case bs: Array[Byte] ⇒ Numeric.toHexString(bs)
-        case _               ⇒ ""
+        case bs: Array[Byte] => Numeric.toHexString(bs)
+        case _               => ""
       }
     } else if (r =:= typeOf[BigInt]) {
       p match {
-        case bs: Array[Byte] ⇒ BigInt(bs)
-        case b: BigInt       ⇒ b
-        case b: BigInteger   ⇒ BigInt(b)
-        case _               ⇒ BigInt(0)
+        case bs: Array[Byte] => BigInt(bs)
+        case b: BigInt       => b
+        case b: BigInteger   => BigInt(b)
+        case _               => BigInt(0)
       }
     } else if (r =:= typeOf[Boolean]) {
       p match {
@@ -66,10 +69,13 @@ object Deserialization {
     val classMirror: ClassMirror = rm.reflectClass(classSymbol)
     val constructors = classSymbol.typeSignature.members.filter(_.isConstructor).toList
     val constructorMirror = classMirror.reflectConstructor(constructors.head.asMethod)
+
     val argsIdx = getContractAnnontationIdx[T]()
     assert(list.size == argsIdx.size)
     val params = constructorMirror.symbol.paramLists(0)
-    val args1 = argsIdx map (i ⇒ getMethodParam(list(i), params(i).typeSignature))
+    val args1 = argsIdx map (
+        i => getMethodParam(list(i), params(i).typeSignature)
+    )
 
     val v = constructorMirror(args1: _*)
     v.asInstanceOf[T]

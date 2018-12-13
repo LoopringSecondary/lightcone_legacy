@@ -21,7 +21,10 @@ import akka.cluster.sharding._
 trait Sharded {
   val name: String
   protected var numOfShards: Int = 1
-  protected def hashed(msg: Any, max: Int) = Math.abs(msg.hashCode % max)
+  protected def hashed(
+      msg: Any,
+      max: Int
+    ) = Math.abs(msg.hashCode % max)
 }
 
 trait ShardedEvenly extends Sharded {
@@ -34,11 +37,10 @@ trait ShardedEvenly extends Sharded {
     name + "_" + hashed(msg, numOfShards * entitiesPerShard)
 
   protected val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg ⇒ (getEntitityId(msg), msg)
+    case msg => (getEntitityId(msg), msg)
   }
 
   protected val extractShardId: ShardRegion.ExtractShardId = {
-    case msg ⇒ getShardId(msg)
+    case msg => getShardId(msg)
   }
 }
-

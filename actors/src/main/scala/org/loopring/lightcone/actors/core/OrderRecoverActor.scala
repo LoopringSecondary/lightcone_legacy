@@ -31,6 +31,7 @@ import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
 // main owner: 杜永丰
@@ -38,22 +39,23 @@ object OrderRecoverActor {
   val name = "order_recover"
 
   private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XStart(_) =>
+      ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
   }
 
   private val extractShardId: ShardRegion.ExtractShardId = {
-    case XStart(_) ⇒ "address_1"
+    case XStart(_) => "address_1"
   }
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef]
+    ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderRecoverActor()),
@@ -64,17 +66,17 @@ object OrderRecoverActor {
   }
 }
 
-class OrderRecoverActor()(
-    implicit
-    val config: Config,
+class OrderRecoverActor(
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
+    val actors: Lookup[ActorRef])
+    extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   def receive: Receive = {
-    case _ ⇒
+    case _ =>
   }
 
 }

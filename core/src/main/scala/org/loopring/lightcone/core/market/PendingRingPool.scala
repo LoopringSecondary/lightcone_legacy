@@ -32,4 +32,3 @@ trait PendingRingPool {
   def deleteRingsOlderThan(age: Long): Unit
   def deleteRingsContainingOrder(orderId: String): Unit
 }
-
