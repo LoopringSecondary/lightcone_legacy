@@ -23,10 +23,15 @@ import scala.annotation.meta.field
 
 class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
 
+  val submitRing = SubmitRingsFunction(abi.findFunction(searchByName(SubmitRingsFunction.name)))
+  val fEE_PERCENTAGE_BASE = FEE_PERCENTAGE_BASEFunction(abi.findFunction(searchByName(FEE_PERCENTAGE_BASEFunction.name)))
+
+  val ringMinedEvent = RingMinedEvent(abi.findEvent(searchByName(RingMinedEvent.name)))
+  val invalidRingEvent = InvalidRingEvent(abi.findEvent(searchByName(InvalidRingEvent.name)))
 }
 
 object RingSubmitterAbi {
-  val jsonStr: String = Source.fromFile("ethereum/src/main/resources/version20/ISubmitRings.abi").getLines().next()
+  val jsonStr: String = Source.fromFile("ethereum/src/main/resources/version20/IRingSubmitter.abi").getLines().next()
 
   def apply(abiJson: String): RingSubmitterAbi = new RingSubmitterAbi(abiJson)
 
@@ -36,11 +41,9 @@ object RingSubmitterAbi {
 class SubmitRingsFunction(val entry: SABI.Function) extends AbiFunction[SubmitRingsFunction.Params, SubmitRingsFunction.Result]
 
 object SubmitRingsFunction {
-
   val name = "submitRings"
-
   case class Params(
-      @(ContractAnnotation @field)("data", 0) data: String
+      @(ContractAnnotation @field)("data", 0) data: Array[Byte]
   )
 
   case class Result()
@@ -70,7 +73,7 @@ object RingMinedEvent {
   val name = "RingMined"
 
   case class Result(
-      @(ContractAnnotation @field)("_ringIndex", 0) _ringIndex: String,
+      @(ContractAnnotation @field)("_ringIndex", 0) _ringIndex: BigInt,
       @(ContractAnnotation @field)("_ringHash", 1) _ringHash: String,
       @(ContractAnnotation @field)("_feeRecipient", 2) _feeRecipient: String,
       @(ContractAnnotation @field)("_fills", 3) _fills: String

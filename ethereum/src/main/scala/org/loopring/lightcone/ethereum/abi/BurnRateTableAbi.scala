@@ -21,15 +21,22 @@ import org.ethereum.solidity.{ Abi ⇒ SABI }
 import scala.annotation.meta.field
 import scala.io.Source
 
-class BurnRateTableABI(abiJson: String) extends AbiWrap(abiJson)
+class BurnRateTableAbi(abiJson: String) extends AbiWrap(abiJson) {
 
-object BurnRateTableABI {
+  val getBurnRate = GetBurnRateFunction(abi.findFunction(searchByName(GetBurnRateFunction.name)))
+  val burn_BASE_PERCENTAGE = BURN_BASE_PERCENTAGEFunction(abi.findFunction(searchByName(BURN_BASE_PERCENTAGEFunction.name)))
+
+  val tokenTierUpgradedEvent = TokenTierUpgradedEvent(abi.findEvent(searchByName(TokenTierUpgradedEvent.name)))
+
+}
+
+object BurnRateTableAbi {
 
   val jsonStr: String = Source.fromFile("ethereum/src/main/resources/version20/IBurnRateTable.abi").getLines().next()
 
-  def apply(abiJson: String): BurnRateTableABI = new BurnRateTableABI(abiJson)
+  def apply(abiJson: String): BurnRateTableAbi = new BurnRateTableAbi(abiJson)
 
-  def apply(): BurnRateTableABI = new BurnRateTableABI(jsonStr)
+  def apply(): BurnRateTableAbi = new BurnRateTableAbi(jsonStr)
 }
 
 class GetBurnRateFunction(val entry: SABI.Function) extends AbiFunction[GetBurnRateFunction.Params, GetBurnRateFunction.Result]
@@ -72,7 +79,7 @@ object TokenTierUpgradedEvent {
 
   case class Result(
       @(ContractAnnotation @field)("add", 0) add: String,
-      @(ContractAnnotation @field)("tier", 0) tier: BigInt
+      @(ContractAnnotation @field)("tier", 1) tier: BigInt
   )
 
   def apply(entry: SABI.Event): TokenTierUpgradedEvent = new TokenTierUpgradedEvent(entry)
