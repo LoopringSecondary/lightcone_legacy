@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.validator
+package org.loopring.lightcone.core.base
 
-import com.typesafe.config.Config
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.{ XErrorCode, XError }
 
-object DatabaseQueryMessageValidator {
-  val name = "database_query_validator"
+final class ErrorException(val error: XError) extends Exception {
+  override def getMessage() = s"ErrorException(${error.code}: ${error.message})"
 }
 
-final class DatabaseQueryMessageValidator()(
-    implicit
-    val config: Config
-) extends MessageValidator {
-
-  def validate = {
-    case x ⇒ x
-  }
+object ErrorException {
+  def apply(code: XErrorCode, message: String) = new ErrorException(XError(code, message))
+  def apply(error: XError) = new ErrorException(error)
 }

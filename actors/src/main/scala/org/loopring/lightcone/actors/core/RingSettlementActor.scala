@@ -33,6 +33,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 import scala.annotation.tailrec
 
@@ -112,7 +113,7 @@ class RingSettlementActor()(
   //未被提交的交易需要使用新的gas和gasprice重新提交
   def resubmitTx(): Future[Unit] = for {
     gasPriceRes ← (gasPriceActor ? XGetGasPriceReq())
-      .mapTo[XGetGasPriceRes]
+      .mapAs[XGetGasPriceRes]
     //todo：查询数据库等得到未能打块的交易
     ringsWithGasLimit = Seq.empty[(String, BigInt)]
     _ = ringsWithGasLimit.foreach {

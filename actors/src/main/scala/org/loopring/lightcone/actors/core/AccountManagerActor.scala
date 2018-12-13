@@ -31,7 +31,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
-
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
 // main owner: 于红雨
@@ -118,11 +118,11 @@ class AccountManagerActor()(
         }
       } yield {
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
-      }).pipeTo(sender)
+      }).sendTo(sender)
 
     case XSubmitOrderReq(Some(xorder)) ⇒ {
       // println("### accountXSubmitOrderReq")
-      submitOrder(xorder).pipeTo(sender)
+      submitOrder(xorder).sendTo(sender)
     }
 
     case req: XCancelOrderReq ⇒
@@ -149,7 +149,7 @@ class AccountManagerActor()(
 
       // Update the order's _outstanding field.
       orderHistoryRes ← (ethereumQueryActor ? XGetOrderFilledAmountReq(order.id))
-        .mapTo[XGetOrderFilledAmountRes]
+        .mapAs[XGetOrderFilledAmountRes]
 
       _ = log.debug(s"order history: orderHistoryRes")
 
@@ -180,7 +180,7 @@ class AccountManagerActor()(
     case STATUS_UNSUPPORTED_MARKET ⇒ ERR_INVALID_MARKET
     case STATUS_CANCELLED_TOO_MANY_ORDERS ⇒ ERR_TOO_MANY_ORDERS
     case STATUS_CANCELLED_DUPLICIATE ⇒ ERR_ORDER_ALREADY_EXIST
-    case _ ⇒ ERR_UNKNOWN
+    case _ ⇒ ERR_INTERNAL_UNKNOWN
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
@@ -189,7 +189,7 @@ class AccountManagerActor()(
     else for {
       _ ← Future.successful(log.debug(s"getTokenManager0 ${token}"))
       res ← (ethereumQueryActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
-        .mapTo[XGetBalanceAndAllowancesRes]
+        .mapAs[XGetBalanceAndAllowancesRes]
       tm = new AccountTokenManagerImpl(token, 1000)
       ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
       _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)

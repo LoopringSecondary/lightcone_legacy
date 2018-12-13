@@ -30,6 +30,6 @@ final class MarketManagerMessageValidator()(
   extends MessageValidator {
 
   def validate = {
-    case x ⇒ Right(x)
+    case x ⇒ x
   }
 }
