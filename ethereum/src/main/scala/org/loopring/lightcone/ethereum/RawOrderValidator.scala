@@ -69,23 +69,23 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     }
 
     val checklist = Seq[(Boolean, XErrorCode)](
-      (order.version == 0) -> ORDER_VALIDATION_ERR_UNSUPPORTED_VERSION,
-      isValidAddress(order.owner) -> ORDER_VALIDATION_ERR_INVALID_OWNER,
-      isValidAddress(order.tokenS) -> ORDER_VALIDATION_ERR_INVALID_TOKENS,
-      isValidAddress(order.tokenB) -> ORDER_VALIDATION_ERR_INVALID_TOKENB,
-      (BigInt(order.amountS.toStringUtf8, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
-      (BigInt(order.amountB.toStringUtf8, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
+      (order.version == 0) -> ERR_ORDER_VALIDATION_UNSUPPORTED_VERSION,
+      isValidAddress(order.owner) -> ERR_ORDER_VALIDATION_INVALID_OWNER,
+      isValidAddress(order.tokenS) -> ERR_ORDER_VALIDATION_INVALID_TOKENS,
+      isValidAddress(order.tokenB) -> ERR_ORDER_VALIDATION_INVALID_TOKENB,
+      (BigInt(order.amountS.toStringUtf8, 16) > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
+      (BigInt(order.amountB.toStringUtf8, 16) > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
       (BigInt(order.feeParams.get.waiveFeePercentage) <= FeePercentageBase)
-        -> ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE,
+        -> ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE,
       (BigInt(order.feeParams.get.waiveFeePercentage) >= -FeePercentageBase)
-        -> ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE,
+        -> ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE,
       (BigInt(order.feeParams.get.tokenSFeePercentage) <= FeePercentageBase)
-        -> ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE,
+        -> ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE,
       (BigInt(order.feeParams.get.tokenBFeePercentage) <= FeePercentageBase)
-        -> ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE,
+        -> ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE,
       (BigInt(order.feeParams.get.walletSplitPercentage) <= 100)
-        -> ORDER_VALIDATION_ERR_INVALID_WALLET_SPLIT_PERCENTAGE,
-      checkDualAuthSig -> ORDER_VALIDATION_ERR_INVALID_MISSING_DUALAUTH_SIG
+        -> ERR_ORDER_VALIDATION_INVALID_WALLET_SPLIT_PERCENTAGE,
+      checkDualAuthSig -> ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_SIG
     )
 
     checklist.span(_._1)._2 match {

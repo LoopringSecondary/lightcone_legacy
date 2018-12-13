@@ -27,6 +27,7 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.dals.{ BlockDal, BlockDalImpl }
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
 import com.google.protobuf.ByteString
 
 import scala.collection.mutable.ListBuffer
