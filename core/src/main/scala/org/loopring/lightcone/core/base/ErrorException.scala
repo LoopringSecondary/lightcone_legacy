@@ -18,7 +18,7 @@ package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.proto.{ XErrorCode, XError }
 
-final class ErrorException(error: XError) extends Exception {
+final class ErrorException(val error: XError) extends Exception {
   override def getMessage() = s"ErrorException(${error.code}: ${error.message}"
 }
 

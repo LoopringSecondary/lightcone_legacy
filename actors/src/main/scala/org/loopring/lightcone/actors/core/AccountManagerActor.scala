@@ -31,7 +31,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
-
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
 // main owner: 于红雨
@@ -118,7 +118,7 @@ class AccountManagerActor()(
         }
       } yield {
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
-      }).pipeTo(sender)
+      }).sendTo(sender)
 
     case XSubmitOrderReq(Some(xorder)) ⇒ {
       // println("### accountXSubmitOrderReq")
