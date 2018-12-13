@@ -19,8 +19,7 @@ package org.loopring.lightcone.persistence.dals
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.persistence._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
@@ -31,7 +30,7 @@ import scala.util.{ Failure, Success }
 trait CutoffDal
   extends BaseDalImpl[CutoffTable, XCutoff] {
 
-  def saveCutoff(cutoff: XCutoff): Future[XPersistenceError]
+  def saveCutoff(cutoff: XCutoff): Future[XErrorCode]
 
   def getCutoffs(
     cutoffType: Option[XCutoff.XType] = None,
@@ -61,21 +60,21 @@ class CutoffDalImpl()(
   val timeProvider = new SystemTimeProvider()
   implicit val XCutoffCxolumnType = enumColumnType(XCutoff.XType)
 
-  override def saveCutoff(cutoff: XCutoff): Future[XPersistenceError] = {
+  override def saveCutoff(cutoff: XCutoff): Future[XErrorCode] = {
     val now = timeProvider.getTimeMillis
     db.run((query += cutoff.copy(
       createdAt = now,
       isValid = true
     )).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
-        XPersistenceError.PERS_ERR_DUPLICATE_INSERT
+        XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
       }
       case Failure(ex) ⇒ {
         // TODO du: print some log
         // log(s"error : ${ex.getMessage}")
-        XPersistenceError.PERS_ERR_INTERNAL
+        XErrorCode.ERR_PERSISTENCE_INTERNAL
       }
-      case Success(x) ⇒ XPersistenceError.PERS_ERR_NONE
+      case Success(x) ⇒ XErrorCode.ERR_NONE
     }
   }
 

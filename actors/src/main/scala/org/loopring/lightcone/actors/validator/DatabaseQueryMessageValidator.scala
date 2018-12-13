@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.actors.validator
 
-// TODO(fukun): should we move this to proto file?
+import com.typesafe.config.Config
+import org.loopring.lightcone.proto._
 
-case class TransactionLog(
-    logIndex: Int = 0,
-    blockNumber: BigInt = 0,
-    blockHash: String = "0x",
-    transactionHash: String = "0x",
-    transactionIndex: Int = 0,
-    address: String = "0x",
-    data: String = "0x",
-    topics: Seq[String] = Seq(),
-    removed: Boolean = false
-)
+object DatabaseQueryMessageValidator {
+  val name = "database_query_validator"
+}
+
+final class DatabaseQueryMessageValidator()(
+    implicit
+    val config: Config
+) extends MessageValidator {
+
+  def validate = {
+    case x ⇒ Right(x)
+  }
+}

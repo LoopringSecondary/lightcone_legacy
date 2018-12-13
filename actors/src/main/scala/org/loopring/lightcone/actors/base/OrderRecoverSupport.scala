@@ -19,8 +19,7 @@ package org.loopring.lightcone.actors.base
 import akka.actor._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 
 import scala.concurrent._
 
@@ -33,7 +32,7 @@ trait OrderRecoverSupport {
   var recoverySettings: XOrderRecoverySettings = _
   private var processed = 0
 
-  protected def ordersDalActor: ActorRef
+  // protected def ordersDalActor: ActorRef
 
   protected def recoverOrder(xorder: XOrder): Future[Any]
 
@@ -51,12 +50,12 @@ trait OrderRecoverSupport {
     } else {
       context.become(recovering)
       log.debug(s"actor recovering started: ${self.path}")
-      ordersDalActor ! XRecoverOrdersReq(
-        recoverySettings.orderOwner,
-        recoverySettings.marketId,
-        0L,
-        recoverySettings.batchSize
-      )
+      // ordersDalActor ! XRecoverOrdersReq(
+      //   recoverySettings.orderOwner,
+      //   recoverySettings.marketId,
+      //   0L,
+      //   recoverySettings.batchSize
+      // )
     }
   }
 
@@ -84,12 +83,12 @@ trait OrderRecoverSupport {
 
         case Nil ⇒
           if (!recoverEnded) {
-            ordersDalActor ! XRecoverOrdersReq(
-              recoverySettings.orderOwner,
-              recoverySettings.marketId,
-              lastUpdatdTimestamp,
-              recoverySettings.batchSize
-            )
+            // ordersDalActor ! XRecoverOrdersReq(
+            //   recoverySettings.orderOwner,
+            //   recoverySettings.marketId,
+            //   lastUpdatdTimestamp,
+            //   recoverySettings.batchSize
+            // )
           } else {
             log.debug(s"recovering completed with $processed orders")
             context.become(functional)

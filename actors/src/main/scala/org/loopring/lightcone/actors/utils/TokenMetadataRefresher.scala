@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.core
+package org.loopring.lightcone.actors.utils
 
 import akka.actor._
 import akka.cluster.sharding._
@@ -25,23 +25,17 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XOrderStatus._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object TokenMetadataActor {
-  val name = "token_metadata"
-}
-
-class TokenMetadataActor()(
+class TokenMetadataRefresher()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -55,15 +49,14 @@ class TokenMetadataActor()(
   with RepeatedJobActor {
 
   private val tokenMetadata = dbModule.tokenMetadata
-  val syncJob = Job(
-    id = 1,
-    name = "syncTokenValue",
-    scheduleDelay = 10000,
-    run = () ⇒ tokenMetadata.getTokens(true).map {
-      _.foreach(tokenMetadataManager.addToken)
+
+  val repeatedJobs = Seq(Job(
+    name = "sync-token-metadata",
+    dalayInSeconds = 10 * 60, // 10 minutes
+    run = () ⇒ tokenMetadata.getTokens(true).map { tokens ⇒
+      tokenMetadataManager.reset(tokens)
     }
-  )
-  initAndStartNextRound(syncJob)
+  ))
 
   override def receive: Receive = super.receive orElse LoggingReceive {
     case _ ⇒

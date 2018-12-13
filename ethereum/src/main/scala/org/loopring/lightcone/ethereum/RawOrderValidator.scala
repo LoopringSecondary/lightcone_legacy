@@ -19,28 +19,28 @@ package org.loopring.lightcone.ethereum.data
 import org.web3j.crypto.Hash
 import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.proto.core._
-import org.loopring.lightcone.proto.core.XOrderValidationError._
+import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 
 trait RawOrderValidator {
   def calculateOrderHash(order: XRawOrder): String
-  def validate(order: XRawOrder): Either[XOrderValidationError, XRawOrder]
+  def validate(order: XRawOrder): Either[XErrorCode, XRawOrder]
 }
 
 // TODO(kongliang): implement and test this class
 class RawOrderValidatorImpl extends RawOrderValidator {
   // TODO this field should be configurable somewhere.
-  val feePercentageBase = 1000
+  val FeePercentageBase = 1000
 
   def calculateOrderHash(order: XRawOrder): String = {
     val bitstream = new Bitstream
     val feeParams = order.feeParams.get
     val optionalParams = order.params.get
-    bitstream.addUintStr(order.amountS.toString)
-    bitstream.addUintStr(order.amountB.toString)
-    bitstream.addUintStr(feeParams.amountFee.toString)
-    bitstream.addUint(BigInt(order.validSince))
-    bitstream.addUint(BigInt(optionalParams.validUntil))
+    bitstream.addUint(order.amountS.toStringUtf8, true)
+    bitstream.addUint(order.amountB.toStringUtf8, true)
+    bitstream.addUint(feeParams.amountFee.toStringUtf8, true)
+    bitstream.addUint(BigInt(order.validSince), true)
+    bitstream.addUint(BigInt(optionalParams.validUntil), true)
     bitstream.addAddress(order.owner, true)
     bitstream.addAddress(order.tokenS, true)
     bitstream.addAddress(order.tokenB, true)
@@ -55,10 +55,10 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     bitstream.addUint16(feeParams.tokenBFeePercentage)
     bitstream.addBoolean(optionalParams.allOrNone)
 
-    Numeric.toHexString(Hash.sha3(bitstream.getPackedBytes))
+    Numeric.toHexString(Hash.sha3(bitstream.getBytes))
   }
 
-  def validate(order: XRawOrder): Either[XOrderValidationError, XRawOrder] = {
+  def validate(order: XRawOrder): Either[XErrorCode, XRawOrder] = {
     def checkDualAuthSig = {
       if (isValidAddress(order.params.get.dualAuthAddr)) {
         val authSig = order.params.get.dualAuthSig
@@ -68,24 +68,24 @@ class RawOrderValidatorImpl extends RawOrderValidator {
       }
     }
 
-    val checklist = Seq[(Boolean, XOrderValidationError)](
-      (order.version == 0) -> ORDER_VALIDATION_ERR_UNSUPPORTED_VERSION,
-      isValidAddress(order.owner) -> ORDER_VALIDATION_ERR_INVALID_OWNER,
-      isValidAddress(order.tokenS) -> ORDER_VALIDATION_ERR_INVALID_TOKENS,
-      isValidAddress(order.tokenB) -> ORDER_VALIDATION_ERR_INVALID_TOKENB,
-      (BigInt(order.amountS.toString, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
-      (BigInt(order.amountB.toString, 16) > 0) -> ORDER_VALIDATION_ERR_INVALID_TOKEN_AMOUNT,
-      (BigInt(order.feeParams.get.waiveFeePercentage) <= feePercentageBase)
-        -> ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE,
-      (BigInt(order.feeParams.get.waiveFeePercentage) >= -feePercentageBase)
-        -> ORDER_VALIDATION_ERR_INVALID_WAIVE_PERCENTAGE,
-      (BigInt(order.feeParams.get.tokenSFeePercentage) <= feePercentageBase)
-        -> ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE,
-      (BigInt(order.feeParams.get.tokenBFeePercentage) <= feePercentageBase)
-        -> ORDER_VALIDATION_ERR_INVALID_FEE_PERCENTAGE,
+    val checklist = Seq[(Boolean, XErrorCode)](
+      (order.version == 0) -> ERR_ORDER_VALIDATION_UNSUPPORTED_VERSION,
+      isValidAddress(order.owner) -> ERR_ORDER_VALIDATION_INVALID_OWNER,
+      isValidAddress(order.tokenS) -> ERR_ORDER_VALIDATION_INVALID_TOKENS,
+      isValidAddress(order.tokenB) -> ERR_ORDER_VALIDATION_INVALID_TOKENB,
+      (BigInt(order.amountS.toStringUtf8, 16) > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
+      (BigInt(order.amountB.toStringUtf8, 16) > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
+      (BigInt(order.feeParams.get.waiveFeePercentage) <= FeePercentageBase)
+        -> ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE,
+      (BigInt(order.feeParams.get.waiveFeePercentage) >= -FeePercentageBase)
+        -> ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE,
+      (BigInt(order.feeParams.get.tokenSFeePercentage) <= FeePercentageBase)
+        -> ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE,
+      (BigInt(order.feeParams.get.tokenBFeePercentage) <= FeePercentageBase)
+        -> ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE,
       (BigInt(order.feeParams.get.walletSplitPercentage) <= 100)
-        -> ORDER_VALIDATION_ERR_INVALID_WALLET_SPLIT_PERCENTAGE,
-      checkDualAuthSig -> ORDER_VALIDATION_ERR_INVALID_MISSING_DUALAUTH_SIG
+        -> ERR_ORDER_VALIDATION_INVALID_WALLET_SPLIT_PERCENTAGE,
+      checkDualAuthSig -> ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_SIG
     )
 
     checklist.span(_._1)._2 match {

@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.actors.validator
 
-trait RingSigner {
-  def getInputData(ring: Ring): String
+import com.typesafe.config.Config
+import org.loopring.lightcone.proto._
 
-  def getSignedTxData(
-    inputData: String,
-    nonce: BigInt,
-    gasLimit: BigInt,
-    gasPrice: BigInt
-  ): Array[Byte]
+object OrderHandlerMessageValidator {
+  val name = "order_handler_validator"
+}
 
-  def getSignerAddress(): String
+final class OrderHandlerMessageValidator()(
+    implicit
+    val config: Config
+) extends MessageValidator {
+
+  def validate = {
+    case msg: XSubmitRawOrderReq ⇒ Right(msg)
+    case msg: XCancelOrderReq    ⇒ Right(msg)
+  }
 }

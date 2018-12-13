@@ -25,31 +25,17 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.actors.XErrorCode._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core.XOrderStatus._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 李亚东
-object GasPriceActor {
+object GasPriceActor extends ShardedEvenly {
   val name = "gas_price"
-
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XGetBalanceAndAllowancesReq(address, _) ⇒ (address, msg)
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XGetBalanceAndAllowancesReq(address, _) ⇒ address
-    case XSubmitOrderReq(Some(xorder)) ⇒ "address_1"
-    case XStart(_) ⇒ "address_1"
-  }
 
   def startShardRegion()(
     implicit
@@ -60,6 +46,11 @@ object GasPriceActor {
     timeout: Timeout,
     actors: Lookup[ActorRef]
   ): ActorRef = {
+
+    val selfConfig = config.getConfig(name)
+    numOfShards = selfConfig.getInt("num-of-shards")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new GasPriceActor()),
@@ -77,7 +68,7 @@ class GasPriceActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef]
-) extends ConfiggedActor(GasPriceActor.name) {
+) extends ActorWithPathBasedConfig(GasPriceActor.name) {
 
   private var gasPrice = BigInt(selfConfig.getString("default"))
 

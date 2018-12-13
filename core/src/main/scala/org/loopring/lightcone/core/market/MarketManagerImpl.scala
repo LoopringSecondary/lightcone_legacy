@@ -17,7 +17,7 @@
 package org.loopring.lightcone.core.market
 
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.base._
 
@@ -48,7 +48,7 @@ class MarketManagerImpl(
 
   import MarketManager._
   import MarketManagerImpl._
-  import XMatchingFailure._
+  import XErrorCode._
   import XOrderStatus._
 
   private implicit val marketId_ = marketId
@@ -149,7 +149,7 @@ class MarketManagerImpl(
           val maker = updateOrderMatchable(order)
 
           val matchResult =
-            if (dustOrderEvaluator.isMatchableDust(maker)) Left(MATCHING_ERR_INCOME_TOO_SMALL)
+            if (dustOrderEvaluator.isMatchableDust(maker)) Left(ERR_MATCHING_INCOME_TOO_SMALL)
             else ringMatcher.matchOrders(taker, maker, minFiatValue)
 
           log.debug(
@@ -166,10 +166,10 @@ class MarketManagerImpl(
             ordersToAddBack :+= maker
             matchResult match {
               case Left(
-                MATCHING_ERR_ORDERS_NOT_TRADABLE |
-                MATCHING_ERR_TAKER_COMPLETELY_FILLED |
-                MATCHING_ERR_INVALID_TAKER_ORDER |
-                MATCHING_ERR_INVALID_MAKER_ORDER) ⇒ // stop redursive matching
+                ERR_MATCHING_ORDERS_NOT_TRADABLE |
+                ERR_MATCHING_TAKER_COMPLETELY_FILLED |
+                ERR_MATCHING_INVALID_TAKER_ORDER |
+                ERR_MATCHING_INVALID_MAKER_ORDER) ⇒ // stop redursive matching
 
               case Left(error) ⇒
                 recursivelyMatchOrders()

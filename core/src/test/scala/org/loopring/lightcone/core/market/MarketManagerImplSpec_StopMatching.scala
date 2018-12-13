@@ -18,10 +18,10 @@ package org.loopring.lightcone.core.market
 
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import XOrderStatus._
-import XMatchingFailure._
+import XErrorCode._
 
 class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
   "MarketManager" should "stop matching on the first price mismatch" in {
@@ -45,7 +45,7 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
 
     (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
       .when(*, buy3.asPending.withMatchableAsActual.withActualAsOriginal, *)
-      .returns(Left(MATCHING_ERR_ORDERS_NOT_TRADABLE))
+      .returns(Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
 
     val ring = OrderRing(null, null)
 

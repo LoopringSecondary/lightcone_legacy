@@ -18,9 +18,9 @@ package org.loopring.lightcone.core.market
 
 import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import org.scalatest._
-import XMatchingFailure._
+import XErrorCode._
 
 class RingMatcherImplSpec_Profit extends OrderAwareSpec {
 
@@ -40,7 +40,7 @@ class RingMatcherImplSpec_Profit extends OrderAwareSpec {
   "RingMatcherImpl" should "not match orders if the ring is not profitable" in {
     implicit val rie = nonProfitable
     val matcher = new RingMatcherImpl()
-    matcher.matchOrders(taker, maker, 0) should be(Left(MATCHING_ERR_INCOME_TOO_SMALL))
+    matcher.matchOrders(taker, maker, 0) should be(Left(ERR_MATCHING_INCOME_TOO_SMALL))
   }
 
   "RingMatcherImpl" should "match orders if the ring is indeed profitable" in {
@@ -62,7 +62,7 @@ class RingMatcherImplSpec_Profit extends OrderAwareSpec {
     matcher.matchOrders(
       sellDAI(10, 10),
       buyDAI(10, 10)
-    ) should be(Left(MATCHING_ERR_TAKER_COMPLETELY_FILLED))
+    ) should be(Left(ERR_MATCHING_TAKER_COMPLETELY_FILLED))
   }
 
 }

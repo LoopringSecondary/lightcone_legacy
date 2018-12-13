@@ -17,8 +17,7 @@
 package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.lib.SystemTimeProvider
-import org.loopring.lightcone.proto.core.XCutoff
-import org.loopring.lightcone.proto.persistence._
+import org.loopring.lightcone.proto._
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 
@@ -31,7 +30,7 @@ class CutoffDalSpec extends DalSpec[CutoffDal] {
     tradingPair: String,
     time: Long,
     blockHeight: Long
-  ): Future[Seq[XPersistenceError]] = {
+  ): Future[Seq[XErrorCode]] = {
     for {
       result ← Future.sequence(brokers.map { broker ⇒
         dal.saveCutoff(XCutoff(
@@ -51,7 +50,7 @@ class CutoffDalSpec extends DalSpec[CutoffDal] {
     tradingPair: String,
     time: Long,
     blockHeight: Long
-  ): Future[Seq[XPersistenceError]] = {
+  ): Future[Seq[XErrorCode]] = {
     for {
       result ← Future.sequence(owners.map { owner ⇒
         dal.saveCutoff(XCutoff(

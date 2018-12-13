@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.actors.validator
 
-// TODO(fukun): should we move this to proto file?
+import com.typesafe.config.Config
+import org.loopring.lightcone.proto._
 
-case class Transaction(
-    hash: String = "0x",
-    blockHash: String = "0x",
-    blockNumber: BigInt = 0,
-    transactionIndex: Int = 0,
-    from: String = "0x",
-    to: String = "0x",
-    value: BigInt = 0,
-    gasPrice: BigInt = 0,
-    gas: BigInt = 0,
-    input: String = "0x",
-    r: String = "0x",
-    s: String = "0x",
-    v: String = "0x"
+object MarketManagerMessageValidator {
+  val name = "market_manager_validator"
+}
+
+final class MarketManagerMessageValidator()(
+    implicit
+    val config: Config
 )
+  extends MessageValidator {
+
+  def validate = {
+    case x ⇒ Right(x)
+  }
+}

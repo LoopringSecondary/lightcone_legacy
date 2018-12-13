@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.actors.validator
 
-option java_multiple_files = true;
-package org.loopring.lightcone.proto.actors;
+import com.typesafe.config.Config
+import org.loopring.lightcone.proto._
 
-import "google/protobuf/any.proto";
-
-message XNodeDeploymentSettings {
-    message XActorSettings {
-        bool is_singleton = 1;
-        repeated string roles = 2;
-        int32 num_of_instances = 3;
-    }
-
-    map<string, XActorSettings> settings_map = 1;
+object AccountManagerMessageValidator {
+  val name = "account_manager_validator"
 }
 
-message XStart{
-    string shard_entity_id = 1;
+final class AccountManagerMessageValidator()(
+    implicit
+    val config: Config
+) extends MessageValidator {
+  def validate = {
+    case x ⇒ Right(x)
+  }
 }
-message XStop{}

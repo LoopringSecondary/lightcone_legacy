@@ -85,7 +85,7 @@ object Settings {
       .setPreference(DanglingCloseParenthesis, Force)
       .setPreference(FirstArgumentOnNewline, Force)
       .setPreference(AllowParamGroupsOnNewlines, true),
-    coverageEnabled := true)
+    coverageEnabled in Test := true)
 
   lazy val dockerSettings: Seq[Setting[_]] = Seq(
     dockerfile in docker := {

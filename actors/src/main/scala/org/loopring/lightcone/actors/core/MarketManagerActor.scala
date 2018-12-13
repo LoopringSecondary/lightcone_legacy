@@ -25,34 +25,17 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
-import org.loopring.lightcone.proto.actors._
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 于红雨
-object MarketManagerActor {
+object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
-  val wethTokenAddress = "WETH" // TODO
-
-  //todo：sharding配置，发送给MarketManager的消息都需要进行处理，或者需要再定义一个wrapper结构，来包含sharding信息
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XSubmitOrderReq(Some(xorder)) ⇒
-      val marketId = (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
-      (marketId, msg)
-    case msg @ XStart(_) ⇒ ("0x00000000004-0x00000000002", msg) //todo:测试deploy
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XSubmitOrderReq(Some(xorder)) ⇒
-      (BigInt(xorder.tokenS) | BigInt(xorder.tokenB)).toString()
-    case XStart(_) ⇒ "0x00000000004-0x00000000002"
-  }
 
   def startShardRegion()(
     implicit
@@ -67,6 +50,7 @@ object MarketManagerActor {
     dustOrderEvaluator: DustOrderEvaluator,
     tokenMetadataManager: TokenMetadataManager
   ): ActorRef = {
+    numOfShards = 1
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new MarketManagerActor()),
@@ -75,9 +59,17 @@ object MarketManagerActor {
       extractShardId = extractShardId
     )
   }
+
+  // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
+  val extractMarketName: PartialFunction[Any, String] = {
+    case _ ⇒ ""
+  }
+
 }
 
-class MarketManagerActor()(
+class MarketManagerActor(
+    extractEntityName: String ⇒ String = MarketManagerActor.extractEntityName
+)(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -88,10 +80,23 @@ class MarketManagerActor()(
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenMetadataManager: TokenMetadataManager
-) extends ConfiggedActor(MarketManagerActor.name)
-  with OrderRecoverSupport {
+) extends ActorWithPathBasedConfig(
+  MarketManagerActor.name,
+  extractEntityName
+) with OrderRecoverSupport {
+  val marketName = entityName
 
-  private val GAS_LIMIT_PER_RING_IN_LOOPRING_V2 = BigInt(400000)
+  val wethTokenAddress = config.getString("weth.address")
+  val gasLimitPerRingV2 = BigInt(config.getString("loopring-protocol.gas-limit-per-ring-v2"))
+
+  // TODO(yongfeng): load marketconfig from database throught a service interface
+  // based on marketName
+  val xorderbookConfig = XMarketConfig(
+    levels = selfConfig.getInt("levels"),
+    priceDecimals = selfConfig.getInt("price-decimals"),
+    precisionForAmount = selfConfig.getInt("precision-for-amount"),
+    precisionForTotal = selfConfig.getInt("precision-for-total")
+  )
 
   private var marketId: XMarketId = _
 
@@ -100,7 +105,6 @@ class MarketManagerActor()(
 
   private var manager: MarketManager = _
 
-  protected def ordersDalActor = actors.get(OrdersDalActor.name)
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   protected def settlementActor = actors.get(RingSettlementActor.name)
@@ -184,8 +188,8 @@ class MarketManagerActor()(
   }
 
   private def getRequiredMinimalIncome(gasPrice: BigInt): Double = {
-    val costinEth = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * gasPrice
-    tokenValueEstimator.getEstimatedValue(MarketManagerActor.wethTokenAddress, costinEth)
+    val costinEth = gasLimitPerRingV2 * gasPrice
+    tokenValueEstimator.getEstimatedValue(wethTokenAddress, costinEth)
   }
 
   private def updateOrderbookAndSettleRings(matchResult: MatchResult, gasPrice: BigInt) {
@@ -195,7 +199,7 @@ class MarketManagerActor()(
 
       settlementActor ! XSettleRingsReq(
         rings = matchResult.rings,
-        gasLimit = GAS_LIMIT_PER_RING_IN_LOOPRING_V2 * matchResult.rings.size,
+        gasLimit = gasLimitPerRingV2 * matchResult.rings.size,
         gasPrice = gasPrice
       )
     }

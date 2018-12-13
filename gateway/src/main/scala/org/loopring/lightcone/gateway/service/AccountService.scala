@@ -17,7 +17,7 @@
 package org.loopring.lightcone.gateway.service
 
 import akka.pattern._
-import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto._
 
 import scala.concurrent.Future
 

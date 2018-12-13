@@ -27,7 +27,7 @@ import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s._
 import org.json4s.native.JsonMethods.parse
 import org.json4s.jackson.Serialization
-import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.proto._
 import scalapb.json4s.JsonFormat
 
 import scala.concurrent._
@@ -120,7 +120,7 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
   private def batchSendMessages(methodList: Seq[BatchMethod]): Future[String] = {
     val jsonRpcList = methodList.map { x ⇒
       JsonRpcReqWrapped(
-        id = Random.nextInt(100),
+        id = if (x.id > 0) x.id else Random.nextInt(100),
         jsonrpc = "2.0",
         method = x.method,
         params = x.params
@@ -225,6 +225,7 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
     case batchR: XBatchContractCallReq ⇒
       val batchReqs = batchR.reqs.map { singleReq ⇒
         BatchMethod(
+          id = singleReq.id,
           method = "eth_call",
           params = Seq(singleReq.param, singleReq.tag)
         )
@@ -242,6 +243,7 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
     case batchR: XBatchGetTransactionReceiptsReq ⇒
       val batchReqs = batchR.reqs.map { singleReq ⇒
         BatchMethod(
+          id = 0,
           method = "eth_getTransactionReceipt",
           params = Seq(singleReq.hash)
         )
@@ -259,6 +261,7 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
     case batchR: XBatchGetTransactionsReq ⇒
       val batchReqs = batchR.reqs.map { singleReq ⇒
         BatchMethod(
+          id = 0,
           method = "eth_getTransactionByHash",
           params = Seq(singleReq.hash)
         )

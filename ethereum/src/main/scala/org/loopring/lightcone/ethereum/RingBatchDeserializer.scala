@@ -16,8 +16,8 @@
 
 package org.loopring.lightcone.ethereum.data
 
-import org.loopring.lightcone.proto.core._
+import org.loopring.lightcone.proto._
 
 trait RingBatchDeserializer {
-  def deserialize(encoded: String): Either[XDeserializationError, XRingBatch]
+  def deserialize(encoded: String): Either[XErrorCode, XRingBatch]
 }
