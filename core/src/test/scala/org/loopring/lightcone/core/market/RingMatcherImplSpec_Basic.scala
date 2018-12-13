@@ -26,7 +26,11 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
 
   implicit val alwaysProfitable = new RingIncomeEstimator {
     def getRingIncome(ring: OrderRing) = Long.MaxValue
-    def isProfitable(ring: OrderRing, fiatValueThreshold: Double) = true
+
+    def isProfitable(
+        ring: OrderRing,
+        fiatValueThreshold: Double
+      ) = true
   }
 
   val matcher = new RingMatcherImpl()
@@ -35,7 +39,9 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
     val maker = sellDAI(100000000, 100000001).matchableAsOriginal
     val taker = buyDAI(100000000, 100000000).matchableAsOriginal
 
-    matcher.matchOrders(taker, maker, 0) should be(Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
+    matcher.matchOrders(taker, maker, 0) should be(
+      Left(ERR_MATCHING_ORDERS_NOT_TRADABLE)
+    )
   }
 
   "RingMatcherImpl" should "not match orders if one of them has tokenB as 0 " in {
@@ -73,15 +79,43 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
   }
 
   "RingMatcherImpl" should "verify two orders in MarketManagerImplSpec_Performance should be matched in a ring " in {
-    matcher.matchOrders(
-      taker = Order("taker", WETH, GTO, LRC,
-        BigInt("60000000000000006000000000"),
-        BigInt("50000000000000"),
-        0, -1, -1, XOrderStatus.STATUS_PENDING, 0.0, None, None, None, Some(OrderState(0, 0, 0))).matchableAsOriginal,
-      maker = Order("maker", GTO, WETH, LRC,
-        BigInt("50000000000000"),
-        BigInt("60000000000000006000000000"),
-        0, -1, -1, XOrderStatus.STATUS_PENDING, 0.0, None, None, None, Some(OrderState(0, 0, 0))).matchableAsOriginal
-    ).isRight should be(true)
+    matcher
+      .matchOrders(
+        taker = Order(
+          "taker",
+          WETH,
+          GTO,
+          LRC,
+          BigInt("60000000000000006000000000"),
+          BigInt("50000000000000"),
+          0,
+          -1,
+          -1,
+          XOrderStatus.STATUS_PENDING,
+          0.0,
+          None,
+          None,
+          None,
+          Some(OrderState(0, 0, 0))
+        ).matchableAsOriginal,
+        maker = Order(
+          "maker",
+          GTO,
+          WETH,
+          LRC,
+          BigInt("50000000000000"),
+          BigInt("60000000000000006000000000"),
+          0,
+          -1,
+          -1,
+          XOrderStatus.STATUS_PENDING,
+          0.0,
+          None,
+          None,
+          None,
+          Some(OrderState(0, 0, 0))
+        ).matchableAsOriginal
+      )
+      .isRight should be(true)
   }
 }

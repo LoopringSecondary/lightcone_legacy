@@ -23,12 +23,10 @@ object DatabaseQueryMessageValidator {
   val name = "database_query_validator"
 }
 
-final class DatabaseQueryMessageValidator()(
-    implicit
-    val config: Config
-) extends MessageValidator {
+final class DatabaseQueryMessageValidator()(implicit val config: Config)
+    extends MessageValidator {
 
   def validate = {
-    case x ⇒ x
+    case x => x
   }
 }

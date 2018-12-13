@@ -24,14 +24,13 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait AddressDal
-  extends BaseDalImpl[AddressTable, XAddressData] {
-}
+trait AddressDal extends BaseDalImpl[AddressTable, XAddressData] {}
 
-class AddressDalImpl()(
+class AddressDalImpl(
+  )(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends AddressDal {
+    val ec: ExecutionContext)
+    extends AddressDal {
   val query = TableQuery[AddressTable]
 }

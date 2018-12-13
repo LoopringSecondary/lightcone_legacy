@@ -19,23 +19,28 @@ package org.loopring.lightcone.core.base
 import org.loopring.lightcone.core.data.Rational
 
 object AmountConverter {
+
   def apply(token: String)(implicit tmm: TokenMetadataManager) =
     new AmountConverter(token)
 }
 
-class AmountConverter(
-    token: String
-)(implicit tmm: TokenMetadataManager) {
+class AmountConverter(token: String)(implicit tmm: TokenMetadataManager) {
   assert(tmm.hasTokenByAddress(token))
   lazy val meta = tmm.getTokenByAddress(token).get
   lazy val scaling = Rational(Math.pow(10, meta.decimals))
 
-  def rawToDisplay(amount: BigInt): Double = (Rational(amount) / scaling).doubleValue
-  def rawToDisplay(amount: BigInt, precision: Int): Double = {
+  def rawToDisplay(amount: BigInt): Double =
+    (Rational(amount) / scaling).doubleValue
+
+  def rawToDisplay(
+      amount: BigInt,
+      precision: Int
+    ): Double = {
     BigDecimal(rawToDisplay(amount: BigInt))
       .setScale(precision, BigDecimal.RoundingMode.HALF_UP)
       .doubleValue
   }
 
-  def displayToRaw(amount: Double): BigInt = (Rational(amount) * scaling).bigintValue
+  def displayToRaw(amount: Double): BigInt =
+    (Rational(amount) * scaling).bigintValue
 }

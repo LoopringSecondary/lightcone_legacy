@@ -16,14 +16,15 @@
 
 package org.loopring.lightcone.ethereum.abi
 
-import org.ethereum.solidity.{ Abi ⇒ SABI }
+import org.ethereum.solidity.{Abi => SABI}
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
 
 object WETHABI {
 
-  val abijsonstr = "[{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"guy\",\"type\":\"address\"},{\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"src\",\"type\":\"address\"},{\"name\":\"dst\",\"type\":\"address\"},{\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"dst\",\"type\":\"address\"},{\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"deposit\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"src\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"guy\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"src\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"dst\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"dst\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"Deposit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"src\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"Withdrawal\",\"type\":\"event\"}]"
+  val abijsonstr =
+    "[{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"guy\",\"type\":\"address\"},{\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"src\",\"type\":\"address\"},{\"name\":\"dst\",\"type\":\"address\"},{\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"dst\",\"type\":\"address\"},{\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"deposit\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"src\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"guy\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"src\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"dst\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"dst\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"Deposit\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"src\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"wad\",\"type\":\"uint256\"}],\"name\":\"Withdrawal\",\"type\":\"event\"}]"
 
   def apply(): WETHABI = new WETHABI(abijsonstr)
 
@@ -32,47 +33,63 @@ object WETHABI {
 
 class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
 
-  val deposit = DepositFunction(abi.findFunction(searchByName(DepositFunction.name)))
-  val withdraw = WithdrawFunction(abi.findFunction(searchByName(WithdrawFunction.name)))
+  val deposit = DepositFunction(
+    abi.findFunction(searchByName(DepositFunction.name))
+  )
 
-  val depositEvent = DepositEvent(abi.findEvent(searchByName(DepositEvent.name)))
-  val withdrawalEvent = WithdrawalEvent(abi.findEvent(searchByName(WithdrawalEvent.name)))
+  val withdraw = WithdrawFunction(
+    abi.findFunction(searchByName(WithdrawFunction.name))
+  )
 
-  override def unpackEvent(data: String, topics: Array[String]): Any = {
-    val event: SABI.Event = abi.findEvent(searchBySignature(Numeric.hexStringToByteArray(topics.head)))
+  val depositEvent = DepositEvent(
+    abi.findEvent(searchByName(DepositEvent.name))
+  )
+
+  val withdrawalEvent = WithdrawalEvent(
+    abi.findEvent(searchByName(WithdrawalEvent.name))
+  )
+
+  override def unpackEvent(
+      data: String,
+      topics: Array[String]
+    ): Any = {
+    val event: SABI.Event = abi.findEvent(
+      searchBySignature(Numeric.hexStringToByteArray(topics.head))
+    )
     event.name match {
-      case ApprovalEvent.name ⇒
+      case ApprovalEvent.name =>
         approvalEvent.unpack(data, topics)
-      case TransferEvent.name ⇒
+      case TransferEvent.name =>
         transferEvent.unpack(data, topics)
-      case DepositEvent.name ⇒
+      case DepositEvent.name =>
         depositEvent.unpack(data, topics)
-      case WithdrawalEvent.name ⇒
+      case WithdrawalEvent.name =>
         withdrawalEvent.unpack(data, topics)
-      case _ ⇒
+      case _ =>
     }
   }
 
   override def unpackFunctionInput(data: String): Any = {
-    val funSig = Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
+    val funSig =
+      Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
     val func = abi.findFunction(searchBySignature(funSig))
 
     func.name match {
-      case TransferFunction.name ⇒
+      case TransferFunction.name =>
         transfer.unpackInput(data)
-      case TransferFromFunction.name ⇒
+      case TransferFromFunction.name =>
         transferFrom.unpackInput(data)
-      case ApproveFunction.name ⇒
+      case ApproveFunction.name =>
         approve.unpackInput(data)
-      case BalanceOfFunction.name ⇒
+      case BalanceOfFunction.name =>
         balanceOf.unpackInput(data)
-      case AllowanceFunction.name ⇒
+      case AllowanceFunction.name =>
         allowance.unpackInput(data)
-      case DepositFunction.name ⇒
+      case DepositFunction.name =>
         deposit.unpackInput(data)
-      case WithdrawFunction.name ⇒
+      case WithdrawFunction.name =>
         withdraw.unpackInput(data)
-      case _ ⇒
+      case _ =>
     }
 
   }
@@ -90,22 +107,23 @@ object DepositFunction {
   def apply(entry: SABI.Function): DepositFunction = new DepositFunction(entry)
 }
 
-class DepositFunction(val entry: SABI.Function) extends AbiFunction[DepositFunction.Parms, DepositFunction.Result]
+class DepositFunction(val entry: SABI.Function)
+    extends AbiFunction[DepositFunction.Parms, DepositFunction.Result]
 
 object WithdrawFunction {
 
-  case class Parms(
-      @(ContractAnnotation @field)("wad", 0) wad: BigInt
-  )
+  case class Parms(@(ContractAnnotation @field)("wad", 0) wad: BigInt)
 
   val name = "withdraw"
 
   case class Result()
 
-  def apply(entry: SABI.Function): WithdrawFunction = new WithdrawFunction(entry)
+  def apply(entry: SABI.Function): WithdrawFunction =
+    new WithdrawFunction(entry)
 }
 
-class WithdrawFunction(val entry: SABI.Function) extends AbiFunction[WithdrawFunction.Parms, WithdrawFunction.Result]
+class WithdrawFunction(val entry: SABI.Function)
+    extends AbiFunction[WithdrawFunction.Parms, WithdrawFunction.Result]
 
 object DepositEvent {
 
@@ -115,8 +133,7 @@ object DepositEvent {
 
   case class Result(
       @(ContractAnnotation @field)("dst", 0) dst: String,
-      @(ContractAnnotation @field)("wad", 1) wad: BigInt
-  )
+      @(ContractAnnotation @field)("wad", 1) wad: BigInt)
 
   def apply(entry: SABI.Event): DepositEvent = new DepositEvent(entry)
 }
@@ -131,10 +148,10 @@ object WithdrawalEvent {
 
   case class Result(
       @(ContractAnnotation @field)("src", 0) src: String,
-      @(ContractAnnotation @field)("wad", 1) wad: BigInt
-  )
+      @(ContractAnnotation @field)("wad", 1) wad: BigInt)
 
   def apply(entry: SABI.Event): WithdrawalEvent = new WithdrawalEvent(entry)
 }
 
-class WithdrawalEvent(val entry: SABI.Event) extends AbiEvent[WithdrawalEvent.Result]
+class WithdrawalEvent(val entry: SABI.Event)
+    extends AbiEvent[WithdrawalEvent.Result]

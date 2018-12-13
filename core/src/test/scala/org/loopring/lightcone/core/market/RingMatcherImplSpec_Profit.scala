@@ -26,12 +26,20 @@ class RingMatcherImplSpec_Profit extends OrderAwareSpec {
 
   val nonProfitable = new RingIncomeEstimator {
     def getRingIncome(ring: OrderRing) = 0
-    def isProfitable(ring: OrderRing, fiatValueThreshold: Double) = false
+
+    def isProfitable(
+        ring: OrderRing,
+        fiatValueThreshold: Double
+      ) = false
   }
 
   val alwaysProfitable = new RingIncomeEstimator {
     def getRingIncome(ring: OrderRing) = Long.MaxValue
-    def isProfitable(ring: OrderRing, fiatValueThreshold: Double) = true
+
+    def isProfitable(
+        ring: OrderRing,
+        fiatValueThreshold: Double
+      ) = true
   }
 
   val maker = sellDAI(10, 10).matchableAsOriginal
@@ -40,7 +48,9 @@ class RingMatcherImplSpec_Profit extends OrderAwareSpec {
   "RingMatcherImpl" should "not match orders if the ring is not profitable" in {
     implicit val rie = nonProfitable
     val matcher = new RingMatcherImpl()
-    matcher.matchOrders(taker, maker, 0) should be(Left(ERR_MATCHING_INCOME_TOO_SMALL))
+    matcher.matchOrders(taker, maker, 0) should be(
+      Left(ERR_MATCHING_INCOME_TOO_SMALL)
+    )
   }
 
   "RingMatcherImpl" should "match orders if the ring is indeed profitable" in {
@@ -53,10 +63,12 @@ class RingMatcherImplSpec_Profit extends OrderAwareSpec {
     implicit val rie = alwaysProfitable
     val matcher = new RingMatcherImpl()
 
-    matcher.matchOrders(
-      sellDAI(10, 10).matchableAsOriginal,
-      buyDAI(10, 10).matchableAsOriginal
-    ).isRight should be(true)
+    matcher
+      .matchOrders(
+        sellDAI(10, 10).matchableAsOriginal,
+        buyDAI(10, 10).matchableAsOriginal
+      )
+      .isRight should be(true)
 
     // match the same orders with `_matchable`
     matcher.matchOrders(

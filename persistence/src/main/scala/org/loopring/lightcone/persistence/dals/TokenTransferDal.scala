@@ -25,14 +25,13 @@ import slick.basic._
 import scala.concurrent._
 
 trait TokenTransferDal
-  extends BaseDalImpl[TokenTransferTable, XTokenTransferData] {
+    extends BaseDalImpl[TokenTransferTable, XTokenTransferData] {}
 
-}
-
-class TokenTransferDalImpl()(
+class TokenTransferDalImpl(
+  )(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends TokenTransferDal {
+    val ec: ExecutionContext)
+    extends TokenTransferDal {
   val query = TableQuery[TokenTransferTable]
 }

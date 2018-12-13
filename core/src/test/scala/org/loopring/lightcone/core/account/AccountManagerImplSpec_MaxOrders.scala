@@ -25,7 +25,7 @@ class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
   "submit order" should "fail when max orders received for tokenS" in {
     dai.setBalanceAndAllowance(dai.maxNumOrders * 10, dai.maxNumOrders * 10)
 
-    (1 to dai.maxNumOrders) foreach { i ⇒
+    (1 to dai.maxNumOrders) foreach { i =>
       val order = sellDAI(10, 1)
       submitOrder(order) should be(true)
     }
@@ -34,7 +34,9 @@ class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
     submitOrder(order) should be(false)
     updatedOrders.size should be(1)
     orderPool.size == dai.maxNumOrders
-    updatedOrders(order.id).status should be(XOrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS)
+    updatedOrders(order.id).status should be(
+      XOrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS
+    )
   }
 
   "submit order" should "fail when max orders received for tokenFee" in {
@@ -42,12 +44,12 @@ class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
     dai.setBalanceAndAllowance(dai.maxNumOrders * 10, dai.maxNumOrders * 10)
     gto.setBalanceAndAllowance(gto.maxNumOrders * 10, gto.maxNumOrders * 10)
 
-    (1 to dai.maxNumOrders / 2) foreach { i ⇒
+    (1 to dai.maxNumOrders / 2) foreach { i =>
       val order = sellDAI(10, 1, 10)
       submitOrder(order) should be(true)
     }
 
-    (1 to dai.maxNumOrders / 2) foreach { i ⇒
+    (1 to dai.maxNumOrders / 2) foreach { i =>
       val order = sellGTO(10, 1, 10)
       submitOrder(order) should be(true)
     }
@@ -56,6 +58,8 @@ class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
     submitOrder(order) should be(false)
     updatedOrders.size should be(1)
     orderPool.size == lrc.maxNumOrders
-    updatedOrders(order.id).status should be(XOrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS)
+    updatedOrders(order.id).status should be(
+      XOrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS
+    )
   }
 }

@@ -26,8 +26,8 @@ import org.loopring.lightcone.proto._
 import scalapb.json4s.JsonFormat
 
 private[ethereum] class IpcConnector(node: XEthereumProxySettings.XNode)
-  extends Actor
-  with ActorLogging {
+    extends Actor
+    with ActorLogging {
 
   val address = new UnixSocketAddress(new File(node.ipcPath))
   val channel = UnixSocketChannel.open(address)
@@ -36,7 +36,7 @@ private[ethereum] class IpcConnector(node: XEthereumProxySettings.XNode)
   val reader = new InputStreamReader(Channels.newInputStream(channel))
 
   def receive: Receive = {
-    case req: XJsonRpcReq ⇒
+    case req: XJsonRpcReq =>
       try {
         writer.print(JsonFormat.toJsonString(req))
         writer.flush()
@@ -49,10 +49,9 @@ private[ethereum] class IpcConnector(node: XEthereumProxySettings.XNode)
         // val response = JsonFormat.fromJsonString[JsonRpcRes](result.toString)
         sender ! XJsonRpcRes(result.toString())
       } catch {
-        case e: Throwable ⇒ log.error(e.getMessage)
+        case e: Throwable => log.error(e.getMessage)
       }
-    case req: ProtoBuf[_] ⇒
+    case req: ProtoBuf[_] =>
       throw new Exception("not support by ipc connector")
   }
 }
-

@@ -20,18 +20,18 @@ import org.json4s._
 import org.json4s.jackson.Serialization
 import org.slf4s.Logging
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-class JsonRpcServer(settings: JsonRpcSettings)
-  extends Object with Logging {
+class JsonRpcServer(settings: JsonRpcSettings) extends Object with Logging {
 
   private[jsonrpc] implicit val formats = DefaultFormats
 
-  def handleRequest(json: String)(
-    implicit
-    ex: ExecutionContext
-  ): Future[Option[String]] = {
+  def handleRequest(
+      json: String
+    )(
+      implicit ex: ExecutionContext
+    ): Future[Option[String]] = {
     handleRequest(parseJson(json))
   }
 
@@ -41,10 +41,11 @@ class JsonRpcServer(settings: JsonRpcSettings)
   //  -36602	无效的参数	无效的方法参数。
   //  -36603	内部错误	JSON-RPC内部错误。
   //  -32000到-32099	服务器端错误	保留给具体实现服务器端错误。
-  def handleRequest(req: JsonRpcRequest)(
-    implicit
-    ex: ExecutionContext
-  ): Future[Option[String]] = {
+  def handleRequest(
+      req: JsonRpcRequest
+    )(
+      implicit ex: ExecutionContext
+    ): Future[Option[String]] = {
 
     val futureValue = try {
 
@@ -57,15 +58,17 @@ class JsonRpcServer(settings: JsonRpcSettings)
       JsonRpcProxy.invoke(request, mmOption.get)
 
     } catch {
-      case e: JsonRpcException ⇒
+      case e: JsonRpcException =>
         log.error(s"${e.code} @ ${e.message}", e)
         Future(JsonRpcResponse(id = e.id, error = Some(e.copy(id = None))))
-      case e: Exception ⇒
+      case e: Exception =>
         log.error(s"failed @ ${e.getMessage}", e)
-        Future(JsonRpcResponse(error = Some(JsonRpcInternalException(e.getMessage))))
+        Future(
+          JsonRpcResponse(error = Some(JsonRpcInternalException(e.getMessage)))
+        )
     }
 
-    futureValue map { resp ⇒
+    futureValue map { resp =>
       Try(Serialization.write(resp)).toOption
     }
 
@@ -78,19 +81,19 @@ class JsonRpcServer(settings: JsonRpcSettings)
   def parseJValue(jValue: JValue): JsonRpcRequest = {
 
     val idOpt = jValue \\ "id" match {
-      case JString(x) if x.nonEmpty ⇒ Some(x.toInt)
-      case JInt(x) ⇒ Some(x.toInt)
-      case _ ⇒ None
+      case JString(x) if x.nonEmpty => Some(x.toInt)
+      case JInt(x)                  => Some(x.toInt)
+      case _                        => None
     }
 
     val mthOpt = jValue \\ "method" match {
-      case JString(x) if x.nonEmpty ⇒ Some(x.trim)
-      case _ ⇒ None
+      case JString(x) if x.nonEmpty => Some(x.trim)
+      case _                        => None
     }
 
     val rpcOpt = jValue \\ "jsonrpc" match {
-      case JString(x) if x == "2.0" ⇒ Some(x)
-      case _ ⇒ None
+      case JString(x) if x == "2.0" => Some(x)
+      case _                        => None
     }
 
     require(idOpt.isDefined, JsonRpcInvalidException)
@@ -99,11 +102,19 @@ class JsonRpcServer(settings: JsonRpcSettings)
 
     require(rpcOpt.isDefined, JsonRpcInvalidException)
 
-    JsonRpcRequest(id = idOpt.get, jsonrpc = rpcOpt.get, method = mthOpt.get, params = (jValue \\ "params"))
+    JsonRpcRequest(
+      id = idOpt.get,
+      jsonrpc = rpcOpt.get,
+      method = mthOpt.get,
+      params = (jValue \\ "params")
+    )
 
   }
 
-  final def require(requirement: Boolean, error: AbstractJsonRpcException): Unit =
+  final def require(
+      requirement: Boolean,
+      error: AbstractJsonRpcException
+    ): Unit =
     if (!requirement) throw error
 
   def parseJson(json: String): JsonRpcRequest = {
@@ -112,4 +123,3 @@ class JsonRpcServer(settings: JsonRpcSettings)
   }
 
 }
-

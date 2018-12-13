@@ -31,9 +31,8 @@ package object data {
     def id = raw.order.id
   }
 
-  implicit class RichOrderRing(
-      raw: OrderRing
-  ) {
+  implicit class RichOrderRing(raw: OrderRing) {
+
     // Switching maker and taker should have the same id.
     def id(): String = {
       val hash = BigInt(Hash.sha3(raw.maker.id.getBytes)) ^

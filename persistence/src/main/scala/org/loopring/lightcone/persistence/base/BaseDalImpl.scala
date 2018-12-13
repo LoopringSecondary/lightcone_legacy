@@ -40,11 +40,11 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
     db.run(query.insertOrUpdate(row))
   }
 
-  def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]] = {
+  def findByFilter[C: CanBeQueryCondition](f: (T) => C): Future[Seq[A]] = {
     db.run(query.withFilter(f).result)
   }
 
-  def deleteByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Int] = {
+  def deleteByFilter[C: CanBeQueryCondition](f: (T) => C): Future[Int] = {
     db.run(query.withFilter(f).delete)
   }
 
@@ -70,7 +70,10 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
     query.schema.create.statements.foreach(println)
   }
 
-  def take(size: Int, skip: Int = 0): Future[Seq[A]] =
+  def take(
+      size: Int,
+      skip: Int = 0
+    ): Future[Seq[A]] =
     db.run(query.drop(skip).take(size).result)
 
 }

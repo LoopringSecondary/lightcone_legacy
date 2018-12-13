@@ -20,7 +20,7 @@ import akka.actor.Actor
 import akka.util.Timeout
 import org.loopring.lightcone.gateway.jsonrpc.JsonrpcServer
 import org.loopring.lightcone.gateway_bak.jsonrpc.JsonRpcServer
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -33,10 +33,10 @@ class ApiServiceSpec extends FlatSpec with Matchers {
     val req = JsonRpcReq(1, "test", "2.0", None)
     val res = service.handle(req)
     res match {
-      case resFuture: Future[Any] ⇒
+      case resFuture: Future[Any] =>
         val r = Await.result(resFuture.mapTo[Any], timeout.duration)
         r match {
-          case s: String ⇒
+          case s: String =>
             info(s"#### $r")
             r should be("test")
         }

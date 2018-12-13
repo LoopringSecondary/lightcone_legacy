@@ -16,7 +16,4 @@
 
 package org.loopring.lightcone.persistence.dals
 
-trait BlockchainScanRecordDal {
-
-}
-
+trait BlockchainScanRecordDal {}

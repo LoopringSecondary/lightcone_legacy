@@ -38,15 +38,15 @@ import scala.concurrent._
 object EthereumEventPersistorActor extends ShardedEvenly {
   val name = "ethereum_event_persister"
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef]
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -62,17 +62,17 @@ object EthereumEventPersistorActor extends ShardedEvenly {
   }
 }
 
-class EthereumEventPersistorActor()(
-    implicit
-    val config: Config,
+class EthereumEventPersistorActor(
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(EthereumEventPersistorActor.name) {
+    val actors: Lookup[ActorRef])
+    extends ActorWithPathBasedConfig(EthereumEventPersistorActor.name) {
 
   def receive: Receive = {
-    case _ ⇒
+    case _ =>
   }
 
 }

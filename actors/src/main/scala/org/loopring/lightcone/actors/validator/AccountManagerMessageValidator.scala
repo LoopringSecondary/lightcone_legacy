@@ -23,11 +23,10 @@ object AccountManagerMessageValidator {
   val name = "account_manager_validator"
 }
 
-final class AccountManagerMessageValidator()(
-    implicit
-    val config: Config
-) extends MessageValidator {
+final class AccountManagerMessageValidator()(implicit val config: Config)
+    extends MessageValidator {
+
   def validate = {
-    case x ⇒ x
+    case x => x
   }
 }
