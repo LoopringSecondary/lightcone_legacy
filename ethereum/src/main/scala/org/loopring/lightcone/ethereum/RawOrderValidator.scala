@@ -83,11 +83,12 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     val bitstream = new Bitstream
     val feeParams = order.feeParams.get
     val optionalParams = order.params.get
+    val erc1400Params = order.erc1400Params.get
 
-    val transferDataBytes = order.erc1400Params.get.transferDataS.getBytes
+    val transferDataBytes = erc1400Params.transferDataS.getBytes
     val transferDataHash = Numeric.toHexString(Hash.sha3(transferDataBytes))
 
-    bitstream.addBytes32(transferDataHash, true)
+    bitstream.addBytes32(Eip712OrderSchemaHash, true)
     bitstream.addUint(order.amountS.toStringUtf8, true)
     bitstream.addUint(order.amountB.toStringUtf8, true)
     bitstream.addUint(feeParams.amountFee.toStringUtf8, true)
@@ -106,8 +107,20 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     bitstream.addUint16(feeParams.tokenSFeePercentage)
     bitstream.addUint16(feeParams.tokenBFeePercentage)
     bitstream.addBoolean(optionalParams.allOrNone)
+    bitstream.addUint(optionalParams.tokenStandardS.value)
+    bitstream.addUint(optionalParams.tokenStandardB.value)
+    bitstream.addUint(optionalParams.tokenStandardFee.value)
+    bitstream.addBytes32(erc1400Params.trancheS, true)
+    bitstream.addBytes32(erc1400Params.trancheB, true)
+    bitstream.addBytes32(transferDataHash, true)
 
-    Numeric.toHexString(Hash.sha3(bitstream.getBytes))
+    val orderDataHash = Numeric.toHexString(Hash.sha3(bitstream.getBytes))
+    val outterStream = new Bitstream
+    outterStream.addBytes32(Eip191Header, true)
+    outterStream.addBytes32(Eip712DomainHash, true)
+    outterStream.addBytes32(orderDataHash, true)
+
+    Numeric.toHexString(Hash.sha3(outterStream.getBytes))
   }
 
   def validate(order: XRawOrder): Either[XErrorCode, XRawOrder] = {
