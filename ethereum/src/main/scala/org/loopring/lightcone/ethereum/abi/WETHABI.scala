@@ -41,57 +41,49 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
     abi.findFunction(searchByName(WithdrawFunction.name))
   )
 
-  val depositEvent = DepositEvent(
-    abi.findEvent(searchByName(DepositEvent.name))
-  )
-
-  val withdrawalEvent = WithdrawalEvent(
-    abi.findEvent(searchByName(WithdrawalEvent.name))
-  )
-
-  override def unpackEvent(
-      data: String,
-      topics: Array[String]
-    ): Any = {
-    val event: SABI.Event = abi.findEvent(
-      searchBySignature(Numeric.hexStringToByteArray(topics.head))
-    )
-    event.name match {
-      case ApprovalEvent.name =>
-        approvalEvent.unpack(data, topics)
-      case TransferEvent.name =>
-        transferEvent.unpack(data, topics)
-      case DepositEvent.name =>
-        depositEvent.unpack(data, topics)
-      case WithdrawalEvent.name =>
-        withdrawalEvent.unpack(data, topics)
-      case _ =>
+  override def unpackEvent(data: String, topics: Array[String]): Option[Any] = {
+    val event: SABI.Event = abi.findEvent(searchBySignature(Numeric.hexStringToByteArray(topics.head)))
+    event match {
+      case _: SABI.Event ⇒
+        event.name match {
+          case ApprovalEvent.name ⇒
+            approvalEvent.unpack(data, topics)
+          case TransferEvent.name ⇒
+            transferEvent.unpack(data, topics)
+          case DepositEvent.name ⇒
+            depositEvent.unpack(data, topics)
+          case WithdrawalEvent.name ⇒
+            withdrawalEvent.unpack(data, topics)
+          case _ ⇒ None
+        }
+      case _ ⇒ None
     }
   }
 
-  override def unpackFunctionInput(data: String): Any = {
-    val funSig =
-      Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
+  override def unpackFunctionInput(data: String): Option[Any] = {
+    val funSig = Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
     val func = abi.findFunction(searchBySignature(funSig))
-
-    func.name match {
-      case TransferFunction.name =>
-        transfer.unpackInput(data)
-      case TransferFromFunction.name =>
-        transferFrom.unpackInput(data)
-      case ApproveFunction.name =>
-        approve.unpackInput(data)
-      case BalanceOfFunction.name =>
-        balanceOf.unpackInput(data)
-      case AllowanceFunction.name =>
-        allowance.unpackInput(data)
-      case DepositFunction.name =>
-        deposit.unpackInput(data)
-      case WithdrawFunction.name =>
-        withdraw.unpackInput(data)
-      case _ =>
+    func match {
+      case _: SABI.Function ⇒
+        func.name match {
+          case TransferFunction.name ⇒
+            transfer.unpackInput(data)
+          case TransferFromFunction.name ⇒
+            transferFrom.unpackInput(data)
+          case ApproveFunction.name ⇒
+            approve.unpackInput(data)
+          case BalanceOfFunction.name ⇒
+            balanceOf.unpackInput(data)
+          case AllowanceFunction.name ⇒
+            allowance.unpackInput(data)
+          case DepositFunction.name ⇒
+            deposit.unpackInput(data)
+          case WithdrawFunction.name ⇒
+            withdraw.unpackInput(data)
+          case _ ⇒ None
+        }
+      case _ ⇒ None
     }
-
   }
 
 }

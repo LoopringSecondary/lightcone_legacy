@@ -49,7 +49,7 @@ trait AbiFunction[P, R] {
 
   def unpackResult(data: String)(implicit mf: Manifest[R]): Option[R] = {
     val dataBytes = Numeric.hexStringToByteArray(data)
-    val list = entry.decode(dataBytes).asScala.toList
+    val list = entry.decodeResult(dataBytes).asScala.toList
     if (list.isEmpty) None
     else Some(Deserialization.deserialize[R](list))
   }
@@ -87,5 +87,9 @@ abstract class AbiWrap(abiJson: String) {
   private[abi] def searchBySignature[T <: SABI.Entry](
       signature: Array[Byte]
     ): Predicate[T] =
-    x => util.Arrays.equals(x.encodeSignature(), signature)
+    x ⇒ util.Arrays.equals(x.encodeSignature(), signature)
+
+  def unpackEvent(data: String, topics: Array[String]): Option[Any] = ???
+
+  def unpackFunctionInput(data: String): Option[Any] = None
 }
