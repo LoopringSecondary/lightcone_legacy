@@ -23,21 +23,20 @@ import akka.util.Timeout
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
-import org.loopring.lightcone.lib._
-import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.persistence.service._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-import scala.concurrent.ExecutionContext
-import scala.concurrent.ExecutionContextExecutor
-import scala.concurrent.ExecutionContext.Implicits.global
+
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
 import scala.concurrent.duration._
 
 class CoreModule(config: Config)
@@ -93,8 +92,8 @@ class CoreModule(config: Config)
     implicit val ringIncomeEstimator: RingIncomeEstimator = new RingIncomeEstimatorImpl()
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
-    //-----------deploy actors-----------
-    actors.add(AccountBalanceActor.name, AccountBalanceActor.startShardRegion)
+    //-----------deploy sharded actors-----------
+    actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
     actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
     actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
     actors.add(EthereumEventExtractorActor.name, EthereumEventExtractorActor.startShardRegion)
@@ -103,10 +102,64 @@ class CoreModule(config: Config)
     actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
     actors.add(OrderbookManagerActor.name, OrderbookManagerActor.startShardRegion)
     actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
-    actors.add(OrderHistoryActor.name, OrderHistoryActor.startShardRegion)
     actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
     actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
     actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
+
+    //-----------deploy local actors-----------
+    actors.add(
+      AccountManagerMessageValidator.name,
+      MessageValidationActor(
+        AccountManagerMessageValidator.name,
+        new AccountManagerMessageValidator(),
+        AccountManagerActor.name
+      )
+    )
+
+    actors.add(
+      DatabaseQueryMessageValidator.name,
+      MessageValidationActor(
+        DatabaseQueryMessageValidator.name,
+        new DatabaseQueryMessageValidator(),
+        DatabaseQueryActor.name
+      )
+    )
+
+    actors.add(
+      EthereumQueryMessageValidator.name,
+      MessageValidationActor(
+        EthereumQueryMessageValidator.name,
+        new EthereumQueryMessageValidator(),
+        EthereumQueryActor.name
+      )
+    )
+
+    actors.add(
+      MarketManagerMessageValidator.name,
+      MessageValidationActor(
+        MarketManagerMessageValidator.name,
+        new MarketManagerMessageValidator(),
+        MarketManagerActor.name
+      )
+    )
+
+    actors.add(
+      OrderbookManagerMessageValidator.name,
+      MessageValidationActor(
+        OrderbookManagerMessageValidator.name,
+        new OrderbookManagerMessageValidator(),
+        OrderbookManagerActor.name
+      )
+    )
+
+    actors.add(
+      OrderHandlerMessageValidator.name,
+      MessageValidationActor(
+        OrderHandlerMessageValidator.name,
+        new OrderHandlerMessageValidator(),
+        OrderHandlerActor.name
+      )
+    )
 
     actors.add(
       EntryPointActor.name,

@@ -22,15 +22,16 @@ import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
 // main owner: 于红雨
@@ -83,8 +84,7 @@ class AccountManagerActor()(
   val manager = AccountManager.default
   private var address: String = _
 
-  protected def accountBalanceActor = actors.get(AccountBalanceActor.name)
-  protected def orderHistoryActor = actors.get(OrderHistoryActor.name)
+  protected def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
   def receive: Receive = {
@@ -118,11 +118,11 @@ class AccountManagerActor()(
         }
       } yield {
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
-      }).pipeTo(sender)
+      }).sendTo(sender)
 
     case XSubmitOrderReq(Some(xorder)) ⇒ {
       // println("### accountXSubmitOrderReq")
-      submitOrder(xorder).pipeTo(sender)
+      submitOrder(xorder).sendTo(sender)
     }
 
     case req: XCancelOrderReq ⇒
@@ -148,8 +148,8 @@ class AccountManagerActor()(
       _ ← getTokenManager(order.tokenFee) if order.amountFee > 0 && order.tokenS != order.tokenFee
 
       // Update the order's _outstanding field.
-      orderHistoryRes ← (orderHistoryActor ? XGetOrderFilledAmountReq(order.id))
-        .mapTo[XGetOrderFilledAmountRes]
+      orderHistoryRes ← (ethereumQueryActor ? XGetOrderFilledAmountReq(order.id))
+        .mapAs[XGetOrderFilledAmountRes]
 
       _ = log.debug(s"order history: orderHistoryRes")
 
@@ -180,7 +180,7 @@ class AccountManagerActor()(
     case STATUS_UNSUPPORTED_MARKET ⇒ ERR_INVALID_MARKET
     case STATUS_CANCELLED_TOO_MANY_ORDERS ⇒ ERR_TOO_MANY_ORDERS
     case STATUS_CANCELLED_DUPLICIATE ⇒ ERR_ORDER_ALREADY_EXIST
-    case _ ⇒ ERR_UNKNOWN
+    case _ ⇒ ERR_INTERNAL_UNKNOWN
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
@@ -188,8 +188,8 @@ class AccountManagerActor()(
       Future.successful(manager.getTokenManager(token))
     else for {
       _ ← Future.successful(log.debug(s"getTokenManager0 ${token}"))
-      res ← (accountBalanceActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
-        .mapTo[XGetBalanceAndAllowancesRes]
+      res ← (ethereumQueryActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
+        .mapAs[XGetBalanceAndAllowancesRes]
       tm = new AccountTokenManagerImpl(token, 1000)
       ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
       _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
@@ -224,7 +224,7 @@ class AccountManagerActor()(
   }
 
   protected def recoverOrder(xorder: XOrder) = {
-    log.debug(s"recoverOrder, ${self.path.toString}, ${orderHistoryActor.path.toString}, ${xorder}")
+    log.debug(s"recoverOrder, ${self.path.toString}, ${ethereumQueryActor.path.toString}, ${xorder}")
     submitOrder(xorder)
   }
 

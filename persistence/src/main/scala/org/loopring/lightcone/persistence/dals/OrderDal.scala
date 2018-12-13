@@ -20,6 +20,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
@@ -158,7 +159,7 @@ class OrderDalImpl()(
     )).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
         XSaveOrderResult(
-          error = XErrorCode.PERS_ERR_DUPLICATE_INSERT,
+          error = ERR_PERSISTENCE_DUPLICATE_INSERT,
           order = None,
           alreadyExist = true
         )
@@ -167,12 +168,12 @@ class OrderDalImpl()(
         // TODO du: print some log
         // log(s"error : ${ex.getMessage}")
         XSaveOrderResult(
-          error = XErrorCode.PERS_ERR_INTERNAL,
+          error = ERR_PERSISTENCE_INTERNAL,
           order = None
         )
       }
       case Success(x) ⇒ XSaveOrderResult(
-        error = XErrorCode.ERR_NONE,
+        error = ERR_NONE,
         order = Some(order)
       )
     }
@@ -345,7 +346,7 @@ class OrderDalImpl()(
       .update(status, timeProvider.getTimeMillis))
   } yield {
     if (result >= 1) Right(hash)
-    else Left(XErrorCode.PERS_ERR_UPDATE_FAILED)
+    else Left(ERR_PERSISTENCE_UPDATE_FAILED)
   }
 
   def updateFailed(
@@ -370,7 +371,7 @@ class OrderDalImpl()(
     }
   } yield {
     if (result >= 1) Right(hash)
-    else Left(XErrorCode.PERS_ERR_UPDATE_FAILED)
+    else Left(ERR_PERSISTENCE_UPDATE_FAILED)
   }
 
   def updateAmount(
@@ -399,6 +400,6 @@ class OrderDalImpl()(
       ))
   } yield {
     if (result >= 1) Right(hash)
-    else Left(XErrorCode.PERS_ERR_UPDATE_FAILED)
+    else Left(ERR_PERSISTENCE_UPDATE_FAILED)
   }
 }

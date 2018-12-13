@@ -85,7 +85,7 @@ import org.loopring.lightcone.proto._
 //         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
 //           val order: Order = xorder
 //           log.debug(s"order submitted: $order")
-//         case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
+//         case XSubmitOrderRes(ERR_INTERNAL_UNKNOWN, None) ⇒
 //       }
 
 //       orderbookManagerActor ! XGetOrderbookReq(0, 100)
