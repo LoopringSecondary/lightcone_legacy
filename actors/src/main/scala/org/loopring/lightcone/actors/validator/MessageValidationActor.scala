@@ -54,7 +54,7 @@ class MessageValidationActor(
     case msg ⇒ Future {
       validate(msg) match {
         case None     ⇒ msg // unvalidated message are forwarded as-is
-        case Some(()) ⇒ msg
+        case Some(()) ⇒ msg // handle 'case x:X =>' situation
         case Some(validatedMsg) ⇒
           log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
           validatedMsg
