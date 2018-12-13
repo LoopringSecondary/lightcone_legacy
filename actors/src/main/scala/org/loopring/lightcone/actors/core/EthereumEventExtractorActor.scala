@@ -29,6 +29,8 @@ import org.loopring.lightcone.persistence.dals.{ BlockDal, BlockDalImpl }
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import com.google.protobuf.ByteString
+import slick.basic.DatabaseConfig
+import slick.jdbc.JdbcProfile
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
@@ -53,7 +55,8 @@ object EthereumEventExtractorActor {
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    actors: Lookup[ActorRef]
+    actors: Lookup[ActorRef],
+    dbConfig: DatabaseConfig[JdbcProfile]
   ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
@@ -71,7 +74,8 @@ class EthereumEventExtractorActor()(
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
+    val actors: Lookup[ActorRef],
+    dbConfig: DatabaseConfig[JdbcProfile]
 ) extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
 
   def ethereumConnectionActor: ActorRef = actors.get(EthereumAccessActor.name)
@@ -127,11 +131,9 @@ class EthereumEventExtractorActor()(
       block match {
         case XGetBlockWithTxObjectByNumberRes(_, _, Some(result), _) ⇒
           if (result.parentHash.equals(currentBlockHash)) {
-            //TODO(yadong)是否要存block的全量数据
             val blockData = XBlockData()
               .withHash(result.hash)
               .withHeight(hex2BigInt(result.number).longValue())
-
             blockDal.saveBlock(blockData)
             self ! XBlockJob()
               .withHeight(hex2BigInt(result.number).intValue())
