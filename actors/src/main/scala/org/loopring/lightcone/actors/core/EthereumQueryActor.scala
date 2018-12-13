@@ -85,9 +85,9 @@ class EthereumQueryActor()(
       val batchReqs: XBatchContractCallReq = xGetBalanceAndAllowanceToBatchReq(Address(delegateAddress), req)
       val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
       (for {
-        callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
+        callRes ← (ethereumConnectionActor ? batchReqs).mapAs[XBatchContractCallRes]
         ethRes ← (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
-          .mapTo[XEthGetBalanceRes]
+          .mapAs[XEthGetBalanceRes]
         res: XGetBalanceAndAllowancesRes = xBatchContractCallResToBalanceAndAllowance(req.address, req.tokens, callRes)
       } yield {
         res.copy(
@@ -100,9 +100,9 @@ class EthereumQueryActor()(
       val batchReqs: XBatchContractCallReq = req
       val existsEth = req.tokens.exists(token ⇒ Address(token).toString.equals(zeroAddress))
       (for {
-        callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
+        callRes ← (ethereumConnectionActor ? batchReqs).mapAs[XBatchContractCallRes]
         ethRes ← (ethereumConnectionActor ? XEthGetBalanceReq(address = Address(req.address).toString, tag = "latest"))
-          .mapTo[XEthGetBalanceRes]
+          .mapAs[XEthGetBalanceRes]
         res: XGetBalanceRes = xBatchContractCallResToBalance(req.address, req.tokens, callRes)
       } yield {
         res.copy(
@@ -114,7 +114,7 @@ class EthereumQueryActor()(
     case req: XGetAllowanceReq ⇒
       val batchReqs: XBatchContractCallReq = xGetAllowanceToBatchReq(Address(delegateAddress), req)
       (for {
-        callRes ← (ethereumConnectionActor ? batchReqs).mapTo[XBatchContractCallRes]
+        callRes ← (ethereumConnectionActor ? batchReqs).mapAs[XBatchContractCallRes]
         res: XGetAllowanceRes = xBatchContractCallResToAllowance(req.address, req.tokens, callRes)
       } yield res) pipeTo sender
 

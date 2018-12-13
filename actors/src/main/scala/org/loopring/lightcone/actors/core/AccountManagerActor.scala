@@ -149,7 +149,7 @@ class AccountManagerActor()(
 
       // Update the order's _outstanding field.
       orderHistoryRes ← (ethereumQueryActor ? XGetOrderFilledAmountReq(order.id))
-        .mapTo[XGetOrderFilledAmountRes]
+        .mapAs[XGetOrderFilledAmountRes]
 
       _ = log.debug(s"order history: orderHistoryRes")
 
@@ -189,7 +189,7 @@ class AccountManagerActor()(
     else for {
       _ ← Future.successful(log.debug(s"getTokenManager0 ${token}"))
       res ← (ethereumQueryActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
-        .mapTo[XGetBalanceAndAllowancesRes]
+        .mapAs[XGetBalanceAndAllowancesRes]
       tm = new AccountTokenManagerImpl(token, 1000)
       ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
       _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
