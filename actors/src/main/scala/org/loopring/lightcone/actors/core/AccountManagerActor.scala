@@ -122,7 +122,7 @@ class AccountManagerActor()(
 
     case XSubmitOrderReq(Some(xorder)) ⇒ {
       // println("### accountXSubmitOrderReq")
-      submitOrder(xorder).pipeTo(sender)
+      submitOrder(xorder).sendTo(sender)
     }
 
     case req: XCancelOrderReq ⇒
