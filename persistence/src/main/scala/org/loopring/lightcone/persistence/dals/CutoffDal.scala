@@ -32,19 +32,11 @@ trait CutoffDal
 
   def saveCutoff(cutoff: XCutoff): Future[XErrorCode]
 
-  def getCutoffs(
-    cutoffType: Option[XCutoff.XType] = None,
-    cutoffBy: Option[XCutoffBy] = None,
-    tradingPair: Option[String] = None,
-    sort: Option[XSort] = None,
-    skip: Option[XSkip] = None
-  ): Future[Seq[XCutoff]]
-
-  def hasCutoffs(
-    cutoffType: Option[XCutoff.XType] = None,
-    cutoffBy: Option[XCutoffBy] = None,
-    tradingPair: Option[String] = None,
-    time: Option[Long] // in seconds, where cutoff > time
+  def hasCutoff(
+    orderBroker: Option[String] = None,
+    orderOwner: String,
+    orderTradingPair: String,
+    time: Long // in seconds, where cutoff > time
   ): Future[Boolean]
 
   def obsolete(height: Long): Future[Unit]
@@ -58,7 +50,6 @@ class CutoffDalImpl()(
   val query = TableQuery[CutoffTable]
   def getRowHash(row: XRawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
-  implicit val XCutoffCxolumnType = enumColumnType(XCutoff.XType)
 
   override def saveCutoff(cutoff: XCutoff): Future[XErrorCode] = {
     val now = timeProvider.getTimeMillis
@@ -78,49 +69,48 @@ class CutoffDalImpl()(
     }
   }
 
-  override def getCutoffs(
-    cutoffType: Option[XCutoff.XType],
-    cutoffBy: Option[XCutoffBy] = None,
-    tradingPair: Option[String],
-    sort: Option[XSort],
-    skip: Option[XSkip]
-  ): Future[Seq[XCutoff]] = {
-    var filters = query.filter(_.isValid === true)
-    if (cutoffType.nonEmpty) filters = filters.filter(_.cutoffType === cutoffType.get)
-    filters = cutoffBy match {
-      case Some(XCutoffBy(XCutoffBy.Value.Broker(value))) ⇒ filters.filter(_.broker === value)
-      case Some(XCutoffBy(XCutoffBy.Value.Owner(value))) ⇒ filters.filter(_.owner === value)
-      case _ ⇒ filters
-    }
-    if (tradingPair.nonEmpty) filters = filters.filter(_.tradingPair === tradingPair.get)
-    if (sort.nonEmpty) filters = sort.get match {
-      case XSort.ASC  ⇒ filters.sortBy(_.createdAt.asc)
-      case XSort.DESC ⇒ filters.sortBy(_.createdAt.desc)
-      case _          ⇒ filters.sortBy(_.createdAt.asc)
-    }
-    filters = skip match {
-      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
-      case None    ⇒ filters
-    }
-    db.run(filters.result)
-  }
-
-  def hasCutoffs(
-    cutoffType: Option[XCutoff.XType] = None,
-    cutoffBy: Option[XCutoffBy] = None,
-    tradingPair: Option[String] = None,
-    time: Option[Long]
+  def hasCutoff(
+    orderBroker: Option[String] = None,
+    orderOwner: String,
+    orderTradingPair: String,
+    time: Long
   ): Future[Boolean] = {
-    var filters = query.filter(_.isValid === true)
-    if (cutoffType.nonEmpty) filters = filters.filter(_.cutoffType === cutoffType.get)
-    filters = cutoffBy match {
-      case Some(XCutoffBy(XCutoffBy.Value.Broker(value))) ⇒ filters.filter(_.broker === value)
-      case Some(XCutoffBy(XCutoffBy.Value.Owner(value))) ⇒ filters.filter(_.owner === value)
-      case _ ⇒ filters
+    val filters = query.filter(_.isValid === true)
+    if (orderBroker.nonEmpty) {
+      val q1 = filters
+        .filter(_.broker === orderBroker.get)
+        .filter(_.owner === "")
+        .filter(_.tradingPair === "")
+        .filter(_.cutoff > time) // broker cancel all
+      val q2 = filters
+        .filter(_.broker === orderBroker.get)
+        .filter(_.owner === orderOwner)
+        .filter(_.tradingPair === "")
+        .filter(_.cutoff > time) // broker cancel owner's all
+      val q3 = filters
+        .filter(_.broker === orderBroker.get)
+        .filter(_.owner === "")
+        .filter(_.tradingPair === orderTradingPair)
+        .filter(_.cutoff > time) // broker cancel market's all
+      val q4 = filters
+        .filter(_.broker === orderBroker.get)
+        .filter(_.owner === orderOwner)
+        .filter(_.tradingPair === orderTradingPair)
+        .filter(_.cutoff > time) // broker cancel owner and market's all
+      db.run((q1 union q2 union q3 union q4).size.result).map(_ > 0)
+    } else {
+      val q1 = filters
+        .filter(_.broker === "")
+        .filter(_.owner === orderOwner)
+        .filter(_.tradingPair === "")
+        .filter(_.cutoff > time) // owner cancel all market
+      val q2 = filters
+        .filter(_.broker === "")
+        .filter(_.owner === orderOwner)
+        .filter(_.tradingPair === orderTradingPair)
+        .filter(_.cutoff > time) // owner cancel market's all
+      db.run((q1 union q2).size.result).map(_ > 0)
     }
-    if (tradingPair.nonEmpty) filters = filters.filter(_.tradingPair === tradingPair.get)
-    if (time.nonEmpty) filters = filters.filter(_.cutoff > time.get)
-    db.run(filters.size.result).map(_ > 0)
   }
 
   def obsolete(height: Long): Future[Unit] = {

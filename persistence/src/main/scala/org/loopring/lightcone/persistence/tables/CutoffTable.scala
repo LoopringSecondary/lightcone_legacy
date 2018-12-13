@@ -23,11 +23,8 @@ import slick.jdbc.MySQLProfile.api._
 class CutoffTable(tag: Tag)
   extends BaseTable[XCutoff](tag, "T_CUTOFFS") {
 
-  implicit val XCutoffCxolumnType = enumColumnType(XCutoff.XType)
-
   def id = txHash
   def txHash = columnHash("tx_hash")
-  def cutoffType = column[XCutoff.XType]("cutoff_type")
   def broker = columnAddress("broker")
   def owner = columnAddress("owner")
   def tradingPair = column[String]("trading_pair", O.Length(100))
@@ -39,7 +36,6 @@ class CutoffTable(tag: Tag)
 
   // indexes
   def idx_hash = index("idx_hash", (txHash), unique = true)
-  def idx_cutoff_type = index("idx_cutoff_type", (cutoffType), unique = false)
   def idx_broker = index("idx_broker", (broker), unique = false)
   def idx_owner = index("idx_owner", (owner), unique = false)
   def idx_trading_pair = index("idx_trading_pair", (tradingPair), unique = false)
@@ -49,7 +45,6 @@ class CutoffTable(tag: Tag)
 
   def * = (
     txHash,
-    cutoffType,
     broker,
     owner,
     tradingPair,

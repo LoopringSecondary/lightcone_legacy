@@ -47,7 +47,6 @@ class CancelOrderOnChainDalImpl()(
   val query = TableQuery[CancelOrderOnChainTable]
   def getRowHash(row: XRawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
-  implicit val XCutoffCxolumnType = enumColumnType(XCutoff.XType)
 
   override def saveCancelOrder(cancelOrder: XCancelOrderOnChain): Future[XErrorCode] = {
     val now = timeProvider.getTimeMillis

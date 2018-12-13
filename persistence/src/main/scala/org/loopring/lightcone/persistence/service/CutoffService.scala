@@ -14,27 +14,23 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.persistence.service
 
-option java_multiple_files = true;
-package org.loopring.lightcone.proto;
+import org.loopring.lightcone.persistence.dals.CutoffDal
+import org.loopring.lightcone.proto.{ XCutoff, XErrorCode }
+import scala.concurrent.Future
 
-import "core_data.proto";
+trait CutoffService {
+  val cutoffDal: CutoffDal
 
-enum XSort {
-    ASC  = 0;
-    DESC = 1;
-}
+  def saveCutoff(cutoff: XCutoff): Future[XErrorCode]
 
-message XSkip {
-    int64 skip = 1; // 忽略的记录
-    int32 take = 2; // 拉取的记录数
-}
+  def hasCutoff(
+    orderBroker: Option[String] = None,
+    orderOwner: String,
+    orderTradingPair: String,
+    time: Long // in seconds, where cutoff > time
+  ): Future[Boolean]
 
-message XTokenMetadata {
-    string address = 1;
-    int32 decimals = 2;
-    double burnRate = 3;
-    string symbol = 4;
-    double currentPrice = 5;
+  def obsolete(height: Long): Future[Unit]
 }

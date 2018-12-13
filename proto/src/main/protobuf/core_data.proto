@@ -229,15 +229,7 @@ message XTrade {
 }
 
 message XCutoff {
-    enum XType {
-        BROKER               = 0;
-        OWNER                = 1;
-        BROKER_TRADING_PAIR  = 2;
-        OWNER_TRADING_PAIR   = 3;
-    }
-
     string tx_hash         = 1;
-    XType  cutoff_type     = 2;
     string broker          = 3;
     string owner           = 4;
     string trading_pair    = 5;
