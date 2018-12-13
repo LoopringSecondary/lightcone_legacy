@@ -33,6 +33,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent.{ ExecutionContext, Future }
 

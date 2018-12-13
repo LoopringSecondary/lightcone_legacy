@@ -31,6 +31,7 @@ import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
 // main owner: 杜永丰

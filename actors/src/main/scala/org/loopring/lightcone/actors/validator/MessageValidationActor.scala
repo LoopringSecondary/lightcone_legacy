@@ -20,26 +20,20 @@ import akka.actor._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
 
 object MessageValidationActor {
   def apply(
     name: String,
     validator: MessageValidator,
-    destinationName: String
-  )(implicit
-    system: ActorSystem,
-    actors: Lookup[ActorRef]
-  ): ActorRef = system.actorOf(
-    Props(new MessageValidationActor(destinationName, validator)), name
-  )
+    destinationName: String)(implicit system: ActorSystem,
+      actors: Lookup[ActorRef]): ActorRef = system.actorOf(
+    Props(new MessageValidationActor(destinationName, validator)), name)
 }
 class MessageValidationActor(
-    destinationName: String,
-    validator: MessageValidator
-)(
-    implicit
-    val actors: Lookup[ActorRef]
-) extends Actor
+  destinationName: String,
+  validator: MessageValidator)(
+    implicit val actors: Lookup[ActorRef]) extends Actor
   with ActorLogging {
 
   private val destinationActor = actors.get(destinationName)
