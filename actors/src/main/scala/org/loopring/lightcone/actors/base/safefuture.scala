@@ -30,6 +30,8 @@ object safefuture {
       ec: ExecutionContext,
       ac: ActorContext
   ) {
+
+    // Map a future to a certain type. All other types will throw ErrorException.
     def mapAs[S](
       implicit
       tag: ClassTag[S]
