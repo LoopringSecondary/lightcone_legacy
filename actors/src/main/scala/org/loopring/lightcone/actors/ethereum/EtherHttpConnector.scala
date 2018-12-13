@@ -20,7 +20,6 @@ import akka.actor._
 import akka.http.scaladsl._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
-import akka.pattern.pipe
 import akka.stream._
 import akka.stream.scaladsl._
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
@@ -154,7 +153,7 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
 
   def receive: Receive = {
     case req: XJsonRpcReq ⇒
-      post(req.json).map(XJsonRpcRes(_)) pipeTo sender
+      post(req.json).map(XJsonRpcRes(_)) sendTo  sender
 
     case _: XEthBlockNumberReq ⇒
       sendMessage("eth_blockNumber") {
