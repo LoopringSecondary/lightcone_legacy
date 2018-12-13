@@ -18,11 +18,11 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.sharding._
-import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
@@ -100,7 +100,13 @@ class AccountManagerActor()(
     }
   }
 
-  def functional: Receive = LoggingReceive {
+  // Validate received message
+  val validator: PartialFunction[Any, Any] = {
+    case x: String ⇒ x // use as-is
+    case _         ⇒ // Use as-is
+  }
+
+  def functional: Receive = ValidationReceive.Logging(validator) {
 
     case XGetBalanceAndAllowancesReq(addr, tokens) ⇒
       assert(addr == address)
