@@ -111,9 +111,9 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     val fullZeroAddr = "0x" + "0" * 40
     val defaultUint256 = ByteString.copyFromUtf8("0")
 
-    val addressGetOrDefault = (addr: String) => if (isValidAddress(addr)) addr else defaultAddr
+    val addressGetOrDefault = (addr: String) ⇒ if (isValidAddress(addr)) addr else defaultAddr
 
-    val uint256GetOrDefault = (uint256Bs: ByteString) => {
+    val uint256GetOrDefault = (uint256Bs: ByteString) ⇒ {
       if (uint256Bs.isEmpty) defaultUint256 else uint256Bs
     }
 
@@ -142,7 +142,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     order.copy(
       params = Option(params),
       feeParams = Option(feeParams),
-      erc1400Params = Option(erc1400Params),
+      erc1400Params = Option(erc1400Params)
     )
   }
 
