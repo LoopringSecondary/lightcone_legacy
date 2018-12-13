@@ -30,13 +30,19 @@ trait RawOrderValidator {
 }
 
 class RawOrderValidatorImpl extends RawOrderValidator {
-  // TODO this field should be configurable somewhere.
+  // TODO(Kongliang): the following constant fields should be configurable somewhere.
+
+
   val FeePercentageBase = 1000
+  val Eip191Header = "\u0019\u0001"
+  val Eip712OrderSchemaHash = "0x40b942178d2a51f1f61934268590778feb8114db632db7d88537c98d2b05c5f2"
+  val Eip712DomainHash = "0xaea25658c273c666156bd427f83a666135fcde6887a6c25fc1cd1562bc4f3f34"
 
   def setupEmptyFieldsWithDefaults(order: XRawOrder, lrcAddress: String) = {
     val defaultAddr = "0x0"
     val fullZeroAddr = "0x" + "0" * 40
     val defaultUint256 = ByteString.copyFromUtf8("0")
+    val zeroBytes32Str = "0x" + "0" * 64
 
     val addressGetOrDefault = (addr: String) => if (isValidAddress(addr)) addr else defaultAddr
 
@@ -77,6 +83,11 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     val bitstream = new Bitstream
     val feeParams = order.feeParams.get
     val optionalParams = order.params.get
+
+    val transferDataBytes = order.erc1400Params.get.transferDataS.getBytes
+    val transferDataHash = Numeric.toHexString(Hash.sha3(transferDataBytes))
+
+    bitstream.addBytes32(transferDataHash, true)
     bitstream.addUint(order.amountS.toStringUtf8, true)
     bitstream.addUint(order.amountB.toStringUtf8, true)
     bitstream.addUint(feeParams.amountFee.toStringUtf8, true)

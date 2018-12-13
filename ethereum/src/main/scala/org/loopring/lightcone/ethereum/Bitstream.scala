@@ -64,6 +64,15 @@ class Bitstream() {
   def addBoolean(b: Boolean, forceAppend: Boolean = true) =
     addBigInt(if (b) 1 else 0, 1, forceAppend)
 
+  def addBytes32(str: String, forceAppend: Boolean = true) {
+    val strWithoutPrefix = Numeric.cleanHexPrefix(str)
+    if (strWithoutPrefix.length > 64) {
+      throw new IllegalArgumentException(s"invalid bytes32 str: too long, str:$str")
+    }
+    val strPadded = strWithoutPrefix + "0" * (64 - strWithoutPrefix.length)
+    insert(strPadded, forceAppend)
+  }
+
   def addHex(str: String, forceAppend: Boolean = true) =
     insert(Numeric.cleanHexPrefix(str), forceAppend)
 

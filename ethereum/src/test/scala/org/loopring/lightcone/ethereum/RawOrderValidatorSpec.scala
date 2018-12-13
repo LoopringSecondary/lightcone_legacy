@@ -44,6 +44,9 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
     val order1WithDefault = validator.setupEmptyFieldsWithDefaults(order1, lrcAddress)
     println(s"order1WithDefault: $order1WithDefault")
 
+    val hash = validator.calculateOrderHash(order1WithDefault)
+    println(s"hash:$hash")
+
     val validateResult = validator.validate(order1WithDefault)
     println(s"validateResult: $validateResult")
   }
