@@ -170,7 +170,7 @@ message XRawOrder {
     ERC1400Params erc1400_params    = 12;
     State state            = 13;
     int64 sequence_id      = 14;
-    int64 market_hash      = 15;
+    string market_hash      = 15;
 }
 
 message XRingBatch {

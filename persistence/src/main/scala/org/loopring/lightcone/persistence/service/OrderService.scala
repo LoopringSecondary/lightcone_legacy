@@ -16,17 +16,12 @@
 
 package org.loopring.lightcone.persistence.service
 
-import com.google.inject.Inject
-import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.dals.{ OrderDal, OrderDalImpl }
 import org.loopring.lightcone.proto._
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
 trait OrderService {
   def saveOrder(order: XRawOrder): Future[Either[XRawOrder, XErrorCode]]
-  def markOrderSoftCancelled(): Future[Option[XErrorCode]] = ???
+  def markOrderSoftCancelled(orderHashes: Seq[String]): Future[Seq[Either[XErrorCode, String]]]
 
   def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]]
   def getOrder(hash: String): Future[Option[XRawOrder]]
@@ -36,7 +31,7 @@ trait OrderService {
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
@@ -47,7 +42,7 @@ trait OrderService {
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
@@ -60,7 +55,7 @@ trait OrderService {
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     validTime: Option[Int] = None,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
@@ -72,7 +67,7 @@ trait OrderService {
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty
   ): Future[Int]
 

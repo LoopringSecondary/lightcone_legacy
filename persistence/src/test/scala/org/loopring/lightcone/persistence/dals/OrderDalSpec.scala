@@ -25,8 +25,8 @@ import scala.concurrent.duration._
 class OrderDalSpec extends DalSpec[OrderDal] {
   def getDal = new OrderDalImpl()
   val timeProvider = new SystemTimeProvider()
-  val tokenS = "0x-tokens"
-  val tokenB = "0x-tokenb"
+  val tokenS = "0xaaaaaa1"
+  val tokenB = "0xaaaaaa2"
   val tokenFee = "0x-fee-token"
   val validSince = 1
   val validUntil = timeProvider.getTimeSeconds()
@@ -65,7 +65,7 @@ class OrderDalSpec extends DalSpec[OrderDal] {
       state = Some(state),
       feeParams = Some(fee),
       params = Some(param),
-      marketHash = MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)
+      marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
     )
     dal.saveOrder(order)
   }
@@ -115,20 +115,20 @@ class OrderDalSpec extends DalSpec[OrderDal] {
       "0x-getorders-token-03",
       "0x-getorders-token-04"
     )
-    val tokenS = "0x-getorders-tokens"
-    val tokenB = "0x-getorders-tokenb"
+    val tokenS = "0xbbbbbbbbb1"
+    val tokenB = "0xbbbbbbbbb2"
     val result = for {
       _ ← testSaves(hashes, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       _ ← testSaves(mockState, XOrderStatus.STATUS_PARTIALLY_FILLED, tokenS, tokenB, validSince, validUntil.toInt)
-      _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0x-mock-tokens", "0x-mock-tokenb", 200, 300)
+      _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0xcccccccc1", "0xcccccccc2", 200, 300)
       query ← dal.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set(tokenFee), Some(XSort.ASC), None)
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), Set(tokenFee), Some(XSort.ASC), None)
       queryStatus ← dal.getOrders(Set(XOrderStatus.STATUS_PARTIALLY_FILLED), Set.empty, Set.empty, Set.empty, Set.empty,
         Set.empty, Some(XSort.ASC), None)
-      queryToken ← dal.getOrders(Set(XOrderStatus.STATUS_NEW), mockToken, Set("0x-mock-tokens"), Set("0x-mock-tokenb"), Set.empty,
+      queryToken ← dal.getOrders(Set(XOrderStatus.STATUS_NEW), mockToken, Set("0xcccccccc1"), Set("0xcccccccc2"), Set.empty,
         Set(tokenFee), Some(XSort.ASC), None)
       queryMarket ← dal.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set.empty, Set.empty,
-        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set.empty, Some(XSort.ASC), None)
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), Set.empty, Some(XSort.ASC), None)
       count ← dal.countOrders(Set.empty, Set.empty, Set.empty, Set.empty, Set.empty)
     } yield (query, queryStatus, queryToken, queryMarket, count)
     val res = Await.result(result.mapTo[(Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Int)], 5.second)
@@ -157,7 +157,7 @@ class OrderDalSpec extends DalSpec[OrderDal] {
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       query ← dal.getOrdersForUser(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), Set(tokenFee), Some(XSort.ASC), None)
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), Set(tokenFee), Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res.length should be(owners.size)
@@ -175,7 +175,7 @@ class OrderDalSpec extends DalSpec[OrderDal] {
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       query ← dal.countOrders(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)))
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)))
     } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
     res should be(owners.size)
@@ -193,7 +193,7 @@ class OrderDalSpec extends DalSpec[OrderDal] {
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       query ← dal.getOrdersForRecover(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), None, Some(XSort.ASC), None)
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), None, Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res.length should be(owners.size)

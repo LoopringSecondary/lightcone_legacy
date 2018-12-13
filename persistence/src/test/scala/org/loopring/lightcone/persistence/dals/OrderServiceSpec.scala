@@ -26,8 +26,8 @@ import scala.concurrent._
 class OrderServiceSpec extends ServiceSpec[OrderService] {
   def getService = new OrderServiceImpl()
   val timeProvider = new SystemTimeProvider()
-  val tokenS = "0x-tokens"
-  val tokenB = "0x-tokenb"
+  val tokenS = "0xaaaaaaaa1"
+  val tokenB = "0xaaaaaaaa2"
   val tokenFee = "0x-fee-token"
   val validSince = 1
   val validUntil = timeProvider.getTimeSeconds()
@@ -71,7 +71,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       state = Some(state),
       feeParams = Some(fee),
       params = Some(param),
-      marketHash = MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)
+      marketHash = MarketHashProvider.convert2Hex(tokenB, tokenS)
     )
     service.saveOrder(order)
   }
@@ -91,7 +91,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     } yield result
   }
 
-  "submitOrder" must "save a order with hash 0x111" in {
+  "saveOrder" must "save a order with hash 0x111" in {
     val hash = "0x-saveorder-state0-01"
     val result = for {
       _ ← testSave(hash, hash, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
@@ -121,20 +121,20 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       "0x-getorders-token-03",
       "0x-getorders-token-04"
     )
-    val tokenS = "0x-getorders-tokens"
-    val tokenB = "0x-getorders-tokenb"
+    val tokenS = "0xbbbbbbbb1"
+    val tokenB = "0xbbbbbbbb2"
     val result = for {
       _ ← testSaves(hashes, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       _ ← testSaves(mockState, XOrderStatus.STATUS_PARTIALLY_FILLED, tokenS, tokenB, validSince, validUntil.toInt)
-      _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0x-mock-tokens", "0x-mock-tokenb", 200, 300)
+      _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0xccccccccc1", "0xccccccccc2", 200, 300)
       query ← service.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set(tokenFee), Some(XSort.ASC), None)
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), Set(tokenFee), Some(XSort.ASC), None)
       queryStatus ← service.getOrders(Set(XOrderStatus.STATUS_PARTIALLY_FILLED), Set.empty, Set.empty, Set.empty, Set.empty,
         Set.empty, Some(XSort.ASC), None)
-      queryToken ← service.getOrders(Set(XOrderStatus.STATUS_NEW), mockToken, Set("0x-mock-tokens"), Set("0x-mock-tokenb"), Set.empty,
+      queryToken ← service.getOrders(Set(XOrderStatus.STATUS_NEW), mockToken, Set("0xccccccccc1"), Set("0xccccccccc2"), Set.empty,
         Set(tokenFee), Some(XSort.ASC), None)
       queryMarket ← service.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set.empty, Set.empty,
-        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set.empty, Some(XSort.ASC), None)
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), Set.empty, Some(XSort.ASC), None)
       count ← service.countOrders(Set.empty, Set.empty, Set.empty, Set.empty, Set.empty)
     } yield (query, queryStatus, queryToken, queryMarket, count)
     val res = Await.result(result.mapTo[(Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Int)], 5.second)
@@ -163,7 +163,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       query ← service.getOrdersForUser(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), Set(tokenFee), Some(XSort.ASC), None)
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), Set(tokenFee), Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res.length should be(owners.size)
@@ -181,7 +181,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       query ← service.countOrders(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)))
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)))
     } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
     res should be(owners.size)
@@ -199,7 +199,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       query ← service.getOrdersForRecover(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), None, Some(XSort.ASC), None)
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), None, Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res.length should be(owners.size)
@@ -257,5 +257,27 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_NEW &&
       res._2.get.state.get.actualAmountB === ByteString.copyFrom("111", "UTF-8")
     x should be(true)
+  }
+
+  "markOrderSoftCancelled" must "update order's status to canceled-by-user" in {
+    val owners = Set(
+      "0x-markordersoftcancel-01",
+      "0x-markordersoftcancel-02",
+      "0x-markordersoftcancel-03",
+      "0x-markordersoftcancel-04",
+      "0x-markordersoftcancel-05",
+      "0x-markordersoftcancel-06"
+    )
+    val queryOwners = Seq(
+      "0x-markordersoftcancel-03",
+      "0x-markordersoftcancel-01"
+    )
+    val result = for {
+      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      update ← service.markOrderSoftCancelled(queryOwners)
+      count ← service.countOrders(Set(XOrderStatus.STATUS_CANCELLED_BY_USER), queryOwners.toSet, Set.empty, Set.empty, Set.empty)
+    } yield (update, count)
+    val res = Await.result(result.mapTo[(Seq[Either[XErrorCode, String]], Int)], 5.second)
+    res._2 should be(2)
   }
 }
