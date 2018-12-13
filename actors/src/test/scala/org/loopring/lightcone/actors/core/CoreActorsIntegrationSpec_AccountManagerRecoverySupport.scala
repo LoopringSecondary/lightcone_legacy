@@ -31,21 +31,7 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
 )
   extends CoreActorsIntegrationCommonSpec(marketId, configStr) {
 
-  class OrderStateForRecoveryTestActor()(
-      implicit
-      ec: ExecutionContext,
-      timeout: Timeout
-  )
-    extends Actor
-    with ActorLogging {
-
-    def receive: Receive = LoggingReceive {
-      case XGetOrderFilledAmountReq(orderId) ⇒
-        sender ! XGetOrderFilledAmountRes(orderId, BigInt(0))
-    }
-  }
-
-  class AccountBalanceForRecoveryTestActor()(
+  class EthereumQueryForRecoveryTestActor()(
       implicit
       ec: ExecutionContext,
       timeout: Timeout
@@ -63,15 +49,14 @@ abstract class CoreActorsIntegrationSpec_AccountManagerRecoverySupport(
               BigInt("100000000000000000000000000")
             ))
           )
+      case XGetOrderFilledAmountReq(orderId) ⇒
+        sender ! XGetOrderFilledAmountRes(orderId, BigInt(0))
     }
   }
 
-  val orderStateRecoveryActor = TestActorRef(new OrderStateForRecoveryTestActor())
-  val accountBalanceRecoveryActor = TestActorRef(new AccountBalanceForRecoveryTestActor())
+  val ethereumQueryRecoveryActor = TestActorRef(new EthereumQueryForRecoveryTestActor())
   val ADDRESS_RECOVERY = "0xaddress_3"
-  actors.del(OrderHistoryActor.name)
-  actors.del(AccountBalanceActor.name)
-  actors.add(OrderHistoryActor.name, orderStateRecoveryActor)
-  actors.add(AccountBalanceActor.name, accountBalanceRecoveryActor)
+  actors.del(EthereumQueryActor.name)
+  actors.add(EthereumQueryActor.name, ethereumQueryRecoveryActor)
 
 }
