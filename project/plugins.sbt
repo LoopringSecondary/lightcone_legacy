@@ -4,13 +4,13 @@ resolvers += "JFrog" at "https://oss.jfrog.org/libs-release/"
 resolvers += "bintray" at "https://dl.bintray.com/ethereum/maven/"
 resolvers += Resolver.bintrayRepo("hseeberger", "maven")
 resolvers += Resolver.url("scoverage-bintray",
-                          url("https://dl.bintray.com/sksamuel/sbt-plugins/"))(
-  Resolver.ivyStylePatterns)
+  url("https://dl.bintray.com/sksamuel/sbt-plugins/"))(
+    Resolver.ivyStylePatterns)
 
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.7.4"
 
 addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "5.2.4")
-addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
+addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.6.0-RC4")
 addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.4.1")
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.5")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.0.0")
