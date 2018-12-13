@@ -26,7 +26,7 @@ import akka.actor._
 
 object safefuture {
 
-  implicit class XFuture[T](f: Future[T])(implicit
+  implicit class SafeFutureSupport[T](f: Future[T])(implicit
       ec: ExecutionContext,
       ac: ActorContext
   ) {
