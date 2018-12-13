@@ -16,6 +16,4 @@
 
 package org.loopring.lightcone.persistence.dals
 
-trait TokenPricingDal {
-
-}
+trait TokenPricingDal {}

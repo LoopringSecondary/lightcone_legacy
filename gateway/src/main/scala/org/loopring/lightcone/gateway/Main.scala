@@ -16,6 +16,4 @@
 
 package org.loopring.lightcone.gateway
 
-object Main {
-
-}
+object Main {}

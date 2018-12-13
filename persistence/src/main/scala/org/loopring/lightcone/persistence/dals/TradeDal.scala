@@ -24,15 +24,13 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait TradeDal
-  extends BaseDalImpl[TradeTable, XTradeData] {
+trait TradeDal extends BaseDalImpl[TradeTable, XTradeData] {}
 
-}
-
-class TradeDalImpl()(
+class TradeDalImpl(
+  )(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends TradeDal {
+    val ec: ExecutionContext)
+    extends TradeDal {
   val query = TableQuery[TradeTable]
 }

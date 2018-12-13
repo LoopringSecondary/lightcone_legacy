@@ -19,14 +19,17 @@ package org.loopring.lightcone.gateway_bak.socketio
 case class EventBinding(
     event: String,
     interval: Long,
-    replyTo: String
-)
+    replyTo: String)
 
 class EventBindings(val bindings: Seq[EventBinding] = Nil) {
-  def add(event: String, interval: Long, replyTo: String): EventBindings =
+
+  def add(
+      event: String,
+      interval: Long,
+      replyTo: String
+    ): EventBindings =
     add(EventBinding(event, interval, replyTo))
 
   def add(binding: EventBinding): EventBindings =
     new EventBindings(bindings :+ binding)
 }
-

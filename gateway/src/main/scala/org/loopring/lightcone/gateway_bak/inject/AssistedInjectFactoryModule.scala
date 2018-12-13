@@ -17,18 +17,18 @@
 package org.loopring.lightcone.gateway_bak.inject
 
 import com.google.inject.assistedinject.FactoryModuleBuilder
-import com.google.inject.{ Binder, Module }
+import com.google.inject.{Binder, Module}
 import net.codingwell.scalaguice.InternalModule
-import scala.reflect.{ ClassTag, _ }
+import scala.reflect.{ClassTag, _}
 
-trait AssistedInjectFactoryModule[B <: Binder]
-  extends Module {
-  self: InternalModule[B] ⇒
+trait AssistedInjectFactoryModule[B <: Binder] extends Module {
+  self: InternalModule[B] =>
 
   protected[this] def bindFactory[C <: Any: ClassTag, F: ClassTag](): Unit =
     bindFactory[C, C, F]()
 
-  protected[this] def bindFactory[I: ClassTag, C <: I: ClassTag, F: ClassTag](): Unit =
+  protected[this] def bindFactory[I: ClassTag, C <: I: ClassTag, F: ClassTag](
+    ): Unit =
     binderAccess
       .install(
         new FactoryModuleBuilder()
@@ -39,4 +39,3 @@ trait AssistedInjectFactoryModule[B <: Binder]
           .build(classTag[F].runtimeClass.asInstanceOf[Class[F]])
       )
 }
-

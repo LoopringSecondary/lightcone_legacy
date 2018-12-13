@@ -29,18 +29,23 @@ trait DatabaseAccessor {
   type ResultRow = slick.jdbc.PositionedResult
   type ResultInt = slick.dbio.DBIO[Int]
 
-  def saveOrUpdate[T](params: T*)(implicit fallback: T ⇒ ResultInt): Future[Int] = {
-    Source[T](params.to[collection.immutable.Seq]).via(Slick.flow(fallback)) runReduce (_ + _)
+  def saveOrUpdate[T](
+      params: T*
+    )(
+      implicit fallback: T => ResultInt
+    ): Future[Int] = {
+    Source[T](params.to[collection.immutable.Seq])
+      .via(Slick.flow(fallback)) runReduce (_ + _)
   }
 
   implicit class SQL(sql: SQLActionBuilder) {
 
-    def list[T](implicit fallback: ResultRow ⇒ T): Future[Seq[T]] = {
+    def list[T](implicit fallback: ResultRow => T): Future[Seq[T]] = {
       implicit val result: GetResult[T] = GetResult(fallback)
       Slick.source(sql.as[T]).runWith(Sink.seq)
     }
 
-    def head[T](implicit fallback: ResultRow ⇒ T): Future[T] = {
+    def head[T](implicit fallback: ResultRow => T): Future[T] = {
       implicit val result: GetResult[T] = GetResult(fallback)
       Slick.source(sql.as[T]).runWith(Sink.head)
     }

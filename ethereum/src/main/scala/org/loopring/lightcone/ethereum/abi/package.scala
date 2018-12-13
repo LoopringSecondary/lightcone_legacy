@@ -22,21 +22,25 @@ import scala.reflect.Manifest
 package object abi {
 
   private def getAnnotationValue[T](tree: Tree): T = tree match {
-    case Literal(Constant(str: T)) ⇒ str
+    case Literal(Constant(str: T)) => str
   }
 
-  private[abi] def getContractAnnontationIdx[T]()(implicit mf: Manifest[T]): Seq[Int] = {
+  private[abi] def getContractAnnontationIdx[T](
+    )(
+      implicit mf: Manifest[T]
+    ): Seq[Int] = {
     val typ = typeOf[T]
-    (typ.members.filter {
-      m ⇒
-        m.annotations.nonEmpty && m.annotations.exists(_.tree.tpe =:= typeOf[ContractAnnotation])
-    } map {
-      m ⇒
-        val tree = m.annotations.find(_.tree.tpe =:= typeOf[ContractAnnotation]).get.tree
-        val annArgs = tree.children.tail
-        val name = getAnnotationValue[String](annArgs(0))
-        val idx = getAnnotationValue[Int](annArgs(1))
-        idx
+    (typ.members.filter { m =>
+      m.annotations.nonEmpty && m.annotations.exists(
+        _.tree.tpe =:= typeOf[ContractAnnotation]
+      )
+    } map { m =>
+      val tree =
+        m.annotations.find(_.tree.tpe =:= typeOf[ContractAnnotation]).get.tree
+      val annArgs = tree.children.tail
+      val name = getAnnotationValue[String](annArgs(0))
+      val idx = getAnnotationValue[Int](annArgs(1))
+      idx
     }).toSeq.reverse
   }
 

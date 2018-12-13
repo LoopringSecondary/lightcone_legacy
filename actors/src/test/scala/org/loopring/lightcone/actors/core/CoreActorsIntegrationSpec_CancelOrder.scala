@@ -83,30 +83,30 @@ import org.loopring.lightcone.proto._
 //       orderHistoryProbe.replyWith(order.id, "0".zeros(0))
 
 //       expectMsgPF() {
-//         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+//         case XSubmitOrderRes(ERR_OK, Some(xorder)) =>
 //           val order: Order = xorder
 //           info(s"submitted an order: $order")
-//         case XSubmitOrderRes(ERR_INTERNAL_UNKNOWN, None) ⇒
+//         case XSubmitOrderRes(ERR_INTERNAL_UNKNOWN, None) =>
 //           info(s"occurs ERR_INTERNAL_UNKNOWN when submitting order:$order")
 //       }
 
 //       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //       expectMsgPF() {
-//         case a: XOrderbook ⇒
+//         case a: XOrderbook =>
 //           info("----orderbook status after submit an order: " + a)
 //       }
 
 //       accountManagerActor1 ! XCancelOrderReq(order.id, false)
 //       expectMsgPF() {
-//         case res: XCancelOrderRes ⇒
+//         case res: XCancelOrderRes =>
 //           info(s"-- canceled this order: $res")
 //       }
 
 //       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //       expectMsgPF() {
-//         case a: XOrderbook ⇒
+//         case a: XOrderbook =>
 //           info("----orderbook status after cancel this order: " + a)
 //       }
 //     }
@@ -116,7 +116,7 @@ import org.loopring.lightcone.proto._
 
 //       accountManagerActor1 ! XCancelOrderReq("not-exists-order-id", false)
 //       expectMsgPF() {
-//         case res: XCancelOrderRes ⇒
+//         case res: XCancelOrderRes =>
 //           info(s"-- canceled this order: $res")
 //           res.error should be(ERR_ORDER_NOT_EXIST)
 //       }
@@ -124,7 +124,7 @@ import org.loopring.lightcone.proto._
 //       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //       expectMsgPF() {
-//         case a: XOrderbook ⇒
+//         case a: XOrderbook =>
 //           info("----orderbook status after cancel this order: " + a)
 //       }
 //     }

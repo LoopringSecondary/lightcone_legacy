@@ -35,30 +35,33 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 杜永丰
-class TokenMetadataRefresher()(
-    implicit
-    val config: Config,
+class TokenMetadataRefresher(
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule,
-    val tokenMetadataManager: TokenMetadataManager
-) extends Actor
-  with ActorLogging
-  with RepeatedJobActor {
+    val tokenMetadataManager: TokenMetadataManager)
+    extends Actor
+    with ActorLogging
+    with RepeatedJobActor {
 
   private val tokenMetadata = dbModule.tokenMetadata
 
-  val repeatedJobs = Seq(Job(
-    name = "sync-token-metadata",
-    dalayInSeconds = 10 * 60, // 10 minutes
-    run = () ⇒ tokenMetadata.getTokens(true).map { tokens ⇒
-      tokenMetadataManager.reset(tokens)
-    }
-  ))
+  val repeatedJobs = Seq(
+    Job(
+      name = "sync-token-metadata",
+      dalayInSeconds = 10 * 60, // 10 minutes
+      run = () =>
+        tokenMetadata.getTokens(true).map { tokens =>
+          tokenMetadataManager.reset(tokens)
+        }
+    )
+  )
 
   override def receive: Receive = super.receive orElse LoggingReceive {
-    case _ ⇒
+    case _ =>
   }
 }

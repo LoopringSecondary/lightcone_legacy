@@ -25,14 +25,12 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization._
 import org.json4s.jackson.Serialization
 import org.json4s.JsonDSL._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
-class JsonrpcServer @Inject() (
+class JsonrpcServer @Inject()(
     @Named("apiService") service: ApiService
-)(
-    implicit
-    val ec: ExecutionContext
-) {
+  )(
+    implicit val ec: ExecutionContext) {
   implicit val formats = DefaultFormats
 
   def handle(json: String): Future[JsonRpcResp] = {
@@ -41,14 +39,12 @@ class JsonrpcServer @Inject() (
 
     //TODO(hongyu): 需要充分测试json4s
     service.handle(rpcReq) match {
-      case resFuture: Future[Any] ⇒
-        resFuture map {
-          res ⇒ resp.copy(result = Some(res.toString))
+      case resFuture: Future[Any] =>
+        resFuture map { res =>
+          resp.copy(result = Some(res.toString))
         }
-      case resNoFuture: Any ⇒
-        Future.successful(
-          resp.copy(result = Some(resNoFuture.toString))
-        )
+      case resNoFuture: Any =>
+        Future.successful(resp.copy(result = Some(resNoFuture.toString)))
     }
 
   }

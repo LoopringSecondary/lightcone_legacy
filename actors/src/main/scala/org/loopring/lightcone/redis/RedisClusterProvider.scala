@@ -22,24 +22,22 @@ import com.typesafe.config.Config
 import redis._
 import com.google.inject._
 
-class RedisClusterProvider @Inject() (
+class RedisClusterProvider @Inject()(
     config: Config
-)(
-    implicit
-    system: ActorSystem
-) extends Provider[RedisCluster] {
+  )(
+    implicit system: ActorSystem)
+    extends Provider[RedisCluster] {
+
   def get(): RedisCluster = {
 
-    val servers = config.getObjectList("redis.servers").asScala
-      .map { item ⇒
-        val c = item.toConfig
-        val host = c.getString("host")
-        val port = c.getInt("port")
-        val password = Some(c.getString("redis.password"))
-        RedisServer(host, port, password)
-      }
+    val servers = config.getObjectList("redis.servers").asScala.map { item =>
+      val c = item.toConfig
+      val host = c.getString("host")
+      val port = c.getInt("port")
+      val password = Some(c.getString("redis.password"))
+      RedisServer(host, port, password)
+    }
 
     RedisCluster(servers)
   }
 }
-
