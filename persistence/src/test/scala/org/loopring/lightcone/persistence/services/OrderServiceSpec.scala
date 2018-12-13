@@ -18,34 +18,28 @@ package org.loopring.lightcone.persistence.dals
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto._
-import scala.concurrent.duration._
 import scala.concurrent._
+import scala.concurrent.duration._
 
-class OrderServiceSpec extends ServiceSpec[OrderService] {
-  def getService = new OrderServiceImpl()
+class OrderDalSpec extends DalSpec[OrderDal] {
+  def getDal = new OrderDalImpl()
   val timeProvider = new SystemTimeProvider()
-  val tokenS = "0x-tokens"
-  val tokenB = "0x-tokenb"
+  val tokenS = "0xaaaaaa1"
+  val tokenB = "0xaaaaaa2"
   val tokenFee = "0x-fee-token"
   val validSince = 1
   val validUntil = timeProvider.getTimeSeconds()
 
-  def createTables(): Future[Any] = for {
-    _ ← new OrderDalImpl().createTable()
-    r ← new BlockDalImpl().createTable()
-  } yield r
-
   private def testSave(
-    hash: String,
-    owner: String,
-    status: XOrderStatus,
-    tokenS: String,
-    tokenB: String,
-    validSince: Int,
-    validUntil: Int
-  ): Future[XSaveOrderResult] = {
+                        hash: String,
+                        owner: String,
+                        status: XOrderStatus,
+                        tokenS: String,
+                        tokenB: String,
+                        validSince: Int,
+                        validUntil: Int
+                      ): Future[XSaveOrderResult] = {
     val now = timeProvider.getTimeMillis
     val state = XRawOrder.State(
       createdAt = now,
@@ -71,19 +65,19 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       state = Some(state),
       feeParams = Some(fee),
       params = Some(param),
-      marketHash = MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)
+      marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
     )
-    service.submitOrder(order)
+    dal.saveOrder(order)
   }
 
   private def testSaves(
-    hashes: Set[String],
-    status: XOrderStatus,
-    tokenS: String,
-    tokenB: String,
-    validSince: Int,
-    validUntil: Int
-  ): Future[Set[XSaveOrderResult]] = {
+                         hashes: Set[String],
+                         status: XOrderStatus,
+                         tokenS: String,
+                         tokenB: String,
+                         validSince: Int,
+                         validUntil: Int
+                       ): Future[Set[XSaveOrderResult]] = {
     for {
       result ← Future.sequence(hashes.map { hash ⇒
         testSave(hash, hash, status, tokenS, tokenB, validSince, validUntil)
@@ -91,11 +85,11 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     } yield result
   }
 
-  "submitOrder" must "save a order with hash 0x111" in {
+  "saveOrder" must "save a order with hash 0x111" in {
     val hash = "0x-saveorder-state0-01"
     val result = for {
       _ ← testSave(hash, hash, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.getOrder(hash)
+      query ← dal.getOrder(hash)
     } yield query
     val res = Await.result(result.mapTo[Option[XRawOrder]], 5.second)
     res should not be empty
@@ -121,21 +115,21 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       "0x-getorders-token-03",
       "0x-getorders-token-04"
     )
-    val tokenS = "0x-getorders-tokens"
-    val tokenB = "0x-getorders-tokenb"
+    val tokenS = "0xbbbbbbbbb1"
+    val tokenB = "0xbbbbbbbbb2"
     val result = for {
       _ ← testSaves(hashes, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       _ ← testSaves(mockState, XOrderStatus.STATUS_PARTIALLY_FILLED, tokenS, tokenB, validSince, validUntil.toInt)
-      _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0x-mock-tokens", "0x-mock-tokenb", 200, 300)
-      query ← service.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set(tokenFee), Some(XSort.ASC), None)
-      queryStatus ← service.getOrders(Set(XOrderStatus.STATUS_PARTIALLY_FILLED), Set.empty, Set.empty, Set.empty, Set.empty,
+      _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0xcccccccc1", "0xcccccccc2", 200, 300)
+      query ← dal.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set(tokenS), Set(tokenB),
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), Set(tokenFee), Some(XSort.ASC), None)
+      queryStatus ← dal.getOrders(Set(XOrderStatus.STATUS_PARTIALLY_FILLED), Set.empty, Set.empty, Set.empty, Set.empty,
         Set.empty, Some(XSort.ASC), None)
-      queryToken ← service.getOrders(Set(XOrderStatus.STATUS_NEW), mockToken, Set("0x-mock-tokens"), Set("0x-mock-tokenb"), Set.empty,
+      queryToken ← dal.getOrders(Set(XOrderStatus.STATUS_NEW), mockToken, Set("0xcccccccc1"), Set("0xcccccccc2"), Set.empty,
         Set(tokenFee), Some(XSort.ASC), None)
-      queryMarket ← service.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set.empty, Set.empty,
-        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set.empty, Some(XSort.ASC), None)
-      count ← service.countOrders(Set.empty, Set.empty, Set.empty, Set.empty, Set.empty)
+      queryMarket ← dal.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set.empty, Set.empty,
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), Set.empty, Some(XSort.ASC), None)
+      count ← dal.countOrders(Set.empty, Set.empty, Set.empty, Set.empty, Set.empty)
     } yield (query, queryStatus, queryToken, queryMarket, count)
     val res = Await.result(result.mapTo[(Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Int)], 5.second)
     val x = res._1.length === hashes.size && res._2.length === 0 && res._3.length === 4 && res._4.length === 5 && res._5 >= 13 // 之前的测试方法可能有插入
@@ -146,7 +140,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val owner = "0x-getorder-state0-01"
     val result = for {
       _ ← testSave(owner, owner, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.getOrder(owner)
+      query ← dal.getOrder(owner)
     } yield query
     val res = Await.result(result.mapTo[Option[XRawOrder]], 5.second)
     res should not be empty
@@ -162,8 +156,8 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     )
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.getOrdersForUser(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), Set(tokenFee), Some(XSort.ASC), None)
+      query ← dal.getOrdersForUser(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), Set(tokenFee), Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res.length should be(owners.size)
@@ -180,8 +174,8 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     )
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.countOrders(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)))
+      query ← dal.countOrders(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)))
     } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
     res should be(owners.size)
@@ -198,8 +192,8 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     )
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.getOrdersForRecover(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), None, Some(XSort.ASC), None)
+      query ← dal.getOrdersForRecover(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
+        Set(MarketHashProvider.convert2Hex(tokenB, tokenS)), None, Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res.length should be(owners.size)
@@ -217,8 +211,8 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val owner = "0x-updateorderstatus-03"
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      update ← service.updateOrderStatus(owner, XOrderStatus.STATUS_CANCELLED_BY_USER)
-      query ← service.getOrder(owner)
+      update ← dal.updateOrderStatus(owner, XOrderStatus.STATUS_CANCELLED_BY_USER)
+      query ← dal.getOrder(owner)
     } yield (update, query)
     val res = Await.result(result.mapTo[(Either[XErrorCode, String], Option[XRawOrder])], 5.second)
     val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_CANCELLED_BY_USER
@@ -250,12 +244,32 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     )
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      update ← service.updateAmount(hash, state)
-      query ← service.getOrder(hash)
+      update ← dal.updateAmount(hash, state)
+      query ← dal.getOrder(hash)
     } yield (update, query)
     val res = Await.result(result.mapTo[(Either[XErrorCode, String], Option[XRawOrder])], 5.second)
     val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_NEW &&
       res._2.get.state.get.actualAmountB === ByteString.copyFrom("111", "UTF-8")
+    x should be(true)
+  }
+
+  "updateFailed" must "update order's status to failed with hash 0x111" in {
+    val owners = Set(
+      "0x-updatefailed-01",
+      "0x-updatefailed-02",
+      "0x-updatefailed-03",
+      "0x-updatefailed-04",
+      "0x-updatefailed-05",
+      "0x-updatefailed-06"
+    )
+    val hash = "0x-updatefailed-05"
+    val result = for {
+      _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
+      update ← dal.updateFailed(hash, XOrderStatus.STATUS_CANCELLED_BY_USER)
+      query ← dal.getOrder(hash)
+    } yield (update, query)
+    val res = Await.result(result.mapTo[(Either[XErrorCode, String], Option[XRawOrder])], 5.second)
+    val x = res._1.isRight && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_CANCELLED_BY_USER
     x should be(true)
   }
 }
