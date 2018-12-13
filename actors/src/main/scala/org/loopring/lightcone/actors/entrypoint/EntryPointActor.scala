@@ -21,8 +21,10 @@ import akka.util.Timeout
 import akka.event.LoggingReceive
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto._
-
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent.ExecutionContext
 
 object EntryPointActor {
@@ -44,8 +46,8 @@ class EntryPointActor()(
 
         case None ⇒
           sender ! XError(
-            code = XErrorCode.ERR_UNSUPPORTED_MES,
-            message = s"unsupported message: $msg"
+            ERR_UNSUPPORTED_MESSAGE,
+            s"unsupported message: $msg"
           )
           log.debug(s"unsupported msg: $msg")
       }
@@ -56,10 +58,11 @@ class EntryPointActor()(
   val findDestination: PartialFunction[Any, String] = {
     case _@ (
       XSubmitRawOrderReq |
-      XCancelOrderReq) ⇒ OrderHandlerActor.name
+      XCancelOrderReq) ⇒ OrderHandlerMessageValidator.name
 
     case _@ (
-      XGetOrderbookReq) ⇒ OrderbookManagerActor.name
+      XGetOrderbookReq) ⇒ OrderbookManagerMessageValidator.name
+
   }
 
 }

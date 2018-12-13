@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.core.base
 
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.{ XErrorCode, XError }
 
-trait RingBatchDeserializer {
-  def deserialize(encoded: String): Either[XErrorCode, XRingBatch]
+final class ErrorException(val error: XError) extends Exception {
+  override def getMessage() = s"ErrorException(${error.code}: ${error.message})"
+}
+
+object ErrorException {
+  def apply(code: XErrorCode, message: String) = new ErrorException(XError(code, message))
+  def apply(error: XError) = new ErrorException(error)
 }

@@ -14,24 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.utils
+package org.loopring.lightcone.actors.validator
 
-import akka.actor._
-import akka.cluster.sharding._
-import akka.event.LoggingReceive
-import akka.pattern._
-import akka.util.Timeout
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XError
 import org.loopring.lightcone.proto.XErrorCode._
 
-class BadMessageListener extends Actor with ActorLogging {
-  def receive = {
-    case u: UnhandledMessage ⇒
-      log.debug(s"invalid request: $u")
-      sender ! XError(ERR_INVALID_REQ, "invalid request")
-
-    case d: DeadLetter ⇒
-      log.warning(s"failed to handle request: $d")
-      sender ! XError(ERR_FAILED_HANDLE_MES, "failed to handle request")
-  }
+trait MessageValidator {
+  def validate: PartialFunction[Any, Any]
 }
+

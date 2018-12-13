@@ -16,8 +16,10 @@
 
 package org.loopring.lightcone.core.depth
 
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 import scala.collection.SortedMap
 
 private[depth] object OrderbookSide {
@@ -110,7 +112,10 @@ private[depth] trait OrderbookSide {
 
   def takeUpdatedSlots(): Seq[XOrderbookUpdate.XSlot] = {
     if (!maintainUpdatedSlots) {
-      throw new UnsupportedOperationException("maintainUpdatedSlots is false")
+      throw ErrorException(
+        ERR_MATCHING_INVALID_INTERNAL_STATE,
+        "maintainUpdatedSlots is false"
+      )
     }
 
     val slots = updatedSlots.filter {

@@ -20,6 +20,7 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals.{ OrderDal, OrderDalImpl }
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent._
@@ -36,7 +37,7 @@ class OrderServiceImpl @Inject() ()(
     //TODO du：验证订单有效，更新状态
     result ← orderDal.saveOrder(order)
   } yield {
-    if (result.error == XErrorCode.ERR_NONE || result.error == XErrorCode.PERS_ERR_DUPLICATE_INSERT) {
+    if (result.error == ERR_NONE || result.error == ERR_PERSISTENCE_DUPLICATE_INSERT) {
       Left(result.order.get)
     } else {
       Right(result.error)
