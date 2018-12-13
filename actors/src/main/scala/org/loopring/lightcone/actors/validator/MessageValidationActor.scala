@@ -53,11 +53,11 @@ class MessageValidationActor(
   override def receive: Receive = {
     case msg ⇒ Future {
       validate(msg) match {
+        case None     ⇒ msg // unvalidated message are forwarded as-is
+        case Some(()) ⇒ msg
         case Some(validatedMsg) ⇒
           log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
           validatedMsg
-
-        case None ⇒ msg // unvalidated message are forwarded as-is
       }
     } forwardTo destinationActor
   }
