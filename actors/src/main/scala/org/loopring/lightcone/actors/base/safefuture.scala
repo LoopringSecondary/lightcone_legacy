@@ -39,7 +39,7 @@ object safefuture {
       case m: S        ⇒ m
       case err: XError ⇒ throw ErrorException(err)
       case other ⇒ throw ErrorException(
-        XError(ERR_INTERNAL_UNKNOWN, s"message not expected ${other.getClass.getName}")
+        XError(ERR_INTERNAL_UNKNOWN, s"unexpected msg ${other.getClass.getName}")
       )
     }
 
