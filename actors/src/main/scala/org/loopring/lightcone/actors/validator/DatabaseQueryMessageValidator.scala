@@ -29,6 +29,6 @@ final class DatabaseQueryMessageValidator()(
 ) extends MessageValidator {
 
   def validate = {
-    case x ⇒ Right(x)
+    case x ⇒ x
   }
 }

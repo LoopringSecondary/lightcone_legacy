@@ -21,33 +21,44 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
+import scala.concurrent._
 
 object MessageValidationActor {
   def apply(
     name: String,
     validator: MessageValidator,
-    destinationName: String)(implicit system: ActorSystem,
-      actors: Lookup[ActorRef]): ActorRef = system.actorOf(
-    Props(new MessageValidationActor(destinationName, validator)), name)
+    destinationName: String
+  )(implicit
+    system: ActorSystem,
+    ec: ExecutionContext,
+    actors: Lookup[ActorRef]
+  ): ActorRef = system.actorOf(
+    Props(new MessageValidationActor(destinationName, validator)), name
+  )
 }
+
 class MessageValidationActor(
-  destinationName: String,
-  validator: MessageValidator)(
-    implicit val actors: Lookup[ActorRef]) extends Actor
+    destinationName: String,
+    validator: MessageValidator
+)(
+    implicit
+    val ec: ExecutionContext,
+    val actors: Lookup[ActorRef]
+) extends Actor
   with ActorLogging {
 
   private val destinationActor = actors.get(destinationName)
   private val validate = validator.validate.lift
 
   override def receive: Receive = {
-    case msg ⇒ validate(msg) match {
-      case Some(Left(err)) ⇒
-        log.debug(s"validation error $err for msg: $msg")
-        sender ! err
-      case Some(Right(validatedMsg)) ⇒
-        log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
-        destinationActor forward validatedMsg
-      case None ⇒ destinationActor forward msg // unvalidated message are forward as-is
-    }
+    case msg ⇒ Future {
+      validate(msg) match {
+        case Some(validatedMsg) ⇒
+          log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
+          validatedMsg
+
+        case None ⇒ msg // unvalidated message are forwarded as-is
+      }
+    } forwardTo destinationActor
   }
 }
