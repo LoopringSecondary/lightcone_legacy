@@ -24,9 +24,9 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.persistence.service.{ OrderService, TradeService }
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.persistence.DatabaseModule
 import scala.concurrent._
+import org.loopring.lightcone.proto._
 
 // main owner: 杜永丰
 object DatabaseQueryActor extends ShardedEvenly {
@@ -39,8 +39,7 @@ object DatabaseQueryActor extends ShardedEvenly {
     timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef],
-    orderService: OrderService,
-    tradeService: TradeService
+    dbModule: DatabaseModule
   ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -64,24 +63,25 @@ class DatabaseQueryActor()(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val orderService: OrderService,
-    tradeService: TradeService
+    dbModule: DatabaseModule
 ) extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
 
   def receive: Receive = LoggingReceive {
     case req: XGetOrdersReq ⇒
       (for {
         result ← req.market match {
-          //TODO du:等order service合并后，在orderservice新增一个按单个owner查询的接口，改这里1l为value
-          case XGetOrdersReq.Market.MarketHash(value) ⇒ orderService.getOrdersForUser(Set.empty, Set(req.owner),
-            Set.empty, Set.empty, Set(1l), Set.empty, Some(req.sort), req.skip)
-          case XGetOrdersReq.Market.Pair(value) ⇒ orderService.getOrdersForUser(Set.empty, Set(req.owner),
-            Set(value.tokenS), Set(value.tokenB), Set.empty, Set.empty, Some(req.sort), req.skip)
+          case XGetOrdersReq.Market.MarketHash(value) ⇒ dbModule.orderService.getOrdersForUser(
+            req.statuses.toSet, Some(req.owner), None, None, Some(value), None, Some(req.sort), req.skip
+          )
+          case XGetOrdersReq.Market.Pair(value) ⇒ dbModule.orderService.getOrdersForUser(
+            req.statuses.toSet,
+            Some(req.owner), Some(value.tokenS), Some(value.tokenB), None, None, Some(req.sort), req.skip
+          )
         }
       } yield result) pipeTo sender
     case req: XGetTradesReq ⇒
       (for {
-        result ← tradeService.getTrades(req)
+        result ← dbModule.tradeService.getTrades(req)
       } yield result) pipeTo sender
     case _ ⇒
     //TODO du: log ?

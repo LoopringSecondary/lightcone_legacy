@@ -45,7 +45,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     tokenB: String,
     validSince: Int,
     validUntil: Int
-  ): Future[XSaveOrderResult] = {
+  ): Future[Either[XRawOrder, XErrorCode]] = {
     val now = timeProvider.getTimeMillis
     val state = XRawOrder.State(
       createdAt = now,
@@ -73,7 +73,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       params = Some(param),
       marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
     )
-    service.submitOrder(order)
+    service.saveOrder(order)
   }
 
   private def testSaves(
@@ -83,7 +83,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     tokenB: String,
     validSince: Int,
     validUntil: Int
-  ): Future[Set[XSaveOrderResult]] = {
+  ): Future[Set[Either[XRawOrder, XErrorCode]]] = {
     for {
       result ← Future.sequence(hashes.map { hash ⇒
         testSave(hash, hash, status, tokenS, tokenB, validSince, validUntil)
@@ -138,14 +138,14 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       _ ← testSaves(mockState, XOrderStatus.STATUS_PARTIALLY_FILLED, tokenS, tokenB, validSince, validUntil.toInt)
       _ ← testSaves(mockToken, XOrderStatus.STATUS_PARTIALLY_FILLED, "0xcccccccc1", "0xccccccccc2", 200, 300)
       query ← service.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set(tokenFee), Some(XSort.ASC), None)
+        Set(MarketHashProvider.convert2Hex(tokenS, tokenB)), Set(tokenFee), Some(XSort.ASC), None)
       queryStatus ← service.getOrders(Set(XOrderStatus.STATUS_PARTIALLY_FILLED), Set.empty, Set.empty, Set.empty, Set.empty,
         Set.empty, Some(XSort.ASC), None)
       queryToken ← service.getOrders(Set(XOrderStatus.STATUS_NEW), mockToken, Set("0xcccccccc1"), Set("0xccccccccc2"), Set.empty,
         Set(tokenFee), Some(XSort.ASC), None)
       queryMarket ← service.getOrders(Set(XOrderStatus.STATUS_NEW), hashes, Set.empty, Set.empty,
-        Set(MurmurHash.hash64(tokenS) ^ MurmurHash.hash64(tokenB)), Set.empty, Some(XSort.ASC), None)
-      count ← service.countOrders(Set.empty, Set.empty, Set.empty, Set.empty, Set.empty)
+        Set(MarketHashProvider.convert2Hex(tokenS, tokenB)), Set.empty, Some(XSort.ASC), None)
+      count ← service.countOrdersForRecover(Set.empty, Set.empty, Set.empty, Set.empty, Set.empty)
     } yield (query, queryStatus, queryToken, queryMarket, count)
     val res = Await.result(result.mapTo[(Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Seq[XRawOrder], Int)], 5.second)
     val x = res._1.length === hashes.size && res._2.length === 0 && res._3.length === 4 && res._4.length === 5 && res._5 >= 13 // 之前的测试方法可能有插入
@@ -172,11 +172,13 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     )
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.getOrdersForUser(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), Set(tokenFee), Some(XSort.ASC), None)
-    } yield query
-    val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
-    res.length should be(owners.size)
+      q1 ← service.getOrdersForUser(Set(XOrderStatus.STATUS_NEW), Some("0x-getordersfouser-03"), Some(tokenS), Some(tokenB),
+        None, Some(tokenFee), Some(XSort.ASC), None)
+      q2 ← service.getOrdersForUser(Set(XOrderStatus.STATUS_NEW), Some("0x-getordersfouser-03"), None, None,
+        Some(MarketHashProvider.convert2Hex(tokenS, tokenB)), Some(tokenFee), Some(XSort.ASC), None)
+    } yield (q1, q2)
+    val res = Await.result(result.mapTo[(Seq[XRawOrder], Seq[XRawOrder])], 5.second)
+    res._1.length === 1 && res._2.length === 1 should be(true)
   }
 
   "countOrders" must "get orders count with many query parameters" in {
@@ -190,8 +192,8 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     )
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
-      query ← service.countOrders(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)))
+      query ← service.countOrdersForRecover(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
+        Set(MarketHashProvider.convert2Hex(tokenS, tokenB)))
     } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
     res should be(owners.size)
@@ -209,7 +211,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val result = for {
       _ ← testSaves(owners, XOrderStatus.STATUS_NEW, tokenS, tokenB, validSince, validUntil.toInt)
       query ← service.getOrdersForRecover(Set(XOrderStatus.STATUS_NEW), owners, Set(tokenS), Set(tokenB),
-        Set(MurmurHash.hash64(tokenB) ^ MurmurHash.hash64(tokenS)), None, Some(XSort.ASC), None)
+        Set(MarketHashProvider.convert2Hex(tokenS, tokenB)), None, Some(XSort.ASC), None)
     } yield query
     val res = Await.result(result.mapTo[Seq[XRawOrder]], 5.second)
     res.length should be(owners.size)

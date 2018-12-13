@@ -72,12 +72,6 @@ class CoreModule(config: Config)
       DatabaseConfig.forConfig("db.default", config)
     bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
 
-    // TODO du: implicit or bind and inject into actors
-    implicit val orderService: OrderService = new OrderServiceImpl()
-    implicit val tradeService: TradeService = new TradeServiceImpl()
-    bind[OrderService].toInstance(orderService)
-    bind[TradeService].toInstance(tradeService)
-
     implicit val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)
 

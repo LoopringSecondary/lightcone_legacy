@@ -67,7 +67,7 @@ trait OrderDal
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
@@ -75,14 +75,24 @@ trait OrderDal
 
   def getOrdersForUser(
     statuses: Set[XOrderStatus],
-    owners: Set[String] = Set.empty,
-    tokenSSet: Set[String] = Set.empty,
-    tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
-    feeTokenSet: Set[String] = Set.empty,
+    owner: Option[String] = None,
+    tokenS: Option[String] = None,
+    tokenB: Option[String] = None,
+    marketHash: Option[String] = None,
+    feeToken: Option[String] = None,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
   ): Future[Seq[XRawOrder]]
+
+  // Count the number of orders
+  def countOrdersForUser(
+    statuses: Set[XOrderStatus],
+    owner: Option[String] = None,
+    tokenS: Option[String] = None,
+    tokenB: Option[String] = None,
+    marketHash: Option[String] = None,
+    feeToken: Option[String] = None,
+  ): Future[Int]
 
   // Get some orders between updatedSince and updatedUntil. The orders are sorted by updated_at
   // indicatd by the sortedByUpdatedAt param.
@@ -91,19 +101,19 @@ trait OrderDal
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     validTime: Option[Int] = None,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
   ): Future[Seq[XRawOrder]]
 
   // Count the number of orders
-  def countOrders(
+  def countOrdersForRecover(
     statuses: Set[XOrderStatus],
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty
   ): Future[Int]
 
@@ -134,7 +144,6 @@ class OrderDalImpl()(
   def getRowHash(row: XRawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
   implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
-  implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
 
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
     val now = timeProvider.getTimeMillis
@@ -185,7 +194,7 @@ class OrderDalImpl()(
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     validTime: Option[Int] = None,
     sort: Option[XSort] = None,
@@ -196,8 +205,7 @@ class OrderDalImpl()(
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
     if (tokenBSet.nonEmpty) filters = filters.filter(_.tokenB inSet tokenBSet)
-    // TODO du：等order service分支合并后修改marketHash为string
-    // if (marketHashSet.nonEmpty) filters = filters.filter(_.marketHash inSet marketHashSet)
+     if (marketHashSet.nonEmpty) filters = filters.filter(_.marketHash inSet marketHashSet)
     if (feeTokenSet.nonEmpty) filters = filters.filter(_.tokenFee inSet feeTokenSet)
     if (validTime.nonEmpty) filters = filters
       .filter(_.validSince >= validTime.get)
@@ -219,7 +227,7 @@ class OrderDalImpl()(
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
@@ -229,31 +237,76 @@ class OrderDalImpl()(
       marketHashSet, feeTokenSet, None, sort, skip
     )
     db.run(filters.result)
+  }
+
+  private def queryOrderForUserFilters(
+    statuses: Set[XOrderStatus],
+    owner: Option[String] = None,
+    tokenS: Option[String] = None,
+    tokenB: Option[String] = None,
+    marketHash: Option[String] = None,
+    feeToken: Option[String] = None,
+    sort: Option[XSort] = None,
+    skip: Option[XSkip] = None
+  ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
+    var filters = query.filter(_.sequenceId > 0l)
+    if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
+    if (owner.nonEmpty) filters = filters.filter(_.owner === owner)
+    if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS)
+    if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB)
+    if (marketHash.nonEmpty) filters = filters.filter(_.marketHash === marketHash)
+    if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
+    if (sort.nonEmpty) filters = sort.get match {
+      case XSort.ASC  ⇒ filters.sortBy(_.sequenceId.asc)
+      case XSort.DESC ⇒ filters.sortBy(_.sequenceId.desc)
+      case _          ⇒ filters.sortBy(_.sequenceId.asc)
+    }
+    filters = skip match {
+      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+      case None    ⇒ filters
+    }
+    filters
   }
 
   def getOrdersForUser(
     statuses: Set[XOrderStatus],
-    owners: Set[String] = Set.empty,
-    tokenSSet: Set[String] = Set.empty,
-    tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
-    feeTokenSet: Set[String] = Set.empty,
+    owner: Option[String] = None,
+    tokenS: Option[String] = None,
+    tokenB: Option[String] = None,
+    marketHash: Option[String] = None,
+    feeToken: Option[String] = None,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None
   ): Future[Seq[XRawOrder]] = {
-    val filters = queryOrderFilters(
-      statuses, owners, tokenSSet, tokenBSet,
-      marketHashSet, feeTokenSet, None, sort, skip
+    val filters = queryOrderForUserFilters(
+      statuses, owner, tokenS, tokenB, marketHash,
+      feeToken, sort, skip
     )
     db.run(filters.result)
   }
 
-  def countOrders(
+  // Count the number of orders
+  def countOrdersForUser(
+    statuses: Set[XOrderStatus],
+    owner: Option[String] = None,
+    tokenS: Option[String] = None,
+    tokenB: Option[String] = None,
+    marketHash: Option[String] = None,
+    feeToken: Option[String] = None,
+  ): Future[Int] = {
+    val filters = queryOrderForUserFilters(
+      statuses, owner, tokenS, tokenB, marketHash,
+      feeToken, None, None
+    )
+    db.run(filters.size.result)
+  }
+
+  def countOrdersForRecover(
     statuses: Set[XOrderStatus],
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     feeTokenSet: Set[String] = Set.empty
   ): Future[Int] = {
     val filters = queryOrderFilters(
@@ -270,7 +323,7 @@ class OrderDalImpl()(
     owners: Set[String] = Set.empty,
     tokenSSet: Set[String] = Set.empty,
     tokenBSet: Set[String] = Set.empty,
-    marketHashSet: Set[Long] = Set.empty,
+    marketHashSet: Set[String] = Set.empty,
     validTime: Option[Int] = None,
     sort: Option[XSort] = None,
     skip: Option[XSkip] = None

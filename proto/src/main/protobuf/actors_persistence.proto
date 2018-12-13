@@ -89,9 +89,10 @@ message XGetOrdersReq {
         MarketPair pair        = 1; // tokenS -> tokenB
         string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
     }
-    string owner   = 3;
-    XSort sort     = 4;
-    XSkip skip     = 5;
+    string   owner                 = 3;
+    repeated XOrderStatus statuses = 4;
+    XSort    sort                  = 5;
+    XSkip    skip                  = 6;
 }
 
 message XGetOrdersResult {
