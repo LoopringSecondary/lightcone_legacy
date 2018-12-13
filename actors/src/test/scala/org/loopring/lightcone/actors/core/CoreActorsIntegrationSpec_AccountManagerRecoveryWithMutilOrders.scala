@@ -125,8 +125,8 @@ import org.loopring.lightcone.proto._
 //           case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
 //             val order: Order = xorder
 //             log.debug(s"submitted an order: $order")
-//           case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
-//             log.debug(s"occurs ERR_UNKNOWN when submitting order:$order")
+//           case XSubmitOrderRes(ERR_INTERNAL_UNKNOWN, None) ⇒
+//             log.debug(s"occurs ERR_INTERNAL_UNKNOWN when submitting order:$order")
 //         }
 
 //         Thread.sleep(1000)

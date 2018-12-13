@@ -180,7 +180,7 @@ class AccountManagerActor()(
     case STATUS_UNSUPPORTED_MARKET ⇒ ERR_INVALID_MARKET
     case STATUS_CANCELLED_TOO_MANY_ORDERS ⇒ ERR_TOO_MANY_ORDERS
     case STATUS_CANCELLED_DUPLICIATE ⇒ ERR_ORDER_ALREADY_EXIST
-    case _ ⇒ ERR_UNKNOWN
+    case _ ⇒ ERR_INTERNAL_UNKNOWN
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
