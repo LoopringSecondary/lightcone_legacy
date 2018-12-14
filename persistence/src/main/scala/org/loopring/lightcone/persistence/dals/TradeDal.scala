@@ -76,7 +76,7 @@ class TradeDalImpl(
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
     ): Query[TradeTable, TradeTable#TableElementType, Seq] = {
-    var filters = query.filter(_.sequenceId > 0l)
+    var filters = query.filter(_.sequenceId > 0L)
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner.get)
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS.get)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB.get)
