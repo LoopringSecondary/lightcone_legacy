@@ -41,8 +41,21 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
     abi.findFunction(searchByName(WithdrawFunction.name))
   )
 
-  override def unpackEvent(data: String, topics: Array[String]): Option[Any] = {
-    val event: SABI.Event = abi.findEvent(searchBySignature(Numeric.hexStringToByteArray(topics.head)))
+  val depositEvent = DepositEvent(
+    abi.findEvent(searchByName(DepositEvent.name))
+  )
+
+  val withdrawalEvent = WithdrawalEvent(
+    abi.findEvent(searchByName(WithdrawalEvent.name))
+  )
+
+  override def unpackEvent(
+      data: String,
+      topics: Array[String]
+    ): Option[Any] = {
+    val event: SABI.Event = abi.findEvent(
+      searchBySignature(Numeric.hexStringToByteArray(topics.head))
+    )
     event match {
       case _: SABI.Event ⇒
         event.name match {
@@ -61,7 +74,8 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
   }
 
   override def unpackFunctionInput(data: String): Option[Any] = {
-    val funSig = Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
+    val funSig =
+      Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
     val func = abi.findFunction(searchBySignature(funSig))
     func match {
       case _: SABI.Function ⇒

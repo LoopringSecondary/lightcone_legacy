@@ -16,20 +16,33 @@
 
 package org.loopring.lightcone.ethereum.abi
 
-import org.ethereum.solidity.{ Abi ⇒ SABI }
+import org.ethereum.solidity.{Abi ⇒ SABI}
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
 import scala.io.Source
 
 class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
-  val orderSubmitted = OrderSubmittedFunction(abi.findFunction(searchByName(OrderSubmittedFunction.name)))
-  val submitOrder = SubmitOrderFunction(abi.findFunction(searchByName(SubmitOrderFunction.name)))
 
-  val orderSubmittedEvent = OrderSubmittedEvent(abi.findEvent(searchByName(OrderSubmittedEvent.name)))
+  val orderSubmitted = OrderSubmittedFunction(
+    abi.findFunction(searchByName(OrderSubmittedFunction.name))
+  )
 
-  override def unpackEvent(data: String, topics: Array[String]): Option[Any] = {
-    val event: SABI.Event = abi.findEvent(searchBySignature(Numeric.hexStringToByteArray(topics.head)))
+  val submitOrder = SubmitOrderFunction(
+    abi.findFunction(searchByName(SubmitOrderFunction.name))
+  )
+
+  val orderSubmittedEvent = OrderSubmittedEvent(
+    abi.findEvent(searchByName(OrderSubmittedEvent.name))
+  )
+
+  override def unpackEvent(
+      data: String,
+      topics: Array[String]
+    ): Option[Any] = {
+    val event: SABI.Event = abi.findEvent(
+      searchBySignature(Numeric.hexStringToByteArray(topics.head))
+    )
     event match {
       case _: SABI.Event if event.name.equals(OrderSubmittedEvent.name) ⇒
         orderSubmittedEvent.unpack(data, topics)
@@ -38,7 +51,8 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
   }
 
   override def unpackFunctionInput(data: String): Option[Any] = {
-    val funSig = Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
+    val funSig =
+      Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
     val func = abi.findFunction(searchBySignature(funSig))
     func match {
       case _: SABI.Function ⇒
@@ -56,7 +70,11 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
 }
 
 object OrderBookAbi {
-  val abiJsonStr: String = Source.fromFile("ethereum/src/main/resources/version20/IOrderBook.abi").getLines().next()
+
+  val abiJsonStr: String = Source
+    .fromFile("ethereum/src/main/resources/version20/IOrderBook.abi")
+    .getLines()
+    .next()
   def apply(abiJson: String): OrderBookAbi = new OrderBookAbi(abiJson)
 
   def apply(): OrderBookAbi = new OrderBookAbi(abiJsonStr)
@@ -64,47 +82,51 @@ object OrderBookAbi {
 }
 
 object OrderSubmittedFunction {
-  case class Parms(
-      @(ContractAnnotation @field)("hash", 0) hash: Array[Byte]
-  )
+  case class Parms(@(ContractAnnotation @field)("hash", 0) hash: Array[Byte])
 
   case class Result(
-      @(ContractAnnotation @field)("submitted", 0) submitted: Boolean
-  )
+      @(ContractAnnotation @field)("submitted", 0) submitted: Boolean)
 
   val name = "orderSubmitted"
 
-  def apply(entry: SABI.Function): OrderSubmittedFunction = new OrderSubmittedFunction(entry)
+  def apply(entry: SABI.Function): OrderSubmittedFunction =
+    new OrderSubmittedFunction(entry)
 
 }
 
-class OrderSubmittedFunction(val entry: SABI.Function) extends AbiFunction[OrderSubmittedFunction.Parms, OrderSubmittedFunction.Result]
+class OrderSubmittedFunction(val entry: SABI.Function)
+    extends AbiFunction[
+      OrderSubmittedFunction.Parms,
+      OrderSubmittedFunction.Result
+    ]
 
 object SubmitOrderFunction {
   case class Parms(
-      @(ContractAnnotation @field)("orderData", 0) orderData: Array[Byte]
-  )
+      @(ContractAnnotation @field)("orderData", 0) orderData: Array[Byte])
 
   case class Result()
 
   val name = "submitOrder"
 
-  def apply(entry: SABI.Function): SubmitOrderFunction = new SubmitOrderFunction(entry)
+  def apply(entry: SABI.Function): SubmitOrderFunction =
+    new SubmitOrderFunction(entry)
 }
 
-class SubmitOrderFunction(val entry: SABI.Function) extends AbiFunction[SubmitOrderFunction.Parms, SubmitOrderFunction.Result]
+class SubmitOrderFunction(val entry: SABI.Function)
+    extends AbiFunction[SubmitOrderFunction.Parms, SubmitOrderFunction.Result]
 
 object OrderSubmittedEvent {
 
   case class Result(
       @(ContractAnnotation @field)("orderHash", 0) orderHash: String,
-      @(ContractAnnotation @field)("orderData", 1) orderData: String
-  )
+      @(ContractAnnotation @field)("orderData", 1) orderData: String)
 
   val name = "OrderSubmitted"
 
-  def apply(entry: SABI.Event): OrderSubmittedEvent = new OrderSubmittedEvent(entry)
+  def apply(entry: SABI.Event): OrderSubmittedEvent =
+    new OrderSubmittedEvent(entry)
 
 }
 
-class OrderSubmittedEvent(val entry: SABI.Event) extends AbiEvent[OrderSubmittedEvent.Result]
+class OrderSubmittedEvent(val entry: SABI.Event)
+    extends AbiEvent[OrderSubmittedEvent.Result]

@@ -18,7 +18,10 @@ package org.loopring.lightcone.ethereum.abi
 
 import org.scalatest._
 
-class AuthorizableAbiSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
+class AuthorizableAbiSpec
+    extends FlatSpec
+    with Matchers
+    with BeforeAndAfterAll {
 
   val authorizableAbi = AuthorizableAbi()
 
