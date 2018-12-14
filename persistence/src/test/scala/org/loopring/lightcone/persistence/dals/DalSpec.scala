@@ -28,10 +28,10 @@ import com.dimafeng.testcontainers._
 import com.typesafe.config._
 
 trait DalSpec[D <: BaseDal[_, _]]
-  extends FlatSpec
-  with ForAllTestContainer
-  with BeforeAndAfterAll
-  with Matchers {
+    extends FlatSpec
+    with ForAllTestContainer
+    with BeforeAndAfterAll
+    with Matchers {
   implicit val ec = ExecutionContext.global
 
   override val container = new MySQLContainer(
@@ -65,6 +65,8 @@ trait DalSpec[D <: BaseDal[_, _]]
   }
 
   override def beforeAll = {
-    println(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
+    println(
+      s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
+    )
   }
 }

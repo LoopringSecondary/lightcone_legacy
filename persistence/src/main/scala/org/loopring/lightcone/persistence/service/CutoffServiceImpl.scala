@@ -18,27 +18,29 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.dals.{ CutoffDal, CutoffDalImpl }
-import org.loopring.lightcone.proto.{ XCutoff, XErrorCode }
+import org.loopring.lightcone.persistence.dals.{CutoffDal, CutoffDalImpl}
+import org.loopring.lightcone.proto.{XCutoff, XErrorCode}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
-class CutoffServiceImpl @Inject() (
+class CutoffServiceImpl @Inject()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
-    @Named("db-execution-context") val ec: ExecutionContext
-) extends CutoffService {
+    @Named("db-execution-context") val ec: ExecutionContext)
+    extends CutoffService {
   val cutoffDal: CutoffDal = new CutoffDalImpl()
 
-  def saveCutoff(cutoff: XCutoff): Future[XErrorCode] = cutoffDal.saveCutoff(cutoff)
+  def saveCutoff(cutoff: XCutoff): Future[XErrorCode] =
+    cutoffDal.saveCutoff(cutoff)
 
   def hasCutoff(
-    orderBroker: Option[String],
-    orderOwner: String,
-    orderTradingPair: String,
-    time: Long
-  ): Future[Boolean] = cutoffDal.hasCutoff(orderBroker, orderOwner, orderTradingPair, time)
+      orderBroker: Option[String],
+      orderOwner: String,
+      orderTradingPair: String,
+      time: Long
+    ): Future[Boolean] =
+    cutoffDal.hasCutoff(orderBroker, orderOwner, orderTradingPair, time)
 
   def obsolete(height: Long): Future[Unit] = cutoffDal.obsolete(height)
 

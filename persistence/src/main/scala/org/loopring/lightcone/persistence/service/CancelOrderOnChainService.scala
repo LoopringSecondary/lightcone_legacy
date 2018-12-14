@@ -17,7 +17,7 @@
 package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.persistence.dals.CancelOrderOnChainDal
-import org.loopring.lightcone.proto.{ XCancelOrderOnChain, XErrorCode }
+import org.loopring.lightcone.proto.{XCancelOrderOnChain, XErrorCode}
 import scala.concurrent.Future
 
 trait CancelOrderOnChainService {
@@ -26,9 +26,7 @@ trait CancelOrderOnChainService {
 
   def saveCancelOrder(cancelOrder: XCancelOrderOnChain): Future[XErrorCode]
 
-  def hasCancelled(
-    orderHash: String
-  ): Future[Boolean]
+  def hasCancelled(orderHash: String): Future[Boolean]
 
   def obsolete(height: Long): Future[Unit]
 }

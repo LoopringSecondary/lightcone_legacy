@@ -18,72 +18,83 @@ package org.loopring.lightcone.persistence.services
 
 import org.loopring.lightcone.lib.SystemTimeProvider
 import org.loopring.lightcone.persistence.dals.CutoffDalImpl
-import org.loopring.lightcone.persistence.service.{ CutoffService, CutoffServiceImpl }
+import org.loopring.lightcone.persistence.service.{
+  CutoffService,
+  CutoffServiceImpl
+}
 import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{Await, Future}
 
 class CutoffServiceSpec extends ServiceSpec[CutoffService] {
   def getService = new CutoffServiceImpl()
-  def createTables(): Future[Any] = for {
-    r ← new CutoffDalImpl().createTable()
-  } yield r
+
+  def createTables(): Future[Any] =
+    for {
+      r ← new CutoffDalImpl().createTable()
+    } yield r
   val timeProvider = new SystemTimeProvider()
 
   private def testCutoffByBrokers(
-    brokers: Seq[String],
-    tradingPair: Option[String],
-    time: Long,
-    blockHeight: Long
-  ): Future[Seq[XErrorCode]] = {
+      brokers: Seq[String],
+      tradingPair: Option[String],
+      time: Long,
+      blockHeight: Long
+    ): Future[Seq[XErrorCode]] = {
     for {
       result ← Future.sequence(brokers.map { broker ⇒
-        service.saveCutoff(XCutoff(
-          txHash = broker,
-          broker = broker,
-          tradingPair = tradingPair.getOrElse(""),
-          cutoff = time,
-          blockHeight = blockHeight
-        ))
+        service.saveCutoff(
+          XCutoff(
+            txHash = broker,
+            broker = broker,
+            tradingPair = tradingPair.getOrElse(""),
+            cutoff = time,
+            blockHeight = blockHeight
+          )
+        )
       })
     } yield result
   }
 
   private def testCutoffByOwners(
-    owners: Seq[String],
-    tradingPair: Option[String],
-    time: Long,
-    blockHeight: Long
-  ): Future[Seq[XErrorCode]] = {
+      owners: Seq[String],
+      tradingPair: Option[String],
+      time: Long,
+      blockHeight: Long
+    ): Future[Seq[XErrorCode]] = {
     for {
       result ← Future.sequence(owners.map { owner ⇒
-        service.saveCutoff(XCutoff(
-          txHash = owner,
-          owner = owner,
-          tradingPair = tradingPair.getOrElse(""),
-          cutoff = time,
-          blockHeight = blockHeight
-        ))
+        service.saveCutoff(
+          XCutoff(
+            txHash = owner,
+            owner = owner,
+            tradingPair = tradingPair.getOrElse(""),
+            cutoff = time,
+            blockHeight = blockHeight
+          )
+        )
       })
     } yield result
   }
 
   private def testCutoffByBrokerAndOwners(
-    brokers: Seq[String],
-    tradingPair: Option[String],
-    time: Long,
-    blockHeight: Long
-  ): Future[Seq[XErrorCode]] = {
+      brokers: Seq[String],
+      tradingPair: Option[String],
+      time: Long,
+      blockHeight: Long
+    ): Future[Seq[XErrorCode]] = {
     for {
       result ← Future.sequence(brokers.map { broker ⇒
-        service.saveCutoff(XCutoff(
-          txHash = broker,
-          broker = broker,
-          owner = broker,
-          tradingPair = tradingPair.getOrElse(""),
-          cutoff = time,
-          blockHeight = blockHeight
-        ))
+        service.saveCutoff(
+          XCutoff(
+            txHash = broker,
+            broker = broker,
+            owner = broker,
+            tradingPair = tradingPair.getOrElse(""),
+            cutoff = time,
+            blockHeight = blockHeight
+          )
+        )
       })
     } yield result
   }
@@ -101,8 +112,13 @@ class CutoffServiceSpec extends ServiceSpec[CutoffService] {
     )
     val now = timeProvider.getTimeSeconds()
     val result = for {
-      _ ← testCutoffByBrokers(brokers1, Some("0x-tradingpair-01"), now, 1l) //broker1 取消了 market："0x-tradingpair-01"
-      q ← service.hasCutoff(Some("0x-savecutoff-broker5"), "0x-savecutoff-broker5", "0x-tradingpair-01", 10000000l) // true
+      _ ← testCutoffByBrokers(brokers1, Some("0x-tradingpair-01"), now, 1L) //broker1 取消了 market："0x-tradingpair-01"
+      q ← service.hasCutoff(
+        Some("0x-savecutoff-broker5"),
+        "0x-savecutoff-broker5",
+        "0x-tradingpair-01",
+        10000000L
+      ) // true
     } yield q
     val res = Await.result(
       result.mapTo[Boolean],
@@ -152,26 +168,100 @@ class CutoffServiceSpec extends ServiceSpec[CutoffService] {
     )
     val now = timeProvider.getTimeSeconds()
     val result = for {
-      _ ← testCutoffByBrokers(brokers1, Some("0x-tradingpair-01"), now, 1l) //broker1 取消了 market："0x-tradingpair-01"
-      q1 ← service.hasCutoff(Some("0x-savecutoff-broker5"), "0x-savecutoff-broker5", "0x-tradingpair-01", 10000000l) // true
-      q2 ← service.hasCutoff(Some("0x-savecutoff-broker5"), "0x-savecutoff-broker5", "0x-tradingpair-02", 10000000l) // false
-      _ ← testCutoffByBrokers(brokers2, None, 20000000l, 1l) // broker2 取消了所有
-      q3 ← service.hasCutoff(Some("0x-savecutoff-broker13"), "0x-savecutoff-broker13", "0x-tradingpair-01", 10000000l) // true
-      q4 ← service.hasCutoff(Some("0x-savecutoff-broker13"), "0x-savecutoff-broker13", "0x-tradingpair-02", 10000000l) // true
-      q5 ← service.hasCutoff(Some("0x-savecutoff-broker13"), "0x-savecutoff-broker-not-exist", "0x-tradingpair-not-exist", 10000000l) // true
-      _ ← testCutoffByBrokerAndOwners(brokerOwners, Some("0x-tradingpair-04"), 20000000l, 1l) // broker==owner取消了market:"0x-tradingpair-04"
-      q6 ← service.hasCutoff(Some("0x-savecutoff-owner11"), "0x-savecutoff-owner11", "0x-tradingpair-04", 10000000l) // true
-      q7 ← service.hasCutoff(Some("0x-savecutoff-owner11"), "0x-savecutoff-owner11", "0x-tradingpair-not-exist", 10000000l) // false
-      q8 ← service.hasCutoff(Some("0x-savecutoff-owner11"), "0x-savecutoff-broker-not-exist", "0x-tradingpair-not-exist", 10000000l) // false
-      _ ← testCutoffByOwners(owner1, None, now, 1l) // owner 取消了所有
-      q9 ← service.hasCutoff(None, "0x-savecutoff-owner2", "0x-tradingpair-not-exist", 10000000l) // true
-      _ ← testCutoffByOwners(owner2, Some("0x-tradingpair-06"), now, 1l) // owner 取消了market:0x-tradingpair-06
-      q10 ← service.hasCutoff(None, "0x-savecutoff-owner9", "0x-tradingpair-06", 10000000l) // true
-      q11 ← service.hasCutoff(None, "0x-savecutoff-owner9", "0x-tradingpair-not-exist", 10000000l) // false
-      _ ← service.obsolete(0l) // clear datas for next spec method
+      _ ← testCutoffByBrokers(brokers1, Some("0x-tradingpair-01"), now, 1L) //broker1 取消了 market："0x-tradingpair-01"
+      q1 ← service.hasCutoff(
+        Some("0x-savecutoff-broker5"),
+        "0x-savecutoff-broker5",
+        "0x-tradingpair-01",
+        10000000L
+      ) // true
+      q2 ← service.hasCutoff(
+        Some("0x-savecutoff-broker5"),
+        "0x-savecutoff-broker5",
+        "0x-tradingpair-02",
+        10000000L
+      ) // false
+      _ ← testCutoffByBrokers(brokers2, None, 20000000L, 1L) // broker2 取消了所有
+      q3 ← service.hasCutoff(
+        Some("0x-savecutoff-broker13"),
+        "0x-savecutoff-broker13",
+        "0x-tradingpair-01",
+        10000000L
+      ) // true
+      q4 ← service.hasCutoff(
+        Some("0x-savecutoff-broker13"),
+        "0x-savecutoff-broker13",
+        "0x-tradingpair-02",
+        10000000L
+      ) // true
+      q5 ← service.hasCutoff(
+        Some("0x-savecutoff-broker13"),
+        "0x-savecutoff-broker-not-exist",
+        "0x-tradingpair-not-exist",
+        10000000L
+      ) // true
+      _ ← testCutoffByBrokerAndOwners(
+        brokerOwners,
+        Some("0x-tradingpair-04"),
+        20000000L,
+        1L
+      ) // broker==owner取消了market:"0x-tradingpair-04"
+      q6 ← service.hasCutoff(
+        Some("0x-savecutoff-owner11"),
+        "0x-savecutoff-owner11",
+        "0x-tradingpair-04",
+        10000000L
+      ) // true
+      q7 ← service.hasCutoff(
+        Some("0x-savecutoff-owner11"),
+        "0x-savecutoff-owner11",
+        "0x-tradingpair-not-exist",
+        10000000L
+      ) // false
+      q8 ← service.hasCutoff(
+        Some("0x-savecutoff-owner11"),
+        "0x-savecutoff-broker-not-exist",
+        "0x-tradingpair-not-exist",
+        10000000L
+      ) // false
+      _ ← testCutoffByOwners(owner1, None, now, 1L) // owner 取消了所有
+      q9 ← service.hasCutoff(
+        None,
+        "0x-savecutoff-owner2",
+        "0x-tradingpair-not-exist",
+        10000000L
+      ) // true
+      _ ← testCutoffByOwners(owner2, Some("0x-tradingpair-06"), now, 1L) // owner 取消了market:0x-tradingpair-06
+      q10 ← service.hasCutoff(
+        None,
+        "0x-savecutoff-owner9",
+        "0x-tradingpair-06",
+        10000000L
+      ) // true
+      q11 ← service.hasCutoff(
+        None,
+        "0x-savecutoff-owner9",
+        "0x-tradingpair-not-exist",
+        10000000L
+      ) // false
+      _ ← service.obsolete(0L) // clear datas for next spec method
     } yield (q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11)
     val res = Await.result(
-      result.mapTo[(Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Boolean)],
+      result.mapTo[
+        (
+            Boolean,
+            Boolean,
+            Boolean,
+            Boolean,
+            Boolean,
+            Boolean,
+            Boolean,
+            Boolean,
+            Boolean,
+            Boolean,
+            Boolean
+        )
+      ],
       5.second
     )
     val x = res._1 === true && res._2 === false && res._3 === true && res._4 === true &&
@@ -215,12 +305,22 @@ class CutoffServiceSpec extends ServiceSpec[CutoffService] {
     )
     val now = timeProvider.getTimeSeconds()
     val result = for {
-      _ ← testCutoffByBrokers(brokers1, Some("LRC-WETH"), now, 100l)
-      _ ← testCutoffByBrokers(brokers2, Some("ABC-WETH"), now - 1000, 10l) //available
-      _ ← testCutoffByOwners(owners, None, now, 30l)
-      _ ← service.obsolete(30l)
-      q1 ← service.hasCutoff(Some("0x-obsolete-broker13"), "0x-obsolete-broker13", "pari-not-exist", now - 2000) //false
-      q2 ← service.hasCutoff(Some("0x-obsolete-broker13"), "0x-obsolete-broker13", "ABC-WETH", now - 2000) //true
+      _ ← testCutoffByBrokers(brokers1, Some("LRC-WETH"), now, 100L)
+      _ ← testCutoffByBrokers(brokers2, Some("ABC-WETH"), now - 1000, 10L) //available
+      _ ← testCutoffByOwners(owners, None, now, 30L)
+      _ ← service.obsolete(30L)
+      q1 ← service.hasCutoff(
+        Some("0x-obsolete-broker13"),
+        "0x-obsolete-broker13",
+        "pari-not-exist",
+        now - 2000
+      ) //false
+      q2 ← service.hasCutoff(
+        Some("0x-obsolete-broker13"),
+        "0x-obsolete-broker13",
+        "ABC-WETH",
+        now - 2000
+      ) //true
     } yield (q1, q2)
     val res = Await.result(result.mapTo[(Boolean, Boolean)], 5.second)
     res._1 === false && res._2 === true should be(true)

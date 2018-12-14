@@ -24,7 +24,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 trait OrderRecoverSupport {
-  actor: Actor with ActorLogging ⇒
+  actor: Actor with ActorLogging =>
 
   implicit val ec: ExecutionContext
   implicit val timeout: Timeout
@@ -61,27 +61,29 @@ trait OrderRecoverSupport {
 
   def recovering: Receive = {
 
-    case XRecoverOrdersRes(xraworders) ⇒
+    case XRecoverOrdersRes(xraworders) =>
       val size = xraworders.size
       log.debug(s"recovering next ${size} orders")
       processed += size
 
       xordersToRecover = xraworders.map(xRawOrderToXOrder).toList
-      lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
+      lastUpdatdTimestamp =
+        xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
       recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverySettings.batchSize
 
       self ! XRecoverNextOrder()
 
-    case _: XRecoverNextOrder ⇒
+    case _: XRecoverNextOrder =>
       xordersToRecover match {
-        case head :: tail ⇒ for {
-          _ ← recoverOrder(head)
-        } yield {
-          xordersToRecover = tail
-          self ! XRecoverNextOrder()
-        }
+        case head :: tail =>
+          for {
+            _ <- recoverOrder(head)
+          } yield {
+            xordersToRecover = tail
+            self ! XRecoverNextOrder()
+          }
 
-        case Nil ⇒
+        case Nil =>
           if (!recoverEnded) {
             // ordersDalActor ! XRecoverOrdersReq(
             //   recoverySettings.orderOwner,
@@ -93,10 +95,11 @@ trait OrderRecoverSupport {
             log.debug(s"recovering completed with $processed orders")
             context.become(functional)
           }
-        case _ ⇒ log.error(s"not match xorders: ${xordersToRecover.getClass.getName}")
+        case _ =>
+          log.error(s"not match xorders: ${xordersToRecover.getClass.getName}")
       }
 
-    case msg ⇒
+    case msg =>
       log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
   }
 }

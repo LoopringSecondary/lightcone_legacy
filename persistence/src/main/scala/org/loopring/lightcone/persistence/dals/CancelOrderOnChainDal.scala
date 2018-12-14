@@ -25,55 +25,60 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import com.mysql.jdbc.exceptions.jdbc4._
 import scala.concurrent._
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 trait CancelOrderOnChainDal
-  extends BaseDalImpl[CancelOrderOnChainTable, XCancelOrderOnChain] {
+    extends BaseDalImpl[CancelOrderOnChainTable, XCancelOrderOnChain] {
 
   def saveCancelOrder(cancelOrder: XCancelOrderOnChain): Future[XErrorCode]
 
-  def hasCancelled(
-    orderHash: String
-  ): Future[Boolean]
+  def hasCancelled(orderHash: String): Future[Boolean]
 
   def obsolete(height: Long): Future[Unit]
 }
 
-class CancelOrderOnChainDalImpl()(
+class CancelOrderOnChainDalImpl(
+  )(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends CancelOrderOnChainDal {
+    val ec: ExecutionContext)
+    extends CancelOrderOnChainDal {
   val query = TableQuery[CancelOrderOnChainTable]
   def getRowHash(row: XRawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
 
-  override def saveCancelOrder(cancelOrder: XCancelOrderOnChain): Future[XErrorCode] = {
+  override def saveCancelOrder(
+      cancelOrder: XCancelOrderOnChain
+    ): Future[XErrorCode] = {
     val now = timeProvider.getTimeMillis
-    db.run((query += cancelOrder.copy(
-      createdAt = now,
-      isValid = true
-    )).asTry).map {
-      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
-        XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
+    db.run(
+        (query += cancelOrder.copy(
+          createdAt = now,
+          isValid = true
+        )).asTry
+      )
+      .map {
+        case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
+          XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
+        }
+        case Failure(ex) ⇒ {
+          // TODO du: print some log
+          // log(s"error : ${ex.getMessage}")
+          XErrorCode.ERR_PERSISTENCE_INTERNAL
+        }
+        case Success(x) ⇒ XErrorCode.ERR_NONE
       }
-      case Failure(ex) ⇒ {
-        // TODO du: print some log
-        // log(s"error : ${ex.getMessage}")
-        XErrorCode.ERR_PERSISTENCE_INTERNAL
-      }
-      case Success(x) ⇒ XErrorCode.ERR_NONE
-    }
   }
 
-  def hasCancelled(
-    orderHash: String
-  ): Future[Boolean] = {
-    db.run(query
-      .filter(_.orderHash === orderHash)
-      .filter(_.isValid === true)
-      .size
-      .result).map(_ > 0)
+  def hasCancelled(orderHash: String): Future[Boolean] = {
+    db.run(
+        query
+          .filter(_.orderHash === orderHash)
+          .filter(_.isValid === true)
+          .size
+          .result
+      )
+      .map(_ > 0)
   }
 
   def obsolete(height: Long): Future[Unit] = {

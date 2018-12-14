@@ -25,12 +25,18 @@ trait AccountManager {
 
   def submitOrder(order: Order): Boolean
   def cancelOrder(orderId: String): Boolean
-  def adjustOrder(orderId: String, outstandingAmountS: BigInt): Boolean
+
+  def adjustOrder(
+      orderId: String,
+      outstandingAmountS: BigInt
+    ): Boolean
 }
 
 object AccountManager {
-  def default()(
-    implicit
-    orderPool: AccountOrderPool
-  ): AccountManager = new AccountManagerImpl()
+
+  def default(
+    )(
+      implicit
+      orderPool: AccountOrderPool
+    ): AccountManager = new AccountManagerImpl()
 }

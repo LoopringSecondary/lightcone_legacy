@@ -31,37 +31,33 @@ object EntryPointActor {
   val name = "entrypoint"
 }
 
-class EntryPointActor()(
-    implicit
-    ec: ExecutionContext,
+class EntryPointActor(
+  )(
+    implicit ec: ExecutionContext,
     timeout: Timeout,
-    actors: Lookup[ActorRef]
-) extends Actor with ActorLogging {
+    actors: Lookup[ActorRef])
+    extends Actor
+    with ActorLogging {
 
   def receive = LoggingReceive {
-    case msg: Any ⇒
+    case msg: Any =>
       findDestination(msg) match {
-        case Some(dest) ⇒
+        case Some(dest) =>
           actors.get(dest) forward msg
 
-        case None ⇒
-          sender ! XError(
-            ERR_UNSUPPORTED_MESSAGE,
-            s"unsupported message: $msg"
-          )
+        case None =>
+          sender ! XError(ERR_UNSUPPORTED_MESSAGE, s"unsupported message: $msg")
           log.debug(s"unsupported msg: $msg")
       }
   }
 
   def findDestination(msg: Any): Option[String] = msg match {
-    case _@ (
-      XSubmitRawOrderReq |
-      XCancelOrderReq) ⇒ Some(OrderHandlerMessageValidator.name)
+    case _ @(XSubmitRawOrderReq | XCancelOrderReq) =>
+      Some(OrderHandlerMessageValidator.name)
 
-    case _@ (
-      XGetOrderbookReq) ⇒ Some(OrderbookManagerMessageValidator.name)
+    case _ @(XGetOrderbookReq) => Some(OrderbookManagerMessageValidator.name)
 
-    case _ ⇒ None
+    case _ => None
   }
 
 }

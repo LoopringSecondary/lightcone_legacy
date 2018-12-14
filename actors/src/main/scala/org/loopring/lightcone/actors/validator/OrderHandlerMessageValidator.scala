@@ -23,13 +23,11 @@ object OrderHandlerMessageValidator {
   val name = "order_handler_validator"
 }
 
-final class OrderHandlerMessageValidator()(
-    implicit
-    val config: Config
-) extends MessageValidator {
+final class OrderHandlerMessageValidator()(implicit val config: Config)
+    extends MessageValidator {
 
   def validate = {
-    case msg: XSubmitRawOrderReq ⇒
-    case msg: XCancelOrderReq    ⇒ msg
+    case msg: XSubmitRawOrderReq =>
+    case msg: XCancelOrderReq    => msg
   }
 }

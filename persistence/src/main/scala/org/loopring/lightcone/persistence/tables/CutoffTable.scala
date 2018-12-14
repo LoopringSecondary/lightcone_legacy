@@ -20,8 +20,7 @@ import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
-class CutoffTable(tag: Tag)
-  extends BaseTable[XCutoff](tag, "T_CUTOFFS") {
+class CutoffTable(tag: Tag) extends BaseTable[XCutoff](tag, "T_CUTOFFS") {
 
   def id = txHash
   def txHash = columnHash("tx_hash")
@@ -38,21 +37,25 @@ class CutoffTable(tag: Tag)
   def idx_hash = index("idx_hash", (txHash), unique = true)
   def idx_broker = index("idx_broker", (broker), unique = false)
   def idx_owner = index("idx_owner", (owner), unique = false)
-  def idx_trading_pair = index("idx_trading_pair", (tradingPair), unique = false)
+
+  def idx_trading_pair =
+    index("idx_trading_pair", (tradingPair), unique = false)
   def idx_created_at = index("idx_created_at", (createdAt), unique = false)
-  def idx_block_height = index("idx_block_height", (blockHeight), unique = false)
+
+  def idx_block_height =
+    index("idx_block_height", (blockHeight), unique = false)
   def idx_is_valid = index("idx_is_valid", (isValid), unique = false)
 
-  def * = (
-    txHash,
-    broker,
-    owner,
-    tradingPair,
-    cutoff,
-    createdAt,
-    updatedAt,
-    blockHeight,
-    isValid
-  ) <> ((XCutoff.apply _).tupled, XCutoff.unapply)
+  def * =
+    (
+      txHash,
+      broker,
+      owner,
+      tradingPair,
+      cutoff,
+      createdAt,
+      updatedAt,
+      blockHeight,
+      isValid
+    ) <> ((XCutoff.apply _).tupled, XCutoff.unapply)
 }
-

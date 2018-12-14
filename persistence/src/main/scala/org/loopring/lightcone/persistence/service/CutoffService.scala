@@ -17,7 +17,7 @@
 package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.persistence.dals.CutoffDal
-import org.loopring.lightcone.proto.{ XCutoff, XErrorCode }
+import org.loopring.lightcone.proto.{XCutoff, XErrorCode}
 import scala.concurrent.Future
 
 trait CutoffService {
@@ -26,11 +26,11 @@ trait CutoffService {
   def saveCutoff(cutoff: XCutoff): Future[XErrorCode]
 
   def hasCutoff(
-    orderBroker: Option[String] = None,
-    orderOwner: String,
-    orderTradingPair: String,
-    time: Long // in seconds, where cutoff > time
-  ): Future[Boolean]
+      orderBroker: Option[String] = None,
+      orderOwner: String,
+      orderTradingPair: String,
+      time: Long // in seconds, where cutoff > time
+    ): Future[Boolean]
 
   def obsolete(height: Long): Future[Unit]
 }

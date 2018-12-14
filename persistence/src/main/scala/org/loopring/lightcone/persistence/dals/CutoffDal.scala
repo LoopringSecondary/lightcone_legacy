@@ -25,56 +25,59 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import com.mysql.jdbc.exceptions.jdbc4._
 import scala.concurrent._
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
-trait CutoffDal
-  extends BaseDalImpl[CutoffTable, XCutoff] {
+trait CutoffDal extends BaseDalImpl[CutoffTable, XCutoff] {
 
   def saveCutoff(cutoff: XCutoff): Future[XErrorCode]
 
   def hasCutoff(
-    orderBroker: Option[String] = None,
-    orderOwner: String,
-    orderTradingPair: String,
-    time: Long // in seconds, where cutoff > time
-  ): Future[Boolean]
+      orderBroker: Option[String] = None,
+      orderOwner: String,
+      orderTradingPair: String,
+      time: Long // in seconds, where cutoff > time
+    ): Future[Boolean]
 
   def obsolete(height: Long): Future[Unit]
 }
 
-class CutoffDalImpl()(
+class CutoffDalImpl(
+  )(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends CutoffDal {
+    val ec: ExecutionContext)
+    extends CutoffDal {
   val query = TableQuery[CutoffTable]
   def getRowHash(row: XRawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
 
   override def saveCutoff(cutoff: XCutoff): Future[XErrorCode] = {
     val now = timeProvider.getTimeMillis
-    db.run((query += cutoff.copy(
-      createdAt = now,
-      isValid = true
-    )).asTry).map {
-      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
-        XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
+    db.run(
+        (query += cutoff.copy(
+          createdAt = now,
+          isValid = true
+        )).asTry
+      )
+      .map {
+        case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
+          XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
+        }
+        case Failure(ex) ⇒ {
+          // TODO du: print some log
+          // log(s"error : ${ex.getMessage}")
+          XErrorCode.ERR_PERSISTENCE_INTERNAL
+        }
+        case Success(x) ⇒ XErrorCode.ERR_NONE
       }
-      case Failure(ex) ⇒ {
-        // TODO du: print some log
-        // log(s"error : ${ex.getMessage}")
-        XErrorCode.ERR_PERSISTENCE_INTERNAL
-      }
-      case Success(x) ⇒ XErrorCode.ERR_NONE
-    }
   }
 
   def hasCutoff(
-    orderBroker: Option[String] = None,
-    orderOwner: String,
-    orderTradingPair: String,
-    time: Long
-  ): Future[Boolean] = {
+      orderBroker: Option[String] = None,
+      orderOwner: String,
+      orderTradingPair: String,
+      time: Long
+    ): Future[Boolean] = {
     val filters = query.filter(_.isValid === true)
     if (orderBroker.nonEmpty) {
       val q1 = filters

@@ -22,12 +22,18 @@ object SocketIOClient {
 
   private val subscribers = new java.util.HashSet[SubscriberEvent]
 
-  def add(client: IOClient, event: String, json: String): Unit = {
+  def add(
+      client: IOClient,
+      event: String,
+      json: String
+    ): Unit = {
 
     require(
-      getClientByEvent(x ⇒
-        x.event == event &&
-          x.client == client).isEmpty,
+      getClientByEvent(
+        x =>
+          x.event == event &&
+            x.client == client
+      ).isEmpty,
       s"event [$event] has bean registered"
     )
 
@@ -38,16 +44,18 @@ object SocketIOClient {
     subscribers.asScala.filter(_.client == client).map(subscribers.remove)
   }
 
-  def getClientByEvent(fallback: SubscriberEvent ⇒ Boolean): Option[SubscriberEvent] = {
-    subscribers.asScala.toSeq.find(x ⇒ fallback(x)).headOption
+  def getClientByEvent(
+      fallback: SubscriberEvent => Boolean
+    ): Option[SubscriberEvent] = {
+    subscribers.asScala.toSeq.find(x => fallback(x)).headOption
   }
 
-  def getClient(fallback: String ⇒ Boolean): Option[SubscriberEvent] = {
-    subscribers.asScala.toSeq.find(x ⇒ fallback(x.event)).headOption
+  def getClient(fallback: String => Boolean): Option[SubscriberEvent] = {
+    subscribers.asScala.toSeq.find(x => fallback(x.event)).headOption
   }
 
-  def getClients(fallback: String ⇒ Boolean): Seq[SubscriberEvent] = {
-    subscribers.asScala.toSeq.filter(x ⇒ fallback(x.event))
+  def getClients(fallback: String => Boolean): Seq[SubscriberEvent] = {
+    subscribers.asScala.toSeq.filter(x => fallback(x.event))
   }
 
 }

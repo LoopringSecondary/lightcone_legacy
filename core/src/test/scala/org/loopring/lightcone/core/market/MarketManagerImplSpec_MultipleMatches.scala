@@ -37,11 +37,13 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
     marketManager.submitOrder(buy2, 0)
     marketManager.submitOrder(buy3, 0)
 
-    marketManager.getBuyOrders(5) should be(Seq(
-      buy3.copy(status = STATUS_PENDING),
-      buy2.copy(status = STATUS_PENDING),
-      buy1.copy(status = STATUS_PENDING)
-    ))
+    marketManager.getBuyOrders(5) should be(
+      Seq(
+        buy3.copy(status = STATUS_PENDING),
+        buy2.copy(status = STATUS_PENDING),
+        buy1.copy(status = STATUS_PENDING)
+      )
+    )
 
     val sell1 = actualNotDust(sellGTO(110000, 100))
 
@@ -49,17 +51,20 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
     val ring2 = OrderRing(ExpectedFill(sell1, null), ExpectedFill(buy2, null))
     val ring1 = OrderRing(ExpectedFill(sell1, null), ExpectedFill(buy1, null))
 
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .when(*, *, *)
       .returns(Right(ring3))
       .noMoreThanOnce()
 
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .when(*, *, *)
       .returns(Right(ring2))
       .noMoreThanOnce()
 
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .when(*, *, *)
       .returns(Right(ring1))
       .noMoreThanOnce()
@@ -67,13 +72,16 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
     // Submit a sell order as the take
     val result = marketManager.submitOrder(sell1, 0)
 
-    result should be(MarketManager.MatchResult(
-      Seq(ring3, ring2, ring1),
-      sell1.copy(status = STATUS_PENDING),
-      XOrderbookUpdate()
-    ))
+    result should be(
+      MarketManager.MatchResult(
+        Seq(ring3, ring2, ring1),
+        sell1.copy(status = STATUS_PENDING),
+        XOrderbookUpdate()
+      )
+    )
 
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .verify(*, *, *)
       .repeated(3)
   }

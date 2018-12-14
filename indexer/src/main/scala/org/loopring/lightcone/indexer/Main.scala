@@ -19,7 +19,6 @@ package org.loopring.lightcone.indexer
 // The Ethereum indexer
 object Main {
 
-  def main(args: Array[String]): Unit = {
-  }
+  def main(args: Array[String]): Unit = {}
 
 }

@@ -82,7 +82,7 @@ import scala.concurrent.Await
 //       )
 
 //       (0 until 100) foreach {
-//         i ⇒ accountManagerActor1 ! XSubmitOrderReq(Some(order.copy(id = "order" + i)))
+//         i => accountManagerActor1 ! XSubmitOrderReq(Some(order.copy(id = "order" + i)))
 //       }
 
 //       Thread.sleep(1000)

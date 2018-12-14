@@ -21,7 +21,7 @@ import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
 class CancelOrderOnChainTable(tag: Tag)
-  extends BaseTable[XCancelOrderOnChain](tag, "T_CANCEL_ORDERS_ON_CHAIN") {
+    extends BaseTable[XCancelOrderOnChain](tag, "T_CANCEL_ORDERS_ON_CHAIN") {
 
   def id = txHash
   def txHash = columnHash("tx_hash")
@@ -34,19 +34,23 @@ class CancelOrderOnChainTable(tag: Tag)
 
   // indexes
   def idx_tx_hash = index("idx_tx_hash", (txHash), unique = true)
-  def idx_broker_or_owner = index("idx_broker_or_owner", (brokerOrOwner), unique = false)
+
+  def idx_broker_or_owner =
+    index("idx_broker_or_owner", (brokerOrOwner), unique = false)
   def idx_order_hash = index("idx_order_hash", (orderHash), unique = false)
-  def idx_block_height = index("idx_block_height", (blockHeight), unique = false)
+
+  def idx_block_height =
+    index("idx_block_height", (blockHeight), unique = false)
   def idx_is_valid = index("idx_is_valid", (isValid), unique = false)
 
-  def * = (
-    txHash,
-    brokerOrOwner,
-    orderHash,
-    createdAt,
-    updatedAt,
-    blockHeight,
-    isValid
-  ) <> ((XCancelOrderOnChain.apply _).tupled, XCancelOrderOnChain.unapply)
+  def * =
+    (
+      txHash,
+      brokerOrOwner,
+      orderHash,
+      createdAt,
+      updatedAt,
+      blockHeight,
+      isValid
+    ) <> ((XCancelOrderOnChain.apply _).tupled, XCancelOrderOnChain.unapply)
 }
-

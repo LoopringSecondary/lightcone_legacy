@@ -18,23 +18,30 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.dals.{ CancelOrderOnChainDal, CancelOrderOnChainDalImpl }
-import org.loopring.lightcone.proto.{ XCancelOrderOnChain, XErrorCode }
+import org.loopring.lightcone.persistence.dals.{
+  CancelOrderOnChainDal,
+  CancelOrderOnChainDalImpl
+}
+import org.loopring.lightcone.proto.{XCancelOrderOnChain, XErrorCode}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
-class CancelOrderOnChainServiceImpl @Inject() (
+class CancelOrderOnChainServiceImpl @Inject()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
-    @Named("db-execution-context") val ec: ExecutionContext
-) extends CancelOrderOnChainService {
+    @Named("db-execution-context") val ec: ExecutionContext)
+    extends CancelOrderOnChainService {
 
-  val cancelOrderOnChainDal: CancelOrderOnChainDal = new CancelOrderOnChainDalImpl()
+  val cancelOrderOnChainDal: CancelOrderOnChainDal =
+    new CancelOrderOnChainDalImpl()
 
-  def saveCancelOrder(cancelOrder: XCancelOrderOnChain): Future[XErrorCode] = cancelOrderOnChainDal.saveCancelOrder(cancelOrder)
+  def saveCancelOrder(cancelOrder: XCancelOrderOnChain): Future[XErrorCode] =
+    cancelOrderOnChainDal.saveCancelOrder(cancelOrder)
 
-  def hasCancelled(orderHash: String): Future[Boolean] = cancelOrderOnChainDal.hasCancelled(orderHash)
+  def hasCancelled(orderHash: String): Future[Boolean] =
+    cancelOrderOnChainDal.hasCancelled(orderHash)
 
-  def obsolete(height: Long): Future[Unit] = cancelOrderOnChainDal.obsolete(height)
+  def obsolete(height: Long): Future[Unit] =
+    cancelOrderOnChainDal.obsolete(height)
 }

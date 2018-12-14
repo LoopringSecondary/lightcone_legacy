@@ -23,32 +23,36 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-class CancelOrderOnChainServiceSpec extends ServiceSpec[CancelOrderOnChainService] {
+class CancelOrderOnChainServiceSpec
+    extends ServiceSpec[CancelOrderOnChainService] {
   def getService = new CancelOrderOnChainServiceImpl()
   val timeProvider = new SystemTimeProvider()
   val hash = "0x-cancelorder-01"
 
-  def createTables(): Future[Any] = for {
-    r ← new CancelOrderOnChainDalImpl().createTable()
-  } yield r
+  def createTables(): Future[Any] =
+    for {
+      r ← new CancelOrderOnChainDalImpl().createTable()
+    } yield r
 
   private def testSave(
-    hash: String,
-    blockHeight: Long
-  ): Future[XErrorCode] = {
+      hash: String,
+      blockHeight: Long
+    ): Future[XErrorCode] = {
     val now = timeProvider.getTimeMillis
-    service.saveCancelOrder(XCancelOrderOnChain(
-      txHash = hash,
-      brokerOrOwner = hash,
-      orderHash = hash,
-      blockHeight = blockHeight
-    ))
+    service.saveCancelOrder(
+      XCancelOrderOnChain(
+        txHash = hash,
+        brokerOrOwner = hash,
+        orderHash = hash,
+        blockHeight = blockHeight
+      )
+    )
   }
 
   private def testSaves(
-    hashes: Set[String],
-    blockHeight: Long
-  ): Future[Set[XErrorCode]] = {
+      hashes: Set[String],
+      blockHeight: Long
+    ): Future[Set[XErrorCode]] = {
     for {
       result ← Future.sequence(hashes.map { hash ⇒
         testSave(hash, blockHeight)
@@ -58,7 +62,7 @@ class CancelOrderOnChainServiceSpec extends ServiceSpec[CancelOrderOnChainServic
 
   "save" must "save a cancel order" in {
     val result = for {
-      _ ← testSave(hash, 1l)
+      _ ← testSave(hash, 1L)
       query ← service.hasCancelled(hash)
       _ ← service.obsolete(0) //clear data
     } yield query
@@ -84,10 +88,10 @@ class CancelOrderOnChainServiceSpec extends ServiceSpec[CancelOrderOnChainServic
       "0x-obsolete-16"
     )
     val result = for {
-      _ ← testSaves(owners1, 100l)
+      _ ← testSaves(owners1, 100L)
       queryNone ← service.hasCancelled(hash)
-      _ ← testSaves(owners2, 101l)
-      _ ← service.obsolete(101l)
+      _ ← testSaves(owners2, 101L)
+      _ ← service.obsolete(101L)
       queryOne ← service.hasCancelled("0x-obsolete-04")
     } yield (queryNone, queryOne)
     val res = Await.result(result.mapTo[(Boolean, Boolean)], 5.second)

@@ -22,19 +22,23 @@ trait ShardedByAddress extends Sharded {
   val extractAddress: PartialFunction[Any, String]
 
   private def hashed(msg: Any): Option[Int] =
-    (extractAddress.lift)(msg).map { address ⇒
+    (extractAddress.lift)(msg).map { address =>
       Math.abs(address.hashCode % numOfShards)
     }
 
   private def _extractEntityId(msg: Any): Option[(String, Any)] =
-    hashed(msg).map { shard ⇒ ("${name}_${shard}_${marketId}", msg) }
+    hashed(msg).map { shard =>
+      ("${name}_${shard}_${marketId}", msg)
+    }
 
   private def _extractShardId(msg: Any): Option[String] =
     hashed(msg).map("shard_" + _)
 
-  val extractEntityId: ShardRegion.ExtractEntityId = Function.unlift(_extractEntityId)
-  val extractShardId: ShardRegion.ExtractShardId = Function.unlift(_extractShardId)
+  val extractEntityId: ShardRegion.ExtractEntityId =
+    Function.unlift(_extractEntityId)
+
+  val extractShardId: ShardRegion.ExtractShardId =
+    Function.unlift(_extractShardId)
 
   def extractEntityName(actorName: String) = actorName.split("_").last
 }
-
