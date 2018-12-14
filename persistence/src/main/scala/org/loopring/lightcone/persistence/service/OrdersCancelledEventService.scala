@@ -16,15 +16,16 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.persistence.dals.CancelOrderOnChainDal
-import org.loopring.lightcone.proto.{XCancelOrderOnChain, XErrorCode}
+import org.loopring.lightcone.persistence.dals.OrdersCancelledEventDal
+import org.loopring.lightcone.proto.{XErrorCode, XOrdersCancelledEvent}
+
 import scala.concurrent.Future
 
-trait CancelOrderOnChainService {
+trait OrdersCancelledEventService {
 
-  val cancelOrderOnChainDal: CancelOrderOnChainDal
+  val ordersCancelledEventDal: OrdersCancelledEventDal
 
-  def saveCancelOrder(cancelOrder: XCancelOrderOnChain): Future[XErrorCode]
+  def saveCancelOrder(cancelOrder: XOrdersCancelledEvent): Future[XErrorCode]
 
   def hasCancelled(orderHash: String): Future[Boolean]
 

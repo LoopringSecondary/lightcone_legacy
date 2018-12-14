@@ -20,7 +20,8 @@ import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
-class CutoffTable(tag: Tag) extends BaseTable[XCutoff](tag, "T_CUTOFFS") {
+class OrdersCutoffTable(tag: Tag)
+    extends BaseTable[XOrdersCutoffEvent](tag, "T_ORDERS_CUTOFF") {
 
   def id = txHash
   def txHash = columnHash("tx_hash")
@@ -31,7 +32,6 @@ class CutoffTable(tag: Tag) extends BaseTable[XCutoff](tag, "T_CUTOFFS") {
   def createdAt = column[Long]("created_at")
   def updatedAt = column[Long]("updated_at")
   def blockHeight = column[Long]("block_height")
-  def isValid = column[Boolean]("is_valid")
 
   // indexes
   def idx_hash = index("idx_hash", (txHash), unique = true)
@@ -44,7 +44,6 @@ class CutoffTable(tag: Tag) extends BaseTable[XCutoff](tag, "T_CUTOFFS") {
 
   def idx_block_height =
     index("idx_block_height", (blockHeight), unique = false)
-  def idx_is_valid = index("idx_is_valid", (isValid), unique = false)
 
   def * =
     (
@@ -55,7 +54,6 @@ class CutoffTable(tag: Tag) extends BaseTable[XCutoff](tag, "T_CUTOFFS") {
       cutoff,
       createdAt,
       updatedAt,
-      blockHeight,
-      isValid
-    ) <> ((XCutoff.apply _).tupled, XCutoff.unapply)
+      blockHeight
+    ) <> ((XOrdersCutoffEvent.apply _).tupled, XOrdersCutoffEvent.unapply)
 }

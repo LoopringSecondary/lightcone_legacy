@@ -27,34 +27,33 @@ import com.mysql.jdbc.exceptions.jdbc4._
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
-trait CancelOrderOnChainDal
-    extends BaseDalImpl[CancelOrderOnChainTable, XCancelOrderOnChain] {
+trait OrdersCancelledEventDal
+    extends BaseDalImpl[OrdersCancelledEventTable, XOrdersCancelledEvent] {
 
-  def saveCancelOrder(cancelOrder: XCancelOrderOnChain): Future[XErrorCode]
+  def saveCancelOrder(cancelOrder: XOrdersCancelledEvent): Future[XErrorCode]
 
   def hasCancelled(orderHash: String): Future[Boolean]
 
   def obsolete(height: Long): Future[Unit]
 }
 
-class CancelOrderOnChainDalImpl(
+class OrdersCancelledEventDalImpl(
   )(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
-    extends CancelOrderOnChainDal {
-  val query = TableQuery[CancelOrderOnChainTable]
+    extends OrdersCancelledEventDal {
+  val query = TableQuery[OrdersCancelledEventTable]
   def getRowHash(row: XRawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
 
   override def saveCancelOrder(
-      cancelOrder: XCancelOrderOnChain
+      cancelOrder: XOrdersCancelledEvent
     ): Future[XErrorCode] = {
     val now = timeProvider.getTimeMillis
     db.run(
         (query += cancelOrder.copy(
-          createdAt = now,
-          isValid = true
+          createdAt = now
         )).asTry
       )
       .map {
@@ -74,7 +73,6 @@ class CancelOrderOnChainDalImpl(
     db.run(
         query
           .filter(_.orderHash === orderHash)
-          .filter(_.isValid === true)
           .size
           .result
       )
@@ -82,9 +80,6 @@ class CancelOrderOnChainDalImpl(
   }
 
   def obsolete(height: Long): Future[Unit] = {
-    val q = for {
-      c ← query if c.blockHeight >= height
-    } yield (c.isValid, c.updatedAt)
-    db.run(q.update(false, timeProvider.getTimeSeconds())).map(_ > 0)
+    db.run(query.filter(_.blockHeight >= height).delete).map(_ >= 0)
   }
 }

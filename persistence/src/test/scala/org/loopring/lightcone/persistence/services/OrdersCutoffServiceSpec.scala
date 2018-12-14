@@ -17,21 +17,21 @@
 package org.loopring.lightcone.persistence.services
 
 import org.loopring.lightcone.lib.SystemTimeProvider
-import org.loopring.lightcone.persistence.dals.CutoffDalImpl
+import org.loopring.lightcone.persistence.dals.OrdersCutoffDalImpl
 import org.loopring.lightcone.persistence.service.{
-  CutoffService,
-  CutoffServiceImpl
+  OrdersCutoffService,
+  OrdersCutoffServiceImpl
 }
 import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class CutoffServiceSpec extends ServiceSpec[CutoffService] {
-  def getService = new CutoffServiceImpl()
+class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
+  def getService = new OrdersCutoffServiceImpl()
 
   def createTables(): Future[Any] =
     for {
-      r ← new CutoffDalImpl().createTable()
+      r ← new OrdersCutoffDalImpl().createTable()
     } yield r
   val timeProvider = new SystemTimeProvider()
 
@@ -44,7 +44,7 @@ class CutoffServiceSpec extends ServiceSpec[CutoffService] {
     for {
       result ← Future.sequence(brokers.map { broker ⇒
         service.saveCutoff(
-          XCutoff(
+          XOrdersCutoffEvent(
             txHash = broker,
             broker = broker,
             tradingPair = tradingPair.getOrElse(""),
@@ -65,7 +65,7 @@ class CutoffServiceSpec extends ServiceSpec[CutoffService] {
     for {
       result ← Future.sequence(owners.map { owner ⇒
         service.saveCutoff(
-          XCutoff(
+          XOrdersCutoffEvent(
             txHash = owner,
             owner = owner,
             tradingPair = tradingPair.getOrElse(""),
@@ -86,7 +86,7 @@ class CutoffServiceSpec extends ServiceSpec[CutoffService] {
     for {
       result ← Future.sequence(brokers.map { broker ⇒
         service.saveCutoff(
-          XCutoff(
+          XOrdersCutoffEvent(
             txHash = broker,
             broker = broker,
             owner = broker,

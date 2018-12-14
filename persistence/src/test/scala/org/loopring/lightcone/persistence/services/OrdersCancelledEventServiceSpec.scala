@@ -17,21 +17,21 @@
 package org.loopring.lightcone.persistence.services
 
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.dals.CancelOrderOnChainDalImpl
+import org.loopring.lightcone.persistence.dals.OrdersCancelledEventDalImpl
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-class CancelOrderOnChainServiceSpec
-    extends ServiceSpec[CancelOrderOnChainService] {
-  def getService = new CancelOrderOnChainServiceImpl()
+class OrdersCancelledEventServiceSpec
+    extends ServiceSpec[OrdersCancelledEventService] {
+  def getService = new OrdersCancelledEventServiceImpl()
   val timeProvider = new SystemTimeProvider()
   val hash = "0x-cancelorder-01"
 
   def createTables(): Future[Any] =
     for {
-      r ← new CancelOrderOnChainDalImpl().createTable()
+      r ← new OrdersCancelledEventDalImpl().createTable()
     } yield r
 
   private def testSave(
@@ -40,7 +40,7 @@ class CancelOrderOnChainServiceSpec
     ): Future[XErrorCode] = {
     val now = timeProvider.getTimeMillis
     service.saveCancelOrder(
-      XCancelOrderOnChain(
+      XOrdersCancelledEvent(
         txHash = hash,
         brokerOrOwner = hash,
         orderHash = hash,

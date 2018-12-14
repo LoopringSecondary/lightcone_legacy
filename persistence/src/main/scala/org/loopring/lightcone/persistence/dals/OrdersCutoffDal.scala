@@ -27,9 +27,10 @@ import com.mysql.jdbc.exceptions.jdbc4._
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
-trait CutoffDal extends BaseDalImpl[CutoffTable, XCutoff] {
+trait OrdersCutoffDal
+    extends BaseDalImpl[OrdersCutoffTable, XOrdersCutoffEvent] {
 
-  def saveCutoff(cutoff: XCutoff): Future[XErrorCode]
+  def saveCutoff(cutoff: XOrdersCutoffEvent): Future[XErrorCode]
 
   def hasCutoff(
       orderBroker: Option[String] = None,
@@ -41,22 +42,21 @@ trait CutoffDal extends BaseDalImpl[CutoffTable, XCutoff] {
   def obsolete(height: Long): Future[Unit]
 }
 
-class CutoffDalImpl(
+class OrdersCutoffDalImpl(
   )(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
-    extends CutoffDal {
-  val query = TableQuery[CutoffTable]
+    extends OrdersCutoffDal {
+  val query = TableQuery[OrdersCutoffTable]
   def getRowHash(row: XRawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
 
-  override def saveCutoff(cutoff: XCutoff): Future[XErrorCode] = {
+  override def saveCutoff(cutoff: XOrdersCutoffEvent): Future[XErrorCode] = {
     val now = timeProvider.getTimeMillis
     db.run(
         (query += cutoff.copy(
-          createdAt = now,
-          isValid = true
+          createdAt = now
         )).asTry
       )
       .map {
@@ -78,7 +78,7 @@ class CutoffDalImpl(
       orderTradingPair: String,
       time: Long
     ): Future[Boolean] = {
-    val filters = query.filter(_.isValid === true)
+    val filters = query.filter(_.createdAt > 0L)
     if (orderBroker.nonEmpty) {
       val q1 = filters
         .filter(_.broker === orderBroker.get)
@@ -117,9 +117,6 @@ class CutoffDalImpl(
   }
 
   def obsolete(height: Long): Future[Unit] = {
-    val q = for {
-      c ← query if c.blockHeight >= height
-    } yield (c.isValid, c.updatedAt)
-    db.run(q.update(false, timeProvider.getTimeSeconds())).map(_ > 0)
+    db.run(query.filter(_.blockHeight >= height).delete).map(_ >= 0)
   }
 }

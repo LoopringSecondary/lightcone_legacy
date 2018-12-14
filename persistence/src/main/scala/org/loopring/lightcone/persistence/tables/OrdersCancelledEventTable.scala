@@ -20,8 +20,8 @@ import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
-class CancelOrderOnChainTable(tag: Tag)
-    extends BaseTable[XCancelOrderOnChain](tag, "T_CANCEL_ORDERS_ON_CHAIN") {
+class OrdersCancelledEventTable(tag: Tag)
+    extends BaseTable[XOrdersCancelledEvent](tag, "T_ORDERS_CANCELLED_EVENT") {
 
   def id = txHash
   def txHash = columnHash("tx_hash")
@@ -30,7 +30,6 @@ class CancelOrderOnChainTable(tag: Tag)
   def createdAt = column[Long]("created_at")
   def updatedAt = column[Long]("updated_at")
   def blockHeight = column[Long]("block_height")
-  def isValid = column[Boolean]("is_valid")
 
   // indexes
   def idx_tx_hash = index("idx_tx_hash", (txHash), unique = true)
@@ -41,7 +40,6 @@ class CancelOrderOnChainTable(tag: Tag)
 
   def idx_block_height =
     index("idx_block_height", (blockHeight), unique = false)
-  def idx_is_valid = index("idx_is_valid", (isValid), unique = false)
 
   def * =
     (
@@ -50,7 +48,6 @@ class CancelOrderOnChainTable(tag: Tag)
       orderHash,
       createdAt,
       updatedAt,
-      blockHeight,
-      isValid
-    ) <> ((XCancelOrderOnChain.apply _).tupled, XCancelOrderOnChain.unapply)
+      blockHeight
+    ) <> ((XOrdersCancelledEvent.apply _).tupled, XOrdersCancelledEvent.unapply)
 }
