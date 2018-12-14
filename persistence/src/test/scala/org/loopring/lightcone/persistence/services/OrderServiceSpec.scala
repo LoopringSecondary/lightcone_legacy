@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.dals
+package org.loopring.lightcone.persistence.services
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.persistence.dals.{BlockDalImpl, OrderDalImpl}
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto._
-import scala.concurrent.duration._
 import scala.concurrent._
+import scala.concurrent.duration._
 
 class OrderServiceSpec extends ServiceSpec[OrderService] {
   def getService = new OrderServiceImpl()

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.dals
+package org.loopring.lightcone.persistence.services
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import slick.basic.DatabaseConfig
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import slick.jdbc.JdbcProfile
-import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait ServiceSpec[S]
     extends FlatSpec
