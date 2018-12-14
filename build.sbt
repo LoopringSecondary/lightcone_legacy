@@ -47,6 +47,7 @@ lazy val actors = (project in file("actors"))
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
+  .settings(parallelExecution in Test := false)
   .dependsOn(proto, lib, core, persistence)
   .settings(
     basicSettings,
