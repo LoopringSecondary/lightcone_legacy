@@ -14,22 +14,26 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway_bak.api
+package org.loopring.lightcone.gateway
 
-package object model {
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 
-  case class TokenSpendables(
-      symbol: String,
-      balance: String,
-      allowance: String)
+import org.loopring.lightcone.proto._
 
-  // QUESTION(Doan): 是不是要加一个token的列表？
-  case class TokenSpendablesReq(
-      owner: String,
-      delegateAddress: String)
+trait MainRoute extends RouteSupport {
 
-  case class TokenSpendablesResp(
-      owner: String,
-      delegateAddress: String,
-      tokens: Seq[TokenSpendables])
+  val route: Route = {
+    path("health") {
+      get {
+        // parameters(('size.as[Int], 'color ?, 'dangerous ? "no"))
+        // .as(XRawOrder)(req => request[XRawOrder](req))
+        // } ~
+        // get {
+        request[XRawOrder](new XRawOrder(tokenS = "afafadf"))
+      } ~ post {
+        entity(as[XRawOrder])(request[XRawOrder](_))
+      }
+    }
+  }
 }

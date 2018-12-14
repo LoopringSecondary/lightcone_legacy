@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway_bak.api.service
+package org.loopring.lightcone.gateway
 
-import scala.concurrent.Future
+import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 
-trait MarketCapService {
-  def getPriceQuote(orderHash: String): Future[String]
+trait JsonSupport extends Json4sSupport {
+  implicit val serialization = org.json4s.native.Serialization
+  implicit val formats = org.json4s.DefaultFormats
 }
