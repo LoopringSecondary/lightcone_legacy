@@ -82,55 +82,71 @@ class EthereumQueryActor(
   //todo:还需要继续优化下
   def receive = LoggingReceive {
     case req: XGetBalanceAndAllowancesReq =>
+      val erc20Tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
+      val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
       val batchReqs: XBatchContractCallReq =
-        xGetBalanceAndAllowanceToBatchReq(Address(delegateAddress), req)
-      val existsEth =
-        req.tokens.exists(token => Address(token).toString.equals(zeroAddress))
+        xGetBalanceAndAllowanceToBatchReq(Address(delegateAddress),req.copy(tokens = erc20Tokens))
       (for {
         callRes <- (ethereumConnectionActor ? batchReqs)
           .mapAs[XBatchContractCallRes]
-        ethRes <- (ethereumConnectionActor ? XEthGetBalanceReq(
+        ethRes <- ethToken match {
+          case  Some(_) ⇒ (ethereumConnectionActor ? XEthGetBalanceReq(
           address = Address(req.address).toString,
           tag = "latest"
-        )).mapAs[XEthGetBalanceRes]
+        )).mapAs[XEthGetBalanceRes].map(Some(_))
+          case None => Future.successful(None)
+        }
         res: XGetBalanceAndAllowancesRes = xBatchContractCallResToBalanceAndAllowance(
           req.address,
-          req.tokens,
+          erc20Tokens,
           callRes
         )
       } yield {
-        res.copy(
-          balanceAndAllowanceMap = res.balanceAndAllowanceMap +
-            (zeroAddress → XBalanceAndAllowance(
-              BigInt(Numeric.toBigInt(ethRes.result)),
-              BigInt(0)
-            ))
-        )
+        ethRes match {
+          case Some(_) ⇒
+            res.copy(
+              balanceAndAllowanceMap = res.balanceAndAllowanceMap +
+                (ethToken.get → XBalanceAndAllowance(
+                  BigInt(Numeric.toBigInt(ethRes.get.result)),
+                  BigInt(0)
+                ))
+            )
+          case None ⇒
+            res
+        }
       }) sendTo sender
 
     case req: XGetBalanceReq =>
-      val batchReqs: XBatchContractCallReq = req
-      val existsEth =
-        req.tokens.exists(token => Address(token).toString.equals(zeroAddress))
+      val erc20Tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
+      val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
+      val batchReqs: XBatchContractCallReq = req.copy(tokens = erc20Tokens)
       (for {
         callRes <- (ethereumConnectionActor ? batchReqs)
           .mapAs[XBatchContractCallRes]
-        ethRes <- (ethereumConnectionActor ? XEthGetBalanceReq(
-          address = Address(req.address).toString,
-          tag = "latest"
-        )).mapAs[XEthGetBalanceRes]
+        ethRes <- ethToken match {
+          case Some(_) ⇒ (ethereumConnectionActor ? XEthGetBalanceReq(
+            address = Address(req.address).toString,
+            tag = "latest"
+          )).mapAs[XEthGetBalanceRes].map(Some(_))
+          case None ⇒ Future.successful(None)
+        }
         res: XGetBalanceRes = xBatchContractCallResToBalance(
           req.address,
           req.tokens,
           callRes
         )
       } yield {
-        res.copy(
-          balanceMap = res.balanceMap +
-            (zeroAddress → BigInt(Numeric.toBigInt(ethRes.result)))
-        )
+        ethRes match{
+          case Some(_) ⇒
+            res.copy(
+              balanceMap = res.balanceMap +
+                (zeroAddress → BigInt(Numeric.toBigInt(ethRes.get.result)))
+            )
+          case None ⇒
+            res
+        }
       }) sendTo sender
-
+    // 查询授权不应该有ETH的授权
     case req: XGetAllowanceReq =>
       val batchReqs: XBatchContractCallReq =
         xGetAllowanceToBatchReq(Address(delegateAddress), req)
