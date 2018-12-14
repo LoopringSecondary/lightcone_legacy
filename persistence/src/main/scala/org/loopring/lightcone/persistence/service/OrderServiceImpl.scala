@@ -47,11 +47,15 @@ class OrderServiceImpl @Inject()(
   // Mark the order as soft-cancelled. Returns error code if the order does not exist.
   def markOrderSoftCancelled(
       orderHashes: Seq[String]
-    ): Future[Seq[Either[XErrorCode, String]]] = {
+    ): Future[Seq[XUserCancelOrderResult.Result]] = {
     Future.sequence(
-      orderHashes.map(
-        orderDal.updateOrderStatus(_, XOrderStatus.STATUS_CANCELLED_BY_USER)
-      )
+      orderHashes.map { orderHash =>
+        orderDal
+          .updateOrderStatus(orderHash, XOrderStatus.STATUS_CANCELLED_BY_USER)
+          .map { result =>
+            XUserCancelOrderResult.Result(orderHash, result)
+          }
+      }
     )
   }
 
@@ -162,7 +166,7 @@ class OrderServiceImpl @Inject()(
   def updateOrderStatus(
       hash: String,
       status: XOrderStatus
-    ): Future[Either[XErrorCode, String]] = {
+    ): Future[XErrorCode] = {
     // TODO du: 验证订单状态 从[new, partially] -> pending， 从cancel不能更新其他
     orderDal.updateOrderStatus(hash, status)
   }
@@ -170,5 +174,5 @@ class OrderServiceImpl @Inject()(
   def updateAmount(
       hash: String,
       state: XRawOrder.State
-    ): Future[Either[XErrorCode, String]] = orderDal.updateAmount(hash, state)
+    ): Future[XErrorCode] = orderDal.updateAmount(hash, state)
 }

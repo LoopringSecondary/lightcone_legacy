@@ -115,8 +115,7 @@ class DatabaseQueryActor(
     case req: XUserCancelOrderReq ⇒
       (for {
         result ← dbModule.orderService.markOrderSoftCancelled(req.orderHashes)
-      } yield
-        XUserCancelOrderResult(result.filter(p ⇒ p.isRight).map(_.right.get))) forwardTo sender
+      } yield XUserCancelOrderResult(result)) forwardTo sender
     case req: XGetTradesReq ⇒
       (for {
         result ← dbModule.tradeService.getTrades(req)

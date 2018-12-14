@@ -227,6 +227,25 @@ message XTrade {
     int64  updated_at        = 15;
     int64  block_height      = 16;
     int64  block_timestamp   = 17;
-    bool  is_valid           = 18;
-    int64 sequence_id        = 19;
+    int64 sequence_id        = 18;
+}
+
+message XOrdersCutoffEvent {
+    string tx_hash         = 1;
+    string broker          = 3;
+    string owner           = 4;
+    string trading_pair    = 5;
+    int64  cutoff          = 6; // in seconds.
+    int64  created_at      = 7;
+    int64  updated_at      = 8;
+    int64  block_height    = 9;
+}
+
+message XOrdersCancelledEvent {
+    string tx_hash         = 1;
+    string broker_or_owner = 2;
+    string order_hash      = 3;
+    int64  created_at      = 4;
+    int64  updated_at      = 5;
+    int64  block_height    = 6;
 }

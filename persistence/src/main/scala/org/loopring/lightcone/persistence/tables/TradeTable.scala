@@ -48,7 +48,6 @@ class TradeTable(tag: Tag) extends BaseTable[XTrade](tag, "T_TRADES") {
   def updatedAt = column[Long]("updated_at")
   def blockHeight = column[Long]("block_height")
   def blockTimestamp = column[Long]("block_timestamp")
-  def isValid = column[Boolean]("is_valid")
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
   def marketHash = columnAddress("market_hash")
 
@@ -100,7 +99,6 @@ class TradeTable(tag: Tag) extends BaseTable[XTrade](tag, "T_TRADES") {
       updatedAt,
       blockHeight,
       blockTimestamp,
-      isValid,
       sequenceId
     ) <> ((XTrade.apply _).tupled, XTrade.unapply)
 }

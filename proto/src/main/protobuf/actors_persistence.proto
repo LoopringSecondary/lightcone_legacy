@@ -105,7 +105,11 @@ message XUserCancelOrderReq {
 }
 
 message XUserCancelOrderResult {
-    repeated string updated_order_hashes = 1;
+    message Result {
+        string     order_hash = 1;
+        XErrorCode error      = 2;
+    }
+    repeated Result updated_result = 1;
 }
 
 message XGetTradesReq {

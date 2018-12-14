@@ -35,7 +35,6 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent.duration._
 
@@ -96,7 +95,10 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     //-----------deploy sharded actors-----------
     actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
-    actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
+    actors.add(
+      MultiAccountManagerActor.name,
+      MultiAccountManagerActor.startShardRegion
+    )
     actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
     actors.add(
       EthereumEventExtractorActor.name,

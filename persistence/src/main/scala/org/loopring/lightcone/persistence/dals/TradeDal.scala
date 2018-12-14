@@ -29,7 +29,6 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 trait TradeDal extends BaseDalImpl[TradeTable, XTrade] {
-
   def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]]
   def saveTrades(trades: Seq[XTrade]): Future[Seq[Either[XErrorCode, String]]]
   def getTrades(request: XGetTradesReq): Future[Seq[XTrade]]
@@ -51,8 +50,7 @@ class TradeDalImpl(
         (query += trade.copy(
           marketHash =
             MarketHashProvider.convert2Hex(trade.tokenS, trade.tokenB),
-          createdAt = timeProvider.getTimeSeconds(),
-          isValid = true
+          createdAt = timeProvider.getTimeSeconds()
         )).asTry
       )
       .map {
@@ -78,7 +76,7 @@ class TradeDalImpl(
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
     ): Query[TradeTable, TradeTable#TableElementType, Seq] = {
-    var filters = query.filter(_.isValid === true)
+    var filters = query.filter(_.sequenceId > 0l)
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner.get)
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS.get)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB.get)
@@ -133,9 +131,6 @@ class TradeDalImpl(
   }
 
   def obsolete(height: Long): Future[Unit] = {
-    val q = for {
-      c ← query if c.blockHeight >= height
-    } yield (c.isValid, c.updatedAt)
-    db.run(q.update(false, timeProvider.getTimeSeconds())).map(_ > 0)
+    db.run(query.filter(_.blockHeight >= height).delete).map(_ >= 0)
   }
 }

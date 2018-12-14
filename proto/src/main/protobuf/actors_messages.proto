@@ -43,6 +43,7 @@ message XSubmitRawOrderResp {
 message XCancelOrderReq {
     string id = 1;
     bool hard_cancel = 2; // 默认软取消
+    string address = 3;
 }
 
 message XCancelOrderRes {
