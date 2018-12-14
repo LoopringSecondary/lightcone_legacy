@@ -174,7 +174,7 @@ class EthereumQueryActor(
         )
       } yield res) sendTo sender
 
-    case req: GetFilledAmountReq => //todo：订单的成交金额
+    case req: GetFilledAmountReq =>
       val batchReq =
         xGetFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
       (for {
