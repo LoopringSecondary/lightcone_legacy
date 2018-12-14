@@ -33,30 +33,19 @@ trait RouteSupport extends JsonSupport {
   val requestHandler: ActorRef
   implicit val timeout: Timeout
 
-  def handle[RESP](req: Any)(implicit tag: ClassTag[RESP]) =
-    handlerInternal(req)
+  def request[RESP](req: Any)(implicit tagRESP: ClassTag[RESP]) =
+    onSuccess(requestHandler ? req) {
+      case resp: RESP =>
+        complete(StatusCodes.OK, resp)
+      case err: XError =>
+        complete(StatusCodes.InternalServerError, err)
+      case e: String =>
+        complete(StatusCodes.InternalServerError, XError(message = e))
+      case e =>
+        complete(
+          StatusCodes.InternalServerError,
+          XError(message = s"unexpected response of type ${e.getClass.getName}")
+        )
 
-  def handle[RESP, REQ](
-      implicit tagRESP: ClassTag[RESP],
-      um: akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller[REQ]
-    ) = entity(as[REQ])(handlerInternal)
-
-  private def handlerInternal[RESP, REQ](
-      req: REQ
-    )(
-      implicit tagRESP: ClassTag[RESP]
-    ) = onSuccess(requestHandler ? req) {
-    case resp: RESP =>
-      complete(StatusCodes.OK, resp)
-    case err: XError =>
-      complete(StatusCodes.InternalServerError, err)
-    case e: String =>
-      complete(StatusCodes.InternalServerError, XError(message = e))
-    case e =>
-      complete(
-        StatusCodes.InternalServerError,
-        XError(message = s"unexpected response of type ${e.getClass.getName}")
-      )
-
-  }
+    }
 }

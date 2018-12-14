@@ -25,8 +25,15 @@ trait MainRoute extends RouteSupport {
 
   val route: Route = {
     path("health") {
-      get(handle[XRawOrder](XRawOrder(tokenS = "afafadf"))) ~
-        post(handle[XRawOrder, XRawOrder])
+      get {
+        // parameters(('size.as[Int], 'color ?, 'dangerous ? "no"))
+        // .as(XRawOrder)(req => request[XRawOrder](req))
+        // } ~
+        // get {
+        request[XRawOrder](new XRawOrder(tokenS = "afafadf"))
+      } ~ post {
+        entity(as[XRawOrder])(request[XRawOrder](_))
+      }
     }
   }
 }
