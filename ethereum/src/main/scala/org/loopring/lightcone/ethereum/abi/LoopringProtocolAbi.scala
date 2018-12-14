@@ -18,12 +18,23 @@ package org.loopring.lightcone.ethereum.abi
 
 case class LoopringProtocolAbi() {
 
-  val abis: Seq[AbiWrap] = Seq(OrderBookAbi(), OrderCancellerAbi(), RingSubmitterAbi(), BurnRateTableAbi(), AuthorizableAbi())
+  val abis: Seq[AbiWrap] = Seq(
+    OrderBookAbi(),
+    OrderCancellerAbi(),
+    RingSubmitterAbi(),
+    BurnRateTableAbi(),
+    AuthorizableAbi()
+  )
 
-  def unpackEvent(data: String, topics: Array[String]): Option[Any] =
-    abis.map(abi ⇒ abi.unpackEvent(data, topics)).find(result ⇒ result.nonEmpty).flatten
+  def unpackEvent(
+      data: String,
+      topics: Array[String]
+    ): Option[Any] =
+    abis
+      .map(abi ⇒ abi.unpackEvent(data, topics))
+      .find(result ⇒ result.nonEmpty)
+      .flatten
 
   def unpackFunctionInput(input: String): Option[Any] =
     abis.map(abi ⇒ abi.unpackFunctionInput(input)).find(_.nonEmpty).flatten
 }
-
