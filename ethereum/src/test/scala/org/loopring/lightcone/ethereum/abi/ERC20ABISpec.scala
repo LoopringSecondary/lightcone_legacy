@@ -100,9 +100,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   "encodeBalanceOfFunction" should "encode class Parmas of balanceOf function to  input" in {
-    val parms = BalanceOfFunction.Parms(
-      _owner = "0x8fd3121013a07c57f0d69646e86e7a4880b467b7"
-    )
+    val parms = BalanceOfFunction.Parms(_owner = "0x8fd3121013a07c57f0d69646e86e7a4880b467b7")
 
     val input = erc20abi.balanceOf.pack(parms)
     info(input)
@@ -112,10 +110,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   "encodeAllowanceFunction" should "encode class Parmas of allowance function to  input" in {
-    val parms = AllowanceFunction.Parms(
-      _owner = "0x8fd3121013a07c57f0d69646e86e7a4880b467b7",
-      _spender = "0xf105c622edc68b9e4e813e631cb534940f5cc509"
-    )
+    val parms = AllowanceFunction.Parms(_owner = "0x8fd3121013a07c57f0d69646e86e7a4880b467b7", _spender = "0xf105c622edc68b9e4e813e631cb534940f5cc509")
 
     val input = erc20abi.allowance.pack(parms)
     info(input)
@@ -125,8 +120,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   "decodeBalanceOfFunctionResult" should "decode eth call result to BalanceOfFunction Result" in {
-    val resp =
-      "0x0000000000000000000000000000000000000000004a817c7ffffffb57e83800"
+    val resp = "0x0000000000000000000000000000000000000000004a817c7ffffffb57e83800"
     val result = erc20abi.balanceOf.unpackResult(resp)
     result.map { res ⇒
       res.balance.toString() should be("90071992547409900000000000")
@@ -134,8 +128,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   "decodeAllowanceFunctionResult" should "decode eth call result to AllowanceFunction Result" in {
-    val resp =
-      "0x0000000000000000000000000000000000000000004a817c7ffffffb57e83800"
+    val resp = "0x0000000000000000000000000000000000000000004a817c7ffffffb57e83800"
     val result = erc20abi.allowance.unpackResult(resp)
     result.map { res ⇒
       res.allowance.toString() should be("90071992547409900000000000")
