@@ -82,18 +82,25 @@ class EthereumQueryActor(
   //todo:还需要继续优化下
   def receive = LoggingReceive {
     case req: XGetBalanceAndAllowancesReq =>
-      val erc20Tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
-      val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
+      val erc20Tokens = req.tokens.filterNot(
+        token ⇒ Address(token).toString.equals(zeroAddress)
+      )
+      val ethToken =
+        req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
       val batchReqs: XBatchContractCallReq =
-        xGetBalanceAndAllowanceToBatchReq(Address(delegateAddress),req.copy(tokens = erc20Tokens))
+        xGetBalanceAndAllowanceToBatchReq(
+          Address(delegateAddress),
+          req.copy(tokens = erc20Tokens)
+        )
       (for {
         callRes <- (ethereumConnectionActor ? batchReqs)
           .mapAs[XBatchContractCallRes]
         ethRes <- ethToken match {
-          case  Some(_) ⇒ (ethereumConnectionActor ? XEthGetBalanceReq(
-          address = Address(req.address).toString,
-          tag = "latest"
-        )).mapAs[XEthGetBalanceRes].map(Some(_))
+          case Some(_) ⇒
+            (ethereumConnectionActor ? XEthGetBalanceReq(
+              address = Address(req.address).toString,
+              tag = "latest"
+            )).mapAs[XEthGetBalanceRes].map(Some(_))
           case None => Future.successful(None)
         }
         res: XGetBalanceAndAllowancesRes = xBatchContractCallResToBalanceAndAllowance(
@@ -117,17 +124,21 @@ class EthereumQueryActor(
       }) sendTo sender
 
     case req: XGetBalanceReq =>
-      val erc20Tokens = req.tokens.filterNot(token ⇒ Address(token).toString.equals(zeroAddress))
-      val ethToken = req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
+      val erc20Tokens = req.tokens.filterNot(
+        token ⇒ Address(token).toString.equals(zeroAddress)
+      )
+      val ethToken =
+        req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
       val batchReqs: XBatchContractCallReq = req.copy(tokens = erc20Tokens)
       (for {
         callRes <- (ethereumConnectionActor ? batchReqs)
           .mapAs[XBatchContractCallRes]
         ethRes <- ethToken match {
-          case Some(_) ⇒ (ethereumConnectionActor ? XEthGetBalanceReq(
-            address = Address(req.address).toString,
-            tag = "latest"
-          )).mapAs[XEthGetBalanceRes].map(Some(_))
+          case Some(_) ⇒
+            (ethereumConnectionActor ? XEthGetBalanceReq(
+              address = Address(req.address).toString,
+              tag = "latest"
+            )).mapAs[XEthGetBalanceRes].map(Some(_))
           case None ⇒ Future.successful(None)
         }
         res: XGetBalanceRes = xBatchContractCallResToBalance(
@@ -136,7 +147,7 @@ class EthereumQueryActor(
           callRes
         )
       } yield {
-        ethRes match{
+        ethRes match {
           case Some(_) ⇒
             res.copy(
               balanceMap = res.balanceMap +
