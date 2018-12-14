@@ -37,7 +37,6 @@ message XBlockData {
     bytes  block_reward         = 15;
     bytes  uncle_reward         = 16;
     bytes  extra_data           = 17;
-    int32  is_valid          = 18;
 }
 
 message XTokenTransferData {
