@@ -153,12 +153,12 @@ class OrderDalImpl(
       updatedAt = now,
       status = XOrderStatus.STATUS_NEW
     )
+    val o = order.copy(
+      state = Some(state),
+      marketHash = MarketHashProvider.convert2Hex(order.tokenS, order.tokenB)
+    )
     db.run(
-        (query += order.copy(
-          state = Some(state),
-          marketHash =
-            MarketHashProvider.convert2Hex(order.tokenS, order.tokenB)
-        )).asTry
+        (query += o).asTry
       )
       .map {
         case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
@@ -179,7 +179,7 @@ class OrderDalImpl(
         case Success(x) ⇒
           XSaveOrderResult(
             error = ERR_NONE,
-            order = Some(order)
+            order = Some(o)
           )
       }
   }
