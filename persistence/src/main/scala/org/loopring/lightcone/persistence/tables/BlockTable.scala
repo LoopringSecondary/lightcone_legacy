@@ -41,7 +41,6 @@ class BlockTable(tag: Tag) extends BaseTable[XBlockData](tag, "T_BLOCKS") {
   def blockReward = columnAmount("block_reward")
   def uncleReward = columnAmount("uncle_reward")
   def extraData = column[ByteString]("extra_data")
-  def isValid = column[Int]("is_valid")
 
   // indexes
   def idx_parent_hash = index("idx_parent_hash", (parentHash), unique = false)
@@ -66,7 +65,6 @@ class BlockTable(tag: Tag) extends BaseTable[XBlockData](tag, "T_BLOCKS") {
       nonce,
       blockReward,
       uncleReward,
-      extraData,
-      isValid
+      extraData
     ) <> ((XBlockData.apply _).tupled, XBlockData.unapply)
 }
