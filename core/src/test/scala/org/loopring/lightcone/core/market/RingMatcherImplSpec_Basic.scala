@@ -35,41 +35,41 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
     val maker = sellDAI(100000000, 100000001).matchableAsOriginal
     val taker = buyDAI(100000000, 100000000).matchableAsOriginal
 
-    matcher.matchOrders(taker, maker, 0) should be(Left(MATCHING_ERR_ORDERS_NOT_TRADABLE))
+    matcher.matchOrders(taker, maker, 0) should be(Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
   }
 
   "RingMatcherImpl" should "not match orders if one of them has tokenB as 0 " in {
     matcher.matchOrders(
       sellDAI(10, 0).matchableAsOriginal,
       buyDAI(10, 10).matchableAsOriginal
-    ) should be(Left(MATCHING_ERR_INVALID_TAKER_ORDER))
+    ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
 
     matcher.matchOrders(
       sellDAI(10, 10).matchableAsOriginal,
       buyDAI(10, 0).matchableAsOriginal
-    ) should be(Left(MATCHING_ERR_INVALID_MAKER_ORDER))
+    ) should be(Left(ERR_MATCHING_INVALID_MAKER_ORDER))
 
     matcher.matchOrders(
       sellDAI(10, 0).matchableAsOriginal,
       buyDAI(10, 0).matchableAsOriginal
-    ) should be(Left(MATCHING_ERR_INVALID_TAKER_ORDER))
+    ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
   }
 
   "RingMatcherImpl" should "not match orders if one of them has tokenS as 0 " in {
     matcher.matchOrders(
       sellDAI(0, 10).matchableAsOriginal,
       buyDAI(10, 10).matchableAsOriginal
-    ) should be(Left(MATCHING_ERR_INVALID_TAKER_ORDER))
+    ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
 
     matcher.matchOrders(
       sellDAI(10, 10).matchableAsOriginal,
       buyDAI(0, 10).matchableAsOriginal
-    ) should be(Left(MATCHING_ERR_INVALID_MAKER_ORDER))
+    ) should be(Left(ERR_MATCHING_INVALID_MAKER_ORDER))
 
     matcher.matchOrders(
       sellDAI(0, 10).matchableAsOriginal,
       buyDAI(0, 10).matchableAsOriginal
-    ) should be(Left(MATCHING_ERR_INVALID_TAKER_ORDER))
+    ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
   }
 
   "RingMatcherImpl" should "verify two orders in MarketManagerImplSpec_Performance should be matched in a ring " in {

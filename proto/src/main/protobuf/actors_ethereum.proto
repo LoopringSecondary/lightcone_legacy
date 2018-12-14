@@ -222,8 +222,9 @@ message XEthBlockNumberRes {
 }
 
 message XEthCallReq {
-    XTransactionParam param = 1;
-    string tag = 2;
+    int32 id = 1;
+    XTransactionParam param = 2;
+    string tag = 3;
 }
 
 message XEthCallRes {

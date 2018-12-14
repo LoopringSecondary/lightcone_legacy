@@ -19,6 +19,7 @@ package org.loopring.lightcone.persistence.dals
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
@@ -48,9 +49,9 @@ class BlockDalImpl()(
     result ← db.run(query.insertOrUpdate(block))
   } yield {
     if (result == 1) {
-      XErrorCode.ERR_NONE
+      ERR_NONE
     } else {
-      XErrorCode.PERS_ERR_INTERNAL
+      ERR_PERSISTENCE_INTERNAL
     }
   }
   def findByHash(hash: String): Future[Option[XBlockData]] = {
