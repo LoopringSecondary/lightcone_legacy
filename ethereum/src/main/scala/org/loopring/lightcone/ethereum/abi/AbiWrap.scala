@@ -89,7 +89,10 @@ abstract class AbiWrap(abiJson: String) {
     ): Predicate[T] =
     x ⇒ util.Arrays.equals(x.encodeSignature(), signature)
 
-  def unpackEvent(data: String, topics: Array[String]): Option[Any] = ???
+  def unpackEvent(
+      data: String,
+      topics: Array[String]
+    ): Option[Any] = ???
 
   def unpackFunctionInput(data: String): Option[Any] = None
 }

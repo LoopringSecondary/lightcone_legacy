@@ -242,7 +242,8 @@ private[ethereum] class HttpConnector(
     case r: XGetUncleByBlockNumAndIndexReq ⇒
       sendMessage(method = "eth_getUncleByBlockNumberAndIndex") {
         Seq(r.blockNum, r.index)
-      } map JsonFormat.fromJsonString[XGetBlockWithTxHashByHashRes] sendTo sender
+      } map JsonFormat
+        .fromJsonString[XGetBlockWithTxHashByHashRes] sendTo sender
 
     case batchR: XBatchContractCallReq =>
       val batchReqs = batchR.reqs.map { singleReq =>
