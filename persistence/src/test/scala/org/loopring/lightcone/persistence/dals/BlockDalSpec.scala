@@ -25,7 +25,7 @@ class BlockDalSpec extends DalSpec[BlockDal] {
   def getDal = new BlockDalImpl()
 
   "saveBlock" must "save a block with hash 0x111" in {
-    val block = XBlockData(hash = "0x111", height = 1L, isValid = 1)
+    val block = XBlockData(hash = "0x111", height = 1L)
     val result = dal.saveBlock(block)
     val res = Await.result(result.mapTo[XErrorCode], 5.second)
     res should be(ERR_NONE)
