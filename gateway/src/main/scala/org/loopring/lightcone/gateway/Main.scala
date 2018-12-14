@@ -16,52 +16,49 @@
 
 package org.loopring.lightcone.gateway
 
-import akka.actor.ActorSystem
+import akka.actor._
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import com.google.inject.Guice
+import com.typesafe.config.Config
+import net.codingwell.scalaguice.InjectorExtensions._
+import org.loopring.lightcone.actors._
+import org.loopring.lightcone.actors.base.Lookup
+import org.loopring.lightcone.actors.entrypoint.EntryPointActor
+import org.slf4s.Logging
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import akka.pattern.ask
-
 import scala.io.StdIn
 
-import akka.actor._
+object Maim extends App with MainRoute with Logging {
 
-import de.heikoseeberger.akkahttpjson4s.{Json4sSupport => J4s}
+  val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
+  val injector = ClusterDeployer.deploy(configPathOpt)
 
-object Main extends MainRoute {
-
-  val host = "localhost"
-  val port = 8080
+  implicit val config = injector.instance[Config]
+  implicit val system = injector.instance[ActorSystem]
+  implicit val materializer = injector.instance[ActorMaterializer]
+  implicit val ec = injector.instance[ExecutionContext]
   implicit val timeout = Timeout(20.seconds)
-  implicit val system = ActorSystem("simple-rest-system")
-  implicit val materializer = ActorMaterializer()
-  implicit val executionContext = system.dispatcher
 
-  val requestHandler: ActorRef = system.actorOf(Props(new Actor {
+  val actors = injector.instance[Lookup[ActorRef]]
+  val requestHandler = actors.get(EntryPointActor.name)
 
-    def receive = {
-      case x: Any => sender ! x
-    }
-  }))
+  val host = config.getString("restful.host")
+  val port = config.getInt("restful.port")
+  val binding = Http().bindAndHandle(route, host, port)
 
-  def main(args: Array[String]): Unit = {
+  log.info(
+    s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate"
+  )
 
-    //Startup, and listen for requests
-    val bindingFuture = Http().bindAndHandle(route, host, port)
-    println(
-      s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate"
-    )
+  StdIn.readLine()
 
-    StdIn.readLine()
-    StdIn.readLine()
-    StdIn.readLine()
-
-    //Shutdown
-    bindingFuture.flatMap(_.unbind())
-    system.terminate()
-  }
+  //Shutdown
+  binding.flatMap(_.unbind())
+  system.terminate()
 }
