@@ -30,7 +30,6 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.XErrorCode._
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.actors.base.safefuture._
@@ -73,11 +72,15 @@ class EthereumQueryActor(
     val actors: Lookup[ActorRef])
     extends ActorWithPathBasedConfig(EthereumQueryActor.name) {
 
-  val delegateAddress = config.getString("loopring-protocol.delegate-address")
   val erc20Abi = ERC20ABI()
+
+  val delegateAddress = config.getString("loopring-protocol.delegate-address")
+
+  val tradeHistoryAddress =
+    config.getString("loopring-protocol.trade-history-address")
   val zeroAddress: String = "0x" + "0" * 40
 
-  protected def ethereumConnectionActor = actors.get(EthereumAccessActor.name)
+  protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   //todo:还需要继续优化下
   def receive = LoggingReceive {
@@ -93,11 +96,11 @@ class EthereumQueryActor(
           req.copy(tokens = erc20Tokens)
         )
       (for {
-        callRes <- (ethereumConnectionActor ? batchReqs)
+        callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[XBatchContractCallRes]
         ethRes <- ethToken match {
           case Some(_) ⇒
-            (ethereumConnectionActor ? XEthGetBalanceReq(
+            (ethereumAccessorActor ? XEthGetBalanceReq(
               address = Address(req.address).toString,
               tag = "latest"
             )).mapAs[XEthGetBalanceRes].map(Some(_))
@@ -131,11 +134,11 @@ class EthereumQueryActor(
         req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
       val batchReqs: XBatchContractCallReq = req.copy(tokens = erc20Tokens)
       (for {
-        callRes <- (ethereumConnectionActor ? batchReqs)
+        callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[XBatchContractCallRes]
         ethRes <- ethToken match {
           case Some(_) ⇒
-            (ethereumConnectionActor ? XEthGetBalanceReq(
+            (ethereumAccessorActor ? XEthGetBalanceReq(
               address = Address(req.address).toString,
               tag = "latest"
             )).mapAs[XEthGetBalanceRes].map(Some(_))
@@ -162,7 +165,7 @@ class EthereumQueryActor(
       val batchReqs: XBatchContractCallReq =
         xGetAllowanceToBatchReq(Address(delegateAddress), req)
       (for {
-        callRes <- (ethereumConnectionActor ? batchReqs)
+        callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[XBatchContractCallRes]
         res: XGetAllowanceRes = xBatchContractCallResToAllowance(
           req.address,
@@ -172,6 +175,20 @@ class EthereumQueryActor(
       } yield res) sendTo sender
 
     case req: GetFilledAmountReq => //todo：订单的成交金额
+      val batchReq =
+        xGetFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
+      (for {
+        batchRes ← (ethereumAccessorActor ? batchReq)
+          .mapAs[XBatchContractCallRes]
+          .map(_.resps.map(_.result))
+      } yield {
+        GetFilledAmountRes(
+          (req.orderIds zip batchRes.map(
+            res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res))
+          )).toMap
+        )
+      }) sendTo sender
+
   }
 
 }
