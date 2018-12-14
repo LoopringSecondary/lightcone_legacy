@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
+import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
@@ -32,7 +33,7 @@ import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 object EthereumQueryActor extends ShardedEvenly {
   val name = "ethereum_query"
