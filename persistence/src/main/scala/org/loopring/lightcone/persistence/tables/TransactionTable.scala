@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
 class TransactionTable(tag: Tag)
-  extends BaseTable[XTransactionData](tag, "T_TRANSACTIONS") {
+    extends BaseTable[XTransactionData](tag, "T_TRANSACTIONS") {
 
   def id = hash
   def hash = columnHash("hash", O.PrimaryKey)
@@ -48,20 +48,21 @@ class TransactionTable(tag: Tag)
   def idx_from = index("idx_from", (from), unique = false)
   def idx_to = index("idx_to", (to), unique = false)
 
-  def * = (
-    hash,
-    height,
-    blockHash,
-    timestamp,
-    from,
-    to,
-    amount,
-    txReceiptStatus,
-    gasUsed,
-    gasLimit,
-    gasPrice,
-    txFee,
-    nonce,
-    inputData
-  ) <> ((XTransactionData.apply _).tupled, XTransactionData.unapply)
+  def * =
+    (
+      hash,
+      height,
+      blockHash,
+      timestamp,
+      from,
+      to,
+      amount,
+      txReceiptStatus,
+      gasUsed,
+      gasLimit,
+      gasPrice,
+      txFee,
+      nonce,
+      inputData
+    ) <> ((XTransactionData.apply _).tupled, XTransactionData.unapply)
 }

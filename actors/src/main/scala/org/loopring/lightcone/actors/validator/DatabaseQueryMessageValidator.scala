@@ -24,16 +24,19 @@ object DatabaseQueryMessageValidator {
   val name = "database_query_validator"
 }
 
-final class DatabaseQueryMessageValidator()(
+final class DatabaseQueryMessageValidator(
+  )(
     implicit
-    val config: Config
-) extends MessageValidator {
+    val config: Config)
+    extends MessageValidator {
 
   def validate = {
     case req: XSaveOrderReq ⇒
       if (req.order.isEmpty || (req.order.get.state.nonEmpty && req.order.get.state.get.status !=
-        XOrderStatus.STATUS_NEW)) throw ErrorException(XError(XErrorCode.ERR_PERSISTENCE_INVALID_DATA))
+            XOrderStatus.STATUS_NEW))
+        throw ErrorException(XError(XErrorCode.ERR_PERSISTENCE_INVALID_DATA))
     case req: XUserCancelOrderReq ⇒
-      if (req.orderHashes.isEmpty) throw ErrorException(XError(XErrorCode.ERR_PERSISTENCE_INVALID_DATA))
+      if (req.orderHashes.isEmpty)
+        throw ErrorException(XError(XErrorCode.ERR_PERSISTENCE_INVALID_DATA))
   }
 }

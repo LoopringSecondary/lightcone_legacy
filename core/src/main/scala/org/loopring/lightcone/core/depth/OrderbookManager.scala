@@ -21,7 +21,11 @@ import org.loopring.lightcone.proto._
 
 trait OrderbookManager {
   def processUpdate(update: XOrderbookUpdate): Unit
-  def getOrderbook(level: Int, size: Int, latestPrice: Option[Double] = None): XOrderbook
+
+  def getOrderbook(
+      level: Int,
+      size: Int,
+      latestPrice: Option[Double] = None
+    ): XOrderbook
   def reset(): Unit
 }
-

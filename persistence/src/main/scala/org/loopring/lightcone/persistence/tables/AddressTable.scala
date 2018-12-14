@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
 class AddressTable(tag: Tag)
-  extends BaseTable[XAddressData](tag, "T_ADDRESSES") {
+    extends BaseTable[XAddressData](tag, "T_ADDRESSES") {
 
   def id = address
   def address = columnAddress("address", O.PrimaryKey)
@@ -34,14 +34,16 @@ class AddressTable(tag: Tag)
   def updatedAtBlock = column[Long]("updated_at_block")
 
   // indexes
-  def idx_updated_at_block = index("idx_updated_at_block", (updatedAtBlock), unique = false)
+  def idx_updated_at_block =
+    index("idx_updated_at_block", (updatedAtBlock), unique = false)
 
-  def * = (
-    address,
-    balance,
-    numTx,
-    creatorAddress,
-    creatorTx,
-    updatedAtBlock
-  ) <> ((XAddressData.apply _).tupled, XAddressData.unapply)
+  def * =
+    (
+      address,
+      balance,
+      numTx,
+      creatorAddress,
+      creatorTx,
+      updatedAtBlock
+    ) <> ((XAddressData.apply _).tupled, XAddressData.unapply)
 }

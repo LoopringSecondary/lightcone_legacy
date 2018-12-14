@@ -26,11 +26,17 @@ object MarketHashProvider {
     }
   }
 
-  def convert2BigInt(address1: String, address2: String): BigInt = {
+  def convert2BigInt(
+      address1: String,
+      address2: String
+    ): BigInt = {
     BigInt(removePrefix(address1), 16) ^ BigInt(removePrefix(address2), 16)
   }
 
-  def convert2Hex(address1: String, address2: String): String = {
+  def convert2Hex(
+      address1: String,
+      address2: String
+    ): String = {
     "0x" + convert2BigInt(address1, address2).toString(16)
   }
 }

@@ -23,17 +23,20 @@ import org.loopring.lightcone.proto.XErrorCode._
 import scala.collection.SortedMap
 
 private[depth] object OrderbookSide {
+
   class Sells(
       val priceDecimals: Int,
       val aggregationLevel: Int,
-      val maintainUpdatedSlots: Boolean
-  ) extends LongOrderingSupport(true) with OrderbookSide
+      val maintainUpdatedSlots: Boolean)
+      extends LongOrderingSupport(true)
+      with OrderbookSide
 
   class Buys(
       val priceDecimals: Int,
       val aggregationLevel: Int,
-      val maintainUpdatedSlots: Boolean
-  ) extends LongOrderingSupport(false) with OrderbookSide
+      val maintainUpdatedSlots: Boolean)
+      extends LongOrderingSupport(false)
+      with OrderbookSide
 }
 
 private[depth] trait OrderbookSide {
@@ -50,13 +53,25 @@ private[depth] trait OrderbookSide {
   var oldSlots = Map.empty[Long, XOrderbookUpdate.XSlot]
   var updatedSlots = Map.empty[Long, XOrderbookUpdate.XSlot]
 
-  def increase(price: Double, amount: Double, total: Double): Unit =
+  def increase(
+      price: Double,
+      amount: Double,
+      total: Double
+    ): Unit =
     increase(XOrderbookUpdate.XSlot(getSlotForPriceId(price), amount, total))
 
-  def decrease(price: Double, amount: Double, total: Double): Unit =
+  def decrease(
+      price: Double,
+      amount: Double,
+      total: Double
+    ): Unit =
     decrease(XOrderbookUpdate.XSlot(getSlotForPriceId(price), amount, total))
 
-  def replace(price: Double, amount: Double, total: Double): Unit =
+  def replace(
+      price: Double,
+      amount: Double,
+      total: Double
+    ): Unit =
     replace(XOrderbookUpdate.XSlot(getSlotForPriceId(price), amount, total))
 
   def increase(slot: XOrderbookUpdate.XSlot): Unit = adjustInternal(slot, _ + _)
@@ -64,16 +79,20 @@ private[depth] trait OrderbookSide {
   def decrease(slot: XOrderbookUpdate.XSlot): Unit = adjustInternal(slot, _ - _)
 
   def replace(slot: XOrderbookUpdate.XSlot): Unit =
-    adjustInternal(slot, (old: XOrderbookUpdate.XSlot, new_ : XOrderbookUpdate.XSlot) ⇒ new_)
+    adjustInternal(
+      slot,
+      (old: XOrderbookUpdate.XSlot, new_ : XOrderbookUpdate.XSlot) => new_
+    )
 
   def getDiff(slot: XOrderbookUpdate.XSlot) = {
     slot - slotMap.getOrElse(slot.slot, XOrderbookUpdate.XSlot(slot.slot, 0, 0))
   }
 
   private def adjustInternal(
-    slot: XOrderbookUpdate.XSlot,
-    op: (XOrderbookUpdate.XSlot, XOrderbookUpdate.XSlot) ⇒ XOrderbookUpdate.XSlot
-  ) = {
+      slot: XOrderbookUpdate.XSlot,
+      op: (XOrderbookUpdate.XSlot,
+          XOrderbookUpdate.XSlot) => XOrderbookUpdate.XSlot
+    ) = {
     val id = getAggregationSlotFor(slot.slot)
 
     val old = slotMap.getOrElse(id, XOrderbookUpdate.XSlot(id, 0, 0))
@@ -98,14 +117,19 @@ private[depth] trait OrderbookSide {
     oldSlots = Map.empty
     updatedSlots = Map.empty
   }
-  def getSlots(num: Int, latestPriceSlot: Option[Long]): Seq[XOrderbookUpdate.XSlot] = {
+
+  def getSlots(
+      num: Int,
+      latestPriceSlot: Option[Long]
+    ): Seq[XOrderbookUpdate.XSlot] = {
     val items = latestPriceSlot match {
-      case None ⇒ slotMap.values
-      case Some(limit) ⇒ if (isSell) {
-        slotMap.values.dropWhile(_.slot <= limit)
-      } else {
-        slotMap.values.dropWhile(_.slot > limit)
-      }
+      case None => slotMap.values
+      case Some(limit) =>
+        if (isSell) {
+          slotMap.values.dropWhile(_.slot <= limit)
+        } else {
+          slotMap.values.dropWhile(_.slot > limit)
+        }
     }
     items.filter(_.slot != 0).take(num).toList
   }
@@ -119,7 +143,7 @@ private[depth] trait OrderbookSide {
     }
 
     val slots = updatedSlots.filter {
-      case (id, slot) ⇒ oldSlots(id) != slot
+      case (id, slot) => oldSlots(id) != slot
     }.values.toList
 
     oldSlots = Map.empty
@@ -128,7 +152,8 @@ private[depth] trait OrderbookSide {
   }
 
   private[depth] def getAggregationSlotFor(slot: Long) = {
-    if (isSell) (Math.ceil(slot / aggregationScaling) * aggregationScaling).toLong
+    if (isSell)
+      (Math.ceil(slot / aggregationScaling) * aggregationScaling).toLong
     else (Math.floor(slot / aggregationScaling) * aggregationScaling).toLong
   }
 
@@ -137,4 +162,3 @@ private[depth] trait OrderbookSide {
     else Math.floor(price * priceScaling).toLong
   }
 }
-

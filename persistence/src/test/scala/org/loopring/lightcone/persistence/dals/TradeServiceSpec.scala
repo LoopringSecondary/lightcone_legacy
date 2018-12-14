@@ -27,36 +27,42 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
   val tokenS = "0xaaaaaa1"
   val tokenB = "0xbbbbbb1"
 
-  def createTables(): Future[Any] = for {
-    r ← new TradeDalImpl().createTable()
-  } yield r
+  def createTables(): Future[Any] =
+    for {
+      r ← new TradeDalImpl().createTable()
+    } yield r
 
   private def testSave(
-    txHash: String,
-    owner: String,
-    tokenS: String,
-    tokenB: String,
-    blockHeight: Long
-  ): Future[Either[XErrorCode, String]] = {
-    service.saveTrade(XTrade(
-      txHash = txHash,
-      owner = owner,
-      tokenB = tokenB,
-      tokenS = tokenS,
-      blockHeight = blockHeight
-    ))
+      txHash: String,
+      owner: String,
+      tokenS: String,
+      tokenB: String,
+      blockHeight: Long
+    ): Future[Either[XErrorCode, String]] = {
+    service.saveTrade(
+      XTrade(
+        txHash = txHash,
+        owner = owner,
+        tokenB = tokenB,
+        tokenS = tokenS,
+        blockHeight = blockHeight
+      )
+    )
   }
 
   "saveTrade" must "save a trade with hash" in {
     val hash = "0x-savetrade-01"
     val result = for {
-      _ ← testSave(hash, hash, tokenS, tokenB, 1l)
-      _ ← testSave("0x-mock-01", "0x-mock-01", tokenS, tokenB, 1l)
-      _ ← testSave("0x-mock-02", "0x-mock-02", tokenS, tokenB, 1l)
-      query ← service.getTrades(XGetTradesReq(
-        owner = hash,
-        market = XGetTradesReq.Market.Pair(MarketPair(tokenB = tokenB, tokenS = tokenS))
-      ))
+      _ ← testSave(hash, hash, tokenS, tokenB, 1L)
+      _ ← testSave("0x-mock-01", "0x-mock-01", tokenS, tokenB, 1L)
+      _ ← testSave("0x-mock-02", "0x-mock-02", tokenS, tokenB, 1L)
+      query ← service.getTrades(
+        XGetTradesReq(
+          owner = hash,
+          market = XGetTradesReq.Market
+            .Pair(MarketPair(tokenB = tokenB, tokenS = tokenS))
+        )
+      )
     } yield query
     val res = Await.result(result.mapTo[Seq[XTrade]], 5.second)
     res.length == 1 should be(true)
@@ -80,19 +86,25 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
     val tokenB = "0xbbbbbbb2"
     val result = for {
       _ ← Future.sequence(hashes.map { hash ⇒
-        testSave(hash, hash, tokenS, tokenB, 1l)
+        testSave(hash, hash, tokenS, tokenB, 1L)
       })
       _ ← Future.sequence(mockToken.map { hash ⇒
-        testSave(hash, hash, "0x00001", "0x00002", 1l)
+        testSave(hash, hash, "0x00001", "0x00002", 1L)
       })
-      query1 ← service.getTrades(XGetTradesReq(
-        owner = "0x-gettrades-state0-02",
-        market = XGetTradesReq.Market.MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
-      ))
-      query2 ← service.getTrades(XGetTradesReq(
-        owner = "0x-gettrades-token-02",
-        market = XGetTradesReq.Market.Pair(MarketPair(tokenB = "0x00002", tokenS = "0x00001"))
-      ))
+      query1 ← service.getTrades(
+        XGetTradesReq(
+          owner = "0x-gettrades-state0-02",
+          market = XGetTradesReq.Market
+            .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+        )
+      )
+      query2 ← service.getTrades(
+        XGetTradesReq(
+          owner = "0x-gettrades-token-02",
+          market = XGetTradesReq.Market
+            .Pair(MarketPair(tokenB = "0x00002", tokenS = "0x00001"))
+        )
+      )
     } yield (query1, query2)
     val res = Await.result(result.mapTo[(Seq[XTrade], Seq[XTrade])], 5.second)
     val x = res._1.length === 1 && res._2.length === 1
@@ -110,12 +122,15 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
     )
     val result = for {
       _ ← Future.sequence(owners.map { hash ⇒
-        testSave(hash, hash, tokenS, tokenB, 1l)
+        testSave(hash, hash, tokenS, tokenB, 1L)
       })
-      query ← service.countTrades(XGetTradesReq(
-        owner = "0x-counttrades-02",
-        market = XGetTradesReq.Market.MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
-      ))
+      query ← service.countTrades(
+        XGetTradesReq(
+          owner = "0x-counttrades-02",
+          market = XGetTradesReq.Market
+            .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+        )
+      )
     } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
     res should be(1)
@@ -153,20 +168,26 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
     val owner = "0x-fixed-owner-01"
     val result = for {
       _ ← Future.sequence(txHashes1.map { hash ⇒
-        testSave(hash, owner, tokenS, tokenB, 100l)
+        testSave(hash, owner, tokenS, tokenB, 100L)
       })
       _ ← Future.sequence(txHashes2.map { hash ⇒
-        testSave(hash, owner, tokenS, tokenB, 20l)
+        testSave(hash, owner, tokenS, tokenB, 20L)
       })
-      count1 ← service.countTrades(XGetTradesReq(
-        owner = owner,
-        market = XGetTradesReq.Market.MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
-      ))
-      _ ← service.obsolete(30l)
-      count2 ← service.countTrades(XGetTradesReq(
-        owner = owner,
-        market = XGetTradesReq.Market.MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
-      ))
+      count1 ← service.countTrades(
+        XGetTradesReq(
+          owner = owner,
+          market = XGetTradesReq.Market
+            .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+        )
+      )
+      _ ← service.obsolete(30L)
+      count2 ← service.countTrades(
+        XGetTradesReq(
+          owner = owner,
+          market = XGetTradesReq.Market
+            .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+        )
+      )
     } yield (count1, count2)
     val res = Await.result(result.mapTo[(Int, Int)], 5.second)
     val x = res._1 == 24 && res._2 == 12

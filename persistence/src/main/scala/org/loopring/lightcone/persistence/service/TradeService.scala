@@ -17,7 +17,7 @@
 package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.persistence.dals.TradeDal
-import org.loopring.lightcone.proto.{ XErrorCode, XGetTradesReq, XTrade }
+import org.loopring.lightcone.proto.{XErrorCode, XGetTradesReq, XTrade}
 import scala.concurrent.Future
 
 trait TradeService {

@@ -20,8 +20,7 @@ import org.loopring.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
 
-class TradeTable(tag: Tag)
-  extends BaseTable[XTrade](tag, "T_TRADES") {
+class TradeTable(tag: Tag) extends BaseTable[XTrade](tag, "T_TRADES") {
 
   def id = txHash
   def delegateAddress = columnAddress("delegate_address")
@@ -62,47 +61,46 @@ class TradeTable(tag: Tag)
   def idx_token_s = index("idx_token_s", (tokenS), unique = false)
   def idx_token_b = index("idx_token_b", (tokenB), unique = false)
   def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
-  def idx_block_height = index("idx_block_height", (blockHeight), unique = false)
 
-  def feeParamsProjection = (
-    tokenFee,
-    amountFee,
-    tokenAmountS,
-    feeAmountS,
-    tokenAmountB,
-    feeAmountB,
-    feeRecipient
-  ) <> (
-      {
-        tuple ⇒
-          Option((XTrade.Fees.apply _).tupled(tuple))
-      },
-      {
-        paramsOpt: Option[XTrade.Fees] ⇒
-          val params = paramsOpt.getOrElse(XTrade.Fees())
-          XTrade.Fees.unapply(params)
-      }
-    )
+  def idx_block_height =
+    index("idx_block_height", (blockHeight), unique = false)
 
-  def * = (
-    owner,
-    delegateAddress,
-    orderHash,
-    ringHash,
-    ringIndex,
-    txHash,
-    amountS,
-    amountB,
-    tokenS,
-    tokenB,
-    marketHash,
-    split,
-    feeParamsProjection,
-    createdAt,
-    updatedAt,
-    blockHeight,
-    blockTimestamp,
-    isValid,
-    sequenceId
-  ) <> ((XTrade.apply _).tupled, XTrade.unapply)
+  def feeParamsProjection =
+    (
+      tokenFee,
+      amountFee,
+      tokenAmountS,
+      feeAmountS,
+      tokenAmountB,
+      feeAmountB,
+      feeRecipient
+    ) <> ({ tuple ⇒
+      Option((XTrade.Fees.apply _).tupled(tuple))
+    }, { paramsOpt: Option[XTrade.Fees] ⇒
+      val params = paramsOpt.getOrElse(XTrade.Fees())
+      XTrade.Fees.unapply(params)
+    })
+
+  def * =
+    (
+      owner,
+      delegateAddress,
+      orderHash,
+      ringHash,
+      ringIndex,
+      txHash,
+      amountS,
+      amountB,
+      tokenS,
+      tokenB,
+      marketHash,
+      split,
+      feeParamsProjection,
+      createdAt,
+      updatedAt,
+      blockHeight,
+      blockTimestamp,
+      isValid,
+      sequenceId
+    ) <> ((XTrade.apply _).tupled, XTrade.unapply)
 }

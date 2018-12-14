@@ -32,15 +32,17 @@ import org.loopring.lightcone.actors.base.safefuture._
 object DatabaseQueryActor extends ShardedEvenly {
   val name = "database_query"
 
-  def startShardRegion()(implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    dbModule: DatabaseModule
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit
+      system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -56,15 +58,16 @@ object DatabaseQueryActor extends ShardedEvenly {
   }
 }
 
-class DatabaseQueryActor()(
+class DatabaseQueryActor(
+  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    dbModule: DatabaseModule
-) extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
+    dbModule: DatabaseModule)
+    extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
 
   def receive: Receive = LoggingReceive {
     case req: XSaveOrderReq ⇒
@@ -84,19 +87,36 @@ class DatabaseQueryActor()(
     case req: XGetOrdersForUserReq ⇒
       (for {
         result ← req.market match {
-          case XGetOrdersForUserReq.Market.MarketHash(value) ⇒ dbModule.orderService.getOrdersForUser(
-            req.statuses.toSet, Some(req.owner), None, None, Some(value), None, Some(req.sort), req.skip
-          )
-          case XGetOrdersForUserReq.Market.Pair(value) ⇒ dbModule.orderService.getOrdersForUser(
-            req.statuses.toSet,
-            Some(req.owner), Some(value.tokenS), Some(value.tokenB), None, None, Some(req.sort), req.skip
-          )
+          case XGetOrdersForUserReq.Market.MarketHash(value) ⇒
+            dbModule.orderService.getOrdersForUser(
+              req.statuses.toSet,
+              Some(req.owner),
+              None,
+              None,
+              Some(value),
+              None,
+              Some(req.sort),
+              req.skip
+            )
+          case XGetOrdersForUserReq.Market.Pair(value) ⇒
+            dbModule.orderService.getOrdersForUser(
+              req.statuses.toSet,
+              Some(req.owner),
+              Some(value.tokenS),
+              Some(value.tokenB),
+              None,
+              None,
+              Some(req.sort),
+              req.skip
+            )
         }
-      } yield XGetOrdersForUserResult(result, XErrorCode.ERR_NONE)) forwardTo sender
+      } yield
+        XGetOrdersForUserResult(result, XErrorCode.ERR_NONE)) forwardTo sender
     case req: XUserCancelOrderReq ⇒
       (for {
         result ← dbModule.orderService.markOrderSoftCancelled(req.orderHashes)
-      } yield XUserCancelOrderResult(result.filter(p ⇒ p.isRight).map(_.right.get))) forwardTo sender
+      } yield
+        XUserCancelOrderResult(result.filter(p ⇒ p.isRight).map(_.right.get))) forwardTo sender
     case req: XGetTradesReq ⇒
       (for {
         result ← dbModule.tradeService.getTrades(req)

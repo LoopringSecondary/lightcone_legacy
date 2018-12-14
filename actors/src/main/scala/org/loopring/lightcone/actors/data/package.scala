@@ -22,7 +22,9 @@ import com.google.protobuf.ByteString
 
 package object data {
 
-  case class BalanceAndAllowance(balance: BigInt, allowance: BigInt)
+  case class BalanceAndAllowance(
+      balance: BigInt,
+      allowance: BigInt)
 
   ///////////
 
@@ -38,20 +40,14 @@ package object data {
     ByteString.copyFrom(bytes)
 
   implicit def xBalanceAndAlowance2BalanceAndAlowance(
-    xba: XBalanceAndAllowance
-  ): BalanceAndAllowance =
-    BalanceAndAllowance(
-      balance = xba.balance,
-      allowance = xba.allowance
-    )
+      xba: XBalanceAndAllowance
+    ): BalanceAndAllowance =
+    BalanceAndAllowance(balance = xba.balance, allowance = xba.allowance)
 
   implicit def balanceAndAlowance2XBalanceAndAlowance(
-    ba: BalanceAndAllowance
-  ): XBalanceAndAllowance =
-    XBalanceAndAllowance(
-      balance = ba.balance,
-      allowance = ba.allowance
-    )
+      ba: BalanceAndAllowance
+    ): XBalanceAndAllowance =
+    XBalanceAndAllowance(balance = ba.balance, allowance = ba.allowance)
 
   implicit def xOrder2Order(xorder: XOrder): Order =
     Order(
@@ -106,43 +102,37 @@ package object data {
     )
 
   implicit def orderRing2XOrderRing(orderRing: OrderRing): XOrderRing =
-    XOrderRing(
-      maker = Some(orderRing.maker),
-      taker = Some(orderRing.taker)
-    )
+    XOrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
 
   implicit def xOrderRing2OrderRing(xOrderRing: XOrderRing): OrderRing =
-    OrderRing(
-      maker = xOrderRing.getMaker,
-      taker = xOrderRing.getTaker
-    )
+    OrderRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
 
-  implicit def seqOrderRing2XOrderRing(orderRings: Seq[OrderRing]): Seq[XOrderRing] =
-    orderRings map {
-      orderRing ⇒
-        XOrderRing(
-          maker = Some(orderRing.maker),
-          taker = Some(orderRing.taker)
-        )
+  implicit def seqOrderRing2XOrderRing(
+      orderRings: Seq[OrderRing]
+    ): Seq[XOrderRing] =
+    orderRings map { orderRing =>
+      XOrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
     }
 
-  implicit def seqXOrderRing2OrderRing(xOrderRings: Seq[XOrderRing]): Seq[OrderRing] =
-    xOrderRings map {
-      xOrderRing ⇒
-        OrderRing(
-          maker = xOrderRing.getMaker,
-          taker = xOrderRing.getTaker
-        )
+  implicit def seqXOrderRing2OrderRing(
+      xOrderRings: Seq[XOrderRing]
+    ): Seq[OrderRing] =
+    xOrderRings map { xOrderRing =>
+      OrderRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
     }
 
-  implicit def expectFill2XEcpectFill(expectedFill: ExpectedFill): XExpectedFill =
+  implicit def expectFill2XEcpectFill(
+      expectedFill: ExpectedFill
+    ): XExpectedFill =
     XExpectedFill(
       order = Some(expectedFill.order),
       pending = Some(expectedFill.pending),
       amountMargin = expectedFill.amountMargin
     )
 
-  implicit def xexpectFill2EcpectFill(xExpectedFill: XExpectedFill): ExpectedFill =
+  implicit def xexpectFill2EcpectFill(
+      xExpectedFill: XExpectedFill
+    ): ExpectedFill =
     ExpectedFill(
       order = xExpectedFill.getOrder,
       pending = xExpectedFill.getPending,

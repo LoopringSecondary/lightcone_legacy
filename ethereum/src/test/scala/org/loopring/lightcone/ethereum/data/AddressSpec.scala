@@ -42,7 +42,10 @@ class AddressSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   "bigIntAddress" should "be canonicalized" in {
-    val bigIntAdd = BigInt(Numeric.cleanHexPrefix("0x000ee35D70AD6331000E370F079aD7df52E75005"), 16)
+    val bigIntAdd = BigInt(
+      Numeric.cleanHexPrefix("0x000ee35D70AD6331000E370F079aD7df52E75005"),
+      16
+    )
     val address = Address(bigIntAdd)
     info(address.toString)
   }
@@ -68,9 +71,15 @@ class AddressSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     Address.isValid(Numeric.hexStringToByteArray(add3)) should be(false)
 
     //ByteString
-    Address.isValid(ByteString.copyFrom(Numeric.hexStringToByteArray(add1))) should be(true)
-    Address.isValid(ByteString.copyFrom(Numeric.hexStringToByteArray(add2))) should be(true)
-    Address.isValid(ByteString.copyFrom(Numeric.hexStringToByteArray(add3))) should be(false)
+    Address.isValid(ByteString.copyFrom(Numeric.hexStringToByteArray(add1))) should be(
+      true
+    )
+    Address.isValid(ByteString.copyFrom(Numeric.hexStringToByteArray(add2))) should be(
+      true
+    )
+    Address.isValid(ByteString.copyFrom(Numeric.hexStringToByteArray(add3))) should be(
+      false
+    )
 
   }
 

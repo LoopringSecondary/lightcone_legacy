@@ -20,8 +20,7 @@ import org.loopring.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
 
-class OrderTable(tag: Tag)
-  extends BaseTable[XRawOrder](tag, "T_ORDERS") {
+class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
 
   implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
   implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
@@ -92,105 +91,85 @@ class OrderTable(tag: Tag)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
   def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
 
-  def paramsProjection = (
-    dualAuthAddr,
-    broker,
-    orderInterceptor,
-    wallet,
-    validUntil,
-    sig,
-    dualAuthPrivKey,
-    allOrNone,
-    tokenStandardS,
-    tokenStandardB,
-    tokenStandardFee
-  ) <> (
-      {
-        tuple ⇒
-          Option((XRawOrder.Params.apply _).tupled(tuple))
-      },
-      {
-        paramsOpt: Option[XRawOrder.Params] ⇒
-          val params = paramsOpt.getOrElse(XRawOrder.Params())
-          XRawOrder.Params.unapply(params)
-      }
-    )
+  def paramsProjection =
+    (
+      dualAuthAddr,
+      broker,
+      orderInterceptor,
+      wallet,
+      validUntil,
+      sig,
+      dualAuthPrivKey,
+      allOrNone,
+      tokenStandardS,
+      tokenStandardB,
+      tokenStandardFee
+    ) <> ({ tuple =>
+      Option((XRawOrder.Params.apply _).tupled(tuple))
+    }, { paramsOpt: Option[XRawOrder.Params] =>
+      val params = paramsOpt.getOrElse(XRawOrder.Params())
+      XRawOrder.Params.unapply(params)
+    })
 
-  def feeParamsProjection = (
-    tokenFee,
-    amountFee,
-    waiveFeePercentage,
-    tokenSFeePercentage,
-    tokenBFeePercentage,
-    tokenRecipient,
-    walletSplitPercentage
-  ) <> (
-      {
-        tuple ⇒
-          Option((XRawOrder.FeeParams.apply _).tupled(tuple))
-      },
-      {
-        paramsOpt: Option[XRawOrder.FeeParams] ⇒
-          val params = paramsOpt.getOrElse(XRawOrder.FeeParams())
-          XRawOrder.FeeParams.unapply(params)
-      }
-    )
+  def feeParamsProjection =
+    (
+      tokenFee,
+      amountFee,
+      waiveFeePercentage,
+      tokenSFeePercentage,
+      tokenBFeePercentage,
+      tokenRecipient,
+      walletSplitPercentage
+    ) <> ({ tuple =>
+      Option((XRawOrder.FeeParams.apply _).tupled(tuple))
+    }, { paramsOpt: Option[XRawOrder.FeeParams] =>
+      val params = paramsOpt.getOrElse(XRawOrder.FeeParams())
+      XRawOrder.FeeParams.unapply(params)
+    })
 
-  def erc1400ParamsProjection = (
-    trancheS,
-    trancheB,
-    trancheDataS
-  ) <> (
-      {
-        tuple ⇒
-          Option((XRawOrder.ERC1400Params.apply _).tupled(tuple))
-      },
-      {
-        paramsOpt: Option[XRawOrder.ERC1400Params] ⇒
-          val params = paramsOpt.getOrElse(XRawOrder.ERC1400Params())
-          XRawOrder.ERC1400Params.unapply(params)
-      }
-    )
+  def erc1400ParamsProjection =
+    (trancheS, trancheB, trancheDataS) <> ({ tuple =>
+      Option((XRawOrder.ERC1400Params.apply _).tupled(tuple))
+    }, { paramsOpt: Option[XRawOrder.ERC1400Params] =>
+      val params = paramsOpt.getOrElse(XRawOrder.ERC1400Params())
+      XRawOrder.ERC1400Params.unapply(params)
+    })
 
-  def stateProjection = (
-    createdAt,
-    updatedAt,
-    matchedAt,
-    updatedAtBlock,
-    status,
-    actualAmountS,
-    actualAmountB,
-    actualAmountFee,
-    outstandingAmountS,
-    outstandingAmountB,
-    outstandingAmountFee
-  ) <> (
-      {
-        tuple ⇒
-          Option((XRawOrder.State.apply _).tupled(tuple))
-      },
-      {
-        paramsOpt: Option[XRawOrder.State] ⇒
-          val params = paramsOpt.getOrElse(XRawOrder.State())
-          XRawOrder.State.unapply(params)
-      }
-    )
+  def stateProjection =
+    (
+      createdAt,
+      updatedAt,
+      matchedAt,
+      updatedAtBlock,
+      status,
+      actualAmountS,
+      actualAmountB,
+      actualAmountFee,
+      outstandingAmountS,
+      outstandingAmountB,
+      outstandingAmountFee
+    ) <> ({ tuple =>
+      Option((XRawOrder.State.apply _).tupled(tuple))
+    }, { paramsOpt: Option[XRawOrder.State] =>
+      val params = paramsOpt.getOrElse(XRawOrder.State())
+      XRawOrder.State.unapply(params)
+    })
 
-  def * = (
-    hash,
-    version,
-    owner,
-    tokenS,
-    tokenB,
-    amountS,
-    amountB,
-    validSince,
-    paramsProjection,
-    feeParamsProjection,
-    erc1400ParamsProjection,
-    stateProjection,
-    sequenceId,
-    marketHash
-  ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
+  def * =
+    (
+      hash,
+      version,
+      owner,
+      tokenS,
+      tokenB,
+      amountS,
+      amountB,
+      validSince,
+      paramsProjection,
+      feeParamsProjection,
+      erc1400ParamsProjection,
+      stateProjection,
+      sequenceId,
+      marketHash
+    ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
 }
-

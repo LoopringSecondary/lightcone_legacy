@@ -22,27 +22,25 @@ package object jsonrpc {
       id: Any,
       method: String,
       jsonrpc: String,
-      params: Any
-  )
+      params: Any)
 
   case class JsonRpcResponse(
       id: Option[Any] = None.orNull,
       jsonrpc: String = "2.0",
       result: Any = None,
-      error: Option[AbstractJsonRpcException] = None
-  )
+      error: Option[AbstractJsonRpcException] = None)
 
   abstract class AbstractJsonRpcException(
       code: Int,
       message: String,
-      id: Option[Any] = None
-  ) extends Exception(message)
+      id: Option[Any] = None)
+      extends Exception(message)
 
   case class JsonRpcException(
       code: Int,
       message: String,
-      id: Option[Any] = None
-  ) extends AbstractJsonRpcException(code, message, id)
+      id: Option[Any] = None)
+      extends AbstractJsonRpcException(code, message, id)
 
   //  -32600	Invalid Request无效请求	发送的json不是一个有效的请求对象。
   //  -32601	Method not found找不到方法	该方法不存在或无效
@@ -51,25 +49,24 @@ package object jsonrpc {
   //  -32000 to -32099	Server error服务端错误	预留用于自定义的服务器错误。
 
   case object JsonRpcParseException
-    extends AbstractJsonRpcException(-32700, "Json parse failed")
+      extends AbstractJsonRpcException(-32700, "Json parse failed")
 
   case object JsonRpcInvalidException
-    extends AbstractJsonRpcException(-32600, "Invalid request")
+      extends AbstractJsonRpcException(-32600, "Invalid request")
 
   case object JsonRpcMethodException
-    extends AbstractJsonRpcException(-32601, "Method not found")
+      extends AbstractJsonRpcException(-32601, "Method not found")
 
   case object JsonRpcParamsException
-    extends AbstractJsonRpcException(-32602, "Parameters invalid")
+      extends AbstractJsonRpcException(-32602, "Parameters invalid")
 
   case class JsonRpcInternalException(
       message: String = "Internal error",
-      id: Option[Any] = None
-  )
-    extends AbstractJsonRpcException(-32603, message, id)
+      id: Option[Any] = None)
+      extends AbstractJsonRpcException(-32603, message, id)
 
   // TODO(Duan): move this one to other package.
   class TokenSpendableException(message: String)
-    extends AbstractJsonRpcException(-32007, message)
+      extends AbstractJsonRpcException(-32007, message)
 
 }

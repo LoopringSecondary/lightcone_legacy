@@ -30,8 +30,8 @@ trait BaseDal[T <: BaseTable[A], A] {
 
   def insertOrUpdate(row: A): Future[Int]
 
-  def findByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Seq[A]]
-  def deleteByFilter[C: CanBeQueryCondition](f: (T) ⇒ C): Future[Int]
+  def findByFilter[C: CanBeQueryCondition](f: (T) => C): Future[Seq[A]]
+  def deleteByFilter[C: CanBeQueryCondition](f: (T) => C): Future[Int]
 
   def findById(id: String): Future[Option[A]]
   def deleteById(id: String): Future[Int]
@@ -42,5 +42,8 @@ trait BaseDal[T <: BaseTable[A], A] {
   def displayTableSchema(): Unit
 
   // take random data for testing
-  def take(size: Int, skip: Int = 0): Future[Seq[A]]
+  def take(
+      size: Int,
+      skip: Int = 0
+    ): Future[Seq[A]]
 }

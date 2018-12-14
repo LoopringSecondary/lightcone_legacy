@@ -39,9 +39,9 @@ class Address(val value: BigInt) {
 
   override def equals(obj: Any): Boolean =
     obj match {
-      case add: Address ⇒
+      case add: Address =>
         this.value.equals(add.value)
-      case _ ⇒
+      case _ =>
         false
     }
 
@@ -72,15 +72,15 @@ object Address {
 
   def isValid(obj: Any): Boolean = {
     obj match {
-      case add: String ⇒
+      case add: String =>
         Numeric.hexStringToByteArray(add).length <= 20
-      case add: Array[Byte] ⇒
+      case add: Array[Byte] =>
         add.length <= 20
-      case add: BigInt ⇒
+      case add: BigInt =>
         add <= maxAddress
-      case add: ByteString ⇒
+      case add: ByteString =>
         add.size() <= 20
-      case _ ⇒
+      case _ =>
         false
     }
   }
