@@ -75,7 +75,7 @@ lazy val gateway = (project in file("gateway"))
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
-  .dependsOn(proto, lib, persistence)
+  .dependsOn(proto, lib, actors, persistence)
   .settings(
     basicSettings,
     dockerSettings,

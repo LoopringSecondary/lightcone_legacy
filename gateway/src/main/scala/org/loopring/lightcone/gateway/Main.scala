@@ -16,4 +16,49 @@
 
 package org.loopring.lightcone.gateway
 
-object Main {}
+import akka.actor._
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import akka.stream.ActorMaterializer
+import com.google.inject.Guice
+import com.typesafe.config.Config
+import net.codingwell.scalaguice.InjectorExtensions._
+import org.loopring.lightcone.actors._
+import org.loopring.lightcone.actors.base.Lookup
+import org.loopring.lightcone.actors.entrypoint.EntryPointActor
+import org.slf4s.Logging
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.io.StdIn
+
+object Maim extends App with MainRoute with Logging {
+
+  val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
+  val injector = ClusterDeployer.deploy(configPathOpt)
+
+  implicit val config = injector.instance[Config]
+  implicit val system = injector.instance[ActorSystem]
+  implicit val materializer = injector.instance[ActorMaterializer]
+  implicit val ec = injector.instance[ExecutionContext]
+  implicit val timeout = config.getInt("restful.timeout").seconds
+
+  val actors = injector.instance[Lookup[ActorRef]]
+  val requestHandler = actors.get(EntryPointActor.name)
+
+  val host = config.getString("restful.host")
+  val port = config.getInt("restful.port")
+
+  val binding = Http().bindAndHandle(route, host, port)
+
+  log.info(
+    s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate"
+  )
+
+  StdIn.readLine()
+
+  //Shutdown
+  binding.flatMap(_.unbind())
+  system.terminate()
+}

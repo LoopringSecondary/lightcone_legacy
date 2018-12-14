@@ -41,7 +41,6 @@ import org.loopring.lightcone.persistence.service.{
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 import scala.concurrent.ExecutionContext
