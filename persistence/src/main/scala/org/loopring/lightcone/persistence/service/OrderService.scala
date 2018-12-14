@@ -25,7 +25,6 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
 trait OrderService {
-
   val orderDal: OrderDal
 
   def submitOrder(order: XRawOrder): Future[XSaveOrderResult]
@@ -83,12 +82,12 @@ trait OrderService {
   def updateOrderStatus(
       hash: String,
       status: XOrderStatus
-    ): Future[Either[XErrorCode, String]]
+    ): Future[XErrorCode]
 
   def updateAmount(
       hash: String,
       state: XRawOrder.State
-    ): Future[Either[XErrorCode, String]]
+    ): Future[XErrorCode]
 }
 
 class OrderServiceImpl @Inject()(
@@ -192,7 +191,7 @@ class OrderServiceImpl @Inject()(
   def updateOrderStatus(
       hash: String,
       status: XOrderStatus
-    ): Future[Either[XErrorCode, String]] = {
+    ): Future[XErrorCode] = {
     // TODO du: 验证订单状态 从[new, partially] -> pending， 从cancel不能更新其他
     orderDal.updateOrderStatus(hash, status)
   }
@@ -200,5 +199,5 @@ class OrderServiceImpl @Inject()(
   def updateAmount(
       hash: String,
       state: XRawOrder.State
-    ): Future[Either[XErrorCode, String]] = orderDal.updateAmount(hash, state)
+    ): Future[XErrorCode] = orderDal.updateAmount(hash, state)
 }

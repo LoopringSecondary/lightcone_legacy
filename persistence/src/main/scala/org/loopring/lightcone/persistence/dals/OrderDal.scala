@@ -112,17 +112,17 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
   def updateOrderStatus(
       hash: String,
       status: XOrderStatus
-    ): Future[Either[XErrorCode, String]]
+    ): Future[XErrorCode]
 
   def updateFailed(
       hash: String,
       status: XOrderStatus
-    ): Future[Either[XErrorCode, String]]
+    ): Future[XErrorCode]
 
   def updateAmount(
       hash: String,
       state: XRawOrder.State
-    ): Future[Either[XErrorCode, String]]
+    ): Future[XErrorCode]
 }
 
 class OrderDalImpl(
@@ -314,7 +314,7 @@ class OrderDalImpl(
   def updateOrderStatus(
       hash: String,
       status: XOrderStatus
-    ): Future[Either[XErrorCode, String]] =
+    ): Future[XErrorCode] =
     for {
       result <- db.run(
         query
@@ -323,14 +323,14 @@ class OrderDalImpl(
           .update(status, timeProvider.getTimeMillis)
       )
     } yield {
-      if (result >= 1) Right(hash)
-      else Left(ERR_PERSISTENCE_UPDATE_FAILED)
+      if (result >= 1) ERR_NONE
+      else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
   def updateFailed(
       hash: String,
       status: XOrderStatus
-    ): Future[Either[XErrorCode, String]] =
+    ): Future[XErrorCode] =
     for {
       _ <- Future.unit
       failedStatus = Seq(
@@ -351,14 +351,14 @@ class OrderDalImpl(
         )
       }
     } yield {
-      if (result >= 1) Right(hash)
-      else Left(ERR_PERSISTENCE_UPDATE_FAILED)
+      if (result >= 1) ERR_NONE
+      else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
   def updateAmount(
       hash: String,
       state: XRawOrder.State
-    ): Future[Either[XErrorCode, String]] =
+    ): Future[XErrorCode] =
     for {
       result <- db.run(
         query
@@ -386,7 +386,7 @@ class OrderDalImpl(
           )
       )
     } yield {
-      if (result >= 1) Right(hash)
-      else Left(ERR_PERSISTENCE_UPDATE_FAILED)
+      if (result >= 1) ERR_NONE
+      else ERR_PERSISTENCE_UPDATE_FAILED
     }
 }
