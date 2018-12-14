@@ -43,4 +43,3 @@ class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
   def getBurnRate(token: String) =
     addressMap.get(token).map(_.burnRate).getOrElse(defaultBurnRate)
 }
-

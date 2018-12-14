@@ -21,8 +21,7 @@ import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
-class BlockTable(tag: Tag)
-  extends BaseTable[XBlockData](tag, "T_BLOCKS") {
+class BlockTable(tag: Tag) extends BaseTable[XBlockData](tag, "T_BLOCKS") {
 
   def id = hash
   def hash = columnHash("hash", O.PrimaryKey)
@@ -49,24 +48,25 @@ class BlockTable(tag: Tag)
   def idx_height = index("idx_height", (height), unique = false)
   // def idx_mined_by = index("idx_mined_by", (minedBy), unique = false)
 
-  def * = (
-    hash,
-    height,
-    timestamp,
-    numTx,
-    parentHash,
-    sha3Uncles,
-    minedBy,
-    difficulty,
-    totalDifficulty,
-    size,
-    gasUsed,
-    gasLimit,
-    avgGasPrice,
-    nonce,
-    blockReward,
-    uncleReward,
-    extraData,
-    isValid
-  ) <> ((XBlockData.apply _).tupled, XBlockData.unapply)
+  def * =
+    (
+      hash,
+      height,
+      timestamp,
+      numTx,
+      parentHash,
+      sha3Uncles,
+      minedBy,
+      difficulty,
+      totalDifficulty,
+      size,
+      gasUsed,
+      gasLimit,
+      avgGasPrice,
+      nonce,
+      blockReward,
+      uncleReward,
+      extraData,
+      isValid
+    ) <> ((XBlockData.apply _).tupled, XBlockData.unapply)
 }

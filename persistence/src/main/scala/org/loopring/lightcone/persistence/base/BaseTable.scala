@@ -20,16 +20,27 @@ import slick.jdbc.MySQLProfile.api._
 import slick.ast.ColumnOption
 import com.google.protobuf.ByteString
 
-abstract class BaseTable[T](tag: Tag, name: String)
-  extends Table[T](tag, name) {
+abstract class BaseTable[T](
+    tag: Tag,
+    name: String)
+    extends Table[T](tag, name) {
 
-  def columnHash(name: String, options: ColumnOption[String]*) =
+  def columnHash(
+      name: String,
+      options: ColumnOption[String]*
+    ) =
     column[String](name, (Seq(O.SqlType("VARCHAR(66)")) ++ options): _*)
 
-  def columnAddress(name: String, options: ColumnOption[String]*) =
+  def columnAddress(
+      name: String,
+      options: ColumnOption[String]*
+    ) =
     column[String](name, (Seq(O.SqlType("VARCHAR(42)")) ++ options): _*)
 
-  def columnAmount(name: String, options: ColumnOption[ByteString]*) =
+  def columnAmount(
+      name: String,
+      options: ColumnOption[ByteString]*
+    ) =
     column[ByteString](name, options: _*)
 
   def id: slick.lifted.Rep[String]

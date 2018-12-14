@@ -22,5 +22,4 @@ case class Settlement(
     createdAt: Long,
     txid: Option[String] = None,
     committedAt: Option[Long] = None,
-    confirmedBlock: Option[Long] = None
-)
+    confirmedBlock: Option[Long] = None)

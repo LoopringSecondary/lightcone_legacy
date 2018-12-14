@@ -23,11 +23,11 @@ import slick.basic._
 import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
-class DatabaseModule @Inject() (
+class DatabaseModule @Inject()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
-    @Named("db-execution-context") val ec: ExecutionContext
-) extends base.BaseDatabaseModule {
+    @Named("db-execution-context") val ec: ExecutionContext)
+    extends base.BaseDatabaseModule {
 
   val tokenMetadata: TokenMetadataDal = new TokenMetadataDalImpl()
   val orders: OrderDal = new OrderDalImpl()

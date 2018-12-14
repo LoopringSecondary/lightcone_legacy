@@ -29,26 +29,36 @@ class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
     var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
     var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
-    (fakePendingRingPool.getOrderPendingAmountS _).when(sellOrder.id).returns(555)
-    (fakePendingRingPool.getOrderPendingAmountS _).when(buyOrder.id).returns(666)
+    (fakePendingRingPool.getOrderPendingAmountS _)
+      .when(sellOrder.id)
+      .returns(555)
+    (fakePendingRingPool.getOrderPendingAmountS _)
+      .when(buyOrder.id)
+      .returns(666)
     (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     val ring = OrderRing(null, null)
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .when(*, *, *)
       .returns(Right(ring))
 
     marketManager.submitOrder(sellOrder, 1)
     marketManager.submitOrder(buyOrder, 2)
 
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
       .verify(
-        buyOrder.asPending.withActualAsOriginal.copy(_matchable = Some(
-          OrderState(99334, 99, 0)
-        )),
-        sellOrder.asPending.withActualAsOriginal.copy(_matchable = Some(
-          OrderState(99445, 100, 0)
-        )),
+        buyOrder.asPending.withActualAsOriginal.copy(
+          _matchable = Some(
+            OrderState(99334, 99, 0)
+          )
+        ),
+        sellOrder.asPending.withActualAsOriginal.copy(
+          _matchable = Some(
+            OrderState(99445, 100, 0)
+          )
+        ),
         2.0
       )
       .once

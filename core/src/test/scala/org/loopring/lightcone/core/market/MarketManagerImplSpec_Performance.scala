@@ -73,14 +73,17 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
 
     (fackRingIncomeEstimator.getRingIncome _).when(*).returns(1)
-    (fackRingIncomeEstimator.isProfitable(_: OrderRing, _: Double)).when(*, *).returns(true)
+    (fackRingIncomeEstimator
+      .isProfitable(_: OrderRing, _: Double))
+      .when(*, *)
+      .returns(true)
   }
 
   "MarketManagingImpl" should "match 100 orders per second per thread" in {
     val now = System.currentTimeMillis
     val num = 100
     var rings = 0
-    (1 to num) foreach { i ⇒
+    (1 to num) foreach { i =>
       var result = marketManager.submitOrder(createGTOSellOrder(0.12, 5000), 0)
       rings += result.rings.size
 
@@ -100,24 +103,33 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
       """)
   }
 
-  private def createGTOSellOrder(price: Double, amount: Double) = {
+  private def createGTOSellOrder(
+      price: Double,
+      amount: Double
+    ) = {
     val rawAmountS: BigInt = AmountConverter(GTO).displayToRaw(amount)
     val rawAmountB: BigInt = AmountConverter(WETH).displayToRaw(amount * price)
     sellGTO(rawAmountS, rawAmountB).withActualAsOriginal
   }
 
-  private def createGTOBuyOrder(price: Double, amount: Double) = {
+  private def createGTOBuyOrder(
+      price: Double,
+      amount: Double
+    ) = {
     val rawAmountS: BigInt = AmountConverter(GTO).displayToRaw(amount)
     val rawAmountB: BigInt = AmountConverter(WETH).displayToRaw(amount * price)
     buyGTO(rawAmountB, rawAmountS).withActualAsOriginal
   }
 
-  private def createRandomOrder(price: Double, amount: Double) = {
+  private def createRandomOrder(
+      price: Double,
+      amount: Double
+    ) = {
     val rand = new util.Random()
     val p = price * (1 + (rand.nextInt % 5) / 100.0)
     val a = amount * (1 + (rand.nextInt % 20) / 100.0)
-    if (rand.nextInt % 2 == 0) createGTOSellOrder(p, a) else createGTOBuyOrder(p, a)
+    if (rand.nextInt % 2 == 0) createGTOSellOrder(p, a)
+    else createGTOBuyOrder(p, a)
   }
 
 }
-

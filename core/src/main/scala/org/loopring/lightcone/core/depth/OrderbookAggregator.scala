@@ -21,11 +21,37 @@ import org.loopring.lightcone.proto._
 
 trait OrderbookAggregator {
   def getOrderbookUpdate(num: Int = 0): XOrderbookUpdate
-  def increaseSell(price: Double, amount: Double, total: Double): Unit
 
-  def decreaseSell(price: Double, amount: Double, total: Double): Unit
-  def increaseBuy(price: Double, amount: Double, total: Double): Unit
-  def decreaseBuy(price: Double, amount: Double, total: Double): Unit
-  def adjustAmount(isSell: Boolean, increase: Boolean, price: Double, amount: Double, total: Double): Unit
+  def increaseSell(
+      price: Double,
+      amount: Double,
+      total: Double
+    ): Unit
+
+  def decreaseSell(
+      price: Double,
+      amount: Double,
+      total: Double
+    ): Unit
+
+  def increaseBuy(
+      price: Double,
+      amount: Double,
+      total: Double
+    ): Unit
+
+  def decreaseBuy(
+      price: Double,
+      amount: Double,
+      total: Double
+    ): Unit
+
+  def adjustAmount(
+      isSell: Boolean,
+      increase: Boolean,
+      price: Double,
+      amount: Double,
+      total: Double
+    ): Unit
   def reset(): Unit
 }

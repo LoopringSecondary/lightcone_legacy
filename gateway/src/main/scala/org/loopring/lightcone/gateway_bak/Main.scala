@@ -33,8 +33,7 @@ object Main extends App {
   case class AppSettings(
       port: Int = 9277,
       ioPort: Int = 9278,
-      seeds: Seq[String] = Seq.empty
-  )
+      seeds: Seq[String] = Seq.empty)
 
   val systemName = "lightcone_gateway"
   val systemPrefix = s"akka.tcp://${systemName}@"
@@ -42,22 +41,27 @@ object Main extends App {
   new scopt.OptionParser[AppSettings](systemName) {
     head("systemName")
 
-    opt[Int]('p', "port").action((x, c) ⇒ {
-      c.copy(port = x)
-    }).text("http server port")
+    opt[Int]('p', "port")
+      .action((x, c) => {
+        c.copy(port = x)
+      })
+      .text("http server port")
 
-    opt[Int]('i', "ioserver").action((x, c) ⇒ {
-      c.copy(port = x)
-    }).text("socketio server port")
+    opt[Int]('i', "ioserver")
+      .action((x, c) => {
+        c.copy(port = x)
+      })
+      .text("socketio server port")
 
-    opt[Seq[String]]('s', "seeds").action((x, c) ⇒ {
-      c.copy(seeds = x)
-    }).text("cluster seeds")
+    opt[Seq[String]]('s', "seeds")
+      .action((x, c) => {
+        c.copy(seeds = x)
+      })
+      .text("cluster seeds")
 
   }.parse(args, AppSettings()) match {
-    case None ⇒ println("Unable to parse args")
-    case Some(settings) ⇒
-
+    case None => println("Unable to parse args")
+    case Some(settings) =>
       val seeds = settings.seeds
         .map(systemPrefix + _.trim)
         .mkString("\"", "\",\"", "\"")
@@ -65,15 +69,13 @@ object Main extends App {
       // TODO(Toan) 这里的配置还没有测试
       // QUESTION(dongw): should we change akka port, hostname, and seed-nodes?
       val config = ConfigFactory
-        .parseString(
-          s"""
-             |akka.remote.netty.tcp.port=0
-             |akka.remote.netty.tcp.hostname="127.0.0.1"
-             |akka.cluster.seed-nodes=["akka.tcp://Lightcone@127.0.0.1:2555"]
-             |jsonrpc.http.port=${settings.port}
-             |jsonrpc.socketio.port=${settings.ioPort}
-           """.stripMargin
-        )
+        .parseString(s"""
+                        |akka.remote.netty.tcp.port=0
+                        |akka.remote.netty.tcp.hostname="127.0.0.1"
+                        |akka.cluster.seed-nodes=["akka.tcp://Lightcone@127.0.0.1:2555"]
+                        |jsonrpc.http.port=${settings.port}
+                        |jsonrpc.socketio.port=${settings.ioPort}
+           """.stripMargin)
         .withFallback(ConfigFactory.load())
 
       val injector = Guice.createInjector(CoreModule(config))

@@ -22,4 +22,3 @@ import org.loopring.lightcone.proto.XErrorCode._
 trait MessageValidator {
   def validate: PartialFunction[Any, Any]
 }
-

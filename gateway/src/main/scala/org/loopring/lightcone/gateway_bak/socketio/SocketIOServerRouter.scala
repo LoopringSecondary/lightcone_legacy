@@ -21,21 +21,18 @@ import akka.routing.RoundRobinPool
 import scala.concurrent.duration._
 import scala.util.Random
 
-class SocketIOServerRouter
-  extends Actor
-  with Timers
-  with ActorLogging {
+class SocketIOServerRouter extends Actor with Timers with ActorLogging {
 
   implicit val ex = context.system.dispatcher
   private var prevId = 0
 
   override def receive: Receive = {
 
-    case StartBroadcast(server, eventBindings, pool) ⇒
+    case StartBroadcast(server, eventBindings, pool) =>
       log.debug("start check broadcast message")
 
       eventBindings.bindings.foreach {
-        case EventBinding(event, interval, replyTo) ⇒
+        case EventBinding(event, interval, replyTo) =>
           val routees = context.actorOf(
             RoundRobinPool(pool).props(Props[SocketIOServerActor]),
             s"socket_timer_${event}_${getNextId}"

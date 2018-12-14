@@ -94,7 +94,7 @@ import scala.concurrent.duration._
 //       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //       expectMsgPF() {
-//         case a: XOrderbook ⇒
+//         case a: XOrderbook =>
 //           info("----orderbook status after submitted first order : " + a)
 //       }
 
@@ -105,7 +105,7 @@ import scala.concurrent.duration._
 //       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //       expectMsgPF() {
-//         case a: XOrderbook ⇒
+//         case a: XOrderbook =>
 //           info("----orderbook status after submitted second order: " + a)
 //       }
 

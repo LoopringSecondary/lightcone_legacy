@@ -19,9 +19,7 @@ package org.loopring.lightcone.gateway_bak.socketio
 import org.slf4s.Logging
 import com.corundumstudio.socketio.listener._
 
-class ConnectionListener
-  extends ConnectListener
-  with Logging {
+class ConnectionListener extends ConnectListener with Logging {
 
   override def onConnect(client: IOClient): Unit = {
     val addr = client.getRemoteAddress
@@ -29,9 +27,7 @@ class ConnectionListener
   }
 }
 
-class DisconnectionListener
-  extends DisconnectListener
-  with Logging {
+class DisconnectionListener extends DisconnectListener with Logging {
 
   override def onDisconnect(client: IOClient): Unit = {
     SocketIOClient.remove(client)
@@ -39,4 +35,3 @@ class DisconnectionListener
     log.debug(s"SocketIO: remote $addr has disconnected")
   }
 }
-
