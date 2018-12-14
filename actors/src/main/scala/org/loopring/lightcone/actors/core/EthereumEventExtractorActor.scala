@@ -31,6 +31,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 import com.google.protobuf.ByteString
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
+import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
@@ -81,7 +82,8 @@ class EthereumEventExtractorActor(
     dbConfig: DatabaseConfig[JdbcProfile])
     extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
 
-  def ethereumConnectionActor: ActorRef = actors.get(EthereumAccessActor.name)
+  def ethereumAccessorActor: ActorRef = actors.get(EthereumAccessActor.name)
+
   def accountManager: ActorRef = actors.get(AccountManagerActor.name)
 
   val erc20Abi = ERC20ABI()
@@ -104,11 +106,11 @@ class EthereumEventExtractorActor(
       blockNum ← maxBlock match {
         case Some(_) ⇒ Future.successful(BigInt(maxBlock.get))
         case _ ⇒
-          (ethereumConnectionActor ? XEthBlockNumberReq())
+          (ethereumAccessorActor ? XEthBlockNumberReq())
             .mapTo[XEthBlockNumberRes]
             .map(res ⇒ BigInt(res.result))
       }
-      blockHash ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(
+      blockHash ← (ethereumAccessorActor ? XGetBlockWithTxHashByNumberReq(
         blockNum.toString(16)
       )).mapTo[XGetBlockWithTxHashByNumberRes]
         .map(_.result.get.hash)
@@ -129,11 +131,11 @@ class EthereumEventExtractorActor(
 
   def process(): Unit = {
     for {
-      taskNum ← (ethereumConnectionActor ? XEthBlockNumberReq())
+      taskNum ← (ethereumAccessorActor ? XEthBlockNumberReq())
         .mapTo[XEthBlockNumberRes]
         .map(_.result)
       block ← if (taskNum > currentBlockNumber)
-        (ethereumConnectionActor ? XGetBlockWithTxObjectByNumberReq(
+        (ethereumAccessorActor ? XGetBlockWithTxObjectByNumberReq(
           (currentBlockNumber + 1).toString(16)
         )).mapTo[XGetBlockWithTxObjectByNumberRes]
       else {
@@ -150,6 +152,8 @@ class EthereumEventExtractorActor(
             self ! XBlockJob()
               .withHeight(result.number.intValue())
               .withHash(result.hash)
+              .withMiner(result.miner)
+              .withUncles(result.uncles)
               .withTxhashes(result.transactions.map(_.hash))
           } else
             self ! XForkBlock((currentBlockNumber - 1).intValue())
@@ -165,7 +169,7 @@ class EthereumEventExtractorActor(
       dbBlockData ← blockDal
         .findByHeight(forkBlock.height.longValue())
         .map(_.get)
-      nodeBlockData ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(
+      nodeBlockData ← (ethereumAccessorActor ? XGetBlockWithTxHashByNumberReq(
         forkBlock.height.toHexString
       )).mapTo[XGetBlockWithTxHashByNumberRes]
         .map(_.result.get)
@@ -182,14 +186,28 @@ class EthereumEventExtractorActor(
   // index block
   def indexBlock(job: XBlockJob): Unit = {
     for {
-      txReceipts ← (ethereumConnectionActor ? XBatchGetTransactionReceiptsReq(
+      txReceipts ← (ethereumAccessorActor ? XBatchGetTransactionReceiptsReq(
         job.txhashes.map(XGetTransactionReceiptReq(_))
       )).mapTo[XBatchGetTransactionReceiptsRes]
         .map(_.resps.map(_.result))
       allGet = txReceipts.forall(_.nonEmpty)
       balanceAddresses = ListBuffer.empty[(String, String)]
       allowanceAddresses = ListBuffer.empty[(String, String)]
+      batchGetUnclesReq = XBatchGetUncleByBlockNumAndIndexReq(
+        job.uncles.zipWithIndex.unzip._2.map(
+          index ⇒
+            XGetUncleByBlockNumAndIndexReq(
+              job.height.toHexString,
+              index.toHexString
+            )
+        )
+      )
+      uncles ← (ethereumAccessorActor ? batchGetUnclesReq)
+        .mapAs[XBatchGetUncleByBlockNumAndIndexRes]
+        .map(_.resps.map(_.result.get.miner))
       _ = if (allGet) {
+        balanceAddresses.append(job.miner → zeroAdd)
+        balanceAddresses.append(uncles.map(_ → zeroAdd): _*)
         txReceipts.foreach(receipt ⇒ {
           balanceAddresses.append(receipt.get.from → zeroAdd)
           balanceAddresses.append(receipt.get.to → zeroAdd)
@@ -231,11 +249,11 @@ class EthereumEventExtractorActor(
       })
       balanceRes ← Future.sequence(
         balanceReqs
-          .map(req ⇒ (ethereumConnectionActor ? req).mapTo[XGetBalanceRes])
+          .map(req ⇒ (ethereumAccessorActor ? req).mapTo[XGetBalanceRes])
       )
       allowanceRes ← Future.sequence(
         allowanceReqs
-          .map(req ⇒ (ethereumConnectionActor ? req).mapTo[XGetAllowanceRes])
+          .map(req ⇒ (ethereumAccessorActor ? req).mapTo[XGetAllowanceRes])
       )
     } yield {
       if (allGet) {
@@ -267,12 +285,6 @@ class EthereumEventExtractorActor(
     }
   }
 
-  implicit def hex2BigInt(hex: String): BigInt = {
-    if (hex.startsWith("0x")) {
-      BigInt(hex.substring(2), 16)
-    } else {
-      BigInt(hex, 16)
-    }
-  }
+  implicit def hex2BigInt(hex: String): BigInt = BigInt(Numeric.toBigInt(hex))
 
 }
