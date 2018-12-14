@@ -98,7 +98,7 @@ class OrderHandlerActor(
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         res ← saveRes match {
           case Right(error) =>
-            throw new ErrorException(XError(error, "occurs error"))
+            Future.failed(new ErrorException(XError(error, "occurs error")))
           case Left(resRawOrder) =>
             for {
               submitRes ← multiAccountManagerActor ? XSubmitOrderReq(
