@@ -22,7 +22,7 @@ import akka.util.Timeout
 import org.json4s.DefaultFormats
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
-import scala.concurrent.{ ExecutionContextExecutor, Future }
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util._
 
@@ -30,12 +30,11 @@ private[ethereum] class EthereumClientMonitor(
     router: ActorRef,
     connectionPools: Seq[ActorRef],
     checkIntervalSeconds: Int
-)(implicit
-    timeout: Timeout,
-    ec: ExecutionContextExecutor
-)
-  extends Actor
-  with ActorLogging {
+  )(
+    implicit timeout: Timeout,
+    ec: ExecutionContextExecutor)
+    extends Actor
+    with ActorLogging {
 
   implicit val formats = DefaultFormats
 
@@ -47,7 +46,7 @@ private[ethereum] class EthereumClientMonitor(
   )
 
   def receive: Receive = {
-    case _: XCheckBlockHeight ⇒
+    case _: XCheckBlockHeight =>
       log.debug("start scheduler check highest block...")
       val blockNumJsonRpcReq = JsonRpcReqWrapped(
         id = Random.nextInt(100),
@@ -55,27 +54,32 @@ private[ethereum] class EthereumClientMonitor(
         params = None
       )
       import JsonRpcResWrapped._
-      connectionPools.map { g ⇒
+      connectionPools.map { g =>
         for {
-          blockNumResp: Int ← (g ? blockNumJsonRpcReq.toProto)
+          blockNumResp: Int <- (g ? blockNumJsonRpcReq.toProto)
             .mapAs[XJsonRpcRes]
             .map(toJsonRpcResWrapped)
             .map(_.result)
             .map(anyHexToInt)
             .recover {
-              case e: Exception ⇒
-                log.error(s"exception on getting blockNumber: $g: ${e.getMessage}")
+              case e: Exception =>
+                log.error(
+                  s"exception on getting blockNumber: $g: ${e.getMessage}"
+                )
                 -1
             }
         } yield {
-          router ! XNodeBlockHeight(path = g.path.toString, height = blockNumResp)
+          router ! XNodeBlockHeight(
+            path = g.path.toString,
+            height = blockNumResp
+          )
         }
       }
   }
+
   def anyHexToInt: PartialFunction[Any, Int] = {
-    case s: String ⇒ BigInt(s.replace("0x", ""), 16).toInt
-    case _         ⇒ -1
+    case s: String => BigInt(s.replace("0x", ""), 16).toInt
+    case _         => -1
   }
 
 }
-

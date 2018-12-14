@@ -38,15 +38,15 @@ import scala.concurrent._
 object GasPriceActor extends ShardedEvenly {
   val name = "gas_price"
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef]
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -62,24 +62,24 @@ object GasPriceActor extends ShardedEvenly {
   }
 }
 
-class GasPriceActor()(
-    implicit
-    val config: Config,
+class GasPriceActor(
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(GasPriceActor.name) {
+    val actors: Lookup[ActorRef])
+    extends ActorWithPathBasedConfig(GasPriceActor.name) {
 
   private var gasPrice = BigInt(selfConfig.getString("default"))
 
   def receive: Receive = {
 
-    case XSetGasPriceReq(price) ⇒
+    case XSetGasPriceReq(price) =>
       sender ! XSetGasPriceRes(gasPrice)
       gasPrice = price
 
-    case req: XGetGasPriceReq ⇒
+    case req: XGetGasPriceReq =>
       sender ! XGetGasPriceRes(gasPrice)
   }
 

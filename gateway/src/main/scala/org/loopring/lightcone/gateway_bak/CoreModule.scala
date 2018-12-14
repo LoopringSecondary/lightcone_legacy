@@ -38,16 +38,16 @@ import scala.collection.JavaConverters._
 object CoreModule {
   def apply(config: Config) = new CoreModule(config)
 
-  class ActorMaterializerProvider @Inject() (system: ActorSystem)
-    extends Provider[ActorMaterializer] {
+  class ActorMaterializerProvider @Inject()(system: ActorSystem)
+      extends Provider[ActorMaterializer] {
     override def get() = ActorMaterializer()(system)
   }
 }
 
 class CoreModule(config: Config)
-  extends AbstractModule
-  with ScalaModule
-  with AssistedInjectFactoryModule[Binder] {
+    extends AbstractModule
+    with ScalaModule
+    with AssistedInjectFactoryModule[Binder] {
   import CoreModule._
 
   override def configure(): Unit = {
@@ -59,15 +59,15 @@ class CoreModule(config: Config)
     bind[TokenSpendablesService].to[TokenSpendablesServiceImpl]
 
     bind[ActorMaterializer]
-      .toProvider[ActorMaterializerProvider].asEagerSingleton()
+      .toProvider[ActorMaterializerProvider]
+      .asEagerSingleton()
 
     val session = SlickSession.forConfig(
-      DatabaseConfig.forConfig[JdbcProfile](
-        "slick-mysql", system.settings.config
-      )
+      DatabaseConfig
+        .forConfig[JdbcProfile]("slick-mysql", system.settings.config)
     )
     bind[SlickSession].toInstance(session)
-    system.registerOnTermination(() ⇒ session.close())
+    system.registerOnTermination(() => session.close())
 
     // QUESTION(Doan): 这两个参数是不是反了？
     bindFactory[ProxyActorProvider, ProxyActor]()
@@ -76,9 +76,15 @@ class CoreModule(config: Config)
   @Provides
   @Singleton
   @Named("cluster_proxy")
-  def providerProxyMap(config: Config, system: ActorSystem): Map[String, ActorRef] = {
+  def providerProxyMap(
+      config: Config,
+      system: ActorSystem
+    ): Map[String, ActorRef] = {
 
-    def proxy(name: String, system: ActorSystem): ActorRef = {
+    def proxy(
+        name: String,
+        system: ActorSystem
+      ): ActorRef = {
       system.actorOf(
         ClusterSingletonProxy.props(
           singletonManagerPath = s"/user/${name}",
@@ -88,22 +94,25 @@ class CoreModule(config: Config)
       )
     }
 
-    config.
-      getStringList("akka.cluster.routees")
+    config
+      .getStringList("akka.cluster.routees")
       .asScala
-      .map { path ⇒ path → proxy(path, system) }
+      .map { path =>
+        path → proxy(path, system)
+      }
       .toMap
   }
 
   // QUESTION(Doan): proxy参数好像没用起来
   @Provides
   @Singleton
-  def provideHttpAndIOServer(proxy: ProxyActor)(
-    implicit
-    injector: Injector,
-    system: ActorSystem,
-    mat: ActorMaterializer
-  ): HttpAndIOServer = {
+  def provideHttpAndIOServer(
+      proxy: ProxyActor
+    )(
+      implicit injector: Injector,
+      system: ActorSystem,
+      mat: ActorMaterializer
+    ): HttpAndIOServer = {
     // 这里注册需要反射类
     val settings = JsonRpcSettings().register[TokenSpendablesServiceImpl]
     val jsonRpcServer = new JsonRpcServer(settings)

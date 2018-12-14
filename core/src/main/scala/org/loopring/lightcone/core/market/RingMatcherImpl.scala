@@ -22,22 +22,26 @@ import org.slf4s.Logging
 import XErrorCode._
 
 class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
-  extends RingMatcher with Logging {
+    extends RingMatcher
+    with Logging {
 
   def matchOrders(
-    taker: Order,
-    maker: Order,
-    minFiatValue: Double = 0
-  ): Either[XErrorCode, OrderRing] = {
+      taker: Order,
+      maker: Order,
+      minFiatValue: Double = 0
+    ): Either[XErrorCode, OrderRing] = {
     val ringOpt = makeRing(maker, taker)
     ringOpt match {
-      case Right(ring) if !rie.isProfitable(ring, minFiatValue) ⇒
+      case Right(ring) if !rie.isProfitable(ring, minFiatValue) =>
         Left(ERR_MATCHING_INCOME_TOO_SMALL)
-      case other ⇒ other
+      case other => other
     }
   }
 
-  private def makeRing(maker: Order, taker: Order): Either[XErrorCode, OrderRing] = {
+  private def makeRing(
+      maker: Order,
+      taker: Order
+    ): Either[XErrorCode, OrderRing] = {
     if (taker.amountB <= 0 || taker.amountS <= 0) {
       Left(ERR_MATCHING_INVALID_TAKER_ORDER)
     } else if (maker.amountB <= 0 || maker.amountS <= 0) {
@@ -53,21 +57,18 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
     取小的成交量计算，按照订单顺序，如果下一单的卖需要缩减，则第一单为最小单
     与顺序相关
     因此生成订单时，按照maker,taker的顺序
-     */
+       */
       //taker的卖出大于maker的买入时，taker需要缩减，则认为最小交易量为maker的卖出，否则为taker的买入
 
       val (makerVolume, takerVolume) =
         if (taker.matchable.amountS > maker.matchable.amountB) {
           (
+            OrderState(maker.matchable.amountS, maker.matchable.amountB),
             OrderState(
-              maker.matchable.amountS,
-              maker.matchable.amountB
-            ),
-              OrderState(
-                maker.matchable.amountB,
-                Rational(maker.matchable.amountB) *
-                  Rational(taker.amountB, taker.amountS)
-              )
+              maker.matchable.amountB,
+              Rational(maker.matchable.amountB) *
+                Rational(taker.amountB, taker.amountS)
+            )
           )
         } else {
           (
@@ -76,10 +77,7 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
               Rational(taker.matchable.amountB) *
                 Rational(maker.amountB, maker.amountS)
             ),
-              OrderState(
-                taker.matchable.amountS,
-                taker.matchable.amountB
-              )
+            OrderState(taker.matchable.amountS, taker.matchable.amountB)
           )
         }
 
@@ -95,30 +93,36 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
       val makerMargin = makerVolume.amountS - takerVolume.amountB
       val takerMargin = takerVolume.amountS - makerVolume.amountB
 
-      Right(OrderRing(
-        maker = ExpectedFill(
-          order = maker.copy(
-            _matchable = Some(OrderState(
-              maker.matchable.amountS - makerVolume.amountS,
-              maker.matchable.amountB - makerVolume.amountB,
-              maker.matchable.amountFee - makerFee
-            ))
+      Right(
+        OrderRing(
+          maker = ExpectedFill(
+            order = maker.copy(
+              _matchable = Some(
+                OrderState(
+                  maker.matchable.amountS - makerVolume.amountS,
+                  maker.matchable.amountB - makerVolume.amountB,
+                  maker.matchable.amountFee - makerFee
+                )
+              )
+            ),
+            pending = makerVolume.copy(amountFee = makerFee),
+            amountMargin = makerMargin
           ),
-          pending = makerVolume.copy(amountFee = makerFee),
-          amountMargin = makerMargin
-        ),
-        taker = ExpectedFill(
-          order = taker.copy(
-            _matchable = Some(OrderState(
-              taker.matchable.amountS - takerVolume.amountS,
-              taker.matchable.amountB - takerVolume.amountB,
-              taker.matchable.amountFee - takerFee
-            ))
-          ),
-          pending = takerVolume.copy(amountFee = takerFee),
-          amountMargin = takerMargin
+          taker = ExpectedFill(
+            order = taker.copy(
+              _matchable = Some(
+                OrderState(
+                  taker.matchable.amountS - takerVolume.amountS,
+                  taker.matchable.amountB - takerVolume.amountB,
+                  taker.matchable.amountFee - takerFee
+                )
+              )
+            ),
+            pending = takerVolume.copy(amountFee = takerFee),
+            amountMargin = takerMargin
+          )
         )
-      ))
+      )
     }
   }
 }

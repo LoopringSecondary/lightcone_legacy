@@ -20,9 +20,7 @@ import org.loopring.lightcone.proto._
 
 import org.slf4s.Logging
 
-class AccountOrderPoolImpl()
-  extends AccountOrderPool
-  with Logging {
+class AccountOrderPoolImpl() extends AccountOrderPool with Logging {
 
   private var callbacks = Set.empty[Callback]
   private[account] var orderMap = Map.empty[String, Order]
@@ -42,27 +40,30 @@ class AccountOrderPoolImpl()
 
   def +=(order: Order) = this.synchronized {
     getOrder(order.id) match {
-      case Some(existing) if existing == order ⇒
+      case Some(existing) if existing == order =>
+      case _ =>
+        order.status match {
+          case XOrderStatus.STATUS_NEW =>
+            add(order.id, order)
 
-      case _ ⇒ order.status match {
-        case XOrderStatus.STATUS_NEW ⇒
-          add(order.id, order)
+          case XOrderStatus.STATUS_PENDING =>
+            add(order.id, order)
+            callbacks.foreach(_(order))
 
-        case XOrderStatus.STATUS_PENDING ⇒
-          add(order.id, order)
-          callbacks.foreach(_(order))
-
-        case _ ⇒
-          // log.debug("drop_order_from_pool: " + order)
-          delete(order.id)
-          callbacks.foreach(_(order))
-      }
+          case _ =>
+            // log.debug("drop_order_from_pool: " + order)
+            delete(order.id)
+            callbacks.foreach(_(order))
+        }
     }
   }
 
   override def toString() = orderMap.toString
 
-  private def add(id: String, order: Order): Unit = orderMap += id -> order
+  private def add(
+      id: String,
+      order: Order
+    ): Unit = orderMap += id -> order
   private def delete(id: String): Unit = orderMap -= id
 
 }

@@ -24,22 +24,29 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait TokenBalanceDal
-  extends BaseDalImpl[TokenBalanceTable, XTokenBalance] {
+trait TokenBalanceDal extends BaseDalImpl[TokenBalanceTable, XTokenBalance] {
   def getBalances(address: String): Future[Seq[XTokenBalance]]
-  def getBalance(address: String, token: String): Future[Option[XTokenBalance]]
+
+  def getBalance(
+      address: String,
+      token: String
+    ): Future[Option[XTokenBalance]]
 }
 
-class TokenBalanceDalImpl()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends TokenBalanceDal {
+class TokenBalanceDalImpl(
+  )(
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext)
+    extends TokenBalanceDal {
   val query = TableQuery[TokenBalanceTable]
 
   def getBalances(address: String) =
     findByFilter(_.address === address)
 
-  def getBalance(address: String, token: String) =
-    findByFilter(r ⇒ r.address === address && r.token === token).map(_.headOption)
+  def getBalance(
+      address: String,
+      token: String
+    ) =
+    findByFilter(r => r.address === address && r.token === token)
+      .map(_.headOption)
 }

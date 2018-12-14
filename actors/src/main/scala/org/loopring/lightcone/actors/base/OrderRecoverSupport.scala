@@ -24,7 +24,7 @@ import org.loopring.lightcone.proto._
 import scala.collection.mutable.Queue
 import scala.concurrent._
 trait OrderRecoverSupport {
-  actor: Actor with ActorLogging ⇒
+  actor: Actor with ActorLogging =>
 
   implicit val ec: ExecutionContext
   implicit val timeout: Timeout
@@ -61,7 +61,7 @@ trait OrderRecoverSupport {
 
   def recovering: Receive = {
 
-    case XRecoverOrdersRes(xraworders) ⇒
+    case XRecoverOrdersRes(xraworders) =>
       val size = xraworders.size
       log.debug(s"recovering next ${size} orders")
       processed += size
@@ -94,7 +94,7 @@ trait OrderRecoverSupport {
         }
       }
 
-    case msg ⇒
+    case msg =>
       log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
     //      stash() //恢复期间，暂时保存消息
   }

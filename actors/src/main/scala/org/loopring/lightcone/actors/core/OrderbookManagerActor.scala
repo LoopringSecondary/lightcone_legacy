@@ -38,16 +38,16 @@ import scala.concurrent._
 object OrderbookManagerActor extends ShardedByMarket {
   val name = "orderbook_manager"
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    tokenMetadataManager: TokenMetadataManager
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      tokenMetadataManager: TokenMetadataManager
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("instances-per-market")
@@ -63,24 +63,24 @@ object OrderbookManagerActor extends ShardedByMarket {
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
   val extractMarketName: PartialFunction[Any, String] = {
-    case XGetOrderbookReq(_, _, marketName) ⇒ marketName
+    case XGetOrderbookReq(_, _, marketName) => marketName
   }
 }
 
 class OrderbookManagerActor(
-    extractEntityName: String ⇒ String = OrderbookManagerActor.extractEntityName
-)(
-    implicit
-    val config: Config,
+    extractEntityName: String => String =
+      OrderbookManagerActor.extractEntityName
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val tokenMetadataManager: TokenMetadataManager
-) extends ActorWithPathBasedConfig(
-  OrderbookManagerActor.name,
-  extractEntityName
-) {
+    val tokenMetadataManager: TokenMetadataManager)
+    extends ActorWithPathBasedConfig(
+      OrderbookManagerActor.name,
+      extractEntityName
+    ) {
   val marketName = entityName
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
@@ -97,13 +97,14 @@ class OrderbookManagerActor(
 
   def receive: Receive = LoggingReceive {
 
-    case XUpdateLatestTradingPrice(price) ⇒
+    case XUpdateLatestTradingPrice(price) =>
       latestPrice = Some(price)
 
-    case req: XOrderbookUpdate ⇒
+    case req: XOrderbookUpdate =>
       manager.processUpdate(req)
 
-    case XGetOrderbookReq(level, size, marketName) if marketName == marketName ⇒
+    case XGetOrderbookReq(level, size, marketName)
+        if marketName == marketName =>
       sender ! manager.getOrderbook(level, size, latestPrice)
   }
 }
