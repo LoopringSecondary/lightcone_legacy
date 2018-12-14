@@ -19,20 +19,14 @@ package org.loopring.lightcone.actors.core
 import akka.actor._
 import akka.cluster.sharding._
 import akka.event.LoggingReceive
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.persistence.DatabaseModule
+import scala.concurrent._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
-import scala.concurrent._
 
 // main owner: 杜永丰
 object DatabaseQueryActor extends ShardedEvenly {
@@ -40,12 +34,14 @@ object DatabaseQueryActor extends ShardedEvenly {
 
   def startShardRegion(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
-      actors: Lookup[ActorRef]
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -64,15 +60,68 @@ object DatabaseQueryActor extends ShardedEvenly {
 
 class DatabaseQueryActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef])
+    val actors: Lookup[ActorRef],
+    dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
 
   def receive: Receive = LoggingReceive {
-    case _ =>
+    case req: XSaveOrderReq ⇒
+      (for {
+        result ← dbModule.orderService.saveOrder(req.order.get)
+      } yield {
+        if (result.isLeft) {
+          XSaveOrderResult(Some(result.left.get), false, XErrorCode.ERR_NONE)
+        } else {
+          if (result.right.get == XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT) {
+            XSaveOrderResult(None, true, result.right.get)
+          } else {
+            XSaveOrderResult(None, false, result.right.get)
+          }
+        }
+      }) forwardTo sender
+    case req: XGetOrdersForUserReq ⇒
+      (for {
+        result ← req.market match {
+          case XGetOrdersForUserReq.Market.MarketHash(value) ⇒
+            dbModule.orderService.getOrdersForUser(
+              req.statuses.toSet,
+              Some(req.owner),
+              None,
+              None,
+              Some(value),
+              None,
+              Some(req.sort),
+              req.skip
+            )
+          case XGetOrdersForUserReq.Market.Pair(value) ⇒
+            dbModule.orderService.getOrdersForUser(
+              req.statuses.toSet,
+              Some(req.owner),
+              Some(value.tokenS),
+              Some(value.tokenB),
+              None,
+              None,
+              Some(req.sort),
+              req.skip
+            )
+        }
+      } yield
+        XGetOrdersForUserResult(result, XErrorCode.ERR_NONE)) forwardTo sender
+    case req: XUserCancelOrderReq ⇒
+      (for {
+        result ← dbModule.orderService.markOrderSoftCancelled(req.orderHashes)
+      } yield XUserCancelOrderResult(result)) forwardTo sender
+    case req: XGetTradesReq ⇒
+      (for {
+        result ← dbModule.tradeService.getTrades(req)
+      } yield result) forwardTo sender
+    case _ ⇒
+    //TODO du: log ?
   }
 
 }

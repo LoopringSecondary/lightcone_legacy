@@ -67,7 +67,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[Long] = Set.empty,
+      marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
@@ -75,14 +75,24 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
 
   def getOrdersForUser(
       statuses: Set[XOrderStatus],
-      owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[Long] = Set.empty,
-      feeTokenSet: Set[String] = Set.empty,
+      owner: Option[String] = None,
+      tokenS: Option[String] = None,
+      tokenB: Option[String] = None,
+      marketHash: Option[String] = None,
+      feeToken: Option[String] = None,
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]]
+
+  // Count the number of orders
+  def countOrdersForUser(
+      statuses: Set[XOrderStatus],
+      owner: Option[String] = None,
+      tokenS: Option[String] = None,
+      tokenB: Option[String] = None,
+      marketHash: Option[String] = None,
+      feeToken: Option[String] = None
+    ): Future[Int]
 
   // Get some orders between updatedSince and updatedUntil. The orders are sorted by updated_at
   // indicatd by the sortedByUpdatedAt param.
@@ -91,19 +101,19 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[Long] = Set.empty,
+      marketHashSet: Set[String] = Set.empty,
       validTime: Option[Int] = None,
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]]
 
   // Count the number of orders
-  def countOrders(
+  def countOrdersForRecover(
       statuses: Set[XOrderStatus],
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[Long] = Set.empty,
+      marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty
     ): Future[Int]
 
@@ -127,14 +137,14 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
 
 class OrderDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends OrderDal {
   val query = TableQuery[OrderTable]
   def getRowHash(row: XRawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
   implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
-  implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
 
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
     val now = timeProvider.getTimeMillis
@@ -146,25 +156,31 @@ class OrderDalImpl(
     db.run(
         (query += order.copy(
           state = Some(state),
-          marketHash = MurmurHash.hash64(order.tokenS) ^ MurmurHash
-            .hash64(order.tokenB)
+          marketHash =
+            MarketHashProvider.convert2Hex(order.tokenS, order.tokenB)
         )).asTry
       )
       .map {
-        case Failure(e: MySQLIntegrityConstraintViolationException) => {
+        case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
           XSaveOrderResult(
             error = ERR_PERSISTENCE_DUPLICATE_INSERT,
             order = None,
             alreadyExist = true
           )
         }
-        case Failure(ex) => {
+        case Failure(ex) ⇒ {
           // TODO du: print some log
           // log(s"error : ${ex.getMessage}")
-          XSaveOrderResult(error = ERR_PERSISTENCE_INTERNAL, order = None)
+          XSaveOrderResult(
+            error = ERR_PERSISTENCE_INTERNAL,
+            order = None
+          )
         }
-        case Success(x) =>
-          XSaveOrderResult(error = ERR_NONE, order = Some(order))
+        case Success(x) ⇒
+          XSaveOrderResult(
+            error = ERR_NONE,
+            order = Some(order)
+          )
       }
   }
 
@@ -184,7 +200,7 @@ class OrderDalImpl(
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[Long] = Set.empty,
+      marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       validTime: Option[Int] = None,
       sort: Option[XSort] = None,
@@ -204,13 +220,13 @@ class OrderDalImpl(
         .filter(_.validSince >= validTime.get)
         .filter(_.validUntil <= validTime.get)
     if (sort.nonEmpty) filters = sort.get match {
-      case XSort.ASC  => filters.sortBy(_.sequenceId.asc)
-      case XSort.DESC => filters.sortBy(_.sequenceId.desc)
-      case _          => filters.sortBy(_.sequenceId.desc)
+      case XSort.ASC ⇒ filters.sortBy(_.sequenceId.asc)
+      case XSort.DESC ⇒ filters.sortBy(_.sequenceId.desc)
+      case _ ⇒ filters.sortBy(_.sequenceId.asc)
     }
     filters = skip match {
-      case Some(s) => filters.drop(s.skip).take(s.take)
-      case None    => filters
+      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+      case None ⇒ filters
     }
     filters
   }
@@ -220,7 +236,7 @@ class OrderDalImpl(
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[Long] = Set.empty,
+      marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
@@ -237,38 +253,89 @@ class OrderDalImpl(
       skip
     )
     db.run(filters.result)
+  }
+
+  private def queryOrderForUserFilters(
+      statuses: Set[XOrderStatus],
+      owner: Option[String] = None,
+      tokenS: Option[String] = None,
+      tokenB: Option[String] = None,
+      marketHash: Option[String] = None,
+      feeToken: Option[String] = None,
+      sort: Option[XSort] = None,
+      skip: Option[XSkip] = None
+    ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
+    var filters = query.filter(_.sequenceId > 0L)
+    if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
+    if (owner.nonEmpty) filters = filters.filter(_.owner === owner)
+    if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS)
+    if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB)
+    if (marketHash.nonEmpty)
+      filters = filters.filter(_.marketHash === marketHash)
+    if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
+    if (sort.nonEmpty) filters = sort.get match {
+      case XSort.ASC ⇒ filters.sortBy(_.sequenceId.asc)
+      case XSort.DESC ⇒ filters.sortBy(_.sequenceId.desc)
+      case _ ⇒ filters.sortBy(_.sequenceId.asc)
+    }
+    filters = skip match {
+      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+      case None ⇒ filters
+    }
+    filters
   }
 
   def getOrdersForUser(
       statuses: Set[XOrderStatus],
-      owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[Long] = Set.empty,
-      feeTokenSet: Set[String] = Set.empty,
+      owner: Option[String] = None,
+      tokenS: Option[String] = None,
+      tokenB: Option[String] = None,
+      marketHash: Option[String] = None,
+      feeToken: Option[String] = None,
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]] = {
-    val filters = queryOrderFilters(
+    val filters = queryOrderForUserFilters(
       statuses,
-      owners,
-      tokenSSet,
-      tokenBSet,
-      marketHashSet,
-      feeTokenSet,
-      None,
+      owner,
+      tokenS,
+      tokenB,
+      marketHash,
+      feeToken,
       sort,
       skip
     )
     db.run(filters.result)
   }
 
-  def countOrders(
+  // Count the number of orders
+  def countOrdersForUser(
+      statuses: Set[XOrderStatus],
+      owner: Option[String] = None,
+      tokenS: Option[String] = None,
+      tokenB: Option[String] = None,
+      marketHash: Option[String] = None,
+      feeToken: Option[String] = None
+    ): Future[Int] = {
+    val filters = queryOrderForUserFilters(
+      statuses,
+      owner,
+      tokenS,
+      tokenB,
+      marketHash,
+      feeToken,
+      None,
+      None
+    )
+    db.run(filters.size.result)
+  }
+
+  def countOrdersForRecover(
       statuses: Set[XOrderStatus],
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[Long] = Set.empty,
+      marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty
     ): Future[Int] = {
     val filters = queryOrderFilters(
@@ -292,7 +359,7 @@ class OrderDalImpl(
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[Long] = Set.empty,
+      marketHashSet: Set[String] = Set.empty,
       validTime: Option[Int] = None,
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
@@ -316,10 +383,10 @@ class OrderDalImpl(
       status: XOrderStatus
     ): Future[XErrorCode] =
     for {
-      result <- db.run(
+      result ← db.run(
         query
           .filter(_.hash === hash)
-          .map(c => (c.status, c.updatedAt))
+          .map(c ⇒ (c.status, c.updatedAt))
           .update(status, timeProvider.getTimeMillis)
       )
     } yield {
@@ -332,7 +399,7 @@ class OrderDalImpl(
       status: XOrderStatus
     ): Future[XErrorCode] =
     for {
-      _ <- Future.unit
+      _ ← Future.unit
       failedStatus = Seq(
         XOrderStatus.STATUS_CANCELLED_BY_USER,
         XOrderStatus.STATUS_CANCELLED_LOW_BALANCE,
@@ -340,13 +407,13 @@ class OrderDalImpl(
         XOrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
         XOrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
       )
-      result <- if (!failedStatus.contains(status)) {
+      result ← if (!failedStatus.contains(status)) {
         Future.successful(0)
       } else {
         db.run(
           query
             .filter(_.hash === hash)
-            .map(c => (c.status, c.updatedAt))
+            .map(c ⇒ (c.status, c.updatedAt))
             .update(status, timeProvider.getTimeMillis)
         )
       }
@@ -360,11 +427,11 @@ class OrderDalImpl(
       state: XRawOrder.State
     ): Future[XErrorCode] =
     for {
-      result <- db.run(
+      result ← db.run(
         query
           .filter(_.hash === hash)
           .map(
-            c =>
+            c ⇒
               (
                 c.actualAmountS,
                 c.actualAmountB,

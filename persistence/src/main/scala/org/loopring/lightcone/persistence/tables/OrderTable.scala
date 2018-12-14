@@ -76,7 +76,7 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
   def actualAmountFee = columnAmount("actual_amount_fee")
 
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
-  def marketHash = column[Long]("market_hash")
+  def marketHash = columnAddress("market_hash")
 
   // indexes
   def idx_hash = index("idx_hash", (hash), unique = true)

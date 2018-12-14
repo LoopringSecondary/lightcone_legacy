@@ -173,7 +173,7 @@ message XRawOrder {
     ERC1400Params erc1400_params    = 12;
     State state            = 13;
     int64 sequence_id      = 14;
-    int64 market_hash      = 15;
+    string market_hash     = 15;
 }
 
 message XRingBatch {
@@ -209,22 +209,25 @@ message XTrade {
         bytes  fee_amount_b            = 6;
         string fee_recipient           = 7;
     }
-    int64  id                = 1;
+
+    string owner             = 1;
     string delegate_address  = 2;
-    string owner             = 3;
-    string order_hash        = 4;
-    string ring_hash         = 5;
-    int32  ring_index        = 6;
-    string tx_hash           = 7;
-    bytes  amount_s          = 9;
-    bytes  amount_b          = 10;
-    string token_s           = 11;
-    string token_b           = 12;
-    bytes  split             = 13; //tokenS
-    Fees   fees              = 14;
-    int64  created_at        = 15;
-    int64  updated_at        = 16;
-    int64  block_height      = 17;
+    string order_hash        = 3;
+    string ring_hash         = 4;
+    int64  ring_index        = 5;
+    string tx_hash           = 6;
+    bytes  amount_s          = 7;
+    bytes  amount_b          = 8;
+    string token_s           = 9;
+    string token_b           = 10;
+    string market_hash       = 11;
+    bytes  split             = 12; //tokenS
+    Fees   fees              = 13;
+    int64  created_at        = 14;
+    int64  updated_at        = 15;
+    int64  block_height      = 16;
+    int64  block_timestamp   = 17;
+    int64 sequence_id        = 18;
 }
 
 message XOrdersCutoffEvent {
