@@ -41,6 +41,14 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
     abi.findFunction(searchByName(WithdrawFunction.name))
   )
 
+  val depositEvent = DepositEvent(
+    abi.findEvent(searchByName(DepositEvent.name))
+  )
+
+  val withdrawalEvent = WithdrawalEvent(
+    abi.findEvent(searchByName(WithdrawalEvent.name))
+  )
+
   override def unpackEvent(
       data: String,
       topics: Array[String]
