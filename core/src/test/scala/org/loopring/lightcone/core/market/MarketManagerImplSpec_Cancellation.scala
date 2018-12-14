@@ -31,22 +31,22 @@ class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
 
   "MarketManager" should "be able to cancel existing order" +
     "and should put order inside the orderbook" in {
-      var order = actualNotDust(sellGTO(100000, 101))
-      (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-      (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    var order = actualNotDust(sellGTO(100000, 101))
+    (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
-      val result = marketManager.submitOrder(order, 0)
-      result should be(emptyMatchingResult(order, STATUS_PENDING))
-      marketManager.getNumOfSellOrders() should be(1)
+    val result = marketManager.submitOrder(order, 0)
+    result should be(emptyMatchingResult(order, STATUS_PENDING))
+    marketManager.getNumOfSellOrders() should be(1)
 
-      marketManager.cancelOrder(order.id) should be(Some(XOrderbookUpdate()))
+    marketManager.cancelOrder(order.id) should be(Some(XOrderbookUpdate()))
 
-      (fakePendingRingPool.deleteOrder _).verify(order.id).once
-      marketManager.getNumOfSellOrders() should be(0)
-      marketManager.getNumOfBuyOrders() should be(0)
-      marketManager.getNumOfOrders() should be(0)
-      marketManager.getSellOrders(3) should be(Nil)
-    }
+    (fakePendingRingPool.deleteOrder _).verify(order.id).once
+    marketManager.getNumOfSellOrders() should be(0)
+    marketManager.getNumOfBuyOrders() should be(0)
+    marketManager.getNumOfOrders() should be(0)
+    marketManager.getSellOrders(3) should be(Nil)
+  }
 
   "MarketManager" should "allow deleting rings" in {
     val ringId = "1234"

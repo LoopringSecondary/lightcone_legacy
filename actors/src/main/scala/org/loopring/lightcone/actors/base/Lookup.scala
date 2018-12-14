@@ -20,8 +20,13 @@ import org.slf4s.Logging
 trait Lookup[T] {
   def size(): Int
   def get(name: String): T
-  def add(name: String, ref: T): Unit
+
+  def add(
+      name: String,
+      ref: T
+    ): Unit
   def del(name: String): Unit
+  def contains(name: String): Boolean
   def clear(): Unit
 }
 
@@ -40,8 +45,15 @@ class MapBasedLookup[T] extends Lookup[T] with Logging {
     items(name)
   }
 
-  def add(name: String, item: T) = {
-    assert(!items.contains(name))
+  def contains(name: String): Boolean = {
+    items.contains(name)
+  }
+
+  def add(
+      name: String,
+      item: T
+    ) = {
+    assert(!contains(name))
     items += name -> item
   }
 

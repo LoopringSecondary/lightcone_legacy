@@ -14,7 +14,8 @@ object Dependencies {
     "com.dimafeng" %% "testcontainers-scala" % "0.21.0" % Test,
     "org.testcontainers" % "mysql" % "1.10.1" % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
-    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test)
+    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test
+  )
 
   lazy val commonDependency = Seq(
     "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -22,7 +23,8 @@ object Dependencies {
     "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
     "ch.qos.logback" % "logback-classic" % logbackVersion,
     "com.github.scopt" %% "scopt" % "3.7.0",
-    "com.github.nscala-time" %% "nscala-time" % "2.20.0")
+    "com.github.nscala-time" %% "nscala-time" % "2.20.0"
+  )
 
   lazy val guiceDependency = Seq(
     "com.google.inject" % "guice" % "4.2.2",
@@ -34,7 +36,8 @@ object Dependencies {
     "org.json4s" %% "json4s-jackson" % json4sVersion,
     "com.thesamet.scalapb" %% "scalapb-json4s" % "0.7.1",
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.7",
-    "org.jsoup" % "jsoup" % "1.11.3")
+    "org.jsoup" % "jsoup" % "1.11.3"
+  )
 
   lazy val ethereumDependency = Seq(
     "org.web3j" % "core" % "3.4.0",
@@ -48,7 +51,8 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
-    "com.typesafe.akka" %% "akka-cluster-sharding" % akkaVersion)
+    "com.typesafe.akka" %% "akka-cluster-sharding" % akkaVersion
+  )
 
   lazy val httpDependency = Seq(
     "com.typesafe.akka" %% "akka-http" % "10.1.5",

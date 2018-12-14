@@ -30,7 +30,10 @@ class Bitstream() {
   def getBytes = Numeric.hexStringToByteArray(data)
   def length() = data.length / 2
 
-  def addAddress(x: String, forceAppend: Boolean = false) = {
+  def addAddress(
+      x: String,
+      forceAppend: Boolean = false
+    ) = {
     val _x = if (x.length == 0) "0" else x
     insert(
       Numeric.toHexStringNoPrefixZeroPadded(
@@ -41,41 +44,69 @@ class Bitstream() {
     )
   }
 
-  def addUint16(num: BigInt, forceAppend: Boolean = true) =
+  def addUint16(
+      num: BigInt,
+      forceAppend: Boolean = true
+    ) =
     addBigInt(num, 2, forceAppend)
 
-  def addUint16(num: Int, forceAppend: Boolean) =
+  def addUint16(
+      num: Int,
+      forceAppend: Boolean
+    ) =
     addBigInt(BigInt(num), 2, forceAppend)
 
-  def addUint32(num: BigInt, forceAppend: Boolean = true) =
+  def addUint32(
+      num: BigInt,
+      forceAppend: Boolean = true
+    ) =
     addBigInt(num, 4, forceAppend)
 
-  def addUint(num: BigInt, forceAppend: Boolean = true) =
+  def addUint(
+      num: BigInt,
+      forceAppend: Boolean = true
+    ) =
     addBigInt(num, 32, forceAppend)
 
-  def addUint(numStr: String, forceAppend: Boolean) = {
+  def addUint(
+      numStr: String,
+      forceAppend: Boolean
+    ) = {
     val _numStr = if (numStr.length > 0) numStr else "0"
     addBigInt(BigInt(Numeric.cleanHexPrefix(_numStr), 16), 32, forceAppend)
   }
 
-  def addNumber(num: BigInt, numBytes: Int, forceAppend: Boolean = true) =
+  def addNumber(
+      num: BigInt,
+      numBytes: Int,
+      forceAppend: Boolean = true
+    ) =
     addBigInt(num, numBytes, forceAppend)
 
-  def addBoolean(b: Boolean, forceAppend: Boolean = true) =
+  def addBoolean(
+      b: Boolean,
+      forceAppend: Boolean = true
+    ) =
     addBigInt(if (b) 1 else 0, 1, forceAppend)
 
-  def addHex(str: String, forceAppend: Boolean = true) =
+  def addHex(
+      str: String,
+      forceAppend: Boolean = true
+    ) =
     insert(Numeric.cleanHexPrefix(str), forceAppend)
 
-  def addRawBytes(str: String, forceAppend: Boolean = true) =
+  def addRawBytes(
+      str: String,
+      forceAppend: Boolean = true
+    ) =
     insert(Numeric.cleanHexPrefix(str), forceAppend)
 
   // TODO(kongliang): 负数问题
   private def addBigInt(
-    num: BigInt,
-    numBytes: Int,
-    forceAppend: Boolean = true
-  ) =
+      num: BigInt,
+      numBytes: Int,
+      forceAppend: Boolean = true
+    ) =
     insert(
       Numeric.toHexStringNoPrefixZeroPadded(
         num.bigInteger,
@@ -84,7 +115,10 @@ class Bitstream() {
       forceAppend
     )
 
-  private def insert(x: String, forceAppend: Boolean): Int = {
+  private def insert(
+      x: String,
+      forceAppend: Boolean
+    ): Int = {
     var offset = length()
 
     if (!forceAppend) {

@@ -33,22 +33,23 @@ import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
 object EthereumAccessActor extends ShardedEvenly {
   val name = "ethereum_access"
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    ma: ActorMaterializer,
-    ece: ExecutionContextExecutor
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      ma: ActorMaterializer,
+      ece: ExecutionContextExecutor
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -64,23 +65,24 @@ object EthereumAccessActor extends ShardedEvenly {
   }
 }
 
-class EthereumAccessActor()(
-    implicit
-    val config: Config,
+class EthereumAccessActor(
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val ma: ActorMaterializer,
-    val ece: ExecutionContextExecutor
-) extends Actor
-  with ActorLogging {
+    val ece: ExecutionContextExecutor)
+    extends Actor
+    with ActorLogging {
 
   val conf = config.getConfig(EthereumAccessActor.name)
+
   val thisConfig = try {
     conf.getConfig(self.path.name).withFallback(conf)
   } catch {
-    case e: Throwable ⇒ conf
+    case e: Throwable => conf
   }
   log.info(s"config for ${self.path.name} = $thisConfig")
 
@@ -88,7 +90,7 @@ class EthereumAccessActor()(
     poolSize = thisConfig.getInt("pool-size"),
     checkIntervalSeconds = thisConfig.getInt("check-interval-seconds"),
     healthyThreshold = thisConfig.getDouble("healthy-threshold").toFloat,
-    nodes = thisConfig.getList("nodes").toArray.map { v ⇒
+    nodes = thisConfig.getList("nodes").toArray.map { v =>
       val c = v.asInstanceOf[Config]
       XEthereumProxySettings.XNode(
         host = c.getString("host"),
@@ -106,10 +108,10 @@ class EthereumAccessActor()(
   updateSettings(settings)
 
   def receive: Receive = {
-    case settings: XEthereumProxySettings ⇒
+    case settings: XEthereumProxySettings =>
       updateSettings(settings)
 
-    case req ⇒
+    case req =>
       router.forward(req)
   }
 
@@ -120,7 +122,7 @@ class EthereumAccessActor()(
     connectorGroups.foreach(context.stop)
 
     connectorGroups = settings.nodes.zipWithIndex.map {
-      case (node, index) ⇒
+      case (node, index) =>
         val ipc = node.ipcPath.nonEmpty
 
         val nodeName =
@@ -132,9 +134,7 @@ class EthereumAccessActor()(
           else Props(new HttpConnector(node))
 
         context.actorOf(
-          RoundRobinPool(
-            settings.poolSize
-          ).props(props),
+          RoundRobinPool(settings.poolSize).props(props),
           nodeName
         )
     }

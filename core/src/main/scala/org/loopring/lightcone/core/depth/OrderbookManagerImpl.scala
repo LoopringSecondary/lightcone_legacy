@@ -20,11 +20,10 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import scala.collection.SortedMap
 
-class OrderbookManagerImpl(config: XMarketConfig)
-  extends OrderbookManager {
+class OrderbookManagerImpl(config: XMarketConfig) extends OrderbookManager {
 
-  private[depth] val viewMap = (0 until config.levels).map {
-    level ⇒ level -> new View(level)
+  private[depth] val viewMap = (0 until config.levels).map { level =>
+    level -> new View(level)
   }.toMap
 
   def processUpdate(update: XOrderbookUpdate) = this.synchronized {
@@ -32,10 +31,14 @@ class OrderbookManagerImpl(config: XMarketConfig)
     viewMap.values.foreach(_.processUpdate(diff))
   }
 
-  def getOrderbook(level: Int, size: Int, latestPrice: Option[Double] = None) =
+  def getOrderbook(
+      level: Int,
+      size: Int,
+      latestPrice: Option[Double] = None
+    ) =
     viewMap.get(level) match {
-      case Some(view) ⇒ view.getOrderbook(size, latestPrice)
-      case None       ⇒ XOrderbook(latestPrice.getOrElse(0), Nil, Nil)
+      case Some(view) => view.getOrderbook(size, latestPrice)
+      case None       => XOrderbook(latestPrice.getOrElse(0), Nil, Nil)
     }
 
   def reset() = this.synchronized {
@@ -48,13 +51,13 @@ class OrderbookManagerImpl(config: XMarketConfig)
     private val amountFormat = s"%.${config.precisionForAmount}f"
     private val totalFormat = s"%.${config.precisionForTotal}f"
 
-    private val sellSide = new OrderbookSide.Sells(
-      config.priceDecimals, aggregationLevel, false
-    ) with ConverstionSupport
+    private val sellSide =
+      new OrderbookSide.Sells(config.priceDecimals, aggregationLevel, false)
+      with ConverstionSupport
 
-    private val buySide = new OrderbookSide.Buys(
-      config.priceDecimals, aggregationLevel, false
-    ) with ConverstionSupport
+    private val buySide =
+      new OrderbookSide.Buys(config.priceDecimals, aggregationLevel, false)
+      with ConverstionSupport
 
     def processUpdate(update: XOrderbookUpdate) {
       update.sells.foreach(sellSide.increase)
@@ -68,7 +71,10 @@ class OrderbookManagerImpl(config: XMarketConfig)
       )
     }
 
-    def getOrderbook(size: Int, latestPrice: Option[Double]) =
+    def getOrderbook(
+        size: Int,
+        latestPrice: Option[Double]
+      ) =
       XOrderbook(
         latestPrice.getOrElse(0),
         sellSide.getDepth(size, latestPrice),
@@ -80,7 +86,7 @@ class OrderbookManagerImpl(config: XMarketConfig)
       buySide.reset()
     }
 
-    trait ConverstionSupport { self: OrderbookSide ⇒
+    trait ConverstionSupport { self: OrderbookSide =>
       private def slotToItem(slot: XOrderbookUpdate.XSlot) =
         XOrderbook.XItem(
           priceFormat.format(slot.slot / priceScaling),
@@ -88,11 +94,15 @@ class OrderbookManagerImpl(config: XMarketConfig)
           totalFormat.format(slot.total)
         )
 
-      def getDepth(num: Int, latestPrice: Option[Double]): Seq[XOrderbook.XItem] = {
-        val latestPriceSlot = latestPrice.map { p ⇒ (p * priceScaling).toLong }
+      def getDepth(
+          num: Int,
+          latestPrice: Option[Double]
+        ): Seq[XOrderbook.XItem] = {
+        val latestPriceSlot = latestPrice.map { p =>
+          (p * priceScaling).toLong
+        }
         getSlots(num, latestPriceSlot).map(slotToItem(_))
       }
     }
   }
 }
-

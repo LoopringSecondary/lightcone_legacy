@@ -83,17 +83,17 @@ import org.loopring.lightcone.proto._
 //       orderHistoryProbe.replyWith(order.id, "0".zeros(0))
 
 //       expectMsgPF() {
-//         case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+//         case XSubmitOrderRes(ERR_OK, Some(xorder)) =>
 //           val order: Order = xorder
 //           info(s"submitted an order: $order")
-//         case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
-//           info(s"occurs ERR_UNKNOWN when submitting order:$order")
+//         case XSubmitOrderRes(ERR_INTERNAL_UNKNOWN, None) =>
+//           info(s"occurs ERR_INTERNAL_UNKNOWN when submitting order:$order")
 //       }
 
 //       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //       expectMsgPF() {
-//         case a: XOrderbook ⇒
+//         case a: XOrderbook =>
 //           a.sells.nonEmpty should be(true)
 //           a.sells.head.amount should be("50.00")
 //           info("----orderbook status after submit an order: " + a)
@@ -106,7 +106,7 @@ import org.loopring.lightcone.proto._
 //       orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //       expectMsgPF() {
-//         case a: XOrderbook ⇒
+//         case a: XOrderbook =>
 //           a.sells.isEmpty should be(true)
 //           info("----orderbook status after cancel this order: " + a)
 //       }

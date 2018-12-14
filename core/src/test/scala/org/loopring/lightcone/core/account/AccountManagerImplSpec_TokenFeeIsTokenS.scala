@@ -27,7 +27,9 @@ class AccountManagerImplSpec_TokenFeeIsTokenS extends OrderAwareSpec {
     val order = sellLRC(100, 1, 10)
     submitOrder(order) should be(false)
     orderPool.size should be(0)
-    updatedOrders(order.id).status should be(XOrderStatus.STATUS_CANCELLED_LOW_BALANCE)
+    updatedOrders(order.id).status should be(
+      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
+    )
   }
 
   "when tokenS == tokenFee, submit order" should "reserve for both tokenS and tokenFee when allowance is suffcient" in {

@@ -21,8 +21,8 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
+import collection.JavaConverters._
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
@@ -30,27 +30,30 @@ import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
+
 import scala.concurrent._
 
 // main owner: 于红雨
 object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    tokenValueEstimator: TokenValueEstimator,
-    ringIncomeEstimator: RingIncomeEstimator,
-    dustOrderEvaluator: DustOrderEvaluator,
-    tokenMetadataManager: TokenMetadataManager
-  ): ActorRef = {
-    numOfShards = 1
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      tokenValueEstimator: TokenValueEstimator,
+      ringIncomeEstimator: RingIncomeEstimator,
+      dustOrderEvaluator: DustOrderEvaluator,
+      tokenMetadataManager: TokenMetadataManager
+    ): ActorRef = {
+    numOfShards = 10
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new MarketManagerActor()),
@@ -62,16 +65,15 @@ object MarketManagerActor extends ShardedByMarket {
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
   val extractMarketName: PartialFunction[Any, String] = {
-    case _ ⇒ ""
+    case _ => ""
   }
 
 }
 
 class MarketManagerActor(
-    extractEntityName: String ⇒ String = MarketManagerActor.extractEntityName
-)(
-    implicit
-    val config: Config,
+    extractEntityName: String => String = MarketManagerActor.extractEntityName
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -79,15 +81,34 @@ class MarketManagerActor(
     val tokenValueEstimator: TokenValueEstimator,
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
-    val tokenMetadataManager: TokenMetadataManager
-) extends ActorWithPathBasedConfig(
-  MarketManagerActor.name,
-  extractEntityName
-) with OrderRecoverSupport {
+    val tokenMetadataManager: TokenMetadataManager)
+    extends ActorWithPathBasedConfig(MarketManagerActor.name, extractEntityName)
+    with OrderRecoverSupport {
   val marketName = entityName
 
+  //todo:需要测试
+  val markets = selfConfig
+    .getObjectList("markets")
+    .asScala
+    .map { item =>
+      val c = item.toConfig
+      val marketId = XMarketId(c.getString("priamry"), c.getString("secondary"))
+      val hash = MarketManagerActor
+        .hashed(marketId)
+        .toString
+      hash -> marketId
+    }
+    .toMap
+
   val wethTokenAddress = config.getString("weth.address")
-  val gasLimitPerRingV2 = BigInt(config.getString("loopring-protocol.gas-limit-per-ring-v2"))
+
+  val gasLimitPerRingV2 = BigInt(
+    config.getString("loopring-protocol.gas-limit-per-ring-v2")
+  )
+
+  protected def gasPriceActor = actors.get(GasPriceActor.name)
+  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  protected def settlementActor = actors.get(RingSettlementActor.name)
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
   // based on marketName
@@ -98,90 +119,86 @@ class MarketManagerActor(
     precisionForTotal = selfConfig.getInt("precision-for-total")
   )
 
-  private var marketId: XMarketId = _
+  //todo: need refactor
+  val shardId = self.path.toString.split("/").last //todo：如何获取shardId
+
+  implicit var marketId: XMarketId = markets(shardId)
 
   private val ringMatcher = new RingMatcherImpl()
   private val pendingRingPool = new PendingRingPoolImpl()
 
-  private var manager: MarketManager = _
+  implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
+    selfConfig.getInt("price-decimals")
+  )
+  private val manager = new MarketManagerImpl(
+    marketId,
+    tokenMetadataManager,
+    ringMatcher,
+    pendingRingPool,
+    dustOrderEvaluator,
+    aggregator
+  )
+  recoverySettings = XOrderRecoverySettings(
+    selfConfig.getBoolean("skip-recovery"),
+    selfConfig.getInt("recover-batch-size"),
+    "",
+    Some(marketId)
+  )
+  requestOrderRecovery(recoverySettings)
 
-  protected def gasPriceActor = actors.get(GasPriceActor.name)
-  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  protected def settlementActor = actors.get(RingSettlementActor.name)
+  def receive: Receive = LoggingReceive {
 
-  def receive: Receive = {
-    case XStart(shardEntityId) ⇒ {
-      val tokens = shardEntityId.split("-")
-      marketId = XMarketId(tokens(0), tokens(1))
-      implicit val marketId_ = marketId
-      implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-        selfConfig.getInt("price-decimals")
-      )
-      manager = new MarketManagerImpl(
-        marketId,
-        tokenMetadataManager,
-        ringMatcher,
-        pendingRingPool,
-        dustOrderEvaluator,
-        aggregator
-      )
-      val recoverySettings = XOrderRecoverySettings(
-        selfConfig.getBoolean("skip-recovery"),
-        selfConfig.getInt("recover-batch-size"),
-        "",
-        Some(marketId)
-      )
-      startOrderRecovery(recoverySettings)
-    }
-  }
-
-  def functional: Receive = LoggingReceive {
-
-    case XSubmitOrderReq(Some(xorder)) ⇒
+    case XSubmitOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder)
 
     case XCancelOrderReq(orderId, hardCancel, _) ⇒
-      manager.cancelOrder(orderId) foreach {
-        orderbookUpdate ⇒ orderbookManagerActor ! orderbookUpdate
+      manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
+        orderbookManagerActor ! orderbookUpdate
       }
       sender ! XCancelOrderRes(id = orderId)
 
-    case XGasPriceUpdated(_gasPrice) ⇒
+    case XGasPriceUpdated(_gasPrice) =>
       val gasPrice: BigInt = _gasPrice
       manager.triggerMatch(true, getRequiredMinimalIncome(gasPrice)) foreach {
-        matchResult ⇒
+        matchResult =>
           updateOrderbookAndSettleRings(matchResult, gasPrice)
       }
 
-    case XTriggerRematchReq(sellOrderAsTaker, offset) ⇒ for {
-      res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
-      gasPrice: BigInt = res.gasPrice
-      minRequiredIncome = getRequiredMinimalIncome(gasPrice)
-      _ = manager.triggerMatch(sellOrderAsTaker, minRequiredIncome, offset)
-        .foreach { updateOrderbookAndSettleRings(_, gasPrice) }
-    } yield Unit
+    case XTriggerRematchReq(sellOrderAsTaker, offset) =>
+      for {
+        res <- (gasPriceActor ? XGetGasPriceReq()).mapAs[XGetGasPriceRes]
+        gasPrice: BigInt = res.gasPrice
+        minRequiredIncome = getRequiredMinimalIncome(gasPrice)
+        _ = manager
+          .triggerMatch(sellOrderAsTaker, minRequiredIncome, offset)
+          .foreach { updateOrderbookAndSettleRings(_, gasPrice) }
+      } yield Unit
 
   }
 
   private def submitOrder(xorder: XOrder): Future[Unit] = {
-    assert(xorder.actual.nonEmpty, "order in XSubmitOrderReq miss `actual` field")
+    assert(
+      xorder.actual.nonEmpty,
+      "order in XSubmitOrderReq miss `actual` field"
+    )
     val order: Order = xorder
     xorder.status match {
-      case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING ⇒ for {
-        // get ring settlement cost
-        res ← (gasPriceActor ? XGetGasPriceReq()).mapTo[XGetGasPriceRes]
+      case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING =>
+        for {
+          // get ring settlement cost
+          res <- (gasPriceActor ? XGetGasPriceReq()).mapAs[XGetGasPriceRes]
 
-        gasPrice: BigInt = res.gasPrice
-        minRequiredIncome = getRequiredMinimalIncome(gasPrice)
+          gasPrice: BigInt = res.gasPrice
+          minRequiredIncome = getRequiredMinimalIncome(gasPrice)
 
-        // submit order to reserve balance and allowance
-        matchResult = manager.submitOrder(order, minRequiredIncome)
+          // submit order to reserve balance and allowance
+          matchResult = manager.submitOrder(order, minRequiredIncome)
 
-        //settlement matchResult and update orderbook
-        _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
-      } yield Unit
+          //settlement matchResult and update orderbook
+          _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
+        } yield Unit
 
-      case s ⇒
+      case s =>
         log.error(s"unexpected order status in XSubmitOrderReq: $s")
         Future.successful(Unit)
     }
@@ -192,7 +209,10 @@ class MarketManagerActor(
     tokenValueEstimator.getEstimatedValue(wethTokenAddress, costinEth)
   }
 
-  private def updateOrderbookAndSettleRings(matchResult: MatchResult, gasPrice: BigInt) {
+  private def updateOrderbookAndSettleRings(
+      matchResult: MatchResult,
+      gasPrice: BigInt
+    ) {
     // Settle rings
     if (matchResult.rings.nonEmpty) {
       log.debug(s"rings: ${matchResult.rings}")
@@ -211,5 +231,6 @@ class MarketManagerActor(
     }
   }
 
-  protected def recoverOrder(xorder: XOrder): Future[Any] = submitOrder(xorder)
+  protected def recoverOrder(xraworder: XRawOrder): Future[Any] =
+    submitOrder(xraworder)
 }

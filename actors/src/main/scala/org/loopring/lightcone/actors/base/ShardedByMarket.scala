@@ -21,16 +21,21 @@ import akka.cluster.sharding._
 trait ShardedByMarket extends Sharded {
   val extractMarketName: PartialFunction[Any, String]
 
-  private def hashed(msg: Any) = Math.abs(msg.hashCode % numOfShards)
+  def hashed(msg: Any) = Math.abs(msg.hashCode % numOfShards)
 
   private def _extractEntityId(msg: Any): Option[(String, Any)] =
-    (extractMarketName.lift)(msg).map { marketId ⇒ ("${name}_${hashed(msg)}_${marketId}", msg) }
+    (extractMarketName.lift)(msg).map { marketId =>
+      ("${name}_${hashed(msg)}_${marketId}", msg)
+    }
 
-  private def _extractShardId(msg: Any): Option[String] = Some("shard_" + hashed(msg))
+  private def _extractShardId(msg: Any): Option[String] =
+    Some("shard_" + hashed(msg))
 
-  val extractEntityId: ShardRegion.ExtractEntityId = Function.unlift(_extractEntityId)
-  val extractShardId: ShardRegion.ExtractShardId = Function.unlift(_extractShardId)
+  val extractEntityId: ShardRegion.ExtractEntityId =
+    Function.unlift(_extractEntityId)
+
+  val extractShardId: ShardRegion.ExtractShardId =
+    Function.unlift(_extractShardId)
 
   def extractEntityName(actorName: String) = actorName.split("_").last
 }
-

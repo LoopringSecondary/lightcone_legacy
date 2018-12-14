@@ -29,13 +29,14 @@ import org.loopring.lightcone.gateway_bak.database.DatabaseAccessor
 import org.loopring.lightcone.gateway_bak.inject.ProxyActor
 //import org.loopring.lightcone.proto.actors.{ GetBalanceAndAllowancesReq, GetBalanceAndAllowancesRes }
 
-class TokenSpendablesServiceImpl @Inject() (proxy: ProxyActor)(
-    implicit
-    val system: ActorSystem,
+class TokenSpendablesServiceImpl @Inject()(
+    proxy: ProxyActor
+  )(
+    implicit val system: ActorSystem,
     val session: SlickSession,
-    val mat: ActorMaterializer
-) extends TokenSpendablesService
-  with DatabaseAccessor {
+    val mat: ActorMaterializer)
+    extends TokenSpendablesService
+    with DatabaseAccessor {
 
   // import session.profile.api._
 
@@ -44,17 +45,23 @@ class TokenSpendablesServiceImpl @Inject() (proxy: ProxyActor)(
   // TODO(Duan): inject this timeout
   implicit val timeout = Timeout(5 seconds)
 
-  implicit val toTokenInfo = (r: ResultRow) ⇒
-    TokenSpendablesResp(owner = r <<, delegateAddress = r <<, tokens = Seq.empty)
+  implicit val toTokenInfo = (r: ResultRow) =>
+    TokenSpendablesResp(
+      owner = r <<,
+      delegateAddress = r <<,
+      tokens = Seq.empty
+    )
 
   // {"jsonrpc": "2.0", "method": "getBalance", "params": {"owner": "haha", "delegateAddress":"dudud"}, "id": 1}
-  override def getSpendables(req: TokenSpendablesReq): Future[TokenSpendablesResp] = {
+  override def getSpendables(
+      req: TokenSpendablesReq
+    ): Future[TokenSpendablesResp] = {
 
     val accessActor = proxy.providerOf("ethereum_access_actor").get
 
     //    val ff = (accessActor ? GetBalanceAndAllowancesReq(address = "hahahhahaha", tokens = Seq("aa", "bb"))).mapTo[GetBalanceAndAllowancesRes]
     //
-    //    ff.map { _ ⇒
+    //    ff.map { _ =>
     //      TokenSpendablesResp( owner = req.owner, delegateAddress = "",tokens = Seq(TokenSpendables("111", "2222", "333333")))
     //    }
 

@@ -24,15 +24,13 @@ package object base {
 
   implicit val byteStringColumnType: BaseColumnType[ByteString] =
     MappedColumnType.base[ByteString, Array[Byte]](
-      bs ⇒ bs.toByteArray(),
-      bytes ⇒ ByteString.copyFrom(bytes)
+      bs => bs.toByteArray(),
+      bytes => ByteString.copyFrom(bytes)
     )
 
   def enumColumnType[T <: scalapb.GeneratedEnum: ClassTag](
-    enumCompanion: scalapb.GeneratedEnumCompanion[T]
-  ): BaseColumnType[T] =
-    MappedColumnType.base[T, Int](
-      enum ⇒ enum.value,
-      int ⇒ enumCompanion.fromValue(int)
-    )
+      enumCompanion: scalapb.GeneratedEnumCompanion[T]
+    ): BaseColumnType[T] =
+    MappedColumnType
+      .base[T, Int](enum => enum.value, int => enumCompanion.fromValue(int))
 }

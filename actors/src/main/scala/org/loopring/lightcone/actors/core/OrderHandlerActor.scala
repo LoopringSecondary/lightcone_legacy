@@ -32,6 +32,7 @@ import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import scala.concurrent._
 
@@ -69,8 +70,8 @@ class OrderHandlerActor(orderService: OrderService)(
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
+    val actors: Lookup[ActorRef])
+    extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
   def accountManagerActor = actors.get(AccountManagerActor.name)
 

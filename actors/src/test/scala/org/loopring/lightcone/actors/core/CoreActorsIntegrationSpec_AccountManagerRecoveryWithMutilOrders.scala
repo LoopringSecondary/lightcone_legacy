@@ -81,7 +81,7 @@ import org.loopring.lightcone.proto._
 //         )
 
 //         val batchOrders1 = (0 until 500) map {
-//           i ⇒ order.copy(hash = "order1" + i)
+//           i => order.copy(hash = "order1" + i)
 //         }
 //         ordersDalActorProbe.expectQuery()
 //         ordersDalActorProbe.replyWith(batchOrders1)
@@ -90,12 +90,12 @@ import org.loopring.lightcone.proto._
 //         orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //         expectMsgPF() {
-//           case a: XOrderbook ⇒
+//           case a: XOrderbook =>
 //             log.debug("----orderbook status after first XRecoverOrdersRes: " + a)
 //         }
 
 //         val batchOrders2 = (0 until 500) map {
-//           i ⇒ order.copy(hash = "order2" + i)
+//           i => order.copy(hash = "order2" + i)
 //         }
 //         ordersDalActorProbe.expectQuery()
 //         ordersDalActorProbe.replyWith(batchOrders2)
@@ -104,7 +104,7 @@ import org.loopring.lightcone.proto._
 //         orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //         expectMsgPF() {
-//           case a: XOrderbook ⇒
+//           case a: XOrderbook =>
 //             log.debug("----orderbook status after second XRecoverOrdersRes: " + a)
 //         }
 //         ordersDalActorProbe.expectQuery()
@@ -113,7 +113,7 @@ import org.loopring.lightcone.proto._
 //         orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //         expectMsgPF() {
-//           case a: XOrderbook ⇒
+//           case a: XOrderbook =>
 //             log.debug("----orderbook status after last XRecoverOrdersRes: " + a)
 //         }
 
@@ -122,18 +122,18 @@ import org.loopring.lightcone.proto._
 //         accountManagerRecoveryActor ! XSubmitOrderReq(Some(order.copy(hash = "order---1")))
 
 //         expectMsgPF() {
-//           case XSubmitOrderRes(ERR_OK, Some(xorder)) ⇒
+//           case XSubmitOrderRes(ERR_OK, Some(xorder)) =>
 //             val order: Order = xorder
 //             log.debug(s"submitted an order: $order")
-//           case XSubmitOrderRes(ERR_UNKNOWN, None) ⇒
-//             log.debug(s"occurs ERR_UNKNOWN when submitting order:$order")
+//           case XSubmitOrderRes(ERR_INTERNAL_UNKNOWN, None) =>
+//             log.debug(s"occurs ERR_INTERNAL_UNKNOWN when submitting order:$order")
 //         }
 
 //         Thread.sleep(1000)
 //         orderbookManagerActor ! XGetOrderbookReq(0, 100)
 
 //         expectMsgPF() {
-//           case a: XOrderbook ⇒
+//           case a: XOrderbook =>
 //             log.debug("----orderbook status after submit an order: " + a)
 //         }
 

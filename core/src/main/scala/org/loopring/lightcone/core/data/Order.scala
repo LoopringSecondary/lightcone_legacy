@@ -18,13 +18,14 @@ package org.loopring.lightcone.core.data
 
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 import XOrderStatus._
 
 case class OrderState(
     amountS: BigInt = 0,
     amountB: BigInt = 0,
-    amountFee: BigInt = 0
-) {
+    amountFee: BigInt = 0) {
+
   def scaleBy(ratio: Rational) = OrderState(
     (Rational(amountS) * ratio).bigintValue,
     (Rational(amountB) * ratio).bigintValue,
@@ -48,11 +49,12 @@ case class Order(
     _outstanding: Option[OrderState] = None,
     _reserved: Option[OrderState] = None,
     _actual: Option[OrderState] = None,
-    _matchable: Option[OrderState] = None
-) {
+    _matchable: Option[OrderState] = None) {
 
   def original = OrderState(amountS, amountB, amountFee)
-  def outstanding = _outstanding.getOrElse(OrderState(amountS, amountB, amountFee))
+
+  def outstanding =
+    _outstanding.getOrElse(OrderState(amountS, amountB, amountFee))
   def reserved = _reserved.getOrElse(OrderState())
   def actual = _actual.getOrElse(OrderState())
   def matchable = _matchable.getOrElse(OrderState())
@@ -98,21 +100,29 @@ case class Order(
     if (token == tokenS && tokenFee == tokenS) {
       val r = Rational(amountS, amountFee + amountS)
       val reservedAmountS = (Rational(v) * r).bigintValue()
-      copy(_reserved = Some(
-        OrderState(reservedAmountS, 0, v - reservedAmountS)
-      )).updateActual()
+      copy(
+        _reserved = Some(
+          OrderState(reservedAmountS, 0, v - reservedAmountS)
+        )
+      ).updateActual()
     } else if (token == tokenS && tokenFee != tokenS) {
-      copy(_reserved = Some(
-        OrderState(v, 0, reserved.amountFee)
-      )).updateActual()
+      copy(
+        _reserved = Some(
+          OrderState(v, 0, reserved.amountFee)
+        )
+      ).updateActual()
     } else if (token != tokenS && tokenFee == tokenB) {
-      copy(_reserved = Some(
-        OrderState(reserved.amountS, 0, v)
-      )).updateActual()
+      copy(
+        _reserved = Some(
+          OrderState(reserved.amountS, 0, v)
+        )
+      ).updateActual()
     } else {
-      copy(_reserved = Some(
-        OrderState(reserved.amountS, 0, v)
-      )).updateActual()
+      copy(
+        _reserved = Some(
+          OrderState(reserved.amountS, 0, v)
+        )
+      ).updateActual()
     }
 
   // Private methods
@@ -128,40 +138,53 @@ case class Order(
 
   private[core] def resetMatchable() = copy(_matchable = None)
 
-  private[core] def displayableAmountS()(implicit tokenMetadataManager: TokenMetadataManager) =
+  private[core] def displayableAmountS(
+    )(
+      implicit tokenMetadataManager: TokenMetadataManager
+    ) =
     calcDisplayableAmount(tokenS, actual.amountS)
 
-  private[core] def displayableAmountB()(implicit tokenMetadataManager: TokenMetadataManager) =
+  private[core] def displayableAmountB(
+    )(
+      implicit tokenMetadataManager: TokenMetadataManager
+    ) =
     calcDisplayableAmount(tokenB, actual.amountB)
 
-  private[core] def displayableAmountFee()(implicit tokenMetadataManager: TokenMetadataManager) =
+  private[core] def displayableAmountFee(
+    )(
+      implicit tokenMetadataManager: TokenMetadataManager
+    ) =
     calcDisplayableAmount(tokenFee, actual.amountFee)
 
   private[core] def isSell()(implicit marketId: XMarketId) =
     (tokenS == marketId.secondary)
 
-  private[core] def displayablePrice()(
-    implicit
-    marketId: XMarketId,
-    tokenMetadataManager: TokenMetadataManager
-  ) = {
+  private[core] def displayablePrice(
+    )(
+      implicit
+      marketId: XMarketId,
+      tokenMetadataManager: TokenMetadataManager
+    ) = {
     if (tokenS == marketId.secondary) Rational(amountS, amountB).doubleValue
     else Rational(amountB, amountS).doubleValue
   }
 
-  private[core] def displayableAmount()(
-    implicit
-    marketId: XMarketId, tokenMetadataManager: TokenMetadataManager
-  ) = {
+  private[core] def displayableAmount(
+    )(
+      implicit
+      marketId: XMarketId,
+      tokenMetadataManager: TokenMetadataManager
+    ) = {
     if (tokenS == marketId.secondary) displayableAmountS
     else displayableAmountB
   }
 
-  private[core] def displayableTotal()(
-    implicit
-    marketId: XMarketId,
-    tokenMetadataManager: TokenMetadataManager
-  ) = {
+  private[core] def displayableTotal(
+    )(
+      implicit
+      marketId: XMarketId,
+      tokenMetadataManager: TokenMetadataManager
+    ) = {
     if (tokenS == marketId.secondary) displayableAmountB
     else displayableAmountS
   }
@@ -180,12 +203,18 @@ case class Order(
     copy(_actual = Some(original.scaleBy(r)))
   }
 
-  private def calcDisplayableAmount(token: String, amount: BigInt)(
-    implicit
-    tokenMetadataManager: TokenMetadataManager
-  ) = {
+  private def calcDisplayableAmount(
+      token: String,
+      amount: BigInt
+    )(
+      implicit
+      tokenMetadataManager: TokenMetadataManager
+    ) = {
     if (!tokenMetadataManager.hasTokenByAddress(token)) {
-      throw new IllegalStateException(s"no metadata available for token $token")
+      throw ErrorException(
+        ERR_MATCHING_TOKEN_METADATA_UNAVAILABLE,
+        s"no metadata available for token $token"
+      )
     }
     val metadata = tokenMetadataManager.getTokenByAddress(token).get
     val decimals = metadata.decimals

@@ -24,13 +24,14 @@ import com.google.inject.name.Named
 import scala.concurrent.Future
 import scala.reflect.runtime.universe._
 
-class ApiService @Inject() (
+class ApiService @Inject()(
     @Named("entry-point") val entryPointActor: ActorRef
-)(implicit val timeout: Timeout)
-  extends Object
-  with AccountService
-  with MarketService
-  with OrderService {
+  )(
+    implicit val timeout: Timeout)
+    extends Object
+    with AccountService
+    with MarketService
+    with OrderService {
 
   def test(): Future[String] = {
     Future.successful("test")
@@ -38,14 +39,18 @@ class ApiService @Inject() (
 
   val rm = runtimeMirror(this.getClass.getClassLoader)
   val thisMirror = rm.reflect(this)
-  val methodMap = (thisMirror.symbol.toType.decls.filter(_.isMethod).map {
-    m ⇒ m.name.toString → thisMirror.reflectMethod(m.asMethod)
-  }).toMap
+
+  val methodMap = (thisMirror.symbol.toType.decls
+    .filter(_.isMethod)
+    .map { m =>
+      m.name.toString → thisMirror.reflectMethod(m.asMethod)
+    })
+    .toMap
 
   def handle(req: JsonRpcReq) =
     req.params match {
-      case None    ⇒ methodMap(req.method)()
-      case Some(p) ⇒ methodMap(req.method)(p)
+      case None    => methodMap(req.method)()
+      case Some(p) => methodMap(req.method)(p)
     }
 
 }

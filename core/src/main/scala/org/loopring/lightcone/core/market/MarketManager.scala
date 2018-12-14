@@ -23,22 +23,36 @@ object MarketManager {
   case class MatchResult(
       rings: Seq[OrderRing],
       taker: Order,
-      orderbookUpdate: XOrderbookUpdate
-  )
+      orderbookUpdate: XOrderbookUpdate)
 }
+
 trait MarketManager {
   import MarketManager._
 
   val marketId: XMarketId
   val pendingRingPool: PendingRingPool
 
-  def submitOrder(order: Order, minFiatValue: Double): MatchResult
+  def submitOrder(
+      order: Order,
+      minFiatValue: Double
+    ): MatchResult
   def cancelOrder(orderId: String): Option[XOrderbookUpdate]
   def deletePendingRing(ringId: String): Option[XOrderbookUpdate]
 
-  def getOrder(orderId: String, returnMatchableAmounts: Boolean = false): Option[Order]
-  def getSellOrders(num: Int, returnMatchableAmounts: Boolean = false): Seq[Order]
-  def getBuyOrders(num: Int, returnMatchableAmounts: Boolean = false): Seq[Order]
+  def getOrder(
+      orderId: String,
+      returnMatchableAmounts: Boolean = false
+    ): Option[Order]
+
+  def getSellOrders(
+      num: Int,
+      returnMatchableAmounts: Boolean = false
+    ): Seq[Order]
+
+  def getBuyOrders(
+      num: Int,
+      returnMatchableAmounts: Boolean = false
+    ): Seq[Order]
 
   def getNumOfOrders(): Int
   def getNumOfBuyOrders(): Int
@@ -47,8 +61,8 @@ trait MarketManager {
   def getMetadata(): MarketMetadata
 
   def triggerMatch(
-    sellOrderAsTaker: Boolean,
-    minFiatValue: Double,
-    offset: Int = 0
-  ): Option[MatchResult]
+      sellOrderAsTaker: Boolean,
+      minFiatValue: Double,
+      offset: Int = 0
+    ): Option[MatchResult]
 }
