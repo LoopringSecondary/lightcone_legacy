@@ -40,11 +40,17 @@ trait RouteSupport extends JsonSupport {
       case err: XError =>
         complete(StatusCodes.InternalServerError, err)
       case e: String =>
-        complete(StatusCodes.InternalServerError, XError(message = e))
+        complete(
+          StatusCodes.InternalServerError,
+          XError(XErrorCode.ERR_INTERNAL_UNKNOWN, e)
+        )
       case e =>
         complete(
           StatusCodes.InternalServerError,
-          XError(message = s"unexpected response of type ${e.getClass.getName}")
+          XError(
+            XErrorCode.ERR_INTERNAL_UNKNOWN,
+            s"unexpected response of type ${e.getClass.getName}"
+          )
         )
 
     }
