@@ -38,21 +38,17 @@ message XSubmitRawOrderReq {
 
 message XSubmitRawOrderRes {
     string id = 1;
-    XErrorCode error = 2;
 }
 
 message XCancelOrderReq {
     string id = 1;
-    bool hard_cancel = 2; // 默认软取消
+    string address = 2; //用于分片路由
     XOrderStatus status = 3; //取消的类型
-    string address = 4;
 }
 
 message XCancelOrderRes {
     string id = 1;
-    bool hard_cancel = 2; // 默认软取消
-    XErrorCode error = 3;
-    XOrderStatus status = 4; //取消的类型
+    XOrderStatus status = 2; //取消的类型
 }
 
 message XSubmitRawOrder {
