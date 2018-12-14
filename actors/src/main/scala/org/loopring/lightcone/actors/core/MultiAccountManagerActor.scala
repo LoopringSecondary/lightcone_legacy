@@ -16,16 +16,23 @@
 
 package org.loopring.lightcone.actors.core
 import akka.actor.SupervisorStrategy.Restart
-import akka.actor.{ ActorLogging, ActorRef, ActorSystem, AllForOneStrategy, Props }
-import akka.cluster.sharding.{ ClusterSharding, ClusterShardingSettings }
+import akka.actor.{
+  ActorLogging,
+  ActorRef,
+  ActorSystem,
+  AllForOneStrategy,
+  Props
+}
+import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.base.DustOrderEvaluator
+import org.loopring.lightcone.core.base.{DustOrderEvaluator, ErrorException}
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -33,16 +40,17 @@ import scala.concurrent.duration._
 object MultiAccountManagerActor extends ShardedByAddress {
   val name = "multi_account_manager"
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    dustEvaluator: DustOrderEvaluator
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit
+      system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dustEvaluator: DustOrderEvaluator
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -58,26 +66,26 @@ object MultiAccountManagerActor extends ShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
-    case req: XCancelOrderReq             ⇒ req.address
-    case req: XSubmitOrderReq             ⇒ req.address
+    case req: XCancelOrderReq ⇒ req.address
+    case req: XSubmitOrderReq ⇒ req.address
     case req: XGetBalanceAndAllowancesReq ⇒ req.address
-    case req: XAddressBalanceUpdated      ⇒ req.address
-    case req: XAddressAllowanceUpdated    ⇒ req.address
+    case req: XAddressBalanceUpdated ⇒ req.address
+    case req: XAddressAllowanceUpdated ⇒ req.address
   }
 }
 
-class MultiAccountManagerActor()(
+class MultiAccountManagerActor(
+  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dustEvaluator: DustOrderEvaluator
-)
-  extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
-  with OrderRecoverSupport
-  with ActorLogging {
+    val dustEvaluator: DustOrderEvaluator)
+    extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
+    with OrderRecoverSupport
+    with ActorLogging {
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
@@ -87,39 +95,40 @@ class MultiAccountManagerActor()(
 
   val accountManagerActors = new MapBasedLookup[ActorRef]()
 
-  requestOrderRecovery(XOrderRecoverySettings(
-    selfConfig.getBoolean("skip-recovery"),
-    selfConfig.getInt("recover-batch-size"),
-    entityName,
-    None
-  ))
+  requestOrderRecovery(
+    XOrderRecoverySettings(
+      selfConfig.getBoolean("skip-recovery"),
+      selfConfig.getInt("recover-batch-size"),
+      entityName,
+      None
+    )
+  )
 
   def receive: Receive = {
-    case req: XSubmitOrderReq ⇒
-      getManagerActorForAccountManager(req.address) forward req
-    case req: XGetBalanceAndAllowancesReq ⇒
-      getManagerActorForAccountManager(req.address) forward req
-    case req: XCancelOrderReq ⇒
-      getManagerActorForAccountManager(req.address) forward req
-    case req: XAddressBalanceUpdated ⇒
-      getManagerActorForAccountManager(req.address) forward req
-    case req: XAddressAllowanceUpdated ⇒
-      getManagerActorForAccountManager(req.address) forward req
-    case x ⇒
-      log.info(s"receive wrong msg: $x")
+    case req: Any =>
+      val addressOpt = (MultiAccountManagerActor.extractAddress.lift)(req)
+      addressOpt match {
+        case Some(address) => accountManagerActorFor(address) forward req
+        case None =>
+          throw ErrorException(ERR_INVALID_REQ, "req cannot be handlled")
+      }
   }
 
-  def getManagerActorForAccountManager(address: String): ActorRef = {
+  def accountManagerActorFor(address: String): ActorRef = {
     val actorName = address
     if (!accountManagerActors.contains(actorName)) {
-      val newAccountActor = context.actorOf(Props(new AccountManagerActor()), actorName)
+      val newAccountActor =
+        context.actorOf(Props(new AccountManagerActor()), actorName)
       accountManagerActors.add(actorName, newAccountActor)
     }
     accountManagerActors.get(actorName)
   }
 
   protected def recoverOrder(xraworder: XRawOrder) = {
-    getManagerActorForAccountManager(xraworder.owner) ? XSubmitOrderReq(xraworder.owner, Some(xraworder))
+    accountManagerActorFor(xraworder.owner) ? XSubmitOrderReq(
+      xraworder.owner,
+      Some(xraworder)
+    )
   }
 
 }

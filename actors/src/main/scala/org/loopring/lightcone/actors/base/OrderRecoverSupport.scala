@@ -23,6 +23,7 @@ import org.loopring.lightcone.proto._
 
 import scala.collection.mutable.Queue
 import scala.concurrent._
+
 trait OrderRecoverSupport {
   actor: Actor with ActorLogging =>
 
@@ -67,13 +68,13 @@ trait OrderRecoverSupport {
       processed += size
 
       xordersToRecover ++= xraworders
-      lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
+      lastUpdatdTimestamp =
+        xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
       recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverySettings.batchSize
 
       self ! XRecoverNextOrder()
 
     case _: XRecoverNextOrder ⇒
-
       if (xordersToRecover.isEmpty) {
         if (!recoverEnded) {
           //          ordersRecoveryActor ! XRecoverOrdersReq(

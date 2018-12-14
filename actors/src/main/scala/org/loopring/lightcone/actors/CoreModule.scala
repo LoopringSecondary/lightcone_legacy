@@ -96,7 +96,10 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     //-----------deploy sharded actors-----------
     actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
-    actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.startShardRegion)
+    actors.add(
+      MultiAccountManagerActor.name,
+      MultiAccountManagerActor.startShardRegion
+    )
     actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
     actors.add(
       EthereumEventExtractorActor.name,

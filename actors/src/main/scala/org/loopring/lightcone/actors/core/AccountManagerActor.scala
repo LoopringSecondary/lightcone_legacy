@@ -47,17 +47,15 @@ class AccountManagerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dustEvaluator: DustOrderEvaluator
-)
-  extends ActorWithPathBasedConfig(AccountManagerActor.name) {
+    val dustEvaluator: DustOrderEvaluator)
+    extends Actor
+    with ActorLogging {
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
       //所有异常都抛给上层监管者，shardingActor
       case _: Exception ⇒ Escalate
     }
-
-  override val entityName = AccountManagerActor.name
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
@@ -87,10 +85,9 @@ class AccountManagerActor(
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case XSubmitOrderReq(_, Some(xorder)) => {
-      // println("### accountXSubmitOrderReq")
+    case XSubmitOrderReq(addr, Some(xorder)) =>
+      assert(addr == address)
       submitOrder(xorder).sendTo(sender)
-    }
 
     case req: XCancelOrderReq =>
       if (manager.cancelOrder(req.id)) {
@@ -190,9 +187,9 @@ class AccountManagerActor(
               STATUS_CANCELLED_LOW_FEE_BALANCE =>
             marketManagerActor ! XCancelOrderReq(order.id)
 
-        case STATUS_PENDING =>
-          //allowance的改变需要更新到marketManager
-          marketManagerActor ! XSubmitOrderReq(order = Some(order))
+          case STATUS_PENDING =>
+            //allowance的改变需要更新到marketManager
+            marketManagerActor ! XSubmitOrderReq(order = Some(order))
 
           case status =>
             log.error(

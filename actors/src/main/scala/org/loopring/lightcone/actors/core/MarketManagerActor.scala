@@ -107,7 +107,8 @@ class MarketManagerActor(
   //todo: need refactor
   val shardId = self.path.toString.split("/").last //todo：如何获取shardId
 
-  implicit var marketId: XMarketId = XMarketId("token1", "token2") //todo:如何通过shardId得到marketId
+  implicit var marketId
+    : XMarketId = XMarketId("token1", "token2") //todo:如何通过shardId得到marketId
 
   private val ringMatcher = new RingMatcherImpl()
   private val pendingRingPool = new PendingRingPoolImpl()
@@ -137,8 +138,8 @@ class MarketManagerActor(
       submitOrder(xorder)
 
     case XCancelOrderReq(orderId, hardCancel, _) ⇒
-      manager.cancelOrder(orderId) foreach {
-        orderbookUpdate ⇒ orderbookManagerActor ! orderbookUpdate
+      manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
+        orderbookManagerActor ! orderbookUpdate
       }
       sender ! XCancelOrderRes(id = orderId)
 
@@ -216,5 +217,6 @@ class MarketManagerActor(
     }
   }
 
-  protected def recoverOrder(xraworder: XRawOrder): Future[Any] = submitOrder(xraworder)
+  protected def recoverOrder(xraworder: XRawOrder): Future[Any] =
+    submitOrder(xraworder)
 }
