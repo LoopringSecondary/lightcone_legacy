@@ -38,11 +38,14 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val parms = WithdrawFunction.Parms(wad = BigInt("29558242000000000000000"))
     val input = weth.withdraw.pack(parms)
     info(input)
-    input should be("0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000")
+    input should be(
+      "0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000"
+    )
   }
 
   "decodeDepositEvent" should "decode event data and assemble to class Deposit" in {
-    val data = "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
+    val data =
+      "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
     val topics = Array(
       "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c",
       "0x00000000000000000000000033debb5ee65549ffa71116957da6db17a9d8fe57"
@@ -50,26 +53,28 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val depositOpt = weth.depositEvent.unpack(data, topics)
     info(depositOpt.toString)
     depositOpt match {
-      case None ⇒
-      case Some(deposit) ⇒
+      case None =>
+      case Some(deposit) =>
         deposit.dst should be("0x33debb5ee65549ffa71116957da6db17a9d8fe57")
         deposit.wad.toString() should be("1000000000000000000")
     }
   }
 
   "decodeWithdrawFunction" should "decode event data and assemble to class Withdraw" in {
-    val data = "0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000"
+    val data =
+      "0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000"
     val withdrawOpt = weth.withdraw.unpackInput(data)
     info(withdrawOpt.toString)
     withdrawOpt match {
-      case None ⇒
-      case Some(withdraw) ⇒
+      case None =>
+      case Some(withdraw) =>
         withdraw.wad.toString() should be("29558242000000000000000")
     }
   }
 
   "decodeEventOfDeposit" should "decode event data and assemble to class Deposit" in {
-    val data = "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
+    val data =
+      "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
     val topics = Array(
       "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c",
       "0x00000000000000000000000033debb5ee65549ffa71116957da6db17a9d8fe57"
@@ -77,20 +82,21 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val eventOpt = weth.unpackEvent(data, topics)
     info(eventOpt.toString)
     eventOpt match {
-      case None ⇒
-      case Some(deposit: DepositEvent.Result) ⇒
+      case None =>
+      case Some(deposit: DepositEvent.Result) =>
         deposit.dst should be("0x33debb5ee65549ffa71116957da6db17a9d8fe57")
         deposit.wad.toString() should be("1000000000000000000")
     }
   }
 
   "decodeFunctionOfWithdrawal" should "decode event data and assemble to class Withdraw" in {
-    val data = "0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000"
+    val data =
+      "0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000"
     val withdrawOpt = weth.unpackFunctionInput(data)
     info(withdrawOpt.toString)
     withdrawOpt match {
-      case None ⇒
-      case Some(withdraw: WithdrawFunction.Parms) ⇒
+      case None =>
+      case Some(withdraw: WithdrawFunction.Parms) =>
         withdraw.wad.toString() should be("29558242000000000000000")
     }
   }

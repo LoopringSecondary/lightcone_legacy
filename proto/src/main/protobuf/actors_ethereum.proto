@@ -357,6 +357,19 @@ message XSendRawTransactionReq {
     string data = 1;
 }
 
+message XGetUncleByBlockNumAndIndexReq{
+    string blockNum = 1;
+    string index = 2;
+}
+
+message XBatchGetUncleByBlockNumAndIndexReq{
+   repeated XGetUncleByBlockNumAndIndexReq reqs = 1;
+}
+
+message XBatchGetUncleByBlockNumAndIndexRes{
+   repeated XGetBlockWithTxHashByHashRes resps = 1;
+}
+
 message XBatchContractCallReq {
     repeated XEthCallReq reqs = 1;
 }

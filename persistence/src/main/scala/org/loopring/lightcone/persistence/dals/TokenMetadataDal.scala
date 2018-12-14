@@ -25,25 +25,30 @@ import slick.basic._
 import scala.concurrent._
 import org.slf4s.Logging
 
-trait TokenMetadataDal
-  extends BaseDalImpl[TokenMetadataTable, XTokenMetadata] {
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[XTokenMetadata]]
+trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, XTokenMetadata] {
+
+  def getTokens(
+      reloadFromDatabase: Boolean = false
+    ): Future[Seq[XTokenMetadata]]
 }
 
-class TokenMetadataDalImpl()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends TokenMetadataDal with Logging {
+class TokenMetadataDalImpl(
+  )(
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext)
+    extends TokenMetadataDal
+    with Logging {
   val query = TableQuery[TokenMetadataTable]
 
   private var tokens: Seq[XTokenMetadata] = Nil
 
   def getTokens(reloadFromDatabase: Boolean = false) = {
     if (reloadFromDatabase || tokens.isEmpty) {
-      db.run(query.take(Int.MaxValue).result).map { tokens_ ⇒
+      db.run(query.take(Int.MaxValue).result).map { tokens_ =>
         tokens = tokens_
-        log.info(s"token metadata retrieved>> ${tokens.mkString("\n", "\n", "\n")}")
+        log.info(
+          s"token metadata retrieved>> ${tokens.mkString("\n", "\n", "\n")}"
+        )
         tokens
       }
     } else {

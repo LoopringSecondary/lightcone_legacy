@@ -21,12 +21,10 @@ import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.name.Named
 
-class ProxyActorProvider @Inject() (
+class ProxyActorProvider @Inject()(
     @Assisted name: String,
-    @Named("cluster_proxy") proxyMap: Map[String, ActorRef]
-) {
+    @Named("cluster_proxy") proxyMap: Map[String, ActorRef]) {
 
   def get(): ActorRef = proxyMap.get(name).get
   def option(): Option[ActorRef] = proxyMap.get(name)
 }
-

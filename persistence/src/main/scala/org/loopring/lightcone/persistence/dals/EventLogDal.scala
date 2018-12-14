@@ -24,15 +24,13 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait EventLogDal
-  extends BaseDalImpl[EventLogTable, XEventLogData] {
+trait EventLogDal extends BaseDalImpl[EventLogTable, XEventLogData] {}
 
-}
-
-class EventLogDalImpl()(
+class EventLogDalImpl(
+  )(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext
-) extends EventLogDal {
+    val ec: ExecutionContext)
+    extends EventLogDal {
   val query = TableQuery[EventLogTable]
 }
