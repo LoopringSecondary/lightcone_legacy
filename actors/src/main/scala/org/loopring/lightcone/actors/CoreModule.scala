@@ -34,7 +34,10 @@ import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence._
-import org.loopring.lightcone.persistence.service.{ OrderService, OrderServiceImpl }
+import org.loopring.lightcone.persistence.service.{
+  OrderService,
+  OrderServiceImpl
+}
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
@@ -125,7 +128,10 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       OrderbookManagerActor.name,
       OrderbookManagerActor.startShardRegion
     )
-    actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
+    actors.add(
+      OrderHandlerActor.name,
+      OrderHandlerActor.startShardRegion(orderService)
+    )
     actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
     actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
     actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)

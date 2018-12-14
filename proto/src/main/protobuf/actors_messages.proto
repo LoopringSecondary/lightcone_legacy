@@ -45,7 +45,7 @@ message XCancelOrderReq {
     string id = 1;
     bool hard_cancel = 2; // 默认软取消
     XOrderStatus status = 3; //取消的类型
-    string address = 3;
+    string address = 4;
 }
 
 message XCancelOrderRes {

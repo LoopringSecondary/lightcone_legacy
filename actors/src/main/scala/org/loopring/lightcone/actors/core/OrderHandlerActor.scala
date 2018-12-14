@@ -24,10 +24,6 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
@@ -40,15 +36,17 @@ import scala.concurrent._
 object OrderHandlerActor extends ShardedEvenly {
   val name = "order_handler"
 
-  def startShardRegion(orderService: OrderService)(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+  def startShardRegion(
+      orderService: OrderService
+    )(
+      implicit
+      system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef]
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -64,7 +62,9 @@ object OrderHandlerActor extends ShardedEvenly {
   }
 }
 
-class OrderHandlerActor(orderService: OrderService)(
+class OrderHandlerActor(
+    orderService: OrderService
+  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -94,9 +94,12 @@ class OrderHandlerActor(orderService: OrderService)(
         saveRes ← orderService.submitOrder(raworder)
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         res ← saveRes.error match {
-          case XErrorCode.ERR_NONE | XErrorCode.PERS_ERR_DUPLICATE_INSERT ⇒
+          case XErrorCode.ERR_NONE | ERR_PERSISTENCE_DUPLICATE_INSERT ⇒
             for {
-              submitRes ← accountManagerActor ? XSubmitOrderReq(Some(raworder))
+              submitRes ← accountManagerActor ? XSubmitOrderReq(
+                raworder.owner,
+                Some(raworder)
+              )
             } yield {
               submitRes match {
                 case XSubmitOrderRes(XErrorCode.ERR_NONE, _) ⇒
@@ -104,7 +107,7 @@ class OrderHandlerActor(orderService: OrderService)(
                 case XSubmitOrderRes(err, _) ⇒
                   XSubmitRawOrderRes(raworder.hash, err)
                 case _ ⇒
-                  XSubmitRawOrderRes(raworder.hash, XErrorCode.ERR_UNKNOWN)
+                  XSubmitRawOrderRes(raworder.hash, ERR_INTERNAL_UNKNOWN)
               }
             }
           case err ⇒
