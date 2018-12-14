@@ -218,6 +218,9 @@ class EthereumEventExtractorActor(
                   transfer.sender → log.address,
                   transfer.receiver → log.address
                 )
+                if (receipt.get.to.equalsIgnoreCase(protocolAddress)) {
+                  allowanceAddresses.append(transfer.sender → log.address)
+                }
               case Some(approval: ApprovalEvent.Result) ⇒
                 if (approval.spender.equalsIgnoreCase(delegateAddress))
                   allowanceAddresses.append(approval.owner → log.address)
