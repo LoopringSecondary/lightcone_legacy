@@ -105,7 +105,8 @@ message XGetAllowanceRes {
 }
 
 message XSubmitOrderReq {
-    XOrder order = 1;
+    string address = 1;
+    XOrder order = 2;
 }
 
 message XSubmitOrderRes {
