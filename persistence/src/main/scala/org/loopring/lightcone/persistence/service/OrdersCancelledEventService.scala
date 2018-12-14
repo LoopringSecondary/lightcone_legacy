@@ -18,7 +18,6 @@ package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.persistence.dals.OrdersCancelledEventDal
 import org.loopring.lightcone.proto.{XErrorCode, XOrdersCancelledEvent}
-
 import scala.concurrent.Future
 
 trait OrdersCancelledEventService {
