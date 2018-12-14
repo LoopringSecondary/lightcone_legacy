@@ -63,7 +63,6 @@ class BlockDalImpl(
     db.run(
       query
         .filter(_.hash === hash)
-        .filter(_.isValid === 1)
         .result
         .headOption
     )
@@ -73,7 +72,6 @@ class BlockDalImpl(
     db.run(
       query
         .filter(_.height === height)
-        .filter(_.isValid === 1)
         .result
         .headOption
     )
@@ -82,7 +80,6 @@ class BlockDalImpl(
   def findMaxHeight(): Future[Option[Long]] = {
     db.run(
       query
-        .filter(_.isValid === 1)
         .map(_.height)
         .max
         .result
@@ -97,7 +94,6 @@ class BlockDalImpl(
       query
         .filter(_.height >= heightFrom)
         .filter(_.height <= heightTo)
-        .filter(_.isValid === 1)
         .sortBy(_.height.asc.nullsFirst)
         .map(c => (c.height, c.hash))
         .result
@@ -106,17 +102,11 @@ class BlockDalImpl(
 
   def count(): Future[Int] = {
     db.run(
-      query
-        .filter(_.isValid === 1)
-        .size
-        .result
+      query.size.result
     )
   }
 
   def obsolete(height: Long): Future[Unit] = {
-    val q = for {
-      c <- query if c.height >= height
-    } yield c.isValid
-    db.run(q.update(0)).map(_ > 0)
+    db.run(query.filter(_.height >= height).delete).map(_ >= 0)
   }
 }

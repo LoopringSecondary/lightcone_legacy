@@ -78,3 +78,51 @@ message XSaveOrderStateResult {
 message XSaveOrderStateReq {
     XRawOrder state    = 1;
 }
+
+message MarketPair {
+    string token_s  = 1;
+    string token_b  = 2;
+}
+
+message XGetOrdersForUserReq {
+    oneof market {
+        MarketPair pair        = 1; // tokenS -> tokenB
+        string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+    }
+    string   owner                 = 3;
+    repeated XOrderStatus statuses = 4;
+    XSort    sort                  = 5;
+    XSkip    skip                  = 6;
+}
+
+message XGetOrdersForUserResult {
+    repeated XRawOrder orders = 1;
+    XErrorCode error = 2;
+}
+
+message XUserCancelOrderReq {
+    repeated string order_hashes = 1;
+}
+
+message XUserCancelOrderResult {
+    message Result {
+        string     order_hash = 1;
+        XErrorCode error      = 2;
+    }
+    repeated Result updated_result = 1;
+}
+
+message XGetTradesReq {
+    oneof market {
+        MarketPair pair        = 1; // tokenS -> tokenB
+        string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+    }
+    string owner   = 3;
+    XSort sort     = 4;
+    XSkip skip     = 5;
+}
+
+message XGetTradesResult {
+    repeated XTrade  trades = 1;
+    XErrorCode       error  = 2;
+}
