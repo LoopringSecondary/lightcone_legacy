@@ -22,7 +22,6 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
-import akka.util.Timeout
 import com.google.inject.Guice
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.InjectorExtensions._
@@ -43,13 +42,14 @@ object Maim extends App with MainRoute with Logging {
   implicit val system = injector.instance[ActorSystem]
   implicit val materializer = injector.instance[ActorMaterializer]
   implicit val ec = injector.instance[ExecutionContext]
-  implicit val timeout = Timeout(20.seconds)
+  implicit val timeout = config.getInt("restful.timeout").seconds
 
   val actors = injector.instance[Lookup[ActorRef]]
   val requestHandler = actors.get(EntryPointActor.name)
 
   val host = config.getString("restful.host")
   val port = config.getInt("restful.port")
+
   val binding = Http().bindAndHandle(route, host, port)
 
   log.info(
