@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
+import collection.JavaConverters._
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
@@ -52,7 +53,7 @@ object MarketManagerActor extends ShardedByMarket {
       dustOrderEvaluator: DustOrderEvaluator,
       tokenMetadataManager: TokenMetadataManager
     ): ActorRef = {
-    numOfShards = 1
+    numOfShards = 10
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new MarketManagerActor()),
@@ -85,6 +86,20 @@ class MarketManagerActor(
     with OrderRecoverSupport {
   val marketName = entityName
 
+  //todo:需要测试
+  val markets = selfConfig
+    .getObjectList("markets")
+    .asScala
+    .map { item =>
+      val c = item.toConfig
+      val marketId = XMarketId(c.getString("priamry"), c.getString("secondary"))
+      val hash = MarketManagerActor
+        .hashed(marketId)
+        .toString
+      hash -> marketId
+    }
+    .toMap
+
   val wethTokenAddress = config.getString("weth.address")
 
   val gasLimitPerRingV2 = BigInt(
@@ -107,8 +122,7 @@ class MarketManagerActor(
   //todo: need refactor
   val shardId = self.path.toString.split("/").last //todo：如何获取shardId
 
-  implicit var marketId
-    : XMarketId = XMarketId("token1", "token2") //todo:如何通过shardId得到marketId
+  implicit var marketId: XMarketId = markets(shardId)
 
   private val ringMatcher = new RingMatcherImpl()
   private val pendingRingPool = new PendingRingPoolImpl()

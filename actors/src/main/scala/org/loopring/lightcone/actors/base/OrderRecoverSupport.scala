@@ -85,7 +85,7 @@ trait OrderRecoverSupport {
           //          )
         } else {
           log.info(s"recovering completed with $processed orders")
-          context.unbecome()
+          context.become(receive)
         }
       } else {
         for {
