@@ -25,7 +25,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.dals.{ BlockDal, BlockDalImpl }
+import org.loopring.lightcone.persistence.dals.{BlockDal, BlockDalImpl}
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import com.google.protobuf.ByteString
@@ -41,23 +41,25 @@ object EthereumEventExtractorActor {
   val name = "ethereum_event_extractor"
 
   private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ XStart(_) ⇒
+      ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
   }
 
   private val extractShardId: ShardRegion.ExtractShardId = {
     case XStart(_) ⇒ "address_1"
   }
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    dbConfig: DatabaseConfig[JdbcProfile]
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit
+      system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dbConfig: DatabaseConfig[JdbcProfile]
+    ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new EthereumEventExtractorActor()),
@@ -68,15 +70,16 @@ object EthereumEventExtractorActor {
   }
 }
 
-class EthereumEventExtractorActor()(
+class EthereumEventExtractorActor(
+  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    dbConfig: DatabaseConfig[JdbcProfile]
-) extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
+    dbConfig: DatabaseConfig[JdbcProfile])
+    extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
 
   def ethereumConnectionActor: ActorRef = actors.get(EthereumAccessActor.name)
   def accountManager: ActorRef = actors.get(AccountManagerActor.name)
@@ -85,7 +88,12 @@ class EthereumEventExtractorActor()(
   val wethAbi = WETHABI()
   val zeroAdd: String = "0x" + "0" * 40
   val blockDal: BlockDal = new BlockDalImpl()
-  val delegateAddress: String = config.getString("loopring-protocol.delegate-address")
+
+  val delegateAddress: String =
+    config.getString("loopring-protocol.delegate-address")
+
+  val protocolAddress: String =
+    config.getString("loopring-protocol.protocol-address")
 
   var currentBlockNumber: BigInt = BigInt(-1)
   var currentBlockHash: String = _
@@ -95,12 +103,14 @@ class EthereumEventExtractorActor()(
       maxBlock: Option[Long] ← blockDal.findMaxHeight()
       blockNum ← maxBlock match {
         case Some(_) ⇒ Future.successful(BigInt(maxBlock.get))
-        case _ ⇒ (ethereumConnectionActor ? XEthBlockNumberReq())
-          .mapTo[XEthBlockNumberRes]
-          .map(res ⇒ BigInt(res.result))
+        case _ ⇒
+          (ethereumConnectionActor ? XEthBlockNumberReq())
+            .mapTo[XEthBlockNumberRes]
+            .map(res ⇒ BigInt(res.result))
       }
-      blockHash ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(blockNum.toString(16)))
-        .mapTo[XGetBlockWithTxHashByNumberRes]
+      blockHash ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(
+        blockNum.toString(16)
+      )).mapTo[XGetBlockWithTxHashByNumberRes]
         .map(_.result.get.hash)
     } yield {
       currentBlockNumber = blockNum
@@ -116,14 +126,16 @@ class EthereumEventExtractorActor()(
     case job: XBlockJob ⇒
       indexBlock(job)
   }
+
   def process(): Unit = {
     for {
       taskNum ← (ethereumConnectionActor ? XEthBlockNumberReq())
         .mapTo[XEthBlockNumberRes]
         .map(_.result)
       block ← if (taskNum > currentBlockNumber)
-        (ethereumConnectionActor ? XGetBlockWithTxObjectByNumberReq(currentBlockNumber + 1))
-          .mapTo[XGetBlockWithTxObjectByNumberRes]
+        (ethereumConnectionActor ? XGetBlockWithTxObjectByNumberReq(
+          (currentBlockNumber + 1).toString(16)
+        )).mapTo[XGetBlockWithTxObjectByNumberRes]
       else {
         Future.successful(XGetBlockWithTxObjectByNumberRes())
       }
@@ -150,9 +162,12 @@ class EthereumEventExtractorActor()(
   // find the fork height
   def handleFork(forkBlock: XForkBlock): Unit = {
     for {
-      dbBlockData ← blockDal.findByHeight(forkBlock.height.longValue()).map(_.get)
-      nodeBlockData ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(forkBlock.height.toHexString))
-        .mapTo[XGetBlockWithTxHashByNumberRes]
+      dbBlockData ← blockDal
+        .findByHeight(forkBlock.height.longValue())
+        .map(_.get)
+      nodeBlockData ← (ethereumConnectionActor ? XGetBlockWithTxHashByNumberReq(
+        forkBlock.height.toHexString
+      )).mapTo[XGetBlockWithTxHashByNumberRes]
         .map(_.result.get)
       task ← if (dbBlockData.hash.equals(nodeBlockData.hash)) {
         currentBlockNumber = forkBlock.height
@@ -167,8 +182,9 @@ class EthereumEventExtractorActor()(
   // index block
   def indexBlock(job: XBlockJob): Unit = {
     for {
-      txReceipts ← (ethereumConnectionActor ? XBatchGetTransactionReceiptsReq(job.txhashes.map(XGetTransactionReceiptReq(_))))
-        .mapTo[XBatchGetTransactionReceiptsRes]
+      txReceipts ← (ethereumConnectionActor ? XBatchGetTransactionReceiptsReq(
+        job.txhashes.map(XGetTransactionReceiptReq(_))
+      )).mapTo[XBatchGetTransactionReceiptsRes]
         .map(_.resps.map(_.result))
       allGet = txReceipts.forall(_.nonEmpty)
       balanceAddresses = ListBuffer.empty[(String, String)]
@@ -180,7 +196,10 @@ class EthereumEventExtractorActor()(
           receipt.get.logs.foreach(log ⇒ {
             wethAbi.unpackEvent(log.data, log.topics.toArray) match {
               case Some(transfer: TransferEvent.Result) ⇒
-                balanceAddresses.append(transfer.sender → log.address, transfer.receiver → log.address)
+                balanceAddresses.append(
+                  transfer.sender → log.address,
+                  transfer.receiver → log.address
+                )
               case Some(approval: ApprovalEvent.Result) ⇒
                 if (approval.spender.equalsIgnoreCase(delegateAddress))
                   allowanceAddresses.append(approval.owner → log.address)
@@ -194,24 +213,49 @@ class EthereumEventExtractorActor()(
         })
       }
       balanceReqs = balanceAddresses.unzip._1.toSet.map((add: String) ⇒ {
-        XGetBalanceReq(add, balanceAddresses.find(_._1.equalsIgnoreCase(add)).unzip._2.toSet.toSeq)
+        XGetBalanceReq(
+          add,
+          balanceAddresses.find(_._1.equalsIgnoreCase(add)).unzip._2.toSet.toSeq
+        )
       })
       allowanceReqs = allowanceAddresses.unzip._1.toSet.map((add: String) ⇒ {
-        XGetAllowanceReq(add, allowanceAddresses.find(_._1.equalsIgnoreCase(add)).unzip._2.toSet.toSeq)
+        XGetAllowanceReq(
+          add,
+          allowanceAddresses
+            .find(_._1.equalsIgnoreCase(add))
+            .unzip
+            ._2
+            .toSet
+            .toSeq
+        )
       })
-      balanceRes ← Future.sequence(balanceReqs.map(req ⇒
-        (ethereumConnectionActor ? req).mapTo[XGetBalanceRes]))
-      allowanceRes ← Future.sequence(allowanceReqs.map(req ⇒
-        (ethereumConnectionActor ? req).mapTo[XGetAllowanceRes]))
+      balanceRes ← Future.sequence(
+        balanceReqs
+          .map(req ⇒ (ethereumConnectionActor ? req).mapTo[XGetBalanceRes])
+      )
+      allowanceRes ← Future.sequence(
+        allowanceReqs
+          .map(req ⇒ (ethereumConnectionActor ? req).mapTo[XGetAllowanceRes])
+      )
     } yield {
       if (allGet) {
         balanceRes.foreach(res ⇒ {
-          res.balanceMap.foreach(item ⇒
-            accountManager ! XAddressBalanceUpdated(res.address, token = item._1, balance = item._2))
+          res.balanceMap.foreach(
+            item ⇒
+              accountManager ! XAddressBalanceUpdated(
+                res.address,
+                token = item._1,
+                balance = item._2
+              )
+          )
         })
         allowanceRes.foreach(res ⇒ {
           res.allowanceMap.foreach(item ⇒ {
-            accountManager ! XAddressAllowanceUpdated(res.address, token = item._1, item._2)
+            accountManager ! XAddressAllowanceUpdated(
+              res.address,
+              token = item._1,
+              item._2
+            )
           })
         })
         currentBlockNumber = job.height

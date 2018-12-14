@@ -21,5 +21,5 @@
     - OrderHistoryActor
     - AccountBalanceActor
     - GasPriceActor
-    - ethereum encoding/declding library
+    - ethereum encoding/decoding library
 
