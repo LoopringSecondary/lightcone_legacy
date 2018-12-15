@@ -89,9 +89,11 @@ class EthereumEventExtractorActor(
   val wethAbi = WETHABI()
   val loopringProtocolAbi = LoopringProtocolAbi()
 
-  val zeroAdd: String = "0x" + "0" * 40
-  val blockDal: BlockDal = new BlockDalImpl()
 
+  val blockDal: BlockDal = new BlockDalImpl()
+  
+
+  val zeroAdd: String = "0x" + "0" * 40
   val delegateAddress: String =
     config.getString("loopring-protocol.delegate-address")
 
@@ -209,9 +211,9 @@ class EthereumEventExtractorActor(
       } else {
         (Seq.empty[(String, String)], Seq.empty[(String, String)])
       }
-      fills = if(allGet){
+      fills = if (allGet) {
         getFills(txReceipts)
-      }else{
+      } else {
         Seq.empty[String]
       }
       balanceAddresses = ListBuffer
@@ -316,13 +318,23 @@ class EthereumEventExtractorActor(
             loopringProtocolAbi
               .unpackEvent(log.data, log.topics.toArray) match {
               case Some(event: RingMinedEvent.Result) ⇒
-                orderHashes.append(event._fills)
+                orderHashes.append(splitEventToFills(event._fills):_*)
               case _ ⇒
             }
           }
         }
       })
     orderHashes
+  }
+
+  def splitEventToFills(_fills: String): Seq[String] = {
+    //首先去掉head
+    val fillContent = _fills.substring(128)
+    val fillLength = 8 * 64
+      (0 until (fillContent.length / fillLength))
+      .map { index ⇒
+        fillContent.substring(index * fillLength, fillLength * (index + 1))
+    }
   }
 
   implicit def hex2BigInt(hex: String): BigInt = BigInt(Numeric.toBigInt(hex))
