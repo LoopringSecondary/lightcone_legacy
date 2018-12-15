@@ -86,8 +86,9 @@ class EthereumEventExtractorActor(
 
   def accountManager: ActorRef = actors.get(AccountManagerActor.name)
 
-  val erc20Abi = ERC20ABI()
   val wethAbi = WETHABI()
+  val loopringProtocolAbi = LoopringProtocolAbi()
+
   val zeroAdd: String = "0x" + "0" * 40
   val blockDal: BlockDal = new BlockDalImpl()
 
@@ -190,9 +191,6 @@ class EthereumEventExtractorActor(
         job.txhashes.map(XGetTransactionReceiptReq(_))
       )).mapTo[XBatchGetTransactionReceiptsRes]
         .map(_.resps.map(_.result))
-      allGet = txReceipts.forall(_.nonEmpty)
-      balanceAddresses = ListBuffer.empty[(String, String)]
-      allowanceAddresses = ListBuffer.empty[(String, String)]
       batchGetUnclesReq = XBatchGetUncleByBlockNumAndIndexReq(
         job.uncles.zipWithIndex.unzip._2.map(
           index ⇒
@@ -205,40 +203,29 @@ class EthereumEventExtractorActor(
       uncles ← (ethereumAccessorActor ? batchGetUnclesReq)
         .mapAs[XBatchGetUncleByBlockNumAndIndexRes]
         .map(_.resps.map(_.result.get.miner))
-      _ = if (allGet) {
-        balanceAddresses.append(job.miner → zeroAdd)
-        balanceAddresses.append(uncles.map(_ → zeroAdd): _*)
-        txReceipts.foreach(receipt ⇒ {
-          balanceAddresses.append(receipt.get.from → zeroAdd)
-          balanceAddresses.append(receipt.get.to → zeroAdd)
-          receipt.get.logs.foreach(log ⇒ {
-            wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-              case Some(transfer: TransferEvent.Result) ⇒
-                balanceAddresses.append(
-                  transfer.sender → log.address,
-                  transfer.receiver → log.address
-                )
-                if (receipt.get.to.equalsIgnoreCase(protocolAddress)) {
-                  allowanceAddresses.append(transfer.sender → log.address)
-                }
-              case Some(approval: ApprovalEvent.Result) ⇒
-                if (approval.spender.equalsIgnoreCase(delegateAddress))
-                  allowanceAddresses.append(approval.owner → log.address)
-              case Some(deposit: DepositEvent.Result) ⇒
-                balanceAddresses.append(deposit.dst → log.address)
-              case Some(withdrawal: WithdrawalEvent.Result) ⇒
-                balanceAddresses.append(withdrawal.src → log.address)
-              case _ ⇒
-            }
-          })
-        })
+      allGet = txReceipts.forall(_.nonEmpty)
+      addresses = if (allGet) {
+        getBalanceAndAllowanceAdds(txReceipts)
+      } else {
+        (Seq.empty[(String, String)], Seq.empty[(String, String)])
       }
+      fills = if(allGet){
+        getFills(txReceipts)
+      }else{
+        Seq.empty[String]
+      }
+      balanceAddresses = ListBuffer
+        .empty[(String, String)]
+        .++=(addresses._1)
+        .++=(uncles.map(_ → zeroAdd))
+        .+=(job.miner → zeroAdd)
       balanceReqs = balanceAddresses.unzip._1.toSet.map((add: String) ⇒ {
         XGetBalanceReq(
           add,
           balanceAddresses.find(_._1.equalsIgnoreCase(add)).unzip._2.toSet.toSeq
         )
       })
+      allowanceAddresses = addresses._2
       allowanceReqs = allowanceAddresses.unzip._1.toSet.map((add: String) ⇒ {
         XGetAllowanceReq(
           add,
@@ -286,6 +273,56 @@ class EthereumEventExtractorActor(
         context.system.scheduler.scheduleOnce(30 seconds, self, XStart())
       }
     }
+  }
+
+  def getBalanceAndAllowanceAdds(
+      receipts: Seq[Option[XTransactionReceipt]]
+    ): (Seq[(String, String)], Seq[(String, String)]) = {
+    val balanceAddresses = ListBuffer.empty[(String, String)]
+    val allowanceAddresses = ListBuffer.empty[(String, String)]
+    receipts.foreach(receipt ⇒ {
+      balanceAddresses.append(receipt.get.from → zeroAdd)
+      balanceAddresses.append(receipt.get.to → zeroAdd)
+      receipt.get.logs.foreach(log ⇒ {
+        wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+          case Some(transfer: TransferEvent.Result) ⇒
+            balanceAddresses.append(
+              transfer.sender → log.address,
+              transfer.receiver → log.address
+            )
+            if (receipt.get.to.equalsIgnoreCase(protocolAddress)) {
+              allowanceAddresses.append(transfer.sender → log.address)
+            }
+          case Some(approval: ApprovalEvent.Result) ⇒
+            if (approval.spender.equalsIgnoreCase(delegateAddress))
+              allowanceAddresses.append(approval.owner → log.address)
+          case Some(deposit: DepositEvent.Result) ⇒
+            balanceAddresses.append(deposit.dst → log.address)
+          case Some(withdrawal: WithdrawalEvent.Result) ⇒
+            balanceAddresses.append(withdrawal.src → log.address)
+          case _ ⇒
+        }
+      })
+    })
+    (balanceAddresses, allowanceAddresses)
+  }
+
+  def getFills(receipts: Seq[Option[XTransactionReceipt]]): Seq[String] = {
+    val orderHashes = ListBuffer.empty[String]
+    receipts
+      .foreach(receipt ⇒ {
+        receipt.get.logs.foreach { log ⇒
+          {
+            loopringProtocolAbi
+              .unpackEvent(log.data, log.topics.toArray) match {
+              case Some(event: RingMinedEvent.Result) ⇒
+                orderHashes.append(event._fills)
+              case _ ⇒
+            }
+          }
+        }
+      })
+    orderHashes
   }
 
   implicit def hex2BigInt(hex: String): BigInt = BigInt(Numeric.toBigInt(hex))
