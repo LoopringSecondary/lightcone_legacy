@@ -18,13 +18,13 @@ package org.loopring.lightcone.gateway.jsonrpc
 
 import org.loopring.lightcone.lib.ProtoSerializer
 import org.loopring.lightcone.proto._
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import akka.pattern.ask
 import scalapb.json4s.JsonFormat
 import scala.reflect.runtime.universe._
 import akka.actor._
 import akka.util.Timeout
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import akka.pattern.ask
 
 trait JsonRpcBinding {
 
@@ -32,7 +32,7 @@ trait JsonRpcBinding {
   implicit private val module_ = this
   implicit private val ps: ProtoSerializer = new ProtoSerializer
 
-  def bindRequest[T <: Proto[T]: TypeTag] = new Binder[T]
+  def ifReceive[T <: Proto[T]: TypeTag] = new Binder[T]
 
   private[jsonrpc] def addPayloadSerializer[
       T <: Proto[T]: TypeTag,

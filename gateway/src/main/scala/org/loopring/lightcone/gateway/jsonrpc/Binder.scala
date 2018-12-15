@@ -30,7 +30,7 @@ class Binder[T <: Proto[T]: TypeTag](
     implicit module: JsonRpcBinding,
     ps: ProtoSerializer) {
 
-  def toResponse[S <: Proto[S]: TypeTag](
+  def thenReply[S <: Proto[S]: TypeTag](
       method: String
     )(
       implicit tc: ProtoC[T],
