@@ -23,7 +23,8 @@ case class LoopringProtocolAbi() {
     OrderCancellerAbi(),
     RingSubmitterAbi(),
     BurnRateTableAbi(),
-    AuthorizableAbi()
+    AuthorizableAbi(),
+    TradeHistoryAbi()
   )
 
   def unpackEvent(
@@ -32,9 +33,12 @@ case class LoopringProtocolAbi() {
     ): Option[Any] =
     abis
       .map(abi ⇒ abi.unpackEvent(data, topics))
-      .find(result ⇒ result.nonEmpty)
+      .find(_.nonEmpty)
       .flatten
 
   def unpackFunctionInput(input: String): Option[Any] =
-    abis.map(abi ⇒ abi.unpackFunctionInput(input)).find(_.nonEmpty).flatten
+    abis
+      .map(abi ⇒ abi.unpackFunctionInput(input))
+      .find(_.nonEmpty)
+      .flatten
 }
