@@ -26,7 +26,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.ethereum.{EthereumAccessActor, _}
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.TimeProvider
