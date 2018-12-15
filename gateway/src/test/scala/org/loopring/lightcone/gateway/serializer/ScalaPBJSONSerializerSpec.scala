@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.gateway.serializer
 
-import de.heikoseeberger.akkahttpjson4s.Json4sSupport
+import org.scalatest._
+import org.scalamock.scalatest._
+import org.loopring.lightcone.proto._
+import org.slf4s.Logging
 
-trait JsonSupport extends Json4sSupport {
-  implicit val serialization = org.json4s.native.Serialization
-  implicit val formats = org.json4s.DefaultFormats
+class ScalaPBJSONSerializerSpec extends FlatSpec with Matchers with Logging {
+
+  val serializer = new ScalaPBJSONSerializer
+  val order = new XRawOrder(tokenS = "aaa")
+  val json = serializer.serialize(order).get
+  println("json: " + json)
+  val order2 = serializer.deserialize[XRawOrder](json).get
+  order should be(order2)
 }

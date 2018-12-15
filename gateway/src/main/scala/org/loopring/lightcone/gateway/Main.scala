@@ -14,51 +14,70 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+// /*
+//  * Copyright 2018 Loopring Foundation
+//  *
+//  * Licensed under the Apache License, Version 2.0 (the "License");
+//  * you may not use this file except in compliance with the License.
+//  * You may obtain a copy of the License at
+//  *
+//  *     http://www.apache.org/licenses/LICENSE-2.0
+//  *
+//  * Unless required by applicable law or agreed to in writing, software
+//  * distributed under the License is distributed on an "AS IS" BASIS,
+//  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  * See the License for the specific language governing permissions and
+//  * limitations under the License.
+//  */
 
-import akka.actor._
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import akka.stream.ActorMaterializer
-import com.google.inject.Guice
-import com.typesafe.config.Config
-import net.codingwell.scalaguice.InjectorExtensions._
-import org.loopring.lightcone.actors._
-import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.actors.entrypoint.EntryPointActor
-import org.slf4s.Logging
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
-import scala.io.StdIn
+// package org.loopring.lightcone.gateway
 
-object Maim extends App with MainRoute with Logging {
+// import akka.actor._
+// import akka.http.scaladsl.Http
+// import akka.http.scaladsl.model.StatusCodes
+// import akka.http.scaladsl.server.Directives._
+// import akka.http.scaladsl.server.Route
+// import akka.stream.ActorMaterializer
+// import com.google.inject.Guice
+// import com.typesafe.config.Config
+// import net.codingwell.scalaguice.InjectorExtensions._
+// import org.loopring.lightcone.actors._
+// import org.loopring.lightcone.actors.base.Lookup
+// import org.loopring.lightcone.actors.entrypoint.EntryPointActor
+// import org.slf4s.Logging
+// import scala.concurrent.ExecutionContext
+// import scala.concurrent.duration._
+// import scala.io.StdIn
 
-  val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
-  val injector = ClusterDeployer.deploy(configPathOpt)
+// import org.loopring.lightcone.proto._
 
-  implicit val config = injector.instance[Config]
-  implicit val system = injector.instance[ActorSystem]
-  implicit val materializer = injector.instance[ActorMaterializer]
-  implicit val ec = injector.instance[ExecutionContext]
-  implicit val timeout = config.getInt("restful.timeout").seconds
+// object Maim extends App with MainRoute with Logging {
 
-  val actors = injector.instance[Lookup[ActorRef]]
-  val requestHandler = actors.get(EntryPointActor.name)
+//   // val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
+//   // val injector = ClusterDeployer.deploy(configPathOpt)
 
-  val host = config.getString("restful.host")
-  val port = config.getInt("restful.port")
+//   // implicit val config = injector.instance[Config]
+//   // implicit val system = injector.instance[ActorSystem]
+//   // implicit val materializer = injector.instance[ActorMaterializer]
+//   // implicit val ec = injector.instance[ExecutionContext]
+//   // implicit val timeout = config.getInt("restful.timeout").seconds
 
-  val binding = Http().bindAndHandle(route, host, port)
+//   // val actors = injector.instance[Lookup[ActorRef]]
+//   // val requestHandler = actors.get(EntryPointActor.name)
 
-  log.info(
-    s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate"
-  )
+//   // val host = config.getString("restful.host")
+//   // val port = config.getInt("restful.port")
 
-  StdIn.readLine()
+//   // val binding = Http().bindAndHandle(route, host, port)
 
-  //Shutdown
-  binding.flatMap(_.unbind())
-  system.terminate()
-}
+//   // log.info(
+//   //   s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate"
+//   // )
+
+//   // StdIn.readLine()
+
+//   // //Shutdown
+//   // binding.flatMap(_.unbind())
+//   // system.terminate()
+
+// }

@@ -16,24 +16,38 @@
 
 package org.loopring.lightcone.gateway
 
+import org.loopring.lightcone.gateway.jsonrpc._
+import org.loopring.lightcone.proto._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.pattern.ask
+import scalapb.json4s.JsonFormat
+import scala.reflect.runtime.universe._
 
-import org.loopring.lightcone.proto._
+import de.heikoseeberger.akkahttpjson4s.Json4sSupport
+import akka.actor._
+import akka.util.Timeout
 
-trait MainRoute extends RouteSupport {
+// trait MainRoute extends AbstractJsonRpcModule with JsonSupport {
+//   val requestHandler: ActorRef
 
-  val route: Route = {
-    path("health") {
-      get {
-        // parameters(('size.as[Int], 'color ?, 'dangerous ? "no"))
-        // .as(XRawOrder)(req => request[XRawOrder](req))
-        // } ~
-        // get {
-        request[XRawOrder](new XRawOrder(tokenS = "afafadf"))
-      } ~ post {
-        entity(as[XRawOrder])(request[XRawOrder](_))
-      }
-    }
-  }
-}
+//   implicit val timeout: Timeout
+
+//   val route: Route = {
+//     path("api") {
+//       post {
+//         entity(as[JsonRpcRequest]) { req =>
+//           val method = req.method
+
+//           val binded = getBinded(method)
+//           val params = req.params.map(binded.strToReq).get
+
+//           onSuccess(requestHandler ? req) { resp =>
+//             println("resp: " + resp)
+//             complete(binded.resToStr(resp))
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
