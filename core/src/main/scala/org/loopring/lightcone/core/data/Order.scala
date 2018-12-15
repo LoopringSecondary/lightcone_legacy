@@ -17,6 +17,7 @@
 package org.loopring.lightcone.core.data
 
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
 import XOrderStatus._
