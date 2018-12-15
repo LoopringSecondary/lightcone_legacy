@@ -18,31 +18,31 @@ package org.loopring.lightcone.gateway.jsonrpc
 
 import org.loopring.lightcone.lib.ProtoSerializer
 import org.loopring.lightcone.proto._
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import akka.pattern.ask
 import scalapb.json4s.JsonFormat
 import scala.reflect.runtime.universe._
 import akka.actor._
 import akka.util.Timeout
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import akka.pattern.ask
 
 trait JsonRpcBinding {
 
-  private var bindings = Map.empty[String, PayloadSerializer[_, _]]
+  private var bindings = Map.empty[String, PayloadConverter[_, _]]
   implicit private val module_ = this
-  implicit private val ps: ProtoSerializer = new ProtoSerializer
+  implicit private val ps = new ProtoSerializer
 
-  def bindRequest[T <: Proto[T]: TypeTag] = new Binder[T]
+  def ifReceive[T <: Proto[T]: TypeTag] = new Binder[T]
 
-  private[jsonrpc] def addPayloadSerializer[
+  private[jsonrpc] def addPayloadConverter[
       T <: Proto[T]: TypeTag,
       S <: Proto[S]: TypeTag
     ](method: String,
-      ps: PayloadSerializer[T, S]
+      ps: PayloadConverter[T, S]
     ) = {
     assert(!bindings.contains(method), s"method ${method} already bound")
     bindings = bindings + (method -> ps)
   }
 
-  def getPayloadSerializer(method: String) = bindings.get(method)
+  def getPayloadConverter(method: String) = bindings.get(method)
 }

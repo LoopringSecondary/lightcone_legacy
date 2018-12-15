@@ -18,24 +18,21 @@ package org.loopring.lightcone.gateway.jsonrpc
 
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.XError
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import akka.pattern.ask
+import org.json4s._
+import org.json4s.JsonAST.JValue
 import scalapb.json4s.JsonFormat
-import scala.reflect.runtime.universe._
 import akka.http.scaladsl.Http
-import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import akka.actor._
 import akka.util.Timeout
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.model._
-import org.json4s._
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import akka.pattern.ask
+import scala.reflect.runtime.universe._
 import scala.concurrent.duration._
-import org.json4s.JsonAST.JValue
-// import StatusCodes._
+import scala.concurrent._
 
 trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   val requestHandler: ActorRef
@@ -53,7 +50,6 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
     case e: Throwable =>
       extractUri { uri =>
-        println(s"Request to $uri could not be handled normally")
         replyWithError(-32603, Some(e.getMessage))("", None)
       }
   }
@@ -62,19 +58,18 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
     path(endpoint) {
       post {
         entity(as[JsonRpcRequest]) { jsonReq =>
-          println("=====json request: " + jsonReq)
           implicit val method = jsonReq.method
           implicit val id = jsonReq.id
 
           if (id.isEmpty) {
             replyWithError(-32000, Some("`id missing"))
           } else {
-            getPayloadSerializer(method) match {
+            getPayloadConverter(method) match {
               case None =>
                 replyWithError(-32601)
 
-              case Some(ps) =>
-                jsonReq.params.map(ps.toRequest) match {
+              case Some(converter) =>
+                jsonReq.params.map(converter.convertToRequest) match {
                   case None =>
                     replyWithError(
                       -32602,
@@ -88,7 +83,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                     }
 
                     onSuccess(f) { resp =>
-                      replyWith(ps.fromResponse(resp))
+                      replyWith(converter.convertFromResponse(resp))
                     }
                 }
             }

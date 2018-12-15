@@ -16,26 +16,22 @@
 
 package org.loopring.lightcone.gateway.jsonrpc
 
-import scala.reflect.runtime.universe._
 import org.loopring.lightcone.lib._
-import scalapb.json4s.JsonFormat
-import scala.language.experimental.macros
-import scala.reflect.macros.blackbox
 import org.json4s.JsonAST.JValue
 import scala.reflect.ClassTag
 import org.loopring.lightcone.proto.XErrorCode
 
 import scala.reflect.runtime.universe.{typeOf, TypeTag}
 
-class PayloadSerializer[T <: Proto[T]: TypeTag, S <: Proto[S]: TypeTag](
+class PayloadConverter[T <: Proto[T]: TypeTag, S <: Proto[S]: TypeTag](
     implicit tc: ProtoC[T],
     ts: ProtoC[S],
     cs: ClassTag[S],
     ps: ProtoSerializer) {
 
-  def toRequest(str: JValue): T = ps.deserialize[T](str).get
+  def convertToRequest(str: JValue): T = ps.deserialize[T](str).get
 
-  def fromResponse(s: Any): JValue = {
+  def convertFromResponse(s: Any): JValue = {
     if (!cs.runtimeClass.isInstance(s))
       throw ErrorException(
         XErrorCode.ERR_INTERNAL_UNKNOWN,

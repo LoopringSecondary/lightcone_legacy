@@ -17,42 +17,33 @@
 package org.loopring.lightcone.gateway
 
 import org.loopring.lightcone.gateway.jsonrpc._
-import org.loopring.lightcone.proto._
-import com.google.inject.Guice
-import akka.http.scaladsl.Http
-import akka.stream.ActorMaterializer
-import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.entrypoint.EntryPointActor
 import org.loopring.lightcone.actors.base.Lookup
 import org.slf4s.Logging
 import net.codingwell.scalaguice.InjectorExtensions._
+import org.loopring.lightcone.actors._
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
+import com.google.inject.Guice
+import akka.http.scaladsl.server.HttpApp
 import akka.actor._
 import akka.util.Timeout
 import scala.io.StdIn
-import org.loopring.lightcone.actors._
-import com.typesafe.config.Config
 import scala.concurrent.ExecutionContext
 
-import akka.http.scaladsl.server.HttpApp
-
-object Main extends HttpApp with JsonRpcModule with Logging {
-
-  override val endpoint = "api"
+object Main extends HttpApp with RpcBinding with Logging {
 
   val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
   val injector = ClusterDeployer.deploy(configPathOpt)
 
   implicit val config = injector.instance[Config]
   override implicit val system = injector.instance[ActorSystem]
-  implicit val materializer = injector.instance[ActorMaterializer]
 
   val actors = injector.instance[Lookup[ActorRef]]
   val requestHandler = actors.get(EntryPointActor.name)
 
-  val host = config.getString("restful.host")
-  val port = config.getInt("restful.port")
-
-  bindRequest[XRawOrder].toResponse[XRawOrder]("abc")
+  val host = config.getString("jsonrpc.http.host")
+  val port = config.getInt("jsonrpc.http.port")
 
   def main(args: Array[String]) {
     startServer(host, port)

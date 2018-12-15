@@ -30,13 +30,13 @@ class Binder[T <: Proto[T]: TypeTag](
     implicit module: JsonRpcBinding,
     ps: ProtoSerializer) {
 
-  def toResponse[S <: Proto[S]: TypeTag](
+  def thenReply[S <: Proto[S]: TypeTag](
       method: String
     )(
       implicit tc: ProtoC[T],
       cs: ClassTag[S],
       ts: ProtoC[S]
     ) = {
-    module.addPayloadSerializer(method, new PayloadSerializer[T, S])
+    module.addPayloadConverter(method, new PayloadConverter[T, S])
   }
 }
