@@ -20,4 +20,5 @@ package object jsonrpc {
 
   type Proto[T] = scalapb.GeneratedMessage with scalapb.Message[T]
   type ProtoC[T <: Proto[T]] = scalapb.GeneratedMessageCompanion[T]
+
 }

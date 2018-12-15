@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.serializer
+package org.loopring.lightcone.gateway.jsonrpc
 
 import org.scalatest._
 import org.scalamock.scalatest._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
+import org.loopring.lightcone.lib.ProtoSerializer
 
-class ScalaPBJSONSerializerSpec extends FlatSpec with Matchers with Logging {
-
-  val serializer = new ScalaPBJSONSerializer
+class PayloadConverterSpec extends FlatSpec with Matchers with Logging {
+  implicit val ps = new ProtoSerializer()
+  val serializer = new PayloadConverter[XRawOrder, XRawOrder]
   val order = new XRawOrder(tokenS = "aaa")
-  val json = serializer.serialize(order).get
-  println("json: " + json)
-  val order2 = serializer.deserialize[XRawOrder](json).get
-  order should be(order2)
+
+  val json = serializer.convertFromResponse(order)
+  val order_ = serializer.convertToRequest(json)
+  order_ should be(order)
 }

@@ -37,6 +37,6 @@ class Binder[T <: Proto[T]: TypeTag](
       cs: ClassTag[S],
       ts: ProtoC[S]
     ) = {
-    module.addPayloadSerializer(method, new PayloadSerializer[T, S])
+    module.addPayloadConverter(method, new PayloadConverter[T, S])
   }
 }
