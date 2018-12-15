@@ -47,7 +47,7 @@ object CoreActorsIntegrationCommonSpec {
 abstract class CoreActorsIntegrationCommonSpec(
     marketId: XMarketId,
     configStr: String)
-    extends TestKit(ActorSystem("lightcone_test", ConfigFactory.load()))
+    extends TestKit(ActorSystem("Lightcone", ConfigFactory.load()))
     with ImplicitSender
     with Matchers
     with WordSpecLike

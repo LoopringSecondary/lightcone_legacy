@@ -14,28 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.base
+package org.loopring.lightcone.actors.core
 
-import slick.basic._
-import slick.jdbc.JdbcProfile
-import scala.concurrent.duration._
-import scala.concurrent._
+import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 
-trait BaseDatabaseModule {
-  val dbConfig: DatabaseConfig[JdbcProfile]
-  implicit val ec: ExecutionContext
+trait EthereumSupport {
+  my: CommonSpec =>
 
-  val tables: Seq[BaseDal[_, _]]
+  actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
+  actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
+  actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
 
-  def createTables() = Await.result(
-    Future.sequence(tables.map(_.createTable)),
-    10.second
-  )
-
-  def dropTables() = Await.result(
-    Future.sequence(tables.map(_.dropTable)),
-    10.second
-  )
-
-  def displayTableSchemas() = tables.map(_.displayTableSchema)
 }

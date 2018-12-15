@@ -106,7 +106,7 @@ class MultiAccountManagerActor(
 
   def receive: Receive = {
     case req: Any =>
-      val addressOpt = (MultiAccountManagerActor.extractAddress.lift)(req)
+      val addressOpt = MultiAccountManagerActor.extractAddress.lift(req)
       addressOpt match {
         case Some(address) => accountManagerActorFor(address) forward req
         case None =>

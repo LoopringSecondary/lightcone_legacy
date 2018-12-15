@@ -16,6 +16,27 @@
 
 package org.loopring.lightcone.actors.core
 
-class MultiAccountManagerSpec_Sharding extends CommonSpec("") {
+import akka.testkit.TestProbe
+import org.loopring.lightcone.proto._
+
+import scala.math.BigInt
+
+trait AccountManagerSupport {
+  my: CommonSpec with EthereumSupport =>
+
+  val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
+
+    def expectQuery() = expectMsgPF() {
+      case XSubmitOrderReq(addr, Some(xorder)) =>
+        info(s"received XSubmitOrderReq: ${addr}, ${xorder}")
+    }
+
+    def replyWith() =
+      reply(
+        XSubmitOrderRes()
+      )
+  }
+  actors.del(MarketManagerActor.name)
+  actors.add(MarketManagerActor.name, marketManagerProbe.ref)
 
 }

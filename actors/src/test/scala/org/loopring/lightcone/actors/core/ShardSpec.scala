@@ -25,8 +25,10 @@ import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 import akka.pattern._
 import com.typesafe.config.ConfigFactory
+import org.loopring.lightcone.proto.XMarketId
 
-class ShardSpec extends FlatSpec with Matchers {
+class ShardSpec
+    extends CoreActorsIntegrationCommonSpec(XMarketId("1", "2"), "") {
 
   class ShardTestActor(
     )(
@@ -43,42 +45,53 @@ class ShardSpec extends FlatSpec with Matchers {
 
   }
 
-  "shard" should "success" in {
-    val config = ConfigFactory.load()
-//    println(s"config: ${config}")
-    implicit val system = ActorSystem("Lightcone", config)
-    implicit val timeout = Timeout(1 seconds)
-    implicit val ec = system.dispatcher
-    val extractEntityId: ShardRegion.ExtractEntityId = {
-      case s: String ⇒
-        println("0xdddddd")
-        (s, s)
-    }
+  "shard" must {
+    "success" in {
+      val config = ConfigFactory.load()
+      //    println(s"config: ${config}")
+//      implicit val system = ActorSystem("Lightcone", config)
+//      implicit val timeout = Timeout(1 seconds)
+//      implicit val ec = system.dispatcher
+      val extractEntityId: ShardRegion.ExtractEntityId = {
+        case s: String ⇒
+          println("0xdddddd")
+          (s, s)
+      }
 
-    val extractShardId: ShardRegion.ExtractShardId = {
-      case s: String ⇒
-        println(s"string ${s}")
-        s
-    }
-    val multiAccountManagerActor = ClusterSharding(system).start(
-      typeName = "ShardTestActor",
-      entityProps = Props(new ShardTestActor()),
-      settings = ClusterShardingSettings(system),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
-    )
-//    val multiAccountManagerActor = system.actorOf(Props(new ShardTestActor()))
+      val extractShardId: ShardRegion.ExtractShardId = {
+        case s: String ⇒
+          println(s"string ${s}")
+          s
+      }
+      val multiAccountManagerActor = ClusterSharding(system).start(
+        typeName = "ShardTestActor",
+        entityProps = Props(new ShardTestActor()),
+        settings = ClusterShardingSettings(system),
+        extractEntityId = extractEntityId,
+        extractShardId = extractShardId
+      )
+      //    val multiAccountManagerActor = system.actorOf(Props(new ShardTestActor()))
 
-    println(s"aa, ${multiAccountManagerActor}")
-    val f = multiAccountManagerActor ? "ffff"
-    val r = Await.result(f, timeout.duration)
-    info("dadddd res:" + r)
-    //    f.map { s =>
-//      info("ccccc:" + s)
-//      assert(s == "ddd")
-//    }
-    Thread.sleep(1000)
-    assert(true)
+      println(System.currentTimeMillis())
+      Thread.sleep(4000)
+      val p = ClusterSharding(system).start(
+        typeName = "ShardTestActor",
+        entityProps = Props(new ShardTestActor()),
+        settings = ClusterShardingSettings(system),
+        extractEntityId = extractEntityId,
+        extractShardId = extractShardId
+      )
+      println(s"aa, ${multiAccountManagerActor}, $p")
+      val f = p ? "ffff"
+      val r = Await.result(f, timeout.duration)
+      info("dadddd res:" + r)
+      //    f.map { s =>
+      //      info("ccccc:" + s)
+      //      assert(s == "ddd")
+      //    }
+      Thread.sleep(1000)
+      assert(true)
+    }
   }
 
 }

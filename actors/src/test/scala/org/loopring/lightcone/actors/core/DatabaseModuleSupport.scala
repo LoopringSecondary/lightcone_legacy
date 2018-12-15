@@ -14,28 +14,19 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.base
+package org.loopring.lightcone.actors.core
 
-import slick.basic._
+import org.loopring.lightcone.persistence.DatabaseModule
+import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-import scala.concurrent.duration._
-import scala.concurrent._
 
-trait BaseDatabaseModule {
-  val dbConfig: DatabaseConfig[JdbcProfile]
-  implicit val ec: ExecutionContext
+trait DatabaseModuleSupport {
+  my: CommonSpec =>
 
-  val tables: Seq[BaseDal[_, _]]
+  implicit val dbConfig: DatabaseConfig[JdbcProfile] =
+    DatabaseConfig.forConfig("db.default", system.settings.config)
+  implicit val dbModule = new DatabaseModule()
+  println(s"DatabaseModuleSupport: dbConfig : ${dbConfig}")
+  dbModule.createTables()
 
-  def createTables() = Await.result(
-    Future.sequence(tables.map(_.createTable)),
-    10.second
-  )
-
-  def dropTables() = Await.result(
-    Future.sequence(tables.map(_.dropTable)),
-    10.second
-  )
-
-  def displayTableSchemas() = tables.map(_.displayTableSchema)
 }
