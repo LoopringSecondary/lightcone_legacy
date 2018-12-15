@@ -25,12 +25,16 @@ trait BaseDatabaseModule {
   val dbConfig: DatabaseConfig[JdbcProfile]
   implicit val ec: ExecutionContext
 
+  println(s"dbConfig1111, ${dbConfig}")
   val tables: Seq[BaseDal[_, _]]
 
-  def createTables() = Await.result(
-    Future.sequence(tables.map(_.createTable)),
-    10.second
-  )
+  def createTables() = {
+    println(s"dbConfig1111, ${tables}")
+    Await.result(
+      Future.sequence(tables.map(_.createTable)),
+      10.second
+    )
+  }
 
   def dropTables() = Await.result(
     Future.sequence(tables.map(_.dropTable)),
