@@ -26,7 +26,7 @@ case class JsonRpcRequest(
 case class JsonRpcError(
     code: Int,
     message: Option[String] = None,
-    data: Option[String] = None)
+    data: Option[JValue] = None)
 
 case class JsonRpcResponse(
     jsonrpc: String,

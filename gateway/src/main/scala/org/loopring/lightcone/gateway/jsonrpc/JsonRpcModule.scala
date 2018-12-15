@@ -47,7 +47,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
     case e: Throwable =>
       extractUri { uri =>
         println(s"Request to $uri could not be handled normally")
-        replyWithError(-32603, e.getMessage)("", None)
+        replyWithError(-32603, Some(e.getMessage))("", None)
       }
   }
 
@@ -60,7 +60,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
           implicit val id = jsonReq.id
 
           if (id.isEmpty) {
-            replyWithError(-32000, "`id missing")
+            replyWithError(-32000, Some("`id missing"))
           } else {
             getPayloadSerializer(method) match {
               case None =>
@@ -71,7 +71,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                   case None =>
                     replyWithError(
                       -32602,
-                      "`params` is missing, use `{}` as default value"
+                      Some("`params` is missing, use `{}` as default value")
                     )
 
                   case Some(req) =>
@@ -88,7 +88,8 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
   private def replyWithError(
       code: Int,
-      message: String = null
+      message: Option[String] = None,
+      data: Option[JValue] = None
     )(
       implicit method: String,
       id: Option[String]
@@ -98,7 +99,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
         JSON_RPC_VER,
         method,
         None,
-        Some(JsonRpcError(code, Option(message))),
+        Some(JsonRpcError(code, message, data)),
         id
       )
     )
