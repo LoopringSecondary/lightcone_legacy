@@ -29,10 +29,12 @@ import net.codingwell.scalaguice.InjectorExtensions._
 import akka.actor._
 import akka.util.Timeout
 import scala.io.StdIn
-import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
-object Main extends App with JsonRpcModule with Logging {
+import scala.concurrent.ExecutionContext
+
+import akka.http.scaladsl.server.HttpApp
+
+object Main extends HttpApp with JsonRpcModule with Logging {
   // val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
   // val injector = ClusterDeployer.deploy(configPathOpt)
   // val system = injector.instance[ActorSystem]
@@ -47,9 +49,6 @@ object Main extends App with JsonRpcModule with Logging {
   // system.terminate()
 
   implicit val system = ActorSystem("Lightcone", ConfigFactory.load())
-  implicit val ec = ExecutionContext.global
-  implicit val materializer = ActorMaterializer()(system)
-  implicit val timeout = Timeout(2 second)
 
   val requestHandler = system.actorOf(Props(new Actor() {
 
@@ -60,10 +59,9 @@ object Main extends App with JsonRpcModule with Logging {
 
   bindRequest[XRawOrder].toResponse[XRawOrder]("abc")
 
-  val bindingFuture = start("localhost", 8080)
-  println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
-  StdIn.readLine() // let it run until user presses return
-  bindingFuture
-    .flatMap(_.unbind()) // trigger unbinding from the port
-    .onComplete(_ => system.terminate()) // and shutdown when done
+  override val routes = jsonRPCRoutes
+
+  def main(args: Array[String]) {
+    startServer("localhost", 8080, system)
+  }
 }

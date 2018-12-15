@@ -15,12 +15,12 @@
  */
 
 package org.loopring.lightcone.gateway.jsonrpc
-import org.json4s.JObject
+import org.json4s.JsonAST.JValue
 
 case class JsonRpcRequest(
     jsonrpc: String,
     method: String,
-    params: Option[JObject],
+    params: Option[JValue],
     id: Option[String] = None)
 
 case class JsonRpcError(
@@ -31,6 +31,6 @@ case class JsonRpcError(
 case class JsonRpcResponse(
     jsonrpc: String,
     method: String,
-    result: Option[String] = None,
+    result: Option[JValue] = None,
     error: Option[JsonRpcError] = None,
     id: Option[String] = None)

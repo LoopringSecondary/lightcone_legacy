@@ -28,20 +28,30 @@ import akka.util.Timeout
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 import akka.stream.ActorMaterializer
+import akka.http.scaladsl.server._
+import akka.http.scaladsl.model._
+import org.json4s._
+import scala.concurrent.duration._
+import org.json4s.JsonAST.JValue
+// import StatusCodes._
 
 trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   val requestHandler: ActorRef
 
   implicit val system: ActorSystem
-  implicit val materializer: ActorMaterializer
-  implicit val ec: ExecutionContext
+  implicit val timeout = Timeout(2 second)
 
-  private var bindingFuture: Option[Future[Http.ServerBinding]] = None
-
-  implicit val timeout: Timeout
   val JSON_RPC_VER = "2.0"
 
-  val route: Route = {
+  val myExceptionHandler = ExceptionHandler {
+    case e: Throwable =>
+      extractUri { uri =>
+        println(s"Request to $uri could not be handled normally")
+        replyWithError(-32603, e.getMessage)("", None)
+      }
+  }
+
+  val jsonRPCRoutes: Route = handleExceptions(myExceptionHandler) {
     path("api") {
       post {
         entity(as[JsonRpcRequest]) { jsonReq =>
@@ -49,23 +59,27 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
           implicit val method = jsonReq.method
           implicit val id = jsonReq.id
 
-          getPayloadSerializer(method) match {
-            case None =>
-              replyWithError(123, s"invalid method `${method}`")
+          if (id.isEmpty) {
+            replyWithError(-32000, "`id missing")
+          } else {
+            getPayloadSerializer(method) match {
+              case None =>
+                replyWithError(-32601)
 
-            case Some(ps) =>
-              jsonReq.params.map(ps.toRequest) match {
-                case None =>
-                  replyWithError(
-                    123,
-                    "`params` is missing, you can provide \"{}\""
-                  )
+              case Some(ps) =>
+                jsonReq.params.map(ps.toRequest) match {
+                  case None =>
+                    replyWithError(
+                      -32602,
+                      "`params` is missing, use `{}` as default value"
+                    )
 
-                case Some(req) =>
-                  onSuccess(requestHandler ? req) { resp =>
-                    replyWith(ps.fromResponse(resp))
-                  }
-              }
+                  case Some(req) =>
+                    onSuccess(requestHandler ? req) { resp =>
+                      replyWith(ps.fromResponse(resp))
+                    }
+                }
+            }
           }
         }
       }
@@ -74,7 +88,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
   private def replyWithError(
       code: Int,
-      message: String
+      message: String = null
     )(
       implicit method: String,
       id: Option[String]
@@ -84,24 +98,17 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
         JSON_RPC_VER,
         method,
         None,
-        Some(JsonRpcError(code, Some(message))),
+        Some(JsonRpcError(code, Option(message))),
         id
       )
     )
 
   private def replyWith(
-      content: String
+      content: JValue
     )(
       implicit method: String,
       id: Option[String]
     ) =
     complete(JsonRpcResponse(JSON_RPC_VER, method, Option(content), None, id))
-
-  def start(
-      host: String,
-      port: Int
-    ) = {
-    Http().bindAndHandle(route, host, port)
-  }
 
 }
