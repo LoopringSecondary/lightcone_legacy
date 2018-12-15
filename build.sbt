@@ -13,6 +13,7 @@ lazy val proto = (project in file("proto"))
 
 lazy val lib = (project in file("lib"))
   .enablePlugins(AutomateHeaderPlugin)
+  .dependsOn(proto)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Lib)
