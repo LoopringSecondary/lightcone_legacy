@@ -16,9 +16,13 @@
 
 package org.loopring.lightcone.gateway
 
-import de.heikoseeberger.akkahttpjson4s.Json4sSupport
+import org.loopring.lightcone.gateway.jsonrpc.JsonRpcModule
+import org.loopring.lightcone.proto._
 
-trait JsonSupport extends Json4sSupport {
-  implicit val serialization = org.json4s.native.Serialization
-  implicit val formats = org.json4s.DefaultFormats
+trait RpcBinding extends JsonRpcModule {
+  override val endpoint = "api"
+  // ifReceive[RequestType].thenReply[ResponseType]("method_name")
+  // Note that RequestType and ResponseType must be proto messages.
+  ifReceive[XRawOrder].thenReply[XRawOrder]("jsonrpc_method_name")
+
 }
