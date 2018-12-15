@@ -22,13 +22,14 @@ import scalapb.json4s.JsonFormat
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
+import org.json4s.JObject
 
 class ProtoSerializer {
 
   def serialize[T](value: T): Option[String] =
     macro ProtoSerializerMacro.serialize[T]
 
-  def deserialize[T](json: String): Option[T] =
+  def deserialize[T](json: JObject): Option[T] =
     macro ProtoSerializerMacro.deserialize[T]
 }
 
@@ -49,7 +50,7 @@ private object ProtoSerializerMacro {
 
   def deserialize[T: c.WeakTypeTag](
       c: blackbox.Context
-    )(json: c.Expr[String]
+    )(json: c.Expr[JObject]
     ): c.Expr[Option[T]] = {
     import c.universe._
 
@@ -58,7 +59,7 @@ private object ProtoSerializerMacro {
     c.Expr[Option[T]](q"""
           {
             import scalapb.json4s.JsonFormat
-            scala.util.Try(JsonFormat.fromJsonString[$deserializeType]($json)).toOption
+            scala.util.Try(JsonFormat.fromJson[$deserializeType]($json)).toOption
           }""")
   }
 }

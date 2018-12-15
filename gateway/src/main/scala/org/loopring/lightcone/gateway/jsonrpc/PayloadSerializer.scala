@@ -22,13 +22,14 @@ import scalapb.json4s.JsonFormat
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
+import org.json4s.JObject
 
 class PayloadSerializer[T <: Proto[T]: TypeTag, S <: Proto[S]: TypeTag](
     implicit tc: ProtoC[T],
     ts: ProtoC[S],
     ps: ProtoSerializer) {
 
-  def strToReq(str: String): T = ps.deserialize[T](str).get
+  def toRequest(str: JObject): T = ps.deserialize[T](str).get
 
-  def respToStr(s: Any): String = ps.serialize[S](s.asInstanceOf[S]).get
+  def fromResponse(s: Any): String = ps.serialize[S](s.asInstanceOf[S]).get
 }

@@ -21,20 +21,28 @@ import org.loopring.lightcone.proto._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.pattern.ask
+import scalapb.json4s.JsonFormat
 import scala.reflect.runtime.universe._
 import akka.actor._
 import akka.util.Timeout
 
-class Binder[T <: Proto[T]: TypeTag](
-    implicit module: JsonRpcBinding,
-    ps: ProtoSerializer) {
+trait JsonRpcBinding {
 
-  def toResponse[S <: Proto[S]: TypeTag](
-      method: String
-    )(
-      implicit tc: ProtoC[T],
-      ts: ProtoC[S]
+  private var bindings = Map.empty[String, PayloadSerializer[_, _]]
+  implicit private val module_ = this
+  implicit private val ps: ProtoSerializer = new ProtoSerializer
+
+  def bindRequest[T <: Proto[T]: TypeTag] = new Binder[T]
+
+  private[jsonrpc] def addPayloadSerializer[
+      T <: Proto[T]: TypeTag,
+      S <: Proto[S]: TypeTag
+    ](method: String,
+      ps: PayloadSerializer[T, S]
     ) = {
-    module.addPayloadSerializer(method, new PayloadSerializer[T, S])
+    assert(!bindings.contains(method), s"method ${method} already bound")
+    bindings = bindings + (method -> ps)
   }
+
+  def getPayloadSerializer(method: String) = bindings.get(method)
 }
