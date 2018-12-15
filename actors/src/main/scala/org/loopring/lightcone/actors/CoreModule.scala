@@ -73,6 +73,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     implicit val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)
+    dbModule.createTables()
 
     implicit val tmm = new TokenMetadataManager()
     bind[TokenMetadataManager].toInstance(tmm)
