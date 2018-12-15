@@ -57,6 +57,7 @@ object Main extends HttpApp with JsonRpcModule with Logging {
     }
   }))
 
+  override val endpoint = "api"
   bindRequest[XRawOrder].toResponse[XRawOrder]("abc")
 
   override val routes = jsonRPCRoutes

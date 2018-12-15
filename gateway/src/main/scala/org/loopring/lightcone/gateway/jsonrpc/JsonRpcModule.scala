@@ -37,6 +37,7 @@ import org.json4s.JsonAST.JValue
 
 trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   val requestHandler: ActorRef
+  val endpoint: String = "api"
 
   implicit val system: ActorSystem
   implicit val timeout = Timeout(2 second)
@@ -52,7 +53,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   }
 
   val jsonRPCRoutes: Route = handleExceptions(myExceptionHandler) {
-    path("api") {
+    path(endpoint) {
       post {
         entity(as[JsonRpcRequest]) { jsonReq =>
           println("=====json request: " + jsonReq)
