@@ -16,8 +16,20 @@
 
 package org.loopring.lightcone.actors.core
 
-trait MultiAccountManagerSupport {
-  my: CommonSpec =>
-  val configStr: String
+import scala.concurrent.Await
 
+trait MultiAccountManagerSupport extends DatabaseModuleSupport {
+  my: CommonSpec =>
+  actors.add(
+    MultiAccountManagerActor.name,
+    MultiAccountManagerActor.startShardRegion
+  )
+
+  def truncateTables() = {
+    val opFuture = for {
+      _ <- dbModule.orders.dropTable()
+      _ <- dbModule.orders.createTable()
+    } yield Unit
+    Await.result(opFuture, timeout.duration)
+  }
 }

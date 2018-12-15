@@ -16,6 +16,23 @@
 
 package org.loopring.lightcone.actors.core
 
-class MultiAccountManagerSpec_Sharding extends CommonSpec("") {
+import org.loopring.lightcone.proto.XCancelOrderReq
+import akka.pattern._
+
+import scala.concurrent.Await
+
+class MultiAccountManagerSpec_Sharding
+    extends CommonSpec("")
+    with MultiAccountManagerSupport {
+
+  Thread.sleep(5000) //暂停5s，等待集群准备完毕
+  "send a request" must {
+    "create an AccountManager and be received by it" in {
+      val cancelReq = XCancelOrderReq("0x11111", "0xaaaaa")
+      val f = actors.get(MultiAccountManagerActor.name) ? cancelReq
+      val res = Await.result(f, timeout.duration)
+      info(s"return is : ${res}")
+    }
+  }
 
 }

@@ -65,7 +65,9 @@ object MultiAccountManagerActor extends ShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
-    case req: XCancelOrderReq ⇒ req.address
+    case req: XCancelOrderReq ⇒
+      println(s"XCancelOrderReq ${req}")
+      req.address
     case req: XSubmitOrderReq ⇒ req.address
     case req: XGetBalanceAndAllowancesReq ⇒ req.address
     case req: XAddressBalanceUpdated ⇒ req.address
@@ -86,6 +88,7 @@ class MultiAccountManagerActor(
     with OrderRecoverSupport
     with ActorLogging {
 
+  log.info(s"MultiAccountManagerActor entity name ${entityName}")
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
       //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor

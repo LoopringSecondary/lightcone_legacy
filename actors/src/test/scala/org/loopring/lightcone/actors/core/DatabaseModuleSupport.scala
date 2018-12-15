@@ -27,6 +27,7 @@ trait DatabaseModuleSupport {
     DatabaseConfig.forConfig("db.default", system.settings.config)
   implicit val dbModule = new DatabaseModule()
   println(s"DatabaseModuleSupport: dbConfig : ${dbConfig}")
-  dbModule.createTables()
+//  dbModule.createTables()
+  actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
 
 }

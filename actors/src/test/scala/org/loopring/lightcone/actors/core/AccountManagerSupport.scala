@@ -22,7 +22,7 @@ import org.loopring.lightcone.proto._
 import scala.math.BigInt
 
 trait AccountManagerSupport {
-  my: CommonSpec with EthereumSupport =>
+  my: CommonSpec =>
 
   val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
 

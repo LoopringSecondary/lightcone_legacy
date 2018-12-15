@@ -22,22 +22,15 @@ import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
-import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
-import org.loopring.lightcone.actors.utils.{
-  BadMessageListener,
-  TokenMetadataRefresher
-}
+import org.loopring.lightcone.actors.utils.BadMessageListener
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market.{
   RingIncomeEstimator,
   RingIncomeEstimatorImpl
 }
 import org.loopring.lightcone.lib.SystemTimeProvider
-import org.loopring.lightcone.persistence.DatabaseModule
 import org.scalatest._
 import org.slf4s.Logging
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
 
 import scala.concurrent.duration._
 
@@ -56,8 +49,7 @@ abstract class CommonSpec(configStr: String)
     with WordSpecLike
     with BeforeAndAfterEach
     with BeforeAndAfterAll
-    with Logging
-    with DatabaseModuleSupport {
+    with Logging {
 
   override def afterAll: Unit = {
     super.afterAll()
@@ -82,12 +74,10 @@ abstract class CommonSpec(configStr: String)
     new RingIncomeEstimatorImpl()
 
   //actors
-  val refresher = system.actorOf(
-    Props(new TokenMetadataRefresher),
-    "token_metadata_refresher"
-  )
-
-  actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
+//  val refresher = system.actorOf(
+//    Props(new TokenMetadataRefresher),
+//    "token_metadata_refresher"
+//  )
 
   val listener =
     system.actorOf(Props[BadMessageListener], "bad_message_listener")
