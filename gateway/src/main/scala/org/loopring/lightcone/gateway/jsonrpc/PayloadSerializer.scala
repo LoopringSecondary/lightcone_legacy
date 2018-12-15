@@ -23,12 +23,9 @@ import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 import scala.reflect.runtime.universe._
 
-class PayloadSerializer[
-    T <: scalapb.GeneratedMessage with scalapb.Message[T]: TypeTag,
-    S <: scalapb.GeneratedMessage with scalapb.Message[S]: TypeTag
-  ](
-    implicit tc: scalapb.GeneratedMessageCompanion[T],
-    ts: scalapb.GeneratedMessageCompanion[S],
+class PayloadSerializer[T <: Proto[T]: TypeTag, S <: Proto[S]: TypeTag](
+    implicit tc: ProtoC[T],
+    ts: ProtoC[S],
     ps: ProtoSerializer) {
 
   def strToReq(str: String): T = ps.deserialize[T](str).get

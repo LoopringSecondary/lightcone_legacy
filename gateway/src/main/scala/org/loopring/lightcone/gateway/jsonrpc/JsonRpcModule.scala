@@ -28,20 +28,21 @@ import akka.util.Timeout
 
 trait JsonRpcModule {
 
-  private var bindings = Map.empty[String, AnyRef]
+  private var bindings = Map.empty[String, PayloadSerializer[_, _]]
   implicit private val module_ = this
   implicit private val ps: ProtoSerializer = new ProtoSerializer
 
-  def bind[T <: scalapb.GeneratedMessage with scalapb.Message[T]: TypeTag] =
-    new Binder[T]
+  def bindRequest[T <: Proto[T]: TypeTag] = new Binder[T]
 
-  private[jsonrpc] def addPayloadSerializer(
-      key: String,
-      ms: AnyRef
+  private[jsonrpc] def addPayloadSerializer[
+      T <: Proto[T]: TypeTag,
+      S <: Proto[S]: TypeTag
+    ](key: String,
+      ps: PayloadSerializer[T, S]
     ) = {
-    bindings = bindings + (key -> ms)
+    assert(!bindings.contains(key), s"${key} already bound")
+    bindings = bindings + (key -> ps)
   }
 
-  def getPayloadSerializer(key: String) =
-    bindings(key).asInstanceOf[PayloadSerializer[_, _]]
+  def getPayloadSerializer(key: String) = bindings.get(key)
 }

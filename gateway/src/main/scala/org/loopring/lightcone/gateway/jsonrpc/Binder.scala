@@ -26,15 +26,15 @@ import scala.reflect.runtime.universe._
 import akka.actor._
 import akka.util.Timeout
 
-class Binder[T <: scalapb.GeneratedMessage with scalapb.Message[T]: TypeTag](
+class Binder[T <: Proto[T]: TypeTag](
     implicit module: JsonRpcModule,
     ps: ProtoSerializer) {
 
-  def to[S <: scalapb.GeneratedMessage with scalapb.Message[S]: TypeTag](
+  def toResponse[S <: Proto[S]: TypeTag](
       key: String
     )(
-      implicit tc: scalapb.GeneratedMessageCompanion[T],
-      ts: scalapb.GeneratedMessageCompanion[S]
+      implicit tc: ProtoC[T],
+      ts: ProtoC[S]
     ) = {
     module.addPayloadSerializer(key, new PayloadSerializer[T, S])
   }
