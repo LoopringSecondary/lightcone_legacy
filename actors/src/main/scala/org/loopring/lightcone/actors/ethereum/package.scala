@@ -60,6 +60,7 @@ package object ethereum {
       params: Seq[Any])
 
   val erc20Abi = ERC20ABI()
+  val tradeHistoryAbi = TradeHistoryAbi()
 
   implicit def xGetBalanceAndAllowanceToBatchReq(
       delegateAddress: Address,
@@ -91,6 +92,15 @@ package object ethereum {
     val allowanceCallReqs =
       batchErc20AllowanceReq(delegateAddress, owner, tokens)
     XBatchContractCallReq(allowanceCallReqs)
+  }
+
+  implicit def xGetFilledAmountToBatchReq(
+      tradeHistoryAddress: Address,
+      req: GetFilledAmountReq
+    ): XBatchContractCallReq = {
+    val batchFilledAmountReqs =
+      batchFilledAmountReq(tradeHistoryAddress, req.orderIds)
+    XBatchContractCallReq(batchFilledAmountReqs)
   }
 
   implicit def xBatchContractCallResToBalanceAndAllowance(
@@ -131,6 +141,20 @@ package object ethereum {
       ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
     }
     XGetAllowanceRes(address, (tokens zip allowances).toMap)
+  }
+
+  private def batchFilledAmountReq(
+      contractAddress: Address,
+      orderHashes: Seq[String],
+      tag: String = "latest"
+    ) = {
+    orderHashes.zipWithIndex.map { orderHash ⇒
+      val data = tradeHistoryAbi.filled.pack(
+        FilledFunction.Params(Numeric.hexStringToByteArray(orderHash._1))
+      )
+      val param = XTransactionParam(to = contractAddress.toString, data = data)
+      XEthCallReq(orderHash._2, Some(param), tag)
+    }
   }
 
   private def batchErc20AllowanceReq(
