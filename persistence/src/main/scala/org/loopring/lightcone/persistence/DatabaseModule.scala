@@ -44,9 +44,15 @@ class DatabaseModule @Inject()(
   val orderService: OrderService = new OrderServiceImpl()
   val tradeService: TradeService = new TradeServiceImpl()
 
+  val orderCancelledEventService: OrdersCancelledEventService =
+    new OrdersCancelledEventServiceImpl()
+  val orderCutoffService: OrdersCutoffService = new OrdersCutoffServiceImpl()
+
   val tables = Seq(
     new TokenMetadataDalImpl(),
     new OrderDalImpl(),
+    new OrdersCancelledEventDalImpl(),
+    new OrdersCutoffDalImpl(),
     new TradeDalImpl(),
     new AddressDalImpl(),
     new TokenBalanceDalImpl(),
