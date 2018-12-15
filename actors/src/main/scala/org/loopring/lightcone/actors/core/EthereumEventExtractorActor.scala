@@ -29,6 +29,7 @@ import org.loopring.lightcone.persistence.dals.{BlockDal, BlockDalImpl}
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.persistence.service.{OrdersCancelledEventServiceImpl, OrdersCutoffServiceImpl}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import org.web3j.utils.Numeric
@@ -91,7 +92,8 @@ class EthereumEventExtractorActor(
 
 
   val blockDal: BlockDal = new BlockDalImpl()
-  
+  val ordersCutoffService = new OrdersCutoffServiceImpl()
+  val orderCancelledEventService  = new OrdersCancelledEventServiceImpl()
 
   val zeroAdd: String = "0x" + "0" * 40
   val delegateAddress: String =
@@ -336,6 +338,8 @@ class EthereumEventExtractorActor(
         fillContent.substring(index * fillLength, fillLength * (index + 1))
     }
   }
+
+
 
   implicit def hex2BigInt(hex: String): BigInt = BigInt(Numeric.toBigInt(hex))
 
