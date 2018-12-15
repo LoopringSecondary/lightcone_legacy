@@ -14,31 +14,26 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package org.loopring.lightcone.gateway
 
-case class LoopringProtocolAbi() {
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 
-  val abis: Seq[AbiWrap] = Seq(
-    OrderBookAbi(),
-    OrderCancellerAbi(),
-    RingSubmitterAbi(),
-    BurnRateTableAbi(),
-    AuthorizableAbi(),
-    TradeHistoryAbi()
-  )
+import org.loopring.lightcone.proto._
 
-  def unpackEvent(
-      data: String,
-      topics: Array[String]
-    ): Option[Any] =
-    abis
-      .map(abi ⇒ abi.unpackEvent(data, topics))
-      .find(_.nonEmpty)
-      .flatten
+trait MainRoute extends RouteSupport {
 
-  def unpackFunctionInput(input: String): Option[Any] =
-    abis
-      .map(abi ⇒ abi.unpackFunctionInput(input))
-      .find(_.nonEmpty)
-      .flatten
+  val route: Route = {
+    path("health") {
+      get {
+        // parameters(('size.as[Int], 'color ?, 'dangerous ? "no"))
+        // .as(XRawOrder)(req => request[XRawOrder](req))
+        // } ~
+        // get {
+        request[XRawOrder](new XRawOrder(tokenS = "afafadf"))
+      } ~ post {
+        entity(as[XRawOrder])(request[XRawOrder](_))
+      }
+    }
+  }
 }

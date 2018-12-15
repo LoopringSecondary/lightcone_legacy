@@ -18,24 +18,36 @@ package org.loopring.lightcone.actors
 
 import com.google.inject.Guice
 import com.typesafe.config.ConfigFactory
-import org.loopring.lightcone.actors.entrypoint.EntryPointActor
-import org.loopring.lightcone.actors.base.Lookup
 import org.slf4s.Logging
 import net.codingwell.scalaguice.InjectorExtensions._
-import akka.actor._
-import scala.io.StdIn
+import akka.actor.ActorRef
+import java.io.File
 
-object Main extends App with Logging {
-  val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
-  val injector = ClusterDeployer.deploy(configPathOpt)
-  val system = injector.instance[ActorSystem]
-  val actors = injector.instance[Lookup[ActorRef]]
-  actors.get(EntryPointActor.name)
+object ClusterDeployer extends Object with Logging {
 
-  println(s"Hit RETURN to terminate")
+  def deploy(configPathOpt: Option[String] = None) = {
+    log.info(s"--> config_path = ${configPathOpt}")
 
-  StdIn.readLine()
+    val baseConfig = ConfigFactory.load()
 
-  //Shutdown
-  system.terminate()
+    val config = configPathOpt match {
+      case Some(path) if path.nonEmpty =>
+        ConfigFactory.parseFile(new File(path)).withFallback(baseConfig)
+      case _ =>
+        baseConfig
+    }
+
+    val configItems = Seq(
+      "akka.remote.netty.tcp.hostname",
+      "akka.remote.netty.tcp.port",
+      "akka.cluster.seed-nodes",
+      "akka.cluster.roles"
+    )
+
+    configItems foreach { i =>
+      log.info(s"--> $i = ${config.getString(i)}")
+    }
+
+    Guice.createInjector(new CoreModule(config))
+  }
 }

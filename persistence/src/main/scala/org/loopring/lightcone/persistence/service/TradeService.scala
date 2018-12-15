@@ -14,31 +14,17 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package org.loopring.lightcone.persistence.service
 
-case class LoopringProtocolAbi() {
+import org.loopring.lightcone.persistence.dals.TradeDal
+import org.loopring.lightcone.proto.{XErrorCode, XGetTradesReq, XTrade}
+import scala.concurrent.Future
 
-  val abis: Seq[AbiWrap] = Seq(
-    OrderBookAbi(),
-    OrderCancellerAbi(),
-    RingSubmitterAbi(),
-    BurnRateTableAbi(),
-    AuthorizableAbi(),
-    TradeHistoryAbi()
-  )
+trait TradeService {
 
-  def unpackEvent(
-      data: String,
-      topics: Array[String]
-    ): Option[Any] =
-    abis
-      .map(abi ⇒ abi.unpackEvent(data, topics))
-      .find(_.nonEmpty)
-      .flatten
-
-  def unpackFunctionInput(input: String): Option[Any] =
-    abis
-      .map(abi ⇒ abi.unpackFunctionInput(input))
-      .find(_.nonEmpty)
-      .flatten
+  val tradeDal: TradeDal
+  def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]]
+  def getTrades(request: XGetTradesReq): Future[Seq[XTrade]]
+  def countTrades(request: XGetTradesReq): Future[Int]
+  def obsolete(height: Long): Future[Unit]
 }

@@ -19,10 +19,10 @@ package org.loopring.lightcone.actors.base
 import scala.concurrent._
 import scala.util.{Failure, Success}
 import scala.reflect.ClassTag
-import org.loopring.lightcone.core.base.ErrorException
 import org.loopring.lightcone.proto.XError
 import org.loopring.lightcone.proto.XErrorCode._
 import akka.actor._
+import org.loopring.lightcone.lib.ErrorException
 
 object safefuture {
 

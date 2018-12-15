@@ -27,8 +27,8 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.ethereum._
-import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.actors.utils._
+import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
@@ -73,6 +73,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     implicit val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)
+    dbModule.createTables()
 
     implicit val tmm = new TokenMetadataManager()
     bind[TokenMetadataManager].toInstance(tmm)
@@ -115,7 +116,10 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       OrderbookManagerActor.name,
       OrderbookManagerActor.startShardRegion
     )
-    actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
+    actors.add(
+      OrderHandlerActor.name,
+      OrderHandlerActor.startShardRegion
+    )
     actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
     actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
     actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)

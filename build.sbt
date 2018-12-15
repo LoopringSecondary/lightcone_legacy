@@ -13,6 +13,7 @@ lazy val proto = (project in file("proto"))
 
 lazy val lib = (project in file("lib"))
   .enablePlugins(AutomateHeaderPlugin)
+  .dependsOn(proto)
   .settings(
     basicSettings,
     libraryDependencies ++= dependency4Lib)
@@ -76,7 +77,7 @@ lazy val gateway = (project in file("gateway"))
   .enablePlugins(MultiJvmPlugin)
   .configs(MultiJvm)
   .settings(multiJvmSettings: _*)
-  .dependsOn(proto, lib, persistence)
+  .dependsOn(proto, lib, actors, persistence)
   .settings(
     basicSettings,
     dockerSettings,

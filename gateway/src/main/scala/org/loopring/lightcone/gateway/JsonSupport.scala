@@ -14,31 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package org.loopring.lightcone.gateway
 
-case class LoopringProtocolAbi() {
+import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 
-  val abis: Seq[AbiWrap] = Seq(
-    OrderBookAbi(),
-    OrderCancellerAbi(),
-    RingSubmitterAbi(),
-    BurnRateTableAbi(),
-    AuthorizableAbi(),
-    TradeHistoryAbi()
-  )
-
-  def unpackEvent(
-      data: String,
-      topics: Array[String]
-    ): Option[Any] =
-    abis
-      .map(abi ⇒ abi.unpackEvent(data, topics))
-      .find(_.nonEmpty)
-      .flatten
-
-  def unpackFunctionInput(input: String): Option[Any] =
-    abis
-      .map(abi ⇒ abi.unpackFunctionInput(input))
-      .find(_.nonEmpty)
-      .flatten
+trait JsonSupport extends Json4sSupport {
+  implicit val serialization = org.json4s.native.Serialization
+  implicit val formats = org.json4s.DefaultFormats
 }

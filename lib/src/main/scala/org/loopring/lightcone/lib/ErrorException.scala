@@ -14,31 +14,19 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package org.loopring.lightcone.lib
 
-case class LoopringProtocolAbi() {
+import org.loopring.lightcone.proto.{XError, XErrorCode}
 
-  val abis: Seq[AbiWrap] = Seq(
-    OrderBookAbi(),
-    OrderCancellerAbi(),
-    RingSubmitterAbi(),
-    BurnRateTableAbi(),
-    AuthorizableAbi(),
-    TradeHistoryAbi()
-  )
+final class ErrorException(val error: XError) extends Exception {
+  override def getMessage() = s"ErrorException(${error.code}: ${error.message})"
+}
 
-  def unpackEvent(
-      data: String,
-      topics: Array[String]
-    ): Option[Any] =
-    abis
-      .map(abi ⇒ abi.unpackEvent(data, topics))
-      .find(_.nonEmpty)
-      .flatten
+object ErrorException {
 
-  def unpackFunctionInput(input: String): Option[Any] =
-    abis
-      .map(abi ⇒ abi.unpackFunctionInput(input))
-      .find(_.nonEmpty)
-      .flatten
+  def apply(
+      code: XErrorCode,
+      message: String
+    ) = new ErrorException(XError(code, message))
+  def apply(error: XError) = new ErrorException(error)
 }

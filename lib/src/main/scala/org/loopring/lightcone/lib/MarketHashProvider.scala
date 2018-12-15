@@ -14,31 +14,29 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package org.loopring.lightcone.lib
 
-case class LoopringProtocolAbi() {
+object MarketHashProvider {
 
-  val abis: Seq[AbiWrap] = Seq(
-    OrderBookAbi(),
-    OrderCancellerAbi(),
-    RingSubmitterAbi(),
-    BurnRateTableAbi(),
-    AuthorizableAbi(),
-    TradeHistoryAbi()
-  )
+  private def removePrefix(address: String): String = {
+    if (address.startsWith("0x")) {
+      address.substring(2).trim
+    } else {
+      address.trim
+    }
+  }
 
-  def unpackEvent(
-      data: String,
-      topics: Array[String]
-    ): Option[Any] =
-    abis
-      .map(abi ⇒ abi.unpackEvent(data, topics))
-      .find(_.nonEmpty)
-      .flatten
+  def convert2BigInt(
+      address1: String,
+      address2: String
+    ): BigInt = {
+    BigInt(removePrefix(address1), 16) ^ BigInt(removePrefix(address2), 16)
+  }
 
-  def unpackFunctionInput(input: String): Option[Any] =
-    abis
-      .map(abi ⇒ abi.unpackFunctionInput(input))
-      .find(_.nonEmpty)
-      .flatten
+  def convert2Hex(
+      address1: String,
+      address2: String
+    ): String = {
+    "0x" + convert2BigInt(address1, address2).toString(16)
+  }
 }

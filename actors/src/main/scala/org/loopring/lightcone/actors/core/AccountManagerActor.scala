@@ -93,7 +93,7 @@ class AccountManagerActor(
       if (manager.cancelOrder(req.id)) {
         marketManagerActor forward req
       } else {
-        sender ! XCancelOrderRes(error = ERR_ORDER_NOT_EXIST)
+        Future.failed(new ErrorException(XError(ERR_FAILED_HANDLE_MES))) sendTo sender
       }
 
     case XAddressBalanceUpdated(_, token, newBalance) =>
@@ -137,8 +137,9 @@ class AccountManagerActor(
         marketManagerActor ! XSubmitOrderReq("", Some(xorder_))
         XSubmitOrderRes(order = Some(xorder_))
       } else {
-        val error = convertOrderStatusToErrorCode(order.status)
-        XSubmitOrderRes(error = error)
+        throw new ErrorException(
+          XError(convertOrderStatusToErrorCode(order.status))
+        )
       }
     }
   }
