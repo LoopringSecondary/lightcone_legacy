@@ -46,25 +46,56 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
       post {
         entity(as[JsonRpcRequest]) { jsonReq =>
           println("=====json request: " + jsonReq)
-          val method = jsonReq.method
+          implicit val method = jsonReq.method
+          implicit val id = jsonReq.id
 
-          val ps = getPayloadSerializer(method).get
-          println("!!!!!: " + jsonReq.params)
-          val req = jsonReq.params.map(ps.toRequest).get
+          getPayloadSerializer(method) match {
+            case None =>
+              replyWithError(123, s"invalid method `${method}`")
 
-          onSuccess(requestHandler ? req) { resp =>
-            println("-------resp: " + resp)
+            case Some(ps) =>
+              jsonReq.params.map(ps.toRequest) match {
+                case None =>
+                  replyWithError(
+                    123,
+                    "`params` is missing, you can provide \"{}\""
+                  )
 
-            val respJson = Option(ps.fromResponse(resp))
-
-            complete(
-              JsonRpcResponse(JSON_RPC_VER, method, respJson, None, jsonReq.id)
-            )
+                case Some(req) =>
+                  onSuccess(requestHandler ? req) { resp =>
+                    replyWith(ps.fromResponse(resp))
+                  }
+              }
           }
         }
       }
     }
   }
+
+  private def replyWithError(
+      code: Int,
+      message: String
+    )(
+      implicit method: String,
+      id: Option[String]
+    ) =
+    complete(
+      JsonRpcResponse(
+        JSON_RPC_VER,
+        method,
+        None,
+        Some(JsonRpcError(code, Some(message))),
+        id
+      )
+    )
+
+  private def replyWith(
+      content: String
+    )(
+      implicit method: String,
+      id: Option[String]
+    ) =
+    complete(JsonRpcResponse(JSON_RPC_VER, method, Option(content), None, id))
 
   def start(
       host: String,
