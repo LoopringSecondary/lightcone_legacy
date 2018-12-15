@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.gateway.jsonrpc
 
+import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto.XError
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.pattern.ask
@@ -41,10 +43,14 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
   implicit val system: ActorSystem
   implicit val timeout = Timeout(2 second)
+  implicit val ec = ExecutionContext.global
 
   val JSON_RPC_VER = "2.0"
 
   val myExceptionHandler = ExceptionHandler {
+    case e: ErrorException =>
+      replyWithError(e.error.code.value, Some(e.error.message))("", None)
+
     case e: Throwable =>
       extractUri { uri =>
         println(s"Request to $uri could not be handled normally")
@@ -76,7 +82,12 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                     )
 
                   case Some(req) =>
-                    onSuccess(requestHandler ? req) { resp =>
+                    val f = (requestHandler ? req).map {
+                      case err: XError => throw ErrorException(err)
+                      case other       => other
+                    }
+
+                    onSuccess(f) { resp =>
                       replyWith(ps.fromResponse(resp))
                     }
                 }

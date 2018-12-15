@@ -53,7 +53,7 @@ object Main extends HttpApp with JsonRpcModule with Logging {
   val requestHandler = system.actorOf(Props(new Actor() {
 
     def receive = {
-      case x => sender ! x
+      case x => sender ! XNodeBlockHeight()
     }
   }))
 

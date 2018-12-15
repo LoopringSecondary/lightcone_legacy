@@ -24,6 +24,7 @@ import akka.pattern.ask
 import scala.reflect.runtime.universe._
 import akka.actor._
 import akka.util.Timeout
+import scala.reflect.ClassTag
 
 class Binder[T <: Proto[T]: TypeTag](
     implicit module: JsonRpcBinding,
@@ -33,6 +34,7 @@ class Binder[T <: Proto[T]: TypeTag](
       method: String
     )(
       implicit tc: ProtoC[T],
+      cs: ClassTag[S],
       ts: ProtoC[S]
     ) = {
     module.addPayloadSerializer(method, new PayloadSerializer[T, S])
