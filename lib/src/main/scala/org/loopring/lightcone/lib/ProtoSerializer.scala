@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.jsonrpc.serialization
+package org.loopring.lightcone.lib
+
+import scala.reflect.runtime.universe._
 
 import scalapb.json4s.JsonFormat
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
+import scala.reflect.runtime.universe._
 
-object ScalaPBJSONSerializer {
-
-  def apply() = new ScalaPBJSONSerializer
-}
-
-class ScalaPBJSONSerializer {
+class ProtoSerializer {
 
   def serialize[T](value: T): Option[String] =
-    macro ScalaPBJSONSerializerMacro.serialize[T]
+    macro ProtoSerializerMacro.serialize[T]
 
   def deserialize[T](json: String): Option[T] =
-    macro ScalaPBJSONSerializerMacro.deserialize[T]
+    macro ProtoSerializerMacro.deserialize[T]
 }
 
-object ScalaPBJSONSerializerMacro {
+private object ProtoSerializerMacro {
 
   def serialize[T](
       c: blackbox.Context
@@ -60,7 +58,7 @@ object ScalaPBJSONSerializerMacro {
     c.Expr[Option[T]](q"""
           {
             import scalapb.json4s.JsonFormat
-          	scala.util.Try(JsonFormat.fromJsonString[$deserializeType]($json)).toOption
+            scala.util.Try(JsonFormat.fromJsonString[$deserializeType]($json)).toOption
           }""")
   }
 }

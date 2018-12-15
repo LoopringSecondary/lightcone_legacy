@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.jsonrpc.serialization
+package org.loopring.lightcone.gateway.jsonrpc
 
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 
