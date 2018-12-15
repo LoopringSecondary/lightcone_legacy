@@ -46,6 +46,6 @@ object Main extends HttpApp with RpcBinding with Logging {
   val port = config.getInt("jsonrpc.http.port")
 
   def main(args: Array[String]) {
-    startServer(host, port)
+    startServer("localhost", 8080, system)
   }
 }

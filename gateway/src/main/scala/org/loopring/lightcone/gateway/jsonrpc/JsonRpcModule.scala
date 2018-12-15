@@ -44,17 +44,15 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
   val JSON_RPC_VER = "2.0"
 
-  val myExceptionHandler = ExceptionHandler {
+  implicit val myExceptionHandler = ExceptionHandler {
     case e: ErrorException =>
       replyWithError(e.error.code.value, Some(e.error.message))("", None)
 
     case e: Throwable =>
-      extractUri { uri =>
-        replyWithError(-32603, Some(e.getMessage))("", None)
-      }
+      replyWithError(-32603, Some(e.getMessage))("", None)
   }
 
-  val routes: Route = handleExceptions(myExceptionHandler) {
+  val routes: Route = {
     path(endpoint) {
       post {
         entity(as[JsonRpcRequest]) { jsonReq =>

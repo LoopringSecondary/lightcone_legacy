@@ -19,12 +19,16 @@ object Settings {
     organizationName := "Loopring Foundation",
     homepage := Some(url("https://loopring.org")),
     developers := List(
-      Developer(id = "foundation@loopring.org",
-                name = "Loopring Developers",
-                email = "foundation@loopring.org",
-                url = url("https://loopring.org"))),
+      Developer(
+        id = "foundation@loopring.org",
+        name = "Loopring Developers",
+        email = "foundation@loopring.org",
+        url = url("https://loopring.org")
+      )
+    ),
     scmInfo := Some(
-      ScmInfo(url(Globals.projectGitHttpUrl), "scm:" + Globals.projectGitUrl)),
+      ScmInfo(url(Globals.projectGitHttpUrl), "scm:" + Globals.projectGitUrl)
+    ),
     autoScalaLibrary := false,
     resolvers += "mvnrepository" at "http://mvnrepository.com/artifact/",
     resolvers += "ethereumlibrepository" at "https://dl.bintray.com/ethereum/maven/",
@@ -39,17 +43,20 @@ object Settings {
     ),
     javacOptions := Seq( //"-source", Globals.jvmVersion,
     ),
-    scalacOptions := Seq("-encoding",
-                         "utf8",
-                         "-g:vars",
-                         "-unchecked",
-                         "-deprecation",
-                         "-Yresolve-term-conflict:package"),
+    scalacOptions := Seq(
+      "-encoding",
+      "utf8",
+      "-g:vars",
+      "-unchecked",
+      "-deprecation",
+      "-Yresolve-term-conflict:package"
+    ),
     fork in Test := false,
     parallelExecution in Test := false,
     startYear := Some(2018),
     licenses += ("Apache-2.0", new URL(
-      "https://www.apache.org/licenses/LICENSE-2.0.txt")),
+      "https://www.apache.org/licenses/LICENSE-2.0.txt"
+    )),
     shellPrompt in ThisBuild := { state =>
       "sbt (%s)> ".format(Project.extract(state).currentProject.id)
     },
@@ -57,7 +64,8 @@ object Settings {
     publishArtifact in (Compile, packageDoc) := true,
     publishTo := Some(
       if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
-      else Opts.resolver.sonatypeStaging),
+      else Opts.resolver.sonatypeStaging
+    ),
     releaseCrossBuild := false,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
@@ -92,11 +100,13 @@ object Settings {
     imageNames in docker := Seq(
       ImageName(s"${organization.value}/lightcone_${name.value}:latest"),
       ImageName(
-        s"${organization.value}/lightcone_${name.value}:v${version.value}")),
-    buildOptions in docker := BuildOptions(cache = false,
-                                           removeIntermediateContainers =
-                                             BuildOptions.Remove.Always,
-                                           pullBaseImage =
-                                             BuildOptions.Pull.Always)
+        s"${organization.value}/lightcone_${name.value}:v${version.value}"
+      )
+    ),
+    buildOptions in docker := BuildOptions(
+      cache = false,
+      removeIntermediateContainers = BuildOptions.Remove.Always,
+      pullBaseImage = BuildOptions.Pull.Always
+    )
   )
 }
