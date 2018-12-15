@@ -142,11 +142,11 @@ private[ethereum] class HttpConnector(
     } yield jsonStr
   }
 
-  private def thenReplyWrapped: PartialFunction[String, JsonRpcResWrapped] = {
+  private def toResponseWrapped: PartialFunction[String, JsonRpcResWrapped] = {
     case json: String => parse(json).extract[JsonRpcResWrapped]
   }
 
-  private def thenReplyListWrapped
+  private def toResponseListWrapped
     : PartialFunction[String, Seq[JsonRpcResWrapped]] = {
     case json: String => parse(json).extract[Seq[JsonRpcResWrapped]]
   }
