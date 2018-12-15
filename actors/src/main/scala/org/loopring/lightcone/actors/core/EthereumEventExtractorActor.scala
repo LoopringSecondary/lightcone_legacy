@@ -22,18 +22,17 @@ import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
+import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.dals.{BlockDal, BlockDalImpl}
+import org.loopring.lightcone.persistence.dals._
+import org.loopring.lightcone.persistence.service._
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
-import com.google.protobuf.ByteString
-import org.loopring.lightcone.persistence.service.{OrdersCancelledEventServiceImpl, OrdersCutoffServiceImpl}
+import org.web3j.utils.Numeric
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-import org.web3j.utils.Numeric
-
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -83,6 +82,7 @@ class EthereumEventExtractorActor(
     dbConfig: DatabaseConfig[JdbcProfile])
     extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
 
+  def ethereumQueryActor: ActorRef = actors.get(EthereumQueryActor.name)
   def ethereumAccessorActor: ActorRef = actors.get(EthereumAccessActor.name)
 
   def accountManager: ActorRef = actors.get(AccountManagerActor.name)
@@ -90,12 +90,12 @@ class EthereumEventExtractorActor(
   val wethAbi = WETHABI()
   val loopringProtocolAbi = LoopringProtocolAbi()
 
-
   val blockDal: BlockDal = new BlockDalImpl()
   val ordersCutoffService = new OrdersCutoffServiceImpl()
-  val orderCancelledEventService  = new OrdersCancelledEventServiceImpl()
+  val orderCancelledEventService = new OrdersCancelledEventServiceImpl()
 
   val zeroAdd: String = "0x" + "0" * 40
+
   val delegateAddress: String =
     config.getString("loopring-protocol.delegate-address")
 
@@ -109,14 +109,14 @@ class EthereumEventExtractorActor(
     for {
       maxBlock: Option[Long] ← blockDal.findMaxHeight()
       blockNum ← maxBlock match {
-        case Some(_) ⇒ Future.successful(BigInt(maxBlock.get))
+        case Some(_) ⇒ Future.successful(maxBlock.get.toHexString)
         case _ ⇒
           (ethereumAccessorActor ? XEthBlockNumberReq())
             .mapTo[XEthBlockNumberRes]
-            .map(res ⇒ BigInt(res.result))
+            .map(res ⇒ res.result)
       }
       blockHash ← (ethereumAccessorActor ? XGetBlockWithTxHashByNumberReq(
-        blockNum.toString(16)
+        blockNum
       )).mapTo[XGetBlockWithTxHashByNumberRes]
         .map(_.result.get.hash)
     } yield {
@@ -150,10 +150,6 @@ class EthereumEventExtractorActor(
       block match {
         case XGetBlockWithTxObjectByNumberRes(_, _, Some(result), _) ⇒
           if (result.parentHash.equals(currentBlockHash)) {
-            val blockData = XBlockData()
-              .withHash(result.hash)
-              .withHeight(result.number.longValue())
-            blockDal.saveBlock(blockData)
             self ! XBlockJob()
               .withHeight(result.number.intValue())
               .withHash(result.hash)
@@ -208,18 +204,19 @@ class EthereumEventExtractorActor(
         .mapAs[XBatchGetUncleByBlockNumAndIndexRes]
         .map(_.resps.map(_.result.get.miner))
       allGet = txReceipts.forall(_.nonEmpty)
-      addresses = if (allGet) {
-        getBalanceAndAllowanceAdds(txReceipts)
-      } else {
-        (Seq.empty[(String, String)], Seq.empty[(String, String)])
-      }
-      fills = if (allGet) {
-        getFills(txReceipts)
-      } else {
-        Seq.empty[String]
-      }
-      balanceAddresses = ListBuffer
-        .empty[(String, String)]
+      addresses = getBalanceAndAllowanceAdds(
+        txReceipts,
+        Address(delegateAddress),
+        Address(protocolAddress)
+      )
+      fills = getFills(txReceipts)
+      filledOrders ← (ethereumQueryActor ? GetFilledAmountReq(
+        fills.map(_.substring(0, 66))
+      )).mapAs[GetFilledAmountRes]
+        .map(_.filledAmountSMap)
+      ordersCancelledEvents = getXOrdersCancelledEvents(txReceipts)
+      ordersCutoffEvents = getXOrdersCutoffEvent(txReceipts)
+      balanceAddresses = ListBuffer.empty
         .++=(addresses._1)
         .++=(uncles.map(_ → zeroAdd))
         .+=(job.miner → zeroAdd)
@@ -243,14 +240,15 @@ class EthereumEventExtractorActor(
       })
       balanceRes ← Future.sequence(
         balanceReqs
-          .map(req ⇒ (ethereumAccessorActor ? req).mapTo[XGetBalanceRes])
+          .map(req ⇒ (ethereumQueryActor ? req).mapAs[XGetBalanceRes])
       )
       allowanceRes ← Future.sequence(
         allowanceReqs
-          .map(req ⇒ (ethereumAccessorActor ? req).mapTo[XGetAllowanceRes])
+          .map(req ⇒ (ethereumQueryActor ? req).mapAs[XGetAllowanceRes])
       )
     } yield {
       if (allGet) {
+        // 更新余额
         balanceRes.foreach(res ⇒ {
           res.balanceMap.foreach(
             item ⇒
@@ -261,6 +259,7 @@ class EthereumEventExtractorActor(
               )
           )
         })
+        // 更新授权
         allowanceRes.foreach(res ⇒ {
           res.allowanceMap.foreach(item ⇒ {
             accountManager ! XAddressAllowanceUpdated(
@@ -270,6 +269,21 @@ class EthereumEventExtractorActor(
             )
           })
         })
+
+        // db 存储订单取消事件
+        ordersCancelledEvents.foreach(
+          orderCancelledEventService.saveCancelOrder
+        )
+        ordersCutoffEvents.foreach(ordersCutoffService.saveCutoff)
+
+        //TODO (yadong) 更新order fill amount--等待MultiAccountManagerActor
+
+        //db 更新已经处理的最新块
+        val blockData = XBlockData()
+          .withHash(job.hash)
+          .withHeight(job.height)
+        blockDal.saveBlock(blockData)
+
         currentBlockNumber = job.height
         currentBlockHash = job.hash
         self ! XStart()
@@ -278,68 +292,6 @@ class EthereumEventExtractorActor(
       }
     }
   }
-
-  def getBalanceAndAllowanceAdds(
-      receipts: Seq[Option[XTransactionReceipt]]
-    ): (Seq[(String, String)], Seq[(String, String)]) = {
-    val balanceAddresses = ListBuffer.empty[(String, String)]
-    val allowanceAddresses = ListBuffer.empty[(String, String)]
-    receipts.foreach(receipt ⇒ {
-      balanceAddresses.append(receipt.get.from → zeroAdd)
-      balanceAddresses.append(receipt.get.to → zeroAdd)
-      receipt.get.logs.foreach(log ⇒ {
-        wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-          case Some(transfer: TransferEvent.Result) ⇒
-            balanceAddresses.append(
-              transfer.sender → log.address,
-              transfer.receiver → log.address
-            )
-            if (receipt.get.to.equalsIgnoreCase(protocolAddress)) {
-              allowanceAddresses.append(transfer.sender → log.address)
-            }
-          case Some(approval: ApprovalEvent.Result) ⇒
-            if (approval.spender.equalsIgnoreCase(delegateAddress))
-              allowanceAddresses.append(approval.owner → log.address)
-          case Some(deposit: DepositEvent.Result) ⇒
-            balanceAddresses.append(deposit.dst → log.address)
-          case Some(withdrawal: WithdrawalEvent.Result) ⇒
-            balanceAddresses.append(withdrawal.src → log.address)
-          case _ ⇒
-        }
-      })
-    })
-    (balanceAddresses, allowanceAddresses)
-  }
-
-  def getFills(receipts: Seq[Option[XTransactionReceipt]]): Seq[String] = {
-    val orderHashes = ListBuffer.empty[String]
-    receipts
-      .foreach(receipt ⇒ {
-        receipt.get.logs.foreach { log ⇒
-          {
-            loopringProtocolAbi
-              .unpackEvent(log.data, log.topics.toArray) match {
-              case Some(event: RingMinedEvent.Result) ⇒
-                orderHashes.append(splitEventToFills(event._fills):_*)
-              case _ ⇒
-            }
-          }
-        }
-      })
-    orderHashes
-  }
-
-  def splitEventToFills(_fills: String): Seq[String] = {
-    //首先去掉head
-    val fillContent = _fills.substring(128)
-    val fillLength = 8 * 64
-      (0 until (fillContent.length / fillLength))
-      .map { index ⇒
-        fillContent.substring(index * fillLength, fillLength * (index + 1))
-    }
-  }
-
-
 
   implicit def hex2BigInt(hex: String): BigInt = BigInt(Numeric.toBigInt(hex))
 
