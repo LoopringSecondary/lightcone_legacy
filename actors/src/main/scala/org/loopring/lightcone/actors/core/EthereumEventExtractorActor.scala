@@ -149,15 +149,17 @@ class EthereumEventExtractorActor(
     } yield {
       block match {
         case XGetBlockWithTxObjectByNumberRes(_, _, Some(result), _) ⇒
-          if (result.parentHash.equals(currentBlockHash)) {
+          // 暂时不考虑分叉
+//          if (result.parentHash.equals(currentBlockHash)) {
             self ! XBlockJob()
               .withHeight(result.number.intValue())
               .withHash(result.hash)
               .withMiner(result.miner)
               .withUncles(result.uncles)
               .withTxhashes(result.transactions.map(_.hash))
-          } else
-            self ! XForkBlock((currentBlockNumber - 1).intValue())
+//          }
+//          else
+//            self ! XForkBlock((currentBlockNumber - 1).intValue())
         case _ ⇒
           context.system.scheduler.scheduleOnce(15 seconds, self, XStart())
       }
@@ -214,6 +216,7 @@ class EthereumEventExtractorActor(
         fills.map(_.substring(0, 66))
       )).mapAs[GetFilledAmountRes]
         .map(_.filledAmountSMap)
+      submitOrders = getOnlineOrders(txReceipts)
       ordersCancelledEvents = getXOrdersCancelledEvents(txReceipts)
       ordersCutoffEvents = getXOrdersCutoffEvent(txReceipts)
       balanceAddresses = ListBuffer.empty
@@ -277,6 +280,8 @@ class EthereumEventExtractorActor(
         ordersCutoffEvents.foreach(ordersCutoffService.saveCutoff)
 
         //TODO (yadong) 更新order fill amount--等待MultiAccountManagerActor
+
+        //TODO(yadong) db 存储 online Orders -- 确认要不要定义类型
 
         //db 更新已经处理的最新块
         val blockData = XBlockData()
