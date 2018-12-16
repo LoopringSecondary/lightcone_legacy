@@ -14,29 +14,35 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.jsonrpc
+package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.lib.ProtoSerializer
 import org.loopring.lightcone.proto._
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import akka.pattern.ask
+import scalapb.json4s.JsonFormat
 import scala.reflect.runtime.universe._
 import akka.actor._
 import akka.util.Timeout
-import scala.reflect.ClassTag
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import akka.pattern.ask
 
-class Binder[T <: Proto[T]: TypeTag](
-    implicit module: JsonRpcBinding,
-    ps: ProtoSerializer) {
+trait JsonRpcBinding {
 
-  def thenReply[S <: Proto[S]: TypeTag](
-      method: String
-    )(
-      implicit tc: ProtoC[T],
-      cs: ClassTag[S],
-      ts: ProtoC[S]
+  private var bindings = Map.empty[String, PayloadConverter[_, _]]
+  implicit private val module_ = this
+  implicit private val ps = new ProtoSerializer
+
+  def ifReceive[T <: Proto[T]: TypeTag] = new Binder[T]
+
+  private[jsonrpc] def addPayloadConverter[
+      T <: Proto[T]: TypeTag,
+      S <: Proto[S]: TypeTag
+    ](method: String,
+      ps: PayloadConverter[T, S]
     ) = {
-    module.addPayloadConverter(method, new PayloadConverter[T, S])
+    assert(!bindings.contains(method), s"method ${method} already bound")
+    bindings = bindings + (method -> ps)
   }
+
+  def getPayloadConverter(method: String) = bindings.get(method)
 }

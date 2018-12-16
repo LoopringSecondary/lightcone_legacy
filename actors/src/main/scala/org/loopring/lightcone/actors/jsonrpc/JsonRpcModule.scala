@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.jsonrpc
+package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.XError

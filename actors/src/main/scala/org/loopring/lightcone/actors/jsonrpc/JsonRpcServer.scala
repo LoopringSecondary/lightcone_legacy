@@ -14,38 +14,29 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.actors.jsonrpc
 
-import org.loopring.lightcone.gateway.jsonrpc._
 import org.loopring.lightcone.actors.entrypoint.EntryPointActor
 import org.loopring.lightcone.actors.base.Lookup
-import org.slf4s.Logging
-import net.codingwell.scalaguice.InjectorExtensions._
-import org.loopring.lightcone.actors._
 import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-import com.google.inject.Guice
 import akka.http.scaladsl.server.HttpApp
 import akka.actor._
 import akka.util.Timeout
 import scala.io.StdIn
 import scala.concurrent.ExecutionContext
 
-object Main extends HttpApp with RpcBinding with Logging {
-
-  val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
-  val injector = ClusterDeployer.deploy(configPathOpt)
-
-  implicit val config = injector.instance[Config]
-  override implicit val system = injector.instance[ActorSystem]
-
-  val actors = injector.instance[Lookup[ActorRef]]
-  val requestHandler = actors.get(EntryPointActor.name)
+abstract class JsonRpcServer(
+    val config: Config,
+    val requestHandler: ActorRef
+  )(
+    implicit val system: ActorSystem)
+    extends HttpApp {
 
   val host = config.getString("jsonrpc.http.host")
   val port = config.getInt("jsonrpc.http.port")
 
-  def main(args: Array[String]) {
-    startServer("localhost", 8080, system)
+  def start() = {
+    startServer(host, port)
+    println(s"started jsonrpc at ${host}:${port}")
   }
 }

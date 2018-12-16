@@ -14,11 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.jsonrpc
+package org.loopring.lightcone.actors.jsonrpc
+import org.json4s.JsonAST.JValue
 
-import de.heikoseeberger.akkahttpjson4s.Json4sSupport
+case class JsonRpcRequest(
+    jsonrpc: String,
+    method: String,
+    params: Option[JValue],
+    id: Option[String] = None)
 
-trait JsonSupport extends Json4sSupport {
-  implicit val serialization = org.json4s.native.Serialization
-  implicit val formats = org.json4s.DefaultFormats
-}
+case class JsonRpcError(
+    code: Int,
+    message: Option[String] = None,
+    data: Option[JValue] = None)
+
+case class JsonRpcResponse(
+    jsonrpc: String,
+    method: String,
+    result: Option[JValue] = None,
+    error: Option[JsonRpcError] = None,
+    id: Option[String] = None)
