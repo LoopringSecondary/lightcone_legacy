@@ -14,23 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.jsonrpc
-import org.json4s.JsonAST.JValue
+package org.loopring.lightcone.actors
 
-case class JsonRpcRequest(
-    jsonrpc: String,
-    method: String,
-    params: Option[JValue],
-    id: Option[String] = None)
+package object jsonrpc {
 
-case class JsonRpcError(
-    code: Int,
-    message: Option[String] = None,
-    data: Option[JValue] = None)
+  type Proto[T] = scalapb.GeneratedMessage with scalapb.Message[T]
+  type ProtoC[T <: Proto[T]] = scalapb.GeneratedMessageCompanion[T]
 
-case class JsonRpcResponse(
-    jsonrpc: String,
-    method: String,
-    result: Option[JValue] = None,
-    error: Option[JsonRpcError] = None,
-    id: Option[String] = None)
+}

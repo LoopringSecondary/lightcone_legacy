@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway.jsonrpc
+package org.loopring.lightcone.actors
 
-import org.scalatest._
-import org.scalamock.scalatest._
+import org.loopring.lightcone.actors.jsonrpc.JsonRpcModule
 import org.loopring.lightcone.proto._
-import org.slf4s.Logging
-import org.loopring.lightcone.lib.ProtoSerializer
 
-class PayloadConverterSpec extends FlatSpec with Matchers with Logging {
-  implicit val ps = new ProtoSerializer()
-  val serializer = new PayloadConverter[XRawOrder, XRawOrder]
-  val order = new XRawOrder(tokenS = "aaa")
+trait RpcBinding extends JsonRpcModule {
+  override val endpoint = "api"
+  // ifReceive[RequestType].thenReply[ResponseType]("method_name")
+  // Note that RequestType and ResponseType must be proto messages.
+  ifReceive[XRawOrder].thenReply[XRawOrder]("jsonrpc_method_name")
 
-  val json = serializer.convertFromResponse(order)
-  val order_ = serializer.convertToRequest(json)
-  order_ should be(order)
 }

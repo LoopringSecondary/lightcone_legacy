@@ -14,15 +14,29 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.actors.jsonrpc
 
-import org.loopring.lightcone.gateway.jsonrpc.JsonRpcModule
+import org.loopring.lightcone.lib.ProtoSerializer
 import org.loopring.lightcone.proto._
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import akka.pattern.ask
+import scala.reflect.runtime.universe._
+import akka.actor._
+import akka.util.Timeout
+import scala.reflect.ClassTag
 
-trait RpcBinding extends JsonRpcModule {
-  override val endpoint = "api"
-  // ifReceive[RequestType].thenReply[ResponseType]("method_name")
-  // Note that RequestType and ResponseType must be proto messages.
-  ifReceive[XRawOrder].thenReply[XRawOrder]("jsonrpc_method_name")
+class Binder[T <: Proto[T]: TypeTag](
+    implicit module: JsonRpcBinding,
+    ps: ProtoSerializer) {
 
+  def thenReply[S <: Proto[S]: TypeTag](
+      method: String
+    )(
+      implicit tc: ProtoC[T],
+      cs: ClassTag[S],
+      ts: ProtoC[S]
+    ) = {
+    module.addPayloadConverter(method, new PayloadConverter[T, S])
+  }
 }

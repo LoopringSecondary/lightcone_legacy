@@ -98,7 +98,10 @@ object Dependencies {
     akkaDependency ++
     json4sDependency ++
     testDependency ++
-    Seq("org.jsoup" % "jsoup" % "1.11.3")
+    Seq(
+      "org.jsoup" % "jsoup" % "1.11.3",
+      "com.corundumstudio.socketio" % "netty-socketio" % "1.7.16"
+    )
 
   lazy val dependency4Indexer = dependency4Persistence ++
     httpDependency ++
@@ -107,10 +110,4 @@ object Dependencies {
     testDependency ++
     Seq("org.jsoup" % "jsoup" % "1.11.3")
 
-  lazy val dependency4Gateway = dependency4Persistence ++
-    httpDependency ++
-    akkaDependency ++
-    json4sDependency ++
-    testDependency ++
-    Seq("com.corundumstudio.socketio" % "netty-socketio" % "1.7.16")
 }

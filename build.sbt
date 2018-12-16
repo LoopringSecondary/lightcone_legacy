@@ -63,28 +63,11 @@ lazy val indexer = (project in file("indexer"))
     dockerSettings,
     libraryDependencies ++= dependency4Indexer
   )
-
-lazy val gateway = (project in file("gateway"))
-  .enablePlugins(AutomateHeaderPlugin)
-  .enablePlugins(DockerComposePlugin)
-  .enablePlugins(sbtdocker.DockerPlugin)
-  .enablePlugins(JavaServerAppPackaging)
-  .enablePlugins(MultiJvmPlugin)
-  .configs(MultiJvm)
-  .settings(multiJvmSettings: _*)
-  .dependsOn(proto, lib, actors, persistence)
-  .settings(
-    basicSettings,
-    dockerSettings,
-    libraryDependencies ++= dependency4Gateway
-  )
-
 lazy val all = (project in file("."))
   .enablePlugins(DockerComposePlugin)
   .settings(docker := {
     (docker in actors).value
     (docker in indexer).value
-    (docker in gateway).value
   }, DockerComposeKeys.dockerImageCreationTask := docker.value)
-  .aggregate(proto, lib, ethereum, persistence, core, actors, gateway, indexer)
+  .aggregate(proto, lib, ethereum, persistence, core, actors, indexer)
   .withId("lightcone")

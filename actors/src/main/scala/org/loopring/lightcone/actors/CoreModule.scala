@@ -97,6 +97,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     //-----------deploy sharded actors-----------
     actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
+
     actors.add(
       MultiAccountManagerActor.name,
       MultiAccountManagerActor.startShardRegion
@@ -116,10 +117,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       OrderbookManagerActor.name,
       OrderbookManagerActor.startShardRegion
     )
-    actors.add(
-      OrderHandlerActor.name,
-      OrderHandlerActor.startShardRegion
-    )
+    actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
     actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
     actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
     actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
@@ -186,7 +184,13 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     val listener =
       system.actorOf(Props[BadMessageListener], "bad_message_listener")
+
     system.eventStream.subscribe(listener, classOf[UnhandledMessage])
     system.eventStream.subscribe(listener, classOf[DeadLetter])
+
+    if (cluster.selfRoles.contains("jsonrpc")) {
+      val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
+      server.start()
+    }
   }
 }
