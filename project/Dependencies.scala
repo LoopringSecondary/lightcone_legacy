@@ -98,10 +98,7 @@ object Dependencies {
     akkaDependency ++
     json4sDependency ++
     testDependency ++
-    Seq(
-      "org.jsoup" % "jsoup" % "1.11.3",
-      "com.corundumstudio.socketio" % "netty-socketio" % "1.7.16"
-    )
+    Seq("com.corundumstudio.socketio" % "netty-socketio" % "1.7.16")
 
   lazy val dependency4Indexer = dependency4Persistence ++
     httpDependency ++
