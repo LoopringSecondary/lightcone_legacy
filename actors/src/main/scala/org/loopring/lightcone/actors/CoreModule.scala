@@ -24,6 +24,7 @@ import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.ethereum._
@@ -190,6 +191,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     if (cluster.selfRoles.contains("jsonrpc")) {
       val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
+      with RpcBinding
       server.start()
     }
   }

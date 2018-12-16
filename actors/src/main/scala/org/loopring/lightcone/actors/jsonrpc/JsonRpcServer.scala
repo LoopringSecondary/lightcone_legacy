@@ -14,31 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.jsonrpc
 
-import org.loopring.lightcone.actors.jsonrpc._
 import org.loopring.lightcone.actors.entrypoint.EntryPointActor
 import org.loopring.lightcone.actors.base.Lookup
-import org.slf4s.Logging
-import net.codingwell.scalaguice.InjectorExtensions._
-import org.loopring.lightcone.actors._
 import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-import com.google.inject.Guice
 import akka.http.scaladsl.server.HttpApp
 import akka.actor._
 import akka.util.Timeout
 import scala.io.StdIn
 import scala.concurrent.ExecutionContext
 
-class JsonRpcServer(
+abstract class JsonRpcServer(
     val config: Config,
     val requestHandler: ActorRef
   )(
-    implicit override val system: ActorSystem)
-    extends HttpApp
-    with RpcBinding
-    with Logging {
+    implicit val system: ActorSystem)
+    extends HttpApp {
 
   val host = config.getString("jsonrpc.http.host")
   val port = config.getInt("jsonrpc.http.port")
