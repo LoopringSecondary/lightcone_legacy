@@ -33,7 +33,6 @@ import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
-
 import scala.concurrent._
 
 // main owner: 于红雨
@@ -126,6 +125,19 @@ class MarketManagerActor(
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   protected def settlementActor = actors.get(RingSettlementActor.name)
+
+  def recovering: Receive = {
+
+    case XSubmitOrderReq(_, Some(xorder)) ⇒
+      submitOrder(xorder)
+
+    case msg: XRecoverEnded =>
+      context.become(receive)
+
+    case msg: Any =>
+      log.warning(s"message not handled during recovery")
+
+  }
 
   def receive: Receive = LoggingReceive {
 

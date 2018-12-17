@@ -35,9 +35,10 @@ trait RecoverSupport extends Actor with ActorLogging {
 
   def recoverOrder(xraworder: XRawOrder): Future[Any]
   def generateRecoveryRequest(): XRecoverReq
+  def recovering: Receive
 
-  private var processed = 0
-  private var cancellable: Option[Cancellable] = None
+  protected var processed = 0
+  protected var cancellable: Option[Cancellable] = None
 
   protected def requestRecovery() = {
     if (skipRecovery) {
@@ -52,35 +53,6 @@ trait RecoverSupport extends Actor with ActorLogging {
   override def preStart(): Unit = {
     super.preStart()
     requestRecovery()
-  }
-
-  def recoverOrders(xraworders: Seq[XRawOrder]) = {
-    log.debug(s"recovering next ${xraworders.size} orders")
-    Future.sequence(xraworders.map(recoverOrder))
-  }
-
-  def recovering: Receive = {
-    case XRecoverRes(xraworders) =>
-      // cancel the previous auto-cancel scheduling
-      cancellable.foreach(_.cancel)
-      cancellable = None
-      val size = xraworders.size
-      log.debug(s"recovering next ${size} orders")
-      processed += size
-
-      recoverOrders(xraworders).map { _ =>
-        // auto-cancel after one minute
-        cancellable = Option(
-          context.system.scheduler.scheduleOnce(1.minute, self, XRecoverEnded())
-        )
-      }
-
-    case msg: XRecoverEnded =>
-      context.become(receive)
-
-    case msg =>
-      log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
-    //      stash() //恢复期间，暂时保存消息
   }
 
 }

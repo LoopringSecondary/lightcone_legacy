@@ -27,7 +27,7 @@ import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
-import scala.concurrent.ExecutionContext
+import scala.concurrent._
 import scala.concurrent.duration._
 
 object MultiAccountManagerActor extends ShardedByAddress {
@@ -85,12 +85,49 @@ class MultiAccountManagerActor(
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
       //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
-      case _: Exception ⇒ Restart
+      case e: Exception ⇒
+        log.error(e.getMessage)
+        Restart
     }
 
-  def receive: Receive = {
+  def recovering: Receive = {
     case XRecoverRes(xraworders) =>
-      recoverOrders(xraworders)
+      // cancel the previous auto-cancel scheduling
+      cancellable.foreach(_.cancel)
+      cancellable = None
+      val size = xraworders.size
+      log.debug(s"recovering next ${size} orders")
+      processed += size
+
+      for {
+        _ <- Future.sequence(xraworders.map(recoverOrder))
+      } yield {
+
+        cancellable = Option(
+          context.system.scheduler.scheduleOnce(1.minute, self, XRecoverEnded())
+        )
+
+        sender ! XRecoverProcessed()
+      }
+
+    case msg: XRecoverEnded =>
+      context.become(receive)
+
+    case msg: Any =>
+      log.warning(s"message not handled during recovery")
+  }
+
+  def receive: Receive = {
+
+    case XRecoverRes(xraworders) =>
+      val size = xraworders.size
+      log.debug(s"recovering next ${size} orders")
+
+      for {
+        _ <- Future.sequence(xraworders.map(recoverOrder))
+      } yield {
+        sender ! XRecoverProcessed()
+      }
 
     case req: Any =>
       (MultiAccountManagerActor.extractAddress.lift)(req) match {

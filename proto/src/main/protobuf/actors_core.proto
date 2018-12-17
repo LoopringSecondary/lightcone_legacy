@@ -192,6 +192,7 @@ message XRecoverRes {
     repeated XRawOrder orders = 1;
 }
 
+message XRecoverProcessed {}
 message XRecoverEnded {}
 
 enum XExecutedStatus {

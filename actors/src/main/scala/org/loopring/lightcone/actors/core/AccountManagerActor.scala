@@ -54,7 +54,10 @@ class AccountManagerActor(
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
       //所有异常都抛给上层监管者，shardingActor
-      case _: Exception ⇒ Escalate
+      case e: Exception ⇒
+        log.error(e.getMessage)
+
+        Escalate
     }
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
