@@ -89,9 +89,11 @@ class MultiAccountManagerActor(
     }
 
   def receive: Receive = {
+    case XRecoverRes(xraworders) =>
+      recoverOrders(xraworders)
+
     case req: Any =>
-      val addressOpt = (MultiAccountManagerActor.extractAddress.lift)(req)
-      addressOpt match {
+      (MultiAccountManagerActor.extractAddress.lift)(req) match {
         case Some(address) => accountManagerActorFor(address) forward req
         case None =>
           throw ErrorException(ERR_INVALID_REQ, "req cannot be handlled")

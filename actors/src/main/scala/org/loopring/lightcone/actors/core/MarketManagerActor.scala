@@ -127,8 +127,6 @@ class MarketManagerActor(
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   protected def settlementActor = actors.get(RingSettlementActor.name)
 
-  //todo: need refactor
-
   def receive: Receive = LoggingReceive {
 
     case XSubmitOrderReq(_, Some(xorder)) ⇒
