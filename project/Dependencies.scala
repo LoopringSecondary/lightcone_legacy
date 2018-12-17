@@ -12,7 +12,6 @@ object Dependencies {
     "org.scalamock" %% "scalamock" % "4.1.0" % Test,
     "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
     "com.dimafeng" %% "testcontainers-scala" % "0.21.0" % Test,
-    "org.testcontainers" % "mysql" % "1.10.1" % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test)
 
@@ -74,6 +73,7 @@ object Dependencies {
     ethereumDependency ++
     driverDependency ++
     guiceDependency ++
+    json4sDependency ++
     testDependency
 
   lazy val dependency4Persistence = commonDependency ++

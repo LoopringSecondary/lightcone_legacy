@@ -25,20 +25,43 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
   val validator: RawOrderValidator = new RawOrderValidatorImpl
 
   "user" should "be able to get hash of an order" in {
-    val lrcAddress = TestConfig.envOrElseConfig("contracts.LRC")
-    val wethAddress = TestConfig.envOrElseConfig("contracts.WETH")
-    val gtoAddress = TestConfig.envOrElseConfig("contracts.GTO")
+    // val lrcAddress = TestConfig.envOrElseConfig("contracts.LRC")
+    // val wethAddress = TestConfig.envOrElseConfig("contracts.WETH")
+    // val gtoAddress = TestConfig.envOrElseConfig("contracts.GTO")
 
-    val order1Owner = TestConfig.envOrElseConfig("accounts.a1.addr")
-    val order2Owner = TestConfig.envOrElseConfig("accounts.a2.addr")
+    // val order1Owner = TestConfig.envOrElseConfig("accounts.a1.addr")
+    // val order2Owner = TestConfig.envOrElseConfig("accounts.a2.addr")
+
+    val wethAddress = "0x5BB30c3741BD80F22938FB1F860F5f5AbD1C2c89"
+    val lrcAddress = "0xD772c98D65F23D41E187489a4fd51D7d631c974c"
+
+    val dualAuthAddr1 = "0x15d6D8a0cff888B9D3f6B2D916Dc2A19b9652310"
+    val walletAddr1 = "0x6883818661dd47b0d6b3184AA781FE837f7c9335"
+
+    val order1Owner = "0x94379bF0b21fdc5f40023177BC00F9eE8BB8bBc1"
+    val order2Owner = ""
+
+    val params1 = (new XRawOrder.Params)
+      .withDualAuthAddr(dualAuthAddr1)
+      .withWallet(walletAddr1)
+
+    val feeParams1 = (new XRawOrder.FeeParams)
+      .withTokenFee(lrcAddress)
+      .withAmountFee(ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16)))
+      .withTokenRecipient(order1Owner)
+      .withWalletSplitPercentage(10)
 
     val order1 = (new XRawOrder)
       .withVersion(0)
       .withOwner(order1Owner)
-      .withTokenS(lrcAddress)
-      .withTokenB(wethAddress)
-      .withAmountS(ByteString.copyFromUtf8(1000e18.toLong.toHexString))
-      .withAmountB(ByteString.copyFromUtf8(1e18.toLong.toHexString))
+      .withTokenS(wethAddress)
+      .withTokenB(lrcAddress)
+      .withAmountS(ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16)))
+      .withAmountB(ByteString.copyFromUtf8(BigInt("1" + "0" * 21).toString(16)))
+      .withValidSince(1545041200)
+      .withParams(params1)
+      .withFeeParams(feeParams1)
+
     println(s"order1: $order1")
 
     val order1WithDefault = validator.setupEmptyFieldsWithDefaults(order1, lrcAddress)

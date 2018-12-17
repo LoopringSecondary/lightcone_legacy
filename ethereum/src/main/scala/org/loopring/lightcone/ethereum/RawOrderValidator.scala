@@ -32,7 +32,6 @@ trait RawOrderValidator {
 class RawOrderValidatorImpl extends RawOrderValidator {
   // TODO(Kongliang): the following constant fields should be configurable somewhere.
 
-
   val FeePercentageBase = 1000
   val Eip191Header = "\u0019\u0001"
   val Eip712OrderSchemaHash = "0x40b942178d2a51f1f61934268590778feb8114db632db7d88537c98d2b05c5f2"
@@ -80,6 +79,8 @@ class RawOrderValidatorImpl extends RawOrderValidator {
   }
 
   def calculateOrderHash(order: XRawOrder): String = {
+    def strToHex(str: String) = str.getBytes.map("%02X" format _).mkString
+
     val bitstream = new Bitstream
     val feeParams = order.feeParams.get
     val optionalParams = order.params.get
@@ -94,29 +95,32 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     bitstream.addUint(feeParams.amountFee.toStringUtf8, true)
     bitstream.addUint(BigInt(order.validSince), true)
     bitstream.addUint(BigInt(optionalParams.validUntil), true)
-    bitstream.addAddress(order.owner, true)
-    bitstream.addAddress(order.tokenS, true)
-    bitstream.addAddress(order.tokenB, true)
-    bitstream.addAddress(optionalParams.dualAuthAddr, true)
-    bitstream.addAddress(optionalParams.broker, true)
-    bitstream.addAddress(optionalParams.orderInterceptor, true)
-    bitstream.addAddress(optionalParams.wallet, true)
-    bitstream.addAddress(feeParams.tokenRecipient, true)
-    bitstream.addAddress(feeParams.tokenFee, true)
+    bitstream.addAddress(order.owner, 32, true)
+    bitstream.addAddress(order.tokenS, 32, true)
+    bitstream.addAddress(order.tokenB, 32, true)
+    bitstream.addAddress(optionalParams.dualAuthAddr, 32, true)
+    bitstream.addAddress(optionalParams.broker, 32, true)
+    bitstream.addAddress(optionalParams.orderInterceptor, 32, true)
+    bitstream.addAddress(optionalParams.wallet, 32, true)
+    bitstream.addAddress(feeParams.tokenRecipient, 32, true)
+    bitstream.addAddress(feeParams.tokenFee, 32, true)
     bitstream.addUint16(feeParams.walletSplitPercentage)
     bitstream.addUint16(feeParams.tokenSFeePercentage)
     bitstream.addUint16(feeParams.tokenBFeePercentage)
     bitstream.addBoolean(optionalParams.allOrNone)
-    bitstream.addUint(optionalParams.tokenStandardS.value)
-    bitstream.addUint(optionalParams.tokenStandardB.value)
-    bitstream.addUint(optionalParams.tokenStandardFee.value)
-    bitstream.addBytes32(erc1400Params.trancheS, true)
-    bitstream.addBytes32(erc1400Params.trancheB, true)
-    bitstream.addBytes32(transferDataHash, true)
+    // bitstream.addUint(optionalParams.tokenStandardS.value)
+    // bitstream.addUint(optionalParams.tokenStandardB.value)
+    // bitstream.addUint(optionalParams.tokenStandardFee.value)
+    // bitstream.addBytes32(erc1400Params.trancheS, true)
+    // bitstream.addBytes32(erc1400Params.trancheB, true)
+    // bitstream.addBytes32(transferDataHash, true)
 
     val orderDataHash = Numeric.toHexString(Hash.sha3(bitstream.getBytes))
+
+    println(s"orderDataHash: $orderDataHash")
+
     val outterStream = new Bitstream
-    outterStream.addBytes32(Eip191Header, true)
+    outterStream.addRawBytes(strToHex(Eip191Header), true)
     outterStream.addBytes32(Eip712DomainHash, true)
     outterStream.addBytes32(orderDataHash, true)
 
