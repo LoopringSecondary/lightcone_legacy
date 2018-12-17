@@ -75,12 +75,11 @@ class MultiAccountManagerActor(
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator)
     extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
-    with RecoverSupport
     with ActorLogging {
 
   val skipRecovery = selfConfig.getBoolean("skip-recovery")
-  val recoverActorName = OrderRecoverCoordinator.name
   val accountManagerActors = new MapBasedLookup[ActorRef]()
+  var autoSwitchBackToReceive: Option[Cancellable] = None
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
@@ -90,20 +89,32 @@ class MultiAccountManagerActor(
         Restart
     }
 
-  def recovering: Receive = {
+  override def preStart(): Unit = {
+    super.preStart()
+
+    if (skipRecovery) {
+      log.warning(s"actor recover skipped: ${self.path}")
+    } else {
+      context.become(recover)
+      log.debug(s"actor recover started: ${self.path}")
+      actors.get(OrderRecoverCoordinator.name) !
+        XRecoverReq(addressShardingEntities = Seq(entityName))
+    }
+  }
+
+  def recover: Receive = {
     case XRecoverRes(xraworders) =>
       // cancel the previous auto-cancel scheduling
-      cancellable.foreach(_.cancel)
-      cancellable = None
-      val size = xraworders.size
-      log.debug(s"recovering next ${size} orders")
-      processed += size
+      autoSwitchBackToReceive.foreach(_.cancel)
+      autoSwitchBackToReceive = None
+
+      log.debug(s"recover next ${xraworders.size} orders")
 
       for {
         _ <- Future.sequence(xraworders.map(recoverOrder))
       } yield {
 
-        cancellable = Option(
+        autoSwitchBackToReceive = Option(
           context.system.scheduler.scheduleOnce(1.minute, self, XRecoverEnded())
         )
 
@@ -111,17 +122,22 @@ class MultiAccountManagerActor(
       }
 
     case msg: XRecoverEnded =>
+      s"account manager `${entityName}` recovery completed (due to timeout: ${timeout})"
       context.become(receive)
 
     case msg: Any =>
       log.warning(s"message not handled during recovery")
+      sender ! XError(
+        ERR_REJECTED_DURING_RECOVERY,
+        s"account manager `${entityName}` is being recovered"
+      )
   }
 
   def receive: Receive = {
 
     case XRecoverRes(xraworders) =>
       val size = xraworders.size
-      log.debug(s"recovering next ${size} orders")
+      log.debug(s"recover next ${size} orders")
 
       for {
         _ <- Future.sequence(xraworders.map(recoverOrder))
@@ -152,8 +168,5 @@ class MultiAccountManagerActor(
       Some(xraworder)
     )
   }
-
-  def generateRecoveryRequest() =
-    XRecoverReq(addressShardingEntities = Seq(entityName))
 
 }

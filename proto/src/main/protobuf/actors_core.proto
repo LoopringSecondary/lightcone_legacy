@@ -193,7 +193,9 @@ message XRecoverRes {
 }
 
 message XRecoverProcessed {}
-message XRecoverEnded {}
+message XRecoverEnded {
+    bool timeout = 1;
+}
 
 enum XExecutedStatus {
     EXECUTED_STATUS_UNKNOW = 0;

@@ -34,6 +34,8 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
+import org.loopring.lightcone.proto.XErrorCode._
+import scala.concurrent.duration._
 
 // main owner: 于红雨
 object MarketManagerActor extends ShardedByMarket {
@@ -84,27 +86,30 @@ class MarketManagerActor(
       MarketManagerActor.name,
       MarketManagerActor.extractEntityName
     )
-    with RecoverSupport {
+    with ActorLogging {
 
   val marketName = entityName
+  var autoSwitchBackToReceive: Option[Cancellable] = None
 
   val wethTokenAddress = config.getString("weth.address")
-  val recoverActorName = OrderRecoverCoordinator.name
   val skipRecovery = selfConfig.getBoolean("skip-recovery")
+
+  val maxRecoveryWindowMinutes =
+    selfConfig.getInt("max-recovery-duration-minutes")
 
   val gasLimitPerRingV2 = BigInt(
     config.getString("loopring-protocol.gas-limit-per-ring-v2")
   )
 
-  private val ringMatcher = new RingMatcherImpl()
-  private val pendingRingPool = new PendingRingPoolImpl()
+  val ringMatcher = new RingMatcherImpl()
+  val pendingRingPool = new PendingRingPoolImpl()
 
-  implicit var marketId: XMarketId = extractMarketMap(selfConfig)(marketName)
+  implicit val marketId = extractMarketMap(selfConfig)(marketName)
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
     selfConfig.getInt("price-decimals")
   )
 
-  private val manager = new MarketManagerImpl(
+  val manager = new MarketManagerImpl(
     marketId,
     tokenMetadataManager,
     ringMatcher,
@@ -126,17 +131,45 @@ class MarketManagerActor(
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   protected def settlementActor = actors.get(RingSettlementActor.name)
 
-  def recovering: Receive = {
+  override def preStart(): Unit = {
+    super.preStart()
+
+    autoSwitchBackToReceive = Some(
+      context.system.scheduler
+        .scheduleOnce(
+          maxRecoveryWindowMinutes.minute,
+          self,
+          XRecoverEnded(true)
+        )
+    )
+
+    if (skipRecovery) {
+      log.warning(s"actor recover skipped: ${self.path}")
+    } else {
+      context.become(recover)
+      log.debug(s"actor recover started: ${self.path}")
+      actors.get(OrderRecoverCoordinator.name) !
+        XRecoverReq(marketIds = Seq(marketId))
+    }
+  }
+
+  def recover: Receive = {
 
     case XSubmitOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder)
 
-    case msg: XRecoverEnded =>
+    case msg @ XRecoverEnded(timeout) =>
+      autoSwitchBackToReceive.foreach(_.cancel)
+      autoSwitchBackToReceive = None
+      s"market manager `${entityName}` recovery completed (due to timeout: ${timeout})"
       context.become(receive)
 
     case msg: Any =>
       log.warning(s"message not handled during recovery")
-
+      sender ! XError(
+        ERR_REJECTED_DURING_RECOVERY,
+        s"market manager `${entityName}` is being recovered"
+      )
   }
 
   def receive: Receive = LoggingReceive {
@@ -224,7 +257,7 @@ class MarketManagerActor(
     }
   }
 
-  private def extractMarketMap(config: Config) = {
+  private def extractMarketMap(config: Config): Map[String, XMarketId] = {
     config
       .getObjectList("markets")
       .asScala
@@ -243,5 +276,4 @@ class MarketManagerActor(
   def recoverOrder(xraworder: XRawOrder): Future[Any] =
     submitOrder(xraworder)
 
-  def generateRecoveryRequest() = XRecoverReq(marketIds = Seq(marketId))
 }
