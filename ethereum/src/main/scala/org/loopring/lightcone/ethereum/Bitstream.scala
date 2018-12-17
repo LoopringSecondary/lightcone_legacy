@@ -33,12 +33,6 @@ class Bitstream() {
   def addAddress(x: String, forceAppend: Boolean = false) = {
     val _x = if (x.length == 0) "0" else x
 
-    val _addr = Numeric.toHexStringNoPrefixZeroPadded(
-      Numeric.toBigInt(_x),
-      ADDRESS_LENGTH * 2
-    );
-    println(s"_addr: ${_addr}")
-
     insert(
       Numeric.toHexStringNoPrefixZeroPadded(
         Numeric.toBigInt(_x),
@@ -50,12 +44,6 @@ class Bitstream() {
 
   def addAddress(x: String, numBytes: Int, forceAppend: Boolean) = {
     val _x = if (x.length == 0) "0" else x
-
-    val _addr = Numeric.toHexStringNoPrefixZeroPadded(
-      Numeric.toBigInt(_x),
-      ADDRESS_LENGTH * 2
-    );
-    println(s"_addr: ${_addr}")
 
     insert(
       Numeric.toHexStringNoPrefixZeroPadded(
@@ -95,7 +83,6 @@ class Bitstream() {
       throw new IllegalArgumentException(s"invalid bytes32 str: too long, str:$str")
     }
     val strPadded = strWithoutPrefix + "0" * (64 - strWithoutPrefix.length)
-    println(s"strWithoutPrefix: $strWithoutPrefix; strPadded: $strPadded")
     insert(strPadded, forceAppend)
   }
 
@@ -110,14 +97,13 @@ class Bitstream() {
     num: BigInt,
     numBytes: Int,
     forceAppend: Boolean = true
-  ) =
-    insert(
-      Numeric.toHexStringNoPrefixZeroPadded(
-        num.bigInteger,
-        numBytes * 2
-      ),
-      forceAppend
-    )
+  ) = insert(
+    Numeric.toHexStringNoPrefixZeroPadded(
+      num.bigInteger,
+      numBytes * 2
+    ),
+    forceAppend
+  )
 
   private def insert(x: String, forceAppend: Boolean): Int = {
     var offset = length()

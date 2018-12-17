@@ -32,8 +32,8 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
     // val order1Owner = TestConfig.envOrElseConfig("accounts.a1.addr")
     // val order2Owner = TestConfig.envOrElseConfig("accounts.a2.addr")
 
-    val wethAddress = "0x5BB30c3741BD80F22938FB1F860F5f5AbD1C2c89"
-    val lrcAddress = "0xD772c98D65F23D41E187489a4fd51D7d631c974c"
+    val wethAddress = "0x9a8ccb389E9AAf81E889deA26CE58A855f085b6C"
+    val lrcAddress = "0x98A82a4DC1ea681bFDB08A7952d6E590cfc177c9"
 
     val dualAuthAddr1 = "0x15d6D8a0cff888B9D3f6B2D916Dc2A19b9652310"
     val walletAddr1 = "0x6883818661dd47b0d6b3184AA781FE837f7c9335"
@@ -58,7 +58,7 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withTokenB(lrcAddress)
       .withAmountS(ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16)))
       .withAmountB(ByteString.copyFromUtf8(BigInt("1" + "0" * 21).toString(16)))
-      .withValidSince(1545041200)
+      .withValidSince(1545049035)
       .withParams(params1)
       .withFeeParams(feeParams1)
 
