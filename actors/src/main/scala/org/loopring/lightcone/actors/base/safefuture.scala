@@ -73,7 +73,7 @@ object safefuture {
         case Failure(f) =>
           f match {
             case e: ErrorException => recipient ! e.error
-            case e: Throwable => throw e
+            case e: Throwable      => throw e
           }
       }
       f

@@ -38,7 +38,6 @@ class MultiAccountManagerSpec_Sharding
   actors.del(MarketManagerActor.name)
   actors.add(MarketManagerActor.name, marketManagerProbe.ref)
 
-  Thread.sleep(5000) //暂停5s，等待集群准备完毕
   "send a request" must {
     "create an AccountManager and be received by it" in {
       //todo:此处需要进一步测试分片的正确性

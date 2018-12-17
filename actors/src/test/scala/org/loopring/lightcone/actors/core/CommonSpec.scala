@@ -84,4 +84,6 @@ abstract class CommonSpec(configStr: String)
 //  system.eventStream.subscribe(listener, classOf[UnhandledMessage])
 //  system.eventStream.subscribe(listener, classOf[DeadLetter])
 
+  Thread.sleep(5000) //暂停5s，等待集群准备完毕
+
 }
