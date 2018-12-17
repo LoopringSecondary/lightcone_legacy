@@ -33,6 +33,7 @@ import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
+import org.web3j.utils.Numeric
 
 // main owner: 于红雨
 object OrderbookManagerActor extends ShardedByMarket {
@@ -62,8 +63,14 @@ object OrderbookManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketName: PartialFunction[Any, String] = {
-    case XGetOrderbookReq(_, _, marketName) => marketName
+  val extractMarketName: PartialFunction[Any, BigInt] = {
+    case XGetOrderbookReq(_, _, marketName) =>
+      val tokens = marketName.split("-")
+      Numeric.toBigInt(tokens(0)) xor Numeric.toBigInt(tokens(1))
+    case XOrderbookUpdate(_, _, Some(marketId)) =>
+      Numeric.toBigInt(marketId.primary) xor Numeric.toBigInt(
+        marketId.secondary
+      )
   }
 }
 
@@ -101,6 +108,7 @@ class OrderbookManagerActor(
       latestPrice = Some(price)
 
     case req: XOrderbookUpdate =>
+      log.info(s"### XOrderbookUpdate ${req}")
       manager.processUpdate(req)
 
     case XGetOrderbookReq(level, size, marketName)

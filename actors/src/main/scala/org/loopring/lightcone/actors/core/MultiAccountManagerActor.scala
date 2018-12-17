@@ -120,7 +120,7 @@ class MultiAccountManagerActor(
     val actorName = address
     if (!accountManagerActors.contains(actorName)) {
       val newAccountActor =
-        context.actorOf(Props(new AccountManagerActor()), actorName)
+        context.actorOf(Props(new AccountManagerActor(address)), actorName)
       accountManagerActors.add(actorName, newAccountActor)
     }
     accountManagerActors.get(actorName)

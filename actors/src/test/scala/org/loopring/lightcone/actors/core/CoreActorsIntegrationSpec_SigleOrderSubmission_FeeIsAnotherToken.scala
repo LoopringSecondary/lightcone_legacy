@@ -22,40 +22,12 @@ import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
 
-// class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsAnotherToken
-//   extends CoreActorsIntegrationCommonSpec(
-//     XMarketId(GTO, WETH),
-//     """
-//     weth {
-//       address = "something"
-//     }
-//     loopring-protocol {
-//       address = "0x8d8812b72d1e4ffCeC158D25f56748b7d67c1e78",
-//       delegate-address ="0x17233e07c67d086464fD408148c3ABB56245FA64"
-//       gas-limit-per-ring-v2 = "1000000"
-//     }
-//     account_manager {
-//       skip-recovery = yes
-//       recover-batch-size = 2
-//     }
-//     market_manager {
-//       skip-recovery = yes
-//       price-decimals = 5
-//       recover-batch-size = 5
-//     }
-//     orderbook_manager {
-//       levels = 2
-//       price-decimals = 5
-//       precision-for-amount = 2
-//       precision-for-total = 1
-//     }
-//     ring_settlement {
-//       submitter-private-key = "0xa1"
-//     }
-//     gas_price {
-//       default = "10000000000"
-//     }
-//     """) {
+class CoreActorsIntegrationSpec_SigleOrderSubmission_FeeIsAnotherToken
+    extends CommonSpec("")
+    with OrderHandleSupport
+    with MultiAccountManagerSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport {
 
 //   "submit a single order" must {
 //     "succeed and make change to orderbook" in {
@@ -70,18 +42,18 @@ import org.loopring.lightcone.proto._
 //         walletSplitPercentage = 0.2,
 //         status = XOrderStatus.STATUS_NEW
 //       )
-
+//
 //       accountManagerActor1 ! XSubmitOrderReq(Some(order))
-
+//
 //       accountBalanceProbe.expectQuery(ADDRESS_1, WETH_TOKEN.address)
 //       accountBalanceProbe.replyWith(ADDRESS_1, WETH_TOKEN.address, "100".zeros(18), "100".zeros(18))
-
+//
 //       accountBalanceProbe.expectQuery(ADDRESS_1, LRC_TOKEN.address)
 //       accountBalanceProbe.replyWith(ADDRESS_1, LRC_TOKEN.address, "10".zeros(18), "10".zeros(18))
-
+//
 //       orderHistoryProbe.expectQuery(order.id)
 //       orderHistoryProbe.replyWith(order.id, "0".zeros(0))
-
+//
 //       expectMsgPF() {
 //         case XSubmitOrderRes(ERR_OK, Some(xorder)) =>
 //           val order: Order = xorder
@@ -89,9 +61,9 @@ import org.loopring.lightcone.proto._
 //         case XSubmitOrderRes(ERR_INTERNAL_UNKNOWN, None) =>
 //           log.debug(s"occurs ERR_INTERNAL_UNKNOWN when submitting order:$order")
 //       }
-
+//
 //       orderbookManagerActor ! XGetOrderbookReq(0, 100)
-
+//
 //       expectMsgPF() {
 //         case a: XOrderbook =>
 //           log.debug("----orderbook: " + a)
@@ -99,4 +71,4 @@ import org.loopring.lightcone.proto._
 //     }
 //   }
 
-// }
+}

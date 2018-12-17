@@ -29,11 +29,13 @@ import org.loopring.lightcone.core.market.{
   RingIncomeEstimatorImpl
 }
 import org.loopring.lightcone.lib.SystemTimeProvider
+import org.loopring.lightcone.proto.XTokenMetadata
 import org.scalatest._
 import org.slf4s.Logging
 
 import scala.concurrent.duration._
-
+import scala.math.BigInt
+import collection.JavaConverters._
 //启动system、以及必须的元素，包括system，TokenMetaData，等
 abstract class CommonSpec(configStr: String)
     extends TestKit(
@@ -63,8 +65,28 @@ abstract class CommonSpec(configStr: String)
   implicit val config = system.settings.config
   implicit val materializer = ActorMaterializer()(system)
 
+//  log.info(s"init config: ${config}")
+
   //token info
   implicit val tokenMetadataManager = new TokenMetadataManager()
+
+  val WETH_TOKEN = XTokenMetadata(
+    "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    18,
+    0.4,
+    "WETH",
+    1000
+  )
+
+  val LRC_TOKEN = XTokenMetadata(
+    "0xef68e7c694f40c8202821edf525de3782458639f",
+    18,
+    0.4,
+    "LRC",
+    1000
+  )
+  tokenMetadataManager.addToken(WETH_TOKEN)
+  tokenMetadataManager.addToken(LRC_TOKEN)
   implicit val tokenValueEstimator = new TokenValueEstimator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
 
@@ -86,4 +108,7 @@ abstract class CommonSpec(configStr: String)
 
   Thread.sleep(5000) //暂停5s，等待集群准备完毕
 
+  implicit class RichString(s: String) {
+    def zeros(size: Int): BigInt = BigInt(s + "0" * size)
+  }
 }

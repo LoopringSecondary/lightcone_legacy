@@ -16,13 +16,12 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.Actor
-
-trait MarketManagerSupport {
+trait OrderbookManagerSupport {
   my: CommonSpec =>
 
-  actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
-
-  actors.add(GasPriceActor.name, GasPriceActor.startShardRegion())
+  actors.add(
+    OrderbookManagerActor.name,
+    OrderbookManagerActor.startShardRegion
+  )
 
 }

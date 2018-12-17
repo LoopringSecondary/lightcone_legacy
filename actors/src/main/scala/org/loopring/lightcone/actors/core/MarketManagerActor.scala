@@ -21,7 +21,6 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
-import collection.JavaConverters._
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
@@ -33,8 +32,9 @@ import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
-
+import org.web3j.utils.Numeric
 import scala.concurrent._
+import collection.JavaConverters._
 
 // main owner: 于红雨
 object MarketManagerActor extends ShardedByMarket {
@@ -54,9 +54,29 @@ object MarketManagerActor extends ShardedByMarket {
       tokenMetadataManager: TokenMetadataManager
     ): ActorRef = {
     numOfShards = 10
+
+    val markets = config
+      .getObjectList("markets")
+      .asScala
+      .map { item =>
+        val c = item.toConfig
+        val marketId =
+          XMarketId(c.getString("priamry"), c.getString("secondary"))
+        val marketXor =
+          Numeric.toBigInt(marketId.primary) xor Numeric.toBigInt(
+            marketId.secondary
+          )
+
+        val hash = MarketManagerActor
+          .hashed(Some(marketXor))
+
+        hash.toString -> marketId
+      }
+      .toMap
+
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new MarketManagerActor()),
+      entityProps = Props(new MarketManagerActor(markets)),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -64,13 +84,17 @@ object MarketManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketName: PartialFunction[Any, String] = {
-    case _ => ""
+  val extractMarketName: PartialFunction[Any, BigInt] = {
+    case XSubmitOrderReq(_, Some(xorder)) =>
+      Numeric.toBigInt(xorder.tokenS) xor Numeric.toBigInt(xorder.tokenB)
+    case XCancelOrderReq(_, _, _, tokenS, tokenB) =>
+      Numeric.toBigInt(tokenS) xor Numeric.toBigInt(tokenB)
   }
 
 }
 
 class MarketManagerActor(
+    markets: Map[String, XMarketId],
     extractEntityName: String => String = MarketManagerActor.extractEntityName
   )(
     implicit val config: Config,
@@ -86,20 +110,6 @@ class MarketManagerActor(
     with OrderRecoverSupport {
   val marketName = entityName
 
-  //todo:需要测试
-  val markets = selfConfig
-    .getObjectList("markets")
-    .asScala
-    .map { item =>
-      val c = item.toConfig
-      val marketId = XMarketId(c.getString("priamry"), c.getString("secondary"))
-      val hash = MarketManagerActor
-        .hashed(marketId)
-        .toString
-      hash -> marketId
-    }
-    .toMap
-
   val wethTokenAddress = config.getString("weth.address")
 
   val gasLimitPerRingV2 = BigInt(
@@ -110,19 +120,8 @@ class MarketManagerActor(
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   protected def settlementActor = actors.get(RingSettlementActor.name)
 
-  // TODO(yongfeng): load marketconfig from database throught a service interface
-  // based on marketName
-  val xorderbookConfig = XMarketConfig(
-    levels = selfConfig.getInt("levels"),
-    priceDecimals = selfConfig.getInt("price-decimals"),
-    precisionForAmount = selfConfig.getInt("precision-for-amount"),
-    precisionForTotal = selfConfig.getInt("precision-for-total")
-  )
-
   //todo: need refactor
-  val shardId = self.path.toString.split("/").last //todo：如何获取shardId
-
-  implicit var marketId: XMarketId = markets(shardId)
+  implicit var marketId: XMarketId = markets(entityName)
 
   private val ringMatcher = new RingMatcherImpl()
   private val pendingRingPool = new PendingRingPoolImpl()
@@ -144,14 +143,17 @@ class MarketManagerActor(
     "",
     Some(marketId)
   )
-  requestOrderRecovery(recoverySettings)
+//  requestOrderRecovery(recoverySettings)
 
-  def receive: Receive = LoggingReceive {
+  println(s"### marketmanageractor ${self.path}")
+
+  def receive: Receive = {
 
     case XSubmitOrderReq(_, Some(xorder)) ⇒
+//      log.info(s"#### marketManager XSubmitOrderReq ${xorder}")
       submitOrder(xorder)
 
-    case XCancelOrderReq(orderId, _, _) ⇒
+    case XCancelOrderReq(orderId, _, _, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
         orderbookManagerActor ! orderbookUpdate
       }
@@ -182,18 +184,21 @@ class MarketManagerActor(
       "order in XSubmitOrderReq miss `actual` field"
     )
     val order: Order = xorder
+    println(s"### submitOrder ${order}, ${gasPriceActor}")
     xorder.status match {
       case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING =>
         for {
           // get ring settlement cost
           res <- (gasPriceActor ? XGetGasPriceReq()).mapAs[XGetGasPriceRes]
 
+          _ = println(s"### gasPriceActor ${gasPriceActor}")
           gasPrice: BigInt = res.gasPrice
           minRequiredIncome = getRequiredMinimalIncome(gasPrice)
 
           // submit order to reserve balance and allowance
           matchResult = manager.submitOrder(order, minRequiredIncome)
 
+          _ = println(s"### matchResult ${matchResult}")
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
         } yield Unit
@@ -227,7 +232,7 @@ class MarketManagerActor(
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerActor ! ou
+      orderbookManagerActor ! ou.copy(marketId = Some(this.marketId))
     }
   }
 

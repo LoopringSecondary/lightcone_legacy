@@ -44,6 +44,8 @@ message XCancelOrderReq {
     string id = 1;
     string address = 2; //用于分片路由
     XOrderStatus status = 3; //取消的类型
+    string token_s = 4;
+    string token_b = 5;
 }
 
 message XCancelOrderRes {

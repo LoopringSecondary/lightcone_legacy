@@ -27,8 +27,8 @@ trait ShardedByAddress extends Sharded {
     }
 
   private def _extractEntityId(msg: Any): Option[(String, Any)] =
-    hashed(msg).map { shard =>
-      (s"${name}_${shard}", msg)
+    hashed(msg).map { entity =>
+      (s"${name}_${entity}", msg)
     }
 
   private def _extractShardId(msg: Any): Option[String] =

@@ -41,6 +41,7 @@ object AccountManagerActor {
 }
 
 class AccountManagerActor(
+    address: String
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -59,7 +60,6 @@ class AccountManagerActor(
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
-  private var address: String = _
 
   protected def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
@@ -68,7 +68,6 @@ class AccountManagerActor(
 
     case XGetBalanceAndAllowancesReq(addr, tokens) =>
       assert(addr == address)
-
       (for {
         managers <- Future.sequence(tokens.map(getTokenManager))
         _ = assert(tokens.size == managers.size)
@@ -86,10 +85,12 @@ class AccountManagerActor(
       }).sendTo(sender)
 
     case XSubmitOrderReq(addr, Some(xorder)) =>
+      println(s"#### accountmanager XSubmitOrderReq, ${xorder}")
       assert(addr == address)
       submitOrder(xorder).sendTo(sender)
 
     case req: XCancelOrderReq =>
+      assert(req.address == address)
       if (manager.cancelOrder(req.id)) {
         marketManagerActor forward req
       } else {
@@ -97,10 +98,12 @@ class AccountManagerActor(
           .failed(ErrorException(XError(ERR_FAILED_HANDLE_MES))) sendTo sender
       }
 
-    case XAddressBalanceUpdated(_, token, newBalance) =>
+    case XAddressBalanceUpdated(addr, token, newBalance) =>
+      assert(addr == address)
       updateBalanceOrAllowance(token, newBalance, _.setBalance(_))
 
-    case XAddressAllowanceUpdated(_, token, newBalance) =>
+    case XAddressAllowanceUpdated(addr, token, newBalance) =>
+      assert(addr == address)
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
 
     case msg => log.debug(s"unknown msg ${msg}")
@@ -110,8 +113,10 @@ class AccountManagerActor(
     val order: Order = xorder
     for {
       _ <- getTokenManager(order.tokenS)
-      _ <- getTokenManager(order.tokenFee)
-      if order.amountFee > 0 && order.tokenS != order.tokenFee
+      _ <- if (order.amountFee > 0 && order.tokenS != order.tokenFee)
+        getTokenManager(order.tokenFee)
+      else
+        Future.successful(Unit)
 
       // Update the order's _outstanding field.
       orderHistoryRes <- (ethereumQueryActor ? XGetOrderFilledAmountReq(
@@ -159,7 +164,7 @@ class AccountManagerActor(
       Future.successful(manager.getTokenManager(token))
     else
       for {
-        _ <- Future.successful(log.debug(s"getTokenManager0 ${token}"))
+        _ <- Future.successful(println(s"getTokenManager0 ${token}"))
         res <- (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
           address,
           Seq(token)
@@ -187,7 +192,11 @@ class AccountManagerActor(
         order.status match {
           case STATUS_CANCELLED_LOW_BALANCE |
               STATUS_CANCELLED_LOW_FEE_BALANCE =>
-            marketManagerActor ! XCancelOrderReq(order.id)
+            marketManagerActor ! XCancelOrderReq(
+              id = order.id,
+              tokenS = order.tokenS,
+              tokenB = order.tokenB
+            )
 
           case STATUS_PENDING =>
             //allowance的改变需要更新到marketManager

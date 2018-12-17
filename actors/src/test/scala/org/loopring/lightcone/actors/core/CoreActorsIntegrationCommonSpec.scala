@@ -151,11 +151,17 @@ abstract class CoreActorsIntegrationCommonSpec(
   val ADDRESS_1 = "address_111111111111111111111"
   val ADDRESS_2 = "address_222222222222222222222"
 
-  val accountManagerActor1: ActorRef = TestActorRef(new AccountManagerActor())
+  val accountManagerActor1: ActorRef = TestActorRef(
+    new AccountManagerActor(ADDRESS_1)
+  )
 
-  val accountManagerActor2: ActorRef = TestActorRef(new AccountManagerActor())
+  val accountManagerActor2: ActorRef = TestActorRef(
+    new AccountManagerActor(ADDRESS_2)
+  )
 
-  val marketManagerActor: ActorRef = TestActorRef(new MarketManagerActor())
+  val marketManagerActor: ActorRef = TestActorRef(
+    new MarketManagerActor(Map.empty)
+  )
 
   actors.add(EthereumQueryActor.name, ethereumQueryActor)
   actors.add(MarketManagerActor.name, marketManagerActor)

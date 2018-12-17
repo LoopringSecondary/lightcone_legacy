@@ -32,7 +32,7 @@ class OrderHandlerSpec_SaveOrder
     new TestProbe(system, MultiAccountManagerActor.name) {
 
       def expectQuery() = expectMsgPF(120 second) {
-        case req @ XCancelOrderReq(_, orderId, _) =>
+        case req @ XCancelOrderReq(_, orderId, _, _, _) =>
           log.info(s"##### expectQuery ${req}， ${sender()}")
           sender ! XCancelOrderRes(id = orderId)
         case req: XSubmitOrderReq =>

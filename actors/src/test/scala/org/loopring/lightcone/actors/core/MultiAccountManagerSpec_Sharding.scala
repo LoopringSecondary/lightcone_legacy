@@ -30,7 +30,7 @@ class MultiAccountManagerSpec_Sharding
   val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
 
     def expectQuery() = expectMsgPF(120 second) {
-      case req @ XCancelOrderReq(_, orderId, _) =>
+      case req @ XCancelOrderReq(_, orderId, _, _, _) =>
         log.info(s"##### AM ${req}， ${sender()}")
         sender ! XCancelOrderRes(id = orderId)
     }

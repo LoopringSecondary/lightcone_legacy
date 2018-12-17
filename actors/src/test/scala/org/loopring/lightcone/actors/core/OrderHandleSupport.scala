@@ -16,11 +16,15 @@
 
 package org.loopring.lightcone.actors.core
 
+import scala.concurrent.Await
+
 trait OrderHandleSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
-  dbModule.orders.dropTable()
-  dbModule.orders.createTable()
+  val dropF = dbModule.orders.dropTable()
+  Await.result(dropF, timeout.duration)
+  val createF = dbModule.orders.createTable()
+  Await.result(createF, timeout.duration)
   actors.add(
     OrderHandlerActor.name,
     OrderHandlerActor.startShardRegion
