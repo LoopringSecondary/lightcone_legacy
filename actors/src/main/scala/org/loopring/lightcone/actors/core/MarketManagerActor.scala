@@ -71,7 +71,6 @@ object MarketManagerActor extends ShardedByMarket {
 }
 
 class MarketManagerActor(
-    extractEntityName: String => String = MarketManagerActor.extractEntityName
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -82,33 +81,38 @@ class MarketManagerActor(
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenMetadataManager: TokenMetadataManager)
-    extends ActorWithPathBasedConfig(MarketManagerActor.name, extractEntityName)
-    with OrderRecoverSupport {
+    extends ActorWithPathBasedConfig(
+      MarketManagerActor.name,
+      MarketManagerActor.extractEntityName
+    )
+    with RecoverSupport {
+
   val marketName = entityName
 
-  //todo:需要测试
-  val markets = selfConfig
-    .getObjectList("markets")
-    .asScala
-    .map { item =>
-      val c = item.toConfig
-      val marketId = XMarketId(c.getString("priamry"), c.getString("secondary"))
-      val hash = MarketManagerActor
-        .hashed(marketId)
-        .toString
-      hash -> marketId
-    }
-    .toMap
-
   val wethTokenAddress = config.getString("weth.address")
+  val recoverActorName = OrderRecoverCoordinator.name
+  val skipRecovery = selfConfig.getBoolean("skip-recovery")
 
   val gasLimitPerRingV2 = BigInt(
     config.getString("loopring-protocol.gas-limit-per-ring-v2")
   )
 
-  protected def gasPriceActor = actors.get(GasPriceActor.name)
-  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  protected def settlementActor = actors.get(RingSettlementActor.name)
+  private val ringMatcher = new RingMatcherImpl()
+  private val pendingRingPool = new PendingRingPoolImpl()
+
+  implicit var marketId: XMarketId = extractMarketMap(selfConfig)(marketName)
+  implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
+    selfConfig.getInt("price-decimals")
+  )
+
+  private val manager = new MarketManagerImpl(
+    marketId,
+    tokenMetadataManager,
+    ringMatcher,
+    pendingRingPool,
+    dustOrderEvaluator,
+    aggregator
+  )
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
   // based on marketName
@@ -119,32 +123,11 @@ class MarketManagerActor(
     precisionForTotal = selfConfig.getInt("precision-for-total")
   )
 
+  protected def gasPriceActor = actors.get(GasPriceActor.name)
+  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  protected def settlementActor = actors.get(RingSettlementActor.name)
+
   //todo: need refactor
-  val shardId = self.path.toString.split("/").last //todo：如何获取shardId
-
-  implicit var marketId: XMarketId = markets(shardId)
-
-  private val ringMatcher = new RingMatcherImpl()
-  private val pendingRingPool = new PendingRingPoolImpl()
-
-  implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-    selfConfig.getInt("price-decimals")
-  )
-  private val manager = new MarketManagerImpl(
-    marketId,
-    tokenMetadataManager,
-    ringMatcher,
-    pendingRingPool,
-    dustOrderEvaluator,
-    aggregator
-  )
-  recoverySettings = XOrderRecoverySettings(
-    selfConfig.getBoolean("skip-recovery"),
-    selfConfig.getInt("recover-batch-size"),
-    "",
-    Some(marketId)
-  )
-  requestOrderRecovery(recoverySettings)
 
   def receive: Receive = LoggingReceive {
 
@@ -231,6 +214,24 @@ class MarketManagerActor(
     }
   }
 
-  protected def recoverOrder(xraworder: XRawOrder): Future[Any] =
+  private def extractMarketMap(config: Config) = {
+    config
+      .getObjectList("markets")
+      .asScala
+      .map { item =>
+        val c = item.toConfig
+        val marketId =
+          XMarketId(c.getString("priamry"), c.getString("secondary"))
+        val hash = MarketManagerActor
+          .hashed(marketId)
+          .toString
+        hash -> marketId
+      }
+      .toMap
+  }
+
+  def recoverOrder(xraworder: XRawOrder): Future[Any] =
     submitOrder(xraworder)
+
+  def generateRecoveryRequest() = XRecoverReq(marketIds = Seq(marketId))
 }

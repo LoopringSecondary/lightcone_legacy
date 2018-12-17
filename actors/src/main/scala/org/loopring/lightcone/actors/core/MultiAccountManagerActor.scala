@@ -16,14 +16,8 @@
 
 package org.loopring.lightcone.actors.core
 import akka.actor.SupervisorStrategy.Restart
-import akka.actor.{
-  ActorLogging,
-  ActorRef,
-  ActorSystem,
-  AllForOneStrategy,
-  Props
-}
-import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
+import akka.actor._
+import akka.cluster.sharding._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -41,8 +35,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
 
   def startShardRegion(
     )(
-      implicit
-      system: ActorSystem,
+      implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -75,33 +68,25 @@ object MultiAccountManagerActor extends ShardedByAddress {
 
 class MultiAccountManagerActor(
   )(
-    implicit
-    val config: Config,
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator)
     extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
-    with OrderRecoverSupport
+    with RecoverSupport
     with ActorLogging {
+
+  val skipRecovery = selfConfig.getBoolean("skip-recovery")
+  val recoverActorName = OrderRecoverCoordinator.name
+  val accountManagerActors = new MapBasedLookup[ActorRef]()
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
       //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
       case _: Exception ⇒ Restart
     }
-
-  val accountManagerActors = new MapBasedLookup[ActorRef]()
-
-  requestOrderRecovery(
-    XOrderRecoverySettings(
-      selfConfig.getBoolean("skip-recovery"),
-      selfConfig.getInt("recover-batch-size"),
-      entityName,
-      None
-    )
-  )
 
   def receive: Receive = {
     case req: Any =>
@@ -113,21 +98,23 @@ class MultiAccountManagerActor(
       }
   }
 
-  def accountManagerActorFor(address: String): ActorRef = {
-    val actorName = address
-    if (!accountManagerActors.contains(actorName)) {
+  protected def accountManagerActorFor(address: String): ActorRef = {
+    if (!accountManagerActors.contains(address)) {
       val newAccountActor =
-        context.actorOf(Props(new AccountManagerActor()), actorName)
-      accountManagerActors.add(actorName, newAccountActor)
+        context.actorOf(Props(new AccountManagerActor()), address)
+      accountManagerActors.add(address, newAccountActor)
     }
-    accountManagerActors.get(actorName)
+    accountManagerActors.get(address)
   }
 
-  protected def recoverOrder(xraworder: XRawOrder) = {
+  def recoverOrder(xraworder: XRawOrder) = {
     accountManagerActorFor(xraworder.owner) ? XSubmitOrderReq(
       xraworder.owner,
       Some(xraworder)
     )
   }
+
+  def generateRecoveryRequest() =
+    XRecoverReq(addressShardingEntities = Seq(entityName))
 
 }
