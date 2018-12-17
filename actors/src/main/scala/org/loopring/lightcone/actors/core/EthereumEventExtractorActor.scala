@@ -223,10 +223,11 @@ class EthereumEventExtractorActor(
         .++=(addresses._1)
         .++=(uncles.map(_ → zeroAdd))
         .+=(job.miner → zeroAdd)
+
       balanceReqs = balanceAddresses.unzip._1.toSet.map((add: String) ⇒ {
         XGetBalanceReq(
           add,
-          balanceAddresses.find(_._1.equalsIgnoreCase(add)).unzip._2.toSet.toSeq
+          balanceAddresses.filter(_._1.equalsIgnoreCase(add)).unzip._2.toSet.toSeq
         )
       })
       allowanceAddresses = addresses._2
@@ -234,7 +235,7 @@ class EthereumEventExtractorActor(
         XGetAllowanceReq(
           add,
           allowanceAddresses
-            .find(_._1.equalsIgnoreCase(add))
+            .filter(_._1.equalsIgnoreCase(add))
             .unzip
             ._2
             .toSet
