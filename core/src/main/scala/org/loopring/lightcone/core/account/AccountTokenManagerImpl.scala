@@ -25,17 +25,16 @@ import org.slf4s.Logging
 class AccountTokenManagerImpl(
     val token: String,
     val maxNumOrders: Int = 1000
-)(
-    implicit
-    orderPool: AccountOrderPool,
-    dustEvaluator: DustOrderEvaluator
-) extends AccountTokenManager with Logging {
+  )(
+    implicit orderPool: AccountOrderPool,
+    dustEvaluator: DustOrderEvaluator)
+    extends AccountTokenManager
+    with Logging {
 
   case class Reservation(
       orderId: String,
       accumulatedBalance: BigInt,
-      accumulatedAllowance: BigInt
-  )
+      accumulatedAllowance: BigInt)
 
   implicit private val _t = token
 
@@ -69,7 +68,10 @@ class AccountTokenManagerImpl(
     setBalanceAndAllowance(this.balance, allowance)
   }
 
-  def setBalanceAndAllowance(balance: BigInt, allowance: BigInt): Set[String] = this.synchronized {
+  def setBalanceAndAllowance(
+      balance: BigInt,
+      allowance: BigInt
+    ): Set[String] = this.synchronized {
     val cursor1 =
       if (balance >= this.balance) cursor
       else {
@@ -78,7 +80,7 @@ class AccountTokenManagerImpl(
       }
 
     val cursor2 = if (allowance >= this.allowance) {
-      val idx = reservations.indexWhere { r ⇒
+      val idx = reservations.indexWhere { r =>
         val order = orderPool(r.orderId)
         order.reservedAmount != order.requestedAmount
       }
@@ -100,10 +102,10 @@ class AccountTokenManagerImpl(
     if (!orderPool.contains(orderId)) Set.empty[String]
     else {
       indexMap.get(orderId) match {
-        case Some(_) ⇒
+        case Some(_) =>
           // in case tokenS == tokenB
           Set.empty[String]
-        case None ⇒
+        case None =>
           reservations :+= Reservation(orderId, 0, 0)
           rebalance()
       }
@@ -113,8 +115,8 @@ class AccountTokenManagerImpl(
   // Release balance/allowance for an order.
   def release(orderId: String): Set[String] = this.synchronized {
     indexMap.get(orderId) match {
-      case None ⇒ Set.empty
-      case Some(idx) ⇒
+      case None => Set.empty
+      case Some(idx) =>
         reservations = reservations.patch(idx, Nil, 1)
         indexMap -= orderId
         // TODO(dongw): optimize cursor
@@ -126,8 +128,8 @@ class AccountTokenManagerImpl(
   // Rebalance due to change of an order.
   def adjust(orderId: String): Set[String] = this.synchronized {
     indexMap.get(orderId) match {
-      case None ⇒ Set.empty
-      case Some(idx) ⇒
+      case None => Set.empty
+      case Some(idx) =>
         assert(orderPool.contains(orderId))
         val order = orderPool(orderId)
         cursor = idx - 1
@@ -155,13 +157,14 @@ class AccountTokenManagerImpl(
 
     var ordersToDelete = Set.empty[String]
 
-    badOnes.foreach { r ⇒
+    badOnes.foreach { r =>
       val order = orderPool(r.orderId)
       val requestedAmount = order.requestedAmount
 
       val status =
         if (availableBalance >= requestedAmount) XOrderStatus.STATUS_PENDING
-        else if (token == order.tokenS) XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
+        else if (token == order.tokenS)
+          XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
         else XOrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE
 
       if (status != XOrderStatus.STATUS_PENDING) {
@@ -169,7 +172,7 @@ class AccountTokenManagerImpl(
         indexMap -= order.id
 
         // delete order if they are still in the pool.
-        orderPool.getOrder(order.id) map { order ⇒
+        orderPool.getOrder(order.id) map { order =>
           val updated = order.as(status)
           // log.debug("delete_by_status: " + updated)
           orderPool += updated
@@ -202,7 +205,7 @@ class AccountTokenManagerImpl(
   }
 
   private[core] def getDebugInfo() = {
-    val localOrders = reservations.map(r ⇒ orderPool(r.orderId))
+    val localOrders = reservations.map(r => orderPool(r.orderId))
     (localOrders, reservations, indexMap, cursor)
   }
 }

@@ -26,11 +26,9 @@ import org.loopring.lightcone.proto._
 
 class MyConfig(val fileNameOption: Option[String] = None) {
 
-  val config = fileNameOption.fold(
-    ifEmpty = ConfigFactory.load()
-  )(
-      file ⇒ ConfigFactory.load(file)
-    )
+  val config = fileNameOption.fold(ifEmpty = ConfigFactory.load())(
+    file => ConfigFactory.load(file)
+  )
 
   def envOrElseConfig(name: String): String = {
     Properties.envOrElse(
@@ -58,7 +56,8 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
 
     // println(s"lrcAddress: $lrcAddress, $wethAddress, $miner, $minerPrivKey")
 
-    val xRingBatchContext = (new XRingBatchContext).withFeeRecipient(miner)
+    val xRingBatchContext = (new XRingBatchContext)
+      .withFeeRecipient(miner)
       .withMiner(miner)
       .withTransactionOrigin(miner)
       .withMinerPrivateKey(minerPrivKey)

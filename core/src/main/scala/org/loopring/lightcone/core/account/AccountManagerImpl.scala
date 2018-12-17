@@ -21,10 +21,11 @@ import org.loopring.lightcone.proto._
 
 import org.slf4s.Logging
 
-final private[core] class AccountManagerImpl()(
-    implicit
-    orderPool: AccountOrderPool
-) extends AccountManager with Logging {
+final private[core] class AccountManagerImpl(
+  )(
+    implicit orderPool: AccountOrderPool)
+    extends AccountManager
+    with Logging {
   import XOrderStatus._
 
   private[core] implicit var tokens =
@@ -47,11 +48,7 @@ final private[core] class AccountManagerImpl()(
 
   //TODO(litao): What if an order is re-submitted?
   def submitOrder(_order: Order): Boolean = this.synchronized {
-    val order = _order.copy(
-      _reserved = None,
-      _actual = None,
-      _matchable = None
-    )
+    val order = _order.copy(_reserved = None, _actual = None, _matchable = None)
 
     if (order.amountS <= 0) {
       orderPool += order.as(STATUS_INVALID_DATA)
@@ -59,13 +56,13 @@ final private[core] class AccountManagerImpl()(
     }
 
     if (!tokens.contains(order.tokenS) ||
-      !tokens.contains(order.tokenFee)) {
+        !tokens.contains(order.tokenFee)) {
       orderPool += order.as(STATUS_UNSUPPORTED_MARKET)
       return false
     }
 
     if (order.callOnTokenS(_.hasTooManyOrders) ||
-      order.callOnTokenFee(_.hasTooManyOrders)) {
+        order.callOnTokenFee(_.hasTooManyOrders)) {
       orderPool += order.as(STATUS_CANCELLED_TOO_MANY_ORDERS)
       return false
     }
@@ -82,9 +79,9 @@ final private[core] class AccountManagerImpl()(
 
   def cancelOrder(orderId: String): Boolean = this.synchronized {
     orderPool.getOrder(orderId) match {
-      case None ⇒ false
-      case Some(order) ⇒
-        orderPool.getOrder(orderId) map { order ⇒
+      case None => false
+      case Some(order) =>
+        orderPool.getOrder(orderId) map { order =>
           orderPool += order.as(STATUS_CANCELLED_BY_USER)
         }
 
@@ -94,10 +91,13 @@ final private[core] class AccountManagerImpl()(
   }
 
   // adjust order's outstanding size
-  def adjustOrder(orderId: String, outstandingAmountS: BigInt): Boolean = this.synchronized {
+  def adjustOrder(
+      orderId: String,
+      outstandingAmountS: BigInt
+    ): Boolean = this.synchronized {
     orderPool.getOrder(orderId) match {
-      case None ⇒ false
-      case Some(order) ⇒
+      case None => false
+      case Some(order) =>
         val outstandingAmountS_ = order.amountS min outstandingAmountS
         orderPool += order.withOutstandingAmountS(outstandingAmountS_)
         order.callOnTokenSAndTokenFee(_.adjust(order.id))
@@ -106,10 +106,11 @@ final private[core] class AccountManagerImpl()(
   }
 
   implicit private class MagicOrder(order: Order) {
-    def callOnTokenS[R](method: AccountTokenManager ⇒ R) =
+
+    def callOnTokenS[R](method: AccountTokenManager => R) =
       method(tokens(order.tokenS))
 
-    def callOnTokenFee[R](method: AccountTokenManager ⇒ R) =
+    def callOnTokenFee[R](method: AccountTokenManager => R) =
       method(tokens(order.tokenFee))
 
     // 删除订单应该有以下几种情况:
@@ -120,9 +121,9 @@ final private[core] class AccountManagerImpl()(
     // tokenManager的release动作不能由tokenManager本身调用,
     // 只能由orderManager根据并汇总tokenS&tokenFee情况后删除,
     // 删除时tokenS&tokenFee都要删,不能只留一个
-    def callOnTokenSAndTokenFee(method: AccountTokenManager ⇒ Set[String]) = {
+    def callOnTokenSAndTokenFee(method: AccountTokenManager => Set[String]) = {
       val ordersToDelete = callOnTokenS(method) ++ callOnTokenFee(method)
-      ordersToDelete.map { orderId ⇒
+      ordersToDelete.map { orderId =>
         callOnTokenS(_.release(orderId))
         callOnTokenFee(_.release(orderId))
       }.size > 0
@@ -130,4 +131,3 @@ final private[core] class AccountManagerImpl()(
   }
 
 }
-

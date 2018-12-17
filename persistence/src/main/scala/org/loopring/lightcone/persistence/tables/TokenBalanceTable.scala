@@ -32,7 +32,7 @@ import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
 class TokenBalanceTable(tag: Tag)
-  extends BaseTable[XTokenBalance](tag, "T_TOKEN_BALANCES") {
+    extends BaseTable[XTokenBalance](tag, "T_TOKEN_BALANCES") {
 
   // Do not support id-based operations
   def id = throw new UnsupportedOperationException(
@@ -40,7 +40,7 @@ class TokenBalanceTable(tag: Tag)
   )
 
   def address = columnAddress("address")
-  def token = columnAddress("address")
+  def token = columnAddress("token")
   def balance = columnAmount("balance")
   def allowance = columnAmount("allowance")
   def updatedAtBlock = column[Long]("updated_at_block")
@@ -50,11 +50,12 @@ class TokenBalanceTable(tag: Tag)
   def idx_token = index("idx_token", (token), unique = false)
   def pk = primaryKey("pk", (address, token))
 
-  def * = (
-    address,
-    token,
-    balance,
-    allowance,
-    updatedAtBlock
-  ) <> ((XTokenBalance.apply _).tupled, XTokenBalance.unapply)
+  def * =
+    (
+      address,
+      token,
+      balance,
+      allowance,
+      updatedAtBlock
+    ) <> ((XTokenBalance.apply _).tupled, XTokenBalance.unapply)
 }

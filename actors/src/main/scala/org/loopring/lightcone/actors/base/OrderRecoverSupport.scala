@@ -21,10 +21,11 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto._
 
+import scala.collection.mutable.Queue
 import scala.concurrent._
 
 trait OrderRecoverSupport {
-  actor: Actor with ActorLogging ⇒
+  actor: Actor with ActorLogging =>
 
   implicit val ec: ExecutionContext
   implicit val timeout: Timeout
@@ -34,19 +35,19 @@ trait OrderRecoverSupport {
 
   // protected def ordersDalActor: ActorRef
 
-  protected def recoverOrder(xorder: XOrder): Future[Any]
+  protected def recoverOrder(xraworder: XRawOrder): Future[Any]
 
-  protected def functional: Receive
+  //  protected def functional: Receive
 
   private var lastUpdatdTimestamp: Long = 0
   private var recoverEnded: Boolean = false
-  private var xordersToRecover: Seq[XOrder] = Nil
+  private var xordersToRecover = Queue.empty[XRawOrder]
 
-  protected def startOrderRecovery(settings: XOrderRecoverySettings) = {
+  protected def requestOrderRecovery(settings: XOrderRecoverySettings) = {
     recoverySettings = settings
     if (recoverySettings.skipRecovery) {
       log.warning(s"actor recovering skipped: ${self.path}")
-      context.become(functional)
+      //      context.become(functional)
     } else {
       context.become(recovering)
       log.debug(s"actor recovering started: ${self.path}")
@@ -61,42 +62,41 @@ trait OrderRecoverSupport {
 
   def recovering: Receive = {
 
-    case XRecoverOrdersRes(xraworders) ⇒
+    case XRecoverOrdersRes(xraworders) =>
       val size = xraworders.size
       log.debug(s"recovering next ${size} orders")
       processed += size
 
-      xordersToRecover = xraworders.map(xRawOrderToXOrder).toList
-      lastUpdatdTimestamp = xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
+      xordersToRecover ++= xraworders
+      lastUpdatdTimestamp =
+        xordersToRecover.lastOption.map(_.updatedAt).getOrElse(0L)
       recoverEnded = lastUpdatdTimestamp == 0 || xordersToRecover.size < recoverySettings.batchSize
 
       self ! XRecoverNextOrder()
 
     case _: XRecoverNextOrder ⇒
-      xordersToRecover match {
-        case head :: tail ⇒ for {
-          _ ← recoverOrder(head)
+      if (xordersToRecover.isEmpty) {
+        if (!recoverEnded) {
+          //          ordersRecoveryActor ! XRecoverOrdersReq(
+          //            recoverySettings.orderOwner,
+          //            recoverySettings.marketId,
+          //            lastUpdatdTimestamp,
+          //            recoverySettings.batchSize
+          //          )
+        } else {
+          log.info(s"recovering completed with $processed orders")
+          context.become(receive)
+        }
+      } else {
+        for {
+          _ ← recoverOrder(xordersToRecover.dequeue())
         } yield {
-          xordersToRecover = tail
           self ! XRecoverNextOrder()
         }
-
-        case Nil ⇒
-          if (!recoverEnded) {
-            // ordersDalActor ! XRecoverOrdersReq(
-            //   recoverySettings.orderOwner,
-            //   recoverySettings.marketId,
-            //   lastUpdatdTimestamp,
-            //   recoverySettings.batchSize
-            // )
-          } else {
-            log.debug(s"recovering completed with $processed orders")
-            context.become(functional)
-          }
-        case _ ⇒ log.error(s"not match xorders: ${xordersToRecover.getClass.getName}")
       }
 
-    case msg ⇒
+    case msg =>
       log.debug(s"ignored msg during recovery: ${msg.getClass.getName}")
+    //      stash() //恢复期间，暂时保存消息
   }
 }

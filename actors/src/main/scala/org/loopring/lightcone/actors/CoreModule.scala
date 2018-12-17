@@ -24,11 +24,12 @@ import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.ethereum._
-import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.actors.utils._
+import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
@@ -36,11 +37,10 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
-import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent.duration._
 
-class CoreModule(config: Config)
-  extends AbstractModule with ScalaModule {
+class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
   override def configure(): Unit = {
     implicit val system = ActorSystem("Lightcone", config)
@@ -58,7 +58,8 @@ class CoreModule(config: Config)
 
     bind[ExecutionContextExecutor].toInstance(system.dispatcher)
     bind[ExecutionContext].toInstance(system.dispatcher)
-    bind[ExecutionContext].annotatedWithName("db-execution-context")
+    bind[ExecutionContext]
+      .annotatedWithName("db-execution-context")
       .toInstance(system.dispatchers.lookup("db-execution-context"))
 
     implicit val actors = new MapBasedLookup[ActorRef]()
@@ -73,6 +74,7 @@ class CoreModule(config: Config)
 
     implicit val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)
+    dbModule.createTables()
 
     implicit val tmm = new TokenMetadataManager()
     bind[TokenMetadataManager].toInstance(tmm)
@@ -83,24 +85,39 @@ class CoreModule(config: Config)
       "token_metadata_refresher"
     )
 
-    implicit val tokenValueEstimator: TokenValueEstimator = new TokenValueEstimator()
+    implicit val tokenValueEstimator: TokenValueEstimator =
+      new TokenValueEstimator()
     bind[TokenValueEstimator].toInstance(tokenValueEstimator)
 
     implicit val dustEvaluator: DustOrderEvaluator = new DustOrderEvaluator()
     bind[DustOrderEvaluator].toInstance(dustEvaluator)
 
-    implicit val ringIncomeEstimator: RingIncomeEstimator = new RingIncomeEstimatorImpl()
+    implicit val ringIncomeEstimator: RingIncomeEstimator =
+      new RingIncomeEstimatorImpl()
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
     //-----------deploy sharded actors-----------
     actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
-    actors.add(AccountManagerActor.name, AccountManagerActor.startShardRegion)
+
+    actors.add(
+      MultiAccountManagerActor.name,
+      MultiAccountManagerActor.startShardRegion
+    )
     actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
-    actors.add(EthereumEventExtractorActor.name, EthereumEventExtractorActor.startShardRegion)
-    actors.add(EthereumEventPersistorActor.name, EthereumEventPersistorActor.startShardRegion)
+    actors.add(
+      EthereumEventExtractorActor.name,
+      EthereumEventExtractorActor.startShardRegion
+    )
+    actors.add(
+      EthereumEventPersistorActor.name,
+      EthereumEventPersistorActor.startShardRegion
+    )
     actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
     actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
-    actors.add(OrderbookManagerActor.name, OrderbookManagerActor.startShardRegion)
+    actors.add(
+      OrderbookManagerActor.name,
+      OrderbookManagerActor.startShardRegion
+    )
     actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
     actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
     actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
@@ -166,8 +183,16 @@ class CoreModule(config: Config)
       system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
     )
 
-    val listener = system.actorOf(Props[BadMessageListener], "bad_message_listener")
+    val listener =
+      system.actorOf(Props[BadMessageListener], "bad_message_listener")
+
     system.eventStream.subscribe(listener, classOf[UnhandledMessage])
     system.eventStream.subscribe(listener, classOf[DeadLetter])
+
+    if (cluster.selfRoles.contains("jsonrpc")) {
+      val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
+      with RpcBinding
+      server.start()
+    }
   }
 }

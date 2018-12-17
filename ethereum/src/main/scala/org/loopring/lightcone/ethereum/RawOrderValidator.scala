@@ -89,8 +89,8 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     )
 
     checklist.span(_._1)._2 match {
-      case List() ⇒ Right(order)
-      case tail   ⇒ Left(tail.head._2)
+      case List() => Right(order)
+      case tail   => Left(tail.head._2)
     }
   }
 

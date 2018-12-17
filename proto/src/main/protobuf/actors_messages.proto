@@ -36,19 +36,19 @@ message XSubmitRawOrderReq {
     XRawOrder raw_order = 1;
 }
 
-message XSubmitRawOrderResp {
-    XRawOrder raw_order = 1;
+message XSubmitRawOrderRes {
+    string id = 1;
 }
 
 message XCancelOrderReq {
     string id = 1;
-    bool hard_cancel = 2; // 默认软取消
+    string address = 2; //用于分片路由
+    XOrderStatus status = 3; //取消的类型
 }
 
 message XCancelOrderRes {
     string id = 1;
-    bool hard_cancel = 2; // 默认软取消
-    XErrorCode error = 3;
+    XOrderStatus status = 2; //取消的类型
 }
 
 message XSubmitRawOrder {

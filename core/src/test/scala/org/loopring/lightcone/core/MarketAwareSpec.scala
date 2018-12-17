@@ -64,12 +64,21 @@ trait MarketAwareSpec extends OrderAwareSpec {
     o
   }
 
-  def emptyMatchingResult(order: Order, newStatus: XOrderStatus) =
-    MarketManager.MatchResult(Nil, order.copy(status = newStatus), XOrderbookUpdate())
+  def emptyMatchingResult(
+      order: Order,
+      newStatus: XOrderStatus
+    ) =
+    MarketManager.MatchResult(
+      Nil,
+      order.copy(status = newStatus),
+      XOrderbookUpdate()
+    )
 
   def noMatchingActivity() = {
-    (fackRingMatcher.matchOrders(_: Order, _: Order, _: Double))
-      .verify(*, *, *).never
+    (fackRingMatcher
+      .matchOrders(_: Order, _: Order, _: Double))
+      .verify(*, *, *)
+      .never
   }
 
 }
