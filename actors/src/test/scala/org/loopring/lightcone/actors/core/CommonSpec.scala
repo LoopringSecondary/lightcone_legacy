@@ -79,9 +79,9 @@ abstract class CommonSpec(configStr: String)
 //    "token_metadata_refresher"
 //  )
 
-  val listener =
-    system.actorOf(Props[BadMessageListener], "bad_message_listener")
-  system.eventStream.subscribe(listener, classOf[UnhandledMessage])
-  system.eventStream.subscribe(listener, classOf[DeadLetter])
+//  val listener =
+//    system.actorOf(Props[BadMessageListener], "bad_message_listener")
+//  system.eventStream.subscribe(listener, classOf[UnhandledMessage])
+//  system.eventStream.subscribe(listener, classOf[DeadLetter])
 
 }

@@ -183,6 +183,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
     )
 
+    //todo:需要测试badMessage，有死循环
     val listener =
       system.actorOf(Props[BadMessageListener], "bad_message_listener")
 

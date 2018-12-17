@@ -55,7 +55,7 @@ object safefuture {
         case Success(r) => recipient forward r
         case Failure(f) =>
           f match {
-            case e: ErrorException => sender ! e.error
+            case e: ErrorException => recipient ! e.error
             case e: Throwable      => throw e
           }
       }
@@ -72,8 +72,8 @@ object safefuture {
         case Success(r) => recipient ! r
         case Failure(f) =>
           f match {
-            case e: ErrorException => sender ! e.error
-            case e: Throwable      => throw e
+            case e: ErrorException => recipient ! e.error
+            case e: Throwable => throw e
           }
       }
       f
