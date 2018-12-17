@@ -21,7 +21,7 @@ import org.loopring.lightcone.proto._
 import akka.pattern._
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
-
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class OrderHandlerSpec_SaveOrder
@@ -31,7 +31,7 @@ class OrderHandlerSpec_SaveOrder
   val multiAccountManagerProbe =
     new TestProbe(system, MultiAccountManagerActor.name) {
 
-      def expectQuery() = expectMsgPF() {
+      def expectQuery() = expectMsgPF(120 second) {
         case req @ XCancelOrderReq(_, orderId, _) =>
           log.info(s"##### expectQuery ${req}， ${sender()}")
           sender ! XCancelOrderRes(id = orderId)

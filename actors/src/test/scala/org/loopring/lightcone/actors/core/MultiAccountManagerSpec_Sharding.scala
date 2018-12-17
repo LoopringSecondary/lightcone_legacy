@@ -21,14 +21,15 @@ import akka.pattern._
 import akka.testkit.TestProbe
 
 import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class MultiAccountManagerSpec_Sharding
-    extends CommonSpec("")
+    extends CommonSpec("""akka.cluster.roles=["multi_account_manager"]""")
     with MultiAccountManagerSupport {
 
   val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
 
-    def expectQuery() = expectMsgPF() {
+    def expectQuery() = expectMsgPF(120 second) {
       case req @ XCancelOrderReq(_, orderId, _) =>
         log.info(s"##### AM ${req}， ${sender()}")
         sender ! XCancelOrderRes(id = orderId)
