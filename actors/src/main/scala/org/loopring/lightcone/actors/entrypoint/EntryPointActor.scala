@@ -61,7 +61,7 @@ class EntryPointActor(
     case _ @(XGetBalanceAndAllowancesReq | XGetBalanceReq | XGetAllowanceReq) ⇒
       Some(EthereumQueryActor.name)
 
-    case  _ @(XJsonRpcReq | XRpcReqWithHeight) ⇒
+    case _ @(XJsonRpcReq | XRpcReqWithHeight) ⇒
       Some(EthereumAccessActor.name)
 
     case _ => None

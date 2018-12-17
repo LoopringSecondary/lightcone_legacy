@@ -76,6 +76,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                       -32602,
                       Some("`params` is missing, use `{}` as default value")
                     )
+                    
                   case Some(req) =>
                     val f = (requestHandler ? req).map {
                       case err: XError => throw ErrorException(err)
