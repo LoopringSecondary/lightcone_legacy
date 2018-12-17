@@ -31,7 +31,8 @@ object Dependencies {
   lazy val guiceDependency = Seq(
     "com.google.inject" % "guice" % "4.2.2",
     "com.google.inject.extensions" % "guice-assistedinject" % "4.2.2",
-    "net.codingwell" %% "scala-guice" % "4.2.1")
+    "net.codingwell" %% "scala-guice" % "4.2.1"
+  )
 
   lazy val json4sDependency = Seq(
     "org.json4s" %% "json4s-native" % json4sVersion,
@@ -43,7 +44,8 @@ object Dependencies {
 
   lazy val ethereumDependency = Seq(
     "org.web3j" % "core" % "3.4.0",
-    "org.ethereum" % "ethereumj-core" % "1.8.2-RELEASE")
+    "org.ethereum" % "ethereumj-core" % "1.8.2-RELEASE"
+  )
 
   lazy val akkaDependency = Seq(
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
@@ -58,18 +60,22 @@ object Dependencies {
 
   lazy val httpDependency = Seq(
     "com.typesafe.akka" %% "akka-http" % "10.1.5",
-    "de.heikoseeberger" %% "akka-http-json4s" % "1.22.0")
+    "de.heikoseeberger" %% "akka-http-json4s" % "1.22.0"
+  )
 
   lazy val driverDependency = Seq(
     "com.github.etaty" %% "rediscala" % "1.8.0",
     "com.lightbend.akka" %% "akka-stream-alpakka-slick" % "0.20",
-    "mysql" % "mysql-connector-java" % "5.1.47")
+    "mysql" % "mysql-connector-java" % "5.1.47"
+  )
 
   lazy val scalapbDependency = Seq(
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion,
-    "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf")
+    "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf"
+  )
 
   lazy val dependency4Lib = commonDependency ++
+    json4sDependency ++
     testDependency
 
   lazy val dependency4Core = commonDependency ++
@@ -94,7 +100,7 @@ object Dependencies {
     akkaDependency ++
     json4sDependency ++
     testDependency ++
-    Seq("org.jsoup" % "jsoup" % "1.11.3")
+    Seq("com.corundumstudio.socketio" % "netty-socketio" % "1.7.16")
 
   lazy val dependency4Indexer = dependency4Persistence ++
     httpDependency ++
@@ -103,10 +109,4 @@ object Dependencies {
     testDependency ++
     Seq("org.jsoup" % "jsoup" % "1.11.3")
 
-  lazy val dependency4Gateway = dependency4Persistence ++
-    httpDependency ++
-    akkaDependency ++
-    json4sDependency ++
-    testDependency ++
-    Seq("com.corundumstudio.socketio" % "netty-socketio" % "1.7.16")
 }
