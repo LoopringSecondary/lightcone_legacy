@@ -151,12 +151,12 @@ class EthereumEventExtractorActor(
         case XGetBlockWithTxObjectByNumberRes(_, _, Some(result), _) ⇒
           // 暂时不考虑分叉
 //          if (result.parentHash.equals(currentBlockHash)) {
-            self ! XBlockJob()
-              .withHeight(result.number.intValue())
-              .withHash(result.hash)
-              .withMiner(result.miner)
-              .withUncles(result.uncles)
-              .withTxhashes(result.transactions.map(_.hash))
+          self ! XBlockJob()
+            .withHeight(result.number.intValue())
+            .withHash(result.hash)
+            .withMiner(result.miner)
+            .withUncles(result.uncles)
+            .withTxhashes(result.transactions.map(_.hash))
 //          }
 //          else
 //            self ! XForkBlock((currentBlockNumber - 1).intValue())
