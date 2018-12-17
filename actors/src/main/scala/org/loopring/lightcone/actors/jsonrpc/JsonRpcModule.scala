@@ -64,16 +64,6 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
           if (id.isEmpty) {
             replyWithError(-32000, Some("`id missing"))
-            //TODO 是不是可以把 ETH 请求直接转发到 节点，把response直接返回给前端
-          } else if (method.startsWith("eth")) {
-            val f = (requestHandler ? XJsonRpcReq(Serialization.write(jsonReq)))
-              .mapTo[XJsonRpcRes]
-
-            onSuccess(f) { resp ⇒
-              complete(
-                Serialization.read[JsonRpcResponse](resp.json)
-              )
-            }
           } else {
             getPayloadConverter(method) match {
               case None =>
@@ -86,7 +76,6 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                       -32602,
                       Some("`params` is missing, use `{}` as default value")
                     )
-
                   case Some(req) =>
                     val f = (requestHandler ? req).map {
                       case err: XError => throw ErrorException(err)

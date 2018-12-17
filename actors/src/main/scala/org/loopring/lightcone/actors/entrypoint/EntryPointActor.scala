@@ -19,12 +19,9 @@ package org.loopring.lightcone.actors.entrypoint
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
-import org.loopring.lightcone.actors.jsonrpc.JsonRpcRequest
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
@@ -42,8 +39,6 @@ class EntryPointActor(
     actors: Lookup[ActorRef])
     extends Actor
     with ActorLogging {
-
-  implicit val formats = DefaultFormats
 
   def receive = LoggingReceive {
     case msg: Any =>
@@ -65,20 +60,9 @@ class EntryPointActor(
 
     case _ @(XGetBalanceAndAllowancesReq | XGetBalanceReq | XGetAllowanceReq) ⇒
       Some(EthereumQueryActor.name)
-    case XJsonRpcReq(json) ⇒
-      val req = Serialization.read[JsonRpcRequest](json)
-      if (req.method.equals("eth_sendRawTransaction")) {
-        // TODO 解析nonce sender 等信息，维护pending tx
-      }
-      Some(EthereumAccessActor.name)
-    case XRpcReqWithHeight(Some(rpcReq), _) ⇒
-      val req: JsonRpcRequest =
-        Serialization.read[JsonRpcRequest](rpcReq.json)
-      if (req.method.equals("eth_sendRawTransaction")) {
-        // TODO 解析nonce sender 等信息，维护pending tx
-      }
-      Some(EthereumAccessActor.name)
 
+    case  _ @(XJsonRpcReq | XRpcReqWithHeight) ⇒
+      Some(EthereumAccessActor.name)
 
     case _ => None
   }
