@@ -3,9 +3,10 @@ resolvers += "ethereumlibrepository" at "https://dl.bintray.com/ethereum/maven/"
 resolvers += "JFrog" at "https://oss.jfrog.org/libs-release/"
 resolvers += "bintray" at "https://dl.bintray.com/ethereum/maven/"
 resolvers += Resolver.bintrayRepo("hseeberger", "maven")
-resolvers += Resolver.url("scoverage-bintray",
-  url("https://dl.bintray.com/sksamuel/sbt-plugins/"))(
-    Resolver.ivyStylePatterns)
+resolvers += Resolver.url(
+  "scoverage-bintray",
+  url("https://dl.bintray.com/sksamuel/sbt-plugins/")
+)(Resolver.ivyStylePatterns)
 
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.7.4"
 

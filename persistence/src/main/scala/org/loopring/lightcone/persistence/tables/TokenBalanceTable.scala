@@ -40,7 +40,7 @@ class TokenBalanceTable(tag: Tag)
   )
 
   def address = columnAddress("address")
-  def token = columnAddress("address")
+  def token = columnAddress("token")
   def balance = columnAmount("balance")
   def allowance = columnAmount("allowance")
   def updatedAtBlock = column[Long]("updated_at_block")
