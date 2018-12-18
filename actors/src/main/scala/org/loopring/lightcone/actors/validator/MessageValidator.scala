@@ -19,6 +19,16 @@ package org.loopring.lightcone.actors.validator
 import org.loopring.lightcone.proto.XError
 import org.loopring.lightcone.proto.XErrorCode._
 
+// Example:
+// class MyMessageValidator extends MessageValidator {
+//   def validate = {
+//     case x: SomeMessageA => // pass as-is
+//     case x: SomeMessageB => x // pass as-is
+//     case x: SomeMessageC => x.copy(field=value) // modify
+//     // unhandled messages are passed as-is
+//
+//
 trait MessageValidator {
+  // Throw exceptions if validation failed.
   def validate: PartialFunction[Any, Any]
 }

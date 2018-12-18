@@ -32,6 +32,7 @@ final class EthereumQueryMessageValidator()(implicit val config: Config)
   // This method should throw exception for an invalid address
   private def normalizeAddress(address: String): String = address
 
+  // Throws exception if validation fails.
   def validate = {
     case req: XGetBalanceAndAllowancesReq =>
       req

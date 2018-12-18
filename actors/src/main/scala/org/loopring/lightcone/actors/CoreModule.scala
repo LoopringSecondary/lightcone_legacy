@@ -17,7 +17,8 @@
 package org.loopring.lightcone.actors
 
 import akka.actor._
-import akka.cluster.Cluster
+import akka.cluster._
+import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.google.inject.AbstractModule
@@ -79,12 +80,6 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     implicit val tmm = new TokenMetadataManager()
     bind[TokenMetadataManager].toInstance(tmm)
 
-    // This actor must be deployed on every node for TokenMetadataManager
-    val refresher = system.actorOf(
-      Props(new TokenMetadataRefresher),
-      "token_metadata_refresher"
-    )
-
     implicit val tokenValueEstimator: TokenValueEstimator =
       new TokenValueEstimator()
     bind[TokenValueEstimator].toInstance(tokenValueEstimator)
@@ -95,6 +90,32 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     implicit val ringIncomeEstimator: RingIncomeEstimator =
       new RingIncomeEstimatorImpl()
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
+
+    //-----------deploy local actors-----------
+    val listener =
+      system.actorOf(Props[BadMessageListener], "bad_message_listener")
+
+    system.eventStream.subscribe(listener, classOf[UnhandledMessage])
+    system.eventStream.subscribe(listener, classOf[DeadLetter])
+
+    //-----------deploy cluster singletons-----------
+    actors.add(
+      OrderRecoverCoordinator.name,
+      system.actorOf(
+        ClusterSingletonProxy.props(
+          singletonManagerPath = OrderRecoverCoordinator.name,
+          settings = ClusterSingletonProxySettings(system)
+        ),
+        name = OrderRecoverCoordinator.name
+      )
+    )
+
+    // This actor must be deployed on every node for TokenMetadataManager
+    actors.add(
+      TokenMetadataRefresher.name,
+      system
+        .actorOf(Props(new TokenMetadataRefresher), TokenMetadataRefresher.name)
+    )
 
     //-----------deploy sharded actors-----------
     actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
@@ -125,56 +146,47 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     //-----------deploy local actors-----------
     actors.add(
-      AccountManagerMessageValidator.name,
+      MultiAccountManagerMessageValidator.name,
       MessageValidationActor(
-        AccountManagerMessageValidator.name,
-        new AccountManagerMessageValidator(),
-        AccountManagerActor.name
+        new MultiAccountManagerMessageValidator(),
+        MultiAccountManagerActor.name,
+        MultiAccountManagerMessageValidator.name
       )
     )
 
     actors.add(
       DatabaseQueryMessageValidator.name,
       MessageValidationActor(
-        DatabaseQueryMessageValidator.name,
         new DatabaseQueryMessageValidator(),
-        DatabaseQueryActor.name
+        DatabaseQueryActor.name,
+        DatabaseQueryMessageValidator.name
       )
     )
 
     actors.add(
       EthereumQueryMessageValidator.name,
       MessageValidationActor(
-        EthereumQueryMessageValidator.name,
         new EthereumQueryMessageValidator(),
-        EthereumQueryActor.name
+        EthereumQueryActor.name,
+        EthereumQueryMessageValidator.name
       )
     )
 
     actors.add(
       MarketManagerMessageValidator.name,
       MessageValidationActor(
-        MarketManagerMessageValidator.name,
         new MarketManagerMessageValidator(),
-        MarketManagerActor.name
+        MarketManagerActor.name,
+        MarketManagerMessageValidator.name
       )
     )
 
     actors.add(
       OrderbookManagerMessageValidator.name,
       MessageValidationActor(
-        OrderbookManagerMessageValidator.name,
         new OrderbookManagerMessageValidator(),
-        OrderbookManagerActor.name
-      )
-    )
-
-    actors.add(
-      OrderHandlerMessageValidator.name,
-      MessageValidationActor(
-        OrderHandlerMessageValidator.name,
-        new OrderHandlerMessageValidator(),
-        OrderHandlerActor.name
+        OrderbookManagerActor.name,
+        OrderbookManagerMessageValidator.name
       )
     )
 
@@ -183,11 +195,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
     )
 
-    val listener =
-      system.actorOf(Props[BadMessageListener], "bad_message_listener")
-
-    system.eventStream.subscribe(listener, classOf[UnhandledMessage])
-    system.eventStream.subscribe(listener, classOf[DeadLetter])
+    //-----------deploy JSONRPC service-----------
 
     if (cluster.selfRoles.contains("jsonrpc")) {
       val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
