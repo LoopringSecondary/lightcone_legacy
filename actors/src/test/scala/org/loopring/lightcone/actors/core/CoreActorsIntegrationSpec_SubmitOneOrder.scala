@@ -17,19 +17,25 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor.{Actor, ActorLogging, Props}
-import akka.event.LoggingReceive
-import com.google.protobuf.ByteString
-import org.loopring.lightcone.lib.MarketHashProvider
-import org.loopring.lightcone.proto._
 import akka.pattern._
 import akka.util.Timeout
+import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.lib.MarketHashProvider
+import org.loopring.lightcone.proto._
 
 import scala.concurrent.{Await, ExecutionContext}
 
 class CoreActorsIntegrationSpec_SubmitOneOrder
     extends CommonSpec(
-      """akka.cluster.roles=["order_handler","multi_account_manager", "market_manager", "orderbook_manager", "gas_price"]"""
+      """
+        |akka.cluster.roles=[
+        | "order_handler",
+        | "multi_account_manager",
+        | "market_manager",
+        | "orderbook_manager",
+        | "gas_price"]
+        |""".stripMargin
     )
     with OrderHandleSupport
     with MultiAccountManagerSupport

@@ -16,18 +16,20 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.testkit.TestProbe
-import org.loopring.lightcone.proto._
 import akka.pattern._
+import akka.testkit.TestProbe
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.support.{CommonSpec, OrderHandleSupport}
 import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
+import org.loopring.lightcone.proto._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class OrderHandlerSpec_SaveOrder
-    extends CommonSpec("""akka.cluster.roles=["order_handler"]""")
+    extends CommonSpec("""
+                         |akka.cluster.roles=["order_handler"]
+                         |""".stripMargin)
     with OrderHandleSupport {
 
   val multiAccountManagerProbe =

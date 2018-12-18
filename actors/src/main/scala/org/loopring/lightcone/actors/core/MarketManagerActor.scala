@@ -18,11 +18,11 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.sharding._
-import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -31,10 +31,10 @@ import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
 import org.web3j.utils.Numeric
+
+import scala.collection.JavaConverters._
 import scala.concurrent._
-import collection.JavaConverters._
 
 // main owner: 于红雨
 object MarketManagerActor extends ShardedByMarket {

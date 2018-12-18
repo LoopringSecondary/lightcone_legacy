@@ -22,7 +22,12 @@ import org.loopring.lightcone.proto._
 
 class CoreActorsIntegrationSpec_SingleRingFullyMatched
     extends CommonSpec(
-      """akka.cluster.roles=["market_manager", "orderbook_manager", "gas_price"]"""
+      """
+        |akka.cluster.roles=[
+        | "market_manager",
+        | "orderbook_manager",
+        | "gas_price"]
+        |""".stripMargin
     )
     with MarketManagerSupport
     with OrderbookManagerSupport {

@@ -19,21 +19,16 @@ package org.loopring.lightcone.actors.core
 import akka.actor._
 import akka.cluster.sharding._
 import akka.event.LoggingReceive
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.core.depth._
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
-import scala.concurrent._
 import org.web3j.utils.Numeric
+
+import scala.concurrent._
 
 // main owner: 于红雨
 object OrderbookManagerActor extends ShardedByMarket {

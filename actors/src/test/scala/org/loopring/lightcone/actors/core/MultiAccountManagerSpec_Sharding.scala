@@ -16,16 +16,18 @@
 
 package org.loopring.lightcone.actors.core
 
-import org.loopring.lightcone.proto._
 import akka.pattern._
 import akka.testkit.TestProbe
 import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.proto._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class MultiAccountManagerSpec_Sharding
-    extends CommonSpec("""akka.cluster.roles=["multi_account_manager"]""")
+    extends CommonSpec("""
+                         |akka.cluster.roles=["multi_account_manager"]
+                         |""".stripMargin)
     with MultiAccountManagerSupport {
 
   val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
