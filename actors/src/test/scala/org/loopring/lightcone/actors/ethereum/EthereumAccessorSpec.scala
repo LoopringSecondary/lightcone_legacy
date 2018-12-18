@@ -54,7 +54,7 @@ class EthereumAccessorSpec extends FlatSpec with Matchers with Logging {
   val ethereumAccessActor =
     system.actorOf(Props(new EthereumAccessActor()))
 
-  Thread.sleep(5000)
+  Thread.sleep(6000)
 
   val fu = for {
     blockNum ← (ethereumAccessActor ? XEthBlockNumberReq())
