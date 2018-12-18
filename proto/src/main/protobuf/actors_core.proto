@@ -104,12 +104,12 @@ message XGetAllowanceRes {
     XError error = 3;
 }
 
-message XSubmitOrderReq {
-    string address = 1;
+message XSubmitSimpleOrderReq {
+    string owner = 1;
     XOrder order = 2;
 }
 
-message XSubmitOrderRes {
+message XSubmitSimpleOrderRes {
     XOrder order = 1;
 }
 
@@ -125,12 +125,12 @@ message XAddressAllowanceUpdated {
     bytes balance = 3;
 }
 
-message XOrderRecoverySettings {
-    bool skip_recovery = 1;
-    int32 batch_size = 2;
-    string order_owner = 3;
-    XMarketId market_id = 4;
-}
+// message XOrderRecoverySettings {
+//     bool skip_recovery = 1;
+//     int32 batch_size = 2;
+//     string order_owner = 3;
+//     XMarketId market_id = 4;
+// }
 
 
 
@@ -183,18 +183,19 @@ message XSendRawTxRes {
     }
 }
 
-message XRecoverOrdersReq {
-    string address = 1;
-    XMarketId market_id = 2;
-    int64 updated_since = 3;
-    int32 num = 4;
+message XRecoverReq {
+   repeated string address_sharding_entities = 1;
+   repeated XMarketId market_ids = 2;
 }
 
-message XRecoverOrdersRes {
-    repeated XRawOrder orders = 1;
+message XRecoverOrderReq {
+    XRawOrder raw_order = 1;
 }
 
-message XRecoverNextOrder {}
+message XRecoverOrderRes {}
+message XRecoverEnded {
+    bool timeout = 1;
+}
 
 enum XExecutedStatus {
     EXECUTED_STATUS_UNKNOW = 0;

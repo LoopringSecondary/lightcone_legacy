@@ -14,58 +14,39 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.utils
-
+package org.loopring.lightcone.actors.core
+import akka.actor.SupervisorStrategy.Restart
 import akka.actor._
 import akka.cluster.sharding._
-import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.persistence._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.core.base.DustOrderEvaluator
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
-import org.loopring.lightcone.proto._
-import scala.concurrent._
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
-object TokenMetadataRefresher {
-  val name = "token_metadata_refresher"
+object OrderRecoverCoordinator extends {
+  val name = "order_recover_coordinator"
+
 }
 
-// main owner: 杜永丰
-class TokenMetadataRefresher(
+class OrderRecoverCoordinator(
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule,
-    val tokenMetadataManager: TokenMetadataManager)
+    val dustEvaluator: DustOrderEvaluator)
     extends Actor
-    with ActorLogging
-    with RepeatedJobActor {
+    with ActorLogging {
 
-  private val tokenMetadata = dbModule.tokenMetadata
-
-  val repeatedJobs = Seq(
-    Job(
-      name = "sync-token-metadata",
-      dalayInSeconds = 10 * 60, // 10 minutes
-      run = () =>
-        tokenMetadata.getTokens(true).map { tokens =>
-          tokenMetadataManager.reset(tokens)
-        }
-    )
-  )
-
-  override def receive: Receive = super.receive orElse LoggingReceive {
-    case _ =>
+  def receive: Receive = {
+    case req: Any =>
   }
+
 }
