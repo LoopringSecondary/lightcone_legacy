@@ -109,7 +109,7 @@ message XSubmitSimpleOrderReq {
     XOrder order = 2;
 }
 
-message XSubmitSimpleOrderRes {
+message XSubmitOrderRes {
     XOrder order = 1;
 }
 
