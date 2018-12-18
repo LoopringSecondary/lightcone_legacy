@@ -252,7 +252,7 @@ package object ethereum {
       })
     }
 
-    (balanceAddresses, allowanceAddresses)
+    (balanceAddresses.toSet.toSeq, allowanceAddresses.toSet.toSeq)
   }
 
   def getFills(receipts: Seq[Option[XTransactionReceipt]]): Seq[String] = {
