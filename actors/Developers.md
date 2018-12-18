@@ -28,3 +28,10 @@ def receive = LoggingReceive {
 
 在使用forwardTo的时候，for构建的future会被forward到nextActor，但如果处理过程出错了(包括`anotherActor`返回了一个XError，或者下一行throw了)，会有个ErrorException被返回给原先的sender。 sendTo和forwardTo不同的是，内部用了forward，而不是tell。
 
+
+
+### 关于recovery
+
+#### MarketManagerActor的Recovery
+
+#### MultiAccountManagerActor 和 AccountManagerActor的Recovery
