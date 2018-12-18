@@ -36,6 +36,6 @@ final class OrderHandlerMessageValidator()(implicit val config: Config)
     case msg @ XSubmitRawOrderReq(Some(raworder)) =>
       checkRawOrder(raworder)
       msg
-    case msg: XCancelOrderReq =>
+    case msg: XCancelOrderReq => msg
   }
 }

@@ -34,6 +34,5 @@ final class OrderbookManagerMessageValidator()(implicit val config: Config)
     case XGetOrderbook(_, _, marketName) =>
       assertMarketNameIsValid(marketName)
       marketName
-    case msg: XGetOrderbook => msg
   }
 }

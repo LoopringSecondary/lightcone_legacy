@@ -82,6 +82,7 @@ class DatabaseQueryActor(
           }
         }
       }) forwardTo sender
+
     case req: XGetOrdersForUserReq ⇒
       (for {
         result <- req.market match {

@@ -18,17 +18,24 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.lib._
 
 object MultiAccountManagerMessageValidator {
   val name = "multi_account_manager_validator"
 }
 
+// This class can be deleted in the future.
 final class MultiAccountManagerMessageValidator()(implicit val config: Config)
-    extends MessageValidator {
+  extends MessageValidator {
 
   // Throws exception if validation fails.
   def validate = {
-    case req: XCancelOrderReq ⇒ req
+    case req @ XCancelOrderReq(_, owner, _) ⇒
+      if (owner.isEmpty)
+        throw ErrorException(ERR_INTERNAL_UNKNOWN, s"owner field empty in $req")
+      req
+
     case req: XSubmitOrderReq ⇒ req
     case req: XGetBalanceAndAllowancesReq ⇒ req
     case req: XAddressBalanceUpdated ⇒ req

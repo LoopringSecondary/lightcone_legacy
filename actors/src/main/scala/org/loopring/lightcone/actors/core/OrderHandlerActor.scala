@@ -86,9 +86,7 @@ class OrderHandlerActor(
           case Some(res) ⇒
             mammValidator forward req.copy(owner = "SOME OWNER")
           case None ⇒
-            throw new ErrorException(
-              XError(ERR_ORDER_NOT_EXIST, "no such order")
-            )
+            throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }
       }) sendTo sender
 
