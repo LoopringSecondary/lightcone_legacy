@@ -99,15 +99,14 @@ class OrderbookManagerActor(
 
   def receive: Receive = LoggingReceive {
 
-    case XUpdateLatestTradingPrice(price) =>
+    case XUpdateLatestTradingPrice(price, _) =>
       latestPrice = Some(price)
 
     case req: XOrderbookUpdate =>
       log.info(s"### XOrderbookUpdate ${req}")
       manager.processUpdate(req)
 
-    case XGetOrderbookReq(level, size, marketName)
-        if marketName == marketName =>
+    case XGetOrderbook(level, size, marketName) if marketName == marketName =>
       sender ! manager.getOrderbook(level, size, latestPrice)
   }
 }

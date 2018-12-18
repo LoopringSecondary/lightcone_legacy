@@ -24,7 +24,9 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.lib.{ErrorException, _}
+import org.loopring.lightcone.actors.validator._
+import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
@@ -37,8 +39,7 @@ object OrderHandlerActor extends ShardedEvenly {
 
   def startShardRegion(
     )(
-      implicit
-      system: ActorSystem,
+      implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -63,8 +64,7 @@ object OrderHandlerActor extends ShardedEvenly {
 
 class OrderHandlerActor(
   )(
-    implicit
-    val config: Config,
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -72,53 +72,39 @@ class OrderHandlerActor(
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
-  def multiAccountManagerActor: ActorRef =
-    actors.get(MultiAccountManagerActor.name)
+  def mammValidator: ActorRef =
+    actors.get(MultiAccountManagerMessageValidator.name)
 
   //save order to db first, then send to AccountManager
   def receive: Receive = {
     case req: XCancelOrderReq ⇒
       (for {
-        cancelRes ← dbModule.orderService.markOrderSoftCancelled(Seq(req.id))
+        // TODO(yongfeng): return the order owner's address
+        cancelRes <- dbModule.orderService.markOrderSoftCancelled(Seq(req.id))
       } yield {
         cancelRes.headOption match {
           case Some(res) ⇒
-            multiAccountManagerActor forward req
+            mammValidator forward req.copy(owner = "SOME OWNER")
           case None ⇒
-            throw new ErrorException(
-              XError(ERR_ORDER_NOT_EXIST, "no such order")
-            )
+            throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }
       }) sendTo sender
 
-    case XSubmitRawOrderReq(Some(raworder)) ⇒
-      (for {
-        saveRes ← dbModule.orderService.saveOrder(raworder)
+    case XSubmitOrderReq(Some(raworder)) ⇒
+      for {
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
-        res ← saveRes match {
-          case Right(error) =>
-            Future.failed(new ErrorException(XError(error, "occurs error")))
+        saveRes <- dbModule.orderService.saveOrder(raworder)
+      } yield {
+        saveRes match {
+          case Right(errCode) =>
+            sender ! XError(errCode)
+
           case Left(resRawOrder) =>
-            for {
-              submitRes ← multiAccountManagerActor ? XSubmitOrderReq(
-                resRawOrder.owner,
-                Some(resRawOrder)
-              )
-            } yield {
-              submitRes match {
-                case res: XSubmitOrderRes ⇒
-                  XSubmitRawOrderRes(resRawOrder.hash)
-                case err: ErrorException ⇒
-                  throw err
-                case _ ⇒
-                  throw new ErrorException(
-                    XError(ERR_INTERNAL_UNKNOWN, "internal error")
-                  )
-              }
-            }
+            mammValidator forward XSubmitSimpleOrderReq(
+              resRawOrder.owner,
+              Some(resRawOrder)
+            )
         }
-
-      } yield res) sendTo sender
-
+      }
   }
 }

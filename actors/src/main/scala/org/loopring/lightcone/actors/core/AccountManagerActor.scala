@@ -56,7 +56,10 @@ class AccountManagerActor(
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
       //所有异常都抛给上层监管者，shardingActor
-      case _: Exception ⇒ Escalate
+      case e: Exception ⇒
+        log.error(e.getMessage)
+
+        Escalate
     }
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
@@ -85,17 +88,16 @@ class AccountManagerActor(
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case XSubmitOrderReq(addr, Some(xorder)) =>
+    case XSubmitSimpleOrderReq(addr, Some(xorder)) =>
       assert(addr == address)
       submitOrder(xorder).sendTo(sender)
 
-    case req: XCancelOrderReq =>
-      assert(req.address == address)
+    case req @ XCancelOrderReq =>
+      assert(req.owner == address)
       if (manager.cancelOrder(req.id)) {
         marketManagerActor forward req
       } else {
-        Future
-          .failed(ErrorException(XError(ERR_FAILED_HANDLE_MES))) sendTo sender
+        Future.failed(ErrorException(ERR_FAILED_HANDLE_MSG, "")) sendTo sender
       }
 
     case XAddressBalanceUpdated(addr, token, newBalance) =>
@@ -105,8 +107,6 @@ class AccountManagerActor(
     case XAddressAllowanceUpdated(addr, token, newBalance) =>
       assert(addr == address)
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
-
-    case msg => log.debug(s"unknown msg ${msg}")
   }
 
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
@@ -140,7 +140,7 @@ class AccountManagerActor(
     } yield {
       if (successful) {
         log.debug(s"submitting order to market manager actor: $order_")
-        marketManagerActor ! XSubmitOrderReq("", Some(xorder_))
+        marketManagerActor ! XSubmitSimpleOrderReq("", Some(xorder_))
         XSubmitOrderRes(order = Some(xorder_))
       } else {
         throw new ErrorException(
@@ -200,7 +200,7 @@ class AccountManagerActor(
 
           case STATUS_PENDING =>
             //allowance的改变需要更新到marketManager
-            marketManagerActor ! XSubmitOrderReq(order = Some(order))
+            marketManagerActor ! XSubmitSimpleOrderReq(order = Some(order))
 
           case status =>
             log.error(

@@ -34,7 +34,10 @@ import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
 import scala.collection.JavaConverters._
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
+import org.loopring.lightcone.proto.XErrorCode._
+import scala.concurrent.duration._
 
 // main owner: 于红雨
 object MarketManagerActor extends ShardedByMarket {
@@ -94,8 +97,7 @@ object MarketManagerActor extends ShardedByMarket {
 }
 
 class MarketManagerActor(
-    markets: Map[String, XMarketId],
-    extractEntityName: String => String = MarketManagerActor.extractEntityName
+    markets: Map[String, XMarketId]
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -106,30 +108,34 @@ class MarketManagerActor(
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenMetadataManager: TokenMetadataManager)
-    extends ActorWithPathBasedConfig(MarketManagerActor.name, extractEntityName)
-    with OrderRecoverSupport {
+    extends ActorWithPathBasedConfig(
+      MarketManagerActor.name,
+      MarketManagerActor.extractEntityName
+    )
+    with ActorLogging {
+
   val marketName = entityName
+  var autoSwitchBackToReceive: Option[Cancellable] = None
 
   val wethTokenAddress = config.getString("weth.address")
+  val skiprecover = selfConfig.getBoolean("skip-recover")
+
+  val maxrecoverWindowMinutes =
+    selfConfig.getInt("max-recover-duration-minutes")
 
   val gasLimitPerRingV2 = BigInt(
     config.getString("loopring-protocol.gas-limit-per-ring-v2")
   )
 
-  protected def gasPriceActor = actors.get(GasPriceActor.name)
-  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  protected def settlementActor = actors.get(RingSettlementActor.name)
+  val ringMatcher = new RingMatcherImpl()
+  val pendingRingPool = new PendingRingPoolImpl()
 
-  //todo: need refactor
-  implicit var marketId: XMarketId = markets(entityName)
-
-  private val ringMatcher = new RingMatcherImpl()
-  private val pendingRingPool = new PendingRingPoolImpl()
-
+  implicit val marketId = extractMarketMap(selfConfig)(marketName)
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
     selfConfig.getInt("price-decimals")
   )
-  private val manager = new MarketManagerImpl(
+
+  val manager = new MarketManagerImpl(
     marketId,
     tokenMetadataManager,
     ringMatcher,
@@ -137,23 +143,65 @@ class MarketManagerActor(
     dustOrderEvaluator,
     aggregator
   )
-  recoverySettings = XOrderRecoverySettings(
-    selfConfig.getBoolean("skip-recovery"),
-    selfConfig.getInt("recover-batch-size"),
-    "",
-    Some(marketId)
+
+  // TODO(yongfeng): load marketconfig from database throught a service interface
+  // based on marketName
+  val xorderbookConfig = XMarketConfig(
+    levels = selfConfig.getInt("levels"),
+    priceDecimals = selfConfig.getInt("price-decimals"),
+    precisionForAmount = selfConfig.getInt("precision-for-amount"),
+    precisionForTotal = selfConfig.getInt("precision-for-total")
   )
-//  requestOrderRecovery(recoverySettings)
+
+  protected def gasPriceActor = actors.get(GasPriceActor.name)
+  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  protected def settlementActor = actors.get(RingSettlementActor.name)
+
+  override def preStart(): Unit = {
+    super.preStart()
+
+    autoSwitchBackToReceive = Some(
+      context.system.scheduler
+        .scheduleOnce(maxrecoverWindowMinutes.minute, self, XRecoverEnded(true))
+    )
+
+    if (skiprecover) {
+      log.warning(s"actor recover skipped: ${self.path}")
+    } else {
+      context.become(recover)
+      log.debug(s"actor recover started: ${self.path}")
+      actors.get(OrderRecoverCoordinator.name) !
+        XRecoverReq(marketIds = Seq(marketId))
+    }
+  }
+
+  def recover: Receive = {
+
+    case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
+      submitOrder(xorder)
+
+    case msg @ XRecoverEnded(timeout) =>
+      autoSwitchBackToReceive.foreach(_.cancel)
+      autoSwitchBackToReceive = None
+      s"market manager `${entityName}` recover completed (due to timeout: ${timeout})"
+      context.become(receive)
+
+    case msg: Any =>
+      log.warning(s"message not handled during recover")
+      sender ! XError(
+        ERR_REJECTED_DURING_RECOVER,
+        s"market manager `${entityName}` is being recovered"
+      )
+  }
 
   def receive: Receive = {
 
-    case XSubmitOrderReq(_, Some(xorder)) ⇒
-//      log.info(s"#### marketManager XSubmitOrderReq ${xorder}")
+    case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder)
 
     case XCancelOrderReq(orderId, _, _, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
-        orderbookManagerActor ! orderbookUpdate
+        orderbookManagerActor ! orderbookUpdate.copy(marketName = marketName)
       }
       sender ! XCancelOrderRes(id = orderId)
 
@@ -179,7 +227,7 @@ class MarketManagerActor(
   private def submitOrder(xorder: XOrder): Future[Unit] = {
     assert(
       xorder.actual.nonEmpty,
-      "order in XSubmitOrderReq miss `actual` field"
+      "order in XSubmitSimpleOrderReq miss `actual` field"
     )
     val order: Order = xorder
     xorder.status match {
@@ -199,7 +247,7 @@ class MarketManagerActor(
         } yield Unit
 
       case s =>
-        log.error(s"unexpected order status in XSubmitOrderReq: $s")
+        log.error(s"unexpected order status in XSubmitSimpleOrderReq: $s")
         Future.successful(Unit)
     }
   }
@@ -227,10 +275,27 @@ class MarketManagerActor(
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerActor ! ou.copy(marketId = Some(this.marketId))
+      orderbookManagerActor ! ou.copy(marketName = marketName)
     }
   }
 
-  protected def recoverOrder(xraworder: XRawOrder): Future[Any] =
+  private def extractMarketMap(config: Config): Map[String, XMarketId] = {
+    config
+      .getObjectList("markets")
+      .asScala
+      .map { item =>
+        val c = item.toConfig
+        val marketId =
+          XMarketId(c.getString("priamry"), c.getString("secondary"))
+        val hash = MarketManagerActor
+          .hashed(marketId)
+          .toString
+        hash -> marketId
+      }
+      .toMap
+  }
+
+  def recoverOrder(xraworder: XRawOrder): Future[Any] =
     submitOrder(xraworder)
+
 }

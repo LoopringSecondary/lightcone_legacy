@@ -69,15 +69,16 @@ message XOrderbookUpdate {
     }
     repeated XSlot sells = 1;
     repeated XSlot buys = 2;
-    XMarketId market_id = 3;
+    string market_name = 3;
 }
 
 
 message XUpdateLatestTradingPrice {
     double price = 1;
+    string market_name = 2;
 }
 
-message XGetOrderbookReq {
+message XGetOrderbook {
     int32 level = 2;
     int32 size = 1;
     string market_name = 3;
