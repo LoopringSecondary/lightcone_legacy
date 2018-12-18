@@ -40,15 +40,16 @@ object AccountManagerActor {
   val name = "account_manager"
 }
 
-class AccountManagerActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef],
-  val dustEvaluator: DustOrderEvaluator)
-  extends Actor
-  with ActorLogging {
+class AccountManagerActor(
+  )(
+    implicit val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
+    val dustEvaluator: DustOrderEvaluator)
+    extends Actor
+    with ActorLogging {
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
@@ -80,7 +81,8 @@ class AccountManagerActor()(
               manager.getBalance(),
               manager.getAllowance(),
               manager.getAvailableBalance(),
-              manager.getAvailableAllowance())
+              manager.getAvailableAllowance()
+            )
         }
       } yield {
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
@@ -105,7 +107,7 @@ class AccountManagerActor()(
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
   }
 
-  private def submitOrder(xorder: XOrder): Future[XSubmitSimpleOrderRes] = {
+  private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
     val order: Order = xorder
     for {
       _ <- getTokenManager(order.tokenS)
@@ -114,7 +116,8 @@ class AccountManagerActor()(
 
       // Update the order's _outstanding field.
       orderHistoryRes <- (ethereumQueryActor ? XGetOrderFilledAmountReq(
-        order.id)).mapAs[XGetOrderFilledAmountRes]
+        order.id
+      )).mapAs[XGetOrderFilledAmountRes]
 
       _ = log.debug(s"order history: orderHistoryRes")
 
@@ -124,7 +127,8 @@ class AccountManagerActor()(
       successful = manager.submitOrder(_order)
       _ = log.debug(s"successful: $successful")
       _ = log.debug(
-        "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
+        "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", ")
+      )
       updatedOrders = orderPool.takeUpdatedOrdersAsMap()
       _ = assert(updatedOrders.contains(_order.id))
       order_ = updatedOrders(_order.id)
@@ -136,18 +140,19 @@ class AccountManagerActor()(
         XSubmitOrderRes(order = Some(xorder_))
       } else {
         throw new ErrorException(
-          XError(convertOrderStatusToErrorCode(order.status)))
+          XError(convertOrderStatusToErrorCode(order.status))
+        )
       }
     }
   }
 
   private def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode =
     status match {
-      case STATUS_INVALID_DATA => ERR_INVALID_ORDER_DATA
-      case STATUS_UNSUPPORTED_MARKET => ERR_INVALID_MARKET
+      case STATUS_INVALID_DATA              => ERR_INVALID_ORDER_DATA
+      case STATUS_UNSUPPORTED_MARKET        => ERR_INVALID_MARKET
       case STATUS_CANCELLED_TOO_MANY_ORDERS => ERR_TOO_MANY_ORDERS
-      case STATUS_CANCELLED_DUPLICIATE => ERR_ORDER_ALREADY_EXIST
-      case _ => ERR_INTERNAL_UNKNOWN
+      case STATUS_CANCELLED_DUPLICIATE      => ERR_ORDER_ALREADY_EXIST
+      case _                                => ERR_INTERNAL_UNKNOWN
     }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
@@ -158,7 +163,8 @@ class AccountManagerActor()(
         _ <- Future.successful(log.debug(s"getTokenManager0 ${token}"))
         res <- (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
           address,
-          Seq(token))).mapAs[XGetBalanceAndAllowancesRes]
+          Seq(token)
+        )).mapAs[XGetBalanceAndAllowancesRes]
         tm = new AccountTokenManagerImpl(token, 1000)
         ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
         _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
@@ -169,9 +175,10 @@ class AccountManagerActor()(
   }
 
   private def updateBalanceOrAllowance(
-    token: String,
-    amount: BigInt,
-    method: (AccountTokenManager, BigInt) => Unit) =
+      token: String,
+      amount: BigInt,
+      method: (AccountTokenManager, BigInt) => Unit
+    ) =
     for {
       tm <- getTokenManager(token)
       _ = method(tm, amount)
@@ -180,7 +187,7 @@ class AccountManagerActor()(
       updatedOrders.foreach { order =>
         order.status match {
           case STATUS_CANCELLED_LOW_BALANCE |
-            STATUS_CANCELLED_LOW_FEE_BALANCE =>
+              STATUS_CANCELLED_LOW_FEE_BALANCE =>
             marketManagerActor ! XCancelOrderReq(order.id)
 
           case STATUS_PENDING =>
@@ -189,14 +196,16 @@ class AccountManagerActor()(
 
           case status =>
             log.error(
-              s"unexpected order status caused by balance/allowance upate: $status")
+              s"unexpected order status caused by balance/allowance upate: $status"
+            )
         }
       }
     }
 
   protected def recoverOrder(xorder: XOrder) = {
     log.debug(
-      s"recoverOrder, ${self.path.toString}, ${ethereumQueryActor.path.toString}, ${xorder}")
+      s"recoverOrder, ${self.path.toString}, ${ethereumQueryActor.path.toString}, ${xorder}"
+    )
     submitOrder(xorder)
   }
 
