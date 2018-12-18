@@ -104,12 +104,12 @@ message XGetAllowanceRes {
     XError error = 3;
 }
 
-message XSubmitOrderReq {
+message XSubmitSimpleOrderReq {
     string owner = 1;
     XOrder order = 2;
 }
 
-message XSubmitOrderRes {
+message XSubmitSimpleOrderRes {
     XOrder order = 1;
 }
 

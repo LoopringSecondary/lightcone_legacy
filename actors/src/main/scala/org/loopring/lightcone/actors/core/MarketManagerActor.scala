@@ -151,7 +151,7 @@ class MarketManagerActor(
 
   def recover: Receive = {
 
-    case XSubmitOrderReq(_, Some(xorder)) ⇒
+    case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder)
 
     case msg @ XRecoverEnded(timeout) =>
@@ -170,7 +170,7 @@ class MarketManagerActor(
 
   def receive: Receive = LoggingReceive {
 
-    case XSubmitOrderReq(_, Some(xorder)) ⇒
+    case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder)
 
     case XCancelOrderReq(orderId, _, _) ⇒
@@ -201,7 +201,7 @@ class MarketManagerActor(
   private def submitOrder(xorder: XOrder): Future[Unit] = {
     assert(
       xorder.actual.nonEmpty,
-      "order in XSubmitOrderReq miss `actual` field"
+      "order in XSubmitSimpleOrderReq miss `actual` field"
     )
     val order: Order = xorder
     xorder.status match {
@@ -221,7 +221,7 @@ class MarketManagerActor(
         } yield Unit
 
       case s =>
-        log.error(s"unexpected order status in XSubmitOrderReq: $s")
+        log.error(s"unexpected order status in XSubmitSimpleOrderReq: $s")
         Future.successful(Unit)
     }
   }

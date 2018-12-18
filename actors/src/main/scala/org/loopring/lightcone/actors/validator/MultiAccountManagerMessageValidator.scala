@@ -39,7 +39,7 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
       verifyAddressValid(req.owner)
       req
 
-    case req: XSubmitOrderReq ⇒ req
+    case req: XSubmitSimpleOrderReq ⇒ req
     case req: XRecoverOrderReq => req
     case req: XGetBalanceAndAllowancesReq ⇒ req
     case req: XAddressBalanceUpdated ⇒ req

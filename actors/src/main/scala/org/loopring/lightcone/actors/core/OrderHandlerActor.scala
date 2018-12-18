@@ -90,7 +90,7 @@ class OrderHandlerActor(
         }
       }) sendTo sender
 
-    case XSubmitRawOrderReq(Some(raworder)) ⇒
+    case XSubmitOrderReq(Some(raworder)) ⇒
       for {
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         saveRes <- dbModule.orderService.saveOrder(raworder)
@@ -100,7 +100,7 @@ class OrderHandlerActor(
             sender ! XError(errCode)
 
           case Left(resRawOrder) =>
-            mammValidator forward XSubmitOrderReq(
+            mammValidator forward XSubmitSimpleOrderReq(
               resRawOrder.owner,
               Some(resRawOrder)
             )
