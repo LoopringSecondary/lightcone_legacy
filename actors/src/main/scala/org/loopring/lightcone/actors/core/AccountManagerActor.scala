@@ -37,10 +37,6 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 // main owner: 于红雨
-object AccountManagerActor {
-  val name = "account_manager"
-}
-
 class AccountManagerActor(
     address: String
   )(
