@@ -27,16 +27,20 @@ object MultiAccountManagerMessageValidator {
 
 // This class can be deleted in the future.
 final class MultiAccountManagerMessageValidator()(implicit val config: Config)
-  extends MessageValidator {
+    extends MessageValidator {
 
   // Throws exception if validation fails.
+  private def verifyAddressValid(address: String) = {
+    throw ErrorException(ERR_INVALID_ARGUMENT, s"invalid address $address")
+  }
+
   def validate = {
-    case req @ XCancelOrderReq(_, owner, _) ⇒
-      if (owner.isEmpty)
-        throw ErrorException(ERR_INTERNAL_UNKNOWN, s"owner field empty in $req")
+    case req: XCancelOrderReq ⇒
+      verifyAddressValid(req.owner)
       req
 
     case req: XSubmitOrderReq ⇒ req
+    case req: XRecoverOrderReq => req
     case req: XGetBalanceAndAllowancesReq ⇒ req
     case req: XAddressBalanceUpdated ⇒ req
     case req: XAddressAllowanceUpdated ⇒ req

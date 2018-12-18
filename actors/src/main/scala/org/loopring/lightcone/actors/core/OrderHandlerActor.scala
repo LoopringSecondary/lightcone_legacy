@@ -94,11 +94,11 @@ class OrderHandlerActor(
       for {
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         saveRes <- dbModule.orderService.saveOrder(raworder)
-
       } yield {
         saveRes match {
-          case Right(error) =>
-            sender ! XError(error, "occurs error")
+          case Right(errCode) =>
+            sender ! XError(errCode)
+
           case Left(resRawOrder) =>
             mammValidator forward XSubmitOrderReq(
               resRawOrder.owner,

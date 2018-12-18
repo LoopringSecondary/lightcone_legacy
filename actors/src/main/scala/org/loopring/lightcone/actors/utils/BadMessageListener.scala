@@ -29,7 +29,7 @@ class BadMessageListener extends Actor with ActorLogging {
   def receive = {
     case u: UnhandledMessage =>
       log.debug(s"invalid request: $u")
-      sender ! XError(ERR_INVALID_REQ, "invalid request")
+      sender ! XError(ERR_UNEXPECTED_ACTOR_MSG, "invalid request")
 
     case d: DeadLetter =>
       log.warning(s"failed to handle request: $d")

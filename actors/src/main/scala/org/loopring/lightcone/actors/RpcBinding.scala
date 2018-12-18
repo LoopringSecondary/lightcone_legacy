@@ -21,10 +21,11 @@ import org.loopring.lightcone.proto._
 
 trait RpcBinding extends JsonRpcModule {
   override val endpoint = "api"
-  // ifReceive[RequestType].thenReply[ResponseType]("method_name")
-  // Note that RequestType and ResponseType must be proto messages.
+
   ifReceive[XGetOrderbook].thenReply[XOrderbook]("orderbook")
+
   ifReceive[XSubmitRawOrderReq].thenReply[XSubmitOrderRes]("submit_order")
+
   ifReceive[XCancelOrderReq].thenReply[XCancelOrderRes]("cancel_order")
 
 }

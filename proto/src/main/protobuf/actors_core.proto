@@ -188,11 +188,11 @@ message XRecoverReq {
    repeated XMarketId market_ids = 2;
 }
 
-message XRecoverOrdersReq {
-    repeated XRawOrder raw_orders = 1;
+message XRecoverOrderReq {
+    XRawOrder raw_order = 1;
 }
 
-message XRecoverOrdersRes {}
+message XRecoverOrderRes {}
 message XRecoverEnded {
     bool timeout = 1;
 }

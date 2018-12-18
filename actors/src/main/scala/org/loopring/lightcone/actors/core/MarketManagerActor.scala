@@ -175,7 +175,7 @@ class MarketManagerActor(
 
     case XCancelOrderReq(orderId, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
-        orderbookManagerActor ! orderbookUpdate
+        orderbookManagerActor ! orderbookUpdate.copy(marketName = marketName)
       }
       sender ! XCancelOrderRes(id = orderId)
 
@@ -249,7 +249,7 @@ class MarketManagerActor(
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerActor ! ou
+      orderbookManagerActor ! ou.copy(marketName = marketName)
     }
   }
 

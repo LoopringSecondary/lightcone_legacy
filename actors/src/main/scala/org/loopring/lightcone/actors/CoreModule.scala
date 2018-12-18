@@ -191,15 +191,6 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     )
 
     actors.add(
-      OrderHandlerMessageValidator.name,
-      MessageValidationActor(
-        new OrderHandlerMessageValidator(),
-        OrderHandlerActor.name,
-        OrderHandlerMessageValidator.name
-      )
-    )
-
-    actors.add(
       EntryPointActor.name,
       system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
     )

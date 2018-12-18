@@ -43,6 +43,7 @@ enum XErrorCode{
     // 0 NONE ERROR
     ERR_NONE = 0;
     ERR_INTERNAL_UNKNOWN = 1;
+    ERR_INVALID_ARGUMENT = 2;
 
     //1001 -- 2000 Matching Error
     ERR_MATCHING_ORDERS_NOT_TRADABLE            = 1001;
@@ -76,11 +77,10 @@ enum XErrorCode{
     ERR_TOO_MANY_FAILED_MATCHES         = 3008;
     ERR_INVALID_ORDER_DATA              = 3009;
     ERR_INVALID_MARKET                  = 3010;
-    ERR_INVALID_REQ                     = 3011;
+    ERR_UNEXPECTED_ACTOR_MSG            = 3011;
     ERR_UNSUPPORTED_MESSAGE             = 3012;
     ERR_FAILED_HANDLE_MSG               = 3013;
     ERR_REJECTED_DURING_RECOVER         = 3014;
-    ERR_UNEXPECTED_ACTOR_MSG            = 3015;
 
     //4001 -- 5000 persistence Error
     ERR_PERSISTENCE_INVALID_DATA        = 4001;

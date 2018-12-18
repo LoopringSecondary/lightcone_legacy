@@ -64,6 +64,8 @@ object MultiAccountManagerActor extends ShardedByAddress {
         ERR_UNEXPECTED_ACTOR_MSG,
         "MultiAccountManagerActor does not handle XSubmitRawOrderReq, use XSubmitOrderReq"
       )
+
+    case XRecoverOrderReq(Some(raworder)) => raworder.owner
     case req: XCancelOrderReq ⇒ req.owner
     case req: XSubmitOrderReq ⇒ req.owner
     case req: XGetBalanceAndAllowancesReq ⇒ req.address
@@ -111,20 +113,22 @@ class MultiAccountManagerActor(
 
   def recover: Receive = {
 
-    case XRecoverOrdersReq(raworders) =>
-      for {
-        _ <- Future.sequence(raworders.map { raworder =>
-          val order: XOrder = raworder
-          val req = XSubmitOrderReq(raworder.owner, Some(order))
+    case XRecoverOrderReq(Some(raworder)) =>
+      val order: XOrder = raworder
+      val req = XSubmitOrderReq(raworder.owner, Some(order))
 
-          extractAddress(req) match {
-            case Some(address) => accountManagerActorFor(address) ? req
-            case None =>
-              throw ErrorException(ERR_INVALID_REQ, "req cannot be handlled")
-          }
-        })
+      for {
+        _ <- extractAddress(req) match {
+          case Some(address) => accountManagerActorFor(address) ? req
+          case None =>
+            throw ErrorException(
+              ERR_UNEXPECTED_ACTOR_MSG,
+              s"$req cannot be handled by ${getClass.getName}"
+            )
+        }
+
       } yield {
-        sender ! XRecoverOrdersRes()
+        sender ! XRecoverOrderRes()
       }
 
     case msg: XRecoverEnded =>
@@ -145,7 +149,10 @@ class MultiAccountManagerActor(
       extractAddress(req) match {
         case Some(address) => accountManagerActorFor(address) forward req
         case None =>
-          throw ErrorException(ERR_INVALID_REQ, "req cannot be handlled")
+          throw ErrorException(
+            ERR_UNEXPECTED_ACTOR_MSG,
+            s"$req cannot be handled by ${getClass.getName}"
+          )
       }
   }
 
