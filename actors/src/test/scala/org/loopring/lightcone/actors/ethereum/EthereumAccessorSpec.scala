@@ -17,26 +17,19 @@
 package org.loopring.lightcone.actors.ethereum
 
 import akka.actor._
+import akka.pattern._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config._
 import org.loopring.lightcone.actors.base.MapBasedLookup
+import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib.SystemTimeProvider
+import org.loopring.lightcone.proto._
 import org.scalatest._
 import org.slf4s.Logging
-import akka.pattern._
-import org.loopring.lightcone.ethereum.abi.{
-  AllowanceFunction,
-  BalanceOfFunction,
-  TransferFunction,
-  WETHABI
-}
-import org.loopring.lightcone.proto._
-import org.web3j.utils.Numeric
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.concurrent._
 
 class EthereumAccessorSpec extends FlatSpec with Matchers with Logging {
 
