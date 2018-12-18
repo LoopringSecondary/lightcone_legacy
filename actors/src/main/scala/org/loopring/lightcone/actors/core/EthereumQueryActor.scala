@@ -178,7 +178,7 @@ class EthereumQueryActor(
       val batchReq =
         xGetFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
       (for {
-        batchRes ← (ethereumAccessorActor ? batchReq)
+        batchRes <- (ethereumAccessorActor ? batchReq)
           .mapAs[XBatchContractCallRes]
           .map(_.resps.map(_.result))
       } yield {

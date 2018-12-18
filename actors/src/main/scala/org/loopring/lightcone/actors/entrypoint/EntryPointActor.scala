@@ -53,9 +53,9 @@ class EntryPointActor(
 
   def findDestination(msg: Any): Option[String] = msg match {
     case _ @(XSubmitRawOrderReq | XCancelOrderReq) =>
-      Some(OrderHandlerMessageValidator.name)
+      Some(OrderHandlerActor.name)
 
-    case _ @(XGetOrderbookReq) => Some(OrderbookManagerMessageValidator.name)
+    case _ @(XGetOrderbook) => Some(OrderbookManagerMessageValidator.name)
 
     case _ => None
   }

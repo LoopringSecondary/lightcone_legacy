@@ -36,13 +36,17 @@ message XSubmitRawOrderReq {
     XRawOrder raw_order = 1;
 }
 
-message XSubmitRawOrderRes {
+message XRestoreRawOrderReq {
+    XRawOrder raw_order = 1;
+}
+
+message XRestoreRawOrderRes {
     string id = 1;
 }
 
 message XCancelOrderReq {
     string id = 1;
-    string address = 2; //用于分片路由
+    string owner = 2;
     XOrderStatus status = 3; //取消的类型
 }
 

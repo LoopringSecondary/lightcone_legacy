@@ -18,16 +18,31 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.lib._
 
-object OrderHandlerMessageValidator {
-  val name = "order_handler_validator"
+object MultiAccountManagerMessageValidator {
+  val name = "multi_account_manager_validator"
 }
 
-final class OrderHandlerMessageValidator()(implicit val config: Config)
+// This class can be deleted in the future.
+final class MultiAccountManagerMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
+  // Throws exception if validation fails.
+  private def verifyAddressValid(address: String) = {
+    throw ErrorException(ERR_INVALID_ARGUMENT, s"invalid address $address")
+  }
+
   def validate = {
-    case msg: XSubmitRawOrderReq =>
-    case msg: XCancelOrderReq    => msg
+    case req: XCancelOrderReq ⇒
+      verifyAddressValid(req.owner)
+      req
+
+    case req: XSubmitOrderReq ⇒ req
+    case req: XRecoverOrderReq => req
+    case req: XGetBalanceAndAllowancesReq ⇒ req
+    case req: XAddressBalanceUpdated ⇒ req
+    case req: XAddressAllowanceUpdated ⇒ req
   }
 }

@@ -54,7 +54,10 @@ class AccountManagerActor(
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
       //所有异常都抛给上层监管者，shardingActor
-      case _: Exception ⇒ Escalate
+      case e: Exception ⇒
+        log.error(e.getMessage)
+
+        Escalate
     }
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
@@ -89,11 +92,12 @@ class AccountManagerActor(
       assert(addr == address)
       submitOrder(xorder).sendTo(sender)
 
-    case req: XCancelOrderReq =>
+    case req @ XCancelOrderReq(id, owner, _) =>
+      assert(owner == address)
       if (manager.cancelOrder(req.id)) {
         marketManagerActor forward req
       } else {
-        Future.failed(new ErrorException(XError(ERR_FAILED_HANDLE_MES))) sendTo sender
+        Future.failed(ErrorException(ERR_FAILED_HANDLE_MSG, "")) sendTo sender
       }
 
     case XAddressBalanceUpdated(_, token, newBalance) =>
@@ -101,8 +105,6 @@ class AccountManagerActor(
 
     case XAddressAllowanceUpdated(_, token, newBalance) =>
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
-
-    case msg => log.debug(s"unknown msg ${msg}")
   }
 
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
