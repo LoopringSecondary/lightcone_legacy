@@ -24,12 +24,10 @@ object DatabaseQueryMessageValidator {
   val name = "database_query_validator"
 }
 
-final class DatabaseQueryMessageValidator(
-  )(
-    implicit
-    val config: Config)
+final class DatabaseQueryMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
+  // Throws exception if validation fails.
   def validate = {
     case req: XSaveOrderReq ⇒
       if (req.order.isEmpty || (req.order.get.state.nonEmpty && req.order.get.state.get.status !=

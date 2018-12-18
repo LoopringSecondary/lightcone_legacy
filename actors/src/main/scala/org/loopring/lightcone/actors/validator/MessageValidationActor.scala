@@ -20,15 +20,16 @@ import akka.actor._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
 object MessageValidationActor {
 
   def apply(
-      name: String,
       validator: MessageValidator,
-      destinationName: String
+      destinationName: String,
+      name: String
     )(
       implicit system: ActorSystem,
       ec: ExecutionContext,
@@ -56,11 +57,18 @@ class MessageValidationActor(
     case msg =>
       Future {
         validate(msg) match {
-          case None     => msg // unvalidated message are forwarded as-is
-          case Some(()) => msg // handle 'case x:X =>' situation
-          case Some(validatedMsg) =>
+          case Some(validatedMsg) if validatedMsg != msg =>
             log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
             validatedMsg
+
+          case Some(validatedMsg) => validatedMsg
+
+          case _ =>
+            throw ErrorException(
+              ERR_UNEXPECTED_ACTOR_MSG,
+              s"unexpected msg of ${msg.getClass.getName}"
+            )
+
         }
       } forwardTo destinationActor
   }

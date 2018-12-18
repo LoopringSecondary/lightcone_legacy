@@ -25,6 +25,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -74,6 +75,9 @@ class OrderRecoverActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef])
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
+
+  def mammValidator: ActorRef =
+    actors.get(MultiAccountManagerMessageValidator.name)
 
   def receive: Receive = {
     case _ =>
