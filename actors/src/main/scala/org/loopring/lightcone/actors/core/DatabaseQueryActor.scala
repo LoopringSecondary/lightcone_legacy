@@ -34,8 +34,7 @@ object DatabaseQueryActor extends ShardedEvenly {
 
   def startShardRegion(
     )(
-      implicit
-      system: ActorSystem,
+      implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -60,8 +59,7 @@ object DatabaseQueryActor extends ShardedEvenly {
 
 class DatabaseQueryActor(
   )(
-    implicit
-    val config: Config,
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -72,7 +70,7 @@ class DatabaseQueryActor(
   def receive: Receive = LoggingReceive {
     case req: XSaveOrderReq ⇒
       (for {
-        result ← dbModule.orderService.saveOrder(req.order.get)
+        result <- dbModule.orderService.saveOrder(req.order.get)
       } yield {
         if (result.isLeft) {
           XSaveOrderResult(Some(result.left.get), false, XErrorCode.ERR_NONE)
@@ -86,7 +84,7 @@ class DatabaseQueryActor(
       }) forwardTo sender
     case req: XGetOrdersForUserReq ⇒
       (for {
-        result ← req.market match {
+        result <- req.market match {
           case XGetOrdersForUserReq.Market.MarketHash(value) ⇒
             dbModule.orderService.getOrdersForUser(
               req.statuses.toSet,
@@ -114,11 +112,11 @@ class DatabaseQueryActor(
         XGetOrdersForUserResult(result, XErrorCode.ERR_NONE)) forwardTo sender
     case req: XUserCancelOrderReq ⇒
       (for {
-        result ← dbModule.orderService.markOrderSoftCancelled(req.orderHashes)
+        result <- dbModule.orderService.markOrderSoftCancelled(req.orderHashes)
       } yield XUserCancelOrderResult(result)) forwardTo sender
     case req: XGetTradesReq ⇒
       (for {
-        result ← dbModule.tradeService.getTrades(req)
+        result <- dbModule.tradeService.getTrades(req)
       } yield result) forwardTo sender
     case _ ⇒
     //TODO du: log ?

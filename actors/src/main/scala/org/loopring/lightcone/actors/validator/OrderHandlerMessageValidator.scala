@@ -26,8 +26,9 @@ object OrderHandlerMessageValidator {
 final class OrderHandlerMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
+  // Throws exception if validation fails.
   def validate = {
     case msg: XSubmitRawOrderReq =>
-    case msg: XCancelOrderReq    => msg
+    case msg: XCancelOrderReq    =>
   }
 }

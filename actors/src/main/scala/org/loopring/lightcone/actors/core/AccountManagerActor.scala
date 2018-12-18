@@ -96,7 +96,7 @@ class AccountManagerActor(
       if (manager.cancelOrder(req.id)) {
         marketManagerActor forward req
       } else {
-        Future.failed(new ErrorException(XError(ERR_FAILED_HANDLE_MES))) sendTo sender
+        Future.failed(new ErrorException(XError(ERR_FAILED_HANDLE_MSG))) sendTo sender
       }
 
     case XAddressBalanceUpdated(_, token, newBalance) =>

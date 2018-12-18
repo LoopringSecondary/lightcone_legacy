@@ -26,9 +26,9 @@ import scala.concurrent._
 object MessageValidationActor {
 
   def apply(
-      name: String,
       validator: MessageValidator,
-      destinationName: String
+      destinationName: String,
+      name: String
     )(
       implicit system: ActorSystem,
       ec: ExecutionContext,
@@ -56,11 +56,11 @@ class MessageValidationActor(
     case msg =>
       Future {
         validate(msg) match {
-          case None     => msg // unvalidated message are forwarded as-is
-          case Some(()) => msg // handle 'case x:X =>' situation
-          case Some(validatedMsg) =>
+          case Some(validatedMsg) if validatedMsg != msg =>
             log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
             validatedMsg
+
+          case _ => msg
         }
       } forwardTo destinationActor
   }

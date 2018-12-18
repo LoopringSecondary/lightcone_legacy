@@ -36,7 +36,11 @@ message XSubmitRawOrderReq {
     XRawOrder raw_order = 1;
 }
 
-message XSubmitRawOrderRes {
+message XRestoreRawOrderReq {
+    XRawOrder raw_order = 1;
+}
+
+message XRestoreRawOrderRes {
     string id = 1;
 }
 

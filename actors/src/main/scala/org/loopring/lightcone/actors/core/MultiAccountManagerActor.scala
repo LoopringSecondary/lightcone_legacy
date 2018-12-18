@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
@@ -58,6 +59,11 @@ object MultiAccountManagerActor extends ShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
+    case req: XSubmitRawOrderReq =>
+      throw ErrorException(
+        ERR_UNEXPECTED_ACTOR_MSG,
+        "MultiAccountManagerActor does not handle XSubmitRawOrderReq, use XSubmitOrderReq"
+      )
     case req: XCancelOrderReq ⇒ req.address
     case req: XSubmitOrderReq ⇒ req.address
     case req: XGetBalanceAndAllowancesReq ⇒ req.address
@@ -77,9 +83,10 @@ class MultiAccountManagerActor(
     extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
     with ActorLogging {
 
-  val skipRecovery = selfConfig.getBoolean("skip-recovery")
+  val skiprecover = selfConfig.getBoolean("skip-recover")
   val accountManagerActors = new MapBasedLookup[ActorRef]()
   var autoSwitchBackToReceive: Option[Cancellable] = None
+  val extractAddress = MultiAccountManagerActor.extractAddress.lift
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
@@ -92,7 +99,7 @@ class MultiAccountManagerActor(
   override def preStart(): Unit = {
     super.preStart()
 
-    if (skipRecovery) {
+    if (skiprecover) {
       log.warning(s"actor recover skipped: ${self.path}")
     } else {
       context.become(recover)
@@ -103,50 +110,39 @@ class MultiAccountManagerActor(
   }
 
   def recover: Receive = {
-    case XRecoverRes(xraworders) =>
-      // cancel the previous auto-cancel scheduling
-      autoSwitchBackToReceive.foreach(_.cancel)
-      autoSwitchBackToReceive = None
 
-      log.debug(s"recover next ${xraworders.size} orders")
-
+    case XRecoverOrdersReq(raworders) =>
       for {
-        _ <- Future.sequence(xraworders.map(recoverOrder))
+        _ <- Future.sequence(raworders.map { raworder =>
+          val order: XOrder = raworder
+          val req = XSubmitOrderReq(raworder.owner, Some(order))
+
+          extractAddress(req) match {
+            case Some(address) => accountManagerActorFor(address) ? req
+            case None =>
+              throw ErrorException(ERR_INVALID_REQ, "req cannot be handlled")
+          }
+        })
       } yield {
-
-        autoSwitchBackToReceive = Option(
-          context.system.scheduler.scheduleOnce(1.minute, self, XRecoverEnded())
-        )
-
-        sender ! XRecoverProcessed()
+        sender ! XRecoverOrdersRes()
       }
 
     case msg: XRecoverEnded =>
-      s"account manager `${entityName}` recovery completed (due to timeout: ${timeout})"
+      s"account manager `${entityName}` recover completed (due to timeout: ${timeout})"
       context.become(receive)
 
     case msg: Any =>
-      log.warning(s"message not handled during recovery")
+      log.warning(s"message not handled during recover")
       sender ! XError(
-        ERR_REJECTED_DURING_RECOVERY,
+        ERR_REJECTED_DURING_RECOVER,
         s"account manager `${entityName}` is being recovered"
       )
   }
 
   def receive: Receive = {
 
-    case XRecoverRes(xraworders) =>
-      val size = xraworders.size
-      log.debug(s"recover next ${size} orders")
-
-      for {
-        _ <- Future.sequence(xraworders.map(recoverOrder))
-      } yield {
-        sender ! XRecoverProcessed()
-      }
-
     case req: Any =>
-      (MultiAccountManagerActor.extractAddress.lift)(req) match {
+      extractAddress(req) match {
         case Some(address) => accountManagerActorFor(address) forward req
         case None =>
           throw ErrorException(ERR_INVALID_REQ, "req cannot be handlled")
@@ -160,13 +156,6 @@ class MultiAccountManagerActor(
       accountManagerActors.add(address, newAccountActor)
     }
     accountManagerActors.get(address)
-  }
-
-  def recoverOrder(xraworder: XRawOrder) = {
-    accountManagerActorFor(xraworder.owner) ? XSubmitOrderReq(
-      xraworder.owner,
-      Some(xraworder)
-    )
   }
 
 }

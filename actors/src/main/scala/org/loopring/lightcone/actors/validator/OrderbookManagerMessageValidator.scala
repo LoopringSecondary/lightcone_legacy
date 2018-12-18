@@ -26,6 +26,7 @@ object OrderbookManagerMessageValidator {
 final class OrderbookManagerMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
+  // Throws exception if validation fails.
   def validate = {
     case msg: XGetOrderbookReq => msg
   }

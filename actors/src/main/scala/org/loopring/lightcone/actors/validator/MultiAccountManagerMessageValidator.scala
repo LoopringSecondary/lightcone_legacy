@@ -19,14 +19,19 @@ package org.loopring.lightcone.actors.validator
 import com.typesafe.config.Config
 import org.loopring.lightcone.proto._
 
-object AccountManagerMessageValidator {
-  val name = "account_manager_validator"
+object MultiAccountManagerMessageValidator {
+  val name = "multi_account_manager_validator"
 }
 
-final class AccountManagerMessageValidator()(implicit val config: Config)
+final class MultiAccountManagerMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
+  // Throws exception if validation fails.
   def validate = {
-    case x => x
+    case req: XCancelOrderReq ⇒ req
+    case req: XSubmitOrderReq ⇒ req
+    case req: XGetBalanceAndAllowancesReq ⇒ req
+    case req: XAddressBalanceUpdated ⇒ req
+    case req: XAddressAllowanceUpdated ⇒ req
   }
 }

@@ -23,6 +23,8 @@ trait RpcBinding extends JsonRpcModule {
   override val endpoint = "api"
   // ifReceive[RequestType].thenReply[ResponseType]("method_name")
   // Note that RequestType and ResponseType must be proto messages.
-  ifReceive[XRawOrder].thenReply[XRawOrder]("jsonrpc_method_name")
+  ifReceive[XGetOrderbookReq].thenReply[XOrderbook]("orderbook")
+  ifReceive[XSubmitRawOrderReq].thenReply[XSubmitOrderRes]("submit_order")
+  ifReceive[XCancelOrderReq].thenReply[XCancelOrderRes]("cancel_order")
 
 }

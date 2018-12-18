@@ -146,56 +146,56 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     //-----------deploy local actors-----------
     actors.add(
-      AccountManagerMessageValidator.name,
+      MultiAccountManagerMessageValidator.name,
       MessageValidationActor(
-        AccountManagerMessageValidator.name,
-        new AccountManagerMessageValidator(),
-        AccountManagerActor.name
+        new MultiAccountManagerMessageValidator(),
+        MultiAccountManagerActor.name,
+        MultiAccountManagerMessageValidator.name
       )
     )
 
     actors.add(
       DatabaseQueryMessageValidator.name,
       MessageValidationActor(
-        DatabaseQueryMessageValidator.name,
         new DatabaseQueryMessageValidator(),
-        DatabaseQueryActor.name
+        DatabaseQueryActor.name,
+        DatabaseQueryMessageValidator.name
       )
     )
 
     actors.add(
       EthereumQueryMessageValidator.name,
       MessageValidationActor(
-        EthereumQueryMessageValidator.name,
         new EthereumQueryMessageValidator(),
-        EthereumQueryActor.name
+        EthereumQueryActor.name,
+        EthereumQueryMessageValidator.name
       )
     )
 
     actors.add(
       MarketManagerMessageValidator.name,
       MessageValidationActor(
-        MarketManagerMessageValidator.name,
         new MarketManagerMessageValidator(),
-        MarketManagerActor.name
+        MarketManagerActor.name,
+        MarketManagerMessageValidator.name
       )
     )
 
     actors.add(
       OrderbookManagerMessageValidator.name,
       MessageValidationActor(
-        OrderbookManagerMessageValidator.name,
         new OrderbookManagerMessageValidator(),
-        OrderbookManagerActor.name
+        OrderbookManagerActor.name,
+        OrderbookManagerMessageValidator.name
       )
     )
 
     actors.add(
       OrderHandlerMessageValidator.name,
       MessageValidationActor(
-        OrderHandlerMessageValidator.name,
         new OrderHandlerMessageValidator(),
-        OrderHandlerActor.name
+        OrderHandlerActor.name,
+        OrderHandlerMessageValidator.name
       )
     )
 

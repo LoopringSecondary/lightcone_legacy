@@ -92,10 +92,10 @@ class MarketManagerActor(
   var autoSwitchBackToReceive: Option[Cancellable] = None
 
   val wethTokenAddress = config.getString("weth.address")
-  val skipRecovery = selfConfig.getBoolean("skip-recovery")
+  val skiprecover = selfConfig.getBoolean("skip-recover")
 
-  val maxRecoveryWindowMinutes =
-    selfConfig.getInt("max-recovery-duration-minutes")
+  val maxrecoverWindowMinutes =
+    selfConfig.getInt("max-recover-duration-minutes")
 
   val gasLimitPerRingV2 = BigInt(
     config.getString("loopring-protocol.gas-limit-per-ring-v2")
@@ -136,14 +136,10 @@ class MarketManagerActor(
 
     autoSwitchBackToReceive = Some(
       context.system.scheduler
-        .scheduleOnce(
-          maxRecoveryWindowMinutes.minute,
-          self,
-          XRecoverEnded(true)
-        )
+        .scheduleOnce(maxrecoverWindowMinutes.minute, self, XRecoverEnded(true))
     )
 
-    if (skipRecovery) {
+    if (skiprecover) {
       log.warning(s"actor recover skipped: ${self.path}")
     } else {
       context.become(recover)
@@ -161,13 +157,13 @@ class MarketManagerActor(
     case msg @ XRecoverEnded(timeout) =>
       autoSwitchBackToReceive.foreach(_.cancel)
       autoSwitchBackToReceive = None
-      s"market manager `${entityName}` recovery completed (due to timeout: ${timeout})"
+      s"market manager `${entityName}` recover completed (due to timeout: ${timeout})"
       context.become(receive)
 
     case msg: Any =>
-      log.warning(s"message not handled during recovery")
+      log.warning(s"message not handled during recover")
       sender ! XError(
-        ERR_REJECTED_DURING_RECOVERY,
+        ERR_REJECTED_DURING_RECOVER,
         s"market manager `${entityName}` is being recovered"
       )
   }

@@ -33,6 +33,6 @@ class BadMessageListener extends Actor with ActorLogging {
 
     case d: DeadLetter =>
       log.warning(s"failed to handle request: $d")
-      sender ! XError(ERR_FAILED_HANDLE_MES, "failed to handle request")
+      sender ! XError(ERR_FAILED_HANDLE_MSG, "failed to handle request")
   }
 }
