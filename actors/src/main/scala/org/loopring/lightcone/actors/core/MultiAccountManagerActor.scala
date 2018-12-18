@@ -87,6 +87,10 @@ class MultiAccountManagerActor(
     with ActorLogging {
 
   val skiprecover = selfConfig.getBoolean("skip-recover")
+
+  val maxrecoverWindowMinutes =
+    selfConfig.getInt("max-recover-duration-minutes")
+
   val accountManagerActors = new MapBasedLookup[ActorRef]()
   var autoSwitchBackToReceive: Option[Cancellable] = None
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
@@ -98,9 +102,13 @@ class MultiAccountManagerActor(
         log.error(e.getMessage)
         Restart
     }
-
   override def preStart(): Unit = {
     super.preStart()
+
+    autoSwitchBackToReceive = Some(
+      context.system.scheduler
+        .scheduleOnce(maxrecoverWindowMinutes.minute, self, XRecoverEnded(true))
+    )
 
     if (skiprecover) {
       log.warning(s"actor recover skipped: ${self.path}")
@@ -114,43 +122,31 @@ class MultiAccountManagerActor(
 
   def recover: Receive = {
 
-    case XRecoverOrderReq(Some(raworder)) =>
-      val order: XOrder = raworder
-      val req = XSubmitSimpleOrderReq(raworder.owner, Some(order))
+    case req: XRecoverOrderReq => handleRequest(req)
 
-      (extractAddress(req) match {
-        case Some(address) =>
-          (accountManagerActorFor(address) ? req).map { _ =>
-            XRecoverOrderRes(order.id, true)
-          }
-        case None =>
-          log.error(s"=====> ERROR: order cannot be recovered: ${raworder}")
-          Future.successful(XRecoverOrderRes(order.id, false))
-      }).sendTo(sender)
-
-    case msg: XRecoverEnded =>
-      s"account manager `${entityName}` recover completed (due to timeout: ${timeout})"
+    case XRecoverEnded(timeout) =>
+      s"account manager ${entityName} recover completed (due to timeout: ${timeout})"
       context.become(receive)
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
       sender ! XError(
         ERR_REJECTED_DURING_RECOVER,
-        s"account manager `${entityName}` is being recovered"
+        s"account manager ${entityName} is being recovered"
       )
   }
 
   def receive: Receive = {
+    case req: Any => handleRequest(req)
+  }
 
-    case req: Any =>
-      extractAddress(req) match {
-        case Some(address) => accountManagerActorFor(address) forward req
-        case None =>
-          throw ErrorException(
-            ERR_UNEXPECTED_ACTOR_MSG,
-            s"$req cannot be handled by ${getClass.getName}"
-          )
-      }
+  private def handleRequest(req: Any) = extractAddress(req) match {
+    case Some(address) => accountManagerActorFor(address) forward req
+    case None =>
+      throw ErrorException(
+        ERR_UNEXPECTED_ACTOR_MSG,
+        s"$req cannot be handled by ${getClass.getName}"
+      )
   }
 
   protected def accountManagerActorFor(address: String): ActorRef = {
