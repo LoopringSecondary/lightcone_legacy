@@ -38,8 +38,8 @@ trait ShardedByMarket extends Sharded {
   }
 
   private def _extractShardId(msg: Any): Option[String] = {
-    hashed((extractMarketId.lift)(msg)) map { entity =>
-      s"shard_${entity}"
+    hashed((extractMarketId.lift)(msg)) map { shard =>
+      s"shard_${shard}"
     }
   }
 
