@@ -87,16 +87,18 @@ class EtherHttpConnectorSpec extends FlatSpec with Matchers with Logging {
       blockWithTxHash.hash
     )).mapTo[XGetBlockWithTxObjectByHashRes]
       .map(_.result.get)
-    txs ← Future.sequence(blockWithTxHash.transactions.map { hash ⇒
-      (ethConnectionActor ? XGetTransactionByHashReq(hash))
-        .mapTo[XGetTransactionByHashRes]
-        .map(_.result.get)
-    })
-    receipts ← Future.sequence(blockWithTxHash.transactions.map { hash ⇒
-      (ethConnectionActor ? XGetTransactionReceiptReq(hash))
-        .mapTo[XGetTransactionReceiptRes]
-        .map(_.result.get)
-    })
+    txs ← Future
+      .sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
+        (ethConnectionActor ? XGetTransactionByHashReq(hash))
+          .mapTo[XGetTransactionByHashRes]
+          .map(_.result.get)
+      })
+    receipts ← Future
+      .sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
+        (ethConnectionActor ? XGetTransactionReceiptReq(hash))
+          .mapTo[XGetTransactionReceiptRes]
+          .map(_.result.get)
+      })
     batchReceipts ← (ethConnectionActor ? XBatchGetTransactionReceiptsReq(
       blockWithTxHash.transactions.map(XGetTransactionReceiptReq(_))
     )).mapTo[XBatchGetTransactionReceiptsRes]

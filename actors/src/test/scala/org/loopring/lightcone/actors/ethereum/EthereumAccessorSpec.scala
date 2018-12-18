@@ -76,16 +76,17 @@ class EthereumAccessorSpec extends FlatSpec with Matchers with Logging {
       blockWithTxHash.hash
     )).mapTo[XGetBlockWithTxObjectByHashRes]
       .map(_.result.get)
-    txs ← Future.sequence(blockWithTxHash.transactions.map { hash ⇒
+    txs ← Future.sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
       (ethereumAccessActor ? XGetTransactionByHashReq(hash))
         .mapTo[XGetTransactionByHashRes]
         .map(_.result.get)
     })
-    receipts ← Future.sequence(blockWithTxHash.transactions.map { hash ⇒
-      (ethereumAccessActor ? XGetTransactionReceiptReq(hash))
-        .mapTo[XGetTransactionReceiptRes]
-        .map(_.result.get)
-    })
+    receipts ← Future
+      .sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
+        (ethereumAccessActor ? XGetTransactionReceiptReq(hash))
+          .mapTo[XGetTransactionReceiptRes]
+          .map(_.result.get)
+      })
     batchReceipts ← (ethereumAccessActor ? XBatchGetTransactionReceiptsReq(
       blockWithTxHash.transactions.map(XGetTransactionReceiptReq(_))
     )).mapTo[XBatchGetTransactionReceiptsRes]
@@ -116,7 +117,7 @@ class EthereumAccessorSpec extends FlatSpec with Matchers with Logging {
       ))
       .mapTo[XEthCallRes]
       .map(resp ⇒ wethAbi.balanceOf.unpackResult(resp.result))
-    lrcbalances: Seq[Option[BalanceOfFunction.Result]] ← (ethereumAccessActor ? XBatchContractCallReq(
+    lrcbalances ← (ethereumAccessActor ? XBatchContractCallReq(
       batchTx.map(
         tx ⇒
           XEthCallReq(tag = "latest")
