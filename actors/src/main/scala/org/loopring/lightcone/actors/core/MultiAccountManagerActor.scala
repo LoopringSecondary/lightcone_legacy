@@ -65,9 +65,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
-    case req: XCancelOrderReq ⇒
-      println(s"XCancelOrderReq ${req}")
-      req.address
+    case req: XCancelOrderReq ⇒ req.address
     case req: XSubmitOrderReq ⇒ req.address
     case req: XGetBalanceAndAllowancesReq ⇒ req.address
     case req: XAddressBalanceUpdated ⇒ req.address

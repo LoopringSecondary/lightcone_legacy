@@ -145,8 +145,6 @@ class MarketManagerActor(
   )
 //  requestOrderRecovery(recoverySettings)
 
-  println(s"### marketmanageractor ${self.path}")
-
   def receive: Receive = {
 
     case XSubmitOrderReq(_, Some(xorder)) ⇒
@@ -184,21 +182,18 @@ class MarketManagerActor(
       "order in XSubmitOrderReq miss `actual` field"
     )
     val order: Order = xorder
-    println(s"### submitOrder ${order}, ${gasPriceActor}")
     xorder.status match {
       case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING =>
         for {
           // get ring settlement cost
           res <- (gasPriceActor ? XGetGasPriceReq()).mapAs[XGetGasPriceRes]
 
-          _ = println(s"### gasPriceActor ${gasPriceActor}")
           gasPrice: BigInt = res.gasPrice
           minRequiredIncome = getRequiredMinimalIncome(gasPrice)
 
           // submit order to reserve balance and allowance
           matchResult = manager.submitOrder(order, minRequiredIncome)
 
-          _ = println(s"### matchResult ${matchResult}")
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
         } yield Unit

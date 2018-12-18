@@ -85,7 +85,6 @@ class AccountManagerActor(
       }).sendTo(sender)
 
     case XSubmitOrderReq(addr, Some(xorder)) =>
-      println(s"#### accountmanager XSubmitOrderReq, ${xorder}")
       assert(addr == address)
       submitOrder(xorder).sendTo(sender)
 
@@ -164,7 +163,7 @@ class AccountManagerActor(
       Future.successful(manager.getTokenManager(token))
     else
       for {
-        _ <- Future.successful(println(s"getTokenManager0 ${token}"))
+        _ <- Future.successful(log.debug(s"getTokenManager0 ${token}"))
         res <- (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
           address,
           Seq(token)
