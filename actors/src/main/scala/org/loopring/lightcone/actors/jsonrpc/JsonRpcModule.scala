@@ -17,7 +17,7 @@
 package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto.XError
+import org.loopring.lightcone.proto.{XError, XJsonRpcReq, XJsonRpcRes}
 import org.json4s._
 import org.json4s.JsonAST.JValue
 import scalapb.json4s.JsonFormat
@@ -30,6 +30,8 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.pattern.ask
+import org.json4s.jackson.Serialization
+
 import scala.reflect.runtime.universe._
 import scala.concurrent.duration._
 import scala.concurrent._
@@ -61,6 +63,15 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
           if (id.isEmpty) {
             replyWithError(-32000, Some("`id missing"))
+          } else if (method.startsWith("eth")) {
+            val f = (requestHandler ? XJsonRpcReq(Serialization.write(jsonReq)))
+              .mapTo[XJsonRpcRes]
+
+            onSuccess(f) { resp ⇒
+              complete(
+                Serialization.read[JsonRpcResponse](resp.json)
+              )
+            }
           } else {
             getPayloadConverter(method) match {
               case None =>

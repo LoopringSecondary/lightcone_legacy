@@ -58,7 +58,8 @@ class EntryPointActor(
 
     case _ @(XGetOrderbookReq) => Some(OrderbookManagerMessageValidator.name)
 
-    case _ @(XGetBalanceAndAllowancesReq | XGetBalanceReq | XGetAllowanceReq) ⇒
+    case _ @(XGetBalanceAndAllowancesReq | XGetBalanceReq | XGetAllowanceReq |
+        GetFilledAmountReq) ⇒
       Some(EthereumQueryActor.name)
 
     case _ @(XJsonRpcReq | XRpcReqWithHeight) ⇒

@@ -25,4 +25,20 @@ trait RpcBinding extends JsonRpcModule {
   // Note that RequestType and ResponseType must be proto messages.
   ifReceive[XRawOrder].thenReply[XRawOrder]("jsonrpc_method_name")
 
+  //Order
+  ifReceive[XSubmitRawOrderReq]
+    .thenReply[XSubmitOrderRes]("submitOrder")
+  ifReceive[XCancelOrderReq].thenReply[XCancelOrderRes]("cancelOrder")
+
+  // OrderBook
+  ifReceive[XGetOrderbookReq].thenReply[XOrderbook]("orderbook")
+
+  //Ethereum Query
+  ifReceive[XGetAllowanceReq]
+    .thenReply[XGetAllowanceRes]("getAllowance")
+  ifReceive[XGetBalanceReq].thenReply[XGetBalanceRes]("getBalance")
+  ifReceive[XGetBalanceAndAllowancesReq]
+    .thenReply[XGetBalanceAndAllowancesRes]("getBalanceAndAllowance")
+  ifReceive[GetFilledAmountReq]
+    .thenReply[GetFilledAmountRes]("getFilledAmount")
 }
