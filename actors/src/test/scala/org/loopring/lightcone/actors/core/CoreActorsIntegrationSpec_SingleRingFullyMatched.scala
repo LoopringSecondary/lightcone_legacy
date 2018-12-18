@@ -78,7 +78,7 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
         Some(maker1)
       )
 
-      Thread.sleep(2000)
+      Thread.sleep(5000)
       actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
         0,
         100,
@@ -88,6 +88,7 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
       expectMsgPF() {
         case a: XOrderbook =>
           info("----orderbook status after submitted first order : " + a)
+          a.sells should not be empty
       }
 
       actors.get(MarketManagerActor.name) ! XSubmitSimpleOrderReq(
@@ -95,7 +96,7 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
         Some(taker1)
       )
 
-      Thread.sleep(2000)
+      Thread.sleep(5000)
       actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
         0,
         100,
