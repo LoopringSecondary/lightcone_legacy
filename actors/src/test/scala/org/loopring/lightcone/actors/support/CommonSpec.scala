@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.core
+package org.loopring.lightcone.actors.support
 
-import akka.actor.{ActorRef, ActorSystem, DeadLetter, Props, UnhandledMessage}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
-import org.loopring.lightcone.actors.utils.BadMessageListener
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.market.{
-  RingIncomeEstimator,
-  RingIncomeEstimatorImpl
-}
+import org.loopring.lightcone.core.market.{RingIncomeEstimator, RingIncomeEstimatorImpl}
 import org.loopring.lightcone.lib.SystemTimeProvider
 import org.loopring.lightcone.proto.XTokenMetadata
 import org.scalatest._
@@ -35,7 +31,6 @@ import org.slf4s.Logging
 
 import scala.concurrent.duration._
 import scala.math.BigInt
-import collection.JavaConverters._
 //启动system、以及必须的元素，包括system，TokenMetaData，等
 abstract class CommonSpec(configStr: String)
     extends TestKit(

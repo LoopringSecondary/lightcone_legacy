@@ -23,6 +23,7 @@ import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
 import akka.pattern._
 import akka.util.Timeout
+import org.loopring.lightcone.actors.support._
 
 import scala.concurrent.{Await, ExecutionContext}
 
@@ -107,6 +108,7 @@ class CoreActorsIntegrationSpec_SubmitOneOrder
       val submitRes = Await.result(submitF, timeout.duration)
       info(s"submit res: ${submitRes}")
 
+      Thread.sleep(1000)
       actors.get(OrderbookManagerActor.name) ! XGetOrderbookReq(
         0,
         100,

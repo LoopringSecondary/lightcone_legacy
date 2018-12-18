@@ -20,7 +20,9 @@ import akka.testkit.TestProbe
 import org.loopring.lightcone.proto._
 import akka.pattern._
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.actors.support.{CommonSpec, OrderHandleSupport}
 import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
