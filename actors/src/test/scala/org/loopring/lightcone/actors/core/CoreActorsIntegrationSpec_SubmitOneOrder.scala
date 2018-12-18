@@ -51,7 +51,6 @@ class CoreActorsIntegrationSpec_SubmitOneOrder
 
     def receive: Receive = {
       case req: XGetBalanceAndAllowancesReq =>
-        println(s"### XGetBalanceAndAllowancesReq ${req}, ${sender}")
         sender !
           XGetBalanceAndAllowancesRes(
             req.address,

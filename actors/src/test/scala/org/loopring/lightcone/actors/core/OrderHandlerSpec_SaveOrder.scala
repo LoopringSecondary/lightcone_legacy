@@ -41,10 +41,10 @@ class OrderHandlerSpec_SaveOrder
 
       def expectQuery() = expectMsgPF(120 second) {
         case req @ XCancelOrderReq(_, orderId, _, _) =>
-          log.info(s"##### expectQuery ${req}， ${sender()}")
+          log.debug(s"##### expectQuery ${req}， ${sender()}")
           sender ! XCancelOrderRes(id = orderId)
         case req: XSubmitSimpleOrderReq =>
-          log.info(s"##### expectQuery ${req}， ${sender()}")
+          log.debug(s"##### expectQuery ${req}， ${sender()}")
           sender ! XSubmitOrderRes(req.order)
       }
 

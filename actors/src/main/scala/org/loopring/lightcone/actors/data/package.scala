@@ -159,11 +159,11 @@ package object data {
     )
   }
 
-  implicit def xMarketId2String(marketId: XMarketId): String = {
+  implicit def xMarketId2MarketName(marketId: XMarketId): String = {
     s"${marketId.primary}-${marketId.secondary}"
   }
 
-  implicit def string2XMarketId(marketName: String): XMarketId = {
+  implicit def marketName2XMarketId(marketName: String): XMarketId = {
     val tokens = marketName.split("-")
     if (tokens.size < 2)
       throw ErrorException(
