@@ -108,14 +108,14 @@ class CoreActorsIntegrationSpec_SubmitOneOrder
           MarketHashProvider.convert2Hex(LRC_TOKEN.address, WETH_TOKEN.address)
       )
 
-      val submitF = actors.get(OrderHandlerActor.name) ? XSubmitRawOrderReq(
+      val submitF = actors.get(OrderHandlerActor.name) ? XSubmitOrderReq(
         Some(rawOrder)
       )
       val submitRes = Await.result(submitF, timeout.duration)
       info(s"submit res: ${submitRes}")
 
       Thread.sleep(1000)
-      actors.get(OrderbookManagerActor.name) ! XGetOrderbookReq(
+      actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
         0,
         100,
         s"${LRC_TOKEN.address}-${WETH_TOKEN.address}"
@@ -123,7 +123,8 @@ class CoreActorsIntegrationSpec_SubmitOneOrder
 
       expectMsgPF() {
         case a: XOrderbook =>
-          info("----orderbook status after submitted second order: " + a)
+          info("----orderbook status after submitted an order: " + a)
+          a.sells should not be empty
       }
 
     }

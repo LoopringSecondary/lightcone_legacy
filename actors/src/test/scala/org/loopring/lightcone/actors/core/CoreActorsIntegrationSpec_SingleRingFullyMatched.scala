@@ -73,13 +73,13 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
           Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18)))
       )
 
-      actors.get(MarketManagerActor.name) ! XSubmitOrderReq(
+      actors.get(MarketManagerActor.name) ! XSubmitSimpleOrderReq(
         "0xaddr1",
         Some(maker1)
       )
 
       Thread.sleep(2000)
-      actors.get(OrderbookManagerActor.name) ! XGetOrderbookReq(
+      actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
         0,
         100,
         s"${LRC_TOKEN.address}-${WETH_TOKEN.address}"
@@ -90,13 +90,13 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
           info("----orderbook status after submitted first order : " + a)
       }
 
-      actors.get(MarketManagerActor.name) ! XSubmitOrderReq(
+      actors.get(MarketManagerActor.name) ! XSubmitSimpleOrderReq(
         "0xaddr2",
         Some(taker1)
       )
 
       Thread.sleep(2000)
-      actors.get(OrderbookManagerActor.name) ! XGetOrderbookReq(
+      actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
         0,
         100,
         s"${LRC_TOKEN.address}-${WETH_TOKEN.address}"

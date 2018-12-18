@@ -20,6 +20,10 @@ import akka.pattern._
 import akka.testkit.TestProbe
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.support.{CommonSpec, OrderHandleSupport}
+import org.loopring.lightcone.actors.validator.{
+  MessageValidationActor,
+  MultiAccountManagerMessageValidator
+}
 import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
 import org.loopring.lightcone.proto._
 
@@ -36,10 +40,10 @@ class OrderHandlerSpec_SaveOrder
     new TestProbe(system, MultiAccountManagerActor.name) {
 
       def expectQuery() = expectMsgPF(120 second) {
-        case req @ XCancelOrderReq(_, orderId, _, _, _) =>
+        case req @ XCancelOrderReq(_, orderId, _, _) =>
           log.info(s"##### expectQuery ${req}， ${sender()}")
           sender ! XCancelOrderRes(id = orderId)
-        case req: XSubmitOrderReq =>
+        case req: XSubmitSimpleOrderReq =>
           log.info(s"##### expectQuery ${req}， ${sender()}")
           sender ! XSubmitOrderRes(req.order)
       }
@@ -47,6 +51,15 @@ class OrderHandlerSpec_SaveOrder
     }
   actors.del(MultiAccountManagerActor.name)
   actors.add(MultiAccountManagerActor.name, multiAccountManagerProbe.ref)
+
+  actors.add(
+    MultiAccountManagerMessageValidator.name,
+    MessageValidationActor(
+      new MultiAccountManagerMessageValidator(),
+      MultiAccountManagerActor.name,
+      MultiAccountManagerMessageValidator.name
+    )
+  )
 
   "submit a raworder" must {
     "be saved in db successful" in {
@@ -83,10 +96,10 @@ class OrderHandlerSpec_SaveOrder
         ),
         marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
       )
-      val submitReq = XSubmitRawOrderReq(Some(rawOrder))
+      val submitReq = XSubmitOrderReq(Some(rawOrder))
       val f = actors.get(OrderHandlerActor.name) ? submitReq
       Future.successful(multiAccountManagerProbe.expectQuery())
-      val res = Await.result(f.mapTo[XSubmitRawOrderRes], timeout.duration)
+      val res = Await.result(f.mapTo[XSubmitOrderRes], timeout.duration)
       info(s"return is : ${res}")
 
       val getOrderF = dbModule.orderService.getOrder(rawOrder.hash)

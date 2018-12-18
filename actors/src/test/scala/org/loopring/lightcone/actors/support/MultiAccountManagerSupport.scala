@@ -17,8 +17,10 @@
 package org.loopring.lightcone.actors.support
 
 import org.loopring.lightcone.actors.core._
-
-import scala.concurrent.Await
+import org.loopring.lightcone.actors.validator.{
+  MessageValidationActor,
+  MultiAccountManagerMessageValidator
+}
 
 trait MultiAccountManagerSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
@@ -27,11 +29,13 @@ trait MultiAccountManagerSupport extends DatabaseModuleSupport {
     MultiAccountManagerActor.startShardRegion
   )
 
-  def truncateTables() = {
-    val opFuture = for {
-      _ <- dbModule.orders.dropTable()
-      _ <- dbModule.orders.createTable()
-    } yield Unit
-    Await.result(opFuture, timeout.duration)
-  }
+  actors.add(
+    MultiAccountManagerMessageValidator.name,
+    MessageValidationActor(
+      new MultiAccountManagerMessageValidator(),
+      MultiAccountManagerActor.name,
+      MultiAccountManagerMessageValidator.name
+    )
+  )
+
 }

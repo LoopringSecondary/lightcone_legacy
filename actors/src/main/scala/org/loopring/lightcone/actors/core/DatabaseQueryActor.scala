@@ -21,12 +21,13 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.persistence.DatabaseModule
-import scala.concurrent._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.proto._
+
+import scala.concurrent._
 
 // main owner: 杜永丰
 object DatabaseQueryActor extends ShardedEvenly {
@@ -81,7 +82,7 @@ class DatabaseQueryActor(
             XSaveOrderResult(None, false, result.right.get)
           }
         }
-      }) forwardTo sender
+      }) sendTo sender
 
     case req: XGetOrdersForUserReq ⇒
       (for {
@@ -110,15 +111,15 @@ class DatabaseQueryActor(
             )
         }
       } yield
-        XGetOrdersForUserResult(result, XErrorCode.ERR_NONE)) forwardTo sender
+        XGetOrdersForUserResult(result, XErrorCode.ERR_NONE)) sendTo sender
     case req: XUserCancelOrderReq ⇒
       (for {
         result <- dbModule.orderService.markOrderSoftCancelled(req.orderHashes)
-      } yield XUserCancelOrderResult(result)) forwardTo sender
+      } yield XUserCancelOrderResult(result)) sendTo sender
     case req: XGetTradesReq ⇒
       (for {
         result <- dbModule.tradeService.getTrades(req)
-      } yield result) forwardTo sender
+      } yield result) sendTo sender
     case _ ⇒
     //TODO du: log ?
   }

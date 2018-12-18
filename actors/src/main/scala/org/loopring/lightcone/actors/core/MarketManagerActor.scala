@@ -30,13 +30,11 @@ import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-import org.web3j.utils.Numeric
 
 import scala.collection.JavaConverters._
-import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
-import org.loopring.lightcone.proto.XErrorCode._
 import scala.concurrent.duration._
 
 // main owner: 于红雨
@@ -61,19 +59,13 @@ object MarketManagerActor extends ShardedByMarket {
     val markets = config
       .getObjectList("markets")
       .asScala
-      .map { item =>
+      .flatMap { item =>
         val c = item.toConfig
         val marketId =
           XMarketId(c.getString("priamry"), c.getString("secondary"))
-        val marketXor =
-          Numeric.toBigInt(marketId.primary) xor Numeric.toBigInt(
-            marketId.secondary
-          )
-
-        val hash = MarketManagerActor
-          .hashed(Some(marketXor))
-
-        hash.toString -> marketId
+        val hashOpt = MarketManagerActor
+          .hashed(Some(marketId))
+        hashOpt map (_.toString -> marketId)
       }
       .toMap
 
@@ -87,11 +79,11 @@ object MarketManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketName: PartialFunction[Any, BigInt] = {
-    case XSubmitOrderReq(_, Some(xorder)) =>
-      Numeric.toBigInt(xorder.tokenS) xor Numeric.toBigInt(xorder.tokenB)
-    case XCancelOrderReq(_, _, _, tokenS, tokenB) =>
-      Numeric.toBigInt(tokenS) xor Numeric.toBigInt(tokenB)
+  val extractMarketName: PartialFunction[Any, XMarketId] = {
+    case XSubmitSimpleOrderReq(_, Some(xorder)) =>
+      XMarketId(xorder.tokenS, xorder.tokenB)
+    case XCancelOrderReq(_, _, _, marketName) =>
+      marketName
   }
 
 }
@@ -114,7 +106,6 @@ class MarketManagerActor(
     )
     with ActorLogging {
 
-  val marketName = entityName
   var autoSwitchBackToReceive: Option[Cancellable] = None
 
   val wethTokenAddress = config.getString("weth.address")
@@ -130,7 +121,8 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
-  implicit val marketId = extractMarketMap(selfConfig)(marketName)
+  implicit val marketId = markets(entityName)
+
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
     selfConfig.getInt("price-decimals")
   )
@@ -142,15 +134,6 @@ class MarketManagerActor(
     pendingRingPool,
     dustOrderEvaluator,
     aggregator
-  )
-
-  // TODO(yongfeng): load marketconfig from database throught a service interface
-  // based on marketName
-  val xorderbookConfig = XMarketConfig(
-    levels = selfConfig.getInt("levels"),
-    priceDecimals = selfConfig.getInt("price-decimals"),
-    precisionForAmount = selfConfig.getInt("precision-for-amount"),
-    precisionForTotal = selfConfig.getInt("precision-for-total")
   )
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
@@ -199,9 +182,9 @@ class MarketManagerActor(
     case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder)
 
-    case XCancelOrderReq(orderId, _, _, _, _) ⇒
+    case XCancelOrderReq(orderId, _, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
-        orderbookManagerActor ! orderbookUpdate.copy(marketName = marketName)
+        orderbookManagerActor ! orderbookUpdate.copy(marketName = marketId)
       }
       sender ! XCancelOrderRes(id = orderId)
 
@@ -275,24 +258,8 @@ class MarketManagerActor(
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerActor ! ou.copy(marketName = marketName)
+      orderbookManagerActor ! ou.copy(marketName = marketId)
     }
-  }
-
-  private def extractMarketMap(config: Config): Map[String, XMarketId] = {
-    config
-      .getObjectList("markets")
-      .asScala
-      .map { item =>
-        val c = item.toConfig
-        val marketId =
-          XMarketId(c.getString("priamry"), c.getString("secondary"))
-        val hash = MarketManagerActor
-          .hashed(marketId)
-          .toString
-        hash -> marketId
-      }
-      .toMap
   }
 
   def recoverOrder(xraworder: XRawOrder): Future[Any] =

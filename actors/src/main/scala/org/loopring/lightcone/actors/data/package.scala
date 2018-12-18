@@ -16,9 +16,10 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto._
 
 package object data {
 
@@ -156,5 +157,19 @@ package object data {
       //      status = XOrderStatus.STATUS_NEW,
       walletSplitPercentage = feeParams.waiveFeePercentage / 1000.0
     )
+  }
+
+  implicit def xMarketId2String(marketId: XMarketId): String = {
+    s"${marketId.primary}-${marketId.secondary}"
+  }
+
+  implicit def string2XMarketId(marketName: String): XMarketId = {
+    val tokens = marketName.split("-")
+    if (tokens.size < 2)
+      throw ErrorException(
+        XErrorCode.ERR_INVALID_MARKET,
+        s"not supported market: $marketName"
+      )
+    XMarketId(primary = tokens(0), secondary = tokens(1))
   }
 }

@@ -92,12 +92,17 @@ class AccountManagerActor(
       assert(addr == address)
       submitOrder(xorder).sendTo(sender)
 
-    case req @ XCancelOrderReq =>
+    case req: XCancelOrderReq =>
       assert(req.owner == address)
       if (manager.cancelOrder(req.id)) {
         marketManagerActor forward req
       } else {
-        Future.failed(ErrorException(ERR_FAILED_HANDLE_MSG, "")) sendTo sender
+        Future.failed(
+          ErrorException(
+            ERR_FAILED_HANDLE_MSG,
+            s"doesn't contain this order ${req.id}"
+          )
+        ) sendTo sender
       }
 
     case XAddressBalanceUpdated(addr, token, newBalance) =>
@@ -194,8 +199,7 @@ class AccountManagerActor(
               STATUS_CANCELLED_LOW_FEE_BALANCE =>
             marketManagerActor ! XCancelOrderReq(
               id = order.id,
-              tokenS = order.tokenS,
-              tokenB = order.tokenB
+              marketName = XMarketId(order.tokenS, order.tokenB)
             )
 
           case STATUS_PENDING =>

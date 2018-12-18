@@ -22,11 +22,11 @@ import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import org.web3j.utils.Numeric
 
 import scala.concurrent._
 
@@ -58,14 +58,11 @@ object OrderbookManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketName: PartialFunction[Any, BigInt] = {
-    case XGetOrderbookReq(_, _, marketName) =>
-      val tokens = marketName.split("-")
-      Numeric.toBigInt(tokens(0)) xor Numeric.toBigInt(tokens(1))
-    case XOrderbookUpdate(_, _, Some(marketId)) =>
-      Numeric.toBigInt(marketId.primary) xor Numeric.toBigInt(
-        marketId.secondary
-      )
+  val extractMarketName: PartialFunction[Any, XMarketId] = {
+    case XGetOrderbook(_, _, marketName) =>
+      marketName
+    case XOrderbookUpdate(_, _, marketName) =>
+      marketName
   }
 }
 

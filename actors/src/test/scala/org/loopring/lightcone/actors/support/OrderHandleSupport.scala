@@ -23,10 +23,11 @@ import scala.concurrent.Await
 trait OrderHandleSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
-  val dropF = dbModule.orders.dropTable()
-  Await.result(dropF, timeout.duration)
-  val createF = dbModule.orders.createTable()
-  Await.result(createF, timeout.duration)
+  val opFuture = for {
+    _ <- dbModule.orders.dropTable()
+    _ <- dbModule.orders.createTable()
+  } yield Unit
+  Await.result(opFuture, timeout.duration)
   actors.add(
     OrderHandlerActor.name,
     OrderHandlerActor.startShardRegion

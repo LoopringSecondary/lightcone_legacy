@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.support
 
 import akka.testkit.TestProbe
 import org.loopring.lightcone.actors.core.MarketManagerActor
-import org.loopring.lightcone.proto.{XSubmitOrderReq, XSubmitOrderRes}
+import org.loopring.lightcone.proto._
 
 trait AccountManagerSupport {
   my: CommonSpec =>
@@ -26,7 +26,7 @@ trait AccountManagerSupport {
   val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
 
     def expectQuery() = expectMsgPF() {
-      case XSubmitOrderReq(addr, Some(xorder)) =>
+      case XSubmitSimpleOrderReq(addr, Some(xorder)) =>
         info(s"received XSubmitOrderReq: ${addr}, ${xorder}")
     }
 
