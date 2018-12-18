@@ -24,6 +24,7 @@ import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.ethereum._
@@ -73,6 +74,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     implicit val dbModule = new DatabaseModule()
     bind[DatabaseModule].toInstance(dbModule)
+    dbModule.createTables()
 
     implicit val tmm = new TokenMetadataManager()
     bind[TokenMetadataManager].toInstance(tmm)
@@ -96,6 +98,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     //-----------deploy sharded actors-----------
     actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
+
     actors.add(
       MultiAccountManagerActor.name,
       MultiAccountManagerActor.startShardRegion
@@ -115,10 +118,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       OrderbookManagerActor.name,
       OrderbookManagerActor.startShardRegion
     )
-    actors.add(
-      OrderHandlerActor.name,
-      OrderHandlerActor.startShardRegion
-    )
+    actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
     actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
     actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
     actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
@@ -185,7 +185,14 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
     val listener =
       system.actorOf(Props[BadMessageListener], "bad_message_listener")
+
     system.eventStream.subscribe(listener, classOf[UnhandledMessage])
     system.eventStream.subscribe(listener, classOf[DeadLetter])
+
+    if (cluster.selfRoles.contains("jsonrpc")) {
+      val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
+      with RpcBinding
+      server.start()
+    }
   }
 }

@@ -14,26 +14,29 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.gateway
+package org.loopring.lightcone.actors.jsonrpc
 
+import org.loopring.lightcone.lib.ProtoSerializer
+import org.loopring.lightcone.proto._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.pattern.ask
+import scala.reflect.runtime.universe._
+import akka.actor._
+import akka.util.Timeout
+import scala.reflect.ClassTag
 
-import org.loopring.lightcone.proto._
+class Binder[T <: Proto[T]: TypeTag](
+    implicit module: JsonRpcBinding,
+    ps: ProtoSerializer) {
 
-trait MainRoute extends RouteSupport {
-
-  val route: Route = {
-    path("health") {
-      get {
-        // parameters(('size.as[Int], 'color ?, 'dangerous ? "no"))
-        // .as(XRawOrder)(req => request[XRawOrder](req))
-        // } ~
-        // get {
-        request[XRawOrder](new XRawOrder(tokenS = "afafadf"))
-      } ~ post {
-        entity(as[XRawOrder])(request[XRawOrder](_))
-      }
-    }
+  def thenReply[S <: Proto[S]: TypeTag](
+      method: String
+    )(
+      implicit tc: ProtoC[T],
+      cs: ClassTag[S],
+      ts: ProtoC[S]
+    ) = {
+    module.addPayloadConverter(method, new PayloadConverter[T, S])
   }
 }
