@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.core
 import org.loopring.lightcone.proto._
 import akka.pattern._
 import akka.testkit.TestProbe
-import org.loopring.lightcone.actors.support.{CommonSpec, MultiAccountManagerSupport}
+import org.loopring.lightcone.actors.support._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._

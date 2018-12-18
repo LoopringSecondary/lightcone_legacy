@@ -23,7 +23,10 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.market.{RingIncomeEstimator, RingIncomeEstimatorImpl}
+import org.loopring.lightcone.core.market.{
+  RingIncomeEstimator,
+  RingIncomeEstimatorImpl
+}
 import org.loopring.lightcone.lib.SystemTimeProvider
 import org.loopring.lightcone.proto.XTokenMetadata
 import org.scalatest._
