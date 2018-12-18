@@ -192,7 +192,10 @@ message XRecoverOrderReq {
     XRawOrder raw_order = 1;
 }
 
-message XRecoverOrderRes {}
+message XRecoverOrderRes {
+    string order_id = 1;
+    bool successful = 2;
+}
 message XRecoverEnded {
     bool timeout = 1;
 }

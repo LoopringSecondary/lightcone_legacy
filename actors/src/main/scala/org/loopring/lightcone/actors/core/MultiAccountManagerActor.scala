@@ -28,6 +28,7 @@ import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -90,9 +91,9 @@ class MultiAccountManagerActor(
   var autoSwitchBackToReceive: Option[Cancellable] = None
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
 
+  //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
-      //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
       case e: Exception ⇒
         log.error(e.getMessage)
         Restart
@@ -117,19 +118,15 @@ class MultiAccountManagerActor(
       val order: XOrder = raworder
       val req = XSubmitSimpleOrderReq(raworder.owner, Some(order))
 
-      for {
-        _ <- extractAddress(req) match {
-          case Some(address) => accountManagerActorFor(address) ? req
-          case None =>
-            throw ErrorException(
-              ERR_UNEXPECTED_ACTOR_MSG,
-              s"$req cannot be handled by ${getClass.getName}"
-            )
-        }
-
-      } yield {
-        sender ! XRecoverOrderRes()
-      }
+      (extractAddress(req) match {
+        case Some(address) =>
+          (accountManagerActorFor(address) ? req).map { _ =>
+            XRecoverOrderRes(order.id, true)
+          }
+        case None =>
+          log.error(s"=====> ERROR: order cannot be recovered: ${raworder}")
+          Future.successful(XRecoverOrderRes(order.id, false))
+      }).sendTo(sender)
 
     case msg: XRecoverEnded =>
       s"account manager `${entityName}` recover completed (due to timeout: ${timeout})"
@@ -158,9 +155,11 @@ class MultiAccountManagerActor(
 
   protected def accountManagerActorFor(address: String): ActorRef = {
     if (!accountManagerActors.contains(address)) {
-      val newAccountActor =
+      log.info(s"created new account manager for address $address")
+      accountManagerActors.add(
+        address,
         context.actorOf(Props(new AccountManagerActor()), address)
-      accountManagerActors.add(address, newAccountActor)
+      )
     }
     accountManagerActors.get(address)
   }
