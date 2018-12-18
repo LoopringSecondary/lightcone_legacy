@@ -55,50 +55,58 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   }
 
   val routes: Route = {
-    path(endpoint) {
-      post {
-        entity(as[JsonRpcRequest]) { jsonReq =>
-          implicit val method = jsonReq.method
-          implicit val id = jsonReq.id
+    pathPrefix(endpoint) {
+      path("loopring") {
+        post {
+          entity(as[JsonRpcRequest]) { jsonReq =>
+            implicit val method = jsonReq.method
+            implicit val id = jsonReq.id
 
-          if (id.isEmpty) {
-            replyWithError(-32000, Some("`id missing"))
-          } else if (method.startsWith("eth")) {
-            val f = (requestHandler ? XJsonRpcReq(Serialization.write(jsonReq)))
-              .mapTo[XJsonRpcRes]
+            if (id.isEmpty) {
+              replyWithError(-32000, Some("`id missing"))
+            } else {
+              getPayloadConverter(method) match {
+                case None =>
+                  replyWithError(-32601)
 
-            onSuccess(f) { resp ⇒
-              complete(
-                Serialization.read[JsonRpcResponse](resp.json)
-              )
-            }
-          } else {
-            getPayloadConverter(method) match {
-              case None =>
-                replyWithError(-32601)
+                case Some(converter) =>
+                  jsonReq.params.map(converter.convertToRequest) match {
+                    case None =>
+                      replyWithError(
+                        -32602,
+                        Some("`params` is missing, use `{}` as default value")
+                      )
 
-              case Some(converter) =>
-                jsonReq.params.map(converter.convertToRequest) match {
-                  case None =>
-                    replyWithError(
-                      -32602,
-                      Some("`params` is missing, use `{}` as default value")
-                    )
+                    case Some(req) =>
+                      val f = (requestHandler ? req).map {
+                        case err: XError => throw ErrorException(err)
+                        case other       => other
+                      }
 
-                  case Some(req) =>
-                    val f = (requestHandler ? req).map {
-                      case err: XError => throw ErrorException(err)
-                      case other       => other
-                    }
-
-                    onSuccess(f) { resp =>
-                      replyWith(converter.convertFromResponse(resp))
-                    }
-                }
+                      onSuccess(f) { resp =>
+                        replyWith(converter.convertFromResponse(resp))
+                      }
+                  }
+              }
             }
           }
         }
-      }
+      } ~
+        path("eth") {
+          post {
+            entity(as[JsonRpcRequest]) { jsonReq =>
+              val f =
+                (requestHandler ? XJsonRpcReq(Serialization.write(jsonReq)))
+                  .mapTo[XJsonRpcRes]
+
+              onSuccess(f) { resp ⇒
+                complete(
+                  Serialization.read[JsonRpcResponse](resp.json)
+                )
+              }
+            }
+          }
+        }
     }
   }
 

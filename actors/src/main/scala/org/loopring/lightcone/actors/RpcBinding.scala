@@ -28,20 +28,12 @@ trait RpcBinding extends JsonRpcModule {
 
   ifReceive[XCancelOrderReq].thenReply[XCancelOrderRes]("cancel_order")
 
-  //Order
-  ifReceive[XSubmitRawOrderReq]
-    .thenReply[XSubmitOrderRes]("submitOrder")
-  ifReceive[XCancelOrderReq].thenReply[XCancelOrderRes]("cancelOrder")
-
-  // OrderBook
-  ifReceive[XGetOrderbookReq].thenReply[XOrderbook]("orderbook")
-
   //Ethereum Query
   ifReceive[XGetAllowanceReq]
-    .thenReply[XGetAllowanceRes]("getAllowance")
-  ifReceive[XGetBalanceReq].thenReply[XGetBalanceRes]("getBalance")
+    .thenReply[XGetAllowanceRes]("get_allowance")
+  ifReceive[XGetBalanceReq].thenReply[XGetBalanceRes]("get_balance")
   ifReceive[XGetBalanceAndAllowancesReq]
-    .thenReply[XGetBalanceAndAllowancesRes]("getBalanceAndAllowance")
+    .thenReply[XGetBalanceAndAllowancesRes]("get_balance_and_allowance")
   ifReceive[GetFilledAmountReq]
-    .thenReply[GetFilledAmountRes]("getFilledAmount")
+    .thenReply[GetFilledAmountRes]("get_filled_amount")
 }
