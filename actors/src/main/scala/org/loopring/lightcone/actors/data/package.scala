@@ -158,18 +158,4 @@ package object data {
       walletSplitPercentage = feeParams.waiveFeePercentage / 1000.0
     )
   }
-
-  implicit def xMarketId2marketId(marketId: XMarketId): String = {
-    s"${marketId.primary}-${marketId.secondary}"
-  }
-
-  implicit def marketId2XMarketId(marketId: String): XMarketId = {
-    val tokens = marketId.split("-")
-    if (tokens.size < 2)
-      throw ErrorException(
-        XErrorCode.ERR_INVALID_MARKET,
-        s"not supported market: $marketId"
-      )
-    XMarketId(primary = tokens(0), secondary = tokens(1))
-  }
 }

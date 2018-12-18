@@ -195,7 +195,7 @@ class AccountManagerActor(
               STATUS_CANCELLED_LOW_FEE_BALANCE =>
             marketManagerActor ! XCancelOrderReq(
               id = order.id,
-              marketId = XMarketId(order.tokenS, order.tokenB)
+              marketId = Some(XMarketId(order.tokenS, order.tokenB))
             )
 
           case STATUS_PENDING =>

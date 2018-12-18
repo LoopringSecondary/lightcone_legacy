@@ -27,12 +27,12 @@ final class OrderbookManagerMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
   // TODO(hongyu): check the marketId is supported in the config
-  def assertmarketIdIsValid(marketId: String) = {}
+  def assertmarketIdIsValid(marketIdOpt: Option[XMarketId]) = {}
 
   // Throws exception if validation fails.
   def validate = {
-    case XGetOrderbook(_, _, marketId) =>
-      assertmarketIdIsValid(marketId)
-      marketId
+    case XGetOrderbook(_, _, marketIdOpt) =>
+      assertmarketIdIsValid(marketIdOpt)
+      marketIdOpt.get
   }
 }
