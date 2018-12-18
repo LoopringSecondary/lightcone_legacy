@@ -21,6 +21,7 @@ package org.loopring.lightcone.proto;
 
 import "core_data.proto";
 import "core_messages.proto";
+import "actors_ethereum.proto";
 
 message XOrderState {
     bytes amount_s = 1;
@@ -75,7 +76,7 @@ message XBlockJob{
     string hash = 2;
     string miner = 3;
     repeated string uncles = 4;
-    repeated string txhashes = 5;
+    repeated XTransaction txs = 5;
 }
 
 message XBalanceAndAllowance {

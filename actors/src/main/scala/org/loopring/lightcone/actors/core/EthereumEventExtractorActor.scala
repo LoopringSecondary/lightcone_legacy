@@ -109,7 +109,8 @@ class EthereumEventExtractorActor(
     for {
       maxBlock: Option[Long] ← blockDal.findMaxHeight()
       blockNum ← maxBlock match {
-        case Some(_) ⇒ Future.successful(maxBlock.get.toHexString)
+        case Some(_) ⇒
+          Future.successful(Numeric.prependHexPrefix(maxBlock.get.toHexString))
         case _ ⇒
           (ethereumAccessorActor ? XEthBlockNumberReq())
             .mapTo[XEthBlockNumberRes]
@@ -156,7 +157,7 @@ class EthereumEventExtractorActor(
             .withHash(result.hash)
             .withMiner(result.miner)
             .withUncles(result.uncles)
-            .withTxhashes(result.transactions.map(_.hash))
+            .withTxs(result.transactions)
 //          }
 //          else
 //            self ! XForkBlock((currentBlockNumber - 1).intValue())
@@ -173,7 +174,7 @@ class EthereumEventExtractorActor(
         .findByHeight(forkBlock.height.longValue())
         .map(_.get)
       nodeBlockData ← (ethereumAccessorActor ? XGetBlockWithTxHashByNumberReq(
-        forkBlock.height.toHexString
+        Numeric.prependHexPrefix(forkBlock.height.toHexString)
       )).mapTo[XGetBlockWithTxHashByNumberRes]
         .map(_.result.get)
       task ← if (dbBlockData.hash.equals(nodeBlockData.hash)) {
@@ -190,24 +191,23 @@ class EthereumEventExtractorActor(
   def indexBlock(job: XBlockJob): Unit = {
     for {
       txReceipts ← (ethereumAccessorActor ? XBatchGetTransactionReceiptsReq(
-        job.txhashes.map(XGetTransactionReceiptReq(_))
+        job.txs.map(tx ⇒ XGetTransactionReceiptReq(tx.hash))
       )).mapTo[XBatchGetTransactionReceiptsRes]
         .map(_.resps.map(_.result))
       batchGetUnclesReq = XBatchGetUncleByBlockNumAndIndexReq(
         job.uncles.zipWithIndex.unzip._2.map(
           index ⇒
             XGetUncleByBlockNumAndIndexReq(
-              job.height.toHexString,
-              index.toHexString
+              Numeric.prependHexPrefix(job.height.toHexString),
+              Numeric.prependHexPrefix(index.toHexString)
             )
         )
       )
       uncles ← (ethereumAccessorActor ? batchGetUnclesReq)
         .mapAs[XBatchGetUncleByBlockNumAndIndexRes]
         .map(_.resps.map(_.result.get.miner))
-      allGet = txReceipts.forall(_.nonEmpty)
       addresses = getBalanceAndAllowanceAdds(
-        txReceipts,
+        job.txs zip txReceipts,
         Address(delegateAddress),
         Address(protocolAddress)
       )
@@ -227,7 +227,12 @@ class EthereumEventExtractorActor(
       balanceReqs = balanceAddresses.unzip._1.toSet.map((add: String) ⇒ {
         XGetBalanceReq(
           add,
-          balanceAddresses.filter(_._1.equalsIgnoreCase(add)).unzip._2.toSet.toSeq
+          balanceAddresses
+            .filter(_._1.equalsIgnoreCase(add))
+            .unzip
+            ._2
+            .toSet
+            .toSeq
         )
       })
       allowanceAddresses = addresses._2
@@ -251,7 +256,7 @@ class EthereumEventExtractorActor(
           .map(req ⇒ (ethereumQueryActor ? req).mapAs[XGetAllowanceRes])
       )
     } yield {
-      if (allGet) {
+      if (txReceipts.forall(_.nonEmpty)) {
         // 更新余额
         balanceRes.foreach(res ⇒ {
           res.balanceMap.foreach(
@@ -288,6 +293,9 @@ class EthereumEventExtractorActor(
         val blockData = XBlockData()
           .withHash(job.hash)
           .withHeight(job.height)
+          .withAvgGasPrice(job.txs.foldLeft(0L) { (result, tx) ⇒
+            result + tx.gasPrice.longValue()
+          })
         blockDal.saveBlock(blockData)
 
         currentBlockNumber = job.height
