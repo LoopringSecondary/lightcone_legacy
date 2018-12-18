@@ -27,8 +27,15 @@ final class OrderHandlerMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
   // Throws exception if validation fails.
+
+  // TODO(hongyu): check the marketName is supported in the config
+  def assertMarketNameIsValid(marketName: String) = {}
+  def checkRawOrder(raworder: XRawOrder) = {}
+
   def validate = {
-    case msg: XSubmitRawOrderReq =>
-    case msg: XCancelOrderReq    =>
+    case msg @ XSubmitRawOrderReq(Some(raworder)) =>
+      checkRawOrder(raworder)
+      msg
+    case msg: XCancelOrderReq =>
   }
 }

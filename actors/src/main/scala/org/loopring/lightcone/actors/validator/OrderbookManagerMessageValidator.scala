@@ -26,8 +26,14 @@ object OrderbookManagerMessageValidator {
 final class OrderbookManagerMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
+  // TODO(hongyu): check the marketName is supported in the config
+  def assertMarketNameIsValid(marketName: String) = {}
+
   // Throws exception if validation fails.
   def validate = {
-    case msg: XGetOrderbookReq => msg
+    case XGetOrderbook(_, _, marketName) =>
+      assertMarketNameIsValid(marketName)
+      marketName
+    case msg: XGetOrderbook => msg
   }
 }

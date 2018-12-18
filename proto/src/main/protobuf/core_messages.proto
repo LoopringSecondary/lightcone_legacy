@@ -76,7 +76,7 @@ message XUpdateLatestTradingPrice {
     double price = 1;
 }
 
-message XGetOrderbookReq {
+message XGetOrderbook {
     int32 level = 2;
     int32 size = 1;
     string market_name = 3;

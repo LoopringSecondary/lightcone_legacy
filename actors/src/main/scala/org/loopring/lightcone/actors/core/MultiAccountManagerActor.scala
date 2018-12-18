@@ -64,8 +64,8 @@ object MultiAccountManagerActor extends ShardedByAddress {
         ERR_UNEXPECTED_ACTOR_MSG,
         "MultiAccountManagerActor does not handle XSubmitRawOrderReq, use XSubmitOrderReq"
       )
-    case req: XCancelOrderReq ⇒ req.address
-    case req: XSubmitOrderReq ⇒ req.address
+    case req: XCancelOrderReq ⇒ req.owner
+    case req: XSubmitOrderReq ⇒ req.owner
     case req: XGetBalanceAndAllowancesReq ⇒ req.address
     case req: XAddressBalanceUpdated ⇒ req.address
     case req: XAddressAllowanceUpdated ⇒ req.address

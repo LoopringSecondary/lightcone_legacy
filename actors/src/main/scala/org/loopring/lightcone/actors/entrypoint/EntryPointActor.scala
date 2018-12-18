@@ -55,7 +55,7 @@ class EntryPointActor(
     case _ @(XSubmitRawOrderReq | XCancelOrderReq) =>
       Some(OrderHandlerMessageValidator.name)
 
-    case _ @(XGetOrderbookReq) => Some(OrderbookManagerMessageValidator.name)
+    case _ @(XGetOrderbook) => Some(OrderbookManagerMessageValidator.name)
 
     case _ => None
   }

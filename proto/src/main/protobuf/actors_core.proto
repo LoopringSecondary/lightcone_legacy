@@ -105,7 +105,7 @@ message XGetAllowanceRes {
 }
 
 message XSubmitOrderReq {
-    string address = 1;
+    string owner = 1;
     XOrder order = 2;
 }
 

@@ -46,7 +46,7 @@ message XRestoreRawOrderRes {
 
 message XCancelOrderReq {
     string id = 1;
-    string address = 2; //用于分片路由
+    string owner = 2;
     XOrderStatus status = 3; //取消的类型
 }
 
