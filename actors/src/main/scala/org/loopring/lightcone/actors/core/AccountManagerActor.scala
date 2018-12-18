@@ -88,7 +88,7 @@ class AccountManagerActor(
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case XSubmitOrderReq(addr, Some(xorder)) =>
+    case XSubmitSimpleOrderReq(addr, Some(xorder)) =>
       assert(addr == address)
       submitOrder(xorder).sendTo(sender)
 
@@ -107,7 +107,7 @@ class AccountManagerActor(
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
   }
 
-  private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
+  private def submitOrder(xorder: XOrder): Future[XSubmitSimpleOrderRes] = {
     val order: Order = xorder
     for {
       _ <- getTokenManager(order.tokenS)
@@ -136,8 +136,8 @@ class AccountManagerActor(
     } yield {
       if (successful) {
         log.debug(s"submitting order to market manager actor: $order_")
-        marketManagerActor ! XSubmitOrderReq("", Some(xorder_))
-        XSubmitOrderRes(order = Some(xorder_))
+        marketManagerActor ! XSubmitSimpleOrderReq("", Some(xorder_))
+        XSubmitSimpleOrderRes(order = Some(xorder_))
       } else {
         throw new ErrorException(
           XError(convertOrderStatusToErrorCode(order.status))
@@ -192,7 +192,7 @@ class AccountManagerActor(
 
           case STATUS_PENDING =>
             //allowance的改变需要更新到marketManager
-            marketManagerActor ! XSubmitOrderReq(order = Some(order))
+            marketManagerActor ! XSubmitSimpleOrderReq(order = Some(order))
 
           case status =>
             log.error(

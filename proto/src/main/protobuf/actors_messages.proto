@@ -32,7 +32,7 @@ message XStart{
 }
 message XStop{}
 
-message XSubmitRawOrderReq {
+message XSubmitOrderReq {
     XRawOrder raw_order = 1;
 }
 
@@ -55,6 +55,6 @@ message XCancelOrderRes {
     XOrderStatus status = 2; //取消的类型
 }
 
-message XSubmitRawOrder {
+message XSubmitOrder {
     XRawOrder raw_order = 1;
 }
