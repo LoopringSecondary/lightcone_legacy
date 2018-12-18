@@ -48,7 +48,7 @@ message XCancelOrderReq {
     string id = 1;
     string owner = 2;
     XOrderStatus status = 3; //取消的类型
-    string market_name = 4;
+    string market_id = 4;
 }
 
 message XCancelOrderRes {

@@ -21,7 +21,7 @@ import org.loopring.lightcone.proto.XMarketId
 import org.web3j.utils.Numeric
 
 trait ShardedByMarket extends Sharded {
-  val extractMarketName: PartialFunction[Any, XMarketId]
+  val extractmarketId: PartialFunction[Any, XMarketId]
 
   def hashed(marketIdOpt: Option[XMarketId]) = {
     marketIdOpt map { marketId =>
@@ -32,13 +32,13 @@ trait ShardedByMarket extends Sharded {
   }
 
   private def _extractEntityId(msg: Any): Option[(String, Any)] = {
-    hashed((extractMarketName.lift)(msg)) map { entity =>
+    hashed((extractmarketId.lift)(msg)) map { entity =>
       (s"${name}_${entity}", msg)
     }
   }
 
   private def _extractShardId(msg: Any): Option[String] = {
-    hashed((extractMarketName.lift)(msg)) map { entity =>
+    hashed((extractmarketId.lift)(msg)) map { entity =>
       s"shard_${entity}"
     }
   }
