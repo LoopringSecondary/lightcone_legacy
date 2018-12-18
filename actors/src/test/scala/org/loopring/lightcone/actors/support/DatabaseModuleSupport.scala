@@ -16,14 +16,9 @@
 
 package org.loopring.lightcone.actors.support
 
-import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
-import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.core.DatabaseQueryActor
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.scalatest.BeforeAndAfterAll
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
-import org.loopring.lightcone.actors.support._
 
 trait DatabaseModuleSupport extends BeforeAndAfterAll {
   my: CommonSpec =>

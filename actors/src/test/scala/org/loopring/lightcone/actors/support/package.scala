@@ -36,7 +36,7 @@ package object support {
 
   container.starting()
 
-  Thread.sleep(20000)
+  Thread.sleep(10000)
 
   val dbConfig1: DatabaseConfig[JdbcProfile] =
     DatabaseConfig.forConfig[JdbcProfile](
