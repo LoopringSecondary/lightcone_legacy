@@ -100,7 +100,7 @@ class AccountManagerActor(
         Future.failed(
           ErrorException(
             ERR_FAILED_HANDLE_MSG,
-            s"doesn't contain this order ${req.id}"
+            s"no order found with id: ${req.id}"
           )
         ) sendTo sender
       }
