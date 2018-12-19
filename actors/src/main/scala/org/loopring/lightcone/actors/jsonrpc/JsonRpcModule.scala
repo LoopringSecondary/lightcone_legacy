@@ -49,10 +49,10 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
   implicit val myExceptionHandler = ExceptionHandler {
     case e: ErrorException =>
-      replyWithError(e.error.code.value, Some(e.error.message))("", None)
+      replyWithError(e.error.code.value, Some(e.error.message))(None)
 
     case e: Throwable =>
-      replyWithError(-32603, Some(e.getMessage))("", None)
+      replyWithError(-32603, Some(e.getMessage))(None)
   }
 
   val routes: Route = {
@@ -60,7 +60,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
       path("loopring") {
         post {
           entity(as[JsonRpcRequest]) { jsonReq =>
-            implicit val method = jsonReq.method
+            val method = jsonReq.method
             implicit val id = jsonReq.id
 
             if (id.isEmpty) {
@@ -110,7 +110,6 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                     JsonRpcResponse(
                       id = jsonReq.id,
                       jsonrpc = jsonReq.jsonrpc,
-                      method = jsonReq.method,
                       error = Some(
                         JsonRpcError(
                           code = -32603,
@@ -132,25 +131,18 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
       message: Option[String] = None,
       data: Option[JValue] = None
     )(
-      implicit method: String,
-      id: Option[String]
+      implicit id: Option[String]
     ) =
     complete(
       JsonRpcResponse(
         JSON_RPC_VER,
-        method,
         None,
         Some(JsonRpcError(code, message, data)),
         id
       )
     )
 
-  private def replyWith(
-      content: JValue
-    )(
-      implicit method: String,
-      id: Option[String]
-    ) =
-    complete(JsonRpcResponse(JSON_RPC_VER, method, Option(content), None, id))
+  private def replyWith(content: JValue)(implicit id: Option[String]) =
+    complete(JsonRpcResponse(JSON_RPC_VER, Option(content), None, id))
 
 }
