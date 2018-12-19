@@ -20,5 +20,6 @@ import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 
 trait JsonSupport extends Json4sSupport {
   implicit val serialization = org.json4s.native.Serialization
+  implicit val parse = org.json4s.native.JsonParser
   implicit val formats = org.json4s.DefaultFormats
 }

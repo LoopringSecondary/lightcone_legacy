@@ -82,7 +82,7 @@ class OrderHandlerActor(
       } yield {
         cancelRes.headOption match {
           case Some(res) ⇒
-            req.copy(owner = "SOME OWNER")
+            req //todo:测试
           case None ⇒
             throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }
