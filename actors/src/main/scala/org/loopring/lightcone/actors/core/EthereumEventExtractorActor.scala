@@ -295,7 +295,7 @@ class EthereumEventExtractorActor(
           .withHeight(job.height)
           .withAvgGasPrice(job.txs.foldLeft(0L) { (result, tx) ⇒
             result + tx.gasPrice.longValue()
-          })
+          } / job.txs.size)
         blockDal.saveBlock(blockData)
 
         currentBlockNumber = job.height
