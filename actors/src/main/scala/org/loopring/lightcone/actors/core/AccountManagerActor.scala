@@ -51,10 +51,8 @@ class AccountManagerActor(
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
-      //所有异常都抛给上层监管者，shardingActor
       case e: Exception ⇒
         log.error(e.getMessage)
-
         Escalate
     }
 
@@ -84,8 +82,12 @@ class AccountManagerActor(
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case XSubmitSimpleOrderReq(addr, Some(xorder)) =>
-      assert(addr == address)
+    case XRecoverOrderReq(Some(xraworder)) =>
+      submitOrder(xraworder).map { _ =>
+        XRecoverOrderRes(xraworder.id, true)
+      }.sendTo(sender)
+
+    case XSubmitSimpleOrderReq(_, Some(xorder)) =>
       submitOrder(xorder).sendTo(sender)
 
     case req: XCancelOrderReq =>
@@ -161,11 +163,11 @@ class AccountManagerActor(
     }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
-    if (manager.hasTokenManager(token))
+    if (manager.hasTokenManager(token)) {
       Future.successful(manager.getTokenManager(token))
-    else
+    } else {
+      log.debug(s"getTokenManager0 ${token}")
       for {
-        _ <- Future.successful(log.debug(s"getTokenManager0 ${token}"))
         res <- (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
           address,
           Seq(token)
@@ -174,9 +176,10 @@ class AccountManagerActor(
         ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
         _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
         tokenManager = manager.addTokenManager(tm)
-        _ <- Future.successful(log.debug(s"getTokenManager5 ${token}"))
+        _ = log.debug(s"getTokenManager5 ${token}")
 
       } yield tokenManager
+    }
   }
 
   private def updateBalanceOrAllowance(
@@ -209,12 +212,4 @@ class AccountManagerActor(
         }
       }
     }
-
-  protected def recoverOrder(xorder: XOrder) = {
-    log.debug(
-      s"recoverOrder, ${self.path.toString}, ${ethereumQueryActor.path.toString}, ${xorder}"
-    )
-    submitOrder(xorder)
-  }
-
 }

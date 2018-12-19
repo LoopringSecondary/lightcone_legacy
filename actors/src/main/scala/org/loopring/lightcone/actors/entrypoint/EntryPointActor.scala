@@ -17,14 +17,15 @@
 package org.loopring.lightcone.actors.entrypoint
 
 import akka.actor._
-import akka.util.Timeout
 import akka.event.LoggingReceive
+import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.proto._
+
 import scala.concurrent.ExecutionContext
 
 object EntryPointActor {
@@ -54,6 +55,13 @@ class EntryPointActor(
   def findDestination(msg: Any): Option[String] = msg match {
     case _ @(XSubmitOrderReq | XCancelOrderReq) =>
       Some(OrderHandlerActor.name)
+
+    case _ @(XGetBalanceAndAllowancesReq | XGetBalanceReq | XGetAllowanceReq |
+        GetFilledAmountReq) ⇒
+      Some(EthereumQueryActor.name)
+
+    case _ @(XJsonRpcReq | XRpcReqWithHeight) ⇒
+      Some(EthereumAccessActor.name)
 
     case req: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
 

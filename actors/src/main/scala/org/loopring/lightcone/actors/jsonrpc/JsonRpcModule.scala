@@ -18,6 +18,8 @@ package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.XError
+import org.loopring.lightcone.proto.{XError, XJsonRpcReq, XJsonRpcRes}
+import org.json4s._
 import org.json4s.JsonAST.JValue
 import akka.actor._
 import akka.util.Timeout
@@ -26,8 +28,12 @@ import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.pattern.ask
 import com.typesafe.config.Config
 
+import org.json4s.jackson.Serialization
+
+import scala.reflect.runtime.universe._
 import scala.concurrent.duration._
 import scala.concurrent._
+import scala.util.{Failure, Success}
 
 trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   val requestHandler: ActorRef
@@ -48,41 +54,74 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   }
 
   val routes: Route = {
-    path(config.getString("jsonrpc.endpoint")) {
-      post {
-        entity(as[JsonRpcRequest]) { jsonReq =>
-          implicit val method = jsonReq.method
-          implicit val id = jsonReq.id
+    pathPrefix(endpoint) {
+      path("loopring") {
+        post {
+          entity(as[JsonRpcRequest]) { jsonReq =>
+            implicit val method = jsonReq.method
+            implicit val id = jsonReq.id
 
-          if (id.isEmpty) {
-            replyWithError(-32000, Some("`id missing"))
-          } else {
-            getPayloadConverter(method) match {
-              case None =>
-                replyWithError(-32601)
+            if (id.isEmpty) {
+              replyWithError(-32000, Some("`id missing"))
+            } else {
+              getPayloadConverter(method) match {
+                case None =>
+                  replyWithError(-32601)
 
-              case Some(converter) =>
-                jsonReq.params.map(converter.convertToRequest) match {
-                  case None =>
-                    replyWithError(
-                      -32602,
-                      Some("`params` is missing, use `{}` as default value")
-                    )
+                case Some(converter) =>
+                  jsonReq.params.map(converter.convertToRequest) match {
+                    case None =>
+                      replyWithError(
+                        -32602,
+                        Some("`params` is missing, use `{}` as default value")
+                      )
 
-                  case Some(req) =>
-                    val f = (requestHandler ? req).map {
-                      case err: XError => throw ErrorException(err)
-                      case other       => other
-                    }
+                    case Some(req) =>
+                      val f = (requestHandler ? req).map {
+                        case err: XError => throw ErrorException(err)
+                        case other       => other
+                      }
 
-                    onSuccess(f) { resp =>
-                      replyWith(converter.convertFromResponse(resp))
-                    }
-                }
+                      onSuccess(f) { resp =>
+                        replyWith(converter.convertFromResponse(resp))
+                      }
+                  }
+              }
             }
           }
         }
-      }
+      } ~
+        path("ethereum") {
+          post {
+            entity(as[JsonRpcRequest]) { jsonReq =>
+              val f =
+                (requestHandler ? XJsonRpcReq(Serialization.write(jsonReq)))
+                  .mapTo[XJsonRpcRes]
+
+              onComplete(f) {
+                case Success(resp) ⇒
+                  complete(
+                    Serialization.read[JsonRpcResponse](resp.json)
+                  )
+                case Failure(e) ⇒
+                  complete(
+                    JsonRpcResponse(
+                      id = jsonReq.id,
+                      jsonrpc = jsonReq.jsonrpc,
+                      method = jsonReq.method,
+                      error = Some(
+                        JsonRpcError(
+                          code = -32603,
+                          message = Some(e.getMessage)
+                        )
+                      )
+                    )
+                  )
+              }
+
+            }
+          }
+        }
     }
   }
 

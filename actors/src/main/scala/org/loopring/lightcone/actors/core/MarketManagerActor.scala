@@ -111,7 +111,7 @@ class MarketManagerActor(
   val wethTokenAddress = config.getString("weth.address")
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
-  val maxrecoverWindowMinutes =
+  val maxRecoverDurationMinutes =
     selfConfig.getInt("max-recover-duration-minutes")
 
   val gasLimitPerRingV2 = BigInt(
@@ -145,7 +145,11 @@ class MarketManagerActor(
 
     autoSwitchBackToReceive = Some(
       context.system.scheduler
-        .scheduleOnce(maxrecoverWindowMinutes.minute, self, XRecoverEnded(true))
+        .scheduleOnce(
+          maxRecoverDurationMinutes.minute,
+          self,
+          XRecoverEnded(true)
+        )
     )
 
     if (skiprecover) {
@@ -166,7 +170,7 @@ class MarketManagerActor(
     case msg @ XRecoverEnded(timeout) =>
       autoSwitchBackToReceive.foreach(_.cancel)
       autoSwitchBackToReceive = None
-      s"market manager `${entityName}` recover completed (due to timeout: ${timeout})"
+      s"market manager `${entityName}` recover completed (timeout=${timeout})"
       context.become(receive)
 
     case msg: Any =>
