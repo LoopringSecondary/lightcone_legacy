@@ -25,9 +25,11 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import akka.serialization._
 
 object OrderRecoverCoordinator extends {
   val name = "order_recover_coordinator"
@@ -45,8 +47,12 @@ class OrderRecoverCoordinator(
     extends Actor
     with ActorLogging {
 
+  var pendingReq: Option[XRecoverReq] = None
+
   def receive: Receive = {
-    case req: Any =>
+    case XRecoverReq(addressShardingEntities, marketIds) =>
+      val identifier = Serialization.serializedActorPath(sender);
+
   }
 
 }
