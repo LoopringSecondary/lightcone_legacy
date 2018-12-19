@@ -107,7 +107,7 @@ class AccountManagerActor(
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
   }
 
-  private def submitOrder(xorder: XOrder): Future[XSubmitSimpleOrderRes] = {
+  private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
     val order: Order = xorder
     for {
       _ <- getTokenManager(order.tokenS)
@@ -137,7 +137,7 @@ class AccountManagerActor(
       if (successful) {
         log.debug(s"submitting order to market manager actor: $order_")
         marketManagerActor ! XSubmitSimpleOrderReq("", Some(xorder_))
-        XSubmitSimpleOrderRes(order = Some(xorder_))
+        XSubmitOrderRes(order = Some(xorder_))
       } else {
         throw new ErrorException(
           XError(convertOrderStatusToErrorCode(order.status))
