@@ -31,7 +31,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.pattern.ask
 import org.json4s.jackson.Serialization
-
+import com.typesafe.config.Config
 import scala.reflect.runtime.universe._
 import scala.concurrent.duration._
 import scala.concurrent._
@@ -39,7 +39,7 @@ import scala.util.{Failure, Success}
 
 trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   val requestHandler: ActorRef
-  val endpoint: String = "jsonrpc"
+  val config: Config
 
   implicit val system: ActorSystem
   implicit val timeout = Timeout(2 second)
@@ -56,7 +56,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   }
 
   val routes: Route = {
-    pathPrefix(endpoint) {
+    pathPrefix(config.getString("jsonrpc.endpoint")) {
       path("loopring") {
         post {
           entity(as[JsonRpcRequest]) { jsonReq =>

@@ -70,21 +70,6 @@ class DatabaseQueryActor(
   private[this] val logger = Logger(this.getClass)
 
   def receive: Receive = LoggingReceive {
-    case req: XSaveOrderReq ⇒
-      (for {
-        result <- dbModule.orderService.saveOrder(req.order.get)
-      } yield {
-        if (result.isLeft) {
-          XSaveOrderResult(Some(result.left.get), false, XErrorCode.ERR_NONE)
-        } else {
-          if (result.right.get == XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT) {
-            XSaveOrderResult(None, true, result.right.get)
-          } else {
-            XSaveOrderResult(None, false, result.right.get)
-          }
-        }
-      }) sendTo sender
-
     case req: XGetOrdersForUserReq ⇒
       (for {
         result <- req.market match {
@@ -124,14 +109,10 @@ class DatabaseQueryActor(
         }
       } yield
         XGetOrdersForUserResult(result, XErrorCode.ERR_NONE)) sendTo sender
-    case req: XUserCancelOrderReq ⇒
-      (for {
-        result <- dbModule.orderService.markOrderSoftCancelled(req.orderHashes)
-      } yield XUserCancelOrderResult(result)) sendTo sender
     case req: XGetTradesReq ⇒
       (for {
         result <- dbModule.tradeService.getTrades(req)
-      } yield result) sendTo sender
+      } yield XGetTradesResult(result)) sendTo sender
     case m ⇒ logger.error(s"Unhandled message ${m}")
   }
 
