@@ -17,19 +17,31 @@
 package org.loopring.lightcone.actors.base
 
 import akka.cluster.sharding._
+import org.loopring.lightcone.proto.XMarketId
+import org.web3j.utils.Numeric
 
 trait ShardedByMarket extends Sharded {
-  val extractMarketName: PartialFunction[Any, String]
+  val extractMarketId: PartialFunction[Any, XMarketId]
 
-  def hashed(msg: Any) = Math.abs(msg.hashCode % numOfShards)
-
-  private def _extractEntityId(msg: Any): Option[(String, Any)] =
-    (extractMarketName.lift)(msg).map { marketId =>
-      ("${name}_${hashed(msg)}_${marketId}", msg)
+  def hashed(marketIdOpt: Option[XMarketId]) = {
+    marketIdOpt map { marketId =>
+      val xorValue = Numeric.toBigInt(marketId.primary) xor
+        Numeric.toBigInt(marketId.secondary)
+      xorValue.mod(BigInt(numOfShards)).abs.toInt
     }
+  }
 
-  private def _extractShardId(msg: Any): Option[String] =
-    Some("shard_" + hashed(msg))
+  private def _extractEntityId(msg: Any): Option[(String, Any)] = {
+    hashed((extractMarketId.lift)(msg)) map { entity =>
+      (s"${name}_${entity}", msg)
+    }
+  }
+
+  private def _extractShardId(msg: Any): Option[String] = {
+    hashed((extractMarketId.lift)(msg)) map { shard =>
+      s"shard_${shard}"
+    }
+  }
 
   val extractEntityId: ShardRegion.ExtractEntityId =
     Function.unlift(_extractEntityId)

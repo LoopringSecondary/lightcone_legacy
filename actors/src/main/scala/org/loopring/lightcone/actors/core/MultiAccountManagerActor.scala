@@ -21,15 +21,15 @@ import akka.cluster.sharding._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
+import org.loopring.lightcone.proto._
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 object MultiAccountManagerActor extends ShardedByAddress {
@@ -154,7 +154,7 @@ class MultiAccountManagerActor(
       log.info(s"created new account manager for address $address")
       accountManagerActors.add(
         address,
-        context.actorOf(Props(new AccountManagerActor()), address)
+        context.actorOf(Props(new AccountManagerActor(address)), address)
       )
     }
     accountManagerActors.get(address)

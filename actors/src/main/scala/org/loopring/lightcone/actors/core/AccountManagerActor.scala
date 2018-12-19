@@ -23,6 +23,7 @@ import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
@@ -31,16 +32,13 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
+
 import scala.concurrent._
 import scala.concurrent.duration._
 
 // main owner: 于红雨
-object AccountManagerActor {
-  val name = "account_manager"
-}
-
 class AccountManagerActor(
+    address: String
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -60,7 +58,6 @@ class AccountManagerActor(
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
-  private var address: String = _
 
   protected def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
@@ -69,7 +66,6 @@ class AccountManagerActor(
 
     case XGetBalanceAndAllowancesReq(addr, tokens) =>
       assert(addr == address)
-
       (for {
         managers <- Future.sequence(tokens.map(getTokenManager))
         _ = assert(tokens.size == managers.size)
@@ -95,16 +91,24 @@ class AccountManagerActor(
       submitOrder(xorder).sendTo(sender)
 
     case req: XCancelOrderReq =>
+      assert(req.owner == address)
       if (manager.cancelOrder(req.id)) {
         marketManagerActor forward req
       } else {
-        Future.failed(ErrorException(ERR_FAILED_HANDLE_MSG)) sendTo sender
+        Future.failed(
+          ErrorException(
+            ERR_FAILED_HANDLE_MSG,
+            s"no order found with id: ${req.id}"
+          )
+        ) sendTo sender
       }
 
-    case XAddressBalanceUpdated(_, token, newBalance) =>
+    case XAddressBalanceUpdated(addr, token, newBalance) =>
+      assert(addr == address)
       updateBalanceOrAllowance(token, newBalance, _.setBalance(_))
 
-    case XAddressAllowanceUpdated(_, token, newBalance) =>
+    case XAddressAllowanceUpdated(addr, token, newBalance) =>
+      assert(addr == address)
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
   }
 
@@ -112,8 +116,10 @@ class AccountManagerActor(
     val order: Order = xorder
     for {
       _ <- getTokenManager(order.tokenS)
-      _ <- getTokenManager(order.tokenFee)
-      if order.amountFee > 0 && order.tokenS != order.tokenFee
+      _ <- if (order.amountFee > 0 && order.tokenS != order.tokenFee)
+        getTokenManager(order.tokenFee)
+      else
+        Future.successful(Unit)
 
       // Update the order's _outstanding field.
       orderHistoryRes <- (ethereumQueryActor ? XGetOrderFilledAmountReq(
@@ -190,7 +196,10 @@ class AccountManagerActor(
         order.status match {
           case STATUS_CANCELLED_LOW_BALANCE |
               STATUS_CANCELLED_LOW_FEE_BALANCE =>
-            marketManagerActor ! XCancelOrderReq(order.id)
+            marketManagerActor ! XCancelOrderReq(
+              id = order.id,
+              marketId = Some(XMarketId(order.tokenS, order.tokenB))
+            )
 
           case STATUS_PENDING =>
             //allowance的改变需要更新到marketManager
