@@ -91,16 +91,23 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       new RingIncomeEstimatorImpl()
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
-    //-----------deploy local actors-----------
-    //todo:需要测试badMessage，可能有死循环
-    val listener =
-      system.actorOf(Props[BadMessageListener], "bad_message_listener")
-
-    system.eventStream.subscribe(listener, classOf[UnhandledMessage])
-    system.eventStream.subscribe(listener, classOf[DeadLetter])
-
-    // Only deploy cluster actors when this node's status changed to UP
     Cluster(system).registerOnMemberUp {
+      //-----------deploy local actors-----------
+      //todo:需要测试badMessage，可能有死循环
+      val listener =
+        system.actorOf(Props[BadMessageListener], "bad_message_listener")
+
+      system.eventStream.subscribe(listener, classOf[UnhandledMessage])
+      system.eventStream.subscribe(listener, classOf[DeadLetter])
+
+      actors.add(
+        TokenMetadataRefresher.name,
+        system
+          .actorOf(
+            Props(new TokenMetadataRefresher),
+            TokenMetadataRefresher.name
+          )
+      )
 
       //-----------deploy cluster singletons-----------
       actors.add(
@@ -114,24 +121,21 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         )
       )
 
-      // This actor must be deployed on every node for TokenMetadataManager
-      actors.add(
-        TokenMetadataRefresher.name,
-        system
-          .actorOf(
-            Props(new TokenMetadataRefresher),
-            TokenMetadataRefresher.name
-          )
-      )
-
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
+      actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
+      actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
+      actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
+      actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
+      actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
+      actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
+      actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
 
       actors.add(
         MultiAccountManagerActor.name,
         MultiAccountManagerActor.startShardRegion
       )
-      actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
+
       actors.add(
         EthereumEventExtractorActor.name,
         EthereumEventExtractorActor.startShardRegion
@@ -140,16 +144,11 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         EthereumEventPersistorActor.name,
         EthereumEventPersistorActor.startShardRegion
       )
-      actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
-      actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
+
       actors.add(
         OrderbookManagerActor.name,
         OrderbookManagerActor.startShardRegion
       )
-      actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
-      actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
-      actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
-      actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
 
       //-----------deploy local actors-----------
       actors.add(
@@ -202,8 +201,8 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         EntryPointActor.name,
         system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
       )
-      //-----------deploy JSONRPC service-----------
 
+      //-----------deploy JSONRPC service-----------
       if (cluster.selfRoles.contains("jsonrpc")) {
         val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
         with RpcBinding
