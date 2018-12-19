@@ -35,6 +35,7 @@ import org.json4s.jackson.Serialization
 import scala.reflect.runtime.universe._
 import scala.concurrent.duration._
 import scala.concurrent._
+import scala.util.{Failure, Success}
 
 trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   val requestHandler: ActorRef
@@ -99,11 +100,27 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                 (requestHandler ? XJsonRpcReq(Serialization.write(jsonReq)))
                   .mapTo[XJsonRpcRes]
 
-              onSuccess(f) { resp ⇒
-                complete(
-                  Serialization.read[JsonRpcResponse](resp.json)
-                )
+              onComplete(f) {
+                case Success(resp) ⇒
+                  complete(
+                    Serialization.read[JsonRpcResponse](resp.json)
+                  )
+                case Failure(e) ⇒
+                  complete(
+                    JsonRpcResponse(
+                      id = jsonReq.id,
+                      jsonrpc = jsonReq.jsonrpc,
+                      method = jsonReq.method,
+                      error = Some(
+                        JsonRpcError(
+                          code = -32603,
+                          message = Some(e.getMessage)
+                        )
+                      )
+                    )
+                  )
               }
+
             }
           }
         }
