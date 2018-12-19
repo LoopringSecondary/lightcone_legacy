@@ -183,23 +183,6 @@ message XSendRawTxRes {
     }
 }
 
-message XRecoverReq {
-   repeated string address_sharding_entities = 1;
-   repeated XMarketId market_ids = 2;
-}
-
-message XRecoverOrderReq {
-    XRawOrder raw_order = 1;
-}
-
-message XRecoverOrderRes {
-    string order_id = 1;
-    bool successful = 2;
-}
-
-message XRecoverEnded {
-    bool timeout = 1;
-}
 
 enum XExecutedStatus {
     EXECUTED_STATUS_UNKNOW = 0;

@@ -24,7 +24,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
-import org.loopring.lightcone.lib.{ ErrorException, TimeProvider }
+import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
@@ -35,14 +35,16 @@ import scala.concurrent.duration._
 object MultiAccountManagerActor extends ShardedByAddress {
   val name = "multi_account_manager"
 
-  def startShardRegion()(
-    implicit system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    dustEvaluator: DustOrderEvaluator): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dustEvaluator: DustOrderEvaluator
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -52,7 +54,8 @@ object MultiAccountManagerActor extends ShardedByAddress {
       entityProps = Props(new MultiAccountManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
-      extractShardId = extractShardId)
+      extractShardId = extractShardId
+    )
   }
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
@@ -60,7 +63,8 @@ object MultiAccountManagerActor extends ShardedByAddress {
     case req: XSubmitOrderReq =>
       throw ErrorException(
         ERR_UNEXPECTED_ACTOR_MSG,
-        "MultiAccountManagerActor does not handle XSubmitOrderReq, use XSubmitSimpleOrderReq")
+        "MultiAccountManagerActor does not handle XSubmitOrderReq, use XSubmitSimpleOrderReq"
+      )
 
     case XRecoverOrderReq(Some(raworder)) => raworder.owner
     case req: XCancelOrderReq ⇒ req.owner
@@ -71,15 +75,16 @@ object MultiAccountManagerActor extends ShardedByAddress {
   }
 }
 
-class MultiAccountManagerActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeProvider: TimeProvider,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef],
-  val dustEvaluator: DustOrderEvaluator)
-  extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
-  with ActorLogging {
+class MultiAccountManagerActor(
+  )(
+    implicit val config: Config,
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
+    val dustEvaluator: DustOrderEvaluator)
+    extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
+    with ActorLogging {
 
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
@@ -97,12 +102,18 @@ class MultiAccountManagerActor()(
         log.error(e.getMessage)
         Restart
     }
+
   override def preStart(): Unit = {
     super.preStart()
 
     autoSwitchBackToReceive = Some(
       context.system.scheduler
-        .scheduleOnce(maxRecoverDurationMinutes.minute, self, XRecoverEnded(true)))
+        .scheduleOnce(
+          maxRecoverDurationMinutes.minute,
+          self,
+          XRecoverEnded(true)
+        )
+    )
 
     if (skiprecover) {
       log.warning(s"actor recover skipped: ${self.path}")
@@ -119,14 +130,15 @@ class MultiAccountManagerActor()(
     case req: XRecoverOrderReq => handleRequest(req)
 
     case XRecoverEnded(timeout) =>
-      s"account manager ${entityName} recover completed (due to timeout: ${timeout})"
+      s"multi-account manager ${entityName} recover completed (timeout=${timeout})"
       context.become(receive)
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
       sender ! XError(
         ERR_REJECTED_DURING_RECOVER,
-        s"account manager ${entityName} is being recovered")
+        s"account manager ${entityName} is being recovered"
+      )
   }
 
   def receive: Receive = {
@@ -138,7 +150,8 @@ class MultiAccountManagerActor()(
     case None =>
       throw ErrorException(
         ERR_UNEXPECTED_ACTOR_MSG,
-        s"$req cannot be handled by ${getClass.getName}")
+        s"$req cannot be handled by ${getClass.getName}"
+      )
   }
 
   protected def accountManagerActorFor(address: String): ActorRef = {
@@ -146,7 +159,8 @@ class MultiAccountManagerActor()(
       log.info(s"created new account manager for address $address")
       accountManagerActors.add(
         address,
-        context.actorOf(Props(new AccountManagerActor(address)), address))
+        context.actorOf(Props(new AccountManagerActor(address)), address)
+      )
     }
     accountManagerActors.get(address)
   }

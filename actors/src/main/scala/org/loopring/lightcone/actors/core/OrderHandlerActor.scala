@@ -70,7 +70,7 @@ class OrderHandlerActor(
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
-  def mammValidator: ActorRef =
+  def mammv: ActorRef =
     actors.get(MultiAccountManagerMessageValidator.name)
 
   //save order to db first, then send to AccountManager
@@ -86,7 +86,7 @@ class OrderHandlerActor(
           case None ⇒
             throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }
-      }) forwardTo (mammValidator, sender)
+      }) forwardTo (mammv, sender)
 
     case XSubmitOrderReq(Some(raworder)) ⇒
       (for {
@@ -97,11 +97,8 @@ class OrderHandlerActor(
           case Right(errCode) =>
             throw ErrorException(errCode, s"failed to submit order: $raworder")
           case Left(resRawOrder) =>
-            XSubmitSimpleOrderReq(
-              resRawOrder.owner,
-              Some(resRawOrder)
-            )
+            XSubmitSimpleOrderReq(resRawOrder.owner, Some(resRawOrder))
         }
-      }) forwardTo (mammValidator, sender)
+      }) forwardTo (mammv, sender)
   }
 }

@@ -30,6 +30,7 @@ import org.loopring.lightcone.proto.XErrorCode._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import akka.serialization._
+import scalapb.json4s.JsonFormat
 
 object OrderRecoverCoordinator extends {
   val name = "order_recover_coordinator"
@@ -44,15 +45,68 @@ class OrderRecoverCoordinator(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator)
-    extends Actor
+    extends ActorWithPathBasedConfig(OrderRecoverCoordinator.name)
     with ActorLogging {
 
-  var pendingReq: Option[XRecoverReq] = None
+  var batchId = 1L
+  var pendingBatchRequestOpt: Option[XRecoverReq] = None
+  var batchTimeoutCancellable: Option[Cancellable] = None
 
-  def receive: Receive = {
-    case XRecoverReq(addressShardingEntities, marketIds) =>
-      val identifier = Serialization.serializedActorPath(sender);
+  val batchTimeout =
+    selfConfig.getInt("batch-timeout-seconds")
 
+  override def preStart(): Unit = {
+    super.preStart()
+
+    batchTimeoutCancellable = Some(
+      context.system.scheduler
+        .scheduleOnce(batchTimeout.seconds, self, XRecoverBatchTimeout())
+    )
   }
 
+  def receive: Receive = {
+
+    case req: XRecoverBatchTimeout if pendingBatchRequestOpt.nonEmpty =>
+      val batchReq = pendingBatchRequestOpt.get
+
+      log.warning(s"""
+      |>>>
+      |>>> BATCH RECOVER STARTED:
+      |>>> ${JsonFormat.toJsonString(batchReq)}
+      |>>> """)
+
+      actors.get(OrderRecoverActor.name) ! batchReq
+      pendingBatchRequestOpt = None
+      batchId += 1
+
+    case req: XRecoverReq =>
+      val requester = Serialization.serializedActorPath(sender)
+
+      val merged = mergeRequests(
+        pendingBatchRequestOpt.getOrElse(XRecoverReq()),
+        req.copy(requesters = Seq(requester))
+      )
+      pendingBatchRequestOpt = Some(merged)
+
+      log.info(
+        s"current pending batch recovery request: ${pendingBatchRequestOpt.get}"
+      )
+
+      batchTimeoutCancellable.foreach(_.cancel)
+      batchTimeoutCancellable = Some(
+        context.system.scheduler
+          .scheduleOnce(batchTimeout.seconds, self, XRecoverBatchTimeout())
+      )
+  }
+
+  private def mergeRequests(
+      r1: XRecoverReq,
+      r2: XRecoverReq
+    ) =
+    XRecoverReq(
+      (r1.addressShardingEntities ++ r2.addressShardingEntities).distinct,
+      (r1.marketIds ++ r2.marketIds).distinct,
+      (r1.requesters ++ r2.requesters).distinct,
+      batchId
+    )
 }

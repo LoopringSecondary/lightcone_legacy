@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{ Actor, ActorLogging, Props }
+import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern._
 import akka.util.Timeout
 import com.google.protobuf.ByteString
@@ -24,10 +24,10 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
 
-import scala.concurrent.{ Await, ExecutionContext }
+import scala.concurrent.{Await, ExecutionContext}
 
 class CoreActorsIntegrationSpec_SubmitOneOrder
-  extends CommonSpec("""
+    extends CommonSpec("""
                          |akka.cluster.roles=[
                          | "order_handler",
                          | "multi_account_manager",
@@ -35,16 +35,17 @@ class CoreActorsIntegrationSpec_SubmitOneOrder
                          | "orderbook_manager",
                          | "gas_price"]
                          |""".stripMargin)
-  with OrderHandleSupport
-  with MultiAccountManagerSupport
-  with MarketManagerSupport
-  with OrderbookManagerSupport {
+    with OrderHandleSupport
+    with MultiAccountManagerSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport {
 
-  class EthereumQueryForRecoveryTestActor()(
-    implicit ec: ExecutionContext,
-    timeout: Timeout)
-    extends Actor
-    with ActorLogging {
+  class EthereumQueryForRecoveryTestActor(
+    )(
+      implicit ec: ExecutionContext,
+      timeout: Timeout)
+      extends Actor
+      with ActorLogging {
 
     def receive: Receive = {
       case req: XGetBalanceAndAllowancesReq =>
@@ -54,11 +55,15 @@ class CoreActorsIntegrationSpec_SubmitOneOrder
             Map(
               req.tokens(0) -> XBalanceAndAllowance(
                 ByteString.copyFrom("100000000000000000000000000", "UTF-8"),
-                ByteString.copyFrom("100000000000000000000000000", "UTF-8"))))
+                ByteString.copyFrom("100000000000000000000000000", "UTF-8")
+              )
+            )
+          )
       case XGetOrderFilledAmountReq(orderId) =>
         sender ! XGetOrderFilledAmountRes(
           orderId,
-          ByteString.copyFrom("0", "UTF-8"))
+          ByteString.copyFrom("0", "UTF-8")
+        )
     }
   }
 
@@ -82,17 +87,23 @@ class CoreActorsIntegrationSpec_SubmitOneOrder
           XRawOrder.State(
             createdAt = timeProvider.getTimeMillis,
             updatedAt = timeProvider.getTimeMillis,
-            status = XOrderStatus.STATUS_NEW)),
+            status = XOrderStatus.STATUS_NEW
+          )
+        ),
         feeParams = Some(
           XRawOrder.FeeParams(
             tokenFee = LRC_TOKEN.address,
-            amountFee = ByteString.copyFrom("3".zeros(18).toString(), "utf-8"))),
+            amountFee = ByteString.copyFrom("3".zeros(18).toString(), "utf-8")
+          )
+        ),
         params = Some(XRawOrder.Params(validUntil = 2000)),
         marketHash =
-          MarketHashProvider.convert2Hex(LRC_TOKEN.address, WETH_TOKEN.address))
+          MarketHashProvider.convert2Hex(LRC_TOKEN.address, WETH_TOKEN.address)
+      )
 
       val submitF = actors.get(OrderHandlerActor.name) ? XSubmitOrderReq(
-        Some(rawOrder))
+        Some(rawOrder)
+      )
       val submitRes = Await.result(submitF, timeout.duration)
       info(s"submit res: ${submitRes}")
 
@@ -100,7 +111,8 @@ class CoreActorsIntegrationSpec_SubmitOneOrder
       actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address)))
+        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+      )
 
       expectMsgPF() {
         case a: XOrderbook =>
