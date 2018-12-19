@@ -18,15 +18,13 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.sharding._
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.lib._
+import org.loopring.lightcone.lib.{ErrorException, _}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
@@ -91,23 +89,22 @@ class OrderHandlerActor(
           case None ⇒
             throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }
-      }) sendTo sender
+      }) forwardTo (mammValidator, sender)
 
     case XSubmitOrderReq(Some(raworder)) ⇒
-      for {
+      (for {
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         saveRes <- dbModule.orderService.saveOrder(raworder)
       } yield {
         saveRes match {
           case Right(errCode) =>
-            sender ! XError(errCode)
-
+            throw ErrorException(errCode, s"failed to submit order: $raworder")
           case Left(resRawOrder) =>
-            mammValidator forward XSubmitSimpleOrderReq(
+            XSubmitSimpleOrderReq(
               resRawOrder.owner,
               Some(resRawOrder)
             )
         }
-      }
+      }) forwardTo (mammValidator, sender)
   }
 }

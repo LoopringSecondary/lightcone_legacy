@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors.base
 import akka.actor._
 import com.typesafe.config.Config
 import scala.concurrent._
+import collection.JavaConverters._
 
 trait NamedBasedConfig {
   val name: String

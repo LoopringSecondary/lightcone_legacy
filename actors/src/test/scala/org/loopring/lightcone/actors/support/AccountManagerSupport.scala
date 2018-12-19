@@ -14,25 +14,28 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.validator
+package org.loopring.lightcone.actors.support
 
-import com.typesafe.config.Config
+import akka.testkit.TestProbe
+import org.loopring.lightcone.actors.core.MarketManagerActor
 import org.loopring.lightcone.proto._
 
-object OrderbookManagerMessageValidator {
-  val name = "orderbook_manager_validator"
-}
+trait AccountManagerSupport {
+  my: CommonSpec =>
 
-final class OrderbookManagerMessageValidator()(implicit val config: Config)
-    extends MessageValidator {
+  val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
 
-  // TODO(hongyu): check the marketId is supported in the config
-  def assertmarketIdIsValid(marketIdOpt: Option[XMarketId]) = {}
+    def expectQuery() = expectMsgPF() {
+      case XSubmitSimpleOrderReq(addr, Some(xorder)) =>
+        info(s"received XSubmitOrderReq: ${addr}, ${xorder}")
+    }
 
-  // Throws exception if validation fails.
-  def validate = {
-    case XGetOrderbook(_, _, marketIdOpt) =>
-      assertmarketIdIsValid(marketIdOpt)
-      marketIdOpt.get
+    def replyWith() =
+      reply(
+        XSubmitOrderRes()
+      )
   }
+  actors.del(MarketManagerActor.name)
+  actors.add(MarketManagerActor.name, marketManagerProbe.ref)
+
 }
