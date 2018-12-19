@@ -16,9 +16,10 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto._
 
 package object data {
 
