@@ -18,22 +18,15 @@ package org.loopring.lightcone.actors.ethereum
 
 import akka.actor._
 import akka.cluster.sharding._
-import akka.stream.ActorMaterializer
-import akka.event.LoggingReceive
 import akka.routing.RoundRobinPool
-import akka.pattern._
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
+import scala.collection.JavaConverters._
+
 import scala.concurrent._
 
 object EthereumAccessActor extends ShardedEvenly {
@@ -90,8 +83,7 @@ class EthereumAccessActor(
     poolSize = thisConfig.getInt("pool-size"),
     checkIntervalSeconds = thisConfig.getInt("check-interval-seconds"),
     healthyThreshold = thisConfig.getDouble("healthy-threshold").toFloat,
-    nodes = thisConfig.getList("nodes").toArray.map { v =>
-      val c = v.asInstanceOf[Config]
+    nodes = thisConfig.getConfigList("nodes").asScala.map { c =>
       XEthereumProxySettings.XNode(
         host = c.getString("host"),
         port = c.getInt("port"),
