@@ -80,7 +80,7 @@ trait HttpSupport extends RpcBinding {
           ),
           uri = Uri(
             s"http://127.0.0.1:${config.getString("jsonrpc.http.port")}/" +
-              s"${config.getString("jsonrpc.endpoint")}"
+              s"${config.getString("jsonrpc.endpoint")}/${config.getString("jsonrpc.loopring")}"
           )
         )
       )

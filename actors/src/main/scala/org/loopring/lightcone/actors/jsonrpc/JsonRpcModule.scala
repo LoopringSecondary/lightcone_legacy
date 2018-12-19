@@ -54,8 +54,8 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   }
 
   val routes: Route = {
-    pathPrefix(endpoint) {
-      path("loopring") {
+    pathPrefix(config.getString("jsonrpc.endpoint")) {
+      path(config.getString("jsonrpc.loopring")) {
         post {
           entity(as[JsonRpcRequest]) { jsonReq =>
             implicit val method = jsonReq.method
@@ -91,7 +91,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
           }
         }
       } ~
-        path("ethereum") {
+        path(config.getString("jsonrpc.ethereum")) {
           post {
             entity(as[JsonRpcRequest]) { jsonReq =>
               val f =
