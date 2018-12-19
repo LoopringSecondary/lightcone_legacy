@@ -58,6 +58,9 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
 
   // Returns orders with given hashes
   def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]]
+  // Returns orders owners with given hashes
+  def getOrderOwnersByHash(hashes: Seq[String]): Future[Map[String, String]]
+
   def getOrder(hash: String): Future[Option[XRawOrder]]
 
   // Get some orders. The orders should be sorted scendantly by created_at or updated_at
@@ -191,6 +194,23 @@ class OrderDalImpl(
       db.run(query.filter(_.hash inSet hashes).result)
     }
   }
+
+  def getOrderOwnersByHash(hashes: Seq[String]): Future[Map[String, String]] =
+    for {
+      result <- if (hashes.isEmpty) {
+        Future.successful(Seq.empty)
+      } else {
+        db.run(
+          query.filter(_.hash inSet hashes).map(c => (c.owner, c.hash)).result
+        )
+      }
+    } yield {
+      val map: Map[String, String] = Map()
+      result.foreach { r =>
+        map + (r._2 -> r._1)
+      }
+      map
+    }
 
   def getOrder(hash: String): Future[Option[XRawOrder]] =
     db.run(query.filter(_.hash === hash).result.headOption)

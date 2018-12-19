@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config
+import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.persistence.DatabaseModule
@@ -66,6 +67,7 @@ class DatabaseQueryActor(
     val actors: Lookup[ActorRef],
     dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
+  private[this] val logger = Logger(this.getClass)
 
   def receive: Receive = LoggingReceive {
     case req: XSaveOrderReq ⇒
@@ -86,6 +88,17 @@ class DatabaseQueryActor(
     case req: XGetOrdersForUserReq ⇒
       (for {
         result <- req.market match {
+          case XGetOrdersForUserReq.Market.Empty =>
+            dbModule.orderService.getOrdersForUser(
+              req.statuses.toSet,
+              Some(req.owner),
+              None,
+              None,
+              None,
+              None,
+              Some(req.sort),
+              req.skip
+            )
           case XGetOrdersForUserReq.Market.MarketHash(value) ⇒
             dbModule.orderService.getOrdersForUser(
               req.statuses.toSet,
@@ -119,8 +132,7 @@ class DatabaseQueryActor(
       (for {
         result <- dbModule.tradeService.getTrades(req)
       } yield result) forwardTo sender
-    case _ ⇒
-    //TODO du: log ?
+    case m ⇒ logger.error(s"Unhandled message ${m}")
   }
 
 }

@@ -79,12 +79,11 @@ class OrderHandlerActor(
   def receive: Receive = {
     case req: XCancelOrderReq ⇒
       (for {
-        // TODO(yongfeng): return the order owner's address
         cancelRes <- dbModule.orderService.markOrderSoftCancelled(Seq(req.id))
       } yield {
         cancelRes.headOption match {
           case Some(res) ⇒
-            mammValidator forward req.copy(owner = "SOME OWNER")
+            mammValidator forward req.copy(owner = res.owner)
           case None ⇒
             throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }
