@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.support
 
-import org.loopring.lightcone.actors.jsonrpc.JsonRpcModule
-import org.loopring.lightcone.proto._
+import akka.actor.Props
+import org.loopring.lightcone.actors.RpcBinding
+import org.loopring.lightcone.actors.entrypoint.EntryPointActor
+import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 
-trait RpcBinding extends JsonRpcModule {
+import scala.concurrent.Future
 
-  ifReceive[XGetOrderbook].thenReply[XOrderbook]("orderbook")
+trait JsonrpcSupport {
+  my: CommonSpec =>
+  actors.add(
+    EntryPointActor.name,
+    system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
+  )
 
-  ifReceive[XSubmitOrderReq].thenReply[XSubmitOrderRes]("submit_order")
-
-  ifReceive[XCancelOrderReq].thenReply[XCancelOrderRes]("cancel_order")
-
+  val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
+  with RpcBinding
+  Future { server.start() }
+  Thread.sleep(5000)
 }

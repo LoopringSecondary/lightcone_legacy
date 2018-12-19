@@ -31,8 +31,8 @@ final class OrderbookManagerMessageValidator()(implicit val config: Config)
 
   // Throws exception if validation fails.
   def validate = {
-    case XGetOrderbook(_, _, marketIdOpt) =>
+    case msg @ XGetOrderbook(_, _, marketIdOpt) =>
       assertmarketIdIsValid(marketIdOpt)
-      marketIdOpt.get
+      msg
   }
 }

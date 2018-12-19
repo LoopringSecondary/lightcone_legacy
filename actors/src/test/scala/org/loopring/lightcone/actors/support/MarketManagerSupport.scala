@@ -23,6 +23,7 @@ trait MarketManagerSupport {
 
   actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
 
-  actors.add(GasPriceActor.name, GasPriceActor.startShardRegion())
+  actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
 
+  actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
 }

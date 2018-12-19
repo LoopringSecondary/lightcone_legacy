@@ -31,6 +31,8 @@ class PayloadConverter[T <: Proto[T]: TypeTag, S <: Proto[S]: TypeTag](
 
   def convertToRequest(str: JValue): T = ps.deserialize[T](str).get
 
+  def convertToResponse(str: JValue): S = ps.deserialize[S](str).get
+
   def convertFromResponse(s: Any): JValue = {
     if (!cs.runtimeClass.isInstance(s))
       throw ErrorException(
