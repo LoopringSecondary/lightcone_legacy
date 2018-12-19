@@ -34,7 +34,6 @@ import scalapb.json4s.JsonFormat
 
 object OrderRecoverCoordinator extends {
   val name = "order_recover_coordinator"
-
 }
 
 class OrderRecoverCoordinator(
@@ -80,6 +79,7 @@ class OrderRecoverCoordinator(
       batchId += 1
 
     case req: XRecoverReq =>
+      batchTimeoutCancellable.foreach(_.cancel)
       val requester = Serialization.serializedActorPath(sender)
 
       val merged = mergeRequests(
@@ -92,7 +92,6 @@ class OrderRecoverCoordinator(
         s"current pending batch recovery request: ${pendingBatchRequestOpt.get}"
       )
 
-      batchTimeoutCancellable.foreach(_.cancel)
       batchTimeoutCancellable = Some(
         context.system.scheduler
           .scheduleOnce(batchTimeout.seconds, self, XRecoverBatchTimeout())
