@@ -35,9 +35,26 @@ message XStop{}
 message XRecoverReq {
    repeated string address_sharding_entities = 1;
    repeated XMarketId market_ids = 2;
-   repeated string requesters = 3;
-   int64 batch_id = 4;
 }
+
+message XRecoverBatchReq {
+    int64 batch_id = 1;
+    map<string, XRecoverReq> request_map = 2;
+}
+
+message XRecoverBatchAck {
+    int64 batch_id = 1;
+    map<string, XRecoverReq> request_map = 2;
+}
+
+message XRecoverBatchFinished {
+}
+
+
+message XRecoverCancel {
+    string requester = 1;
+}
+
 
 message XRecoverOrderReq {
     XRawOrder raw_order = 1;
