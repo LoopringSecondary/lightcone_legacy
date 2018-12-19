@@ -158,7 +158,7 @@ class MarketManagerActor(
       context.become(recover)
       log.debug(s"actor recover started: ${self.path}")
       actors.get(OrderRecoverCoordinator.name) !
-        XRecover.Request(marketIds = Seq(marketId))
+        XRecover.Request(marketId = Some(marketId))
     }
   }
 

@@ -48,7 +48,7 @@ class OrderRecoverCoordinator(
     with ActorLogging {
 
   val batchTimeout = selfConfig.getInt("batch-timeout-seconds")
-  var activeBatches = Map.empty[ActorRef, XRecover.BatchAck]
+  var activeBatches = Map.empty[ActorRef, XRecover.Batch]
   var pendingBatch = XRecover.Batch(batchId = 1)
   var batchTimer: Option[Cancellable] = None
 
@@ -57,35 +57,42 @@ class OrderRecoverCoordinator(
     case req: XRecover.Request =>
       cancelBatchTimer()
 
-      val senderPath = Serialization.serializedActorPath(sender)
+      val requesterPath = Serialization.serializedActorPath(sender)
 
-      activeBatches.find {
-        case (k, v) => v.requestMap.contains(senderPath)
+      activeBatches.filter {
+        case (_, batch) => batch.requestMap.contains(requesterPath)
       }.foreach {
-        case (orderRecoverActor, ack) =>
-          val requestMap = ack.requestMap.filterNot(_._1 == senderPath)
-          val updatedAck = ack.copy(requestMap = requestMap)
-          activeBatches += orderRecoverActor -> updatedAck
-
-          orderRecoverActor ! XRecover.Cancel(senderPath)
+        case (orderRecoverActor, _) =>
+          // Notify the actor to stop handling the request in a previous batch
+          orderRecoverActor ! XRecover.CancelFor(requesterPath)
       }
 
-      val requestMap = pendingBatch.requestMap + (senderPath -> req)
+      val requestMap = pendingBatch.requestMap + (requesterPath -> req)
       pendingBatch = pendingBatch.copy(requestMap = requestMap)
 
       log.info(s"current pending batch recovery request: ${pendingBatch}")
 
       startBatchTimer()
 
-    case ack: XRecover.BatchAck =>
+    case req: XRecover.Timeout =>
+      if (pendingBatch.requestMap.nonEmpty) {
+        actors.get(OrderRecoverActor.name) ! pendingBatch
+        pendingBatch = XRecover.Batch(pendingBatch.batchId + 1)
+      }
+
+    // This message should be sent from OrderRecoverActors
+    case batch: XRecover.Batch =>
+      val isUpdate =
+        if (activeBatches.contains(sender)) "UPDATED" else "STARTED"
       log.warning(s"""
       |>>>
-      |>>> BATCH RECOVER STARTED:
-      |>>> ${JsonFormat.toJsonString(ack)}
+      |>>> BATCH RECOVER ${isUpdate}:
+      |>>> ${JsonFormat.toJsonString(batch)}
       |>>> """)
 
-      activeBatches += sender -> ack
+      activeBatches += sender -> batch
 
+    // This message should be sent from OrderRecoverActors
     case msg: XRecover.Finished if activeBatches.contains(sender) =>
       log.warning(s"""
       |>>>
@@ -95,11 +102,6 @@ class OrderRecoverCoordinator(
 
       activeBatches -= sender
 
-    case req: XRecover.Timeout =>
-      if (pendingBatch.requestMap.nonEmpty) {
-        actors.get(OrderRecoverActor.name) ! pendingBatch
-        pendingBatch = XRecover.Batch(pendingBatch.batchId + 1)
-      }
   }
 
   private def startBatchTimer() {

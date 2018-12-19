@@ -121,7 +121,7 @@ class MultiAccountManagerActor(
       context.become(recover)
       log.debug(s"actor recover started: ${self.path}")
       actors.get(OrderRecoverCoordinator.name) !
-        XRecover.Request(addressShardingEntities = Seq(entityName))
+        XRecover.Request(addressShardingEntity = entityName)
     }
   }
 

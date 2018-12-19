@@ -76,21 +76,21 @@ class OrderRecoverActor(
 
   def mama: ActorRef = actors.get(MultiAccountManagerActor.name)
   var batch: XRecover.Batch = _
-  var lastOrderId: Long = 0
 
   def receive: Receive = {
     case req: XRecover.Batch =>
       batch = req
-      sender ! XRecover.BatchAck(req.batchId, req.requestMap)
+      sender ! batch
       context.become(recovering)
       log.info(s"started order recover - $req")
   }
 
   def recovering: Receive = {
-    case XRecover.Cancel(requester) =>
+    case XRecover.CancelFor(requester) =>
       batch =
         batch.copy(requestMap = batch.requestMap.filterNot(_._1 == requester))
 
+      sender ! batch
   }
 
   // private def mergeRequests(

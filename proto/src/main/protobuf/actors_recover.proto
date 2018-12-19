@@ -25,24 +25,24 @@ import "core_messages.proto";
 
 message XRecover {
     message Request {
-       repeated string address_sharding_entities = 1;
-       repeated XMarketId market_ids = 2;
+        string address_sharding_entity = 1;
+        XMarketId market_id = 2;
     }
 
-    message Cancel {
-        string requester = 1;
+    message CancelFor {
+        string requester_path = 1;
     }
 
     message Batch {
         int64 batch_id = 1;
-        map<string, Request> request_map = 2;
+        map<string, Request> request_map = 2; // requester_path -> Request
     }
 
-    message BatchAck {
-        int64 batch_id = 1;
-        map<string, Request> request_map = 2;
+    message Finished {
+        bool timeout = 1;
     }
 
+    message Timeout{}
 
     message RecoverOrderReq {
         XRawOrder raw_order = 1;
@@ -53,9 +53,5 @@ message XRecover {
         bool successful = 2;
     }
 
-    message Finished {
-        bool timeout = 1;
-    }
 
-    message Timeout{}
 }
