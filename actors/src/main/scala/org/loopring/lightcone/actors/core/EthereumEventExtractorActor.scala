@@ -142,7 +142,7 @@ class EthereumEventExtractorActor(
         .map(_.result)
       block ← if (taskNum > currentBlockNumber)
         (ethereumAccessorActor ? XGetBlockWithTxObjectByNumberReq(
-          (currentBlockNumber + 1).toString(16)
+          Numeric.prependHexPrefix((currentBlockNumber + 1).toString(16))
         )).mapTo[XGetBlockWithTxObjectByNumberRes]
       else {
         Future.successful(XGetBlockWithTxObjectByNumberRes())
