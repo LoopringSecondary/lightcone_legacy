@@ -92,7 +92,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
           }
         }
       } ~
-        path("eth") {
+        path("ethereum") {
           post {
             entity(as[JsonRpcRequest]) { jsonReq =>
               val f =
