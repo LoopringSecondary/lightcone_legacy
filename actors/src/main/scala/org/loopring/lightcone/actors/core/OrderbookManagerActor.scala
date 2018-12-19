@@ -22,12 +22,13 @@ import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 
+import scala.collection.JavaConverters._
 import scala.concurrent._
 
 // main owner: 于红雨
@@ -48,9 +49,23 @@ object OrderbookManagerActor extends ShardedByMarket {
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("instances-per-market")
 
+    val markets = config
+      .getObjectList("markets")
+      .asScala
+      .flatMap { item =>
+        val c = item.toConfig
+        val marketId =
+          XMarketId(c.getString("priamry"), c.getString("secondary"))
+        val hashOpt = OrderbookManagerActor
+          .hashed(Some(marketId))
+        hashOpt map (_.toString -> marketId)
+      }
+      .toMap
+
+    println(s"### orderbook ClusterSharding ${markets}")
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new OrderbookManagerActor()),
+      entityProps = Props(new OrderbookManagerActor(markets)),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -66,6 +81,7 @@ object OrderbookManagerActor extends ShardedByMarket {
 }
 
 class OrderbookManagerActor(
+    markets: Map[String, XMarketId],
     extractEntityName: String => String =
       OrderbookManagerActor.extractEntityName
   )(
@@ -79,7 +95,8 @@ class OrderbookManagerActor(
       OrderbookManagerActor.name,
       extractEntityName
     ) {
-  val marketId = entityName
+  val marketId = markets(entityName)
+  val marketIdHashedValue = OrderbookManagerActor.hashed(Some(marketId))
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
   // based on marketId
@@ -96,14 +113,24 @@ class OrderbookManagerActor(
   def receive: Receive = LoggingReceive {
 
     case XUpdateLatestTradingPrice(price, _) =>
-      log.debug(s"receive XUpdateLatestTradingPrice ${price}")
+      log.info(s"receive XUpdateLatestTradingPrice ${price}")
       latestPrice = Some(price)
 
     case req: XOrderbookUpdate =>
-      log.debug(s"receive XOrderbookUpdate ${req}")
+      log.info(s"receive XOrderbookUpdate ${req}")
       manager.processUpdate(req)
 
-    case XGetOrderbook(level, size, _marketId) if _marketId == marketId =>
-      sender ! manager.getOrderbook(level, size, latestPrice)
+    case XGetOrderbook(level, size, marketIdOpt) =>
+      Future {
+        if (OrderbookManagerActor.hashed(marketIdOpt) == marketIdHashedValue)
+          manager.getOrderbook(level, size, latestPrice)
+        else
+          throw ErrorException(
+            XErrorCode.ERR_INVALID_ARGUMENT,
+            s"marketId doesn't match, expect:${marketId} ,receive:${marketIdOpt}"
+          )
+      } sendTo sender
+    case msg => log.info(s"not supported msg:${msg}, ${marketId}")
+
   }
 }
