@@ -14,7 +14,8 @@ object Dependencies {
     "com.dimafeng" %% "testcontainers-scala" % "0.21.0" % Test,
     "org.testcontainers" % "mysql" % "1.10.1" % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
-    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test
+    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
+    "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion % Test
   )
 
   lazy val commonDependency = Seq(

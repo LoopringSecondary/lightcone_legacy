@@ -19,19 +19,16 @@ package org.loopring.lightcone.actors.core
 import akka.actor._
 import akka.cluster.sharding._
 import akka.event.LoggingReceive
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.depth._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.depth._
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.proto._
+
+import scala.collection.JavaConverters._
 import scala.concurrent._
 
 // main owner: 于红雨
@@ -52,9 +49,23 @@ object OrderbookManagerActor extends ShardedByMarket {
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("instances-per-market")
 
+    val markets = config
+      .getObjectList("markets")
+      .asScala
+      .flatMap { item =>
+        val c = item.toConfig
+        val marketId =
+          XMarketId(c.getString("priamry"), c.getString("secondary"))
+        val hashOpt = OrderbookManagerActor
+          .hashed(Some(marketId))
+        hashOpt map (_.toString -> marketId)
+      }
+      .toMap
+
+    println(s"### orderbook ClusterSharding ${markets}")
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new OrderbookManagerActor()),
+      entityProps = Props(new OrderbookManagerActor(markets)),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -62,14 +73,15 @@ object OrderbookManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketName: PartialFunction[Any, String] = {
-    case req: XGetOrderbook             => req.marketName
-    case req: XOrderbookUpdate          => req.marketName
-    case req: XUpdateLatestTradingPrice => req.marketName
+  val extractMarketId: PartialFunction[Any, XMarketId] = {
+    case XGetOrderbook(_, _, Some(marketId))          => marketId
+    case XOrderbookUpdate(_, _, Some(marketId))       => marketId
+    case XUpdateLatestTradingPrice(_, Some(marketId)) => marketId
   }
 }
 
 class OrderbookManagerActor(
+    markets: Map[String, XMarketId],
     extractEntityName: String => String =
       OrderbookManagerActor.extractEntityName
   )(
@@ -83,10 +95,11 @@ class OrderbookManagerActor(
       OrderbookManagerActor.name,
       extractEntityName
     ) {
-  val marketName = entityName
+  val marketId = markets(entityName)
+  val marketIdHashedValue = OrderbookManagerActor.hashed(Some(marketId))
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
-  // based on marketName
+  // based on marketId
   val xorderbookConfig = XMarketConfig(
     levels = selfConfig.getInt("levels"),
     priceDecimals = selfConfig.getInt("price-decimals"),
@@ -100,12 +113,24 @@ class OrderbookManagerActor(
   def receive: Receive = LoggingReceive {
 
     case XUpdateLatestTradingPrice(price, _) =>
+      log.info(s"receive XUpdateLatestTradingPrice ${price}")
       latestPrice = Some(price)
 
     case req: XOrderbookUpdate =>
+      log.info(s"receive XOrderbookUpdate ${req}")
       manager.processUpdate(req)
 
-    case XGetOrderbook(level, size, marketName) if marketName == marketName =>
-      sender ! manager.getOrderbook(level, size, latestPrice)
+    case XGetOrderbook(level, size, marketIdOpt) =>
+      Future {
+        if (OrderbookManagerActor.hashed(marketIdOpt) == marketIdHashedValue)
+          manager.getOrderbook(level, size, latestPrice)
+        else
+          throw ErrorException(
+            XErrorCode.ERR_INVALID_ARGUMENT,
+            s"marketId doesn't match, expect:${marketId} ,receive:${marketIdOpt}"
+          )
+      } sendTo sender
+    case msg => log.info(s"not supported msg:${msg}, ${marketId}")
+
   }
 }

@@ -25,10 +25,10 @@ import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.base._
@@ -38,8 +38,8 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
@@ -92,6 +92,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
     //-----------deploy local actors-----------
+    //todo:需要测试badMessage，可能有死循环
     val listener =
       system.actorOf(Props[BadMessageListener], "bad_message_listener")
 
