@@ -83,7 +83,11 @@ class OrderHandlerActor(
       } yield {
         cancelRes.headOption match {
           case Some(res) ⇒
-            mammValidator forward req.copy(owner = res.owner)
+            val owner = res.order match {
+              case Some(o) => o.owner
+              case None    => ""
+            }
+            mammValidator forward req.copy(owner = owner)
           case None ⇒
             throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }

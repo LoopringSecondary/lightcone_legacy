@@ -48,7 +48,7 @@ class OrderServiceImpl @Inject()(
       orderHashes: Seq[String]
     ): Future[Seq[XUserCancelOrderResult.Result]] =
     for {
-      selectOwners <- orderDal.getOrderOwnersByHash(orderHashes)
+      selectOwners <- orderDal.getOrdersMap(orderHashes)
       updateResults <- Future.sequence(
         orderHashes.map { orderHash =>
           orderDal
@@ -56,7 +56,7 @@ class OrderServiceImpl @Inject()(
             .map { result =>
               XUserCancelOrderResult.Result(
                 orderHash,
-                selectOwners.getOrElse(orderHash, ""),
+                selectOwners.get(orderHash),
                 result
               )
             }
