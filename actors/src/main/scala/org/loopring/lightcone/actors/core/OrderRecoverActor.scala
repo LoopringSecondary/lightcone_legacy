@@ -40,7 +40,7 @@ object OrderRecoverActor extends ShardedEvenly {
   val name = "order_recover"
 
   override protected def getEntitityId(msg: Any) = msg match {
-    case req: XRecoverBatchReq =>
+    case req: XRecover.Batch =>
       name + "_batch_" + req.batchId
     case e: Any =>
       throw new Exception(s"$e not expected by OrderRecoverActor")
@@ -75,27 +75,29 @@ class OrderRecoverActor(
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   def mama: ActorRef = actors.get(MultiAccountManagerActor.name)
-  var batch: Option[XRecoverBatchReq] = None
+  var batch: XRecover.Batch = _
+  var lastOrderId: Long = 0
 
   def receive: Receive = {
-    case req: XRecoverBatchReq =>
-      batch = Some(req)
-      sender ! XRecoverBatchAck(req.batchId, req.requestMap)
-
+    case req: XRecover.Batch =>
+      batch = req
+      sender ! XRecover.BatchAck(req.batchId, req.requestMap)
       context.become(recovering)
       log.info(s"started order recover - $req")
   }
 
   def recovering: Receive = {
+    case XRecover.Cancel(requester) =>
+      batch =
+        batch.copy(requestMap = batch.requestMap.filterNot(_._1 == requester))
 
-    case XRecoverCancel(requester) =>
   }
 
   // private def mergeRequests(
-  //     r1: XRecoverReq,
-  //     r2: XRecoverReq
+  //     r1: XRecover.Request,
+  //     r2: XRecover.Request
   //   ) =
-  //   XRecoverReq(
+  //   XRecover.Request(
   //     (r1.addressShardingEntities ++ r2.addressShardingEntities).distinct,
   //     (r1.marketIds ++ r2.marketIds).distinct,
   //     (r1.senderRefs ++ r2.senderRefs).distinct,

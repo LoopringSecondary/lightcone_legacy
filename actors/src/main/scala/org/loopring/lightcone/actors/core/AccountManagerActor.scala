@@ -82,9 +82,9 @@ class AccountManagerActor(
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case XRecoverOrderReq(Some(xraworder)) =>
+    case XRecover.RecoverOrderReq(Some(xraworder)) =>
       submitOrder(xraworder).map { _ =>
-        XRecoverOrderRes(xraworder.id, true)
+        XRecover.RecoverOrderRes(xraworder.id, true)
       }.sendTo(sender)
 
     case XSubmitSimpleOrderReq(_, Some(xorder)) =>

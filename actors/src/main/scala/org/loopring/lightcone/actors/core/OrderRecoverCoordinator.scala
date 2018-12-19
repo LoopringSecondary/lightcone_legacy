@@ -48,13 +48,13 @@ class OrderRecoverCoordinator(
     with ActorLogging {
 
   val batchTimeout = selfConfig.getInt("batch-timeout-seconds")
-  var activeBatches = Map.empty[ActorRef, XRecoverBatchAck]
-  var pendingBatch = XRecoverBatchReq(batchId = 1)
+  var activeBatches = Map.empty[ActorRef, XRecover.BatchAck]
+  var pendingBatch = XRecover.Batch(batchId = 1)
   var batchTimer: Option[Cancellable] = None
 
   def receive: Receive = {
 
-    case req: XRecoverReq =>
+    case req: XRecover.Request =>
       cancelBatchTimer()
 
       val senderPath = Serialization.serializedActorPath(sender)
@@ -67,7 +67,7 @@ class OrderRecoverCoordinator(
           val updatedAck = ack.copy(requestMap = requestMap)
           activeBatches += orderRecoverActor -> updatedAck
 
-          orderRecoverActor ! XRecoverCancel(senderPath)
+          orderRecoverActor ! XRecover.Cancel(senderPath)
       }
 
       val requestMap = pendingBatch.requestMap + (senderPath -> req)
@@ -77,7 +77,7 @@ class OrderRecoverCoordinator(
 
       startBatchTimer()
 
-    case ack: XRecoverBatchAck =>
+    case ack: XRecover.BatchAck =>
       log.warning(s"""
       |>>>
       |>>> BATCH RECOVER STARTED:
@@ -86,7 +86,7 @@ class OrderRecoverCoordinator(
 
       activeBatches += sender -> ack
 
-    case msg: XRecoverBatchFinished if activeBatches.contains(sender) =>
+    case msg: XRecover.Finished if activeBatches.contains(sender) =>
       log.warning(s"""
       |>>>
       |>>> BATCH RECOVER FINISHED:
@@ -95,10 +95,10 @@ class OrderRecoverCoordinator(
 
       activeBatches -= sender
 
-    case req: XRecoverBatchTimeout =>
+    case req: XRecover.Timeout =>
       if (pendingBatch.requestMap.nonEmpty) {
         actors.get(OrderRecoverActor.name) ! pendingBatch
-        pendingBatch = XRecoverBatchReq(pendingBatch.batchId + 1)
+        pendingBatch = XRecover.Batch(pendingBatch.batchId + 1)
       }
   }
 
@@ -106,7 +106,7 @@ class OrderRecoverCoordinator(
     if (batchTimer.isEmpty) {
       batchTimer = Some(
         context.system.scheduler
-          .scheduleOnce(batchTimeout.seconds, self, XRecoverBatchTimeout())
+          .scheduleOnce(batchTimeout.seconds, self, XRecover.Timeout())
       )
     }
   }
