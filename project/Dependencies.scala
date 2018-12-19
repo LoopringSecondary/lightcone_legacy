@@ -16,7 +16,6 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion % Test
-
   )
 
   lazy val commonDependency = Seq(

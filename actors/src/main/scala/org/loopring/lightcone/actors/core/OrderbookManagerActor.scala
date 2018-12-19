@@ -58,10 +58,10 @@ object OrderbookManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketName: PartialFunction[Any, XMarketId] = {
-    case req: XGetOrderbook             => req.marketName
-    case req: XOrderbookUpdate          => req.marketName
-    case req: XUpdateLatestTradingPrice => req.marketName
+  val extractMarketId: PartialFunction[Any, XMarketId] = {
+    case XGetOrderbook(_, _, Some(marketId))          => marketId
+    case XOrderbookUpdate(_, _, Some(marketId))       => marketId
+    case XUpdateLatestTradingPrice(_, Some(marketId)) => marketId
   }
 }
 
@@ -79,10 +79,10 @@ class OrderbookManagerActor(
       OrderbookManagerActor.name,
       extractEntityName
     ) {
-  val marketName = entityName
+  val marketId = entityName
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
-  // based on marketName
+  // based on marketId
   val xorderbookConfig = XMarketConfig(
     levels = selfConfig.getInt("levels"),
     priceDecimals = selfConfig.getInt("price-decimals"),
@@ -103,7 +103,7 @@ class OrderbookManagerActor(
       log.debug(s"receive XOrderbookUpdate ${req}")
       manager.processUpdate(req)
 
-    case XGetOrderbook(level, size, marketName) if marketName == marketName =>
+    case XGetOrderbook(level, size, _marketId) if _marketId == marketId =>
       sender ! manager.getOrderbook(level, size, latestPrice)
   }
 }

@@ -52,7 +52,7 @@ object safefuture {
         recipient: ActorRef,
         orginSender: ActorRef
       )(
-        implicit sender: ActorRef = Actor.noSender
+        implicit sender: ActorRef
       ): Future[T] = {
       f onComplete {
         case Success(r) => recipient.tell(r, orginSender)
@@ -71,7 +71,7 @@ object safefuture {
         recipient: ActorRef,
         orginSenderOpt: Option[ActorRef] = None
       )(
-        implicit sender: ActorRef = Actor.noSender
+        implicit sender: ActorRef
       ): Future[T] = {
       f onComplete {
         case Success(r) => recipient ! r

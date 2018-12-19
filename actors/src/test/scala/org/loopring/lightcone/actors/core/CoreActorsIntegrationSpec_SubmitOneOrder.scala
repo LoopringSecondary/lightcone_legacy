@@ -27,16 +27,14 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.{Await, ExecutionContext}
 
 class CoreActorsIntegrationSpec_SubmitOneOrder
-    extends CommonSpec(
-      """
-        |akka.cluster.roles=[
-        | "order_handler",
-        | "multi_account_manager",
-        | "market_manager",
-        | "orderbook_manager",
-        | "gas_price"]
-        |""".stripMargin
-    )
+    extends CommonSpec("""
+                         |akka.cluster.roles=[
+                         | "order_handler",
+                         | "multi_account_manager",
+                         | "market_manager",
+                         | "orderbook_manager",
+                         | "gas_price"]
+                         |""".stripMargin)
     with OrderHandleSupport
     with MultiAccountManagerSupport
     with MarketManagerSupport
@@ -98,11 +96,7 @@ class CoreActorsIntegrationSpec_SubmitOneOrder
             amountFee = ByteString.copyFrom("3".zeros(18).toString(), "utf-8")
           )
         ),
-        params = Some(
-          XRawOrder.Params(
-            validUntil = 2000
-          )
-        ),
+        params = Some(XRawOrder.Params(validUntil = 2000)),
         marketHash =
           MarketHashProvider.convert2Hex(LRC_TOKEN.address, WETH_TOKEN.address)
       )
@@ -117,7 +111,7 @@ class CoreActorsIntegrationSpec_SubmitOneOrder
       actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
         0,
         100,
-        s"${LRC_TOKEN.address}-${WETH_TOKEN.address}"
+        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
 
       expectMsgPF() {

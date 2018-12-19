@@ -21,14 +21,12 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 
 class CoreActorsIntegrationSpec_SingleRingFullyMatched
-    extends CommonSpec(
-      """
-        |akka.cluster.roles=[
-        | "market_manager",
-        | "orderbook_manager",
-        | "gas_price"]
-        |""".stripMargin
-    )
+    extends CommonSpec("""
+                         |akka.cluster.roles=[
+                         | "market_manager",
+                         | "orderbook_manager",
+                         | "gas_price"]
+                         |""".stripMargin)
     with MarketManagerSupport
     with OrderbookManagerSupport {
 
@@ -82,7 +80,7 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
       actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
         0,
         100,
-        s"${LRC_TOKEN.address}-${WETH_TOKEN.address}"
+        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
 
       expectMsgPF() {
@@ -100,7 +98,7 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
       actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
         0,
         100,
-        s"${LRC_TOKEN.address}-${WETH_TOKEN.address}"
+        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
 
       expectMsgPF() {

@@ -79,11 +79,11 @@ object MarketManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketName: PartialFunction[Any, XMarketId] = {
+  val extractMarketId: PartialFunction[Any, XMarketId] = {
     case XSubmitSimpleOrderReq(_, Some(xorder)) =>
       XMarketId(xorder.tokenS, xorder.tokenB)
-    case XCancelOrderReq(_, _, _, marketName) =>
-      marketName
+    case XCancelOrderReq(_, _, _, Some(marketId)) =>
+      marketId
   }
 
 }
@@ -184,7 +184,7 @@ class MarketManagerActor(
 
     case XCancelOrderReq(orderId, _, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
-        orderbookManagerActor ! orderbookUpdate.copy(marketName = marketId)
+        orderbookManagerActor ! orderbookUpdate.copy(marketId = Some(marketId))
       }
       sender ! XCancelOrderRes(id = orderId)
 
@@ -258,7 +258,7 @@ class MarketManagerActor(
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerActor ! ou.copy(marketName = marketId)
+      orderbookManagerActor ! ou.copy(marketId = Some(marketId))
     }
   }
 

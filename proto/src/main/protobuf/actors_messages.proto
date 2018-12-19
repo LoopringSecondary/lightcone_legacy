@@ -19,9 +19,9 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
-import "google/protobuf/any.proto";
 import "actors_core.proto";
 import "core_data.proto";
+import "core_messages.proto";
 
 message XRunNamedJob {
     string name = 1;
@@ -48,7 +48,7 @@ message XCancelOrderReq {
     string id = 1;
     string owner = 2;
     XOrderStatus status = 3; //取消的类型
-    string market_name = 4;
+    XMarketId market_id = 4;
 }
 
 message XCancelOrderRes {
