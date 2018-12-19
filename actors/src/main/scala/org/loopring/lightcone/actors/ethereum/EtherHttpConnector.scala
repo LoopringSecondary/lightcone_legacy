@@ -71,7 +71,7 @@ private[ethereum] class HttpConnector(
     : SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])] =
     Source
       .queue[(HttpRequest, Promise[HttpResponse])](
-        100,
+        500,
         OverflowStrategy.backpressure
       )
       .via(poolClientFlow)
@@ -289,7 +289,7 @@ private[ethereum] class HttpConnector(
           params = Seq(singleReq.hash)
         )
       }
-      //这里无法直接解析成XBatchGetTransactionReceiptsRes
+      //这里无法直接解析成XBatchGetTransactionsRes
       batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val txResps = resps.map(resp => {
