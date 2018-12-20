@@ -40,7 +40,9 @@ trait EthereumSupport {
     )
   )
 
-  actors.add(GasPriceActor.name, GasPriceActor.startShardRegion())
+  if (!actors.contains(GasPriceActor.name)) {
+    actors.add(GasPriceActor.name, GasPriceActor.startShardRegion())
+  }
   actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion())
 
 }

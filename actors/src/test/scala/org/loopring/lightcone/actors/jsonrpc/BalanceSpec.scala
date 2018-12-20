@@ -16,23 +16,12 @@
 
 package org.loopring.lightcone.actors.jsonrpc
 
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import org.loopring.lightcone.actors.RpcBinding
-import org.loopring.lightcone.actors.entrypoint.EntryPointActor
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-import org.json4s.jackson.Serialization
-import org.json4s.DefaultFormats
-import org.loopring.lightcone.actors.core.MultiAccountManagerActor
 import org.loopring.lightcone.actors.validator._
 import akka.pattern._
-import com.google.protobuf.ByteString
-import org.web3j.utils.Numeric
-
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
 
 class BalanceSpec
     extends CommonSpec("""
@@ -40,104 +29,76 @@ class BalanceSpec
                          | "ethereum_access",
                          | "multi_account_manager",
                          | "ethereum_query",
-                         | "gas_price"]
+                         | "gas_price",
+                         | "orderbook_manager",
+                         | "ring_settlement",
+                         | "market_manager"]
                          |""".stripMargin)
     with EthereumSupport
     with MultiAccountManagerSupport
-    with JsonrpcSupport {
+    with MarketManagerSupport
+    with OrderbookManagerSupport
+    with JsonrpcSupport
+    with HttpSupport {
 
   override def beforeAll() {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
-  implicit val formats = DefaultFormats
 
-  val host = "localhost"
-  val port = 8080
-  val relayUri = "/api/loopring"
-  val ethUri = "/api/ethereum"
-
-  val owner = "0xb94065482ad64d4c2b9252358d746b39e820a582"
-
-  val getBalanceReq =
-    XGetBalanceReq(owner, tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address))
-
-  val rpcReq =
-    Map("id" → 1, "method" → "get_balance_and_allowance", "jsonrpc" → "2.0")
-
-  for {
-    ba1 ← Http()
-      .singleRequest(
-        HttpRequest(
-          method = HttpMethods.POST,
-          uri = s"http://localhost:8080$relayUri",
-          entity = HttpEntity(
-            ContentTypes.`application/json`,
-            Serialization.write(rpcReq.+("params" → getBalanceReq))
-          )
+  "send an query balance request" must {
+    "receive a response with balance" in {
+      val method = "get_balance_and_allowance"
+      val owner = "0xb94065482ad64d4c2b9252358d746b39e820a582"
+      val getBalanceReq =
+        XGetBalanceAndAllowancesReq(
+          owner,
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         )
+      val maker = XOrder(
+        id = "maker1",
+        tokenS = LRC_TOKEN.address,
+        tokenB = WETH_TOKEN.address,
+        tokenFee = LRC_TOKEN.address,
+        amountS = "1".zeros(18),
+        amountB = "100".zeros(10),
+        amountFee = "1".zeros(16),
+        walletSplitPercentage = 0.2,
+        status = XOrderStatus.STATUS_NEW,
+        reserved =
+          Some(XOrderState("1".zeros(18), "100".zeros(10), "1".zeros(16))),
+        outstanding =
+          Some(XOrderState("1".zeros(18), "100".zeros(10), "1".zeros(16))),
+        actual =
+          Some(XOrderState("1".zeros(18), "100".zeros(10), "1".zeros(16))),
+        matchable =
+          Some(XOrderState("1".zeros(18), "100".zeros(10), "1".zeros(16)))
       )
-      .flatMap(res ⇒ res.entity.dataBytes.map(_.utf8String).runReduce(_ + _))
-      .map { Serialization.read[JsonRpcResponse] }
-//      .map { res ⇒
-//        val ba = res.result.get.extract[XGetBalanceAndAllowancesRes]
-    ////        ba.balanceAndAllowanceMap.map(
-    ////          item ⇒
-    ////            (
-    ////              BigInt(item._2.balance.toByteArray),
-    ////              BigInt(item._2.allowance.toByteArray),
-    ////              BigInt(item._2.availableBalance.toByteArray),
-    ////              BigInt(item._2.availableAllowance.toByteArray)
-    ////            )
-    ////        )
-    ////      }
-//    orderRes ← (actors.get(MultiAccountManagerMessageValidator.name) ? XSubmitSimpleOrderReq()
-//      .withOwner(owner)
-//      .withOrder(
-//        XOrder()
-//          .withTokenS(LRC_TOKEN.address)
-    ////          .withTokenB((WETH_TOKEN.address))
-    ////          .withAmountS(
-    ////            ByteString
-    ////              .copyFrom(Numeric.hexStringToByteArray("0x54607fc96a60000"))
-    ////          )
-    ////          .withAmountS(
-    ////            ByteString
-    ////              .copyFrom(Numeric.hexStringToByteArray("0x54607fc96a60000"))
-    ////          )
-//      )).mapTo[XSubmitOrderRes]
-
-    ba2 ← Http()
-      .singleRequest(
-        HttpRequest(
-          method = HttpMethods.POST,
-          uri = s"http://localhost:8080$relayUri",
-          entity = HttpEntity(
-            ContentTypes.`application/json`,
-            Serialization.write(rpcReq.+("params" → getBalanceReq))
-          )
+      val r = for {
+        first <- singleRequest(
+          getBalanceReq,
+          method
         )
-      )
-      .flatMap(res ⇒ res.entity.dataBytes.map(_.utf8String).runReduce(_ + _))
-      .map { Serialization.read[JsonRpcResponse] }
-//      .map { res ⇒
-//        val ba = res.extract[XGetBalanceAndAllowancesRes]
-//        ba.balanceAndAllowanceMap.map(
-//          item ⇒
-//            (
-//              BigInt(item._2.balance.toByteArray),
-//              BigInt(item._2.allowance.toByteArray),
-//              BigInt(item._2.availableBalance.toByteArray),
-//              BigInt(item._2.availableAllowance.toByteArray)
-//            )
-//        )
-//      }
-
-  } yield {
-
-    println(s"ba1：$ba1")
-    println(s"ba2: $ba2")
-//    println(orderRes)
+        _ ← (actors.get(MultiAccountManagerMessageValidator.name) ? XSubmitSimpleOrderReq(
+          owner = owner,
+          order = Some(maker)
+        )).mapTo[XSubmitOrderRes]
+        second <- singleRequest(
+          getBalanceReq,
+          method
+        )
+      } yield (first, second)
+      val res = Await.result(r, timeout.duration)
+      res match {
+        case (f: XGetBalanceAndAllowancesRes, s: XGetBalanceAndAllowancesRes) =>
+          val bf: BigInt =
+            f.balanceAndAllowanceMap(LRC_TOKEN.address).availableBalance
+          val bs: BigInt =
+            s.balanceAndAllowanceMap(LRC_TOKEN.address).availableBalance
+          val sold: BigInt = maker.amountS
+          val fee: BigInt = maker.amountFee
+          assert(bf - bs === sold + fee)
+        case _ => assert(false)
+      }
+    }
   }
-
-  Thread.sleep(60 * 60 * 1000)
 }
