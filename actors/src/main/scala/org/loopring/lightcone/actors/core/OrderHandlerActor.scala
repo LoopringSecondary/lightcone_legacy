@@ -54,8 +54,7 @@ object OrderHandlerActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new OrderHandlerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
