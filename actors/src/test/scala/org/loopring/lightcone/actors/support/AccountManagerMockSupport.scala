@@ -20,7 +20,7 @@ import akka.testkit.TestProbe
 import org.loopring.lightcone.actors.core.MarketManagerActor
 import org.loopring.lightcone.proto._
 
-trait AccountManagerSupport {
+trait AccountManagerMockSupport {
   my: CommonSpec =>
 
   val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {

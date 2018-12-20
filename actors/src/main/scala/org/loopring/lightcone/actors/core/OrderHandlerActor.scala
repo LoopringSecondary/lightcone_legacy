@@ -89,6 +89,7 @@ class OrderHandlerActor(
       }) forwardTo (mammv, sender)
 
     case XSubmitOrderReq(Some(raworder)) ⇒
+      log.info(s"### XSubmitOrderReq11 ${raworder} ")
       (for {
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         saveRes <- dbModule.orderService.saveOrder(raworder)

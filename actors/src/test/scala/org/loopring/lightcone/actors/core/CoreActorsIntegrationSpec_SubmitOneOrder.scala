@@ -38,39 +38,8 @@ class CoreActorsIntegrationSpec_SubmitOneOrder
     with OrderHandleSupport
     with MultiAccountManagerSupport
     with MarketManagerSupport
-    with OrderbookManagerSupport {
-
-  class EthereumQueryForRecoveryTestActor(
-    )(
-      implicit ec: ExecutionContext,
-      timeout: Timeout)
-      extends Actor
-      with ActorLogging {
-
-    def receive: Receive = {
-      case req: XGetBalanceAndAllowancesReq =>
-        sender !
-          XGetBalanceAndAllowancesRes(
-            req.address,
-            Map(
-              req.tokens(0) -> XBalanceAndAllowance(
-                ByteString.copyFrom("100000000000000000000000000", "UTF-8"),
-                ByteString.copyFrom("100000000000000000000000000", "UTF-8")
-              )
-            )
-          )
-      case XGetOrderFilledAmountReq(orderId) =>
-        sender ! XGetOrderFilledAmountRes(
-          orderId,
-          ByteString.copyFrom("0", "UTF-8")
-        )
-    }
-  }
-
-  val ethereumQueryActor =
-    system.actorOf(Props(new EthereumQueryForRecoveryTestActor()))
-  actors.del(EthereumQueryActor.name)
-  actors.add(EthereumQueryActor.name, ethereumQueryActor)
+    with OrderbookManagerSupport
+    with EthereumQueryMockSupport {
 
   "submiting one from OrderHandleActor" must {
     "get depth in OrderbookManagerActor" in {
