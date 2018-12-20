@@ -22,13 +22,10 @@ class Bitstream() {
   private val ADDRESS_LENGTH = 20
   private var data: String = ""
 
-  def getData = {
-    if (data.length.equals(0)) "0x0"
-    else "0x" + data
-  }
+  def getData = if (data.length == 0) "0x0" else "0x" + data
 
   def getBytes = Numeric.hexStringToByteArray(data)
-  def length() = data.length / 2
+  def length = data.length / 2
 
   def addAddress(x: String, forceAppend: Boolean = false): Int =
     addAddress(x, ADDRESS_LENGTH, forceAppend)
@@ -89,7 +86,7 @@ class Bitstream() {
   )
 
   private def insert(x: String, forceAppend: Boolean): Int = {
-    var offset = length()
+    var offset = length
 
     if (!forceAppend) {
       // Check if the data we're inserting is already available in the bitstream.

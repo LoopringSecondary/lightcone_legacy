@@ -36,8 +36,6 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
   val SerializationVersion = 0
 
   def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch = {
-    orders.flatten.foreach(println)
-
     val orderValidator = new RawOrderValidatorImpl
 
     val ordersWithHash = orders.map(ordersOfRing ⇒
@@ -110,42 +108,6 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     paramStream.addHex(data.getData)
 
     return paramStream.getData
-  }
-
-  private def addDataAndOffset(
-    data: Any,
-    solidityType: String,
-    dataBits: Bitstream,
-    tablesBits: Bitstream,
-    dataForceAppend: Boolean
-  ) {
-    val offset = solidityType match {
-      case "uint8" ⇒
-        val dataInt = data.asInstanceOf[Int]
-        dataBits.addNumber(BigInt(dataInt), 1, dataForceAppend)
-      case "uint16" ⇒
-        val dataInt = data.asInstanceOf[Int]
-        dataBits.addNumber(BigInt(dataInt), 2, dataForceAppend)
-      case "uint32" ⇒
-        val dataInt = data.asInstanceOf[Int]
-        dataBits.addNumber(BigInt(dataInt), 4, dataForceAppend)
-      case "uint" | "uint256" ⇒
-        val dataStr = data.asInstanceOf[String]
-        dataBits.addUint(dataStr, dataForceAppend)
-      case "address" ⇒
-        val dataStr = data.asInstanceOf[String]
-        dataBits.addAddress(dataStr, dataForceAppend)
-      case "bytes32" ⇒
-        val dataStr = data.asInstanceOf[String]
-        dataBits.addHex(dataStr, dataForceAppend)
-      case "bytes" ⇒
-        val dataStr = data.asInstanceOf[String]
-        dataBits.addHex(dataStr, dataForceAppend)
-      case _ ⇒
-        throw new IllegalArgumentException(s"unsupported solidity type: $solidityType")
-    }
-
-    insertOffset(tablesBits, offset)
   }
 
   private def createBytes(data: String) = {
