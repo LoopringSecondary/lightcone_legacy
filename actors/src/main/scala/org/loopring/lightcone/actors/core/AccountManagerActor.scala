@@ -171,6 +171,7 @@ class AccountManagerActor(
       case _                                => ERR_INTERNAL_UNKNOWN
     }
 
+  //todo:需要处理同时请求的问题
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
     if (manager.hasTokenManager(token)) {
       Future.successful(manager.getTokenManager(token))

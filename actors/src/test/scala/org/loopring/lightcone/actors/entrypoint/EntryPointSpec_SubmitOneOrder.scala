@@ -46,7 +46,7 @@ class EntryPointSpec_SubmitOneOrder
     with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
-  "send an order" must {
+  "submit an order" must {
     "get right response in EntryPoint,DbModule,Orderbook" in {
 
       val amountS = "30"
