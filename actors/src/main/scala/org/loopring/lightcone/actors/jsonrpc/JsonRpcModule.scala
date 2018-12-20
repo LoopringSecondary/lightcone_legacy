@@ -17,19 +17,16 @@
 package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto.XError
 import org.loopring.lightcone.proto.{XError, XJsonRpcReq, XJsonRpcRes}
 import org.json4s._
 import org.json4s.JsonAST.JValue
-import scalapb.json4s.JsonFormat
-import akka.http.scaladsl.Http
 import akka.actor._
 import akka.util.Timeout
-import akka.stream.ActorMaterializer
-import akka.http.scaladsl.server._
-import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.pattern.ask
+import com.typesafe.config.Config
 import org.json4s.jackson.Serialization
 import com.typesafe.config.Config
 import scala.reflect.runtime.universe._
@@ -42,8 +39,8 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   val config: Config
 
   implicit val system: ActorSystem
-  implicit val timeout = Timeout(2 second)
-  implicit val ec = ExecutionContext.global
+  implicit val timeout: Timeout
+  implicit val ec: ExecutionContext
 
   val JSON_RPC_VER = "2.0"
 
@@ -57,7 +54,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
   val routes: Route = {
     pathPrefix(config.getString("jsonrpc.endpoint")) {
-      path("loopring") {
+      path(config.getString("jsonrpc.loopring")) {
         post {
           entity(as[JsonRpcRequest]) { jsonReq =>
             implicit val method = jsonReq.method
@@ -93,7 +90,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
           }
         }
       } ~
-        path("ethereum") {
+        path(config.getString("jsonrpc.ethereum")) {
           post {
             entity(as[JsonRpcRequest]) { jsonReq =>
               val f =

@@ -30,10 +30,10 @@ trait Sharded {
 trait ShardedEvenly extends Sharded {
   protected var entitiesPerShard: Int = 1
 
-  private def getShardId(msg: Any) =
+  protected def getShardId(msg: Any) =
     "shard_" + hashed(msg, numOfShards)
 
-  private def getEntitityId(msg: Any) =
+  protected def getEntitityId(msg: Any) =
     name + "_" + hashed(msg, numOfShards * entitiesPerShard)
 
   protected val extractEntityId: ShardRegion.ExtractEntityId = {

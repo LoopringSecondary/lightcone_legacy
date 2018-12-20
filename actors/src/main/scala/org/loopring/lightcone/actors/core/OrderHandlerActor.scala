@@ -28,7 +28,6 @@ import org.loopring.lightcone.lib.{ErrorException, _}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent._
 
 // main owner: 于红雨
@@ -70,7 +69,7 @@ class OrderHandlerActor(
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
-  def mammValidator: ActorRef =
+  def mammv: ActorRef =
     actors.get(MultiAccountManagerMessageValidator.name)
 
   //save order to db first, then send to AccountManager
@@ -83,13 +82,14 @@ class OrderHandlerActor(
           case Some(res) ⇒
             val owner = res.order match {
               case Some(o) => o.owner
-              case None    => ""
+              case None =>
+                throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
             }
-            mammValidator forward req.copy(owner = owner)
+            req.copy(owner = owner)
           case None ⇒
             throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }
-      }) forwardTo (mammValidator, sender)
+      }) forwardTo (mammv, sender)
 
     case XSubmitOrderReq(Some(raworder)) ⇒
       (for {
@@ -100,11 +100,8 @@ class OrderHandlerActor(
           case Right(errCode) =>
             throw ErrorException(errCode, s"failed to submit order: $raworder")
           case Left(resRawOrder) =>
-            XSubmitSimpleOrderReq(
-              resRawOrder.owner,
-              Some(resRawOrder)
-            )
+            XSubmitSimpleOrderReq(resRawOrder.owner, Some(resRawOrder))
         }
-      }) forwardTo (mammValidator, sender)
+      }) forwardTo (mammv, sender)
   }
 }

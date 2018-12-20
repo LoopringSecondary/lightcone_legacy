@@ -29,7 +29,9 @@ abstract class JsonRpcServer(
     val config: Config,
     val requestHandler: ActorRef
   )(
-    implicit val system: ActorSystem)
+    implicit val system: ActorSystem,
+    val timeout: Timeout,
+    val ec: ExecutionContext)
     extends HttpApp {
 
   val host = config.getString("jsonrpc.http.host")
