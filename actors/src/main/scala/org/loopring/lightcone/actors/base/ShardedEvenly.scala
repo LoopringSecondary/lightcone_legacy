@@ -31,22 +31,9 @@ trait Sharded {
 trait ShardedEvenly extends Sharded {
   protected var entitiesPerShard: Int = 1
 
-  // protected def getShardId(msg: Any) =
-  //   "shard_" + hashed(msg, numOfShards)
-
-  // protected def getEntitityId(msg: Any) =
-  //   name + "_" + hashed(msg, numOfShards * entitiesPerShard)
-
-  // protected val extractEntityId: ShardRegion.ExtractEntityId = {
-  //   case msg => (getEntitityId(msg), msg)
-  // }
-
-  // protected val extractShardId: ShardRegion.ExtractShardId = {
-  //   case msg => getShardId(msg)
-  // }
-
-  protected val messageExtractor = new HashCodeMessageExtractor(numOfShards) {
-    override def entityId(message: Any) =
-      hashed(message, numOfShards * entitiesPerShard).toString
-  }
+  protected val messageExtractor =
+    new HashCodeMessageExtractor(numOfShards) {
+      override def entityId(message: Any) =
+        name + "_" + hashed(message, numOfShards * entitiesPerShard)
+    }
 }
