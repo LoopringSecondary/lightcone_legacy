@@ -56,8 +56,6 @@ class EntryPointActor(
     case _: XSubmitOrderReq | _: XCancelOrderReq =>
       Some(OrderHandlerActor.name)
 
-    case _: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
-
     case _: XGetBalanceAndAllowancesReq ⇒
       Some(MultiAccountManagerMessageValidator.name)
 
@@ -67,7 +65,7 @@ class EntryPointActor(
     case _: XJsonRpcReq | _: XRpcReqWithHeight ⇒
       Some(EthereumAccessActor.name)
 
-    case req: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
+    case _: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
 
     case _ => None
   }
