@@ -16,17 +16,8 @@
 
 package org.loopring.lightcone.ethereum
 
-import scala.util.Properties
-import com.typesafe.config.ConfigFactory
+package object ethereum {
 
-object TestConfig {
-  val configFile = "ethereum.conf"
-  val config = ConfigFactory.load(configFile)
+  implicit def int2BigInt(x: Int) = BigInt(x)
 
-  def envOrElseConfig(name: String): String = {
-    Properties.envOrElse(
-      name.toUpperCase.replaceAll("""\.""", "_"),
-      config.getString(name)
-    )
-  }
 }
