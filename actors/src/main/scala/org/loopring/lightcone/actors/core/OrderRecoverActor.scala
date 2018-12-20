@@ -39,6 +39,8 @@ import scala.concurrent._
 object OrderRecoverActor extends ShardedEvenly {
   val name = "order_recover"
 
+  // XRecover.CancelFor is sent directly to a sharded instance, not through
+  // a Shard Region actor.
   override protected def getEntitityId(msg: Any) = msg match {
     case req: XRecover.Batch =>
       name + "_batch_" + req.batchId
@@ -74,8 +76,11 @@ class OrderRecoverActor(
     val actors: Lookup[ActorRef])
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
-  def mama: ActorRef = actors.get(MultiAccountManagerActor.name)
+  val batchSize = selfConfig.getInt("batch-size")
   var batch: XRecover.Batch = _
+  var numOrders = 0L
+  def coordinator = actors.get(OrderRecoverCoordinator.name)
+  def mama = actors.get(MultiAccountManagerActor.name)
 
   def receive: Receive = {
     case req: XRecover.Batch =>
@@ -97,18 +102,24 @@ class OrderRecoverActor(
 
     case XRecover.RetrieveOrders(lastOrderSeqId) =>
       for {
-        orders <- retrieveOrders(lastOrderSeqId)
+        orders <- retrieveOrders(batchSize, lastOrderSeqId)
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
         reqs = orders.map { order =>
           XRecover.RecoverOrderReq(Some(order))
         }
+        _ = log.info(
+          s"--> batch#${batch.batchId} recovering ${orders.size} orders (total=${numOrders})..."
+        )
         _ <- Future.sequence(reqs.map(mama ? _))
       } yield {
+        numOrders += orders.size
+
         lastOrderSeqIdOpt match {
           case Some(lastOrderSeqId) =>
             self ! XRecover.RetrieveOrders(lastOrderSeqId)
+
           case None =>
-            actors.get(OrderRecoverCoordinator.name) ! XRecover.Finished()
+            coordinator ! XRecover.Finished()
 
             batch.requestMap.keys.toSeq
               .map(resolveActorRef)
@@ -126,6 +137,13 @@ class OrderRecoverActor(
       .resolveActorRef(actorRefStr)
   }
 
-  def retrieveOrders(lastOrderSeqId: Long): Future[Seq[XRawOrder]] = ???
+  // This method returns a list of orders to recover, based on the current batch
+  // parameters, the batch size, and the last order sequence id.
+  // The last order in the returned list should be the most up-to-date one.
+  // TODO(yongfeng): Implement this
+  def retrieveOrders(
+      batchSize: Int,
+      lastOrderSeqId: Long
+    ): Future[Seq[XRawOrder]] = ???
 
 }

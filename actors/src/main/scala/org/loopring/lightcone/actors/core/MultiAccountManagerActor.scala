@@ -118,10 +118,12 @@ class MultiAccountManagerActor(
     if (skiprecover) {
       log.warning(s"actor recover skipped: ${self.path}")
     } else {
-      context.become(recover)
+
       log.debug(s"actor recover started: ${self.path}")
       actors.get(OrderRecoverCoordinator.name) !
         XRecover.Request(addressShardingEntity = entityName)
+
+      context.become(recover)
     }
   }
 

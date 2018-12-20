@@ -84,6 +84,7 @@ class OrderRecoverCoordinator(
     case batch: XRecover.Batch =>
       val isUpdate =
         if (activeBatches.contains(sender)) "UPDATED" else "STARTED"
+
       log.warning(s"""
       |>>>
       |>>> BATCH RECOVER ${isUpdate}:
