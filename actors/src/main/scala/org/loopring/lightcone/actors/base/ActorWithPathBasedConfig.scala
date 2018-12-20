@@ -34,10 +34,10 @@ abstract class ActorWithPathBasedConfig(
     extends Actor
     with ActorLogging
     with NamedBasedConfig {
-  protected val entityName = extractEntityId(self.path.name).replace("$", "")
+  protected val entityId = extractEntityId(self.path.name).replace("$", "")
 
   override val selfConfig = try {
-    selfConfig_.getConfig(entityName).withFallback(selfConfig_)
+    selfConfig_.getConfig(entityId).withFallback(selfConfig_)
   } catch {
     case e: Throwable =>
       log.warning(s"NO CONFIG FOUND for actor with path: ${self.path.name}")
@@ -47,7 +47,7 @@ abstract class ActorWithPathBasedConfig(
   log.info(s"""
     >>> ----------------
     >>> actor created: ${self.path.name}
-    >>> entity name: ${entityName}
+    >>> entity name: ${entityId}
     >>> config: ${selfConfig}
     >>> ----------------
   """)

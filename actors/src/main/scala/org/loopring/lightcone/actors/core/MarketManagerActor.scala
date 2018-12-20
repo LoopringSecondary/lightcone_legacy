@@ -118,7 +118,7 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
-  implicit val marketId = markets(entityName)
+  implicit val marketId = markets(entityId)
 
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
     selfConfig.getInt("price-decimals")
@@ -167,14 +167,14 @@ class MarketManagerActor(
     case msg @ XRecoverEnded(timeout) =>
       autoSwitchBackToReceive.foreach(_.cancel)
       autoSwitchBackToReceive = None
-      s"market manager `${entityName}` recover completed (timeout=${timeout})"
+      s"market manager `${entityId}` recover completed (timeout=${timeout})"
       context.become(receive)
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
       sender ! XError(
         ERR_REJECTED_DURING_RECOVER,
-        s"market manager `${entityName}` is being recovered"
+        s"market manager `${entityId}` is being recovered"
       )
   }
 

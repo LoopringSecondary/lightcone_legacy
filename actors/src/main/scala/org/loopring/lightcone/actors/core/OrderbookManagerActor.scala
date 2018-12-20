@@ -91,7 +91,7 @@ class OrderbookManagerActor(
       OrderbookManagerActor.name,
       extractEntityId
     ) {
-  val marketId = markets(entityName)
+  val marketId = markets(entityId)
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
