@@ -99,7 +99,7 @@ class MarketManagerActor(
     val tokenMetadataManager: TokenMetadataManager)
     extends ActorWithPathBasedConfig(
       MarketManagerActor.name,
-      MarketManagerActor.extractEntityName
+      MarketManagerActor.extractEntityId
     )
     with ActorLogging {
 

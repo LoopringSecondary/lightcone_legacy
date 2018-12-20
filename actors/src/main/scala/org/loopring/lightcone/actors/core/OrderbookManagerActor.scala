@@ -79,8 +79,7 @@ object OrderbookManagerActor extends ShardedByMarket {
 
 class OrderbookManagerActor(
     markets: Map[String, XMarketId],
-    extractEntityName: String => String =
-      OrderbookManagerActor.extractEntityName
+    extractEntityId: String => String = OrderbookManagerActor.extractEntityId
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -90,7 +89,7 @@ class OrderbookManagerActor(
     val tokenMetadataManager: TokenMetadataManager)
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
-      extractEntityName
+      extractEntityId
     ) {
   val marketId = markets(entityName)
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)

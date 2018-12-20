@@ -30,11 +30,11 @@ trait NamedBasedConfig {
 
 abstract class ActorWithPathBasedConfig(
     val name: String,
-    val extractEntityName: String => String = Predef.identity)
+    val extractEntityId: String => String = Predef.identity)
     extends Actor
     with ActorLogging
     with NamedBasedConfig {
-  protected val entityName = extractEntityName(self.path.name).replace("$", "")
+  protected val entityName = extractEntityId(self.path.name).replace("$", "")
 
   override val selfConfig = try {
     selfConfig_.getConfig(entityName).withFallback(selfConfig_)

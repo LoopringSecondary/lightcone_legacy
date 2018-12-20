@@ -30,7 +30,7 @@ trait ShardedByMarket extends Sharded {
     Math.abs(xorValue.hashCode % numOfShards).toString
   }
 
-  def extractEntityName(actorName: String) = actorName.split("_").last
+  def extractEntityId(actorName: String) = actorName.split("_").last
 
   val messageExtractor =
     new HashCodeMessageExtractor(numOfShards) {
