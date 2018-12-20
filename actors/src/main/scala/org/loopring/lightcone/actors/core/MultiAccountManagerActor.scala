@@ -26,8 +26,9 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.actors.base.safefuture._
+import scala.concurrent._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
@@ -52,8 +53,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
       typeName = name,
       entityProps = Props(new MultiAccountManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 
@@ -86,13 +86,17 @@ class MultiAccountManagerActor(
     with ActorLogging {
 
   val skiprecover = selfConfig.getBoolean("skip-recover")
+
+  val maxRecoverDurationMinutes =
+    selfConfig.getInt("max-recover-duration-minutes")
+
   val accountManagerActors = new MapBasedLookup[ActorRef]()
   var autoSwitchBackToReceive: Option[Cancellable] = None
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
 
+  //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
-      //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
       case e: Exception ⇒
         log.error(e.getMessage)
         Restart
@@ -101,66 +105,61 @@ class MultiAccountManagerActor(
   override def preStart(): Unit = {
     super.preStart()
 
+    autoSwitchBackToReceive = Some(
+      context.system.scheduler
+        .scheduleOnce(
+          maxRecoverDurationMinutes.minute,
+          self,
+          XRecoverEnded(true)
+        )
+    )
+
     if (skiprecover) {
       log.warning(s"actor recover skipped: ${self.path}")
     } else {
       context.become(recover)
       log.debug(s"actor recover started: ${self.path}")
       actors.get(OrderRecoverCoordinator.name) !
-        XRecoverReq(addressShardingEntities = Seq(entityName))
+        XRecoverReq(addressShardingEntities = Seq(entityId))
     }
   }
 
   def recover: Receive = {
 
-    case XRecoverOrderReq(Some(raworder)) =>
-      val order: XOrder = raworder
-      val req = XSubmitSimpleOrderReq(raworder.owner, Some(order))
+    case req: XRecoverOrderReq => handleRequest(req)
 
-      for {
-        _ <- extractAddress(req) match {
-          case Some(address) => accountManagerActorFor(address) ? req
-          case None =>
-            throw ErrorException(
-              ERR_UNEXPECTED_ACTOR_MSG,
-              s"$req cannot be handled by ${getClass.getName}"
-            )
-        }
-
-      } yield {
-        sender ! XRecoverOrderRes()
-      }
-
-    case msg: XRecoverEnded =>
-      s"account manager `${entityName}` recover completed (due to timeout: ${timeout})"
+    case XRecoverEnded(timeout) =>
+      s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
       context.become(receive)
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
       sender ! XError(
         ERR_REJECTED_DURING_RECOVER,
-        s"account manager `${entityName}` is being recovered"
+        s"account manager ${entityId} is being recovered"
       )
   }
 
   def receive: Receive = {
+    case req: Any => handleRequest(req)
+  }
 
-    case req: Any =>
-      extractAddress(req) match {
-        case Some(address) => accountManagerActorFor(address) forward req
-        case None =>
-          throw ErrorException(
-            ERR_UNEXPECTED_ACTOR_MSG,
-            s"$req cannot be handled by ${getClass.getName}"
-          )
-      }
+  private def handleRequest(req: Any) = extractAddress(req) match {
+    case Some(address) => accountManagerActorFor(address) forward req
+    case None =>
+      throw ErrorException(
+        ERR_UNEXPECTED_ACTOR_MSG,
+        s"$req cannot be handled by ${getClass.getName}"
+      )
   }
 
   protected def accountManagerActorFor(address: String): ActorRef = {
     if (!accountManagerActors.contains(address)) {
-      val newAccountActor =
+      log.info(s"created new account manager for address $address")
+      accountManagerActors.add(
+        address,
         context.actorOf(Props(new AccountManagerActor(address)), address)
-      accountManagerActors.add(address, newAccountActor)
+      )
     }
     accountManagerActors.get(address)
   }

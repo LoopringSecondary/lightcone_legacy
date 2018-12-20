@@ -33,20 +33,22 @@ import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
+import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 import scala.concurrent._
 
 // main owner: 杜永丰
-object OrderRecoverActor {
+object OrderRecoverActor extends ShardedEvenly {
   val name = "order_recover"
 
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XStart(_) =>
-      ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XStart(_) => "address_1"
-  }
+  override protected val messageExtractor =
+    new HashCodeMessageExtractor(numOfShards) {
+      override def entityId(message: Any) = message match {
+        case req: XRecoverReq =>
+          name + "_batch_" + req.batchId
+        case e: Any =>
+          throw new Exception(s"$e not expected by OrderRecoverActor")
+      }
+    }
 
   def startShardRegion(
     )(
@@ -61,8 +63,7 @@ object OrderRecoverActor {
       typeName = name,
       entityProps = Props(new OrderRecoverActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
@@ -76,10 +77,16 @@ class OrderRecoverActor(
     val actors: Lookup[ActorRef])
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
-  def mammValidator: ActorRef =
-    actors.get(MultiAccountManagerMessageValidator.name)
+  def mama: ActorRef = actors.get(MultiAccountManagerActor.name)
 
   def receive: Receive = {
+    case req: XRecoverReq =>
+      log.info(s"started order recover - $req")
+      context.become(recovering)
+  }
+
+  def recovering: Receive = {
+
     case _ =>
   }
 

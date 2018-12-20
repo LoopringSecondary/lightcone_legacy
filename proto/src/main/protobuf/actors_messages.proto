@@ -32,6 +32,28 @@ message XStart{
 }
 message XStop{}
 
+message XRecoverReq {
+   repeated string address_sharding_entities = 1;
+   repeated XMarketId market_ids = 2;
+   repeated string requesters = 3;
+   int64 batch_id = 4;
+}
+
+message XRecoverOrderReq {
+    XRawOrder raw_order = 1;
+}
+
+message XRecoverOrderRes {
+    string order_id = 1;
+    bool successful = 2;
+}
+
+message XRecoverEnded {
+    bool timeout = 1;
+}
+
+message XRecoverBatchTimeout{}
+
 message XSubmitOrderReq {
     XRawOrder raw_order = 1;
 }

@@ -57,8 +57,7 @@ object EthereumQueryActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new EthereumQueryActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }

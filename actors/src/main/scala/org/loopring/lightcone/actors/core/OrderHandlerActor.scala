@@ -54,8 +54,7 @@ object OrderHandlerActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new OrderHandlerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
@@ -70,7 +69,7 @@ class OrderHandlerActor(
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
-  def mammValidator: ActorRef =
+  def mammv: ActorRef =
     actors.get(MultiAccountManagerMessageValidator.name)
 
   //save order to db first, then send to AccountManager
@@ -82,11 +81,11 @@ class OrderHandlerActor(
       } yield {
         cancelRes.headOption match {
           case Some(res) ⇒
-            req.copy(owner = "SOME OWNER")
+            req //todo:测试
           case None ⇒
             throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }
-      }) forwardTo (mammValidator, sender)
+      }) forwardTo (mammv, sender)
 
     case XSubmitOrderReq(Some(raworder)) ⇒
       (for {
@@ -97,11 +96,8 @@ class OrderHandlerActor(
           case Right(errCode) =>
             throw ErrorException(errCode, s"failed to submit order: $raworder")
           case Left(resRawOrder) =>
-            XSubmitSimpleOrderReq(
-              resRawOrder.owner,
-              Some(resRawOrder)
-            )
+            XSubmitSimpleOrderReq(resRawOrder.owner, Some(resRawOrder))
         }
-      }) forwardTo (mammValidator, sender)
+      }) forwardTo (mammv, sender)
   }
 }

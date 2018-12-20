@@ -66,6 +66,9 @@ class EntryPointActor(
 
     case _: XJsonRpcReq | _: XRpcReqWithHeight ⇒
       Some(EthereumAccessActor.name)
+
+    case req: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
+
     case _ => None
   }
 

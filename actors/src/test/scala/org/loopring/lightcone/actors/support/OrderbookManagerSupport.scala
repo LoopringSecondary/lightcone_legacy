@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.support
 
 import org.loopring.lightcone.actors.core.OrderbookManagerActor
+import org.loopring.lightcone.actors.validator._
 
 trait OrderbookManagerSupport {
   my: CommonSpec =>
@@ -24,6 +25,15 @@ trait OrderbookManagerSupport {
   actors.add(
     OrderbookManagerActor.name,
     OrderbookManagerActor.startShardRegion
+  )
+
+  actors.add(
+    OrderbookManagerMessageValidator.name,
+    MessageValidationActor(
+      new OrderbookManagerMessageValidator(),
+      OrderbookManagerActor.name,
+      OrderbookManagerMessageValidator.name
+    )
   )
 
 }
