@@ -30,6 +30,8 @@ trait RingBatchGenerator {
 
 class RingBatchGeneratorImpl(context: XRingBatchContext)
   extends RingBatchGenerator {
+  import ethereum._
+
   val OrderVersion = 0
   val SerializationVersion = 0
 

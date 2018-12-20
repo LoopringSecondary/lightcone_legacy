@@ -21,6 +21,7 @@ import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.utils.Numeric
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.proto.XErrorCode._
 
 trait RawOrderValidator {
@@ -30,6 +31,8 @@ trait RawOrderValidator {
 }
 
 class RawOrderValidatorImpl extends RawOrderValidator {
+  import ethereum._
+
   // TODO(Kongliang): the following constant fields should be configurable somewhere.
   val FeePercentageBase = 1000
   val Eip191Header = "\u0019\u0001"
