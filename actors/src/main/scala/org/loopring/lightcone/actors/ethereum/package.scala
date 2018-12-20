@@ -71,6 +71,7 @@ package object ethereum {
     val allowanceCallReqs =
       batchErc20AllowanceReq(delegateAddress, owner, tokens)
     val balanceCallReqs = batchErc20BalanceReq(owner, tokens)
+
     XBatchContractCallReq(allowanceCallReqs ++ balanceCallReqs)
   }
 
@@ -109,12 +110,15 @@ package object ethereum {
       batchRes: XBatchContractCallRes
     ): XGetBalanceAndAllowancesRes = {
 
-    val allowances = batchRes.resps.filter(_.id % 2 == 0).map { res =>
-      ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+    val allowances = batchRes.resps.slice(0, batchRes.resps.size / 2).map {
+      res =>
+        ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
     }
-    val balances = batchRes.resps.filter(_.id % 2 == 1).map { res =>
-      ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
-    }
+    val balances =
+      batchRes.resps.slice(batchRes.resps.size / 2, batchRes.resps.size).map {
+        res =>
+          ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+      }
     val balanceAndAllowance = (balances zip allowances).map { ba =>
       XBalanceAndAllowance(ba._1, ba._2)
     }

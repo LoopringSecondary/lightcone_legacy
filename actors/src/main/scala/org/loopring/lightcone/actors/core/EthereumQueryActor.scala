@@ -144,10 +144,11 @@ class EthereumQueryActor(
             )).mapAs[XEthGetBalanceRes].map(Some(_))
           case None ⇒ Future.successful(None)
         }
-        res: XGetBalanceRes = xBatchContractCallResToBalance(
-          req.address,
-          req.tokens,
-          callRes
+        res: XGetBalanceRes = XGetBalanceRes(
+          address = req.address,
+          (req.tokens zip callRes.resps.map(
+            res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+          )).toMap
         )
       } yield {
         ethRes match {
@@ -167,10 +168,11 @@ class EthereumQueryActor(
       (for {
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[XBatchContractCallRes]
-        res: XGetAllowanceRes = xBatchContractCallResToAllowance(
-          req.address,
-          req.tokens,
-          callRes
+        res: XGetAllowanceRes = XGetAllowanceRes(
+          address = req.address,
+          (req.tokens zip callRes.resps.map(
+            res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+          )).toMap
         )
       } yield res) sendTo sender
 

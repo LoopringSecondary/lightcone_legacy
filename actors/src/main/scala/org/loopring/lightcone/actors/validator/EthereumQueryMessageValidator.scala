@@ -30,7 +30,8 @@ final class EthereumQueryMessageValidator()(implicit val config: Config)
 
   // TODO(yadong): 我们不仅要判断Jan地址是不是合法的，害怕把地址改写成规范的模式
   // This method should throw exception for an invalid address
-  private def normalizeAddress(address: String): String = address
+  private def normalizeAddress(address: String): String =
+    Address(address).toString
 
   // Throws exception if validation fails.
   def validate = {

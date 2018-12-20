@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.lib._
@@ -35,16 +36,31 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
     //todo: 测试暂时注释
 //    throw ErrorException(ERR_INVALID_ARGUMENT, s"invalid address $address")
   }
+  private def normalizeAddress(address: String): String =
+    Address(address).toString
 
   def validate = {
     case req: XCancelOrderReq ⇒
       verifyAddressValid(req.owner)
-      req
+      req.copy(owner = normalizeAddress(req.owner))
 
-    case req: XSubmitSimpleOrderReq ⇒ req
+    case req: XSubmitSimpleOrderReq ⇒
+      req.copy(owner = normalizeAddress(req.owner))
     case req: XRecoverOrderReq => req
-    case req: XGetBalanceAndAllowancesReq ⇒ req
-    case req: XAddressBalanceUpdated ⇒ req
-    case req: XAddressAllowanceUpdated ⇒ req
+    case req: XGetBalanceAndAllowancesReq ⇒
+      req
+        .copy(address = normalizeAddress(req.address))
+        .copy(tokens = req.tokens.map(normalizeAddress))
+
+    case req: XAddressBalanceUpdated ⇒
+      req
+        .copy(address = req.address)
+        .copy(token = normalizeAddress(req.token))
+
+    case req: XAddressAllowanceUpdated ⇒
+      req
+        .copy(address = req.address)
+        .copy(token = normalizeAddress(req.token))
+
   }
 }
