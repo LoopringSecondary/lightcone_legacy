@@ -33,20 +33,22 @@ import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
+import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 import scala.concurrent._
 
 // main owner: 杜永丰
 object OrderRecoverActor extends ShardedEvenly {
   val name = "order_recover"
 
-  // XRecover.CancelFor is sent directly to a sharded instance, not through
-  // a Shard Region actor.
-  override protected def getEntitityId(msg: Any) = msg match {
-    case req: XRecover.Batch =>
-      name + "_batch_" + req.batchId
-    case e: Any =>
-      throw new Exception(s"$e not expected by OrderRecoverActor")
-  }
+  override protected val messageExtractor =
+    new HashCodeMessageExtractor(numOfShards) {
+      override def entityId(message: Any) = message match {
+        case req: XRecover.Batch =>
+          name + "_batch" + req.batchId
+        case e: Any =>
+          throw new Exception(s"$e not expected by OrderRecoverActor")
+      }
+    }
 
   def startShardRegion(
     )(
@@ -61,8 +63,7 @@ object OrderRecoverActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new OrderRecoverActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
