@@ -18,10 +18,13 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
+import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.persistence.dals.{OrderDal, OrderDalImpl}
+import org.loopring.lightcone.proto.XErrorCode.ERR_INTERNAL_UNKNOWN
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
+
 import scala.concurrent._
 
 class OrderServiceImpl @Inject()(
@@ -48,21 +51,24 @@ class OrderServiceImpl @Inject()(
       orderHashes: Seq[String]
     ): Future[Seq[XUserCancelOrderResult.Result]] =
     for {
-      selectOwners <- orderDal.getOrdersMap(orderHashes)
-      updateResults <- Future.sequence(
-        orderHashes.map { orderHash =>
-          orderDal
-            .updateOrderStatus(orderHash, XOrderStatus.STATUS_CANCELLED_BY_USER)
-            .map { result =>
-              XUserCancelOrderResult.Result(
-                orderHash,
-                selectOwners.get(orderHash),
-                result
-              )
-            }
-        }
+      updated <- orderDal.updateOrdersStatus(
+        orderHashes,
+        XOrderStatus.STATUS_CANCELLED_BY_USER
       )
-    } yield updateResults
+      selectOwners <- orderDal.getOrdersMap(orderHashes)
+    } yield {
+      if (updated == XErrorCode.ERR_NONE) {
+        orderHashes.map { orderHash =>
+          XUserCancelOrderResult.Result(
+            orderHash,
+            selectOwners.get(orderHash),
+            XErrorCode.ERR_NONE
+          )
+        }
+      } else {
+        throw ErrorException(ERR_INTERNAL_UNKNOWN, "failed to update")
+      }
+    }
 
   def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]] =
     orderDal.getOrders(hashes)

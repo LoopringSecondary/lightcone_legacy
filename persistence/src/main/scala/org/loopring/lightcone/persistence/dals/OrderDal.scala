@@ -128,6 +128,11 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
       status: XOrderStatus
     ): Future[XErrorCode]
 
+  def updateOrdersStatus(
+      hashes: Seq[String],
+      status: XOrderStatus
+    ): Future[XErrorCode]
+
   def updateFailed(
       hash: String,
       status: XOrderStatus
@@ -197,9 +202,7 @@ class OrderDalImpl(
   }
 
   def getOrdersMap(hashes: Seq[String]): Future[Map[String, XRawOrder]] =
-    for {
-      result <- getOrders(hashes)
-    } yield result.map(r => r.hash -> r).toMap
+    getOrders(hashes).map(_.map(r => r.hash -> r).toMap)
 
   def getOrder(hash: String): Future[Option[XRawOrder]] =
     db.run(query.filter(_.hash === hash).result.headOption)
@@ -395,6 +398,22 @@ class OrderDalImpl(
       result ← db.run(
         query
           .filter(_.hash === hash)
+          .map(c ⇒ (c.status, c.updatedAt))
+          .update(status, timeProvider.getTimeMillis)
+      )
+    } yield {
+      if (result >= 1) ERR_NONE
+      else ERR_PERSISTENCE_UPDATE_FAILED
+    }
+
+  def updateOrdersStatus(
+      hashes: Seq[String],
+      status: XOrderStatus
+    ): Future[XErrorCode] =
+    for {
+      result ← db.run(
+        query
+          .filter(_.hash inSet hashes)
           .map(c ⇒ (c.status, c.updatedAt))
           .update(status, timeProvider.getTimeMillis)
       )

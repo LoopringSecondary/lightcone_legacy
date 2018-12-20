@@ -64,9 +64,8 @@ class EntryPointActor(
 
     case req: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
 
-    case _: XGetOrdersForUserReq | _: XGetTradesReq => {
+    case _: XGetOrdersForUserReq | _: XGetTradesReq =>
       Some(DatabaseQueryMessageValidator.name)
-    }
 
     case _ => None
   }

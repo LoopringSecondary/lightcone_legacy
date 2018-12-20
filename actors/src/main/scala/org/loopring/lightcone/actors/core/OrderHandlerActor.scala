@@ -80,12 +80,9 @@ class OrderHandlerActor(
       } yield {
         cancelRes.headOption match {
           case Some(res) ⇒
-            val owner = res.order match {
-              case Some(o) => o.owner
-              case None =>
-                throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
-            }
-            req.copy(owner = owner)
+            if (res.order.isEmpty)
+              throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
+            req.copy(owner = res.order.get.owner)
           case None ⇒
             throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }
