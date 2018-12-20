@@ -37,11 +37,8 @@ trait ShardedByMarket extends Sharded {
     }
   }
 
-  private def _extractShardId(msg: Any): Option[String] = {
-    hashed((extractMarketId.lift)(msg)) map { shard =>
-      s"shard_${shard}"
-    }
-  }
+  private def _extractShardId(msg: Any): Option[String] =
+    _extractEntityId(msg).map("shard_" + _)
 
   val extractEntityId: ShardRegion.ExtractEntityId =
     Function.unlift(_extractEntityId)

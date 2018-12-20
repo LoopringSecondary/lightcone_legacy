@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.base
 
 import akka.cluster.sharding._
+import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 
 trait Sharded {
   val name: String
@@ -30,17 +31,22 @@ trait Sharded {
 trait ShardedEvenly extends Sharded {
   protected var entitiesPerShard: Int = 1
 
-  protected def getShardId(msg: Any) =
-    "shard_" + hashed(msg, numOfShards)
+  // protected def getShardId(msg: Any) =
+  //   "shard_" + hashed(msg, numOfShards)
 
-  protected def getEntitityId(msg: Any) =
-    name + "_" + hashed(msg, numOfShards * entitiesPerShard)
+  // protected def getEntitityId(msg: Any) =
+  //   name + "_" + hashed(msg, numOfShards * entitiesPerShard)
 
-  protected val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg => (getEntitityId(msg), msg)
-  }
+  // protected val extractEntityId: ShardRegion.ExtractEntityId = {
+  //   case msg => (getEntitityId(msg), msg)
+  // }
 
-  protected val extractShardId: ShardRegion.ExtractShardId = {
-    case msg => getShardId(msg)
+  // protected val extractShardId: ShardRegion.ExtractShardId = {
+  //   case msg => getShardId(msg)
+  // }
+
+  protected val messageExtractor = new HashCodeMessageExtractor(numOfShards) {
+    override def entityId(message: Any) =
+      hashed(message, numOfShards * entitiesPerShard).toString
   }
 }

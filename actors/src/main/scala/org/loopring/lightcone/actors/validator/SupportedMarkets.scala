@@ -34,8 +34,7 @@ case class SupportedMarkets(config: Config) {
     }
     .toSet
 
-
-  def contains(marketId:XMarketId) = {
+  def contains(marketId: XMarketId) = {
     val eig = Numeric.toBigInt(marketId.primary) xor
       Numeric.toBigInt(marketId.secondary)
     markets.contains(eig)

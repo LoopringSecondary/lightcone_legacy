@@ -32,7 +32,7 @@ trait ShardedByAddress extends Sharded {
     }
 
   private def _extractShardId(msg: Any): Option[String] =
-    hashed(msg).map("shard_" + _)
+    _extractEntityId(msg).map("shard_" + _)
 
   val extractEntityId: ShardRegion.ExtractEntityId =
     Function.unlift(_extractEntityId)
