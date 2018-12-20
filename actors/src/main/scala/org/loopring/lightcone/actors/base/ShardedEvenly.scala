@@ -25,15 +25,20 @@ trait Sharded {
   protected def hashed(
       msg: Any,
       max: Int
-    ) = Math.abs(msg.hashCode % max)
+    ): Int = Math.abs(msg.hashCode % max)
 }
 
 trait ShardedEvenly extends Sharded {
   protected var entitiesPerShard: Int = 1
 
+  def getEntityId(message: Any) =
+    Math.abs(message.hashCode % numOfShards * entitiesPerShard)
+
   protected val messageExtractor =
     new HashCodeMessageExtractor(numOfShards) {
-      override def entityId(message: Any) =
-        name + "_" + hashed(message, numOfShards * entitiesPerShard)
+      override def entityId(message: Any) = {
+        val eid = getEntityId(message)
+        s"${name}_${eid}"
+      }
     }
 }

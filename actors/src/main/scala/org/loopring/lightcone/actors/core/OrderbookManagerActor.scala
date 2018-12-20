@@ -52,13 +52,11 @@ object OrderbookManagerActor extends ShardedByMarket {
     val markets = config
       .getObjectList("markets")
       .asScala
-      .flatMap { item =>
+      .map { item =>
         val c = item.toConfig
         val marketId =
           XMarketId(c.getString("priamry"), c.getString("secondary"))
-        val hashOpt = OrderbookManagerActor
-          .hashed(Some(marketId))
-        hashOpt map (_.toString -> marketId)
+        OrderbookManagerActor.getEntityId(marketId) -> marketId
       }
       .toMap
 
@@ -67,8 +65,7 @@ object OrderbookManagerActor extends ShardedByMarket {
       typeName = name,
       entityProps = Props(new OrderbookManagerActor(markets)),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 
@@ -96,7 +93,7 @@ class OrderbookManagerActor(
       extractEntityName
     ) {
   val marketId = markets(entityName)
-  val marketIdHashedValue = OrderbookManagerActor.hashed(Some(marketId))
+  val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
   // based on marketId
@@ -120,14 +117,14 @@ class OrderbookManagerActor(
       log.info(s"receive XOrderbookUpdate ${req}")
       manager.processUpdate(req)
 
-    case XGetOrderbook(level, size, marketIdOpt) =>
+    case XGetOrderbook(level, size, Some(marketId)) =>
       Future {
-        if (OrderbookManagerActor.hashed(marketIdOpt) == marketIdHashedValue)
+        if (OrderbookManagerActor.getEntityId(marketId) == marketIdHashedValue)
           manager.getOrderbook(level, size, latestPrice)
         else
           throw ErrorException(
             XErrorCode.ERR_INVALID_ARGUMENT,
-            s"marketId doesn't match, expect:${marketId} ,receive:${marketIdOpt}"
+            s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}"
           )
       } sendTo sender
     case msg => log.info(s"not supported msg:${msg}, ${marketId}")

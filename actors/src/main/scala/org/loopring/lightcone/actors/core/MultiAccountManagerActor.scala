@@ -53,8 +53,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
       typeName = name,
       entityProps = Props(new MultiAccountManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 

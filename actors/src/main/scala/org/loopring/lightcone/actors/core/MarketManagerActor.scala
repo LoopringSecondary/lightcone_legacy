@@ -59,13 +59,11 @@ object MarketManagerActor extends ShardedByMarket {
     val markets = config
       .getObjectList("markets")
       .asScala
-      .flatMap { item =>
+      .map { item =>
         val c = item.toConfig
         val marketId =
           XMarketId(c.getString("priamry"), c.getString("secondary"))
-        val hashOpt = MarketManagerActor
-          .hashed(Some(marketId))
-        hashOpt map (_.toString -> marketId)
+        MarketManagerActor.getEntityId(marketId) -> marketId
       }
       .toMap
 
@@ -73,8 +71,7 @@ object MarketManagerActor extends ShardedByMarket {
       typeName = name,
       entityProps = Props(new MarketManagerActor(markets)),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 
