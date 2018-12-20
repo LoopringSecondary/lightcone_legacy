@@ -31,35 +31,49 @@ import org.slf4s.Logging
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent._
+import org.json4s.jackson.Serialization
+import org.json4s.DefaultFormats
 
-//class EtherHttpConnectorSpec extends FlatSpec with Matchers with Logging {
-//
-//  implicit val system = ActorSystem("Lightcone")
-//  implicit val ec = system.dispatcher
-//  implicit val materializer = ActorMaterializer()(system)
-//  implicit val timeout = Timeout(2 second)
-//  implicit val timeProvider = new SystemTimeProvider()
-//  implicit val actors = new MapBasedLookup[ActorRef]()
-//  implicit val config: Config = ConfigFactory.load()
-//
-//  val wethAbi = WETHABI()
-//  val delegateAdderess = "0x17233e07c67d086464fD408148c3ABB56245FA64"
-//
-//  val nodeConfig = config
-//    .getConfig(EthereumAccessActor.name)
-//    .getConfigList("nodes")
-//    .asScala
-//    .head
-//
-//  val node = XEthereumProxySettings.XNode(
-//    host = nodeConfig.getString("host"),
-//    port = nodeConfig.getInt("port"),
-//    ipcPath = nodeConfig.getString("ipc-path")
-//  )
-//
-//  val ethConnectionActor = system.actorOf(Props(new HttpConnector(node)))
-//
-//  val fu = for {
+class EtherHttpConnectorSpec extends FlatSpec with Matchers with Logging {
+
+  implicit val system = ActorSystem("Lightcone")
+  implicit val ec = system.dispatcher
+  implicit val materializer = ActorMaterializer()(system)
+  implicit val timeout = Timeout(2 second)
+  implicit val timeProvider = new SystemTimeProvider()
+  implicit val actors = new MapBasedLookup[ActorRef]()
+  implicit val config: Config = ConfigFactory.load()
+  implicit val formats = DefaultFormats
+
+  val wethAbi = WETHABI()
+  val delegateAdderess = "0x17233e07c67d086464fD408148c3ABB56245FA64"
+
+  val nodeConfig = config
+    .getConfig(EthereumAccessActor.name)
+    .getConfigList("nodes")
+    .asScala
+    .head
+
+  val node = XEthereumProxySettings.XNode(
+    host = nodeConfig.getString("host"),
+    port = nodeConfig.getInt("port"),
+    ipcPath = nodeConfig.getString("ipc-path")
+  )
+
+  val ethConnectionActor = system.actorOf(Props(new HttpConnector(node)))
+
+  val jsonRpcReqWrapped = JsonRpcReqWrapped(
+    id = 1,
+    jsonrpc = "2.0",
+    method = "eth_getBlockByNumber",
+    params = Seq("0x694b94", false)
+  )
+
+  val fu = for {
+    block ← (ethConnectionActor ? XJsonRpcReq(
+      Serialization.write(jsonRpcReqWrapped)
+    )).mapTo[XJsonRpcRes]
+      .map(_.json)
 //    blockNum ← (ethConnectionActor ? XEthBlockNumberReq())
 //      .mapTo[XEthBlockNumberRes]
 //      .map(_.result)
@@ -189,40 +203,41 @@ import scala.concurrent._
 //      ))
 //      .mapTo[XBatchGetUncleByBlockNumAndIndexRes]
 //      .map(_.resps.map(_.result.get))
-//    gas ← (ethConnectionActor ? XGetEstimatedGasReq(
-//      to = "0xef68e7c694f40c8202821edf525de3782458639f"
-//    ).withData(
-//      wethAbi.transfer.pack(
-//        TransferFunction.Parms(
-//          to = "0xb94065482ad64d4c2b9252358d746b39e820a582",
-//          amount = BigInt("10000")
-//        )
-//      )
-//    )).mapTo[XGetEstimatedGasRes]
-//      .map(_.result)
-//  } yield {
-////    println(
-////      s"BlockNum: ${blockNum} --- ${Numeric.toBigInt(blockNum).intValue()}"
-////    )
-////    println(s"txHashs:${blockWithTxHash}")
-////    println(s"txHashs:${blockByHashWithHash}")
-////    println(s"Txs:${blockWithTxObjcet}")
-////    println(s"Txs:${blockByHashwithObject}")
-////    println(s"Txs:${txs}")
-////    println(s"Receipts:${receipts}")
-////    println(s"Receipts:${batchReceipts.map(_.from)}")
-////    println(s"nonce:${nonce}")
-////    println(s"TxCount:${txCount}")
-////    println(s"txs:${batchTx.map(_.get.from)}")
-////    println(s"Lrc Balance:${lrcBalance.get.balance.toString()}")
-////    println(s"balances:${lrcbalances.map(_.get.balance.toString)}")
-////    println(s"Allowance:${allowance.get.allowance.toString}")
-////    println(s"Allowances:${allowances.map(_.get.allowance.toString)}")
-////    println(s"Uncle:${uncle}")
-////    println(s"Uncles:${uncles}")
-//    println(s"Gas:$gas")
-//    println("test success")
-//  }
-//
-//  Await.result(fu, 2 minute)
-//}
+    gas ← (ethConnectionActor ? XGetEstimatedGasReq(
+      to = "0xef68e7c694f40c8202821edf525de3782458639f"
+    ).withData(
+      wethAbi.transfer.pack(
+        TransferFunction.Parms(
+          to = "0xb94065482ad64d4c2b9252358d746b39e820a582",
+          amount = BigInt("10000")
+        )
+      )
+    )).mapTo[XGetEstimatedGasRes]
+      .map(_.result)
+  } yield {
+//    println(
+//      s"BlockNum: ${blockNum} --- ${Numeric.toBigInt(blockNum).intValue()}"
+//    )
+//    println(s"txHashs:${blockWithTxHash}")
+//    println(s"txHashs:${blockByHashWithHash}")
+//    println(s"Txs:${blockWithTxObjcet}")
+//    println(s"Txs:${blockByHashwithObject}")
+//    println(s"Txs:${txs}")
+//    println(s"Receipts:${receipts}")
+//    println(s"Receipts:${batchReceipts.map(_.from)}")
+//    println(s"nonce:${nonce}")
+//    println(s"TxCount:${txCount}")
+//    println(s"txs:${batchTx.map(_.get.from)}")
+//    println(s"Lrc Balance:${lrcBalance.get.balance.toString()}")
+//    println(s"balances:${lrcbalances.map(_.get.balance.toString)}")
+//    println(s"Allowance:${allowance.get.allowance.toString}")
+//    println(s"Allowances:${allowances.map(_.get.allowance.toString)}")
+//    println(s"Uncle:${uncle}")
+//    println(s"Uncles:${uncles}")
+    println(block)
+    println(s"Gas:$gas")
+    println("test success")
+  }
+
+  Await.result(fu, 2 minute)
+}

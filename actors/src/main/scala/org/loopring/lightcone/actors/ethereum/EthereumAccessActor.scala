@@ -132,7 +132,7 @@ class EthereumAccessActor(
     }
 
     router = context.actorOf(
-      Props(new EthereumServiceRouter()),
+      Props(new EthereumServiceRouter(connectorGroups.map(_.path.toString))),
       "r_ethereum_connector"
     )
 

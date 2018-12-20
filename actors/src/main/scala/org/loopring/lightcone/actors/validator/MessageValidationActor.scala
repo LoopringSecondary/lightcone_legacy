@@ -61,15 +61,12 @@ class MessageValidationActor(
         validate(msg) match {
           case Some(validatedMsg) if validatedMsg != msg =>
             log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
-            println(s"correct but need rewritten:${validatedMsg}")
             validatedMsg
 
           case Some(validatedMsg) =>
-            println(s"correctly validate:${validatedMsg}")
             validatedMsg
 
           case _ =>
-            println(s"invalid msg:${msg}")
             throw ErrorException(
               ERR_UNEXPECTED_ACTOR_MSG,
               s"unexpected msg of ${msg.getClass.getName}"
