@@ -16,123 +16,182 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.Props
-import org.loopring.lightcone.actors.RpcBinding
-import org.loopring.lightcone.actors.entrypoint.EntryPointActor
-import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
-import org.loopring.lightcone.actors.support.{CommonSpec, DatabaseModuleSupport}
-import org.loopring.lightcone.actors.validator.{
-  DatabaseQueryMessageValidator,
-  MessageValidationActor
-}
+import org.loopring.lightcone.actors.support._
 import scala.concurrent.{Await, Future}
-import akka.http.scaladsl.model._
-import akka.util.ByteString
-import scala.concurrent.duration._
 import scala.concurrent.Future
-import akka.http.scaladsl.Http
-import org.loopring.lightcone.lib.MarketHashProvider
-import org.loopring.lightcone.proto.{MarketPair, XGetTradesReq, XSkip, XSort}
-import scala.util.{Failure, Success}
-import org.json4s._
-import org.json4s.jackson.Serialization.write
+import com.google.protobuf.ByteString
+import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
+import org.loopring.lightcone.proto._
 
 class DatabaseQuerySpec
     extends CommonSpec("""
                          |akka.cluster.roles=["database_query"]
                          |""".stripMargin)
-    with DatabaseModuleSupport {
-  actors.add(
-    DatabaseQueryMessageValidator.name,
-    MessageValidationActor(
-      new DatabaseQueryMessageValidator(),
-      DatabaseQueryActor.name,
-      DatabaseQueryMessageValidator.name
+    with DatabaseModuleSupport
+    with DatabaseQueryMessageSupport
+    with JsonrpcSupport
+    with HttpSupport {
+  val tokenS = "0xaaaaaa1"
+  val tokenB = "0xbbbbbb1"
+  val tokenFee = "0x-fee-token"
+  val validSince = 1
+  val validUntil = timeProvider.getTimeSeconds()
+
+  private def testSaveOrder(
+      hash: String,
+      owner: String,
+      status: XOrderStatus,
+      tokenS: String,
+      tokenB: String,
+      validSince: Int,
+      validUntil: Int
+    ): Future[Either[XRawOrder, XErrorCode]] = {
+    val now = timeProvider.getTimeMillis
+    val state = XRawOrder.State(
+      createdAt = now,
+      updatedAt = now,
+      status = status
     )
-  )
-  actors.add(
-    EntryPointActor.name,
-    system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
-  )
-
-  Future {
-    val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
-    with RpcBinding
-    server.start()
+    val fee = XRawOrder.FeeParams(
+      tokenFee = tokenFee,
+      amountFee = ByteString.copyFrom("111", "utf-8")
+    )
+    val param = XRawOrder.Params(
+      validUntil = validUntil
+    )
+    var order = XRawOrder(
+      owner = owner,
+      hash = hash,
+      version = 1,
+      tokenS = tokenS,
+      tokenB = tokenB,
+      amountS = ByteString.copyFrom("11", "UTF-8"),
+      amountB = ByteString.copyFrom("12", "UTF-8"),
+      validSince = validSince,
+      state = Some(state),
+      feeParams = Some(fee),
+      params = Some(param),
+      marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
+    )
+    dbModule.orderService.saveOrder(order)
   }
 
-  "getOrdersWithJRPC" should {
-    "query owner's orders successfully" in {
-      val jsonByteString = ByteString(
-        s"""{
-           |  "method":"get_orders",
-           |  "params" : {"owner":"0x1","statuses":["STATUS_NEW"]},
-           |  "id" : 0,
-           |  "jsonrpc":"000"
-           |}""".stripMargin
-      )
-      val request = HttpRequest(
-        method = HttpMethods.POST,
-        uri = "http://127.0.0.1:8080/api/loopring",
-        entity = HttpEntity(MediaTypes.`application/json`, jsonByteString)
-      )
-      val response = Http().singleRequest(request)
-      val result = Await.result(response.mapTo[HttpResponse], 10 second)
-      result.entity.dataBytes
-        .runFold(ByteString(""))(_ ++ _)
-        .foreach(body => println(body.utf8String))
-      result.status === StatusCodes.OK should be(true)
-    }
+  private def testSaveOrders(
+      hashes: Set[String],
+      status: XOrderStatus,
+      tokenS: String,
+      tokenB: String,
+      validSince: Int,
+      validUntil: Int
+    ): Future[Set[Either[XRawOrder, XErrorCode]]] = {
+    for {
+      result ← Future.sequence(hashes.map { hash ⇒
+        testSaveOrder(
+          hash,
+          hash,
+          status,
+          tokenS,
+          tokenB,
+          validSince,
+          validUntil
+        )
+      })
+    } yield result
   }
 
-  "getTradesWithJRPC" should {
-    "query owner's trades successfully" in {
-      val a = XGetTradesReq(
-        owner = "0x-gettrades-state0-02",
-        market = XGetTradesReq.Market
-          .MarketHash(MarketHashProvider.convert2Hex("0x00001", "0x00002")),
-        skip = Some(XSkip(0, 10)),
-        sort = XSort.ASC
+  private def testSaveTrade(
+      txHash: String,
+      owner: String,
+      tokenS: String,
+      tokenB: String,
+      blockHeight: Long
+    ): Future[Either[XErrorCode, String]] = {
+    dbModule.tradeService.saveTrade(
+      XTrade(
+        txHash = txHash,
+        owner = owner,
+        tokenB = tokenB,
+        tokenS = tokenS,
+        blockHeight = blockHeight
       )
-      val b = XGetTradesReq(
-        owner = "0x-gettrades-token-02",
-        market = XGetTradesReq.Market
-          .Pair(MarketPair(tokenB = "0x00001", tokenS = "0x00002")),
-        skip = Some(XSkip(0, 10)),
-        sort = XSort.ASC
+    )
+  }
+
+  "send an orders request" must {
+    "receive a response without orders" in {
+      val method = "get_orders"
+      val hashes = Set(
+        "0x-getorders-actor-01",
+        "0x-getorders-actor-02",
+        "0x-getorders-actor-03",
+        "0x-getorders-actor-04",
+        "0x-getorders-actor-05"
       )
-      implicit val formats = DefaultFormats
-      // TODO du: write(a)无法序列化enum，暂时写死参数
-      // {"owner":"0x-gettrades-state0-02","market":{"value":"0x3"}}
-      // {"owner":"0x-gettrades-token-02","skip":{"skip":0,"take":10},"market":{"value":{"tokenS":"0x00002","tokenB":"0x00001"}}}
-      val jsonByteString = ByteString(
-        s"""{
-           |  "method":"get_trades",
-           |  "params" : {
-           |    "owner":"0x-gettrades-token-02",
-           |    "skip":{"skip":0,"take":10},
-           |    "market":{"value":{"tokenS":"0x00002","tokenB":"0x00001"}}
-           |   },
-           |  "id" : 0,
-           |  "jsonrpc":"000"
-           |}""".stripMargin
+      val request = XGetOrdersForUserReq(
+        owner = "0x-getorders-actor-03",
+        statuses = Seq(XOrderStatus.STATUS_NEW),
+        market = XGetOrdersForUserReq.Market
+          .Pair(MarketPair(tokenS = tokenS, tokenB = tokenB))
       )
-      val request = HttpRequest(
-        method = HttpMethods.POST,
-        uri = "http://127.0.0.1:8080/api/loopring",
-        entity = HttpEntity(MediaTypes.`application/json`, jsonByteString)
-      )
-      val response = Http().singleRequest(request)
-      response onComplete {
-        case Success(value) => println(value)
-        case Failure(e)     => println(e)
+      val r = for {
+        _ ← testSaveOrders(
+          hashes,
+          XOrderStatus.STATUS_NEW,
+          tokenS,
+          tokenB,
+          validSince,
+          validUntil.toInt
+        )
+        response <- singleRequest(
+          request,
+          method
+        )
+      } yield response
+      val res = Await.result(r, timeout.duration)
+      res match {
+        case XGetOrdersForUserResult(orders, error) =>
+          assert(orders.nonEmpty && orders.length === 1)
+          assert(error === XErrorCode.ERR_NONE)
+        case _ => assert(false)
       }
-      val result = Await.result(response.mapTo[HttpResponse], 10 second)
-      val body = result.entity.dataBytes
-        .runFold(ByteString(""))(_ ++ _)
-        .map(_.utf8String)
-      result.status === StatusCodes.OK should be(true)
     }
   }
 
+  "send an trades request" must {
+    "receive a response without trades" in {
+      val method = "get_trades"
+      val tokenS = "0xaaaaaaa2"
+      val tokenB = "0xbbbbbbb2"
+      val tradesReq = XGetTradesReq(
+        owner = "0x-gettrades-actor-02",
+        market = XGetTradesReq.Market
+          .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB)),
+        skip = Some(XSkip(0, 10)),
+        sort = XSort.ASC
+      )
+      val hashes = Set(
+        "0x-gettrades-actor-01",
+        "0x-gettrades-actor-02",
+        "0x-gettrades-actor-03",
+        "0x-gettrades-actor-04",
+        "0x-gettrades-actor-05"
+      )
+      val r = for {
+        _ ← Future.sequence(hashes.map { hash ⇒
+          testSaveTrade(hash, hash, tokenS, tokenB, 1L)
+        })
+        response <- singleRequest(
+          tradesReq,
+          method
+        )
+      } yield response
+      val res = Await.result(r, timeout.duration)
+      res match {
+        case XGetTradesResult(trades, error) =>
+          assert(trades.nonEmpty && trades.length === 1)
+          assert(error === XErrorCode.ERR_NONE)
+        case _ => assert(false)
+      }
+    }
+  }
 }
