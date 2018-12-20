@@ -40,61 +40,44 @@ class BalanceSpec
                          | "ethereum_access",
                          | "multi_account_manager",
                          | "ethereum_query",
-                         | "orderbook_manager",
                          | "gas_price"]
                          |""".stripMargin)
     with EthereumSupport
-    with EntryPointSupport {
-
-  actors.add(
-    MultiAccountManagerActor.name,
-    MultiAccountManagerActor.startShardRegion
-  )
-
-  actors.add(
-    MultiAccountManagerMessageValidator.name,
-    MessageValidationActor(
-      new MultiAccountManagerMessageValidator(),
-      MultiAccountManagerActor.name,
-      MultiAccountManagerMessageValidator.name
-    )
-  )
+    with MultiAccountManagerSupport
+    with JsonrpcSupport {
 
   override def beforeAll() {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
-
   implicit val formats = DefaultFormats
 
-  val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
-  with RpcBinding
-  server.start()
+  val host = "localhost"
+  val port = 8080
+  val relayUri = "/api/loopring"
+  val ethUri = "/api/ethereum"
 
-//  Thread.sleep(5000)
-//  val host = "localhost"
-//  val port = 8080
-//  val relayUri = "/api/loopring"
-//  val ethUri = "/api/ethereum"
-//
-//  val owner = "0xb94065482ad64d4c2b9252358d746b39e820a582"
-//
-//  val getBalanceReq =
-//    XGetBalanceReq(owner, tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address))
-//
-//  val rpcReq = Map("id" → 1, "method" → "get_balance_and_allowance", "jsonrpc" → "2.0")
-//
-//  val responseFuture: Future[HttpResponse] = Http().singleRequest(
-//    HttpRequest(
-//      method = HttpMethods.POST,
-//      uri = s"http://localhost:8080$relayUri",
-//      entity = HttpEntity(
-//        ContentTypes.`application/json`,
-//        Serialization.write(rpcReq.+("params" → getBalanceReq))
-//      )
-//    )
-//  )
-//
-//  val res = Await.result(responseFuture, 2 seconds)
-//
-//  println(res)
+  val owner = "0xb94065482ad64d4c2b9252358d746b39e820a582"
+
+  val getBalanceReq =
+        XGetBalanceReq(owner, tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address))
+
+      val rpcReq =
+        Map("id" → 1, "method" → "get_balance_and_allowance", "jsonrpc" → "2.0")
+
+      val responseFuture: Future[HttpResponse] = Http().singleRequest(
+        HttpRequest(
+          method = HttpMethods.POST,
+          uri = s"http://localhost:8080$relayUri",
+          entity = HttpEntity(
+            ContentTypes.`application/json`,
+            Serialization.write(rpcReq.+("params" → getBalanceReq))
+          )
+        )
+      )
+
+      val res = Await.result(responseFuture, 2 seconds)
+
+      println(res)
+
+  Thread.sleep(60 * 60 * 1000)
 }
