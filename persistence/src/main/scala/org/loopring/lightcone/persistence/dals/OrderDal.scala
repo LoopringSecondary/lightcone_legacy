@@ -199,13 +199,7 @@ class OrderDalImpl(
   def getOrdersMap(hashes: Seq[String]): Future[Map[String, XRawOrder]] =
     for {
       result <- getOrders(hashes)
-    } yield {
-      val map: Map[String, XRawOrder] = Map()
-      result.foreach { r =>
-        map + (r.hash -> r)
-      }
-      map
-    }
+    } yield result.map(r => r.hash -> r).toMap
 
   def getOrder(hash: String): Future[Option[XRawOrder]] =
     db.run(query.filter(_.hash === hash).result.headOption)
