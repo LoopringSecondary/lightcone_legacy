@@ -74,7 +74,7 @@ class BalanceSpec
           Some(XOrderState("1".zeros(18), "100".zeros(10), "1".zeros(16)))
       )
       val r = for {
-        first <- singleRequest(
+        firstQuery <- singleRequest(
           getBalanceReq,
           method
         )
@@ -82,11 +82,11 @@ class BalanceSpec
           owner = owner,
           order = Some(maker)
         )).mapTo[XSubmitOrderRes]
-        second <- singleRequest(
+        secondQuery <- singleRequest(
           getBalanceReq,
           method
         )
-      } yield (first, second)
+      } yield (firstQuery, secondQuery)
       val res = Await.result(r, timeout.duration)
       res match {
         case (f: XGetBalanceAndAllowancesRes, s: XGetBalanceAndAllowancesRes) =>
