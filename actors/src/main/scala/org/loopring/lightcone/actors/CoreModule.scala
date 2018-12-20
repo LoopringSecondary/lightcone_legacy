@@ -179,15 +179,6 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       )
 
       actors.add(
-        MarketManagerMessageValidator.name,
-        MessageValidationActor(
-          new MarketManagerMessageValidator(),
-          MarketManagerActor.name,
-          MarketManagerMessageValidator.name
-        )
-      )
-
-      actors.add(
         OrderbookManagerMessageValidator.name,
         MessageValidationActor(
           new OrderbookManagerMessageValidator(),
