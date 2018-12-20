@@ -25,7 +25,8 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
                          |akka.cluster.roles=[
                          | "market_manager",
                          | "orderbook_manager",
-                         | "gas_price"]
+                         | "gas_price",
+                         | "ring_settlement"]
                          |""".stripMargin)
     with MarketManagerSupport
     with OrderbookManagerSupport {
