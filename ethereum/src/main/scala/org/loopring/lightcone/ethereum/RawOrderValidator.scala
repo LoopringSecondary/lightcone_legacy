@@ -31,7 +31,6 @@ trait RawOrderValidator {
 
 class RawOrderValidatorImpl extends RawOrderValidator {
   // TODO(Kongliang): the following constant fields should be configurable somewhere.
-
   val FeePercentageBase = 1000
   val Eip191Header = "\u0019\u0001"
   val Eip712OrderSchemaHash = "0x40b942178d2a51f1f61934268590778feb8114db632db7d88537c98d2b05c5f2"
@@ -117,7 +116,7 @@ class RawOrderValidatorImpl extends RawOrderValidator {
     val orderDataHash = Numeric.toHexString(Hash.sha3(bitstream.getBytes))
 
     val outterStream = new Bitstream
-    outterStream.addRawBytes(strToHex(Eip191Header), true)
+    outterStream.addHex(strToHex(Eip191Header), true)
     outterStream.addBytes32(Eip712DomainHash, true)
     outterStream.addBytes32(orderDataHash, true)
 

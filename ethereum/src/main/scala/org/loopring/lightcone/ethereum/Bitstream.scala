@@ -74,6 +74,9 @@ class Bitstream() {
   def addNumber(num: BigInt, numBytes: Int, forceAppend: Boolean = true) =
     addBigInt(num, numBytes, forceAppend)
 
+  def addNumber(num: Int, numBytes: Int, forceAppend: Boolean) =
+    addBigInt(BigInt(num), numBytes, forceAppend)
+
   def addBoolean(b: Boolean, forceAppend: Boolean = true) =
     addBigInt(if (b) 1 else 0, 1, forceAppend)
 
@@ -89,8 +92,8 @@ class Bitstream() {
   def addHex(str: String, forceAppend: Boolean = true) =
     insert(Numeric.cleanHexPrefix(str), forceAppend)
 
-  def addRawBytes(str: String, forceAppend: Boolean = true) =
-    insert(Numeric.cleanHexPrefix(str), forceAppend)
+  def addRawBytes(bytes: Array[Byte], forceAppend: Boolean = true) =
+    insert(Numeric.cleanHexPrefix(Numeric.toHexString(bytes)), forceAppend)
 
   // TODO(kongliang): 负数问题
   private def addBigInt(
