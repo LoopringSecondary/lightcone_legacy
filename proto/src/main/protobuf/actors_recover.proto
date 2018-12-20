@@ -42,6 +42,9 @@ message XRecover {
         bool timeout = 1;
     }
 
+    message RetrieveOrders {
+        int64 last_order_id = 1;
+    }
     message Timeout{}
 
     message RecoverOrderReq {

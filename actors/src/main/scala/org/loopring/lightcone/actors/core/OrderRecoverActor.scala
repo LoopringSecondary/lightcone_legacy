@@ -79,10 +79,13 @@ class OrderRecoverActor(
 
   def receive: Receive = {
     case req: XRecover.Batch =>
-      batch = req
-      sender ! batch
-      context.become(recovering)
       log.info(s"started order recover - $req")
+      batch = req
+
+      sender ! batch // echo back to coordinator
+      self ! XRecover.RetrieveOrders(0L)
+
+      context.become(recovering)
   }
 
   def recovering: Receive = {
@@ -90,18 +93,39 @@ class OrderRecoverActor(
       batch =
         batch.copy(requestMap = batch.requestMap.filterNot(_._1 == requester))
 
-      sender ! batch
+      sender ! batch // echo back to coordinator
+
+    case XRecover.RetrieveOrders(lastOrderSeqId) =>
+      for {
+        orders <- retrieveOrders(lastOrderSeqId)
+        lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
+        reqs = orders.map { order =>
+          XRecover.RecoverOrderReq(Some(order))
+        }
+        _ <- Future.sequence(reqs.map(mama ? _))
+      } yield {
+        lastOrderSeqIdOpt match {
+          case Some(lastOrderSeqId) =>
+            self ! XRecover.RetrieveOrders(lastOrderSeqId)
+          case None =>
+            actors.get(OrderRecoverCoordinator.name) ! XRecover.Finished()
+
+            batch.requestMap.keys.toSeq
+              .map(resolveActorRef)
+              .foreach { actor =>
+                actor ! XRecover.Finished()
+              }
+        }
+      }
   }
 
-  // private def mergeRequests(
-  //     r1: XRecover.Request,
-  //     r2: XRecover.Request
-  //   ) =
-  //   XRecover.Request(
-  //     (r1.addressShardingEntities ++ r2.addressShardingEntities).distinct,
-  //     (r1.marketIds ++ r2.marketIds).distinct,
-  //     (r1.senderRefs ++ r2.senderRefs).distinct,
-  //     batchId
-  //   )
+  def resolveActorRef(actorRefStr: String): ActorRef = {
+    context.system
+      .asInstanceOf[ExtendedActorSystem]
+      .provider
+      .resolveActorRef(actorRefStr)
+  }
+
+  def retrieveOrders(lastOrderSeqId: Long): Future[Seq[XRawOrder]] = ???
 
 }
