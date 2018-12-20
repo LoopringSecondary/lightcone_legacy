@@ -25,7 +25,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
+import org.loopring.lightcone.core.account.{AccountTokenManager, _}
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.lib._
@@ -67,7 +67,7 @@ class AccountManagerActor(
     case XGetBalanceAndAllowancesReq(addr, tokens) =>
       assert(addr == address)
       (for {
-        managers <- Future.sequence(tokens.map(getTokenManager))
+        managers <- getTokenManagers(tokens)
         _ = assert(tokens.size == managers.size)
         balanceAndAllowanceMap = tokens.zip(managers).toMap.map {
           case (token, manager) =>
@@ -180,6 +180,32 @@ class AccountManagerActor(
 
       } yield tokenManager
     }
+  }
+
+  private def getTokenManagers(
+      tokens: Seq[String]
+    ): Future[Seq[AccountTokenManager]] = {
+    val tokensNoManager =
+      tokens.filterNot(token ⇒ manager.hasTokenManager(token))
+    for {
+      res <- if (tokensNoManager.nonEmpty) {
+        (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
+          address,
+          tokensNoManager
+        )).mapAs[XGetBalanceAndAllowancesRes]
+      } else {
+        Future.successful(XGetBalanceAndAllowancesRes())
+      }
+      tms = tokensNoManager.map(
+        token ⇒ new AccountTokenManagerImpl(token, 1000)
+      )
+      _ = tms.foreach(tm ⇒ {
+        val ba = res.balanceAndAllowanceMap(tm.token)
+        tm.setBalanceAndAllowance(ba.balance, ba.allowance)
+      })
+      _ = tms.foreach(tm ⇒ manager.addTokenManager(tm))
+      tokenMangers ← Future.sequence(tokens.map(getTokenManager))
+    } yield tokenMangers
   }
 
   private def updateBalanceOrAllowance(

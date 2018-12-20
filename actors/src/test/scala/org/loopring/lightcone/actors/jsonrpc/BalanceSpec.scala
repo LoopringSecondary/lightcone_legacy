@@ -59,25 +59,25 @@ class BalanceSpec
   val owner = "0xb94065482ad64d4c2b9252358d746b39e820a582"
 
   val getBalanceReq =
-        XGetBalanceReq(owner, tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address))
+    XGetBalanceReq(owner, tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address))
 
-      val rpcReq =
-        Map("id" → 1, "method" → "get_balance_and_allowance", "jsonrpc" → "2.0")
+  val rpcReq =
+    Map("id" → 1, "method" → "get_balance_and_allowance", "jsonrpc" → "2.0")
 
-      val responseFuture: Future[HttpResponse] = Http().singleRequest(
-        HttpRequest(
-          method = HttpMethods.POST,
-          uri = s"http://localhost:8080$relayUri",
-          entity = HttpEntity(
-            ContentTypes.`application/json`,
-            Serialization.write(rpcReq.+("params" → getBalanceReq))
-          )
-        )
+  val responseFuture: Future[HttpResponse] = Http().singleRequest(
+    HttpRequest(
+      method = HttpMethods.POST,
+      uri = s"http://localhost:8080$relayUri",
+      entity = HttpEntity(
+        ContentTypes.`application/json`,
+        Serialization.write(rpcReq.+("params" → getBalanceReq))
       )
+    )
+  )
 
-      val res = Await.result(responseFuture, 2 seconds)
+  val res = Await.result(responseFuture, 2 seconds)
 
-      println(res)
+  println(res)
 
   Thread.sleep(60 * 60 * 1000)
 }
