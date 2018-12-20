@@ -31,8 +31,8 @@ trait Sharded {
 trait ShardedEvenly extends Sharded {
   protected var entitiesPerShard: Int = 1
 
-  def getEntityId(message: Any) =
-    Math.abs(message.hashCode % numOfShards * entitiesPerShard)
+  def getEntityId(message: Any): String =
+    Math.abs(message.hashCode % numOfShards * entitiesPerShard).toString
 
   protected val messageExtractor =
     new HashCodeMessageExtractor(numOfShards) {
