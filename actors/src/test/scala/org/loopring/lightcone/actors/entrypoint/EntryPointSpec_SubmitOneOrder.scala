@@ -49,7 +49,7 @@ class EntryPointSpec_SubmitOneOrder
   "submit an order" must {
     "get right response in EntryPoint,DbModule,Orderbook" in {
 
-      val amountS = "30"
+      val amountS = "10"
       val amountB = "1"
       val rawOrder =
         createRawOrder(amountS = amountS.zeros(18), amountB = amountB.zeros(18))
