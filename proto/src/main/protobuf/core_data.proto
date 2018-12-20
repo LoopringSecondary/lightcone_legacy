@@ -43,6 +43,7 @@ enum XErrorCode{
     // 0 NONE ERROR
     ERR_NONE = 0;
     ERR_INTERNAL_UNKNOWN = 1;
+    ERR_INVALID_ARGUMENT = 2;
 
     //1001 -- 2000 Matching Error
     ERR_MATCHING_ORDERS_NOT_TRADABLE            = 1001;
@@ -76,9 +77,10 @@ enum XErrorCode{
     ERR_TOO_MANY_FAILED_MATCHES         = 3008;
     ERR_INVALID_ORDER_DATA              = 3009;
     ERR_INVALID_MARKET                  = 3010;
-    ERR_INVALID_REQ                     = 3011;
+    ERR_UNEXPECTED_ACTOR_MSG            = 3011;
     ERR_UNSUPPORTED_MESSAGE             = 3012;
-    ERR_FAILED_HANDLE_MES               = 3013;
+    ERR_FAILED_HANDLE_MSG               = 3013;
+    ERR_REJECTED_DURING_RECOVER         = 3014;
 
     //4001 -- 5000 persistence Error
     ERR_PERSISTENCE_INVALID_DATA        = 4001;
@@ -174,7 +176,7 @@ message XRawOrder {
     ERC1400Params erc1400_params    = 12;
     State state            = 13;
     int64 sequence_id      = 14;
-    int64 market_hash      = 15;
+    string market_hash     = 15;
 }
 
 message XRingBatch {
@@ -210,21 +212,43 @@ message XTrade {
         bytes  fee_amount_b            = 6;
         string fee_recipient           = 7;
     }
-    int64  id                = 1;
+
+    string owner             = 1;
     string delegate_address  = 2;
-    string owner             = 3;
-    string order_hash        = 4;
-    string ring_hash         = 5;
-    int32  ring_index        = 6;
-    string tx_hash           = 7;
-    bytes  amount_s          = 9;
-    bytes  amount_b          = 10;
-    string token_s           = 11;
-    string token_b           = 12;
-    bytes  split             = 13; //tokenS
-    Fees   fees              = 14;
-    int64  created_at        = 15;
-    int64  updated_at        = 16;
-    int64  block_height      = 17;
-    bool  is_valid           = 18;
+    string order_hash        = 3;
+    string ring_hash         = 4;
+    int64  ring_index        = 5;
+    string tx_hash           = 6;
+    bytes  amount_s          = 7;
+    bytes  amount_b          = 8;
+    string token_s           = 9;
+    string token_b           = 10;
+    string market_hash       = 11;
+    bytes  split             = 12; //tokenS
+    Fees   fees              = 13;
+    int64  created_at        = 14;
+    int64  updated_at        = 15;
+    int64  block_height      = 16;
+    int64  block_timestamp   = 17;
+    int64 sequence_id        = 18;
+}
+
+message XOrdersCutoffEvent {
+    string tx_hash         = 1;
+    string broker          = 3;
+    string owner           = 4;
+    string trading_pair    = 5;
+    int64  cutoff          = 6; // in seconds.
+    int64  created_at      = 7;
+    int64  updated_at      = 8;
+    int64  block_height    = 9;
+}
+
+message XOrdersCancelledEvent {
+    string tx_hash         = 1;
+    string broker_or_owner = 2;
+    string order_hash      = 3;
+    int64  created_at      = 4;
+    int64  updated_at      = 5;
+    int64  block_height    = 6;
 }

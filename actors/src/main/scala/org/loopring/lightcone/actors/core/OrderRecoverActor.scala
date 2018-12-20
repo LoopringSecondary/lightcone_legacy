@@ -25,6 +25,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -32,50 +33,61 @@ import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
+import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 import scala.concurrent._
 
 // main owner: 杜永丰
-object OrderRecoverActor {
+object OrderRecoverActor extends ShardedEvenly {
   val name = "order_recover"
 
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XStart(_) ⇒ ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
+  override protected val messageExtractor =
+    new HashCodeMessageExtractor(numOfShards) {
+      override def entityId(message: Any) = message match {
+        case req: XRecoverReq =>
+          name + "_batch_" + req.batchId
+        case e: Any =>
+          throw new Exception(s"$e not expected by OrderRecoverActor")
+      }
+    }
 
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XStart(_) ⇒ "address_1"
-  }
-
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef]
+    ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderRecoverActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
 
-class OrderRecoverActor()(
-    implicit
-    val config: Config,
+class OrderRecoverActor(
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
+    val actors: Lookup[ActorRef])
+    extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
+
+  def mama: ActorRef = actors.get(MultiAccountManagerActor.name)
 
   def receive: Receive = {
-    case _ ⇒
+    case req: XRecoverReq =>
+      log.info(s"started order recover - $req")
+      context.become(recovering)
+  }
+
+  def recovering: Receive = {
+
+    case _ =>
   }
 
 }

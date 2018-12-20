@@ -23,13 +23,11 @@ object MarketManagerMessageValidator {
   val name = "market_manager_validator"
 }
 
-final class MarketManagerMessageValidator()(
-    implicit
-    val config: Config
-)
-  extends MessageValidator {
+final class MarketManagerMessageValidator()(implicit val config: Config)
+    extends MessageValidator {
 
+  // Throws exception if validation fails.
   def validate = {
-    case x ⇒ x
+    case x => x
   }
 }

@@ -30,6 +30,7 @@ class Bitstream() {
   def addAddress(x: String, forceAppend: Boolean = false): Int =
     addAddress(x, ADDRESS_LENGTH, forceAppend)
 
+
   def addAddress(x: String, numBytes: Int, forceAppend: Boolean) = {
     val _x = if (x.length == 0) "0" else x
 
@@ -42,19 +43,30 @@ class Bitstream() {
     )
   }
 
-  def addUint16(num: BigInt, forceAppend: Boolean = true) =
+  def addUint16(
+      num: BigInt,
+      forceAppend: Boolean = true
+    ) =
     addBigInt(num, 2, forceAppend)
+
 
   def addUint32(num: BigInt, forceAppend: Boolean = true) =
     addBigInt(num, 4, forceAppend)
 
-  def addUint(num: BigInt, forceAppend: Boolean = true) =
+  def addUint(
+      num: BigInt,
+      forceAppend: Boolean = true
+    ) =
     addBigInt(num, 32, forceAppend)
+
 
   def addNumber(num: BigInt, numBytes: Int, forceAppend: Boolean = true) =
     addBigInt(num, numBytes, forceAppend)
 
-  def addBoolean(b: Boolean, forceAppend: Boolean = true) =
+  def addBoolean(
+      b: Boolean,
+      forceAppend: Boolean = true
+    ) =
     addBigInt(if (b) 1 else 0, 1, forceAppend)
 
   def addBytes32(str: String, forceAppend: Boolean = true) {

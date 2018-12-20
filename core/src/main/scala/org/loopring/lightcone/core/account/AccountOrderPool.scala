@@ -22,7 +22,7 @@ import org.slf4s.Logging
 
 trait AccountOrderPool {
 
-  type Callback = Order ⇒ Unit
+  type Callback = Order => Unit
 
   def apply(id: String): Order
   def getOrder(id: String): Option[Order]
@@ -36,11 +36,10 @@ trait AccountOrderPool {
 }
 
 trait UpdatedOrdersTracing {
-  self: AccountOrderPool ⇒
+  self: AccountOrderPool =>
   private var updatedOrders = Map.empty[String, Order]
 
-  addCallback((order: Order) ⇒
-    updatedOrders += order.id -> order)
+  addCallback((order: Order) => updatedOrders += order.id -> order)
 
   def getUpdatedOrdersAsMap() = updatedOrders
   def getUpdatedOrders() = updatedOrders.values

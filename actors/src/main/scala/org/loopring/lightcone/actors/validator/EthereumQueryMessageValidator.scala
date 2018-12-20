@@ -25,28 +25,30 @@ object EthereumQueryMessageValidator {
   val name = "ethereum_query_validator"
 }
 
-final class EthereumQueryMessageValidator()(
-    implicit
-    val config: Config
-) extends MessageValidator {
+final class EthereumQueryMessageValidator()(implicit val config: Config)
+    extends MessageValidator {
 
   // TODO(yadong): 我们不仅要判断Jan地址是不是合法的，害怕把地址改写成规范的模式
   // This method should throw exception for an invalid address
   private def normalizeAddress(address: String): String = address
 
+  // Throws exception if validation fails.
   def validate = {
-    case req: XGetBalanceAndAllowancesReq ⇒
-      req.copy(tokens = req.tokens.map(normalizeAddress))
+    case req: XGetBalanceAndAllowancesReq =>
+      req
+        .copy(tokens = req.tokens.map(normalizeAddress))
         .copy(address = normalizeAddress(req.address))
 
-    case req: XGetBalanceReq ⇒
-      req.copy(tokens = req.tokens.map(normalizeAddress))
+    case req: XGetBalanceReq =>
+      req
+        .copy(tokens = req.tokens.map(normalizeAddress))
         .copy(address = normalizeAddress(req.address))
 
-    case req: XGetAllowanceReq ⇒
-      req.copy(tokens = req.tokens.map(normalizeAddress))
+    case req: XGetAllowanceReq =>
+      req
+        .copy(tokens = req.tokens.map(normalizeAddress))
         .copy(address = normalizeAddress(req.address))
 
-    // case req: GetFilledAmountReq ⇒
+    // case req: GetFilledAmountReq =>
   }
 }

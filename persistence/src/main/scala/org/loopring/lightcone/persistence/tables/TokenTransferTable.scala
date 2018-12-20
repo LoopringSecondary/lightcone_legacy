@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
 class TokenTransferTable(tag: Tag)
-  extends BaseTable[XTokenTransferData](tag, "T_TOKEN_TRANSFERS") {
+    extends BaseTable[XTokenTransferData](tag, "T_TOKEN_TRANSFERS") {
 
   // how to generate the id???
   def id = column[String]("id", O.PrimaryKey)
@@ -42,14 +42,15 @@ class TokenTransferTable(tag: Tag)
   def idx_to = index("idx_to", (to), unique = false)
   def idx_token = index("idx_token", (token), unique = false)
 
-  def * = (
-    id,
-    height,
-    txHash,
-    timestamp,
-    from,
-    to,
-    amount,
-    token
-  ) <> ((XTokenTransferData.apply _).tupled, XTokenTransferData.unapply)
+  def * =
+    (
+      id,
+      height,
+      txHash,
+      timestamp,
+      from,
+      to,
+      amount,
+      token
+    ) <> ((XTokenTransferData.apply _).tupled, XTokenTransferData.unapply)
 }

@@ -16,13 +16,14 @@
 
 package org.loopring.lightcone.actors.core
 
+import akka.actor.SupervisorStrategy.Escalate
 import akka.actor._
-import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
@@ -31,125 +32,99 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
+
 import scala.concurrent._
+import scala.concurrent.duration._
 
 // main owner: 于红雨
-object AccountManagerActor extends ShardedByAddress {
-  val name = "account_manager"
-
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    dustEvaluator: DustOrderEvaluator
-  ): ActorRef = {
-
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shards")
-
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new AccountManagerActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
-    )
-  }
-
-  // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
-  val extractAddress: PartialFunction[Any, String] = {
-    case x: Any ⇒ "abc"
-  }
-}
-
-class AccountManagerActor()(
-    implicit
-    val config: Config,
+class AccountManagerActor(
+    address: String
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dustEvaluator: DustOrderEvaluator
-) extends ActorWithPathBasedConfig(AccountManagerActor.name)
-  with OrderRecoverSupport {
+    val dustEvaluator: DustOrderEvaluator)
+    extends Actor
+    with ActorLogging {
 
-  override val entityName = AccountManagerActor.name
+  override val supervisorStrategy =
+    AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
+      case e: Exception ⇒
+        log.error(e.getMessage)
+        Escalate
+    }
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
-  private var address: String = _
 
   protected def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
 
-  def receive: Receive = {
-    case XStart(shardEntityId) ⇒ {
-      address = shardEntityId
-      val recoverySettings = XOrderRecoverySettings(
-        selfConfig.getBoolean("skip-recovery"),
-        selfConfig.getInt("recover-batch-size"),
-        address,
-        None
-      )
-      startOrderRecovery(recoverySettings)
-    }
-  }
+  def receive: Receive = LoggingReceive {
 
-  def functional: Receive = LoggingReceive {
-
-    case XGetBalanceAndAllowancesReq(addr, tokens) ⇒
+    case XGetBalanceAndAllowancesReq(addr, tokens) =>
       assert(addr == address)
-
       (for {
-        managers ← Future.sequence(tokens.map(getTokenManager))
+        managers <- Future.sequence(tokens.map(getTokenManager))
         _ = assert(tokens.size == managers.size)
         balanceAndAllowanceMap = tokens.zip(managers).toMap.map {
-          case (token, manager) ⇒ token -> XBalanceAndAllowance(
-            manager.getBalance(),
-            manager.getAllowance(),
-            manager.getAvailableBalance(),
-            manager.getAvailableAllowance()
-          )
+          case (token, manager) =>
+            token -> XBalanceAndAllowance(
+              manager.getBalance(),
+              manager.getAllowance(),
+              manager.getAvailableBalance(),
+              manager.getAvailableAllowance()
+            )
         }
       } yield {
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case XSubmitOrderReq(Some(xorder)) ⇒ {
-      // println("### accountXSubmitOrderReq")
-      submitOrder(xorder).sendTo(sender)
-    }
+    case XRecoverOrderReq(Some(xraworder)) =>
+      submitOrder(xraworder).map { _ =>
+        XRecoverOrderRes(xraworder.id, true)
+      }.sendTo(sender)
 
-    case req: XCancelOrderReq ⇒
+    case XSubmitSimpleOrderReq(_, Some(xorder)) =>
+      submitOrder(xorder).sendTo(sender)
+
+    case req: XCancelOrderReq =>
+      assert(req.owner == address)
       if (manager.cancelOrder(req.id)) {
         marketManagerActor forward req
       } else {
-        sender ! XCancelOrderRes(error = ERR_ORDER_NOT_EXIST)
+        Future.failed(
+          ErrorException(
+            ERR_FAILED_HANDLE_MSG,
+            s"no order found with id: ${req.id}"
+          )
+        ) sendTo sender
       }
 
-    case XAddressBalanceUpdated(_, token, newBalance) ⇒
+    case XAddressBalanceUpdated(addr, token, newBalance) =>
+      assert(addr == address)
       updateBalanceOrAllowance(token, newBalance, _.setBalance(_))
 
-    case XAddressAllowanceUpdated(_, token, newBalance) ⇒
+    case XAddressAllowanceUpdated(addr, token, newBalance) =>
+      assert(addr == address)
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
-
-    case msg ⇒ log.debug(s"unknown msg ${msg}")
   }
 
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
     val order: Order = xorder
     for {
-      _ ← getTokenManager(order.tokenS)
-      _ ← getTokenManager(order.tokenFee) if order.amountFee > 0 && order.tokenS != order.tokenFee
+      _ <- getTokenManager(order.tokenS)
+      _ <- if (order.amountFee > 0 && order.tokenS != order.tokenFee)
+        getTokenManager(order.tokenFee)
+      else
+        Future.successful(Unit)
 
       // Update the order's _outstanding field.
-      orderHistoryRes ← (ethereumQueryActor ? XGetOrderFilledAmountReq(order.id))
-        .mapAs[XGetOrderFilledAmountRes]
+      orderHistoryRes <- (ethereumQueryActor ? XGetOrderFilledAmountReq(
+        order.id
+      )).mapAs[XGetOrderFilledAmountRes]
 
       _ = log.debug(s"order history: orderHistoryRes")
 
@@ -158,7 +133,9 @@ class AccountManagerActor()(
       _ = log.debug(s"submitting order to AccountManager: ${_order}")
       successful = manager.submitOrder(_order)
       _ = log.debug(s"successful: $successful")
-      _ = log.debug("orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", "))
+      _ = log.debug(
+        "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", ")
+      )
       updatedOrders = orderPool.takeUpdatedOrdersAsMap()
       _ = assert(updatedOrders.contains(_order.id))
       order_ = updatedOrders(_order.id)
@@ -166,67 +143,73 @@ class AccountManagerActor()(
     } yield {
       if (successful) {
         log.debug(s"submitting order to market manager actor: $order_")
-        marketManagerActor ! XSubmitOrderReq(Some(xorder_))
+        marketManagerActor ! XSubmitSimpleOrderReq("", Some(xorder_))
         XSubmitOrderRes(order = Some(xorder_))
       } else {
-        val error = convertOrderStatusToErrorCode(order.status)
-        XSubmitOrderRes(error = error)
+        throw new ErrorException(
+          XError(convertOrderStatusToErrorCode(order.status))
+        )
       }
     }
   }
 
-  private def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode = status match {
-    case STATUS_INVALID_DATA ⇒ ERR_INVALID_ORDER_DATA
-    case STATUS_UNSUPPORTED_MARKET ⇒ ERR_INVALID_MARKET
-    case STATUS_CANCELLED_TOO_MANY_ORDERS ⇒ ERR_TOO_MANY_ORDERS
-    case STATUS_CANCELLED_DUPLICIATE ⇒ ERR_ORDER_ALREADY_EXIST
-    case _ ⇒ ERR_INTERNAL_UNKNOWN
-  }
+  private def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode =
+    status match {
+      case STATUS_INVALID_DATA              => ERR_INVALID_ORDER_DATA
+      case STATUS_UNSUPPORTED_MARKET        => ERR_INVALID_MARKET
+      case STATUS_CANCELLED_TOO_MANY_ORDERS => ERR_TOO_MANY_ORDERS
+      case STATUS_CANCELLED_DUPLICIATE      => ERR_ORDER_ALREADY_EXIST
+      case _                                => ERR_INTERNAL_UNKNOWN
+    }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
-    if (manager.hasTokenManager(token))
+    if (manager.hasTokenManager(token)) {
       Future.successful(manager.getTokenManager(token))
-    else for {
-      _ ← Future.successful(log.debug(s"getTokenManager0 ${token}"))
-      res ← (ethereumQueryActor ? XGetBalanceAndAllowancesReq(address, Seq(token)))
-        .mapAs[XGetBalanceAndAllowancesRes]
-      tm = new AccountTokenManagerImpl(token, 1000)
-      ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
-      _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
-      tokenManager = manager.addTokenManager(tm)
-      _ ← Future.successful(log.debug(s"getTokenManager5 ${token}"))
+    } else {
+      log.debug(s"getTokenManager0 ${token}")
+      for {
+        res <- (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
+          address,
+          Seq(token)
+        )).mapAs[XGetBalanceAndAllowancesRes]
+        tm = new AccountTokenManagerImpl(token, 1000)
+        ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
+        _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
+        tokenManager = manager.addTokenManager(tm)
+        _ = log.debug(s"getTokenManager5 ${token}")
 
-    } yield tokenManager
+      } yield tokenManager
+    }
   }
 
   private def updateBalanceOrAllowance(
-    token: String,
-    amount: BigInt,
-    method: (AccountTokenManager, BigInt) ⇒ Unit
-  ) = for {
-    tm ← getTokenManager(token)
-    _ = method(tm, amount)
-    updatedOrders = orderPool.takeUpdatedOrders()
-  } yield {
-    updatedOrders.foreach { order ⇒
-      order.status match {
-        case STATUS_CANCELLED_LOW_BALANCE | STATUS_CANCELLED_LOW_FEE_BALANCE ⇒
-          marketManagerActor ! XCancelOrderReq(order.id)
+      token: String,
+      amount: BigInt,
+      method: (AccountTokenManager, BigInt) => Unit
+    ) =
+    for {
+      tm <- getTokenManager(token)
+      _ = method(tm, amount)
+      updatedOrders = orderPool.takeUpdatedOrders()
+    } yield {
+      updatedOrders.foreach { order =>
+        order.status match {
+          case STATUS_CANCELLED_LOW_BALANCE |
+              STATUS_CANCELLED_LOW_FEE_BALANCE =>
+            marketManagerActor ! XCancelOrderReq(
+              id = order.id,
+              marketId = Some(XMarketId(order.tokenS, order.tokenB))
+            )
 
-        case STATUS_PENDING ⇒
-          //allowance的改变需要更新到marketManager
-          marketManagerActor ! XSubmitOrderReq(Some(order))
+          case STATUS_PENDING =>
+            //allowance的改变需要更新到marketManager
+            marketManagerActor ! XSubmitSimpleOrderReq(order = Some(order))
 
-        case status ⇒
-          log.error(s"unexpected order status caused by balance/allowance upate: $status")
+          case status =>
+            log.error(
+              s"unexpected order status caused by balance/allowance upate: $status"
+            )
+        }
       }
     }
-  }
-
-  protected def recoverOrder(xorder: XOrder) = {
-    log.debug(s"recoverOrder, ${self.path.toString}, ${ethereumQueryActor.path.toString}, ${xorder}")
-    submitOrder(xorder)
-  }
-
 }
-

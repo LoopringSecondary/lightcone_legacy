@@ -22,34 +22,20 @@ import org.loopring.lightcone.actors.entrypoint.EntryPointActor
 import org.loopring.lightcone.actors.base.Lookup
 import org.slf4s.Logging
 import net.codingwell.scalaguice.InjectorExtensions._
-import akka.actor.ActorRef
-import java.io.File
+import akka.actor._
+import scala.io.StdIn
 
 object Main extends App with Logging {
   val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
-  log.info(s"--> config_path = ${configPathOpt}")
-
-  val baseConfig = ConfigFactory.load()
-  val config = configPathOpt match {
-    case Some(path) if path.nonEmpty ⇒
-      ConfigFactory.parseFile(new File(path)).withFallback(baseConfig)
-    case _ ⇒
-      baseConfig
-  }
-
-  val configItems = Seq(
-    "akka.remote.netty.tcp.hostname",
-    "akka.remote.netty.tcp.port",
-    "akka.cluster.seed-nodes",
-    "akka.cluster.roles"
-  )
-
-  configItems foreach { i ⇒
-    log.info(s"--> $i = ${config.getString(i)}")
-  }
-
-  val injector = Guice.createInjector(new CoreModule(config))
+  val injector = ClusterDeployer.deploy(configPathOpt)
+  val system = injector.instance[ActorSystem]
   val actors = injector.instance[Lookup[ActorRef]]
   actors.get(EntryPointActor.name)
-}
 
+  println(s"Hit RETURN to terminate")
+
+  StdIn.readLine()
+
+  //Shutdown
+  system.terminate()
+}

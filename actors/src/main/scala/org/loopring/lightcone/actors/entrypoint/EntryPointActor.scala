@@ -17,51 +17,55 @@
 package org.loopring.lightcone.actors.entrypoint
 
 import akka.actor._
-import akka.util.Timeout
 import akka.event.LoggingReceive
+import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.proto._
+
 import scala.concurrent.ExecutionContext
 
 object EntryPointActor {
   val name = "entrypoint"
 }
 
-class EntryPointActor()(
-    implicit
-    ec: ExecutionContext,
+class EntryPointActor(
+  )(
+    implicit ec: ExecutionContext,
     timeout: Timeout,
-    actors: Lookup[ActorRef]
-) extends Actor with ActorLogging {
+    actors: Lookup[ActorRef])
+    extends Actor
+    with ActorLogging {
 
   def receive = LoggingReceive {
-    case msg: Any ⇒
+    case msg: Any =>
       findDestination(msg) match {
-        case Some(dest) ⇒
+        case Some(dest) =>
           actors.get(dest) forward msg
 
-        case None ⇒
-          sender ! XError(
-            ERR_UNSUPPORTED_MESSAGE,
-            s"unsupported message: $msg"
-          )
+        case None =>
+          sender ! XError(ERR_UNSUPPORTED_MESSAGE, s"unsupported message: $msg")
           log.debug(s"unsupported msg: $msg")
       }
   }
 
   def findDestination(msg: Any): Option[String] = msg match {
-    case _@ (
-      XSubmitRawOrderReq |
-      XCancelOrderReq) ⇒ Some(OrderHandlerMessageValidator.name)
+    case _ @(XSubmitOrderReq | XCancelOrderReq) =>
+      Some(OrderHandlerActor.name)
 
-    case _@ (
-      XGetOrderbookReq) ⇒ Some(OrderbookManagerMessageValidator.name)
+    case _ @(XGetBalanceAndAllowancesReq | XGetBalanceReq | XGetAllowanceReq |
+        GetFilledAmountReq) ⇒
+      Some(EthereumQueryActor.name)
 
-    case _ ⇒ None
+    case _ @(XJsonRpcReq | XRpcReqWithHeight) ⇒
+      Some(EthereumAccessActor.name)
+
+    case req: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
+
+    case _ => None
   }
 
 }

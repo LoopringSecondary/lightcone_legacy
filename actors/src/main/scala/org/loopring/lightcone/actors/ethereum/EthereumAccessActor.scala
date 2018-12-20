@@ -18,70 +18,62 @@ package org.loopring.lightcone.actors.ethereum
 
 import akka.actor._
 import akka.cluster.sharding._
-import akka.stream.ActorMaterializer
-import akka.event.LoggingReceive
 import akka.routing.RoundRobinPool
-import akka.pattern._
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
+import scala.collection.JavaConverters._
+
 import scala.concurrent._
 
 object EthereumAccessActor extends ShardedEvenly {
   val name = "ethereum_access"
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    ma: ActorMaterializer,
-    ece: ExecutionContextExecutor
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      ma: ActorMaterializer,
+      ece: ExecutionContextExecutor
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
-    entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new EthereumAccessActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
 
-class EthereumAccessActor()(
-    implicit
-    val config: Config,
+class EthereumAccessActor(
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val ma: ActorMaterializer,
-    val ece: ExecutionContextExecutor
-) extends Actor
-  with ActorLogging {
+    val ece: ExecutionContextExecutor)
+    extends Actor
+    with ActorLogging {
 
   val conf = config.getConfig(EthereumAccessActor.name)
+
   val thisConfig = try {
     conf.getConfig(self.path.name).withFallback(conf)
   } catch {
-    case e: Throwable ⇒ conf
+    case e: Throwable => conf
   }
   log.info(s"config for ${self.path.name} = $thisConfig")
 
@@ -89,8 +81,7 @@ class EthereumAccessActor()(
     poolSize = thisConfig.getInt("pool-size"),
     checkIntervalSeconds = thisConfig.getInt("check-interval-seconds"),
     healthyThreshold = thisConfig.getDouble("healthy-threshold").toFloat,
-    nodes = thisConfig.getList("nodes").toArray.map { v ⇒
-      val c = v.asInstanceOf[Config]
+    nodes = thisConfig.getConfigList("nodes").asScala.map { c =>
       XEthereumProxySettings.XNode(
         host = c.getString("host"),
         port = c.getInt("port"),
@@ -107,10 +98,10 @@ class EthereumAccessActor()(
   updateSettings(settings)
 
   def receive: Receive = {
-    case settings: XEthereumProxySettings ⇒
+    case settings: XEthereumProxySettings =>
       updateSettings(settings)
 
-    case req ⇒
+    case req =>
       router.forward(req)
   }
 
@@ -121,7 +112,7 @@ class EthereumAccessActor()(
     connectorGroups.foreach(context.stop)
 
     connectorGroups = settings.nodes.zipWithIndex.map {
-      case (node, index) ⇒
+      case (node, index) =>
         val ipc = node.ipcPath.nonEmpty
 
         val nodeName =
@@ -133,9 +124,7 @@ class EthereumAccessActor()(
           else Props(new HttpConnector(node))
 
         context.actorOf(
-          RoundRobinPool(
-            settings.poolSize
-          ).props(props),
+          RoundRobinPool(settings.poolSize).props(props),
           nodeName
         )
     }

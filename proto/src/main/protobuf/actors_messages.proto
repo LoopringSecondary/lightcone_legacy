@@ -19,9 +19,9 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
-import "google/protobuf/any.proto";
 import "actors_core.proto";
 import "core_data.proto";
+import "core_messages.proto";
 
 message XRunNamedJob {
     string name = 1;
@@ -32,25 +32,52 @@ message XStart{
 }
 message XStop{}
 
-message XSubmitRawOrderReq {
+message XRecoverReq {
+   repeated string address_sharding_entities = 1;
+   repeated XMarketId market_ids = 2;
+   repeated string requesters = 3;
+   int64 batch_id = 4;
+}
+
+message XRecoverOrderReq {
     XRawOrder raw_order = 1;
 }
 
-message XSubmitRawOrderResp {
+message XRecoverOrderRes {
+    string order_id = 1;
+    bool successful = 2;
+}
+
+message XRecoverEnded {
+    bool timeout = 1;
+}
+
+message XRecoverBatchTimeout{}
+
+message XSubmitOrderReq {
     XRawOrder raw_order = 1;
+}
+
+message XRestoreRawOrderReq {
+    XRawOrder raw_order = 1;
+}
+
+message XRestoreRawOrderRes {
+    string id = 1;
 }
 
 message XCancelOrderReq {
     string id = 1;
-    bool hard_cancel = 2; // 默认软取消
+    string owner = 2;
+    XOrderStatus status = 3; //取消的类型
+    XMarketId market_id = 4;
 }
 
 message XCancelOrderRes {
     string id = 1;
-    bool hard_cancel = 2; // 默认软取消
-    XErrorCode error = 3;
+    XOrderStatus status = 2; //取消的类型
 }
 
-message XSubmitRawOrder {
+message XSubmitOrder {
     XRawOrder raw_order = 1;
 }

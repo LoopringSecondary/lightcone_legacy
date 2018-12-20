@@ -74,8 +74,14 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
   }
 
   def toSubmitableParamStr(xRingBatch: XRingBatch): String = {
-    val tokenSpendables = xRingBatch.orders.map(order ⇒
-      Seq((order.owner + order.tokenS), (order.owner + order.feeParams.get.tokenFee)))
+    val tokenSpendables = xRingBatch.orders
+      .map(
+        order =>
+          Seq(
+            (order.owner + order.tokenS),
+            (order.owner + order.feeParams.get.tokenFee)
+          )
+      )
       .flatten
       .distinct
       .zipWithIndex
@@ -87,7 +93,9 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     data.addUint(BigInt(0), true)
     setupMiningInfo(xRingBatch, data, tables)
 
-    xRingBatch.orders.foreach(order ⇒ setupOrderInfo(data, tables, order, tokenSpendables))
+    xRingBatch.orders.foreach(
+      order => setupOrderInfo(data, tables, order, tokenSpendables)
+    )
 
     val paramStream = new Bitstream
     paramStream.addUint16(SerializationVersion)
@@ -100,7 +108,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     xRingBatch.rings.foreach(ring ⇒ {
       val orderIndexes = ring.orderIndexes
       paramStream.addNumber(BigInt(orderIndexes.length), 1, true)
-      orderIndexes.foreach(i ⇒ paramStream.addNumber(BigInt(i), 1, true))
+      orderIndexes.foreach(i => paramStream.addNumber(BigInt(i), 1, true))
       paramStream.addNumber(BigInt(0), 8 - orderIndexes.length, true)
     })
 
@@ -117,9 +125,16 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     bitstream.getData
   }
 
-  private def setupMiningInfo(xRingBatch: XRingBatch, data: Bitstream, tables: Bitstream) {
-    val feeRecipient = if (isValidAddress(xRingBatch.feeRecipient)) xRingBatch.feeRecipient else xRingBatch.transactionOrigin
-    val miner = if (isValidAddress(xRingBatch.miner)) xRingBatch.miner else feeRecipient
+  private def setupMiningInfo(
+      xRingBatch: XRingBatch,
+      data: Bitstream,
+      tables: Bitstream
+    ) {
+    val feeRecipient =
+      if (isValidAddress(xRingBatch.feeRecipient)) xRingBatch.feeRecipient
+      else xRingBatch.transactionOrigin
+    val miner =
+      if (isValidAddress(xRingBatch.miner)) xRingBatch.miner else feeRecipient
     if (feeRecipient != xRingBatch.transactionOrigin) {
       insertOffset(tables, data.addAddress(feeRecipient, false))
     } else {
@@ -133,6 +148,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     }
 
     if (xRingBatch.sig != null && xRingBatch.sig.length > 0
+
       && miner != xRingBatch.transactionOrigin) {
       insertOffset(tables, data.addHex(createBytes(xRingBatch.sig), false))
       addPadding(data)
@@ -141,8 +157,12 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     }
   }
 
-  private def setupOrderInfo(data: Bitstream, tables: Bitstream,
-    order: XRawOrder, tokenSpendables: Map[String, Int]) {
+  private def setupOrderInfo(
+      data: Bitstream,
+      tables: Bitstream,
+      order: XRawOrder,
+      tokenSpendables: Map[String, Int]
+    ) {
     addPadding(data)
     insertOffset(tables, OrderVersion)
     insertOffset(tables, data.addAddress(order.owner, false))
@@ -154,12 +174,17 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     insertOffset(tables, data.addUint32(order.validSince, false))
 
     val spendableSIndex = tokenSpendables(order.owner + order.tokenS)
-    val spendableFeeIndex = tokenSpendables(order.owner + order.feeParams.get.tokenFee)
+    val spendableFeeIndex = tokenSpendables(
+      order.owner + order.feeParams.get.tokenFee
+    )
     tables.addUint16(spendableSIndex)
     tables.addUint16(spendableFeeIndex)
 
     if (isValidAddress(order.params.get.dualAuthAddr)) {
-      insertOffset(tables, data.addAddress(order.params.get.dualAuthAddr, false))
+      insertOffset(
+        tables,
+        data.addAddress(order.params.get.dualAuthAddr, false)
+      )
     } else {
       insertDefault(tables)
     }
@@ -171,7 +196,10 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     }
 
     if (isValidAddress(order.params.get.orderInterceptor)) {
-      insertOffset(tables, data.addAddress(order.params.get.orderInterceptor, false))
+      insertOffset(
+        tables,
+        data.addAddress(order.params.get.orderInterceptor, false)
+      )
     } else {
       insertDefault(tables)
     }
@@ -257,7 +285,10 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     }
   }
 
-  private def insertOffset(tables: Bitstream, offset: Int) {
+  private def insertOffset(
+      tables: Bitstream,
+      offset: Int
+    ) {
     assert(offset % 4 == 0)
     val slot = offset / 4
     tables.addUint16(slot)
@@ -273,20 +304,18 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
   }
 
   private def ringBatchHash(xRingBatch: XRingBatch) = {
-    val ringHashes = xRingBatch.rings.map(
-      xring ⇒ {
-        val bitstream = new Bitstream
-        val orders = xring.orderIndexes.map(i ⇒ xRingBatch.orders(i))
-        orders.foreach(o ⇒ {
-          bitstream.addHex(o.hash)
-          bitstream.addUint16(o.feeParams.get.waiveFeePercentage)
-        })
-        Numeric.toHexString(Hash.sha3(bitstream.getBytes))
-      }
-    )
+    val ringHashes = xRingBatch.rings.map(xring => {
+      val bitstream = new Bitstream
+      val orders = xring.orderIndexes.map(i => xRingBatch.orders(i))
+      orders.foreach(o => {
+        bitstream.addHex(o.hash)
+        bitstream.addUint16(o.feeParams.get.waiveFeePercentage)
+      })
+      Numeric.toHexString(Hash.sha3(bitstream.getBytes))
+    })
 
     val ringHashesXor = ringHashes.tail.foldLeft(ringHashes.head) {
-      (h1: String, h2: String) ⇒
+      (h1: String, h2: String) =>
         {
           val bigInt1 = Numeric.decodeQuantity(h1)
           val bigInt2 = Numeric.decodeQuantity(h2)

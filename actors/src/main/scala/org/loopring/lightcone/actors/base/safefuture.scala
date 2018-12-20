@@ -16,58 +16,74 @@
 
 package org.loopring.lightcone.actors.base
 
-import scala.concurrent._
-import scala.util.{ Failure, Success }
-import scala.reflect.ClassTag
-import org.loopring.lightcone.core.base.ErrorException
+import akka.actor._
+import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.XError
 import org.loopring.lightcone.proto.XErrorCode._
-import akka.actor._
+
+import scala.concurrent._
+import scala.reflect.ClassTag
+import scala.util.{Failure, Success}
 
 object safefuture {
 
-  implicit class SafeFutureSupport[T](f: Future[T])(implicit
-      ec: ExecutionContext,
-      ac: ActorContext
-  ) {
+  implicit class SafeFutureSupport[T](
+      f: Future[T]
+    )(
+      implicit ec: ExecutionContext,
+      ac: ActorContext) {
+
     // Map a future to a certain type. All other types will throw ErrorException.
-    def mapAs[S](
-      implicit
-      tag: ClassTag[S]
-    ): Future[S] = f map {
-      case m: S        ⇒ m
-      case err: XError ⇒ throw ErrorException(err)
-      case other ⇒ throw ErrorException(
-        XError(ERR_INTERNAL_UNKNOWN, s"unexpected msg ${other.getClass.getName}")
-      )
+    def mapAs[S](implicit tag: ClassTag[S]): Future[S] = f map {
+      case m: S        => m
+      case err: XError => throw ErrorException(err)
+      case other =>
+        throw ErrorException(
+          XError(
+            ERR_INTERNAL_UNKNOWN,
+            s"unexpected msg ${other.getClass.getName}"
+          )
+        )
     }
 
     // Forward the future to a receiver but will send back an XError to sender in case of exception.
-    def forwardTo(recipient: ActorRef)(
-      implicit
-      sender: ActorRef = Actor.noSender
-    ): Future[T] = {
+    //todo:直接使用forward无法使用，暂时以该方式实现功能，后续可以优化
+    def forwardTo(
+        recipient: ActorRef,
+        orginSender: ActorRef
+      )(
+        implicit sender: ActorRef
+      ): Future[T] = {
       f onComplete {
-        case Success(r) ⇒ recipient forward r
-        case Failure(f) ⇒ f match {
-          case e: ErrorException ⇒ sender ! e.error
-          case e: Throwable      ⇒ throw e
-        }
+        case Success(r) => recipient.tell(r, orginSender)
+        case Failure(f) =>
+          f match {
+            case e: ErrorException =>
+              orginSender ! e.error
+            case e: Throwable => throw e
+          }
       }
       f
     }
 
     // Send the future to a receiver but will send back an XError to sender in case of exception.
-    def sendTo(recipient: ActorRef)(
-      implicit
-      sender: ActorRef = Actor.noSender
-    ): Future[T] = {
+    def sendTo(
+        recipient: ActorRef,
+        orginSenderOpt: Option[ActorRef] = None
+      )(
+        implicit sender: ActorRef
+      ): Future[T] = {
       f onComplete {
-        case Success(r) ⇒ recipient ! r
-        case Failure(f) ⇒ f match {
-          case e: ErrorException ⇒ sender ! e.error
-          case e: Throwable      ⇒ throw e
-        }
+        case Success(r) => recipient ! r
+        case Failure(f) =>
+          f match {
+            case e: ErrorException =>
+              orginSenderOpt match {
+                case Some(orginSender) => orginSender ! e
+                case None              => recipient ! e
+              }
+            case e: Throwable => throw e
+          }
       }
       f
     }

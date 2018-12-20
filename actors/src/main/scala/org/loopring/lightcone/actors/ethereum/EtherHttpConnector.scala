@@ -20,7 +20,6 @@ import akka.actor._
 import akka.http.scaladsl._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
-import akka.pattern.pipe
 import akka.stream._
 import akka.stream.scaladsl._
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
@@ -29,22 +28,25 @@ import org.json4s.native.JsonMethods.parse
 import org.json4s.jackson.Serialization
 import org.loopring.lightcone.proto._
 import scalapb.json4s.JsonFormat
+import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent._
 import scala.util._
 
-private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
-    implicit
-    val mat: ActorMaterializer
-) extends Actor
-  with ActorLogging
-  with Json4sSupport {
+private[ethereum] class HttpConnector(
+    node: XEthereumProxySettings.XNode
+  )(
+    implicit val mat: ActorMaterializer)
+    extends Actor
+    with ActorLogging
+    with Json4sSupport {
 
   import context.dispatcher
 
   implicit val serialization = jackson.Serialization //.formats(NoTypeHints)
   implicit val system: ActorSystem = context.system
-  implicit val formats = org.json4s.native.Serialization.formats(NoTypeHints) + new EmptyValueSerializer
+  implicit val formats = org.json4s.native.Serialization
+    .formats(NoTypeHints) + new EmptyValueSerializer
 
   val DEBUG_TIMEOUT_STR = "5s"
   val DEBUG_TRACER = "callTracer"
@@ -52,7 +54,11 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
 
   val emptyError = XEthResError(code = 500, error = "result is empty")
 
-  private val poolClientFlow: Flow[(HttpRequest, Promise[HttpResponse]), (Try[HttpResponse], Promise[HttpResponse]), Http.HostConnectionPool] = {
+  private val poolClientFlow: Flow[
+    (HttpRequest, Promise[HttpResponse]),
+    (Try[HttpResponse], Promise[HttpResponse]),
+    Http.HostConnectionPool
+  ] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
       host = node.host,
       port = node.port
@@ -61,29 +67,30 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
 
   log.debug(s"connecting Ethereum at ${node.host}:${node.port}")
 
-  private val queue: SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])] =
+  private val queue
+    : SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])] =
     Source
       .queue[(HttpRequest, Promise[HttpResponse])](
-        100,
+        500,
         OverflowStrategy.backpressure
       )
       .via(poolClientFlow)
       .toMat(Sink.foreach({
-        case (Success(resp), p) ⇒ p.success(resp)
-        case (Failure(e), p)    ⇒ p.failure(e)
+        case (Success(resp), p) => p.success(resp)
+        case (Failure(e), p)    => p.failure(e)
       }))(Keep.left)
       .run()(mat)
 
   private def request(request: HttpRequest): Future[HttpResponse] = {
     val responsePromise = Promise[HttpResponse]()
     queue.offer(request -> responsePromise).flatMap {
-      case QueueOfferResult.Enqueued ⇒
+      case QueueOfferResult.Enqueued =>
         responsePromise.future
-      case QueueOfferResult.Dropped ⇒
+      case QueueOfferResult.Dropped =>
         Future.failed(new RuntimeException("Queue overflowed."))
-      case QueueOfferResult.Failure(ex) ⇒
+      case QueueOfferResult.Failure(ex) =>
         Future.failed(ex)
-      case QueueOfferResult.QueueClosed ⇒
+      case QueueOfferResult.QueueClosed =>
         Future.failed(new RuntimeException("Queue closed."))
     }
   }
@@ -94,10 +101,10 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
 
   private def post(entity: RequestEntity): Future[String] = {
     for {
-      httpResp ← request(
+      httpResp <- request(
         HttpRequest(method = HttpMethods.POST, entity = entity)
       )
-      jsonStr ← httpResp.entity.dataBytes.map(_.utf8String).runReduce(_ + _)
+      jsonStr <- httpResp.entity.dataBytes.map(_.utf8String).runReduce(_ + _)
     } yield jsonStr
   }
 
@@ -111,14 +118,16 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
     log.debug(s"reqeust: ${org.json4s.native.Serialization.write(jsonRpc)}")
 
     for {
-      entity ← Marshal(jsonRpc).to[RequestEntity]
-      jsonStr ← post(entity)
+      entity <- Marshal(jsonRpc).to[RequestEntity]
+      jsonStr <- post(entity)
       _ = log.debug(s"response: $jsonStr")
     } yield jsonStr
 
   }
-  private def batchSendMessages(methodList: Seq[BatchMethod]): Future[String] = {
-    val jsonRpcList = methodList.map { x ⇒
+  private def batchSendMessages(
+      methodList: Seq[BatchMethod]
+    ): Future[String] = {
+    val jsonRpcList = methodList.map { x =>
       JsonRpcReqWrapped(
         id = if (x.id > 0) x.id else Random.nextInt(100),
         jsonrpc = "2.0",
@@ -128,102 +137,116 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
     }
 
     for {
-      entity ← Marshal(jsonRpcList).to[RequestEntity]
-      jsonStr ← post(entity)
+      entity <- Marshal(jsonRpcList).to[RequestEntity]
+      jsonStr <- post(entity)
     } yield jsonStr
   }
 
   private def toResponseWrapped: PartialFunction[String, JsonRpcResWrapped] = {
-    case json: String ⇒ parse(json).extract[JsonRpcResWrapped]
+    case json: String => parse(json).extract[JsonRpcResWrapped]
   }
 
-  private def toResponseListWrapped: PartialFunction[String, Seq[JsonRpcResWrapped]] = {
-    case json: String ⇒ parse(json).extract[Seq[JsonRpcResWrapped]]
+  private def toResponseListWrapped
+    : PartialFunction[String, Seq[JsonRpcResWrapped]] = {
+    case json: String => parse(json).extract[Seq[JsonRpcResWrapped]]
   }
 
-  private def checkResponseWrapped: PartialFunction[JsonRpcResWrapped, Boolean] = {
-    case res: JsonRpcResWrapped ⇒ res.result.toString.isEmpty
+  private def checkResponseWrapped
+    : PartialFunction[JsonRpcResWrapped, Boolean] = {
+    case res: JsonRpcResWrapped => res.result.toString.isEmpty
   }
 
-  private def checkResponseListWrapped: PartialFunction[Seq[JsonRpcResWrapped], Boolean] = {
-    case res: Seq[JsonRpcResWrapped] ⇒ res.isEmpty
+  private def checkResponseListWrapped
+    : PartialFunction[Seq[JsonRpcResWrapped], Boolean] = {
+    case res: Seq[JsonRpcResWrapped] => res.isEmpty
   }
 
   private def hex2BigInt(s: String) = BigInt(s.replace("0x", ""), 16)
 
   def receive: Receive = {
-    case req: XJsonRpcReq ⇒
-      post(req.json).map(XJsonRpcRes(_)) pipeTo sender
+    case req: XJsonRpcReq =>
+      post(req.json).map(XJsonRpcRes(_)) sendTo sender
 
-    case _: XEthBlockNumberReq ⇒
+    case _: XEthBlockNumberReq =>
       sendMessage("eth_blockNumber") {
         Seq.empty
-      } map JsonFormat.fromJsonString[XEthBlockNumberRes] pipeTo sender
+      } map JsonFormat.fromJsonString[XEthBlockNumberRes] sendTo sender
 
-    case r: XEthGetBalanceReq ⇒
+    case r: XEthGetBalanceReq =>
       sendMessage("eth_getBalance") {
         Seq(r.address, r.tag)
-      } map JsonFormat.fromJsonString[XEthGetBalanceRes] pipeTo sender
+      } map JsonFormat.fromJsonString[XEthGetBalanceRes] sendTo sender
 
-    case r: XGetTransactionByHashReq ⇒
+    case r: XGetTransactionByHashReq =>
       sendMessage("eth_getTransactionByHash") {
         Seq(r.hash)
-      } map JsonFormat.fromJsonString[XGetTransactionByHashRes] pipeTo sender
+      } map JsonFormat.fromJsonString[XGetTransactionByHashRes] sendTo sender
 
-    case r: XGetTransactionReceiptReq ⇒
+    case r: XGetTransactionReceiptReq =>
       sendMessage("eth_getTransactionReceipt") {
         Seq(r.hash)
-      } map JsonFormat.fromJsonString[XGetTransactionReceiptRes] pipeTo sender
+      } map JsonFormat.fromJsonString[XGetTransactionReceiptRes] sendTo sender
 
-    case r: XGetBlockWithTxHashByNumberReq ⇒
+    case r: XGetBlockWithTxHashByNumberReq =>
       sendMessage("eth_getBlockByNumber") {
         Seq(r.blockNumber, false)
-      } map JsonFormat.fromJsonString[XGetBlockWithTxHashByNumberRes] pipeTo sender
+      } map JsonFormat
+        .fromJsonString[XGetBlockWithTxHashByNumberRes] sendTo sender
 
-    case r: XGetBlockWithTxObjectByNumberReq ⇒
+    case r: XGetBlockWithTxObjectByNumberReq =>
       sendMessage("eth_getBlockByNumber") {
         Seq(r.blockNumber, true)
-      } map JsonFormat.fromJsonString[XGetBlockWithTxObjectByNumberRes] pipeTo sender
+      } map JsonFormat
+        .fromJsonString[XGetBlockWithTxObjectByNumberRes] sendTo sender
 
-    case r: XGetBlockWithTxHashByHashReq ⇒
+    case r: XGetBlockWithTxHashByHashReq =>
       sendMessage("eth_getBlockByHash") {
         Seq(r.blockHash, false)
-      } map JsonFormat.fromJsonString[XGetBlockWithTxHashByHashRes] pipeTo sender
+      } map JsonFormat
+        .fromJsonString[XGetBlockWithTxHashByHashRes] sendTo sender
 
-    case r: XGetBlockWithTxObjectByHashReq ⇒
+    case r: XGetBlockWithTxObjectByHashReq =>
       sendMessage("eth_getBlockByHash") {
         Seq(r.blockHash, true)
-      } map JsonFormat.fromJsonString[XGetBlockWithTxObjectByHashRes] pipeTo sender
+      } map JsonFormat
+        .fromJsonString[XGetBlockWithTxObjectByHashRes] sendTo sender
 
-    case r: XTraceTransactionReq ⇒
+    case r: XTraceTransactionReq =>
       sendMessage("debug_traceTransaction") {
         val debugParams = DebugParams(DEBUG_TIMEOUT_STR, DEBUG_TRACER)
         Seq(r.txhash, debugParams)
-      } map JsonFormat.fromJsonString[XTraceTransactionRes] pipeTo sender
+      } map JsonFormat.fromJsonString[XTraceTransactionRes] sendTo sender
 
-    case r: XGetEstimatedGasReq ⇒
+    case r: XGetEstimatedGasReq =>
       sendMessage("eth_estimateGas") {
         val args = XTransactionParam().withTo(r.to).withData(r.data)
         Seq(args)
-      } map JsonFormat.fromJsonString[XGetEstimatedGasRes] pipeTo sender
+      } map JsonFormat.fromJsonString[XGetEstimatedGasRes] sendTo sender
 
-    case r: XGetNonceReq ⇒
+    case r: XGetNonceReq =>
       sendMessage("eth_getTransactionCount") {
         Seq(r.owner, r.tag)
-      } map JsonFormat.fromJsonString[XGetNonceRes] pipeTo sender
+      } map JsonFormat.fromJsonString[XGetNonceRes] sendTo sender
 
-    case r: XGetBlockTransactionCountReq ⇒
+    case r: XGetBlockTransactionCountReq =>
       sendMessage("eth_getBlockTransactionCountByHash") {
         Seq(r.blockHash)
-      } map JsonFormat.fromJsonString[XGetBlockTransactionCountRes] pipeTo sender
+      } map JsonFormat
+        .fromJsonString[XGetBlockTransactionCountRes] sendTo sender
 
-    case r: XEthCallReq ⇒
+    case r: XEthCallReq =>
       sendMessage("eth_call") {
         Seq(r.param, r.tag)
-      } map JsonFormat.fromJsonString[XEthCallRes] pipeTo sender
+      } map JsonFormat.fromJsonString[XEthCallRes] sendTo sender
 
-    case batchR: XBatchContractCallReq ⇒
-      val batchReqs = batchR.reqs.map { singleReq ⇒
+    case r: XGetUncleByBlockNumAndIndexReq ⇒
+      sendMessage(method = "eth_getUncleByBlockNumberAndIndex") {
+        Seq(r.blockNum, r.index)
+      } map JsonFormat
+        .fromJsonString[XGetBlockWithTxHashByHashRes] sendTo sender
+
+    case batchR: XBatchContractCallReq =>
+      val batchReqs = batchR.reqs.map { singleReq =>
         BatchMethod(
           id = singleReq.id,
           method = "eth_call",
@@ -231,17 +254,17 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
         )
       }
       //这里无法直接解析成XBatchContractCallRes
-      batchSendMessages(batchReqs) map { json ⇒
+      batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
-        val callResps = resps.map(resp ⇒ {
+        val callResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
           JsonFormat.fromJsonString[XEthCallRes](respJson)
         })
         XBatchContractCallRes(resps = callResps)
-      } pipeTo sender
+      } sendTo sender
 
-    case batchR: XBatchGetTransactionReceiptsReq ⇒
-      val batchReqs = batchR.reqs.map { singleReq ⇒
+    case batchR: XBatchGetTransactionReceiptsReq =>
+      val batchReqs = batchR.reqs.map { singleReq =>
         BatchMethod(
           id = 0,
           method = "eth_getTransactionReceipt",
@@ -249,46 +272,64 @@ private[ethereum] class HttpConnector(node: XEthereumProxySettings.XNode)(
         )
       }
       //这里无法直接解析成XBatchGetTransactionReceiptsRes
-      batchSendMessages(batchReqs) map { json ⇒
+      batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
-        val receiptResps = resps.map(resp ⇒ {
+        val receiptResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
           JsonFormat.fromJsonString[XGetTransactionReceiptRes](respJson)
         })
         XBatchGetTransactionReceiptsRes(resps = receiptResps)
-      } pipeTo sender
+      } sendTo sender
 
-    case batchR: XBatchGetTransactionsReq ⇒
-      val batchReqs = batchR.reqs.map { singleReq ⇒
+    case batchR: XBatchGetTransactionsReq =>
+      val batchReqs = batchR.reqs.map { singleReq =>
         BatchMethod(
           id = 0,
           method = "eth_getTransactionByHash",
           params = Seq(singleReq.hash)
         )
       }
-      //这里无法直接解析成XBatchGetTransactionReceiptsRes
-      batchSendMessages(batchReqs) map { json ⇒
+      //这里无法直接解析成XBatchGetTransactionsRes
+      batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
-        val txResps = resps.map(resp ⇒ {
+        val txResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
           JsonFormat.fromJsonString[XGetTransactionByHashRes](respJson)
         })
         XBatchGetTransactionsRes(resps = txResps)
-      } pipeTo sender
+      } sendTo sender
 
+    case batchR: XBatchGetUncleByBlockNumAndIndexReq ⇒ {
+      val batchReqs = batchR.reqs.map { singleReq ⇒
+        BatchMethod(
+          id = 0,
+          method = "eth_getUncleByBlockNumberAndIndex",
+          params = Seq(singleReq.blockNum, singleReq.index)
+        )
+      }
+      batchSendMessages(batchReqs) map { json ⇒
+        val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
+        val txResps = resps.map(resp ⇒ {
+          val respJson = Serialization.write(resp)
+          JsonFormat.fromJsonString[XGetBlockWithTxHashByHashRes](respJson)
+        })
+        XBatchGetUncleByBlockNumAndIndexRes(txResps)
+      } sendTo sender
+    }
   }
 
 }
 
-private case class DebugParams(timeout: String, tracer: String)
+private case class DebugParams(
+    timeout: String,
+    tracer: String)
 
 private class EmptyValueSerializer
-  extends CustomSerializer[String](
-    _ ⇒
-      ({
-        case JNull ⇒ ""
-      }, {
-        case "" ⇒ JNothing
-      })
-  )
-
+    extends CustomSerializer[String](
+      _ =>
+        ({
+          case JNull => ""
+        }, {
+          case "" => JNothing
+        })
+    )

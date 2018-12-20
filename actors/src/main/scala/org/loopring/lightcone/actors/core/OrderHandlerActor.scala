@@ -18,35 +18,33 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.sharding._
-import akka.event.LoggingReceive
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.validator._
+import org.loopring.lightcone.lib.{ErrorException, _}
+import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto._
+
 import scala.concurrent._
 
 // main owner: 于红雨
 object OrderHandlerActor extends ShardedEvenly {
   val name = "order_handler"
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -56,24 +54,50 @@ object OrderHandlerActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new OrderHandlerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
 
-class OrderHandlerActor()(
-    implicit
-    val config: Config,
+class OrderHandlerActor(
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
+    val actors: Lookup[ActorRef],
+    val dbModule: DatabaseModule)
+    extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
+  def mammv: ActorRef =
+    actors.get(MultiAccountManagerMessageValidator.name)
+
+  //save order to db first, then send to AccountManager
   def receive: Receive = {
-    case _ ⇒
-    // case XSubmitRawOrder(Some(order)) ⇒
-  }
+    case req: XCancelOrderReq ⇒
+      (for {
+        // TODO(yongfeng): return the order owner's address
+        cancelRes <- dbModule.orderService.markOrderSoftCancelled(Seq(req.id))
+      } yield {
+        cancelRes.headOption match {
+          case Some(res) ⇒
+            req //todo:测试
+          case None ⇒
+            throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
+        }
+      }) forwardTo (mammv, sender)
 
+    case XSubmitOrderReq(Some(raworder)) ⇒
+      (for {
+        //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
+        saveRes <- dbModule.orderService.saveOrder(raworder)
+      } yield {
+        saveRes match {
+          case Right(errCode) =>
+            throw ErrorException(errCode, s"failed to submit order: $raworder")
+          case Left(resRawOrder) =>
+            XSubmitSimpleOrderReq(resRawOrder.owner, Some(resRawOrder))
+        }
+      }) forwardTo (mammv, sender)
+  }
 }

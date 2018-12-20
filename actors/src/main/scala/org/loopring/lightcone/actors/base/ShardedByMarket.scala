@@ -17,20 +17,27 @@
 package org.loopring.lightcone.actors.base
 
 import akka.cluster.sharding._
+import org.loopring.lightcone.proto.XMarketId
+import org.web3j.utils.Numeric
+import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 
 trait ShardedByMarket extends Sharded {
-  val extractMarketName: PartialFunction[Any, String]
+  val extractMarketId: PartialFunction[Any, XMarketId]
 
-  private def hashed(msg: Any) = Math.abs(msg.hashCode % numOfShards)
+  def getEntityId(marketId: XMarketId): String = {
+    val xorValue = Numeric.toBigInt(marketId.primary) xor
+      Numeric.toBigInt(marketId.secondary)
+    Math.abs(xorValue.hashCode % numOfShards).toString
+  }
 
-  private def _extractEntityId(msg: Any): Option[(String, Any)] =
-    (extractMarketName.lift)(msg).map { marketId ⇒ ("${name}_${hashed(msg)}_${marketId}", msg) }
+  def extractEntityId(actorName: String) = actorName.split("_").last
 
-  private def _extractShardId(msg: Any): Option[String] = Some("shard_" + hashed(msg))
-
-  val extractEntityId: ShardRegion.ExtractEntityId = Function.unlift(_extractEntityId)
-  val extractShardId: ShardRegion.ExtractShardId = Function.unlift(_extractShardId)
-
-  def extractEntityName(actorName: String) = actorName.split("_").last
+  val messageExtractor =
+    new HashCodeMessageExtractor(numOfShards) {
+      override def entityId(msg: Any) = {
+        val entityIdOpt = (extractMarketId.lift)(msg).map(getEntityId)
+        assert(entityIdOpt.isDefined, s"${msg} no entity id extracted")
+        s"${name}_${entityIdOpt.get}"
+      }
+    }
 }
-

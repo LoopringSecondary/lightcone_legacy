@@ -41,15 +41,15 @@ import scala.annotation.tailrec
 object RingSettlementActor extends ShardedEvenly {
   val name = "ring_settlement"
 
-  def startShardRegion()(
-    implicit
-    system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef]
-  ): ActorRef = {
+  def startShardRegion(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef]
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -59,21 +59,20 @@ object RingSettlementActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new RingSettlementActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
 
-class RingSettlementActor()(
-    implicit
-    val config: Config,
+class RingSettlementActor(
+  )(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef]
-) extends ActorWithPathBasedConfig(RingSettlementActor.name)
-  with RepeatedJobActor {
+    val actors: Lookup[ActorRef])
+    extends ActorWithPathBasedConfig(RingSettlementActor.name)
+    with RepeatedJobActor {
 
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
@@ -88,17 +87,21 @@ class RingSettlementActor()(
   private def gasPriceActor = actors.get(GasPriceActor.name)
 
   override def receive: Receive = super.receive orElse LoggingReceive {
-    // case req: XSettleRingsReq ⇒
+    // case req: XSettleRingsReq =>
     //   val rings = generateRings(req.rings)
     //   rings.foreach {
-    //     ring ⇒
+    //     ring =>
     //       val inputData = ringSigner.getInputData(ring)
     //       signAndSubmitTx(inputData, req.gasLimit, req.gasPrice)
     //   }
-    case _ ⇒
+    case _ =>
   }
 
-  def signAndSubmitTx(inputData: String, gasLimit: BigInt, gasPrice: BigInt) = {
+  def signAndSubmitTx(
+      inputData: String,
+      gasLimit: BigInt,
+      gasPrice: BigInt
+    ) = {
     // var hasSended = false
     // while (!hasSended) {
     //   val txData = ringSigner.getSignedTxData(inputData, nonce.get(), gasLimit, gasPrice)
@@ -111,20 +114,20 @@ class RingSettlementActor()(
   }
 
   //未被提交的交易需要使用新的gas和gasprice重新提交
-  def resubmitTx(): Future[Unit] = for {
-    gasPriceRes ← (gasPriceActor ? XGetGasPriceReq())
-      .mapAs[XGetGasPriceRes]
-    //todo：查询数据库等得到未能打块的交易
-    ringsWithGasLimit = Seq.empty[(String, BigInt)]
-    _ = ringsWithGasLimit.foreach {
-      ringWithGasLimit ⇒
+  def resubmitTx(): Future[Unit] =
+    for {
+      gasPriceRes <- (gasPriceActor ? XGetGasPriceReq())
+        .mapAs[XGetGasPriceRes]
+      //todo：查询数据库等得到未能打块的交易
+      ringsWithGasLimit = Seq.empty[(String, BigInt)]
+      _ = ringsWithGasLimit.foreach { ringWithGasLimit =>
         signAndSubmitTx(
           ringWithGasLimit._1,
           ringWithGasLimit._2,
           gasPriceRes.gasPrice
         )
-    }
-  } yield Unit
+      }
+    } yield Unit
 
   // private def generateRings(rings: Seq[XOrderRing]): Seq[Ring] = {
   //   // @tailrec
@@ -142,11 +145,11 @@ class RingSettlementActor()(
   //   //     ""
   //   //   )
   //   //   val orders = rings.flatMap {
-  //   //     ring ⇒
+  //   //     ring =>
   //   //       Set(ring.getMaker.getOrder, ring.getTaker.getOrder)
   //   //   }.distinct
   //   //   val orderIndexes = rings.map {
-  //   //     ring ⇒
+  //   //     ring =>
   //   //       Seq(
   //   //         orders.indexOf(ring.getTaker.getOrder),
   //   //         orders.indexOf(ring.getMaker.getOrder)

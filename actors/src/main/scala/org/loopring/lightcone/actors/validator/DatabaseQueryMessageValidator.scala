@@ -17,18 +17,24 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
 object DatabaseQueryMessageValidator {
   val name = "database_query_validator"
 }
 
-final class DatabaseQueryMessageValidator()(
-    implicit
-    val config: Config
-) extends MessageValidator {
+final class DatabaseQueryMessageValidator()(implicit val config: Config)
+    extends MessageValidator {
 
+  // Throws exception if validation fails.
   def validate = {
-    case x ⇒ x
+    case req: XSaveOrderReq ⇒
+      if (req.order.isEmpty || (req.order.get.state.nonEmpty && req.order.get.state.get.status !=
+            XOrderStatus.STATUS_NEW))
+        throw ErrorException(XError(XErrorCode.ERR_PERSISTENCE_INVALID_DATA))
+    case req: XUserCancelOrderReq ⇒
+      if (req.orderHashes.isEmpty)
+        throw ErrorException(XError(XErrorCode.ERR_PERSISTENCE_INVALID_DATA))
   }
 }

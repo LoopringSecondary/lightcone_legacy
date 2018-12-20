@@ -34,7 +34,8 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
 
     // println(s"lrcAddress: $lrcAddress, $wethAddress, $miner, $minerPrivKey")
 
-    val xRingBatchContext = (new XRingBatchContext).withFeeRecipient(miner)
+    val xRingBatchContext = (new XRingBatchContext)
+      .withFeeRecipient(miner)
       .withMiner(miner)
       .withTransactionOrigin(miner)
       .withMinerPrivateKey(minerPrivKey)
