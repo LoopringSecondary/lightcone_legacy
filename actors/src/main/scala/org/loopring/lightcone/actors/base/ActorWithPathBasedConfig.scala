@@ -47,7 +47,7 @@ abstract class ActorWithPathBasedConfig(
   log.info(s"""
     >>> ----------------
     >>> actor created: ${self.path.name}
-    >>> entity name: ${entityId}
+    >>> entity id: ${entityId}
     >>> config: ${selfConfig}
     >>> ----------------
   """)

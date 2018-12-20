@@ -36,7 +36,7 @@ trait ShardedByMarket extends Sharded {
     new HashCodeMessageExtractor(numOfShards) {
       override def entityId(msg: Any) = {
         val entityIdOpt = (extractMarketId.lift)(msg).map(getEntityId)
-        assert(entityIdOpt.isDefined)
+        assert(entityIdOpt.isDefined, s"${msg} no entity id extracted")
         s"${name}_${entityIdOpt.get}"
       }
     }

@@ -22,10 +22,6 @@ import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 trait Sharded {
   val name: String
   protected var numOfShards: Int = 1
-  protected def hashed(
-      msg: Any,
-      max: Int
-    ): Int = Math.abs(msg.hashCode % max)
 }
 
 trait ShardedEvenly extends Sharded {
