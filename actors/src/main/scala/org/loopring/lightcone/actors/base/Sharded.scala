@@ -21,8 +21,4 @@ import akka.cluster.sharding._
 trait Sharded {
   val name: String
   protected var numOfShards: Int = 1
-  protected def hashed(
-      msg: Any,
-      max: Int
-    ) = Math.abs(msg.hashCode % max)
 }

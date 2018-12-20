@@ -19,11 +19,6 @@ package org.loopring.lightcone.actors.base
 import akka.cluster.sharding._
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 
-trait Sharded {
-  val name: String
-  protected var numOfShards: Int = 1
-}
-
 trait ShardedEvenly extends Sharded {
   protected var entitiesPerShard: Int = 1
 
