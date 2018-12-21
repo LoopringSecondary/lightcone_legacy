@@ -47,65 +47,76 @@ class OrderRecoverCoordinator(
     extends ActorWithPathBasedConfig(OrderRecoverCoordinator.name)
     with ActorLogging {
 
-  var batchId = 1L
-  var pendingBatchRequestOpt: Option[XRecoverReq] = None
-  var batchTimeoutCancellable: Option[Cancellable] = None
-
-  val batchTimeout =
-    selfConfig.getInt("batch-timeout-seconds")
-
-  override def preStart(): Unit = {
-    super.preStart()
-
-    batchTimeoutCancellable = Some(
-      context.system.scheduler
-        .scheduleOnce(batchTimeout.seconds, self, XRecoverBatchTimeout())
-    )
-  }
+  val batchTimeout = selfConfig.getInt("batch-timeout-seconds")
+  var activeBatches = Map.empty[ActorRef, XRecover.Batch]
+  var pendingBatch = XRecover.Batch(batchId = 1)
+  var batchTimer: Option[Cancellable] = None
 
   def receive: Receive = {
 
-    case req: XRecoverBatchTimeout if pendingBatchRequestOpt.nonEmpty =>
-      val batchReq = pendingBatchRequestOpt.get
+    case req: XRecover.Request =>
+      cancelBatchTimer()
+
+      val requesterPath = Serialization.serializedActorPath(sender)
+
+      activeBatches.filter {
+        case (_, batch) => batch.requestMap.contains(requesterPath)
+      }.foreach {
+        case (orderRecoverActor, _) =>
+          // Notify the actor to stop handling the request in a previous batch
+          orderRecoverActor ! XRecover.CancelFor(requesterPath)
+      }
+
+      val requestMap = pendingBatch.requestMap + (requesterPath -> req)
+      pendingBatch = pendingBatch.copy(requestMap = requestMap)
+
+      log.info(s"current pending batch recovery request: ${pendingBatch}")
+
+      startBatchTimer()
+
+    case req: XRecover.Timeout =>
+      if (pendingBatch.requestMap.nonEmpty) {
+        actors.get(OrderRecoverActor.name) ! pendingBatch
+        pendingBatch = XRecover.Batch(pendingBatch.batchId + 1)
+      }
+
+    // This message should be sent from OrderRecoverActors
+    case batch: XRecover.Batch =>
+      val isUpdate =
+        if (activeBatches.contains(sender)) "UPDATED" else "STARTED"
 
       log.warning(s"""
       |>>>
-      |>>> BATCH RECOVER STARTED:
-      |>>> ${JsonFormat.toJsonString(batchReq)}
+      |>>> BATCH RECOVER ${isUpdate}:
+      |>>> ${JsonFormat.toJsonString(batch)}
       |>>> """)
 
-      actors.get(OrderRecoverActor.name) ! batchReq
-      pendingBatchRequestOpt = None
-      batchId += 1
+      activeBatches += sender -> batch
 
-    case req: XRecoverReq =>
-      batchTimeoutCancellable.foreach(_.cancel)
-      val requester = Serialization.serializedActorPath(sender)
+    // This message should be sent from OrderRecoverActors
+    case msg: XRecover.Finished if activeBatches.contains(sender) =>
+      log.warning(s"""
+      |>>>
+      |>>> BATCH RECOVER FINISHED:
+      |>>> ${JsonFormat.toJsonString(activeBatches(sender))}
+      |>>> """)
 
-      val merged = mergeRequests(
-        pendingBatchRequestOpt.getOrElse(XRecoverReq()),
-        req.copy(requesters = Seq(requester))
-      )
-      pendingBatchRequestOpt = Some(merged)
+      activeBatches -= sender
 
-      log.info(
-        s"current pending batch recovery request: ${pendingBatchRequestOpt.get}"
-      )
-
-      batchTimeoutCancellable = Some(
-        context.system.scheduler
-          .scheduleOnce(batchTimeout.seconds, self, XRecoverBatchTimeout())
-      )
   }
 
-  private def mergeRequests(
-      r1: XRecoverReq,
-      r2: XRecoverReq
-    ) =
-    XRecoverReq(
-      (r1.addressShardingEntities ++ r2.addressShardingEntities).distinct,
-      (r1.marketIds ++ r2.marketIds).distinct,
-      (r1.requesters ++ r2.requesters).distinct,
-      batchId
-    )
+  private def startBatchTimer() {
+    if (batchTimer.isEmpty) {
+      batchTimer = Some(
+        context.system.scheduler
+          .scheduleOnce(batchTimeout.seconds, self, XRecover.Timeout())
+      )
+    }
+  }
+
+  private def cancelBatchTimer() {
+    batchTimer.foreach(_.cancel)
+    batchTimer = None
+  }
+
 }

@@ -23,39 +23,38 @@ import "actors_core.proto";
 import "core_data.proto";
 import "core_messages.proto";
 
-message XRunNamedJob {
-    string name = 1;
-}
+message XRecover {
+    message Request {
+        string address_sharding_entity = 1;
+        XMarketId market_id = 2;
+    }
 
-message XStart{
-    string shard_entity_id = 1;
-}
-message XStop{}
+    message CancelFor {
+        string requester_path = 1;
+    }
 
-message XSubmitOrderReq {
-    XRawOrder raw_order = 1;
-}
+    message Batch {
+        int64 batch_id = 1;
+        map<string, Request> request_map = 2; // requester_path -> Request
+    }
 
-message XRestoreRawOrderReq {
-    XRawOrder raw_order = 1;
-}
+    message Finished {
+        bool timeout = 1;
+    }
 
-message XRestoreRawOrderRes {
-    string id = 1;
-}
+    message RetrieveOrders {
+        int64 last_order_id = 1;
+    }
+    message Timeout{}
 
-message XCancelOrderReq {
-    string id = 1;
-    string owner = 2;
-    XOrderStatus status = 3; //取消的类型
-    XMarketId market_id = 4;
-}
+    message RecoverOrderReq {
+        XRawOrder raw_order = 1;
+    }
 
-message XCancelOrderRes {
-    string id = 1;
-    XOrderStatus status = 2; //取消的类型
-}
+    message RecoverOrderRes {
+        string order_id = 1;
+        bool successful = 2;
+    }
 
-message XSubmitOrder {
-    XRawOrder raw_order = 1;
+
 }

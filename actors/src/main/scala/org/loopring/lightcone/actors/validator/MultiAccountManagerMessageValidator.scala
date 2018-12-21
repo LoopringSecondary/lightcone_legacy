@@ -33,13 +33,14 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
   // Throws exception if validation fails.
   private def verifyAddressValid(address: String) = {
     //todo: 测试暂时注释
-//    throw ErrorException(ERR_INVALID_ARGUMENT, s"invalid address $address")
+    //    throw ErrorException(ERR_INVALID_ARGUMENT, s"invalid address $address")
   }
 
   def validate = {
     case req: XCancelOrderReq ⇒
       verifyAddressValid(req.owner)
       req
+
     case req: XSubmitSimpleOrderReq ⇒
       req.order match {
         case None =>
@@ -51,7 +52,8 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
           req.copy(order = Some(order)) //todo:需要覆盖token地址
       }
       req
-    case req: XRecoverOrderReq => req
+
+    case req: XRecover.RecoverOrderReq => req
     case req: XGetBalanceAndAllowancesReq ⇒ req
     case req: XAddressBalanceUpdated ⇒ req
     case req: XAddressAllowanceUpdated ⇒ req
