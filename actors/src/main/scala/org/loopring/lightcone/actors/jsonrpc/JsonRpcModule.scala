@@ -104,18 +104,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                     Serialization.read[JsonRpcResponse](resp.json)
                   )
                 case Failure(e) ⇒
-                  complete(
-                    JsonRpcResponse(
-                      id = jsonReq.id,
-                      jsonrpc = jsonReq.jsonrpc,
-                      error = Some(
-                        JsonRpcError(
-                          code = -32603,
-                          message = Some(e.getMessage)
-                        )
-                      )
-                    )
-                  )
+                  replyWithError(-32603,Some(e.getMessage))
               }
 
             }
