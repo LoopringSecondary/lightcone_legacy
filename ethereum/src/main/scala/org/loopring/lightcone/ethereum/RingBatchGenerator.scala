@@ -20,7 +20,6 @@ import org.web3j.crypto._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress
 import com.google.protobuf.ByteString
-import org.web3j.tx.
 
 import org.loopring.lightcone.proto._
 
@@ -390,18 +389,4 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
 
     xRingBatch.copy(hash = hash, sig = sig)
   }
-
-  def getSignedTxData(
-      inputData: String,
-      nonce: Int,
-      gasLimit: BigInt,
-      gasPrice: BigInt
-    )(
-      implicit context: XRingBatchContext
-    ): String = {
-
-
-
-  }
-
 }
