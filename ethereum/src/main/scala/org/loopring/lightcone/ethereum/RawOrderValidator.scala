@@ -25,16 +25,11 @@ import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.proto.XErrorCode._
 
 trait RawOrderValidator {
-
-  def setupEmptyFieldsWithDefaults(
-      order: XRawOrder,
-      lrcAddress: String
-    ): XRawOrder
   def calculateOrderHash(order: XRawOrder): String
   def validate(order: XRawOrder): Either[XErrorCode, XRawOrder]
 }
 
-class RawOrderValidatorImpl extends RawOrderValidator {
+object RawOrderValidatorImpl extends RawOrderValidator {
   import ethereum._
 
   // TODO(Kongliang): the following constant fields should be configurable somewhere.
@@ -47,67 +42,21 @@ class RawOrderValidatorImpl extends RawOrderValidator {
   val Eip712DomainHash =
     "0xaea25658c273c666156bd427f83a666135fcde6887a6c25fc1cd1562bc4f3f34"
 
-  def setupEmptyFieldsWithDefaults(
-      order: XRawOrder,
-      lrcAddress: String
-    ) = {
-    val defaultAddr = "0x0"
-    val fullZeroAddr = "0x" + "0" * 40
-    val defaultUint256 = ByteString.copyFromUtf8("0")
-    val zeroBytes32Str = "0x" + "0" * 64
-
-    val addressGetOrDefault = (addr: String) =>
-      if (isValidAddress(addr)) addr else defaultAddr
-
-    val uint256GetOrDefault = (uint256Bs: ByteString) => {
-      if (uint256Bs.isEmpty) defaultUint256 else uint256Bs
-    }
-
-    var params = order.params.getOrElse(new XRawOrder.Params)
-    var feeParams = order.feeParams.getOrElse(new XRawOrder.FeeParams)
-    var erc1400Params =
-      order.erc1400Params.getOrElse(new XRawOrder.ERC1400Params)
-
-    params = params.copy(
-      dualAuthAddr = addressGetOrDefault(params.dualAuthAddr),
-      broker = addressGetOrDefault(params.broker),
-      orderInterceptor = addressGetOrDefault(params.orderInterceptor),
-      wallet = addressGetOrDefault(params.wallet)
-    )
-
-    feeParams = feeParams.copy(
-      amountFee = uint256GetOrDefault(feeParams.amountFee),
-      tokenRecipient = addressGetOrDefault(feeParams.tokenRecipient)
-    )
-
-    if (feeParams.tokenFee.length == 0
-        || feeParams.tokenFee == defaultAddr
-        || feeParams.tokenFee == fullZeroAddr) {
-      feeParams = feeParams.copy(tokenFee = lrcAddress)
-    }
-
-    order.copy(
-      params = Option(params),
-      feeParams = Option(feeParams),
-      erc1400Params = Option(erc1400Params)
-    )
-  }
-
   def calculateOrderHash(order: XRawOrder): String = {
     def strToHex(str: String) = str.getBytes.map("%02X" format _).mkString
 
     val bitstream = new Bitstream
-    val feeParams = order.feeParams.get
-    val optionalParams = order.params.get
-    val erc1400Params = order.erc1400Params.get
+    val feeParams = order.getFeeParams
+    val optionalParams = order.getParams
+    val erc1400Params = order.getErc1400Params
 
     val transferDataBytes = erc1400Params.transferDataS.getBytes
     val transferDataHash = Numeric.toHexString(Hash.sha3(transferDataBytes))
 
     bitstream.addBytes32(Eip712OrderSchemaHash, true)
-    bitstream.addUint(order.amountS.toStringUtf8, true)
-    bitstream.addUint(order.amountB.toStringUtf8, true)
-    bitstream.addUint(feeParams.amountFee.toStringUtf8, true)
+    bitstream.addUint(order.amountS, true)
+    bitstream.addUint(order.amountB, true)
+    bitstream.addUint(feeParams.amountFee, true)
     bitstream.addUint(BigInt(order.validSince), true)
     bitstream.addUint(BigInt(optionalParams.validUntil), true)
     bitstream.addAddress(order.owner, 32, true)
@@ -154,8 +103,8 @@ class RawOrderValidatorImpl extends RawOrderValidator {
       isValidAddress(order.owner) -> ERR_ORDER_VALIDATION_INVALID_OWNER,
       isValidAddress(order.tokenS) -> ERR_ORDER_VALIDATION_INVALID_TOKENS,
       isValidAddress(order.tokenB) -> ERR_ORDER_VALIDATION_INVALID_TOKENB,
-      (BigInt(order.amountS.toStringUtf8, 16) > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
-      (BigInt(order.amountB.toStringUtf8, 16) > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
+      (order.amountS > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
+      (order.amountB > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
       (BigInt(order.feeParams.get.waiveFeePercentage) <= FeePercentageBase)
         -> ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE,
       (BigInt(order.feeParams.get.waiveFeePercentage) >= -FeePercentageBase)

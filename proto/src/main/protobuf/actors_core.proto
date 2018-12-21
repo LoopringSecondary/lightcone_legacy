@@ -143,11 +143,11 @@ message UpdateFilledAmountRes {
     XErrorCode error = 1;
 }
 
-message GetFilledAmountReq {
+message XGetFilledAmountReq {
     repeated string order_ids = 1;
 }
 
-message GetFilledAmountRes {
+message XGetFilledAmountRes {
     map<string, bytes> filled_amount_s_map = 1;
 }
 

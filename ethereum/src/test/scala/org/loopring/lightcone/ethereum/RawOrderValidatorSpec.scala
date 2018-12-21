@@ -45,14 +45,14 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
     val order1Owner = "0xFDa769A839DA57D88320E683cD20075f8f525a57"
     val order2Owner = "0xf5B3ab72F6E80d79202dBD37400447c11618f21f"
 
-    val validator: RawOrderValidator = new RawOrderValidatorImpl
-    val context: XRingBatchContext = (new XRingBatchContext)
+    val validator: RawOrderValidator = RawOrderValidatorImpl
+    implicit val context: XRingBatchContext = XRingBatchContext()
       .withMiner(miner)
       .withMinerPrivateKey(minerPrivKey)
       .withFeeRecipient(minerFeeRecipient)
       .withTransactionOrigin(transactionOrigin)
       .withLrcAddress(lrcAddress)
-    val generator: RingBatchGenerator = new RingBatchGeneratorImpl(context)
+    val generator: RingBatchGenerator = RingBatchGeneratorImpl
 
     val mockOrderSig1 =
       "0x01411bdfe8ac29b828887bc17e926e1938585eef3edd535d53efad605726663fd124e737c1837300ff9afca20ba60f19d19daa98fe357b1719ebcf765943e99ca46047"
@@ -86,16 +86,13 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withParams(params1)
       .withFeeParams(feeParams1)
 
-    val order1WithDefault =
-      validator.setupEmptyFieldsWithDefaults(order1, lrcAddress)
-
-    val hash = validator.calculateOrderHash(order1WithDefault)
+    val hash = validator.calculateOrderHash(order1)
     println(s"order1 hash:$hash")
     val hash1Expected =
       "0xa078d272fe15177fec76268c3896319e8736853583b67d5bf746001b987f43d0"
     // assert(hash == hash1Expected, "hash1 not as expected ")
-
-    val validateResult = validator.validate(order1WithDefault)
+    val order1WithHash = order1.copy(hash = hash)
+    val validateResult = validator.validate(order1WithHash)
 
     val params2 = (new XRawOrder.Params)
       .withDualAuthAddr(dualAuthAddr)
@@ -122,17 +119,15 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withParams(params2)
       .withFeeParams(feeParams2)
 
-    val order2WithDefault =
-      validator.setupEmptyFieldsWithDefaults(order2, lrcAddress)
-
-    val hash2 = validator.calculateOrderHash(order2WithDefault)
+    val hash2 = validator.calculateOrderHash(order2)
     println(s"order2 hash:$hash2")
 
     val hash2Expected =
       "0x65d3a688a5f0d0dad84bee5d5ec8dbc540748dd2f95583ecdfcfe3cada333dbe"
     // assert(hash2 == hash2Expected, "hash2 not as expected ")
 
-    val validateResult2 = validator.validate(order2WithDefault)
+    val order2WithHash = order2.copy()
+    val validateResult2 = validator.validate(order2WithHash)
     println(s"validateResult: $validateResult2")
 
     val xRingBatch =
