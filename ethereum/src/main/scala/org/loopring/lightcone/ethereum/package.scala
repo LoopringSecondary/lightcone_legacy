@@ -40,12 +40,27 @@ package object ethereum {
       hash: Array[Byte],
       r: Array[Byte],
       s: Array[Byte],
-      v: Int,
+      v: Byte,
       addr: Address
     ): Boolean = {
-    val signatureDataV = new Sign.SignatureData(v.toByte, r, s)
+    val signatureDataV = new Sign.SignatureData(v, r, s)
     val key = Sign.signedMessageToKey(hash, signatureDataV)
     addr.equals(Address(Keys.getAddress(key)))
+  }
+
+  def verifySignature(
+      hash: Array[Byte],
+      sig: Array[Byte],
+      addr: Address
+    ): Boolean = {
+    if (sig.length == 65) {
+      val r = sig.toSeq.slice(0, 32).toArray
+      val s = sig.toSeq.slice(32, 64).toArray
+      val v = sig(65)
+      verifySignature(hash, r, s, v, addr)
+    } else {
+      false
+    }
   }
 
   def getSignedTxData(
@@ -54,7 +69,7 @@ package object ethereum {
       gasLimit: BigInt,
       gasPrice: BigInt,
       to: String,
-      value:BigInt= BigInt(0),
+      value: BigInt = BigInt(0),
       chainId: Int = 1
     )(
       implicit credentials: Credentials
