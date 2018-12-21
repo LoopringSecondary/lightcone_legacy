@@ -35,16 +35,14 @@ import scala.concurrent._
 object OrderbookManagerActor extends ShardedByMarket {
   val name = "orderbook_manager"
 
-  def startShardRegion(
-    )(
-      implicit system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      actors: Lookup[ActorRef],
-      tokenMetadataManager: TokenMetadataManager
-    ): ActorRef = {
+  def startShardRegion()(
+    implicit system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    tokenMetadataManager: TokenMetadataManager): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("instances-per-market")
@@ -65,32 +63,29 @@ object OrderbookManagerActor extends ShardedByMarket {
       typeName = name,
       entityProps = Props(new OrderbookManagerActor(markets)),
       settings = ClusterShardingSettings(system).withRole(name),
-      messageExtractor = messageExtractor
-    )
+      messageExtractor = messageExtractor)
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
   val extractMarketId: PartialFunction[Any, XMarketId] = {
-    case XGetOrderbook(_, _, Some(marketId))          => marketId
-    case XOrderbookUpdate(_, _, Some(marketId))       => marketId
+    case XGetOrderbook(_, _, Some(marketId)) => marketId
+    case XOrderbookUpdate(_, _, Some(marketId)) => marketId
     case XUpdateLatestTradingPrice(_, Some(marketId)) => marketId
   }
 }
 
 class OrderbookManagerActor(
-    markets: Map[String, XMarketId],
-    extractEntityId: String => String = OrderbookManagerActor.extractEntityId
-  )(
+  markets: Map[String, XMarketId],
+  extractEntityId: String => String = OrderbookManagerActor.extractEntityId)(
     implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val tokenMetadataManager: TokenMetadataManager)
-    extends ActorWithPathBasedConfig(
-      OrderbookManagerActor.name,
-      extractEntityId
-    ) {
+  extends ActorWithPathBasedConfig(
+    OrderbookManagerActor.name,
+    extractEntityId) {
   val marketId = markets(entityId)
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
 
@@ -100,17 +95,11 @@ class OrderbookManagerActor(
     levels = selfConfig.getInt("levels"),
     priceDecimals = selfConfig.getInt("price-decimals"),
     precisionForAmount = selfConfig.getInt("precision-for-amount"),
-    precisionForTotal = selfConfig.getInt("precision-for-total")
-  )
+    precisionForTotal = selfConfig.getInt("precision-for-total"))
 
   val manager: OrderbookManager = new OrderbookManagerImpl(xorderbookConfig)
-  private var latestPrice: Option[Double] = None
 
   def receive: Receive = LoggingReceive {
-
-    case XUpdateLatestTradingPrice(price, _) =>
-      log.info(s"receive XUpdateLatestTradingPrice ${price}")
-      latestPrice = Some(price)
 
     case req: XOrderbookUpdate =>
       log.info(s"receive XOrderbookUpdate ${req}")
@@ -119,12 +108,11 @@ class OrderbookManagerActor(
     case XGetOrderbook(level, size, Some(marketId)) =>
       Future {
         if (OrderbookManagerActor.getEntityId(marketId) == marketIdHashedValue)
-          manager.getOrderbook(level, size, latestPrice)
+          manager.getOrderbook(level, size, None)
         else
           throw ErrorException(
             XErrorCode.ERR_INVALID_ARGUMENT,
-            s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}"
-          )
+            s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}")
       } sendTo sender
     case msg => log.info(s"not supported msg:${msg}, ${marketId}")
 
