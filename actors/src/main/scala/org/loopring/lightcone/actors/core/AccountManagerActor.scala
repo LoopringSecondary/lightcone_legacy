@@ -122,18 +122,15 @@ class AccountManagerActor(
         Future.successful(Unit)
 
       // Update the order's _outstanding field.
-      orderHistoryRes <- (ethereumQueryActor ? GetFilledAmountReq(
+      getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmountReq(
         Seq(order.id)
       )).mapAs[GetFilledAmountRes]
 
       _ = log.info(s"order history: orderHistoryRes")
 
       _order = order.withFilledAmountS(
-        orderHistoryRes.filledAmountSMap(order.id)
+        getFilledAmountRes.filledAmountSMap(order.id)
       )
-      _ = log.debug(s"submitting order to AccountManager: ${_order}")
-      _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
-
       _ = log.info(s"submitting order to AccountManager: ${_order}")
       successful = manager.submitOrder(_order)
       _ = log.info(s"successful: $successful")
@@ -185,7 +182,10 @@ class AccountManagerActor(
           address,
           Seq(token)
         )).mapAs[XGetBalanceAndAllowancesRes]
-        tm = new AccountTokenManagerImpl(token, 1000)
+        tm = new AccountTokenManagerImpl(
+          token,
+          config.getInt("account_manager.max_order_num")
+        )
         ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
         _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
         tokenManager = manager.addTokenManager(tm)
@@ -198,25 +198,29 @@ class AccountManagerActor(
   private def getTokenManagers(
       tokens: Seq[String]
     ): Future[Seq[AccountTokenManager]] = {
-    val tokensNoManager =
+    val tokensWithoutMaster =
       tokens.filterNot(token ⇒ manager.hasTokenManager(token))
     for {
-      res <- if (tokensNoManager.nonEmpty) {
+      res <- if (tokensWithoutMaster.nonEmpty) {
         (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
           address,
-          tokensNoManager
+          tokensWithoutMaster
         )).mapAs[XGetBalanceAndAllowancesRes]
       } else {
         Future.successful(XGetBalanceAndAllowancesRes())
       }
-      tms = tokensNoManager.map(
-        token ⇒ new AccountTokenManagerImpl(token, 1000)
+      tms = tokensWithoutMaster.map(
+        token ⇒
+          new AccountTokenManagerImpl(
+            token,
+            config.getInt("account_manager.max_order_num")
+          )
       )
       _ = tms.foreach(tm ⇒ {
         val ba = res.balanceAndAllowanceMap(tm.token)
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
+        manager.addTokenManager(tm)
       })
-      _ = tms.foreach(tm ⇒ manager.addTokenManager(tm))
       tokenMangers ← Future.sequence(tokens.map(getTokenManager))
     } yield tokenMangers
   }

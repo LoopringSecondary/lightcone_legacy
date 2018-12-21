@@ -27,7 +27,7 @@ object EthereumQueryMessageValidator {
 }
 
 final class EthereumQueryMessageValidator()(implicit val config: Config)
-  extends MessageValidator {
+    extends MessageValidator {
 
   // TODO(yadong): 我们不仅要判断Jan地址是不是合法的，害怕把地址改写成规范的模式
   // This method should throw exception for an invalid address
@@ -35,9 +35,11 @@ final class EthereumQueryMessageValidator()(implicit val config: Config)
     try {
       Address(address).toString
     } catch {
-      case _:Throwable ⇒
-        throw ErrorException(XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-          message = s"invalid ethereum address:$address")
+      case _: Throwable ⇒
+        throw ErrorException(
+          XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+          message = s"invalid ethereum address:$address"
+        )
     }
 
   // Throws exception if validation fails.

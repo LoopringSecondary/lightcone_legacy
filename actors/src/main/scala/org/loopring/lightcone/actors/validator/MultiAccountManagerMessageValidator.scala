@@ -40,9 +40,11 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
     try {
       Address(address).toString
     } catch {
-      case _:Throwable ⇒
-        throw ErrorException(XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-          message = s"invalid ethereum address:$address")
+      case _: Throwable ⇒
+        throw ErrorException(
+          XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+          message = s"invalid ethereum address:$address"
+        )
     }
 
   def validate = {
@@ -51,34 +53,39 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
       req.copy(owner = normalizeAddress(req.owner))
 
     case req: XSubmitSimpleOrderReq ⇒
-      req.copy(owner = normalizeAddress(req.owner))
-      req
-    case req: XSubmitSimpleOrderReq ⇒
       req.order match {
         case None =>
-          throw ErrorException(XErrorCode.ERR_INVALID_ARGUMENT, s"bad request:${req}")
+          throw ErrorException(
+            XErrorCode.ERR_INVALID_ARGUMENT,
+            s"bad request:${req}"
+          )
         case Some(order) =>
-          val marketIdInternal = supportedMarkets.assertmarketIdIsValid(
+          supportedMarkets.assertmarketIdIsValid(
             XMarketId(order.tokenS, order.tokenB)
           )
-          req.copy(order = Some(order)) //todo:需要覆盖token地址
+          req.copy(
+            order = Some(
+              order.copy(
+                tokenB = normalizeAddress(order.tokenB),
+                tokenS = normalizeAddress(order.tokenS),
+                tokenFee = normalizeAddress(order.tokenFee)
+              )
+            ),
+            owner = normalizeAddress(req.owner)
+          )
       }
-      req
     case req: XRecoverOrderReq => req
     case req: XGetBalanceAndAllowancesReq ⇒
-      req
-        .copy(address = normalizeAddress(req.address))
-        .copy(tokens = req.tokens.map(normalizeAddress))
+      req.copy(
+        address = normalizeAddress(req.address),
+        tokens = req.tokens.map(normalizeAddress)
+      )
 
     case req: XAddressBalanceUpdated ⇒
-      req
-        .copy(address = req.address)
-        .copy(token = normalizeAddress(req.token))
+      req.copy(address = req.address, token = normalizeAddress(req.token))
 
     case req: XAddressAllowanceUpdated ⇒
-      req
-        .copy(address = req.address)
-        .copy(token = normalizeAddress(req.token))
+      req.copy(address = req.address, token = normalizeAddress(req.token))
 
   }
 }

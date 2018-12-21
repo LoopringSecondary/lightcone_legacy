@@ -129,7 +129,7 @@ private[ethereum] class HttpConnector(
     ): Future[String] = {
     val jsonRpcList = methodList.map { x =>
       JsonRpcReqWrapped(
-        id = if (x.id >= 0) x.id else Random.nextInt(100),
+        id = if (x.id >= 0) x.id else Random.nextInt(10000),
         jsonrpc = "2.0",
         method = x.method,
         params = x.params
