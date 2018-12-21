@@ -53,8 +53,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
       typeName = name,
       entityProps = Props(new MultiAccountManagerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 
@@ -121,7 +120,7 @@ class MultiAccountManagerActor(
       context.become(recover)
       log.debug(s"actor recover started: ${self.path}")
       actors.get(OrderRecoverCoordinator.name) !
-        XRecoverReq(addressShardingEntities = Seq(entityName))
+        XRecoverReq(addressShardingEntities = Seq(entityId))
     }
   }
 
@@ -130,14 +129,14 @@ class MultiAccountManagerActor(
     case req: XRecoverOrderReq => handleRequest(req)
 
     case XRecoverEnded(timeout) =>
-      s"multi-account manager ${entityName} recover completed (timeout=${timeout})"
+      s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
       context.become(receive)
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
       sender ! XError(
         ERR_REJECTED_DURING_RECOVER,
-        s"account manager ${entityName} is being recovered"
+        s"account manager ${entityId} is being recovered"
       )
   }
 

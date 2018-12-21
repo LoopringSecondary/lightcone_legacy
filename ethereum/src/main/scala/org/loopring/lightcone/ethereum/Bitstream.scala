@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.ethereum
 
 import org.web3j.utils.Numeric
 
@@ -22,23 +22,22 @@ class Bitstream() {
   private val ADDRESS_LENGTH = 20
   private var data: String = ""
 
-  def getData = {
-    if (data.length.equals(0)) "0x0"
-    else "0x" + data
-  }
+  def getData = if (data.length == 0) "0x0" else "0x" + data
 
   def getBytes = Numeric.hexStringToByteArray(data)
-  def length() = data.length / 2
+  def length = data.length / 2
 
-  def addAddress(
-      x: String,
-      forceAppend: Boolean = false
-    ) = {
+  def addAddress(x: String, forceAppend: Boolean = false): Int =
+    addAddress(x, ADDRESS_LENGTH, forceAppend)
+
+
+  def addAddress(x: String, numBytes: Int, forceAppend: Boolean) = {
     val _x = if (x.length == 0) "0" else x
+
     insert(
       Numeric.toHexStringNoPrefixZeroPadded(
         Numeric.toBigInt(_x),
-        ADDRESS_LENGTH * 2
+        numBytes * 2
       ),
       forceAppend
     )
@@ -50,16 +49,8 @@ class Bitstream() {
     ) =
     addBigInt(num, 2, forceAppend)
 
-  def addUint16(
-      num: Int,
-      forceAppend: Boolean
-    ) =
-    addBigInt(BigInt(num), 2, forceAppend)
 
-  def addUint32(
-      num: BigInt,
-      forceAppend: Boolean = true
-    ) =
+  def addUint32(num: BigInt, forceAppend: Boolean = true) =
     addBigInt(num, 4, forceAppend)
 
   def addUint(
@@ -68,19 +59,8 @@ class Bitstream() {
     ) =
     addBigInt(num, 32, forceAppend)
 
-  def addUint(
-      numStr: String,
-      forceAppend: Boolean
-    ) = {
-    val _numStr = if (numStr.length > 0) numStr else "0"
-    addBigInt(BigInt(Numeric.cleanHexPrefix(_numStr), 16), 32, forceAppend)
-  }
 
-  def addNumber(
-      num: BigInt,
-      numBytes: Int,
-      forceAppend: Boolean = true
-    ) =
+  def addNumber(num: BigInt, numBytes: Int, forceAppend: Boolean = true) =
     addBigInt(num, numBytes, forceAppend)
 
   def addBoolean(
@@ -89,37 +69,36 @@ class Bitstream() {
     ) =
     addBigInt(if (b) 1 else 0, 1, forceAppend)
 
-  def addHex(
-      str: String,
-      forceAppend: Boolean = true
-    ) =
+  def addBytes32(str: String, forceAppend: Boolean = true) {
+    val strWithoutPrefix = Numeric.cleanHexPrefix(str)
+    if (strWithoutPrefix.length > 64) {
+      throw new IllegalArgumentException(s"invalid bytes32 str: too long, str:$str")
+    }
+    val strPadded = strWithoutPrefix + "0" * (64 - strWithoutPrefix.length)
+    insert(strPadded, forceAppend)
+  }
+
+  def addHex(str: String, forceAppend: Boolean = true) =
     insert(Numeric.cleanHexPrefix(str), forceAppend)
 
-  def addRawBytes(
-      str: String,
-      forceAppend: Boolean = true
-    ) =
-    insert(Numeric.cleanHexPrefix(str), forceAppend)
+  def addRawBytes(bytes: Array[Byte], forceAppend: Boolean = true) =
+    insert(Numeric.cleanHexPrefix(Numeric.toHexString(bytes)), forceAppend)
 
   // TODO(kongliang): 负数问题
   private def addBigInt(
-      num: BigInt,
-      numBytes: Int,
-      forceAppend: Boolean = true
-    ) =
-    insert(
-      Numeric.toHexStringNoPrefixZeroPadded(
-        num.bigInteger,
-        numBytes * 2
-      ),
-      forceAppend
-    )
+    num: BigInt,
+    numBytes: Int,
+    forceAppend: Boolean = true
+  ) = insert(
+    Numeric.toHexStringNoPrefixZeroPadded(
+      num.bigInteger,
+      numBytes * 2
+    ),
+    forceAppend
+  )
 
-  private def insert(
-      x: String,
-      forceAppend: Boolean
-    ): Int = {
-    var offset = length()
+  private def insert(x: String, forceAppend: Boolean): Int = {
+    var offset = length
 
     if (!forceAppend) {
       // Check if the data we're inserting is already available in the bitstream.

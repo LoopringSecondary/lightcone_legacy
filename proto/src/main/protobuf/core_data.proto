@@ -106,9 +106,10 @@ enum XTokenStandard {
 }
 
 enum XSigningAlgorithm {
-    ALGO_NONE       = 0;
-    ALGO_ETHEREUM   = 1;
-    ALGO_EIP712     = 2;
+    ALGO_ETHEREUM   = 0;
+    ALGO_EIP712     = 1;
+    
+    ALGO_NONE       = 255;
 }
 
 

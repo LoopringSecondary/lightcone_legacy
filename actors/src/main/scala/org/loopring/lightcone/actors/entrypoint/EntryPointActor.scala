@@ -52,7 +52,7 @@ class EntryPointActor(
   }
 
   def findDestination(msg: Any): Option[String] = msg match {
-    case _ @(XSubmitOrderReq | XCancelOrderReq) =>
+    case _: XSubmitOrderReq | _: XCancelOrderReq =>
       Some(OrderHandlerActor.name)
 
     case _ @(XGetBalanceAndAllowancesReq | XGetBalanceReq | XGetAllowanceReq |
@@ -62,7 +62,7 @@ class EntryPointActor(
     case _ @(XJsonRpcReq | XRpcReqWithHeight) ⇒
       Some(EthereumAccessActor.name)
 
-    case req: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
+    case _: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
 
     case _: XGetOrdersForUserReq | _: XGetTradesReq =>
       Some(DatabaseQueryMessageValidator.name)

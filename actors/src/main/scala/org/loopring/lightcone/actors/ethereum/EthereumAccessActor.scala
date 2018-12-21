@@ -46,14 +46,12 @@ object EthereumAccessActor extends ShardedEvenly {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
-    entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new EthereumAccessActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
