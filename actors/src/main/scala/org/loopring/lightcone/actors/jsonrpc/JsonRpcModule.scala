@@ -45,6 +45,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
   val JSON_RPC_VER = "2.0"
 
+  //todo：可能没生效，导致每次异常都导致server挂掉，需要再处理下
   implicit val myExceptionHandler = ExceptionHandler {
     case e: ErrorException =>
       replyWithError(e.error.code.value, Some(e.error.message))("", None)
