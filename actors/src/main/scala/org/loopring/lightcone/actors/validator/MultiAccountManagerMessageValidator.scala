@@ -49,7 +49,6 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
 
   def validate = {
     case req: XCancelOrderReq ⇒
-      verifyAddressValid(req.owner)
       req.copy(owner = normalizeAddress(req.owner))
 
     case req: XSubmitSimpleOrderReq ⇒
@@ -74,7 +73,7 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
             owner = normalizeAddress(req.owner)
           )
       }
-    case req: XRecoverOrderReq => req
+    case req: XRecover.RecoverOrderReq => req
     case req: XGetBalanceAndAllowancesReq ⇒
       req.copy(
         address = normalizeAddress(req.address),
@@ -82,10 +81,16 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
       )
 
     case req: XAddressBalanceUpdated ⇒
-      req.copy(address = req.address, token = normalizeAddress(req.token))
+      req.copy(
+        address = normalizeAddress(req.address),
+        token = normalizeAddress(req.token)
+      )
 
     case req: XAddressAllowanceUpdated ⇒
-      req.copy(address = req.address, token = normalizeAddress(req.token))
+      req.copy(
+        address = normalizeAddress(req.address),
+        token = normalizeAddress(req.token)
+      )
 
   }
 }
