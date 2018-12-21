@@ -37,7 +37,13 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
 //    throw ErrorException(ERR_INVALID_ARGUMENT, s"invalid address $address")
   }
   private def normalizeAddress(address: String): String =
-    Address(address).toString
+    try {
+      Address(address).toString
+    } catch {
+      case _:Throwable ⇒
+        throw ErrorException(XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+          message = s"invalid ethereum address:$address")
+    }
 
   def validate = {
     case req: XCancelOrderReq ⇒
