@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.base
+package org.loopring.lightcone.actors.support
 
-import akka.cluster.sharding._
-import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
+import org.loopring.lightcone.actors.core.DatabaseQueryActor
+import org.loopring.lightcone.actors.validator.{
+  DatabaseQueryMessageValidator,
+  MessageValidationActor
+}
 
-trait ShardedEvenly extends Sharded {
-  protected var entitiesPerShard: Int = 1
+trait DatabaseQueryMessageSupport extends DatabaseModuleSupport {
+  my: CommonSpec =>
 
-  def getEntityId(message: Any): String =
-    Math.abs(message.hashCode % numOfShards * entitiesPerShard).toString
-
-  protected val messageExtractor =
-    new HashCodeMessageExtractor(numOfShards) {
-      override def entityId(message: Any) = {
-        val eid = getEntityId(message)
-        s"${name}_${eid}"
-      }
-    }
+  actors.add(
+    DatabaseQueryMessageValidator.name,
+    MessageValidationActor(
+      new DatabaseQueryMessageValidator(),
+      DatabaseQueryActor.name,
+      DatabaseQueryMessageValidator.name
+    )
+  )
 }

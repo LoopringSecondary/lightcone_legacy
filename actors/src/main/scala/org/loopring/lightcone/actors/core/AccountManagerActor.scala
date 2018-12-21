@@ -64,6 +64,11 @@ class AccountManagerActor(
 
   def receive: Receive = LoggingReceive {
 
+    case XRecover.RecoverOrderReq(Some(xraworder)) =>
+      submitOrder(xraworder).map { _ =>
+        XRecover.RecoverOrderRes(xraworder.id, true)
+      }.sendTo(sender)
+
     case XGetBalanceAndAllowancesReq(addr, tokens) =>
       assert(addr == address)
       (for {
@@ -81,11 +86,6 @@ class AccountManagerActor(
       } yield {
         XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
-
-    case XRecoverOrderReq(Some(xraworder)) =>
-      submitOrder(xraworder).map { _ =>
-        XRecoverOrderRes(xraworder.id, true)
-      }.sendTo(sender)
 
     case XSubmitSimpleOrderReq(_, Some(xorder)) =>
       submitOrder(xorder).sendTo(sender)

@@ -43,8 +43,8 @@ object OrderRecoverActor extends ShardedEvenly {
   override protected val messageExtractor =
     new HashCodeMessageExtractor(numOfShards) {
       override def entityId(message: Any) = message match {
-        case req: XRecoverReq =>
-          name + "_batch_" + req.batchId
+        case req: XRecover.Batch =>
+          name + "_batch" + req.batchId
         case e: Any =>
           throw new Exception(s"$e not expected by OrderRecoverActor")
       }
@@ -77,17 +77,74 @@ class OrderRecoverActor(
     val actors: Lookup[ActorRef])
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
-  def mama: ActorRef = actors.get(MultiAccountManagerActor.name)
+  val batchSize = selfConfig.getInt("batch-size")
+  var batch: XRecover.Batch = _
+  var numOrders = 0L
+  def coordinator = actors.get(OrderRecoverCoordinator.name)
+  def mama = actors.get(MultiAccountManagerActor.name)
 
   def receive: Receive = {
-    case req: XRecoverReq =>
+    case req: XRecover.Batch =>
       log.info(s"started order recover - $req")
+      batch = req
+
+      sender ! batch // echo back to coordinator
+      self ! XRecover.RetrieveOrders(0L)
+
       context.become(recovering)
   }
 
   def recovering: Receive = {
+    case XRecover.CancelFor(requester) =>
+      batch =
+        batch.copy(requestMap = batch.requestMap.filterNot(_._1 == requester))
 
-    case _ =>
+      sender ! batch // echo back to coordinator
+
+    case XRecover.RetrieveOrders(lastOrderSeqId) =>
+      for {
+        orders <- retrieveOrders(batchSize, lastOrderSeqId)
+        lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
+        reqs = orders.map { order =>
+          XRecover.RecoverOrderReq(Some(order))
+        }
+        _ = log.info(
+          s"--> batch#${batch.batchId} recovering ${orders.size} orders (total=${numOrders})..."
+        )
+        _ <- Future.sequence(reqs.map(mama ? _))
+      } yield {
+        numOrders += orders.size
+
+        lastOrderSeqIdOpt match {
+          case Some(lastOrderSeqId) =>
+            self ! XRecover.RetrieveOrders(lastOrderSeqId)
+
+          case None =>
+            coordinator ! XRecover.Finished()
+
+            batch.requestMap.keys.toSeq
+              .map(resolveActorRef)
+              .foreach { actor =>
+                actor ! XRecover.Finished()
+              }
+        }
+      }
   }
+
+  def resolveActorRef(actorRefStr: String): ActorRef = {
+    context.system
+      .asInstanceOf[ExtendedActorSystem]
+      .provider
+      .resolveActorRef(actorRefStr)
+  }
+
+  // This method returns a list of orders to recover, based on the current batch
+  // parameters, the batch size, and the last order sequence id.
+  // The last order in the returned list should be the most up-to-date one.
+  // TODO(yongfeng): Implement this
+  def retrieveOrders(
+      batchSize: Int,
+      lastOrderSeqId: Long
+    ): Future[Seq[XRawOrder]] = ???
 
 }
