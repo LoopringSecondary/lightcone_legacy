@@ -34,7 +34,7 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
 
     // println(s"lrcAddress: $lrcAddress, $wethAddress, $miner, $minerPrivKey")
 
-    val xRingBatchContext = (new XRingBatchContext)
+    implicit val xRingBatchContext = new XRingBatchContext()
       .withFeeRecipient(miner)
       .withMiner(miner)
       .withTransactionOrigin(miner)
@@ -43,9 +43,9 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
 
     println(s"xRingBatchContext: $xRingBatchContext")
 
-    val ringBatchGenerator = new RingBatchGeneratorImpl(xRingBatchContext)
+    val ringBatchGenerator = RingBatchGeneratorImpl
 
-    val order1 = (new XRawOrder)
+    val order1 = new XRawOrder()
       .withVersion(0)
       .withOwner(order1Owner)
       .withTokenS(lrcAddress)
@@ -53,7 +53,7 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
       .withAmountS(ByteString.copyFromUtf8(1000e18.toLong.toHexString))
       .withAmountB(ByteString.copyFromUtf8(1e18.toLong.toHexString))
 
-    val order2 = (new XRawOrder)
+    val order2 = new XRawOrder()
       .withVersion(0)
       .withOwner(order2Owner)
       .withTokenS(wethAddress)

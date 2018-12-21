@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.ethereum
 
+import com.google.protobuf.ByteString
+
 package object ethereum {
   implicit def int2BigInt(x: Int): BigInt = BigInt(x)
 
@@ -24,5 +26,8 @@ package object ethereum {
     case p if p.startsWith("0x") ⇒ BigInt(p, 16)
     case _ ⇒ BigInt(x, 16)
   }
+
+  implicit def byteString2BigInt(bs: ByteString): BigInt =
+    string2BigInt(bs.toStringUtf8)
 
 }
