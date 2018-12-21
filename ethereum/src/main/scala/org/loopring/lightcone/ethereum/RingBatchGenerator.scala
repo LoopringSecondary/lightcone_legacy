@@ -182,6 +182,30 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
       tokenSpendables: Map[String, Int],
       context: XRingBatchContext
     ) {
+
+    def addField(
+        fieldValue: Any,
+        fieldType: String,
+        numBytes: Int,
+        forceAppend: Boolean
+      ): Unit = fieldType match {
+      case "uint8" | "uint16" | "uint32" =>
+        val _value = fieldValue.asInstanceOf[Int]
+        insertOffset(tables, data.addNumber(_value, numBytes, forceAppend))
+      case "uint" | "uint256" =>
+        val _bn = fieldValue.asInstanceOf[BigInt]
+        insertOffset(tables, data.addNumber(_bn, numBytes, forceAppend))
+      case "address" =>
+        val _addr = fieldValue.asInstanceOf[String]
+        insertOffset(tables, data.addAddress(_addr, numBytes, forceAppend))
+      case "bytes" =>
+        val _bs = fieldValue.asInstanceOf[String]
+        insertOffset(tables, data.addHex(createBytes(_bs), false))
+        addPadding(data)
+      case _ =>
+        throw new IllegalArgumentException(s"unsupported fieldType: $fieldType")
+    }
+
     val orderParams = order.getParams
     val orderFeeParams = order.getFeeParams
     val orderErc1400Params = order.getErc1400Params
@@ -203,35 +227,12 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     tables.addUint16(spendableSIndex)
     tables.addUint16(spendableFeeIndex)
 
-    if (isValidAddress(orderParams.dualAuthAddr)) {
-      insertOffset(
-        tables,
-        data.addAddress(orderParams.dualAuthAddr, false)
-      )
-    } else {
-      insertDefault(tables)
-    }
-
-    if (isValidAddress(orderParams.broker)) {
-      insertOffset(tables, data.addAddress(orderParams.broker, false))
-    } else {
-      insertDefault(tables)
-    }
-
-    if (isValidAddress(orderParams.orderInterceptor)) {
-      insertOffset(
-        tables,
-        data.addAddress(orderParams.orderInterceptor, false)
-      )
-    } else {
-      insertDefault(tables)
-    }
-
-    if (isValidAddress(orderParams.wallet)) {
-      insertOffset(tables, data.addAddress(orderParams.wallet, false))
-    } else {
-      insertDefault(tables)
-    }
+    Seq(
+      (orderParams.dualAuthAddr, "address", 20, false),
+      (orderParams.broker, "address", 20, false),
+      (orderParams.orderInterceptor, "address", 20, false),
+      (orderParams.wallet, "address", 20, false)
+    ).foreach((addField _).tupled)
 
     if (orderParams.validUntil > 0) {
       insertOffset(tables, data.addUint32(orderParams.validUntil, false))
