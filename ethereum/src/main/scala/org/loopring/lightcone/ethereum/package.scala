@@ -24,7 +24,6 @@ import org.web3j.crypto._
 import org.web3j.utils.Numeric
 import org.web3j.crypto
 
-
 package object ethereum {
   implicit def int2BigInt(x: Int): BigInt = BigInt(x)
 
@@ -42,11 +41,11 @@ package object ethereum {
       r: Array[Byte],
       s: Array[Byte],
       v: Int,
-      add:Address
+      addr: Address
     ): Boolean = {
     val signatureDataV = new Sign.SignatureData(v.toByte, r, s)
     val key = Sign.signedMessageToKey(hash, signatureDataV)
-    add.equals(Address(Keys.getAddress(key)))
+    addr.equals(Address(Keys.getAddress(key)))
   }
 
   def getSignedTxData(
@@ -55,8 +54,10 @@ package object ethereum {
       gasLimit: BigInt,
       gasPrice: BigInt,
       to: String,
-      chainId: Int = 1,
-      privateKey: String
+      value:BigInt= BigInt(0),
+      chainId: Int = 1
+    )(
+      implicit credentials: Credentials
     ): String = {
     val rawTransaction = RawTransaction
       .createTransaction(
@@ -64,12 +65,12 @@ package object ethereum {
         gasPrice.bigInteger,
         gasLimit.bigInteger,
         to,
-        BigInteger.ZERO,
+        value.bigInteger,
         inputData
       )
-    val credentials = Credentials.create(privateKey)
     Numeric.toHexString(
-      TransactionEncoder.signMessage(rawTransaction, chainId.toByte, credentials)
+      TransactionEncoder
+        .signMessage(rawTransaction, chainId.toByte, credentials)
     )
   }
 
