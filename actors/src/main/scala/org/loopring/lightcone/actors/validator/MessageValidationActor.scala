@@ -63,7 +63,8 @@ class MessageValidationActor(
             log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
             validatedMsg
 
-          case Some(validatedMsg) => validatedMsg
+          case Some(validatedMsg) =>
+            validatedMsg
 
           case _ =>
             throw ErrorException(

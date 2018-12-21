@@ -72,7 +72,7 @@ class AccountManagerActor(
     case XGetBalanceAndAllowancesReq(addr, tokens) =>
       assert(addr == address)
       (for {
-        managers <- Future.sequence(tokens.map(getTokenManager))
+        managers <- getTokenManagers(tokens)
         _ = assert(tokens.size == managers.size)
         balanceAndAllowanceMap = tokens.zip(managers).toMap.map {
           case (token, manager) =>
@@ -122,14 +122,15 @@ class AccountManagerActor(
         Future.successful(Unit)
 
       // Update the order's _outstanding field.
-      orderHistoryRes <- (ethereumQueryActor ? XGetOrderFilledAmountReq(
-        order.id
-      )).mapAs[XGetOrderFilledAmountRes]
+      getFilledAmountRes <- (ethereumQueryActor ? XGetFilledAmountReq(
+        Seq(order.id)
+      )).mapAs[XGetFilledAmountRes]
 
       _ = log.info(s"order history: orderHistoryRes")
 
-      _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
-
+      _order = order.withFilledAmountS(
+        getFilledAmountRes.filledAmountSMap(order.id)
+      )
       _ = log.info(s"submitting order to AccountManager: ${_order}")
       successful = manager.submitOrder(_order)
       _ = log.info(s"successful: $successful")
@@ -171,7 +172,6 @@ class AccountManagerActor(
       case _                                => ERR_INTERNAL_UNKNOWN
     }
 
-  //todo:需要处理同时请求的问题
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
     if (manager.hasTokenManager(token)) {
       Future.successful(manager.getTokenManager(token))
@@ -182,7 +182,10 @@ class AccountManagerActor(
           address,
           Seq(token)
         )).mapAs[XGetBalanceAndAllowancesRes]
-        tm = new AccountTokenManagerImpl(token, 1000)
+        tm = new AccountTokenManagerImpl(
+          token,
+          config.getInt("account_manager.max_order_num")
+        )
         ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
         _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
         tokenManager = manager.addTokenManager(tm)
@@ -190,6 +193,36 @@ class AccountManagerActor(
 
       } yield tokenManager
     }
+  }
+
+  private def getTokenManagers(
+      tokens: Seq[String]
+    ): Future[Seq[AccountTokenManager]] = {
+    val tokensWithoutMaster =
+      tokens.filterNot(token ⇒ manager.hasTokenManager(token))
+    for {
+      res <- if (tokensWithoutMaster.nonEmpty) {
+        (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
+          address,
+          tokensWithoutMaster
+        )).mapAs[XGetBalanceAndAllowancesRes]
+      } else {
+        Future.successful(XGetBalanceAndAllowancesRes())
+      }
+      tms = tokensWithoutMaster.map(
+        token ⇒
+          new AccountTokenManagerImpl(
+            token,
+            config.getInt("account_manager.max_order_num")
+          )
+      )
+      _ = tms.foreach(tm ⇒ {
+        val ba = res.balanceAndAllowanceMap(tm.token)
+        tm.setBalanceAndAllowance(ba.balance, ba.allowance)
+        manager.addTokenManager(tm)
+      })
+      tokenMangers ← Future.sequence(tokens.map(getTokenManager))
+    } yield tokenMangers
   }
 
   private def updateBalanceOrAllowance(
