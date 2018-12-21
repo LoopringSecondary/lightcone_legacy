@@ -22,8 +22,6 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.ethereum.data.Address
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
-import org.web3j.crypto
-
 
 package object ethereum {
   implicit def int2BigInt(x: Int): BigInt = BigInt(x)
@@ -42,7 +40,7 @@ package object ethereum {
       r: Array[Byte],
       s: Array[Byte],
       v: Int,
-      add:Address
+      add: Address
     ): Boolean = {
     val signatureDataV = new Sign.SignatureData(v.toByte, r, s)
     val key = Sign.signedMessageToKey(hash, signatureDataV)
@@ -69,7 +67,8 @@ package object ethereum {
       )
     val credentials = Credentials.create(privateKey)
     Numeric.toHexString(
-      TransactionEncoder.signMessage(rawTransaction, chainId.toByte, credentials)
+      TransactionEncoder
+        .signMessage(rawTransaction, chainId.toByte, credentials)
     )
   }
 
