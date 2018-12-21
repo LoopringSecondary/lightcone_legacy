@@ -17,17 +17,19 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.ethereum.RawOrderValidatorImpl
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
-
-object EthereumQueryMessageValidator {
-  val name = "ethereum_query_validator"
+import org.loopring.lightcone.proto.{
+  XCancelOrderReq,
+  XErrorCode,
+  XSubmitOrderReq
 }
 
-final class EthereumQueryMessageValidator()(implicit val config: Config)
+class OrderHandlerMessageValidator()(implicit val config: Config)
     extends MessageValidator {
+
+  val supportedMarkets = SupportedMarkets(config)
 
   private def normalizeAddress(address: String): String =
     try {
@@ -40,27 +42,23 @@ final class EthereumQueryMessageValidator()(implicit val config: Config)
         )
     }
 
-  // Throws exception if validation fails.
-  def validate = {
-    case req: XGetBalanceAndAllowancesReq =>
-      req.copy(
-        tokens = req.tokens.map(normalizeAddress),
-        address = normalizeAddress(req.address)
-      )
+  override def validate: PartialFunction[Any, Any] = {
 
-    case req: XGetBalanceReq =>
-      req.copy(
-        tokens = req.tokens.map(normalizeAddress),
-        address = normalizeAddress(req.address)
-      )
+    case _ @XSubmitOrderReq(Some(order)) ⇒
+      RawOrderValidatorImpl.validate(order) match {
+        case Left(errorCode) ⇒
+          throw ErrorException(
+            errorCode,
+            message = s"invalid order in XSubmitOrderReq:$order"
+          )
+        case Right(rawOrder) ⇒
+          rawOrder
+      }
 
-    case req: XGetAllowanceReq =>
+    case req @ XCancelOrderReq(_, owner, _, marketId) ⇒
+      supportedMarkets.assertmarketIdIsValid(marketId)
       req.copy(
-        tokens = req.tokens.map(normalizeAddress),
-        address = normalizeAddress(req.address)
+        owner = normalizeAddress(owner)
       )
-
-    case req: XGetFilledAmountReq =>
-      req
   }
 }

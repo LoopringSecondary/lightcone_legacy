@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.ethereum.RawOrderValidatorImpl
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
@@ -31,11 +32,6 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
 
   val supportedMarkets = SupportedMarkets(config)
 
-  // Throws exception if validation fails.
-  private def verifyAddressValid(address: String) = {
-    //todo: 测试暂时注释
-//    throw ErrorException(ERR_INVALID_ARGUMENT, s"invalid address $address")
-  }
   private def normalizeAddress(address: String): String =
     try {
       Address(address).toString
