@@ -127,6 +127,7 @@ message XRawOrder {
         XTokenStandard token_standard_s   = 9;
         XTokenStandard token_standard_b   = 10;
         XTokenStandard token_standard_fee = 11;
+        string dual_auth_addr_private_key = 12;
     }
 
     message FeeParams {
