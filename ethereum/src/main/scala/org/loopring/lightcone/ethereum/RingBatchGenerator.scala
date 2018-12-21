@@ -29,7 +29,7 @@ trait RingBatchGenerator {
 }
 
 class RingBatchGeneratorImpl(context: XRingBatchContext)
-  extends RingBatchGenerator {
+    extends RingBatchGenerator {
   import ethereum._
 
   val OrderVersion = 0
@@ -38,15 +38,17 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
   def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch = {
     val orderValidator = new RawOrderValidatorImpl
 
-    val ordersWithHash = orders.map(ordersOfRing ⇒
-      ordersOfRing.map(o ⇒ {
-        val orderWithDefaults = orderValidator.setupEmptyFieldsWithDefaults(o, context.lrcAddress)
-        val hash = orderValidator.calculateOrderHash(orderWithDefaults)
-        orderWithDefaults.copy(hash = hash)
-      }))
+    val ordersWithHash = orders.map(
+      ordersOfRing ⇒
+        ordersOfRing.map(o ⇒ {
+          val orderWithDefaults =
+            orderValidator.setupEmptyFieldsWithDefaults(o, context.lrcAddress)
+          val hash = orderValidator.calculateOrderHash(orderWithDefaults)
+          orderWithDefaults.copy(hash = hash)
+        })
+    )
 
-    val ordersDistinctedSeq = ordersWithHash
-      .flatten
+    val ordersDistinctedSeq = ordersWithHash.flatten
       .map(o ⇒ o.hash -> o)
       .toMap
       .map(_._2)
@@ -149,7 +151,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
 
     if (xRingBatch.sig != null && xRingBatch.sig.length > 0
 
-      && miner != xRingBatch.transactionOrigin) {
+        && miner != xRingBatch.transactionOrigin) {
       insertOffset(tables, data.addHex(createBytes(xRingBatch.sig), false))
       addPadding(data)
     } else {
@@ -278,7 +280,10 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     }
 
     if (order.erc1400Params.get.transferDataS.length > 0) {
-      insertOffset(tables, data.addHex(createBytes(order.erc1400Params.get.transferDataS), false))
+      insertOffset(
+        tables,
+        data.addHex(createBytes(order.erc1400Params.get.transferDataS), false)
+      )
       addPadding(data)
     } else {
       insertDefault(tables)
@@ -329,7 +334,9 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
       feeRecipient = xRingBatch.transactionOrigin
     }
     var miner = xRingBatch.miner
-    if (miner == null || miner.length == 0 || miner.equalsIgnoreCase(feeRecipient)) {
+    if (miner == null || miner.length == 0 || miner.equalsIgnoreCase(
+          feeRecipient
+        )) {
       miner = "0x" + "0" * 40
     }
 
