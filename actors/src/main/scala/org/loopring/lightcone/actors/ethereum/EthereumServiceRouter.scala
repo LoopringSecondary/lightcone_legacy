@@ -22,11 +22,11 @@ import org.loopring.lightcone.proto._
 
 import scala.util.Random
 
-class EthereumServiceRouter(implicit timeout: Timeout)
+class EthereumServiceRouter(connectors: Seq[String])(implicit timeout: Timeout)
     extends Actor
     with ActorLogging {
 
-  var connectionPools: Seq[(String, Int)] = Seq.empty
+  var connectionPools: Seq[(String, Int)] = connectors.map(_ → 0)
 
   override def receive: Receive = {
     case node: XNodeBlockHeight =>
