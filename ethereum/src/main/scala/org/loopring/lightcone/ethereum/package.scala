@@ -56,7 +56,7 @@ package object ethereum {
     if (sig.length == 65) {
       val r = sig.toSeq.slice(0, 32).toArray
       val s = sig.toSeq.slice(32, 64).toArray
-      val v = sig(65)
+      val v = sig(64)
       verifySignature(hash, r, s, v, addr)
     } else {
       false
