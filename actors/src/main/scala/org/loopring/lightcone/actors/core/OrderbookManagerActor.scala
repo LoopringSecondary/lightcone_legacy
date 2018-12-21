@@ -113,7 +113,7 @@ class OrderbookManagerActor(
       latestPrice = Some(price)
 
     case req: XOrderbookUpdate =>
-      log.info(s"receive XOrderbookUpdate ${req}")
+      log.info(s"~~~~~~~~~~~~~ receive XOrderbookUpdate:\n${req}")
       manager.processUpdate(req)
 
     case XGetOrderbook(level, size, Some(marketId)) =>

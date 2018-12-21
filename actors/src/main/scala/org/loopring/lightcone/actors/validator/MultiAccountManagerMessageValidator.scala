@@ -44,7 +44,10 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
     case req: XSubmitSimpleOrderReq ⇒
       req.order match {
         case None =>
-          throw ErrorException(XErrorCode.ERR_INVALID_ARGUMENT, s"bad request:${req}")
+          throw ErrorException(
+            XErrorCode.ERR_INVALID_ARGUMENT,
+            s"bad request:${req}"
+          )
         case Some(order) =>
           val marketIdInternal = supportedMarkets.assertmarketIdIsValid(
             XMarketId(order.tokenS, order.tokenB)

@@ -260,6 +260,7 @@ class MarketManagerActor(
 
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
+    println("======+~~~~~~~~~:\n" + ou)
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
       orderbookManagerActor ! ou.copy(marketId = Some(marketId))
     }
