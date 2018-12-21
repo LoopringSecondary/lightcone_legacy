@@ -54,7 +54,7 @@ package object ethereum {
       gasLimit: BigInt,
       gasPrice: BigInt,
       to: String,
-      value:BigInt= BigInt(0),
+      value: BigInt = BigInt(0),
       chainId: Int = 1
     )(
       implicit credentials: Credentials
