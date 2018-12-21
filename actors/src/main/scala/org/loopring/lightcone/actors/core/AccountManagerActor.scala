@@ -126,28 +126,40 @@ class AccountManagerActor(
         Seq(order.id)
       )).mapAs[GetFilledAmountRes]
 
-      _ = log.debug(s"order history: orderHistoryRes")
+      _ = log.info(s"order history: orderHistoryRes")
 
       _order = order.withFilledAmountS(
         orderHistoryRes.filledAmountSMap(order.id)
       )
       _ = log.debug(s"submitting order to AccountManager: ${_order}")
+      _order = order.withFilledAmountS(orderHistoryRes.filledAmountS)
+
+      _ = log.info(s"submitting order to AccountManager: ${_order}")
       successful = manager.submitOrder(_order)
-      _ = log.debug(s"successful: $successful")
-      _ = log.debug(
+      _ = log.info(s"successful: $successful")
+      _ = log.info(
         "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", ")
       )
       updatedOrders = orderPool.takeUpdatedOrdersAsMap()
+      _ = log.info(
+        "orderPool updatedOrders: " + updatedOrders.mkString(", ")
+      )
       _ = assert(updatedOrders.contains(_order.id))
+      _ = log.info(
+        "assert contains order: "
+      )
       order_ = updatedOrders(_order.id)
       xorder_ : XOrder = order_.copy(_reserved = None, _outstanding = None)
+      _ = log.info(
+        s"assert contains order:  ${order_}, ${xorder_}"
+      )
     } yield {
       if (successful) {
-        log.debug(s"submitting order to market manager actor: $order_")
+        log.info(s"submitting order to market manager actor: $order_")
         marketManagerActor ! XSubmitSimpleOrderReq("", Some(xorder_))
         XSubmitOrderRes(order = Some(xorder_))
       } else {
-        throw new ErrorException(
+        throw ErrorException(
           XError(convertOrderStatusToErrorCode(order.status))
         )
       }

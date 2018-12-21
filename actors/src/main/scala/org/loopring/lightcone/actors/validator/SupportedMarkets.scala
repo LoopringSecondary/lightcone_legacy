@@ -17,14 +17,15 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
-import org.loopring.lightcone.proto.XMarketId
+import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
 import scala.collection.JavaConverters._
 
 case class SupportedMarkets(config: Config) {
 
-  val markets = config
+  private val markets = config
     .getObjectList("markets")
     .asScala
     .map { item =>
@@ -34,9 +35,33 @@ case class SupportedMarkets(config: Config) {
     }
     .toSet
 
-  def contains(marketId: XMarketId) = {
+  private def contains(marketId: XMarketId) = {
     val eig = Numeric.toBigInt(marketId.primary) xor
       Numeric.toBigInt(marketId.secondary)
     markets.contains(eig)
+  }
+
+  def assertmarketIdIsValid(
+      marketIdOpt: Option[XMarketId]
+    ): Option[XMarketId] = {
+    marketIdOpt match {
+      case None =>
+        throw ErrorException(XErrorCode.ERR_INVALID_MARKET)
+      case Some(marketId) =>
+        val marketIdRes = assertmarketIdIsValid(marketId)
+        Some(marketIdRes)
+    }
+  }
+
+  def assertmarketIdIsValid(marketId: XMarketId): XMarketId = {
+    if (!contains(marketId))
+      throw ErrorException(
+        XErrorCode.ERR_INVALID_MARKET,
+        s"invalid market: ${marketId}"
+      )
+    marketId.copy(
+      primary = marketId.primary.toLowerCase(),
+      secondary = marketId.secondary.toLowerCase()
+    )
   }
 }

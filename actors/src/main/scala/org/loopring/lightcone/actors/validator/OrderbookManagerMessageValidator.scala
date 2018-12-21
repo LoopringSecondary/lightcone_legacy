@@ -27,25 +27,12 @@ object OrderbookManagerMessageValidator {
 final class OrderbookManagerMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
-  val markets = SupportedMarkets(config)
-
-  def assertmarketIdIsValid(marketIdOpt: Option[XMarketId]) = {
-    marketIdOpt match {
-      case None =>
-        throw ErrorException(XErrorCode.ERR_INVALID_MARKET)
-      case Some(marketId) =>
-        if (!markets.contains(marketId))
-          throw ErrorException(
-            XErrorCode.ERR_INVALID_MARKET,
-            s"invalid market: ${marketId}"
-          )
-    }
-  }
+  val supportedMarkets = SupportedMarkets(config)
 
   // Throws exception if validation fails.
   def validate = {
     case msg @ XGetOrderbook(_, _, marketIdOpt) =>
-      assertmarketIdIsValid(marketIdOpt)
-      msg
+      val marketIdInternal = supportedMarkets.assertmarketIdIsValid(marketIdOpt)
+      msg.copy(marketId = marketIdInternal)
   }
 }
