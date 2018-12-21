@@ -17,6 +17,9 @@
 package org.loopring.lightcone.actors.entrypoint
 
 import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.proto._
+
+import scala.concurrent.Await
 
 class EntryPointSpec_Depth
     extends CommonSpec("""
@@ -39,6 +42,24 @@ class EntryPointSpec_Depth
 
   "submit several orders" must {
     "get the right depth" in {
+      val amountS = "10"
+      val amountB = "1"
+      val rawOrder =
+        createRawOrder(amountS = amountS.zeros(18), amountB = amountB.zeros(18))
+      val f = singleRequest(
+        XSubmitOrderReq(
+          Some(rawOrder)
+        ),
+        "submit_order"
+      )
+
+      val res = Await.result(f, timeout.duration)
+      res match {
+        case XSubmitOrderRes(Some(order)) =>
+          info(s" response ${order}")
+          order.status should be(XOrderStatus.STATUS_PENDING)
+        case _ => assert(false)
+      }
 
     }
   }

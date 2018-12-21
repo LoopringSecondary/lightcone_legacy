@@ -58,10 +58,6 @@ trait EthereumQueryMockSupport {
         sender ! XGetFilledAmountRes(
           orderIds.map(id ⇒ id → ByteString.copyFrom("0", "UTF-8")).toMap
         )
-      case GetFilledAmountReq(orderId) =>
-        sender ! GetFilledAmountRes(
-          Map.empty
-        )
     }
   }
 
