@@ -11,7 +11,8 @@ object Dependencies {
     "org.scalatest" %% "scalatest" % "3.0.5" % Test,
     "org.scalamock" %% "scalamock" % "4.1.0" % Test,
     "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
-    "com.dimafeng" %% "testcontainers-scala" % "0.21.0" % Test,
+    "com.dimafeng" %% "testcontainers-scala" % "0.22.0" % Test,
+    "org.testcontainers" % "mysql" % "1.10.3" % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion % Test
