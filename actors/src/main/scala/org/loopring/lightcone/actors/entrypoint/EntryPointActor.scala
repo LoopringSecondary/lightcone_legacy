@@ -25,7 +25,6 @@ import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.ExecutionContext
 
 object EntryPointActor {
@@ -66,6 +65,9 @@ class EntryPointActor(
       Some(EthereumAccessActor.name)
 
     case _: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
+
+    case _: XGetOrdersForUserReq | _: XGetTradesReq =>
+      Some(DatabaseQueryMessageValidator.name)
 
     case _ => None
   }

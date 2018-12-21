@@ -17,19 +17,8 @@
 package org.loopring.lightcone.actors.base
 
 import akka.cluster.sharding._
-import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 
-trait ShardedEvenly extends Sharded {
-  protected var entitiesPerShard: Int = 1
-
-  def getEntityId(message: Any): String =
-    Math.abs(message.hashCode % numOfShards * entitiesPerShard).toString
-
-  protected val messageExtractor =
-    new HashCodeMessageExtractor(numOfShards) {
-      override def entityId(message: Any) = {
-        val eid = getEntityId(message)
-        s"${name}_${eid}"
-      }
-    }
+trait Sharded {
+  val name: String
+  protected var numOfShards: Int = 1
 }

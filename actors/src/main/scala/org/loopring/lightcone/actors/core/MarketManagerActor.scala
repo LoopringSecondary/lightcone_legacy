@@ -145,17 +145,19 @@ class MarketManagerActor(
         .scheduleOnce(
           maxRecoverDurationMinutes.minute,
           self,
-          XRecoverEnded(true)
+          XRecover.Finished(true)
         )
     )
 
     if (skiprecover) {
       log.warning(s"actor recover skipped: ${self.path}")
     } else {
-      context.become(recover)
+
       log.debug(s"actor recover started: ${self.path}")
       actors.get(OrderRecoverCoordinator.name) !
-        XRecoverReq(marketIds = Seq(marketId))
+        XRecover.Request(marketId = Some(marketId))
+
+      context.become(recover)
     }
   }
 
@@ -164,7 +166,7 @@ class MarketManagerActor(
     case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder)
 
-    case msg @ XRecoverEnded(timeout) =>
+    case msg @ XRecover.Finished(timeout) =>
       autoSwitchBackToReceive.foreach(_.cancel)
       autoSwitchBackToReceive = None
       s"market manager `${entityId}` recover completed (timeout=${timeout})"
