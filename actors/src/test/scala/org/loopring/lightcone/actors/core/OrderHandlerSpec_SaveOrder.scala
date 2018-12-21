@@ -18,8 +18,7 @@ package org.loopring.lightcone.actors.core
 
 import akka.pattern._
 import akka.testkit.TestProbe
-import com.google.protobuf.ByteString
-import org.loopring.lightcone.actors.support.{CommonSpec, OrderHandleSupport}
+import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.{
   MessageValidationActor,
   MultiAccountManagerMessageValidator
@@ -34,7 +33,8 @@ class OrderHandlerSpec_SaveOrder
     extends CommonSpec("""
                          |akka.cluster.roles=["order_handler"]
                          |""".stripMargin)
-    with OrderHandleSupport {
+    with OrderHandleSupport
+    with OrderGenerateSupport {
 
   val multiAccountManagerProbe =
     new TestProbe(system, MultiAccountManagerActor.name) {
@@ -63,39 +63,8 @@ class OrderHandlerSpec_SaveOrder
 
   "submit a raworder" must {
     "be saved in db successful" in {
-      val tokenS = "0x1"
-      val tokenB = "0x2"
-      val tokenFee = "0x3"
       val timeProvider = new SystemTimeProvider()
-      val rawOrder = XRawOrder(
-        owner = "0xa",
-        hash = "0xa",
-        version = 1,
-        tokenS = tokenS,
-        tokenB = tokenB,
-        amountS = ByteString.copyFrom("11", "UTF-8"),
-        amountB = ByteString.copyFrom("12", "UTF-8"),
-        validSince = 1000,
-        state = Some(
-          XRawOrder.State(
-            createdAt = timeProvider.getTimeMillis,
-            updatedAt = timeProvider.getTimeMillis,
-            status = XOrderStatus.STATUS_NEW
-          )
-        ),
-        feeParams = Some(
-          XRawOrder.FeeParams(
-            tokenFee = tokenFee,
-            amountFee = ByteString.copyFrom("111", "utf-8")
-          )
-        ),
-        params = Some(
-          XRawOrder.Params(
-            validUntil = 2000
-          )
-        ),
-        marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
-      )
+      val rawOrder = createRawOrder()
       val submitReq = XSubmitOrderReq(Some(rawOrder))
       val f = actors.get(OrderHandlerActor.name) ? submitReq
       Future.successful(multiAccountManagerProbe.expectQuery())

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.ethereum
 
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
@@ -28,23 +28,27 @@ trait RingBatchGenerator {
   def toSubmitableParamStr(xRingBatch: XRingBatch): String
 }
 
-// TODO(kongliang): implement and test this class
 class RingBatchGeneratorImpl(context: XRingBatchContext)
-    extends RingBatchGenerator {
+  extends RingBatchGenerator {
+  import ethereum._
+
   val OrderVersion = 0
   val SerializationVersion = 0
 
   def generateAndSignRingBatch(orders: Seq[Seq[XRawOrder]]): XRingBatch = {
-    orders.flatten.foreach(println)
-
     val orderValidator = new RawOrderValidatorImpl
 
-    val ordersDistinctedMap = orders.flatten
-      .map(o => setupOrderDefaults(o))
-      .map(o => orderValidator.calculateOrderHash(o) -> o)
-      .toMap
+    val ordersWithHash = orders.map(ordersOfRing ⇒
+      ordersOfRing.map(o ⇒ {
+        val orderWithDefaults = orderValidator.setupEmptyFieldsWithDefaults(o, context.lrcAddress)
+        val hash = orderValidator.calculateOrderHash(orderWithDefaults)
+        orderWithDefaults.copy(hash = hash)
+      }))
 
-    val ordersDistinctedSeq = ordersDistinctedMap
+    val ordersDistinctedSeq = ordersWithHash
+      .flatten
+      .map(o ⇒ o.hash -> o)
+      .toMap
       .map(_._2)
       .toSeq
 
@@ -53,8 +57,8 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
       .zipWithIndex
       .toMap
 
-    val xrings = orders.map(orders => {
-      val orderIndexes = orders.map(o => ordersHashIndexMap(o.hash))
+    val xrings = ordersWithHash.map(ordersOfRing ⇒ {
+      val orderIndexes = ordersOfRing.map(o ⇒ ordersHashIndexMap(o.hash))
       new XRingBatch.XRing(orderIndexes)
     })
 
@@ -98,9 +102,10 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     paramStream.addUint16(xRingBatch.orders.length)
     paramStream.addUint16(xRingBatch.rings.length)
     paramStream.addUint16(tokenSpendables.size)
-
     paramStream.addHex(tables.getData)
-    xRingBatch.rings.foreach(ring => {
+
+    val ringIndexStream = new Bitstream
+    xRingBatch.rings.foreach(ring ⇒ {
       val orderIndexes = ring.orderIndexes
       paramStream.addNumber(BigInt(orderIndexes.length), 1, true)
       orderIndexes.foreach(i => paramStream.addNumber(BigInt(i), 1, true))
@@ -113,84 +118,11 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     return paramStream.getData
   }
 
-  private def setupOrderDefaults(order: XRawOrder) = {
-    val defaultAddr = "0x0"
-    val fullZeroAddr = "0x" + "0" * 40
-    val defaultUint256 = ByteString.copyFromUtf8("0")
-
-    val addressGetOrDefault = (addr: String) =>
-      if (isValidAddress(addr)) addr else defaultAddr
-
-    val uint256GetOrDefault = (uint256Bs: ByteString) => {
-      if (uint256Bs.isEmpty) defaultUint256 else uint256Bs
-    }
-
-    var params = order.params.getOrElse(new XRawOrder.Params)
-    var feeParams = order.feeParams.getOrElse(new XRawOrder.FeeParams)
-    var erc1400Params =
-      order.erc1400Params.getOrElse(new XRawOrder.ERC1400Params)
-
-    params = params.copy(
-      dualAuthAddr = addressGetOrDefault(params.dualAuthAddr),
-      broker = addressGetOrDefault(params.broker),
-      orderInterceptor = addressGetOrDefault(params.orderInterceptor),
-      wallet = addressGetOrDefault(params.wallet)
-    )
-
-    feeParams = feeParams.copy(
-      amountFee = uint256GetOrDefault(feeParams.amountFee),
-      tokenRecipient = addressGetOrDefault(feeParams.tokenRecipient)
-    )
-
-    if (feeParams.tokenFee.length == 0
-        || feeParams.tokenFee == defaultAddr
-        || feeParams.tokenFee == fullZeroAddr) {
-      feeParams = feeParams.copy(tokenFee = context.lrcAddress)
-    }
-
-    order.copy(
-      params = Option(params),
-      feeParams = Option(feeParams),
-      erc1400Params = Option(erc1400Params)
-    )
-  }
-
-  private def addDataAndOffset(
-      data: Any,
-      solidityType: String,
-      dataBits: Bitstream,
-      tablesBits: Bitstream,
-      dataForceAppend: Boolean
-    ) {
-    val offset = solidityType match {
-      case "uint8" =>
-        val dataInt = data.asInstanceOf[Int]
-        dataBits.addNumber(BigInt(dataInt), 1, dataForceAppend)
-      case "uint16" =>
-        val dataInt = data.asInstanceOf[Int]
-        dataBits.addNumber(BigInt(dataInt), 2, dataForceAppend)
-      case "uint32" =>
-        val dataInt = data.asInstanceOf[Int]
-        dataBits.addNumber(BigInt(dataInt), 4, dataForceAppend)
-      case "uint" | "uint256" =>
-        val dataStr = data.asInstanceOf[String]
-        dataBits.addUint(dataStr, dataForceAppend)
-      case "address" =>
-        val dataStr = data.asInstanceOf[String]
-        dataBits.addAddress(dataStr, dataForceAppend)
-      case "bytes32" =>
-        val dataStr = data.asInstanceOf[String]
-        dataBits.addHex(dataStr, dataForceAppend)
-      case "bytes" =>
-        val dataStr = data.asInstanceOf[String]
-        dataBits.addHex(dataStr, dataForceAppend)
-      case _ =>
-        throw new IllegalArgumentException(
-          s"unsupported solidity type: $solidityType"
-        )
-    }
-
-    insertOffset(tablesBits, offset)
+  private def createBytes(data: String) = {
+    val bitstream = new Bitstream
+    bitstream.addUint((data.length - 2) / 2, true)
+    bitstream.addHex(data)
+    bitstream.getData
   }
 
   private def setupMiningInfo(
@@ -216,8 +148,9 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     }
 
     if (xRingBatch.sig != null && xRingBatch.sig.length > 0
-        && miner != xRingBatch.transactionOrigin) {
-      insertOffset(tables, data.addHex(xRingBatch.sig, false))
+
+      && miner != xRingBatch.transactionOrigin) {
+      insertOffset(tables, data.addHex(createBytes(xRingBatch.sig), false))
       addPadding(data)
     } else {
       insertDefault(tables)
@@ -236,6 +169,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
     insertOffset(tables, data.addAddress(order.tokenS, false))
     insertOffset(tables, data.addAddress(order.tokenB, false))
     insertOffset(tables, data.addUint(order.amountS.toStringUtf8, false))
+
     insertOffset(tables, data.addUint(order.amountB.toStringUtf8, false))
     insertOffset(tables, data.addUint32(order.validSince, false))
 
@@ -284,7 +218,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
 
     val orderSig = order.params.get.sig
     if (orderSig != null && orderSig.length > 0) {
-      insertOffset(tables, data.addHex(orderSig, false))
+      insertOffset(tables, data.addHex(createBytes(orderSig), false))
       addPadding(data)
     } else {
       insertDefault(tables)
@@ -292,7 +226,7 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
 
     val dualAuthSig = order.params.get.dualAuthSig
     if (dualAuthSig != null && dualAuthSig.length > 0) {
-      insertOffset(tables, data.addHex(dualAuthSig, false))
+      insertOffset(tables, data.addHex(createBytes(dualAuthSig), false))
       addPadding(data)
     } else {
       insertDefault(tables)
@@ -315,9 +249,9 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
       insertDefault(tables)
     }
 
-    tables.addUint16(order.feeParams.get.waiveFeePercentage)
-    tables.addUint16(order.feeParams.get.tokenSFeePercentage)
-    tables.addUint16(order.feeParams.get.tokenBFeePercentage)
+    tables.addUint16(order.feeParams.get.waiveFeePercentage, true)
+    tables.addUint16(order.feeParams.get.tokenSFeePercentage, true)
+    tables.addUint16(order.feeParams.get.tokenBFeePercentage, true)
 
     val tokenRecipient = order.feeParams.get.tokenRecipient
     if (tokenRecipient.length > 0 && tokenRecipient != order.owner) {
@@ -326,7 +260,29 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
       insertDefault(tables)
     }
 
-    tables.addUint16(order.feeParams.get.walletSplitPercentage)
+    tables.addUint16(order.feeParams.get.walletSplitPercentage, true)
+    tables.addUint16(order.params.get.tokenStandardS.value, true)
+    tables.addUint16(order.params.get.tokenStandardB.value, true)
+    tables.addUint16(order.params.get.tokenStandardFee.value, true)
+
+    if (order.erc1400Params.get.trancheS.length > 0) {
+      insertOffset(tables, data.addHex(order.erc1400Params.get.trancheS, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    if (order.erc1400Params.get.trancheB.length > 0) {
+      insertOffset(tables, data.addHex(order.erc1400Params.get.trancheB, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    if (order.erc1400Params.get.transferDataS.length > 0) {
+      insertOffset(tables, data.addHex(createBytes(order.erc1400Params.get.transferDataS), false))
+      addPadding(data)
+    } else {
+      insertDefault(tables)
+    }
   }
 
   private def insertOffset(
@@ -334,7 +290,8 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
       offset: Int
     ) {
     assert(offset % 4 == 0)
-    tables.addUint16(offset / 4)
+    val slot = offset / 4
+    tables.addUint16(slot)
   }
 
   private def insertDefault(tables: Bitstream) = tables.addUint16(0)
@@ -372,16 +329,14 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
       feeRecipient = xRingBatch.transactionOrigin
     }
     var miner = xRingBatch.miner
-    if (miner == null || miner.length == 0 || miner.equalsIgnoreCase(
-          feeRecipient
-        )) {
-      miner = "0x0"
+    if (miner == null || miner.length == 0 || miner.equalsIgnoreCase(feeRecipient)) {
+      miner = "0x" + "0" * 40
     }
 
     val ringBatchBits = new Bitstream
     ringBatchBits.addAddress(feeRecipient, true)
     ringBatchBits.addAddress(miner, true)
-    ringBatchBits.addHex(ringHashesXor)
+    ringBatchBits.addBytes32(ringHashesXor, true)
 
     Numeric.toHexString(Hash.sha3(ringBatchBits.getBytes))
   }
@@ -394,8 +349,13 @@ class RingBatchGeneratorImpl(context: XRingBatchContext)
       credentials.getEcKeyPair
     )
 
-    val sigBytes = sigData.getR ++ sigData.getS
-    val sig = Numeric.toHexString(sigBytes)
+    val sigStream = new Bitstream
+    sigStream.addNumber(xRingBatch.signAlgorithm.value, 1, true)
+    sigStream.addNumber(1 + 32 + 32, 1, true)
+    sigStream.addNumber(sigData.getV, 1, true)
+    sigStream.addRawBytes(sigData.getR)
+    sigStream.addRawBytes(sigData.getS)
+    val sig = sigStream.getData
 
     xRingBatch.copy(hash = hash, sig = sig)
   }
