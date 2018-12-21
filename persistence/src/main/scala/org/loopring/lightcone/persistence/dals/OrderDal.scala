@@ -58,6 +58,10 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
 
   // Returns orders with given hashes
   def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]]
+  // Returns orders owners with given hashes
+  // Map[orderHash, XRawOrder]
+  def getOrdersMap(hashes: Seq[String]): Future[Map[String, XRawOrder]]
+
   def getOrder(hash: String): Future[Option[XRawOrder]]
 
   // Get some orders. The orders should be sorted scendantly by created_at or updated_at
@@ -121,6 +125,11 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
   // Returns Left(error) if this operation fails, or Right(string) the order's hash.
   def updateOrderStatus(
       hash: String,
+      status: XOrderStatus
+    ): Future[XErrorCode]
+
+  def updateOrdersStatus(
+      hashes: Seq[String],
       status: XOrderStatus
     ): Future[XErrorCode]
 
@@ -191,6 +200,9 @@ class OrderDalImpl(
       db.run(query.filter(_.hash inSet hashes).result)
     }
   }
+
+  def getOrdersMap(hashes: Seq[String]): Future[Map[String, XRawOrder]] =
+    getOrders(hashes).map(_.map(r => r.hash -> r).toMap)
 
   def getOrder(hash: String): Future[Option[XRawOrder]] =
     db.run(query.filter(_.hash === hash).result.headOption)
@@ -386,6 +398,22 @@ class OrderDalImpl(
       result ← db.run(
         query
           .filter(_.hash === hash)
+          .map(c ⇒ (c.status, c.updatedAt))
+          .update(status, timeProvider.getTimeMillis)
+      )
+    } yield {
+      if (result >= 1) ERR_NONE
+      else ERR_PERSISTENCE_UPDATE_FAILED
+    }
+
+  def updateOrdersStatus(
+      hashes: Seq[String],
+      status: XOrderStatus
+    ): Future[XErrorCode] =
+    for {
+      result ← db.run(
+        query
+          .filter(_.hash inSet hashes)
           .map(c ⇒ (c.status, c.updatedAt))
           .update(status, timeProvider.getTimeMillis)
       )
