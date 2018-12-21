@@ -59,8 +59,6 @@ message XOrderbook {
     repeated XItem buys = 3;
 }
 
-
-
 message XOrderbookUpdate {
     message XSlot {
         int64 slot = 1;
@@ -77,18 +75,8 @@ message XOrderbookUpdate {
     XMarketId market_id = 4;
 }
 
-
-message XUpdateLatestTradingPrice {
-    double price = 1;
-    XMarketId market_id = 2;
-}
-
 message XGetOrderbook {
     int32 level = 2;
     int32 size = 1;
     XMarketId market_id = 3;
 }
-
-
-
-
