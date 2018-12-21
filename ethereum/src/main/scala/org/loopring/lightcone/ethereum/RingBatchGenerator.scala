@@ -38,13 +38,11 @@ trait RingBatchGenerator {
     ): String
 }
 
-
 object RingBatchGeneratorImpl extends RingBatchGenerator {
   import ethereum._
 
   val OrderVersion = 0
   val SerializationVersion = 0
-
 
   def generateAndSignRingBatch(
       orders: Seq[Seq[XRawOrder]]
@@ -300,7 +298,6 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     } else {
       insertDefault(tables)
     }
-
 
     if (orderErc1400Params.transferDataS.length > 0) {
       insertOffset(
