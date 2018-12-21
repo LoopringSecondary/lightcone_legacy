@@ -58,7 +58,7 @@ class EntryPointActor(
     case _: XGetBalanceAndAllowancesReq ⇒
       Some(MultiAccountManagerMessageValidator.name)
 
-    case _: XGetBalanceReq | _: XGetAllowanceReq | _: GetFilledAmountReq ⇒
+    case _: XGetBalanceReq | _: XGetAllowanceReq | _: XGetFilledAmountReq ⇒
       Some(EthereumQueryMessageValidator.name)
 
     case _: XJsonRpcReq | _: XRpcReqWithHeight ⇒

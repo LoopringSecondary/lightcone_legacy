@@ -39,6 +39,6 @@ trait RpcBinding extends JsonRpcModule {
   ifReceive[XGetBalanceReq].thenReply[XGetBalanceRes]("get_balance")
   ifReceive[XGetBalanceAndAllowancesReq]
     .thenReply[XGetBalanceAndAllowancesRes]("get_balance_and_allowance")
-  ifReceive[GetFilledAmountReq]
-    .thenReply[GetFilledAmountRes]("get_filled_amount")
+  ifReceive[XGetFilledAmountReq]
+    .thenReply[XGetFilledAmountRes]("get_filled_amount")
 }

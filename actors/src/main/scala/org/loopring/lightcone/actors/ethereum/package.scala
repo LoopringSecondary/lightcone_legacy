@@ -97,7 +97,7 @@ package object ethereum {
 
   implicit def xGetFilledAmountToBatchReq(
       tradeHistoryAddress: Address,
-      req: GetFilledAmountReq
+      req: XGetFilledAmountReq
     ): XBatchContractCallReq = {
     val batchFilledAmountReqs =
       batchFilledAmountReq(tradeHistoryAddress, req.orderIds)

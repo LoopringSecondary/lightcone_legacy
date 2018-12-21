@@ -122,9 +122,9 @@ class AccountManagerActor(
         Future.successful(Unit)
 
       // Update the order's _outstanding field.
-      getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmountReq(
+      getFilledAmountRes <- (ethereumQueryActor ? XGetFilledAmountReq(
         Seq(order.id)
-      )).mapAs[GetFilledAmountRes]
+      )).mapAs[XGetFilledAmountRes]
 
       _ = log.info(s"order history: orderHistoryRes")
 
