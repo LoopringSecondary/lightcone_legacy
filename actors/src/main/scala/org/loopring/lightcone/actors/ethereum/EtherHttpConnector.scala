@@ -166,7 +166,10 @@ private[ethereum] class HttpConnector(
   def receive: Receive = {
     case req: XJsonRpcReq =>
       post(req.json).map(XJsonRpcRes(_)) sendTo sender
-
+    case r: XSendRawTransactionReq ⇒
+      sendMessage("eth_sendRawTransaction") {
+        Seq(r.data)
+      } map JsonFormat.fromJsonString[XSendRawTransactionRes] sendTo sender
     case _: XEthBlockNumberReq =>
       sendMessage("eth_blockNumber") {
         Seq.empty

@@ -358,6 +358,12 @@ message XSendRawTransactionReq {
     string data = 1;
 }
 
+message XSendRawTransactionRes {
+    int32 id = 1;
+    string jsonrpc = 2;
+    string result = 3;
+    XEthResError error = 4;
+}
 message XGetUncleByBlockNumAndIndexReq{
     string blockNum = 1;
     string index = 2;

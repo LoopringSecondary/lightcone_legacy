@@ -198,16 +198,6 @@ message XRingExecutedRes {
     int64 block_number = 5;
 }
 
-message XSendRawTransaction {
-    bytes data = 1;
-}
-
-message XSendRawTransactionRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-}
-
 message XSettleRingsReq {
     repeated XOrderRing rings = 1;
     bytes gas_limit = 2;
