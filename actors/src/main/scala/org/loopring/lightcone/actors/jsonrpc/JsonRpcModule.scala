@@ -47,10 +47,10 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   //todo：可能没生效，导致每次异常都导致server挂掉，需要再处理下
   implicit val myExceptionHandler = ExceptionHandler {
     case e: ErrorException =>
-      replyWithError(e.error.code.value, Some(e.error.message))("", None)
+      replyWithError(e.error.code.value, Some(e.error.message))(None)
 
     case e: Throwable =>
-      replyWithError(-32603, Some(e.getMessage))("", None)
+      replyWithError(-32603, Some(e.getMessage))(None)
   }
 
   val routes: Route = {
@@ -58,7 +58,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
       path(config.getString("jsonrpc.loopring")) {
         post {
           entity(as[JsonRpcRequest]) { jsonReq =>
-            implicit val method = jsonReq.method
+            val method = jsonReq.method
             implicit val id = jsonReq.id
 
             if (id.isEmpty) {
@@ -104,19 +104,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                     Serialization.read[JsonRpcResponse](resp.json)
                   )
                 case Failure(e) ⇒
-                  complete(
-                    JsonRpcResponse(
-                      id = jsonReq.id,
-                      jsonrpc = jsonReq.jsonrpc,
-                      method = jsonReq.method,
-                      error = Some(
-                        JsonRpcError(
-                          code = -32603,
-                          message = Some(e.getMessage)
-                        )
-                      )
-                    )
-                  )
+                  replyWithError(-32603, Some(e.getMessage))(jsonReq.id)
               }
 
             }
@@ -130,25 +118,18 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
       message: Option[String] = None,
       data: Option[JValue] = None
     )(
-      implicit method: String,
-      id: Option[String]
+      implicit id: Option[String]
     ) =
     complete(
       JsonRpcResponse(
         JSON_RPC_VER,
-        method,
         None,
         Some(JsonRpcError(code, message, data)),
         id
       )
     )
 
-  private def replyWith(
-      content: JValue
-    )(
-      implicit method: String,
-      id: Option[String]
-    ) =
-    complete(JsonRpcResponse(JSON_RPC_VER, method, Option(content), None, id))
+  private def replyWith(content: JValue)(implicit id: Option[String]) =
+    complete(JsonRpcResponse(JSON_RPC_VER, Option(content), None, id))
 
 }

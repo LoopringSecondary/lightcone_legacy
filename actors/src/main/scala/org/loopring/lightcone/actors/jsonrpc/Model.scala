@@ -30,7 +30,6 @@ case class JsonRpcError(
 
 case class JsonRpcResponse(
     jsonrpc: String,
-    method: String,
     result: Option[JValue] = None,
     error: Option[JsonRpcError] = None,
     id: Option[String] = None)

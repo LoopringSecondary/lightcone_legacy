@@ -47,6 +47,7 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
   def tokenStandardS = column[XTokenStandard]("token_standard_s")
   def tokenStandardB = column[XTokenStandard]("token_standard_b")
   def tokenStandardFee = column[XTokenStandard]("token_standard_fee")
+  def dualAuthAddrPrivateKey = columnHash("dual_auth_addr_private_key")
 
   // FeeParams
   def tokenFee = columnAddress("token_fee")
@@ -103,7 +104,8 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
       allOrNone,
       tokenStandardS,
       tokenStandardB,
-      tokenStandardFee
+      tokenStandardFee,
+      dualAuthAddrPrivateKey
     ) <> ({ tuple =>
       Option((XRawOrder.Params.apply _).tupled(tuple))
     }, { paramsOpt: Option[XRawOrder.Params] =>
