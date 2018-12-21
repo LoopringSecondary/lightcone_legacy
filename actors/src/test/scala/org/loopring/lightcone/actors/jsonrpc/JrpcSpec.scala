@@ -81,7 +81,8 @@ class JrpcSpec
       }
       result2 match {
         case e: ErrorException
-            if e.error.code === XErrorCode.ERR_INTERNAL_UNKNOWN =>
+            if e.error.code === XErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
+              .contains("3010") =>
           assert(true)
         case _ =>
           assert(false)
@@ -103,7 +104,8 @@ class JrpcSpec
       }
       result3 match {
         case e: ErrorException
-            if e.error.code === XErrorCode.ERR_INTERNAL_UNKNOWN =>
+            if e.error.code === XErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
+              .contains("not found actor") =>
           assert(true)
         case _ => assert(false)
       }
