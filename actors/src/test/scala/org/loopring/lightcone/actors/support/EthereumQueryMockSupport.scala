@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext
 trait EthereumQueryMockSupport {
   my: CommonSpec =>
 
-  class EthereumQueryForRecoveryTestActor(
+  class EthereumQueryForRecoveryMockActor(
     )(
       implicit ec: ExecutionContext,
       timeout: Timeout)
@@ -59,11 +59,15 @@ trait EthereumQueryMockSupport {
           orderId,
           ByteString.copyFrom("0", "UTF-8")
         )
+      case GetFilledAmountReq(orderId) =>
+        sender ! GetFilledAmountRes(
+          Map.empty
+        )
     }
   }
 
   val ethereumQueryActor =
-    system.actorOf(Props(new EthereumQueryForRecoveryTestActor()))
+    system.actorOf(Props(new EthereumQueryForRecoveryMockActor()))
   actors.del(EthereumQueryActor.name)
   actors.add(EthereumQueryActor.name, ethereumQueryActor)
 }

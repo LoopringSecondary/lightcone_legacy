@@ -128,6 +128,7 @@ class EntryPointSpec_SubmitSeveralOrder
         case _ => assert(false)
       }
 
+      info("then cancel one of it.")
       val cancelReq = XCancelOrderReq(
         order1.hash,
         order1.owner,
