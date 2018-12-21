@@ -17,10 +17,8 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto._
 
 object EthereumQueryMessageValidator {
   val name = "ethereum_query_validator"
@@ -29,35 +27,22 @@ object EthereumQueryMessageValidator {
 final class EthereumQueryMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
-  // TODO(yadong): 我们不仅要判断Jan地址是不是合法的，害怕把地址改写成规范的模式
-  // This method should throw exception for an invalid address
-  private def normalizeAddress(address: String): String =
-    try {
-      Address(address).toString
-    } catch {
-      case _: Throwable ⇒
-        throw ErrorException(
-          XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-          message = s"invalid ethereum address:$address"
-        )
-    }
-
   // Throws exception if validation fails.
   def validate = {
     case req: XGetBalanceAndAllowancesReq =>
       req
-        .copy(tokens = req.tokens.map(normalizeAddress))
-        .copy(address = normalizeAddress(req.address))
+        .copy(tokens = req.tokens.map(Address.normalizeAddress))
+        .copy(address = Address.normalizeAddress(req.address))
 
     case req: XGetBalanceReq =>
       req
-        .copy(tokens = req.tokens.map(normalizeAddress))
-        .copy(address = normalizeAddress(req.address))
+        .copy(tokens = req.tokens.map(Address.normalizeAddress))
+        .copy(address = Address.normalizeAddress(req.address))
 
     case req: XGetAllowanceReq =>
       req
-        .copy(tokens = req.tokens.map(normalizeAddress))
-        .copy(address = normalizeAddress(req.address))
+        .copy(tokens = req.tokens.map(Address.normalizeAddress))
+        .copy(address = Address.normalizeAddress(req.address))
 
     // case req: GetFilledAmountReq =>
   }
