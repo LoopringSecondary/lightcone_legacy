@@ -107,7 +107,8 @@ message XUserCancelOrderReq {
 message XUserCancelOrderResult {
     message Result {
         string     order_hash = 1;
-        XErrorCode error      = 2;
+        XRawOrder  order      = 2;
+        XErrorCode error      = 3;
     }
     repeated Result updated_result = 1;
 }

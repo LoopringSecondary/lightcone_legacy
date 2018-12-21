@@ -25,7 +25,6 @@ import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.ExecutionContext
 
 object EntryPointActor {
@@ -53,7 +52,7 @@ class EntryPointActor(
   }
 
   def findDestination(msg: Any): Option[String] = msg match {
-    case _ @(XSubmitOrderReq | XCancelOrderReq) =>
+    case _: XSubmitOrderReq | _: XCancelOrderReq =>
       Some(OrderHandlerActor.name)
 
     case _ @(XGetBalanceAndAllowancesReq | XGetBalanceReq | XGetAllowanceReq |
@@ -63,7 +62,10 @@ class EntryPointActor(
     case _ @(XJsonRpcReq | XRpcReqWithHeight) ⇒
       Some(EthereumAccessActor.name)
 
-    case req: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
+    case _: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
+
+    case _: XGetOrdersForUserReq | _: XGetTradesReq =>
+      Some(DatabaseQueryMessageValidator.name)
 
     case _ => None
   }

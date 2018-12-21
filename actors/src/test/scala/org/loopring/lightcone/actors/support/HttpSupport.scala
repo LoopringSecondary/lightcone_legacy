@@ -22,11 +22,10 @@ import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.RpcBinding
-import org.loopring.lightcone.actors.jsonrpc.JsonRpcRequest
+import org.loopring.lightcone.actors.jsonrpc.{JsonRpcRequest, JsonRpcResponse}
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.XErrorCode
 import scalapb.json4s.JsonFormat
-
 import scala.concurrent.ExecutionContext
 
 trait HttpSupport extends RpcBinding {
@@ -66,11 +65,30 @@ trait HttpSupport extends RpcBinding {
           )
         )
       )
+      _ = println(s"### ${response}")
       res <- response.status match {
         case StatusCodes.OK =>
           response.entity.toStrict(timeout.duration).map { r =>
-            getPayloadConverter(method).get
-              .convertToResponse(parse.parse(r.data.utf8String))
+            val j = parse.parse(r.data.utf8String).extract[JsonRpcResponse]
+
+            j.result match {
+              case Some(r1) =>
+                getPayloadConverter(method).get
+                  .convertToResponse(r1)
+              case None =>
+                j.error match {
+                  case Some(err) =>
+                    throw ErrorException(
+                      XErrorCode.ERR_INTERNAL_UNKNOWN,
+                      s"msg:${err}"
+                    )
+                  case None =>
+                    throw ErrorException(
+                      XErrorCode.ERR_INTERNAL_UNKNOWN,
+                      s"res:${response}"
+                    )
+                }
+            }
           }
         case _ =>
           throw ErrorException(

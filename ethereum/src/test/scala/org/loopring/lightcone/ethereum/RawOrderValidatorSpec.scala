@@ -86,9 +86,6 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withParams(params1)
       .withFeeParams(feeParams1)
 
-    // val order1WithDefault =
-    //   validator.setupEmptyFieldsWithDefaults(order1, lrcAddress)
-
     val hash = validator.calculateOrderHash(order1)
     println(s"order1 hash:$hash")
     val hash1Expected =
@@ -121,9 +118,6 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withValidSince(validSince)
       .withParams(params2)
       .withFeeParams(feeParams2)
-
-    // val order2WithDefault =
-    //   validator.setupEmptyFieldsWithDefaults(order2, lrcAddress)
 
     val hash2 = validator.calculateOrderHash(order2)
     println(s"order2 hash:$hash2")

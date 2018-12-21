@@ -16,26 +16,21 @@
 
 package org.loopring.lightcone.actors.support
 
-import akka.testkit.TestProbe
-import org.loopring.lightcone.actors.core.MarketManagerActor
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.core.DatabaseQueryActor
+import org.loopring.lightcone.actors.validator.{
+  DatabaseQueryMessageValidator,
+  MessageValidationActor
+}
 
-trait AccountManagerSupport {
+trait DatabaseQueryMessageSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
-  val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
-
-    def expectQuery() = expectMsgPF() {
-      case XSubmitSimpleOrderReq(addr, Some(xorder)) =>
-        info(s"received XSubmitOrderReq: ${addr}, ${xorder}")
-    }
-
-    def replyWith() =
-      reply(
-        XSubmitOrderRes()
-      )
-  }
-  actors.del(MarketManagerActor.name)
-  actors.add(MarketManagerActor.name, marketManagerProbe.ref)
-
+  actors.add(
+    DatabaseQueryMessageValidator.name,
+    MessageValidationActor(
+      new DatabaseQueryMessageValidator(),
+      DatabaseQueryActor.name,
+      DatabaseQueryMessageValidator.name
+    )
+  )
 }

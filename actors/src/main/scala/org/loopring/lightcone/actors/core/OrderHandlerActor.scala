@@ -28,7 +28,6 @@ import org.loopring.lightcone.lib.{ErrorException, _}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent._
 
 // main owner: 于红雨
@@ -76,18 +75,20 @@ class OrderHandlerActor(
   def receive: Receive = {
     case req: XCancelOrderReq ⇒
       (for {
-        // TODO(yongfeng): return the order owner's address
         cancelRes <- dbModule.orderService.markOrderSoftCancelled(Seq(req.id))
       } yield {
         cancelRes.headOption match {
           case Some(res) ⇒
-            req //todo:测试
+            if (res.order.isEmpty)
+              throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
+            req.copy(owner = res.order.get.owner)
           case None ⇒
             throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }
       }) forwardTo (mammv, sender)
 
     case XSubmitOrderReq(Some(raworder)) ⇒
+      log.info(s"### XSubmitOrderReq11 ${raworder} ")
       (for {
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         saveRes <- dbModule.orderService.saveOrder(raworder)

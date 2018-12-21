@@ -27,9 +27,8 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.pattern.ask
 import com.typesafe.config.Config
-
 import org.json4s.jackson.Serialization
-
+import com.typesafe.config.Config
 import scala.reflect.runtime.universe._
 import scala.concurrent.duration._
 import scala.concurrent._
@@ -45,6 +44,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
   val JSON_RPC_VER = "2.0"
 
+  //todo：可能没生效，导致每次异常都导致server挂掉，需要再处理下
   implicit val myExceptionHandler = ExceptionHandler {
     case e: ErrorException =>
       replyWithError(e.error.code.value, Some(e.error.message))("", None)

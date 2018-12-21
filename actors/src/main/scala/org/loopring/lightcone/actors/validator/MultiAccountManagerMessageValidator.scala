@@ -17,10 +17,8 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.lib._
-import org.web3j.utils.Assertions
 
 object MultiAccountManagerMessageValidator {
   val name = "multi_account_manager_validator"
@@ -30,10 +28,12 @@ object MultiAccountManagerMessageValidator {
 final class MultiAccountManagerMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
+  val supportedMarkets = SupportedMarkets(config)
+
   // Throws exception if validation fails.
   private def verifyAddressValid(address: String) = {
     //todo: 测试暂时注释
-//    throw ErrorException(ERR_INVALID_ARGUMENT, s"invalid address $address")
+    //    throw ErrorException(ERR_INVALID_ARGUMENT, s"invalid address $address")
   }
 
   def validate = {
@@ -41,8 +41,22 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
       verifyAddressValid(req.owner)
       req
 
-    case req: XSubmitSimpleOrderReq ⇒ req
-    case req: XRecoverOrderReq => req
+    case req: XSubmitSimpleOrderReq ⇒
+      req.order match {
+        case None =>
+          throw ErrorException(
+            XErrorCode.ERR_INVALID_ARGUMENT,
+            s"bad request:${req}"
+          )
+        case Some(order) =>
+          val marketIdInternal = supportedMarkets.assertmarketIdIsValid(
+            XMarketId(order.tokenS, order.tokenB)
+          )
+          req.copy(order = Some(order)) //todo:需要覆盖token地址
+      }
+      req
+
+    case req: XRecover.RecoverOrderReq => req
     case req: XGetBalanceAndAllowancesReq ⇒ req
     case req: XAddressBalanceUpdated ⇒ req
     case req: XAddressAllowanceUpdated ⇒ req

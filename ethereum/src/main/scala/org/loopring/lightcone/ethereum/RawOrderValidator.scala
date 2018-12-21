@@ -25,11 +25,6 @@ import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.proto.XErrorCode._
 
 trait RawOrderValidator {
-
-  // def setupEmptyFieldsWithDefaults(
-  //     order: XRawOrder,
-  //     lrcAddress: String
-  //   ): XRawOrder
   def calculateOrderHash(order: XRawOrder): String
   def validate(order: XRawOrder): Either[XErrorCode, XRawOrder]
 }
@@ -46,52 +41,6 @@ object RawOrderValidatorImpl extends RawOrderValidator {
 
   val Eip712DomainHash =
     "0xaea25658c273c666156bd427f83a666135fcde6887a6c25fc1cd1562bc4f3f34"
-
-  // def setupEmptyFieldsWithDefaults(
-  //     order: XRawOrder,
-  //     lrcAddress: String
-  //   ) = {
-  //   val defaultAddr = "0x0"
-  //   val fullZeroAddr = "0x" + "0" * 40
-  //   val defaultUint256 = ByteString.copyFromUtf8("0")
-  //   val zeroBytes32Str = "0x" + "0" * 64
-
-  //   val addressGetOrDefault = (addr: String) =>
-  //     if (isValidAddress(addr)) addr else defaultAddr
-
-  //   val uint256GetOrDefault = (uint256Bs: ByteString) => {
-  //     if (uint256Bs.isEmpty) defaultUint256 else uint256Bs
-  //   }
-
-  //   var params = order.params.getOrElse(new XRawOrder.Params)
-  //   var feeParams = order.feeParams.getOrElse(new XRawOrder.FeeParams)
-  //   var erc1400Params =
-  //     order.erc1400Params.getOrElse(new XRawOrder.ERC1400Params)
-
-  //   params = params.copy(
-  //     dualAuthAddr = addressGetOrDefault(params.dualAuthAddr),
-  //     broker = addressGetOrDefault(params.broker),
-  //     orderInterceptor = addressGetOrDefault(params.orderInterceptor),
-  //     wallet = addressGetOrDefault(params.wallet)
-  //   )
-
-  //   feeParams = feeParams.copy(
-  //     amountFee = uint256GetOrDefault(feeParams.amountFee),
-  //     tokenRecipient = addressGetOrDefault(feeParams.tokenRecipient)
-  //   )
-
-  //   if (feeParams.tokenFee.length == 0
-  //       || feeParams.tokenFee == defaultAddr
-  //       || feeParams.tokenFee == fullZeroAddr) {
-  //     feeParams = feeParams.copy(tokenFee = lrcAddress)
-  //   }
-
-  //   order.copy(
-  //     params = Option(params),
-  //     feeParams = Option(feeParams),
-  //     erc1400Params = Option(erc1400Params)
-  //   )
-  // }
 
   def calculateOrderHash(order: XRawOrder): String = {
     def strToHex(str: String) = str.getBytes.map("%02X" format _).mkString
