@@ -34,6 +34,10 @@ import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.ethereum.RingBatchGeneratorImpl
+import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.persistence.dals.OrderDalImpl
+
 import scala.concurrent._
 import scala.annotation.tailrec
 
@@ -70,16 +74,15 @@ class RingSettlementActor(
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef])
+    val actors: Lookup[ActorRef],
+    val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(RingSettlementActor.name)
     with RepeatedJobActor {
 
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
   private var nonce = new AtomicInteger(0)
-  // val ringSigner = new RingSignerImpl(
-  //   privateKey = selfConfig.getString("submitter-private-key")
-  // )
+  implicit val ringContext = XRingBatchContext()
 
   val repeatedJobs = Nil
 
@@ -87,13 +90,20 @@ class RingSettlementActor(
   private def gasPriceActor = actors.get(GasPriceActor.name)
 
   override def receive: Receive = super.receive orElse LoggingReceive {
-    // case req: XSettleRingsReq =>
-    //   val rings = generateRings(req.rings)
-    //   rings.foreach {
-    //     ring =>
-    //       val inputData = ringSigner.getInputData(ring)
-    //       signAndSubmitTx(inputData, req.gasLimit, req.gasPrice)
-    //   }
+    case req: XSettleRingsReq =>
+      for {
+        rawOrders ← Future.sequence(req.rings.map { xOrderRing ⇒
+          dbModule.orderService.getOrders(
+            Seq(
+              xOrderRing.maker.get.order.get.id,
+              xOrderRing.taker.get.order.get.id
+            )
+          )
+        })
+        xRingBatch = RingBatchGeneratorImpl.generateAndSignRingBatch(rawOrders)
+        inputData = RingBatchGeneratorImpl.toSubmitableParamStr(xRingBatch)
+        hash = signAndSubmitTx(inputData, req.gasLimit, req.gasPrice)
+      } yield {}
     case _ =>
   }
 
@@ -102,14 +112,15 @@ class RingSettlementActor(
       gasLimit: BigInt,
       gasPrice: BigInt
     ) = {
-    // var hasSended = false
-    // while (!hasSended) {
-    //   val txData = ringSigner.getSignedTxData(inputData, nonce.get(), gasLimit, gasPrice)
-    //   val sendFuture = ethereumAccessActor ? XSendRawTransaction(txData)
-    //   //todo:需要等待提交被确认才提交下一个
-    //   nonce.getAndIncrement()
-    //   hasSended = true
-    // }
+    var hasSended = false
+    while (!hasSended) {
+      val txData =
+        ringSigner.getSignedTxData(inputData, nonce.get(), gasLimit, gasPrice)
+      val sendFuture = ethereumAccessActor ? XSendRawTransaction(txData)
+      //todo:需要等待提交被确认才提交下一个
+      nonce.getAndIncrement()
+      hasSended = true
+    }
 
   }
 
