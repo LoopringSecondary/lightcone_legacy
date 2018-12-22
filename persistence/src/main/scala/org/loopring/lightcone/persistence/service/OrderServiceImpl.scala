@@ -34,14 +34,14 @@ class OrderServiceImpl @Inject()(
     extends OrderService {
   val orderDal: OrderDal = new OrderDalImpl()
 
-  private def giveUserOrder(order: Option[XRawOrder]): XRawOrder = {
+  private def giveUserOrder(order: Option[XRawOrder]): Option[XRawOrder] = {
     order match {
       case Some(o) =>
         val state = o.state.get
         val returnState =
           XRawOrder.State(status = state.status, createdAt = state.createdAt)
-        o.copy(state = Some(returnState), sequenceId = 0, marketHash = "")
-      case None => XRawOrder()
+        Some(o.copy(state = Some(returnState), sequenceId = 0, marketHash = ""))
+      case None => None
     }
   }
 
@@ -70,14 +70,9 @@ class OrderServiceImpl @Inject()(
     } yield {
       if (updated == XErrorCode.ERR_NONE) {
         orderHashes.map { orderHash =>
-          val orderOpt = selectOwners.get(orderHash)
-          val returnOrderOpt = orderOpt match {
-            case Some(o) => Some(giveUserOrder(orderOpt))
-            case None    => None
-          }
           XUserCancelOrderResult.Result(
             orderHash,
-            returnOrderOpt,
+            giveUserOrder(selectOwners.get(orderHash)),
             XErrorCode.ERR_NONE
           )
         }
@@ -113,7 +108,7 @@ class OrderServiceImpl @Inject()(
         sort,
         skip
       )
-      .map(_.map(r => giveUserOrder(Some(r))))
+      .map(_.map(r => giveUserOrder(Some(r)).get))
 
   def getOrdersForUser(
       statuses: Set[XOrderStatus],
@@ -136,7 +131,7 @@ class OrderServiceImpl @Inject()(
         sort,
         skip
       )
-      .map(_.map(r => giveUserOrder(Some(r))))
+      .map(_.map(r => giveUserOrder(Some(r)).get))
 
   def getOrdersForRecover(
       statuses: Set[XOrderStatus],
