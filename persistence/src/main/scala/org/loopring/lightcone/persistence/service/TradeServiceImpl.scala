@@ -35,7 +35,9 @@ class TradeServiceImpl @Inject()(
     tradeDal.saveTrade(trade)
 
   def getTrades(request: XGetTradesReq): Future[Seq[XTrade]] =
-    tradeDal.getTrades(request)
+    tradeDal
+      .getTrades(request)
+      .map(_.map(r => r.copy(updatedAt = 0, sequenceId = 0)))
 
   def countTrades(request: XGetTradesReq): Future[Int] =
     tradeDal.countTrades(request)

@@ -469,9 +469,15 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       result.mapTo[(Seq[XUserCancelOrderResult.Result], Int, Int)],
       5.second
     )
-    val x = res._1.length === 3 && res._1
-      .filter(_.error !== XErrorCode.ERR_NONE)
-      .isEmpty && res._2 === 6 && res._3 === 3
+    res._1.map { o =>
+      o.order match {
+        case None    => assert(false)
+        case Some(_) => assert(true)
+      }
+    }
+    val x = res._1.length === 3 && !res._1.exists(
+      _.error !== XErrorCode.ERR_NONE
+    ) && res._2 === 6 && res._3 === 3
     x should be(true)
   }
 }

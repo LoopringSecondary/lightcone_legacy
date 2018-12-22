@@ -34,6 +34,17 @@ class OrderServiceImpl @Inject()(
     extends OrderService {
   val orderDal: OrderDal = new OrderDalImpl()
 
+  private def giveUserOrder(order: Option[XRawOrder]): XRawOrder = {
+    order match {
+      case Some(o) =>
+        val state = o.state.get
+        val returnState =
+          XRawOrder.State(status = state.status, createdAt = state.createdAt)
+        o.copy(state = Some(returnState), sequenceId = 0, marketHash = "")
+      case None => XRawOrder()
+    }
+  }
+
   // Save order to database, if the order already exist, return an error code.
   def saveOrder(order: XRawOrder): Future[Either[XRawOrder, XErrorCode]] =
     for {
@@ -59,9 +70,14 @@ class OrderServiceImpl @Inject()(
     } yield {
       if (updated == XErrorCode.ERR_NONE) {
         orderHashes.map { orderHash =>
+          val orderOpt = selectOwners.get(orderHash)
+          val returnOrderOpt = orderOpt match {
+            case Some(o) => Some(giveUserOrder(orderOpt))
+            case None    => None
+          }
           XUserCancelOrderResult.Result(
             orderHash,
-            selectOwners.get(orderHash),
+            returnOrderOpt,
             XErrorCode.ERR_NONE
           )
         }
@@ -86,16 +102,18 @@ class OrderServiceImpl @Inject()(
       sort: Option[XSort],
       skip: Option[XSkip]
     ): Future[Seq[XRawOrder]] =
-    orderDal.getOrders(
-      statuses,
-      owners,
-      tokenSSet,
-      tokenBSet,
-      marketHashSet,
-      feeTokenSet,
-      sort,
-      skip
-    )
+    orderDal
+      .getOrders(
+        statuses,
+        owners,
+        tokenSSet,
+        tokenBSet,
+        marketHashSet,
+        feeTokenSet,
+        sort,
+        skip
+      )
+      .map(_.map(r => giveUserOrder(Some(r))))
 
   def getOrdersForUser(
       statuses: Set[XOrderStatus],
@@ -107,16 +125,18 @@ class OrderServiceImpl @Inject()(
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]] =
-    orderDal.getOrdersForUser(
-      statuses,
-      owner,
-      tokenS,
-      tokenB,
-      marketHashSet,
-      feeTokenSet,
-      sort,
-      skip
-    )
+    orderDal
+      .getOrdersForUser(
+        statuses,
+        owner,
+        tokenS,
+        tokenB,
+        marketHashSet,
+        feeTokenSet,
+        sort,
+        skip
+      )
+      .map(_.map(r => giveUserOrder(Some(r))))
 
   def getOrdersForRecover(
       statuses: Set[XOrderStatus],
@@ -178,7 +198,6 @@ class OrderServiceImpl @Inject()(
       hash: String,
       status: XOrderStatus
     ): Future[XErrorCode] = {
-    // TODO du: 验证订单状态 从[new, partially] -> pending， 从cancel不能更新其他
     orderDal.updateOrderStatus(hash, status)
   }
 
