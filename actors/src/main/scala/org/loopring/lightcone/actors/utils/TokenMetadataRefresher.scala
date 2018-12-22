@@ -52,14 +52,14 @@ class TokenMetadataRefresher(
     with ActorLogging
     with RepeatedJobActor {
 
-  private val tokenMetadata = dbModule.tokenMetadata
+  private val tokenMetadataService = dbModule.tokenMetadataService
 
   val repeatedJobs = Seq(
     Job(
       name = "sync-token-metadata",
       dalayInSeconds = 10 * 60, // 10 minutes
       run = () =>
-        tokenMetadata.getTokens(true).map { tokens =>
+        tokenMetadataService.getTokens(true).map { tokens =>
           tokenMetadataManager.reset(tokens)
         }
     )
