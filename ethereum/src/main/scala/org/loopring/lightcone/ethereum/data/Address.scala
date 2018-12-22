@@ -17,6 +17,8 @@
 package org.loopring.lightcone.ethereum.data
 
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto.XErrorCode
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils
 
@@ -84,5 +86,16 @@ object Address {
         false
     }
   }
+
+  def normalizeAddress(address: String): String =
+    try {
+      Address(address).toString
+    } catch {
+      case _: Throwable ⇒
+        throw ErrorException(
+          XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+          message = s"invalid ethereum address:$address"
+        )
+    }
 
 }

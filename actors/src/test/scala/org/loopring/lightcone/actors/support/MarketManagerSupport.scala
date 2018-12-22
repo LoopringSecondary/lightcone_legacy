@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.validator
+package org.loopring.lightcone.actors.support
 
-import com.typesafe.config.Config
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.core._
 
-object MarketManagerMessageValidator {
-  val name = "market_manager_validator"
-}
+trait MarketManagerSupport {
+  my: CommonSpec =>
 
-final class MarketManagerMessageValidator()(implicit val config: Config)
-    extends MessageValidator {
+  actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
 
-  // Throws exception if validation fails.
-  def validate = {
-    case x => x
+  if (!actors.contains(GasPriceActor.name)) {
+    actors.add(GasPriceActor.name, GasPriceActor.startShardRegion())
   }
+
+  actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
 }

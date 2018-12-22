@@ -26,7 +26,7 @@ object ErrorException {
 
   def apply(
       code: XErrorCode,
-      message: String
+      message: String = ""
     ) = new ErrorException(XError(code, message))
   def apply(error: XError) = new ErrorException(error)
 }

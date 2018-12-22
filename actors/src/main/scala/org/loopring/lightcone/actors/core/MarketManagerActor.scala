@@ -18,12 +18,11 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.sharding._
-import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
-import collection.JavaConverters._
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Order
@@ -31,10 +30,11 @@ import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
-import scala.concurrent._
 import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto._
+
+import scala.collection.JavaConverters._
+import scala.concurrent._
 import scala.concurrent.duration._
 
 // main owner: 于红雨
@@ -55,23 +55,38 @@ object MarketManagerActor extends ShardedByMarket {
       tokenMetadataManager: TokenMetadataManager
     ): ActorRef = {
     numOfShards = 10
+
+    val markets = config
+      .getObjectList("markets")
+      .asScala
+      .map { item =>
+        val c = item.toConfig
+        val marketId =
+          XMarketId(c.getString("priamry"), c.getString("secondary"))
+        MarketManagerActor.getEntityId(marketId) -> marketId
+      }
+      .toMap
+
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new MarketManagerActor()),
+      entityProps = Props(new MarketManagerActor(markets)),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketName: PartialFunction[Any, String] = {
-    case _ => ""
+  val extractMarketId: PartialFunction[Any, XMarketId] = {
+    case XSubmitSimpleOrderReq(_, Some(xorder)) =>
+      XMarketId(xorder.tokenS, xorder.tokenB)
+    case XCancelOrderReq(_, _, _, Some(marketId)) =>
+      marketId
   }
 
 }
 
 class MarketManagerActor(
+    markets: Map[String, XMarketId]
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -84,17 +99,16 @@ class MarketManagerActor(
     val tokenMetadataManager: TokenMetadataManager)
     extends ActorWithPathBasedConfig(
       MarketManagerActor.name,
-      MarketManagerActor.extractEntityName
+      MarketManagerActor.extractEntityId
     )
     with ActorLogging {
 
-  val marketName = entityName
   var autoSwitchBackToReceive: Option[Cancellable] = None
 
   val wethTokenAddress = config.getString("weth.address")
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
-  val maxrecoverWindowMinutes =
+  val maxRecoverDurationMinutes =
     selfConfig.getInt("max-recover-duration-minutes")
 
   val gasLimitPerRingV2 = BigInt(
@@ -104,7 +118,8 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
-  implicit val marketId = extractMarketMap(selfConfig)(marketName)
+  implicit val marketId = markets(entityId)
+
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
     selfConfig.getInt("price-decimals")
   )
@@ -118,15 +133,6 @@ class MarketManagerActor(
     aggregator
   )
 
-  // TODO(yongfeng): load marketconfig from database throught a service interface
-  // based on marketName
-  val xorderbookConfig = XMarketConfig(
-    levels = selfConfig.getInt("levels"),
-    priceDecimals = selfConfig.getInt("price-decimals"),
-    precisionForAmount = selfConfig.getInt("precision-for-amount"),
-    precisionForTotal = selfConfig.getInt("precision-for-total")
-  )
-
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   protected def settlementActor = actors.get(RingSettlementActor.name)
@@ -136,16 +142,22 @@ class MarketManagerActor(
 
     autoSwitchBackToReceive = Some(
       context.system.scheduler
-        .scheduleOnce(maxrecoverWindowMinutes.minute, self, XRecoverEnded(true))
+        .scheduleOnce(
+          maxRecoverDurationMinutes.minute,
+          self,
+          XRecover.Finished(true)
+        )
     )
 
     if (skiprecover) {
       log.warning(s"actor recover skipped: ${self.path}")
     } else {
-      context.become(recover)
+
       log.debug(s"actor recover started: ${self.path}")
       actors.get(OrderRecoverCoordinator.name) !
-        XRecoverReq(marketIds = Seq(marketId))
+        XRecover.Request(marketId = Some(marketId))
+
+      context.become(recover)
     }
   }
 
@@ -154,28 +166,28 @@ class MarketManagerActor(
     case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder)
 
-    case msg @ XRecoverEnded(timeout) =>
+    case msg @ XRecover.Finished(timeout) =>
       autoSwitchBackToReceive.foreach(_.cancel)
       autoSwitchBackToReceive = None
-      s"market manager `${entityName}` recover completed (due to timeout: ${timeout})"
+      s"market manager `${entityId}` recover completed (timeout=${timeout})"
       context.become(receive)
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
       sender ! XError(
         ERR_REJECTED_DURING_RECOVER,
-        s"market manager `${entityName}` is being recovered"
+        s"market manager `${entityId}` is being recovered"
       )
   }
 
-  def receive: Receive = LoggingReceive {
+  def receive: Receive = {
 
     case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder)
 
-    case XCancelOrderReq(orderId, _, _) ⇒
+    case XCancelOrderReq(orderId, _, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
-        orderbookManagerActor ! orderbookUpdate.copy(marketName = marketName)
+        orderbookManagerActor ! orderbookUpdate.copy(marketId = Some(marketId))
       }
       sender ! XCancelOrderRes(id = orderId)
 
@@ -249,24 +261,8 @@ class MarketManagerActor(
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerActor ! ou.copy(marketName = marketName)
+      orderbookManagerActor ! ou.copy(marketId = Some(marketId))
     }
-  }
-
-  private def extractMarketMap(config: Config): Map[String, XMarketId] = {
-    config
-      .getObjectList("markets")
-      .asScala
-      .map { item =>
-        val c = item.toConfig
-        val marketId =
-          XMarketId(c.getString("priamry"), c.getString("secondary"))
-        val hash = MarketManagerActor
-          .hashed(marketId)
-          .toString
-        hash -> marketId
-      }
-      .toMap
   }
 
   def recoverOrder(xraworder: XRawOrder): Future[Any] =

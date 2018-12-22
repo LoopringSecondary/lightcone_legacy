@@ -36,5 +36,7 @@ final class DatabaseQueryMessageValidator()(implicit val config: Config)
     case req: XUserCancelOrderReq ⇒
       if (req.orderHashes.isEmpty)
         throw ErrorException(XError(XErrorCode.ERR_PERSISTENCE_INVALID_DATA))
+    case req: XGetOrdersForUserReq => req
+    case req: XGetTradesReq        => req
   }
 }

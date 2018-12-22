@@ -25,13 +25,15 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import akka.serialization._
+import scalapb.json4s.JsonFormat
 
 object OrderRecoverCoordinator extends {
   val name = "order_recover_coordinator"
-
 }
 
 class OrderRecoverCoordinator(
@@ -42,11 +44,79 @@ class OrderRecoverCoordinator(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator)
-    extends Actor
+    extends ActorWithPathBasedConfig(OrderRecoverCoordinator.name)
     with ActorLogging {
 
+  val batchTimeout = selfConfig.getInt("batch-timeout-seconds")
+  var activeBatches = Map.empty[ActorRef, XRecover.Batch]
+  var pendingBatch = XRecover.Batch(batchId = 1)
+  var batchTimer: Option[Cancellable] = None
+
   def receive: Receive = {
-    case req: Any =>
+
+    case req: XRecover.Request =>
+      cancelBatchTimer()
+
+      val requesterPath = Serialization.serializedActorPath(sender)
+
+      activeBatches.filter {
+        case (_, batch) => batch.requestMap.contains(requesterPath)
+      }.foreach {
+        case (orderRecoverActor, _) =>
+          // Notify the actor to stop handling the request in a previous batch
+          orderRecoverActor ! XRecover.CancelFor(requesterPath)
+      }
+
+      val requestMap = pendingBatch.requestMap + (requesterPath -> req)
+      pendingBatch = pendingBatch.copy(requestMap = requestMap)
+
+      log.info(s"current pending batch recovery request: ${pendingBatch}")
+
+      startBatchTimer()
+
+    case req: XRecover.Timeout =>
+      if (pendingBatch.requestMap.nonEmpty) {
+        actors.get(OrderRecoverActor.name) ! pendingBatch
+        pendingBatch = XRecover.Batch(pendingBatch.batchId + 1)
+      }
+
+    // This message should be sent from OrderRecoverActors
+    case batch: XRecover.Batch =>
+      val isUpdate =
+        if (activeBatches.contains(sender)) "UPDATED" else "STARTED"
+
+      log.warning(s"""
+      |>>>
+      |>>> BATCH RECOVER ${isUpdate}:
+      |>>> ${JsonFormat.toJsonString(batch)}
+      |>>> """)
+
+      activeBatches += sender -> batch
+
+    // This message should be sent from OrderRecoverActors
+    case msg: XRecover.Finished if activeBatches.contains(sender) =>
+      log.warning(s"""
+      |>>>
+      |>>> BATCH RECOVER FINISHED:
+      |>>> ${JsonFormat.toJsonString(activeBatches(sender))}
+      |>>> """)
+
+      activeBatches -= sender
+
+  }
+
+  private def startBatchTimer() {
+    if (batchTimer.isEmpty) {
+      batchTimer = Some(
+        context.system.scheduler
+          .scheduleOnce(batchTimeout.seconds, self, XRecover.Timeout())
+      )
+    }
+  }
+
+  private def cancelBatchTimer() {
+    batchTimer.foreach(_.cancel)
+    batchTimer = None
   }
 
 }

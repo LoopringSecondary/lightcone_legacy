@@ -18,76 +18,97 @@ package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.XError
+import org.loopring.lightcone.proto.{XError, XJsonRpcReq, XJsonRpcRes}
 import org.json4s._
 import org.json4s.JsonAST.JValue
-import scalapb.json4s.JsonFormat
-import akka.http.scaladsl.Http
 import akka.actor._
 import akka.util.Timeout
-import akka.stream.ActorMaterializer
-import akka.http.scaladsl.server._
-import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.pattern.ask
+import com.typesafe.config.Config
+import org.json4s.jackson.Serialization
+import com.typesafe.config.Config
 import scala.reflect.runtime.universe._
 import scala.concurrent.duration._
 import scala.concurrent._
+import scala.util.{Failure, Success}
 
 trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   val requestHandler: ActorRef
-  val endpoint: String = "jsonrpc"
+  val config: Config
 
   implicit val system: ActorSystem
-  implicit val timeout = Timeout(2 second)
-  implicit val ec = ExecutionContext.global
+  implicit val timeout: Timeout
+  implicit val ec: ExecutionContext
 
   val JSON_RPC_VER = "2.0"
 
-  implicit val myExceptionHandler = ExceptionHandler {
+  val myExceptionHandler: ExceptionHandler = ExceptionHandler {
     case e: ErrorException =>
-      replyWithError(e.error.code.value, Some(e.error.message))("", None)
+      replyWithError(e.error.code.value, Some(e.error.message))(None)
 
     case e: Throwable =>
-      replyWithError(-32603, Some(e.getMessage))("", None)
+      replyWithError(-32603, Some(e.getMessage))(None)
   }
 
-  val routes: Route = {
-    path(endpoint) {
-      post {
-        entity(as[JsonRpcRequest]) { jsonReq =>
-          implicit val method = jsonReq.method
-          implicit val id = jsonReq.id
+  val routes: Route = handleExceptions(myExceptionHandler) {
+    pathPrefix(config.getString("jsonrpc.endpoint")) {
+      path(config.getString("jsonrpc.loopring")) {
+        post {
+          entity(as[JsonRpcRequest]) { jsonReq =>
+            val method = jsonReq.method
+            implicit val id = jsonReq.id
 
-          if (id.isEmpty) {
-            replyWithError(-32000, Some("`id missing"))
-          } else {
-            getPayloadConverter(method) match {
-              case None =>
-                replyWithError(-32601)
+            if (id.isEmpty) {
+              replyWithError(-32000, Some("`id missing"))
+            } else {
+              getPayloadConverter(method) match {
+                case None =>
+                  replyWithError(-32601)
 
-              case Some(converter) =>
-                jsonReq.params.map(converter.convertToRequest) match {
-                  case None =>
-                    replyWithError(
-                      -32602,
-                      Some("`params` is missing, use `{}` as default value")
-                    )
+                case Some(converter) =>
+                  jsonReq.params.map(converter.convertToRequest) match {
+                    case None =>
+                      replyWithError(
+                        -32602,
+                        Some("`params` is missing, use `{}` as default value")
+                      )
 
-                  case Some(req) =>
-                    val f = (requestHandler ? req).map {
-                      case err: XError => throw ErrorException(err)
-                      case other       => other
-                    }
+                    case Some(req) =>
+                      val f = (requestHandler ? req).map {
+                        case err: XError => throw ErrorException(err)
+                        case other       => other
+                      }
 
-                    onSuccess(f) { resp =>
-                      replyWith(converter.convertFromResponse(resp))
-                    }
-                }
+                      onSuccess(f) { resp =>
+                        replyWith(converter.convertFromResponse(resp))
+                      }
+                  }
+              }
             }
           }
         }
-      }
+      } ~
+        path(config.getString("jsonrpc.ethereum")) {
+          post {
+            entity(as[JsonRpcRequest]) { jsonReq =>
+              val f =
+                (requestHandler ? XJsonRpcReq(Serialization.write(jsonReq)))
+                  .mapTo[XJsonRpcRes]
+
+              onComplete(f) {
+                case Success(resp) ⇒
+                  complete(
+                    Serialization.read[JsonRpcResponse](resp.json)
+                  )
+                case Failure(e) ⇒
+                  replyWithError(-32603, Some(e.getMessage))(jsonReq.id)
+              }
+
+            }
+          }
+        }
     }
   }
 
@@ -96,25 +117,18 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
       message: Option[String] = None,
       data: Option[JValue] = None
     )(
-      implicit method: String,
-      id: Option[String]
+      implicit id: Option[String]
     ) =
     complete(
       JsonRpcResponse(
         JSON_RPC_VER,
-        method,
         None,
         Some(JsonRpcError(code, message, data)),
         id
       )
     )
 
-  private def replyWith(
-      content: JValue
-    )(
-      implicit method: String,
-      id: Option[String]
-    ) =
-    complete(JsonRpcResponse(JSON_RPC_VER, method, Option(content), None, id))
+  private def replyWith(content: JValue)(implicit id: Option[String]) =
+    complete(JsonRpcResponse(JSON_RPC_VER, Option(content), None, id))
 
 }

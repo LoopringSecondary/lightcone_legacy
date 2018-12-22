@@ -14,49 +14,27 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.ethereum
 
-import scala.util.Properties
 import org.scalatest._
-
-import com.typesafe.config.ConfigFactory
 import com.google.protobuf.ByteString
-
 import org.loopring.lightcone.proto._
 
-class MyConfig(val fileNameOption: Option[String] = None) {
-
-  val config = fileNameOption.fold(ifEmpty = ConfigFactory.load())(
-    file => ConfigFactory.load(file)
-  )
-
-  def envOrElseConfig(name: String): String = {
-    Properties.envOrElse(
-      name.toUpperCase.replaceAll("""\.""", "_"),
-      config.getString(name)
-    )
-  }
-}
-
 class RingBatchGeneratorSpec extends FlatSpec with Matchers {
-  val ethereumConf = new MyConfig(Some("ethereum.conf"))
-
-  println(s"ethereumConf: $ethereumConf")
-
   "simple 2 tradable orders" should "be able to generate a ring" in {
-    val lrcAddress = ethereumConf.envOrElseConfig("contracts.LRC")
-    val wethAddress = ethereumConf.envOrElseConfig("contracts.WETH")
-    val gtoAddress = ethereumConf.envOrElseConfig("contracts.GTO")
+    val lrcAddress = TestConfig.envOrElseConfig("contracts.LRC")
+    val wethAddress = TestConfig.envOrElseConfig("contracts.WETH")
+    val gtoAddress = TestConfig.envOrElseConfig("contracts.GTO")
 
-    val order1Owner = ethereumConf.envOrElseConfig("accounts.a1.addr")
-    val order2Owner = ethereumConf.envOrElseConfig("accounts.a2.addr")
+    val order1Owner = TestConfig.envOrElseConfig("accounts.a1.addr")
+    val order2Owner = TestConfig.envOrElseConfig("accounts.a2.addr")
 
-    val miner = ethereumConf.envOrElseConfig("accounts.a3.addr")
-    val minerPrivKey = ethereumConf.envOrElseConfig("accounts.a3.privKey")
+    val miner = TestConfig.envOrElseConfig("accounts.a3.addr")
+    val minerPrivKey = TestConfig.envOrElseConfig("accounts.a3.privKey")
 
     // println(s"lrcAddress: $lrcAddress, $wethAddress, $miner, $minerPrivKey")
 
-    val xRingBatchContext = (new XRingBatchContext)
+    implicit val xRingBatchContext = new XRingBatchContext()
       .withFeeRecipient(miner)
       .withMiner(miner)
       .withTransactionOrigin(miner)
@@ -65,9 +43,9 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
 
     println(s"xRingBatchContext: $xRingBatchContext")
 
-    val ringBatchGenerator = new RingBatchGeneratorImpl(xRingBatchContext)
+    val ringBatchGenerator = RingBatchGeneratorImpl
 
-    val order1 = (new XRawOrder)
+    val order1 = new XRawOrder()
       .withVersion(0)
       .withOwner(order1Owner)
       .withTokenS(lrcAddress)
@@ -75,7 +53,7 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
       .withAmountS(ByteString.copyFromUtf8(1000e18.toLong.toHexString))
       .withAmountB(ByteString.copyFromUtf8(1e18.toLong.toHexString))
 
-    val order2 = (new XRawOrder)
+    val order2 = new XRawOrder()
       .withVersion(0)
       .withOwner(order2Owner)
       .withTokenS(wethAddress)

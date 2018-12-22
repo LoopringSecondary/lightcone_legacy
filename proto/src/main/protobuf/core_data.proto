@@ -106,9 +106,10 @@ enum XTokenStandard {
 }
 
 enum XSigningAlgorithm {
-    ALGO_NONE       = 0;
-    ALGO_ETHEREUM   = 1;
-    ALGO_EIP712     = 2;
+    ALGO_ETHEREUM   = 0;
+    ALGO_EIP712     = 1;
+    
+    ALGO_NONE       = 255;
 }
 
 
@@ -126,6 +127,7 @@ message XRawOrder {
         XTokenStandard token_standard_s   = 9;
         XTokenStandard token_standard_b   = 10;
         XTokenStandard token_standard_fee = 11;
+        string dual_auth_addr_private_key = 12;
     }
 
     message FeeParams {

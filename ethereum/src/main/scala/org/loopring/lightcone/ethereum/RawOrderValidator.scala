@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.ethereum
 
 import org.web3j.crypto.Hash
 import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.utils.Numeric
+import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.proto.XErrorCode._
 
 trait RawOrderValidator {
@@ -27,35 +29,62 @@ trait RawOrderValidator {
   def validate(order: XRawOrder): Either[XErrorCode, XRawOrder]
 }
 
-// TODO(kongliang): implement and test this class
-class RawOrderValidatorImpl extends RawOrderValidator {
-  // TODO this field should be configurable somewhere.
+object RawOrderValidatorImpl extends RawOrderValidator {
+  import ethereum._
+
   val FeePercentageBase = 1000
+  val Eip191Header = "\u0019\u0001"
+
+  val Eip712OrderSchemaHash =
+    "0x40b942178d2a51f1f61934268590778feb8114db632db7d88537c98d2b05c5f2"
+
+  val Eip712DomainHash =
+    "0xaea25658c273c666156bd427f83a666135fcde6887a6c25fc1cd1562bc4f3f34"
 
   def calculateOrderHash(order: XRawOrder): String = {
+    def strToHex(str: String) = str.getBytes.map("%02X" format _).mkString
+
     val bitstream = new Bitstream
-    val feeParams = order.feeParams.get
-    val optionalParams = order.params.get
-    bitstream.addUint(order.amountS.toStringUtf8, true)
-    bitstream.addUint(order.amountB.toStringUtf8, true)
-    bitstream.addUint(feeParams.amountFee.toStringUtf8, true)
+    val feeParams = order.getFeeParams
+    val optionalParams = order.getParams
+    val erc1400Params = order.getErc1400Params
+
+    val transferDataBytes = erc1400Params.transferDataS.getBytes
+    val transferDataHash = Numeric.toHexString(Hash.sha3(transferDataBytes))
+
+    bitstream.addBytes32(Eip712OrderSchemaHash, true)
+    bitstream.addUint(order.amountS, true)
+    bitstream.addUint(order.amountB, true)
+    bitstream.addUint(feeParams.amountFee, true)
     bitstream.addUint(BigInt(order.validSince), true)
     bitstream.addUint(BigInt(optionalParams.validUntil), true)
-    bitstream.addAddress(order.owner, true)
-    bitstream.addAddress(order.tokenS, true)
-    bitstream.addAddress(order.tokenB, true)
-    bitstream.addAddress(optionalParams.dualAuthAddr, true)
-    bitstream.addAddress(optionalParams.broker, true)
-    bitstream.addAddress(optionalParams.orderInterceptor, true)
-    bitstream.addAddress(optionalParams.wallet, true)
-    bitstream.addAddress(feeParams.tokenRecipient, true)
-    bitstream.addAddress(feeParams.tokenFee, true)
-    bitstream.addUint16(feeParams.walletSplitPercentage)
-    bitstream.addUint16(feeParams.tokenSFeePercentage)
-    bitstream.addUint16(feeParams.tokenBFeePercentage)
-    bitstream.addBoolean(optionalParams.allOrNone)
+    bitstream.addAddress(order.owner, 32, true)
+    bitstream.addAddress(order.tokenS, 32, true)
+    bitstream.addAddress(order.tokenB, 32, true)
+    bitstream.addAddress(optionalParams.dualAuthAddr, 32, true)
+    bitstream.addAddress(optionalParams.broker, 32, true)
+    bitstream.addAddress(optionalParams.orderInterceptor, 32, true)
+    bitstream.addAddress(optionalParams.wallet, 32, true)
+    bitstream.addAddress(feeParams.tokenRecipient, 32, true)
+    bitstream.addAddress(feeParams.tokenFee, 32, true)
+    bitstream.addUint(feeParams.walletSplitPercentage)
+    bitstream.addUint(feeParams.tokenSFeePercentage)
+    bitstream.addUint(feeParams.tokenBFeePercentage)
+    bitstream.addUint(if (optionalParams.allOrNone) 1 else 0)
+    bitstream.addUint(optionalParams.tokenStandardS.value)
+    bitstream.addUint(optionalParams.tokenStandardB.value)
+    bitstream.addUint(optionalParams.tokenStandardFee.value)
+    bitstream.addBytes32(erc1400Params.trancheS, true)
+    bitstream.addBytes32(erc1400Params.trancheB, true)
+    bitstream.addBytes32(transferDataHash, true)
+    val orderDataHash = Numeric.toHexString(Hash.sha3(bitstream.getBytes))
 
-    Numeric.toHexString(Hash.sha3(bitstream.getBytes))
+    val outterStream = new Bitstream
+    outterStream.addHex(strToHex(Eip191Header), true)
+    outterStream.addBytes32(Eip712DomainHash, true)
+    outterStream.addBytes32(orderDataHash, true)
+
+    Numeric.toHexString(Hash.sha3(outterStream.getBytes))
   }
 
   def validate(order: XRawOrder): Either[XErrorCode, XRawOrder] = {
@@ -73,8 +102,8 @@ class RawOrderValidatorImpl extends RawOrderValidator {
       isValidAddress(order.owner) -> ERR_ORDER_VALIDATION_INVALID_OWNER,
       isValidAddress(order.tokenS) -> ERR_ORDER_VALIDATION_INVALID_TOKENS,
       isValidAddress(order.tokenB) -> ERR_ORDER_VALIDATION_INVALID_TOKENB,
-      (BigInt(order.amountS.toStringUtf8, 16) > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
-      (BigInt(order.amountB.toStringUtf8, 16) > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
+      (order.amountS > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
+      (order.amountB > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
       (BigInt(order.feeParams.get.waiveFeePercentage) <= FeePercentageBase)
         -> ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE,
       (BigInt(order.feeParams.get.waiveFeePercentage) >= -FeePercentageBase)

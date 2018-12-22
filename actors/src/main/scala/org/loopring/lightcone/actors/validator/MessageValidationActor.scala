@@ -17,11 +17,13 @@
 package org.loopring.lightcone.actors.validator
 
 import akka.actor._
+import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base.safefuture._
+
 import scala.concurrent._
 
 object MessageValidationActor {
@@ -61,7 +63,8 @@ class MessageValidationActor(
             log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
             validatedMsg
 
-          case Some(validatedMsg) => validatedMsg
+          case Some(validatedMsg) =>
+            validatedMsg
 
           case _ =>
             throw ErrorException(
@@ -70,6 +73,7 @@ class MessageValidationActor(
             )
 
         }
-      } forwardTo destinationActor
+      } forwardTo (destinationActor, sender)
+
   }
 }

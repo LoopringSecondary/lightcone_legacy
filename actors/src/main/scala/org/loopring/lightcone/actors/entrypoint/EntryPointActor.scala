@@ -17,14 +17,14 @@
 package org.loopring.lightcone.actors.entrypoint
 
 import akka.actor._
-import akka.util.Timeout
 import akka.event.LoggingReceive
+import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.proto._
 import scala.concurrent.ExecutionContext
 
 object EntryPointActor {
@@ -43,8 +43,11 @@ class EntryPointActor(
     case msg: Any =>
       findDestination(msg) match {
         case Some(dest) =>
-          actors.get(dest) forward msg
-
+          if (actors.contains(dest)) {
+            actors.get(dest) forward msg
+          } else {
+            sender ! XError(ERR_INTERNAL_UNKNOWN, s"not found actor: $dest")
+          }
         case None =>
           sender ! XError(ERR_UNSUPPORTED_MESSAGE, s"unsupported message: $msg")
           log.debug(s"unsupported msg: $msg")
@@ -52,10 +55,22 @@ class EntryPointActor(
   }
 
   def findDestination(msg: Any): Option[String] = msg match {
-    case _ @(XSubmitOrderReq | XCancelOrderReq) =>
+    case _: XSubmitOrderReq | _: XCancelOrderReq =>
       Some(OrderHandlerActor.name)
 
-    case _ @(XGetOrderbook) => Some(OrderbookManagerMessageValidator.name)
+    case _: XGetBalanceAndAllowancesReq ⇒
+      Some(MultiAccountManagerMessageValidator.name)
+
+    case _: XGetBalanceReq | _: XGetAllowanceReq | _: XGetFilledAmountReq ⇒
+      Some(EthereumQueryMessageValidator.name)
+
+    case _: XJsonRpcReq | _: XRpcReqWithHeight ⇒
+      Some(EthereumAccessActor.name)
+
+    case _: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
+
+    case _: XGetOrdersForUserReq | _: XGetTradesReq =>
+      Some(DatabaseQueryMessageValidator.name)
 
     case _ => None
   }

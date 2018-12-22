@@ -59,8 +59,7 @@ object RingSettlementActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new RingSettlementActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }

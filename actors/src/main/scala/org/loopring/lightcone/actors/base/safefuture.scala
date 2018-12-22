@@ -16,13 +16,14 @@
 
 package org.loopring.lightcone.actors.base
 
-import scala.concurrent._
-import scala.util.{Failure, Success}
-import scala.reflect.ClassTag
-import org.loopring.lightcone.proto.XError
-import org.loopring.lightcone.proto.XErrorCode._
 import akka.actor._
 import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto.XError
+import org.loopring.lightcone.proto.XErrorCode._
+
+import scala.concurrent._
+import scala.reflect.ClassTag
+import scala.util.{Failure, Success}
 
 object safefuture {
 
@@ -46,17 +47,20 @@ object safefuture {
     }
 
     // Forward the future to a receiver but will send back an XError to sender in case of exception.
+    //todo:直接使用forward无法使用，暂时以该方式实现功能，后续可以优化
     def forwardTo(
-        recipient: ActorRef
+        recipient: ActorRef,
+        orginSender: ActorRef
       )(
-        implicit sender: ActorRef = Actor.noSender
+        implicit sender: ActorRef
       ): Future[T] = {
       f onComplete {
-        case Success(r) => recipient forward r
+        case Success(r) => recipient.tell(r, orginSender)
         case Failure(f) =>
           f match {
-            case e: ErrorException => sender ! e.error
-            case e: Throwable      => throw e
+            case e: ErrorException =>
+              orginSender ! e.error
+            case e: Throwable => throw e
           }
       }
       f
@@ -64,16 +68,21 @@ object safefuture {
 
     // Send the future to a receiver but will send back an XError to sender in case of exception.
     def sendTo(
-        recipient: ActorRef
+        recipient: ActorRef,
+        orginSenderOpt: Option[ActorRef] = None
       )(
-        implicit sender: ActorRef = Actor.noSender
+        implicit sender: ActorRef
       ): Future[T] = {
       f onComplete {
         case Success(r) => recipient ! r
         case Failure(f) =>
           f match {
-            case e: ErrorException => sender ! e.error
-            case e: Throwable      => throw e
+            case e: ErrorException =>
+              orginSenderOpt match {
+                case Some(orginSender) => orginSender ! e
+                case None              => recipient ! e
+              }
+            case e: Throwable => throw e
           }
       }
       f
