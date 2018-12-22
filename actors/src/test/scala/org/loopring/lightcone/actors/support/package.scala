@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors
 import com.dimafeng.testcontainers.MySQLContainer
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.XTokenMetadata
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
@@ -26,7 +27,7 @@ import slick.jdbc.JdbcProfile
 package object support {
 
   val WETH_TOKEN = XTokenMetadata(
-    "0x08D24FC29CDccF8e9Ca45Eef05384c58F8a8E94F",
+    Address("0x08D24FC29CDccF8e9Ca45Eef05384c58F8a8E94F").toString,
     18,
     0.4,
     "WETH",
@@ -34,7 +35,7 @@ package object support {
   )
 
   val LRC_TOKEN = XTokenMetadata(
-    "0xa345b6c2e5ce5970d026CeA8591DC28958fF6Edc",
+    Address("0xa345b6c2e5ce5970d026CeA8591DC28958fF6Edc").toString,
     18,
     0.4,
     "LRC",
@@ -42,7 +43,7 @@ package object support {
   )
 
   val GTO_TOKEN = XTokenMetadata(
-    "0xBe6727c37cD9c5679Fa99c9A8B4E66035c0A3735",
+    Address("0xBe6727c37cD9c5679Fa99c9A8B4E66035c0A3735").toString,
     18,
     0.4,
     "LRC",
@@ -50,7 +51,7 @@ package object support {
   )
 
   val RDN_TOKEN = XTokenMetadata(
-    "0xD80805F6d12C9342195cAab20efFa761a4964dD4",
+    Address("0xD80805F6d12C9342195cAab20efFa761a4964dD4").toString,
     18,
     0.4,
     "LRC",
@@ -58,7 +59,7 @@ package object support {
   )
 
   val REP_TOKEN = XTokenMetadata(
-    "0xd319078729D5bE3A89b79a11b4665acE9b6cF61E",
+    Address("0xd319078729D5bE3A89b79a11b4665acE9b6cF61E").toString,
     18,
     0.4,
     "LRC",

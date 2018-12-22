@@ -23,6 +23,11 @@ trait AccountManager {
   def addTokenManager(tm: AccountTokenManager): AccountTokenManager
   def getTokenManager(token: String): AccountTokenManager
 
+  def getOrUpdateTokenManager(
+      token: String,
+      tm: AccountTokenManager
+    ): AccountTokenManager
+
   def submitOrder(order: Order): Boolean
   def cancelOrder(orderId: String): Boolean
 
