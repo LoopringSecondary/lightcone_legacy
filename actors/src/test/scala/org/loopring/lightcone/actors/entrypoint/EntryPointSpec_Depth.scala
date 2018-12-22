@@ -43,7 +43,7 @@ class EntryPointSpec_Depth
   "submit several orders" must {
     "get the right depth" in {
       val rawOrder1 =
-        createRawOrder(amountS = "120".zeros(18), amountB = "1".zeros(18))
+        createRawOrder(amountS = "123456789".zeros(10), amountB = "1".zeros(18))
       val f1 = singleRequest(
         XSubmitOrderReq(
           Some(rawOrder1)
@@ -60,7 +60,7 @@ class EntryPointSpec_Depth
       }
 
       val rawOrder2 =
-        createRawOrder(amountS = "121".zeros(18), amountB = "1".zeros(18))
+        createRawOrder(amountS = "223456789".zeros(10), amountB = "1".zeros(18))
       val f2 = singleRequest(
         XSubmitOrderReq(
           Some(rawOrder2)
@@ -77,7 +77,7 @@ class EntryPointSpec_Depth
       }
 
       val rawOrder3 =
-        createRawOrder(amountS = "125".zeros(18), amountB = "1".zeros(18))
+        createRawOrder(amountS = "323456789".zeros(10), amountB = "1".zeros(18))
       val f3 = singleRequest(
         XSubmitOrderReq(
           Some(rawOrder3)
@@ -87,6 +87,23 @@ class EntryPointSpec_Depth
 
       val res3 = Await.result(f3, timeout.duration)
       res3 match {
+        case XSubmitOrderRes(Some(order)) =>
+          info(s" response ${order}")
+          order.status should be(XOrderStatus.STATUS_PENDING)
+        case _ => assert(false)
+      }
+
+      val rawOrder4 =
+        createRawOrder(amountS = "323456689".zeros(10), amountB = "1".zeros(18))
+      val f4 = singleRequest(
+        XSubmitOrderReq(
+          Some(rawOrder4)
+        ),
+        "submit_order"
+      )
+
+      val res4 = Await.result(f4, timeout.duration)
+      res4 match {
         case XSubmitOrderRes(Some(order)) =>
           info(s" response ${order}")
           order.status should be(XOrderStatus.STATUS_PENDING)
@@ -107,7 +124,18 @@ class EntryPointSpec_Depth
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
         case XOrderbook(lastPrice, sells, buys) =>
-          info(s"sells:${buys}, buys:${buys}")
+          info(s"sells:${sells}, buys:${buys}")
+          assert(sells.size == 4)
+          assert(
+            sells(0).price == "1.234568" &&
+              sells(0).amount == "1.23457" &&
+              sells(0).total == "1.00000"
+          )
+          assert(
+            sells(1).price == "2.234568" &&
+              sells(1).amount == "2.23457" &&
+              sells(1).total == "1.00000"
+          )
         case _ => assert(false)
       }
 
@@ -124,7 +152,18 @@ class EntryPointSpec_Depth
       val orderbookRes2 = Await.result(orderbookF2, timeout.duration)
       orderbookRes2 match {
         case XOrderbook(lastPrice, sells, buys) =>
-          info(s"sells:${buys}, buys:${buys}")
+          info(s"sells:${sells}, buys:${buys}")
+          assert(sells.size == 3)
+          assert(
+            sells(0).price == "1.23457" &&
+              sells(0).amount == "1.23457" &&
+              sells(0).total == "1.00000"
+          )
+          assert(
+            sells(2).price == "3.23457" &&
+              sells(2).amount == "6.46913" &&
+              sells(2).total == "2.00000"
+          )
         case _ => assert(false)
       }
 
