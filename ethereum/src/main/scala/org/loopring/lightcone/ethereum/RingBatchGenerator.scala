@@ -97,7 +97,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
         order =>
           Seq(
             (order.owner + order.tokenS),
-            (order.owner + order.feeParams.get.tokenFee)
+            (order.owner + order.getFeeParams.tokenFee)
           )
       )
       .flatten
@@ -182,30 +182,6 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
       tokenSpendables: Map[String, Int],
       context: XRingBatchContext
     ) {
-
-    def addField(
-        fieldValue: Any,
-        fieldType: String,
-        numBytes: Int,
-        forceAppend: Boolean
-      ): Unit = fieldType match {
-      case "uint8" | "uint16" | "uint32" =>
-        val _value = fieldValue.asInstanceOf[Int]
-        insertOffset(tables, data.addNumber(_value, numBytes, forceAppend))
-      case "uint" | "uint256" =>
-        val _bn = fieldValue.asInstanceOf[BigInt]
-        insertOffset(tables, data.addNumber(_bn, numBytes, forceAppend))
-      case "address" =>
-        val _addr = fieldValue.asInstanceOf[String]
-        insertOffset(tables, data.addAddress(_addr, numBytes, forceAppend))
-      case "bytes" =>
-        val _bs = fieldValue.asInstanceOf[String]
-        insertOffset(tables, data.addHex(createBytes(_bs), false))
-        addPadding(data)
-      case _ =>
-        throw new IllegalArgumentException(s"unsupported fieldType: $fieldType")
-    }
-
     val orderParams = order.getParams
     val orderFeeParams = order.getFeeParams
     val orderErc1400Params = order.getErc1400Params
@@ -216,7 +192,6 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     insertOffset(tables, data.addAddress(order.tokenS, false))
     insertOffset(tables, data.addAddress(order.tokenB, false))
     insertOffset(tables, data.addUint(order.amountS, false))
-
     insertOffset(tables, data.addUint(order.amountB, false))
     insertOffset(tables, data.addUint32(order.validSince, false))
 
@@ -227,12 +202,35 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     tables.addUint16(spendableSIndex)
     tables.addUint16(spendableFeeIndex)
 
-    Seq(
-      (orderParams.dualAuthAddr, "address", 20, false),
-      (orderParams.broker, "address", 20, false),
-      (orderParams.orderInterceptor, "address", 20, false),
-      (orderParams.wallet, "address", 20, false)
-    ).foreach((addField _).tupled)
+    if (isValidAddress(orderParams.dualAuthAddr)) {
+      insertOffset(
+        tables,
+        data.addAddress(orderParams.dualAuthAddr, false)
+      )
+    } else {
+      insertDefault(tables)
+    }
+
+    if (isValidAddress(orderParams.broker)) {
+      insertOffset(tables, data.addAddress(orderParams.broker, false))
+    } else {
+      insertDefault(tables)
+    }
+
+    if (isValidAddress(orderParams.orderInterceptor)) {
+      insertOffset(
+        tables,
+        data.addAddress(orderParams.orderInterceptor, false)
+      )
+    } else {
+      insertDefault(tables)
+    }
+
+    if (isValidAddress(orderParams.wallet)) {
+      insertOffset(tables, data.addAddress(orderParams.wallet, false))
+    } else {
+      insertDefault(tables)
+    }
 
     if (orderParams.validUntil > 0) {
       insertOffset(tables, data.addUint32(orderParams.validUntil, false))
@@ -335,7 +333,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
       val orders = xring.orderIndexes.map(i => xRingBatch.orders(i))
       orders.foreach(o => {
         bitstream.addHex(o.hash)
-        bitstream.addUint16(o.feeParams.get.waiveFeePercentage)
+        bitstream.addUint16(o.getFeeParams.waiveFeePercentage)
       })
       Numeric.toHexString(Hash.sha3(bitstream.getBytes))
     })
