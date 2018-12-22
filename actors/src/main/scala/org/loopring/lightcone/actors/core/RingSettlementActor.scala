@@ -82,9 +82,10 @@ class RingSettlementActor(initialNonce :Int = 0)(
 
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
-  private var nonce = new AtomicInteger(initialNonce)
-  implicit val ringContext = XRingBatchContext()
-  implicit val credentials =
+  private val nonce = new AtomicInteger(initialNonce)
+  //TODO(yadong)
+  implicit val ringContext: XRingBatchContext = XRingBatchContext()
+  implicit val credentials: Credentials =
     Credentials.create(config.getString("private_key"))
   val protocolAddress = config.getString("loopring-protocol.protocol-address")
   val repeatedJobs = Nil
@@ -97,7 +98,6 @@ class RingSettlementActor(initialNonce :Int = 0)(
   override def receive: Receive = super.receive orElse LoggingReceive {
     case req: XSettleRingsReq =>
       for {
-        //Todo(yadong) check balance allowance validSince validUntil
         rawOrders ← Future.sequence(req.rings.map { xOrderRing ⇒
           dbModule.orderService.getOrders(
             Seq(
@@ -119,8 +119,7 @@ class RingSettlementActor(initialNonce :Int = 0)(
           .mapAs[XSendRawTransactionRes]
           .map(_.result)
       } yield {
-        //TODO(yadong) 把提交的环路记录到数据库
-        //TODO(yadong) 通知相关的actor
+        //TODO(yadong) 把提交的环路记录到数据库,提交失败以后的处理
         hash
       }
     case _ =>
