@@ -32,7 +32,7 @@ import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-
+import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -62,7 +62,10 @@ object MarketManagerActor extends ShardedByMarket {
       .map { item =>
         val c = item.toConfig
         val marketId =
-          XMarketId(c.getString("priamry"), c.getString("secondary"))
+          XMarketId(
+            LAddress(c.getString("priamry")).toString,
+            LAddress(c.getString("secondary")).toString
+          )
         MarketManagerActor.getEntityId(marketId) -> marketId
       }
       .toMap

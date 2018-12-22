@@ -176,7 +176,7 @@ class AccountManagerActor(
     if (manager.hasTokenManager(token)) {
       Future.successful(manager.getTokenManager(token))
     } else {
-      log.debug(s"getTokenManager0 ${token}")
+      log.info(s"getTokenManager0 ${token}")
       for {
         res <- (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
           address,
@@ -188,7 +188,7 @@ class AccountManagerActor(
         )
         ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
         _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
-        tokenManager = manager.addTokenManager(tm)
+        tokenManager = manager.getOrUpdateTokenManager(token, tm)
         _ = log.debug(s"getTokenManager5 ${token}")
 
       } yield tokenManager

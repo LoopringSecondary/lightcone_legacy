@@ -71,21 +71,6 @@ abstract class CommonSpec(configStr: String)
   //token info
   implicit val tokenMetadataManager = new TokenMetadataManager()
 
-  val WETH_TOKEN = XTokenMetadata(
-    "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    18,
-    0.4,
-    "WETH",
-    1000
-  )
-
-  val LRC_TOKEN = XTokenMetadata(
-    "0xef68e7c694f40c8202821edf525de3782458639f",
-    18,
-    0.4,
-    "LRC",
-    1000
-  )
   tokenMetadataManager.addToken(WETH_TOKEN)
   tokenMetadataManager.addToken(LRC_TOKEN)
   implicit val tokenValueEstimator = new TokenValueEstimator()
