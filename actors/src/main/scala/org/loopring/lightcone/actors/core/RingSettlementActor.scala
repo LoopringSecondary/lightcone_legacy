@@ -16,38 +16,32 @@
 
 package org.loopring.lightcone.actors.core
 
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
 import akka.actor._
 import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
-import com.google.protobuf.ByteString
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.ethereum._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.ethereum._
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 
 import scala.concurrent._
-import scala.annotation.tailrec
 
 // main owner: 李亚东
 object RingSettlementActor extends ShardedEvenly {
   val name = "ring_settlement"
 
-  def startShardRegion(nonce :Int = 0)(
+  def startShardRegion(
+    )(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
@@ -63,14 +57,15 @@ object RingSettlementActor extends ShardedEvenly {
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new RingSettlementActor(nonce)),
+      entityProps = Props(new RingSettlementActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       messageExtractor = messageExtractor
     )
   }
 }
 
-class RingSettlementActor(initialNonce :Int = 0)(
+class RingSettlementActor(
+  )(
     implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
@@ -82,13 +77,23 @@ class RingSettlementActor(initialNonce :Int = 0)(
 
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
-  private val nonce = new AtomicInteger(initialNonce)
-  //TODO(yadong)
-  implicit val ringContext: XRingBatchContext = XRingBatchContext()
+  implicit val ringContext: XRingBatchContext =
+    XRingBatchContext(
+      lrcAddress = selfConfig.getString("lrc_address"),
+      feeRecipient = selfConfig.getString("fee_recipient"),
+      miner = selfConfig.getString("miner"),
+      transactionOrigin = selfConfig.getString("transaction_origin"),
+      minerPrivateKey = selfConfig.getString("miner_privateKey")
+    )
   implicit val credentials: Credentials =
-    Credentials.create(config.getString("private_key"))
-  val protocolAddress = config.getString("loopring-protocol.protocol-address")
+    Credentials.create(selfConfig.getString("transaction_origin_private_key"))
+
+  val protocolAddress: String =
+    config.getString("loopring-protocol.protocol-address")
   val repeatedJobs = Nil
+
+  private val ready = new AtomicBoolean(false)
+  private val nonce = new AtomicInteger(0)
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)
@@ -108,9 +113,10 @@ class RingSettlementActor(initialNonce :Int = 0)(
         })
         xRingBatch = RingBatchGeneratorImpl.generateAndSignRingBatch(rawOrders)
         inputData = RingBatchGeneratorImpl.toSubmitableParamStr(xRingBatch)
+        validNonce ← getNonce()
         txData = getSignedTxData(
           inputData,
-          nonce.get(),
+          validNonce,
           req.gasLimit,
           req.gasPrice,
           to = protocolAddress
@@ -124,4 +130,24 @@ class RingSettlementActor(initialNonce :Int = 0)(
       }
     case _ =>
   }
+
+  def getNonce(): Future[Int] = {
+    if (ready.get()) {
+      Future.successful(nonce.getAndIncrement())
+    } else {
+      for {
+        validNonce ← (ethereumAccessActor ? XGetNonceReq(
+          owner = ringContext.transactionOrigin,
+          tag = "latest"
+        )).mapAs[XGetNonceRes]
+          .map(_.result)
+      } yield {
+        if (ready.compareAndSet(false, true)) {
+          nonce.set(Numeric.toBigInt(validNonce).intValue())
+        }
+        nonce.getAndIncrement()
+      }
+    }
+  }
+
 }
