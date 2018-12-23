@@ -53,10 +53,10 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val depositOpt = weth.depositEvent.unpack(data, topics)
     info(depositOpt.toString)
     depositOpt match {
-      case None =>
       case Some(deposit) =>
         deposit.dst should be("0x33debb5ee65549ffa71116957da6db17a9d8fe57")
         deposit.wad.toString() should be("1000000000000000000")
+      case _ =>
     }
   }
 
@@ -66,9 +66,9 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val withdrawOpt = weth.withdraw.unpackInput(data)
     info(withdrawOpt.toString)
     withdrawOpt match {
-      case None =>
       case Some(withdraw) =>
         withdraw.wad.toString() should be("29558242000000000000000")
+      case _ =>
     }
   }
 
@@ -82,10 +82,10 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val eventOpt = weth.unpackEvent(data, topics)
     info(eventOpt.toString)
     eventOpt match {
-      case None =>
       case Some(deposit: DepositEvent.Result) =>
         deposit.dst should be("0x33debb5ee65549ffa71116957da6db17a9d8fe57")
         deposit.wad.toString() should be("1000000000000000000")
+      case _ =>
     }
   }
 
@@ -95,9 +95,9 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val withdrawOpt = weth.unpackFunctionInput(data)
     info(withdrawOpt.toString)
     withdrawOpt match {
-      case None =>
       case Some(withdraw: WithdrawFunction.Parms) =>
         withdraw.wad.toString() should be("29558242000000000000000")
+      case _ =>
     }
   }
 }

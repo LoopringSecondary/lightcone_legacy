@@ -43,7 +43,7 @@ object OrderbookManagerActor extends ShardedByMarket {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      tokenMetadataManager: TokenMetadataManager
+      tokenManager: TokenManager
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -85,7 +85,7 @@ class OrderbookManagerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val tokenMetadataManager: TokenMetadataManager)
+    val tokenManager: TokenManager)
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
       extractEntityId
@@ -113,7 +113,7 @@ class OrderbookManagerActor(
     case XGetOrderbook(level, size, Some(marketId)) =>
       Future {
         if (OrderbookManagerActor.getEntityId(marketId) == marketIdHashedValue)
-          manager.getOrderbook(level, size, None)
+          manager.getOrderbook(level, size)
         else
           throw ErrorException(
             XErrorCode.ERR_INVALID_ARGUMENT,

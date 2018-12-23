@@ -26,11 +26,11 @@ class OrderbookManagerImpl(config: XMarketConfig) extends OrderbookManager {
     level -> new View(level)
   }.toMap
 
-  private var latestPrice: Option[Double] = None
+  private var lastPrice: Double = 0
 
   def processUpdate(update: XOrderbookUpdate) = this.synchronized {
-    if (update.price.isDefined) {
-      latestPrice = Some(update.price.get.value)
+    if (update.lastPrice > 0) {
+      lastPrice = update.lastPrice
     }
     val diff = viewMap(0).getDiff(update)
     viewMap.values.foreach(_.processUpdate(diff))
@@ -39,15 +39,16 @@ class OrderbookManagerImpl(config: XMarketConfig) extends OrderbookManager {
   def getOrderbook(
       level: Int,
       size: Int,
-      latestPrice: Option[Double] = None
+      price: Option[Double] = None
     ) = {
-    val _latestPrice =
-      if (latestPrice.isEmpty) this.latestPrice
-      else latestPrice
+    val p = price match {
+      case Some(p) if p > 0 => p
+      case _                => lastPrice
+    }
 
     viewMap.get(level) match {
-      case Some(view) => view.getOrderbook(size, _latestPrice)
-      case None       => XOrderbook(_latestPrice.getOrElse(0.0), Nil, Nil)
+      case Some(view) => view.getOrderbook(size, p)
+      case None       => XOrderbook(p, Nil, Nil)
     }
   }
 
@@ -83,11 +84,11 @@ class OrderbookManagerImpl(config: XMarketConfig) extends OrderbookManager {
 
     def getOrderbook(
         size: Int,
-        latestPrice: Option[Double]
+        price: Double
       ) = {
-      val priceOpt = latestPrice match {
-        case Some(price) if price > 0 => Some(price)
-        case None =>
+      val priceOpt =
+        if (price > 0) Some(price)
+        else {
           val sellPrice = sellSide
             .getDepth(1, None)
             .headOption
@@ -101,10 +102,10 @@ class OrderbookManagerImpl(config: XMarketConfig) extends OrderbookManager {
             .getOrElse(0.0)
 
           Some((sellPrice + buyPrice) / 2)
-      }
+        }
 
       XOrderbook(
-        latestPrice.getOrElse(0.0),
+        lastPrice,
         sellSide.getDepth(size, priceOpt),
         buySide.getDepth(size, priceOpt)
       )

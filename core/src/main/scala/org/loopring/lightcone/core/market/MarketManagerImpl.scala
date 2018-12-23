@@ -43,7 +43,7 @@ object MarketManagerImpl {
 
 class MarketManagerImpl(
     val marketId: XMarketId,
-    val tokenMetadataManager: TokenMetadataManager,
+    val tokenManager: TokenManager,
     val ringMatcher: RingMatcher,
     val pendingRingPool: PendingRingPool,
     val dustOrderEvaluator: DustOrderEvaluator,
@@ -57,7 +57,7 @@ class MarketManagerImpl(
   import XOrderStatus._
 
   private implicit val marketId_ = marketId
-  private implicit val tmm_ = tokenMetadataManager
+  private implicit val tm_ = tokenManager
   private implicit val ordering = defaultOrdering()
 
   private var isLastTakerSell = false
@@ -157,6 +157,7 @@ class MarketManagerImpl(
       var taker = order.copy(status = STATUS_PENDING)
       var rings = Seq.empty[OrderRing]
       var ordersToAddBack = Seq.empty[Order]
+      var lastPrice: Double = 0
 
       // The result of this recursive method is to populate
       // `rings` and `ordersToAddBack`.
@@ -173,17 +174,16 @@ class MarketManagerImpl(
               Left(ERR_MATCHING_INCOME_TOO_SMALL)
             else ringMatcher.matchOrders(taker, maker, minFiatValue)
 
-          log.debug(
-            s"""\n\n------ recursive matching (${taker.id} => ${maker.id}) ------
-[taker]  : $taker,
-[maker]  : $maker,
-[result] : $matchResult\n\n"""
-          )
+          log.debug(s"""
+          | \n------ recursive matching (${taker.id} => ${maker.id}) ------
+          | [taker]  : $taker,
+          | [maker]  : $maker,
+          | [result] : $matchResult\n\n""")
           (maker, matchResult)
         } match {
           case None                       => // to maker to trade with
           case Some((maker, matchResult)) =>
-            // we alsways need to add maker back even if it is STATUS_PENDING-fully-matched.
+            // we always need to add maker back even if it is STATUS_PENDING-fully-matched.
             ordersToAddBack :+= maker
             matchResult match {
               case Left(
@@ -191,7 +191,7 @@ class MarketManagerImpl(
                   ERR_MATCHING_TAKER_COMPLETELY_FILLED |
                   ERR_MATCHING_INVALID_TAKER_ORDER |
                   ERR_MATCHING_INVALID_MAKER_ORDER
-                  ) => // stop redursive matching
+                  ) => // stop recursive matching
 
               case Left(error) =>
                 recursivelyMatchOrders()
@@ -199,6 +199,7 @@ class MarketManagerImpl(
               case Right(ring) =>
                 isLastTakerSell = (taker.tokenS == marketId.secondary)
                 rings :+= ring
+                lastPrice = (taker.displayablePrice + maker.displayablePrice) / 2
                 pendingRingPool.addRing(ring)
                 recursivelyMatchOrders()
             }
@@ -213,7 +214,9 @@ class MarketManagerImpl(
       // add each skipped maker orders back
       ordersToAddBack.map(_.resetMatchable).foreach(addToSide)
 
-      val orderbookUpdate = aggregator.getOrderbookUpdate()
+      val orderbookUpdate = aggregator
+        .getOrderbookUpdate()
+        .copy(lastPrice = lastPrice)
 
       MatchResult(rings, taker.resetMatchable, orderbookUpdate)
     }

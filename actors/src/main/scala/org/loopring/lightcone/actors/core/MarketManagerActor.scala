@@ -52,7 +52,7 @@ object MarketManagerActor extends ShardedByMarket {
       tokenValueEstimator: TokenValueEstimator,
       ringIncomeEstimator: RingIncomeEstimator,
       dustOrderEvaluator: DustOrderEvaluator,
-      tokenMetadataManager: TokenMetadataManager
+      tokenManager: TokenManager
     ): ActorRef = {
     numOfShards = 10
 
@@ -99,7 +99,7 @@ class MarketManagerActor(
     val tokenValueEstimator: TokenValueEstimator,
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
-    val tokenMetadataManager: TokenMetadataManager)
+    val tokenManager: TokenManager)
     extends ActorWithPathBasedConfig(
       MarketManagerActor.name,
       MarketManagerActor.extractEntityId
@@ -129,7 +129,7 @@ class MarketManagerActor(
 
   val manager = new MarketManagerImpl(
     marketId,
-    tokenMetadataManager,
+    tokenManager,
     ringMatcher,
     pendingRingPool,
     dustOrderEvaluator,

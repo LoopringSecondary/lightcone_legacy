@@ -47,7 +47,7 @@ class TokenMetadataRefresher(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule,
-    val tokenMetadataManager: TokenMetadataManager)
+    val tokenManager: TokenManager)
     extends Actor
     with ActorLogging
     with RepeatedJobActor {
@@ -60,7 +60,7 @@ class TokenMetadataRefresher(
       dalayInSeconds = 10 * 60, // 10 minutes
       run = () =>
         tokenMetadataService.getTokens(true).map { tokens =>
-          tokenMetadataManager.reset(tokens)
+          tokenManager.reset(tokens)
         }
     )
   )

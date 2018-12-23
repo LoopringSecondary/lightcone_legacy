@@ -199,7 +199,7 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
     obm.getOrderbook(0, 100, Some(0.12343)) should be(
       XOrderbook(
-        0.12343,
+        0.0,
         Seq(
           XOrderbook.XItem("0.12344", "5.00", "40.0"),
           XOrderbook.XItem("0.12345", "10.00", "80.0")
@@ -210,7 +210,7 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
     obm.getOrderbook(0, 100, Some(0.12344)) should be(
       XOrderbook(
-        0.12344,
+        0.0,
         Seq(
           // XOrderbook.XItem("0.12344", "5.00", "40.0"),
           XOrderbook.XItem("0.12345", "10.00", "80.0")
@@ -220,16 +220,10 @@ class OrderbookManagerImplSpec extends CommonSpec {
     )
 
     obm.getOrderbook(0, 100, Some(0.123445)) should be(
-      XOrderbook(
-        0.123445,
-        Seq(XOrderbook.XItem("0.12345", "10.00", "80.0")),
-        Nil
-      )
+      XOrderbook(0.0, Seq(XOrderbook.XItem("0.12345", "10.00", "80.0")), Nil)
     )
 
-    obm.getOrderbook(0, 100, Some(0.12345)) should be(
-      XOrderbook(0.12345, Nil, Nil)
-    )
+    obm.getOrderbook(0, 100, Some(0.12345)) should be(XOrderbook(0.0, Nil, Nil))
   }
 
   "OrderbookManagerImplSpec" should "skip slots with higer buy prices" in {
@@ -266,7 +260,7 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
     obm.getOrderbook(0, 100, Some(0.12346)) should be(
       XOrderbook(
-        0.12346,
+        0.0,
         Nil,
         Seq(
           XOrderbook.XItem("0.12345", "10.00", "80.0"),
@@ -277,7 +271,7 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
     obm.getOrderbook(0, 100, Some(0.12345)) should be(
       XOrderbook(
-        0.12345,
+        0.0,
         Nil,
         Seq(
           XOrderbook.XItem("0.12345", "10.00", "80.0"),
@@ -287,19 +281,15 @@ class OrderbookManagerImplSpec extends CommonSpec {
     )
 
     obm.getOrderbook(0, 100, Some(0.123445)) should be(
-      XOrderbook(
-        0.123445,
-        Nil,
-        Seq(XOrderbook.XItem("0.12344", "5.00", "40.0"))
-      )
+      XOrderbook(0.0, Nil, Seq(XOrderbook.XItem("0.12344", "5.00", "40.0")))
     )
 
     obm.getOrderbook(0, 100, Some(0.12344)) should be(
-      XOrderbook(0.12344, Nil, Seq(XOrderbook.XItem("0.12344", "5.00", "40.0")))
+      XOrderbook(0.0, Nil, Seq(XOrderbook.XItem("0.12344", "5.00", "40.0")))
     )
 
     obm.getOrderbook(0, 100, Some(0.123435)) should be(
-      XOrderbook(0.123435, Nil, Nil)
+      XOrderbook(0.0, Nil, Nil)
     )
   }
 
