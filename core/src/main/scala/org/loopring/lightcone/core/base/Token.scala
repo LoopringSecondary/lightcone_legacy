@@ -19,10 +19,8 @@ package org.loopring.lightcone.core.base
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
-class Token(val meta: XTokenMetadata) {
+class Token(val meta: XTokenMeta) {
   lazy val scaling = Rational(Math.pow(10, meta.decimals))
-
-  var currentPrice: Double = 0
 
   def rawToDisplay(amount: BigInt): Double =
     (Rational(amount) / scaling).doubleValue

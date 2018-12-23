@@ -23,12 +23,12 @@ class TokenManager(defaultBurnRate: Double = 0.2) {
 
   private var addressMap = Map.empty[String, Token]
 
-  def reset(metas: Seq[XTokenMetadata]) = this.synchronized {
+  def reset(metas: Seq[XTokenMeta]) = this.synchronized {
     addressMap = Map.empty
     metas.foreach(addToken)
   }
 
-  def addToken(meta: XTokenMetadata) = this.synchronized {
+  def addToken(meta: XTokenMeta) = this.synchronized {
     addressMap += meta.address -> new Token(meta)
   }
 

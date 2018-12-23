@@ -29,7 +29,7 @@ import org.loopring.lightcone.core.market.{
   RingIncomeEstimatorImpl
 }
 import org.loopring.lightcone.lib.SystemTimeProvider
-import org.loopring.lightcone.proto.XTokenMetadata
+import org.loopring.lightcone.proto.XTokenMeta
 import org.scalatest._
 import org.slf4s.Logging
 import slick.basic.DatabaseConfig

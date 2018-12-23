@@ -30,7 +30,7 @@ class TokenValueEstimator()(implicit tmm: TokenManager) {
     else {
       val token = tmm.getToken(tokenAddr)
       val scaling = BigInt(10).pow(token.meta.decimals)
-      (Rational(token.currentPrice) *
+      (Rational(token.meta.currentPrice) *
         Rational(amount) /
         Rational(scaling)).doubleValue
     }

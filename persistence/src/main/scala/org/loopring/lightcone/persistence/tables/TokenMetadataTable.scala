@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
 class TokenMetadataTable(tag: Tag)
-    extends BaseTable[XTokenMetadata](tag, "T_TOKEN_METADATA") {
+  extends BaseTable[XTokenMeta](tag, "T_TOKEN_METADATA") {
 
   def id = address
   def address = columnAddress("address")
@@ -38,6 +38,5 @@ class TokenMetadataTable(tag: Tag)
       decimals,
       burnRate,
       symbol,
-      currentPrice
-    ) <> ((XTokenMetadata.apply _).tupled, XTokenMetadata.unapply)
+      currentPrice) <> ((XTokenMeta.apply _).tupled, XTokenMeta.unapply)
 }

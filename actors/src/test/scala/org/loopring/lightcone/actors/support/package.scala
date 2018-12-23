@@ -20,58 +20,52 @@ import com.dimafeng.testcontainers.MySQLContainer
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.XTokenMetadata
+import org.loopring.lightcone.proto.XTokenMeta
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
 package object support {
 
-  val WETH_TOKEN = XTokenMetadata(
+  val WETH_TOKEN = XTokenMeta(
     Address("0x08D24FC29CDccF8e9Ca45Eef05384c58F8a8E94F").toString,
     18,
     0.4,
     "WETH",
-    1000
-  )
+    1000)
 
-  val LRC_TOKEN = XTokenMetadata(
+  val LRC_TOKEN = XTokenMeta(
     Address("0xa345b6c2e5ce5970d026CeA8591DC28958fF6Edc").toString,
     18,
     0.4,
     "LRC",
-    1000
-  )
+    1000)
 
-  val GTO_TOKEN = XTokenMetadata(
+  val GTO_TOKEN = XTokenMeta(
     Address("0xBe6727c37cD9c5679Fa99c9A8B4E66035c0A3735").toString,
     18,
     0.4,
     "LRC",
-    1000
-  )
+    1000)
 
-  val RDN_TOKEN = XTokenMetadata(
+  val RDN_TOKEN = XTokenMeta(
     Address("0xD80805F6d12C9342195cAab20efFa761a4964dD4").toString,
     18,
     0.4,
     "LRC",
-    1000
-  )
+    1000)
 
-  val REP_TOKEN = XTokenMetadata(
+  val REP_TOKEN = XTokenMeta(
     Address("0xd319078729D5bE3A89b79a11b4665acE9b6cF61E").toString,
     18,
     0.4,
     "LRC",
-    1000
-  )
+    1000)
 
   val container = new MySQLContainer(
     mysqlImageVersion = Some("mysql:5.7.18"),
     databaseName = Some("lightcone_test"),
     mysqlUsername = Some("test"),
-    mysqlPassword = Some("test")
-  )
+    mysqlPassword = Some("test"))
 
   implicit private val suiteDescription =
     Description.createSuiteDescription(this.getClass)
@@ -91,6 +85,5 @@ package object support {
           password="${container.password}"
           driver="${container.driverClassName}"
           maxThreads = 4
-        }""")
-    )
+        }"""))
 }

@@ -19,18 +19,17 @@ package org.loopring.lightcone.persistence.service
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals.TokenMetadataDalImpl
-import org.loopring.lightcone.proto.XTokenMetadata
+import org.loopring.lightcone.proto.XTokenMeta
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
-class TokenMetadataServiceImpl @Inject()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
-    @Named("db-execution-context") val ec: ExecutionContext)
-    extends TokenMetadataService {
+class TokenMetadataServiceImpl @Inject() (
+  implicit val dbConfig: DatabaseConfig[JdbcProfile],
+  @Named("db-execution-context") val ec: ExecutionContext)
+  extends TokenMetadataService {
   val tokenMetadataDal = new TokenMetadataDalImpl()
 
-  def getTokens(reloadFromDatabase: Boolean): Future[Seq[XTokenMetadata]] =
+  def getTokens(reloadFromDatabase: Boolean): Future[Seq[XTokenMeta]] =
     tokenMetadataDal.getTokens(reloadFromDatabase)
 }
