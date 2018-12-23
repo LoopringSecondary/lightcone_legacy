@@ -42,8 +42,40 @@ case class TokenAmount(
     copy(value = value - that.value)
   }
 
+  def +(that: TokenAmount) = {
+    assert(tokenSymbol == that.tokenSymbol)
+    copy(value = value + that.value)
+  }
+
+  def >(that: TokenAmount): Boolean = {
+    assert(tokenSymbol == that.tokenSymbol)
+    value > that.value
+  }
+
+  def =~(that: TokenAmount): Boolean = tokenSymbol == that.tokenSymbol
+  def =~(token: String): Boolean = tokenSymbol == token
+
+  def !~(that: TokenAmount): Boolean = tokenSymbol != that.tokenSymbol
+  def !~(token: String): Boolean = tokenSymbol != token
+
   def max(m: BigInt) = if (value < m) copy(value = m) else this
   def min(m: BigInt) = if (value > m) copy(value = m) else this
+  def nonZero() = value > 0
+  def isZero() = value <= 0
+
+  def displayableValue(
+      implicit tokenMetadataManager: TokenMetadataManager
+    ): Double = {
+    if (!tokenMetadataManager.hasTokenBySymbol(tokenSymbol)) {
+      throw ErrorException(
+        ERR_MATCHING_TOKEN_METADATA_UNAVAILABLE,
+        s"no metadata available for token: $tokenSymbol"
+      )
+    }
+    val metadata = tokenMetadataManager.getTokenByAddress(tokenSymbol).get
+    val decimals = metadata.decimals
+    Rational(value, BigInt(10).pow(decimals)).doubleValue
+  }
 }
 
 case class OrderState2(
@@ -89,6 +121,10 @@ case class Order2(
     _matchable: Option[OrderState2] = None) {
 
   lazy val original = OrderState2(amountS, amountB, amountF)
+
+  def isSell(implicit marketId: XMarketId) =
+    (amountS.tokenSymbol == marketId.secondary)
+
   def zeroState = OrderState2(amountS.zero, amountB.zero, amountF.zero)
 
   def outstanding = _outstanding.getOrElse(original)
@@ -105,6 +141,109 @@ case class Order2(
 
   def withFilledAmountS(filledAmountS: TokenAmount) =
     withOutstandingAmountS((amountS - filledAmountS).max(0))
+
+  // Private methods
+  private[core] def as(status: XOrderStatus) = {
+    assert(status != STATUS_PENDING)
+    copy(status = status, _reserved = None, _actual = None, _matchable = None)
+  }
+
+  private[core] def resetMatchable() = copy(_matchable = None)
+
+  // methods to convert to displayable values
+  private[core] def displayablePrice(
+      implicit marketId: XMarketId,
+      tokenMetadataManager: TokenMetadataManager
+    ) = {
+    if (amountS.tokenSymbol == marketId.secondary)
+      (amountS / amountB).doubleValue
+    else (amountB / amountS).doubleValue
+  }
+
+  private[core] def displayableAmount(
+    )(
+      implicit marketId: XMarketId,
+      tokenMetadataManager: TokenMetadataManager
+    ) = {
+    if (amountS.tokenSymbol == marketId.secondary)
+      amountS.displayableValue
+    else
+      amountB.displayableValue
+  }
+
+  private[core] def displayableTotal(
+    )(
+      implicit marketId: XMarketId,
+      tokenMetadataManager: TokenMetadataManager
+    ) = {
+    if (amountS.tokenSymbol == marketId.secondary)
+      amountB.displayableValue
+    else
+      amountS.displayableValue
+  }
+
+  private[core] def requestedAmount()(implicit token: String): TokenAmount =
+    if (amountS =~ token && amountF =~ amountS) {
+      outstanding.amountS + outstanding.amountF
+    } else if (amountS =~ token && amountF !~ amountS) {
+      outstanding.amountS
+    } else if (amountS !~ token && amountF =~ amountB) {
+      if (outstanding.amountF > outstanding.amountB)
+        outstanding.amountF - outstanding.amountB
+      else TokenAmount.zero(token)
+    } else {
+      outstanding.amountF
+    }
+
+  private[core] def reservedAmount()(implicit token: String): TokenAmount =
+    if (amountS =~ token && amountF =~ amountS) {
+      reserved.amountS + reserved.amountF
+    } else if (amountS =~ token && amountF !~ amountS) {
+      reserved.amountS
+    } else if (amountS !~ token && amountB =~ amountF) {
+      reserved.amountB + reserved.amountF
+    } else {
+      reserved.amountF
+    }
+
+  private[core] def withReservedAmount(
+      v: TokenAmount
+    )(
+      implicit token: String
+    ) = {
+    if (amountS =~ token && amountF =~ token) {
+      val r = amountS / (amountF + amountS)
+
+      val reservedAmountS = v.scaledBy(r) //(Rational(v) * r).bigintValue()
+      copy(
+        _reserved =
+          Some(OrderState2(reservedAmountS, amountB.zero, v - reservedAmountS))
+      ).updateActual()
+    } else if (amountS =~ token && amountF !~ token) {
+      copy(_reserved = Some(OrderState2(v, amountB.zero, reserved.amountF)))
+        .updateActual()
+    } else if (amountS !~ token && amountF =~ amountB) {
+      copy(_reserved = Some(OrderState2(reserved.amountS, amountB.zero, v)))
+        .updateActual()
+    } else {
+      copy(_reserved = Some(OrderState2(reserved.amountS, amountB.zero, v)))
+        .updateActual()
+    }
+  }
+
+  private def updateActual() = {
+    var r = reserved.amountS / amountS
+    if (amountF.nonZero) {
+      if (amountF =~ amountB && reserved.amountF.nonZero) {
+        r = (reserved.amountF / (amountF - amountB)).min(r)
+      } else if (amountF =~ amountB && reserved.amountF.isZero) {
+        // r = r
+      } else {
+        r = (reserved.amountF / amountF).min(r)
+      }
+    }
+    copy(_actual = Some(original.scaledBy(r)))
+  }
 }
 
 case class Order(
