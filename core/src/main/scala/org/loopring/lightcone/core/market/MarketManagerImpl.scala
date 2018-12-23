@@ -183,7 +183,7 @@ class MarketManagerImpl(
         } match {
           case None                       => // to maker to trade with
           case Some((maker, matchResult)) =>
-            // we alsways need to add maker back even if it is STATUS_PENDING-fully-matched.
+            // we always need to add maker back even if it is STATUS_PENDING-fully-matched.
             ordersToAddBack :+= maker
             matchResult match {
               case Left(
@@ -191,7 +191,7 @@ class MarketManagerImpl(
                   ERR_MATCHING_TAKER_COMPLETELY_FILLED |
                   ERR_MATCHING_INVALID_TAKER_ORDER |
                   ERR_MATCHING_INVALID_MAKER_ORDER
-                  ) => // stop redursive matching
+                  ) => // stop recursive matching
 
               case Left(error) =>
                 recursivelyMatchOrders()
