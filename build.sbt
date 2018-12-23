@@ -9,9 +9,7 @@ lazy val proto = (project in file("proto"))
   .settings(
     libraryDependencies ++= scalapbDependency,
     PB.targets in Compile := Seq(
-      scalapb.gen(flatPackage = true) -> (sourceManaged in Compile).value
-    )
-  )
+      scalapb.gen(flatPackage = true) -> (sourceManaged in Compile).value))
 
 lazy val lib = (project in file("lib"))
   .enablePlugins(AutomateHeaderPlugin)
@@ -47,8 +45,7 @@ lazy val actors = (project in file("actors"))
   .settings(
     basicSettings,
     dockerSettings,
-    libraryDependencies ++= dependency4Actors
-  )
+    libraryDependencies ++= dependency4Actors)
 
 lazy val indexer = (project in file("indexer"))
   .enablePlugins(AutomateHeaderPlugin)
@@ -62,8 +59,7 @@ lazy val indexer = (project in file("indexer"))
   .settings(
     basicSettings,
     dockerSettings,
-    libraryDependencies ++= dependency4Indexer
-  )
+    libraryDependencies ++= dependency4Indexer)
 lazy val all = (project in file("."))
   .enablePlugins(DockerComposePlugin)
   .settings(docker := {
