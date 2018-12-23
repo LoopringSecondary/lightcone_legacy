@@ -199,7 +199,7 @@ class MarketManagerImpl(
               case Right(ring) =>
                 isLastTakerSell = (taker.tokenS == marketId.secondary)
                 rings :+= ring
-                lastPrice = (taker.displayablePrice + maker.displayablePrice) / 2
+                lastPrice = (taker.priceU + maker.priceU) / 2
                 pendingRingPool.addRing(ring)
                 recursivelyMatchOrders()
             }
@@ -239,7 +239,8 @@ class MarketManagerImpl(
   private def addToSide(order: Order) {
     // always make sure _matchable is None.
     val order_ = order.copy(_matchable = None)
-    aggregator.addOrder(order)
+    aggregator.addOrder(updateOrderMatchable(order_))
+
     orderMap += order.id -> order_
     sides(order.tokenS) += order_
   }
@@ -248,7 +249,8 @@ class MarketManagerImpl(
     orderMap.get(orderId) match {
       case None =>
       case Some(order) =>
-        aggregator.deleteOrder(order)
+        aggregator.deleteOrder(updateOrderMatchable(order))
+
         orderMap -= order.id
         sides(order.tokenS) -= order
     }
@@ -261,7 +263,7 @@ class MarketManagerImpl(
   // Remove and return the top order from one side.
   private def popOrder(side: SortedSet[Order]): Option[Order] = {
     side.headOption.map { order =>
-      aggregator.deleteOrder(order)
+      aggregator.deleteOrder(updateOrderMatchable(order))
       orderMap -= order.id
       side -= order
       order
@@ -274,14 +276,6 @@ class MarketManagerImpl(
 
     val matchableAmountS = (order.actual.amountS - pendingAmountS).max(0)
     val scale = Rational(matchableAmountS, order.original.amountS)
-    val copy = order.copy(_matchable = Some(order.original.scaleBy(scale)))
-    // println(s"""
-    //   original: $order
-    //   pendingAmountS: $pendingAmountS
-    //   actualAmount: ${order.actual}
-    //   matchableAmountS: $matchableAmountS
-    //   scale: $scale
-    //   new : $copy""")
-    copy
+    order.copy(_matchable = Some(order.original.scaleBy(scale)))
   }
 }

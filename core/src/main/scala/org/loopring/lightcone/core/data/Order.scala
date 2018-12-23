@@ -121,45 +121,69 @@ case class Order(
 
   private[core] def resetMatchable() = copy(_matchable = None)
 
-  private[core] def displayableAmountS()(implicit tokenManager: TokenManager) =
-    calcDisplayableAmount(tokenS, actual.amountS)
+  private[core] def amountSU()(implicit tokenManager: TokenManager) =
+    fromWei(tokenS, actual.amountS)
 
-  private[core] def displayableAmountB()(implicit tokenManager: TokenManager) =
-    calcDisplayableAmount(tokenB, actual.amountB)
+  private[core] def amountBU()(implicit tokenManager: TokenManager) =
+    fromWei(tokenB, actual.amountB)
 
-  private[core] def displayableAmountFee(
-    )(
-      implicit tokenManager: TokenManager
-    ) =
-    calcDisplayableAmount(tokenFee, actual.amountFee)
+  private[core] def amountFeeU()(implicit tokenManager: TokenManager) =
+    fromWei(tokenFee, actual.amountFee)
+
+  private[core] def matchableAmountSU()(implicit tokenManager: TokenManager) =
+    fromWei(tokenS, matchable.amountS)
+
+  private[core] def matchableAmountBU()(implicit tokenManager: TokenManager) =
+    fromWei(tokenB, matchable.amountB)
+
+  private[core] def matchableAmountFeeU()(implicit tokenManager: TokenManager) =
+    fromWei(tokenFee, matchable.amountFee)
 
   private[core] def isSell()(implicit marketId: XMarketId) =
     (tokenS == marketId.secondary)
 
-  private[core] def displayablePrice(
+  private[core] def priceU(
     )(
       implicit marketId: XMarketId,
       tokenManager: TokenManager
     ) = {
-    displayableAmount / displayableTotal
+    amountU / totalU
   }
 
-  private[core] def displayableAmount(
+  private[core] def amountU(
     )(
       implicit marketId: XMarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) displayableAmountS
-    else displayableAmountB
+    if (tokenS == marketId.secondary) amountSU
+    else amountBU
   }
 
-  private[core] def displayableTotal(
+  private[core] def totalU(
     )(
       implicit marketId: XMarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) displayableAmountB
-    else displayableAmountS
+    if (tokenS == marketId.secondary) amountBU
+    else amountSU
+  }
+
+  private[core] def matchableAmountU(
+    )(
+      implicit marketId: XMarketId,
+      tokenManager: TokenManager
+    ) = {
+    if (tokenS == marketId.secondary) matchableAmountSU
+    else matchableAmountBU
+  }
+
+  private[core] def matchableTotalU(
+    )(
+      implicit marketId: XMarketId,
+      tokenManager: TokenManager
+    ) = {
+    if (tokenS == marketId.secondary) matchableAmountBU
+    else matchableAmountSU
   }
 
   private def updateActual() = {
@@ -176,7 +200,7 @@ case class Order(
     copy(_actual = Some(original.scaleBy(r)))
   }
 
-  private def calcDisplayableAmount(
+  private def fromWei(
       tokenAddr: String,
       amount: BigInt
     )(
