@@ -25,6 +25,8 @@ package object core {
     def toWei(tokenAddr: String)(implicit tm: base.TokenManager) = {
       tm.getToken(tokenAddr).toWei(v)
     }
+
+    def ! = BigInt(v.toLong)
   }
 
   implicit class RichOrder(order: Order) {

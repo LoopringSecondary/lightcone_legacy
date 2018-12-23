@@ -173,10 +173,10 @@ trait OrderAwareSpec extends CommonSpec {
     )
 
   def orderState(
-      amountS: Long,
-      amountB: Long,
-      amountFee: Long
-    ) = OrderState(BigInt(amountS), BigInt(amountB), BigInt(amountFee))
+      amountS: BigInt,
+      amountB: BigInt,
+      amountFee: BigInt
+    ) = OrderState(amountS, amountB, amountFee)
 
   def submitOrder(order: Order) = {
     updatedOrders = Map.empty[String, Order]
@@ -190,10 +190,10 @@ trait OrderAwareSpec extends CommonSpec {
 
   def adjustOrder(
       orderId: String,
-      outstandingAmountS: Long
+      outstandingAmountS: BigInt
     ) = {
     updatedOrders = Map.empty[String, Order]
-    accountManager.adjustOrder(orderId, BigInt(outstandingAmountS))
+    accountManager.adjustOrder(orderId, outstandingAmountS)
   }
 
   def resetUpdatedOrders() {
