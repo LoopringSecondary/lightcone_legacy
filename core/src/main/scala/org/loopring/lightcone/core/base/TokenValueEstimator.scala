@@ -19,6 +19,7 @@ package org.loopring.lightcone.core.base
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
+// TODO(dongw): we need a price provider
 class TokenValueEstimator()(implicit tmm: TokenManager) {
 
   def getEstimatedValue(
@@ -29,10 +30,8 @@ class TokenValueEstimator()(implicit tmm: TokenManager) {
     else if (!tmm.hasToken(tokenAddr)) 0
     else {
       val token = tmm.getToken(tokenAddr)
-      val scaling = BigInt(10).pow(token.meta.decimals)
-      (Rational(token.meta.currentPrice) *
-        Rational(amount) /
-        Rational(scaling)).doubleValue
+      (Rational(token.fromWei(amount)) *
+        Rational(token.meta.currentPrice)).doubleValue
     }
   }
 

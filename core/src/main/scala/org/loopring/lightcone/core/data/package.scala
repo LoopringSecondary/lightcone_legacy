@@ -50,7 +50,7 @@ package object data {
         Rational(raw.taker.order.amountS, raw.taker.order.amountB).doubleValue()
 
       val productPrice = takerSellPrice * makerSellPrice
-      val rateOfPrice = math.pow(productPrice, 0.5)
+      val rateOfPrice = Math.pow(productPrice, 0.5)
       val priceByMaker = makerSellPrice * rateOfPrice
 
       if (raw.maker.order.tokenS == feeToken) priceByMaker
