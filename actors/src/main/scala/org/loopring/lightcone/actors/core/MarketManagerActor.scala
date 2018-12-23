@@ -218,7 +218,7 @@ class MarketManagerActor(
       xorder.actual.nonEmpty,
       "order in XSubmitSimpleOrderReq miss `actual` field"
     )
-    val order: Order = xorder
+    val order: Order2 = xorder
     xorder.status match {
       case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING =>
         for {

@@ -38,7 +38,7 @@ class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
   def getTokenByAddress(token: String) = addressMap.get(token)
 
   def hasTokenBySymbol(symbol: String) = symbolMap.contains(symbol)
-  def getTokenBySymbbol(symbol: String) = symbolMap.get(symbol)
+  def getTokenBySymbol(symbol: String) = symbolMap.get(symbol)
 
   def getBurnRate(token: String) =
     addressMap.get(token).map(_.burnRate).getOrElse(defaultBurnRate)

@@ -22,8 +22,8 @@ import org.loopring.lightcone.proto._
 trait RingMatcher {
 
   def matchOrders(
-      taker: Order,
-      maker: Order,
+      taker: Order2,
+      maker: Order2,
       minFiatValue: Double
     ): Either[XErrorCode, OrderRing]
 }

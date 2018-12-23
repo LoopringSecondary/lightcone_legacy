@@ -31,8 +31,7 @@ trait RingIncomeEstimator {
 
 final class RingIncomeEstimatorImpl(
   )(
-    implicit
-    tmm: TokenMetadataManager,
+    implicit tmm: TokenMetadataManager,
     tve: TokenValueEstimator)
     extends RingIncomeEstimator {
 
@@ -52,24 +51,11 @@ final class RingIncomeEstimatorImpl(
       (fill.order, fill.pending, fill.amountMargin)
 
     val rate = (1 - order.walletSplitPercentage) *
-      (1 - tmm.getBurnRate(order.tokenFee))
+      (1 - tmm.getBurnRate(order.amountF.tokenSymbol))
 
-    val fiatFee = rate * tve.getEstimatedValue(
-      order.tokenFee,
-      pending.amountFee
-    )
+    val fiatFee = rate * tve.getEstimatedValue(pending.amountF)
+    val fiatMargin = tve.getEstimatedValue(amountMargin)
 
-    // when we do not know the price of tokenS, try to use tokenB's price to calculate
-    // the price.
-    val fiatMargin =
-      if (tmm.hasTokenByAddress(order.tokenS)) {
-        tve.getEstimatedValue(order.tokenS, amountMargin)
-      } else {
-        tve.getEstimatedValue(
-          order.tokenB,
-          Rational(amountMargin * order.amountS, order.amountB)
-        )
-      }
     fiatFee + fiatMargin
   }
 }

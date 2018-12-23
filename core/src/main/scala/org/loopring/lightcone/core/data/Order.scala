@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto.XErrorCode._
 import XOrderStatus._
 
 object TokenAmount {
-  def zero(tokenSymbol: String) = new TokenAmount(BigInt(0), tokenSymbol)
+  def zero = new TokenAmount(BigInt(0), "")
 }
 
 case class TokenAmount(
@@ -36,10 +36,18 @@ case class TokenAmount(
   def zero = copy(value = BigInt(0))
 
   def /(that: TokenAmount) = Rational(value, that.value)
+  def /(that: Rational) = copy(value = value / that)
+
+  def *(that: TokenAmount) = value * that.value
+  def *(that: Rational) = copy(value = value * that)
 
   def -(that: TokenAmount) = {
     assert(tokenSymbol == that.tokenSymbol)
     copy(value = value - that.value)
+  }
+
+  def -(that: BigInt) = {
+    copy(value = value - that)
   }
 
   def +(that: TokenAmount) = {
@@ -47,9 +55,18 @@ case class TokenAmount(
     copy(value = value + that.value)
   }
 
+  def +(that: BigInt) = {
+    copy(value = value + that)
+  }
+
   def >(that: TokenAmount): Boolean = {
     assert(tokenSymbol == that.tokenSymbol)
     value > that.value
+  }
+
+  def <(that: TokenAmount): Boolean = {
+    assert(tokenSymbol == that.tokenSymbol)
+    value < that.value
   }
 
   def =~(that: TokenAmount): Boolean = tokenSymbol == that.tokenSymbol
@@ -60,28 +77,29 @@ case class TokenAmount(
 
   def max(m: BigInt) = if (value < m) copy(value = m) else this
   def min(m: BigInt) = if (value > m) copy(value = m) else this
-  def nonZero() = value > 0
-  def isZero() = value <= 0
 
   def displayableValue(
       implicit tokenMetadataManager: TokenMetadataManager
     ): Double = {
-    if (!tokenMetadataManager.hasTokenBySymbol(tokenSymbol)) {
-      throw ErrorException(
-        ERR_MATCHING_TOKEN_METADATA_UNAVAILABLE,
-        s"no metadata available for token: $tokenSymbol"
-      )
+    if (value == 0) 0.0
+    else {
+      if (!tokenMetadataManager.hasTokenBySymbol(tokenSymbol)) {
+        throw ErrorException(
+          ERR_MATCHING_TOKEN_METADATA_UNAVAILABLE,
+          s"no metadata available for token: $tokenSymbol"
+        )
+      }
+      val metadata = tokenMetadataManager.getTokenByAddress(tokenSymbol).get
+      val decimals = metadata.decimals
+      Rational(value, BigInt(10).pow(decimals)).doubleValue
     }
-    val metadata = tokenMetadataManager.getTokenByAddress(tokenSymbol).get
-    val decimals = metadata.decimals
-    Rational(value, BigInt(10).pow(decimals)).doubleValue
   }
 }
 
 case class OrderState2(
     amountS: TokenAmount,
     amountB: TokenAmount,
-    amountF: TokenAmount) {
+    amountF: TokenAmount = TokenAmount.zero) {
 
   def scaledBy(ratio: Rational) =
     OrderState2(
@@ -190,7 +208,7 @@ case class Order2(
     } else if (amountS !~ token && amountF =~ amountB) {
       if (outstanding.amountF > outstanding.amountB)
         outstanding.amountF - outstanding.amountB
-      else TokenAmount.zero(token)
+      else TokenAmount.zero
     } else {
       outstanding.amountF
     }
@@ -233,10 +251,10 @@ case class Order2(
 
   private def updateActual() = {
     var r = reserved.amountS / amountS
-    if (amountF.nonZero) {
-      if (amountF =~ amountB && reserved.amountF.nonZero) {
+    if (amountF.value > 0) {
+      if (amountF =~ amountB && reserved.amountF.value > 0) {
         r = (reserved.amountF / (amountF - amountB)).min(r)
-      } else if (amountF =~ amountB && reserved.amountF.isZero) {
+      } else if (amountF =~ amountB && reserved.amountF.value == 0) {
         // r = r
       } else {
         r = (reserved.amountF / amountF).min(r)

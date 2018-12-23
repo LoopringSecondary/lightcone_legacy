@@ -17,9 +17,9 @@
 package org.loopring.lightcone.core.data
 
 case class ExpectedFill(
-    order: Order,
-    pending: OrderState,
-    amountMargin: BigInt = 0)
+    order: Order2,
+    pending: OrderState2,
+    amountMargin: TokenAmount)
 
 case class OrderRing(
     maker: ExpectedFill,

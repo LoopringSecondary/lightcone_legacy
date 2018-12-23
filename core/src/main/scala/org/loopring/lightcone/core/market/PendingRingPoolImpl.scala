@@ -96,22 +96,22 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
       case None =>
         ringMap += ring.id -> RingInfo(
           ring.taker.id,
-          ring.taker.pending.amountS,
+          ring.taker.pending.amountS.value,
           ring.maker.id,
-          ring.maker.pending.amountS,
+          ring.maker.pending.amountS.value,
           time.getTimeMillis()
         )
 
         incrementOrderPendingAmountS(
           ring.taker.id,
           ring.id,
-          ring.taker.pending.amountS
+          ring.taker.pending.amountS.value
         )
 
         incrementOrderPendingAmountS(
           ring.maker.id,
           ring.id,
-          ring.maker.pending.amountS
+          ring.maker.pending.amountS.value
         )
 
       // log.debug("pending_orders: " + orderMap.mkString("\n\t"))
