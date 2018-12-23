@@ -56,32 +56,32 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
   //   res.right.toOption should be(Some(expectRing))
   // }
 
-  "price just match" should "part fill if both matchables are half raw amount" in {
-    def testScale(scale: Rational) {
-      val res = matcher.matchOrders(
-        taker.copy(_matchable = Some(taker.original.scaleBy(scale))),
-        maker.copy(_matchable = Some(maker.original.scaleBy(scale)))
-      )
-      val expectRing = OrderRing(
-        taker = ExpectedFill(
-          order = taker.copy(_matchable = Some(OrderState())),
-          pending = taker.original.scaleBy(scale),
-          amountMargin = 0 !
-        ),
-        maker = ExpectedFill(
-          order = maker.copy(_matchable = Some(OrderState())),
-          pending = maker.original.scaleBy(scale),
-          amountMargin = 0 !
-        )
-      )
-      res.right.toOption should be(Some(expectRing))
-    }
+  // "price just match" should "part fill if both matchables are half raw amount" in {
+  //   def testScale(scale: Rational) {
+  //     val res = matcher.matchOrders(
+  //       taker.copy(_matchable = Some(taker.original.scaleBy(scale))),
+  //       maker.copy(_matchable = Some(maker.original.scaleBy(scale)))
+  //     )
+  //     val expectRing = OrderRing(
+  //       taker = ExpectedFill(
+  //         order = taker.copy(_matchable = Some(OrderState())),
+  //         pending = taker.original.scaleBy(scale),
+  //         amountMargin = 0 !
+  //       ),
+  //       maker = ExpectedFill(
+  //         order = maker.copy(_matchable = Some(OrderState())),
+  //         pending = maker.original.scaleBy(scale),
+  //         amountMargin = 0 !
+  //       )
+  //     )
+  //     res.right.toOption should be(Some(expectRing))
+  //   }
 
-    // testScale(Rational(1, 2))
-    testScale(Rational(1, 3))
-    // testScale(Rational(1, 5))
-    // testScale(Rational(1, 7))
-  }
+  //   // testScale(Rational(1, 2))
+  //   testScale(Rational(1, 3))
+  //   // testScale(Rational(1, 5))
+  //   // testScale(Rational(1, 7))
+  // }
 
   // "price3 just match" should "part fill if both matchables are a third of raw amount" in {
   //   //taker.amountB的计算通过amountS，因为精度问题，所以taker.amountB会在amountS的精度后为0
