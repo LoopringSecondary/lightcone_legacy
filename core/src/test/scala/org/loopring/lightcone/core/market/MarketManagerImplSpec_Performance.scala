@@ -14,122 +14,138 @@
  * limitations under the License.
  */
 
-/*
- * Copyright 2018 Loopring Foundation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// /*
+//  * Copyright 2018 Loopring Foundation
+//  *
+//  * Licensed under the Apache License, Version 2.0 (the "License");
+//  * you may not use this file except in compliance with the License.
+//  * You may obtain a copy of the License at
+//  *
+//  *     http://www.apache.org/licenses/LICENSE-2.0
+//  *
+//  * Unless required by applicable law or agreed to in writing, software
+//  * distributed under the License is distributed on an "AS IS" BASIS,
+//  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  * See the License for the specific language governing permissions and
+//  * limitations under the License.
+//  */
 
-package org.loopring.lightcone.core.market
+// /*
+//  * Copyright 2018 Loopring Foundation
+//  *
+//  * Licensed under the Apache License, Version 2.0 (the "License");
+//  * you may not use this file except in compliance with the License.
+//  * You may obtain a copy of the License at
+//  *
+//  *     http://www.apache.org/licenses/LICENSE-2.0
+//  *
+//  * Unless required by applicable law or agreed to in writing, software
+//  * distributed under the License is distributed on an "AS IS" BASIS,
+//  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  * See the License for the specific language governing permissions and
+//  * limitations under the License.
+//  */
 
-import org.loopring.lightcone.lib._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.depth._
-import org.loopring.lightcone.core._
-import XOrderStatus._
-import XErrorCode._
+// package org.loopring.lightcone.core.market
 
-class MarketManagerImplSpec_Performance extends OrderAwareSpec {
+// import org.loopring.lightcone.lib._
+// import org.loopring.lightcone.core.base._
+// import org.loopring.lightcone.core.data._
+// import org.loopring.lightcone.proto._
+// import org.loopring.lightcone.core.depth._
+// import org.loopring.lightcone.core._
+// import XOrderStatus._
+// import XErrorCode._
 
-  implicit var timeProvider = new TimeProvider {
-    def getTimeMillis = -1
-  }
+// class MarketManagerImplSpec_Performance extends OrderAwareSpec {
 
-  implicit val marketId = XMarketId(primary = WETH, secondary = GTO)
+//   implicit var timeProvider = new TimeProvider {
+//     def getTimeMillis = -1
+//   }
 
-  implicit var fakeDustOrderEvaluator: DustOrderEvaluator = _
-  implicit var fackRingIncomeEstimator: RingIncomeEstimator = _
-  var marketManager: MarketManager = _
+//   implicit val marketId = XMarketId(primary = WETH, secondary = GTO)
 
-  override def beforeEach() {
-    nextId = 1
-    fackRingIncomeEstimator = stub[RingIncomeEstimator]
-    fakeDustOrderEvaluator = stub[DustOrderEvaluator]
+//   implicit var fakeDustOrderEvaluator: DustOrderEvaluator = _
+//   implicit var fackRingIncomeEstimator: RingIncomeEstimator = _
+//   var marketManager: MarketManager = _
 
-    marketManager = new MarketManagerImpl(
-      marketId,
-      new TokenManager,
-      new RingMatcherImpl,
-      new PendingRingPoolImpl,
-      fakeDustOrderEvaluator,
-      new OrderAwareOrderbookAggregatorImpl(priceDecimals = 5)
-    )
+//   override def beforeEach() {
+//     nextId = 1
+//     fackRingIncomeEstimator = stub[RingIncomeEstimator]
+//     fakeDustOrderEvaluator = stub[DustOrderEvaluator]
 
-    (fakeDustOrderEvaluator.isOriginalDust _).when(*).returns(false)
-    (fakeDustOrderEvaluator.isOutstandingDust _).when(*).returns(false)
-    (fakeDustOrderEvaluator.isActualDust _).when(*).returns(false)
-    (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
+//     marketManager = new MarketManagerImpl(
+//       marketId,
+//       new TokenManager,
+//       new RingMatcherImpl,
+//       new PendingRingPoolImpl,
+//       fakeDustOrderEvaluator,
+//       new OrderAwareOrderbookAggregatorImpl(priceDecimals = 5)
+//     )
 
-    (fackRingIncomeEstimator.getRingIncome _).when(*).returns(1)
-    (fackRingIncomeEstimator
-      .isProfitable(_: OrderRing, _: Double))
-      .when(*, *)
-      .returns(true)
-  }
+//     (fakeDustOrderEvaluator.isOriginalDust _).when(*).returns(false)
+//     (fakeDustOrderEvaluator.isOutstandingDust _).when(*).returns(false)
+//     (fakeDustOrderEvaluator.isActualDust _).when(*).returns(false)
+//     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
 
-  "MarketManagingImpl" should "match 100 orders per second per thread" in {
-    val now = System.currentTimeMillis
-    val num = 100
-    var rings = 0
-    (1 to num) foreach { i =>
-      var result = marketManager.submitOrder(createGTOSellOrder(0.12, 5000), 0)
-      rings += result.rings.size
+//     (fackRingIncomeEstimator.getRingIncome _).when(*).returns(1)
+//     (fackRingIncomeEstimator
+//       .isProfitable(_: OrderRing, _: Double))
+//       .when(*, *)
+//       .returns(true)
+//   }
 
-      result = marketManager.submitOrder(createGTOBuyOrder(0.12, 5000), 0)
-      rings += result.rings.size
-    }
-    val cost = System.currentTimeMillis - now
-    val avg = 1000 * num / cost
+//   "MarketManagingImpl" should "match 100 orders per second per thread" in {
+//     val now = System.currentTimeMillis
+//     val num = 100
+//     var rings = 0
+//     (1 to num) foreach { i =>
+//       var result = marketManager.submitOrder(createGTOSellOrder(0.12, 5000), 0)
+//       rings += result.rings.size
 
-    val sells = marketManager.getSellOrders(100)
-    val buys = marketManager.getBuyOrders(100)
+//       result = marketManager.submitOrder(createGTOBuyOrder(0.12, 5000), 0)
+//       rings += result.rings.size
+//     }
+//     val cost = System.currentTimeMillis - now
+//     val avg = 1000 * num / cost
 
-    println(s"""
-      number of orders :${marketManager.getNumOfOrders}
-      time cost for $num orders: $cost ($avg/second)
-      num of rings: $rings
-      """)
-  }
+//     val sells = marketManager.getSellOrders(100)
+//     val buys = marketManager.getBuyOrders(100)
 
-  private def createGTOSellOrder(
-      price: Double,
-      amount: Double
-    ) = {
-    val rawAmountS: BigInt = AmountConverter(GTO).displayToRaw(amount)
-    val rawAmountB: BigInt = AmountConverter(WETH).displayToRaw(amount * price)
-    sellGTO(rawAmountS, rawAmountB).withActualAsOriginal
-  }
+//     println(s"""
+//       number of orders :${marketManager.getNumOfOrders}
+//       time cost for $num orders: $cost ($avg/second)
+//       num of rings: $rings
+//       """)
+//   }
 
-  private def createGTOBuyOrder(
-      price: Double,
-      amount: Double
-    ) = {
-    val rawAmountS: BigInt = AmountConverter(GTO).displayToRaw(amount)
-    val rawAmountB: BigInt = AmountConverter(WETH).displayToRaw(amount * price)
-    buyGTO(rawAmountB, rawAmountS).withActualAsOriginal
-  }
+//   private def createGTOSellOrder(
+//       price: Double,
+//       amount: Double
+//     ) = {
+//     val rawAmountS: BigInt = AmountConverter(GTO).displayToRaw(amount)
+//     val rawAmountB: BigInt = AmountConverter(WETH).displayToRaw(amount * price)
+//     sellGTO(rawAmountS, rawAmountB).withActualAsOriginal
+//   }
 
-  private def createRandomOrder(
-      price: Double,
-      amount: Double
-    ) = {
-    val rand = new util.Random()
-    val p = price * (1 + (rand.nextInt % 5) / 100.0)
-    val a = amount * (1 + (rand.nextInt % 20) / 100.0)
-    if (rand.nextInt % 2 == 0) createGTOSellOrder(p, a)
-    else createGTOBuyOrder(p, a)
-  }
+//   private def createGTOBuyOrder(
+//       price: Double,
+//       amount: Double
+//     ) = {
+//     val rawAmountS: BigInt = AmountConverter(GTO).displayToRaw(amount)
+//     val rawAmountB: BigInt = AmountConverter(WETH).displayToRaw(amount * price)
+//     buyGTO(rawAmountB, rawAmountS).withActualAsOriginal
+//   }
 
-}
+//   private def createRandomOrder(
+//       price: Double,
+//       amount: Double
+//     ) = {
+//     val rand = new util.Random()
+//     val p = price * (1 + (rand.nextInt % 5) / 100.0)
+//     val a = amount * (1 + (rand.nextInt % 20) / 100.0)
+//     if (rand.nextInt % 2 == 0) createGTOSellOrder(p, a)
+//     else createGTOBuyOrder(p, a)
+//   }
+
+// }

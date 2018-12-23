@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.base
+package org.loopring.lightcone
 
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
-// TODO(dongw): we need a price provider
-class TokenValueEstimator()(implicit tm: TokenManager) {
+package object core {
+  implicit class RichDoubleValue(v: Double) {
 
-  def getEstimatedValue(
-      tokenAddr: String,
-      amount: BigInt
-    ): Double = {
-    if (amount.signum <= 0) 0
-    else if (!tm.hasToken(tokenAddr)) 0
-    else {
-      val token = tm.getToken(tokenAddr)
-      (Rational(token.fromWei(amount)) *
-        Rational(token.meta.currentPrice)).doubleValue
+    def toWei(tokenAddr: String)(implicit tm: base.TokenManager) = {
+      tm.getToken(tokenAddr).toWei(v)
     }
   }
 
+  implicit class RichOrder(order: Order) {
+    def asPending() = order.copy(status = XOrderStatus.STATUS_PENDING)
+    def withActualAsOriginal() = order.copy(_actual = Some(order.original))
+    def withMatchableAsActual() = order.copy(_matchable = Some(order.actual))
+    def matchableAsOriginal() = order.copy(_matchable = Some(order.original))
+  }
 }

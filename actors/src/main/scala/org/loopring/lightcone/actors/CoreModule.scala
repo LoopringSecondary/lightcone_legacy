@@ -77,8 +77,8 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[DatabaseModule].toInstance(dbModule)
     dbModule.createTables()
 
-    implicit val tmm = new TokenManager()
-    bind[TokenManager].toInstance(tmm)
+    implicit val tm = new TokenManager()
+    bind[TokenManager].toInstance(tm)
 
     implicit val tokenValueEstimator: TokenValueEstimator =
       new TokenValueEstimator()

@@ -31,16 +31,11 @@ trait OrderAwareSpec extends CommonSpec {
   val DAI = "0x00000000003"
   val WETH = "0x00000000004"
 
-  val LRC_TOKEN = XTokenMeta(LRC, 0, 0.1, "LRC", 1.0)
-  val GTO_TOKEN = XTokenMeta(GTO, 10, 0.2, "GTO", 1400.0)
-  val DAI_TOKEN = XTokenMeta(DAI, 20, 0.3, "DAI", 7.0)
-  val WETH_TOKEN = XTokenMeta(WETH, 23, 0.4, "WETH", 0.5)
-
-  implicit val tmm = new TokenManager()
-  tmm.addToken(LRC_TOKEN)
-  tmm.addToken(GTO_TOKEN)
-  tmm.addToken(DAI_TOKEN)
-  tmm.addToken(WETH_TOKEN)
+  implicit val tm = new TokenManager()
+    .addToken(XTokenMeta(LRC, 0, 0.1, "LRC", 1.0))
+    .addToken(XTokenMeta(GTO, 10, 0.2, "GTO", 1400.0))
+    .addToken(XTokenMeta(DAI, 20, 0.3, "DAI", 7.0))
+    .addToken(XTokenMeta(WETH, 23, 0.4, "WETH", 0.5))
 
   implicit val tve = new TokenValueEstimator
 
@@ -50,7 +45,7 @@ trait OrderAwareSpec extends CommonSpec {
   implicit val dustEvaluator = new DustOrderEvaluator
 
   implicit var orderPool: AccountOrderPool with UpdatedOrdersTracing = _
-  var orderManager: AccountManager = _
+  var accountManager: AccountManager = _
   var lrc: AccountTokenManager = _
   var gto: AccountTokenManager = _
   var dai: AccountTokenManager = _
@@ -64,88 +59,95 @@ trait OrderAwareSpec extends CommonSpec {
     updatedOrders = Map.empty[String, Order]
     orderPool.addCallback { order =>
       updatedOrders += order.id -> order
-      // println("----UO: " + order)
-      // log.debug("order: " + order)
+    // println("----UO: " + order)
+    // log.debug("order: " + order)
     }
-    orderManager = AccountManager.default()
+    accountManager = AccountManager.default()
 
     lrc = new AccountTokenManagerImpl(LRC)
     gto = new AccountTokenManagerImpl(GTO)
     dai = new AccountTokenManagerImpl(DAI)
     weth = new AccountTokenManagerImpl(WETH)
 
-    orderManager.addTokenManager(lrc)
-    orderManager.addTokenManager(gto)
-    orderManager.addTokenManager(dai)
-    orderManager.addTokenManager(weth)
+    accountManager.addTokenManager(lrc)
+    accountManager.addTokenManager(gto)
+    accountManager.addTokenManager(dai)
+    accountManager.addTokenManager(weth)
   }
 
   def sellLRC(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(LRC, WETH, LRC, amountS, amountB, amountFee)
+      amountLRC: BigInt,
+      amountWETH: BigInt,
+      amountFee: BigInt
+    ) = newOrder(LRC, WETH, LRC, amountLRC, amountWETH, amountFee)
 
   def buyLRC(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(WETH, LRC, LRC, amountS, amountB, amountFee)
+      amountLRC: BigInt,
+      amountWETH: BigInt,
+      amountFee: BigInt
+    ) = newOrder(WETH, LRC, LRC, amountWETH, amountLRC, amountFee)
 
   def sellDAI(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(DAI, WETH, LRC, amountS, amountB, amountFee)
+      amountDAI: BigInt,
+      amountWETH: BigInt,
+      amountFee: BigInt = 0
+    ) = newOrder(DAI, WETH, LRC, amountDAI, amountWETH, amountFee)
 
   def buyDAI(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(WETH, DAI, LRC, amountS, amountB, amountFee)
+      amountDAI: BigInt,
+      amountWETH: BigInt,
+      amountFee: BigInt = 0
+    ) = newOrder(WETH, DAI, LRC, amountWETH, amountDAI, amountFee)
 
   def sellGTO(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(GTO, WETH, LRC, amountS, amountB, amountFee)
+      amountGTO: BigInt,
+      amountWETH: BigInt,
+      amountFee: BigInt = 0
+    ) = newOrder(GTO, WETH, LRC, amountGTO, amountWETH, amountFee)
 
   def buyGTO(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(WETH, GTO, LRC, amountS, amountB, amountFee)
+      amountGTO: BigInt,
+      amountWETH: BigInt,
+      amountFee: BigInt = 0
+    ) = newOrder(WETH, GTO, LRC, amountWETH, amountGTO, amountFee)
 
   def newOrder(
-    tokenS: String,
-    tokenB: String,
-    tokenFee: String,
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) =
+      tokenS: String,
+      tokenB: String,
+      tokenFee: String,
+      amountS: BigInt,
+      amountB: BigInt,
+      amountFee: BigInt
+    ): Order =
     Order(getNextId(), tokenS, tokenB, tokenFee, amountS, amountB, amountFee)
 
   def orderState(
-    amountS: Long,
-    amountB: Long,
-    amountFee: Long) = OrderState(BigInt(amountS), BigInt(amountB), BigInt(amountFee))
+      amountS: Long,
+      amountB: Long,
+      amountFee: Long
+    ) = OrderState(BigInt(amountS), BigInt(amountB), BigInt(amountFee))
 
   def submitOrder(order: Order) = {
     updatedOrders = Map.empty[String, Order]
-    orderManager.submitOrder(order)
+    accountManager.submitOrder(order)
   }
 
   def cancelOrder(orderId: String) = {
     updatedOrders = Map.empty[String, Order]
-    orderManager.cancelOrder(orderId)
+    accountManager.cancelOrder(orderId)
   }
 
   def adjustOrder(
-    orderId: String,
-    outstandingAmountS: Long) = {
+      orderId: String,
+      outstandingAmountS: Long
+    ) = {
     updatedOrders = Map.empty[String, Order]
-    orderManager.adjustOrder(orderId, BigInt(outstandingAmountS))
+    accountManager.adjustOrder(orderId, BigInt(outstandingAmountS))
   }
 
   def resetUpdatedOrders() {
     updatedOrders = Map.empty[String, Order]
   }
-
-  implicit def longToBigInt(l: Long) = BigInt(l)
 
   def getNextId() = {
     val id = nextId
@@ -153,10 +155,4 @@ trait OrderAwareSpec extends CommonSpec {
     id.toString
   }
 
-  implicit class RichOrder(order: Order) {
-    def asPending() = order.copy(status = XOrderStatus.STATUS_PENDING)
-    def withActualAsOriginal() = order.copy(_actual = Some(order.original))
-    def withMatchableAsActual() = order.copy(_matchable = Some(order.actual))
-    def matchableAsOriginal() = order.copy(_matchable = Some(order.original))
-  }
 }

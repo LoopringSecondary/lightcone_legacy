@@ -57,7 +57,7 @@ class MarketManagerImpl(
   import XOrderStatus._
 
   private implicit val marketId_ = marketId
-  private implicit val tmm_ = tokenManager
+  private implicit val tm_ = tokenManager
   private implicit val ordering = defaultOrdering()
 
   private var isLastTakerSell = false

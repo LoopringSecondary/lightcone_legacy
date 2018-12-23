@@ -20,7 +20,7 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
 class Token(val meta: XTokenMeta) {
-  lazy val scaling = Rational(BigInt(10).pow(meta.decimals))
+  val scaling = Rational(BigInt(10).pow(meta.decimals))
 
   def fromWei(amount: BigInt): Double =
     (Rational(amount) / scaling).doubleValue

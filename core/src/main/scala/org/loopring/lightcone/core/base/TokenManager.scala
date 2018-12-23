@@ -30,6 +30,12 @@ class TokenManager(defaultBurnRate: Double = 0.2) {
 
   def addToken(meta: XTokenMeta) = this.synchronized {
     addressMap += meta.address -> new Token(meta)
+    this
+  }
+
+  def addTokens(meta: Seq[XTokenMeta]) = {
+    meta.foreach(addToken)
+    this
   }
 
   def hasToken(addr: String) = addressMap.contains(addr)
