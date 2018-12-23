@@ -215,8 +215,6 @@ class MarketManagerImpl(
 
       val orderbookUpdate = aggregator.getOrderbookUpdate()
 
-      println("~~~~~~~~~~~~>>> " + orderbookUpdate)
-
       MatchResult(rings, taker.resetMatchable, orderbookUpdate)
     }
   }
