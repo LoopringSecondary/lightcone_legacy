@@ -213,7 +213,9 @@ class MarketManagerImpl(
       // add each skipped maker orders back
       ordersToAddBack.map(_.resetMatchable).foreach(addToSide)
 
-      MatchResult(rings, taker.resetMatchable, aggregator.getOrderbookUpdate())
+      val orderbookUpdate = aggregator.getOrderbookUpdate()
+
+      MatchResult(rings, taker.resetMatchable, orderbookUpdate)
     }
   }
 

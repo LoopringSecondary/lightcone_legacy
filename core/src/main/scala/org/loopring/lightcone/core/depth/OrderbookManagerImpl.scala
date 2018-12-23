@@ -26,7 +26,12 @@ class OrderbookManagerImpl(config: XMarketConfig) extends OrderbookManager {
     level -> new View(level)
   }.toMap
 
+  private var latestPrice: Option[Double] = None
+
   def processUpdate(update: XOrderbookUpdate) = this.synchronized {
+    if (update.price.isDefined) {
+      latestPrice = Some(update.price.get.value)
+    }
     val diff = viewMap(0).getDiff(update)
     viewMap.values.foreach(_.processUpdate(diff))
   }
@@ -35,11 +40,16 @@ class OrderbookManagerImpl(config: XMarketConfig) extends OrderbookManager {
       level: Int,
       size: Int,
       latestPrice: Option[Double] = None
-    ) =
+    ) = {
+    val _latestPrice =
+      if (latestPrice.isEmpty) this.latestPrice
+      else latestPrice
+
     viewMap.get(level) match {
-      case Some(view) => view.getOrderbook(size, latestPrice)
-      case None       => XOrderbook(latestPrice.getOrElse(0), Nil, Nil)
+      case Some(view) => view.getOrderbook(size, _latestPrice)
+      case None       => XOrderbook(_latestPrice.getOrElse(0.0), Nil, Nil)
     }
+  }
 
   def reset() = this.synchronized {
     viewMap.values.foreach(_.reset)
@@ -74,12 +84,31 @@ class OrderbookManagerImpl(config: XMarketConfig) extends OrderbookManager {
     def getOrderbook(
         size: Int,
         latestPrice: Option[Double]
-      ) =
+      ) = {
+      val priceOpt = latestPrice match {
+        case Some(price) if price > 0 => Some(price)
+        case None =>
+          val sellPrice = sellSide
+            .getDepth(1, None)
+            .headOption
+            .map(_.price.toDouble)
+            .getOrElse(Double.MaxValue)
+
+          val buyPrice = buySide
+            .getDepth(1, None)
+            .headOption
+            .map(_.price.toDouble)
+            .getOrElse(0.0)
+
+          Some((sellPrice + buyPrice) / 2)
+      }
+
       XOrderbook(
-        latestPrice.getOrElse(0),
-        sellSide.getDepth(size, latestPrice),
-        buySide.getDepth(size, latestPrice)
+        latestPrice.getOrElse(0.0),
+        sellSide.getDepth(size, priceOpt),
+        buySide.getDepth(size, priceOpt)
       )
+    }
 
     def reset() {
       sellSide.reset()
