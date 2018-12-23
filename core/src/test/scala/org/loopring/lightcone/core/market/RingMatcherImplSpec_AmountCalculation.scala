@@ -60,20 +60,16 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
   //   def testScale(scale: Rational) {
   //     val res = matcher.matchOrders(
   //       taker.copy(_matchable = Some(taker.original.scaleBy(scale))),
-  //       maker.copy(_matchable = Some(maker.original.scaleBy(scale)))
-  //     )
+  //       maker.copy(_matchable = Some(maker.original.scaleBy(scale))))
   //     val expectRing = OrderRing(
   //       taker = ExpectedFill(
   //         order = taker.copy(_matchable = Some(OrderState())),
   //         pending = taker.original.scaleBy(scale),
-  //         amountMargin = 0 !
-  //       ),
+  //         amountMargin = 0 !),
   //       maker = ExpectedFill(
   //         order = maker.copy(_matchable = Some(OrderState())),
   //         pending = maker.original.scaleBy(scale),
-  //         amountMargin = 0 !
-  //       )
-  //     )
+  //         amountMargin = 0 !))
   //     res.right.toOption should be(Some(expectRing))
   //   }
 
