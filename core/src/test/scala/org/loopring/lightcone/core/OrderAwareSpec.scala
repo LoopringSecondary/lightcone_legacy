@@ -90,25 +90,25 @@ trait OrderAwareSpec extends CommonSpec {
   def sellDAI(
       amountDAI: BigInt,
       amountWETH: BigInt,
-      amountFee: BigInt = 0
+      amountFee: BigInt
     ) = newOrder(DAI, WETH, LRC, amountDAI, amountWETH, amountFee)
 
   def buyDAI(
       amountDAI: BigInt,
       amountWETH: BigInt,
-      amountFee: BigInt = 0
+      amountFee: BigInt
     ) = newOrder(WETH, DAI, LRC, amountWETH, amountDAI, amountFee)
 
   def sellGTO(
       amountGTO: BigInt,
       amountWETH: BigInt,
-      amountFee: BigInt = 0
+      amountFee: BigInt
     ) = newOrder(GTO, WETH, LRC, amountGTO, amountWETH, amountFee)
 
   def buyGTO(
       amountGTO: BigInt,
       amountWETH: BigInt,
-      amountFee: BigInt = 0
+      amountFee: BigInt
     ) = newOrder(WETH, GTO, LRC, amountWETH, amountGTO, amountFee)
 
   def newOrder(
@@ -120,6 +120,60 @@ trait OrderAwareSpec extends CommonSpec {
       amountFee: BigInt
     ): Order =
     Order(getNextId(), tokenS, tokenB, tokenFee, amountS, amountB, amountFee)
+
+  def sellLRC(
+      amountLRC: Double,
+      amountWETH: Double,
+      amountFee: Double = 0
+    ) = newOrder(LRC, WETH, LRC, amountLRC, amountWETH, amountFee)
+
+  def buyLRC(
+      amountLRC: Double,
+      amountWETH: Double,
+      amountFee: Double = 0
+    ) = newOrder(WETH, LRC, LRC, amountWETH, amountLRC, amountFee)
+
+  def sellDAI(
+      amountDAI: Double,
+      amountWETH: Double,
+      amountFee: Double = 0
+    ) = newOrder(DAI, WETH, LRC, amountDAI, amountWETH, amountFee)
+
+  def buyDAI(
+      amountDAI: Double,
+      amountWETH: Double,
+      amountFee: Double = 0
+    ) = newOrder(WETH, DAI, LRC, amountWETH, amountDAI, amountFee)
+
+  def sellGTO(
+      amountGTO: Double,
+      amountWETH: Double,
+      amountFee: Double = 0
+    ) = newOrder(GTO, WETH, LRC, amountGTO, amountWETH, amountFee)
+
+  def buyGTO(
+      amountGTO: Double,
+      amountWETH: Double,
+      amountFee: Double = 0
+    ) = newOrder(WETH, GTO, LRC, amountWETH, amountGTO, amountFee)
+
+  def newOrder(
+      tokenS: String,
+      tokenB: String,
+      tokenFee: String,
+      amountS: Double,
+      amountB: Double,
+      amountFee: Double
+    ): Order =
+    Order(
+      getNextId(),
+      tokenS,
+      tokenB,
+      tokenFee,
+      amountS.toWei(tokenS),
+      amountB.toWei(tokenB),
+      amountFee.toWei(tokenFee)
+    )
 
   def orderState(
       amountS: Long,
