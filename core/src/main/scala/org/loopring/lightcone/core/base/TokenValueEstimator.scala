@@ -30,7 +30,7 @@ class TokenValueEstimator()(implicit tmm: TokenMetadataManager) {
       tmm.getTokenByAddress(token) match {
         case None => 0
         case Some(metadata) =>
-          val scaling = Math.pow(10, metadata.decimals)
+          val scaling = BigInt(10).pow(metadata.decimals)
           (Rational(metadata.currentPrice) *
             Rational(amount) /
             Rational(scaling)).doubleValue

@@ -196,6 +196,6 @@ case class Order(
     }
     val metadata = tokenMetadataManager.getTokenByAddress(token).get
     val decimals = metadata.decimals
-    (Rational(amount) / Rational(Math.pow(10, decimals))).doubleValue
+    (Rational(amount) / Rational(BigInt(10).pow(decimals))).doubleValue
   }
 }

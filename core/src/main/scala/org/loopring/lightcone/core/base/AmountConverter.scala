@@ -27,7 +27,7 @@ object AmountConverter {
 class AmountConverter(token: String)(implicit tmm: TokenMetadataManager) {
   assert(tmm.hasTokenByAddress(token))
   lazy val meta = tmm.getTokenByAddress(token).get
-  lazy val scaling = Rational(Math.pow(10, meta.decimals))
+  lazy val scaling = Rational(BigInt(10).pow(meta.decimals))
 
   def rawToDisplay(amount: BigInt): Double =
     (Rational(amount) / scaling).doubleValue
