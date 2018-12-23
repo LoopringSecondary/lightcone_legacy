@@ -271,7 +271,7 @@ class MarketManagerImpl(
 
     val matchableAmountS = (order.actual.amountS - pendingAmountS).max(0)
     val scale = Rational(matchableAmountS, order.original.amountS)
-    val copy = order.copy(_matchable = Some(order.original.scaleBy(scale)))
+    val copy = order.copy(_matchable = Some(order.original.scaledBy(scale)))
     // println(s"""
     //   original: $order
     //   pendingAmountS: $pendingAmountS
