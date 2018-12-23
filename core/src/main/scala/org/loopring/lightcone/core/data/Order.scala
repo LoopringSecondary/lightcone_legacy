@@ -183,6 +183,7 @@ case class Order(
       implicit tokenManager: TokenManager
     ) = {
     if (!tokenManager.hasToken(tokenAddr)) {
+
       throw ErrorException(
         ERR_MATCHING_TOKEN_METADATA_UNAVAILABLE,
         s"no metadata available for token $tokenAddr"

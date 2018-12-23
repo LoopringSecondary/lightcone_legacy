@@ -39,9 +39,6 @@ trait OrderAwareSpec extends CommonSpec {
 
   implicit val tve = new TokenValueEstimator
 
-  implicit class RichDouble(v: Double) {
-    // def LRC =
-  }
   implicit val dustEvaluator = new DustOrderEvaluator
 
   implicit var orderPool: AccountOrderPool with UpdatedOrdersTracing = _

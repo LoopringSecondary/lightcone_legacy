@@ -47,4 +47,6 @@ class TokenManager(defaultBurnRate: Double = 0.2) {
 
   def getBurnRate(addr: String) =
     addressMap.get(addr).map(_.meta.burnRate).getOrElse(defaultBurnRate)
+
+  override def toString() = addressMap.toString
 }
