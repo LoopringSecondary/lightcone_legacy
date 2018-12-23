@@ -175,7 +175,7 @@ class MarketManagerImpl(
             else ringMatcher.matchOrders(taker, maker, minFiatValue)
 
           log.debug(s"""
-                       | \n------ recursive matching (${taker.id} => ${maker.id}) ------
+                       | \n-- recursive matching (${taker.id} => ${maker.id}) --
                        | [taker]  : $taker,
                        | [maker]  : $maker,
                        | [result] : $matchResult\n\n
