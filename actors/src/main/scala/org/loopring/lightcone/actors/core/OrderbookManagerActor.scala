@@ -113,7 +113,7 @@ class OrderbookManagerActor(
     case XGetOrderbook(level, size, Some(marketId)) =>
       Future {
         if (OrderbookManagerActor.getEntityId(marketId) == marketIdHashedValue)
-          manager.getOrderbook(level, size, None)
+          manager.getOrderbook(level, size)
         else
           throw ErrorException(
             XErrorCode.ERR_INVALID_ARGUMENT,

@@ -25,7 +25,7 @@ trait OrderbookManager {
   def getOrderbook(
       level: Int,
       size: Int,
-      latestPrice: Option[Double] = None
+      price: Option[Double] = None
     ): XOrderbook
   def reset(): Unit
 }

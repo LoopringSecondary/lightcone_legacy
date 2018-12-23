@@ -66,12 +66,9 @@ message XOrderbookUpdate {
         double total = 3;
     }
 
-    message LatestPrice {
-        double value = 1;
-    }
     repeated XSlot sells = 1;
     repeated XSlot buys = 2;
-    LatestPrice price = 3;
+    double last_price = 3;
     XMarketId market_id = 4;
 }
 

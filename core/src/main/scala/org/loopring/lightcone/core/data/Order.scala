@@ -27,11 +27,12 @@ case class OrderState(
     amountB: BigInt = 0,
     amountFee: BigInt = 0) {
 
-  def scaleBy(ratio: Rational) = OrderState(
-    (Rational(amountS) * ratio).bigintValue,
-    (Rational(amountB) * ratio).bigintValue,
-    (Rational(amountFee) * ratio).bigintValue
-  )
+  def scaleBy(ratio: Rational) =
+    OrderState(
+      (Rational(amountS) * ratio).bigintValue,
+      (Rational(amountB) * ratio).bigintValue,
+      (Rational(amountFee) * ratio).bigintValue
+    )
 }
 
 // 注意!!!! 收益不能保证时,合约等比例计算,分母中不包含amountB
@@ -52,10 +53,9 @@ case class Order(
     _actual: Option[OrderState] = None,
     _matchable: Option[OrderState] = None) {
 
-  def original = OrderState(amountS, amountB, amountFee)
+  lazy val original = OrderState(amountS, amountB, amountFee)
 
-  def outstanding =
-    _outstanding.getOrElse(OrderState(amountS, amountB, amountFee))
+  def outstanding = _outstanding.getOrElse(original)
   def reserved = _reserved.getOrElse(OrderState())
   def actual = _actual.getOrElse(OrderState())
   def matchable = _matchable.getOrElse(OrderState())
@@ -102,39 +102,21 @@ case class Order(
       val r = Rational(amountS, amountFee + amountS)
       val reservedAmountS = (Rational(v) * r).bigintValue()
       copy(
-        _reserved = Some(
-          OrderState(reservedAmountS, 0, v - reservedAmountS)
-        )
+        _reserved = Some(OrderState(reservedAmountS, 0, v - reservedAmountS))
       ).updateActual()
     } else if (token == tokenS && tokenFee != tokenS) {
-      copy(
-        _reserved = Some(
-          OrderState(v, 0, reserved.amountFee)
-        )
-      ).updateActual()
+      copy(_reserved = Some(OrderState(v, 0, reserved.amountFee)))
+        .updateActual()
     } else if (token != tokenS && tokenFee == tokenB) {
-      copy(
-        _reserved = Some(
-          OrderState(reserved.amountS, 0, v)
-        )
-      ).updateActual()
+      copy(_reserved = Some(OrderState(reserved.amountS, 0, v))).updateActual()
     } else {
-      copy(
-        _reserved = Some(
-          OrderState(reserved.amountS, 0, v)
-        )
-      ).updateActual()
+      copy(_reserved = Some(OrderState(reserved.amountS, 0, v))).updateActual()
     }
 
   // Private methods
   private[core] def as(status: XOrderStatus) = {
     assert(status != STATUS_PENDING)
-    copy(
-      status = status,
-      _reserved = None,
-      _actual = None,
-      _matchable = None
-    )
+    copy(status = status, _reserved = None, _actual = None, _matchable = None)
   }
 
   private[core] def resetMatchable() = copy(_matchable = None)
@@ -162,18 +144,15 @@ case class Order(
 
   private[core] def displayablePrice(
     )(
-      implicit
-      marketId: XMarketId,
+      implicit marketId: XMarketId,
       tokenMetadataManager: TokenMetadataManager
     ) = {
-    if (tokenS == marketId.secondary) Rational(amountS, amountB).doubleValue
-    else Rational(amountB, amountS).doubleValue
+    displayableAmount / displayableTotal
   }
 
   private[core] def displayableAmount(
     )(
-      implicit
-      marketId: XMarketId,
+      implicit marketId: XMarketId,
       tokenMetadataManager: TokenMetadataManager
     ) = {
     if (tokenS == marketId.secondary) displayableAmountS
@@ -182,8 +161,7 @@ case class Order(
 
   private[core] def displayableTotal(
     )(
-      implicit
-      marketId: XMarketId,
+      implicit marketId: XMarketId,
       tokenMetadataManager: TokenMetadataManager
     ) = {
     if (tokenS == marketId.secondary) displayableAmountB
@@ -208,8 +186,7 @@ case class Order(
       token: String,
       amount: BigInt
     )(
-      implicit
-      tokenMetadataManager: TokenMetadataManager
+      implicit tokenMetadataManager: TokenMetadataManager
     ) = {
     if (!tokenMetadataManager.hasTokenByAddress(token)) {
       throw ErrorException(

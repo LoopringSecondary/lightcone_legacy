@@ -157,6 +157,7 @@ class MarketManagerImpl(
       var taker = order.copy(status = STATUS_PENDING)
       var rings = Seq.empty[OrderRing]
       var ordersToAddBack = Seq.empty[Order]
+      var lastPrice: Double = 0
 
       // The result of this recursive method is to populate
       // `rings` and `ordersToAddBack`.
@@ -173,12 +174,11 @@ class MarketManagerImpl(
               Left(ERR_MATCHING_INCOME_TOO_SMALL)
             else ringMatcher.matchOrders(taker, maker, minFiatValue)
 
-          log.debug(
-            s"""\n\n------ recursive matching (${taker.id} => ${maker.id}) ------
-[taker]  : $taker,
-[maker]  : $maker,
-[result] : $matchResult\n\n"""
-          )
+          log.debug(s"""
+          | \n------ recursive matching (${taker.id} => ${maker.id}) ------
+          | [taker]  : $taker,
+          | [maker]  : $maker,
+          | [result] : $matchResult\n\n""")
           (maker, matchResult)
         } match {
           case None                       => // to maker to trade with
@@ -199,6 +199,7 @@ class MarketManagerImpl(
               case Right(ring) =>
                 isLastTakerSell = (taker.tokenS == marketId.secondary)
                 rings :+= ring
+                lastPrice = (taker.displayablePrice + maker.displayablePrice) / 2
                 pendingRingPool.addRing(ring)
                 recursivelyMatchOrders()
             }
@@ -213,7 +214,9 @@ class MarketManagerImpl(
       // add each skipped maker orders back
       ordersToAddBack.map(_.resetMatchable).foreach(addToSide)
 
-      val orderbookUpdate = aggregator.getOrderbookUpdate()
+      val orderbookUpdate = aggregator
+        .getOrderbookUpdate()
+        .copy(lastPrice = lastPrice)
 
       MatchResult(rings, taker.resetMatchable, orderbookUpdate)
     }
