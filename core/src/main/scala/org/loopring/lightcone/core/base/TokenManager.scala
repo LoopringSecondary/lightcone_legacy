@@ -19,27 +19,26 @@ package org.loopring.lightcone.core.base
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
-class TokenMetadataManager(defaultBurnRate: Double = 0.2) {
+class TokenManager(defaultBurnRate: Double = 0.2) {
 
-  private var addressMap = Map.empty[String, XTokenMetadata]
-  private var symbolMap = Map.empty[String, XTokenMetadata]
+  private var addressMap = Map.empty[String, Token]
 
-  def reset(tokens: Seq[XTokenMetadata]) = this.synchronized {
+  def reset(metas: Seq[XTokenMetadata]) = this.synchronized {
     addressMap = Map.empty
-    symbolMap = Map.empty
-    tokens.foreach(addToken)
+    metas.foreach(addToken)
   }
 
-  def addToken(token: XTokenMetadata) = this.synchronized {
-    addressMap += token.address -> token
+  def addToken(meta: XTokenMetadata) = this.synchronized {
+    addressMap += meta.address -> new Token(meta)
   }
 
-  def hasTokenByAddress(token: String) = addressMap.contains(token)
-  def getTokenByAddress(token: String) = addressMap.get(token)
+  def hasToken(addr: String) = addressMap.contains(addr)
 
-  def hasTokenBySymbol(symbol: String) = symbolMap.contains(symbol)
-  def getTokenBySymbbol(symbol: String) = symbolMap.get(symbol)
+  def getToken(addr: String) = {
+    assert(hasToken(addr), s"token no found for address $addr")
+    addressMap.get(addr).get
+  }
 
-  def getBurnRate(token: String) =
-    addressMap.get(token).map(_.burnRate).getOrElse(defaultBurnRate)
+  def getBurnRate(addr: String) =
+    addressMap.get(addr).map(_.meta.burnRate).getOrElse(defaultBurnRate)
 }

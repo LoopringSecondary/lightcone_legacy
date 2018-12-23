@@ -43,7 +43,7 @@ object MarketManagerImpl {
 
 class MarketManagerImpl(
     val marketId: XMarketId,
-    val tokenMetadataManager: TokenMetadataManager,
+    val tokenManager: TokenManager,
     val ringMatcher: RingMatcher,
     val pendingRingPool: PendingRingPool,
     val dustOrderEvaluator: DustOrderEvaluator,
@@ -57,7 +57,7 @@ class MarketManagerImpl(
   import XOrderStatus._
 
   private implicit val marketId_ = marketId
-  private implicit val tmm_ = tokenMetadataManager
+  private implicit val tmm_ = tokenManager
   private implicit val ordering = defaultOrdering()
 
   private var isLastTakerSell = false

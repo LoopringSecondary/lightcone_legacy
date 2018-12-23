@@ -39,7 +39,7 @@ import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
 
 class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
@@ -77,8 +77,8 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[DatabaseModule].toInstance(dbModule)
     dbModule.createTables()
 
-    implicit val tmm = new TokenMetadataManager()
-    bind[TokenMetadataManager].toInstance(tmm)
+    implicit val tmm = new TokenManager()
+    bind[TokenManager].toInstance(tmm)
 
     implicit val tokenValueEstimator: TokenValueEstimator =
       new TokenValueEstimator()
@@ -105,9 +105,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         system
           .actorOf(
             Props(new TokenMetadataRefresher),
-            TokenMetadataRefresher.name
-          )
-      )
+            TokenMetadataRefresher.name))
 
       //-----------deploy cluster singletons-----------
       actors.add(
@@ -115,11 +113,8 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         system.actorOf(
           ClusterSingletonProxy.props(
             singletonManagerPath = OrderRecoverCoordinator.name,
-            settings = ClusterSingletonProxySettings(system)
-          ),
-          name = OrderRecoverCoordinator.name
-        )
-      )
+            settings = ClusterSingletonProxySettings(system)),
+          name = OrderRecoverCoordinator.name))
 
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
@@ -133,22 +128,18 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
       actors.add(
         MultiAccountManagerActor.name,
-        MultiAccountManagerActor.startShardRegion
-      )
+        MultiAccountManagerActor.startShardRegion)
 
       actors.add(
         EthereumEventExtractorActor.name,
-        EthereumEventExtractorActor.startShardRegion
-      )
+        EthereumEventExtractorActor.startShardRegion)
       actors.add(
         EthereumEventPersistorActor.name,
-        EthereumEventPersistorActor.startShardRegion
-      )
+        EthereumEventPersistorActor.startShardRegion)
 
       actors.add(
         OrderbookManagerActor.name,
-        OrderbookManagerActor.startShardRegion
-      )
+        OrderbookManagerActor.startShardRegion)
 
       //-----------deploy local actors-----------
       actors.add(
@@ -156,47 +147,37 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         MessageValidationActor(
           new MultiAccountManagerMessageValidator(),
           MultiAccountManagerActor.name,
-          MultiAccountManagerMessageValidator.name
-        )
-      )
+          MultiAccountManagerMessageValidator.name))
 
       actors.add(
         DatabaseQueryMessageValidator.name,
         MessageValidationActor(
           new DatabaseQueryMessageValidator(),
           DatabaseQueryActor.name,
-          DatabaseQueryMessageValidator.name
-        )
-      )
+          DatabaseQueryMessageValidator.name))
 
       actors.add(
         EthereumQueryMessageValidator.name,
         MessageValidationActor(
           new EthereumQueryMessageValidator(),
           EthereumQueryActor.name,
-          EthereumQueryMessageValidator.name
-        )
-      )
+          EthereumQueryMessageValidator.name))
 
       actors.add(
         OrderbookManagerMessageValidator.name,
         MessageValidationActor(
           new OrderbookManagerMessageValidator(),
           OrderbookManagerActor.name,
-          OrderbookManagerMessageValidator.name
-        )
-      )
+          OrderbookManagerMessageValidator.name))
 
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors.add(
         EntryPointActor.name,
-        system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
-      )
+        system.actorOf(Props(new EntryPointActor()), EntryPointActor.name))
 
       //-----------deploy JSONRPC service-----------
       if (cluster.selfRoles.contains("jsonrpc")) {
-        val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
-        with RpcBinding
+        val server = new JsonRpcServer(config, actors.get(EntryPointActor.name)) with RpcBinding
         server.start()
       }
     }

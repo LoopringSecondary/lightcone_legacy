@@ -32,7 +32,7 @@ import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.ethereum.data.{Address => LAddress}
+import org.loopring.lightcone.ethereum.data.{ Address => LAddress }
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -41,19 +41,17 @@ import scala.concurrent.duration._
 object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
-  def startShardRegion(
-    )(
-      implicit system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      actors: Lookup[ActorRef],
-      tokenValueEstimator: TokenValueEstimator,
-      ringIncomeEstimator: RingIncomeEstimator,
-      dustOrderEvaluator: DustOrderEvaluator,
-      tokenMetadataManager: TokenMetadataManager
-    ): ActorRef = {
+  def startShardRegion()(
+    implicit system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    tokenValueEstimator: TokenValueEstimator,
+    ringIncomeEstimator: RingIncomeEstimator,
+    dustOrderEvaluator: DustOrderEvaluator,
+    tokenManager: TokenManager): ActorRef = {
     numOfShards = 10
 
     val markets = config
@@ -64,8 +62,7 @@ object MarketManagerActor extends ShardedByMarket {
         val marketId =
           XMarketId(
             LAddress(c.getString("priamry")).toString,
-            LAddress(c.getString("secondary")).toString
-          )
+            LAddress(c.getString("secondary")).toString)
         MarketManagerActor.getEntityId(marketId) -> marketId
       }
       .toMap
@@ -74,8 +71,7 @@ object MarketManagerActor extends ShardedByMarket {
       typeName = name,
       entityProps = Props(new MarketManagerActor(markets)),
       settings = ClusterShardingSettings(system).withRole(name),
-      messageExtractor = messageExtractor
-    )
+      messageExtractor = messageExtractor)
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
@@ -89,8 +85,7 @@ object MarketManagerActor extends ShardedByMarket {
 }
 
 class MarketManagerActor(
-    markets: Map[String, XMarketId]
-  )(
+  markets: Map[String, XMarketId])(
     implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
@@ -99,12 +94,11 @@ class MarketManagerActor(
     val tokenValueEstimator: TokenValueEstimator,
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
-    val tokenMetadataManager: TokenMetadataManager)
-    extends ActorWithPathBasedConfig(
-      MarketManagerActor.name,
-      MarketManagerActor.extractEntityId
-    )
-    with ActorLogging {
+    val tokenManager: TokenManager)
+  extends ActorWithPathBasedConfig(
+    MarketManagerActor.name,
+    MarketManagerActor.extractEntityId)
+  with ActorLogging {
 
   var autoSwitchBackToReceive: Option[Cancellable] = None
 
@@ -115,8 +109,7 @@ class MarketManagerActor(
     selfConfig.getInt("max-recover-duration-minutes")
 
   val gasLimitPerRingV2 = BigInt(
-    config.getString("loopring-protocol.gas-limit-per-ring-v2")
-  )
+    config.getString("loopring-protocol.gas-limit-per-ring-v2"))
 
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
@@ -124,17 +117,15 @@ class MarketManagerActor(
   implicit val marketId = markets(entityId)
 
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-    selfConfig.getInt("price-decimals")
-  )
+    selfConfig.getInt("price-decimals"))
 
   val manager = new MarketManagerImpl(
     marketId,
-    tokenMetadataManager,
+    tokenManager,
     ringMatcher,
     pendingRingPool,
     dustOrderEvaluator,
-    aggregator
-  )
+    aggregator)
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
@@ -148,9 +139,7 @@ class MarketManagerActor(
         .scheduleOnce(
           maxRecoverDurationMinutes.minute,
           self,
-          XRecover.Finished(true)
-        )
-    )
+          XRecover.Finished(true)))
 
     if (skiprecover) {
       log.warning(s"actor recover skipped: ${self.path}")
@@ -179,8 +168,7 @@ class MarketManagerActor(
       log.warning(s"message not handled during recover")
       sender ! XError(
         ERR_REJECTED_DURING_RECOVER,
-        s"market manager `${entityId}` is being recovered"
-      )
+        s"market manager `${entityId}` is being recovered")
   }
 
   def receive: Receive = {
@@ -216,8 +204,7 @@ class MarketManagerActor(
   private def submitOrder(xorder: XOrder): Future[Unit] = {
     assert(
       xorder.actual.nonEmpty,
-      "order in XSubmitSimpleOrderReq miss `actual` field"
-    )
+      "order in XSubmitSimpleOrderReq miss `actual` field")
     val order: Order = xorder
     xorder.status match {
       case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING =>
@@ -247,9 +234,8 @@ class MarketManagerActor(
   }
 
   private def updateOrderbookAndSettleRings(
-      matchResult: MatchResult,
-      gasPrice: BigInt
-    ) {
+    matchResult: MatchResult,
+    gasPrice: BigInt) {
     // Settle rings
     if (matchResult.rings.nonEmpty) {
       log.debug(s"rings: ${matchResult.rings}")
@@ -257,8 +243,7 @@ class MarketManagerActor(
       settlementActor ! XSettleRingsReq(
         rings = matchResult.rings,
         gasLimit = gasLimitPerRingV2 * matchResult.rings.size,
-        gasPrice = gasPrice
-      )
+        gasPrice = gasPrice)
     }
 
     // Update order book (depth)

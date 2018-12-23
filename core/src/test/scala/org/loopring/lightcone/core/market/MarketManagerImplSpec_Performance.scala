@@ -60,7 +60,7 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
 
     marketManager = new MarketManagerImpl(
       marketId,
-      new TokenMetadataManager,
+      new TokenManager,
       new RingMatcherImpl,
       new PendingRingPoolImpl,
       fakeDustOrderEvaluator,

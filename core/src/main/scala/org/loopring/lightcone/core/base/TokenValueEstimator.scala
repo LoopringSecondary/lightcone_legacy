@@ -19,22 +19,21 @@ package org.loopring.lightcone.core.base
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
-class TokenValueEstimator()(implicit tmm: TokenMetadataManager) {
+class TokenValueEstimator()(implicit tmm: TokenManager) {
 
   def getEstimatedValue(
-      token: String,
+      tokenAddr: String,
       amount: BigInt
     ): Double = {
     if (amount.signum <= 0) 0
-    else
-      tmm.getTokenByAddress(token) match {
-        case None => 0
-        case Some(metadata) =>
-          val scaling = BigInt(10).pow(metadata.decimals)
-          (Rational(metadata.currentPrice) *
-            Rational(amount) /
-            Rational(scaling)).doubleValue
-      }
+    else if (!tmm.hasToken(tokenAddr)) 0
+    else {
+      val token = tmm.getToken(tokenAddr)
+      val scaling = BigInt(10).pow(token.meta.decimals)
+      (Rational(token.currentPrice) *
+        Rational(amount) /
+        Rational(scaling)).doubleValue
+    }
   }
 
 }

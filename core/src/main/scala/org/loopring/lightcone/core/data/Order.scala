@@ -121,21 +121,15 @@ case class Order(
 
   private[core] def resetMatchable() = copy(_matchable = None)
 
-  private[core] def displayableAmountS(
-    )(
-      implicit tokenMetadataManager: TokenMetadataManager
-    ) =
+  private[core] def displayableAmountS()(implicit tokenManager: TokenManager) =
     calcDisplayableAmount(tokenS, actual.amountS)
 
-  private[core] def displayableAmountB(
-    )(
-      implicit tokenMetadataManager: TokenMetadataManager
-    ) =
+  private[core] def displayableAmountB()(implicit tokenManager: TokenManager) =
     calcDisplayableAmount(tokenB, actual.amountB)
 
   private[core] def displayableAmountFee(
     )(
-      implicit tokenMetadataManager: TokenMetadataManager
+      implicit tokenManager: TokenManager
     ) =
     calcDisplayableAmount(tokenFee, actual.amountFee)
 
@@ -145,7 +139,7 @@ case class Order(
   private[core] def displayablePrice(
     )(
       implicit marketId: XMarketId,
-      tokenMetadataManager: TokenMetadataManager
+      tokenManager: TokenManager
     ) = {
     displayableAmount / displayableTotal
   }
@@ -153,7 +147,7 @@ case class Order(
   private[core] def displayableAmount(
     )(
       implicit marketId: XMarketId,
-      tokenMetadataManager: TokenMetadataManager
+      tokenManager: TokenManager
     ) = {
     if (tokenS == marketId.secondary) displayableAmountS
     else displayableAmountB
@@ -162,7 +156,7 @@ case class Order(
   private[core] def displayableTotal(
     )(
       implicit marketId: XMarketId,
-      tokenMetadataManager: TokenMetadataManager
+      tokenManager: TokenManager
     ) = {
     if (tokenS == marketId.secondary) displayableAmountB
     else displayableAmountS
@@ -183,19 +177,19 @@ case class Order(
   }
 
   private def calcDisplayableAmount(
-      token: String,
+      tokenAddr: String,
       amount: BigInt
     )(
-      implicit tokenMetadataManager: TokenMetadataManager
+      implicit tokenManager: TokenManager
     ) = {
-    if (!tokenMetadataManager.hasTokenByAddress(token)) {
+    if (!tokenManager.hasToken(tokenAddr)) {
       throw ErrorException(
         ERR_MATCHING_TOKEN_METADATA_UNAVAILABLE,
-        s"no metadata available for token $token"
+        s"no metadata available for token $tokenAddr"
       )
     }
-    val metadata = tokenMetadataManager.getTokenByAddress(token).get
-    val decimals = metadata.decimals
+    val token = tokenManager.getToken(tokenAddr)
+    val decimals = token.meta.decimals
     (Rational(amount) / Rational(BigInt(10).pow(decimals))).doubleValue
   }
 }

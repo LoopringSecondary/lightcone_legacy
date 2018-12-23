@@ -36,7 +36,7 @@ trait OrderAwareSpec extends CommonSpec {
   val DAI_TOKEN = XTokenMetadata(DAI, 20, 0.3, "DAI", 7.0)
   val WETH_TOKEN = XTokenMetadata(WETH, 23, 0.4, "WETH", 0.5)
 
-  implicit val tmm = new TokenMetadataManager()
+  implicit val tmm = new TokenManager()
   tmm.addToken(LRC_TOKEN)
   tmm.addToken(GTO_TOKEN)
   tmm.addToken(DAI_TOKEN)
@@ -45,7 +45,7 @@ trait OrderAwareSpec extends CommonSpec {
   implicit val tve = new TokenValueEstimator
 
   implicit class RichDouble(v: Double) {
-    // def LRC = 
+    // def LRC =
   }
   implicit val dustEvaluator = new DustOrderEvaluator
 
@@ -64,8 +64,8 @@ trait OrderAwareSpec extends CommonSpec {
     updatedOrders = Map.empty[String, Order]
     orderPool.addCallback { order =>
       updatedOrders += order.id -> order
-      // println("----UO: " + order)
-      // log.debug("order: " + order)
+    // println("----UO: " + order)
+    // log.debug("order: " + order)
     }
     orderManager = AccountManager.default()
 
@@ -81,48 +81,56 @@ trait OrderAwareSpec extends CommonSpec {
   }
 
   def sellLRC(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(LRC, WETH, LRC, amountS, amountB, amountFee)
+      amountS: BigInt,
+      amountB: BigInt,
+      amountFee: BigInt = 0
+    ) = newOrder(LRC, WETH, LRC, amountS, amountB, amountFee)
 
   def buyLRC(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(WETH, LRC, LRC, amountS, amountB, amountFee)
+      amountS: BigInt,
+      amountB: BigInt,
+      amountFee: BigInt = 0
+    ) = newOrder(WETH, LRC, LRC, amountS, amountB, amountFee)
 
   def sellDAI(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(DAI, WETH, LRC, amountS, amountB, amountFee)
+      amountS: BigInt,
+      amountB: BigInt,
+      amountFee: BigInt = 0
+    ) = newOrder(DAI, WETH, LRC, amountS, amountB, amountFee)
 
   def buyDAI(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(WETH, DAI, LRC, amountS, amountB, amountFee)
+      amountS: BigInt,
+      amountB: BigInt,
+      amountFee: BigInt = 0
+    ) = newOrder(WETH, DAI, LRC, amountS, amountB, amountFee)
 
   def sellGTO(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(GTO, WETH, LRC, amountS, amountB, amountFee)
+      amountS: BigInt,
+      amountB: BigInt,
+      amountFee: BigInt = 0
+    ) = newOrder(GTO, WETH, LRC, amountS, amountB, amountFee)
 
   def buyGTO(
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) = newOrder(WETH, GTO, LRC, amountS, amountB, amountFee)
+      amountS: BigInt,
+      amountB: BigInt,
+      amountFee: BigInt = 0
+    ) = newOrder(WETH, GTO, LRC, amountS, amountB, amountFee)
 
   def newOrder(
-    tokenS: String,
-    tokenB: String,
-    tokenFee: String,
-    amountS: BigInt,
-    amountB: BigInt,
-    amountFee: BigInt = 0) =
+      tokenS: String,
+      tokenB: String,
+      tokenFee: String,
+      amountS: BigInt,
+      amountB: BigInt,
+      amountFee: BigInt = 0
+    ) =
     Order(getNextId(), tokenS, tokenB, tokenFee, amountS, amountB, amountFee)
 
   def orderState(
-    amountS: Long,
-    amountB: Long,
-    amountFee: Long) = OrderState(BigInt(amountS), BigInt(amountB), BigInt(amountFee))
+      amountS: Long,
+      amountB: Long,
+      amountFee: Long
+    ) = OrderState(BigInt(amountS), BigInt(amountB), BigInt(amountFee))
 
   def submitOrder(order: Order) = {
     updatedOrders = Map.empty[String, Order]
@@ -135,8 +143,9 @@ trait OrderAwareSpec extends CommonSpec {
   }
 
   def adjustOrder(
-    orderId: String,
-    outstandingAmountS: Long) = {
+      orderId: String,
+      outstandingAmountS: Long
+    ) = {
     updatedOrders = Map.empty[String, Order]
     orderManager.adjustOrder(orderId, BigInt(outstandingAmountS))
   }

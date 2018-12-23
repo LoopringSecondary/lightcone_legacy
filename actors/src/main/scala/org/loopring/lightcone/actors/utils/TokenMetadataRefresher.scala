@@ -39,18 +39,17 @@ object TokenMetadataRefresher {
 }
 
 // main owner: 杜永丰
-class TokenMetadataRefresher(
-  )(
-    implicit val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule,
-    val tokenMetadataManager: TokenMetadataManager)
-    extends Actor
-    with ActorLogging
-    with RepeatedJobActor {
+class TokenMetadataRefresher()(
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeProvider: TimeProvider,
+  val timeout: Timeout,
+  val actors: Lookup[ActorRef],
+  val dbModule: DatabaseModule,
+  val tokenManager: TokenManager)
+  extends Actor
+  with ActorLogging
+  with RepeatedJobActor {
 
   private val tokenMetadataService = dbModule.tokenMetadataService
 
@@ -60,10 +59,8 @@ class TokenMetadataRefresher(
       dalayInSeconds = 10 * 60, // 10 minutes
       run = () =>
         tokenMetadataService.getTokens(true).map { tokens =>
-          tokenMetadataManager.reset(tokens)
-        }
-    )
-  )
+          tokenManager.reset(tokens)
+        }))
 
   override def receive: Receive = super.receive orElse LoggingReceive {
     case _ =>
