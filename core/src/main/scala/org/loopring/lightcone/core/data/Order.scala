@@ -189,7 +189,6 @@ case class Order(
       )
     }
     val token = tokenManager.getToken(tokenAddr)
-    val decimals = token.meta.decimals
-    (Rational(amount) / Rational(BigInt(10).pow(decimals))).doubleValue
+    token.fromWei(amount)
   }
 }

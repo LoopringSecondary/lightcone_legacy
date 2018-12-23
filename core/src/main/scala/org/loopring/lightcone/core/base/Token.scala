@@ -22,18 +22,18 @@ import org.loopring.lightcone.proto._
 class Token(val meta: XTokenMeta) {
   lazy val scaling = Rational(Math.pow(10, meta.decimals))
 
-  def rawToDisplay(amount: BigInt): Double =
+  def fromWei(amount: BigInt): Double =
     (Rational(amount) / scaling).doubleValue
 
-  def rawToDisplay(
+  def fromWei(
       amount: BigInt,
       precision: Int
     ): Double = {
-    BigDecimal(rawToDisplay(amount: BigInt))
+    BigDecimal(fromWei(amount))
       .setScale(precision, BigDecimal.RoundingMode.HALF_UP)
       .doubleValue
   }
 
-  def displayToRaw(amount: Double): BigInt =
+  def toWei(amount: Double): BigInt =
     (Rational(amount) * scaling).bigintValue
 }
