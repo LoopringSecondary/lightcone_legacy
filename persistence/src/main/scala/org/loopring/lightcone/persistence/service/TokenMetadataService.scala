@@ -21,6 +21,5 @@ import scala.concurrent.Future
 
 trait TokenMetadataService {
 
-  def getTokens(
-    reloadFromDatabase: Boolean = false): Future[Seq[XTokenMeta]]
+  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[XTokenMeta]]
 }
