@@ -128,6 +128,25 @@ class EntryPointSpec_SubmitSeveralOrder
 
       val res = Await.result(orderbookF1, timeout.duration)
       println("====>>>" + res)
+      /*
+    ERROR
+          org.loopring.lightcone.lib.ErrorException: ErrorException(
+          ERR_INTERNAL_UNKNOWN: msg:JsonRpcError(4002,
+          Some(failed to submit order:
+          XRawOrder(0x3518ce27b5f6ff3c8dfb8f0d3f4c58fb09294c7c8d4678a4d6a433faa7de46d6,
+          1,0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10,
+          0xa345b6c2e5ce5970d026cea8591dc28958ff6edc,
+          0x08d24fc29cdccf8e9ca45eef05384c58f8a8e94f,
+          <ByteString@3eee611 size=9>,<ByteString@1c4324b9 size=8>,
+          1545606389,Some(Params(,,,,1545616389,,,false,ERC20,ERC20,ERC20,)),
+          Some(FeeParams(0xa345b6c2e5ce5970d026cea8591dc28958ff6edc,
+          <ByteString@613cd30 size=8>,0,0,0,,0)),None,
+          Some(State(1545596389381,1545596389381,0,0,STATUS_NEW,
+          <ByteString@3a80d779 size=0>,<ByteString@3a80d779 size=0>,
+          <ByteString@3a80d779 size=0>,<ByteString@3a80d779 size=0>,
+          <ByteString@3a80d779 size=0>,<ByteString@3a80d779 size=0>))
+          ,0,)),None))
+       */
       res match {
         case XOrderbook(_, sells, buys) =>
           assert(sells.size == 2)
