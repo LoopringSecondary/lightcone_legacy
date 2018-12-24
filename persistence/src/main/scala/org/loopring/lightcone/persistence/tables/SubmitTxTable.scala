@@ -24,6 +24,8 @@ class SubmitTxTable(tag: Tag)
     extends BaseTable[XSubmitTx](tag, "T_SUBMIT_TXS") {
   implicit val XStatusCxolumnType = enumColumnType(XSubmitTx.XStatus)
 
+  // TODO du: 用什么做id ?
+  def id = from
   def from = columnAddress("from")
   def to = columnAddress("to")
   def gas = column[String]("gas")

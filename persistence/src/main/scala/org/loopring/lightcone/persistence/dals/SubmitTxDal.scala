@@ -31,7 +31,10 @@ import scala.util.{Failure, Success}
 trait SubmitTxDal extends BaseDalImpl[SubmitTxTable, XSubmitTx] {
   def saveTx(tx: XSubmitTx): Future[XErrorCode]
   def saveTxs(txs: Seq[XSubmitTx]): Future[XErrorCode]
-  def getPendingTxs(request: XGetTradesReq): Future[Seq[XSubmitTx]]
+  // get all pending txs with given owner, from_nonce is a optional parameter(>=)
+  def getPendingTxs(request: XGetPendingTxsReq): Future[Seq[XSubmitTx]]
+  // update address's all txs status below or equals the given nonce to BLOCK
+  def updateInBlock(request: XUpdateTxInBlockReq): Future[XErrorCode]
 }
 
 class SubmitDalImpl(
@@ -47,5 +50,7 @@ class SubmitDalImpl(
 
   def saveTxs(txs: Seq[XSubmitTx]): Future[XErrorCode] = ???
 
-  def getPendingTxs(request: XGetTradesReq): Future[Seq[XSubmitTx]] = ???
+  def getPendingTxs(request: XGetPendingTxsReq): Future[Seq[XSubmitTx]] = ???
+
+  def updateInBlock(request: XUpdateTxInBlockReq): Future[XErrorCode] = ???
 }
