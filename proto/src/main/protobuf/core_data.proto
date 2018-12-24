@@ -253,3 +253,19 @@ message XOrdersCancelledEvent {
     int64  updated_at      = 5;
     int64  block_height    = 6;
 }
+
+message XSubmitTx {
+    enum XStatus {
+        PENDING  = 0;
+        BLOCK = 1;
+    }
+    string  from       = 1;
+    string  to         = 2;
+    string  gas        = 3;
+    string  gasPrice   = 4;
+    string  value      = 5;
+    string  data       = 6;
+    int64   nonce      = 7;
+    XStatus status     = 8;
+    int64   submit_at  = 9;
+}

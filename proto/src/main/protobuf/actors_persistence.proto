@@ -127,3 +127,20 @@ message XGetTradesResult {
     repeated XTrade  trades = 1;
     XErrorCode       error  = 2;
 }
+
+message XSubmitTxReq {
+    repeated XSubmitTx txs = 1;
+}
+
+message XSubmitTxResult {
+    XErrorCode error = 1;
+}
+
+message XGetPendingTxsReq {
+    string owner      = 1; // required
+    int64  from_nonce = 2; // optional, contains(>=from_nonce)
+}
+
+message XGetPendingTxsResult {
+    repeated XSubmitTx txs = 1;
+}
