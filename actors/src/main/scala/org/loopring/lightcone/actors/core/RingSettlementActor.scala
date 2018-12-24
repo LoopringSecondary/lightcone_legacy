@@ -72,21 +72,22 @@ class RingSettlementActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(RingSettlementActor.name)
+    extends Actor
+    with ActorLogging
     with RepeatedJobActor {
 
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx = 10
   implicit val ringContext: XRingBatchContext =
     XRingBatchContext(
-      lrcAddress = selfConfig.getString("lrc_address"),
-      feeRecipient = selfConfig.getString("fee_recipient"),
-      miner = selfConfig.getString("miner"),
-      transactionOrigin = selfConfig.getString("transaction_origin"),
-      minerPrivateKey = selfConfig.getString("miner_privateKey")
+      lrcAddress = config.getString("ring_settlement.lrc_address"),
+      feeRecipient = config.getString("ring_settlement.fee_recipient"),
+      miner = config.getString("miner"),
+      transactionOrigin = config.getString("transaction_origin"),
+      minerPrivateKey = config.getString("miner_privateKey")
     )
   implicit val credentials: Credentials =
-    Credentials.create(selfConfig.getString("transaction_origin_private_key"))
+    Credentials.create(config.getString("transaction_origin_private_key"))
 
   val protocolAddress: String =
     config.getString("loopring-protocol.protocol-address")
@@ -94,7 +95,8 @@ class RingSettlementActor(
 
   private val ready = new AtomicBoolean(false)
   private val nonce = new AtomicInteger(0)
-
+  // 维护balance, 当余额不足的时候停止接收新的任务
+  private var  minerBalance = BigInt(10).pow(18)
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)
 
@@ -126,6 +128,7 @@ class RingSettlementActor(
           .map(_.result)
       } yield {
         //TODO(yadong) 把提交的环路记录到数据库,提交失败以后的处理
+        minerBalance = minerBalance.min(BigInt(req.gasLimit.toByteArray) * BigInt(req.gasPrice.toByteArray))
         hash
       }
   }
