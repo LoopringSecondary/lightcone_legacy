@@ -22,37 +22,41 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config._
 import org.loopring.lightcone.actors.base.MapBasedLookup
+import org.loopring.lightcone.actors.support.{
+  CommonSpec,
+  EthereumSupport,
+  JsonrpcSupport
+}
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib.SystemTimeProvider
 import org.loopring.lightcone.proto._
 import org.scalatest._
 import org.slf4s.Logging
+import org.web3j.utils.Numeric
 
 import scala.concurrent.duration._
 import scala.concurrent._
 
-//class EthereumAccessorSpec extends FlatSpec with Matchers with Logging {
-//
-//  implicit val system = ActorSystem("Lightcone")
-//  implicit val ec = system.dispatcher
-//  implicit val materializer = ActorMaterializer()(system)
-//  implicit val timeout = Timeout(2 second)
-//  implicit val timeProvider = new SystemTimeProvider()
-//  implicit val actors = new MapBasedLookup[ActorRef]()
-//  implicit val config: Config = ConfigFactory.load()
-//
-//  val wethAbi = WETHABI()
-//  val delegateAdderess = "0x17233e07c67d086464fD408148c3ABB56245FA64"
-//
-//  val ethereumAccessActor =
-//    system.actorOf(Props(new EthereumAccessActor()))
-//
-//  Thread.sleep(6000)
-//
-//  val fu = for {
-//    blockNum ← (ethereumAccessActor ? XEthBlockNumberReq())
-//      .mapTo[XEthBlockNumberRes]
-//      .map(_.result)
+class EthereumAccessorSpec
+    extends CommonSpec(
+      """
+        |akka.cluster.roles=[
+        | "ethereum_access"]
+        |""".stripMargin
+    )
+    with JsonrpcSupport
+    with EthereumSupport
+    with Logging {
+
+  val wethAbi = WETHABI()
+  val delegateAdderess = "0x17233e07c67d086464fD408148c3ABB56245FA64"
+
+  val ethereumAccessActor = actors.get(EthereumAccessActor.name)
+
+  val fu = for {
+    blockNum ← (ethereumAccessActor ? XEthBlockNumberReq())
+      .mapTo[XEthBlockNumberRes]
+      .map(_.result)
 //    blockWithTxHash ← (ethereumAccessActor ? XGetBlockWithTxHashByNumberReq(
 //      blockNum
 //    )).mapTo[XGetBlockWithTxHashByNumberRes]
@@ -189,30 +193,30 @@ import scala.concurrent._
 //      )
 //    )).mapTo[XGetEstimatedGasRes]
 //      .map(_.result)
-//  } yield {
-//    //    println(
-//    //      s"BlockNum: ${blockNum} --- ${Numeric.toBigInt(blockNum).intValue()}"
-//    //    )
-//    //    println(s"txHashs:${blockWithTxHash}")
-//    //    println(s"txHashs:${blockByHashWithHash}")
-//    //    println(s"Txs:${blockWithTxObjcet}")
-//    //    println(s"Txs:${blockByHashwithObject}")
-//    //    println(s"Txs:${txs}")
-//    //    println(s"Receipts:${receipts}")
-//    //    println(s"Receipts:${batchReceipts.map(_.from)}")
-//    //    println(s"nonce:${nonce}")
-//    //    println(s"TxCount:${txCount}")
-//    //    println(s"txs:${batchTx.map(_.get.from)}")
-//    //    println(s"Lrc Balance:${lrcBalance.get.balance.toString()}")
-//    //    println(s"balances:${lrcbalances.map(_.get.balance.toString)}")
-//    //    println(s"Allowance:${allowance.get.allowance.toString}")
-//    //    println(s"Allowances:${allowances.map(_.get.allowance.toString)}")
-//    //    println(s"Uncle:${uncle}")
-//    //    println(s"Uncles:${uncles}")
+  } yield {
+    println(
+      s"BlockNum: ${blockNum} --- ${Numeric.toBigInt(blockNum).intValue()}"
+    )
+    //    println(s"txHashs:${blockWithTxHash}")
+    //    println(s"txHashs:${blockByHashWithHash}")
+    //    println(s"Txs:${blockWithTxObjcet}")
+    //    println(s"Txs:${blockByHashwithObject}")
+    //    println(s"Txs:${txs}")
+    //    println(s"Receipts:${receipts}")
+    //    println(s"Receipts:${batchReceipts.map(_.from)}")
+    //    println(s"nonce:${nonce}")
+    //    println(s"TxCount:${txCount}")
+    //    println(s"txs:${batchTx.map(_.get.from)}")
+    //    println(s"Lrc Balance:${lrcBalance.get.balance.toString()}")
+    //    println(s"balances:${lrcbalances.map(_.get.balance.toString)}")
+    //    println(s"Allowance:${allowance.get.allowance.toString}")
+    //    println(s"Allowances:${allowances.map(_.get.allowance.toString)}")
+    //    println(s"Uncle:${uncle}")
+    //    println(s"Uncles:${uncles}")
 //    println(s"Gas:$gas")
-//    println("test success")
-//  }
-//
-//  Await.result(fu, 2 minute)
-//
-//}
+    println("test success")
+  }
+
+  Await.result(fu, 2 minute)
+
+}

@@ -128,7 +128,6 @@ class RingSettlementActor(
         //TODO(yadong) 把提交的环路记录到数据库,提交失败以后的处理
         hash
       }
-    case _ =>
   }
 
   def getNonce(): Future[Int] = {
