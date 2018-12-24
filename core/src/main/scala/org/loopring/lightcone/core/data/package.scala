@@ -43,18 +43,14 @@ package object data {
     //中间价格，可以在显示深度价格时使用,简单的中间价
     //根据计价token来计算中间价格
     def middleRate(feeToken: String): Double = {
-      val makerSellPrice = Rational(
-        raw.maker.order.amountS,
-        raw.maker.order.amountB
-      ).doubleValue()
+      val makerSellPrice =
+        Rational(raw.maker.order.amountS, raw.maker.order.amountB).doubleValue()
 
-      val takerSellPrice = Rational(
-        raw.taker.order.amountS,
-        raw.taker.order.amountB
-      ).doubleValue()
+      val takerSellPrice =
+        Rational(raw.taker.order.amountS, raw.taker.order.amountB).doubleValue()
 
       val productPrice = takerSellPrice * makerSellPrice
-      val rateOfPrice = math.pow(productPrice, 0.5)
+      val rateOfPrice = Math.pow(productPrice, 0.5)
       val priceByMaker = makerSellPrice * rateOfPrice
 
       if (raw.maker.order.tokenS == feeToken) priceByMaker

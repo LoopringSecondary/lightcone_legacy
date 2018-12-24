@@ -39,37 +39,37 @@ class CoreActorsIntegrationSpec_SingleRingFullyMatched
         tokenB = WETH_TOKEN.address,
         tokenFee = LRC_TOKEN.address,
         amountS = "10".zeros(18),
-        amountB = "100".zeros(10),
+        amountB = "100".zeros(18),
         amountFee = "10".zeros(18),
         walletSplitPercentage = 0.2,
         status = XOrderStatus.STATUS_NEW,
         reserved =
-          Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
+          Some(XOrderState("10".zeros(18), "100".zeros(18), "10".zeros(18))),
         outstanding =
-          Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
+          Some(XOrderState("10".zeros(18), "100".zeros(18), "10".zeros(18))),
         actual =
-          Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18))),
+          Some(XOrderState("10".zeros(18), "100".zeros(18), "10".zeros(18))),
         matchable =
-          Some(XOrderState("10".zeros(18), "100".zeros(10), "10".zeros(18)))
+          Some(XOrderState("10".zeros(18), "100".zeros(18), "10".zeros(18)))
       )
       val taker1 = XOrder(
         id = "taker1",
         tokenS = WETH_TOKEN.address,
         tokenB = LRC_TOKEN.address,
         tokenFee = LRC_TOKEN.address,
-        amountS = "100".zeros(10),
+        amountS = "100".zeros(18),
         amountB = "10".zeros(18),
         amountFee = "10".zeros(18),
         walletSplitPercentage = 0.2,
         status = XOrderStatus.STATUS_NEW,
         outstanding =
-          Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
+          Some(XOrderState("100".zeros(18), "10".zeros(18), "10".zeros(18))),
         reserved =
-          Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
+          Some(XOrderState("100".zeros(18), "10".zeros(18), "10".zeros(18))),
         actual =
-          Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18))),
+          Some(XOrderState("100".zeros(18), "10".zeros(18), "10".zeros(18))),
         matchable =
-          Some(XOrderState("100".zeros(10), "10".zeros(18), "10".zeros(18)))
+          Some(XOrderState("100".zeros(18), "10".zeros(18), "10".zeros(18)))
       )
 
       actors.get(MarketManagerActor.name) ! XSubmitSimpleOrderReq(

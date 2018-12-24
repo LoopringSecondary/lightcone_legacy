@@ -16,7 +16,13 @@
 
 package org.loopring.lightcone.ethereum
 
+import java.math.BigInteger
+
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.ethereum.data.Address
+import org.web3j.crypto._
+import org.web3j.utils.Numeric
+import org.web3j.crypto
 
 package object ethereum {
   implicit def int2BigInt(x: Int): BigInt = BigInt(x)
@@ -29,5 +35,58 @@ package object ethereum {
 
   implicit def byteString2BigInt(bs: ByteString): BigInt =
     string2BigInt(bs.toStringUtf8)
+
+  def verifySignature(
+      hash: Array[Byte],
+      r: Array[Byte],
+      s: Array[Byte],
+      v: Byte,
+      addr: Address
+    ): Boolean = {
+    val signatureDataV = new Sign.SignatureData(v, r, s)
+    val key = Sign.signedMessageToKey(hash, signatureDataV)
+    addr.equals(Address(Keys.getAddress(key)))
+  }
+
+  def verifySignature(
+      hash: Array[Byte],
+      sig: Array[Byte],
+      addr: Address
+    ): Boolean = {
+    if (sig.length == 65) {
+      val r = sig.toSeq.slice(0, 32).toArray
+      val s = sig.toSeq.slice(32, 64).toArray
+      val v = sig(64)
+      verifySignature(hash, r, s, v, addr)
+    } else {
+      false
+    }
+  }
+
+  def getSignedTxData(
+      inputData: String,
+      nonce: Int,
+      gasLimit: BigInt,
+      gasPrice: BigInt,
+      to: String,
+      value: BigInt = BigInt(0),
+      chainId: Int = 1
+    )(
+      implicit credentials: Credentials
+    ): String = {
+    val rawTransaction = RawTransaction
+      .createTransaction(
+        BigInteger.valueOf(nonce),
+        gasPrice.bigInteger,
+        gasLimit.bigInteger,
+        to,
+        value.bigInteger,
+        inputData
+      )
+    Numeric.toHexString(
+      TransactionEncoder
+        .signMessage(rawTransaction, chainId.toByte, credentials)
+    )
+  }
 
 }

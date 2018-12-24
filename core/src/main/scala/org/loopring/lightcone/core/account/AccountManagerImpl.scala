@@ -46,6 +46,17 @@ final private[core] class AccountManagerImpl(
     tokens(token)
   }
 
+  def getOrUpdateTokenManager(
+      token: String,
+      tm: AccountTokenManager
+    ): AccountTokenManager = this.synchronized {
+    if (hasTokenManager(token))
+      tokens(token)
+    else
+      tokens += tm.token -> tm
+    tokens(token)
+  }
+
   //TODO(litao): What if an order is re-submitted?
   def submitOrder(_order: Order): Boolean = this.synchronized {
     val order = _order.copy(_reserved = None, _actual = None, _matchable = None)

@@ -29,7 +29,7 @@ import org.loopring.lightcone.core.market.{
   RingIncomeEstimatorImpl
 }
 import org.loopring.lightcone.lib.SystemTimeProvider
-import org.loopring.lightcone.proto.XTokenMetadata
+import org.loopring.lightcone.proto.XTokenMeta
 import org.scalatest._
 import org.slf4s.Logging
 import slick.basic.DatabaseConfig
@@ -66,28 +66,13 @@ abstract class CommonSpec(configStr: String)
   implicit val config = system.settings.config
   implicit val materializer = ActorMaterializer()(system)
 
-//  log.info(s"init config: ${config}")
+  //  log.info(s"init config: ${config}")
 
   //token info
-  implicit val tokenMetadataManager = new TokenMetadataManager()
+  implicit val tokenManager = new TokenManager()
 
-  val WETH_TOKEN = XTokenMetadata(
-    "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    18,
-    0.4,
-    "WETH",
-    1000
-  )
-
-  val LRC_TOKEN = XTokenMetadata(
-    "0xef68e7c694f40c8202821edf525de3782458639f",
-    18,
-    0.4,
-    "LRC",
-    1000
-  )
-  tokenMetadataManager.addToken(WETH_TOKEN)
-  tokenMetadataManager.addToken(LRC_TOKEN)
+  tokenManager.addToken(WETH_TOKEN)
+  tokenManager.addToken(LRC_TOKEN)
   implicit val tokenValueEstimator = new TokenValueEstimator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
 
@@ -97,15 +82,15 @@ abstract class CommonSpec(configStr: String)
     new RingIncomeEstimatorImpl()
 
   //actors
-//  val refresher = system.actorOf(
-//    Props(new TokenMetadataRefresher),
-//    "token_metadata_refresher"
-//  )
+  //  val refresher = system.actorOf(
+  //    Props(new TokenMetadataRefresher),
+  //    "token_metadata_refresher"
+  //  )
 
-//  val listener =
-//    system.actorOf(Props[BadMessageListener], "bad_message_listener")
-//  system.eventStream.subscribe(listener, classOf[UnhandledMessage])
-//  system.eventStream.subscribe(listener, classOf[DeadLetter])
+  //  val listener =
+  //    system.actorOf(Props[BadMessageListener], "bad_message_listener")
+  //  system.eventStream.subscribe(listener, classOf[UnhandledMessage])
+  //  system.eventStream.subscribe(listener, classOf[DeadLetter])
 
   Thread.sleep(5000) //暂停5s，等待集群准备完毕
 

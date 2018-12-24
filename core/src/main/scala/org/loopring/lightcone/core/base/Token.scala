@@ -16,31 +16,24 @@
 
 package org.loopring.lightcone.core.base
 
-import org.loopring.lightcone.core.data.Rational
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.proto._
 
-object AmountConverter {
+class Token(val meta: XTokenMeta) {
+  val scaling = Rational(BigInt(10).pow(meta.decimals))
 
-  def apply(token: String)(implicit tmm: TokenMetadataManager) =
-    new AmountConverter(token)
-}
-
-class AmountConverter(token: String)(implicit tmm: TokenMetadataManager) {
-  assert(tmm.hasTokenByAddress(token))
-  lazy val meta = tmm.getTokenByAddress(token).get
-  lazy val scaling = Rational(Math.pow(10, meta.decimals))
-
-  def rawToDisplay(amount: BigInt): Double =
+  def fromWei(amount: BigInt): Double =
     (Rational(amount) / scaling).doubleValue
 
-  def rawToDisplay(
+  def fromWei(
       amount: BigInt,
       precision: Int
     ): Double = {
-    BigDecimal(rawToDisplay(amount: BigInt))
+    BigDecimal(fromWei(amount))
       .setScale(precision, BigDecimal.RoundingMode.HALF_UP)
       .doubleValue
   }
 
-  def displayToRaw(amount: Double): BigInt =
+  def toWei(amount: Double): BigInt =
     (Rational(amount) * scaling).bigintValue
 }

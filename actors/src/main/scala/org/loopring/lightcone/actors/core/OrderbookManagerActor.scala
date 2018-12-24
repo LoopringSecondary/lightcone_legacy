@@ -43,7 +43,7 @@ object OrderbookManagerActor extends ShardedByMarket {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      tokenMetadataManager: TokenMetadataManager
+      tokenManager: TokenManager
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -71,9 +71,8 @@ object OrderbookManagerActor extends ShardedByMarket {
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
   val extractMarketId: PartialFunction[Any, XMarketId] = {
-    case XGetOrderbook(_, _, Some(marketId))          => marketId
-    case XOrderbookUpdate(_, _, Some(marketId))       => marketId
-    case XUpdateLatestTradingPrice(_, Some(marketId)) => marketId
+    case XGetOrderbook(_, _, Some(marketId))       => marketId
+    case XOrderbookUpdate(_, _, _, Some(marketId)) => marketId
   }
 }
 
@@ -86,7 +85,7 @@ class OrderbookManagerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val tokenMetadataManager: TokenMetadataManager)
+    val tokenManager: TokenManager)
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
       extractEntityId
@@ -104,13 +103,8 @@ class OrderbookManagerActor(
   )
 
   val manager: OrderbookManager = new OrderbookManagerImpl(xorderbookConfig)
-  private var latestPrice: Option[Double] = None
 
   def receive: Receive = LoggingReceive {
-
-    case XUpdateLatestTradingPrice(price, _) =>
-      log.info(s"receive XUpdateLatestTradingPrice ${price}")
-      latestPrice = Some(price)
 
     case req: XOrderbookUpdate =>
       log.info(s"receive XOrderbookUpdate ${req}")
@@ -119,7 +113,7 @@ class OrderbookManagerActor(
     case XGetOrderbook(level, size, Some(marketId)) =>
       Future {
         if (OrderbookManagerActor.getEntityId(marketId) == marketIdHashedValue)
-          manager.getOrderbook(level, size, latestPrice)
+          manager.getOrderbook(level, size)
         else
           throw ErrorException(
             XErrorCode.ERR_INVALID_ARGUMENT,

@@ -30,23 +30,13 @@ class DatabaseModule @Inject()(
     @Named("db-execution-context") val ec: ExecutionContext)
     extends base.BaseDatabaseModule {
 
-  // TODO du: actor调用service，不再暴露dal
-  val tokenMetadata: TokenMetadataDal = new TokenMetadataDalImpl()
-  val orders: OrderDal = new OrderDalImpl()
-  val trades: TradeDal = new TradeDalImpl()
-  val addresses: AddressDal = new AddressDalImpl()
-  val tokenBalances: TokenBalanceDal = new TokenBalanceDalImpl()
-  val blocks: BlockDal = new BlockDalImpl()
-  val transactions: TransactionDal = new TransactionDalImpl()
-  val evengLogs: EventLogDal = new EventLogDalImpl()
-  val tokenTransfers: TokenTransferDal = new TokenTransferDalImpl()
-
   val orderService: OrderService = new OrderServiceImpl()
   val tradeService: TradeService = new TradeServiceImpl()
 
   val orderCancelledEventService: OrdersCancelledEventService =
     new OrdersCancelledEventServiceImpl()
   val orderCutoffService: OrdersCutoffService = new OrdersCutoffServiceImpl()
+  val tokenMetadataService = new TokenMetadataServiceImpl()
 
   val tables = Seq(
     new TokenMetadataDalImpl(),

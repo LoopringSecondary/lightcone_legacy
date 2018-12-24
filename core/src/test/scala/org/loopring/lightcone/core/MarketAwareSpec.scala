@@ -49,7 +49,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
 
     marketManager = new MarketManagerImpl(
       marketId,
-      tmm,
+      tm,
       fackRingMatcher,
       fakePendingRingPool,
       fakeDustOrderEvaluator,
