@@ -18,6 +18,7 @@ package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.scalatest._
 
@@ -25,10 +26,10 @@ class AccountManagerImplSpec_Performance extends OrderAwareSpec {
   "submit order" should "fail when tokenS balance is low" in {
 
     val _lrc = lrc.asInstanceOf[AccountTokenManagerImpl]
-    lrc.setBalanceAndAllowance(100000, 100000)
+    lrc.setBalanceAndAllowance(100000 !, 100000 !)
 
     (1 to lrc.maxNumOrders) foreach { i =>
-      val order = sellLRC(1, 1, 1)
+      val order = sellLRC(1 !, 1 !, 1 !)
       submitOrder(order)
     }
 
@@ -36,7 +37,7 @@ class AccountManagerImplSpec_Performance extends OrderAwareSpec {
     val count: Int = 100
     (1 to count) foreach { i =>
       cancelOrder(_lrc.reservations.head.orderId)
-      val order = sellLRC(1, 1, 1)
+      val order = sellLRC(1 !, 1 !, 1 !)
       submitOrder(order)
     }
 

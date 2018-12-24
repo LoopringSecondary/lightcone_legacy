@@ -32,7 +32,6 @@ trait RawOrderValidator {
 object RawOrderValidatorImpl extends RawOrderValidator {
   import ethereum._
 
-  // TODO(Kongliang): the following constant fields should be configurable somewhere.
   val FeePercentageBase = 1000
   val Eip191Header = "\u0019\u0001"
 

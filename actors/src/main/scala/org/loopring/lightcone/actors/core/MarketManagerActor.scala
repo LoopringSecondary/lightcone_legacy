@@ -32,7 +32,7 @@ import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-
+import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -52,7 +52,7 @@ object MarketManagerActor extends ShardedByMarket {
       tokenValueEstimator: TokenValueEstimator,
       ringIncomeEstimator: RingIncomeEstimator,
       dustOrderEvaluator: DustOrderEvaluator,
-      tokenMetadataManager: TokenMetadataManager
+      tokenManager: TokenManager
     ): ActorRef = {
     numOfShards = 10
 
@@ -62,7 +62,10 @@ object MarketManagerActor extends ShardedByMarket {
       .map { item =>
         val c = item.toConfig
         val marketId =
-          XMarketId(c.getString("priamry"), c.getString("secondary"))
+          XMarketId(
+            LAddress(c.getString("priamry")).toString,
+            LAddress(c.getString("secondary")).toString
+          )
         MarketManagerActor.getEntityId(marketId) -> marketId
       }
       .toMap
@@ -96,7 +99,7 @@ class MarketManagerActor(
     val tokenValueEstimator: TokenValueEstimator,
     val ringIncomeEstimator: RingIncomeEstimator,
     val dustOrderEvaluator: DustOrderEvaluator,
-    val tokenMetadataManager: TokenMetadataManager)
+    val tokenManager: TokenManager)
     extends ActorWithPathBasedConfig(
       MarketManagerActor.name,
       MarketManagerActor.extractEntityId
@@ -126,7 +129,7 @@ class MarketManagerActor(
 
   val manager = new MarketManagerImpl(
     marketId,
-    tokenMetadataManager,
+    tokenManager,
     ringMatcher,
     pendingRingPool,
     dustOrderEvaluator,

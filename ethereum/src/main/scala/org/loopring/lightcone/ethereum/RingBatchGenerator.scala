@@ -97,7 +97,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
         order =>
           Seq(
             (order.owner + order.tokenS),
-            (order.owner + order.feeParams.get.tokenFee)
+            (order.owner + order.getFeeParams.tokenFee)
           )
       )
       .flatten
@@ -192,7 +192,6 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     insertOffset(tables, data.addAddress(order.tokenS, false))
     insertOffset(tables, data.addAddress(order.tokenB, false))
     insertOffset(tables, data.addUint(order.amountS, false))
-
     insertOffset(tables, data.addUint(order.amountB, false))
     insertOffset(tables, data.addUint32(order.validSince, false))
 
@@ -334,7 +333,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
       val orders = xring.orderIndexes.map(i => xRingBatch.orders(i))
       orders.foreach(o => {
         bitstream.addHex(o.hash)
-        bitstream.addUint16(o.feeParams.get.waiveFeePercentage)
+        bitstream.addUint16(o.getFeeParams.waiveFeePercentage)
       })
       Numeric.toHexString(Hash.sha3(bitstream.getBytes))
     })

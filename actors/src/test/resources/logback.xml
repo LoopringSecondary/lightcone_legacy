@@ -39,7 +39,7 @@
         </encoder>
     </appender>
     <logger name="akka" level="INFO" />
-    <logger name="slick.jdbc.JdbcBackend"  level="DEBUG" />
+    <logger name="slick.jdbc.JdbcBackend"  level="INFO" />
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />

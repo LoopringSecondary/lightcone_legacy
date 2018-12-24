@@ -18,29 +18,18 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.dals.{TradeDal, TradeDalImpl}
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.persistence.dals.TokenMetadataDalImpl
+import org.loopring.lightcone.proto.XTokenMeta
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
-class TradeServiceImpl @Inject()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+class TokenMetadataServiceImpl @Inject()(
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
-    extends TradeService {
-  val tradeDal: TradeDal = new TradeDalImpl()
+    extends TokenMetadataService {
+  val tokenMetadataDal = new TokenMetadataDalImpl()
 
-  def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]] =
-    tradeDal.saveTrade(trade)
-
-  def getTrades(request: XGetTradesReq): Future[Seq[XTrade]] =
-    tradeDal
-      .getTrades(request)
-      .map(_.map(r => r.copy(updatedAt = 0, sequenceId = 0)))
-
-  def countTrades(request: XGetTradesReq): Future[Int] =
-    tradeDal.countTrades(request)
-
-  def obsolete(height: Long): Future[Unit] = tradeDal.obsolete(height)
+  def getTokens(reloadFromDatabase: Boolean): Future[Seq[XTokenMeta]] =
+    tokenMetadataDal.getTokens(reloadFromDatabase)
 }
