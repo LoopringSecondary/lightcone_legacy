@@ -373,7 +373,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     ) = {
     val hash = ringBatchHash(xRingBatch)
     val credentials = Credentials.create(context.minerPrivateKey)
-    val sigData = Sign.signMessage(
+    val sigData = Sign.signPrefixedMessage(
       Numeric.hexStringToByteArray(hash),
       credentials.getEcKeyPair
     )
