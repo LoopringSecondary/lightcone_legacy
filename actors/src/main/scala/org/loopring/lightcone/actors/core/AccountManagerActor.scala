@@ -132,15 +132,17 @@ class AccountManagerActor(
         getFilledAmountRes.filledAmountSMap(order.id)
       )
       _ = log.info(s"submitting order to AccountManager: ${_order}")
-      successful = manager.submitOrder(_order)
-      _ = log.info(s"successful: $successful")
-      _ = log.info(
-        "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", ")
-      )
-      updatedOrders = orderPool.takeUpdatedOrdersAsMap()
-      _ = log.info(
-        "orderPool updatedOrders: " + updatedOrders.mkString(", ")
-      )
+      (successful, updatedOrders) = manager.submitAndGetUpdatedOrders(_order)
+//      successful = manager.submitOrder(_order)
+//      _ = log.info(s"successful: $successful")
+//      _ = log.info(
+//        "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", ")
+//      )
+//
+//      updatedOrders = orderPool.takeUpdatedOrdersAsMap()
+//      _ = log.info(
+//        "orderPool updatedOrders: " + updatedOrders.mkString(", ")
+//      )
       _ = assert(updatedOrders.contains(_order.id))
       _ = log.info(
         "assert contains order: "
