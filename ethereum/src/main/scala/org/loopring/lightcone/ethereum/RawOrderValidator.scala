@@ -22,6 +22,7 @@ import org.web3j.utils.Numeric
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.ethereum._
+import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.proto.XErrorCode._
 
 trait RawOrderValidator {
@@ -88,13 +89,29 @@ object RawOrderValidatorImpl extends RawOrderValidator {
   }
 
   def validate(order: XRawOrder): Either[XErrorCode, XRawOrder] = {
-    def checkDualAuthSig = {
-      if (isValidAddress(order.params.get.dualAuthAddr)) {
-        val authSig = order.params.get.dualAuthSig
-        authSig != null && authSig.length > 0
+    def checkDualAuthPrivateKey = {
+      if (isValidAddress(order.getParams.dualAuthAddr)) {
+        val dualAuthAddrPrivateKey = order.getParams.dualAuthAddrPrivateKey
+        dualAuthAddrPrivateKey != null && dualAuthAddrPrivateKey.length >= 64
       } else {
         true
       }
+    }
+
+    def checkOrderSig = {
+      val orderHash = calculateOrderHash(order)
+      val sig = order.getParams.sig
+      val sigBytes = Numeric.hexStringToByteArray(sig)
+      val v = sigBytes(1)
+      val r = sigBytes.slice(2, 34)
+      val s = sigBytes.slice(34, 66)
+      verifySignature(
+        Numeric.hexStringToByteArray(orderHash),
+        r,
+        s,
+        v,
+        Address(order.owner)
+      )
     }
 
     val checklist = Seq[(Boolean, XErrorCode)](
@@ -114,7 +131,8 @@ object RawOrderValidatorImpl extends RawOrderValidator {
         -> ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE,
       (BigInt(order.feeParams.get.walletSplitPercentage) <= 100)
         -> ERR_ORDER_VALIDATION_INVALID_WALLET_SPLIT_PERCENTAGE,
-      checkDualAuthSig -> ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_SIG
+      checkDualAuthPrivateKey -> ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_PRIV_KEY,
+      checkOrderSig -> ERR_ORDER_VALIDATION_INVALID_SIG
     )
 
     checklist.span(_._1)._2 match {

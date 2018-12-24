@@ -42,21 +42,29 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
     .withLrcAddress(lrcAddress)
   // println(s"xRingBatchContext: $xRingBatchContext")
 
-  // "sign message" should "be the same as web3" in {
-  //   val credentials = Credentials.create(context.minerPrivateKey)
-  //   val hash =
-  //     "0x997975290ca7006e12221705eedba70148b415fc94c89b280650f91c8a351fac"
-  //   val sigData = Sign.signPrefixedMessage(
-  //     Numeric.hexStringToByteArray(hash),
-  //     credentials.getEcKeyPair
-  //   )
+  "sign message" should "be the same as web3" in {
+    val credentials = Credentials.create(
+      "0x2949899bb4312754e11537e1e2eba03c0298608effeab21620e02a3ef68ea58a"
+    )
+    val hash =
+      "0xa2ed3a2382efb6b50f6d32fe03cf2bbdf2e9bdfed42d7aba2e4803235bd0fa73"
+    val sigData = Sign.signPrefixedMessage(
+      Numeric.hexStringToByteArray(hash),
+      credentials.getEcKeyPair
+    )
+    val sStr = sigData.getS.map("%02x" format _).mkString
+    val rStr = sigData.getR.map("%02x" format _).mkString
+    println(s"sig: $rStr$sStr")
 
-  //   val sStr = sigData.getS.map("%02x" format _).mkString
-  //   val rStr = sigData.getR.map("%02x" format _).mkString
+    val sigData2 = Sign.signMessage(
+      Numeric.hexStringToByteArray(hash),
+      credentials.getEcKeyPair
+    )
+    val sStr2 = sigData2.getS.map("%02x" format _).mkString
+    val rStr2 = sigData2.getR.map("%02x" format _).mkString
 
-  //   println(s"sig: $rStr$sStr")
-
-  // }
+    println(s"sig2: $rStr2$sStr2")
+  }
 
   "simple 2 tradable orders" should "be able to generate a ring" in {
     val order1Owner = TestConfig.envOrElseConfig("accounts.a1.addr")
