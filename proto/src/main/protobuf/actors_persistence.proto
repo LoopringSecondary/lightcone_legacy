@@ -127,3 +127,29 @@ message XGetTradesResult {
     repeated XTrade  trades = 1;
     XErrorCode       error  = 2;
 }
+
+message XSubmitTxReq {
+    repeated XSubmitTx txs = 1;
+}
+
+message XSubmitTxResult {
+    XErrorCode error = 1;
+}
+
+message XGetPendingTxsReq {
+    string owner       = 1; // required
+    int64  time_before = 2; // optional, if >0 query create_at <= time_before
+}
+
+message XGetPendingTxsResult {
+    repeated XSubmitTx txs = 1;
+}
+
+message XUpdateTxInBlockReq {
+    string from  = 1;
+    int64  nonce = 2;
+}
+
+message XUpdateTxInBlockResult {
+    XErrorCode error = 1;
+}
