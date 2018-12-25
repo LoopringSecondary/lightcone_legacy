@@ -138,7 +138,7 @@ message XSaveSettlementTxResult {
 
 message XGetPendingTxsReq {
     string owner       = 1; // required
-    int64  time_before = 2; // optional, if >0 query create_at <= time_before
+    int64  time_before = 2; // create_at <= time_before
 }
 
 message XGetPendingTxsResult {
