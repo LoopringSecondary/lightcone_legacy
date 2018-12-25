@@ -131,14 +131,18 @@ class AccountManagerActor(
       _order = order.withFilledAmountS(
         getFilledAmountRes.filledAmountSMap(order.id)
       )
-      _ = log.debug(s"submitting order to AccountManager: ${_order}")
-      successful = manager.submitOrder(_order)
-      _ = log.debug(s"successful: $successful")
-      _ = log.debug(
-        "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", ")
-      )
-      updatedOrders = orderPool.takeUpdatedOrdersAsMap()
-      _ = log.debug("orderPool updatedOrders: " + updatedOrders.mkString(", "))
+      _ = log.info(s"submitting order to AccountManager: ${_order}")
+      (successful, updatedOrders) = manager.submitAndGetUpdatedOrders(_order)
+      //      successful = manager.submitOrder(_order)
+      //      _ = log.info(s"successful: $successful")
+      //      _ = log.info(
+      //        "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", ")
+      //      )
+      //
+      //      updatedOrders = orderPool.takeUpdatedOrdersAsMap()
+      //      _ = log.info(
+      //        "orderPool updatedOrders: " + updatedOrders.mkString(", ")
+      //      )
       _ = assert(updatedOrders.contains(_order.id))
       order_ = updatedOrders(_order.id)
       xorder_ : XOrder = order_.copy(_reserved = None, _outstanding = None)

@@ -23,7 +23,7 @@ import org.slf4s.Logging
 
 final private[core] class AccountManagerImpl(
   )(
-    implicit orderPool: AccountOrderPool)
+    implicit orderPool: AccountOrderPool with UpdatedOrdersTracing)
     extends AccountManager
     with Logging {
   import XOrderStatus._
@@ -50,12 +50,16 @@ final private[core] class AccountManagerImpl(
       token: String,
       tm: AccountTokenManager
     ): AccountTokenManager = this.synchronized {
-    if (hasTokenManager(token))
-      tokens(token)
-    else
+    if (!hasTokenManager(token))
       tokens += tm.token -> tm
     tokens(token)
   }
+
+  def submitAndGetUpdatedOrders(_order: Order): (Boolean, Map[String, Order]) =
+    this.synchronized {
+      val submitRes = this.submitOrder(_order)
+      (submitRes, this.orderPool.takeUpdatedOrdersAsMap())
+    }
 
   //TODO(litao): What if an order is re-submitted?
   def submitOrder(_order: Order): Boolean = this.synchronized {

@@ -61,7 +61,6 @@ trait HttpSupport extends RpcBinding with Logging {
           )
         )
       )
-      _ = log.debug(s"### $req --> $response")
       res <- response.status match {
         case StatusCodes.OK =>
           response.entity.toStrict(timeout.duration).map { r =>

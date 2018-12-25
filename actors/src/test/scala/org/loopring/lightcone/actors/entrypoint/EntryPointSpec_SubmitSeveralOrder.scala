@@ -46,31 +46,36 @@ class EntryPointSpec_SubmitSeveralOrder
   "submit several order then cancel it" must {
     "get right response in EntryPoint,DbModule,Orderbook" in {
       //下单情况
-      //初始化getTokenManager，否则会有同步问题
-      //      val order1 =
-      //        createRawOrder(amountS = "10".zeros(18), amountFee = "1".zeros(15))
-      //      val f = singleRequest(XSubmitOrderReq(Some(order1)), "submit_order")
-      //      Await.result(f, 3 second)
-
-      val marketId = XMarketId(LRC_TOKEN.address, WETH_TOKEN.address)
 
       val rawOrders =
-        ((0 until 1) map { i =>
-          createRawOrder(amountS = "10".zeros(18), amountFee = "1".zeros(18))
+        ((0 until 2) map { i =>
+          createRawOrder(
+            amountS = "10".zeros(LRC_TOKEN.decimals),
+            amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+          )
         }) ++
           ((0 until 2) map { i =>
-            createRawOrder(amountS = "20".zeros(18), amountFee = "2".zeros(18))
+            createRawOrder(
+              amountS = "20".zeros(LRC_TOKEN.decimals),
+              amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+            )
           }) ++
           ((0 until 2) map { i =>
-            createRawOrder(amountS = "30".zeros(18), amountFee = "3".zeros(18))
+            createRawOrder(
+              amountS = "30".zeros(LRC_TOKEN.decimals),
+              amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+            )
           })
 
       val f1 = Future.sequence(rawOrders.map { o =>
         singleRequest(XSubmitOrderReq(Some(o)), "submit_order")
       })
 
-      Await.result(f1, 3 second)
+      val res = Await.result(f1, 3 second)
 
+      info(
+        "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING"
+      )
       val assertOrderFromDbF = Future.sequence(rawOrders.map { o =>
         for {
           orderOpt <- dbModule.orderService.getOrder(o.hash)
@@ -78,14 +83,21 @@ class EntryPointSpec_SubmitSeveralOrder
           orderOpt match {
             case Some(order) =>
               assert(order.sequenceId > 0)
+              assert(order.getState.status == XOrderStatus.STATUS_PENDING)
             case None =>
               assert(false)
           }
         }
+
       })
 
       //orderbook
-      val getOrderBook = XGetOrderbook(0, 100, Some(marketId))
+      Thread.sleep(1000)
+      val getOrderBook = XGetOrderbook(
+        0,
+        100,
+        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+      )
       val orderbookF = singleRequest(getOrderBook, "orderbook")
 
       val orderbookRes = Await.result(orderbookF, timeout.duration)
@@ -95,8 +107,13 @@ class EntryPointSpec_SubmitSeveralOrder
           assert(sells.size == 3)
           assert(
             sells(0).price == "10.000000" &&
-              sells(0).amount == "10.00000" &&
-              sells(0).total == "1.00000"
+              sells(0).amount == "20.00000" &&
+              sells(0).total == "2.00000"
+          )
+          assert(
+            sells(1).price == "20.000000" &&
+              sells(1).amount == "40.00000" &&
+              sells(1).total == "2.00000"
           )
           assert(
             sells(1).price == "20.000000" &&
@@ -113,21 +130,43 @@ class EntryPointSpec_SubmitSeveralOrder
         case _ => assert(false)
       }
 
-      info("then cancel one of it.")
+      info("then cancel one of it, the depth should be changed.")
       val cancelReq = XCancelOrderReq(
-        rawOrders(1).hash,
-        rawOrders(1).owner,
+        rawOrders(0).hash,
+        rawOrders(0).owner,
         XOrderStatus.STATUS_CANCELLED_BY_USER,
-        Some(marketId)
+        Some(XMarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
       )
 
       val cancelF = singleRequest(cancelReq, "cancel_order")
       Await.result(cancelF, timeout.duration)
 
+      info("the first order's status in db should be STATUS_CANCELLED_BY_USER")
+      val assertOrderFromDbF2 = Future.sequence(rawOrders.map { o =>
+        for {
+          orderOpt <- dbModule.orderService.getOrder(o.hash)
+        } yield {
+          orderOpt match {
+            case Some(order) =>
+              if (order.hash == rawOrders(0).hash) {
+                assert(
+                  order.getState.status == XOrderStatus.STATUS_CANCELLED_BY_USER
+                )
+              } else {
+                assert(order.getState.status == XOrderStatus.STATUS_PENDING)
+              }
+            case None =>
+              assert(false)
+          }
+        }
+      })
+
+      Thread.sleep(1000)
       val orderbookF1 = singleRequest(getOrderBook, "orderbook")
 
-      val res = Await.result(orderbookF1, timeout.duration)
-      println("====>>>" + res)
+      val cancelF = singleRequest(cancelReq, "cancel_order")
+      Await.result(cancelF, timeout.duration)
+
       /*
     ERROR
           org.loopring.lightcone.lib.ErrorException: ErrorException(
@@ -151,9 +190,14 @@ class EntryPointSpec_SubmitSeveralOrder
         case XOrderbook(_, sells, buys) =>
           assert(sells.size == 2)
           assert(
-            sells(0).price == "20.000000" &&
-              sells(0).amount == "40.00000" &&
-              sells(0).total == "2.00000"
+            sells(0).price == "10.000000" &&
+              sells(0).amount == "10.00000" &&
+              sells(0).total == "1.00000"
+          )
+          assert(
+            sells(1).price == "20.000000" &&
+              sells(1).amount == "40.00000" &&
+              sells(1).total == "2.00000"
           )
           assert(
             sells(1).price == "30.000000" &&
