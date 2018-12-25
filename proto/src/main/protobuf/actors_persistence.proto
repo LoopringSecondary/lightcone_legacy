@@ -128,11 +128,11 @@ message XGetTradesResult {
     XErrorCode       error  = 2;
 }
 
-message XSubmitTxReq {
-    repeated XSubmitTx txs = 1;
+message XSaveSettlementTxReq {
+    XSettlementTx tx = 1;
 }
 
-message XSubmitTxResult {
+message XSaveSettlementTxResult {
     XErrorCode error = 1;
 }
 
@@ -142,12 +142,13 @@ message XGetPendingTxsReq {
 }
 
 message XGetPendingTxsResult {
-    repeated XSubmitTx txs = 1;
+    repeated XSettlementTx txs = 1;
 }
 
 message XUpdateTxInBlockReq {
-    string from  = 1;
-    int64  nonce = 2;
+    string tx_hash = 1;
+    string from    = 2;
+    int64  nonce   = 3;
 }
 
 message XUpdateTxInBlockResult {

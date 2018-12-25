@@ -17,34 +17,38 @@
 package org.loopring.lightcone.persistence.services
 
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.dals.{SubmitTxDalImpl, TradeDalImpl}
+import org.loopring.lightcone.persistence.dals.SettlementTxDalImpl
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-class SubmitTxServiceSpec extends ServiceSpec[SubmitTxService] {
-  def getService = new SubmitTxServiceImpl()
+class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
+  def getService = new SettlementTxServiceImpl()
   val timeProvider = new SystemTimeProvider()
 
   def createTables(): Future[Any] =
     for {
-      r ← new SubmitTxDalImpl().createTable()
+      r ← new SettlementTxDalImpl().createTable()
     } yield r
 
   private def testSave(
       txHash: String,
       owner: String,
       nonce: Long,
-      status: XSubmitTx.XStatus
-    ): Future[XErrorCode] = {
+      status: XSettlementTx.XStatus
+    ): Future[XSaveSettlementTxResult] = {
     service.saveTx(
-      XSubmitTx(
-        txHash = txHash,
-        from = owner,
-        nonce = nonce,
-        status = status,
-        createAt = timeProvider.getTimeSeconds()
+      XSaveSettlementTxReq(
+        Some(
+          XSettlementTx(
+            txHash = txHash,
+            from = owner,
+            nonce = nonce,
+            status = status,
+            createAt = timeProvider.getTimeSeconds()
+          )
+        )
       )
     )
   }
@@ -61,14 +65,14 @@ class SubmitTxServiceSpec extends ServiceSpec[SubmitTxService] {
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
       _ ← Future.sequence(txHashes.map { hash ⇒
-        testSave(hash, owner, 1, XSubmitTx.XStatus.PENDING)
+        testSave(hash, owner, 1, XSettlementTx.XStatus.PENDING)
       })
       query ← service.getPendingTxs(
         XGetPendingTxsReq(owner = owner, timeBefore = time)
       )
     } yield query
-    val res = Await.result(result.mapTo[Seq[XSubmitTx]], 5.second)
-    res.length == 5 should be(true)
+    val res = Await.result(result.mapTo[XGetPendingTxsResult], 5.second)
+    res.txs.length == 1 should be(true)
   }
 
   "getPending" must "get some pending txs" in {
@@ -89,17 +93,17 @@ class SubmitTxServiceSpec extends ServiceSpec[SubmitTxService] {
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
       _ ← Future.sequence(txHashes.map { hash ⇒
-        testSave(hash, owner, 1, XSubmitTx.XStatus.PENDING)
+        testSave(hash, owner, 1, XSettlementTx.XStatus.PENDING)
       })
       _ ← Future.sequence(mocks.map { hash ⇒
-        testSave(hash, owner, 2, XSubmitTx.XStatus.PENDING)
+        testSave(hash, owner, 2, XSettlementTx.XStatus.PENDING)
       })
       query1 ← service.getPendingTxs(
         XGetPendingTxsReq(owner = owner, timeBefore = time)
       )
     } yield query1
-    val res = Await.result(result.mapTo[Seq[XSubmitTx]], 5.second)
-    res.length === 9 should be(true)
+    val res = Await.result(result.mapTo[XGetPendingTxsResult], 5.second)
+    res.txs.length === 2 should be(true)
   }
 
   "updatePendingInBlock" must "update pending txs with BLOCK status" in {
@@ -114,19 +118,28 @@ class SubmitTxServiceSpec extends ServiceSpec[SubmitTxService] {
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
       _ ← Future.sequence(txHashes.map { hash ⇒
-        testSave(hash, owner, 1, XSubmitTx.XStatus.PENDING)
+        testSave(hash, owner, 1, XSettlementTx.XStatus.PENDING)
       })
       query1 ← service.getPendingTxs(
         XGetPendingTxsReq(owner = owner, timeBefore = time)
       )
-      _ <- service.updateInBlock(XUpdateTxInBlockReq(from = owner, nonce = 1))
+      _ <- service.updateInBlock(
+        XUpdateTxInBlockReq(
+          txHash = "0x-updateblock-03",
+          from = owner,
+          nonce = 1
+        )
+      )
       query2 ← service.getPendingTxs(
         XGetPendingTxsReq(owner = owner, timeBefore = time)
       )
     } yield (query1, query2)
     val res =
-      Await.result(result.mapTo[(Seq[XSubmitTx], Seq[XSubmitTx])], 5.second)
-    res._1.length === 5 && res._2.length === 0 should be(true)
+      Await.result(
+        result.mapTo[(XGetPendingTxsResult, XGetPendingTxsResult)],
+        5.second
+      )
+    res._1.txs.length === 1 && res._2.txs.length === 0 should be(true)
   }
 
 }

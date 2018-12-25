@@ -17,29 +17,30 @@
 package org.loopring.lightcone.persistence.service
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.dals.{SubmitTxDal, SubmitTxDalImpl}
-import org.loopring.lightcone.proto.{
-  XErrorCode,
-  XGetPendingTxsReq,
-  XSubmitTx,
-  XUpdateTxInBlockReq
+import org.loopring.lightcone.persistence.dals.{
+  SettlementTxDal,
+  SettlementTxDalImpl
 }
+import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
-class SubmitTxServiceImpl @Inject()(
+class SettlementTxServiceImpl @Inject()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
-    extends SubmitTxService {
-  val submitTxDal: SubmitTxDal = new SubmitTxDalImpl()
+    extends SettlementTxService {
+  val submitTxDal: SettlementTxDal = new SettlementTxDalImpl()
 
-  def saveTx(tx: XSubmitTx): Future[XErrorCode] = submitTxDal.saveTx(tx)
+  def saveTx(req: XSaveSettlementTxReq): Future[XSaveSettlementTxResult] =
+    submitTxDal.saveTx(req.tx.get)
 
-  def getPendingTxs(request: XGetPendingTxsReq): Future[Seq[XSubmitTx]] =
+  def getPendingTxs(request: XGetPendingTxsReq): Future[XGetPendingTxsResult] =
     submitTxDal.getPendingTxs(request)
 
-  def updateInBlock(request: XUpdateTxInBlockReq): Future[XErrorCode] =
+  def updateInBlock(
+      request: XUpdateTxInBlockReq
+    ): Future[XUpdateTxInBlockResult] =
     submitTxDal.updateInBlock(request)
 }

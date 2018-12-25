@@ -254,10 +254,11 @@ message XOrdersCancelledEvent {
     int64  block_height    = 6;
 }
 
-message XSubmitTx {
+message XSettlementTx {
     enum XStatus {
         PENDING  = 0;
         BLOCK    = 1;
+        FAILED   = 2;
     }
     string  tx_hash    = 1;
     string  from       = 2;

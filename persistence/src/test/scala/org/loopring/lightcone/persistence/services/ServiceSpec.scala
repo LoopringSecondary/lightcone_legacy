@@ -31,6 +31,7 @@ trait ServiceSpec[S]
     with Matchers {
 
   override val container = new MySQLContainer(
+    configurationOverride = Some("db"),
     mysqlImageVersion = Some("mysql:5.7.18"),
     databaseName = Some("lightcone_test"),
     mysqlUsername = Some("test"),
