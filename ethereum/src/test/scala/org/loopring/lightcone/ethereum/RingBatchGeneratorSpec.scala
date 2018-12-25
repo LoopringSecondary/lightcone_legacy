@@ -23,28 +23,27 @@ import org.web3j.crypto._
 import org.web3j.utils.Numeric
 
 class RingBatchGeneratorSpec extends FlatSpec with Matchers {
-  val miner = "0x23a51c5f860527f971d0587d130c64536256040d"
-
-  val minerPrivKey =
-    "0xa99a8d27d06380565d1cf6c71974e7707a81676c4e7cb3dad2c43babbdca2d23"
-  val transactionOrigin = "0xc0ff3f78529ab90f765406f7234ce0f2b1ed69ee"
-  val minerFeeRecipient = "0x611db73454c27e07281d2317aa088f9918321415"
-
-  val lrcAddress = TestConfig.envOrElseConfig("contracts.LRC")
-  val wethAddress = TestConfig.envOrElseConfig("contracts.WETH")
-  val gtoAddress = TestConfig.envOrElseConfig("contracts.GTO")
-
-  implicit val context: XRingBatchContext = XRingBatchContext()
-    .withMiner(miner)
-    .withMinerPrivateKey(minerPrivKey)
-    .withFeeRecipient(minerFeeRecipient)
-    .withTransactionOrigin(transactionOrigin)
-    .withLrcAddress(lrcAddress)
-
   "generateAndSignRingBatch" should "be able to generate a ring from order seqs" in {
+    val miner = "0x23a51c5f860527f971d0587d130c64536256040d"
+
+    val minerPrivKey =
+      "0xa99a8d27d06380565d1cf6c71974e7707a81676c4e7cb3dad2c43babbdca2d23"
+    val transactionOrigin = "0xc0ff3f78529ab90f765406f7234ce0f2b1ed69ee"
+    val minerFeeRecipient = "0x611db73454c27e07281d2317aa088f9918321415"
+
+    val lrcAddress = TestConfig.envOrElseConfig("contracts.LRC")
+    val wethAddress = TestConfig.envOrElseConfig("contracts.WETH")
+    val gtoAddress = TestConfig.envOrElseConfig("contracts.GTO")
+
     val order1Owner = TestConfig.envOrElseConfig("accounts.a1.addr")
     val order2Owner = TestConfig.envOrElseConfig("accounts.a2.addr")
 
+    implicit val context: XRingBatchContext = XRingBatchContext()
+      .withMiner(miner)
+      .withMinerPrivateKey(minerPrivKey)
+      .withFeeRecipient(minerFeeRecipient)
+      .withTransactionOrigin(transactionOrigin)
+      .withLrcAddress(lrcAddress)
     val ringBatchGenerator = RingBatchGeneratorImpl
 
     val order1 = new XRawOrder()
@@ -66,10 +65,9 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
     val orders = Seq(Seq(order1, order2))
     val xRingBatch: XRingBatch =
       ringBatchGenerator.generateAndSignRingBatch(orders)
-
   }
 
-  "XRingBatchGenerator" should "be able to generate a XRingBatch object to param string" in {
+  "toSubmitableParamStr" should "be able to serialize a XRingBatch object to param string" in {
     val miner = "0x23a51c5f860527f971d0587d130c64536256040d"
     val minerPrivKey =
       "0xa99a8d27d06380565d1cf6c71974e7707a81676c4e7cb3dad2c43babbdca2d23"
@@ -81,25 +79,31 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
     val validSince = 1545619108
 
     val dualAuthAddr = "0x66D3444ad66fc32abCEC9B38A4181066b1146CCA"
+    val dualAuthPrivateKey =
+      "0x2cebf2be8c8542bc9ab08f8bfd6e5cbd77b7ce3ba30d99bea19887ef4b24f08c"
     val walletAddr = dualAuthAddr
     val order1Owner = "0xFDa769A839DA57D88320E683cD20075f8f525a57"
     val order2Owner = "0xf5B3ab72F6E80d79202dBD37400447c11618f21f"
 
     val validator: RawOrderValidator = RawOrderValidatorImpl
     val generator: RingBatchGenerator = RingBatchGeneratorImpl
+    implicit val context: XRingBatchContext = XRingBatchContext()
+      .withMiner(miner)
+      .withMinerPrivateKey(minerPrivKey)
+      .withFeeRecipient(minerFeeRecipient)
+      .withTransactionOrigin(transactionOrigin)
+      .withLrcAddress(lrcAddress)
 
-    val mockOrderSig1 =
-      "0x01411bdfe8ac29b828887bc17e926e1938585eef3edd535d53efad605726663fd124e737c1837300ff9afca20ba60f19d19daa98fe357b1719ebcf765943e99ca46047"
-    val mockOrderSig2 =
-      "0x00411bdfe8ac29b828887bc17e926e1938585eef3edd535d53efad605726663fd124e737c1837300ff9afca20ba60f19d19daa98fe357b1719ebcf765943e99ca46028"
-    val mockDualAuthSig =
-      "0x00411bdfe8ac29b828887bc17e926e1938585eef3edd535d53efad605726663fd124e737c1837300ff9afca20ba60f19d19daa98fe357b1719ebcf765943e99ca46047"
+    val orderSig1 =
+      "0x00411b60253172658e0f1de6277245d4d1c8dd379259554b646c41513ecdfe0b19a205048ac90d2df4c6b61f321d2cc20a31b08e16e081724bec57a72db3c573db3dd4"
+    val orderSig2 =
+      "0x01411c37034ce977b6b9ba41af6cac3cb36256d58129ebed9127dbeec8844b570a601e326e641b7800b2b0e965a01dcb07564090923a4f2f8ff61f3276417c0c17a61e"
 
     val params1 = (new XRawOrder.Params)
       .withDualAuthAddr(dualAuthAddr)
+      .withDualAuthPrivateKey(dualAuthPrivateKey)
       .withWallet(walletAddr)
-      .withSig(mockOrderSig1)
-      .withDualAuthSig(mockDualAuthSig)
+      .withSig(orderSig1)
 
     val feeParams1 = (new XRawOrder.FeeParams)
       .withTokenFee(lrcAddress)
@@ -120,19 +124,11 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
       .withParams(params1)
       .withFeeParams(feeParams1)
 
-    val hash = validator.calculateOrderHash(order1)
-    println(s"order1 hash:$hash")
-    val hash1Expected =
-      "0xa078d272fe15177fec76268c3896319e8736853583b67d5bf746001b987f43d0"
-    // assert(hash == hash1Expected, "hash1 not as expected ")
-    val order1WithHash = order1.copy(hash = hash)
-    val validateResult = validator.validate(order1WithHash)
-
     val params2 = (new XRawOrder.Params)
       .withDualAuthAddr(dualAuthAddr)
+      .withDualAuthPrivateKey(dualAuthPrivateKey)
       .withWallet(walletAddr)
-      .withSig(mockOrderSig2)
-      .withDualAuthSig(mockDualAuthSig)
+      .withSig(orderSig2)
 
     val feeParams2 = (new XRawOrder.FeeParams)
       .withTokenFee(lrcAddress)
@@ -153,29 +149,18 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
       .withParams(params2)
       .withFeeParams(feeParams2)
 
-    val hash2 = validator.calculateOrderHash(order2)
-    println(s"order2 hash:$hash2")
-
-    val hash2Expected =
-      "0x65d3a688a5f0d0dad84bee5d5ec8dbc540748dd2f95583ecdfcfe3cada333dbe"
-    // assert(hash2 == hash2Expected, "hash2 not as expected ")
-
-    val order2WithHash = order2.copy()
-    val validateResult2 = validator.validate(order2WithHash)
-    println(s"validateResult: $validateResult2")
-
     val xRingBatch =
       generator.generateAndSignRingBatch(Seq(Seq(order1, order2)))
-    println(s"xRingBatch: $xRingBatch")
-    println(s"xRingBatch hash:${xRingBatch.hash}")
-    println(s"ringBatch sig: ${xRingBatch.sig}")
+    // println(s"xRingBatch: $xRingBatch")
+    // println(s"xRingBatch hash:${xRingBatch.hash}")
+    // println(s"ringBatch sig: ${xRingBatch.sig}")
 
     val paramStr = generator.toSubmitableParamStr(xRingBatch)
-    println(s"paramStr:$paramStr")
+    // println(s"paramStr:$paramStr")
 
     val expectedParamStr =
-      ""
+      "0x00000002000100030008000d00120000002b00300035003a0042004a00000001004b00000000004b00000050006900000000003a0000000000000000000a00000000000000000000000000000082003500300042003a008700020002004b00000000004b00000088006900000000003a0000000000000000001400000000000000000000000002000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000611db73454c27e07281d2317aa088f991832141523a51c5f860527f971d0587d130c64536256040d000000000000000000000000000000000000000000000000000000000000004300411c3385bd1aa7110949f76e790a685e690fd24af09d109f49eead506529bf212ec07d68d2c03b2ed86d14a3609488b247b4be94972da781bf293dc0a18edfe1638600fda769a839da57d88320e683cd20075f8f525a573b39f10dc98b3fcd86a6d4837ff2bdf410710b945eade4cbac9ecd6082bb2a375185e2f8fcaeeb7f0000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000003635c9adc5dea000005c2046a466d3444ad66fc32abcec9b38a4181066b1146cca000000000000000000000000000000000000000000000000000000000000004300411b60253172658e0f1de6277245d4d1c8dd379259554b646c41513ecdfe0b19a205048ac90d2df4c6b61f321d2cc20a31b08e16e081724bec57a72db3c573db3dd400000000000000000000000000000000000000000000000000000000000000004300411b7ea4758921b4a8cc6dca98f35abaa8c08ef0fc64162a9bd9046060f4b221971f051b6f7536c653857b4ea4aa483d8e2199c0b71cbbe3ce616a777d3e43b2dff800f5b3ab72f6e80d79202dbd37400447c11618f21f5c2046a5000000000000000000000000000000000000000000000000000000000000004301411c37034ce977b6b9ba41af6cac3cb36256d58129ebed9127dbeec8844b570a601e326e641b7800b2b0e965a01dcb07564090923a4f2f8ff61f3276417c0c17a61e00"
 
-    assert(paramStr.length == expectedParamStr.length, "invalid paramstr")
+    assert(paramStr == expectedParamStr, "generate wrong paramstr")
   }
 }
