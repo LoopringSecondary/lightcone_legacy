@@ -283,3 +283,5 @@ message XOwnerTradingPairCutoffs {
     string trading_pair = 3;
     int32  cutoff       = 4; // in seconds.
 }
+
+
