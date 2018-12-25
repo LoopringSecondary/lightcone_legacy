@@ -28,72 +28,30 @@ class AccountManagerImplSpec_RequestAmount extends OrderAwareSpec {
     gto.setBalanceAndAllowance(100, 200)
     weth.setBalanceAndAllowance(100, 200)
 
-    var order = newOrder(
-      LRC,
-      WETH,
-      GTO,
-      50,
-      20,
-      50
-    )
+    var order = newOrder(LRC, WETH, GTO, BigInt(50), BigInt(20), BigInt(50))
     submitOrder(order) should be(true)
     cancelOrder(order.id)
 
     // 情况2: tokenFee only, balance/allowance不足
-    order = newOrder(
-      LRC,
-      WETH,
-      GTO,
-      50,
-      20,
-      110
-    )
+    order = newOrder(LRC, WETH, GTO, BigInt(50), BigInt(20), BigInt(110))
     submitOrder(order) should be(false)
 
     // 情况3: tokenFee == tokenS, balance/allowance充足
-    order = newOrder(
-      LRC,
-      WETH,
-      LRC,
-      30,
-      10,
-      10
-    )
+    order = newOrder(LRC, WETH, LRC, BigInt(30), BigInt(10), BigInt(10))
     submitOrder(order) should be(true)
     cancelOrder(order.id)
 
     // 情况4: tokenFee == tokenS, balance/allowance不足
-    order = newOrder(
-      LRC,
-      WETH,
-      LRC,
-      100,
-      10,
-      10
-    )
+    order = newOrder(LRC, WETH, LRC, BigInt(100), BigInt(10), BigInt(10))
     submitOrder(order) should be(false)
 
     // 情况5: tokenFee == tokenB, balance/allowance充足
-    order = newOrder(
-      LRC,
-      WETH,
-      WETH,
-      30,
-      20,
-      120
-    )
+    order = newOrder(LRC, WETH, WETH, BigInt(30), BigInt(20), BigInt(120))
     submitOrder(order) should be(true)
     cancelOrder(order.id)
 
     // 情况6: tokenFee == tokenB, balance/allowance不足
-    order = newOrder(
-      LRC,
-      WETH,
-      WETH,
-      30,
-      20,
-      200
-    )
+    order = newOrder(LRC, WETH, WETH, BigInt(30), BigInt(20), BigInt(200))
     submitOrder(order) should be(false)
   }
 

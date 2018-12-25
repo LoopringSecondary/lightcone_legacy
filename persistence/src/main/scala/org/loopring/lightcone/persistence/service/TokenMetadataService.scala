@@ -14,25 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.base
+package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.XTokenMeta
+import scala.concurrent.Future
 
-// TODO(dongw): we need a price provider
-class TokenValueEstimator()(implicit tm: TokenManager) {
+trait TokenMetadataService {
 
-  def getEstimatedValue(
-      tokenAddr: String,
-      amount: BigInt
-    ): Double = {
-    if (amount.signum <= 0) 0
-    else if (!tm.hasToken(tokenAddr)) 0
-    else {
-      val token = tm.getToken(tokenAddr)
-      (Rational(token.fromWei(amount)) *
-        Rational(token.meta.currentPrice)).doubleValue
-    }
-  }
-
+  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[XTokenMeta]]
 }

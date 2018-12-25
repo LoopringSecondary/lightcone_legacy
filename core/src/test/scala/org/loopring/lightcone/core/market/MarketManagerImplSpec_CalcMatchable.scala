@@ -26,15 +26,15 @@ import XErrorCode._
 class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
 
   "MarketManager" should "generate a ring for buy order as taker" in {
-    var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
-    var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
+    var buyOrder = actualNotDust(buyGTO(BigInt(100000), BigInt(100), 0)) // price =  100000/100.0 = 1000.00
+    var sellOrder = actualNotDust(sellGTO(BigInt(100000), BigInt(101), 0)) // price =  100000/101.0 = 989.12
 
     (fakePendingRingPool.getOrderPendingAmountS _)
       .when(sellOrder.id)
       .returns(555)
     (fakePendingRingPool.getOrderPendingAmountS _)
       .when(buyOrder.id)
-      .returns(666)
+      .returns(66)
     (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     val ring = OrderRing(null, null)
@@ -49,16 +49,10 @@ class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
     (fackRingMatcher
       .matchOrders(_: Order, _: Order, _: Double))
       .verify(
-        buyOrder.asPending.withActualAsOriginal.copy(
-          _matchable = Some(
-            OrderState(99334, 99, 0)
-          )
-        ),
-        sellOrder.asPending.withActualAsOriginal.copy(
-          _matchable = Some(
-            OrderState(99445, 100, 0)
-          )
-        ),
+        buyOrder.asPending.withActualAsOriginal
+          .copy(_matchable = Some(OrderState(34, 34000, 0))),
+        sellOrder.asPending.withActualAsOriginal
+          .copy(_matchable = Some(OrderState(99445, 100, 0))),
         2.0
       )
       .once

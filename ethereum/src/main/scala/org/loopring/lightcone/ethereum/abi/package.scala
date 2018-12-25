@@ -18,12 +18,14 @@ package org.loopring.lightcone.ethereum
 
 import scala.reflect.runtime.universe._
 import scala.reflect.Manifest
+import scala.reflect.ClassTag
 
 package object abi {
 
-  private def getAnnotationValue[T](tree: Tree): T = tree match {
-    case Literal(Constant(str: T)) => str
-  }
+  private def getAnnotationValue[T](tree: Tree)(implicit ct: ClassTag[T]): T =
+    tree match {
+      case Literal(Constant(str: T)) => str
+    }
 
   private[abi] def getContractAnnontationIdx[T](
     )(

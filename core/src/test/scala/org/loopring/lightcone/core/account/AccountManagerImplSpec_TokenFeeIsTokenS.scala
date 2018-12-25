@@ -18,39 +18,40 @@ package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.scalatest._
 
 class AccountManagerImplSpec_TokenFeeIsTokenS extends OrderAwareSpec {
   "when tokenS == tokenFee, submit order" should "fail when tokenS balance is low" in {
-    lrc.setBalanceAndAllowance(100, 0)
-    val order = sellLRC(100, 1, 10)
+    lrc.setBalanceAndAllowance(100 !, 0 !)
+    val order = sellLRC(100 !, 1, 10 !)
     submitOrder(order) should be(false)
-    orderPool.size should be(0)
+    orderPool.size should be(0 !)
     updatedOrders(order.id).status should be(
       XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
     )
   }
 
   "when tokenS == tokenFee, submit order" should "reserve for both tokenS and tokenFee when allowance is suffcient" in {
-    lrc.setBalanceAndAllowance(1000, 1000)
-    val order = sellLRC(100, 10, 10)
+    lrc.setBalanceAndAllowance(1000 !, 1000 !)
+    val order = sellLRC(100 !, 10 !, 10 !)
     submitOrder(order) should be(true)
     orderPool.size should be(1)
     updatedOrders(order.id).status should be(XOrderStatus.STATUS_PENDING)
 
-    updatedOrders(order.id).reserved should be(orderState(100, 0, 10))
-    updatedOrders(order.id).actual should be(orderState(100, 10, 10))
+    updatedOrders(order.id).reserved should be(orderState(100 !, 0 !, 10 !))
+    updatedOrders(order.id).actual should be(orderState(100 !, 10 !, 10 !))
   }
 
   "when tokenS == tokenFee, submit order" should "reserve for both tokenS and tokenFee when allowance is insuffcient" in {
-    lrc.setBalanceAndAllowance(1000, 55)
-    val order = sellLRC(200, 10, 20)
+    lrc.setBalanceAndAllowance(1000 !, 55)
+    val order = sellLRC(200 !, 10 !, 20 !)
     submitOrder(order) should be(true)
     orderPool.size should be(1)
     updatedOrders(order.id).status should be(XOrderStatus.STATUS_PENDING)
 
-    updatedOrders(order.id).reserved should be(orderState(50, 0, 5))
-    updatedOrders(order.id).actual should be(orderState(50, 2, 5))
+    updatedOrders(order.id).reserved should be(orderState(50 !, 0 !, 5))
+    updatedOrders(order.id).actual should be(orderState(50 !, 2, 5))
   }
 }

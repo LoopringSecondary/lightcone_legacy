@@ -132,15 +132,17 @@ class AccountManagerActor(
         getFilledAmountRes.filledAmountSMap(order.id)
       )
       _ = log.info(s"submitting order to AccountManager: ${_order}")
-      successful = manager.submitOrder(_order)
-      _ = log.info(s"successful: $successful")
-      _ = log.info(
-        "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", ")
-      )
-      updatedOrders = orderPool.takeUpdatedOrdersAsMap()
-      _ = log.info(
-        "orderPool updatedOrders: " + updatedOrders.mkString(", ")
-      )
+      (successful, updatedOrders) = manager.submitAndGetUpdatedOrders(_order)
+//      successful = manager.submitOrder(_order)
+//      _ = log.info(s"successful: $successful")
+//      _ = log.info(
+//        "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", ")
+//      )
+//
+//      updatedOrders = orderPool.takeUpdatedOrdersAsMap()
+//      _ = log.info(
+//        "orderPool updatedOrders: " + updatedOrders.mkString(", ")
+//      )
       _ = assert(updatedOrders.contains(_order.id))
       _ = log.info(
         "assert contains order: "
@@ -176,7 +178,7 @@ class AccountManagerActor(
     if (manager.hasTokenManager(token)) {
       Future.successful(manager.getTokenManager(token))
     } else {
-      log.debug(s"getTokenManager0 ${token}")
+      log.info(s"getTokenManager0 ${token}")
       for {
         res <- (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
           address,
@@ -188,7 +190,7 @@ class AccountManagerActor(
         )
         ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
         _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
-        tokenManager = manager.addTokenManager(tm)
+        tokenManager = manager.getOrUpdateTokenManager(token, tm)
         _ = log.debug(s"getTokenManager5 ${token}")
 
       } yield tokenManager

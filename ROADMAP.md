@@ -6,7 +6,7 @@
 - **v0.1**(目标12月底): 主要功能包括：
   - [x] [yadong] 连接到以太坊节点，并且可以读取 1）账户ETH和各种token的余额以及Allowance，2）某个特定订单的成交金额；
   - [x] [hongyu] 通过上述以太坊链接，动态创建和初始化AccountManangerActor
-  -  [hongyu/wangdong]提交和取消订单的整个流程（忽略订单生效，过期时间，忽略cutofff），以及市场深度读取，基本的撮合
+  - [x] [hongyu/wangdong]提交和取消订单的整个流程（忽略订单生效，过期时间，忽略cutofff），以及市场深度读取，基本的撮合
   - [x] [kongliang] 环路生成，签名，和以太坊的提交，（但不包括以太坊环路提交结果的处理）
   - [x] [yongfeng] 用户订单数据的读取，成交的读取（目前应该是空结果）
   - [x] [yadong] ETH和WETH的转换，以及setCutoff, 和cancelOrder(软取消和硬取消）
