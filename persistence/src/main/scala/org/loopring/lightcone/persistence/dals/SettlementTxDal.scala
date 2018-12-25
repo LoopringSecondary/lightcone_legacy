@@ -27,7 +27,6 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 import slick.basic._
 import slick.lifted.Query
-
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
