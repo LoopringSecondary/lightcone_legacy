@@ -43,8 +43,8 @@ class EntryPointSpec
         2,
         Some(
           XMarketId(
-            "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-            "0xef68e7c694f40c8202821edf525de3782458639f"
+            LRC_TOKEN.address,
+            WETH_TOKEN.address
           )
         )
       )

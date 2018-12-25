@@ -65,7 +65,6 @@ trait HttpSupport extends RpcBinding {
           )
         )
       )
-      _ = println(s"### ${response}")
       res <- response.status match {
         case StatusCodes.OK =>
           response.entity.toStrict(timeout.duration).map { r =>

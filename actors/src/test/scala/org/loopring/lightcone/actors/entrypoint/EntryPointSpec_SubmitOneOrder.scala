@@ -67,11 +67,6 @@ class EntryPointSpec_SubmitOneOrder
           order.status should be(XOrderStatus.STATUS_PENDING)
         case _ => assert(false)
       }
-//      val submitF = actors.get(OrderHandlerActor.name) ? XSubmitOrderReq(
-//        Some(rawOrder)
-//      )
-//      val submitRes = Await.result(submitF, timeout.duration)
-//      info(s"submit res: ${submitRes}")
 
       Thread.sleep(1000)
       val getOrderF = dbModule.orderService.getOrder(rawOrder.hash)
