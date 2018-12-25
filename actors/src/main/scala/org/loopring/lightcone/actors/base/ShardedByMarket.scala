@@ -27,17 +27,22 @@ trait ShardedByMarket extends Sharded {
   def getEntityId(marketId: XMarketId): String = {
     val xorValue = Numeric.toBigInt(marketId.primary) xor
       Numeric.toBigInt(marketId.secondary)
-    Math.abs(xorValue.hashCode % numOfShards).toString
+    Math.abs(xorValue.hashCode).toString
   }
 
   def extractEntityId(actorName: String) = actorName.split("_").last
 
   val messageExtractor =
-    new HashCodeMessageExtractor(numOfShards) {
+    new HashCodeMessageExtractor(Int.MaxValue) {
       override def entityId(msg: Any) = {
         val entityIdOpt = (extractMarketId.lift)(msg).map(getEntityId)
         assert(entityIdOpt.isDefined, s"${msg} no entity id extracted")
         s"${name}_${entityIdOpt.get}"
+      }
+
+      //shardid使用entityId，确保每个market都有且只有一个actor
+      override def shardId(message: Any): String = {
+        entityId(message)
       }
     }
 }

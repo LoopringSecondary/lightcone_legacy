@@ -57,7 +57,6 @@ object MarketManagerActor extends ShardedByMarket {
       dustOrderEvaluator: DustOrderEvaluator,
       tokenManager: TokenManager
     ): ActorRef = {
-    numOfShards = 10
 
     val markets = config
       .getObjectList("markets")

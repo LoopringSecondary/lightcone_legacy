@@ -63,7 +63,6 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
       }
       .toMap
 
-    log.info(s"### orderbook ClusterSharding ${markets}")
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderbookManagerActor(markets)),
