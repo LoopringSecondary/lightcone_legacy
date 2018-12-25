@@ -22,13 +22,27 @@ import org.loopring.lightcone.proto._
 
 import scala.util.Random
 
-class EthereumServiceRouter(connectors: Seq[String])(implicit timeout: Timeout)
+class EthereumServiceRouter()(implicit timeout: Timeout)
     extends Actor
+    with Stash
     with ActorLogging {
 
-  var connectionPools: Seq[(String, Int)] = connectors.map(_ → 0)
-
+  var connectionPools: Seq[(String, Int)] = Seq.empty
   override def receive: Receive = {
+    case node: XNodeBlockHeight =>
+      connectionPools =
+        (connectionPools.toMap + (node.path → node.height)).toSeq
+          .filter(_._2 >= 0)
+          .sortWith(_._2 > _._2)
+      if (connectionPools.nonEmpty) {
+        unstashAll()
+        context.become(ready)
+      }
+    case msg ⇒
+      stash()
+  }
+
+  def ready: Receive = {
     case node: XNodeBlockHeight =>
       connectionPools =
         (connectionPools.toMap + (node.path → node.height)).toSeq
