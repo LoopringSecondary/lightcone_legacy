@@ -18,6 +18,9 @@ package org.loopring.lightcone.actors.support
 
 import org.loopring.lightcone.actors.core.OrderbookManagerActor
 import org.loopring.lightcone.actors.validator._
+import org.loopring.lightcone.proto.{XGetOrderbook, XMarketId}
+import akka.pattern._
+import scala.concurrent.Await
 
 trait OrderbookManagerSupport {
   my: CommonSpec =>
@@ -35,5 +38,14 @@ trait OrderbookManagerSupport {
       OrderbookManagerMessageValidator.name
     )
   )
+
+  //todo：因暂时未完成recover，因此需要发起一次请求，将shard初始化成功
+  val orderBookInit = XGetOrderbook(
+    0,
+    100,
+    Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+  )
+  val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit
+  Await.result(orderBookInitF, timeout.duration)
 
 }
