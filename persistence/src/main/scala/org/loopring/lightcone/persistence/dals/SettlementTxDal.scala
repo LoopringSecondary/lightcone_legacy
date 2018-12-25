@@ -87,12 +87,12 @@ class SettlementTxDalImpl(
     )
     val sql =
       sql"""
-           SELECT tx_hash, `from`, `to`, gas, gas_price, `value`, `data`, MAX(create_at), status, create_at, update_at
-            FROM T_SETTLEMENT_TXS
-            GROUP BY `from`, nonce
-            having `from` = ${request.owner}
-             and status = ${XSettlementTx.XStatus.PENDING.value}
-             and create_at <= ${request.timeBefore}
+        SELECT tx_hash, `from`, `to`, gas, gas_price, `value`, `data`, nonce, status, MAX(create_at) as create_at, update_at
+        FROM T_SETTLEMENT_TXS
+        WHERE `from` = ${request.owner}
+          and status = ${XSettlementTx.XStatus.PENDING.value}
+          and create_at <= ${request.timeBefore}
+        GROUP BY `from`, nonce
         """
         .as[XSettlementTx]
     db.run(sql).map(r => XGetPendingTxsResult(r.toSeq))
