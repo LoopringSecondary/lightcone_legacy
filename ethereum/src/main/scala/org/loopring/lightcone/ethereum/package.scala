@@ -36,6 +36,18 @@ package object ethereum {
   implicit def byteString2BigInt(bs: ByteString): BigInt =
     string2BigInt(bs.toStringUtf8)
 
+  def verifyEthereumSignature(
+      hash: Array[Byte],
+      r: Array[Byte],
+      s: Array[Byte],
+      v: Byte,
+      addr: Address
+    ): Boolean = {
+    val signatureDataV = new Sign.SignatureData(v, r, s)
+    val key = Sign.signedPrefixedMessageToKey(hash, signatureDataV)
+    addr.equals(Address(Keys.getAddress(key)))
+  }
+
   def verifySignature(
       hash: Array[Byte],
       r: Array[Byte],

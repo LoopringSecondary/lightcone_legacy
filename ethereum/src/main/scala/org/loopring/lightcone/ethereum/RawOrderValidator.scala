@@ -91,8 +91,8 @@ object RawOrderValidatorImpl extends RawOrderValidator {
   def validate(order: XRawOrder): Either[XErrorCode, XRawOrder] = {
     def checkDualAuthPrivateKey = {
       if (isValidAddress(order.getParams.dualAuthAddr)) {
-        val dualAuthAddrPrivateKey = order.getParams.dualAuthAddrPrivateKey
-        dualAuthAddrPrivateKey != null && dualAuthAddrPrivateKey.length >= 64
+        val dualAuthPrivateKey = order.getParams.dualAuthPrivateKey
+        dualAuthPrivateKey != null && dualAuthPrivateKey.length >= 64
       } else {
         true
       }
@@ -102,16 +102,23 @@ object RawOrderValidatorImpl extends RawOrderValidator {
       val orderHash = calculateOrderHash(order)
       val sig = order.getParams.sig
       val sigBytes = Numeric.hexStringToByteArray(sig)
-      val v = sigBytes(1)
-      val r = sigBytes.slice(2, 34)
-      val s = sigBytes.slice(34, 66)
-      verifySignature(
-        Numeric.hexStringToByteArray(orderHash),
-        r,
-        s,
-        v,
-        Address(order.owner)
-      )
+
+      // Not support OrderRegistry contract for now.
+      // All orders here must have signature field.
+      if (sigBytes.length < 67) false
+      else {
+        val v = sigBytes(2)
+        val r = sigBytes.slice(3, 35)
+        val s = sigBytes.slice(35, 67)
+
+        verifyEthereumSignature(
+          Numeric.hexStringToByteArray(orderHash),
+          r,
+          s,
+          v,
+          Address(order.owner)
+        )
+      }
     }
 
     val checklist = Seq[(Boolean, XErrorCode)](

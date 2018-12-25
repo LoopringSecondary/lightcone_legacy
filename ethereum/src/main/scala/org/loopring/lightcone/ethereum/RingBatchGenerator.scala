@@ -377,7 +377,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     val ordersWithDualAuthSig = xRingBatch.orders.map(order => {
       val orderParams = order.getParams
       if (isValidAndNonzeroAddress(orderParams.dualAuthAddr)) {
-        val privateKey = orderParams.dualAuthAddrPrivateKey
+        val privateKey = orderParams.dualAuthPrivateKey
         val dualAuthSig = signPrefixedMessage(hash, privateKey)
         val newOrderParams = orderParams.copy(dualAuthSig = dualAuthSig)
         order.withParams(newOrderParams)

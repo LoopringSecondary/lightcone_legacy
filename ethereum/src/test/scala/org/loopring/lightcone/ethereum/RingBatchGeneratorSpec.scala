@@ -41,7 +41,7 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
     .withTransactionOrigin(transactionOrigin)
     .withLrcAddress(lrcAddress)
 
-  "simple 2 tradable orders" should "be able to generate a ring" in {
+  "generateAndSignRingBatch" should "be able to generate a ring from order seqs" in {
     val order1Owner = TestConfig.envOrElseConfig("accounts.a1.addr")
     val order2Owner = TestConfig.envOrElseConfig("accounts.a2.addr")
 
