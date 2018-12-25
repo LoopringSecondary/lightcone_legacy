@@ -32,6 +32,10 @@ object Main extends App with Logging {
   val actors = injector.instance[Lookup[ActorRef]]
   actors.get(EntryPointActor.name)
 
+  sys.ShutdownHookThread {
+    system.terminate()
+  }
+
   println(s"Hit RETURN to terminate")
 
   StdIn.readLine()

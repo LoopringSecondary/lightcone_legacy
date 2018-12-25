@@ -96,10 +96,10 @@ class OrderRecoverCoordinator(
     // This message should be sent from OrderRecoverActors
     case msg: XRecover.Finished if activeBatches.contains(sender) =>
       log.warning(s"""
-      |>>>
-      |>>> BATCH RECOVER FINISHED:
-      |>>> ${JsonFormat.toJsonString(activeBatches(sender))}
-      |>>> """)
+                     |>>>
+                     |>>> BATCH RECOVER FINISHED:
+                     |>>> ${JsonFormat.toJsonString(activeBatches(sender))}
+                     |>>> """.stripMargin)
 
       activeBatches -= sender
 

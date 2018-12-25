@@ -69,7 +69,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
       val f1 = singleRequest(XSubmitOrderReq(Some(order2)), "submit_order")
       Await.result(f1, timeout.duration)
 
-      Thread.sleep(2000)
+      Thread.sleep(1000)
       val getOrderBook = XGetOrderbook(
         0,
         100,
@@ -82,14 +82,8 @@ class EntryPointSpec_SubmitTwoMatchedOrder
       val orderbookRes2 = Await.result(orderbookF2, timeout.duration)
       orderbookRes2 match {
         case XOrderbook(lastPrice, sells, buys) =>
-          info(s"sells:${buys}, buys:${buys}")
-          assert(sells.size == 1 && buys.size == 1)
-          assert(
-            sells(0).total == "1.00000" &&
-              sells(0).price == "10.000000" &&
-              sells(0).amount == "10.00000"
-          )
-
+          info(s"sells:${sells}, buys:${buys}")
+          assert(sells.isEmpty && buys.size == 1)
           assert(
             buys(0).total == "0.50000" &&
               buys(0).price == "10.000000" &&
@@ -110,7 +104,13 @@ class EntryPointSpec_SubmitTwoMatchedOrder
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
         case XOrderbook(lastPrice, sells, buys) =>
-          info(s"sells:${buys}, buys:${buys}")
+          info(s"sells:${sells}, buys:${buys}")
+          assert(sells.isEmpty && buys.size == 1)
+          assert(
+            buys(0).total == "0.50000" &&
+              buys(0).price == "10.00000" &&
+              buys(0).amount == "5.00000"
+          )
         case _ => assert(false)
       }
     }
