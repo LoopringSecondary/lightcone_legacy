@@ -32,7 +32,7 @@ import scala.util.{Failure, Success}
 
 trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, XSettlementTx] {
   def saveTx(tx: XSettlementTx): Future[XSaveSettlementTxResult]
-  // get all pending txs with given owner, from_nonce is a optional parameter(>=)
+  // get all pending txs with given owner
   def getPendingTxs(request: XGetPendingTxsReq): Future[XGetPendingTxsResult]
 
   // update address's all txs status below or equals the given nonce to BLOCK
@@ -87,7 +87,7 @@ class SettlementTxDalImpl(
     )
     val sql =
       sql"""
-           SELECT tx_hash, `from`, `to`, gas, gas_price, `value`, `data`, MAX(nonce), status, create_at, update_at
+           SELECT tx_hash, `from`, `to`, gas, gas_price, `value`, `data`, MAX(create_at), status, create_at, update_at
             FROM T_SETTLEMENT_TXS
             GROUP BY `from`, nonce
             having `from` = ${request.owner}
