@@ -35,6 +35,7 @@ import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.ethereum.data.Address
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 
 // main owner: 李亚东
@@ -149,28 +150,37 @@ class RingSettlementActor(
 
   def ready: Receive = super.receive orElse LoggingReceive {
     case req: XSettleRingsReq =>
+      val rings = truncReq2Rings(req)
       for {
-        rawOrders ← Future.sequence(req.rings.map { xOrderRing ⇒
-          dbModule.orderService.getOrders(
-            Seq(
-              xOrderRing.maker.get.order.get.id,
-              xOrderRing.taker.get.order.get.id
+        rawOrders ← Future.sequence(rings.map { ring ⇒
+          Future.sequence(ring.map { xOrderRing ⇒
+            dbModule.orderService.getOrders(
+              Seq(
+                xOrderRing.maker.get.order.get.id,
+                xOrderRing.taker.get.order.get.id
+              )
             )
-          )
+          })
         })
-        xRingBatch = RingBatchGeneratorImpl.generateAndSignRingBatch(rawOrders)
-        inputData = RingBatchGeneratorImpl.toSubmitableParamStr(xRingBatch)
-        validNonce = nonce.getAndIncrement()
-        txData = getSignedTxData(
-          inputData,
-          validNonce,
-          req.gasLimit,
-          req.gasPrice,
-          to = protocolAddress
+        xRingBatchs = rawOrders.map(
+          RingBatchGeneratorImpl.generateAndSignRingBatch
         )
-        hash ← (ethereumAccessActor ? XSendRawTransactionReq(txData))
-          .mapTo[XSendRawTransactionRes]
-          .map(_.result)
+        inputDatas = xRingBatchs.map(
+          RingBatchGeneratorImpl.toSubmitableParamStr
+        )
+        txs = inputDatas.map { input ⇒
+          getSignedTxData(
+            input,
+            nonce.getAndIncrement(),
+            req.gasLimit,
+            req.gasPrice,
+            to = protocolAddress
+          )
+        }
+        responses ← Future.sequence(txs.map { tx ⇒
+          (ethereumAccessActor ? XSendRawTransactionReq(tx))
+            .mapTo[XSendRawTransactionRes]
+        })
       } yield {
         //TODO(yadong) 把提交的环路记录到数据库,提交失败以后的处理
         minerBalance = minerBalance.min(
@@ -184,7 +194,17 @@ class RingSettlementActor(
       }
   }
 
-  //未被提交的交易需要使用新的gas和gasprice重新提交
+  def truncReq2Rings(req: XSettleRingsReq): Seq[Seq[XOrderRing]] = {
+    val rings = ListBuffer.empty[Seq[XOrderRing]]
+    while (rings.size * maxRingsInOneTx < req.rings.size) {
+      val startIndex = rings.size * 10
+      val endIndex = Math.min(startIndex + maxRingsInOneTx, req.rings.size)
+      rings.append(req.rings.slice(startIndex, endIndex))
+    }
+    rings
+  }
+
+  //未被提交的交易需要使用新的gas price重新提交
   def resubmitTx(): Future[Unit] =
     for {
       gasPriceRes <- (gasPriceActor ? XGetGasPriceReq())
