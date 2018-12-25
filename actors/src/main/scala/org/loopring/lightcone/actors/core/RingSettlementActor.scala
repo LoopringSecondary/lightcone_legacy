@@ -33,6 +33,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
+import org.loopring.lightcone.ethereum.data.Address
 
 import scala.concurrent._
 
@@ -73,6 +74,7 @@ class RingSettlementActor(
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
     extends Actor
+    with Stash
     with ActorLogging
     with RepeatedJobActor {
 
@@ -92,17 +94,52 @@ class RingSettlementActor(
   val protocolAddress: String =
     config.getString("loopring-protocol.protocol-address")
   val repeatedJobs = Nil
-
-  private val ready = new AtomicBoolean(false)
   private val nonce = new AtomicInteger(0)
   // 维护balance, 当余额不足的时候停止接收新的任务
-  private var  minerBalance = BigInt(10).pow(18)
+  private var minerBalance = BigInt(0)
+
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)
+  private def ringSettlementManagerActor =
+    actors.get(RingSettlementManagerActor.name)
 
   import ethereum._
 
-  override def receive: Receive = super.receive orElse LoggingReceive {
+  override def preStart(): Unit = {
+    context.become(starting)
+    self ! XStart()
+  }
+
+  override def receive: Receive = {
+
+    case _ ⇒
+      stash()
+  }
+
+  def starting: Receive = {
+    case XStart ⇒
+      for {
+        validNonce ← (ethereumAccessActor ? XGetNonceReq(
+          owner = ringContext.transactionOrigin,
+          tag = "latest"
+        )).mapTo[XGetNonceRes]
+          .map(_.result)
+        balance ← (ethereumAccessActor ? XEthGetBalanceReq(
+          address = ringContext.transactionOrigin,
+          tag = "latest"
+        )).mapTo[XEthGetBalanceRes]
+          .map(_.result)
+      } yield {
+        minerBalance = BigInt(Numeric.toBigInt(balance))
+        nonce.set(Numeric.toBigInt(validNonce).intValue())
+        unstashAll()
+        context.become(ready)
+      }
+    case _ ⇒
+      stash()
+  }
+
+  def ready: Receive = super.receive orElse LoggingReceive {
     case req: XSettleRingsReq =>
       for {
         rawOrders ← Future.sequence(req.rings.map { xOrderRing ⇒
@@ -115,7 +152,7 @@ class RingSettlementActor(
         })
         xRingBatch = RingBatchGeneratorImpl.generateAndSignRingBatch(rawOrders)
         inputData = RingBatchGeneratorImpl.toSubmitableParamStr(xRingBatch)
-        validNonce ← getNonce()
+        validNonce = nonce.getAndIncrement()
         txData = getSignedTxData(
           inputData,
           validNonce,
@@ -124,32 +161,18 @@ class RingSettlementActor(
           to = protocolAddress
         )
         hash ← (ethereumAccessActor ? XSendRawTransactionReq(txData))
-          .mapAs[XSendRawTransactionRes]
+          .mapTo[XSendRawTransactionRes]
           .map(_.result)
       } yield {
         //TODO(yadong) 把提交的环路记录到数据库,提交失败以后的处理
-        minerBalance = minerBalance.min(BigInt(req.gasLimit.toByteArray) * BigInt(req.gasPrice.toByteArray))
-        hash
-      }
-  }
-
-  def getNonce(): Future[Int] = {
-    if (ready.get()) {
-      Future.successful(nonce.getAndIncrement())
-    } else {
-      for {
-        validNonce ← (ethereumAccessActor ? XGetNonceReq(
-          owner = ringContext.transactionOrigin,
-          tag = "latest"
-        )).mapAs[XGetNonceRes]
-          .map(_.result)
-      } yield {
-        if (ready.compareAndSet(false, true)) {
-          nonce.set(Numeric.toBigInt(validNonce).intValue())
+        minerBalance = minerBalance.min(
+          BigInt(req.gasLimit.toByteArray) * BigInt(req.gasPrice.toByteArray)
+        )
+        if (minerBalance <= BigInt(5).pow(17)) {
+          ringSettlementManagerActor ! XMinerBalanceNotEnough(
+            miner = ringContext.transactionOrigin
+          )
         }
-        nonce.getAndIncrement()
       }
-    }
   }
-
 }

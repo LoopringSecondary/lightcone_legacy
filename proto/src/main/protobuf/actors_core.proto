@@ -204,6 +204,10 @@ message XSettleRingsReq {
     bytes gas_price = 3;
 }
 
+message XMinerBalanceNotEnough {
+    string miner = 1;
+}
+
 message XGetGasPriceReq {}
 
 message XGetGasPriceRes {

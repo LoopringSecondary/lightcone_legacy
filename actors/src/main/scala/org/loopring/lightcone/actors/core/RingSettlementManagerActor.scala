@@ -20,23 +20,15 @@ import akka.actor._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
-import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.proto.{
-  XGetNonceReq,
-  XGetNonceRes,
-  XSettleRingsReq
-}
-import akka.pattern._
-import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.proto.XErrorCode.ERR_INTERNAL_UNKNOWN
-import org.web3j.utils.Numeric
+import org.loopring.lightcone.proto._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext
 import scala.util.Random
-import scala.concurrent.{ExecutionContext, Future}
 
 object RingSettlementManagerActor {
   val name = "ring_settlement"
@@ -53,9 +45,7 @@ class RingSettlementManagerActor(
     dbModule: DatabaseModule)
     extends Actor {
 
-  val ethereumAccessorActor = actors.get(EthereumAccessActor.name)
-
-  val ringSettlementActors =
+  var ringSettlementActors: Map[String, ActorRef] =
     config
       .getConfigList("ring_settlement.miners")
       .asScala
@@ -75,6 +65,8 @@ class RingSettlementManagerActor(
       })
       .toMap
 
+  var invalidRingSettlementActors = mutable.HashMap.empty[String, ActorRef]
+
   override def receive: Receive = {
     case req: XSettleRingsReq ⇒
       if (ringSettlementActors.nonEmpty) {
@@ -84,9 +76,13 @@ class RingSettlementManagerActor(
       } else {
         sender ! ErrorException(
           ERR_INTERNAL_UNKNOWN,
-          message = "no invalid miner to handle this req"
+          message = "no invalid miner to handle this XSettleRingsReq"
         )
       }
-
+    case msg: XMinerBalanceNotEnough ⇒
+      invalidRingSettlementActors += (msg.miner → ringSettlementActors(
+        msg.miner
+      ))
+      ringSettlementActors = ringSettlementActors - msg.miner
   }
 }
