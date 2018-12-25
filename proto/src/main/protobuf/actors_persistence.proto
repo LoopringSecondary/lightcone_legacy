@@ -127,3 +127,30 @@ message XGetTradesResult {
     repeated XTrade  trades = 1;
     XErrorCode       error  = 2;
 }
+
+message XSaveSettlementTxReq {
+    XSettlementTx tx = 1;
+}
+
+message XSaveSettlementTxResult {
+    XErrorCode error = 1;
+}
+
+message XGetPendingTxsReq {
+    string owner       = 1; // required
+    int64  time_before = 2; // create_at <= time_before
+}
+
+message XGetPendingTxsResult {
+    repeated XSettlementTx txs = 1;
+}
+
+message XUpdateTxInBlockReq {
+    string tx_hash = 1;
+    string from    = 2;
+    int64  nonce   = 3;
+}
+
+message XUpdateTxInBlockResult {
+    XErrorCode error = 1;
+}
