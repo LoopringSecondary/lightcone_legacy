@@ -217,11 +217,10 @@ class RingSettlementActor(
       ringTxs ← dbModule.settlementTxService
         .getPendingTxs(
           XGetPendingTxsReq(
-            owner = Address(ringContext.transactionOrigin).toString,
+            owner = ringContext.transactionOrigin,
             timeProvider.getTimeSeconds() - resendDelay
           )
-        )
-        .map(_.txs)
+        ).map(_.txs)
       txs = ringTxs.map(
         (tx: XSettlementTx) ⇒
           Transaction(

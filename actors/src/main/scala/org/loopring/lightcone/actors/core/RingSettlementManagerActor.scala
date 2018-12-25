@@ -24,6 +24,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.XErrorCode.ERR_INTERNAL_UNKNOWN
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.ethereum.data.Address
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -50,7 +51,7 @@ class RingSettlementManagerActor(
       .getConfigList("ring_settlement.miners")
       .asScala
       .map(minerConfig ⇒ {
-        minerConfig.getString("transaction_origin") → context.actorOf(
+        Address(minerConfig.getString("transaction_origin")).toString → context.actorOf(
           Props(
             new RingSettlementActor()(
               config = minerConfig.withFallback(config),
@@ -66,6 +67,9 @@ class RingSettlementManagerActor(
       .toMap
 
   var invalidRingSettlementActors = mutable.HashMap.empty[String, ActorRef]
+
+  val zeroAddr = "0x" + "0"*40
+  val miniMinerBalance = BigInt(config.getString("mini-miner-balance"))
 
   override def receive: Receive = {
     case req: XSettleRingsReq ⇒
@@ -84,5 +88,14 @@ class RingSettlementManagerActor(
         msg.miner
       ))
       ringSettlementActors = ringSettlementActors - msg.miner
+
+    case ba:XAddressBalanceUpdated ⇒
+      if(ba.token.equals(zeroAddr) && invalidRingSettlementActors.contains(ba.address)){
+        val balance = BigInt(ba.balance.toByteArray)
+        if(balance > miniMinerBalance){
+          ringSettlementActors += ba.address → invalidRingSettlementActors.(ba.address)
+          invalidRingSettlementActors = invalidRingSettlementActors - ba.address
+        }
+      }
   }
 }
