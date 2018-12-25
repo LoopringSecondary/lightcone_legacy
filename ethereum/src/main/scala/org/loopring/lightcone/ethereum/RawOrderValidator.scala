@@ -22,6 +22,7 @@ import org.web3j.utils.Numeric
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.ethereum._
+import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.proto.XErrorCode._
 
 trait RawOrderValidator {
@@ -88,12 +89,35 @@ object RawOrderValidatorImpl extends RawOrderValidator {
   }
 
   def validate(order: XRawOrder): Either[XErrorCode, XRawOrder] = {
-    def checkDualAuthSig = {
-      if (isValidAddress(order.params.get.dualAuthAddr)) {
-        val authSig = order.params.get.dualAuthSig
-        authSig != null && authSig.length > 0
+    def checkDualAuthPrivateKey = {
+      if (isValidAddress(order.getParams.dualAuthAddr)) {
+        val dualAuthPrivateKey = order.getParams.dualAuthPrivateKey
+        dualAuthPrivateKey != null && dualAuthPrivateKey.length >= 64
       } else {
         true
+      }
+    }
+
+    def checkOrderSig = {
+      val orderHash = calculateOrderHash(order)
+      val sig = order.getParams.sig
+      val sigBytes = Numeric.hexStringToByteArray(sig)
+
+      // Not support OrderRegistry contract for now.
+      // All orders here must have signature field.
+      if (sigBytes.length < 67) false
+      else {
+        val v = sigBytes(2)
+        val r = sigBytes.slice(3, 35)
+        val s = sigBytes.slice(35, 67)
+
+        verifyEthereumSignature(
+          Numeric.hexStringToByteArray(orderHash),
+          r,
+          s,
+          v,
+          Address(order.owner)
+        )
       }
     }
 
@@ -114,7 +138,8 @@ object RawOrderValidatorImpl extends RawOrderValidator {
         -> ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE,
       (BigInt(order.feeParams.get.walletSplitPercentage) <= 100)
         -> ERR_ORDER_VALIDATION_INVALID_WALLET_SPLIT_PERCENTAGE,
-      checkDualAuthSig -> ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_SIG
+      checkDualAuthPrivateKey -> ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_PRIV_KEY,
+      checkOrderSig -> ERR_ORDER_VALIDATION_INVALID_SIG
     )
 
     checklist.span(_._1)._2 match {

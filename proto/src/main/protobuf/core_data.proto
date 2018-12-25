@@ -63,8 +63,9 @@ enum XErrorCode{
     ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE           = 2005;
     ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE             = 2006;
     ERR_ORDER_VALIDATION_INVALID_WALLET_SPLIT_PERCENTAGE    = 2007;
-    ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_SIG       = 2008;
+    ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_PRIV_KEY  = 2008;   
     ERR_ORDER_VALIDATION_UNSUPPORTED_VERSION                = 2009;
+    ERR_ORDER_VALIDATION_INVALID_SIG                        = 2010;
 
     //3001 -- 4000 core actors error
     ERR_ORDER_ALREADY_EXIST             = 3001;
@@ -116,18 +117,18 @@ enum XSigningAlgorithm {
 // use bytes to represent big-numbers and string for addresses
 message XRawOrder {
     message Params {
-        string dual_auth_addr          = 1;
-        string broker                  = 2;
-        string order_interceptor       = 3;
-        string wallet                  = 4;
-        int32  valid_until             = 5; // in seconds
-        string sig                     = 6;
-        string dual_auth_sig           = 7;
-        bool   all_or_none             = 8;
-        XTokenStandard token_standard_s   = 9;
-        XTokenStandard token_standard_b   = 10;
-        XTokenStandard token_standard_fee = 11;
-        string dual_auth_addr_private_key = 12;
+        string dual_auth_addr                      = 1;
+        string broker                              = 2;
+        string order_interceptor                   = 3;
+        string wallet                              = 4;
+        int32  valid_until                         = 5; // in seconds
+        string sig                                 = 6;
+        string dual_auth_sig                       = 7;
+        bool   all_or_none                         = 8;
+        XTokenStandard token_standard_s            = 9;
+        XTokenStandard token_standard_b            = 10;
+        XTokenStandard token_standard_fee          = 11;
+        string dual_auth_private_key               = 12;
     }
 
     message FeeParams {
@@ -149,35 +150,35 @@ message XRawOrder {
     // // The following fieds are not part of Loopring's order definition but
     // // will be provided as metadata
     message State {
-        int64 created_at            = 101;
-        int64 updated_at            = 102;
-        int64 matched_at            = 103;
-        int64 updated_at_block      = 104;
-        XOrderStatus status         = 105;
-
-        bytes actual_amount_s       = 200;
-        bytes actual_amount_b       = 201;
-        bytes actual_amount_fee     = 202;
+        int64 created_at              = 101;
+        int64 updated_at              = 102;
+        int64 matched_at              = 103;
+        int64 updated_at_block        = 104;
+        XOrderStatus status           = 105;
+                                    
+        bytes actual_amount_s         = 200;
+        bytes actual_amount_b         = 201;
+        bytes actual_amount_fee       = 202;
         bytes outstanding_amount_s    = 203;
         bytes outstanding_amount_b    = 204;
         bytes outstanding_amount_fee  = 205;
     }
 
     // string  id          = 1; // order hash
-    string hash         = 2;
-    int32  version      = 3;
-    string owner        = 4;
-    string token_s      = 5;
-    string token_b      = 6;
-    bytes  amount_s     = 7;
-    bytes  amount_b     = 8;
-    int32  valid_since  = 9; // in seconds
+    string hash                     = 2;
+    int32  version                  = 3;
+    string owner                    = 4;
+    string token_s                  = 5;
+    string token_b                  = 6;
+    bytes  amount_s                 = 7;
+    bytes  amount_b                 = 8;
+    int32  valid_since              = 9; // in seconds
     Params params                   = 10;
     FeeParams fee_params            = 11;
     ERC1400Params erc1400_params    = 12;
-    State state            = 13;
-    int64 sequence_id      = 14;
-    string market_hash     = 15;
+    State state                     = 13;
+    int64 sequence_id               = 14;
+    string market_hash              = 15;
 }
 
 message XRingBatch {

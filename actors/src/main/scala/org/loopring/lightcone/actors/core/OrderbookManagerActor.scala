@@ -30,9 +30,10 @@ import org.loopring.lightcone.proto._
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
+import org.slf4s.Logging
 
 // main owner: 于红雨
-object OrderbookManagerActor extends ShardedByMarket {
+object OrderbookManagerActor extends ShardedByMarket with Logging {
   val name = "orderbook_manager"
 
   def startShardRegion(
@@ -60,7 +61,7 @@ object OrderbookManagerActor extends ShardedByMarket {
       }
       .toMap
 
-    println(s"### orderbook ClusterSharding ${markets}")
+    log.info(s"### orderbook ClusterSharding ${markets}")
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderbookManagerActor(markets)),

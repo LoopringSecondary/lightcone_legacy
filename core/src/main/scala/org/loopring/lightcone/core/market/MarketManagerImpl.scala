@@ -175,10 +175,11 @@ class MarketManagerImpl(
             else ringMatcher.matchOrders(taker, maker, minFiatValue)
 
           log.debug(s"""
-          | \n------ recursive matching (${taker.id} => ${maker.id}) ------
-          | [taker]  : $taker,
-          | [maker]  : $maker,
-          | [result] : $matchResult\n\n""")
+                       | \n-- recursive matching (${taker.id} => ${maker.id}) --
+                       | [taker]  : $taker,
+                       | [maker]  : $maker,
+                       | [result] : $matchResult\n\n
+                       | """.stripMargin)
           (maker, matchResult)
         } match {
           case None                       => // to maker to trade with

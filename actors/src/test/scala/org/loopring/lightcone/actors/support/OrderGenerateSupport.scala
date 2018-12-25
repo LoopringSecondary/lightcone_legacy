@@ -34,8 +34,7 @@ trait OrderGenerateSupport {
       tokenFee: String = LRC_TOKEN.address,
       amountFee: BigInt = "3".zeros(18)
     )(
-      implicit
-      privateKey: Option[String] = None
+      implicit privateKey: Option[String] = None
     ) = {
     //todo:hash 和 签名,
     // todo:hash 暂时随便给定

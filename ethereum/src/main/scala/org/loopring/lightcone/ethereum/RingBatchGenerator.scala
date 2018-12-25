@@ -372,20 +372,40 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
       context: XRingBatchContext
     ) = {
     val hash = ringBatchHash(xRingBatch)
-    val credentials = Credentials.create(context.minerPrivateKey)
-    val sigData = Sign.signMessage(
+    val sig = signPrefixedMessage(hash, context.minerPrivateKey)
+
+    val ordersWithDualAuthSig = xRingBatch.orders.map(order => {
+      val orderParams = order.getParams
+      if (isValidAndNonzeroAddress(orderParams.dualAuthAddr)) {
+        val privateKey = orderParams.dualAuthPrivateKey
+        val dualAuthSig = signPrefixedMessage(hash, privateKey)
+        val newOrderParams = orderParams.copy(dualAuthSig = dualAuthSig)
+        order.withParams(newOrderParams)
+      } else {
+        order
+      }
+    })
+
+    xRingBatch.copy(hash = hash, sig = sig, orders = ordersWithDualAuthSig)
+  }
+
+  // For miner sig and dual-auth sigs, only ALGO_ETHEREUM algorithm supported for now.
+  private def signPrefixedMessage(
+      hash: String,
+      privateKey: String
+    ) = {
+    val credentials = Credentials.create(privateKey)
+    val sigData = Sign.signPrefixedMessage(
       Numeric.hexStringToByteArray(hash),
       credentials.getEcKeyPair
     )
 
     val sigStream = new Bitstream
-    sigStream.addNumber(xRingBatch.signAlgorithm.value, 1, true)
+    sigStream.addNumber(XSigningAlgorithm.ALGO_ETHEREUM.value, 1, true)
     sigStream.addNumber(1 + 32 + 32, 1, true)
     sigStream.addNumber(sigData.getV, 1, true)
     sigStream.addRawBytes(sigData.getR)
     sigStream.addRawBytes(sigData.getS)
-    val sig = sigStream.getData
-
-    xRingBatch.copy(hash = hash, sig = sig)
+    sigStream.getData
   }
 }
