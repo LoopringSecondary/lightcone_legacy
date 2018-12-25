@@ -101,16 +101,16 @@ class SettlementTxDalImpl(
   def updateInBlock(
       request: XUpdateTxInBlockReq
     ): Future[XUpdateTxInBlockResult] = {
-    val pending: XSettlementTx.XStatus = XSettlementTx.XStatus.PENDING
     val a = (for {
       // update tx in block
-      inBlock <- query
+      updateInBlock <- query
         .filter(_.txHash === request.txHash)
         .filter(_.from === request.from)
         .filter(_.nonce === request.nonce)
         .map(_.status)
         .update(XSettlementTx.XStatus.BLOCK)
-      _ <- if (inBlock == 1) {
+      updateFaild <- if (updateInBlock == 1) {
+        val pending: XSettlementTx.XStatus = XSettlementTx.XStatus.PENDING
         query
           .filter(_.from === request.from)
           .filter(_.nonce === request.nonce)
@@ -121,9 +121,9 @@ class SettlementTxDalImpl(
         throw ErrorException(XErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
       }
       // update others pending tx to failed
-    } yield inBlock).transactionally
+    } yield updateFaild).transactionally
     db.run(a).map { r =>
-      if (r > 0) XUpdateTxInBlockResult(XErrorCode.ERR_NONE)
+      if (r >= 0) XUpdateTxInBlockResult(XErrorCode.ERR_NONE)
       else XUpdateTxInBlockResult(XErrorCode.ERR_INTERNAL_UNKNOWN)
     }
   }
