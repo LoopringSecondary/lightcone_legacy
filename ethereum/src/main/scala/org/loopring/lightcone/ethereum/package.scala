@@ -19,7 +19,7 @@ package org.loopring.lightcone.ethereum
 import java.math.BigInteger
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.ethereum.data.{Address, Transaction}
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress
@@ -76,28 +76,22 @@ package object ethereum {
   }
 
   def getSignedTxData(
-      inputData: String,
-      nonce: Int,
-      gasLimit: BigInt,
-      gasPrice: BigInt,
-      to: String,
-      value: BigInt = BigInt(0),
-      chainId: Int = 1
+      tx: Transaction
     )(
       implicit credentials: Credentials
     ): String = {
     val rawTransaction = RawTransaction
       .createTransaction(
-        BigInteger.valueOf(nonce),
-        gasPrice.bigInteger,
-        gasLimit.bigInteger,
-        to,
-        value.bigInteger,
-        inputData
+        BigInteger.valueOf(tx.nonce),
+        tx.gasPrice.bigInteger,
+        tx.gasLimit.bigInteger,
+        tx.to,
+        tx.value.bigInteger,
+        tx.inputData
       )
     Numeric.toHexString(
       TransactionEncoder
-        .signMessage(rawTransaction, chainId.toByte, credentials)
+        .signMessage(rawTransaction, tx.chainId.toByte, credentials)
     )
   }
 

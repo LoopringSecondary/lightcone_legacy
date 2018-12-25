@@ -33,7 +33,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.ethereum.data.{Address, Transaction}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
@@ -80,13 +80,17 @@ class RingSettlementActor(
     with RepeatedJobActor {
 
   //防止一个tx中的订单过多，超过 gaslimit
-  private val maxRingsInOneTx = 10
+  private val maxRingsInOneTx =
+    config.getInt("ring_settlement.max-rings-in-one-tx")
+  private val resendDelay =
+    config.getInt("ring_settlement.resend-delay_in_seconds")
   implicit val ringContext: XRingBatchContext =
     XRingBatchContext(
       lrcAddress = config.getString("ring_settlement.lrc-address"),
       feeRecipient = config.getString("ring_settlement.fee-recipient"),
       miner = config.getString("miner"),
-      transactionOrigin = config.getString("transaction-origin"),
+      transactionOrigin =
+        Address(config.getString("transaction-origin")).toString,
       minerPrivateKey = config.getString("miner-privateKey")
     )
   implicit val credentials: Credentials =
@@ -104,9 +108,7 @@ class RingSettlementActor(
         config.getInt("ring_settlement.job.initial-delay-in-seconds")
     )
   )
-
   private val nonce = new AtomicInteger(0)
-  private var minerBalance = BigInt(0)
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)
@@ -133,13 +135,7 @@ class RingSettlementActor(
           tag = "latest"
         )).mapTo[XGetNonceRes]
           .map(_.result)
-        balance ← (ethereumAccessActor ? XEthGetBalanceReq(
-          address = ringContext.transactionOrigin,
-          tag = "latest"
-        )).mapTo[XEthGetBalanceRes]
-          .map(_.result)
       } yield {
-        minerBalance = BigInt(Numeric.toBigInt(balance))
         nonce.set(Numeric.toBigInt(validNonce).intValue())
         unstashAll()
         context.become(ready)
@@ -162,34 +158,48 @@ class RingSettlementActor(
             )
           })
         })
-        xRingBatchs = rawOrders.map(
-          RingBatchGeneratorImpl.generateAndSignRingBatch
-        )
-        inputDatas = xRingBatchs.map(
-          RingBatchGeneratorImpl.toSubmitableParamStr
-        )
+        inputDatas = rawOrders
+          .map(
+            RingBatchGeneratorImpl.generateAndSignRingBatch
+          )
+          .map {
+            RingBatchGeneratorImpl.toSubmitableParamStr
+          }
         txs = inputDatas.map { input ⇒
-          getSignedTxData(
+          Transaction(
             input,
             nonce.getAndIncrement(),
             req.gasLimit,
             req.gasPrice,
-            to = protocolAddress
+            protocolAddress
           )
         }
-        responses ← Future.sequence(txs.map { tx ⇒
-          (ethereumAccessActor ? XSendRawTransactionReq(tx))
+        hashes ← Future.sequence(txs.map { tx ⇒
+          val rawTx = getSignedTxData(tx)
+          (ethereumAccessActor ? XSendRawTransactionReq(rawTx))
             .mapTo[XSendRawTransactionRes]
+            .map(_.result)
         })
       } yield {
-        //TODO(yadong) 把提交的环路记录到数据库,提交失败以后的处理
-        minerBalance = minerBalance.min(
-          BigInt(req.gasLimit.toByteArray) * BigInt(req.gasPrice.toByteArray)
-        )
-        if (minerBalance <= BigInt(5).pow(17)) {
-          ringSettlementManagerActor ! XMinerBalanceNotEnough(
-            miner = ringContext.transactionOrigin
-          )
+        (txs zip hashes).map {
+          case (tx, hash) ⇒
+            dbModule.settlementTxService.saveTx(
+              XSaveSettlementTxReq(
+                tx = Some(
+                  XSettlementTx(
+                    txHash = hash,
+                    from = ringContext.transactionOrigin,
+                    to = tx.to,
+                    nonce = tx.nonce,
+                    gas = Numeric.toHexStringWithPrefix(tx.gasLimit.bigInteger),
+                    gasPrice =
+                      Numeric.toHexStringWithPrefix(tx.gasPrice.bigInteger),
+                    data = tx.inputData,
+                    value = Numeric.toHexStringWithPrefix(tx.value.bigInteger)
+                  )
+                )
+              )
+            )
         }
       }
   }
@@ -210,21 +220,50 @@ class RingSettlementActor(
       gasPriceRes <- (gasPriceActor ? XGetGasPriceReq())
         .mapTo[XGetGasPriceRes]
         .map(_.gasPrice)
-      //todo：查询数据库等得到未能打块的交易,暂时用XTransaction的结构
-      ringTxs = Seq.empty[XTransaction]
-      txResponses ← Future.sequence(ringTxs.map { tx =>
-        val txData = getSignedTxData(
-          tx.input,
-          tx.nonce.intValue(),
-          tx.gas,
-          gasPriceRes,
-          to = protocolAddress
+      ringTxs ← dbModule.settlementTxService
+        .getPendingTxs(
+          XGetPendingTxsReq(
+            owner = Address(ringContext.transactionOrigin).toString,
+            timeProvider.getTimeSeconds() - resendDelay
+          )
         )
-        (ethereumAccessActor ? XSendRawTransactionReq(txData))
+        .map(_.txs)
+      txs = ringTxs.map(
+        (tx: XSettlementTx) ⇒
+          Transaction(
+            tx.data,
+            nonce.getAndIncrement(),
+            tx.gas,
+            gasPriceRes,
+            to = protocolAddress
+          )
+      )
+      txResps ← Future.sequence(txs.map { tx =>
+        val rawTx = getSignedTxData(tx)
+        (ethereumAccessActor ? XSendRawTransactionReq(rawTx))
           .mapTo[XSendRawTransactionRes]
       })
     } yield {
-      // Todo(yadong) 更新新提交的TX信息
-      txResponses
+      (txs zip txResps).filter(_._2.error.isEmpty).map {
+        case (tx, res) ⇒
+          dbModule.settlementTxService.saveTx(
+            XSaveSettlementTxReq(
+              tx = Some(
+                XSettlementTx(
+                  txHash = res.result,
+                  from = ringContext.transactionOrigin,
+                  to = tx.to,
+                  nonce = tx.nonce,
+                  gas = Numeric.toHexStringWithPrefix(tx.gasLimit.bigInteger),
+                  gasPrice =
+                    Numeric.toHexStringWithPrefix(tx.gasPrice.bigInteger),
+                  data = tx.inputData,
+                  value = Numeric.toHexStringWithPrefix(tx.value.bigInteger)
+                )
+              )
+            )
+          )
+      }
+
     }
 }
