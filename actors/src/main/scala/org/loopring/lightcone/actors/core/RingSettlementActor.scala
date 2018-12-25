@@ -82,20 +82,29 @@ class RingSettlementActor(
   private val maxRingsInOneTx = 10
   implicit val ringContext: XRingBatchContext =
     XRingBatchContext(
-      lrcAddress = config.getString("ring_settlement.lrc_address"),
-      feeRecipient = config.getString("ring_settlement.fee_recipient"),
+      lrcAddress = config.getString("ring_settlement.lrc-address"),
+      feeRecipient = config.getString("ring_settlement.fee-recipient"),
       miner = config.getString("miner"),
-      transactionOrigin = config.getString("transaction_origin"),
-      minerPrivateKey = config.getString("miner_privateKey")
+      transactionOrigin = config.getString("transaction-origin"),
+      minerPrivateKey = config.getString("miner-privateKey")
     )
   implicit val credentials: Credentials =
-    Credentials.create(config.getString("transaction_origin_private_key"))
+    Credentials.create(config.getString("transaction-origin-private-key"))
 
   val protocolAddress: String =
-    config.getString("loopring-protocol.protocol-address")
-  val repeatedJobs = Nil
+    config.getString("loopring_protocol.protocol-address")
+
+  val repeatedJobs = Seq(
+    Job(
+      name = config.getString("ring_settlement.job.name"),
+      dalayInSeconds = config.getInt("ring_settlement.job.delay-in-seconds"),
+      run = () ⇒ resubmitTx(),
+      initialDalayInSeconds =
+        config.getInt("ring_settlement.job.initial-delay-in-seconds")
+    )
+  )
+
   private val nonce = new AtomicInteger(0)
-  // 维护balance, 当余额不足的时候停止接收新的任务
   private var minerBalance = BigInt(0)
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
@@ -111,7 +120,6 @@ class RingSettlementActor(
   }
 
   override def receive: Receive = {
-
     case _ ⇒
       stash()
   }
@@ -175,4 +183,28 @@ class RingSettlementActor(
         }
       }
   }
+
+  //未被提交的交易需要使用新的gas和gasprice重新提交
+  def resubmitTx(): Future[Unit] =
+    for {
+      gasPriceRes <- (gasPriceActor ? XGetGasPriceReq())
+        .mapTo[XGetGasPriceRes]
+        .map(_.gasPrice)
+      //todo：查询数据库等得到未能打块的交易,暂时用XTransaction的结构
+      ringTxs = Seq.empty[XTransaction]
+      txResponses ← Future.sequence(ringTxs.map { tx =>
+        val txData = getSignedTxData(
+          tx.input,
+          tx.nonce.intValue(),
+          tx.gas,
+          gasPriceRes,
+          to = protocolAddress
+        )
+        (ethereumAccessActor ? XSendRawTransactionReq(txData))
+          .mapTo[XSendRawTransactionRes]
+      })
+    } yield {
+      // Todo(yadong) 更新新提交的TX信息
+      txResponses
+    }
 }
