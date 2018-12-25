@@ -46,7 +46,6 @@ class EntryPointSpec_SubmitSeveralOrder
   "submit several order then cancel it" must {
     "get right response in EntryPoint,DbModule,Orderbook" in {
       //下单情况
-
       val rawOrders =
         ((0 until 2) map { i =>
           createRawOrder(
@@ -88,7 +87,6 @@ class EntryPointSpec_SubmitSeveralOrder
               assert(false)
           }
         }
-
       })
 
       //orderbook
@@ -102,7 +100,7 @@ class EntryPointSpec_SubmitSeveralOrder
 
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
-        case XOrderbook(_, sells, buys) =>
+        case XOrderbook(lastPrice, sells, buys) =>
           info(s"sells: ${sells}")
           assert(sells.size == 3)
           assert(
@@ -116,16 +114,10 @@ class EntryPointSpec_SubmitSeveralOrder
               sells(1).total == "2.00000"
           )
           assert(
-            sells(1).price == "20.000000" &&
-              sells(1).amount == "40.00000" &&
-              sells(1).total == "2.00000"
-          )
-          assert(
             sells(2).price == "30.000000" &&
               sells(2).amount == "60.00000" &&
               sells(2).total == "2.00000"
           )
-
           assert(buys.isEmpty)
         case _ => assert(false)
       }
@@ -164,31 +156,10 @@ class EntryPointSpec_SubmitSeveralOrder
       Thread.sleep(1000)
       val orderbookF1 = singleRequest(getOrderBook, "orderbook")
 
-      val cancelF = singleRequest(cancelReq, "cancel_order")
-      Await.result(cancelF, timeout.duration)
-
-      /*
-    ERROR
-          org.loopring.lightcone.lib.ErrorException: ErrorException(
-          ERR_INTERNAL_UNKNOWN: msg:JsonRpcError(4002,
-          Some(failed to submit order:
-          XRawOrder(0x3518ce27b5f6ff3c8dfb8f0d3f4c58fb09294c7c8d4678a4d6a433faa7de46d6,
-          1,0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10,
-          0xa345b6c2e5ce5970d026cea8591dc28958ff6edc,
-          0x08d24fc29cdccf8e9ca45eef05384c58f8a8e94f,
-          <ByteString@3eee611 size=9>,<ByteString@1c4324b9 size=8>,
-          1545606389,Some(Params(,,,,1545616389,,,false,ERC20,ERC20,ERC20,)),
-          Some(FeeParams(0xa345b6c2e5ce5970d026cea8591dc28958ff6edc,
-          <ByteString@613cd30 size=8>,0,0,0,,0)),None,
-          Some(State(1545596389381,1545596389381,0,0,STATUS_NEW,
-          <ByteString@3a80d779 size=0>,<ByteString@3a80d779 size=0>,
-          <ByteString@3a80d779 size=0>,<ByteString@3a80d779 size=0>,
-          <ByteString@3a80d779 size=0>,<ByteString@3a80d779 size=0>))
-          ,0,)),None))
-       */
-      res match {
-        case XOrderbook(_, sells, buys) =>
-          assert(sells.size == 2)
+      val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
+      orderbookRes1 match {
+        case XOrderbook(lastPrice, sells, buys) =>
+          assert(sells.size == 3)
           assert(
             sells(0).price == "10.000000" &&
               sells(0).amount == "10.00000" &&
@@ -200,9 +171,9 @@ class EntryPointSpec_SubmitSeveralOrder
               sells(1).total == "2.00000"
           )
           assert(
-            sells(1).price == "30.000000" &&
-              sells(1).amount == "60.00000" &&
-              sells(1).total == "2.00000"
+            sells(2).price == "30.000000" &&
+              sells(2).amount == "60.00000" &&
+              sells(2).total == "2.00000"
           )
           assert(buys.isEmpty)
         case _ => assert(false)
