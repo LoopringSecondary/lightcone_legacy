@@ -40,31 +40,6 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
     .withFeeRecipient(minerFeeRecipient)
     .withTransactionOrigin(transactionOrigin)
     .withLrcAddress(lrcAddress)
-  // println(s"xRingBatchContext: $xRingBatchContext")
-
-  "sign message" should "be the same as web3" in {
-    val credentials = Credentials.create(
-      "0x2949899bb4312754e11537e1e2eba03c0298608effeab21620e02a3ef68ea58a"
-    )
-    val hash =
-      "0xa2ed3a2382efb6b50f6d32fe03cf2bbdf2e9bdfed42d7aba2e4803235bd0fa73"
-    val sigData = Sign.signPrefixedMessage(
-      Numeric.hexStringToByteArray(hash),
-      credentials.getEcKeyPair
-    )
-    val sStr = sigData.getS.map("%02x" format _).mkString
-    val rStr = sigData.getR.map("%02x" format _).mkString
-    println(s"sig: $rStr$sStr")
-
-    val sigData2 = Sign.signMessage(
-      Numeric.hexStringToByteArray(hash),
-      credentials.getEcKeyPair
-    )
-    val sStr2 = sigData2.getS.map("%02x" format _).mkString
-    val rStr2 = sigData2.getR.map("%02x" format _).mkString
-
-    println(s"sig2: $rStr2$sStr2")
-  }
 
   "simple 2 tradable orders" should "be able to generate a ring" in {
     val order1Owner = TestConfig.envOrElseConfig("accounts.a1.addr")
@@ -89,11 +64,118 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
       .withAmountB(ByteString.copyFromUtf8(1000e18.toLong.toHexString))
 
     val orders = Seq(Seq(order1, order2))
-    val xRingBatch = ringBatchGenerator.generateAndSignRingBatch(orders)
+    val xRingBatch: XRingBatch =
+      ringBatchGenerator.generateAndSignRingBatch(orders)
+
+  }
+
+  "XRingBatchGenerator" should "be able to generate a XRingBatch object to param string" in {
+    val miner = "0x23a51c5f860527f971d0587d130c64536256040d"
+    val minerPrivKey =
+      "0xa99a8d27d06380565d1cf6c71974e7707a81676c4e7cb3dad2c43babbdca2d23"
+    val transactionOrigin = "0xc0ff3f78529ab90f765406f7234ce0f2b1ed69ee"
+    val minerFeeRecipient = "0x611db73454c27e07281d2317aa088f9918321415"
+
+    val wethAddress = "0x3B39f10dC98b3fcd86a6d4837ff2BdF410710B94"
+    val lrcAddress = "0x5eADE4Cbac9ecd6082Bb2A375185e2F8FCaeeb7F"
+    val validSince = 1545619108
+
+    val dualAuthAddr = "0x66D3444ad66fc32abCEC9B38A4181066b1146CCA"
+    val walletAddr = dualAuthAddr
+    val order1Owner = "0xFDa769A839DA57D88320E683cD20075f8f525a57"
+    val order2Owner = "0xf5B3ab72F6E80d79202dBD37400447c11618f21f"
+
+    val validator: RawOrderValidator = RawOrderValidatorImpl
+    val generator: RingBatchGenerator = RingBatchGeneratorImpl
+
+    val mockOrderSig1 =
+      "0x01411bdfe8ac29b828887bc17e926e1938585eef3edd535d53efad605726663fd124e737c1837300ff9afca20ba60f19d19daa98fe357b1719ebcf765943e99ca46047"
+    val mockOrderSig2 =
+      "0x00411bdfe8ac29b828887bc17e926e1938585eef3edd535d53efad605726663fd124e737c1837300ff9afca20ba60f19d19daa98fe357b1719ebcf765943e99ca46028"
+    val mockDualAuthSig =
+      "0x00411bdfe8ac29b828887bc17e926e1938585eef3edd535d53efad605726663fd124e737c1837300ff9afca20ba60f19d19daa98fe357b1719ebcf765943e99ca46047"
+
+    val params1 = (new XRawOrder.Params)
+      .withDualAuthAddr(dualAuthAddr)
+      .withWallet(walletAddr)
+      .withSig(mockOrderSig1)
+      .withDualAuthSig(mockDualAuthSig)
+
+    val feeParams1 = (new XRawOrder.FeeParams)
+      .withTokenFee(lrcAddress)
+      .withAmountFee(
+        ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16))
+      )
+      .withTokenRecipient(order1Owner)
+      .withWalletSplitPercentage(10)
+
+    val order1 = (new XRawOrder)
+      .withVersion(0)
+      .withOwner(order1Owner)
+      .withTokenS(wethAddress)
+      .withTokenB(lrcAddress)
+      .withAmountS(ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16)))
+      .withAmountB(ByteString.copyFromUtf8(BigInt("1" + "0" * 21).toString(16)))
+      .withValidSince(validSince)
+      .withParams(params1)
+      .withFeeParams(feeParams1)
+
+    val hash = validator.calculateOrderHash(order1)
+    println(s"order1 hash:$hash")
+    val hash1Expected =
+      "0xa078d272fe15177fec76268c3896319e8736853583b67d5bf746001b987f43d0"
+    // assert(hash == hash1Expected, "hash1 not as expected ")
+    val order1WithHash = order1.copy(hash = hash)
+    val validateResult = validator.validate(order1WithHash)
+
+    val params2 = (new XRawOrder.Params)
+      .withDualAuthAddr(dualAuthAddr)
+      .withWallet(walletAddr)
+      .withSig(mockOrderSig2)
+      .withDualAuthSig(mockDualAuthSig)
+
+    val feeParams2 = (new XRawOrder.FeeParams)
+      .withTokenFee(lrcAddress)
+      .withAmountFee(
+        ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16))
+      )
+      .withTokenRecipient(order2Owner)
+      .withWalletSplitPercentage(20)
+
+    val order2 = (new XRawOrder)
+      .withVersion(0)
+      .withOwner(order2Owner)
+      .withTokenS(lrcAddress)
+      .withTokenB(wethAddress)
+      .withAmountS(ByteString.copyFromUtf8(BigInt("1" + "0" * 21).toString(16)))
+      .withAmountB(ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16)))
+      .withValidSince(1545619109)
+      .withParams(params2)
+      .withFeeParams(feeParams2)
+
+    val hash2 = validator.calculateOrderHash(order2)
+    println(s"order2 hash:$hash2")
+
+    val hash2Expected =
+      "0x65d3a688a5f0d0dad84bee5d5ec8dbc540748dd2f95583ecdfcfe3cada333dbe"
+    // assert(hash2 == hash2Expected, "hash2 not as expected ")
+
+    val order2WithHash = order2.copy()
+    val validateResult2 = validator.validate(order2WithHash)
+    println(s"validateResult: $validateResult2")
+
+    val xRingBatch =
+      generator.generateAndSignRingBatch(Seq(Seq(order1, order2)))
     println(s"xRingBatch: $xRingBatch")
+    println(s"xRingBatch hash:${xRingBatch.hash}")
+    println(s"ringBatch sig: ${xRingBatch.sig}")
 
-    val param = ringBatchGenerator.toSubmitableParamStr(xRingBatch)
-    println(s"param str: $param")
+    val paramStr = generator.toSubmitableParamStr(xRingBatch)
+    println(s"paramStr:$paramStr")
 
+    val expectedParamStr =
+      ""
+
+    assert(paramStr.length == expectedParamStr.length, "invalid paramstr")
   }
 }
