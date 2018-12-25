@@ -171,11 +171,12 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
           5.second
         )
       } catch {
-        case e:ErrorException => e
-        case m:Throwable => m
+        case e: ErrorException => e
+        case m: Throwable      => m
       }
     res match {
-      case e:ErrorException => assert(e.error.code === XErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
+      case e: ErrorException =>
+        assert(e.error.code === XErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
       case _ => assert(false)
     }
   }
