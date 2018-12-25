@@ -49,18 +49,13 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       validUntil: Int
     ): Future[Either[XRawOrder, XErrorCode]] = {
     val now = timeProvider.getTimeMillis
-    val state = XRawOrder.State(
-      createdAt = now,
-      updatedAt = now,
-      status = status
-    )
+    val state =
+      XRawOrder.State(createdAt = now, updatedAt = now, status = status)
     val fee = XRawOrder.FeeParams(
       tokenFee = tokenFee,
       amountFee = ByteString.copyFrom("111", "utf-8")
     )
-    val param = XRawOrder.Params(
-      validUntil = validUntil
-    )
+    val param = XRawOrder.Params(validUntil = validUntil)
     var order = XRawOrder(
       owner = owner,
       hash = hash,
@@ -377,10 +372,8 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       )
       query ← service.getOrder(owner)
     } yield (update, query)
-    val res = Await.result(
-      result.mapTo[(XErrorCode, Option[XRawOrder])],
-      5.second
-    )
+    val res =
+      Await.result(result.mapTo[(XErrorCode, Option[XRawOrder])], 5.second)
     val x = res._1 === XErrorCode.ERR_NONE && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_CANCELLED_BY_USER
     x should be(true)
   }
@@ -420,10 +413,8 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       update ← service.updateAmount(hash, state)
       query ← service.getOrder(hash)
     } yield (update, query)
-    val res = Await.result(
-      result.mapTo[(XErrorCode, Option[XRawOrder])],
-      5.second
-    )
+    val res =
+      Await.result(result.mapTo[(XErrorCode, Option[XRawOrder])], 5.second)
     val x = res._1 === XErrorCode.ERR_NONE && res._2.nonEmpty && res._2.get.state.get.status === XOrderStatus.STATUS_NEW &&
       res._2.get.state.get.actualAmountB === ByteString.copyFrom("111", "UTF-8")
     x should be(true)

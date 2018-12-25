@@ -66,32 +66,28 @@ class EntryPointSpec_SubmitSeveralOrder
             )
           })
 
-      val f1 = Future.sequence(
-        rawOrders.map { o =>
-          singleRequest(XSubmitOrderReq(Some(o)), "submit_order")
-        }
-      )
+      val f1 = Future.sequence(rawOrders.map { o =>
+        singleRequest(XSubmitOrderReq(Some(o)), "submit_order")
+      })
 
       val res = Await.result(f1, 3 second)
 
       info(
         "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING"
       )
-      val assertOrderFromDbF = Future.sequence(
-        rawOrders.map { o =>
-          for {
-            orderOpt <- dbModule.orderService.getOrder(o.hash)
-          } yield {
-            orderOpt match {
-              case Some(order) =>
-                assert(order.sequenceId > 0)
-                assert(order.getState.status == XOrderStatus.STATUS_PENDING)
-              case None =>
-                assert(false)
-            }
+      val assertOrderFromDbF = Future.sequence(rawOrders.map { o =>
+        for {
+          orderOpt <- dbModule.orderService.getOrder(o.hash)
+        } yield {
+          orderOpt match {
+            case Some(order) =>
+              assert(order.sequenceId > 0)
+              assert(order.getState.status == XOrderStatus.STATUS_PENDING)
+            case None =>
+              assert(false)
           }
         }
-      )
+      })
 
       //orderbook
       Thread.sleep(1000)
@@ -100,10 +96,7 @@ class EntryPointSpec_SubmitSeveralOrder
         100,
         Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF = singleRequest(
-        getOrderBook,
-        "orderbook"
-      )
+      val orderbookF = singleRequest(getOrderBook, "orderbook")
 
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
@@ -141,32 +134,27 @@ class EntryPointSpec_SubmitSeveralOrder
       Await.result(cancelF, timeout.duration)
 
       info("the first order's status in db should be STATUS_CANCELLED_BY_USER")
-      val assertOrderFromDbF2 = Future.sequence(
-        rawOrders.map { o =>
-          for {
-            orderOpt <- dbModule.orderService.getOrder(o.hash)
-          } yield {
-            orderOpt match {
-              case Some(order) =>
-                if (order.hash == rawOrders(0).hash) {
-                  assert(
-                    order.getState.status == XOrderStatus.STATUS_CANCELLED_BY_USER
-                  )
-                } else {
-                  assert(order.getState.status == XOrderStatus.STATUS_PENDING)
-                }
-              case None =>
-                assert(false)
-            }
+      val assertOrderFromDbF2 = Future.sequence(rawOrders.map { o =>
+        for {
+          orderOpt <- dbModule.orderService.getOrder(o.hash)
+        } yield {
+          orderOpt match {
+            case Some(order) =>
+              if (order.hash == rawOrders(0).hash) {
+                assert(
+                  order.getState.status == XOrderStatus.STATUS_CANCELLED_BY_USER
+                )
+              } else {
+                assert(order.getState.status == XOrderStatus.STATUS_PENDING)
+              }
+            case None =>
+              assert(false)
           }
         }
-      )
+      })
 
       Thread.sleep(1000)
-      val orderbookF1 = singleRequest(
-        getOrderBook,
-        "orderbook"
-      )
+      val orderbookF1 = singleRequest(getOrderBook, "orderbook")
 
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
