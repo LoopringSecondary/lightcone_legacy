@@ -20,9 +20,9 @@ import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
-class SubmitTxTable(tag: Tag)
-    extends BaseTable[XSubmitTx](tag, "T_SUBMIT_TXS") {
-  implicit val XStatusCxolumnType = enumColumnType(XSubmitTx.XStatus)
+class SettlementTxTable(tag: Tag)
+    extends BaseTable[XSettlementTx](tag, "T_SETTLEMENT_TXS") {
+  implicit val XStatusCxolumnType = enumColumnType(XSettlementTx.XStatus)
 
   def id = txHash
   def txHash = columnAddress("tx_hash")
@@ -33,7 +33,7 @@ class SubmitTxTable(tag: Tag)
   def value = column[String]("value")
   def data = column[String]("data")
   def nonce = column[Long]("nonce")
-  def status = column[XSubmitTx.XStatus]("status")
+  def status = column[XSettlementTx.XStatus]("status")
   def createAt = column[Long]("create_at")
   def updateAt = column[Long]("update_at")
 
@@ -56,5 +56,5 @@ class SubmitTxTable(tag: Tag)
       status,
       createAt,
       updateAt
-    ) <> ((XSubmitTx.apply _).tupled, XSubmitTx.unapply)
+    ) <> ((XSettlementTx.apply _).tupled, XSettlementTx.unapply)
 }

@@ -15,31 +15,40 @@
  */
 
 package org.loopring.lightcone.persistence.service
+
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.dals.{SubmitTxDal, SubmitTxDalImpl}
-import org.loopring.lightcone.proto.{
-  XErrorCode,
-  XGetPendingTxsReq,
-  XSubmitTx,
-  XUpdateTxInBlockReq
-}
+import org.loopring.lightcone.persistence.dals.{BlockDal, BlockDalImpl}
+import org.loopring.lightcone.proto.{XBlockData, XErrorCode}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
-class SubmitTxServiceImpl @Inject()(
+class BlockServiceImpl @Inject()(
     implicit
     val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
-    extends SubmitTxService {
-  val submitTxDal: SubmitTxDal = new SubmitTxDalImpl()
+    extends BlockService {
+  val blockDal: BlockDal = new BlockDalImpl()
 
-  def saveTx(tx: XSubmitTx): Future[XErrorCode] = submitTxDal.saveTx(tx)
+  def saveBlock(block: XBlockData): Future[XErrorCode] =
+    blockDal.saveBlock(block)
 
-  def getPendingTxs(request: XGetPendingTxsReq): Future[Seq[XSubmitTx]] =
-    submitTxDal.getPendingTxs(request)
+  def findByHash(hash: String): Future[Option[XBlockData]] =
+    blockDal.findByHash(hash)
 
-  def updateInBlock(request: XUpdateTxInBlockReq): Future[XErrorCode] =
-    submitTxDal.updateInBlock(request)
+  def findByHeight(height: Long): Future[Option[XBlockData]] =
+    blockDal.findByHeight(height)
+
+  def findMaxHeight(): Future[Option[Long]] = blockDal.findMaxHeight()
+
+  def findBlocksInHeightRange(
+      heightFrom: Long,
+      heightTo: Long
+    ): Future[Seq[(Long, String)]] =
+    blockDal.findBlocksInHeightRange(heightFrom, heightTo)
+
+  def count(): Future[Int] = blockDal.count()
+
+  def obsolete(height: Long): Future[Unit] = blockDal.obsolete(height)
 }

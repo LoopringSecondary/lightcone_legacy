@@ -16,16 +16,19 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.persistence.dals.SubmitTxDal
+import org.loopring.lightcone.persistence.dals.SettlementTxDal
 import org.loopring.lightcone.proto._
 import scala.concurrent.Future
 
-trait SubmitTxService {
+trait SettlementTxService {
 
-  val submitTxDal: SubmitTxDal
-  def saveTx(tx: XSubmitTx): Future[XErrorCode]
+  val submitTxDal: SettlementTxDal
+  def saveTx(req: XSaveSettlementTxReq): Future[XSaveSettlementTxResult]
   // get all pending txs with given owner, from_nonce is a optional parameter(>=)
-  def getPendingTxs(request: XGetPendingTxsReq): Future[Seq[XSubmitTx]]
+  def getPendingTxs(request: XGetPendingTxsReq): Future[XGetPendingTxsResult]
+
   // update address's all txs status below or equals the given nonce to BLOCK
-  def updateInBlock(request: XUpdateTxInBlockReq): Future[XErrorCode]
+  def updateInBlock(
+      request: XUpdateTxInBlockReq
+    ): Future[XUpdateTxInBlockResult]
 }

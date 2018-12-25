@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.utils
+package org.loopring.lightcone.persistence.service
 
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.filter.Filter
-import ch.qos.logback.core.spi.FilterReply
+import org.loopring.lightcone.proto.{XBlockData, XErrorCode}
+import scala.concurrent.Future
 
-class LogFilter extends Filter[ILoggingEvent] {
+trait BlockService {
 
-  def decide(event: ILoggingEvent) = {
-    event.getLoggerName() match {
-      case "akka.cluster.ClusterHeartbeatSender" => FilterReply.DENY
-      case "org.hbase.async.RegionClient"        => FilterReply.DENY
-      case _                                     => FilterReply.ACCEPT
-    }
-  }
+  def saveBlock(block: XBlockData): Future[XErrorCode]
+  def findByHash(hash: String): Future[Option[XBlockData]]
+  def findByHeight(height: Long): Future[Option[XBlockData]]
+  def findMaxHeight(): Future[Option[Long]]
+
+  def findBlocksInHeightRange(
+      heightFrom: Long,
+      heightTo: Long
+    ): Future[Seq[(Long, String)]]
+  def count(): Future[Int]
+  def obsolete(height: Long): Future[Unit]
 }
