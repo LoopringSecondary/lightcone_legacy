@@ -88,7 +88,7 @@ class SettlementTxDalImpl(
     val sql =
       sql"""
            SELECT tx_hash, `from`, `to`, gas, gas_price, `value`, `data`, MAX(nonce), status, create_at, update_at
-            FROM ${tableName}
+            FROM T_SETTLEMENT_TXS
             GROUP BY `from`, nonce
             having `from` = ${request.owner}
              and status = ${XSettlementTx.XStatus.PENDING.value}
