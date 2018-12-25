@@ -49,6 +49,7 @@ class DatabaseModule @Inject()(
     new BlockDalImpl(),
     new TransactionDalImpl(),
     new EventLogDalImpl(),
-    new TokenTransferDalImpl()
+    new TokenTransferDalImpl(),
+    new SubmitTxDalImpl()
   )
 }

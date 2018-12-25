@@ -24,25 +24,28 @@ class SubmitTxTable(tag: Tag)
     extends BaseTable[XSubmitTx](tag, "T_SUBMIT_TXS") {
   implicit val XStatusCxolumnType = enumColumnType(XSubmitTx.XStatus)
 
-  // TODO du: 用什么做id ?
-  def id = from
+  def id = txHash
+  def txHash = columnAddress("tx_hash")
   def from = columnAddress("from")
   def to = columnAddress("to")
   def gas = column[String]("gas")
-  def gasPrice = column[String]("gasPrice")
+  def gasPrice = column[String]("gas_price")
   def value = column[String]("value")
   def data = column[String]("data")
   def nonce = column[Long]("nonce")
   def status = column[XSubmitTx.XStatus]("status")
-  def submitAt = column[Long]("submit_at")
+  def createAt = column[Long]("create_at")
+  def updateAt = column[Long]("update_at")
 
   // indexes
-  def idx_from_nonce = index("idx_from_nonce", (from, nonce), unique = true)
+  def idx_tx_hash = index("idx_tx_hash", (txHash), unique = true)
+  def idx_from = index("idx_from", (from), unique = false)
   def idx_status = index("idx_status", (status), unique = false)
-  def idx_submit_at = index("idx_submit_at", (submitAt), unique = false)
+  def idx_create_at = index("idx_submit_at", (createAt), unique = false)
 
   def * =
     (
+      txHash,
       from,
       to,
       gas,
@@ -51,6 +54,7 @@ class SubmitTxTable(tag: Tag)
       data,
       nonce,
       status,
-      submitAt
+      createAt,
+      updateAt
     ) <> ((XSubmitTx.apply _).tupled, XSubmitTx.unapply)
 }

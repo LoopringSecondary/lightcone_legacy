@@ -17,6 +17,7 @@
 package org.loopring.lightcone.persistence.dals
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
+import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
@@ -44,6 +45,7 @@ class TradeDalImpl(
     extends TradeDal {
   val query = TableQuery[TradeTable]
   val timeProvider = new SystemTimeProvider()
+  private[this] val logger = Logger(this.getClass)
 
   def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]] = {
     db.run(
@@ -57,8 +59,7 @@ class TradeDalImpl(
         case Failure(e: MySQLIntegrityConstraintViolationException) ⇒
           Left(XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
         case Failure(ex) ⇒ {
-          // TODO du: print some log
-          // log(s"error : ${ex.getMessage}")
+          logger.error(s"error : ${ex.getMessage}")
           Left(XErrorCode.ERR_PERSISTENCE_INTERNAL)
         }
         case Success(x) ⇒ Right(trade.txHash)

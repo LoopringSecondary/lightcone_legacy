@@ -137,8 +137,8 @@ message XSubmitTxResult {
 }
 
 message XGetPendingTxsReq {
-    string owner      = 1; // required
-    int64  from_nonce = 2; // optional, contains(>=from_nonce)
+    string owner       = 1; // required
+    int64  time_before = 2; // optional, if >0 query create_at <= time_before
 }
 
 message XGetPendingTxsResult {
