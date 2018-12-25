@@ -37,6 +37,8 @@ class DatabaseModule @Inject()(
     new OrdersCancelledEventServiceImpl()
   val orderCutoffService: OrdersCutoffService = new OrdersCutoffServiceImpl()
   val tokenMetadataService = new TokenMetadataServiceImpl()
+  val settlementTxService: SettlementTxService = new SettlementTxServiceImpl()
+  val blockService: BlockService = new BlockServiceImpl()
 
   val tables = Seq(
     new TokenMetadataDalImpl(),
@@ -49,6 +51,7 @@ class DatabaseModule @Inject()(
     new BlockDalImpl(),
     new TransactionDalImpl(),
     new EventLogDalImpl(),
-    new TokenTransferDalImpl()
+    new TokenTransferDalImpl(),
+    new SettlementTxDalImpl()
   )
 }
