@@ -18,7 +18,7 @@ package org.loopring.lightcone.persistence.dals
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import com.typesafe.scalalogging.Logger
-import org.loopring.lightcone.lib.SystemTimeProvider
+import org.loopring.lightcone.lib.{ErrorException, SystemTimeProvider}
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto.XErrorCode._
@@ -27,6 +27,7 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 import slick.basic._
 import slick.lifted.Query
+
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
@@ -110,13 +111,17 @@ class SettlementTxDalImpl(
         .filter(_.nonce === request.nonce)
         .map(_.status)
         .update(XSettlementTx.XStatus.BLOCK)
+      _ <- if (inBlock == 1) {
+        query
+          .filter(_.from === request.from)
+          .filter(_.nonce === request.nonce)
+          .filter(_.status === pending)
+          .map(_.status)
+          .update(XSettlementTx.XStatus.FAILED)
+      } else {
+        throw ErrorException(XErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
+      }
       // update others pending tx to failed
-      _ <- query
-        .filter(_.from === request.from)
-        .filter(_.nonce === request.nonce)
-        .filter(_.status === pending)
-        .map(_.status)
-        .update(XSettlementTx.XStatus.FAILED)
     } yield inBlock).transactionally
     db.run(a).map { r =>
       if (r > 0) XUpdateTxInBlockResult(XErrorCode.ERR_NONE)

@@ -142,4 +142,42 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     res._1.txs.length === 1 && res._2.txs.length === 0 should be(true)
   }
 
+  "update status with a not exist tx hash" must "update failed" in {
+    val txHashes = Set(
+      "0x-updateblock-01",
+      "0x-updateblock-02",
+      "0x-updateblock-03",
+      "0x-updateblock-04",
+      "0x-updateblock-05"
+    )
+    val owner = "0x-test3-owner"
+    val time = timeProvider.getTimeSeconds() + 1000
+    val result = for {
+      _ ← Future.sequence(txHashes.map { hash ⇒
+        testSave(hash, owner, 1, XSettlementTx.XStatus.PENDING)
+      })
+      updated <- service.updateInBlock(
+        XUpdateTxInBlockReq(
+          txHash = "0x-tx-not-exist",
+          from = owner,
+          nonce = 1
+        )
+      )
+    } yield updated
+    val res =
+      try {
+        Await.result(
+          result.mapTo[XUpdateTxInBlockResult],
+          5.second
+        )
+      } catch {
+        case e:ErrorException => e
+        case m:Throwable => m
+      }
+    res match {
+      case e:ErrorException => assert(e.error.code === XErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
+      case _ => assert(false)
+    }
+  }
+
 }
