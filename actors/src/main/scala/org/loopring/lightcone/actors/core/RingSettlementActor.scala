@@ -118,16 +118,10 @@ class RingSettlementActor(
   import ethereum._
 
   override def preStart(): Unit = {
-    context.become(starting)
     self ! XStart()
   }
 
   override def receive: Receive = {
-    case _ ⇒
-      stash()
-  }
-
-  def starting: Receive = {
     case XStart ⇒
       for {
         validNonce ← (ethereumAccessActor ? XGetNonceReq(
