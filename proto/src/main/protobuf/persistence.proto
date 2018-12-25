@@ -31,7 +31,7 @@ message XSkip {
     int32 take = 2; // 拉取的记录数
 }
 
-message XTokenMetadata {
+message XTokenMeta {
     string address = 1;
     int32 decimals = 2;
     double burnRate = 3;

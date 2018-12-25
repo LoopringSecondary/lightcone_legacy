@@ -56,8 +56,7 @@ object EthereumEventPersistorActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new EthereumEventPersistorActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }

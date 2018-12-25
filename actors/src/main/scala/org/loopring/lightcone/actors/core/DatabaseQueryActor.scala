@@ -21,12 +21,13 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
+import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.persistence.DatabaseModule
-import scala.concurrent._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.proto._
+import scala.concurrent._
 
 // main owner: 杜永丰
 object DatabaseQueryActor extends ShardedEvenly {
@@ -51,8 +52,7 @@ object DatabaseQueryActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new DatabaseQueryActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
@@ -66,26 +66,23 @@ class DatabaseQueryActor(
     val actors: Lookup[ActorRef],
     dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
+  private[this] val logger = Logger(this.getClass)
 
   def receive: Receive = LoggingReceive {
-    case req: XSaveOrderReq ⇒
-      (for {
-        result <- dbModule.orderService.saveOrder(req.order.get)
-      } yield {
-        if (result.isLeft) {
-          XSaveOrderResult(Some(result.left.get), false, XErrorCode.ERR_NONE)
-        } else {
-          if (result.right.get == XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT) {
-            XSaveOrderResult(None, true, result.right.get)
-          } else {
-            XSaveOrderResult(None, false, result.right.get)
-          }
-        }
-      }) forwardTo sender
-
     case req: XGetOrdersForUserReq ⇒
       (for {
         result <- req.market match {
+          case XGetOrdersForUserReq.Market.Empty =>
+            dbModule.orderService.getOrdersForUser(
+              req.statuses.toSet,
+              Some(req.owner),
+              None,
+              None,
+              None,
+              None,
+              Some(req.sort),
+              req.skip
+            )
           case XGetOrdersForUserReq.Market.MarketHash(value) ⇒
             dbModule.orderService.getOrdersForUser(
               req.statuses.toSet,
@@ -110,17 +107,12 @@ class DatabaseQueryActor(
             )
         }
       } yield
-        XGetOrdersForUserResult(result, XErrorCode.ERR_NONE)) forwardTo sender
-    case req: XUserCancelOrderReq ⇒
-      (for {
-        result <- dbModule.orderService.markOrderSoftCancelled(req.orderHashes)
-      } yield XUserCancelOrderResult(result)) forwardTo sender
+        XGetOrdersForUserResult(result, XErrorCode.ERR_NONE)) sendTo sender
     case req: XGetTradesReq ⇒
       (for {
         result <- dbModule.tradeService.getTrades(req)
-      } yield result) forwardTo sender
-    case _ ⇒
-    //TODO du: log ?
+      } yield XGetTradesResult(result)) sendTo sender
+    case m ⇒ logger.error(s"Unhandled message ${m}")
   }
 
 }

@@ -56,8 +56,7 @@ object GasPriceActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new GasPriceActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }

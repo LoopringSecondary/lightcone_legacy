@@ -56,8 +56,7 @@ object EthereumQueryActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new EthereumQueryActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
@@ -173,7 +172,7 @@ class EthereumQueryActor(
         )
       } yield res) sendTo sender
 
-    case req: GetFilledAmountReq =>
+    case req: XGetFilledAmountReq ⇒
       val batchReq =
         xGetFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
       (for {
@@ -181,13 +180,12 @@ class EthereumQueryActor(
           .mapAs[XBatchContractCallRes]
           .map(_.resps.map(_.result))
       } yield {
-        GetFilledAmountRes(
+        XGetFilledAmountRes(
           (req.orderIds zip batchRes.map(
             res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res))
           )).toMap
         )
       }) sendTo sender
-
   }
 
 }

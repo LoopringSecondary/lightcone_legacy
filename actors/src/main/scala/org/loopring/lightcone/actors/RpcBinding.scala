@@ -20,7 +20,6 @@ import org.loopring.lightcone.actors.jsonrpc.JsonRpcModule
 import org.loopring.lightcone.proto._
 
 trait RpcBinding extends JsonRpcModule {
-  override val endpoint = "api"
 
   ifReceive[XGetOrderbook].thenReply[XOrderbook]("orderbook")
 
@@ -28,4 +27,18 @@ trait RpcBinding extends JsonRpcModule {
 
   ifReceive[XCancelOrderReq].thenReply[XCancelOrderRes]("cancel_order")
 
+  // db query
+  ifReceive[XGetOrdersForUserReq]
+    .thenReply[XGetOrdersForUserResult]("get_orders")
+  ifReceive[XGetTradesReq]
+    .thenReply[XGetTradesResult]("get_trades")
+
+  //Ethereum Query
+  ifReceive[XGetAllowanceReq]
+    .thenReply[XGetAllowanceRes]("get_allowance")
+  ifReceive[XGetBalanceReq].thenReply[XGetBalanceRes]("get_balance")
+  ifReceive[XGetBalanceAndAllowancesReq]
+    .thenReply[XGetBalanceAndAllowancesRes]("get_balance_and_allowance")
+  ifReceive[XGetFilledAmountReq]
+    .thenReply[XGetFilledAmountRes]("get_filled_amount")
 }

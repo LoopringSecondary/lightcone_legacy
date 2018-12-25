@@ -62,6 +62,7 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
 
       val (makerVolume, takerVolume) =
         if (taker.matchable.amountS > maker.matchable.amountB) {
+
           (
             OrderState(maker.matchable.amountS, maker.matchable.amountB),
             OrderState(
@@ -70,6 +71,7 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
                 Rational(taker.amountB, taker.amountS)
             )
           )
+
         } else {
           (
             OrderState(
@@ -93,6 +95,10 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
       val makerMargin = makerVolume.amountS - takerVolume.amountB
       val takerMargin = takerVolume.amountS - makerVolume.amountB
 
+      // println(s"------- takerVolume.amountS: ${takerVolume.amountS}")
+      // println(s"------- makerVolume.amountB: ${makerVolume.amountB}")
+      // println(s"======== makerMargin: $makerMargin")
+      // println(s"======== takerMargin: $takerMargin")
       Right(
         OrderRing(
           maker = ExpectedFill(

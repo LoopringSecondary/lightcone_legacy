@@ -18,19 +18,23 @@ package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.scalatest._
 
 class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
   "submit order" should "fail when max orders received for tokenS" in {
-    dai.setBalanceAndAllowance(dai.maxNumOrders * 10, dai.maxNumOrders * 10)
+    dai.setBalanceAndAllowance(
+      (dai.maxNumOrders * 10) !,
+      (dai.maxNumOrders * 10) !
+    )
 
     (1 to dai.maxNumOrders) foreach { i =>
-      val order = sellDAI(10, 1)
+      val order = sellDAI(10 !, 1 !, 0 !)
       submitOrder(order) should be(true)
     }
 
-    val order = sellDAI(10, 1)
+    val order = sellDAI(10 !, 1 !, 0 !)
     submitOrder(order) should be(false)
     updatedOrders.size should be(1)
     orderPool.size == dai.maxNumOrders
@@ -40,21 +44,30 @@ class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
   }
 
   "submit order" should "fail when max orders received for tokenFee" in {
-    lrc.setBalanceAndAllowance(lrc.maxNumOrders * 10, lrc.maxNumOrders * 10)
-    dai.setBalanceAndAllowance(dai.maxNumOrders * 10, dai.maxNumOrders * 10)
-    gto.setBalanceAndAllowance(gto.maxNumOrders * 10, gto.maxNumOrders * 10)
+    lrc.setBalanceAndAllowance(
+      (lrc.maxNumOrders * 10) !,
+      (lrc.maxNumOrders * 10) !
+    )
+    dai.setBalanceAndAllowance(
+      (dai.maxNumOrders * 10) !,
+      (dai.maxNumOrders * 10) !
+    )
+    gto.setBalanceAndAllowance(
+      (gto.maxNumOrders * 10) !,
+      (gto.maxNumOrders * 10) !
+    )
 
     (1 to dai.maxNumOrders / 2) foreach { i =>
-      val order = sellDAI(10, 1, 10)
+      val order = sellDAI(10 !, 1 !, 10 !)
       submitOrder(order) should be(true)
     }
 
     (1 to dai.maxNumOrders / 2) foreach { i =>
-      val order = sellGTO(10, 1, 10)
+      val order = sellGTO(10 !, 1 !, 10 !)
       submitOrder(order) should be(true)
     }
 
-    val order = sellLRC(1, 1)
+    val order = sellLRC(1 !, 1 !, 0 !)
     submitOrder(order) should be(false)
     updatedOrders.size should be(1)
     orderPool.size == lrc.maxNumOrders

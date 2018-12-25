@@ -25,10 +25,10 @@ import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.base._
@@ -38,8 +38,8 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
@@ -77,8 +77,8 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[DatabaseModule].toInstance(dbModule)
     dbModule.createTables()
 
-    implicit val tmm = new TokenMetadataManager()
-    bind[TokenMetadataManager].toInstance(tmm)
+    implicit val tm = new TokenManager()
+    bind[TokenManager].toInstance(tm)
 
     implicit val tokenValueEstimator: TokenValueEstimator =
       new TokenValueEstimator()
@@ -91,116 +91,114 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       new RingIncomeEstimatorImpl()
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
-    //-----------deploy local actors-----------
-    val listener =
-      system.actorOf(Props[BadMessageListener], "bad_message_listener")
+    Cluster(system).registerOnMemberUp {
+      //-----------deploy local actors-----------
+      //todo:需要测试badMessage，可能有死循环
+      val listener =
+        system.actorOf(Props[BadMessageListener], "bad_message_listener")
 
-    system.eventStream.subscribe(listener, classOf[UnhandledMessage])
-    system.eventStream.subscribe(listener, classOf[DeadLetter])
+      system.eventStream.subscribe(listener, classOf[UnhandledMessage])
+      system.eventStream.subscribe(listener, classOf[DeadLetter])
 
-    //-----------deploy cluster singletons-----------
-    actors.add(
-      OrderRecoverCoordinator.name,
-      system.actorOf(
-        ClusterSingletonProxy.props(
-          singletonManagerPath = OrderRecoverCoordinator.name,
-          settings = ClusterSingletonProxySettings(system)
-        ),
-        name = OrderRecoverCoordinator.name
+      actors.add(
+        TokenMetadataRefresher.name,
+        system
+          .actorOf(
+            Props(new TokenMetadataRefresher),
+            TokenMetadataRefresher.name
+          )
       )
-    )
 
-    // This actor must be deployed on every node for TokenMetadataManager
-    actors.add(
-      TokenMetadataRefresher.name,
-      system
-        .actorOf(Props(new TokenMetadataRefresher), TokenMetadataRefresher.name)
-    )
+      //-----------deploy cluster singletons-----------
+      actors.add(
+        OrderRecoverCoordinator.name,
+        system.actorOf(
+          ClusterSingletonProxy.props(
+            singletonManagerPath = OrderRecoverCoordinator.name,
+            settings = ClusterSingletonProxySettings(system)
+          ),
+          name = OrderRecoverCoordinator.name
+        )
+      )
 
-    //-----------deploy sharded actors-----------
-    actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
+      //-----------deploy sharded actors-----------
+      actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
+      actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
+      actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
+      actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
+      actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
+      actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
+      actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
+      actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
 
-    actors.add(
-      MultiAccountManagerActor.name,
-      MultiAccountManagerActor.startShardRegion
-    )
-    actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
-    actors.add(
-      EthereumEventExtractorActor.name,
-      EthereumEventExtractorActor.startShardRegion
-    )
-    actors.add(
-      EthereumEventPersistorActor.name,
-      EthereumEventPersistorActor.startShardRegion
-    )
-    actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
-    actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
-    actors.add(
-      OrderbookManagerActor.name,
-      OrderbookManagerActor.startShardRegion
-    )
-    actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
-    actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
-    actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
-    actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
-
-    //-----------deploy local actors-----------
-    actors.add(
-      MultiAccountManagerMessageValidator.name,
-      MessageValidationActor(
-        new MultiAccountManagerMessageValidator(),
+      actors.add(
         MultiAccountManagerActor.name,
-        MultiAccountManagerMessageValidator.name
+        MultiAccountManagerActor.startShardRegion
       )
-    )
 
-    actors.add(
-      DatabaseQueryMessageValidator.name,
-      MessageValidationActor(
-        new DatabaseQueryMessageValidator(),
-        DatabaseQueryActor.name,
-        DatabaseQueryMessageValidator.name
+      actors.add(
+        EthereumEventExtractorActor.name,
+        EthereumEventExtractorActor.startShardRegion
       )
-    )
-
-    actors.add(
-      EthereumQueryMessageValidator.name,
-      MessageValidationActor(
-        new EthereumQueryMessageValidator(),
-        EthereumQueryActor.name,
-        EthereumQueryMessageValidator.name
+      actors.add(
+        EthereumEventPersistorActor.name,
+        EthereumEventPersistorActor.startShardRegion
       )
-    )
 
-    actors.add(
-      MarketManagerMessageValidator.name,
-      MessageValidationActor(
-        new MarketManagerMessageValidator(),
-        MarketManagerActor.name,
-        MarketManagerMessageValidator.name
-      )
-    )
-
-    actors.add(
-      OrderbookManagerMessageValidator.name,
-      MessageValidationActor(
-        new OrderbookManagerMessageValidator(),
+      actors.add(
         OrderbookManagerActor.name,
-        OrderbookManagerMessageValidator.name
+        OrderbookManagerActor.startShardRegion
       )
-    )
 
-    actors.add(
-      EntryPointActor.name,
-      system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
-    )
+      //-----------deploy local actors-----------
+      actors.add(
+        MultiAccountManagerMessageValidator.name,
+        MessageValidationActor(
+          new MultiAccountManagerMessageValidator(),
+          MultiAccountManagerActor.name,
+          MultiAccountManagerMessageValidator.name
+        )
+      )
 
-    //-----------deploy JSONRPC service-----------
+      actors.add(
+        DatabaseQueryMessageValidator.name,
+        MessageValidationActor(
+          new DatabaseQueryMessageValidator(),
+          DatabaseQueryActor.name,
+          DatabaseQueryMessageValidator.name
+        )
+      )
 
-    if (cluster.selfRoles.contains("jsonrpc")) {
-      val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
-      with RpcBinding
-      server.start()
+      actors.add(
+        EthereumQueryMessageValidator.name,
+        MessageValidationActor(
+          new EthereumQueryMessageValidator(),
+          EthereumQueryActor.name,
+          EthereumQueryMessageValidator.name
+        )
+      )
+
+      actors.add(
+        OrderbookManagerMessageValidator.name,
+        MessageValidationActor(
+          new OrderbookManagerMessageValidator(),
+          OrderbookManagerActor.name,
+          OrderbookManagerMessageValidator.name
+        )
+      )
+
+      //-----------deploy local actors that depend on cluster aware actors-----------
+      actors.add(
+        EntryPointActor.name,
+        system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
+      )
+
+      //-----------deploy JSONRPC service-----------
+      if (cluster.selfRoles.contains("jsonrpc")) {
+        val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
+        with RpcBinding
+        server.start()
+      }
     }
   }
 }

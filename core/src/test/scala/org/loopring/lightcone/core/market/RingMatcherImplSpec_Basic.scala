@@ -18,6 +18,7 @@ package org.loopring.lightcone.core.market
 
 import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.scalatest._
 import XErrorCode._
@@ -36,8 +37,10 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
   val matcher = new RingMatcherImpl()
 
   "RingMatcherImpl" should "not match untradable orders" in {
-    val maker = sellDAI(100000000, 100000001).matchableAsOriginal
-    val taker = buyDAI(100000000, 100000000).matchableAsOriginal
+    val maker =
+      sellDAI(BigInt(100000000), BigInt(100000001), 0).matchableAsOriginal
+    val taker =
+      buyDAI(BigInt(100000000), BigInt(100000000), 0).matchableAsOriginal
 
     matcher.matchOrders(taker, maker, 0) should be(
       Left(ERR_MATCHING_ORDERS_NOT_TRADABLE)

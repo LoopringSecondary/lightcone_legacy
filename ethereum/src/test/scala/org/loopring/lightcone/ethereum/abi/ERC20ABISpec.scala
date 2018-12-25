@@ -157,11 +157,11 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val approveOpt = erc20abi.approvalEvent.unpack(data, topics)
 
     approveOpt match {
-      case None =>
       case Some(approve) =>
         approve.owner should be("0x85194623225c1a0576abf8e2bdc0951351fcddda")
         approve.spender should be("0x8fd3121013a07c57f0d69646e86e7a4880b467b7")
         approve.amount.toString() should be("90071992547409900000000000")
+      case _ =>
     }
   }
 
@@ -180,11 +180,11 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
     val eventOpt = erc20abi.unpackEvent(data, topics)
     eventOpt match {
-      case None =>
       case Some(approve: ApprovalEvent.Result) =>
         approve.owner should be("0x85194623225c1a0576abf8e2bdc0951351fcddda")
         approve.spender should be("0x8fd3121013a07c57f0d69646e86e7a4880b467b7")
         approve.amount.toString() should be("90071992547409900000000000")
+      case _ =>
     }
   }
 
@@ -196,10 +196,10 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val funcOpt = erc20abi.unpackFunctionInput(input)
 
     funcOpt match {
-      case None =>
       case Some(approve: ApproveFunction.Parms) =>
         approve.spender should be("0x8fd3121013a07c57f0d69646e86e7a4880b467b7")
         approve.amount should be(BigInt("90071992547409900000000000"))
+      case _ =>
     }
   }
 
@@ -213,6 +213,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
       case Some(tranfer: TransferFunction.Parms) =>
         tranfer.amount.toString() should be("29558242000000000000000")
         tranfer.to should be("0xf105c622edc68b9e4e813e631cb534940f5cc509")
+      case _ =>
     }
   }
 
@@ -230,13 +231,13 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
     val transferOpt = erc20abi.unpackEvent(data, topics.toArray)
     transferOpt match {
-      case None =>
       case Some(transfer: TransferEvent.Result) =>
         transfer.sender should be("0x0681d8db095565fe8a346fa0277bffde9c0edbbf")
         transfer.receiver should be(
           "0xf105c622edc68b9e4e813e631cb534940f5cc509"
         )
         transfer.amount should be(BigInt("29558242000000000000000"))
+      case _ =>
     }
   }
 

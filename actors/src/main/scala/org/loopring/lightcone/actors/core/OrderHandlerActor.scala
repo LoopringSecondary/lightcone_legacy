@@ -18,19 +18,16 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.sharding._
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.lib._
+import org.loopring.lightcone.lib.{ErrorException, _}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent._
 
 // main owner: 于红雨
@@ -56,8 +53,7 @@ object OrderHandlerActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new OrderHandlerActor()),
       settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+      messageExtractor = messageExtractor
     )
   }
 }
@@ -72,39 +68,37 @@ class OrderHandlerActor(
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
 
-  def mammValidator: ActorRef =
+  def mammv: ActorRef =
     actors.get(MultiAccountManagerMessageValidator.name)
 
   //save order to db first, then send to AccountManager
   def receive: Receive = {
     case req: XCancelOrderReq ⇒
       (for {
-        // TODO(yongfeng): return the order owner's address
         cancelRes <- dbModule.orderService.markOrderSoftCancelled(Seq(req.id))
       } yield {
         cancelRes.headOption match {
           case Some(res) ⇒
-            mammValidator forward req.copy(owner = "SOME OWNER")
+            if (res.order.isEmpty)
+              throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
+            req.copy(owner = res.order.get.owner)
           case None ⇒
             throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
         }
-      }) sendTo sender
+      }) forwardTo (mammv, sender)
 
     case XSubmitOrderReq(Some(raworder)) ⇒
-      for {
+      log.info(s"### XSubmitOrderReq11 ${raworder} ")
+      (for {
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         saveRes <- dbModule.orderService.saveOrder(raworder)
       } yield {
         saveRes match {
           case Right(errCode) =>
-            sender ! XError(errCode)
-
+            throw ErrorException(errCode, s"failed to submit order: $raworder")
           case Left(resRawOrder) =>
-            mammValidator forward XSubmitSimpleOrderReq(
-              resRawOrder.owner,
-              Some(resRawOrder)
-            )
+            XSubmitSimpleOrderReq(resRawOrder.owner, Some(resRawOrder))
         }
-      }
+      }) forwardTo (mammv, sender)
   }
 }

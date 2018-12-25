@@ -31,12 +31,19 @@ class PayloadConverter[T <: Proto[T]: TypeTag, S <: Proto[S]: TypeTag](
 
   def convertToRequest(str: JValue): T = ps.deserialize[T](str).get
 
+  def convertToResponse(str: JValue): S = ps.deserialize[S](str).get
+
   def convertFromResponse(s: Any): JValue = {
-    if (!cs.runtimeClass.isInstance(s))
-      throw ErrorException(
-        XErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"expect ${typeOf[T].typeSymbol.name} get ${s.getClass.getName}"
-      )
-    ps.serialize[S](s.asInstanceOf[S]).get
+    s match {
+      case err: ErrorException =>
+        throw err
+      case _ =>
+        if (!cs.runtimeClass.isInstance(s))
+          throw ErrorException(
+            XErrorCode.ERR_INTERNAL_UNKNOWN,
+            s"expect ${typeOf[T].typeSymbol.name} get ${s.getClass.getName}"
+          )
+        ps.serialize[S](s.asInstanceOf[S]).get
+    }
   }
 }

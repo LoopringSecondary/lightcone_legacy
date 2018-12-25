@@ -83,24 +83,18 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
 
     val buyResult = marketManager.submitOrder(buyOrder, 2)
     buyResult should be(
-      MarketManager.MatchResult(
-        Seq(ring),
-        buyOrder.asPending,
-        XOrderbookUpdate()
-      )
+      MarketManager
+        .MatchResult(
+          Seq(ring),
+          buyOrder.asPending,
+          XOrderbookUpdate()
+            .copy(lastPrice = (100000.0 / 101 + 100000.0 / 100) / 2)
+        )
     )
 
-    marketManager.getSellOrders(100) should be(
-      Seq(
-        sellOrder.asPending
-      )
-    )
+    marketManager.getSellOrders(100) should be(Seq(sellOrder.asPending))
 
-    marketManager.getBuyOrders(100) should be(
-      Seq(
-        buyOrder.asPending
-      )
-    )
+    marketManager.getBuyOrders(100) should be(Seq(buyOrder.asPending))
 
     (fakePendingRingPool.addRing _).verify(ring).once
   }
@@ -123,11 +117,13 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
 
     val sellResult = marketManager.submitOrder(sellOrder, 2)
     sellResult should be(
-      MarketManager.MatchResult(
-        Seq(ring),
-        sellOrder.asPending,
-        XOrderbookUpdate()
-      )
+      MarketManager
+        .MatchResult(
+          Seq(ring),
+          sellOrder.asPending,
+          XOrderbookUpdate()
+            .copy(lastPrice = (100000.0 / 101 + 100000.0 / 100) / 2)
+        )
     )
 
     marketManager.getSellOrders(100) should be(Seq(sellOrder.asPending))

@@ -59,31 +59,21 @@ message XOrderbook {
     repeated XItem buys = 3;
 }
 
-
-
 message XOrderbookUpdate {
     message XSlot {
         int64 slot = 1;
         double amount = 2;
         double total = 3;
     }
+
     repeated XSlot sells = 1;
     repeated XSlot buys = 2;
-    string market_name = 3;
-}
-
-
-message XUpdateLatestTradingPrice {
-    double price = 1;
-    string market_name = 2;
+    double last_price = 3;
+    XMarketId market_id = 4;
 }
 
 message XGetOrderbook {
     int32 level = 2;
     int32 size = 1;
-    string market_name = 3;
+    XMarketId market_id = 3;
 }
-
-
-
-

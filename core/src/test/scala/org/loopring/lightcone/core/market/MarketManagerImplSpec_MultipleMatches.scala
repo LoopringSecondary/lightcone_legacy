@@ -25,9 +25,9 @@ import XErrorCode._
 
 class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
   "MarketManager" should "skip non-profitable orders" in {
-    val buy1 = actualNotDust(buyGTO(100, 100050)) // worst price
-    val buy2 = actualNotDust(buyGTO(100, 100040))
-    val buy3 = actualNotDust(buyGTO(100, 100030)) // best price
+    val buy1 = actualNotDust(buyGTO(BigInt(100), BigInt(100050), 0)) // worst price
+    val buy2 = actualNotDust(buyGTO(BigInt(100), BigInt(100040), 0))
+    val buy3 = actualNotDust(buyGTO(BigInt(100), BigInt(100030), 0)) // best price
 
     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
@@ -39,17 +39,17 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
 
     marketManager.getBuyOrders(5) should be(
       Seq(
-        buy3.copy(status = STATUS_PENDING),
+        buy1.copy(status = STATUS_PENDING),
         buy2.copy(status = STATUS_PENDING),
-        buy1.copy(status = STATUS_PENDING)
+        buy3.copy(status = STATUS_PENDING)
       )
     )
 
-    val sell1 = actualNotDust(sellGTO(110000, 100))
+    val sell1 = actualNotDust(sellGTO(BigInt(110000), BigInt(100), 0))
 
-    val ring3 = OrderRing(ExpectedFill(sell1, null), ExpectedFill(buy3, null))
-    val ring2 = OrderRing(ExpectedFill(sell1, null), ExpectedFill(buy2, null))
     val ring1 = OrderRing(ExpectedFill(sell1, null), ExpectedFill(buy1, null))
+    val ring2 = OrderRing(ExpectedFill(sell1, null), ExpectedFill(buy2, null))
+    val ring3 = OrderRing(ExpectedFill(sell1, null), ExpectedFill(buy3, null))
 
     (fackRingMatcher
       .matchOrders(_: Order, _: Order, _: Double))
@@ -70,7 +70,12 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
       .noMoreThanOnce()
 
     // Submit a sell order as the take
-    val result = marketManager.submitOrder(sell1, 0)
+    var result = marketManager.submitOrder(sell1, 0)
+
+    // remove the last price
+    result = result.copy(
+      orderbookUpdate = result.orderbookUpdate.copy(lastPrice = 0.0)
+    )
 
     result should be(
       MarketManager.MatchResult(

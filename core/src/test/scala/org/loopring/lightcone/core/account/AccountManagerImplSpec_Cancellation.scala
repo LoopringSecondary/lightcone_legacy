@@ -18,6 +18,7 @@ package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.scalatest._
 
@@ -29,10 +30,10 @@ class AccountManagerImplSpec_Cancellation extends OrderAwareSpec {
   }
 
   "cancel a single order" should "just work" in {
-    dai.setBalanceAndAllowance(1000, 1000)
-    lrc.setBalanceAndAllowance(1000, 1000)
+    dai.setBalanceAndAllowance(1000 !, 1000 !)
+    lrc.setBalanceAndAllowance(1000 !, 1000 !)
 
-    val order1 = sellDAI(100, 10, 40)
+    val order1 = sellDAI(100 !, 10 !, 40 !)
     submitOrder(order1) should be(true)
     orderPool.size should be(1)
 
@@ -42,16 +43,16 @@ class AccountManagerImplSpec_Cancellation extends OrderAwareSpec {
     updatedOrders(order1.id).status should be(
       XOrderStatus.STATUS_CANCELLED_BY_USER
     )
-    updatedOrders(order1.id).reserved should be(orderState(0, 0, 0))
-    updatedOrders(order1.id).actual should be(orderState(0, 0, 0))
+    updatedOrders(order1.id).reserved should be(orderState(0 !, 0 !, 0 !))
+    updatedOrders(order1.id).actual should be(orderState(0 !, 0 !, 0 !))
 
   }
 
   "cancel the first order" should "just scale up the following orders" in {
-    dai.setBalanceAndAllowance(1000, 500)
-    val order1 = sellDAI(400, 40)
-    val order2 = sellDAI(200, 20)
-    val order3 = sellDAI(200, 20)
+    dai.setBalanceAndAllowance(1000 !, 500 !)
+    val order1 = sellDAI(400 !, 40 !, 0 !)
+    val order2 = sellDAI(200 !, 20 !, 0 !)
+    val order3 = sellDAI(200 !, 20 !, 0 !)
 
     submitOrder(order1)
     submitOrder(order2)
@@ -60,19 +61,19 @@ class AccountManagerImplSpec_Cancellation extends OrderAwareSpec {
 
     orderPool.size should be(2)
 
-    updatedOrders(order2.id).reserved should be(orderState(200, 0, 0))
-    updatedOrders(order2.id).actual should be(orderState(200, 20, 0))
+    updatedOrders(order2.id).reserved should be(orderState(200 !, 0 !, 0 !))
+    updatedOrders(order2.id).actual should be(orderState(200 !, 20 !, 0 !))
 
-    updatedOrders(order3.id).reserved should be(orderState(200, 0, 0))
-    updatedOrders(order3.id).actual should be(orderState(200, 20, 0))
+    updatedOrders(order3.id).reserved should be(orderState(200 !, 0 !, 0 !))
+    updatedOrders(order3.id).actual should be(orderState(200 !, 20 !, 0 !))
 
   }
 
   "cancel an order in the middle" should "scale up the following orders" in {
-    dai.setBalanceAndAllowance(1000, 500)
-    val order1 = sellDAI(400, 40)
-    val order2 = sellDAI(200, 20)
-    val order3 = sellDAI(400, 40)
+    dai.setBalanceAndAllowance(1000 !, 500 !)
+    val order1 = sellDAI(400 !, 40 !, 0 !)
+    val order2 = sellDAI(200 !, 20 !, 0 !)
+    val order3 = sellDAI(400 !, 40 !, 0 !)
 
     submitOrder(order1)
     submitOrder(order2)
@@ -81,17 +82,17 @@ class AccountManagerImplSpec_Cancellation extends OrderAwareSpec {
 
     updatedOrders.size should be(2)
 
-    updatedOrders(order3.id).reserved should be(orderState(100, 0, 0))
-    updatedOrders(order3.id).actual should be(orderState(100, 10, 0))
+    updatedOrders(order3.id).reserved should be(orderState(100 !, 0 !, 0 !))
+    updatedOrders(order3.id).actual should be(orderState(100 !, 10 !, 0 !))
   }
 
   "cancel an order" should "free both tokenS and tokenFee" in {
-    dai.setBalanceAndAllowance(2000, 1000)
-    lrc.setBalanceAndAllowance(200, 100)
+    dai.setBalanceAndAllowance(2000 !, 1000 !)
+    lrc.setBalanceAndAllowance(200 !, 100 !)
 
-    val order1 = sellDAI(1000, 10, 100)
-    val order2 = sellDAI(500, 5)
-    val order3 = sellLRC(50, 20)
+    val order1 = sellDAI(1000 !, 10 !, 100 !)
+    val order2 = sellDAI(500 !, 5 !, 0 !)
+    val order3 = sellLRC(50 !, 20 !, 0)
 
     submitOrder(order1)
     submitOrder(order2)
@@ -101,10 +102,10 @@ class AccountManagerImplSpec_Cancellation extends OrderAwareSpec {
     updatedOrders.size should be(3)
     orderPool.size should be(2)
 
-    updatedOrders(order2.id).reserved should be(orderState(500, 0, 0))
-    updatedOrders(order2.id).actual should be(orderState(500, 5, 0))
+    updatedOrders(order2.id).reserved should be(orderState(500 !, 0 !, 0 !))
+    updatedOrders(order2.id).actual should be(orderState(500 !, 5 !, 0 !))
 
-    updatedOrders(order3.id).reserved should be(orderState(50, 0, 0))
-    updatedOrders(order3.id).actual should be(orderState(50, 20, 0))
+    updatedOrders(order3.id).reserved should be(orderState(50 !, 0 !, 0 !))
+    updatedOrders(order3.id).actual should be(orderState(50 !, 20 !, 0 !))
   }
 }

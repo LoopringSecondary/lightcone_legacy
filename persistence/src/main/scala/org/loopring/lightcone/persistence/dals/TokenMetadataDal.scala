@@ -25,11 +25,9 @@ import slick.basic._
 import scala.concurrent._
 import org.slf4s.Logging
 
-trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, XTokenMetadata] {
+trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, XTokenMeta] {
 
-  def getTokens(
-      reloadFromDatabase: Boolean = false
-    ): Future[Seq[XTokenMetadata]]
+  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[XTokenMeta]]
 }
 
 class TokenMetadataDalImpl(
@@ -40,7 +38,7 @@ class TokenMetadataDalImpl(
     with Logging {
   val query = TableQuery[TokenMetadataTable]
 
-  private var tokens: Seq[XTokenMetadata] = Nil
+  private var tokens: Seq[XTokenMeta] = Nil
 
   def getTokens(reloadFromDatabase: Boolean = false) = {
     if (reloadFromDatabase || tokens.isEmpty) {

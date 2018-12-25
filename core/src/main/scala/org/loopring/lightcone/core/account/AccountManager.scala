@@ -23,7 +23,13 @@ trait AccountManager {
   def addTokenManager(tm: AccountTokenManager): AccountTokenManager
   def getTokenManager(token: String): AccountTokenManager
 
+  def getOrUpdateTokenManager(
+      token: String,
+      tm: AccountTokenManager
+    ): AccountTokenManager
+
   def submitOrder(order: Order): Boolean
+  def submitAndGetUpdatedOrders(_order: Order): (Boolean, Map[String, Order])
   def cancelOrder(orderId: String): Boolean
 
   def adjustOrder(
@@ -37,6 +43,6 @@ object AccountManager {
   def default(
     )(
       implicit
-      orderPool: AccountOrderPool
+      orderPool: AccountOrderPool with UpdatedOrdersTracing
     ): AccountManager = new AccountManagerImpl()
 }
