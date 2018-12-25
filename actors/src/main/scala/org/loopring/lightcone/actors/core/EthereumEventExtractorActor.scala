@@ -26,14 +26,10 @@ import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.dals._
-import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
@@ -81,7 +77,7 @@ class EthereumEventExtractorActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-  dbModule: DatabaseModule)
+    dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name)
     with Stash {
 
@@ -111,7 +107,7 @@ class EthereumEventExtractorActor(
   override def receive: Receive = {
     case _: XStart ⇒
       for {
-        maxBlock: Option[Long] ← dbModule.findMaxHeight()
+        maxBlock: Option[Long] ← dbModule.blockService.findMaxHeight()
         blockNum ← maxBlock match {
           case Some(_) ⇒
             Future.successful(
@@ -155,9 +151,8 @@ class EthereumEventExtractorActor(
         (ethereumAccessorActor ? XGetBlockWithTxObjectByNumberReq(
           Numeric.prependHexPrefix((currentBlockNumber + 1).toString(16))
         )).mapTo[XGetBlockWithTxObjectByNumberRes]
-      else {
-        Future.successful(XGetBlockWithTxObjectByNumberRes())
-      }
+      else
+        Future.successful(None)
     } yield {
       block match {
         case XGetBlockWithTxObjectByNumberRes(_, _, Some(result), _) ⇒
@@ -183,7 +178,7 @@ class EthereumEventExtractorActor(
   // find the fork height
   def handleFork(forkBlock: XForkBlock): Unit = {
     for {
-      dbBlockData ← blockDal
+      dbBlockData ← dbModule.blockService
         .findByHeight(forkBlock.height.longValue())
         .map(_.get)
       nodeBlockData ← (ethereumAccessorActor ? XGetBlockWithTxHashByNumberReq(
@@ -193,7 +188,7 @@ class EthereumEventExtractorActor(
       task ← if (dbBlockData.hash.equals(nodeBlockData.hash)) {
         currentBlockNumber = forkBlock.height
         currentBlockHash = nodeBlockData.hash
-        blockDal
+        dbModule.blockService
           .obsolete((forkBlock.height + 1).longValue())
           .map(_ ⇒ IndexNextHeight())
       } else {
@@ -296,29 +291,27 @@ class EthereumEventExtractorActor(
 
         // db 存储订单取消事件
         ordersCancelledEvents.foreach(
-          orderCancelledEventService.saveCancelOrder
+          dbModule.orderCancelledEventService.saveCancelOrder
         )
-        ordersCutoffEvents.foreach(ordersCutoffService.saveCutoff)
+        ordersCutoffEvents.foreach(dbModule.orderCutoffService.saveCutoff)
 
         //TODO (yadong) 更新order fill amount--等待MultiAccountManagerActor
 
-        //TODO(yadong) db 存储 online Orders -- 确认要不要定义类型
+        //TODO(yadong) db 存储 online Orders -- 确认要不要定义Order类型
 
         //db 更新已经处理的最新块
-        val blockData = XBlockData()
-          .withHash(job.hash)
-          .withHeight(job.height)
-          .withAvgGasPrice(job.txs.foldLeft(0L) { (result, tx) ⇒
-            result + tx.gasPrice.longValue()
-          } / job.txs.size)
-        blockDal.saveBlock(blockData)
-
+        val blockData = XBlockData(
+          hash = job.hash,
+          height = job.height,
+          avgGasPrice = job.txs.map(_.gasPrice.longValue()).sum / job.txs.size
+        )
+        dbModule.blockService.saveBlock(blockData)
         currentBlockNumber = job.height
         currentBlockHash = job.hash
         self ! IndexNextHeight()
       } else {
         context.system.scheduler
-          .scheduleOnce(30 seconds, self, IndexNextHeight())
+          .scheduleOnce(1 seconds, self, IndexNextHeight())
       }
     }
   }
