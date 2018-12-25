@@ -110,7 +110,7 @@ class EntryPointSpec_Depth
         case _ => assert(false)
       }
 
-      Thread.sleep(3000)
+      Thread.sleep(2000)
       //根据不同的level需要有不同的汇总
       val getOrderBook1 = XGetOrderbook(
         0,
@@ -136,6 +136,16 @@ class EntryPointSpec_Depth
               sells(1).amount == "2.23457" &&
               sells(1).total == "1.00000"
           )
+          assert(
+            sells(2).price == "3.234567" &&
+              sells(2).amount == "3.23457" &&
+              sells(2).total == "1.00000"
+          )
+          assert(
+            sells(3).price == "3.234568" &&
+              sells(3).amount == "3.23457" &&
+              sells(3).total == "1.00000"
+          )
         case _ => assert(false)
       }
 
@@ -158,6 +168,11 @@ class EntryPointSpec_Depth
             sells(0).price == "1.23457" &&
               sells(0).amount == "1.23457" &&
               sells(0).total == "1.00000"
+          )
+          assert(
+            sells(1).price == "2.23457" &&
+              sells(1).amount == "2.23457" &&
+              sells(1).total == "1.00000"
           )
           assert(
             sells(2).price == "3.23457" &&

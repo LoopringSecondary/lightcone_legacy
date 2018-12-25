@@ -53,8 +53,8 @@ class JrpcSpec
           2,
           Some(
             XMarketId(
-              "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-              "0xef68e7c694f40c8202821edf525de3782458639f"
+              "0xa345b6c2e5ce5970d026CeA8591DC28958fF6Edc",
+              "0x08D24FC29CDccF8e9Ca45Eef05384c58F8a8E94F"
             )
           )
         ),
