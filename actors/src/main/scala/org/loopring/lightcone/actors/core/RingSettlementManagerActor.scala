@@ -51,24 +51,25 @@ class RingSettlementManagerActor(
       .getConfigList("ring_settlement.miners")
       .asScala
       .map(minerConfig ⇒ {
-        Address(minerConfig.getString("transaction_origin")).toString → context.actorOf(
-          Props(
-            new RingSettlementActor()(
-              config = minerConfig.withFallback(config),
-              ec = ec,
-              timeProvider = timeProvider,
-              timeout = timeout,
-              actors = actors,
-              dbModule = dbModule
+        Address(minerConfig.getString("transaction_origin")).toString → context
+          .actorOf(
+            Props(
+              new RingSettlementActor()(
+                config = minerConfig.withFallback(config),
+                ec = ec,
+                timeProvider = timeProvider,
+                timeout = timeout,
+                actors = actors,
+                dbModule = dbModule
+              )
             )
           )
-        )
       })
       .toMap
 
   var invalidRingSettlementActors = mutable.HashMap.empty[String, ActorRef]
 
-  val zeroAddr = "0x" + "0"*40
+  val zeroAddr = "0x" + "0" * 40
   val miniMinerBalance = BigInt(config.getString("mini-miner-balance"))
 
   override def receive: Receive = {
@@ -89,11 +90,15 @@ class RingSettlementManagerActor(
       ))
       ringSettlementActors = ringSettlementActors - msg.miner
 
-    case ba:XAddressBalanceUpdated ⇒
-      if(ba.token.equals(zeroAddr) && invalidRingSettlementActors.contains(ba.address)){
+    case ba: XAddressBalanceUpdated ⇒
+      if (ba.token.equals(zeroAddr) && invalidRingSettlementActors.contains(
+            ba.address
+          )) {
         val balance = BigInt(ba.balance.toByteArray)
-        if(balance > miniMinerBalance){
-          ringSettlementActors += ba.address → invalidRingSettlementActors.(ba.address)
+        if (balance > miniMinerBalance) {
+          ringSettlementActors += (ba.address → invalidRingSettlementActors(
+            ba.address
+          ))
           invalidRingSettlementActors = invalidRingSettlementActors - ba.address
         }
       }

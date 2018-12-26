@@ -37,6 +37,7 @@ import org.loopring.lightcone.ethereum.data.{Address, Transaction}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
+import scala.util.{Failure, Success}
 
 // main owner: 李亚东
 object RingSettlementActor extends ShardedEvenly {
@@ -118,22 +119,26 @@ class RingSettlementActor(
   import ethereum._
 
   override def preStart(): Unit = {
-    self ! XStart()
+    val initialFuture = (ethereumAccessActor ? XGetNonceReq(
+      owner = ringContext.transactionOrigin,
+      tag = "latest"
+    )).mapTo[XGetNonceRes]
+      .map(_.result)
+
+    initialFuture onComplete {
+      case Success(validNonce) ⇒
+        nonce.set(Numeric.toBigInt(validNonce).intValue())
+        self ! XInitializationDone()
+      case Failure(e) ⇒ context.stop(self)
+    }
   }
 
-  override def receive: Receive = {
-    case XStart ⇒
-      for {
-        validNonce ← (ethereumAccessActor ? XGetNonceReq(
-          owner = ringContext.transactionOrigin,
-          tag = "latest"
-        )).mapTo[XGetNonceRes]
-          .map(_.result)
-      } yield {
-        nonce.set(Numeric.toBigInt(validNonce).intValue())
-        unstashAll()
-        context.become(ready)
-      }
+  override def receive: Receive = initialReceive
+
+  def initialReceive: Receive = {
+    case XInitializationDone ⇒
+      unstashAll()
+      context.become(ready)
     case _ ⇒
       stash()
   }
@@ -220,7 +225,8 @@ class RingSettlementActor(
             owner = ringContext.transactionOrigin,
             timeProvider.getTimeSeconds() - resendDelay
           )
-        ).map(_.txs)
+        )
+        .map(_.txs)
       txs = ringTxs.map(
         (tx: XSettlementTx) ⇒
           Transaction(
@@ -257,6 +263,5 @@ class RingSettlementActor(
             )
           )
       }
-
     }
 }
