@@ -17,14 +17,10 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
-import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.actors.base.{
-  ActorWithPathBasedConfig,
-  Lookup,
-  ShardedEvenly
-}
+import org.loopring.lightcone.actors.base._
+import akka.cluster.singleton._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.XErrorCode.ERR_INTERNAL_UNKNOWN
@@ -36,11 +32,10 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.util.Random
 
-object RingSettlementManagerActor extends ShardedEvenly {
+object RingSettlementManagerActor  {
   val name = "ring_settlement"
 
-  def startShardRegion(
-    )(
+  def start()(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
@@ -49,16 +44,11 @@ object RingSettlementManagerActor extends ShardedEvenly {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule
     ): ActorRef = {
-
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shards")
-    entitiesPerShard = selfConfig.getInt("entities-per-shard")
-
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new RingSettlementActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
-      messageExtractor = messageExtractor
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = Props(new RingSettlementManagerActor()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system))
     )
   }
 }

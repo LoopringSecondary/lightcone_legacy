@@ -51,6 +51,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     implicit val ec = system.dispatcher
     implicit val c_ = config
 
+
     bind[Config].toInstance(config)
     bind[ActorSystem].toInstance(system)
     bind[Cluster].toInstance(cluster)
@@ -131,7 +132,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
       actors.add(
         RingSettlementManagerActor.name,
-        RingSettlementManagerActor.startShardRegion
+        RingSettlementManagerActor.start
       )
       actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
 
