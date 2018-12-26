@@ -26,6 +26,10 @@ import org.loopring.lightcone.proto.{
   XSubmitOrderReq
 }
 
+object OrderHandlerMessageValidator{
+  val name = "order_handler_message_validator"
+}
+
 class OrderHandlerMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 

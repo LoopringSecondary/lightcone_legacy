@@ -40,33 +40,6 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 // main owner: 李亚东
-object RingSettlementActor extends ShardedEvenly {
-  val name = "ring_settlement"
-
-  def startShardRegion(
-    )(
-      implicit system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      actors: Lookup[ActorRef],
-      dbModule: DatabaseModule
-    ): ActorRef = {
-
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shards")
-    entitiesPerShard = selfConfig.getInt("entities-per-shard")
-
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new RingSettlementActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
-      messageExtractor = messageExtractor
-    )
-  }
-}
-
 class RingSettlementActor(
   )(
     implicit val config: Config,
