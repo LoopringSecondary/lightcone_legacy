@@ -43,6 +43,89 @@ object RawOrderValidatorImpl extends RawOrderValidator {
     "0xaea25658c273c666156bd427f83a666135fcde6887a6c25fc1cd1562bc4f3f34"
 
   def calculateOrderHash(order: XRawOrder): String = {
+    val sourceBytes = getOrderHashSourceBytes(order)
+    Numeric.toHexString(Hash.sha3(sourceBytes))
+  }
+
+  def validate(order: XRawOrder): Either[XErrorCode, XRawOrder] = {
+    def checkDualAuthPrivateKey = {
+      if (isValidAddress(order.getParams.dualAuthAddr)) {
+        val dualAuthPrivateKey = order.getParams.dualAuthPrivateKey
+        dualAuthPrivateKey != null && dualAuthPrivateKey.length >= 64
+      } else {
+        true
+      }
+    }
+
+    def checkOrderSig = {
+      val hashSourceBytes = getOrderHashSourceBytes(order)
+      val hashBytes = Hash.sha3(hashSourceBytes)
+      val sig = order.getParams.sig
+      val sigBytes = Numeric.hexStringToByteArray(sig)
+
+      // Not support OrderRegistry contract for now.
+      // All orders here must have signature field.
+      if (sigBytes.length < 67) false
+      else {
+        val algorithm = sigBytes(0)
+        val v = sigBytes(2)
+        val r = sigBytes.slice(3, 35)
+        val s = sigBytes.slice(35, 67)
+
+        algorithm match {
+          case XSigningAlgorithm.ALGO_ETHEREUM.value =>
+            verifyEthereumSignature(
+              hashBytes,
+              r,
+              s,
+              v,
+              Address(order.owner)
+            )
+          case XSigningAlgorithm.ALGO_EIP712.value =>
+            verifySignature(
+              hashSourceBytes,
+              r,
+              s,
+              v,
+              Address(order.owner)
+            )
+          case _ =>
+            throw new IllegalArgumentException(
+              s"invalid XSigningAlgorithm value: $algorithm"
+            )
+        }
+
+      }
+    }
+
+    val checklist = Seq[(Boolean, XErrorCode)](
+      (order.version == 0) -> ERR_ORDER_VALIDATION_UNSUPPORTED_VERSION,
+      isValidAddress(order.owner) -> ERR_ORDER_VALIDATION_INVALID_OWNER,
+      isValidAddress(order.tokenS) -> ERR_ORDER_VALIDATION_INVALID_TOKENS,
+      isValidAddress(order.tokenB) -> ERR_ORDER_VALIDATION_INVALID_TOKENB,
+      (order.amountS > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
+      (order.amountB > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
+      (BigInt(order.feeParams.get.waiveFeePercentage) <= FeePercentageBase)
+        -> ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE,
+      (BigInt(order.feeParams.get.waiveFeePercentage) >= -FeePercentageBase)
+        -> ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE,
+      (BigInt(order.feeParams.get.tokenSFeePercentage) <= FeePercentageBase)
+        -> ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE,
+      (BigInt(order.feeParams.get.tokenBFeePercentage) <= FeePercentageBase)
+        -> ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE,
+      (BigInt(order.feeParams.get.walletSplitPercentage) <= 100)
+        -> ERR_ORDER_VALIDATION_INVALID_WALLET_SPLIT_PERCENTAGE,
+      checkDualAuthPrivateKey -> ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_PRIV_KEY,
+      checkOrderSig -> ERR_ORDER_VALIDATION_INVALID_SIG
+    )
+
+    checklist.span(_._1)._2 match {
+      case List() => Right(order)
+      case tail   => Left(tail.head._2)
+    }
+  }
+
+  private def getOrderHashSourceBytes(order: XRawOrder) = {
     def strToHex(str: String) = str.getBytes.map("%02X" format _).mkString
 
     val bitstream = new Bitstream
@@ -85,67 +168,7 @@ object RawOrderValidatorImpl extends RawOrderValidator {
     outterStream.addBytes32(Eip712DomainHash, true)
     outterStream.addBytes32(orderDataHash, true)
 
-    Numeric.toHexString(Hash.sha3(outterStream.getBytes))
-  }
-
-  def validate(order: XRawOrder): Either[XErrorCode, XRawOrder] = {
-    def checkDualAuthPrivateKey = {
-      if (isValidAddress(order.getParams.dualAuthAddr)) {
-        val dualAuthPrivateKey = order.getParams.dualAuthPrivateKey
-        dualAuthPrivateKey != null && dualAuthPrivateKey.length >= 64
-      } else {
-        true
-      }
-    }
-
-    def checkOrderSig = {
-      val orderHash = calculateOrderHash(order)
-      val sig = order.getParams.sig
-      val sigBytes = Numeric.hexStringToByteArray(sig)
-
-      // Not support OrderRegistry contract for now.
-      // All orders here must have signature field.
-      if (sigBytes.length < 67) false
-      else {
-        val v = sigBytes(2)
-        val r = sigBytes.slice(3, 35)
-        val s = sigBytes.slice(35, 67)
-
-        verifyEthereumSignature(
-          Numeric.hexStringToByteArray(orderHash),
-          r,
-          s,
-          v,
-          Address(order.owner)
-        )
-      }
-    }
-
-    val checklist = Seq[(Boolean, XErrorCode)](
-      (order.version == 0) -> ERR_ORDER_VALIDATION_UNSUPPORTED_VERSION,
-      isValidAddress(order.owner) -> ERR_ORDER_VALIDATION_INVALID_OWNER,
-      isValidAddress(order.tokenS) -> ERR_ORDER_VALIDATION_INVALID_TOKENS,
-      isValidAddress(order.tokenB) -> ERR_ORDER_VALIDATION_INVALID_TOKENB,
-      (order.amountS > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
-      (order.amountB > 0) -> ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT,
-      (BigInt(order.feeParams.get.waiveFeePercentage) <= FeePercentageBase)
-        -> ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE,
-      (BigInt(order.feeParams.get.waiveFeePercentage) >= -FeePercentageBase)
-        -> ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE,
-      (BigInt(order.feeParams.get.tokenSFeePercentage) <= FeePercentageBase)
-        -> ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE,
-      (BigInt(order.feeParams.get.tokenBFeePercentage) <= FeePercentageBase)
-        -> ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE,
-      (BigInt(order.feeParams.get.walletSplitPercentage) <= 100)
-        -> ERR_ORDER_VALIDATION_INVALID_WALLET_SPLIT_PERCENTAGE,
-      checkDualAuthPrivateKey -> ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_PRIV_KEY,
-      checkOrderSig -> ERR_ORDER_VALIDATION_INVALID_SIG
-    )
-
-    checklist.span(_._1)._2 match {
-      case List() => Right(order)
-      case tail   => Left(tail.head._2)
-    }
+    outterStream.getBytes
   }
 
 }
