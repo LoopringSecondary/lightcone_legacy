@@ -20,7 +20,11 @@ import akka.actor._
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.actors.base.{Lookup, ShardedEvenly}
+import org.loopring.lightcone.actors.base.{
+  ActorWithPathBasedConfig,
+  Lookup,
+  ShardedEvenly
+}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.XErrorCode.ERR_INTERNAL_UNKNOWN
@@ -62,17 +66,17 @@ object RingSettlementManagerActor extends ShardedEvenly {
 class RingSettlementManagerActor(
   )(
     implicit system: ActorSystem,
-    config: Config,
+    val config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef],
     dbModule: DatabaseModule)
-    extends Actor {
+    extends ActorWithPathBasedConfig(RingSettlementManagerActor.name) {
 
   var ringSettlementActors: Map[String, ActorRef] =
     config
-      .getConfigList("ring_settlement.miners")
+      .getConfigList("miners")
       .asScala
       .map(minerConfig ⇒ {
         Address(minerConfig.getString("transaction_origin")).toString → context
