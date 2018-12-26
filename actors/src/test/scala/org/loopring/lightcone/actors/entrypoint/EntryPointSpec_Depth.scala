@@ -110,7 +110,7 @@ class EntryPointSpec_Depth
         case _ => assert(false)
       }
 
-      Thread.sleep(2000)
+      Thread.sleep(1000)
       //根据不同的level需要有不同的汇总
       val getOrderBook1 = XGetOrderbook(
         0,

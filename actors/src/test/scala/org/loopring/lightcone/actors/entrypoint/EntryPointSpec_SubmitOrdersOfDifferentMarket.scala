@@ -92,7 +92,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       })
 
       //orderbook
-      Thread.sleep(2000)
+      Thread.sleep(1000)
       info("then test the orderbook of LRC-WETH")
       val orderbookLrcF = singleRequest(
         XGetOrderbook(
