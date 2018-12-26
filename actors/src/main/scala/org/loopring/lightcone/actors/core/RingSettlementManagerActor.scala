@@ -108,22 +108,24 @@ class RingSettlementManagerActor(
           message = "no invalid miner to handle this XSettleRingsReq"
         )
       }
-    case msg: XMinerBalanceNotEnough ⇒
-      invalidRingSettlementActors += (msg.miner → ringSettlementActors(
-        msg.miner
-      ))
-      ringSettlementActors = ringSettlementActors - msg.miner
 
     case ba: XAddressBalanceUpdated ⇒
-      if (ba.token.equals(zeroAddr) && invalidRingSettlementActors.contains(
-            ba.address
-          )) {
+      if (ba.token.equals(zeroAddr)) {
         val balance = BigInt(ba.balance.toByteArray)
-        if (balance > miniMinerBalance) {
+        if (balance > miniMinerBalance && invalidRingSettlementActors.contains(
+              ba.address
+            )) {
           ringSettlementActors += (ba.address → invalidRingSettlementActors(
             ba.address
           ))
           invalidRingSettlementActors = invalidRingSettlementActors - ba.address
+        } else if (balance <= miniMinerBalance && ringSettlementActors.contains(
+                     ba.address
+                   )) {
+          invalidRingSettlementActors += (ba.address → ringSettlementActors(
+            ba.address
+          ))
+          ringSettlementActors = ringSettlementActors - ba.address
         }
       }
   }

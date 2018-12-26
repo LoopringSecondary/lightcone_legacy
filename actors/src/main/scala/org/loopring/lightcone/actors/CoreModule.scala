@@ -194,7 +194,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       actors.add(
         OrderHandlerMessageValidator.name,
         MessageValidationActor(
-          new OrderHandlerMessageValidator()(),
+          new OrderHandlerMessageValidator(),
           OrderHandlerActor.name,
           OrderHandlerMessageValidator.name
         )

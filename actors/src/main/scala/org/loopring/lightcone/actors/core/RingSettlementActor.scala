@@ -41,6 +41,7 @@ import scala.util.{Failure, Success}
 
 // main owner: 李亚东
 class RingSettlementActor(
+    val name: String = RingSettlementManagerActor.name
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -51,17 +52,18 @@ class RingSettlementActor(
     extends Actor
     with Stash
     with ActorLogging
-    with RepeatedJobActor {
+    with RepeatedJobActor
+    with NamedBasedConfig {
 
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx =
-    config.getInt("ring_settlement.max-rings-in-one-tx")
+    selfConfig.getInt("max-rings-in-one-tx")
   private val resendDelay =
-    config.getInt("ring_settlement.resend-delay_in_seconds")
+    selfConfig.getInt("resend-delay_in_seconds")
   implicit val ringContext: XRingBatchContext =
     XRingBatchContext(
-      lrcAddress = config.getString("ring_settlement.lrc-address"),
-      feeRecipient = config.getString("ring_settlement.fee-recipient"),
+      lrcAddress = selfConfig.getString("lrc-address"),
+      feeRecipient = selfConfig.getString("fee-recipient"),
       miner = config.getString("miner"),
       transactionOrigin =
         Address(config.getString("transaction-origin")).toString,
@@ -75,11 +77,10 @@ class RingSettlementActor(
 
   val repeatedJobs = Seq(
     Job(
-      name = config.getString("ring_settlement.job.name"),
-      dalayInSeconds = config.getInt("ring_settlement.job.delay-in-seconds"),
+      name = selfConfig.getString("job.name"),
+      dalayInSeconds = selfConfig.getInt("job.delay-in-seconds"),
       run = () ⇒ resubmitTx(),
-      initialDalayInSeconds =
-        config.getInt("ring_settlement.job.initial-delay-in-seconds")
+      initialDalayInSeconds = selfConfig.getInt("job.initial-delay-in-seconds")
     )
   )
   private val nonce = new AtomicInteger(0)
@@ -237,4 +238,5 @@ class RingSettlementActor(
           )
       }
     }
+
 }
