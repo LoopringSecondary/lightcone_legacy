@@ -32,10 +32,11 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.util.Random
 
-object RingSettlementManagerActor  {
+object RingSettlementManagerActor {
   val name = "ring_settlement"
 
-  def startSingleton()(
+  def startSingleton(
+    )(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
@@ -48,7 +49,8 @@ object RingSettlementManagerActor  {
       ClusterSingletonManager.props(
         singletonProps = Props(new RingSettlementManagerActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system))
+        settings = ClusterSingletonManagerSettings(system)
+      )
     )
   }
 }
@@ -87,7 +89,6 @@ class RingSettlementManagerActor(
 
   var invalidRingSettlementActors = mutable.HashMap.empty[String, ActorRef]
 
-  val zeroAddr = "0x" + "0" * 40
   val miniMinerBalance = BigInt(config.getString("mini-miner-balance"))
 
   override def receive: Receive = {
@@ -104,7 +105,7 @@ class RingSettlementManagerActor(
       }
 
     case ba: XAddressBalanceUpdated ⇒
-      if (ba.token.equals(zeroAddr)) {
+      if (ba.token.equals(Address.zeroAddress)) {
         val balance = BigInt(ba.balance.toByteArray)
         if (balance > miniMinerBalance && invalidRingSettlementActors.contains(
               ba.address

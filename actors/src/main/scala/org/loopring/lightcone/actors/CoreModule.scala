@@ -51,7 +51,6 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     implicit val ec = system.dispatcher
     implicit val c_ = config
 
-
     bind[Config].toInstance(config)
     bind[ActorSystem].toInstance(system)
     bind[Cluster].toInstance(cluster)

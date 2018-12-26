@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.core
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import akka.actor._
+import akka.actor.{Actor, ActorLogging, ActorRef, Stash}
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
