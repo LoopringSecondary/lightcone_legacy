@@ -17,69 +17,163 @@
 package org.loopring.lightcone.actors.ethereum
 
 import akka.actor._
+import akka.cluster.singleton._
 import akka.pattern.ask
+import akka.routing.RoundRobinPool
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import com.typesafe.config.Config
 import org.json4s.DefaultFormats
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
-import scala.concurrent.{ExecutionContextExecutor, Future}
-import scala.concurrent.duration._
+import org.loopring.lightcone.lib.TimeProvider
+
+import scala.collection.JavaConverters._
+import scala.concurrent._
 import scala.util._
 
-private[ethereum] class EthereumClientMonitor(
-    router: ActorRef,
-    connectionPools: Seq[ActorRef],
-    checkIntervalSeconds: Int
+object EthereumClientMonitor {
+  val name = "ethereum_client_monitor"
+
+  def startSingleton(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      ma: ActorMaterializer,
+      ece: ExecutionContextExecutor
+    ): ActorRef = {
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = Props(new EthereumClientMonitor()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system)
+      )
+    )
+  }
+}
+
+class EthereumClientMonitor(
+    val name: String = EthereumClientMonitor.name
   )(
-    implicit timeout: Timeout,
-    ec: ExecutionContextExecutor)
+    implicit system: ActorSystem,
+    val config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    ma: ActorMaterializer,
+    ece: ExecutionContextExecutor)
     extends Actor
-    with ActorLogging {
+    with Stash
+    with ActorLogging
+    with RepeatedJobActor
+    with NamedBasedConfig {
 
   implicit val formats = DefaultFormats
 
-  context.system.scheduler.schedule(
-    0.seconds,
-    checkIntervalSeconds.seconds,
-    self,
-    XCheckBlockHeight()
+  def ethereumAccessor = actors.get(EthereumAccessActor.name)
+
+  var connectionPools: Seq[ActorRef] = Nil
+  var nodes: Map[String, Int] = Map.empty
+
+  val checkIntervalSeconds: Int = selfConfig.getInt("check-interval-seconds")
+
+  override val repeatedJobs: Seq[Job] = Seq(
+    Job(
+      name = EthereumClientMonitor.name,
+      dalayInSeconds = checkIntervalSeconds,
+      run = () ⇒ checkNodeHeight,
+      initialDalayInSeconds = checkIntervalSeconds
+    )
   )
 
-  def receive: Receive = {
-    case _: XCheckBlockHeight =>
-      log.debug("start scheduler check highest block...")
-      val blockNumJsonRpcReq = JsonRpcReqWrapped(
-        id = Random.nextInt(100),
-        method = "eth_blockNumber",
-        params = None
+  override def preStart(): Unit = {
+    val poolSize = selfConfig.getInt("pool-size")
+    val nodesConfig = selfConfig.getConfigList("nodes").asScala.map { c =>
+      XEthereumProxySettings.XNode(
+        host = c.getString("host"),
+        port = c.getInt("port")
       )
-      import JsonRpcResWrapped._
-      connectionPools.map { g =>
-        for {
-          blockNumResp: Int <- (g ? blockNumJsonRpcReq.toProto)
-            .mapAs[XJsonRpcRes]
-            .map(toJsonRpcResWrapped)
-            .map(_.result)
-            .map(anyHexToInt)
-            .recover {
-              case e: Exception =>
-                log.error(
-                  s"exception on getting blockNumber: $g: ${e.getMessage}"
-                )
-                -1
-            }
-        } yield {
-          router ! XNodeBlockHeight(
-            path = g.path.toString,
-            height = blockNumResp
-          )
-        }
+    }
+    connectionPools = nodesConfig.zipWithIndex.map {
+      case (node, index) =>
+        val nodeName = s"ethereum_connector_http_$index"
+        val props =
+          Props(new HttpConnector(node))
+        context.actorOf(
+          RoundRobinPool(poolSize).props(props),
+          nodeName
+        )
+    }
+
+    checkNodeHeight onComplete {
+      case Success(_) ⇒
+        self ! XInitializationDone
+        super.preStart()
+      case Failure(e) ⇒
+        log.error(s"Failed to start EthereumClientMonitor:${e.getMessage} ")
+        context.stop(self)
+    }
+  }
+
+  override def receive: Receive = initialReceive
+
+  def initialReceive: Receive = {
+    case _: XInitializationDone ⇒
+      unstashAll()
+      context.become(normalReceive)
+    case _ ⇒
+      stash()
+  }
+
+  def normalReceive: Receive = super.receive orElse {
+    case _: XNodeHeightReq ⇒
+      sender ! XNodeHeightRes(
+        nodes.toSeq.map(
+          node ⇒ XNodeBlockHeight(path = node._1, height = node._2)
+        )
+      )
+  }
+
+  def checkNodeHeight = {
+    log.debug("start scheduler check highest block...")
+    val blockNumJsonRpcReq = JsonRpcReqWrapped(
+      id = Random.nextInt(100),
+      method = "eth_blockNumber",
+      params = None
+    )
+    import JsonRpcResWrapped._
+    Future.sequence(connectionPools.map { g =>
+      for {
+        blockNumResp: Int <- (g ? blockNumJsonRpcReq.toProto)
+          .mapAs[XJsonRpcRes]
+          .map(toJsonRpcResWrapped)
+          .map(_.result)
+          .map(anyHexToInt)
+          .recover {
+            case e: Exception =>
+              log.error(
+                s"exception on getting blockNumber: $g: ${e.getMessage}"
+              )
+              -1
+          }
+      } yield {
+        nodes = nodes + (g.path.toString → blockNumResp)
+        ethereumAccessor ! XNodeBlockHeight(
+          path = g.path.toString,
+          height = blockNumResp
+        )
       }
+    })
   }
 
   def anyHexToInt: PartialFunction[Any, Int] = {
     case s: String => BigInt(s.replace("0x", ""), 16).toInt
     case _         => -1
   }
-
 }

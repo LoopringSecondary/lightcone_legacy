@@ -34,15 +34,13 @@ import scala.concurrent.duration._
 import scala.concurrent._
 
 class EthereumAccessorSpec extends CommonSpec("""
-                                                |akka.cluster.roles=[
-                                                | "ethereum_access"]
+                                                |akka.cluster.roles=[]
                                                 |""".stripMargin) with Logging {
 
   val wethAbi = WETHABI()
   val delegateAdderess = "0x17233e07c67d086464fD408148c3ABB56245FA64"
 
-  val ethereumAccessActor =
-    EthereumAccessActor.startShardRegion()
+  val ethereumAccessActor = actors.get(EthereumAccessActor.name)
 
   val fu = for {
     blockNum ← (ethereumAccessActor ? XEthBlockNumberReq())

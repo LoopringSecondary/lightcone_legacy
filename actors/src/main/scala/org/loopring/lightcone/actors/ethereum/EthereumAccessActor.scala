@@ -17,22 +17,23 @@
 package org.loopring.lightcone.actors.ethereum
 
 import akka.actor._
-import akka.cluster.sharding._
-import akka.routing.RoundRobinPool
+import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import scala.collection.JavaConverters._
+import org.loopring.lightcone.actors.base.safefuture._
+import akka.pattern._
 
 import scala.concurrent._
+import scala.util.{Failure, Random, Success}
 
-object EthereumAccessActor extends ShardedEvenly {
+object EthereumAccessActor {
   val name = "ethereum_access"
 
-  def startShardRegion(
+  def startSingleton(
     )(
       implicit system: ActorSystem,
       config: Config,
@@ -43,15 +44,12 @@ object EthereumAccessActor extends ShardedEvenly {
       ma: ActorMaterializer,
       ece: ExecutionContextExecutor
     ): ActorRef = {
-
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shards")
-
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new EthereumAccessActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
-      messageExtractor = messageExtractor
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = Props(new EthereumAccessActor()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system)
+      )
     )
   }
 }
@@ -66,84 +64,78 @@ class EthereumAccessActor(
     val ma: ActorMaterializer,
     val ece: ExecutionContextExecutor)
     extends Actor
+    with Stash
     with ActorLogging {
 
-  val conf = config.getConfig(EthereumAccessActor.name)
+  private def monitor: ActorRef = actors.get(EthereumClientMonitor.name)
+  var connectionPools: Seq[(String, Int)] = Nil
 
-  val thisConfig = try {
-    conf.getConfig(self.path.name).withFallback(conf)
-  } catch {
-    case e: Throwable => conf
-  }
-  log.info(s"config for ${self.path.name} = $thisConfig")
-
-  val settings = XEthereumProxySettings(
-    poolSize = thisConfig.getInt("pool-size"),
-    checkIntervalSeconds = thisConfig.getInt("check-interval-seconds"),
-    healthyThreshold = thisConfig.getDouble("healthy-threshold").toFloat,
-    nodes = thisConfig.getConfigList("nodes").asScala.map { c =>
-      XEthereumProxySettings.XNode(
-        host = c.getString("host"),
-        port = c.getInt("port"),
-        ipcPath = c.getString("ipc-path")
-      )
+  override def preStart() = {
+    val fu = (monitor ? XNodeHeightReq)
+      .mapAs[XNodeHeightRes]
+    fu onComplete {
+      case Success(res) ⇒
+        connectionPools = res.nodes.map(node ⇒ node.path → node.height)
+        self ! XInitializationDone
+      case Failure(e) ⇒
+        log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
+        context.stop(self)
     }
-  )
-
-  private var monitor: ActorRef = _
-  private var router: ActorRef = _
-  private var connectorGroups: Seq[ActorRef] = Nil
-  private var currentSettings: Option[XEthereumProxySettings] = None
-
-  updateSettings(settings)
-
-  def receive: Receive = {
-    case settings: XEthereumProxySettings =>
-      updateSettings(settings)
-
-    case req =>
-      router.forward(req)
   }
 
-  def updateSettings(settings: XEthereumProxySettings) {
-    if (router != null) {
-      context.stop(router)
+  override def receive: Receive = initialReceive
+
+  def initialReceive: Receive = {
+    case _: XInitializationDone ⇒
+      unstashAll()
+      context.become(normalReceive)
+    case node: XNodeBlockHeight =>
+      connectionPools =
+        (connectionPools.toMap + (node.path → node.height)).toSeq
+          .filter(_._2 >= 0)
+          .sortWith(_._2 > _._2)
+      if (connectionPools.nonEmpty) {
+        unstashAll()
+        context.become(normalReceive)
+      }
+    case _ ⇒
+      stash()
+  }
+
+  def normalReceive: Receive = {
+    case node: XNodeBlockHeight =>
+      connectionPools =
+        (connectionPools.toMap + (node.path → node.height)).toSeq
+          .filter(_._2 >= 0)
+          .sortWith(_._2 > _._2)
+
+    case req: XRpcReqWithHeight =>
+      val validPools = connectionPools.filter(_._2 > req.height)
+      if (validPools.nonEmpty) {
+        context
+          .actorSelection(validPools(Random.nextInt(validPools.size))._1)
+          .forward(req.req)
+      } else {
+        sender ! XJsonRpcErr(message = "No accessible Ethereum node service")
+      }
+
+    case msg: XJsonRpcReq => {
+      if (connectionPools.nonEmpty) {
+        context.actorSelection(connectionPools.head._1).forward(msg)
+      } else {
+        sender ! XJsonRpcErr(message = "No accessible Ethereum node service")
+      }
     }
-    connectorGroups.foreach(context.stop)
 
-    connectorGroups = settings.nodes.zipWithIndex.map {
-      case (node, index) =>
-        val ipc = node.ipcPath.nonEmpty
-
-        val nodeName =
-          if (ipc) s"ethereum_connector_ipc_$index"
-          else s"ethereum_connector_http_$index"
-
-        val props =
-          if (ipc) Props(new IpcConnector(node))
-          else Props(new HttpConnector(node))
-
-        context.actorOf(
-          RoundRobinPool(settings.poolSize).props(props),
-          nodeName
-        )
+    case msg: ProtoBuf[_] => {
+      if (connectionPools.nonEmpty) {
+        context.actorSelection(connectionPools.head._1).forward(msg)
+      } else {
+        sender ! XJsonRpcErr(message = "No accessible Ethereum node service")
+      }
     }
 
-    router = context.actorOf(
-      Props(new EthereumServiceRouter()),
-      "r_ethereum_connector"
-    )
-
-    monitor = context.actorOf(
-      Props(
-        new EthereumClientMonitor(
-          router,
-          connectorGroups,
-          settings.checkIntervalSeconds
-        )
-      ),
-      "ethereum_connector_monitor"
-    )
-    currentSettings = Some(settings)
+    case msg =>
+      log.error(s"unsupported request to EthereumServiceRouter: $msg")
   }
 }
