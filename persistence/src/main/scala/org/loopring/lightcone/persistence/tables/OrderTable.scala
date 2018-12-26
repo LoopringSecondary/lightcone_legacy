@@ -95,8 +95,12 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
   def idx_owner = index("idx_owner", (owner), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
   def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
-  def idx_address_shard_id = index("idx_address_shard_id", (addressShardId), unique = false)
-  def idx_market_hash_id = index("idx_market_hash_id", (marketHashId), unique = false)
+
+  def idx_address_shard_id =
+    index("idx_address_shard_id", (addressShardId), unique = false)
+
+  def idx_market_hash_id =
+    index("idx_market_hash_id", (marketHashId), unique = false)
 
   def paramsProjection =
     (

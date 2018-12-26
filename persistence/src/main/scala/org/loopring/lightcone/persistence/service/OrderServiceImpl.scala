@@ -18,7 +18,11 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.lib.{ErrorException, MarketHashProvider, SystemTimeProvider}
+import org.loopring.lightcone.lib.{
+  ErrorException,
+  MarketHashProvider,
+  SystemTimeProvider
+}
 import org.loopring.lightcone.persistence.dals.{OrderDal, OrderDalImpl}
 import org.loopring.lightcone.proto.XErrorCode.ERR_INTERNAL_UNKNOWN
 import org.loopring.lightcone.proto._
@@ -40,7 +44,15 @@ class OrderServiceImpl @Inject()(
         val state = o.state.get
         val returnState =
           XRawOrder.State(status = state.status, createdAt = state.createdAt)
-        Some(o.copy(state = Some(returnState), sequenceId = 0, marketHash = "", marketHashId = 0, addressShardId = 0))
+        Some(
+          o.copy(
+            state = Some(returnState),
+            sequenceId = 0,
+            marketHash = "",
+            marketHashId = 0,
+            addressShardId = 0
+          )
+        )
       case None => None
     }
   }
@@ -59,7 +71,7 @@ class OrderServiceImpl @Inject()(
       marketHashId = 0,
       addressShardId = Math.abs(order.owner.hashCode % 100)
     )
-    orderDal.saveOrder(o).map{r=>
+    orderDal.saveOrder(o).map { r =>
       if (r.error == XErrorCode.ERR_NONE) {
         Left(r.order.get)
       } else {
@@ -67,8 +79,6 @@ class OrderServiceImpl @Inject()(
       }
     }
   }
-
-
 
   // Mark the order as soft-cancelled. Returns error code if the order does not exist.
   def markOrderSoftCancelled(
