@@ -22,7 +22,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config._
 import org.loopring.lightcone.actors.base.MapBasedLookup
-import org.loopring.lightcone.actors.support.CommonSpec
+import org.loopring.lightcone.actors.support.{CommonSpec, EthereumSupport}
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib.SystemTimeProvider
 import org.loopring.lightcone.proto._
@@ -35,7 +35,7 @@ import scala.concurrent._
 
 class EthereumAccessorSpec extends CommonSpec("""
                                                 |akka.cluster.roles=[]
-                                                |""".stripMargin) with Logging {
+                                                |""".stripMargin) with EthereumSupport {
 
   val wethAbi = WETHABI()
   val delegateAdderess = "0x17233e07c67d086464fD408148c3ABB56245FA64"

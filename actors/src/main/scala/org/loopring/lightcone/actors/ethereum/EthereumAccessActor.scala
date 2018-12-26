@@ -44,12 +44,8 @@ object EthereumAccessActor {
       ma: ActorMaterializer,
       ece: ExecutionContextExecutor
     ): ActorRef = {
-    system.actorOf(
-      ClusterSingletonManager.props(
-        singletonProps = Props(new EthereumAccessActor()),
-        terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system)
-      )
+      system.actorOf(
+      Props(new EthereumAccessActor())
     )
   }
 }
@@ -71,12 +67,12 @@ class EthereumAccessActor(
   var connectionPools: Seq[(String, Int)] = Nil
 
   override def preStart() = {
-    val fu = (monitor ? XNodeHeightReq)
+    val fu = (monitor ? XNodeHeightReq())
       .mapAs[XNodeHeightRes]
     fu onComplete {
       case Success(res) ⇒
         connectionPools = res.nodes.map(node ⇒ node.path → node.height)
-        self ! XInitializationDone
+        self ! XInitializationDone()
       case Failure(e) ⇒
         log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
         context.stop(self)
@@ -94,11 +90,8 @@ class EthereumAccessActor(
         (connectionPools.toMap + (node.path → node.height)).toSeq
           .filter(_._2 >= 0)
           .sortWith(_._2 > _._2)
-      if (connectionPools.nonEmpty) {
-        unstashAll()
-        context.become(normalReceive)
-      }
-    case _ ⇒
+    case msg ⇒
+      log.info(s"Ethereum Accessor received req:${msg}")
       stash()
   }
 
@@ -128,14 +121,12 @@ class EthereumAccessActor(
     }
 
     case msg: ProtoBuf[_] => {
+      log.info(s"Ethereum accessor Received req:${msg}")
       if (connectionPools.nonEmpty) {
         context.actorSelection(connectionPools.head._1).forward(msg)
       } else {
         sender ! XJsonRpcErr(message = "No accessible Ethereum node service")
       }
     }
-
-    case msg =>
-      log.error(s"unsupported request to EthereumServiceRouter: $msg")
   }
 }

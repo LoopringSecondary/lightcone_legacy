@@ -48,11 +48,7 @@ object EthereumClientMonitor {
       ece: ExecutionContextExecutor
     ): ActorRef = {
     system.actorOf(
-      ClusterSingletonManager.props(
-        singletonProps = Props(new EthereumClientMonitor()),
-        terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system)
-      )
+      Props(new EthereumClientMonitor())
     )
   }
 }
@@ -113,7 +109,7 @@ class EthereumClientMonitor(
 
     checkNodeHeight onComplete {
       case Success(_) ⇒
-        self ! XInitializationDone
+        self ! XInitializationDone()
         super.preStart()
       case Failure(e) ⇒
         log.error(s"Failed to start EthereumClientMonitor:${e.getMessage} ")
@@ -127,17 +123,21 @@ class EthereumClientMonitor(
     case _: XInitializationDone ⇒
       unstashAll()
       context.become(normalReceive)
-    case _ ⇒
+    case msg ⇒
+      log.info(s"Monitor received :${msg}")
       stash()
   }
 
-  def normalReceive: Receive = super.receive orElse {
+  def normalReceive: Receive = {
     case _: XNodeHeightReq ⇒
+      println("Ethereum Client Monitor received:XNodeHeightReq")
       sender ! XNodeHeightRes(
         nodes.toSeq.map(
           node ⇒ XNodeBlockHeight(path = node._1, height = node._2)
         )
       )
+    case msg ⇒
+      log.info(s"Monitor received :${msg}")
   }
 
   def checkNodeHeight = {

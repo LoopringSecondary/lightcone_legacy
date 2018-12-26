@@ -18,8 +18,14 @@ package org.loopring.lightcone.actors.support
 
 import akka.actor.Props
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.ethereum.{EthereumAccessActor, EthereumClientMonitor}
-import org.loopring.lightcone.actors.validator.{EthereumQueryMessageValidator, MessageValidationActor}
+import org.loopring.lightcone.actors.ethereum.{
+  EthereumAccessActor,
+  EthereumClientMonitor
+}
+import org.loopring.lightcone.actors.validator.{
+  EthereumQueryMessageValidator,
+  MessageValidationActor
+}
 
 trait EthereumSupport {
   my: CommonSpec =>
