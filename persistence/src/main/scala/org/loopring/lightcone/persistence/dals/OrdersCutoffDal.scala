@@ -24,6 +24,7 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
 import com.mysql.jdbc.exceptions.jdbc4._
+import com.typesafe.scalalogging.Logger
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
@@ -51,6 +52,7 @@ class OrdersCutoffDalImpl(
   val query = TableQuery[OrdersCutoffTable]
   def getRowHash(row: XRawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
+  private[this] val logger = Logger(this.getClass)
 
   override def saveCutoff(cutoff: XOrdersCutoffEvent): Future[XErrorCode] = {
     val now = timeProvider.getTimeMillis
@@ -64,8 +66,7 @@ class OrdersCutoffDalImpl(
           XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
         }
         case Failure(ex) ⇒ {
-          // TODO du: print some log
-          // log(s"error : ${ex.getMessage}")
+          logger.error(s"error : ${ex.getMessage}")
           XErrorCode.ERR_PERSISTENCE_INTERNAL
         }
         case Success(x) ⇒ XErrorCode.ERR_NONE

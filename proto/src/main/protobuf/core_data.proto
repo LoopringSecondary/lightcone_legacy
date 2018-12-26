@@ -256,3 +256,22 @@ message XOrdersCancelledEvent {
     int64  updated_at      = 5;
     int64  block_height    = 6;
 }
+
+message XSettlementTx {
+    enum XStatus {
+        PENDING  = 0;
+        BLOCK    = 1;
+        FAILED   = 2;
+    }
+    string  tx_hash    = 1;
+    string  from       = 2;
+    string  to         = 3;
+    string  gas        = 4;
+    string  gasPrice   = 5;
+    string  value      = 6;
+    string  data       = 7;
+    int64   nonce      = 8;
+    XStatus status     = 9;
+    int64   create_at  = 10;
+    int64   updated_at = 11;
+}
