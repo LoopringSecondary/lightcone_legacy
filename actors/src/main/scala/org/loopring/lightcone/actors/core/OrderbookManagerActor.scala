@@ -27,16 +27,20 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
+import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
+import org.slf4s.Logging
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
-import org.slf4s.Logging
 
 // main owner: 于红雨
 object OrderbookManagerActor extends ShardedByMarket with Logging {
   val name = "orderbook_manager"
+
+  def getTopicId(marketId: XMarketId) =
+    OrderbookManagerActor.name + "-" + getEntityId(marketId)
 
   def startShardRegion(
     )(
@@ -58,8 +62,11 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
       .map { item =>
         val c = item.toConfig
         val marketId =
-          XMarketId(c.getString("priamry"), c.getString("secondary"))
-        OrderbookManagerActor.getEntityId(marketId) -> marketId
+          XMarketId(
+            LAddress(c.getString("priamry")).toString,
+            LAddress(c.getString("secondary")).toString
+          )
+        getEntityId(marketId) -> marketId
       }
       .toMap
 
@@ -92,10 +99,10 @@ class OrderbookManagerActor(
       OrderbookManagerActor.name,
       extractEntityId
     ) {
-  val mediator = DistributedPubSub(context.system).mediator
-  mediator ! Subscribe(OrderbookManagerActor.name, self)
-
   val marketId = markets(entityId)
+  val mediator = DistributedPubSub(context.system).mediator
+  mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
+
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
 
   // TODO(yongfeng): load marketconfig from database throught a service interface

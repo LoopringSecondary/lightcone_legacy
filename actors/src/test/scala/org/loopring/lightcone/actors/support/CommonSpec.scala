@@ -20,7 +20,6 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
-import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
 import org.loopring.lightcone.core.base._
@@ -29,11 +28,8 @@ import org.loopring.lightcone.core.market.{
   RingIncomeEstimatorImpl
 }
 import org.loopring.lightcone.lib.SystemTimeProvider
-import org.loopring.lightcone.proto.XTokenMeta
 import org.scalatest._
 import org.slf4s.Logging
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
 
 import scala.concurrent.duration._
 import scala.math.BigInt
@@ -73,6 +69,10 @@ abstract class CommonSpec(configStr: String)
 
   tokenManager.addToken(WETH_TOKEN)
   tokenManager.addToken(LRC_TOKEN)
+  tokenManager.addToken(GTO_TOKEN)
+  tokenManager.addToken(RDN_TOKEN)
+  tokenManager.addToken(REP_TOKEN)
+
   implicit val tokenValueEstimator = new TokenValueEstimator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
 
