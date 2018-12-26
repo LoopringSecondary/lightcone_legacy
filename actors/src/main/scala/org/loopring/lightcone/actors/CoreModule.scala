@@ -132,7 +132,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
       actors.add(
         RingSettlementManagerActor.name,
-        RingSettlementManagerActor.start
+        RingSettlementManagerActor.startSingleton
       )
       actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
 
