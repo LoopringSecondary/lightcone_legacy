@@ -94,7 +94,7 @@ class RingSettlementActor(
     val initialFuture = (ethereumAccessActor ? XGetNonceReq(
       owner = ringContext.transactionOrigin,
       tag = "latest"
-    )).mapTo[XGetNonceRes]
+    )).mapAs[XGetNonceRes]
       .map(_.result)
 
     initialFuture onComplete {
@@ -150,7 +150,7 @@ class RingSettlementActor(
         hashes ← Future.sequence(txs.map { tx ⇒
           val rawTx = getSignedTxData(tx)
           (ethereumAccessActor ? XSendRawTransactionReq(rawTx))
-            .mapTo[XSendRawTransactionRes]
+            .mapAs[XSendRawTransactionRes]
             .map(_.result)
         })
       } yield {
@@ -191,7 +191,7 @@ class RingSettlementActor(
   def resubmitTx(): Future[Unit] =
     for {
       gasPriceRes <- (gasPriceActor ? XGetGasPriceReq())
-        .mapTo[XGetGasPriceRes]
+        .mapAs[XGetGasPriceRes]
         .map(_.gasPrice)
       ringTxs ← dbModule.settlementTxService
         .getPendingTxs(
@@ -214,7 +214,7 @@ class RingSettlementActor(
       txResps ← Future.sequence(txs.map { tx =>
         val rawTx = getSignedTxData(tx)
         (ethereumAccessActor ? XSendRawTransactionReq(rawTx))
-          .mapTo[XSendRawTransactionRes]
+          .mapAs[XSendRawTransactionRes]
       })
     } yield {
       (txs zip txResps).filter(_._2.error.isEmpty).map {
