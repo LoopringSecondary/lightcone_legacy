@@ -16,10 +16,9 @@
 
 package org.loopring.lightcone.actors.core
 
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
+import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor._
-import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
@@ -33,11 +32,11 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.ethereum.data.{Address, Transaction}
+import org.loopring.lightcone.ethereum.data._
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
-import scala.util.{Failure, Success}
+import scala.util._
 
 // main owner: 李亚东
 class RingSettlementActor(
