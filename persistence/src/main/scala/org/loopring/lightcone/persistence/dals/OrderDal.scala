@@ -99,27 +99,21 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
       feeToken: Option[String] = None
     ): Future[Int]
 
-  // Get some orders between updatedSince and updatedUntil. The orders are sorted by updated_at
-  // indicatd by the sortedByUpdatedAt param.
+  // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
       statuses: Set[XOrderStatus],
       owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
-      validTime: Option[Int] = None,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty,
+      skip: Option[XSkipBySequenceId] = None
     ): Future[Seq[XRawOrder]]
 
   // Count the number of orders
   def countOrdersForRecover(
       statuses: Set[XOrderStatus],
       owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
-      feeTokenSet: Set[String] = Set.empty
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty
     ): Future[Int]
 
   // Update order's status and update the updated_at timestamp if changeUpdatedAtField is true.
@@ -333,49 +327,56 @@ class OrderDalImpl(
     db.run(filters.size.result)
   }
 
+  private def queryOrderForRecorverFilters(
+      statuses: Set[XOrderStatus],
+      owners: Set[String] = Set.empty,
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty,
+      skip: Option[XSkipBySequenceId] = None
+    ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
+    var filters = query.filter(_.sequenceId > 0L)
+    if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
+    if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
+    if (marketHashIdSet.nonEmpty)
+      filters = filters.filter(_.marketHashId inSet marketHashIdSet)
+    if (addressShardIdSet.nonEmpty)
+      filters = filters.filter(_.addressShardId inSet addressShardIdSet)
+    filters = skip match {
+      case Some(s) ⇒
+        filters.filter(_.sequenceId > skip.get.from).take(skip.get.take)
+      case None ⇒ filters
+    }
+    filters.sortBy(_.sequenceId.asc)
+  }
+
   def countOrdersForRecover(
       statuses: Set[XOrderStatus],
       owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
-      feeTokenSet: Set[String] = Set.empty
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty
     ): Future[Int] = {
-    val filters = queryOrderFilters(
+    val filters = queryOrderForRecorverFilters(
       statuses,
       owners,
-      tokenSSet,
-      tokenBSet,
-      marketHashSet,
-      feeTokenSet,
-      None,
-      None,
-      None
+      marketHashIdSet,
+      addressShardIdSet
     )
     db.run(filters.size.result)
   }
 
-  // Get some orders between updatedSince and updatedUntil. The orders are sorted by updated_at
-  // indicatd by the sortedByUpdatedAt param.
+  // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
       statuses: Set[XOrderStatus],
       owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
-      validTime: Option[Int] = None,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty,
+      skip: Option[XSkipBySequenceId] = None
     ): Future[Seq[XRawOrder]] = {
-    val filters = queryOrderFilters(
+    val filters = queryOrderForRecorverFilters(
       statuses,
       owners,
-      tokenSSet,
-      tokenBSet,
-      marketHashSet,
-      Set.empty,
-      validTime,
-      sort,
+      marketHashIdSet,
+      addressShardIdSet,
       skip
     )
     db.run(filters.result)

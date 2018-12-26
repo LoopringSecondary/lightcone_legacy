@@ -31,6 +31,11 @@ message XSkip {
     int32 take = 2; // 拉取的记录数
 }
 
+message XSkipBySequenceId {
+    int64 from = 1; // where seqenceId > from limit 0, take
+    int32 take = 2;
+}
+
 message XTokenMeta {
     string address = 1;
     int32 decimals = 2;

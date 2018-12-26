@@ -16,27 +16,17 @@
 
 package org.loopring.lightcone.actors.support
 
+import akka.actor.Props
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.validator.{
-  MessageValidationActor,
-  OrderHandlerMessageValidator
-}
-import scala.concurrent.Await
 
-trait OrderHandleSupport extends DatabaseModuleSupport {
+trait RecoverSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
-  actors.add(
-    OrderHandlerActor.name,
-    OrderHandlerActor.startShardRegion
-  )
+  actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
 
+  // TODO du: singleton方式调不通
   actors.add(
-    OrderHandlerMessageValidator.name,
-    MessageValidationActor(
-      new OrderHandlerMessageValidator(),
-      OrderHandlerActor.name,
-      OrderHandlerMessageValidator.name
-    )
+    OrderRecoverCoordinator.name,
+    system.actorOf(Props(new OrderRecoverCoordinator()))
   )
 }

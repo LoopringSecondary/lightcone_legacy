@@ -18,6 +18,7 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
+import com.typesafe.config.Config
 import org.loopring.lightcone.lib.{
   ErrorException,
   MarketHashProvider,
@@ -59,19 +60,13 @@ class OrderServiceImpl @Inject()(
 
   // Save order to database, if the order already exist, return an error code.
   def saveOrder(order: XRawOrder): Future[Either[XRawOrder, XErrorCode]] = {
-    val now = timeProvider.getTimeMillis
-    val state = XRawOrder.State(
-      createdAt = now,
-      updatedAt = now,
-      status = XOrderStatus.STATUS_NEW
-    )
-    val o = order.copy(
-      state = Some(state),
-      marketHash = MarketHashProvider.convert2Hex(order.tokenS, order.tokenB),
-      marketHashId = 0,
-      addressShardId = Math.abs(order.owner.hashCode % 100)
-    )
-    orderDal.saveOrder(o).map { r =>
+    if (order.addressShardId <= 0 || order.marketHashId <= 0) {
+      throw ErrorException(
+        XErrorCode.ERR_INTERNAL_UNKNOWN,
+        s"Invalid addressShardId:[${order.addressShardId}] or marketHashId:[${order.marketHashId}]"
+      )
+    }
+    orderDal.saveOrder(order).map { r =>
       if (r.error == XErrorCode.ERR_NONE) {
         Left(r.order.get)
       } else {
@@ -158,22 +153,16 @@ class OrderServiceImpl @Inject()(
 
   def getOrdersForRecover(
       statuses: Set[XOrderStatus],
-      owners: Set[String],
-      tokenSSet: Set[String],
-      tokenBSet: Set[String],
-      marketHashSet: Set[String],
-      validTime: Option[Int],
-      sort: Option[XSort],
-      skip: Option[XSkip]
+      owners: Set[String] = Set.empty,
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty,
+      skip: Option[XSkipBySequenceId] = None
     ): Future[Seq[XRawOrder]] =
     orderDal.getOrdersForRecover(
       statuses,
       owners,
-      tokenSSet,
-      tokenBSet,
-      marketHashSet,
-      validTime,
-      sort,
+      marketHashIdSet,
+      addressShardIdSet,
       skip
     )
 
@@ -197,19 +186,15 @@ class OrderServiceImpl @Inject()(
 
   def countOrdersForRecover(
       statuses: Set[XOrderStatus],
-      owners: Set[String],
-      tokenSSet: Set[String],
-      tokenBSet: Set[String],
-      marketHashSet: Set[String],
-      feeTokenSet: Set[String]
+      owners: Set[String] = Set.empty,
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty
     ): Future[Int] =
     orderDal.countOrdersForRecover(
       statuses,
       owners,
-      tokenSSet,
-      tokenBSet,
-      marketHashSet,
-      feeTokenSet
+      marketHashIdSet,
+      addressShardIdSet
     )
 
   def updateOrderStatus(

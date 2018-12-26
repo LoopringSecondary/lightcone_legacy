@@ -55,17 +55,13 @@ trait OrderService {
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]]
 
-  // Get some orders between updatedSince and updatedUntil. The orders are sorted by updated_at
-  // indicatd by the sortedByUpdatedAt param.
+  // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
       statuses: Set[XOrderStatus],
       owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
-      validTime: Option[Int] = None,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty,
+      skip: Option[XSkipBySequenceId] = None
     ): Future[Seq[XRawOrder]]
 
   // Count the number of orders
@@ -82,10 +78,8 @@ trait OrderService {
   def countOrdersForRecover(
       statuses: Set[XOrderStatus],
       owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
-      feeTokenSet: Set[String] = Set.empty
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty
     ): Future[Int]
 
   // Update order's status and update the updated_at timestamp if changeUpdatedAtField is true.
