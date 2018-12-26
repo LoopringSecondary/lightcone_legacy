@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
@@ -60,8 +61,8 @@ case class SupportedMarkets(config: Config) {
         s"invalid market: ${marketId}"
       )
     marketId.copy(
-      primary = marketId.primary.toLowerCase(),
-      secondary = marketId.secondary.toLowerCase()
+      primary = Address(marketId.primary).toString,
+      secondary = Address(marketId.secondary).toString
     )
   }
 }
