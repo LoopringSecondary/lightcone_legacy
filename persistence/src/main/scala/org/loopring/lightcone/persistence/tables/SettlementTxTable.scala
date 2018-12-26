@@ -40,6 +40,7 @@ class SettlementTxTable(tag: Tag)
   // indexes
   def idx_tx_hash = index("idx_tx_hash", (txHash), unique = true)
   def idx_from = index("idx_from", (from), unique = false)
+  def idx_from_nonce = index("idx_from_nonce", (from, nonce), unique = false)
   def idx_status = index("idx_status", (status), unique = false)
   def idx_create_at = index("idx_submit_at", (createAt), unique = false)
 

@@ -27,13 +27,12 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 import slick.basic._
 import slick.lifted.Query
-
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
 trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, XSettlementTx] {
   def saveTx(tx: XSettlementTx): Future[XSaveSettlementTxResult]
-  // get all pending txs with given owner, from_nonce is a optional parameter(>=)
+  // get all pending txs with given owner
   def getPendingTxs(request: XGetPendingTxsReq): Future[XGetPendingTxsResult]
 
   // update address's all txs status below or equals the given nonce to BLOCK
@@ -88,12 +87,12 @@ class SettlementTxDalImpl(
     )
     val sql =
       sql"""
-           SELECT tx_hash, `from`, `to`, gas, gas_price, `value`, `data`, MAX(nonce), status, create_at, update_at
-            FROM T_SETTLEMENT_TXS
-            GROUP BY `from`, nonce
-            having `from` = ${request.owner}
-             and status = ${XSettlementTx.XStatus.PENDING.value}
-             and create_at <= ${request.timeBefore}
+        SELECT tx_hash, `from`, `to`, gas, gas_price, `value`, `data`, nonce, status, MAX(create_at) as create_at, update_at
+        FROM T_SETTLEMENT_TXS
+        WHERE `from` = ${request.owner}
+          and status = ${XSettlementTx.XStatus.PENDING.value}
+          and create_at <= ${request.timeBefore}
+        GROUP BY `from`, nonce
         """
         .as[XSettlementTx]
     db.run(sql).map(r => XGetPendingTxsResult(r.toSeq))
@@ -102,16 +101,16 @@ class SettlementTxDalImpl(
   def updateInBlock(
       request: XUpdateTxInBlockReq
     ): Future[XUpdateTxInBlockResult] = {
-    val pending: XSettlementTx.XStatus = XSettlementTx.XStatus.PENDING
     val a = (for {
       // update tx in block
-      inBlock <- query
+      updateInBlock <- query
         .filter(_.txHash === request.txHash)
         .filter(_.from === request.from)
         .filter(_.nonce === request.nonce)
         .map(_.status)
         .update(XSettlementTx.XStatus.BLOCK)
-      _ <- if (inBlock == 1) {
+      updateFaild <- if (updateInBlock == 1) {
+        val pending: XSettlementTx.XStatus = XSettlementTx.XStatus.PENDING
         query
           .filter(_.from === request.from)
           .filter(_.nonce === request.nonce)
@@ -122,9 +121,9 @@ class SettlementTxDalImpl(
         throw ErrorException(XErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
       }
       // update others pending tx to failed
-    } yield inBlock).transactionally
+    } yield updateFaild).transactionally
     db.run(a).map { r =>
-      if (r > 0) XUpdateTxInBlockResult(XErrorCode.ERR_NONE)
+      if (r >= 0) XUpdateTxInBlockResult(XErrorCode.ERR_NONE)
       else XUpdateTxInBlockResult(XErrorCode.ERR_INTERNAL_UNKNOWN)
     }
   }
