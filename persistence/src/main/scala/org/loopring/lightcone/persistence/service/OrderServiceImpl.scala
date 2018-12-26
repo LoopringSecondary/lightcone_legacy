@@ -18,13 +18,12 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.lib.{ErrorException, MarketHashProvider, SystemTimeProvider}
 import org.loopring.lightcone.persistence.dals.{OrderDal, OrderDalImpl}
 import org.loopring.lightcone.proto.XErrorCode.ERR_INTERNAL_UNKNOWN
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-
 import scala.concurrent._
 
 class OrderServiceImpl @Inject()(
@@ -33,6 +32,7 @@ class OrderServiceImpl @Inject()(
     @Named("db-execution-context") val ec: ExecutionContext)
     extends OrderService {
   val orderDal: OrderDal = new OrderDalImpl()
+  val timeProvider = new SystemTimeProvider()
 
   private def giveUserOrder(order: Option[XRawOrder]): Option[XRawOrder] = {
     order match {
@@ -40,22 +40,35 @@ class OrderServiceImpl @Inject()(
         val state = o.state.get
         val returnState =
           XRawOrder.State(status = state.status, createdAt = state.createdAt)
-        Some(o.copy(state = Some(returnState), sequenceId = 0, marketHash = ""))
+        Some(o.copy(state = Some(returnState), sequenceId = 0, marketHash = "", marketHashId = 0, addressShardId = 0))
       case None => None
     }
   }
 
   // Save order to database, if the order already exist, return an error code.
-  def saveOrder(order: XRawOrder): Future[Either[XRawOrder, XErrorCode]] =
-    for {
-      result ← orderDal.saveOrder(order)
-    } yield {
-      if (result.error == XErrorCode.ERR_NONE) {
-        Left(result.order.get)
+  def saveOrder(order: XRawOrder): Future[Either[XRawOrder, XErrorCode]] = {
+    val now = timeProvider.getTimeMillis
+    val state = XRawOrder.State(
+      createdAt = now,
+      updatedAt = now,
+      status = XOrderStatus.STATUS_NEW
+    )
+    val o = order.copy(
+      state = Some(state),
+      marketHash = MarketHashProvider.convert2Hex(order.tokenS, order.tokenB),
+      marketHashId = 0,
+      addressShardId = Math.abs(order.owner.hashCode % 100)
+    )
+    orderDal.saveOrder(o).map{r=>
+      if (r.error == XErrorCode.ERR_NONE) {
+        Left(r.order.get)
       } else {
-        Right(result.error)
+        Right(r.error)
       }
     }
+  }
+
+
 
   // Mark the order as soft-cancelled. Returns error code if the order does not exist.
   def markOrderSoftCancelled(
