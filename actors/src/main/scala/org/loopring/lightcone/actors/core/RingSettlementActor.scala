@@ -86,8 +86,6 @@ class RingSettlementActor(
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)
-  private def ringSettlementManagerActor =
-    actors.get(RingSettlementManagerActor.name)
 
   import ethereum._
 
@@ -102,7 +100,9 @@ class RingSettlementActor(
       case Success(validNonce) ⇒
         nonce.set(Numeric.toBigInt(validNonce).intValue())
         self ! XInitializationDone()
-      case Failure(e) ⇒ context.stop(self)
+      case Failure(e) ⇒
+        log.error(s"Start ring settlement actor failed:${e.getMessage}")
+        context.stop(self)
     }
   }
 
