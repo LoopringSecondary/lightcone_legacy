@@ -75,7 +75,7 @@ class RingSettlementManagerActor(
     extends ActorWithPathBasedConfig(RingSettlementManagerActor.name) {
 
   var ringSettlementActors: Map[String, ActorRef] =
-    config
+    selfConfig
       .getConfigList("miners")
       .asScala
       .map(minerConfig ⇒ {
