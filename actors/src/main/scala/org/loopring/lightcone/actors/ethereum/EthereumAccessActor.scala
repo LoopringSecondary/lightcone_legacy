@@ -44,9 +44,23 @@ object EthereumAccessActor {
       ma: ActorMaterializer,
       ece: ExecutionContextExecutor
     ): ActorRef = {
-      system.actorOf(
-      Props(new EthereumAccessActor())
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = Props(new EthereumAccessActor()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system)
+      ),
+      name = "accessor"
     )
+
+    system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = "/user/accessor",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = "AccessorProxy"
+    )
+
   }
 }
 
@@ -90,8 +104,7 @@ class EthereumAccessActor(
         (connectionPools.toMap + (node.path → node.height)).toSeq
           .filter(_._2 >= 0)
           .sortWith(_._2 > _._2)
-    case msg ⇒
-      log.info(s"Ethereum Accessor received req:${msg}")
+    case _ ⇒
       stash()
   }
 
@@ -121,7 +134,6 @@ class EthereumAccessActor(
     }
 
     case msg: ProtoBuf[_] => {
-      log.info(s"Ethereum accessor Received req:${msg}")
       if (connectionPools.nonEmpty) {
         context.actorSelection(connectionPools.head._1).forward(msg)
       } else {

@@ -48,7 +48,20 @@ object EthereumClientMonitor {
       ece: ExecutionContextExecutor
     ): ActorRef = {
     system.actorOf(
-      Props(new EthereumClientMonitor())
+      ClusterSingletonManager.props(
+        singletonProps = Props(new EthereumClientMonitor()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system)
+      ),
+      name = "monitor"
+    )
+
+    system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = "/user/monitor",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = "MonitorProxy"
     )
   }
 }
@@ -123,8 +136,7 @@ class EthereumClientMonitor(
     case _: XInitializationDone ⇒
       unstashAll()
       context.become(normalReceive)
-    case msg ⇒
-      log.info(s"Monitor received :${msg}")
+    case _ ⇒
       stash()
   }
 
@@ -136,8 +148,6 @@ class EthereumClientMonitor(
           node ⇒ XNodeBlockHeight(path = node._1, height = node._2)
         )
       )
-    case msg ⇒
-      log.info(s"Monitor received :${msg}")
   }
 
   def checkNodeHeight = {
