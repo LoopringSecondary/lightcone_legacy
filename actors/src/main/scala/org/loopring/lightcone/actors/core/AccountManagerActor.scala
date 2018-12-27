@@ -226,7 +226,8 @@ class AccountManagerActor(
             case STATUS_CANCELLED_LOW_BALANCE |
                 STATUS_CANCELLED_LOW_FEE_BALANCE =>
               for {
-                _ <- dbModule.orderService.updateOrderStatus(order.id, order.status)
+                _ <- dbModule.orderService
+                  .updateOrderStatus(order.id, order.status)
               } yield {
                 marketManagerActor ! XCancelOrderReq(
                   id = order.id,
