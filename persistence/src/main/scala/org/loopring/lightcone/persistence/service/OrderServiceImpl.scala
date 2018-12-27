@@ -154,6 +154,10 @@ class OrderServiceImpl @Inject()(
       skip
     )
 
+  def getOrdersForMonitor(): Future[Seq[XRawOrder]] = ???
+
+  def countOrdersForMonitor(): Future[Int] = ???
+
   // Count the number of orders
   def countOrdersForUser(
       statuses: Set[XOrderStatus],

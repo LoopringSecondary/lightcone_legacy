@@ -38,3 +38,14 @@ message XTokenMeta {
     string symbol = 4;
     double currentPrice = 5;
 }
+
+message XOrderStatusMonitor {
+    int64 id = 1;
+    XMonitorType monitor_type = 2;
+    int64 process_time = 3;
+
+    enum XMonitorType {
+        MONITOR_TYPE_EFFECTIVE = 0;
+        MONITOR_TYPE_EXPIRE = 1;
+    }
+}
