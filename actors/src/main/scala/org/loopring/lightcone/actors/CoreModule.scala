@@ -127,9 +127,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
       actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
       actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
-
       actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
-      actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
       actors.add(EthereumAccessActor.name, EthereumAccessActor.startSingleton)
       actors.add(
         EthereumClientMonitor.name,
@@ -139,8 +137,6 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         RingSettlementManagerActor.name,
         RingSettlementManagerActor.startSingleton
       )
-      actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
-
       actors.add(
         MultiAccountManagerActor.name,
         MultiAccountManagerActor.startShardRegion
