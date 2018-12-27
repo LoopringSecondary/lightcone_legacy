@@ -21,6 +21,7 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import akka.cluster.singleton._
+import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.XErrorCode.ERR_INTERNAL_UNKNOWN
@@ -50,7 +51,15 @@ object RingSettlementManagerActor {
         singletonProps = Props(new RingSettlementManagerActor()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system)
-      )
+      ),
+      RingSettlementManagerActor.name
+    )
+    system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = s"/user/${RingSettlementManagerActor.name}",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"${RingSettlementManagerActor.name}_proxy"
     )
   }
 }
