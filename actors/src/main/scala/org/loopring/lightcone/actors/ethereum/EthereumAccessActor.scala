@@ -50,15 +50,15 @@ object EthereumAccessActor {
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system)
       ),
-      name = "accessor"
+      name = EthereumAccessActor.name
     )
 
     system.actorOf(
       ClusterSingletonProxy.props(
-        singletonManagerPath = "/user/accessor",
+        singletonManagerPath = s"/user/${EthereumAccessActor.name}",
         settings = ClusterSingletonProxySettings(system)
       ),
-      name = "AccessorProxy"
+      name = s"${EthereumAccessActor.name}_proxy"
     )
 
   }
@@ -99,11 +99,7 @@ class EthereumAccessActor(
     case _: XInitializationDone ⇒
       unstashAll()
       context.become(normalReceive)
-    case node: XNodeBlockHeight =>
-      connectionPools =
-        (connectionPools.toMap + (node.path → node.height)).toSeq
-          .filter(_._2 >= 0)
-          .sortWith(_._2 > _._2)
+    case _: XNodeBlockHeight ⇒
     case _ ⇒
       stash()
   }
@@ -122,14 +118,20 @@ class EthereumAccessActor(
           .actorSelection(validPools(Random.nextInt(validPools.size))._1)
           .forward(req.req)
       } else {
-        sender ! XJsonRpcErr(message = "No accessible Ethereum node service")
+        sender ! ErrorException(
+          code = XErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
+          message = "No accessible Ethereum node service"
+        )
       }
 
     case msg: XJsonRpcReq => {
       if (connectionPools.nonEmpty) {
         context.actorSelection(connectionPools.head._1).forward(msg)
       } else {
-        sender ! XJsonRpcErr(message = "No accessible Ethereum node service")
+        sender ! ErrorException(
+          code = XErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
+          message = "No accessible Ethereum node service"
+        )
       }
     }
 
@@ -137,7 +139,10 @@ class EthereumAccessActor(
       if (connectionPools.nonEmpty) {
         context.actorSelection(connectionPools.head._1).forward(msg)
       } else {
-        sender ! XJsonRpcErr(message = "No accessible Ethereum node service")
+        sender ! ErrorException(
+          code = XErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
+          message = "No accessible Ethereum node service"
+        )
       }
     }
   }

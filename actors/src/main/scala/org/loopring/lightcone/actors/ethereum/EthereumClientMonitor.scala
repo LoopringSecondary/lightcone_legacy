@@ -53,15 +53,15 @@ object EthereumClientMonitor {
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system)
       ),
-      name = "monitor"
+      name = EthereumClientMonitor.name
     )
 
     system.actorOf(
       ClusterSingletonProxy.props(
-        singletonManagerPath = "/user/monitor",
+        singletonManagerPath = s"/user/${EthereumClientMonitor.name}",
         settings = ClusterSingletonProxySettings(system)
       ),
-      name = "MonitorProxy"
+      name = s"${EthereumClientMonitor.name}_proxy"
     )
   }
 }
