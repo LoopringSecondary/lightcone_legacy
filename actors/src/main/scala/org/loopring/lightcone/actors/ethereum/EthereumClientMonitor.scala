@@ -28,6 +28,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.lib.TimeProvider
+import org.web3j.utils.Numeric
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
@@ -183,7 +184,7 @@ class EthereumClientMonitor(
   }
 
   def anyHexToInt: PartialFunction[Any, Int] = {
-    case s: String => BigInt(s.replace("0x", ""), 16).toInt
-    case _         => -1
+    case s: String ⇒ Numeric.toBigInt(s).intValue()
+    case _         ⇒ -1
   }
 }
