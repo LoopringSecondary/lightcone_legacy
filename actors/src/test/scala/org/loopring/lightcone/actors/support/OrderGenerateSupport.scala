@@ -17,6 +17,10 @@
 package org.loopring.lightcone.actors.support
 
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.ethereum.{
+  RawOrderValidatorImpl,
+  RingBatchGeneratorImpl
+}
 import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Hash
@@ -39,24 +43,14 @@ trait OrderGenerateSupport {
     //todo:hash 和 签名,
     // todo:hash 暂时随便给定
     val createAt = timeProvider.getTimeMillis
-    val hash = Hash.sha3(
-      BigInt(createAt).toByteArray ++
-        Numeric.hexStringToByteArray(owner) ++
-        Numeric.hexStringToByteArray(tokenS) ++
-        Numeric.hexStringToByteArray(tokenB) ++
-        Numeric.hexStringToByteArray(tokenFee) ++
-        amountS.toByteArray ++
-        amountB.toByteArray ++
-        amountFee.toByteArray
-    )
-    XRawOrder(
+
+    val order = XRawOrder(
       owner = owner,
-      hash = Numeric.toHexString(hash),
-      version = 1,
+      version = 0,
       tokenS = tokenS,
       tokenB = tokenB,
-      amountS = ByteString.copyFrom(amountS.toByteArray),
-      amountB = ByteString.copyFrom(amountB.toByteArray),
+      amountS = ByteString.copyFromUtf8(amountS.toString(16)),
+      amountB = ByteString.copyFromUtf8(amountB.toString(16)),
       validSince = (createAt / 1000).toInt + 10000,
       state = Some(
         XRawOrder.State(
@@ -68,12 +62,23 @@ trait OrderGenerateSupport {
       feeParams = Some(
         XRawOrder.FeeParams(
           tokenFee = tokenFee,
-          amountFee = ByteString.copyFrom(amountFee.toByteArray)
+          amountFee = ByteString.copyFromUtf8(amountFee.toString(16))
         )
       ),
       params =
         Some(XRawOrder.Params(validUntil = (createAt / 1000).toInt + 20000))
     )
+
+    val hash = RawOrderValidatorImpl.calculateOrderHash(order)
+    order
+      .withHash(hash)
+      .withParams(
+        order.params.get.withSig(
+          RingBatchGeneratorImpl
+            .signPrefixedMessage(hash, privateKey.getOrElse(""))
+        )
+      )
+
   }
 
 }

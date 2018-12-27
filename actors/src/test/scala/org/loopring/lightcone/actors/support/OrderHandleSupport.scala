@@ -17,8 +17,10 @@
 package org.loopring.lightcone.actors.support
 
 import org.loopring.lightcone.actors.core._
-
-import scala.concurrent.Await
+import org.loopring.lightcone.actors.validator.{
+  MessageValidationActor,
+  OrderHandlerMessageValidator
+}
 
 trait OrderHandleSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
@@ -26,5 +28,13 @@ trait OrderHandleSupport extends DatabaseModuleSupport {
   actors.add(
     OrderHandlerActor.name,
     OrderHandlerActor.startShardRegion
+  )
+  actors.add(
+    OrderHandlerMessageValidator.name,
+    MessageValidationActor(
+      new OrderHandlerMessageValidator(),
+      OrderHandlerActor.name,
+      OrderHandlerMessageValidator.name
+    )
   )
 }

@@ -111,11 +111,11 @@ package object ethereum {
     ): XGetBalanceAndAllowancesRes = {
 
     val allowances = batchRes.resps.filter(_.id % 2 == 0).map { res =>
-      ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
     }
     val balances =
       batchRes.resps.filter(_.id % 2 == 1).map { res =>
-        ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+        ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
       }
     val balanceAndAllowance = (balances zip allowances).map { ba =>
       XBalanceAndAllowance(ba._1, ba._2)
@@ -129,7 +129,7 @@ package object ethereum {
       batchRes: XBatchContractCallRes
     ): XGetBalanceRes = {
     val balances = batchRes.resps.map { res =>
-      ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
     }
     XGetBalanceRes(address, (tokens zip balances).toMap)
   }
@@ -140,7 +140,7 @@ package object ethereum {
       batchRes: XBatchContractCallRes
     ): XGetAllowanceRes = {
     val allowances = batchRes.resps.map { res =>
-      ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
     }
     XGetAllowanceRes(address, (tokens zip allowances).toMap)
   }
@@ -152,7 +152,7 @@ package object ethereum {
     ) = {
     orderHashes.zipWithIndex.map { orderHash ⇒
       val data = tradeHistoryAbi.filled.pack(
-        FilledFunction.Params(Numeric.hexStringToByteArray(orderHash._1))
+        FilledFunction.Params(Numeric.toBigInt(orderHash._1).toByteArray)
       )
       val param = XTransactionParam(to = contractAddress.toString, data = data)
       XEthCallReq(orderHash._2, Some(param), tag)

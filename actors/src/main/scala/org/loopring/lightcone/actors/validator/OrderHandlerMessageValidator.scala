@@ -48,15 +48,15 @@ final class OrderHandlerMessageValidator()(implicit val config: Config)
 
   override def validate: PartialFunction[Any, Any] = {
 
-    case _ @XSubmitOrderReq(Some(order)) ⇒
+    case req @ XSubmitOrderReq(Some(order)) ⇒
       RawOrderValidatorImpl.validate(order) match {
         case Left(errorCode) ⇒
           throw ErrorException(
             errorCode,
             message = s"invalid order in XSubmitOrderReq:$order"
           )
-        case Right(rawOrder) ⇒
-          rawOrder
+        case Right(_) ⇒
+          req
       }
 
     case req @ XCancelOrderReq(_, owner, _, marketId) ⇒

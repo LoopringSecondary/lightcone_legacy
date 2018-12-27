@@ -73,10 +73,10 @@ class EthereumQueryActor(
 
   val erc20Abi = ERC20ABI()
 
-  val delegateAddress = config.getString("loopring-protocol.delegate-address")
+  val delegateAddress = config.getString("loopring_protocol.delegate-address")
 
   val tradeHistoryAddress =
-    config.getString("loopring-protocol.trade-history-address")
+    config.getString("loopring_protocol.trade-history-address")
   val zeroAddress: String = "0x" + "0" * 40
 
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
@@ -121,6 +121,10 @@ class EthereumQueryActor(
                 ))
             )
           case None ⇒
+            res.balanceAndAllowanceMap.unzip._2
+              .foreach(
+                ba ⇒ println(Numeric.toHexString(ba.allowance.toByteArray))
+              )
             res
         }
       }) sendTo sender
