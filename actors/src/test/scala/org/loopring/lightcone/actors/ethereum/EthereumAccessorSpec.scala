@@ -22,11 +22,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config._
 import org.loopring.lightcone.actors.base.MapBasedLookup
-import org.loopring.lightcone.actors.support.{
-  CommonSpec,
-  EthereumSupport,
-  JsonrpcSupport
-}
+import org.loopring.lightcone.actors.support.{CommonSpec, EthereumSupport}
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib.SystemTimeProvider
 import org.loopring.lightcone.proto._
@@ -37,16 +33,9 @@ import org.web3j.utils.Numeric
 import scala.concurrent.duration._
 import scala.concurrent._
 
-class EthereumAccessorSpec
-    extends CommonSpec(
-      """
-        |akka.cluster.roles=[
-        | "ethereum_access"]
-        |""".stripMargin
-    )
-    with JsonrpcSupport
-    with EthereumSupport
-    with Logging {
+class EthereumAccessorSpec extends CommonSpec("""
+                                                |akka.cluster.roles=[]
+                                                |""".stripMargin) with EthereumSupport {
 
   val wethAbi = WETHABI()
   val delegateAdderess = "0x17233e07c67d086464fD408148c3ABB56245FA64"
@@ -195,7 +184,7 @@ class EthereumAccessorSpec
 //      .map(_.result)
   } yield {
     println(
-      s"BlockNum: ${blockNum} --- ${Numeric.toBigInt(blockNum).intValue()}"
+      s"BlockNum: ${blockNum} ---${Numeric.toBigInt(blockNum)}"
     )
     //    println(s"txHashs:${blockWithTxHash}")
     //    println(s"txHashs:${blockByHashWithHash}")
@@ -214,7 +203,7 @@ class EthereumAccessorSpec
     //    println(s"Uncle:${uncle}")
     //    println(s"Uncles:${uncles}")
 //    println(s"Gas:$gas")
-    println("test success")
+//    println("test success")
   }
 
   Await.result(fu, 2 minute)

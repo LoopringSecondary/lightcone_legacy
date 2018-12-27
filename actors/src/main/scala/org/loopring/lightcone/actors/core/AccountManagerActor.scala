@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.SupervisorStrategy.Escalate
+import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern._

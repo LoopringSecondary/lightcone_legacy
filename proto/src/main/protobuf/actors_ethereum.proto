@@ -34,19 +34,21 @@ message XEthereumProxySettings {
     repeated XNode nodes = 4;
 }
 
-message XCheckBlockHeight {
-}
-
-message XCheckBlockHeightResp {
-    int32 current_block = 1;
-    int32 height_block = 2;
-}
+//message XCheckBlockHeightResp {
+//    int32 current_block = 1;
+//    int32 height_block = 2;
+//}
 
 message XNodeBlockHeight{
     string path = 1;
     int32 height = 2;
 }
 
+message XNodeHeightReq{}
+
+message XNodeHeightRes{
+    repeated XNodeBlockHeight nodes = 1;
+}
 
 message XJsonRpcReq {
     string json = 1;
