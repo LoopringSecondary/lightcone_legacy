@@ -16,15 +16,13 @@
 
 package org.loopring.lightcone.actors.entrypoint
 
-import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
-class EntryPointSpec_SubmitSeveralOrder
+class EntryPointSpec_SubmitOrdersOfDifferentMarket
     extends CommonSpec("""
                          |akka.cluster.roles=[
                          | "order_handler",
@@ -43,22 +41,26 @@ class EntryPointSpec_SubmitSeveralOrder
     with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
-  "submit several order then cancel it" must {
-    "get right response in EntryPoint,DbModule,Orderbook" in {
+  "submit several orders of different markets" must {
+    "use the right shardId" in {
       //下单情况
       val rawOrders =
+        //lrc-weth
         ((0 until 2) map { i =>
           createRawOrder(
             amountS = "10".zeros(LRC_TOKEN.decimals),
             amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
           )
         }) ++
+          //gto-weth
           ((0 until 2) map { i =>
             createRawOrder(
-              amountS = "20".zeros(LRC_TOKEN.decimals),
+              amountS = "20".zeros(GTO_TOKEN.decimals),
+              tokenS = GTO_TOKEN.address,
               amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
             )
           }) ++
+          //lrc-weth
           ((0 until 2) map { i =>
             createRawOrder(
               amountS = "30".zeros(LRC_TOKEN.decimals),
@@ -91,32 +93,54 @@ class EntryPointSpec_SubmitSeveralOrder
 
       //orderbook
       Thread.sleep(1000)
-      val getOrderBook = XGetOrderbook(
-        0,
-        100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+      info("then test the orderbook of LRC-WETH")
+      val orderbookLrcF = singleRequest(
+        XGetOrderbook(
+          0,
+          100,
+          Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        ),
+        "orderbook"
       )
-      val orderbookF = singleRequest(getOrderBook, "orderbook")
 
-      val orderbookRes = Await.result(orderbookF, timeout.duration)
-      orderbookRes match {
+      val orderbookLrcRes = Await.result(orderbookLrcF, timeout.duration)
+      orderbookLrcRes match {
         case XOrderbook(lastPrice, sells, buys) =>
           info(s"sells: ${sells}")
-          assert(sells.size == 3)
+          assert(sells.size == 2)
           assert(
             sells(0).price == "10.000000" &&
               sells(0).amount == "20.00000" &&
               sells(0).total == "2.00000"
           )
           assert(
-            sells(1).price == "20.000000" &&
-              sells(1).amount == "40.00000" &&
+            sells(1).price == "30.000000" &&
+              sells(1).amount == "60.00000" &&
               sells(1).total == "2.00000"
           )
+          assert(buys.isEmpty)
+        case _ => assert(false)
+      }
+
+      info("then test the orderbook of GTO-WETH")
+      val orderbookGtoF = singleRequest(
+        XGetOrderbook(
+          0,
+          100,
+          Some(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address))
+        ),
+        "orderbook"
+      )
+
+      val orderbookGtoRes = Await.result(orderbookGtoF, timeout.duration)
+      orderbookGtoRes match {
+        case XOrderbook(lastPrice, sells, buys) =>
+          info(s"sells: ${sells}")
+          assert(sells.size == 1)
           assert(
-            sells(2).price == "30.000000" &&
-              sells(2).amount == "60.00000" &&
-              sells(2).total == "2.00000"
+            sells(0).price == "20.000000" &&
+              sells(0).amount == "40.00000" &&
+              sells(0).total == "2.00000"
           )
           assert(buys.isEmpty)
         case _ => assert(false)
@@ -154,26 +178,28 @@ class EntryPointSpec_SubmitSeveralOrder
       })
 
       Thread.sleep(1000)
-      val orderbookF1 = singleRequest(getOrderBook, "orderbook")
+      val orderbookF1 = singleRequest(
+        XGetOrderbook(
+          0,
+          100,
+          Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        ),
+        "orderbook"
+      )
 
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
         case XOrderbook(lastPrice, sells, buys) =>
-          assert(sells.size == 3)
+          assert(sells.size == 2)
           assert(
             sells(0).price == "10.000000" &&
               sells(0).amount == "10.00000" &&
               sells(0).total == "1.00000"
           )
           assert(
-            sells(1).price == "20.000000" &&
-              sells(1).amount == "40.00000" &&
+            sells(1).price == "30.000000" &&
+              sells(1).amount == "60.00000" &&
               sells(1).total == "2.00000"
-          )
-          assert(
-            sells(2).price == "30.000000" &&
-              sells(2).amount == "60.00000" &&
-              sells(2).total == "2.00000"
           )
           assert(buys.isEmpty)
         case _ => assert(false)

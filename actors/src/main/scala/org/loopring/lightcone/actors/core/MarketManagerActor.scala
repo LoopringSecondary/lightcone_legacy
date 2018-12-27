@@ -17,6 +17,8 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.cluster.sharding._
 import akka.pattern.ask
 import akka.util.Timeout
@@ -29,10 +31,11 @@ import org.loopring.lightcone.core.data.Order
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.ethereum.data.{Address => LAddress}
+
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -54,7 +57,6 @@ object MarketManagerActor extends ShardedByMarket {
       dustOrderEvaluator: DustOrderEvaluator,
       tokenManager: TokenManager
     ): ActorRef = {
-    numOfShards = 10
 
     val markets = config
       .getObjectList("markets")
@@ -137,7 +139,8 @@ class MarketManagerActor(
   )
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
-  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  protected def orderbookManagerMediator =
+    DistributedPubSub(context.system).mediator
   protected def settlementActor = actors.get(RingSettlementActor.name)
 
   override def preStart(): Unit = {
@@ -190,7 +193,10 @@ class MarketManagerActor(
 
     case XCancelOrderReq(orderId, _, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
-        orderbookManagerActor ! orderbookUpdate.copy(marketId = Some(marketId))
+        orderbookManagerMediator ! Publish(
+          OrderbookManagerActor.getTopicId(marketId),
+          orderbookUpdate.copy(marketId = Some(marketId))
+        )
       }
       sender ! XCancelOrderRes(id = orderId)
 
@@ -264,7 +270,10 @@ class MarketManagerActor(
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerActor ! ou.copy(marketId = Some(marketId))
+      orderbookManagerMediator ! Publish(
+        OrderbookManagerActor.getTopicId(marketId),
+        ou.copy(marketId = Some(marketId))
+      )
     }
   }
 

@@ -17,6 +17,8 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.util.Timeout
@@ -25,15 +27,20 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
+import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
+import org.slf4s.Logging
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderbookManagerActor extends ShardedByMarket {
+object OrderbookManagerActor extends ShardedByMarket with Logging {
   val name = "orderbook_manager"
+
+  def getTopicId(marketId: XMarketId) =
+    OrderbookManagerActor.name + "-" + getEntityId(marketId)
 
   def startShardRegion(
     )(
@@ -55,12 +62,14 @@ object OrderbookManagerActor extends ShardedByMarket {
       .map { item =>
         val c = item.toConfig
         val marketId =
-          XMarketId(c.getString("priamry"), c.getString("secondary"))
-        OrderbookManagerActor.getEntityId(marketId) -> marketId
+          XMarketId(
+            LAddress(c.getString("priamry")).toString,
+            LAddress(c.getString("secondary")).toString
+          )
+        getEntityId(marketId) -> marketId
       }
       .toMap
 
-    println(s"### orderbook ClusterSharding ${markets}")
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderbookManagerActor(markets)),
@@ -91,6 +100,9 @@ class OrderbookManagerActor(
       extractEntityId
     ) {
   val marketId = markets(entityId)
+  val mediator = DistributedPubSub(context.system).mediator
+  mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
+
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
 
   // TODO(yongfeng): load marketconfig from database throught a service interface

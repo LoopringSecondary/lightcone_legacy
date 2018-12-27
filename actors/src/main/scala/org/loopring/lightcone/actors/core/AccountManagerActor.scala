@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.SupervisorStrategy.Escalate
+import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern._
@@ -126,35 +126,30 @@ class AccountManagerActor(
         Seq(order.id)
       )).mapAs[XGetFilledAmountRes]
 
-      _ = log.info(s"order history: orderHistoryRes")
+      _ = log.debug(s"order history: orderHistoryRes")
 
       _order = order.withFilledAmountS(
         getFilledAmountRes.filledAmountSMap(order.id)
       )
       _ = log.info(s"submitting order to AccountManager: ${_order}")
       (successful, updatedOrders) = manager.submitAndGetUpdatedOrders(_order)
-//      successful = manager.submitOrder(_order)
-//      _ = log.info(s"successful: $successful")
-//      _ = log.info(
-//        "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", ")
-//      )
-//
-//      updatedOrders = orderPool.takeUpdatedOrdersAsMap()
-//      _ = log.info(
-//        "orderPool updatedOrders: " + updatedOrders.mkString(", ")
-//      )
+      //      successful = manager.submitOrder(_order)
+      //      _ = log.info(s"successful: $successful")
+      //      _ = log.info(
+      //        "orderPool updatdOrders: " + orderPool.getUpdatedOrders.mkString(", ")
+      //      )
+      //
+      //      updatedOrders = orderPool.takeUpdatedOrdersAsMap()
+      //      _ = log.info(
+      //        "orderPool updatedOrders: " + updatedOrders.mkString(", ")
+      //      )
       _ = assert(updatedOrders.contains(_order.id))
-      _ = log.info(
-        "assert contains order: "
-      )
       order_ = updatedOrders(_order.id)
       xorder_ : XOrder = order_.copy(_reserved = None, _outstanding = None)
-      _ = log.info(
-        s"assert contains order:  ${order_}, ${xorder_}"
-      )
+      _ = log.debug(s"assert contains order:  ${order_}, ${xorder_}")
     } yield {
       if (successful) {
-        log.info(s"submitting order to market manager actor: $order_")
+        log.debug(s"submitting order to market manager actor: $order_")
         marketManagerActor ! XSubmitSimpleOrderReq("", Some(xorder_))
         XSubmitOrderRes(order = Some(xorder_))
       } else {
@@ -178,7 +173,7 @@ class AccountManagerActor(
     if (manager.hasTokenManager(token)) {
       Future.successful(manager.getTokenManager(token))
     } else {
-      log.info(s"getTokenManager0 ${token}")
+      log.debug(s"getTokenManager0 ${token}")
       for {
         res <- (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
           address,

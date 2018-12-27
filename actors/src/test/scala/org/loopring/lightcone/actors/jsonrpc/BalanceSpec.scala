@@ -21,6 +21,9 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.validator._
 import akka.pattern._
+import org.loopring.lightcone.ethereum.data.Address
+import org.web3j.utils.Numeric
+
 import scala.concurrent.{Await, Future}
 
 class BalanceSpec
@@ -45,20 +48,23 @@ class BalanceSpec
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 
+  val LRC = Address("0xa345b6c2e5ce5970d026CeA8591DC28958fF6Edc").toString
+  val WETH = Address("0x08D24FC29CDccF8e9Ca45Eef05384c58F8a8E94F").toString
+
   "send an query balance request" must {
     "receive a response with balance" in {
       val method = "get_balance_and_allowance"
-      val owner = "0xb94065482ad64d4c2b9252358d746b39e820a582"
+      val owner = "0xb5fab0b11776aad5ce60588c16bd59dcfd61a1c2"
       val getBalanceReq =
         XGetBalanceAndAllowancesReq(
           owner,
-          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+          tokens = Seq(LRC, WETH)
         )
       val maker = XOrder(
         id = "maker1",
-        tokenS = LRC_TOKEN.address,
-        tokenB = WETH_TOKEN.address,
-        tokenFee = LRC_TOKEN.address,
+        tokenS = LRC,
+        tokenB = WETH,
+        tokenFee = LRC,
         amountS = "1".zeros(18),
         amountB = "100".zeros(10),
         amountFee = "1".zeros(16),
@@ -91,9 +97,9 @@ class BalanceSpec
       res match {
         case (f: XGetBalanceAndAllowancesRes, s: XGetBalanceAndAllowancesRes) =>
           val bf: BigInt =
-            f.balanceAndAllowanceMap(LRC_TOKEN.address).availableBalance
+            f.balanceAndAllowanceMap(LRC).availableBalance
           val bs: BigInt =
-            s.balanceAndAllowanceMap(LRC_TOKEN.address).availableBalance
+            s.balanceAndAllowanceMap(LRC).availableBalance
           val sold: BigInt = maker.amountS
           val fee: BigInt = maker.amountFee
           assert(bf - bs === sold + fee)

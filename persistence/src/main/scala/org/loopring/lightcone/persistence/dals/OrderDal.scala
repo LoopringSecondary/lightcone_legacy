@@ -25,6 +25,7 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
 import com.mysql.jdbc.exceptions.jdbc4._
+import com.typesafe.scalalogging.Logger
 import scala.concurrent._
 import scala.util.{Failure, Success}
 import slick.lifted.Query
@@ -154,6 +155,7 @@ class OrderDalImpl(
   def getRowHash(row: XRawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
   implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
+  private[this] val logger = Logger(this.getClass)
 
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
     val now = timeProvider.getTimeMillis
@@ -178,8 +180,7 @@ class OrderDalImpl(
           )
         }
         case Failure(ex) ⇒ {
-          // TODO du: print some log
-          // log(s"error : ${ex.getMessage}")
+          logger.error(s"error : ${ex.getMessage}")
           XSaveOrderResult(
             error = ERR_PERSISTENCE_INTERNAL,
             order = None

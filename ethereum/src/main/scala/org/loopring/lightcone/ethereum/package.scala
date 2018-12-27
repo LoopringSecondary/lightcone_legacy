@@ -22,7 +22,7 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.ethereum.data.Address
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
-import org.web3j.crypto
+import org.web3j.crypto.WalletUtils.isValidAddress
 
 package object ethereum {
   implicit def int2BigInt(x: Int): BigInt = BigInt(x)
@@ -35,6 +35,18 @@ package object ethereum {
 
   implicit def byteString2BigInt(bs: ByteString): BigInt =
     string2BigInt(bs.toStringUtf8)
+
+  def verifyEthereumSignature(
+      hash: Array[Byte],
+      r: Array[Byte],
+      s: Array[Byte],
+      v: Byte,
+      addr: Address
+    ): Boolean = {
+    val signatureDataV = new Sign.SignatureData(v, r, s)
+    val key = Sign.signedPrefixedMessageToKey(hash, signatureDataV)
+    addr.equals(Address(Keys.getAddress(key)))
+  }
 
   def verifySignature(
       hash: Array[Byte],
@@ -87,6 +99,12 @@ package object ethereum {
       TransactionEncoder
         .signMessage(rawTransaction, chainId.toByte, credentials)
     )
+  }
+
+  def isValidAndNonzeroAddress(addr: String) = addr match {
+    case ad if isValidAddress(addr) =>
+      BigInt(Numeric.cleanHexPrefix(ad), 16) > 0
+    case _ => false
   }
 
 }
