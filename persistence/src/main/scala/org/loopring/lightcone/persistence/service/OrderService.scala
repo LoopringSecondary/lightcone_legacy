@@ -58,10 +58,9 @@ trait OrderService {
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
       statuses: Set[XOrderStatus],
-      owners: Set[String] = Set.empty,
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: Option[XSkipBySequenceId] = None
+      skip: XSkipBySequenceId
     ): Future[Seq[XRawOrder]]
 
   // Count the number of orders
@@ -72,14 +71,6 @@ trait OrderService {
       tokenB: Option[String] = None,
       marketHash: Option[String] = None,
       feeTokenSet: Option[String] = None
-    ): Future[Int]
-
-  // Count the number of orders
-  def countOrdersForRecover(
-      statuses: Set[XOrderStatus],
-      owners: Set[String] = Set.empty,
-      marketHashIdSet: Set[Int] = Set.empty,
-      addressShardIdSet: Set[Int] = Set.empty
     ): Future[Int]
 
   // Update order's status and update the updated_at timestamp if changeUpdatedAtField is true.

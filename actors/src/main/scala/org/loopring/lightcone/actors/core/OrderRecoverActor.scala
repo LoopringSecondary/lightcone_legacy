@@ -156,10 +156,8 @@ class OrderRecoverActor(
           if ("" != request.addressShardingEntity)
             addressShardIds += request.addressShardingEntity.toInt
           if (request.marketId.nonEmpty) {
-            val marketId = request.marketId.get
-            val marketHashId = MarketHashProvider
-              .convert2Hex(marketId.primary, marketId.secondary)
-              .hashCode
+            val marketHashId =
+              MarketManagerActor.getEntityId(request.marketId.get).toInt
             marketHashIds += marketHashId
           }
         }
@@ -171,10 +169,9 @@ class OrderRecoverActor(
       )
       dbModule.orderService.getOrdersForRecover(
         status,
-        Set.empty,
         marketHashIds,
         addressShardIds,
-        Some(XSkipBySequenceId(lastOrderSeqId, batchSize))
+        XSkipBySequenceId(lastOrderSeqId, batchSize)
       )
     } else {
       Future.successful(Seq.empty)

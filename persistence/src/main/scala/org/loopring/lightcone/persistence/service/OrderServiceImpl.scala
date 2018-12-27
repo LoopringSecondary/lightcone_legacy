@@ -18,7 +18,6 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import com.typesafe.config.Config
 import org.loopring.lightcone.lib.{
   ErrorException,
   MarketHashProvider,
@@ -153,14 +152,12 @@ class OrderServiceImpl @Inject()(
 
   def getOrdersForRecover(
       statuses: Set[XOrderStatus],
-      owners: Set[String] = Set.empty,
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: Option[XSkipBySequenceId] = None
+      skip: XSkipBySequenceId
     ): Future[Seq[XRawOrder]] =
     orderDal.getOrdersForRecover(
       statuses,
-      owners,
       marketHashIdSet,
       addressShardIdSet,
       skip
@@ -182,19 +179,6 @@ class OrderServiceImpl @Inject()(
       tokenB,
       marketHash,
       feeTokenSet
-    )
-
-  def countOrdersForRecover(
-      statuses: Set[XOrderStatus],
-      owners: Set[String] = Set.empty,
-      marketHashIdSet: Set[Int] = Set.empty,
-      addressShardIdSet: Set[Int] = Set.empty
-    ): Future[Int] =
-    orderDal.countOrdersForRecover(
-      statuses,
-      owners,
-      marketHashIdSet,
-      addressShardIdSet
     )
 
   def updateOrderStatus(

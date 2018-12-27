@@ -17,6 +17,10 @@
 package org.loopring.lightcone.actors.support
 
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.actors.core.{
+  MarketManagerActor,
+  MultiAccountManagerActor
+}
 import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Hash
@@ -49,6 +53,7 @@ trait OrderGenerateSupport {
         amountB.toByteArray ++
         amountFee.toByteArray
     )
+    val marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
     XRawOrder(
       owner = owner,
       hash = Numeric.toHexString(hash),
@@ -72,7 +77,14 @@ trait OrderGenerateSupport {
         )
       ),
       params =
-        Some(XRawOrder.Params(validUntil = (createAt / 1000).toInt + 20000))
+        Some(XRawOrder.Params(validUntil = (createAt / 1000).toInt + 20000)),
+      marketHash = marketHash,
+      marketHashId = MarketManagerActor
+        .getEntityId(XMarketId(primary = tokenS, secondary = tokenB))
+        .toInt,
+      addressShardId = MultiAccountManagerActor
+        .getEntityId(owner, 100)
+        .toInt
     )
   }
 

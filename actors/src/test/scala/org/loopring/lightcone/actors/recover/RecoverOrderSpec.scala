@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.recover
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.core.{
+  MarketManagerActor,
   MultiAccountManagerActor,
   OrderRecoverCoordinator
 }
@@ -29,6 +30,8 @@ import akka.pattern._
 import akka.util.Timeout
 import scala.concurrent.duration._
 import org.loopring.lightcone.core.base._
+import org.web3j.crypto.Hash
+import org.web3j.utils.Numeric
 
 class RecoverOrderSpec
     extends CommonSpec("""
@@ -56,59 +59,79 @@ class RecoverOrderSpec
   val validSince = 1
   val validUntil = timeProvider.getTimeSeconds()
 
-  private def testSave(
-      hash: String,
-      owner: String,
-      status: XOrderStatus,
-      tokenS: String,
-      tokenB: String,
-      validSince: Int,
-      validUntil: Int
-    ): Future[Either[XRawOrder, XErrorCode]] = {
-    val now = timeProvider.getTimeMillis
-    val state =
-      XRawOrder.State(createdAt = now, updatedAt = now, status = status)
-    val fee = XRawOrder.FeeParams(
-      tokenFee = LRC_TOKEN.address,
-      amountFee = ByteString.copyFrom("1", "utf-8")
-    )
-    val param = XRawOrder.Params(validUntil = validUntil)
-    val marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
-    val order = XRawOrder(
-      owner = owner,
-      hash = hash,
-      version = 1,
-      tokenS = tokenS,
-      tokenB = tokenB,
-      amountS = ByteString.copyFrom("11", "UTF-8"),
-      amountB = ByteString.copyFrom("12", "UTF-8"),
-      validSince = validSince,
-      state = Some(state),
-      feeParams = Some(fee),
-      params = Some(param),
-      marketHash = marketHash,
-      marketHashId = marketHash.hashCode,
-      addressShardId = MultiAccountManagerActor
-        .getEntityId(owner, 100)
-        .toInt
-    )
-    dbModule.orderService.saveOrder(order)
-  }
-
   private def testSaves(
-      hashes: Set[String],
-      owner: String,
-      status: XOrderStatus,
-      tokenS: String,
-      tokenB: String,
-      validSince: Int,
-      validUntil: Int
-    ): Future[Set[Either[XRawOrder, XErrorCode]]] = {
+      orders: Seq[XRawOrder]
+    ): Future[Seq[Either[XRawOrder, XErrorCode]]] = {
     for {
-      result ← Future.sequence(hashes.map { hash ⇒
-        testSave(hash, owner, status, tokenS, tokenB, validSince, validUntil)
+      result ← Future.sequence(orders.map { order ⇒
+        dbModule.orderService.saveOrder(order)
       })
     } yield result
+  }
+
+  private def testSaveOrder4Recover(
+    ): Future[Seq[Either[XRawOrder, XErrorCode]]] = {
+    val rawOrders = ((0 until 6) map { i =>
+      createRawOrder(
+        amountS = "10".zeros(LRC_TOKEN.decimals),
+        amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+      )
+    }) ++
+      ((0 until 4) map { i =>
+        createRawOrder(
+          amountS = "20".zeros(LRC_TOKEN.decimals),
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        ).copy(
+          state = Some(
+            XRawOrder.State(
+              status = XOrderStatus.STATUS_PENDING
+            )
+          )
+        )
+      }) ++
+      ((0 until 3) map { i =>
+        createRawOrder(
+          tokenS = "0x021",
+          tokenB = "0x022",
+          amountS = "11".zeros(LRC_TOKEN.decimals),
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        ).copy(
+          state = Some(
+            XRawOrder.State(
+              status = XOrderStatus.STATUS_EXPIRED
+            )
+          )
+        )
+      }) ++
+      ((0 until 5) map { i =>
+        createRawOrder(
+          tokenS = "0x031",
+          tokenB = "0x032",
+          amountS = "12".zeros(LRC_TOKEN.decimals),
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        ).copy(
+          state = Some(
+            XRawOrder.State(
+              status = XOrderStatus.STATUS_DUST_ORDER
+            )
+          )
+        )
+      }) ++
+      ((0 until 2) map { i =>
+        createRawOrder(
+          tokenS = "0x041",
+          tokenB = "0x042",
+          amountS = "13".zeros(LRC_TOKEN.decimals),
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        ).copy(
+          state = Some(
+            XRawOrder.State(
+              status = XOrderStatus.STATUS_PARTIALLY_FILLED
+            )
+          )
+        )
+      })
+    testSaves(rawOrders)
   }
 
   "recover an address" must {
@@ -126,87 +149,20 @@ class RecoverOrderSpec
       )
       val timeout1 = Timeout(5 second)
       val orderbookRes1 = Await.result(orderbookF1, timeout1.duration)
-      println(1111, orderbookRes1)
 
       // 2. save some orders in db
-      val state0 = Set(
-        "0x-recover-state0-01",
-        "0x-recover-state0-02",
-        "0x-recover-state0-03",
-        "0x-recover-state0-04",
-        "0x-recover-state0-05"
-      )
-      testSaves(
-        state0,
-        owner,
-        XOrderStatus.STATUS_NEW,
-        LRC_TOKEN.address,
-        WETH_TOKEN.address,
-        validSince,
-        validUntil.toInt
-      )
-      val state1 = Set(
-        "0x-recover-state1-01",
-        "0x-recover-state1-02"
-      )
-      testSaves(
-        state1,
-        owner,
-        XOrderStatus.STATUS_PENDING,
-        LRC_TOKEN.address,
-        WETH_TOKEN.address,
-        validSince,
-        validUntil.toInt
-      )
-      val state2 = Set(
-        "0x-recover-state2-01",
-        "0x-recover-state2-02"
-      )
-      testSaves(
-        state2,
-        owner,
-        XOrderStatus.STATUS_EXPIRED,
-        "0x021",
-        "0x022",
-        validSince,
-        validUntil.toInt
-      )
-      val state3 = Set(
-        "0x-recover-state3-01",
-        "0x-recover-state3-02",
-        "0x-recover-state3-03",
-        "0x-recover-state3-04",
-        "0x-recover-state3-05"
-      )
-      testSaves(
-        state3,
-        owner,
-        XOrderStatus.STATUS_DUST_ORDER,
-        "0x031",
-        "0x032",
-        validSince,
-        validUntil.toInt
-      )
-      val state4 = Set(
-        "0x-recover-state4-01",
-        "0x-recover-state4-02",
-        "0x-recover-state4-03"
-      )
-      testSaves(
-        state4,
-        owner,
-        XOrderStatus.STATUS_PARTIALLY_FILLED,
-        "0x041",
-        "0x042",
-        validSince,
-        validUntil.toInt
-      )
+      testSaveOrder4Recover()
       // 3. recover
+      val marketLrcWeth = Some(
+        XMarketId(primary = LRC_TOKEN.address, secondary = WETH_TOKEN.address)
+      )
+      val marketMock4 = Some(XMarketId(primary = "0x041", secondary = "0x042"))
       val request1 = XRecover.Request(
         addressShardingEntity = MultiAccountManagerActor
-          .getEntityId(owner, 100)
+          .getEntityId(owner, 100),
+        marketId = marketLrcWeth
       )
-      implicit val timeout = Timeout(100 second)
+      // implicit val timeout = Timeout(100 second)
       val r = actors.get(OrderRecoverCoordinator.name) ? request1
       val res = Await.result(r, timeout.duration)
       res match {
@@ -214,7 +170,9 @@ class RecoverOrderSpec
         case _                    => assert(false)
       }
       // 4. get depth
+      Thread.sleep(10000)
       val orderbookRes2 = Await.result(orderbookF1, timeout1.duration)
+      println(11111, orderbookRes1)
       println(22222, orderbookRes1)
     }
   }
