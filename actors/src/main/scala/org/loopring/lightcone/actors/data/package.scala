@@ -19,6 +19,8 @@ package org.loopring.lightcone.actors
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
 
 package object data {
@@ -151,11 +153,19 @@ package object data {
       amountS = xraworder.amountS,
       amountB = xraworder.amountB,
       amountFee = feeParams.amountFee,
-      //todo:该数据需要在xrawOrder中，暂时默认，等待结构确定
-      createdAt = System.currentTimeMillis(),
-      updatedAt = System.currentTimeMillis(),
-      //      status = XOrderStatus.STATUS_NEW,
+      createdAt = xraworder.getState.createdAt,
+      updatedAt = xraworder.getState.updatedAt,
+      status = xraworder.getState.status,
       walletSplitPercentage = feeParams.waiveFeePercentage / 1000.0
     )
   }
+
+  implicit def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode =
+    status match {
+      case STATUS_INVALID_DATA              => ERR_INVALID_ORDER_DATA
+      case STATUS_UNSUPPORTED_MARKET        => ERR_INVALID_MARKET
+      case STATUS_CANCELLED_TOO_MANY_ORDERS => ERR_TOO_MANY_ORDERS
+      case STATUS_CANCELLED_DUPLICIATE      => ERR_ORDER_ALREADY_EXIST
+      case _                                => ERR_INTERNAL_UNKNOWN
+    }
 }

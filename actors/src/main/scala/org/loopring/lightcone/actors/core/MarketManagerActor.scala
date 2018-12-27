@@ -189,7 +189,7 @@ class MarketManagerActor(
   def receive: Receive = {
 
     case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
-      submitOrder(xorder)
+      submitOrder(xorder).sendTo(sender)
 
     case XCancelOrderReq(orderId, _, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
