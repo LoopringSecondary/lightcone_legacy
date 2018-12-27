@@ -434,7 +434,10 @@ class OrderDalImpl(
     val concat: (String, String) => String = (left, right) => {
       left + ", " + right
     }
-    //TODO du: where invalid_from > current time
+    val now = timeProvider.getTimeSeconds()
+    // TODO du: 测试提交的订单 valid since为延后的10000s
+    // AND valid_since <= ${now}
+    // AND valid_until > ${now}
     val sql =
       sql"""
         SELECT * FROM T_ORDERS

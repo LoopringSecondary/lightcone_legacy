@@ -16,22 +16,20 @@
 
 package org.loopring.lightcone.actors.recover
 
-import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.core.{
-  MarketManagerActor,
   MultiAccountManagerActor,
   OrderRecoverCoordinator
 }
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
 import org.loopring.lightcone.proto._
+
 import scala.concurrent.{Await, Future}
 import akka.pattern._
 import akka.util.Timeout
+
 import scala.concurrent.duration._
 import org.loopring.lightcone.core.base._
-import org.web3j.crypto.Hash
-import org.web3j.utils.Numeric
+import org.loopring.lightcone.proto.XOrderbook.XItem
 
 class RecoverOrderSpec
     extends CommonSpec("""
@@ -53,11 +51,6 @@ class RecoverOrderSpec
     with EthereumQueryMockSupport
     with OrderGenerateSupport
     with RecoverSupport {
-  val tokenS = "0xaaaaaa1"
-  val tokenB = "0xbbbbbb1"
-  val tokenFee = "0x-fee-token"
-  val validSince = 1
-  val validUntil = timeProvider.getTimeSeconds()
 
   private def testSaves(
       orders: Seq[XRawOrder]
@@ -78,58 +71,58 @@ class RecoverOrderSpec
       )
     }) ++
       ((0 until 4) map { i =>
-        createRawOrder(
+        val o = createRawOrder(
           amountS = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        ).copy(
+        )
+        o.copy(
           state = Some(
-            XRawOrder.State(
-              status = XOrderStatus.STATUS_PENDING
-            )
+            o.state.get.copy(status = XOrderStatus.STATUS_PENDING)
           )
         )
+        o
       }) ++
       ((0 until 3) map { i =>
-        createRawOrder(
+        val o = createRawOrder(
           tokenS = "0x021",
           tokenB = "0x022",
           amountS = "11".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        ).copy(
+        )
+        o.copy(
           state = Some(
-            XRawOrder.State(
-              status = XOrderStatus.STATUS_EXPIRED
-            )
+            o.state.get.copy(status = XOrderStatus.STATUS_EXPIRED)
           )
         )
+        o
       }) ++
       ((0 until 5) map { i =>
-        createRawOrder(
+        val o = createRawOrder(
           tokenS = "0x031",
           tokenB = "0x032",
           amountS = "12".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        ).copy(
+        )
+        o.copy(
           state = Some(
-            XRawOrder.State(
-              status = XOrderStatus.STATUS_DUST_ORDER
-            )
+            o.state.get.copy(status = XOrderStatus.STATUS_DUST_ORDER)
           )
         )
+        o
       }) ++
       ((0 until 2) map { i =>
-        createRawOrder(
+        val o = createRawOrder(
           tokenS = "0x041",
           tokenB = "0x042",
           amountS = "13".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        ).copy(
+        )
+        o.copy(
           state = Some(
-            XRawOrder.State(
-              status = XOrderStatus.STATUS_PARTIALLY_FILLED
-            )
+            o.state.get.copy(status = XOrderStatus.STATUS_PARTIALLY_FILLED)
           )
         )
+        o
       })
     testSaves(rawOrders)
   }
@@ -148,7 +141,8 @@ class RecoverOrderSpec
         "orderbook"
       )
       val timeout1 = Timeout(5 second)
-      val orderbookRes1 = Await.result(orderbookF1, timeout1.duration)
+      val orderbookRes1 =
+        Await.result(orderbookF1.mapTo[XOrderbook], timeout1.duration)
 
       // 2. save some orders in db
       testSaveOrder4Recover()
@@ -162,7 +156,7 @@ class RecoverOrderSpec
           .getEntityId(owner, 100),
         marketId = marketLrcWeth
       )
-      // implicit val timeout = Timeout(100 second)
+      implicit val timeout = Timeout(100 second)
       val r = actors.get(OrderRecoverCoordinator.name) ? request1
       val res = Await.result(r, timeout.duration)
       res match {
@@ -170,10 +164,22 @@ class RecoverOrderSpec
         case _                    => assert(false)
       }
       // 4. get depth
-      Thread.sleep(10000)
-      val orderbookRes2 = Await.result(orderbookF1, timeout1.duration)
-      println(11111, orderbookRes1)
-      println(22222, orderbookRes1)
+      Thread.sleep(5000)
+      val orderbookF2 = singleRequest(
+        getOrderBook1,
+        "orderbook"
+      )
+      val orderbookRes2 =
+        Await.result(orderbookF2.mapTo[XOrderbook], timeout1.duration)
+      assert(orderbookRes1.sells.isEmpty && orderbookRes1.buys.isEmpty)
+      assert(
+        orderbookRes2.sells.nonEmpty && orderbookRes2.sells.length === 2 && orderbookRes2.buys.isEmpty
+      )
+      orderbookRes2.sells.foreach(_ match {
+        case XItem("10.000000", "60.00000", "6.00000") => assert(true)
+        case XItem("20.000000", "80.00000", "4.00000") => assert(true)
+        case _                                         => assert(false)
+      })
     }
   }
 
