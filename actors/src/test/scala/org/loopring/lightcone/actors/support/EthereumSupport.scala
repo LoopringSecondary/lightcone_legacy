@@ -18,7 +18,10 @@ package org.loopring.lightcone.actors.support
 
 import akka.actor.Props
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
+import org.loopring.lightcone.actors.ethereum.{
+  EthereumAccessActor,
+  EthereumClientMonitor
+}
 import org.loopring.lightcone.actors.validator.{
   EthereumQueryMessageValidator,
   MessageValidationActor
@@ -43,6 +46,6 @@ trait EthereumSupport {
   if (!actors.contains(GasPriceActor.name)) {
     actors.add(GasPriceActor.name, GasPriceActor.startShardRegion())
   }
-  actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion())
-
+  actors.add(EthereumAccessActor.name, EthereumAccessActor.startSingleton())
+  actors.add(EthereumClientMonitor.name, EthereumClientMonitor.startSingleton())
 }

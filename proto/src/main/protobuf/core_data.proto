@@ -63,7 +63,7 @@ enum XErrorCode{
     ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE           = 2005;
     ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE             = 2006;
     ERR_ORDER_VALIDATION_INVALID_WALLET_SPLIT_PERCENTAGE    = 2007;
-    ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_PRIV_KEY  = 2008;   
+    ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_PRIV_KEY  = 2008;
     ERR_ORDER_VALIDATION_UNSUPPORTED_VERSION                = 2009;
     ERR_ORDER_VALIDATION_INVALID_SIG                        = 2010;
 
@@ -91,7 +91,7 @@ enum XErrorCode{
 
     //5001 -- 6000 ethereum Error
     ERR_ETHEREUM_ILLEGAL_ADDRESS        = 5001;
-
+    ERR_NO_ACCESSIBLE_ETHEREUM_NODE     = 5002;
     // 5001 and beyound for other
 
 }
@@ -109,7 +109,7 @@ enum XTokenStandard {
 enum XSigningAlgorithm {
     ALGO_ETHEREUM   = 0;
     ALGO_EIP712     = 1;
-    
+
     ALGO_NONE       = 255;
 }
 
@@ -155,7 +155,7 @@ message XRawOrder {
         int64 matched_at              = 103;
         int64 updated_at_block        = 104;
         XOrderStatus status           = 105;
-                                    
+
         bytes actual_amount_s         = 200;
         bytes actual_amount_b         = 201;
         bytes actual_amount_fee       = 202;
