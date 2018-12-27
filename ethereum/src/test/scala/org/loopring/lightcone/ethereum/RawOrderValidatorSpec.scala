@@ -63,7 +63,7 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
     assert(hash == hash1Expected, "hash calculating method get wrong result.")
   }
 
-  "validate" should "be able to validate is an order is valid" in {
+  "validate" should "be able to validate if an order is valid or not" in {
     val wethAddress = "0x3B39f10dC98b3fcd86a6d4837ff2BdF410710B94"
     val lrcAddress = "0x5eADE4Cbac9ecd6082Bb2A375185e2F8FCaeeb7F"
     val validSince = 1545619108
@@ -115,5 +115,47 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
     val validateRes3 = validator.validate(order3)
     val expectedRes3 = Right(order3)
     assert(validateRes3 == expectedRes3, "validate order not as expected.")
+  }
+
+  it should "be able to verify order's signature(eip712)" in {
+    val wethAddress = "0x1090B9813DF54d1F03dB5596939b69DC89ba1Be4"
+    val lrcAddress = "0x703C3606e05E151DCe6ECBCd9998617C30dfeFfd"
+    val order2Owner = "0xf5B3ab72F6E80d79202dBD37400447c11618f21f"
+    val dualAuthAddr = "0x66D3444ad66fc32abCEC9B38A4181066b1146CCA"
+    val dualAuthPrivateKey =
+      "0x2cebf2be8c8542bc9ab08f8bfd6e5cbd77b7ce3ba30d99bea19887ef4b24f08c"
+    val walletAddr = dualAuthAddr
+
+    val orderSig2 =
+      "0x01411b448f2be050fb924c688077ec0167c6f374e2392cd870366be0c05944a08a9578280c72d522724741a7b6b7a487d01499a2604032cdd6e2c630b5978898511534"
+
+    val params2 = (new XRawOrder.Params)
+      .withDualAuthAddr(dualAuthAddr)
+      .withDualAuthPrivateKey(dualAuthPrivateKey)
+      .withWallet(walletAddr)
+      .withSig(orderSig2)
+
+    val feeParams2 = (new XRawOrder.FeeParams)
+      .withTokenFee(lrcAddress)
+      .withAmountFee(
+        ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16))
+      )
+      .withTokenRecipient(order2Owner)
+      .withWalletSplitPercentage(20)
+
+    val order2 = (new XRawOrder)
+      .withVersion(0)
+      .withOwner(order2Owner)
+      .withTokenS(lrcAddress)
+      .withTokenB(wethAddress)
+      .withAmountS(ByteString.copyFromUtf8(BigInt("1" + "0" * 21).toString(16)))
+      .withAmountB(ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16)))
+      .withValidSince(1545813653)
+      .withParams(params2)
+      .withFeeParams(feeParams2)
+
+    val validateRes = validator.validate(order2)
+    val expectedRes = Right(order2)
+    assert(validateRes == expectedRes, "validate order not as expected.")
   }
 }

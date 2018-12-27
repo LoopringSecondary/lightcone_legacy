@@ -15,7 +15,7 @@
  */
 
 package org.loopring.lightcone.actors.core
-import akka.actor.SupervisorStrategy.Restart
+import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor._
 import akka.cluster.sharding._
 import akka.pattern._
@@ -95,10 +95,14 @@ class MultiAccountManagerActor(
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
+  //todo: 完成recovery后，需要再次测试异常恢复情况
   override val supervisorStrategy =
-    AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
+    AllForOneStrategy() {
       case e: Exception ⇒
         log.error(e.getMessage)
+        accountManagerActors.all().foreach(_ ! PoisonPill)
+        Escalate
+      case e =>
         Restart
     }
 

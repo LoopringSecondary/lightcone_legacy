@@ -32,6 +32,8 @@ message XStart{
 }
 message XStop{}
 
+message XInitializationDone {}
+
 message XSubmitOrderReq {
     XRawOrder raw_order = 1;
 }

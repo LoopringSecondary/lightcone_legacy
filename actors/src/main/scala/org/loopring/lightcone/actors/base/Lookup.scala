@@ -28,6 +28,7 @@ trait Lookup[T] {
   def del(name: String): Unit
   def contains(name: String): Boolean
   def clear(): Unit
+  def all(): Seq[T]
 }
 
 class MapBasedLookup[T] extends Lookup[T] with Logging {
@@ -64,4 +65,9 @@ class MapBasedLookup[T] extends Lookup[T] with Logging {
   def clear() = {
     items = Map.empty
   }
+
+  def all() = {
+    items.values.toSeq
+  }
+
 }
