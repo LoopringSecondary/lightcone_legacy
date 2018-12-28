@@ -53,7 +53,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       info(s"submit res: ${submitRes}")
 
       Thread.sleep(1000)
-      actors.get(OrderbookManagerActor.name) ! Orderbook.Get(
+      actors.get(OrderbookManagerActor.name) ! GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -89,7 +89,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
         o.getState.status should be(OrderStatus.STATUS_CANCELLED_BY_USER)
       }
 
-      actors.get(OrderbookManagerActor.name) ! Orderbook.Get(
+      actors.get(OrderbookManagerActor.name) ! GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))

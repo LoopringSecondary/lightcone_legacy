@@ -21,7 +21,7 @@ import org.loopring.lightcone.proto._
 
 trait RpcBinding extends JsonRpcModule {
 
-  ifReceive[Orderbook.Get].thenReply[Orderbook]("orderbook")
+  ifReceive[GetOrderbook.Req].thenReply[GetOrderbook.Res]("orderbook")
 
   ifReceive[SubmitOrder.Req].thenReply[SubmitOrder.Res]("submit_order")
 

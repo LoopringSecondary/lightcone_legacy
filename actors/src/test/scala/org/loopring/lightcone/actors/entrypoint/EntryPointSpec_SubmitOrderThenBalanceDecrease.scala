@@ -98,7 +98,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       //orderbook
       Thread.sleep(1000)
       info("the depth after submit an order:")
-      val getOrderBook = Orderbook.Get(
+      val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -107,7 +107,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
 
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}, buys:${buys}")
           assert(sells.size == 1)
           assert(
@@ -144,7 +144,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
 
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}, buys: ${buys}")
           assert(sells.isEmpty)
           assert(buys.isEmpty)

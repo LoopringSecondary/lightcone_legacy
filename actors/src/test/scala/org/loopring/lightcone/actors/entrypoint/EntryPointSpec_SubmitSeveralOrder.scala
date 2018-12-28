@@ -91,7 +91,7 @@ class EntryPointSpec_SubmitSeveralOrder
 
       //orderbook
       Thread.sleep(1000)
-      val getOrderBook = Orderbook.Get(
+      val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -100,7 +100,7 @@ class EntryPointSpec_SubmitSeveralOrder
 
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}")
           assert(sells.size == 3)
           assert(
@@ -158,7 +158,7 @@ class EntryPointSpec_SubmitSeveralOrder
 
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           assert(sells.size == 3)
           assert(
             sells(0).price == "10.000000" &&

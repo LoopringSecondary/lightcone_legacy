@@ -80,7 +80,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
   val extractMarketId: PartialFunction[Any, MarketId] = {
-    case Orderbook.Get(_, _, Some(marketId))      => marketId
+    case GetOrderbook.Req(_, _, Some(marketId))   => marketId
     case OrderbookUpdate(_, _, _, Some(marketId)) => marketId
   }
 }
@@ -122,10 +122,10 @@ class OrderbookManagerActor(
       log.info(s"receive OrderbookUpdate ${req}")
       manager.processUpdate(req)
 
-    case Orderbook.Get(level, size, Some(marketId)) =>
+    case GetOrderbook.Req(level, size, Some(marketId)) =>
       Future {
         if (OrderbookManagerActor.getEntityId(marketId) == marketIdHashedValue)
-          manager.getOrderbook(level, size)
+          GetOrderbook.Res(Option(manager.getOrderbook(level, size)))
         else
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,

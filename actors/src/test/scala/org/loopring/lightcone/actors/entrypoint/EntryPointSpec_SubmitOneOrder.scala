@@ -73,7 +73,7 @@ class EntryPointSpec_SubmitOneOrder
         case None => assert(false)
       }
       //orderbook
-      val getOrderBook = Orderbook.Get(
+      val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -81,7 +81,7 @@ class EntryPointSpec_SubmitOneOrder
       val orderbookF = singleRequest(getOrderBook, "orderbook")
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           println(s"sells:${sells}, buys:${buys}")
           assert(sells.nonEmpty)
           assert(

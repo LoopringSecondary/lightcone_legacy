@@ -19,8 +19,90 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
-import "core_data.proto";
-import "core_messages.proto";
+import "core.proto";
+
+
+enum TokenStandard {
+    ERC20   = 0;
+    ERC1400 = 1;
+}
+
+enum SigningAlgorithm {
+    ALGO_ETHEREUM   = 0;
+    ALGO_EIP712     = 1;
+    ALGO_NONE       = 255;
+}
+
+
+// use bytes to represent big-numbers and string for addresses
+message RawOrder {
+    message Params {
+        string dual_auth_addr                      = 1;
+        string broker                              = 2;
+        string order_interceptor                   = 3;
+        string wallet                              = 4;
+        int32  valid_until                         = 5; // in seconds
+        string sig                                 = 6;
+        string dual_auth_sig                       = 7;
+        bool   all_or_none                         = 8;
+        TokenStandard token_standard_s            = 9;
+        TokenStandard token_standard_b            = 10;
+        TokenStandard token_standard_fee          = 11;
+        string dual_auth_private_key               = 12;
+    }
+
+    message FeeParams {
+        string token_fee               = 1;
+        bytes  amount_fee              = 2;
+        int32  waive_fee_percentage    = 3;
+        int32  token_s_fee_percentage  = 4;
+        int32  token_b_fee_percentage  = 5;
+        string token_recipient         = 6;
+        int32  wallet_split_percentage = 7;
+    }
+
+    message ERC1400Params {
+        string    tranche_s         = 53;
+        string    tranche_b         = 54;
+        string    transfer_data_s   = 55;
+    }
+
+    // // The following fieds are not part of Loopring's order definition but
+    // // will be provided as metadata
+    message State {
+        int64 created_at              = 101;
+        int64 updated_at              = 102;
+        int64 matched_at              = 103;
+        int64 updated_at_block        = 104;
+        OrderStatus status           = 105;
+
+        bytes actual_amount_s         = 200;
+        bytes actual_amount_b         = 201;
+        bytes actual_amount_fee       = 202;
+        bytes outstanding_amount_s    = 203;
+        bytes outstanding_amount_b    = 204;
+        bytes outstanding_amount_fee  = 205;
+    }
+
+    // string  id          = 1; // order hash
+    string hash                     = 2;
+    int32  version                  = 3;
+    string owner                    = 4;
+    string token_s                  = 5;
+    string token_b                  = 6;
+    bytes  amount_s                 = 7;
+    bytes  amount_b                 = 8;
+    int32  valid_since              = 9; // in seconds
+    Params params                   = 10;
+    FeeParams fee_params            = 11;
+    ERC1400Params erc1400_params    = 12;
+    State state                     = 13;
+    int64  sequence_id              = 14;
+    string market_hash              = 15;
+    int32  address_shard_id         = 16;
+    int32  market_hash_id           = 17;
+}
+
 
 message OrderState {
     bytes amount_s = 1;
@@ -118,4 +200,97 @@ message UpdatedTokenBurnRate {
     double burnRate = 2;
 }
 
+
+message RingBatch {
+    message Ring {
+        repeated int32 order_indexes = 1;
+    }
+
+    string fee_recipient            = 1;
+    string miner                    = 2;
+    string sig                      = 3;
+    repeated Ring rings            = 4;
+    repeated RawOrder orders       = 5;
+    SigningAlgorithm sign_algorithm = 6;
+    string hash                     = 7;
+    string transaction_origin       = 8;
+}
+
+message RingBatchContext {
+    string fee_recipient            = 1;
+    string miner                    = 2;
+    string transaction_origin       = 3;
+    string miner_private_key        = 4;
+    string lrc_address              = 5;
+}
+
+message Trade {
+    message Fees {
+        string token_fee               = 1;
+        bytes  amount_fee              = 2;
+        string token_amount_s          = 3;
+        bytes  fee_amount_s            = 4;
+        string token_amount_b          = 5;
+        bytes  fee_amount_b            = 6;
+        string fee_recipient           = 7;
+    }
+
+    string owner             = 1;
+    string delegate_address  = 2;
+    string order_hash        = 3;
+    string ring_hash         = 4;
+    int64  ring_index        = 5;
+    string tx_hash           = 6;
+    bytes  amount_s          = 7;
+    bytes  amount_b          = 8;
+    string token_s           = 9;
+    string token_b           = 10;
+    string market_hash       = 11;
+    bytes  split             = 12; //tokenS
+    Fees   fees              = 13;
+    int64  created_at        = 14;
+    int64  updated_at        = 15;
+    int64  block_height      = 16;
+    int64  block_timestamp   = 17;
+    int64 sequence_id        = 18;
+}
+
+message OrdersCutoffEvent {
+    string tx_hash         = 1;
+    string broker          = 3;
+    string owner           = 4;
+    string trading_pair    = 5;
+    int64  cutoff          = 6; // in seconds.
+    int64  created_at      = 7;
+    int64  updated_at      = 8;
+    int64  block_height    = 9;
+}
+
+message OrdersCancelledEvent {
+    string tx_hash         = 1;
+    string broker_or_owner = 2;
+    string order_hash      = 3;
+    int64  created_at      = 4;
+    int64  updated_at      = 5;
+    int64  block_height    = 6;
+}
+
+message SettlementTx {
+    enum Status {
+        PENDING  = 0;
+        BLOCK    = 1;
+        FAILED   = 2;
+    }
+    string  tx_hash    = 1;
+    string  from       = 2;
+    string  to         = 3;
+    string  gas        = 4;
+    string  gasPrice   = 5;
+    string  value      = 6;
+    string  data       = 7;
+    int64   nonce      = 8;
+    Status  status     = 9;
+    int64   create_at  = 10;
+    int64   updated_at = 11;
+}
 

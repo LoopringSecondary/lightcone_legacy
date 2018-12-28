@@ -95,14 +95,14 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       Thread.sleep(1000)
       info("then test the orderbook of LRC-WETH")
       val orderbookLrcF = singleRequest(
-        Orderbook
-          .Get(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+        GetOrderbook
+          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
         "orderbook"
       )
 
       val orderbookLrcRes = Await.result(orderbookLrcF, timeout.duration)
       orderbookLrcRes match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}")
           assert(sells.size == 2)
           assert(
@@ -121,14 +121,14 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
 
       info("then test the orderbook of GTO-WETH")
       val orderbookGtoF = singleRequest(
-        Orderbook
-          .Get(0, 100, Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))),
+        GetOrderbook
+          .Req(0, 100, Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))),
         "orderbook"
       )
 
       val orderbookGtoRes = Await.result(orderbookGtoF, timeout.duration)
       orderbookGtoRes match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}")
           assert(sells.size == 1)
           assert(
@@ -173,14 +173,14 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
 
       Thread.sleep(1000)
       val orderbookF1 = singleRequest(
-        Orderbook
-          .Get(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+        GetOrderbook
+          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
         "orderbook"
       )
 
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           assert(sells.size == 2)
           assert(
             sells(0).price == "10.000000" &&

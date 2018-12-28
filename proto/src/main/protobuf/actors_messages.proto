@@ -20,8 +20,7 @@ option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
 import "actors_core.proto";
-import "core_data.proto";
-import "core_messages.proto";
+import "core.proto";
 import "ethereum.proto";
 
 /////////////////////////////////////////////////////////////////////
@@ -93,6 +92,17 @@ message CancelOrder {
     }
 }
 
+message GetOrderbook {
+    message Req {
+        int32 level = 2;
+        int32 size = 1;
+        MarketId market_id = 3;
+    }
+
+    message Res {
+        Orderbook orderbook = 1;
+    }
+}
 
 message GetOrderFilledAmount {
     message Req {

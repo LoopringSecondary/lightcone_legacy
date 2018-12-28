@@ -103,7 +103,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
 
       //orderbook
       Thread.sleep(1000)
-      val getOrderBook = Orderbook.Get(
+      val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -112,7 +112,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
 
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}， buys: ${buys}")
           assert(sells.size == 1)
           assert(
@@ -165,7 +165,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
 
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           assert(sells.isEmpty)
           assert(buys.isEmpty)
         case _ => assert(false)

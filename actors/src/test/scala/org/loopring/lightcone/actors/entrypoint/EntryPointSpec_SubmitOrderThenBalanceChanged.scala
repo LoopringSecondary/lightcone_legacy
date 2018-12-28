@@ -92,7 +92,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       //orderbook
       Thread.sleep(1000)
       info("the depth should be empty when allowance is not enough")
-      val getOrderBook = Orderbook.Get(
+      val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -101,7 +101,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
 
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}, buys:${buys}")
           assert(sells.isEmpty && buys.isEmpty)
         case _ => assert(false)
@@ -131,7 +131,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
 
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}, buys: ${buys}")
           assert(sells.size == 1)
           assert(

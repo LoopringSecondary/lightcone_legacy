@@ -92,7 +92,7 @@ class EntryPointSpec_Depth
 
       Thread.sleep(1000)
       //根据不同的level需要有不同的汇总
-      val getOrderBook1 = Orderbook.Get(
+      val getOrderBook1 = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -100,7 +100,7 @@ class EntryPointSpec_Depth
       val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 4)
           assert(
@@ -127,7 +127,7 @@ class EntryPointSpec_Depth
       }
 
       //下一level
-      val getOrderBook2 = Orderbook.Get(
+      val getOrderBook2 = GetOrderbook.Req(
         1,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -135,7 +135,7 @@ class EntryPointSpec_Depth
       val orderbookF2 = singleRequest(getOrderBook2, "orderbook")
       val orderbookRes2 = Await.result(orderbookF2, timeout.duration)
       orderbookRes2 match {
-        case Orderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 3)
           assert(
