@@ -39,8 +39,7 @@ import scala.concurrent._
 import scala.util._
 
 // main owner: 李亚东
-class RingSettlementActor(
-  )(
+class RingSettlementActor()(
     implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
@@ -74,6 +73,8 @@ class RingSettlementActor(
   val protocolAddress: String =
     config.getString("loopring_protocol.protocol-address")
 
+  val chainId: Int = config.getInt(s"${EthereumClientMonitor.name}.chain_id")
+
   val repeatedJobs = Seq(
     Job(
       name = selfConfig.getString("job.name"),
@@ -98,7 +99,6 @@ class RingSettlementActor(
 
     initialFuture onComplete {
       case Success(validNonce) ⇒
-        println(s"validNonce:${validNonce}")
         nonce.set(Numeric.toBigInt(validNonce).intValue())
         self ! XInitializationDone()
       case Failure(e) ⇒
@@ -113,8 +113,7 @@ class RingSettlementActor(
     case _: XInitializationDone ⇒
       unstashAll()
       context.become(ready)
-    case msg ⇒
-      println(s"initial receive received $msg")
+    case _ ⇒
       stash()
   }
 
@@ -145,7 +144,8 @@ class RingSettlementActor(
             nonce.getAndIncrement(),
             req.gasLimit,
             req.gasPrice,
-            protocolAddress
+            protocolAddress,
+            chainId = chainId
           )
         }
         hashes ← Future.sequence(txs.map { tx ⇒

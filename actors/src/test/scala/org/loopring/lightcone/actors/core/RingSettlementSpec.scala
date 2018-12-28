@@ -139,12 +139,14 @@ class RingSettlementSpec
           }
         })
         println("*" * 50)
+        println("*" * 20 + "Buy" + "*" * 20)
         orderbookF1.buys.foreach(
           item ⇒
             println(
               s"${item.amount}" + "-" * 5 + item.price + "-" * 5 + item.total
             )
         )
+        println("*" * 20 + "Sell" + "*" * 20)
         orderbookF1.sells.foreach(
           item ⇒
             println(
@@ -152,12 +154,14 @@ class RingSettlementSpec
             )
         )
         println("*" * 50)
+        println("*" * 20 + "Buy" + "*" * 20)
         orderbookF2.buys.foreach(
           item ⇒
             println(
               s"${item.amount}" + "-" * 5 + item.price + "-" * 5 + item.total
             )
         )
+        println("*" * 20 + "Sell" + "*" * 20)
         orderbookF2.sells.foreach(
           item ⇒
             println(
