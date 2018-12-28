@@ -28,7 +28,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
 
   private var lastPrice: Double = 0
 
-  def processUpdate(update: XOrderbookUpdate) = this.synchronized {
+  def processUpdate(update: OrderbookUpdate) = this.synchronized {
     if (update.lastPrice > 0) {
       lastPrice = update.lastPrice
     }
@@ -48,7 +48,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
 
     viewMap.get(level) match {
       case Some(view) => view.getOrderbook(size, p)
-      case None       => XOrderbook(p, Nil, Nil)
+      case None       => Orderbook(p, Nil, Nil)
     }
   }
 
@@ -70,13 +70,13 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
       new OrderbookSide.Buys(config.priceDecimals, aggregationLevel, false)
       with ConverstionSupport
 
-    def processUpdate(update: XOrderbookUpdate) {
+    def processUpdate(update: OrderbookUpdate) {
       update.sells.foreach(sellSide.increase)
       update.buys.foreach(buySide.increase)
     }
 
-    def getDiff(update: XOrderbookUpdate) = {
-      XOrderbookUpdate(
+    def getDiff(update: OrderbookUpdate) = {
+      OrderbookUpdate(
         update.sells.map(sellSide.getDiff),
         update.buys.map(buySide.getDiff)
       )
@@ -104,7 +104,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
           Some((sellPrice + buyPrice) / 2)
         }
 
-      XOrderbook(
+      Orderbook(
         lastPrice,
         sellSide.getDepth(size, priceOpt),
         buySide.getDepth(size, priceOpt)
@@ -117,8 +117,8 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
     }
 
     trait ConverstionSupport { self: OrderbookSide =>
-      private def slotToItem(slot: XOrderbookUpdate.XSlot) =
-        XOrderbook.XItem(
+      private def slotToItem(slot: OrderbookUpdate.Slot) =
+        Orderbook.Item(
           priceFormat.format(slot.slot / priceScaling),
           amountFormat.format(slot.amount),
           totalFormat.format(slot.total)
@@ -127,7 +127,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
       def getDepth(
           num: Int,
           latestPrice: Option[Double]
-        ): Seq[XOrderbook.XItem] = {
+        ): Seq[Orderbook.Item] = {
         val latestPriceSlot = latestPrice.map { p =>
           (p * priceScaling).toLong
         }

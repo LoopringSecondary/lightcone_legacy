@@ -31,7 +31,7 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
 
     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(OrderbookUpdate())
 
     marketManager.submitOrder(buy1, 0)
     marketManager.submitOrder(buy2, 0)
@@ -73,7 +73,7 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
       MarketManager.MatchResult(
         Seq(ring),
         sell1.copy(status = STATUS_PENDING),
-        XOrderbookUpdate()
+        OrderbookUpdate()
       )
     )
 

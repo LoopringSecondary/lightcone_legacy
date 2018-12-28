@@ -107,7 +107,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
 
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case Orderbook(lastPrice, sells, buys) =>
           info(s"sells: ${sells}, buys:${buys}")
           assert(sells.size == 1)
           assert(
@@ -143,7 +143,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
 
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case Orderbook(lastPrice, sells, buys) =>
           info(s"sells: ${sells}, buys: ${buys}")
           assert(sells.isEmpty)
           assert(buys.isEmpty)

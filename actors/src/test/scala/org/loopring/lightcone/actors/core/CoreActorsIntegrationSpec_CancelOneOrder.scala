@@ -60,7 +60,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       )
 
       expectMsgPF() {
-        case a: XOrderbook =>
+        case a: Orderbook =>
           info("----orderbook status after submitted an order: " + a)
           a.sells should not be empty
       }
@@ -96,7 +96,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       )
 
       expectMsgPF() {
-        case a: XOrderbook =>
+        case a: Orderbook =>
           info("----orderbook status after cancel this order: " + a)
           assert(a.sells.isEmpty)
       }

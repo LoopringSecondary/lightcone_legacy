@@ -27,7 +27,7 @@ import akka.pattern._
 import akka.util.Timeout
 import scala.concurrent.duration._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.proto.XOrderbook.XItem
+import org.loopring.lightcone.proto.Orderbook.Item
 
 class RecoverOrderSpec
     extends CommonSpec("""
@@ -130,7 +130,7 @@ class RecoverOrderSpec
       val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
       val timeout1 = Timeout(5 second)
       val orderbookRes1 =
-        Await.result(orderbookF1.mapTo[XOrderbook], timeout1.duration)
+        Await.result(orderbookF1.mapTo[Orderbook], timeout1.duration)
 
       // 2. save some orders in db
       testSaveOrder4Recover()
@@ -155,15 +155,15 @@ class RecoverOrderSpec
       Thread.sleep(5000)
       val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
       val orderbookRes2 =
-        Await.result(orderbookF2.mapTo[XOrderbook], timeout1.duration)
+        Await.result(orderbookF2.mapTo[Orderbook], timeout1.duration)
       assert(orderbookRes1.sells.isEmpty && orderbookRes1.buys.isEmpty)
       assert(
         orderbookRes2.sells.nonEmpty && orderbookRes2.sells.length === 2 && orderbookRes2.buys.isEmpty
       )
       orderbookRes2.sells.foreach(_ match {
-        case XItem("10.000000", "60.00000", "6.00000") => assert(true)
-        case XItem("20.000000", "80.00000", "4.00000") => assert(true)
-        case _                                         => assert(false)
+        case Item("10.000000", "60.00000", "6.00000") => assert(true)
+        case Item("20.000000", "80.00000", "4.00000") => assert(true)
+        case _                                        => assert(false)
       })
     }
   }

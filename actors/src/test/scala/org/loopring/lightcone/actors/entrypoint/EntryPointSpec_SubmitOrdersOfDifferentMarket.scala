@@ -105,7 +105,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
 
       val orderbookLrcRes = Await.result(orderbookLrcF, timeout.duration)
       orderbookLrcRes match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case Orderbook(lastPrice, sells, buys) =>
           info(s"sells: ${sells}")
           assert(sells.size == 2)
           assert(
@@ -134,7 +134,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
 
       val orderbookGtoRes = Await.result(orderbookGtoF, timeout.duration)
       orderbookGtoRes match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case Orderbook(lastPrice, sells, buys) =>
           info(s"sells: ${sells}")
           assert(sells.size == 1)
           assert(
@@ -189,7 +189,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
 
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case Orderbook(lastPrice, sells, buys) =>
           assert(sells.size == 2)
           assert(
             sells(0).price == "10.000000" &&

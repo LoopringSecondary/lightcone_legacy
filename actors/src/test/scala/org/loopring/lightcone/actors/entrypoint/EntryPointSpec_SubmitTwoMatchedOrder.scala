@@ -76,7 +76,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
       val orderbookF2 = singleRequest(getOrderBook, "orderbook")
       val orderbookRes2 = Await.result(orderbookF2, timeout.duration)
       orderbookRes2 match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case Orderbook(lastPrice, sells, buys) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.isEmpty && buys.size == 1)
           assert(
@@ -95,7 +95,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
       val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case Orderbook(lastPrice, sells, buys) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.isEmpty && buys.size == 1)
           assert(

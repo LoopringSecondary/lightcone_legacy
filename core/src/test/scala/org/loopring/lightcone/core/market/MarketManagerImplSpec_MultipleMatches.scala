@@ -31,7 +31,7 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
 
     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(OrderbookUpdate())
 
     marketManager.submitOrder(buy1, 0)
     marketManager.submitOrder(buy2, 0)
@@ -90,7 +90,7 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
       MarketManager.MatchResult(
         Seq(ring3, ring2, ring1),
         sell1.copy(status = STATUS_PENDING),
-        XOrderbookUpdate()
+        OrderbookUpdate()
       )
     )
 

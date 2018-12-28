@@ -80,8 +80,8 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
   val extractMarketId: PartialFunction[Any, MarketId] = {
-    case GetOrderbook(_, _, Some(marketId))        => marketId
-    case XOrderbookUpdate(_, _, _, Some(marketId)) => marketId
+    case GetOrderbook(_, _, Some(marketId))       => marketId
+    case OrderbookUpdate(_, _, _, Some(marketId)) => marketId
   }
 }
 
@@ -118,8 +118,8 @@ class OrderbookManagerActor(
 
   def receive: Receive = LoggingReceive {
 
-    case req: XOrderbookUpdate =>
-      log.info(s"receive XOrderbookUpdate ${req}")
+    case req: OrderbookUpdate =>
+      log.info(s"receive OrderbookUpdate ${req}")
       manager.processUpdate(req)
 
     case GetOrderbook(level, size, Some(marketId)) =>

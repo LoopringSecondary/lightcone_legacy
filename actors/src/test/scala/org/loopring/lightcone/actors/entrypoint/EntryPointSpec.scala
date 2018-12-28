@@ -47,7 +47,7 @@ class EntryPointSpec
 
       val res = Await.result(f, timeout.duration)
       res match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case Orderbook(lastPrice, sells, buys) =>
           assert(sells.isEmpty)
           assert(buys.isEmpty)
         case _ => assert(false)

@@ -47,61 +47,60 @@ private[depth] trait OrderbookSide {
 
   val aggregationScaling = Math.pow(10, aggregationLevel)
   val priceScaling = Math.pow(10, priceDecimals)
-  var slotMap = SortedMap.empty[Long, XOrderbookUpdate.XSlot]
+  var slotMap = SortedMap.empty[Long, OrderbookUpdate.Slot]
 
-  var oldSlots = Map.empty[Long, XOrderbookUpdate.XSlot]
-  var updatedSlots = Map.empty[Long, XOrderbookUpdate.XSlot]
+  var oldSlots = Map.empty[Long, OrderbookUpdate.Slot]
+  var updatedSlots = Map.empty[Long, OrderbookUpdate.Slot]
 
   def increase(
       price: Double,
       amount: Double,
       total: Double
     ): Unit =
-    increase(XOrderbookUpdate.XSlot(getSlotForPriceId(price), amount, total))
+    increase(OrderbookUpdate.Slot(getSlotForPriceId(price), amount, total))
 
   def decrease(
       price: Double,
       amount: Double,
       total: Double
     ): Unit =
-    decrease(XOrderbookUpdate.XSlot(getSlotForPriceId(price), amount, total))
+    decrease(OrderbookUpdate.Slot(getSlotForPriceId(price), amount, total))
 
   def replace(
       price: Double,
       amount: Double,
       total: Double
     ): Unit =
-    replace(XOrderbookUpdate.XSlot(getSlotForPriceId(price), amount, total))
+    replace(OrderbookUpdate.Slot(getSlotForPriceId(price), amount, total))
 
-  def increase(slot: XOrderbookUpdate.XSlot): Unit = adjustInternal(slot, _ + _)
+  def increase(slot: OrderbookUpdate.Slot): Unit = adjustInternal(slot, _ + _)
 
-  def decrease(slot: XOrderbookUpdate.XSlot): Unit = adjustInternal(slot, _ - _)
+  def decrease(slot: OrderbookUpdate.Slot): Unit = adjustInternal(slot, _ - _)
 
-  def replace(slot: XOrderbookUpdate.XSlot): Unit =
+  def replace(slot: OrderbookUpdate.Slot): Unit =
     adjustInternal(
       slot,
-      (old: XOrderbookUpdate.XSlot, new_ : XOrderbookUpdate.XSlot) => new_
+      (old: OrderbookUpdate.Slot, new_ : OrderbookUpdate.Slot) => new_
     )
 
-  def getDiff(slot: XOrderbookUpdate.XSlot) = {
-    slot - slotMap.getOrElse(slot.slot, XOrderbookUpdate.XSlot(slot.slot, 0, 0))
+  def getDiff(slot: OrderbookUpdate.Slot) = {
+    slot - slotMap.getOrElse(slot.slot, OrderbookUpdate.Slot(slot.slot, 0, 0))
   }
 
   private def adjustInternal(
-      slot: XOrderbookUpdate.XSlot,
-      op: (XOrderbookUpdate.XSlot,
-          XOrderbookUpdate.XSlot) => XOrderbookUpdate.XSlot
+      slot: OrderbookUpdate.Slot,
+      op: (OrderbookUpdate.Slot, OrderbookUpdate.Slot) => OrderbookUpdate.Slot
     ) = {
     val id = getAggregationSlotFor(slot.slot)
 
-    val old = slotMap.getOrElse(id, XOrderbookUpdate.XSlot(id, 0, 0))
+    val old = slotMap.getOrElse(id, OrderbookUpdate.Slot(id, 0, 0))
     if (maintainUpdatedSlots && !oldSlots.contains(id)) {
       oldSlots += id -> old
     }
 
     var updated = op(old, slot.copy(slot = id))
     if (updated.amount <= 0 || updated.total <= 0) {
-      updated = XOrderbookUpdate.XSlot(id, 0, 0)
+      updated = OrderbookUpdate.Slot(id, 0, 0)
       slotMap -= id
     } else {
       slotMap += id -> updated
@@ -120,7 +119,7 @@ private[depth] trait OrderbookSide {
   def getSlots(
       num: Int,
       latestPriceSlot: Option[Long]
-    ): Seq[XOrderbookUpdate.XSlot] = {
+    ): Seq[OrderbookUpdate.Slot] = {
     val items = latestPriceSlot match {
       case None => slotMap.values
       case Some(limit) =>
@@ -133,7 +132,7 @@ private[depth] trait OrderbookSide {
     items.filter(_.slot != 0).take(num).toList
   }
 
-  def takeUpdatedSlots(): Seq[XOrderbookUpdate.XSlot] = {
+  def takeUpdatedSlots(): Seq[OrderbookUpdate.Slot] = {
     if (!maintainUpdatedSlots) {
       throw ErrorException(
         ERR_MATCHING_INVALID_INTERNAL_STATE,

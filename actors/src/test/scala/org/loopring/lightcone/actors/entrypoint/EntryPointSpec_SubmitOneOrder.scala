@@ -81,7 +81,7 @@ class EntryPointSpec_SubmitOneOrder
       val orderbookF = singleRequest(getOrderBook, "orderbook")
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case Orderbook(lastPrice, sells, buys) =>
           println(s"sells:${sells}, buys:${buys}")
           assert(sells.nonEmpty)
           assert(

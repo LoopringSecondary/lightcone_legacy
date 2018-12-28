@@ -50,7 +50,7 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     var order2 = actualNotDust(sellGTO(100000, 101))
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(OrderbookUpdate())
 
     var result = marketManager.submitOrder(order1, 0)
     result should be(emptyMatchingResult(order1, STATUS_PENDING))
@@ -83,7 +83,7 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     var order2 = actualNotDust(buyGTO(101, 100000))
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(OrderbookUpdate())
 
     var result = marketManager.submitOrder(order1, 0)
     result should be(emptyMatchingResult(order1, STATUS_PENDING))

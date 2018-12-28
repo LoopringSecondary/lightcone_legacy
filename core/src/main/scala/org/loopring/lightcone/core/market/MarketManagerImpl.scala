@@ -110,7 +110,7 @@ class MarketManagerImpl(
     matchOrders(order, minFiatValue)
   }
 
-  def cancelOrder(orderId: String): Option[XOrderbookUpdate] =
+  def cancelOrder(orderId: String): Option[OrderbookUpdate] =
     this.synchronized {
       getOrder(orderId).map { order =>
         removeFromSide(orderId)
@@ -119,7 +119,7 @@ class MarketManagerImpl(
       }
     }
 
-  def deletePendingRing(ringId: String): Option[XOrderbookUpdate] =
+  def deletePendingRing(ringId: String): Option[OrderbookUpdate] =
     this.synchronized {
       if (pendingRingPool.hasRing(ringId)) {
         pendingRingPool.deleteRing(ringId)
@@ -145,13 +145,13 @@ class MarketManagerImpl(
       MatchResult(
         Nil,
         order.copy(status = STATUS_DUST_ORDER),
-        XOrderbookUpdate(Nil, Nil)
+        OrderbookUpdate(Nil, Nil)
       )
     } else if (dustOrderEvaluator.isActualDust(order)) {
       MatchResult(
         Nil,
         order.copy(status = STATUS_COMPLETELY_FILLED),
-        XOrderbookUpdate(Nil, Nil)
+        OrderbookUpdate(Nil, Nil)
       )
     } else {
       var taker = order.copy(status = STATUS_PENDING)

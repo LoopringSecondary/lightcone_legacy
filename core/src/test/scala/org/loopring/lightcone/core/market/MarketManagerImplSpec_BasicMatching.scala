@@ -31,7 +31,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     var buyOrder = actualNotDust(sellGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(OrderbookUpdate())
 
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))
@@ -51,7 +51,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(OrderbookUpdate())
 
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))
@@ -70,7 +70,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(OrderbookUpdate())
 
     val ring = MatchableRing(null, null)
     (fackRingMatcher
@@ -87,7 +87,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
         .MatchResult(
           Seq(ring),
           buyOrder.asPending,
-          XOrderbookUpdate()
+          OrderbookUpdate()
             .copy(lastPrice = (100000.0 / 101 + 100000.0 / 100) / 2)
         )
     )
@@ -104,7 +104,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(OrderbookUpdate())
 
     val ring = MatchableRing(null, null)
     (fackRingMatcher
@@ -121,7 +121,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
         .MatchResult(
           Seq(ring),
           sellOrder.asPending,
-          XOrderbookUpdate()
+          OrderbookUpdate()
             .copy(lastPrice = (100000.0 / 101 + 100000.0 / 100) / 2)
         )
     )

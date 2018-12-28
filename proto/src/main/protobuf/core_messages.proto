@@ -48,26 +48,26 @@ message MarketMetadata {
     bool isLastTakerSell = 8;
 }
 
-message XOrderbook {
-    message XItem {
+message Orderbook {
+    message Item {
         string price = 1;
         string amount = 2;
         string total = 3;
     }
     double latestPrice = 1;
-    repeated XItem sells = 2;
-    repeated XItem buys = 3;
+    repeated Item sells = 2;
+    repeated Item buys = 3;
 }
 
-message XOrderbookUpdate {
-    message XSlot {
+message OrderbookUpdate {
+    message Slot {
         int64 slot = 1;
         double amount = 2;
         double total = 3;
     }
 
-    repeated XSlot sells = 1;
-    repeated XSlot buys = 2;
+    repeated Slot sells = 1;
+    repeated Slot buys = 2;
     double last_price = 3;
     MarketId market_id = 4;
 }
