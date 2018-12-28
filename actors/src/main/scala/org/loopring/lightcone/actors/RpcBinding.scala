@@ -34,11 +34,11 @@ trait RpcBinding extends JsonRpcModule {
     .thenReply[GetTradesResult]("get_trades")
 
   //Ethereum Query
-  ifReceive[GetAllowanceReq]
-    .thenReply[GetAllowanceRes]("get_allowance")
-  ifReceive[GetBalanceReq].thenReply[GetBalanceRes]("get_balance")
-  ifReceive[GetBalanceAndAllowancesReq]
-    .thenReply[GetBalanceAndAllowancesRes]("get_balance_and_allowance")
-  ifReceive[GetFilledAmountReq]
-    .thenReply[GetFilledAmountRes]("get_filled_amount")
+  ifReceive[GetAllowance.Req]
+    .thenReply[GetAllowance.Res]("get_allowance")
+  ifReceive[GetBalance.Req].thenReply[GetBalance.Res]("get_balance")
+  ifReceive[GetBalanceAndAllowances.Req]
+    .thenReply[GetBalanceAndAllowances.Res]("get_balance_and_allowance")
+  ifReceive[GetFilledAmount.Req]
+    .thenReply[GetFilledAmount.Res]("get_filled_amount")
 }

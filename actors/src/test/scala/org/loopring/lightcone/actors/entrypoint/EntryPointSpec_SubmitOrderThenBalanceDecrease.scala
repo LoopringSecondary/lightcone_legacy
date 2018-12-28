@@ -53,7 +53,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
 
       //设置余额
       info("set the balance and allowance is enough befor submit an order")
-      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
+      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances.Res(
         "",
         Map(
           "" -> BalanceAndAllowance(
@@ -120,15 +120,16 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       }
 
       info("then make balance is not enough.")
-      val setAllowanceF = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
-        "",
-        Map(
-          "" -> BalanceAndAllowance(
-            "0".zeros(LRC_TOKEN.decimals),
-            "25".zeros(LRC_TOKEN.decimals)
+      val setAllowanceF = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances
+        .Res(
+          "",
+          Map(
+            "" -> BalanceAndAllowance(
+              "0".zeros(LRC_TOKEN.decimals),
+              "25".zeros(LRC_TOKEN.decimals)
+            )
           )
         )
-      )
       Await.result(setAllowanceF, timeout.duration)
 
       actors.get(MultiAccountManagerActor.name) ? AddressBalanceUpdated(

@@ -57,13 +57,15 @@ message OrderRing {
     ExpectedOrderFill taker = 2;
 }
 
-message GetOrderFilledAmountReq {
-    string order_id = 1;
-}
+message GetOrderFilledAmount {
+    message Req {
+        string order_id = 1;
+    }
 
-message GetOrderFilledAmountRes {
-    string order_id = 1;
-    bytes filled_amount_s = 2;
+    message Res {
+        string order_id = 1;
+        bytes filled_amount_s = 2;
+    }
 }
 
 message BalanceAndAllowance {
@@ -73,38 +75,44 @@ message BalanceAndAllowance {
     bytes availableAllowance = 4;
 }
 
-message GetBalanceAndAllowancesReq {
-    string address = 1;
-    repeated string tokens = 2;
+message GetBalanceAndAllowances {
+    message Req {
+        string address = 1;
+        repeated string tokens = 2;
+    }
+
+    message Res {
+        string address = 1;
+        map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
+        Error error = 3;
+    }
 }
 
-message GetBalanceAndAllowancesRes {
-    string address = 1;
-    map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
-    Error error = 3;
+message GetBalance {
+    message Req{
+        string address = 1;
+        repeated string tokens = 2;
+    }
+    message Res {
+        string address = 1;
+        map<string, bytes> balance_map = 2;
+        Error error = 3;
+    }
 }
 
-message GetBalanceReq{
-    string address = 1;
-    repeated string tokens = 2;
-}
-message GetBalanceRes {
-    string address = 1;
-    map<string, bytes> balance_map = 2;
-    Error error = 3;
-}
-
-message GetAllowanceReq{
-    string address = 1;
-    repeated string tokens = 2;
-}
-message GetAllowanceRes {
-    string address = 1;
-    map<string, bytes> allowance_map = 2;
-    Error error = 3;
+message GetAllowance {
+    message Req{
+        string address = 1;
+        repeated string tokens = 2;
+    }
+    message Res {
+        string address = 1;
+        map<string, bytes> allowance_map = 2;
+        Error error = 3;
+    }
 }
 
-message SubmitSimpleOrderReq {
+message SubmitSimpleOrder {
     string owner = 1;
     Order order = 2;
 }
@@ -134,52 +142,60 @@ message AddressAllowanceUpdated {
 
 
 
-message UpdateFilledAmountReq {
-    string id = 1;
-    bytes order_filled_amount_s = 2;
+message UpdateFilledAmount {
+    message Req {
+        string id = 1;
+        bytes order_filled_amount_s = 2;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+    }
 }
 
-message UpdateFilledAmountRes {
-    ErrorCode error = 1;
+message GetFilledAmount {
+    message Req {
+        repeated string order_ids = 1;
+    }
+
+    message Res {
+        map<string, bytes> filled_amount_s_map = 1;
+    }
 }
 
-message GetFilledAmountReq {
-    repeated string order_ids = 1;
-}
+message UpdateBalanceAndAllowance {
+    message Req {
+        string address = 1;
+        string token = 2;
+        BalanceAndAllowance balance_and_allowance = 3;
+    }
 
-message GetFilledAmountRes {
-    map<string, bytes> filled_amount_s_map = 1;
-}
-
-message UpdateBalanceAndAllowanceReq {
-    string address = 1;
-    string token = 2;
-    BalanceAndAllowance balance_and_allowance = 3;
-}
-
-message UpdateBalanceAndAllowanceRes {
-    ErrorCode error = 1;
-    BalanceAndAllowance balance_and_allowance = 2;
+    message Res {
+        ErrorCode error = 1;
+        BalanceAndAllowance balance_and_allowance = 2;
+    }
 }
 
 message GasPriceUpdated {
     int64 gas_price = 1;
 }
 
-message TriggerRematchReq {
+message TriggerRematch {
     bool sell_order_as_taker = 1;
     int32 offset = 2;
 }
 
-message SendRawTxReq {
-    bytes data = 1;
-}
+message SendRawTx {
+    message Req {
+        bytes data = 1;
+    }
 
-message SendRawTxRes {
-    SendStatus status = 1;
-    enum SendStatus {
-        SEND_STATUS_UNKNOW = 0;
-        SEND_STATUS_SUCCESS = 1;
+    message Res {
+        SendStatus status = 1;
+        enum SendStatus {
+            SEND_STATUS_UNKNOW = 0;
+            SEND_STATUS_SUCCESS = 1;
+        }
     }
 }
 
@@ -190,13 +206,13 @@ enum ExecutionStatus {
     EXECUTED_STATUS_SUCCESS = 2;
 }
 
-message RingExecutedRes {
-    OrderRing ring = 1;
-    string tx_hash = 2;
-    ExecutionStatus status = 3;
-    bytes used_gas = 4;
-    int64 block_number = 5;
-}
+// message RingExecuted {
+//     OrderRing ring = 1;
+//     string tx_hash = 2;
+//     ExecutionStatus status = 3;
+//     bytes used_gas = 4;
+//     int64 block_number = 5;
+// }
 
 message SendRawTransaction {
     bytes data = 1;

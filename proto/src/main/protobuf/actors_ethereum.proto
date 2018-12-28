@@ -237,15 +237,17 @@ message EthCallRes {
 }
 
 // eth_getBalance
-message EthGetBalanceReq {
-    string address = 1;
-    string tag = 2;
-}
-message EthGetBalanceRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    EthResError error = 4;
+message EthGetBalance {
+    message Req {
+        string address = 1;
+        string tag = 2;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthResError error = 4;
+    }
 }
 
 // eth_getTransactionByHash

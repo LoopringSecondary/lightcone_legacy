@@ -172,10 +172,10 @@ private[ethereum] class HttpConnector(
         Seq.empty
       } map JsonFormat.fromJsonString[EthBlockNumberRes] sendTo sender
 
-    case r: EthGetBalanceReq =>
+    case r: EthGetBalance.Req =>
       sendMessage("eth_getBalance") {
         Seq(r.address, r.tag)
-      } map JsonFormat.fromJsonString[EthGetBalanceRes] sendTo sender
+      } map JsonFormat.fromJsonString[EthGetBalance.Res] sendTo sender
 
     case r: GetTransactionByHashReq =>
       sendMessage("eth_getTransactionByHash") {

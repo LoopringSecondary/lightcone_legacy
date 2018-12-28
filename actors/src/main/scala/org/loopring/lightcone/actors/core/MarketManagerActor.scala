@@ -82,7 +82,7 @@ object MarketManagerActor extends ShardedByMarket {
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
   val extractMarketId: PartialFunction[Any, MarketId] = {
-    case SubmitSimpleOrderReq(_, Some(order)) =>
+    case SubmitSimpleOrder(_, Some(order)) =>
       MarketId(order.tokenS, order.tokenB)
     case CancelOrderReq(_, _, _, Some(marketId)) =>
       marketId
@@ -169,7 +169,7 @@ class MarketManagerActor(
 
   def recover: Receive = {
 
-    case SubmitSimpleOrderReq(_, Some(order)) ⇒
+    case SubmitSimpleOrder(_, Some(order)) ⇒
       submitOrder(order)
 
     case msg @ Recover.Finished(timeout) =>
@@ -188,7 +188,7 @@ class MarketManagerActor(
 
   def receive: Receive = {
 
-    case SubmitSimpleOrderReq(_, Some(order)) ⇒
+    case SubmitSimpleOrder(_, Some(order)) ⇒
       submitOrder(order).sendTo(sender)
 
     case CancelOrderReq(orderId, _, _, _) ⇒
@@ -207,7 +207,7 @@ class MarketManagerActor(
           updateOrderbookAndSettleRings(matchResult, gasPrice)
       }
 
-    case TriggerRematchReq(sellOrderAsTaker, offset) =>
+    case TriggerRematch(sellOrderAsTaker, offset) =>
       for {
         res <- (gasPriceActor ? GetGasPriceReq()).mapAs[GetGasPriceRes]
         gasPrice: BigInt = res.gasPrice
@@ -222,7 +222,7 @@ class MarketManagerActor(
   private def submitOrder(order: Order): Future[Unit] = {
     assert(
       order.actual.nonEmpty,
-      "order in SubmitSimpleOrderReq miss `actual` field"
+      "order in SubmitSimpleOrder miss `actual` field"
     )
     val matchable: Matchable = order
     order.status match {
@@ -242,7 +242,7 @@ class MarketManagerActor(
         } yield Unit
 
       case s =>
-        log.error(s"unexpected order status in SubmitSimpleOrderReq: $s")
+        log.error(s"unexpected order status in SubmitSimpleOrder: $s")
         Future.successful(Unit)
     }
   }

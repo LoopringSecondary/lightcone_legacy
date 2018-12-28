@@ -52,7 +52,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
     "store it but the depth is empty until allowance is enough" in {
 
       //设置余额
-      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
+      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances.Res(
         "",
         Map("" -> BalanceAndAllowance("25".zeros(LRC_TOKEN.decimals)))
       )
@@ -108,15 +108,16 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       }
 
       info("then make allowance enough.")
-      val setAllowanceF = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
-        "",
-        Map(
-          "" -> BalanceAndAllowance(
-            "25".zeros(LRC_TOKEN.decimals),
-            "25".zeros(LRC_TOKEN.decimals)
+      val setAllowanceF = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances
+        .Res(
+          "",
+          Map(
+            "" -> BalanceAndAllowance(
+              "25".zeros(LRC_TOKEN.decimals),
+              "25".zeros(LRC_TOKEN.decimals)
+            )
           )
         )
-      )
       Await.result(setAllowanceF, timeout.duration)
       actors.get(MultiAccountManagerActor.name) ? AddressAllowanceUpdated(
         rawOrders(0).owner,

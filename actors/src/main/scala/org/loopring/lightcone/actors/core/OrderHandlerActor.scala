@@ -96,7 +96,7 @@ class OrderHandlerActor(
           case Right(errCode) =>
             throw ErrorException(errCode, s"failed to submit order: $raworder")
           case Left(resRawOrder) =>
-            SubmitSimpleOrderReq(resRawOrder.owner, Some(resRawOrder))
+            SubmitSimpleOrder(resRawOrder.owner, Some(resRawOrder))
         }
       }) forwardTo (mammv, sender)
   }

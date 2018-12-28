@@ -61,13 +61,13 @@ object MultiAccountManagerActor extends ShardedByAddress {
     case req: SubmitOrderReq =>
       throw ErrorException(
         ERR_UNEXPECTED_ACTOR_MSG,
-        "MultiAccountManagerActor does not handle SubmitOrderReq, use SubmitSimpleOrderReq"
+        "MultiAccountManagerActor does not handle SubmitOrderReq, use SubmitSimpleOrder"
       )
 
     case Recover.RecoverOrderReq(Some(raworder)) => raworder.owner
     case req: CancelOrderReq ⇒ req.owner
-    case req: SubmitSimpleOrderReq ⇒ req.owner
-    case req: GetBalanceAndAllowancesReq ⇒ req.address
+    case req: SubmitSimpleOrder ⇒ req.owner
+    case req: GetBalanceAndAllowances.Req ⇒ req.address
     case req: AddressBalanceUpdated ⇒ req.address
     case req: AddressAllowanceUpdated ⇒ req.address
   }

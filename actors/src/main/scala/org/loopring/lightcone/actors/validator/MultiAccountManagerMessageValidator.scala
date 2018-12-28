@@ -35,7 +35,7 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
     case req: CancelOrderReq ⇒
       req.copy(owner = Address.normalizeAddress(req.owner))
 
-    case req: SubmitSimpleOrderReq ⇒
+    case req: SubmitSimpleOrder ⇒
       req.order match {
         case None =>
           throw ErrorException(
@@ -58,7 +58,7 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
           )
       }
     case req: Recover.RecoverOrderReq => req
-    case req: GetBalanceAndAllowancesReq ⇒
+    case req: GetBalanceAndAllowances.Req ⇒
       req.copy(
         address = Address.normalizeAddress(req.address),
         tokens = req.tokens.map(Address.normalizeAddress)

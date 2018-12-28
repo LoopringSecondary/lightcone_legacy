@@ -58,10 +58,10 @@ class EntryPointActor(
     case _: SubmitOrderReq | _: CancelOrderReq =>
       Some(OrderHandlerMessageValidator.name)
 
-    case _: GetBalanceAndAllowancesReq ⇒
+    case _: GetBalanceAndAllowances.Req ⇒
       Some(MultiAccountManagerMessageValidator.name)
 
-    case _: GetBalanceReq | _: GetAllowanceReq | _: GetFilledAmountReq ⇒
+    case _: GetBalance.Req | _: GetAllowance.Req | _: GetFilledAmount.Req ⇒
       Some(EthereumQueryMessageValidator.name)
 
     case _: XJsonRpcReq | _: XRpcReqWithHeight ⇒

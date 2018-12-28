@@ -71,7 +71,7 @@ class AccountManagerActor(
         Recover.RecoverOrderRes(xraworder.id, true)
       }.sendTo(sender)
 
-    case GetBalanceAndAllowancesReq(addr, tokens) =>
+    case GetBalanceAndAllowances.Req(addr, tokens) =>
       assert(addr == address)
       (for {
         managers <- getTokenManagers(tokens)
@@ -86,10 +86,10 @@ class AccountManagerActor(
             )
         }
       } yield {
-        GetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
+        GetBalanceAndAllowances.Res(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case SubmitSimpleOrderReq(_, Some(order)) =>
+    case SubmitSimpleOrder(_, Some(order)) =>
       submitOrder(order).sendTo(sender)
 
     case req: CancelOrderReq =>
@@ -124,9 +124,9 @@ class AccountManagerActor(
         Future.successful(Unit)
 
       // Update the order's _outstanding field.
-      getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmountReq(
+      getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmount.Req(
         Seq(matchable.id)
-      )).mapAs[GetFilledAmountRes]
+      )).mapAs[GetFilledAmount.Res]
 
       _ = log.debug(s"order history: orderHistoryRes")
 
@@ -147,7 +147,7 @@ class AccountManagerActor(
             //需要更新到数据库
             _ <- dbModule.orderService.updateOrderStatus(o._2.id, o._2.status)
           } yield {
-            marketManagerActor ! SubmitSimpleOrderReq(
+            marketManagerActor ! SubmitSimpleOrder(
               order = Some(o._2.copy(_reserved = None, _outstanding = None))
             )
           }
@@ -164,10 +164,10 @@ class AccountManagerActor(
     } else {
       log.debug(s"getTokenManager0 ${token}")
       for {
-        res <- (ethereumQueryActor ? GetBalanceAndAllowancesReq(
+        res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
           address,
           Seq(token)
-        )).mapAs[GetBalanceAndAllowancesRes]
+        )).mapAs[GetBalanceAndAllowances.Res]
         tm = new AccountTokenManagerImpl(
           token,
           config.getInt("account_manager.max_order_num")
@@ -188,12 +188,12 @@ class AccountManagerActor(
       tokens.filterNot(token ⇒ manager.hasTokenManager(token))
     for {
       res <- if (tokensWithoutMaster.nonEmpty) {
-        (ethereumQueryActor ? GetBalanceAndAllowancesReq(
+        (ethereumQueryActor ? GetBalanceAndAllowances.Req(
           address,
           tokensWithoutMaster
-        )).mapAs[GetBalanceAndAllowancesRes]
+        )).mapAs[GetBalanceAndAllowances.Res]
       } else {
-        Future.successful(GetBalanceAndAllowancesRes())
+        Future.successful(GetBalanceAndAllowances.Res())
       }
       tms = tokensWithoutMaster.map(
         token ⇒
@@ -237,9 +237,7 @@ class AccountManagerActor(
             case STATUS_PENDING =>
               //allowance的改变需要更新到marketManager
               for {
-                _ <- marketManagerActor ? SubmitSimpleOrderReq(
-                  order = Some(order)
-                )
+                _ <- marketManagerActor ? SubmitSimpleOrder(order = Some(order))
               } yield Unit
 
             case status =>

@@ -47,7 +47,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
 
       //设置余额
       //todo: allowance 为0 的逻辑是什么，accountmanager与marketmanager中是否需要保存
-      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
+      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances.Res(
         "",
         Map(
           "" -> BalanceAndAllowance(

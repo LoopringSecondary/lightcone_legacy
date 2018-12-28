@@ -42,9 +42,9 @@ trait EthereumQueryMockSupport {
     var allowance = BigInt("1000000000000000000000000000")
 
     def receive: Receive = {
-      case req: GetBalanceAndAllowancesReq =>
+      case req: GetBalanceAndAllowances.Req =>
         sender !
-          GetBalanceAndAllowancesRes(
+          GetBalanceAndAllowances.Res(
             req.address,
             Map(
               req.tokens(0) -> BalanceAndAllowance(
@@ -54,12 +54,12 @@ trait EthereumQueryMockSupport {
             )
           )
 
-      case GetFilledAmountReq(orderIds) =>
-        sender ! GetFilledAmountRes(
+      case GetFilledAmount.Req(orderIds) =>
+        sender ! GetFilledAmount.Res(
           orderIds.map(id ⇒ id → ByteString.copyFrom("0", "UTF-8")).toMap
         )
 
-      case res: GetBalanceAndAllowancesRes =>
+      case res: GetBalanceAndAllowances.Res =>
         res.balanceAndAllowanceMap.values.headOption map {
           case head =>
             balance = head.balance
