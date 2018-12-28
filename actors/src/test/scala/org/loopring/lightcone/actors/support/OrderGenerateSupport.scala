@@ -54,7 +54,7 @@ trait OrderGenerateSupport {
         amountFee.toByteArray
     )
     val marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
-    XRawOrder(
+    RawOrder(
       owner = owner,
       hash = Numeric.toHexString(hash),
       version = 1,
@@ -64,23 +64,23 @@ trait OrderGenerateSupport {
       amountB = ByteString.copyFrom(amountB.toByteArray),
       validSince = (createAt / 1000).toInt,
       state = Some(
-        XRawOrder.State(
+        RawOrder.State(
           createdAt = createAt,
           updatedAt = createAt,
-          status = XOrderStatus.STATUS_NEW
+          status = OrderStatus.STATUS_NEW
         )
       ),
       feeParams = Some(
-        XRawOrder.FeeParams(
+        RawOrder.FeeParams(
           tokenFee = tokenFee,
           amountFee = ByteString.copyFrom(amountFee.toByteArray)
         )
       ),
       params =
-        Some(XRawOrder.Params(validUntil = (createAt / 1000).toInt + 20000)),
+        Some(RawOrder.Params(validUntil = (createAt / 1000).toInt + 20000)),
       marketHash = marketHash,
       marketHashId = MarketManagerActor
-        .getEntityId(XMarketId(primary = tokenS, secondary = tokenB))
+        .getEntityId(MarketId(primary = tokenS, secondary = tokenB))
         .toInt,
       addressShardId = MultiAccountManagerActor
         .getEntityId(owner, 100)

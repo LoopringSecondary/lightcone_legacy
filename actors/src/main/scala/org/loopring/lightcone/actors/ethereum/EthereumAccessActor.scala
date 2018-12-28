@@ -81,12 +81,12 @@ class EthereumAccessActor(
   var connectionPools: Seq[(String, Int)] = Nil
 
   override def preStart() = {
-    val fu = (monitor ? XNodeHeightReq())
-      .mapAs[XNodeHeightRes]
+    val fu = (monitor ? GetNodeBlockHeight.Req())
+      .mapAs[GetNodeBlockHeight.Res]
     fu onComplete {
       case Success(res) ⇒
         connectionPools = res.nodes.map(node ⇒ node.path → node.height)
-        self ! XInitializationDone()
+        self ! Notify("initialized")
       case Failure(e) ⇒
         log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
         context.stop(self)
@@ -96,22 +96,22 @@ class EthereumAccessActor(
   override def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
-    case _: XInitializationDone ⇒
+    case Notify("initialized", _) ⇒
       unstashAll()
       context.become(normalReceive)
-    case _: XNodeBlockHeight ⇒
+    case _: NodeBlockHeight ⇒
     case _ ⇒
       stash()
   }
 
   def normalReceive: Receive = {
-    case node: XNodeBlockHeight =>
+    case node: NodeBlockHeight =>
       connectionPools =
         (connectionPools.toMap + (node.path → node.height)).toSeq
           .filter(_._2 >= 0)
           .sortWith(_._2 > _._2)
 
-    case req: XRpcReqWithHeight =>
+    case req: JsonRpc.RequestWithHeight =>
       val validPools = connectionPools.filter(_._2 > req.height)
       if (validPools.nonEmpty) {
         context
@@ -119,17 +119,17 @@ class EthereumAccessActor(
           .forward(req.req)
       } else {
         sender ! ErrorException(
-          code = XErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
+          code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
           message = "No accessible Ethereum node service"
         )
       }
 
-    case msg: XJsonRpcReq => {
+    case msg: JsonRpc.Request => {
       if (connectionPools.nonEmpty) {
         context.actorSelection(connectionPools.head._1).forward(msg)
       } else {
         sender ! ErrorException(
-          code = XErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
+          code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
           message = "No accessible Ethereum node service"
         )
       }
@@ -140,7 +140,7 @@ class EthereumAccessActor(
         context.actorSelection(connectionPools.head._1).forward(msg)
       } else {
         sender ! ErrorException(
-          code = XErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
+          code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
           message = "No accessible Ethereum node service"
         )
       }

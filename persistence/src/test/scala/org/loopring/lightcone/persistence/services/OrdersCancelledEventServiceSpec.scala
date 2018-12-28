@@ -30,16 +30,16 @@ class OrdersCancelledEventServiceSpec
 
   def createTables(): Future[Any] =
     for {
-      r ← new OrdersCancelledEventDalImpl().createTable()
+      r <- new OrdersCancelledEventDalImpl().createTable()
     } yield r
 
   private def testSave(
       hash: String,
       blockHeight: Long
-    ): Future[XErrorCode] = {
+    ): Future[ErrorCode] = {
     val now = timeProvider.getTimeMillis
     service.saveCancelOrder(
-      XOrdersCancelledEvent(
+      OrdersCancelledEvent(
         txHash = hash,
         brokerOrOwner = hash,
         orderHash = hash,
@@ -51,9 +51,9 @@ class OrdersCancelledEventServiceSpec
   private def testSaves(
       hashes: Set[String],
       blockHeight: Long
-    ): Future[Set[XErrorCode]] = {
+    ): Future[Set[ErrorCode]] = {
     for {
-      result ← Future.sequence(hashes.map { hash ⇒
+      result <- Future.sequence(hashes.map { hash ⇒
         testSave(hash, blockHeight)
       })
     } yield result
@@ -61,9 +61,9 @@ class OrdersCancelledEventServiceSpec
 
   "save" must "save a cancel order" in {
     val result = for {
-      _ ← testSave(hash, 1L)
-      query ← service.hasCancelled(hash)
-      _ ← service.obsolete(0) //clear data
+      _ <- testSave(hash, 1L)
+      query <- service.hasCancelled(hash)
+      _ <- service.obsolete(0) //clear data
     } yield query
     val res = Await.result(result.mapTo[Boolean], 5.second)
     res should be(true)
@@ -87,11 +87,11 @@ class OrdersCancelledEventServiceSpec
       "0x-obsolete-16"
     )
     val result = for {
-      _ ← testSaves(owners1, 100L)
-      queryNone ← service.hasCancelled(hash)
-      _ ← testSaves(owners2, 101L)
-      _ ← service.obsolete(101L)
-      queryOne ← service.hasCancelled("0x-obsolete-04")
+      _ <- testSaves(owners1, 100L)
+      queryNone <- service.hasCancelled(hash)
+      _ <- testSaves(owners2, 101L)
+      _ <- service.obsolete(101L)
+      queryOne <- service.hasCancelled("0x-obsolete-04")
     } yield (queryNone, queryOne)
     val res = Await.result(result.mapTo[(Boolean, Boolean)], 5.second)
     val x = res._1 === false && res._2 === true

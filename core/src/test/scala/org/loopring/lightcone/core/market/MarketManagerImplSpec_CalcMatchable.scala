@@ -20,8 +20,8 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
-import XOrderStatus._
-import XErrorCode._
+import OrderStatus._
+import ErrorCode._
 
 class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
 
@@ -35,7 +35,7 @@ class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
     (fakePendingRingPool.getOrderPendingAmountS _)
       .when(buyOrder.id)
       .returns(66)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
 
     val ring = MatchableRing(null, null)
     (fackRingMatcher

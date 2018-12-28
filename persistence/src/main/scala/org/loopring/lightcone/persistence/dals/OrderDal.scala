@@ -21,7 +21,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 import slick.basic._
@@ -31,7 +31,7 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 import slick.lifted.Query
 
-trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
+trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
 
   // Save a order to the database and returns the saved order and indicate
   // whether the order was perviously saved or not.
@@ -56,43 +56,43 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
   // also, if the order is NEW, the status field needs to save as NEW
   // and the created_at and updated_at fileds should both be the current timestamp;
   // if the order already exists, no field should be changed.
-  def saveOrder(order: XRawOrder): Future[XSaveOrderResult]
+  def saveOrder(order: RawOrder): Future[PersistOrder.Res]
 
   // Returns orders with given hashes
-  def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]]
+  def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]]
   // Returns orders owners with given hashes
-  // Map[orderHash, XRawOrder]
-  def getOrdersMap(hashes: Seq[String]): Future[Map[String, XRawOrder]]
+  // Map[orderHash, RawOrder]
+  def getOrdersMap(hashes: Seq[String]): Future[Map[String, RawOrder]]
 
-  def getOrder(hash: String): Future[Option[XRawOrder]]
+  def getOrder(hash: String): Future[Option[RawOrder]]
 
   // Get some orders. The orders should be sorted scendantly by created_at or updated_at
   // indicatd by the sortedByUpdatedAt param.
   def getOrders(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
       marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]]
+      sort: Option[SortingType] = None,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
 
   def getOrdersForUser(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
       marketHash: Option[String] = None,
       feeToken: Option[String] = None,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]]
+      sort: Option[SortingType] = None,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
 
   // Count the number of orders
   def countOrdersForUser(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
@@ -102,76 +102,66 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
 
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: XSkipBySequenceId
-    ): Future[Seq[XRawOrder]]
+      skip: CursorPaging
+    ): Future[Seq[RawOrder]]
 
   // Update order's status and update the updated_at timestamp if changeUpdatedAtField is true.
   // Returns Left(error) if this operation fails, or Right(string) the order's hash.
   def updateOrderStatus(
       hash: String,
-      status: XOrderStatus
-    ): Future[XErrorCode]
+      status: OrderStatus
+    ): Future[ErrorCode]
 
   def updateOrdersStatus(
       hashes: Seq[String],
-      status: XOrderStatus
-    ): Future[XErrorCode]
+      status: OrderStatus
+    ): Future[ErrorCode]
 
   def updateFailed(
       hash: String,
-      status: XOrderStatus
-    ): Future[XErrorCode]
+      status: OrderStatus
+    ): Future[ErrorCode]
 
   def updateAmount(
       hash: String,
-      state: XRawOrder.State
-    ): Future[XErrorCode]
+      state: RawOrder.State
+    ): Future[ErrorCode]
 }
 
 class OrderDalImpl(
   )(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends OrderDal {
   val query = TableQuery[OrderTable]
-  def getRowHash(row: XRawOrder) = row.hash
+  def getRowHash(row: RawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
-  implicit val XOrderStatusColumnType = enumColumnType(XOrderStatus)
-  implicit val XTokenStandardColumnType = enumColumnType(XTokenStandard)
+  implicit val OrderStatusColumnType = enumColumnType(OrderStatus)
+  implicit val TokenStandardColumnType = enumColumnType(TokenStandard)
   private[this] val logger = Logger(this.getClass)
 
-  def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
-    db.run(
-        (query += order).asTry
-      )
-      .map {
-        case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
-          XSaveOrderResult(
-            error = ERR_PERSISTENCE_DUPLICATE_INSERT,
-            order = None,
-            alreadyExist = true
-          )
-        }
-        case Failure(ex) ⇒ {
-          logger.error(s"error : ${ex.getMessage}")
-          XSaveOrderResult(
-            error = ERR_PERSISTENCE_INTERNAL,
-            order = None
-          )
-        }
-        case Success(x) ⇒
-          XSaveOrderResult(
-            error = ERR_NONE,
-            order = Some(order)
-          )
+  def saveOrder(order: RawOrder): Future[PersistOrder.Res] = {
+    db.run((query += order).asTry).map {
+      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
+        PersistOrder.Res(
+          error = ERR_PERSISTENCE_DUPLICATE_INSERT,
+          order = None,
+          alreadyExist = true
+        )
       }
+      case Failure(ex) ⇒ {
+        logger.error(s"error : ${ex.getMessage}")
+        PersistOrder.Res(error = ERR_PERSISTENCE_INTERNAL, order = None)
+      }
+      case Success(x) ⇒
+        PersistOrder.Res(error = ERR_NONE, order = Some(order))
+    }
   }
 
-  def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]] = {
+  def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]] = {
     if (hashes.isEmpty) {
       Future.successful(Seq.empty)
     } else {
@@ -179,22 +169,22 @@ class OrderDalImpl(
     }
   }
 
-  def getOrdersMap(hashes: Seq[String]): Future[Map[String, XRawOrder]] =
+  def getOrdersMap(hashes: Seq[String]): Future[Map[String, RawOrder]] =
     getOrders(hashes).map(_.map(r => r.hash -> r).toMap)
 
-  def getOrder(hash: String): Future[Option[XRawOrder]] =
+  def getOrder(hash: String): Future[Option[RawOrder]] =
     db.run(query.filter(_.hash === hash).result.headOption)
 
   private def queryOrderFilters(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
       marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       validTime: Option[Int] = None,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
+      sort: Option[SortingType] = None,
+      pagingOpt: Option[Paging] = None
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
@@ -210,27 +200,27 @@ class OrderDalImpl(
         .filter(_.validSince >= validTime.get)
         .filter(_.validUntil <= validTime.get)
     if (sort.nonEmpty) filters = sort.get match {
-      case XSort.ASC ⇒ filters.sortBy(_.sequenceId.asc)
-      case XSort.DESC ⇒ filters.sortBy(_.sequenceId.desc)
+      case SortingType.ASC ⇒ filters.sortBy(_.sequenceId.asc)
+      case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
       case _ ⇒ filters.sortBy(_.sequenceId.asc)
     }
-    filters = skip match {
-      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+    filters = pagingOpt match {
+      case Some(paging) ⇒ filters.drop(paging.skip).take(paging.size)
       case None ⇒ filters
     }
     filters
   }
 
   def getOrders(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
       marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]] = {
+      sort: Option[SortingType] = None,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] = {
     val filters = queryOrderFilters(
       statuses,
       owners,
@@ -246,14 +236,14 @@ class OrderDalImpl(
   }
 
   private def queryOrderForUserFilters(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
       marketHash: Option[String] = None,
       feeToken: Option[String] = None,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
+      sort: Option[SortingType] = None,
+      pagingOpt: Option[Paging] = None
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
@@ -264,27 +254,27 @@ class OrderDalImpl(
       filters = filters.filter(_.marketHash === marketHash)
     if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
     if (sort.nonEmpty) filters = sort.get match {
-      case XSort.ASC ⇒ filters.sortBy(_.sequenceId.asc)
-      case XSort.DESC ⇒ filters.sortBy(_.sequenceId.desc)
+      case SortingType.ASC ⇒ filters.sortBy(_.sequenceId.asc)
+      case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
       case _ ⇒ filters.sortBy(_.sequenceId.asc)
     }
-    filters = skip match {
-      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+    filters = pagingOpt match {
+      case Some(paging) ⇒ filters.drop(paging.skip).take(paging.size)
       case None ⇒ filters
     }
     filters
   }
 
   def getOrdersForUser(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
       marketHash: Option[String] = None,
       feeToken: Option[String] = None,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]] = {
+      sort: Option[SortingType] = None,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] = {
     val filters = queryOrderForUserFilters(
       statuses,
       owner,
@@ -300,7 +290,7 @@ class OrderDalImpl(
 
   // Count the number of orders
   def countOrdersForUser(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
@@ -321,20 +311,20 @@ class OrderDalImpl(
   }
 
   private def queryOrderForRecorverFilters(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: XSkipBySequenceId
+      paging: CursorPaging
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     if (marketHashIdSet.nonEmpty && addressShardIdSet.nonEmpty) {
       throw ErrorException(
-        XErrorCode.ERR_INTERNAL_UNKNOWN,
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
         "Invalid parameters:`marketHashIdSet` and `addressShardIdSet` could not both not empty"
       )
     }
     if (marketHashIdSet.isEmpty && addressShardIdSet.isEmpty) {
       throw ErrorException(
-        XErrorCode.ERR_INTERNAL_UNKNOWN,
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
         "Invalid parameters:`marketHashIdSet` and `addressShardIdSet` could not both empty"
       )
     }
@@ -345,20 +335,20 @@ class OrderDalImpl(
     }
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
     filters
-      .filter(_.sequenceId > skip.from)
-      .take(skip.take)
+      .filter(_.sequenceId > paging.cursor)
+      .take(paging.size)
       .sortBy(_.sequenceId.asc)
   }
 
   private def queryOrderForMarketAndAddress(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: XSkipBySequenceId
-    ): Future[Seq[XRawOrder]] = {
-    implicit val paramsResult = GetResult[XRawOrder.Params](
+      paging: CursorPaging
+    ): Future[Seq[RawOrder]] = {
+    implicit val paramsResult = GetResult[RawOrder.Params](
       r =>
-        XRawOrder.Params(
+        RawOrder.Params(
           r.nextString,
           r.nextString,
           r.nextString,
@@ -367,15 +357,15 @@ class OrderDalImpl(
           r.nextString,
           r.nextString,
           r.nextBoolean,
-          XTokenStandard.fromValue(r.nextInt),
-          XTokenStandard.fromValue(r.nextInt),
-          XTokenStandard.fromValue(r.nextInt),
+          TokenStandard.fromValue(r.nextInt),
+          TokenStandard.fromValue(r.nextInt),
+          TokenStandard.fromValue(r.nextInt),
           r.nextString
         )
     )
-    implicit val feeParamsResult = GetResult[XRawOrder.FeeParams](
+    implicit val feeParamsResult = GetResult[RawOrder.FeeParams](
       r =>
-        XRawOrder.FeeParams(
+        RawOrder.FeeParams(
           r.nextString,
           ByteString.copyFrom(r.nextBytes()),
           r.nextInt,
@@ -385,22 +375,17 @@ class OrderDalImpl(
           r.nextInt
         )
     )
-    implicit val erc1400ParamsResult = GetResult[XRawOrder.ERC1400Params](
-      r =>
-        XRawOrder.ERC1400Params(
-          r.nextString,
-          r.nextString,
-          r.nextString
-        )
+    implicit val erc1400ParamsResult = GetResult[RawOrder.ERC1400Params](
+      r => RawOrder.ERC1400Params(r.nextString, r.nextString, r.nextString)
     )
-    implicit val stateResult = GetResult[XRawOrder.State](
+    implicit val stateResult = GetResult[RawOrder.State](
       r =>
-        XRawOrder.State(
+        RawOrder.State(
           r.nextLong,
           r.nextLong,
           r.nextLong,
           r.nextLong,
-          XOrderStatus.fromValue(r.nextInt),
+          OrderStatus.fromValue(r.nextInt),
           ByteString.copyFrom(r.nextBytes()),
           ByteString.copyFrom(r.nextBytes()),
           ByteString.copyFrom(r.nextBytes()),
@@ -409,9 +394,9 @@ class OrderDalImpl(
           ByteString.copyFrom(r.nextBytes())
         )
     )
-    implicit val totalResult = GetResult[XRawOrder](
+    implicit val totalResult = GetResult[RawOrder](
       r =>
-        XRawOrder(
+        RawOrder(
           r.nextString,
           r.nextInt,
           r.nextString,
@@ -440,27 +425,27 @@ class OrderDalImpl(
         WHERE `status` in (${statuses.map(_.value).mkString(",")})
         AND valid_since <= ${now}
         AND valid_until > ${now}
-        AND sequence_id > ${skip.from}
+        AND sequence_id > ${paging.cursor}
         AND (
           market_hash_id in (${marketHashIdSet.mkString(",")})
           OR address_shard_id IN (${addressShardIdSet.mkString(",")})
         )
         ORDER BY sequence_id ASC
-        LIMIT ${skip.take}
-      """.as[XRawOrder]
+        LIMIT ${paging.size}
+      """.as[RawOrder]
     db.run(sql).map(r => r.toSeq)
   }
 
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: XSkipBySequenceId
-    ): Future[Seq[XRawOrder]] = {
+      skip: CursorPaging
+    ): Future[Seq[RawOrder]] = {
     if (marketHashIdSet.isEmpty && addressShardIdSet.isEmpty) {
       throw ErrorException(
-        XErrorCode.ERR_INTERNAL_UNKNOWN,
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
         "Invalid parameters:`marketHashIdSet` and `addressShardIdSet` could not both empty"
       )
     } else {
@@ -485,10 +470,10 @@ class OrderDalImpl(
 
   def updateOrderStatus(
       hash: String,
-      status: XOrderStatus
-    ): Future[XErrorCode] =
+      status: OrderStatus
+    ): Future[ErrorCode] =
     for {
-      result ← db.run(
+      result <- db.run(
         query
           .filter(_.hash === hash)
           .map(c ⇒ (c.status, c.updatedAt))
@@ -501,10 +486,10 @@ class OrderDalImpl(
 
   def updateOrdersStatus(
       hashes: Seq[String],
-      status: XOrderStatus
-    ): Future[XErrorCode] =
+      status: OrderStatus
+    ): Future[ErrorCode] =
     for {
-      result ← db.run(
+      result <- db.run(
         query
           .filter(_.hash inSet hashes)
           .map(c ⇒ (c.status, c.updatedAt))
@@ -517,18 +502,18 @@ class OrderDalImpl(
 
   def updateFailed(
       hash: String,
-      status: XOrderStatus
-    ): Future[XErrorCode] =
+      status: OrderStatus
+    ): Future[ErrorCode] =
     for {
-      _ ← Future.unit
+      _ <- Future.unit
       failedStatus = Seq(
-        XOrderStatus.STATUS_CANCELLED_BY_USER,
-        XOrderStatus.STATUS_CANCELLED_LOW_BALANCE,
-        XOrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE,
-        XOrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
-        XOrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
+        OrderStatus.STATUS_CANCELLED_BY_USER,
+        OrderStatus.STATUS_CANCELLED_LOW_BALANCE,
+        OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE,
+        OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
+        OrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
       )
-      result ← if (!failedStatus.contains(status)) {
+      result <- if (!failedStatus.contains(status)) {
         Future.successful(0)
       } else {
         db.run(
@@ -545,10 +530,10 @@ class OrderDalImpl(
 
   def updateAmount(
       hash: String,
-      state: XRawOrder.State
-    ): Future[XErrorCode] =
+      state: RawOrder.State
+    ): Future[ErrorCode] =
     for {
-      result ← db.run(
+      result <- db.run(
         query
           .filter(_.hash === hash)
           .map(

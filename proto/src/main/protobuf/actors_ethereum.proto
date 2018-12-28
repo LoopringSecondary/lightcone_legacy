@@ -20,387 +20,268 @@ option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
 import "ethereum.proto";
-import "core_data.proto";
+import "core.proto";
 
-message XEthereumProxySettings {
-    message XNode {
-        string host = 1;
-        int32 port = 2;
-        string ipcPath = 3;
+/////////////////////////////////////////////////////////////////////
+// ETHEREUM JSON-RPC MESSAGES
+/////////////////////////////////////////////////////////////////////
+
+message JsonRpc {
+    message Request {
+        string json = 1;
     }
-    int32 pool_size = 1;
-    int32 check_interval_seconds = 2;
-    float healthy_threshold = 3;
-    repeated XNode nodes = 4;
+
+    message RequestWithHeight{
+        Request req = 1;
+        uint32 height = 2;
+    }
+
+    message Error {
+        int32 code = 1;
+        string message = 2;
+    }
+
+    message Response {
+        string json = 1;
+    }
 }
 
-//message XCheckBlockHeightResp {
-//    int32 current_block = 1;
-//    int32 height_block = 2;
-//}
-
-message XNodeBlockHeight{
-    string path = 1;
-    int32 height = 2;
-}
-
-message XNodeHeightReq{}
-
-message XNodeHeightRes{
-    repeated XNodeBlockHeight nodes = 1;
-}
-
-message XJsonRpcReq {
-    string json = 1;
-}
-
-message XRpcReqWithHeight{
-    XJsonRpcReq req = 1;
-    uint32 height = 2;
-}
-
-message XJsonRpcErr {
-    int32 code = 1;
-    string message = 2;
-}
-
-message XJsonRpcRes {
-    string json = 1;
-}
-
-///////////////////////////////////////////
-//
-// ethereum original type
-//
-///////////////////////////////////////////
-
-message XTransaction {
-    string hash = 1;
-    string nonce = 2;
-    string blockHash = 3;
-    string blockNumber = 4;
-    string transactionIndex = 5;
-    string from = 6;
-    string to = 7;
-    string value = 8;
-    string gasPrice = 9;
-    string gas = 10;
-    string input = 11;
-    string r = 12;
-    string s = 13;
-    string v = 14;
-}
-
-message XLog {
-    string logIndex = 1;
-    string blockNumber = 2;
-    string blockHash = 3;
-    string transactionHash = 4;
-    string transactionIndex = 5;
-    string address = 6;
-    string data = 7;
-    repeated string topics = 8;
-    bool removed = 9;
-}
-
-message XTransactionReceipt {
-    string blockHash = 1;
-    string blockNumber = 2;
-    string transactionHash = 3;
-    string transactionIndex = 4;
-    string from = 5;
-    string to = 6;
-    string contractAddress = 7;
-    string cumulativeGasUsed = 8;
-    string gasUsed = 9;
-    repeated XLog logs = 10;
-    string logsBloom = 11;
-    string root = 12;
-    string status = 13;
-}
-
-message XBlockWithTxHash {
-    string number = 1;
-    string hash = 2;
-    string parentHash = 3;
-    string nonce = 4;
-    string sha3Uncles = 5;
-    string logsBloom = 6;
-    string transactionsRoot = 7;
-    string stateRoot = 8;
-    string receiptRoot = 9;
-    string miner = 10;
-    string difficulty = 11;
-    string totalDifficulty = 12;
-    string extraData = 13;
-    string size = 14;
-    string gasLimit = 15;
-    string gasUsed = 16;
-    string timestamp = 17;
-    repeated string transactions = 18;
-    repeated string uncles = 19;
-}
-
-message XBlockWithTxObject {
-    string number = 1;
-    string hash = 2;
-    string parentHash = 3;
-    string nonce = 4;
-    string sha3Uncles = 5;
-    string logsBloom = 6;
-    string transactionsRoot = 7;
-    string stateRoot = 8;
-    string receiptRoot = 9;
-    string miner = 10;
-    string difficulty = 11;
-    string totalDifficulty = 12;
-    string extraData = 13;
-    string size = 14;
-    string gasLimit = 15;
-    string gasUsed = 16;
-    string timestamp = 17;
-    repeated XTransaction transactions = 18;
-    repeated string uncles = 19;
-}
-
-message XTraceCall {
-    string from = 1;
-    string to = 2;
-    string input = 3;
-    string output = 4;
-    string gas = 5;
-    string gasUsed = 6;
-    string type = 7;
-    string value = 8;
-}
-
-message XTraceTransaction {
-    string from = 1;
-    string to = 2;
-    string input = 3;
-    string output = 4;
-    string gas = 5;
-    string gasUsed = 6;
-    string type = 7;
-    string value = 8;
-    repeated XTraceCall calls = 9;
-}
-
-message XTransactionParam {
-    string from = 1;
-    string to = 2;
-    string gas = 3;
-    string gasPrice = 4;
-    string value = 5;
-    string data = 6;
-}
-
-//message BlockWithTxAndReceipt {
-//    Block block = 1;
-//    repeated Transaction        transactions = 2;
-//    repeated TransactionReceipt receipts = 3;
-//}
-
-///////////////////////////////////////////
-//
-// ethereum json rpc params
-//
-///////////////////////////////////////////
-
-//eth_blockNumber
-message XEthBlockNumberReq {
-}
-
-message XEthResError {
+message EthRpcError {
     int32 code = 1;
     string error = 2;
 }
 
-message XEthBlockNumberRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    XEthResError error = 4;
+message GetBlockNumber {
+    message Req {
+    }
+
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthRpcError error = 4;
+    }
 }
 
-message XEthCallReq {
-    int32 id = 1;
-    XTransactionParam param = 2;
-    string tag = 3;
-}
+message EthCall {
+    message Req {
+        int32 id = 1;
+        TransactionParams param = 2;
+        string tag = 3;
+    }
 
-message XEthCallRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    XEthResError error = 4;
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthRpcError error = 4;
+    }
 }
 
 // eth_getBalance
-message XEthGetBalanceReq {
-    string address = 1;
-    string tag = 2;
-}
-message XEthGetBalanceRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    XEthResError error = 4;
+message EthGetBalance {
+    message Req {
+        string address = 1;
+        string tag = 2;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthRpcError error = 4;
+    }
 }
 
 // eth_getTransactionByHash
-message XGetTransactionByHashReq {
-    string hash = 1;
-}
-message XGetTransactionByHashRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    XTransaction result = 3;
-    XEthResError error = 4;
+message GetTransactionByHash {
+    message Req {
+        string hash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        Transaction result = 3;
+        EthRpcError error = 4;
+    }
 }
 
 // eth_getTransactionReceipt
-message XGetTransactionReceiptReq {
-    string hash = 1;
-}
-message XGetTransactionReceiptRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    XTransactionReceipt result = 3;
-    XEthResError error = 4;
+message GetTransactionReceipt {
+    message Req {
+        string hash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        TransactionReceipt result = 3;
+        EthRpcError error = 4;
+    }
 }
 
 // eth_getBlockByNumber
-message XGetBlockWithTxHashByNumberReq {
-    string blockNumber = 1;
-}
-message XGetBlockWithTxHashByNumberRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    XBlockWithTxHash result = 3;
-    XEthResError error = 4;
+message GetBlockWithTxHashByNumber {
+    message Req {
+        string blockNumber = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        BlockWithTxHash result = 3;
+        EthRpcError error = 4;
+    }
 }
 
-message XGetBlockWithTxObjectByNumberReq {
-    string blockNumber = 1;
-}
-message XGetBlockWithTxObjectByNumberRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    XBlockWithTxObject result = 3;
-    XEthResError error = 4;
+message GetBlockWithTxObjectByNumber {
+    message Req {
+        string blockNumber = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        BlockWithTxObject result = 3;
+        EthRpcError error = 4;
+    }
 }
 
 // eth_getBlockByHash
-message XGetBlockWithTxHashByHashReq {
-    string blockHash = 1;
-}
-message XGetBlockWithTxHashByHashRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    XBlockWithTxHash result = 3;
-    XEthResError error = 4;
+message GetBlockWithTxHashByHash {
+    message Req {
+        string blockHash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        BlockWithTxHash result = 3;
+        EthRpcError error = 4;
+    }
 }
 
-message XGetBlockWithTxObjectByHashReq {
-    string blockHash = 1;
-}
-message XGetBlockWithTxObjectByHashRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    XBlockWithTxObject result = 3;
-    XEthResError error = 4;
+message GetBlockWithTxObjectByHash {
+    message Req {
+        string blockHash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        BlockWithTxObject result = 3;
+        EthRpcError error = 4;
+    }
 }
 
 // debug_traceTransaction
-message XTraceTransactionReq {
-    string txhash = 1;
-}
-message XTraceTransactionRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    XTraceTransaction result = 3;
-    XEthResError error = 4;
+message TraceTransaction {
+    message Req {
+        string txhash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        TransactionTracing result = 3;
+        EthRpcError error = 4;
+    }
 }
 
 // eth_estimateGas
-message XGetEstimatedGasReq {
-    string to = 1;
-    string data = 2;
-}
-message XGetEstimatedGasRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    XEthResError error = 4;
-}
-
-message XGetNonceReq {
-    string owner = 1;
-    string tag = 2;
-}
-message XGetNonceRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    XEthResError error = 4;
+message GetEstimatedGas {
+    message Req {
+        string to = 1;
+        string data = 2;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthRpcError error = 4;
+    }
 }
 
-message XGetBlockTransactionCountReq {
-    string block_hash = 1;
-}
-message XGetBlockTransactionCountRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    XEthResError error = 4;
-}
-
-message XSendRawTransactionReq {
-    string data = 1;
-}
-
-message XGetUncleByBlockNumAndIndexReq{
-    string blockNum = 1;
-    string index = 2;
+message GetNonce {
+    message Req {
+        string owner = 1;
+        string tag = 2;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthRpcError error = 4;
+    }
 }
 
-message XBatchGetUncleByBlockNumAndIndexReq{
-   repeated XGetUncleByBlockNumAndIndexReq reqs = 1;
+message GetBlockTransactionCount {
+    message Req {
+        string block_hash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthRpcError error = 4;
+    }
 }
 
-message XBatchGetUncleByBlockNumAndIndexRes{
-   repeated XGetBlockWithTxHashByHashRes resps = 1;
+message BatchCallContracts {
+    message Req {
+        repeated EthCall.Req reqs = 1;
+    }
+
+    message Res {
+        repeated EthCall.Res resps = 1;
+    }
 }
 
-message XBatchContractCallReq {
-    repeated XEthCallReq reqs = 1;
+message BatchGetTransactions {
+    message Req {
+        repeated GetTransactionByHash.Req reqs = 1;
+    }
+
+    message Res {
+        repeated GetTransactionByHash.Res resps = 1;
+    }
 }
 
-message XBatchContractCallRes {
-    repeated XEthCallRes resps = 1;
+message BatchGetTransactionReceipts {
+    message Req {
+        repeated GetTransactionReceipt.Req reqs = 1;
+    }
+
+    message Res {
+        repeated GetTransactionReceipt.Res resps = 1;
+    }
 }
 
-message XBatchGetTransactionsReq {
-    repeated XGetTransactionByHashReq reqs = 1;
+message GetUncle {
+    message Req {
+        string blockNum = 1;
+        string index = 2;
+    }
+    message Res {}
 }
 
-message XBatchGetTransactionsRes {
-    repeated XGetTransactionByHashRes resps = 1;
+message BatchGetUncle {
+    message Req{
+       repeated GetUncle.Req reqs = 1;
+    }
+
+    message Res{
+       repeated GetBlockWithTxHashByHash.Res resps = 1;
+    }
 }
 
-message XBatchGetTransactionReceiptsReq {
-    repeated XGetTransactionReceiptReq reqs = 1;
-}
+// message SendRawTransactionReq {
+//     string data = 1;
+// }
 
-message XBatchGetTransactionReceiptsRes {
-    repeated XGetTransactionReceiptRes resps = 1;
-}
+/// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
+/// 解析合约事件得到下面的数据：
 
-message XSaveBlockReq {
-    XBlockData block_data = 1;
-}
+// message RingExecuted {
+//     OrderRing ring = 1;
+//     string tx_hash = 2;
+//     ExecutionStatus status = 3;
+//     bytes used_gas = 4;
+//     int64 block_number = 5;
+// }
 
-message XSaveBlockRes {
-    XError error = 1;
-}
+
+

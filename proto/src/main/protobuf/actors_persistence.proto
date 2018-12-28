@@ -19,138 +19,149 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
-import "core_data.proto";
-import "persistence.proto";
+import "common.proto";
+import "core.proto";
+import "actors_data.proto";
 
-message XSaveOrderResult {
-    XRawOrder order    = 1;
-    bool already_exist      = 2;
-    XErrorCode error = 3;
-}
+/////////////////////////////////////////////////////////////////////
+// TWO WAY DATABASE-RELATED REQUEST-RESPONSES
+/////////////////////////////////////////////////////////////////////
 
-message XSaveOrderReq {
-    XRawOrder order    = 1;
-}
-
-message XUpdateOrderStateReq {
-    string hash = 1;
-    XRawOrder.State state = 2;
-    bool changeUpdatedAtField = 3;
-}
-
-message XUpdateOrderStateRes {
-    XErrorCode error = 1;
-}
-
-message XUpdateOrderStatusReq {
-    string hash = 1;
-    XOrderStatus status = 2;
-    bool changeUpdatedAtField = 3;
-}
-
-message XUpdateOrderStatusRes {
-    XErrorCode error = 1;
-}
-
-message XGetOrdersByHashesReq {
-    repeated string hashes = 1;
-}
-
-message XGetOrdersByHashesRes {
-    repeated XRawOrder orders = 1;
-    XErrorCode error = 2;
-}
-
-message XGetOrderByHashReq {
-    string hash = 1;
-}
-
-message XGetOrderByHashRes {
-    XRawOrder order = 1;
-    XErrorCode error = 2;
-}
-
-message XSaveOrderStateResult {
-    XRawOrder state    = 1;
-    XErrorCode error = 3;
-}
-
-message XSaveOrderStateReq {
-    XRawOrder state    = 1;
-}
-
-message MarketPair {
-    string token_s  = 1;
-    string token_b  = 2;
-}
-
-message XGetOrdersForUserReq {
-    oneof market {
-        MarketPair pair        = 1; // tokenS -> tokenB
-        string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+message PersistOrder {
+    message Req {
+        RawOrder order    = 1;
     }
-    string   owner                 = 3;
-    repeated XOrderStatus statuses = 4;
-    XSort    sort                  = 5;
-    XSkip    skip                  = 6;
-}
-
-message XGetOrdersForUserResult {
-    repeated XRawOrder orders = 1;
-    XErrorCode error = 2;
-}
-
-message XUserCancelOrderReq {
-    repeated string order_hashes = 1;
-}
-
-message XUserCancelOrderResult {
-    message Result {
-        string     order_hash = 1;
-        XRawOrder  order      = 2;
-        XErrorCode error      = 3;
+    message Res {
+        RawOrder order    = 1;
+        bool already_exist      = 2;
+        ErrorCode error = 3;
     }
-    repeated Result updated_result = 1;
 }
 
-message XGetTradesReq {
-    oneof market {
-        MarketPair pair        = 1; // tokenS -> tokenB
-        string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+message UpdateOrderState {
+    message Req {
+        string hash = 1;
+        RawOrder.State state = 2;
+        bool changeUpdatedAtField = 3;
     }
-    string owner   = 3;
-    XSort sort     = 4;
-    XSkip skip     = 5;
+
+    message Res {
+        ErrorCode error = 1;
+    }
 }
 
-message XGetTradesResult {
-    repeated XTrade  trades = 1;
-    XErrorCode       error  = 2;
+message UpdateOrderStatus {
+    message Req {
+        string hash = 1;
+        OrderStatus status = 2;
+        bool changeUpdatedAtField = 3;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+}
 }
 
-message XSaveSettlementTxReq {
-    XSettlementTx tx = 1;
+message GetOrderByHash {
+    message Req {
+        string hash = 1;
+    }
+
+    message Res {
+        RawOrder order = 1;
+        ErrorCode error = 2;
+    }
+
+    message BatchReq {
+        repeated string hashes = 1;
+    }
+
+    message BatchRes {
+        repeated RawOrder orders = 1;
+        ErrorCode error = 2;
+    }
 }
 
-message XSaveSettlementTxResult {
-    XErrorCode error = 1;
+
+message GetOrdersForUser {
+    message Req {
+        oneof market {
+            MarketPair pair        = 1; // tokenS -> tokenB
+            string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+        }
+        string   owner                 = 3;
+        repeated OrderStatus statuses = 4;
+        SortingType    sort                  = 5;
+        Paging    skip                  = 6;
+    }
+
+    message Res {
+        repeated RawOrder orders = 1;
+        ErrorCode error = 2;
+    }
 }
 
-message XGetPendingTxsReq {
-    string owner       = 1; // required
-    int64  time_before = 2; // create_at <= time_before
+message UserCancelOrder {
+    message Req {
+        repeated string order_hashes = 1;
+    }
+
+    message Res {
+        message Result {
+            string    order_hash = 1;
+            RawOrder  order      = 2;
+            ErrorCode error      = 3;
+        }
+        repeated Result updated_result = 1;
+    }
 }
 
-message XGetPendingTxsResult {
-    repeated XSettlementTx txs = 1;
+message GetTrades {
+    message Req {
+        oneof market {
+            MarketPair pair        = 1; // tokenS -> tokenB
+            string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+        }
+        string owner   = 3;
+        SortingType sort     = 4;
+        Paging skip     = 5;
+    }
+
+    message Res {
+        repeated Trade  trades = 1;
+        ErrorCode       error  = 2;
+    }
 }
 
-message XUpdateTxInBlockReq {
-    string tx_hash = 1;
-    string from    = 2;
-    int64  nonce   = 3;
+message PersistSettlementTx {
+    message Req {
+        SettlementTx tx = 1;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+    }
 }
 
-message XUpdateTxInBlockResult {
-    XErrorCode error = 1;
+message GetPendingTxs {
+    message Req {
+        string owner       = 1; // required
+        int64  time_before = 2; // create_at <= time_before
+    }
+
+    message Res {
+        repeated SettlementTx txs = 1;
+    }
+}
+
+message UpdateTxInBlock {
+    message Req {
+        string tx_hash = 1;
+        string from    = 2;
+        int64  nonce   = 3;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+    }
 }

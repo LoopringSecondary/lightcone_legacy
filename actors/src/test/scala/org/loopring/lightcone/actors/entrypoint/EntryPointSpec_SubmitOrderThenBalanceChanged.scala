@@ -52,9 +52,9 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
     "store it but the depth is empty until allowance is enough" in {
 
       //设置余额
-      val f = actors.get(EthereumQueryActor.name) ? XGetBalanceAndAllowancesRes(
+      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances.Res(
         "",
-        Map("" -> XBalanceAndAllowance("25".zeros(LRC_TOKEN.decimals)))
+        Map("" -> BalanceAndAllowance("25".zeros(LRC_TOKEN.decimals)))
       )
       Await.result(f, timeout.duration)
 
@@ -67,7 +67,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       }
 
       val f1 = Future.sequence(rawOrders.map { o =>
-        singleRequest(XSubmitOrderReq(Some(o)), "submit_order")
+        singleRequest(SubmitOrder.Req(Some(o)), "submit_order")
       })
 
       val res = Await.result(f1, 3 second)
@@ -82,7 +82,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
           orderOpt match {
             case Some(order) =>
               assert(order.sequenceId > 0)
-              assert(order.getState.status == XOrderStatus.STATUS_PENDING)
+              assert(order.getState.status == OrderStatus.STATUS_PENDING)
             case None =>
               assert(false)
           }
@@ -92,33 +92,34 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       //orderbook
       Thread.sleep(1000)
       info("the depth should be empty when allowance is not enough")
-      val getOrderBook = XGetOrderbook(
+      val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val orderbookF = singleRequest(getOrderBook, "orderbook")
 
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}, buys:${buys}")
           assert(sells.isEmpty && buys.isEmpty)
         case _ => assert(false)
       }
 
       info("then make allowance enough.")
-      val setAllowanceF = actors.get(EthereumQueryActor.name) ? XGetBalanceAndAllowancesRes(
-        "",
-        Map(
-          "" -> XBalanceAndAllowance(
-            "25".zeros(LRC_TOKEN.decimals),
-            "25".zeros(LRC_TOKEN.decimals)
+      val setAllowanceF = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances
+        .Res(
+          "",
+          Map(
+            "" -> BalanceAndAllowance(
+              "25".zeros(LRC_TOKEN.decimals),
+              "25".zeros(LRC_TOKEN.decimals)
+            )
           )
         )
-      )
       Await.result(setAllowanceF, timeout.duration)
-      actors.get(MultiAccountManagerActor.name) ? XAddressAllowanceUpdated(
+      actors.get(MultiAccountManagerActor.name) ? AddressAllowanceUpdated(
         rawOrders(0).owner,
         LRC_TOKEN.address,
         ByteString.copyFrom("15".zeros(LRC_TOKEN.decimals).toByteArray)
@@ -130,7 +131,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
 
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}, buys: ${buys}")
           assert(sells.size == 1)
           assert(

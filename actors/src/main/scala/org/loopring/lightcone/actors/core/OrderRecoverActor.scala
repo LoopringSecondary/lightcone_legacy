@@ -29,8 +29,8 @@ import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Matchable
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
@@ -44,7 +44,7 @@ object OrderRecoverActor extends ShardedEvenly {
   override protected val messageExtractor =
     new HashCodeMessageExtractor(numOfShards) {
       override def entityId(message: Any) = message match {
-        case req: XRecover.Batch =>
+        case req: ActorRecover.RequestBatch =>
           name + "_batch" + req.batchId
         case e: Any =>
           throw new Exception(s"$e not expected by OrderRecoverActor")
@@ -81,35 +81,35 @@ class OrderRecoverActor(
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   val batchSize = selfConfig.getInt("batch-size")
-  var batch: XRecover.Batch = _
+  var batch: ActorRecover.RequestBatch = _
   var numOrders = 0L
   def coordinator = actors.get(OrderRecoverCoordinator.name)
   def mama = actors.get(MultiAccountManagerActor.name)
 
   def receive: Receive = {
-    case req: XRecover.Batch =>
+    case req: ActorRecover.RequestBatch =>
       log.info(s"started order recover - $req")
       batch = req
 
       sender ! batch // echo back to coordinator
-      self ! XRecover.RetrieveOrders(0L)
+      self ! ActorRecover.RetrieveOrders(0L)
 
       context.become(recovering)
   }
 
   def recovering: Receive = {
-    case XRecover.CancelFor(requester) =>
+    case ActorRecover.CancelFor(requester) =>
       batch =
         batch.copy(requestMap = batch.requestMap.filterNot(_._1 == requester))
 
       sender ! batch // echo back to coordinator
 
-    case XRecover.RetrieveOrders(lastOrderSeqId) =>
+    case ActorRecover.RetrieveOrders(lastOrderSeqId) =>
       for {
         orders <- retrieveOrders(batchSize, lastOrderSeqId)
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
         reqs = orders.map { order =>
-          XRecover.RecoverOrderReq(Some(order))
+          ActorRecover.RecoverOrderReq(Some(order))
         }
         _ = log.info(
           s"--> batch#${batch.batchId} recovering ${orders.size} orders (total=${numOrders})..."
@@ -120,15 +120,15 @@ class OrderRecoverActor(
 
         lastOrderSeqIdOpt match {
           case Some(lastOrderSeqId) =>
-            self ! XRecover.RetrieveOrders(lastOrderSeqId)
+            self ! ActorRecover.RetrieveOrders(lastOrderSeqId)
 
           case None =>
-            coordinator ! XRecover.Finished(false)
+            coordinator ! ActorRecover.Finished(false)
 
             batch.requestMap.keys.toSeq
               .map(resolveActorRef)
               .foreach { actor =>
-                actor ! XRecover.Finished(false)
+                actor ! ActorRecover.Finished(false)
               }
         }
       }
@@ -147,7 +147,7 @@ class OrderRecoverActor(
   def retrieveOrders(
       batchSize: Int,
       lastOrderSeqId: Long
-    ): Future[Seq[XRawOrder]] = {
+    ): Future[Seq[RawOrder]] = {
     if (batch.requestMap.nonEmpty) {
       var addressShardIds: Set[Int] = Set.empty
       var marketHashIds: Set[Int] = Set.empty
@@ -163,15 +163,15 @@ class OrderRecoverActor(
         }
       }
       val status = Set(
-        XOrderStatus.STATUS_NEW,
-        XOrderStatus.STATUS_PENDING,
-        XOrderStatus.STATUS_PARTIALLY_FILLED
+        OrderStatus.STATUS_NEW,
+        OrderStatus.STATUS_PENDING,
+        OrderStatus.STATUS_PARTIALLY_FILLED
       )
       dbModule.orderService.getOrdersForRecover(
         status,
         marketHashIds,
         addressShardIds,
-        XSkipBySequenceId(lastOrderSeqId, batchSize)
+        CursorPaging(lastOrderSeqId, batchSize)
       )
     } else {
       Future.successful(Seq.empty)

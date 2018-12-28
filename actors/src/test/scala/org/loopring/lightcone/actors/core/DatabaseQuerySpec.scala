@@ -38,9 +38,9 @@ class DatabaseQuerySpec
       tokenS: String,
       tokenB: String,
       blockHeight: Long
-    ): Future[Either[XErrorCode, String]] = {
+    ): Future[Either[ErrorCode, String]] = {
     dbModule.tradeService.saveTrade(
-      XTrade(
+      Trade(
         txHash = txHash,
         owner = owner,
         tokenB = tokenB,
@@ -60,28 +60,25 @@ class DatabaseQuerySpec
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )
       }
-      val request = XGetOrdersForUserReq(
+      val request = GetOrdersForUser.Req(
         owner = owner,
-        statuses = Seq(XOrderStatus.STATUS_NEW),
-        market = XGetOrdersForUserReq.Market
+        statuses = Seq(OrderStatus.STATUS_NEW),
+        market = GetOrdersForUser.Req.Market
           .Pair(
             MarketPair(tokenS = LRC_TOKEN.address, tokenB = WETH_TOKEN.address)
           )
       )
       val r = for {
-        _ ← Future.sequence(rawOrders.map { order ⇒
+        _ <- Future.sequence(rawOrders.map { order ⇒
           dbModule.orderService.saveOrder(order)
         })
-        response <- singleRequest(
-          request,
-          "get_orders"
-        )
+        response <- singleRequest(request, "get_orders")
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case XGetOrdersForUserResult(orders, error) =>
+        case GetOrdersForUser.Res(orders, error) =>
           assert(orders.nonEmpty && orders.length === 6)
-          assert(error === XErrorCode.ERR_NONE)
+          assert(error === ErrorCode.ERR_NONE)
         case _ => assert(false)
       }
     }
@@ -92,12 +89,12 @@ class DatabaseQuerySpec
       val method = "get_trades"
       val tokenS = "0xaaaaaaa2"
       val tokenB = "0xbbbbbbb2"
-      val tradesReq = XGetTradesReq(
+      val tradesReq = GetTrades.Req(
         owner = "0x-gettrades-actor-02",
-        market = XGetTradesReq.Market
+        market = GetTrades.Req.Market
           .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB)),
-        skip = Some(XSkip(0, 10)),
-        sort = XSort.ASC
+        skip = Some(Paging(0, 10)),
+        sort = SortingType.ASC
       )
       val hashes = Set(
         "0x-gettrades-actor-01",
@@ -107,19 +104,16 @@ class DatabaseQuerySpec
         "0x-gettrades-actor-05"
       )
       val r = for {
-        _ ← Future.sequence(hashes.map { hash ⇒
+        _ <- Future.sequence(hashes.map { hash ⇒
           testSaveTrade(hash, hash, tokenS, tokenB, 1L)
         })
-        response <- singleRequest(
-          tradesReq,
-          method
-        )
+        response <- singleRequest(tradesReq, method)
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case XGetTradesResult(trades, error) =>
+        case GetTrades.Res(trades, error) =>
           assert(trades.nonEmpty && trades.length === 1)
-          assert(error === XErrorCode.ERR_NONE)
+          assert(error === ErrorCode.ERR_NONE)
         case _ => assert(false)
       }
     }

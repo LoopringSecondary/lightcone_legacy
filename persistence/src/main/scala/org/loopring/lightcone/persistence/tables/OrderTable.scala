@@ -20,10 +20,10 @@ import org.loopring.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
 
-class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
+class OrderTable(tag: Tag) extends BaseTable[RawOrder](tag, "T_ORDERS") {
 
-  implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
-  implicit val XTokenStandardCxolumnType = enumColumnType(XTokenStandard)
+  implicit val OrderStatusCxolumnType = enumColumnType(OrderStatus)
+  implicit val TokenStandardCxolumnType = enumColumnType(TokenStandard)
 
   def id = hash
   def hash = columnHash("hash")
@@ -44,9 +44,9 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
   def sig = column[String]("sig")
   def dualAuthPrivKey = column[String]("dual_auth_priv_key")
   def allOrNone = column[Boolean]("all_or_none")
-  def tokenStandardS = column[XTokenStandard]("token_standard_s")
-  def tokenStandardB = column[XTokenStandard]("token_standard_b")
-  def tokenStandardFee = column[XTokenStandard]("token_standard_fee")
+  def tokenStandardS = column[TokenStandard]("token_standard_s")
+  def tokenStandardB = column[TokenStandard]("token_standard_b")
+  def tokenStandardFee = column[TokenStandard]("token_standard_fee")
   def dualAuthAddrPrivateKey = columnHash("dual_auth_addr_private_key")
 
   // FeeParams
@@ -68,7 +68,7 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
   def updatedAt = column[Long]("updated_at")
   def matchedAt = column[Long]("matched_at")
   def updatedAtBlock = column[Long]("updated_at_block")
-  def status = column[XOrderStatus]("status")
+  def status = column[OrderStatus]("status")
   def outstandingAmountS = columnAmount("outstanding_amount_s")
   def outstandingAmountB = columnAmount("outstanding_amount_b")
   def outstandingAmountFee = columnAmount("outstanding_amount_fee")
@@ -117,10 +117,10 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
       tokenStandardFee,
       dualAuthAddrPrivateKey
     ) <> ({ tuple =>
-      Option((XRawOrder.Params.apply _).tupled(tuple))
-    }, { paramsOpt: Option[XRawOrder.Params] =>
-      val params = paramsOpt.getOrElse(XRawOrder.Params())
-      XRawOrder.Params.unapply(params)
+      Option((RawOrder.Params.apply _).tupled(tuple))
+    }, { paramsOpt: Option[RawOrder.Params] =>
+      val params = paramsOpt.getOrElse(RawOrder.Params())
+      RawOrder.Params.unapply(params)
     })
 
   def feeParamsProjection =
@@ -133,18 +133,18 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
       tokenRecipient,
       walletSplitPercentage
     ) <> ({ tuple =>
-      Option((XRawOrder.FeeParams.apply _).tupled(tuple))
-    }, { paramsOpt: Option[XRawOrder.FeeParams] =>
-      val params = paramsOpt.getOrElse(XRawOrder.FeeParams())
-      XRawOrder.FeeParams.unapply(params)
+      Option((RawOrder.FeeParams.apply _).tupled(tuple))
+    }, { paramsOpt: Option[RawOrder.FeeParams] =>
+      val params = paramsOpt.getOrElse(RawOrder.FeeParams())
+      RawOrder.FeeParams.unapply(params)
     })
 
   def erc1400ParamsProjection =
     (trancheS, trancheB, trancheDataS) <> ({ tuple =>
-      Option((XRawOrder.ERC1400Params.apply _).tupled(tuple))
-    }, { paramsOpt: Option[XRawOrder.ERC1400Params] =>
-      val params = paramsOpt.getOrElse(XRawOrder.ERC1400Params())
-      XRawOrder.ERC1400Params.unapply(params)
+      Option((RawOrder.ERC1400Params.apply _).tupled(tuple))
+    }, { paramsOpt: Option[RawOrder.ERC1400Params] =>
+      val params = paramsOpt.getOrElse(RawOrder.ERC1400Params())
+      RawOrder.ERC1400Params.unapply(params)
     })
 
   def stateProjection =
@@ -161,10 +161,10 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
       outstandingAmountB,
       outstandingAmountFee
     ) <> ({ tuple =>
-      Option((XRawOrder.State.apply _).tupled(tuple))
-    }, { paramsOpt: Option[XRawOrder.State] =>
-      val params = paramsOpt.getOrElse(XRawOrder.State())
-      XRawOrder.State.unapply(params)
+      Option((RawOrder.State.apply _).tupled(tuple))
+    }, { paramsOpt: Option[RawOrder.State] =>
+      val params = paramsOpt.getOrElse(RawOrder.State())
+      RawOrder.State.unapply(params)
     })
 
   def * =
@@ -185,5 +185,5 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
       marketHash,
       addressShardId,
       marketHashId
-    ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
+    ) <> ((RawOrder.apply _).tupled, RawOrder.unapply)
 }

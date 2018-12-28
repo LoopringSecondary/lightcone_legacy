@@ -21,7 +21,7 @@ import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
 class OrdersCutoffTable(tag: Tag)
-    extends BaseTable[XOrdersCutoffEvent](tag, "T_ORDERS_CUTOFF") {
+    extends BaseTable[OrdersCutoffEvent](tag, "T_ORDERS_CUTOFF") {
 
   def id = txHash
   def txHash = columnHash("tx_hash")
@@ -55,5 +55,5 @@ class OrdersCutoffTable(tag: Tag)
       createdAt,
       updatedAt,
       blockHeight
-    ) <> ((XOrdersCutoffEvent.apply _).tupled, XOrdersCutoffEvent.unapply)
+    ) <> ((OrdersCutoffEvent.apply _).tupled, OrdersCutoffEvent.unapply)
 }

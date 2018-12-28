@@ -23,21 +23,21 @@ object MarketManager {
   case class MatchResult(
       rings: Seq[MatchableRing],
       taker: Matchable,
-      orderbookUpdate: XOrderbookUpdate)
+      orderbookUpdate: Orderbook.Update)
 }
 
 trait MarketManager {
   import MarketManager._
 
-  val marketId: XMarketId
+  val marketId: MarketId
   val pendingRingPool: PendingRingPool
 
   def submitOrder(
       order: Matchable,
       minFiatValue: Double
     ): MatchResult
-  def cancelOrder(orderId: String): Option[XOrderbookUpdate]
-  def deletePendingRing(ringId: String): Option[XOrderbookUpdate]
+  def cancelOrder(orderId: String): Option[Orderbook.Update]
+  def deletePendingRing(ringId: String): Option[Orderbook.Update]
 
   def getOrder(
       orderId: String,

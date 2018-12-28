@@ -16,10 +16,10 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.proto.XTokenMeta
+import org.loopring.lightcone.proto.TokenMeta
 import scala.concurrent.Future
 
 trait TokenMetadataService {
 
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[XTokenMeta]]
+  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMeta]]
 }

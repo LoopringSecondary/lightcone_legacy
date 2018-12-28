@@ -43,10 +43,10 @@ class AccountOrderPoolImpl() extends AccountOrderPool with Logging {
       case Some(existing) if existing == order =>
       case _ =>
         order.status match {
-          case XOrderStatus.STATUS_NEW =>
+          case OrderStatus.STATUS_NEW =>
             add(order.id, order)
 
-          case XOrderStatus.STATUS_PENDING =>
+          case OrderStatus.STATUS_PENDING =>
             add(order.id, order)
             callbacks.foreach(_(order))
 

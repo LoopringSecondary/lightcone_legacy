@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
 class EventLogTable(tag: Tag)
-    extends BaseTable[XEventLogData](tag, "T_EVENT_LOGS") {
+    extends BaseTable[EventLogData](tag, "T_EVENT_LOGS") {
 
   def id = column[String]("id", O.PrimaryKey)
   def height = column[Long]("height")
@@ -39,14 +39,5 @@ class EventLogTable(tag: Tag)
   def idx_tx_hash = index("idx_tx_hash", (txHash), unique = false)
 
   def * =
-    (
-      id,
-      height,
-      txHash,
-      timestamp,
-      address,
-      name,
-      data,
-      topics
-    ) <> ((XEventLogData.apply _).tupled, XEventLogData.unapply)
+    (id, height, txHash, timestamp, address, name, data, topics) <> ((EventLogData.apply _).tupled, EventLogData.unapply)
 }

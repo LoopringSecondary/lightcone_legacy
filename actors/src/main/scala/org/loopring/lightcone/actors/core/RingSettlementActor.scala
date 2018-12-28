@@ -30,8 +30,8 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
@@ -87,7 +87,7 @@ class RingSettlementActor(
   private def gasPriceActor = actors.get(GasPriceActor.name)
 
   override def receive: Receive = super.receive orElse LoggingReceive {
-    // case req: XSettleRingsReq =>
+    // case req: SettleRings =>
     //   val rings = generateRings(req.rings)
     //   rings.foreach {
     //     ring =>
@@ -105,7 +105,7 @@ class RingSettlementActor(
     // var hasSended = false
     // while (!hasSended) {
     //   val txData = ringSigner.getSignedTxData(inputData, nonce.get(), gasLimit, gasPrice)
-    //   val sendFuture = ethereumAccessActor ? XSendRawTransaction(txData)
+    //   val sendFuture = ethereumAccessActor ? SendRawTransaction(txData)
     //   //todo:需要等待提交被确认才提交下一个
     //   nonce.getAndIncrement()
     //   hasSended = true
@@ -116,8 +116,8 @@ class RingSettlementActor(
   //未被提交的交易需要使用新的gas和gasprice重新提交
   def resubmitTx(): Future[Unit] =
     for {
-      gasPriceRes <- (gasPriceActor ? XGetGasPriceReq())
-        .mapAs[XGetGasPriceRes]
+      gasPriceRes <- (gasPriceActor ? GetGasPrice.Req())
+        .mapAs[GetGasPrice.Res]
       //todo：查询数据库等得到未能打块的交易
       ringsWithGasLimit = Seq.empty[(String, BigInt)]
       _ = ringsWithGasLimit.foreach { ringWithGasLimit =>
@@ -129,9 +129,9 @@ class RingSettlementActor(
       }
     } yield Unit
 
-  // private def generateRings(rings: Seq[XOrderRing]): Seq[Ring] = {
+  // private def generateRings(rings: Seq[OrderRing]): Seq[Ring] = {
   //   // @tailrec
-  //   // def generateRingRec(rings: Seq[XOrderRing], res: Seq[Ring]): Seq[Ring] = {
+  //   // def generateRingRec(rings: Seq[OrderRing], res: Seq[Ring]): Seq[Ring] = {
   //   //   if (rings.isEmpty) {
   //   //     return res
   //   //   }
@@ -166,22 +166,22 @@ class RingSettlementActor(
   //   ???
   // }
 
-  // private def convertToOrder(xOrder: XOrder): Matchable = {
+  // private def convertToOrder(order: Order): Matchable = {
   //   // //todo:need to get From db
   //   // Matchable(
   //   //   owner = "0x0",
-  //   //   tokenS = xOrder.tokenS,
-  //   //   tokenB = xOrder.tokenB,
-  //   //   amountS = xOrder.amountS,
-  //   //   amountB = xOrder.amountB,
+  //   //   tokenS = order.tokenS,
+  //   //   tokenB = order.tokenB,
+  //   //   amountS = order.amountS,
+  //   //   amountB = order.amountB,
   //   //   validSince = 0,
   //   //   allOrNone = false,
-  //   //   feeToken = xOrder.tokenFee,
-  //   //   feeAmount = xOrder.amountFee,
+  //   //   feeToken = order.tokenFee,
+  //   //   feeAmount = order.amountFee,
   //   //   tokenReceipt = "",
   //   //   sig = "",
   //   //   dualAuthSig = "",
-  //   //   hash = xOrder.id
+  //   //   hash = order.id
   //   // )
   //   ???
   // }

@@ -69,7 +69,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
           })
 
       val f1 = Future.sequence(rawOrders.map { o =>
-        singleRequest(XSubmitOrderReq(Some(o)), "submit_order")
+        singleRequest(SubmitOrder.Req(Some(o)), "submit_order")
       })
 
       val res = Await.result(f1, 3 second)
@@ -84,7 +84,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
           orderOpt match {
             case Some(order) =>
               assert(order.sequenceId > 0)
-              assert(order.getState.status == XOrderStatus.STATUS_PENDING)
+              assert(order.getState.status == OrderStatus.STATUS_PENDING)
             case None =>
               assert(false)
           }
@@ -95,17 +95,14 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       Thread.sleep(1000)
       info("then test the orderbook of LRC-WETH")
       val orderbookLrcF = singleRequest(
-        XGetOrderbook(
-          0,
-          100,
-          Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
-        ),
+        GetOrderbook
+          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
         "orderbook"
       )
 
       val orderbookLrcRes = Await.result(orderbookLrcF, timeout.duration)
       orderbookLrcRes match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}")
           assert(sells.size == 2)
           assert(
@@ -124,17 +121,14 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
 
       info("then test the orderbook of GTO-WETH")
       val orderbookGtoF = singleRequest(
-        XGetOrderbook(
-          0,
-          100,
-          Some(XMarketId(GTO_TOKEN.address, WETH_TOKEN.address))
-        ),
+        GetOrderbook
+          .Req(0, 100, Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))),
         "orderbook"
       )
 
       val orderbookGtoRes = Await.result(orderbookGtoF, timeout.duration)
       orderbookGtoRes match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells: ${sells}")
           assert(sells.size == 1)
           assert(
@@ -147,11 +141,11 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       }
 
       info("then cancel one of it, the depth should be changed.")
-      val cancelReq = XCancelOrderReq(
+      val cancelReq = CancelOrder.Req(
         rawOrders(0).hash,
         rawOrders(0).owner,
-        XOrderStatus.STATUS_CANCELLED_BY_USER,
-        Some(XMarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
+        OrderStatus.STATUS_CANCELLED_BY_USER,
+        Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
       )
 
       val cancelF = singleRequest(cancelReq, "cancel_order")
@@ -166,10 +160,10 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
             case Some(order) =>
               if (order.hash == rawOrders(0).hash) {
                 assert(
-                  order.getState.status == XOrderStatus.STATUS_CANCELLED_BY_USER
+                  order.getState.status == OrderStatus.STATUS_CANCELLED_BY_USER
                 )
               } else {
-                assert(order.getState.status == XOrderStatus.STATUS_PENDING)
+                assert(order.getState.status == OrderStatus.STATUS_PENDING)
               }
             case None =>
               assert(false)
@@ -179,17 +173,14 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
 
       Thread.sleep(1000)
       val orderbookF1 = singleRequest(
-        XGetOrderbook(
-          0,
-          100,
-          Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
-        ),
+        GetOrderbook
+          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
         "orderbook"
       )
 
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           assert(sells.size == 2)
           assert(
             sells(0).price == "10.000000" &&

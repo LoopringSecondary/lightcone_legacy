@@ -40,34 +40,34 @@ class OrderHandlerMessageValidator(
     } catch {
       case _: Throwable ⇒
         throw ErrorException(
-          XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+          ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
           message = s"invalid ethereum address:$address"
         )
     }
 
   override def validate: PartialFunction[Any, Any] = {
 
-    case _ @XSubmitOrderReq(Some(order)) ⇒
+    case _ @SubmitOrder.Req(Some(order)) ⇒
       RawOrderValidatorImpl.validate(order) match {
         case Left(errorCode) ⇒
           throw ErrorException(
             errorCode,
-            message = s"invalid order in XSubmitOrderReq:$order"
+            message = s"invalid order in SubmitOrder.Req:$order"
           )
         case Right(rawOrder) ⇒
           val multiAccountConfig =
             config.getConfig(MultiAccountManagerActor.name)
           val numOfShards = multiAccountConfig.getInt("num-of-shards")
           val now = timeProvider.getTimeMillis
-          val state = XRawOrder.State(
+          val state = RawOrder.State(
             createdAt = now,
             updatedAt = now,
-            status = XOrderStatus.STATUS_NEW
+            status = OrderStatus.STATUS_NEW
           )
           val marketHash =
             MarketHashProvider.convert2Hex(rawOrder.tokenS, rawOrder.tokenB)
           val marketId =
-            XMarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
+            MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
           rawOrder.copy(
             state = Some(state),
             marketHash = marketHash,
@@ -78,7 +78,7 @@ class OrderHandlerMessageValidator(
           )
       }
 
-    case req @ XCancelOrderReq(_, owner, _, marketId) ⇒
+    case req @ CancelOrder.Req(_, owner, _, marketId) ⇒
       supportedMarkets.assertmarketIdIsValid(marketId)
       req.copy(owner = normalizeAddress(owner))
   }

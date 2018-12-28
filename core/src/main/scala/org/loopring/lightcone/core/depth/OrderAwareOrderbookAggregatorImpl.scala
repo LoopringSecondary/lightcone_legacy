@@ -23,7 +23,7 @@ import org.loopring.lightcone.core.base._
 class OrderAwareOrderbookAggregatorImpl(
     priceDecimals: Int
   )(
-    implicit marketId: XMarketId,
+    implicit marketId: MarketId,
     tokenManager: TokenManager)
     extends OrderbookAggregatorImpl(priceDecimals)
     with OrderAwareOrderbookAggregator {

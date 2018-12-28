@@ -29,9 +29,9 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 trait OrdersCancelledEventDal
-    extends BaseDalImpl[OrdersCancelledEventTable, XOrdersCancelledEvent] {
+    extends BaseDalImpl[OrdersCancelledEventTable, OrdersCancelledEvent] {
 
-  def saveCancelOrder(cancelOrder: XOrdersCancelledEvent): Future[XErrorCode]
+  def saveCancelOrder(cancelOrder: OrdersCancelledEvent): Future[ErrorCode]
 
   def hasCancelled(orderHash: String): Future[Boolean]
 
@@ -40,34 +40,28 @@ trait OrdersCancelledEventDal
 
 class OrdersCancelledEventDalImpl(
   )(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends OrdersCancelledEventDal {
   val query = TableQuery[OrdersCancelledEventTable]
-  def getRowHash(row: XRawOrder) = row.hash
+  def getRowHash(row: RawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
   private[this] val logger = Logger(this.getClass)
 
   override def saveCancelOrder(
-      cancelOrder: XOrdersCancelledEvent
-    ): Future[XErrorCode] = {
+      cancelOrder: OrdersCancelledEvent
+    ): Future[ErrorCode] = {
     val now = timeProvider.getTimeMillis
-    db.run(
-        (query += cancelOrder.copy(
-          createdAt = now
-        )).asTry
-      )
-      .map {
-        case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
-          XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
-        }
-        case Failure(ex) ⇒ {
-          logger.error(s"error : ${ex.getMessage}")
-          XErrorCode.ERR_PERSISTENCE_INTERNAL
-        }
-        case Success(x) ⇒ XErrorCode.ERR_NONE
+    db.run((query += cancelOrder.copy(createdAt = now)).asTry).map {
+      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
+        ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
       }
+      case Failure(ex) ⇒ {
+        logger.error(s"error : ${ex.getMessage}")
+        ErrorCode.ERR_PERSISTENCE_INTERNAL
+      }
+      case Success(x) ⇒ ErrorCode.ERR_NONE
+    }
   }
 
   def hasCancelled(orderHash: String): Future[Boolean] = {

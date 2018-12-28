@@ -19,13 +19,13 @@ package org.loopring.lightcone.actors
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 
 package object data {
 
-  case class BalanceAndAllowance(
+  case class BalanceAndAllowanceBigInt(
       balance: BigInt,
       allowance: BigInt)
 
@@ -42,37 +42,18 @@ package object data {
   implicit def byteArray2ByteString(bytes: Array[Byte]) =
     ByteString.copyFrom(bytes)
 
-  implicit def xBalanceAndAlowance2BalanceAndAlowance(
-      xba: XBalanceAndAllowance
+  implicit def balanceAndAlowance2BalanceAndAlowanceBigInt(
+      xba: BalanceAndAllowance
+    ): BalanceAndAllowanceBigInt =
+    BalanceAndAllowanceBigInt(balance = xba.balance, allowance = xba.allowance)
+
+  implicit def balanceAndAlowanceBigInt2BalanceAndAlowance(
+      ba: BalanceAndAllowanceBigInt
     ): BalanceAndAllowance =
-    BalanceAndAllowance(balance = xba.balance, allowance = xba.allowance)
+    BalanceAndAllowance(balance = ba.balance, allowance = ba.allowance)
 
-  implicit def balanceAndAlowance2XBalanceAndAlowance(
-      ba: BalanceAndAllowance
-    ): XBalanceAndAllowance =
-    XBalanceAndAllowance(balance = ba.balance, allowance = ba.allowance)
-
-  implicit def order2Matchable(xorder: XOrder): Matchable =
+  implicit def order2Matchable(order: Order): Matchable =
     Matchable(
-      id = xorder.id,
-      tokenS = xorder.tokenS,
-      tokenB = xorder.tokenB,
-      tokenFee = xorder.tokenFee,
-      amountS = xorder.amountS,
-      amountB = xorder.amountB,
-      amountFee = xorder.amountFee,
-      createdAt = xorder.createdAt,
-      updatedAt = xorder.updatedAt,
-      status = xorder.status,
-      walletSplitPercentage = xorder.walletSplitPercentage,
-      _outstanding = xorder.outstanding.map(orderState2MatchableState),
-      _reserved = xorder.reserved.map(orderState2MatchableState),
-      _actual = xorder.actual.map(orderState2MatchableState),
-      _matchable = xorder.matchable.map(orderState2MatchableState)
-    )
-
-  implicit def matchable2Order(order: Matchable): XOrder =
-    XOrder(
       id = order.id,
       tokenS = order.tokenS,
       tokenB = order.tokenB,
@@ -84,74 +65,93 @@ package object data {
       updatedAt = order.updatedAt,
       status = order.status,
       walletSplitPercentage = order.walletSplitPercentage,
-      outstanding = order._outstanding.map(matchableState2OrderState),
-      reserved = order._reserved.map(matchableState2OrderState),
-      actual = order._actual.map(matchableState2OrderState),
-      matchable = order._matchable.map(matchableState2OrderState)
+      _outstanding = order.outstanding.map(orderState2MatchableState),
+      _reserved = order.reserved.map(orderState2MatchableState),
+      _actual = order.actual.map(orderState2MatchableState),
+      _matchable = order.matchable.map(orderState2MatchableState)
+    )
+
+  implicit def matchable2Order(matchable: Matchable): Order =
+    Order(
+      id = matchable.id,
+      tokenS = matchable.tokenS,
+      tokenB = matchable.tokenB,
+      tokenFee = matchable.tokenFee,
+      amountS = matchable.amountS,
+      amountB = matchable.amountB,
+      amountFee = matchable.amountFee,
+      createdAt = matchable.createdAt,
+      updatedAt = matchable.updatedAt,
+      status = matchable.status,
+      walletSplitPercentage = matchable.walletSplitPercentage,
+      outstanding = matchable._outstanding.map(matchableState2OrderState),
+      reserved = matchable._reserved.map(matchableState2OrderState),
+      actual = matchable._actual.map(matchableState2OrderState),
+      matchable = matchable._matchable.map(matchableState2OrderState)
     )
 
   implicit def orderState2MatchableState(
-      xOrderState: XOrderState
+      orderState: OrderState
     ): MatchableState =
     MatchableState(
-      amountS = xOrderState.amountS,
-      amountB = xOrderState.amountB,
-      amountFee = xOrderState.amountFee
-    )
-
-  implicit def matchableState2OrderState(
-      orderState: MatchableState
-    ): XOrderState =
-    XOrderState(
       amountS = orderState.amountS,
       amountB = orderState.amountB,
       amountFee = orderState.amountFee
     )
 
-  implicit def matchableRing2OrderRing(orderRing: MatchableRing): XOrderRing =
-    XOrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
+  implicit def matchableState2OrderState(
+      MatchableState: MatchableState
+    ): OrderState =
+    OrderState(
+      amountS = MatchableState.amountS,
+      amountB = MatchableState.amountB,
+      amountFee = MatchableState.amountFee
+    )
 
-  implicit def orderRing2MatchableRing(xOrderRing: XOrderRing): MatchableRing =
-    MatchableRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
+  implicit def matchableRing2OrderRing(orderRing: MatchableRing): OrderRing =
+    OrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
+
+  implicit def orderRing2MatchableRing(orderRing: OrderRing): MatchableRing =
+    MatchableRing(maker = orderRing.getMaker, taker = orderRing.getTaker)
 
   implicit def seqMatchableRing2OrderRing(
       orderRings: Seq[MatchableRing]
-    ): Seq[XOrderRing] =
+    ): Seq[OrderRing] =
     orderRings map { orderRing =>
-      XOrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
+      OrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
     }
 
   implicit def seqOrderRing2MatchableRing(
-      xOrderRings: Seq[XOrderRing]
+      orderRings: Seq[OrderRing]
     ): Seq[MatchableRing] =
-    xOrderRings map { xOrderRing =>
-      MatchableRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
+    orderRings map { orderRing =>
+      MatchableRing(maker = orderRing.getMaker, taker = orderRing.getTaker)
     }
 
   implicit def expectFill2XEcpectFill(
-      expectedFill: ExpectedMatchableFill
-    ): XExpectedFill =
-    XExpectedFill(
-      order = Some(expectedFill.order),
-      pending = Some(expectedFill.pending),
-      amountMargin = expectedFill.amountMargin
+      fill: ExpectedMatchableFill
+    ): ExpectedOrderFill =
+    ExpectedOrderFill(
+      order = Some(fill.order),
+      pending = Some(fill.pending),
+      amountMargin = fill.amountMargin
     )
 
   implicit def expectedOrderFill2ExpectedMatchableFill(
-      xExpectedFill: XExpectedFill
+      fill: ExpectedOrderFill
     ): ExpectedMatchableFill =
     ExpectedMatchableFill(
-      order = xExpectedFill.getOrder,
-      pending = xExpectedFill.getPending,
-      amountMargin = xExpectedFill.amountMargin
+      order = fill.getOrder,
+      pending = fill.getPending,
+      amountMargin = fill.amountMargin
     )
 
   implicit def expectedMatchableFill2ExpectedOrderFill(
-      xraworder: XRawOrder
-    ): XOrder = {
+      xraworder: RawOrder
+    ): Order = {
 
-    val feeParams = xraworder.feeParams.getOrElse(XRawOrder.FeeParams())
-    XOrder(
+    val feeParams = xraworder.feeParams.getOrElse(RawOrder.FeeParams())
+    Order(
       id = xraworder.hash,
       tokenS = xraworder.tokenS,
       tokenB = xraworder.tokenB,
@@ -166,7 +166,7 @@ package object data {
     )
   }
 
-  implicit def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode =
+  implicit def convertOrderStatusToErrorCode(status: OrderStatus): ErrorCode =
     status match {
       case STATUS_INVALID_DATA              => ERR_INVALID_ORDER_DATA
       case STATUS_UNSUPPORTED_MARKET        => ERR_INVALID_MARKET

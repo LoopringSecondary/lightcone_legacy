@@ -22,8 +22,8 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core._
-import XOrderStatus._
-import XErrorCode._
+import OrderStatus._
+import ErrorCode._
 
 class MarketManagerImplSpec_Performance extends OrderAwareSpec {
 
@@ -31,7 +31,7 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
     def getTimeMillis = -1
   }
 
-  implicit val marketId = XMarketId(primary = WETH, secondary = GTO)
+  implicit val marketId = MarketId(primary = WETH, secondary = GTO)
 
   implicit var fakeDustOrderEvaluator: DustOrderEvaluator = _
   implicit var fackRingIncomeEstimator: RingIncomeEstimator = _

@@ -30,7 +30,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
 
   def createTables(): Future[Any] =
     for {
-      r ← new TradeDalImpl().createTable()
+      r <- new TradeDalImpl().createTable()
     } yield r
 
   private def testSave(
@@ -39,9 +39,9 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
       tokenS: String,
       tokenB: String,
       blockHeight: Long
-    ): Future[Either[XErrorCode, String]] = {
+    ): Future[Either[ErrorCode, String]] = {
     service.saveTrade(
-      XTrade(
+      Trade(
         txHash = txHash,
         owner = owner,
         tokenB = tokenB,
@@ -54,18 +54,18 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
   "saveTrade" must "save a trade with hash" in {
     val hash = "0x-savetrade-01"
     val result = for {
-      _ ← testSave(hash, hash, tokenS, tokenB, 1L)
-      _ ← testSave("0x-mock-01", "0x-mock-01", tokenS, tokenB, 1L)
-      _ ← testSave("0x-mock-02", "0x-mock-02", tokenS, tokenB, 1L)
-      query ← service.getTrades(
-        XGetTradesReq(
+      _ <- testSave(hash, hash, tokenS, tokenB, 1L)
+      _ <- testSave("0x-mock-01", "0x-mock-01", tokenS, tokenB, 1L)
+      _ <- testSave("0x-mock-02", "0x-mock-02", tokenS, tokenB, 1L)
+      query <- service.getTrades(
+        GetTrades.Req(
           owner = hash,
-          market = XGetTradesReq.Market
+          market = GetTrades.Req.Market
             .Pair(MarketPair(tokenB = tokenB, tokenS = tokenS))
         )
       )
     } yield query
-    val res = Await.result(result.mapTo[Seq[XTrade]], 5.second)
+    val res = Await.result(result.mapTo[Seq[Trade]], 5.second)
     res.length == 1 should be(true)
   }
 
@@ -86,28 +86,28 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
     val tokenS = "0xaaaaaaa2"
     val tokenB = "0xbbbbbbb2"
     val result = for {
-      _ ← Future.sequence(hashes.map { hash ⇒
+      _ <- Future.sequence(hashes.map { hash ⇒
         testSave(hash, hash, tokenS, tokenB, 1L)
       })
-      _ ← Future.sequence(mockToken.map { hash ⇒
+      _ <- Future.sequence(mockToken.map { hash ⇒
         testSave(hash, hash, "0x00001", "0x00002", 1L)
       })
-      query1 ← service.getTrades(
-        XGetTradesReq(
+      query1 <- service.getTrades(
+        GetTrades.Req(
           owner = "0x-gettrades-state0-02",
-          market = XGetTradesReq.Market
+          market = GetTrades.Req.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )
-      query2 ← service.getTrades(
-        XGetTradesReq(
+      query2 <- service.getTrades(
+        GetTrades.Req(
           owner = "0x-gettrades-token-02",
-          market = XGetTradesReq.Market
+          market = GetTrades.Req.Market
             .Pair(MarketPair(tokenB = "0x00002", tokenS = "0x00001"))
         )
       )
     } yield (query1, query2)
-    val res = Await.result(result.mapTo[(Seq[XTrade], Seq[XTrade])], 5.second)
+    val res = Await.result(result.mapTo[(Seq[Trade], Seq[Trade])], 5.second)
     val x = res._1.length === 1 && res._2.length === 1
     x should be(true)
   }
@@ -122,13 +122,13 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
       "0x-counttrades-06"
     )
     val result = for {
-      _ ← Future.sequence(owners.map { hash ⇒
+      _ <- Future.sequence(owners.map { hash ⇒
         testSave(hash, hash, tokenS, tokenB, 1L)
       })
-      query ← service.countTrades(
-        XGetTradesReq(
+      query <- service.countTrades(
+        GetTrades.Req(
           owner = "0x-counttrades-02",
-          market = XGetTradesReq.Market
+          market = GetTrades.Req.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )
@@ -168,24 +168,24 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
     )
     val owner = "0x-fixed-owner-01"
     val result = for {
-      _ ← Future.sequence(txHashes1.map { hash ⇒
+      _ <- Future.sequence(txHashes1.map { hash ⇒
         testSave(hash, owner, tokenS, tokenB, 100L)
       })
-      _ ← Future.sequence(txHashes2.map { hash ⇒
+      _ <- Future.sequence(txHashes2.map { hash ⇒
         testSave(hash, owner, tokenS, tokenB, 20L)
       })
-      count1 ← service.countTrades(
-        XGetTradesReq(
+      count1 <- service.countTrades(
+        GetTrades.Req(
           owner = owner,
-          market = XGetTradesReq.Market
+          market = GetTrades.Req.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )
-      _ ← service.obsolete(30L)
-      count2 ← service.countTrades(
-        XGetTradesReq(
+      _ <- service.obsolete(30L)
+      count2 <- service.countTrades(
+        GetTrades.Req(
           owner = owner,
-          market = XGetTradesReq.Market
+          market = GetTrades.Req.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )

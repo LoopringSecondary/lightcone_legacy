@@ -42,7 +42,7 @@ object MarketManagerImpl {
 }
 
 class MarketManagerImpl(
-    val marketId: XMarketId,
+    val marketId: MarketId,
     val tokenManager: TokenManager,
     val ringMatcher: RingMatcher,
     val pendingRingPool: PendingRingPool,
@@ -53,8 +53,8 @@ class MarketManagerImpl(
 
   import MarketManager._
   import MarketManagerImpl._
-  import XErrorCode._
-  import XOrderStatus._
+  import ErrorCode._
+  import OrderStatus._
 
   private implicit val marketId_ = marketId
   private implicit val tm_ = tokenManager
@@ -110,7 +110,7 @@ class MarketManagerImpl(
     matchOrders(order, minFiatValue)
   }
 
-  def cancelOrder(orderId: String): Option[XOrderbookUpdate] =
+  def cancelOrder(orderId: String): Option[Orderbook.Update] =
     this.synchronized {
       getOrder(orderId).map { order =>
         removeFromSide(orderId)
@@ -119,7 +119,7 @@ class MarketManagerImpl(
       }
     }
 
-  def deletePendingRing(ringId: String): Option[XOrderbookUpdate] =
+  def deletePendingRing(ringId: String): Option[Orderbook.Update] =
     this.synchronized {
       if (pendingRingPool.hasRing(ringId)) {
         pendingRingPool.deleteRing(ringId)
@@ -145,13 +145,13 @@ class MarketManagerImpl(
       MatchResult(
         Nil,
         order.copy(status = STATUS_DUST_ORDER),
-        XOrderbookUpdate(Nil, Nil)
+        Orderbook.Update(Nil, Nil)
       )
     } else if (dustOrderEvaluator.isActualDust(order)) {
       MatchResult(
         Nil,
         order.copy(status = STATUS_COMPLETELY_FILLED),
-        XOrderbookUpdate(Nil, Nil)
+        Orderbook.Update(Nil, Nil)
       )
     } else {
       var taker = order.copy(status = STATUS_PENDING)

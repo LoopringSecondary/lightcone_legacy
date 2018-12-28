@@ -54,7 +54,7 @@ import org.json4s.DefaultFormats
 //    .asScala
 //    .head
 //
-//  val node = XEthereumProxySettings.XNode(
+//  val node = EthereumProxySettings.Node(
 //    host = nodeConfig.getString("host"),
 //    port = nodeConfig.getInt("port"),
 //    ipcPath = nodeConfig.getString("ipc-path")
@@ -70,61 +70,61 @@ import org.json4s.DefaultFormats
 //  )
 //
 //  val fu = for {
-//    block ← (ethConnectionActor ? XJsonRpcReq(
+//    block <- (ethConnectionActor ? JsonRpc.Request(
 //      Serialization.write(jsonRpcReqWrapped)
-//    )).mapTo[XJsonRpcRes]
+//    )).mapTo[JsonRpc.Response]
 //      .map(_.json)
-//    blockNum ← (ethConnectionActor ? XEthBlockNumberReq())
-//      .mapTo[XEthBlockNumberRes]
+//    blockNum <- (ethConnectionActor ? GetBlockNumber.Req())
+//      .mapTo[GetBlockNumber.Res]
 //      .map(_.result)
-//    blockWithTxHash ← (ethConnectionActor ? XGetBlockWithTxHashByNumberReq(
+//    blockWithTxHash <- (ethConnectionActor ? GetBlockWithTxHashByNumber.Req(
 //      blockNum
-//    )).mapTo[XGetBlockWithTxHashByNumberRes]
+//    )).mapTo[GetBlockWithTxHashByNumber.Res]
 //      .map(_.result.get)
-//    blockWithTxObjcet ← (ethConnectionActor ? XGetBlockWithTxObjectByNumberReq(
+//    blockWithTxObjcet <- (ethConnectionActor ? GetBlockWithTxObjectByNumber.Req(
 //      blockNum
-//    )).mapTo[XGetBlockWithTxObjectByNumberRes]
+//    )).mapTo[GetBlockWithTxObjectByNumber.Res]
 //      .map(_.result.get)
-//    blockByHashWithHash ← (ethConnectionActor ? XGetBlockWithTxHashByHashReq(
+//    blockByHashWithHash <- (ethConnectionActor ? GetBlockWithTxHashByHash.Req(
 //      blockWithTxHash.hash
-//    )).mapTo[XGetBlockWithTxHashByHashRes]
+//    )).mapTo[GetBlockWithTxHashByHash.Res]
 //      .map(_.result.get)
-//    blockByHashwithObject ← (ethConnectionActor ? XGetBlockWithTxObjectByHashReq(
+//    blockByHashwithObject <- (ethConnectionActor ? GetBlockWithTxObjectByHash.Req(
 //      blockWithTxHash.hash
-//    )).mapTo[XGetBlockWithTxObjectByHashRes]
+//    )).mapTo[GetBlockWithTxObjectByHash.Res]
 //      .map(_.result.get)
-//    txs ← Future
+//    txs <- Future
 //      .sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
-//        (ethConnectionActor ? XGetTransactionByHashReq(hash))
-//          .mapTo[XGetTransactionByHashRes]
+//        (ethConnectionActor ? GetTransactionByHash.Req(hash))
+//          .mapTo[GetTransactionByHash.Res]
 //          .map(_.result.get)
 //      })
-//    receipts ← Future
+//    receipts <- Future
 //      .sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
-//        (ethConnectionActor ? XGetTransactionReceiptReq(hash))
-//          .mapTo[XGetTransactionReceiptRes]
+//        (ethConnectionActor ? GetTransactionReceipt.Req(hash))
+//          .mapTo[GetTransactionReceipt.Res]
 //          .map(_.result.get)
 //      })
-//    batchReceipts ← (ethConnectionActor ? XBatchGetTransactionReceiptsReq(
-//      blockWithTxHash.transactions.map(XGetTransactionReceiptReq(_))
-//    )).mapTo[XBatchGetTransactionReceiptsRes]
+//    batchReceipts <- (ethConnectionActor ? BatchGetTransactionReceipts.Req(
+//      blockWithTxHash.transactions.map(GetTransactionReceipt.Req(_))
+//    )).mapTo[BatchGetTransactionReceipts.Res]
 //      .map(_.resps.map(_.result.get))
-//    nonce ← (ethConnectionActor ? XGetNonceReq(
+//    nonce <- (ethConnectionActor ? GetNonce.Req(
 //      owner = "0xdce9e65ba38d4249c38d00d664d41e5f6d7e83b3",
 //      tag = "latest"
-//    )).mapTo[XGetNonceRes]
+//    )).mapTo[GetNonce.Res]
 //      .map(_.result)
-//    txCount ← (ethConnectionActor ? XGetBlockTransactionCountReq(
+//    txCount <- (ethConnectionActor ? GetBlockTransactionCount.Req(
 //      blockWithTxHash.hash
-//    )).mapTo[XGetBlockTransactionCountRes]
+//    )).mapTo[GetBlockTransactionCount.Res]
 //      .map(_.result)
-//    batchTx ← (ethConnectionActor ? XBatchGetTransactionsReq(
-//      blockWithTxHash.transactions.map(XGetTransactionByHashReq(_))
-//    )).mapTo[XBatchGetTransactionsRes]
+//    batchTx <- (ethConnectionActor ? BatchGetTransactions.Req(
+//      blockWithTxHash.transactions.map(GetTransactionByHash.Req(_))
+//    )).mapTo[BatchGetTransactions.Res]
 //      .map(_.resps.map(_.result))
-//    lrcBalance ← (ethConnectionActor ? XEthCallReq(tag = "latest")
+//    lrcBalance <- (ethConnectionActor ? EthCall.Req(tag = "latest")
 //      .withParam(
-//        XTransactionParam()
+//        TransactionParams()
 //          .withData(
 //            wethAbi.balanceOf.pack(
 //              BalanceOfFunction
@@ -133,14 +133,14 @@ import org.json4s.DefaultFormats
 //          )
 //          .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
 //      ))
-//      .mapTo[XEthCallRes]
+//      .mapTo[EthCall.Res]
 //      .map(resp ⇒ wethAbi.balanceOf.unpackResult(resp.result))
-//    lrcbalances: Seq[Option[BalanceOfFunction.Result]] ← (ethConnectionActor ? XBatchContractCallReq(
+//    lrcbalances: Seq[Option[BalanceOfFunction.Result]] <- (ethConnectionActor ? BatchCallContracts.Req(
 //      batchTx.map(
 //        tx ⇒
-//          XEthCallReq(tag = "latest")
+//          EthCall.Req(tag = "latest")
 //            .withParam(
-//              XTransactionParam()
+//              TransactionParams()
 //                .withData(
 //                  wethAbi.balanceOf.pack(
 //                    BalanceOfFunction
@@ -150,12 +150,12 @@ import org.json4s.DefaultFormats
 //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
 //            )
 //      )
-//    )).mapTo[XBatchContractCallRes]
+//    )).mapTo[BatchCallContracts.Res]
 //      .map(_.resps.map(res ⇒ wethAbi.balanceOf.unpackResult(res.result)))
 //
-//    allowance ← (ethConnectionActor ? XEthCallReq(tag = "latest")
+//    allowance <- (ethConnectionActor ? EthCall.Req(tag = "latest")
 //      .withParam(
-//        XTransactionParam()
+//        TransactionParams()
 //          .withData(
 //            wethAbi.allowance.pack(
 //              AllowanceFunction
@@ -167,15 +167,15 @@ import org.json4s.DefaultFormats
 //          )
 //          .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
 //      ))
-//      .mapTo[XEthCallRes]
+//      .mapTo[EthCall.Res]
 //      .map(resp ⇒ wethAbi.allowance.unpackResult(resp.result))
 //
-//    allowances ← (ethConnectionActor ? XBatchContractCallReq(
+//    allowances <- (ethConnectionActor ? BatchCallContracts.Req(
 //      batchTx.map(
 //        tx ⇒
-//          XEthCallReq(tag = "latest")
+//          EthCall.Req(tag = "latest")
 //            .withParam(
-//              XTransactionParam()
+//              TransactionParams()
 //                .withData(
 //                  wethAbi.allowance.pack(
 //                    AllowanceFunction
@@ -185,25 +185,25 @@ import org.json4s.DefaultFormats
 //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
 //            )
 //      )
-//    )).mapTo[XBatchContractCallRes]
+//    )).mapTo[BatchCallContracts.Res]
 //      .map(_.resps.map(res ⇒ wethAbi.allowance.unpackResult(res.result)))
-//    uncle ← (ethConnectionActor ? XGetUncleByBlockNumAndIndexReq(
+//    uncle <- (ethConnectionActor ? GetUncle.Req(
 //      blockNum = "0x69555e",
 //      index = "0x0"
-//    )).mapTo[XGetBlockWithTxHashByHashRes]
+//    )).mapTo[GetBlockWithTxHashByHash.Res]
 //      .map(_.result.get)
-//    uncles ← (ethConnectionActor ? XBatchGetUncleByBlockNumAndIndexReq()
+//    uncles <- (ethConnectionActor ? BatchGetUncle.Req()
 //      .withReqs(
 //        Seq(
-//          XGetUncleByBlockNumAndIndexReq(
+//          GetUncle.Req(
 //            blockNum = "0x69555e",
 //            index = "0x0"
 //          )
 //        )
 //      ))
-//      .mapTo[XBatchGetUncleByBlockNumAndIndexRes]
+//      .mapTo[BatchGetUncle.Res]
 //      .map(_.resps.map(_.result.get))
-//    gas ← (ethConnectionActor ? XGetEstimatedGasReq(
+//    gas <- (ethConnectionActor ? GetEstimatedGas.Req(
 //      to = "0xef68e7c694f40c8202821edf525de3782458639f"
 //    ).withData(
 //      wethAbi.transfer.pack(
@@ -212,7 +212,7 @@ import org.json4s.DefaultFormats
 //          amount = BigInt("10000")
 //        )
 //      )
-//    )).mapTo[XGetEstimatedGasRes]
+//    )).mapTo[GetEstimatedGas.Res]
 //      .map(_.result)
 //  } yield {
 //    println(

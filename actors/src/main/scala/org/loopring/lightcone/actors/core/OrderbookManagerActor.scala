@@ -39,7 +39,7 @@ import scala.concurrent._
 object OrderbookManagerActor extends ShardedByMarket with Logging {
   val name = "orderbook_manager"
 
-  def getTopicId(marketId: XMarketId) =
+  def getTopicId(marketId: MarketId) =
     OrderbookManagerActor.name + "-" + getEntityId(marketId)
 
   def startShardRegion(
@@ -62,7 +62,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
       .map { item =>
         val c = item.toConfig
         val marketId =
-          XMarketId(
+          MarketId(
             LAddress(c.getString("priamry")).toString,
             LAddress(c.getString("secondary")).toString
           )
@@ -79,14 +79,14 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketId: PartialFunction[Any, XMarketId] = {
-    case XGetOrderbook(_, _, Some(marketId))       => marketId
-    case XOrderbookUpdate(_, _, _, Some(marketId)) => marketId
+  val extractMarketId: PartialFunction[Any, MarketId] = {
+    case GetOrderbook.Req(_, _, Some(marketId))    => marketId
+    case Orderbook.Update(_, _, _, Some(marketId)) => marketId
   }
 }
 
 class OrderbookManagerActor(
-    markets: Map[String, XMarketId],
+    markets: Map[String, MarketId],
     extractEntityId: String => String = OrderbookManagerActor.extractEntityId
   )(
     implicit val config: Config,
@@ -107,28 +107,28 @@ class OrderbookManagerActor(
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
   // based on marketId
-  val xorderbookConfig = XMarketConfig(
+  val marketConfig = MarketConfig(
     levels = selfConfig.getInt("levels"),
     priceDecimals = selfConfig.getInt("price-decimals"),
     precisionForAmount = selfConfig.getInt("precision-for-amount"),
     precisionForTotal = selfConfig.getInt("precision-for-total")
   )
 
-  val manager: OrderbookManager = new OrderbookManagerImpl(xorderbookConfig)
+  val manager: OrderbookManager = new OrderbookManagerImpl(marketConfig)
 
   def receive: Receive = LoggingReceive {
 
-    case req: XOrderbookUpdate =>
-      log.info(s"receive XOrderbookUpdate ${req}")
+    case req: Orderbook.Update =>
+      log.info(s"receive Orderbook.Update ${req}")
       manager.processUpdate(req)
 
-    case XGetOrderbook(level, size, Some(marketId)) =>
+    case GetOrderbook.Req(level, size, Some(marketId)) =>
       Future {
         if (OrderbookManagerActor.getEntityId(marketId) == marketIdHashedValue)
-          manager.getOrderbook(level, size)
+          GetOrderbook.Res(Option(manager.getOrderbook(level, size)))
         else
           throw ErrorException(
-            XErrorCode.ERR_INVALID_ARGUMENT,
+            ErrorCode.ERR_INVALID_ARGUMENT,
             s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}"
           )
       } sendTo sender
