@@ -152,7 +152,7 @@ package object ethereum {
     ) = {
     orderHashes.zipWithIndex.map { orderHash ⇒
       val data = tradeHistoryAbi.filled.pack(
-        FilledFunction.Params(Numeric.toBigInt(orderHash._1).toByteArray)
+        FilledFunction.Params(Numeric.hexStringToByteArray(orderHash._1))
       )
       val param = XTransactionParam(to = contractAddress.toString, data = data)
       XEthCallReq(orderHash._2, Some(param), tag)
