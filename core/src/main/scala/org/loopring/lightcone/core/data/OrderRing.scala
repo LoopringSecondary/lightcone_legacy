@@ -17,7 +17,7 @@
 package org.loopring.lightcone.core.data
 
 case class ExpectedFill(
-    order: Order,
+    order: Matchable,
     pending: MatchableState,
     amountMargin: BigInt = 0)
 

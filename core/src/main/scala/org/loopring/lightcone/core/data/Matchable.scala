@@ -36,7 +36,7 @@ case class MatchableState(
 }
 
 // 注意!!!! 收益不能保证时,合约等比例计算,分母中不包含amountB
-case class Order(
+case class Matchable(
     id: String,
     tokenS: String,
     tokenB: String,

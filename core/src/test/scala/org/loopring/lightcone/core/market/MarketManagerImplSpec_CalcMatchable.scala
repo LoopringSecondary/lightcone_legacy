@@ -39,7 +39,7 @@ class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
 
     val ring = OrderRing(null, null)
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Right(ring))
 
@@ -47,7 +47,7 @@ class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
     marketManager.submitOrder(buyOrder, 2)
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .verify(
         buyOrder.asPending.withActualAsOriginal
           .copy(_matchable = Some(MatchableState(34, 34000, 0))),

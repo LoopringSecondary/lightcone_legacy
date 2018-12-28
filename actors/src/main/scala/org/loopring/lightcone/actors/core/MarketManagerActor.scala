@@ -27,7 +27,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.core.data.Matchable
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
@@ -224,7 +224,7 @@ class MarketManagerActor(
       xorder.actual.nonEmpty,
       "order in XSubmitSimpleOrderReq miss `actual` field"
     )
-    val order: Order = xorder
+    val order: Matchable = xorder
     xorder.status match {
       case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING =>
         for {

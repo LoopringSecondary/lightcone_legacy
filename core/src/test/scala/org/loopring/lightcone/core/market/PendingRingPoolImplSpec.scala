@@ -33,7 +33,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
     info("添加10个不同环路")
     (0 until 10) foreach { i =>
       val makerExpectFill = ExpectedFill(
-        order = Order(
+        order = Matchable(
           id = "maker-" + i,
           tokenS = LRC,
           tokenB = WETH,
@@ -44,7 +44,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
         amountMargin = 100
       )
       val takerExpectFill = ExpectedFill(
-        order = Order(
+        order = Matchable(
           id = "taker-" + i,
           tokenS = WETH,
           tokenB = LRC,
@@ -76,7 +76,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
     //继续使用taker-1与maker-1时，需要金额保持不变
     info("继续添加 taker-1 与maker-1的环路") //或者可以改变，继续相加
     val makerExpectFill = ExpectedFill(
-      order = Order(
+      order = Matchable(
         id = "maker-1",
         tokenS = LRC,
         tokenB = WETH,
@@ -87,7 +87,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
       amountMargin = 100
     )
     val takerExpectFill = ExpectedFill(
-      order = Order(
+      order = Matchable(
         id = "taker-1",
         tokenS = WETH,
         tokenB = LRC,
@@ -116,7 +116,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
 
     info("使用新的taker-new-1, 将maker-1完全吃掉")
     val takerExpectFillNew1 = ExpectedFill(
-      order = Order(
+      order = Matchable(
         id = "taker-new-1",
         tokenS = WETH,
         tokenB = LRC,
@@ -148,7 +148,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
   "testBaseOperation" should "remove ring " in {
     info("删除maker-1与taker-new-1的环路")
     val makerExpectFill = ExpectedFill(
-      order = Order(
+      order = Matchable(
         id = "maker-1",
         tokenS = LRC,
         tokenB = WETH,
@@ -159,7 +159,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
       amountMargin = 100
     )
     val takerExpectFillNew1 = ExpectedFill(
-      order = Order(
+      order = Matchable(
         id = "taker-new-1",
         tokenS = WETH,
         tokenB = LRC,

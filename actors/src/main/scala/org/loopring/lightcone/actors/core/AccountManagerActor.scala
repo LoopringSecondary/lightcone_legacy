@@ -27,7 +27,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.core.data.Matchable
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.XErrorCode._
@@ -115,7 +115,7 @@ class AccountManagerActor(
   }
 
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
-    val order: Order = xorder
+    val order: Matchable = xorder
     for {
       _ <- getTokenManager(order.tokenS)
       _ <- if (order.amountFee > 0 && order.tokenS != order.tokenFee)
@@ -138,9 +138,7 @@ class AccountManagerActor(
       _ = assert(updatedOrders.contains(_order.id))
       _ = log.debug(s"assert contains order:  ${updatedOrders(_order.id)}")
       _ = if (!successful)
-        throw ErrorException(
-          XError(order.status)
-        )
+        throw ErrorException(XError(order.status))
       res <- Future.sequence {
         updatedOrders.map { o =>
           for {

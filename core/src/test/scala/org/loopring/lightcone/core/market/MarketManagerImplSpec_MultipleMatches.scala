@@ -52,19 +52,19 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
     val ring3 = OrderRing(ExpectedFill(sell1, null), ExpectedFill(buy3, null))
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Right(ring3))
       .noMoreThanOnce()
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Right(ring2))
       .noMoreThanOnce()
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Right(ring1))
       .noMoreThanOnce()
@@ -86,7 +86,7 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
     )
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .verify(*, *, *)
       .repeated(3)
   }

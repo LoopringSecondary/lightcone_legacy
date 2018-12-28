@@ -22,7 +22,7 @@ import org.loopring.lightcone.proto._
 object MarketManager {
   case class MatchResult(
       rings: Seq[OrderRing],
-      taker: Order,
+      taker: Matchable,
       orderbookUpdate: XOrderbookUpdate)
 }
 
@@ -33,7 +33,7 @@ trait MarketManager {
   val pendingRingPool: PendingRingPool
 
   def submitOrder(
-      order: Order,
+      order: Matchable,
       minFiatValue: Double
     ): MatchResult
   def cancelOrder(orderId: String): Option[XOrderbookUpdate]
@@ -42,17 +42,17 @@ trait MarketManager {
   def getOrder(
       orderId: String,
       returnMatchableAmounts: Boolean = false
-    ): Option[Order]
+    ): Option[Matchable]
 
   def getSellOrders(
       num: Int,
       returnMatchableAmounts: Boolean = false
-    ): Seq[Order]
+    ): Seq[Matchable]
 
   def getBuyOrders(
       num: Int,
       returnMatchableAmounts: Boolean = false
-    ): Seq[Order]
+    ): Seq[Matchable]
 
   def getNumOfOrders(): Int
   def getNumOfBuyOrders(): Int

@@ -34,7 +34,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Left(ERR_MATCHING_INCOME_TOO_SMALL))
 
@@ -54,7 +54,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
 
@@ -74,7 +74,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
 
     val ring = OrderRing(null, null)
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Right(ring))
 
@@ -108,7 +108,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
 
     val ring = OrderRing(null, null)
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Right(ring))
 

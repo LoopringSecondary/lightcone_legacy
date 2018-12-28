@@ -46,19 +46,19 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
     )
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, buy1.asPending.withMatchableAsActual.withActualAsOriginal, *)
       .returns(Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
 
     val ring = OrderRing(null, null)
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, buy2.asPending.withMatchableAsActual.withActualAsOriginal, *)
       .returns(Right(ring))
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, buy3.asPending.withMatchableAsActual.withActualAsOriginal, *)
       .returns(Right(ring))
 
@@ -87,7 +87,7 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
     )
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .verify(*, *, *)
       .repeated(1)
   }

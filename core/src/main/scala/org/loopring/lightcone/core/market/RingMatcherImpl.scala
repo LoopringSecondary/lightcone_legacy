@@ -26,8 +26,8 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
     with Logging {
 
   def matchOrders(
-      taker: Order,
-      maker: Order,
+      taker: Matchable,
+      maker: Matchable,
       minFiatValue: Double = 0
     ): Either[XErrorCode, OrderRing] = {
     val ringOpt = makeRing(maker, taker)
@@ -39,8 +39,8 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
   }
 
   private def makeRing(
-      maker: Order,
-      taker: Order
+      maker: Matchable,
+      taker: Matchable
     ): Either[XErrorCode, OrderRing] = {
     if (taker.amountB <= 0 || taker.amountS <= 0) {
       Left(ERR_MATCHING_INVALID_TAKER_ORDER)

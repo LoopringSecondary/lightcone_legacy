@@ -52,8 +52,8 @@ package object data {
     ): XBalanceAndAllowance =
     XBalanceAndAllowance(balance = ba.balance, allowance = ba.allowance)
 
-  implicit def xOrder2Order(xorder: XOrder): Order =
-    Order(
+  implicit def order2Matchable(xorder: XOrder): Matchable =
+    Matchable(
       id = xorder.id,
       tokenS = xorder.tokenS,
       tokenB = xorder.tokenB,
@@ -71,7 +71,7 @@ package object data {
       _matchable = xorder.matchable.map(orderState2MatchableState)
     )
 
-  implicit def order2XOrder(order: Order): XOrder =
+  implicit def matchable2Order(order: Matchable): XOrder =
     XOrder(
       id = order.id,
       tokenS = order.tokenS,

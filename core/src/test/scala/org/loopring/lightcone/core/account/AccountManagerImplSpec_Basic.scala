@@ -104,7 +104,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     dai.setBalanceAndAllowance(100 !, 100 !)
     lrc.setBalanceAndAllowance(100 !, 100 !)
     val order =
-      new Order("id", "XYZ", WETH, LRC, 10 !, 10 !, 10 !)
+      new Matchable("id", "XYZ", WETH, LRC, 10 !, 10 !, 10 !)
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(
@@ -116,7 +116,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     dai.setBalanceAndAllowance(100 !, 100 !)
     lrc.setBalanceAndAllowance(100 !, 100 !)
     val order =
-      Order("id", DAI, WETH, "XYZ", 10 !, 10 !, 10 !)
+      Matchable("id", DAI, WETH, "XYZ", 10 !, 10 !, 10 !)
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(

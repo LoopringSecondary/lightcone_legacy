@@ -48,12 +48,12 @@ trait OrderAwareSpec extends CommonSpec {
   var dai: AccountTokenManager = _
   var weth: AccountTokenManager = _
 
-  var updatedOrders = Map.empty[String, Order]
+  var updatedOrders = Map.empty[String, Matchable]
 
   override def beforeEach() {
     nextId = 1
     orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
-    updatedOrders = Map.empty[String, Order]
+    updatedOrders = Map.empty[String, Matchable]
     orderPool.addCallback { order =>
       updatedOrders += order.id -> order
     // println("----UO: " + order)
@@ -115,8 +115,16 @@ trait OrderAwareSpec extends CommonSpec {
       amountS: BigInt,
       amountB: BigInt,
       amountFee: BigInt
-    ): Order =
-    Order(getNextId(), tokenS, tokenB, tokenFee, amountS, amountB, amountFee)
+    ): Matchable =
+    Matchable(
+      getNextId(),
+      tokenS,
+      tokenB,
+      tokenFee,
+      amountS,
+      amountB,
+      amountFee
+    )
 
   def sellLRC(
       amountLRC: Double,
@@ -161,8 +169,8 @@ trait OrderAwareSpec extends CommonSpec {
       amountS: Double,
       amountB: Double,
       amountFee: Double
-    ): Order =
-    Order(
+    ): Matchable =
+    Matchable(
       getNextId(),
       tokenS,
       tokenB,
@@ -178,13 +186,13 @@ trait OrderAwareSpec extends CommonSpec {
       amountFee: BigInt
     ) = MatchableState(amountS, amountB, amountFee)
 
-  def submitOrder(order: Order) = {
-    updatedOrders = Map.empty[String, Order]
+  def submitOrder(order: Matchable) = {
+    updatedOrders = Map.empty[String, Matchable]
     accountManager.submitOrder(order)
   }
 
   def cancelOrder(orderId: String) = {
-    updatedOrders = Map.empty[String, Order]
+    updatedOrders = Map.empty[String, Matchable]
     accountManager.cancelOrder(orderId)
   }
 
@@ -192,12 +200,12 @@ trait OrderAwareSpec extends CommonSpec {
       orderId: String,
       outstandingAmountS: BigInt
     ) = {
-    updatedOrders = Map.empty[String, Order]
+    updatedOrders = Map.empty[String, Matchable]
     accountManager.adjustOrder(orderId, outstandingAmountS)
   }
 
   def resetUpdatedOrders() {
-    updatedOrders = Map.empty[String, Order]
+    updatedOrders = Map.empty[String, Matchable]
   }
 
   def getNextId() = {

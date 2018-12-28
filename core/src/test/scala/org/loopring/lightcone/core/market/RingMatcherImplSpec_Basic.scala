@@ -84,7 +84,7 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
   "RingMatcherImpl" should "verify two orders in MarketManagerImplSpec_Performance should be matched in a ring " in {
     matcher
       .matchOrders(
-        taker = Order(
+        taker = Matchable(
           "taker",
           WETH,
           GTO,
@@ -101,7 +101,7 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
           None,
           Some(MatchableState(0, 0, 0))
         ).matchableAsOriginal,
-        maker = Order(
+        maker = Matchable(
           "maker",
           GTO,
           WETH,
