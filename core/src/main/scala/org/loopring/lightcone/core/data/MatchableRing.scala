@@ -16,11 +16,11 @@
 
 package org.loopring.lightcone.core.data
 
-case class ExpectedFill(
-    order: Order,
-    pending: OrderState,
+case class ExpectedMatchableFill(
+    order: Matchable,
+    pending: MatchableState,
     amountMargin: BigInt = 0)
 
-case class OrderRing(
-    maker: ExpectedFill,
-    taker: ExpectedFill)
+case class MatchableRing(
+    maker: ExpectedMatchableFill,
+    taker: ExpectedMatchableFill)

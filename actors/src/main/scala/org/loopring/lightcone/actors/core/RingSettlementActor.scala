@@ -141,7 +141,7 @@ class RingSettlementActor(
   //   //     ringSigner.getSignerAddress(),
   //   //     "",
   //   //     Seq.empty[Seq[Int]],
-  //   //     Seq.empty[Order],
+  //   //     Seq.empty[Matchable],
   //   //     ""
   //   //   )
   //   //   val orders = rings.flatMap {
@@ -166,9 +166,9 @@ class RingSettlementActor(
   //   ???
   // }
 
-  // private def convertToOrder(xOrder: XOrder): Order = {
+  // private def convertToOrder(xOrder: XOrder): Matchable = {
   //   // //todo:need to get From db
-  //   // Order(
+  //   // Matchable(
   //   //   owner = "0x0",
   //   //   tokenS = xOrder.tokenS,
   //   //   tokenB = xOrder.tokenB,

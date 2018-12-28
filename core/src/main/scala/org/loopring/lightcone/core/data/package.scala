@@ -27,11 +27,11 @@ package object data {
 
   implicit def rational2BigInt(r: Rational) = r.bigintValue
 
-  implicit class RichExpectedFill(raw: ExpectedFill) {
+  implicit class RichExpectedFill(raw: ExpectedMatchableFill) {
     def id = raw.order.id
   }
 
-  implicit class RichOrderRing(raw: OrderRing) {
+  implicit class RichOrderRing(raw: MatchableRing) {
 
     // Switching maker and taker should have the same id.
     def id(): String = {

@@ -26,10 +26,10 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
     with Logging {
 
   def matchOrders(
-      taker: Order,
-      maker: Order,
+      taker: Matchable,
+      maker: Matchable,
       minFiatValue: Double = 0
-    ): Either[XErrorCode, OrderRing] = {
+    ): Either[XErrorCode, MatchableRing] = {
     val ringOpt = makeRing(maker, taker)
     ringOpt match {
       case Right(ring) if !rie.isProfitable(ring, minFiatValue) =>
@@ -39,9 +39,9 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
   }
 
   private def makeRing(
-      maker: Order,
-      taker: Order
-    ): Either[XErrorCode, OrderRing] = {
+      maker: Matchable,
+      taker: Matchable
+    ): Either[XErrorCode, MatchableRing] = {
     if (taker.amountB <= 0 || taker.amountS <= 0) {
       Left(ERR_MATCHING_INVALID_TAKER_ORDER)
     } else if (maker.amountB <= 0 || maker.amountS <= 0) {
@@ -64,8 +64,8 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
         if (taker.matchable.amountS > maker.matchable.amountB) {
 
           (
-            OrderState(maker.matchable.amountS, maker.matchable.amountB),
-            OrderState(
+            MatchableState(maker.matchable.amountS, maker.matchable.amountB),
+            MatchableState(
               maker.matchable.amountB,
               Rational(maker.matchable.amountB) *
                 Rational(taker.amountB, taker.amountS)
@@ -74,12 +74,12 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
 
         } else {
           (
-            OrderState(
+            MatchableState(
               taker.matchable.amountB,
               Rational(taker.matchable.amountB) *
                 Rational(maker.amountB, maker.amountS)
             ),
-            OrderState(taker.matchable.amountS, taker.matchable.amountB)
+            MatchableState(taker.matchable.amountS, taker.matchable.amountB)
           )
         }
 
@@ -100,11 +100,11 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
       // println(s"======== makerMargin: $makerMargin")
       // println(s"======== takerMargin: $takerMargin")
       Right(
-        OrderRing(
-          maker = ExpectedFill(
+        MatchableRing(
+          maker = ExpectedMatchableFill(
             order = maker.copy(
               _matchable = Some(
-                OrderState(
+                MatchableState(
                   maker.matchable.amountS - makerVolume.amountS,
                   maker.matchable.amountB - makerVolume.amountB,
                   maker.matchable.amountFee - makerFee
@@ -114,10 +114,10 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
             pending = makerVolume.copy(amountFee = makerFee),
             amountMargin = makerMargin
           ),
-          taker = ExpectedFill(
+          taker = ExpectedMatchableFill(
             order = taker.copy(
               _matchable = Some(
-                OrderState(
+                MatchableState(
                   taker.matchable.amountS - takerVolume.amountS,
                   taker.matchable.amountB - takerVolume.amountB,
                   taker.matchable.amountFee - takerFee

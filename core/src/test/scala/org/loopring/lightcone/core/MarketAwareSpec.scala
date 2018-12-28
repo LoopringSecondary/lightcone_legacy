@@ -57,7 +57,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
     )
   }
 
-  def actualNotDust(order: Order): Order = {
+  def actualNotDust(order: Matchable): Matchable = {
     val o = order.copy(_actual = Some(order.original))
     (fakeDustOrderEvaluator.isOriginalDust _).when(o).returns(false)
     (fakeDustOrderEvaluator.isActualDust _).when(o).returns(false)
@@ -65,7 +65,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
   }
 
   def emptyMatchingResult(
-      order: Order,
+      order: Matchable,
       newStatus: XOrderStatus
     ) =
     MarketManager.MatchResult(
@@ -76,7 +76,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
 
   def noMatchingActivity() = {
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .verify(*, *, *)
       .never
   }

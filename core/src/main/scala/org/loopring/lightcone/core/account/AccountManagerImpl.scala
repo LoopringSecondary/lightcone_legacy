@@ -55,14 +55,16 @@ final private[core] class AccountManagerImpl(
     tokens(token)
   }
 
-  def submitAndGetUpdatedOrders(_order: Order): (Boolean, Map[String, Order]) =
+  def submitAndGetUpdatedOrders(
+      _order: Matchable
+    ): (Boolean, Map[String, Matchable]) =
     this.synchronized {
       val submitRes = this.submitOrder(_order)
       (submitRes, this.orderPool.takeUpdatedOrdersAsMap())
     }
 
   //TODO(litao): What if an order is re-submitted?
-  def submitOrder(_order: Order): Boolean = this.synchronized {
+  def submitOrder(_order: Matchable): Boolean = this.synchronized {
     val order = _order.copy(_reserved = None, _actual = None, _matchable = None)
 
     if (order.amountS <= 0) {
@@ -120,7 +122,7 @@ final private[core] class AccountManagerImpl(
     }
   }
 
-  implicit private class MagicOrder(order: Order) {
+  implicit private class MagicOrder(order: Matchable) {
 
     def callOnTokenS[R](method: AccountTokenManager => R) =
       method(tokens(order.tokenS))

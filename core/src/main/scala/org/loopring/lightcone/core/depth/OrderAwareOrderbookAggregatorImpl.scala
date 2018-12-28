@@ -28,7 +28,7 @@ class OrderAwareOrderbookAggregatorImpl(
     extends OrderbookAggregatorImpl(priceDecimals)
     with OrderAwareOrderbookAggregator {
 
-  def addOrder(order: Order) =
+  def addOrder(order: Matchable) =
     adjustAmount(
       order.isSell,
       true,
@@ -37,7 +37,7 @@ class OrderAwareOrderbookAggregatorImpl(
       order.displayableTotal
     )
 
-  def deleteOrder(order: Order) =
+  def deleteOrder(order: Matchable) =
     adjustAmount(
       order.isSell,
       false,

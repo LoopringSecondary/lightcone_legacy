@@ -22,13 +22,13 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
 import XOrderStatus._
 
-case class OrderState(
+case class MatchableState(
     amountS: BigInt = 0,
     amountB: BigInt = 0,
     amountFee: BigInt = 0) {
 
   def scaleBy(ratio: Rational) =
-    OrderState(
+    MatchableState(
       (Rational(amountS) * ratio).bigintValue,
       (Rational(amountB) * ratio).bigintValue,
       (Rational(amountFee) * ratio).bigintValue
@@ -36,7 +36,7 @@ case class OrderState(
 }
 
 // 注意!!!! 收益不能保证时,合约等比例计算,分母中不包含amountB
-case class Order(
+case class Matchable(
     id: String,
     tokenS: String,
     tokenB: String,
@@ -48,17 +48,17 @@ case class Order(
     updatedAt: Long = -1,
     status: XOrderStatus = STATUS_NEW,
     walletSplitPercentage: Double = 0,
-    _outstanding: Option[OrderState] = None,
-    _reserved: Option[OrderState] = None,
-    _actual: Option[OrderState] = None,
-    _matchable: Option[OrderState] = None) {
+    _outstanding: Option[MatchableState] = None,
+    _reserved: Option[MatchableState] = None,
+    _actual: Option[MatchableState] = None,
+    _matchable: Option[MatchableState] = None) {
 
-  lazy val original = OrderState(amountS, amountB, amountFee)
+  lazy val original = MatchableState(amountS, amountB, amountFee)
 
   def outstanding = _outstanding.getOrElse(original)
-  def reserved = _reserved.getOrElse(OrderState())
-  def actual = _actual.getOrElse(OrderState())
-  def matchable = _matchable.getOrElse(OrderState())
+  def reserved = _reserved.getOrElse(MatchableState())
+  def actual = _actual.getOrElse(MatchableState())
+  def matchable = _matchable.getOrElse(MatchableState())
 
   // rate is the price of this sell-order
   lazy val rate = Rational(amountB, amountS)
@@ -102,15 +102,18 @@ case class Order(
       val r = Rational(amountS, amountFee + amountS)
       val reservedAmountS = (Rational(v) * r).bigintValue()
       copy(
-        _reserved = Some(OrderState(reservedAmountS, 0, v - reservedAmountS))
+        _reserved =
+          Some(MatchableState(reservedAmountS, 0, v - reservedAmountS))
       ).updateActual()
     } else if (token == tokenS && tokenFee != tokenS) {
-      copy(_reserved = Some(OrderState(v, 0, reserved.amountFee)))
+      copy(_reserved = Some(MatchableState(v, 0, reserved.amountFee)))
         .updateActual()
     } else if (token != tokenS && tokenFee == tokenB) {
-      copy(_reserved = Some(OrderState(reserved.amountS, 0, v))).updateActual()
+      copy(_reserved = Some(MatchableState(reserved.amountS, 0, v)))
+        .updateActual()
     } else {
-      copy(_reserved = Some(OrderState(reserved.amountS, 0, v))).updateActual()
+      copy(_reserved = Some(MatchableState(reserved.amountS, 0, v)))
+        .updateActual()
     }
 
   // Private methods

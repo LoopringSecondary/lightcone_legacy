@@ -28,8 +28,11 @@ trait AccountManager {
       tm: AccountTokenManager
     ): AccountTokenManager
 
-  def submitOrder(order: Order): Boolean
-  def submitAndGetUpdatedOrders(_order: Order): (Boolean, Map[String, Order])
+  def submitOrder(order: Matchable): Boolean
+
+  def submitAndGetUpdatedOrders(
+      _order: Matchable
+    ): (Boolean, Map[String, Matchable])
   def cancelOrder(orderId: String): Boolean
 
   def adjustOrder(
@@ -42,7 +45,6 @@ object AccountManager {
 
   def default(
     )(
-      implicit
-      orderPool: AccountOrderPool with UpdatedOrdersTracing
+      implicit orderPool: AccountOrderPool with UpdatedOrdersTracing
     ): AccountManager = new AccountManagerImpl()
 }
