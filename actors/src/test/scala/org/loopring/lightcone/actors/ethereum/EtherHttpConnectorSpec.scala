@@ -54,7 +54,7 @@ import org.json4s.DefaultFormats
 //    .asScala
 //    .head
 //
-//  val node = XEthereumProxySettings.XNode(
+//  val node = EthereumProxySettings.Node(
 //    host = nodeConfig.getString("host"),
 //    port = nodeConfig.getInt("port"),
 //    ipcPath = nodeConfig.getString("ipc-path")
@@ -74,8 +74,8 @@ import org.json4s.DefaultFormats
 //      Serialization.write(jsonRpcReqWrapped)
 //    )).mapTo[XJsonRpcRes]
 //      .map(_.json)
-//    blockNum ← (ethConnectionActor ? XEthBlockNumberReq())
-//      .mapTo[XEthBlockNumberRes]
+//    blockNum ← (ethConnectionActor ? EthBlockNumberReq())
+//      .mapTo[EthBlockNumberRes]
 //      .map(_.result)
 //    blockWithTxHash ← (ethConnectionActor ? GetBlockWithTxHashByNumberReq(
 //      blockNum
@@ -105,9 +105,9 @@ import org.json4s.DefaultFormats
 //          .mapTo[GetTransactionReceiptRes]
 //          .map(_.result.get)
 //      })
-//    batchReceipts ← (ethConnectionActor ? XBatchGetTransactionReceiptsReq(
+//    batchReceipts ← (ethConnectionActor ? BatchGetTransactionReceiptsReq(
 //      blockWithTxHash.transactions.map(GetTransactionReceiptReq(_))
-//    )).mapTo[XBatchGetTransactionReceiptsRes]
+//    )).mapTo[BatchGetTransactionReceiptsRes]
 //      .map(_.resps.map(_.result.get))
 //    nonce ← (ethConnectionActor ? GetNonceReq(
 //      owner = "0xdce9e65ba38d4249c38d00d664d41e5f6d7e83b3",
@@ -118,13 +118,13 @@ import org.json4s.DefaultFormats
 //      blockWithTxHash.hash
 //    )).mapTo[GetBlockTransactionCountRes]
 //      .map(_.result)
-//    batchTx ← (ethConnectionActor ? XBatchGetTransactionsReq(
+//    batchTx ← (ethConnectionActor ? BatchGetTransactionsReq(
 //      blockWithTxHash.transactions.map(GetTransactionByHashReq(_))
-//    )).mapTo[XBatchGetTransactionsRes]
+//    )).mapTo[BatchGetTransactionsRes]
 //      .map(_.resps.map(_.result))
-//    lrcBalance ← (ethConnectionActor ? XEthCallReq(tag = "latest")
+//    lrcBalance ← (ethConnectionActor ? EthCallReq(tag = "latest")
 //      .withParam(
-//        XTransactionParam()
+//        TransactionParams()
 //          .withData(
 //            wethAbi.balanceOf.pack(
 //              BalanceOfFunction
@@ -133,14 +133,14 @@ import org.json4s.DefaultFormats
 //          )
 //          .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
 //      ))
-//      .mapTo[XEthCallRes]
+//      .mapTo[EthCallRes]
 //      .map(resp ⇒ wethAbi.balanceOf.unpackResult(resp.result))
-//    lrcbalances: Seq[Option[BalanceOfFunction.Result]] ← (ethConnectionActor ? XBatchContractCallReq(
+//    lrcbalances: Seq[Option[BalanceOfFunction.Result]] ← (ethConnectionActor ? BatchContractCallReq(
 //      batchTx.map(
 //        tx ⇒
-//          XEthCallReq(tag = "latest")
+//          EthCallReq(tag = "latest")
 //            .withParam(
-//              XTransactionParam()
+//              TransactionParams()
 //                .withData(
 //                  wethAbi.balanceOf.pack(
 //                    BalanceOfFunction
@@ -150,12 +150,12 @@ import org.json4s.DefaultFormats
 //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
 //            )
 //      )
-//    )).mapTo[XBatchContractCallRes]
+//    )).mapTo[BatchContractCallRes]
 //      .map(_.resps.map(res ⇒ wethAbi.balanceOf.unpackResult(res.result)))
 //
-//    allowance ← (ethConnectionActor ? XEthCallReq(tag = "latest")
+//    allowance ← (ethConnectionActor ? EthCallReq(tag = "latest")
 //      .withParam(
-//        XTransactionParam()
+//        TransactionParams()
 //          .withData(
 //            wethAbi.allowance.pack(
 //              AllowanceFunction
@@ -167,15 +167,15 @@ import org.json4s.DefaultFormats
 //          )
 //          .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
 //      ))
-//      .mapTo[XEthCallRes]
+//      .mapTo[EthCallRes]
 //      .map(resp ⇒ wethAbi.allowance.unpackResult(resp.result))
 //
-//    allowances ← (ethConnectionActor ? XBatchContractCallReq(
+//    allowances ← (ethConnectionActor ? BatchContractCallReq(
 //      batchTx.map(
 //        tx ⇒
-//          XEthCallReq(tag = "latest")
+//          EthCallReq(tag = "latest")
 //            .withParam(
-//              XTransactionParam()
+//              TransactionParams()
 //                .withData(
 //                  wethAbi.allowance.pack(
 //                    AllowanceFunction
@@ -185,14 +185,14 @@ import org.json4s.DefaultFormats
 //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
 //            )
 //      )
-//    )).mapTo[XBatchContractCallRes]
+//    )).mapTo[BatchContractCallRes]
 //      .map(_.resps.map(res ⇒ wethAbi.allowance.unpackResult(res.result)))
 //    uncle ← (ethConnectionActor ? GetUncleByBlockNumAndIndexReq(
 //      blockNum = "0x69555e",
 //      index = "0x0"
 //    )).mapTo[GetBlockWithTxHashByHashRes]
 //      .map(_.result.get)
-//    uncles ← (ethConnectionActor ? XBatchGetUncleByBlockNumAndIndexReq()
+//    uncles ← (ethConnectionActor ? BatchGetUncleByBlockNumAndIndexReq()
 //      .withReqs(
 //        Seq(
 //          GetUncleByBlockNumAndIndexReq(
@@ -201,7 +201,7 @@ import org.json4s.DefaultFormats
 //          )
 //        )
 //      ))
-//      .mapTo[XBatchGetUncleByBlockNumAndIndexRes]
+//      .mapTo[BatchGetUncleByBlockNumAndIndexRes]
 //      .map(_.resps.map(_.result.get))
 //    gas ← (ethConnectionActor ? GetEstimatedGasReq(
 //      to = "0xef68e7c694f40c8202821edf525de3782458639f"

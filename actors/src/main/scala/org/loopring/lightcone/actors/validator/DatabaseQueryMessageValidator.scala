@@ -29,11 +29,11 @@ final class DatabaseQueryMessageValidator()(implicit val config: Config)
 
   // Throws exception if validation fails.
   def validate = {
-    case req: XSaveOrderReq ⇒
+    case req: SaveOrderReq ⇒
       if (req.order.isEmpty || (req.order.get.state.nonEmpty && req.order.get.state.get.status !=
             OrderStatus.STATUS_NEW))
         throw ErrorException(Error(ErrorCode.ERR_PERSISTENCE_INVALID_DATA))
-    case req: XUserCancelOrderReq ⇒
+    case req: UserCancelOrderReq ⇒
       if (req.orderHashes.isEmpty)
         throw ErrorException(Error(ErrorCode.ERR_PERSISTENCE_INVALID_DATA))
     case req: GetOrdersForUserReq => req

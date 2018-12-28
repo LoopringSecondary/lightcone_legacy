@@ -22,8 +22,8 @@ package org.loopring.lightcone.proto;
 import "ethereum.proto";
 import "core_data.proto";
 
-message XEthereumProxySettings {
-    message XNode {
+message EthereumProxySettings {
+    message Node {
         string host = 1;
         int32 port = 2;
         string ipcPath = 3;
@@ -31,23 +31,23 @@ message XEthereumProxySettings {
     int32 pool_size = 1;
     int32 check_interval_seconds = 2;
     float healthy_threshold = 3;
-    repeated XNode nodes = 4;
+    repeated Node nodes = 4;
 }
 
-//message XCheckBlockHeightResp {
+//message CheckBlockHeightResp {
 //    int32 current_block = 1;
 //    int32 height_block = 2;
 //}
 
-message XNodeBlockHeight{
+message NodeBlockHeight{
     string path = 1;
     int32 height = 2;
 }
 
-message XNodeHeightReq{}
+message NodeHeightReq{}
 
-message XNodeHeightRes{
-    repeated XNodeBlockHeight nodes = 1;
+message NodeHeightRes{
+    repeated NodeBlockHeight nodes = 1;
 }
 
 message XJsonRpcReq {
@@ -91,7 +91,7 @@ message XTransaction {
     string v = 14;
 }
 
-message XLog {
+message TransactionLog {
     string logIndex = 1;
     string blockNumber = 2;
     string blockHash = 3;
@@ -103,7 +103,7 @@ message XLog {
     bool removed = 9;
 }
 
-message XTransactionReceipt {
+message TransactionReceipt {
     string blockHash = 1;
     string blockNumber = 2;
     string transactionHash = 3;
@@ -113,7 +113,7 @@ message XTransactionReceipt {
     string contractAddress = 7;
     string cumulativeGasUsed = 8;
     string gasUsed = 9;
-    repeated XLog logs = 10;
+    repeated TransactionLog logs = 10;
     string logsBloom = 11;
     string root = 12;
     string status = 13;
@@ -163,7 +163,7 @@ message BlockWithTxObject {
     repeated string uncles = 19;
 }
 
-message XTraceCall {
+message TraceCall {
     string from = 1;
     string to = 2;
     string input = 3;
@@ -174,7 +174,7 @@ message XTraceCall {
     string value = 8;
 }
 
-message XTraceTransaction {
+message TraceTransaction {
     string from = 1;
     string to = 2;
     string input = 3;
@@ -183,10 +183,10 @@ message XTraceTransaction {
     string gasUsed = 6;
     string type = 7;
     string value = 8;
-    repeated XTraceCall calls = 9;
+    repeated TraceCall calls = 9;
 }
 
-message XTransactionParam {
+message TransactionParams {
     string from = 1;
     string to = 2;
     string gas = 3;
@@ -208,44 +208,44 @@ message XTransactionParam {
 ///////////////////////////////////////////
 
 //eth_blockNumber
-message XEthBlockNumberReq {
+message EthBlockNumberReq {
 }
 
-message XEthResError {
+message EthResError {
     int32 code = 1;
     string error = 2;
 }
 
-message XEthBlockNumberRes {
+message EthBlockNumberRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
-    XEthResError error = 4;
+    EthResError error = 4;
 }
 
-message XEthCallReq {
+message EthCallReq {
     int32 id = 1;
-    XTransactionParam param = 2;
+    TransactionParams param = 2;
     string tag = 3;
 }
 
-message XEthCallRes {
+message EthCallRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
-    XEthResError error = 4;
+    EthResError error = 4;
 }
 
 // eth_getBalance
-message XEthGetBalanceReq {
+message EthGetBalanceReq {
     string address = 1;
     string tag = 2;
 }
-message XEthGetBalanceRes {
+message EthGetBalanceRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
-    XEthResError error = 4;
+    EthResError error = 4;
 }
 
 // eth_getTransactionByHash
@@ -256,7 +256,7 @@ message GetTransactionByHashRes {
     int32 id = 1;
     string jsonrpc = 2;
     XTransaction result = 3;
-    XEthResError error = 4;
+    EthResError error = 4;
 }
 
 // eth_getTransactionReceipt
@@ -266,8 +266,8 @@ message GetTransactionReceiptReq {
 message GetTransactionReceiptRes {
     int32 id = 1;
     string jsonrpc = 2;
-    XTransactionReceipt result = 3;
-    XEthResError error = 4;
+    TransactionReceipt result = 3;
+    EthResError error = 4;
 }
 
 // eth_getBlockByNumber
@@ -278,7 +278,7 @@ message GetBlockWithTxHashByNumberRes {
     int32 id = 1;
     string jsonrpc = 2;
     BlockWithTxHash result = 3;
-    XEthResError error = 4;
+    EthResError error = 4;
 }
 
 message GetBlockWithTxObjectByNumberReq {
@@ -288,7 +288,7 @@ message GetBlockWithTxObjectByNumberRes {
     int32 id = 1;
     string jsonrpc = 2;
     BlockWithTxObject result = 3;
-    XEthResError error = 4;
+    EthResError error = 4;
 }
 
 // eth_getBlockByHash
@@ -299,7 +299,7 @@ message GetBlockWithTxHashByHashRes {
     int32 id = 1;
     string jsonrpc = 2;
     BlockWithTxHash result = 3;
-    XEthResError error = 4;
+    EthResError error = 4;
 }
 
 message GetBlockWithTxObjectByHashReq {
@@ -309,18 +309,18 @@ message GetBlockWithTxObjectByHashRes {
     int32 id = 1;
     string jsonrpc = 2;
     BlockWithTxObject result = 3;
-    XEthResError error = 4;
+    EthResError error = 4;
 }
 
 // debug_traceTransaction
-message XTraceTransactionReq {
+message TraceTransactionReq {
     string txhash = 1;
 }
-message XTraceTransactionRes {
+message TraceTransactionRes {
     int32 id = 1;
     string jsonrpc = 2;
-    XTraceTransaction result = 3;
-    XEthResError error = 4;
+    TraceTransaction result = 3;
+    EthResError error = 4;
 }
 
 // eth_estimateGas
@@ -332,7 +332,7 @@ message GetEstimatedGasRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
-    XEthResError error = 4;
+    EthResError error = 4;
 }
 
 message GetNonceReq {
@@ -343,7 +343,7 @@ message GetNonceRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
-    XEthResError error = 4;
+    EthResError error = 4;
 }
 
 message GetBlockTransactionCountReq {
@@ -353,10 +353,10 @@ message GetBlockTransactionCountRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
-    XEthResError error = 4;
+    EthResError error = 4;
 }
 
-message XSendRawTransactionReq {
+message SendRawTransactionReq {
     string data = 1;
 }
 
@@ -365,42 +365,42 @@ message GetUncleByBlockNumAndIndexReq{
     string index = 2;
 }
 
-message XBatchGetUncleByBlockNumAndIndexReq{
+message BatchGetUncleByBlockNumAndIndexReq{
    repeated GetUncleByBlockNumAndIndexReq reqs = 1;
 }
 
-message XBatchGetUncleByBlockNumAndIndexRes{
+message BatchGetUncleByBlockNumAndIndexRes{
    repeated GetBlockWithTxHashByHashRes resps = 1;
 }
 
-message XBatchContractCallReq {
-    repeated XEthCallReq reqs = 1;
+message BatchContractCallReq {
+    repeated EthCallReq reqs = 1;
 }
 
-message XBatchContractCallRes {
-    repeated XEthCallRes resps = 1;
+message BatchContractCallRes {
+    repeated EthCallRes resps = 1;
 }
 
-message XBatchGetTransactionsReq {
+message BatchGetTransactionsReq {
     repeated GetTransactionByHashReq reqs = 1;
 }
 
-message XBatchGetTransactionsRes {
+message BatchGetTransactionsRes {
     repeated GetTransactionByHashRes resps = 1;
 }
 
-message XBatchGetTransactionReceiptsReq {
+message BatchGetTransactionReceiptsReq {
     repeated GetTransactionReceiptReq reqs = 1;
 }
 
-message XBatchGetTransactionReceiptsRes {
+message BatchGetTransactionReceiptsRes {
     repeated GetTransactionReceiptRes resps = 1;
 }
 
-message XSaveBlockReq {
+message SaveBlockReq {
     BlockData block_data = 1;
 }
 
-message XSaveBlockRes {
+message SaveBlockRes {
     Error error = 1;
 }

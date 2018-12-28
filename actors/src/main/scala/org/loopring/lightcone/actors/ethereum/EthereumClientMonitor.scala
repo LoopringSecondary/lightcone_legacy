@@ -105,8 +105,8 @@ class EthereumClientMonitor(
   override def preStart(): Unit = {
     val poolSize = selfConfig.getInt("pool-size")
     val nodesConfig = selfConfig.getConfigList("nodes").asScala.map { c =>
-      XEthereumProxySettings
-        .XNode(host = c.getString("host"), port = c.getInt("port"))
+      EthereumProxySettings
+        .Node(host = c.getString("host"), port = c.getInt("port"))
     }
     connectionPools = nodesConfig.zipWithIndex.map {
       case (node, index) =>
@@ -137,10 +137,10 @@ class EthereumClientMonitor(
   }
 
   def normalReceive: Receive = super.receive orElse {
-    case _: XNodeHeightReq ⇒
-      sender ! XNodeHeightRes(
+    case _: NodeHeightReq ⇒
+      sender ! NodeHeightRes(
         nodes.toSeq
-          .map(node ⇒ XNodeBlockHeight(path = node._1, height = node._2))
+          .map(node ⇒ NodeBlockHeight(path = node._1, height = node._2))
       )
   }
 
@@ -167,7 +167,7 @@ class EthereumClientMonitor(
           }
       } yield {
         nodes = nodes + (g.path.toString → blockNumResp)
-        ethereumAccessor ! XNodeBlockHeight(
+        ethereumAccessor ! NodeBlockHeight(
           path = g.path.toString,
           height = blockNumResp
         )

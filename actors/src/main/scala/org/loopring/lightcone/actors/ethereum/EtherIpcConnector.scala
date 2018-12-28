@@ -25,7 +25,7 @@ import jnr.unixsocket._
 import org.loopring.lightcone.proto._
 import scalapb.json4s.JsonFormat
 
-private[ethereum] class IpcConnector(node: XEthereumProxySettings.XNode)
+private[ethereum] class IpcConnector(node: EthereumProxySettings.Node)
     extends Actor
     with ActorLogging {
 

@@ -81,8 +81,8 @@ class EthereumAccessActor(
   var connectionPools: Seq[(String, Int)] = Nil
 
   override def preStart() = {
-    val fu = (monitor ? XNodeHeightReq())
-      .mapAs[XNodeHeightRes]
+    val fu = (monitor ? NodeHeightReq())
+      .mapAs[NodeHeightRes]
     fu onComplete {
       case Success(res) ⇒
         connectionPools = res.nodes.map(node ⇒ node.path → node.height)
@@ -99,13 +99,13 @@ class EthereumAccessActor(
     case _: InitializationDone ⇒
       unstashAll()
       context.become(normalReceive)
-    case _: XNodeBlockHeight ⇒
+    case _: NodeBlockHeight ⇒
     case _ ⇒
       stash()
   }
 
   def normalReceive: Receive = {
-    case node: XNodeBlockHeight =>
+    case node: NodeBlockHeight =>
       connectionPools =
         (connectionPools.toMap + (node.path → node.height)).toSeq
           .filter(_._2 >= 0)

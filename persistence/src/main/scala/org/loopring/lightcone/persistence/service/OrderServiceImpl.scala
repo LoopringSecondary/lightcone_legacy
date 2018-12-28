@@ -76,7 +76,7 @@ class OrderServiceImpl @Inject()(
   // Mark the order as soft-cancelled. Returns error code if the order does not exist.
   def markOrderSoftCancelled(
       orderHashes: Seq[String]
-    ): Future[Seq[XUserCancelOrderResult.Result]] =
+    ): Future[Seq[UserCancelOrderResult.Result]] =
     for {
       updated <- orderDal.updateOrdersStatus(
         orderHashes,
@@ -86,7 +86,7 @@ class OrderServiceImpl @Inject()(
     } yield {
       if (updated == ErrorCode.ERR_NONE) {
         orderHashes.map { orderHash =>
-          XUserCancelOrderResult.Result(
+          UserCancelOrderResult.Result(
             orderHash,
             giveUserOrder(selectOwners.get(orderHash)),
             ErrorCode.ERR_NONE

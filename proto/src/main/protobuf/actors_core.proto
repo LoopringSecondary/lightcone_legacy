@@ -151,13 +151,13 @@ message GetFilledAmountRes {
     map<string, bytes> filled_amount_s_map = 1;
 }
 
-message XUpdateBalanceAndAllowanceReq {
+message UpdateBalanceAndAllowanceReq {
     string address = 1;
     string token = 2;
     BalanceAndAllowance balance_and_allowance = 3;
 }
 
-message XUpdateBalanceAndAllowanceRes {
+message UpdateBalanceAndAllowanceRes {
     ErrorCode error = 1;
     BalanceAndAllowance balance_and_allowance = 2;
 }
@@ -229,7 +229,7 @@ message XSetGasPriceRes {
 }
 
 
-message XUpdatedTokenBurnRate {
+message UpdatedTokenBurnRate {
     string token = 1;
     double burnRate = 2;
 }

@@ -36,9 +36,9 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
       owner: String,
       nonce: Long,
       status: SettlementTx.XStatus
-    ): Future[XSaveSettlementTxResult] = {
+    ): Future[SaveSettlementTxResult] = {
     service.saveTx(
-      XSaveSettlementTxReq(
+      SaveSettlementTxReq(
         Some(
           SettlementTx(
             txHash = txHash,
@@ -123,7 +123,7 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
         GetPendingTxsReq(owner = owner, timeBefore = time)
       )
       _ <- service.updateInBlock(
-        XUpdateTxInBlockReq(
+        UpdateTxInBlockReq(
           txHash = "0x-updateblock-03",
           from = owner,
           nonce = 1
@@ -156,12 +156,12 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
         testSave(hash, owner, 1, SettlementTx.XStatus.PENDING)
       })
       updated <- service.updateInBlock(
-        XUpdateTxInBlockReq(txHash = "0x-tx-not-exist", from = owner, nonce = 1)
+        UpdateTxInBlockReq(txHash = "0x-tx-not-exist", from = owner, nonce = 1)
       )
     } yield updated
     val res =
       try {
-        Await.result(result.mapTo[XUpdateTxInBlockResult], 5.second)
+        Await.result(result.mapTo[UpdateTxInBlockResult], 5.second)
       } catch {
         case e: ErrorException => e
         case m: Throwable      => m

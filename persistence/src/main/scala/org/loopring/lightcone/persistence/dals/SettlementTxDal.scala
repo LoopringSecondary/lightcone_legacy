@@ -31,14 +31,12 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
-  def saveTx(tx: SettlementTx): Future[XSaveSettlementTxResult]
+  def saveTx(tx: SettlementTx): Future[SaveSettlementTxResult]
   // get all pending txs with given owner
   def getPendingTxs(request: GetPendingTxsReq): Future[GetPendingTxsResult]
 
   // update address's all txs status below or equals the given nonce to BLOCK
-  def updateInBlock(
-      request: XUpdateTxInBlockReq
-    ): Future[XUpdateTxInBlockResult]
+  def updateInBlock(request: UpdateTxInBlockReq): Future[UpdateTxInBlockResult]
 }
 
 class SettlementTxDalImpl(
@@ -51,14 +49,14 @@ class SettlementTxDalImpl(
   val timeProvider = new SystemTimeProvider()
   implicit val XStatusCxolumnType = enumColumnType(SettlementTx.XStatus)
 
-  def saveTx(tx: SettlementTx): Future[XSaveSettlementTxResult] = {
+  def saveTx(tx: SettlementTx): Future[SaveSettlementTxResult] = {
     db.run((query += tx).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒
-        XSaveSettlementTxResult(ERR_PERSISTENCE_DUPLICATE_INSERT)
+        SaveSettlementTxResult(ERR_PERSISTENCE_DUPLICATE_INSERT)
       case Failure(ex) ⇒
         logger.error(s"error : ${ex.getMessage}")
-        XSaveSettlementTxResult(ERR_PERSISTENCE_INTERNAL)
-      case Success(x) ⇒ XSaveSettlementTxResult(ERR_NONE)
+        SaveSettlementTxResult(ERR_PERSISTENCE_INTERNAL)
+      case Success(x) ⇒ SaveSettlementTxResult(ERR_NONE)
     }
   }
 
@@ -93,8 +91,8 @@ class SettlementTxDalImpl(
   }
 
   def updateInBlock(
-      request: XUpdateTxInBlockReq
-    ): Future[XUpdateTxInBlockResult] = {
+      request: UpdateTxInBlockReq
+    ): Future[UpdateTxInBlockResult] = {
     val a = (for {
       // update tx in block
       updateInBlock <- query
@@ -117,8 +115,8 @@ class SettlementTxDalImpl(
       // update others pending tx to failed
     } yield updateFaild).transactionally
     db.run(a).map { r =>
-      if (r >= 0) XUpdateTxInBlockResult(ErrorCode.ERR_NONE)
-      else XUpdateTxInBlockResult(ErrorCode.ERR_INTERNAL_UNKNOWN)
+      if (r >= 0) UpdateTxInBlockResult(ErrorCode.ERR_NONE)
+      else UpdateTxInBlockResult(ErrorCode.ERR_INTERNAL_UNKNOWN)
     }
   }
 }

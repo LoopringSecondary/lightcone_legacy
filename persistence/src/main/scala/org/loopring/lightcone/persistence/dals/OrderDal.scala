@@ -56,7 +56,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
   // also, if the order is NEW, the status field needs to save as NEW
   // and the created_at and updated_at fileds should both be the current timestamp;
   // if the order already exists, no field should be changed.
-  def saveOrder(order: RawOrder): Future[XSaveOrderResult]
+  def saveOrder(order: RawOrder): Future[SaveOrderResult]
 
   // Returns orders with given hashes
   def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]]
@@ -143,10 +143,10 @@ class OrderDalImpl(
   implicit val TokenStandardColumnType = enumColumnType(TokenStandard)
   private[this] val logger = Logger(this.getClass)
 
-  def saveOrder(order: RawOrder): Future[XSaveOrderResult] = {
+  def saveOrder(order: RawOrder): Future[SaveOrderResult] = {
     db.run((query += order).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
-        XSaveOrderResult(
+        SaveOrderResult(
           error = ERR_PERSISTENCE_DUPLICATE_INSERT,
           order = None,
           alreadyExist = true
@@ -154,10 +154,10 @@ class OrderDalImpl(
       }
       case Failure(ex) ⇒ {
         logger.error(s"error : ${ex.getMessage}")
-        XSaveOrderResult(error = ERR_PERSISTENCE_INTERNAL, order = None)
+        SaveOrderResult(error = ERR_PERSISTENCE_INTERNAL, order = None)
       }
       case Success(x) ⇒
-        XSaveOrderResult(error = ERR_NONE, order = Some(order))
+        SaveOrderResult(error = ERR_NONE, order = Some(order))
     }
   }
 

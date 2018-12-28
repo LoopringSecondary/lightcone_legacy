@@ -43,8 +43,8 @@ class EthereumAccessorSpec extends CommonSpec("""
   val ethereumAccessActor = actors.get(EthereumAccessActor.name)
 
   val fu = for {
-    blockNum ← (ethereumAccessActor ? XEthBlockNumberReq())
-      .mapTo[XEthBlockNumberRes]
+    blockNum ← (ethereumAccessActor ? EthBlockNumberReq())
+      .mapTo[EthBlockNumberRes]
       .map(_.result)
     //    blockWithTxHash ← (ethereumAccessActor ? GetBlockWithTxHashByNumberReq(
     //      blockNum
@@ -73,9 +73,9 @@ class EthereumAccessorSpec extends CommonSpec("""
     //          .mapTo[GetTransactionReceiptRes]
     //          .map(_.result.get)
     //      })
-    //    batchReceipts ← (ethereumAccessActor ? XBatchGetTransactionReceiptsReq(
+    //    batchReceipts ← (ethereumAccessActor ? BatchGetTransactionReceiptsReq(
     //      blockWithTxHash.transactions.map(GetTransactionReceiptReq(_))
-    //    )).mapTo[XBatchGetTransactionReceiptsRes]
+    //    )).mapTo[BatchGetTransactionReceiptsRes]
     //      .map(_.resps.map(_.result.get))
     //    nonce ← (ethereumAccessActor ? GetNonceReq(
     //      owner = "0xdce9e65ba38d4249c38d00d664d41e5f6d7e83b3",
@@ -86,13 +86,13 @@ class EthereumAccessorSpec extends CommonSpec("""
     //      blockWithTxHash.hash
     //    )).mapTo[GetBlockTransactionCountRes]
     //      .map(_.result)
-    //    batchTx ← (ethereumAccessActor ? XBatchGetTransactionsReq(
+    //    batchTx ← (ethereumAccessActor ? BatchGetTransactionsReq(
     //      blockWithTxHash.transactions.map(GetTransactionByHashReq(_))
-    //    )).mapTo[XBatchGetTransactionsRes]
+    //    )).mapTo[BatchGetTransactionsRes]
     //      .map(_.resps.map(_.result))
-    //    lrcBalance ← (ethereumAccessActor ? XEthCallReq(tag = "latest")
+    //    lrcBalance ← (ethereumAccessActor ? EthCallReq(tag = "latest")
     //      .withParam(
-    //        XTransactionParam()
+    //        TransactionParams()
     //          .withData(
     //            wethAbi.balanceOf.pack(
     //              BalanceOfFunction
@@ -101,14 +101,14 @@ class EthereumAccessorSpec extends CommonSpec("""
     //          )
     //          .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
     //      ))
-    //      .mapTo[XEthCallRes]
+    //      .mapTo[EthCallRes]
     //      .map(resp ⇒ wethAbi.balanceOf.unpackResult(resp.result))
-    //    lrcbalances ← (ethereumAccessActor ? XBatchContractCallReq(
+    //    lrcbalances ← (ethereumAccessActor ? BatchContractCallReq(
     //      batchTx.map(
     //        tx ⇒
-    //          XEthCallReq(tag = "latest")
+    //          EthCallReq(tag = "latest")
     //            .withParam(
-    //              XTransactionParam()
+    //              TransactionParams()
     //                .withData(
     //                  wethAbi.balanceOf.pack(
     //                    BalanceOfFunction
@@ -118,12 +118,12 @@ class EthereumAccessorSpec extends CommonSpec("""
     //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
     //            )
     //      )
-    //    )).mapTo[XBatchContractCallRes]
+    //    )).mapTo[BatchContractCallRes]
     //      .map(_.resps.map(res ⇒ wethAbi.balanceOf.unpackResult(res.result)))
     //
-    //    allowance ← (ethereumAccessActor ? XEthCallReq(tag = "latest")
+    //    allowance ← (ethereumAccessActor ? EthCallReq(tag = "latest")
     //      .withParam(
-    //        XTransactionParam()
+    //        TransactionParams()
     //          .withData(
     //            wethAbi.allowance.pack(
     //              AllowanceFunction
@@ -135,15 +135,15 @@ class EthereumAccessorSpec extends CommonSpec("""
     //          )
     //          .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
     //      ))
-    //      .mapTo[XEthCallRes]
+    //      .mapTo[EthCallRes]
     //      .map(resp ⇒ wethAbi.allowance.unpackResult(resp.result))
     //
-    //    allowances ← (ethereumAccessActor ? XBatchContractCallReq(
+    //    allowances ← (ethereumAccessActor ? BatchContractCallReq(
     //      batchTx.map(
     //        tx ⇒
-    //          XEthCallReq(tag = "latest")
+    //          EthCallReq(tag = "latest")
     //            .withParam(
-    //              XTransactionParam()
+    //              TransactionParams()
     //                .withData(
     //                  wethAbi.allowance.pack(
     //                    AllowanceFunction
@@ -153,14 +153,14 @@ class EthereumAccessorSpec extends CommonSpec("""
     //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
     //            )
     //      )
-    //    )).mapTo[XBatchContractCallRes]
+    //    )).mapTo[BatchContractCallRes]
     //      .map(_.resps.map(res ⇒ wethAbi.allowance.unpackResult(res.result)))
     //    uncle ← (ethereumAccessActor ? GetUncleByBlockNumAndIndexReq(
     //      blockNum = "0x69555e",
     //      index = "0x0"
     //    )).mapTo[GetBlockWithTxHashByHashRes]
     //      .map(_.result.get)
-    //    uncles ← (ethereumAccessActor ? XBatchGetUncleByBlockNumAndIndexReq()
+    //    uncles ← (ethereumAccessActor ? BatchGetUncleByBlockNumAndIndexReq()
     //      .withReqs(
     //        Seq(
     //          GetUncleByBlockNumAndIndexReq(
@@ -169,7 +169,7 @@ class EthereumAccessorSpec extends CommonSpec("""
     //          )
     //        )
     //      ))
-    //      .mapTo[XBatchGetUncleByBlockNumAndIndexRes]
+    //      .mapTo[BatchGetUncleByBlockNumAndIndexRes]
     //      .map(_.resps.map(_.result.get))
     //    gas ← (ethereumAccessActor ? GetEstimatedGasReq(
     //      to = "0xef68e7c694f40c8202821edf525de3782458639f"
