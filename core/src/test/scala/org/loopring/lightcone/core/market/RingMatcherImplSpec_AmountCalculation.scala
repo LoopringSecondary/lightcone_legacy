@@ -24,10 +24,10 @@ import org.loopring.lightcone.proto._
 class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
 
   implicit val alwaysProfitable = new RingIncomeEstimator {
-    def getRingIncome(ring: OrderRing) = Long.MaxValue
+    def getRingIncome(ring: MatchableRing) = Long.MaxValue
 
     def isProfitable(
-        ring: OrderRing,
+        ring: MatchableRing,
         fiatValueThreshold: Double
       ) = true
   }
@@ -41,7 +41,7 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
   //     taker.copy(_matchable = Some(taker.original)),
   //     maker.copy(_matchable = Some(maker.original))
   //   )
-  //   val expectRing = OrderRing(
+  //   val expectRing = MatchableRing(
   //     taker = ExpectedMatchableFill(
   //       order = taker.copy(_matchable = Some(MatchableState())),
   //       pending = taker.original,
@@ -63,7 +63,7 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
         maker.copy(_matchable = Some(maker.original.scaleBy(scale)))
       )
       val pending = maker.original.scaleBy(scale)
-      val expectRing = OrderRing(
+      val expectRing = MatchableRing(
         taker = ExpectedMatchableFill(
           order = taker.copy(_matchable = Some(MatchableState())),
           pending = taker.original.scaleBy(scale),
@@ -90,7 +90,7 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
   //     taker.copy(_matchable = Some(taker.original.scaleBy(1.0 / 3))),
   //     maker.copy(_matchable = Some(maker.original.scaleBy(1.0 / 3)))
   //   )
-  //   val expectRing = OrderRing(
+  //   val expectRing = MatchableRing(
   //     taker = ExpectedMatchableFill(
   //       order = taker.copy(_matchable = Some(MatchableState())),
   //       pending = taker.original.scaleBy(1.0 / 3),
@@ -128,7 +128,7 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
   //     )
   //   )
 
-  //   val expectRing = OrderRing(
+  //   val expectRing = MatchableRing(
   //     taker = ExpectedMatchableFill(
   //       order = taker.copy(_matchable = Some(MatchableState())),
   //       pending = MatchableState(
@@ -200,7 +200,7 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
   //       )
   //     )
   //   )
-  //   val expectRing = OrderRing(
+  //   val expectRing = MatchableRing(
   //     taker = ExpectedMatchableFill(
   //       order = taker.copy(_matchable = Some(MatchableState())),
   //       pending = MatchableState(
@@ -264,7 +264,7 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
   //       )
   //     )
   //   )
-  //   val expectRing = OrderRing(
+  //   val expectRing = MatchableRing(
   //     taker = ExpectedMatchableFill(
   //       order = taker.copy(_matchable = Some(MatchableState())),
   //       pending = MatchableState(
@@ -329,7 +329,7 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
   //       )
   //     )
   //   )
-  //   val expectRing = OrderRing(
+  //   val expectRing = MatchableRing(
   //     taker = ExpectedMatchableFill(
   //       order = taker.copy(_matchable = Some(MatchableState())),
   //       pending = MatchableState(

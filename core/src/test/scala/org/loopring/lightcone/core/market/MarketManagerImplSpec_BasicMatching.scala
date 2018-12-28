@@ -72,7 +72,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
     (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
-    val ring = OrderRing(null, null)
+    val ring = MatchableRing(null, null)
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
@@ -106,7 +106,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
     (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
 
-    val ring = OrderRing(null, null)
+    val ring = MatchableRing(null, null)
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)

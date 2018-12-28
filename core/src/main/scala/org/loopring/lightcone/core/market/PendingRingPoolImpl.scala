@@ -90,7 +90,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
 
   def hasRing(ringId: String) = ringMap.contains(ringId)
 
-  def addRing(ring: OrderRing) = this.synchronized {
+  def addRing(ring: MatchableRing) = this.synchronized {
     ringMap.get(ring.id) match {
       case Some(_) =>
       case None =>

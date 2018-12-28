@@ -26,10 +26,10 @@ import XErrorCode._
 class RingMatcherImplSpec_Basic extends OrderAwareSpec {
 
   implicit val alwaysProfitable = new RingIncomeEstimator {
-    def getRingIncome(ring: OrderRing) = Long.MaxValue
+    def getRingIncome(ring: MatchableRing) = Long.MaxValue
 
     def isProfitable(
-        ring: OrderRing,
+        ring: MatchableRing,
         fiatValueThreshold: Double
       ) = true
   }

@@ -155,7 +155,7 @@ class MarketManagerImpl(
       )
     } else {
       var taker = order.copy(status = STATUS_PENDING)
-      var rings = Seq.empty[OrderRing]
+      var rings = Seq.empty[MatchableRing]
       var ordersToAddBack = Seq.empty[Matchable]
       var lastPrice: Double = 0
 

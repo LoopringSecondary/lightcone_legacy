@@ -29,7 +29,7 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
       taker: Matchable,
       maker: Matchable,
       minFiatValue: Double = 0
-    ): Either[XErrorCode, OrderRing] = {
+    ): Either[XErrorCode, MatchableRing] = {
     val ringOpt = makeRing(maker, taker)
     ringOpt match {
       case Right(ring) if !rie.isProfitable(ring, minFiatValue) =>
@@ -41,7 +41,7 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
   private def makeRing(
       maker: Matchable,
       taker: Matchable
-    ): Either[XErrorCode, OrderRing] = {
+    ): Either[XErrorCode, MatchableRing] = {
     if (taker.amountB <= 0 || taker.amountS <= 0) {
       Left(ERR_MATCHING_INVALID_TAKER_ORDER)
     } else if (maker.amountB <= 0 || maker.amountS <= 0) {
@@ -100,7 +100,7 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
       // println(s"======== makerMargin: $makerMargin")
       // println(s"======== takerMargin: $takerMargin")
       Right(
-        OrderRing(
+        MatchableRing(
           maker = ExpectedMatchableFill(
             order = maker.copy(
               _matchable = Some(

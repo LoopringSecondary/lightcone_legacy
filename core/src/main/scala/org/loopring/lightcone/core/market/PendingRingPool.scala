@@ -25,7 +25,7 @@ trait PendingRingPool {
   def deleteRing(ringId: String): Boolean
 
   def hasRing(ringId: String): Boolean
-  def addRing(ring: OrderRing): Unit
+  def addRing(ring: MatchableRing): Unit
 
   def deleteAllRings(): Unit
   def deleteRingsBefore(timestamp: Long): Unit

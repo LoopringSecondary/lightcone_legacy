@@ -31,7 +31,7 @@ package object data {
     def id = raw.order.id
   }
 
-  implicit class RichOrderRing(raw: OrderRing) {
+  implicit class RichOrderRing(raw: MatchableRing) {
 
     // Switching maker and taker should have the same id.
     def id(): String = {

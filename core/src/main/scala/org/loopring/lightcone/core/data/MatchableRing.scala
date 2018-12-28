@@ -21,6 +21,6 @@ case class ExpectedMatchableFill(
     pending: MatchableState,
     amountMargin: BigInt = 0)
 
-case class OrderRing(
+case class MatchableRing(
     maker: ExpectedMatchableFill,
     taker: ExpectedMatchableFill)

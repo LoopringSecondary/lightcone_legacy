@@ -54,7 +54,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
         pending = MatchableState(amountS = 100, amountFee = 100),
         amountMargin = 100
       )
-      val ring = OrderRing(
+      val ring = MatchableRing(
         makerExpectFill.copy(
           amountMargin = 0,
           pending = MatchableState(amountS = 100, amountFee = 10)
@@ -97,7 +97,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
       pending = MatchableState(amountS = 100, amountFee = 100),
       amountMargin = 100
     )
-    val ring = OrderRing(
+    val ring = MatchableRing(
       makerExpectFill.copy(
         amountMargin = 0,
         pending = MatchableState(amountS = 100, amountFee = 10)
@@ -126,7 +126,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
       pending = MatchableState(amountS = 100, amountFee = 100),
       amountMargin = 100
     )
-    val ring1 = OrderRing(
+    val ring1 = MatchableRing(
       makerExpectFill.copy(
         amountMargin = 0,
         pending = MatchableState(amountS = 100, amountFee = 10)
@@ -169,7 +169,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
       pending = MatchableState(amountS = 100, amountFee = 100),
       amountMargin = 100
     )
-    val ring1 = OrderRing(
+    val ring1 = MatchableRing(
       takerExpectFillNew1.copy(
         amountMargin = 0,
         pending = MatchableState(amountS = 100, amountFee = 0)

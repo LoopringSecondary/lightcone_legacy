@@ -59,7 +59,7 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
 
     (fackRingIncomeEstimator.getRingIncome _).when(*).returns(1)
     (fackRingIncomeEstimator
-      .isProfitable(_: OrderRing, _: Double))
+      .isProfitable(_: MatchableRing, _: Double))
       .when(*, *)
       .returns(true)
   }

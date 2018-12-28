@@ -17,7 +17,7 @@
 package org.loopring.lightcone.core.data
 
 case class Settlement(
-    rings: Seq[OrderRing],
+    rings: Seq[MatchableRing],
     nonce: Int,
     createdAt: Long,
     txid: Option[String] = None,

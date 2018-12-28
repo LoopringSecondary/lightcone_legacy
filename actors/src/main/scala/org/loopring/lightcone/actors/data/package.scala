@@ -108,24 +108,24 @@ package object data {
       amountFee = orderState.amountFee
     )
 
-  implicit def orderRing2XOrderRing(orderRing: OrderRing): XOrderRing =
+  implicit def matchableRing2OrderRing(orderRing: MatchableRing): XOrderRing =
     XOrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
 
-  implicit def xOrderRing2OrderRing(xOrderRing: XOrderRing): OrderRing =
-    OrderRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
+  implicit def orderRing2MatchableRing(xOrderRing: XOrderRing): MatchableRing =
+    MatchableRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
 
-  implicit def seqOrderRing2XOrderRing(
-      orderRings: Seq[OrderRing]
+  implicit def seqMatchableRing2OrderRing(
+      orderRings: Seq[MatchableRing]
     ): Seq[XOrderRing] =
     orderRings map { orderRing =>
       XOrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
     }
 
-  implicit def seqXOrderRing2OrderRing(
+  implicit def seqOrderRing2MatchableRing(
       xOrderRings: Seq[XOrderRing]
-    ): Seq[OrderRing] =
+    ): Seq[MatchableRing] =
     xOrderRings map { xOrderRing =>
-      OrderRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
+      MatchableRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
     }
 
   implicit def expectFill2XEcpectFill(

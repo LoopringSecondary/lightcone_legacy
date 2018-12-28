@@ -47,15 +47,15 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
 
     val sell1 = actualNotDust(sellGTO(BigInt(110000), BigInt(100), 0))
 
-    val ring1 = OrderRing(
+    val ring1 = MatchableRing(
       ExpectedMatchableFill(sell1, null),
       ExpectedMatchableFill(buy1, null)
     )
-    val ring2 = OrderRing(
+    val ring2 = MatchableRing(
       ExpectedMatchableFill(sell1, null),
       ExpectedMatchableFill(buy2, null)
     )
-    val ring3 = OrderRing(
+    val ring3 = MatchableRing(
       ExpectedMatchableFill(sell1, null),
       ExpectedMatchableFill(buy3, null)
     )
