@@ -22,11 +22,9 @@ import org.loopring.lightcone.actors.core.{
 }
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.{Await, Future}
 import akka.pattern._
 import akka.util.Timeout
-
 import scala.concurrent.duration._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.XOrderbook.XItem
