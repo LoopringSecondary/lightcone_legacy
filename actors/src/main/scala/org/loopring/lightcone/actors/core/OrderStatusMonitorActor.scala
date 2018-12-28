@@ -28,6 +28,10 @@ import org.loopring.lightcone.proto._
 
 import scala.concurrent._
 
+object OrderStatusMonitorActor {
+  val name = "order_status_monitor"
+}
+
 class OrderStatusMonitorActor(
   )(
     implicit val config: Config,
@@ -43,15 +47,17 @@ class OrderStatusMonitorActor(
   val repeatedJobs = Seq(
     Job(
       name = "effective",
-      dalayInSeconds = 60, // 1 minute
+      dalayInSeconds = 1, // 1 minute
       run = () => processEffectiveOrders
     ),
     Job(
       name = "expire",
-      dalayInSeconds = 60, // 1 minute
+      dalayInSeconds = 1, // 1 minute
       run = () => processExpireOrders
     )
   )
+
+  println(s"### OrderStatusMonitorActor ${repeatedJobs}")
 
   def processEffectiveOrders =
     for {
@@ -108,12 +114,14 @@ class OrderStatusMonitorActor(
       monitorType: XOrderStatusMonitor.XMonitorType
     ): Future[(Int, Int)] = {
     val processTime = timeProvider.getTimeSeconds()
+    println(s"####1 getProcessTime ${processTime}")
     for {
       lastEventOpt <- dbModule.orderStatusMonitorService.getLastEvent(
-        XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE
-      )
-      lastProcessTime = if (lastEventOpt.isEmpty) 0
-      else lastEventOpt.get.processTime
+              XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE
+            )
+            lastProcessTime = if (lastEventOpt.isEmpty) 0
+            else lastEventOpt.get.processTime
+      _ = println(s"#### getProcessTime ${processTime}, ${lastProcessTime}")
     } yield (processTime.toInt, lastProcessTime.toInt)
   }
 }
