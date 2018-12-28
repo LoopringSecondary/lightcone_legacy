@@ -61,7 +61,7 @@ class JrpcSpec
         "orderbook"
       )
       // 只要返回了Orderbook类型就认为成功，其他会抛异常
-      Await.result(resonse1.mapTo[Orderbook], timeout.duration)
+      Await.result(resonse1.mapTo[GetOrderbook.Res], timeout.duration)
 
       // 1. 没有在EntryPoint绑定过的request消息类型; 错误的request类型 => 反序列化为默认的proto对象，进入validator
       // 2. 错误的validate请求

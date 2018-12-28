@@ -130,7 +130,10 @@ class RecoverOrderSpec
       val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
       val timeout1 = Timeout(5 second)
       val orderbookRes1 =
-        Await.result(orderbookF1.mapTo[Orderbook], timeout1.duration)
+        Await
+          .result(orderbookF1.mapTo[GetOrderbook.Res], timeout1.duration)
+          .orderbook
+          .get
 
       // 2. save some orders in db
       testSaveOrder4Recover()
@@ -155,7 +158,10 @@ class RecoverOrderSpec
       Thread.sleep(5000)
       val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
       val orderbookRes2 =
-        Await.result(orderbookF2.mapTo[Orderbook], timeout1.duration)
+        Await
+          .result(orderbookF2.mapTo[GetOrderbook.Res], timeout1.duration)
+          .orderbook
+          .get
       assert(orderbookRes1.sells.isEmpty && orderbookRes1.buys.isEmpty)
       assert(
         orderbookRes2.sells.nonEmpty && orderbookRes2.sells.length === 2 && orderbookRes2.buys.isEmpty
