@@ -44,7 +44,7 @@ object OrderRecoverActor extends ShardedEvenly {
   override protected val messageExtractor =
     new HashCodeMessageExtractor(numOfShards) {
       override def entityId(message: Any) = message match {
-        case req: Recover.Batch =>
+        case req: Recover.RequestBatch =>
           name + "_batch" + req.batchId
         case e: Any =>
           throw new Exception(s"$e not expected by OrderRecoverActor")
@@ -81,13 +81,13 @@ class OrderRecoverActor(
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   val batchSize = selfConfig.getInt("batch-size")
-  var batch: Recover.Batch = _
+  var batch: Recover.RequestBatch = _
   var numOrders = 0L
   def coordinator = actors.get(OrderRecoverCoordinator.name)
   def mama = actors.get(MultiAccountManagerActor.name)
 
   def receive: Receive = {
-    case req: Recover.Batch =>
+    case req: Recover.RequestBatch =>
       log.info(s"started order recover - $req")
       batch = req
 

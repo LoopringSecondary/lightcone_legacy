@@ -33,7 +33,7 @@ message Recover {
         string requester_path = 1;
     }
 
-    message Batch {
+    message RequestBatch {
         int64 batch_id = 1;
         map<string, Request> request_map = 2; // requester_path -> Request
     }
@@ -51,10 +51,8 @@ message Recover {
         RawOrder raw_order = 1;
     }
 
-    message RecoverOrderRes {
+    message OrderRecoverResult {
         string order_id = 1;
         bool successful = 2;
     }
-
-
 }

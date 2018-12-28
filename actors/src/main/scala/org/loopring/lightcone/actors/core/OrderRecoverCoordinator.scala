@@ -48,8 +48,8 @@ class OrderRecoverCoordinator(
     with ActorLogging {
 
   val batchTimeout = selfConfig.getInt("batch-timeout-seconds")
-  var activeBatches = Map.empty[ActorRef, Recover.Batch]
-  var pendingBatch = Recover.Batch(batchId = 1)
+  var activeBatches = Map.empty[ActorRef, Recover.RequestBatch]
+  var pendingBatch = Recover.RequestBatch(batchId = 1)
   var batchTimer: Option[Cancellable] = None
 
   def receive: Receive = {
@@ -77,11 +77,11 @@ class OrderRecoverCoordinator(
     case req: Recover.Timeout =>
       if (pendingBatch.requestMap.nonEmpty) {
         actors.get(OrderRecoverActor.name) ! pendingBatch
-        pendingBatch = Recover.Batch(pendingBatch.batchId + 1)
+        pendingBatch = Recover.RequestBatch(pendingBatch.batchId + 1)
       }
 
     // This message should be sent from OrderRecoverActors
-    case batch: Recover.Batch =>
+    case batch: Recover.RequestBatch =>
       val isUpdate =
         if (activeBatches.contains(sender)) "UPDATED" else "STARTED"
 

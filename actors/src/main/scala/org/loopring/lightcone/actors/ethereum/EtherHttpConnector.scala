@@ -52,7 +52,7 @@ private[ethereum] class HttpConnector(
   val DEBUG_TRACER = "callTracer"
   val ETH_CALL = "eth_call"
 
-  val emptyError = EthError(code = 500, error = "result is empty")
+  val emptyError = EthRpcError(code = 500, error = "result is empty")
 
   private val poolClientFlow: Flow[
     (HttpRequest, Promise[HttpResponse]),
@@ -167,10 +167,10 @@ private[ethereum] class HttpConnector(
     case req: JsonRpc.Request =>
       post(req.json).map(JsonRpc.Response(_)) sendTo sender
 
-    case _: EthBlockNumber.Req =>
+    case _: GetBlockNumber.Req =>
       sendMessage("eth_blockNumber") {
         Seq.empty
-      } map JsonFormat.fromJsonString[EthBlockNumber.Res] sendTo sender
+      } map JsonFormat.fromJsonString[GetBlockNumber.Res] sendTo sender
 
     case r: EthGetBalance.Req =>
       sendMessage("eth_getBalance") {
@@ -245,7 +245,7 @@ private[ethereum] class HttpConnector(
       } map JsonFormat
         .fromJsonString[GetBlockWithTxHashByHash.Res] sendTo sender
 
-    case batchR: BatchContractCall.Req =>
+    case batchR: BatchCallContracts.Req =>
       val batchReqs = batchR.reqs.map { singleReq =>
         BatchMethod(
           id = singleReq.id,
@@ -253,14 +253,14 @@ private[ethereum] class HttpConnector(
           params = Seq(singleReq.param, singleReq.tag)
         )
       }
-      //这里无法直接解析成BatchContractCall.Res
+      //这里无法直接解析成BatchCallContracts.Res
       batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val callResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
           JsonFormat.fromJsonString[EthCall.Res](respJson)
         })
-        BatchContractCall.Res(resps = callResps)
+        BatchCallContracts.Res(resps = callResps)
       } sendTo sender
 
     case batchR: BatchGetTransactionReceipts.Req =>

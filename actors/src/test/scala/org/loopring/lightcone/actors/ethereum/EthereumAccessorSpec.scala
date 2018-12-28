@@ -45,8 +45,8 @@ class EthereumAccessorSpec
   val ethereumAccessActor = actors.get(EthereumAccessActor.name)
 
   val fu = for {
-    blockNum ← (ethereumAccessActor ? EthBlockNumber.Req())
-      .mapTo[EthBlockNumber.Res]
+    blockNum ← (ethereumAccessActor ? GetBlockNumber.Req())
+      .mapTo[GetBlockNumber.Res]
       .map(_.result)
     //    blockWithTxHash ← (ethereumAccessActor ? GetBlockWithTxHashByNumber.Req(
     //      blockNum
@@ -105,7 +105,7 @@ class EthereumAccessorSpec
     //      ))
     //      .mapTo[EthCall.Res]
     //      .map(resp ⇒ wethAbi.balanceOf.unpackResult(resp.result))
-    //    lrcbalances ← (ethereumAccessActor ? BatchContractCall.Req(
+    //    lrcbalances ← (ethereumAccessActor ? BatchCallContracts.Req(
     //      batchTx.map(
     //        tx ⇒
     //          EthCall.Req(tag = "latest")
@@ -120,7 +120,7 @@ class EthereumAccessorSpec
     //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
     //            )
     //      )
-    //    )).mapTo[BatchContractCall.Res]
+    //    )).mapTo[BatchCallContracts.Res]
     //      .map(_.resps.map(res ⇒ wethAbi.balanceOf.unpackResult(res.result)))
     //
     //    allowance ← (ethereumAccessActor ? EthCall.Req(tag = "latest")
@@ -140,7 +140,7 @@ class EthereumAccessorSpec
     //      .mapTo[EthCall.Res]
     //      .map(resp ⇒ wethAbi.allowance.unpackResult(resp.result))
     //
-    //    allowances ← (ethereumAccessActor ? BatchContractCall.Req(
+    //    allowances ← (ethereumAccessActor ? BatchCallContracts.Req(
     //      batchTx.map(
     //        tx ⇒
     //          EthCall.Req(tag = "latest")
@@ -155,7 +155,7 @@ class EthereumAccessorSpec
     //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
     //            )
     //      )
-    //    )).mapTo[BatchContractCall.Res]
+    //    )).mapTo[BatchCallContracts.Res]
     //      .map(_.resps.map(res ⇒ wethAbi.allowance.unpackResult(res.result)))
     //    uncle ← (ethereumAccessActor ? GetUncle.Req(
     //      blockNum = "0x69555e",

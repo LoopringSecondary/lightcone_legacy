@@ -22,17 +22,7 @@ package org.loopring.lightcone.proto;
 import "ethereum.proto";
 import "core_data.proto";
 
-message EthereumProxySettings {
-    message Node {
-        string host = 1;
-        int32 port = 2;
-        string ipcPath = 3;
-    }
-    int32 pool_size = 1;
-    int32 check_interval_seconds = 2;
-    float healthy_threshold = 3;
-    repeated Node nodes = 4;
-}
+
 
 message NodeBlockHeight{
     string path = 1;
@@ -215,12 +205,12 @@ message JsonRpc {
     }
 }
 
-message EthError {
+message EthRpcError {
     int32 code = 1;
     string error = 2;
 }
 
-message EthBlockNumber {
+message GetBlockNumber {
     message Req {
     }
 
@@ -228,7 +218,7 @@ message EthBlockNumber {
         int32 id = 1;
         string jsonrpc = 2;
         string result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -243,7 +233,7 @@ message EthCall {
         int32 id = 1;
         string jsonrpc = 2;
         string result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -257,7 +247,7 @@ message EthGetBalance {
         int32 id = 1;
         string jsonrpc = 2;
         string result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -270,7 +260,7 @@ message GetTransactionByHash {
         int32 id = 1;
         string jsonrpc = 2;
         Transaction result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -283,7 +273,7 @@ message GetTransactionReceipt {
         int32 id = 1;
         string jsonrpc = 2;
         TransactionReceipt result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -296,7 +286,7 @@ message GetBlockWithTxHashByNumber {
         int32 id = 1;
         string jsonrpc = 2;
         BlockWithTxHash result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -308,7 +298,7 @@ message GetBlockWithTxObjectByNumber {
         int32 id = 1;
         string jsonrpc = 2;
         BlockWithTxObject result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -321,7 +311,7 @@ message GetBlockWithTxHashByHash {
         int32 id = 1;
         string jsonrpc = 2;
         BlockWithTxHash result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -333,7 +323,7 @@ message GetBlockWithTxObjectByHash {
         int32 id = 1;
         string jsonrpc = 2;
         BlockWithTxObject result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -346,7 +336,7 @@ message TraceTransaction {
         int32 id = 1;
         string jsonrpc = 2;
         TransactionTracing result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -360,7 +350,7 @@ message GetEstimatedGas {
         int32 id = 1;
         string jsonrpc = 2;
         string result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -373,7 +363,7 @@ message GetNonce {
         int32 id = 1;
         string jsonrpc = 2;
         string result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
@@ -385,11 +375,11 @@ message GetBlockTransactionCount {
         int32 id = 1;
         string jsonrpc = 2;
         string result = 3;
-        EthError error = 4;
+        EthRpcError error = 4;
     }
 }
 
-message BatchContractCall {
+message BatchCallContracts {
     message Req {
         repeated EthCall.Req reqs = 1;
     }

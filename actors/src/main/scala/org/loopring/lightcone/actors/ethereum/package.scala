@@ -23,7 +23,7 @@ import org.json4s.native.Serialization
 import org.json4s.native.Serialization.write
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{BatchContractCall, _}
+import org.loopring.lightcone.proto.{BatchCallContracts, _}
 import org.web3j.utils.Numeric
 
 package object ethereum {
@@ -66,49 +66,49 @@ package object ethereum {
   implicit def getBalanceAndAllowanceToBatchReq(
       delegateAddress: Address,
       req: GetBalanceAndAllowances.Req
-    ): BatchContractCall.Req = {
+    ): BatchCallContracts.Req = {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val allowanceCallReqs =
       batchErc20AllowanceReq(delegateAddress, owner, tokens)
     val balanceCallReqs = batchErc20BalanceReq(owner, tokens)
 
-    BatchContractCall.Req(allowanceCallReqs ++ balanceCallReqs)
+    BatchCallContracts.Req(allowanceCallReqs ++ balanceCallReqs)
   }
 
   implicit def getBalanceToBatchReq(
       req: GetBalance.Req
-    ): BatchContractCall.Req = {
+    ): BatchCallContracts.Req = {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val balanceCallReqs = batchErc20BalanceReq(owner, tokens)
-    BatchContractCall.Req(balanceCallReqs)
+    BatchCallContracts.Req(balanceCallReqs)
   }
 
   implicit def getAllowanceToBatchReq(
       delegateAddress: Address,
       req: GetAllowance.Req
-    ): BatchContractCall.Req = {
+    ): BatchCallContracts.Req = {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val allowanceCallReqs =
       batchErc20AllowanceReq(delegateAddress, owner, tokens)
-    BatchContractCall.Req(allowanceCallReqs)
+    BatchCallContracts.Req(allowanceCallReqs)
   }
 
   implicit def getFilledAmountToBatchReq(
       tradeHistoryAddress: Address,
       req: GetFilledAmount.Req
-    ): BatchContractCall.Req = {
+    ): BatchCallContracts.Req = {
     val batchFilledAmountReqs =
       batchFilledAmountReq(tradeHistoryAddress, req.orderIds)
-    BatchContractCall.Req(batchFilledAmountReqs)
+    BatchCallContracts.Req(batchFilledAmountReqs)
   }
 
   implicit def batchContractCallResToBalanceAndAllowance(
       address: String,
       tokens: Seq[String],
-      batchRes: BatchContractCall.Res
+      batchRes: BatchCallContracts.Res
     ): GetBalanceAndAllowances.Res = {
 
     val allowances = batchRes.resps.filter(_.id % 2 == 0).map { res =>
@@ -127,7 +127,7 @@ package object ethereum {
   implicit def batchContractCallResToBalance(
       address: String,
       tokens: Seq[String],
-      batchRes: BatchContractCall.Res
+      batchRes: BatchCallContracts.Res
     ): GetBalance.Res = {
     val balances = batchRes.resps.map { res =>
       ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
@@ -138,7 +138,7 @@ package object ethereum {
   implicit def batchContractCallResToAllowance(
       address: String,
       tokens: Seq[String],
-      batchRes: BatchContractCall.Res
+      batchRes: BatchCallContracts.Res
     ): GetAllowance.Res = {
     val allowances = batchRes.resps.map { res =>
       ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))

@@ -89,14 +89,14 @@ class EthereumQueryActor(
       )
       val ethToken =
         req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
-      val batchReqs: BatchContractCall.Req =
+      val batchReqs: BatchCallContracts.Req =
         getBalanceAndAllowanceToBatchReq(
           Address(delegateAddress),
           req.copy(tokens = erc20Tokens)
         )
       (for {
         callRes <- (ethereumAccessorActor ? batchReqs)
-          .mapAs[BatchContractCall.Res]
+          .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
           case Some(_) ⇒
             (ethereumAccessorActor ? EthGetBalance.Req(
@@ -131,10 +131,10 @@ class EthereumQueryActor(
       )
       val ethToken =
         req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
-      val batchReqs: BatchContractCall.Req = req.copy(tokens = erc20Tokens)
+      val batchReqs: BatchCallContracts.Req = req.copy(tokens = erc20Tokens)
       (for {
         callRes <- (ethereumAccessorActor ? batchReqs)
-          .mapAs[BatchContractCall.Res]
+          .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
           case Some(_) ⇒
             (ethereumAccessorActor ? EthGetBalance.Req(
@@ -161,11 +161,11 @@ class EthereumQueryActor(
       }) sendTo sender
     // 查询授权不应该有ETH的授权
     case req: GetAllowance.Req =>
-      val batchReqs: BatchContractCall.Req =
+      val batchReqs: BatchCallContracts.Req =
         getAllowanceToBatchReq(Address(delegateAddress), req)
       (for {
         callRes <- (ethereumAccessorActor ? batchReqs)
-          .mapAs[BatchContractCall.Res]
+          .mapAs[BatchCallContracts.Res]
         res: GetAllowance.Res = batchContractCallResToAllowance(
           req.address,
           req.tokens,
@@ -178,7 +178,7 @@ class EthereumQueryActor(
         getFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
       (for {
         batchRes <- (ethereumAccessorActor ? batchReq)
-          .mapAs[BatchContractCall.Res]
+          .mapAs[BatchCallContracts.Res]
           .map(_.resps.map(_.result))
       } yield {
         GetFilledAmount.Res(

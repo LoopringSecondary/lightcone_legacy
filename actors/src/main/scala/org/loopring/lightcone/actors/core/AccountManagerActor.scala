@@ -68,7 +68,7 @@ class AccountManagerActor(
 
     case Recover.RecoverOrderReq(Some(xraworder)) =>
       submitOrder(xraworder).map { _ =>
-        Recover.RecoverOrderRes(xraworder.id, true)
+        Recover.OrderRecoverResult(xraworder.id, true)
       }.sendTo(sender)
 
     case GetBalanceAndAllowances.Req(addr, tokens) =>

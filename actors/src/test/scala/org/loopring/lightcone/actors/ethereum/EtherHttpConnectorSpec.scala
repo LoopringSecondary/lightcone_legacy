@@ -74,8 +74,8 @@ import org.json4s.DefaultFormats
 //      Serialization.write(jsonRpcReqWrapped)
 //    )).mapTo[JsonRpc.Response]
 //      .map(_.json)
-//    blockNum ← (ethConnectionActor ? EthBlockNumber.Req())
-//      .mapTo[EthBlockNumber.Res]
+//    blockNum ← (ethConnectionActor ? GetBlockNumber.Req())
+//      .mapTo[GetBlockNumber.Res]
 //      .map(_.result)
 //    blockWithTxHash ← (ethConnectionActor ? GetBlockWithTxHashByNumber.Req(
 //      blockNum
@@ -135,7 +135,7 @@ import org.json4s.DefaultFormats
 //      ))
 //      .mapTo[EthCall.Res]
 //      .map(resp ⇒ wethAbi.balanceOf.unpackResult(resp.result))
-//    lrcbalances: Seq[Option[BalanceOfFunction.Result]] ← (ethConnectionActor ? BatchContractCall.Req(
+//    lrcbalances: Seq[Option[BalanceOfFunction.Result]] ← (ethConnectionActor ? BatchCallContracts.Req(
 //      batchTx.map(
 //        tx ⇒
 //          EthCall.Req(tag = "latest")
@@ -150,7 +150,7 @@ import org.json4s.DefaultFormats
 //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
 //            )
 //      )
-//    )).mapTo[BatchContractCall.Res]
+//    )).mapTo[BatchCallContracts.Res]
 //      .map(_.resps.map(res ⇒ wethAbi.balanceOf.unpackResult(res.result)))
 //
 //    allowance ← (ethConnectionActor ? EthCall.Req(tag = "latest")
@@ -170,7 +170,7 @@ import org.json4s.DefaultFormats
 //      .mapTo[EthCall.Res]
 //      .map(resp ⇒ wethAbi.allowance.unpackResult(resp.result))
 //
-//    allowances ← (ethConnectionActor ? BatchContractCall.Req(
+//    allowances ← (ethConnectionActor ? BatchCallContracts.Req(
 //      batchTx.map(
 //        tx ⇒
 //          EthCall.Req(tag = "latest")
@@ -185,7 +185,7 @@ import org.json4s.DefaultFormats
 //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
 //            )
 //      )
-//    )).mapTo[BatchContractCall.Res]
+//    )).mapTo[BatchCallContracts.Res]
 //      .map(_.resps.map(res ⇒ wethAbi.allowance.unpackResult(res.result)))
 //    uncle ← (ethConnectionActor ? GetUncle.Req(
 //      blockNum = "0x69555e",
