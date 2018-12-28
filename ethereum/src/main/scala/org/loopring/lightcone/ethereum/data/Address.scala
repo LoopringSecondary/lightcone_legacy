@@ -72,8 +72,9 @@ object Address {
     new Address(value)
   }
 
-  def apply(addr: String): Address =
-    apply(Numeric.toBigInt(addr))
+  def apply(addr: String): Address = {
+    apply(BigInt(Numeric.toBigInt(addr)))
+  }
 
   def isValid(obj: Any): Boolean = {
     obj match {

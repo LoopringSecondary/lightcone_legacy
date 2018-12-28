@@ -73,15 +73,24 @@ class RingSettlementManagerActor(
     timeout: Timeout,
     actors: Lookup[ActorRef],
     dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(RingSettlementManagerActor.name) {
+    extends Actor {
 
-  var ringSettlementActors: Map[String, ActorRef] =
-    selfConfig
+  val selfConfig = config.getConfig(RingSettlementManagerActor.name)
+
+  var ringSettlementActors: Map[String, ActorRef] = Map.empty
+
+  var invalidRingSettlementActors = mutable.HashMap.empty[String, ActorRef]
+
+  val miniMinerBalance = BigInt(selfConfig.getString("mini-miner-balance"))
+
+  override def preStart() = {
+    ringSettlementActors = selfConfig
       .getConfigList("miners")
       .asScala
       .map(minerConfig ⇒ {
-        Address(minerConfig.getString("transaction_origin")).toString → context
-          .actorOf(
+        val miner = minerConfig.getString("transaction-origin")
+        val item = Address(miner).toString →
+          context.actorOf(
             Props(
               new RingSettlementActor()(
                 config = minerConfig.withFallback(config),
@@ -93,12 +102,11 @@ class RingSettlementManagerActor(
               )
             )
           )
+        item
       })
       .toMap
-
-  var invalidRingSettlementActors = mutable.HashMap.empty[String, ActorRef]
-
-  val miniMinerBalance = BigInt(config.getString("mini-miner-balance"))
+    println(ringSettlementActors)
+  }
 
   override def receive: Receive = {
     case req: XSettleRingsReq ⇒
@@ -132,5 +140,7 @@ class RingSettlementManagerActor(
           ringSettlementActors = ringSettlementActors - ba.address
         }
       }
+    case msg ⇒
+      println(s"ring settlement manager received $msg")
   }
 }

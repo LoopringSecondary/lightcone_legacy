@@ -40,7 +40,6 @@ import scala.util._
 
 // main owner: 李亚东
 class RingSettlementActor(
-    val name: String = RingSettlementManagerActor.name
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -51,8 +50,9 @@ class RingSettlementActor(
     extends Actor
     with Stash
     with ActorLogging
-    with RepeatedJobActor
-    with NamedBasedConfig {
+    with RepeatedJobActor {
+
+  val selfConfig = config.getConfig(RingSettlementManagerActor.name)
 
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx =
@@ -98,6 +98,7 @@ class RingSettlementActor(
 
     initialFuture onComplete {
       case Success(validNonce) ⇒
+        println(s"validNonce:${validNonce}")
         nonce.set(Numeric.toBigInt(validNonce).intValue())
         self ! XInitializationDone()
       case Failure(e) ⇒
@@ -109,15 +110,17 @@ class RingSettlementActor(
   override def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
-    case XInitializationDone ⇒
+    case _: XInitializationDone ⇒
       unstashAll()
       context.become(ready)
-    case _ ⇒
+    case msg ⇒
+      println(s"initial receive received $msg")
       stash()
   }
 
   def ready: Receive = super.receive orElse LoggingReceive {
     case req: XSettleRingsReq =>
+      println(s"normal receive received $req")
       val rings = truncReq2Rings(req)
       for {
         rawOrders ← Future.sequence(rings.map { ring ⇒
@@ -155,6 +158,7 @@ class RingSettlementActor(
       } yield {
         (txs zip hashes).map {
           case (tx, hash) ⇒
+            println(s"hash:${hash}")
             dbModule.settlementTxService.saveTx(
               XSaveSettlementTxReq(
                 tx = Some(
