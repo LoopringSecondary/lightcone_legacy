@@ -46,15 +46,15 @@ message XOrder {
     OrderState matchable = 15;
 }
 
-message XExpectedFill {
+message ExpectedOrderFill {
     XOrder order = 1;
     OrderState pending = 2;
     bytes amount_margin = 3;
 }
 
-message XOrderRing {
-    XExpectedFill maker = 1;
-    XExpectedFill taker = 2;
+message OrderRing {
+    ExpectedOrderFill maker = 1;
+    ExpectedOrderFill taker = 2;
 }
 
 message XGetOrderFilledAmountReq {
@@ -191,7 +191,7 @@ enum XExecutedStatus {
 }
 
 message XRingExecutedRes {
-    XOrderRing ring = 1;
+    OrderRing ring = 1;
     string tx_hash = 2;
     XExecutedStatus status = 3;
     bytes used_gas = 4;
@@ -209,7 +209,7 @@ message XSendRawTransactionRes {
 }
 
 message XSettleRingsReq {
-    repeated XOrderRing rings = 1;
+    repeated OrderRing rings = 1;
     bytes gas_limit = 2;
     bytes gas_price = 3;
 }

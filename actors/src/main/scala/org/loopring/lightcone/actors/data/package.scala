@@ -108,42 +108,42 @@ package object data {
       amountFee = orderState.amountFee
     )
 
-  implicit def matchableRing2OrderRing(orderRing: MatchableRing): XOrderRing =
-    XOrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
+  implicit def matchableRing2OrderRing(orderRing: MatchableRing): OrderRing =
+    OrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
 
-  implicit def orderRing2MatchableRing(xOrderRing: XOrderRing): MatchableRing =
+  implicit def orderRing2MatchableRing(xOrderRing: OrderRing): MatchableRing =
     MatchableRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
 
   implicit def seqMatchableRing2OrderRing(
       orderRings: Seq[MatchableRing]
-    ): Seq[XOrderRing] =
+    ): Seq[OrderRing] =
     orderRings map { orderRing =>
-      XOrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
+      OrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
     }
 
   implicit def seqOrderRing2MatchableRing(
-      xOrderRings: Seq[XOrderRing]
+      xOrderRings: Seq[OrderRing]
     ): Seq[MatchableRing] =
     xOrderRings map { xOrderRing =>
       MatchableRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
     }
 
   implicit def expectFill2XEcpectFill(
-      expectedFill: ExpectedMatchableFill
-    ): XExpectedFill =
-    XExpectedFill(
-      order = Some(expectedFill.order),
-      pending = Some(expectedFill.pending),
-      amountMargin = expectedFill.amountMargin
+      fill: ExpectedMatchableFill
+    ): ExpectedOrderFill =
+    ExpectedOrderFill(
+      order = Some(fill.order),
+      pending = Some(fill.pending),
+      amountMargin = fill.amountMargin
     )
 
   implicit def expectedOrderFill2ExpectedMatchableFill(
-      xExpectedFill: XExpectedFill
+      fill: ExpectedOrderFill
     ): ExpectedMatchableFill =
     ExpectedMatchableFill(
-      order = xExpectedFill.getOrder,
-      pending = xExpectedFill.getPending,
-      amountMargin = xExpectedFill.amountMargin
+      order = fill.getOrder,
+      pending = fill.getPending,
+      amountMargin = fill.amountMargin
     )
 
   implicit def expectedMatchableFill2ExpectedOrderFill(

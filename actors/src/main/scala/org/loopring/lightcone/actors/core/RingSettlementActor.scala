@@ -129,9 +129,9 @@ class RingSettlementActor(
       }
     } yield Unit
 
-  // private def generateRings(rings: Seq[XOrderRing]): Seq[Ring] = {
+  // private def generateRings(rings: Seq[OrderRing]): Seq[Ring] = {
   //   // @tailrec
-  //   // def generateRingRec(rings: Seq[XOrderRing], res: Seq[Ring]): Seq[Ring] = {
+  //   // def generateRingRec(rings: Seq[OrderRing], res: Seq[Ring]): Seq[Ring] = {
   //   //   if (rings.isEmpty) {
   //   //     return res
   //   //   }
