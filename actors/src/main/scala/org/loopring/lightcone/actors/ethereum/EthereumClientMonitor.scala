@@ -141,7 +141,7 @@ class EthereumClientMonitor(
       stash()
   }
 
-  def normalReceive: Receive = super.receive orElse {
+  def normalReceive: Receive = {
     case _: XNodeHeightReq ⇒
       sender ! XNodeHeightRes(
         nodes.toSeq.map(
