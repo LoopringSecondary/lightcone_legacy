@@ -40,8 +40,6 @@ trait OrderGenerateSupport {
     )(
       implicit privateKey: Option[String] = None
     ) = {
-    //todo:hash 和 签名,
-    // todo:hash 暂时随便给定
     val createAt = timeProvider.getTimeMillis
 
     val order = XRawOrder(
@@ -49,8 +47,8 @@ trait OrderGenerateSupport {
       version = 0,
       tokenS = tokenS,
       tokenB = tokenB,
-      amountS = ByteString.copyFromUtf8(amountS.toString(16)),
-      amountB = ByteString.copyFromUtf8(amountB.toString(16)),
+      amountS = ByteString.copyFrom(amountS.toByteArray),
+      amountB = ByteString.copyFrom(amountB.toByteArray),
       validSince = (createAt / 1000).toInt + 10000,
       state = Some(
         XRawOrder.State(
@@ -62,7 +60,7 @@ trait OrderGenerateSupport {
       feeParams = Some(
         XRawOrder.FeeParams(
           tokenFee = tokenFee,
-          amountFee = ByteString.copyFromUtf8(amountFee.toString(16))
+          amountFee = ByteString.copyFrom(amountFee.toByteArray)
         )
       ),
       params =
