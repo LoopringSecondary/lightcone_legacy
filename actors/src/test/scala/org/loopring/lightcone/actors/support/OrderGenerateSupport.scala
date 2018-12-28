@@ -30,7 +30,7 @@ trait OrderGenerateSupport {
   my: CommonSpec =>
 
   def createRawOrder(
-      owner: String = "0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10",
+      owner: String = "0x53a356c45cffc4c5d4e54bbececb60dbf5de9c8b",
       tokenS: String = LRC_TOKEN.address,
       tokenB: String = WETH_TOKEN.address,
       amountS: BigInt = "10".zeros(18),
@@ -73,7 +73,12 @@ trait OrderGenerateSupport {
       .withParams(
         order.params.get.withSig(
           RingBatchGeneratorImpl
-            .signPrefixedMessage(hash, privateKey.getOrElse(""))
+            .signPrefixedMessage(
+              hash,
+              privateKey.getOrElse(
+                "0x6549df526c28b1d92b0de63606cf039d3dc1846b114118367d8b161ec03256bf"
+              )
+            )
         )
       )
 

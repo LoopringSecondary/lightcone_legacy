@@ -49,8 +49,6 @@ class RingSettlementSpec
   def selfConfig = config.getConfig(RingSettlementManagerActor.name)
   def orderHandler = actors.get(OrderHandlerActor.name)
 
-  def ringSettlement = actors.get(RingSettlementManagerActor.name)
-
   val users = selfConfig
     .getConfigList("users")
     .asScala
@@ -87,14 +85,13 @@ class RingSettlementSpec
       )(Some(users(1)._2))
 
       val f = for {
-//        _ ← ringSettlement ? XSettleRingsReq()
-//        ba1 ← Future.sequence(
-        //          getBalanceReqs.map(
-        //            req ⇒
-        //              singleRequest(req, getBaMethod)
-        //                .mapAs[XGetBalanceAndAllowancesRes]
-        //          )
-        //        )
+        ba1 ← Future.sequence(
+                  getBalanceReqs.map(
+                    req ⇒
+                      singleRequest(req, getBaMethod)
+                        .mapAs[XGetBalanceAndAllowancesRes]
+                  )
+                )
         _ ← singleRequest(
           XSubmitOrderReq(Some(order1)),
           submit_order
@@ -107,38 +104,38 @@ class RingSettlementSpec
           "orderbook"
         ).mapAs[XOrderbook]
 
-//        subOrderRes2 ← singleRequest(
-//          XSubmitOrderReq(Some(order2)),
-//          submit_order
-//        ).mapAs[XSubmitOrderRes]
+        subOrderRes2 ← singleRequest(
+          XSubmitOrderReq(Some(order2)),
+          submit_order
+        ).mapAs[XSubmitOrderRes]
 
-//        orderbookF2 ← singleRequest(
-//          getOrderBook1,
-//          "orderbook"
-//        ).mapAs[XOrderbook]
+        orderbookF2 ← singleRequest(
+          getOrderBook1,
+          "orderbook"
+        ).mapAs[XOrderbook]
 
-//        ba2 ← Future.sequence(
-//          getBalanceReqs.map(
-//            req ⇒
-//              singleRequest(req, getBaMethod)
-//                .mapAs[XGetBalanceAndAllowancesRes]
-//          )
-//        )
+        ba2 ← Future.sequence(
+          getBalanceReqs.map(
+            req ⇒
+              singleRequest(req, getBaMethod)
+                .mapAs[XGetBalanceAndAllowancesRes]
+          )
+        )
       } yield {
-//        ba1.foreach(bas ⇒ {
-//          println("-" * 20 + bas.address + "-" * 20)
-//          bas.balanceAndAllowanceMap.foreach { ba ⇒
-//            println(
-//              ba._1 + "-" * 5 + Numeric
-//                .toHexStringWithPrefix(
-//                  Numeric.toBigInt(ba._2.balance.toByteArray)
-//                ) + "-" * 5 + Numeric
-//                .toHexStringWithPrefix(
-//                  Numeric.toBigInt(ba._2.availableBalance.toByteArray)
-//                )
-//            )
-//          }
-//        })
+        ba1.foreach(bas ⇒ {
+          println("-" * 20 + bas.address + "-" * 20)
+          bas.balanceAndAllowanceMap.foreach { ba ⇒
+            println(
+              ba._1 + "-" * 5 + Numeric
+                .toHexStringWithPrefix(
+                  Numeric.toBigInt(ba._2.balance.toByteArray)
+                ) + "-" * 5 + Numeric
+                .toHexStringWithPrefix(
+                  Numeric.toBigInt(ba._2.availableBalance.toByteArray)
+                )
+            )
+          }
+        })
         println("*" * 50)
         orderbookF1.buys.foreach(
           item ⇒
@@ -152,34 +149,34 @@ class RingSettlementSpec
               s"${item.amount}" + "-" * 5 + item.price + "-" * 5 + item.total
             )
         )
-//        println("*" * 50)
-//        orderbookF2.buys.foreach(
-//          item ⇒
-//            println(
-//              s"${item.amount}" + "-" * 5 + item.price + "-" * 5 + item.total
-//            )
-//        )
-//        orderbookF2.sells.foreach(
-//          item ⇒
-//            println(
-//              s"${item.amount}" + "-" * 5 + item.price + "-" * 5 + item.total
-//            )
-//        )
         println("*" * 50)
-//        ba2.foreach(bas ⇒ {
-//          println("-" * 20 + bas.address + "-" * 20)
-//          bas.balanceAndAllowanceMap.foreach { ba ⇒
-//            println(
-//              ba._1 + "-" * 5 + Numeric
-//                .toHexStringWithPrefix(
-//                  Numeric.toBigInt(ba._2.balance.toByteArray)
-//                ) + "-" * 5 + Numeric
-//                .toHexStringWithPrefix(
-//                  Numeric.toBigInt(ba._2.availableBalance.toByteArray)
-//                )
-//            )
-//          }
-//        })
+        orderbookF2.buys.foreach(
+          item ⇒
+            println(
+              s"${item.amount}" + "-" * 5 + item.price + "-" * 5 + item.total
+            )
+        )
+        orderbookF2.sells.foreach(
+          item ⇒
+            println(
+              s"${item.amount}" + "-" * 5 + item.price + "-" * 5 + item.total
+            )
+        )
+        println("*" * 50)
+        ba2.foreach(bas ⇒ {
+          println("-" * 20 + bas.address + "-" * 20)
+          bas.balanceAndAllowanceMap.foreach { ba ⇒
+            println(
+              ba._1 + "-" * 5 + Numeric
+                .toHexStringWithPrefix(
+                  Numeric.toBigInt(ba._2.balance.toByteArray)
+                ) + "-" * 5 + Numeric
+                .toHexStringWithPrefix(
+                  Numeric.toBigInt(ba._2.availableBalance.toByteArray)
+                )
+            )
+          }
+        })
       }
 
       Await.result(f, 2 minutes)
