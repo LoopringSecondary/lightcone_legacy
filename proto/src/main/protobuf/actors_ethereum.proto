@@ -34,38 +34,12 @@ message EthereumProxySettings {
     repeated Node nodes = 4;
 }
 
-//message CheckBlockHeightResp {
-//    int32 current_block = 1;
-//    int32 height_block = 2;
-//}
-
 message NodeBlockHeight{
     string path = 1;
     int32 height = 2;
 }
 
 
-/////////////////////////////////////////////////////////////////////
-// ETHEREUM JSON-RPC
-/////////////////////////////////////////////////////////////////////
-
-message XJsonRpcReq {
-    string json = 1;
-}
-
-message XRpcReqWithHeight{
-    XJsonRpcReq req = 1;
-    uint32 height = 2;
-}
-
-message XJsonRpcErr {
-    int32 code = 1;
-    string message = 2;
-}
-
-message XJsonRpcRes {
-    string json = 1;
-}
 
 /////////////////////////////////////////////////////////////////////
 // TWO WAY REQUEST-RESPONSES
@@ -82,11 +56,11 @@ message GetNodeBlockHeight {
 
 
 
-///////////////////////////////////////////
-//
-// ethereum original type
-//
-///////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+// ETHEREUM RAW DATA TYPES
+/////////////////////////////////////////////////////////////////////
+
+
 
 message Transaction {
     string hash = 1;
@@ -188,7 +162,7 @@ message TraceCall {
     string value = 8;
 }
 
-message TraceTransaction {
+message TransactionTracing {
     string from = 1;
     string to = 2;
     string input = 3;
@@ -215,39 +189,62 @@ message TransactionParams {
 //    repeated TransactionReceipt receipts = 3;
 //}
 
-///////////////////////////////////////////
-//
-// ethereum json rpc params
-//
-///////////////////////////////////////////
 
-//eth_blockNumber
-message EthBlockNumberReq {
+/////////////////////////////////////////////////////////////////////
+// ETHEREUM JSON-RPC
+/////////////////////////////////////////////////////////////////////
+
+
+message JsonRpc {
+    message Request {
+        string json = 1;
+    }
+
+    message RequestWithHeight{
+        Request req = 1;
+        uint32 height = 2;
+    }
+
+    message Error {
+        int32 code = 1;
+        string message = 2;
+    }
+
+    message Response {
+        string json = 1;
+    }
 }
 
-message EthResError {
+message EthError {
     int32 code = 1;
     string error = 2;
 }
 
-message EthBlockNumberRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    EthResError error = 4;
+message EthBlockNumber {
+    message Req {
+    }
+
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthError error = 4;
+    }
 }
 
-message EthCallReq {
-    int32 id = 1;
-    TransactionParams param = 2;
-    string tag = 3;
-}
+message EthCall {
+    message Req {
+        int32 id = 1;
+        TransactionParams param = 2;
+        string tag = 3;
+    }
 
-message EthCallRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    EthResError error = 4;
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthError error = 4;
+    }
 }
 
 // eth_getBalance
@@ -260,121 +257,171 @@ message EthGetBalance {
         int32 id = 1;
         string jsonrpc = 2;
         string result = 3;
-        EthResError error = 4;
+        EthError error = 4;
     }
 }
 
 // eth_getTransactionByHash
-message GetTransactionByHashReq {
-    string hash = 1;
-}
-message GetTransactionByHashRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    Transaction result = 3;
-    EthResError error = 4;
+message GetTransactionByHash {
+    message Req {
+        string hash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        Transaction result = 3;
+        EthError error = 4;
+    }
 }
 
 // eth_getTransactionReceipt
-message GetTransactionReceiptReq {
-    string hash = 1;
-}
-message GetTransactionReceiptRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    TransactionReceipt result = 3;
-    EthResError error = 4;
+message GetTransactionReceipt {
+    message Req {
+        string hash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        TransactionReceipt result = 3;
+        EthError error = 4;
+    }
 }
 
 // eth_getBlockByNumber
-message GetBlockWithTxHashByNumberReq {
-    string blockNumber = 1;
-}
-message GetBlockWithTxHashByNumberRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    BlockWithTxHash result = 3;
-    EthResError error = 4;
+message GetBlockWithTxHashByNumber {
+    message Req {
+        string blockNumber = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        BlockWithTxHash result = 3;
+        EthError error = 4;
+    }
 }
 
-message GetBlockWithTxObjectByNumberReq {
-    string blockNumber = 1;
-}
-message GetBlockWithTxObjectByNumberRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    BlockWithTxObject result = 3;
-    EthResError error = 4;
+message GetBlockWithTxObjectByNumber {
+    message Req {
+        string blockNumber = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        BlockWithTxObject result = 3;
+        EthError error = 4;
+    }
 }
 
 // eth_getBlockByHash
-message GetBlockWithTxHashByHashReq {
-    string blockHash = 1;
-}
-message GetBlockWithTxHashByHashRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    BlockWithTxHash result = 3;
-    EthResError error = 4;
+message GetBlockWithTxHashByHash {
+    message Req {
+        string blockHash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        BlockWithTxHash result = 3;
+        EthError error = 4;
+    }
 }
 
-message GetBlockWithTxObjectByHashReq {
-    string blockHash = 1;
-}
-message GetBlockWithTxObjectByHashRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    BlockWithTxObject result = 3;
-    EthResError error = 4;
+message GetBlockWithTxObjectByHash {
+    message Req {
+        string blockHash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        BlockWithTxObject result = 3;
+        EthError error = 4;
+    }
 }
 
 // debug_traceTransaction
-message TraceTransactionReq {
-    string txhash = 1;
-}
-message TraceTransactionRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    TraceTransaction result = 3;
-    EthResError error = 4;
+message TraceTransaction {
+    message Req {
+        string txhash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        TransactionTracing result = 3;
+        EthError error = 4;
+    }
 }
 
 // eth_estimateGas
-message GetEstimatedGasReq {
-    string to = 1;
-    string data = 2;
-}
-message GetEstimatedGasRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    EthResError error = 4;
-}
-
-message GetNonceReq {
-    string owner = 1;
-    string tag = 2;
-}
-message GetNonceRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    EthResError error = 4;
+message GetEstimatedGas {
+    message Req {
+        string to = 1;
+        string data = 2;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthError error = 4;
+    }
 }
 
-message GetBlockTransactionCountReq {
-    string block_hash = 1;
-}
-message GetBlockTransactionCountRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    EthResError error = 4;
+message GetNonce {
+    message Req {
+        string owner = 1;
+        string tag = 2;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthError error = 4;
+    }
 }
 
-message SendRawTransactionReq {
-    string data = 1;
+message GetBlockTransactionCount {
+    message Req {
+        string block_hash = 1;
+    }
+    message Res {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthError error = 4;
+    }
 }
+
+message BatchContractCall {
+    message Req {
+        repeated EthCall.Req reqs = 1;
+    }
+
+    message Res {
+        repeated EthCall.Res resps = 1;
+    }
+}
+
+message BatchGetTransactions {
+    message Req {
+        repeated GetTransactionByHash.Req reqs = 1;
+    }
+
+    message Res {
+        repeated GetTransactionByHash.Res resps = 1;
+    }
+}
+
+message BatchGetTransactionReceipts {
+    message Req {
+        repeated GetTransactionReceipt.Req reqs = 1;
+    }
+
+    message Res {
+        repeated GetTransactionReceipt.Res resps = 1;
+    }
+}
+
+// message SendRawTransactionReq {
+//     string data = 1;
+// }
 
 message GetUncleByBlockNumAndIndexReq{
     string blockNum = 1;
@@ -386,41 +433,8 @@ message BatchGetUncleByBlockNumAndIndexReq{
 }
 
 message BatchGetUncleByBlockNumAndIndexRes{
-   repeated GetBlockWithTxHashByHashRes resps = 1;
+   repeated GetBlockWithTxHashByHash.Res resps = 1;
 }
-
-message BatchContractCallReq {
-    repeated EthCallReq reqs = 1;
-}
-
-message BatchContractCallRes {
-    repeated EthCallRes resps = 1;
-}
-
-message BatchGetTransactionsReq {
-    repeated GetTransactionByHashReq reqs = 1;
-}
-
-message BatchGetTransactionsRes {
-    repeated GetTransactionByHashRes resps = 1;
-}
-
-message BatchGetTransactionReceiptsReq {
-    repeated GetTransactionReceiptReq reqs = 1;
-}
-
-message BatchGetTransactionReceiptsRes {
-    repeated GetTransactionReceiptRes resps = 1;
-}
-
-message SaveBlockReq {
-    BlockData block_data = 1;
-}
-
-message SaveBlockRes {
-    Error error = 1;
-}
-
 
 /// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
 /// 解析合约事件得到下面的数据：

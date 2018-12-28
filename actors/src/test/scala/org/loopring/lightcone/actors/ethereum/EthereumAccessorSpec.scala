@@ -33,11 +33,9 @@ import org.web3j.utils.Numeric
 import scala.concurrent.duration._
 import scala.concurrent._
 
-class EthereumAccessorSpec
-    extends CommonSpec("""
-                         |akka.cluster.roles=[]
-                         |""".stripMargin)
-    with EthereumSupport {
+class EthereumAccessorSpec extends CommonSpec("""
+                                                |akka.cluster.roles=[]
+                                                |""".stripMargin) with EthereumSupport {
 
   val wethAbi = WETHABI()
   val delegateAdderess = "0x17233e07c67d086464fD408148c3ABB56245FA64"
@@ -45,54 +43,54 @@ class EthereumAccessorSpec
   val ethereumAccessActor = actors.get(EthereumAccessActor.name)
 
   val fu = for {
-    blockNum ← (ethereumAccessActor ? EthBlockNumberReq())
-      .mapTo[EthBlockNumberRes]
+    blockNum ← (ethereumAccessActor ? EthBlockNumber.Req())
+      .mapTo[EthBlockNumber.Res]
       .map(_.result)
-    //    blockWithTxHash ← (ethereumAccessActor ? GetBlockWithTxHashByNumberReq(
+    //    blockWithTxHash ← (ethereumAccessActor ? GetBlockWithTxHashByNumber.Req(
     //      blockNum
-    //    )).mapTo[GetBlockWithTxHashByNumberRes]
+    //    )).mapTo[GetBlockWithTxHashByNumber.Res]
     //      .map(_.result.get)
-    //    blockWithTxObjcet ← (ethereumAccessActor ? GetBlockWithTxObjectByNumberReq(
+    //    blockWithTxObjcet ← (ethereumAccessActor ? GetBlockWithTxObjectByNumber.Req(
     //      blockNum
-    //    )).mapTo[GetBlockWithTxObjectByNumberRes]
+    //    )).mapTo[GetBlockWithTxObjectByNumber.Res]
     //      .map(_.result.get)
-    //    blockByHashWithHash ← (ethereumAccessActor ? GetBlockWithTxHashByHashReq(
+    //    blockByHashWithHash ← (ethereumAccessActor ? GetBlockWithTxHashByHash.Req(
     //      blockWithTxHash.hash
-    //    )).mapTo[GetBlockWithTxHashByHashRes]
+    //    )).mapTo[GetBlockWithTxHashByHash.Res]
     //      .map(_.result.get)
-    //    blockByHashwithObject ← (ethereumAccessActor ? GetBlockWithTxObjectByHashReq(
+    //    blockByHashwithObject ← (ethereumAccessActor ? GetBlockWithTxObjectByHash.Req(
     //      blockWithTxHash.hash
-    //    )).mapTo[GetBlockWithTxObjectByHashRes]
+    //    )).mapTo[GetBlockWithTxObjectByHash.Res]
     //      .map(_.result.get)
     //    txs ← Future.sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
-    //      (ethereumAccessActor ? GetTransactionByHashReq(hash))
-    //        .mapTo[GetTransactionByHashRes]
+    //      (ethereumAccessActor ? GetTransactionByHash.Req(hash))
+    //        .mapTo[GetTransactionByHash.Res]
     //        .map(_.result.get)
     //    })
     //    receipts ← Future
     //      .sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
-    //        (ethereumAccessActor ? GetTransactionReceiptReq(hash))
-    //          .mapTo[GetTransactionReceiptRes]
+    //        (ethereumAccessActor ? GetTransactionReceipt.Req(hash))
+    //          .mapTo[GetTransactionReceipt.Res]
     //          .map(_.result.get)
     //      })
-    //    batchReceipts ← (ethereumAccessActor ? BatchGetTransactionReceiptsReq(
-    //      blockWithTxHash.transactions.map(GetTransactionReceiptReq(_))
-    //    )).mapTo[BatchGetTransactionReceiptsRes]
+    //    batchReceipts ← (ethereumAccessActor ? BatchGetTransactionReceipts.Req(
+    //      blockWithTxHash.transactions.map(GetTransactionReceipt.Req(_))
+    //    )).mapTo[BatchGetTransactionReceipts.Res]
     //      .map(_.resps.map(_.result.get))
-    //    nonce ← (ethereumAccessActor ? GetNonceReq(
+    //    nonce ← (ethereumAccessActor ? GetNonce.Req(
     //      owner = "0xdce9e65ba38d4249c38d00d664d41e5f6d7e83b3",
     //      tag = "latest"
-    //    )).mapTo[GetNonceRes]
+    //    )).mapTo[GetNonce.Res]
     //      .map(_.result)
-    //    txCount ← (ethereumAccessActor ? GetBlockTransactionCountReq(
+    //    txCount ← (ethereumAccessActor ? GetBlockTransactionCount.Req(
     //      blockWithTxHash.hash
-    //    )).mapTo[GetBlockTransactionCountRes]
+    //    )).mapTo[GetBlockTransactionCount.Res]
     //      .map(_.result)
-    //    batchTx ← (ethereumAccessActor ? BatchGetTransactionsReq(
-    //      blockWithTxHash.transactions.map(GetTransactionByHashReq(_))
-    //    )).mapTo[BatchGetTransactionsRes]
+    //    batchTx ← (ethereumAccessActor ? BatchGetTransactions.Req(
+    //      blockWithTxHash.transactions.map(GetTransactionByHash.Req(_))
+    //    )).mapTo[BatchGetTransactions.Res]
     //      .map(_.resps.map(_.result))
-    //    lrcBalance ← (ethereumAccessActor ? EthCallReq(tag = "latest")
+    //    lrcBalance ← (ethereumAccessActor ? EthCall.Req(tag = "latest")
     //      .withParam(
     //        TransactionParams()
     //          .withData(
@@ -103,12 +101,12 @@ class EthereumAccessorSpec
     //          )
     //          .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
     //      ))
-    //      .mapTo[EthCallRes]
+    //      .mapTo[EthCall.Res]
     //      .map(resp ⇒ wethAbi.balanceOf.unpackResult(resp.result))
-    //    lrcbalances ← (ethereumAccessActor ? BatchContractCallReq(
+    //    lrcbalances ← (ethereumAccessActor ? BatchContractCall.Req(
     //      batchTx.map(
     //        tx ⇒
-    //          EthCallReq(tag = "latest")
+    //          EthCall.Req(tag = "latest")
     //            .withParam(
     //              TransactionParams()
     //                .withData(
@@ -120,10 +118,10 @@ class EthereumAccessorSpec
     //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
     //            )
     //      )
-    //    )).mapTo[BatchContractCallRes]
+    //    )).mapTo[BatchContractCall.Res]
     //      .map(_.resps.map(res ⇒ wethAbi.balanceOf.unpackResult(res.result)))
     //
-    //    allowance ← (ethereumAccessActor ? EthCallReq(tag = "latest")
+    //    allowance ← (ethereumAccessActor ? EthCall.Req(tag = "latest")
     //      .withParam(
     //        TransactionParams()
     //          .withData(
@@ -137,13 +135,13 @@ class EthereumAccessorSpec
     //          )
     //          .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
     //      ))
-    //      .mapTo[EthCallRes]
+    //      .mapTo[EthCall.Res]
     //      .map(resp ⇒ wethAbi.allowance.unpackResult(resp.result))
     //
-    //    allowances ← (ethereumAccessActor ? BatchContractCallReq(
+    //    allowances ← (ethereumAccessActor ? BatchContractCall.Req(
     //      batchTx.map(
     //        tx ⇒
-    //          EthCallReq(tag = "latest")
+    //          EthCall.Req(tag = "latest")
     //            .withParam(
     //              TransactionParams()
     //                .withData(
@@ -155,12 +153,12 @@ class EthereumAccessorSpec
     //                .withTo("0xef68e7c694f40c8202821edf525de3782458639f")
     //            )
     //      )
-    //    )).mapTo[BatchContractCallRes]
+    //    )).mapTo[BatchContractCall.Res]
     //      .map(_.resps.map(res ⇒ wethAbi.allowance.unpackResult(res.result)))
     //    uncle ← (ethereumAccessActor ? GetUncleByBlockNumAndIndexReq(
     //      blockNum = "0x69555e",
     //      index = "0x0"
-    //    )).mapTo[GetBlockWithTxHashByHashRes]
+    //    )).mapTo[GetBlockWithTxHashByHash.Res]
     //      .map(_.result.get)
     //    uncles ← (ethereumAccessActor ? BatchGetUncleByBlockNumAndIndexReq()
     //      .withReqs(
@@ -173,7 +171,7 @@ class EthereumAccessorSpec
     //      ))
     //      .mapTo[BatchGetUncleByBlockNumAndIndexRes]
     //      .map(_.resps.map(_.result.get))
-    //    gas ← (ethereumAccessActor ? GetEstimatedGasReq(
+    //    gas ← (ethereumAccessActor ? GetEstimatedGas.Req(
     //      to = "0xef68e7c694f40c8202821edf525de3782458639f"
     //    ).withData(
     //      wethAbi.transfer.pack(
@@ -182,7 +180,7 @@ class EthereumAccessorSpec
     //          amount = BigInt("10000")
     //        )
     //      )
-    //    )).mapTo[GetEstimatedGasRes]
+    //    )).mapTo[GetEstimatedGas.Res]
     //      .map(_.result)
   } yield {
     println(s"BlockNum: ${blockNum} ---${Numeric.toBigInt(blockNum)}")

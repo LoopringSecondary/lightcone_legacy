@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.Error
-import org.loopring.lightcone.proto.{Error, XJsonRpcReq, XJsonRpcRes}
+import org.loopring.lightcone.proto.{Error, JsonRpc}
 import org.json4s._
 import org.json4s.JsonAST.JValue
 import akka.actor._
@@ -94,8 +94,8 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
           post {
             entity(as[JsonRpcRequest]) { jsonReq =>
               val f =
-                (requestHandler ? XJsonRpcReq(Serialization.write(jsonReq)))
-                  .mapTo[XJsonRpcRes]
+                (requestHandler ? JsonRpc.Request(Serialization.write(jsonReq)))
+                  .mapTo[JsonRpc.Response]
 
               onComplete(f) {
                 case Success(resp) ⇒

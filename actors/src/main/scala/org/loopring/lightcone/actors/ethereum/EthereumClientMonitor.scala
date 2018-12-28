@@ -155,7 +155,7 @@ class EthereumClientMonitor(
     Future.sequence(connectionPools.map { g =>
       for {
         blockNumResp: Int <- (g ? blockNumJsonRpcReq.toProto)
-          .mapAs[XJsonRpcRes]
+          .mapAs[JsonRpc.Response]
           .map(toJsonRpcResWrapped)
           .map(_.result)
           .map(anyHexToInt)

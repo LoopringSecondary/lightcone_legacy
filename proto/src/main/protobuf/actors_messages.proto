@@ -22,6 +22,7 @@ package org.loopring.lightcone.proto;
 import "actors_core.proto";
 import "core_data.proto";
 import "core_messages.proto";
+import "ethereum.proto";
 
 /////////////////////////////////////////////////////////////////////
 // ONE WAY MESSAGES
@@ -207,3 +208,12 @@ message SetGasPrice {
     }
 }
 
+message SaveBlock {
+    message Req {
+        BlockData block_data = 1;
+    }
+
+    message Res {
+        Error error = 1;
+    }
+}

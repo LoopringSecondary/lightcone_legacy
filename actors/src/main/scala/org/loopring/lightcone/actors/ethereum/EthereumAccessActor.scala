@@ -111,7 +111,7 @@ class EthereumAccessActor(
           .filter(_._2 >= 0)
           .sortWith(_._2 > _._2)
 
-    case req: XRpcReqWithHeight =>
+    case req: JsonRpc.RequestWithHeight =>
       val validPools = connectionPools.filter(_._2 > req.height)
       if (validPools.nonEmpty) {
         context
@@ -124,7 +124,7 @@ class EthereumAccessActor(
         )
       }
 
-    case msg: XJsonRpcReq => {
+    case msg: JsonRpc.Request => {
       if (connectionPools.nonEmpty) {
         context.actorSelection(connectionPools.head._1).forward(msg)
       } else {

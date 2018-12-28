@@ -64,7 +64,7 @@ class EntryPointActor(
     case _: GetBalance.Req | _: GetAllowance.Req | _: GetFilledAmount.Req ⇒
       Some(EthereumQueryMessageValidator.name)
 
-    case _: XJsonRpcReq | _: XRpcReqWithHeight ⇒
+    case _: JsonRpc.Request | _: JsonRpc.RequestWithHeight ⇒
       Some(EthereumAccessActor.name)
 
     case _: Orderbook.Get => Some(OrderbookManagerMessageValidator.name)
