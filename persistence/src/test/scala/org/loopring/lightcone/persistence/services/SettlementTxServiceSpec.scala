@@ -25,7 +25,6 @@ import scala.concurrent.duration._
 
 class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
   def getService = new SettlementTxServiceImpl()
-  val timeProvider = new SystemTimeProvider()
 
   def createTables(): Future[Any] =
     for {

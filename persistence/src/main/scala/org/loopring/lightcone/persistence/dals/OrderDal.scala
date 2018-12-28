@@ -16,13 +16,14 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.XErrorCode._
 import slick.jdbc.MySQLProfile.api._
-import slick.jdbc.JdbcProfile
+import slick.jdbc.{GetResult, JdbcProfile}
 import slick.basic._
 import com.mysql.jdbc.exceptions.jdbc4._
 import com.typesafe.scalalogging.Logger
@@ -99,28 +100,13 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
       feeToken: Option[String] = None
     ): Future[Int]
 
-  // Get some orders between updatedSince and updatedUntil. The orders are sorted by updated_at
-  // indicatd by the sortedByUpdatedAt param.
+  // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
       statuses: Set[XOrderStatus],
-      owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
-      validTime: Option[Int] = None,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty,
+      skip: XSkipBySequenceId
     ): Future[Seq[XRawOrder]]
-
-  // Count the number of orders
-  def countOrdersForRecover(
-      statuses: Set[XOrderStatus],
-      owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
-      feeTokenSet: Set[String] = Set.empty
-    ): Future[Int]
 
   // Update order's status and update the updated_at timestamp if changeUpdatedAtField is true.
   // Returns Left(error) if this operation fails, or Right(string) the order's hash.
@@ -154,22 +140,13 @@ class OrderDalImpl(
   val query = TableQuery[OrderTable]
   def getRowHash(row: XRawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
-  implicit val XOrderStatusCxolumnType = enumColumnType(XOrderStatus)
+  implicit val XOrderStatusColumnType = enumColumnType(XOrderStatus)
+  implicit val XTokenStandardColumnType = enumColumnType(XTokenStandard)
   private[this] val logger = Logger(this.getClass)
 
   def saveOrder(order: XRawOrder): Future[XSaveOrderResult] = {
-    val now = timeProvider.getTimeMillis
-    val state = XRawOrder.State(
-      createdAt = now,
-      updatedAt = now,
-      status = XOrderStatus.STATUS_NEW
-    )
-    val o = order.copy(
-      state = Some(state),
-      marketHash = MarketHashProvider.convert2Hex(order.tokenS, order.tokenB)
-    )
     db.run(
-        (query += o).asTry
+        (query += order).asTry
       )
       .map {
         case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
@@ -189,7 +166,7 @@ class OrderDalImpl(
         case Success(x) ⇒
           XSaveOrderResult(
             error = ERR_NONE,
-            order = Some(o)
+            order = Some(order)
           )
       }
   }
@@ -343,52 +320,167 @@ class OrderDalImpl(
     db.run(filters.size.result)
   }
 
-  def countOrdersForRecover(
+  private def queryOrderForRecorverFilters(
       statuses: Set[XOrderStatus],
-      owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
-      feeTokenSet: Set[String] = Set.empty
-    ): Future[Int] = {
-    val filters = queryOrderFilters(
-      statuses,
-      owners,
-      tokenSSet,
-      tokenBSet,
-      marketHashSet,
-      feeTokenSet,
-      None,
-      None,
-      None
-    )
-    db.run(filters.size.result)
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty,
+      skip: XSkipBySequenceId
+    ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
+    if (marketHashIdSet.nonEmpty && addressShardIdSet.nonEmpty) {
+      throw ErrorException(
+        XErrorCode.ERR_INTERNAL_UNKNOWN,
+        "Invalid parameters:`marketHashIdSet` and `addressShardIdSet` could not both not empty"
+      )
+    }
+    if (marketHashIdSet.isEmpty && addressShardIdSet.isEmpty) {
+      throw ErrorException(
+        XErrorCode.ERR_INTERNAL_UNKNOWN,
+        "Invalid parameters:`marketHashIdSet` and `addressShardIdSet` could not both empty"
+      )
+    }
+    var filters = if (marketHashIdSet.nonEmpty) {
+      query.filter(_.marketHashId inSet marketHashIdSet)
+    } else {
+      query.filter(_.addressShardId inSet addressShardIdSet)
+    }
+    if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
+    filters
+      .filter(_.sequenceId > skip.from)
+      .take(skip.take)
+      .sortBy(_.sequenceId.asc)
   }
 
-  // Get some orders between updatedSince and updatedUntil. The orders are sorted by updated_at
-  // indicatd by the sortedByUpdatedAt param.
+  private def queryOrderForMarketAndAddress(
+      statuses: Set[XOrderStatus],
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty,
+      skip: XSkipBySequenceId
+    ): Future[Seq[XRawOrder]] = {
+    implicit val paramsResult = GetResult[XRawOrder.Params](
+      r =>
+        XRawOrder.Params(
+          r.nextString,
+          r.nextString,
+          r.nextString,
+          r.nextString,
+          r.nextInt,
+          r.nextString,
+          r.nextString,
+          r.nextBoolean,
+          XTokenStandard.fromValue(r.nextInt),
+          XTokenStandard.fromValue(r.nextInt),
+          XTokenStandard.fromValue(r.nextInt),
+          r.nextString
+        )
+    )
+    implicit val feeParamsResult = GetResult[XRawOrder.FeeParams](
+      r =>
+        XRawOrder.FeeParams(
+          r.nextString,
+          ByteString.copyFrom(r.nextBytes()),
+          r.nextInt,
+          r.nextInt,
+          r.nextInt,
+          r.nextString,
+          r.nextInt
+        )
+    )
+    implicit val erc1400ParamsResult = GetResult[XRawOrder.ERC1400Params](
+      r =>
+        XRawOrder.ERC1400Params(
+          r.nextString,
+          r.nextString,
+          r.nextString
+        )
+    )
+    implicit val stateResult = GetResult[XRawOrder.State](
+      r =>
+        XRawOrder.State(
+          r.nextLong,
+          r.nextLong,
+          r.nextLong,
+          r.nextLong,
+          XOrderStatus.fromValue(r.nextInt),
+          ByteString.copyFrom(r.nextBytes()),
+          ByteString.copyFrom(r.nextBytes()),
+          ByteString.copyFrom(r.nextBytes()),
+          ByteString.copyFrom(r.nextBytes()),
+          ByteString.copyFrom(r.nextBytes()),
+          ByteString.copyFrom(r.nextBytes())
+        )
+    )
+    implicit val totalResult = GetResult[XRawOrder](
+      r =>
+        XRawOrder(
+          r.nextString,
+          r.nextInt,
+          r.nextString,
+          r.nextString,
+          r.nextString,
+          ByteString.copyFrom(r.nextBytes()),
+          ByteString.copyFrom(r.nextBytes()),
+          r.nextInt,
+          Some(paramsResult(r)),
+          Some(feeParamsResult(r)),
+          Some(erc1400ParamsResult(r)),
+          Some(stateResult(r)),
+          r.nextLong,
+          r.nextString,
+          r.nextInt,
+          r.nextInt
+        )
+    )
+    val concat: (String, String) => String = (left, right) => {
+      left + ", " + right
+    }
+    val now = timeProvider.getTimeSeconds()
+    val sql =
+      sql"""
+        SELECT * FROM T_ORDERS
+        WHERE `status` in (${statuses.map(_.value).mkString(",")})
+        AND valid_since <= ${now}
+        AND valid_until > ${now}
+        AND sequence_id > ${skip.from}
+        AND (
+          market_hash_id in (${marketHashIdSet.mkString(",")})
+          OR address_shard_id IN (${addressShardIdSet.mkString(",")})
+        )
+        ORDER BY sequence_id ASC
+        LIMIT ${skip.take}
+      """.as[XRawOrder]
+    db.run(sql).map(r => r.toSeq)
+  }
+
+  // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
       statuses: Set[XOrderStatus],
-      owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
-      validTime: Option[Int] = None,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty,
+      skip: XSkipBySequenceId
     ): Future[Seq[XRawOrder]] = {
-    val filters = queryOrderFilters(
-      statuses,
-      owners,
-      tokenSSet,
-      tokenBSet,
-      marketHashSet,
-      Set.empty,
-      validTime,
-      sort,
-      skip
-    )
-    db.run(filters.result)
+    if (marketHashIdSet.isEmpty && addressShardIdSet.isEmpty) {
+      throw ErrorException(
+        XErrorCode.ERR_INTERNAL_UNKNOWN,
+        "Invalid parameters:`marketHashIdSet` and `addressShardIdSet` could not both empty"
+      )
+    } else {
+      if (marketHashIdSet.nonEmpty && addressShardIdSet.nonEmpty) {
+        queryOrderForMarketAndAddress(
+          statuses,
+          marketHashIdSet,
+          addressShardIdSet,
+          skip
+        )
+      } else {
+        val filters = queryOrderForRecorverFilters(
+          statuses,
+          marketHashIdSet,
+          addressShardIdSet,
+          skip
+        )
+        db.run(filters.result)
+      }
+    }
   }
 
   def updateOrderStatus(

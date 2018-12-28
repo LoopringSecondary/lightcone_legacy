@@ -22,8 +22,14 @@ import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 trait ShardedByAddress extends Sharded {
   val extractAddress: PartialFunction[Any, String]
 
-  def getEntityId(address: String): String =
+  def getEntityId(
+      address: String,
+      numOfShards: Int
+    ): String =
     Math.abs(address.hashCode % numOfShards).toString
+
+  def getEntityId(address: String): String =
+    getEntityId(address, numOfShards)
 
   def extractEntityId(actorName: String) = actorName.split("_").last
 

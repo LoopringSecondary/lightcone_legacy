@@ -177,8 +177,10 @@ message XRawOrder {
     FeeParams fee_params            = 11;
     ERC1400Params erc1400_params    = 12;
     State state                     = 13;
-    int64 sequence_id               = 14;
+    int64  sequence_id              = 14;
     string market_hash              = 15;
+    int32  address_shard_id         = 16;
+    int32  market_hash_id           = 17;
 }
 
 message XRingBatch {

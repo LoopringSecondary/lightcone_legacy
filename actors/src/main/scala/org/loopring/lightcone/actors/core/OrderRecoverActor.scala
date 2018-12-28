@@ -34,6 +34,7 @@ import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
+import org.loopring.lightcone.persistence.DatabaseModule
 import scala.concurrent._
 
 // main owner: 杜永丰
@@ -57,7 +58,8 @@ object OrderRecoverActor extends ShardedEvenly {
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
-      actors: Lookup[ActorRef]
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule
     ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
@@ -74,7 +76,8 @@ class OrderRecoverActor(
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef])
+    val actors: Lookup[ActorRef],
+    val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   val batchSize = selfConfig.getInt("batch-size")
@@ -120,12 +123,12 @@ class OrderRecoverActor(
             self ! XRecover.RetrieveOrders(lastOrderSeqId)
 
           case None =>
-            coordinator ! XRecover.Finished()
+            coordinator ! XRecover.Finished(false)
 
             batch.requestMap.keys.toSeq
               .map(resolveActorRef)
               .foreach { actor =>
-                actor ! XRecover.Finished()
+                actor ! XRecover.Finished(false)
               }
         }
       }
@@ -141,10 +144,38 @@ class OrderRecoverActor(
   // This method returns a list of orders to recover, based on the current batch
   // parameters, the batch size, and the last order sequence id.
   // The last order in the returned list should be the most up-to-date one.
-  // TODO(yongfeng): Implement this
   def retrieveOrders(
       batchSize: Int,
       lastOrderSeqId: Long
-    ): Future[Seq[XRawOrder]] = ???
+    ): Future[Seq[XRawOrder]] = {
+    if (batch.requestMap.nonEmpty) {
+      var addressShardIds: Set[Int] = Set.empty
+      var marketHashIds: Set[Int] = Set.empty
+      batch.requestMap.foreach {
+        case (_, request) => {
+          if ("" != request.addressShardingEntity)
+            addressShardIds += request.addressShardingEntity.toInt
+          if (request.marketId.nonEmpty) {
+            val marketHashId =
+              MarketManagerActor.getEntityId(request.marketId.get).toInt
+            marketHashIds += marketHashId
+          }
+        }
+      }
+      val status = Set(
+        XOrderStatus.STATUS_NEW,
+        XOrderStatus.STATUS_PENDING,
+        XOrderStatus.STATUS_PARTIALLY_FILLED
+      )
+      dbModule.orderService.getOrdersForRecover(
+        status,
+        marketHashIds,
+        addressShardIds,
+        XSkipBySequenceId(lastOrderSeqId, batchSize)
+      )
+    } else {
+      Future.successful(Seq.empty)
+    }
+  }
 
 }

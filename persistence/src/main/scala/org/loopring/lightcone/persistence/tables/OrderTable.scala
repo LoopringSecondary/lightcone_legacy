@@ -76,6 +76,10 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
   def actualAmountB = columnAmount("actual_amount_b")
   def actualAmountFee = columnAmount("actual_amount_fee")
 
+  // Shard
+  def addressShardId = column[Int]("address_shard_id")
+  def marketHashId = column[Int]("market_hash_id")
+
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
   def marketHash = columnAddress("market_hash")
 
@@ -91,6 +95,12 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
   def idx_owner = index("idx_owner", (owner), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
   def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
+
+  def idx_address_shard_id =
+    index("idx_address_shard_id", (addressShardId), unique = false)
+
+  def idx_market_hash_id =
+    index("idx_market_hash_id", (marketHashId), unique = false)
 
   def paramsProjection =
     (
@@ -172,6 +182,8 @@ class OrderTable(tag: Tag) extends BaseTable[XRawOrder](tag, "T_ORDERS") {
       erc1400ParamsProjection,
       stateProjection,
       sequenceId,
-      marketHash
+      marketHash,
+      addressShardId,
+      marketHashId
     ) <> ((XRawOrder.apply _).tupled, XRawOrder.unapply)
 }

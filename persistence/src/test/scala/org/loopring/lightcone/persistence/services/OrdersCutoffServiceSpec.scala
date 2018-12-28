@@ -33,7 +33,6 @@ class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
     for {
       r ← new OrdersCutoffDalImpl().createTable()
     } yield r
-  val timeProvider = new SystemTimeProvider()
 
   private def testCutoffByBrokers(
       brokers: Seq[String],
