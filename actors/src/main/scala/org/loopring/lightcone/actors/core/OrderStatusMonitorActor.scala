@@ -59,7 +59,8 @@ class OrderStatusMonitorActor(
         XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EFFECTIVE
       )
       orders <- dbModule.orderService.getEffectiveOrdersForMonitor(
-        lastProcessTime
+        lastProcessTime,
+        processTime
       )
       _ <- Future.sequence(orders.map { o =>
         actors.get(MultiAccountManagerActor.name) ? XSubmitSimpleOrderReq(
@@ -82,7 +83,8 @@ class OrderStatusMonitorActor(
       (processTime, lastProcessTime) <- getProcessTime(
         XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE
       )
-      orders <- dbModule.orderService.getExpiredOrdersForMonitor(processTime)
+      orders <- dbModule.orderService
+        .getExpiredOrdersForMonitor(lastProcessTime, processTime)
       _ <- Future.sequence(orders.map { o =>
         val cancelReq = XCancelOrderReq(
           o.hash,
@@ -104,7 +106,7 @@ class OrderStatusMonitorActor(
 
   private def getProcessTime(
       monitorType: XOrderStatusMonitor.XMonitorType
-    ): Future[(Long, Long)] = {
+    ): Future[(Int, Int)] = {
     val processTime = timeProvider.getTimeSeconds()
     for {
       lastEventOpt <- dbModule.orderStatusMonitorService.getLastEvent(
@@ -112,6 +114,6 @@ class OrderStatusMonitorActor(
       )
       lastProcessTime = if (lastEventOpt.isEmpty) 0
       else lastEventOpt.get.processTime
-    } yield (processTime, lastProcessTime)
+    } yield (processTime.toInt, lastProcessTime.toInt)
   }
 }

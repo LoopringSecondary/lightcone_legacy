@@ -34,10 +34,12 @@ class OrderStatusMonitorServiceImpl @Inject()(
   val orderStatusMonitorDal: OrderStatusMonitorDal =
     new OrderStatusMonitorDalImpl()
 
-  def saveEvent(event: XOrderStatusMonitor): Future[Unit] = ???
+  def saveEvent(event: XOrderStatusMonitor): Future[Int] =
+    orderStatusMonitorDal.saveEvent(event)
 
   def getLastEvent(
       monitorType: XOrderStatusMonitor.XMonitorType
-    ): Future[Option[XOrderStatusMonitor]] = ???
+    ): Future[Option[XOrderStatusMonitor]] =
+    orderStatusMonitorDal.getLastEvent(monitorType)
 
 }

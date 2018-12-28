@@ -16,23 +16,25 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.persistence.base.BaseDalImpl
+import org.loopring.lightcone.persistence.base.{enumColumnType, BaseDalImpl}
 import org.loopring.lightcone.persistence.tables.OrderStatusMonitorTable
-import org.loopring.lightcone.proto.XOrderStatusMonitor
+import org.loopring.lightcone.proto.{XOrderStatusMonitor, XSettlementTx}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-import slick.lifted.TableQuery
+import slick.jdbc.MySQLProfile.api._
+import slick.basic._
+import com.mysql.jdbc.exceptions.jdbc4._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 trait OrderStatusMonitorDal
     extends BaseDalImpl[OrderStatusMonitorTable, XOrderStatusMonitor] {
 
-  def saveEvent(event: XOrderStatusMonitor): Future[Unit]
+  def saveEvent(event: XOrderStatusMonitor): Future[Int]
 
   def getLastEvent(
       monitorType: XOrderStatusMonitor.XMonitorType
-    ): Future[XOrderStatusMonitor]
+    ): Future[Option[XOrderStatusMonitor]]
 
 }
 
@@ -43,11 +45,19 @@ class OrderStatusMonitorDalImpl(
     val ec: ExecutionContext)
     extends OrderStatusMonitorDal {
   val query = TableQuery[OrderStatusMonitorTable]
+  implicit val XMonitorTypeCxolumnType = enumColumnType(
+    XOrderStatusMonitor.XMonitorType
+  )
 
-  def saveEvent(event: XOrderStatusMonitor): Future[Unit] = ???
+  def saveEvent(event: XOrderStatusMonitor): Future[Int] = {
+    db.run(
+      query += event
+    )
+  }
 
   def getLastEvent(
       monitorType: XOrderStatusMonitor.XMonitorType
-    ): Future[XOrderStatusMonitor] = ???
+    ): Future[Option[XOrderStatusMonitor]] =
+    db.run(query.filter(_.monitorType === monitorType).result.headOption)
 
 }

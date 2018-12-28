@@ -112,6 +112,20 @@ trait OrderDal extends BaseDalImpl[OrderTable, XRawOrder] {
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]]
 
+  //
+  def getEffectiveOrdersForMonitor(
+      lastProcessTime: Int,
+      processTime: Int,
+      skip: Option[XSkip] = None
+    ): Future[Seq[XRawOrder]]
+
+  //
+  def getExpiredOrdersForMonitor(
+      lastProcessTime: Int,
+      processTime: Int,
+      skip: Option[XSkip] = None
+    ): Future[Seq[XRawOrder]]
+
   // Count the number of orders
   def countOrdersForRecover(
       statuses: Set[XOrderStatus],
@@ -318,6 +332,42 @@ class OrderDalImpl(
       sort,
       skip
     )
+    db.run(filters.result)
+  }
+
+  //
+  def getEffectiveOrdersForMonitor(
+      lastProcessTime: Int,
+      processTime: Int,
+      skip: Option[XSkip] = None
+    ): Future[Seq[XRawOrder]] = {
+    var filters = query
+      .filter(_.sequenceId > 0L)
+      .filter(_.validSince > lastProcessTime)
+      .filter(_.validSince < processTime)
+//        .filter(r => r.validSince > r.createdAt ) //todo:
+    filters = skip match {
+      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+      case None ⇒ filters
+    }
+    db.run(filters.result)
+  }
+
+  //
+  def getExpiredOrdersForMonitor(
+      lastProcessTime: Int,
+      processTime: Int,
+      skip: Option[XSkip] = None
+    ): Future[Seq[XRawOrder]] = {
+    var filters = query
+      .filter(_.sequenceId > 0L)
+      .filter(_.validUntil > lastProcessTime)
+      .filter(_.validUntil < processTime) //todo:需要确认下
+    //        .filter(r => r.validSince > r.createdAt )
+    filters = skip match {
+      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+      case None ⇒ filters
+    }
     db.run(filters.result)
   }
 

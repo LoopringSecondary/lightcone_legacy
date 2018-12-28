@@ -70,13 +70,15 @@ trait OrderService {
 
   //
   def getEffectiveOrdersForMonitor(
-      lastProcessTime: Long,
+      lastProcessTime: Int,
+      processTime: Int,
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]]
 
   //
   def getExpiredOrdersForMonitor(
-      lastProcessTime: Long,
+      lastProcessTime: Int,
+      processTime: Int,
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]]
 
