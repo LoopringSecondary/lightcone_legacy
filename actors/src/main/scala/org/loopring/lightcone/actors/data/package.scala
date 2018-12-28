@@ -91,7 +91,7 @@ package object data {
     )
 
   implicit def orderState2MatchableState(
-      xOrderState: XOrderState
+      xOrderState: OrderState
     ): MatchableState =
     MatchableState(
       amountS = xOrderState.amountS,
@@ -101,8 +101,8 @@ package object data {
 
   implicit def matchableState2OrderState(
       orderState: MatchableState
-    ): XOrderState =
-    XOrderState(
+    ): OrderState =
+    OrderState(
       amountS = orderState.amountS,
       amountB = orderState.amountB,
       amountFee = orderState.amountFee
