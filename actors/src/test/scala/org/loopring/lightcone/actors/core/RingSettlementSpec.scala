@@ -86,12 +86,12 @@ class RingSettlementSpec
 
       val f = for {
         ba1 ← Future.sequence(
-                  getBalanceReqs.map(
-                    req ⇒
-                      singleRequest(req, getBaMethod)
-                        .mapAs[XGetBalanceAndAllowancesRes]
-                  )
-                )
+          getBalanceReqs.map(
+            req ⇒
+              singleRequest(req, getBaMethod)
+                .mapAs[XGetBalanceAndAllowancesRes]
+          )
+        )
         _ ← singleRequest(
           XSubmitOrderReq(Some(order1)),
           submit_order
