@@ -19,6 +19,12 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
+
+/////////////////////////////////////////////////////////////////////
+// CONTAINS DATA USED BY THE CORE SUB-PROJECT, ONLY!!!
+/////////////////////////////////////////////////////////////////////
+
+
 enum OrderStatus {
     STATUS_NEW = 0;
     STATUS_PENDING = 1;

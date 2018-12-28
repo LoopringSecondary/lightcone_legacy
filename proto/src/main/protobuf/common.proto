@@ -19,7 +19,10 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
-import "core.proto";
+
+/////////////////////////////////////////////////////////////////////
+// CONTAINS VERY GENERIC DATA TYPE, ONLY!!!
+/////////////////////////////////////////////////////////////////////
 
 enum SortingType {
     ASC  = 0;

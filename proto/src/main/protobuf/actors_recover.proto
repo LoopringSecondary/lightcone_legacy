@@ -23,6 +23,11 @@ import "actors_core.proto";
 import "core.proto";
 
 
+/////////////////////////////////////////////////////////////////////
+// CONTAINS MESSAGES RELATED TO ACTOR RECOVER ONLY!!!
+/////////////////////////////////////////////////////////////////////
+
+
 message Recover {
     message Request {
         string address_sharding_entity = 1;
