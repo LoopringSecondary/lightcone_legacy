@@ -52,7 +52,7 @@ message ExpectedFill {
     bytes amount_margin = 3;
 }
 
-message XOrderRing {
+message OrderRing {
     ExpectedFill maker = 1;
     ExpectedFill taker = 2;
 }
@@ -191,7 +191,7 @@ enum XExecutedStatus {
 }
 
 message XRingExecutedRes {
-    XOrderRing ring = 1;
+    OrderRing ring = 1;
     string tx_hash = 2;
     XExecutedStatus status = 3;
     bytes used_gas = 4;
@@ -209,7 +209,7 @@ message XSendRawTransactionRes {
 }
 
 message XSettleRingsReq {
-    repeated XOrderRing rings = 1;
+    repeated OrderRing rings = 1;
     bytes gas_limit = 2;
     bytes gas_price = 3;
 }

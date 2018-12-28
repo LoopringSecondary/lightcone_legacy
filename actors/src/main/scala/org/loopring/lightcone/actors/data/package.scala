@@ -25,6 +25,7 @@ import org.loopring.lightcone.proto.{
   Order => XOrder,
   OrderState => XOrderState,
   ExpectedFill => XExpectedFill,
+  OrderRing => XOrderRing,
   _
 }
 
