@@ -105,25 +105,20 @@ class EthereumClientMonitor(
   override def preStart(): Unit = {
     val poolSize = selfConfig.getInt("pool-size")
     val nodesConfig = selfConfig.getConfigList("nodes").asScala.map { c =>
-      XEthereumProxySettings.XNode(
-        host = c.getString("host"),
-        port = c.getInt("port")
-      )
+      XEthereumProxySettings
+        .XNode(host = c.getString("host"), port = c.getInt("port"))
     }
     connectionPools = nodesConfig.zipWithIndex.map {
       case (node, index) =>
         val nodeName = s"ethereum_connector_http_$index"
         val props =
           Props(new HttpConnector(node))
-        context.actorOf(
-          RoundRobinPool(poolSize).props(props),
-          nodeName
-        )
+        context.actorOf(RoundRobinPool(poolSize).props(props), nodeName)
     }
 
     checkNodeHeight onComplete {
       case Success(_) ⇒
-        self ! XInitializationDone()
+        self ! InitializationDone()
         super.preStart()
       case Failure(e) ⇒
         log.error(s"Failed to start EthereumClientMonitor:${e.getMessage} ")
@@ -134,7 +129,7 @@ class EthereumClientMonitor(
   override def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
-    case _: XInitializationDone ⇒
+    case _: InitializationDone ⇒
       unstashAll()
       context.become(normalReceive)
     case _ ⇒
@@ -144,9 +139,8 @@ class EthereumClientMonitor(
   def normalReceive: Receive = super.receive orElse {
     case _: XNodeHeightReq ⇒
       sender ! XNodeHeightRes(
-        nodes.toSeq.map(
-          node ⇒ XNodeBlockHeight(path = node._1, height = node._2)
-        )
+        nodes.toSeq
+          .map(node ⇒ XNodeBlockHeight(path = node._1, height = node._2))
       )
   }
 
@@ -167,9 +161,8 @@ class EthereumClientMonitor(
           .map(anyHexToInt)
           .recover {
             case e: Exception =>
-              log.error(
-                s"exception on getting blockNumber: $g: ${e.getMessage}"
-              )
+              log
+                .error(s"exception on getting blockNumber: $g: ${e.getMessage}")
               -1
           }
       } yield {

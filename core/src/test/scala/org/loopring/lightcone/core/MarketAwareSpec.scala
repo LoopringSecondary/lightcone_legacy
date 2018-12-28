@@ -32,7 +32,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
     def getTimeMillis = -1
   }
 
-  var marketId = XMarketId(primary = WETH, secondary = GTO)
+  var marketId = MarketId(primary = WETH, secondary = GTO)
 
   var fackRingMatcher: RingMatcher = _
   var fakeDustOrderEvaluator: DustOrderEvaluator = _

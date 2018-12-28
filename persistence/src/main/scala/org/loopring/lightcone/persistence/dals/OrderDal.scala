@@ -75,7 +75,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       tokenBSet: Set[String] = Set.empty,
       marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
-      sort: Option[XSort] = None,
+      sort: Option[SortingType] = None,
       skip: Option[XSkip] = None
     ): Future[Seq[RawOrder]]
 
@@ -86,7 +86,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       tokenB: Option[String] = None,
       marketHash: Option[String] = None,
       feeToken: Option[String] = None,
-      sort: Option[XSort] = None,
+      sort: Option[SortingType] = None,
       skip: Option[XSkip] = None
     ): Future[Seq[RawOrder]]
 
@@ -183,7 +183,7 @@ class OrderDalImpl(
       marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       validTime: Option[Int] = None,
-      sort: Option[XSort] = None,
+      sort: Option[SortingType] = None,
       skip: Option[XSkip] = None
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
@@ -200,8 +200,8 @@ class OrderDalImpl(
         .filter(_.validSince >= validTime.get)
         .filter(_.validUntil <= validTime.get)
     if (sort.nonEmpty) filters = sort.get match {
-      case XSort.ASC ⇒ filters.sortBy(_.sequenceId.asc)
-      case XSort.DESC ⇒ filters.sortBy(_.sequenceId.desc)
+      case SortingType.ASC ⇒ filters.sortBy(_.sequenceId.asc)
+      case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
       case _ ⇒ filters.sortBy(_.sequenceId.asc)
     }
     filters = skip match {
@@ -218,7 +218,7 @@ class OrderDalImpl(
       tokenBSet: Set[String] = Set.empty,
       marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
-      sort: Option[XSort] = None,
+      sort: Option[SortingType] = None,
       skip: Option[XSkip] = None
     ): Future[Seq[RawOrder]] = {
     val filters = queryOrderFilters(
@@ -242,7 +242,7 @@ class OrderDalImpl(
       tokenB: Option[String] = None,
       marketHash: Option[String] = None,
       feeToken: Option[String] = None,
-      sort: Option[XSort] = None,
+      sort: Option[SortingType] = None,
       skip: Option[XSkip] = None
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
@@ -254,8 +254,8 @@ class OrderDalImpl(
       filters = filters.filter(_.marketHash === marketHash)
     if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
     if (sort.nonEmpty) filters = sort.get match {
-      case XSort.ASC ⇒ filters.sortBy(_.sequenceId.asc)
-      case XSort.DESC ⇒ filters.sortBy(_.sequenceId.desc)
+      case SortingType.ASC ⇒ filters.sortBy(_.sequenceId.asc)
+      case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
       case _ ⇒ filters.sortBy(_.sequenceId.asc)
     }
     filters = skip match {
@@ -272,7 +272,7 @@ class OrderDalImpl(
       tokenB: Option[String] = None,
       marketHash: Option[String] = None,
       feeToken: Option[String] = None,
-      sort: Option[XSort] = None,
+      sort: Option[SortingType] = None,
       skip: Option[XSkip] = None
     ): Future[Seq[RawOrder]] = {
     val filters = queryOrderForUserFilters(

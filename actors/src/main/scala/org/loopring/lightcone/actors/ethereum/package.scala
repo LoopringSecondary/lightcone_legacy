@@ -118,7 +118,7 @@ package object ethereum {
         ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
       }
     val balanceAndAllowance = (balances zip allowances).map { ba =>
-      XBalanceAndAllowance(ba._1, ba._2)
+      BalanceAndAllowance(ba._1, ba._2)
     }
     GetBalanceAndAllowancesRes(address, (tokens zip balanceAndAllowance).toMap)
   }

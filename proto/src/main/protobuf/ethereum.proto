@@ -19,7 +19,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
-message XBlockData {
+message BlockData {
     string hash                 = 1;
     int64  height               = 2;
     int64  timestamp            = 3;
@@ -39,7 +39,7 @@ message XBlockData {
     bytes  extra_data           = 17;
 }
 
-message XTokenTransferData {
+message TokenTransferData {
     string id                   = 1;
     int64  height               = 2;
     string tx_hash              = 3;
@@ -79,7 +79,7 @@ message XTransactionData {
     bytes  input_data           = 15;
 }
 
-message XAddressData {
+message AddressData {
     string address              = 1;
     bytes  balance              = 2;
     int64  num_tx               = 3;
@@ -101,7 +101,7 @@ message XTradeData {
     // bytes amount_fee            = 9;
 }
 
-message XTokenBalance {
+message TokenBalance {
     string address              = 1;
     string token                = 2;
     bytes  balance              = 3;

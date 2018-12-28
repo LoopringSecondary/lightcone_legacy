@@ -25,11 +25,11 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait BlockDal extends BaseDalImpl[BlockTable, XBlockData] {
+trait BlockDal extends BaseDalImpl[BlockTable, BlockData] {
 
-  def saveBlock(block: XBlockData): Future[ErrorCode]
-  def findByHash(hash: String): Future[Option[XBlockData]]
-  def findByHeight(height: Long): Future[Option[XBlockData]]
+  def saveBlock(block: BlockData): Future[ErrorCode]
+  def findByHash(hash: String): Future[Option[BlockData]]
+  def findByHeight(height: Long): Future[Option[BlockData]]
   def findMaxHeight(): Future[Option[Long]]
 
   def findBlocksInHeightRange(
@@ -46,9 +46,9 @@ class BlockDalImpl(
     val ec: ExecutionContext)
     extends BlockDal {
   val query = TableQuery[BlockTable]
-  def getRowHash(row: XBlockData) = row.hash
+  def getRowHash(row: BlockData) = row.hash
 
-  def saveBlock(block: XBlockData): Future[ErrorCode] =
+  def saveBlock(block: BlockData): Future[ErrorCode] =
     for {
       result <- db.run(query.insertOrUpdate(block))
     } yield {
@@ -59,7 +59,7 @@ class BlockDalImpl(
       }
     }
 
-  def findByHash(hash: String): Future[Option[XBlockData]] = {
+  def findByHash(hash: String): Future[Option[BlockData]] = {
     db.run(
       query
         .filter(_.hash === hash)
@@ -68,7 +68,7 @@ class BlockDalImpl(
     )
   }
 
-  def findByHeight(height: Long): Future[Option[XBlockData]] = {
+  def findByHeight(height: Long): Future[Option[BlockData]] = {
     db.run(
       query
         .filter(_.height === height)

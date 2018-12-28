@@ -50,7 +50,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
         "",
         Map(
-          "" -> XBalanceAndAllowance(
+          "" -> BalanceAndAllowance(
             "30".zeros(LRC_TOKEN.decimals),
             "30".zeros(LRC_TOKEN.decimals)
           )
@@ -67,7 +67,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       }
 
       val f1 = Future.sequence(rawOrders.map { o =>
-        singleRequest(XSubmitOrderReq(Some(o)), "submit_order").recover {
+        singleRequest(SubmitOrderReq(Some(o)), "submit_order").recover {
           case e: Throwable =>
             info(
               s"submit the second order shouldn't be success. it will occurs err: ${e} when submit order:${o}"
@@ -106,7 +106,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       val getOrderBook = GetOrderbook(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val orderbookF = singleRequest(getOrderBook, "orderbook")
 
@@ -125,11 +125,11 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       }
 
       info("then cancel the first one, the depth should be changed to empy.")
-      val cancelReq = XCancelOrderReq(
+      val cancelReq = CancelOrderReq(
         rawOrders(0).hash,
         rawOrders(0).owner,
         OrderStatus.STATUS_CANCELLED_BY_USER,
-        Some(XMarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
+        Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
       )
 
       val cancelF = singleRequest(cancelReq, "cancel_order")

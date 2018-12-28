@@ -80,7 +80,7 @@ trait OrderGenerateSupport {
         Some(RawOrder.Params(validUntil = (createAt / 1000).toInt + 20000)),
       marketHash = marketHash,
       marketHashId = MarketManagerActor
-        .getEntityId(XMarketId(primary = tokenS, secondary = tokenB))
+        .getEntityId(MarketId(primary = tokenS, secondary = tokenB))
         .toInt,
       addressShardId = MultiAccountManagerActor
         .getEntityId(owner, 100)

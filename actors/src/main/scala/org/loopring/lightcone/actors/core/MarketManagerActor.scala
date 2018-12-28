@@ -64,7 +64,7 @@ object MarketManagerActor extends ShardedByMarket {
       .map { item =>
         val c = item.toConfig
         val marketId =
-          XMarketId(
+          MarketId(
             LAddress(c.getString("priamry")).toString,
             LAddress(c.getString("secondary")).toString
           )
@@ -81,17 +81,17 @@ object MarketManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketId: PartialFunction[Any, XMarketId] = {
-    case XSubmitSimpleOrderReq(_, Some(xorder)) =>
-      XMarketId(xorder.tokenS, xorder.tokenB)
-    case XCancelOrderReq(_, _, _, Some(marketId)) =>
+  val extractMarketId: PartialFunction[Any, MarketId] = {
+    case SubmitSimpleOrderReq(_, Some(xorder)) =>
+      MarketId(xorder.tokenS, xorder.tokenB)
+    case CancelOrderReq(_, _, _, Some(marketId)) =>
       marketId
   }
 
 }
 
 class MarketManagerActor(
-    markets: Map[String, XMarketId]
+    markets: Map[String, MarketId]
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -169,7 +169,7 @@ class MarketManagerActor(
 
   def recover: Receive = {
 
-    case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
+    case SubmitSimpleOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder)
 
     case msg @ XRecover.Finished(timeout) =>
@@ -188,17 +188,17 @@ class MarketManagerActor(
 
   def receive: Receive = {
 
-    case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
+    case SubmitSimpleOrderReq(_, Some(xorder)) ⇒
       submitOrder(xorder).sendTo(sender)
 
-    case XCancelOrderReq(orderId, _, _, _) ⇒
+    case CancelOrderReq(orderId, _, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
         orderbookManagerMediator ! Publish(
           OrderbookManagerActor.getTopicId(marketId),
           orderbookUpdate.copy(marketId = Some(marketId))
         )
       }
-      sender ! XCancelOrderRes(id = orderId)
+      sender ! CancelOrderRes(id = orderId)
 
     case XGasPriceUpdated(_gasPrice) =>
       val gasPrice: BigInt = _gasPrice
@@ -222,7 +222,7 @@ class MarketManagerActor(
   private def submitOrder(xorder: XOrder): Future[Unit] = {
     assert(
       xorder.actual.nonEmpty,
-      "order in XSubmitSimpleOrderReq miss `actual` field"
+      "order in SubmitSimpleOrderReq miss `actual` field"
     )
     val matchable: Matchable = xorder
     xorder.status match {
@@ -242,7 +242,7 @@ class MarketManagerActor(
         } yield Unit
 
       case s =>
-        log.error(s"unexpected order status in XSubmitSimpleOrderReq: $s")
+        log.error(s"unexpected order status in SubmitSimpleOrderReq: $s")
         Future.successful(Unit)
     }
   }

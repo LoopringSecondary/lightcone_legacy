@@ -32,10 +32,10 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
   val supportedMarkets = SupportedMarkets(config)
 
   def validate = {
-    case req: XCancelOrderReq ⇒
+    case req: CancelOrderReq ⇒
       req.copy(owner = Address.normalizeAddress(req.owner))
 
-    case req: XSubmitSimpleOrderReq ⇒
+    case req: SubmitSimpleOrderReq ⇒
       req.order match {
         case None =>
           throw ErrorException(
@@ -44,7 +44,7 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
           )
         case Some(order) =>
           supportedMarkets.assertmarketIdIsValid(
-            XMarketId(order.tokenS, order.tokenB)
+            MarketId(order.tokenS, order.tokenB)
           )
           req.copy(
             order = Some(
@@ -64,13 +64,13 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
         tokens = req.tokens.map(Address.normalizeAddress)
       )
 
-    case req: XAddressBalanceUpdated ⇒
+    case req: AddressBalanceUpdated ⇒
       req.copy(
         address = Address.normalizeAddress(req.address),
         token = Address.normalizeAddress(req.token)
       )
 
-    case req: XAddressAllowanceUpdated ⇒
+    case req: AddressAllowanceUpdated ⇒
       req.copy(
         address = Address.normalizeAddress(req.address),
         token = Address.normalizeAddress(req.token)

@@ -94,7 +94,7 @@ class DatabaseQuerySpec
         market = GetTradesReq.Market
           .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB)),
         skip = Some(XSkip(0, 10)),
-        sort = XSort.ASC
+        sort = SortingType.ASC
       )
       val hashes = Set(
         "0x-gettrades-actor-01",

@@ -67,7 +67,7 @@ class EntryPointSpec_SubmitSeveralOrder
           })
 
       val f1 = Future.sequence(rawOrders.map { o =>
-        singleRequest(XSubmitOrderReq(Some(o)), "submit_order")
+        singleRequest(SubmitOrderReq(Some(o)), "submit_order")
       })
 
       val res = Await.result(f1, 3 second)
@@ -94,7 +94,7 @@ class EntryPointSpec_SubmitSeveralOrder
       val getOrderBook = GetOrderbook(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val orderbookF = singleRequest(getOrderBook, "orderbook")
 
@@ -123,11 +123,11 @@ class EntryPointSpec_SubmitSeveralOrder
       }
 
       info("then cancel one of it, the depth should be changed.")
-      val cancelReq = XCancelOrderReq(
+      val cancelReq = CancelOrderReq(
         rawOrders(0).hash,
         rawOrders(0).owner,
         OrderStatus.STATUS_CANCELLED_BY_USER,
-        Some(XMarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
+        Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
       )
 
       val cancelF = singleRequest(cancelReq, "cancel_order")

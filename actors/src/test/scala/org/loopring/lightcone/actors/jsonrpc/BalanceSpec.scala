@@ -77,10 +77,10 @@ class BalanceSpec
       )
       val r = for {
         firstQuery <- singleRequest(getBalanceReq, method)
-        _ ← (actors.get(MultiAccountManagerMessageValidator.name) ? XSubmitSimpleOrderReq(
+        _ ← (actors.get(MultiAccountManagerMessageValidator.name) ? SubmitSimpleOrderReq(
           owner = owner,
           order = Some(maker)
-        )).mapTo[XSubmitOrderRes]
+        )).mapTo[SubmitOrderRes]
         secondQuery <- singleRequest(getBalanceReq, method)
       } yield (firstQuery, secondQuery)
       val res = Await.result(r, timeout.duration)

@@ -136,12 +136,12 @@ case class Matchable(
     ) =
     calcDisplayableAmount(tokenFee, actual.amountFee)
 
-  private[core] def isSell()(implicit marketId: XMarketId) =
+  private[core] def isSell()(implicit marketId: MarketId) =
     (tokenS == marketId.secondary)
 
   private[core] def displayablePrice(
     )(
-      implicit marketId: XMarketId,
+      implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
     displayableAmount / displayableTotal
@@ -149,7 +149,7 @@ case class Matchable(
 
   private[core] def displayableAmount(
     )(
-      implicit marketId: XMarketId,
+      implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
     if (tokenS == marketId.secondary) displayableAmountS
@@ -158,7 +158,7 @@ case class Matchable(
 
   private[core] def displayableTotal(
     )(
-      implicit marketId: XMarketId,
+      implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
     if (tokenS == marketId.secondary) displayableAmountB

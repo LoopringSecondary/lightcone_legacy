@@ -21,7 +21,7 @@ package org.loopring.lightcone.proto;
 
 import "core_data.proto";
 
-enum XSort {
+enum SortingType {
     ASC  = 0;
     DESC = 1;
 }
@@ -36,7 +36,7 @@ message XSkipBySequenceId {
     int32 take = 2;
 }
 
-message XTokenMeta {
+message TokenMeta {
     string address = 1;
     int32 decimals = 2;
     double burnRate = 3;

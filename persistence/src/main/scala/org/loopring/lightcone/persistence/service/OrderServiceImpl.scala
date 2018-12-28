@@ -110,7 +110,7 @@ class OrderServiceImpl @Inject()(
       tokenBSet: Set[String],
       marketHashSet: Set[String],
       feeTokenSet: Set[String],
-      sort: Option[XSort],
+      sort: Option[SortingType],
       skip: Option[XSkip]
     ): Future[Seq[RawOrder]] =
     orderDal
@@ -133,7 +133,7 @@ class OrderServiceImpl @Inject()(
       tokenB: Option[String] = None,
       marketHashSet: Option[String] = None,
       feeTokenSet: Option[String] = None,
-      sort: Option[XSort] = None,
+      sort: Option[SortingType] = None,
       skip: Option[XSkip] = None
     ): Future[Seq[RawOrder]] =
     orderDal

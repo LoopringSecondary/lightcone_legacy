@@ -47,12 +47,12 @@ class OrderHandlerMessageValidator(
 
   override def validate: PartialFunction[Any, Any] = {
 
-    case _ @XSubmitOrderReq(Some(order)) ⇒
+    case _ @SubmitOrderReq(Some(order)) ⇒
       RawOrderValidatorImpl.validate(order) match {
         case Left(errorCode) ⇒
           throw ErrorException(
             errorCode,
-            message = s"invalid order in XSubmitOrderReq:$order"
+            message = s"invalid order in SubmitOrderReq:$order"
           )
         case Right(rawOrder) ⇒
           val multiAccountConfig =
@@ -67,7 +67,7 @@ class OrderHandlerMessageValidator(
           val marketHash =
             MarketHashProvider.convert2Hex(rawOrder.tokenS, rawOrder.tokenB)
           val marketId =
-            XMarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
+            MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
           rawOrder.copy(
             state = Some(state),
             marketHash = marketHash,
@@ -78,7 +78,7 @@ class OrderHandlerMessageValidator(
           )
       }
 
-    case req @ XCancelOrderReq(_, owner, _, marketId) ⇒
+    case req @ CancelOrderReq(_, owner, _, marketId) ⇒
       supportedMarkets.assertmarketIdIsValid(marketId)
       req.copy(owner = normalizeAddress(owner))
   }

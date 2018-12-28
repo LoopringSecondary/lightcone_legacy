@@ -23,9 +23,9 @@ trait RpcBinding extends JsonRpcModule {
 
   ifReceive[GetOrderbook].thenReply[XOrderbook]("orderbook")
 
-  ifReceive[XSubmitOrderReq].thenReply[XSubmitOrderRes]("submit_order")
+  ifReceive[SubmitOrderReq].thenReply[SubmitOrderRes]("submit_order")
 
-  ifReceive[XCancelOrderReq].thenReply[XCancelOrderRes]("cancel_order")
+  ifReceive[CancelOrderReq].thenReply[CancelOrderRes]("cancel_order")
 
   // db query
   ifReceive[GetOrdersForUserReq]

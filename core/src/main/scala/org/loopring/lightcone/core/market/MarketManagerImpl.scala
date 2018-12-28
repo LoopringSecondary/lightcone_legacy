@@ -42,7 +42,7 @@ object MarketManagerImpl {
 }
 
 class MarketManagerImpl(
-    val marketId: XMarketId,
+    val marketId: MarketId,
     val tokenManager: TokenManager,
     val ringMatcher: RingMatcher,
     val pendingRingPool: PendingRingPool,

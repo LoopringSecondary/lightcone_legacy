@@ -91,7 +91,7 @@ message GetOrdersForUserReq {
     }
     string   owner                 = 3;
     repeated OrderStatus statuses = 4;
-    XSort    sort                  = 5;
+    SortingType    sort                  = 5;
     XSkip    skip                  = 6;
 }
 
@@ -119,7 +119,7 @@ message GetTradesReq {
         string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
     }
     string owner   = 3;
-    XSort sort     = 4;
+    SortingType sort     = 4;
     XSkip skip     = 5;
 }
 

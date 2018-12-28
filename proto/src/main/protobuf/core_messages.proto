@@ -22,13 +22,13 @@ package org.loopring.lightcone.proto;
 import "core_data.proto";
 
 // For ABC/XYZ market, ABC is secondary, XYZ is primary
-message XMarketId {
+message MarketId {
     string primary = 1;
     string secondary = 2;
 }
 
-message XMarketConfig {
-    XMarketId market_id = 1;
+message MarketConfig {
+    MarketId market_id = 1;
     int32 maxNumbersOfOrders = 2;
     int32 priceDecimals = 3;
     int32 recover_batch_size = 4;
@@ -69,11 +69,11 @@ message XOrderbookUpdate {
     repeated XSlot sells = 1;
     repeated XSlot buys = 2;
     double last_price = 3;
-    XMarketId market_id = 4;
+    MarketId market_id = 4;
 }
 
 message GetOrderbook {
     int32 level = 2;
     int32 size = 1;
-    XMarketId market_id = 3;
+    MarketId market_id = 3;
 }

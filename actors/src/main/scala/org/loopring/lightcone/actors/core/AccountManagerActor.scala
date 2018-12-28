@@ -78,7 +78,7 @@ class AccountManagerActor(
         _ = assert(tokens.size == managers.size)
         balanceAndAllowanceMap = tokens.zip(managers).toMap.map {
           case (token, manager) =>
-            token -> XBalanceAndAllowance(
+            token -> BalanceAndAllowance(
               manager.getBalance(),
               manager.getAllowance(),
               manager.getAvailableBalance(),
@@ -89,10 +89,10 @@ class AccountManagerActor(
         GetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case XSubmitSimpleOrderReq(_, Some(xorder)) =>
+    case SubmitSimpleOrderReq(_, Some(xorder)) =>
       submitOrder(xorder).sendTo(sender)
 
-    case req: XCancelOrderReq =>
+    case req: CancelOrderReq =>
       assert(req.owner == address)
       if (manager.cancelOrder(req.id)) {
         marketManagerActor forward req
@@ -105,16 +105,16 @@ class AccountManagerActor(
         ) sendTo sender
       }
 
-    case XAddressBalanceUpdated(addr, token, newBalance) =>
+    case AddressBalanceUpdated(addr, token, newBalance) =>
       assert(addr == address)
       updateBalanceOrAllowance(token, newBalance, _.setBalance(_))
 
-    case XAddressAllowanceUpdated(addr, token, newBalance) =>
+    case AddressAllowanceUpdated(addr, token, newBalance) =>
       assert(addr == address)
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
   }
 
-  private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
+  private def submitOrder(xorder: XOrder): Future[SubmitOrderRes] = {
     val matchable: Matchable = xorder
     for {
       _ <- getTokenManager(matchable.tokenS)
@@ -147,7 +147,7 @@ class AccountManagerActor(
             //需要更新到数据库
             _ <- dbModule.orderService.updateOrderStatus(o._2.id, o._2.status)
           } yield {
-            marketManagerActor ! XSubmitSimpleOrderReq(
+            marketManagerActor ! SubmitSimpleOrderReq(
               order = Some(o._2.copy(_reserved = None, _outstanding = None))
             )
           }
@@ -155,7 +155,7 @@ class AccountManagerActor(
       }
       matchable_ = updatedOrders(_matchable.id)
       order_ : XOrder = matchable_.copy(_reserved = None, _outstanding = None)
-    } yield XSubmitOrderRes(order = Some(order_))
+    } yield SubmitOrderRes(order = Some(order_))
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
@@ -172,7 +172,7 @@ class AccountManagerActor(
           token,
           config.getInt("account_manager.max_order_num")
         )
-        ba: BalanceAndAllowance = res.balanceAndAllowanceMap(token)
+        ba: BalanceAndAllowanceBigInt = res.balanceAndAllowanceMap(token)
         _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
         tokenManager = manager.getOrUpdateTokenManager(token, tm)
         _ = log.debug(s"getTokenManager5 ${token}")
@@ -229,15 +229,15 @@ class AccountManagerActor(
                 _ <- dbModule.orderService
                   .updateOrderStatus(order.id, order.status)
               } yield {
-                marketManagerActor ! XCancelOrderReq(
+                marketManagerActor ! CancelOrderReq(
                   id = order.id,
-                  marketId = Some(XMarketId(order.tokenS, order.tokenB))
+                  marketId = Some(MarketId(order.tokenS, order.tokenB))
                 )
               }
             case STATUS_PENDING =>
               //allowance的改变需要更新到marketManager
               for {
-                _ <- marketManagerActor ? XSubmitSimpleOrderReq(
+                _ <- marketManagerActor ? SubmitSimpleOrderReq(
                   order = Some(order)
                 )
               } yield Unit

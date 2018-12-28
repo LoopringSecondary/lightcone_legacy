@@ -40,7 +40,7 @@ trait OrderService {
       tokenBSet: Set[String] = Set.empty,
       marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
-      sort: Option[XSort] = None,
+      sort: Option[SortingType] = None,
       skip: Option[XSkip] = None
     ): Future[Seq[RawOrder]]
 
@@ -51,7 +51,7 @@ trait OrderService {
       tokenB: Option[String] = None,
       marketHashSet: Option[String] = None,
       feeTokenSet: Option[String] = None,
-      sort: Option[XSort] = None,
+      sort: Option[SortingType] = None,
       skip: Option[XSkip] = None
     ): Future[Seq[RawOrder]]
 

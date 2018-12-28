@@ -26,14 +26,12 @@ trait MarketManagerMockSupport {
   val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
 
     def expectQuery() = expectMsgPF() {
-      case XSubmitSimpleOrderReq(addr, Some(xorder)) =>
-        info(s"received XSubmitOrderReq: ${addr}, ${xorder}")
+      case SubmitSimpleOrderReq(addr, Some(xorder)) =>
+        info(s"received SubmitOrderReq: ${addr}, ${xorder}")
     }
 
     def replyWith() =
-      reply(
-        XSubmitOrderRes()
-      )
+      reply(SubmitOrderRes())
   }
   actors.del(MarketManagerActor.name)
   actors.add(MarketManagerActor.name, marketManagerProbe.ref)

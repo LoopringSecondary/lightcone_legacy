@@ -19,7 +19,7 @@ package org.loopring.lightcone.core.base
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
-class Token(val meta: XTokenMeta) {
+class Token(val meta: TokenMeta) {
   val scaling = Rational(BigInt(10).pow(meta.decimals))
 
   def fromWei(amount: BigInt): Double =

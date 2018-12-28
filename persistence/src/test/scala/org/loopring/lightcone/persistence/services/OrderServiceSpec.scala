@@ -133,7 +133,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Set(tokenB),
         Set(MarketHashProvider.convert2Hex(tokenS, tokenB)),
         Set.empty,
-        Some(XSort.ASC),
+        Some(SortingType.ASC),
         None
       )
       queryStatus ← service.getOrders(
@@ -143,7 +143,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Set.empty,
         Set.empty,
         Set.empty,
-        Some(XSort.ASC),
+        Some(SortingType.ASC),
         None
       )
       queryToken ← service.getOrders(
@@ -153,7 +153,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Set("0xccccccccc2"),
         Set.empty,
         Set.empty,
-        Some(XSort.ASC),
+        Some(SortingType.ASC),
         None
       )
       queryMarket ← service.getOrders(
@@ -163,7 +163,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Set.empty,
         Set(MarketHashProvider.convert2Hex(tokenS, tokenB)),
         Set.empty,
-        Some(XSort.ASC),
+        Some(SortingType.ASC),
         None
       )
       count ← service.countOrdersForUser(Set.empty)
@@ -206,7 +206,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some(tokenB),
         None,
         None,
-        Some(XSort.ASC),
+        Some(SortingType.ASC),
         None
       )
       q2 ← service.getOrdersForUser(
@@ -216,7 +216,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         None,
         Some(MarketHashProvider.convert2Hex(tokenS, tokenB)),
         None,
-        Some(XSort.ASC),
+        Some(SortingType.ASC),
         None
       )
     } yield (q1, q2)

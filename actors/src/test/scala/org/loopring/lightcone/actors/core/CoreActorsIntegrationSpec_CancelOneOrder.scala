@@ -46,7 +46,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
   "submiting one from OrderHandleActor" must {
     "get depth in OrderbookManagerActor" in {
       val rawOrder = createRawOrder()
-      val submitF = actors.get(OrderHandlerActor.name) ? XSubmitOrderReq(
+      val submitF = actors.get(OrderHandlerActor.name) ? SubmitOrderReq(
         Some(rawOrder)
       )
       val submitRes = Await.result(submitF, timeout.duration)
@@ -56,7 +56,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       actors.get(OrderbookManagerActor.name) ! GetOrderbook(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
 
       expectMsgPF() {
@@ -67,11 +67,11 @@ class CoreActorsIntegrationSpec_CancelOneOrder
 
       info("cancel this order now. ")
 
-      val cancelReq = XCancelOrderReq(
+      val cancelReq = CancelOrderReq(
         id = rawOrder.hash,
         owner = rawOrder.owner,
         status = OrderStatus.STATUS_CANCELLED_BY_USER,
-        marketId = Some(XMarketId(rawOrder.tokenS, rawOrder.tokenB))
+        marketId = Some(MarketId(rawOrder.tokenS, rawOrder.tokenB))
       )
 
       val cancelResF = actors.get(OrderHandlerActor.name) ? cancelReq
@@ -92,7 +92,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       actors.get(OrderbookManagerActor.name) ! GetOrderbook(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
 
       expectMsgPF() {

@@ -54,7 +54,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       //设置余额
       val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
         "",
-        Map("" -> XBalanceAndAllowance("25".zeros(LRC_TOKEN.decimals)))
+        Map("" -> BalanceAndAllowance("25".zeros(LRC_TOKEN.decimals)))
       )
       Await.result(f, timeout.duration)
 
@@ -67,7 +67,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       }
 
       val f1 = Future.sequence(rawOrders.map { o =>
-        singleRequest(XSubmitOrderReq(Some(o)), "submit_order")
+        singleRequest(SubmitOrderReq(Some(o)), "submit_order")
       })
 
       val res = Await.result(f1, 3 second)
@@ -95,7 +95,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       val getOrderBook = GetOrderbook(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val orderbookF = singleRequest(getOrderBook, "orderbook")
 
@@ -111,14 +111,14 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       val setAllowanceF = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
         "",
         Map(
-          "" -> XBalanceAndAllowance(
+          "" -> BalanceAndAllowance(
             "25".zeros(LRC_TOKEN.decimals),
             "25".zeros(LRC_TOKEN.decimals)
           )
         )
       )
       Await.result(setAllowanceF, timeout.duration)
-      actors.get(MultiAccountManagerActor.name) ? XAddressAllowanceUpdated(
+      actors.get(MultiAccountManagerActor.name) ? AddressAllowanceUpdated(
         rawOrders(0).owner,
         LRC_TOKEN.address,
         ByteString.copyFrom("15".zeros(LRC_TOKEN.decimals).toByteArray)

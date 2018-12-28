@@ -115,7 +115,7 @@ class EthereumQueryActor(
           case Some(_) ⇒
             res.copy(
               balanceAndAllowanceMap = res.balanceAndAllowanceMap +
-                (ethToken.get → XBalanceAndAllowance(
+                (ethToken.get → BalanceAndAllowance(
                   BigInt(Numeric.toBigInt(ethRes.get.result)),
                   BigInt(0)
                 ))

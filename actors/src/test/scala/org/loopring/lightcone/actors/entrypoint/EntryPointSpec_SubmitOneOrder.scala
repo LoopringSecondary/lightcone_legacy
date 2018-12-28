@@ -53,11 +53,11 @@ class EntryPointSpec_SubmitOneOrder
       val amountB = "1"
       val rawOrder =
         createRawOrder(amountS = amountS.zeros(18), amountB = amountB.zeros(18))
-      val f = singleRequest(XSubmitOrderReq(Some(rawOrder)), "submit_order")
+      val f = singleRequest(SubmitOrderReq(Some(rawOrder)), "submit_order")
 
       val res = Await.result(f, timeout.duration)
       res match {
-        case XSubmitOrderRes(Some(order)) =>
+        case SubmitOrderRes(Some(order)) =>
           info(s" response ${order}")
           order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)
@@ -76,7 +76,7 @@ class EntryPointSpec_SubmitOneOrder
       val getOrderBook = GetOrderbook(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val orderbookF = singleRequest(getOrderBook, "orderbook")
       val orderbookRes = Await.result(orderbookF, timeout.duration)

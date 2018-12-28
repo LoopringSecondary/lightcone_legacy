@@ -23,7 +23,7 @@ import "actors_core.proto";
 import "core_data.proto";
 import "core_messages.proto";
 
-message XRunNamedJob {
+message RunNamedJob {
     string name = 1;
 }
 
@@ -32,32 +32,32 @@ message XStart{
 }
 message XStop{}
 
-message XInitializationDone {}
+message InitializationDone {}
 
-message XSubmitOrderReq {
+message SubmitOrderReq {
     RawOrder raw_order = 1;
 }
 
-message XRestoreRawOrderReq {
-    RawOrder raw_order = 1;
-}
+// message RestoreRawOrderReq {
+//     RawOrder raw_order = 1;
+// }
 
-message XRestoreRawOrderRes {
-    string id = 1;
-}
+// message RestoreRawOrderRes {
+//     string id = 1;
+// }
 
-message XCancelOrderReq {
+message CancelOrderReq {
     string id = 1;
     string owner = 2;
     OrderStatus status = 3; //取消的类型
-    XMarketId market_id = 4;
+    MarketId market_id = 4;
 }
 
-message XCancelOrderRes {
+message CancelOrderRes {
     string id = 1;
     OrderStatus status = 2; //取消的类型
 }
 
-message XSubmitOrder {
+message SubmitOrder {
     RawOrder raw_order = 1;
 }

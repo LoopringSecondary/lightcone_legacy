@@ -66,7 +66,7 @@ message GetOrderFilledAmountRes {
     bytes filled_amount_s = 2;
 }
 
-message XBalanceAndAllowance {
+message BalanceAndAllowance {
     bytes balance = 1;
     bytes allowance = 2;
     bytes availableBalance = 3;
@@ -80,7 +80,7 @@ message GetBalanceAndAllowancesReq {
 
 message GetBalanceAndAllowancesRes {
     string address = 1;
-    map<string, XBalanceAndAllowance> balance_and_allowance_map = 2;
+    map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
     XError error = 3;
 }
 
@@ -104,22 +104,22 @@ message GetAllowanceRes {
     XError error = 3;
 }
 
-message XSubmitSimpleOrderReq {
+message SubmitSimpleOrderReq {
     string owner = 1;
     XOrder order = 2;
 }
 
-message XSubmitOrderRes {
+message SubmitOrderRes {
     XOrder order = 1;
 }
 
-message XAddressBalanceUpdated {
+message AddressBalanceUpdated {
     string address = 1;
     string token = 2;
     bytes balance = 3;
 }
 
-message XAddressAllowanceUpdated {
+message AddressAllowanceUpdated {
     string address = 1;
     string token = 2;
     bytes balance = 3;
@@ -129,7 +129,7 @@ message XAddressAllowanceUpdated {
 //     bool skip_recovery = 1;
 //     int32 batch_size = 2;
 //     string order_owner = 3;
-//     XMarketId market_id = 4;
+//     MarketId market_id = 4;
 // }
 
 
@@ -154,12 +154,12 @@ message GetFilledAmountRes {
 message XUpdateBalanceAndAllowanceReq {
     string address = 1;
     string token = 2;
-    XBalanceAndAllowance balance_and_allowance = 3;
+    BalanceAndAllowance balance_and_allowance = 3;
 }
 
 message XUpdateBalanceAndAllowanceRes {
     ErrorCode error = 1;
-    XBalanceAndAllowance balance_and_allowance = 2;
+    BalanceAndAllowance balance_and_allowance = 2;
 }
 
 message XGasPriceUpdated {

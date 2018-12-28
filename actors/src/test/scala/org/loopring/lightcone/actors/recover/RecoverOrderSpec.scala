@@ -125,7 +125,7 @@ class RecoverOrderSpec
       val getOrderBook1 = GetOrderbook(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
       val timeout1 = Timeout(5 second)
@@ -136,9 +136,9 @@ class RecoverOrderSpec
       testSaveOrder4Recover()
       // 3. recover
       val marketLrcWeth = Some(
-        XMarketId(primary = LRC_TOKEN.address, secondary = WETH_TOKEN.address)
+        MarketId(primary = LRC_TOKEN.address, secondary = WETH_TOKEN.address)
       )
-      val marketMock4 = Some(XMarketId(primary = "0x041", secondary = "0x042"))
+      val marketMock4 = Some(MarketId(primary = "0x041", secondary = "0x042"))
       val request1 = XRecover.Request(
         addressShardingEntity = MultiAccountManagerActor
           .getEntityId(owner, 100),

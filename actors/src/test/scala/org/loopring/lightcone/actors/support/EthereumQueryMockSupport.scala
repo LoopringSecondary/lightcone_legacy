@@ -47,7 +47,7 @@ trait EthereumQueryMockSupport {
           GetBalanceAndAllowancesRes(
             req.address,
             Map(
-              req.tokens(0) -> XBalanceAndAllowance(
+              req.tokens(0) -> BalanceAndAllowance(
                 ByteString.copyFrom(balance.toByteArray),
                 ByteString.copyFrom(allowance.toByteArray)
               )

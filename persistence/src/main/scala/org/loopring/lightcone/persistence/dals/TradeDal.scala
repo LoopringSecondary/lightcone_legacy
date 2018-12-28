@@ -73,7 +73,7 @@ class TradeDalImpl(
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
       marketHash: Option[String] = None,
-      sort: Option[XSort] = None,
+      sort: Option[SortingType] = None,
       skip: Option[XSkip] = None
     ): Query[TradeTable, TradeTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
@@ -83,8 +83,8 @@ class TradeDalImpl(
     if (marketHash.nonEmpty)
       filters = filters.filter(_.marketHash === marketHash.get)
     if (sort.nonEmpty) filters = sort.get match {
-      case XSort.ASC ⇒ filters.sortBy(_.sequenceId.asc)
-      case XSort.DESC ⇒ filters.sortBy(_.sequenceId.desc)
+      case SortingType.ASC ⇒ filters.sortBy(_.sequenceId.asc)
+      case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
       case _ ⇒ filters.sortBy(_.sequenceId.asc)
     }
     filters = skip match {

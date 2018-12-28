@@ -52,7 +52,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
           amountFee = "10".zeros(18),
           tokenFee = LRC_TOKEN.address
         )
-      val f = singleRequest(XSubmitOrderReq(Some(order1)), "submit_order")
+      val f = singleRequest(SubmitOrderReq(Some(order1)), "submit_order")
       Await.result(f, timeout.duration)
 
       val order2 =
@@ -64,14 +64,14 @@ class EntryPointSpec_SubmitTwoMatchedOrder
           amountFee = "10".zeros(18),
           tokenFee = LRC_TOKEN.address
         )
-      val f1 = singleRequest(XSubmitOrderReq(Some(order2)), "submit_order")
+      val f1 = singleRequest(SubmitOrderReq(Some(order2)), "submit_order")
       Await.result(f1, timeout.duration)
 
       Thread.sleep(1000)
       val getOrderBook = GetOrderbook(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val orderbookF2 = singleRequest(getOrderBook, "orderbook")
       val orderbookRes2 = Await.result(orderbookF2, timeout.duration)
@@ -90,7 +90,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
       val getOrderBook1 = GetOrderbook(
         1,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)

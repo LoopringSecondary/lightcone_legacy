@@ -86,7 +86,7 @@ class EthereumAccessActor(
     fu onComplete {
       case Success(res) ⇒
         connectionPools = res.nodes.map(node ⇒ node.path → node.height)
-        self ! XInitializationDone()
+        self ! InitializationDone()
       case Failure(e) ⇒
         log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
         context.stop(self)
@@ -96,7 +96,7 @@ class EthereumAccessActor(
   override def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
-    case _: XInitializationDone ⇒
+    case _: InitializationDone ⇒
       unstashAll()
       context.become(normalReceive)
     case _: XNodeBlockHeight ⇒

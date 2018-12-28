@@ -26,7 +26,7 @@ import "core_messages.proto";
 message XRecover {
     message Request {
         string address_sharding_entity = 1;
-        XMarketId market_id = 2;
+        MarketId market_id = 2;
     }
 
     message CancelFor {

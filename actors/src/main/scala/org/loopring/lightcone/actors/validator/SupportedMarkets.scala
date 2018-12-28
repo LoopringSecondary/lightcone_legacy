@@ -36,15 +36,13 @@ case class SupportedMarkets(config: Config) {
     }
     .toSet
 
-  private def contains(marketId: XMarketId) = {
+  private def contains(marketId: MarketId) = {
     val eig = Numeric.toBigInt(marketId.primary) xor
       Numeric.toBigInt(marketId.secondary)
     markets.contains(eig)
   }
 
-  def assertmarketIdIsValid(
-      marketIdOpt: Option[XMarketId]
-    ): Option[XMarketId] = {
+  def assertmarketIdIsValid(marketIdOpt: Option[MarketId]): Option[MarketId] = {
     marketIdOpt match {
       case None =>
         throw ErrorException(ErrorCode.ERR_INVALID_MARKET)
@@ -54,7 +52,7 @@ case class SupportedMarkets(config: Config) {
     }
   }
 
-  def assertmarketIdIsValid(marketId: XMarketId): XMarketId = {
+  def assertmarketIdIsValid(marketId: MarketId): MarketId = {
     if (!contains(marketId))
       throw ErrorException(
         ErrorCode.ERR_INVALID_MARKET,
