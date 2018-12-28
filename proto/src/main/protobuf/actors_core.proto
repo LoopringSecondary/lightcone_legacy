@@ -162,20 +162,20 @@ message UpdateBalanceAndAllowanceRes {
     BalanceAndAllowance balance_and_allowance = 2;
 }
 
-message XGasPriceUpdated {
+message GasPriceUpdated {
     int64 gas_price = 1;
 }
 
-message XTriggerRematchReq {
+message TriggerRematchReq {
     bool sell_order_as_taker = 1;
     int32 offset = 2;
 }
 
-message XSendRawTxReq {
+message SendRawTxReq {
     bytes data = 1;
 }
 
-message XSendRawTxRes {
+message SendRawTxRes {
     SendStatus status = 1;
     enum SendStatus {
         SEND_STATUS_UNKNOW = 0;
@@ -184,7 +184,7 @@ message XSendRawTxRes {
 }
 
 
-enum XExecutedStatus {
+enum ExecutionStatus {
     EXECUTED_STATUS_UNKNOW = 0;
     EXECUTED_STATUS_FAILED = 1;
     EXECUTED_STATUS_SUCCESS = 2;
@@ -193,22 +193,22 @@ enum XExecutedStatus {
 message RingExecutedRes {
     OrderRing ring = 1;
     string tx_hash = 2;
-    XExecutedStatus status = 3;
+    ExecutionStatus status = 3;
     bytes used_gas = 4;
     int64 block_number = 5;
 }
 
-message XSendRawTransaction {
+message SendRawTransaction {
     bytes data = 1;
 }
 
-message XSendRawTransactionRes {
+message SendRawTransactionRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
 }
 
-message XSettleRingsReq {
+message SettleRingsReq {
     repeated OrderRing rings = 1;
     bytes gas_limit = 2;
     bytes gas_price = 3;
@@ -220,11 +220,11 @@ message GetGasPriceRes {
     bytes gas_price = 1;
 }
 
-message XSetGasPriceReq {
+message SetGasPriceReq {
     bytes gas_price = 1;
 }
 
-message XSetGasPriceRes {
+message SetGasPriceRes {
     bytes gas_price = 1;
 }
 
@@ -236,35 +236,35 @@ message UpdatedTokenBurnRate {
 
 /// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
 /// 解析合约事件得到下面的数据：
-message XOrderFilled {
+message OrderFilled {
     string order_hash = 1;
     bytes  filled     = 2;
 }
 
-message XOrderCancelled {
+message OrderCancelled {
     string order_owner = 1;
     string order_hash  = 2;
     bool   cancelled   = 3;
 }
 
-message XCutoffs {
+message Cutoffs {
     string broker = 1;
     int32  cutoff = 2; // in seconds.
 }
 
-message XOwnerCutoffs {
+message OwnerCutoffs {
     string broker = 1;
     string owner  = 2;
     int32  cutoff = 3; // in seconds.
 }
 
-message XTradingPairCutoffs {
+message TradingPairCutoffs {
     string broker       = 1;
     string trading_pair = 2;
     int32  cutoff       = 3; // in seconds.
 }
 
-message XOwnerTradingPairCutoffs {
+message OwnerTradingPairCutoffs {
     string broker       = 1;
     string owner        = 2;
     string trading_pair = 3;

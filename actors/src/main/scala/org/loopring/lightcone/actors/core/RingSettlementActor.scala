@@ -87,7 +87,7 @@ class RingSettlementActor(
   private def gasPriceActor = actors.get(GasPriceActor.name)
 
   override def receive: Receive = super.receive orElse LoggingReceive {
-    // case req: XSettleRingsReq =>
+    // case req: SettleRingsReq =>
     //   val rings = generateRings(req.rings)
     //   rings.foreach {
     //     ring =>
@@ -105,7 +105,7 @@ class RingSettlementActor(
     // var hasSended = false
     // while (!hasSended) {
     //   val txData = ringSigner.getSignedTxData(inputData, nonce.get(), gasLimit, gasPrice)
-    //   val sendFuture = ethereumAccessActor ? XSendRawTransaction(txData)
+    //   val sendFuture = ethereumAccessActor ? SendRawTransaction(txData)
     //   //todo:需要等待提交被确认才提交下一个
     //   nonce.getAndIncrement()
     //   hasSended = true

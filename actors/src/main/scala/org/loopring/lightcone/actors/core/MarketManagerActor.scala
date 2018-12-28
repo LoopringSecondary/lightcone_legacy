@@ -200,14 +200,14 @@ class MarketManagerActor(
       }
       sender ! CancelOrderRes(id = orderId)
 
-    case XGasPriceUpdated(_gasPrice) =>
+    case GasPriceUpdated(_gasPrice) =>
       val gasPrice: BigInt = _gasPrice
       manager.triggerMatch(true, getRequiredMinimalIncome(gasPrice)) foreach {
         matchResult =>
           updateOrderbookAndSettleRings(matchResult, gasPrice)
       }
 
-    case XTriggerRematchReq(sellOrderAsTaker, offset) =>
+    case TriggerRematchReq(sellOrderAsTaker, offset) =>
       for {
         res <- (gasPriceActor ? GetGasPriceReq()).mapAs[GetGasPriceRes]
         gasPrice: BigInt = res.gasPrice
@@ -260,7 +260,7 @@ class MarketManagerActor(
     if (matchResult.rings.nonEmpty) {
       log.debug(s"rings: ${matchResult.rings}")
 
-      settlementActor ! XSettleRingsReq(
+      settlementActor ! SettleRingsReq(
         rings = matchResult.rings,
         gasLimit = gasLimitPerRingV2 * matchResult.rings.size,
         gasPrice = gasPrice
