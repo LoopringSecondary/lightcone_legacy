@@ -23,4 +23,4 @@ case class Transaction(
     gasPrice: BigInt,
     to: String,
     value: BigInt = BigInt(0),
-    chainId: Int = 1)
+    chainId: Int = 71)

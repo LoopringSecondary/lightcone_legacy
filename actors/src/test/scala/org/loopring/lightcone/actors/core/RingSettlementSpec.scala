@@ -54,7 +54,6 @@ class RingSettlementSpec
     .asScala
     .map(config ⇒ config.getString("addr") → config.getString("key"))
 
-  Thread.sleep(1000)
   "Submit a ring tx " must {
     "tx successfully, order, balance, allowance must be right" in {
 
@@ -114,6 +113,9 @@ class RingSettlementSpec
           "orderbook"
         ).mapAs[XOrderbook]
 
+        _ ← Future {
+          Thread.sleep(1000 * 30)
+        }
         ba2 ← Future.sequence(
           getBalanceReqs.map(
             req ⇒

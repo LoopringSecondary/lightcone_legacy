@@ -120,7 +120,6 @@ class RingSettlementActor(
 
   def ready: Receive = super.receive orElse LoggingReceive {
     case req: XSettleRingsReq =>
-      println(s"normal receive received $req")
       val rings = truncReq2Rings(req)
       for {
         rawOrders ← Future.sequence(rings.map { ring ⇒
