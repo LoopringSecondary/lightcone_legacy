@@ -45,7 +45,7 @@ final class RingIncomeEstimatorImpl(
     ) =
     getRingIncome(ring) >= fiatValueThreshold
 
-  private def getExpectedFillIncomeFiatValue(fill: ExpectedFill) = {
+  private def getExpectedFillIncomeFiatValue(fill: ExpectedMatchableFill) = {
 
     val (order, pending, amountMargin) =
       (fill.order, fill.pending, fill.amountMargin)

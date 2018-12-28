@@ -27,7 +27,7 @@ package object data {
 
   implicit def rational2BigInt(r: Rational) = r.bigintValue
 
-  implicit class RichExpectedFill(raw: ExpectedFill) {
+  implicit class RichExpectedFill(raw: ExpectedMatchableFill) {
     def id = raw.order.id
   }
 

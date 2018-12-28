@@ -101,7 +101,7 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
       // println(s"======== takerMargin: $takerMargin")
       Right(
         OrderRing(
-          maker = ExpectedFill(
+          maker = ExpectedMatchableFill(
             order = maker.copy(
               _matchable = Some(
                 MatchableState(
@@ -114,7 +114,7 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
             pending = makerVolume.copy(amountFee = makerFee),
             amountMargin = makerMargin
           ),
-          taker = ExpectedFill(
+          taker = ExpectedMatchableFill(
             order = taker.copy(
               _matchable = Some(
                 MatchableState(

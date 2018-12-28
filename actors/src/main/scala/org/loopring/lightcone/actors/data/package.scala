@@ -129,7 +129,7 @@ package object data {
     }
 
   implicit def expectFill2XEcpectFill(
-      expectedFill: ExpectedFill
+      expectedFill: ExpectedMatchableFill
     ): XExpectedFill =
     XExpectedFill(
       order = Some(expectedFill.order),
@@ -137,16 +137,18 @@ package object data {
       amountMargin = expectedFill.amountMargin
     )
 
-  implicit def xexpectFill2EcpectFill(
+  implicit def expectedOrderFill2ExpectedMatchableFill(
       xExpectedFill: XExpectedFill
-    ): ExpectedFill =
-    ExpectedFill(
+    ): ExpectedMatchableFill =
+    ExpectedMatchableFill(
       order = xExpectedFill.getOrder,
       pending = xExpectedFill.getPending,
       amountMargin = xExpectedFill.amountMargin
     )
 
-  implicit def xRawOrderToXOrder(xraworder: XRawOrder): XOrder = {
+  implicit def expectedMatchableFill2ExpectedOrderFill(
+      xraworder: XRawOrder
+    ): XOrder = {
 
     val feeParams = xraworder.feeParams.getOrElse(XRawOrder.FeeParams())
     XOrder(
