@@ -33,9 +33,11 @@ import org.web3j.utils.Numeric
 import scala.concurrent.duration._
 import scala.concurrent._
 
-class EthereumAccessorSpec extends CommonSpec("""
-                                                |akka.cluster.roles=[]
-                                                |""".stripMargin) with EthereumSupport {
+class EthereumAccessorSpec
+    extends CommonSpec("""
+                         |akka.cluster.roles=[]
+                         |""".stripMargin)
+    with EthereumSupport {
 
   val wethAbi = WETHABI()
   val delegateAdderess = "0x17233e07c67d086464fD408148c3ABB56245FA64"
@@ -155,21 +157,21 @@ class EthereumAccessorSpec extends CommonSpec("""
     //      )
     //    )).mapTo[BatchContractCall.Res]
     //      .map(_.resps.map(res ⇒ wethAbi.allowance.unpackResult(res.result)))
-    //    uncle ← (ethereumAccessActor ? GetUncleByBlockNumAndIndexReq(
+    //    uncle ← (ethereumAccessActor ? GetUncle.Req(
     //      blockNum = "0x69555e",
     //      index = "0x0"
     //    )).mapTo[GetBlockWithTxHashByHash.Res]
     //      .map(_.result.get)
-    //    uncles ← (ethereumAccessActor ? BatchGetUncleByBlockNumAndIndexReq()
+    //    uncles ← (ethereumAccessActor ? BatchGetUncle.Req()
     //      .withReqs(
     //        Seq(
-    //          GetUncleByBlockNumAndIndexReq(
+    //          GetUncle.Req(
     //            blockNum = "0x69555e",
     //            index = "0x0"
     //          )
     //        )
     //      ))
-    //      .mapTo[BatchGetUncleByBlockNumAndIndexRes]
+    //      .mapTo[BatchGetUncle.Res]
     //      .map(_.resps.map(_.result.get))
     //    gas ← (ethereumAccessActor ? GetEstimatedGas.Req(
     //      to = "0xef68e7c694f40c8202821edf525de3782458639f"

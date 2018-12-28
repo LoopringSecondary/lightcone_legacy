@@ -187,21 +187,21 @@ import org.json4s.DefaultFormats
 //      )
 //    )).mapTo[BatchContractCall.Res]
 //      .map(_.resps.map(res ⇒ wethAbi.allowance.unpackResult(res.result)))
-//    uncle ← (ethConnectionActor ? GetUncleByBlockNumAndIndexReq(
+//    uncle ← (ethConnectionActor ? GetUncle.Req(
 //      blockNum = "0x69555e",
 //      index = "0x0"
 //    )).mapTo[GetBlockWithTxHashByHash.Res]
 //      .map(_.result.get)
-//    uncles ← (ethConnectionActor ? BatchGetUncleByBlockNumAndIndexReq()
+//    uncles ← (ethConnectionActor ? BatchGetUncle.Req()
 //      .withReqs(
 //        Seq(
-//          GetUncleByBlockNumAndIndexReq(
+//          GetUncle.Req(
 //            blockNum = "0x69555e",
 //            index = "0x0"
 //          )
 //        )
 //      ))
-//      .mapTo[BatchGetUncleByBlockNumAndIndexRes]
+//      .mapTo[BatchGetUncle.Res]
 //      .map(_.resps.map(_.result.get))
 //    gas ← (ethConnectionActor ? GetEstimatedGas.Req(
 //      to = "0xef68e7c694f40c8202821edf525de3782458639f"

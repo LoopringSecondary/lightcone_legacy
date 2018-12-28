@@ -239,7 +239,7 @@ private[ethereum] class HttpConnector(
         Seq(r.param, r.tag)
       } map JsonFormat.fromJsonString[EthCall.Res] sendTo sender
 
-    case r: GetUncleByBlockNumAndIndexReq ⇒
+    case r: GetUncle.Req ⇒
       sendMessage(method = "eth_getUncleByBlockNumberAndIndex") {
         Seq(r.blockNum, r.index)
       } map JsonFormat
@@ -299,7 +299,7 @@ private[ethereum] class HttpConnector(
         BatchGetTransactions.Res(resps = txResps)
       } sendTo sender
 
-    case batchR: BatchGetUncleByBlockNumAndIndexReq ⇒ {
+    case batchR: BatchGetUncle.Req ⇒ {
       val batchReqs = batchR.reqs.map { singleReq ⇒
         BatchMethod(
           id = 0,
@@ -313,7 +313,7 @@ private[ethereum] class HttpConnector(
           val respJson = Serialization.write(resp)
           JsonFormat.fromJsonString[GetBlockWithTxHashByHash.Res](respJson)
         })
-        BatchGetUncleByBlockNumAndIndexRes(txResps)
+        BatchGetUncle.Res(txResps)
       } sendTo sender
     }
   }

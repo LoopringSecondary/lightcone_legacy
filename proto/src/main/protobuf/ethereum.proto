@@ -108,3 +108,38 @@ message TokenBalance {
     bytes  allowance            = 4;
     int64  updated_at_block     = 5;
 }
+
+message OrderFilled {
+    string order_hash = 1;
+    bytes  filled     = 2;
+}
+
+message OrderCancelled {
+    string order_owner = 1;
+    string order_hash  = 2;
+    bool   cancelled   = 3;
+}
+
+message Cutoffs {
+    string broker = 1;
+    int32  cutoff = 2; // in seconds.
+}
+
+message OwnerCutoffs {
+    string broker = 1;
+    string owner  = 2;
+    int32  cutoff = 3; // in seconds.
+}
+
+message TradingPairCutoffs {
+    string broker       = 1;
+    string trading_pair = 2;
+    int32  cutoff       = 3; // in seconds.
+}
+
+message OwnerTradingPairCutoffs {
+    string broker       = 1;
+    string owner        = 2;
+    string trading_pair = 3;
+    int32  cutoff       = 4; // in seconds.
+}
