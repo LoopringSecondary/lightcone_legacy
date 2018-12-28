@@ -20,7 +20,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
-import XOrderStatus._
+import OrderStatus._
 
 class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
 

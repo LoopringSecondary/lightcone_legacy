@@ -53,8 +53,8 @@ class MarketManagerImpl(
 
   import MarketManager._
   import MarketManagerImpl._
-  import XErrorCode._
-  import XOrderStatus._
+  import ErrorCode._
+  import OrderStatus._
 
   private implicit val marketId_ = marketId
   private implicit val tm_ = tokenManager

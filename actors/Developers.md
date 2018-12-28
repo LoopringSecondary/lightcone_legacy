@@ -20,7 +20,7 @@ val res: Future[...] = (req ? RequestActor).mapAs[MyExpectedType]
 def receive = LoggingReceive {
     case x: MyReq = (for{
         res <- (anotherActor ? x).mapAs[MyResp]
-        _ = if (res.something) throw ErrorException(XErrorCode.SOME_ERROR, "msg")
+        _ = if (res.something) throw ErrorException(ErrorCode.SOME_ERROR, "msg")
     } yield res) forwardTo nextActor
     // } yield res) sendTo nextActor
 }

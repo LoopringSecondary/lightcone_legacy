@@ -26,7 +26,7 @@ import org.loopring.lightcone.proto._
 trait RingBatchGenerator {
 
   def generateAndSignRingBatch(
-      orders: Seq[Seq[XRawOrder]]
+      orders: Seq[Seq[RawOrder]]
     )(
       implicit context: XRingBatchContext
     ): XRingBatch
@@ -45,7 +45,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   val SerializationVersion = 0
 
   def generateAndSignRingBatch(
-      orders: Seq[Seq[XRawOrder]]
+      orders: Seq[Seq[RawOrder]]
     )(
       implicit context: XRingBatchContext
     ): XRingBatch = {
@@ -178,7 +178,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   private def setupOrderInfo(
       data: Bitstream,
       tables: Bitstream,
-      order: XRawOrder,
+      order: RawOrder,
       tokenSpendables: Map[String, Int],
       context: XRingBatchContext
     ) {
@@ -203,10 +203,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     tables.addUint16(spendableFeeIndex)
 
     if (isValidAddress(orderParams.dualAuthAddr)) {
-      insertOffset(
-        tables,
-        data.addAddress(orderParams.dualAuthAddr, false)
-      )
+      insertOffset(tables, data.addAddress(orderParams.dualAuthAddr, false))
     } else {
       insertDefault(tables)
     }
@@ -218,10 +215,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     }
 
     if (isValidAddress(orderParams.orderInterceptor)) {
-      insertOffset(
-        tables,
-        data.addAddress(orderParams.orderInterceptor, false)
-      )
+      insertOffset(tables, data.addAddress(orderParams.orderInterceptor, false))
     } else {
       insertDefault(tables)
     }

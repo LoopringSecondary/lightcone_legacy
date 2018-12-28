@@ -22,22 +22,21 @@ import org.loopring.lightcone.persistence.dals.{
   OrdersCancelledEventDal,
   OrdersCancelledEventDalImpl
 }
-import org.loopring.lightcone.proto.{XErrorCode, XOrdersCancelledEvent}
+import org.loopring.lightcone.proto.{ErrorCode, XOrdersCancelledEvent}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class OrdersCancelledEventServiceImpl @Inject()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
     extends OrdersCancelledEventService {
 
   val ordersCancelledEventDal: OrdersCancelledEventDal =
     new OrdersCancelledEventDalImpl()
 
-  def saveCancelOrder(cancelOrder: XOrdersCancelledEvent): Future[XErrorCode] =
+  def saveCancelOrder(cancelOrder: XOrdersCancelledEvent): Future[ErrorCode] =
     ordersCancelledEventDal.saveCancelOrder(cancelOrder)
 
   def hasCancelled(orderHash: String): Future[Boolean] =

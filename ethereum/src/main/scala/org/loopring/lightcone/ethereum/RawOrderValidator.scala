@@ -23,11 +23,11 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 
 trait RawOrderValidator {
-  def calculateOrderHash(order: XRawOrder): String
-  def validate(order: XRawOrder): Either[XErrorCode, XRawOrder]
+  def calculateOrderHash(order: RawOrder): String
+  def validate(order: RawOrder): Either[ErrorCode, RawOrder]
 }
 
 object RawOrderValidatorImpl extends RawOrderValidator {
@@ -42,12 +42,12 @@ object RawOrderValidatorImpl extends RawOrderValidator {
   val Eip712DomainHash =
     "0xaea25658c273c666156bd427f83a666135fcde6887a6c25fc1cd1562bc4f3f34"
 
-  def calculateOrderHash(order: XRawOrder): String = {
+  def calculateOrderHash(order: RawOrder): String = {
     val sourceBytes = getOrderHashSourceBytes(order)
     Numeric.toHexString(Hash.sha3(sourceBytes))
   }
 
-  def validate(order: XRawOrder): Either[XErrorCode, XRawOrder] = {
+  def validate(order: RawOrder): Either[ErrorCode, RawOrder] = {
     def checkDualAuthPrivateKey = {
       if (isValidAddress(order.getParams.dualAuthAddr)) {
         val dualAuthPrivateKey = order.getParams.dualAuthPrivateKey
@@ -74,21 +74,9 @@ object RawOrderValidatorImpl extends RawOrderValidator {
 
         algorithm match {
           case XSigningAlgorithm.ALGO_ETHEREUM.value =>
-            verifyEthereumSignature(
-              hashBytes,
-              r,
-              s,
-              v,
-              Address(order.owner)
-            )
+            verifyEthereumSignature(hashBytes, r, s, v, Address(order.owner))
           case XSigningAlgorithm.ALGO_EIP712.value =>
-            verifySignature(
-              hashSourceBytes,
-              r,
-              s,
-              v,
-              Address(order.owner)
-            )
+            verifySignature(hashSourceBytes, r, s, v, Address(order.owner))
           case _ =>
             throw new IllegalArgumentException(
               s"invalid XSigningAlgorithm value: $algorithm"
@@ -98,7 +86,7 @@ object RawOrderValidatorImpl extends RawOrderValidator {
       }
     }
 
-    val checklist = Seq[(Boolean, XErrorCode)](
+    val checklist = Seq[(Boolean, ErrorCode)](
       (order.version == 0) -> ERR_ORDER_VALIDATION_UNSUPPORTED_VERSION,
       isValidAddress(order.owner) -> ERR_ORDER_VALIDATION_INVALID_OWNER,
       isValidAddress(order.tokenS) -> ERR_ORDER_VALIDATION_INVALID_TOKENS,
@@ -125,7 +113,7 @@ object RawOrderValidatorImpl extends RawOrderValidator {
     }
   }
 
-  private def getOrderHashSourceBytes(order: XRawOrder) = {
+  private def getOrderHashSourceBytes(order: RawOrder) = {
     def strToHex(str: String) = str.getBytes.map("%02X" format _).mkString
 
     val bitstream = new Bitstream

@@ -35,11 +35,11 @@ message XStop{}
 message XInitializationDone {}
 
 message XSubmitOrderReq {
-    XRawOrder raw_order = 1;
+    RawOrder raw_order = 1;
 }
 
 message XRestoreRawOrderReq {
-    XRawOrder raw_order = 1;
+    RawOrder raw_order = 1;
 }
 
 message XRestoreRawOrderRes {
@@ -49,15 +49,15 @@ message XRestoreRawOrderRes {
 message XCancelOrderReq {
     string id = 1;
     string owner = 2;
-    XOrderStatus status = 3; //取消的类型
+    OrderStatus status = 3; //取消的类型
     XMarketId market_id = 4;
 }
 
 message XCancelOrderRes {
     string id = 1;
-    XOrderStatus status = 2; //取消的类型
+    OrderStatus status = 2; //取消的类型
 }
 
 message XSubmitOrder {
-    XRawOrder raw_order = 1;
+    RawOrder raw_order = 1;
 }

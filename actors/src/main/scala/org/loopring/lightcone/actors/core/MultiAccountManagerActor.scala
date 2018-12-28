@@ -23,7 +23,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.persistence.DatabaseModule
 
 import org.loopring.lightcone.proto._
@@ -67,7 +67,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
     case XRecover.RecoverOrderReq(Some(raworder)) => raworder.owner
     case req: XCancelOrderReq ⇒ req.owner
     case req: XSubmitSimpleOrderReq ⇒ req.owner
-    case req: XGetBalanceAndAllowancesReq ⇒ req.address
+    case req: GetBalanceAndAllowancesReq ⇒ req.address
     case req: XAddressBalanceUpdated ⇒ req.address
     case req: XAddressAllowanceUpdated ⇒ req.address
   }

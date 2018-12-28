@@ -47,7 +47,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
 
       //设置余额
       //todo: allowance 为0 的逻辑是什么，accountmanager与marketmanager中是否需要保存
-      val f = actors.get(EthereumQueryActor.name) ? XGetBalanceAndAllowancesRes(
+      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
         "",
         Map(
           "" -> XBalanceAndAllowance(
@@ -89,10 +89,10 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
             case Some(order) =>
               assert(order.sequenceId > 0)
               if (order.id == rawOrders(0).hash) {
-                assert(order.getState.status == XOrderStatus.STATUS_PENDING)
+                assert(order.getState.status == OrderStatus.STATUS_PENDING)
               } else {
                 assert(
-                  order.getState.status == XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
+                  order.getState.status == OrderStatus.STATUS_CANCELLED_LOW_BALANCE
                 )
               }
             case None =>
@@ -103,7 +103,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
 
       //orderbook
       Thread.sleep(1000)
-      val getOrderBook = XGetOrderbook(
+      val getOrderBook = GetOrderbook(
         0,
         100,
         Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -128,7 +128,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       val cancelReq = XCancelOrderReq(
         rawOrders(0).hash,
         rawOrders(0).owner,
-        XOrderStatus.STATUS_CANCELLED_BY_USER,
+        OrderStatus.STATUS_CANCELLED_BY_USER,
         Some(XMarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
       )
 
@@ -144,11 +144,11 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
             case Some(order) =>
               if (order.hash == rawOrders(0).hash) {
                 assert(
-                  order.getState.status == XOrderStatus.STATUS_CANCELLED_BY_USER
+                  order.getState.status == OrderStatus.STATUS_CANCELLED_BY_USER
                 )
               } else {
                 assert(
-                  order.getState.status == XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
+                  order.getState.status == OrderStatus.STATUS_CANCELLED_LOW_BALANCE
                 )
               }
             case None =>

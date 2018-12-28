@@ -27,8 +27,7 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
 class SettlementTxServiceImpl @Inject()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
     extends SettlementTxService {
   val submitTxDal: SettlementTxDal = new SettlementTxDalImpl()
@@ -36,7 +35,7 @@ class SettlementTxServiceImpl @Inject()(
   def saveTx(req: XSaveSettlementTxReq): Future[XSaveSettlementTxResult] =
     submitTxDal.saveTx(req.tx.get)
 
-  def getPendingTxs(request: XGetPendingTxsReq): Future[XGetPendingTxsResult] =
+  def getPendingTxs(request: GetPendingTxsReq): Future[GetPendingTxsResult] =
     submitTxDal.getPendingTxs(request)
 
   def updateInBlock(

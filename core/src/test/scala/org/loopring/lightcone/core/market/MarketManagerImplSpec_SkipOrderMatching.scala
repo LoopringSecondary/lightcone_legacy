@@ -20,8 +20,8 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
-import XOrderStatus._
-import XErrorCode._
+import OrderStatus._
+import ErrorCode._
 
 class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
   "MarketManager" should "skip non-profitable orders" in {

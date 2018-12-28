@@ -40,7 +40,7 @@ class OrderHandlerMessageValidator(
     } catch {
       case _: Throwable ⇒
         throw ErrorException(
-          XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+          ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
           message = s"invalid ethereum address:$address"
         )
     }
@@ -59,10 +59,10 @@ class OrderHandlerMessageValidator(
             config.getConfig(MultiAccountManagerActor.name)
           val numOfShards = multiAccountConfig.getInt("num-of-shards")
           val now = timeProvider.getTimeMillis
-          val state = XRawOrder.State(
+          val state = RawOrder.State(
             createdAt = now,
             updatedAt = now,
-            status = XOrderStatus.STATUS_NEW
+            status = OrderStatus.STATUS_NEW
           )
           val marketHash =
             MarketHashProvider.convert2Hex(rawOrder.tokenS, rawOrder.tokenB)

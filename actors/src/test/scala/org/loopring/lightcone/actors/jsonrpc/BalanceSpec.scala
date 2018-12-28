@@ -56,7 +56,7 @@ class BalanceSpec
       val method = "get_balance_and_allowance"
       val owner = "0xb5fab0b11776aad5ce60588c16bd59dcfd61a1c2"
       val getBalanceReq =
-        XGetBalanceAndAllowancesReq(owner, tokens = Seq(LRC, WETH))
+        GetBalanceAndAllowancesReq(owner, tokens = Seq(LRC, WETH))
       val maker = XOrder(
         id = "maker1",
         tokenS = LRC,
@@ -66,7 +66,7 @@ class BalanceSpec
         amountB = "100".zeros(10),
         amountFee = "1".zeros(16),
         walletSplitPercentage = 0.2,
-        status = XOrderStatus.STATUS_NEW,
+        status = OrderStatus.STATUS_NEW,
         reserved =
           Some(OrderState("1".zeros(18), "100".zeros(10), "1".zeros(16))),
         outstanding =
@@ -85,7 +85,7 @@ class BalanceSpec
       } yield (firstQuery, secondQuery)
       val res = Await.result(r, timeout.duration)
       res match {
-        case (f: XGetBalanceAndAllowancesRes, s: XGetBalanceAndAllowancesRes) =>
+        case (f: GetBalanceAndAllowancesRes, s: GetBalanceAndAllowancesRes) =>
           val bf: BigInt =
             f.balanceAndAllowanceMap(LRC).availableBalance
           val bs: BigInt =

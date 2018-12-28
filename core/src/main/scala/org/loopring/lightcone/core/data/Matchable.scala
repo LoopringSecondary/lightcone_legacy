@@ -19,8 +19,8 @@ package org.loopring.lightcone.core.data
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.XErrorCode._
-import XOrderStatus._
+import org.loopring.lightcone.proto.ErrorCode._
+import OrderStatus._
 
 case class MatchableState(
     amountS: BigInt = 0,
@@ -46,7 +46,7 @@ case class Matchable(
     amountFee: BigInt = 0,
     createdAt: Long = -1,
     updatedAt: Long = -1,
-    status: XOrderStatus = STATUS_NEW,
+    status: OrderStatus = STATUS_NEW,
     walletSplitPercentage: Double = 0,
     _outstanding: Option[MatchableState] = None,
     _reserved: Option[MatchableState] = None,
@@ -117,7 +117,7 @@ case class Matchable(
     }
 
   // Private methods
-  private[core] def as(status: XOrderStatus) = {
+  private[core] def as(status: OrderStatus) = {
     assert(status != STATUS_PENDING)
     copy(status = status, _reserved = None, _actual = None, _matchable = None)
   }

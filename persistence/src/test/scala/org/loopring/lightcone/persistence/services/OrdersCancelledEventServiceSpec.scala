@@ -36,7 +36,7 @@ class OrdersCancelledEventServiceSpec
   private def testSave(
       hash: String,
       blockHeight: Long
-    ): Future[XErrorCode] = {
+    ): Future[ErrorCode] = {
     val now = timeProvider.getTimeMillis
     service.saveCancelOrder(
       XOrdersCancelledEvent(
@@ -51,7 +51,7 @@ class OrdersCancelledEventServiceSpec
   private def testSaves(
       hashes: Set[String],
       blockHeight: Long
-    ): Future[Set[XErrorCode]] = {
+    ): Future[Set[ErrorCode]] = {
     for {
       result ← Future.sequence(hashes.map { hash ⇒
         testSave(hash, blockHeight)

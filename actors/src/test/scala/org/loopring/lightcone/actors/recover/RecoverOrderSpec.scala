@@ -51,8 +51,8 @@ class RecoverOrderSpec
     with RecoverSupport {
 
   private def testSaves(
-      orders: Seq[XRawOrder]
-    ): Future[Seq[Either[XRawOrder, XErrorCode]]] = {
+      orders: Seq[RawOrder]
+    ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
     for {
       result ← Future.sequence(orders.map { order ⇒
         dbModule.orderService.saveOrder(order)
@@ -61,7 +61,7 @@ class RecoverOrderSpec
   }
 
   private def testSaveOrder4Recover(
-    ): Future[Seq[Either[XRawOrder, XErrorCode]]] = {
+    ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
     val rawOrders = ((0 until 6) map { i =>
       createRawOrder(
         amountS = "10".zeros(LRC_TOKEN.decimals),
@@ -74,9 +74,7 @@ class RecoverOrderSpec
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )
         o.copy(
-          state = Some(
-            o.state.get.copy(status = XOrderStatus.STATUS_PENDING)
-          )
+          state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
         )
         o
       }) ++
@@ -88,9 +86,7 @@ class RecoverOrderSpec
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )
         o.copy(
-          state = Some(
-            o.state.get.copy(status = XOrderStatus.STATUS_EXPIRED)
-          )
+          state = Some(o.state.get.copy(status = OrderStatus.STATUS_EXPIRED))
         )
         o
       }) ++
@@ -102,9 +98,7 @@ class RecoverOrderSpec
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )
         o.copy(
-          state = Some(
-            o.state.get.copy(status = XOrderStatus.STATUS_DUST_ORDER)
-          )
+          state = Some(o.state.get.copy(status = OrderStatus.STATUS_DUST_ORDER))
         )
         o
       }) ++
@@ -116,9 +110,8 @@ class RecoverOrderSpec
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )
         o.copy(
-          state = Some(
-            o.state.get.copy(status = XOrderStatus.STATUS_PARTIALLY_FILLED)
-          )
+          state =
+            Some(o.state.get.copy(status = OrderStatus.STATUS_PARTIALLY_FILLED))
         )
         o
       })
@@ -129,15 +122,12 @@ class RecoverOrderSpec
     "get all effective orders and recover" in {
       val owner = "0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10"
       // 1. select depth
-      val getOrderBook1 = XGetOrderbook(
+      val getOrderBook1 = GetOrderbook(
         0,
         100,
         Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF1 = singleRequest(
-        getOrderBook1,
-        "orderbook"
-      )
+      val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
       val timeout1 = Timeout(5 second)
       val orderbookRes1 =
         Await.result(orderbookF1.mapTo[XOrderbook], timeout1.duration)
@@ -163,10 +153,7 @@ class RecoverOrderSpec
       }
       // 4. get depth
       Thread.sleep(5000)
-      val orderbookF2 = singleRequest(
-        getOrderBook1,
-        "orderbook"
-      )
+      val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
       val orderbookRes2 =
         Await.result(orderbookF2.mapTo[XOrderbook], timeout1.duration)
       assert(orderbookRes1.sells.isEmpty && orderbookRes1.buys.isEmpty)

@@ -25,5 +25,5 @@ trait RingMatcher {
       taker: Matchable,
       maker: Matchable,
       minFiatValue: Double
-    ): Either[XErrorCode, MatchableRing]
+    ): Either[ErrorCode, MatchableRing]
 }

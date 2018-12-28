@@ -31,7 +31,7 @@ import scala.util.{Failure, Success}
 trait OrdersCutoffDal
     extends BaseDalImpl[OrdersCutoffTable, XOrdersCutoffEvent] {
 
-  def saveCutoff(cutoff: XOrdersCutoffEvent): Future[XErrorCode]
+  def saveCutoff(cutoff: XOrdersCutoffEvent): Future[ErrorCode]
 
   def hasCutoff(
       orderBroker: Option[String] = None,
@@ -45,32 +45,26 @@ trait OrdersCutoffDal
 
 class OrdersCutoffDalImpl(
   )(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends OrdersCutoffDal {
   val query = TableQuery[OrdersCutoffTable]
-  def getRowHash(row: XRawOrder) = row.hash
+  def getRowHash(row: RawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
   private[this] val logger = Logger(this.getClass)
 
-  override def saveCutoff(cutoff: XOrdersCutoffEvent): Future[XErrorCode] = {
+  override def saveCutoff(cutoff: XOrdersCutoffEvent): Future[ErrorCode] = {
     val now = timeProvider.getTimeMillis
-    db.run(
-        (query += cutoff.copy(
-          createdAt = now
-        )).asTry
-      )
-      .map {
-        case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
-          XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
-        }
-        case Failure(ex) ⇒ {
-          logger.error(s"error : ${ex.getMessage}")
-          XErrorCode.ERR_PERSISTENCE_INTERNAL
-        }
-        case Success(x) ⇒ XErrorCode.ERR_NONE
+    db.run((query += cutoff.copy(createdAt = now)).asTry).map {
+      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
+        ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
       }
+      case Failure(ex) ⇒ {
+        logger.error(s"error : ${ex.getMessage}")
+        ErrorCode.ERR_PERSISTENCE_INTERNAL
+      }
+      case Success(x) ⇒ ErrorCode.ERR_NONE
+    }
   }
 
   def hasCutoff(

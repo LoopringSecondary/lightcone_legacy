@@ -22,8 +22,8 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.core.depth._
-import XOrderStatus._
-import XErrorCode._
+import OrderStatus._
+import ErrorCode._
 
 trait MarketAwareSpec extends OrderAwareSpec {
   type MR = MarketManager.MatchResult
@@ -66,7 +66,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
 
   def emptyMatchingResult(
       order: Matchable,
-      newStatus: XOrderStatus
+      newStatus: OrderStatus
     ) =
     MarketManager.MatchResult(
       Nil,

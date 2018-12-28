@@ -24,17 +24,17 @@ trait OrderService {
   val orderDal: OrderDal
 
   // Save order to database, if the order already exist, return an error code.
-  def saveOrder(order: XRawOrder): Future[Either[XRawOrder, XErrorCode]]
+  def saveOrder(order: RawOrder): Future[Either[RawOrder, ErrorCode]]
 
   // Mark the order as soft-cancelled. Returns error code if the order does not exist.
   def markOrderSoftCancelled(
       orderHashes: Seq[String]
     ): Future[Seq[XUserCancelOrderResult.Result]]
-  def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]]
-  def getOrder(hash: String): Future[Option[XRawOrder]]
+  def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]]
+  def getOrder(hash: String): Future[Option[RawOrder]]
 
   def getOrders(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
@@ -42,10 +42,10 @@ trait OrderService {
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]]
+    ): Future[Seq[RawOrder]]
 
   def getOrdersForUser(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
@@ -53,19 +53,19 @@ trait OrderService {
       feeTokenSet: Option[String] = None,
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]]
+    ): Future[Seq[RawOrder]]
 
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
       skip: XSkipBySequenceId
-    ): Future[Seq[XRawOrder]]
+    ): Future[Seq[RawOrder]]
 
   // Count the number of orders
   def countOrdersForUser(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
@@ -77,11 +77,11 @@ trait OrderService {
   // Returns Left(error) if this operation fails, or Right(string) the order's hash.
   def updateOrderStatus(
       hash: String,
-      status: XOrderStatus
-    ): Future[XErrorCode]
+      status: OrderStatus
+    ): Future[ErrorCode]
 
   def updateAmount(
       hash: String,
-      state: XRawOrder.State
-    ): Future[XErrorCode]
+      state: RawOrder.State
+    ): Future[ErrorCode]
 }

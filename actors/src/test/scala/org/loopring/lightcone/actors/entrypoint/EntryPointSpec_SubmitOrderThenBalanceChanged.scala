@@ -52,7 +52,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
     "store it but the depth is empty until allowance is enough" in {
 
       //设置余额
-      val f = actors.get(EthereumQueryActor.name) ? XGetBalanceAndAllowancesRes(
+      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
         "",
         Map("" -> XBalanceAndAllowance("25".zeros(LRC_TOKEN.decimals)))
       )
@@ -82,7 +82,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
           orderOpt match {
             case Some(order) =>
               assert(order.sequenceId > 0)
-              assert(order.getState.status == XOrderStatus.STATUS_PENDING)
+              assert(order.getState.status == OrderStatus.STATUS_PENDING)
             case None =>
               assert(false)
           }
@@ -92,7 +92,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       //orderbook
       Thread.sleep(1000)
       info("the depth should be empty when allowance is not enough")
-      val getOrderBook = XGetOrderbook(
+      val getOrderBook = GetOrderbook(
         0,
         100,
         Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -108,7 +108,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       }
 
       info("then make allowance enough.")
-      val setAllowanceF = actors.get(EthereumQueryActor.name) ? XGetBalanceAndAllowancesRes(
+      val setAllowanceF = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
         "",
         Map(
           "" -> XBalanceAndAllowance(

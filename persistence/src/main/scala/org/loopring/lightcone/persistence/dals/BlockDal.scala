@@ -19,7 +19,7 @@ package org.loopring.lightcone.persistence.dals
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
@@ -27,7 +27,7 @@ import scala.concurrent._
 
 trait BlockDal extends BaseDalImpl[BlockTable, XBlockData] {
 
-  def saveBlock(block: XBlockData): Future[XErrorCode]
+  def saveBlock(block: XBlockData): Future[ErrorCode]
   def findByHash(hash: String): Future[Option[XBlockData]]
   def findByHeight(height: Long): Future[Option[XBlockData]]
   def findMaxHeight(): Future[Option[Long]]
@@ -48,7 +48,7 @@ class BlockDalImpl(
   val query = TableQuery[BlockTable]
   def getRowHash(row: XBlockData) = row.hash
 
-  def saveBlock(block: XBlockData): Future[XErrorCode] =
+  def saveBlock(block: XBlockData): Future[ErrorCode] =
     for {
       result <- db.run(query.insertOrUpdate(block))
     } yield {
@@ -101,9 +101,7 @@ class BlockDalImpl(
   }
 
   def count(): Future[Int] = {
-    db.run(
-      query.size.result
-    )
+    db.run(query.size.result)
   }
 
   def obsolete(height: Long): Future[Unit] = {

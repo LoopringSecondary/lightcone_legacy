@@ -29,8 +29,8 @@ import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Matchable
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
@@ -147,7 +147,7 @@ class OrderRecoverActor(
   def retrieveOrders(
       batchSize: Int,
       lastOrderSeqId: Long
-    ): Future[Seq[XRawOrder]] = {
+    ): Future[Seq[RawOrder]] = {
     if (batch.requestMap.nonEmpty) {
       var addressShardIds: Set[Int] = Set.empty
       var marketHashIds: Set[Int] = Set.empty
@@ -163,9 +163,9 @@ class OrderRecoverActor(
         }
       }
       val status = Set(
-        XOrderStatus.STATUS_NEW,
-        XOrderStatus.STATUS_PENDING,
-        XOrderStatus.STATUS_PARTIALLY_FILLED
+        OrderStatus.STATUS_NEW,
+        OrderStatus.STATUS_PENDING,
+        OrderStatus.STATUS_PARTIALLY_FILLED
       )
       dbModule.orderService.getOrdersForRecover(
         status,

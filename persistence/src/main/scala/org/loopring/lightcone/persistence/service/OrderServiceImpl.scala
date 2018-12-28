@@ -24,26 +24,25 @@ import org.loopring.lightcone.lib.{
   SystemTimeProvider
 }
 import org.loopring.lightcone.persistence.dals.{OrderDal, OrderDalImpl}
-import org.loopring.lightcone.proto.XErrorCode.ERR_INTERNAL_UNKNOWN
+import org.loopring.lightcone.proto.ErrorCode.ERR_INTERNAL_UNKNOWN
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
 class OrderServiceImpl @Inject()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
     extends OrderService {
   val orderDal: OrderDal = new OrderDalImpl()
   val timeProvider = new SystemTimeProvider()
 
-  private def giveUserOrder(order: Option[XRawOrder]): Option[XRawOrder] = {
+  private def giveUserOrder(order: Option[RawOrder]): Option[RawOrder] = {
     order match {
       case Some(o) =>
         val state = o.state.get
         val returnState =
-          XRawOrder.State(status = state.status, createdAt = state.createdAt)
+          RawOrder.State(status = state.status, createdAt = state.createdAt)
         Some(
           o.copy(
             state = Some(returnState),
@@ -58,15 +57,15 @@ class OrderServiceImpl @Inject()(
   }
 
   // Save order to database, if the order already exist, return an error code.
-  def saveOrder(order: XRawOrder): Future[Either[XRawOrder, XErrorCode]] = {
+  def saveOrder(order: RawOrder): Future[Either[RawOrder, ErrorCode]] = {
     if (order.addressShardId < 0 || order.marketHashId <= 0) {
       throw ErrorException(
-        XErrorCode.ERR_INTERNAL_UNKNOWN,
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
         s"Invalid addressShardId:[${order.addressShardId}] or marketHashId:[${order.marketHashId}]"
       )
     }
     orderDal.saveOrder(order).map { r =>
-      if (r.error == XErrorCode.ERR_NONE) {
+      if (r.error == ErrorCode.ERR_NONE) {
         Left(r.order.get)
       } else {
         Right(r.error)
@@ -81,16 +80,16 @@ class OrderServiceImpl @Inject()(
     for {
       updated <- orderDal.updateOrdersStatus(
         orderHashes,
-        XOrderStatus.STATUS_CANCELLED_BY_USER
+        OrderStatus.STATUS_CANCELLED_BY_USER
       )
       selectOwners <- orderDal.getOrdersMap(orderHashes)
     } yield {
-      if (updated == XErrorCode.ERR_NONE) {
+      if (updated == ErrorCode.ERR_NONE) {
         orderHashes.map { orderHash =>
           XUserCancelOrderResult.Result(
             orderHash,
             giveUserOrder(selectOwners.get(orderHash)),
-            XErrorCode.ERR_NONE
+            ErrorCode.ERR_NONE
           )
         }
       } else {
@@ -98,14 +97,14 @@ class OrderServiceImpl @Inject()(
       }
     }
 
-  def getOrders(hashes: Seq[String]): Future[Seq[XRawOrder]] =
+  def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]] =
     orderDal.getOrders(hashes)
 
-  def getOrder(hash: String): Future[Option[XRawOrder]] =
+  def getOrder(hash: String): Future[Option[RawOrder]] =
     orderDal.getOrder(hash)
 
   def getOrders(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owners: Set[String],
       tokenSSet: Set[String],
       tokenBSet: Set[String],
@@ -113,7 +112,7 @@ class OrderServiceImpl @Inject()(
       feeTokenSet: Set[String],
       sort: Option[XSort],
       skip: Option[XSkip]
-    ): Future[Seq[XRawOrder]] =
+    ): Future[Seq[RawOrder]] =
     orderDal
       .getOrders(
         statuses,
@@ -128,7 +127,7 @@ class OrderServiceImpl @Inject()(
       .map(_.map(r => giveUserOrder(Some(r)).get))
 
   def getOrdersForUser(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
@@ -136,7 +135,7 @@ class OrderServiceImpl @Inject()(
       feeTokenSet: Option[String] = None,
       sort: Option[XSort] = None,
       skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]] =
+    ): Future[Seq[RawOrder]] =
     orderDal
       .getOrdersForUser(
         statuses,
@@ -151,11 +150,11 @@ class OrderServiceImpl @Inject()(
       .map(_.map(r => giveUserOrder(Some(r)).get))
 
   def getOrdersForRecover(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
       skip: XSkipBySequenceId
-    ): Future[Seq[XRawOrder]] =
+    ): Future[Seq[RawOrder]] =
     orderDal.getOrdersForRecover(
       statuses,
       marketHashIdSet,
@@ -165,7 +164,7 @@ class OrderServiceImpl @Inject()(
 
   // Count the number of orders
   def countOrdersForUser(
-      statuses: Set[XOrderStatus],
+      statuses: Set[OrderStatus],
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
@@ -183,13 +182,13 @@ class OrderServiceImpl @Inject()(
 
   def updateOrderStatus(
       hash: String,
-      status: XOrderStatus
-    ): Future[XErrorCode] = {
+      status: OrderStatus
+    ): Future[ErrorCode] = {
     orderDal.updateOrderStatus(hash, status)
   }
 
   def updateAmount(
       hash: String,
-      state: XRawOrder.State
-    ): Future[XErrorCode] = orderDal.updateAmount(hash, state)
+      state: RawOrder.State
+    ): Future[ErrorCode] = orderDal.updateAmount(hash, state)
 }

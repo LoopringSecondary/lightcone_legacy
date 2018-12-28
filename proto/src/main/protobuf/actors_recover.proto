@@ -48,7 +48,7 @@ message XRecover {
     message Timeout{}
 
     message RecoverOrderReq {
-        XRawOrder raw_order = 1;
+        RawOrder raw_order = 1;
     }
 
     message RecoverOrderRes {

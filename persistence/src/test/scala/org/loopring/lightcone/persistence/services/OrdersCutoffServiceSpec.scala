@@ -39,7 +39,7 @@ class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
       tradingPair: Option[String],
       time: Long,
       blockHeight: Long
-    ): Future[Seq[XErrorCode]] = {
+    ): Future[Seq[ErrorCode]] = {
     for {
       result ← Future.sequence(brokers.map { broker ⇒
         service.saveCutoff(
@@ -60,7 +60,7 @@ class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
       tradingPair: Option[String],
       time: Long,
       blockHeight: Long
-    ): Future[Seq[XErrorCode]] = {
+    ): Future[Seq[ErrorCode]] = {
     for {
       result ← Future.sequence(owners.map { owner ⇒
         service.saveCutoff(
@@ -81,7 +81,7 @@ class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
       tradingPair: Option[String],
       time: Long,
       blockHeight: Long
-    ): Future[Seq[XErrorCode]] = {
+    ): Future[Seq[ErrorCode]] = {
     for {
       result ← Future.sequence(brokers.map { broker ⇒
         service.saveCutoff(
@@ -119,10 +119,7 @@ class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
         10000000L
       ) // true
     } yield q
-    val res = Await.result(
-      result.mapTo[Boolean],
-      5.second
-    )
+    val res = Await.result(result.mapTo[Boolean], 5.second)
     res should be(true)
   }
 

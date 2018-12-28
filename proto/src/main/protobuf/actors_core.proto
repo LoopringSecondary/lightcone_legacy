@@ -38,7 +38,7 @@ message XOrder {
     bytes amount_fee = 7;
     int64 created_at = 8;
     int64 updated_at = 9;
-    XOrderStatus status = 10;
+    OrderStatus status = 10;
     double wallet_split_percentage = 11;
     OrderState outstanding = 12;
     OrderState reserved = 13;
@@ -57,11 +57,11 @@ message OrderRing {
     ExpectedOrderFill taker = 2;
 }
 
-message XGetOrderFilledAmountReq {
+message GetOrderFilledAmountReq {
     string order_id = 1;
 }
 
-message XGetOrderFilledAmountRes {
+message GetOrderFilledAmountRes {
     string order_id = 1;
     bytes filled_amount_s = 2;
 }
@@ -73,32 +73,32 @@ message XBalanceAndAllowance {
     bytes availableAllowance = 4;
 }
 
-message XGetBalanceAndAllowancesReq {
+message GetBalanceAndAllowancesReq {
     string address = 1;
     repeated string tokens = 2;
 }
 
-message XGetBalanceAndAllowancesRes {
+message GetBalanceAndAllowancesRes {
     string address = 1;
     map<string, XBalanceAndAllowance> balance_and_allowance_map = 2;
     XError error = 3;
 }
 
-message XGetBalanceReq{
+message GetBalanceReq{
     string address = 1;
     repeated string tokens = 2;
 }
-message XGetBalanceRes {
+message GetBalanceRes {
     string address = 1;
     map<string, bytes> balance_map = 2;
     XError error = 3;
 }
 
-message XGetAllowanceReq{
+message GetAllowanceReq{
     string address = 1;
     repeated string tokens = 2;
 }
-message XGetAllowanceRes {
+message GetAllowanceRes {
     string address = 1;
     map<string, bytes> allowance_map = 2;
     XError error = 3;
@@ -140,14 +140,14 @@ message UpdateFilledAmountReq {
 }
 
 message UpdateFilledAmountRes {
-    XErrorCode error = 1;
+    ErrorCode error = 1;
 }
 
-message XGetFilledAmountReq {
+message GetFilledAmountReq {
     repeated string order_ids = 1;
 }
 
-message XGetFilledAmountRes {
+message GetFilledAmountRes {
     map<string, bytes> filled_amount_s_map = 1;
 }
 
@@ -158,7 +158,7 @@ message XUpdateBalanceAndAllowanceReq {
 }
 
 message XUpdateBalanceAndAllowanceRes {
-    XErrorCode error = 1;
+    ErrorCode error = 1;
     XBalanceAndAllowance balance_and_allowance = 2;
 }
 
@@ -214,9 +214,9 @@ message XSettleRingsReq {
     bytes gas_price = 3;
 }
 
-message XGetGasPriceReq {}
+message GetGasPriceReq {}
 
-message XGetGasPriceRes {
+message GetGasPriceRes {
     bytes gas_price = 1;
 }
 

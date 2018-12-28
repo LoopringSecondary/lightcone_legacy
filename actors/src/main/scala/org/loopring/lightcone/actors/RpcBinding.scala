@@ -21,24 +21,24 @@ import org.loopring.lightcone.proto._
 
 trait RpcBinding extends JsonRpcModule {
 
-  ifReceive[XGetOrderbook].thenReply[XOrderbook]("orderbook")
+  ifReceive[GetOrderbook].thenReply[XOrderbook]("orderbook")
 
   ifReceive[XSubmitOrderReq].thenReply[XSubmitOrderRes]("submit_order")
 
   ifReceive[XCancelOrderReq].thenReply[XCancelOrderRes]("cancel_order")
 
   // db query
-  ifReceive[XGetOrdersForUserReq]
-    .thenReply[XGetOrdersForUserResult]("get_orders")
-  ifReceive[XGetTradesReq]
-    .thenReply[XGetTradesResult]("get_trades")
+  ifReceive[GetOrdersForUserReq]
+    .thenReply[GetOrdersForUserResult]("get_orders")
+  ifReceive[GetTradesReq]
+    .thenReply[GetTradesResult]("get_trades")
 
   //Ethereum Query
-  ifReceive[XGetAllowanceReq]
-    .thenReply[XGetAllowanceRes]("get_allowance")
-  ifReceive[XGetBalanceReq].thenReply[XGetBalanceRes]("get_balance")
-  ifReceive[XGetBalanceAndAllowancesReq]
-    .thenReply[XGetBalanceAndAllowancesRes]("get_balance_and_allowance")
-  ifReceive[XGetFilledAmountReq]
-    .thenReply[XGetFilledAmountRes]("get_filled_amount")
+  ifReceive[GetAllowanceReq]
+    .thenReply[GetAllowanceRes]("get_allowance")
+  ifReceive[GetBalanceReq].thenReply[GetBalanceRes]("get_balance")
+  ifReceive[GetBalanceAndAllowancesReq]
+    .thenReply[GetBalanceAndAllowancesRes]("get_balance_and_allowance")
+  ifReceive[GetFilledAmountReq]
+    .thenReply[GetFilledAmountRes]("get_filled_amount")
 }

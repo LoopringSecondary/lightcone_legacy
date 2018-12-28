@@ -19,7 +19,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
-enum XOrderStatus {
+enum OrderStatus {
     STATUS_NEW = 0;
     STATUS_PENDING = 1;
     STATUS_EXPIRED = 2;
@@ -39,7 +39,7 @@ enum XOrderStatus {
     STATUS_UNSUPPORTED_MARKET = 202;
 }
 
-enum XErrorCode{
+enum ErrorCode{
     // 0 NONE ERROR
     ERR_NONE = 0;
     ERR_INTERNAL_UNKNOWN = 1;
@@ -97,11 +97,11 @@ enum XErrorCode{
 }
 
 message XError{
-    XErrorCode code = 1;
+    ErrorCode code = 1;
     string message = 2;
 }
 
-enum XTokenStandard {
+enum TokenStandard {
     ERC20   = 0;
     ERC1400 = 1;
 }
@@ -115,7 +115,7 @@ enum XSigningAlgorithm {
 
 
 // use bytes to represent big-numbers and string for addresses
-message XRawOrder {
+message RawOrder {
     message Params {
         string dual_auth_addr                      = 1;
         string broker                              = 2;
@@ -125,9 +125,9 @@ message XRawOrder {
         string sig                                 = 6;
         string dual_auth_sig                       = 7;
         bool   all_or_none                         = 8;
-        XTokenStandard token_standard_s            = 9;
-        XTokenStandard token_standard_b            = 10;
-        XTokenStandard token_standard_fee          = 11;
+        TokenStandard token_standard_s            = 9;
+        TokenStandard token_standard_b            = 10;
+        TokenStandard token_standard_fee          = 11;
         string dual_auth_private_key               = 12;
     }
 
@@ -154,7 +154,7 @@ message XRawOrder {
         int64 updated_at              = 102;
         int64 matched_at              = 103;
         int64 updated_at_block        = 104;
-        XOrderStatus status           = 105;
+        OrderStatus status           = 105;
 
         bytes actual_amount_s         = 200;
         bytes actual_amount_b         = 201;
@@ -192,7 +192,7 @@ message XRingBatch {
     string miner                    = 2;
     string sig                      = 3;
     repeated XRing rings            = 4;
-    repeated XRawOrder orders       = 5;
+    repeated RawOrder orders       = 5;
     XSigningAlgorithm sign_algorithm = 6;
     string hash                     = 7;
     string transaction_origin       = 8;

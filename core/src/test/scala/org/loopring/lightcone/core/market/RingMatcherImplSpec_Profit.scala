@@ -36,7 +36,7 @@ import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.scalatest._
-import XErrorCode._
+import ErrorCode._
 
 class RingMatcherImplSpec_Profit extends OrderAwareSpec {
 

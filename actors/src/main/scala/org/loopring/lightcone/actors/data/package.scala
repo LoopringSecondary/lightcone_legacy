@@ -19,8 +19,8 @@ package org.loopring.lightcone.actors
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 
 package object data {
@@ -147,10 +147,10 @@ package object data {
     )
 
   implicit def expectedMatchableFill2ExpectedOrderFill(
-      xraworder: XRawOrder
+      xraworder: RawOrder
     ): XOrder = {
 
-    val feeParams = xraworder.feeParams.getOrElse(XRawOrder.FeeParams())
+    val feeParams = xraworder.feeParams.getOrElse(RawOrder.FeeParams())
     XOrder(
       id = xraworder.hash,
       tokenS = xraworder.tokenS,
@@ -166,7 +166,7 @@ package object data {
     )
   }
 
-  implicit def convertOrderStatusToErrorCode(status: XOrderStatus): XErrorCode =
+  implicit def convertOrderStatusToErrorCode(status: OrderStatus): ErrorCode =
     status match {
       case STATUS_INVALID_DATA              => ERR_INVALID_ORDER_DATA
       case STATUS_UNSUPPORTED_MARKET        => ERR_INVALID_MARKET

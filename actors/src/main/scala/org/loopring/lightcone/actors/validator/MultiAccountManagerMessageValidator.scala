@@ -39,7 +39,7 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
       req.order match {
         case None =>
           throw ErrorException(
-            XErrorCode.ERR_INVALID_ARGUMENT,
+            ErrorCode.ERR_INVALID_ARGUMENT,
             s"bad request:${req}"
           )
         case Some(order) =>
@@ -58,7 +58,7 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
           )
       }
     case req: XRecover.RecoverOrderReq => req
-    case req: XGetBalanceAndAllowancesReq ⇒
+    case req: GetBalanceAndAllowancesReq ⇒
       req.copy(
         address = Address.normalizeAddress(req.address),
         tokens = req.tokens.map(Address.normalizeAddress)

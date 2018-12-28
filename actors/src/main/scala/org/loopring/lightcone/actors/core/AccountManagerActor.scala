@@ -30,8 +30,8 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data.Matchable
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 
 import scala.concurrent._
@@ -71,7 +71,7 @@ class AccountManagerActor(
         XRecover.RecoverOrderRes(xraworder.id, true)
       }.sendTo(sender)
 
-    case XGetBalanceAndAllowancesReq(addr, tokens) =>
+    case GetBalanceAndAllowancesReq(addr, tokens) =>
       assert(addr == address)
       (for {
         managers <- getTokenManagers(tokens)
@@ -86,7 +86,7 @@ class AccountManagerActor(
             )
         }
       } yield {
-        XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
+        GetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
     case XSubmitSimpleOrderReq(_, Some(xorder)) =>
@@ -124,9 +124,9 @@ class AccountManagerActor(
         Future.successful(Unit)
 
       // Update the order's _outstanding field.
-      getFilledAmountRes <- (ethereumQueryActor ? XGetFilledAmountReq(
+      getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmountReq(
         Seq(matchable.id)
-      )).mapAs[XGetFilledAmountRes]
+      )).mapAs[GetFilledAmountRes]
 
       _ = log.debug(s"order history: orderHistoryRes")
 
@@ -164,10 +164,10 @@ class AccountManagerActor(
     } else {
       log.debug(s"getTokenManager0 ${token}")
       for {
-        res <- (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
+        res <- (ethereumQueryActor ? GetBalanceAndAllowancesReq(
           address,
           Seq(token)
-        )).mapAs[XGetBalanceAndAllowancesRes]
+        )).mapAs[GetBalanceAndAllowancesRes]
         tm = new AccountTokenManagerImpl(
           token,
           config.getInt("account_manager.max_order_num")
@@ -188,12 +188,12 @@ class AccountManagerActor(
       tokens.filterNot(token ⇒ manager.hasTokenManager(token))
     for {
       res <- if (tokensWithoutMaster.nonEmpty) {
-        (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
+        (ethereumQueryActor ? GetBalanceAndAllowancesReq(
           address,
           tokensWithoutMaster
-        )).mapAs[XGetBalanceAndAllowancesRes]
+        )).mapAs[GetBalanceAndAllowancesRes]
       } else {
-        Future.successful(XGetBalanceAndAllowancesRes())
+        Future.successful(GetBalanceAndAllowancesRes())
       }
       tms = tokensWithoutMaster.map(
         token ⇒
@@ -247,7 +247,7 @@ class AccountManagerActor(
                 s"unexpected order status caused by balance/allowance upate: $status"
               )
               throw ErrorException(
-                XErrorCode.ERR_INTERNAL_UNKNOWN,
+                ErrorCode.ERR_INTERNAL_UNKNOWN,
                 s"unexpected order status caused by balance/allowance upate: $status"
               )
           }

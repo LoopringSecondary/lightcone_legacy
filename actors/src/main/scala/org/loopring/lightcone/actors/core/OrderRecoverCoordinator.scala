@@ -26,7 +26,7 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import akka.serialization._

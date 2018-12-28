@@ -20,7 +20,7 @@ import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
 import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
-import org.loopring.lightcone.proto.{XOrderStatus, XRawOrder}
+import org.loopring.lightcone.proto.{OrderStatus, RawOrder}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
@@ -83,29 +83,29 @@ trait ServiceSpec[S]
       owner: String = "0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10",
       tokenS: String = "0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1",
       tokenB: String = "0x8B75225571ff31B58F95C704E05044D5CF6B32BF",
-      status: XOrderStatus = XOrderStatus.STATUS_NEW,
+      status: OrderStatus = OrderStatus.STATUS_NEW,
       validSince: Int,
       validUntil: Int,
       amountS: BigInt = "10".zeros(18),
       amountB: BigInt = "1".zeros(18),
       tokenFee: String = "0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1",
       amountFee: BigInt = "3".zeros(18)
-    ): XRawOrder = {
+    ): RawOrder = {
     val createAt = timeProvider.getTimeMillis
     val state =
-      XRawOrder.State(
+      RawOrder.State(
         createdAt = createAt,
         updatedAt = createAt,
         status = status
       )
-    val fee = XRawOrder.FeeParams(
+    val fee = RawOrder.FeeParams(
       tokenFee = tokenFee,
       amountFee = ByteString.copyFrom("111", "utf-8")
     )
     val since = if (validSince > 0) validSince else (createAt / 1000).toInt
     val until =
       if (validUntil > 0) validUntil else (createAt / 1000).toInt + 20000
-    val param = XRawOrder.Params(validUntil = until)
+    val param = RawOrder.Params(validUntil = until)
     val marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
     val hash = Hash.sha3(
       BigInt(createAt).toByteArray ++
@@ -117,7 +117,7 @@ trait ServiceSpec[S]
         amountB.toByteArray ++
         amountFee.toByteArray
     )
-    XRawOrder(
+    RawOrder(
       owner = owner,
       hash = Numeric.toHexString(hash),
       version = 1,

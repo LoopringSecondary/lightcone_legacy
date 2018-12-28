@@ -23,7 +23,7 @@ import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent.ExecutionContext
 
@@ -58,18 +58,18 @@ class EntryPointActor(
     case _: XSubmitOrderReq | _: XCancelOrderReq =>
       Some(OrderHandlerMessageValidator.name)
 
-    case _: XGetBalanceAndAllowancesReq ⇒
+    case _: GetBalanceAndAllowancesReq ⇒
       Some(MultiAccountManagerMessageValidator.name)
 
-    case _: XGetBalanceReq | _: XGetAllowanceReq | _: XGetFilledAmountReq ⇒
+    case _: GetBalanceReq | _: GetAllowanceReq | _: GetFilledAmountReq ⇒
       Some(EthereumQueryMessageValidator.name)
 
     case _: XJsonRpcReq | _: XRpcReqWithHeight ⇒
       Some(EthereumAccessActor.name)
 
-    case _: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
+    case _: GetOrderbook => Some(OrderbookManagerMessageValidator.name)
 
-    case _: XGetOrdersForUserReq | _: XGetTradesReq =>
+    case _: GetOrdersForUserReq | _: GetTradesReq =>
       Some(DatabaseQueryMessageValidator.name)
 
     case _ => None

@@ -119,7 +119,7 @@ class EthereumAccessActor(
           .forward(req.req)
       } else {
         sender ! ErrorException(
-          code = XErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
+          code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
           message = "No accessible Ethereum node service"
         )
       }
@@ -129,7 +129,7 @@ class EthereumAccessActor(
         context.actorSelection(connectionPools.head._1).forward(msg)
       } else {
         sender ! ErrorException(
-          code = XErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
+          code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
           message = "No accessible Ethereum node service"
         )
       }
@@ -140,7 +140,7 @@ class EthereumAccessActor(
         context.actorSelection(connectionPools.head._1).forward(msg)
       } else {
         sender ! ErrorException(
-          code = XErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
+          code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
           message = "No accessible Ethereum node service"
         )
       }

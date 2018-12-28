@@ -33,7 +33,7 @@ import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 
 import scala.collection.JavaConverters._
@@ -46,8 +46,7 @@ object MarketManagerActor extends ShardedByMarket {
 
   def startShardRegion(
     )(
-      implicit
-      system: ActorSystem,
+      implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -94,8 +93,7 @@ object MarketManagerActor extends ShardedByMarket {
 class MarketManagerActor(
     markets: Map[String, XMarketId]
   )(
-    implicit
-    val config: Config,
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -211,7 +209,7 @@ class MarketManagerActor(
 
     case XTriggerRematchReq(sellOrderAsTaker, offset) =>
       for {
-        res <- (gasPriceActor ? XGetGasPriceReq()).mapAs[XGetGasPriceRes]
+        res <- (gasPriceActor ? GetGasPriceReq()).mapAs[GetGasPriceRes]
         gasPrice: BigInt = res.gasPrice
         minRequiredIncome = getRequiredMinimalIncome(gasPrice)
         _ = manager
@@ -228,10 +226,10 @@ class MarketManagerActor(
     )
     val matchable: Matchable = xorder
     xorder.status match {
-      case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING =>
+      case OrderStatus.STATUS_NEW | OrderStatus.STATUS_PENDING =>
         for {
           // get ring settlement cost
-          res <- (gasPriceActor ? XGetGasPriceReq()).mapAs[XGetGasPriceRes]
+          res <- (gasPriceActor ? GetGasPriceReq()).mapAs[GetGasPriceRes]
 
           gasPrice: BigInt = res.gasPrice
           minRequiredIncome = getRequiredMinimalIncome(gasPrice)
@@ -279,7 +277,7 @@ class MarketManagerActor(
     }
   }
 
-  def recoverOrder(xraworder: XRawOrder): Future[Any] =
+  def recoverOrder(xraworder: RawOrder): Future[Any] =
     submitOrder(xraworder)
 
 }

@@ -53,7 +53,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       info(s"submit res: ${submitRes}")
 
       Thread.sleep(1000)
-      actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
+      actors.get(OrderbookManagerActor.name) ! GetOrderbook(
         0,
         100,
         Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -70,7 +70,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       val cancelReq = XCancelOrderReq(
         id = rawOrder.hash,
         owner = rawOrder.owner,
-        status = XOrderStatus.STATUS_CANCELLED_BY_USER,
+        status = OrderStatus.STATUS_CANCELLED_BY_USER,
         marketId = Some(XMarketId(rawOrder.tokenS, rawOrder.tokenB))
       )
 
@@ -83,13 +83,13 @@ class CoreActorsIntegrationSpec_CancelOneOrder
 
       val getOrderFromDbF = dbModule.orderService.getOrder(rawOrder.hash)
       val getOrderFromDb =
-        Await.result(getOrderFromDbF.mapTo[Option[XRawOrder]], timeout.duration)
+        Await.result(getOrderFromDbF.mapTo[Option[RawOrder]], timeout.duration)
 
       getOrderFromDb map { o =>
-        o.getState.status should be(XOrderStatus.STATUS_CANCELLED_BY_USER)
+        o.getState.status should be(OrderStatus.STATUS_CANCELLED_BY_USER)
       }
 
-      actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
+      actors.get(OrderbookManagerActor.name) ! GetOrderbook(
         0,
         100,
         Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))

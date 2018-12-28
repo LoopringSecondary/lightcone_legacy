@@ -82,7 +82,7 @@ class EntryPointSpec_SubmitSeveralOrder
           orderOpt match {
             case Some(order) =>
               assert(order.sequenceId > 0)
-              assert(order.getState.status == XOrderStatus.STATUS_PENDING)
+              assert(order.getState.status == OrderStatus.STATUS_PENDING)
             case None =>
               assert(false)
           }
@@ -91,7 +91,7 @@ class EntryPointSpec_SubmitSeveralOrder
 
       //orderbook
       Thread.sleep(1000)
-      val getOrderBook = XGetOrderbook(
+      val getOrderBook = GetOrderbook(
         0,
         100,
         Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -126,7 +126,7 @@ class EntryPointSpec_SubmitSeveralOrder
       val cancelReq = XCancelOrderReq(
         rawOrders(0).hash,
         rawOrders(0).owner,
-        XOrderStatus.STATUS_CANCELLED_BY_USER,
+        OrderStatus.STATUS_CANCELLED_BY_USER,
         Some(XMarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
       )
 
@@ -142,10 +142,10 @@ class EntryPointSpec_SubmitSeveralOrder
             case Some(order) =>
               if (order.hash == rawOrders(0).hash) {
                 assert(
-                  order.getState.status == XOrderStatus.STATUS_CANCELLED_BY_USER
+                  order.getState.status == OrderStatus.STATUS_CANCELLED_BY_USER
                 )
               } else {
-                assert(order.getState.status == XOrderStatus.STATUS_PENDING)
+                assert(order.getState.status == OrderStatus.STATUS_PENDING)
               }
             case None =>
               assert(false)

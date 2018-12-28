@@ -47,7 +47,7 @@ case class SupportedMarkets(config: Config) {
     ): Option[XMarketId] = {
     marketIdOpt match {
       case None =>
-        throw ErrorException(XErrorCode.ERR_INVALID_MARKET)
+        throw ErrorException(ErrorCode.ERR_INVALID_MARKET)
       case Some(marketId) =>
         val marketIdRes = assertmarketIdIsValid(marketId)
         Some(marketIdRes)
@@ -57,7 +57,7 @@ case class SupportedMarkets(config: Config) {
   def assertmarketIdIsValid(marketId: XMarketId): XMarketId = {
     if (!contains(marketId))
       throw ErrorException(
-        XErrorCode.ERR_INVALID_MARKET,
+        ErrorCode.ERR_INVALID_MARKET,
         s"invalid market: ${marketId}"
       )
     marketId.copy(

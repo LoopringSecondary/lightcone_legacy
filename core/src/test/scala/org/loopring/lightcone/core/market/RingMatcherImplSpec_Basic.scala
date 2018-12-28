@@ -21,7 +21,7 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.scalatest._
-import XErrorCode._
+import ErrorCode._
 
 class RingMatcherImplSpec_Basic extends OrderAwareSpec {
 
@@ -94,7 +94,7 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
           0,
           -1,
           -1,
-          XOrderStatus.STATUS_PENDING,
+          OrderStatus.STATUS_PENDING,
           0.0,
           None,
           None,
@@ -111,7 +111,7 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
           0,
           -1,
           -1,
-          XOrderStatus.STATUS_PENDING,
+          OrderStatus.STATUS_PENDING,
           0.0,
           None,
           None,
