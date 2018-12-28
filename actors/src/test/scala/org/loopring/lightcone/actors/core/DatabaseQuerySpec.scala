@@ -47,18 +47,13 @@ class DatabaseQuerySpec
       validUntil: Int
     ): Future[Either[XRawOrder, XErrorCode]] = {
     val now = timeProvider.getTimeMillis
-    val state = XRawOrder.State(
-      createdAt = now,
-      updatedAt = now,
-      status = status
-    )
+    val state =
+      XRawOrder.State(createdAt = now, updatedAt = now, status = status)
     val fee = XRawOrder.FeeParams(
       tokenFee = tokenFee,
       amountFee = ByteString.copyFrom("111", "utf-8")
     )
-    val param = XRawOrder.Params(
-      validUntil = validUntil
-    )
+    val param = XRawOrder.Params(validUntil = validUntil)
     var order = XRawOrder(
       owner = owner,
       hash = hash,
@@ -127,10 +122,10 @@ class DatabaseQuerySpec
         "0x-getorders-actor-04",
         "0x-getorders-actor-05"
       )
-      val request = XGetOrdersForUserReq(
+      val request = GetOrdersForUserReq(
         owner = "0x-getorders-actor-03",
         statuses = Seq(XOrderStatus.STATUS_NEW),
-        market = XGetOrdersForUserReq.Market
+        market = GetOrdersForUserReq.Market
           .Pair(MarketPair(tokenS = tokenS, tokenB = tokenB))
       )
       val r = for {
@@ -142,14 +137,11 @@ class DatabaseQuerySpec
           validSince,
           validUntil.toInt
         )
-        response <- singleRequest(
-          request,
-          method
-        )
+        response <- singleRequest(request, method)
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case XGetOrdersForUserResult(orders, error) =>
+        case GetOrdersForUserResult(orders, error) =>
           assert(orders.nonEmpty && orders.length === 1)
           assert(error === XErrorCode.ERR_NONE)
         case _ => assert(false)
@@ -162,9 +154,9 @@ class DatabaseQuerySpec
       val method = "get_trades"
       val tokenS = "0xaaaaaaa2"
       val tokenB = "0xbbbbbbb2"
-      val tradesReq = XGetTradesReq(
+      val tradesReq = GetTradesReq(
         owner = "0x-gettrades-actor-02",
-        market = XGetTradesReq.Market
+        market = GetTradesReq.Market
           .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB)),
         skip = Some(XSkip(0, 10)),
         sort = XSort.ASC
@@ -180,14 +172,11 @@ class DatabaseQuerySpec
         _ ← Future.sequence(hashes.map { hash ⇒
           testSaveTrade(hash, hash, tokenS, tokenB, 1L)
         })
-        response <- singleRequest(
-          tradesReq,
-          method
-        )
+        response <- singleRequest(tradesReq, method)
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case XGetTradesResult(trades, error) =>
+        case GetTradesResult(trades, error) =>
           assert(trades.nonEmpty && trades.length === 1)
           assert(error === XErrorCode.ERR_NONE)
         case _ => assert(false)

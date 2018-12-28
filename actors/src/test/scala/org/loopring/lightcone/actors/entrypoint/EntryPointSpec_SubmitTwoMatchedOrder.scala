@@ -23,17 +23,15 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class EntryPointSpec_SubmitTwoMatchedOrder
-    extends CommonSpec(
-      """
-        |akka.cluster.roles=[
-        | "order_handler",
-        | "multi_account_manager",
-        | "market_manager",
-        | "orderbook_manager",
-        | "gas_price",
-        | "ring_settlement"]
-        |""".stripMargin
-    )
+    extends CommonSpec("""
+                         |akka.cluster.roles=[
+                         | "order_handler",
+                         | "multi_account_manager",
+                         | "market_manager",
+                         | "orderbook_manager",
+                         | "gas_price",
+                         | "ring_settlement"]
+                         |""".stripMargin)
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport
@@ -70,15 +68,12 @@ class EntryPointSpec_SubmitTwoMatchedOrder
       Await.result(f1, timeout.duration)
 
       Thread.sleep(1000)
-      val getOrderBook = XGetOrderbook(
+      val getOrderBook = GetOrderbook(
         0,
         100,
         Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF2 = singleRequest(
-        getOrderBook,
-        "orderbook"
-      )
+      val orderbookF2 = singleRequest(getOrderBook, "orderbook")
       val orderbookRes2 = Await.result(orderbookF2, timeout.duration)
       orderbookRes2 match {
         case XOrderbook(lastPrice, sells, buys) =>
@@ -92,15 +87,12 @@ class EntryPointSpec_SubmitTwoMatchedOrder
         case _ => assert(false)
       }
 
-      val getOrderBook1 = XGetOrderbook(
+      val getOrderBook1 = GetOrderbook(
         1,
         100,
         Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF1 = singleRequest(
-        getOrderBook1,
-        "orderbook"
-      )
+      val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
         case XOrderbook(lastPrice, sells, buys) =>

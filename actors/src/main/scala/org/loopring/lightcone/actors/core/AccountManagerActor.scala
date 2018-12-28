@@ -71,7 +71,7 @@ class AccountManagerActor(
         XRecover.RecoverOrderRes(xraworder.id, true)
       }.sendTo(sender)
 
-    case XGetBalanceAndAllowancesReq(addr, tokens) =>
+    case GetBalanceAndAllowancesReq(addr, tokens) =>
       assert(addr == address)
       (for {
         managers <- getTokenManagers(tokens)
@@ -86,7 +86,7 @@ class AccountManagerActor(
             )
         }
       } yield {
-        XGetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
+        GetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
     case XSubmitSimpleOrderReq(_, Some(xorder)) =>
@@ -124,9 +124,9 @@ class AccountManagerActor(
         Future.successful(Unit)
 
       // Update the order's _outstanding field.
-      getFilledAmountRes <- (ethereumQueryActor ? XGetFilledAmountReq(
+      getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmountReq(
         Seq(order.id)
-      )).mapAs[XGetFilledAmountRes]
+      )).mapAs[GetFilledAmountRes]
 
       _ = log.debug(s"order history: orderHistoryRes")
 
@@ -162,10 +162,10 @@ class AccountManagerActor(
     } else {
       log.debug(s"getTokenManager0 ${token}")
       for {
-        res <- (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
+        res <- (ethereumQueryActor ? GetBalanceAndAllowancesReq(
           address,
           Seq(token)
-        )).mapAs[XGetBalanceAndAllowancesRes]
+        )).mapAs[GetBalanceAndAllowancesRes]
         tm = new AccountTokenManagerImpl(
           token,
           config.getInt("account_manager.max_order_num")
@@ -186,12 +186,12 @@ class AccountManagerActor(
       tokens.filterNot(token ⇒ manager.hasTokenManager(token))
     for {
       res <- if (tokensWithoutMaster.nonEmpty) {
-        (ethereumQueryActor ? XGetBalanceAndAllowancesReq(
+        (ethereumQueryActor ? GetBalanceAndAllowancesReq(
           address,
           tokensWithoutMaster
-        )).mapAs[XGetBalanceAndAllowancesRes]
+        )).mapAs[GetBalanceAndAllowancesRes]
       } else {
-        Future.successful(XGetBalanceAndAllowancesRes())
+        Future.successful(GetBalanceAndAllowancesRes())
       }
       tms = tokensWithoutMaster.map(
         token ⇒

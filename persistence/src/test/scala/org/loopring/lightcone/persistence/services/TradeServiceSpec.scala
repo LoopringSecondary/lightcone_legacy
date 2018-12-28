@@ -58,9 +58,9 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
       _ ← testSave("0x-mock-01", "0x-mock-01", tokenS, tokenB, 1L)
       _ ← testSave("0x-mock-02", "0x-mock-02", tokenS, tokenB, 1L)
       query ← service.getTrades(
-        XGetTradesReq(
+        GetTradesReq(
           owner = hash,
-          market = XGetTradesReq.Market
+          market = GetTradesReq.Market
             .Pair(MarketPair(tokenB = tokenB, tokenS = tokenS))
         )
       )
@@ -93,16 +93,16 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         testSave(hash, hash, "0x00001", "0x00002", 1L)
       })
       query1 ← service.getTrades(
-        XGetTradesReq(
+        GetTradesReq(
           owner = "0x-gettrades-state0-02",
-          market = XGetTradesReq.Market
+          market = GetTradesReq.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )
       query2 ← service.getTrades(
-        XGetTradesReq(
+        GetTradesReq(
           owner = "0x-gettrades-token-02",
-          market = XGetTradesReq.Market
+          market = GetTradesReq.Market
             .Pair(MarketPair(tokenB = "0x00002", tokenS = "0x00001"))
         )
       )
@@ -126,9 +126,9 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         testSave(hash, hash, tokenS, tokenB, 1L)
       })
       query ← service.countTrades(
-        XGetTradesReq(
+        GetTradesReq(
           owner = "0x-counttrades-02",
-          market = XGetTradesReq.Market
+          market = GetTradesReq.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )
@@ -175,17 +175,17 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         testSave(hash, owner, tokenS, tokenB, 20L)
       })
       count1 ← service.countTrades(
-        XGetTradesReq(
+        GetTradesReq(
           owner = owner,
-          market = XGetTradesReq.Market
+          market = GetTradesReq.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )
       _ ← service.obsolete(30L)
       count2 ← service.countTrades(
-        XGetTradesReq(
+        GetTradesReq(
           owner = owner,
-          market = XGetTradesReq.Market
+          market = GetTradesReq.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )

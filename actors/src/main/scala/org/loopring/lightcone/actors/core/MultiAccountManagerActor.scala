@@ -67,7 +67,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
     case XRecover.RecoverOrderReq(Some(raworder)) => raworder.owner
     case req: XCancelOrderReq ⇒ req.owner
     case req: XSubmitSimpleOrderReq ⇒ req.owner
-    case req: XGetBalanceAndAllowancesReq ⇒ req.address
+    case req: GetBalanceAndAllowancesReq ⇒ req.address
     case req: XAddressBalanceUpdated ⇒ req.address
     case req: XAddressAllowanceUpdated ⇒ req.address
   }

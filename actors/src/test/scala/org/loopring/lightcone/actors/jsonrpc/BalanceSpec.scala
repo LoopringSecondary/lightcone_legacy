@@ -56,7 +56,7 @@ class BalanceSpec
       val method = "get_balance_and_allowance"
       val owner = "0xb5fab0b11776aad5ce60588c16bd59dcfd61a1c2"
       val getBalanceReq =
-        XGetBalanceAndAllowancesReq(owner, tokens = Seq(LRC, WETH))
+        GetBalanceAndAllowancesReq(owner, tokens = Seq(LRC, WETH))
       val maker = Order(
         id = "maker1",
         tokenS = LRC,
@@ -85,7 +85,7 @@ class BalanceSpec
       } yield (firstQuery, secondQuery)
       val res = Await.result(r, timeout.duration)
       res match {
-        case (f: XGetBalanceAndAllowancesRes, s: XGetBalanceAndAllowancesRes) =>
+        case (f: GetBalanceAndAllowancesRes, s: GetBalanceAndAllowancesRes) =>
           val bf: BigInt =
             f.balanceAndAllowanceMap(LRC).availableBalance
           val bs: BigInt =

@@ -58,18 +58,18 @@ class EntryPointActor(
     case _: XSubmitOrderReq | _: XCancelOrderReq =>
       Some(OrderHandlerActor.name)
 
-    case _: XGetBalanceAndAllowancesReq ⇒
+    case _: GetBalanceAndAllowancesReq ⇒
       Some(MultiAccountManagerMessageValidator.name)
 
-    case _: XGetBalanceReq | _: XGetAllowanceReq | _: XGetFilledAmountReq ⇒
+    case _: GetBalanceReq | _: GetAllowanceReq | _: GetFilledAmountReq ⇒
       Some(EthereumQueryMessageValidator.name)
 
     case _: XJsonRpcReq | _: XRpcReqWithHeight ⇒
       Some(EthereumAccessActor.name)
 
-    case _: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
+    case _: GetOrderbook => Some(OrderbookManagerMessageValidator.name)
 
-    case _: XGetOrdersForUserReq | _: XGetTradesReq =>
+    case _: GetOrdersForUserReq | _: GetTradesReq =>
       Some(DatabaseQueryMessageValidator.name)
 
     case _ => None

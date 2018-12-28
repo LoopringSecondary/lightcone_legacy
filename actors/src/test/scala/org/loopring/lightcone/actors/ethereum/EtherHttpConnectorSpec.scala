@@ -77,49 +77,49 @@ import org.json4s.DefaultFormats
 //    blockNum ← (ethConnectionActor ? XEthBlockNumberReq())
 //      .mapTo[XEthBlockNumberRes]
 //      .map(_.result)
-//    blockWithTxHash ← (ethConnectionActor ? XGetBlockWithTxHashByNumberReq(
+//    blockWithTxHash ← (ethConnectionActor ? GetBlockWithTxHashByNumberReq(
 //      blockNum
-//    )).mapTo[XGetBlockWithTxHashByNumberRes]
+//    )).mapTo[GetBlockWithTxHashByNumberRes]
 //      .map(_.result.get)
-//    blockWithTxObjcet ← (ethConnectionActor ? XGetBlockWithTxObjectByNumberReq(
+//    blockWithTxObjcet ← (ethConnectionActor ? GetBlockWithTxObjectByNumberReq(
 //      blockNum
-//    )).mapTo[XGetBlockWithTxObjectByNumberRes]
+//    )).mapTo[GetBlockWithTxObjectByNumberRes]
 //      .map(_.result.get)
-//    blockByHashWithHash ← (ethConnectionActor ? XGetBlockWithTxHashByHashReq(
+//    blockByHashWithHash ← (ethConnectionActor ? GetBlockWithTxHashByHashReq(
 //      blockWithTxHash.hash
-//    )).mapTo[XGetBlockWithTxHashByHashRes]
+//    )).mapTo[GetBlockWithTxHashByHashRes]
 //      .map(_.result.get)
-//    blockByHashwithObject ← (ethConnectionActor ? XGetBlockWithTxObjectByHashReq(
+//    blockByHashwithObject ← (ethConnectionActor ? GetBlockWithTxObjectByHashReq(
 //      blockWithTxHash.hash
-//    )).mapTo[XGetBlockWithTxObjectByHashRes]
+//    )).mapTo[GetBlockWithTxObjectByHashRes]
 //      .map(_.result.get)
 //    txs ← Future
 //      .sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
-//        (ethConnectionActor ? XGetTransactionByHashReq(hash))
-//          .mapTo[XGetTransactionByHashRes]
+//        (ethConnectionActor ? GetTransactionByHashReq(hash))
+//          .mapTo[GetTransactionByHashRes]
 //          .map(_.result.get)
 //      })
 //    receipts ← Future
 //      .sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
-//        (ethConnectionActor ? XGetTransactionReceiptReq(hash))
-//          .mapTo[XGetTransactionReceiptRes]
+//        (ethConnectionActor ? GetTransactionReceiptReq(hash))
+//          .mapTo[GetTransactionReceiptRes]
 //          .map(_.result.get)
 //      })
 //    batchReceipts ← (ethConnectionActor ? XBatchGetTransactionReceiptsReq(
-//      blockWithTxHash.transactions.map(XGetTransactionReceiptReq(_))
+//      blockWithTxHash.transactions.map(GetTransactionReceiptReq(_))
 //    )).mapTo[XBatchGetTransactionReceiptsRes]
 //      .map(_.resps.map(_.result.get))
-//    nonce ← (ethConnectionActor ? XGetNonceReq(
+//    nonce ← (ethConnectionActor ? GetNonceReq(
 //      owner = "0xdce9e65ba38d4249c38d00d664d41e5f6d7e83b3",
 //      tag = "latest"
-//    )).mapTo[XGetNonceRes]
+//    )).mapTo[GetNonceRes]
 //      .map(_.result)
-//    txCount ← (ethConnectionActor ? XGetBlockTransactionCountReq(
+//    txCount ← (ethConnectionActor ? GetBlockTransactionCountReq(
 //      blockWithTxHash.hash
-//    )).mapTo[XGetBlockTransactionCountRes]
+//    )).mapTo[GetBlockTransactionCountRes]
 //      .map(_.result)
 //    batchTx ← (ethConnectionActor ? XBatchGetTransactionsReq(
-//      blockWithTxHash.transactions.map(XGetTransactionByHashReq(_))
+//      blockWithTxHash.transactions.map(GetTransactionByHashReq(_))
 //    )).mapTo[XBatchGetTransactionsRes]
 //      .map(_.resps.map(_.result))
 //    lrcBalance ← (ethConnectionActor ? XEthCallReq(tag = "latest")
@@ -187,15 +187,15 @@ import org.json4s.DefaultFormats
 //      )
 //    )).mapTo[XBatchContractCallRes]
 //      .map(_.resps.map(res ⇒ wethAbi.allowance.unpackResult(res.result)))
-//    uncle ← (ethConnectionActor ? XGetUncleByBlockNumAndIndexReq(
+//    uncle ← (ethConnectionActor ? GetUncleByBlockNumAndIndexReq(
 //      blockNum = "0x69555e",
 //      index = "0x0"
-//    )).mapTo[XGetBlockWithTxHashByHashRes]
+//    )).mapTo[GetBlockWithTxHashByHashRes]
 //      .map(_.result.get)
 //    uncles ← (ethConnectionActor ? XBatchGetUncleByBlockNumAndIndexReq()
 //      .withReqs(
 //        Seq(
-//          XGetUncleByBlockNumAndIndexReq(
+//          GetUncleByBlockNumAndIndexReq(
 //            blockNum = "0x69555e",
 //            index = "0x0"
 //          )
@@ -203,7 +203,7 @@ import org.json4s.DefaultFormats
 //      ))
 //      .mapTo[XBatchGetUncleByBlockNumAndIndexRes]
 //      .map(_.resps.map(_.result.get))
-//    gas ← (ethConnectionActor ? XGetEstimatedGasReq(
+//    gas ← (ethConnectionActor ? GetEstimatedGasReq(
 //      to = "0xef68e7c694f40c8202821edf525de3782458639f"
 //    ).withData(
 //      wethAbi.transfer.pack(
@@ -212,7 +212,7 @@ import org.json4s.DefaultFormats
 //          amount = BigInt("10000")
 //        )
 //      )
-//    )).mapTo[XGetEstimatedGasRes]
+//    )).mapTo[GetEstimatedGasRes]
 //      .map(_.result)
 //  } yield {
 //    println(

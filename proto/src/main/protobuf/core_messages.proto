@@ -72,7 +72,7 @@ message XOrderbookUpdate {
     XMarketId market_id = 4;
 }
 
-message XGetOrderbook {
+message GetOrderbook {
     int32 level = 2;
     int32 size = 1;
     XMarketId market_id = 3;

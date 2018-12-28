@@ -53,7 +53,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
 
       //设置余额
       info("set the balance and allowance is enough befor submit an order")
-      val f = actors.get(EthereumQueryActor.name) ? XGetBalanceAndAllowancesRes(
+      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
         "",
         Map(
           "" -> XBalanceAndAllowance(
@@ -98,7 +98,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       //orderbook
       Thread.sleep(1000)
       info("the depth after submit an order:")
-      val getOrderBook = XGetOrderbook(
+      val getOrderBook = GetOrderbook(
         0,
         100,
         Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -120,7 +120,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       }
 
       info("then make balance is not enough.")
-      val setAllowanceF = actors.get(EthereumQueryActor.name) ? XGetBalanceAndAllowancesRes(
+      val setAllowanceF = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowancesRes(
         "",
         Map(
           "" -> XBalanceAndAllowance(

@@ -91,7 +91,7 @@ class EntryPointSpec_SubmitSeveralOrder
 
       //orderbook
       Thread.sleep(1000)
-      val getOrderBook = XGetOrderbook(
+      val getOrderBook = GetOrderbook(
         0,
         100,
         Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))

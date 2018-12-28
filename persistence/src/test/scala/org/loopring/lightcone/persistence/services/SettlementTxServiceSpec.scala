@@ -68,10 +68,10 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
         testSave(hash, owner, 1, XSettlementTx.XStatus.PENDING)
       })
       query ← service.getPendingTxs(
-        XGetPendingTxsReq(owner = owner, timeBefore = time)
+        GetPendingTxsReq(owner = owner, timeBefore = time)
       )
     } yield query
-    val res = Await.result(result.mapTo[XGetPendingTxsResult], 5.second)
+    val res = Await.result(result.mapTo[GetPendingTxsResult], 5.second)
     res.txs.length == 1 should be(true)
   }
 
@@ -99,10 +99,10 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
         testSave(hash, owner, 2, XSettlementTx.XStatus.PENDING)
       })
       query1 ← service.getPendingTxs(
-        XGetPendingTxsReq(owner = owner, timeBefore = time)
+        GetPendingTxsReq(owner = owner, timeBefore = time)
       )
     } yield query1
-    val res = Await.result(result.mapTo[XGetPendingTxsResult], 5.second)
+    val res = Await.result(result.mapTo[GetPendingTxsResult], 5.second)
     res.txs.length === 2 should be(true)
   }
 
@@ -121,7 +121,7 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
         testSave(hash, owner, 1, XSettlementTx.XStatus.PENDING)
       })
       query1 ← service.getPendingTxs(
-        XGetPendingTxsReq(owner = owner, timeBefore = time)
+        GetPendingTxsReq(owner = owner, timeBefore = time)
       )
       _ <- service.updateInBlock(
         XUpdateTxInBlockReq(
@@ -131,12 +131,12 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
         )
       )
       query2 ← service.getPendingTxs(
-        XGetPendingTxsReq(owner = owner, timeBefore = time)
+        GetPendingTxsReq(owner = owner, timeBefore = time)
       )
     } yield (query1, query2)
     val res =
       Await.result(
-        result.mapTo[(XGetPendingTxsResult, XGetPendingTxsResult)],
+        result.mapTo[(GetPendingTxsResult, GetPendingTxsResult)],
         5.second
       )
     res._1.txs.length === 1 && res._2.txs.length === 0 should be(true)
@@ -157,19 +157,12 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
         testSave(hash, owner, 1, XSettlementTx.XStatus.PENDING)
       })
       updated <- service.updateInBlock(
-        XUpdateTxInBlockReq(
-          txHash = "0x-tx-not-exist",
-          from = owner,
-          nonce = 1
-        )
+        XUpdateTxInBlockReq(txHash = "0x-tx-not-exist", from = owner, nonce = 1)
       )
     } yield updated
     val res =
       try {
-        Await.result(
-          result.mapTo[XUpdateTxInBlockResult],
-          5.second
-        )
+        Await.result(result.mapTo[XUpdateTxInBlockResult], 5.second)
       } catch {
         case e: ErrorException => e
         case m: Throwable      => m

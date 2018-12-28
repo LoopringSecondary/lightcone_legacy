@@ -78,8 +78,8 @@ class GasPriceActor(
       sender ! XSetGasPriceRes(gasPrice)
       gasPrice = price
 
-    case req: XGetGasPriceReq =>
-      sender ! XGetGasPriceRes(gasPrice)
+    case req: GetGasPriceReq =>
+      sender ! GetGasPriceRes(gasPrice)
   }
 
 }

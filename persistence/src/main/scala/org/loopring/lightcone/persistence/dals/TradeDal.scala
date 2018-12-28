@@ -32,15 +32,14 @@ import scala.util.{Failure, Success}
 trait TradeDal extends BaseDalImpl[TradeTable, XTrade] {
   def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]]
   def saveTrades(trades: Seq[XTrade]): Future[Seq[Either[XErrorCode, String]]]
-  def getTrades(request: XGetTradesReq): Future[Seq[XTrade]]
-  def countTrades(request: XGetTradesReq): Future[Int]
+  def getTrades(request: GetTradesReq): Future[Seq[XTrade]]
+  def countTrades(request: GetTradesReq): Future[Int]
   def obsolete(height: Long): Future[Unit]
 }
 
 class TradeDalImpl(
   )(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends TradeDal {
   val query = TableQuery[TradeTable]
@@ -95,11 +94,11 @@ class TradeDalImpl(
     filters
   }
 
-  def getTrades(request: XGetTradesReq): Future[Seq[XTrade]] = {
+  def getTrades(request: GetTradesReq): Future[Seq[XTrade]] = {
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
-      case XGetTradesReq.Market.MarketHash(v) ⇒ (None, None, Some(v))
-      case XGetTradesReq.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
+      case GetTradesReq.Market.MarketHash(v) ⇒ (None, None, Some(v))
+      case GetTradesReq.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
       case _ ⇒ (None, None, None)
     }
     val filters = queryFilters(
@@ -113,11 +112,11 @@ class TradeDalImpl(
     db.run(filters.result)
   }
 
-  def countTrades(request: XGetTradesReq): Future[Int] = {
+  def countTrades(request: GetTradesReq): Future[Int] = {
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
-      case XGetTradesReq.Market.MarketHash(v) ⇒ (None, None, Some(v))
-      case XGetTradesReq.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
+      case GetTradesReq.Market.MarketHash(v) ⇒ (None, None, Some(v))
+      case GetTradesReq.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
       case _ ⇒ (None, None, None)
     }
     val filters = queryFilters(

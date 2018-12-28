@@ -249,10 +249,10 @@ message XEthGetBalanceRes {
 }
 
 // eth_getTransactionByHash
-message XGetTransactionByHashReq {
+message GetTransactionByHashReq {
     string hash = 1;
 }
-message XGetTransactionByHashRes {
+message GetTransactionByHashRes {
     int32 id = 1;
     string jsonrpc = 2;
     XTransaction result = 3;
@@ -260,10 +260,10 @@ message XGetTransactionByHashRes {
 }
 
 // eth_getTransactionReceipt
-message XGetTransactionReceiptReq {
+message GetTransactionReceiptReq {
     string hash = 1;
 }
-message XGetTransactionReceiptRes {
+message GetTransactionReceiptRes {
     int32 id = 1;
     string jsonrpc = 2;
     XTransactionReceipt result = 3;
@@ -271,20 +271,20 @@ message XGetTransactionReceiptRes {
 }
 
 // eth_getBlockByNumber
-message XGetBlockWithTxHashByNumberReq {
+message GetBlockWithTxHashByNumberReq {
     string blockNumber = 1;
 }
-message XGetBlockWithTxHashByNumberRes {
+message GetBlockWithTxHashByNumberRes {
     int32 id = 1;
     string jsonrpc = 2;
     XBlockWithTxHash result = 3;
     XEthResError error = 4;
 }
 
-message XGetBlockWithTxObjectByNumberReq {
+message GetBlockWithTxObjectByNumberReq {
     string blockNumber = 1;
 }
-message XGetBlockWithTxObjectByNumberRes {
+message GetBlockWithTxObjectByNumberRes {
     int32 id = 1;
     string jsonrpc = 2;
     XBlockWithTxObject result = 3;
@@ -292,20 +292,20 @@ message XGetBlockWithTxObjectByNumberRes {
 }
 
 // eth_getBlockByHash
-message XGetBlockWithTxHashByHashReq {
+message GetBlockWithTxHashByHashReq {
     string blockHash = 1;
 }
-message XGetBlockWithTxHashByHashRes {
+message GetBlockWithTxHashByHashRes {
     int32 id = 1;
     string jsonrpc = 2;
     XBlockWithTxHash result = 3;
     XEthResError error = 4;
 }
 
-message XGetBlockWithTxObjectByHashReq {
+message GetBlockWithTxObjectByHashReq {
     string blockHash = 1;
 }
-message XGetBlockWithTxObjectByHashRes {
+message GetBlockWithTxObjectByHashRes {
     int32 id = 1;
     string jsonrpc = 2;
     XBlockWithTxObject result = 3;
@@ -324,32 +324,32 @@ message XTraceTransactionRes {
 }
 
 // eth_estimateGas
-message XGetEstimatedGasReq {
+message GetEstimatedGasReq {
     string to = 1;
     string data = 2;
 }
-message XGetEstimatedGasRes {
+message GetEstimatedGasRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
     XEthResError error = 4;
 }
 
-message XGetNonceReq {
+message GetNonceReq {
     string owner = 1;
     string tag = 2;
 }
-message XGetNonceRes {
+message GetNonceRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
     XEthResError error = 4;
 }
 
-message XGetBlockTransactionCountReq {
+message GetBlockTransactionCountReq {
     string block_hash = 1;
 }
-message XGetBlockTransactionCountRes {
+message GetBlockTransactionCountRes {
     int32 id = 1;
     string jsonrpc = 2;
     string result = 3;
@@ -360,17 +360,17 @@ message XSendRawTransactionReq {
     string data = 1;
 }
 
-message XGetUncleByBlockNumAndIndexReq{
+message GetUncleByBlockNumAndIndexReq{
     string blockNum = 1;
     string index = 2;
 }
 
 message XBatchGetUncleByBlockNumAndIndexReq{
-   repeated XGetUncleByBlockNumAndIndexReq reqs = 1;
+   repeated GetUncleByBlockNumAndIndexReq reqs = 1;
 }
 
 message XBatchGetUncleByBlockNumAndIndexRes{
-   repeated XGetBlockWithTxHashByHashRes resps = 1;
+   repeated GetBlockWithTxHashByHashRes resps = 1;
 }
 
 message XBatchContractCallReq {
@@ -382,19 +382,19 @@ message XBatchContractCallRes {
 }
 
 message XBatchGetTransactionsReq {
-    repeated XGetTransactionByHashReq reqs = 1;
+    repeated GetTransactionByHashReq reqs = 1;
 }
 
 message XBatchGetTransactionsRes {
-    repeated XGetTransactionByHashRes resps = 1;
+    repeated GetTransactionByHashRes resps = 1;
 }
 
 message XBatchGetTransactionReceiptsReq {
-    repeated XGetTransactionReceiptReq reqs = 1;
+    repeated GetTransactionReceiptReq reqs = 1;
 }
 
 message XBatchGetTransactionReceiptsRes {
-    repeated XGetTransactionReceiptRes resps = 1;
+    repeated GetTransactionReceiptRes resps = 1;
 }
 
 message XSaveBlockReq {

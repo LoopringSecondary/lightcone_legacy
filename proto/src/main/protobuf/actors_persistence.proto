@@ -52,20 +52,20 @@ message XUpdateOrderStatusRes {
     XErrorCode error = 1;
 }
 
-message XGetOrdersByHashesReq {
+message GetOrdersByHashesReq {
     repeated string hashes = 1;
 }
 
-message XGetOrdersByHashesRes {
+message GetOrdersByHashesRes {
     repeated XRawOrder orders = 1;
     XErrorCode error = 2;
 }
 
-message XGetOrderByHashReq {
+message GetOrderByHashReq {
     string hash = 1;
 }
 
-message XGetOrderByHashRes {
+message GetOrderByHashRes {
     XRawOrder order = 1;
     XErrorCode error = 2;
 }
@@ -84,7 +84,7 @@ message MarketPair {
     string token_b  = 2;
 }
 
-message XGetOrdersForUserReq {
+message GetOrdersForUserReq {
     oneof market {
         MarketPair pair        = 1; // tokenS -> tokenB
         string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
@@ -95,7 +95,7 @@ message XGetOrdersForUserReq {
     XSkip    skip                  = 6;
 }
 
-message XGetOrdersForUserResult {
+message GetOrdersForUserResult {
     repeated XRawOrder orders = 1;
     XErrorCode error = 2;
 }
@@ -113,7 +113,7 @@ message XUserCancelOrderResult {
     repeated Result updated_result = 1;
 }
 
-message XGetTradesReq {
+message GetTradesReq {
     oneof market {
         MarketPair pair        = 1; // tokenS -> tokenB
         string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
@@ -123,7 +123,7 @@ message XGetTradesReq {
     XSkip skip     = 5;
 }
 
-message XGetTradesResult {
+message GetTradesResult {
     repeated XTrade  trades = 1;
     XErrorCode       error  = 2;
 }
@@ -136,12 +136,12 @@ message XSaveSettlementTxResult {
     XErrorCode error = 1;
 }
 
-message XGetPendingTxsReq {
+message GetPendingTxsReq {
     string owner       = 1; // required
     int64  time_before = 2; // create_at <= time_before
 }
 
-message XGetPendingTxsResult {
+message GetPendingTxsResult {
     repeated XSettlementTx txs = 1;
 }
 

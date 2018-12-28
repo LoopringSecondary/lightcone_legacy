@@ -25,7 +25,7 @@ trait SettlementTxService {
   val submitTxDal: SettlementTxDal
   def saveTx(req: XSaveSettlementTxReq): Future[XSaveSettlementTxResult]
   // get all pending txs with given owner, from_nonce is a optional parameter(>=)
-  def getPendingTxs(request: XGetPendingTxsReq): Future[XGetPendingTxsResult]
+  def getPendingTxs(request: GetPendingTxsReq): Future[GetPendingTxsResult]
 
   // update address's all txs status below or equals the given nonce to BLOCK
   def updateInBlock(
