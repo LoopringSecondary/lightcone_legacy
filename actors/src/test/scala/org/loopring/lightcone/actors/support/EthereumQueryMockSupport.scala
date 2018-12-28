@@ -25,7 +25,7 @@ import org.loopring.lightcone.actors.core.{
   MarketManagerActor
 }
 import org.loopring.lightcone.proto._
-
+import org.loopring.lightcone.actors.data._
 import scala.concurrent.ExecutionContext
 
 trait EthereumQueryMockSupport {
@@ -38,6 +38,9 @@ trait EthereumQueryMockSupport {
       extends Actor
       with ActorLogging {
 
+    var balance = BigInt("1000000000000000000000000000")
+    var allowance = BigInt("1000000000000000000000000000")
+
     def receive: Receive = {
       case req: XGetBalanceAndAllowancesReq =>
         sender !
@@ -46,18 +49,27 @@ trait EthereumQueryMockSupport {
             Map(
               req.tokens(0) -> XBalanceAndAllowance(
                 ByteString.copyFrom(
-                  BigInt("1000000000000000000000000000").toByteArray
+                  balance.toByteArray
                 ),
                 ByteString.copyFrom(
-                  BigInt("1000000000000000000000000000").toByteArray
+                  allowance.toByteArray
                 )
               )
             )
           )
+
       case XGetFilledAmountReq(orderIds) =>
         sender ! XGetFilledAmountRes(
           orderIds.map(id ⇒ id → ByteString.copyFrom("0", "UTF-8")).toMap
         )
+
+      case res: XGetBalanceAndAllowancesRes =>
+        res.balanceAndAllowanceMap.values.headOption map {
+          case head =>
+            balance = head.balance
+            allowance = head.allowance
+        }
+        sender ! res
     }
   }
 

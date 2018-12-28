@@ -18,16 +18,14 @@ package org.loopring.lightcone.actors.core
 import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor._
 import akka.cluster.sharding._
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.actors.base.safefuture._
-import scala.concurrent._
+import org.loopring.lightcone.persistence.DatabaseModule
+
 import org.loopring.lightcone.proto._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -43,7 +41,8 @@ object MultiAccountManagerActor extends ShardedByAddress {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dustEvaluator: DustOrderEvaluator
+      dustEvaluator: DustOrderEvaluator,
+      dbModule: DatabaseModule
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -81,7 +80,8 @@ class MultiAccountManagerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dustEvaluator: DustOrderEvaluator)
+    val dustEvaluator: DustOrderEvaluator,
+    val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
     with ActorLogging {
 
