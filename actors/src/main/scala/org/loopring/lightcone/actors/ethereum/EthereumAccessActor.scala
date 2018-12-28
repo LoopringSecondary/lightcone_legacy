@@ -81,8 +81,8 @@ class EthereumAccessActor(
   var connectionPools: Seq[(String, Int)] = Nil
 
   override def preStart() = {
-    val fu = (monitor ? NodeHeightReq())
-      .mapAs[NodeHeightRes]
+    val fu = (monitor ? GetNodeBlockHeight.Req())
+      .mapAs[GetNodeBlockHeight.Res]
     fu onComplete {
       case Success(res) ⇒
         connectionPools = res.nodes.map(node ⇒ node.path → node.height)

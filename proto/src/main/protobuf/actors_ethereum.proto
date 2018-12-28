@@ -44,11 +44,10 @@ message NodeBlockHeight{
     int32 height = 2;
 }
 
-message NodeHeightReq{}
 
-message NodeHeightRes{
-    repeated NodeBlockHeight nodes = 1;
-}
+/////////////////////////////////////////////////////////////////////
+// ETHEREUM JSON-RPC
+/////////////////////////////////////////////////////////////////////
 
 message XJsonRpcReq {
     string json = 1;
@@ -67,6 +66,21 @@ message XJsonRpcErr {
 message XJsonRpcRes {
     string json = 1;
 }
+
+/////////////////////////////////////////////////////////////////////
+// TWO WAY REQUEST-RESPONSES
+/////////////////////////////////////////////////////////////////////
+
+
+message GetNodeBlockHeight {
+    message Req{}
+
+    message Res{
+        repeated NodeBlockHeight nodes = 1;
+    }
+}
+
+
 
 ///////////////////////////////////////////
 //
@@ -405,4 +419,52 @@ message SaveBlockReq {
 
 message SaveBlockRes {
     Error error = 1;
+}
+
+
+/// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
+/// 解析合约事件得到下面的数据：
+
+// message RingExecuted {
+//     OrderRing ring = 1;
+//     string tx_hash = 2;
+//     ExecutionStatus status = 3;
+//     bytes used_gas = 4;
+//     int64 block_number = 5;
+// }
+
+
+message OrderFilled {
+    string order_hash = 1;
+    bytes  filled     = 2;
+}
+
+message OrderCancelled {
+    string order_owner = 1;
+    string order_hash  = 2;
+    bool   cancelled   = 3;
+}
+
+message Cutoffs {
+    string broker = 1;
+    int32  cutoff = 2; // in seconds.
+}
+
+message OwnerCutoffs {
+    string broker = 1;
+    string owner  = 2;
+    int32  cutoff = 3; // in seconds.
+}
+
+message TradingPairCutoffs {
+    string broker       = 1;
+    string trading_pair = 2;
+    int32  cutoff       = 3; // in seconds.
+}
+
+message OwnerTradingPairCutoffs {
+    string broker       = 1;
+    string owner        = 2;
+    string trading_pair = 3;
+    int32  cutoff       = 4; // in seconds.
 }

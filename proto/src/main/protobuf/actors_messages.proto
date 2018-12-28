@@ -23,10 +23,50 @@ import "actors_core.proto";
 import "core_data.proto";
 import "core_messages.proto";
 
+/////////////////////////////////////////////////////////////////////
+// ONE WAY MESSAGES
+/////////////////////////////////////////////////////////////////////
+
 message Notify {
     string message = 1;
     string param = 2;
 }
+
+message SubmitSimpleOrder {
+    string owner = 1;
+    Order order = 2;
+}
+
+message TriggerRematch {
+    bool sell_order_as_taker = 1;
+    int32 offset = 2;
+}
+
+message SettleRings {
+    repeated OrderRing rings = 1;
+    bytes gas_limit = 2;
+    bytes gas_price = 3;
+}
+
+message AddressBalanceUpdated {
+    string address = 1;
+    string token = 2;
+    bytes balance = 3;
+}
+
+message AddressAllowanceUpdated {
+    string address = 1;
+    string token = 2;
+    bytes balance = 3;
+}
+
+message GasPriceUpdated {
+    int64 gas_price = 1;
+}
+
+/////////////////////////////////////////////////////////////////////
+// TWO WAY REQUEST-RESPONSES
+/////////////////////////////////////////////////////////////////////
 
 message SubmitOrder {
     message Req {
@@ -52,6 +92,118 @@ message CancelOrder {
     }
 }
 
-// message SubmitOrder {
-//     RawOrder raw_order = 1;
-// }
+
+message GetOrderFilledAmount {
+    message Req {
+        string order_id = 1;
+    }
+
+    message Res {
+        string order_id = 1;
+        bytes filled_amount_s = 2;
+    }
+}
+
+message GetBalanceAndAllowances {
+    message Req {
+        string address = 1;
+        repeated string tokens = 2;
+    }
+
+    message Res {
+        string address = 1;
+        map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
+        Error error = 3;
+    }
+}
+
+message GetBalance {
+    message Req{
+        string address = 1;
+        repeated string tokens = 2;
+    }
+    message Res {
+        string address = 1;
+        map<string, bytes> balance_map = 2;
+        Error error = 3;
+    }
+}
+
+message GetAllowance {
+    message Req{
+        string address = 1;
+        repeated string tokens = 2;
+    }
+    message Res {
+        string address = 1;
+        map<string, bytes> allowance_map = 2;
+        Error error = 3;
+    }
+}
+
+message UpdateFilledAmount {
+    message Req {
+        string id = 1;
+        bytes order_filled_amount_s = 2;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+    }
+}
+
+message GetFilledAmount {
+    message Req {
+        repeated string order_ids = 1;
+    }
+
+    message Res {
+        map<string, bytes> filled_amount_s_map = 1;
+    }
+}
+
+message UpdateBalanceAndAllowance {
+    message Req {
+        string address = 1;
+        string token = 2;
+        BalanceAndAllowance balance_and_allowance = 3;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+        BalanceAndAllowance balance_and_allowance = 2;
+    }
+}
+
+message SendRawTx {
+    message Req {
+        bytes data = 1;
+    }
+
+    message Res {
+        SendStatus status = 1;
+        enum SendStatus {
+            SEND_STATUS_UNKNOW = 0;
+            SEND_STATUS_SUCCESS = 1;
+        }
+    }
+}
+
+message GetGasPrice {
+    message Req {}
+
+    message Res {
+        bytes gas_price = 1;
+    }
+}
+
+message SetGasPrice {
+    message Req {
+        bytes gas_price = 1;
+    }
+
+    message Res {
+        bytes gas_price = 1;
+    }
+}
+

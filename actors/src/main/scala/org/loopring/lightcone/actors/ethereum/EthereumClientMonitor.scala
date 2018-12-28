@@ -137,8 +137,8 @@ class EthereumClientMonitor(
   }
 
   def normalReceive: Receive = super.receive orElse {
-    case _: NodeHeightReq ⇒
-      sender ! NodeHeightRes(
+    case _: GetNodeBlockHeight ⇒
+      sender ! GetNodeBlockHeight.Res(
         nodes.toSeq
           .map(node ⇒ NodeBlockHeight(path = node._1, height = node._2))
       )

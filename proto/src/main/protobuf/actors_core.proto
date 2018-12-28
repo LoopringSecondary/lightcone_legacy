@@ -57,16 +57,6 @@ message OrderRing {
     ExpectedOrderFill taker = 2;
 }
 
-message GetOrderFilledAmount {
-    message Req {
-        string order_id = 1;
-    }
-
-    message Res {
-        string order_id = 1;
-        bytes filled_amount_s = 2;
-    }
-}
 
 message BalanceAndAllowance {
     bytes balance = 1;
@@ -75,61 +65,8 @@ message BalanceAndAllowance {
     bytes availableAllowance = 4;
 }
 
-message GetBalanceAndAllowances {
-    message Req {
-        string address = 1;
-        repeated string tokens = 2;
-    }
-
-    message Res {
-        string address = 1;
-        map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
-        Error error = 3;
-    }
-}
-
-message GetBalance {
-    message Req{
-        string address = 1;
-        repeated string tokens = 2;
-    }
-    message Res {
-        string address = 1;
-        map<string, bytes> balance_map = 2;
-        Error error = 3;
-    }
-}
-
-message GetAllowance {
-    message Req{
-        string address = 1;
-        repeated string tokens = 2;
-    }
-    message Res {
-        string address = 1;
-        map<string, bytes> allowance_map = 2;
-        Error error = 3;
-    }
-}
-
-message SubmitSimpleOrder {
-    string owner = 1;
-    Order order = 2;
-}
 
 
-
-message AddressBalanceUpdated {
-    string address = 1;
-    string token = 2;
-    bytes balance = 3;
-}
-
-message AddressAllowanceUpdated {
-    string address = 1;
-    string token = 2;
-    bytes balance = 3;
-}
 
 // message OrderRecoverySettings {
 //     bool skip_recovery = 1;
@@ -140,62 +77,9 @@ message AddressAllowanceUpdated {
 
 
 
-message UpdateFilledAmount {
-    message Req {
-        string id = 1;
-        bytes order_filled_amount_s = 2;
-    }
 
-    message Res {
-        ErrorCode error = 1;
-    }
-}
 
-message GetFilledAmount {
-    message Req {
-        repeated string order_ids = 1;
-    }
 
-    message Res {
-        map<string, bytes> filled_amount_s_map = 1;
-    }
-}
-
-message UpdateBalanceAndAllowance {
-    message Req {
-        string address = 1;
-        string token = 2;
-        BalanceAndAllowance balance_and_allowance = 3;
-    }
-
-    message Res {
-        ErrorCode error = 1;
-        BalanceAndAllowance balance_and_allowance = 2;
-    }
-}
-
-message GasPriceUpdated {
-    int64 gas_price = 1;
-}
-
-message TriggerRematch {
-    bool sell_order_as_taker = 1;
-    int32 offset = 2;
-}
-
-message SendRawTx {
-    message Req {
-        bytes data = 1;
-    }
-
-    message Res {
-        SendStatus status = 1;
-        enum SendStatus {
-            SEND_STATUS_UNKNOW = 0;
-            SEND_STATUS_SUCCESS = 1;
-        }
-    }
-}
 
 
 enum ExecutionStatus {
@@ -204,43 +88,7 @@ enum ExecutionStatus {
     EXECUTED_STATUS_SUCCESS = 2;
 }
 
-// message RingExecuted {
-//     OrderRing ring = 1;
-//     string tx_hash = 2;
-//     ExecutionStatus status = 3;
-//     bytes used_gas = 4;
-//     int64 block_number = 5;
-// }
 
-message SendRawTransaction {
-    bytes data = 1;
-}
-
-message SendRawTransactionRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-}
-
-message SettleRingsReq {
-    repeated OrderRing rings = 1;
-    bytes gas_limit = 2;
-    bytes gas_price = 3;
-}
-
-message GetGasPriceReq {}
-
-message GetGasPriceRes {
-    bytes gas_price = 1;
-}
-
-message SetGasPriceReq {
-    bytes gas_price = 1;
-}
-
-message SetGasPriceRes {
-    bytes gas_price = 1;
-}
 
 
 message UpdatedTokenBurnRate {
@@ -248,39 +96,4 @@ message UpdatedTokenBurnRate {
     double burnRate = 2;
 }
 
-/// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
-/// 解析合约事件得到下面的数据：
-message OrderFilled {
-    string order_hash = 1;
-    bytes  filled     = 2;
-}
 
-message OrderCancelled {
-    string order_owner = 1;
-    string order_hash  = 2;
-    bool   cancelled   = 3;
-}
-
-message Cutoffs {
-    string broker = 1;
-    int32  cutoff = 2; // in seconds.
-}
-
-message OwnerCutoffs {
-    string broker = 1;
-    string owner  = 2;
-    int32  cutoff = 3; // in seconds.
-}
-
-message TradingPairCutoffs {
-    string broker       = 1;
-    string trading_pair = 2;
-    int32  cutoff       = 3; // in seconds.
-}
-
-message OwnerTradingPairCutoffs {
-    string broker       = 1;
-    string owner        = 2;
-    string trading_pair = 3;
-    int32  cutoff       = 4; // in seconds.
-}

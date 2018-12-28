@@ -87,7 +87,7 @@ class RingSettlementActor(
   private def gasPriceActor = actors.get(GasPriceActor.name)
 
   override def receive: Receive = super.receive orElse LoggingReceive {
-    // case req: SettleRingsReq =>
+    // case req: SettleRings =>
     //   val rings = generateRings(req.rings)
     //   rings.foreach {
     //     ring =>
@@ -116,8 +116,8 @@ class RingSettlementActor(
   //未被提交的交易需要使用新的gas和gasprice重新提交
   def resubmitTx(): Future[Unit] =
     for {
-      gasPriceRes <- (gasPriceActor ? GetGasPriceReq())
-        .mapAs[GetGasPriceRes]
+      gasPriceRes <- (gasPriceActor ? GetGasPrice.Req())
+        .mapAs[GetGasPrice.Res]
       //todo：查询数据库等得到未能打块的交易
       ringsWithGasLimit = Seq.empty[(String, BigInt)]
       _ = ringsWithGasLimit.foreach { ringWithGasLimit =>

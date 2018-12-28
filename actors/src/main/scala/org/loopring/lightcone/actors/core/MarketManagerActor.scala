@@ -209,7 +209,7 @@ class MarketManagerActor(
 
     case TriggerRematch(sellOrderAsTaker, offset) =>
       for {
-        res <- (gasPriceActor ? GetGasPriceReq()).mapAs[GetGasPriceRes]
+        res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
         gasPrice: BigInt = res.gasPrice
         minRequiredIncome = getRequiredMinimalIncome(gasPrice)
         _ = manager
@@ -229,7 +229,7 @@ class MarketManagerActor(
       case OrderStatus.STATUS_NEW | OrderStatus.STATUS_PENDING =>
         for {
           // get ring settlement cost
-          res <- (gasPriceActor ? GetGasPriceReq()).mapAs[GetGasPriceRes]
+          res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
 
           gasPrice: BigInt = res.gasPrice
           minRequiredIncome = getRequiredMinimalIncome(gasPrice)
@@ -260,7 +260,7 @@ class MarketManagerActor(
     if (matchResult.rings.nonEmpty) {
       log.debug(s"rings: ${matchResult.rings}")
 
-      settlementActor ! SettleRingsReq(
+      settlementActor ! SettleRings(
         rings = matchResult.rings,
         gasLimit = gasLimitPerRingV2 * matchResult.rings.size,
         gasPrice = gasPrice
