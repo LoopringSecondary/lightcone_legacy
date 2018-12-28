@@ -22,7 +22,7 @@ package org.loopring.lightcone.proto;
 import "core_data.proto";
 import "core_messages.proto";
 
-message XOrderState {
+message OrderState {
     bytes amount_s = 1;
     bytes amount_b = 2;
     bytes amount_fee = 3;
@@ -40,15 +40,15 @@ message XOrder {
     int64 updated_at = 9;
     XOrderStatus status = 10;
     double wallet_split_percentage = 11;
-    XOrderState outstanding = 12;
-    XOrderState reserved = 13;
-    XOrderState actual = 14;
-    XOrderState matchable = 15;
+    OrderState outstanding = 12;
+    OrderState reserved = 13;
+    OrderState actual = 14;
+    OrderState matchable = 15;
 }
 
 message XExpectedFill {
     XOrder order = 1;
-    XOrderState pending = 2;
+    OrderState pending = 2;
     bytes amount_margin = 3;
 }
 

@@ -21,7 +21,7 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.{OrderState => XOrderState, _}
 
 package object data {
 
