@@ -171,7 +171,7 @@ class OrderRecoverActor(
         status,
         marketHashIds,
         addressShardIds,
-        XSkipBySequenceId(lastOrderSeqId, batchSize)
+        CursorPaging(lastOrderSeqId, batchSize)
       )
     } else {
       Future.successful(Seq.empty)

@@ -111,7 +111,7 @@ class OrderServiceImpl @Inject()(
       marketHashSet: Set[String],
       feeTokenSet: Set[String],
       sort: Option[SortingType],
-      skip: Option[XSkip]
+      skip: Option[Paging]
     ): Future[Seq[RawOrder]] =
     orderDal
       .getOrders(
@@ -134,7 +134,7 @@ class OrderServiceImpl @Inject()(
       marketHashSet: Option[String] = None,
       feeTokenSet: Option[String] = None,
       sort: Option[SortingType] = None,
-      skip: Option[XSkip] = None
+      skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] =
     orderDal
       .getOrdersForUser(
@@ -153,7 +153,7 @@ class OrderServiceImpl @Inject()(
       statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: XSkipBySequenceId
+      skip: CursorPaging
     ): Future[Seq[RawOrder]] =
     orderDal.getOrdersForRecover(
       statuses,

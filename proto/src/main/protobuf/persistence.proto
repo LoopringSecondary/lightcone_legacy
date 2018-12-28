@@ -26,14 +26,14 @@ enum SortingType {
     DESC = 1;
 }
 
-message XSkip {
+message Paging {
     int64 skip = 1; // 忽略的记录
-    int32 take = 2; // 拉取的记录数
+    int32 size = 2; // 拉取的记录数
 }
 
-message XSkipBySequenceId {
-    int64 from = 1; // where seqenceId > from limit 0, take
-    int32 take = 2;
+message CursorPaging {
+    int64 cursor = 1; // where seqenceId > from limit 0, take
+    int32 size = 2;
 }
 
 message TokenMeta {

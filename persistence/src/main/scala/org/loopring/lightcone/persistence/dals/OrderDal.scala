@@ -76,7 +76,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[SortingType] = None,
-      skip: Option[XSkip] = None
+      skip: Option[Paging] = None
     ): Future[Seq[RawOrder]]
 
   def getOrdersForUser(
@@ -87,7 +87,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       marketHash: Option[String] = None,
       feeToken: Option[String] = None,
       sort: Option[SortingType] = None,
-      skip: Option[XSkip] = None
+      skip: Option[Paging] = None
     ): Future[Seq[RawOrder]]
 
   // Count the number of orders
@@ -105,7 +105,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: XSkipBySequenceId
+      skip: CursorPaging
     ): Future[Seq[RawOrder]]
 
   // Update order's status and update the updated_at timestamp if changeUpdatedAtField is true.
@@ -184,7 +184,7 @@ class OrderDalImpl(
       feeTokenSet: Set[String] = Set.empty,
       validTime: Option[Int] = None,
       sort: Option[SortingType] = None,
-      skip: Option[XSkip] = None
+      pagingOpt: Option[Paging] = None
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
@@ -204,8 +204,8 @@ class OrderDalImpl(
       case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
       case _ ⇒ filters.sortBy(_.sequenceId.asc)
     }
-    filters = skip match {
-      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+    filters = pagingOpt match {
+      case Some(paging) ⇒ filters.drop(paging.skip).take(paging.size)
       case None ⇒ filters
     }
     filters
@@ -219,7 +219,7 @@ class OrderDalImpl(
       marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[SortingType] = None,
-      skip: Option[XSkip] = None
+      skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] = {
     val filters = queryOrderFilters(
       statuses,
@@ -243,7 +243,7 @@ class OrderDalImpl(
       marketHash: Option[String] = None,
       feeToken: Option[String] = None,
       sort: Option[SortingType] = None,
-      skip: Option[XSkip] = None
+      pagingOpt: Option[Paging] = None
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
@@ -258,8 +258,8 @@ class OrderDalImpl(
       case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
       case _ ⇒ filters.sortBy(_.sequenceId.asc)
     }
-    filters = skip match {
-      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+    filters = pagingOpt match {
+      case Some(paging) ⇒ filters.drop(paging.skip).take(paging.size)
       case None ⇒ filters
     }
     filters
@@ -273,7 +273,7 @@ class OrderDalImpl(
       marketHash: Option[String] = None,
       feeToken: Option[String] = None,
       sort: Option[SortingType] = None,
-      skip: Option[XSkip] = None
+      skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] = {
     val filters = queryOrderForUserFilters(
       statuses,
@@ -314,7 +314,7 @@ class OrderDalImpl(
       statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: XSkipBySequenceId
+      paging: CursorPaging
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     if (marketHashIdSet.nonEmpty && addressShardIdSet.nonEmpty) {
       throw ErrorException(
@@ -335,8 +335,8 @@ class OrderDalImpl(
     }
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
     filters
-      .filter(_.sequenceId > skip.from)
-      .take(skip.take)
+      .filter(_.sequenceId > paging.cursor)
+      .take(paging.size)
       .sortBy(_.sequenceId.asc)
   }
 
@@ -344,7 +344,7 @@ class OrderDalImpl(
       statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: XSkipBySequenceId
+      paging: CursorPaging
     ): Future[Seq[RawOrder]] = {
     implicit val paramsResult = GetResult[RawOrder.Params](
       r =>
@@ -425,13 +425,13 @@ class OrderDalImpl(
         WHERE `status` in (${statuses.map(_.value).mkString(",")})
         AND valid_since <= ${now}
         AND valid_until > ${now}
-        AND sequence_id > ${skip.from}
+        AND sequence_id > ${paging.cursor}
         AND (
           market_hash_id in (${marketHashIdSet.mkString(",")})
           OR address_shard_id IN (${addressShardIdSet.mkString(",")})
         )
         ORDER BY sequence_id ASC
-        LIMIT ${skip.take}
+        LIMIT ${paging.size}
       """.as[RawOrder]
     db.run(sql).map(r => r.toSeq)
   }
@@ -441,7 +441,7 @@ class OrderDalImpl(
       statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: XSkipBySequenceId
+      skip: CursorPaging
     ): Future[Seq[RawOrder]] = {
     if (marketHashIdSet.isEmpty && addressShardIdSet.isEmpty) {
       throw ErrorException(

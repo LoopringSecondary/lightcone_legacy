@@ -74,7 +74,7 @@ class TradeDalImpl(
       tokenB: Option[String] = None,
       marketHash: Option[String] = None,
       sort: Option[SortingType] = None,
-      skip: Option[XSkip] = None
+      pagingOpt: Option[Paging] = None
     ): Query[TradeTable, TradeTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner.get)
@@ -87,8 +87,8 @@ class TradeDalImpl(
       case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
       case _ ⇒ filters.sortBy(_.sequenceId.asc)
     }
-    filters = skip match {
-      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+    filters = pagingOpt match {
+      case Some(paging) ⇒ filters.drop(paging.skip).take(paging.size)
       case None ⇒ filters
     }
     filters

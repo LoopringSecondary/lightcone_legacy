@@ -41,7 +41,7 @@ trait OrderService {
       marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[SortingType] = None,
-      skip: Option[XSkip] = None
+      skip: Option[Paging] = None
     ): Future[Seq[RawOrder]]
 
   def getOrdersForUser(
@@ -52,7 +52,7 @@ trait OrderService {
       marketHashSet: Option[String] = None,
       feeTokenSet: Option[String] = None,
       sort: Option[SortingType] = None,
-      skip: Option[XSkip] = None
+      skip: Option[Paging] = None
     ): Future[Seq[RawOrder]]
 
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
@@ -60,7 +60,7 @@ trait OrderService {
       statuses: Set[OrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
-      skip: XSkipBySequenceId
+      skip: CursorPaging
     ): Future[Seq[RawOrder]]
 
   // Count the number of orders

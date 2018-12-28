@@ -268,7 +268,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Set(OrderStatus.STATUS_NEW),
         marketHashIds,
         addressShardIds,
-        XSkipBySequenceId(take = 100)
+        CursorPaging(size = 100)
       )
     } yield query
     val res = Await.result(result.mapTo[Seq[RawOrder]], 5.second)

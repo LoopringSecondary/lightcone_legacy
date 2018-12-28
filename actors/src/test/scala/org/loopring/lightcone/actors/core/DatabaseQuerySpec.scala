@@ -93,7 +93,7 @@ class DatabaseQuerySpec
         owner = "0x-gettrades-actor-02",
         market = GetTradesReq.Market
           .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB)),
-        skip = Some(XSkip(0, 10)),
+        skip = Some(Paging(0, 10)),
         sort = SortingType.ASC
       )
       val hashes = Set(
