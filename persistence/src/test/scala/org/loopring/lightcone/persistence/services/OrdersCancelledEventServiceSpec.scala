@@ -26,7 +26,6 @@ import scala.concurrent.duration._
 class OrdersCancelledEventServiceSpec
     extends ServiceSpec[OrdersCancelledEventService] {
   def getService = new OrdersCancelledEventServiceImpl()
-  val timeProvider = new SystemTimeProvider()
   val hash = "0x-cancelorder-01"
 
   def createTables(): Future[Any] =

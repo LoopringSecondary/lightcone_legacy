@@ -344,14 +344,13 @@ class OrderDalImpl(
       query.filter(_.addressShardId inSet addressShardIdSet)
     }
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
-    filters = filters
+    filters
       .filter(_.sequenceId > skip.from)
       .take(skip.take)
-    filters = filters.sortBy(_.sequenceId.asc)
-    filters
+      .sortBy(_.sequenceId.asc)
   }
 
-  def queryOrderForMarketAndAddress(
+  private def queryOrderForMarketAndAddress(
       statuses: Set[XOrderStatus],
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
@@ -438,17 +437,13 @@ class OrderDalImpl(
     val sql =
       sql"""
         SELECT * FROM T_ORDERS
-        WHERE `status` in (${statuses.map(_.value.toString).reduceLeft(concat)})
+        WHERE `status` in (${statuses.map(_.value).mkString(",")})
         AND valid_since <= ${now}
         AND valid_until > ${now}
         AND sequence_id > ${skip.from}
         AND (
-          market_hash_id in (${marketHashIdSet
-        .map(_.toString)
-        .reduceLeft(concat)})
-          OR address_shard_id IN (${addressShardIdSet
-        .map(_.toString)
-        .reduceLeft(concat)})
+          market_hash_id in (${marketHashIdSet.mkString(",")})
+          OR address_shard_id IN (${addressShardIdSet.mkString(",")})
         )
         ORDER BY sequence_id ASC
         LIMIT ${skip.take}

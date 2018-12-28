@@ -59,7 +59,7 @@ class OrderServiceImpl @Inject()(
 
   // Save order to database, if the order already exist, return an error code.
   def saveOrder(order: XRawOrder): Future[Either[XRawOrder, XErrorCode]] = {
-    if (order.addressShardId <= 0 || order.marketHashId <= 0) {
+    if (order.addressShardId < 0 || order.marketHashId <= 0) {
       throw ErrorException(
         XErrorCode.ERR_INTERNAL_UNKNOWN,
         s"Invalid addressShardId:[${order.addressShardId}] or marketHashId:[${order.marketHashId}]"
