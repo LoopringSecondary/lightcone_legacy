@@ -92,7 +92,7 @@ class EntryPointSpec_Depth
 
       Thread.sleep(1000)
       //根据不同的level需要有不同的汇总
-      val getOrderBook1 = GetOrderbook(
+      val getOrderBook1 = Orderbook.Get(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -127,7 +127,7 @@ class EntryPointSpec_Depth
       }
 
       //下一level
-      val getOrderBook2 = GetOrderbook(
+      val getOrderBook2 = Orderbook.Get(
         1,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))

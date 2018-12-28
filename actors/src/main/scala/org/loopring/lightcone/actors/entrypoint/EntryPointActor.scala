@@ -67,7 +67,7 @@ class EntryPointActor(
     case _: XJsonRpcReq | _: XRpcReqWithHeight ⇒
       Some(EthereumAccessActor.name)
 
-    case _: GetOrderbook => Some(OrderbookManagerMessageValidator.name)
+    case _: Orderbook.Get => Some(OrderbookManagerMessageValidator.name)
 
     case _: GetOrdersForUserReq | _: GetTradesReq =>
       Some(DatabaseQueryMessageValidator.name)

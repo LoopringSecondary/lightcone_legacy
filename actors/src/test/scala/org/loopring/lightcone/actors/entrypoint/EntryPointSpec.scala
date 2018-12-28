@@ -38,7 +38,7 @@ class EntryPointSpec
 
   "send an orderbook request" must {
     "receive a response without value" in {
-      val getOrderBook = GetOrderbook(
+      val getOrderBook = Orderbook.Get(
         0,
         2,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))

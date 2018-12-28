@@ -103,7 +103,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
 
       //orderbook
       Thread.sleep(1000)
-      val getOrderBook = GetOrderbook(
+      val getOrderBook = Orderbook.Get(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))

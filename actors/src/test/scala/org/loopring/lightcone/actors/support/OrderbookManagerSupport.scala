@@ -20,7 +20,7 @@ import akka.pattern._
 import org.loopring.lightcone.actors.core.OrderbookManagerActor
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.ethereum.data.{Address => LAddress}
-import org.loopring.lightcone.proto.{GetOrderbook, MarketId}
+import org.loopring.lightcone.proto.{MarketId, Orderbook}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
@@ -49,7 +49,7 @@ trait OrderbookManagerSupport {
         LAddress(c.getString("priamry")).toString,
         LAddress(c.getString("secondary")).toString
       )
-      val orderBookInit = GetOrderbook(0, 100, Some(marketId))
+      val orderBookInit = Orderbook.Get(0, 100, Some(marketId))
       val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit
       Await.result(orderBookInitF, timeout.duration)
     }

@@ -73,7 +73,7 @@ class EntryPointSpec_SubmitOneOrder
         case None => assert(false)
       }
       //orderbook
-      val getOrderBook = GetOrderbook(
+      val getOrderBook = Orderbook.Get(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))

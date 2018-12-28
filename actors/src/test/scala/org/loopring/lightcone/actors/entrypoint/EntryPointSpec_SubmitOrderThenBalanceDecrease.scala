@@ -98,7 +98,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       //orderbook
       Thread.sleep(1000)
       info("the depth after submit an order:")
-      val getOrderBook = GetOrderbook(
+      val getOrderBook = Orderbook.Get(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))

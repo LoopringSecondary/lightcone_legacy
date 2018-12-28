@@ -95,11 +95,8 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       Thread.sleep(1000)
       info("then test the orderbook of LRC-WETH")
       val orderbookLrcF = singleRequest(
-        GetOrderbook(
-          0,
-          100,
-          Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
-        ),
+        Orderbook
+          .Get(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
         "orderbook"
       )
 
@@ -124,11 +121,8 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
 
       info("then test the orderbook of GTO-WETH")
       val orderbookGtoF = singleRequest(
-        GetOrderbook(
-          0,
-          100,
-          Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))
-        ),
+        Orderbook
+          .Get(0, 100, Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))),
         "orderbook"
       )
 
@@ -179,11 +173,8 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
 
       Thread.sleep(1000)
       val orderbookF1 = singleRequest(
-        GetOrderbook(
-          0,
-          100,
-          Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
-        ),
+        Orderbook
+          .Get(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
         "orderbook"
       )
 

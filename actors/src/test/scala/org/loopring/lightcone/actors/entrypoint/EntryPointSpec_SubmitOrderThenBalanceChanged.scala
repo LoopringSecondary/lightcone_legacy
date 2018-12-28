@@ -92,7 +92,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       //orderbook
       Thread.sleep(1000)
       info("the depth should be empty when allowance is not enough")
-      val getOrderBook = GetOrderbook(
+      val getOrderBook = Orderbook.Get(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))

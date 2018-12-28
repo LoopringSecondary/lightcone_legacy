@@ -68,7 +68,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
       Await.result(f1, timeout.duration)
 
       Thread.sleep(1000)
-      val getOrderBook = GetOrderbook(
+      val getOrderBook = Orderbook.Get(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
@@ -87,7 +87,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
         case _ => assert(false)
       }
 
-      val getOrderBook1 = GetOrderbook(
+      val getOrderBook1 = Orderbook.Get(
         1,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))

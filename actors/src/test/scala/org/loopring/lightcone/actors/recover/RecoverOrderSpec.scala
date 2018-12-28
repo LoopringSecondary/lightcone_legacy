@@ -122,7 +122,7 @@ class RecoverOrderSpec
     "get all effective orders and recover" in {
       val owner = "0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10"
       // 1. select depth
-      val getOrderBook1 = GetOrderbook(
+      val getOrderBook1 = Orderbook.Get(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
