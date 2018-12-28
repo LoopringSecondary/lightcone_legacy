@@ -82,7 +82,7 @@ class OrderStatusMonitorActor(
       (processTime, lastProcessTime) <- getProcessTime(
         XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE
       )
-      orders <- dbModule.orderService.getExpiredOrdersForMonitor()
+      orders <- dbModule.orderService.getExpiredOrdersForMonitor(processTime)
       _ <- Future.sequence(orders.map { o =>
         val cancelReq = XCancelOrderReq(
           o.hash,
