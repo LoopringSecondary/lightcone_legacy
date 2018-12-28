@@ -17,14 +17,14 @@
 package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.persistence.dals.TradeDal
-import org.loopring.lightcone.proto.{ErrorCode, GetTradesReq, Trade}
+import org.loopring.lightcone.proto._
 import scala.concurrent.Future
 
 trait TradeService {
 
   val tradeDal: TradeDal
   def saveTrade(trade: Trade): Future[Either[ErrorCode, String]]
-  def getTrades(request: GetTradesReq): Future[Seq[Trade]]
-  def countTrades(request: GetTradesReq): Future[Int]
+  def getTrades(request: GetTrades.Req): Future[Seq[Trade]]
+  def countTrades(request: GetTrades.Req): Future[Int]
   def obsolete(height: Long): Future[Unit]
 }

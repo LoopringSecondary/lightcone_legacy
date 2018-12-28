@@ -56,7 +56,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
   // also, if the order is NEW, the status field needs to save as NEW
   // and the created_at and updated_at fileds should both be the current timestamp;
   // if the order already exists, no field should be changed.
-  def saveOrder(order: RawOrder): Future[SaveOrderResult]
+  def saveOrder(order: RawOrder): Future[PersistOrder.Res]
 
   // Returns orders with given hashes
   def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]]
@@ -143,10 +143,10 @@ class OrderDalImpl(
   implicit val TokenStandardColumnType = enumColumnType(TokenStandard)
   private[this] val logger = Logger(this.getClass)
 
-  def saveOrder(order: RawOrder): Future[SaveOrderResult] = {
+  def saveOrder(order: RawOrder): Future[PersistOrder.Res] = {
     db.run((query += order).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
-        SaveOrderResult(
+        PersistOrder.Res(
           error = ERR_PERSISTENCE_DUPLICATE_INSERT,
           order = None,
           alreadyExist = true
@@ -154,10 +154,10 @@ class OrderDalImpl(
       }
       case Failure(ex) ⇒ {
         logger.error(s"error : ${ex.getMessage}")
-        SaveOrderResult(error = ERR_PERSISTENCE_INTERNAL, order = None)
+        PersistOrder.Res(error = ERR_PERSISTENCE_INTERNAL, order = None)
       }
       case Success(x) ⇒
-        SaveOrderResult(error = ERR_NONE, order = Some(order))
+        PersistOrder.Res(error = ERR_NONE, order = Some(order))
     }
   }
 
@@ -473,7 +473,7 @@ class OrderDalImpl(
       status: OrderStatus
     ): Future[ErrorCode] =
     for {
-      result ← db.run(
+      result <- db.run(
         query
           .filter(_.hash === hash)
           .map(c ⇒ (c.status, c.updatedAt))
@@ -489,7 +489,7 @@ class OrderDalImpl(
       status: OrderStatus
     ): Future[ErrorCode] =
     for {
-      result ← db.run(
+      result <- db.run(
         query
           .filter(_.hash inSet hashes)
           .map(c ⇒ (c.status, c.updatedAt))
@@ -505,7 +505,7 @@ class OrderDalImpl(
       status: OrderStatus
     ): Future[ErrorCode] =
     for {
-      _ ← Future.unit
+      _ <- Future.unit
       failedStatus = Seq(
         OrderStatus.STATUS_CANCELLED_BY_USER,
         OrderStatus.STATUS_CANCELLED_LOW_BALANCE,
@@ -513,7 +513,7 @@ class OrderDalImpl(
         OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
         OrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
       )
-      result ← if (!failedStatus.contains(status)) {
+      result <- if (!failedStatus.contains(status)) {
         Future.successful(0)
       } else {
         db.run(
@@ -533,7 +533,7 @@ class OrderDalImpl(
       state: RawOrder.State
     ): Future[ErrorCode] =
     for {
-      result ← db.run(
+      result <- db.run(
         query
           .filter(_.hash === hash)
           .map(

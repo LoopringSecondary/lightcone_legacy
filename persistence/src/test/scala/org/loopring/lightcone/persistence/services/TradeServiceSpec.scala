@@ -30,7 +30,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
 
   def createTables(): Future[Any] =
     for {
-      r ← new TradeDalImpl().createTable()
+      r <- new TradeDalImpl().createTable()
     } yield r
 
   private def testSave(
@@ -54,13 +54,13 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
   "saveTrade" must "save a trade with hash" in {
     val hash = "0x-savetrade-01"
     val result = for {
-      _ ← testSave(hash, hash, tokenS, tokenB, 1L)
-      _ ← testSave("0x-mock-01", "0x-mock-01", tokenS, tokenB, 1L)
-      _ ← testSave("0x-mock-02", "0x-mock-02", tokenS, tokenB, 1L)
-      query ← service.getTrades(
-        GetTradesReq(
+      _ <- testSave(hash, hash, tokenS, tokenB, 1L)
+      _ <- testSave("0x-mock-01", "0x-mock-01", tokenS, tokenB, 1L)
+      _ <- testSave("0x-mock-02", "0x-mock-02", tokenS, tokenB, 1L)
+      query <- service.getTrades(
+        GetTrades.Req(
           owner = hash,
-          market = GetTradesReq.Market
+          market = GetTrades.Req.Market
             .Pair(MarketPair(tokenB = tokenB, tokenS = tokenS))
         )
       )
@@ -86,23 +86,23 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
     val tokenS = "0xaaaaaaa2"
     val tokenB = "0xbbbbbbb2"
     val result = for {
-      _ ← Future.sequence(hashes.map { hash ⇒
+      _ <- Future.sequence(hashes.map { hash ⇒
         testSave(hash, hash, tokenS, tokenB, 1L)
       })
-      _ ← Future.sequence(mockToken.map { hash ⇒
+      _ <- Future.sequence(mockToken.map { hash ⇒
         testSave(hash, hash, "0x00001", "0x00002", 1L)
       })
-      query1 ← service.getTrades(
-        GetTradesReq(
+      query1 <- service.getTrades(
+        GetTrades.Req(
           owner = "0x-gettrades-state0-02",
-          market = GetTradesReq.Market
+          market = GetTrades.Req.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )
-      query2 ← service.getTrades(
-        GetTradesReq(
+      query2 <- service.getTrades(
+        GetTrades.Req(
           owner = "0x-gettrades-token-02",
-          market = GetTradesReq.Market
+          market = GetTrades.Req.Market
             .Pair(MarketPair(tokenB = "0x00002", tokenS = "0x00001"))
         )
       )
@@ -122,13 +122,13 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
       "0x-counttrades-06"
     )
     val result = for {
-      _ ← Future.sequence(owners.map { hash ⇒
+      _ <- Future.sequence(owners.map { hash ⇒
         testSave(hash, hash, tokenS, tokenB, 1L)
       })
-      query ← service.countTrades(
-        GetTradesReq(
+      query <- service.countTrades(
+        GetTrades.Req(
           owner = "0x-counttrades-02",
-          market = GetTradesReq.Market
+          market = GetTrades.Req.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )
@@ -168,24 +168,24 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
     )
     val owner = "0x-fixed-owner-01"
     val result = for {
-      _ ← Future.sequence(txHashes1.map { hash ⇒
+      _ <- Future.sequence(txHashes1.map { hash ⇒
         testSave(hash, owner, tokenS, tokenB, 100L)
       })
-      _ ← Future.sequence(txHashes2.map { hash ⇒
+      _ <- Future.sequence(txHashes2.map { hash ⇒
         testSave(hash, owner, tokenS, tokenB, 20L)
       })
-      count1 ← service.countTrades(
-        GetTradesReq(
+      count1 <- service.countTrades(
+        GetTrades.Req(
           owner = owner,
-          market = GetTradesReq.Market
+          market = GetTrades.Req.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )
-      _ ← service.obsolete(30L)
-      count2 ← service.countTrades(
-        GetTradesReq(
+      _ <- service.obsolete(30L)
+      count2 <- service.countTrades(
+        GetTrades.Req(
           owner = owner,
-          market = GetTradesReq.Market
+          market = GetTrades.Req.Market
             .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
         )
       )

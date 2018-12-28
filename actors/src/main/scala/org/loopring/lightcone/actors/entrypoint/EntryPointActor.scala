@@ -69,7 +69,7 @@ class EntryPointActor(
 
     case _: GetOrderbook.Req => Some(OrderbookManagerMessageValidator.name)
 
-    case _: GetOrdersForUserReq | _: GetTradesReq =>
+    case _: GetOrdersForUser.Req | _: GetTrades.Req =>
       Some(DatabaseQueryMessageValidator.name)
 
     case _ => None

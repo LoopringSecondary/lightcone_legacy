@@ -70,59 +70,59 @@ import org.json4s.DefaultFormats
 //  )
 //
 //  val fu = for {
-//    block ← (ethConnectionActor ? JsonRpc.Request(
+//    block <- (ethConnectionActor ? JsonRpc.Request(
 //      Serialization.write(jsonRpcReqWrapped)
 //    )).mapTo[JsonRpc.Response]
 //      .map(_.json)
-//    blockNum ← (ethConnectionActor ? GetBlockNumber.Req())
+//    blockNum <- (ethConnectionActor ? GetBlockNumber.Req())
 //      .mapTo[GetBlockNumber.Res]
 //      .map(_.result)
-//    blockWithTxHash ← (ethConnectionActor ? GetBlockWithTxHashByNumber.Req(
+//    blockWithTxHash <- (ethConnectionActor ? GetBlockWithTxHashByNumber.Req(
 //      blockNum
 //    )).mapTo[GetBlockWithTxHashByNumber.Res]
 //      .map(_.result.get)
-//    blockWithTxObjcet ← (ethConnectionActor ? GetBlockWithTxObjectByNumber.Req(
+//    blockWithTxObjcet <- (ethConnectionActor ? GetBlockWithTxObjectByNumber.Req(
 //      blockNum
 //    )).mapTo[GetBlockWithTxObjectByNumber.Res]
 //      .map(_.result.get)
-//    blockByHashWithHash ← (ethConnectionActor ? GetBlockWithTxHashByHash.Req(
+//    blockByHashWithHash <- (ethConnectionActor ? GetBlockWithTxHashByHash.Req(
 //      blockWithTxHash.hash
 //    )).mapTo[GetBlockWithTxHashByHash.Res]
 //      .map(_.result.get)
-//    blockByHashwithObject ← (ethConnectionActor ? GetBlockWithTxObjectByHash.Req(
+//    blockByHashwithObject <- (ethConnectionActor ? GetBlockWithTxObjectByHash.Req(
 //      blockWithTxHash.hash
 //    )).mapTo[GetBlockWithTxObjectByHash.Res]
 //      .map(_.result.get)
-//    txs ← Future
+//    txs <- Future
 //      .sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
 //        (ethConnectionActor ? GetTransactionByHash.Req(hash))
 //          .mapTo[GetTransactionByHash.Res]
 //          .map(_.result.get)
 //      })
-//    receipts ← Future
+//    receipts <- Future
 //      .sequence(blockWithTxHash.transactions.take(1).map { hash ⇒
 //        (ethConnectionActor ? GetTransactionReceipt.Req(hash))
 //          .mapTo[GetTransactionReceipt.Res]
 //          .map(_.result.get)
 //      })
-//    batchReceipts ← (ethConnectionActor ? BatchGetTransactionReceipts.Req(
+//    batchReceipts <- (ethConnectionActor ? BatchGetTransactionReceipts.Req(
 //      blockWithTxHash.transactions.map(GetTransactionReceipt.Req(_))
 //    )).mapTo[BatchGetTransactionReceipts.Res]
 //      .map(_.resps.map(_.result.get))
-//    nonce ← (ethConnectionActor ? GetNonce.Req(
+//    nonce <- (ethConnectionActor ? GetNonce.Req(
 //      owner = "0xdce9e65ba38d4249c38d00d664d41e5f6d7e83b3",
 //      tag = "latest"
 //    )).mapTo[GetNonce.Res]
 //      .map(_.result)
-//    txCount ← (ethConnectionActor ? GetBlockTransactionCount.Req(
+//    txCount <- (ethConnectionActor ? GetBlockTransactionCount.Req(
 //      blockWithTxHash.hash
 //    )).mapTo[GetBlockTransactionCount.Res]
 //      .map(_.result)
-//    batchTx ← (ethConnectionActor ? BatchGetTransactions.Req(
+//    batchTx <- (ethConnectionActor ? BatchGetTransactions.Req(
 //      blockWithTxHash.transactions.map(GetTransactionByHash.Req(_))
 //    )).mapTo[BatchGetTransactions.Res]
 //      .map(_.resps.map(_.result))
-//    lrcBalance ← (ethConnectionActor ? EthCall.Req(tag = "latest")
+//    lrcBalance <- (ethConnectionActor ? EthCall.Req(tag = "latest")
 //      .withParam(
 //        TransactionParams()
 //          .withData(
@@ -135,7 +135,7 @@ import org.json4s.DefaultFormats
 //      ))
 //      .mapTo[EthCall.Res]
 //      .map(resp ⇒ wethAbi.balanceOf.unpackResult(resp.result))
-//    lrcbalances: Seq[Option[BalanceOfFunction.Result]] ← (ethConnectionActor ? BatchCallContracts.Req(
+//    lrcbalances: Seq[Option[BalanceOfFunction.Result]] <- (ethConnectionActor ? BatchCallContracts.Req(
 //      batchTx.map(
 //        tx ⇒
 //          EthCall.Req(tag = "latest")
@@ -153,7 +153,7 @@ import org.json4s.DefaultFormats
 //    )).mapTo[BatchCallContracts.Res]
 //      .map(_.resps.map(res ⇒ wethAbi.balanceOf.unpackResult(res.result)))
 //
-//    allowance ← (ethConnectionActor ? EthCall.Req(tag = "latest")
+//    allowance <- (ethConnectionActor ? EthCall.Req(tag = "latest")
 //      .withParam(
 //        TransactionParams()
 //          .withData(
@@ -170,7 +170,7 @@ import org.json4s.DefaultFormats
 //      .mapTo[EthCall.Res]
 //      .map(resp ⇒ wethAbi.allowance.unpackResult(resp.result))
 //
-//    allowances ← (ethConnectionActor ? BatchCallContracts.Req(
+//    allowances <- (ethConnectionActor ? BatchCallContracts.Req(
 //      batchTx.map(
 //        tx ⇒
 //          EthCall.Req(tag = "latest")
@@ -187,12 +187,12 @@ import org.json4s.DefaultFormats
 //      )
 //    )).mapTo[BatchCallContracts.Res]
 //      .map(_.resps.map(res ⇒ wethAbi.allowance.unpackResult(res.result)))
-//    uncle ← (ethConnectionActor ? GetUncle.Req(
+//    uncle <- (ethConnectionActor ? GetUncle.Req(
 //      blockNum = "0x69555e",
 //      index = "0x0"
 //    )).mapTo[GetBlockWithTxHashByHash.Res]
 //      .map(_.result.get)
-//    uncles ← (ethConnectionActor ? BatchGetUncle.Req()
+//    uncles <- (ethConnectionActor ? BatchGetUncle.Req()
 //      .withReqs(
 //        Seq(
 //          GetUncle.Req(
@@ -203,7 +203,7 @@ import org.json4s.DefaultFormats
 //      ))
 //      .mapTo[BatchGetUncle.Res]
 //      .map(_.resps.map(_.result.get))
-//    gas ← (ethConnectionActor ? GetEstimatedGas.Req(
+//    gas <- (ethConnectionActor ? GetEstimatedGas.Req(
 //      to = "0xef68e7c694f40c8202821edf525de3782458639f"
 //    ).withData(
 //      wethAbi.transfer.pack(

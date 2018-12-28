@@ -32,14 +32,12 @@ class SettlementTxServiceImpl @Inject()(
     extends SettlementTxService {
   val submitTxDal: SettlementTxDal = new SettlementTxDalImpl()
 
-  def saveTx(req: SaveSettlementTxReq): Future[SaveSettlementTxResult] =
+  def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res] =
     submitTxDal.saveTx(req.tx.get)
 
-  def getPendingTxs(request: GetPendingTxsReq): Future[GetPendingTxsResult] =
+  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res] =
     submitTxDal.getPendingTxs(request)
 
-  def updateInBlock(
-      request: UpdateTxInBlockReq
-    ): Future[UpdateTxInBlockResult] =
+  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res] =
     submitTxDal.updateInBlock(request)
 }

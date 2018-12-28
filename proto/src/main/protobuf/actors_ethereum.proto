@@ -22,168 +22,9 @@ package org.loopring.lightcone.proto;
 import "ethereum.proto";
 import "core.proto";
 
-
-
-message NodeBlockHeight{
-    string path = 1;
-    int32 height = 2;
-}
-
-
-
 /////////////////////////////////////////////////////////////////////
-// TWO WAY REQUEST-RESPONSES
+// ETHEREUM JSON-RPC MESSAGES
 /////////////////////////////////////////////////////////////////////
-
-
-message GetNodeBlockHeight {
-    message Req{}
-
-    message Res{
-        repeated NodeBlockHeight nodes = 1;
-    }
-}
-
-
-
-/////////////////////////////////////////////////////////////////////
-// ETHEREUM RAW DATA TYPES
-/////////////////////////////////////////////////////////////////////
-
-
-
-message Transaction {
-    string hash = 1;
-    string nonce = 2;
-    string blockHash = 3;
-    string blockNumber = 4;
-    string transactionIndex = 5;
-    string from = 6;
-    string to = 7;
-    string value = 8;
-    string gasPrice = 9;
-    string gas = 10;
-    string input = 11;
-    string r = 12;
-    string s = 13;
-    string v = 14;
-}
-
-message TransactionLog {
-    string logIndex = 1;
-    string blockNumber = 2;
-    string blockHash = 3;
-    string transactionHash = 4;
-    string transactionIndex = 5;
-    string address = 6;
-    string data = 7;
-    repeated string topics = 8;
-    bool removed = 9;
-}
-
-message TransactionReceipt {
-    string blockHash = 1;
-    string blockNumber = 2;
-    string transactionHash = 3;
-    string transactionIndex = 4;
-    string from = 5;
-    string to = 6;
-    string contractAddress = 7;
-    string cumulativeGasUsed = 8;
-    string gasUsed = 9;
-    repeated TransactionLog logs = 10;
-    string logsBloom = 11;
-    string root = 12;
-    string status = 13;
-}
-
-message BlockWithTxHash {
-    string number = 1;
-    string hash = 2;
-    string parentHash = 3;
-    string nonce = 4;
-    string sha3Uncles = 5;
-    string logsBloom = 6;
-    string transactionsRoot = 7;
-    string stateRoot = 8;
-    string receiptRoot = 9;
-    string miner = 10;
-    string difficulty = 11;
-    string totalDifficulty = 12;
-    string extraData = 13;
-    string size = 14;
-    string gasLimit = 15;
-    string gasUsed = 16;
-    string timestamp = 17;
-    repeated string transactions = 18;
-    repeated string uncles = 19;
-}
-
-message BlockWithTxObject {
-    string number = 1;
-    string hash = 2;
-    string parentHash = 3;
-    string nonce = 4;
-    string sha3Uncles = 5;
-    string logsBloom = 6;
-    string transactionsRoot = 7;
-    string stateRoot = 8;
-    string receiptRoot = 9;
-    string miner = 10;
-    string difficulty = 11;
-    string totalDifficulty = 12;
-    string extraData = 13;
-    string size = 14;
-    string gasLimit = 15;
-    string gasUsed = 16;
-    string timestamp = 17;
-    repeated Transaction transactions = 18;
-    repeated string uncles = 19;
-}
-
-message TraceCall {
-    string from = 1;
-    string to = 2;
-    string input = 3;
-    string output = 4;
-    string gas = 5;
-    string gasUsed = 6;
-    string type = 7;
-    string value = 8;
-}
-
-message TransactionTracing {
-    string from = 1;
-    string to = 2;
-    string input = 3;
-    string output = 4;
-    string gas = 5;
-    string gasUsed = 6;
-    string type = 7;
-    string value = 8;
-    repeated TraceCall calls = 9;
-}
-
-message TransactionParams {
-    string from = 1;
-    string to = 2;
-    string gas = 3;
-    string gasPrice = 4;
-    string value = 5;
-    string data = 6;
-}
-
-//message BlockWithTxAndReceipt {
-//    Block block = 1;
-//    repeated Transaction        transactions = 2;
-//    repeated TransactionReceipt receipts = 3;
-//}
-
-
-/////////////////////////////////////////////////////////////////////
-// ETHEREUM JSON-RPC
-/////////////////////////////////////////////////////////////////////
-
 
 message JsonRpc {
     message Request {
@@ -409,10 +250,6 @@ message BatchGetTransactionReceipts {
     }
 }
 
-// message SendRawTransactionReq {
-//     string data = 1;
-// }
-
 message GetUncle {
     message Req {
         string blockNum = 1;
@@ -430,6 +267,10 @@ message BatchGetUncle {
        repeated GetBlockWithTxHashByHash.Res resps = 1;
     }
 }
+
+// message SendRawTransactionReq {
+//     string data = 1;
+// }
 
 /// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
 /// 解析合约事件得到下面的数据：

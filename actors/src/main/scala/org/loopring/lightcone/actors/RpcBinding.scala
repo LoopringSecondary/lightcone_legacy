@@ -28,10 +28,10 @@ trait RpcBinding extends JsonRpcModule {
   ifReceive[CancelOrder.Req].thenReply[CancelOrder.Res]("cancel_order")
 
   // db query
-  ifReceive[GetOrdersForUserReq]
-    .thenReply[GetOrdersForUserResult]("get_orders")
-  ifReceive[GetTradesReq]
-    .thenReply[GetTradesResult]("get_trades")
+  ifReceive[GetOrdersForUser.Req]
+    .thenReply[GetOrdersForUser.Res]("get_orders")
+  ifReceive[GetTrades.Req]
+    .thenReply[GetTrades.Res]("get_trades")
 
   //Ethereum Query
   ifReceive[GetAllowance.Req]

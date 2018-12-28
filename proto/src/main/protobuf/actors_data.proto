@@ -21,10 +21,9 @@ package org.loopring.lightcone.proto;
 
 import "core.proto";
 
-
 enum TokenStandard {
-    ERC20   = 0;
-    ERC1400 = 1;
+    ERC20           = 0;
+    ERC1400         = 1;
 }
 
 enum SigningAlgorithm {
@@ -33,6 +32,10 @@ enum SigningAlgorithm {
     ALGO_NONE       = 255;
 }
 
+message MarketPair {
+    string token_s  = 1;
+    string token_b  = 2;
+}
 
 // use bytes to represent big-numbers and string for addresses
 message RawOrder {
@@ -45,9 +48,9 @@ message RawOrder {
         string sig                                 = 6;
         string dual_auth_sig                       = 7;
         bool   all_or_none                         = 8;
-        TokenStandard token_standard_s            = 9;
-        TokenStandard token_standard_b            = 10;
-        TokenStandard token_standard_fee          = 11;
+        TokenStandard token_standard_s             = 9;
+        TokenStandard token_standard_b             = 10;
+        TokenStandard token_standard_fee           = 11;
         string dual_auth_private_key               = 12;
     }
 
@@ -62,9 +65,9 @@ message RawOrder {
     }
 
     message ERC1400Params {
-        string    tranche_s         = 53;
-        string    tranche_b         = 54;
-        string    transfer_data_s   = 55;
+        string    tranche_s            = 53;
+        string    tranche_b            = 54;
+        string    transfer_data_s      = 55;
     }
 
     // // The following fieds are not part of Loopring's order definition but
@@ -74,7 +77,7 @@ message RawOrder {
         int64 updated_at              = 102;
         int64 matched_at              = 103;
         int64 updated_at_block        = 104;
-        OrderStatus status           = 105;
+        OrderStatus status            = 105;
 
         bytes actual_amount_s         = 200;
         bytes actual_amount_b         = 201;
@@ -85,78 +88,78 @@ message RawOrder {
     }
 
     // string  id          = 1; // order hash
-    string hash                     = 2;
-    int32  version                  = 3;
-    string owner                    = 4;
-    string token_s                  = 5;
-    string token_b                  = 6;
-    bytes  amount_s                 = 7;
-    bytes  amount_b                 = 8;
-    int32  valid_since              = 9; // in seconds
-    Params params                   = 10;
-    FeeParams fee_params            = 11;
-    ERC1400Params erc1400_params    = 12;
-    State state                     = 13;
-    int64  sequence_id              = 14;
-    string market_hash              = 15;
-    int32  address_shard_id         = 16;
-    int32  market_hash_id           = 17;
+    string hash                       = 2;
+    int32  version                    = 3;
+    string owner                      = 4;
+    string token_s                    = 5;
+    string token_b                    = 6;
+    bytes  amount_s                   = 7;
+    bytes  amount_b                   = 8;
+    int32  valid_since                = 9; // in seconds
+    Params params                     = 10;
+    FeeParams fee_params              = 11;
+    ERC1400Params erc1400_params      = 12;
+    State state                       = 13;
+    int64  sequence_id                = 14;
+    string market_hash                = 15;
+    int32  address_shard_id           = 16;
+    int32  market_hash_id             = 17;
 }
 
 
 message OrderState {
-    bytes amount_s = 1;
-    bytes amount_b = 2;
-    bytes amount_fee = 3;
+    bytes amount_s          = 1;
+    bytes amount_b          = 2;
+    bytes amount_fee        = 3;
 }
 
 message Order {
-    string id = 1;
-    string token_s = 2;
-    string token_b = 3;
-    string token_fee = 4;
-    bytes amount_s = 5;
-    bytes amount_b = 6;
-    bytes amount_fee = 7;
-    int64 created_at = 8;
-    int64 updated_at = 9;
-    OrderStatus status = 10;
-    double wallet_split_percentage = 11;
-    OrderState outstanding = 12;
-    OrderState reserved = 13;
-    OrderState actual = 14;
-    OrderState matchable = 15;
+    string id                       = 1;
+    string token_s                  = 2;
+    string token_b                  = 3;
+    string token_fee                = 4;
+    bytes amount_s                  = 5;
+    bytes amount_b                  = 6;
+    bytes amount_fee                = 7;
+    int64 created_at                = 8;
+    int64 updated_at                = 9;
+    OrderStatus status              = 10;
+    double wallet_split_percentage  = 11;
+    OrderState outstanding          = 12;
+    OrderState reserved             = 13;
+    OrderState actual               = 14;
+    OrderState matchable            = 15;
 }
 
 message ExpectedOrderFill {
-    Order order = 1;
-    OrderState pending = 2;
-    bytes amount_margin = 3;
+    Order order                     = 1;
+    OrderState pending              = 2;
+    bytes amount_margin             = 3;
 }
 
 message OrderRing {
-    ExpectedOrderFill maker = 1;
-    ExpectedOrderFill taker = 2;
+    ExpectedOrderFill maker         = 1;
+    ExpectedOrderFill taker         = 2;
 }
 
 
 message BalanceAndAllowance {
-    bytes balance = 1;
-    bytes allowance = 2;
-    bytes availableBalance = 3;
-    bytes availableAllowance = 4;
+    bytes balance                   = 1;
+    bytes allowance                 = 2;
+    bytes availableBalance          = 3;
+    bytes availableAllowance        = 4;
 }
 
 message EthereumProxySettings {
     message Node {
-        string host = 1;
-        int32 port = 2;
-        string ipcPath = 3;
+        string host                 = 1;
+        int32 port                  = 2;
+        string ipcPath              = 3;
     }
-    int32 pool_size = 1;
-    int32 check_interval_seconds = 2;
-    float healthy_threshold = 3;
-    repeated Node nodes = 4;
+    int32 pool_size                 = 1;
+    int32 check_interval_seconds    = 2;
+    float healthy_threshold         = 3;
+    repeated Node nodes             = 4;
 }
 
 message TokenMeta {
@@ -188,13 +191,6 @@ message MarketMetadata {
     bool isLastTakerSell = 8;
 }
 
-enum ExecutionStatus {
-    EXECUTED_STATUS_UNKNOW = 0;
-    EXECUTED_STATUS_FAILED = 1;
-    EXECUTED_STATUS_SUCCESS = 2;
-}
-
-
 message UpdatedTokenBurnRate {
     string token = 1;
     double burnRate = 2;
@@ -209,8 +205,8 @@ message RingBatch {
     string fee_recipient            = 1;
     string miner                    = 2;
     string sig                      = 3;
-    repeated Ring rings            = 4;
-    repeated RawOrder orders       = 5;
+    repeated Ring rings             = 4;
+    repeated RawOrder orders        = 5;
     SigningAlgorithm sign_algorithm = 6;
     string hash                     = 7;
     string transaction_origin       = 8;
@@ -294,3 +290,7 @@ message SettlementTx {
     int64   updated_at = 11;
 }
 
+message NodeBlockHeight{
+    string path = 1;
+    int32 height = 2;
+}

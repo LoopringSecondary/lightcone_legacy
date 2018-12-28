@@ -207,7 +207,7 @@ class AccountManagerActor(
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
         manager.addTokenManager(tm)
       })
-      tokenMangers ← Future.sequence(tokens.map(getTokenManager))
+      tokenMangers <- Future.sequence(tokens.map(getTokenManager))
     } yield tokenMangers
   }
 

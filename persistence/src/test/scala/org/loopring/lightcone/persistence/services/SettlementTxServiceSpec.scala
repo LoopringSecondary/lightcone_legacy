@@ -28,7 +28,7 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
 
   def createTables(): Future[Any] =
     for {
-      r ← new SettlementTxDalImpl().createTable()
+      r <- new SettlementTxDalImpl().createTable()
     } yield r
 
   private def testSave(
@@ -36,9 +36,9 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
       owner: String,
       nonce: Long,
       status: SettlementTx.Status
-    ): Future[SaveSettlementTxResult] = {
+    ): Future[PersistSettlementTx.Res] = {
     service.saveTx(
-      SaveSettlementTxReq(
+      PersistSettlementTx.Req(
         Some(
           SettlementTx(
             txHash = txHash,
@@ -63,14 +63,14 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val owner = "0x-test1-owner"
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
-      _ ← Future.sequence(txHashes.map { hash ⇒
+      _ <- Future.sequence(txHashes.map { hash ⇒
         testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
-      query ← service.getPendingTxs(
-        GetPendingTxsReq(owner = owner, timeBefore = time)
+      query <- service.getPendingTxs(
+        GetPendingTxs.Req(owner = owner, timeBefore = time)
       )
     } yield query
-    val res = Await.result(result.mapTo[GetPendingTxsResult], 5.second)
+    val res = Await.result(result.mapTo[GetPendingTxs.Res], 5.second)
     res.txs.length == 1 should be(true)
   }
 
@@ -91,17 +91,17 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val owner = "0x-test2-owner"
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
-      _ ← Future.sequence(txHashes.map { hash ⇒
+      _ <- Future.sequence(txHashes.map { hash ⇒
         testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
-      _ ← Future.sequence(mocks.map { hash ⇒
+      _ <- Future.sequence(mocks.map { hash ⇒
         testSave(hash, owner, 2, SettlementTx.Status.PENDING)
       })
-      query1 ← service.getPendingTxs(
-        GetPendingTxsReq(owner = owner, timeBefore = time)
+      query1 <- service.getPendingTxs(
+        GetPendingTxs.Req(owner = owner, timeBefore = time)
       )
     } yield query1
-    val res = Await.result(result.mapTo[GetPendingTxsResult], 5.second)
+    val res = Await.result(result.mapTo[GetPendingTxs.Res], 5.second)
     res.txs.length === 2 should be(true)
   }
 
@@ -116,26 +116,23 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val owner = "0x-test3-owner"
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
-      _ ← Future.sequence(txHashes.map { hash ⇒
+      _ <- Future.sequence(txHashes.map { hash ⇒
         testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
-      query1 ← service.getPendingTxs(
-        GetPendingTxsReq(owner = owner, timeBefore = time)
+      query1 <- service.getPendingTxs(
+        GetPendingTxs.Req(owner = owner, timeBefore = time)
       )
       _ <- service.updateInBlock(
-        UpdateTxInBlockReq(
-          txHash = "0x-updateblock-03",
-          from = owner,
-          nonce = 1
-        )
+        UpdateTxInBlock
+          .Req(txHash = "0x-updateblock-03", from = owner, nonce = 1)
       )
-      query2 ← service.getPendingTxs(
-        GetPendingTxsReq(owner = owner, timeBefore = time)
+      query2 <- service.getPendingTxs(
+        GetPendingTxs.Req(owner = owner, timeBefore = time)
       )
     } yield (query1, query2)
     val res =
       Await.result(
-        result.mapTo[(GetPendingTxsResult, GetPendingTxsResult)],
+        result.mapTo[(GetPendingTxs.Res, GetPendingTxs.Res)],
         5.second
       )
     res._1.txs.length === 1 && res._2.txs.length === 0 should be(true)
@@ -152,16 +149,16 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val owner = "0x-test3-owner"
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
-      _ ← Future.sequence(txHashes.map { hash ⇒
+      _ <- Future.sequence(txHashes.map { hash ⇒
         testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
       updated <- service.updateInBlock(
-        UpdateTxInBlockReq(txHash = "0x-tx-not-exist", from = owner, nonce = 1)
+        UpdateTxInBlock.Req(txHash = "0x-tx-not-exist", from = owner, nonce = 1)
       )
     } yield updated
     val res =
       try {
-        Await.result(result.mapTo[UpdateTxInBlockResult], 5.second)
+        Await.result(result.mapTo[UpdateTxInBlock.Res], 5.second)
       } catch {
         case e: ErrorException => e
         case m: Throwable      => m

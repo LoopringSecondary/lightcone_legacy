@@ -19,7 +19,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
-import "actors_core.proto";
+import "actors_data.proto";
 import "core.proto";
 import "ethereum.proto";
 
@@ -65,7 +65,7 @@ message GasPriceUpdated {
 }
 
 /////////////////////////////////////////////////////////////////////
-// TWO WAY REQUEST-RESPONSES
+// TWO WAY REQUEST-RESPONSES (DB RELATD NOT INCLUDED)
 /////////////////////////////////////////////////////////////////////
 
 message SubmitOrder {
@@ -225,5 +225,13 @@ message SaveBlock {
 
     message Res {
         Error error = 1;
+    }
+}
+
+message GetNodeBlockHeight {
+    message Req{}
+
+    message Res{
+        repeated NodeBlockHeight nodes = 1;
     }
 }

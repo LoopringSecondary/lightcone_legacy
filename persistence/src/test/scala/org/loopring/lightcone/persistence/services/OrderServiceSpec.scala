@@ -34,8 +34,8 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
 
   def createTables(): Future[Any] =
     for {
-      _ ← new OrderDalImpl().createTable()
-      r ← new BlockDalImpl().createTable()
+      _ <- new OrderDalImpl().createTable()
+      r <- new BlockDalImpl().createTable()
     } yield r
 
   private def testSave(
@@ -60,7 +60,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       validUntil: Int = 0
     ): Future[Set[Either[RawOrder, ErrorCode]]] = {
     for {
-      result ← Future.sequence(owners.map { owner ⇒
+      result <- Future.sequence(owners.map { owner ⇒
         testSave(owner, status, tokenS, tokenB, validSince, validUntil)
       })
     } yield result
@@ -81,9 +81,9 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
   "submitOrder" must "save a order with hash" in {
     val owner = "0x-saveorder-state0-01"
     val result = for {
-      order ← testSave(owner, OrderStatus.STATUS_NEW, tokenS, tokenB)
+      order <- testSave(owner, OrderStatus.STATUS_NEW, tokenS, tokenB)
       _ = assert(order.isLeft)
-      query ← service.getOrder(order.left.get.hash)
+      query <- service.getOrder(order.left.get.hash)
     } yield query
     val res = Await.result(result.mapTo[Option[RawOrder]], 5.second)
     res should not be empty
@@ -111,14 +111,14 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val tokenS = "0xaaaaaaa2"
     val tokenB = "0xbbbbbbb2"
     val result = for {
-      _ ← testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
-      _ ← testSaves(
+      _ <- testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
+      _ <- testSaves(
         mockState,
         OrderStatus.STATUS_PARTIALLY_FILLED,
         tokenS,
         tokenB
       )
-      _ ← testSaves(
+      _ <- testSaves(
         mockToken,
         OrderStatus.STATUS_PARTIALLY_FILLED,
         "0xcccccccc1",
@@ -126,7 +126,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         200,
         300
       )
-      query ← service.getOrders(
+      query <- service.getOrders(
         Set(OrderStatus.STATUS_NEW),
         owners,
         Set(tokenS),
@@ -136,7 +136,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some(SortingType.ASC),
         None
       )
-      queryStatus ← service.getOrders(
+      queryStatus <- service.getOrders(
         Set(OrderStatus.STATUS_PARTIALLY_FILLED),
         Set.empty,
         Set.empty,
@@ -146,7 +146,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some(SortingType.ASC),
         None
       )
-      queryToken ← service.getOrders(
+      queryToken <- service.getOrders(
         Set(OrderStatus.STATUS_NEW),
         mockToken,
         Set("0xcccccccc1"),
@@ -156,7 +156,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some(SortingType.ASC),
         None
       )
-      queryMarket ← service.getOrders(
+      queryMarket <- service.getOrders(
         Set(OrderStatus.STATUS_NEW),
         owners,
         Set.empty,
@@ -166,7 +166,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some(SortingType.ASC),
         None
       )
-      count ← service.countOrdersForUser(Set.empty)
+      count <- service.countOrdersForUser(Set.empty)
     } yield (query, queryStatus, queryToken, queryMarket, count)
     val res = Await.result(
       result.mapTo[
@@ -181,9 +181,9 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
   "getOrder" must "get a order with hash" in {
     val owner = "0x-getorder-state0-01"
     val result = for {
-      saved ← testSave(owner, OrderStatus.STATUS_NEW, tokenS, tokenB)
+      saved <- testSave(owner, OrderStatus.STATUS_NEW, tokenS, tokenB)
       _ = assert(saved.isLeft)
-      query ← service.getOrder(saved.left.get.hash)
+      query <- service.getOrder(saved.left.get.hash)
     } yield query
     val res = Await.result(result.mapTo[Option[RawOrder]], 5.second)
     res should not be empty
@@ -198,8 +198,8 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       "0x-getordersfouser-05"
     )
     val result = for {
-      _ ← testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
-      q1 ← service.getOrdersForUser(
+      _ <- testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
+      q1 <- service.getOrdersForUser(
         Set(OrderStatus.STATUS_NEW),
         Some("0x-getordersfouser-03"),
         Some(tokenS),
@@ -209,7 +209,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some(SortingType.ASC),
         None
       )
-      q2 ← service.getOrdersForUser(
+      q2 <- service.getOrdersForUser(
         Set(OrderStatus.STATUS_NEW),
         Some("0x-getordersfouser-03"),
         None,
@@ -235,8 +235,8 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       "0x-countorders-06"
     )
     val result = for {
-      _ ← testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
-      query ← service.countOrdersForUser(
+      _ <- testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
+      query <- service.countOrdersForUser(
         Set(OrderStatus.STATUS_NEW),
         Some("0x-countorders-05"),
         Some(tokenS),
@@ -260,7 +260,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val tokenS = "0xaaaaa01"
     val tokenB = "0xaaaaa02"
     val result = for {
-      _ ← testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
+      _ <- testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
       marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
       marketHashIds = Set(Math.abs(marketHash.hashCode))
       addressShardIds = owners.map(a => Math.abs(a.hashCode % 100)).toSet
@@ -278,13 +278,13 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
   "updateOrderStatus" must "update order's status with hash" in {
     val owner = "0x-updateorderstatus-03"
     val result = for {
-      saved ← testSave(owner, OrderStatus.STATUS_NEW, tokenS, tokenB)
+      saved <- testSave(owner, OrderStatus.STATUS_NEW, tokenS, tokenB)
       _ = assert(saved.isLeft)
-      update ← service.updateOrderStatus(
+      update <- service.updateOrderStatus(
         saved.left.get.hash,
         OrderStatus.STATUS_CANCELLED_BY_USER
       )
-      query ← service.getOrder(saved.left.get.hash)
+      query <- service.getOrder(saved.left.get.hash)
     } yield (update, query)
     val res =
       Await.result(result.mapTo[(ErrorCode, Option[RawOrder])], 5.second)
@@ -308,10 +308,10 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       outstandingAmountFee = ByteString.copyFrom("116", "UTF-8")
     )
     val result = for {
-      saved ← testSave(owner, OrderStatus.STATUS_NEW, tokenS, tokenB)
+      saved <- testSave(owner, OrderStatus.STATUS_NEW, tokenS, tokenB)
       _ = assert(saved.isLeft)
-      update ← service.updateAmount(saved.left.get.hash, state)
-      query ← service.getOrder(saved.left.get.hash)
+      update <- service.updateAmount(saved.left.get.hash, state)
+      query <- service.getOrder(saved.left.get.hash)
     } yield (update, query)
     val res =
       Await.result(result.mapTo[(ErrorCode, Option[RawOrder])], 5.second)
@@ -324,45 +324,45 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val tokenS = "0xbbbbb01"
     val tokenB = "0xbbbbb02"
     val result = for {
-      saved1 ← testSave(
+      saved1 <- testSave(
         "0x-softcancel-01",
         OrderStatus.STATUS_NEW,
         tokenS,
         tokenB
       )
       _ = assert(saved1.isLeft)
-      saved2 ← testSave(
+      saved2 <- testSave(
         "0x-softcancel-02",
         OrderStatus.STATUS_NEW,
         tokenS,
         tokenB
       )
       _ = assert(saved2.isLeft)
-      saved3 ← testSave(
+      saved3 <- testSave(
         "0x-softcancel-03",
         OrderStatus.STATUS_NEW,
         tokenS,
         tokenB
       )
       _ = assert(saved3.isLeft)
-      query1 ← service.countOrdersForUser(
+      query1 <- service.countOrdersForUser(
         Set(OrderStatus.STATUS_NEW),
         None,
         Some(tokenS),
         Some(tokenB),
         Some(MarketHashProvider.convert2Hex(tokenS, tokenB))
       )
-      update ← service.markOrderSoftCancelled(
+      update <- service.markOrderSoftCancelled(
         Seq(saved1.left.get.hash, saved3.left.get.hash)
       )
-      query2 ← service.countOrdersForUser(
+      query2 <- service.countOrdersForUser(
         Set(OrderStatus.STATUS_NEW),
         None,
         Some(tokenS),
         Some(tokenB),
         Some(MarketHashProvider.convert2Hex(tokenS, tokenB))
       )
-      query3 ← service.countOrdersForUser(
+      query3 <- service.countOrdersForUser(
         Set(OrderStatus.STATUS_CANCELLED_BY_USER),
         None,
         Some(tokenS),
@@ -371,7 +371,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       )
     } yield (update, query1, query2, query3)
     val res = Await.result(
-      result.mapTo[(Seq[UserCancelOrder.Result.Result], Int, Int, Int)],
+      result.mapTo[(Seq[UserCancelOrder.Res.Result], Int, Int, Int)],
       5.second
     )
     res._1.map { o =>

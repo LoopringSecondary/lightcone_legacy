@@ -54,7 +54,7 @@ class RecoverOrderSpec
       orders: Seq[RawOrder]
     ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
     for {
-      result ← Future.sequence(orders.map { order ⇒
+      result <- Future.sequence(orders.map { order ⇒
         dbModule.orderService.saveOrder(order)
       })
     } yield result

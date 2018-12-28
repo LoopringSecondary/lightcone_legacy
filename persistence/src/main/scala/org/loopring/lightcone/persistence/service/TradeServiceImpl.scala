@@ -33,12 +33,12 @@ class TradeServiceImpl @Inject()(
   def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] =
     tradeDal.saveTrade(trade)
 
-  def getTrades(request: GetTradesReq): Future[Seq[Trade]] =
+  def getTrades(request: GetTrades.Req): Future[Seq[Trade]] =
     tradeDal
       .getTrades(request)
       .map(_.map(r => r.copy(updatedAt = 0, sequenceId = 0)))
 
-  def countTrades(request: GetTradesReq): Future[Int] =
+  def countTrades(request: GetTrades.Req): Future[Int] =
     tradeDal.countTrades(request)
 
   def obsolete(height: Long): Future[Unit] = tradeDal.obsolete(height)

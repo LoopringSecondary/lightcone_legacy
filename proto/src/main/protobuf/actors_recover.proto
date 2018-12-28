@@ -20,7 +20,7 @@ option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
 import "core.proto";
-import "actors_core.proto";
+import "actors_data.proto";
 
 
 /////////////////////////////////////////////////////////////////////

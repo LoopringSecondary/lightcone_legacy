@@ -31,12 +31,12 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
-  def saveTx(tx: SettlementTx): Future[SaveSettlementTxResult]
+  def saveTx(tx: SettlementTx): Future[PersistSettlementTx.Res]
   // get all pending txs with given owner
-  def getPendingTxs(request: GetPendingTxsReq): Future[GetPendingTxsResult]
+  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res]
 
   // update address's all txs status below or equals the given nonce to BLOCK
-  def updateInBlock(request: UpdateTxInBlockReq): Future[UpdateTxInBlockResult]
+  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res]
 }
 
 class SettlementTxDalImpl(
@@ -49,18 +49,18 @@ class SettlementTxDalImpl(
   val timeProvider = new SystemTimeProvider()
   implicit val StatusCxolumnType = enumColumnType(SettlementTx.Status)
 
-  def saveTx(tx: SettlementTx): Future[SaveSettlementTxResult] = {
+  def saveTx(tx: SettlementTx): Future[PersistSettlementTx.Res] = {
     db.run((query += tx).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒
-        SaveSettlementTxResult(ERR_PERSISTENCE_DUPLICATE_INSERT)
+        PersistSettlementTx.Res(ERR_PERSISTENCE_DUPLICATE_INSERT)
       case Failure(ex) ⇒
         logger.error(s"error : ${ex.getMessage}")
-        SaveSettlementTxResult(ERR_PERSISTENCE_INTERNAL)
-      case Success(x) ⇒ SaveSettlementTxResult(ERR_NONE)
+        PersistSettlementTx.Res(ERR_PERSISTENCE_INTERNAL)
+      case Success(x) ⇒ PersistSettlementTx.Res(ERR_NONE)
     }
   }
 
-  def getPendingTxs(request: GetPendingTxsReq): Future[GetPendingTxsResult] = {
+  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res] = {
     implicit val getSupplierResult = GetResult[SettlementTx](
       r =>
         SettlementTx(
@@ -87,12 +87,12 @@ class SettlementTxDalImpl(
         GROUP BY `from`, nonce
         """
         .as[SettlementTx]
-    db.run(sql).map(r => GetPendingTxsResult(r.toSeq))
+    db.run(sql).map(r => GetPendingTxs.Res(r.toSeq))
   }
 
   def updateInBlock(
-      request: UpdateTxInBlockReq
-    ): Future[UpdateTxInBlockResult] = {
+      request: UpdateTxInBlock.Req
+    ): Future[UpdateTxInBlock.Res] = {
     val a = (for {
       // update tx in block
       updateInBlock <- query
@@ -115,8 +115,8 @@ class SettlementTxDalImpl(
       // update others pending tx to failed
     } yield updateFaild).transactionally
     db.run(a).map { r =>
-      if (r >= 0) UpdateTxInBlockResult(ErrorCode.ERR_NONE)
-      else UpdateTxInBlockResult(ErrorCode.ERR_INTERNAL_UNKNOWN)
+      if (r >= 0) UpdateTxInBlock.Res(ErrorCode.ERR_NONE)
+      else UpdateTxInBlock.Res(ErrorCode.ERR_INTERNAL_UNKNOWN)
     }
   }
 }

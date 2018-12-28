@@ -32,8 +32,8 @@ import scala.util.{Failure, Success}
 trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
   def saveTrade(trade: Trade): Future[Either[ErrorCode, String]]
   def saveTrades(trades: Seq[Trade]): Future[Seq[Either[ErrorCode, String]]]
-  def getTrades(request: GetTradesReq): Future[Seq[Trade]]
-  def countTrades(request: GetTradesReq): Future[Int]
+  def getTrades(request: GetTrades.Req): Future[Seq[Trade]]
+  def countTrades(request: GetTrades.Req): Future[Int]
   def obsolete(height: Long): Future[Unit]
 }
 
@@ -94,11 +94,11 @@ class TradeDalImpl(
     filters
   }
 
-  def getTrades(request: GetTradesReq): Future[Seq[Trade]] = {
+  def getTrades(request: GetTrades.Req): Future[Seq[Trade]] = {
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
-      case GetTradesReq.Market.MarketHash(v) ⇒ (None, None, Some(v))
-      case GetTradesReq.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
+      case GetTrades.Req.Market.MarketHash(v) ⇒ (None, None, Some(v))
+      case GetTrades.Req.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
       case _ ⇒ (None, None, None)
     }
     val filters = queryFilters(
@@ -112,11 +112,11 @@ class TradeDalImpl(
     db.run(filters.result)
   }
 
-  def countTrades(request: GetTradesReq): Future[Int] = {
+  def countTrades(request: GetTrades.Req): Future[Int] = {
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
-      case GetTradesReq.Market.MarketHash(v) ⇒ (None, None, Some(v))
-      case GetTradesReq.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
+      case GetTrades.Req.Market.MarketHash(v) ⇒ (None, None, Some(v))
+      case GetTrades.Req.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
       case _ ⇒ (None, None, None)
     }
     val filters = queryFilters(

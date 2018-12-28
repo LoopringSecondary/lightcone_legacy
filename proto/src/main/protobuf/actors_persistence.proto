@@ -21,85 +21,84 @@ package org.loopring.lightcone.proto;
 
 import "common.proto";
 import "core.proto";
-import "actors_core.proto";
+import "actors_data.proto";
 
+/////////////////////////////////////////////////////////////////////
+// TWO WAY DATABASE-RELATED REQUEST-RESPONSES
+/////////////////////////////////////////////////////////////////////
 
-message SaveOrderResult {
-    RawOrder order    = 1;
-    bool already_exist      = 2;
-    ErrorCode error = 3;
-}
-
-message SaveOrderReq {
-    RawOrder order    = 1;
-}
-
-message UpdateOrderStateReq {
-    string hash = 1;
-    RawOrder.State state = 2;
-    bool changeUpdatedAtField = 3;
-}
-
-message UpdateOrderStateRes {
-    ErrorCode error = 1;
-}
-
-message UpdateOrderStatusReq {
-    string hash = 1;
-    OrderStatus status = 2;
-    bool changeUpdatedAtField = 3;
-}
-
-message UpdateOrderStatusRes {
-    ErrorCode error = 1;
-}
-
-message GetOrdersByHashesReq {
-    repeated string hashes = 1;
-}
-
-message GetOrdersByHashesRes {
-    repeated RawOrder orders = 1;
-    ErrorCode error = 2;
-}
-
-message GetOrderByHashReq {
-    string hash = 1;
-}
-
-message GetOrderByHashRes {
-    RawOrder order = 1;
-    ErrorCode error = 2;
-}
-
-message SaveOrderStateResult {
-    RawOrder state    = 1;
-    ErrorCode error = 3;
-}
-
-message SaveOrderStateReq {
-    RawOrder state    = 1;
-}
-
-message MarketPair {
-    string token_s  = 1;
-    string token_b  = 2;
-}
-
-message GetOrdersForUserReq {
-    oneof market {
-        MarketPair pair        = 1; // tokenS -> tokenB
-        string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+message PersistOrder {
+    message Req {
+        RawOrder order    = 1;
     }
-    string   owner                 = 3;
-    repeated OrderStatus statuses = 4;
-    SortingType    sort                  = 5;
-    Paging    skip                  = 6;
+    message Res {
+        RawOrder order    = 1;
+        bool already_exist      = 2;
+        ErrorCode error = 3;
+    }
 }
 
-message GetOrdersForUserResult {
-    repeated RawOrder orders = 1;
-    ErrorCode error = 2;
+message UpdateOrderState {
+    message Req {
+        string hash = 1;
+        RawOrder.State state = 2;
+        bool changeUpdatedAtField = 3;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+    }
+}
+
+message UpdateOrderStatus {
+    message Req {
+        string hash = 1;
+        OrderStatus status = 2;
+        bool changeUpdatedAtField = 3;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+}
+}
+
+message GetOrderByHash {
+    message Req {
+        string hash = 1;
+    }
+
+    message Res {
+        RawOrder order = 1;
+        ErrorCode error = 2;
+    }
+
+    message BatchReq {
+        repeated string hashes = 1;
+    }
+
+    message BatchRes {
+        repeated RawOrder orders = 1;
+        ErrorCode error = 2;
+    }
+}
+
+
+message GetOrdersForUser {
+    message Req {
+        oneof market {
+            MarketPair pair        = 1; // tokenS -> tokenB
+            string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+        }
+        string   owner                 = 3;
+        repeated OrderStatus statuses = 4;
+        SortingType    sort                  = 5;
+        Paging    skip                  = 6;
+    }
+
+    message Res {
+        repeated RawOrder orders = 1;
+        ErrorCode error = 2;
+    }
 }
 
 message UserCancelOrder {
@@ -107,9 +106,9 @@ message UserCancelOrder {
         repeated string order_hashes = 1;
     }
 
-    message Result {
+    message Res {
         message Result {
-            string     order_hash = 1;
+            string    order_hash = 1;
             RawOrder  order      = 2;
             ErrorCode error      = 3;
         }
@@ -117,44 +116,52 @@ message UserCancelOrder {
     }
 }
 
-message GetTradesReq {
-    oneof market {
-        MarketPair pair        = 1; // tokenS -> tokenB
-        string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+message GetTrades {
+    message Req {
+        oneof market {
+            MarketPair pair        = 1; // tokenS -> tokenB
+            string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+        }
+        string owner   = 3;
+        SortingType sort     = 4;
+        Paging skip     = 5;
     }
-    string owner   = 3;
-    SortingType sort     = 4;
-    Paging skip     = 5;
+
+    message Res {
+        repeated Trade  trades = 1;
+        ErrorCode       error  = 2;
+    }
 }
 
-message GetTradesResult {
-    repeated Trade  trades = 1;
-    ErrorCode       error  = 2;
+message PersistSettlementTx {
+    message Req {
+        SettlementTx tx = 1;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+    }
 }
 
-message SaveSettlementTxReq {
-    SettlementTx tx = 1;
+message GetPendingTxs {
+    message Req {
+        string owner       = 1; // required
+        int64  time_before = 2; // create_at <= time_before
+    }
+
+    message Res {
+        repeated SettlementTx txs = 1;
+    }
 }
 
-message SaveSettlementTxResult {
-    ErrorCode error = 1;
-}
+message UpdateTxInBlock {
+    message Req {
+        string tx_hash = 1;
+        string from    = 2;
+        int64  nonce   = 3;
+    }
 
-message GetPendingTxsReq {
-    string owner       = 1; // required
-    int64  time_before = 2; // create_at <= time_before
-}
-
-message GetPendingTxsResult {
-    repeated SettlementTx txs = 1;
-}
-
-message UpdateTxInBlockReq {
-    string tx_hash = 1;
-    string from    = 2;
-    int64  nonce   = 3;
-}
-
-message UpdateTxInBlockResult {
-    ErrorCode error = 1;
+    message Res {
+        ErrorCode error = 1;
+    }
 }

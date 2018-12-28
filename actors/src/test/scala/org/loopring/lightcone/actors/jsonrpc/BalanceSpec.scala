@@ -77,7 +77,7 @@ class BalanceSpec
       )
       val r = for {
         firstQuery <- singleRequest(getBalanceReq, method)
-        _ ← (actors.get(MultiAccountManagerMessageValidator.name) ? SubmitSimpleOrder(
+        _ <- (actors.get(MultiAccountManagerMessageValidator.name) ? SubmitSimpleOrder(
           owner = owner,
           order = Some(maker)
         )).mapTo[SubmitOrder.Res]
