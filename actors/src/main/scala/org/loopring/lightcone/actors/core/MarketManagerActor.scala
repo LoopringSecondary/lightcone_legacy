@@ -46,7 +46,8 @@ object MarketManagerActor extends ShardedByMarket {
 
   def startShardRegion(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -93,7 +94,8 @@ object MarketManagerActor extends ShardedByMarket {
 class MarketManagerActor(
     markets: Map[String, XMarketId]
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -224,7 +226,7 @@ class MarketManagerActor(
       xorder.actual.nonEmpty,
       "order in XSubmitSimpleOrderReq miss `actual` field"
     )
-    val order: Matchable = xorder
+    val matchable: Matchable = xorder
     xorder.status match {
       case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING =>
         for {
@@ -235,7 +237,7 @@ class MarketManagerActor(
           minRequiredIncome = getRequiredMinimalIncome(gasPrice)
 
           // submit order to reserve balance and allowance
-          matchResult = manager.submitOrder(order, minRequiredIncome)
+          matchResult = manager.submitOrder(matchable, minRequiredIncome)
 
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult, gasPrice)

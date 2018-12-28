@@ -115,30 +115,32 @@ class AccountManagerActor(
   }
 
   private def submitOrder(xorder: XOrder): Future[XSubmitOrderRes] = {
-    val order: Matchable = xorder
+    val matchable: Matchable = xorder
     for {
-      _ <- getTokenManager(order.tokenS)
-      _ <- if (order.amountFee > 0 && order.tokenS != order.tokenFee)
-        getTokenManager(order.tokenFee)
+      _ <- getTokenManager(matchable.tokenS)
+      _ <- if (matchable.amountFee > 0 && matchable.tokenS != matchable.tokenFee)
+        getTokenManager(matchable.tokenFee)
       else
         Future.successful(Unit)
 
       // Update the order's _outstanding field.
       getFilledAmountRes <- (ethereumQueryActor ? XGetFilledAmountReq(
-        Seq(order.id)
+        Seq(matchable.id)
       )).mapAs[XGetFilledAmountRes]
 
       _ = log.debug(s"order history: orderHistoryRes")
 
-      _order = order.withFilledAmountS(
-        getFilledAmountRes.filledAmountSMap(order.id)
+      _matchable = matchable.withFilledAmountS(
+        getFilledAmountRes.filledAmountSMap(matchable.id)
       )
-      _ = log.info(s"submitting order to AccountManager: ${_order}")
-      (successful, updatedOrders) = manager.submitAndGetUpdatedOrders(_order)
-      _ = assert(updatedOrders.contains(_order.id))
-      _ = log.debug(s"assert contains order:  ${updatedOrders(_order.id)}")
+      _ = log.info(s"submitting order to AccountManager: ${_matchable}")
+      (successful, updatedOrders) = manager.submitAndGetUpdatedOrders(
+        _matchable
+      )
+      _ = assert(updatedOrders.contains(_matchable.id))
+      _ = log.debug(s"assert contains order:  ${updatedOrders(_matchable.id)}")
       _ = if (!successful)
-        throw ErrorException(XError(order.status))
+        throw ErrorException(XError(matchable.status))
       res <- Future.sequence {
         updatedOrders.map { o =>
           for {
@@ -151,9 +153,9 @@ class AccountManagerActor(
           }
         }
       }
-      order_ = updatedOrders(_order.id)
-      xorder_ : XOrder = order_.copy(_reserved = None, _outstanding = None)
-    } yield XSubmitOrderRes(order = Some(xorder_))
+      matchable_ = updatedOrders(_matchable.id)
+      order_ : XOrder = matchable_.copy(_reserved = None, _outstanding = None)
+    } yield XSubmitOrderRes(order = Some(order_))
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {

@@ -31,8 +31,9 @@ trait AccountManager {
   def submitOrder(order: Matchable): Boolean
 
   def submitAndGetUpdatedOrders(
-      _order: Matchable
+      order: Matchable
     ): (Boolean, Map[String, Matchable])
+
   def cancelOrder(orderId: String): Boolean
 
   def adjustOrder(

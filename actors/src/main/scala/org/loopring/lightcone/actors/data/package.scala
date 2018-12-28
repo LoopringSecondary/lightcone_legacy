@@ -71,23 +71,23 @@ package object data {
       _matchable = xorder.matchable.map(orderState2MatchableState)
     )
 
-  implicit def matchable2Order(order: Matchable): XOrder =
+  implicit def matchable2Order(matchable: Matchable): XOrder =
     XOrder(
-      id = order.id,
-      tokenS = order.tokenS,
-      tokenB = order.tokenB,
-      tokenFee = order.tokenFee,
-      amountS = order.amountS,
-      amountB = order.amountB,
-      amountFee = order.amountFee,
-      createdAt = order.createdAt,
-      updatedAt = order.updatedAt,
-      status = order.status,
-      walletSplitPercentage = order.walletSplitPercentage,
-      outstanding = order._outstanding.map(matchableState2OrderState),
-      reserved = order._reserved.map(matchableState2OrderState),
-      actual = order._actual.map(matchableState2OrderState),
-      matchable = order._matchable.map(matchableState2OrderState)
+      id = matchable.id,
+      tokenS = matchable.tokenS,
+      tokenB = matchable.tokenB,
+      tokenFee = matchable.tokenFee,
+      amountS = matchable.amountS,
+      amountB = matchable.amountB,
+      amountFee = matchable.amountFee,
+      createdAt = matchable.createdAt,
+      updatedAt = matchable.updatedAt,
+      status = matchable.status,
+      walletSplitPercentage = matchable.walletSplitPercentage,
+      outstanding = matchable._outstanding.map(matchableState2OrderState),
+      reserved = matchable._reserved.map(matchableState2OrderState),
+      actual = matchable._actual.map(matchableState2OrderState),
+      matchable = matchable._matchable.map(matchableState2OrderState)
     )
 
   implicit def orderState2MatchableState(
