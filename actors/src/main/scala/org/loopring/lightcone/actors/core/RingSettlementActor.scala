@@ -39,7 +39,8 @@ import scala.concurrent._
 import scala.util._
 
 // main owner: 李亚东
-class RingSettlementActor()(
+class RingSettlementActor(
+  )(
     implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,

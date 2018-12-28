@@ -114,7 +114,7 @@ class RingSettlementSpec
         ).mapAs[XOrderbook]
 
         _ ← Future {
-          Thread.sleep(1000 * 30)
+          Thread.sleep(1000 * 10)
         }
         ba2 ← Future.sequence(
           getBalanceReqs.map(
