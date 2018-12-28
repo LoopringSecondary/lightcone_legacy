@@ -402,5 +402,5 @@ message XSaveBlockReq {
 }
 
 message XSaveBlockRes {
-    XError error = 1;
+    Error error = 1;
 }

@@ -180,7 +180,7 @@ class MarketManagerActor(
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
-      sender ! XError(
+      sender ! Error(
         ERR_REJECTED_DURING_RECOVER,
         s"market manager `${entityId}` is being recovered"
       )

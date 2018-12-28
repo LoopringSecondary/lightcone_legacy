@@ -81,7 +81,7 @@ message GetBalanceAndAllowancesReq {
 message GetBalanceAndAllowancesRes {
     string address = 1;
     map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
-    XError error = 3;
+    Error error = 3;
 }
 
 message GetBalanceReq{
@@ -91,7 +91,7 @@ message GetBalanceReq{
 message GetBalanceRes {
     string address = 1;
     map<string, bytes> balance_map = 2;
-    XError error = 3;
+    Error error = 3;
 }
 
 message GetAllowanceReq{
@@ -101,7 +101,7 @@ message GetAllowanceReq{
 message GetAllowanceRes {
     string address = 1;
     map<string, bytes> allowance_map = 2;
-    XError error = 3;
+    Error error = 3;
 }
 
 message SubmitSimpleOrderReq {

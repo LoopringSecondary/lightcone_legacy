@@ -46,10 +46,10 @@ class EntryPointActor(
           if (actors.contains(dest)) {
             actors.get(dest) forward msg
           } else {
-            sender ! XError(ERR_INTERNAL_UNKNOWN, s"not found actor: $dest")
+            sender ! Error(ERR_INTERNAL_UNKNOWN, s"not found actor: $dest")
           }
         case None =>
-          sender ! XError(ERR_UNSUPPORTED_MESSAGE, s"unsupported message: $msg")
+          sender ! Error(ERR_UNSUPPORTED_MESSAGE, s"unsupported message: $msg")
           log.debug(s"unsupported msg: $msg")
       }
   }

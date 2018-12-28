@@ -96,7 +96,7 @@ enum ErrorCode{
 
 }
 
-message XError{
+message Error{
     ErrorCode code = 1;
     string message = 2;
 }

@@ -140,7 +140,7 @@ class MultiAccountManagerActor(
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
-      sender ! XError(
+      sender ! Error(
         ERR_REJECTED_DURING_RECOVER,
         s"account manager ${entityId} is being recovered"
       )

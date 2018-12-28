@@ -3,7 +3,7 @@
 
 ### 关于错误消息返回
 
-我们之前是在每个消息的返回值里面加入错误码，后续不在这样做 -- 一旦出错，actor直接返回XError结构。
+我们之前是在每个消息的返回值里面加入错误码，后续不在这样做 -- 一旦出错，actor直接返回Error结构。
 
 请求的Actor因此需要等待返回值的时候，这样处理：
 
@@ -26,7 +26,7 @@ def receive = LoggingReceive {
 }
 ```
 
-在使用forwardTo的时候，for构建的future会被forward到nextActor，但如果处理过程出错了(包括`anotherActor`返回了一个XError，或者下一行throw了)，会有个ErrorException被返回给原先的sender。 sendTo和forwardTo不同的是，内部用了forward，而不是tell。
+在使用forwardTo的时候，for构建的future会被forward到nextActor，但如果处理过程出错了(包括`anotherActor`返回了一个Error，或者下一行throw了)，会有个ErrorException被返回给原先的sender。 sendTo和forwardTo不同的是，内部用了forward，而不是tell。
 
 
 

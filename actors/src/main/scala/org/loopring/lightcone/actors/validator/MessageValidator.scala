@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.validator
 
-import org.loopring.lightcone.proto.XError
+import org.loopring.lightcone.proto.Error
 import org.loopring.lightcone.proto.ErrorCode._
 
 // Example:
