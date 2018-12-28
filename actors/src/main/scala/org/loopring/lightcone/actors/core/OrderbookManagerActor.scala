@@ -107,14 +107,14 @@ class OrderbookManagerActor(
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
   // based on marketId
-  val xorderbookConfig = MarketConfig(
+  val marketConfig = MarketConfig(
     levels = selfConfig.getInt("levels"),
     priceDecimals = selfConfig.getInt("price-decimals"),
     precisionForAmount = selfConfig.getInt("precision-for-amount"),
     precisionForTotal = selfConfig.getInt("precision-for-total")
   )
 
-  val manager: OrderbookManager = new OrderbookManagerImpl(xorderbookConfig)
+  val manager: OrderbookManager = new OrderbookManagerImpl(marketConfig)
 
   def receive: Receive = LoggingReceive {
 

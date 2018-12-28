@@ -52,23 +52,23 @@ package object data {
     ): BalanceAndAllowance =
     BalanceAndAllowance(balance = ba.balance, allowance = ba.allowance)
 
-  implicit def order2Matchable(xorder: Order): Matchable =
+  implicit def order2Matchable(order: Order): Matchable =
     Matchable(
-      id = xorder.id,
-      tokenS = xorder.tokenS,
-      tokenB = xorder.tokenB,
-      tokenFee = xorder.tokenFee,
-      amountS = xorder.amountS,
-      amountB = xorder.amountB,
-      amountFee = xorder.amountFee,
-      createdAt = xorder.createdAt,
-      updatedAt = xorder.updatedAt,
-      status = xorder.status,
-      walletSplitPercentage = xorder.walletSplitPercentage,
-      _outstanding = xorder.outstanding.map(orderState2MatchableState),
-      _reserved = xorder.reserved.map(orderState2MatchableState),
-      _actual = xorder.actual.map(orderState2MatchableState),
-      _matchable = xorder.matchable.map(orderState2MatchableState)
+      id = order.id,
+      tokenS = order.tokenS,
+      tokenB = order.tokenB,
+      tokenFee = order.tokenFee,
+      amountS = order.amountS,
+      amountB = order.amountB,
+      amountFee = order.amountFee,
+      createdAt = order.createdAt,
+      updatedAt = order.updatedAt,
+      status = order.status,
+      walletSplitPercentage = order.walletSplitPercentage,
+      _outstanding = order.outstanding.map(orderState2MatchableState),
+      _reserved = order.reserved.map(orderState2MatchableState),
+      _actual = order.actual.map(orderState2MatchableState),
+      _matchable = order.matchable.map(orderState2MatchableState)
     )
 
   implicit def matchable2Order(matchable: Matchable): Order =
@@ -111,8 +111,8 @@ package object data {
   implicit def matchableRing2OrderRing(orderRing: MatchableRing): OrderRing =
     OrderRing(maker = Some(orderRing.maker), taker = Some(orderRing.taker))
 
-  implicit def orderRing2MatchableRing(xOrderRing: OrderRing): MatchableRing =
-    MatchableRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
+  implicit def orderRing2MatchableRing(orderRing: OrderRing): MatchableRing =
+    MatchableRing(maker = orderRing.getMaker, taker = orderRing.getTaker)
 
   implicit def seqMatchableRing2OrderRing(
       orderRings: Seq[MatchableRing]
@@ -122,10 +122,10 @@ package object data {
     }
 
   implicit def seqOrderRing2MatchableRing(
-      xOrderRings: Seq[OrderRing]
+      orderRings: Seq[OrderRing]
     ): Seq[MatchableRing] =
-    xOrderRings map { xOrderRing =>
-      MatchableRing(maker = xOrderRing.getMaker, taker = xOrderRing.getTaker)
+    orderRings map { orderRing =>
+      MatchableRing(maker = orderRing.getMaker, taker = orderRing.getTaker)
     }
 
   implicit def expectFill2XEcpectFill(

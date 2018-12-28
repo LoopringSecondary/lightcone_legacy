@@ -82,8 +82,8 @@ object MarketManagerActor extends ShardedByMarket {
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
   val extractMarketId: PartialFunction[Any, MarketId] = {
-    case SubmitSimpleOrderReq(_, Some(xorder)) =>
-      MarketId(xorder.tokenS, xorder.tokenB)
+    case SubmitSimpleOrderReq(_, Some(order)) =>
+      MarketId(order.tokenS, order.tokenB)
     case CancelOrderReq(_, _, _, Some(marketId)) =>
       marketId
   }
@@ -169,8 +169,8 @@ class MarketManagerActor(
 
   def recover: Receive = {
 
-    case SubmitSimpleOrderReq(_, Some(xorder)) ⇒
-      submitOrder(xorder)
+    case SubmitSimpleOrderReq(_, Some(order)) ⇒
+      submitOrder(order)
 
     case msg @ Recover.Finished(timeout) =>
       autoSwitchBackToReceive.foreach(_.cancel)
@@ -188,8 +188,8 @@ class MarketManagerActor(
 
   def receive: Receive = {
 
-    case SubmitSimpleOrderReq(_, Some(xorder)) ⇒
-      submitOrder(xorder).sendTo(sender)
+    case SubmitSimpleOrderReq(_, Some(order)) ⇒
+      submitOrder(order).sendTo(sender)
 
     case CancelOrderReq(orderId, _, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
@@ -219,13 +219,13 @@ class MarketManagerActor(
 
   }
 
-  private def submitOrder(xorder: Order): Future[Unit] = {
+  private def submitOrder(order: Order): Future[Unit] = {
     assert(
-      xorder.actual.nonEmpty,
+      order.actual.nonEmpty,
       "order in SubmitSimpleOrderReq miss `actual` field"
     )
-    val matchable: Matchable = xorder
-    xorder.status match {
+    val matchable: Matchable = order
+    order.status match {
       case OrderStatus.STATUS_NEW | OrderStatus.STATUS_PENDING =>
         for {
           // get ring settlement cost

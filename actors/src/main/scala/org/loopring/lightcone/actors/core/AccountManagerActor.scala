@@ -89,8 +89,8 @@ class AccountManagerActor(
         GetBalanceAndAllowancesRes(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case SubmitSimpleOrderReq(_, Some(xorder)) =>
-      submitOrder(xorder).sendTo(sender)
+    case SubmitSimpleOrderReq(_, Some(order)) =>
+      submitOrder(order).sendTo(sender)
 
     case req: CancelOrderReq =>
       assert(req.owner == address)
@@ -114,8 +114,8 @@ class AccountManagerActor(
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
   }
 
-  private def submitOrder(xorder: Order): Future[SubmitOrderRes] = {
-    val matchable: Matchable = xorder
+  private def submitOrder(order: Order): Future[SubmitOrderRes] = {
+    val matchable: Matchable = order
     for {
       _ <- getTokenManager(matchable.tokenS)
       _ <- if (matchable.amountFee > 0 && matchable.tokenS != matchable.tokenFee)
