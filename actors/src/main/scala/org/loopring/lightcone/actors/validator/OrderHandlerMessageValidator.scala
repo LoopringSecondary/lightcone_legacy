@@ -17,26 +17,21 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
-import org.loopring.lightcone.actors.core.{
-  MarketManagerActor,
-  MultiAccountManagerActor
-}
+import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.ethereum.RawOrderValidatorImpl
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib.{
-  ErrorException,
-  MarketHashProvider,
-  SystemTimeProvider
-}
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 
 object OrderHandlerMessageValidator {
   val name = "order_handler_message_validator"
 }
 
-class OrderHandlerMessageValidator()(implicit val config: Config)
+class OrderHandlerMessageValidator(
+  )(
+    implicit config: Config,
+    timeProvider: TimeProvider)
     extends MessageValidator {
-  val timeProvider = new SystemTimeProvider()
   val supportedMarkets = SupportedMarkets(config)
 
   private def normalizeAddress(address: String): String =
@@ -85,8 +80,6 @@ class OrderHandlerMessageValidator()(implicit val config: Config)
 
     case req @ XCancelOrderReq(_, owner, _, marketId) ⇒
       supportedMarkets.assertmarketIdIsValid(marketId)
-      req.copy(
-        owner = normalizeAddress(owner)
-      )
+      req.copy(owner = normalizeAddress(owner))
   }
 }

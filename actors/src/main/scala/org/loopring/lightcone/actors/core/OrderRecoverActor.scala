@@ -123,12 +123,12 @@ class OrderRecoverActor(
             self ! XRecover.RetrieveOrders(lastOrderSeqId)
 
           case None =>
-            coordinator ! XRecover.Finished(true)
+            coordinator ! XRecover.Finished(false)
 
             batch.requestMap.keys.toSeq
               .map(resolveActorRef)
               .foreach { actor =>
-                actor ! XRecover.Finished(true)
+                actor ! XRecover.Finished(false)
               }
         }
       }
