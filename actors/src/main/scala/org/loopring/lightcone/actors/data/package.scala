@@ -24,6 +24,7 @@ import org.loopring.lightcone.proto.XOrderStatus._
 import org.loopring.lightcone.proto.{
   Order => XOrder,
   OrderState => XOrderState,
+  ExpectedFill => XExpectedFill,
   _
 }
 

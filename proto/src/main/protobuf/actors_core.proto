@@ -46,15 +46,15 @@ message Order {
     OrderState matchable = 15;
 }
 
-message XExpectedFill {
+message ExpectedFill {
     Order order = 1;
     OrderState pending = 2;
     bytes amount_margin = 3;
 }
 
 message XOrderRing {
-    XExpectedFill maker = 1;
-    XExpectedFill taker = 2;
+    ExpectedFill maker = 1;
+    ExpectedFill taker = 2;
 }
 
 message XGetOrderFilledAmountReq {
