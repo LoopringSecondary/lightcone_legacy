@@ -62,7 +62,7 @@ trait OrderGenerateSupport {
       tokenB = tokenB,
       amountS = ByteString.copyFrom(amountS.toByteArray),
       amountB = ByteString.copyFrom(amountB.toByteArray),
-      validSince = (createAt / 1000).toInt + 10000,
+      validSince = (createAt / 1000).toInt,
       state = Some(
         XRawOrder.State(
           createdAt = createAt,

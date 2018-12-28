@@ -435,13 +435,12 @@ class OrderDalImpl(
       left + ", " + right
     }
     val now = timeProvider.getTimeSeconds()
-    // TODO du: 测试提交的订单 valid since为延后的10000s
-    // AND valid_since <= ${now}
-    // AND valid_until > ${now}
     val sql =
       sql"""
         SELECT * FROM T_ORDERS
         WHERE `status` in (${statuses.map(_.value.toString).reduceLeft(concat)})
+        AND valid_since <= ${now}
+        AND valid_until > ${now}
         AND sequence_id > ${skip.from}
         AND (
           market_hash_id in (${marketHashIdSet
