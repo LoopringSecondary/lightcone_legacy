@@ -29,10 +29,10 @@ import slick.lifted.Query
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
-trait TradeDal extends BaseDalImpl[TradeTable, XTrade] {
-  def saveTrade(trade: XTrade): Future[Either[ErrorCode, String]]
-  def saveTrades(trades: Seq[XTrade]): Future[Seq[Either[ErrorCode, String]]]
-  def getTrades(request: GetTradesReq): Future[Seq[XTrade]]
+trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
+  def saveTrade(trade: Trade): Future[Either[ErrorCode, String]]
+  def saveTrades(trades: Seq[Trade]): Future[Seq[Either[ErrorCode, String]]]
+  def getTrades(request: GetTradesReq): Future[Seq[Trade]]
   def countTrades(request: GetTradesReq): Future[Int]
   def obsolete(height: Long): Future[Unit]
 }
@@ -46,7 +46,7 @@ class TradeDalImpl(
   val timeProvider = new SystemTimeProvider()
   private[this] val logger = Logger(this.getClass)
 
-  def saveTrade(trade: XTrade): Future[Either[ErrorCode, String]] = {
+  def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] = {
     db.run(
         (query += trade.copy(
           marketHash =
@@ -65,7 +65,7 @@ class TradeDalImpl(
       }
   }
 
-  def saveTrades(trades: Seq[XTrade]): Future[Seq[Either[ErrorCode, String]]] =
+  def saveTrades(trades: Seq[Trade]): Future[Seq[Either[ErrorCode, String]]] =
     Future.sequence(trades.map(saveTrade))
 
   private def queryFilters(
@@ -94,7 +94,7 @@ class TradeDalImpl(
     filters
   }
 
-  def getTrades(request: GetTradesReq): Future[Seq[XTrade]] = {
+  def getTrades(request: GetTradesReq): Future[Seq[Trade]] = {
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
       case GetTradesReq.Market.MarketHash(v) ⇒ (None, None, Some(v))

@@ -40,7 +40,7 @@ class DatabaseQuerySpec
       blockHeight: Long
     ): Future[Either[ErrorCode, String]] = {
     dbModule.tradeService.saveTrade(
-      XTrade(
+      Trade(
         txHash = txHash,
         owner = owner,
         tokenB = tokenB,

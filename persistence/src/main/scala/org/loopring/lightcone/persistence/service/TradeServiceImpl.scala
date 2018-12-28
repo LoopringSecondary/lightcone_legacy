@@ -30,10 +30,10 @@ class TradeServiceImpl @Inject()(
     extends TradeService {
   val tradeDal: TradeDal = new TradeDalImpl()
 
-  def saveTrade(trade: XTrade): Future[Either[ErrorCode, String]] =
+  def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] =
     tradeDal.saveTrade(trade)
 
-  def getTrades(request: GetTradesReq): Future[Seq[XTrade]] =
+  def getTrades(request: GetTradesReq): Future[Seq[Trade]] =
     tradeDal
       .getTrades(request)
       .map(_.map(r => r.copy(updatedAt = 0, sequenceId = 0)))

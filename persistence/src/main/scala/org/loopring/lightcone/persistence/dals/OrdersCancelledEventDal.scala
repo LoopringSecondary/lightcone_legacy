@@ -29,9 +29,9 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 trait OrdersCancelledEventDal
-    extends BaseDalImpl[OrdersCancelledEventTable, XOrdersCancelledEvent] {
+    extends BaseDalImpl[OrdersCancelledEventTable, OrdersCancelledEvent] {
 
-  def saveCancelOrder(cancelOrder: XOrdersCancelledEvent): Future[ErrorCode]
+  def saveCancelOrder(cancelOrder: OrdersCancelledEvent): Future[ErrorCode]
 
   def hasCancelled(orderHash: String): Future[Boolean]
 
@@ -49,7 +49,7 @@ class OrdersCancelledEventDalImpl(
   private[this] val logger = Logger(this.getClass)
 
   override def saveCancelOrder(
-      cancelOrder: XOrdersCancelledEvent
+      cancelOrder: OrdersCancelledEvent
     ): Future[ErrorCode] = {
     val now = timeProvider.getTimeMillis
     db.run((query += cancelOrder.copy(createdAt = now)).asTry).map {

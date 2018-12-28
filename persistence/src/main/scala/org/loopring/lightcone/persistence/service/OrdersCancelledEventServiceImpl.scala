@@ -22,7 +22,7 @@ import org.loopring.lightcone.persistence.dals.{
   OrdersCancelledEventDal,
   OrdersCancelledEventDalImpl
 }
-import org.loopring.lightcone.proto.{ErrorCode, XOrdersCancelledEvent}
+import org.loopring.lightcone.proto.{ErrorCode, OrdersCancelledEvent}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -36,7 +36,7 @@ class OrdersCancelledEventServiceImpl @Inject()(
   val ordersCancelledEventDal: OrdersCancelledEventDal =
     new OrdersCancelledEventDalImpl()
 
-  def saveCancelOrder(cancelOrder: XOrdersCancelledEvent): Future[ErrorCode] =
+  def saveCancelOrder(cancelOrder: OrdersCancelledEvent): Future[ErrorCode] =
     ordersCancelledEventDal.saveCancelOrder(cancelOrder)
 
   def hasCancelled(orderHash: String): Future[Boolean] =

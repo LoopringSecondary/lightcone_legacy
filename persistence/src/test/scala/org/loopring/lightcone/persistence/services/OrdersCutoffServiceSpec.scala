@@ -43,7 +43,7 @@ class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
     for {
       result ← Future.sequence(brokers.map { broker ⇒
         service.saveCutoff(
-          XOrdersCutoffEvent(
+          OrdersCutoffEvent(
             txHash = broker,
             broker = broker,
             tradingPair = tradingPair.getOrElse(""),
@@ -64,7 +64,7 @@ class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
     for {
       result ← Future.sequence(owners.map { owner ⇒
         service.saveCutoff(
-          XOrdersCutoffEvent(
+          OrdersCutoffEvent(
             txHash = owner,
             owner = owner,
             tradingPair = tradingPair.getOrElse(""),
@@ -85,7 +85,7 @@ class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
     for {
       result ← Future.sequence(brokers.map { broker ⇒
         service.saveCutoff(
-          XOrdersCutoffEvent(
+          OrdersCutoffEvent(
             txHash = broker,
             broker = broker,
             owner = broker,

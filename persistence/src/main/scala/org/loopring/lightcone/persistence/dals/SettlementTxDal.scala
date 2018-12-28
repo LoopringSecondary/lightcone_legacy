@@ -30,8 +30,8 @@ import slick.lifted.Query
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
-trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, XSettlementTx] {
-  def saveTx(tx: XSettlementTx): Future[XSaveSettlementTxResult]
+trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
+  def saveTx(tx: SettlementTx): Future[XSaveSettlementTxResult]
   // get all pending txs with given owner
   def getPendingTxs(request: GetPendingTxsReq): Future[GetPendingTxsResult]
 
@@ -49,9 +49,9 @@ class SettlementTxDalImpl(
   private[this] val logger = Logger(this.getClass)
   val query = TableQuery[SettlementTxTable]
   val timeProvider = new SystemTimeProvider()
-  implicit val XStatusCxolumnType = enumColumnType(XSettlementTx.XStatus)
+  implicit val XStatusCxolumnType = enumColumnType(SettlementTx.XStatus)
 
-  def saveTx(tx: XSettlementTx): Future[XSaveSettlementTxResult] = {
+  def saveTx(tx: SettlementTx): Future[XSaveSettlementTxResult] = {
     db.run((query += tx).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒
         XSaveSettlementTxResult(ERR_PERSISTENCE_DUPLICATE_INSERT)
@@ -63,9 +63,9 @@ class SettlementTxDalImpl(
   }
 
   def getPendingTxs(request: GetPendingTxsReq): Future[GetPendingTxsResult] = {
-    implicit val getSupplierResult = GetResult[XSettlementTx](
+    implicit val getSupplierResult = GetResult[SettlementTx](
       r =>
-        XSettlementTx(
+        SettlementTx(
           r.nextString,
           r.nextString,
           r.nextString,
@@ -74,7 +74,7 @@ class SettlementTxDalImpl(
           r.nextString,
           r.nextString,
           r.nextLong,
-          XSettlementTx.XStatus.fromValue(r.nextInt),
+          SettlementTx.XStatus.fromValue(r.nextInt),
           r.nextLong,
           r.nextLong
         )
@@ -84,11 +84,11 @@ class SettlementTxDalImpl(
         SELECT tx_hash, `from`, `to`, gas, gas_price, `value`, `data`, nonce, status, MAX(create_at) as create_at, update_at
         FROM T_SETTLEMENT_TXS
         WHERE `from` = ${request.owner}
-          and status = ${XSettlementTx.XStatus.PENDING.value}
+          and status = ${SettlementTx.XStatus.PENDING.value}
           and create_at <= ${request.timeBefore}
         GROUP BY `from`, nonce
         """
-        .as[XSettlementTx]
+        .as[SettlementTx]
     db.run(sql).map(r => GetPendingTxsResult(r.toSeq))
   }
 
@@ -102,15 +102,15 @@ class SettlementTxDalImpl(
         .filter(_.from === request.from)
         .filter(_.nonce === request.nonce)
         .map(_.status)
-        .update(XSettlementTx.XStatus.BLOCK)
+        .update(SettlementTx.XStatus.BLOCK)
       updateFaild <- if (updateInBlock == 1) {
-        val pending: XSettlementTx.XStatus = XSettlementTx.XStatus.PENDING
+        val pending: SettlementTx.XStatus = SettlementTx.XStatus.PENDING
         query
           .filter(_.from === request.from)
           .filter(_.nonce === request.nonce)
           .filter(_.status === pending)
           .map(_.status)
-          .update(XSettlementTx.XStatus.FAILED)
+          .update(SettlementTx.XStatus.FAILED)
       } else {
         throw ErrorException(ErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
       }

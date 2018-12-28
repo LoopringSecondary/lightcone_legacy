@@ -124,12 +124,12 @@ message GetTradesReq {
 }
 
 message GetTradesResult {
-    repeated XTrade  trades = 1;
+    repeated Trade  trades = 1;
     ErrorCode       error  = 2;
 }
 
 message XSaveSettlementTxReq {
-    XSettlementTx tx = 1;
+    SettlementTx tx = 1;
 }
 
 message XSaveSettlementTxResult {
@@ -142,7 +142,7 @@ message GetPendingTxsReq {
 }
 
 message GetPendingTxsResult {
-    repeated XSettlementTx txs = 1;
+    repeated SettlementTx txs = 1;
 }
 
 message XUpdateTxInBlockReq {

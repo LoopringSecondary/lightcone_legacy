@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
 class TransactionTable(tag: Tag)
-    extends BaseTable[XTransactionData](tag, "T_TRANSACTIONS") {
+    extends BaseTable[TransactionData](tag, "T_TRANSACTIONS") {
 
   def id = hash
   def hash = columnHash("hash", O.PrimaryKey)
@@ -64,5 +64,5 @@ class TransactionTable(tag: Tag)
       txFee,
       nonce,
       inputData
-    ) <> ((XTransactionData.apply _).tupled, XTransactionData.unapply)
+    ) <> ((TransactionData.apply _).tupled, TransactionData.unapply)
 }

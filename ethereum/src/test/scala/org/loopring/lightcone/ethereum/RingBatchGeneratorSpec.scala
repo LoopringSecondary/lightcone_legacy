@@ -38,7 +38,7 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
     val order1Owner = TestConfig.envOrElseConfig("accounts.a1.addr")
     val order2Owner = TestConfig.envOrElseConfig("accounts.a2.addr")
 
-    implicit val context: XRingBatchContext = XRingBatchContext()
+    implicit val context: RingBatchContext = RingBatchContext()
       .withMiner(miner)
       .withMinerPrivateKey(minerPrivKey)
       .withFeeRecipient(minerFeeRecipient)
@@ -63,11 +63,11 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
       .withAmountB(ByteString.copyFromUtf8(1000e18.toLong.toHexString))
 
     val orders = Seq(Seq(order1, order2))
-    val xRingBatch: XRingBatch =
+    val xRingBatch: RingBatch =
       ringBatchGenerator.generateAndSignRingBatch(orders)
   }
 
-  "toSubmitableParamStr" should "be able to serialize a XRingBatch object to param string" in {
+  "toSubmitableParamStr" should "be able to serialize a RingBatch object to param string" in {
     val miner = "0x23a51c5f860527f971d0587d130c64536256040d"
     val minerPrivKey =
       "0xa99a8d27d06380565d1cf6c71974e7707a81676c4e7cb3dad2c43babbdca2d23"
@@ -87,7 +87,7 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
 
     val validator: RawOrderValidator = RawOrderValidatorImpl
     val generator: RingBatchGenerator = RingBatchGeneratorImpl
-    implicit val context: XRingBatchContext = XRingBatchContext()
+    implicit val context: RingBatchContext = RingBatchContext()
       .withMiner(miner)
       .withMinerPrivateKey(minerPrivKey)
       .withFeeRecipient(minerFeeRecipient)

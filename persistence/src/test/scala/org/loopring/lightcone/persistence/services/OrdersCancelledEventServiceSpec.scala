@@ -39,7 +39,7 @@ class OrdersCancelledEventServiceSpec
     ): Future[ErrorCode] = {
     val now = timeProvider.getTimeMillis
     service.saveCancelOrder(
-      XOrdersCancelledEvent(
+      OrdersCancelledEvent(
         txHash = hash,
         brokerOrOwner = hash,
         orderHash = hash,

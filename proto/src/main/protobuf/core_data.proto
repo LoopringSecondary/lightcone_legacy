@@ -106,7 +106,7 @@ enum TokenStandard {
     ERC1400 = 1;
 }
 
-enum XSigningAlgorithm {
+enum SigningAlgorithm {
     ALGO_ETHEREUM   = 0;
     ALGO_EIP712     = 1;
 
@@ -183,7 +183,7 @@ message RawOrder {
     int32  market_hash_id           = 17;
 }
 
-message XRingBatch {
+message RingBatch {
     message XRing {
         repeated int32 order_indexes = 1;
     }
@@ -193,12 +193,12 @@ message XRingBatch {
     string sig                      = 3;
     repeated XRing rings            = 4;
     repeated RawOrder orders       = 5;
-    XSigningAlgorithm sign_algorithm = 6;
+    SigningAlgorithm sign_algorithm = 6;
     string hash                     = 7;
     string transaction_origin       = 8;
 }
 
-message XRingBatchContext {
+message RingBatchContext {
     string fee_recipient            = 1;
     string miner                    = 2;
     string transaction_origin       = 3;
@@ -206,7 +206,7 @@ message XRingBatchContext {
     string lrc_address              = 5;
 }
 
-message XTrade {
+message Trade {
     message Fees {
         string token_fee               = 1;
         bytes  amount_fee              = 2;
@@ -237,7 +237,7 @@ message XTrade {
     int64 sequence_id        = 18;
 }
 
-message XOrdersCutoffEvent {
+message OrdersCutoffEvent {
     string tx_hash         = 1;
     string broker          = 3;
     string owner           = 4;
@@ -248,7 +248,7 @@ message XOrdersCutoffEvent {
     int64  block_height    = 9;
 }
 
-message XOrdersCancelledEvent {
+message OrdersCancelledEvent {
     string tx_hash         = 1;
     string broker_or_owner = 2;
     string order_hash      = 3;
@@ -257,7 +257,7 @@ message XOrdersCancelledEvent {
     int64  block_height    = 6;
 }
 
-message XSettlementTx {
+message SettlementTx {
     enum XStatus {
         PENDING  = 0;
         BLOCK    = 1;

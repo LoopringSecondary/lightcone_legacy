@@ -17,13 +17,13 @@
 package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.persistence.dals.OrdersCutoffDal
-import org.loopring.lightcone.proto.{ErrorCode, XOrdersCutoffEvent}
+import org.loopring.lightcone.proto.{ErrorCode, OrdersCutoffEvent}
 import scala.concurrent.Future
 
 trait OrdersCutoffService {
   val cutoffDal: OrdersCutoffDal
 
-  def saveCutoff(cutoff: XOrdersCutoffEvent): Future[ErrorCode]
+  def saveCutoff(cutoff: OrdersCutoffEvent): Future[ErrorCode]
 
   def hasCutoff(
       orderBroker: Option[String] = None,

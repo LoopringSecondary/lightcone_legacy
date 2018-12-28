@@ -73,13 +73,13 @@ object RawOrderValidatorImpl extends RawOrderValidator {
         val s = sigBytes.slice(35, 67)
 
         algorithm match {
-          case XSigningAlgorithm.ALGO_ETHEREUM.value =>
+          case SigningAlgorithm.ALGO_ETHEREUM.value =>
             verifyEthereumSignature(hashBytes, r, s, v, Address(order.owner))
-          case XSigningAlgorithm.ALGO_EIP712.value =>
+          case SigningAlgorithm.ALGO_EIP712.value =>
             verifySignature(hashSourceBytes, r, s, v, Address(order.owner))
           case _ =>
             throw new IllegalArgumentException(
-              s"invalid XSigningAlgorithm value: $algorithm"
+              s"invalid SigningAlgorithm value: $algorithm"
             )
         }
 

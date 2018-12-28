@@ -41,7 +41,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
       blockHeight: Long
     ): Future[Either[ErrorCode, String]] = {
     service.saveTrade(
-      XTrade(
+      Trade(
         txHash = txHash,
         owner = owner,
         tokenB = tokenB,
@@ -65,7 +65,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         )
       )
     } yield query
-    val res = Await.result(result.mapTo[Seq[XTrade]], 5.second)
+    val res = Await.result(result.mapTo[Seq[Trade]], 5.second)
     res.length == 1 should be(true)
   }
 
@@ -107,7 +107,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         )
       )
     } yield (query1, query2)
-    val res = Await.result(result.mapTo[(Seq[XTrade], Seq[XTrade])], 5.second)
+    val res = Await.result(result.mapTo[(Seq[Trade], Seq[Trade])], 5.second)
     val x = res._1.length === 1 && res._2.length === 1
     x should be(true)
   }
