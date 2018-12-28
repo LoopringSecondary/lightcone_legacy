@@ -46,7 +46,7 @@ package object support {
     Address("0x17839E1AC3B46F12f74465BFbc754aB487B093AB").toString,
     18,
     0.4,
-    "LRC",
+    "GTO",
     1000
   )
 
@@ -54,7 +54,7 @@ package object support {
     Address("0xcF30e28DD8570e8d5B769CEcd293Bdc0E28bF0d2").toString,
     18,
     0.4,
-    "LRC",
+    "RDN",
     1000
   )
 
@@ -62,7 +62,7 @@ package object support {
     Address("0xf386CedfAA2d1071e52C81554D4200c0aD0aDC24").toString,
     18,
     0.4,
-    "LRC",
+    "REP",
     1000
   )
 

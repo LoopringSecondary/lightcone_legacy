@@ -34,7 +34,7 @@ package object ethereum {
   }
 
   implicit def byteString2BigInt(bs: ByteString): BigInt =
-    string2BigInt(bs.toStringUtf8)
+    BigInt(Numeric.toBigInt(bs.toByteArray))
 
   def verifyEthereumSignature(
       hash: Array[Byte],
