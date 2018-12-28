@@ -341,7 +341,8 @@ class OrderDalImpl(
       processTime: Int,
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]] = {
-    val availableStatus = Seq(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING)
+    val availableStatus =
+      Seq(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING)
     var filters = query
       .filter(_.status inSet availableStatus)
       .filter(_.validSince > lastProcessTime)
@@ -361,7 +362,11 @@ class OrderDalImpl(
       processTime: Int,
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]] = {
-    val availableStatus = Seq(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING, XOrderStatus.STATUS_PARTIALLY_FILLED)
+    val availableStatus = Seq(
+      XOrderStatus.STATUS_NEW,
+      XOrderStatus.STATUS_PENDING,
+      XOrderStatus.STATUS_PARTIALLY_FILLED
+    )
     var filters = query
       .filter(_.status inSet availableStatus)
       .filter(_.validUntil > lastProcessTime)
