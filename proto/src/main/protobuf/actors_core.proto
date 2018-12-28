@@ -28,7 +28,7 @@ message OrderState {
     bytes amount_fee = 3;
 }
 
-message XOrder {
+message Order {
     string id = 1;
     string token_s = 2;
     string token_b = 3;
@@ -47,7 +47,7 @@ message XOrder {
 }
 
 message XExpectedFill {
-    XOrder order = 1;
+    Order order = 1;
     OrderState pending = 2;
     bytes amount_margin = 3;
 }
@@ -106,11 +106,11 @@ message XGetAllowanceRes {
 
 message XSubmitSimpleOrderReq {
     string owner = 1;
-    XOrder order = 2;
+    Order order = 2;
 }
 
 message XSubmitOrderRes {
-    XOrder order = 1;
+    Order order = 1;
 }
 
 message XAddressBalanceUpdated {

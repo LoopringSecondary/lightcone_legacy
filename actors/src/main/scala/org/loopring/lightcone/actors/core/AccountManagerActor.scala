@@ -32,7 +32,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.XErrorCode._
 import org.loopring.lightcone.proto.XOrderStatus._
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.{Order => XOrder, _}
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -138,9 +138,7 @@ class AccountManagerActor(
       _ = assert(updatedOrders.contains(_order.id))
       _ = log.debug(s"assert contains order:  ${updatedOrders(_order.id)}")
       _ = if (!successful)
-        throw ErrorException(
-          XError(order.status)
-        )
+        throw ErrorException(XError(order.status))
       res <- Future.sequence {
         updatedOrders.map { o =>
           for {
