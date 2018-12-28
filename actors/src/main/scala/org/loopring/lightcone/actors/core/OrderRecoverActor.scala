@@ -44,7 +44,7 @@ object OrderRecoverActor extends ShardedEvenly {
   override protected val messageExtractor =
     new HashCodeMessageExtractor(numOfShards) {
       override def entityId(message: Any) = message match {
-        case req: Recover.RequestBatch =>
+        case req: ActorRecover.RequestBatch =>
           name + "_batch" + req.batchId
         case e: Any =>
           throw new Exception(s"$e not expected by OrderRecoverActor")
@@ -81,35 +81,35 @@ class OrderRecoverActor(
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   val batchSize = selfConfig.getInt("batch-size")
-  var batch: Recover.RequestBatch = _
+  var batch: ActorRecover.RequestBatch = _
   var numOrders = 0L
   def coordinator = actors.get(OrderRecoverCoordinator.name)
   def mama = actors.get(MultiAccountManagerActor.name)
 
   def receive: Receive = {
-    case req: Recover.RequestBatch =>
+    case req: ActorRecover.RequestBatch =>
       log.info(s"started order recover - $req")
       batch = req
 
       sender ! batch // echo back to coordinator
-      self ! Recover.RetrieveOrders(0L)
+      self ! ActorRecover.RetrieveOrders(0L)
 
       context.become(recovering)
   }
 
   def recovering: Receive = {
-    case Recover.CancelFor(requester) =>
+    case ActorRecover.CancelFor(requester) =>
       batch =
         batch.copy(requestMap = batch.requestMap.filterNot(_._1 == requester))
 
       sender ! batch // echo back to coordinator
 
-    case Recover.RetrieveOrders(lastOrderSeqId) =>
+    case ActorRecover.RetrieveOrders(lastOrderSeqId) =>
       for {
         orders <- retrieveOrders(batchSize, lastOrderSeqId)
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
         reqs = orders.map { order =>
-          Recover.RecoverOrderReq(Some(order))
+          ActorRecover.RecoverOrderReq(Some(order))
         }
         _ = log.info(
           s"--> batch#${batch.batchId} recovering ${orders.size} orders (total=${numOrders})..."
@@ -120,15 +120,15 @@ class OrderRecoverActor(
 
         lastOrderSeqIdOpt match {
           case Some(lastOrderSeqId) =>
-            self ! Recover.RetrieveOrders(lastOrderSeqId)
+            self ! ActorRecover.RetrieveOrders(lastOrderSeqId)
 
           case None =>
-            coordinator ! Recover.Finished(false)
+            coordinator ! ActorRecover.Finished(false)
 
             batch.requestMap.keys.toSeq
               .map(resolveActorRef)
               .foreach { actor =>
-                actor ! Recover.Finished(false)
+                actor ! ActorRecover.Finished(false)
               }
         }
       }

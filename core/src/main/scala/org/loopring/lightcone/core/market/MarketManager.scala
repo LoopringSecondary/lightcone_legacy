@@ -23,7 +23,7 @@ object MarketManager {
   case class MatchResult(
       rings: Seq[MatchableRing],
       taker: Matchable,
-      orderbookUpdate: OrderbookUpdate)
+      orderbookUpdate: Orderbook.Update)
 }
 
 trait MarketManager {
@@ -36,8 +36,8 @@ trait MarketManager {
       order: Matchable,
       minFiatValue: Double
     ): MatchResult
-  def cancelOrder(orderId: String): Option[OrderbookUpdate]
-  def deletePendingRing(ringId: String): Option[OrderbookUpdate]
+  def cancelOrder(orderId: String): Option[Orderbook.Update]
+  def deletePendingRing(ringId: String): Option[Orderbook.Update]
 
   def getOrder(
       orderId: String,

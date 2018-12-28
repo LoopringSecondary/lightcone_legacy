@@ -28,7 +28,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
 
   private var lastPrice: Double = 0
 
-  def processUpdate(update: OrderbookUpdate) = this.synchronized {
+  def processUpdate(update: Orderbook.Update) = this.synchronized {
     if (update.lastPrice > 0) {
       lastPrice = update.lastPrice
     }
@@ -70,13 +70,13 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
       new OrderbookSide.Buys(config.priceDecimals, aggregationLevel, false)
       with ConverstionSupport
 
-    def processUpdate(update: OrderbookUpdate) {
+    def processUpdate(update: Orderbook.Update) {
       update.sells.foreach(sellSide.increase)
       update.buys.foreach(buySide.increase)
     }
 
-    def getDiff(update: OrderbookUpdate) = {
-      OrderbookUpdate(
+    def getDiff(update: Orderbook.Update) = {
+      Orderbook.Update(
         update.sells.map(sellSide.getDiff),
         update.buys.map(buySide.getDiff)
       )
@@ -117,7 +117,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
     }
 
     trait ConverstionSupport { self: OrderbookSide =>
-      private def slotToItem(slot: OrderbookUpdate.Slot) =
+      private def slotToItem(slot: Orderbook.Slot) =
         Orderbook.Item(
           priceFormat.format(slot.slot / priceScaling),
           amountFormat.format(slot.amount),

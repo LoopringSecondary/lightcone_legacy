@@ -20,20 +20,20 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
 package object depth {
-  implicit class RichOrderbookSlot(this_ : OrderbookUpdate.Slot) {
+  implicit class RichOrderbookSlot(this_ : Orderbook.Slot) {
 
-    def +(that: OrderbookUpdate.Slot) = {
+    def +(that: Orderbook.Slot) = {
       assert(this_.slot == that.slot)
-      OrderbookUpdate.Slot(
+      Orderbook.Slot(
         this_.slot,
         this_.amount + that.amount,
         this_.total + that.total
       )
     }
 
-    def -(that: OrderbookUpdate.Slot) = {
+    def -(that: Orderbook.Slot) = {
       assert(this_.slot == that.slot)
-      OrderbookUpdate.Slot(
+      Orderbook.Slot(
         this_.slot,
         this_.amount - that.amount,
         this_.total - that.total

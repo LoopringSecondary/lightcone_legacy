@@ -41,9 +41,7 @@ class OrderbookManagerImplSpec extends CommonSpec {
   }
 
   "OrderbookManagerImplSpec" should "process very small slot" in {
-    obm.processUpdate(
-      OrderbookUpdate(Seq(OrderbookUpdate.Slot(1, 10, 100)), Nil)
-    )
+    obm.processUpdate(Orderbook.Update(Seq(Orderbook.Slot(1, 10, 100)), Nil))
 
     obm.getOrderbook(0, 100) should be(
       Orderbook(0, Seq(Orderbook.Item("0.00001", "10.00", "100.0")), Nil)
@@ -56,9 +54,9 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
   "OrderbookManagerImplSpec" should "skip 0 value slots" in {
     obm.processUpdate(
-      OrderbookUpdate(
-        Seq(OrderbookUpdate.Slot(0, 10, 100)),
-        Seq(OrderbookUpdate.Slot(0, 10, 100))
+      Orderbook.Update(
+        Seq(Orderbook.Slot(0, 10, 100)),
+        Seq(Orderbook.Slot(0, 10, 100))
       )
     )
     obm.getOrderbook(0, 100) should be(Orderbook(0, Nil, Nil))
@@ -67,7 +65,7 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
   "OrderbookManagerImplSpec" should "process sell slot and round up" in {
     obm.processUpdate(
-      OrderbookUpdate(Seq(OrderbookUpdate.Slot(12344, 10, 100)), Nil)
+      Orderbook.Update(Seq(Orderbook.Slot(12344, 10, 100)), Nil)
     )
     obm.getOrderbook(0, 100) should be(
       Orderbook(0, Seq(Orderbook.Item("0.12344", "10.00", "100.0")), Nil)
@@ -80,7 +78,7 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
   "OrderbookManagerImplSpec" should "process buy slot and round down" in {
     obm.processUpdate(
-      OrderbookUpdate(Nil, Seq(OrderbookUpdate.Slot(12344, 10, 100)))
+      Orderbook.Update(Nil, Seq(Orderbook.Slot(12344, 10, 100)))
     )
     obm.getOrderbook(0, 100) should be(
       Orderbook(0, Nil, Seq(Orderbook.Item("0.12344", "10.00", "100.0")))
@@ -93,21 +91,15 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
   "OrderbookManagerImplSpec" should "process sell slot with new lower values" in {
     obm.processUpdate(
-      OrderbookUpdate(
-        Seq(
-          OrderbookUpdate.Slot(12344, 10, 100),
-          OrderbookUpdate.Slot(12345, 20, 200)
-        ),
+      Orderbook.Update(
+        Seq(Orderbook.Slot(12344, 10, 100), Orderbook.Slot(12345, 20, 200)),
         Nil
       )
     )
 
     obm.processUpdate(
-      OrderbookUpdate(
-        Seq(
-          OrderbookUpdate.Slot(12344, 5, 40),
-          OrderbookUpdate.Slot(12345, 10, 80)
-        ),
+      Orderbook.Update(
+        Seq(Orderbook.Slot(12344, 5, 40), Orderbook.Slot(12345, 10, 80)),
         Nil
       )
     )
@@ -130,22 +122,16 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
   "OrderbookManagerImplSpec" should "process buy slot with new lower values" in {
     obm.processUpdate(
-      OrderbookUpdate(
+      Orderbook.Update(
         Nil,
-        Seq(
-          OrderbookUpdate.Slot(12344, 10, 100),
-          OrderbookUpdate.Slot(12345, 20, 200)
-        )
+        Seq(Orderbook.Slot(12344, 10, 100), Orderbook.Slot(12345, 20, 200))
       )
     )
 
     obm.processUpdate(
-      OrderbookUpdate(
+      Orderbook.Update(
         Nil,
-        Seq(
-          OrderbookUpdate.Slot(12344, 5, 40),
-          OrderbookUpdate.Slot(12345, 10, 80)
-        )
+        Seq(Orderbook.Slot(12344, 5, 40), Orderbook.Slot(12345, 10, 80))
       )
     )
 
@@ -167,21 +153,15 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
   "OrderbookManagerImplSpec" should "skip slots with lower or equal sell prices" in {
     obm.processUpdate(
-      OrderbookUpdate(
-        Seq(
-          OrderbookUpdate.Slot(12344, 10, 100),
-          OrderbookUpdate.Slot(12345, 20, 200)
-        ),
+      Orderbook.Update(
+        Seq(Orderbook.Slot(12344, 10, 100), Orderbook.Slot(12345, 20, 200)),
         Nil
       )
     )
 
     obm.processUpdate(
-      OrderbookUpdate(
-        Seq(
-          OrderbookUpdate.Slot(12344, 5, 40),
-          OrderbookUpdate.Slot(12345, 10, 80)
-        ),
+      Orderbook.Update(
+        Seq(Orderbook.Slot(12344, 5, 40), Orderbook.Slot(12345, 10, 80)),
         Nil
       )
     )
@@ -228,22 +208,16 @@ class OrderbookManagerImplSpec extends CommonSpec {
 
   "OrderbookManagerImplSpec" should "skip slots with higer buy prices" in {
     obm.processUpdate(
-      OrderbookUpdate(
+      Orderbook.Update(
         Nil,
-        Seq(
-          OrderbookUpdate.Slot(12344, 10, 100),
-          OrderbookUpdate.Slot(12345, 20, 200)
-        )
+        Seq(Orderbook.Slot(12344, 10, 100), Orderbook.Slot(12345, 20, 200))
       )
     )
 
     obm.processUpdate(
-      OrderbookUpdate(
+      Orderbook.Update(
         Nil,
-        Seq(
-          OrderbookUpdate.Slot(12344, 5, 40),
-          OrderbookUpdate.Slot(12345, 10, 80)
-        )
+        Seq(Orderbook.Slot(12344, 5, 40), Orderbook.Slot(12345, 10, 80))
       )
     )
 

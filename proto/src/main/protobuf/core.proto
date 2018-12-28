@@ -24,7 +24,6 @@ package org.loopring.lightcone.proto;
 // CONTAINS DATA USED BY THE CORE SUB-PROJECT, ONLY!!!
 /////////////////////////////////////////////////////////////////////
 
-
 enum OrderStatus {
     STATUS_NEW = 0;
     STATUS_PENDING = 1;
@@ -119,20 +118,20 @@ message Orderbook {
         string total = 3;
     }
 
-    double latestPrice = 1;
-    repeated Item sells = 2;
-    repeated Item buys = 3;
-}
-
-message OrderbookUpdate {
     message Slot {
         int64 slot = 1;
         double amount = 2;
         double total = 3;
     }
 
-    repeated Slot sells = 1;
-    repeated Slot buys = 2;
-    double last_price = 3;
-    MarketId market_id = 4;
+    message Update {
+        repeated Slot sells = 1;
+        repeated Slot buys = 2;
+        double last_price = 3;
+        MarketId market_id = 4;
+    }
+
+    double latestPrice = 1;
+    repeated Item sells = 2;
+    repeated Item buys = 3;
 }

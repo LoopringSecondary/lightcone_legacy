@@ -71,7 +71,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
     MarketManager.MatchResult(
       Nil,
       order.copy(status = newStatus),
-      OrderbookUpdate()
+      Orderbook.Update()
     )
 
   def noMatchingActivity() = {

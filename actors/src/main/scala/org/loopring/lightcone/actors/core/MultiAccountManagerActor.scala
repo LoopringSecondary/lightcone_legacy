@@ -64,7 +64,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
         "MultiAccountManagerActor does not handle SubmitOrder.Req, use SubmitSimpleOrder"
       )
 
-    case Recover.RecoverOrderReq(Some(raworder)) => raworder.owner
+    case ActorRecover.RecoverOrderReq(Some(raworder)) => raworder.owner
     case req: CancelOrder.Req ⇒ req.owner
     case req: SubmitSimpleOrder ⇒ req.owner
     case req: GetBalanceAndAllowances.Req ⇒ req.address
@@ -114,7 +114,7 @@ class MultiAccountManagerActor(
         .scheduleOnce(
           maxRecoverDurationMinutes.minute,
           self,
-          Recover.Finished(true)
+          ActorRecover.Finished(true)
         )
     )
 
@@ -124,7 +124,7 @@ class MultiAccountManagerActor(
 
       log.debug(s"actor recover started: ${self.path}")
       actors.get(OrderRecoverCoordinator.name) !
-        Recover.Request(addressShardingEntity = entityId)
+        ActorRecover.Request(addressShardingEntity = entityId)
 
       context.become(recover)
     }
@@ -132,9 +132,9 @@ class MultiAccountManagerActor(
 
   def recover: Receive = {
 
-    case req: Recover.RecoverOrderReq => handleRequest(req)
+    case req: ActorRecover.RecoverOrderReq => handleRequest(req)
 
-    case Recover.Finished(timeout) =>
+    case ActorRecover.Finished(timeout) =>
       s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
       context.become(receive)
 

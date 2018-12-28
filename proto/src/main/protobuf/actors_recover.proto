@@ -19,16 +19,15 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
-import "actors_core.proto";
 import "core.proto";
+import "actors_core.proto";
 
 
 /////////////////////////////////////////////////////////////////////
 // CONTAINS MESSAGES RELATED TO ACTOR RECOVER ONLY!!!
 /////////////////////////////////////////////////////////////////////
 
-
-message Recover {
+message ActorRecover {
     message Request {
         string address_sharding_entity = 1;
         MarketId market_id = 2;
