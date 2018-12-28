@@ -74,7 +74,7 @@ message XJsonRpcRes {
 //
 ///////////////////////////////////////////
 
-message XTransaction {
+message Transaction {
     string hash = 1;
     string nonce = 2;
     string blockHash = 3;
@@ -159,7 +159,7 @@ message BlockWithTxObject {
     string gasLimit = 15;
     string gasUsed = 16;
     string timestamp = 17;
-    repeated XTransaction transactions = 18;
+    repeated Transaction transactions = 18;
     repeated string uncles = 19;
 }
 
@@ -255,7 +255,7 @@ message GetTransactionByHashReq {
 message GetTransactionByHashRes {
     int32 id = 1;
     string jsonrpc = 2;
-    XTransaction result = 3;
+    Transaction result = 3;
     EthResError error = 4;
 }
 

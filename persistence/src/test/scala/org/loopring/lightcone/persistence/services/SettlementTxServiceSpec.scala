@@ -35,7 +35,7 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
       txHash: String,
       owner: String,
       nonce: Long,
-      status: SettlementTx.XStatus
+      status: SettlementTx.Status
     ): Future[SaveSettlementTxResult] = {
     service.saveTx(
       SaveSettlementTxReq(
@@ -64,7 +64,7 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
       _ ← Future.sequence(txHashes.map { hash ⇒
-        testSave(hash, owner, 1, SettlementTx.XStatus.PENDING)
+        testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
       query ← service.getPendingTxs(
         GetPendingTxsReq(owner = owner, timeBefore = time)
@@ -92,10 +92,10 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
       _ ← Future.sequence(txHashes.map { hash ⇒
-        testSave(hash, owner, 1, SettlementTx.XStatus.PENDING)
+        testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
       _ ← Future.sequence(mocks.map { hash ⇒
-        testSave(hash, owner, 2, SettlementTx.XStatus.PENDING)
+        testSave(hash, owner, 2, SettlementTx.Status.PENDING)
       })
       query1 ← service.getPendingTxs(
         GetPendingTxsReq(owner = owner, timeBefore = time)
@@ -117,7 +117,7 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
       _ ← Future.sequence(txHashes.map { hash ⇒
-        testSave(hash, owner, 1, SettlementTx.XStatus.PENDING)
+        testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
       query1 ← service.getPendingTxs(
         GetPendingTxsReq(owner = owner, timeBefore = time)
@@ -153,7 +153,7 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
       _ ← Future.sequence(txHashes.map { hash ⇒
-        testSave(hash, owner, 1, SettlementTx.XStatus.PENDING)
+        testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
       updated <- service.updateInBlock(
         UpdateTxInBlockReq(txHash = "0x-tx-not-exist", from = owner, nonce = 1)

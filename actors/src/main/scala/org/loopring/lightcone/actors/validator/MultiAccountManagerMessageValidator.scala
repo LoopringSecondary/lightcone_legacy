@@ -57,7 +57,7 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
             owner = Address.normalizeAddress(req.owner)
           )
       }
-    case req: XRecover.RecoverOrderReq => req
+    case req: Recover.RecoverOrderReq => req
     case req: GetBalanceAndAllowancesReq ⇒
       req.copy(
         address = Address.normalizeAddress(req.address),

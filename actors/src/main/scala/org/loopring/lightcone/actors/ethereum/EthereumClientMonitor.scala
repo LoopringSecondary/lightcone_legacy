@@ -118,7 +118,7 @@ class EthereumClientMonitor(
 
     checkNodeHeight onComplete {
       case Success(_) ⇒
-        self ! InitializationDone()
+        self ! Notify("initialized")
         super.preStart()
       case Failure(e) ⇒
         log.error(s"Failed to start EthereumClientMonitor:${e.getMessage} ")
@@ -129,7 +129,7 @@ class EthereumClientMonitor(
   override def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
-    case _: InitializationDone ⇒
+    case Notify("initialized", _) ⇒
       unstashAll()
       context.become(normalReceive)
     case _ ⇒

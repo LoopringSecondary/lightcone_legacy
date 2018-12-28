@@ -66,9 +66,9 @@ class AccountManagerActor(
 
   def receive: Receive = LoggingReceive {
 
-    case XRecover.RecoverOrderReq(Some(xraworder)) =>
+    case Recover.RecoverOrderReq(Some(xraworder)) =>
       submitOrder(xraworder).map { _ =>
-        XRecover.RecoverOrderRes(xraworder.id, true)
+        Recover.RecoverOrderRes(xraworder.id, true)
       }.sendTo(sender)
 
     case GetBalanceAndAllowancesReq(addr, tokens) =>

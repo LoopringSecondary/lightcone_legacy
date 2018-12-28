@@ -72,7 +72,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
 
     val xrings = ordersWithHash.map(ordersOfRing ⇒ {
       val orderIndexes = ordersOfRing.map(o ⇒ ordersHashIndexMap(o.hash))
-      new RingBatch.XRing(orderIndexes)
+      new RingBatch.Ring(orderIndexes)
     })
 
     val xRingBatch = new RingBatch().copy(

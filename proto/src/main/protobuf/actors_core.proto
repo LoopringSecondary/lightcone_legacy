@@ -190,7 +190,7 @@ enum XExecutedStatus {
     EXECUTED_STATUS_SUCCESS = 2;
 }
 
-message XRingExecutedRes {
+message RingExecutedRes {
     OrderRing ring = 1;
     string tx_hash = 2;
     XExecutedStatus status = 3;

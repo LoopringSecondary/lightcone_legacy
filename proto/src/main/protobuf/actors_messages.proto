@@ -23,28 +23,14 @@ import "actors_core.proto";
 import "core_data.proto";
 import "core_messages.proto";
 
-message RunNamedJob {
-    string name = 1;
+message Notify {
+    string message = 1;
+    string param = 2;
 }
-
-message XStart{
-    string shard_entity_id = 1;
-}
-message XStop{}
-
-message InitializationDone {}
 
 message SubmitOrderReq {
     RawOrder raw_order = 1;
 }
-
-// message RestoreRawOrderReq {
-//     RawOrder raw_order = 1;
-// }
-
-// message RestoreRawOrderRes {
-//     string id = 1;
-// }
 
 message CancelOrderReq {
     string id = 1;

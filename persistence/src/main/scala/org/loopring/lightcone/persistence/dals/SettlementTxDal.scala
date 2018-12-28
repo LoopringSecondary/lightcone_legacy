@@ -47,7 +47,7 @@ class SettlementTxDalImpl(
   private[this] val logger = Logger(this.getClass)
   val query = TableQuery[SettlementTxTable]
   val timeProvider = new SystemTimeProvider()
-  implicit val XStatusCxolumnType = enumColumnType(SettlementTx.XStatus)
+  implicit val StatusCxolumnType = enumColumnType(SettlementTx.Status)
 
   def saveTx(tx: SettlementTx): Future[SaveSettlementTxResult] = {
     db.run((query += tx).asTry).map {
@@ -72,7 +72,7 @@ class SettlementTxDalImpl(
           r.nextString,
           r.nextString,
           r.nextLong,
-          SettlementTx.XStatus.fromValue(r.nextInt),
+          SettlementTx.Status.fromValue(r.nextInt),
           r.nextLong,
           r.nextLong
         )
@@ -82,7 +82,7 @@ class SettlementTxDalImpl(
         SELECT tx_hash, `from`, `to`, gas, gas_price, `value`, `data`, nonce, status, MAX(create_at) as create_at, update_at
         FROM T_SETTLEMENT_TXS
         WHERE `from` = ${request.owner}
-          and status = ${SettlementTx.XStatus.PENDING.value}
+          and status = ${SettlementTx.Status.PENDING.value}
           and create_at <= ${request.timeBefore}
         GROUP BY `from`, nonce
         """
@@ -100,15 +100,15 @@ class SettlementTxDalImpl(
         .filter(_.from === request.from)
         .filter(_.nonce === request.nonce)
         .map(_.status)
-        .update(SettlementTx.XStatus.BLOCK)
+        .update(SettlementTx.Status.BLOCK)
       updateFaild <- if (updateInBlock == 1) {
-        val pending: SettlementTx.XStatus = SettlementTx.XStatus.PENDING
+        val pending: SettlementTx.Status = SettlementTx.Status.PENDING
         query
           .filter(_.from === request.from)
           .filter(_.nonce === request.nonce)
           .filter(_.status === pending)
           .map(_.status)
-          .update(SettlementTx.XStatus.FAILED)
+          .update(SettlementTx.Status.FAILED)
       } else {
         throw ErrorException(ErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
       }

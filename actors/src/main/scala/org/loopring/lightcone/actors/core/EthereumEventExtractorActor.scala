@@ -37,14 +37,15 @@ import scala.concurrent._
 // main owner: 李亚东
 object EthereumEventExtractorActor {
   val name = "ethereum_event_extractor"
+  private val shardId = "singleton"
 
   private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XStart(_) =>
-      ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ Notify("start", _) =>
+      (shardId, msg) //todo:该数据结构并没有包含sharding信息，无法sharding
   }
 
   private val extractShardId: ShardRegion.ExtractShardId = {
-    case XStart(_) => "address_1"
+    case Notify("start", _) => shardId
   }
 
   def startShardRegion(

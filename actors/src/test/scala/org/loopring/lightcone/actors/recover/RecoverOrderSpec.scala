@@ -139,7 +139,7 @@ class RecoverOrderSpec
         MarketId(primary = LRC_TOKEN.address, secondary = WETH_TOKEN.address)
       )
       val marketMock4 = Some(MarketId(primary = "0x041", secondary = "0x042"))
-      val request1 = XRecover.Request(
+      val request1 = Recover.Request(
         addressShardingEntity = MultiAccountManagerActor
           .getEntityId(owner, 100),
         marketId = marketLrcWeth
@@ -148,8 +148,8 @@ class RecoverOrderSpec
       val r = actors.get(OrderRecoverCoordinator.name) ? request1
       val res = Await.result(r, timeout.duration)
       res match {
-        case XRecover.Finished(b) => assert(b)
-        case _                    => assert(false)
+        case Recover.Finished(b) => assert(b)
+        case _                   => assert(false)
       }
       // 4. get depth
       Thread.sleep(5000)
