@@ -17,14 +17,14 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
-import akka.event.LoggingReceive
+import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence._
-import org.loopring.lightcone.proto.XOrderStatusMonitor
+import org.loopring.lightcone.proto._
 
 import scala.concurrent._
 
@@ -53,12 +53,22 @@ class OrderStatusMonitorActor(
     )
   )
 
-  def processEffectiveOrders = {
-    val processTime = timeProvider.getTimeSeconds()
+  def processEffectiveOrders =
     for {
-      orders <- dbModule.orderService.getOrdersForMonitor()
-
+      (processTime, lastProcessTime) <- getProcessTime(
+        XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EFFECTIVE
+      )
+      orders <- dbModule.orderService.getEffectiveOrdersForMonitor(
+        lastProcessTime
+      )
+      _ <- Future.sequence(orders.map { o =>
+        actors.get(MultiAccountManagerActor.name) ? XSubmitSimpleOrderReq(
+          o.owner,
+          Some(o)
+        )
+      })
     } yield {
+      //记录处理时间
       dbModule.orderStatusMonitorService.saveEvent(
         XOrderStatusMonitor(
           monitorType = XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EFFECTIVE,
@@ -66,8 +76,42 @@ class OrderStatusMonitorActor(
         )
       )
     }
+
+  def processExpireOrders =
+    for {
+      (processTime, lastProcessTime) <- getProcessTime(
+        XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE
+      )
+      orders <- dbModule.orderService.getExpiredOrdersForMonitor()
+      _ <- Future.sequence(orders.map { o =>
+        val cancelReq = XCancelOrderReq(
+          o.hash,
+          o.owner,
+          o.status,
+          Some(XMarketId(o.tokenS, o.tokenB))
+        )
+        actors.get(MultiAccountManagerActor.name) ? cancelReq
+      })
+    } yield {
+      //记录处理时间
+      dbModule.orderStatusMonitorService.saveEvent(
+        XOrderStatusMonitor(
+          monitorType = XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE,
+          processTime = processTime
+        )
+      )
+    }
+
+  private def getProcessTime(
+      monitorType: XOrderStatusMonitor.XMonitorType
+    ): Future[(Long, Long)] = {
+    val processTime = timeProvider.getTimeSeconds()
+    for {
+      lastEventOpt <- dbModule.orderStatusMonitorService.getLastEvent(
+        XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE
+      )
+      lastProcessTime = if (lastEventOpt.isEmpty) 0
+      else lastEventOpt.get.processTime
+    } yield (processTime, lastProcessTime)
   }
-
-  def processExpireOrders = Future.successful()
-
 }

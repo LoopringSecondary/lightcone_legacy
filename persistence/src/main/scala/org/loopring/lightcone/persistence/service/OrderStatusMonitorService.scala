@@ -28,5 +28,5 @@ trait OrderStatusMonitorService {
 
   def getLastEvent(
       monitorType: XOrderStatusMonitor.XMonitorType
-    ): Future[XOrderStatusMonitor]
+    ): Future[Option[XOrderStatusMonitor]]
 }

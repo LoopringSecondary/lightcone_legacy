@@ -154,9 +154,15 @@ class OrderServiceImpl @Inject()(
       skip
     )
 
-  def getOrdersForMonitor(): Future[Seq[XRawOrder]] = ???
+  def getEffectiveOrdersForMonitor(
+      lastProcessTime: Long,
+      skip: Option[XSkip] = None
+    ): Future[Seq[XRawOrder]] = ???
 
-  def countOrdersForMonitor(): Future[Int] = ???
+  def getExpiredOrdersForMonitor(
+      lastProcessTime: Long,
+      skip: Option[XSkip] = None
+    ): Future[Seq[XRawOrder]] = ???
 
   // Count the number of orders
   def countOrdersForUser(
