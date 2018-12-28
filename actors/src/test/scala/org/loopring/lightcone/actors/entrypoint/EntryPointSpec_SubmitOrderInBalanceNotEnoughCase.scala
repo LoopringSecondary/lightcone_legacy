@@ -67,7 +67,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       }
 
       val f1 = Future.sequence(rawOrders.map { o =>
-        singleRequest(SubmitOrderReq(Some(o)), "submit_order").recover {
+        singleRequest(SubmitOrder.Req(Some(o)), "submit_order").recover {
           case e: Throwable =>
             info(
               s"submit the second order shouldn't be success. it will occurs err: ${e} when submit order:${o}"
@@ -125,7 +125,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       }
 
       info("then cancel the first one, the depth should be changed to empy.")
-      val cancelReq = CancelOrderReq(
+      val cancelReq = CancelOrder.Req(
         rawOrders(0).hash,
         rawOrders(0).owner,
         OrderStatus.STATUS_CANCELLED_BY_USER,

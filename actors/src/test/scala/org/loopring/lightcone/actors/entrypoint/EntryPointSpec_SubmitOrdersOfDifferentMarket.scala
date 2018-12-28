@@ -69,7 +69,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
           })
 
       val f1 = Future.sequence(rawOrders.map { o =>
-        singleRequest(SubmitOrderReq(Some(o)), "submit_order")
+        singleRequest(SubmitOrder.Req(Some(o)), "submit_order")
       })
 
       val res = Await.result(f1, 3 second)
@@ -141,7 +141,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       }
 
       info("then cancel one of it, the depth should be changed.")
-      val cancelReq = CancelOrderReq(
+      val cancelReq = CancelOrder.Req(
         rawOrders(0).hash,
         rawOrders(0).owner,
         OrderStatus.STATUS_CANCELLED_BY_USER,

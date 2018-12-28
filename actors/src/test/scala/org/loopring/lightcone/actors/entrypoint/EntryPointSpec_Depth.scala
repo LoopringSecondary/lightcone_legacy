@@ -44,11 +44,11 @@ class EntryPointSpec_Depth
     "get the right depth" in {
       val rawOrder1 =
         createRawOrder(amountS = "123456789".zeros(10), amountB = "1".zeros(18))
-      val f1 = singleRequest(SubmitOrderReq(Some(rawOrder1)), "submit_order")
+      val f1 = singleRequest(SubmitOrder.Req(Some(rawOrder1)), "submit_order")
 
       val res1 = Await.result(f1, timeout.duration)
       res1 match {
-        case SubmitOrderRes(Some(order)) =>
+        case SubmitOrder.Res(Some(order)) =>
           info(s" response ${order}")
           order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)
@@ -56,11 +56,11 @@ class EntryPointSpec_Depth
 
       val rawOrder2 =
         createRawOrder(amountS = "223456789".zeros(10), amountB = "1".zeros(18))
-      val f2 = singleRequest(SubmitOrderReq(Some(rawOrder2)), "submit_order")
+      val f2 = singleRequest(SubmitOrder.Req(Some(rawOrder2)), "submit_order")
 
       val res2 = Await.result(f2, timeout.duration)
       res2 match {
-        case SubmitOrderRes(Some(order)) =>
+        case SubmitOrder.Res(Some(order)) =>
           info(s" response ${order}")
           order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)
@@ -68,11 +68,11 @@ class EntryPointSpec_Depth
 
       val rawOrder3 =
         createRawOrder(amountS = "323456789".zeros(10), amountB = "1".zeros(18))
-      val f3 = singleRequest(SubmitOrderReq(Some(rawOrder3)), "submit_order")
+      val f3 = singleRequest(SubmitOrder.Req(Some(rawOrder3)), "submit_order")
 
       val res3 = Await.result(f3, timeout.duration)
       res3 match {
-        case SubmitOrderRes(Some(order)) =>
+        case SubmitOrder.Res(Some(order)) =>
           info(s" response ${order}")
           order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)
@@ -80,11 +80,11 @@ class EntryPointSpec_Depth
 
       val rawOrder4 =
         createRawOrder(amountS = "323456689".zeros(10), amountB = "1".zeros(18))
-      val f4 = singleRequest(SubmitOrderReq(Some(rawOrder4)), "submit_order")
+      val f4 = singleRequest(SubmitOrder.Req(Some(rawOrder4)), "submit_order")
 
       val res4 = Await.result(f4, timeout.duration)
       res4 match {
-        case SubmitOrderRes(Some(order)) =>
+        case SubmitOrder.Res(Some(order)) =>
           info(s" response ${order}")
           order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)

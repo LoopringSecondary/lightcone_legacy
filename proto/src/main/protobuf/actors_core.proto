@@ -117,9 +117,7 @@ message SubmitSimpleOrder {
     Order order = 2;
 }
 
-message SubmitOrderRes {
-    Order order = 1;
-}
+
 
 message AddressBalanceUpdated {
     string address = 1;

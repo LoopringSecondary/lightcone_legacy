@@ -73,7 +73,7 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       }
 
       val f1 = Future.sequence(rawOrders.map { o =>
-        singleRequest(SubmitOrderReq(Some(o)), "submit_order")
+        singleRequest(SubmitOrder.Req(Some(o)), "submit_order")
       })
 
       val res = Await.result(f1, timeout.duration)

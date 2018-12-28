@@ -46,7 +46,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
   "submiting one from OrderHandleActor" must {
     "get depth in OrderbookManagerActor" in {
       val rawOrder = createRawOrder()
-      val submitF = actors.get(OrderHandlerActor.name) ? SubmitOrderReq(
+      val submitF = actors.get(OrderHandlerActor.name) ? SubmitOrder.Req(
         Some(rawOrder)
       )
       val submitRes = Await.result(submitF, timeout.duration)
@@ -67,7 +67,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
 
       info("cancel this order now. ")
 
-      val cancelReq = CancelOrderReq(
+      val cancelReq = CancelOrder.Req(
         id = rawOrder.hash,
         owner = rawOrder.owner,
         status = OrderStatus.STATUS_CANCELLED_BY_USER,

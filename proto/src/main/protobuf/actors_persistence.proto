@@ -100,17 +100,19 @@ message GetOrdersForUserResult {
     ErrorCode error = 2;
 }
 
-message UserCancelOrderReq {
-    repeated string order_hashes = 1;
-}
-
-message UserCancelOrderResult {
-    message Result {
-        string     order_hash = 1;
-        RawOrder  order      = 2;
-        ErrorCode error      = 3;
+message UserCancelOrder {
+    message Req {
+        repeated string order_hashes = 1;
     }
-    repeated Result updated_result = 1;
+
+    message Result {
+        message Result {
+            string     order_hash = 1;
+            RawOrder  order      = 2;
+            ErrorCode error      = 3;
+        }
+        repeated Result updated_result = 1;
+    }
 }
 
 message GetTradesReq {

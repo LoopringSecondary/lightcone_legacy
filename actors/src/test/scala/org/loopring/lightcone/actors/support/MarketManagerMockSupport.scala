@@ -27,11 +27,11 @@ trait MarketManagerMockSupport {
 
     def expectQuery() = expectMsgPF() {
       case SubmitSimpleOrder(addr, Some(order)) =>
-        info(s"received SubmitOrderReq: ${addr}, ${order}")
+        info(s"received SubmitOrder.Req: ${addr}, ${order}")
     }
 
     def replyWith() =
-      reply(SubmitOrderRes())
+      reply(SubmitOrder.Res())
   }
   actors.del(MarketManagerActor.name)
   actors.add(MarketManagerActor.name, marketManagerProbe.ref)

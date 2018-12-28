@@ -33,7 +33,7 @@ final class DatabaseQueryMessageValidator()(implicit val config: Config)
       if (req.order.isEmpty || (req.order.get.state.nonEmpty && req.order.get.state.get.status !=
             OrderStatus.STATUS_NEW))
         throw ErrorException(Error(ErrorCode.ERR_PERSISTENCE_INVALID_DATA))
-    case req: UserCancelOrderReq ⇒
+    case req: UserCancelOrder.Req ⇒
       if (req.orderHashes.isEmpty)
         throw ErrorException(Error(ErrorCode.ERR_PERSISTENCE_INVALID_DATA))
     case req: GetOrdersForUserReq => req

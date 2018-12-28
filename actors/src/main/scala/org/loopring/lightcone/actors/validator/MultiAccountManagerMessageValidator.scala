@@ -32,7 +32,7 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
   val supportedMarkets = SupportedMarkets(config)
 
   def validate = {
-    case req: CancelOrderReq ⇒
+    case req: CancelOrder.Req ⇒
       req.copy(owner = Address.normalizeAddress(req.owner))
 
     case req: SubmitSimpleOrder ⇒

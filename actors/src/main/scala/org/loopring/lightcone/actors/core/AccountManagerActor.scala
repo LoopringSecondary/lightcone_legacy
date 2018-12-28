@@ -92,7 +92,7 @@ class AccountManagerActor(
     case SubmitSimpleOrder(_, Some(order)) =>
       submitOrder(order).sendTo(sender)
 
-    case req: CancelOrderReq =>
+    case req: CancelOrder.Req =>
       assert(req.owner == address)
       if (manager.cancelOrder(req.id)) {
         marketManagerActor forward req
@@ -114,7 +114,7 @@ class AccountManagerActor(
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
   }
 
-  private def submitOrder(order: Order): Future[SubmitOrderRes] = {
+  private def submitOrder(order: Order): Future[SubmitOrder.Res] = {
     val matchable: Matchable = order
     for {
       _ <- getTokenManager(matchable.tokenS)
@@ -155,7 +155,7 @@ class AccountManagerActor(
       }
       matchable_ = updatedOrders(_matchable.id)
       order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
-    } yield SubmitOrderRes(order = Some(order_))
+    } yield SubmitOrder.Res(order = Some(order_))
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
@@ -229,7 +229,7 @@ class AccountManagerActor(
                 _ <- dbModule.orderService
                   .updateOrderStatus(order.id, order.status)
               } yield {
-                marketManagerActor ! CancelOrderReq(
+                marketManagerActor ! CancelOrder.Req(
                   id = order.id,
                   marketId = Some(MarketId(order.tokenS, order.tokenB))
                 )

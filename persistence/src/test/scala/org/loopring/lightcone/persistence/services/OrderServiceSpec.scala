@@ -371,7 +371,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       )
     } yield (update, query1, query2, query3)
     val res = Await.result(
-      result.mapTo[(Seq[UserCancelOrderResult.Result], Int, Int, Int)],
+      result.mapTo[(Seq[UserCancelOrder.Result.Result], Int, Int, Int)],
       5.second
     )
     res._1.map { o =>

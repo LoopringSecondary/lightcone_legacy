@@ -53,11 +53,11 @@ class EntryPointSpec_SubmitOneOrder
       val amountB = "1"
       val rawOrder =
         createRawOrder(amountS = amountS.zeros(18), amountB = amountB.zeros(18))
-      val f = singleRequest(SubmitOrderReq(Some(rawOrder)), "submit_order")
+      val f = singleRequest(SubmitOrder.Req(Some(rawOrder)), "submit_order")
 
       val res = Await.result(f, timeout.duration)
       res match {
-        case SubmitOrderRes(Some(order)) =>
+        case SubmitOrder.Res(Some(order)) =>
           info(s" response ${order}")
           order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)

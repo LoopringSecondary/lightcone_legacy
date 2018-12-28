@@ -52,7 +52,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
           amountFee = "10".zeros(18),
           tokenFee = LRC_TOKEN.address
         )
-      val f = singleRequest(SubmitOrderReq(Some(order1)), "submit_order")
+      val f = singleRequest(SubmitOrder.Req(Some(order1)), "submit_order")
       Await.result(f, timeout.duration)
 
       val order2 =
@@ -64,7 +64,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
           amountFee = "10".zeros(18),
           tokenFee = LRC_TOKEN.address
         )
-      val f1 = singleRequest(SubmitOrderReq(Some(order2)), "submit_order")
+      val f1 = singleRequest(SubmitOrder.Req(Some(order2)), "submit_order")
       Await.result(f1, timeout.duration)
 
       Thread.sleep(1000)

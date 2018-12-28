@@ -84,7 +84,7 @@ object MarketManagerActor extends ShardedByMarket {
   val extractMarketId: PartialFunction[Any, MarketId] = {
     case SubmitSimpleOrder(_, Some(order)) =>
       MarketId(order.tokenS, order.tokenB)
-    case CancelOrderReq(_, _, _, Some(marketId)) =>
+    case CancelOrder.Req(_, _, _, Some(marketId)) =>
       marketId
   }
 
@@ -191,14 +191,14 @@ class MarketManagerActor(
     case SubmitSimpleOrder(_, Some(order)) ⇒
       submitOrder(order).sendTo(sender)
 
-    case CancelOrderReq(orderId, _, _, _) ⇒
+    case CancelOrder.Req(orderId, _, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
         orderbookManagerMediator ! Publish(
           OrderbookManagerActor.getTopicId(marketId),
           orderbookUpdate.copy(marketId = Some(marketId))
         )
       }
-      sender ! CancelOrderRes(id = orderId)
+      sender ! CancelOrder.Res(id = orderId)
 
     case GasPriceUpdated(_gasPrice) =>
       val gasPrice: BigInt = _gasPrice

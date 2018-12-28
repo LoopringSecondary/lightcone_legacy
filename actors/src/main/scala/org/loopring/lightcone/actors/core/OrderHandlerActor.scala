@@ -73,7 +73,7 @@ class OrderHandlerActor(
 
   //save order to db first, then send to AccountManager
   def receive: Receive = {
-    case req: CancelOrderReq ⇒
+    case req: CancelOrder.Req ⇒
       (for {
         cancelRes <- dbModule.orderService.markOrderSoftCancelled(Seq(req.id))
       } yield {
@@ -87,7 +87,7 @@ class OrderHandlerActor(
         }
       }) forwardTo (mammv, sender)
 
-    case SubmitOrderReq(Some(raworder)) ⇒
+    case SubmitOrder.Req(Some(raworder)) ⇒
       (for {
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         saveRes <- dbModule.orderService.saveOrder(raworder)

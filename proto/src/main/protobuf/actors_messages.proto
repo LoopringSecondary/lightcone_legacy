@@ -28,22 +28,30 @@ message Notify {
     string param = 2;
 }
 
-message SubmitOrderReq {
-    RawOrder raw_order = 1;
-}
-
-message CancelOrderReq {
-    string id = 1;
-    string owner = 2;
-    OrderStatus status = 3; //取消的类型
-    MarketId market_id = 4;
-}
-
-message CancelOrderRes {
-    string id = 1;
-    OrderStatus status = 2; //取消的类型
-}
-
 message SubmitOrder {
-    RawOrder raw_order = 1;
+    message Req {
+        RawOrder raw_order = 1;
+    }
+
+    message Res {
+        Order order = 1;
+    }
 }
+
+message CancelOrder {
+    message Req {
+        string id = 1;
+        string owner = 2;
+        OrderStatus status = 3; //取消的类型
+        MarketId market_id = 4;
+    }
+
+    message Res {
+        string id = 1;
+        OrderStatus status = 2; //取消的类型
+    }
+}
+
+// message SubmitOrder {
+//     RawOrder raw_order = 1;
+// }
