@@ -57,7 +57,7 @@ class BalanceSpec
       val owner = "0xb5fab0b11776aad5ce60588c16bd59dcfd61a1c2"
       val getBalanceReq =
         GetBalanceAndAllowancesReq(owner, tokens = Seq(LRC, WETH))
-      val maker = XOrder(
+      val maker = Order(
         id = "maker1",
         tokenS = LRC,
         tokenB = WETH,

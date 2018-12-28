@@ -219,7 +219,7 @@ class MarketManagerActor(
 
   }
 
-  private def submitOrder(xorder: XOrder): Future[Unit] = {
+  private def submitOrder(xorder: Order): Future[Unit] = {
     assert(
       xorder.actual.nonEmpty,
       "order in SubmitSimpleOrderReq miss `actual` field"

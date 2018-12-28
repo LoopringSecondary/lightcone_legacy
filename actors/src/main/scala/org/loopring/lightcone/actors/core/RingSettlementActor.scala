@@ -166,22 +166,22 @@ class RingSettlementActor(
   //   ???
   // }
 
-  // private def convertToOrder(xOrder: XOrder): Matchable = {
+  // private def convertToOrder(order: Order): Matchable = {
   //   // //todo:need to get From db
   //   // Matchable(
   //   //   owner = "0x0",
-  //   //   tokenS = xOrder.tokenS,
-  //   //   tokenB = xOrder.tokenB,
-  //   //   amountS = xOrder.amountS,
-  //   //   amountB = xOrder.amountB,
+  //   //   tokenS = order.tokenS,
+  //   //   tokenB = order.tokenB,
+  //   //   amountS = order.amountS,
+  //   //   amountB = order.amountB,
   //   //   validSince = 0,
   //   //   allOrNone = false,
-  //   //   feeToken = xOrder.tokenFee,
-  //   //   feeAmount = xOrder.amountFee,
+  //   //   feeToken = order.tokenFee,
+  //   //   feeAmount = order.amountFee,
   //   //   tokenReceipt = "",
   //   //   sig = "",
   //   //   dualAuthSig = "",
-  //   //   hash = xOrder.id
+  //   //   hash = order.id
   //   // )
   //   ???
   // }

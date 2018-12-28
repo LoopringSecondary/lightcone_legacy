@@ -114,7 +114,7 @@ class AccountManagerActor(
       updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
   }
 
-  private def submitOrder(xorder: XOrder): Future[SubmitOrderRes] = {
+  private def submitOrder(xorder: Order): Future[SubmitOrderRes] = {
     val matchable: Matchable = xorder
     for {
       _ <- getTokenManager(matchable.tokenS)
@@ -154,7 +154,7 @@ class AccountManagerActor(
         }
       }
       matchable_ = updatedOrders(_matchable.id)
-      order_ : XOrder = matchable_.copy(_reserved = None, _outstanding = None)
+      order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
     } yield SubmitOrderRes(order = Some(order_))
   }
 
