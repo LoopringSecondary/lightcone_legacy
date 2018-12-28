@@ -99,7 +99,7 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
           None,
           None,
           None,
-          Some(OrderState(0, 0, 0))
+          Some(MatchableState(0, 0, 0))
         ).matchableAsOriginal,
         maker = Order(
           "maker",
@@ -116,7 +116,7 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
           None,
           None,
           None,
-          Some(OrderState(0, 0, 0))
+          Some(MatchableState(0, 0, 0))
         ).matchableAsOriginal
       )
       .isRight should be(true)

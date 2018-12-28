@@ -65,10 +65,10 @@ package object data {
       updatedAt = xorder.updatedAt,
       status = xorder.status,
       walletSplitPercentage = xorder.walletSplitPercentage,
-      _outstanding = xorder.outstanding.map(xorderState2OrderState),
-      _reserved = xorder.reserved.map(xorderState2OrderState),
-      _actual = xorder.actual.map(xorderState2OrderState),
-      _matchable = xorder.matchable.map(xorderState2OrderState)
+      _outstanding = xorder.outstanding.map(orderState2MatchableState),
+      _reserved = xorder.reserved.map(orderState2MatchableState),
+      _actual = xorder.actual.map(orderState2MatchableState),
+      _matchable = xorder.matchable.map(orderState2MatchableState)
     )
 
   implicit def order2XOrder(order: Order): XOrder =
@@ -84,20 +84,24 @@ package object data {
       updatedAt = order.updatedAt,
       status = order.status,
       walletSplitPercentage = order.walletSplitPercentage,
-      outstanding = order._outstanding.map(orderState2XOrderState),
-      reserved = order._reserved.map(orderState2XOrderState),
-      actual = order._actual.map(orderState2XOrderState),
-      matchable = order._matchable.map(orderState2XOrderState)
+      outstanding = order._outstanding.map(matchableState2OrderState),
+      reserved = order._reserved.map(matchableState2OrderState),
+      actual = order._actual.map(matchableState2OrderState),
+      matchable = order._matchable.map(matchableState2OrderState)
     )
 
-  implicit def xorderState2OrderState(xOrderState: XOrderState): OrderState =
-    OrderState(
+  implicit def orderState2MatchableState(
+      xOrderState: XOrderState
+    ): MatchableState =
+    MatchableState(
       amountS = xOrderState.amountS,
       amountB = xOrderState.amountB,
       amountFee = xOrderState.amountFee
     )
 
-  implicit def orderState2XOrderState(orderState: OrderState): XOrderState =
+  implicit def matchableState2OrderState(
+      orderState: MatchableState
+    ): XOrderState =
     XOrderState(
       amountS = orderState.amountS,
       amountB = orderState.amountB,

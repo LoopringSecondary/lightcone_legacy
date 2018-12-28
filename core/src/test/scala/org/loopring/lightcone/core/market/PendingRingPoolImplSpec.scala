@@ -40,7 +40,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
           tokenFee = LRC,
           walletSplitPercentage = 0.2
         ),
-        pending = OrderState(amountS = 200, amountFee = 200),
+        pending = MatchableState(amountS = 200, amountFee = 200),
         amountMargin = 100
       )
       val takerExpectFill = ExpectedFill(
@@ -51,17 +51,17 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
           tokenFee = LRC,
           walletSplitPercentage = 0.2
         ),
-        pending = OrderState(amountS = 100, amountFee = 100),
+        pending = MatchableState(amountS = 100, amountFee = 100),
         amountMargin = 100
       )
       val ring = OrderRing(
         makerExpectFill.copy(
           amountMargin = 0,
-          pending = OrderState(amountS = 100, amountFee = 10)
+          pending = MatchableState(amountS = 100, amountFee = 10)
         ),
         takerExpectFill.copy(
           amountMargin = 0,
-          pending = OrderState(amountS = 100, amountFee = 0)
+          pending = MatchableState(amountS = 100, amountFee = 0)
         )
       )
       pendingRingPool.addRing(ring)
@@ -83,7 +83,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
         tokenFee = LRC,
         walletSplitPercentage = 0.2
       ),
-      pending = OrderState(amountS = 200, amountFee = 200),
+      pending = MatchableState(amountS = 200, amountFee = 200),
       amountMargin = 100
     )
     val takerExpectFill = ExpectedFill(
@@ -94,17 +94,17 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
         tokenFee = LRC,
         walletSplitPercentage = 0.2
       ),
-      pending = OrderState(amountS = 100, amountFee = 100),
+      pending = MatchableState(amountS = 100, amountFee = 100),
       amountMargin = 100
     )
     val ring = OrderRing(
       makerExpectFill.copy(
         amountMargin = 0,
-        pending = OrderState(amountS = 100, amountFee = 10)
+        pending = MatchableState(amountS = 100, amountFee = 10)
       ),
       takerExpectFill.copy(
         amountMargin = 0,
-        pending = OrderState(amountS = 100, amountFee = 0)
+        pending = MatchableState(amountS = 100, amountFee = 0)
       )
     )
     pendingRingPool.addRing(ring)
@@ -123,17 +123,17 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
         tokenFee = LRC,
         walletSplitPercentage = 0.2
       ),
-      pending = OrderState(amountS = 100, amountFee = 100),
+      pending = MatchableState(amountS = 100, amountFee = 100),
       amountMargin = 100
     )
     val ring1 = OrderRing(
       makerExpectFill.copy(
         amountMargin = 0,
-        pending = OrderState(amountS = 100, amountFee = 10)
+        pending = MatchableState(amountS = 100, amountFee = 10)
       ),
       takerExpectFillNew1.copy(
         amountMargin = 0,
-        pending = OrderState(amountS = 100, amountFee = 0)
+        pending = MatchableState(amountS = 100, amountFee = 0)
       )
     )
     pendingRingPool.addRing(ring1)
@@ -155,7 +155,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
         tokenFee = LRC,
         walletSplitPercentage = 0.2
       ),
-      pending = OrderState(amountS = 200, amountFee = 200),
+      pending = MatchableState(amountS = 200, amountFee = 200),
       amountMargin = 100
     )
     val takerExpectFillNew1 = ExpectedFill(
@@ -166,17 +166,17 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
         tokenFee = LRC,
         walletSplitPercentage = 0.2
       ),
-      pending = OrderState(amountS = 100, amountFee = 100),
+      pending = MatchableState(amountS = 100, amountFee = 100),
       amountMargin = 100
     )
     val ring1 = OrderRing(
       takerExpectFillNew1.copy(
         amountMargin = 0,
-        pending = OrderState(amountS = 100, amountFee = 0)
+        pending = MatchableState(amountS = 100, amountFee = 0)
       ),
       makerExpectFill.copy(
         amountMargin = 0,
-        pending = OrderState(amountS = 100, amountFee = 10)
+        pending = MatchableState(amountS = 100, amountFee = 10)
       )
     )
     pendingRingPool.deleteRing(ring1.id)

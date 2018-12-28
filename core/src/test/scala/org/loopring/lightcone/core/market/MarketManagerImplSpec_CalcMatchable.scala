@@ -50,9 +50,9 @@ class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
       .matchOrders(_: Order, _: Order, _: Double))
       .verify(
         buyOrder.asPending.withActualAsOriginal
-          .copy(_matchable = Some(OrderState(34, 34000, 0))),
+          .copy(_matchable = Some(MatchableState(34, 34000, 0))),
         sellOrder.asPending.withActualAsOriginal
-          .copy(_matchable = Some(OrderState(99445, 100, 0))),
+          .copy(_matchable = Some(MatchableState(99445, 100, 0))),
         2.0
       )
       .once

@@ -176,7 +176,7 @@ trait OrderAwareSpec extends CommonSpec {
       amountS: BigInt,
       amountB: BigInt,
       amountFee: BigInt
-    ) = OrderState(amountS, amountB, amountFee)
+    ) = MatchableState(amountS, amountB, amountFee)
 
   def submitOrder(order: Order) = {
     updatedOrders = Map.empty[String, Order]

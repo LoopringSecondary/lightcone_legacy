@@ -64,8 +64,8 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
         if (taker.matchable.amountS > maker.matchable.amountB) {
 
           (
-            OrderState(maker.matchable.amountS, maker.matchable.amountB),
-            OrderState(
+            MatchableState(maker.matchable.amountS, maker.matchable.amountB),
+            MatchableState(
               maker.matchable.amountB,
               Rational(maker.matchable.amountB) *
                 Rational(taker.amountB, taker.amountS)
@@ -74,12 +74,12 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
 
         } else {
           (
-            OrderState(
+            MatchableState(
               taker.matchable.amountB,
               Rational(taker.matchable.amountB) *
                 Rational(maker.amountB, maker.amountS)
             ),
-            OrderState(taker.matchable.amountS, taker.matchable.amountB)
+            MatchableState(taker.matchable.amountS, taker.matchable.amountB)
           )
         }
 
@@ -104,7 +104,7 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
           maker = ExpectedFill(
             order = maker.copy(
               _matchable = Some(
-                OrderState(
+                MatchableState(
                   maker.matchable.amountS - makerVolume.amountS,
                   maker.matchable.amountB - makerVolume.amountB,
                   maker.matchable.amountFee - makerFee
@@ -117,7 +117,7 @@ class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
           taker = ExpectedFill(
             order = taker.copy(
               _matchable = Some(
-                OrderState(
+                MatchableState(
                   taker.matchable.amountS - takerVolume.amountS,
                   taker.matchable.amountB - takerVolume.amountB,
                   taker.matchable.amountFee - takerFee
