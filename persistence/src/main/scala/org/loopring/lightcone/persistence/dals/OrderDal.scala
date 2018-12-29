@@ -102,34 +102,25 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
 
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
-                           statuses: Set[OrderStatus],
-                           marketHashIdSet: Set[Int] = Set.empty,
-                           addressShardIdSet: Set[Int] = Set.empty,
-                           skip: CursorPaging
-                         ): Future[Seq[RawOrder]]
+      statuses: Set[OrderStatus],
+      marketHashIdSet: Set[Int] = Set.empty,
+      addressShardIdSet: Set[Int] = Set.empty,
+      skip: CursorPaging
+    ): Future[Seq[RawOrder]]
+
   //
   def getEffectiveOrdersForMonitor(
       lastProcessTime: Int,
       processTime: Int,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]]
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
 
   //
   def getExpiredOrdersForMonitor(
       lastProcessTime: Int,
       processTime: Int,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]]
-
-  // Count the number of orders
-  def countOrdersForRecover(
-      statuses: Set[XOrderStatus],
-      owners: Set[String] = Set.empty,
-      tokenSSet: Set[String] = Set.empty,
-      tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
-      feeTokenSet: Set[String] = Set.empty
-    ): Future[Int]
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
 
   // Update order's status and update the updated_at timestamp if changeUpdatedAtField is true.
   // Returns Left(error) if this operation fails, or Right(string) the order's hash.
@@ -315,18 +306,18 @@ class OrderDalImpl(
   def getEffectiveOrdersForMonitor(
       lastProcessTime: Int,
       processTime: Int,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]] = {
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] = {
     val availableStatus =
-      Seq(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING)
+      Seq(OrderStatus.STATUS_NEW, OrderStatus.STATUS_PENDING)
     var filters = query
       .filter(_.status inSet availableStatus)
-      .filter(_.validSince > lastProcessTime)
+      .filter(_.validSince >= lastProcessTime)
       .filter(_.validSince < processTime)
+//      .filter(r => r.validSince > r.createdAt ) //todo:
       .sortBy(_.sequenceId.asc)
-//        .filter(r => r.validSince > r.createdAt ) //todo:
     filters = skip match {
-      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+      case Some(s) ⇒ filters.drop(s.skip).take(s.size)
       case None ⇒ filters
     }
     db.run(filters.result)
@@ -336,21 +327,21 @@ class OrderDalImpl(
   def getExpiredOrdersForMonitor(
       lastProcessTime: Int,
       processTime: Int,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]] = {
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] = {
     val availableStatus = Seq(
-      XOrderStatus.STATUS_NEW,
-      XOrderStatus.STATUS_PENDING,
-      XOrderStatus.STATUS_PARTIALLY_FILLED
+      OrderStatus.STATUS_NEW,
+      OrderStatus.STATUS_PENDING,
+      OrderStatus.STATUS_PARTIALLY_FILLED
     )
     var filters = query
       .filter(_.status inSet availableStatus)
-      .filter(_.validUntil > lastProcessTime)
+      .filter(_.validUntil >= lastProcessTime)
       .filter(_.validUntil < processTime) //todo:需要确认下
       .sortBy(_.sequenceId.asc)
     //        .filter(r => r.validSince > r.createdAt )
     filters = skip match {
-      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+      case Some(s) ⇒ filters.drop(s.skip).take(s.size)
       case None ⇒ filters
     }
     db.run(filters.result)

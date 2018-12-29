@@ -33,6 +33,7 @@ object OrderStatusMonitorActor {
 }
 
 class OrderStatusMonitorActor(
+    val name: String = OrderStatusMonitorActor.name
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -42,34 +43,33 @@ class OrderStatusMonitorActor(
     val dbModule: DatabaseModule)
     extends Actor
     with ActorLogging
+    with NamedBasedConfig
     with RepeatedJobActor {
 
   val repeatedJobs = Seq(
     Job(
       name = "effective",
-      dalayInSeconds = 1, // 1 minute
+      dalayInSeconds = selfConfig.getInt("delay-in-seconds"), // 1 minute
       run = () => processEffectiveOrders
     ),
     Job(
       name = "expire",
-      dalayInSeconds = 1, // 1 minute
+      dalayInSeconds = selfConfig.getInt("delay-in-seconds"), // 1 minute
       run = () => processExpireOrders
     )
   )
 
-  println(s"### OrderStatusMonitorActor ${repeatedJobs}")
-
   def processEffectiveOrders =
     for {
       (processTime, lastProcessTime) <- getProcessTime(
-        XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EFFECTIVE
+        OrderStatusMonitor.XMonitorType.MONITOR_TYPE_EFFECTIVE
       )
       orders <- dbModule.orderService.getEffectiveOrdersForMonitor(
         lastProcessTime,
         processTime
       )
       _ <- Future.sequence(orders.map { o =>
-        actors.get(MultiAccountManagerActor.name) ? XSubmitSimpleOrderReq(
+        actors.get(MultiAccountManagerActor.name) ? SubmitSimpleOrder(
           o.owner,
           Some(o)
         )
@@ -77,8 +77,8 @@ class OrderStatusMonitorActor(
     } yield {
       //记录处理时间
       dbModule.orderStatusMonitorService.saveEvent(
-        XOrderStatusMonitor(
-          monitorType = XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EFFECTIVE,
+        OrderStatusMonitor(
+          monitorType = OrderStatusMonitor.XMonitorType.MONITOR_TYPE_EFFECTIVE,
           processTime = processTime
         )
       )
@@ -87,41 +87,39 @@ class OrderStatusMonitorActor(
   def processExpireOrders =
     for {
       (processTime, lastProcessTime) <- getProcessTime(
-        XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE
+        OrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE
       )
       orders <- dbModule.orderService
         .getExpiredOrdersForMonitor(lastProcessTime, processTime)
       _ <- Future.sequence(orders.map { o =>
-        val cancelReq = XCancelOrderReq(
+        val cancelReq = CancelOrder.Req(
           o.hash,
           o.owner,
           o.status,
-          Some(XMarketId(o.tokenS, o.tokenB))
+          Some(MarketId(o.tokenS, o.tokenB))
         )
         actors.get(MultiAccountManagerActor.name) ? cancelReq
       })
     } yield {
       //记录处理时间
       dbModule.orderStatusMonitorService.saveEvent(
-        XOrderStatusMonitor(
-          monitorType = XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE,
+        OrderStatusMonitor(
+          monitorType = OrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE,
           processTime = processTime
         )
       )
     }
 
   private def getProcessTime(
-      monitorType: XOrderStatusMonitor.XMonitorType
+      monitorType: OrderStatusMonitor.XMonitorType
     ): Future[(Int, Int)] = {
     val processTime = timeProvider.getTimeSeconds()
-    println(s"####1 getProcessTime ${processTime}")
     for {
       lastEventOpt <- dbModule.orderStatusMonitorService.getLastEvent(
-              XOrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE
-            )
-            lastProcessTime = if (lastEventOpt.isEmpty) 0
-            else lastEventOpt.get.processTime
-      _ = println(s"#### getProcessTime ${processTime}, ${lastProcessTime}")
+        OrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE
+      )
+      lastProcessTime = if (lastEventOpt.isEmpty) 0
+      else lastEventOpt.get.processTime
     } yield (processTime.toInt, lastProcessTime.toInt)
   }
 }

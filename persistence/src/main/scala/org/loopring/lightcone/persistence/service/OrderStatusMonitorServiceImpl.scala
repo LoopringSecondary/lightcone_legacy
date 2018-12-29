@@ -19,7 +19,7 @@ package org.loopring.lightcone.persistence.service
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals._
-import org.loopring.lightcone.proto.XOrderStatusMonitor
+import org.loopring.lightcone.proto.OrderStatusMonitor
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -34,12 +34,12 @@ class OrderStatusMonitorServiceImpl @Inject()(
   val orderStatusMonitorDal: OrderStatusMonitorDal =
     new OrderStatusMonitorDalImpl()
 
-  def saveEvent(event: XOrderStatusMonitor): Future[Int] =
+  def saveEvent(event: OrderStatusMonitor): Future[Int] =
     orderStatusMonitorDal.saveEvent(event)
 
   def getLastEvent(
-      monitorType: XOrderStatusMonitor.XMonitorType
-    ): Future[Option[XOrderStatusMonitor]] =
+      monitorType: OrderStatusMonitor.XMonitorType
+    ): Future[Option[OrderStatusMonitor]] =
     orderStatusMonitorDal.getLastEvent(monitorType)
 
 }

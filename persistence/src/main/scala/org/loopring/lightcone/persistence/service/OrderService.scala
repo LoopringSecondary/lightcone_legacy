@@ -67,15 +67,15 @@ trait OrderService {
   def getEffectiveOrdersForMonitor(
       lastProcessTime: Int,
       processTime: Int,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]]
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
 
   //
   def getExpiredOrdersForMonitor(
       lastProcessTime: Int,
       processTime: Int,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]]
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
 
   // Count the number of orders
   def countOrdersForUser(

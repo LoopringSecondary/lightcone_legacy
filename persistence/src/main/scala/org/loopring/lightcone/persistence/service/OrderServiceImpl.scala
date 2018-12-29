@@ -165,16 +165,16 @@ class OrderServiceImpl @Inject()(
   def getEffectiveOrdersForMonitor(
       lastProcessTime: Int,
       processTime: Int,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]] =
-    orderDal.getEffectiveOrdersForMonitor(lastProcessTime, processTime, skip)
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] =
+    orderDal.getEffectiveOrdersForMonitor(lastProcessTime, processTime)
 
   def getExpiredOrdersForMonitor(
       lastProcessTime: Int,
       processTime: Int,
-      skip: Option[XSkip] = None
-    ): Future[Seq[XRawOrder]] =
-    orderDal.getExpiredOrdersForMonitor(lastProcessTime, processTime, skip)
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] =
+    orderDal.getExpiredOrdersForMonitor(lastProcessTime, processTime)
 
   // Count the number of orders
   def countOrdersForUser(

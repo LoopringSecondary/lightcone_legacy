@@ -20,13 +20,15 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
+import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.RpcBinding
 import org.loopring.lightcone.actors.jsonrpc.{JsonRpcRequest, JsonRpcResponse}
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto.ErrorCode
+import org.loopring.lightcone.proto._
 import scalapb.json4s.JsonFormat
-import scala.concurrent.ExecutionContext
+
+import scala.concurrent.{Await, ExecutionContext}
 import org.slf4s.Logging
 
 trait HttpSupport extends RpcBinding with Logging {
@@ -92,6 +94,34 @@ trait HttpSupport extends RpcBinding with Logging {
           )
       }
     } yield res
+  }
+
+  def expectOrderbookRes(
+      getOrderBook: GetOrderbook.Req,
+      assertFun: Orderbook => Boolean,
+      expectTimeout: Option[Timeout] = None
+    ) = {
+    val now = System.currentTimeMillis()
+    var res: Option[Orderbook] = None
+    val timeout1 = if (expectTimeout.isEmpty) timeout else expectTimeout.get
+    while (res.isEmpty && System
+             .currentTimeMillis() <= now + timeout1.duration.toMillis) {
+      val orderbookF = singleRequest(
+        getOrderBook,
+        "orderbook"
+      )
+      val orderbookRes = Await.result(orderbookF, timeout.duration)
+      orderbookRes match {
+        case GetOrderbook.Res(Some(orderbook)) =>
+          if (assertFun(orderbook)) {
+            res = Some(orderbook)
+          }
+      }
+      if (res.isEmpty) {
+        Thread.sleep(200)
+      }
+    }
+    res
   }
 
 }

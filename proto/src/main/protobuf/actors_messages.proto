@@ -64,6 +64,17 @@ message GasPriceUpdated {
     int64 gas_price = 1;
 }
 
+message OrderStatusMonitor {
+    int64 id = 1;
+    XMonitorType monitor_type = 2;
+    int64 process_time = 3;
+
+    enum XMonitorType {
+        MONITOR_TYPE_EFFECTIVE = 0;
+        MONITOR_TYPE_EXPIRE = 1;
+    }
+}
+
 /////////////////////////////////////////////////////////////////////
 // TWO WAY REQUEST-RESPONSES (DB RELATD NOT INCLUDED)
 /////////////////////////////////////////////////////////////////////

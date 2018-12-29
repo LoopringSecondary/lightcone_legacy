@@ -21,22 +21,22 @@ import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
 class OrderStatusMonitorTable(tag: Tag)
-    extends BaseTable[XOrderStatusMonitor](tag, "T_ORDER_STATUS_MONITOR") {
+    extends BaseTable[OrderStatusMonitor](tag, "T_ORDER_STATUS_MONITOR") {
 
-  implicit val XOrderStatusMonitorTypeCxolumnType = enumColumnType(
-    XOrderStatusMonitor.XMonitorType
+  implicit val OrderStatusMonitorTypeCxolumnType = enumColumnType(
+    OrderStatusMonitor.XMonitorType
   )
 
   def id = column[String]("id")
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
   def processTime = column[Long]("process_time")
-  def monitorType = column[XOrderStatusMonitor.XMonitorType]("monitor_type")
+  def monitorType = column[OrderStatusMonitor.XMonitorType]("monitor_type")
 
   def * =
     (
       sequenceId,
       monitorType,
       processTime
-    ) <> ((XOrderStatusMonitor.apply _).tupled, XOrderStatusMonitor.unapply)
+    ) <> ((OrderStatusMonitor.apply _).tupled, OrderStatusMonitor.unapply)
 
 }

@@ -17,16 +17,16 @@
 package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.persistence.dals.OrderStatusMonitorDal
-import org.loopring.lightcone.proto.XOrderStatusMonitor
+import org.loopring.lightcone.proto.OrderStatusMonitor
 
 import scala.concurrent.Future
 
 trait OrderStatusMonitorService {
   val orderStatusMonitorDal: OrderStatusMonitorDal
 
-  def saveEvent(event: XOrderStatusMonitor): Future[Int]
+  def saveEvent(event: OrderStatusMonitor): Future[Int]
 
   def getLastEvent(
-      monitorType: XOrderStatusMonitor.XMonitorType
-    ): Future[Option[XOrderStatusMonitor]]
+      monitorType: OrderStatusMonitor.XMonitorType
+    ): Future[Option[OrderStatusMonitor]]
 }

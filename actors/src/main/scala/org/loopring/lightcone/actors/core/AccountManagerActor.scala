@@ -137,10 +137,10 @@ class AccountManagerActor(
       (successful, updatedOrders) = manager.submitAndGetUpdatedOrders(
         _matchable
       )
-      _ = assert(updatedOrders.contains(_matchable.id))
-      _ = log.debug(s"assert contains order:  ${updatedOrders(_matchable.id)}")
       _ = if (!successful)
         throw ErrorException(Error(matchable.status))
+      _ = assert(updatedOrders.contains(_matchable.id))
+      _ = log.debug(s"assert contains order:  ${updatedOrders(_matchable.id)}")
       res <- Future.sequence {
         updatedOrders.map { o =>
           for {

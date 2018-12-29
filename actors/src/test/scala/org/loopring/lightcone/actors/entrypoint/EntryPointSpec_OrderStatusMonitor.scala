@@ -18,18 +18,20 @@ package org.loopring.lightcone.actors.entrypoint
 
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-
+import akka.util.Timeout
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_OrderStatusMonitor
     extends CommonSpec("""
                          |akka.cluster.roles=[
+                         | "order_handler",
+                         | "multi_account_manager",
                          | "market_manager",
                          | "orderbook_manager",
                          | "gas_price",
                          | "ring_settlement"]
                          |""".stripMargin)
-    with OrderStatusMonitorSupport
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport
@@ -37,7 +39,8 @@ class EntryPointSpec_OrderStatusMonitor
     with MarketManagerSupport
     with OrderbookManagerSupport
     with EthereumQueryMockSupport
-    with OrderGenerateSupport {
+    with OrderGenerateSupport
+    with OrderStatusMonitorSupport {
 
   //保存一批订单，等待提交
   val orders =
@@ -48,30 +51,27 @@ class EntryPointSpec_OrderStatusMonitor
   val f = Future.sequence(orders map { o =>
     dbModule.orderService.saveOrder(o)
   })
+
   Await.result(f, timeout.duration)
 
   "start an order status monitor" must {
     "scan the order table" in {
 
-      Thread.sleep(30000)
-
-      val getOrderBook = XGetOrderbook(
+      val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF = singleRequest(
+      val orderbookRes = expectOrderbookRes(
         getOrderBook,
-        "orderbook"
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty,
+        Some(Timeout(20 second))
       )
-      val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
-        case XOrderbook(lastPrice, sells, buys) =>
-          println(s"sells:${sells}, buys:${buys}")
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          assert(sells.nonEmpty)
         case _ => assert(false)
       }
-      println("#### EntryPointSpec_OrderStatusMonitor")
-      Thread.sleep(100000)
     }
   }
 
