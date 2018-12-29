@@ -24,10 +24,11 @@ object OrderbookManagerMessageValidator {
   val name = "orderbook_manager_validator"
 }
 
-final class OrderbookManagerMessageValidator()(implicit val config: Config)
+final class OrderbookManagerMessageValidator(
+  )(
+    implicit val config: Config,
+    supportedMarkets: SupportedMarkets)
     extends MessageValidator {
-
-  val supportedMarkets = SupportedMarkets(config)
 
   // Throws exception if validation fails.
   def validate = {

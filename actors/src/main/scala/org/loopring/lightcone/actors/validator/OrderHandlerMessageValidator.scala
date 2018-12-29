@@ -30,9 +30,9 @@ object OrderHandlerMessageValidator {
 class OrderHandlerMessageValidator(
   )(
     implicit config: Config,
-    timeProvider: TimeProvider)
+    timeProvider: TimeProvider,
+    supportedMarkets: SupportedMarkets)
     extends MessageValidator {
-  val supportedMarkets = SupportedMarkets(config)
 
   private def normalizeAddress(address: String): String =
     try {

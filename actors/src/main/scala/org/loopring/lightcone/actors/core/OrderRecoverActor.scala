@@ -18,21 +18,13 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.sharding._
-import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Matchable
-import org.loopring.lightcone.proto.ErrorCode._
-import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 import org.loopring.lightcone.persistence.DatabaseModule
 import scala.concurrent._
@@ -59,7 +51,8 @@ object OrderRecoverActor extends ShardedEvenly {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dbModule: DatabaseModule
+      dbModule: DatabaseModule,
+      supportedMarkets: SupportedMarkets
     ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
@@ -73,11 +66,12 @@ object OrderRecoverActor extends ShardedEvenly {
 class OrderRecoverActor(
   )(
     implicit val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule)
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    dbModule: DatabaseModule,
+    supportedMarkets: SupportedMarkets)
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   val batchSize = selfConfig.getInt("batch-size")
@@ -108,7 +102,25 @@ class OrderRecoverActor(
       for {
         orders <- retrieveOrders(batchSize, lastOrderSeqId)
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
-        reqs = orders.map { order =>
+        // filter unsupported markets
+        multiAccountConfig = config.getConfig(MultiAccountManagerActor.name)
+        numOfShards = multiAccountConfig.getInt("num-of-shards")
+        availableOrders = orders.filter { o =>
+          supportedMarkets.contains(MarketId(o.tokenS, o.tokenB))
+        }.map { o =>
+          val marketHash =
+            MarketHashProvider.convert2Hex(o.tokenS, o.tokenB)
+          val marketId =
+            MarketId(primary = o.tokenS, secondary = o.tokenB)
+          o.copy(
+            marketHash = marketHash,
+            marketHashId = MarketManagerActor.getEntityId(marketId).toInt,
+            addressShardId = MultiAccountManagerActor
+              .getEntityId(o.owner, numOfShards)
+              .toInt
+          )
+        }
+        reqs = availableOrders.map { order =>
           ActorRecover.RecoverOrderReq(Some(order))
         }
         _ = log.info(

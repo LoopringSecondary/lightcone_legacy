@@ -63,6 +63,8 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       .annotatedWithName("db-execution-context")
       .toInstance(system.dispatchers.lookup("db-execution-context"))
 
+    implicit val supportedMarkets: SupportedMarkets = SupportedMarkets(config)
+
     implicit val actors = new MapBasedLookup[ActorRef]()
     bind[Lookup[ActorRef]].toInstance(actors)
 
