@@ -56,6 +56,13 @@ class OrderStatusMonitorDalImpl(
   def getLastEvent(
       monitorType: OrderStatusMonitor.XMonitorType
     ): Future[Option[OrderStatusMonitor]] =
-    db.run(query.filter(_.monitorType === monitorType).result.headOption)
+    db.run(
+      query
+        .filter(_.monitorType === monitorType)
+        .sortBy(_.sequenceId.desc)
+        .take(1)
+        .result
+        .headOption
+    )
 
 }
