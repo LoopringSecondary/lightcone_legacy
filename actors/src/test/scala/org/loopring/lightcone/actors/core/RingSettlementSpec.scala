@@ -59,15 +59,15 @@ class RingSettlementSpec
 
       val getBaMethod = "get_balance_and_allowance"
       val submit_order = "submit_order"
-      val getOrderBook1 = XGetOrderbook(
+      val getOrderBook1 = GetOrderbook.Req(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val getBalanceReqs =
         users.unzip._1.map(
           user ⇒
-            XGetBalanceAndAllowancesReq(
+            GetBalanceAndAllowances.Req(
               user,
               tokens =
                 Seq(LRC_TOKEN.address, WETH_TOKEN.address, GTO_TOKEN.address)
@@ -88,30 +88,32 @@ class RingSettlementSpec
           getBalanceReqs.map(
             req ⇒
               singleRequest(req, getBaMethod)
-                .mapAs[XGetBalanceAndAllowancesRes]
+                .mapAs[GetBalanceAndAllowances.Res]
           )
         )
         _ ← singleRequest(
-          XSubmitOrderReq(Some(order1)),
+          SubmitOrder.Req(Some(order1)),
           submit_order
-        ).mapAs[XSubmitOrderRes]
+        ).mapAs[SubmitOrder.Res]
         _ ← Future {
           Thread.sleep(1000)
         }
         orderbookF1 ← singleRequest(
           getOrderBook1,
           "orderbook"
-        ).mapAs[XOrderbook]
+        ).mapAs[GetOrderbook.Res]
+          .map(_.getOrderbook)
 
         subOrderRes2 ← singleRequest(
-          XSubmitOrderReq(Some(order2)),
+          SubmitOrder.Req(Some(order2)),
           submit_order
-        ).mapAs[XSubmitOrderRes]
+        ).mapAs[SubmitOrder.Res]
 
         orderbookF2 ← singleRequest(
           getOrderBook1,
           "orderbook"
-        ).mapAs[XOrderbook]
+        ).mapAs[GetOrderbook.Res]
+          .map(_.getOrderbook)
 
         _ ← Future {
           Thread.sleep(1000 * 10)
@@ -120,7 +122,7 @@ class RingSettlementSpec
           getBalanceReqs.map(
             req ⇒
               singleRequest(req, getBaMethod)
-                .mapAs[XGetBalanceAndAllowancesRes]
+                .mapAs[GetBalanceAndAllowances.Res]
           )
         )
       } yield {

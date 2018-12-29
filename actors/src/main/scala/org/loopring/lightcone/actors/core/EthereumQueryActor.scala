@@ -32,6 +32,7 @@ import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.ethereum._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -90,12 +91,12 @@ class EthereumQueryActor(
         req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
 
       (for {
-      val batchReqs: BatchCallContracts.Req =
-        getBalanceAndAllowanceToBatchReq(
-          Address(delegateAddress),
-          req.copy(tokens = erc20Tokens)
-        )
-      (for {
+        batchReqs ← Future {
+          getBalanceAndAllowanceToBatchReq(
+            Address(delegateAddress),
+            req.copy(tokens = erc20Tokens)
+          )
+        }
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
@@ -136,7 +137,7 @@ class EthereumQueryActor(
       (for {
         batchReqs ← Future { req.copy(tokens = erc20Tokens) }
         callRes ← (ethereumAccessorActor ? batchReqs)
-          .mapAs[XBatchContractCallRes]
+          .mapAs[BatchCallContracts.Res]
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
@@ -166,9 +167,9 @@ class EthereumQueryActor(
     // 查询授权不应该有ETH的授权
     case req: GetAllowance.Req =>
       (for {
-       batchReqs: BatchCallContracts.Req = Future{
-      getAllowanceToBatchReq(Address(delegateAddress), req)
-      }
+        batchReqs: BatchCallContracts.Req ← Future {
+          getAllowanceToBatchReq(Address(delegateAddress), req)
+        }
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         res: GetAllowance.Res = batchContractCallResToAllowance(
@@ -178,12 +179,11 @@ class EthereumQueryActor(
         )
       } yield res) sendTo sender
 
-
     case req: GetFilledAmount.Req ⇒
       (for {
-       batchReq = Future{
-      getFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
-      }
+        batchReq ← Future {
+          getFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
+        }
         batchRes <- (ethereumAccessorActor ? batchReq)
           .mapAs[BatchCallContracts.Res]
           .map(_.resps.map(_.result))

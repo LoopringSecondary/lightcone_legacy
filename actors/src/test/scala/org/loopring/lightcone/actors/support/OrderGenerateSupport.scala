@@ -42,11 +42,12 @@ trait OrderGenerateSupport {
       tokenFee: String = LRC_TOKEN.address,
       amountFee: BigInt = "3".zeros(18)
     )(
-      implicit privateKey: Option[String] = Some("0x6549df526c28b1d92b0de63606cf039d3dc1846b114118367d8b161ec03256bf")
+      implicit privateKey: Option[String] =
+        Some("0x6549df526c28b1d92b0de63606cf039d3dc1846b114118367d8b161ec03256bf")
     ) = {
     val createAt = timeProvider.getTimeMillis
-
-    val order = XRawOrder(
+    val marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
+    val order = RawOrder(
       owner = owner,
       version = 0,
       tokenS = tokenS,

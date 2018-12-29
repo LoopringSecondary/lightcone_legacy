@@ -32,7 +32,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.ethereum.data._
+import org.loopring.lightcone.ethereum.data.{Transaction, _}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
@@ -59,8 +59,8 @@ class RingSettlementActor(
     selfConfig.getInt("max-rings-in-one-tx")
   private val resendDelay =
     selfConfig.getInt("resend-delay_in_seconds")
-  implicit val ringContext: XRingBatchContext =
-    XRingBatchContext(
+  implicit val ringContext: RingBatchContext =
+    RingBatchContext(
       lrcAddress = selfConfig.getString("lrc-address"),
       feeRecipient = selfConfig.getString("fee-recipient"),
       miner = config.getString("miner"),
@@ -92,16 +92,16 @@ class RingSettlementActor(
   import ethereum._
 
   override def preStart(): Unit = {
-    val initialFuture = (ethereumAccessActor ? XGetNonceReq(
+    val initialFuture = (ethereumAccessActor ? GetNonce.Req(
       owner = ringContext.transactionOrigin,
       tag = "latest"
-    )).mapAs[XGetNonceRes]
+    )).mapAs[GetNonce.Res]
       .map(_.result)
 
     initialFuture onComplete {
       case Success(validNonce) ⇒
         nonce.set(Numeric.toBigInt(validNonce).intValue())
-        self ! XInitializationDone()
+        self ! Notify("initialized")
       case Failure(e) ⇒
         log.error(s"Start ring settlement actor failed:${e.getMessage}")
         context.stop(self)
@@ -111,7 +111,7 @@ class RingSettlementActor(
   override def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
-    case _: XInitializationDone ⇒
+    case Notify("initialized", _) ⇒
       unstashAll()
       context.become(ready)
     case _ ⇒
@@ -119,7 +119,7 @@ class RingSettlementActor(
   }
 
   def ready: Receive = super.receive orElse LoggingReceive {
-    case req: XSettleRingsReq =>
+    case req: SettleRings =>
       val rings = truncReq2Rings(req)
       for {
         rawOrders ← Future.sequence(rings.map { ring ⇒
@@ -151,19 +151,20 @@ class RingSettlementActor(
         }
         resps ← Future.sequence(txs.map { tx ⇒
           val rawTx = getSignedTxData(tx)
-          (ethereumAccessActor ? XSendRawTransactionReq(rawTx))
-            .mapAs[XSendRawTransactionRes]
+          (ethereumAccessActor ? SendRawTransaction.Req(rawTx))
+            .mapAs[SendRawTransaction.Res]
         })
       } yield {
         (txs zip resps).map {
           case (tx, resp) ⇒
-            saveTx(tx,resp)
+            println(s"hash:${resp.result}")
+            saveTx(tx, resp)
         }
       }
   }
 
-  def truncReq2Rings(req: XSettleRingsReq): Seq[Seq[XOrderRing]] = {
-    val rings = ListBuffer.empty[Seq[XOrderRing]]
+  def truncReq2Rings(req: SettleRings): Seq[Seq[OrderRing]] = {
+    val rings = ListBuffer.empty[Seq[OrderRing]]
     while (rings.size * maxRingsInOneTx < req.rings.size) {
       val startIndex = rings.size * 10
       val endIndex = Math.min(startIndex + maxRingsInOneTx, req.rings.size)
@@ -175,19 +176,19 @@ class RingSettlementActor(
   //未被提交的交易需要使用新的gas price重新提交
   def resubmitTx(): Future[Unit] =
     for {
-      gasPriceRes <- (gasPriceActor ? XGetGasPriceReq())
-        .mapAs[XGetGasPriceRes]
+      gasPriceRes <- (gasPriceActor ? GetGasPrice.Req())
+        .mapAs[GetGasPrice.Res]
         .map(_.gasPrice)
       ringTxs ← dbModule.settlementTxService
         .getPendingTxs(
-          XGetPendingTxsReq(
+          GetPendingTxs.Req(
             owner = ringContext.transactionOrigin,
             timeProvider.getTimeSeconds() - resendDelay
           )
         )
         .map(_.txs)
       txs = ringTxs.map(
-        (tx: XSettlementTx) ⇒
+        (tx: SettlementTx) ⇒
           Transaction(
             tx.data,
             tx.nonce.toInt,
@@ -198,28 +199,30 @@ class RingSettlementActor(
       )
       txResps ← Future.sequence(txs.map { tx =>
         val rawTx = getSignedTxData(tx)
-        (ethereumAccessActor ? XSendRawTransactionReq(rawTx))
-          .mapAs[XSendRawTransactionRes]
+        (ethereumAccessActor ? SendRawTransaction.Req(rawTx))
+          .mapAs[SendRawTransaction.Res]
       })
     } yield {
       (txs zip txResps).filter(_._2.error.isEmpty).map {
         case (tx, res) ⇒
-          saveTx(tx,res)
+          saveTx(tx, res)
       }
     }
 
-  def saveTx(tx:Transaction,res:XSendRawTransactionRes):Future[XSaveSettlementTxResult]= {
+  def saveTx(
+      tx: Transaction,
+      res: SendRawTransaction.Res
+    ): Future[PersistSettlementTx.Res] = {
     dbModule.settlementTxService.saveTx(
-      XSaveSettlementTxReq(
+      PersistSettlementTx.Req(
         tx = Some(
-          XSettlementTx(
+          SettlementTx(
             txHash = res.result,
             from = ringContext.transactionOrigin,
             to = tx.to,
             nonce = tx.nonce,
             gas = Numeric.toHexStringWithPrefix(tx.gasLimit.bigInteger),
-            gasPrice =
-              Numeric.toHexStringWithPrefix(tx.gasPrice.bigInteger),
+            gasPrice = Numeric.toHexStringWithPrefix(tx.gasPrice.bigInteger),
             data = tx.inputData,
             value = Numeric.toHexStringWithPrefix(tx.value.bigInteger)
           )

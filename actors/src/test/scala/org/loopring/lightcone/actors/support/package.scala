@@ -26,7 +26,7 @@ import slick.jdbc.JdbcProfile
 
 package object support {
 
-  val WETH_TOKEN = XTokenMeta(
+  val WETH_TOKEN = TokenMeta(
     Address("0x8B75225571ff31B58F95C704E05044D5CF6B32BF").toString,
     18,
     0.4,
@@ -34,7 +34,7 @@ package object support {
     1000
   )
 
-  val LRC_TOKEN = XTokenMeta(
+  val LRC_TOKEN = TokenMeta(
     Address("0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1").toString,
     18,
     0.4,
@@ -42,7 +42,7 @@ package object support {
     1000
   )
 
-  val GTO_TOKEN = XTokenMeta(
+  val GTO_TOKEN = TokenMeta(
     Address("0x17839E1AC3B46F12f74465BFbc754aB487B093AB").toString,
     18,
     0.4,
@@ -50,7 +50,7 @@ package object support {
     1000
   )
 
-  val RDN_TOKEN = XTokenMeta(
+  val RDN_TOKEN = TokenMeta(
     Address("0xcF30e28DD8570e8d5B769CEcd293Bdc0E28bF0d2").toString,
     18,
     0.4,
@@ -58,7 +58,7 @@ package object support {
     1000
   )
 
-  val REP_TOKEN = XTokenMeta(
+  val REP_TOKEN = TokenMeta(
     Address("0xf386CedfAA2d1071e52C81554D4200c0aD0aDC24").toString,
     18,
     0.4,

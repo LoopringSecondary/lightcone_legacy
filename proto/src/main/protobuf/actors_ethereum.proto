@@ -245,22 +245,20 @@ message BatchGetTransactionReceipts {
         repeated GetTransactionReceipt.Req reqs = 1;
     }
 
-message XSendRawTransactionRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-    XEthResError error = 4;
-}
-message XGetUncleByBlockNumAndIndexReq{
-    string blockNum = 1;
-    string index = 2;
-}
-
-message XBatchGetUncleByBlockNumAndIndexReq{
-   repeated XGetUncleByBlockNumAndIndexReq reqs = 1;
     message Res {
         repeated GetTransactionReceipt.Res resps = 1;
     }
+}
+message SendRawTransaction {
+    message Req  {
+    string data = 1;
+}
+   message Res  {
+       int32 id = 1;
+       string jsonrpc = 2;
+       string result = 3;
+       EthRpcError error = 4;
+}
 }
 
 message GetUncle {
@@ -268,22 +266,19 @@ message GetUncle {
         string blockNum = 1;
         string index = 2;
     }
-    message Res {}
+    message Res {
+    }
 }
 
 message BatchGetUncle {
-    message Req{
-       repeated GetUncle.Req reqs = 1;
+    message Req {
+        repeated GetUncle.Req reqs = 1;
     }
 
-    message Res{
-       repeated GetBlockWithTxHashByHash.Res resps = 1;
+    message Res {
+        repeated GetBlockWithTxHashByHash.Res resps = 1;
     }
 }
-
-// message SendRawTransactionReq {
-//     string data = 1;
-// }
 
 /// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
 /// 解析合约事件得到下面的数据：

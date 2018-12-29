@@ -21,8 +21,6 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.validator._
 import akka.pattern._
-import org.loopring.lightcone.ethereum.data.Address
-import org.web3j.utils.Numeric
 
 import scala.concurrent.{Await, Future}
 

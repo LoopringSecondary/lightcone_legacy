@@ -21,10 +21,9 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import akka.cluster.singleton._
-import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.proto.XErrorCode.ERR_INTERNAL_UNKNOWN
+import org.loopring.lightcone.proto.ErrorCode.ERR_INTERNAL_UNKNOWN
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.ethereum.data.Address
 
@@ -108,7 +107,7 @@ class RingSettlementManagerActor(
   }
 
   override def receive: Receive = {
-    case req: XSettleRingsReq ⇒
+    case req: SettleRings ⇒
       if (ringSettlementActors.nonEmpty) {
         ringSettlementActors
           .toSeq(Random.nextInt(ringSettlementActors.size))
@@ -120,7 +119,7 @@ class RingSettlementManagerActor(
         )
       }
 
-    case ba: XAddressBalanceUpdated ⇒
+    case ba: AddressBalanceUpdated ⇒
       if (ba.token.equals(Address.zeroAddress)) {
         val balance = BigInt(ba.balance.toByteArray)
         if (balance > miniMinerBalance && invalidRingSettlementActors.contains(
