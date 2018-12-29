@@ -182,7 +182,7 @@ class RingSettlementActor(
   def truncReq2Rings(req: SettleRings): Seq[Seq[OrderRing]] = {
     val rings = ListBuffer.empty[Seq[OrderRing]]
     while (rings.size * maxRingsInOneTx < req.rings.size) {
-      val startIndex = rings.size * 10
+      val startIndex = rings.size * maxRingsInOneTx
       val endIndex = Math.min(startIndex + maxRingsInOneTx, req.rings.size)
       rings.append(req.rings.slice(startIndex, endIndex))
     }
