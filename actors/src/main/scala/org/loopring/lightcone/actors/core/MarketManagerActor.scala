@@ -117,7 +117,7 @@ class MarketManagerActor(
     selfConfig.getInt("max-recover-duration-minutes")
 
   val gasLimitPerRingV2 = BigInt(
-    config.getString("loopring-protocol.gas-limit-per-ring-v2")
+    config.getString("loopring_protocol.gas-limit-per-ring-v2")
   )
 
   val ringMatcher = new RingMatcherImpl()
