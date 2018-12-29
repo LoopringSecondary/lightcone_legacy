@@ -341,10 +341,13 @@ class OrderDalImpl(
       processTime: Int,
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]] = {
+    val availableStatus =
+      Seq(XOrderStatus.STATUS_NEW, XOrderStatus.STATUS_PENDING)
     var filters = query
-      .filter(_.sequenceId > 0L)
+      .filter(_.status inSet availableStatus)
       .filter(_.validSince > lastProcessTime)
       .filter(_.validSince < processTime)
+      .sortBy(_.sequenceId.asc)
 //        .filter(r => r.validSince > r.createdAt ) //todo:
     filters = skip match {
       case Some(s) ⇒ filters.drop(s.skip).take(s.take)
@@ -359,10 +362,16 @@ class OrderDalImpl(
       processTime: Int,
       skip: Option[XSkip] = None
     ): Future[Seq[XRawOrder]] = {
+    val availableStatus = Seq(
+      XOrderStatus.STATUS_NEW,
+      XOrderStatus.STATUS_PENDING,
+      XOrderStatus.STATUS_PARTIALLY_FILLED
+    )
     var filters = query
-      .filter(_.sequenceId > 0L)
+      .filter(_.status inSet availableStatus)
       .filter(_.validUntil > lastProcessTime)
       .filter(_.validUntil < processTime) //todo:需要确认下
+      .sortBy(_.sequenceId.asc)
     //        .filter(r => r.validSince > r.createdAt )
     filters = skip match {
       case Some(s) ⇒ filters.drop(s.skip).take(s.take)
