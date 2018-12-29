@@ -33,9 +33,12 @@ import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.ethereum.data.{Transaction, _}
+import org.loopring.lightcone.actors.data._
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
+import scala.concurrent.duration._
 import scala.util._
 
 // main owner: 李亚东
@@ -76,6 +79,8 @@ class RingSettlementActor(
 
   val chainId: Int = config.getInt(s"${EthereumClientMonitor.name}.chain_id")
 
+  val taskQueue = new mutable.Queue[SettleRings]()
+
   val repeatedJobs = Seq(
     Job(
       name = selfConfig.getString("job.name"),
@@ -114,16 +119,32 @@ class RingSettlementActor(
     case Notify("initialized", _) ⇒
       unstashAll()
       context.become(ready)
+      self ! Notify("handle_settle_rings")
     case _ ⇒
       stash()
   }
 
   def ready: Receive = super.receive orElse LoggingReceive {
     case req: SettleRings =>
-      val rings = truncReq2Rings(req)
+      val rings: Seq[Seq[OrderRing]] = truncReq2Rings(req)
+      taskQueue.enqueue(rings.map(ring ⇒ {
+        SettleRings(
+          gasPrice = req.gasPrice,
+          gasLimit = BigInt(Numeric.toBigInt(req.gasLimit.toByteArray))* ring.size /req.rings.size,
+          rings = ring)
+      }):_*)
+
+
+    case Notify("handle_settle_rings",_) ⇒
+      handleSettleRings()
+  }
+
+  def handleSettleRings() = {
+    if(taskQueue.nonEmpty){
+      val ring: SettleRings = taskQueue.dequeue()
       for {
-        rawOrders ← Future.sequence(rings.map { ring ⇒
-          Future.sequence(ring.map { xOrderRing ⇒
+        rawOrders: Seq[Seq[RawOrder]] ←
+          Future.sequence(ring.rings.map { xOrderRing ⇒
             dbModule.orderService.getOrders(
               Seq(
                 xOrderRing.maker.get.order.get.id,
@@ -131,36 +152,30 @@ class RingSettlementActor(
               )
             )
           })
-        })
-        inputDatas = rawOrders
-          .map(
-            RingBatchGeneratorImpl.generateAndSignRingBatch
-          )
-          .map {
-            RingBatchGeneratorImpl.toSubmitableParamStr
-          }
-        txs = inputDatas.map { input ⇒
-          Transaction(
+        ringBatch =  RingBatchGeneratorImpl.generateAndSignRingBatch(rawOrders)
+        input = RingBatchGeneratorImpl.toSubmitableParamStr(ringBatch)
+        tx = Transaction(
             inputData = packRingToInput(input),
             nonce.getAndIncrement(),
-            req.gasLimit,
-            req.gasPrice,
+            ring.gasLimit,
+            ring.gasPrice,
             protocolAddress,
             chainId = chainId
           )
-        }
-        resps ← Future.sequence(txs.map { tx ⇒
-          val rawTx = getSignedTxData(tx)
-          (ethereumAccessActor ? SendRawTransaction.Req(rawTx))
+        rawTx = getSignedTxData(tx)
+        resp ← (ethereumAccessActor ? SendRawTransaction.Req(rawTx))
             .mapAs[SendRawTransaction.Res]
-        })
       } yield {
-        (txs zip resps).map {
-          case (tx, resp) ⇒
-            println(s"hash:${resp.result}")
-            saveTx(tx, resp)
+        if(resp.error.isEmpty){
+          saveTx(tx, resp)
+        }else{
+          //TODO 通知MarketManager等失败消息
         }
+       self ! Notify("handle_settle_rings")
       }
+    }else{
+     context.system.scheduler.scheduleOnce(1 seconds,self,Notify("handle_settle_rings"))
+    }
   }
 
   def truncReq2Rings(req: SettleRings): Seq[Seq[OrderRing]] = {
