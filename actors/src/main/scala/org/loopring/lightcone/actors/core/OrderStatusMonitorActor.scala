@@ -116,7 +116,7 @@ class OrderStatusMonitorActor(
     val processTime = timeProvider.getTimeSeconds()
     for {
       lastEventOpt <- dbModule.orderStatusMonitorService.getLastEvent(
-        OrderStatusMonitor.XMonitorType.MONITOR_TYPE_EXPIRE
+        monitorType
       )
       lastProcessTime = if (lastEventOpt.isEmpty) 0
       else lastEventOpt.get.processTime
