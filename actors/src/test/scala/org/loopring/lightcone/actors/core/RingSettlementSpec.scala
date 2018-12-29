@@ -110,7 +110,7 @@ class RingSettlementSpec
         ).mapAs[SubmitOrder.Res]
 
         _ ← Future {
-          Thread.sleep(1000)
+          Thread.sleep(2000)
         }
         orderbookF2 ← singleRequest(
           getOrderBook1,
