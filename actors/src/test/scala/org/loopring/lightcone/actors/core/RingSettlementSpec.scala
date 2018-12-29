@@ -109,16 +109,16 @@ class RingSettlementSpec
           submit_order
         ).mapAs[SubmitOrder.Res]
 
+        _ ← Future {
+          Thread.sleep(1000)
+        }
         orderbookF2 ← singleRequest(
           getOrderBook1,
           "orderbook"
         ).mapAs[GetOrderbook.Res]
           .map(_.getOrderbook)
 
-        _ ← Future {
-          Thread.sleep(1000 * 10)
-        }
-        ba2 ← Future.sequence(
+        ba2: Seq[GetBalanceAndAllowances.Res] ← Future.sequence(
           getBalanceReqs.map(
             req ⇒
               singleRequest(req, getBaMethod)
@@ -126,65 +126,15 @@ class RingSettlementSpec
           )
         )
       } yield {
-        ba1.foreach(bas ⇒ {
-          println("-" * 20 + bas.address + "-" * 20)
-          bas.balanceAndAllowanceMap.foreach { ba ⇒
-            println(
-              ba._1 + "-" * 5 + Numeric
-                .toHexStringWithPrefix(
-                  Numeric.toBigInt(ba._2.balance.toByteArray)
-                ) + "-" * 5 + Numeric
-                .toHexStringWithPrefix(
-                  Numeric.toBigInt(ba._2.availableBalance.toByteArray)
-                )
-            )
-          }
-        })
-        println("*" * 50)
-        println("*" * 20 + "Buy" + "*" * 20)
-        orderbookF1.buys.foreach(
-          item ⇒
-            println(
-              s"${item.amount}" + "-" * 5 + item.price + "-" * 5 + item.total
-            )
-        )
-        println("*" * 20 + "Sell" + "*" * 20)
-        orderbookF1.sells.foreach(
-          item ⇒
-            println(
-              s"${item.amount}" + "-" * 5 + item.price + "-" * 5 + item.total
-            )
-        )
-        println("*" * 50)
-        println("*" * 20 + "Buy" + "*" * 20)
-        orderbookF2.buys.foreach(
-          item ⇒
-            println(
-              s"${item.amount}" + "-" * 5 + item.price + "-" * 5 + item.total
-            )
-        )
-        println("*" * 20 + "Sell" + "*" * 20)
-        orderbookF2.sells.foreach(
-          item ⇒
-            println(
-              s"${item.amount}" + "-" * 5 + item.price + "-" * 5 + item.total
-            )
-        )
-        println("*" * 50)
-        ba2.foreach(bas ⇒ {
-          println("-" * 20 + bas.address + "-" * 20)
-          bas.balanceAndAllowanceMap.foreach { ba ⇒
-            println(
-              ba._1 + "-" * 5 + Numeric
-                .toHexStringWithPrefix(
-                  Numeric.toBigInt(ba._2.balance.toByteArray)
-                ) + "-" * 5 + Numeric
-                .toHexStringWithPrefix(
-                  Numeric.toBigInt(ba._2.availableBalance.toByteArray)
-                )
-            )
-          }
-        })
+        assert(orderbookF1.buys.isEmpty)
+        assert(orderbookF1.sells.size == 1)
+        orderbookF1.sells.head match {
+          case Orderbook.Item(price, amount, total) ⇒
+            assert(amount.toDouble == "10".toDouble)
+            assert(price.toDouble == "10".toDouble)
+            assert(total.toDouble == "1".toDouble)
+          case _ ⇒
+        }
       }
 
       Await.result(f, 2 minutes)
