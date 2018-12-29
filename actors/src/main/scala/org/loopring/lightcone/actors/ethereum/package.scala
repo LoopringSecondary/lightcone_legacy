@@ -61,6 +61,7 @@ package object ethereum {
 
   val erc20Abi = ERC20ABI()
   val tradeHistoryAbi = TradeHistoryAbi()
+  val ringSubmitterAbi = RingSubmitterAbi()
 
   implicit def xGetBalanceAndAllowanceToBatchReq(
       delegateAddress: Address,
@@ -145,6 +146,12 @@ package object ethereum {
     XGetAllowanceRes(address, (tokens zip allowances).toMap)
   }
 
+  implicit def packRingToInput(data: String): String = {
+    ringSubmitterAbi.submitRing.pack(
+      SubmitRingsFunction.Params(data = Numeric.hexStringToByteArray(data))
+    )
+  }
+
   private def batchFilledAmountReq(
       contractAddress: Address,
       orderHashes: Seq[String],
@@ -187,6 +194,5 @@ package object ethereum {
       val param = XTransactionParam(to = token._1.toString, data = data)
       XEthCallReq(1 + token._2 * 2, Some(param), tag)
     }
-
   }
 }

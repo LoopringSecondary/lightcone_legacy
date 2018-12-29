@@ -141,7 +141,7 @@ class RingSettlementActor(
           }
         txs = inputDatas.map { input ⇒
           Transaction(
-            input,
+            inputData = packRingToInput(input),
             nonce.getAndIncrement(),
             req.gasLimit,
             req.gasPrice,
@@ -158,7 +158,6 @@ class RingSettlementActor(
       } yield {
         (txs zip hashes).map {
           case (tx, hash) ⇒
-            println(s"hash:${hash}")
             dbModule.settlementTxService.saveTx(
               XSaveSettlementTxReq(
                 tx = Some(
@@ -208,7 +207,7 @@ class RingSettlementActor(
         (tx: XSettlementTx) ⇒
           Transaction(
             tx.data,
-            nonce.getAndIncrement(),
+            tx.nonce.toInt,
             tx.gas,
             gasPriceRes,
             to = protocolAddress

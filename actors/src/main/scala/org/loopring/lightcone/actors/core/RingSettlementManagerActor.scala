@@ -105,7 +105,6 @@ class RingSettlementManagerActor(
         item
       })
       .toMap
-    println(ringSettlementActors)
   }
 
   override def receive: Receive = {
