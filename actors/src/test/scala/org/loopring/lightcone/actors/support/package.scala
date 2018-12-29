@@ -20,7 +20,7 @@ import com.dimafeng.testcontainers.MySQLContainer
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.XTokenMeta
+import org.loopring.lightcone.proto.TokenMeta
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 

@@ -23,12 +23,10 @@ import scala.concurrent.Future
 trait SettlementTxService {
 
   val submitTxDal: SettlementTxDal
-  def saveTx(req: XSaveSettlementTxReq): Future[XSaveSettlementTxResult]
+  def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res]
   // get all pending txs with given owner, from_nonce is a optional parameter(>=)
-  def getPendingTxs(request: XGetPendingTxsReq): Future[XGetPendingTxsResult]
+  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res]
 
   // update address's all txs status below or equals the given nonce to BLOCK
-  def updateInBlock(
-      request: XUpdateTxInBlockReq
-    ): Future[XUpdateTxInBlockResult]
+  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res]
 }

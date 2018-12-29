@@ -17,14 +17,14 @@
 package org.loopring.lightcone.actors.base
 
 import akka.cluster.sharding._
-import org.loopring.lightcone.proto.XMarketId
+import org.loopring.lightcone.proto.MarketId
 import org.web3j.utils.Numeric
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 
 trait ShardedByMarket extends Sharded {
-  val extractMarketId: PartialFunction[Any, XMarketId]
+  val extractMarketId: PartialFunction[Any, MarketId]
 
-  def getEntityId(marketId: XMarketId): String = {
+  def getEntityId(marketId: MarketId): String = {
     val xorValue = Numeric.toBigInt(marketId.primary) xor
       Numeric.toBigInt(marketId.secondary)
     Math.abs(xorValue.hashCode).toString

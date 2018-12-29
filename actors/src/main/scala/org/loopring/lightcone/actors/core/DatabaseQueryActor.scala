@@ -69,10 +69,10 @@ class DatabaseQueryActor(
   private[this] val logger = Logger(this.getClass)
 
   def receive: Receive = LoggingReceive {
-    case req: XGetOrdersForUserReq ⇒
+    case req: GetOrdersForUser.Req ⇒
       (for {
         result <- req.market match {
-          case XGetOrdersForUserReq.Market.Empty =>
+          case GetOrdersForUser.Req.Market.Empty =>
             dbModule.orderService.getOrdersForUser(
               req.statuses.toSet,
               Some(req.owner),
@@ -83,7 +83,7 @@ class DatabaseQueryActor(
               Some(req.sort),
               req.skip
             )
-          case XGetOrdersForUserReq.Market.MarketHash(value) ⇒
+          case GetOrdersForUser.Req.Market.MarketHash(value) ⇒
             dbModule.orderService.getOrdersForUser(
               req.statuses.toSet,
               Some(req.owner),
@@ -94,7 +94,7 @@ class DatabaseQueryActor(
               Some(req.sort),
               req.skip
             )
-          case XGetOrdersForUserReq.Market.Pair(value) ⇒
+          case GetOrdersForUser.Req.Market.Pair(value) ⇒
             dbModule.orderService.getOrdersForUser(
               req.statuses.toSet,
               Some(req.owner),
@@ -106,12 +106,11 @@ class DatabaseQueryActor(
               req.skip
             )
         }
-      } yield
-        XGetOrdersForUserResult(result, XErrorCode.ERR_NONE)) sendTo sender
-    case req: XGetTradesReq ⇒
+      } yield GetOrdersForUser.Res(result, ErrorCode.ERR_NONE)) sendTo sender
+    case req: GetTrades.Req ⇒
       (for {
         result <- dbModule.tradeService.getTrades(req)
-      } yield XGetTradesResult(result)) sendTo sender
+      } yield GetTrades.Res(result)) sendTo sender
     case m ⇒ logger.error(s"Unhandled message ${m}")
   }
 

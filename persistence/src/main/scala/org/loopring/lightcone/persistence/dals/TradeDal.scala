@@ -29,25 +29,24 @@ import slick.lifted.Query
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
-trait TradeDal extends BaseDalImpl[TradeTable, XTrade] {
-  def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]]
-  def saveTrades(trades: Seq[XTrade]): Future[Seq[Either[XErrorCode, String]]]
-  def getTrades(request: XGetTradesReq): Future[Seq[XTrade]]
-  def countTrades(request: XGetTradesReq): Future[Int]
+trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
+  def saveTrade(trade: Trade): Future[Either[ErrorCode, String]]
+  def saveTrades(trades: Seq[Trade]): Future[Seq[Either[ErrorCode, String]]]
+  def getTrades(request: GetTrades.Req): Future[Seq[Trade]]
+  def countTrades(request: GetTrades.Req): Future[Int]
   def obsolete(height: Long): Future[Unit]
 }
 
 class TradeDalImpl(
   )(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends TradeDal {
   val query = TableQuery[TradeTable]
   val timeProvider = new SystemTimeProvider()
   private[this] val logger = Logger(this.getClass)
 
-  def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]] = {
+  def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] = {
     db.run(
         (query += trade.copy(
           marketHash =
@@ -57,16 +56,16 @@ class TradeDalImpl(
       )
       .map {
         case Failure(e: MySQLIntegrityConstraintViolationException) ⇒
-          Left(XErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
+          Left(ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
         case Failure(ex) ⇒ {
           logger.error(s"error : ${ex.getMessage}")
-          Left(XErrorCode.ERR_PERSISTENCE_INTERNAL)
+          Left(ErrorCode.ERR_PERSISTENCE_INTERNAL)
         }
         case Success(x) ⇒ Right(trade.txHash)
       }
   }
 
-  def saveTrades(trades: Seq[XTrade]): Future[Seq[Either[XErrorCode, String]]] =
+  def saveTrades(trades: Seq[Trade]): Future[Seq[Either[ErrorCode, String]]] =
     Future.sequence(trades.map(saveTrade))
 
   private def queryFilters(
@@ -74,8 +73,8 @@ class TradeDalImpl(
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
       marketHash: Option[String] = None,
-      sort: Option[XSort] = None,
-      skip: Option[XSkip] = None
+      sort: Option[SortingType] = None,
+      pagingOpt: Option[Paging] = None
     ): Query[TradeTable, TradeTable#TableElementType, Seq] = {
     var filters = query.filter(_.sequenceId > 0L)
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner.get)
@@ -84,22 +83,22 @@ class TradeDalImpl(
     if (marketHash.nonEmpty)
       filters = filters.filter(_.marketHash === marketHash.get)
     if (sort.nonEmpty) filters = sort.get match {
-      case XSort.ASC ⇒ filters.sortBy(_.sequenceId.asc)
-      case XSort.DESC ⇒ filters.sortBy(_.sequenceId.desc)
+      case SortingType.ASC ⇒ filters.sortBy(_.sequenceId.asc)
+      case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
       case _ ⇒ filters.sortBy(_.sequenceId.asc)
     }
-    filters = skip match {
-      case Some(s) ⇒ filters.drop(s.skip).take(s.take)
+    filters = pagingOpt match {
+      case Some(paging) ⇒ filters.drop(paging.skip).take(paging.size)
       case None ⇒ filters
     }
     filters
   }
 
-  def getTrades(request: XGetTradesReq): Future[Seq[XTrade]] = {
+  def getTrades(request: GetTrades.Req): Future[Seq[Trade]] = {
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
-      case XGetTradesReq.Market.MarketHash(v) ⇒ (None, None, Some(v))
-      case XGetTradesReq.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
+      case GetTrades.Req.Market.MarketHash(v) ⇒ (None, None, Some(v))
+      case GetTrades.Req.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
       case _ ⇒ (None, None, None)
     }
     val filters = queryFilters(
@@ -113,11 +112,11 @@ class TradeDalImpl(
     db.run(filters.result)
   }
 
-  def countTrades(request: XGetTradesReq): Future[Int] = {
+  def countTrades(request: GetTrades.Req): Future[Int] = {
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
-      case XGetTradesReq.Market.MarketHash(v) ⇒ (None, None, Some(v))
-      case XGetTradesReq.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
+      case GetTrades.Req.Market.MarketHash(v) ⇒ (None, None, Some(v))
+      case GetTrades.Req.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
       case _ ⇒ (None, None, None)
     }
     val filters = queryFilters(

@@ -27,9 +27,9 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.core.data.Matchable
+import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
@@ -37,14 +37,15 @@ import scala.concurrent._
 // main owner: 李亚东
 object EthereumEventExtractorActor {
   val name = "ethereum_event_extractor"
+  private val shardId = "singleton"
 
   private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XStart(_) =>
-      ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
+    case msg @ Notify("start", _) =>
+      (shardId, msg) //todo:该数据结构并没有包含sharding信息，无法sharding
   }
 
   private val extractShardId: ShardRegion.ExtractShardId = {
-    case XStart(_) => "address_1"
+    case Notify("start", _) => shardId
   }
 
   def startShardRegion(

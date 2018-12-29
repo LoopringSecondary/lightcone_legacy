@@ -17,22 +17,21 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.ethereum.RawOrderValidatorImpl
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto.{
-  XCancelOrderReq,
-  XErrorCode,
-  XSubmitOrderReq
-}
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.proto._
 
 object OrderHandlerMessageValidator {
   val name = "order_handler_message_validator"
 }
 
-final class OrderHandlerMessageValidator()(implicit val config: Config)
+class OrderHandlerMessageValidator(
+  )(
+    implicit config: Config,
+    timeProvider: TimeProvider)
     extends MessageValidator {
-
   val supportedMarkets = SupportedMarkets(config)
 
   private def normalizeAddress(address: String): String =
@@ -41,28 +40,46 @@ final class OrderHandlerMessageValidator()(implicit val config: Config)
     } catch {
       case _: Throwable ⇒
         throw ErrorException(
-          XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+          ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
           message = s"invalid ethereum address:$address"
         )
     }
 
   override def validate: PartialFunction[Any, Any] = {
 
-    case req @ XSubmitOrderReq(Some(order)) ⇒
+    case _ @SubmitOrder.Req(Some(order)) ⇒
       RawOrderValidatorImpl.validate(order) match {
         case Left(errorCode) ⇒
           throw ErrorException(
             errorCode,
-            message = s"invalid order in XSubmitOrderReq:$order"
+            message = s"invalid order in SubmitOrder.Req:$order"
           )
-        case Right(_) ⇒
-          req
+        case Right(rawOrder) ⇒
+          val multiAccountConfig =
+            config.getConfig(MultiAccountManagerActor.name)
+          val numOfShards = multiAccountConfig.getInt("num-of-shards")
+          val now = timeProvider.getTimeMillis
+          val state = RawOrder.State(
+            createdAt = now,
+            updatedAt = now,
+            status = OrderStatus.STATUS_NEW
+          )
+          val marketHash =
+            MarketHashProvider.convert2Hex(rawOrder.tokenS, rawOrder.tokenB)
+          val marketId =
+            MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
+          rawOrder.copy(
+            state = Some(state),
+            marketHash = marketHash,
+            marketHashId = MarketManagerActor.getEntityId(marketId).toInt,
+            addressShardId = MultiAccountManagerActor
+              .getEntityId(order.owner, numOfShards)
+              .toInt
+          )
       }
 
-    case req @ XCancelOrderReq(_, owner, _, marketId) ⇒
+    case req @ CancelOrder.Req(_, owner, _, marketId) ⇒
       supportedMarkets.assertmarketIdIsValid(marketId)
-      req.copy(
-        owner = normalizeAddress(owner)
-      )
+      req.copy(owner = normalizeAddress(owner))
   }
 }

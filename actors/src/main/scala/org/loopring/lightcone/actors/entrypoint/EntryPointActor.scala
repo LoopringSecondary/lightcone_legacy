@@ -23,7 +23,7 @@ import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent.ExecutionContext
 
@@ -46,30 +46,30 @@ class EntryPointActor(
           if (actors.contains(dest)) {
             actors.get(dest) forward msg
           } else {
-            sender ! XError(ERR_INTERNAL_UNKNOWN, s"not found actor: $dest")
+            sender ! Error(ERR_INTERNAL_UNKNOWN, s"not found actor: $dest")
           }
         case None =>
-          sender ! XError(ERR_UNSUPPORTED_MESSAGE, s"unsupported message: $msg")
+          sender ! Error(ERR_UNSUPPORTED_MESSAGE, s"unsupported message: $msg")
           log.debug(s"unsupported msg: $msg")
       }
   }
 
   def findDestination(msg: Any): Option[String] = msg match {
-    case _: XSubmitOrderReq | _: XCancelOrderReq =>
+    case _: SubmitOrder.Req | _: CancelOrder.Req =>
       Some(OrderHandlerMessageValidator.name)
 
-    case _: XGetBalanceAndAllowancesReq ⇒
+    case _: GetBalanceAndAllowances.Req ⇒
       Some(MultiAccountManagerMessageValidator.name)
 
-    case _: XGetBalanceReq | _: XGetAllowanceReq | _: XGetFilledAmountReq ⇒
+    case _: GetBalance.Req | _: GetAllowance.Req | _: GetFilledAmount.Req ⇒
       Some(EthereumQueryMessageValidator.name)
 
-    case _: XJsonRpcReq | _: XRpcReqWithHeight ⇒
+    case _: JsonRpc.Request | _: JsonRpc.RequestWithHeight ⇒
       Some(EthereumAccessActor.name)
 
-    case _: XGetOrderbook => Some(OrderbookManagerMessageValidator.name)
+    case _: GetOrderbook.Req => Some(OrderbookManagerMessageValidator.name)
 
-    case _: XGetOrdersForUserReq | _: XGetTradesReq =>
+    case _: GetOrdersForUser.Req | _: GetTrades.Req =>
       Some(DatabaseQueryMessageValidator.name)
 
     case _ => None

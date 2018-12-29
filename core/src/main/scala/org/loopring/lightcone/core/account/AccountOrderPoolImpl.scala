@@ -23,7 +23,7 @@ import org.slf4s.Logging
 class AccountOrderPoolImpl() extends AccountOrderPool with Logging {
 
   private var callbacks = Set.empty[Callback]
-  private[account] var orderMap = Map.empty[String, Order]
+  private[account] var orderMap = Map.empty[String, Matchable]
 
   def apply(id: String) = orderMap(id)
   def getOrder(id: String) = orderMap.get(id)
@@ -38,15 +38,15 @@ class AccountOrderPoolImpl() extends AccountOrderPool with Logging {
     callbacks -= callback
   }
 
-  def +=(order: Order) = this.synchronized {
+  def +=(order: Matchable) = this.synchronized {
     getOrder(order.id) match {
       case Some(existing) if existing == order =>
       case _ =>
         order.status match {
-          case XOrderStatus.STATUS_NEW =>
+          case OrderStatus.STATUS_NEW =>
             add(order.id, order)
 
-          case XOrderStatus.STATUS_PENDING =>
+          case OrderStatus.STATUS_PENDING =>
             add(order.id, order)
             callbacks.foreach(_(order))
 
@@ -62,7 +62,7 @@ class AccountOrderPoolImpl() extends AccountOrderPool with Logging {
 
   private def add(
       id: String,
-      order: Order
+      order: Matchable
     ): Unit = orderMap += id -> order
   private def delete(id: String): Unit = orderMap -= id
 

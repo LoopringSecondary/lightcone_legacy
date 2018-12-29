@@ -27,9 +27,9 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.core.data.Matchable
+import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
@@ -74,12 +74,12 @@ class GasPriceActor(
 
   def receive: Receive = {
 
-    case XSetGasPriceReq(price) =>
-      sender ! XSetGasPriceRes(gasPrice)
+    case SetGasPrice.Req(price) =>
+      sender ! SetGasPrice.Res(gasPrice)
       gasPrice = price
 
-    case req: XGetGasPriceReq =>
-      sender ! XGetGasPriceRes(gasPrice)
+    case req: GetGasPrice.Req =>
+      sender ! GetGasPrice.Res(gasPrice)
   }
 
 }

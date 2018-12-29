@@ -53,11 +53,11 @@ class BalanceSpec
       val method = "get_balance_and_allowance"
       val owner = "0x53a356c45cffc4c5d4e54bbececb60dbf5de9c8b"
       val getBalanceReq =
-        XGetBalanceAndAllowancesReq(
+        GetBalanceAndAllowances.Req(
           owner,
           tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         )
-      val maker = XOrder(
+      val maker = Order(
         id = "maker1",
         tokenS = LRC_TOKEN.address,
         tokenB = WETH_TOKEN.address,
@@ -66,33 +66,26 @@ class BalanceSpec
         amountB = "100".zeros(10),
         amountFee = "1".zeros(16),
         walletSplitPercentage = 0.2,
-        status = XOrderStatus.STATUS_NEW,
+        status = OrderStatus.STATUS_NEW,
         reserved =
-          Some(XOrderState("1".zeros(18), "100".zeros(10), "1".zeros(16))),
+          Some(OrderState("1".zeros(18), "100".zeros(10), "1".zeros(16))),
         outstanding =
-          Some(XOrderState("1".zeros(18), "100".zeros(10), "1".zeros(16))),
-        actual =
-          Some(XOrderState("1".zeros(18), "100".zeros(10), "1".zeros(16))),
+          Some(OrderState("1".zeros(18), "100".zeros(10), "1".zeros(16))),
+        actual = Some(OrderState("1".zeros(18), "100".zeros(10), "1".zeros(16))),
         matchable =
-          Some(XOrderState("1".zeros(18), "100".zeros(10), "1".zeros(16)))
+          Some(OrderState("1".zeros(18), "100".zeros(10), "1".zeros(16)))
       )
       val r = for {
-        firstQuery <- singleRequest(
-          getBalanceReq,
-          method
-        )
-        _ ← (actors.get(MultiAccountManagerMessageValidator.name) ? XSubmitSimpleOrderReq(
+        firstQuery <- singleRequest(getBalanceReq, method)
+        _ <- (actors.get(MultiAccountManagerMessageValidator.name) ? SubmitSimpleOrder(
           owner = owner,
           order = Some(maker)
-        )).mapTo[XSubmitOrderRes]
-        secondQuery <- singleRequest(
-          getBalanceReq,
-          method
-        )
+        )).mapTo[SubmitOrder.Res]
+        secondQuery <- singleRequest(getBalanceReq, method)
       } yield (firstQuery, secondQuery)
       val res = Await.result(r, timeout.duration)
       res match {
-        case (f: XGetBalanceAndAllowancesRes, s: XGetBalanceAndAllowancesRes) =>
+        case (f: GetBalanceAndAllowances.Res, s: GetBalanceAndAllowances.Res) =>
           val bf: BigInt =
             f.balanceAndAllowanceMap(LRC_TOKEN.address).availableBalance
           val bs: BigInt =

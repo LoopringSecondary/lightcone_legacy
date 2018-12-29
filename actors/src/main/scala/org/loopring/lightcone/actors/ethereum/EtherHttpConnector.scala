@@ -34,7 +34,7 @@ import scala.concurrent._
 import scala.util._
 
 private[ethereum] class HttpConnector(
-    node: XEthereumProxySettings.XNode
+    node: EthereumProxySettings.Node
   )(
     implicit val mat: ActorMaterializer)
     extends Actor
@@ -52,7 +52,7 @@ private[ethereum] class HttpConnector(
   val DEBUG_TRACER = "callTracer"
   val ETH_CALL = "eth_call"
 
-  val emptyError = XEthResError(code = 500, error = "result is empty")
+  val emptyError = EthRpcError(code = 500, error = "result is empty")
 
   private val poolClientFlow: Flow[
     (HttpRequest, Promise[HttpResponse]),
@@ -164,91 +164,88 @@ private[ethereum] class HttpConnector(
   private def hex2BigInt(s: String) = BigInt(s.replace("0x", ""), 16)
 
   def receive: Receive = {
-    case req: XJsonRpcReq =>
-      post(req.json).map(XJsonRpcRes(_)) sendTo sender
-    case r: XSendRawTransactionReq ⇒
-      sendMessage("eth_sendRawTransaction") {
-        Seq(r.data)
-      } map JsonFormat.fromJsonString[XSendRawTransactionRes] sendTo sender
-    case _: XEthBlockNumberReq =>
+    case req: JsonRpc.Request =>
+      post(req.json).map(JsonRpc.Response(_)) sendTo sender
+
+    case _: GetBlockNumber.Req =>
       sendMessage("eth_blockNumber") {
         Seq.empty
-      } map JsonFormat.fromJsonString[XEthBlockNumberRes] sendTo sender
+      } map JsonFormat.fromJsonString[GetBlockNumber.Res] sendTo sender
 
-    case r: XEthGetBalanceReq =>
+    case r: EthGetBalance.Req =>
       sendMessage("eth_getBalance") {
         Seq(r.address, r.tag)
-      } map JsonFormat.fromJsonString[XEthGetBalanceRes] sendTo sender
+      } map JsonFormat.fromJsonString[EthGetBalance.Res] sendTo sender
 
-    case r: XGetTransactionByHashReq =>
+    case r: GetTransactionByHash.Req =>
       sendMessage("eth_getTransactionByHash") {
         Seq(r.hash)
-      } map JsonFormat.fromJsonString[XGetTransactionByHashRes] sendTo sender
+      } map JsonFormat.fromJsonString[GetTransactionByHash.Res] sendTo sender
 
-    case r: XGetTransactionReceiptReq =>
+    case r: GetTransactionReceipt.Req =>
       sendMessage("eth_getTransactionReceipt") {
         Seq(r.hash)
-      } map JsonFormat.fromJsonString[XGetTransactionReceiptRes] sendTo sender
+      } map JsonFormat.fromJsonString[GetTransactionReceipt.Res] sendTo sender
 
-    case r: XGetBlockWithTxHashByNumberReq =>
+    case r: GetBlockWithTxHashByNumber.Req =>
       sendMessage("eth_getBlockByNumber") {
         Seq(r.blockNumber, false)
       } map JsonFormat
-        .fromJsonString[XGetBlockWithTxHashByNumberRes] sendTo sender
+        .fromJsonString[GetBlockWithTxHashByNumber.Res] sendTo sender
 
-    case r: XGetBlockWithTxObjectByNumberReq =>
+    case r: GetBlockWithTxObjectByNumber.Req =>
       sendMessage("eth_getBlockByNumber") {
         Seq(r.blockNumber, true)
       } map JsonFormat
-        .fromJsonString[XGetBlockWithTxObjectByNumberRes] sendTo sender
+        .fromJsonString[GetBlockWithTxObjectByNumber.Res] sendTo sender
 
-    case r: XGetBlockWithTxHashByHashReq =>
+    case r: GetBlockWithTxHashByHash.Req =>
       sendMessage("eth_getBlockByHash") {
         Seq(r.blockHash, false)
       } map JsonFormat
-        .fromJsonString[XGetBlockWithTxHashByHashRes] sendTo sender
+        .fromJsonString[GetBlockWithTxHashByHash.Res] sendTo sender
 
-    case r: XGetBlockWithTxObjectByHashReq =>
+    case r: GetBlockWithTxObjectByHash.Req =>
       sendMessage("eth_getBlockByHash") {
         Seq(r.blockHash, true)
       } map JsonFormat
-        .fromJsonString[XGetBlockWithTxObjectByHashRes] sendTo sender
+        .fromJsonString[GetBlockWithTxObjectByHash.Res] sendTo sender
 
-    case r: XTraceTransactionReq =>
+    case r: TraceTransaction.Req =>
       sendMessage("debug_traceTransaction") {
         val debugParams = DebugParams(DEBUG_TIMEOUT_STR, DEBUG_TRACER)
         Seq(r.txhash, debugParams)
-      } map JsonFormat.fromJsonString[XTraceTransactionRes] sendTo sender
+      } map JsonFormat.fromJsonString[TraceTransaction.Res] sendTo sender
 
-    case r: XGetEstimatedGasReq =>
+    case r: GetEstimatedGas.Req =>
       sendMessage("eth_estimateGas") {
-        val args = XTransactionParam().withTo(r.to).withData(r.data)
+        val args = TransactionParams().withTo(r.to).withData(r.data)
         Seq(args)
-      } map JsonFormat.fromJsonString[XGetEstimatedGasRes] sendTo sender
+      } map JsonFormat.fromJsonString[GetEstimatedGas.Res] sendTo sender
 
-    case r: XGetNonceReq =>
+    case r: GetNonce.Req =>
       sendMessage("eth_getTransactionCount") {
         Seq(r.owner, r.tag)
-      } map JsonFormat.fromJsonString[XGetNonceRes] sendTo sender
+      } map JsonFormat.fromJsonString[GetNonce.Res] sendTo sender
 
-    case r: XGetBlockTransactionCountReq =>
+    case r: GetBlockTransactionCount.Req =>
       sendMessage("eth_getBlockTransactionCountByHash") {
         Seq(r.blockHash)
       } map JsonFormat
-        .fromJsonString[XGetBlockTransactionCountRes] sendTo sender
+        .fromJsonString[GetBlockTransactionCount.Res] sendTo sender
 
-    case r: XEthCallReq =>
+    case r: EthCall.Req =>
       sendMessage("eth_call") {
         Seq(r.param, r.tag)
-      } map JsonFormat.fromJsonString[XEthCallRes] sendTo sender
+      } map JsonFormat.fromJsonString[EthCall.Res] sendTo sender
 
-    case r: XGetUncleByBlockNumAndIndexReq ⇒
+    case r: GetUncle.Req ⇒
       sendMessage(method = "eth_getUncleByBlockNumberAndIndex") {
         Seq(r.blockNum, r.index)
       } map JsonFormat
-        .fromJsonString[XGetBlockWithTxHashByHashRes] sendTo sender
+        .fromJsonString[GetBlockWithTxHashByHash.Res] sendTo sender
 
-    case batchR: XBatchContractCallReq =>
+    case batchR: BatchCallContracts.Req =>
       val batchReqs = batchR.reqs.map { singleReq =>
         BatchMethod(
           id = singleReq.id,
@@ -256,17 +253,17 @@ private[ethereum] class HttpConnector(
           params = Seq(singleReq.param, singleReq.tag)
         )
       }
-      //这里无法直接解析成XBatchContractCallRes
+      //这里无法直接解析成BatchCallContracts.Res
       batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val callResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
-          JsonFormat.fromJsonString[XEthCallRes](respJson)
+          JsonFormat.fromJsonString[EthCall.Res](respJson)
         })
-        XBatchContractCallRes(resps = callResps)
+        BatchCallContracts.Res(resps = callResps)
       } sendTo sender
 
-    case batchR: XBatchGetTransactionReceiptsReq =>
+    case batchR: BatchGetTransactionReceipts.Req =>
       val batchReqs = batchR.reqs.map { singleReq =>
         BatchMethod(
           id = 0,
@@ -274,17 +271,17 @@ private[ethereum] class HttpConnector(
           params = Seq(singleReq.hash)
         )
       }
-      //这里无法直接解析成XBatchGetTransactionReceiptsRes
+      //这里无法直接解析成BatchGetTransactionReceipts.Res
       batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val receiptResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
-          JsonFormat.fromJsonString[XGetTransactionReceiptRes](respJson)
+          JsonFormat.fromJsonString[GetTransactionReceipt.Res](respJson)
         })
-        XBatchGetTransactionReceiptsRes(resps = receiptResps)
+        BatchGetTransactionReceipts.Res(resps = receiptResps)
       } sendTo sender
 
-    case batchR: XBatchGetTransactionsReq =>
+    case batchR: BatchGetTransactions.Req =>
       val batchReqs = batchR.reqs.map { singleReq =>
         BatchMethod(
           id = 0,
@@ -292,17 +289,17 @@ private[ethereum] class HttpConnector(
           params = Seq(singleReq.hash)
         )
       }
-      //这里无法直接解析成XBatchGetTransactionsRes
+      //这里无法直接解析成BatchGetTransactions.Res
       batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val txResps = resps.map(resp => {
           val respJson = Serialization.write(resp)
-          JsonFormat.fromJsonString[XGetTransactionByHashRes](respJson)
+          JsonFormat.fromJsonString[GetTransactionByHash.Res](respJson)
         })
-        XBatchGetTransactionsRes(resps = txResps)
+        BatchGetTransactions.Res(resps = txResps)
       } sendTo sender
 
-    case batchR: XBatchGetUncleByBlockNumAndIndexReq ⇒ {
+    case batchR: BatchGetUncle.Req ⇒ {
       val batchReqs = batchR.reqs.map { singleReq ⇒
         BatchMethod(
           id = 0,
@@ -314,9 +311,9 @@ private[ethereum] class HttpConnector(
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
         val txResps = resps.map(resp ⇒ {
           val respJson = Serialization.write(resp)
-          JsonFormat.fromJsonString[XGetBlockWithTxHashByHashRes](respJson)
+          JsonFormat.fromJsonString[GetBlockWithTxHashByHash.Res](respJson)
         })
-        XBatchGetUncleByBlockNumAndIndexRes(txResps)
+        BatchGetUncle.Res(txResps)
       } sendTo sender
     }
   }

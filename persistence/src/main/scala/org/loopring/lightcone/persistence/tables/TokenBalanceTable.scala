@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// message XTokenBalance {
+// message TokenBalance {
 //     int64  id                   = 1;
 //     string address              = 2;
 //     string token                = 3;
@@ -32,12 +32,13 @@ import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
 class TokenBalanceTable(tag: Tag)
-    extends BaseTable[XTokenBalance](tag, "T_TOKEN_BALANCES") {
+    extends BaseTable[TokenBalance](tag, "T_TOKEN_BALANCES") {
 
   // Do not support id-based operations
-  def id = throw new UnsupportedOperationException(
-    s"${getClass.getName} does not support id-based operations"
-  )
+  def id =
+    throw new UnsupportedOperationException(
+      s"${getClass.getName} does not support id-based operations"
+    )
 
   def address = columnAddress("address")
   def token = columnAddress("token")
@@ -51,11 +52,5 @@ class TokenBalanceTable(tag: Tag)
   def pk = primaryKey("pk", (address, token))
 
   def * =
-    (
-      address,
-      token,
-      balance,
-      allowance,
-      updatedAtBlock
-    ) <> ((XTokenBalance.apply _).tupled, XTokenBalance.unapply)
+    (address, token, balance, allowance, updatedAtBlock) <> ((TokenBalance.apply _).tupled, TokenBalance.unapply)
 }

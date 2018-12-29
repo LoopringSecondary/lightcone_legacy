@@ -21,7 +21,7 @@ import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
 class OrdersCancelledEventTable(tag: Tag)
-    extends BaseTable[XOrdersCancelledEvent](tag, "T_ORDERS_CANCELLED_EVENT") {
+    extends BaseTable[OrdersCancelledEvent](tag, "T_ORDERS_CANCELLED_EVENT") {
 
   def id = txHash
   def txHash = columnHash("tx_hash")
@@ -42,12 +42,5 @@ class OrdersCancelledEventTable(tag: Tag)
     index("idx_block_height", (blockHeight), unique = false)
 
   def * =
-    (
-      txHash,
-      brokerOrOwner,
-      orderHash,
-      createdAt,
-      updatedAt,
-      blockHeight
-    ) <> ((XOrdersCancelledEvent.apply _).tupled, XOrdersCancelledEvent.unapply)
+    (txHash, brokerOrOwner, orderHash, createdAt, updatedAt, blockHeight) <> ((OrdersCancelledEvent.apply _).tupled, OrdersCancelledEvent.unapply)
 }

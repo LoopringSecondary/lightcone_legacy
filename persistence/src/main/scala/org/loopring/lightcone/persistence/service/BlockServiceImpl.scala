@@ -19,25 +19,24 @@ package org.loopring.lightcone.persistence.service
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals.{BlockDal, BlockDalImpl}
-import org.loopring.lightcone.proto.{XBlockData, XErrorCode}
+import org.loopring.lightcone.proto.{BlockData, ErrorCode}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
 class BlockServiceImpl @Inject()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
     extends BlockService {
   val blockDal: BlockDal = new BlockDalImpl()
 
-  def saveBlock(block: XBlockData): Future[XErrorCode] =
+  def saveBlock(block: BlockData): Future[ErrorCode] =
     blockDal.saveBlock(block)
 
-  def findByHash(hash: String): Future[Option[XBlockData]] =
+  def findByHash(hash: String): Future[Option[BlockData]] =
     blockDal.findByHash(hash)
 
-  def findByHeight(height: Long): Future[Option[XBlockData]] =
+  def findByHeight(height: Long): Future[Option[BlockData]] =
     blockDal.findByHeight(height)
 
   def findMaxHeight(): Future[Option[Long]] = blockDal.findMaxHeight()

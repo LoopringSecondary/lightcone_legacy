@@ -20,7 +20,7 @@ import scala.util.Properties
 import org.scalatest._
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 
 class RawOrderValidatorSpec extends FlatSpec with Matchers {
   val validator: RawOrderValidator = RawOrderValidatorImpl
@@ -34,11 +34,11 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
     val walletAddr = dualAuthAddr
     val order1Owner = "0xFDa769A839DA57D88320E683cD20075f8f525a57"
 
-    val params1 = (new XRawOrder.Params)
+    val params1 = (new RawOrder.Params)
       .withDualAuthAddr(dualAuthAddr)
       .withWallet(walletAddr)
 
-    val feeParams1 = (new XRawOrder.FeeParams)
+    val feeParams1 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
       .withAmountFee(
         ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray)
@@ -46,7 +46,7 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withTokenRecipient(order1Owner)
       .withWalletSplitPercentage(10)
 
-    val order1 = (new XRawOrder)
+    val order1 = (new RawOrder)
       .withVersion(0)
       .withOwner(order1Owner)
       .withTokenS(wethAddress)
@@ -74,11 +74,11 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
     val dualAuthPrivateKey =
       "0x2cebf2be8c8542bc9ab08f8bfd6e5cbd77b7ce3ba30d99bea19887ef4b24f08c"
 
-    val params1 = (new XRawOrder.Params)
+    val params1 = (new RawOrder.Params)
       .withDualAuthAddr(dualAuthAddr)
       .withWallet(walletAddr)
 
-    val feeParams1 = (new XRawOrder.FeeParams)
+    val feeParams1 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
       .withAmountFee(
         ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray)
@@ -86,7 +86,7 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withTokenRecipient(order1Owner)
       .withWalletSplitPercentage(10)
 
-    val order1 = (new XRawOrder)
+    val order1 = (new RawOrder)
       .withVersion(0)
       .withOwner(order1Owner)
       .withTokenS(wethAddress)
@@ -129,13 +129,13 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
     val orderSig2 =
       "0x01411b448f2be050fb924c688077ec0167c6f374e2392cd870366be0c05944a08a9578280c72d522724741a7b6b7a487d01499a2604032cdd6e2c630b5978898511534"
 
-    val params2 = (new XRawOrder.Params)
+    val params2 = (new RawOrder.Params)
       .withDualAuthAddr(dualAuthAddr)
       .withDualAuthPrivateKey(dualAuthPrivateKey)
       .withWallet(walletAddr)
       .withSig(orderSig2)
 
-    val feeParams2 = (new XRawOrder.FeeParams)
+    val feeParams2 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
       .withAmountFee(
         ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray)
@@ -143,7 +143,7 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withTokenRecipient(order2Owner)
       .withWalletSplitPercentage(20)
 
-    val order2 = (new XRawOrder)
+    val order2 = (new RawOrder)
       .withVersion(0)
       .withOwner(order2Owner)
       .withTokenS(lrcAddress)

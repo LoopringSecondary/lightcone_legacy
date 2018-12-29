@@ -19,7 +19,139 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
-message XBlockData {
+/////////////////////////////////////////////////////////////////////
+// ETHEREUM RAW DATA TYPES
+/////////////////////////////////////////////////////////////////////
+
+message Transaction {
+    string hash = 1;
+    string nonce = 2;
+    string blockHash = 3;
+    string blockNumber = 4;
+    string transactionIndex = 5;
+    string from = 6;
+    string to = 7;
+    string value = 8;
+    string gasPrice = 9;
+    string gas = 10;
+    string input = 11;
+    string r = 12;
+    string s = 13;
+    string v = 14;
+}
+
+message TransactionLog {
+    string logIndex = 1;
+    string blockNumber = 2;
+    string blockHash = 3;
+    string transactionHash = 4;
+    string transactionIndex = 5;
+    string address = 6;
+    string data = 7;
+    repeated string topics = 8;
+    bool removed = 9;
+}
+
+message TransactionReceipt {
+    string blockHash = 1;
+    string blockNumber = 2;
+    string transactionHash = 3;
+    string transactionIndex = 4;
+    string from = 5;
+    string to = 6;
+    string contractAddress = 7;
+    string cumulativeGasUsed = 8;
+    string gasUsed = 9;
+    repeated TransactionLog logs = 10;
+    string logsBloom = 11;
+    string root = 12;
+    string status = 13;
+}
+
+message BlockWithTxHash {
+    string number = 1;
+    string hash = 2;
+    string parentHash = 3;
+    string nonce = 4;
+    string sha3Uncles = 5;
+    string logsBloom = 6;
+    string transactionsRoot = 7;
+    string stateRoot = 8;
+    string receiptRoot = 9;
+    string miner = 10;
+    string difficulty = 11;
+    string totalDifficulty = 12;
+    string extraData = 13;
+    string size = 14;
+    string gasLimit = 15;
+    string gasUsed = 16;
+    string timestamp = 17;
+    repeated string transactions = 18;
+    repeated string uncles = 19;
+}
+
+message BlockWithTxObject {
+    string number = 1;
+    string hash = 2;
+    string parentHash = 3;
+    string nonce = 4;
+    string sha3Uncles = 5;
+    string logsBloom = 6;
+    string transactionsRoot = 7;
+    string stateRoot = 8;
+    string receiptRoot = 9;
+    string miner = 10;
+    string difficulty = 11;
+    string totalDifficulty = 12;
+    string extraData = 13;
+    string size = 14;
+    string gasLimit = 15;
+    string gasUsed = 16;
+    string timestamp = 17;
+    repeated Transaction transactions = 18;
+    repeated string uncles = 19;
+}
+
+message TraceCall {
+    string from = 1;
+    string to = 2;
+    string input = 3;
+    string output = 4;
+    string gas = 5;
+    string gasUsed = 6;
+    string type = 7;
+    string value = 8;
+}
+
+message TransactionTracing {
+    string from = 1;
+    string to = 2;
+    string input = 3;
+    string output = 4;
+    string gas = 5;
+    string gasUsed = 6;
+    string type = 7;
+    string value = 8;
+    repeated TraceCall calls = 9;
+}
+
+message TransactionParams {
+    string from = 1;
+    string to = 2;
+    string gas = 3;
+    string gasPrice = 4;
+    string value = 5;
+    string data = 6;
+}
+
+//message BlockWithTxAndReceipt {
+//    Block block = 1;
+//    repeated Transaction        transactions = 2;
+//    repeated TransactionReceipt receipts = 3;
+//}
+
+
+message BlockData {
     string hash                 = 1;
     int64  height               = 2;
     int64  timestamp            = 3;
@@ -39,7 +171,7 @@ message XBlockData {
     bytes  extra_data           = 17;
 }
 
-message XTokenTransferData {
+message TokenTransferData {
     string id                   = 1;
     int64  height               = 2;
     string tx_hash              = 3;
@@ -50,7 +182,7 @@ message XTokenTransferData {
     string token                = 8;
 }
 
-message XEventLogData {
+message EventLogData {
     string id                   = 1;
     int64  height               = 2;
     string tx_hash              = 3;
@@ -61,7 +193,7 @@ message XEventLogData {
     bytes  topics               = 8;
 }
 
-message XTransactionData {
+message TransactionData {
     // string id                = 1;
     string hash                 = 2;
     int64  height               = 3;
@@ -79,7 +211,7 @@ message XTransactionData {
     bytes  input_data           = 15;
 }
 
-message XAddressData {
+message AddressData {
     string address              = 1;
     bytes  balance              = 2;
     int64  num_tx               = 3;
@@ -88,23 +220,58 @@ message XAddressData {
     int64  updated_at_block     = 6;
 }
 
-// TODO(kongliang): for 2.0, we should add some other fields.
-message XTradeData {
-    string id                   = 1;
-    int64  height               = 2;
-    string block_hash           = 3;
-    string tx_hash              = 4;
-    string order_hash           = 5;
-    int64  timestamp            = 6;
-    // bytes amount_s              = 7;
-    // bytes amount_b              = 8;
-    // bytes amount_fee            = 9;
-}
+// // TODO(kongliang): for 2.0, we should add some other fields.
+// message TradeData {
+//     string id                   = 1;
+//     int64  height               = 2;
+//     string block_hash           = 3;
+//     string tx_hash              = 4;
+//     string order_hash           = 5;
+//     int64  timestamp            = 6;
+//     // bytes amount_s              = 7;
+//     // bytes amount_b              = 8;
+//     // bytes amount_fee            = 9;
+// }
 
-message XTokenBalance {
+message TokenBalance {
     string address              = 1;
     string token                = 2;
     bytes  balance              = 3;
     bytes  allowance            = 4;
     int64  updated_at_block     = 5;
+}
+
+message OrderFilled {
+    string order_hash = 1;
+    bytes  filled     = 2;
+}
+
+message OrderCancelled {
+    string order_owner = 1;
+    string order_hash  = 2;
+    bool   cancelled   = 3;
+}
+
+message Cutoffs {
+    string broker = 1;
+    int32  cutoff = 2; // in seconds.
+}
+
+message OwnerCutoffs {
+    string broker = 1;
+    string owner  = 2;
+    int32  cutoff = 3; // in seconds.
+}
+
+message TradingPairCutoffs {
+    string broker       = 1;
+    string trading_pair = 2;
+    int32  cutoff       = 3; // in seconds.
+}
+
+message OwnerTradingPairCutoffs {
+    string broker       = 1;
+    string owner        = 2;
+    string trading_pair = 3;
+    int32  cutoff       = 4; // in seconds.
 }

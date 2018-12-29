@@ -16,14 +16,14 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.proto.{XBlockData, XErrorCode}
+import org.loopring.lightcone.proto.{BlockData, ErrorCode}
 import scala.concurrent.Future
 
 trait BlockService {
 
-  def saveBlock(block: XBlockData): Future[XErrorCode]
-  def findByHash(hash: String): Future[Option[XBlockData]]
-  def findByHeight(height: Long): Future[Option[XBlockData]]
+  def saveBlock(block: BlockData): Future[ErrorCode]
+  def findByHash(hash: String): Future[Option[BlockData]]
+  def findByHeight(height: Long): Future[Option[BlockData]]
   def findMaxHeight(): Future[Option[Long]]
 
   def findBlocksInHeightRange(

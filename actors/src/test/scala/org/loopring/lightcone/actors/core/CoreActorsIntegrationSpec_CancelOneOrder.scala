@@ -46,32 +46,32 @@ class CoreActorsIntegrationSpec_CancelOneOrder
   "submiting one from OrderHandleActor" must {
     "get depth in OrderbookManagerActor" in {
       val rawOrder = createRawOrder()
-      val submitF = actors.get(OrderHandlerActor.name) ? XSubmitOrderReq(
+      val submitF = actors.get(OrderHandlerActor.name) ? SubmitOrder.Req(
         Some(rawOrder)
       )
       val submitRes = Await.result(submitF, timeout.duration)
       info(s"submit res: ${submitRes}")
 
       Thread.sleep(1000)
-      actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
+      actors.get(OrderbookManagerActor.name) ! GetOrderbook.Req(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
 
       expectMsgPF() {
-        case a: XOrderbook =>
+        case a: Orderbook =>
           info("----orderbook status after submitted an order: " + a)
           a.sells should not be empty
       }
 
       info("cancel this order now. ")
 
-      val cancelReq = XCancelOrderReq(
+      val cancelReq = CancelOrder.Req(
         id = rawOrder.hash,
         owner = rawOrder.owner,
-        status = XOrderStatus.STATUS_CANCELLED_BY_USER,
-        marketId = Some(XMarketId(rawOrder.tokenS, rawOrder.tokenB))
+        status = OrderStatus.STATUS_CANCELLED_BY_USER,
+        marketId = Some(MarketId(rawOrder.tokenS, rawOrder.tokenB))
       )
 
       val cancelResF = actors.get(OrderHandlerActor.name) ? cancelReq
@@ -83,20 +83,20 @@ class CoreActorsIntegrationSpec_CancelOneOrder
 
       val getOrderFromDbF = dbModule.orderService.getOrder(rawOrder.hash)
       val getOrderFromDb =
-        Await.result(getOrderFromDbF.mapTo[Option[XRawOrder]], timeout.duration)
+        Await.result(getOrderFromDbF.mapTo[Option[RawOrder]], timeout.duration)
 
       getOrderFromDb map { o =>
-        o.getState.status should be(XOrderStatus.STATUS_CANCELLED_BY_USER)
+        o.getState.status should be(OrderStatus.STATUS_CANCELLED_BY_USER)
       }
 
-      actors.get(OrderbookManagerActor.name) ! XGetOrderbook(
+      actors.get(OrderbookManagerActor.name) ! GetOrderbook.Req(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
 
       expectMsgPF() {
-        case a: XOrderbook =>
+        case a: Orderbook =>
           info("----orderbook status after cancel this order: " + a)
           assert(a.sells.isEmpty)
       }

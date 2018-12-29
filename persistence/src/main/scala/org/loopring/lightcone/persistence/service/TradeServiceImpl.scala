@@ -25,21 +25,20 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
 class TradeServiceImpl @Inject()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
     extends TradeService {
   val tradeDal: TradeDal = new TradeDalImpl()
 
-  def saveTrade(trade: XTrade): Future[Either[XErrorCode, String]] =
+  def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] =
     tradeDal.saveTrade(trade)
 
-  def getTrades(request: XGetTradesReq): Future[Seq[XTrade]] =
+  def getTrades(request: GetTrades.Req): Future[Seq[Trade]] =
     tradeDal
       .getTrades(request)
       .map(_.map(r => r.copy(updatedAt = 0, sequenceId = 0)))
 
-  def countTrades(request: XGetTradesReq): Future[Int] =
+  def countTrades(request: GetTrades.Req): Future[Int] =
     tradeDal.countTrades(request)
 
   def obsolete(height: Long): Future[Unit] = tradeDal.obsolete(height)

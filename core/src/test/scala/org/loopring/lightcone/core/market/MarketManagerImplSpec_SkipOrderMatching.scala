@@ -20,8 +20,8 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
-import XOrderStatus._
-import XErrorCode._
+import OrderStatus._
+import ErrorCode._
 
 class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
   "MarketManager" should "skip non-profitable orders" in {
@@ -31,7 +31,7 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
 
     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
 
     marketManager.submitOrder(buy1, 0)
     marketManager.submitOrder(buy2, 0)
@@ -46,18 +46,18 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
     )
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, buy1.asPending.withMatchableAsActual().withActualAsOriginal(), *)
       .returns(Left(ERR_MATCHING_INCOME_TOO_SMALL))
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, buy2.asPending.withMatchableAsActual().withActualAsOriginal(), *)
       .returns(Left(ERR_MATCHING_INCOME_TOO_SMALL))
 
-    val ring = OrderRing(null, null)
+    val ring = MatchableRing(null, null)
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, buy3.asPending.withMatchableAsActual().withActualAsOriginal(), *)
       .returns(Right(ring))
 
@@ -73,7 +73,7 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
       MarketManager.MatchResult(
         Seq(ring),
         sell1.copy(status = STATUS_PENDING),
-        XOrderbookUpdate()
+        Orderbook.Update()
       )
     )
 
@@ -90,7 +90,7 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
     )
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .verify(*, *, *)
       .repeated(3)
   }

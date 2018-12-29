@@ -21,8 +21,8 @@ import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
 class SettlementTxTable(tag: Tag)
-    extends BaseTable[XSettlementTx](tag, "T_SETTLEMENT_TXS") {
-  implicit val XStatusCxolumnType = enumColumnType(XSettlementTx.XStatus)
+    extends BaseTable[SettlementTx](tag, "T_SETTLEMENT_TXS") {
+  implicit val StatusCxolumnType = enumColumnType(SettlementTx.Status)
 
   def id = txHash
   def txHash = columnAddress("tx_hash")
@@ -33,7 +33,7 @@ class SettlementTxTable(tag: Tag)
   def value = column[String]("value")
   def data = column[String]("data")
   def nonce = column[Long]("nonce")
-  def status = column[XSettlementTx.XStatus]("status")
+  def status = column[SettlementTx.Status]("status")
   def createAt = column[Long]("create_at")
   def updateAt = column[Long]("update_at")
 
@@ -57,5 +57,5 @@ class SettlementTxTable(tag: Tag)
       status,
       createAt,
       updateAt
-    ) <> ((XSettlementTx.apply _).tupled, XSettlementTx.unapply)
+    ) <> ((SettlementTx.apply _).tupled, SettlementTx.unapply)
 }

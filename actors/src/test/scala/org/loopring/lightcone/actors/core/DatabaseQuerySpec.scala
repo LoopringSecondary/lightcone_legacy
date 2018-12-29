@@ -19,7 +19,6 @@ package org.loopring.lightcone.actors.core
 import org.loopring.lightcone.actors.support._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.Future
-import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
 import org.loopring.lightcone.proto._
 
@@ -30,74 +29,8 @@ class DatabaseQuerySpec
     with DatabaseModuleSupport
     with DatabaseQueryMessageSupport
     with JsonrpcSupport
+    with OrderGenerateSupport
     with HttpSupport {
-  val tokenS = "0xaaaaaa1"
-  val tokenB = "0xbbbbbb1"
-  val tokenFee = "0x-fee-token"
-  val validSince = 1
-  val validUntil = timeProvider.getTimeSeconds()
-
-  private def testSaveOrder(
-      hash: String,
-      owner: String,
-      status: XOrderStatus,
-      tokenS: String,
-      tokenB: String,
-      validSince: Int,
-      validUntil: Int
-    ): Future[Either[XRawOrder, XErrorCode]] = {
-    val now = timeProvider.getTimeMillis
-    val state = XRawOrder.State(
-      createdAt = now,
-      updatedAt = now,
-      status = status
-    )
-    val fee = XRawOrder.FeeParams(
-      tokenFee = tokenFee,
-      amountFee = ByteString.copyFrom("111", "utf-8")
-    )
-    val param = XRawOrder.Params(
-      validUntil = validUntil
-    )
-    var order = XRawOrder(
-      owner = owner,
-      hash = hash,
-      version = 1,
-      tokenS = tokenS,
-      tokenB = tokenB,
-      amountS = ByteString.copyFrom("11", "UTF-8"),
-      amountB = ByteString.copyFrom("12", "UTF-8"),
-      validSince = validSince,
-      state = Some(state),
-      feeParams = Some(fee),
-      params = Some(param),
-      marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
-    )
-    dbModule.orderService.saveOrder(order)
-  }
-
-  private def testSaveOrders(
-      hashes: Set[String],
-      status: XOrderStatus,
-      tokenS: String,
-      tokenB: String,
-      validSince: Int,
-      validUntil: Int
-    ): Future[Set[Either[XRawOrder, XErrorCode]]] = {
-    for {
-      result ← Future.sequence(hashes.map { hash ⇒
-        testSaveOrder(
-          hash,
-          hash,
-          status,
-          tokenS,
-          tokenB,
-          validSince,
-          validUntil
-        )
-      })
-    } yield result
-  }
 
   private def testSaveTrade(
       txHash: String,
@@ -105,9 +38,9 @@ class DatabaseQuerySpec
       tokenS: String,
       tokenB: String,
       blockHeight: Long
-    ): Future[Either[XErrorCode, String]] = {
+    ): Future[Either[ErrorCode, String]] = {
     dbModule.tradeService.saveTrade(
-      XTrade(
+      Trade(
         txHash = txHash,
         owner = owner,
         tokenB = tokenB,
@@ -119,39 +52,33 @@ class DatabaseQuerySpec
 
   "send an orders request" must {
     "receive a response without orders" in {
-      val method = "get_orders"
-      val hashes = Set(
-        "0x-getorders-actor-01",
-        "0x-getorders-actor-02",
-        "0x-getorders-actor-03",
-        "0x-getorders-actor-04",
-        "0x-getorders-actor-05"
-      )
-      val request = XGetOrdersForUserReq(
-        owner = "0x-getorders-actor-03",
-        statuses = Seq(XOrderStatus.STATUS_NEW),
-        market = XGetOrdersForUserReq.Market
-          .Pair(MarketPair(tokenS = tokenS, tokenB = tokenB))
+      val owner = "0x-getorders-actor-01"
+      val rawOrders = (0 until 6) map { i =>
+        createRawOrder(
+          owner = owner,
+          amountS = "10".zeros(LRC_TOKEN.decimals),
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        )
+      }
+      val request = GetOrdersForUser.Req(
+        owner = owner,
+        statuses = Seq(OrderStatus.STATUS_NEW),
+        market = GetOrdersForUser.Req.Market
+          .Pair(
+            MarketPair(tokenS = LRC_TOKEN.address, tokenB = WETH_TOKEN.address)
+          )
       )
       val r = for {
-        _ ← testSaveOrders(
-          hashes,
-          XOrderStatus.STATUS_NEW,
-          tokenS,
-          tokenB,
-          validSince,
-          validUntil.toInt
-        )
-        response <- singleRequest(
-          request,
-          method
-        )
+        _ <- Future.sequence(rawOrders.map { order ⇒
+          dbModule.orderService.saveOrder(order)
+        })
+        response <- singleRequest(request, "get_orders")
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case XGetOrdersForUserResult(orders, error) =>
-          assert(orders.nonEmpty && orders.length === 1)
-          assert(error === XErrorCode.ERR_NONE)
+        case GetOrdersForUser.Res(orders, error) =>
+          assert(orders.nonEmpty && orders.length === 6)
+          assert(error === ErrorCode.ERR_NONE)
         case _ => assert(false)
       }
     }
@@ -162,12 +89,12 @@ class DatabaseQuerySpec
       val method = "get_trades"
       val tokenS = "0xaaaaaaa2"
       val tokenB = "0xbbbbbbb2"
-      val tradesReq = XGetTradesReq(
+      val tradesReq = GetTrades.Req(
         owner = "0x-gettrades-actor-02",
-        market = XGetTradesReq.Market
+        market = GetTrades.Req.Market
           .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB)),
-        skip = Some(XSkip(0, 10)),
-        sort = XSort.ASC
+        skip = Some(Paging(0, 10)),
+        sort = SortingType.ASC
       )
       val hashes = Set(
         "0x-gettrades-actor-01",
@@ -177,19 +104,16 @@ class DatabaseQuerySpec
         "0x-gettrades-actor-05"
       )
       val r = for {
-        _ ← Future.sequence(hashes.map { hash ⇒
+        _ <- Future.sequence(hashes.map { hash ⇒
           testSaveTrade(hash, hash, tokenS, tokenB, 1L)
         })
-        response <- singleRequest(
-          tradesReq,
-          method
-        )
+        response <- singleRequest(tradesReq, method)
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case XGetTradesResult(trades, error) =>
+        case GetTrades.Res(trades, error) =>
           assert(trades.nonEmpty && trades.length === 1)
-          assert(error === XErrorCode.ERR_NONE)
+          assert(error === ErrorCode.ERR_NONE)
         case _ => assert(false)
       }
     }

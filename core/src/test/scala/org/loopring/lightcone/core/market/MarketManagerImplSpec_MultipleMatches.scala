@@ -20,8 +20,8 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
-import XOrderStatus._
-import XErrorCode._
+import OrderStatus._
+import ErrorCode._
 
 class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
   "MarketManager" should "skip non-profitable orders" in {
@@ -31,7 +31,7 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
 
     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
 
     marketManager.submitOrder(buy1, 0)
     marketManager.submitOrder(buy2, 0)
@@ -47,24 +47,33 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
 
     val sell1 = actualNotDust(sellGTO(BigInt(110000), BigInt(100), 0))
 
-    val ring1 = OrderRing(ExpectedFill(sell1, null), ExpectedFill(buy1, null))
-    val ring2 = OrderRing(ExpectedFill(sell1, null), ExpectedFill(buy2, null))
-    val ring3 = OrderRing(ExpectedFill(sell1, null), ExpectedFill(buy3, null))
+    val ring1 = MatchableRing(
+      ExpectedMatchableFill(sell1, null),
+      ExpectedMatchableFill(buy1, null)
+    )
+    val ring2 = MatchableRing(
+      ExpectedMatchableFill(sell1, null),
+      ExpectedMatchableFill(buy2, null)
+    )
+    val ring3 = MatchableRing(
+      ExpectedMatchableFill(sell1, null),
+      ExpectedMatchableFill(buy3, null)
+    )
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Right(ring3))
       .noMoreThanOnce()
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Right(ring2))
       .noMoreThanOnce()
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Right(ring1))
       .noMoreThanOnce()
@@ -81,12 +90,12 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
       MarketManager.MatchResult(
         Seq(ring3, ring2, ring1),
         sell1.copy(status = STATUS_PENDING),
-        XOrderbookUpdate()
+        Orderbook.Update()
       )
     )
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .verify(*, *, *)
       .repeated(3)
   }

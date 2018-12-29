@@ -21,6 +21,10 @@ import org.loopring.lightcone.ethereum.{
   RawOrderValidatorImpl,
   RingBatchGeneratorImpl
 }
+import org.loopring.lightcone.actors.core.{
+  MarketManagerActor,
+  MultiAccountManagerActor
+}
 import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Hash
@@ -38,7 +42,7 @@ trait OrderGenerateSupport {
       tokenFee: String = LRC_TOKEN.address,
       amountFee: BigInt = "3".zeros(18)
     )(
-      implicit privateKey: Option[String] = None
+      implicit privateKey: Option[String] = Some("0x6549df526c28b1d92b0de63606cf039d3dc1846b114118367d8b161ec03256bf")
     ) = {
     val createAt = timeProvider.getTimeMillis
 
@@ -49,22 +53,29 @@ trait OrderGenerateSupport {
       tokenB = tokenB,
       amountS = ByteString.copyFrom(amountS.toByteArray),
       amountB = ByteString.copyFrom(amountB.toByteArray),
-      validSince = (createAt / 1000).toInt + 10000,
+      validSince = (createAt / 1000).toInt,
       state = Some(
-        XRawOrder.State(
+        RawOrder.State(
           createdAt = createAt,
           updatedAt = createAt,
-          status = XOrderStatus.STATUS_NEW
+          status = OrderStatus.STATUS_NEW
         )
       ),
       feeParams = Some(
-        XRawOrder.FeeParams(
+        RawOrder.FeeParams(
           tokenFee = tokenFee,
           amountFee = ByteString.copyFrom(amountFee.toByteArray)
         )
       ),
       params =
-        Some(XRawOrder.Params(validUntil = (createAt / 1000).toInt + 20000))
+        Some(RawOrder.Params(validUntil = (createAt / 1000).toInt + 20000)),
+      marketHash = marketHash,
+      marketHashId = MarketManagerActor
+        .getEntityId(MarketId(primary = tokenS, secondary = tokenB))
+        .toInt,
+      addressShardId = MultiAccountManagerActor
+        .getEntityId(owner, 100)
+        .toInt
     )
 
     val hash = RawOrderValidatorImpl.calculateOrderHash(order)
@@ -75,9 +86,7 @@ trait OrderGenerateSupport {
           RingBatchGeneratorImpl
             .signPrefixedMessage(
               hash,
-              privateKey.getOrElse(
-                "0x6549df526c28b1d92b0de63606cf039d3dc1846b114118367d8b161ec03256bf"
-              )
+              privateKey.get
             )
         )
       )
