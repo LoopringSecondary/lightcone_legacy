@@ -130,52 +130,53 @@ class RingSettlementActor(
       taskQueue.enqueue(rings.map(ring ⇒ {
         SettleRings(
           gasPrice = req.gasPrice,
-          gasLimit = BigInt(Numeric.toBigInt(req.gasLimit.toByteArray))* ring.size /req.rings.size,
-          rings = ring)
-      }):_*)
+          gasLimit = BigInt(Numeric.toBigInt(req.gasLimit.toByteArray)) * ring.size / req.rings.size,
+          rings = ring
+        )
+      }): _*)
 
-
-    case Notify("handle_settle_rings",_) ⇒
+    case Notify("handle_settle_rings", _) ⇒
       handleSettleRings()
   }
 
   def handleSettleRings() = {
-    if(taskQueue.nonEmpty){
+    if (taskQueue.nonEmpty) {
       val ring: SettleRings = taskQueue.dequeue()
       for {
-        rawOrders: Seq[Seq[RawOrder]] ←
-          Future.sequence(ring.rings.map { xOrderRing ⇒
+        rawOrders: Seq[Seq[RawOrder]] ← Future.sequence(ring.rings.map {
+          xOrderRing ⇒
             dbModule.orderService.getOrders(
               Seq(
                 xOrderRing.maker.get.order.get.id,
                 xOrderRing.taker.get.order.get.id
               )
             )
-          })
-        ringBatch =  RingBatchGeneratorImpl.generateAndSignRingBatch(rawOrders)
+        })
+        ringBatch = RingBatchGeneratorImpl.generateAndSignRingBatch(rawOrders)
         input = RingBatchGeneratorImpl.toSubmitableParamStr(ringBatch)
         tx = Transaction(
-            inputData = packRingToInput(input),
-            nonce.get(),
-            ring.gasLimit,
-            ring.gasPrice,
-            protocolAddress,
-            chainId = chainId
-          )
+          inputData = packRingToInput(input),
+          nonce.get(),
+          ring.gasLimit,
+          ring.gasPrice,
+          protocolAddress,
+          chainId = chainId
+        )
         rawTx = getSignedTxData(tx)
         resp ← (ethereumAccessActor ? SendRawTransaction.Req(rawTx))
-            .mapAs[SendRawTransaction.Res]
+          .mapAs[SendRawTransaction.Res]
       } yield {
-        if(resp.error.isEmpty){
+        if (resp.error.isEmpty) {
           saveTx(tx, resp)
           nonce.getAndIncrement()
-        }else{
+        } else {
           //TODO 通知MarketManager等失败消息
         }
-       self ! Notify("handle_settle_rings")
+        self ! Notify("handle_settle_rings")
       }
-    }else{
-     context.system.scheduler.scheduleOnce(1 seconds,self,Notify("handle_settle_rings"))
+    } else {
+      context.system.scheduler
+        .scheduleOnce(1 seconds, self, Notify("handle_settle_rings"))
     }
   }
 

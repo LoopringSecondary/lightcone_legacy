@@ -19,13 +19,9 @@ package org.loopring.lightcone.actors.core
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.actors.validator.OrderHandlerMessageValidator
-import akka.pattern._
-
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import org.web3j.utils.Numeric
 
 class RingSettlementSpec
     extends CommonSpec("""
@@ -83,61 +79,46 @@ class RingSettlementSpec
         amountS = "1".zeros(18)
       )(Some(users(1)._2))
 
-      val f = for {
-        ba1 ← Future.sequence(
-          getBalanceReqs.map(
-            req ⇒
-              singleRequest(req, getBaMethod)
-                .mapAs[GetBalanceAndAllowances.Res]
-          )
-        )
-        _ ← singleRequest(
-          SubmitOrder.Req(Some(order1)),
-          submit_order
-        ).mapAs[SubmitOrder.Res]
-        _ ← Future {
-          Thread.sleep(1000)
-        }
-        orderbookF1 ← singleRequest(
-          getOrderBook1,
-          "orderbook"
-        ).mapAs[GetOrderbook.Res]
-          .map(_.getOrderbook)
+      val submitOrder1F = singleRequest(
+        SubmitOrder.Req(Some(order1)),
+        submit_order
+      ).mapAs[SubmitOrder.Res]
+      Await.result(submitOrder1F, timeout.duration)
 
-        subOrderRes2 ← singleRequest(
-          SubmitOrder.Req(Some(order2)),
-          submit_order
-        ).mapAs[SubmitOrder.Res]
+      val orderbook1F = singleRequest(
+        getOrderBook1,
+        "orderbook"
+      ).mapAs[GetOrderbook.Res]
+        .map(_.getOrderbook)
+      val orderbook1 = Await.result(orderbook1F, timeout.duration)
 
-        _ ← Future {
-          Thread.sleep(2000)
-        }
-        orderbookF2 ← singleRequest(
-          getOrderBook1,
-          "orderbook"
-        ).mapAs[GetOrderbook.Res]
-          .map(_.getOrderbook)
-
-        ba2: Seq[GetBalanceAndAllowances.Res] ← Future.sequence(
-          getBalanceReqs.map(
-            req ⇒
-              singleRequest(req, getBaMethod)
-                .mapAs[GetBalanceAndAllowances.Res]
-          )
-        )
-      } yield {
-        assert(orderbookF1.buys.isEmpty)
-        assert(orderbookF1.sells.size == 1)
-        orderbookF1.sells.head match {
-          case Orderbook.Item(price, amount, total) ⇒
-            assert(amount.toDouble == "10".toDouble)
-            assert(price.toDouble == "10".toDouble)
-            assert(total.toDouble == "1".toDouble)
-          case _ ⇒
-        }
+      assert(orderbook1.buys.isEmpty)
+      assert(orderbook1.sells.size == 1)
+      orderbook1.sells.head match {
+        case Orderbook.Item(price, amount, total) ⇒
+          assert(amount.toDouble == "10".toDouble)
+          assert(price.toDouble == "10".toDouble)
+          assert(total.toDouble == "1".toDouble)
+        case _ ⇒
       }
 
-      Await.result(f, 2 minutes)
+      val submitOrder2F = singleRequest(
+        SubmitOrder.Req(Some(order2)),
+        submit_order
+      ).mapAs[SubmitOrder.Res]
+      Await.result(submitOrder2F, timeout.duration)
+      Thread.sleep(1000)
+      val orderbookF2 = singleRequest(
+        getOrderBook1,
+        "orderbook"
+      ).mapAs[GetOrderbook.Res]
+        .map(_.getOrderbook)
+
+      val orderbook2 = Await.result(orderbookF2, timeout.duration)
+
+      println(orderbook2)
+      assert(orderbook2.buys.isEmpty)
+      assert(orderbook2.sells.isEmpty)
     }
   }
 

@@ -78,7 +78,6 @@ class EthereumQueryActor(
   val tradeHistoryAddress =
     config.getString("loopring_protocol.trade-history-address")
 
-
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   //todo:还需要继续优化下
@@ -88,7 +87,9 @@ class EthereumQueryActor(
         token ⇒ Address(token).toString.equals(Address.zeroAddress)
       )
       val ethToken =
-        req.tokens.find(token ⇒ Address(token).toString.equals(Address.zeroAddress))
+        req.tokens.find(
+          token ⇒ Address(token).toString.equals(Address.zeroAddress)
+        )
 
       (for {
         batchReqs ← Future {
@@ -132,7 +133,9 @@ class EthereumQueryActor(
         token ⇒ Address(token).toString.equals(Address.zeroAddress)
       )
       val ethToken =
-        req.tokens.find(token ⇒ Address(token).toString.equals(Address.zeroAddress))
+        req.tokens.find(
+          token ⇒ Address(token).toString.equals(Address.zeroAddress)
+        )
 
       (for {
         batchReqs ← Future { req.copy(tokens = erc20Tokens) }
@@ -156,7 +159,9 @@ class EthereumQueryActor(
           case Some(_) ⇒
             res.copy(
               balanceMap = res.balanceMap +
-                (Address.zeroAddress → BigInt(Numeric.toBigInt(ethRes.get.result)))
+                (Address.zeroAddress → BigInt(
+                  Numeric.toBigInt(ethRes.get.result)
+                ))
             )
           case None ⇒
             res
