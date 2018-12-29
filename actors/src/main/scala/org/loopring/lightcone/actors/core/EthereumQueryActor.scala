@@ -136,8 +136,6 @@ class EthereumQueryActor(
 
       (for {
         batchReqs ← Future { req.copy(tokens = erc20Tokens) }
-        callRes ← (ethereumAccessorActor ? batchReqs)
-          .mapAs[BatchCallContracts.Res]
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
