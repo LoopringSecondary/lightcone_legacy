@@ -21,11 +21,11 @@
   - [x] [wangdong/yongfeng] 基于订单数据库表的actor recover操作
   - [wangdong/yongfeng]redis缓存
   - [wangdong] socketio
+  - [yongfeng/wangdong] 订单生效，过期，和cutoff的处理（actor层面）
 
 
 - **v0.3** (目标1月低）主要功能包括
   - [yadong/hongyu] 以太坊分叉事件的处理
-  - [yongfeng/wangdong] 订单生效，过期，和cutoff的处理（actor层面）
 
 
 - **v0.4** 主要功能包括
