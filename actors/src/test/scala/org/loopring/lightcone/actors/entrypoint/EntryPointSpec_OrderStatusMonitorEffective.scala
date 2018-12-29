@@ -22,7 +22,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class EntryPointSpec_OrderStatusMonitor
+class EntryPointSpec_OrderStatusMonitorEffective
     extends CommonSpec("""
                          |akka.cluster.roles=[
                          | "order_handler",
@@ -55,7 +55,7 @@ class EntryPointSpec_OrderStatusMonitor
   Await.result(f, timeout.duration)
 
   "start an order status monitor" must {
-    "scan the order table" in {
+    "scan the order table and submit the order to AccountManager" in {
 
       val getOrderBook = GetOrderbook.Req(
         0,

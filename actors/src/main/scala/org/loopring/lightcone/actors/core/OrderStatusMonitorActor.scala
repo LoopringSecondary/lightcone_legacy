@@ -115,7 +115,9 @@ class OrderStatusMonitorActor(
     ): Future[(Int, Int)] = {
     val processTime = timeProvider.getTimeSeconds()
     for {
-      lastEventOpt <- dbModule.orderStatusMonitorService.getLastEvent(monitorType)
+      lastEventOpt <- dbModule.orderStatusMonitorService.getLastEvent(
+        monitorType
+      )
       lastProcessTime = if (lastEventOpt.isEmpty) 0
       else lastEventOpt.get.processTime
     } yield (processTime.toInt, lastProcessTime.toInt)
