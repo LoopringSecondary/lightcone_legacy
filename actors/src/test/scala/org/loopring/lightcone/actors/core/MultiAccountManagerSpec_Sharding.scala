@@ -33,9 +33,9 @@ class MultiAccountManagerSpec_Sharding
   val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
 
     def expectQuery() = expectMsgPF(120 second) {
-      case req @ XCancelOrderReq(_, orderId, _, _) =>
+      case req @ CancelOrder.Req(_, orderId, _, _) =>
         log.info(s"##### AM ${req}， ${sender()}")
-        sender ! XCancelOrderRes(id = orderId)
+        sender ! CancelOrder.Res(id = orderId)
     }
   }
   actors.del(MarketManagerActor.name)
@@ -44,7 +44,7 @@ class MultiAccountManagerSpec_Sharding
   "send a request" must {
     "create an AccountManager and be received by it" in {
       //todo:此处需要进一步测试分片的正确性
-      val cancelReq = XCancelOrderReq("0x11111", "0xaaaaa")
+      val cancelReq = CancelOrder.Req("0x11111", "0xaaaaa")
       val f = actors.get(MultiAccountManagerActor.name) ? cancelReq
       val res = Await.result(f, timeout.duration)
       info(s"return is : ${res}")

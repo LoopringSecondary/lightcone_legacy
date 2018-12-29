@@ -22,24 +22,24 @@ import org.slf4s.Logging
 
 trait AccountOrderPool {
 
-  type Callback = Order => Unit
+  type Callback = Matchable => Unit
 
-  def apply(id: String): Order
-  def getOrder(id: String): Option[Order]
+  def apply(id: String): Matchable
+  def getOrder(id: String): Option[Matchable]
   def contains(id: String): Boolean
   def size: Int
 
   def addCallback(callback: Callback): Unit
   def removeCallback(callback: Callback): Unit
 
-  def +=(order: Order): Unit
+  def +=(order: Matchable): Unit
 }
 
 trait UpdatedOrdersTracing {
   self: AccountOrderPool =>
-  private var updatedOrders = Map.empty[String, Order]
+  private var updatedOrders = Map.empty[String, Matchable]
 
-  addCallback((order: Order) => updatedOrders += order.id -> order)
+  addCallback((order: Matchable) => updatedOrders += order.id -> order)
 
   def getUpdatedOrdersAsMap() = updatedOrders
   def getUpdatedOrders() = updatedOrders.values

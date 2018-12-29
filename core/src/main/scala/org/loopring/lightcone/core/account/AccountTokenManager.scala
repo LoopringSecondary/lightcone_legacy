@@ -21,7 +21,7 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
 import org.slf4s.Logging
-import XOrderStatus._
+import OrderStatus._
 
 /*
  * AccountTokenManagerImpl manages reserving balance and allowance for orders.

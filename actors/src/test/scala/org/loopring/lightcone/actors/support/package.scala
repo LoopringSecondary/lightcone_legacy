@@ -20,46 +20,46 @@ import com.dimafeng.testcontainers.MySQLContainer
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.XTokenMeta
+import org.loopring.lightcone.proto.TokenMeta
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
 package object support {
 
-  val WETH_TOKEN = XTokenMeta(
-    Address("0x08D24FC29CDccF8e9Ca45Eef05384c58F8a8E94F").toString,
+  val WETH_TOKEN = TokenMeta(
+    Address("0x8B75225571ff31B58F95C704E05044D5CF6B32BF").toString,
     18,
     0.4,
     "WETH",
     1000
   )
 
-  val LRC_TOKEN = XTokenMeta(
-    Address("0xa345b6c2e5ce5970d026CeA8591DC28958fF6Edc").toString,
+  val LRC_TOKEN = TokenMeta(
+    Address("0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1").toString,
     18,
     0.4,
     "LRC",
     1000
   )
 
-  val GTO_TOKEN = XTokenMeta(
-    Address("0xBe6727c37cD9c5679Fa99c9A8B4E66035c0A3735").toString,
+  val GTO_TOKEN = TokenMeta(
+    Address("0x17839E1AC3B46F12f74465BFbc754aB487B093AB").toString,
     18,
     0.4,
     "LRC",
     1000
   )
 
-  val RDN_TOKEN = XTokenMeta(
-    Address("0xD80805F6d12C9342195cAab20efFa761a4964dD4").toString,
+  val RDN_TOKEN = TokenMeta(
+    Address("0xcF30e28DD8570e8d5B769CEcd293Bdc0E28bF0d2").toString,
     18,
     0.4,
     "LRC",
     1000
   )
 
-  val REP_TOKEN = XTokenMeta(
-    Address("0xd319078729D5bE3A89b79a11b4665acE9b6cF61E").toString,
+  val REP_TOKEN = TokenMeta(
+    Address("0xf386CedfAA2d1071e52C81554D4200c0aD0aDC24").toString,
     18,
     0.4,
     "LRC",

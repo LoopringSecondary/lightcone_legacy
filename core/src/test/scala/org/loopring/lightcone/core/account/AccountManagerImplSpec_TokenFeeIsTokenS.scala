@@ -29,7 +29,7 @@ class AccountManagerImplSpec_TokenFeeIsTokenS extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(0 !)
     updatedOrders(order.id).status should be(
-      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
+      OrderStatus.STATUS_CANCELLED_LOW_BALANCE
     )
   }
 
@@ -38,7 +38,7 @@ class AccountManagerImplSpec_TokenFeeIsTokenS extends OrderAwareSpec {
     val order = sellLRC(100 !, 10 !, 10 !)
     submitOrder(order) should be(true)
     orderPool.size should be(1)
-    updatedOrders(order.id).status should be(XOrderStatus.STATUS_PENDING)
+    updatedOrders(order.id).status should be(OrderStatus.STATUS_PENDING)
 
     updatedOrders(order.id).reserved should be(orderState(100 !, 0 !, 10 !))
     updatedOrders(order.id).actual should be(orderState(100 !, 10 !, 10 !))
@@ -49,7 +49,7 @@ class AccountManagerImplSpec_TokenFeeIsTokenS extends OrderAwareSpec {
     val order = sellLRC(200 !, 10 !, 20 !)
     submitOrder(order) should be(true)
     orderPool.size should be(1)
-    updatedOrders(order.id).status should be(XOrderStatus.STATUS_PENDING)
+    updatedOrders(order.id).status should be(OrderStatus.STATUS_PENDING)
 
     updatedOrders(order.id).reserved should be(orderState(50 !, 0 !, 5))
     updatedOrders(order.id).actual should be(orderState(50 !, 2, 5))

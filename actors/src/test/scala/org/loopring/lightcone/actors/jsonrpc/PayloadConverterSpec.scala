@@ -24,8 +24,8 @@ import org.loopring.lightcone.lib.ProtoSerializer
 
 class PayloadConverterSpec extends FlatSpec with Matchers with Logging {
   implicit val ps = new ProtoSerializer()
-  val serializer = new PayloadConverter[XRawOrder, XRawOrder]
-  val order = new XRawOrder(tokenS = "aaa")
+  val serializer = new PayloadConverter[RawOrder, RawOrder]
+  val order = new RawOrder(tokenS = "aaa")
 
   val json = serializer.convertFromResponse(order)
   val order_ = serializer.convertToRequest(json)

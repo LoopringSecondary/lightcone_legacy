@@ -27,13 +27,13 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
+import org.loopring.lightcone.core.data.Matchable
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 
 import scala.collection.JavaConverters._
@@ -64,7 +64,7 @@ object MarketManagerActor extends ShardedByMarket {
       .map { item =>
         val c = item.toConfig
         val marketId =
-          XMarketId(
+          MarketId(
             LAddress(c.getString("priamry")).toString,
             LAddress(c.getString("secondary")).toString
           )
@@ -81,17 +81,17 @@ object MarketManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketId: PartialFunction[Any, XMarketId] = {
-    case XSubmitSimpleOrderReq(_, Some(xorder)) =>
-      XMarketId(xorder.tokenS, xorder.tokenB)
-    case XCancelOrderReq(_, _, _, Some(marketId)) =>
+  val extractMarketId: PartialFunction[Any, MarketId] = {
+    case SubmitSimpleOrder(_, Some(order)) =>
+      MarketId(order.tokenS, order.tokenB)
+    case CancelOrder.Req(_, _, _, Some(marketId)) =>
       marketId
   }
 
 }
 
 class MarketManagerActor(
-    markets: Map[String, XMarketId]
+    markets: Map[String, MarketId]
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -151,7 +151,7 @@ class MarketManagerActor(
         .scheduleOnce(
           maxRecoverDurationMinutes.minute,
           self,
-          XRecover.Finished(true)
+          ActorRecover.Finished(true)
         )
     )
 
@@ -161,7 +161,7 @@ class MarketManagerActor(
 
       log.debug(s"actor recover started: ${self.path}")
       actors.get(OrderRecoverCoordinator.name) !
-        XRecover.Request(marketId = Some(marketId))
+        ActorRecover.Request(marketId = Some(marketId))
 
       context.become(recover)
     }
@@ -169,10 +169,10 @@ class MarketManagerActor(
 
   def recover: Receive = {
 
-    case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
-      submitOrder(xorder)
+    case SubmitSimpleOrder(_, Some(order)) ⇒
+      submitOrder(order)
 
-    case msg @ XRecover.Finished(timeout) =>
+    case msg @ ActorRecover.Finished(timeout) =>
       autoSwitchBackToReceive.foreach(_.cancel)
       autoSwitchBackToReceive = None
       s"market manager `${entityId}` recover completed (timeout=${timeout})"
@@ -180,7 +180,7 @@ class MarketManagerActor(
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
-      sender ! XError(
+      sender ! Error(
         ERR_REJECTED_DURING_RECOVER,
         s"market manager `${entityId}` is being recovered"
       )
@@ -188,28 +188,28 @@ class MarketManagerActor(
 
   def receive: Receive = {
 
-    case XSubmitSimpleOrderReq(_, Some(xorder)) ⇒
-      submitOrder(xorder)
+    case SubmitSimpleOrder(_, Some(order)) ⇒
+      submitOrder(order).sendTo(sender)
 
-    case XCancelOrderReq(orderId, _, _, _) ⇒
+    case CancelOrder.Req(orderId, _, _, _) ⇒
       manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
         orderbookManagerMediator ! Publish(
           OrderbookManagerActor.getTopicId(marketId),
           orderbookUpdate.copy(marketId = Some(marketId))
         )
       }
-      sender ! XCancelOrderRes(id = orderId)
+      sender ! CancelOrder.Res(id = orderId)
 
-    case XGasPriceUpdated(_gasPrice) =>
+    case GasPriceUpdated(_gasPrice) =>
       val gasPrice: BigInt = _gasPrice
       manager.triggerMatch(true, getRequiredMinimalIncome(gasPrice)) foreach {
         matchResult =>
           updateOrderbookAndSettleRings(matchResult, gasPrice)
       }
 
-    case XTriggerRematchReq(sellOrderAsTaker, offset) =>
+    case TriggerRematch(sellOrderAsTaker, offset) =>
       for {
-        res <- (gasPriceActor ? XGetGasPriceReq()).mapAs[XGetGasPriceRes]
+        res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
         gasPrice: BigInt = res.gasPrice
         minRequiredIncome = getRequiredMinimalIncome(gasPrice)
         _ = manager
@@ -219,30 +219,30 @@ class MarketManagerActor(
 
   }
 
-  private def submitOrder(xorder: XOrder): Future[Unit] = {
+  private def submitOrder(order: Order): Future[Unit] = {
     assert(
-      xorder.actual.nonEmpty,
-      "order in XSubmitSimpleOrderReq miss `actual` field"
+      order.actual.nonEmpty,
+      "order in SubmitSimpleOrder miss `actual` field"
     )
-    val order: Order = xorder
-    xorder.status match {
-      case XOrderStatus.STATUS_NEW | XOrderStatus.STATUS_PENDING =>
+    val matchable: Matchable = order
+    order.status match {
+      case OrderStatus.STATUS_NEW | OrderStatus.STATUS_PENDING =>
         for {
           // get ring settlement cost
-          res <- (gasPriceActor ? XGetGasPriceReq()).mapAs[XGetGasPriceRes]
+          res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
 
           gasPrice: BigInt = res.gasPrice
           minRequiredIncome = getRequiredMinimalIncome(gasPrice)
 
           // submit order to reserve balance and allowance
-          matchResult = manager.submitOrder(order, minRequiredIncome)
+          matchResult = manager.submitOrder(matchable, minRequiredIncome)
 
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
         } yield Unit
 
       case s =>
-        log.error(s"unexpected order status in XSubmitSimpleOrderReq: $s")
+        log.error(s"unexpected order status in SubmitSimpleOrder: $s")
         Future.successful(Unit)
     }
   }
@@ -260,7 +260,7 @@ class MarketManagerActor(
     if (matchResult.rings.nonEmpty) {
       log.debug(s"rings: ${matchResult.rings}")
 
-      settlementActor ! XSettleRingsReq(
+      settlementActor ! SettleRings(
         rings = matchResult.rings,
         gasLimit = gasLimitPerRingV2 * matchResult.rings.size,
         gasPrice = gasPrice
@@ -277,7 +277,7 @@ class MarketManagerActor(
     }
   }
 
-  def recoverOrder(xraworder: XRawOrder): Future[Any] =
+  def recoverOrder(xraworder: RawOrder): Future[Any] =
     submitOrder(xraworder)
 
 }

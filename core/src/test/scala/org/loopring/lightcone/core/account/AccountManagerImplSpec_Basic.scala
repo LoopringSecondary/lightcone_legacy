@@ -29,7 +29,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(
-      XOrderStatus.STATUS_CANCELLED_LOW_BALANCE
+      OrderStatus.STATUS_CANCELLED_LOW_BALANCE
     )
   }
 
@@ -39,7 +39,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(
-      XOrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE
+      OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE
     )
   }
 
@@ -97,18 +97,18 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     val order = sellDAI(0 !, 1000 !, 20 !)
     submitOrder(order) should be(false)
     orderPool.size should be(0)
-    updatedOrders(order.id).status should be(XOrderStatus.STATUS_INVALID_DATA)
+    updatedOrders(order.id).status should be(OrderStatus.STATUS_INVALID_DATA)
   }
 
   "submit order" should "fail if tokenS is not supported" in {
     dai.setBalanceAndAllowance(100 !, 100 !)
     lrc.setBalanceAndAllowance(100 !, 100 !)
     val order =
-      new Order("id", "XYZ", WETH, LRC, 10 !, 10 !, 10 !)
+      new Matchable("id", "XYZ", WETH, LRC, 10 !, 10 !, 10 !)
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(
-      XOrderStatus.STATUS_UNSUPPORTED_MARKET
+      OrderStatus.STATUS_UNSUPPORTED_MARKET
     )
   }
 
@@ -116,11 +116,11 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     dai.setBalanceAndAllowance(100 !, 100 !)
     lrc.setBalanceAndAllowance(100 !, 100 !)
     val order =
-      Order("id", DAI, WETH, "XYZ", 10 !, 10 !, 10 !)
+      Matchable("id", DAI, WETH, "XYZ", 10 !, 10 !, 10 !)
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(
-      XOrderStatus.STATUS_UNSUPPORTED_MARKET
+      OrderStatus.STATUS_UNSUPPORTED_MARKET
     )
   }
 }

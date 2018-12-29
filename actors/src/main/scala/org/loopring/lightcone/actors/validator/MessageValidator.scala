@@ -16,8 +16,8 @@
 
 package org.loopring.lightcone.actors.validator
 
-import org.loopring.lightcone.proto.XError
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.Error
+import org.loopring.lightcone.proto.ErrorCode._
 
 // Example:
 // class MyMessageValidator extends MessageValidator {

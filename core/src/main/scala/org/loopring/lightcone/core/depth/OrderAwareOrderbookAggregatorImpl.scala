@@ -23,12 +23,12 @@ import org.loopring.lightcone.core.base._
 class OrderAwareOrderbookAggregatorImpl(
     priceDecimals: Int
   )(
-    implicit marketId: XMarketId,
+    implicit marketId: MarketId,
     tokenManager: TokenManager)
     extends OrderbookAggregatorImpl(priceDecimals)
     with OrderAwareOrderbookAggregator {
 
-  def addOrder(order: Order) =
+  def addOrder(order: Matchable) =
     adjustAmount(
       order.isSell,
       true,
@@ -37,7 +37,7 @@ class OrderAwareOrderbookAggregatorImpl(
       order.displayableTotal
     )
 
-  def deleteOrder(order: Order) =
+  def deleteOrder(order: Matchable) =
     adjustAmount(
       order.isSell,
       false,

@@ -20,7 +20,7 @@ import org.loopring.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
 
-class TradeTable(tag: Tag) extends BaseTable[XTrade](tag, "T_TRADES") {
+class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
 
   def id = txHash
   def delegateAddress = columnAddress("delegate_address")
@@ -74,10 +74,10 @@ class TradeTable(tag: Tag) extends BaseTable[XTrade](tag, "T_TRADES") {
       feeAmountB,
       feeRecipient
     ) <> ({ tuple ⇒
-      Option((XTrade.Fees.apply _).tupled(tuple))
-    }, { paramsOpt: Option[XTrade.Fees] ⇒
-      val params = paramsOpt.getOrElse(XTrade.Fees())
-      XTrade.Fees.unapply(params)
+      Option((Trade.Fees.apply _).tupled(tuple))
+    }, { paramsOpt: Option[Trade.Fees] ⇒
+      val params = paramsOpt.getOrElse(Trade.Fees())
+      Trade.Fees.unapply(params)
     })
 
   def * =
@@ -100,5 +100,5 @@ class TradeTable(tag: Tag) extends BaseTable[XTrade](tag, "T_TRADES") {
       blockHeight,
       blockTimestamp,
       sequenceId
-    ) <> ((XTrade.apply _).tupled, XTrade.unapply)
+    ) <> ((Trade.apply _).tupled, Trade.unapply)
 }

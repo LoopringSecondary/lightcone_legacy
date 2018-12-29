@@ -20,8 +20,8 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
-import XOrderStatus._
-import XErrorCode._
+import OrderStatus._
+import ErrorCode._
 
 class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
 
@@ -35,11 +35,11 @@ class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
     (fakePendingRingPool.getOrderPendingAmountS _)
       .when(buyOrder.id)
       .returns(66)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
 
-    val ring = OrderRing(null, null)
+    val ring = MatchableRing(null, null)
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .when(*, *, *)
       .returns(Right(ring))
 
@@ -47,12 +47,12 @@ class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
     marketManager.submitOrder(buyOrder, 2)
 
     (fackRingMatcher
-      .matchOrders(_: Order, _: Order, _: Double))
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
       .verify(
         buyOrder.asPending.withActualAsOriginal
-          .copy(_matchable = Some(OrderState(34, 34000, 0))),
+          .copy(_matchable = Some(MatchableState(34, 34000, 0))),
         sellOrder.asPending.withActualAsOriginal
-          .copy(_matchable = Some(OrderState(99445, 100, 0))),
+          .copy(_matchable = Some(MatchableState(99445, 100, 0))),
         2.0
       )
       .once

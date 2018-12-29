@@ -36,24 +36,24 @@ import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.scalatest._
-import XErrorCode._
+import ErrorCode._
 
 class RingMatcherImplSpec_Profit extends OrderAwareSpec {
 
   val nonProfitable = new RingIncomeEstimator {
-    def getRingIncome(ring: OrderRing) = 0
+    def getRingIncome(ring: MatchableRing) = 0
 
     def isProfitable(
-        ring: OrderRing,
+        ring: MatchableRing,
         fiatValueThreshold: Double
       ) = false
   }
 
   val alwaysProfitable = new RingIncomeEstimator {
-    def getRingIncome(ring: OrderRing) = Long.MaxValue
+    def getRingIncome(ring: MatchableRing) = Long.MaxValue
 
     def isProfitable(
-        ring: OrderRing,
+        ring: MatchableRing,
         fiatValueThreshold: Double
       ) = true
   }

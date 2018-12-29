@@ -48,31 +48,24 @@ class JrpcSpec
     "return correct responses" in {
       // 正确返回
       val resonse1 = singleRequest(
-        XGetOrderbook(
+        GetOrderbook.Req(
           0,
           2,
           Some(
-            XMarketId(
-              "0xa345b6c2e5ce5970d026CeA8591DC28958fF6Edc",
-              "0x08D24FC29CDccF8e9Ca45Eef05384c58F8a8E94F"
+            MarketId(
+              "0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1",
+              "0x8B75225571ff31B58F95C704E05044D5CF6B32BF"
             )
           )
         ),
         "orderbook"
       )
-      // 只要返回了XOrderbook类型就认为成功，其他会抛异常
-      Await.result(resonse1.mapTo[XOrderbook], timeout.duration)
+      // 只要返回了Orderbook类型就认为成功，其他会抛异常
+      Await.result(resonse1.mapTo[GetOrderbook.Res], timeout.duration)
 
       // 1. 没有在EntryPoint绑定过的request消息类型; 错误的request类型 => 反序列化为默认的proto对象，进入validator
       // 2. 错误的validate请求
-      val resonse2 = singleRequest(
-        XGetOrderbook(
-          0,
-          2,
-          None
-        ),
-        "orderbook"
-      )
+      val resonse2 = singleRequest(GetOrderbook.Req(0, 2, None), "orderbook")
       val result2 = try {
         Await.result(resonse2, timeout.duration)
       } catch {
@@ -81,7 +74,7 @@ class JrpcSpec
       }
       result2 match {
         case e: ErrorException
-            if e.error.code === XErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
+            if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
               .contains("3010") =>
           assert(true)
         case _ =>
@@ -90,7 +83,7 @@ class JrpcSpec
 
       // 调用没有注册过的actor
       val resonse3 = singleRequest(
-        XGetBalanceAndAllowancesReq(
+        GetBalanceAndAllowances.Req(
           "0xb94065482ad64d4c2b9252358d746b39e820a582",
           tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         ),
@@ -104,21 +97,15 @@ class JrpcSpec
       }
       result3 match {
         case e: ErrorException
-            if e.error.code === XErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
+            if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
               .contains("not found actor") =>
           assert(true)
         case _ => assert(false)
       }
 
       // 调用没有注册过的method
-      val resonse4 = singleRequest(
-        XGetOrderbook(
-          0,
-          2,
-          None
-        ),
-        "method-not-exist"
-      )
+      val resonse4 =
+        singleRequest(GetOrderbook.Req(0, 2, None), "method-not-exist")
       val result4 = try {
         Await.result(resonse4, timeout.duration)
       } catch {
@@ -127,7 +114,7 @@ class JrpcSpec
       }
       result4 match {
         case e: ErrorException
-            if e.error.code === XErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
+            if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
               .contains("-32601") =>
           assert(true)
         case _ =>

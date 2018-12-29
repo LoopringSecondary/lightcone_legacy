@@ -38,24 +38,16 @@ class EntryPointSpec
 
   "send an orderbook request" must {
     "receive a response without value" in {
-      val getOrderBook = XGetOrderbook(
+      val getOrderBook = GetOrderbook.Req(
         0,
         2,
-        Some(
-          XMarketId(
-            LRC_TOKEN.address,
-            WETH_TOKEN.address
-          )
-        )
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val f = singleRequest(
-        getOrderBook,
-        "orderbook"
-      )
+      val f = singleRequest(getOrderBook, "orderbook")
 
       val res = Await.result(f, timeout.duration)
       res match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           assert(sells.isEmpty)
           assert(buys.isEmpty)
         case _ => assert(false)

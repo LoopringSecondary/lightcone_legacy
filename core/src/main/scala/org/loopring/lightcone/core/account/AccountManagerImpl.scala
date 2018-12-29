@@ -26,7 +26,7 @@ final private[core] class AccountManagerImpl(
     implicit orderPool: AccountOrderPool with UpdatedOrdersTracing)
     extends AccountManager
     with Logging {
-  import XOrderStatus._
+  import OrderStatus._
 
   private[core] implicit var tokens =
     Map.empty[String, AccountTokenManager]
@@ -55,40 +55,43 @@ final private[core] class AccountManagerImpl(
     tokens(token)
   }
 
-  def submitAndGetUpdatedOrders(_order: Order): (Boolean, Map[String, Order]) =
+  def submitAndGetUpdatedOrders(
+      order: Matchable
+    ): (Boolean, Map[String, Matchable]) =
     this.synchronized {
-      val submitRes = this.submitOrder(_order)
+      val submitRes = this.submitOrder(order)
       (submitRes, this.orderPool.takeUpdatedOrdersAsMap())
     }
 
   //TODO(litao): What if an order is re-submitted?
-  def submitOrder(_order: Order): Boolean = this.synchronized {
-    val order = _order.copy(_reserved = None, _actual = None, _matchable = None)
+  def submitOrder(order: Matchable): Boolean = this.synchronized {
+    val order_ =
+      order.copy(_reserved = None, _actual = None, _matchable = None)
 
-    if (order.amountS <= 0) {
-      orderPool += order.as(STATUS_INVALID_DATA)
+    if (order_.amountS <= 0) {
+      orderPool += order_.as(STATUS_INVALID_DATA)
       return false
     }
 
-    if (!tokens.contains(order.tokenS) ||
-        !tokens.contains(order.tokenFee)) {
-      orderPool += order.as(STATUS_UNSUPPORTED_MARKET)
+    if (!tokens.contains(order_.tokenS) ||
+        !tokens.contains(order_.tokenFee)) {
+      orderPool += order_.as(STATUS_UNSUPPORTED_MARKET)
       return false
     }
 
-    if (order.callOnTokenS(_.hasTooManyOrders) ||
-        order.callOnTokenFee(_.hasTooManyOrders)) {
-      orderPool += order.as(STATUS_CANCELLED_TOO_MANY_ORDERS)
+    if (order_.callOnTokenS(_.hasTooManyOrders) ||
+        order_.callOnTokenFee(_.hasTooManyOrders)) {
+      orderPool += order_.as(STATUS_CANCELLED_TOO_MANY_ORDERS)
       return false
     }
 
-    orderPool += order.as(STATUS_NEW)
+    orderPool += order_.as(STATUS_NEW)
 
-    if (order.callOnTokenSAndTokenFee(_.reserve(order.id))) {
+    if (order_.callOnTokenSAndTokenFee(_.reserve(order_.id))) {
       return false
     }
 
-    orderPool += orderPool(order.id).copy(status = STATUS_PENDING)
+    orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
     return true
   }
 
@@ -120,7 +123,7 @@ final private[core] class AccountManagerImpl(
     }
   }
 
-  implicit private class MagicOrder(order: Order) {
+  implicit private class MagicOrder(order: Matchable) {
 
     def callOnTokenS[R](method: AccountTokenManager => R) =
       method(tokens(order.tokenS))

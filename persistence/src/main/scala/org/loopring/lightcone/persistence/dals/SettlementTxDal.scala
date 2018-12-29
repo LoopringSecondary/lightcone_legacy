@@ -21,7 +21,7 @@ import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib.{ErrorException, SystemTimeProvider}
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
@@ -30,48 +30,40 @@ import slick.lifted.Query
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
-trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, XSettlementTx] {
-  def saveTx(tx: XSettlementTx): Future[XSaveSettlementTxResult]
+trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
+  def saveTx(tx: SettlementTx): Future[PersistSettlementTx.Res]
   // get all pending txs with given owner
-  def getPendingTxs(request: XGetPendingTxsReq): Future[XGetPendingTxsResult]
+  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res]
 
   // update address's all txs status below or equals the given nonce to BLOCK
-  def updateInBlock(
-      request: XUpdateTxInBlockReq
-    ): Future[XUpdateTxInBlockResult]
+  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res]
 }
 
 class SettlementTxDalImpl(
   )(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends SettlementTxDal {
   private[this] val logger = Logger(this.getClass)
   val query = TableQuery[SettlementTxTable]
   val timeProvider = new SystemTimeProvider()
-  implicit val XStatusCxolumnType = enumColumnType(XSettlementTx.XStatus)
+  implicit val StatusCxolumnType = enumColumnType(SettlementTx.Status)
 
-  def saveTx(tx: XSettlementTx): Future[XSaveSettlementTxResult] = {
-    db.run(
-        (query += tx).asTry
-      )
-      .map {
-        case Failure(e: MySQLIntegrityConstraintViolationException) ⇒
-          XSaveSettlementTxResult(ERR_PERSISTENCE_DUPLICATE_INSERT)
-        case Failure(ex) ⇒
-          logger.error(s"error : ${ex.getMessage}")
-          XSaveSettlementTxResult(ERR_PERSISTENCE_INTERNAL)
-        case Success(x) ⇒ XSaveSettlementTxResult(ERR_NONE)
-      }
+  def saveTx(tx: SettlementTx): Future[PersistSettlementTx.Res] = {
+    db.run((query += tx).asTry).map {
+      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒
+        PersistSettlementTx.Res(ERR_PERSISTENCE_DUPLICATE_INSERT)
+      case Failure(ex) ⇒
+        logger.error(s"error : ${ex.getMessage}")
+        PersistSettlementTx.Res(ERR_PERSISTENCE_INTERNAL)
+      case Success(x) ⇒ PersistSettlementTx.Res(ERR_NONE)
+    }
   }
 
-  def getPendingTxs(
-      request: XGetPendingTxsReq
-    ): Future[XGetPendingTxsResult] = {
-    implicit val getSupplierResult = GetResult[XSettlementTx](
+  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res] = {
+    implicit val getSupplierResult = GetResult[SettlementTx](
       r =>
-        XSettlementTx(
+        SettlementTx(
           r.nextString,
           r.nextString,
           r.nextString,
@@ -80,7 +72,7 @@ class SettlementTxDalImpl(
           r.nextString,
           r.nextString,
           r.nextLong,
-          XSettlementTx.XStatus.fromValue(r.nextInt),
+          SettlementTx.Status.fromValue(r.nextInt),
           r.nextLong,
           r.nextLong
         )
@@ -90,17 +82,17 @@ class SettlementTxDalImpl(
         SELECT tx_hash, `from`, `to`, gas, gas_price, `value`, `data`, nonce, status, MAX(create_at) as create_at, update_at
         FROM T_SETTLEMENT_TXS
         WHERE `from` = ${request.owner}
-          and status = ${XSettlementTx.XStatus.PENDING.value}
+          and status = ${SettlementTx.Status.PENDING.value}
           and create_at <= ${request.timeBefore}
         GROUP BY `from`, nonce
         """
-        .as[XSettlementTx]
-    db.run(sql).map(r => XGetPendingTxsResult(r.toSeq))
+        .as[SettlementTx]
+    db.run(sql).map(r => GetPendingTxs.Res(r.toSeq))
   }
 
   def updateInBlock(
-      request: XUpdateTxInBlockReq
-    ): Future[XUpdateTxInBlockResult] = {
+      request: UpdateTxInBlock.Req
+    ): Future[UpdateTxInBlock.Res] = {
     val a = (for {
       // update tx in block
       updateInBlock <- query
@@ -108,23 +100,23 @@ class SettlementTxDalImpl(
         .filter(_.from === request.from)
         .filter(_.nonce === request.nonce)
         .map(_.status)
-        .update(XSettlementTx.XStatus.BLOCK)
+        .update(SettlementTx.Status.BLOCK)
       updateFaild <- if (updateInBlock == 1) {
-        val pending: XSettlementTx.XStatus = XSettlementTx.XStatus.PENDING
+        val pending: SettlementTx.Status = SettlementTx.Status.PENDING
         query
           .filter(_.from === request.from)
           .filter(_.nonce === request.nonce)
           .filter(_.status === pending)
           .map(_.status)
-          .update(XSettlementTx.XStatus.FAILED)
+          .update(SettlementTx.Status.FAILED)
       } else {
-        throw ErrorException(XErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
+        throw ErrorException(ErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
       }
       // update others pending tx to failed
     } yield updateFaild).transactionally
     db.run(a).map { r =>
-      if (r >= 0) XUpdateTxInBlockResult(XErrorCode.ERR_NONE)
-      else XUpdateTxInBlockResult(XErrorCode.ERR_INTERNAL_UNKNOWN)
+      if (r >= 0) UpdateTxInBlock.Res(ErrorCode.ERR_NONE)
+      else UpdateTxInBlock.Res(ErrorCode.ERR_INTERNAL_UNKNOWN)
     }
   }
 }
