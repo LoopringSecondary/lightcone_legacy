@@ -55,6 +55,7 @@ class DatabaseModule @Inject()(
     new TransactionDalImpl(),
     new EventLogDalImpl(),
     new TokenTransferDalImpl(),
-    new SettlementTxDalImpl()
+    new SettlementTxDalImpl(),
+    new OrderStatusMonitorDalImpl()
   )
 }

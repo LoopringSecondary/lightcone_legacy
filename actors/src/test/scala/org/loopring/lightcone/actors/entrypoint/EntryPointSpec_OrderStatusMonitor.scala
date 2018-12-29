@@ -17,6 +17,9 @@
 package org.loopring.lightcone.actors.entrypoint
 
 import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.proto._
+
+import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_OrderStatusMonitor
     extends CommonSpec("""
@@ -27,15 +30,46 @@ class EntryPointSpec_OrderStatusMonitor
                          | "ring_settlement"]
                          |""".stripMargin)
     with OrderStatusMonitorSupport
+    with JsonrpcSupport
+    with HttpSupport
+    with OrderHandleSupport
+    with MultiAccountManagerSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport
+    with EthereumQueryMockSupport
     with OrderGenerateSupport {
+
+  //保存一批订单，等待提交
+  val orders =
+    (0 until 2) map { i =>
+      createRawOrder(amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
+    }
+
+  val f = Future.sequence(orders map { o =>
+    dbModule.orderService.saveOrder(o)
+  })
+  Await.result(f, timeout.duration)
 
   "start an order status monitor" must {
     "scan the order table" in {
-      val orders =
-        (0 until 2) map { i =>
-          createRawOrder(amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
-        }
 
+      Thread.sleep(30000)
+
+      val getOrderBook = XGetOrderbook(
+        0,
+        100,
+        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+      )
+      val orderbookF = singleRequest(
+        getOrderBook,
+        "orderbook"
+      )
+      val orderbookRes = Await.result(orderbookF, timeout.duration)
+      orderbookRes match {
+        case XOrderbook(lastPrice, sells, buys) =>
+          println(s"sells:${sells}, buys:${buys}")
+        case _ => assert(false)
+      }
       println("#### EntryPointSpec_OrderStatusMonitor")
       Thread.sleep(100000)
     }
