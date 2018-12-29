@@ -149,32 +149,15 @@ class RingSettlementActor(
             chainId = chainId
           )
         }
-        hashes ← Future.sequence(txs.map { tx ⇒
+        resps ← Future.sequence(txs.map { tx ⇒
           val rawTx = getSignedTxData(tx)
           (ethereumAccessActor ? XSendRawTransactionReq(rawTx))
             .mapAs[XSendRawTransactionRes]
-            .map(_.result)
         })
       } yield {
-        (txs zip hashes).map {
-          case (tx, hash) ⇒
-            dbModule.settlementTxService.saveTx(
-              XSaveSettlementTxReq(
-                tx = Some(
-                  XSettlementTx(
-                    txHash = hash,
-                    from = ringContext.transactionOrigin,
-                    to = tx.to,
-                    nonce = tx.nonce,
-                    gas = Numeric.toHexStringWithPrefix(tx.gasLimit.bigInteger),
-                    gasPrice =
-                      Numeric.toHexStringWithPrefix(tx.gasPrice.bigInteger),
-                    data = tx.inputData,
-                    value = Numeric.toHexStringWithPrefix(tx.value.bigInteger)
-                  )
-                )
-              )
-            )
+        (txs zip resps).map {
+          case (tx, resp) ⇒
+            saveTx(tx,resp)
         }
       }
   }
@@ -210,7 +193,7 @@ class RingSettlementActor(
             tx.nonce.toInt,
             tx.gas,
             gasPriceRes,
-            to = protocolAddress
+            to = tx.to
           )
       )
       txResps ← Future.sequence(txs.map { tx =>
@@ -221,24 +204,27 @@ class RingSettlementActor(
     } yield {
       (txs zip txResps).filter(_._2.error.isEmpty).map {
         case (tx, res) ⇒
-          dbModule.settlementTxService.saveTx(
-            XSaveSettlementTxReq(
-              tx = Some(
-                XSettlementTx(
-                  txHash = res.result,
-                  from = ringContext.transactionOrigin,
-                  to = tx.to,
-                  nonce = tx.nonce,
-                  gas = Numeric.toHexStringWithPrefix(tx.gasLimit.bigInteger),
-                  gasPrice =
-                    Numeric.toHexStringWithPrefix(tx.gasPrice.bigInteger),
-                  data = tx.inputData,
-                  value = Numeric.toHexStringWithPrefix(tx.value.bigInteger)
-                )
-              )
-            )
-          )
+          saveTx(tx,res)
       }
     }
 
+  def saveTx(tx:Transaction,res:XSendRawTransactionRes):Future[XSaveSettlementTxResult]= {
+    dbModule.settlementTxService.saveTx(
+      XSaveSettlementTxReq(
+        tx = Some(
+          XSettlementTx(
+            txHash = res.result,
+            from = ringContext.transactionOrigin,
+            to = tx.to,
+            nonce = tx.nonce,
+            gas = Numeric.toHexStringWithPrefix(tx.gasLimit.bigInteger),
+            gasPrice =
+              Numeric.toHexStringWithPrefix(tx.gasPrice.bigInteger),
+            data = tx.inputData,
+            value = Numeric.toHexStringWithPrefix(tx.value.bigInteger)
+          )
+        )
+      )
+    )
+  }
 }
