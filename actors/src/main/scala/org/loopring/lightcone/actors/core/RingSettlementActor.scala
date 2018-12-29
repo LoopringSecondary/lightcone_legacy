@@ -156,7 +156,7 @@ class RingSettlementActor(
         input = RingBatchGeneratorImpl.toSubmitableParamStr(ringBatch)
         tx = Transaction(
             inputData = packRingToInput(input),
-            nonce.getAndIncrement(),
+            nonce.get(),
             ring.gasLimit,
             ring.gasPrice,
             protocolAddress,
@@ -168,6 +168,7 @@ class RingSettlementActor(
       } yield {
         if(resp.error.isEmpty){
           saveTx(tx, resp)
+          nonce.getAndIncrement()
         }else{
           //TODO 通知MarketManager等失败消息
         }
