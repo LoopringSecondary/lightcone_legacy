@@ -124,24 +124,6 @@ case class Matchable(
 
   private[core] def resetMatchable() = copy(_matchable = None)
 
-  private[core] def amountDS()(implicit tokenManager: TokenManager) =
-    fromWei(tokenS, actual.amountS)
-
-  private[core] def amountDB()(implicit tokenManager: TokenManager) =
-    fromWei(tokenB, actual.amountB)
-
-  private[core] def amountDFee()(implicit tokenManager: TokenManager) =
-    fromWei(tokenFee, actual.amountFee)
-
-  private[core] def actualAmountDS()(implicit tokenManager: TokenManager) =
-    fromWei(tokenS, actual.amountS)
-
-  private[core] def actualAmountDB()(implicit tokenManager: TokenManager) =
-    fromWei(tokenB, actual.amountB)
-
-  private[core] def actualAmountDFee()(implicit tokenManager: TokenManager) =
-    fromWei(tokenFee, actual.amountFee)
-
   private[core] def isSell()(implicit marketId: MarketId) =
     (tokenS == marketId.secondary)
 
@@ -158,8 +140,8 @@ case class Matchable(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) amountDS
-    else amountDB
+    if (tokenS == marketId.secondary) fromWei(tokenS, actual.amountS)
+    else fromWei(tokenB, actual.amountB)
   }
 
   private[core] def total(
@@ -167,8 +149,8 @@ case class Matchable(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) amountDB
-    else amountDS
+    if (tokenS == marketId.secondary) fromWei(tokenB, actual.amountB)
+    else fromWei(tokenS, actual.amountS)
   }
 
   private[core] def actualAmount(
@@ -176,8 +158,8 @@ case class Matchable(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) actualAmountDS
-    else actualAmountDB
+    if (tokenS == marketId.secondary) fromWei(tokenS, actual.amountS)
+    else fromWei(tokenB, actual.amountB)
   }
 
   private[core] def actualTotal(
@@ -185,8 +167,8 @@ case class Matchable(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) actualAmountDB
-    else actualAmountDS
+    if (tokenS == marketId.secondary) fromWei(tokenB, actual.amountB)
+    else fromWei(tokenS, actual.amountS)
   }
 
   private def updateActual() = {
