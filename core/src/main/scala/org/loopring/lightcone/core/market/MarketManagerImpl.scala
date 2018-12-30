@@ -201,7 +201,7 @@ class MarketManagerImpl(
               case Right(ring) =>
                 isLastTakerSell = (taker.tokenS == marketId.secondary)
                 rings :+= ring
-                lastPrice = (taker.priceD + maker.priceD) / 2
+                lastPrice = (taker.price + maker.price) / 2
                 pendingRingPool.addRing(ring)
                 recursivelyMatchOrders()
             }
