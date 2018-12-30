@@ -251,14 +251,14 @@ message BatchGetTransactionReceipts {
 }
 message SendRawTransaction {
     message Req  {
-    string data = 1;
-}
-   message Res  {
-       int32 id = 1;
-       string jsonrpc = 2;
-       string result = 3;
-       EthRpcError error = 4;
-}
+        string data = 1;
+    }
+    message Res  {
+        int32 id = 1;
+        string jsonrpc = 2;
+        string result = 3;
+        EthRpcError error = 4;
+    }
 }
 
 message GetUncle {
