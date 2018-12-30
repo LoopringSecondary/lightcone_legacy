@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.support
+package org.loopring.lightcone.ethereum.data
 
-import org.loopring.lightcone.actors.core._
-
-trait MarketManagerSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
-
-  actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
-
-  if (!actors.contains(GasPriceActor.name)) {
-    actors.add(GasPriceActor.name, GasPriceActor.startShardRegion())
-  }
-
-  actors.add(
-    RingSettlementManagerActor.name,
-    RingSettlementManagerActor.startSingleton()
-  )
-}
+case class Transaction(
+    inputData: String,
+    nonce: Int,
+    gasLimit: BigInt,
+    gasPrice: BigInt,
+    to: String,
+    value: BigInt = BigInt(0),
+    chainId: Int = 1)

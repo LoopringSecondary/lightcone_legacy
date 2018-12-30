@@ -167,6 +167,11 @@ private[ethereum] class HttpConnector(
     case req: JsonRpc.Request =>
       post(req.json).map(JsonRpc.Response(_)) sendTo sender
 
+    case r: SendRawTransaction.Req ⇒
+      sendMessage("eth_sendRawTransaction") {
+        Seq(r.data)
+      } map JsonFormat.fromJsonString[SendRawTransaction.Res] sendTo sender
+
     case _: GetBlockNumber.Req =>
       sendMessage("eth_blockNumber") {
         Seq.empty

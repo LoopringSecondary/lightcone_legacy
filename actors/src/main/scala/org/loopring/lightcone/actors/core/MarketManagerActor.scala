@@ -117,7 +117,7 @@ class MarketManagerActor(
     selfConfig.getInt("max-recover-duration-minutes")
 
   val gasLimitPerRingV2 = BigInt(
-    config.getString("loopring-protocol.gas-limit-per-ring-v2")
+    config.getString("loopring_protocol.gas-limit-per-ring-v2")
   )
 
   val ringMatcher = new RingMatcherImpl()
@@ -141,7 +141,7 @@ class MarketManagerActor(
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerMediator =
     DistributedPubSub(context.system).mediator
-  protected def settlementActor = actors.get(RingSettlementActor.name)
+  protected def settlementActor = actors.get(RingSettlementManagerActor.name)
 
   override def preStart(): Unit = {
     super.preStart()

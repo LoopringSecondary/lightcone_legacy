@@ -62,6 +62,7 @@ package object ethereum {
 
   val erc20Abi = ERC20ABI()
   val tradeHistoryAbi = TradeHistoryAbi()
+  val ringSubmitterAbi = RingSubmitterAbi()
 
   implicit def getBalanceAndAllowanceToBatchReq(
       delegateAddress: Address,
@@ -112,11 +113,11 @@ package object ethereum {
     ): GetBalanceAndAllowances.Res = {
 
     val allowances = batchRes.resps.filter(_.id % 2 == 0).map { res =>
-      ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
     }
     val balances =
       batchRes.resps.filter(_.id % 2 == 1).map { res =>
-        ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+        ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
       }
     val balanceAndAllowance = (balances zip allowances).map { ba =>
       BalanceAndAllowance(ba._1, ba._2)
@@ -130,7 +131,7 @@ package object ethereum {
       batchRes: BatchCallContracts.Res
     ): GetBalance.Res = {
     val balances = batchRes.resps.map { res =>
-      ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
     }
     GetBalance.Res(address, (tokens zip balances).toMap)
   }
@@ -141,9 +142,15 @@ package object ethereum {
       batchRes: BatchCallContracts.Res
     ): GetAllowance.Res = {
     val allowances = batchRes.resps.map { res =>
-      ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
     }
     GetAllowance.Res(address, (tokens zip allowances).toMap)
+  }
+
+  implicit def packRingToInput(data: String): String = {
+    ringSubmitterAbi.submitRing.pack(
+      SubmitRingsFunction.Params(data = Numeric.hexStringToByteArray(data))
+    )
   }
 
   private def batchFilledAmountReq(
@@ -188,6 +195,5 @@ package object ethereum {
       val param = TransactionParams(to = token._1.toString, data = data)
       EthCall.Req(1 + token._2 * 2, Some(param), tag)
     }
-
   }
 }
