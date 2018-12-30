@@ -200,7 +200,7 @@ class MarketManagerImpl(
               case Right(ring) =>
                 isLastTakerSell = (taker.tokenS == marketId.secondary)
                 rings :+= ring
-                lastPrice = (taker.displayablePrice + maker.displayablePrice) / 2
+                lastPrice = (taker.priceU + maker.priceU) / 2
                 pendingRingPool.addRing(ring)
                 recursivelyMatchOrders()
             }
@@ -275,14 +275,6 @@ class MarketManagerImpl(
 
     val matchableAmountS = (order.actual.amountS - pendingAmountS).max(0)
     val scale = Rational(matchableAmountS, order.original.amountS)
-    val copy = order.copy(_matchable = Some(order.original.scaleBy(scale)))
-    // println(s"""
-    //   original: $order
-    //   pendingAmountS: $pendingAmountS
-    //   actualAmount: ${order.actual}
-    //   matchableAmountS: $matchableAmountS
-    //   scale: $scale
-    //   new : $copy""")
-    copy
+    order.copy(_matchable = Some(order.original.scaleBy(scale)))
   }
 }

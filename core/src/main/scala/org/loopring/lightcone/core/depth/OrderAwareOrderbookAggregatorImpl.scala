@@ -32,17 +32,17 @@ class OrderAwareOrderbookAggregatorImpl(
     adjustAmount(
       order.isSell,
       true,
-      order.displayablePrice,
-      order.displayableAmount,
-      order.displayableTotal
+      order.priceU,
+      order.matchableAmountU,
+      order.matchableTotalU
     )
 
   def deleteOrder(order: Matchable) =
     adjustAmount(
       order.isSell,
       false,
-      order.displayablePrice,
-      order.displayableAmount,
-      order.displayableTotal
+      order.priceU,
+      order.matchableAmountU,
+      order.matchableTotalU
     )
 }
