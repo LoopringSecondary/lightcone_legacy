@@ -114,6 +114,7 @@ class MarketManagerImpl(
     this.synchronized {
       getOrder(orderId).map { order =>
         removeFromSide(orderId)
+        // TODO(dongw): remove depths for pending orders
         pendingRingPool.deleteOrder(orderId)
         aggregator.getOrderbookUpdate()
       }
@@ -182,7 +183,7 @@ class MarketManagerImpl(
                        | """.stripMargin)
           (maker, matchResult)
         } match {
-          case None                       => // to maker to trade with
+          case None                       => // no maker to trade with
           case Some((maker, matchResult)) =>
             // we always need to add maker back even if it is STATUS_PENDING-fully-matched.
             ordersToAddBack :+= maker
