@@ -22,23 +22,17 @@ object Dependencies {
     "org.slf4j" % "slf4j-api" % slf4jVersion,
     "tv.cntt" %% "slf4s-api" % "1.7.25",
     "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
-    "ch.qos.logback" % "logback-classic" % logbackVersion,
-    "com.github.scopt" %% "scopt" % "3.7.0",
-    "com.github.nscala-time" %% "nscala-time" % "2.20.0"
+    "ch.qos.logback" % "logback-classic" % logbackVersion
   )
 
   lazy val guiceDependency = Seq(
-    "com.google.inject" % "guice" % "4.2.2",
     "com.google.inject.extensions" % "guice-assistedinject" % "4.2.2",
-    "net.codingwell" %% "scala-guice" % "4.2.1"
+    "net.codingwell" %% "scala-guice" % "4.2.2"
   )
 
   lazy val json4sDependency = Seq(
     "org.json4s" %% "json4s-native" % json4sVersion,
-    "org.json4s" %% "json4s-jackson" % json4sVersion,
-    "com.thesamet.scalapb" %% "scalapb-json4s" % "0.7.1",
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.9.7",
-    "org.jsoup" % "jsoup" % "1.11.3"
+    "com.thesamet.scalapb" %% "scalapb-json4s" % "0.7.2"
   )
 
   lazy val ethereumDependency = Seq(
@@ -99,14 +93,11 @@ object Dependencies {
     httpDependency ++
     akkaDependency ++
     json4sDependency ++
-    testDependency ++
-    Seq("com.corundumstudio.socketio" % "netty-socketio" % "1.7.16")
+    testDependency
 
   lazy val dependency4Indexer = dependency4Persistence ++
     httpDependency ++
     akkaDependency ++
     json4sDependency ++
-    testDependency ++
-    Seq("org.jsoup" % "jsoup" % "1.11.3")
-
+    testDependency
 }
