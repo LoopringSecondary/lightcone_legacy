@@ -32,7 +32,7 @@ class OrderAwareOrderbookAggregatorImpl(
     adjustAmount(
       order.isSell,
       true,
-      order.priceU,
+      order.priceD,
       order.matchableAmountU,
       order.matchableTotalU
     )
@@ -41,7 +41,7 @@ class OrderAwareOrderbookAggregatorImpl(
     adjustAmount(
       order.isSell,
       false,
-      order.priceU,
+      order.priceD,
       order.matchableAmountU,
       order.matchableTotalU
     )
