@@ -52,6 +52,7 @@ object Settings {
       "-Yresolve-term-conflict:package"
     ),
     fork in Test := false,
+    // conflictManager := ConflictManager.strict,
     parallelExecution in Test := false,
     startYear := Some(2018),
     licenses += ("Apache-2.0", new URL(
