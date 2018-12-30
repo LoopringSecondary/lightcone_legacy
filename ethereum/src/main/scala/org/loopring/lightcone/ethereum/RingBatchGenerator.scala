@@ -384,7 +384,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   }
 
   // For miner sig and dual-auth sigs, only ALGO_ETHEREUM algorithm supported for now.
-  private def signPrefixedMessage(
+  def signPrefixedMessage(
       hash: String,
       privateKey: String
     ) = {
@@ -402,5 +402,4 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     sigStream.addRawBytes(sigData.getS)
     sigStream.getData
   }
-
 }
