@@ -37,7 +37,7 @@ object Dependencies {
 
   lazy val ethereumDependency = Seq(
     "org.web3j" % "core" % "4.1.0",
-    "org.ethereum" % "ethereumj-core" % "1.8.2-RELEASE"
+    "org.ethereum" % "ethereumj-core" % "1.9.1-RELEASE"
   )
 
   lazy val akkaDependency = Seq(
