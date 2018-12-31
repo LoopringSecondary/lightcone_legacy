@@ -26,25 +26,25 @@ trait OrderbookAggregator {
       price: Double,
       amount: Double,
       total: Double
-    ): Unit
+    ) = adjustAmount(true, true, price, amount, total)
 
   def decreaseSell(
       price: Double,
       amount: Double,
       total: Double
-    ): Unit
+    ) = adjustAmount(true, false, price, amount, total)
 
   def increaseBuy(
       price: Double,
       amount: Double,
       total: Double
-    ): Unit
+    ) = adjustAmount(false, true, price, amount, total)
 
   def decreaseBuy(
       price: Double,
       amount: Double,
       total: Double
-    ): Unit
+    ) = adjustAmount(false, false, price, amount, total)
 
   def adjustAmount(
       isSell: Boolean,
@@ -52,6 +52,7 @@ trait OrderbookAggregator {
       price: Double,
       amount: Double,
       total: Double
-    ): Unit
+    )
+
   def reset(): Unit
 }
