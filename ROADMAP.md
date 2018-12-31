@@ -17,16 +17,16 @@
   - [x] [wangdong/yongfeng] 基于订单数据库表的actor recover操作
   - [ ] [yongfeng/wangdong] 订单生效，过期，和cutoff的处理（actor层面）
   - [ ] [yadong/yongfeng] 以太坊上面环路的爬取和存储到数据库。主要包括ring，trade，cutoff的存储。并基于此提供更多用户读取数据的API
-  - [ ] [yadong/hongyu] 以太坊事件的解析和通知（但不包括分叉的处理）
-  - [ ] [hongyu] 以太坊事件处理（包括actor里面的处理，和数据库的一些更改操作）
+  - [ ] [yadong/hongyu] **以太坊事件的解析和通知（但不包括分叉的处理）**
+  - [ ] [hongyu] **以太坊事件处理（包括actor里面的处理，和数据库的一些更改操作）**
   - [ ] [yongfeng]redis缓存
-  - [ ] [wangdong] 支持websocket
   - [ ] [wangdong] 解决订单本（深度）问题
 
 
 - **v0.3** (目标1月末）主要功能包括
+  - [ ] [wangdong] 支持websocket
   - [ ] [yadong/hongyu] 以太坊分叉事件的处理
-  - [ ] [yadong] JSONRPC支持HTTP
+  - [ ] [yadong] JSONRPC支持HTTPS
   - [ ] [yadong] Akka Cluster支持SSL/TLS
 
 
