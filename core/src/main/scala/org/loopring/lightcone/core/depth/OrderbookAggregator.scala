@@ -20,7 +20,9 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
 trait OrderbookAggregator {
-  def getOrderbookUpdate(num: Int = 0): Orderbook.Update
+  def getOrderbookUpdate(): Orderbook.Update
+
+  def getOrderbookSlots(num: Int): Orderbook.Update
 
   def increaseSell(
       price: Double,
