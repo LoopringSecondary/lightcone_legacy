@@ -26,7 +26,7 @@
 
 - **v0.3** (目标1月末）主要功能包括
   - [ ] [yadong/hongyu] 以太坊分叉事件的处理
-  - [ ] [yadong] JSONRPC支持HTTP
+  - [ ] [yadong] JSONRPC支持HTTPS
   - [ ] [yadong] Akka Cluster支持SSL/TLS
 
 
