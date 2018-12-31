@@ -22,38 +22,34 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.base._
 import org.slf4s.Logging
 
-object PendingRingPoolImpl {
-  case class OrderInfo(
-      pendingAmountS: BigInt = 0,
-      ringIds: Set[String] = Set.empty) {
-    assert(pendingAmountS >= 0)
+case class OrderInfo(
+    pendingAmountS: BigInt = 0,
+    ringIds: Set[String] = Set.empty) {
+  assert(pendingAmountS >= 0)
 
-    def +(another: OrderInfo) =
-      OrderInfo(
-        (pendingAmountS + another.pendingAmountS).max(0),
-        ringIds ++ another.ringIds
-      )
+  def +(another: OrderInfo) =
+    OrderInfo(
+      (pendingAmountS + another.pendingAmountS).max(0),
+      ringIds ++ another.ringIds
+    )
 
-    def -(another: OrderInfo) =
-      OrderInfo(
-        (pendingAmountS - another.pendingAmountS).max(0),
-        ringIds ++ another.ringIds
-      )
-  }
-
-  case class RingInfo(
-      takerId: String,
-      takerPendingAmountS: BigInt,
-      makerId: String,
-      makerPendingAmountS: BigInt,
-      timestamp: Long)
+  def -(another: OrderInfo) =
+    OrderInfo(
+      (pendingAmountS - another.pendingAmountS).max(0),
+      ringIds ++ another.ringIds
+    )
 }
+
+case class RingInfo(
+    takerId: String,
+    takerPendingAmountS: BigInt,
+    makerId: String,
+    makerPendingAmountS: BigInt,
+    timestamp: Long)
 
 class PendingRingPoolImpl()(implicit time: TimeProvider)
     extends PendingRingPool
     with Logging {
-
-  import PendingRingPoolImpl._
 
   private[core] var orderMap = Map.empty[String, OrderInfo]
   private[core] var ringMap = Map.empty[String, RingInfo]
