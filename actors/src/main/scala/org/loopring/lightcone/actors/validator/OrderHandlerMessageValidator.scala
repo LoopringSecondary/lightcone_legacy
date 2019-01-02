@@ -50,7 +50,7 @@ class OrderHandlerMessageValidator(
     }
 
   override def validate: PartialFunction[Any, Any] = {
-    case _ @SubmitOrder.Req(Some(order)) ⇒
+    case req @ SubmitOrder.Req(Some(order)) ⇒
       RawOrderValidatorImpl.validate(order) match {
         case Left(errorCode) ⇒
           throw ErrorException(
@@ -68,13 +68,15 @@ class OrderHandlerMessageValidator(
             MarketHashProvider.convert2Hex(rawOrder.tokenS, rawOrder.tokenB)
           val marketId =
             MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
-          rawOrder.copy(
-            state = Some(state),
-            marketHash = marketHash,
-            marketHashId = MarketManagerActor.getEntityId(marketId).toInt,
-            addressShardId = MultiAccountManagerActor
-              .getEntityId(order.owner, numOfShards)
-              .toInt
+          req.withRawOrder(
+            rawOrder.copy(
+              state = Some(state),
+              marketHash = marketHash,
+              marketHashId = MarketManagerActor.getEntityId(marketId).toInt,
+              addressShardId = MultiAccountManagerActor
+                .getEntityId(order.owner, numOfShards)
+                .toInt
+            )
           )
       }
 

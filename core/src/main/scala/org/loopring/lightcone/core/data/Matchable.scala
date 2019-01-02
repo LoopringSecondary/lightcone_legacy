@@ -124,45 +124,51 @@ case class Matchable(
 
   private[core] def resetMatchable() = copy(_matchable = None)
 
-  private[core] def displayableAmountS()(implicit tokenManager: TokenManager) =
-    calcDisplayableAmount(tokenS, actual.amountS)
-
-  private[core] def displayableAmountB()(implicit tokenManager: TokenManager) =
-    calcDisplayableAmount(tokenB, actual.amountB)
-
-  private[core] def displayableAmountFee(
-    )(
-      implicit tokenManager: TokenManager
-    ) =
-    calcDisplayableAmount(tokenFee, actual.amountFee)
-
   private[core] def isSell()(implicit marketId: MarketId) =
     (tokenS == marketId.secondary)
 
-  private[core] def displayablePrice(
+  private[core] def price(
     )(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    displayableAmount / displayableTotal
+    amount / total
   }
 
-  private[core] def displayableAmount(
+  private[core] def amount(
     )(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) displayableAmountS
-    else displayableAmountB
+    if (tokenS == marketId.secondary) fromWei(tokenS, actual.amountS)
+    else fromWei(tokenB, actual.amountB)
   }
 
-  private[core] def displayableTotal(
+  private[core] def total(
     )(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) displayableAmountB
-    else displayableAmountS
+    if (tokenS == marketId.secondary) fromWei(tokenB, actual.amountB)
+    else fromWei(tokenS, actual.amountS)
+  }
+
+  private[core] def actualAmount(
+    )(
+      implicit marketId: MarketId,
+      tokenManager: TokenManager
+    ) = {
+    if (tokenS == marketId.secondary) fromWei(tokenS, actual.amountS)
+    else fromWei(tokenB, actual.amountB)
+  }
+
+  private[core] def actualTotal(
+    )(
+      implicit marketId: MarketId,
+      tokenManager: TokenManager
+    ) = {
+    if (tokenS == marketId.secondary) fromWei(tokenB, actual.amountB)
+    else fromWei(tokenS, actual.amountS)
   }
 
   private def updateActual() = {
@@ -179,7 +185,7 @@ case class Matchable(
     copy(_actual = Some(original.scaleBy(r)))
   }
 
-  private def calcDisplayableAmount(
+  private def fromWei(
       tokenAddr: String,
       amount: BigInt
     )(

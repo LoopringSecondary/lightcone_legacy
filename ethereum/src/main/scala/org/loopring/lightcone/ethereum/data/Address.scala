@@ -53,6 +53,9 @@ class Address(val value: BigInt) {
 }
 
 object Address {
+
+  val zeroAddress: String = "0x" + "0" * 40
+
   val maxAddress: BigInt = BigInt("f" * 40, 16)
 
   def apply(bytes: Array[Byte]): Address = {
@@ -69,8 +72,9 @@ object Address {
     new Address(value)
   }
 
-  def apply(addr: String): Address =
-    apply(Numeric.toBigInt(addr))
+  def apply(addr: String): Address = {
+    apply(BigInt(Numeric.toBigInt(addr)))
+  }
 
   def isValid(obj: Any): Boolean = {
     obj match {
