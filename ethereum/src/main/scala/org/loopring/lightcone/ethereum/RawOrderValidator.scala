@@ -137,7 +137,13 @@ object RawOrderValidatorImpl extends RawOrderValidator {
     bitstream.addAddress(optionalParams.broker, 32, true)
     bitstream.addAddress(optionalParams.orderInterceptor, 32, true)
     bitstream.addAddress(optionalParams.wallet, 32, true)
-    bitstream.addAddress(feeParams.tokenRecipient, 32, true)
+
+    if (isValidAndNonzeroAddress(feeParams.tokenRecipient)) {
+      bitstream.addAddress(feeParams.tokenRecipient, 32, true)
+    } else {
+      bitstream.addAddress(order.owner, 32, true)
+    }
+
     bitstream.addAddress(feeParams.tokenFee, 32, true)
     bitstream.addUint(feeParams.walletSplitPercentage)
     bitstream.addUint(feeParams.tokenSFeePercentage)
