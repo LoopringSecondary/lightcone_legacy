@@ -22,7 +22,6 @@ import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.OrderStatusMonitor
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class OrderStatusMonitorServiceImpl @Inject()(
@@ -38,7 +37,7 @@ class OrderStatusMonitorServiceImpl @Inject()(
     orderStatusMonitorDal.updateLastProcessingTimestamp(event)
 
   def getLastProcessingTimestamp(
-      monitorType: OrderStatusMonitor.XMonitorType
+      monitorType: String
     ): Future[Option[OrderStatusMonitor]] =
     orderStatusMonitorDal.getLastProcessingTimestamp(monitorType)
 

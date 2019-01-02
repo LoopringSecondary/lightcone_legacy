@@ -22,7 +22,6 @@ import org.loopring.lightcone.proto.OrderStatusMonitor
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
-
 import scala.concurrent.{ExecutionContext, Future}
 
 trait OrderStatusMonitorDal
@@ -31,7 +30,7 @@ trait OrderStatusMonitorDal
   def updateLastProcessingTimestamp(event: OrderStatusMonitor): Future[Int]
 
   def getLastProcessingTimestamp(
-      monitorType: OrderStatusMonitor.XMonitorType
+      monitorType: String
     ): Future[Option[OrderStatusMonitor]]
 
 }
@@ -43,23 +42,19 @@ class OrderStatusMonitorDalImpl(
     val ec: ExecutionContext)
     extends OrderStatusMonitorDal {
   val query = TableQuery[OrderStatusMonitorTable]
-  implicit val XMonitorTypeCxolumnType = enumColumnType(
-    OrderStatusMonitor.XMonitorType
-  )
 
   def updateLastProcessingTimestamp(event: OrderStatusMonitor): Future[Int] = {
     db.run(
-      query += event
+      query.insertOrUpdate(event)
     )
   }
 
   def getLastProcessingTimestamp(
-      monitorType: OrderStatusMonitor.XMonitorType
+      monitorType: String
     ): Future[Option[OrderStatusMonitor]] =
     db.run(
       query
         .filter(_.monitorType === monitorType)
-        .sortBy(_.sequenceId.desc)
         .take(1)
         .result
         .headOption

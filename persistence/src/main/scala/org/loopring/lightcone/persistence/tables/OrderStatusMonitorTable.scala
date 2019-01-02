@@ -23,18 +23,12 @@ import slick.jdbc.MySQLProfile.api._
 class OrderStatusMonitorTable(tag: Tag)
     extends BaseTable[OrderStatusMonitor](tag, "T_ORDER_STATUS_MONITOR") {
 
-  implicit val OrderStatusMonitorTypeCxolumnType = enumColumnType(
-    OrderStatusMonitor.XMonitorType
-  )
-
-  def id = column[String]("id")
-  def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
+  def id = monitorType
   def processTime = column[Long]("process_time")
-  def monitorType = column[OrderStatusMonitor.XMonitorType]("monitor_type")
+  def monitorType = column[String]("monitor_type", O.PrimaryKey, O.Unique)
 
   def * =
     (
-      sequenceId,
       monitorType,
       processTime
     ) <> ((OrderStatusMonitor.apply _).tupled, OrderStatusMonitor.unapply)
