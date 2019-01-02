@@ -67,6 +67,11 @@ message GasPriceUpdated {
 message OrderStatusMonitor {
     string monitor_type = 1;
     int64 process_time = 2;
+
+    enum MonitorType {
+        MONITOR_TYPE_EFFECTIVE = 0;
+        MONITOR_TYPE_EXPIRE = 1;
+    }
 }
 
 /////////////////////////////////////////////////////////////////////

@@ -43,36 +43,93 @@ class EntryPointSpec_OrderStatusMonitorExpire
     with OrderGenerateSupport
     with OrderStatusMonitorSupport {
 
-  //保存一批订单，等待提交
-  val orders =
-    (0 until 2) map { i =>
-      createRawOrder(amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
-    }
-
-  val f = Future.sequence(orders map { o =>
-    dbModule.orderService.saveOrder(o)
-  })
-
-  Await.result(f, timeout.duration)
-
   "start an order status monitor" must {
     "scan the order table and submit the canceled order to AccountManager" in {
+
+      //提交一批订单
+      val orders =
+        (0 until 5) map { i =>
+          createRawOrder(
+            amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals),
+            validUntil = timeProvider.getTimeSeconds().toInt + 10
+          )
+        }
+
+      val f = Future.sequence(orders.map { o =>
+        singleRequest(SubmitOrder.Req(Some(o)), "submit_order")
+      })
+
+      Await.result(f, timeout.duration)
+      info(
+        "confirm the status of the orders in db should be STATUS_PENDING"
+      )
+      val assertOrderFromDbF = Future.sequence(orders.map { o =>
+        for {
+          orderOpt <- dbModule.orderService.getOrder(o.hash)
+        } yield {
+          orderOpt match {
+            case Some(order) =>
+              assert(order.sequenceId > 0)
+              assert(
+                order.getState.status == OrderStatus.STATUS_PENDING
+              )
+            case None =>
+              assert(false)
+          }
+        }
+      })
 
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
+      info("the sells in orderbook should be nonEmpty.")
       val orderbookRes = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.nonEmpty,
+        (orderbook: Orderbook) =>
+          orderbook.sells.nonEmpty && orderbook.sells(0).amount == "50.00000",
         Some(Timeout(20 second))
       )
       orderbookRes match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
           assert(sells.nonEmpty)
         case _ => assert(false)
       }
+
+      info(
+        "the sells in orderbook should be empty, because of the orders has been expired."
+      )
+      val orderbookRes1 = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) => orderbook.sells.isEmpty,
+        Some(Timeout(15 second))
+      )
+      orderbookRes1 match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(sells.isEmpty)
+        case _ => assert(false)
+      }
+
+      val assertOrderFromDbF1 = Future.sequence(orders.map { o =>
+        for {
+          orderOpt <- dbModule.orderService.getOrder(o.hash)
+        } yield {
+          orderOpt match {
+            case Some(order) =>
+              assert(order.sequenceId > 0)
+              assert(
+                order.getState.status == OrderStatus.STATUS_EXPIRED
+              )
+            case None =>
+              assert(false)
+          }
+        }
+      })
+
+      Await.result(assertOrderFromDbF1, timeout.duration)
     }
   }
 
