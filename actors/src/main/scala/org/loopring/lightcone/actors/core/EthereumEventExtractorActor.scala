@@ -17,16 +17,14 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
-import akka.cluster.sharding._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.ethereum.abi._
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
@@ -39,16 +37,7 @@ import scala.concurrent.duration._
 object EthereumEventExtractorActor {
   val name = "ethereum_event_extractor"
 
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ XStart(_) ⇒
-      ("address_1", msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case XStart(_) ⇒ "address_1"
-  }
-
-  def startShardRegion(
+  def start(
     )(
       implicit
       system: ActorSystem,
@@ -59,13 +48,7 @@ object EthereumEventExtractorActor {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule
     ): ActorRef = {
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new EthereumEventExtractorActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
-    )
+    system.actorOf(Props(new EthereumEventExtractorActor()))
   }
 }
 
@@ -86,11 +69,6 @@ class EthereumEventExtractorActor(
 
   def accountManager: ActorRef = actors.get(MultiAccountManagerActor.name)
 
-  val wethAbi = WETHABI()
-  val loopringProtocolAbi = LoopringProtocolAbi()
-
-  val zeroAdd: String = "0x" + "0" * 40
-
   val delegateAddress: String =
     config.getString("loopring_protocol.delegate-address")
 
@@ -98,123 +76,79 @@ class EthereumEventExtractorActor(
     config.getString("loopring_protocol.protocol-address")
 
   var currentBlockNumber: BigInt = BigInt(-1)
-  var currentBlockHash: String = _
 
   override def preStart(): Unit = {
-    self ! XStart()
+    for {
+      maxBlock: Option[Long] ← dbModule.blockService.findMaxHeight()
+      blockNum ← maxBlock match {
+        case Some(_) ⇒
+          Future.successful(
+            Numeric.prependHexPrefix(maxBlock.get.toHexString)
+          )
+        case _ ⇒
+          (ethereumAccessorActor ? GetBlockNumber.Req())
+            .mapTo[GetBlockNumber.Res]
+            .map(res ⇒ res.result)
+      }
+    } yield {
+      currentBlockNumber = blockNum -1
+      self ! Notify("nextBlock")
+    }
   }
 
   override def receive: Receive = {
-    case _: XStart ⇒
-      for {
-        maxBlock: Option[Long] ← dbModule.blockService.findMaxHeight()
-        blockNum ← maxBlock match {
-          case Some(_) ⇒
-            Future.successful(
-              Numeric.prependHexPrefix(maxBlock.get.toHexString)
-            )
-          case _ ⇒
-            (ethereumAccessorActor ? XEthBlockNumberReq())
-              .mapTo[XEthBlockNumberRes]
-              .map(res ⇒ res.result)
-        }
-        blockHash ← (ethereumAccessorActor ? XGetBlockWithTxHashByNumberReq(
-          blockNum
-        )).mapTo[XGetBlockWithTxHashByNumberRes]
-          .map(_.result.get.hash)
-      } yield {
-        currentBlockNumber = blockNum
-        currentBlockHash = blockHash
-        unstashAll()
-        context.become(ready)
-        self ! IndexNextHeight()
-      }
-    case _ ⇒
-      stash()
-  }
-
-  def ready: Receive = {
-    case _: IndexNextHeight ⇒
+    case Notify("nextBlock", _) ⇒
       process()
-    case forkBlock: XForkBlock ⇒
-      handleFork(forkBlock)
-    case job: XBlockJob ⇒
+    case job: BlockJob ⇒
       indexBlock(job)
   }
 
   def process(): Unit = {
     for {
-      taskNum ← (ethereumAccessorActor ? XEthBlockNumberReq())
-        .mapTo[XEthBlockNumberRes]
+      taskNum ← (ethereumAccessorActor ? GetBlockNumber.Req())
+        .mapTo[GetBlockNumber.Res]
         .map(_.result)
       block ← if (taskNum > currentBlockNumber)
-        (ethereumAccessorActor ? XGetBlockWithTxObjectByNumberReq(
+        (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(
           Numeric.prependHexPrefix((currentBlockNumber + 1).toString(16))
-        )).mapTo[XGetBlockWithTxObjectByNumberRes]
+        )).mapTo[GetBlockWithTxObjectByNumber.Res]
       else
         Future.successful(None)
     } yield {
       block match {
-        case XGetBlockWithTxObjectByNumberRes(_, _, Some(result), _) ⇒
-          // 暂时不考虑分叉
-//          if (result.parentHash.equals(currentBlockHash)) {
-          self ! XBlockJob(
-            height = result.number.intValue(),
+        case GetBlockWithTxObjectByNumber.Res(_, _, Some(result), _) ⇒
+          self ! BlockJob(
+            height = result.number.longValue(),
             hash = result.hash,
             miner = result.miner,
             uncles = result.uncles,
             txs = result.transactions
           )
-//          }
-//          else
-//            self ! XForkBlock((currentBlockNumber - 1).intValue())
         case _ ⇒
           context.system.scheduler
-            .scheduleOnce(15 seconds, self, IndexNextHeight())
+            .scheduleOnce(15 seconds, self, Notify("nextBlock"))
       }
     }
   }
 
-  // find the fork height
-  def handleFork(forkBlock: XForkBlock): Unit = {
-    for {
-      dbBlockData ← dbModule.blockService
-        .findByHeight(forkBlock.height.longValue())
-        .map(_.get)
-      nodeBlockData ← (ethereumAccessorActor ? XGetBlockWithTxHashByNumberReq(
-        Numeric.prependHexPrefix(forkBlock.height.toHexString)
-      )).mapTo[XGetBlockWithTxHashByNumberRes]
-        .map(_.result.get)
-      task ← if (dbBlockData.hash.equals(nodeBlockData.hash)) {
-        currentBlockNumber = forkBlock.height
-        currentBlockHash = nodeBlockData.hash
-        dbModule.blockService
-          .obsolete((forkBlock.height + 1).longValue())
-          .map(_ ⇒ IndexNextHeight())
-      } else {
-        Future.successful(XForkBlock((forkBlock.height - 1).intValue()))
-      }
-    } yield self ! task
-  }
-
   // index block
-  def indexBlock(job: XBlockJob): Unit = {
+  def indexBlock(job: BlockJob): Unit = {
     for {
-      txReceipts ← (ethereumAccessorActor ? XBatchGetTransactionReceiptsReq(
-        job.txs.map(tx ⇒ XGetTransactionReceiptReq(tx.hash))
-      )).mapTo[XBatchGetTransactionReceiptsRes]
+      txReceipts ← (ethereumAccessorActor ? BatchGetTransactionReceipts.Req(
+        job.txs.map(tx ⇒ GetTransactionReceipt.Req(tx.hash))
+      )).mapTo[BatchGetTransactionReceipts.Res]
         .map(_.resps.map(_.result))
-      batchGetUnclesReq = XBatchGetUncleByBlockNumAndIndexReq(
+      batchGetUnclesReq = BatchGetUncle.Req(
         job.uncles.zipWithIndex.unzip._2.map(
           index ⇒
-            XGetUncleByBlockNumAndIndexReq(
+            GetUncle.Req(
               Numeric.prependHexPrefix(job.height.toHexString),
               Numeric.prependHexPrefix(index.toHexString)
             )
         )
       )
       uncles ← (ethereumAccessorActor ? batchGetUnclesReq)
-        .mapTo[XBatchGetUncleByBlockNumAndIndexRes]
+        .mapTo[BatchGetUncle.Res]
         .map(_.resps.map(_.result.get.miner))
       addresses = getBalanceAndAllowanceAdds(
         job.txs zip txReceipts,
@@ -222,20 +156,20 @@ class EthereumEventExtractorActor(
         Address(protocolAddress)
       )
       fills = getFills(txReceipts)
-      filledOrders ← (ethereumQueryActor ? XGetFilledAmountReq(
+      filledOrders ← (ethereumQueryActor ? GetFilledAmount.Req(
         fills.map(_.substring(0, 66))
-      )).mapTo[XGetFilledAmountRes]
+      )).mapTo[GetFilledAmount.Res]
         .map(_.filledAmountSMap)
       submitOrders = getOnlineOrders(txReceipts)
       ordersCancelledEvents = getXOrdersCancelledEvents(txReceipts)
       ordersCutoffEvents = getXOrdersCutoffEvent(txReceipts)
       balanceAddresses = ListBuffer.empty
         .++=(addresses._1)
-        .++=(uncles.map(_ → zeroAdd))
-        .+=(job.miner → zeroAdd)
+        .++=(uncles.map(_ → Address.zeroAddress))
+        .+=(job.miner → Address.zeroAddress)
 
       balanceReqs = balanceAddresses.unzip._1.toSet.map((add: String) ⇒ {
-        XGetBalanceReq(
+        GetBalance.Req(
           add,
           balanceAddresses
             .filter(_._1.equalsIgnoreCase(add))
@@ -247,7 +181,7 @@ class EthereumEventExtractorActor(
       })
       allowanceAddresses = addresses._2
       allowanceReqs = allowanceAddresses.unzip._1.toSet.map((add: String) ⇒ {
-        XGetAllowanceReq(
+        GetAllowance.Req(
           add,
           allowanceAddresses
             .filter(_._1.equalsIgnoreCase(add))
@@ -259,11 +193,11 @@ class EthereumEventExtractorActor(
       })
       balanceRes ← Future.sequence(
         balanceReqs
-          .map(req ⇒ (ethereumQueryActor ? req).mapTo[XGetBalanceRes])
+          .map(req ⇒ (ethereumQueryActor ? req).mapTo[GetBalance.Res])
       )
       allowanceRes ← Future.sequence(
         allowanceReqs
-          .map(req ⇒ (ethereumQueryActor ? req).mapTo[XGetAllowanceRes])
+          .map(req ⇒ (ethereumQueryActor ? req).mapTo[GetAllowance.Res])
       )
     } yield {
       if (txReceipts.forall(_.nonEmpty)) {
@@ -271,7 +205,7 @@ class EthereumEventExtractorActor(
         balanceRes.foreach(res ⇒ {
           res.balanceMap.foreach(
             item ⇒
-              accountManager ! XAddressBalanceUpdated(
+              accountManager ! AddressBalanceUpdated(
                 res.address,
                 token = item._1,
                 balance = item._2
@@ -281,7 +215,7 @@ class EthereumEventExtractorActor(
         // 更新授权
         allowanceRes.foreach(res ⇒ {
           res.allowanceMap.foreach(item ⇒ {
-            accountManager ! XAddressAllowanceUpdated(
+            accountManager ! AddressAllowanceUpdated(
               res.address,
               token = item._1,
               item._2
@@ -300,18 +234,17 @@ class EthereumEventExtractorActor(
         //TODO(yadong) db 存储 online Orders -- 确认要不要定义Order类型
 
         //db 更新已经处理的最新块
-        val blockData = XBlockData(
+        val blockData = BlockData(
           hash = job.hash,
           height = job.height,
           avgGasPrice = job.txs.map(_.gasPrice.longValue()).sum / job.txs.size
         )
         dbModule.blockService.saveBlock(blockData)
         currentBlockNumber = job.height
-        currentBlockHash = job.hash
-        self ! IndexNextHeight()
+        self ! Notify("nextBlock")
       } else {
         context.system.scheduler
-          .scheduleOnce(1 seconds, self, IndexNextHeight())
+          .scheduleOnce(1 seconds, self, Notify("nextBlock"))
       }
     }
   }

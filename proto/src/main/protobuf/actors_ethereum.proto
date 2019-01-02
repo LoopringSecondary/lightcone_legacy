@@ -291,5 +291,17 @@ message BatchGetUncle {
 //     int64 block_number = 5;
 // }
 
+/////////////////////////////////////////////////////////////////////
+// ETHEREUM EVENT EXTRACTMESSAGES
+/////////////////////////////////////////////////////////////////////
+
+message BlockJob{
+    int64 height = 1;
+    string hash = 2;
+    string  miner = 3;
+    repeated string uncles = 4;
+    repeated Transaction txs = 5;
+}
+
 
 
