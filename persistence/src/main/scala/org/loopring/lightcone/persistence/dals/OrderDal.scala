@@ -309,12 +309,11 @@ class OrderDalImpl(
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] = {
     val availableStatus =
-      Seq(OrderStatus.STATUS_NEW, OrderStatus.STATUS_PENDING)
+      Seq(OrderStatus.STATUS_UNEFFECTIVED_YET)
     var filters = query
       .filter(_.status inSet availableStatus)
       .filter(_.validSince >= lastProcessTime)
       .filter(_.validSince < processTime)
-//      .filter(r => r.validSince > r.createdAt ) //todo:
       .sortBy(_.sequenceId.asc)
     filters = skip match {
       case Some(s) ⇒ filters.drop(s.skip).take(s.size)
@@ -339,7 +338,6 @@ class OrderDalImpl(
       .filter(_.validUntil >= lastProcessTime)
       .filter(_.validUntil < processTime) //todo:需要确认下
       .sortBy(_.sequenceId.asc)
-    //        .filter(r => r.validSince > r.createdAt )
     filters = skip match {
       case Some(s) ⇒ filters.drop(s.skip).take(s.size)
       case None ⇒ filters
