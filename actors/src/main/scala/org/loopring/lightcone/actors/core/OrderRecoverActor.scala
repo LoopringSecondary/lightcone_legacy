@@ -77,6 +77,8 @@ class OrderRecoverActor(
   val batchSize = selfConfig.getInt("batch-size")
   var batch: ActorRecover.RequestBatch = _
   var numOrders = 0L
+  val multiAccountConfig = config.getConfig(MultiAccountManagerActor.name)
+  val numOfShards = multiAccountConfig.getInt("num-of-shards")
   def coordinator = actors.get(OrderRecoverCoordinator.name)
   def mama = actors.get(MultiAccountManagerActor.name)
 
@@ -103,8 +105,6 @@ class OrderRecoverActor(
         orders <- retrieveOrders(batchSize, lastOrderSeqId)
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
         // filter unsupported markets
-        multiAccountConfig = config.getConfig(MultiAccountManagerActor.name)
-        numOfShards = multiAccountConfig.getInt("num-of-shards")
         availableOrders = orders.filter { o =>
           supportedMarkets.contains(MarketId(o.tokenS, o.tokenB))
         }.map { o =>
@@ -120,13 +120,17 @@ class OrderRecoverActor(
               .toInt
           )
         }
-        reqs = availableOrders.map { order =>
-          ActorRecover.RecoverOrderReq(Some(order))
+        _ <- if (availableOrders.nonEmpty) {
+          val reqs = availableOrders.map { order =>
+            ActorRecover.RecoverOrderReq(Some(order))
+          }
+          log.info(
+            s"--> batch#${batch.batchId} recovering ${orders.size} orders (total=${numOrders})..."
+          )
+          Future.sequence(reqs.map(mama ? _))
+        } else {
+          Future.successful()
         }
-        _ = log.info(
-          s"--> batch#${batch.batchId} recovering ${orders.size} orders (total=${numOrders})..."
-        )
-        _ <- Future.sequence(reqs.map(mama ? _))
       } yield {
         numOrders += orders.size
 

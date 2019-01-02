@@ -34,6 +34,10 @@ class OrderHandlerMessageValidator(
     supportedMarkets: SupportedMarkets)
     extends MessageValidator {
 
+  val multiAccountConfig =
+    config.getConfig(MultiAccountManagerActor.name)
+  val numOfShards = multiAccountConfig.getInt("num-of-shards")
+
   private def normalizeAddress(address: String): String =
     try {
       Address(address).toString
@@ -46,7 +50,6 @@ class OrderHandlerMessageValidator(
     }
 
   override def validate: PartialFunction[Any, Any] = {
-
     case _ @SubmitOrder.Req(Some(order)) ⇒
       RawOrderValidatorImpl.validate(order) match {
         case Left(errorCode) ⇒
@@ -55,9 +58,6 @@ class OrderHandlerMessageValidator(
             message = s"invalid order in SubmitOrder.Req:$order"
           )
         case Right(rawOrder) ⇒
-          val multiAccountConfig =
-            config.getConfig(MultiAccountManagerActor.name)
-          val numOfShards = multiAccountConfig.getInt("num-of-shards")
           val now = timeProvider.getTimeMillis
           val state = RawOrder.State(
             createdAt = now,
