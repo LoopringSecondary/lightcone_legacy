@@ -201,6 +201,13 @@ class OrderServiceImpl @Inject()(
     orderDal.updateOrderStatus(hash, status)
   }
 
+  def updateOrdersStatus(
+      hashes: Seq[String],
+      status: OrderStatus
+    ): Future[ErrorCode] = {
+    orderDal.updateOrdersStatus(hashes, status)
+  }
+
   def updateAmount(
       hash: String,
       state: RawOrder.State

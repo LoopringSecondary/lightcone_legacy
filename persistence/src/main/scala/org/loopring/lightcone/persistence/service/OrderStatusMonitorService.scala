@@ -24,9 +24,9 @@ import scala.concurrent.Future
 trait OrderStatusMonitorService {
   val orderStatusMonitorDal: OrderStatusMonitorDal
 
-  def saveEvent(event: OrderStatusMonitor): Future[Int]
+  def updateLastProcessingTimestamp(event: OrderStatusMonitor): Future[Int]
 
-  def getLastEvent(
+  def getLastProcessingTimestamp(
       monitorType: OrderStatusMonitor.XMonitorType
     ): Future[Option[OrderStatusMonitor]]
 }

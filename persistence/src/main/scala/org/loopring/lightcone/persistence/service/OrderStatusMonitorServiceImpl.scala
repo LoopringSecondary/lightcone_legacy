@@ -34,12 +34,12 @@ class OrderStatusMonitorServiceImpl @Inject()(
   val orderStatusMonitorDal: OrderStatusMonitorDal =
     new OrderStatusMonitorDalImpl()
 
-  def saveEvent(event: OrderStatusMonitor): Future[Int] =
-    orderStatusMonitorDal.saveEvent(event)
+  def updateLastProcessingTimestamp(event: OrderStatusMonitor): Future[Int] =
+    orderStatusMonitorDal.updateLastProcessingTimestamp(event)
 
-  def getLastEvent(
+  def getLastProcessingTimestamp(
       monitorType: OrderStatusMonitor.XMonitorType
     ): Future[Option[OrderStatusMonitor]] =
-    orderStatusMonitorDal.getLastEvent(monitorType)
+    orderStatusMonitorDal.getLastProcessingTimestamp(monitorType)
 
 }

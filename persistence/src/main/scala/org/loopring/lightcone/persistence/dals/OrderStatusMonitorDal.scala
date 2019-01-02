@@ -28,9 +28,9 @@ import scala.concurrent.{ExecutionContext, Future}
 trait OrderStatusMonitorDal
     extends BaseDalImpl[OrderStatusMonitorTable, OrderStatusMonitor] {
 
-  def saveEvent(event: OrderStatusMonitor): Future[Int]
+  def updateLastProcessingTimestamp(event: OrderStatusMonitor): Future[Int]
 
-  def getLastEvent(
+  def getLastProcessingTimestamp(
       monitorType: OrderStatusMonitor.XMonitorType
     ): Future[Option[OrderStatusMonitor]]
 
@@ -47,13 +47,13 @@ class OrderStatusMonitorDalImpl(
     OrderStatusMonitor.XMonitorType
   )
 
-  def saveEvent(event: OrderStatusMonitor): Future[Int] = {
+  def updateLastProcessingTimestamp(event: OrderStatusMonitor): Future[Int] = {
     db.run(
       query += event
     )
   }
 
-  def getLastEvent(
+  def getLastProcessingTimestamp(
       monitorType: OrderStatusMonitor.XMonitorType
     ): Future[Option[OrderStatusMonitor]] =
     db.run(
