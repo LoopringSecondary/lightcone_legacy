@@ -40,14 +40,14 @@ class AccountManagerImplSpec_Adjustment extends OrderAwareSpec {
     adjustOrder(order1.id, 40 !) should be(true)
     updatedOrders.size should be(1)
 
-    updatedOrders(order1.id).status should be(XOrderStatus.STATUS_PENDING)
+    updatedOrders(order1.id).status should be(OrderStatus.STATUS_PENDING)
     updatedOrders(order1.id).reserved should be(orderState(40 !, 0 !, 16 !))
     updatedOrders(order1.id).actual should be(orderState(40 !, 4 !, 16 !))
 
     adjustOrder(order1.id, 140 !) should be(true)
     updatedOrders.size should be(1)
 
-    updatedOrders(order1.id).status should be(XOrderStatus.STATUS_PENDING)
+    updatedOrders(order1.id).status should be(OrderStatus.STATUS_PENDING)
     updatedOrders(order1.id).reserved should be(orderState(100 !, 0 !, 40 !))
     updatedOrders(order1.id).actual should be(orderState(100 !, 10 !, 40 !))
   }
@@ -66,14 +66,14 @@ class AccountManagerImplSpec_Adjustment extends OrderAwareSpec {
     adjustOrder(order2.id, 40 !)
     updatedOrders.size should be(1)
 
-    updatedOrders(order2.id).status should be(XOrderStatus.STATUS_PENDING)
+    updatedOrders(order2.id).status should be(OrderStatus.STATUS_PENDING)
     updatedOrders(order2.id).reserved should be(orderState(40 !, 0 !, 16 !))
     updatedOrders(order2.id).actual should be(orderState(40 !, 4 !, 16 !))
 
     adjustOrder(order2.id, 140 !)
     updatedOrders.size should be(1)
 
-    updatedOrders(order2.id).status should be(XOrderStatus.STATUS_PENDING)
+    updatedOrders(order2.id).status should be(OrderStatus.STATUS_PENDING)
     updatedOrders(order2.id).reserved should be(orderState(100 !, 0 !, 40 !))
     updatedOrders(order2.id).actual should be(orderState(100 !, 10 !, 40 !))
   }

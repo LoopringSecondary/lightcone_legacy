@@ -38,7 +38,7 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
     val order1Owner = TestConfig.envOrElseConfig("accounts.a1.addr")
     val order2Owner = TestConfig.envOrElseConfig("accounts.a2.addr")
 
-    implicit val context: XRingBatchContext = XRingBatchContext()
+    implicit val context: RingBatchContext = RingBatchContext()
       .withMiner(miner)
       .withMinerPrivateKey(minerPrivKey)
       .withFeeRecipient(minerFeeRecipient)
@@ -46,28 +46,28 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
       .withLrcAddress(lrcAddress)
     val ringBatchGenerator = RingBatchGeneratorImpl
 
-    val order1 = new XRawOrder()
+    val order1 = new RawOrder()
       .withVersion(0)
       .withOwner(order1Owner)
       .withTokenS(lrcAddress)
       .withTokenB(wethAddress)
-      .withAmountS(ByteString.copyFromUtf8(1000e18.toLong.toHexString))
-      .withAmountB(ByteString.copyFromUtf8(1e18.toLong.toHexString))
+      .withAmountS(ByteString.copyFrom(BigInt(1000e18.toLong).toByteArray))
+      .withAmountB(ByteString.copyFrom(BigInt(1e18.toLong).toByteArray))
 
-    val order2 = new XRawOrder()
+    val order2 = new RawOrder()
       .withVersion(0)
       .withOwner(order2Owner)
       .withTokenS(wethAddress)
       .withTokenB(lrcAddress)
-      .withAmountS(ByteString.copyFromUtf8(1e18.toLong.toHexString))
-      .withAmountB(ByteString.copyFromUtf8(1000e18.toLong.toHexString))
+      .withAmountS(ByteString.copyFrom(BigInt(1e18.toLong).toByteArray))
+      .withAmountB(ByteString.copyFrom(BigInt(1000e18.toLong).toByteArray))
 
     val orders = Seq(Seq(order1, order2))
-    val xRingBatch: XRingBatch =
+    val xRingBatch: RingBatch =
       ringBatchGenerator.generateAndSignRingBatch(orders)
   }
 
-  "toSubmitableParamStr" should "be able to serialize a XRingBatch object to param string" in {
+  "toSubmitableParamStr" should "be able to serialize a RingBatch object to param string" in {
     val miner = "0x23a51c5f860527f971d0587d130c64536256040d"
     val minerPrivKey =
       "0xa99a8d27d06380565d1cf6c71974e7707a81676c4e7cb3dad2c43babbdca2d23"
@@ -87,7 +87,7 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
 
     val validator: RawOrderValidator = RawOrderValidatorImpl
     val generator: RingBatchGenerator = RingBatchGeneratorImpl
-    implicit val context: XRingBatchContext = XRingBatchContext()
+    implicit val context: RingBatchContext = RingBatchContext()
       .withMiner(miner)
       .withMinerPrivateKey(minerPrivKey)
       .withFeeRecipient(minerFeeRecipient)
@@ -99,52 +99,52 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
     val orderSig2 =
       "0x01411c37034ce977b6b9ba41af6cac3cb36256d58129ebed9127dbeec8844b570a601e326e641b7800b2b0e965a01dcb07564090923a4f2f8ff61f3276417c0c17a61e"
 
-    val params1 = (new XRawOrder.Params)
+    val params1 = (new RawOrder.Params)
       .withDualAuthAddr(dualAuthAddr)
       .withDualAuthPrivateKey(dualAuthPrivateKey)
       .withWallet(walletAddr)
       .withSig(orderSig1)
 
-    val feeParams1 = (new XRawOrder.FeeParams)
+    val feeParams1 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
       .withAmountFee(
-        ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16))
+        ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray)
       )
       .withTokenRecipient(order1Owner)
       .withWalletSplitPercentage(10)
 
-    val order1 = (new XRawOrder)
+    val order1 = (new RawOrder)
       .withVersion(0)
       .withOwner(order1Owner)
       .withTokenS(wethAddress)
       .withTokenB(lrcAddress)
-      .withAmountS(ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16)))
-      .withAmountB(ByteString.copyFromUtf8(BigInt("1" + "0" * 21).toString(16)))
+      .withAmountS(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
+      .withAmountB(ByteString.copyFrom(BigInt("1" + "0" * 21).toByteArray))
       .withValidSince(validSince)
       .withParams(params1)
       .withFeeParams(feeParams1)
 
-    val params2 = (new XRawOrder.Params)
+    val params2 = (new RawOrder.Params)
       .withDualAuthAddr(dualAuthAddr)
       .withDualAuthPrivateKey(dualAuthPrivateKey)
       .withWallet(walletAddr)
       .withSig(orderSig2)
 
-    val feeParams2 = (new XRawOrder.FeeParams)
+    val feeParams2 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
       .withAmountFee(
-        ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16))
+        ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray)
       )
       .withTokenRecipient(order2Owner)
       .withWalletSplitPercentage(20)
 
-    val order2 = (new XRawOrder)
+    val order2 = (new RawOrder)
       .withVersion(0)
       .withOwner(order2Owner)
       .withTokenS(lrcAddress)
       .withTokenB(wethAddress)
-      .withAmountS(ByteString.copyFromUtf8(BigInt("1" + "0" * 21).toString(16)))
-      .withAmountB(ByteString.copyFromUtf8(BigInt("1" + "0" * 18).toString(16)))
+      .withAmountS(ByteString.copyFrom(BigInt("1" + "0" * 21).toByteArray))
+      .withAmountB(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
       .withValidSince(1545619109)
       .withParams(params2)
       .withFeeParams(feeParams2)

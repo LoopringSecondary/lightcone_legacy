@@ -20,8 +20,8 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
-import XOrderStatus._
-import XErrorCode._
+import OrderStatus._
+import ErrorCode._
 
 class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
 
@@ -33,13 +33,13 @@ class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
     "and should put order inside the orderbook" in {
     var order = actualNotDust(sellGTO(100000, 101))
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(XOrderbookUpdate())
+    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
 
     val result = marketManager.submitOrder(order, 0)
     result should be(emptyMatchingResult(order, STATUS_PENDING))
     marketManager.getNumOfSellOrders() should be(1)
 
-    marketManager.cancelOrder(order.id) should be(Some(XOrderbookUpdate()))
+    marketManager.cancelOrder(order.id) should be(Some(Orderbook.Update()))
 
     (fakePendingRingPool.deleteOrder _).verify(order.id).once
     marketManager.getNumOfSellOrders() should be(0)

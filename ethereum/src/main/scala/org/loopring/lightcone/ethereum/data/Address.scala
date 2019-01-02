@@ -18,7 +18,7 @@ package org.loopring.lightcone.ethereum.data
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto.XErrorCode
+import org.loopring.lightcone.proto.ErrorCode
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils
 
@@ -53,6 +53,9 @@ class Address(val value: BigInt) {
 }
 
 object Address {
+
+  val zeroAddress: String = "0x" + "0" * 40
+
   val maxAddress: BigInt = BigInt("f" * 40, 16)
 
   def apply(bytes: Array[Byte]): Address = {
@@ -69,8 +72,9 @@ object Address {
     new Address(value)
   }
 
-  def apply(addr: String): Address =
-    apply(Numeric.toBigInt(addr))
+  def apply(addr: String): Address = {
+    apply(BigInt(Numeric.toBigInt(addr)))
+  }
 
   def isValid(obj: Any): Boolean = {
     obj match {
@@ -93,7 +97,7 @@ object Address {
     } catch {
       case _: Throwable ⇒
         throw ErrorException(
-          XErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+          ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
           message = s"invalid ethereum address:$address"
         )
     }

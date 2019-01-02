@@ -15,19 +15,17 @@
  */
 
 package org.loopring.lightcone.actors.core
-import akka.actor.SupervisorStrategy.Restart
+import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor._
 import akka.cluster.sharding._
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.actors.base.safefuture._
-import scala.concurrent._
+import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.persistence.DatabaseModule
+
 import org.loopring.lightcone.proto._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -43,7 +41,8 @@ object MultiAccountManagerActor extends ShardedByAddress {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dustEvaluator: DustOrderEvaluator
+      dustEvaluator: DustOrderEvaluator,
+      dbModule: DatabaseModule
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -59,18 +58,18 @@ object MultiAccountManagerActor extends ShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
-    case req: XSubmitOrderReq =>
+    case req: SubmitOrder.Req =>
       throw ErrorException(
         ERR_UNEXPECTED_ACTOR_MSG,
-        "MultiAccountManagerActor does not handle XSubmitOrderReq, use XSubmitSimpleOrderReq"
+        "MultiAccountManagerActor does not handle SubmitOrder.Req, use SubmitSimpleOrder"
       )
 
-    case XRecover.RecoverOrderReq(Some(raworder)) => raworder.owner
-    case req: XCancelOrderReq ⇒ req.owner
-    case req: XSubmitSimpleOrderReq ⇒ req.owner
-    case req: XGetBalanceAndAllowancesReq ⇒ req.address
-    case req: XAddressBalanceUpdated ⇒ req.address
-    case req: XAddressAllowanceUpdated ⇒ req.address
+    case ActorRecover.RecoverOrderReq(Some(raworder)) => raworder.owner
+    case req: CancelOrder.Req ⇒ req.owner
+    case req: SubmitSimpleOrder ⇒ req.owner
+    case req: GetBalanceAndAllowances.Req ⇒ req.address
+    case req: AddressBalanceUpdated ⇒ req.address
+    case req: AddressAllowanceUpdated ⇒ req.address
   }
 }
 
@@ -81,7 +80,8 @@ class MultiAccountManagerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dustEvaluator: DustOrderEvaluator)
+    val dustEvaluator: DustOrderEvaluator,
+    val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
     with ActorLogging {
 
@@ -95,10 +95,14 @@ class MultiAccountManagerActor(
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
+  //todo: 完成recovery后，需要再次测试异常恢复情况
   override val supervisorStrategy =
-    AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
+    AllForOneStrategy() {
       case e: Exception ⇒
         log.error(e.getMessage)
+        accountManagerActors.all().foreach(_ ! PoisonPill)
+        Escalate
+      case e =>
         Restart
     }
 
@@ -110,7 +114,7 @@ class MultiAccountManagerActor(
         .scheduleOnce(
           maxRecoverDurationMinutes.minute,
           self,
-          XRecover.Finished(true)
+          ActorRecover.Finished(true)
         )
     )
 
@@ -120,7 +124,7 @@ class MultiAccountManagerActor(
 
       log.debug(s"actor recover started: ${self.path}")
       actors.get(OrderRecoverCoordinator.name) !
-        XRecover.Request(addressShardingEntity = entityId)
+        ActorRecover.Request(addressShardingEntity = entityId)
 
       context.become(recover)
     }
@@ -128,15 +132,15 @@ class MultiAccountManagerActor(
 
   def recover: Receive = {
 
-    case req: XRecover.RecoverOrderReq => handleRequest(req)
+    case req: ActorRecover.RecoverOrderReq => handleRequest(req)
 
-    case XRecover.Finished(timeout) =>
+    case ActorRecover.Finished(timeout) =>
       s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
       context.become(receive)
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
-      sender ! XError(
+      sender ! Error(
         ERR_REJECTED_DURING_RECOVER,
         s"account manager ${entityId} is being recovered"
       )

@@ -29,21 +29,21 @@ final class EthereumQueryMessageValidator()(implicit val config: Config)
 
   // Throws exception if validation fails.
   def validate = {
-    case req: XGetBalanceAndAllowancesReq =>
+    case req: GetBalanceAndAllowances.Req =>
       req
         .copy(tokens = req.tokens.map(Address.normalizeAddress))
         .copy(address = Address.normalizeAddress(req.address))
 
-    case req: XGetBalanceReq =>
+    case req: GetBalance.Req =>
       req
         .copy(tokens = req.tokens.map(Address.normalizeAddress))
         .copy(address = Address.normalizeAddress(req.address))
 
-    case req: XGetAllowanceReq =>
+    case req: GetAllowance.Req =>
       req
         .copy(tokens = req.tokens.map(Address.normalizeAddress))
         .copy(address = Address.normalizeAddress(req.address))
 
-    // case req: GetFilledAmountReq =>
+    // case req: GetFilledAmount.Req =>
   }
 }

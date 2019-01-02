@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.jsonrpc
 import org.loopring.lightcone.lib._
 import org.json4s.JsonAST.JValue
 import scala.reflect.ClassTag
-import org.loopring.lightcone.proto.XErrorCode
+import org.loopring.lightcone.proto.ErrorCode
 
 import scala.reflect.runtime.universe.{typeOf, TypeTag}
 
@@ -40,7 +40,7 @@ class PayloadConverter[T <: Proto[T]: TypeTag, S <: Proto[S]: TypeTag](
       case _ =>
         if (!cs.runtimeClass.isInstance(s))
           throw ErrorException(
-            XErrorCode.ERR_INTERNAL_UNKNOWN,
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
             s"expect ${typeOf[T].typeSymbol.name} get ${s.getClass.getName}"
           )
         ps.serialize[S](s.asInstanceOf[S]).get

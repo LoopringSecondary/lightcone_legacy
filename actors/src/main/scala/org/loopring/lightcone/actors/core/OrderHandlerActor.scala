@@ -26,7 +26,7 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.lib.{ErrorException, _}
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
@@ -73,7 +73,7 @@ class OrderHandlerActor(
 
   //save order to db first, then send to AccountManager
   def receive: Receive = {
-    case req: XCancelOrderReq ⇒
+    case req: CancelOrder.Req ⇒
       (for {
         cancelRes <- dbModule.orderService.markOrderSoftCancelled(Seq(req.id))
       } yield {
@@ -87,8 +87,7 @@ class OrderHandlerActor(
         }
       }) forwardTo (mammv, sender)
 
-    case XSubmitOrderReq(Some(raworder)) ⇒
-      log.info(s"### XSubmitOrderReq11 ${raworder} ")
+    case SubmitOrder.Req(Some(raworder)) ⇒
       (for {
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         saveRes <- dbModule.orderService.saveOrder(raworder)
@@ -97,7 +96,7 @@ class OrderHandlerActor(
           case Right(errCode) =>
             throw ErrorException(errCode, s"failed to submit order: $raworder")
           case Left(resRawOrder) =>
-            XSubmitSimpleOrderReq(resRawOrder.owner, Some(resRawOrder))
+            SubmitSimpleOrder(resRawOrder.owner, Some(resRawOrder))
         }
       }) forwardTo (mammv, sender)
   }

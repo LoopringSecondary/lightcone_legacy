@@ -26,11 +26,11 @@ import scala.annotation.tailrec
 import scala.collection.mutable.{Map, SortedSet}
 
 object MarketManagerImpl {
-  private def defaultOrdering() = new Ordering[Order] {
+  private def defaultOrdering() = new Ordering[Matchable] {
 
     def compare(
-        a: Order,
-        b: Order
+        a: Matchable,
+        b: Matchable
       ) = {
       if (a.rate < b.rate) -1
       else if (a.rate > b.rate) 1
@@ -42,7 +42,7 @@ object MarketManagerImpl {
 }
 
 class MarketManagerImpl(
-    val marketId: XMarketId,
+    val marketId: MarketId,
     val tokenManager: TokenManager,
     val ringMatcher: RingMatcher,
     val pendingRingPool: PendingRingPool,
@@ -53,8 +53,8 @@ class MarketManagerImpl(
 
   import MarketManager._
   import MarketManagerImpl._
-  import XErrorCode._
-  import XOrderStatus._
+  import ErrorCode._
+  import OrderStatus._
 
   private implicit val marketId_ = marketId
   private implicit val tm_ = tokenManager
@@ -63,10 +63,10 @@ class MarketManagerImpl(
   private var isLastTakerSell = false
   private var lastPrice: Double = 0
 
-  private[core] val buys = SortedSet.empty[Order] // order.tokenS == marketId.primary
-  private[core] val sells = SortedSet.empty[Order] // order.tokenS == marketId.secondary
+  private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.primary
+  private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.secondary
 
-  private[core] val orderMap = Map.empty[String, Order]
+  private[core] val orderMap = Map.empty[String, Matchable]
   private[core] val sides =
     Map(marketId.primary -> buys, marketId.secondary -> sells)
 
@@ -102,7 +102,7 @@ class MarketManagerImpl(
   }
 
   def submitOrder(
-      order: Order,
+      order: Matchable,
       minFiatValue: Double = 0
     ): MatchResult = this.synchronized {
     // Allow re-submission of an existing order.
@@ -110,16 +110,17 @@ class MarketManagerImpl(
     matchOrders(order, minFiatValue)
   }
 
-  def cancelOrder(orderId: String): Option[XOrderbookUpdate] =
+  def cancelOrder(orderId: String): Option[Orderbook.Update] =
     this.synchronized {
       getOrder(orderId).map { order =>
         removeFromSide(orderId)
+        // TODO(dongw): remove depths for pending orders
         pendingRingPool.deleteOrder(orderId)
         aggregator.getOrderbookUpdate()
       }
     }
 
-  def deletePendingRing(ringId: String): Option[XOrderbookUpdate] =
+  def deletePendingRing(ringId: String): Option[Orderbook.Update] =
     this.synchronized {
       if (pendingRingPool.hasRing(ringId)) {
         pendingRingPool.deleteRing(ringId)
@@ -138,25 +139,25 @@ class MarketManagerImpl(
   }
 
   private[core] def matchOrders(
-      order: Order,
+      order: Matchable,
       minFiatValue: Double
     ): MatchResult = {
     if (dustOrderEvaluator.isOriginalDust(order)) {
       MatchResult(
         Nil,
         order.copy(status = STATUS_DUST_ORDER),
-        XOrderbookUpdate(Nil, Nil)
+        Orderbook.Update(Nil, Nil)
       )
     } else if (dustOrderEvaluator.isActualDust(order)) {
       MatchResult(
         Nil,
         order.copy(status = STATUS_COMPLETELY_FILLED),
-        XOrderbookUpdate(Nil, Nil)
+        Orderbook.Update(Nil, Nil)
       )
     } else {
       var taker = order.copy(status = STATUS_PENDING)
-      var rings = Seq.empty[OrderRing]
-      var ordersToAddBack = Seq.empty[Order]
+      var rings = Seq.empty[MatchableRing]
+      var ordersToAddBack = Seq.empty[Matchable]
       var lastPrice: Double = 0
 
       // The result of this recursive method is to populate
@@ -182,7 +183,7 @@ class MarketManagerImpl(
                        | """.stripMargin)
           (maker, matchResult)
         } match {
-          case None                       => // to maker to trade with
+          case None                       => // no maker to trade with
           case Some((maker, matchResult)) =>
             // we always need to add maker back even if it is STATUS_PENDING-fully-matched.
             ordersToAddBack :+= maker
@@ -200,7 +201,7 @@ class MarketManagerImpl(
               case Right(ring) =>
                 isLastTakerSell = (taker.tokenS == marketId.secondary)
                 rings :+= ring
-                lastPrice = (taker.displayablePrice + maker.displayablePrice) / 2
+                lastPrice = (taker.price + maker.price) / 2
                 pendingRingPool.addRing(ring)
                 recursivelyMatchOrders()
             }
@@ -237,7 +238,7 @@ class MarketManagerImpl(
     )
 
   // Add an order to its side.
-  private def addToSide(order: Order) {
+  private def addToSide(order: Matchable) {
     // always make sure _matchable is None.
     val order_ = order.copy(_matchable = None)
     aggregator.addOrder(order)
@@ -256,11 +257,11 @@ class MarketManagerImpl(
   }
 
   // Remove and return the top taker order for a taker order.
-  private def popBestMakerOrder(order: Order): Option[Order] =
+  private def popBestMakerOrder(order: Matchable): Option[Matchable] =
     popOrder(sides(order.tokenB))
 
   // Remove and return the top order from one side.
-  private def popOrder(side: SortedSet[Order]): Option[Order] = {
+  private def popOrder(side: SortedSet[Matchable]): Option[Matchable] = {
     side.headOption.map { order =>
       aggregator.deleteOrder(order)
       orderMap -= order.id
@@ -269,20 +270,12 @@ class MarketManagerImpl(
     }
   }
 
-  private[core] def updateOrderMatchable(order: Order): Order = {
+  private[core] def updateOrderMatchable(order: Matchable): Matchable = {
 
     val pendingAmountS = pendingRingPool.getOrderPendingAmountS(order.id)
 
     val matchableAmountS = (order.actual.amountS - pendingAmountS).max(0)
     val scale = Rational(matchableAmountS, order.original.amountS)
-    val copy = order.copy(_matchable = Some(order.original.scaleBy(scale)))
-    // println(s"""
-    //   original: $order
-    //   pendingAmountS: $pendingAmountS
-    //   actualAmount: ${order.actual}
-    //   matchableAmountS: $matchableAmountS
-    //   scale: $scale
-    //   new : $copy""")
-    copy
+    order.copy(_matchable = Some(order.original.scaleBy(scale)))
   }
 }

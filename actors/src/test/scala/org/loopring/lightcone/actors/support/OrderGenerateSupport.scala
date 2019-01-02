@@ -17,6 +17,14 @@
 package org.loopring.lightcone.actors.support
 
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.ethereum.{
+  RawOrderValidatorImpl,
+  RingBatchGeneratorImpl
+}
+import org.loopring.lightcone.actors.core.{
+  MarketManagerActor,
+  MultiAccountManagerActor
+}
 import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Hash
@@ -26,7 +34,7 @@ trait OrderGenerateSupport {
   my: CommonSpec =>
 
   def createRawOrder(
-      owner: String = "0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10",
+      owner: String = "0x53a356c45cffc4c5d4e54bbececb60dbf5de9c8b",
       tokenS: String = LRC_TOKEN.address,
       tokenB: String = WETH_TOKEN.address,
       amountS: BigInt = "10".zeros(18),
@@ -34,46 +42,56 @@ trait OrderGenerateSupport {
       tokenFee: String = LRC_TOKEN.address,
       amountFee: BigInt = "3".zeros(18)
     )(
-      implicit privateKey: Option[String] = None
+      implicit privateKey: Option[String] =
+        Some("0x6549df526c28b1d92b0de63606cf039d3dc1846b114118367d8b161ec03256bf")
     ) = {
-    //todo:hash 和 签名,
-    // todo:hash 暂时随便给定
     val createAt = timeProvider.getTimeMillis
-    val hash = Hash.sha3(
-      BigInt(createAt).toByteArray ++
-        Numeric.hexStringToByteArray(owner) ++
-        Numeric.hexStringToByteArray(tokenS) ++
-        Numeric.hexStringToByteArray(tokenB) ++
-        Numeric.hexStringToByteArray(tokenFee) ++
-        amountS.toByteArray ++
-        amountB.toByteArray ++
-        amountFee.toByteArray
-    )
-    XRawOrder(
+    val marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
+    val order = RawOrder(
       owner = owner,
-      hash = Numeric.toHexString(hash),
-      version = 1,
+      version = 0,
       tokenS = tokenS,
       tokenB = tokenB,
       amountS = ByteString.copyFrom(amountS.toByteArray),
       amountB = ByteString.copyFrom(amountB.toByteArray),
-      validSince = (createAt / 1000).toInt + 10000,
+      validSince = (createAt / 1000).toInt,
       state = Some(
-        XRawOrder.State(
+        RawOrder.State(
           createdAt = createAt,
           updatedAt = createAt,
-          status = XOrderStatus.STATUS_NEW
+          status = OrderStatus.STATUS_NEW
         )
       ),
       feeParams = Some(
-        XRawOrder.FeeParams(
+        RawOrder.FeeParams(
           tokenFee = tokenFee,
           amountFee = ByteString.copyFrom(amountFee.toByteArray)
         )
       ),
       params =
-        Some(XRawOrder.Params(validUntil = (createAt / 1000).toInt + 20000))
+        Some(RawOrder.Params(validUntil = (createAt / 1000).toInt + 20000)),
+      marketHash = marketHash,
+      marketHashId = MarketManagerActor
+        .getEntityId(MarketId(primary = tokenS, secondary = tokenB))
+        .toInt,
+      addressShardId = MultiAccountManagerActor
+        .getEntityId(owner, 100)
+        .toInt
     )
+
+    val hash = RawOrderValidatorImpl.calculateOrderHash(order)
+    order
+      .withHash(hash)
+      .withParams(
+        order.params.get.withSig(
+          RingBatchGeneratorImpl
+            .signPrefixedMessage(
+              hash,
+              privateKey.get
+            )
+        )
+      )
+
   }
 
 }

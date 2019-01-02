@@ -21,15 +21,15 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.scalatest._
-import XErrorCode._
+import ErrorCode._
 
 class RingMatcherImplSpec_Basic extends OrderAwareSpec {
 
   implicit val alwaysProfitable = new RingIncomeEstimator {
-    def getRingIncome(ring: OrderRing) = Long.MaxValue
+    def getRingIncome(ring: MatchableRing) = Long.MaxValue
 
     def isProfitable(
-        ring: OrderRing,
+        ring: MatchableRing,
         fiatValueThreshold: Double
       ) = true
   }
@@ -84,7 +84,7 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
   "RingMatcherImpl" should "verify two orders in MarketManagerImplSpec_Performance should be matched in a ring " in {
     matcher
       .matchOrders(
-        taker = Order(
+        taker = Matchable(
           "taker",
           WETH,
           GTO,
@@ -94,14 +94,14 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
           0,
           -1,
           -1,
-          XOrderStatus.STATUS_PENDING,
+          OrderStatus.STATUS_PENDING,
           0.0,
           None,
           None,
           None,
-          Some(OrderState(0, 0, 0))
+          Some(MatchableState(0, 0, 0))
         ).matchableAsOriginal,
-        maker = Order(
+        maker = Matchable(
           "maker",
           GTO,
           WETH,
@@ -111,12 +111,12 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
           0,
           -1,
           -1,
-          XOrderStatus.STATUS_PENDING,
+          OrderStatus.STATUS_PENDING,
           0.0,
           None,
           None,
           None,
-          Some(OrderState(0, 0, 0))
+          Some(MatchableState(0, 0, 0))
         ).matchableAsOriginal
       )
       .isRight should be(true)

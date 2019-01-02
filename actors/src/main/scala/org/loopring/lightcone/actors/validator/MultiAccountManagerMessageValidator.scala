@@ -32,19 +32,19 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
   val supportedMarkets = SupportedMarkets(config)
 
   def validate = {
-    case req: XCancelOrderReq ⇒
+    case req: CancelOrder.Req ⇒
       req.copy(owner = Address.normalizeAddress(req.owner))
 
-    case req: XSubmitSimpleOrderReq ⇒
+    case req: SubmitSimpleOrder ⇒
       req.order match {
         case None =>
           throw ErrorException(
-            XErrorCode.ERR_INVALID_ARGUMENT,
+            ErrorCode.ERR_INVALID_ARGUMENT,
             s"bad request:${req}"
           )
         case Some(order) =>
           supportedMarkets.assertmarketIdIsValid(
-            XMarketId(order.tokenS, order.tokenB)
+            MarketId(order.tokenS, order.tokenB)
           )
           req.copy(
             order = Some(
@@ -57,20 +57,20 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
             owner = Address.normalizeAddress(req.owner)
           )
       }
-    case req: XRecover.RecoverOrderReq => req
-    case req: XGetBalanceAndAllowancesReq ⇒
+    case req: ActorRecover.RecoverOrderReq => req
+    case req: GetBalanceAndAllowances.Req ⇒
       req.copy(
         address = Address.normalizeAddress(req.address),
         tokens = req.tokens.map(Address.normalizeAddress)
       )
 
-    case req: XAddressBalanceUpdated ⇒
+    case req: AddressBalanceUpdated ⇒
       req.copy(
         address = Address.normalizeAddress(req.address),
         token = Address.normalizeAddress(req.token)
       )
 
-    case req: XAddressAllowanceUpdated ⇒
+    case req: AddressAllowanceUpdated ⇒
       req.copy(
         address = Address.normalizeAddress(req.address),
         token = Address.normalizeAddress(req.token)

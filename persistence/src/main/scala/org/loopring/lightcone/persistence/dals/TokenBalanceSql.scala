@@ -24,13 +24,13 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 
-trait TokenBalanceDal extends BaseDalImpl[TokenBalanceTable, XTokenBalance] {
-  def getBalances(address: String): Future[Seq[XTokenBalance]]
+trait TokenBalanceDal extends BaseDalImpl[TokenBalanceTable, TokenBalance] {
+  def getBalances(address: String): Future[Seq[TokenBalance]]
 
   def getBalance(
       address: String,
       token: String
-    ): Future[Option[XTokenBalance]]
+    ): Future[Option[TokenBalance]]
 }
 
 class TokenBalanceDalImpl(

@@ -23,17 +23,15 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class EntryPointSpec_SubmitTwoMatchedOrder
-    extends CommonSpec(
-      """
-        |akka.cluster.roles=[
-        | "order_handler",
-        | "multi_account_manager",
-        | "market_manager",
-        | "orderbook_manager",
-        | "gas_price",
-        | "ring_settlement"]
-        |""".stripMargin
-    )
+    extends CommonSpec("""
+                         |akka.cluster.roles=[
+                         | "order_handler",
+                         | "multi_account_manager",
+                         | "market_manager",
+                         | "orderbook_manager",
+                         | "gas_price",
+                         | "ring_settlement"]
+                         |""".stripMargin)
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport
@@ -54,7 +52,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
           amountFee = "10".zeros(18),
           tokenFee = LRC_TOKEN.address
         )
-      val f = singleRequest(XSubmitOrderReq(Some(order1)), "submit_order")
+      val f = singleRequest(SubmitOrder.Req(Some(order1)), "submit_order")
       Await.result(f, timeout.duration)
 
       val order2 =
@@ -66,22 +64,19 @@ class EntryPointSpec_SubmitTwoMatchedOrder
           amountFee = "10".zeros(18),
           tokenFee = LRC_TOKEN.address
         )
-      val f1 = singleRequest(XSubmitOrderReq(Some(order2)), "submit_order")
+      val f1 = singleRequest(SubmitOrder.Req(Some(order2)), "submit_order")
       Await.result(f1, timeout.duration)
 
       Thread.sleep(1000)
-      val getOrderBook = XGetOrderbook(
+      val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF2 = singleRequest(
-        getOrderBook,
-        "orderbook"
-      )
+      val orderbookF2 = singleRequest(getOrderBook, "orderbook")
       val orderbookRes2 = Await.result(orderbookF2, timeout.duration)
       orderbookRes2 match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.isEmpty && buys.size == 1)
           assert(
@@ -92,18 +87,15 @@ class EntryPointSpec_SubmitTwoMatchedOrder
         case _ => assert(false)
       }
 
-      val getOrderBook1 = XGetOrderbook(
+      val getOrderBook1 = GetOrderbook.Req(
         1,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF1 = singleRequest(
-        getOrderBook1,
-        "orderbook"
-      )
+      val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.isEmpty && buys.size == 1)
           assert(

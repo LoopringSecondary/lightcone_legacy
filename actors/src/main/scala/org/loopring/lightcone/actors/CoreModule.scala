@@ -37,9 +37,9 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import org.loopring.lightcone.actors.validator._
 
 class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
@@ -110,14 +110,22 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       )
 
       //-----------deploy cluster singletons-----------
+      system.actorOf(
+        ClusterSingletonManager.props(
+          singletonProps = Props(new OrderRecoverCoordinator()),
+          terminationMessage = PoisonPill,
+          settings = ClusterSingletonManagerSettings(system)
+        ),
+        OrderRecoverCoordinator.name
+      )
       actors.add(
         OrderRecoverCoordinator.name,
         system.actorOf(
           ClusterSingletonProxy.props(
-            singletonManagerPath = OrderRecoverCoordinator.name,
+            singletonManagerPath = s"/user/${OrderRecoverCoordinator.name}",
             settings = ClusterSingletonProxySettings(system)
           ),
-          name = OrderRecoverCoordinator.name
+          name = s"${OrderRecoverCoordinator.name}_proxy"
         )
       )
 
@@ -128,9 +136,15 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
       actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
       actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
-      actors.add(RingSettlementActor.name, RingSettlementActor.startShardRegion)
-      actors.add(EthereumAccessActor.name, EthereumAccessActor.startShardRegion)
-
+      actors.add(EthereumAccessActor.name, EthereumAccessActor.startSingleton)
+      actors.add(
+        EthereumClientMonitor.name,
+        EthereumClientMonitor.startSingleton
+      )
+      actors.add(
+        RingSettlementManagerActor.name,
+        RingSettlementManagerActor.startSingleton
+      )
       actors.add(
         MultiAccountManagerActor.name,
         MultiAccountManagerActor.startShardRegion
@@ -184,6 +198,15 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
           new OrderbookManagerMessageValidator(),
           OrderbookManagerActor.name,
           OrderbookManagerMessageValidator.name
+        )
+      )
+
+      actors.add(
+        OrderHandlerMessageValidator.name,
+        MessageValidationActor(
+          new OrderHandlerMessageValidator(),
+          OrderHandlerActor.name,
+          OrderHandlerMessageValidator.name
         )
       )
 

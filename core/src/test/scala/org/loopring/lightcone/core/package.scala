@@ -29,8 +29,8 @@ package object core {
     def ! = BigInt(v.toLong)
   }
 
-  implicit class RichOrder(order: Order) {
-    def asPending() = order.copy(status = XOrderStatus.STATUS_PENDING)
+  implicit class RichMatchable(order: Matchable) {
+    def asPending() = order.copy(status = OrderStatus.STATUS_PENDING)
     def withActualAsOriginal() = order.copy(_actual = Some(order.original))
     def withMatchableAsActual() = order.copy(_matchable = Some(order.actual))
     def matchableAsOriginal() = order.copy(_matchable = Some(order.original))

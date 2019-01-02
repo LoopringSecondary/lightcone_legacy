@@ -44,86 +44,63 @@ class EntryPointSpec_Depth
     "get the right depth" in {
       val rawOrder1 =
         createRawOrder(amountS = "123456789".zeros(10), amountB = "1".zeros(18))
-      val f1 = singleRequest(
-        XSubmitOrderReq(
-          Some(rawOrder1)
-        ),
-        "submit_order"
-      )
+      val f1 = singleRequest(SubmitOrder.Req(Some(rawOrder1)), "submit_order")
 
       val res1 = Await.result(f1, timeout.duration)
       res1 match {
-        case XSubmitOrderRes(Some(order)) =>
+        case SubmitOrder.Res(Some(order)) =>
           info(s" response ${order}")
-          order.status should be(XOrderStatus.STATUS_PENDING)
+          order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)
       }
 
       val rawOrder2 =
         createRawOrder(amountS = "223456789".zeros(10), amountB = "1".zeros(18))
-      val f2 = singleRequest(
-        XSubmitOrderReq(
-          Some(rawOrder2)
-        ),
-        "submit_order"
-      )
+      val f2 = singleRequest(SubmitOrder.Req(Some(rawOrder2)), "submit_order")
 
       val res2 = Await.result(f2, timeout.duration)
       res2 match {
-        case XSubmitOrderRes(Some(order)) =>
+        case SubmitOrder.Res(Some(order)) =>
           info(s" response ${order}")
-          order.status should be(XOrderStatus.STATUS_PENDING)
+          order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)
       }
 
       val rawOrder3 =
         createRawOrder(amountS = "323456789".zeros(10), amountB = "1".zeros(18))
-      val f3 = singleRequest(
-        XSubmitOrderReq(
-          Some(rawOrder3)
-        ),
-        "submit_order"
-      )
+      val f3 = singleRequest(SubmitOrder.Req(Some(rawOrder3)), "submit_order")
 
       val res3 = Await.result(f3, timeout.duration)
       res3 match {
-        case XSubmitOrderRes(Some(order)) =>
+        case SubmitOrder.Res(Some(order)) =>
           info(s" response ${order}")
-          order.status should be(XOrderStatus.STATUS_PENDING)
+          order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)
       }
 
       val rawOrder4 =
         createRawOrder(amountS = "323456689".zeros(10), amountB = "1".zeros(18))
-      val f4 = singleRequest(
-        XSubmitOrderReq(
-          Some(rawOrder4)
-        ),
-        "submit_order"
-      )
+      val f4 = singleRequest(SubmitOrder.Req(Some(rawOrder4)), "submit_order")
 
       val res4 = Await.result(f4, timeout.duration)
       res4 match {
-        case XSubmitOrderRes(Some(order)) =>
+        case SubmitOrder.Res(Some(order)) =>
           info(s" response ${order}")
-          order.status should be(XOrderStatus.STATUS_PENDING)
+          order.status should be(OrderStatus.STATUS_PENDING)
         case _ => assert(false)
       }
 
-      Thread.sleep(2000)
+      Thread.sleep(1000)
       //根据不同的level需要有不同的汇总
-      val getOrderBook1 = XGetOrderbook(
+      val getOrderBook1 = GetOrderbook.Req(
         0,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF1 = singleRequest(
-        getOrderBook1,
-        "orderbook"
-      )
+      val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
       val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
       orderbookRes1 match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 4)
           assert(
@@ -150,18 +127,15 @@ class EntryPointSpec_Depth
       }
 
       //下一level
-      val getOrderBook2 = XGetOrderbook(
+      val getOrderBook2 = GetOrderbook.Req(
         1,
         100,
-        Some(XMarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF2 = singleRequest(
-        getOrderBook2,
-        "orderbook"
-      )
+      val orderbookF2 = singleRequest(getOrderBook2, "orderbook")
       val orderbookRes2 = Await.result(orderbookF2, timeout.duration)
       orderbookRes2 match {
-        case XOrderbook(lastPrice, sells, buys) =>
+        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 3)
           assert(

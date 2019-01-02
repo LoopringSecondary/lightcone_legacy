@@ -28,12 +28,13 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Order
-import org.loopring.lightcone.proto.XErrorCode._
-import org.loopring.lightcone.proto.XOrderStatus._
+import org.loopring.lightcone.core.data.Matchable
+import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
+import org.loopring.lightcone.persistence.DatabaseModule
 import scala.concurrent._
 
 // main owner: 杜永丰
@@ -43,7 +44,7 @@ object OrderRecoverActor extends ShardedEvenly {
   override protected val messageExtractor =
     new HashCodeMessageExtractor(numOfShards) {
       override def entityId(message: Any) = message match {
-        case req: XRecover.Batch =>
+        case req: ActorRecover.RequestBatch =>
           name + "_batch" + req.batchId
         case e: Any =>
           throw new Exception(s"$e not expected by OrderRecoverActor")
@@ -57,7 +58,8 @@ object OrderRecoverActor extends ShardedEvenly {
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
-      actors: Lookup[ActorRef]
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule
     ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
@@ -74,39 +76,40 @@ class OrderRecoverActor(
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef])
+    val actors: Lookup[ActorRef],
+    val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   val batchSize = selfConfig.getInt("batch-size")
-  var batch: XRecover.Batch = _
+  var batch: ActorRecover.RequestBatch = _
   var numOrders = 0L
   def coordinator = actors.get(OrderRecoverCoordinator.name)
   def mama = actors.get(MultiAccountManagerActor.name)
 
   def receive: Receive = {
-    case req: XRecover.Batch =>
+    case req: ActorRecover.RequestBatch =>
       log.info(s"started order recover - $req")
       batch = req
 
       sender ! batch // echo back to coordinator
-      self ! XRecover.RetrieveOrders(0L)
+      self ! ActorRecover.RetrieveOrders(0L)
 
       context.become(recovering)
   }
 
   def recovering: Receive = {
-    case XRecover.CancelFor(requester) =>
+    case ActorRecover.CancelFor(requester) =>
       batch =
         batch.copy(requestMap = batch.requestMap.filterNot(_._1 == requester))
 
       sender ! batch // echo back to coordinator
 
-    case XRecover.RetrieveOrders(lastOrderSeqId) =>
+    case ActorRecover.RetrieveOrders(lastOrderSeqId) =>
       for {
         orders <- retrieveOrders(batchSize, lastOrderSeqId)
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
         reqs = orders.map { order =>
-          XRecover.RecoverOrderReq(Some(order))
+          ActorRecover.RecoverOrderReq(Some(order))
         }
         _ = log.info(
           s"--> batch#${batch.batchId} recovering ${orders.size} orders (total=${numOrders})..."
@@ -117,15 +120,15 @@ class OrderRecoverActor(
 
         lastOrderSeqIdOpt match {
           case Some(lastOrderSeqId) =>
-            self ! XRecover.RetrieveOrders(lastOrderSeqId)
+            self ! ActorRecover.RetrieveOrders(lastOrderSeqId)
 
           case None =>
-            coordinator ! XRecover.Finished()
+            coordinator ! ActorRecover.Finished(false)
 
             batch.requestMap.keys.toSeq
               .map(resolveActorRef)
               .foreach { actor =>
-                actor ! XRecover.Finished()
+                actor ! ActorRecover.Finished(false)
               }
         }
       }
@@ -141,10 +144,38 @@ class OrderRecoverActor(
   // This method returns a list of orders to recover, based on the current batch
   // parameters, the batch size, and the last order sequence id.
   // The last order in the returned list should be the most up-to-date one.
-  // TODO(yongfeng): Implement this
   def retrieveOrders(
       batchSize: Int,
       lastOrderSeqId: Long
-    ): Future[Seq[XRawOrder]] = ???
+    ): Future[Seq[RawOrder]] = {
+    if (batch.requestMap.nonEmpty) {
+      var addressShardIds: Set[Int] = Set.empty
+      var marketHashIds: Set[Int] = Set.empty
+      batch.requestMap.foreach {
+        case (_, request) => {
+          if ("" != request.addressShardingEntity)
+            addressShardIds += request.addressShardingEntity.toInt
+          if (request.marketId.nonEmpty) {
+            val marketHashId =
+              MarketManagerActor.getEntityId(request.marketId.get).toInt
+            marketHashIds += marketHashId
+          }
+        }
+      }
+      val status = Set(
+        OrderStatus.STATUS_NEW,
+        OrderStatus.STATUS_PENDING,
+        OrderStatus.STATUS_PARTIALLY_FILLED
+      )
+      dbModule.orderService.getOrdersForRecover(
+        status,
+        marketHashIds,
+        addressShardIds,
+        CursorPaging(lastOrderSeqId, batchSize)
+      )
+    } else {
+      Future.successful(Seq.empty)
+    }
+  }
 
 }

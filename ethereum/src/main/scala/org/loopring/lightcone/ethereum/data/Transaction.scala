@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.ethereum.data
 
-option java_multiple_files = true;
-package org.loopring.lightcone.proto;
-
-
-message IndexNextHeight {
-
-}
+case class Transaction(
+    inputData: String,
+    nonce: Int,
+    gasLimit: BigInt,
+    gasPrice: BigInt,
+    to: String,
+    value: BigInt = BigInt(0),
+    chainId: Int = 1)

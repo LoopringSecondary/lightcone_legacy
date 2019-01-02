@@ -17,19 +17,14 @@
 package org.loopring.lightcone.actors
 
 import com.google.protobuf.ByteString
-import org.json4s._
+import org.json4s.{DefaultFormats, NoTypeHints}
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.write
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib.MarketHashProvider.convert2Hex
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.data._
-
+import org.loopring.lightcone.proto.{BatchCallContracts, _}
 import org.web3j.utils.Numeric
-
-import scala.collection.mutable.ListBuffer
 
 package object ethereum {
 
@@ -41,21 +36,22 @@ package object ethereum {
       method: String,
       params: Any) {
     private implicit val formats = Serialization.formats(NoTypeHints)
-    def toProto: XJsonRpcReq = XJsonRpcReq(write(this))
+    def toProto = JsonRpc.Request(write(this))
   }
 
   private[ethereum] case class JsonRpcResWrapped(
       id: Any,
       jsonrpc: String = "2.0",
       result: Any,
-      error: Option[XJsonRpcErr]
+      error: Option[JsonRpc.Error]
     )
 
   private[ethereum] object JsonRpcResWrapped {
     private implicit val formats = DefaultFormats
 
-    def toJsonRpcResWrapped: PartialFunction[XJsonRpcRes, JsonRpcResWrapped] = {
-      case j: XJsonRpcRes => parse(j.json).extract[JsonRpcResWrapped]
+    def toJsonRpcResWrapped
+      : PartialFunction[JsonRpc.Response, JsonRpcResWrapped] = {
+      case j: JsonRpc.Response => parse(j.json).extract[JsonRpcResWrapped]
     }
   }
 
@@ -65,93 +61,96 @@ package object ethereum {
       params: Seq[Any])
 
   val erc20Abi = ERC20ABI()
-  val wethAbi = WETHABI()
   val tradeHistoryAbi = TradeHistoryAbi()
+  val ringSubmitterAbi = RingSubmitterAbi()
 
-  val zeroAdd: String = "0x" + "0" * 40
-  val loopringProtocolAbi = LoopringProtocolAbi()
-
-  implicit def xGetBalanceAndAllowanceToBatchReq(
+  implicit def getBalanceAndAllowanceToBatchReq(
       delegateAddress: Address,
-      req: XGetBalanceAndAllowancesReq
-    ): XBatchContractCallReq = {
+      req: GetBalanceAndAllowances.Req
+    ): BatchCallContracts.Req = {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val allowanceCallReqs =
       batchErc20AllowanceReq(delegateAddress, owner, tokens)
     val balanceCallReqs = batchErc20BalanceReq(owner, tokens)
 
-    XBatchContractCallReq(allowanceCallReqs ++ balanceCallReqs)
+    BatchCallContracts.Req(allowanceCallReqs ++ balanceCallReqs)
   }
 
-  implicit def xGetBalanceToBatchReq(
-      req: XGetBalanceReq
-    ): XBatchContractCallReq = {
+  implicit def getBalanceToBatchReq(
+      req: GetBalance.Req
+    ): BatchCallContracts.Req = {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val balanceCallReqs = batchErc20BalanceReq(owner, tokens)
-    XBatchContractCallReq(balanceCallReqs)
+    BatchCallContracts.Req(balanceCallReqs)
   }
 
-  implicit def xGetAllowanceToBatchReq(
+  implicit def getAllowanceToBatchReq(
       delegateAddress: Address,
-      req: XGetAllowanceReq
-    ): XBatchContractCallReq = {
+      req: GetAllowance.Req
+    ): BatchCallContracts.Req = {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val allowanceCallReqs =
       batchErc20AllowanceReq(delegateAddress, owner, tokens)
-    XBatchContractCallReq(allowanceCallReqs)
+    BatchCallContracts.Req(allowanceCallReqs)
   }
 
-  implicit def xGetFilledAmountToBatchReq(
+  implicit def getFilledAmountToBatchReq(
       tradeHistoryAddress: Address,
-      req: XGetFilledAmountReq
-    ): XBatchContractCallReq = {
+      req: GetFilledAmount.Req
+    ): BatchCallContracts.Req = {
     val batchFilledAmountReqs =
       batchFilledAmountReq(tradeHistoryAddress, req.orderIds)
-    XBatchContractCallReq(batchFilledAmountReqs)
+    BatchCallContracts.Req(batchFilledAmountReqs)
   }
 
-  implicit def xBatchContractCallResToBalanceAndAllowance(
+  implicit def batchContractCallResToBalanceAndAllowance(
       address: String,
       tokens: Seq[String],
-      batchRes: XBatchContractCallRes
-    ): XGetBalanceAndAllowancesRes = {
+      batchRes: BatchCallContracts.Res
+    ): GetBalanceAndAllowances.Res = {
 
     val allowances = batchRes.resps.filter(_.id % 2 == 0).map { res =>
-      ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
     }
     val balances =
       batchRes.resps.filter(_.id % 2 == 1).map { res =>
-        ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+        ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
       }
     val balanceAndAllowance = (balances zip allowances).map { ba =>
-      XBalanceAndAllowance(ba._1, ba._2)
+      BalanceAndAllowance(ba._1, ba._2)
     }
-    XGetBalanceAndAllowancesRes(address, (tokens zip balanceAndAllowance).toMap)
+    GetBalanceAndAllowances.Res(address, (tokens zip balanceAndAllowance).toMap)
   }
 
-  implicit def xBatchContractCallResToBalance(
+  implicit def batchContractCallResToBalance(
       address: String,
       tokens: Seq[String],
-      batchRes: XBatchContractCallRes
-    ): XGetBalanceRes = {
+      batchRes: BatchCallContracts.Res
+    ): GetBalance.Res = {
     val balances = batchRes.resps.map { res =>
-      ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
     }
-    XGetBalanceRes(address, (tokens zip balances).toMap)
+    GetBalance.Res(address, (tokens zip balances).toMap)
   }
 
-  implicit def xBatchContractCallResToAllowance(
+  implicit def batchContractCallResToAllowance(
       address: String,
       tokens: Seq[String],
-      batchRes: XBatchContractCallRes
-    ): XGetAllowanceRes = {
+      batchRes: BatchCallContracts.Res
+    ): GetAllowance.Res = {
     val allowances = batchRes.resps.map { res =>
-      ByteString.copyFrom(Numeric.hexStringToByteArray(res.result))
+      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
     }
-    XGetAllowanceRes(address, (tokens zip allowances).toMap)
+    GetAllowance.Res(address, (tokens zip allowances).toMap)
+  }
+
+  implicit def packRingToInput(data: String): String = {
+    ringSubmitterAbi.submitRing.pack(
+      SubmitRingsFunction.Params(data = Numeric.hexStringToByteArray(data))
+    )
   }
 
   private def batchFilledAmountReq(
@@ -163,8 +162,8 @@ package object ethereum {
       val data = tradeHistoryAbi.filled.pack(
         FilledFunction.Params(Numeric.hexStringToByteArray(orderHash._1))
       )
-      val param = XTransactionParam(to = contractAddress.toString, data = data)
-      XEthCallReq(orderHash._2, Some(param), tag)
+      val param = TransactionParams(to = contractAddress.toString, data = data)
+      EthCall.Req(orderHash._2, Some(param), tag)
     }
   }
 
@@ -179,8 +178,8 @@ package object ethereum {
         AllowanceFunction
           .Parms(_spender = delegateAddress.toString, _owner = owner.toString)
       )
-      val param = XTransactionParam(to = token._1.toString, data = data)
-      XEthCallReq(token._2 * 2, Some(param), tag)
+      val param = TransactionParams(to = token._1.toString, data = data)
+      EthCall.Req(token._2 * 2, Some(param), tag)
     })
   }
 
@@ -193,259 +192,8 @@ package object ethereum {
       val data = erc20Abi.balanceOf.pack(
         BalanceOfFunction.Parms(_owner = owner.toString)
       )
-      val param = XTransactionParam(to = token._1.toString, data = data)
-      XEthCallReq(1 + token._2 * 2, Some(param), tag)
+      val param = TransactionParams(to = token._1.toString, data = data)
+      EthCall.Req(1 + token._2 * 2, Some(param), tag)
     }
   }
-
-  def getBalanceAndAllowanceAdds(
-      txs:Seq[(XTransaction,Option[XTransactionReceipt])],
-      delegate: Address,
-      protocol: Address
-    ): (Seq[(String, String)], Seq[(String, String)]) = {
-    val balanceAddresses = ListBuffer.empty[(String, String)]
-    val allowanceAddresses = ListBuffer.empty[(String, String)]
-    if (txs.forall(_._2.nonEmpty)) {
-      txs.foreach(tx ⇒ {
-        balanceAddresses.append(tx._2.get.from → zeroAdd)
-        if(Numeric.toBigInt(tx._2.get.status).intValue() == 1 ){
-          if(tx._1.input.isEmpty || tx._1.input.equals("0x")||tx._1.input.equals("0x0")){
-            balanceAddresses.append(tx._2.get.to → zeroAdd)
-          }
-          wethAbi.unpackFunctionInput(tx._1.input) match {
-            case Some(param:TransferFunction.Parms) ⇒
-              balanceAddresses.append(
-                tx._1.from → tx._1.to,
-                param.to → tx._1.to
-              )
-            case Some(param:ApproveFunction.Parms) ⇒
-              if (param.spender.equalsIgnoreCase(delegate.toString))
-                allowanceAddresses.append(
-                  tx._1.from → tx._1.to
-                )
-            case Some(param:TransferFromFunction.Parms) ⇒
-              balanceAddresses.append(
-                param.txFrom -> tx._1.to,
-                param.to → tx._1.to
-              )
-            case _ ⇒
-          }
-        }
-        tx._2.get.logs.foreach(log ⇒ {
-          wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-            case Some(transfer: TransferEvent.Result) ⇒
-              balanceAddresses.append(
-                transfer.sender → log.address,
-                transfer.receiver → log.address
-              )
-              if (tx._2.get.to.equalsIgnoreCase(protocol.toString)) {
-                allowanceAddresses.append(transfer.sender → log.address)
-              }
-            case Some(approval: ApprovalEvent.Result) ⇒
-              if (approval.spender.equalsIgnoreCase(delegate.toString))
-                allowanceAddresses.append(approval.owner → log.address)
-            case Some(deposit: DepositEvent.Result) ⇒
-              balanceAddresses.append(deposit.dst → log.address)
-            case Some(withdrawal: WithdrawalEvent.Result) ⇒
-              balanceAddresses.append(withdrawal.src → log.address)
-            case _ ⇒
-          }
-        })
-      })
-    }
-
-    (balanceAddresses.toSet.toSeq, allowanceAddresses.toSet.toSeq)
-  }
-
-  def getFills(receipts: Seq[Option[XTransactionReceipt]]): Seq[String] = {
-
-    if (receipts.forall(_.nonEmpty)) {
-      receipts
-        .flatMap(receipt ⇒ {
-          receipt.get.logs.flatMap { log ⇒
-            {
-              loopringProtocolAbi
-                .unpackEvent(log.data, log.topics.toArray) match {
-                case Some(event: RingMinedEvent.Result) ⇒
-                  splitEventToFills(event._fills)
-                case _ ⇒
-                  Seq.empty[String]
-              }
-            }
-          }
-        })
-    } else {
-      Seq.empty[String]
-    }
-
-  }
-
-  def splitEventToFills(_fills: String): Seq[String] = {
-    //首先去掉head 64 * 2
-    val fillContent = Numeric.cleanHexPrefix(_fills).substring(128)
-    val fillLength = 8 * 64
-    (0 until (fillContent.length / fillLength)).map { index ⇒
-      fillContent.substring(index * fillLength, fillLength * (index + 1))
-    }
-  }
-
-  def getXOrdersCancelledEvents(
-      receipts: Seq[Option[XTransactionReceipt]]
-    ): Seq[XOrdersCancelledEvent] = {
-
-    if (receipts.forall(_.nonEmpty)) {
-      receipts.flatMap(
-        receipt ⇒
-          receipt.get.logs.flatMap { log ⇒
-            {
-              loopringProtocolAbi
-                .unpackEvent(log.data, log.topics.toArray) match {
-                case Some(event: OrdersCancelledEvent.Result) ⇒
-                  event._orderHashes
-                    .map(orderHash ⇒ {
-                      XOrdersCancelledEvent()
-                        .withOrderHash(orderHash)
-                        .withBlockHeight(
-                          Numeric.toBigInt(receipt.get.blockNumber).longValue()
-                        )
-                        .withBrokerOrOwner(event.address)
-                        .withTxHash(receipt.get.transactionHash)
-                    })
-                case _ ⇒
-                  Seq.empty[XOrdersCancelledEvent]
-              }
-            }
-          }
-      )
-    } else {
-      Seq.empty[XOrdersCancelledEvent]
-    }
-  }
-
-  def getXOrdersCutoffEvent(
-      receipts: Seq[Option[XTransactionReceipt]]
-    ): Seq[XOrdersCutoffEvent] = {
-    receipts.flatMap { receipt ⇒
-      receipt.get.logs.map { log ⇒
-        loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-          case Some(event: AllOrdersCancelledEvent.Result) ⇒
-            Some(
-              XOrdersCutoffEvent()
-                .withTxHash(receipt.get.transactionHash)
-                .withBlockHeight(
-                  Numeric.toBigInt(receipt.get.blockNumber).longValue()
-                )
-                .withBroker(event._broker)
-                .withCutoff(event._cutoff.longValue())
-            )
-          case Some(event: AllOrdersCancelledByBrokerEvent.Result) ⇒
-            Some(
-              XOrdersCutoffEvent()
-                .withTxHash(receipt.get.transactionHash)
-                .withBlockHeight(
-                  Numeric.toBigInt(receipt.get.blockNumber).longValue()
-                )
-                .withBroker(event._broker)
-                .withOwner(event._owner)
-                .withCutoff(event._cutoff.longValue())
-            )
-          case Some(event: AllOrdersCancelledForTradingPairEvent.Result) ⇒
-            Some(
-              XOrdersCutoffEvent()
-                .withTxHash(receipt.get.transactionHash)
-                .withBlockHeight(
-                  Numeric.toBigInt(receipt.get.blockNumber).longValue()
-                )
-                .withBroker(event._broker)
-                .withCutoff(event._cutoff.longValue())
-                .withTradingPair(
-                  convert2Hex(
-                    Address(event._token1).toString,
-                    Address(event._token2).toString
-                  )
-                )
-            )
-          case Some(
-              event: AllOrdersCancelledForTradingPairByBrokerEvent.Result
-              ) ⇒
-            Some(
-              XOrdersCutoffEvent()
-                .withTxHash(receipt.get.transactionHash)
-                .withBlockHeight(
-                  Numeric.toBigInt(receipt.get.blockNumber).longValue()
-                )
-                .withBroker(event._broker)
-                .withOwner(event._owner)
-                .withCutoff(event._cutoff.longValue())
-                .withTradingPair(
-                  convert2Hex(
-                    Address(event._token1).toString,
-                    Address(event._token2).toString
-                  )
-                )
-            )
-          case _ ⇒
-            None
-        }
-      }.filter(_.nonEmpty).flatten
-    }
-  }
-
-  //等待定义Online Order 结构
-  def getOnlineOrders( receipts: Seq[Option[XTransactionReceipt]]):Seq[XRawOrder] = {
-    if(receipts.forall(_.nonEmpty)){
-      receipts.flatMap(receipt ⇒ {
-        receipt.get.logs.map{log ⇒
-         loopringProtocolAbi.unpackEvent(log.data,log.topics.toArray) match {
-           case Some(event:OrderSubmittedEvent.Result)⇒
-              Some(extractOrderfromEvent(event))
-           case _ ⇒
-             None
-         }
-        }.filter(_.nonEmpty).flatten
-      })
-    }else{
-      Seq.empty[XRawOrder]
-    }
-  }
-
-  def extractOrderfromEvent(event:OrderSubmittedEvent.Result):XRawOrder = {
-
-    // 去掉head 2 * 64
-    val data = Numeric.cleanHexPrefix(event.orderData).substring(128)
-
-    XRawOrder()
-      .withOwner(Numeric.prependHexPrefix(data.substring(0,64)))
-      .withTokenS(Numeric.prependHexPrefix(data.substring(64,64 *2)))
-      .withTokenB(Numeric.prependHexPrefix(data.substring(64 *2,64 *3)))
-      .withAmountS(Numeric.hexStringToByteArray(data.substring(64 *3 ,64 * 4)))
-      .withAmountB(Numeric.hexStringToByteArray(data.substring(64 *4 ,64 * 5)))
-      .withValidSince(Numeric.toBigInt(data.substring(64 *5 ,64 * 6)).intValue())
-      .withParams(
-        XRawOrder.Params()
-          .withBroker(Numeric.prependHexPrefix(data.substring(64 * 6,64 *7)))
-          .withOrderInterceptor(Numeric.prependHexPrefix(data.substring(64 * 7,64 *8)))
-          .withWallet(Numeric.prependHexPrefix(data.substring(64 * 8,64 * 9)))
-          .withValidUntil(Numeric.toBigInt(data.substring(64 *9 ,64 * 10)).intValue())
-          .withAllOrNone(Numeric.toBigInt(data.substring(64 *10 ,64 * 11)).intValue() == 1)
-          .withTokenStandardS(XTokenStandard.fromValue(Numeric.toBigInt(data.substring(64 *17 ,64 * 18)).intValue()))
-          .withTokenStandardB(XTokenStandard.fromValue(Numeric.toBigInt(data.substring(64 *18 ,64 * 19)).intValue()))
-          .withTokenStandardFee(XTokenStandard.fromValue(Numeric.toBigInt(data.substring(64 *19 ,64 * 20)).intValue())))
-      .withHash(event.orderHash)
-      .withFeeParams(
-        XRawOrder.FeeParams()
-          .withTokenFee(Numeric.prependHexPrefix(data.substring(64 * 11,64 * 12)))
-          .withAmountFee(Numeric.hexStringToByteArray(data.substring(64 * 12,64 * 13)))
-          .withTokenSFeePercentage(Numeric.toBigInt(data.substring(64 * 13,64 * 14)).intValue())
-          .withTokenBFeePercentage(Numeric.toBigInt(data.substring(64 * 14,64 * 15)).intValue())
-          .withTokenRecipient(Numeric.prependHexPrefix(data.substring(64 * 15,64 * 16)))
-          .withWalletSplitPercentage(Numeric.toBigInt(data.substring(64 * 16,64 * 17)).intValue()))
-      .withErc1400Params(
-        XRawOrder.ERC1400Params()
-          .withTrancheS(Numeric.prependHexPrefix(data.substring(64 * 20,64 * 21)))
-          .withTrancheB(Numeric.prependHexPrefix(data.substring(64 * 21,64 * 22)))
-          .withTransferDataS(Numeric.prependHexPrefix(data.substring(64 * 22,64 * 23)))
-      )
-  }
-
 }

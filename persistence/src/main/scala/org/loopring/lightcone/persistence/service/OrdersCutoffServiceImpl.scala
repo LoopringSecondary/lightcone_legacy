@@ -22,19 +22,18 @@ import org.loopring.lightcone.persistence.dals.{
   OrdersCutoffDal,
   OrdersCutoffDalImpl
 }
-import org.loopring.lightcone.proto.{XErrorCode, XOrdersCutoffEvent}
+import org.loopring.lightcone.proto.{ErrorCode, OrdersCutoffEvent}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
 class OrdersCutoffServiceImpl @Inject()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
     extends OrdersCutoffService {
   val cutoffDal: OrdersCutoffDal = new OrdersCutoffDalImpl()
 
-  def saveCutoff(cutoff: XOrdersCutoffEvent): Future[XErrorCode] =
+  def saveCutoff(cutoff: OrdersCutoffEvent): Future[ErrorCode] =
     cutoffDal.saveCutoff(cutoff)
 
   def hasCutoff(

@@ -18,8 +18,8 @@ package org.loopring.lightcone.actors.base
 
 import akka.actor._
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto.XError
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.Error
+import org.loopring.lightcone.proto.ErrorCode._
 
 import scala.concurrent._
 import scala.reflect.ClassTag
@@ -30,23 +30,22 @@ object safefuture {
   implicit class SafeFutureSupport[T](
       f: Future[T]
     )(
-      implicit ec: ExecutionContext,
-      ac: ActorContext) {
+      implicit ec: ExecutionContext) {
 
     // Map a future to a certain type. All other types will throw ErrorException.
     def mapAs[S](implicit tag: ClassTag[S]): Future[S] = f map {
-      case m: S        => m
-      case err: XError => throw ErrorException(err)
+      case m: S       => m
+      case err: Error => throw ErrorException(err)
       case other =>
         throw ErrorException(
-          XError(
+          Error(
             ERR_INTERNAL_UNKNOWN,
             s"unexpected msg ${other.getClass.getName}"
           )
         )
     }
 
-    // Forward the future to a receiver but will send back an XError to sender in case of exception.
+    // Forward the future to a receiver but will send back an Error to sender in case of exception.
     //todo:直接使用forward无法使用，暂时以该方式实现功能，后续可以优化
     def forwardTo(
         recipient: ActorRef,
@@ -66,7 +65,7 @@ object safefuture {
       f
     }
 
-    // Send the future to a receiver but will send back an XError to sender in case of exception.
+    // Send the future to a receiver but will send back an Error to sender in case of exception.
     def sendTo(
         recipient: ActorRef,
         orginSenderOpt: Option[ActorRef] = None

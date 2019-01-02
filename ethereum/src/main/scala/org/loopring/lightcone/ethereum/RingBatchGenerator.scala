@@ -26,15 +26,15 @@ import org.loopring.lightcone.proto._
 trait RingBatchGenerator {
 
   def generateAndSignRingBatch(
-      orders: Seq[Seq[XRawOrder]]
+      orders: Seq[Seq[RawOrder]]
     )(
-      implicit context: XRingBatchContext
-    ): XRingBatch
+      implicit context: RingBatchContext
+    ): RingBatch
 
   def toSubmitableParamStr(
-      xRingBatch: XRingBatch
+      xRingBatch: RingBatch
     )(
-      implicit context: XRingBatchContext
+      implicit context: RingBatchContext
     ): String
 }
 
@@ -45,10 +45,10 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   val SerializationVersion = 0
 
   def generateAndSignRingBatch(
-      orders: Seq[Seq[XRawOrder]]
+      orders: Seq[Seq[RawOrder]]
     )(
-      implicit context: XRingBatchContext
-    ): XRingBatch = {
+      implicit context: RingBatchContext
+    ): RingBatch = {
     val orderValidator = RawOrderValidatorImpl
 
     val ordersWithHash = orders.map(
@@ -72,15 +72,15 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
 
     val xrings = ordersWithHash.map(ordersOfRing ⇒ {
       val orderIndexes = ordersOfRing.map(o ⇒ ordersHashIndexMap(o.hash))
-      new XRingBatch.XRing(orderIndexes)
+      new RingBatch.Ring(orderIndexes)
     })
 
-    val xRingBatch = new XRingBatch().copy(
+    val xRingBatch = new RingBatch().copy(
       feeRecipient = context.feeRecipient,
       miner = context.miner,
       rings = xrings,
       orders = ordersDistinctedSeq,
-      signAlgorithm = XSigningAlgorithm.ALGO_ETHEREUM,
+      signAlgorithm = SigningAlgorithm.ALGO_ETHEREUM,
       transactionOrigin = context.transactionOrigin
     )
 
@@ -88,9 +88,9 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   }
 
   def toSubmitableParamStr(
-      xRingBatch: XRingBatch
+      xRingBatch: RingBatch
     )(
-      implicit context: XRingBatchContext
+      implicit context: RingBatchContext
     ): String = {
     val tokenSpendables = xRingBatch.orders
       .map(
@@ -144,7 +144,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   }
 
   private def setupMiningInfo(
-      xRingBatch: XRingBatch,
+      xRingBatch: RingBatch,
       data: Bitstream,
       tables: Bitstream
     ) {
@@ -178,9 +178,9 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   private def setupOrderInfo(
       data: Bitstream,
       tables: Bitstream,
-      order: XRawOrder,
+      order: RawOrder,
       tokenSpendables: Map[String, Int],
-      context: XRingBatchContext
+      context: RingBatchContext
     ) {
     val orderParams = order.getParams
     val orderFeeParams = order.getFeeParams
@@ -203,10 +203,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     tables.addUint16(spendableFeeIndex)
 
     if (isValidAddress(orderParams.dualAuthAddr)) {
-      insertOffset(
-        tables,
-        data.addAddress(orderParams.dualAuthAddr, false)
-      )
+      insertOffset(tables, data.addAddress(orderParams.dualAuthAddr, false))
     } else {
       insertDefault(tables)
     }
@@ -218,10 +215,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     }
 
     if (isValidAddress(orderParams.orderInterceptor)) {
-      insertOffset(
-        tables,
-        data.addAddress(orderParams.orderInterceptor, false)
-      )
+      insertOffset(tables, data.addAddress(orderParams.orderInterceptor, false))
     } else {
       insertDefault(tables)
     }
@@ -327,7 +321,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     }
   }
 
-  private def ringBatchHash(xRingBatch: XRingBatch) = {
+  private def ringBatchHash(xRingBatch: RingBatch) = {
     val ringHashes = xRingBatch.rings.map(xring => {
       val bitstream = new Bitstream
       val orders = xring.orderIndexes.map(i => xRingBatch.orders(i))
@@ -368,8 +362,8 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   }
 
   private def sign(
-      xRingBatch: XRingBatch,
-      context: XRingBatchContext
+      xRingBatch: RingBatch,
+      context: RingBatchContext
     ) = {
     val hash = ringBatchHash(xRingBatch)
     val sig = signPrefixedMessage(hash, context.minerPrivateKey)
@@ -390,7 +384,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   }
 
   // For miner sig and dual-auth sigs, only ALGO_ETHEREUM algorithm supported for now.
-  private def signPrefixedMessage(
+  def signPrefixedMessage(
       hash: String,
       privateKey: String
     ) = {
@@ -401,12 +395,11 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     )
 
     val sigStream = new Bitstream
-    sigStream.addNumber(XSigningAlgorithm.ALGO_ETHEREUM.value, 1, true)
+    sigStream.addNumber(SigningAlgorithm.ALGO_ETHEREUM.value, 1, true)
     sigStream.addNumber(1 + 32 + 32, 1, true)
     sigStream.addNumber(sigData.getV, 1, true)
     sigStream.addRawBytes(sigData.getR)
     sigStream.addRawBytes(sigData.getS)
     sigStream.getData
   }
-
 }

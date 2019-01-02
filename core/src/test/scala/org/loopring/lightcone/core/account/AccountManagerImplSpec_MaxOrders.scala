@@ -39,7 +39,7 @@ class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
     updatedOrders.size should be(1)
     orderPool.size == dai.maxNumOrders
     updatedOrders(order.id).status should be(
-      XOrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS
+      OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS
     )
   }
 
@@ -72,7 +72,7 @@ class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
     updatedOrders.size should be(1)
     orderPool.size == lrc.maxNumOrders
     updatedOrders(order.id).status should be(
-      XOrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS
+      OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS
     )
   }
 }

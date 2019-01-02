@@ -24,7 +24,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.RpcBinding
 import org.loopring.lightcone.actors.jsonrpc.{JsonRpcRequest, JsonRpcResponse}
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto.XErrorCode
+import org.loopring.lightcone.proto.ErrorCode
 import scalapb.json4s.JsonFormat
 import scala.concurrent.ExecutionContext
 import org.slf4s.Logging
@@ -74,12 +74,12 @@ trait HttpSupport extends RpcBinding with Logging {
                 j.error match {
                   case Some(err) =>
                     throw ErrorException(
-                      XErrorCode.ERR_INTERNAL_UNKNOWN,
+                      ErrorCode.ERR_INTERNAL_UNKNOWN,
                       s"msg:${err}"
                     )
                   case None =>
                     throw ErrorException(
-                      XErrorCode.ERR_INTERNAL_UNKNOWN,
+                      ErrorCode.ERR_INTERNAL_UNKNOWN,
                       s"res:${response}"
                     )
                 }
@@ -87,7 +87,7 @@ trait HttpSupport extends RpcBinding with Logging {
           }
         case _ =>
           throw ErrorException(
-            XErrorCode.ERR_INTERNAL_UNKNOWN,
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
             s"res:${response}"
           )
       }

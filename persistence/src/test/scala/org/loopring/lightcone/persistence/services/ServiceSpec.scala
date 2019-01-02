@@ -17,12 +17,18 @@
 package org.loopring.lightcone.persistence.services
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
+import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
+import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
+import org.loopring.lightcone.proto.{OrderStatus, RawOrder}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.web3j.crypto.Hash
+import org.web3j.utils.Numeric
 import slick.basic.DatabaseConfig
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import slick.jdbc.JdbcProfile
+import scala.math.BigInt
 
 trait ServiceSpec[S]
     extends FlatSpec
@@ -40,6 +46,7 @@ trait ServiceSpec[S]
 
   implicit val ec = ExecutionContext.global
   implicit var dbConfig: DatabaseConfig[JdbcProfile] = _
+  val timeProvider = new SystemTimeProvider()
   def getService(): S
   var service: S = _
   def createTables(): Future[Any]
@@ -65,6 +72,66 @@ trait ServiceSpec[S]
   override def beforeAll = {
     println(
       s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
+    )
+  }
+
+  implicit class RichString(s: String) {
+    def zeros(size: Int): BigInt = BigInt(s + "0" * size)
+  }
+
+  def generateRawOrder(
+      owner: String = "0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10",
+      tokenS: String = "0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1",
+      tokenB: String = "0x8B75225571ff31B58F95C704E05044D5CF6B32BF",
+      status: OrderStatus = OrderStatus.STATUS_NEW,
+      validSince: Int,
+      validUntil: Int,
+      amountS: BigInt = "10".zeros(18),
+      amountB: BigInt = "1".zeros(18),
+      tokenFee: String = "0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1",
+      amountFee: BigInt = "3".zeros(18)
+    ): RawOrder = {
+    val createAt = timeProvider.getTimeMillis
+    val state =
+      RawOrder.State(
+        createdAt = createAt,
+        updatedAt = createAt,
+        status = status
+      )
+    val fee = RawOrder.FeeParams(
+      tokenFee = tokenFee,
+      amountFee = ByteString.copyFrom("111", "utf-8")
+    )
+    val since = if (validSince > 0) validSince else (createAt / 1000).toInt
+    val until =
+      if (validUntil > 0) validUntil else (createAt / 1000).toInt + 20000
+    val param = RawOrder.Params(validUntil = until)
+    val marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
+    val hash = Hash.sha3(
+      BigInt(createAt).toByteArray ++
+        Numeric.hexStringToByteArray(owner) ++
+        Numeric.hexStringToByteArray(tokenS) ++
+        Numeric.hexStringToByteArray(tokenB) ++
+        Numeric.hexStringToByteArray(tokenFee) ++
+        amountS.toByteArray ++
+        amountB.toByteArray ++
+        amountFee.toByteArray
+    )
+    RawOrder(
+      owner = owner,
+      hash = Numeric.toHexString(hash),
+      version = 1,
+      tokenS = tokenS,
+      tokenB = tokenB,
+      amountS = ByteString.copyFrom("11", "UTF-8"),
+      amountB = ByteString.copyFrom("12", "UTF-8"),
+      validSince = since,
+      state = Some(state),
+      feeParams = Some(fee),
+      params = Some(param),
+      marketHash = marketHash,
+      marketHashId = Math.abs(marketHash.hashCode),
+      addressShardId = Math.abs(owner.hashCode % 100)
     )
   }
 }

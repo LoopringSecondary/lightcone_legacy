@@ -19,103 +19,26 @@ syntax = "proto3";
 option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
-enum XOrderStatus {
-    STATUS_NEW = 0;
-    STATUS_PENDING = 1;
-    STATUS_EXPIRED = 2;
-    STATUS_DUST_ORDER = 3;
-    STATUS_PARTIALLY_FILLED = 4;
-    STATUS_COMPLETELY_FILLED = 5;
-    STATUS_CANCELLED_BY_USER = 6;
+import "core.proto";
 
-    STATUS_CANCELLED_LOW_BALANCE = 100;
-    STATUS_CANCELLED_LOW_FEE_BALANCE = 101;
-    STATUS_CANCELLED_TOO_MANY_ORDERS = 102;
-    STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 103;
-
-    // TODO(dongw): the following should be error code
-    STATUS_CANCELLED_DUPLICIATE = 200;
-    STATUS_INVALID_DATA = 201;
-    STATUS_UNSUPPORTED_MARKET = 202;
+enum TokenStandard {
+    ERC20           = 0;
+    ERC1400         = 1;
 }
 
-enum XErrorCode{
-    // 0 NONE ERROR
-    ERR_NONE = 0;
-    ERR_INTERNAL_UNKNOWN = 1;
-    ERR_INVALID_ARGUMENT = 2;
-
-    //1001 -- 2000 Matching Error
-    ERR_MATCHING_ORDERS_NOT_TRADABLE            = 1001;
-    ERR_MATCHING_INCOME_TOO_SMALL               = 1002;
-    ERR_MATCHING_MAKER_COMPLETELY_FILLED        = 1003;
-    ERR_MATCHING_TAKER_COMPLETELY_FILLED        = 1004;
-    ERR_MATCHING_INVALID_MAKER_ORDER            = 1005;
-    ERR_MATCHING_INVALID_TAKER_ORDER            = 1006;
-    ERR_MATCHING_TOKEN_METADATA_UNAVAILABLE     = 1007;
-    ERR_MATCHING_INVALID_INTERNAL_STATE         = 1008;
-
-    // 2001 -- 3000 Order Error
-    ERR_ORDER_VALIDATION_INVALID_OWNER                      = 2001;
-    ERR_ORDER_VALIDATION_INVALID_TOKENS                     = 2002;
-    ERR_ORDER_VALIDATION_INVALID_TOKENB                     = 2003;
-    ERR_ORDER_VALIDATION_INVALID_TOKEN_AMOUNT               = 2004;
-    ERR_ORDER_VALIDATION_INVALID_WAIVE_PERCENTAGE           = 2005;
-    ERR_ORDER_VALIDATION_INVALID_FEE_PERCENTAGE             = 2006;
-    ERR_ORDER_VALIDATION_INVALID_WALLET_SPLIT_PERCENTAGE    = 2007;
-    ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_PRIV_KEY  = 2008;   
-    ERR_ORDER_VALIDATION_UNSUPPORTED_VERSION                = 2009;
-    ERR_ORDER_VALIDATION_INVALID_SIG                        = 2010;
-
-    //3001 -- 4000 core actors error
-    ERR_ORDER_ALREADY_EXIST             = 3001;
-    ERR_ORDER_NOT_EXIST                 = 3002;
-    ERR_ORDER_INVALID_AMOUNT_S          = 3003;
-    ERR_LOW_BALANCE                     = 3004;
-    ERR_LOW_FEE_BALANCE                 = 3005;
-    ERR_TOKEN_NOT_EXIST                 = 3006;
-    ERR_TOO_MANY_ORDERS                 = 3007;
-    ERR_TOO_MANY_FAILED_MATCHES         = 3008;
-    ERR_INVALID_ORDER_DATA              = 3009;
-    ERR_INVALID_MARKET                  = 3010;
-    ERR_UNEXPECTED_ACTOR_MSG            = 3011;
-    ERR_UNSUPPORTED_MESSAGE             = 3012;
-    ERR_FAILED_HANDLE_MSG               = 3013;
-    ERR_REJECTED_DURING_RECOVER         = 3014;
-
-    //4001 -- 5000 persistence Error
-    ERR_PERSISTENCE_INVALID_DATA        = 4001;
-    ERR_PERSISTENCE_DUPLICATE_INSERT    = 4002;
-    ERR_PERSISTENCE_UPDATE_FAILED       = 4003;
-    ERR_PERSISTENCE_INTERNAL            = 4004;
-
-    //5001 -- 6000 ethereum Error
-    ERR_ETHEREUM_ILLEGAL_ADDRESS        = 5001;
-
-    // 5001 and beyound for other
-
-}
-
-message XError{
-    XErrorCode code = 1;
-    string message = 2;
-}
-
-enum XTokenStandard {
-    ERC20   = 0;
-    ERC1400 = 1;
-}
-
-enum XSigningAlgorithm {
+enum SigningAlgorithm {
     ALGO_ETHEREUM   = 0;
     ALGO_EIP712     = 1;
-    
     ALGO_NONE       = 255;
 }
 
+message MarketPair {
+    string token_s  = 1;
+    string token_b  = 2;
+}
 
 // use bytes to represent big-numbers and string for addresses
-message XRawOrder {
+message RawOrder {
     message Params {
         string dual_auth_addr                      = 1;
         string broker                              = 2;
@@ -125,9 +48,9 @@ message XRawOrder {
         string sig                                 = 6;
         string dual_auth_sig                       = 7;
         bool   all_or_none                         = 8;
-        XTokenStandard token_standard_s            = 9;
-        XTokenStandard token_standard_b            = 10;
-        XTokenStandard token_standard_fee          = 11;
+        TokenStandard token_standard_s             = 9;
+        TokenStandard token_standard_b             = 10;
+        TokenStandard token_standard_fee           = 11;
         string dual_auth_private_key               = 12;
     }
 
@@ -142,9 +65,9 @@ message XRawOrder {
     }
 
     message ERC1400Params {
-        string    tranche_s         = 53;
-        string    tranche_b         = 54;
-        string    transfer_data_s   = 55;
+        string    tranche_s            = 53;
+        string    tranche_b            = 54;
+        string    transfer_data_s      = 55;
     }
 
     // // The following fieds are not part of Loopring's order definition but
@@ -154,8 +77,8 @@ message XRawOrder {
         int64 updated_at              = 102;
         int64 matched_at              = 103;
         int64 updated_at_block        = 104;
-        XOrderStatus status           = 105;
-                                    
+        OrderStatus status            = 105;
+
         bytes actual_amount_s         = 200;
         bytes actual_amount_b         = 201;
         bytes actual_amount_fee       = 202;
@@ -165,38 +88,131 @@ message XRawOrder {
     }
 
     // string  id          = 1; // order hash
-    string hash                     = 2;
-    int32  version                  = 3;
-    string owner                    = 4;
-    string token_s                  = 5;
-    string token_b                  = 6;
-    bytes  amount_s                 = 7;
-    bytes  amount_b                 = 8;
-    int32  valid_since              = 9; // in seconds
-    Params params                   = 10;
-    FeeParams fee_params            = 11;
-    ERC1400Params erc1400_params    = 12;
-    State state                     = 13;
-    int64 sequence_id               = 14;
-    string market_hash              = 15;
+    string hash                       = 2;
+    int32  version                    = 3;
+    string owner                      = 4;
+    string token_s                    = 5;
+    string token_b                    = 6;
+    bytes  amount_s                   = 7;
+    bytes  amount_b                   = 8;
+    int32  valid_since                = 9; // in seconds
+    Params params                     = 10;
+    FeeParams fee_params              = 11;
+    ERC1400Params erc1400_params      = 12;
+    State state                       = 13;
+    int64  sequence_id                = 14;
+    string market_hash                = 15;
+    int32  address_shard_id           = 16;
+    int32  market_hash_id             = 17;
 }
 
-message XRingBatch {
-    message XRing {
+
+message OrderState {
+    bytes amount_s          = 1;
+    bytes amount_b          = 2;
+    bytes amount_fee        = 3;
+}
+
+message Order {
+    string id                       = 1;
+    string token_s                  = 2;
+    string token_b                  = 3;
+    string token_fee                = 4;
+    bytes amount_s                  = 5;
+    bytes amount_b                  = 6;
+    bytes amount_fee                = 7;
+    int64 created_at                = 8;
+    int64 updated_at                = 9;
+    OrderStatus status              = 10;
+    double wallet_split_percentage  = 11;
+    OrderState outstanding          = 12;
+    OrderState reserved             = 13;
+    OrderState actual               = 14;
+    OrderState matchable            = 15;
+}
+
+message ExpectedOrderFill {
+    Order order                     = 1;
+    OrderState pending              = 2;
+    bytes amount_margin             = 3;
+}
+
+message OrderRing {
+    ExpectedOrderFill maker         = 1;
+    ExpectedOrderFill taker         = 2;
+}
+
+
+message BalanceAndAllowance {
+    bytes balance                   = 1;
+    bytes allowance                 = 2;
+    bytes availableBalance          = 3;
+    bytes availableAllowance        = 4;
+}
+
+message EthereumProxySettings {
+    message Node {
+        string host                 = 1;
+        int32 port                  = 2;
+        string ipcPath              = 3;
+    }
+    int32 pool_size                 = 1;
+    int32 check_interval_seconds    = 2;
+    float healthy_threshold         = 3;
+    repeated Node nodes             = 4;
+}
+
+message TokenMeta {
+    string address = 1;
+    int32 decimals = 2;
+    double burnRate = 3;
+    string symbol = 4;
+    double currentPrice = 5;
+}
+
+message MarketConfig {
+    MarketId market_id = 1;
+    int32 maxNumbersOfOrders = 2;
+    int32 priceDecimals = 3;
+    int32 recover_batch_size = 4;
+    int32 levels = 5;
+    int32 precisionForAmount = 6;
+    int32 precisionForTotal = 7;
+}
+
+message MarketMetadata {
+    int32 numBuys = 1;
+    int32 numSells = 2;
+    int32 numHiddenBuys = 3;
+    int32 numHiddenSells = 4;
+    double bestBuyPrice = 5;
+    double bestSellPrice = 6;
+    double lastPrice = 7;
+    bool isLastTakerSell = 8;
+}
+
+message UpdatedTokenBurnRate {
+    string token = 1;
+    double burnRate = 2;
+}
+
+
+message RingBatch {
+    message Ring {
         repeated int32 order_indexes = 1;
     }
 
     string fee_recipient            = 1;
     string miner                    = 2;
     string sig                      = 3;
-    repeated XRing rings            = 4;
-    repeated XRawOrder orders       = 5;
-    XSigningAlgorithm sign_algorithm = 6;
+    repeated Ring rings             = 4;
+    repeated RawOrder orders        = 5;
+    SigningAlgorithm sign_algorithm = 6;
     string hash                     = 7;
     string transaction_origin       = 8;
 }
 
-message XRingBatchContext {
+message RingBatchContext {
     string fee_recipient            = 1;
     string miner                    = 2;
     string transaction_origin       = 3;
@@ -204,7 +220,7 @@ message XRingBatchContext {
     string lrc_address              = 5;
 }
 
-message XTrade {
+message Trade {
     message Fees {
         string token_fee               = 1;
         bytes  amount_fee              = 2;
@@ -235,7 +251,7 @@ message XTrade {
     int64 sequence_id        = 18;
 }
 
-message XOrdersCutoffEvent {
+message OrdersCutoffEvent {
     string tx_hash         = 1;
     string broker          = 3;
     string owner           = 4;
@@ -246,7 +262,7 @@ message XOrdersCutoffEvent {
     int64  block_height    = 9;
 }
 
-message XOrdersCancelledEvent {
+message OrdersCancelledEvent {
     string tx_hash         = 1;
     string broker_or_owner = 2;
     string order_hash      = 3;
@@ -255,8 +271,8 @@ message XOrdersCancelledEvent {
     int64  block_height    = 6;
 }
 
-message XSettlementTx {
-    enum XStatus {
+message SettlementTx {
+    enum Status {
         PENDING  = 0;
         BLOCK    = 1;
         FAILED   = 2;
@@ -269,7 +285,12 @@ message XSettlementTx {
     string  value      = 6;
     string  data       = 7;
     int64   nonce      = 8;
-    XStatus status     = 9;
+    Status  status     = 9;
     int64   create_at  = 10;
     int64   updated_at = 11;
+}
+
+message NodeBlockHeight{
+    string path = 1;
+    int32 height = 2;
 }

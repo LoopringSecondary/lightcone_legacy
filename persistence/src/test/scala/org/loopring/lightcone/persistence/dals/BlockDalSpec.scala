@@ -17,7 +17,7 @@
 package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.XErrorCode._
+import org.loopring.lightcone.proto.ErrorCode._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -25,21 +25,21 @@ class BlockDalSpec extends DalSpec[BlockDal] {
   def getDal = new BlockDalImpl()
 
   "saveBlock" must "save a block with hash 0x111" in {
-    val block = XBlockData(hash = "0x111", height = 1L)
+    val block = BlockData(hash = "0x111", height = 1L)
     val result = dal.saveBlock(block)
-    val res = Await.result(result.mapTo[XErrorCode], 5.second)
+    val res = Await.result(result.mapTo[ErrorCode], 5.second)
     res should be(ERR_NONE)
   }
 
   "findByHash" must "find a block with hash 0x111" in {
     val result = dal.findByHash("0x111")
-    val res = Await.result(result.mapTo[Option[XBlockData]], 5.second)
+    val res = Await.result(result.mapTo[Option[BlockData]], 5.second)
     res should not be empty
   }
 
   "findByHeight" must "find a block with height 1" in {
     val result = dal.findByHeight(1L)
-    val res = Await.result(result.mapTo[Option[XBlockData]], 5.second)
+    val res = Await.result(result.mapTo[Option[BlockData]], 5.second)
     res should not be empty
   }
 
