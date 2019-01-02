@@ -26,10 +26,11 @@ object MultiAccountManagerMessageValidator {
 }
 
 // This class can be deleted in the future.
-final class MultiAccountManagerMessageValidator()(implicit val config: Config)
+final class MultiAccountManagerMessageValidator(
+  )(
+    implicit val config: Config,
+    supportedMarkets: SupportedMarkets)
     extends MessageValidator {
-
-  val supportedMarkets = SupportedMarkets(config)
 
   def validate = {
     case req: CancelOrder.Req ⇒
