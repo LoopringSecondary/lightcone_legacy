@@ -31,8 +31,8 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.ethereum._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -77,7 +77,6 @@ class EthereumQueryActor(
 
   val tradeHistoryAddress =
     config.getString("loopring_protocol.trade-history-address")
-  val zeroAddress: String = "0x" + "0" * 40
 
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
@@ -85,16 +84,20 @@ class EthereumQueryActor(
   def receive = LoggingReceive {
     case req: GetBalanceAndAllowances.Req =>
       val erc20Tokens = req.tokens.filterNot(
-        token ⇒ Address(token).toString.equals(zeroAddress)
+        token ⇒ Address(token).toString.equals(Address.zeroAddress)
       )
       val ethToken =
-        req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
-      val batchReqs: BatchCallContracts.Req =
-        getBalanceAndAllowanceToBatchReq(
-          Address(delegateAddress),
-          req.copy(tokens = erc20Tokens)
+        req.tokens.find(
+          token ⇒ Address(token).toString.equals(Address.zeroAddress)
         )
+
       (for {
+        batchReqs ← Future {
+          getBalanceAndAllowanceToBatchReq(
+            Address(delegateAddress),
+            req.copy(tokens = erc20Tokens)
+          )
+        }
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
@@ -127,12 +130,15 @@ class EthereumQueryActor(
 
     case req: GetBalance.Req =>
       val erc20Tokens = req.tokens.filterNot(
-        token ⇒ Address(token).toString.equals(zeroAddress)
+        token ⇒ Address(token).toString.equals(Address.zeroAddress)
       )
       val ethToken =
-        req.tokens.find(token ⇒ Address(token).toString.equals(zeroAddress))
-      val batchReqs: BatchCallContracts.Req = req.copy(tokens = erc20Tokens)
+        req.tokens.find(
+          token ⇒ Address(token).toString.equals(Address.zeroAddress)
+        )
+
       (for {
+        batchReqs ← Future { req.copy(tokens = erc20Tokens) }
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
@@ -153,7 +159,9 @@ class EthereumQueryActor(
           case Some(_) ⇒
             res.copy(
               balanceMap = res.balanceMap +
-                (zeroAddress → BigInt(Numeric.toBigInt(ethRes.get.result)))
+                (Address.zeroAddress → BigInt(
+                  Numeric.toBigInt(ethRes.get.result)
+                ))
             )
           case None ⇒
             res
@@ -161,9 +169,10 @@ class EthereumQueryActor(
       }) sendTo sender
     // 查询授权不应该有ETH的授权
     case req: GetAllowance.Req =>
-      val batchReqs: BatchCallContracts.Req =
-        getAllowanceToBatchReq(Address(delegateAddress), req)
       (for {
+        batchReqs: BatchCallContracts.Req ← Future {
+          getAllowanceToBatchReq(Address(delegateAddress), req)
+        }
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         res: GetAllowance.Res = batchContractCallResToAllowance(
@@ -174,9 +183,10 @@ class EthereumQueryActor(
       } yield res) sendTo sender
 
     case req: GetFilledAmount.Req ⇒
-      val batchReq =
-        getFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
       (for {
+        batchReq ← Future {
+          getFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
+        }
         batchRes <- (ethereumAccessorActor ? batchReq)
           .mapAs[BatchCallContracts.Res]
           .map(_.resps.map(_.result))

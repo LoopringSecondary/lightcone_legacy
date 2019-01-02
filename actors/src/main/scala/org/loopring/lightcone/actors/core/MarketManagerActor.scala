@@ -141,7 +141,7 @@ class MarketManagerActor(
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerMediator =
     DistributedPubSub(context.system).mediator
-  protected def settlementActor = actors.get(RingSettlementActor.name)
+  protected def settlementActor = actors.get(RingSettlementManagerActor.name)
 
   override def preStart(): Unit = {
     super.preStart()
