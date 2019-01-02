@@ -264,27 +264,102 @@ package object ethereum {
     (balanceAddresses.toSet.toSeq, allowanceAddresses.toSet.toSeq)
   }
 
-  def getFills(receipts: Seq[Option[TransactionReceipt]]): Seq[String] = {
-
+  def getRingMinedEvent(
+      receipts: Seq[Option[TransactionReceipt]]
+    ): Seq[(RingMinedEvent.Result, TransactionReceipt)] = {
     if (receipts.forall(_.nonEmpty)) {
       receipts
         .flatMap(receipt ⇒ {
-          receipt.get.logs.flatMap { log ⇒
+          receipt.get.logs.map { log ⇒
             {
               loopringProtocolAbi
                 .unpackEvent(log.data, log.topics.toArray) match {
                 case Some(event: RingMinedEvent.Result) ⇒
-                  splitEventToFills(event._fills)
+                  Some(event)
                 case _ ⇒
-                  Seq.empty[String]
+                  None
               }
             }
-          }
+          }.filter(_.nonEmpty).map(_.get → receipt.get)
         })
     } else {
-      Seq.empty[String]
+      Seq.empty
     }
+  }
 
+  def getTrades(
+      events: Seq[(RingMinedEvent.Result, TransactionReceipt)],
+      blockTime: String
+    ): Seq[Trade] = {
+    events.flatMap(eventItem ⇒ {
+      val (event, receipt) = eventItem
+      val fills = splitEventToFills(event._fills)
+      fills.zipWithIndex.map(item ⇒ {
+        val (fill, index) = item
+        val fill2 = if (index + 1 < fills.size) {
+          fills(index + 1)
+        } else {
+          fills.head
+        }
+        val trade = Trade(
+          orderHash = fill.substring(0, 2 + 64 * 1),
+          owner = Address(fill.substring(2 + 64 * 1, 2 + 64 * 2)).toString,
+          tokenS = Address(fill.substring(2 + 64 * 2, 2 + 64 * 3)).toString,
+          tokenB = Address(fill2.substring(2 + 64 * 2, 2 + 64 * 3)).toString,
+          amountS = Numeric
+            .toBigInt(fill.substring(2 + 64 * 3, 2 + 64 * 4))
+            .toByteArray,
+          amountB = Numeric
+            .toBigInt(fill2.substring(2 + 64 * 3, 2 + 64 * 4))
+            .toByteArray,
+          split = Numeric
+            .toBigInt(fill.substring(2 + 64 * 4, 2 + 64 * 5))
+            .toByteArray,
+          fees = Some(
+            Trade.Fees(
+              amountFee = Numeric
+                .toBigInt(fill.substring(2 + 64 * 5, 2 + 64 * 6))
+                .toByteArray,
+              feeAmountS = Numeric
+                .toBigInt(fill.substring(2 + 64 * 6, 2 + 64 * 7))
+                .toByteArray,
+              feeAmountB = Numeric
+                .toBigInt(fill.substring(2 + 64 * 7, 2 + 64 * 8))
+                .toByteArray
+            )
+          ),
+          txHash = receipt.transactionHash,
+          blockHeight = Numeric.toBigInt(receipt.blockNumber).longValue(),
+          blockTimestamp = Numeric.toBigInt(blockTime).longValue(),
+          ringHash = event._ringHash,
+          ringIndex = event._ringIndex.longValue(),
+          //TODO(yadong) 尝试在事件中找到该地址
+          delegateAddress = ""
+        )
+        trade.withMarketHash(convert2Hex(trade.tokenB, trade.tokenS))
+      })
+    })
+  }
+
+  //TODO（yadong）等待孔亮提供解析的方法
+  def getFailedRings(
+      txs: Seq[(Transaction, Option[TransactionReceipt])]
+    ): Seq[String] = {
+    if (txs.forall(_._2.nonEmpty)) {
+      txs
+        .filter(tx ⇒ Numeric.toBigInt(tx._2.get.status).intValue() == 0)
+        .filter(tx ⇒ {
+          loopringProtocolAbi.unpackFunctionInput(tx._1.input) match {
+            case Some(SubmitRingsFunction.Params) ⇒
+              true
+            case _ ⇒
+              false
+          }
+        })
+        .map(_._1.input)
+    } else {
+      Seq.empty
+    }
   }
 
   def splitEventToFills(_fills: String): Seq[String] = {
@@ -296,7 +371,7 @@ package object ethereum {
     }
   }
 
-  def getXOrdersCancelledEvents(
+  def getOrdersCancelledEvents(
       receipts: Seq[Option[TransactionReceipt]]
     ): Seq[OrdersCancelledEvent] = {
 
@@ -329,7 +404,7 @@ package object ethereum {
     }
   }
 
-  def getXOrdersCutoffEvent(
+  def getOrdersCutoffEvent(
       receipts: Seq[Option[TransactionReceipt]]
     ): Seq[OrdersCutoffEvent] = {
     receipts.flatMap { receipt ⇒
@@ -475,4 +550,23 @@ package object ethereum {
 
   }
 
+  def getTokenTierUpgradedEvent(
+      receipts: Seq[Option[TransactionReceipt]]
+    ): Seq[TokenTierUpgradedEvent.Result] = {
+    if (receipts.forall(_.nonEmpty)) {
+      receipts.flatMap(receipt ⇒ {
+        receipt.get.logs.map { log ⇒
+          loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+            case Some(event: TokenTierUpgradedEvent.Result) ⇒
+              Some(event)
+            case _ ⇒
+              None
+          }
+        }.filter(_.nonEmpty).flatten
+      })
+
+    } else {
+      Seq.empty
+    }
+  }
 }

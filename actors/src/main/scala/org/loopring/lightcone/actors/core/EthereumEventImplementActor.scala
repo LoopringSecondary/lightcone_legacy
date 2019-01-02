@@ -27,15 +27,16 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 import scala.concurrent.duration._
 
 // main owner: 李亚东
-object EthereumEventExtractorActor {
-  val name = "ethereum_event_extractor"
+object EthereumEventImplementActor {
+  val name = "ethereum_event_implement"
 
   def start(
     )(
@@ -48,11 +49,11 @@ object EthereumEventExtractorActor {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule
     ): ActorRef = {
-    system.actorOf(Props(new EthereumEventExtractorActor()))
+    system.actorOf(Props(new EthereumEventImplementActor()))
   }
 }
 
-class EthereumEventExtractorActor(
+class EthereumEventImplementActor(
   )(
     implicit
     val config: Config,
@@ -72,9 +73,6 @@ class EthereumEventExtractorActor(
   def orderHandler: ActorRef = actors.get(OrderHandlerActor.name)
   def accountManager: ActorRef = actors.get(MultiAccountManagerActor.name)
 
-  def ethereumImplementActor: ActorRef =
-    actors.get(EthereumEventImplementActor.name)
-
   val miners = config
     .getConfig(RingSettlementManagerActor.name)
     .getConfigList("miners")
@@ -93,67 +91,45 @@ class EthereumEventExtractorActor(
   val protocolAddress: String =
     config.getString("loopring_protocol.protocol-address")
 
-  var currentBlockNumber: BigInt = BigInt(-1)
+  var currentBlockNumber: Long = -1
+  val taskQueue: mutable.Queue[Long] = new mutable.Queue()
 
-  override def preStart(): Unit = initial()
-
-  override def preRestart(
-      reason: Throwable,
-      message: Option[Any]
-    ) = {
-    super.preRestart(reason, message)
-    initial()
-  }
-
-  def initial() = {
-    for {
-      handledBlock: Option[Long] ← dbModule.blockService.findMaxHeight()
-      maxBlock ← (ethereumAccessorActor ? GetBlockNumber.Req())
-        .mapTo[GetBlockNumber.Res]
-        .map(res ⇒ res.result)
-    } yield {
-      currentBlockNumber = maxBlock - 1
-      if (handledBlock.nonEmpty && handledBlock.get < maxBlock - 1) {
-        ethereumImplementActor ! BlockImplementTask(
-          handledBlock.get + 1 until maxBlock.longValue()
-        )
-      }
-      self ! Notify("nextBlock")
-    }
+  override def preStart() = {
+    self ! Notify("nextBlock")
   }
 
   override def receive: Receive = {
     case Notify("nextBlock", _) ⇒
+      if (taskQueue.nonEmpty) {
+         currentBlockNumber = taskQueue.dequeue()
+        process()
+      } else {
+        context.system.scheduler
+          .scheduleOnce(15 seconds, self, Notify("nextBlock"))
+      }
+    case Notify("currentBlock", _) ⇒
       process()
     case job: BlockJob ⇒
       indexBlock(job)
+    case BlockImplementTask(heights) ⇒
+      taskQueue.enqueue(heights: _*)
   }
 
   def process(): Unit = {
+
     for {
-      taskNum ← (ethereumAccessorActor ? GetBlockNumber.Req())
-        .mapTo[GetBlockNumber.Res]
-        .map(_.result)
-      block ← if (taskNum > currentBlockNumber)
-        (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(
-          Numeric.prependHexPrefix((currentBlockNumber + 1).toString(16))
-        )).mapTo[GetBlockWithTxObjectByNumber.Res]
-      else
-        Future.successful(None)
+      block ← (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(
+        Numeric.prependHexPrefix(currentBlockNumber.toHexString)
+      )).mapTo[GetBlockWithTxObjectByNumber.Res]
+        .map(_.result.get)
     } yield {
-      block match {
-        case GetBlockWithTxObjectByNumber.Res(_, _, Some(result), _) ⇒
-          self ! BlockJob(
-            height = result.number.longValue(),
-            hash = result.hash,
-            miner = result.miner,
-            uncles = result.uncles,
-            txs = result.transactions
-          )
-        case _ ⇒
-          context.system.scheduler
-            .scheduleOnce(15 seconds, self, Notify("nextBlock"))
-      }
+      self ! BlockJob(
+        height = block.number.longValue(),
+        hash = block.hash,
+        miner = block.miner,
+        uncles = block.uncles,
+        txs = block.transactions
+      )
     }
   }
 
@@ -295,11 +271,10 @@ class EthereumEventExtractorActor(
           avgGasPrice = job.txs.map(_.gasPrice.longValue()).sum / job.txs.size
         )
         dbModule.blockService.saveBlock(blockData)
-        currentBlockNumber = job.height
         self ! Notify("nextBlock")
       } else {
         context.system.scheduler
-          .scheduleOnce(1 seconds, self, Notify("nextBlock"))
+          .scheduleOnce(1 seconds, self, Notify("currentBlock"))
       }
     }
   }
