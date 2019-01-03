@@ -60,7 +60,9 @@ class EntryPointSpec_OrderStatusMonitorEffective
 
       Await.result(f, timeout.duration)
 
-      info("confirm the status of the orders in db should be STATUS_INACTIVE")
+      info(
+        "confirm the status of the orders in db should be STATUS_PENDING_ACTIVE"
+      )
       val assertOrderFromDbF = Future.sequence(orders.map { o =>
         for {
           orderOpt <- dbModule.orderService.getOrder(o.hash)
@@ -68,7 +70,7 @@ class EntryPointSpec_OrderStatusMonitorEffective
           orderOpt match {
             case Some(order) =>
               assert(order.sequenceId > 0)
-              assert(order.getState.status == OrderStatus.STATUS_INACTIVE)
+              assert(order.getState.status == OrderStatus.STATUS_PENDING_ACTIVE)
             case None =>
               assert(false)
           }

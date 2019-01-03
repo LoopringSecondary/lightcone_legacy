@@ -163,18 +163,18 @@ class OrderServiceImpl @Inject()(
     )
 
   def getOrdersToActivate(
-      lastProcessTime: Int,
+      latestProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] =
-    orderDal.getOrdersToActivate(lastProcessTime, processTime)
+    orderDal.getOrdersToActivate(latestProcessTime, processTime)
 
   def getOrdersToExpire(
-      lastProcessTime: Int,
+      latestProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] =
-    orderDal.getOrdersToExpire(lastProcessTime, processTime)
+    orderDal.getOrdersToExpire(latestProcessTime, processTime)
 
   // Count the number of orders
   def countOrdersForUser(

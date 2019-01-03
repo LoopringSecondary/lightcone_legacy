@@ -19,6 +19,8 @@ package org.loopring.lightcone.actors.core
 import akka.actor._
 import akka.pattern._
 import akka.util.Timeout
+import akka.cluster.singleton._
+import akka.stream.ActorMaterializer
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
@@ -30,6 +32,36 @@ import scala.concurrent._
 
 object OrderStatusMonitorActor {
   val name = "order_status_monitor"
+
+  def startSingleton(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule,
+      ma: ActorMaterializer,
+      ece: ExecutionContextExecutor
+    ): ActorRef = {
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = Props(new OrderStatusMonitorActor()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system).withRole(name)
+      ),
+      name = OrderStatusMonitorActor.name
+    )
+
+    system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = s"/user/${OrderStatusMonitorActor.name}",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"${OrderStatusMonitorActor.name}_proxy"
+    )
+  }
 }
 
 class OrderStatusMonitorActor(
@@ -82,19 +114,19 @@ class OrderStatusMonitorActor(
 
   def runJob(
       processFunction: (Int, Int, Option[Paging]) => Future[Int],
-      lastProcessTimeOpt: Option[Int] = None,
+      latestProcessTimeOpt: Option[Int] = None,
       processTimeOpt: Option[Int] = None,
       skipOpt: Option[Paging] = None,
       monitoringType: OrderStatusMonitor.MonitoringType,
       leadOrLagSeconds: Int
     ): Future[Unit] = {
     for {
-      (lastProcessTime, processTime) <- if (processTimeOpt.isEmpty)
+      (latestProcessTime, processTime) <- if (processTimeOpt.isEmpty)
         getProcessTime(monitoringType, leadOrLagSeconds)
       else
-        Future.successful(lastProcessTimeOpt.get, processTimeOpt.get)
-      _ = println(s"### lastProcessTime:${lastProcessTime}, ${processTime}")
-      orderSize <- processFunction(lastProcessTime, processTime, skipOpt)
+        Future.successful(latestProcessTimeOpt.get, processTimeOpt.get)
+      _ = println(s"### latestProcessTime:${latestProcessTime}, ${processTime}")
+      orderSize <- processFunction(latestProcessTime, processTime, skipOpt)
       _ <- skipOpt match {
         case None => //记录本次处理时间
           dbModule.orderStatusMonitorService.updateLatestProcessingTime(
@@ -107,7 +139,7 @@ class OrderStatusMonitorActor(
           if (orderSize >= skip.size && skip.skip / skip.size <= maxRetriesCount) {
             runJob(
               processFunction,
-              Some(lastProcessTime),
+              Some(latestProcessTime),
               Some(processTime),
               Some(skip.copy(skip = skip.skip + skip.size, size = skip.size)),
               monitoringType,
@@ -127,13 +159,13 @@ class OrderStatusMonitorActor(
   }
 
   private def activateOrders(
-      lastProcessTime: Int,
+      latestProcessTime: Int,
       processTime: Int,
       skipOpt: Option[Paging] = None
     ): Future[Int] =
     for {
       orders <- dbModule.orderService.getOrdersToActivate(
-        lastProcessTime,
+        latestProcessTime,
         processTime,
         skipOpt
       )
@@ -152,13 +184,13 @@ class OrderStatusMonitorActor(
     } yield orders.size
 
   private def expireOrders(
-      lastProcessTime: Int,
+      latestProcessTime: Int,
       processTime: Int,
       skipOpt: Option[Paging] = None
     ): Future[Int] =
     for {
       orders <- dbModule.orderService
-        .getOrdersToExpire(lastProcessTime, processTime)
+        .getOrdersToExpire(latestProcessTime, processTime)
       _ <- Future.sequence(orders.map { o =>
         val cancelReq = CancelOrder.Req(
           o.hash,
@@ -185,11 +217,11 @@ class OrderStatusMonitorActor(
     for {
       lastEventOpt <- dbModule.orderStatusMonitorService
         .getLatestProcessingTime(monitoringType.name)
-      lastProcessTime = if (lastEventOpt.isEmpty) 0
+      latestProcessTime = if (lastEventOpt.isEmpty) 0
       else lastEventOpt.get.processTime
     } yield
       (
-        lastProcessTime.toInt + leadOrLagSeconds,
+        latestProcessTime.toInt + leadOrLagSeconds,
         processTime.toInt + leadOrLagSeconds
       )
   }

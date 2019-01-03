@@ -48,7 +48,7 @@ object EthereumAccessActor {
       ClusterSingletonManager.props(
         singletonProps = Props(new EthereumAccessActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system)
+        settings = ClusterSingletonManagerSettings(system).withRole(name)
       ),
       name = EthereumAccessActor.name
     )
@@ -60,7 +60,6 @@ object EthereumAccessActor {
       ),
       name = s"${EthereumAccessActor.name}_proxy"
     )
-
   }
 }
 

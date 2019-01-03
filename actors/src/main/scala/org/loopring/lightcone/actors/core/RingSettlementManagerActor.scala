@@ -49,10 +49,11 @@ object RingSettlementManagerActor {
       ClusterSingletonManager.props(
         singletonProps = Props(new RingSettlementManagerActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system)
+        settings = ClusterSingletonManagerSettings(system).withRole(name)
       ),
       RingSettlementManagerActor.name
     )
+
     system.actorOf(
       ClusterSingletonProxy.props(
         singletonManagerPath = s"/user/${RingSettlementManagerActor.name}",

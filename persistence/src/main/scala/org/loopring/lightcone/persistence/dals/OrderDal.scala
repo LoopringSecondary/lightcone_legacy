@@ -108,16 +108,14 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       skip: CursorPaging
     ): Future[Seq[RawOrder]]
 
-  //
   def getOrdersToActivate(
-      lastProcessTime: Int,
+      latestProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]]
 
-  //
   def getOrdersToExpire(
-      lastProcessTime: Int,
+      latestProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]]
@@ -304,15 +302,15 @@ class OrderDalImpl(
 
   //
   def getOrdersToActivate(
-      lastProcessTime: Int,
+      latestProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] = {
     val availableStatus =
-      Seq(OrderStatus.STATUS_INACTIVE)
+      Seq(OrderStatus.STATUS_PENDING_ACTIVE)
     var filters = query
       .filter(_.status inSet availableStatus)
-      .filter(_.validSince >= lastProcessTime)
+      .filter(_.validSince >= latestProcessTime)
       .filter(_.validSince < processTime)
       .sortBy(_.sequenceId.asc)
     filters = skip match {
@@ -324,7 +322,7 @@ class OrderDalImpl(
 
   //
   def getOrdersToExpire(
-      lastProcessTime: Int,
+      latestProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] = {
@@ -335,7 +333,7 @@ class OrderDalImpl(
     )
     var filters = query
       .filter(_.status inSet availableStatus)
-      .filter(_.validUntil >= lastProcessTime)
+      .filter(_.validUntil >= latestProcessTime)
       .filter(_.validUntil < processTime) //todo:需要确认下
       .sortBy(_.sequenceId.asc)
     filters = skip match {

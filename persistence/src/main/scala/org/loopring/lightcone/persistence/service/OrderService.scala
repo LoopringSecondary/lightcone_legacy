@@ -65,14 +65,14 @@ trait OrderService {
 
   //
   def getOrdersToActivate(
-      lastProcessTime: Int,
+      latestProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]]
 
   //
   def getOrdersToExpire(
-      lastProcessTime: Int,
+      latestProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]]
