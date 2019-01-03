@@ -47,77 +47,77 @@ class OrderStatusMonitorActor(
     with RepeatedJobActor {
 
   val repeatedDelayInSeconds = selfConfig.getInt("delay-in-seconds")
-  val effectiveLagSeconds = selfConfig.getInt("effective-lag-seconds")
-  val expiredLeadSeconds = selfConfig.getInt("expired-lead-seconds")
+  val activateLaggingInSecond = selfConfig.getInt("activate-lagging-seconds")
+  val expireLeadInSeconds = selfConfig.getInt("expire-lead-seconds")
   val batchSize = selfConfig.getInt("batch-size")
   val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
   val maxRetriesCount = 500
 
   val repeatedJobs = Seq(
     Job(
-      name = "effective",
+      name = "activate_order",
       dalayInSeconds = repeatedDelayInSeconds, // 1 minute
       initialDalayInSeconds = initialDelayInSeconds,
       run = () =>
-        pagging(
-          f = processEffectiveOrders,
+        runJob(
+          processFunction = activateOrders,
           skipOpt = Some(Paging(0, batchSize)),
-          monitorType = OrderStatusMonitor.MonitorType.MONITOR_TYPE_EFFECTIVE,
-          leadOrLagSeconds = effectiveLagSeconds
+          monitoringType = OrderStatusMonitor.MonitoringType.MONITORING_ACTIVATE,
+          leadOrLagSeconds = activateLaggingInSecond
         )
     ),
     Job(
-      name = "expire",
+      name = "expire_order",
       dalayInSeconds = repeatedDelayInSeconds, // 1 minute
       initialDalayInSeconds = initialDelayInSeconds,
       run = () =>
-        pagging(
-          f = processExpiredOrders,
+        runJob(
+          processFunction = expireOrders,
           skipOpt = Some(Paging(0, batchSize)),
-          monitorType = OrderStatusMonitor.MonitorType.MONITOR_TYPE_EXPIRE,
-          leadOrLagSeconds = effectiveLagSeconds
+          monitoringType = OrderStatusMonitor.MonitoringType.MONITORING_EXPIRE,
+          leadOrLagSeconds = activateLaggingInSecond
         )
     )
   )
 
-  def pagging(
-      f: (Int, Int, Option[Paging]) => Future[Int],
+  def runJob(
+      processFunction: (Int, Int, Option[Paging]) => Future[Int],
       lastProcessTimeOpt: Option[Int] = None,
       processTimeOpt: Option[Int] = None,
       skipOpt: Option[Paging] = None,
-      monitorType: OrderStatusMonitor.MonitorType,
+      monitoringType: OrderStatusMonitor.MonitoringType,
       leadOrLagSeconds: Int
     ): Future[Unit] = {
     for {
       (lastProcessTime, processTime) <- if (processTimeOpt.isEmpty)
-        getProcessTime(monitorType, leadOrLagSeconds)
+        getProcessTime(monitoringType, leadOrLagSeconds)
       else
         Future.successful(lastProcessTimeOpt.get, processTimeOpt.get)
       _ = println(s"### lastProcessTime:${lastProcessTime}, ${processTime}")
-      orderSize <- f(lastProcessTime, processTime, skipOpt)
+      orderSize <- processFunction(lastProcessTime, processTime, skipOpt)
       _ <- skipOpt match {
         case None => //记录本次处理时间
-          dbModule.orderStatusMonitorService.updateLastProcessingTimestamp(
+          dbModule.orderStatusMonitorService.updateLatestProcessingTime(
             OrderStatusMonitor(
-              monitorType = monitorType.name,
+              monitoringType = monitoringType.name,
               processTime = processTime
             )
           )
         case Some(skip) =>
           if (orderSize >= skip.size && skip.skip / skip.size <= maxRetriesCount) {
-            pagging(
-              f,
+            runJob(
+              processFunction,
               Some(lastProcessTime),
               Some(processTime),
               Some(skip.copy(skip = skip.skip + skip.size, size = skip.size)),
-              monitorType,
+              monitoringType,
               leadOrLagSeconds
             )
           } else {
             //记录本次处理时间
-            dbModule.orderStatusMonitorService.updateLastProcessingTimestamp(
+            dbModule.orderStatusMonitorService.updateLatestProcessingTime(
               OrderStatusMonitor(
-                monitorType = monitorType.name,
+                monitoringType = monitoringType.name,
                 processTime = processTime
               )
             )
@@ -126,13 +126,13 @@ class OrderStatusMonitorActor(
     } yield Unit
   }
 
-  private def processEffectiveOrders(
+  private def activateOrders(
       lastProcessTime: Int,
       processTime: Int,
       skipOpt: Option[Paging] = None
     ): Future[Int] =
     for {
-      orders <- dbModule.orderService.getEffectiveOrdersForMonitor(
+      orders <- dbModule.orderService.getOrdersToActivate(
         lastProcessTime,
         processTime,
         skipOpt
@@ -151,17 +151,14 @@ class OrderStatusMonitorActor(
         .updateOrdersStatus(orders.map(_.hash), OrderStatus.STATUS_PENDING)
     } yield orders.size
 
-  private def processExpiredOrders(
+  private def expireOrders(
       lastProcessTime: Int,
       processTime: Int,
       skipOpt: Option[Paging] = None
     ): Future[Int] =
     for {
       orders <- dbModule.orderService
-        .getExpiredOrdersForMonitor(
-          lastProcessTime,
-          processTime
-        )
+        .getOrdersToExpire(lastProcessTime, processTime)
       _ <- Future.sequence(orders.map { o =>
         val cancelReq = CancelOrder.Req(
           o.hash,
@@ -181,15 +178,13 @@ class OrderStatusMonitorActor(
     } yield orders.size
 
   private def getProcessTime(
-      monitorType: OrderStatusMonitor.MonitorType,
+      monitoringType: OrderStatusMonitor.MonitoringType,
       leadOrLagSeconds: Int
     ): Future[(Int, Int)] = {
     val processTime = timeProvider.getTimeSeconds()
     for {
       lastEventOpt <- dbModule.orderStatusMonitorService
-        .getLastProcessingTimestamp(
-          monitorType.name
-        )
+        .getLatestProcessingTime(monitoringType.name)
       lastProcessTime = if (lastEventOpt.isEmpty) 0
       else lastEventOpt.get.processTime
     } yield

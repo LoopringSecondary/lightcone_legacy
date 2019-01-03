@@ -64,14 +64,14 @@ trait OrderService {
     ): Future[Seq[RawOrder]]
 
   //
-  def getEffectiveOrdersForMonitor(
+  def getOrdersToActivate(
       lastProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]]
 
   //
-  def getExpiredOrdersForMonitor(
+  def getOrdersToExpire(
       lastProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None

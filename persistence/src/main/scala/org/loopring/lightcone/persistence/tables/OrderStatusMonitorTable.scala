@@ -23,14 +23,11 @@ import slick.jdbc.MySQLProfile.api._
 class OrderStatusMonitorTable(tag: Tag)
     extends BaseTable[OrderStatusMonitor](tag, "T_ORDER_STATUS_MONITOR") {
 
-  def id = monitorType
+  def id = monitoringType
   def processTime = column[Long]("process_time")
-  def monitorType = column[String]("monitor_type", O.PrimaryKey, O.Unique)
+  def monitoringType = column[String]("monitoring_type", O.PrimaryKey, O.Unique)
 
   def * =
-    (
-      monitorType,
-      processTime
-    ) <> ((OrderStatusMonitor.apply _).tupled, OrderStatusMonitor.unapply)
+    (monitoringType, processTime) <> ((OrderStatusMonitor.apply _).tupled, OrderStatusMonitor.unapply)
 
 }

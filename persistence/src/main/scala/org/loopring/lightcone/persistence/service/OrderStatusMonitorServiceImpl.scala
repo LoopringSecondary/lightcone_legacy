@@ -25,20 +25,19 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
 class OrderStatusMonitorServiceImpl @Inject()(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
     extends OrderStatusMonitorService {
 
   val orderStatusMonitorDal: OrderStatusMonitorDal =
     new OrderStatusMonitorDalImpl()
 
-  def updateLastProcessingTimestamp(event: OrderStatusMonitor): Future[Int] =
-    orderStatusMonitorDal.updateLastProcessingTimestamp(event)
+  def updateLatestProcessingTime(event: OrderStatusMonitor): Future[Int] =
+    orderStatusMonitorDal.updateLatestProcessingTime(event)
 
-  def getLastProcessingTimestamp(
-      monitorType: String
+  def getLatestProcessingTime(
+      monitoringType: String
     ): Future[Option[OrderStatusMonitor]] =
-    orderStatusMonitorDal.getLastProcessingTimestamp(monitorType)
+    orderStatusMonitorDal.getLatestProcessingTime(monitoringType)
 
 }

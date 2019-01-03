@@ -27,34 +27,31 @@ import scala.concurrent.{ExecutionContext, Future}
 trait OrderStatusMonitorDal
     extends BaseDalImpl[OrderStatusMonitorTable, OrderStatusMonitor] {
 
-  def updateLastProcessingTimestamp(event: OrderStatusMonitor): Future[Int]
+  def updateLatestProcessingTime(event: OrderStatusMonitor): Future[Int]
 
-  def getLastProcessingTimestamp(
-      monitorType: String
+  def getLatestProcessingTime(
+      monitoringType: String
     ): Future[Option[OrderStatusMonitor]]
 
 }
 
 class OrderStatusMonitorDalImpl(
   )(
-    implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends OrderStatusMonitorDal {
   val query = TableQuery[OrderStatusMonitorTable]
 
-  def updateLastProcessingTimestamp(event: OrderStatusMonitor): Future[Int] = {
-    db.run(
-      query.insertOrUpdate(event)
-    )
+  def updateLatestProcessingTime(event: OrderStatusMonitor): Future[Int] = {
+    db.run(query.insertOrUpdate(event))
   }
 
-  def getLastProcessingTimestamp(
-      monitorType: String
+  def getLatestProcessingTime(
+      monitoringType: String
     ): Future[Option[OrderStatusMonitor]] =
     db.run(
       query
-        .filter(_.monitorType === monitorType)
+        .filter(_.monitoringType === monitoringType)
         .take(1)
         .result
         .headOption

@@ -109,14 +109,14 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
     ): Future[Seq[RawOrder]]
 
   //
-  def getEffectiveOrdersForMonitor(
+  def getOrdersToActivate(
       lastProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]]
 
   //
-  def getExpiredOrdersForMonitor(
+  def getOrdersToExpire(
       lastProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
@@ -303,13 +303,13 @@ class OrderDalImpl(
   }
 
   //
-  def getEffectiveOrdersForMonitor(
+  def getOrdersToActivate(
       lastProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] = {
     val availableStatus =
-      Seq(OrderStatus.STATUS_UNEFFECTIVED_YET)
+      Seq(OrderStatus.STATUS_INACTIVE)
     var filters = query
       .filter(_.status inSet availableStatus)
       .filter(_.validSince >= lastProcessTime)
@@ -323,7 +323,7 @@ class OrderDalImpl(
   }
 
   //
-  def getExpiredOrdersForMonitor(
+  def getOrdersToExpire(
       lastProcessTime: Int,
       processTime: Int,
       skip: Option[Paging] = None

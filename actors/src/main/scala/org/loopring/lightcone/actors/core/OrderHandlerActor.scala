@@ -91,9 +91,8 @@ class OrderHandlerActor(
       //如果订单未到生效时间，则暂时不发送到AccountManager，只保存到数据库
       if (raworder.validSince > timeProvider.getTimeSeconds()) {
         val newRaworder = raworder.copy(
-          state = Some(
-            raworder.getState.copy(status = OrderStatus.STATUS_UNEFFECTIVED_YET)
-          )
+          state =
+            Some(raworder.getState.copy(status = OrderStatus.STATUS_INACTIVE))
         )
         (for {
           saveRes <- dbModule.orderService.saveOrder(newRaworder)
