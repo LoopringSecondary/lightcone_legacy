@@ -107,7 +107,7 @@ class OrderStatusMonitorActor(
           processFunction = expireOrders,
           skipOpt = Some(Paging(0, batchSize)),
           monitoringType = OrderStatusMonitor.MonitoringType.MONITORING_EXPIRE,
-          leadOrLagSeconds = activateLaggingInSecond
+          leadOrLagSeconds = expireLeadInSeconds
         )
     )
   )
@@ -125,7 +125,7 @@ class OrderStatusMonitorActor(
         getProcessTime(monitoringType, leadOrLagSeconds)
       else
         Future.successful(latestProcessTimeOpt.get, processTimeOpt.get)
-      _ = println(s"### latestProcessTime:${latestProcessTime}, ${processTime}")
+      _ = log.debug(s"latestProcessTime: ${latestProcessTime}, ${processTime}")
       orderSize <- processFunction(latestProcessTime, processTime, skipOpt)
       _ <- skipOpt match {
         case None => //记录本次处理时间
@@ -135,6 +135,7 @@ class OrderStatusMonitorActor(
               processTime = processTime
             )
           )
+
         case Some(skip) =>
           if (orderSize >= skip.size && skip.skip / skip.size <= maxRetriesCount) {
             runJob(
