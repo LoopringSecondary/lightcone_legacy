@@ -75,7 +75,7 @@ class OrderHandlerActor(
   def receive: Receive = {
     case req: CancelOrder.Req ⇒
       (for {
-        cancelRes <- dbModule.orderService.markOrderSoftCancelled(Seq(req.id))
+        cancelRes <- dbModule.orderService.cancelOrders(Seq(req.id), req.status)
       } yield {
         cancelRes.headOption match {
           case Some(res) ⇒
