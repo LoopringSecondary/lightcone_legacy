@@ -18,7 +18,11 @@ package org.loopring.lightcone.ethereum.event
 
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{Transaction, TransactionEvent, TransactionReceipt}
+import org.loopring.lightcone.proto.{
+  Transaction,
+  TransactionEvent,
+  TransactionReceipt
+}
 import org.web3j.utils.Numeric
 
 abstract class TransactionExtractor {
@@ -116,7 +120,10 @@ case class EthTransactionExtractor(abi: WETHABI) extends TransactionExtractor {
   }
 }
 
-case class TokenTransactionExtractor(abi: WETHABI)(implicit protocolAddress: Address)
+case class TokenTransactionExtractor(
+    abi: WETHABI
+  )(
+    implicit protocolAddress: Address)
     extends TransactionExtractor {
 
   def extract(
@@ -176,7 +183,10 @@ case class TokenTransactionExtractor(abi: WETHABI)(implicit protocolAddress: Add
 
 }
 
-case class TradeTransactionExtractor(abi: WETHABI)(implicit protocolAddress: Address)
+case class TradeTransactionExtractor(
+    abi: WETHABI
+  )(
+    implicit protocolAddress: Address)
     extends TransactionExtractor {
 
   def extract(
@@ -224,7 +234,12 @@ case class LoopringTransactionExtractor(abi: LoopringProtocolAbi)
         receiptOpt.get.logs
           .map(log ⇒ {
             abi.unpackEvent(log.data, log.topics.toArray) match {
-              case Some(OrderSubmittedEvent.Result) ⇒
+              case Some(
+                  OrderSubmittedEvent.Result | AllOrdersCancelledEvent.Result |
+                  AllOrdersCancelledByBrokerEvent.Result |
+                  AllOrdersCancelledForTradingPairEvent.Result |
+                  AllOrdersCancelledForTradingPairByBrokerEvent.Result
+                  ) ⇒
                 Some(
                   Transaction2Event(tx).copy(
                     eventType = TransactionEvent.Type.LOOPRING

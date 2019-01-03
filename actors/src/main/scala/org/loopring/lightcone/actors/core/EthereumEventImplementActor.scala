@@ -28,6 +28,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+import org.loopring.lightcone.ethereum.event._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable

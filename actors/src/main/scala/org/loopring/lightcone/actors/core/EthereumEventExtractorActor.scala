@@ -17,12 +17,7 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
-import akka.cluster.singleton.{
-  ClusterSingletonManager,
-  ClusterSingletonManagerSettings,
-  ClusterSingletonProxy,
-  ClusterSingletonProxySettings
-}
+import akka.cluster.singleton._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -33,6 +28,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+import org.loopring.lightcone.ethereum.event._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
