@@ -33,6 +33,9 @@ class OrdersCutoffServiceImpl @Inject()(
     extends OrdersCutoffService {
   val cutoffDal: OrdersCutoffDal = new OrdersCutoffDalImpl()
 
+  def getCutoffByTxHash(txHash: String): Future[Option[OrdersCutoffEvent]] =
+    cutoffDal.getCutoffByTxHash(txHash)
+
   def saveCutoff(cutoff: OrdersCutoffEvent): Future[ErrorCode] =
     cutoffDal.saveCutoff(cutoff)
 

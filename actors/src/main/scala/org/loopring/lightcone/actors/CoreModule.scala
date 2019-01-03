@@ -129,6 +129,25 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         )
       )
 
+      system.actorOf(
+        ClusterSingletonManager.props(
+          singletonProps = Props(new OrderCutoffHandlerActor()),
+          terminationMessage = PoisonPill,
+          settings = ClusterSingletonManagerSettings(system)
+        ),
+        OrderCutoffHandlerActor.name
+      )
+      actors.add(
+        OrderCutoffHandlerActor.name,
+        system.actorOf(
+          ClusterSingletonProxy.props(
+            singletonManagerPath = s"/user/${OrderCutoffHandlerActor.name}",
+            settings = ClusterSingletonProxySettings(system)
+          ),
+          name = s"${OrderCutoffHandlerActor.name}_proxy"
+        )
+      )
+
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
       actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)

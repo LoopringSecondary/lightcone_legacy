@@ -63,6 +63,11 @@ trait OrderService {
       skip: CursorPaging
     ): Future[Seq[RawOrder]]
 
+  def getCutoffAffectedOrders(
+      cutoffEvent: OrdersCutoffEvent,
+      paging: CursorPaging
+    ): Future[Seq[RawOrder]]
+
   // Count the number of orders
   def countOrdersForUser(
       statuses: Set[OrderStatus],
@@ -80,8 +85,21 @@ trait OrderService {
       status: OrderStatus
     ): Future[ErrorCode]
 
+  def updateOrdersStatus(
+      hashes: Seq[String],
+      status: OrderStatus
+    ): Future[ErrorCode]
+
   def updateAmount(
       hash: String,
       state: RawOrder.State
     ): Future[ErrorCode]
+
+  def cancelOrders(
+      orderHashes: Seq[String],
+      status: OrderStatus
+    ): Future[Seq[UserCancelOrder.Res.Result]]
+
+  // 查询db，通过订单cancel cutoff，验证是否有效
+  def verifyOrderEffective(req: OrderEffective.Req): Future[Boolean]
 }

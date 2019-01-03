@@ -31,6 +31,8 @@ import scala.util.{Failure, Success}
 trait OrdersCutoffDal
     extends BaseDalImpl[OrdersCutoffTable, OrdersCutoffEvent] {
 
+  def getCutoffByTxHash(txHash: String): Future[Option[OrdersCutoffEvent]]
+
   def saveCutoff(cutoff: OrdersCutoffEvent): Future[ErrorCode]
 
   def hasCutoff(
@@ -53,7 +55,18 @@ class OrdersCutoffDalImpl(
   val timeProvider = new SystemTimeProvider()
   private[this] val logger = Logger(this.getClass)
 
-  override def saveCutoff(cutoff: OrdersCutoffEvent): Future[ErrorCode] = {
+  def getCutoffByTxHash(txHash: String): Future[Option[OrdersCutoffEvent]] = {
+    db.run(
+      query
+        .filter(_.txHash === txHash)
+        .sortBy(_.createdAt.desc)
+        .take(1)
+        .result
+        .headOption
+    )
+  }
+
+  def saveCutoff(cutoff: OrdersCutoffEvent): Future[ErrorCode] = {
     val now = timeProvider.getTimeMillis
     db.run((query += cutoff.copy(createdAt = now)).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {

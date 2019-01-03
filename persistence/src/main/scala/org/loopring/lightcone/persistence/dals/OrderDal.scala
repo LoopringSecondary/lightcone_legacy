@@ -108,6 +108,11 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       skip: CursorPaging
     ): Future[Seq[RawOrder]]
 
+  def getCutoffAffectedOrders(
+      cutoffEvent: OrdersCutoffEvent,
+      paging: CursorPaging
+    ): Future[Seq[RawOrder]]
+
   // Update order's status and update the updated_at timestamp if changeUpdatedAtField is true.
   // Returns Left(error) if this operation fails, or Right(string) the order's hash.
   def updateOrderStatus(
@@ -142,6 +147,12 @@ class OrderDalImpl(
   implicit val OrderStatusColumnType = enumColumnType(OrderStatus)
   implicit val TokenStandardColumnType = enumColumnType(TokenStandard)
   private[this] val logger = Logger(this.getClass)
+
+  val effectiveStatus = Set(
+    OrderStatus.STATUS_NEW,
+    OrderStatus.STATUS_PENDING,
+    OrderStatus.STATUS_PARTIALLY_FILLED
+  )
 
   def saveOrder(order: RawOrder): Future[PersistOrder.Res] = {
     db.run((query += order).asTry).map {
@@ -466,6 +477,30 @@ class OrderDalImpl(
         db.run(filters.result)
       }
     }
+  }
+
+  def getCutoffAffectedOrders(
+      cutoffEvent: OrdersCutoffEvent,
+      paging: CursorPaging
+    ): Future[Seq[RawOrder]] = {
+    //TODO du：暂时不考虑broker，owner必传
+    if (cutoffEvent.owner.isEmpty) {
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        "owner could not be empty"
+      )
+    }
+    var filters = query
+      .filter(_.owner === cutoffEvent.owner)
+      .filter(_.status inSet effectiveStatus)
+      .filter(_.sequenceId > paging.cursor)
+    if (cutoffEvent.tradingPair.nonEmpty) {
+      filters = filters.filter(_.marketHash === cutoffEvent.tradingPair)
+    }
+    filters = filters
+      .take(paging.size)
+      .sortBy(_.sequenceId.asc)
+    db.run(filters.result)
   }
 
   def updateOrderStatus(

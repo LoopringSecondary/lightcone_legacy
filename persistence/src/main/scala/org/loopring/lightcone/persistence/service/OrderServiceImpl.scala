@@ -18,12 +18,13 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
+import org.loopring.lightcone.ethereum.RawOrderValidatorImpl
 import org.loopring.lightcone.lib.{
   ErrorException,
   MarketHashProvider,
   SystemTimeProvider
 }
-import org.loopring.lightcone.persistence.dals.{OrderDal, OrderDalImpl}
+import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.ErrorCode.ERR_INTERNAL_UNKNOWN
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
@@ -35,6 +36,10 @@ class OrderServiceImpl @Inject()(
     @Named("db-execution-context") val ec: ExecutionContext)
     extends OrderService {
   val orderDal: OrderDal = new OrderDalImpl()
+
+  val ordersCancelledEventDal: OrdersCancelledEventDal =
+    new OrdersCancelledEventDalImpl()
+  val orderCutoffDal: OrdersCutoffDal = new OrdersCutoffDalImpl()
   val timeProvider = new SystemTimeProvider()
 
   private def giveUserOrder(order: Option[RawOrder]): Option[RawOrder] = {
@@ -77,25 +82,7 @@ class OrderServiceImpl @Inject()(
   def markOrderSoftCancelled(
       orderHashes: Seq[String]
     ): Future[Seq[UserCancelOrder.Res.Result]] =
-    for {
-      updated <- orderDal.updateOrdersStatus(
-        orderHashes,
-        OrderStatus.STATUS_CANCELLED_BY_USER
-      )
-      selectOwners <- orderDal.getOrdersMap(orderHashes)
-    } yield {
-      if (updated == ErrorCode.ERR_NONE) {
-        orderHashes.map { orderHash =>
-          UserCancelOrder.Res.Result(
-            orderHash,
-            giveUserOrder(selectOwners.get(orderHash)),
-            ErrorCode.ERR_NONE
-          )
-        }
-      } else {
-        throw ErrorException(ERR_INTERNAL_UNKNOWN, "failed to update")
-      }
-    }
+    cancelOrders(orderHashes, OrderStatus.STATUS_CANCELLED_BY_USER)
 
   def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]] =
     orderDal.getOrders(hashes)
@@ -162,6 +149,12 @@ class OrderServiceImpl @Inject()(
       skip
     )
 
+  def getCutoffAffectedOrders(
+      cutoffEvent: OrdersCutoffEvent,
+      paging: CursorPaging
+    ): Future[Seq[RawOrder]] =
+    orderDal.getCutoffAffectedOrders(cutoffEvent, paging)
+
   // Count the number of orders
   def countOrdersForUser(
       statuses: Set[OrderStatus],
@@ -187,8 +180,83 @@ class OrderServiceImpl @Inject()(
     orderDal.updateOrderStatus(hash, status)
   }
 
+  def updateOrdersStatus(
+      hashes: Seq[String],
+      status: OrderStatus
+    ): Future[ErrorCode] = {
+    orderDal.updateOrdersStatus(hashes, status)
+  }
+
   def updateAmount(
       hash: String,
       state: RawOrder.State
     ): Future[ErrorCode] = orderDal.updateAmount(hash, state)
+
+  def cancelOrders(
+      orderHashes: Seq[String],
+      status: OrderStatus
+    ): Future[Seq[UserCancelOrder.Res.Result]] =
+    for {
+      updated <- orderDal.updateOrdersStatus(
+        orderHashes,
+        status
+      )
+      selectOwners <- orderDal.getOrdersMap(orderHashes)
+    } yield {
+      if (updated == ErrorCode.ERR_NONE) {
+        orderHashes.map { orderHash =>
+          UserCancelOrder.Res.Result(
+            orderHash,
+            giveUserOrder(selectOwners.get(orderHash)),
+            ErrorCode.ERR_NONE
+          )
+        }
+      } else {
+        throw ErrorException(ERR_INTERNAL_UNKNOWN, "failed to update")
+      }
+    }
+
+  def verifyOrderEffective(req: OrderEffective.Req): Future[Boolean] = {
+    for {
+      orderOpt <- req.order match {
+        case OrderEffective.Req.Order.Hash(value) =>
+          orderDal.getOrder(value)
+        case OrderEffective.Req.Order.RawOrder(value) =>
+          Future.successful(Some(value))
+        case _ =>
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "invalid order parameter"
+          )
+      }
+      order = orderOpt match {
+        case Some(o) => o
+        case None =>
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "invalid order parameter"
+          )
+      }
+      orderHash = RawOrderValidatorImpl.calculateOrderHash(order)
+      cancelled <- ordersCancelledEventDal.hasCancelled(orderHash)
+      available <- if (cancelled) {
+        Future.successful(false)
+      } else {
+        val brokerOpt =
+          if (order.getParams.broker.isEmpty)
+            Some(order.getParams.broker)
+          else None
+        val marketHash = MarketHashProvider.convert2Hex(
+          order.tokenS,
+          order.tokenB
+        )
+        orderCutoffDal.hasCutoff(
+          brokerOpt,
+          order.owner,
+          marketHash,
+          order.getParams.validUntil
+        )
+      }
+    } yield available
+  }
 }

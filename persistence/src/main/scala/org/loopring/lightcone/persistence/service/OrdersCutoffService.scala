@@ -23,6 +23,8 @@ import scala.concurrent.Future
 trait OrdersCutoffService {
   val cutoffDal: OrdersCutoffDal
 
+  def getCutoffByTxHash(txHash: String): Future[Option[OrdersCutoffEvent]]
+
   def saveCutoff(cutoff: OrdersCutoffEvent): Future[ErrorCode]
 
   def hasCutoff(

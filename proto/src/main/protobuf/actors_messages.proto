@@ -22,6 +22,7 @@ package org.loopring.lightcone.proto;
 import "actors_data.proto";
 import "core.proto";
 import "ethereum.proto";
+import "common.proto";
 
 /////////////////////////////////////////////////////////////////////
 // ONE WAY MESSAGES
@@ -89,6 +90,46 @@ message CancelOrder {
     message Res {
         string id = 1;
         OrderStatus status = 2; //取消的类型
+    }
+}
+
+message CutoffOrder {
+    message Req {
+        oneof cutoff {
+            Cutoffs                 by_broker      = 1;
+            OwnerCutoffs            by_owner       = 2;
+            TradingPairCutoffs      by_broker_pair = 3;
+            OwnerTradingPairCutoffs by_owner_pair  = 4;
+        }
+        string tx_hash      = 5;
+        int64  block_height = 6;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+    }
+}
+
+message BatchCutoffOrders {
+    message Req {
+        OrdersCutoffEvent cutoff = 1;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+    }
+}
+
+message OrderEffective {
+    message Req {
+        oneof order {
+            string   hash      = 1;
+            RawOrder raw_order = 2;
+        }
+    }
+
+    message Res {
+        bool effective = 1;
     }
 }
 
