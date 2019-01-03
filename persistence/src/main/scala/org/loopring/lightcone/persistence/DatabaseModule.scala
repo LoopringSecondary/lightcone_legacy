@@ -40,6 +40,9 @@ class DatabaseModule @Inject()(
   val settlementTxService: SettlementTxService = new SettlementTxServiceImpl()
   val blockService: BlockService = new BlockServiceImpl()
 
+  val orderStatusMonitorService: OrderStatusMonitorService =
+    new OrderStatusMonitorServiceImpl()
+
   val tables = Seq(
     new TokenMetadataDalImpl(),
     new OrderDalImpl(),
@@ -52,6 +55,7 @@ class DatabaseModule @Inject()(
     new TransactionDalImpl(),
     new EventLogDalImpl(),
     new TokenTransferDalImpl(),
-    new SettlementTxDalImpl()
+    new SettlementTxDalImpl(),
+    new OrderStatusMonitorDalImpl()
   )
 }

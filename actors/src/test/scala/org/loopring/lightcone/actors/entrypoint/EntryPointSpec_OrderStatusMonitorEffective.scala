@@ -18,10 +18,11 @@ package org.loopring.lightcone.actors.entrypoint
 
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
+import akka.util.Timeout
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
-import scala.concurrent.Await
-
-class EntryPointSpec_SubmitOneOrder
+class EntryPointSpec_OrderStatusMonitorEffective
     extends CommonSpec("""
                          |akka.cluster.roles=[
                          | "order_handler",
@@ -35,61 +36,66 @@ class EntryPointSpec_SubmitOneOrder
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with MarketManagerSupport
     with OrderbookManagerSupport
     with EthereumQueryMockSupport
-    with OrderGenerateSupport {
+    with MarketManagerSupport
+    with OrderGenerateSupport
+    with OrderStatusMonitorSupport {
 
-  "submit an order" must {
-    "get right response in EntryPoint,DbModule,Orderbook" in {
+  "start an order status monitor" must {
+    "scan the order table and submit the order to AccountManager" in {
 
-      val amountS = "10"
-      val amountB = "1"
-      val rawOrder =
-        createRawOrder(amountS = amountS.zeros(18), amountB = amountB.zeros(18))
-      val f = singleRequest(SubmitOrder.Req(Some(rawOrder)), "submit_order")
+      //保存一批订单，等待提交
+      val orders =
+        (0 until 5) map { i =>
+          createRawOrder(
+            amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals),
+            validSince = timeProvider.getTimeSeconds().toInt + 10
+          )
+        }
 
-      val res = Await.result(f, timeout.duration)
-      res match {
-        case SubmitOrder.Res(Some(order)) =>
-          info(s" response ${order}")
-          order.status should be(OrderStatus.STATUS_PENDING)
-        case _ => assert(false)
-      }
+      val f = Future.sequence(orders.map { o =>
+        singleRequest(SubmitOrder.Req(Some(o)), "submit_order")
+      })
 
-//      Thread.sleep(1000)
-      val getOrderF = dbModule.orderService.getOrder(rawOrder.hash)
+      Await.result(f, timeout.duration)
 
-      val getOrder = Await.result(getOrderF, timeout.duration)
-      getOrder match {
-        case Some(order) =>
-          assert(order.sequenceId > 0)
-        case None => assert(false)
-      }
-      //orderbook
+      info(
+        "confirm the status of the orders in db should be STATUS_PENDING_ACTIVE"
+      )
+      val assertOrderFromDbF = Future.sequence(orders.map { o =>
+        for {
+          orderOpt <- dbModule.orderService.getOrder(o.hash)
+        } yield {
+          orderOpt match {
+            case Some(order) =>
+              assert(order.sequenceId > 0)
+              assert(order.getState.status == OrderStatus.STATUS_PENDING_ACTIVE)
+            case None =>
+              assert(false)
+          }
+        }
+      })
+
+      Await.result(assertOrderFromDbF, timeout.duration)
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-
+      info("the sells in orderbook should be nonEmpty after several seconds.")
       val orderbookRes = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+        (orderbook: Orderbook) =>
+          orderbook.sells.nonEmpty && orderbook.sells(0).amount == "50.00000",
+        Some(Timeout(20 second))
       )
       orderbookRes match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
-          println(s"sells:${sells}, buys:${buys}")
+          info(s"sells:${sells}, buys:${buys}")
           assert(sells.nonEmpty)
-          assert(
-            sells(0).price == "10.000000" &&
-              //              sells(0).amount == "10.00000" &&
-              sells(0).total == "1.00000"
-          )
-          assert(buys.isEmpty)
         case _ => assert(false)
       }
-
     }
   }
 

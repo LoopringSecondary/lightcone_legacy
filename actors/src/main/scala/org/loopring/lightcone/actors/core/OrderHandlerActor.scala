@@ -88,16 +88,33 @@ class OrderHandlerActor(
       }) forwardTo (mammv, sender)
 
     case SubmitOrder.Req(Some(raworder)) ⇒
-      (for {
-        //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
-        saveRes <- dbModule.orderService.saveOrder(raworder)
-      } yield {
-        saveRes match {
-          case Right(errCode) =>
-            throw ErrorException(errCode, s"failed to submit order: $raworder")
-          case Left(resRawOrder) =>
-            SubmitSimpleOrder(resRawOrder.owner, Some(resRawOrder))
-        }
-      }) forwardTo (mammv, sender)
+      //如果订单未到生效时间，则暂时不发送到AccountManager，只保存到数据库
+      if (raworder.validSince > timeProvider.getTimeSeconds()) {
+        val newRaworder = raworder.copy(
+          state = Some(
+            raworder.getState.copy(status = OrderStatus.STATUS_PENDING_ACTIVE)
+          )
+        )
+        (for {
+          saveRes <- dbModule.orderService.saveOrder(newRaworder)
+        } yield {
+          SubmitOrder.Res(Some(newRaworder))
+        }) sendTo sender
+      } else {
+        (for {
+          //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
+          saveRes <- dbModule.orderService.saveOrder(raworder)
+        } yield {
+          saveRes match {
+            case Right(errCode) =>
+              throw ErrorException(
+                errCode,
+                s"failed to submit order: $raworder"
+              )
+            case Left(resRawOrder) =>
+              SubmitSimpleOrder(resRawOrder.owner, Some(resRawOrder))
+          }
+        }) forwardTo (mammv, sender)
+      }
   }
 }

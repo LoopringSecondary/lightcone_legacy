@@ -36,6 +36,23 @@ import scala.concurrent._
 
 object TokenMetadataRefresher {
   val name = "token_metadata_refresher"
+
+  def start(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule,
+      tokenManager: TokenManager
+    ) = {
+    system.actorOf(
+      Props(new TokenMetadataRefresher()),
+      TokenMetadataRefresher.name
+    )
+  }
 }
 
 // main owner: 杜永丰

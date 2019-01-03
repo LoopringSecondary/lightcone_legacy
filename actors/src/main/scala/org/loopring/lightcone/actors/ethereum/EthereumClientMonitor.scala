@@ -52,7 +52,7 @@ object EthereumClientMonitor {
       ClusterSingletonManager.props(
         singletonProps = Props(new EthereumClientMonitor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system)
+        settings = ClusterSingletonManagerSettings(system).withRole(name)
       ),
       name = EthereumClientMonitor.name
     )

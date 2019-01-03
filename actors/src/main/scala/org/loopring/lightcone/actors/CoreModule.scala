@@ -102,34 +102,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       system.eventStream.subscribe(listener, classOf[UnhandledMessage])
       system.eventStream.subscribe(listener, classOf[DeadLetter])
 
-      actors.add(
-        TokenMetadataRefresher.name,
-        system
-          .actorOf(
-            Props(new TokenMetadataRefresher),
-            TokenMetadataRefresher.name
-          )
-      )
-
-      //-----------deploy cluster singletons-----------
-      system.actorOf(
-        ClusterSingletonManager.props(
-          singletonProps = Props(new OrderRecoverCoordinator()),
-          terminationMessage = PoisonPill,
-          settings = ClusterSingletonManagerSettings(system)
-        ),
-        OrderRecoverCoordinator.name
-      )
-      actors.add(
-        OrderRecoverCoordinator.name,
-        system.actorOf(
-          ClusterSingletonProxy.props(
-            singletonManagerPath = s"/user/${OrderRecoverCoordinator.name}",
-            settings = ClusterSingletonProxySettings(system)
-          ),
-          name = s"${OrderRecoverCoordinator.name}_proxy"
-        )
-      )
+      actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
 
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
@@ -138,15 +111,6 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
       actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
       actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
-      actors.add(EthereumAccessActor.name, EthereumAccessActor.startSingleton)
-      actors.add(
-        EthereumClientMonitor.name,
-        EthereumClientMonitor.startSingleton
-      )
-      actors.add(
-        RingSettlementManagerActor.name,
-        RingSettlementManagerActor.startSingleton
-      )
       actors.add(
         MultiAccountManagerActor.name,
         MultiAccountManagerActor.startShardRegion
@@ -164,6 +128,28 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       actors.add(
         OrderbookManagerActor.name,
         OrderbookManagerActor.startShardRegion
+      )
+
+      //-----------deploy singleton actors-----------
+      actors.add(EthereumAccessActor.name, EthereumAccessActor.startSingleton)
+
+      actors.add(
+        OrderRecoverCoordinator.name,
+        OrderRecoverCoordinator.startSingleton
+      )
+
+      actors.add(
+        OrderStatusMonitorActor.name,
+        OrderStatusMonitorActor.startSingleton
+      )
+
+      actors.add(
+        EthereumClientMonitor.name,
+        EthereumClientMonitor.startSingleton
+      )
+      actors.add(
+        RingSettlementManagerActor.name,
+        RingSettlementManagerActor.startSingleton
       )
 
       //-----------deploy local actors-----------
@@ -213,10 +199,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       )
 
       //-----------deploy local actors that depend on cluster aware actors-----------
-      actors.add(
-        EntryPointActor.name,
-        system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
-      )
+      actors.add(EntryPointActor.name, EntryPointActor.start)
 
       //-----------deploy JSONRPC service-----------
       if (cluster.selfRoles.contains("jsonrpc")) {

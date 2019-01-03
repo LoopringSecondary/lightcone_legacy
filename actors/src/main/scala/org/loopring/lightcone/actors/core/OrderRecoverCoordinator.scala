@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.core
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor._
 import akka.cluster.sharding._
+import akka.cluster.singleton._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -34,6 +35,35 @@ import scalapb.json4s.JsonFormat
 
 object OrderRecoverCoordinator extends {
   val name = "order_recover_coordinator"
+
+  def startSingleton(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dustEvaluator: DustOrderEvaluator
+    ): ActorRef = {
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = Props(new OrderRecoverCoordinator()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system).withRole(name)
+      ),
+      OrderRecoverCoordinator.name
+    )
+
+    system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = s"/user/${OrderRecoverCoordinator.name}",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"${OrderRecoverCoordinator.name}_proxy"
+    )
+  }
+
 }
 
 class OrderRecoverCoordinator(
