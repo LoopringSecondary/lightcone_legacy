@@ -30,6 +30,7 @@ class EntryPointSpec_OrderStatusMonitorEffective
                          | "market_manager",
                          | "orderbook_manager",
                          | "gas_price",
+                         | "order_status_monitor",
                          | "ring_settlement"]
                          |""".stripMargin)
     with JsonrpcSupport

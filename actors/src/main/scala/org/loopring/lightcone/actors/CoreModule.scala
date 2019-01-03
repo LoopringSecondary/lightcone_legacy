@@ -109,7 +109,10 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
       actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
       actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
-      actors.add(OrderHandlerActor.name, OrderHandlerActor.startShardRegion)
+      actors.add(
+        OrderPersistenceActor.name,
+        OrderPersistenceActor.startShardRegion
+      )
       actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
       actors.add(
         MultiAccountManagerActor.name,
@@ -193,7 +196,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         OrderHandlerMessageValidator.name,
         MessageValidationActor(
           new OrderHandlerMessageValidator(),
-          OrderHandlerActor.name,
+          OrderPersistenceActor.name,
           OrderHandlerMessageValidator.name
         )
       )

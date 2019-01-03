@@ -63,6 +63,7 @@ class AccountManagerActor(
 
   protected def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
+  protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   def receive: Receive = LoggingReceive {
 
@@ -89,32 +90,82 @@ class AccountManagerActor(
         GetBalanceAndAllowances.Res(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case SubmitSimpleOrder(_, Some(order)) =>
-      submitOrder(order).sendTo(sender)
+//    case SubmitSimpleOrder(_, Some(order)) =>
+//      submitOrder(order).sendTo(sender)
+
+    case req @ SubmitOrder.Req(Some(raworder)) =>
+      (for {
+        _ <- Future.successful {
+          //所有异常检验放到Future里，否则会导致Actor重启
+          if (manager.isCutOff(raworder)) //check通过再保存到数据库，以及后续处理
+            throw ErrorException(ErrorCode.ERR_ORDER_VALIDATION_INVALID_CUTOFF)
+        }
+        //如果订单未到生效时间，则暂时不处理，只保存到数据库
+        res <- if (raworder.validSince > timeProvider.getTimeSeconds()) {
+          for {
+            newRaworder <- Future.successful(
+              raworder.copy(
+                state = Some(
+                  raworder.getState
+                    .copy(status = OrderStatus.STATUS_PENDING_ACTIVE)
+                )
+              )
+            )
+            resRawOrder <- (orderPersistenceActor ? req
+              .copy(rawOrder = Some(newRaworder)))
+              .mapAs[RawOrder]
+          } yield SubmitOrder.Res(Some(resRawOrder))
+        } else {
+          for {
+            resRawOrder <- (orderPersistenceActor ? req)
+              .mapAs[RawOrder]
+            resOrder_ <- submitOrder(resRawOrder)
+          } yield SubmitOrder.Res(order = Some(resOrder_))
+        }
+      } yield res) sendTo sender
 
     case req: CancelOrder.Req =>
-      assert(req.owner == address)
-      if (manager.cancelOrder(req.id)) {
-        marketManagerActor forward req
-      } else {
-        Future.failed(
-          ErrorException(
+      val originalSender = sender
+      (for {
+        _ <- Future.successful(assert(req.owner == address))
+        cancelRes <- orderPersistenceActor ? req
+        _ = if (manager.cancelOrder(req.id))
+          marketManagerActor.tell(req, originalSender)
+        else {
+          marketManagerActor ! req //在目前没有使用eventlog的情况下，哪怕manager中并没有该订单，则仍需要发送到MarketManager
+          throw ErrorException(
             ERR_FAILED_HANDLE_MSG,
             s"no order found with id: ${req.id}"
           )
-        ) sendTo sender
-      }
+        }
+      } yield cancelRes) sendTo sender
+
+//      if (manager.cancelOrder(req.id)) {
+//        marketManagerActor forward req
+//      } else {
+//        marketManagerActor ! req //在目前没有使用eventlog的情况下，哪怕manager中并没有该订单，则仍需要发送到MarketManager
+//        Future.failed(
+//          ErrorException(
+//            ERR_FAILED_HANDLE_MSG,
+//            s"no order found with id: ${req.id}"
+//          )
+//        ) sendTo sender
+//      }
 
     case AddressBalanceUpdated(addr, token, newBalance) =>
-      assert(addr == address)
-      updateBalanceOrAllowance(token, newBalance, _.setBalance(_))
+      (for {
+        _ <- Future.successful(assert(addr == address))
+      } yield
+        updateBalanceOrAllowance(token, newBalance, _.setBalance(_))) sendTo sender
 
     case AddressAllowanceUpdated(addr, token, newBalance) =>
-      assert(addr == address)
-      updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
+      (for {
+        _ <- Future.successful(assert(addr == address))
+      } yield
+        updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))) sendTo sender
   }
 
-  private def submitOrder(order: Order): Future[SubmitOrder.Res] = {
+  private def submitOrder(order: Order): Future[Order] = {
     val matchable: Matchable = order
     for {
       _ <- getTokenManager(matchable.tokenS)
@@ -155,7 +206,7 @@ class AccountManagerActor(
       }
       matchable_ = updatedOrders(_matchable.id)
       order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
-    } yield SubmitOrder.Res(order = Some(order_))
+    } yield order_
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {

@@ -14,29 +14,22 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.support
+package org.loopring.lightcone.core.account
 
-import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.validator.{
-  MessageValidationActor,
-  OrderHandlerMessageValidator
+import org.loopring.lightcone.core.data.{
+  Cutoff,
+  MarketPairCutoff,
+  Matchable,
+  OrderCutoff,
+  OwnerCutoff
 }
-import scala.concurrent.Await
+import org.loopring.lightcone.proto.RawOrder
 
-trait OrderHandleSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+trait AccountCutoffPool {
 
-  actors.add(
-    OrderPersistenceActor.name,
-    OrderPersistenceActor.startShardRegion
-  )
+  def addCutoff(cutoff: MarketPairCutoff)
+  def addCutoff(cutoff: OwnerCutoff)
+  def addCutoff(cutoff: OrderCutoff)
 
-  actors.add(
-    OrderHandlerMessageValidator.name,
-    MessageValidationActor(
-      new OrderHandlerMessageValidator(),
-      OrderPersistenceActor.name,
-      OrderHandlerMessageValidator.name
-    )
-  )
+  def isCutOff(rawOrder: RawOrder): Boolean
 }

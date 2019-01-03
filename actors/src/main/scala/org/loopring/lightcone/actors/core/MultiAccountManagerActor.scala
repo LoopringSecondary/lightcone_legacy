@@ -59,14 +59,23 @@ object MultiAccountManagerActor extends ShardedByAddress {
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
     case req: SubmitOrder.Req =>
-      throw ErrorException(
-        ERR_UNEXPECTED_ACTOR_MSG,
-        "MultiAccountManagerActor does not handle SubmitOrder.Req, use SubmitSimpleOrder"
-      )
+      req.rawOrder match {
+        case None =>
+          throw ErrorException(
+            ERR_UNEXPECTED_ACTOR_MSG,
+            "SubmitOrder.Req.rawOrder must be nonEmpty."
+          )
+        case Some(o) =>
+          o.owner
+      }
 
     case ActorRecover.RecoverOrderReq(Some(raworder)) => raworder.owner
     case req: CancelOrder.Req ⇒ req.owner
-    case req: SubmitSimpleOrder ⇒ req.owner
+    case req: SubmitSimpleOrder ⇒
+      throw ErrorException(
+        ERR_UNEXPECTED_ACTOR_MSG,
+        "MultiAccountManagerActor does not handle SubmitSimpleOrder, use SubmitOrder.Req"
+      )
     case req: GetBalanceAndAllowances.Req ⇒ req.address
     case req: AddressBalanceUpdated ⇒ req.address
     case req: AddressAllowanceUpdated ⇒ req.address
