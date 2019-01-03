@@ -149,10 +149,9 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         MultiAccountManagerActor.name,
         MultiAccountManagerActor.startShardRegion
       )
-
       actors.add(
         EthereumEventExtractorActor.name,
-        EthereumEventExtractorActor.start
+        EthereumEventExtractorActor.startSingleton
       )
       actors.add(
         EthereumEventImplementActor.name,

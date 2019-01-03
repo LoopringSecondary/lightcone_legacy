@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
+import akka.cluster.singleton._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -49,7 +50,22 @@ object EthereumEventImplementActor {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule
     ): ActorRef = {
-    system.actorOf(Props(new EthereumEventImplementActor()))
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = Props(new EthereumEventImplementActor()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system)
+      ),
+      name = EthereumEventImplementActor.name
+    )
+
+    system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = s"/user/${EthereumEventImplementActor.name}",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"${EthereumEventImplementActor.name}_proxy"
+    )
   }
 }
 
@@ -101,7 +117,7 @@ class EthereumEventImplementActor(
   override def receive: Receive = {
     case Notify("nextBlock", _) ⇒
       if (taskQueue.nonEmpty) {
-         currentBlockNumber = taskQueue.dequeue()
+        currentBlockNumber = taskQueue.dequeue()
         process()
       } else {
         context.system.scheduler
@@ -116,7 +132,6 @@ class EthereumEventImplementActor(
   }
 
   def process(): Unit = {
-
     for {
       block ← (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(
         Numeric.prependHexPrefix(currentBlockNumber.toHexString)

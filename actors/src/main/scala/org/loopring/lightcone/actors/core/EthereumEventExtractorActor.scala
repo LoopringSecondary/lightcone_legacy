@@ -17,6 +17,12 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
+import akka.cluster.singleton.{
+  ClusterSingletonManager,
+  ClusterSingletonManagerSettings,
+  ClusterSingletonProxy,
+  ClusterSingletonProxySettings
+}
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -27,8 +33,8 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -37,7 +43,7 @@ import scala.concurrent.duration._
 object EthereumEventExtractorActor {
   val name = "ethereum_event_extractor"
 
-  def start(
+  def startSingleton(
     )(
       implicit
       system: ActorSystem,
@@ -48,7 +54,22 @@ object EthereumEventExtractorActor {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule
     ): ActorRef = {
-    system.actorOf(Props(new EthereumEventExtractorActor()))
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = Props(new EthereumEventExtractorActor()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system)
+      ),
+      name = EthereumEventExtractorActor.name
+    )
+
+    system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = s"/user/${EthereumEventExtractorActor.name}",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"${EthereumEventExtractorActor.name}_proxy"
+    )
   }
 }
 
@@ -160,9 +181,11 @@ class EthereumEventExtractorActor(
   // index block
   def indexBlock(job: BlockJob): Unit = {
     for {
-      txReceipts ← (ethereumAccessorActor ? BatchGetTransactionReceipts.Req(
-        job.txs.map(tx ⇒ GetTransactionReceipt.Req(tx.hash))
-      )).mapTo[BatchGetTransactionReceipts.Res]
+      txReceipts: Seq[Option[TransactionReceipt]] ← (ethereumAccessorActor ? BatchGetTransactionReceipts
+        .Req(
+          job.txs.map(tx ⇒ GetTransactionReceipt.Req(tx.hash))
+        ))
+        .mapTo[BatchGetTransactionReceipts.Res]
         .map(_.resps.map(_.result))
       batchGetUnclesReq = BatchGetUncle.Req(
         job.uncles.zipWithIndex.unzip._2.map(

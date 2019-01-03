@@ -242,11 +242,11 @@ package object ethereum {
           wethAbi.unpackEvent(log.data, log.topics.toArray) match {
             case Some(transfer: TransferEvent.Result) ⇒
               balanceAddresses.append(
-                transfer.sender → log.address,
+                transfer.from → log.address,
                 transfer.receiver → log.address
               )
               if (tx._2.get.to.equalsIgnoreCase(protocol.toString)) {
-                allowanceAddresses.append(transfer.sender → log.address)
+                allowanceAddresses.append(transfer.from → log.address)
               }
             case Some(approval: ApprovalEvent.Result) ⇒
               if (approval.spender.equalsIgnoreCase(delegate.toString))
@@ -260,7 +260,6 @@ package object ethereum {
         })
       })
     }
-
     (balanceAddresses.toSet.toSeq, allowanceAddresses.toSet.toSeq)
   }
 
@@ -564,7 +563,6 @@ package object ethereum {
           }
         }.filter(_.nonEmpty).flatten
       })
-
     } else {
       Seq.empty
     }
