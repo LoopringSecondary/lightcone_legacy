@@ -235,4 +235,3 @@ message GetNodeBlockHeight {
         repeated NodeBlockHeight nodes = 1;
     }
 }
-
