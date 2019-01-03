@@ -317,10 +317,10 @@ class OrderDalImpl(
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] = {
-    val availableStatus =
-      Seq(OrderStatus.STATUS_PENDING_ACTIVE)
+    val availableStatus: OrderStatus =
+      OrderStatus.STATUS_PENDING_ACTIVE
     var filters = query
-      .filter(_.status inSet availableStatus)
+      .filter(_.status === availableStatus)
       .filter(_.validSince >= latestProcessTime)
       .filter(_.validSince < processTime)
       .sortBy(_.sequenceId.asc)
