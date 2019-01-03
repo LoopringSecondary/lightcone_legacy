@@ -70,7 +70,7 @@ class EntryPointSpec_SubmitSeveralOrder
         singleRequest(SubmitOrder.Req(Some(o)), "submit_order")
       })
 
-      val res = Await.result(f1, 3 second)
+      val res = Await.result(f1, timeout.duration)
 
       info(
         "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING"

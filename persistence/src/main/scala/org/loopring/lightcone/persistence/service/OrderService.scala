@@ -68,6 +68,20 @@ trait OrderService {
       paging: CursorPaging
     ): Future[Seq[RawOrder]]
 
+  //
+  def getOrdersToActivate(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
+
+  //
+  def getOrdersToExpire(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
+
   // Count the number of orders
   def countOrdersForUser(
       statuses: Set[OrderStatus],

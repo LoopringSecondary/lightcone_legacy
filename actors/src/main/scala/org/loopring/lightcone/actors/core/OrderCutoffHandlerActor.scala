@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
+import akka.cluster.singleton._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -29,6 +30,34 @@ import org.loopring.lightcone.persistence.DatabaseModule
 
 object OrderCutoffHandlerActor {
   val name = "order_cutoff_handler"
+
+  def startSingleton(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      dbModule: DatabaseModule,
+      actors: Lookup[ActorRef]
+    ): ActorRef = {
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = Props(new OrderCutoffHandlerActor()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system).withRole(name)
+      ),
+      OrderCutoffHandlerActor.name
+    )
+
+    system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = s"/user/${OrderCutoffHandlerActor.name}",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"${OrderCutoffHandlerActor.name}_proxy"
+    )
+  }
 }
 
 class OrderCutoffHandlerActor(
@@ -82,7 +111,7 @@ class OrderCutoffHandlerActor(
           )
          */
         case CutoffOrder.Req.Cutoff.ByOwner(value) =>
-          if (value.broker.isEmpty)
+          if (value.owner.isEmpty)
             throw ErrorException(
               ErrorCode.ERR_INVALID_ARGUMENT,
               "owner could not be empty"
@@ -135,7 +164,9 @@ class OrderCutoffHandlerActor(
                   CancelOrder.Req(
                     id = o.hash,
                     owner = o.owner,
-                    status = OrderStatus.STATUS_CANCELLED_BY_USER
+                    status = OrderStatus.STATUS_CANCELLED_BY_USER,
+                    marketId =
+                      Some(MarketId(primary = o.tokenB, secondary = o.tokenS))
                   )
                 }
                 for {

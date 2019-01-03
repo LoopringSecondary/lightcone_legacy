@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.entrypoint
 
 import akka.actor._
 import akka.event.LoggingReceive
+import com.typesafe.config.Config
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
@@ -29,6 +30,17 @@ import scala.concurrent.ExecutionContext
 
 object EntryPointActor {
   val name = "entrypoint"
+
+  def start(
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeout: Timeout,
+      actors: Lookup[ActorRef]
+    ) = {
+    system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)
+  }
 }
 
 class EntryPointActor(
@@ -56,7 +68,7 @@ class EntryPointActor(
 
   def findDestination(msg: Any): Option[String] = msg match {
     case _: SubmitOrder.Req | _: CancelOrder.Req =>
-      Some(OrderHandlerMessageValidator.name)
+      Some(OrderHandlerActor.name)
 
     case _: GetBalanceAndAllowances.Req ⇒
       Some(MultiAccountManagerMessageValidator.name)

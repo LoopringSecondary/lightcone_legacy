@@ -16,13 +16,15 @@
 
 package org.loopring.lightcone.actors.support
 
-import org.loopring.lightcone.actors.core._
+import akka.actor.Props
+import org.loopring.lightcone.actors.core.OrderStatusMonitorActor
 
-trait OrderCutoffSupport extends DatabaseModuleSupport {
+trait OrderStatusMonitorSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
   actors.add(
-    OrderCutoffHandlerActor.name,
-    OrderCutoffHandlerActor.startSingleton
+    OrderStatusMonitorActor.name,
+    system.actorOf(Props(new OrderStatusMonitorActor()))
   )
+
 }

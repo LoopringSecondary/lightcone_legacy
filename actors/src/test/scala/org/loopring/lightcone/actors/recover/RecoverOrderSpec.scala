@@ -151,7 +151,7 @@ class RecoverOrderSpec
       val r = actors.get(OrderRecoverCoordinator.name) ? request1
       val res = Await.result(r, timeout.duration)
       res match {
-        case ActorRecover.Finished(b) => assert(b)
+        case ActorRecover.Finished(b) => assert(true)
         case _                        => assert(false)
       }
       // 4. get depth

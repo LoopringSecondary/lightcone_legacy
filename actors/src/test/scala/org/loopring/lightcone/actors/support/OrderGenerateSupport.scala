@@ -40,7 +40,9 @@ trait OrderGenerateSupport {
       amountS: BigInt = "10".zeros(18),
       amountB: BigInt = "1".zeros(18),
       tokenFee: String = LRC_TOKEN.address,
-      amountFee: BigInt = "3".zeros(18)
+      amountFee: BigInt = "3".zeros(18),
+      validSince: Int = (timeProvider.getTimeMillis / 1000).toInt,
+      validUntil: Int = (timeProvider.getTimeMillis / 1000).toInt + 20000
     )(
       implicit privateKey: Option[String] =
         Some("0x6549df526c28b1d92b0de63606cf039d3dc1846b114118367d8b161ec03256bf")
@@ -54,7 +56,7 @@ trait OrderGenerateSupport {
       tokenB = tokenB,
       amountS = ByteString.copyFrom(amountS.toByteArray),
       amountB = ByteString.copyFrom(amountB.toByteArray),
-      validSince = (createAt / 1000).toInt,
+      validSince = validSince,
       state = Some(
         RawOrder.State(
           createdAt = createAt,
@@ -68,8 +70,7 @@ trait OrderGenerateSupport {
           amountFee = ByteString.copyFrom(amountFee.toByteArray)
         )
       ),
-      params =
-        Some(RawOrder.Params(validUntil = (createAt / 1000).toInt + 20000)),
+      params = Some(RawOrder.Params(validUntil = validUntil)),
       marketHash = marketHash,
       marketHashId = MarketManagerActor
         .getEntityId(MarketId(primary = tokenS, secondary = tokenB))

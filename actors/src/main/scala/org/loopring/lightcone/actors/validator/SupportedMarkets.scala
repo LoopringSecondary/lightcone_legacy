@@ -21,7 +21,6 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
-
 import scala.collection.JavaConverters._
 
 case class SupportedMarkets(config: Config) {
@@ -36,7 +35,7 @@ case class SupportedMarkets(config: Config) {
     }
     .toSet
 
-  private def contains(marketId: MarketId) = {
+  def contains(marketId: MarketId) = {
     val eig = Numeric.toBigInt(marketId.primary) xor
       Numeric.toBigInt(marketId.secondary)
     markets.contains(eig)

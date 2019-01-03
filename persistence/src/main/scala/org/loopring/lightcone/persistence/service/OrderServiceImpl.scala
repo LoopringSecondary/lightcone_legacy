@@ -155,6 +155,20 @@ class OrderServiceImpl @Inject()(
     ): Future[Seq[RawOrder]] =
     orderDal.getCutoffAffectedOrders(cutoffEvent, paging)
 
+  def getOrdersToActivate(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] =
+    orderDal.getOrdersToActivate(latestProcessTime, processTime)
+
+  def getOrdersToExpire(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] =
+    orderDal.getOrdersToExpire(latestProcessTime, processTime)
+
   // Count the number of orders
   def countOrdersForUser(
       statuses: Set[OrderStatus],

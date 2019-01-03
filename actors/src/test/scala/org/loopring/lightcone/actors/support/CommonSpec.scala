@@ -22,6 +22,7 @@ import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
+import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market.{
   RingIncomeEstimator,
@@ -30,9 +31,9 @@ import org.loopring.lightcone.core.market.{
 import org.loopring.lightcone.lib.SystemTimeProvider
 import org.scalatest._
 import org.slf4s.Logging
-
 import scala.concurrent.duration._
 import scala.math.BigInt
+
 //启动system、以及必须的元素，包括system，TokenMetaData，等
 abstract class CommonSpec(configStr: String)
     extends TestKit(
@@ -63,6 +64,8 @@ abstract class CommonSpec(configStr: String)
   implicit val materializer = ActorMaterializer()(system)
 
   //  log.info(s"init config: ${config}")
+
+  implicit val supportedMarkets: SupportedMarkets = SupportedMarkets(config)
 
   //token info
   implicit val tokenManager = new TokenManager()
