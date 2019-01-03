@@ -52,7 +52,7 @@ class DatabaseQuerySpec
 
   "send an orders request" must {
     "receive a response without orders" in {
-      val owner = "0x-getorders-actor-01"
+      val owner = "0xa111dae0a3e4e146bcaf0fe782be5afb14041a10"
       val rawOrders = (0 until 6) map { i =>
         createRawOrder(
           owner = owner,
@@ -89,8 +89,9 @@ class DatabaseQuerySpec
       val method = "get_trades"
       val tokenS = "0xaaaaaaa2"
       val tokenB = "0xbbbbbbb2"
+      val owner = "0xa112dae0a3e4e146bcaf0fe782be5afb14041a10"
       val tradesReq = GetTrades.Req(
-        owner = "0x-gettrades-actor-02",
+        owner = owner,
         market = GetTrades.Req.Market
           .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB)),
         skip = Some(Paging(0, 10)),
@@ -105,14 +106,14 @@ class DatabaseQuerySpec
       )
       val r = for {
         _ <- Future.sequence(hashes.map { hash ⇒
-          testSaveTrade(hash, hash, tokenS, tokenB, 1L)
+          testSaveTrade(hash, owner, tokenS, tokenB, 1L)
         })
         response <- singleRequest(tradesReq, method)
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
         case GetTrades.Res(trades, error) =>
-          assert(trades.nonEmpty && trades.length === 1)
+          assert(trades.nonEmpty && trades.length === 5)
           assert(error === ErrorCode.ERR_NONE)
         case _ => assert(false)
       }
