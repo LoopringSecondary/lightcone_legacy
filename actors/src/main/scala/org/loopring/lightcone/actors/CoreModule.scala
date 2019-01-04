@@ -192,15 +192,6 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         )
       )
 
-      actors.add(
-        OrderHandlerMessageValidator.name,
-        MessageValidationActor(
-          new OrderHandlerMessageValidator(),
-          OrderPersistenceActor.name,
-          OrderHandlerMessageValidator.name
-        )
-      )
-
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors.add(EntryPointActor.name, EntryPointActor.start)
 

@@ -16,20 +16,14 @@
 
 package org.loopring.lightcone.core.account
 
-import org.loopring.lightcone.core.data.{
-  Cutoff,
-  MarketPairCutoff,
-  Matchable,
-  OrderCutoff,
-  OwnerCutoff
-}
-import org.loopring.lightcone.proto.RawOrder
+import org.loopring.lightcone.proto.{MarketId, RawOrder}
 
-trait AccountCutoffPool {
+trait AccountCutoffState {
 
-  def addCutoff(cutoff: MarketPairCutoff)
-  def addCutoff(cutoff: OwnerCutoff)
-  def addCutoff(cutoff: OrderCutoff)
-
-  def isCutOff(rawOrder: RawOrder): Boolean
+  def setCutoff(
+      marketId: MarketId,
+      cutoff: Long
+    )
+  def setCutoff(cutoff: Long)
+  def isOrderCutoff(rawOrder: RawOrder)
 }

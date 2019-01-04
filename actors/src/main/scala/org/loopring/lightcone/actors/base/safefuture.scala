@@ -70,7 +70,7 @@ object safefuture {
         recipient: ActorRef,
         orginSenderOpt: Option[ActorRef] = None
       )(
-        implicit sender: ActorRef
+        implicit sender: ActorRef = Actor.noSender
       ): Future[T] = {
       f onComplete {
         case Success(r) => recipient ! r

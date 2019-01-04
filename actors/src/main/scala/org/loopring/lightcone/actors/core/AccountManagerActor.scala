@@ -36,6 +36,7 @@ import org.loopring.lightcone.proto._
 
 import scala.concurrent._
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 // main owner: 于红雨
 class AccountManagerActor(
@@ -49,6 +50,7 @@ class AccountManagerActor(
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule)
     extends Actor
+    with Stash
     with ActorLogging {
 
   override val supervisorStrategy =
@@ -60,12 +62,38 @@ class AccountManagerActor(
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
+  val accountCutoffState = new AccountCutoffStateImpl()
 
   protected def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
-  def receive: Receive = LoggingReceive {
+  override def preStart() = {
+    //todo:eth请求还未就绪，等待就绪再完善该部分~
+    val fu = Future.successful(Unit)
+    fu onComplete {
+      case Success(res) ⇒
+        self ! Notify("initialized")
+      case Failure(e) ⇒
+        log.error(s"failed to start AccountManagerActor: ${e.getMessage}")
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"failed to start AccountManagerActor: ${e.getMessage}"
+        )
+    }
+  }
+
+  def receive: Receive = initialReceive
+
+  def initialReceive: Receive = {
+    case Notify("initialized", _) ⇒
+      unstashAll()
+      context.become(normalReceive)
+    case _ ⇒
+      stash()
+  }
+
+  def normalReceive: Receive = LoggingReceive {
 
     case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
       submitOrder(xraworder).map { _ =>
@@ -90,67 +118,51 @@ class AccountManagerActor(
         GetBalanceAndAllowances.Res(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-//    case SubmitSimpleOrder(_, Some(order)) =>
-//      submitOrder(order).sendTo(sender)
-
     case req @ SubmitOrder.Req(Some(raworder)) =>
       (for {
-        _ <- Future.successful {
-          //所有异常检验放到Future里，否则会导致Actor重启
-          if (manager.isCutOff(raworder)) //check通过再保存到数据库，以及后续处理
-            throw ErrorException(ErrorCode.ERR_ORDER_VALIDATION_INVALID_CUTOFF)
-        }
-        //如果订单未到生效时间，则暂时不处理，只保存到数据库
-        res <- if (raworder.validSince > timeProvider.getTimeSeconds()) {
-          for {
-            newRaworder <- Future.successful(
-              raworder.copy(
-                state = Some(
-                  raworder.getState
-                    .copy(status = OrderStatus.STATUS_PENDING_ACTIVE)
-                )
-              )
+        _ <- for {
+          //check通过再保存到数据库，以及后续处理
+          _ <- Future.successful(accountCutoffState.isOrderCutoff(raworder))
+          _ <- isOrderCanceled(raworder) //取消订单，单独查询以太坊
+        } yield Unit
+        newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
+          raworder.copy(
+            state = Some(
+              raworder.getState
+                .copy(status = OrderStatus.STATUS_PENDING_ACTIVE)
             )
-            resRawOrder <- (orderPersistenceActor ? req
-              .copy(rawOrder = Some(newRaworder)))
-              .mapAs[RawOrder]
-          } yield SubmitOrder.Res(Some(resRawOrder))
-        } else {
-          for {
-            resRawOrder <- (orderPersistenceActor ? req)
-              .mapAs[RawOrder]
-            resOrder_ <- submitOrder(resRawOrder)
-          } yield SubmitOrder.Res(order = Some(resOrder_))
-        }
+          )
+        } else raworder
+
+        res <- for {
+          resRawOrder <- (orderPersistenceActor ? req
+            .copy(rawOrder = Some(newRaworder)))
+            .mapAs[RawOrder]
+          resOrder <- (resRawOrder.getState.status match {
+            case STATUS_PENDING_ACTIVE => Future.successful(resRawOrder)
+            case _                     => submitOrder(resRawOrder)
+          }).mapAs[RawOrder]
+        } yield SubmitOrder.Res(Some(resOrder))
+
       } yield res) sendTo sender
 
     case req: CancelOrder.Req =>
       val originalSender = sender
       (for {
         _ <- Future.successful(assert(req.owner == address))
-        cancelRes <- orderPersistenceActor ? req
+        cancelRes <- (orderPersistenceActor ? req)
+          .mapAs[CancelOrder.Res]
         _ = if (manager.cancelOrder(req.id))
           marketManagerActor.tell(req, originalSender)
         else {
-          marketManagerActor ! req //在目前没有使用eventlog的情况下，哪怕manager中并没有该订单，则仍需要发送到MarketManager
+          //在目前没有使用eventlog的情况下，哪怕manager中并没有该订单，则仍需要发送到MarketManager
+          marketManagerActor ! req
           throw ErrorException(
             ERR_FAILED_HANDLE_MSG,
             s"no order found with id: ${req.id}"
           )
         }
       } yield cancelRes) sendTo sender
-
-//      if (manager.cancelOrder(req.id)) {
-//        marketManagerActor forward req
-//      } else {
-//        marketManagerActor ! req //在目前没有使用eventlog的情况下，哪怕manager中并没有该订单，则仍需要发送到MarketManager
-//        Future.failed(
-//          ErrorException(
-//            ERR_FAILED_HANDLE_MSG,
-//            s"no order found with id: ${req.id}"
-//          )
-//        ) sendTo sender
-//      }
 
     case AddressBalanceUpdated(addr, token, newBalance) =>
       (for {
@@ -303,5 +315,16 @@ class AccountManagerActor(
         }
       }
     } yield Unit
+
+  def isOrderCanceled(rawOrder: RawOrder) =
+    for {
+      //todo:eth请求还未就绪，等待就绪再完善该部分~
+      isCanceled <- Future.successful(false)
+    } yield
+      if (isCanceled)
+        throw ErrorException(
+          ERR_ORDER_VALIDATION_INVALID_CUTOFF,
+          s"this order has been canceled."
+        )
 
 }

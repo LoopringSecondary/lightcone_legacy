@@ -32,8 +32,6 @@ final private[core] class AccountManagerImpl(
   private[core] implicit var tokens =
     Map.empty[String, AccountTokenManager]
 
-  private[core] val cutoffPool = new AccountCutoffPoolImpl()
-
   def hasTokenManager(token: String): Boolean = {
     tokens.contains(token)
   }
@@ -128,10 +126,6 @@ final private[core] class AccountManagerImpl(
         order.callOnTokenSAndTokenFee(_.adjust(order.id))
         true
     }
-  }
-
-  def isCutOff(rawOrder: RawOrder): Boolean = {
-    cutoffPool.isCutOff(rawOrder)
   }
 
   implicit private class MagicOrder(order: Matchable) {

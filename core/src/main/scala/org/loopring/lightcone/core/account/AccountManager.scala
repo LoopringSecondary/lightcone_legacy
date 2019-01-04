@@ -17,7 +17,6 @@
 package org.loopring.lightcone.core.account
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib.TimeProvider
-import org.loopring.lightcone.proto._
 
 trait AccountManager {
   def hasTokenManager(token: String): Boolean
@@ -42,7 +41,6 @@ trait AccountManager {
       outstandingAmountS: BigInt
     ): Boolean
 
-  def isCutOff(rawOrder: RawOrder): Boolean
 }
 
 object AccountManager {

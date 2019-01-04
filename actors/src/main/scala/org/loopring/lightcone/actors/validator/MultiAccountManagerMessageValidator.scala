@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.ethereum.RawOrderValidatorImpl
+import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
@@ -38,6 +38,8 @@ final class MultiAccountManagerMessageValidator(
   val multiAccountConfig =
     config.getConfig(MultiAccountManagerActor.name)
   val numOfShards = multiAccountConfig.getInt("num-of-shards")
+
+  val orderValidator:RawOrderValidator = RawOrderValidatorImpl
 
   def validate = {
     case req: CancelOrder.Req ⇒
@@ -85,7 +87,7 @@ final class MultiAccountManagerMessageValidator(
       )
 
     case req @ SubmitOrder.Req(Some(order)) ⇒
-      RawOrderValidatorImpl.validate(order) match {
+      orderValidator.validate(order) match {
         case Left(errorCode) ⇒
           throw ErrorException(
             errorCode,
