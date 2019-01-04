@@ -109,8 +109,8 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
     ): Future[Seq[RawOrder]]
 
   def getCutoffAffectedOrders(
-      cutoffEvent: OrdersCutoffEvent,
-      paging: CursorPaging
+      retrieveCondition: RetrieveOrdersToCancel,
+      take: Int
     ): Future[Seq[RawOrder]]
 
   def getOrdersToActivate(
@@ -481,9 +481,6 @@ class OrderDalImpl(
           r.nextInt
         )
     )
-    val concat: (String, String) => String = (left, right) => {
-      left + ", " + right
-    }
     val now = timeProvider.getTimeSeconds()
     val sql =
       sql"""
@@ -535,27 +532,26 @@ class OrderDalImpl(
   }
 
   def getCutoffAffectedOrders(
-      cutoffEvent: OrdersCutoffEvent,
-      paging: CursorPaging
+      retrieveCondition: RetrieveOrdersToCancel,
+      take: Int
     ): Future[Seq[RawOrder]] = {
     //TODO du：暂时不考虑broker，owner必传
-    if (cutoffEvent.owner.isEmpty) {
+    if (retrieveCondition.owner.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
         "owner could not be empty"
       )
     }
     var filters = query
-      .filter(_.owner === cutoffEvent.owner)
+      .filter(_.owner === retrieveCondition.owner)
       .filter(_.status inSet effectiveStatus)
-      .filter(_.validSince <= cutoffEvent.cutoff.toInt)
-      .filter(_.sequenceId > paging.cursor)
-    if (cutoffEvent.tradingPair.nonEmpty) {
-      filters = filters.filter(_.marketHash === cutoffEvent.tradingPair)
+      .filter(_.validSince <= retrieveCondition.cutoff)
+    if (retrieveCondition.tradingPair.nonEmpty) {
+      filters = filters.filter(_.marketHash === retrieveCondition.tradingPair)
     }
     filters = filters
-      .take(paging.size)
       .sortBy(_.sequenceId.asc)
+      .take(take)
     db.run(filters.result)
   }
 

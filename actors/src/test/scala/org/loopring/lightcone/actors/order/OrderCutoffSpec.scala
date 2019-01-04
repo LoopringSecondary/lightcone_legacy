@@ -114,29 +114,14 @@ class OrderCutoffSpec
 
       // 3. send cutoff
       val txHash = "0x999"
-      val cutoff = CutoffOrder.Req.Cutoff.ByOwner(
-        OwnerCutoffs(
-          owner = owner,
-          cutoff = timeProvider.getTimeSeconds().toInt + 100
-        )
+      val cutoff = OwnerCutoffs(
+        owner = owner,
+        cutoff = timeProvider.getTimeSeconds().toInt + 100
       )
-      actors.get(OrderCutoffHandlerActor.name) ? CutoffOrder.Req(
-        txHash = txHash,
-        blockHeight = 1L,
-        cutoff = cutoff
-      )
+      actors.get(OrderCutoffHandlerActor.name) ? cutoff
       Thread.sleep(5000)
 
-      // 4. select cutoff
-      val f2 = dbModule.orderCutoffService.getCutoffByTxHash(txHash)
-      val res2 =
-        Await.result(f2.mapTo[Option[OrdersCutoffEvent]], timeout.duration)
-      res2 match {
-        case Some(c) => assert(true)
-        case None    => assert(false)
-      }
-
-      // 5. get orders
+      // 4. get orders
       val orders2 =
         dbModule.orderService.getOrders(
           Set(OrderStatus.STATUS_NEW, OrderStatus.STATUS_PENDING),
@@ -146,7 +131,7 @@ class OrderCutoffSpec
         Await.result(orders2.mapTo[Seq[RawOrder]], timeout.duration)
       assert(resOrder2.length === 0)
 
-      // 6. orderbook
+      // 5. orderbook
       val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
       val orderbookRes2 =
         Await

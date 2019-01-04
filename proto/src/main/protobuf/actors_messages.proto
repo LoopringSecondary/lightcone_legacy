@@ -103,31 +103,11 @@ message CancelOrder {
     }
 }
 
-message CutoffOrder {
-    message Req {
-        oneof cutoff {
-            Cutoffs                 by_broker      = 1;
-            OwnerCutoffs            by_owner       = 2;
-            TradingPairCutoffs      by_broker_pair = 3;
-            OwnerTradingPairCutoffs by_owner_pair  = 4;
-        }
-        string tx_hash      = 5;
-        int64  block_height = 6;
-    }
-
-    message Res {
-        ErrorCode error = 1;
-    }
-}
-
-message BatchCutoffOrders {
-    message Req {
-        OrdersCutoffEvent cutoff = 1;
-    }
-
-    message Res {
-        ErrorCode error = 1;
-    }
+message RetrieveOrdersToCancel {
+    string broker       = 1;
+    string owner        = 2;
+    string trading_pair = 3;
+    int32  cutoff       = 4; // in seconds.
 }
 
 message OrderEffective {

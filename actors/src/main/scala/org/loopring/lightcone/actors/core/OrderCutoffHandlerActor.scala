@@ -71,121 +71,69 @@ class OrderCutoffHandlerActor(
     extends ActorWithPathBasedConfig(OrderCutoffHandlerActor.name)
     with ActorLogging {
   def mama = actors.get(MultiAccountManagerActor.name)
-  val batchSize = selfConfig.getInt("batch-size")
-  var numOrders = 0L
-  var paging: CursorPaging = CursorPaging(size = batchSize)
+
+  val batchSize =
+    if (selfConfig.getInt("batch-size") > 0) selfConfig.getInt("batch-size")
+    else 50
 
   def receive: Receive = {
 
-    case req: CutoffOrder.Req =>
-      val now = timeProvider.getTimeSeconds()
-      val cutoff = req.cutoff match {
-        // TODO du:暂时不考虑broker
-        /*
-        case CutoffOrder.Req.Cutoff.ByBroker(value) =>
-          if (value.broker.isEmpty)
-            throw ErrorException(
-              ErrorCode.ERR_INVALID_ARGUMENT,
-              "broker could not be empty"
-            )
-          val cutoff = OrdersCutoffEvent(
-            txHash = req.txHash,
-            blockHeight = req.blockHeight,
-            createdAt = now,
-            broker = value.broker,
-            cutoff = value.cutoff
-          )
-        case CutoffOrder.Req.Cutoff.ByBrokerPair(value) =>
-          if (value.broker.isEmpty || value.tradingPair.isEmpty)
-            throw ErrorException(
-              ErrorCode.ERR_INVALID_ARGUMENT,
-              "broker or tradingPair could not be empty"
-            )
-          val cutoff = OrdersCutoffEvent(
-            txHash = req.txHash,
-            blockHeight = req.blockHeight,
-            createdAt = now,
-            broker = value.broker,
-            tradingPair = value.tradingPair,
-            cutoff = value.cutoff
-          )
-         */
-        case CutoffOrder.Req.Cutoff.ByOwner(value) =>
-          if (value.owner.isEmpty)
-            throw ErrorException(
-              ErrorCode.ERR_INVALID_ARGUMENT,
-              "owner could not be empty"
-            )
-          OrdersCutoffEvent(
-            txHash = req.txHash,
-            blockHeight = req.blockHeight,
-            createdAt = now,
-            broker = value.broker,
-            owner = value.owner,
-            cutoff = value.cutoff
-          )
+    // TODO du: 收到任务后先存入db，一批处理完之后删除。
+    // 如果执行失败，1. 自身重启时需要再恢复 2. 整体系统重启时直接删除不需要再恢复（accountManagerActor恢复时会处理cutoff）
+    case req: OwnerCutoffs =>
+      if (req.owner.isEmpty)
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          "Owner could not be empty"
+        )
+      log.info(s"Deal with cutoff:$req")
+      self ! RetrieveOrdersToCancel(
+        broker = req.broker,
+        owner = req.owner,
+        cutoff = req.cutoff
+      )
 
-        case CutoffOrder.Req.Cutoff.ByOwnerPair(value) =>
-          if (value.owner.isEmpty || value.tradingPair.isEmpty)
-            throw ErrorException(
-              ErrorCode.ERR_INVALID_ARGUMENT,
-              "owner or tradingPair could not be empty"
+    case req: OwnerTradingPairCutoffs =>
+      if (req.owner.isEmpty || req.tradingPair.isEmpty)
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          "Owner or tradingPair could not be empty"
+        )
+      log.info(s"Deal with cutoff:$req")
+      self ! RetrieveOrdersToCancel(
+        broker = req.broker,
+        owner = req.owner,
+        tradingPair = req.tradingPair,
+        cutoff = req.cutoff
+      )
+
+    case req: RetrieveOrdersToCancel =>
+      dbModule.orderService.getCutoffAffectedOrders(req, batchSize).map { r =>
+        if (r.nonEmpty) {
+          log.info(s"Handle cutoff:$req in a batch:$batchSize request, return ${r.length} orders to cancel")
+          val cancelOrderReqs = r.map { o =>
+            CancelOrder.Req(
+              id = o.hash,
+              owner = o.owner,
+              status = OrderStatus.STATUS_CANCELLED_BY_USER,
+              marketId =
+                Some(MarketId(primary = o.tokenB, secondary = o.tokenS))
             )
-          OrdersCutoffEvent(
-            txHash = req.txHash,
-            blockHeight = req.blockHeight,
-            createdAt = now,
-            broker = value.broker,
-            owner = value.broker,
-            tradingPair = value.tradingPair,
-            cutoff = value.cutoff
-          )
-
-        case _ =>
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"unhandled request: $req"
-          )
-      }
-      for {
-        saved <- dbModule.orderCutoffService.saveCutoff(cutoff)
-        _ = if (saved != ERR_NONE) throw ErrorException(saved)
-        // TODO du: 怎么保证一个事件被正确执行完？每个事件处理的地方都记录进度？
-        _ = self ! BatchCutoffOrders.Req(Some(cutoff))
-      } yield CutoffOrder.Res(ErrorCode.ERR_NONE)
-
-    case req: BatchCutoffOrders.Req =>
-      req.cutoff match {
-        case Some(cutoff) =>
-          dbModule.orderService.getCutoffAffectedOrders(cutoff, paging).map {
-            r =>
-              if (r.nonEmpty) {
-                val cancelOrderReqs = r.map { o =>
-                  CancelOrder.Req(
-                    id = o.hash,
-                    owner = o.owner,
-                    status = OrderStatus.STATUS_CANCELLED_BY_USER,
-                    marketId =
-                      Some(MarketId(primary = o.tokenB, secondary = o.tokenS))
-                  )
-                }
-                for {
-                  notified <- Future.sequence(cancelOrderReqs.map(mama ? _))
-                  updated <- dbModule.orderService.updateOrdersStatus(
-                    r.map(_.hash),
-                    OrderStatus.STATUS_CANCELLED_BY_USER
-                  )
-                  _ = if (updated != ERR_NONE)
-                    throw ErrorException(ERR_INTERNAL_UNKNOWN, "update failed")
-                } yield self ! req
-              }
           }
-          BatchCutoffOrders.Res()
-        case None => BatchCutoffOrders.Res()
+          for {
+            notified <- Future.sequence(cancelOrderReqs.map(mama ? _))
+            updated <- dbModule.orderService.updateOrdersStatus(
+              r.map(_.hash),
+              OrderStatus.STATUS_CANCELLED_BY_USER
+            )
+            _ = if (updated != ERR_NONE)
+              throw ErrorException(ERR_INTERNAL_UNKNOWN, "Update failed")
+          } yield self ! req
+        }
       }
 
     case m =>
-      throw ErrorException(ERR_INTERNAL_UNKNOWN, s"unhandled message: $m")
+      throw ErrorException(ERR_INTERNAL_UNKNOWN, s"Unhandled message: $m")
 
   }
 }

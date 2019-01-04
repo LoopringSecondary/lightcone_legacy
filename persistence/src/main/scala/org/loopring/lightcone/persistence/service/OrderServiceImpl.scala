@@ -150,10 +150,10 @@ class OrderServiceImpl @Inject()(
     )
 
   def getCutoffAffectedOrders(
-      cutoffEvent: OrdersCutoffEvent,
-      paging: CursorPaging
+      retrieveCondition: RetrieveOrdersToCancel,
+      take: Int
     ): Future[Seq[RawOrder]] =
-    orderDal.getCutoffAffectedOrders(cutoffEvent, paging)
+    orderDal.getCutoffAffectedOrders(retrieveCondition, take)
 
   def getOrdersToActivate(
       latestProcessTime: Int,

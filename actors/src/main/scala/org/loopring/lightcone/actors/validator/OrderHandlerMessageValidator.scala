@@ -38,6 +38,16 @@ class OrderHandlerMessageValidator(
     config.getConfig(MultiAccountManagerActor.name)
   val numOfShards = multiAccountConfig.getInt("num-of-shards")
 
+  val cancelStatus = Set(
+    OrderStatus.STATUS_CANCELLED_BY_USER,
+    OrderStatus.STATUS_CANCELLED_LOW_BALANCE,
+    OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE,
+    OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
+    OrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS,
+    OrderStatus.STATUS_EXPIRED,
+    OrderStatus.STATUS_DUST_ORDER
+  )
+
   private def normalizeAddress(address: String): String =
     try {
       Address(address).toString
@@ -82,15 +92,6 @@ class OrderHandlerMessageValidator(
 
     case req @ CancelOrder.Req(_, owner, status, marketId) ⇒
       supportedMarkets.assertmarketIdIsValid(marketId)
-      val cancelStatus = Set(
-        OrderStatus.STATUS_CANCELLED_BY_USER,
-        OrderStatus.STATUS_CANCELLED_LOW_BALANCE,
-        OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE,
-        OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
-        OrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS,
-        OrderStatus.STATUS_EXPIRED,
-        OrderStatus.STATUS_DUST_ORDER
-      )
       assert(cancelStatus.contains(status))
       req.copy(owner = normalizeAddress(owner))
   }

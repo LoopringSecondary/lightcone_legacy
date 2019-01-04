@@ -64,8 +64,8 @@ trait OrderService {
     ): Future[Seq[RawOrder]]
 
   def getCutoffAffectedOrders(
-      cutoffEvent: OrdersCutoffEvent,
-      paging: CursorPaging
+      retrieveCondition: RetrieveOrdersToCancel,
+      take: Int
     ): Future[Seq[RawOrder]]
 
   //
