@@ -64,16 +64,6 @@ message GasPriceUpdated {
     int64 gas_price = 1;
 }
 
-message OrderStatusMonitor {
-    string monitoring_type = 1;
-    int64 process_time = 2;
-
-    enum MonitoringType {
-        MONITORING_ACTIVATE = 0;
-        MONITORING_EXPIRE = 1;
-    }
-}
-
 /////////////////////////////////////////////////////////////////////
 // TWO WAY REQUEST-RESPONSES (DB RELATD NOT INCLUDED)
 /////////////////////////////////////////////////////////////////////

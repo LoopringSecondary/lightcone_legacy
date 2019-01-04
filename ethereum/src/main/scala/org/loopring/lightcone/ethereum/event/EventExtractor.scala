@@ -25,8 +25,8 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.OrdersCancelledEvent
 import org.web3j.utils.Numeric
 
-trait EventExtractor {
-  def extract(txs: Seq[(Transaction, Option[TransactionReceipt])]): Seq[Any]
+trait EventExtractor[R] {
+  def extract(txs: Seq[(Transaction, Option[TransactionReceipt])]): Seq[R]
 
   def splitEventToFills(_fills: String): Seq[String] = {
     //首先去掉head 64 * 2
@@ -41,7 +41,8 @@ trait EventExtractor {
     ByteString.copyFrom(bytes)
 }
 
-case class TradeExtractor()(implicit blockTime: String) extends EventExtractor {
+case class TradeExtractor()(implicit blockTime: String)
+    extends EventExtractor[Trade] {
 
   override def extract(
       txs: Seq[(Transaction, Option[TransactionReceipt])]
@@ -69,7 +70,7 @@ case class TradeExtractor()(implicit blockTime: String) extends EventExtractor {
     }
   }
 
-  def extractTrades(
+  private def extractTrades(
       event: RingMinedEvent.Result,
       receipt: TransactionReceipt
     )(
@@ -123,7 +124,8 @@ case class TradeExtractor()(implicit blockTime: String) extends EventExtractor {
   }
 }
 
-case class OrdersCancelledExtractor() extends EventExtractor {
+case class OrdersCancelledExtractor()
+    extends EventExtractor[OrdersCancelledEvent] {
   override def extract(
       txs: Seq[(Transaction, Option[TransactionReceipt])]
     ): Seq[OrdersCancelledEvent] = {
@@ -157,7 +159,7 @@ case class OrdersCancelledExtractor() extends EventExtractor {
   }
 }
 
-case class CutOffExtractor() extends EventExtractor {
+case class CutOffExtractor() extends EventExtractor[OrdersCutoffEvent] {
   override def extract(
       txs: Seq[(Transaction, Option[TransactionReceipt])]
     ): Seq[OrdersCutoffEvent] = {
@@ -228,7 +230,7 @@ case class CutOffExtractor() extends EventExtractor {
   }
 }
 
-case class OrderEvent() extends EventExtractor {
+case class OrderEvent() extends EventExtractor[RawOrder] {
   override def extract(
       txs: Seq[(Transaction, Option[TransactionReceipt])]
     ): Seq[RawOrder] = {
@@ -249,7 +251,9 @@ case class OrderEvent() extends EventExtractor {
 
   }
 
-  def extractOrderFromEvent(event: OrderSubmittedEvent.Result): RawOrder = {
+  private def extractOrderFromEvent(
+      event: OrderSubmittedEvent.Result
+    ): RawOrder = {
     // 去掉head 2 * 64
     val data = Numeric.cleanHexPrefix(event.orderData).substring(128)
     RawOrder(
@@ -309,7 +313,7 @@ case class OrderEvent() extends EventExtractor {
   }
 }
 
-case class FailedRingsExtractor() extends EventExtractor {
+case class FailedRingsExtractor() extends EventExtractor[String] {
   //TODO（yadong）等待孔亮提供解析的方法
   override def extract(
       txs: Seq[(Transaction, Option[TransactionReceipt])]
@@ -332,10 +336,11 @@ case class FailedRingsExtractor() extends EventExtractor {
   }
 }
 
-case class TokenTierUpgradedExtractor() extends EventExtractor {
+case class TokenTierUpgradedExtractor()
+    extends EventExtractor[TokenTierUpgradedEvent.Result] {
   override def extract(
       txs: Seq[(Transaction, Option[TransactionReceipt])]
-    ): Seq[Any] = {
+    ): Seq[TokenTierUpgradedEvent.Result] = {
     if (txs.forall(_._2.nonEmpty)) {
       txs.unzip._2.flatMap(receipt ⇒ {
         receipt.get.logs.map { log ⇒
@@ -345,7 +350,7 @@ case class TokenTierUpgradedExtractor() extends EventExtractor {
             case _ ⇒
               None
           }
-        }.filter(_.nonEmpty).flatten
+        }.filter(_.nonEmpty).map(_.get)
       })
     } else {
       Seq.empty

@@ -61,7 +61,7 @@ case class CommonTransactionExtractor() extends TransactionExtractor {
   }
 }
 
-case class EthTransactionExtractor(abi: WETHABI) extends TransactionExtractor {
+case class EthTransactionExtractor() extends TransactionExtractor {
 
   def extract(
       txs: Seq[(Transaction, Option[TransactionReceipt])]
@@ -84,7 +84,7 @@ case class EthTransactionExtractor(abi: WETHABI) extends TransactionExtractor {
             events = events.++:(
               receiptOpt.get.logs
                 .map(log ⇒ {
-                  abi.unpackEvent(log.data, log.topics.toArray) match {
+                  wethAbi.unpackEvent(log.data, log.topics.toArray) match {
                     case Some(withdraw: WithdrawalEvent.Result) ⇒
                       Some(
                         Transaction2Event(tx).copy(
@@ -120,10 +120,7 @@ case class EthTransactionExtractor(abi: WETHABI) extends TransactionExtractor {
   }
 }
 
-case class TokenTransactionExtractor(
-    abi: WETHABI
-  )(
-    implicit protocolAddress: Address)
+case class TokenTransactionExtractor()(implicit protocolAddress: Address)
     extends TransactionExtractor {
 
   def extract(
@@ -136,7 +133,7 @@ case class TokenTransactionExtractor(
           val (tx, receiptOpt) = item
           receiptOpt.get.logs
             .map(log ⇒ {
-              abi.unpackEvent(log.data, log.topics.toArray) match {
+              wethAbi.unpackEvent(log.data, log.topics.toArray) match {
                 case Some(transfer: TransferEvent.Result) ⇒
                   Some(
                     Transaction2Event(tx).copy(
@@ -183,10 +180,7 @@ case class TokenTransactionExtractor(
 
 }
 
-case class TradeTransactionExtractor(
-    abi: WETHABI
-  )(
-    implicit protocolAddress: Address)
+case class TradeTransactionExtractor()(implicit protocolAddress: Address)
     extends TransactionExtractor {
 
   def extract(
@@ -199,7 +193,7 @@ case class TradeTransactionExtractor(
           val (tx, receiptOpt) = item
           receiptOpt.get.logs
             .map(log ⇒ {
-              abi.unpackEvent(log.data, log.topics.toArray) match {
+              wethAbi.unpackEvent(log.data, log.topics.toArray) match {
                 case Some(transfer: TransferEvent.Result) ⇒
                   Some(
                     Transaction2Event(tx).copy(
@@ -223,8 +217,7 @@ case class TradeTransactionExtractor(
   }
 }
 
-case class LoopringTransactionExtractor(abi: LoopringProtocolAbi)
-    extends TransactionExtractor {
+case class LoopringTransactionExtractor() extends TransactionExtractor {
   override def extract(
       txs: Seq[(Transaction, Option[TransactionReceipt])]
     ): Seq[TransactionEvent] = {
@@ -233,7 +226,8 @@ case class LoopringTransactionExtractor(abi: LoopringProtocolAbi)
         val (tx, receiptOpt) = item
         receiptOpt.get.logs
           .map(log ⇒ {
-            abi.unpackEvent(log.data, log.topics.toArray) match {
+            loopringProtocolAbi
+              .unpackEvent(log.data, log.topics.toArray) match {
               case Some(
                   OrderSubmittedEvent.Result | AllOrdersCancelledEvent.Result |
                   AllOrdersCancelledByBrokerEvent.Result |
