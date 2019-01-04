@@ -28,6 +28,26 @@ class TradeHistoryAbi(abiJson: String) extends AbiWrap(abiJson) {
     abi.findFunction(searchByName(FilledFunction.name))
   )
 
+  val cancelled = CancelledFunction(
+    abi.findFunction(searchByName(CancelledFunction.name))
+  )
+
+  val tradingPairCutoffs = TradingPairCutoffsFunction(
+    abi.findFunction(searchByName(TradingPairCutoffsFunction.name))
+  )
+
+  val cutoffsOwner = CutoffsOwnerFunction(
+    abi.findFunction(searchByName(CutoffsOwnerFunction.name))
+  )
+
+  val tradingPairCutoffsOwner = TradingPairCutoffsOwnerFunction(
+    abi.findFunction(searchByName(TradingPairCutoffsOwnerFunction.name))
+  )
+
+  val cutoffs = CutoffsFunction(
+    abi.findFunction(searchByName(CutoffsFunction.name))
+  )
+
   override def unpackEvent(
       data: String,
       topics: Array[String]
@@ -74,4 +94,92 @@ object FilledFunction {
   case class Result(@(ContractAnnotation @field)("amount", 0) amount: BigInt)
 
   def apply(entry: SABI.Function): FilledFunction = new FilledFunction(entry)
+}
+
+class CancelledFunction(val entry: SABI.Function)
+    extends AbiFunction[CancelledFunction.Params, CancelledFunction.Result]
+
+object CancelledFunction {
+  val name = "cancelled"
+  case class Params(
+      @(ContractAnnotation @field)("broker", 0) broker: String,
+      @(ContractAnnotation @field)("orderHash", 1) orderHash: Array[Byte])
+
+  case class Result(
+      @(ContractAnnotation @field)("cancelled", 0) cancelled: Boolean)
+
+  def apply(entry: SABI.Function): CancelledFunction =
+    new CancelledFunction(entry)
+}
+
+class TradingPairCutoffsFunction(val entry: SABI.Function)
+    extends AbiFunction[
+      TradingPairCutoffsFunction.Params,
+      TradingPairCutoffsFunction.Result
+    ]
+
+object TradingPairCutoffsFunction {
+
+  val name = "tradingPairCutoffs"
+
+  case class Params(
+      @(ContractAnnotation @field)("broker", 0) broker: String,
+      @(ContractAnnotation @field)("tokenPair", 1) tokenPair: Array[Byte])
+
+  case class Result(@(ContractAnnotation @field)("cutOff", 0) cutOff: BigInt)
+
+  def apply(entry: SABI.Function): TradingPairCutoffsFunction =
+    new TradingPairCutoffsFunction(entry)
+}
+
+class CutoffsOwnerFunction(val entry: SABI.Function)
+    extends AbiFunction[
+      CutoffsOwnerFunction.Params,
+      CutoffsOwnerFunction.Result
+    ]
+
+object CutoffsOwnerFunction {
+  val name = "cutoffsOwner"
+
+  case class Params(
+      @(ContractAnnotation @field)("broker", 0) broker: String,
+      @(ContractAnnotation @field)("owner", 1) owner: String)
+
+  case class Result(@(ContractAnnotation @field)("cutOff", 0) cutOff: BigInt)
+
+  def apply(entry: SABI.Function): CutoffsOwnerFunction =
+    new CutoffsOwnerFunction(entry)
+}
+
+class TradingPairCutoffsOwnerFunction(val entry: SABI.Function)
+    extends AbiFunction[
+      TradingPairCutoffsOwnerFunction.Params,
+      TradingPairCutoffsOwnerFunction.Result
+    ]
+
+object TradingPairCutoffsOwnerFunction {
+  val name = "tradingPairCutoffsOwner"
+
+  case class Params(
+      @(ContractAnnotation @field)("broker", 0) broker: String,
+      @(ContractAnnotation @field)("owner", 1) owner: String,
+      @(ContractAnnotation @field)("tokenPair", 2) tokenPair: Array[Byte])
+
+  case class Result(@(ContractAnnotation @field)("cutOff", 0) cutOff: BigInt)
+
+  def apply(entry: SABI.Function): TradingPairCutoffsOwnerFunction =
+    new TradingPairCutoffsOwnerFunction(entry)
+}
+
+class CutoffsFunction(val entry: SABI.Function)
+    extends AbiFunction[CutoffsFunction.Params, CutoffsFunction.Result]
+
+object CutoffsFunction {
+  val name = "cutoffs"
+
+  case class Params(@(ContractAnnotation @field)("broker", 0) broker: String)
+
+  case class Result(@(ContractAnnotation @field)("cutOff", 0) cutOff: BigInt)
+
+  def apply(entry: SABI.Function): CutoffsFunction = new CutoffsFunction(entry)
 }
