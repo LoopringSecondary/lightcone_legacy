@@ -96,7 +96,7 @@ case class EthTransactionExtractor() extends TransactionExtractor {
       .filter(tx ⇒ isSucceed(tx._2.get.status))
       .flatMap(item ⇒ {
         val (tx, receiptOpt) = item
-        if (receiptOpt.get.logs.isEmpty) {
+        if (BigInt(Numeric.toBigInt(tx.value)) > 0 ) {
           Seq(
             transaction2Event(tx).copy(
               eventType = TransactionEvent.Type.ETH,
@@ -118,16 +118,6 @@ case class EthTransactionExtractor() extends TransactionExtractor {
                         .toHexStringWithPrefix(withdraw.wad.bigInteger)
                     )
                   )
-                case Some(deposit: DepositEvent.Result) ⇒
-                  Some(
-                    transaction2Event(tx).copy(
-                      eventType = TransactionEvent.Type.ETH,
-                      sender = deposit.dst,
-                      receiver = log.address,
-                      value = Numeric
-                        .toHexStringWithPrefix(deposit.wad.bigInteger)
-                    )
-                  )
                 case _ ⇒ None
               }
             })
@@ -141,10 +131,11 @@ case class EthTransactionExtractor() extends TransactionExtractor {
       txs: Seq[(Transaction, Option[TransactionReceipt])]
     ): Seq[TransactionEvent] = {
 
-    txs.filterNot(tx ⇒ isSucceed(tx._2.get.status)).map { item ⇒
-      val (tx, _) = item
-      wethAbi.unpackFunctionInput(tx.input) match {
-        case Some(DepositFunction.Parms) ⇒
+    txs
+      .filterNot(tx ⇒ isSucceed(tx._2.get.status))
+      .map { item ⇒
+        val (tx, _) = item
+        if (BigInt(Numeric.toBigInt(tx.value))>0) {
           Some(
             transaction2Event(tx).copy(
               eventType = TransactionEvent.Type.ETH,
@@ -153,32 +144,25 @@ case class EthTransactionExtractor() extends TransactionExtractor {
               status = TransactionEvent.Status.FAILED
             )
           )
-        case Some(withdraw: WithdrawFunction.Parms) ⇒
-          Some(
-            transaction2Event(tx).copy(
-              eventType = TransactionEvent.Type.ETH,
-              receiver = tx.from,
-              sender = tx.to,
-              value = Numeric.toHexStringWithPrefix(withdraw.wad.bigInteger),
-              status = TransactionEvent.Status.FAILED
-            )
-          )
-        case _ ⇒
-          if (tx.input.isEmpty || tx.input.equals("0x") || tx.input
-                .equals("0x0")) {
-            Some(
-              transaction2Event(tx).copy(
-                eventType = TransactionEvent.Type.ETH,
-                receiver = tx.to,
-                sender = tx.from,
-                status = TransactionEvent.Status.FAILED
+        }else {
+          wethAbi.unpackFunctionInput(tx.input) match {
+            case Some(withdraw: WithdrawFunction.Parms) ⇒
+              Some(
+                transaction2Event(tx).copy(
+                  eventType = TransactionEvent.Type.ETH,
+                  receiver = tx.from,
+                  sender = tx.to,
+                  value = Numeric.toHexStringWithPrefix(withdraw.wad.bigInteger),
+                  status = TransactionEvent.Status.FAILED
+                )
               )
-            )
-          } else {
-            None
+            case _ ⇒
+              None
           }
+        }
       }
-    }
+      .filter(_.nonEmpty)
+      .map(_.get)
   }
 }
 
