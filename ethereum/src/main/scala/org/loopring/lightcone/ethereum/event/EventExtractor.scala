@@ -242,9 +242,8 @@ case class OrderEvent() extends EventExtractor[RawOrder] {
         }.filter(_.nonEmpty).map(_.get)
       })
     } else {
-      Seq.empty[RawOrder]
+      Seq.empty
     }
-
   }
 
   private def extractOrderFromEvent(

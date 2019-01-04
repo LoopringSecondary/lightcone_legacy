@@ -33,7 +33,7 @@ package object event {
   val ringSubmitterAbi = RingSubmitterAbi()
   val loopringProtocolAbi = LoopringProtocolAbi()
 
-  def getBalanceAndAllowanceAdds(
+  def getBalanceAndAllowanceAddrs(
       txs: Seq[(Transaction, Option[TransactionReceipt])]
     )(
       implicit delegate: Address,
