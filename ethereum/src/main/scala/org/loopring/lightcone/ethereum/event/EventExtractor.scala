@@ -16,7 +16,6 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import com.google.protobuf.ByteString
 import org.loopring.lightcone.ethereum.abi.OrdersCancelledEvent.Result
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
@@ -36,9 +35,6 @@ trait EventExtractor[R] {
       fillContent.substring(index * fillLength, fillLength * (index + 1))
     }
   }
-
-  implicit def bytes2ByteString(bytes: Array[Byte]): ByteString =
-    ByteString.copyFrom(bytes)
 }
 
 case class TradeExtractor()(implicit blockTime: String)

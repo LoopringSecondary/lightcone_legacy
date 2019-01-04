@@ -25,7 +25,7 @@ import org.loopring.lightcone.proto.{
 }
 import org.web3j.utils.Numeric
 
-abstract class TransactionExtractor {
+trait TransactionExtractor {
 
   def extract(
       txs: Seq[(Transaction, Option[TransactionReceipt])]
