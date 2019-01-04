@@ -35,7 +35,7 @@ package object event {
 
   def getBalanceAndAllowanceAdds(
       txs: Seq[(Transaction, Option[TransactionReceipt])]
-  )(
+    )(
       implicit delegate: Address,
       protocol: Address
     ): (Seq[(String, String)], Seq[(String, String)]) = {
