@@ -197,6 +197,75 @@ class EthereumQueryActor(
           )).toMap
         )
       }) sendTo sender
+
+    case req:CheckCancelled.Req ⇒
+      (
+        for{
+          callReq ← Future{
+            checkCancelledToCallReq(req,Address(tradeHistoryAddress))
+          }
+         result ← (ethereumAccessorActor ? callReq)
+            .mapAs[EthCall.Res]
+              .map(_.result)
+        }yield {
+          CheckCancelled.Res(Numeric.toBigInt(result).intValue() == 1)
+        }
+      ) sendTo sender
+
+    case req:GetTradingPairCutoffs.Req ⇒
+      (
+        for{
+          callReq ← Future{
+            getTradingPairCutoffsToCallReq(req,Address(tradeHistoryAddress))
+          }
+          result ← (ethereumAccessorActor ? callReq)
+            .mapAs[EthCall.Res]
+            .map(_.result)
+        }yield {
+          GetTradingPairCutoffs.Res(Numeric.toBigInt(result).toByteArray)
+        }
+        ) sendTo sender
+    case req:GetCutoffsOwner.Req ⇒
+      (
+        for{
+          callReq ← Future{
+            getCutoffsOwnerToCallReq(req,Address(tradeHistoryAddress))
+          }
+          result ← (ethereumAccessorActor ? callReq)
+            .mapAs[EthCall.Res]
+            .map(_.result)
+        }yield {
+          GetCutoffsOwner.Res(Numeric.toBigInt(result).toByteArray)
+        }
+        ) sendTo sender
+
+    case req:GetTradingPairCutoffsOwner.Req ⇒
+      (
+        for{
+          callReq ← Future{
+            getTradingPairCutoffsOwnerToCallReq(req,Address(tradeHistoryAddress))
+          }
+          result ← (ethereumAccessorActor ? callReq)
+            .mapAs[EthCall.Res]
+            .map(_.result)
+        }yield {
+          GetTradingPairCutoffsOwner.Res(Numeric.toBigInt(result).toByteArray)
+        }
+        ) sendTo sender
+
+    case req:GetCutoffs.Req ⇒
+      (
+        for{
+          callReq ← Future{
+            getCutoffsToCallReq(req,Address(tradeHistoryAddress))
+          }
+          result ← (ethereumAccessorActor ? callReq)
+            .mapAs[EthCall.Res]
+            .map(_.result)
+        }yield {
+          GetCutoffs.Res(Numeric.toBigInt(result).toByteArray)
+        }
+        ) sendTo sender
   }
 
 }
