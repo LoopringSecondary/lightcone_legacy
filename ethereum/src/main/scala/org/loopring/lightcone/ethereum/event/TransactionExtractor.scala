@@ -24,7 +24,7 @@ import org.web3j.utils.Numeric
 trait TransactionExtractor {
 
   def extract(
-      txs: Seq[(Transaction,TransactionReceipt)]
+      txs: Seq[(Transaction, TransactionReceipt)]
     ): Seq[TransactionEvent]
 
   def transaction2Event(tx: Transaction): TransactionEvent = {
@@ -62,14 +62,14 @@ case class CommonTransactionExtractor() extends TransactionExtractor {
   def extract(
       txs: Seq[(Transaction, TransactionReceipt)]
     ): Seq[TransactionEvent] = {
-      txs.map { tx ⇒
-        {
-          transaction2Event(tx._1).copy(
-            eventType = TransactionEvent.Type.COMMON,
-            status = getStatus(tx._2.status)
-          )
-        }
+    txs.map { tx ⇒
+      {
+        transaction2Event(tx._1).copy(
+          eventType = TransactionEvent.Type.COMMON,
+          status = getStatus(tx._2.status)
+        )
       }
+    }
   }
 }
 
@@ -78,7 +78,7 @@ case class EthTransactionExtractor() extends TransactionExtractor {
   def extract(
       txs: Seq[(Transaction, TransactionReceipt)]
     ): Seq[TransactionEvent] = {
-      extractSucceedTransactions(txs) ++ extractFailedTransactions(txs)
+    extractSucceedTransactions(txs) ++ extractFailedTransactions(txs)
   }
 
   def extractSucceedTransactions(
@@ -87,8 +87,8 @@ case class EthTransactionExtractor() extends TransactionExtractor {
     txs
       .filter(tx ⇒ isSucceed(tx._2.status))
       .flatMap(item ⇒ {
-        val (tx, receiptOpt) = item
-        if (BigInt(Numeric.toBigInt(tx.value)) > 0 ) {
+        val (tx, receipt) = item
+        if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
           Seq(
             transaction2Event(tx).copy(
               eventType = TransactionEvent.Type.ETH,
@@ -97,7 +97,7 @@ case class EthTransactionExtractor() extends TransactionExtractor {
             )
           )
         } else {
-          receiptOpt.logs
+          receipt.logs
             .map(log ⇒ {
               wethAbi.unpackEvent(log.data, log.topics.toArray) match {
                 case Some(withdraw: WithdrawalEvent.Result) ⇒
@@ -127,7 +127,7 @@ case class EthTransactionExtractor() extends TransactionExtractor {
       .filterNot(tx ⇒ isSucceed(tx._2.status))
       .map { item ⇒
         val (tx, _) = item
-        if (BigInt(Numeric.toBigInt(tx.value))>0) {
+        if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
           Some(
             transaction2Event(tx).copy(
               eventType = TransactionEvent.Type.ETH,
@@ -136,7 +136,7 @@ case class EthTransactionExtractor() extends TransactionExtractor {
               status = TransactionEvent.Status.FAILED
             )
           )
-        }else {
+        } else {
           wethAbi.unpackFunctionInput(tx.input) match {
             case Some(withdraw: WithdrawFunction.Parms) ⇒
               Some(
@@ -164,7 +164,7 @@ case class TokenTransactionExtractor()(implicit protocolAddress: Address)
   def extract(
       txs: Seq[(Transaction, TransactionReceipt)]
     ): Seq[TransactionEvent] = {
-      extractSucceedTransactions(txs) ++ extractFailedTransactions(txs)
+    extractSucceedTransactions(txs) ++ extractFailedTransactions(txs)
   }
 
   def extractSucceedTransactions(
@@ -177,8 +177,8 @@ case class TokenTransactionExtractor()(implicit protocolAddress: Address)
             .equals(protocolAddress) && isSucceed(tx._2.status)
       )
       .flatMap(item ⇒ {
-        val (tx, receiptOpt) = item
-        receiptOpt.logs
+        val (tx, receipt) = item
+        receipt.logs
           .map(log ⇒ {
             wethAbi.unpackEvent(log.data, log.topics.toArray) match {
               case Some(transfer: TransferEvent.Result) ⇒
@@ -293,31 +293,31 @@ case class TradeTransactionExtractor()(implicit protocolAddress: Address)
   def extract(
       txs: Seq[(Transaction, TransactionReceipt)]
     ): Seq[TransactionEvent] = {
-      txs
-        .filter(tx ⇒ Address(tx._1.to).equals(protocolAddress))
-        .flatMap(item ⇒ {
-          val (tx, receiptOpt) = item
-          receiptOpt.logs
-            .map(log ⇒ {
-              wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-                case Some(transfer: TransferEvent.Result) ⇒
-                  Some(
-                    transaction2Event(tx).copy(
-                      eventType = TransactionEvent.Type.TRADE,
-                      receiver = transfer.receiver,
-                      sender = transfer.from,
-                      token = log.address,
-                      value = Numeric
-                        .toHexStringWithPrefix(transfer.amount.bigInteger),
-                      status = TransactionEvent.Status.SUCCEED
-                    )
+    txs
+      .filter(tx ⇒ Address(tx._1.to).equals(protocolAddress))
+      .flatMap(item ⇒ {
+        val (tx, receipt) = item
+        receipt.logs
+          .map(log ⇒ {
+            wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+              case Some(transfer: TransferEvent.Result) ⇒
+                Some(
+                  transaction2Event(tx).copy(
+                    eventType = TransactionEvent.Type.TRADE,
+                    receiver = transfer.receiver,
+                    sender = transfer.from,
+                    token = log.address,
+                    value = Numeric
+                      .toHexStringWithPrefix(transfer.amount.bigInteger),
+                    status = TransactionEvent.Status.SUCCEED
                   )
-                case _ ⇒ None
-              }
-            })
-            .filter(_.nonEmpty)
-            .map(_.get)
-        })
+                )
+              case _ ⇒ None
+            }
+          })
+          .filter(_.nonEmpty)
+          .map(_.get)
+      })
   }
 }
 
@@ -325,7 +325,7 @@ case class LoopringTransactionExtractor() extends TransactionExtractor {
   override def extract(
       txs: Seq[(Transaction, TransactionReceipt)]
     ): Seq[TransactionEvent] = {
-      extractSucceedTransactions(txs) ++ extractFailedTransactions(txs)
+    extractSucceedTransactions(txs) ++ extractFailedTransactions(txs)
   }
 
   private def extractSucceedTransactions(
@@ -334,8 +334,8 @@ case class LoopringTransactionExtractor() extends TransactionExtractor {
     txs
       .filter(tx ⇒ isSucceed(tx._2.status))
       .flatMap(item ⇒ {
-        val (tx, receiptOpt) = item
-        receiptOpt.logs
+        val (tx, receipt) = item
+        receipt.logs
           .map(log ⇒ {
             loopringProtocolAbi
               .unpackEvent(log.data, log.topics.toArray) match {
