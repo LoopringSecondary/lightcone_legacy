@@ -59,7 +59,6 @@ case class TradeExtractor()(implicit blockTime: String)
     )(
       implicit blockTime: String
     ): Seq[Trade] = {
-    //首先去掉head 64 * 2
     val fillContent = Numeric.cleanHexPrefix(event._fills).substring(128)
     val fillLength = 8 * 64
     val fills = (0 until (fillContent.length / fillLength)).map { index ⇒
