@@ -29,22 +29,23 @@ import scala.collection.mutable.ListBuffer
 package object event {
   val erc20Abi = ERC20ABI()
   val wethAbi = WETHABI()
+  val tradeHistoryAbi = TradeHistoryAbi()
   val ringSubmitterAbi = RingSubmitterAbi()
   val loopringProtocolAbi = LoopringProtocolAbi()
 
   def getBalanceAndAllowanceAdds(
-                                  txs: Seq[(Transaction, Option[TransactionReceipt])],
-                                  delegate: Address,
-                                  protocol: Address
-                                ): (Seq[(String, String)], Seq[(String, String)]) = {
+      txs: Seq[(Transaction, Option[TransactionReceipt])]
+  )(
+      implicit delegate: Address,
+      protocol: Address
+    ): (Seq[(String, String)], Seq[(String, String)]) = {
     val balanceAddresses = ListBuffer.empty[(String, String)]
     val allowanceAddresses = ListBuffer.empty[(String, String)]
     if (txs.forall(_._2.nonEmpty)) {
       txs.foreach(tx ⇒ {
         balanceAddresses.append(tx._2.get.from → Address.zeroAddress)
         if (Numeric.toBigInt(tx._2.get.status).intValue() == 1) {
-          if (tx._1.input.isEmpty || tx._1.input.equals("0x") || tx._1.input
-            .equals("0x0")) {
+          if (BigInt(Numeric.toBigInt(tx._1.value)) > 0) {
             balanceAddresses.append(tx._2.get.to → Address.zeroAddress)
           }
           wethAbi.unpackFunctionInput(tx._1.input) match {
@@ -90,8 +91,6 @@ package object event {
     }
     (balanceAddresses.toSet.toSeq, allowanceAddresses.toSet.toSeq)
   }
-
-
 
   implicit def bytes2ByteString(bytes: Array[Byte]): ByteString =
     ByteString.copyFrom(bytes)

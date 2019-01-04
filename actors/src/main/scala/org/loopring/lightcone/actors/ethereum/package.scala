@@ -27,7 +27,6 @@ import org.loopring.lightcone.ethereum.event._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
-
 package object ethereum {
 
   type ProtoBuf[T] = scalapb.GeneratedMessage with scalapb.Message[T]
@@ -61,9 +60,6 @@ package object ethereum {
       id: Int,
       method: String,
       params: Seq[Any])
-
-  val tradeHistoryAbi = TradeHistoryAbi()
-  val ringSubmitterAbi = RingSubmitterAbi()
 
   implicit def getBalanceAndAllowanceToBatchReq(
       delegateAddress: Address,

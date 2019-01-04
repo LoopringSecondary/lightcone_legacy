@@ -54,9 +54,12 @@ case class CommonTransactionExtractor() extends TransactionExtractor {
       txs: Seq[(Transaction, Option[TransactionReceipt])]
     ): Seq[TransactionEvent] = {
     if (txs.forall(_._2.nonEmpty)) {
-      txs.map(tx ⇒ Transaction2Event(tx._1).copy(
-        eventType = TransactionEvent.Type.COMMON
-      ))
+      txs.map(
+        tx ⇒
+          Transaction2Event(tx._1).copy(
+            eventType = TransactionEvent.Type.COMMON
+          )
+      )
     } else {
       Seq.empty
     }
