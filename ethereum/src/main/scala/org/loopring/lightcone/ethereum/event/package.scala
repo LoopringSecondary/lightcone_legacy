@@ -17,11 +17,9 @@
 package org.loopring.lightcone.ethereum
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.ethereum.abi.OrdersCancelledEvent.Result
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib.MarketHashProvider.convert2Hex
-import org.loopring.lightcone.proto.{OrdersCancelledEvent, _}
+import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer

@@ -26,15 +26,6 @@ import org.web3j.utils.Numeric
 
 trait EventExtractor[R] {
   def extract(txs: Seq[(Transaction, TransactionReceipt)]): Seq[R]
-
-  def splitEventToFills(_fills: String): Seq[String] = {
-    //首先去掉head 64 * 2
-    val fillContent = Numeric.cleanHexPrefix(_fills).substring(128)
-    val fillLength = 8 * 64
-    (0 until (fillContent.length / fillLength)).map { index ⇒
-      fillContent.substring(index * fillLength, fillLength * (index + 1))
-    }
-  }
 }
 
 case class TradeExtractor()(implicit blockTime: String)
@@ -45,7 +36,7 @@ case class TradeExtractor()(implicit blockTime: String)
     ): Seq[Trade] = {
     txs
       .flatMap(item ⇒ {
-        val (tx, receipt) = item
+        val (_, receipt) = item
         receipt.logs.map { log ⇒
           {
             loopringProtocolAbi
@@ -68,7 +59,12 @@ case class TradeExtractor()(implicit blockTime: String)
     )(
       implicit blockTime: String
     ): Seq[Trade] = {
-    val fills = splitEventToFills(event._fills)
+    //首先去掉head 64 * 2
+    val fillContent = Numeric.cleanHexPrefix(event._fills).substring(128)
+    val fillLength = 8 * 64
+    val fills = (0 until (fillContent.length / fillLength)).map { index ⇒
+      fillContent.substring(index * fillLength, fillLength * (index + 1))
+    }
     fills.zipWithIndex.map(item ⇒ {
       val (fill, index) = item
       val fill2 = if (index + 1 < fills.size) {
@@ -76,44 +72,57 @@ case class TradeExtractor()(implicit blockTime: String)
       } else {
         fills.head
       }
-      val trade = Trade(
-        orderHash = fill.substring(0, 2 + 64 * 1),
-        owner = Address(fill.substring(2 + 64 * 1, 2 + 64 * 2)).toString,
-        tokenS = Address(fill.substring(2 + 64 * 2, 2 + 64 * 3)).toString,
-        tokenB = Address(fill2.substring(2 + 64 * 2, 2 + 64 * 3)).toString,
-        amountS = Numeric
-          .toBigInt(fill.substring(2 + 64 * 3, 2 + 64 * 4))
-          .toByteArray,
-        amountB = Numeric
-          .toBigInt(fill2.substring(2 + 64 * 3, 2 + 64 * 4))
-          .toByteArray,
-        split = Numeric
-          .toBigInt(fill.substring(2 + 64 * 4, 2 + 64 * 5))
-          .toByteArray,
-        fees = Some(
-          Trade.Fees(
-            amountFee = Numeric
-              .toBigInt(fill.substring(2 + 64 * 5, 2 + 64 * 6))
-              .toByteArray,
-            feeAmountS = Numeric
-              .toBigInt(fill.substring(2 + 64 * 6, 2 + 64 * 7))
-              .toByteArray,
-            feeAmountB = Numeric
-              .toBigInt(fill.substring(2 + 64 * 7, 2 + 64 * 8))
-              .toByteArray
-          )
-        ),
-        txHash = receipt.transactionHash,
-        blockHeight = Numeric.toBigInt(receipt.blockNumber).longValue(),
-        blockTimestamp = Numeric.toBigInt(blockTime).longValue(),
-        ringHash = event._ringHash,
-        ringIndex = event._ringIndex.longValue(),
-        //TODO(yadong) 尝试在事件中找到该地址
-        delegateAddress = ""
-      )
-      trade.withMarketHash(convert2Hex(trade.tokenB, trade.tokenS))
+      fillToTrade(fill, fill2, event, receipt)
     })
   }
+
+  private def fillToTrade(
+      fill: String,
+      _fill: String,
+      event: RingMinedEvent.Result,
+      receipt: TransactionReceipt
+    )(
+      implicit blockTime: String
+    ): Trade = {
+
+    val trade = Trade(
+      orderHash = fill.substring(0, 2 + 64 * 1),
+      owner = Address(fill.substring(2 + 64 * 1, 2 + 64 * 2)).toString,
+      tokenS = Address(fill.substring(2 + 64 * 2, 2 + 64 * 3)).toString,
+      tokenB = Address(_fill.substring(2 + 64 * 2, 2 + 64 * 3)).toString,
+      amountS = Numeric
+        .toBigInt(fill.substring(2 + 64 * 3, 2 + 64 * 4))
+        .toByteArray,
+      amountB = Numeric
+        .toBigInt(_fill.substring(2 + 64 * 3, 2 + 64 * 4))
+        .toByteArray,
+      split = Numeric
+        .toBigInt(fill.substring(2 + 64 * 4, 2 + 64 * 5))
+        .toByteArray,
+      fees = Some(
+        Trade.Fees(
+          amountFee = Numeric
+            .toBigInt(fill.substring(2 + 64 * 5, 2 + 64 * 6))
+            .toByteArray,
+          feeAmountS = Numeric
+            .toBigInt(fill.substring(2 + 64 * 6, 2 + 64 * 7))
+            .toByteArray,
+          feeAmountB = Numeric
+            .toBigInt(fill.substring(2 + 64 * 7, 2 + 64 * 8))
+            .toByteArray
+        )
+      ),
+      txHash = receipt.transactionHash,
+      blockHeight = Numeric.toBigInt(receipt.blockNumber).longValue(),
+      blockTimestamp = Numeric.toBigInt(blockTime).longValue(),
+      ringHash = event._ringHash,
+      ringIndex = event._ringIndex.longValue(),
+      //TODO(yadong) 尝试在事件中找到该地址
+      delegateAddress = ""
+    )
+    trade.withMarketHash(convert2Hex(trade.tokenB, trade.tokenS))
+  }
+
 }
 
 case class OrdersCancelledExtractor()
