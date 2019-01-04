@@ -316,6 +316,11 @@ message TransactionEvent {
         TRADE = 3;  // 交易类型
         LOOPRING = 4; //路印合约相关的，比如取消订单，提交在线订单
     }
+    enum Status {
+        PENDING = 0;
+        SUCCEED = 1;
+        FAILED = 2;
+    }
     string hash = 1;
     string nonce = 2;
     string blockHash = 3;
@@ -330,7 +335,8 @@ message TransactionEvent {
     string input = 12;
     string sender = 13; //针对token转账, trade类型，internal类型指实际的转账地址
     string receiver = 14;//针对token转账, trade类型，internal类型指实际的接收地址
-    Type  EventType = 15;
+    Type   eventType = 15;
+    Status  status = 16;
 }
 
 
