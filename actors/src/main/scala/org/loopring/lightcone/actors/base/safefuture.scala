@@ -40,7 +40,7 @@ object safefuture {
         throw ErrorException(
           Error(
             ERR_INTERNAL_UNKNOWN,
-            s"unexpected msg ${other.getClass.getName}"
+            s"unexpected msg ${other} ${other.getClass.getName}"
           )
         )
     }

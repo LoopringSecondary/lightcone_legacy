@@ -139,9 +139,11 @@ class AccountManagerActor(
             .copy(rawOrder = Some(newRaworder)))
             .mapAs[RawOrder]
           resOrder <- (resRawOrder.getState.status match {
-            case STATUS_PENDING_ACTIVE => Future.successful(resRawOrder)
-            case _                     => submitOrder(resRawOrder)
-          }).mapAs[RawOrder]
+            case STATUS_PENDING_ACTIVE =>
+              val order: Order = resRawOrder
+              Future.successful(order)
+            case _ => submitOrder(resRawOrder)
+          }).mapAs[Order]
         } yield SubmitOrder.Res(Some(resOrder))
 
       } yield res) sendTo sender

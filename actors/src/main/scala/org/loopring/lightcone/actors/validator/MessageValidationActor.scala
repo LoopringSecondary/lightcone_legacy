@@ -71,7 +71,6 @@ class MessageValidationActor(
               ERR_UNEXPECTED_ACTOR_MSG,
               s"unexpected msg of ${msg.getClass.getName}"
             )
-
         }
       } forwardTo (destinationActor, sender)
 
