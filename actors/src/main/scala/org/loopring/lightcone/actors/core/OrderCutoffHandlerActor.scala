@@ -110,7 +110,9 @@ class OrderCutoffHandlerActor(
     case req: RetrieveOrdersToCancel =>
       dbModule.orderService.getCutoffAffectedOrders(req, batchSize).map { r =>
         if (r.nonEmpty) {
-          log.info(s"Handle cutoff:$req in a batch:$batchSize request, return ${r.length} orders to cancel")
+          log.info(
+            s"Handle cutoff:$req in a batch:$batchSize request, return ${r.length} orders to cancel"
+          )
           val cancelOrderReqs = r.map { o =>
             CancelOrder.Req(
               id = o.hash,
