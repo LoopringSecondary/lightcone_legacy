@@ -35,5 +35,6 @@
   - [ ] [yongfeng]redis缓存
   - [ ] 清理每个人的TODO
   - [ ] 集群监控
+  - [ ] 迁移到AMS DynamoDB
   - [ ] 动态增加token和市场，动态停止某个市场（配置放入数据库）
 
