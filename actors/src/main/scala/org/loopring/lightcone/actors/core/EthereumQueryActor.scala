@@ -198,74 +198,77 @@ class EthereumQueryActor(
         )
       }) sendTo sender
 
-    case req:CheckCancelled.Req ⇒
+    case req: CheckCancelled.Req ⇒
       (
-        for{
-          callReq ← Future{
-            checkCancelledToCallReq(req,Address(tradeHistoryAddress))
+        for {
+          callReq ← Future {
+            checkCancelledToCallReq(req, Address(tradeHistoryAddress))
           }
-         result ← (ethereumAccessorActor ? callReq)
+          result ← (ethereumAccessorActor ? callReq)
             .mapAs[EthCall.Res]
-              .map(_.result)
-        }yield {
+            .map(_.result)
+        } yield {
           CheckCancelled.Res(Numeric.toBigInt(result).intValue() == 1)
         }
       ) sendTo sender
 
-    case req:GetTradingPairCutoffs.Req ⇒
+    case req: GetTradingPairCutoffs.Req ⇒
       (
-        for{
-          callReq ← Future{
-            getTradingPairCutoffsToCallReq(req,Address(tradeHistoryAddress))
+        for {
+          callReq ← Future {
+            getTradingPairCutoffsToCallReq(req, Address(tradeHistoryAddress))
           }
           result ← (ethereumAccessorActor ? callReq)
             .mapAs[EthCall.Res]
             .map(_.result)
-        }yield {
+        } yield {
           GetTradingPairCutoffs.Res(Numeric.toBigInt(result).toByteArray)
         }
-        ) sendTo sender
-    case req:GetCutoffsOwner.Req ⇒
+      ) sendTo sender
+    case req: GetCutoffsOwner.Req ⇒
       (
-        for{
-          callReq ← Future{
-            getCutoffsOwnerToCallReq(req,Address(tradeHistoryAddress))
+        for {
+          callReq ← Future {
+            getCutoffsOwnerToCallReq(req, Address(tradeHistoryAddress))
           }
           result ← (ethereumAccessorActor ? callReq)
             .mapAs[EthCall.Res]
             .map(_.result)
-        }yield {
+        } yield {
           GetCutoffsOwner.Res(Numeric.toBigInt(result).toByteArray)
         }
-        ) sendTo sender
+      ) sendTo sender
 
-    case req:GetTradingPairCutoffsOwner.Req ⇒
+    case req: GetTradingPairCutoffsOwner.Req ⇒
       (
-        for{
-          callReq ← Future{
-            getTradingPairCutoffsOwnerToCallReq(req,Address(tradeHistoryAddress))
+        for {
+          callReq ← Future {
+            getTradingPairCutoffsOwnerToCallReq(
+              req,
+              Address(tradeHistoryAddress)
+            )
           }
           result ← (ethereumAccessorActor ? callReq)
             .mapAs[EthCall.Res]
             .map(_.result)
-        }yield {
+        } yield {
           GetTradingPairCutoffsOwner.Res(Numeric.toBigInt(result).toByteArray)
         }
-        ) sendTo sender
+      ) sendTo sender
 
-    case req:GetCutoffs.Req ⇒
+    case req: GetCutoffs.Req ⇒
       (
-        for{
-          callReq ← Future{
-            getCutoffsToCallReq(req,Address(tradeHistoryAddress))
+        for {
+          callReq ← Future {
+            getCutoffsToCallReq(req, Address(tradeHistoryAddress))
           }
           result ← (ethereumAccessorActor ? callReq)
             .mapAs[EthCall.Res]
             .map(_.result)
-        }yield {
+        } yield {
           GetCutoffs.Res(Numeric.toBigInt(result).toByteArray)
         }
-        ) sendTo sender
+      ) sendTo sender
   }
 
 }

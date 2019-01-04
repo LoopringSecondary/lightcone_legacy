@@ -106,32 +106,71 @@ package object ethereum {
     BatchCallContracts.Req(batchFilledAmountReqs)
   }
 
-  implicit def checkCancelledToCallReq(req:CheckCancelled.Req, contractAddress: Address,tag:String = "latest"):EthCall.Req = {
-   val input =  tradeHistoryAbi.cancelled.pack(CancelledFunction.Params(broker = req.broker,orderHash = Numeric.hexStringToByteArray(req.orderHash)))
+  implicit def checkCancelledToCallReq(
+      req: CheckCancelled.Req,
+      contractAddress: Address,
+      tag: String = "latest"
+    ): EthCall.Req = {
+    val input = tradeHistoryAbi.cancelled.pack(
+      CancelledFunction.Params(
+        broker = req.broker,
+        orderHash = Numeric.hexStringToByteArray(req.orderHash)
+      )
+    )
     val param = TransactionParams(to = contractAddress.toString, data = input)
     EthCall.Req(param = Some(param), tag = tag)
   }
 
-  implicit def getTradingPairCutoffsToCallReq(req:GetTradingPairCutoffs.Req, contractAddress: Address,tag:String = "latest"):EthCall.Req = {
-    val input =  tradeHistoryAbi.tradingPairCutoffs.pack(TradingPairCutoffsFunction.Params(broker = req.broker,tokenPair = Numeric.hexStringToByteArray(req.tokenPair)))
+  implicit def getTradingPairCutoffsToCallReq(
+      req: GetTradingPairCutoffs.Req,
+      contractAddress: Address,
+      tag: String = "latest"
+    ): EthCall.Req = {
+    val input = tradeHistoryAbi.tradingPairCutoffs.pack(
+      TradingPairCutoffsFunction.Params(
+        broker = req.broker,
+        tokenPair = Numeric.hexStringToByteArray(req.tokenPair)
+      )
+    )
     val param = TransactionParams(to = contractAddress.toString, data = input)
     EthCall.Req(param = Some(param), tag = tag)
   }
 
-  implicit def getCutoffsOwnerToCallReq(req:GetCutoffsOwner.Req,contractAddress: Address,tag:String = "latest"):EthCall.Req = {
-    val input =  tradeHistoryAbi.cutoffsOwner.pack(CutoffsOwnerFunction.Params(broker = req.broker,owner = req.owner))
+  implicit def getCutoffsOwnerToCallReq(
+      req: GetCutoffsOwner.Req,
+      contractAddress: Address,
+      tag: String = "latest"
+    ): EthCall.Req = {
+    val input = tradeHistoryAbi.cutoffsOwner.pack(
+      CutoffsOwnerFunction.Params(broker = req.broker, owner = req.owner)
+    )
     val param = TransactionParams(to = contractAddress.toString, data = input)
     EthCall.Req(param = Some(param), tag = tag)
   }
 
-  implicit def getTradingPairCutoffsOwnerToCallReq(req:GetTradingPairCutoffsOwner.Req,contractAddress: Address,tag:String = "latest"):EthCall.Req = {
-    val input =  tradeHistoryAbi.tradingPairCutoffsOwner.pack(TradingPairCutoffsOwnerFunction.Params(broker = req.broker,owner = req.owner,tokenPair = Numeric.hexStringToByteArray(req.tokenPair)))
+  implicit def getTradingPairCutoffsOwnerToCallReq(
+      req: GetTradingPairCutoffsOwner.Req,
+      contractAddress: Address,
+      tag: String = "latest"
+    ): EthCall.Req = {
+    val input = tradeHistoryAbi.tradingPairCutoffsOwner.pack(
+      TradingPairCutoffsOwnerFunction.Params(
+        broker = req.broker,
+        owner = req.owner,
+        tokenPair = Numeric.hexStringToByteArray(req.tokenPair)
+      )
+    )
     val param = TransactionParams(to = contractAddress.toString, data = input)
     EthCall.Req(param = Some(param), tag = tag)
   }
 
-  implicit def getCutoffsToCallReq(req:GetCutoffs.Req,contractAddress: Address,tag:String = "latest"):EthCall.Req = {
-    val input =  tradeHistoryAbi.cutoffs.pack(CutoffsFunction.Params(broker = req.broker))
+  implicit def getCutoffsToCallReq(
+      req: GetCutoffs.Req,
+      contractAddress: Address,
+      tag: String = "latest"
+    ): EthCall.Req = {
+    val input =
+      tradeHistoryAbi.cutoffs.pack(CutoffsFunction.Params(broker = req.broker))
     val param = TransactionParams(to = contractAddress.toString, data = input)
     EthCall.Req(param = Some(param), tag = tag)
   }
@@ -176,9 +215,6 @@ package object ethereum {
     }
     GetAllowance.Res(address, (tokens zip allowances).toMap)
   }
-
-
-
 
   implicit def packRingToInput(data: String): String = {
     ringSubmitterAbi.submitRing.pack(
