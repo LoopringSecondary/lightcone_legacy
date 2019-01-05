@@ -230,12 +230,14 @@ class OrderServiceImpl @Inject()(
       }
     }
 
-  def verifyOrderEffective(req: OrderEffective.Req): Future[Boolean] = {
+  def checkOrderActiveStatus(
+      req: CheckOrderActiveStatus.Req
+    ): Future[Boolean] = {
     for {
       orderOpt <- req.order match {
-        case OrderEffective.Req.Order.Hash(value) =>
+        case CheckOrderActiveStatus.Req.Order.Hash(value) =>
           orderDal.getOrder(value)
-        case OrderEffective.Req.Order.RawOrder(value) =>
+        case CheckOrderActiveStatus.Req.Order.RawOrder(value) =>
           Future.successful(Some(value))
         case _ =>
           throw ErrorException(

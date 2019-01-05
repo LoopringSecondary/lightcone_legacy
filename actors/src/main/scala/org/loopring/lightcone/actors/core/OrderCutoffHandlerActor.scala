@@ -78,9 +78,22 @@ class OrderCutoffHandlerActor(
 
   def receive: Receive = {
 
-    case req: OrdersCancelledEvent =>
     // TODO du: 收到任务后先存入db，一批处理完之后删除。
     // 如果执行失败，1. 自身重启时需要再恢复 2. 整体系统重启时直接删除不需要再恢复（accountManagerActor恢复时会处理cutoff）
+    case req: OrderCancelledEvent =>
+      dbModule.orderService.getOrder(req.orderHash).map {
+        _ match {
+          case Some(o) =>
+          case None    =>
+        }
+      }
+      val cancelOrderReqs = CancelOrder.Req(
+        id = req.orderHash,
+        owner = req.orderOwner,
+        status = OrderStatus.STATUS_CANCELLED_BY_USER,
+        marketId = Some(MarketId(primary = o.tokenB, secondary = o.tokenS))
+      )
+
     case req: OwnerCutoffEvent =>
       if (req.owner.isEmpty)
         throw ErrorException(

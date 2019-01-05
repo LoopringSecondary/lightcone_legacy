@@ -110,7 +110,7 @@ message RetrieveOrdersToCancel {
     int32  cutoff       = 4; // in seconds.
 }
 
-message OrderEffective {
+message CheckOrderActiveStatus {
     message Req {
         oneof order {
             string   hash      = 1;
@@ -119,7 +119,7 @@ message OrderEffective {
     }
 
     message Res {
-        bool effective = 1;
+        bool active = 1;
     }
 }
 

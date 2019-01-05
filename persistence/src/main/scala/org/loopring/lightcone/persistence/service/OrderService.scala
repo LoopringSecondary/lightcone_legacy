@@ -115,5 +115,5 @@ trait OrderService {
     ): Future[Seq[UserCancelOrder.Res.Result]]
 
   // 查询db，通过订单cancel cutoff，验证是否有效
-  def verifyOrderEffective(req: OrderEffective.Req): Future[Boolean]
+  def checkOrderActiveStatus(req: CheckOrderActiveStatus.Req): Future[Boolean]
 }
