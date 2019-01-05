@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.support
+package org.loopring.lightcone.core.account
 
-import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.proto.{MarketId, RawOrder}
 
-trait OrderHandleSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+trait AccountCutoffState {
 
-  actors.add(
-    OrderPersistenceActor.name,
-    OrderPersistenceActor.startShardRegion
-  )
-
+  def setCutoff(
+      marketId: MarketId,
+      cutoff: Long
+    )
+  def setCutoff(cutoff: Long)
+  def isOrderCutoff(rawOrder: RawOrder)
 }

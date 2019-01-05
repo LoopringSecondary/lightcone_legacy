@@ -36,9 +36,9 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
   "submit several orders of different markets" must {

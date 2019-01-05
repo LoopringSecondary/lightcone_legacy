@@ -43,9 +43,9 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
   "submit an order when the balance and allowance enough" must {
