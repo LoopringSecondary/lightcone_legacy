@@ -101,8 +101,7 @@ class MarketManagerImpl(
   // part of the order will not be cancelled.
   def cancelOrder(orderId: String): Option[Orderbook.Update] =
     this.synchronized {
-      getOrder(orderId).map { order =>
-        removeOrder(orderId)
+      removeOrder(orderId) map { _ =>
         aggregator.getOrderbookUpdate()
       }
     }
