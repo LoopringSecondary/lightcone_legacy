@@ -241,37 +241,94 @@ message TokenBalance {
     int64  updated_at_block     = 5;
 }
 
-message OrderFilled {
-    string order_hash = 1;
-    bytes  filled     = 2;
+
+
+
+/////////////////////////////////////////////////////////////////////
+// ETHEREUM EVENT
+/////////////////////////////////////////////////////////////////////
+
+enum TxStatus {
+    TX_STATUS_PENDING = 0;
+    TX_STATUS_SUCCESS = 1;
+    TX_STATUS_FAILED = 2;
 }
 
-message OrderCancelledEvent {
-    string order_owner = 1;
-    string order_hash  = 2;
-    bool   cancelled   = 3;
+message EventHeader {
+    string hash = 1;
+    TxStatus tx_status = 2;
+    string block_hash = 3;
+    string block_number = 4;
+    string tx_from = 5;
+    string tx_to = 6;
+    string tx_value = 7;
+    string tx_index = 8;
+    string log_index = 9;
+}
+
+message TransferEvent {
+    EventHeader header = 1;
+    string sender = 2;
+    string receiver = 3;
+    string token = 4;
+    bytes amount = 5;
+}
+
+//LOOPRING Cutoff
+
+message OrdersCancelledEvent {
+    EventHeader header = 1;
+    string broker = 2;
+    repeated string order_hashes = 3;
 }
 
 message CutoffEvent {
-    string broker = 1;
-    int32  cutoff = 2; // in seconds.
-}
-
-message OwnerCutoffEvent {
-    string broker = 1;
-    string owner  = 2;
+    EventHeader header = 1;
+    string broker = 2;
     int32  cutoff = 3; // in seconds.
 }
 
+message OwnerCutoffEvent {
+    EventHeader header = 1;
+    string broker = 2;
+    string owner  = 3;
+    int32  cutoff = 4; // in seconds.
+}
+
 message TradingPairCutoffEvent {
-    string broker       = 1;
-    string trading_pair = 2;
-    int32  cutoff       = 3; // in seconds.
+    EventHeader header = 1;
+    string broker       = 2;
+    string trading_pair = 3;
+    int32  cutoff       = 4; // in seconds.
 }
 
 message OwnerTradingPairCutoffEvent {
+    EventHeader header = 1;
     string broker       = 1;
     string owner        = 2;
     string trading_pair = 3;
     int32  cutoff       = 4; // in seconds.
 }
+
+//LOOPRING RINGMINED
+message OrderFilledEvent {
+    EventHeader header = 1;
+    string owner = 2;
+    string order_hash = 3;
+    bytes  filled     = 4;
+}
+
+message TokenBurnRateEvent {
+    EventHeader header = 1;
+    string token = 2;
+    double burnRate = 3;
+}
+
+message RingMinedEvent {   //include InvalidRing and RingMined
+    EventHeader header = 1;
+    bytes ring_index = 2;
+    string ring_hash = 3;
+    string fee_recipient = 4;
+    bytes fills = 5;
+}
+
