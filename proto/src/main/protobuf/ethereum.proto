@@ -246,30 +246,30 @@ message OrderFilled {
     bytes  filled     = 2;
 }
 
-message OrderCancelled {
+message OrderCancelledEvent {
     string order_owner = 1;
     string order_hash  = 2;
     bool   cancelled   = 3;
 }
 
-message Cutoffs {
+message CutoffEvent {
     string broker = 1;
     int32  cutoff = 2; // in seconds.
 }
 
-message OwnerCutoffs {
+message OwnerCutoffEvent {
     string broker = 1;
     string owner  = 2;
     int32  cutoff = 3; // in seconds.
 }
 
-message TradingPairCutoffs {
+message TradingPairCutoffEvent {
     string broker       = 1;
     string trading_pair = 2;
     int32  cutoff       = 3; // in seconds.
 }
 
-message OwnerTradingPairCutoffs {
+message OwnerTradingPairCutoffEvent {
     string broker       = 1;
     string owner        = 2;
     string trading_pair = 3;

@@ -78,9 +78,10 @@ class OrderCutoffHandlerActor(
 
   def receive: Receive = {
 
+    case req: OrdersCancelledEvent =>
     // TODO du: 收到任务后先存入db，一批处理完之后删除。
     // 如果执行失败，1. 自身重启时需要再恢复 2. 整体系统重启时直接删除不需要再恢复（accountManagerActor恢复时会处理cutoff）
-    case req: OwnerCutoffs =>
+    case req: OwnerCutoffEvent =>
       if (req.owner.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
@@ -93,7 +94,7 @@ class OrderCutoffHandlerActor(
         cutoff = req.cutoff
       )
 
-    case req: OwnerTradingPairCutoffs =>
+    case req: OwnerTradingPairCutoffEvent =>
       if (req.owner.isEmpty || req.tradingPair.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
