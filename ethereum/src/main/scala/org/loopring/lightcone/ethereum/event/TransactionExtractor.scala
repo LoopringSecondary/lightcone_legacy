@@ -24,7 +24,8 @@ import org.web3j.utils.Numeric
 trait TransactionExtractor {
 
   def extract(
-      txs: Seq[(Transaction, TransactionReceipt)]
+      tx: Transaction,
+      receipt: TransactionReceipt
     ): Seq[TransactionEvent]
 
   def transaction2Event(tx: Transaction): TransactionEvent = {
@@ -57,104 +58,95 @@ trait TransactionExtractor {
 
 }
 
-case class CommonTransactionExtractor() extends TransactionExtractor {
+class CommonTransactionExtractor() extends TransactionExtractor {
 
   def extract(
-      txs: Seq[(Transaction, TransactionReceipt)]
-    ): Seq[TransactionEvent] = {
-    txs.map { tx ⇒
-      {
-        transaction2Event(tx._1).copy(
-          eventType = TransactionEvent.Type.COMMON,
-          status = getStatus(tx._2.status)
-        )
-      }
-    }
-  }
+      tx: Transaction,
+      receipt: TransactionReceipt
+    ): Seq[TransactionEvent] =
+    Seq(
+      transaction2Event(tx).copy(
+        eventType = TransactionEvent.Type.COMMON,
+        status = getStatus(receipt.status)
+      )
+    )
 }
 
 case class EthTransactionExtractor() extends TransactionExtractor {
 
   def extract(
-      txs: Seq[(Transaction, TransactionReceipt)]
+      tx: Transaction,
+      receipt: TransactionReceipt
     ): Seq[TransactionEvent] = {
-    extractSucceedTransactions(txs) ++ extractFailedTransactions(txs)
+    extractSucceedTransactions(tx: Transaction, receipt: TransactionReceipt) ++ extractFailedTransactions(
+      tx: Transaction,
+      receipt: TransactionReceipt
+    )
   }
 
   def extractSucceedTransactions(
-      txs: Seq[(Transaction, TransactionReceipt)]
+      tx: Transaction,
+      receipt: TransactionReceipt
     ): Seq[TransactionEvent] = {
-    txs
-      .filter(tx ⇒ isSucceed(tx._2.status))
-      .flatMap(item ⇒ {
-        val (tx, receipt) = item
-        if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
-          Seq(
-            transaction2Event(tx).copy(
-              eventType = TransactionEvent.Type.ETH,
-              sender = tx.from,
-              receiver = tx.to
-            )
-          )
-        } else {
-          receipt.logs
-            .map(log ⇒ {
-              wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-                case Some(withdraw: WithdrawalEvent.Result) ⇒
-                  Some(
-                    transaction2Event(tx).copy(
-                      eventType = TransactionEvent.Type.ETH,
-                      sender = log.address,
-                      receiver = withdraw.src,
-                      value = Numeric
-                        .toHexStringWithPrefix(withdraw.wad.bigInteger)
-                    )
-                  )
-                case _ ⇒ None
-              }
-            })
-            .filter(_.nonEmpty)
-            .map(_.get)
-        }
-      })
-  }
-
-  def extractFailedTransactions(
-      txs: Seq[(Transaction, TransactionReceipt)]
-    ): Seq[TransactionEvent] = {
-
-    txs
-      .filterNot(tx ⇒ isSucceed(tx._2.status))
-      .map { item ⇒
-        val (tx, _) = item
-        if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
-          Some(
-            transaction2Event(tx).copy(
-              eventType = TransactionEvent.Type.ETH,
-              receiver = tx.to,
-              sender = tx.from,
-              status = TransactionEvent.Status.FAILED
-            )
-          )
-        } else {
-          wethAbi.unpackFunctionInput(tx.input) match {
-            case Some(withdraw: WithdrawFunction.Parms) ⇒
+    if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
+      Seq(
+        transaction2Event(tx).copy(
+          eventType = TransactionEvent.Type.ETH,
+          sender = tx.from,
+          receiver = tx.to
+        )
+      )
+    } else {
+      receipt.logs
+        .map(log ⇒ {
+          wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+            case Some(withdraw: WithdrawalEvent.Result) ⇒
               Some(
                 transaction2Event(tx).copy(
                   eventType = TransactionEvent.Type.ETH,
-                  receiver = tx.from,
-                  sender = tx.to,
-                  value = Numeric.toHexStringWithPrefix(withdraw.wad.bigInteger),
-                  status = TransactionEvent.Status.FAILED
+                  sender = log.address,
+                  receiver = withdraw.src,
+                  value = Numeric
+                    .toHexStringWithPrefix(withdraw.wad.bigInteger)
                 )
               )
-            case _ ⇒
-              None
+            case _ ⇒ None
           }
-        }
+        })
+        .filter(_.nonEmpty)
+        .map(_.get)
+    }
+  }
+
+  def extractFailedTransactions(
+      tx: Transaction,
+      receipt: TransactionReceipt
+    ): Seq[TransactionEvent] = {
+    if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
+      Seq(
+        transaction2Event(tx).copy(
+          eventType = TransactionEvent.Type.ETH,
+          receiver = tx.to,
+          sender = tx.from,
+          status = TransactionEvent.Status.FAILED
+        )
+      )
+    } else {
+      wethAbi.unpackFunctionInput(tx.input) match {
+        case Some(withdraw: WithdrawFunction.Parms) ⇒
+          Seq(
+            transaction2Event(tx).copy(
+              eventType = TransactionEvent.Type.ETH,
+              receiver = tx.from,
+              sender = tx.to,
+              value = Numeric.toHexStringWithPrefix(withdraw.wad.bigInteger),
+              status = TransactionEvent.Status.FAILED
+            )
+          )
+        case _ ⇒
+          Seq.empty
       }
-      .filter(_.nonEmpty)
-      .map(_.get)
+    }
   }
 }
 
@@ -162,128 +154,116 @@ case class TokenTransactionExtractor()(implicit protocolAddress: Address)
     extends TransactionExtractor {
 
   def extract(
-      txs: Seq[(Transaction, TransactionReceipt)]
+      tx: Transaction,
+      receipt: TransactionReceipt
     ): Seq[TransactionEvent] = {
-    extractSucceedTransactions(txs) ++ extractFailedTransactions(txs)
+    extractSucceedTransactions(tx: Transaction, receipt: TransactionReceipt) ++ extractFailedTransactions(
+      tx: Transaction,
+      receipt: TransactionReceipt
+    )
   }
 
   def extractSucceedTransactions(
-      txs: Seq[(Transaction, TransactionReceipt)]
+      tx: Transaction,
+      receipt: TransactionReceipt
     ): Seq[TransactionEvent] = {
-    txs
-      .filter(
-        tx ⇒
-          !Address(tx._1.to)
-            .equals(protocolAddress) && isSucceed(tx._2.status)
-      )
-      .flatMap(item ⇒ {
-        val (tx, receipt) = item
-        receipt.logs
-          .map(log ⇒ {
-            wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-              case Some(transfer: TransferEvent.Result) ⇒
-                Some(
-                  transaction2Event(tx).copy(
-                    eventType = TransactionEvent.Type.TOKEN,
-                    receiver = transfer.receiver,
-                    sender = transfer.from,
-                    token = log.address,
-                    value = Numeric
-                      .toHexStringWithPrefix(transfer.amount.bigInteger),
-                    status = TransactionEvent.Status.SUCCEED
-                  )
-                )
-              case Some(withdraw: WithdrawalEvent.Result) ⇒
-                Some(
-                  transaction2Event(tx).copy(
-                    eventType = TransactionEvent.Type.TOKEN,
-                    receiver = log.address,
-                    sender = withdraw.src,
-                    token = log.address,
-                    value = Numeric
-                      .toHexStringWithPrefix(withdraw.wad.bigInteger),
-                    status = TransactionEvent.Status.SUCCEED
-                  )
-                )
-              case Some(deposit: DepositEvent.Result) ⇒
-                Some(
-                  transaction2Event(tx).copy(
-                    eventType = TransactionEvent.Type.TOKEN,
-                    receiver = deposit.dst,
-                    sender = log.address,
-                    token = log.address,
-                    value = Numeric
-                      .toHexStringWithPrefix(deposit.wad.bigInteger),
-                    status = TransactionEvent.Status.SUCCEED
-                  )
-                )
-              case _ ⇒ None
-            }
-          })
-          .filter(_.nonEmpty)
-          .map(_.get)
-      })
-  }
-
-  def extractFailedTransactions(
-      txs: Seq[(Transaction, TransactionReceipt)]
-    ): Seq[TransactionEvent] = {
-
-    txs
-      .filterNot(tx ⇒ isSucceed(tx._2.status))
-      .map { item ⇒
-        val (tx, _) = item
-        wethAbi.unpackFunctionInput(tx.input) match {
-          case Some(transfer: TransferFunction.Parms) ⇒
+    receipt.logs
+      .map(log ⇒ {
+        wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+          case Some(transfer: TransferEvent.Result) ⇒
             Some(
               transaction2Event(tx).copy(
                 eventType = TransactionEvent.Type.TOKEN,
-                receiver = transfer.to,
-                sender = tx.from,
-                token = tx.to,
-                value =
-                  Numeric.toHexStringWithPrefix(transfer.amount.bigInteger),
-                status = TransactionEvent.Status.FAILED
+                receiver = transfer.receiver,
+                sender = transfer.from,
+                token = log.address,
+                value = Numeric
+                  .toHexStringWithPrefix(transfer.amount.bigInteger),
+                status = TransactionEvent.Status.SUCCEED
               )
             )
-          case Some(transferFrom: TransferFromFunction.Parms) ⇒
+          case Some(withdraw: WithdrawalEvent.Result) ⇒
             Some(
               transaction2Event(tx).copy(
                 eventType = TransactionEvent.Type.TOKEN,
-                receiver = transferFrom.to,
-                sender = transferFrom.txFrom,
-                token = tx.to,
-                value =
-                  Numeric.toHexStringWithPrefix(transferFrom.amount.bigInteger),
-                status = TransactionEvent.Status.FAILED
+                receiver = log.address,
+                sender = withdraw.src,
+                token = log.address,
+                value = Numeric
+                  .toHexStringWithPrefix(withdraw.wad.bigInteger),
+                status = TransactionEvent.Status.SUCCEED
               )
             )
-          case Some(DepositFunction.Parms) ⇒
+          case Some(deposit: DepositEvent.Result) ⇒
             Some(
               transaction2Event(tx).copy(
                 eventType = TransactionEvent.Type.TOKEN,
-                receiver = tx.from,
-                sender = tx.to,
-                token = tx.to,
-                status = TransactionEvent.Status.FAILED
-              )
-            )
-          case Some(withdraw: WithdrawFunction.Parms) ⇒
-            Some(
-              transaction2Event(tx).copy(
-                eventType = TransactionEvent.Type.TOKEN,
-                receiver = tx.to,
-                sender = tx.from,
-                token = tx.to,
-                value = Numeric.toHexStringWithPrefix(withdraw.wad.bigInteger),
-                status = TransactionEvent.Status.FAILED
+                receiver = deposit.dst,
+                sender = log.address,
+                token = log.address,
+                value = Numeric
+                  .toHexStringWithPrefix(deposit.wad.bigInteger),
+                status = TransactionEvent.Status.SUCCEED
               )
             )
           case _ ⇒ None
         }
-      }
+      })
       .filter(_.nonEmpty)
       .map(_.get)
+  }
+
+  def extractFailedTransactions(
+      tx: Transaction,
+      receipt: TransactionReceipt
+    ): Seq[TransactionEvent] = {
+    wethAbi.unpackFunctionInput(tx.input) match {
+      case Some(transfer: TransferFunction.Parms) ⇒
+        Seq(
+          transaction2Event(tx).copy(
+            eventType = TransactionEvent.Type.TOKEN,
+            receiver = transfer.to,
+            sender = tx.from,
+            token = tx.to,
+            value = Numeric.toHexStringWithPrefix(transfer.amount.bigInteger),
+            status = TransactionEvent.Status.FAILED
+          )
+        )
+      case Some(transferFrom: TransferFromFunction.Parms) ⇒
+        Seq(
+          transaction2Event(tx).copy(
+            eventType = TransactionEvent.Type.TOKEN,
+            receiver = transferFrom.to,
+            sender = transferFrom.txFrom,
+            token = tx.to,
+            value =
+              Numeric.toHexStringWithPrefix(transferFrom.amount.bigInteger),
+            status = TransactionEvent.Status.FAILED
+          )
+        )
+      case Some(DepositFunction.Parms) ⇒
+        Seq(
+          transaction2Event(tx).copy(
+            eventType = TransactionEvent.Type.TOKEN,
+            receiver = tx.from,
+            sender = tx.to,
+            token = tx.to,
+            status = TransactionEvent.Status.FAILED
+          )
+        )
+      case Some(withdraw: WithdrawFunction.Parms) ⇒
+        Seq(
+          transaction2Event(tx).copy(
+            eventType = TransactionEvent.Type.TOKEN,
+            receiver = tx.to,
+            sender = tx.from,
+            token = tx.to,
+            value = Numeric.toHexStringWithPrefix(withdraw.wad.bigInteger),
+            status = TransactionEvent.Status.FAILED
+          )
+        )
+      case _ ⇒ Seq.empty
+    }
   }
 }
 
@@ -291,92 +271,85 @@ case class TradeTransactionExtractor()(implicit protocolAddress: Address)
     extends TransactionExtractor {
 
   def extract(
-      txs: Seq[(Transaction, TransactionReceipt)]
+      tx: Transaction,
+      receipt: TransactionReceipt
     ): Seq[TransactionEvent] = {
-    txs
-      .filter(tx ⇒ Address(tx._1.to).equals(protocolAddress))
-      .flatMap(item ⇒ {
-        val (tx, receipt) = item
-        receipt.logs
-          .map(log ⇒ {
-            wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-              case Some(transfer: TransferEvent.Result) ⇒
-                Some(
-                  transaction2Event(tx).copy(
-                    eventType = TransactionEvent.Type.TRADE,
-                    receiver = transfer.receiver,
-                    sender = transfer.from,
-                    token = log.address,
-                    value = Numeric
-                      .toHexStringWithPrefix(transfer.amount.bigInteger),
-                    status = TransactionEvent.Status.SUCCEED
-                  )
-                )
-              case _ ⇒ None
-            }
-          })
-          .filter(_.nonEmpty)
-          .map(_.get)
+    receipt.logs
+      .map(log ⇒ {
+        wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+          case Some(transfer: TransferEvent.Result) ⇒
+            Some(
+              transaction2Event(tx).copy(
+                eventType = TransactionEvent.Type.TRADE,
+                receiver = transfer.receiver,
+                sender = transfer.from,
+                token = log.address,
+                value = Numeric
+                  .toHexStringWithPrefix(transfer.amount.bigInteger),
+                status = TransactionEvent.Status.SUCCEED
+              )
+            )
+          case _ ⇒ None
+        }
       })
+      .filterNot(_.nonEmpty)
+      .map(_.get)
   }
 }
 
 case class LoopringTransactionExtractor() extends TransactionExtractor {
   override def extract(
-      txs: Seq[(Transaction, TransactionReceipt)]
+      tx: Transaction,
+      receipt: TransactionReceipt
     ): Seq[TransactionEvent] = {
-    extractSucceedTransactions(txs) ++ extractFailedTransactions(txs)
+    extractSucceedTransactions(tx: Transaction, receipt: TransactionReceipt) ++ extractFailedTransactions(
+      tx: Transaction,
+      receipt: TransactionReceipt
+    )
   }
 
   private def extractSucceedTransactions(
-      txs: Seq[(Transaction, TransactionReceipt)]
+      tx: Transaction,
+      receipt: TransactionReceipt
     ): Seq[TransactionEvent] = {
-    txs
-      .filter(tx ⇒ isSucceed(tx._2.status))
-      .flatMap(item ⇒ {
-        val (tx, receipt) = item
-        receipt.logs
-          .map(log ⇒ {
-            loopringProtocolAbi
-              .unpackEvent(log.data, log.topics.toArray) match {
-              case Some(
-                  OrderSubmittedEvent.Result | AllOrdersCancelledEvent.Result |
-                  AllOrdersCancelledByBrokerEvent.Result |
-                  AllOrdersCancelledForTradingPairEvent.Result |
-                  AllOrdersCancelledForTradingPairByBrokerEvent.Result
-                  ) ⇒
-                Some(
-                  transaction2Event(tx).copy(
-                    eventType = TransactionEvent.Type.LOOPRING,
-                    status = TransactionEvent.Status.SUCCEED
-                  )
-                )
-              case _ ⇒
-                None
-            }
-          })
-          .filter(_.nonEmpty)
-          .map(_.get)
-      })
-
-  }
-
-  private def extractFailedTransactions(
-      txs: Seq[(Transaction, TransactionReceipt)]
-    ): Seq[TransactionEvent] = {
-    txs
-      .filterNot(tx ⇒ isSucceed(tx._2.status))
-      .map { item ⇒
-        val (tx, _) = item
-        loopringProtocolAbi.unpackFunctionInput(tx.input).map { _ ⇒
-          transaction2Event(tx).copy(
-            eventType = TransactionEvent.Type.LOOPRING,
-            status = TransactionEvent.Status.FAILED
-          )
+    receipt.logs
+      .map(log ⇒ {
+        loopringProtocolAbi
+          .unpackEvent(log.data, log.topics.toArray) match {
+          case Some(
+              OrderSubmittedEvent.Result | AllOrdersCancelledEvent.Result |
+              AllOrdersCancelledByBrokerEvent.Result |
+              AllOrdersCancelledForTradingPairEvent.Result |
+              AllOrdersCancelledForTradingPairByBrokerEvent.Result
+              ) ⇒
+            Some(
+              transaction2Event(tx).copy(
+                eventType = TransactionEvent.Type.LOOPRING,
+                status = TransactionEvent.Status.SUCCEED
+              )
+            )
+          case _ ⇒
+            None
         }
-      }
+      })
       .filter(_.nonEmpty)
       .map(_.get)
   }
 
+  private def extractFailedTransactions(
+      tx: Transaction,
+      receipt: TransactionReceipt
+    ): Seq[TransactionEvent] = {
+    loopringProtocolAbi.unpackFunctionInput(tx.input) match {
+      case Some(_) ⇒
+        Seq(
+          transaction2Event(tx).copy(
+            eventType = TransactionEvent.Type.LOOPRING,
+            status = TransactionEvent.Status.FAILED
+          )
+        )
+      case _ ⇒
+        Seq.empty
+    }
+  }
 }
