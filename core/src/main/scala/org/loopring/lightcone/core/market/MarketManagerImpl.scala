@@ -160,8 +160,8 @@ class MarketManagerImpl(
         taker = updateOrderMatchable(taker)
         if (dustOrderEvaluator.isMatchableDust(taker)) return
 
-        popBestMakerOrder(taker).map { order =>
-          val maker = updateOrderMatchable(order)
+        popTopMakerOrder(taker).map { maker =>
+          // val maker = updateOrderMatchable(order)
 
           val matchResult =
             if (dustOrderEvaluator.isMatchableDust(maker))
@@ -176,10 +176,8 @@ class MarketManagerImpl(
                        | """.stripMargin)
           (maker, matchResult)
         } match {
-          case None                       => // no maker to trade with
+          case None => // no maker to trade with
           case Some((maker, matchResult)) =>
-            // we always need to add maker back even if it is STATUS_PENDING-fully-matched.
-            ordersToAddBack :+= maker
             matchResult match {
               case Left(
                   ERR_MATCHING_ORDERS_NOT_TRADABLE |
@@ -187,17 +185,23 @@ class MarketManagerImpl(
                   ERR_MATCHING_INVALID_TAKER_ORDER |
                   ERR_MATCHING_INVALID_MAKER_ORDER
                   ) => // stop recursive matching
+                ordersToAddBack :+= maker
 
               case Left(error) =>
+                ordersToAddBack :+= maker
                 recursivelyMatchOrders()
 
               case Right(ring) =>
                 isLastTakerSell = (taker.tokenS == marketId.secondary)
                 rings :+= ring
                 latestPrice = (taker.price + maker.price) / 2
+
                 pendingRingPool.addRing(ring)
+                ordersToAddBack :+= updateOrderMatchable(maker)
+
                 recursivelyMatchOrders()
             }
+
         }
       }
 
@@ -259,7 +263,7 @@ class MarketManagerImpl(
   }
 
   // Remove and return the top taker order for a taker order.
-  private def popBestMakerOrder(order: Matchable): Option[Matchable] = {
+  private def popTopMakerOrder(order: Matchable): Option[Matchable] = {
     val side = sides(order.tokenB)
     side.headOption match {
       case None        => None
