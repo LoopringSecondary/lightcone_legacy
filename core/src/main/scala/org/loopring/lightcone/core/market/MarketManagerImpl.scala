@@ -151,9 +151,7 @@ class MarketManagerImpl(
       def recursivelyMatchOrders(): Unit = {
         popTopMakerOrder(taker).map { maker =>
           val matchResult =
-            if (dustOrderEvaluator.isMatchableDust(maker))
-              Left(ERR_MATCHING_INCOME_TOO_SMALL)
-            else ringMatcher.matchOrders(taker, maker, minFiatValue)
+            ringMatcher.matchOrders(taker, maker, minFiatValue)
 
           log.debug(s"""
                        | \n-- recursive matching (${taker.id} => ${maker.id}) --
@@ -163,35 +161,41 @@ class MarketManagerImpl(
                        | """.stripMargin)
           (maker, matchResult)
         } match {
-          case None => // no maker to trade with
-          case Some((maker, matchResult)) =>
-            matchResult match {
-              case Left(
+          case Some(
+              (
+                maker,
+                error @ Left(
                   ERR_MATCHING_ORDERS_NOT_TRADABLE |
                   ERR_MATCHING_TAKER_COMPLETELY_FILLED |
                   ERR_MATCHING_INVALID_TAKER_ORDER |
                   ERR_MATCHING_INVALID_MAKER_ORDER
-                  ) => // stop recursive matching
-                ordersToAddBack :+= maker
+                )
+              )
+              ) =>
+            log.debug(s"match error: $error")
+            ordersToAddBack :+= maker
 
-              case Left(error) =>
-                ordersToAddBack :+= maker
-                recursivelyMatchOrders()
+          case Some((maker, Left(error))) =>
+            log.debug(s"match error: $error")
+            ordersToAddBack :+= maker
+            recursivelyMatchOrders()
 
-              case Right(ring) =>
-                isLastTakerSell = (taker.tokenS == marketId.secondary)
-                rings :+= ring
-                latestPrice = (taker.price + maker.price) / 2
+          case Some((maker, Right(ring))) =>
+            isLastTakerSell = (taker.tokenS == marketId.secondary)
+            rings :+= ring
+            latestPrice = (taker.price + maker.price) / 2
 
-                pendingRingPool.addRing(ring)
+            pendingRingPool.addRing(ring)
 
-                ordersToAddBack :+= updateOrderMatchable(maker)
-                taker = updateOrderMatchable(taker)
+            ordersToAddBack :+= updateOrderMatchable(maker)
+            taker = updateOrderMatchable(taker)
 
-                if (!dustOrderEvaluator.isMatchableDust(taker)) {
-                  recursivelyMatchOrders()
-                }
+            if (!dustOrderEvaluator.isMatchableDust(taker)) {
+              recursivelyMatchOrders()
             }
+
+          case None =>
+            log.debug("no maker found")
         }
       }
 
