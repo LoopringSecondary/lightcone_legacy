@@ -16,10 +16,34 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import org.loopring.lightcone.proto.TxStatus
+import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
-trait Extractor {
+trait DataExtractor[R] {
+
+  def extract(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
+    ): Seq[R]
+
+  def getEventHeader(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
+    ): EventHeader = {
+    EventHeader(
+      txHash = tx.hash,
+      txFrom = tx.from,
+      txTo = tx.to,
+      txValue = Numeric.toBigInt(tx.value).toByteArray,
+      txIndex = Numeric.toBigInt(tx.transactionIndex).intValue(),
+      txStatus = getStatus(receipt.status),
+      blockHash = tx.blockHash,
+      blockTimestamp = Numeric.toBigInt(blockTime).longValue(),
+      blockNumber = Numeric.toBigInt(tx.blockNumber).longValue()
+    )
+  }
 
   def getStatus(status: String): TxStatus = {
     if (isSucceed(status)) {
@@ -32,5 +56,4 @@ trait Extractor {
   def isSucceed(status: String): Boolean = {
     Numeric.toBigInt(status).intValue() == 1
   }
-
 }

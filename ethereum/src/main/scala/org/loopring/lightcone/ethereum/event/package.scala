@@ -19,7 +19,7 @@ package org.loopring.lightcone.ethereum
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.{Transaction, TransactionReceipt}
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
