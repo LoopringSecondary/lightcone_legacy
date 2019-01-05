@@ -18,17 +18,22 @@ package org.loopring.lightcone.ethereum.event
 
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.{
+  Transaction,
+  TransactionEvent,
+  TransactionReceipt,
+  TxStatus
+}
 import org.web3j.utils.Numeric
 
-trait TransactionExtractor {
+trait TransactionExtractor extends Extractor {
 
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt
     ): Seq[TransactionEvent]
 
-  def transaction2Event(tx: Transaction): TransactionEvent = {
+  def txToEvent(tx: Transaction): TransactionEvent = {
     TransactionEvent(
       hash = tx.hash,
       nonce = tx.nonce,
@@ -43,32 +48,16 @@ trait TransactionExtractor {
       input = tx.input
     )
   }
-
 }
 
-class CommonTransactionExtractor() extends TransactionExtractor {
-
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt
-    ): Seq[TransactionEvent] =
-    Seq(
-      transaction2Event(tx).copy(
-        eventType = TransactionEvent.Type.COMMON,
-        status = getStatus(receipt.status)
-      )
-    )
-}
-
-case class EthTransactionExtractor() extends TransactionExtractor {
+class EthTransactionExtractor() extends TransactionExtractor {
 
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt
     ): Seq[TransactionEvent] = {
-    extractSucceedTransactions(tx: Transaction, receipt: TransactionReceipt) ++ extractFailedTransactions(
-      tx: Transaction,
-      receipt: TransactionReceipt
+    extractSucceedTransactions(tx, receipt) ++
+      extractFailedTransactions(tx, receipt
     )
   }
 
@@ -78,7 +67,7 @@ case class EthTransactionExtractor() extends TransactionExtractor {
     ): Seq[TransactionEvent] = {
     if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
       Seq(
-        transaction2Event(tx).copy(
+        txToEvent(tx).copy(
           eventType = TransactionEvent.Type.ETH,
           sender = tx.from,
           receiver = tx.to
@@ -90,7 +79,7 @@ case class EthTransactionExtractor() extends TransactionExtractor {
           wethAbi.unpackEvent(log.data, log.topics.toArray) match {
             case Some(withdraw: WithdrawalEvent.Result) ⇒
               Some(
-                transaction2Event(tx).copy(
+                txToEvent(tx).copy(
                   eventType = TransactionEvent.Type.ETH,
                   sender = log.address,
                   receiver = withdraw.src,
@@ -112,23 +101,23 @@ case class EthTransactionExtractor() extends TransactionExtractor {
     ): Seq[TransactionEvent] = {
     if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
       Seq(
-        transaction2Event(tx).copy(
+        txToEvent(tx).copy(
           eventType = TransactionEvent.Type.ETH,
           receiver = tx.to,
           sender = tx.from,
-          status = TransactionEvent.Status.FAILED
+          status = TxStatus.TX_STATUS_FAILED
         )
       )
     } else {
       wethAbi.unpackFunctionInput(tx.input) match {
         case Some(withdraw: WithdrawFunction.Parms) ⇒
           Seq(
-            transaction2Event(tx).copy(
+            txToEvent(tx).copy(
               eventType = TransactionEvent.Type.ETH,
               receiver = tx.from,
               sender = tx.to,
               value = Numeric.toHexStringWithPrefix(withdraw.wad.bigInteger),
-              status = TransactionEvent.Status.FAILED
+              status = TxStatus.TX_STATUS_FAILED
             )
           )
         case _ ⇒
@@ -138,17 +127,15 @@ case class EthTransactionExtractor() extends TransactionExtractor {
   }
 }
 
-case class TokenTransactionExtractor()(implicit protocolAddress: Address)
+ class TokenTransactionExtractor()(implicit protocolAddress: Address)
     extends TransactionExtractor {
 
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt
     ): Seq[TransactionEvent] = {
-    extractSucceedTransactions(tx: Transaction, receipt: TransactionReceipt) ++ extractFailedTransactions(
-      tx: Transaction,
-      receipt: TransactionReceipt
-    )
+    extractSucceedTransactions(tx, receipt) ++
+      extractFailedTransactions(tx, receipt)
   }
 
   def extractSucceedTransactions(
@@ -160,38 +147,38 @@ case class TokenTransactionExtractor()(implicit protocolAddress: Address)
         wethAbi.unpackEvent(log.data, log.topics.toArray) match {
           case Some(transfer: TransferEvent.Result) ⇒
             Some(
-              transaction2Event(tx).copy(
+              txToEvent(tx).copy(
                 eventType = TransactionEvent.Type.TOKEN,
                 receiver = transfer.receiver,
                 sender = transfer.from,
                 token = log.address,
                 value = Numeric
                   .toHexStringWithPrefix(transfer.amount.bigInteger),
-                status = TransactionEvent.Status.SUCCEED
+                status = TxStatus.TX_STATUS_SUCCESS
               )
             )
           case Some(withdraw: WithdrawalEvent.Result) ⇒
             Some(
-              transaction2Event(tx).copy(
+              txToEvent(tx).copy(
                 eventType = TransactionEvent.Type.TOKEN,
                 receiver = log.address,
                 sender = withdraw.src,
                 token = log.address,
                 value = Numeric
                   .toHexStringWithPrefix(withdraw.wad.bigInteger),
-                status = TransactionEvent.Status.SUCCEED
+                status = TxStatus.TX_STATUS_SUCCESS
               )
             )
           case Some(deposit: DepositEvent.Result) ⇒
             Some(
-              transaction2Event(tx).copy(
+              txToEvent(tx).copy(
                 eventType = TransactionEvent.Type.TOKEN,
                 receiver = deposit.dst,
                 sender = log.address,
                 token = log.address,
                 value = Numeric
                   .toHexStringWithPrefix(deposit.wad.bigInteger),
-                status = TransactionEvent.Status.SUCCEED
+                status = TxStatus.TX_STATUS_SUCCESS
               )
             )
           case _ ⇒ None
@@ -208,46 +195,46 @@ case class TokenTransactionExtractor()(implicit protocolAddress: Address)
     wethAbi.unpackFunctionInput(tx.input) match {
       case Some(transfer: TransferFunction.Parms) ⇒
         Seq(
-          transaction2Event(tx).copy(
+          txToEvent(tx).copy(
             eventType = TransactionEvent.Type.TOKEN,
             receiver = transfer.to,
             sender = tx.from,
             token = tx.to,
             value = Numeric.toHexStringWithPrefix(transfer.amount.bigInteger),
-            status = TransactionEvent.Status.FAILED
+            status = TxStatus.TX_STATUS_FAILED
           )
         )
       case Some(transferFrom: TransferFromFunction.Parms) ⇒
         Seq(
-          transaction2Event(tx).copy(
+          txToEvent(tx).copy(
             eventType = TransactionEvent.Type.TOKEN,
             receiver = transferFrom.to,
             sender = transferFrom.txFrom,
             token = tx.to,
             value =
               Numeric.toHexStringWithPrefix(transferFrom.amount.bigInteger),
-            status = TransactionEvent.Status.FAILED
+            status = TxStatus.TX_STATUS_FAILED
           )
         )
       case Some(DepositFunction.Parms) ⇒
         Seq(
-          transaction2Event(tx).copy(
+          txToEvent(tx).copy(
             eventType = TransactionEvent.Type.TOKEN,
             receiver = tx.from,
             sender = tx.to,
             token = tx.to,
-            status = TransactionEvent.Status.FAILED
+            status = TxStatus.TX_STATUS_FAILED
           )
         )
       case Some(withdraw: WithdrawFunction.Parms) ⇒
         Seq(
-          transaction2Event(tx).copy(
+          txToEvent(tx).copy(
             eventType = TransactionEvent.Type.TOKEN,
             receiver = tx.to,
             sender = tx.from,
             token = tx.to,
             value = Numeric.toHexStringWithPrefix(withdraw.wad.bigInteger),
-            status = TransactionEvent.Status.FAILED
+            status = TxStatus.TX_STATUS_FAILED
           )
         )
       case _ ⇒ Seq.empty
@@ -255,7 +242,7 @@ case class TokenTransactionExtractor()(implicit protocolAddress: Address)
   }
 }
 
-case class TradeTransactionExtractor()(implicit protocolAddress: Address)
+ class TradeTransactionExtractor()(implicit protocolAddress: Address)
     extends TransactionExtractor {
 
   def extract(
@@ -267,14 +254,14 @@ case class TradeTransactionExtractor()(implicit protocolAddress: Address)
         wethAbi.unpackEvent(log.data, log.topics.toArray) match {
           case Some(transfer: TransferEvent.Result) ⇒
             Some(
-              transaction2Event(tx).copy(
+              txToEvent(tx).copy(
                 eventType = TransactionEvent.Type.TRADE,
                 receiver = transfer.receiver,
                 sender = transfer.from,
                 token = log.address,
                 value = Numeric
                   .toHexStringWithPrefix(transfer.amount.bigInteger),
-                status = TransactionEvent.Status.SUCCEED
+                status = TxStatus.TX_STATUS_SUCCESS
               )
             )
           case _ ⇒ None
@@ -285,15 +272,13 @@ case class TradeTransactionExtractor()(implicit protocolAddress: Address)
   }
 }
 
-case class LoopringTransactionExtractor() extends TransactionExtractor {
+ class LoopringTransactionExtractor() extends TransactionExtractor {
   override def extract(
       tx: Transaction,
       receipt: TransactionReceipt
     ): Seq[TransactionEvent] = {
-    extractSucceedTransactions(tx: Transaction, receipt: TransactionReceipt) ++ extractFailedTransactions(
-      tx: Transaction,
-      receipt: TransactionReceipt
-    )
+    extractSucceedTransactions(tx, receipt) ++
+      extractFailedTransactions(tx, receipt)
   }
 
   private def extractSucceedTransactions(
@@ -311,9 +296,9 @@ case class LoopringTransactionExtractor() extends TransactionExtractor {
               AllOrdersCancelledForTradingPairByBrokerEvent.Result
               ) ⇒
             Some(
-              transaction2Event(tx).copy(
+              txToEvent(tx).copy(
                 eventType = TransactionEvent.Type.LOOPRING,
-                status = TransactionEvent.Status.SUCCEED
+                status = TxStatus.TX_STATUS_SUCCESS
               )
             )
           case _ ⇒
@@ -331,9 +316,9 @@ case class LoopringTransactionExtractor() extends TransactionExtractor {
     loopringProtocolAbi.unpackFunctionInput(tx.input) match {
       case Some(_) ⇒
         Seq(
-          transaction2Event(tx).copy(
+          txToEvent(tx).copy(
             eventType = TransactionEvent.Type.LOOPRING,
-            status = TransactionEvent.Status.FAILED
+            status = TxStatus.TX_STATUS_FAILED
           )
         )
       case _ ⇒

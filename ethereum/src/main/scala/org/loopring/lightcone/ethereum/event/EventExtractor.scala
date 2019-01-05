@@ -19,141 +19,135 @@ package org.loopring.lightcone.ethereum.event
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.MarketHashProvider.convert2Hex
-import org.loopring.lightcone.proto.{OrdersCancelledEvent ⇒ POrdersCancelledEvent , RingMinedEvent ⇒ PRingMinedEvent, _}
+import org.loopring.lightcone.proto.{
+  OrdersCancelledEvent ⇒ POrdersCancelledEvent,
+  RingMinedEvent ⇒ PRingMinedEvent,
+  _
+}
 import org.web3j.utils.Numeric
 
-trait DataExtractor[R] extends Extractor{
+trait DataExtractor[R] extends Extractor {
+
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt,
-      blockTime:String
+      blockTime: String
     ): Seq[R]
 
-  def getEventHeader(tx:Transaction,receipt: TransactionReceipt,blockTime:String):EventHeader = {
+  def getEventHeader(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
+    ): EventHeader = {
     EventHeader(
-      hash = tx.hash,
+      txHash = tx.hash,
       txFrom = tx.from,
       txTo = tx.to,
-      txValue = tx.value,
-      txIndex = tx.transactionIndex,
+      txValue = Numeric.toBigInt(tx.value).toByteArray,
+      txIndex = Numeric.toBigInt(tx.transactionIndex).intValue(),
       txStatus = getStatus(receipt.status),
       blockHash = tx.blockHash,
       blockTimestamp = Numeric.toBigInt(blockTime).longValue(),
-      blockNumber = tx.blockNumber
+      blockNumber = Numeric.toBigInt(tx.blockNumber).longValue()
     )
   }
 }
 
-class TradeExtractor()(implicit blockTime: String)
-    extends DataExtractor[Trade] {
+class RingMinedEventExtractor() extends DataExtractor[PRingMinedEvent] {
 
   def extract(
       tx: Transaction,
-      receipt: TransactionReceipt
-    ): Seq[Trade] = {
-    receipt.logs.map { log ⇒
+      receipt: TransactionReceipt,
+      blockTime: String
+    ): Seq[PRingMinedEvent] = {
+    val header = getEventHeader(tx, receipt, blockTime)
+    receipt.logs.zipWithIndex.map { item ⇒
       {
+        val (log, index) = item
         loopringProtocolAbi
           .unpackEvent(log.data, log.topics.toArray) match {
           case Some(event: RingMinedEvent.Result) ⇒
-            Some(event)
+            val fillContent =
+              Numeric.cleanHexPrefix(event._fills).substring(128)
+            val fillLength = 8 * 64
+            val orderFilledEvents =
+              (0 until (fillContent.length / fillLength)).map { index ⇒
+                fillContent.substring(
+                  index * fillLength,
+                  fillLength * (index + 1)
+                )
+              }.map { fill ⇒
+                fillToOrderFilledEvent(
+                  fill,
+                  event,
+                  receipt,
+                  Some(header.withLogIndex(index))
+                )
+              }
+            Some(
+              PRingMinedEvent(
+                header = Some(header.withLogIndex(index)),
+                ringIndex = event._ringIndex.longValue(),
+                ringHash = event._ringHash,
+                fills = orderFilledEvents
+              )
+            )
           case _ ⇒
             None
         }
       }
-    }.filter(_.nonEmpty).flatMap { event ⇒
-      extractTrades(event.get, receipt)
-    }
+    }.filter(_.nonEmpty).map(_.get)
   }
 
-  private def extractTrades(
-      event: RingMinedEvent.Result,
-      receipt: TransactionReceipt
-    )(
-      implicit blockTime: String
-    ): Seq[Trade] = {
-    val fillContent = Numeric.cleanHexPrefix(event._fills).substring(128)
-    val fillLength = 8 * 64
-    val fills = (0 until (fillContent.length / fillLength)).map { index ⇒
-      fillContent.substring(index * fillLength, fillLength * (index + 1))
-    }
-    fills.zipWithIndex.map(item ⇒ {
-      val (fill, index) = item
-      val fill2 = if (index + 1 < fills.size) {
-        fills(index + 1)
-      } else {
-        fills.head
-      }
-      fillToTrade(fill, fill2, event, receipt)
-    })
-  }
-
-  private def fillToTrade(
+  private def fillToOrderFilledEvent(
       fill: String,
-      _fill: String,
       event: RingMinedEvent.Result,
-      receipt: TransactionReceipt
-    )(
-      implicit blockTime: String
-    ): Trade = {
-
-    val trade = Trade(
-      orderHash = fill.substring(0, 2 + 64 * 1),
+      receipt: TransactionReceipt,
+      header: Option[EventHeader]
+    ): OrderFilledEvent = {
+    OrderFilledEvent(
+      header = header,
       owner = Address(fill.substring(2 + 64 * 1, 2 + 64 * 2)).toString,
-      tokenS = Address(fill.substring(2 + 64 * 2, 2 + 64 * 3)).toString,
-      tokenB = Address(_fill.substring(2 + 64 * 2, 2 + 64 * 3)).toString,
-      amountS = Numeric
-        .toBigInt(fill.substring(2 + 64 * 3, 2 + 64 * 4))
-        .toByteArray,
-      amountB = Numeric
-        .toBigInt(_fill.substring(2 + 64 * 3, 2 + 64 * 4))
-        .toByteArray,
-      split = Numeric
-        .toBigInt(fill.substring(2 + 64 * 4, 2 + 64 * 5))
-        .toByteArray,
-      fees = Some(
-        Trade.Fees(
-          amountFee = Numeric
-            .toBigInt(fill.substring(2 + 64 * 5, 2 + 64 * 6))
-            .toByteArray,
-          feeAmountS = Numeric
-            .toBigInt(fill.substring(2 + 64 * 6, 2 + 64 * 7))
-            .toByteArray,
-          feeAmountB = Numeric
-            .toBigInt(fill.substring(2 + 64 * 7, 2 + 64 * 8))
-            .toByteArray
-        )
-      ),
-      txHash = receipt.transactionHash,
-      blockHeight = Numeric.toBigInt(receipt.blockNumber).longValue(),
-      blockTimestamp = Numeric.toBigInt(blockTime).longValue(),
+      orderHash = fill.substring(0, 2 + 64 * 1),
       ringHash = event._ringHash,
       ringIndex = event._ringIndex.longValue(),
-      //TODO(yadong) 尝试在事件中找到该地址
-      delegateAddress = ""
+      filledAmountS =
+        Numeric.toBigInt(fill.substring(2 + 64 * 3, 2 + 64 * 4)).toByteArray,
+      filledAmountFee = Numeric
+        .toBigInt(fill.substring(2 + 64 * 5, 2 + 64 * 6))
+        .toByteArray,
+      feeAmountS = Numeric
+        .toBigInt(fill.substring(2 + 64 * 6, 2 + 64 * 7))
+        .toByteArray,
+      feeAmountB = Numeric
+        .toBigInt(fill.substring(2 + 64 * 7, 2 + 64 * 8))
+        .toByteArray,
+      feeRecipient = event._feeRecipient
     )
-    trade.withMarketHash(convert2Hex(trade.tokenB, trade.tokenS))
   }
 
 }
 
-class OrdersCancelledExtractor() extends DataExtractor[POrdersCancelledEvent] {
+class OrdersCancelledEventExtractor()
+    extends DataExtractor[POrdersCancelledEvent] {
 
   def extract(
-               tx: Transaction,
-               receipt: TransactionReceipt,
-               blockTime:String
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
     ): Seq[POrdersCancelledEvent] = {
     receipt.logs.map { log ⇒
       {
         loopringProtocolAbi
           .unpackEvent(log.data, log.topics.toArray) match {
-          case Some(event: Result) ⇒
-            Some(POrdersCancelledEvent(
-              header = Some(getEventHeader(tx, receipt, blockTime)),
-              broker = event.address,
-              orderHashes = event._orderHashes
-            ))
+          case Some(event: OrdersCancelledEvent.Result) ⇒
+            Some(
+              POrdersCancelledEvent(
+                header = Some(getEventHeader(tx, receipt, blockTime)),
+                broker = event.address,
+                orderHashes = event._orderHashes
+              )
+            )
           case _ ⇒
             None
         }
@@ -162,12 +156,12 @@ class OrdersCancelledExtractor() extends DataExtractor[POrdersCancelledEvent] {
   }
 }
 
-class CutOffExtractor() extends DataExtractor[CutoffEvent] {
+class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
 
   def extract(
-               tx: Transaction,
-               receipt: TransactionReceipt,
-               blockTime:String
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
     ): Seq[CutoffEvent] = {
     receipt.logs.map { log ⇒
       loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
@@ -186,12 +180,90 @@ class CutOffExtractor() extends DataExtractor[CutoffEvent] {
   }
 }
 
-class OrderEvent() extends DataExtractor[RawOrder] {
+class OwnerCutoffEventExtractor() extends DataExtractor[OwnerCutoffEvent] {
 
   def extract(
-               tx: Transaction,
-               receipt: TransactionReceipt,
-               blockTime:String
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
+    ): Seq[OwnerCutoffEvent] = {
+    receipt.logs.map { log ⇒
+      loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+        case Some(event: AllOrdersCancelledByBrokerEvent.Result) ⇒
+          Some(
+            OwnerCutoffEvent(
+              header = Some(getEventHeader(tx, receipt, blockTime)),
+              cutoff = event._cutoff.longValue(),
+              broker = event._broker,
+              owner = event._owner
+            )
+          )
+        case _ ⇒
+          None
+      }
+    }.filter(_.nonEmpty).map(_.get)
+  }
+}
+
+class TradingPairCutoffEventExtractor()
+    extends DataExtractor[TradingPairCutoffEvent] {
+
+  def extract(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
+    ): Seq[TradingPairCutoffEvent] = {
+    receipt.logs.map { log ⇒
+      loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+        case Some(event: AllOrdersCancelledForTradingPairEvent.Result) ⇒
+          Some(
+            TradingPairCutoffEvent(
+              header = Some(getEventHeader(tx, receipt, blockTime)),
+              cutoff = event._cutoff.longValue(),
+              broker = event._broker,
+              tradingPair = convert2Hex(event._token1, event._token2)
+            )
+          )
+        case _ ⇒
+          None
+      }
+    }.filter(_.nonEmpty).map(_.get)
+  }
+}
+
+class OwnerTradingPairCutoffEventExtractor()
+    extends DataExtractor[OwnerTradingPairCutoffEvent] {
+
+  def extract(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
+    ): Seq[OwnerTradingPairCutoffEvent] = {
+    receipt.logs.map { log ⇒
+      loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+        case Some(event: AllOrdersCancelledForTradingPairByBrokerEvent.Result) ⇒
+          Some(
+            OwnerTradingPairCutoffEvent(
+              header = Some(getEventHeader(tx, receipt, blockTime)),
+              cutoff = event._cutoff.longValue(),
+              broker = event._broker,
+              owner = event._owner,
+              tradingPair = convert2Hex(event._token1, event._token2)
+            )
+          )
+        case _ ⇒
+          None
+      }
+    }.filter(_.nonEmpty).map(_.get)
+  }
+}
+
+class OnlineOrderExtractor() extends DataExtractor[RawOrder] {
+
+  def extract(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
     ): Seq[RawOrder] = {
     receipt.logs.map { log ⇒
       loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
@@ -265,29 +337,15 @@ class OrderEvent() extends DataExtractor[RawOrder] {
   }
 }
 
-class FailedRingsExtractor() extends DataExtractor[String] {
-
-  //TODO（yadong）等待孔亮提供解析的方法
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt
-    ): Seq[String] = {
-    loopringProtocolAbi.unpackFunctionInput(tx.input) match {
-      case Some(SubmitRingsFunction.Params) ⇒
-        Seq(tx.input)
-      case _ ⇒
-        Seq.empty
-    }
-  }
-}
-
-class TokenTierUpgradedExtractor(rateMap:Map[String,Int],base:Int)
+class TokenBurnRateEventExtractor(
+    rateMap: Map[String, Int],
+    base: Int)
     extends DataExtractor[TokenBurnRateEvent] {
 
   def extract(
-               tx: Transaction,
-               receipt: TransactionReceipt,
-               blockTime:String
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
     ): Seq[TokenBurnRateEvent] = {
     receipt.logs.zipWithIndex.map { log ⇒
       loopringProtocolAbi.unpackEvent(log._1.data, log._1.topics.toArray) match {
@@ -296,10 +354,12 @@ class TokenTierUpgradedExtractor(rateMap:Map[String,Int],base:Int)
             TokenBurnRateEvent(
               header = Some(
                 getEventHeader(tx, receipt, blockTime)
-                .withLogIndex(Numeric.toHexString(log._2))),
+                  .withLogIndex(log._2)
+              ),
               token = event.add,
               burnRate = rateMap(Address(event.add).toString) / base.toDouble
-          ))
+            )
+          )
         case _ ⇒
           None
       }
