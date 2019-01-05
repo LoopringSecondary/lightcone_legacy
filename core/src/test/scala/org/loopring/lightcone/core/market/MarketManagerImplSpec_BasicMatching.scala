@@ -31,7 +31,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     var buyOrder = actualNotDust(sellGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
+    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))
@@ -51,7 +51,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
+    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))
@@ -70,7 +70,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
+    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
     val ring = MatchableRing(null, null)
     (fackRingMatcher
@@ -105,7 +105,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
     var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
+    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
     val ring = MatchableRing(null, null)
     (fackRingMatcher
