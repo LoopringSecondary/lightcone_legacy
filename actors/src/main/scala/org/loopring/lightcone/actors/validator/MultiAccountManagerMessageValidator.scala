@@ -42,8 +42,9 @@ final class MultiAccountManagerMessageValidator(
   val orderValidator: RawOrderValidator = RawOrderValidatorImpl
 
   def validate = {
-    case req: CancelOrder.Req ⇒
-      req.copy(owner = Address.normalizeAddress(req.owner))
+    case req @ CancelOrder.Req(_, owner, _, marketId) ⇒
+      supportedMarkets.assertmarketIdIsValid(marketId)
+      req.copy(owner = Address.normalizeAddress(owner))
 
     case req: SubmitSimpleOrder ⇒
       req.order match {
@@ -115,9 +116,5 @@ final class MultiAccountManagerMessageValidator(
             )
           )
       }
-
-    case req @ CancelOrder.Req(_, owner, _, marketId) ⇒
-      supportedMarkets.assertmarketIdIsValid(marketId)
-      req.copy(owner = Address.normalizeAddress(owner))
   }
 }
