@@ -18,7 +18,6 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.ethereum.RawOrderValidatorImpl
 import org.loopring.lightcone.lib.{
   ErrorException,
   MarketHashProvider,
@@ -36,10 +35,6 @@ class OrderServiceImpl @Inject()(
     @Named("db-execution-context") val ec: ExecutionContext)
     extends OrderService {
   val orderDal: OrderDal = new OrderDalImpl()
-
-  val ordersCancelledEventDal: OrdersCancelledEventDal =
-    new OrdersCancelledEventDalImpl()
-  val orderCutoffDal: OrdersCutoffDal = new OrdersCutoffDalImpl()
   val timeProvider = new SystemTimeProvider()
 
   private def giveUserOrder(order: Option[RawOrder]): Option[RawOrder] = {
@@ -226,53 +221,7 @@ class OrderServiceImpl @Inject()(
           )
         }
       } else {
-        throw ErrorException(ERR_INTERNAL_UNKNOWN, "failed to update")
+        throw ErrorException(ERR_INTERNAL_UNKNOWN, "Failed to update")
       }
     }
-
-  def checkOrderActiveStatus(
-      req: CheckOrderActiveStatus.Req
-    ): Future[Boolean] = {
-    for {
-      orderOpt <- req.order match {
-        case CheckOrderActiveStatus.Req.Order.Hash(value) =>
-          orderDal.getOrder(value)
-        case CheckOrderActiveStatus.Req.Order.RawOrder(value) =>
-          Future.successful(Some(value))
-        case _ =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            "invalid order parameter"
-          )
-      }
-      order = orderOpt match {
-        case Some(o) => o
-        case None =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            "invalid order parameter"
-          )
-      }
-      orderHash = RawOrderValidatorImpl.calculateOrderHash(order)
-      cancelled <- ordersCancelledEventDal.hasCancelled(orderHash)
-      available <- if (cancelled) {
-        Future.successful(false)
-      } else {
-        val brokerOpt =
-          if (order.getParams.broker.isEmpty)
-            Some(order.getParams.broker)
-          else None
-        val marketHash = MarketHashProvider.convert2Hex(
-          order.tokenS,
-          order.tokenB
-        )
-        orderCutoffDal.hasCutoff(
-          brokerOpt,
-          order.owner,
-          marketHash,
-          order.getParams.validUntil
-        )
-      }
-    } yield available
-  }
 }

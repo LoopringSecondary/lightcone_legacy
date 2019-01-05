@@ -113,7 +113,4 @@ trait OrderService {
       orderHashes: Seq[String],
       status: OrderStatus
     ): Future[Seq[UserCancelOrder.Res.Result]]
-
-  // 查询db，通过订单cancel cutoff，验证是否有效
-  def checkOrderActiveStatus(req: CheckOrderActiveStatus.Req): Future[Boolean]
 }
