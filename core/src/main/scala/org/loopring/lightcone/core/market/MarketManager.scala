@@ -21,9 +21,9 @@ import org.loopring.lightcone.proto._
 
 object MarketManager {
   case class MatchResult(
-      rings: Seq[MatchableRing],
       taker: Matchable,
-      orderbookUpdate: Orderbook.Update)
+      rings: Seq[MatchableRing] = Nil,
+      orderbookUpdate: Orderbook.Update = Orderbook.Update())
 }
 
 trait MarketManager {

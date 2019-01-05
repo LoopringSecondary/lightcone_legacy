@@ -68,11 +68,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
       order: Matchable,
       newStatus: OrderStatus
     ) =
-    MarketManager.MatchResult(
-      Nil,
-      order.copy(status = newStatus),
-      Orderbook.Update()
-    )
+    MarketManager.MatchResult(order.copy(status = newStatus))
 
   def noMatchingActivity() = {
     (fackRingMatcher

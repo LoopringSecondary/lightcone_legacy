@@ -23,14 +23,15 @@ import org.loopring.lightcone.core.base._
 
 import org.slf4s.Logging
 import scala.annotation.tailrec
-import scala.collection.mutable.{ Map, SortedSet }
+import scala.collection.mutable.{Map, SortedSet}
 
 object MarketManagerImpl {
   private def defaultOrdering() = new Ordering[Matchable] {
 
     def compare(
-      a: Matchable,
-      b: Matchable) = {
+        a: Matchable,
+        b: Matchable
+      ) = {
       if (a.rate < b.rate) -1
       else if (a.rate > b.rate) 1
       else if (a.createdAt < b.createdAt) -1
@@ -41,14 +42,14 @@ object MarketManagerImpl {
 }
 
 class MarketManagerImpl(
-  val marketId: MarketId,
-  val tokenManager: TokenManager,
-  val ringMatcher: RingMatcher,
-  val pendingRingPool: PendingRingPool,
-  val dustOrderEvaluator: DustOrderEvaluator,
-  val aggregator: OrderAwareOrderbookAggregator)
-  extends MarketManager
-  with Logging {
+    val marketId: MarketId,
+    val tokenManager: TokenManager,
+    val ringMatcher: RingMatcher,
+    val pendingRingPool: PendingRingPool,
+    val dustOrderEvaluator: DustOrderEvaluator,
+    val aggregator: OrderAwareOrderbookAggregator)
+    extends MarketManager
+    with Logging {
 
   import MarketManager._
   import MarketManagerImpl._
@@ -74,21 +75,24 @@ class MarketManagerImpl(
   def getNumOfBuyOrders = buys.size
 
   def getSellOrders(
-    num: Int,
-    skip: Int) =
+      num: Int,
+      skip: Int
+    ) =
     sells.drop(skip).take(num).toSeq
 
   def getBuyOrders(
-    num: Int,
-    skip: Int) =
+      num: Int,
+      skip: Int
+    ) =
     buys.drop(skip).take(num).toSeq
 
   def getOrder(orderId: String) =
     orderMap.get(orderId)
 
   def submitOrder(
-    order: Matchable,
-    minFiatValue: Double): MatchResult = this.synchronized {
+      order: Matchable,
+      minFiatValue: Double
+    ): MatchResult = this.synchronized {
     removeOrder(order.id)
     matchOrders(order, minFiatValue)
   }
@@ -108,8 +112,9 @@ class MarketManagerImpl(
   // Need to return a list of orders and their status changes so actores can save
   // order status into the database.
   def deletePendingRing(
-    ringId: String,
-    restoreState: Boolean): Option[Orderbook.Update] =
+      ringId: String,
+      restoreState: Boolean
+    ): Option[Orderbook.Update] =
     this.synchronized {
       if (pendingRingPool.hasRing(ringId)) {
         pendingRingPool.deleteRing(ringId)
@@ -118,27 +123,23 @@ class MarketManagerImpl(
     }
 
   def triggerMatch(
-    sellOrderAsTaker: Boolean,
-    minFiatValue: Double = 0,
-    offset: Int = 0): Option[MatchResult] = this.synchronized {
+      sellOrderAsTaker: Boolean,
+      minFiatValue: Double = 0,
+      offset: Int = 0
+    ): Option[MatchResult] = this.synchronized {
     val side = if (sellOrderAsTaker) sells else buys
     val takerOption = side.drop(offset).headOption
     takerOption.map(submitOrder(_, minFiatValue))
   }
 
   private[core] def matchOrders(
-    order: Matchable,
-    minFiatValue: Double): MatchResult = {
+      order: Matchable,
+      minFiatValue: Double
+    ): MatchResult = {
     if (dustOrderEvaluator.isOriginalDust(order)) {
-      MatchResult(
-        Nil,
-        order.copy(status = STATUS_DUST_ORDER),
-        Orderbook.Update(Nil, Nil))
+      MatchResult(order.copy(status = STATUS_DUST_ORDER))
     } else if (dustOrderEvaluator.isActualDust(order)) {
-      MatchResult(
-        Nil,
-        order.copy(status = STATUS_COMPLETELY_FILLED),
-        Orderbook.Update(Nil, Nil))
+      MatchResult(order.copy(status = STATUS_COMPLETELY_FILLED))
     } else {
       var taker = updateOrderMatchable(order).copy(status = STATUS_PENDING)
       var rings = Seq.empty[MatchableRing]
@@ -149,8 +150,6 @@ class MarketManagerImpl(
       @tailrec
       def recursivelyMatchOrders(): Unit = {
         popTopMakerOrder(taker).map { maker =>
-          // val maker = updateOrderMatchable(order)
-
           val matchResult =
             if (dustOrderEvaluator.isMatchableDust(maker))
               Left(ERR_MATCHING_INCOME_TOO_SMALL)
@@ -168,11 +167,11 @@ class MarketManagerImpl(
           case Some((maker, matchResult)) =>
             matchResult match {
               case Left(
-                ERR_MATCHING_ORDERS_NOT_TRADABLE |
-                ERR_MATCHING_TAKER_COMPLETELY_FILLED |
-                ERR_MATCHING_INVALID_TAKER_ORDER |
-                ERR_MATCHING_INVALID_MAKER_ORDER
-                ) => // stop recursive matching
+                  ERR_MATCHING_ORDERS_NOT_TRADABLE |
+                  ERR_MATCHING_TAKER_COMPLETELY_FILLED |
+                  ERR_MATCHING_INVALID_TAKER_ORDER |
+                  ERR_MATCHING_INVALID_MAKER_ORDER
+                  ) => // stop recursive matching
                 ordersToAddBack :+= maker
 
               case Left(error) =>
@@ -209,7 +208,7 @@ class MarketManagerImpl(
         .getOrderbookUpdate()
         .copy(latestPrice = latestPrice)
 
-      MatchResult(rings, taker, orderbookUpdate)
+      MatchResult(taker, rings, orderbookUpdate)
     }
   }
 
@@ -221,7 +220,8 @@ class MarketManagerImpl(
       bestBuyPrice = buys.headOption.map(_.price).getOrElse(0),
       bestSellPrice = sells.headOption.map(_.price).getOrElse(0),
       latestPrice = latestPrice,
-      isLastTakerSell = isLastTakerSell)
+      isLastTakerSell = isLastTakerSell
+    )
 
   // Add an order to its side.
   private def addOrder(order: Matchable) {
@@ -258,7 +258,7 @@ class MarketManagerImpl(
   private def popTopMakerOrder(order: Matchable): Option[Matchable] = {
     val side = sides(order.tokenB)
     side.headOption match {
-      case None => None
+      case None        => None
       case Some(order) => removeOrder(order.id)
     }
   }

@@ -70,11 +70,7 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
     )
 
     result should be(
-      MarketManager.MatchResult(
-        Seq(ring),
-        sell1.copy(status = STATUS_PENDING),
-        Orderbook.Update()
-      )
+      MarketManager.MatchResult(sell1.copy(status = STATUS_PENDING), Seq(ring))
     )
 
     marketManager.getSellOrders(100) should be(
