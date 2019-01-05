@@ -37,9 +37,9 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
   "submit several order when the balance is not enough" must {

@@ -38,9 +38,9 @@ class EntryPointSpec_SubmitSeveralOrder
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
   "submit several order then cancel it" must {

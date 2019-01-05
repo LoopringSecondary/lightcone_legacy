@@ -17,13 +17,14 @@
 package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
-
 import org.slf4s.Logging
 
 final private[core] class AccountManagerImpl(
   )(
-    implicit orderPool: AccountOrderPool with UpdatedOrdersTracing)
+    implicit orderPool: AccountOrderPool with UpdatedOrdersTracing,
+    timeProvider: TimeProvider)
     extends AccountManager
     with Logging {
   import OrderStatus._
