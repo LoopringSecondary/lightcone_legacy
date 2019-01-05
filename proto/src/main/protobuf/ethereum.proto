@@ -255,16 +255,16 @@ enum TxStatus {
 }
 
 message EventHeader {
-    string hash = 1;
+    string tx_hash = 1;
     TxStatus tx_status = 2;
     string block_hash = 3;
-    string block_number = 4;
+    int64 block_number = 4;
     int64  block_timestamp   = 5;
     string tx_from = 6;
     string tx_to = 7;
-    string tx_value = 8;
-    string tx_index = 9;
-    string log_index = 10;
+    bytes tx_value = 8;
+    int32 tx_index = 9;
+    int32 log_index = 10;
 }
 
 message TransferEvent {
@@ -334,7 +334,7 @@ message TokenBurnRateEvent {
 
 message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
     EventHeader header = 1;
-    bytes ring_index = 2;
+    int64 ring_index = 2;
     string ring_hash = 3;
     string fee_recipient = 4;
     repeated OrderFilledEvent fills = 5;
