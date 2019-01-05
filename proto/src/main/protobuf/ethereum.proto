@@ -324,7 +324,7 @@ message TokenBurnRateEvent {
     double burnRate = 3;
 }
 
-message RingMinedEvent {   //include InvalidRing and RingMined
+message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
     EventHeader header = 1;
     bytes ring_index = 2;
     string ring_hash = 3;
