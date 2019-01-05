@@ -93,7 +93,7 @@ class EthereumQueryActor(
 
       (for {
         batchReqs ← Future {
-          getBalanceAndAllowanceToBatchReq(
+          BatchCall.from(
             Address(delegateAddress),
             req.copy(tokens = erc20Tokens)
           )
@@ -108,7 +108,7 @@ class EthereumQueryActor(
             )).mapAs[EthGetBalance.Res].map(Some(_))
           case None => Future.successful(None)
         }
-        res: GetBalanceAndAllowances.Res = batchContractCallResToBalanceAndAllowance(
+        res: GetBalanceAndAllowances.Res = BatchCall.toBalanceAndAllowance(
           req.address,
           erc20Tokens,
           callRes
@@ -138,7 +138,7 @@ class EthereumQueryActor(
         )
 
       (for {
-        batchReqs ← Future { req.copy(tokens = erc20Tokens) }
+        batchReqs ← Future { BatchCall.from(req.copy(tokens = erc20Tokens)) }
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
@@ -149,7 +149,7 @@ class EthereumQueryActor(
             )).mapAs[EthGetBalance.Res].map(Some(_))
           case None ⇒ Future.successful(None)
         }
-        res: GetBalance.Res = batchContractCallResToBalance(
+        res: GetBalance.Res = BatchCall.toBalance(
           req.address,
           req.tokens,
           callRes
@@ -171,11 +171,11 @@ class EthereumQueryActor(
     case req: GetAllowance.Req =>
       (for {
         batchReqs: BatchCallContracts.Req ← Future {
-          getAllowanceToBatchReq(Address(delegateAddress), req)
+          BatchCall.from(Address(delegateAddress), req)
         }
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
-        res: GetAllowance.Res = batchContractCallResToAllowance(
+        res: GetAllowance.Res = BatchCall.toAllowance(
           req.address,
           req.tokens,
           callRes
@@ -185,7 +185,7 @@ class EthereumQueryActor(
     case req: GetFilledAmount.Req ⇒
       (for {
         batchReq ← Future {
-          getFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
+          BatchCall.from(Address(tradeHistoryAddress), req)
         }
         batchRes <- (ethereumAccessorActor ? batchReq)
           .mapAs[BatchCallContracts.Res]
@@ -202,7 +202,7 @@ class EthereumQueryActor(
       (
         for {
           callReq ← Future {
-            checkCancelledToCallReq(req, Address(tradeHistoryAddress))
+            ContractCall.from(req, Address(tradeHistoryAddress), "latest")
           }
           result ← (ethereumAccessorActor ? callReq)
             .mapAs[EthCall.Res]
@@ -216,7 +216,7 @@ class EthereumQueryActor(
       (
         for {
           callReq ← Future {
-            getTradingPairCutoffsToCallReq(req, Address(tradeHistoryAddress))
+            ContractCall.from(req, Address(tradeHistoryAddress), "latest")
           }
           result ← (ethereumAccessorActor ? callReq)
             .mapAs[EthCall.Res]
@@ -231,7 +231,7 @@ class EthereumQueryActor(
       (
         for {
           callReq ← Future {
-            getCutoffsOwnerToCallReq(req, Address(tradeHistoryAddress))
+            ContractCall.from(req, Address(tradeHistoryAddress), "latest")
           }
           result ← (ethereumAccessorActor ? callReq)
             .mapAs[EthCall.Res]
@@ -245,9 +245,10 @@ class EthereumQueryActor(
       (
         for {
           callReq ← Future {
-            getTradingPairCutoffsOwnerToCallReq(
+            ContractCall.from(
               req,
-              Address(tradeHistoryAddress)
+              Address(tradeHistoryAddress),
+              "latest"
             )
           }
           result ← (ethereumAccessorActor ? callReq)
@@ -262,7 +263,7 @@ class EthereumQueryActor(
       (
         for {
           callReq ← Future {
-            getCutoffsToCallReq(req, Address(tradeHistoryAddress))
+            ContractCall.from(req, Address(tradeHistoryAddress), "latest")
           }
           result ← (ethereumAccessorActor ? callReq)
             .mapAs[EthCall.Res]
