@@ -239,7 +239,7 @@ class MarketManagerImpl(
 
   // Add an order to its side.
   private def addToSide(order: Matchable) {
-    // always make sure _matchable is NOT None.
+    // always make sure _matchable is None.
     val order_ = order.copy(_matchable = None)
     aggregator.addOrder(order)
     orderMap += order.id -> order_
