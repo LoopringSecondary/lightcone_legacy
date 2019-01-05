@@ -173,48 +173,10 @@ class CutOffExtractor() extends DataExtractor[CutoffEvent] {
       loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
         case Some(event: AllOrdersCancelledEvent.Result) ⇒
           Some(
-            OrdersCutoffEvent(
-              txHash = receipt.transactionHash,
-              blockHeight = Numeric.toBigInt(receipt.blockNumber).longValue(),
-              broker = event._broker,
-              cutoff = event._cutoff.longValue()
-            )
-          )
-        case Some(event: AllOrdersCancelledByBrokerEvent.Result) ⇒
-          Some(
             CutoffEvent(
               header = Some(getEventHeader(tx, receipt, blockTime)),
-              cutoff = event._cutoff.intValue(),
+              cutoff = event._cutoff.longValue(),
               broker = event._broker
-            )
-          )
-        case Some(event: AllOrdersCancelledForTradingPairEvent.Result) ⇒
-          Some(
-            OrdersCutoffEvent(
-              txHash = receipt.transactionHash,
-              blockHeight = Numeric.toBigInt(receipt.blockNumber).longValue(),
-              broker = event._broker,
-              cutoff = event._cutoff.longValue(),
-              tradingPair = convert2Hex(
-                Address(event._token1).toString,
-                Address(event._token2).toString
-              )
-            )
-          )
-        case Some(
-        event: AllOrdersCancelledForTradingPairByBrokerEvent.Result
-        ) ⇒
-          Some(
-            OrdersCutoffEvent(
-              txHash = receipt.transactionHash,
-              blockHeight = Numeric.toBigInt(receipt.blockNumber).longValue(),
-              broker = event._broker,
-              owner = event._owner,
-              cutoff = event._cutoff.longValue(),
-              tradingPair = convert2Hex(
-                Address(event._token1).toString,
-                Address(event._token2).toString
-              )
             )
           )
         case _ ⇒
@@ -227,8 +189,9 @@ class CutOffExtractor() extends DataExtractor[CutoffEvent] {
 class OrderEvent() extends DataExtractor[RawOrder] {
 
   def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt
+               tx: Transaction,
+               receipt: TransactionReceipt,
+               blockTime:String
     ): Seq[RawOrder] = {
     receipt.logs.map { log ⇒
       loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
@@ -318,19 +281,25 @@ class FailedRingsExtractor() extends DataExtractor[String] {
   }
 }
 
-class TokenTierUpgradedExtractor()
+class TokenTierUpgradedExtractor(rateMap:Map[String,Int],base:Int)
     extends DataExtractor[TokenBurnRateEvent] {
 
   def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt
+               tx: Transaction,
+               receipt: TransactionReceipt,
+               blockTime:String
     ): Seq[TokenBurnRateEvent] = {
-    receipt.logs.map { log ⇒
-      loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+    receipt.logs.zipWithIndex.map { log ⇒
+      loopringProtocolAbi.unpackEvent(log._1.data, log._1.topics.toArray) match {
         case Some(event: TokenTierUpgradedEvent.Result) ⇒
           Some(
-            TokenBurnRateEvent(token = event.add,rate = )
-          )
+            TokenBurnRateEvent(
+              header = Some(
+                getEventHeader(tx, receipt, blockTime)
+                .withLogIndex(Numeric.toHexString(log._2))),
+              token = event.add,
+              burnRate = rateMap(Address(event.add).toString) / base.toDouble
+          ))
         case _ ⇒
           None
       }
