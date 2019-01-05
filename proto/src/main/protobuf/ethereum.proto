@@ -304,10 +304,10 @@ message TradingPairCutoffEvent {
 
 message OwnerTradingPairCutoffEvent {
     EventHeader header = 1;
-    string broker       = 1;
-    string owner        = 2;
-    string trading_pair = 3;
-    int32  cutoff       = 4; // in seconds.
+    string broker       = 2;
+    string owner        = 3;
+    string trading_pair = 4;
+    int32  cutoff       = 5; // in seconds.
 }
 
 //LOOPRING RINGMINED
