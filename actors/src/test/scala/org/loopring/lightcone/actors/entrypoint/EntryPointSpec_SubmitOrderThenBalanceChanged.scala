@@ -43,9 +43,9 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
   "submit an order when the allowance is not enough" must {
@@ -70,7 +70,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
         singleRequest(SubmitOrder.Req(Some(o)), "submit_order")
       })
 
-      val res = Await.result(f1, 3 second)
+      val res = Await.result(f1, timeout.duration)
 
       info(
         "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING"

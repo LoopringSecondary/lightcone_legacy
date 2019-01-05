@@ -35,9 +35,9 @@ class EntryPointSpec_SubmitOneOrder
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
   "submit an order" must {
@@ -58,6 +58,7 @@ class EntryPointSpec_SubmitOneOrder
       }
 
 //      Thread.sleep(1000)
+      info("this order must be saved in db.")
       val getOrderF = dbModule.orderService.getOrder(rawOrder.hash)
 
       val getOrder = Await.result(getOrderF, timeout.duration)
@@ -67,6 +68,7 @@ class EntryPointSpec_SubmitOneOrder
         case None => assert(false)
       }
       //orderbook
+      info("check the status of orderbook now.")
       val getOrderBook = GetOrderbook.Req(
         0,
         100,

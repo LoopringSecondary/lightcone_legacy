@@ -125,8 +125,8 @@ class OrderStatusMonitorActor(
         getProcessTime(monitoringType, leadOrLagSeconds)
       else
         Future.successful(latestProcessTimeOpt.get, processTimeOpt.get)
-      _ = log.debug(s"latestProcessTime: ${latestProcessTime}, ${processTime}")
       orderSize <- processFunction(latestProcessTime, processTime, skipOpt)
+      _ = log.debug(s"latestProcessTime: ${latestProcessTime}, ${processTime}")
       _ <- skipOpt match {
         case None => //记录本次处理时间
           dbModule.orderStatusMonitorService.updateLatestProcessingTime(
@@ -171,8 +171,8 @@ class OrderStatusMonitorActor(
         skipOpt
       )
       _ <- Future.sequence(orders.map { o =>
-        actors.get(MultiAccountManagerActor.name) ? SubmitSimpleOrder(
-          o.owner,
+        actors
+          .get(MultiAccountManagerActor.name) ? ActorRecover.RecoverOrderReq(
           Some(
             o.copy(
               state = Some(o.getState.copy(status = OrderStatus.STATUS_PENDING))
@@ -180,6 +180,7 @@ class OrderStatusMonitorActor(
           )
         )
       })
+      //还是需要更新数据库的
       _ <- dbModule.orderService
         .updateOrdersStatus(orders.map(_.hash), OrderStatus.STATUS_PENDING)
     } yield orders.size

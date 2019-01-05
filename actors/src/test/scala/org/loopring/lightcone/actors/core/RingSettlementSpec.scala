@@ -43,7 +43,7 @@ class RingSettlementSpec
     with HttpSupport {
 
   def selfConfig = config.getConfig(RingSettlementManagerActor.name)
-  def orderHandler = actors.get(OrderHandlerActor.name)
+  def orderHandler = actors.get(OrderPersistenceActor.name)
 
   val users = selfConfig
     .getConfigList("users")

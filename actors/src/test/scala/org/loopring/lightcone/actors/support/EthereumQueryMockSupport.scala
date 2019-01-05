@@ -38,6 +38,7 @@ trait EthereumQueryMockSupport {
       with ActorLogging {
 
     def receive: Receive = {
+      case req: GetNonce.Req => sender ! GetNonce.Res(result = "0x1")
       case msg =>
         log.debug(s"${EthereumAccessActor.name} receive msg: ${msg}")
     }

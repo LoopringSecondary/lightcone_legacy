@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.core.account
 
-import org.loopring.lightcone.persistence.dals.OrdersCancelledEventDal
-import org.loopring.lightcone.proto.{ErrorCode, OrdersCancelledEvent}
-import scala.concurrent.Future
+import org.loopring.lightcone.proto.{MarketId, RawOrder}
 
-trait OrdersCancelledEventService {
+trait AccountCutoffState {
 
-  val ordersCancelledEventDal: OrdersCancelledEventDal
-
-  def saveCancelOrder(cancelOrder: OrdersCancelledEvent): Future[ErrorCode]
-
-  def hasCancelled(orderHash: String): Future[Boolean]
-
-  def obsolete(height: Long): Future[Unit]
+  def setCutoff(
+      marketId: MarketId,
+      cutoff: Long
+    )
+  def setCutoff(cutoff: Long)
+  def isOrderCutoff(rawOrder: RawOrder)
 }
