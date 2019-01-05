@@ -44,7 +44,9 @@ class OrderCutoffSpec
     with OrderbookManagerSupport
     with OrderGenerateSupport
     with OrderCutoffSupport {
-  val owner = "0xabc0dae0a3e4e146bcaf0fe782be5afb14041a10"
+  val owner = "0x4fb7f2bfab7b39722808f75f009f45e6e106881d"
+  implicit val privateKey =
+    "a0492cc79eac96a23a235ad99c386c27c8b30ee50a94e4b379900c6467e9ea6e"
 
   private def testSaves(orders: Seq[RawOrder]): Future[Seq[Any]] = {
     Future.sequence(orders.map { order ⇒
@@ -58,14 +60,14 @@ class OrderCutoffSpec
         owner = owner,
         amountS = "10".zeros(LRC_TOKEN.decimals),
         amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-      )
+      )(Some(privateKey))
     }) ++
       ((0 until 4) map { i =>
         val o = createRawOrder(
           owner = owner,
           amountS = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )
+        )(Some(privateKey))
         o.copy(
           state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
         )
