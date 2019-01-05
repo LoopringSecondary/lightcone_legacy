@@ -122,8 +122,6 @@ case class Matchable(
     copy(status = status, _reserved = None, _actual = None, _matchable = None)
   }
 
-  private[core] def resetMatchable() = copy(_matchable = None)
-
   private[core] def isSell()(implicit marketId: MarketId) =
     (tokenS == marketId.secondary)
 

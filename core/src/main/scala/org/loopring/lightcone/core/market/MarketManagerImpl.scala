@@ -209,7 +209,7 @@ class MarketManagerImpl(
         .getOrderbookUpdate()
         .copy(lastPrice = lastPrice)
 
-      MatchResult(rings, taker.resetMatchable, orderbookUpdate)
+      MatchResult(rings, taker, orderbookUpdate)
     }
   }
 
