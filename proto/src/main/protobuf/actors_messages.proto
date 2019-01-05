@@ -183,6 +183,61 @@ message GetFilledAmount {
     }
 }
 
+message GetOrderCancellation {
+    message Req {
+        string broker = 1;
+        string order_hash = 2;
+    }
+
+    message Res {
+       bool  cancelled = 1;
+    }
+}
+
+message GetCutoffForTradingPairBroker {
+     message Req {
+         string broker = 1;
+         string token_pair = 2;
+     }
+
+     message Res {
+         bytes cutoff = 1;
+     }
+}
+
+message GetCutoffForTradingPairOwner {
+    message Req {
+        string broker = 1;
+        string owner = 2;
+        string token_pair = 3;
+    }
+
+    message Res {
+        bytes cutoff = 1;
+    }
+}
+
+message GetCutoffForOwner {
+    message Req {
+        string broker = 1;
+        string owner = 2;
+    }
+
+    message Res {
+        bytes cut_off = 1;
+    }
+}
+
+message GetCutoffForBroker{
+    message Req {
+        string broker = 1;
+    }
+
+    message Res {
+        bytes cutoff = 1;
+    }
+}
+
 message UpdateBalanceAndAllowance {
     message Req {
         string address = 1;
