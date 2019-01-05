@@ -89,7 +89,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
           buyOrder.asPending,
           Orderbook
             .Update()
-            .copy(lastPrice = (100000.0 / 101 + 100000.0 / 100) / 2)
+            .copy(latestPrice = (100000.0 / 101 + 100000.0 / 100) / 2)
         )
     )
 
@@ -124,7 +124,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
           sellOrder.asPending,
           Orderbook
             .Update()
-            .copy(lastPrice = (100000.0 / 101 + 100000.0 / 100) / 2)
+            .copy(latestPrice = (100000.0 / 101 + 100000.0 / 100) / 2)
         )
     )
 

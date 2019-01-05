@@ -83,7 +83,7 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
 
     // remove the last price
     result = result.copy(
-      orderbookUpdate = result.orderbookUpdate.copy(lastPrice = 0.0)
+      orderbookUpdate = result.orderbookUpdate.copy(latestPrice = 0.0)
     )
 
     result should be(

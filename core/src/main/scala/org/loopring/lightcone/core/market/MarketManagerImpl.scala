@@ -61,7 +61,7 @@ class MarketManagerImpl(
   private implicit val ordering = defaultOrdering()
 
   private var isLastTakerSell = false
-  private var lastPrice: Double = 0
+  private var latestPrice: Double = 0
 
   private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.primary
   private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.secondary
@@ -152,7 +152,6 @@ class MarketManagerImpl(
       var taker = order.copy(status = STATUS_PENDING)
       var rings = Seq.empty[MatchableRing]
       var ordersToAddBack = Seq.empty[Matchable]
-      var lastPrice: Double = 0
 
       // The result of this recursive method is to populate
       // `rings` and `ordersToAddBack`.
@@ -195,7 +194,7 @@ class MarketManagerImpl(
               case Right(ring) =>
                 isLastTakerSell = (taker.tokenS == marketId.secondary)
                 rings :+= ring
-                lastPrice = (taker.price + maker.price) / 2
+                latestPrice = (taker.price + maker.price) / 2
                 pendingRingPool.addRing(ring)
                 recursivelyMatchOrders()
             }
@@ -204,27 +203,27 @@ class MarketManagerImpl(
 
       recursivelyMatchOrders()
 
-      // we alsways need to add the taker back even if it is STATUS_PENDING-fully-matched.
+      // we alsways need to add the taker back even if it is pending fully-matched
       ordersToAddBack :+= taker
+
+      ordersToAddBack.foreach(addOrder)
 
       val orderbookUpdate = aggregator
         .getOrderbookUpdate()
-        .copy(lastPrice = lastPrice)
+        .copy(latestPrice = latestPrice)
 
       MatchResult(rings, taker, orderbookUpdate)
     }
   }
 
-  // TODO(dongw)
   def getMetadata() =
     MarketMetadata(
       numBuys = buys.size,
       numSells = sells.size,
-      numHiddenBuys = 0,
-      numHiddenSells = 0,
-      bestBuyPrice = 0.0,
-      bestSellPrice = 0.0,
-      lastPrice = 0.0,
+      numOrders = orderMap.size,
+      bestBuyPrice = buys.headOption.map(_.price).getOrElse(0),
+      bestSellPrice = sells.headOption.map(_.price).getOrElse(0),
+      latestPrice = latestPrice,
       isLastTakerSell = isLastTakerSell
     )
 
@@ -244,7 +243,7 @@ class MarketManagerImpl(
   // Remove an order from depths, order map, and its side.
   private def removeOrder(orderId: String): Option[Matchable] = {
     orderMap.get(orderId).map { order =>
-      orderMap -= order.id
+      orderMap -= orderId
       aggregator.deleteOrder(order)
       sides(order.tokenS) -= order
       order

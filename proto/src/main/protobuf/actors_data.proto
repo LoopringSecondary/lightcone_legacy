@@ -183,11 +183,10 @@ message MarketConfig {
 message MarketMetadata {
     int32 numBuys = 1;
     int32 numSells = 2;
-    int32 numHiddenBuys = 3;
-    int32 numHiddenSells = 4;
+    int32 numOrders = 3;
     double bestBuyPrice = 5;
     double bestSellPrice = 6;
-    double lastPrice = 7;
+    double latestPrice = 7;
     bool isLastTakerSell = 8;
 }
 

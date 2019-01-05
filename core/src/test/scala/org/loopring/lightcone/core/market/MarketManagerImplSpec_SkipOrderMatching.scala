@@ -66,7 +66,7 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
     var result = marketManager.submitOrder(sell1, 0)
 
     result = result.copy(
-      orderbookUpdate = result.orderbookUpdate.copy(lastPrice = 0.0)
+      orderbookUpdate = result.orderbookUpdate.copy(latestPrice = 0.0)
     )
 
     result should be(

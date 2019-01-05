@@ -61,7 +61,7 @@ trait MarketManager {
   def getNumOfBuyOrders(): Int
   def getNumOfSellOrders(): Int
 
-  def getMetadata(): MarketMetadata
+  // def getMetadata(): MarketMetadata
 
   def triggerMatch(
       sellOrderAsTaker: Boolean,
