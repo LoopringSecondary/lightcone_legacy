@@ -36,9 +36,9 @@ class EntryPointSpec_SubmitTwoMatchedOrder
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
   "submit two fullMatched orders" must {

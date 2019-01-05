@@ -73,6 +73,7 @@ enum ErrorCode{
     ERR_ORDER_VALIDATION_UNSUPPORTED_VERSION                = 2009;
     ERR_ORDER_VALIDATION_INVALID_SIG                        = 2010;
     ERR_ORDER_VALIDATION_INVALID                            = 2011;
+    ERR_ORDER_VALIDATION_INVALID_CUTOFF                     = 2012;
 
     //3001 -- 4000 core actors error
     ERR_ORDER_ALREADY_EXIST             = 3001;

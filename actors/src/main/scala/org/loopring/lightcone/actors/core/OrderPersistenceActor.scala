@@ -31,7 +31,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 于红雨
-object OrderHandlerActor extends ShardedEvenly {
+object OrderPersistenceActor extends ShardedEvenly {
   val name = "order_handler"
 
   def startShardRegion(
@@ -51,14 +51,14 @@ object OrderHandlerActor extends ShardedEvenly {
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new OrderHandlerActor()),
+      entityProps = Props(new OrderPersistenceActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       messageExtractor = messageExtractor
     )
   }
 }
 
-class OrderHandlerActor(
+class OrderPersistenceActor(
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -66,55 +66,52 @@ class OrderHandlerActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(OrderHandlerActor.name) {
-
-  def mammv: ActorRef =
-    actors.get(MultiAccountManagerMessageValidator.name)
+    extends ActorWithPathBasedConfig(OrderPersistenceActor.name) {
 
   //save order to db first, then send to AccountManager
   def receive: Receive = {
     case req: CancelOrder.Req ⇒
-      (for {
-        cancelRes <- dbModule.orderService.cancelOrders(Seq(req.id), req.status)
-      } yield {
-        cancelRes.headOption match {
-          case Some(res) ⇒
-            if (res.order.isEmpty)
-              throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
-            req.copy(owner = res.order.get.owner)
-          case None ⇒
-            throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
-        }
-      }) forwardTo (mammv, sender)
+      (req.status match {
+        case OrderStatus.STATUS_CANCELLED_BY_USER =>
+          for {
+            cancelRes <- dbModule.orderService.markOrderSoftCancelled(
+              Seq(req.id)
+            )
+          } yield {
+            cancelRes.headOption match {
+              case Some(res) ⇒
+                if (res.order.isEmpty)
+                  throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
+                CancelOrder.Res(req.id, req.status)
+              case None ⇒
+                throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
+            }
+          }
+        case _ =>
+          for {
+            cancelRes <- dbModule.orderService
+              .updateOrderStatus(req.id, req.status)
+          } yield
+            cancelRes match {
+              case ERR_NONE => CancelOrder.Res(req.id, req.status) //取消成功
+              case _        => throw ErrorException(cancelRes)
+            }
+      }) sendTo sender
 
     case SubmitOrder.Req(Some(raworder)) ⇒
-      //如果订单未到生效时间，则暂时不发送到AccountManager，只保存到数据库
-      if (raworder.validSince > timeProvider.getTimeSeconds()) {
-        val newRaworder = raworder.copy(
-          state = Some(
-            raworder.getState.copy(status = OrderStatus.STATUS_PENDING_ACTIVE)
-          )
-        )
-        (for {
-          saveRes <- dbModule.orderService.saveOrder(newRaworder)
-        } yield {
-          SubmitOrder.Res(Some(newRaworder))
-        }) sendTo sender
-      } else {
-        (for {
-          //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
-          saveRes <- dbModule.orderService.saveOrder(raworder)
-        } yield {
-          saveRes match {
-            case Right(errCode) =>
-              throw ErrorException(
-                errCode,
-                s"failed to submit order: $raworder"
-              )
-            case Left(resRawOrder) =>
-              SubmitSimpleOrder(resRawOrder.owner, Some(resRawOrder))
-          }
-        }) forwardTo (mammv, sender)
-      }
+      (for {
+        //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
+        saveRes <- dbModule.orderService.saveOrder(raworder)
+      } yield {
+        saveRes match {
+          case Right(errCode) =>
+            throw ErrorException(
+              errCode,
+              s"failed to submit order: $raworder"
+            )
+          case Left(resRawOrder) =>
+            resRawOrder
+        }
+      }) sendTo sender
   }
 }
