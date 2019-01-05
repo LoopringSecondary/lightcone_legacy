@@ -286,21 +286,21 @@ message OrdersCancelledEvent {
 message CutoffEvent {
     EventHeader header = 1;
     string broker = 2;
-    int32  cutoff = 3; // in seconds.
+    int64  cutoff = 3; // in seconds.
 }
 
 message OwnerCutoffEvent {
     EventHeader header = 1;
     string broker = 2;
     string owner  = 3;
-    int32  cutoff = 4; // in seconds.
+    int64  cutoff = 4; // in seconds.
 }
 
 message TradingPairCutoffEvent {
     EventHeader header = 1;
     string broker       = 2;
     string trading_pair = 3;
-    int32  cutoff       = 4; // in seconds.
+    int64  cutoff       = 4; // in seconds.
 }
 
 message OwnerTradingPairCutoffEvent {
@@ -308,7 +308,7 @@ message OwnerTradingPairCutoffEvent {
     string broker       = 2;
     string owner        = 3;
     string trading_pair = 4;
-    int32  cutoff       = 5; // in seconds.
+    int64  cutoff       = 5; // in seconds.
 }
 
 //LOOPRING RINGMINED
