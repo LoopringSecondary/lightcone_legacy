@@ -22,7 +22,7 @@ import org.loopring.lightcone.proto._
 object MarketManager {
   case class MatchResult(
       rings: Seq[MatchableRing],
-      takerId: String,
+      taker: Matchable,
       orderbookUpdate: Orderbook.Update)
 }
 
@@ -34,7 +34,7 @@ trait MarketManager {
 
   def submitOrder(
       order: Matchable,
-      minFiatValue: Double
+      minFiatValue: Double = 0
     ): MatchResult
   def cancelOrder(orderId: String): Option[Orderbook.Update]
 
