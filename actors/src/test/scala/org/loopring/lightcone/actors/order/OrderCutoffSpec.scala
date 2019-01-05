@@ -77,7 +77,6 @@ class OrderCutoffSpec
   "send a cutoff event" must {
     "stored cutoff and cancel all affected orders" in {
       // 1. submit some orders
-      println("++++++++++++++++ 1")
       val f = testSaveOrder()
       val res = Await.result(f.mapTo[Seq[SubmitOrder.Res]], timeout.duration)
       res.map {
@@ -89,7 +88,7 @@ class OrderCutoffSpec
         }
       }
       Thread.sleep(5000)
-      println("++++++++++++++++ 2")
+
       // 2. get orders
       val orders1 =
         dbModule.orderService.getOrders(
@@ -99,7 +98,7 @@ class OrderCutoffSpec
       val resOrder1 =
         Await.result(orders1.mapTo[Seq[RawOrder]], timeout.duration)
       assert(resOrder1.length === 10)
-      println("++++++++++++++++ 3")
+
       // 3. orderbook
       val getOrderBook1 = GetOrderbook.Req(
         0,
@@ -112,7 +111,7 @@ class OrderCutoffSpec
           .result(orderbookF1.mapTo[GetOrderbook.Res], timeout.duration)
           .orderbook
           .get
-      println("++++++++++++++++ 4")
+
       // 4. send cutoff
       val txHash = "0x999"
       val cutoff = OwnerCutoffEvent(
@@ -121,7 +120,7 @@ class OrderCutoffSpec
       )
       actors.get(OrderCutoffHandlerActor.name) ? cutoff
       Thread.sleep(5000)
-      println("++++++++++++++++ 5")
+
       // 5. get orders
       val orders2 =
         dbModule.orderService.getOrders(
