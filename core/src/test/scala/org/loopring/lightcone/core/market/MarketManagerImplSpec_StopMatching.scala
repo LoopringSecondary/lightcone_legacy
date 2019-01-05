@@ -67,7 +67,11 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
     val result = marketManager.submitOrder(sell1, 0)
 
     result should be(
-      MarketManager.MatchResult(Nil, sell1.id, Orderbook.Update())
+      MarketManager.MatchResult(
+        Nil,
+        sell1.copy(status = STATUS_PENDING),
+        Orderbook.Update()
+      )
     )
 
     marketManager.getSellOrders(100) should be(
