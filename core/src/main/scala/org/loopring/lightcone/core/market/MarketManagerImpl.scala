@@ -74,53 +74,36 @@ class MarketManagerImpl(
   def getNumOfSellOrders = sells.size
   def getNumOfBuyOrders = buys.size
 
-  def getSellOrders(
-      num: Int,
-      returnMatchableAmounts: Boolean = false
-    ) = {
-    val orders = sells.take(num).toSeq
-    if (!returnMatchableAmounts) orders
-    else orders.map(updateOrderMatchable)
-  }
+  def getSellOrders(num: Int) =
+    sells.take(num).map(updateOrderMatchable).toSeq
 
-  def getBuyOrders(
-      num: Int,
-      returnMatchableAmounts: Boolean = false
-    ) = {
-    val orders = buys.take(num).toSeq
-    if (!returnMatchableAmounts) orders
-    else orders.map(updateOrderMatchable)
-  }
+  def getBuyOrders(num: Int) =
+    buys.take(num).map(updateOrderMatchable).toSeq
 
-  def getOrder(
-      orderId: String,
-      returnMatchableAmounts: Boolean = false
-    ) = {
-    val order = orderMap.get(orderId)
-    if (!returnMatchableAmounts) order
-    else order.map(updateOrderMatchable)
-  }
+  def getOrder(orderId: String) =
+    orderMap.get(orderId).map(updateOrderMatchable)
 
   def submitOrder(
       order: Matchable,
       minFiatValue: Double = 0
     ): MatchResult = this.synchronized {
-    // Allow re-submission of an existing order.
-    removeFromSide(order.id)
+    removeOrder(order.id, removeFromPendingRingPool = false)
     matchOrders(order, minFiatValue)
   }
 
   def cancelOrder(orderId: String): Option[Orderbook.Update] =
     this.synchronized {
       getOrder(orderId).map { order =>
-        removeFromSide(orderId)
-        // TODO(dongw): remove depths for pending orders
-        pendingRingPool.deleteOrder(orderId)
+        removeOrder(orderId, removeFromPendingRingPool = true)
         aggregator.getOrderbookUpdate()
       }
     }
 
-  def deletePendingRing(ringId: String): Option[Orderbook.Update] =
+  // TODO:dongw
+  def deletePendingRing(
+      ringId: String,
+      restoreState: Boolean
+    ): Option[Orderbook.Update] =
     this.synchronized {
       if (pendingRingPool.hasRing(ringId)) {
         pendingRingPool.deleteRing(ringId)
@@ -214,7 +197,7 @@ class MarketManagerImpl(
       ordersToAddBack :+= taker
 
       // add each skipped maker orders back
-      ordersToAddBack.map(_.resetMatchable).foreach(addToSide)
+      ordersToAddBack.foreach(addOrder)
 
       val orderbookUpdate = aggregator
         .getOrderbookUpdate()
@@ -238,35 +221,36 @@ class MarketManagerImpl(
     )
 
   // Add an order to its side.
-  private def addToSide(order: Matchable) {
+  private def addOrder(order: Matchable) {
     // always make sure _matchable is None.
-    val order_ = order.copy(_matchable = None)
     aggregator.addOrder(order)
-    orderMap += order.id -> order_
-    sides(order.tokenS) += order_
+    orderMap += order.id -> order
+    sides(order.tokenS) += order
   }
 
-  private def removeFromSide(orderId: String) {
-    orderMap.get(orderId) match {
-      case None =>
-      case Some(order) =>
-        aggregator.deleteOrder(order)
-        orderMap -= order.id
-        sides(order.tokenS) -= order
+  // Remove an order from depths, order map, and its side.
+  private def removeOrder(
+      orderId: String,
+      removeFromPendingRingPool: Boolean
+    ): Option[Matchable] = {
+    orderMap.get(orderId).map { order =>
+      aggregator.deleteOrder(order)
+      orderMap -= order.id
+      sides(order.tokenS) -= order
+
+      if (removeFromPendingRingPool) {
+        pendingRingPool.deleteOrder(orderId)
+      }
+      order
     }
   }
 
   // Remove and return the top taker order for a taker order.
-  private def popBestMakerOrder(order: Matchable): Option[Matchable] =
-    popOrder(sides(order.tokenB))
-
-  // Remove and return the top order from one side.
-  private def popOrder(side: SortedSet[Matchable]): Option[Matchable] = {
-    side.headOption.map { order =>
-      aggregator.deleteOrder(order)
-      orderMap -= order.id
-      side -= order
-      order
+  private def popBestMakerOrder(order: Matchable): Option[Matchable] = {
+    val side = sides(order.tokenB)
+    side.headOption match {
+      case None        => None
+      case Some(order) => removeOrder(order.id, false)
     }
   }
 

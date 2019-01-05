@@ -132,43 +132,43 @@ case class Matchable(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    amount / total
+    originalAmount / originalTotal
   }
 
-  private[core] def amount(
+  private[core] def originalAmount(
     )(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) fromWei(tokenS, actual.amountS)
-    else fromWei(tokenB, actual.amountB)
+    if (tokenS == marketId.secondary) fromWei(tokenS, original.amountS)
+    else fromWei(tokenB, original.amountB)
   }
 
-  private[core] def total(
+  private[core] def originalTotal(
     )(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) fromWei(tokenB, actual.amountB)
-    else fromWei(tokenS, actual.amountS)
+    if (tokenS == marketId.secondary) fromWei(tokenB, original.amountB)
+    else fromWei(tokenS, original.amountS)
   }
 
-  private[core] def actualAmount(
+  private[core] def matchableAmount(
     )(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) fromWei(tokenS, actual.amountS)
-    else fromWei(tokenB, actual.amountB)
+    if (tokenS == marketId.secondary) fromWei(tokenS, matchable.amountS)
+    else fromWei(tokenB, matchable.amountB)
   }
 
-  private[core] def actualTotal(
+  private[core] def matchableTotal(
     )(
       implicit marketId: MarketId,
       tokenManager: TokenManager
     ) = {
-    if (tokenS == marketId.secondary) fromWei(tokenB, actual.amountB)
-    else fromWei(tokenS, actual.amountS)
+    if (tokenS == marketId.secondary) fromWei(tokenB, matchable.amountB)
+    else fromWei(tokenS, matchable.amountS)
   }
 
   private def updateActual() = {

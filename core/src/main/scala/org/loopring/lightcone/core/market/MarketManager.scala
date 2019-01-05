@@ -37,22 +37,19 @@ trait MarketManager {
       minFiatValue: Double
     ): MatchResult
   def cancelOrder(orderId: String): Option[Orderbook.Update]
-  def deletePendingRing(ringId: String): Option[Orderbook.Update]
 
-  def getOrder(
-      orderId: String,
-      returnMatchableAmounts: Boolean = false
-    ): Option[Matchable]
+  // If we believe the ring is (being) settled successfully, we should set
+  // `restoreSteate` to false.
+  def deletePendingRing(
+      ringId: String,
+      restoreState: Boolean
+    ): Option[Orderbook.Update]
 
-  def getSellOrders(
-      num: Int,
-      returnMatchableAmounts: Boolean = false
-    ): Seq[Matchable]
+  def getOrder(orderId: String): Option[Matchable]
 
-  def getBuyOrders(
-      num: Int,
-      returnMatchableAmounts: Boolean = false
-    ): Seq[Matchable]
+  def getSellOrders(num: Int): Seq[Matchable]
+
+  def getBuyOrders(num: Int): Seq[Matchable]
 
   def getNumOfOrders(): Int
   def getNumOfBuyOrders(): Int
