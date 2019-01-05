@@ -47,9 +47,15 @@ trait MarketManager {
 
   def getOrder(orderId: String): Option[Matchable]
 
-  def getSellOrders(num: Int): Seq[Matchable]
+  def getSellOrders(
+      num: Int,
+      skip: Int = 0
+    ): Seq[Matchable]
 
-  def getBuyOrders(num: Int): Seq[Matchable]
+  def getBuyOrders(
+      num: Int,
+      skip: Int = 0
+    ): Seq[Matchable]
 
   def getNumOfOrders(): Int
   def getNumOfBuyOrders(): Int
