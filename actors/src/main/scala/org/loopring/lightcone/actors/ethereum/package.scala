@@ -107,7 +107,7 @@ package object ethereum {
   }
 
   implicit def checkCancelledToCallReq(
-      req: CheckCancelled.Req,
+      req: GetOrderCancellation.Req,
       contractAddress: Address,
       tag: String = "latest"
     ): EthCall.Req = {
@@ -122,7 +122,7 @@ package object ethereum {
   }
 
   implicit def getTradingPairCutoffsToCallReq(
-      req: GetTradingPairCutoffs.Req,
+      req: GetCutoffForTradingPairs.Req,
       contractAddress: Address,
       tag: String = "latest"
     ): EthCall.Req = {

@@ -183,7 +183,7 @@ message GetFilledAmount {
     }
 }
 
-message CheckCancelled {
+message GetOrderCancellation {
     message Req {
         string broker = 1;
         string order_hash = 2;
@@ -194,7 +194,7 @@ message CheckCancelled {
     }
 }
 
-message GetTradingPairCutoffs {
+message GetCutoffForTradingPairs {
      message Req {
          string broker = 1;
          string token_pair = 2;
@@ -203,17 +203,6 @@ message GetTradingPairCutoffs {
      message Res {
          bytes cutoff = 1;
      }
-}
-
-message GetCutoffsOwner {
-    message Req {
-        string broker = 1;
-        string owner = 2;
-    }
-
-    message Res {
-        bytes cut_off = 1;
-    }
 }
 
 message GetTradingPairCutoffsOwner {
@@ -225,6 +214,17 @@ message GetTradingPairCutoffsOwner {
 
     message Res {
         bytes cutoff = 1;
+    }
+}
+
+message GetCutoffsOwner {
+    message Req {
+        string broker = 1;
+        string owner = 2;
+    }
+
+    message Res {
+        bytes cut_off = 1;
     }
 }
 

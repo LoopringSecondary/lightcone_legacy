@@ -198,7 +198,7 @@ class EthereumQueryActor(
         )
       }) sendTo sender
 
-    case req: CheckCancelled.Req ⇒
+    case req: GetOrderCancellation.Req ⇒
       (
         for {
           callReq ← Future {
@@ -208,11 +208,11 @@ class EthereumQueryActor(
             .mapAs[EthCall.Res]
             .map(_.result)
         } yield {
-          CheckCancelled.Res(Numeric.toBigInt(result).intValue() == 1)
+          GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
         }
       ) sendTo sender
 
-    case req: GetTradingPairCutoffs.Req ⇒
+    case req: GetCutoffForTradingPairs.Req ⇒
       (
         for {
           callReq ← Future {
@@ -222,7 +222,7 @@ class EthereumQueryActor(
             .mapAs[EthCall.Res]
             .map(_.result)
         } yield {
-          GetTradingPairCutoffs.Res(Numeric.toBigInt(result).toByteArray)
+          GetCutoffForTradingPairs.Res(Numeric.toBigInt(result).toByteArray)
         }
       ) sendTo sender
     case req: GetCutoffsOwner.Req ⇒
