@@ -87,11 +87,8 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
     )
 
     result should be(
-      MarketManager.MatchResult(
-        Seq(ring3, ring2, ring1),
-        sell1.copy(status = STATUS_PENDING),
-        Orderbook.Update()
-      )
+      MarketManager
+        .MatchResult(Seq(ring3, ring2, ring1), sell1.id, Orderbook.Update())
     )
 
     (fackRingMatcher

@@ -119,8 +119,11 @@ case class Matchable(
   // Private methods
   private[core] def as(status: OrderStatus) = {
     assert(status != STATUS_PENDING)
-    copy(status = status, _reserved = None, _actual = None, _matchable = None)
+    copy(status = status).clearStates
   }
+
+  private[core] def clearStates() =
+    copy(_reserved = None, _actual = None, _matchable = None)
 
   private[core] def isSell()(implicit marketId: MarketId) =
     (tokenS == marketId.secondary)

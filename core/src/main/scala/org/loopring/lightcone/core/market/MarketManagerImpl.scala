@@ -136,17 +136,9 @@ class MarketManagerImpl(
       minFiatValue: Double
     ): MatchResult = {
     if (dustOrderEvaluator.isOriginalDust(order)) {
-      MatchResult(
-        Nil,
-        order.copy(status = STATUS_DUST_ORDER),
-        Orderbook.Update(Nil, Nil)
-      )
+      MatchResult(Nil, order.id, Orderbook.Update(Nil, Nil))
     } else if (dustOrderEvaluator.isActualDust(order)) {
-      MatchResult(
-        Nil,
-        order.copy(status = STATUS_COMPLETELY_FILLED),
-        Orderbook.Update(Nil, Nil)
-      )
+      MatchResult(Nil, order.id, Orderbook.Update(Nil, Nil))
     } else {
       var taker = order.copy(status = STATUS_PENDING)
       var rings = Seq.empty[MatchableRing]
@@ -213,7 +205,7 @@ class MarketManagerImpl(
         .getOrderbookUpdate()
         .copy(lastPrice = lastPrice)
 
-      MatchResult(rings, taker, orderbookUpdate)
+      MatchResult(rings, taker.id, orderbookUpdate)
     }
   }
 

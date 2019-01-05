@@ -22,7 +22,7 @@ import org.loopring.lightcone.proto._
 object MarketManager {
   case class MatchResult(
       rings: Seq[MatchableRing],
-      taker: Matchable,
+      takerId: String,
       orderbookUpdate: Orderbook.Update)
 }
 
