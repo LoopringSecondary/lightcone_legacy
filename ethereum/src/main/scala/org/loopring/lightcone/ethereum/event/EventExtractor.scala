@@ -16,20 +16,32 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import org.loopring.lightcone.ethereum.abi.OrdersCancelledEvent.Result
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.MarketHashProvider.convert2Hex
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.OrdersCancelledEvent
+import org.loopring.lightcone.proto.{OrdersCancelledEvent ⇒ POrdersCancelledEvent , RingMinedEvent ⇒ PRingMinedEvent, _}
 import org.web3j.utils.Numeric
 
-trait DataExtractor[R] {
-
+trait DataExtractor[R] extends Extractor{
   def extract(
       tx: Transaction,
-      receipt: TransactionReceipt
+      receipt: TransactionReceipt,
+      blockTime:String
     ): Seq[R]
+
+  def getEventHeader(tx:Transaction,receipt: TransactionReceipt,blockTime:String):EventHeader = {
+    EventHeader(
+      hash = tx.hash,
+      txFrom = tx.from,
+      txTo = tx.to,
+      txValue = tx.value,
+      txIndex = tx.transactionIndex,
+      txStatus = getStatus(receipt.status),
+      blockHash = tx.blockHash,
+      blockTimestamp = Numeric.toBigInt(blockTime).longValue(),
+      blockNumber = tx.blockNumber
+    )
+  }
 }
 
 class TradeExtractor()(implicit blockTime: String)
@@ -125,41 +137,38 @@ class TradeExtractor()(implicit blockTime: String)
 
 }
 
-class OrdersCancelledExtractor() extends DataExtractor[OrdersCancelledEvent] {
+class OrdersCancelledExtractor() extends DataExtractor[POrdersCancelledEvent] {
 
   def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt
-    ): Seq[OrdersCancelledEvent] = {
-    receipt.logs.flatMap { log ⇒
+               tx: Transaction,
+               receipt: TransactionReceipt,
+               blockTime:String
+    ): Seq[POrdersCancelledEvent] = {
+    receipt.logs.map { log ⇒
       {
         loopringProtocolAbi
           .unpackEvent(log.data, log.topics.toArray) match {
           case Some(event: Result) ⇒
-            event._orderHashes
-              .map(orderHash ⇒ {
-                OrdersCancelledEvent(
-                  orderHash = orderHash,
-                  blockHeight =
-                    Numeric.toBigInt(receipt.blockNumber).longValue(),
-                  brokerOrOwner = event.address,
-                  txHash = receipt.transactionHash
-                )
-              })
+            Some(POrdersCancelledEvent(
+              header = Some(getEventHeader(tx, receipt, blockTime)),
+              broker = event.address,
+              orderHashes = event._orderHashes
+            ))
           case _ ⇒
-            Seq.empty[OrdersCancelledEvent]
+            None
         }
       }
-    }
+    }.filter(_.nonEmpty).map(_.get)
   }
 }
 
-class CutOffExtractor() extends DataExtractor[OrdersCutoffEvent] {
+class CutOffExtractor() extends DataExtractor[CutoffEvent] {
 
   def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt
-    ): Seq[OrdersCutoffEvent] = {
+               tx: Transaction,
+               receipt: TransactionReceipt,
+               blockTime:String
+    ): Seq[CutoffEvent] = {
     receipt.logs.map { log ⇒
       loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
         case Some(event: AllOrdersCancelledEvent.Result) ⇒
@@ -173,12 +182,10 @@ class CutOffExtractor() extends DataExtractor[OrdersCutoffEvent] {
           )
         case Some(event: AllOrdersCancelledByBrokerEvent.Result) ⇒
           Some(
-            OrdersCutoffEvent(
-              txHash = receipt.transactionHash,
-              blockHeight = Numeric.toBigInt(receipt.blockNumber).longValue(),
-              broker = event._broker,
-              owner = event._owner,
-              cutoff = event._cutoff.longValue()
+            CutoffEvent(
+              header = Some(getEventHeader(tx, receipt, blockTime)),
+              cutoff = event._cutoff.intValue(),
+              broker = event._broker
             )
           )
         case Some(event: AllOrdersCancelledForTradingPairEvent.Result) ⇒
@@ -195,8 +202,8 @@ class CutOffExtractor() extends DataExtractor[OrdersCutoffEvent] {
             )
           )
         case Some(
-            event: AllOrdersCancelledForTradingPairByBrokerEvent.Result
-            ) ⇒
+        event: AllOrdersCancelledForTradingPairByBrokerEvent.Result
+        ) ⇒
           Some(
             OrdersCutoffEvent(
               txHash = receipt.transactionHash,
@@ -312,16 +319,18 @@ class FailedRingsExtractor() extends DataExtractor[String] {
 }
 
 class TokenTierUpgradedExtractor()
-    extends DataExtractor[TokenTierUpgradedEvent.Result] {
+    extends DataExtractor[TokenBurnRateEvent] {
 
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt
-    ): Seq[TokenTierUpgradedEvent.Result] = {
+    ): Seq[TokenBurnRateEvent] = {
     receipt.logs.map { log ⇒
       loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
         case Some(event: TokenTierUpgradedEvent.Result) ⇒
-          Some(event)
+          Some(
+            TokenBurnRateEvent(token = event.add,rate = )
+          )
         case _ ⇒
           None
       }

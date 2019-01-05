@@ -44,18 +44,6 @@ trait TransactionExtractor {
     )
   }
 
-  def getStatus(status: String): TransactionEvent.Status = {
-    if (isSucceed(status)) {
-      TransactionEvent.Status.SUCCEED
-    } else {
-      TransactionEvent.Status.FAILED
-    }
-  }
-
-  def isSucceed(status: String): Boolean = {
-    Numeric.toBigInt(status).intValue() == 1
-  }
-
 }
 
 class CommonTransactionExtractor() extends TransactionExtractor {
