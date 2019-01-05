@@ -108,6 +108,18 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       skip: CursorPaging
     ): Future[Seq[RawOrder]]
 
+  def getOrdersToActivate(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
+
+  def getOrdersToExpire(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
+
   // Update order's status and update the updated_at timestamp if changeUpdatedAtField is true.
   // Returns Left(error) if this operation fails, or Right(string) the order's hash.
   def updateOrderStatus(
@@ -285,6 +297,49 @@ class OrderDalImpl(
       sort,
       skip
     )
+    db.run(filters.result)
+  }
+
+  //
+  def getOrdersToActivate(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] = {
+    val availableStatus =
+      Seq(OrderStatus.STATUS_PENDING_ACTIVE)
+    var filters = query
+      .filter(_.status inSet availableStatus)
+      .filter(_.validSince >= latestProcessTime)
+      .filter(_.validSince < processTime)
+      .sortBy(_.sequenceId.asc)
+    filters = skip match {
+      case Some(s) ⇒ filters.drop(s.skip).take(s.size)
+      case None ⇒ filters
+    }
+    db.run(filters.result)
+  }
+
+  //
+  def getOrdersToExpire(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] = {
+    val availableStatus = Seq(
+      OrderStatus.STATUS_NEW,
+      OrderStatus.STATUS_PENDING,
+      OrderStatus.STATUS_PARTIALLY_FILLED
+    )
+    var filters = query
+      .filter(_.status inSet availableStatus)
+      .filter(_.validUntil >= latestProcessTime)
+      .filter(_.validUntil < processTime) //todo:需要确认下
+      .sortBy(_.sequenceId.asc)
+    filters = skip match {
+      case Some(s) ⇒ filters.drop(s.skip).take(s.size)
+      case None ⇒ filters
+    }
     db.run(filters.result)
   }
 

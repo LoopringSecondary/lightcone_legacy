@@ -17,8 +17,10 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 
 object MultiAccountManagerMessageValidator {
@@ -26,14 +28,23 @@ object MultiAccountManagerMessageValidator {
 }
 
 // This class can be deleted in the future.
-final class MultiAccountManagerMessageValidator()(implicit val config: Config)
+final class MultiAccountManagerMessageValidator(
+  )(
+    implicit val config: Config,
+    timeProvider: TimeProvider,
+    supportedMarkets: SupportedMarkets)
     extends MessageValidator {
 
-  val supportedMarkets = SupportedMarkets(config)
+  val multiAccountConfig =
+    config.getConfig(MultiAccountManagerActor.name)
+  val numOfShards = multiAccountConfig.getInt("num-of-shards")
+
+  val orderValidator: RawOrderValidator = RawOrderValidatorImpl
 
   def validate = {
-    case req: CancelOrder.Req ⇒
-      req.copy(owner = Address.normalizeAddress(req.owner))
+    case req @ CancelOrder.Req(_, owner, _, marketId) ⇒
+      supportedMarkets.assertmarketIdIsValid(marketId)
+      req.copy(owner = Address.normalizeAddress(owner))
 
     case req: SubmitSimpleOrder ⇒
       req.order match {
@@ -76,5 +87,34 @@ final class MultiAccountManagerMessageValidator()(implicit val config: Config)
         token = Address.normalizeAddress(req.token)
       )
 
+    case req @ SubmitOrder.Req(Some(order)) ⇒
+      orderValidator.validate(order) match {
+        case Left(errorCode) ⇒
+          throw ErrorException(
+            errorCode,
+            message = s"invalid order in SubmitOrder.Req:$order"
+          )
+        case Right(rawOrder) ⇒
+          val now = timeProvider.getTimeMillis
+          val state = RawOrder.State(
+            createdAt = now,
+            updatedAt = now,
+            status = OrderStatus.STATUS_NEW
+          )
+          val marketHash =
+            MarketHashProvider.convert2Hex(rawOrder.tokenS, rawOrder.tokenB)
+          val marketId =
+            MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
+          req.withRawOrder(
+            rawOrder.copy(
+              state = Some(state),
+              marketHash = marketHash,
+              marketHashId = MarketManagerActor.getEntityId(marketId).toInt,
+              addressShardId = MultiAccountManagerActor
+                .getEntityId(order.owner, numOfShards)
+                .toInt
+            )
+          )
+      }
   }
 }

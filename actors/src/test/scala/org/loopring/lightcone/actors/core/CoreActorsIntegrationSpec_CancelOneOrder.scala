@@ -46,7 +46,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
   "submiting one from OrderHandleActor" must {
     "get depth in OrderbookManagerActor" in {
       val rawOrder = createRawOrder()
-      val submitF = actors.get(OrderHandlerActor.name) ? SubmitOrder.Req(
+      val submitF = actors.get(MultiAccountManagerActor.name) ? SubmitOrder.Req(
         Some(rawOrder)
       )
       val submitRes = Await.result(submitF, timeout.duration)
@@ -60,9 +60,9 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       )
 
       expectMsgPF() {
-        case a: Orderbook =>
-          info("----orderbook status after submitted an order: " + a)
-          a.sells should not be empty
+        case GetOrderbook.Res(Some(orderbook)) =>
+          info("----orderbook status after submitted an order: " + orderbook)
+          orderbook.sells should not be empty
       }
 
       info("cancel this order now. ")
@@ -74,7 +74,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
         marketId = Some(MarketId(rawOrder.tokenS, rawOrder.tokenB))
       )
 
-      val cancelResF = actors.get(OrderHandlerActor.name) ? cancelReq
+      val cancelResF = actors.get(MultiAccountManagerActor.name) ? cancelReq
 
       val cancelRes = Await.result(cancelResF, timeout.duration)
       info(s"submit res: ${cancelRes}")
@@ -96,9 +96,9 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       )
 
       expectMsgPF() {
-        case a: Orderbook =>
-          info("----orderbook status after cancel this order: " + a)
-          assert(a.sells.isEmpty)
+        case GetOrderbook.Res(Some(orderbook)) =>
+          info("----orderbook status after cancel this order: " + orderbook)
+          assert(orderbook.sells.isEmpty)
       }
     }
 

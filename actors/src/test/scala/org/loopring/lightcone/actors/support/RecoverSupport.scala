@@ -38,6 +38,7 @@ trait RecoverSupport extends DatabaseModuleSupport {
     ),
     OrderRecoverCoordinator.name
   )
+
   actors.add(
     OrderRecoverCoordinator.name,
     system.actorOf(

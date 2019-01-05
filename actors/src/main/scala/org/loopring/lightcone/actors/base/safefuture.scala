@@ -40,7 +40,7 @@ object safefuture {
         throw ErrorException(
           Error(
             ERR_INTERNAL_UNKNOWN,
-            s"unexpected msg ${other.getClass.getName}"
+            s"unexpected msg ${other} ${other.getClass.getName}"
           )
         )
     }
@@ -70,7 +70,7 @@ object safefuture {
         recipient: ActorRef,
         orginSenderOpt: Option[ActorRef] = None
       )(
-        implicit sender: ActorRef
+        implicit sender: ActorRef = Actor.noSender
       ): Future[T] = {
       f onComplete {
         case Success(r) => recipient ! r

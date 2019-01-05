@@ -37,9 +37,9 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
   "submit several order when the balance is not enough" must {
@@ -66,17 +66,28 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
         )
       }
 
-      val f1 = Future.sequence(rawOrders.map { o =>
-        singleRequest(SubmitOrder.Req(Some(o)), "submit_order").recover {
+//      info(s"## rawOrders ${rawOrders}")
+
+      val f1 =
+        singleRequest(SubmitOrder.Req(Some(rawOrders(0))), "submit_order").recover {
           case e: Throwable =>
             info(
-              s"submit the second order shouldn't be success. it will occurs err: ${e} when submit order:${o}"
+              s"submit the second order shouldn't be success. it will occurs err: ${e} when submit order:${rawOrders(0)}"
             )
             Future.successful(Unit)
         }
-      })
 
-      val res = Await.result(f1, timeout.duration)
+      val res1 = Await.result(f1, timeout.duration)
+      val f2 =
+        singleRequest(SubmitOrder.Req(Some(rawOrders(1))), "submit_order").recover {
+          case e: Throwable =>
+            info(
+              s"submit the second order shouldn't be success. it will occurs err: ${e} when submit order:${rawOrders(1)}"
+            )
+            Future.successful(Unit)
+        }
+
+      Await.result(f2, timeout.duration)
 
       info(
         "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING and STATUS_CANCELLED_LOW_BALANCE "
@@ -124,7 +135,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
         case _ => assert(false)
       }
 
-      info("then cancel the first one, the depth should be changed to empy.")
+      info("then cancel the first one, the depth should be changed to empty.")
       val cancelReq = CancelOrder.Req(
         rawOrders(0).hash,
         rawOrders(0).owner,

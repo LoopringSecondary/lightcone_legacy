@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.support
+package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.persistence.dals.OrderStatusMonitorDal
+import org.loopring.lightcone.proto.OrderStatusMonitor
+import scala.concurrent.Future
 
-trait OrderHandleSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+trait OrderStatusMonitorService {
+  val orderStatusMonitorDal: OrderStatusMonitorDal
 
-  actors.add(
-    OrderPersistenceActor.name,
-    OrderPersistenceActor.startShardRegion
-  )
+  def updateLatestProcessingTime(event: OrderStatusMonitor): Future[Int]
 
+  def getLatestProcessingTime(
+      monitoringType: String
+    ): Future[Option[OrderStatusMonitor]]
 }

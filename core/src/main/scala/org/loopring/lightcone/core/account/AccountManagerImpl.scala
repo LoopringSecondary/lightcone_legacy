@@ -17,8 +17,8 @@
 package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
-
 import org.slf4s.Logging
 
 final private[core] class AccountManagerImpl(
@@ -59,8 +59,12 @@ final private[core] class AccountManagerImpl(
       order: Matchable
     ): (Boolean, Map[String, Matchable]) =
     this.synchronized {
-      val submitRes = this.submitOrder(order)
-      (submitRes, this.orderPool.takeUpdatedOrdersAsMap())
+      if (this.orderPool.contains(order.id)) {
+        (false, Map.empty[String, Matchable])
+      } else {
+        val submitRes = this.submitOrder(order)
+        (submitRes, this.orderPool.takeUpdatedOrdersAsMap())
+      }
     }
 
   //TODO(litao): What if an order is re-submitted?

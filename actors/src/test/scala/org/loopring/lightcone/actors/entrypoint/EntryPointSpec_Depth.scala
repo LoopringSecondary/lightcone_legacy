@@ -35,9 +35,9 @@ class EntryPointSpec_Depth
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
   "submit several orders" must {
@@ -90,17 +90,20 @@ class EntryPointSpec_Depth
         case _ => assert(false)
       }
 
-      Thread.sleep(1000)
       //根据不同的level需要有不同的汇总
       val getOrderBook1 = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
-      val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
+
+      val orderbookRes1 = expectOrderbookRes(
+        getOrderBook1,
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
+
       orderbookRes1 match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
+        case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 4)
           assert(
@@ -132,10 +135,12 @@ class EntryPointSpec_Depth
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF2 = singleRequest(getOrderBook2, "orderbook")
-      val orderbookRes2 = Await.result(orderbookF2, timeout.duration)
+      val orderbookRes2 = expectOrderbookRes(
+        getOrderBook2,
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
       orderbookRes2 match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
+        case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 3)
           assert(

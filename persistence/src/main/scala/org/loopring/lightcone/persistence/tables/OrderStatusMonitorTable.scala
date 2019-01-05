@@ -14,26 +14,20 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.validator
+package org.loopring.lightcone.persistence.tables
 
-import com.typesafe.config.Config
-import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.persistence.base.{enumColumnType, BaseTable}
 import org.loopring.lightcone.proto._
+import slick.jdbc.MySQLProfile.api._
 
-object OrderbookManagerMessageValidator {
-  val name = "orderbook_manager_validator"
-}
+class OrderStatusMonitorTable(tag: Tag)
+    extends BaseTable[OrderStatusMonitor](tag, "T_ORDER_STATUS_MONITOR") {
 
-final class OrderbookManagerMessageValidator(
-  )(
-    implicit val config: Config,
-    supportedMarkets: SupportedMarkets)
-    extends MessageValidator {
+  def id = monitoringType
+  def processTime = column[Long]("process_time")
+  def monitoringType = column[String]("monitoring_type", O.PrimaryKey, O.Unique)
 
-  // Throws exception if validation fails.
-  def validate = {
-    case msg @ GetOrderbook.Req(_, _, marketIdOpt) =>
-      val marketIdInternal = supportedMarkets.assertmarketIdIsValid(marketIdOpt)
-      msg.copy(marketId = marketIdInternal)
-  }
+  def * =
+    (monitoringType, processTime) <> ((OrderStatusMonitor.apply _).tupled, OrderStatusMonitor.unapply)
+
 }

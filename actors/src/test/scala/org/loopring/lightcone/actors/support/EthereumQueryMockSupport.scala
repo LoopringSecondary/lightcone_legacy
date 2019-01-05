@@ -20,16 +20,29 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.actors.core.{
-  EthereumQueryActor,
-  MarketManagerActor
-}
+import org.loopring.lightcone.actors.core.EthereumQueryActor
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
+
 import scala.concurrent.ExecutionContext
 
 trait EthereumQueryMockSupport {
   my: CommonSpec =>
+
+  class EthereumAccessMockActor(
+    )(
+      implicit ec: ExecutionContext,
+      timeout: Timeout)
+      extends Actor
+      with ActorLogging {
+
+    def receive: Receive = {
+      case req: GetNonce.Req => sender ! GetNonce.Res(result = "0x1")
+      case msg =>
+        log.debug(s"${EthereumAccessActor.name} receive msg: ${msg}")
+    }
+  }
 
   class EthereumQueryForRecoveryMockActor(
     )(
@@ -73,4 +86,9 @@ trait EthereumQueryMockSupport {
     system.actorOf(Props(new EthereumQueryForRecoveryMockActor()))
   actors.del(EthereumQueryActor.name)
   actors.add(EthereumQueryActor.name, ethereumQueryActor)
+
+  val ethereumAccessActor =
+    system.actorOf(Props(new EthereumAccessMockActor()))
+  actors.del(EthereumAccessActor.name)
+  actors.add(EthereumAccessActor.name, ethereumAccessActor)
 }
