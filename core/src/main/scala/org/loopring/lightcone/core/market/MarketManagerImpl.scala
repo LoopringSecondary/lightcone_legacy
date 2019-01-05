@@ -93,19 +93,23 @@ class MarketManagerImpl(
       order: Matchable,
       minFiatValue: Double = 0
     ): MatchResult = this.synchronized {
-    removeOrder(order.id, removeFromPendingRingPool = false)
+    removeOrder(order.id)
     matchOrders(order, minFiatValue)
   }
 
   def cancelOrder(orderId: String): Option[Orderbook.Update] =
     this.synchronized {
       getOrder(orderId).map { order =>
-        removeOrder(orderId, removeFromPendingRingPool = true)
+        // If an order is in one more more pending rings, that
+        // part of the order will not be cancelled.
+        removeOrder(orderId)
         aggregator.getOrderbookUpdate()
       }
     }
 
   // TODO:dongw
+  // if the order cannot be find in any side, we don't restore the order's states,
+  // it may have been cancelled.
   def deletePendingRing(
       ringId: String,
       restoreState: Boolean
@@ -228,26 +232,27 @@ class MarketManagerImpl(
 
   // Add an order to its side.
   private def addOrder(order: Matchable) {
-    // always make sure _matchable is None.
+    assert(order._matchable.isDefined)
     aggregator.addOrder(order)
     orderMap += order.id -> order
     sides(order.tokenS) += order
   }
 
   // Remove an order from depths, order map, and its side.
-  private def removeOrder(
-      orderId: String,
-      removeFromPendingRingPool: Boolean
-    ): Option[Matchable] = {
+  private def removeOrder(orderId: String): Option[Matchable] = {
     orderMap.get(orderId).map { order =>
       aggregator.deleteOrder(order)
       orderMap -= order.id
       sides(order.tokenS) -= order
-
-      if (removeFromPendingRingPool) {
-        pendingRingPool.deleteOrder(orderId)
-      }
       order
+    }
+  }
+
+  private def restoreOrders(orderIds: Seq[String]) = {
+    orderIds.foreach { orderId =>
+      removeOrder(orderId) foreach { order =>
+        addOrder(updateOrderMatchable(order))
+      }
     }
   }
 
@@ -256,14 +261,12 @@ class MarketManagerImpl(
     val side = sides(order.tokenB)
     side.headOption match {
       case None        => None
-      case Some(order) => removeOrder(order.id, false)
+      case Some(order) => removeOrder(order.id)
     }
   }
 
-  private[core] def updateOrderMatchable(order: Matchable): Matchable = {
-
+  private def updateOrderMatchable(order: Matchable): Matchable = {
     val pendingAmountS = pendingRingPool.getOrderPendingAmountS(order.id)
-
     val matchableAmountS = (order.actual.amountS - pendingAmountS).max(0)
     val scale = Rational(matchableAmountS, order.original.amountS)
     order.copy(_matchable = Some(order.original.scaleBy(scale)))

@@ -57,12 +57,6 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
   def getOrderPendingAmountS(orderId: String): BigInt =
     orderMap.get(orderId).map(_.pendingAmountS).getOrElse(0)
 
-  def deleteOrder(orderId: String) = this.synchronized {
-    val result = orderMap.contains(orderId)
-    orderMap -= orderId
-    result
-  }
-
   def deleteRing(ringId: String): Boolean = this.synchronized {
     ringMap.get(ringId) match {
       case Some(ringInfo) =>

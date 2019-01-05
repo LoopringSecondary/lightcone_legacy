@@ -41,7 +41,6 @@ class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
 
     marketManager.cancelOrder(order.id) should be(Some(Orderbook.Update()))
 
-    (fakePendingRingPool.deleteOrder _).verify(order.id).once
     marketManager.getNumOfSellOrders() should be(0)
     marketManager.getNumOfBuyOrders() should be(0)
     marketManager.getNumOfOrders() should be(0)

@@ -21,7 +21,6 @@ import org.loopring.lightcone.proto._
 
 trait PendingRingPool {
   def getOrderPendingAmountS(orderId: String): BigInt
-  def deleteOrder(orderId: String): Boolean
   def deleteRing(ringId: String): Boolean
 
   def hasRing(ringId: String): Boolean
