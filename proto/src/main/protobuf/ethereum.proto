@@ -319,7 +319,7 @@ message OrderFilledEvent {
     string delegate_address  = 4;
     string ring_hash         = 5;
     int64  ring_index        = 6;
-    bytes  filled     = 7;
+    bytes  filled_amount_s     = 7;
     bytes  amount_fee = 8;
     bytes  fee_amount_s = 9;
     bytes  fee_amount_b = 10;
