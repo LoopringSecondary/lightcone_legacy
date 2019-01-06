@@ -212,13 +212,13 @@ class OrderDalImpl(
         .filter(_.validSince >= validTime.get)
         .filter(_.validUntil <= validTime.get)
     if (sort.nonEmpty) filters = sort.get match {
-      case SortingType.ASC => filters.sortBy(_.sequenceId.asc)
+      case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
       case SortingType.DESC => filters.sortBy(_.sequenceId.desc)
-      case _ => filters.sortBy(_.sequenceId.asc)
+      case _                => filters.sortBy(_.sequenceId.asc)
     }
     filters = pagingOpt match {
       case Some(paging) => filters.drop(paging.skip).take(paging.size)
-      case None => filters
+      case None         => filters
     }
     filters
   }
@@ -266,13 +266,13 @@ class OrderDalImpl(
       filters = filters.filter(_.marketHash === marketHash)
     if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
     if (sort.nonEmpty) filters = sort.get match {
-      case SortingType.ASC => filters.sortBy(_.sequenceId.asc)
+      case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
       case SortingType.DESC => filters.sortBy(_.sequenceId.desc)
-      case _ => filters.sortBy(_.sequenceId.asc)
+      case _                => filters.sortBy(_.sequenceId.asc)
     }
     filters = pagingOpt match {
       case Some(paging) => filters.drop(paging.skip).take(paging.size)
-      case None => filters
+      case None         => filters
     }
     filters
   }
@@ -315,7 +315,7 @@ class OrderDalImpl(
       .sortBy(_.sequenceId.asc)
     filters = skip match {
       case Some(s) => filters.drop(s.skip).take(s.size)
-      case None => filters
+      case None    => filters
     }
     db.run(filters.result)
   }
@@ -338,7 +338,7 @@ class OrderDalImpl(
       .sortBy(_.sequenceId.asc)
     filters = skip match {
       case Some(s) => filters.drop(s.skip).take(s.size)
-      case None => filters
+      case None    => filters
     }
     db.run(filters.result)
   }

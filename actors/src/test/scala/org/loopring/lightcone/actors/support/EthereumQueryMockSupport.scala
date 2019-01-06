@@ -69,7 +69,7 @@ trait EthereumQueryMockSupport {
 
       case GetFilledAmount.Req(orderIds) =>
         sender ! GetFilledAmount.Res(
-          orderIds.map(id ⇒ id → ByteString.copyFrom("0", "UTF-8")).toMap
+          orderIds.map(id => id → ByteString.copyFrom("0", "UTF-8")).toMap
         )
 
       case res: GetBalanceAndAllowances.Res =>

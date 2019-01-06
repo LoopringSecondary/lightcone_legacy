@@ -35,11 +35,11 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.actors.validator._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
-import org.loopring.lightcone.actors.validator._
 
 class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
