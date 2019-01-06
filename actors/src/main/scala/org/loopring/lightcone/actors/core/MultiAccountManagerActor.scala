@@ -69,10 +69,10 @@ object MultiAccountManagerActor extends ShardedByAddress {
         }
 
     case ActorRecover.RecoverOrderReq(Some(raworder)) => raworder.owner
-    case req: CancelOrder.Req ⇒ req.owner
-    case req: GetBalanceAndAllowances.Req ⇒ req.address
-    case req: AddressBalanceUpdated ⇒ req.address
-    case req: AddressAllowanceUpdated ⇒ req.address
+    case req: CancelOrder.Req => req.owner
+    case req: GetBalanceAndAllowances.Req => req.address
+    case req: AddressBalanceUpdated => req.address
+    case req: AddressAllowanceUpdated => req.address
   }
 }
 
@@ -101,7 +101,7 @@ class MultiAccountManagerActor(
   //todo: 完成recovery后，需要再次测试异常恢复情况
   override val supervisorStrategy =
     AllForOneStrategy() {
-      case e: Exception ⇒
+      case e: Exception =>
         log.error(e.getMessage)
         accountManagerActors.all().foreach(_ ! PoisonPill)
         Escalate

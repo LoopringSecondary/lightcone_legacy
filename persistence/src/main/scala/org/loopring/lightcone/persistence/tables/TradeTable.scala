@@ -73,9 +73,9 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
       tokenAmountB,
       feeAmountB,
       feeRecipient
-    ) <> ({ tuple ⇒
+    ) <> ({ tuple =>
       Option((Trade.Fees.apply _).tupled(tuple))
-    }, { paramsOpt: Option[Trade.Fees] ⇒
+    }, { paramsOpt: Option[Trade.Fees] =>
       val params = paramsOpt.getOrElse(Trade.Fees())
       Trade.Fees.unapply(params)
     })

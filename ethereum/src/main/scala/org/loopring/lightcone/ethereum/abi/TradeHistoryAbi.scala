@@ -17,7 +17,7 @@
 package org.loopring.lightcone.ethereum.abi
 
 import scala.io.Source
-import org.ethereum.solidity.{Abi ⇒ SABI}
+import org.ethereum.solidity.{Abi => SABI}
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -38,13 +38,13 @@ class TradeHistoryAbi(abiJson: String) extends AbiWrap(abiJson) {
       Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
     val func = abi.findFunction(searchBySignature(funSig))
     func match {
-      case _: SABI.Function ⇒
+      case _: SABI.Function =>
         func.name match {
-          case FilledFunction.name ⇒
+          case FilledFunction.name =>
             filled.unpackInput(data)
-          case _ ⇒ None
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 }
