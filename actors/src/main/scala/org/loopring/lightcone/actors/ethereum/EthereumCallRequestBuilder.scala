@@ -39,57 +39,41 @@ class EthereumCallRequestBuilder {
   }
 
   def buildRequest(
-      req: GetCutoffForTradingPairBroker.Req,
+      req: GetCutoff.Req,
       contractAddress: Address,
       tag: String
     ): EthCall.Req = {
-    val input = tradeHistoryAbi.cutoffForTradingPairBroker.pack(
-      CutoffForTradingPairBrokerFunction.Params(
-        broker = req.broker,
-        tokenPair = Numeric.hexStringToByteArray(req.tokenPair)
-      )
-    )
-    val param = TransactionParams(to = contractAddress.toString, data = input)
-    EthCall.Req(param = Some(param), tag = tag)
-  }
+    val input = req match {
+      case GetCutoff.Req(broker, owner, "") ⇒
+        tradeHistoryAbi.cutoffForOwner.pack(
+          CutoffForOwnerFunction.Params(
+            broker,
+            owner
+          )
+        )
+      case GetCutoff.Req(broker, "", "") ⇒
+        tradeHistoryAbi.cutoffForBroker.pack(
+          CutoffForBrokerFunction.Params(
+            broker
+          )
+        )
+      case GetCutoff.Req(broker, "", tokenPair) ⇒
+        tradeHistoryAbi.cutoffForTradingPairBroker.pack(
+          CutoffForTradingPairBrokerFunction.Params(
+            broker,
+            Numeric.hexStringToByteArray(tokenPair)
+          )
+        )
+      case GetCutoff.Req(broker, owner, tokenPair) ⇒
+        tradeHistoryAbi.cutoffForTradingPairOwner.pack(
+          CutoffForTradingPairOwnerFunction.Params(
+            broker,
+            owner,
+            Numeric.hexStringToByteArray(tokenPair)
+          )
+        )
+    }
 
-  def buildRequest(
-      req: GetCutoffForTradingPairOwner.Req,
-      contractAddress: Address,
-      tag: String
-    ): EthCall.Req = {
-    val input = tradeHistoryAbi.cutoffForTradingPairOwner.pack(
-      CutoffForTradingPairOwnerFunction.Params(
-        broker = req.broker,
-        owner = req.owner,
-        tokenPair = Numeric.hexStringToByteArray(req.tokenPair)
-      )
-    )
-    val param = TransactionParams(to = contractAddress.toString, data = input)
-    EthCall.Req(param = Some(param), tag = tag)
-  }
-
-  def buildRequest(
-      req: GetCutoffForOwner.Req,
-      contractAddress: Address,
-      tag: String
-    ): EthCall.Req = {
-    val input = tradeHistoryAbi.cutoffForOwner.pack(
-      CutoffForOwnerFunction.Params(broker = req.broker, owner = req.owner)
-    )
-    val param = TransactionParams(to = contractAddress.toString, data = input)
-    EthCall.Req(param = Some(param), tag = tag)
-  }
-
-  def buildRequest(
-      req: GetCutoffForBroker.Req,
-      contractAddress: Address,
-      tag: String
-    ): EthCall.Req = {
-    val input =
-      tradeHistoryAbi.cutoffForBroker.pack(
-        CutoffForBrokerFunction.Params(broker = req.broker)
-      )
     val param = TransactionParams(to = contractAddress.toString, data = input)
     EthCall.Req(param = Some(param), tag = tag)
   }

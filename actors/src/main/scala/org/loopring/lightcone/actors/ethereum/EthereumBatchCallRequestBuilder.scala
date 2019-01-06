@@ -16,12 +16,7 @@
 
 package org.loopring.lightcone.actors.ethereum
 
-import com.google.protobuf.ByteString
-import org.loopring.lightcone.ethereum.abi.{
-  AllowanceFunction,
-  BalanceOfFunction,
-  FilledFunction
-}
+import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
@@ -66,47 +61,6 @@ class EthereumBatchCallRequestBuilder {
     val batchFilledAmountReqs =
       batchFilledAmountReq(tradeHistoryAddress, req.orderIds)
     BatchCallContracts.Req(batchFilledAmountReqs)
-  }
-
-  def toBalanceAndAllowance(
-      address: String,
-      tokens: Seq[String],
-      batchRes: BatchCallContracts.Res
-    ): GetBalanceAndAllowances.Res = {
-
-    val allowances = batchRes.resps.filter(_.id % 2 == 0).map { res =>
-      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
-    }
-    val balances =
-      batchRes.resps.filter(_.id % 2 == 1).map { res =>
-        ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
-      }
-    val balanceAndAllowance = (balances zip allowances).map { ba =>
-      BalanceAndAllowance(ba._1, ba._2)
-    }
-    GetBalanceAndAllowances.Res(address, (tokens zip balanceAndAllowance).toMap)
-  }
-
-  def toBalance(
-      address: String,
-      tokens: Seq[String],
-      batchRes: BatchCallContracts.Res
-    ): GetBalance.Res = {
-    val balances = batchRes.resps.map { res =>
-      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
-    }
-    GetBalance.Res(address, (tokens zip balances).toMap)
-  }
-
-  def toAllowance(
-      address: String,
-      tokens: Seq[String],
-      batchRes: BatchCallContracts.Res
-    ): GetAllowance.Res = {
-    val allowances = batchRes.resps.map { res =>
-      ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
-    }
-    GetAllowance.Res(address, (tokens zip allowances).toMap)
   }
 
   private def batchErc20AllowanceReq(
