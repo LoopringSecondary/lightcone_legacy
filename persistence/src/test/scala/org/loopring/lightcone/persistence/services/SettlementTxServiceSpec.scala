@@ -63,7 +63,7 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val owner = "0x-test1-owner"
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
-      _ <- Future.sequence(txHashes.map { hash ⇒
+      _ <- Future.sequence(txHashes.map { hash =>
         testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
       query <- service.getPendingTxs(
@@ -91,10 +91,10 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val owner = "0x-test2-owner"
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
-      _ <- Future.sequence(txHashes.map { hash ⇒
+      _ <- Future.sequence(txHashes.map { hash =>
         testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
-      _ <- Future.sequence(mocks.map { hash ⇒
+      _ <- Future.sequence(mocks.map { hash =>
         testSave(hash, owner, 2, SettlementTx.Status.PENDING)
       })
       query1 <- service.getPendingTxs(
@@ -116,7 +116,7 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val owner = "0x-test3-owner"
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
-      _ <- Future.sequence(txHashes.map { hash ⇒
+      _ <- Future.sequence(txHashes.map { hash =>
         testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
       query1 <- service.getPendingTxs(
@@ -149,7 +149,7 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     val owner = "0x-test3-owner"
     val time = timeProvider.getTimeSeconds() + 1000
     val result = for {
-      _ <- Future.sequence(txHashes.map { hash ⇒
+      _ <- Future.sequence(txHashes.map { hash =>
         testSave(hash, owner, 1, SettlementTx.Status.PENDING)
       })
       updated <- service.updateInBlock(

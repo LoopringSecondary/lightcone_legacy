@@ -128,7 +128,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val resp =
       "0x0000000000000000000000000000000000000000004a817c7ffffffb57e83800"
     val result = erc20abi.balanceOf.unpackResult(resp)
-    result.map { res ⇒
+    result.map { res =>
       res.balance.toString() should be("90071992547409900000000000")
     }
   }
@@ -137,7 +137,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val resp =
       "0x0000000000000000000000000000000000000000004a817c7ffffffb57e83800"
     val result = erc20abi.allowance.unpackResult(resp)
-    result.map { res ⇒
+    result.map { res =>
       res.allowance.toString() should be("90071992547409900000000000")
     }
   }
