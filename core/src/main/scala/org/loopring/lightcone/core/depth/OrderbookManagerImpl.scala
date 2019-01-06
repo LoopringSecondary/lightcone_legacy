@@ -26,11 +26,11 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
     level -> new View(level)
   }.toMap
 
-  private var lastPrice: Double = 0
+  private var latestPrice: Double = 0
 
   def processUpdate(update: Orderbook.Update) = this.synchronized {
-    if (update.lastPrice > 0) {
-      lastPrice = update.lastPrice
+    if (update.latestPrice > 0) {
+      latestPrice = update.latestPrice
     }
     val diff = viewMap(0).getDiff(update)
     viewMap.values.foreach(_.processUpdate(diff))
@@ -43,7 +43,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
     ) = {
     val p = price match {
       case Some(p) if p > 0 => p
-      case _                => lastPrice
+      case _                => latestPrice
     }
 
     viewMap.get(level) match {
@@ -105,7 +105,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
         }
 
       Orderbook(
-        lastPrice,
+        latestPrice,
         sellSide.getDepth(size, priceOpt),
         buySide.getDepth(size, priceOpt)
       )

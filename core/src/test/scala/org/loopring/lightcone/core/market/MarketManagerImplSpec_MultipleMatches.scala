@@ -38,11 +38,7 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
     marketManager.submitOrder(buy3, 0)
 
     marketManager.getBuyOrders(5) should be(
-      Seq(
-        buy1.copy(status = STATUS_PENDING),
-        buy2.copy(status = STATUS_PENDING),
-        buy3.copy(status = STATUS_PENDING)
-      )
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
     )
 
     val sell1 = actualNotDust(sellGTO(BigInt(110000), BigInt(100), 0))
@@ -83,15 +79,12 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
 
     // remove the last price
     result = result.copy(
-      orderbookUpdate = result.orderbookUpdate.copy(lastPrice = 0.0)
+      orderbookUpdate = result.orderbookUpdate.copy(latestPrice = 0.0)
     )
 
     result should be(
-      MarketManager.MatchResult(
-        Seq(ring3, ring2, ring1),
-        sell1.copy(status = STATUS_PENDING),
-        Orderbook.Update()
-      )
+      MarketManager
+        .MatchResult(sell1.asPending, Seq(ring3, ring2, ring1))
     )
 
     (fackRingMatcher

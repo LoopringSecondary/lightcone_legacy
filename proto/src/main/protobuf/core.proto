@@ -129,7 +129,7 @@ message Orderbook {
     message Update {
         repeated Slot sells = 1;
         repeated Slot buys = 2;
-        double last_price = 3;
+        double latest_price = 3;
         MarketId market_id = 4;
     }
 
