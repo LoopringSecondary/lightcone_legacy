@@ -19,7 +19,7 @@ package org.loopring.lightcone.ethereum
 import java.math.BigInteger
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.ethereum.data.{Address, Transaction}
+import org.loopring.lightcone.ethereum.data.{ Address, Transaction }
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress
@@ -28,43 +28,40 @@ package object ethereum {
   implicit def int2BigInt(x: Int): BigInt = BigInt(x)
 
   implicit def string2BigInt(x: String): BigInt = x match {
-    case n if n.length == 0      => BigInt(0)
+    case n if n.length == 0 => BigInt(0)
     case p if p.startsWith("0x") => BigInt(p, 16)
-    case _                       => BigInt(x, 16)
+    case _ => BigInt(x, 16)
   }
 
   implicit def byteString2BigInt(bs: ByteString): BigInt =
     Numeric.toBigInt(bs.toByteArray)
 
   def verifyEthereumSignature(
-      hash: Array[Byte],
-      r: Array[Byte],
-      s: Array[Byte],
-      v: Byte,
-      addr: Address
-    ): Boolean = {
+    hash: Array[Byte],
+    r: Array[Byte],
+    s: Array[Byte],
+    v: Byte,
+    addr: Address): Boolean = {
     val signatureDataV = new Sign.SignatureData(v, r, s)
     val key = Sign.signedPrefixedMessageToKey(hash, signatureDataV)
     addr.equals(Address(Keys.getAddress(key)))
   }
 
   def verifySignature(
-      hash: Array[Byte],
-      r: Array[Byte],
-      s: Array[Byte],
-      v: Byte,
-      addr: Address
-    ): Boolean = {
+    hash: Array[Byte],
+    r: Array[Byte],
+    s: Array[Byte],
+    v: Byte,
+    addr: Address): Boolean = {
     val signatureDataV = new Sign.SignatureData(v, r, s)
     val key = Sign.signedMessageToKey(hash, signatureDataV)
     addr.equals(Address(Keys.getAddress(key)))
   }
 
   def verifySignature(
-      hash: Array[Byte],
-      sig: Array[Byte],
-      addr: Address
-    ): Boolean = {
+    hash: Array[Byte],
+    sig: Array[Byte],
+    addr: Address): Boolean = {
     if (sig.length == 65) {
       val r = sig.toSeq.slice(0, 32).toArray
       val s = sig.toSeq.slice(32, 64).toArray
@@ -76,10 +73,8 @@ package object ethereum {
   }
 
   def getSignedTxData(
-      tx: Transaction
-    )(
-      implicit credentials: Credentials
-    ): String = {
+    tx: Transaction)(
+      implicit credentials: Credentials): String = {
     val rawTransaction = RawTransaction
       .createTransaction(
         BigInteger.valueOf(tx.nonce),
@@ -87,15 +82,13 @@ package object ethereum {
         tx.gasLimit.bigInteger,
         tx.to,
         tx.value.bigInteger,
-        tx.inputData
-      )
+        tx.inputData)
     Numeric.toHexString(
       TransactionEncoder
-        .signMessage(rawTransaction, tx.chainId.toByte, credentials)
-    )
+        .signMessage(rawTransaction, tx.chainId.toByte, credentials))
   }
 
-  def isValidAndNonZERO(addr: String) = addr match {
+  def isAddressValidAndNonZero(addr: String) = addr match {
     case ad if isValidAddress(addr) =>
       BigInt(Numeric.cleanHexPrefix(ad), 16) > 0
     case _ => false
