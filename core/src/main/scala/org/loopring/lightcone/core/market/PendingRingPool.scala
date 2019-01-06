@@ -20,7 +20,9 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
 trait PendingRingPool {
+  // This reset method should be used only by tests.
   def reset(): Unit
+
   def getOrderPendingAmountS(orderId: String): BigInt
 
   def hasRing(ringId: String): Boolean

@@ -101,16 +101,16 @@ class MarketManagerImpl(
   def deleteRing(
       ringId: String,
       ringSettledSuccessfully: Boolean
-    ) =
+    ): Option[Orderbook.Update] =
     deleteRingsInternal(
       pendingRingPool.deleteRing(ringId),
       !ringSettledSuccessfully
     )
 
-  def deleteRingsBefore(timestamp: Long) =
+  def deleteRingsBefore(timestamp: Long): Option[Orderbook.Update] =
     deleteRingsInternal(pendingRingPool.deleteRingsBefore(timestamp))
 
-  def deleteRingsOlderThan(ageInSeconds: Long) =
+  def deleteRingsOlderThan(ageInSeconds: Long): Option[Orderbook.Update] =
     deleteRingsInternal(pendingRingPool.deleteRingsOlderThan(ageInSeconds))
 
   def submitOrder(

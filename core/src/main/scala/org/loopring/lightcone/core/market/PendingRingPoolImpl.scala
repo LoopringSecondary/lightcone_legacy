@@ -54,7 +54,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
   private[core] var orderMap = Map.empty[String, OrderInfo]
   private[core] var ringMap = Map.empty[String, RingInfo]
 
-  def reset() = this.synchronized {
+  def reset() = {
     orderMap = Map.empty
     ringMap = Map.empty
   }
@@ -64,7 +64,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
 
   def hasRing(ringId: String) = ringMap.contains(ringId)
 
-  def addRing(ring: MatchableRing): Boolean = this.synchronized {
+  def addRing(ring: MatchableRing): Boolean = {
     ringMap.get(ring.id) match {
       case Some(_) => false
       case None =>
@@ -82,7 +82,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
     }
   }
 
-  def deleteRing(ringId: String) = this.synchronized {
+  def deleteRing(ringId: String) = {
     ringMap.get(ringId) match {
       case Some(ringInfo) =>
         ringMap -= ringId
@@ -105,7 +105,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
     }
   }
 
-  def deleteRingsBefore(timestamp: Long) = this.synchronized {
+  def deleteRingsBefore(timestamp: Long) = {
     ringMap.filter {
       case (_, ringInfo) => ringInfo.timestamp < timestamp
     }.keys.map(deleteRing).flatten.toSet
