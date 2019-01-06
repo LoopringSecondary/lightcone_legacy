@@ -26,9 +26,9 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
-object BatchCall {
+class EthereumBatchCallRequestBuilder {
 
-  def from(
+  def buildRequest(
       delegateAddress: Address,
       req: GetBalanceAndAllowances.Req
     ): BatchCallContracts.Req = {
@@ -41,14 +41,14 @@ object BatchCall {
     BatchCallContracts.Req(allowanceCallReqs ++ balanceCallReqs)
   }
 
-  def from(req: GetBalance.Req): BatchCallContracts.Req = {
+  def buildRequest(req: GetBalance.Req): BatchCallContracts.Req = {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val balanceCallReqs = batchErc20BalanceReq(owner, tokens)
     BatchCallContracts.Req(balanceCallReqs)
   }
 
-  def from(
+  def buildRequest(
       delegateAddress: Address,
       req: GetAllowance.Req
     ): BatchCallContracts.Req = {
@@ -59,7 +59,7 @@ object BatchCall {
     BatchCallContracts.Req(allowanceCallReqs)
   }
 
-  def from(
+  def buildRequest(
       tradeHistoryAddress: Address,
       req: GetFilledAmount.Req
     ): BatchCallContracts.Req = {

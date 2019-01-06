@@ -21,9 +21,9 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
-object ContractCall {
+class EthereumCallRequestBuilder {
 
-  def from(
+  def buildRequest(
       req: GetOrderCancellation.Req,
       contractAddress: Address,
       tag: String
@@ -38,7 +38,7 @@ object ContractCall {
     EthCall.Req(param = Some(param), tag = tag)
   }
 
-  def from(
+  def buildRequest(
       req: GetCutoffForTradingPairBroker.Req,
       contractAddress: Address,
       tag: String
@@ -53,7 +53,7 @@ object ContractCall {
     EthCall.Req(param = Some(param), tag = tag)
   }
 
-  def from(
+  def buildRequest(
       req: GetCutoffForTradingPairOwner.Req,
       contractAddress: Address,
       tag: String
@@ -69,7 +69,7 @@ object ContractCall {
     EthCall.Req(param = Some(param), tag = tag)
   }
 
-  def from(
+  def buildRequest(
       req: GetCutoffForOwner.Req,
       contractAddress: Address,
       tag: String
@@ -81,7 +81,7 @@ object ContractCall {
     EthCall.Req(param = Some(param), tag = tag)
   }
 
-  def from(
+  def buildRequest(
       req: GetCutoffForBroker.Req,
       contractAddress: Address,
       tag: String
