@@ -49,7 +49,7 @@ class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
 
   "MarketManager" should "allow deleting rings" in {
     val ringId = "1234"
-    marketManager.deletePendingRing(ringId, false) should be(None)
+    marketManager.deleteRing(ringId, false) should be(None)
     (fakePendingRingPool.hasRing _).verify(ringId).returns(false).once
   }
 }

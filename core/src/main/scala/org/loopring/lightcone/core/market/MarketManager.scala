@@ -32,20 +32,19 @@ trait MarketManager {
   val marketId: MarketId
   val pendingRingPool: PendingRingPool
 
-  def submitOrder(
-      order: Matchable,
-      minFiatValue: Double = 0
-    ): MatchResult
-  def cancelOrder(orderId: String): Option[Orderbook.Update]
-
-  // If we believe the ring is (being) settled successfully, we should set
-  // `restoreSteate` to false.
-  def deletePendingRing(
-      ringId: String,
-      restoreState: Boolean
-    ): Option[Orderbook.Update]
+  def getMetadata(): MarketMetadata
 
   def getOrder(orderId: String): Option[Matchable]
+
+  def cancelOrder(orderId: String): Option[Orderbook.Update]
+
+  def deleteRing(
+      ringId: String,
+      ringSettledSuccessfully: Boolean
+    ): Option[Orderbook.Update]
+
+  def deleteRingsBefore(timestamp: Long): Option[Orderbook.Update]
+  def deleteRingsOlderThan(ageInSeconds: Long): Option[Orderbook.Update]
 
   def getSellOrders(
       num: Int,
@@ -61,7 +60,10 @@ trait MarketManager {
   def getNumOfBuyOrders(): Int
   def getNumOfSellOrders(): Int
 
-  // def getMetadata(): MarketMetadata
+  def submitOrder(
+      order: Matchable,
+      minFiatValue: Double = 0
+    ): MatchResult
 
   def triggerMatch(
       sellOrderAsTaker: Boolean,

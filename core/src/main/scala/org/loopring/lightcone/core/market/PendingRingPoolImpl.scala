@@ -22,7 +22,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.base._
 import org.slf4s.Logging
 
-case class OrderInfo(
+final case class OrderInfo(
     pendingAmountS: BigInt = 0,
     ringIds: Set[String] = Set.empty) {
   assert(pendingAmountS >= 0)
@@ -40,7 +40,7 @@ case class OrderInfo(
     )
 }
 
-case class RingInfo(
+final case class RingInfo(
     takerId: String,
     takerPendingAmountS: BigInt,
     makerId: String,
@@ -54,35 +54,19 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
   private[core] var orderMap = Map.empty[String, OrderInfo]
   private[core] var ringMap = Map.empty[String, RingInfo]
 
+  def reset() = {
+    orderMap = Map.empty
+    ringMap = Map.empty
+  }
+
   def getOrderPendingAmountS(orderId: String): BigInt =
     orderMap.get(orderId).map(_.pendingAmountS).getOrElse(0)
 
-  def deleteRing(ringId: String): Boolean = this.synchronized {
-    ringMap.get(ringId) match {
-      case Some(ringInfo) =>
-        ringMap -= ringId
-
-        decrementOrderPendingAmountS(
-          ringInfo.takerId,
-          ringId,
-          ringInfo.takerPendingAmountS
-        )
-
-        decrementOrderPendingAmountS(
-          ringInfo.makerId,
-          ringId,
-          ringInfo.makerPendingAmountS
-        )
-        true
-      case None => false
-    }
-  }
-
   def hasRing(ringId: String) = ringMap.contains(ringId)
 
-  def addRing(ring: MatchableRing) = this.synchronized {
+  def addRing(ring: MatchableRing): Boolean = {
     ringMap.get(ring.id) match {
-      case Some(_) =>
+      case Some(_) => false
       case None =>
         ringMap += ring.id -> RingInfo(
           ring.taker.id,
@@ -92,64 +76,58 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
           time.getTimeMillis()
         )
 
-        incrementOrderPendingAmountS(
-          ring.taker.id,
-          ring.id,
-          ring.taker.pending.amountS
-        )
-
-        incrementOrderPendingAmountS(
-          ring.maker.id,
-          ring.id,
-          ring.maker.pending.amountS
-        )
-
-      // log.debug("pending_orders: " + orderMap.mkString("\n\t"))
+        adjustPendingAmount(ring.id, ring.taker.id, ring.taker.pending.amountS)
+        adjustPendingAmount(ring.id, ring.maker.id, ring.maker.pending.amountS)
+        true
     }
   }
 
-  def deleteAllRings() = this.synchronized {
-    orderMap = Map.empty[String, OrderInfo]
-    ringMap = Map.empty[String, RingInfo]
+  def deleteRing(ringId: String) = {
+    ringMap.get(ringId) match {
+      case Some(ringInfo) =>
+        ringMap -= ringId
+
+        adjustPendingAmount(
+          ringId,
+          ringInfo.takerId,
+          -ringInfo.takerPendingAmountS
+        )
+
+        adjustPendingAmount(
+          ringId,
+          ringInfo.makerId,
+          -ringInfo.makerPendingAmountS
+        )
+        Set(ringInfo.takerId, ringInfo.makerId)
+
+      case None =>
+        Set.empty[String]
+    }
   }
 
-  def deleteRingsBefore(timestamp: Long) = this.synchronized {
+  def deleteRingsBefore(timestamp: Long) = {
     ringMap.filter {
       case (_, ringInfo) => ringInfo.timestamp < timestamp
-    }.keys.foreach(deleteRing)
+    }.keys.map(deleteRing).flatten.toSet
   }
 
-  def deleteRingsOlderThan(age: Long) =
-    deleteRingsBefore(time.getTimeMillis - age)
-
-  def deleteRingsContainingOrder(orderId: String) = this.synchronized {
-    ringMap.filter {
-      case (_, ringInfo) =>
-        ringInfo.takerId == orderId || ringInfo.makerId == orderId
-    }.keys.foreach(deleteRing)
-  }
+  def deleteRingsOlderThan(ageInSeconds: Long) =
+    deleteRingsBefore(time.getTimeMillis - ageInSeconds * 1000)
 
   // Private methods
-  private def decrementOrderPendingAmountS(
-      orderId: String,
+  private def adjustPendingAmount(
       ringId: String,
-      pendingAmountS: BigInt
+      orderId: String,
+      pendingAmountSDelta: BigInt
     ) = {
-    orderMap.get(orderId) foreach { orderInfo =>
-      val updated = orderInfo - OrderInfo(pendingAmountS, Set(ringId))
-      if (updated.pendingAmountS <= 0) orderMap -= orderId
-      else orderMap += orderId -> updated
+    val updated = orderMap.get(orderId) match {
+      case Some(orderInfo) =>
+        orderInfo + OrderInfo(pendingAmountSDelta, Set(ringId))
+      case None =>
+        OrderInfo(pendingAmountSDelta, Set(ringId))
     }
-  }
 
-  private def incrementOrderPendingAmountS(
-      orderId: String,
-      ringId: String,
-      pendingAmountS: BigInt
-    ) = {
-    orderMap += orderId ->
-      (orderMap.getOrElse(orderId, OrderInfo()) +
-        OrderInfo(pendingAmountS, Set(ringId)))
+    if (updated.pendingAmountS <= 0) orderMap -= orderId
+    else orderMap += orderId -> updated
   }
-
 }
