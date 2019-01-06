@@ -39,4 +39,4 @@ jobs:
           key: v1-dependencies--{{ checksum "build.sbt" }}
 
       # run tests!
-      - run: cat /dev/null | sbt test:compile core/test persistence/test ethereum/test lib/test
+      - run: cat /dev/null | sbt core/test persistence/test ethereum/test lib/test
