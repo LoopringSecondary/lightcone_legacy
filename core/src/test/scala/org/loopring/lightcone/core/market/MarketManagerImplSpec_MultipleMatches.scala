@@ -39,9 +39,9 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
 
     marketManager.getBuyOrders(5) should be(
       Seq(
-        buy1.copy(status = STATUS_PENDING),
-        buy2.copy(status = STATUS_PENDING),
-        buy3.copy(status = STATUS_PENDING)
+        buy1.copy(_matchable = buy1._actual, status = STATUS_PENDING),
+        buy2.copy(_matchable = buy2._actual, status = STATUS_PENDING),
+        buy3.copy(_matchable = buy3._actual, status = STATUS_PENDING)
       )
     )
 
@@ -89,7 +89,7 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
     result should be(
       MarketManager
         .MatchResult(
-          sell1.copy(status = STATUS_PENDING),
+          sell1.copy(_matchable = sell1._actual, status = STATUS_PENDING),
           Seq(ring3, ring2, ring1)
         )
     )
