@@ -43,8 +43,8 @@ class TradeHistoryAbiSpec
       "0x0000000000000000000000000000000000000000000000000000000000000123"
     val resultOpt = tradeHistoryAbi.filled.unpackResult(data)
     resultOpt match {
-      case None ⇒
-      case Some(res) ⇒
+      case None =>
+      case Some(res) =>
         res.amount.toString should be("291")
     }
   }

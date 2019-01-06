@@ -48,7 +48,7 @@ class OrderCancellerAbiSpec
     val params = orderCancellerAbi.cancelOrders.unpackInput(input)
 
     params.map(
-      param ⇒
+      param =>
         Numeric.toHexString(param.orderHashes) should be(
           "0x7aa6bab45d654cbf3c335730c58f62ab93449d1099968659b7a9f96fdda603f8"
         )
@@ -65,7 +65,7 @@ class OrderCancellerAbiSpec
     val result =
       orderCancellerAbi.ordersCancelledEvent.unpack(data, topics.toArray)
 
-    result.foreach(res ⇒ {
+    result.foreach(res => {
       res.address should be("0xcc1cf2a03c023e12426b0047c3d07e30f4e1d103")
       res._orderHashes.length should be(1)
       res._orderHashes.head should be(
@@ -95,7 +95,7 @@ class OrderCancellerAbiSpec
     val params =
       orderCancellerAbi.cancelAllOrdersForTradingPair.unpackInput(input)
     info(params.toString)
-    params.foreach { param ⇒
+    params.foreach { param =>
       param.token1 should be("0x5399b819f14e55683bd90cacb61f13203bef4d63")
       param.token2 should be("0xb6beb7c8a3394098c485172d5636c1e107fee6f6")
       param.cutoff.toString() should be("1544612294")
@@ -112,7 +112,7 @@ class OrderCancellerAbiSpec
     val result = orderCancellerAbi.allOrdersCancelledForTradingPairEvent
       .unpack(data, topics.toArray)
     info(result.toString)
-    result.foreach(res ⇒ {
+    result.foreach(res => {
       res._broker should be("0x07d24603d5fb6cdff728a7be7a04a26b7fcc20d9")
       res._token1 should be("0x5399b819f14e55683bd90cacb61f13203bef4d63")
       res._token2 should be("0xb6beb7c8a3394098c485172d5636c1e107fee6f6")
@@ -122,7 +122,7 @@ class OrderCancellerAbiSpec
 
   "encodeCancelAllOrdersFunction" should "encode cancel all orders function params to input" in {
     val cutOff = BigInt(1544614733)
-    val input = orderCancellerAbi.cancelAllOrdersFunction.pack(
+    val input = orderCancellerAbi.cancelAllOrders.pack(
       CancelAllOrdersFunction.Params(cutOff)
     )
     input should be(
@@ -133,9 +133,9 @@ class OrderCancellerAbiSpec
   "decodeCancelAllOrdersFunction" should "decode input to cancel all orders function params" in {
     val input =
       "0xbd545f53000000000000000000000000000000000000000000000000000000005c10f34d"
-    var params = orderCancellerAbi.cancelAllOrdersFunction.unpackInput(input)
+    var params = orderCancellerAbi.cancelAllOrders.unpackInput(input)
     info(params.toString)
-    params.map { param ⇒
+    params.map { param =>
       param.cutoff.toString should be("1544614733")
     }
   }
@@ -150,7 +150,7 @@ class OrderCancellerAbiSpec
     val result =
       orderCancellerAbi.allOrdersCancelledEvent.unpack(data, topics.toArray)
     info(result.toString)
-    result.map { res ⇒
+    result.map { res =>
       res._broker should be("0xcc1cf2a03c023e12426b0047c3d07e30f4e1d103")
       res._cutoff.toString should be("1544614733")
     }
@@ -181,7 +181,7 @@ class OrderCancellerAbiSpec
     val params =
       orderCancellerAbi.cancelAllOrdersForTradingPairOfOwner.unpackInput(input)
     info(params.toString)
-    params.map { param ⇒
+    params.map { param =>
       OrdersCancelledEvent
       param.owner should be("0x07d24603d5fb6cdff728a7be7a04a26b7fcc20d9")
       param.token1 should be("0xcbb0b3d6dc184aa31625d94fc03db7965cbfb7f7")
@@ -201,7 +201,7 @@ class OrderCancellerAbiSpec
     )
     val result = orderCancellerAbi.allOrdersCancelledForTradingPairByBrokerEvent
       .unpack(data, topics.toArray)
-    result.map { res ⇒
+    result.map { res =>
       {
         res._broker should be("0x317863d48454d193f1df864b9b374cd397157dd4")
         res._owner should be("0x07d24603d5fb6cdff728a7be7a04a26b7fcc20d9")
@@ -228,7 +228,7 @@ class OrderCancellerAbiSpec
       "0x543b5fa4000000000000000000000000cc1cf2a03c023e12426b0047c3d07e30f4e1d103000000000000000000000000000000000000000000000000000000005c10ff3f"
     val params = orderCancellerAbi.cancelAllOrdersOfOwner.unpackInput(input)
     info(params.toString)
-    params.map { res ⇒
+    params.map { res =>
       res.owner should be("0xcc1cf2a03c023e12426b0047c3d07e30f4e1d103")
       res.cutoff.toString should be("1544617791")
     }
@@ -244,7 +244,7 @@ class OrderCancellerAbiSpec
     )
     val result = orderCancellerAbi.allOrdersCancelledByBrokerEvent
       .unpack(data, topics.toArray)
-    result.map { res ⇒
+    result.map { res =>
       res._broker should be("0x317863d48454d193f1df864b9b374cd397157dd4")
       res._owner should be("0xcc1cf2a03c023e12426b0047c3d07e30f4e1d103")
       res._cutoff.toString should be("1544617791")
