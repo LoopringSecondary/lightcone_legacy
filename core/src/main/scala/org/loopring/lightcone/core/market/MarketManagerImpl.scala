@@ -194,7 +194,7 @@ class MarketManagerImpl(
             }
 
           case None =>
-            log.debug("no maker found")
+          // log.debug("no maker found")
         }
       }
 
