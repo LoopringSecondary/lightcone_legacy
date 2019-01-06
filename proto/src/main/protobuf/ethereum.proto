@@ -269,8 +269,8 @@ message EventHeader {
 
 message TransferEvent {
     EventHeader header = 1;
-    string sender = 2;
-    string receiver = 3;
+    string from = 2;
+    string to = 3;
     string token = 4;
     bytes amount = 5;
 }
@@ -286,29 +286,9 @@ message OrdersCancelledEvent {
 message CutoffEvent {
     EventHeader header = 1;
     string broker = 2;
-    int64  cutoff = 3; // in seconds.
-}
-
-message OwnerCutoffEvent {
-    EventHeader header = 1;
-    string broker = 2;
     string owner  = 3;
-    int64  cutoff = 4; // in seconds.
-}
-
-message TradingPairCutoffEvent {
-    EventHeader header = 1;
-    string broker       = 2;
-    string trading_pair = 3;
-    int64  cutoff       = 4; // in seconds.
-}
-
-message OwnerTradingPairCutoffEvent {
-    EventHeader header = 1;
-    string broker       = 2;
-    string owner        = 3;
     string trading_pair = 4;
-    int64  cutoff       = 5; // in seconds.
+    int64  cutoff = 5; // in seconds.
 }
 
 //LOOPRING RINGMINED
@@ -326,7 +306,7 @@ message OrderFilledEvent {
     string fee_recipient = 11;
 }
 
-message TokenBurnRateEvent {
+message TokenBurnRateChangedEvent {
     EventHeader header = 1;
     string token = 2;
     double burnRate = 3;
