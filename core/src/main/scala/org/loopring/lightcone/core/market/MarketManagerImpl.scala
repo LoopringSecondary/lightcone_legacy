@@ -62,6 +62,7 @@ class MarketManagerImpl(
 
   private var isLastTakerSell = false
   private var latestPrice: Double = 0
+  private var minFiatValue: Double = 0
 
   private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.primary
   private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.secondary
@@ -101,22 +102,23 @@ class MarketManagerImpl(
   def deleteRing(
       ringId: String,
       ringSettledSuccessfully: Boolean
-    ): Option[Orderbook.Update] =
-    deleteRingsInternal(
-      pendingRingPool.deleteRing(ringId),
-      !ringSettledSuccessfully
-    )
+    ): Seq[MatchResult] = {
+    val orderIds = pendingRingPool.deleteRing(ringId)
+    if (ringSettledSuccessfully) Nil
+    else resubmitOrders(orderIds)
+  }
 
-  def deleteRingsBefore(timestamp: Long): Option[Orderbook.Update] =
-    deleteRingsInternal(pendingRingPool.deleteRingsBefore(timestamp))
+  def deleteRingsBefore(timestamp: Long): Seq[MatchResult] =
+    resubmitOrders(pendingRingPool.deleteRingsBefore(timestamp))
 
-  def deleteRingsOlderThan(ageInSeconds: Long): Option[Orderbook.Update] =
-    deleteRingsInternal(pendingRingPool.deleteRingsOlderThan(ageInSeconds))
+  def deleteRingsOlderThan(ageInSeconds: Long): Seq[MatchResult] =
+    resubmitOrders(pendingRingPool.deleteRingsOlderThan(ageInSeconds))
 
   def submitOrder(
       order: Matchable,
       minFiatValue: Double
     ): MatchResult = this.synchronized {
+    this.minFiatValue = minFiatValue
     removeOrder(order.id)
     matchOrders(order, minFiatValue)
   }
@@ -265,21 +267,11 @@ class MarketManagerImpl(
     order.copy(_matchable = Some(order.original.scaleBy(scale)))
   }
 
-  private def deleteRingsInternal(
-      deleteMethod: => Set[String],
-      recalculateMatchable: Boolean = true
-    ): Option[Orderbook.Update] = this.synchronized {
-    val orderIds = deleteMethod
-
-    if (recalculateMatchable) {
-      orderIds.foreach { orderId =>
-        removeOrder(orderId) foreach { order =>
-          addOrder(updateOrderMatchable(order))
-        }
-      }
-    }
-
-    if (orderIds.isEmpty) None
-    else Some(aggregator.getOrderbookUpdate())
+  private def resubmitOrders(orderIds: Set[String]): Seq[MatchResult] = {
+    orderIds.toSeq
+      .map(orderMap.get)
+      .filter(_.isDefined)
+      .map(_.get)
+      .map(submitOrder(_, minFiatValue))
   }
 }

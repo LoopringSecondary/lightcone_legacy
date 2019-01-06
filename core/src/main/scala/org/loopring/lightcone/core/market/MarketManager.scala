@@ -41,10 +41,10 @@ trait MarketManager {
   def deleteRing(
       ringId: String,
       ringSettledSuccessfully: Boolean
-    ): Option[Orderbook.Update]
+    ): Seq[MatchResult]
 
-  def deleteRingsBefore(timestamp: Long): Option[Orderbook.Update]
-  def deleteRingsOlderThan(ageInSeconds: Long): Option[Orderbook.Update]
+  def deleteRingsBefore(timestamp: Long): Seq[MatchResult]
+  def deleteRingsOlderThan(ageInSeconds: Long): Seq[MatchResult]
 
   def getSellOrders(
       num: Int,
