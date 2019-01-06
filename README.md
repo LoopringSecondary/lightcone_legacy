@@ -1,3 +1,6 @@
+
+[![CircleCI](https://circleci.com/gh/Loopring/lightcone.svg?style=svg)](https://circleci.com/gh/Loopring/lightcone)
+
 # Lightcone Relay
 
 ## Compile
