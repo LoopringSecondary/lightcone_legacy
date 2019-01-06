@@ -29,8 +29,9 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
     def getRingIncome(ring: MatchableRing) = Long.MaxValue
 
     def isProfitable(
-      ring: MatchableRing,
-      fiatValueThreshold: Double) = true
+        ring: MatchableRing,
+        fiatValueThreshold: Double
+      ) = true
   }
 
   val matcher = new RingMatcherImpl()
@@ -42,35 +43,42 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
       buyDAI(BigInt(100000000), BigInt(100000000), 0).matchableAsOriginal
 
     matcher.matchOrders(taker, maker, 0) should be(
-      Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
+      Left(ERR_MATCHING_ORDERS_NOT_TRADABLE)
+    )
   }
 
   "RingMatcherImpl" should "not match orders if one of them has tokenB as 0 " in {
     matcher.matchOrders(
       sellDAI(10, 0).matchableAsOriginal,
-      buyDAI(10, 10).matchableAsOriginal) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
+      buyDAI(10, 10).matchableAsOriginal
+    ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
 
     matcher.matchOrders(
       sellDAI(10, 10).matchableAsOriginal,
-      buyDAI(10, 0).matchableAsOriginal) should be(Left(ERR_MATCHING_INVALID_MAKER_ORDER))
+      buyDAI(10, 0).matchableAsOriginal
+    ) should be(Left(ERR_MATCHING_INVALID_MAKER_ORDER))
 
     matcher.matchOrders(
       sellDAI(10, 0).matchableAsOriginal,
-      buyDAI(10, 0).matchableAsOriginal) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
+      buyDAI(10, 0).matchableAsOriginal
+    ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
   }
 
   "RingMatcherImpl" should "not match orders if one of them has tokenS as 0 " in {
     matcher.matchOrders(
       sellDAI(0, 10).matchableAsOriginal,
-      buyDAI(10, 10).matchableAsOriginal) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
+      buyDAI(10, 10).matchableAsOriginal
+    ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
 
     matcher.matchOrders(
       sellDAI(10, 10).matchableAsOriginal,
-      buyDAI(0, 10).matchableAsOriginal) should be(Left(ERR_MATCHING_INVALID_MAKER_ORDER))
+      buyDAI(0, 10).matchableAsOriginal
+    ) should be(Left(ERR_MATCHING_INVALID_MAKER_ORDER))
 
     matcher.matchOrders(
       sellDAI(0, 10).matchableAsOriginal,
-      buyDAI(0, 10).matchableAsOriginal) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
+      buyDAI(0, 10).matchableAsOriginal
+    ) should be(Left(ERR_MATCHING_INVALID_TAKER_ORDER))
   }
 
   "RingMatcherImpl" should "verify two orders in MarketManagerImplSpec_Performance should be matched in a ring " in {
@@ -85,12 +93,14 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
           BigInt("50000000000000"),
           0,
           -1,
+          0,
           OrderStatus.STATUS_PENDING,
           0.0,
           None,
           None,
           None,
-          Some(MatchableState(0, 0, 0))).matchableAsOriginal,
+          Some(MatchableState(0, 0, 0))
+        ).matchableAsOriginal,
         maker = Matchable(
           "maker",
           GTO,
@@ -100,12 +110,15 @@ class RingMatcherImplSpec_Basic extends OrderAwareSpec {
           BigInt("60000000000000006000000000"),
           0,
           -1,
+          0,
           OrderStatus.STATUS_PENDING,
           0.0,
           None,
           None,
           None,
-          Some(MatchableState(0, 0, 0))).matchableAsOriginal)
+          Some(MatchableState(0, 0, 0))
+        ).matchableAsOriginal
+      )
       .isRight should be(true)
   }
 }

@@ -122,6 +122,7 @@ message Order {
     bytes amount_b                  = 6;
     bytes amount_fee                = 7;
     int64 submitted_at              = 8;
+    int32 num_attempts              = 9;
     OrderStatus status              = 10;
     double wallet_split_percentage  = 11;
     OrderState outstanding          = 12;

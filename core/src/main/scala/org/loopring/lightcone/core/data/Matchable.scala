@@ -45,6 +45,7 @@ case class Matchable(
     amountB: BigInt = 0,
     amountFee: BigInt = 0,
     submittedAt: Long = -1,
+    numAttempts: Int = 0,
     status: OrderStatus = STATUS_NEW,
     walletSplitPercentage: Double = 0,
     _outstanding: Option[MatchableState] = None,

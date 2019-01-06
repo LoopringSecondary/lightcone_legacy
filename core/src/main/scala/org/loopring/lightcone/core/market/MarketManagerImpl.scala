@@ -47,7 +47,8 @@ class MarketManagerImpl(
     val ringMatcher: RingMatcher,
     val pendingRingPool: PendingRingPool,
     val dustOrderEvaluator: DustOrderEvaluator,
-    val aggregator: OrderAwareOrderbookAggregator)
+    val aggregator: OrderAwareOrderbookAggregator,
+    val maxSettementFailuresPerOrder: Int)
     extends MarketManager
     with Logging {
 
@@ -119,8 +120,8 @@ class MarketManagerImpl(
       minFiatValue: Double
     ): MatchResult = this.synchronized {
     this.minFiatValue = minFiatValue
-    removeOrder(order.id)
     matchOrders(order, minFiatValue)
+
   }
 
   def triggerMatch(
@@ -137,7 +138,9 @@ class MarketManagerImpl(
       order: Matchable,
       minFiatValue: Double
     ): MatchResult = {
-    if (dustOrderEvaluator.isOriginalDust(order)) {
+    if (order.numAttempts > maxSettementFailuresPerOrder) {
+      MatchResult(order.copy(status = STATUS_TOO_MANY_RING_FAILURES))
+    } else if (dustOrderEvaluator.isOriginalDust(order)) {
       MatchResult(order.copy(status = STATUS_DUST_ORDER))
     } else if (dustOrderEvaluator.isActualDust(order)) {
       MatchResult(order.copy(status = STATUS_COMPLETELY_FILLED))
@@ -272,7 +275,10 @@ class MarketManagerImpl(
       .map(orderMap.get)
       .filter(_.isDefined)
       .map(_.get)
-      .sortWith(_.createdAt < _.createdAt)
+      .map { order =>
+        order.copy(numAttempts = order.numAttempts + 1)
+      }
+      .sortWith(_.submittedAt < _.submittedAt)
       .map(submitOrder(_, minFiatValue))
   }
 }

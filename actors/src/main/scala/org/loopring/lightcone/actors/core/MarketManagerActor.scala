@@ -113,6 +113,9 @@ class MarketManagerActor(
   val wethTokenAddress = config.getString("weth.address")
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
+  val maxSettementFailuresPerOrder =
+    selfConfig.getInt("max-ring-failures-per-order")
+
   val maxRecoverDurationMinutes =
     selfConfig.getInt("max-recover-duration-minutes")
 
@@ -135,7 +138,8 @@ class MarketManagerActor(
     ringMatcher,
     pendingRingPool,
     dustOrderEvaluator,
-    aggregator
+    aggregator,
+    maxSettementFailuresPerOrder
   )
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
@@ -170,7 +174,7 @@ class MarketManagerActor(
   def recover: Receive = {
 
     case SubmitSimpleOrder(_, Some(order)) =>
-      submitOrder(order)
+      submitOrder(order.copy(submittedAt = timeProvider.getTimeMillis))
 
     case msg @ ActorRecover.Finished(timeout) =>
       autoSwitchBackToReceive.foreach(_.cancel)
