@@ -116,10 +116,11 @@ class MarketManagerImpl(
       restoreState: Boolean
     ): Option[Orderbook.Update] =
     this.synchronized {
-      if (pendingRingPool.hasRing(ringId)) {
-        pendingRingPool.deleteRing(ringId)
-        Some(aggregator.getOrderbookUpdate())
-      } else None
+      // if (pendingRingPool.hasRing(ringId)) {
+      //   pendingRingPool.deleteRing(ringId)
+      //   Some(aggregator.getOrderbookUpdate())
+      // } else None
+      None
     }
 
   def triggerMatch(
