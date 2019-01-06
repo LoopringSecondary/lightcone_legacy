@@ -40,7 +40,6 @@ enum OrderStatus {
     STATUS_CANCELLED_TOO_MANY_ORDERS = 102;
     STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 103;
 
-
     // TODO(dongw): the following should be error code
     STATUS_CANCELLED_DUPLICIATE = 200;
     STATUS_INVALID_DATA = 201;
