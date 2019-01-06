@@ -36,7 +36,7 @@ final case class OrderInfo(
   def -(another: OrderInfo) =
     OrderInfo(
       (pendingAmountS - another.pendingAmountS).max(0),
-      ringIds ++ another.ringIds
+      ringIds -- another.ringIds
     )
 }
 
@@ -76,8 +76,17 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
           time.getTimeMillis()
         )
 
-        adjustPendingAmount(ring.id, ring.taker.id, ring.taker.pending.amountS)
-        adjustPendingAmount(ring.id, ring.maker.id, ring.maker.pending.amountS)
+        incrementOrderPendingAmountS(
+          ring.taker.id,
+          ring.id,
+          ring.taker.pending.amountS
+        )
+
+        incrementOrderPendingAmountS(
+          ring.maker.id,
+          ring.id,
+          ring.maker.pending.amountS
+        )
         true
     }
   }
@@ -87,16 +96,16 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
       case Some(ringInfo) =>
         ringMap -= ringId
 
-        adjustPendingAmount(
-          ringId,
+        decrementOrderPendingAmountS(
           ringInfo.takerId,
-          -ringInfo.takerPendingAmountS
+          ringId,
+          ringInfo.takerPendingAmountS
         )
 
-        adjustPendingAmount(
-          ringId,
+        decrementOrderPendingAmountS(
           ringInfo.makerId,
-          -ringInfo.makerPendingAmountS
+          ringId,
+          ringInfo.makerPendingAmountS
         )
         Set(ringInfo.takerId, ringInfo.makerId)
 
@@ -115,19 +124,26 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
     deleteRingsBefore(time.getTimeMillis - ageInSeconds * 1000)
 
   // Private methods
-  private def adjustPendingAmount(
-      ringId: String,
+  // Private methods
+  private def decrementOrderPendingAmountS(
       orderId: String,
-      pendingAmountSDelta: BigInt
+      ringId: String,
+      pendingAmountS: BigInt
     ) = {
-    val updated = orderMap.get(orderId) match {
-      case Some(orderInfo) =>
-        orderInfo + OrderInfo(pendingAmountSDelta, Set(ringId))
-      case None =>
-        OrderInfo(pendingAmountSDelta, Set(ringId))
+    orderMap.get(orderId) foreach { orderInfo =>
+      val updated = orderInfo - OrderInfo(pendingAmountS, Set(ringId))
+      if (updated.pendingAmountS == 0) orderMap -= orderId
+      else orderMap += orderId -> updated
     }
+  }
 
-    if (updated.pendingAmountS <= 0) orderMap -= orderId
-    else orderMap += orderId -> updated
+  private def incrementOrderPendingAmountS(
+      orderId: String,
+      ringId: String,
+      pendingAmountS: BigInt
+    ) = {
+    orderMap += orderId ->
+      (orderMap.getOrElse(orderId, OrderInfo()) +
+        OrderInfo(pendingAmountS, Set(ringId)))
   }
 }
