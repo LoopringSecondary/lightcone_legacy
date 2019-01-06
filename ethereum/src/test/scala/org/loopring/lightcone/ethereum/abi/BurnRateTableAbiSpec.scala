@@ -42,7 +42,7 @@ class BurnRateTableAbiSpec
     val result = burnRateTableAbi.burn_BASE_PERCENTAGE.unpackResult(resp)
     result match {
       case Some(res) => res.burnRate.toString should be("1000")
-      case _ =>
+      case _         =>
     }
   }
 

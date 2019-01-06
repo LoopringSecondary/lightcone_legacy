@@ -23,7 +23,6 @@ import org.loopring.lightcone.proto._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.language.postfixOps
 
 class MultiAccountManagerSpec_Sharding
     extends CommonSpec("""

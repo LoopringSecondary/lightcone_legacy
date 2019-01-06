@@ -37,7 +37,6 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
-import scala.language.postfixOps
 
 // main owner: 于红雨
 class AccountManagerActor(

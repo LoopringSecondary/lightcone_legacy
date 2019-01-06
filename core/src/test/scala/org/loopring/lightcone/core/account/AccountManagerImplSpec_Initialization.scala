@@ -21,7 +21,6 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.scalatest._
-import scala.language.postfixOps
 
 class AccountManagerImplSpec_Initialization extends OrderAwareSpec {
   "reinitialization of tokenS balance to smaller values" should "cancel existing orders" in {

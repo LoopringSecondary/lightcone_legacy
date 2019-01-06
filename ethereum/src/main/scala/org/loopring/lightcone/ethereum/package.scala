@@ -23,7 +23,6 @@ import org.loopring.lightcone.ethereum.data.{Address, Transaction}
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress
-import scala.language.implicitConversions
 
 package object ethereum {
   implicit def int2BigInt(x: Int): BigInt = BigInt(x)

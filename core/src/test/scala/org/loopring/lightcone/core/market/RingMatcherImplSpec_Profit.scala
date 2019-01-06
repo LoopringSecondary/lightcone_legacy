@@ -21,7 +21,6 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.scalatest._
 import ErrorCode._
-import scala.language.postfixOps
 
 class RingMatcherImplSpec_Profit extends OrderAwareSpec {
 

@@ -40,7 +40,6 @@ import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
-import scala.language.postfixOps
 
 class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 

@@ -24,7 +24,6 @@ import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core._
 import OrderStatus._
 import ErrorCode._
-import scala.language.postfixOps
 
 class MarketManagerImplSpec_Performance extends OrderAwareSpec {
 

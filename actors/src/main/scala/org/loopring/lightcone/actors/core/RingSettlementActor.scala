@@ -40,7 +40,6 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util._
-import scala.language.postfixOps
 
 // main owner: 李亚东
 class RingSettlementActor(

@@ -18,7 +18,6 @@ package org.loopring.lightcone.core
 
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
-import scala.language.implicitConversions
 
 package object data {
   implicit class RichBigInt(this_ : BigInt) {

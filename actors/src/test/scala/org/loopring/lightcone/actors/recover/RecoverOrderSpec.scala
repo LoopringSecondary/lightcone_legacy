@@ -28,7 +28,6 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.Orderbook.Item
-import scala.language.postfixOps
 
 class RecoverOrderSpec
     extends CommonSpec("""

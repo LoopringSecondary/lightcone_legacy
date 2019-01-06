@@ -21,7 +21,6 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import OrderStatus._
-import scala.language.postfixOps
 
 class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
 

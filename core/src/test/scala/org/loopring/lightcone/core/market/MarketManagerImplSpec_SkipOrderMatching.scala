@@ -22,7 +22,6 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import OrderStatus._
 import ErrorCode._
-import scala.language.postfixOps
 
 class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
   "MarketManager" should "skip non-profitable orders" in {

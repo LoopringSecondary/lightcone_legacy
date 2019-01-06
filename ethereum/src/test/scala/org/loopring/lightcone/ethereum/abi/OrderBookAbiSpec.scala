@@ -45,7 +45,7 @@ class OrderBookAbiSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val result = orderBookAbi.orderSubmitted.unpackResult(resp)
     info(result.toString)
     result match {
-      case None =>
+      case None    =>
       case Some(r) => r.submitted should be(true)
     }
   }

@@ -21,7 +21,6 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.scalatest._
-import scala.language.postfixOps
 
 class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
   "last order" should "fail when available balance for tokenS is smaller than required" in {

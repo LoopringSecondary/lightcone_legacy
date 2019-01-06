@@ -25,7 +25,6 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{BatchCallContracts, _}
 import org.web3j.utils.Numeric
-import scala.language.implicitConversions
 
 package object ethereum {
 
