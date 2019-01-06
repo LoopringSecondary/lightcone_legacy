@@ -1,5 +1,7 @@
 
-[![CircleCI](https://circleci.com/gh/Loopring/lightcone.svg?style=svg&circle-token=b0b326cac389ea05a6dc019b83a2691f8596688b)](https://circleci.com/gh/Loopring/lightcone)
+[![CircleCI](https://circleci.com/gh/Loopring/lightcone.svg?style=svg&circle-token=b0b326cac389ea05a6dc019b83a2691f8596688b)](https://circleci.com/gh/Loopring/lightcone) 
+> 注意：CircleCI并没有运行`persistence/test`和`actors/test`
+
 # Lightcone Relay
 
 ## Compile
