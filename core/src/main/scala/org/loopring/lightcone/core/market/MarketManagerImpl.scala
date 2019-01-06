@@ -34,8 +34,8 @@ object MarketManagerImpl {
       ) = {
       if (a.rate < b.rate) -1
       else if (a.rate > b.rate) 1
-      else if (a.createdAt < b.createdAt) -1
-      else if (a.createdAt > b.createdAt) 1
+      else if (a.submittedAt < b.submittedAt) -1
+      else if (a.submittedAt > b.submittedAt) 1
       else a.id compare b.id //在rate和createAt相同时，根据id排序，否则会丢单
     }
   }
