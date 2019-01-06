@@ -32,13 +32,13 @@ case class LoopringProtocolAbi() {
       topics: Array[String]
     ): Option[Any] =
     abis
-      .map(abi ⇒ abi.unpackEvent(data, topics))
+      .map(abi => abi.unpackEvent(data, topics))
       .find(_.nonEmpty)
       .flatten
 
   def unpackFunctionInput(input: String): Option[Any] =
     abis
-      .map(abi ⇒ abi.unpackFunctionInput(input))
+      .map(abi => abi.unpackFunctionInput(input))
       .find(_.nonEmpty)
       .flatten
 }

@@ -17,7 +17,7 @@
 package org.loopring.lightcone.ethereum.abi
 
 import scala.io.Source
-import org.ethereum.solidity.{Abi ⇒ SABI}
+import org.ethereum.solidity.{Abi => SABI}
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -48,15 +48,15 @@ class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
       searchBySignature(Numeric.hexStringToByteArray(topics.head))
     )
     event match {
-      case _: SABI.Event ⇒
+      case _: SABI.Event =>
         event.name match {
-          case RingMinedEvent.name ⇒
+          case RingMinedEvent.name =>
             ringMinedEvent.unpack(data, topics)
-          case InvalidRingEvent.name ⇒
+          case InvalidRingEvent.name =>
             invalidRingEvent.unpack(data, topics)
-          case _ ⇒ None
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 
@@ -65,13 +65,13 @@ class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
       Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
     val func = abi.findFunction(searchBySignature(funSig))
     func match {
-      case _: SABI.Function ⇒
+      case _: SABI.Function =>
         func.name match {
-          case SubmitRingsFunction.name ⇒
+          case SubmitRingsFunction.name =>
             submitRing.unpackInput(data)
-          case _ ⇒ None
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 
