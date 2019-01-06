@@ -46,10 +46,4 @@ class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
     marketManager.getNumOfOrders() should be(0)
     marketManager.getSellOrders(3) should be(Nil)
   }
-
-  "MarketManager" should "allow deleting rings" in {
-    val ringId = "1234"
-    marketManager.deleteRing(ringId, false) should be(None)
-    (fakePendingRingPool.hasRing _).verify(ringId).returns(false).once
-  }
 }

@@ -82,7 +82,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
     }
   }
 
-  def deleteRing(ringId: String) = {
+  def deleteRing(ringId: String): Set[String] = {
     ringMap.get(ringId) match {
       case Some(ringInfo) =>
         ringMap -= ringId
