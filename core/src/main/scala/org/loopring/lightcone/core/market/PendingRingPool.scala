@@ -24,9 +24,9 @@ trait PendingRingPool {
   def getOrderPendingAmountS(orderId: String): BigInt
 
   def hasRing(ringId: String): Boolean
-  def addRing(ring: MatchableRing): Unit
+  def addRing(ring: MatchableRing): Boolean
   def deleteRing(ringId: String): Set[String]
 
-  def deleteRingsBefore(timestamp: Long): Unit
-  def deleteRingsOlderThan(age: Long): Unit
+  def deleteRingsBefore(timestamp: Long): Set[String]
+  def deleteRingsOlderThan(ageInSeconds: Long): Set[String]
 }

@@ -55,8 +55,8 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
   private[core] var ringMap = Map.empty[String, RingInfo]
 
   def reset() = this.synchronized {
-    orderMap = Map.empty[String, OrderInfo]
-    ringMap = Map.empty[String, RingInfo]
+    orderMap = Map.empty
+    ringMap = Map.empty
   }
 
   def getOrderPendingAmountS(orderId: String): BigInt =
@@ -64,9 +64,9 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
 
   def hasRing(ringId: String) = ringMap.contains(ringId)
 
-  def addRing(ring: MatchableRing) = this.synchronized {
+  def addRing(ring: MatchableRing): Boolean = this.synchronized {
     ringMap.get(ring.id) match {
-      case Some(_) =>
+      case Some(_) => false
       case None =>
         ringMap += ring.id -> RingInfo(
           ring.taker.id,
@@ -76,10 +76,9 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
           time.getTimeMillis()
         )
 
-        adjustOrderPending(ring.id, ring.taker.id, ring.taker.pending.amountS)
-        adjustOrderPending(ring.id, ring.maker.id, ring.maker.pending.amountS)
-
-      // log.debug("pending_orders: " + orderMap.mkString("\n\t"))
+        adjustPendingAmount(ring.id, ring.taker.id, ring.taker.pending.amountS)
+        adjustPendingAmount(ring.id, ring.maker.id, ring.maker.pending.amountS)
+        true
     }
   }
 
@@ -88,13 +87,13 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
       case Some(ringInfo) =>
         ringMap -= ringId
 
-        adjustOrderPending(
+        adjustPendingAmount(
           ringId,
           ringInfo.takerId,
           -ringInfo.takerPendingAmountS
         )
 
-        adjustOrderPending(
+        adjustPendingAmount(
           ringId,
           ringInfo.makerId,
           -ringInfo.makerPendingAmountS
@@ -109,14 +108,14 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
   def deleteRingsBefore(timestamp: Long) = this.synchronized {
     ringMap.filter {
       case (_, ringInfo) => ringInfo.timestamp < timestamp
-    }.keys.foreach(deleteRing)
+    }.keys.map(deleteRing).flatten.toSet
   }
 
-  def deleteRingsOlderThan(age: Long) =
-    deleteRingsBefore(time.getTimeMillis - age)
+  def deleteRingsOlderThan(ageInSeconds: Long) =
+    deleteRingsBefore(time.getTimeMillis - ageInSeconds * 1000)
 
   // Private methods
-  private def adjustOrderPending(
+  private def adjustPendingAmount(
       ringId: String,
       orderId: String,
       pendingAmountSDelta: BigInt
