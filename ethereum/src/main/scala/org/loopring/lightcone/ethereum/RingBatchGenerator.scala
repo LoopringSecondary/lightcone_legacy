@@ -82,16 +82,11 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   def toSubmitableParamStr(
     xRingBatch: RingBatch)(
       implicit context: RingBatchContext): String = {
-    val tokenSpendables = xRingBatch.orders
-      .map(
-        order =>
-          Seq(
-            (order.owner + order.tokenS),
-            (order.owner + order.getFeeParams.tokenFee)))
-      .flatten
-      .distinct
-      .zipWithIndex
-      .toMap
+    val tokenSpendables = xRingBatch.orders.map { order =>
+      Seq(
+        (order.owner + order.tokenS),
+        (order.owner + order.getFeeParams.tokenFee))
+    }.flatten.distinct.zipWithIndex.toMap
 
     val data = new Bitstream
     val tables = new Bitstream

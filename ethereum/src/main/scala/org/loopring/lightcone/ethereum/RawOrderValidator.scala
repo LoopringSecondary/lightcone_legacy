@@ -79,7 +79,8 @@ object RawOrderValidatorImpl extends RawOrderValidator {
             verifySignature(hashSourceBytes, r, s, v, Address(order.owner))
           case _ =>
             throw new IllegalArgumentException(
-              s"invalid SigningAlgorithm value: $algorithm")
+              s"invalid SigningAlgorithm value: $algorithm"
+            )
         }
 
       }
@@ -103,11 +104,12 @@ object RawOrderValidatorImpl extends RawOrderValidator {
       (BigInt(order.feeParams.get.walletSplitPercentage) <= 100)
         -> ERR_ORDER_VALIDATION_INVALID_WALLET_SPLIT_PERCENTAGE,
       checkDualAuthPrivateKey -> ERR_ORDER_VALIDATION_INVALID_MISSING_DUALAUTH_PRIV_KEY,
-      checkOrderSig -> ERR_ORDER_VALIDATION_INVALID_SIG)
+      checkOrderSig -> ERR_ORDER_VALIDATION_INVALID_SIG
+    )
 
     checklist.span(_._1)._2 match {
       case List() => Right(order)
-      case tail => Left(tail.head._2)
+      case tail   => Left(tail.head._2)
     }
   }
 

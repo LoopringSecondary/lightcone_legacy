@@ -144,7 +144,5 @@ class EthereumAccessActor(
         )
       }
     }
-
-    case msg: EthGetBalance.Req =>
   }
 }
