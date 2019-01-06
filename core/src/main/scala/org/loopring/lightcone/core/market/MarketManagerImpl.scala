@@ -272,6 +272,7 @@ class MarketManagerImpl(
       .map(orderMap.get)
       .filter(_.isDefined)
       .map(_.get)
+      .sortWith(_.createdAt < _.createdAt)
       .map(submitOrder(_, minFiatValue))
   }
 }
