@@ -89,14 +89,6 @@ class MarketManagerImpl(
   def getOrder(orderId: String) =
     orderMap.get(orderId)
 
-  def submitOrder(
-      order: Matchable,
-      minFiatValue: Double
-    ): MatchResult = this.synchronized {
-    removeOrder(order.id)
-    matchOrders(order, minFiatValue)
-  }
-
   // If an order is in one or more pending rings, that
   // part of the order will not be cancelled.
   def cancelOrder(orderId: String): Option[Orderbook.Update] =
@@ -106,22 +98,28 @@ class MarketManagerImpl(
       }
     }
 
-  // TODO:dongw
-  // if the order cannot be find in any side, we don't restore the order's states,
-  // it may have been cancelled.
-  // Need to return a list of orders and their status changes so actores can save
-  // order status into the database.
-  def deletePendingRing(
+  def deleteRing(
       ringId: String,
-      restoreState: Boolean
-    ): Option[Orderbook.Update] =
-    this.synchronized {
-      // if (pendingRingPool.hasRing(ringId)) {
-      //   pendingRingPool.deleteRing(ringId)
-      //   Some(aggregator.getOrderbookUpdate())
-      // } else None
-      None
-    }
+      ringSettledSuccessfully: Boolean
+    ) =
+    deleteRingsInternal(
+      pendingRingPool.deleteRing(ringId),
+      !ringSettledSuccessfully
+    )
+
+  def deleteRingsBefore(timestamp: Long) =
+    deleteRingsInternal(pendingRingPool.deleteRingsBefore(timestamp))
+
+  def deleteRingsOlderThan(ageInSeconds: Long) =
+    deleteRingsInternal(pendingRingPool.deleteRingsOlderThan(ageInSeconds))
+
+  def submitOrder(
+      order: Matchable,
+      minFiatValue: Double
+    ): MatchResult = this.synchronized {
+    removeOrder(order.id)
+    matchOrders(order, minFiatValue)
+  }
 
   def triggerMatch(
       sellOrderAsTaker: Boolean,
@@ -251,14 +249,6 @@ class MarketManagerImpl(
     }
   }
 
-  private def restoreOrders(orderIds: Seq[String]) = {
-    orderIds.foreach { orderId =>
-      removeOrder(orderId) foreach { order =>
-        addOrder(updateOrderMatchable(order))
-      }
-    }
-  }
-
   // Remove and return the top taker order for a taker order.
   private def popTopMakerOrder(order: Matchable): Option[Matchable] = {
     val side = sides(order.tokenB)
@@ -273,5 +263,23 @@ class MarketManagerImpl(
     val matchableAmountS = (order.actual.amountS - pendingAmountS).max(0)
     val scale = Rational(matchableAmountS, order.original.amountS)
     order.copy(_matchable = Some(order.original.scaleBy(scale)))
+  }
+
+  private def deleteRingsInternal(
+      deleteMethod: => Set[String],
+      recalculateMatchable: Boolean = true
+    ): Option[Orderbook.Update] = this.synchronized {
+    val orderIds = deleteMethod
+
+    if (recalculateMatchable) {
+      orderIds.foreach { orderId =>
+        removeOrder(orderId) foreach { order =>
+          addOrder(updateOrderMatchable(order))
+        }
+      }
+    }
+
+    if (orderIds.isEmpty) None
+    else Some(aggregator.getOrderbookUpdate())
   }
 }
