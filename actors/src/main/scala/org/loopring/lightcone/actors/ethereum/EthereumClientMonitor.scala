@@ -166,7 +166,7 @@ class EthereumClientMonitor(
               -1
           }
       } yield {
-        nodes = nodes + (g.path.toString → blockNumResp)
+        nodes = nodes + (g.path.toString -> blockNumResp)
         ethereumAccessor ! NodeBlockHeight(
           path = g.path.toString,
           height = blockNumResp
