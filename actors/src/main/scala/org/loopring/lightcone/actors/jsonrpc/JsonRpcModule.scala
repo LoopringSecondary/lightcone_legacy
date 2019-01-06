@@ -98,9 +98,9 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                   .mapTo[JsonRpc.Response]
 
               onComplete(f) {
-                case Success(resp) ⇒
+                case Success(resp) =>
                   complete(Serialization.read[JsonRpcResponse](resp.json))
-                case Failure(e) ⇒
+                case Failure(e) =>
                   replyWithError(-32603, Some(e.getMessage))(jsonReq.id)
               }
 

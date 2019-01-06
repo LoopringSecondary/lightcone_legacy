@@ -42,10 +42,11 @@ final class MultiAccountManagerMessageValidator(
   val orderValidator: RawOrderValidator = RawOrderValidatorImpl
 
   def validate = {
-    case req: CancelOrder.Req ⇒
-      req.copy(owner = Address.normalizeAddress(req.owner))
+    case req @ CancelOrder.Req(_, owner, _, marketId) =>
+      supportedMarkets.assertmarketIdIsValid(marketId)
+      req.copy(owner = Address.normalizeAddress(owner))
 
-    case req: SubmitSimpleOrder ⇒
+    case req: SubmitSimpleOrder =>
       req.order match {
         case None =>
           throw ErrorException(
@@ -68,32 +69,32 @@ final class MultiAccountManagerMessageValidator(
           )
       }
     case req: ActorRecover.RecoverOrderReq => req
-    case req: GetBalanceAndAllowances.Req ⇒
+    case req: GetBalanceAndAllowances.Req =>
       req.copy(
         address = Address.normalizeAddress(req.address),
         tokens = req.tokens.map(Address.normalizeAddress)
       )
 
-    case req: AddressBalanceUpdated ⇒
+    case req: AddressBalanceUpdated =>
       req.copy(
         address = Address.normalizeAddress(req.address),
         token = Address.normalizeAddress(req.token)
       )
 
-    case req: AddressAllowanceUpdated ⇒
+    case req: AddressAllowanceUpdated =>
       req.copy(
         address = Address.normalizeAddress(req.address),
         token = Address.normalizeAddress(req.token)
       )
 
-    case req @ SubmitOrder.Req(Some(order)) ⇒
+    case req @ SubmitOrder.Req(Some(order)) =>
       orderValidator.validate(order) match {
-        case Left(errorCode) ⇒
+        case Left(errorCode) =>
           throw ErrorException(
             errorCode,
             message = s"invalid order in SubmitOrder.Req:$order"
           )
-        case Right(rawOrder) ⇒
+        case Right(rawOrder) =>
           val now = timeProvider.getTimeMillis
           val state = RawOrder.State(
             createdAt = now,
@@ -115,9 +116,5 @@ final class MultiAccountManagerMessageValidator(
             )
           )
       }
-
-    case req @ CancelOrder.Req(_, owner, _, marketId) ⇒
-      supportedMarkets.assertmarketIdIsValid(marketId)
-      req.copy(owner = Address.normalizeAddress(owner))
   }
 }
