@@ -38,11 +38,7 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
     marketManager.submitOrder(buy3, 0)
 
     marketManager.getBuyOrders(5) should be(
-      Seq(
-        buy1.copy(_matchable = buy1._actual, status = STATUS_PENDING),
-        buy2.copy(_matchable = buy2._actual, status = STATUS_PENDING),
-        buy3.copy(_matchable = buy3._actual, status = STATUS_PENDING)
-      )
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
     )
 
     (fackRingMatcher
@@ -66,22 +62,12 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
     val sell1 = actualNotDust(sellGTO(100, 110000))
     val result = marketManager.submitOrder(sell1, 0)
 
-    result should be(
-      MarketManager.MatchResult(
-        sell1.copy(_matchable = sell1._actual, status = STATUS_PENDING)
-      )
-    )
+    result should be(MarketManager.MatchResult(sell1.asPending))
 
-    marketManager.getSellOrders(100) should be(
-      Seq(sell1.copy(_matchable = sell1._actual, status = STATUS_PENDING))
-    )
+    marketManager.getSellOrders(100) should be(Seq(sell1.asPending))
 
     marketManager.getBuyOrders(5) should be(
-      Seq(
-        buy1.copy(_matchable = buy1._actual, status = STATUS_PENDING),
-        buy2.copy(_matchable = buy2._actual, status = STATUS_PENDING),
-        buy3.copy(_matchable = buy3._actual, status = STATUS_PENDING)
-      )
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
     )
 
     (fackRingMatcher

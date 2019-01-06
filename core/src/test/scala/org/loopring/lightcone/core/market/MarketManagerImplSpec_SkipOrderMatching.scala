@@ -38,11 +38,7 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
     marketManager.submitOrder(buy3, 0)
 
     marketManager.getBuyOrders(5) should be(
-      Seq(
-        buy1.copy(_matchable = buy1._actual, status = STATUS_PENDING),
-        buy2.copy(_matchable = buy2._actual, status = STATUS_PENDING),
-        buy3.copy(_matchable = buy3._actual, status = STATUS_PENDING)
-      )
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
     )
 
     (fackRingMatcher
@@ -69,23 +65,12 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
       orderbookUpdate = result.orderbookUpdate.copy(latestPrice = 0.0)
     )
 
-    result should be(
-      MarketManager.MatchResult(
-        sell1.copy(_matchable = sell1._actual, status = STATUS_PENDING),
-        Seq(ring)
-      )
-    )
+    result should be(MarketManager.MatchResult(sell1.asPending, Seq(ring)))
 
-    marketManager.getSellOrders(100) should be(
-      Seq(sell1.copy(_matchable = sell1._actual, status = STATUS_PENDING))
-    )
+    marketManager.getSellOrders(100) should be(Seq(sell1.asPending))
 
     marketManager.getBuyOrders(5) should be(
-      Seq(
-        buy1.copy(_matchable = buy1._actual, status = STATUS_PENDING),
-        buy2.copy(_matchable = buy2._actual, status = STATUS_PENDING),
-        buy3.copy(_matchable = buy3._actual, status = STATUS_PENDING)
-      )
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
     )
 
     (fackRingMatcher
