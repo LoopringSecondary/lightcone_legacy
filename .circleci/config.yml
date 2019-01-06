@@ -36,7 +36,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.m2
-          key: v1-dependencies--{{ checksum "build.sbt" }}
+          key: v1-dependencies--{{ checksum "build.sbt" }}-{{ checksum "project/Dependencies.scala" }}-{{ checksum "project/Globals.scala" }}-{{ checksum "project/Settings.scala" }}-{{ checksum "project/plugins.sbt" }}
 
       # run tests!
       - run: cat /dev/null | sbt core/test persistence/test ethereum/test lib/test
