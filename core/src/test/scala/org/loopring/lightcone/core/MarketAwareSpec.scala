@@ -53,7 +53,8 @@ trait MarketAwareSpec extends OrderAwareSpec {
       fackRingMatcher,
       fakePendingRingPool,
       fakeDustOrderEvaluator,
-      fakeAggregator
+      fakeAggregator,
+      100 // max matching attempts
     )
   }
 
