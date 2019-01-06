@@ -84,15 +84,15 @@ class EthereumQueryActor(
   def receive = LoggingReceive {
     case req: GetBalanceAndAllowances.Req =>
       val erc20Tokens = req.tokens.filterNot(
-        token ⇒ Address(token).toString.equals(Address.zeroAddress)
+        token => Address(token).toString.equals(Address.zeroAddress)
       )
       val ethToken =
         req.tokens.find(
-          token ⇒ Address(token).toString.equals(Address.zeroAddress)
+          token => Address(token).toString.equals(Address.zeroAddress)
         )
 
       (for {
-        batchReqs ← Future {
+        batchReqs <- Future {
           getBalanceAndAllowanceToBatchReq(
             Address(delegateAddress),
             req.copy(tokens = erc20Tokens)
@@ -101,7 +101,7 @@ class EthereumQueryActor(
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
-          case Some(_) ⇒
+          case Some(_) =>
             (ethereumAccessorActor ? EthGetBalance.Req(
               address = Address(req.address).toString,
               tag = "latest"
@@ -115,7 +115,7 @@ class EthereumQueryActor(
         )
       } yield {
         ethRes match {
-          case Some(_) ⇒
+          case Some(_) =>
             res.copy(
               balanceAndAllowanceMap = res.balanceAndAllowanceMap +
                 (ethToken.get → BalanceAndAllowance(
@@ -123,31 +123,31 @@ class EthereumQueryActor(
                   BigInt(0)
                 ))
             )
-          case None ⇒
+          case None =>
             res
         }
       }) sendTo sender
 
     case req: GetBalance.Req =>
       val erc20Tokens = req.tokens.filterNot(
-        token ⇒ Address(token).toString.equals(Address.zeroAddress)
+        token => Address(token).toString.equals(Address.zeroAddress)
       )
       val ethToken =
         req.tokens.find(
-          token ⇒ Address(token).toString.equals(Address.zeroAddress)
+          token => Address(token).toString.equals(Address.zeroAddress)
         )
 
       (for {
-        batchReqs ← Future { req.copy(tokens = erc20Tokens) }
+        batchReqs <- Future { req.copy(tokens = erc20Tokens) }
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
-          case Some(_) ⇒
+          case Some(_) =>
             (ethereumAccessorActor ? EthGetBalance.Req(
               address = Address(req.address).toString,
               tag = "latest"
             )).mapAs[EthGetBalance.Res].map(Some(_))
-          case None ⇒ Future.successful(None)
+          case None => Future.successful(None)
         }
         res: GetBalance.Res = batchContractCallResToBalance(
           req.address,
@@ -156,21 +156,21 @@ class EthereumQueryActor(
         )
       } yield {
         ethRes match {
-          case Some(_) ⇒
+          case Some(_) =>
             res.copy(
               balanceMap = res.balanceMap +
                 (Address.zeroAddress → BigInt(
                   Numeric.toBigInt(ethRes.get.result)
                 ))
             )
-          case None ⇒
+          case None =>
             res
         }
       }) sendTo sender
     // 查询授权不应该有ETH的授权
     case req: GetAllowance.Req =>
       (for {
-        batchReqs: BatchCallContracts.Req ← Future {
+        batchReqs: BatchCallContracts.Req <- Future {
           getAllowanceToBatchReq(Address(delegateAddress), req)
         }
         callRes <- (ethereumAccessorActor ? batchReqs)
@@ -182,9 +182,9 @@ class EthereumQueryActor(
         )
       } yield res) sendTo sender
 
-    case req: GetFilledAmount.Req ⇒
+    case req: GetFilledAmount.Req =>
       (for {
-        batchReq ← Future {
+        batchReq <- Future {
           getFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
         }
         batchRes <- (ethereumAccessorActor ? batchReq)
@@ -193,7 +193,7 @@ class EthereumQueryActor(
       } yield {
         GetFilledAmount.Res(
           (req.orderIds zip batchRes.map(
-            res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res))
+            res => ByteString.copyFrom(Numeric.hexStringToByteArray(res))
           )).toMap
         )
       }) sendTo sender

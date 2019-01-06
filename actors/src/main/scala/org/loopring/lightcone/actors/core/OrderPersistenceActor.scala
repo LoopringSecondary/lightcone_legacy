@@ -70,7 +70,7 @@ class OrderPersistenceActor(
 
   //save order to db first, then send to AccountManager
   def receive: Receive = {
-    case req: CancelOrder.Req ⇒
+    case req: CancelOrder.Req =>
       (req.status match {
         case OrderStatus.STATUS_CANCELLED_BY_USER =>
           for {
@@ -79,11 +79,11 @@ class OrderPersistenceActor(
             )
           } yield {
             cancelRes.headOption match {
-              case Some(res) ⇒
+              case Some(res) =>
                 if (res.order.isEmpty)
                   throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
                 CancelOrder.Res(req.id, req.status)
-              case None ⇒
+              case None =>
                 throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
             }
           }
@@ -98,7 +98,7 @@ class OrderPersistenceActor(
             }
       }) sendTo sender
 
-    case SubmitOrder.Req(Some(raworder)) ⇒
+    case SubmitOrder.Req(Some(raworder)) =>
       (for {
         //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         saveRes <- dbModule.orderService.saveOrder(raworder)

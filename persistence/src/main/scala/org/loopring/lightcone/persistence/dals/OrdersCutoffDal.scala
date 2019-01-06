@@ -56,14 +56,14 @@ class OrdersCutoffDalImpl(
   override def saveCutoff(cutoff: OrdersCutoffEvent): Future[ErrorCode] = {
     val now = timeProvider.getTimeMillis
     db.run((query += cutoff.copy(createdAt = now)).asTry).map {
-      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
+      case Failure(e: MySQLIntegrityConstraintViolationException) => {
         ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
       }
-      case Failure(ex) ⇒ {
+      case Failure(ex) => {
         logger.error(s"error : ${ex.getMessage}")
         ErrorCode.ERR_PERSISTENCE_INTERNAL
       }
-      case Success(x) ⇒ ErrorCode.ERR_NONE
+      case Success(x) => ErrorCode.ERR_NONE
     }
   }
 
