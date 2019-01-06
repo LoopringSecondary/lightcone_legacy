@@ -20,6 +20,7 @@ import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
+import scala.language.postfixOps
 
 class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
 

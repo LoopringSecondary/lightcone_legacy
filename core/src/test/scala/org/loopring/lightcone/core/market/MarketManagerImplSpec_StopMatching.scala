@@ -22,6 +22,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import OrderStatus._
 import ErrorCode._
+import scala.language.postfixOps
 
 class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
   "MarketManager" should "stop matching on the first price mismatch" in {

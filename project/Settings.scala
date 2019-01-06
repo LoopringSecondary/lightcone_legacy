@@ -49,7 +49,9 @@ object Settings {
       "-g:vars",
       "-unchecked",
       "-deprecation",
-      "-Yresolve-term-conflict:package"
+      "-Yresolve-term-conflict:package",
+      "-feature",
+      "-Xfatal-warnings"
     ),
     fork in Test := false,
     // conflictManager := ConflictManager.strict,

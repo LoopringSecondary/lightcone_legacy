@@ -22,6 +22,7 @@ import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
+import scala.language.implicitConversions
 
 package object data {
 

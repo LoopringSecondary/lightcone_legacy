@@ -40,6 +40,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util._
+import scala.language.postfixOps
 
 // main owner: 李亚东
 class RingSettlementActor(
@@ -206,13 +207,7 @@ class RingSettlementActor(
         .map(_.txs)
       txs = ringTxs.map(
         (tx: SettlementTx) =>
-          Transaction(
-            tx.data,
-            tx.nonce.toInt,
-            tx.gas,
-            gasPriceRes,
-            to = tx.to
-          )
+          Transaction(tx.data, tx.nonce.toInt, tx.gas, gasPriceRes, to = tx.to)
       )
       txResps <- Future.sequence(txs.map { tx =>
         val rawTx = getSignedTxData(tx)

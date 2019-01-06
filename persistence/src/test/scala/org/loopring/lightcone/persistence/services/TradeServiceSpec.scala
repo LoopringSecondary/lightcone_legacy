@@ -86,10 +86,10 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
     val tokenS = "0xaaaaaaa2"
     val tokenB = "0xbbbbbbb2"
     val result = for {
-      _ <- Future.sequence(hashes.map { hash ⇒
+      _ <- Future.sequence(hashes.map { hash =>
         testSave(hash, hash, tokenS, tokenB, 1L)
       })
-      _ <- Future.sequence(mockToken.map { hash ⇒
+      _ <- Future.sequence(mockToken.map { hash =>
         testSave(hash, hash, "0x00001", "0x00002", 1L)
       })
       query1 <- service.getTrades(
@@ -122,7 +122,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
       "0x-counttrades-06"
     )
     val result = for {
-      _ <- Future.sequence(owners.map { hash ⇒
+      _ <- Future.sequence(owners.map { hash =>
         testSave(hash, hash, tokenS, tokenB, 1L)
       })
       query <- service.countTrades(
@@ -168,10 +168,10 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
     )
     val owner = "0x-fixed-owner-01"
     val result = for {
-      _ <- Future.sequence(txHashes1.map { hash ⇒
+      _ <- Future.sequence(txHashes1.map { hash =>
         testSave(hash, owner, tokenS, tokenB, 100L)
       })
-      _ <- Future.sequence(txHashes2.map { hash ⇒
+      _ <- Future.sequence(txHashes2.map { hash =>
         testSave(hash, owner, tokenS, tokenB, 20L)
       })
       count1 <- service.countTrades(

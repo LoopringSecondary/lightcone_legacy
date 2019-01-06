@@ -41,8 +41,8 @@ class BurnRateTableAbiSpec
       "0x00000000000000000000000000000000000000000000000000000000000003e8"
     val result = burnRateTableAbi.burn_BASE_PERCENTAGE.unpackResult(resp)
     result match {
-      case Some(res) ⇒ res.burnRate.toString should be("1000")
-      case _ ⇒
+      case Some(res) => res.burnRate.toString should be("1000")
+      case _ =>
     }
   }
 
@@ -59,7 +59,7 @@ class BurnRateTableAbiSpec
     val resp =
       "0x0000000000000000000000000000000000000000000000000000000000050032"
     val result = burnRateTableAbi.getBurnRate.unpackResult(resp)
-    result.map { res ⇒
+    result.map { res =>
       res.burnRate.toString should be("327730")
     }
   }
@@ -76,7 +76,7 @@ class BurnRateTableAbiSpec
       burnRateTableAbi.tokenTierUpgradedEvent.unpack(data, topics.toArray)
 
     info(result.toString)
-    result.map { res ⇒
+    result.map { res =>
       res.add should be("0x91e658c123e23f509201a99f30574f6548724639")
       res.tier.toString() should be("100000000000000000000000")
     }

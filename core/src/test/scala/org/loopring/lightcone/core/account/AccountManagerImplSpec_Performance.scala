@@ -21,6 +21,7 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.scalatest._
+import scala.language.postfixOps
 
 class AccountManagerImplSpec_Performance extends OrderAwareSpec {
   "submit order" should "fail when tokenS balance is low" in {

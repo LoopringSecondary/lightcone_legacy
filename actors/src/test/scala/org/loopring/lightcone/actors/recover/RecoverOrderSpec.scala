@@ -28,6 +28,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.Orderbook.Item
+import scala.language.postfixOps
 
 class RecoverOrderSpec
     extends CommonSpec("""
@@ -54,7 +55,7 @@ class RecoverOrderSpec
       orders: Seq[RawOrder]
     ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
     for {
-      result <- Future.sequence(orders.map { order ⇒
+      result <- Future.sequence(orders.map { order =>
         dbModule.orderService.saveOrder(order)
       })
     } yield result

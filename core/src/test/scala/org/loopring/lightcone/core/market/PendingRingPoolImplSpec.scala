@@ -23,6 +23,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.base._
 import org.scalatest._
 import org.web3j.utils.Numeric
+import scala.language.postfixOps
 
 class PendingRingPoolImplSpec extends OrderAwareSpec {
   implicit val timeProvider = new SystemTimeProvider()
