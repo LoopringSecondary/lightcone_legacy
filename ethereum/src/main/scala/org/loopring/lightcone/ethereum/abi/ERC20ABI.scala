@@ -69,15 +69,15 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
       searchBySignature(Numeric.hexStringToByteArray(topics.head))
     )
     event match {
-      case _: SABI.Event ⇒
+      case _: SABI.Event =>
         event.name match {
-          case ApprovalEvent.name ⇒
+          case ApprovalEvent.name =>
             approvalEvent.unpack(data, topics)
-          case TransferEvent.name ⇒
+          case TransferEvent.name =>
             transferEvent.unpack(data, topics)
-          case _ ⇒ None
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 
@@ -86,21 +86,21 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
       Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
     val func = abi.findFunction(searchBySignature(funSig))
     func match {
-      case _: SABI.Function ⇒
+      case _: SABI.Function =>
         func.name match {
-          case TransferFunction.name ⇒
+          case TransferFunction.name =>
             transfer.unpackInput(data)
-          case TransferFromFunction.name ⇒
+          case TransferFromFunction.name =>
             transferFrom.unpackInput(data)
-          case ApproveFunction.name ⇒
+          case ApproveFunction.name =>
             approve.unpackInput(data)
-          case BalanceOfFunction.name ⇒
+          case BalanceOfFunction.name =>
             balanceOf.unpackInput(data)
-          case AllowanceFunction.name ⇒
+          case AllowanceFunction.name =>
             allowance.unpackInput(data)
-          case _ ⇒ None
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 

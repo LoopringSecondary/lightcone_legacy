@@ -31,18 +31,14 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
 
     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
+    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
     marketManager.submitOrder(buy1, 0)
     marketManager.submitOrder(buy2, 0)
     marketManager.submitOrder(buy3, 0)
 
     marketManager.getBuyOrders(5) should be(
-      Seq(
-        buy1.copy(status = STATUS_PENDING),
-        buy2.copy(status = STATUS_PENDING),
-        buy3.copy(status = STATUS_PENDING)
-      )
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
     )
 
     (fackRingMatcher
@@ -66,27 +62,15 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
     var result = marketManager.submitOrder(sell1, 0)
 
     result = result.copy(
-      orderbookUpdate = result.orderbookUpdate.copy(lastPrice = 0.0)
+      orderbookUpdate = result.orderbookUpdate.copy(latestPrice = 0.0)
     )
 
-    result should be(
-      MarketManager.MatchResult(
-        Seq(ring),
-        sell1.copy(status = STATUS_PENDING),
-        Orderbook.Update()
-      )
-    )
+    result should be(MarketManager.MatchResult(sell1.asPending, Seq(ring)))
 
-    marketManager.getSellOrders(100) should be(
-      Seq(sell1.copy(status = STATUS_PENDING))
-    )
+    marketManager.getSellOrders(100) should be(Seq(sell1.asPending))
 
     marketManager.getBuyOrders(5) should be(
-      Seq(
-        buy1.copy(status = STATUS_PENDING),
-        buy2.copy(status = STATUS_PENDING),
-        buy3.copy(status = STATUS_PENDING)
-      )
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
     )
 
     (fackRingMatcher

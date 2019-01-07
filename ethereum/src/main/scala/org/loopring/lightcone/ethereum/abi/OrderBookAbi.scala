@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.ethereum.abi
 
-import org.ethereum.solidity.{Abi ⇒ SABI}
+import org.ethereum.solidity.{Abi => SABI}
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -44,9 +44,9 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
       searchBySignature(Numeric.hexStringToByteArray(topics.head))
     )
     event match {
-      case _: SABI.Event if event.name.equals(OrderSubmittedEvent.name) ⇒
+      case _: SABI.Event if event.name.equals(OrderSubmittedEvent.name) =>
         orderSubmittedEvent.unpack(data, topics)
-      case _ ⇒ None
+      case _ => None
     }
   }
 
@@ -55,15 +55,15 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
       Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
     val func = abi.findFunction(searchBySignature(funSig))
     func match {
-      case _: SABI.Function ⇒
+      case _: SABI.Function =>
         func.name match {
-          case OrderSubmittedFunction.name ⇒
+          case OrderSubmittedFunction.name =>
             orderSubmitted.unpackInput(data)
-          case SubmitOrderFunction.name ⇒
+          case SubmitOrderFunction.name =>
             submitOrder.unpackInput(data)
-          case _ ⇒ None
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 

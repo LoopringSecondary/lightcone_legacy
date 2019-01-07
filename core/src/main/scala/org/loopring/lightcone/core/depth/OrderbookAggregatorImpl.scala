@@ -19,41 +19,33 @@ package org.loopring.lightcone.core.depth
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
-class OrderbookAggregatorImpl(priceDecimals: Int) extends OrderbookAggregator {
+class OrderbookAggregatorImpl(
+    priceDecimals: Int,
+    precisionForAmount: Int,
+    precisionForTotal: Int)
+    extends OrderbookAggregator {
 
-  private val sells = new OrderbookSide.Sells(priceDecimals, 0, true)
-  private val buys = new OrderbookSide.Buys(priceDecimals, 0, true)
+  private val sells = new OrderbookSide.Sells(
+    priceDecimals,
+    0,
+    precisionForAmount,
+    precisionForTotal,
+    true
+  )
+  private val buys = new OrderbookSide.Buys(
+    priceDecimals,
+    0,
+    precisionForAmount,
+    precisionForTotal,
+    true
+  )
   private val lastPrice: Double = 0
 
-  def getOrderbookUpdate(num: Int = 0): Orderbook.Update = {
-    if (num == 0)
-      Orderbook.Update(sells.takeUpdatedSlots, buys.takeUpdatedSlots)
-    else Orderbook.Update(sells.getSlots(num, None), buys.getSlots(num, None))
-  }
+  def getOrderbookUpdate() =
+    Orderbook.Update(sells.takeUpdatedSlots, buys.takeUpdatedSlots)
 
-  def increaseSell(
-      price: Double,
-      amount: Double,
-      total: Double
-    ) = adjustAmount(true, true, price, amount, total)
-
-  def decreaseSell(
-      price: Double,
-      amount: Double,
-      total: Double
-    ) = adjustAmount(true, false, price, amount, total)
-
-  def increaseBuy(
-      price: Double,
-      amount: Double,
-      total: Double
-    ) = adjustAmount(false, true, price, amount, total)
-
-  def decreaseBuy(
-      price: Double,
-      amount: Double,
-      total: Double
-    ) = adjustAmount(false, false, price, amount, total)
+  def getOrderbookSlots(num: Int) =
+    Orderbook.Update(sells.getSlots(num, None), buys.getSlots(num, None))
 
   def adjustAmount(
       isSell: Boolean,

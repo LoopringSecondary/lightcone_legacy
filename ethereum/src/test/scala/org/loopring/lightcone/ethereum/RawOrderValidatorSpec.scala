@@ -43,7 +43,6 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
       .withAmountFee(
         ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray)
       )
-      .withTokenRecipient(order1Owner)
       .withWalletSplitPercentage(10)
 
     val order1 = (new RawOrder)

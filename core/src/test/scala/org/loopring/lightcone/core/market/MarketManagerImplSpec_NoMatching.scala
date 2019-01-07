@@ -50,7 +50,7 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     var order2 = actualNotDust(sellGTO(100000, 101))
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
+    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
     var result = marketManager.submitOrder(order1, 0)
     result should be(emptyMatchingResult(order1, STATUS_PENDING))
@@ -65,15 +65,10 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     marketManager.getNumOfOrders() should be(2)
 
     marketManager.getSellOrders(3) should be(
-      Seq(
-        order1.copy(status = STATUS_PENDING),
-        order2.copy(status = STATUS_PENDING)
-      )
+      Seq(order1.asPending, order2.asPending)
     )
 
-    marketManager.getSellOrders(1) should be(
-      Seq(order1.copy(status = STATUS_PENDING))
-    )
+    marketManager.getSellOrders(1) should be(Seq(order1.asPending))
 
     marketManager.getBuyOrders(100) should be(Nil)
   }
@@ -83,7 +78,7 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     var order2 = actualNotDust(buyGTO(101, 100000))
 
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
+    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
     var result = marketManager.submitOrder(order1, 0)
     result should be(emptyMatchingResult(order1, STATUS_PENDING))
@@ -98,15 +93,10 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     marketManager.getNumOfOrders() should be(2)
 
     marketManager.getBuyOrders(3) should be(
-      Seq(
-        order1.copy(status = STATUS_PENDING),
-        order2.copy(status = STATUS_PENDING)
-      )
+      Seq(order1.asPending, order2.asPending)
     )
 
-    marketManager.getBuyOrders(1) should be(
-      Seq(order1.copy(status = STATUS_PENDING))
-    )
+    marketManager.getBuyOrders(1) should be(Seq(order1.asPending))
 
     marketManager.getSellOrders(100) should be(Nil)
   }

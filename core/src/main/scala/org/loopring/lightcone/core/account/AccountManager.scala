@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.core.account
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.lib.TimeProvider
 
 trait AccountManager {
   def hasTokenManager(token: String): Boolean
@@ -40,6 +40,7 @@ trait AccountManager {
       orderId: String,
       outstandingAmountS: BigInt
     ): Boolean
+
 }
 
 object AccountManager {

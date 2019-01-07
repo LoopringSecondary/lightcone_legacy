@@ -69,7 +69,7 @@ class DatabaseQueryActor(
   private[this] val logger = Logger(this.getClass)
 
   def receive: Receive = LoggingReceive {
-    case req: GetOrdersForUser.Req ⇒
+    case req: GetOrdersForUser.Req =>
       (for {
         result <- req.market match {
           case GetOrdersForUser.Req.Market.Empty =>
@@ -83,7 +83,7 @@ class DatabaseQueryActor(
               Some(req.sort),
               req.skip
             )
-          case GetOrdersForUser.Req.Market.MarketHash(value) ⇒
+          case GetOrdersForUser.Req.Market.MarketHash(value) =>
             dbModule.orderService.getOrdersForUser(
               req.statuses.toSet,
               Some(req.owner),
@@ -94,7 +94,7 @@ class DatabaseQueryActor(
               Some(req.sort),
               req.skip
             )
-          case GetOrdersForUser.Req.Market.Pair(value) ⇒
+          case GetOrdersForUser.Req.Market.Pair(value) =>
             dbModule.orderService.getOrdersForUser(
               req.statuses.toSet,
               Some(req.owner),
@@ -107,11 +107,11 @@ class DatabaseQueryActor(
             )
         }
       } yield GetOrdersForUser.Res(result, ErrorCode.ERR_NONE)) sendTo sender
-    case req: GetTrades.Req ⇒
+    case req: GetTrades.Req =>
       (for {
         result <- dbModule.tradeService.getTrades(req)
       } yield GetTrades.Res(result)) sendTo sender
-    case m ⇒ logger.error(s"Unhandled message ${m}")
+    case m => logger.error(s"Unhandled message ${m}")
   }
 
 }

@@ -43,12 +43,12 @@ class RingSettlementSpec
     with HttpSupport {
 
   def selfConfig = config.getConfig(RingSettlementManagerActor.name)
-  def orderHandler = actors.get(OrderHandlerActor.name)
+  def orderHandler = actors.get(OrderPersistenceActor.name)
 
   val users = selfConfig
     .getConfigList("users")
     .asScala
-    .map(config ⇒ config.getString("addr") → config.getString("key"))
+    .map(config => config.getString("addr") → config.getString("key"))
 
   "Submit a ring tx " must {
     "tx successfully, order, balance, allowance must be right" in {
@@ -62,7 +62,7 @@ class RingSettlementSpec
       )
       val getBalanceReqs =
         users.unzip._1.map(
-          user ⇒
+          user =>
             GetBalanceAndAllowances.Req(
               user,
               tokens =
@@ -95,11 +95,11 @@ class RingSettlementSpec
       assert(orderbook1.buys.isEmpty)
       assert(orderbook1.sells.size == 1)
       orderbook1.sells.head match {
-        case Orderbook.Item(price, amount, total) ⇒
+        case Orderbook.Item(price, amount, total) =>
           assert(amount.toDouble == "10".toDouble)
           assert(price.toDouble == "10".toDouble)
           assert(total.toDouble == "1".toDouble)
-        case _ ⇒
+        case _ =>
       }
 
       val submitOrder2F = singleRequest(

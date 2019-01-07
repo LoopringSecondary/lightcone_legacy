@@ -22,77 +22,51 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.base._
 import org.slf4s.Logging
 
-object PendingRingPoolImpl {
-  case class OrderInfo(
-      pendingAmountS: BigInt = 0,
-      ringIds: Set[String] = Set.empty) {
-    assert(pendingAmountS >= 0)
+final case class OrderInfo(
+    pendingAmountS: BigInt = 0,
+    ringIds: Set[String] = Set.empty) {
+  assert(pendingAmountS >= 0)
 
-    def +(another: OrderInfo) =
-      OrderInfo(
-        (pendingAmountS + another.pendingAmountS).max(0),
-        ringIds ++ another.ringIds
-      )
+  def +(another: OrderInfo) =
+    OrderInfo(
+      (pendingAmountS + another.pendingAmountS).max(0),
+      ringIds ++ another.ringIds
+    )
 
-    def -(another: OrderInfo) =
-      OrderInfo(
-        (pendingAmountS - another.pendingAmountS).max(0),
-        ringIds ++ another.ringIds
-      )
-  }
-
-  case class RingInfo(
-      takerId: String,
-      takerPendingAmountS: BigInt,
-      makerId: String,
-      makerPendingAmountS: BigInt,
-      timestamp: Long)
+  def -(another: OrderInfo) =
+    OrderInfo(
+      (pendingAmountS - another.pendingAmountS).max(0),
+      ringIds -- another.ringIds
+    )
 }
+
+final case class RingInfo(
+    takerId: String,
+    takerPendingAmountS: BigInt,
+    makerId: String,
+    makerPendingAmountS: BigInt,
+    timestamp: Long)
 
 class PendingRingPoolImpl()(implicit time: TimeProvider)
     extends PendingRingPool
     with Logging {
 
-  import PendingRingPoolImpl._
-
   private[core] var orderMap = Map.empty[String, OrderInfo]
   private[core] var ringMap = Map.empty[String, RingInfo]
+
+  def reset() = {
+    orderMap = Map.empty
+    ringMap = Map.empty
+  }
 
   def getOrderPendingAmountS(orderId: String): BigInt =
     orderMap.get(orderId).map(_.pendingAmountS).getOrElse(0)
 
-  def deleteOrder(orderId: String) = this.synchronized {
-    val result = orderMap.contains(orderId)
-    orderMap -= orderId
-    result
-  }
-
-  def deleteRing(ringId: String): Boolean = this.synchronized {
-    ringMap.get(ringId) match {
-      case Some(ringInfo) =>
-        ringMap -= ringId
-
-        decrementOrderPendingAmountS(
-          ringInfo.takerId,
-          ringId,
-          ringInfo.takerPendingAmountS
-        )
-
-        decrementOrderPendingAmountS(
-          ringInfo.makerId,
-          ringId,
-          ringInfo.makerPendingAmountS
-        )
-        true
-      case None => false
-    }
-  }
-
   def hasRing(ringId: String) = ringMap.contains(ringId)
 
-  def addRing(ring: MatchableRing) = this.synchronized {
+  def addRing(ring: MatchableRing): Boolean = {
     ringMap.get(ring.id) match {
-      case Some(_) =>
+      case Some(_) => false
       case None =>
         ringMap += ring.id -> RingInfo(
           ring.taker.id,
@@ -113,32 +87,43 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
           ring.id,
           ring.maker.pending.amountS
         )
-
-      // log.debug("pending_orders: " + orderMap.mkString("\n\t"))
+        true
     }
   }
 
-  def deleteAllRings() = this.synchronized {
-    orderMap = Map.empty[String, OrderInfo]
-    ringMap = Map.empty[String, RingInfo]
+  def deleteRing(ringId: String): Set[String] = {
+    ringMap.get(ringId) match {
+      case Some(ringInfo) =>
+        ringMap -= ringId
+
+        decrementOrderPendingAmountS(
+          ringInfo.takerId,
+          ringId,
+          ringInfo.takerPendingAmountS
+        )
+
+        decrementOrderPendingAmountS(
+          ringInfo.makerId,
+          ringId,
+          ringInfo.makerPendingAmountS
+        )
+        Set(ringInfo.takerId, ringInfo.makerId)
+
+      case None =>
+        Set.empty[String]
+    }
   }
 
-  def deleteRingsBefore(timestamp: Long) = this.synchronized {
+  def deleteRingsBefore(timestamp: Long) = {
     ringMap.filter {
       case (_, ringInfo) => ringInfo.timestamp < timestamp
-    }.keys.foreach(deleteRing)
+    }.keys.map(deleteRing).flatten.toSet
   }
 
-  def deleteRingsOlderThan(age: Long) =
-    deleteRingsBefore(time.getTimeMillis - age)
+  def deleteRingsOlderThan(ageInSeconds: Long) =
+    deleteRingsBefore(time.getTimeMillis - ageInSeconds * 1000)
 
-  def deleteRingsContainingOrder(orderId: String) = this.synchronized {
-    ringMap.filter {
-      case (_, ringInfo) =>
-        ringInfo.takerId == orderId || ringInfo.makerId == orderId
-    }.keys.foreach(deleteRing)
-  }
-
+  // Private methods
   // Private methods
   private def decrementOrderPendingAmountS(
       orderId: String,
@@ -147,7 +132,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
     ) = {
     orderMap.get(orderId) foreach { orderInfo =>
       val updated = orderInfo - OrderInfo(pendingAmountS, Set(ringId))
-      if (updated.pendingAmountS <= 0) orderMap -= orderId
+      if (updated.pendingAmountS == 0) orderMap -= orderId
       else orderMap += orderId -> updated
     }
   }
@@ -161,5 +146,4 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
       (orderMap.getOrElse(orderId, OrderInfo()) +
         OrderInfo(pendingAmountS, Set(ringId)))
   }
-
 }

@@ -48,7 +48,7 @@ object EthereumAccessActor {
       ClusterSingletonManager.props(
         singletonProps = Props(new EthereumAccessActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system)
+        settings = ClusterSingletonManagerSettings(system).withRole(name)
       ),
       name = EthereumAccessActor.name
     )
@@ -60,7 +60,6 @@ object EthereumAccessActor {
       ),
       name = s"${EthereumAccessActor.name}_proxy"
     )
-
   }
 }
 
@@ -84,10 +83,10 @@ class EthereumAccessActor(
     val fu = (monitor ? GetNodeBlockHeight.Req())
       .mapAs[GetNodeBlockHeight.Res]
     fu onComplete {
-      case Success(res) ⇒
-        connectionPools = res.nodes.map(node ⇒ node.path → node.height)
+      case Success(res) =>
+        connectionPools = res.nodes.map(node => node.path → node.height)
         self ! Notify("initialized")
-      case Failure(e) ⇒
+      case Failure(e) =>
         log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
         context.stop(self)
     }
@@ -96,11 +95,11 @@ class EthereumAccessActor(
   override def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
-    case Notify("initialized", _) ⇒
+    case Notify("initialized", _) =>
       unstashAll()
       context.become(normalReceive)
-    case _: NodeBlockHeight ⇒
-    case _ ⇒
+    case _: NodeBlockHeight =>
+    case _ =>
       stash()
   }
 

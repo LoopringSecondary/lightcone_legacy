@@ -26,9 +26,12 @@ import scala.concurrent.duration._
 
 class MultiAccountManagerSpec_Sharding
     extends CommonSpec("""
-                         |akka.cluster.roles=["multi_account_manager"]
+                         akka.cluster.roles=[
+                         | "order_handler",
+                         | "multi_account_manager"]
                          |""".stripMargin)
-    with MultiAccountManagerSupport {
+    with MultiAccountManagerSupport
+    with OrderHandleSupport {
 
   val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
 

@@ -51,12 +51,12 @@ class SettlementTxDalImpl(
 
   def saveTx(tx: SettlementTx): Future[PersistSettlementTx.Res] = {
     db.run((query += tx).asTry).map {
-      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒
+      case Failure(e: MySQLIntegrityConstraintViolationException) =>
         PersistSettlementTx.Res(ERR_PERSISTENCE_DUPLICATE_INSERT)
-      case Failure(ex) ⇒
+      case Failure(ex) =>
         logger.error(s"error : ${ex.getMessage}")
         PersistSettlementTx.Res(ERR_PERSISTENCE_INTERNAL)
-      case Success(x) ⇒ PersistSettlementTx.Res(ERR_NONE)
+      case Success(x) => PersistSettlementTx.Res(ERR_NONE)
     }
   }
 

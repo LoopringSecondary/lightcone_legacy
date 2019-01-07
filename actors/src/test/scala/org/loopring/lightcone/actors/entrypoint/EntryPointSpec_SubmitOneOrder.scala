@@ -16,16 +16,10 @@
 
 package org.loopring.lightcone.actors.entrypoint
 
-import akka.actor.{Actor, ActorLogging, Props}
-import com.google.protobuf.ByteString
-import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
-import akka.pattern._
-import akka.util.Timeout
 
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.Await
 
 class EntryPointSpec_SubmitOneOrder
     extends CommonSpec("""
@@ -41,9 +35,9 @@ class EntryPointSpec_SubmitOneOrder
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
   "submit an order" must {
@@ -63,7 +57,8 @@ class EntryPointSpec_SubmitOneOrder
         case _ => assert(false)
       }
 
-      Thread.sleep(1000)
+//      Thread.sleep(1000)
+      info("this order must be saved in db.")
       val getOrderF = dbModule.orderService.getOrder(rawOrder.hash)
 
       val getOrder = Await.result(getOrderF, timeout.duration)
@@ -73,15 +68,19 @@ class EntryPointSpec_SubmitOneOrder
         case None => assert(false)
       }
       //orderbook
+      info("check the status of orderbook now.")
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF = singleRequest(getOrderBook, "orderbook")
-      val orderbookRes = Await.result(orderbookF, timeout.duration)
+
+      val orderbookRes = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
       orderbookRes match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
+        case Some(Orderbook(lastPrice, sells, buys)) =>
           println(s"sells:${sells}, buys:${buys}")
           assert(sells.nonEmpty)
           assert(

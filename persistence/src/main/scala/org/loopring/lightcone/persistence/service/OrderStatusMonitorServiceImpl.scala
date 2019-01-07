@@ -18,32 +18,26 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.dals.{
-  OrdersCutoffDal,
-  OrdersCutoffDalImpl
-}
-import org.loopring.lightcone.proto.{ErrorCode, OrdersCutoffEvent}
+import org.loopring.lightcone.persistence.dals._
+import org.loopring.lightcone.proto.OrderStatusMonitor
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
-class OrdersCutoffServiceImpl @Inject()(
+class OrderStatusMonitorServiceImpl @Inject()(
     implicit val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
-    extends OrdersCutoffService {
-  val cutoffDal: OrdersCutoffDal = new OrdersCutoffDalImpl()
+    extends OrderStatusMonitorService {
 
-  def saveCutoff(cutoff: OrdersCutoffEvent): Future[ErrorCode] =
-    cutoffDal.saveCutoff(cutoff)
+  val orderStatusMonitorDal: OrderStatusMonitorDal =
+    new OrderStatusMonitorDalImpl()
 
-  def hasCutoff(
-      orderBroker: Option[String],
-      orderOwner: String,
-      orderTradingPair: String,
-      time: Long
-    ): Future[Boolean] =
-    cutoffDal.hasCutoff(orderBroker, orderOwner, orderTradingPair, time)
+  def updateLatestProcessingTime(event: OrderStatusMonitor): Future[Int] =
+    orderStatusMonitorDal.updateLatestProcessingTime(event)
 
-  def obsolete(height: Long): Future[Unit] = cutoffDal.obsolete(height)
+  def getLatestProcessingTime(
+      monitoringType: String
+    ): Future[Option[OrderStatusMonitor]] =
+    orderStatusMonitorDal.getLatestProcessingTime(monitoringType)
 
 }

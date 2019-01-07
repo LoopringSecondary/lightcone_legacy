@@ -63,6 +63,20 @@ trait OrderService {
       skip: CursorPaging
     ): Future[Seq[RawOrder]]
 
+  //
+  def getOrdersToActivate(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
+
+  //
+  def getOrdersToExpire(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
+
   // Count the number of orders
   def countOrdersForUser(
       statuses: Set[OrderStatus],
@@ -77,6 +91,11 @@ trait OrderService {
   // Returns Left(error) if this operation fails, or Right(string) the order's hash.
   def updateOrderStatus(
       hash: String,
+      status: OrderStatus
+    ): Future[ErrorCode]
+
+  def updateOrdersStatus(
+      hashes: Seq[String],
       status: OrderStatus
     ): Future[ErrorCode]
 

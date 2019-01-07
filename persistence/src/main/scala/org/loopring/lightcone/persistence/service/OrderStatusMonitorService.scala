@@ -16,17 +16,16 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.persistence.dals.OrdersCancelledEventDal
-import org.loopring.lightcone.proto.{ErrorCode, OrdersCancelledEvent}
+import org.loopring.lightcone.persistence.dals.OrderStatusMonitorDal
+import org.loopring.lightcone.proto.OrderStatusMonitor
 import scala.concurrent.Future
 
-trait OrdersCancelledEventService {
+trait OrderStatusMonitorService {
+  val orderStatusMonitorDal: OrderStatusMonitorDal
 
-  val ordersCancelledEventDal: OrdersCancelledEventDal
+  def updateLatestProcessingTime(event: OrderStatusMonitor): Future[Int]
 
-  def saveCancelOrder(cancelOrder: OrdersCancelledEvent): Future[ErrorCode]
-
-  def hasCancelled(orderHash: String): Future[Boolean]
-
-  def obsolete(height: Long): Future[Unit]
+  def getLatestProcessingTime(
+      monitoringType: String
+    ): Future[Option[OrderStatusMonitor]]
 }

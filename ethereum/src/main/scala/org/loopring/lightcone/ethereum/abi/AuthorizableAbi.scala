@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.ethereum.abi
 
-import org.ethereum.solidity.{Abi ⇒ SABI}
+import org.ethereum.solidity.{Abi => SABI}
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -44,15 +44,15 @@ class AuthorizableAbi(abiJson: String) extends AbiWrap(abiJson) {
       searchBySignature(Numeric.hexStringToByteArray(topics.head))
     )
     event match {
-      case _: SABI.Event ⇒
+      case _: SABI.Event =>
         event.name match {
-          case AddressAuthorizedEvent.name ⇒
+          case AddressAuthorizedEvent.name =>
             addressAuthorizedEvent.unpack(data, topics)
-          case AddressDeauthorizedEvent.name ⇒
+          case AddressDeauthorizedEvent.name =>
             addressDeauthorizedEvent.unpack(data, topics)
-          case _ ⇒ None
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 

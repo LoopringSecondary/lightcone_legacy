@@ -108,6 +108,18 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       skip: CursorPaging
     ): Future[Seq[RawOrder]]
 
+  def getOrdersToActivate(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
+
+  def getOrdersToExpire(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]]
+
   // Update order's status and update the updated_at timestamp if changeUpdatedAtField is true.
   // Returns Left(error) if this operation fails, or Right(string) the order's hash.
   def updateOrderStatus(
@@ -145,18 +157,18 @@ class OrderDalImpl(
 
   def saveOrder(order: RawOrder): Future[PersistOrder.Res] = {
     db.run((query += order).asTry).map {
-      case Failure(e: MySQLIntegrityConstraintViolationException) ⇒ {
+      case Failure(e: MySQLIntegrityConstraintViolationException) => {
         PersistOrder.Res(
           error = ERR_PERSISTENCE_DUPLICATE_INSERT,
           order = None,
           alreadyExist = true
         )
       }
-      case Failure(ex) ⇒ {
+      case Failure(ex) => {
         logger.error(s"error : ${ex.getMessage}")
         PersistOrder.Res(error = ERR_PERSISTENCE_INTERNAL, order = None)
       }
-      case Success(x) ⇒
+      case Success(x) =>
         PersistOrder.Res(error = ERR_NONE, order = Some(order))
     }
   }
@@ -200,13 +212,13 @@ class OrderDalImpl(
         .filter(_.validSince >= validTime.get)
         .filter(_.validUntil <= validTime.get)
     if (sort.nonEmpty) filters = sort.get match {
-      case SortingType.ASC ⇒ filters.sortBy(_.sequenceId.asc)
-      case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
-      case _ ⇒ filters.sortBy(_.sequenceId.asc)
+      case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
+      case SortingType.DESC => filters.sortBy(_.sequenceId.desc)
+      case _                => filters.sortBy(_.sequenceId.asc)
     }
     filters = pagingOpt match {
-      case Some(paging) ⇒ filters.drop(paging.skip).take(paging.size)
-      case None ⇒ filters
+      case Some(paging) => filters.drop(paging.skip).take(paging.size)
+      case None         => filters
     }
     filters
   }
@@ -254,13 +266,13 @@ class OrderDalImpl(
       filters = filters.filter(_.marketHash === marketHash)
     if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
     if (sort.nonEmpty) filters = sort.get match {
-      case SortingType.ASC ⇒ filters.sortBy(_.sequenceId.asc)
-      case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
-      case _ ⇒ filters.sortBy(_.sequenceId.asc)
+      case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
+      case SortingType.DESC => filters.sortBy(_.sequenceId.desc)
+      case _                => filters.sortBy(_.sequenceId.asc)
     }
     filters = pagingOpt match {
-      case Some(paging) ⇒ filters.drop(paging.skip).take(paging.size)
-      case None ⇒ filters
+      case Some(paging) => filters.drop(paging.skip).take(paging.size)
+      case None         => filters
     }
     filters
   }
@@ -285,6 +297,49 @@ class OrderDalImpl(
       sort,
       skip
     )
+    db.run(filters.result)
+  }
+
+  //
+  def getOrdersToActivate(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] = {
+    val availableStatus =
+      Seq(OrderStatus.STATUS_PENDING_ACTIVE)
+    var filters = query
+      .filter(_.status inSet availableStatus)
+      .filter(_.validSince >= latestProcessTime)
+      .filter(_.validSince < processTime)
+      .sortBy(_.sequenceId.asc)
+    filters = skip match {
+      case Some(s) => filters.drop(s.skip).take(s.size)
+      case None    => filters
+    }
+    db.run(filters.result)
+  }
+
+  //
+  def getOrdersToExpire(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] = {
+    val availableStatus = Seq(
+      OrderStatus.STATUS_NEW,
+      OrderStatus.STATUS_PENDING,
+      OrderStatus.STATUS_PARTIALLY_FILLED
+    )
+    var filters = query
+      .filter(_.status inSet availableStatus)
+      .filter(_.validUntil >= latestProcessTime)
+      .filter(_.validUntil < processTime) //todo:需要确认下
+      .sortBy(_.sequenceId.asc)
+    filters = skip match {
+      case Some(s) => filters.drop(s.skip).take(s.size)
+      case None    => filters
+    }
     db.run(filters.result)
   }
 
@@ -476,7 +531,7 @@ class OrderDalImpl(
       result <- db.run(
         query
           .filter(_.hash === hash)
-          .map(c ⇒ (c.status, c.updatedAt))
+          .map(c => (c.status, c.updatedAt))
           .update(status, timeProvider.getTimeMillis)
       )
     } yield {
@@ -492,7 +547,7 @@ class OrderDalImpl(
       result <- db.run(
         query
           .filter(_.hash inSet hashes)
-          .map(c ⇒ (c.status, c.updatedAt))
+          .map(c => (c.status, c.updatedAt))
           .update(status, timeProvider.getTimeMillis)
       )
     } yield {
@@ -519,7 +574,7 @@ class OrderDalImpl(
         db.run(
           query
             .filter(_.hash === hash)
-            .map(c ⇒ (c.status, c.updatedAt))
+            .map(c => (c.status, c.updatedAt))
             .update(status, timeProvider.getTimeMillis)
         )
       }
@@ -537,7 +592,7 @@ class OrderDalImpl(
         query
           .filter(_.hash === hash)
           .map(
-            c ⇒
+            c =>
               (
                 c.actualAmountS,
                 c.actualAmountB,

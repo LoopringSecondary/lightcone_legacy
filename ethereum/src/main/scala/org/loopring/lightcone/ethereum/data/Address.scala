@@ -95,7 +95,7 @@ object Address {
     try {
       Address(address).toString
     } catch {
-      case _: Throwable ⇒
+      case _: Throwable =>
         throw ErrorException(
           ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
           message = s"invalid ethereum address:$address"

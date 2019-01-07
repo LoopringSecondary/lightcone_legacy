@@ -162,6 +162,20 @@ class OrderServiceImpl @Inject()(
       skip
     )
 
+  def getOrdersToActivate(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] =
+    orderDal.getOrdersToActivate(latestProcessTime, processTime)
+
+  def getOrdersToExpire(
+      latestProcessTime: Int,
+      processTime: Int,
+      skip: Option[Paging] = None
+    ): Future[Seq[RawOrder]] =
+    orderDal.getOrdersToExpire(latestProcessTime, processTime)
+
   // Count the number of orders
   def countOrdersForUser(
       statuses: Set[OrderStatus],
@@ -185,6 +199,13 @@ class OrderServiceImpl @Inject()(
       status: OrderStatus
     ): Future[ErrorCode] = {
     orderDal.updateOrderStatus(hash, status)
+  }
+
+  def updateOrdersStatus(
+      hashes: Seq[String],
+      status: OrderStatus
+    ): Future[ErrorCode] = {
+    orderDal.updateOrdersStatus(hashes, status)
   }
 
   def updateAmount(

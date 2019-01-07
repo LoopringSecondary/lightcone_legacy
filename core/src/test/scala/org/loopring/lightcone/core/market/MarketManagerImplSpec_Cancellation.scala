@@ -33,7 +33,7 @@ class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
     "and should put order inside the orderbook" in {
     var order = actualNotDust(sellGTO(100000, 101))
     (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-    (fakeAggregator.getOrderbookUpdate _).when(0).returns(Orderbook.Update())
+    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
     val result = marketManager.submitOrder(order, 0)
     result should be(emptyMatchingResult(order, STATUS_PENDING))
@@ -41,16 +41,9 @@ class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
 
     marketManager.cancelOrder(order.id) should be(Some(Orderbook.Update()))
 
-    (fakePendingRingPool.deleteOrder _).verify(order.id).once
     marketManager.getNumOfSellOrders() should be(0)
     marketManager.getNumOfBuyOrders() should be(0)
     marketManager.getNumOfOrders() should be(0)
     marketManager.getSellOrders(3) should be(Nil)
-  }
-
-  "MarketManager" should "allow deleting rings" in {
-    val ringId = "1234"
-    marketManager.deletePendingRing(ringId) should be(None)
-    (fakePendingRingPool.hasRing _).verify(ringId).returns(false).once
   }
 }

@@ -52,7 +52,7 @@ object EthereumClientMonitor {
       ClusterSingletonManager.props(
         singletonProps = Props(new EthereumClientMonitor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system)
+        settings = ClusterSingletonManagerSettings(system).withRole(name)
       ),
       name = EthereumClientMonitor.name
     )
@@ -97,7 +97,7 @@ class EthereumClientMonitor(
     Job(
       name = EthereumClientMonitor.name,
       dalayInSeconds = checkIntervalSeconds,
-      run = () ⇒ checkNodeHeight,
+      run = () => checkNodeHeight,
       initialDalayInSeconds = checkIntervalSeconds
     )
   )
@@ -117,10 +117,10 @@ class EthereumClientMonitor(
     }
 
     checkNodeHeight onComplete {
-      case Success(_) ⇒
+      case Success(_) =>
         self ! Notify("initialized")
         super.preStart()
-      case Failure(e) ⇒
+      case Failure(e) =>
         log.error(s"Failed to start EthereumClientMonitor:${e.getMessage} ")
         context.stop(self)
     }
@@ -129,18 +129,18 @@ class EthereumClientMonitor(
   override def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
-    case Notify("initialized", _) ⇒
+    case Notify("initialized", _) =>
       unstashAll()
       context.become(normalReceive)
-    case _ ⇒
+    case _ =>
       stash()
   }
 
   def normalReceive: Receive = super.receive orElse {
-    case _: GetNodeBlockHeight.Req ⇒
+    case _: GetNodeBlockHeight.Req =>
       sender ! GetNodeBlockHeight.Res(
         nodes.toSeq
-          .map(node ⇒ NodeBlockHeight(path = node._1, height = node._2))
+          .map(node => NodeBlockHeight(path = node._1, height = node._2))
       )
   }
 
@@ -176,7 +176,7 @@ class EthereumClientMonitor(
   }
 
   def anyHexToInt: PartialFunction[Any, Int] = {
-    case s: String ⇒ Numeric.toBigInt(s).intValue()
-    case _ ⇒ -1
+    case s: String => Numeric.toBigInt(s).intValue()
+    case _         => -1
   }
 }

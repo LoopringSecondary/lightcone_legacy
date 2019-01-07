@@ -36,6 +36,7 @@ import org.loopring.lightcone.proto._
 
 import scala.concurrent._
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 // main owner: 于红雨
 class AccountManagerActor(
@@ -49,22 +50,50 @@ class AccountManagerActor(
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule)
     extends Actor
+    with Stash
     with ActorLogging {
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
-      case e: Exception ⇒
+      case e: Exception =>
         log.error(e.getMessage)
         Escalate
     }
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
+  val accountCutoffState = new AccountCutoffStateImpl()
 
   protected def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
+  protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
-  def receive: Receive = LoggingReceive {
+  override def preStart() = {
+    //todo:eth请求还未就绪，等待就绪再完善该部分~
+    val fu = Future.successful(Unit)
+    fu onComplete {
+      case Success(res) =>
+        self ! Notify("initialized")
+      case Failure(e) =>
+        log.error(s"failed to start AccountManagerActor: ${e.getMessage}")
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"failed to start AccountManagerActor: ${e.getMessage}"
+        )
+    }
+  }
+
+  def receive: Receive = initialReceive
+
+  def initialReceive: Receive = {
+    case Notify("initialized", _) =>
+      unstashAll()
+      context.become(normalReceive)
+    case _ =>
+      stash()
+  }
+
+  def normalReceive: Receive = LoggingReceive {
 
     case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
       submitOrder(xraworder).map { _ =>
@@ -89,32 +118,68 @@ class AccountManagerActor(
         GetBalanceAndAllowances.Res(address, balanceAndAllowanceMap)
       }).sendTo(sender)
 
-    case SubmitSimpleOrder(_, Some(order)) =>
-      submitOrder(order).sendTo(sender)
+    case req @ SubmitOrder.Req(Some(raworder)) =>
+      (for {
+        _ <- for {
+          //check通过再保存到数据库，以及后续处理
+          _ <- Future.successful(accountCutoffState.isOrderCutoff(raworder))
+          _ <- isOrderCanceled(raworder) //取消订单，单独查询以太坊
+        } yield Unit
+        newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
+          raworder.copy(
+            state = Some(
+              raworder.getState
+                .copy(status = OrderStatus.STATUS_PENDING_ACTIVE)
+            )
+          )
+        } else raworder
+
+        res <- for {
+          resRawOrder <- (orderPersistenceActor ? req
+            .copy(rawOrder = Some(newRaworder)))
+            .mapAs[RawOrder]
+          resOrder <- (resRawOrder.getState.status match {
+            case STATUS_PENDING_ACTIVE =>
+              val order: Order = resRawOrder
+              Future.successful(order)
+            case _ => submitOrder(resRawOrder)
+          }).mapAs[Order]
+        } yield SubmitOrder.Res(Some(resOrder))
+
+      } yield res) sendTo sender
 
     case req: CancelOrder.Req =>
-      assert(req.owner == address)
-      if (manager.cancelOrder(req.id)) {
-        marketManagerActor forward req
-      } else {
-        Future.failed(
-          ErrorException(
+      val originalSender = sender
+      (for {
+        _ <- Future.successful(assert(req.owner == address))
+        cancelRes <- (orderPersistenceActor ? req)
+          .mapAs[CancelOrder.Res]
+        _ = if (manager.cancelOrder(req.id))
+          marketManagerActor.tell(req, originalSender)
+        else {
+          //在目前没有使用eventlog的情况下，哪怕manager中并没有该订单，则仍需要发送到MarketManager
+          marketManagerActor ! req
+          throw ErrorException(
             ERR_FAILED_HANDLE_MSG,
             s"no order found with id: ${req.id}"
           )
-        ) sendTo sender
-      }
+        }
+      } yield cancelRes) sendTo sender
 
     case AddressBalanceUpdated(addr, token, newBalance) =>
-      assert(addr == address)
-      updateBalanceOrAllowance(token, newBalance, _.setBalance(_))
+      (for {
+        _ <- Future.successful(assert(addr == address))
+      } yield
+        updateBalanceOrAllowance(token, newBalance, _.setBalance(_))) sendTo sender
 
     case AddressAllowanceUpdated(addr, token, newBalance) =>
-      assert(addr == address)
-      updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))
+      (for {
+        _ <- Future.successful(assert(addr == address))
+      } yield
+        updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))) sendTo sender
   }
 
-  private def submitOrder(order: Order): Future[SubmitOrder.Res] = {
+  private def submitOrder(order: Order): Future[Order] = {
     val matchable: Matchable = order
     for {
       _ <- getTokenManager(matchable.tokenS)
@@ -137,10 +202,10 @@ class AccountManagerActor(
       (successful, updatedOrders) = manager.submitAndGetUpdatedOrders(
         _matchable
       )
-      _ = assert(updatedOrders.contains(_matchable.id))
-      _ = log.debug(s"assert contains order:  ${updatedOrders(_matchable.id)}")
       _ = if (!successful)
         throw ErrorException(Error(matchable.status))
+      _ = assert(updatedOrders.contains(_matchable.id))
+      _ = log.debug(s"assert contains order:  ${updatedOrders(_matchable.id)}")
       res <- Future.sequence {
         updatedOrders.map { o =>
           for {
@@ -155,7 +220,7 @@ class AccountManagerActor(
       }
       matchable_ = updatedOrders(_matchable.id)
       order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
-    } yield SubmitOrder.Res(order = Some(order_))
+    } yield order_
   }
 
   private def getTokenManager(token: String): Future[AccountTokenManager] = {
@@ -185,7 +250,7 @@ class AccountManagerActor(
       tokens: Seq[String]
     ): Future[Seq[AccountTokenManager]] = {
     val tokensWithoutMaster =
-      tokens.filterNot(token ⇒ manager.hasTokenManager(token))
+      tokens.filterNot(token => manager.hasTokenManager(token))
     for {
       res <- if (tokensWithoutMaster.nonEmpty) {
         (ethereumQueryActor ? GetBalanceAndAllowances.Req(
@@ -196,13 +261,13 @@ class AccountManagerActor(
         Future.successful(GetBalanceAndAllowances.Res())
       }
       tms = tokensWithoutMaster.map(
-        token ⇒
+        token =>
           new AccountTokenManagerImpl(
             token,
             config.getInt("account_manager.max_order_num")
           )
       )
-      _ = tms.foreach(tm ⇒ {
+      _ = tms.foreach(tm => {
         val ba = res.balanceAndAllowanceMap(tm.token)
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
         manager.addTokenManager(tm)
@@ -252,5 +317,16 @@ class AccountManagerActor(
         }
       }
     } yield Unit
+
+  def isOrderCanceled(rawOrder: RawOrder) =
+    for {
+      //todo:eth请求还未就绪，等待就绪再完善该部分~
+      isCanceled <- Future.successful(false)
+    } yield
+      if (isCanceled)
+        throw ErrorException(
+          ERR_ORDER_VALIDATION_INVALID_CUTOFF,
+          s"this order has been canceled."
+        )
 
 }

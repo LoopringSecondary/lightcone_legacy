@@ -15,12 +15,13 @@
 
 - **v0.2** (目标1月15号）主要功能包括
   - [x] [wangdong/yongfeng] 基于订单数据库表的actor recover操作
-  - [ ] [yongfeng/wangdong] 订单生效，过期，和cutoff的处理（actor层面）
-  - [ ] [yadong/yongfeng] 以太坊上面环路的爬取和存储到数据库。主要包括ring，trade，cutoff的存储。并基于此提供更多用户读取数据的API
+  - [x] [hongyu] 订单生效，过期处理（actor层面）
+  - [x] [wangdong] 解决订单本（深度）问题
+  - [ ] [hongyu] cutoff的处理（actor层面）
+  - [ ] [yadong/yongfeng] 以太坊上面爬取存储到数据库。主要包括ring，ERC20 transfer, Ether Transfer, trade，cutoff的存储。并基于此提供更多用户读取数据的API
   - [ ] [yadong/hongyu] **以太坊事件的解析和通知（但不包括分叉的处理）**
   - [ ] [hongyu] **以太坊事件处理（包括actor里面的处理，和数据库的一些更改操作）**
-  - [ ] [yongfeng]redis缓存
-  - [ ] [wangdong] 解决订单本（深度）问题
+  - [ ] [hongyu] TokenMetadataRefresher启动以后应该自己询问费用代币的burn rate
 
 
 - **v0.3** (目标1月末）主要功能包括
@@ -28,11 +29,15 @@
   - [ ] [yadong/hongyu] 以太坊分叉事件的处理
   - [ ] [yadong] JSONRPC支持HTTPS
   - [ ] [yadong] Akka Cluster支持SSL/TLS
+  - [ ] [yongfeng] 所有和市场，包括orderbook相关的配置，应该都放到数据库里面，从配置文件里面移除。
 
 
 - **v0.4** 主要功能包括
-  - [ ] 性能优化
+  - [ ] 更好的整集群集成测试
+  - [ ] [yongfeng]redis缓存
   - [ ] 清理每个人的TODO
   - [ ] 集群监控
   - [ ] 动态增加token和市场，动态停止某个市场（配置放入数据库）
+  - [ ] kongliang/yadong: 整理API文档，中文即可。包括json schema和json rpc。
+  - [ ] 特殊数据可用来存储k线
 

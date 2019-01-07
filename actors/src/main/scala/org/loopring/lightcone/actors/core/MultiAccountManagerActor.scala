@@ -23,10 +23,10 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
-import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.persistence.DatabaseModule
-
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
@@ -59,17 +59,20 @@ object MultiAccountManagerActor extends ShardedByAddress {
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
     case req: SubmitOrder.Req =>
-      throw ErrorException(
-        ERR_UNEXPECTED_ACTOR_MSG,
-        "MultiAccountManagerActor does not handle SubmitOrder.Req, use SubmitSimpleOrder"
-      )
+      req.rawOrder
+        .map(_.owner)
+        .getOrElse {
+          throw ErrorException(
+            ERR_UNEXPECTED_ACTOR_MSG,
+            "SubmitOrder.Req.rawOrder must be nonEmpty."
+          )
+        }
 
     case ActorRecover.RecoverOrderReq(Some(raworder)) => raworder.owner
-    case req: CancelOrder.Req ⇒ req.owner
-    case req: SubmitSimpleOrder ⇒ req.owner
-    case req: GetBalanceAndAllowances.Req ⇒ req.address
-    case req: AddressBalanceUpdated ⇒ req.address
-    case req: AddressAllowanceUpdated ⇒ req.address
+    case req: CancelOrder.Req                         => req.owner
+    case req: GetBalanceAndAllowances.Req             => req.address
+    case req: AddressBalanceUpdated                   => req.address
+    case req: AddressAllowanceUpdated                 => req.address
   }
 }
 
@@ -85,6 +88,8 @@ class MultiAccountManagerActor(
     extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
     with ActorLogging {
 
+  log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
+
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
   val maxRecoverDurationMinutes =
@@ -98,7 +103,7 @@ class MultiAccountManagerActor(
   //todo: 完成recovery后，需要再次测试异常恢复情况
   override val supervisorStrategy =
     AllForOneStrategy() {
-      case e: Exception ⇒
+      case e: Exception =>
         log.error(e.getMessage)
         accountManagerActors.all().foreach(_ ! PoisonPill)
         Escalate

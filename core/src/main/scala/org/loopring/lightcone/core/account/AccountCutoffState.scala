@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.core.account
 
-import org.loopring.lightcone.persistence.dals.OrdersCutoffDal
-import org.loopring.lightcone.proto.{ErrorCode, OrdersCutoffEvent}
-import scala.concurrent.Future
+import org.loopring.lightcone.proto.{MarketId, RawOrder}
 
-trait OrdersCutoffService {
-  val cutoffDal: OrdersCutoffDal
+trait AccountCutoffState {
 
-  def saveCutoff(cutoff: OrdersCutoffEvent): Future[ErrorCode]
-
-  def hasCutoff(
-      orderBroker: Option[String] = None,
-      orderOwner: String,
-      orderTradingPair: String,
-      time: Long // in seconds, where cutoff > time
-    ): Future[Boolean]
-
-  def obsolete(height: Long): Future[Unit]
+  def setCutoff(
+      marketId: MarketId,
+      cutoff: Long
+    )
+  def setCutoff(cutoff: Long)
+  def isOrderCutoff(rawOrder: RawOrder)
 }
