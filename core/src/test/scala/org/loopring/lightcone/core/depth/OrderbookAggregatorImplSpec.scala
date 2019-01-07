@@ -26,7 +26,7 @@ class OrderbookAggregatorImplSpec extends CommonSpec {
   var agg: OrderbookAggregator = _
 
   override def beforeEach() {
-    agg = new OrderbookAggregatorImpl(5)
+    agg = new OrderbookAggregatorImpl(5, 4, 4)
   }
 
   "OrderbookAggregatorImpl" should "not handle 0-valued adjustment" in {
