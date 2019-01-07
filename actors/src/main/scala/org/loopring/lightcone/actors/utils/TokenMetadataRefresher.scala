@@ -83,8 +83,13 @@ class TokenMetadataRefresher(
   )
 
   override def receive: Receive = super.receive orElse LoggingReceive {
-    //todo: 需要接受BurnRate更新事件
     case req: TokenBurnRateChangedEvent =>
       log.info(s"received TokenBurnRateChangedEvent ${req}")
+      tokenMetadataService.updateBurnRate(req.token, req.burnRate)
+      if (tokenManager.hasToken(req.token)) {
+        tokenManager.addToken(
+          tokenManager.getToken(req.token).meta.copy(burnRate = req.burnRate)
+        )
+      }
   }
 }
