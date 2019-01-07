@@ -29,6 +29,7 @@
   - [ ] [yadong/hongyu] 以太坊分叉事件的处理
   - [ ] [yadong] JSONRPC支持HTTPS
   - [ ] [yadong] Akka Cluster支持SSL/TLS
+  - [ ] [yongfeng] 所有和市场，包括orderbook相关的配置，应该都放到数据库里面，从配置文件里面移除。
 
 
 - **v0.4** 主要功能包括
