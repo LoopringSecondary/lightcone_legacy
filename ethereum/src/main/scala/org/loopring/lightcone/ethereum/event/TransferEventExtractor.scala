@@ -16,12 +16,9 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import org.loopring.lightcone.ethereum.abi.{
-  DepositEvent,
-  TransferEvent,
-  WithdrawalEvent
-}
+import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto.{TransferEvent => PTransferEvent, _}
+import org.web3j.utils.Numeric
 
 class TransferEventExtractor extends DataExtractor[PTransferEvent] {
 
@@ -32,49 +29,92 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
     ): Seq[PTransferEvent] = {
     val header = getEventHeader(tx, receipt, blockTime)
 
-   if(isSucceed(receipt.status)) {
-     receipt.logs.zipWithIndex
-       .map(item => {
-         val (log,index) = item
-         wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-           case Some(transfer: TransferEvent.Result) =>
-             Some(
-               PTransferEvent(
-                 header = Some(header.withLogIndex(index)),
-                 from = transfer.from,
-                 to = transfer.receiver,
-                 amount = transfer.amount.toByteArray
-               )
-             )
-           case Some(withdraw: WithdrawalEvent.Result) =>
-             Some(
-               PTransferEvent(
-                 header = Some(header.withLogIndex(index)),
-                 from = withdraw.src,
-                 to = log.address,
-                 amount = withdraw.wad.toByteArray
-               )
-             )
-           case Some(deposit: DepositEvent.Result) =>
-             Some(
-               PTransferEvent(
-                 header = Some(header.withLogIndex(index)),
-                 from = log.address,
-                 to = deposit.dst,
-                 amount = deposit.wad.toByteArray
-               )
-             )
-           case _ => None
-         }
-       })
-       .filter(_.nonEmpty)
-       .map(_.get)
+    if (isSucceed(receipt.status)) {
+      receipt.logs.zipWithIndex
+        .map(item => {
+          val (log, index) = item
+          wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+            case Some(transfer: TransferEvent.Result) =>
+              Some(
+                PTransferEvent(
+                  header = Some(header.withLogIndex(index)),
+                  from = transfer.from,
+                  to = transfer.receiver,
+                  token = log.address,
+                  amount = transfer.amount.toByteArray
+                )
+              )
+            case Some(withdraw: WithdrawalEvent.Result) =>
+              Some(
+                PTransferEvent(
+                  header = Some(header.withLogIndex(index)),
+                  from = withdraw.src,
+                  to = log.address,
+                  token = log.address,
+                  amount = withdraw.wad.toByteArray
+                )
+              )
+            case Some(deposit: DepositEvent.Result) =>
+              Some(
+                PTransferEvent(
+                  header = Some(header.withLogIndex(index)),
+                  from = log.address,
+                  to = deposit.dst,
+                  token = log.address,
+                  amount = deposit.wad.toByteArray
+                )
+              )
+            case _ => None
+          }
+        })
+        .filter(_.nonEmpty)
+        .map(_.get)
 
-   }
-   }else{
-
-
-
+    } else {
+      wethAbi.unpackFunctionInput(tx.input) match {
+        case Some(transfer: TransferFunction.Parms) =>
+          Seq(
+            PTransferEvent(
+              header = Some(header),
+              from = tx.from,
+              to = transfer.to,
+              token = tx.to,
+              amount = transfer.amount.toByteArray
+            )
+          )
+        case Some(transferFrom: TransferFromFunction.Parms) =>
+          Seq(
+            PTransferEvent(
+              header = Some(header),
+              from = transferFrom.txFrom,
+              to = transferFrom.to,
+              token = tx.to,
+              amount = transferFrom.amount.toByteArray
+            )
+          )
+        case Some(DepositFunction.Parms) =>
+          Seq(
+            PTransferEvent(
+              header = Some(header),
+              from = tx.to,
+              to = tx.from,
+              token = tx.to,
+              amount = Numeric.toBigInt(tx.value).toByteArray
+            )
+          )
+        case Some(withdraw: WithdrawFunction.Parms) =>
+          Seq(
+            PTransferEvent(
+              header = Some(header),
+              from = tx.from,
+              to = tx.to,
+              token = tx.to,
+              amount = withdraw.wad.toByteArray
+            )
+          )
+        case _ => Seq.empty
+      }
+    }
 
   }
 }

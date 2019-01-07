@@ -24,7 +24,7 @@ import org.web3j.utils.Numeric
 
 class RingMinedEventExtractor() extends DataExtractor[PRingMinedEvent] {
 
-  val fillLength = 8 * 64
+  val fillLength: Int = 8 * 64
 
   def extract(
       tx: Transaction,
@@ -32,43 +32,47 @@ class RingMinedEventExtractor() extends DataExtractor[PRingMinedEvent] {
       blockTime: String
     ): Seq[PRingMinedEvent] = {
     val header = getEventHeader(tx, receipt, blockTime)
-    receipt.logs.zipWithIndex.map { item =>
-      {
-        val (log, index) = item
-        loopringProtocolAbi
-          .unpackEvent(log.data, log.topics.toArray) match {
-          case Some(event: RingMinedEvent.Result) =>
-            val fillContent =
-              Numeric.cleanHexPrefix(event._fills).substring(128)
-            val orderFilledEvents =
-              (0 until (fillContent.length / fillLength)).map { index =>
-                fillContent.substring(
-                  index * fillLength,
-                  fillLength * (index + 1)
+    if (isSucceed(receipt.status)) {
+      receipt.logs.zipWithIndex.map { item =>
+        {
+          val (log, index) = item
+          loopringProtocolAbi
+            .unpackEvent(log.data, log.topics.toArray) match {
+            case Some(event: RingMinedEvent.Result) =>
+              val fillContent =
+                Numeric.cleanHexPrefix(event._fills).substring(128)
+              val orderFilledEvents =
+                (0 until (fillContent.length / fillLength)).map { index =>
+                  fillContent.substring(
+                    index * fillLength,
+                    fillLength * (index + 1)
+                  )
+                }.map { fill =>
+                  fillToOrderFilledEvent(
+                    fill,
+                    event,
+                    receipt,
+                    Some(header.withLogIndex(index))
+                  )
+                }
+              Some(
+                PRingMinedEvent(
+                  header = Some(header.withLogIndex(index)),
+                  ringIndex = event._ringIndex.longValue(),
+                  ringHash = event._ringHash,
+                  fills = orderFilledEvents
                 )
-              }.map { fill =>
-                fillToOrderFilledEvent(
-                  fill,
-                  event,
-                  receipt,
-                  Some(header.withLogIndex(index))
-                )
-              }
-            Some(
-              PRingMinedEvent(
-                header = Some(header.withLogIndex(index)),
-                ringIndex = event._ringIndex.longValue(),
-                ringHash = event._ringHash,
-                fills = orderFilledEvents
               )
-            )
-          case _ =>
-            None
+            case _ =>
+              None
+          }
         }
-      }
-    }.filter(_.nonEmpty).map(_.get)
+      }.filter(_.nonEmpty).map(_.get)
+    } else {
+      //TODO (yadong)等待孔亮提供具体的解析方法
+      Seq.empty
+    }
   }
-
   private def fillToOrderFilledEvent(
       fill: String,
       event: RingMinedEvent.Result,
