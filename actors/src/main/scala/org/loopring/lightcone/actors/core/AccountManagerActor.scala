@@ -216,6 +216,10 @@ class AccountManagerActor(
         s"ethereumQueryActor GetFilledAmount.Res $getFilledAmountRes"
       )
 
+      outstandingAmountB = byteString2BigInt(rawOrder.amountB) *
+        byteString2BigInt(filledAmountS) / byteString2BigInt(rawOrder.amountS)
+      outstandingAmountFee = byteString2BigInt(rawOrder.amountFee) *
+        byteString2BigInt(filledAmountS) / byteString2BigInt(rawOrder.amountS)
       state = rawOrder.state match {
         case None =>
           RawOrder.State(
@@ -223,26 +227,14 @@ class AccountManagerActor(
             updatedAt = timeProvider.getTimeMillis(),
             status = OrderStatus.STATUS_NEW,
             outstandingAmountS = filledAmountS,
-            outstandingAmountB = byteString2BigInt(rawOrder.amountB) *
-              byteString2BigInt(filledAmountS) / byteString2BigInt(
-              rawOrder.amountS
-            ),
-            outstandingAmountFee = byteString2BigInt(rawOrder.amountFee) *
-              byteString2BigInt(filledAmountS) / byteString2BigInt(
-              rawOrder.amountS
-            )
+            outstandingAmountB = outstandingAmountB,
+            outstandingAmountFee = outstandingAmountFee
           )
         case Some(s) =>
           s.copy(
             outstandingAmountS = filledAmountS,
-            outstandingAmountB = byteString2BigInt(rawOrder.amountB) *
-              byteString2BigInt(filledAmountS) / byteString2BigInt(
-              rawOrder.amountS
-            ),
-            outstandingAmountFee = byteString2BigInt(rawOrder.amountFee) *
-              byteString2BigInt(filledAmountS) / byteString2BigInt(
-              rawOrder.amountS
-            )
+            outstandingAmountB = outstandingAmountB,
+            outstandingAmountFee = outstandingAmountFee
           )
       }
       _ <- dbModule.orderService.updateAmount(rawOrder.id, state = state)
