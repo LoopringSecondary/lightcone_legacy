@@ -83,13 +83,13 @@ class TradeDalImpl(
     if (marketHash.nonEmpty)
       filters = filters.filter(_.marketHash === marketHash.get)
     if (sort.nonEmpty) filters = sort.get match {
-      case SortingType.ASC => filters.sortBy(_.sequenceId.asc)
+      case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
       case SortingType.DESC => filters.sortBy(_.sequenceId.desc)
-      case _ => filters.sortBy(_.sequenceId.asc)
+      case _                => filters.sortBy(_.sequenceId.asc)
     }
     filters = pagingOpt match {
       case Some(paging) => filters.drop(paging.skip).take(paging.size)
-      case None => filters
+      case None         => filters
     }
     filters
   }
@@ -98,7 +98,8 @@ class TradeDalImpl(
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
       case GetTrades.Req.Market.MarketHash(v) => (None, None, Some(v))
-      case GetTrades.Req.Market.Pair(v) => (Some(v.tokenS), Some(v.tokenB), None)
+      case GetTrades.Req.Market.Pair(v) =>
+        (Some(v.tokenS), Some(v.tokenB), None)
       case _ => (None, None, None)
     }
     val filters = queryFilters(
@@ -116,7 +117,8 @@ class TradeDalImpl(
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
       case GetTrades.Req.Market.MarketHash(v) => (None, None, Some(v))
-      case GetTrades.Req.Market.Pair(v) => (Some(v.tokenS), Some(v.tokenB), None)
+      case GetTrades.Req.Market.Pair(v) =>
+        (Some(v.tokenS), Some(v.tokenB), None)
       case _ => (None, None, None)
     }
     val filters = queryFilters(

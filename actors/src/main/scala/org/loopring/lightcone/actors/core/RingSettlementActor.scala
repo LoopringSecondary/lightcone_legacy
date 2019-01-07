@@ -206,13 +206,7 @@ class RingSettlementActor(
         .map(_.txs)
       txs = ringTxs.map(
         (tx: SettlementTx) =>
-          Transaction(
-            tx.data,
-            tx.nonce.toInt,
-            tx.gas,
-            gasPriceRes,
-            to = tx.to
-          )
+          Transaction(tx.data, tx.nonce.toInt, tx.gas, gasPriceRes, to = tx.to)
       )
       txResps <- Future.sequence(txs.map { tx =>
         val rawTx = getSignedTxData(tx)

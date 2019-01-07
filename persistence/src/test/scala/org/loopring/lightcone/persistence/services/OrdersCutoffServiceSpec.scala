@@ -41,7 +41,7 @@ class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
       blockHeight: Long
     ): Future[Seq[ErrorCode]] = {
     for {
-      result <- Future.sequence(brokers.map { broker ⇒
+      result <- Future.sequence(brokers.map { broker =>
         service.saveCutoff(
           OrdersCutoffEvent(
             txHash = broker,
@@ -62,7 +62,7 @@ class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
       blockHeight: Long
     ): Future[Seq[ErrorCode]] = {
     for {
-      result <- Future.sequence(owners.map { owner ⇒
+      result <- Future.sequence(owners.map { owner =>
         service.saveCutoff(
           OrdersCutoffEvent(
             txHash = owner,
@@ -83,7 +83,7 @@ class OrdersCutoffServiceSpec extends ServiceSpec[OrdersCutoffService] {
       blockHeight: Long
     ): Future[Seq[ErrorCode]] = {
     for {
-      result <- Future.sequence(brokers.map { broker ⇒
+      result <- Future.sequence(brokers.map { broker =>
         service.saveCutoff(
           OrdersCutoffEvent(
             txHash = broker,
