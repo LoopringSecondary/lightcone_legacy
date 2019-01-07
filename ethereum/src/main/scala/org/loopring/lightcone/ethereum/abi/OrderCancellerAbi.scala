@@ -17,7 +17,7 @@
 package org.loopring.lightcone.ethereum.abi
 
 import scala.io.Source
-import org.ethereum.solidity.{Abi ⇒ SABI}
+import org.ethereum.solidity.{Abi => SABI}
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -45,7 +45,7 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
     abi.findFunction(searchByName(CancelOrdersFunction.name))
   )
 
-  val cancelAllOrders = CancelAllOrdersFunction(
+  val cancelAllOrdersFunction = CancelAllOrdersFunction(
     abi.findFunction(searchByName(CancelAllOrdersFunction.name))
   )
 
@@ -82,21 +82,21 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
     )
 
     event match {
-      case _: SABI.Event ⇒
+      case _: SABI.Event =>
         event.name match {
-          case OrdersCancelledEvent.name ⇒
+          case OrdersCancelledEvent.name =>
             ordersCancelledEvent.unpack(data, topics)
-          case AllOrdersCancelledForTradingPairEvent.name ⇒
+          case AllOrdersCancelledForTradingPairEvent.name =>
             allOrdersCancelledForTradingPairEvent.unpack(data, topics)
-          case AllOrdersCancelledEvent.name ⇒
+          case AllOrdersCancelledEvent.name =>
             allOrdersCancelledEvent.unpack(data, topics)
-          case AllOrdersCancelledForTradingPairByBrokerEvent.name ⇒
+          case AllOrdersCancelledForTradingPairByBrokerEvent.name =>
             allOrdersCancelledForTradingPairByBrokerEvent.unpack(data, topics)
-          case AllOrdersCancelledByBrokerEvent.name ⇒
+          case AllOrdersCancelledByBrokerEvent.name =>
             allOrdersCancelledByBrokerEvent.unpack(data, topics)
-          case _ ⇒ None
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 
@@ -105,21 +105,21 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
       Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
     val func = abi.findFunction(searchBySignature(funSig))
     func match {
-      case _: SABI.Function ⇒
+      case _: SABI.Function =>
         func.name match {
-          case CancelAllOrdersForTradingPairFunction.name ⇒
+          case CancelAllOrdersForTradingPairFunction.name =>
             cancelAllOrdersForTradingPair.unpackInput(data)
-          case CancelAllOrdersForTradingPairOfOwnerFunction.name ⇒
+          case CancelAllOrdersForTradingPairOfOwnerFunction.name =>
             cancelAllOrdersForTradingPairOfOwner.unpackInput(data)
-          case CancelAllOrdersOfOwnerFunction.name ⇒
+          case CancelAllOrdersOfOwnerFunction.name =>
             cancelAllOrdersOfOwner.unpackInput(data)
-          case CancelOrdersFunction.name ⇒
+          case CancelOrdersFunction.name =>
             cancelOrders.unpackInput(data)
-          case CancelAllOrdersFunction.name ⇒
-            cancelAllOrders.unpackInput(data)
-          case _ ⇒ None
+          case CancelAllOrdersFunction.name =>
+            cancelAllOrdersFunction.unpackInput(data)
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 }

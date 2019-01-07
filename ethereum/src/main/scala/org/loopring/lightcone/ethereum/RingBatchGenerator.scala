@@ -52,15 +52,15 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     val orderValidator = RawOrderValidatorImpl
 
     val ordersWithHash = orders.map(
-      ordersOfRing ⇒
-        ordersOfRing.map(order ⇒ {
+      ordersOfRing =>
+        ordersOfRing.map(order => {
           val hash = orderValidator.calculateOrderHash(order)
           order.copy(hash = hash)
         })
     )
 
     val ordersDistinctedSeq = ordersWithHash.flatten
-      .map(o ⇒ o.hash -> o)
+      .map(o => o.hash -> o)
       .toMap
       .map(_._2)
       .toSeq
@@ -70,8 +70,8 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
       .zipWithIndex
       .toMap
 
-    val xrings = ordersWithHash.map(ordersOfRing ⇒ {
-      val orderIndexes = ordersOfRing.map(o ⇒ ordersHashIndexMap(o.hash))
+    val xrings = ordersWithHash.map(ordersOfRing => {
+      val orderIndexes = ordersOfRing.map(o => ordersHashIndexMap(o.hash))
       new RingBatch.Ring(orderIndexes)
     })
 
@@ -123,7 +123,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     paramStream.addHex(tables.getData)
 
     val ringIndexStream = new Bitstream
-    xRingBatch.rings.foreach(ring ⇒ {
+    xRingBatch.rings.foreach(ring => {
       val orderIndexes = ring.orderIndexes
       paramStream.addNumber(BigInt(orderIndexes.length), 1, true)
       orderIndexes.foreach(i => paramStream.addNumber(BigInt(i), 1, true))

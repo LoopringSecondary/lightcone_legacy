@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.ethereum.abi
 
-import org.ethereum.solidity.{Abi ⇒ SABI}
+import org.ethereum.solidity.{Abi => SABI}
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -44,13 +44,13 @@ class BurnRateTableAbi(abiJson: String) extends AbiWrap(abiJson) {
       searchBySignature(Numeric.hexStringToByteArray(topics.head))
     )
     event match {
-      case _: SABI.Event ⇒
+      case _: SABI.Event =>
         event.name match {
-          case TokenTierUpgradedEvent.name ⇒
+          case TokenTierUpgradedEvent.name =>
             tokenTierUpgradedEvent.unpack(data, topics)
-          case _ ⇒ None
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 

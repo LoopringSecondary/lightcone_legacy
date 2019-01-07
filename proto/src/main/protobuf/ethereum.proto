@@ -269,8 +269,8 @@ message EventHeader {
 
 message TransferEvent {
     EventHeader header = 1;
-    string sender = 2;
-    string receiver = 3;
+    string from = 2;
+    string to = 3;
     string token = 4;
     bytes amount = 5;
 }
@@ -286,29 +286,9 @@ message OrdersCancelledEvent {
 message CutoffEvent {
     EventHeader header = 1;
     string broker = 2;
-    int64  cutoff = 3; // in seconds.
-}
-
-message OwnerCutoffEvent {
-    EventHeader header = 1;
-    string broker = 2;
     string owner  = 3;
-    int64  cutoff = 4; // in seconds.
-}
-
-message TradingPairCutoffEvent {
-    EventHeader header = 1;
-    string broker       = 2;
-    string trading_pair = 3;
-    int64  cutoff       = 4; // in seconds.
-}
-
-message OwnerTradingPairCutoffEvent {
-    EventHeader header = 1;
-    string broker       = 2;
-    string owner        = 3;
     string trading_pair = 4;
-    int64  cutoff       = 5; // in seconds.
+    int64  cutoff = 5; // in seconds.
 }
 
 //LOOPRING RINGMINED
@@ -326,7 +306,7 @@ message OrderFilledEvent {
     string fee_recipient = 11;
 }
 
-message TokenBurnRateEvent {
+message TokenBurnRateChangedEvent {
     EventHeader header = 1;
     string token = 2;
     double burnRate = 3;
@@ -338,32 +318,5 @@ message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
     string ring_hash = 3;
     string fee_recipient = 4;
     repeated OrderFilledEvent fills = 5;
-}
-
-
-message TransactionEvent {
-    enum Type {
-        COMMON = 0;// 普通类型的tx
-        TOKEN = 1; // Token 转账
-        ETH = 2; // ETH 转账
-        TRADE = 3;  // 交易类型
-        LOOPRING = 4; //路印合约相关的，比如取消订单，提交在线订单
-    }
-    string hash = 1;
-    string nonce = 2;
-    string blockHash = 3;
-    string blockNumber = 4;
-    string transactionIndex = 5;
-    string from = 6;
-    string to = 7;
-    string token = 8;// token地址
-    string value = 9;
-    string gasPrice = 10;
-    string gas = 11;
-    string input = 12;
-    string sender = 13; //针对token转账, trade类型，internal类型指实际的转账地址
-    string receiver = 14;//针对token转账, trade类型，internal类型指实际的接收地址
-    Type   eventType = 15;
-    TxStatus  status = 16;
 }
 

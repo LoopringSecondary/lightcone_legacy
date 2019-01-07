@@ -84,16 +84,16 @@ class EthereumQueryActor(
   def receive = LoggingReceive {
     case req: GetBalanceAndAllowances.Req =>
       val erc20Tokens = req.tokens.filterNot(
-        token ⇒ Address(token).toString.equals(Address.zeroAddress)
+        token => Address(token).toString.equals(Address.zeroAddress)
       )
       val ethToken =
         req.tokens.find(
-          token ⇒ Address(token).toString.equals(Address.zeroAddress)
+          token => Address(token).toString.equals(Address.zeroAddress)
         )
 
       (for {
-        batchReqs ← Future {
-          BatchCall.from(
+        batchReqs <- Future {
+          getBalanceAndAllowanceToBatchReq(
             Address(delegateAddress),
             req.copy(tokens = erc20Tokens)
           )
@@ -101,21 +101,21 @@ class EthereumQueryActor(
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
-          case Some(_) ⇒
+          case Some(_) =>
             (ethereumAccessorActor ? EthGetBalance.Req(
               address = Address(req.address).toString,
               tag = "latest"
             )).mapAs[EthGetBalance.Res].map(Some(_))
           case None => Future.successful(None)
         }
-        res: GetBalanceAndAllowances.Res = BatchCall.toBalanceAndAllowance(
+        res: GetBalanceAndAllowances.Res = batchContractCallResToBalanceAndAllowance(
           req.address,
           erc20Tokens,
           callRes
         )
       } yield {
         ethRes match {
-          case Some(_) ⇒
+          case Some(_) =>
             res.copy(
               balanceAndAllowanceMap = res.balanceAndAllowanceMap +
                 (ethToken.get → BalanceAndAllowance(
@@ -123,69 +123,69 @@ class EthereumQueryActor(
                   BigInt(0)
                 ))
             )
-          case None ⇒
+          case None =>
             res
         }
       }) sendTo sender
 
     case req: GetBalance.Req =>
       val erc20Tokens = req.tokens.filterNot(
-        token ⇒ Address(token).toString.equals(Address.zeroAddress)
+        token => Address(token).toString.equals(Address.zeroAddress)
       )
       val ethToken =
         req.tokens.find(
-          token ⇒ Address(token).toString.equals(Address.zeroAddress)
+          token => Address(token).toString.equals(Address.zeroAddress)
         )
 
       (for {
-        batchReqs ← Future { BatchCall.from(req.copy(tokens = erc20Tokens)) }
+        batchReqs <- Future { req.copy(tokens = erc20Tokens) }
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
-          case Some(_) ⇒
+          case Some(_) =>
             (ethereumAccessorActor ? EthGetBalance.Req(
               address = Address(req.address).toString,
               tag = "latest"
             )).mapAs[EthGetBalance.Res].map(Some(_))
-          case None ⇒ Future.successful(None)
+          case None => Future.successful(None)
         }
-        res: GetBalance.Res = BatchCall.toBalance(
+        res: GetBalance.Res = batchContractCallResToBalance(
           req.address,
           req.tokens,
           callRes
         )
       } yield {
         ethRes match {
-          case Some(_) ⇒
+          case Some(_) =>
             res.copy(
               balanceMap = res.balanceMap +
                 (Address.zeroAddress → BigInt(
                   Numeric.toBigInt(ethRes.get.result)
                 ))
             )
-          case None ⇒
+          case None =>
             res
         }
       }) sendTo sender
     // 查询授权不应该有ETH的授权
     case req: GetAllowance.Req =>
       (for {
-        batchReqs: BatchCallContracts.Req ← Future {
-          BatchCall.from(Address(delegateAddress), req)
+        batchReqs: BatchCallContracts.Req <- Future {
+          getAllowanceToBatchReq(Address(delegateAddress), req)
         }
         callRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
-        res: GetAllowance.Res = BatchCall.toAllowance(
+        res: GetAllowance.Res = batchContractCallResToAllowance(
           req.address,
           req.tokens,
           callRes
         )
       } yield res) sendTo sender
 
-    case req: GetFilledAmount.Req ⇒
+    case req: GetFilledAmount.Req =>
       (for {
-        batchReq ← Future {
-          BatchCall.from(Address(tradeHistoryAddress), req)
+        batchReq <- Future {
+          getFilledAmountToBatchReq(Address(tradeHistoryAddress), req)
         }
         batchRes <- (ethereumAccessorActor ? batchReq)
           .mapAs[BatchCallContracts.Res]
@@ -193,85 +193,10 @@ class EthereumQueryActor(
       } yield {
         GetFilledAmount.Res(
           (req.orderIds zip batchRes.map(
-            res ⇒ ByteString.copyFrom(Numeric.hexStringToByteArray(res))
+            res => ByteString.copyFrom(Numeric.hexStringToByteArray(res))
           )).toMap
         )
       }) sendTo sender
-
-    case req: GetOrderCancellation.Req ⇒
-      (
-        for {
-          callReq ← Future {
-            ContractCall.from(req, Address(tradeHistoryAddress), "latest")
-          }
-          result ← (ethereumAccessorActor ? callReq)
-            .mapAs[EthCall.Res]
-            .map(_.result)
-        } yield {
-          GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
-        }
-      ) sendTo sender
-
-    case req: GetCutoffForTradingPairBroker.Req ⇒
-      (
-        for {
-          callReq ← Future {
-            ContractCall.from(req, Address(tradeHistoryAddress), "latest")
-          }
-          result ← (ethereumAccessorActor ? callReq)
-            .mapAs[EthCall.Res]
-            .map(_.result)
-        } yield {
-          GetCutoffForTradingPairBroker.Res(
-            Numeric.toBigInt(result).toByteArray
-          )
-        }
-      ) sendTo sender
-    case req: GetCutoffForOwner.Req ⇒
-      (
-        for {
-          callReq ← Future {
-            ContractCall.from(req, Address(tradeHistoryAddress), "latest")
-          }
-          result ← (ethereumAccessorActor ? callReq)
-            .mapAs[EthCall.Res]
-            .map(_.result)
-        } yield {
-          GetCutoffForOwner.Res(Numeric.toBigInt(result).toByteArray)
-        }
-      ) sendTo sender
-
-    case req: GetCutoffForTradingPairOwner.Req ⇒
-      (
-        for {
-          callReq ← Future {
-            ContractCall.from(
-              req,
-              Address(tradeHistoryAddress),
-              "latest"
-            )
-          }
-          result ← (ethereumAccessorActor ? callReq)
-            .mapAs[EthCall.Res]
-            .map(_.result)
-        } yield {
-          GetCutoffForTradingPairOwner.Res(Numeric.toBigInt(result).toByteArray)
-        }
-      ) sendTo sender
-
-    case req: GetCutoffForBroker.Req ⇒
-      (
-        for {
-          callReq ← Future {
-            ContractCall.from(req, Address(tradeHistoryAddress), "latest")
-          }
-          result ← (ethereumAccessorActor ? callReq)
-            .mapAs[EthCall.Res]
-            .map(_.result)
-        } yield {
-          GetCutoffForBroker.Res(Numeric.toBigInt(result).toByteArray)
-        }
-      ) sendTo sender
   }
 
 }
