@@ -88,6 +88,8 @@ class MultiAccountManagerActor(
     extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
     with ActorLogging {
 
+  log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
+
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
   val maxRecoverDurationMinutes =

@@ -108,6 +108,9 @@ class MarketManagerActor(
     )
     with ActorLogging {
 
+  implicit val marketId = markets(entityId)
+  log.info(s"=======> starting MarketManagerActor ${self.path} for ${marketId}")
+
   var autoSwitchBackToReceive: Option[Cancellable] = None
 
   val wethTokenAddress = config.getString("weth.address")
@@ -125,8 +128,6 @@ class MarketManagerActor(
 
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
-
-  implicit val marketId = markets(entityId)
 
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
     selfConfig.getInt("price-decimals")
