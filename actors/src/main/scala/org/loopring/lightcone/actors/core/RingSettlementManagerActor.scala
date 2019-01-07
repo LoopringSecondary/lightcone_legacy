@@ -87,7 +87,7 @@ class RingSettlementManagerActor(
     ringSettlementActors = selfConfig
       .getConfigList("miners")
       .asScala
-      .map(minerConfig ⇒ {
+      .map(minerConfig => {
         val miner = minerConfig.getString("transaction-origin")
         val item = Address(miner).toString →
           context.actorOf(
@@ -108,7 +108,7 @@ class RingSettlementManagerActor(
   }
 
   override def receive: Receive = {
-    case req: SettleRings ⇒
+    case req: SettleRings =>
       if (ringSettlementActors.nonEmpty) {
         ringSettlementActors
           .toSeq(Random.nextInt(ringSettlementActors.size))
@@ -120,7 +120,7 @@ class RingSettlementManagerActor(
         )
       }
 
-    case ba: AddressBalanceUpdated ⇒
+    case ba: AddressBalanceUpdated =>
       if (ba.token.equals(Address.zeroAddress)) {
         val balance = BigInt(ba.balance.toByteArray)
         if (balance > miniMinerBalance && invalidRingSettlementActors.contains(
@@ -139,7 +139,7 @@ class RingSettlementManagerActor(
           ringSettlementActors = ringSettlementActors - ba.address
         }
       }
-    case msg ⇒
+    case msg =>
       println(s"ring settlement manager received $msg")
   }
 }

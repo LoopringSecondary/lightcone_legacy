@@ -85,7 +85,7 @@ class RingSettlementActor(
     Job(
       name = selfConfig.getString("job.name"),
       dalayInSeconds = selfConfig.getInt("job.delay-in-seconds"),
-      run = () ⇒ resubmitTx(),
+      run = () => resubmitTx(),
       initialDalayInSeconds = selfConfig.getInt("job.initial-delay-in-seconds")
     )
   )
@@ -104,10 +104,10 @@ class RingSettlementActor(
       .map(_.result)
 
     initialFuture onComplete {
-      case Success(validNonce) ⇒
+      case Success(validNonce) =>
         nonce.set(Numeric.toBigInt(validNonce).intValue())
         self ! Notify("initialized")
-      case Failure(e) ⇒
+      case Failure(e) =>
         log.error(s"Start ring settlement actor failed:${e.getMessage}")
         context.stop(self)
     }
@@ -116,18 +116,18 @@ class RingSettlementActor(
   override def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
-    case Notify("initialized", _) ⇒
+    case Notify("initialized", _) =>
       unstashAll()
       context.become(ready)
       self ! Notify("handle_settle_rings")
-    case _ ⇒
+    case _ =>
       stash()
   }
 
   def ready: Receive = super.receive orElse LoggingReceive {
     case req: SettleRings =>
       val rings: Seq[Seq[OrderRing]] = truncReq2Rings(req)
-      taskQueue.enqueue(rings.map(ring ⇒ {
+      taskQueue.enqueue(rings.map(ring => {
         SettleRings(
           gasPrice = req.gasPrice,
           gasLimit = BigInt(Numeric.toBigInt(req.gasLimit.toByteArray)) * ring.size / req.rings.size,
@@ -135,7 +135,7 @@ class RingSettlementActor(
         )
       }): _*)
 
-    case Notify("handle_settle_rings", _) ⇒
+    case Notify("handle_settle_rings", _) =>
       handleSettleRings()
   }
 
@@ -143,8 +143,8 @@ class RingSettlementActor(
     if (taskQueue.nonEmpty) {
       val ring: SettleRings = taskQueue.dequeue()
       for {
-        rawOrders: Seq[Seq[RawOrder]] ← Future.sequence(ring.rings.map {
-          xOrderRing ⇒
+        rawOrders: Seq[Seq[RawOrder]] <- Future.sequence(ring.rings.map {
+          xOrderRing =>
             dbModule.orderService.getOrders(
               Seq(
                 xOrderRing.maker.get.order.get.id,
@@ -163,7 +163,7 @@ class RingSettlementActor(
           chainId = chainId
         )
         rawTx = getSignedTxData(tx)
-        resp ← (ethereumAccessActor ? SendRawTransaction.Req(rawTx))
+        resp <- (ethereumAccessActor ? SendRawTransaction.Req(rawTx))
           .mapAs[SendRawTransaction.Res]
       } yield {
         if (resp.error.isEmpty) {
@@ -196,7 +196,7 @@ class RingSettlementActor(
       gasPriceRes <- (gasPriceActor ? GetGasPrice.Req())
         .mapAs[GetGasPrice.Res]
         .map(_.gasPrice)
-      ringTxs ← dbModule.settlementTxService
+      ringTxs <- dbModule.settlementTxService
         .getPendingTxs(
           GetPendingTxs.Req(
             owner = ringContext.transactionOrigin,
@@ -205,23 +205,17 @@ class RingSettlementActor(
         )
         .map(_.txs)
       txs = ringTxs.map(
-        (tx: SettlementTx) ⇒
-          Transaction(
-            tx.data,
-            tx.nonce.toInt,
-            tx.gas,
-            gasPriceRes,
-            to = tx.to
-          )
+        (tx: SettlementTx) =>
+          Transaction(tx.data, tx.nonce.toInt, tx.gas, gasPriceRes, to = tx.to)
       )
-      txResps ← Future.sequence(txs.map { tx =>
+      txResps <- Future.sequence(txs.map { tx =>
         val rawTx = getSignedTxData(tx)
         (ethereumAccessActor ? SendRawTransaction.Req(rawTx))
           .mapAs[SendRawTransaction.Res]
       })
     } yield {
       (txs zip txResps).filter(_._2.error.isEmpty).map {
-        case (tx, res) ⇒
+        case (tx, res) =>
           saveTx(tx, res)
       }
     }

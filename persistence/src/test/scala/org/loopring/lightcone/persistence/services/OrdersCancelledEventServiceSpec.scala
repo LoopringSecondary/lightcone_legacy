@@ -53,7 +53,7 @@ class OrdersCancelledEventServiceSpec
       blockHeight: Long
     ): Future[Set[ErrorCode]] = {
     for {
-      result <- Future.sequence(hashes.map { hash ⇒
+      result <- Future.sequence(hashes.map { hash =>
         testSave(hash, blockHeight)
       })
     } yield result

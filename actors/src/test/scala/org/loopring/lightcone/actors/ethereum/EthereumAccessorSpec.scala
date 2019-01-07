@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.ethereum
+// package org.loopring.lightcone.actors.ethereum
 
-import akka.actor._
-import akka.pattern._
-import akka.stream.ActorMaterializer
-import akka.util.Timeout
-import com.typesafe.config._
-import org.loopring.lightcone.actors.base.MapBasedLookup
-import org.loopring.lightcone.actors.support.{CommonSpec, EthereumSupport}
-import org.loopring.lightcone.ethereum.abi._
-import org.loopring.lightcone.lib.SystemTimeProvider
-import org.loopring.lightcone.proto._
-import org.scalatest._
-import org.slf4s.Logging
-import org.web3j.utils.Numeric
+// import akka.actor._
+// import akka.pattern._
+// import akka.stream.ActorMaterializer
+// import akka.util.Timeout
+// import com.typesafe.config._
+// import org.loopring.lightcone.actors.base.MapBasedLookup
+// import org.loopring.lightcone.actors.support.{CommonSpec, EthereumSupport}
+// import org.loopring.lightcone.ethereum.abi._
+// import org.loopring.lightcone.lib.SystemTimeProvider
+// import org.loopring.lightcone.proto._
+// import org.scalatest._
+// import org.slf4s.Logging
+// import org.web3j.utils.Numeric
 
-import scala.concurrent.duration._
-import scala.concurrent._
+// import scala.concurrent.duration._
+// import scala.concurrent._
 
 //class EthereumAccessorSpec
 //    extends CommonSpec("""

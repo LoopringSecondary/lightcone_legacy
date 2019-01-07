@@ -55,13 +55,13 @@ class TradeDalImpl(
         )).asTry
       )
       .map {
-        case Failure(e: MySQLIntegrityConstraintViolationException) ⇒
+        case Failure(e: MySQLIntegrityConstraintViolationException) =>
           Left(ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
-        case Failure(ex) ⇒ {
+        case Failure(ex) => {
           logger.error(s"error : ${ex.getMessage}")
           Left(ErrorCode.ERR_PERSISTENCE_INTERNAL)
         }
-        case Success(x) ⇒ Right(trade.txHash)
+        case Success(x) => Right(trade.txHash)
       }
   }
 
@@ -83,13 +83,13 @@ class TradeDalImpl(
     if (marketHash.nonEmpty)
       filters = filters.filter(_.marketHash === marketHash.get)
     if (sort.nonEmpty) filters = sort.get match {
-      case SortingType.ASC ⇒ filters.sortBy(_.sequenceId.asc)
-      case SortingType.DESC ⇒ filters.sortBy(_.sequenceId.desc)
-      case _ ⇒ filters.sortBy(_.sequenceId.asc)
+      case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
+      case SortingType.DESC => filters.sortBy(_.sequenceId.desc)
+      case _                => filters.sortBy(_.sequenceId.asc)
     }
     filters = pagingOpt match {
-      case Some(paging) ⇒ filters.drop(paging.skip).take(paging.size)
-      case None ⇒ filters
+      case Some(paging) => filters.drop(paging.skip).take(paging.size)
+      case None         => filters
     }
     filters
   }
@@ -97,9 +97,10 @@ class TradeDalImpl(
   def getTrades(request: GetTrades.Req): Future[Seq[Trade]] = {
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
-      case GetTrades.Req.Market.MarketHash(v) ⇒ (None, None, Some(v))
-      case GetTrades.Req.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
-      case _ ⇒ (None, None, None)
+      case GetTrades.Req.Market.MarketHash(v) => (None, None, Some(v))
+      case GetTrades.Req.Market.Pair(v) =>
+        (Some(v.tokenS), Some(v.tokenB), None)
+      case _ => (None, None, None)
     }
     val filters = queryFilters(
       owner,
@@ -115,9 +116,10 @@ class TradeDalImpl(
   def countTrades(request: GetTrades.Req): Future[Int] = {
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokenS, tokenB, marketHash) = request.market match {
-      case GetTrades.Req.Market.MarketHash(v) ⇒ (None, None, Some(v))
-      case GetTrades.Req.Market.Pair(v) ⇒ (Some(v.tokenS), Some(v.tokenB), None)
-      case _ ⇒ (None, None, None)
+      case GetTrades.Req.Market.MarketHash(v) => (None, None, Some(v))
+      case GetTrades.Req.Market.Pair(v) =>
+        (Some(v.tokenS), Some(v.tokenB), None)
+      case _ => (None, None, None)
     }
     val filters = queryFilters(
       owner,

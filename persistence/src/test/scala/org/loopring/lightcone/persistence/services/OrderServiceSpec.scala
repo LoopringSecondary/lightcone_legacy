@@ -60,7 +60,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       validUntil: Int = 0
     ): Future[Set[Either[RawOrder, ErrorCode]]] = {
     for {
-      result <- Future.sequence(owners.map { owner ⇒
+      result <- Future.sequence(owners.map { owner =>
         testSave(owner, status, tokenS, tokenB, validSince, validUntil)
       })
     } yield result

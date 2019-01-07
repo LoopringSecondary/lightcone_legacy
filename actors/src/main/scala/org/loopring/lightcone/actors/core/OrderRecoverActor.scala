@@ -129,7 +129,7 @@ class OrderRecoverActor(
           )
           Future.sequence(reqs.map(mama ? _))
         } else {
-          Future.successful()
+          Future.successful(Unit)
         }
       } yield {
         numOrders += orders.size

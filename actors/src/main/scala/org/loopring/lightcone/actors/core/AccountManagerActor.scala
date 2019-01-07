@@ -55,7 +55,7 @@ class AccountManagerActor(
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
-      case e: Exception ⇒
+      case e: Exception =>
         log.error(e.getMessage)
         Escalate
     }
@@ -72,9 +72,9 @@ class AccountManagerActor(
     //todo:eth请求还未就绪，等待就绪再完善该部分~
     val fu = Future.successful(Unit)
     fu onComplete {
-      case Success(res) ⇒
+      case Success(res) =>
         self ! Notify("initialized")
-      case Failure(e) ⇒
+      case Failure(e) =>
         log.error(s"failed to start AccountManagerActor: ${e.getMessage}")
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
@@ -86,10 +86,10 @@ class AccountManagerActor(
   def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
-    case Notify("initialized", _) ⇒
+    case Notify("initialized", _) =>
       unstashAll()
       context.become(normalReceive)
-    case _ ⇒
+    case _ =>
       stash()
   }
 
@@ -250,7 +250,7 @@ class AccountManagerActor(
       tokens: Seq[String]
     ): Future[Seq[AccountTokenManager]] = {
     val tokensWithoutMaster =
-      tokens.filterNot(token ⇒ manager.hasTokenManager(token))
+      tokens.filterNot(token => manager.hasTokenManager(token))
     for {
       res <- if (tokensWithoutMaster.nonEmpty) {
         (ethereumQueryActor ? GetBalanceAndAllowances.Req(
@@ -261,13 +261,13 @@ class AccountManagerActor(
         Future.successful(GetBalanceAndAllowances.Res())
       }
       tms = tokensWithoutMaster.map(
-        token ⇒
+        token =>
           new AccountTokenManagerImpl(
             token,
             config.getInt("account_manager.max_order_num")
           )
       )
-      _ = tms.foreach(tm ⇒ {
+      _ = tms.foreach(tm => {
         val ba = res.balanceAndAllowanceMap(tm.token)
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
         manager.addTokenManager(tm)

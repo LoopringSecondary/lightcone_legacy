@@ -87,7 +87,7 @@ abstract class AbiWrap(abiJson: String) {
   private[abi] def searchBySignature[T <: SABI.Entry](
       signature: Array[Byte]
     ): Predicate[T] =
-    x ⇒ util.Arrays.equals(x.encodeSignature(), signature)
+    x => util.Arrays.equals(x.encodeSignature(), signature)
 
   def unpackEvent(
       data: String,

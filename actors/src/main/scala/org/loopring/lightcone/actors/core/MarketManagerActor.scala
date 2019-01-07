@@ -169,7 +169,7 @@ class MarketManagerActor(
 
   def recover: Receive = {
 
-    case SubmitSimpleOrder(_, Some(order)) ⇒
+    case SubmitSimpleOrder(_, Some(order)) =>
       submitOrder(order)
 
     case msg @ ActorRecover.Finished(timeout) =>
@@ -188,11 +188,11 @@ class MarketManagerActor(
 
   def receive: Receive = {
 
-    case SubmitSimpleOrder(_, Some(order)) ⇒
+    case SubmitSimpleOrder(_, Some(order)) =>
       submitOrder(order).sendTo(sender)
 
-    case CancelOrder.Req(orderId, _, _, _) ⇒
-      manager.cancelOrder(orderId) foreach { orderbookUpdate ⇒
+    case CancelOrder.Req(orderId, _, _, _) =>
+      manager.cancelOrder(orderId) foreach { orderbookUpdate =>
         orderbookManagerMediator ! Publish(
           OrderbookManagerActor.getTopicId(marketId),
           orderbookUpdate.copy(marketId = Some(marketId))
