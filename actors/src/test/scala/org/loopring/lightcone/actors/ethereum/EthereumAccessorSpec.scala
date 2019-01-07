@@ -33,13 +33,11 @@ import org.web3j.utils.Numeric
 import scala.concurrent.duration._
 import scala.concurrent._
 
-class EthereumAccessorSpec
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "ethereum_access",
-                         | "ethereum_client_monitor"]
-                         |""".stripMargin)
-    with EthereumSupport {
+class EthereumAccessorSpec extends CommonSpec("""
+                                                |akka.cluster.roles=[
+                                                | "ethereum_access",
+                                                | "ethereum_client_monitor"]
+                                                |""".stripMargin) with EthereumSupport {
 
   val wethAbi = WETHABI()
   val delegateAdderess = "0x17233e07c67d086464fD408148c3ABB56245FA64"
@@ -207,7 +205,6 @@ class EthereumAccessorSpec
     //    println(s"Gas:$gas")
     //    println("test success")
   }
-
   Await.result(fu, 2 minute)
 
 }

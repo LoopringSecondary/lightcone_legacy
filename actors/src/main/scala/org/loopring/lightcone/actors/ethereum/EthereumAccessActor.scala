@@ -114,8 +114,6 @@ class EthereumAccessActor(
         .filter(_._2 >= 0)
         .sortWith(_._2 > _._2)
 
-      println(connectionPools.size)
-
     case req: JsonRpc.RequestWithHeight =>
       val validPools = connectionPools.filter(_._2 > req.height)
       if (validPools.nonEmpty) {
