@@ -18,7 +18,7 @@ package org.loopring.lightcone.ethereum.event
 
 import org.loopring.lightcone.ethereum.abi.RingMinedEvent
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{RingMinedEvent ⇒ PRingMinedEvent}
+import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent}
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
@@ -30,22 +30,22 @@ class RingMinedEventExtractor() extends DataExtractor[PRingMinedEvent] {
       blockTime: String
     ): Seq[PRingMinedEvent] = {
     val header = getEventHeader(tx, receipt, blockTime)
-    receipt.logs.zipWithIndex.map { item ⇒
+    receipt.logs.zipWithIndex.map { item =>
       {
         val (log, index) = item
         loopringProtocolAbi
           .unpackEvent(log.data, log.topics.toArray) match {
-          case Some(event: RingMinedEvent.Result) ⇒
+          case Some(event: RingMinedEvent.Result) =>
             val fillContent =
               Numeric.cleanHexPrefix(event._fills).substring(128)
             val fillLength = 8 * 64
             val orderFilledEvents =
-              (0 until (fillContent.length / fillLength)).map { index ⇒
+              (0 until (fillContent.length / fillLength)).map { index =>
                 fillContent.substring(
                   index * fillLength,
                   fillLength * (index + 1)
                 )
-              }.map { fill ⇒
+              }.map { fill =>
                 fillToOrderFilledEvent(
                   fill,
                   event,
@@ -61,7 +61,7 @@ class RingMinedEventExtractor() extends DataExtractor[PRingMinedEvent] {
                 fills = orderFilledEvents
               )
             )
-          case _ ⇒
+          case _ =>
             None
         }
       }

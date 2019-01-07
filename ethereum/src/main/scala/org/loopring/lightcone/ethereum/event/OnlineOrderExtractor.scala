@@ -27,11 +27,11 @@ class OnlineOrderExtractor() extends DataExtractor[RawOrder] {
       receipt: TransactionReceipt,
       blockTime: String
     ): Seq[RawOrder] = {
-    receipt.logs.map { log ⇒
+    receipt.logs.map { log =>
       loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-        case Some(event: OrderSubmittedEvent.Result) ⇒
+        case Some(event: OrderSubmittedEvent.Result) =>
           Some(extractOrderFromEvent(event))
-        case _ ⇒
+        case _ =>
           None
       }
     }.filter(_.nonEmpty).map(_.get)

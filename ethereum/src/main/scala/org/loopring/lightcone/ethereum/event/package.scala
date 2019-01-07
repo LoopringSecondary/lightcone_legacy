@@ -39,49 +39,49 @@ package object event {
     ): (Seq[(String, String)], Seq[(String, String)]) = {
     val balanceAddresses = ListBuffer.empty[(String, String)]
     val allowanceAddresses = ListBuffer.empty[(String, String)]
-    txs.foreach(tx ⇒ {
-      balanceAddresses.append(tx._2.from → Address.zeroAddress)
+    txs.foreach(tx => {
+      balanceAddresses.append(tx._2.from -> Address.ZERO.toString())
       if (Numeric.toBigInt(tx._2.status).intValue() == 1) {
         if (BigInt(Numeric.toBigInt(tx._1.value)) > 0) {
-          balanceAddresses.append(tx._2.to → Address.zeroAddress)
+          balanceAddresses.append(tx._2.to -> Address.ZERO.toString())
         }
         wethAbi.unpackFunctionInput(tx._1.input) match {
-          case Some(param: TransferFunction.Parms) ⇒
+          case Some(param: TransferFunction.Parms) =>
             balanceAddresses.append(
-              tx._1.from → tx._1.to,
-              param.to → tx._1.to
+              tx._1.from -> tx._1.to,
+              param.to -> tx._1.to
             )
-          case Some(param: ApproveFunction.Parms) ⇒
+          case Some(param: ApproveFunction.Parms) =>
             if (param.spender.equalsIgnoreCase(delegate.toString))
               allowanceAddresses.append(
-                tx._1.from → tx._1.to
+                tx._1.from -> tx._1.to
               )
-          case Some(param: TransferFromFunction.Parms) ⇒
+          case Some(param: TransferFromFunction.Parms) =>
             balanceAddresses.append(
               param.txFrom -> tx._1.to,
-              param.to → tx._1.to
+              param.to -> tx._1.to
             )
-          case _ ⇒
+          case _ =>
         }
       }
-      tx._2.logs.foreach(log ⇒ {
+      tx._2.logs.foreach(log => {
         wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-          case Some(transfer: TransferEvent.Result) ⇒
+          case Some(transfer: TransferEvent.Result) =>
             balanceAddresses.append(
-              transfer.from → log.address,
-              transfer.receiver → log.address
+              transfer.from -> log.address,
+              transfer.receiver -> log.address
             )
             if (tx._2.to.equalsIgnoreCase(protocol.toString)) {
-              allowanceAddresses.append(transfer.from → log.address)
+              allowanceAddresses.append(transfer.from -> log.address)
             }
-          case Some(approval: ApprovalEvent.Result) ⇒
+          case Some(approval: ApprovalEvent.Result) =>
             if (approval.spender.equalsIgnoreCase(delegate.toString))
-              allowanceAddresses.append(approval.owner → log.address)
-          case Some(deposit: DepositEvent.Result) ⇒
-            balanceAddresses.append(deposit.dst → log.address)
-          case Some(withdrawal: WithdrawalEvent.Result) ⇒
-            balanceAddresses.append(withdrawal.src → log.address)
-          case _ ⇒
+              allowanceAddresses.append(approval.owner -> log.address)
+          case Some(deposit: DepositEvent.Result) =>
+            balanceAddresses.append(deposit.dst -> log.address)
+          case Some(withdrawal: WithdrawalEvent.Result) =>
+            balanceAddresses.append(withdrawal.src -> log.address)
+          case _ =>
         }
       })
     })

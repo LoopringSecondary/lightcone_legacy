@@ -23,18 +23,18 @@ import org.loopring.lightcone.proto._
 class TokenBurnRateEventExtractor(
     rateMap: Map[String, Int],
     base: Int)
-    extends DataExtractor[TokenBurnRateEvent] {
+    extends DataExtractor[TokenBurnRateChangedEvent] {
 
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[TokenBurnRateEvent] = {
-    receipt.logs.zipWithIndex.map { log ⇒
+    ): Seq[TokenBurnRateChangedEvent] = {
+    receipt.logs.zipWithIndex.map { log =>
       loopringProtocolAbi.unpackEvent(log._1.data, log._1.topics.toArray) match {
-        case Some(event: TokenTierUpgradedEvent.Result) ⇒
+        case Some(event: TokenTierUpgradedEvent.Result) =>
           Some(
-            TokenBurnRateEvent(
+            TokenBurnRateChangedEvent(
               header = Some(
                 getEventHeader(tx, receipt, blockTime)
                   .withLogIndex(log._2)
@@ -43,7 +43,7 @@ class TokenBurnRateEventExtractor(
               burnRate = rateMap(Address(event.add).toString) / base.toDouble
             )
           )
-        case _ ⇒
+        case _ =>
           None
       }
     }.filter(_.nonEmpty).map(_.get)

@@ -16,7 +16,13 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import org.loopring.lightcone.ethereum.abi.AllOrdersCancelledEvent
+import org.loopring.lightcone.ethereum.abi.{
+  AllOrdersCancelledByBrokerEvent,
+  AllOrdersCancelledEvent,
+  AllOrdersCancelledForTradingPairByBrokerEvent,
+  AllOrdersCancelledForTradingPairEvent
+}
+import org.loopring.lightcone.lib.MarketHashProvider.convert2Hex
 import org.loopring.lightcone.proto._
 
 class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
@@ -26,9 +32,9 @@ class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
       receipt: TransactionReceipt,
       blockTime: String
     ): Seq[CutoffEvent] = {
-    receipt.logs.map { log ⇒
+    receipt.logs.map { log =>
       loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-        case Some(event: AllOrdersCancelledEvent.Result) ⇒
+        case Some(event: AllOrdersCancelledEvent.Result) =>
           Some(
             CutoffEvent(
               header = Some(getEventHeader(tx, receipt, blockTime)),
@@ -36,7 +42,37 @@ class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
               broker = event._broker
             )
           )
-        case _ ⇒
+        case Some(event: AllOrdersCancelledByBrokerEvent.Result) =>
+          Some(
+            CutoffEvent(
+              header = Some(getEventHeader(tx, receipt, blockTime)),
+              cutoff = event._cutoff.longValue(),
+              broker = event._broker,
+              owner = event._owner
+            )
+          )
+        case Some(
+            event: AllOrdersCancelledForTradingPairByBrokerEvent.Result
+            ) =>
+          Some(
+            CutoffEvent(
+              header = Some(getEventHeader(tx, receipt, blockTime)),
+              cutoff = event._cutoff.longValue(),
+              broker = event._broker,
+              owner = event._owner,
+              tradingPair = convert2Hex(event._token1, event._token2)
+            )
+          )
+        case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
+          Some(
+            CutoffEvent(
+              header = Some(getEventHeader(tx, receipt, blockTime)),
+              cutoff = event._cutoff.longValue(),
+              broker = event._broker,
+              tradingPair = convert2Hex(event._token1, event._token2)
+            )
+          )
+        case _ =>
           None
       }
     }.filter(_.nonEmpty).map(_.get)

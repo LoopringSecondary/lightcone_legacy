@@ -18,7 +18,7 @@ package org.loopring.lightcone.ethereum.event
 
 import org.loopring.lightcone.ethereum.abi.OrdersCancelledEvent
 import org.loopring.lightcone.proto.{
-  OrdersCancelledEvent ⇒ POrdersCancelledEvent
+  OrdersCancelledEvent => POrdersCancelledEvent
 }
 import org.loopring.lightcone.proto._
 
@@ -30,11 +30,11 @@ class OrdersCancelledEventExtractor()
       receipt: TransactionReceipt,
       blockTime: String
     ): Seq[POrdersCancelledEvent] = {
-    receipt.logs.map { log ⇒
+    receipt.logs.map { log =>
       {
         loopringProtocolAbi
           .unpackEvent(log.data, log.topics.toArray) match {
-          case Some(event: OrdersCancelledEvent.Result) ⇒
+          case Some(event: OrdersCancelledEvent.Result) =>
             Some(
               POrdersCancelledEvent(
                 header = Some(getEventHeader(tx, receipt, blockTime)),
@@ -42,7 +42,7 @@ class OrdersCancelledEventExtractor()
                 orderHashes = event._orderHashes
               )
             )
-          case _ ⇒
+          case _ =>
             None
         }
       }
