@@ -18,10 +18,7 @@ package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.ErrorCode.{
-  ERR_NONE,
-  ERR_PERSISTENCE_UPDATE_FAILED
-}
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
