@@ -17,19 +17,22 @@
 package org.loopring.lightcone.core.depth
 
 private[depth] abstract class LongOrderingSupport(val isSell: Boolean) {
-  implicit val ordering =
-    if (isSell) new Ordering[Long] {
 
-      def compare(
-          a: Long,
-          b: Long
-        ) = a compare b
-    } else
-      new Ordering[Long] {
+  private lazy val desc = new Ordering[Long] {
 
-        def compare(
-            a: Long,
-            b: Long
-          ) = b compare a
-      }
+    def compare(
+        a: Long,
+        b: Long
+      ) = a compare b
+  }
+
+  private lazy val asc = new Ordering[Long] {
+
+    def compare(
+        a: Long,
+        b: Long
+      ) = b compare a
+  }
+
+  implicit val ordering = if (isSell) desc else asc
 }
