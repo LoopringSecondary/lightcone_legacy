@@ -53,7 +53,8 @@ trait MarketAwareSpec extends OrderAwareSpec {
       fackRingMatcher,
       fakePendingRingPool,
       fakeDustOrderEvaluator,
-      fakeAggregator
+      fakeAggregator,
+      100 // max matching attempts
     )
   }
 
@@ -69,9 +70,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
       newStatus: OrderStatus
     ) =
     MarketManager.MatchResult(
-      Nil,
-      order.copy(status = newStatus),
-      Orderbook.Update()
+      order.copy(_matchable = order._actual, status = newStatus)
     )
 
   def noMatchingActivity() = {
