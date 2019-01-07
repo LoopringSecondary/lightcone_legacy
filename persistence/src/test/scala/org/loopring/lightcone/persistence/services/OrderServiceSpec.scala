@@ -23,7 +23,6 @@ import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.math.BigInt
 
 class OrderServiceSpec extends ServiceSpec[OrderService] {
   def getService = new OrderServiceImpl()
@@ -353,7 +352,8 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some(MarketHashProvider.convert2Hex(tokenS, tokenB))
       )
       update <- service.markOrderSoftCancelled(
-        Seq(saved1.left.get.hash, saved3.left.get.hash)
+        Seq(saved1.left.get.hash, saved3.left.get.hash),
+        OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
       )
       query2 <- service.countOrdersForUser(
         Set(OrderStatus.STATUS_NEW),
