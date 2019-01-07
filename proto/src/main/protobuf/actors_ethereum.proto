@@ -92,6 +92,17 @@ message EthGetBalance {
     }
 }
 
+message BatchGetEthBalance {
+    message Req {
+        repeated EthGetBalance.Req reqs = 1;
+    }
+
+    message Res {
+        repeated EthGetBalance.Res resps = 1;
+    }
+}
+
+
 // eth_getTransactionByHash
 message GetTransactionByHash {
     message Req {
@@ -279,6 +290,8 @@ message BatchGetUncle {
         repeated GetBlockWithTxHashByHash.Res resps = 1;
     }
 }
+
+
 
 /// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
 /// 解析合约事件得到下面的数据：

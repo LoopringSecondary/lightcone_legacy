@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import org.loopring.lightcone.ethereum.abi.RingMinedEvent
+import org.loopring.lightcone.ethereum.abi.{RingMinedEvent, SubmitRingsFunction}
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent}
 import org.loopring.lightcone.proto._
@@ -69,8 +69,14 @@ class RingMinedEventExtractor() extends DataExtractor[PRingMinedEvent] {
         }
       }.filter(_.nonEmpty).map(_.get)
     } else {
-      //TODO (yadong)等待孔亮提供具体的解析方法
-      Seq.empty
+      ringSubmitterAbi.unpackFunctionInput(tx.input) match {
+        case Some(params: SubmitRingsFunction.Params) =>
+          val ringData = params.data
+          //TODO (yadong) 等待孔亮的提供具体的解析方法
+          Seq.empty
+        case _ =>
+          Seq.empty
+      }
     }
   }
   private def fillToOrderFilledEvent(

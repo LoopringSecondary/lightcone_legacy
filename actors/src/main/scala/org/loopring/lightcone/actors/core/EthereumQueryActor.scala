@@ -91,7 +91,11 @@ class EthereumQueryActor(
       val (ethToken, erc20Tokens) = req.tokens.partition(Address(_).isZero)
 
       val batchReqs = brb
-        .buildRequest(Address(delegateAddress), req.copy(tokens = erc20Tokens))
+        .buildRequest(
+          Address(delegateAddress),
+          req.copy(tokens = erc20Tokens),
+          LATEST
+        )
 
       (for {
         batchRes <- (ethereumAccessorActor ? batchReqs)
@@ -134,7 +138,7 @@ class EthereumQueryActor(
 
     case req: GetBalance.Req =>
       val (ethToken, erc20Tokens) = req.tokens.partition(Address(_).isZero)
-      val batchReqs = brb.buildRequest(req.copy(tokens = erc20Tokens))
+      val batchReqs = brb.buildRequest(req.copy(tokens = erc20Tokens), LATEST)
 
       (for {
         batchRes <- (ethereumAccessorActor ? batchReqs)
@@ -168,19 +172,21 @@ class EthereumQueryActor(
       } yield finalResult) sendTo sender
 
     case req: GetAllowance.Req =>
-      batchCallEthereum(sender, brb.buildRequest(Address(delegateAddress), req)) {
-        result =>
-          val allowances = result.map { res =>
-            ByteString.copyFrom(Numeric.toBigInt(res).toByteArray)
-          }
-          GetAllowance.Res(req.address, (req.tokens zip allowances).toMap)
+      batchCallEthereum(
+        sender,
+        brb.buildRequest(Address(delegateAddress), req, LATEST)
+      ) { result =>
+        val allowances = result.map { res =>
+          ByteString.copyFrom(Numeric.toBigInt(res).toByteArray)
+        }
+        GetAllowance.Res(req.address, (req.tokens zip allowances).toMap)
       }
 
     case req: GetFilledAmount.Req =>
       batchCallEthereum(
         sender,
         brb
-          .buildRequest(Address(tradeHistoryAddress), req)
+          .buildRequest(Address(tradeHistoryAddress), req, LATEST)
       ) { result =>
         GetFilledAmount.Res(
           (req.orderIds zip result.map(

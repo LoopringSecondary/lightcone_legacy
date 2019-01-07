@@ -60,6 +60,16 @@ message AddressAllowanceUpdated {
     bytes balance = 3;
 }
 
+message BalanceUpdatedAddress{
+    string owner = 1;
+    string token = 2;
+}
+
+message AllowanceUpdatedAddress{
+    string owner = 1;
+    string token = 2;
+}
+
 message GasPriceUpdated {
     int64 gas_price = 1;
 }

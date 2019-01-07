@@ -321,6 +321,24 @@ private[ethereum] class HttpConnector(
         BatchGetUncle.Res(txResps)
       } sendTo sender
     }
+
+    case batchR: BatchGetEthBalance.Req => {
+      val batchReqs = batchR.reqs.map { singleReq =>
+        BatchMethod(
+          id = 0,
+          method = "eth_getBalance",
+          params = Seq(singleReq.address, singleReq.tag)
+        )
+      }
+      batchSendMessages(batchReqs) map { json =>
+        val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
+        val txResps = resps.map(resp => {
+          val respJson = Serialization.write(resp)
+          JsonFormat.fromJsonString[EthGetBalance.Res](respJson)
+        })
+        BatchGetEthBalance.Res(txResps)
+      } sendTo sender
+    }
   }
 
 }
