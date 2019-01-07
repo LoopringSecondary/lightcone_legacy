@@ -33,6 +33,7 @@ enum OrderStatus {
     STATUS_COMPLETELY_FILLED = 5;
     STATUS_CANCELLED_BY_USER = 6;
     STATUS_PENDING_ACTIVE = 7;
+    STATUS_TOO_MANY_RING_FAILURES = 8;
 
     STATUS_CANCELLED_LOW_BALANCE = 100;
     STATUS_CANCELLED_LOW_FEE_BALANCE = 101;
@@ -129,7 +130,7 @@ message Orderbook {
     message Update {
         repeated Slot sells = 1;
         repeated Slot buys = 2;
-        double last_price = 3;
+        double latest_price = 3;
         MarketId market_id = 4;
     }
 
