@@ -20,11 +20,10 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.ErrorCode
 import org.web3j.utils.Numeric
-import org.web3j.crypto.WalletUtils
 
 class Address(val value: BigInt) {
 
-//  assert(value <= Address.MAX.value)
+  assert(value <= BigInt("f" * 40, 16))
 
   def toBigInt: BigInt = value
 
