@@ -21,11 +21,17 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.base._
 
 class OrderAwareOrderbookAggregatorImpl(
-    priceDecimals: Int
+    priceDecimals: Int,
+    precisionForAmount: Int,
+    precisionForTotal: Int
   )(
     implicit marketId: MarketId,
     tokenManager: TokenManager)
-    extends OrderbookAggregatorImpl(priceDecimals)
+    extends OrderbookAggregatorImpl(
+      priceDecimals,
+      precisionForAmount,
+      precisionForTotal
+    )
     with OrderAwareOrderbookAggregator {
 
   def addOrder(order: Matchable) =

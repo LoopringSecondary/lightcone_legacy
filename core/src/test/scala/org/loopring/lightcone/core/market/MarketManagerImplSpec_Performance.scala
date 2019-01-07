@@ -49,7 +49,11 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
       new RingMatcherImpl,
       new PendingRingPoolImpl,
       fakeDustOrderEvaluator,
-      new OrderAwareOrderbookAggregatorImpl(priceDecimals = 5),
+      new OrderAwareOrderbookAggregatorImpl(
+        priceDecimals = 5,
+        precisionForAmount = 4,
+        precisionForTotal = 4
+      ),
       100 // max matching attempts
     )
 

@@ -63,12 +63,22 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
     private val totalFormat = s"%.${config.precisionForTotal}f"
 
     private val sellSide =
-      new OrderbookSide.Sells(config.priceDecimals, aggregationLevel, false)
-      with ConverstionSupport
+      new OrderbookSide.Sells(
+        config.priceDecimals,
+        aggregationLevel,
+        config.precisionForAmount,
+        config.precisionForTotal,
+        false
+      ) with ConverstionSupport
 
     private val buySide =
-      new OrderbookSide.Buys(config.priceDecimals, aggregationLevel, false)
-      with ConverstionSupport
+      new OrderbookSide.Buys(
+        config.priceDecimals,
+        aggregationLevel,
+        config.precisionForAmount,
+        config.precisionForTotal,
+        false
+      ) with ConverstionSupport
 
     def processUpdate(update: Orderbook.Update) {
       update.sells.foreach(sellSide.increase)
@@ -128,6 +138,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
           num: Int,
           latestPrice: Option[Double]
         ): Seq[Orderbook.Item] = {
+
         val latestPriceSlot = latestPrice.map { p =>
           (p * priceScaling).toLong
         }

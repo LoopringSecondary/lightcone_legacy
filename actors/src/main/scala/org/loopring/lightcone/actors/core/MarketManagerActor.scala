@@ -130,7 +130,9 @@ class MarketManagerActor(
   val pendingRingPool = new PendingRingPoolImpl()
 
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-    selfConfig.getInt("price-decimals")
+    selfConfig.getInt("price-decimals"),
+    selfConfig.getInt("precision-for-amount"),
+    selfConfig.getInt("precision-for-total")
   )
 
   val manager = new MarketManagerImpl(
