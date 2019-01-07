@@ -167,20 +167,28 @@ message UpdateTxInBlock {
     }
 }
 
-message OrderFilledData {
-    string order_hash = 1;
-    string tx_hash = 2;
-    string owner = 3;
-    string block_hash = 4;
-    int64  block_number = 5;
-    int64  block_timestamp   = 6;
-    string ring_hash         = 7;
-    int64  ring_index        = 8;
-    bytes  origin_amount_s   = 9;
-    bytes  filled_amount_s     = 10;
-    bytes  amount_fee = 11;
-    bytes  fee_amount_s = 12;
-    bytes  fee_amount_b = 13;
-    string fee_recipient = 14;
-    int64  created_at = 15;
+message BlockchainRecordData {
+    enum RecordType {
+        TRANSFER        = 0;
+        ERC20_TRANSFER  = 1;
+        ORDER_FILLED    = 2;
+        ORDER_CANCELLED = 3;
+    }
+    EventHeader header      = 1;
+    string      owner       = 2;
+    RecordType  record_type = 3;
+    bytes       data        = 4;
+    int64       created_at  = 5;
+    int64       sequence_id = 6;
+}
+
+message PersistBlockchainRecord {
+    message Req {
+        BlockchainRecordData data    = 1;
+    }
+    message Res {
+        BlockchainRecordData data          = 1;
+        bool                 already_exist = 2;
+        ErrorCode            error         = 3;
+    }
 }

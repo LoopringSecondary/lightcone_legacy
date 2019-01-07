@@ -24,44 +24,69 @@ import slick.jdbc.MySQLProfile.api._
 class BlockchainScanRecordBaseTable(tableNum: Int) {
 
   class BlockchainScanRecordTable(tag: Tag)
-      extends BaseTable[OrderFilledData](tag, s"ORDER_FILLED_$tableNum") {
-    def id = orderHash
-    def orderHash = columnHash("order_hash")
+      extends BaseTable[BlockchainRecordData](
+        tag,
+        s"BLOCKCHAIN_SCAN_RECORD_$tableNum"
+      ) {
+    implicit val txStatusColumnType = enumColumnType(TxStatus)
+    implicit val recordTypeColumnType = enumColumnType(
+      BlockchainRecordData.RecordType
+    )
+
+    def id = txHash
     def txHash = columnHash("tx_hash")
-    def owner = columnAddress("owner")
+    def txStatus = column[TxStatus]("tx_status")
     def blockHash = columnHash("block_hash")
     def blockNumber = column[Long]("block_number")
     def blockTimestamp = column[Long]("block_timestamp")
-    def ringHash = columnHash("ring_hash")
-    def ringIndex = column[Long]("ring_index")
-    def originAmountS = column[ByteString]("origin_amount_s")
-    def filledAmountS = column[ByteString]("filled_amount_s")
-    def amountFee = column[ByteString]("amount_fee")
-    def feeAmountS = column[ByteString]("fee_amount_s")
-    def feeAmountB = column[ByteString]("fee_amount_b")
-    def feeRecipient = columnAddress("fee_recipient")
+    def txFrom = columnAddress("tx_from")
+    def txTo = columnAddress("tx_to")
+    def txValue = column[ByteString]("tx_value")
+    def txIndex = column[Int]("tx_index")
+    def logIndex = column[Int]("log_index")
     def createdAt = column[Long]("created_at")
+
+    def owner = columnAddress("owner")
+    def recordType = column[BlockchainRecordData.RecordType]("record_type")
+    def data = column[ByteString]("data")
+    def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
 
     // indexes
     def idx_owner = index("idx_owner", (owner), unique = false)
+    def idx_owner_tx = index("idx_owner_tx", (owner, txHash), unique = true)
 
-    def * =
+    def idx_block_number =
+      index("idx_block_number", (blockNumber), unique = false)
+    def idx_tx_index = index("idx_tx_index", (txIndex), unique = false)
+    def idx_log_index = index("idx_log_index", (logIndex), unique = false)
+
+    def headerProjection =
       (
-        orderHash,
         txHash,
-        owner,
+        txStatus,
         blockHash,
         blockNumber,
         blockTimestamp,
-        ringHash,
-        ringIndex,
-        originAmountS,
-        filledAmountS,
-        amountFee,
-        feeAmountS,
-        feeAmountB,
-        feeRecipient,
-        createdAt
-      ) <> ((OrderFilledData.apply _).tupled, OrderFilledData.unapply)
+        txFrom,
+        txTo,
+        txValue,
+        txIndex,
+        logIndex
+      ) <> ({ tuple =>
+        Option((EventHeader.apply _).tupled(tuple))
+      }, { paramsOpt: Option[EventHeader] =>
+        val params = paramsOpt.getOrElse(EventHeader())
+        EventHeader.unapply(params)
+      })
+
+    def * =
+      (
+        headerProjection,
+        owner,
+        recordType,
+        data,
+        createdAt,
+        sequenceId
+      ) <> ((BlockchainRecordData.apply _).tupled, BlockchainRecordData.unapply)
   }
 }

@@ -18,7 +18,7 @@ package org.loopring.lightcone.persistence.services
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
 import com.google.protobuf.ByteString
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
 import org.loopring.lightcone.proto.{OrderStatus, RawOrder}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
@@ -44,6 +44,7 @@ trait ServiceSpec[S]
     mysqlPassword = Some("test")
   )
 
+  implicit val config = ConfigFactory.load()
   implicit val ec = ExecutionContext.global
   implicit var dbConfig: DatabaseConfig[JdbcProfile] = _
   val timeProvider = new SystemTimeProvider()

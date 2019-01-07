@@ -58,6 +58,6 @@ class DatabaseModule @Inject()(
   )
 
   val separateTables = Seq(
-    new OrderFilledDalInit()
+    new BlockchainScanRecordDalInit()
   )
 }
