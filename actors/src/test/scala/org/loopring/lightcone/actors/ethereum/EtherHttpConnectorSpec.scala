@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.ethereum
+// package org.loopring.lightcone.actors.ethereum
 
-import akka.actor._
-import akka.pattern._
-import akka.stream.ActorMaterializer
-import akka.util.Timeout
-import com.typesafe.config._
-import org.loopring.lightcone.actors.base.MapBasedLookup
-import org.loopring.lightcone.ethereum.abi._
-import org.loopring.lightcone.lib.SystemTimeProvider
-import org.loopring.lightcone.proto._
-import org.scalatest._
-import org.slf4s.Logging
+// import akka.actor._
+// import akka.pattern._
+// import akka.stream.ActorMaterializer
+// import akka.util.Timeout
+// import com.typesafe.config._
+// import org.loopring.lightcone.actors.base.MapBasedLookup
+// import org.loopring.lightcone.ethereum.abi._
+// import org.loopring.lightcone.lib.SystemTimeProvider
+// import org.loopring.lightcone.proto._
+// import org.scalatest._
+// import org.slf4s.Logging
 
-import scala.collection.JavaConverters._
-import scala.concurrent.duration._
-import scala.concurrent._
-import org.json4s.jackson.Serialization
-import org.json4s.DefaultFormats
+// import scala.collection.JavaConverters._
+// import scala.concurrent.duration._
+// import scala.concurrent._
+// import org.json4s.jackson.Serialization
+// import org.json4s.DefaultFormats
 
 //class EtherHttpConnectorSpec extends FlatSpec with Matchers with Logging {
 //

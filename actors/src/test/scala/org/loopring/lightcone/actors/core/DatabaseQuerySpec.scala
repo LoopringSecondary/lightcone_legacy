@@ -69,7 +69,7 @@ class DatabaseQuerySpec
           )
       )
       val r = for {
-        _ <- Future.sequence(rawOrders.map { order ⇒
+        _ <- Future.sequence(rawOrders.map { order =>
           dbModule.orderService.saveOrder(order)
         })
         response <- singleRequest(request, "get_orders")
@@ -105,7 +105,7 @@ class DatabaseQuerySpec
         "0x-gettrades-actor-05"
       )
       val r = for {
-        _ <- Future.sequence(hashes.map { hash ⇒
+        _ <- Future.sequence(hashes.map { hash =>
           testSaveTrade(hash, owner, tokenS, tokenB, 1L)
         })
         response <- singleRequest(tradesReq, method)

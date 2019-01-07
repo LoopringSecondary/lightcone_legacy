@@ -57,19 +57,19 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
       searchBySignature(Numeric.hexStringToByteArray(topics.head))
     )
     event match {
-      case _: SABI.Event ⇒
+      case _: SABI.Event =>
         event.name match {
-          case ApprovalEvent.name ⇒
+          case ApprovalEvent.name =>
             approvalEvent.unpack(data, topics)
-          case TransferEvent.name ⇒
+          case TransferEvent.name =>
             transferEvent.unpack(data, topics)
-          case DepositEvent.name ⇒
+          case DepositEvent.name =>
             depositEvent.unpack(data, topics)
-          case WithdrawalEvent.name ⇒
+          case WithdrawalEvent.name =>
             withdrawalEvent.unpack(data, topics)
-          case _ ⇒ None
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 
@@ -78,25 +78,25 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
       Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
     val func = abi.findFunction(searchBySignature(funSig))
     func match {
-      case _: SABI.Function ⇒
+      case _: SABI.Function =>
         func.name match {
-          case TransferFunction.name ⇒
+          case TransferFunction.name =>
             transfer.unpackInput(data)
-          case TransferFromFunction.name ⇒
+          case TransferFromFunction.name =>
             transferFrom.unpackInput(data)
-          case ApproveFunction.name ⇒
+          case ApproveFunction.name =>
             approve.unpackInput(data)
-          case BalanceOfFunction.name ⇒
+          case BalanceOfFunction.name =>
             balanceOf.unpackInput(data)
-          case AllowanceFunction.name ⇒
+          case AllowanceFunction.name =>
             allowance.unpackInput(data)
-          case DepositFunction.name ⇒
+          case DepositFunction.name =>
             deposit.unpackInput(data)
-          case WithdrawFunction.name ⇒
+          case WithdrawFunction.name =>
             withdraw.unpackInput(data)
-          case _ ⇒ None
+          case _ => None
         }
-      case _ ⇒ None
+      case _ => None
     }
   }
 

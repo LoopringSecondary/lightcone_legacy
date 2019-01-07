@@ -49,7 +49,7 @@ class OrderCutoffSpec
     "a0492cc79eac96a23a235ad99c386c27c8b30ee50a94e4b379900c6467e9ea6e"
 
   private def testSaves(orders: Seq[RawOrder]): Future[Seq[Any]] = {
-    Future.sequence(orders.map { order ⇒
+    Future.sequence(orders.map { order =>
       singleRequest(SubmitOrder.Req(Some(order)), "submit_order")
     })
   }

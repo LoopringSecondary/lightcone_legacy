@@ -70,13 +70,13 @@ class EntryPointActor(
     case _: SubmitOrder.Req | _: CancelOrder.Req =>
       Some(MultiAccountManagerMessageValidator.name)
 
-    case _: GetBalanceAndAllowances.Req ⇒
+    case _: GetBalanceAndAllowances.Req =>
       Some(MultiAccountManagerMessageValidator.name)
 
-    case _: GetBalance.Req | _: GetAllowance.Req | _: GetFilledAmount.Req ⇒
+    case _: GetBalance.Req | _: GetAllowance.Req | _: GetFilledAmount.Req =>
       Some(EthereumQueryMessageValidator.name)
 
-    case _: JsonRpc.Request | _: JsonRpc.RequestWithHeight ⇒
+    case _: JsonRpc.Request | _: JsonRpc.RequestWithHeight =>
       Some(EthereumAccessActor.name)
 
     case _: GetOrderbook.Req => Some(OrderbookManagerMessageValidator.name)
