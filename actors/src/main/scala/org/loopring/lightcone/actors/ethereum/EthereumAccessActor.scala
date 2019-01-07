@@ -77,14 +77,18 @@ class EthereumAccessActor(
     with ActorLogging {
 
   private def monitor: ActorRef = actors.get(EthereumClientMonitor.name)
-  var connectionPools: Seq[(String, Int)] = Nil
+  var connectionPools: Seq[(ActorSelection, Long)] = Nil
 
   override def preStart() = {
     val fu = (monitor ? GetNodeBlockHeight.Req())
       .mapAs[GetNodeBlockHeight.Res]
     fu onComplete {
       case Success(res) =>
-        connectionPools = res.nodes.map(node => node.path -> node.height)
+        connectionPools = res.nodes.map(
+          node =>
+            context
+              .actorSelection(node.path) -> node.height
+        )
         self ! Notify("initialized")
       case Failure(e) =>
         log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
@@ -105,17 +109,17 @@ class EthereumAccessActor(
 
   def normalReceive: Receive = {
     case node: NodeBlockHeight =>
-      connectionPools =
-        (connectionPools.toMap + (node.path -> node.height)).toSeq
-          .filter(_._2 >= 0)
-          .sortWith(_._2 > _._2)
+      connectionPools = (connectionPools.toMap +
+        (context.actorSelection(node.path) -> node.height)).toSeq
+        .filter(_._2 >= 0)
+        .sortWith(_._2 > _._2)
+
+      println(connectionPools.size)
 
     case req: JsonRpc.RequestWithHeight =>
       val validPools = connectionPools.filter(_._2 > req.height)
       if (validPools.nonEmpty) {
-        context
-          .actorSelection(validPools(Random.nextInt(validPools.size))._1)
-          .forward(req.req)
+        validPools(Random.nextInt(validPools.size))._1 forward req.req
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
@@ -125,7 +129,7 @@ class EthereumAccessActor(
 
     case msg: JsonRpc.Request => {
       if (connectionPools.nonEmpty) {
-        context.actorSelection(connectionPools.head._1).forward(msg)
+        connectionPools.head._1 forward msg
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
@@ -136,7 +140,7 @@ class EthereumAccessActor(
 
     case msg: ProtoBuf[_] => {
       if (connectionPools.nonEmpty) {
-        context.actorSelection(connectionPools.head._1).forward(msg)
+        connectionPools.head._1 forward msg
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,

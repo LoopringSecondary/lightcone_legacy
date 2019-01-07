@@ -24,7 +24,7 @@ import org.web3j.crypto.WalletUtils
 
 class Address(val value: BigInt) {
 
-  assert(value <= Address.MAX.value)
+//  assert(value <= Address.MAX.value)
 
   def toBigInt: BigInt = value
 

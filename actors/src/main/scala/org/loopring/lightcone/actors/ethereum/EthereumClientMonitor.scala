@@ -89,7 +89,7 @@ class EthereumClientMonitor(
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
   var connectionPools: Seq[ActorRef] = Nil
-  var nodes: Map[String, Int] = Map.empty
+  var nodes: Map[String, Long] = Map.empty
 
   val checkIntervalSeconds: Int = selfConfig.getInt("check-interval-seconds")
 
@@ -154,16 +154,16 @@ class EthereumClientMonitor(
     import JsonRpcResWrapped._
     Future.sequence(connectionPools.map { g =>
       for {
-        blockNumResp: Int <- (g ? blockNumJsonRpcReq.toProto)
+        blockNumResp: Long <- (g ? blockNumJsonRpcReq.toProto)
           .mapAs[JsonRpc.Response]
           .map(toJsonRpcResWrapped)
           .map(_.result)
-          .map(anyHexToInt)
+          .map(anyHexToLong)
           .recover {
             case e: Exception =>
               log
                 .error(s"exception on getting blockNumber: $g: ${e.getMessage}")
-              -1
+              -1L
           }
       } yield {
         nodes = nodes + (g.path.toString -> blockNumResp)
@@ -175,8 +175,8 @@ class EthereumClientMonitor(
     })
   }
 
-  def anyHexToInt: PartialFunction[Any, Int] = {
-    case s: String => Numeric.toBigInt(s).intValue()
-    case _         => -1
+  def anyHexToLong: PartialFunction[Any, Long] = {
+    case s: String => Numeric.toBigInt(s).longValue()
+    case _         => -1L
   }
 }
