@@ -225,7 +225,7 @@ class OrderServiceImpl @Inject()(
           )
         }
       } else {
-        throw ErrorException(ERR_INTERNAL_UNKNOWN, "Failed to update")
+        throw ErrorException(ERR_INTERNAL_UNKNOWN, "Failed to update order status")
       }
     }
 }
