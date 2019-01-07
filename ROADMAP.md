@@ -31,10 +31,11 @@
 
 
 - **v0.4** 主要功能包括
-  - [ ] 性能优化
+  - [ ] 更好的整集群集成测试
   - [ ] [yongfeng]redis缓存
   - [ ] 清理每个人的TODO
   - [ ] 集群监控
-  - [ ] 迁移到AMS DynamoDB
   - [ ] 动态增加token和市场，动态停止某个市场（配置放入数据库）
+  - [ ] kongliang/yadong: 整理API文档，中文即可。包括json schema和json rpc。
+  - [ ] 特殊数据可用来存储k线
 
