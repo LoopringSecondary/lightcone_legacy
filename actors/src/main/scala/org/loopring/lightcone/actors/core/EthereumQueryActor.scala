@@ -47,8 +47,8 @@ object EthereumQueryActor extends ShardedEvenly {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      requestBuilder: EthereumCallRequestBuilder,
-      batchRequestBuilder: EthereumBatchCallRequestBuilder
+      rb: EthereumCallRequestBuilder,
+      brb: EthereumBatchCallRequestBuilder
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -71,13 +71,15 @@ class EthereumQueryActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val requestBuilder: EthereumCallRequestBuilder,
-    val batchRequestBuilder: EthereumBatchCallRequestBuilder)
+    val rb: EthereumCallRequestBuilder,
+    val brb: EthereumBatchCallRequestBuilder)
     extends ActorWithPathBasedConfig(EthereumQueryActor.name) {
 
+  //TODO(yadong): 如果默认值是Latest的话，可以再处理的时候来用这个默认值
   val LATEST = "latest"
 
-  val delegateAddress = config.getString("loopring_protocol.delegate-address")
+  val delegateAddress =
+    config.getString("loopring_protocol.delegate-address")
 
   val tradeHistoryAddress =
     config.getString("loopring_protocol.trade-history-address")
@@ -87,132 +89,107 @@ class EthereumQueryActor(
   //todo:还需要继续优化下
   def receive = LoggingReceive {
     case req: GetBalanceAndAllowances.Req =>
-      val erc20Tokens = req.tokens.filterNot(
-        token => Address(token).toString.equals(Address.zeroAddress)
-      )
-      val ethToken =
-        req.tokens.find(
-          token => Address(token).toString.equals(Address.zeroAddress)
-        )
+      val (ethToken, erc20Tokens) = req.tokens.partition(Address(_).isZero)
 
-      val batchReqs =
-        batchRequestBuilder
-          .buildRequest(
-            Address(delegateAddress),
-            req.copy(tokens = erc20Tokens)
-          )
+      val batchReqs = brb
+        .buildRequest(Address(delegateAddress), req.copy(tokens = erc20Tokens))
+
       (for {
         batchRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
-        ethRes <- ethToken match {
-          case Some(_) =>
-            (ethereumAccessorActor ? EthGetBalance.Req(
-              address = Address(req.address).toString,
-              tag = LATEST
-            )).mapAs[EthGetBalance.Res].map(Some(_))
-          case None => Future.successful(None)
-        }
-      } yield {
-        val allowances = batchRes.resps.filter(_.id % 2 == 0).map { res =>
+        (allowanceResps, balanceResps) = batchRes.resps.partition(_.id % 2 == 0)
+
+        allowances = allowanceResps.map { res =>
           Numeric.toBigInt(res.result).toByteArray
         }
-        val balances =
-          batchRes.resps.filter(_.id % 2 == 1).map { res =>
-            Numeric.toBigInt(res.result).toByteArray
-          }
-        val balanceAndAllowance = (balances zip allowances).map { ba =>
+        balances = balanceResps.map { res =>
+          Numeric.toBigInt(res.result).toByteArray
+        }
+        balanceAndAllowance = (balances zip allowances).map { ba =>
           BalanceAndAllowance(ba._1, ba._2)
         }
-        val res = GetBalanceAndAllowances
+        result = GetBalanceAndAllowances
           .Res(req.address, (erc20Tokens zip balanceAndAllowance).toMap)
 
-        ethRes match {
-          case Some(_) =>
-            res.copy(
-              balanceAndAllowanceMap = res.balanceAndAllowanceMap +
-                (ethToken.get → BalanceAndAllowance(
-                  BigInt(Numeric.toBigInt(ethRes.get.result)),
-                  BigInt(0)
-                ))
-            )
-          case None =>
-            res
-        }
-      }) sendTo sender
-
-    case req: GetBalance.Req =>
-      val erc20Tokens = req.tokens.filterNot(
-        token => Address(token).toString.equals(Address.zeroAddress)
-      )
-      val ethToken =
-        req.tokens.find(
-          token => Address(token).toString.equals(Address.zeroAddress)
-        )
-
-      val batchReqs = batchRequestBuilder
-        .buildRequest(req.copy(tokens = erc20Tokens))
-
-      (for {
-        batchRes <- (ethereumAccessorActor ? batchReqs)
-          .mapAs[BatchCallContracts.Res]
         ethRes <- ethToken match {
-          case Some(_) =>
+          case head :: tail =>
             (ethereumAccessorActor ? EthGetBalance.Req(
               address = Address(req.address).toString,
               tag = LATEST
             )).mapAs[EthGetBalance.Res].map(Some(_))
-          case None => Future.successful(None)
+          case Nil => Future.successful(None)
         }
-      } yield {
-        val balances = batchRes.resps.map { res =>
+
+        _ = if (ethRes.isDefined) {
+          result.copy(
+            balanceAndAllowanceMap = result.balanceAndAllowanceMap +
+              (ethToken.head -> BalanceAndAllowance(
+                BigInt(Numeric.toBigInt(ethRes.get.result)),
+                BigInt(0)
+              ))
+          )
+        }
+      } yield result) sendTo sender
+
+    case req: GetBalance.Req =>
+      val (ethToken, erc20Tokens) = req.tokens.partition(Address(_).isZero)
+      val batchReqs = brb.buildRequest(req.copy(tokens = erc20Tokens))
+
+      (for {
+        batchRes <- (ethereumAccessorActor ? batchReqs)
+          .mapAs[BatchCallContracts.Res]
+
+        balances = batchRes.resps.map { res =>
           ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
         }
-        val res = GetBalance.Res(req.address, (erc20Tokens zip balances).toMap)
-        ethRes match {
-          case Some(_) =>
-            res.copy(
-              balanceMap = res.balanceMap +
-                (Address.zeroAddress → BigInt(
-                  Numeric.toBigInt(ethRes.get.result)
-                ))
-            )
-          case None =>
-            res
+
+        result = GetBalance.Res(req.address, (erc20Tokens zip balances).toMap)
+
+        ethRes <- ethToken match {
+          case head :: tail =>
+            (ethereumAccessorActor ? EthGetBalance.Req(
+              address = Address(req.address).toString,
+              tag = LATEST
+            )).mapAs[EthGetBalance.Res].map(Some(_))
+          case Nil => Future.successful(None)
         }
-      }) sendTo sender
+
+        _ = if (ethRes.isDefined) {
+          result.copy(
+            balanceMap = result.balanceMap +
+              (Address.ZERO.toString -> BigInt(
+                Numeric.toBigInt(ethRes.get.result)
+              ))
+          )
+        }
+      } yield result) sendTo sender
+
     case req: GetAllowance.Req =>
-      batchCallEthereum(
-        sender,
-        batchRequestBuilder
-          .buildRequest(Address(delegateAddress), req)
-      ) { result =>
-        {
+      batchCallEthereum(sender, brb.buildRequest(Address(delegateAddress), req)) {
+        result =>
           val allowances = result.map { res =>
             ByteString.copyFrom(Numeric.toBigInt(res).toByteArray)
           }
           GetAllowance.Res(req.address, (req.tokens zip allowances).toMap)
-        }
       }
+
     case req: GetFilledAmount.Req =>
       batchCallEthereum(
         sender,
-        batchRequestBuilder
+        brb
           .buildRequest(Address(tradeHistoryAddress), req)
       ) { result =>
-        {
-          GetFilledAmount.Res(
-            (req.orderIds zip result.map(
-              res => ByteString.copyFrom(Numeric.hexStringToByteArray(res))
-            )).toMap
-          )
-        }
+        GetFilledAmount.Res(
+          (req.orderIds zip result.map(
+            res => ByteString.copyFrom(Numeric.hexStringToByteArray(res))
+          )).toMap
+        )
       }
 
     case req: GetOrderCancellation.Req =>
       callEthereum(
         sender,
-        requestBuilder
-          .buildRequest(req, Address(tradeHistoryAddress), LATEST)
+        rb.buildRequest(req, Address(tradeHistoryAddress), LATEST)
       ) { result =>
         GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
       }
@@ -220,8 +197,7 @@ class EthereumQueryActor(
     case req: GetCutoff.Req =>
       callEthereum(
         sender,
-        requestBuilder
-          .buildRequest(req, Address(tradeHistoryAddress), LATEST)
+        rb.buildRequest(req, Address(tradeHistoryAddress), LATEST)
       ) { result =>
         GetCutoff.Res(Numeric.toBigInt(result).toByteArray)
       }

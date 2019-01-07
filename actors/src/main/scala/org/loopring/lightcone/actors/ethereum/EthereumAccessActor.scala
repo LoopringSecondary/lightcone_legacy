@@ -84,7 +84,7 @@ class EthereumAccessActor(
       .mapAs[GetNodeBlockHeight.Res]
     fu onComplete {
       case Success(res) =>
-        connectionPools = res.nodes.map(node => node.path → node.height)
+        connectionPools = res.nodes.map(node => node.path -> node.height)
         self ! Notify("initialized")
       case Failure(e) =>
         log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
@@ -106,7 +106,7 @@ class EthereumAccessActor(
   def normalReceive: Receive = {
     case node: NodeBlockHeight =>
       connectionPools =
-        (connectionPools.toMap + (node.path → node.height)).toSeq
+        (connectionPools.toMap + (node.path -> node.height)).toSeq
           .filter(_._2 >= 0)
           .sortWith(_._2 > _._2)
 
