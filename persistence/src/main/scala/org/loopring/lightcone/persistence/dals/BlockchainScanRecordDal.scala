@@ -113,12 +113,16 @@ class BlockchainScanRecordDalImpl(
     ): Future[Seq[BlockchainRecordData]] = {
     var filters = query
       .filter(_.owner === owner)
-      .filter(_.sequenceId > paging.cursor)
-      .take(paging.size)
     filters = if (sort == SortingType.ASC) {
       filters.sortBy(_.sequenceId.asc)
     } else {
       filters.sortBy(_.sequenceId.desc)
+    }
+    if (paging.cursor > 0) {
+      filters = filters.filter(_.sequenceId > paging.cursor)
+    }
+    if (paging.size > 0) {
+      filters = filters.take(paging.size)
     }
     db.run(filters.result)
   }

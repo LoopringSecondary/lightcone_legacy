@@ -67,7 +67,8 @@ trait ServiceSpec[S]
     )
     service = getService()
     val result = createTables()
-    Await.result(result, 5.second)
+    Await.result(result, 10.second)
+    Thread.sleep(5000)
   }
 
   override def beforeAll = {

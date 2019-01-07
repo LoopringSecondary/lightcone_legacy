@@ -18,18 +18,19 @@ package org.loopring.lightcone.persistence.services
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.dals.{BlockDalImpl, BlockchainScanRecordDalInit, OrderDalImpl}
+import org.loopring.lightcone.persistence.dals.{
+  BlockDalImpl,
+  BlockchainScanRecordDalInit,
+  OrderDalImpl
+}
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-class BlockchainScanRecordServiceSpec extends ServiceSpec[BlockchainScanRecordService] {
+class BlockchainScanRecordServiceSpec
+    extends ServiceSpec[BlockchainScanRecordService] {
   def getService = new BlockchainScanRecordServiceImpl()
-  val tokenS = "0xaaaaaa1"
-  val tokenB = "0xbbbbbb1"
-  val validSince = 1
-  val validUntil = timeProvider.getTimeSeconds()
 
   def createTables(): Future[Any] =
     for {
@@ -46,17 +47,43 @@ class BlockchainScanRecordServiceSpec extends ServiceSpec[BlockchainScanRecordSe
       txFrom: String,
       txTo: String
     ): Future[PersistBlockchainRecord.Res] = {
-    val header = EventHeader(txHash = txHash, txStatus = txStatus, blockNumber = blockNumber, txIndex = txIndex, logIndex = logIndex, txFrom = txFrom, txTo = txTo)
+    val header = EventHeader(
+      txHash = txHash,
+      txStatus = txStatus,
+      blockNumber = blockNumber,
+      txIndex = txIndex,
+      logIndex = logIndex,
+      txFrom = txFrom,
+      txTo = txTo
+    )
     val data = OrderFilledEvent(owner = "0x111").toByteArray
-    val r = BlockchainRecordData(header = Some(header), owner = owner, recordType = BlockchainRecordData.RecordType.TRANSFER, data = ByteString.copyFrom(data))
+    val r = BlockchainRecordData(
+      header = Some(header),
+      owner = owner,
+      recordType = BlockchainRecordData.RecordType.TRANSFER,
+      data = ByteString.copyFrom(data)
+    )
     service.saveRecord(r)
   }
 
-  "submitRecord" must "save a record successfully" in {
+  "saveRecord" must "save a record successfully" in {
     val owner = "0x-submitrecord-01"
     val result = for {
-      saved <- testSave("0x-hash1", TxStatus.TX_STATUS_SUCCESS, 100l, 1, 0, owner, owner, "0x-to")
-      query <- service.getRecordsByOwner(owner, SortingType.ASC, CursorPaging())
+      saved <- testSave(
+        "0x-hash1",
+        TxStatus.TX_STATUS_SUCCESS,
+        100L,
+        1,
+        0,
+        owner,
+        owner,
+        "0x-to"
+      )
+      query <- service.getRecordsByOwner(
+        owner,
+        SortingType.ASC,
+        CursorPaging(size = 10)
+      )
     } yield query
     val res = Await.result(result.mapTo[Seq[BlockchainRecordData]], 5.second)
     res should not be empty
