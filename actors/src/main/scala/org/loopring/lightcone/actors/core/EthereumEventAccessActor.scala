@@ -27,7 +27,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object EthereumEventAccessActor extends ShardedByAddress {
+object EthereumEventAccessActor extends ShardedEvenly {
   val name = "ethereum_event_access"
 
   def startShardRegion(
@@ -42,53 +42,27 @@ object EthereumEventAccessActor extends ShardedByAddress {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
+    entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new EthereumEventAccessActor(numOfShards)),
+      entityProps = Props(new EthereumEventAccessActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       messageExtractor = messageExtractor
     )
   }
-
-  // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
-  val extractAddress: PartialFunction[Any, String] = {
-    case req: SubmitOrder.Req =>
-      req.rawOrder
-        .map(_.owner)
-        .getOrElse {
-          throw ErrorException(
-            ERR_UNEXPECTED_ACTOR_MSG,
-            "SubmitOrder.Req.rawOrder must be nonEmpty."
-          )
-        }
-  }
 }
 
-class EthereumEventAccessActor(
-    numOfShards: Int
-  )(
+class EthereumEventAccessActor()(
     implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef])
     extends ActorWithPathBasedConfig(EthereumEventAccessActor.name) {
-  val ethereumEventActors = new MapBasedLookup[ActorRef]()
 
   def receive: Receive = {
-    case req: Any => handleRequest(req)
-  }
-
-  val extractAddress = EthereumEventAccessActor.extractAddress.lift
-
-  private def handleRequest(req: Any) = extractAddress(req) match {
-    case Some(address) =>
-    case None =>
-      throw ErrorException(
-        ERR_UNEXPECTED_ACTOR_MSG,
-        s"$req cannot be handled by ${getClass.getName}"
-      )
+    case _ =>
   }
 
 }

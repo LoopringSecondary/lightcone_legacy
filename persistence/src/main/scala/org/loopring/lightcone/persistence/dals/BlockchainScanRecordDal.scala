@@ -35,7 +35,7 @@ class BlockchainScanRecordDalInit(
     val config: Config,
     val ec: ExecutionContext)
     extends BaseSeparateDal {
-  val tableSeparate = config.getInt("separate.event")
+  val tableSeparate = config.getInt("separate.BlockchainScanRecord")
 
   val tables = (0 until tableSeparate).toList.map { num =>
     val clazz = new BlockchainScanRecordBaseTable(num)

@@ -39,7 +39,7 @@ class BlockchainScanRecordServiceImpl @Inject()(
 
   private def getDal(owner: String): BlockchainScanRecordDal = {
     val separateIndex =
-      Math.abs(owner.hashCode % config.getInt("separate.event"))
+      Math.abs(owner.hashCode % config.getInt("separate.BlockchainScanRecord"))
     if (!dals.contains(separateIndex)) {
       dals += (separateIndex -> new BlockchainScanRecordDalImpl(separateIndex))
     }
