@@ -21,6 +21,7 @@
   - [ ] [yadong/yongfeng] 以太坊上面爬取存储到数据库。主要包括ring，ERC20 transfer, Ether Transfer, trade，cutoff的存储。并基于此提供更多用户读取数据的API
   - [ ] [yadong/hongyu] **以太坊事件的解析和通知（但不包括分叉的处理）**
   - [ ] [hongyu] **以太坊事件处理（包括actor里面的处理，和数据库的一些更改操作）**
+  - [ ] [hongyu] TokenMetadataRefresher启动以后应该自己询问费用代币的burn rate
 
 
 - **v0.3** (目标1月末）主要功能包括
@@ -28,6 +29,7 @@
   - [ ] [yadong/hongyu] 以太坊分叉事件的处理
   - [ ] [yadong] JSONRPC支持HTTPS
   - [ ] [yadong] Akka Cluster支持SSL/TLS
+  - [ ] [yongfeng] 所有和市场，包括orderbook相关的配置，应该都放到数据库里面，从配置文件里面移除。
 
 
 - **v0.4** 主要功能包括

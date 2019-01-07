@@ -65,15 +65,10 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     marketManager.getNumOfOrders() should be(2)
 
     marketManager.getSellOrders(3) should be(
-      Seq(
-        order1.copy(status = STATUS_PENDING),
-        order2.copy(status = STATUS_PENDING)
-      )
+      Seq(order1.asPending, order2.asPending)
     )
 
-    marketManager.getSellOrders(1) should be(
-      Seq(order1.copy(status = STATUS_PENDING))
-    )
+    marketManager.getSellOrders(1) should be(Seq(order1.asPending))
 
     marketManager.getBuyOrders(100) should be(Nil)
   }
@@ -98,15 +93,10 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     marketManager.getNumOfOrders() should be(2)
 
     marketManager.getBuyOrders(3) should be(
-      Seq(
-        order1.copy(status = STATUS_PENDING),
-        order2.copy(status = STATUS_PENDING)
-      )
+      Seq(order1.asPending, order2.asPending)
     )
 
-    marketManager.getBuyOrders(1) should be(
-      Seq(order1.copy(status = STATUS_PENDING))
-    )
+    marketManager.getBuyOrders(1) should be(Seq(order1.asPending))
 
     marketManager.getSellOrders(100) should be(Nil)
   }
