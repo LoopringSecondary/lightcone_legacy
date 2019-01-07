@@ -255,22 +255,22 @@ enum TxStatus {
 }
 
 message EventHeader {
-    string hash = 1;
+    string tx_hash = 1;
     TxStatus tx_status = 2;
     string block_hash = 3;
-    string block_number = 4;
+    int64 block_number = 4;
     int64  block_timestamp   = 5;
     string tx_from = 6;
     string tx_to = 7;
-    string tx_value = 8;
-    string tx_index = 9;
-    string log_index = 10;
+    bytes tx_value = 8;
+    int32 tx_index = 9;
+    int32 log_index = 10;
 }
 
 message TransferEvent {
     EventHeader header = 1;
-    string sender = 2;
-    string receiver = 3;
+    string from = 2;
+    string to = 3;
     string token = 4;
     bytes amount = 5;
 }
@@ -286,29 +286,9 @@ message OrdersCancelledEvent {
 message CutoffEvent {
     EventHeader header = 1;
     string broker = 2;
-    int32  cutoff = 3; // in seconds.
-}
-
-message OwnerCutoffEvent {
-    EventHeader header = 1;
-    string broker = 2;
     string owner  = 3;
-    int32  cutoff = 4; // in seconds.
-}
-
-message TradingPairCutoffEvent {
-    EventHeader header = 1;
-    string broker       = 2;
-    string trading_pair = 3;
-    int32  cutoff       = 4; // in seconds.
-}
-
-message OwnerTradingPairCutoffEvent {
-    EventHeader header = 1;
-    string broker       = 2;
-    string owner        = 3;
     string trading_pair = 4;
-    int32  cutoff       = 5; // in seconds.
+    int64  cutoff = 5; // in seconds.
 }
 
 //LOOPRING RINGMINED
@@ -319,14 +299,14 @@ message OrderFilledEvent {
     string delegate_address  = 4;
     string ring_hash         = 5;
     int64  ring_index        = 6;
-    bytes  filled     = 7;
-    bytes  amount_fee = 8;
+    bytes  filled_amount_s     = 7;
+    bytes  filled_amount_fee = 8;
     bytes  fee_amount_s = 9;
     bytes  fee_amount_b = 10;
     string fee_recipient = 11;
 }
 
-message TokenBurnRateEvent {
+message TokenBurnRateChangedEvent {
     EventHeader header = 1;
     string token = 2;
     double burnRate = 3;
@@ -334,9 +314,8 @@ message TokenBurnRateEvent {
 
 message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
     EventHeader header = 1;
-    bytes ring_index = 2;
+    int64 ring_index = 2;
     string ring_hash = 3;
     string fee_recipient = 4;
-    bytes fills = 5;
+    repeated OrderFilledEvent fills = 5;
 }
-

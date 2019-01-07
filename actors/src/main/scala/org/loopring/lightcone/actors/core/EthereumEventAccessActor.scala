@@ -31,14 +31,14 @@ object EthereumEventAccessActor extends ShardedByAddress {
   val name = "ethereum_event_access"
 
   def startShardRegion(
-                      )(
-                        implicit system: ActorSystem,
-                        config: Config,
-                        ec: ExecutionContext,
-                        timeProvider: TimeProvider,
-                        timeout: Timeout,
-                        actors: Lookup[ActorRef]
-                      ): ActorRef = {
+    )(
+      implicit system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef]
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -66,7 +66,7 @@ object EthereumEventAccessActor extends ShardedByAddress {
 }
 
 class EthereumEventAccessActor(
-                                numOfShards: Int
+    numOfShards: Int
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -84,7 +84,6 @@ class EthereumEventAccessActor(
 
   private def handleRequest(req: Any) = extractAddress(req) match {
     case Some(address) =>
-
     case None =>
       throw ErrorException(
         ERR_UNEXPECTED_ACTOR_MSG,
