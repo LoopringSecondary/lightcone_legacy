@@ -40,15 +40,17 @@ object Settings {
     javacOptions := Seq( //"-source", Globals.jvmVersion,
     ),
     scalacOptions := Seq(
-      "-encoding",
-      "utf8",
+      "-encoding", "utf8", // Option and arguments on same line
+      "-language:implicitConversions",
+      "-language:higherKinds",
+      "-language:existentials",
+      "-language:postfixOps",
       "-g:vars",
       "-unchecked",
       "-deprecation",
       "-Yresolve-term-conflict:package",
-      // "-feature",
-      // "-Xfatal-warnisngs"
-    ),
+      "-feature",
+      "-Xfatal-warnings"),
     fork in Test := false,
     // conflictManager := ConflictManager.strict,
     parallelExecution in Test := false,

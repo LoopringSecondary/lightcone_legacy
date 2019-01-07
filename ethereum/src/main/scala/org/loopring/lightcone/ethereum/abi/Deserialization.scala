@@ -47,7 +47,7 @@ object Deserialization {
         case bs: Array[Byte] => BigInt(bs) == 1
         case b: BigInt       => b == 1
         case b: BigInteger   => BigInt(b) == 1
-        case b: String       => Numeric.toBigInt(b) == 1
+        case b: String       => BigInt(Numeric.toBigInt(b)) == 1
       }
     } else if (r =:= typeOf[Array[String]]) {
       p match {
