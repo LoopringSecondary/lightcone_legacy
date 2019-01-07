@@ -75,7 +75,6 @@ class EthereumQueryActor(
     val brb: EthereumBatchCallRequestBuilder)
     extends ActorWithPathBasedConfig(EthereumQueryActor.name) {
 
-  //TODO(yadong): 如果默认值是Latest的话，可以再处理的时候来用这个默认值
   val LATEST = "latest"
 
   val delegateAddress =
