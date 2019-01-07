@@ -96,6 +96,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
         size: Int,
         price: Double
       ) = {
+
       val priceOpt =
         if (price > 0) Some(price)
         else {
@@ -114,11 +115,18 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
           Some((sellPrice + buyPrice) / 2)
         }
 
-      Orderbook(
-        latestPrice,
-        sellSide.getDepth(size, priceOpt),
-        buySide.getDepth(size, priceOpt)
-      )
+      val buys = buySide.getDepth(size, priceOpt)
+      var sells = sellSide.getDepth(size + 1, priceOpt)
+      // If the price is overlapping,we drop the top sell item
+      sells =
+        if (sells.headOption.map(_.price) == buys.headOption.map(_.price)) {
+          log.warning(s"order book overlapped ${buys} <> ${sells}")
+          sells.drop(1)
+        } else {
+          sells.take(size)
+        }
+
+      Orderbook(latestPrice, sells, buys)
     }
 
     def reset() {
@@ -139,10 +147,8 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
           latestPrice: Option[Double]
         ): Seq[Orderbook.Item] = {
 
-        val latestPriceSlot = latestPrice.map { p =>
-          (p * priceScaling).toLong
-        }
-        getSlots(num, latestPriceSlot).map(slotToItem(_))
+        val priceLimit = latestPrice.map(_ * priceScaling)
+        getSlots(num, priceLimit).map(slotToItem(_))
       }
     }
   }
