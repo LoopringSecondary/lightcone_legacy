@@ -119,7 +119,7 @@ class EthereumQueryActor(
           case Nil => Future.successful(None)
         }
 
-        _ = if (ethRes.isDefined) {
+        finalResult = if (ethRes.isDefined) {
           result.copy(
             balanceAndAllowanceMap = result.balanceAndAllowanceMap +
               (ethToken.head -> BalanceAndAllowance(
@@ -127,8 +127,10 @@ class EthereumQueryActor(
                 BigInt(0)
               ))
           )
+        } else {
+          result
         }
-      } yield result) sendTo sender
+      } yield finalResult) sendTo sender
 
     case req: GetBalance.Req =>
       val (ethToken, erc20Tokens) = req.tokens.partition(Address(_).isZero)
@@ -153,15 +155,17 @@ class EthereumQueryActor(
           case Nil => Future.successful(None)
         }
 
-        _ = if (ethRes.isDefined) {
+        finalResult = if (ethRes.isDefined) {
           result.copy(
             balanceMap = result.balanceMap +
               (Address.ZERO.toString -> BigInt(
                 Numeric.toBigInt(ethRes.get.result)
               ))
           )
+        } else {
+          result
         }
-      } yield result) sendTo sender
+      } yield finalResult) sendTo sender
 
     case req: GetAllowance.Req =>
       batchCallEthereum(sender, brb.buildRequest(Address(delegateAddress), req)) {
