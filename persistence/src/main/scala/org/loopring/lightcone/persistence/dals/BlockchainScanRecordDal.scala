@@ -16,4 +16,50 @@
 
 package org.loopring.lightcone.persistence.dals
 
-trait BlockchainScanRecordDal {}
+import com.typesafe.config.Config
+import org.loopring.lightcone.persistence.base._
+import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.JdbcProfile
+import slick.basic._
+import scala.concurrent._
+import org.loopring.lightcone.persistence.tables.BlockchainScanRecordBaseTable
+
+class BlockchainScanRecordDalInit(
+                        )(
+                          implicit val dbConfig: DatabaseConfig[JdbcProfile],
+                          val config: Config,
+                          val ec: ExecutionContext)
+  extends BaseSeparateDal {
+  val tableSeparate = config.getInt("separate.orderFilled")
+
+  val tables = (0 until tableSeparate).toList.map { num =>
+    val clazz = new BlockchainScanRecordBaseTable(num)
+    TableQuery[clazz.BlockchainScanRecordTable]
+  }
+
+  def createTables(): Future[Any] = {
+    Future(
+      tables.map { p =>
+        db.run(p.schema.create)
+      }
+    )
+  }
+
+  def dropTables(): Future[Any] = {
+    Future(
+      tables.map { p =>
+        db.run(p.schema.drop)
+      }
+    )
+  }
+}
+
+class BlockchainScanRecordDalImpl(tableIndex: Int) {
+  base: BlockchainScanRecordDalInit =>
+  val clazz = new BlockchainScanRecordBaseTable(tableIndex)
+  val query = TableQuery[clazz.BlockchainScanRecordTable]
+
+  def get(): Unit = {
+    db.run(query.take(1).result)
+  }
+}

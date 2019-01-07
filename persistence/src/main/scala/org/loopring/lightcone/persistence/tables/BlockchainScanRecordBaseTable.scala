@@ -21,9 +21,9 @@ import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
-class OrderFilledBaseTable(tableNum: Int) {
+class BlockchainScanRecordBaseTable(tableNum: Int) {
 
-  class OrderFilledTable(tag: Tag)
+  class BlockchainScanRecordTable(tag: Tag)
       extends BaseTable[OrderFilledData](tag, s"ORDER_FILLED_$tableNum") {
     def id = orderHash
     def orderHash = columnHash("order_hash")
