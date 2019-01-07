@@ -26,6 +26,8 @@ private[depth] object OrderbookSide {
   class Sells(
       val priceDecimals: Int,
       val aggregationLevel: Int,
+      val precisionForAmount: Int,
+      val precisionForTotal: Int,
       val maintainUpdatedSlots: Boolean)
       extends LongOrderingSupport(true)
       with OrderbookSide
@@ -33,6 +35,8 @@ private[depth] object OrderbookSide {
   class Buys(
       val priceDecimals: Int,
       val aggregationLevel: Int,
+      val precisionForAmount: Int,
+      val precisionForTotal: Int,
       val maintainUpdatedSlots: Boolean)
       extends LongOrderingSupport(false)
       with OrderbookSide
@@ -43,6 +47,8 @@ private[depth] trait OrderbookSide {
   val maintainUpdatedSlots: Boolean
   val priceDecimals: Int
   val aggregationLevel: Int
+  val precisionForAmount: Int
+  val precisionForTotal: Int
   implicit val ordering: Ordering[Long]
 
   val aggregationScaling = Math.pow(10, aggregationLevel)
@@ -96,7 +102,8 @@ private[depth] trait OrderbookSide {
     }
 
     var updated = op(old, slot.copy(slot = id))
-    if (updated.amount <= 0 || updated.total <= 0) {
+
+    if (isSlotTooTiny(updated)) {
       updated = Orderbook.Slot(id, 0, 0)
       slotMap -= id
     } else {
@@ -115,13 +122,15 @@ private[depth] trait OrderbookSide {
 
   def getSlots(
       num: Int,
-      latestPriceSlot: Option[Long]
+      priceLimit: Option[Double]
     ): Seq[Orderbook.Slot] = {
-    val items = latestPriceSlot match {
-      case None => slotMap.values
+
+    val items = priceLimit match {
+      case None =>
+        slotMap.values
       case Some(limit) =>
         if (isSell) {
-          slotMap.values.dropWhile(_.slot <= limit)
+          slotMap.values.dropWhile(_.slot < limit)
         } else {
           slotMap.values.dropWhile(_.slot > limit)
         }
@@ -155,5 +164,13 @@ private[depth] trait OrderbookSide {
   private[depth] def getSlotForPriceId(price: Double) = {
     if (isSell) Math.ceil(price * priceScaling).toLong
     else Math.floor(price * priceScaling).toLong
+  }
+
+  private val _amountScaling = Math.pow(10, precisionForAmount).toLong
+  private val _totalScaling = Math.pow(10, precisionForTotal).toLong
+
+  private def isSlotTooTiny(slot: Orderbook.Slot) = {
+    (slot.amount * _amountScaling).toLong <= 0 ||
+    (slot.total * _totalScaling).toLong <= 0
   }
 }

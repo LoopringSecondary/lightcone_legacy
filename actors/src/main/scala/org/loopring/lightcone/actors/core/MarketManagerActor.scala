@@ -108,10 +108,16 @@ class MarketManagerActor(
     )
     with ActorLogging {
 
+  implicit val marketId = markets(entityId)
+  log.info(s"=======> starting MarketManagerActor ${self.path} for ${marketId}")
+
   var autoSwitchBackToReceive: Option[Cancellable] = None
 
   val wethTokenAddress = config.getString("weth.address")
   val skiprecover = selfConfig.getBoolean("skip-recover")
+
+  val maxSettementFailuresPerOrder =
+    selfConfig.getInt("max-ring-failures-per-order")
 
   val maxRecoverDurationMinutes =
     selfConfig.getInt("max-recover-duration-minutes")
@@ -123,10 +129,10 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
-  implicit val marketId = markets(entityId)
-
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-    selfConfig.getInt("price-decimals")
+    selfConfig.getInt("price-decimals"),
+    selfConfig.getInt("precision-for-amount"),
+    selfConfig.getInt("precision-for-total")
   )
 
   val manager = new MarketManagerImpl(
@@ -135,7 +141,8 @@ class MarketManagerActor(
     ringMatcher,
     pendingRingPool,
     dustOrderEvaluator,
-    aggregator
+    aggregator,
+    maxSettementFailuresPerOrder
   )
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
@@ -170,7 +177,7 @@ class MarketManagerActor(
   def recover: Receive = {
 
     case SubmitSimpleOrder(_, Some(order)) =>
-      submitOrder(order)
+      submitOrder(order.copy(submittedAt = timeProvider.getTimeMillis))
 
     case msg @ ActorRecover.Finished(timeout) =>
       autoSwitchBackToReceive.foreach(_.cancel)

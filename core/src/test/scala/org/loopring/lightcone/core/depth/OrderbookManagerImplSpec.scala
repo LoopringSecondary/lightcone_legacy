@@ -192,7 +192,7 @@ class OrderbookManagerImplSpec extends CommonSpec {
       Orderbook(
         0.0,
         Seq(
-          // Orderbook.Item("0.12344", "5.00", "40.0"),
+          Orderbook.Item("0.12344", "5.00", "40.0"),
           Orderbook.Item("0.12345", "10.00", "80.0")
         ),
         Nil
@@ -203,7 +203,7 @@ class OrderbookManagerImplSpec extends CommonSpec {
       Orderbook(0.0, Seq(Orderbook.Item("0.12345", "10.00", "80.0")), Nil)
     )
 
-    obm.getOrderbook(0, 100, Some(0.12345)) should be(Orderbook(0.0, Nil, Nil))
+    obm.getOrderbook(0, 100, Some(0.12346)) should be(Orderbook(0.0, Nil, Nil))
   }
 
   "OrderbookManagerImplSpec" should "skip slots with higer buy prices" in {

@@ -45,66 +45,163 @@ class EntryPointSpec_SubmitTwoMatchedOrder
     "submit a ring and affect to orderbook before blocked and executed in eth" in {
       val order1 =
         createRawOrder(
-          amountS = "10".zeros(18),
+          amountS = "10".zeros(LRC_TOKEN.decimals),
           tokenS = LRC_TOKEN.address,
-          amountB = "1".zeros(18),
+          amountB = "1".zeros(WETH_TOKEN.decimals),
           tokenB = WETH_TOKEN.address,
-          amountFee = "10".zeros(18),
+          amountFee = "10".zeros(LRC_TOKEN.decimals),
           tokenFee = LRC_TOKEN.address
         )
-      val f = singleRequest(SubmitOrder.Req(Some(order1)), "submit_order")
-      Await.result(f, timeout.duration)
 
+      Await.result(
+        singleRequest(SubmitOrder.Req(Some(order1)), "submit_order"),
+        timeout.duration
+      )
+
+      var orderbook =
+        Await.result(
+          singleRequest(
+            GetOrderbook.Req(
+              0,
+              100,
+              Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+            ),
+            "orderbook"
+          ),
+          timeout.duration
+        )
+
+      orderbook should be(
+        GetOrderbook
+          .Res(
+            Some(
+              Orderbook(
+                0.0,
+                Seq(Orderbook.Item("10.000000", "10.00000", "1.00000")),
+                Nil
+              )
+            )
+          )
+      )
+
+      // -----------------------
       val order2 =
         createRawOrder(
-          amountS = "5".zeros(17),
+          amountS = "1".zeros(WETH_TOKEN.decimals) / 2,
           tokenS = WETH_TOKEN.address,
-          amountB = "5".zeros(18),
+          amountB = "10".zeros(LRC_TOKEN.decimals) / 2,
           tokenB = LRC_TOKEN.address,
-          amountFee = "10".zeros(18),
+          amountFee = "10".zeros(LRC_TOKEN.decimals),
           tokenFee = LRC_TOKEN.address
         )
-      val f1 = singleRequest(SubmitOrder.Req(Some(order2)), "submit_order")
-      Await.result(f1, timeout.duration)
+
+      Await.result(
+        singleRequest(SubmitOrder.Req(Some(order2)), "submit_order"),
+        timeout.duration
+      )
 
       Thread.sleep(1000)
-      val getOrderBook = GetOrderbook.Req(
-        0,
-        100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
-      )
-      val orderbookF2 = singleRequest(getOrderBook, "orderbook")
-      val orderbookRes2 = Await.result(orderbookF2, timeout.duration)
-      orderbookRes2 match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          info(s"sells:${sells}, buys:${buys}")
-          assert(sells.isEmpty && buys.size == 1)
-          assert(
-            buys(0).total == "0.50000" &&
-              buys(0).price == "10.000000" &&
-              buys(0).amount == "5.00000"
-          )
-        case _ => assert(false)
-      }
 
-      val getOrderBook1 = GetOrderbook.Req(
-        1,
-        100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+      orderbook = Await.result(
+        singleRequest(
+          GetOrderbook
+            .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+          "orderbook"
+        ),
+        timeout.duration
       )
-      val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
-      val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
-      orderbookRes1 match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          info(s"sells:${sells}, buys:${buys}")
-          assert(sells.isEmpty && buys.size == 1)
-          assert(
-            buys(0).total == "0.50000" &&
-              buys(0).price == "10.00000" &&
-              buys(0).amount == "5.00000"
+
+      //  println("======" + orderbook)
+
+      orderbook should be(
+        GetOrderbook
+          .Res(
+            Some(
+              Orderbook(
+                10.0,
+                Seq(Orderbook.Item("10.000000", "5.00000", "0.50000")),
+                Nil
+              )
+            )
           )
-        case _ => assert(false)
-      }
+      )
+
+      // -----------------------
+      val order3 =
+        createRawOrder(
+          amountS = "1".zeros(WETH_TOKEN.decimals) / 2,
+          tokenS = WETH_TOKEN.address,
+          amountB = "10".zeros(LRC_TOKEN.decimals) / 2,
+          tokenB = LRC_TOKEN.address,
+          amountFee = "10".zeros(LRC_TOKEN.decimals),
+          tokenFee = LRC_TOKEN.address
+        )
+
+      Await.result(
+        singleRequest(SubmitOrder.Req(Some(order3)), "submit_order"),
+        timeout.duration
+      )
+
+      Thread.sleep(1000)
+
+      orderbook = Await.result(
+        singleRequest(
+          GetOrderbook
+            .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+          "orderbook"
+        ),
+        timeout.duration
+      )
+
+      //  println("======" + orderbook)
+
+      orderbook should be(
+        GetOrderbook
+          .Res(Some(Orderbook(10.0, Nil, Nil)))
+      )
+
+      // -----------------------
+      val order4 =
+        createRawOrder(
+          amountS = "1".zeros(WETH_TOKEN.decimals) / 2,
+          tokenS = WETH_TOKEN.address,
+          amountB = "10".zeros(LRC_TOKEN.decimals) / 2,
+          tokenB = LRC_TOKEN.address,
+          amountFee = "10".zeros(LRC_TOKEN.decimals),
+          tokenFee = LRC_TOKEN.address
+        )
+
+      Await.result(
+        singleRequest(SubmitOrder.Req(Some(order4)), "submit_order"),
+        timeout.duration
+      )
+
+      Thread.sleep(1000)
+
+      orderbook = Await.result(
+        singleRequest(
+          GetOrderbook
+            .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+          "orderbook"
+        ),
+        timeout.duration
+      )
+
+      //  println("======" + orderbook)
+
+      orderbook should be(
+        GetOrderbook
+          .Res(
+            Some(
+              Orderbook(
+                10.0,
+                Nil,
+                Seq(Orderbook.Item("10.000000", "5.00000", "0.50000"))
+              )
+            )
+          )
+      )
+
     }
   }
 
