@@ -282,13 +282,13 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
       _ = assert(saved.isLeft)
       update <- service.updateOrderStatus(
         saved.left.get.hash,
-        OrderStatus.STATUS_CANCELLED_BY_USER
+        OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
       )
       query <- service.getOrder(saved.left.get.hash)
     } yield (update, query)
     val res =
       Await.result(result.mapTo[(ErrorCode, Option[RawOrder])], 5.second)
-    val x = res._1 === ErrorCode.ERR_NONE && res._2.nonEmpty && res._2.get.state.get.status === OrderStatus.STATUS_CANCELLED_BY_USER
+    val x = res._1 === ErrorCode.ERR_NONE && res._2.nonEmpty && res._2.get.state.get.status === OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
     x should be(true)
   }
 
@@ -363,7 +363,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some(MarketHashProvider.convert2Hex(tokenS, tokenB))
       )
       query3 <- service.countOrdersForUser(
-        Set(OrderStatus.STATUS_CANCELLED_BY_USER),
+        Set(OrderStatus.STATUS_SOFT_CANCELLED_BY_USER),
         None,
         Some(tokenS),
         Some(tokenB),

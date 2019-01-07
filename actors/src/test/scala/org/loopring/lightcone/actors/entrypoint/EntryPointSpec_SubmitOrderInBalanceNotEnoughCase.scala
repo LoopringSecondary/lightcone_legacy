@@ -146,7 +146,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       val cancelF = singleRequest(cancelReq, "cancel_order")
       Await.result(cancelF, timeout.duration)
 
-      info("the first order's status in db should be STATUS_CANCELLED_BY_USER")
+      info("the first order's status in db should be STATUS_SOFT_CANCELLED_BY_USER")
       val assertOrderFromDbF2 = Future.sequence(rawOrders.map { o =>
         for {
           orderOpt <- dbModule.orderService.getOrder(o.hash)

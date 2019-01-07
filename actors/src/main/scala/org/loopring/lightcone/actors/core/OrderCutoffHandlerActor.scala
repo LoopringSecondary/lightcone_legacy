@@ -86,7 +86,7 @@ class OrderCutoffHandlerActor(
       if (req.owner.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
-          "Owner could not be empty"
+          "owner in CutoffEvent is empty"
         )
       log.debug(s"Deal with cutoff:$req")
       self ! RetrieveOrdersToCancel(

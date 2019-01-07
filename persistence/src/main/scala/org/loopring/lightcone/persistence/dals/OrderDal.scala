@@ -550,7 +550,7 @@ class OrderDalImpl(
     if (retrieveCondition.owner.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "owner could not be empty"
+        "owner in CutoffEvent is empty"
       )
     }
     var filters = query
