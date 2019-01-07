@@ -20,15 +20,15 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
 trait PendingRingPool {
+  // This reset method should be used only by tests.
+  def reset(): Unit
+
   def getOrderPendingAmountS(orderId: String): BigInt
-  def deleteOrder(orderId: String): Boolean
-  def deleteRing(ringId: String): Boolean
 
   def hasRing(ringId: String): Boolean
-  def addRing(ring: MatchableRing): Unit
+  def addRing(ring: MatchableRing): Boolean
+  def deleteRing(ringId: String): Set[String]
 
-  def deleteAllRings(): Unit
-  def deleteRingsBefore(timestamp: Long): Unit
-  def deleteRingsOlderThan(age: Long): Unit
-  def deleteRingsContainingOrder(orderId: String): Unit
+  def deleteRingsBefore(timestamp: Long): Set[String]
+  def deleteRingsOlderThan(ageInSeconds: Long): Set[String]
 }

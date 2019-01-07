@@ -21,9 +21,9 @@ import org.loopring.lightcone.proto._
 
 object MarketManager {
   case class MatchResult(
-      rings: Seq[MatchableRing],
       taker: Matchable,
-      orderbookUpdate: Orderbook.Update)
+      rings: Seq[MatchableRing] = Nil,
+      orderbookUpdate: Orderbook.Update = Orderbook.Update())
 }
 
 trait MarketManager {
@@ -32,33 +32,38 @@ trait MarketManager {
   val marketId: MarketId
   val pendingRingPool: PendingRingPool
 
-  def submitOrder(
-      order: Matchable,
-      minFiatValue: Double
-    ): MatchResult
-  def cancelOrder(orderId: String): Option[Orderbook.Update]
-  def deletePendingRing(ringId: String): Option[Orderbook.Update]
+  def getMetadata(): MarketMetadata
 
-  def getOrder(
-      orderId: String,
-      returnMatchableAmounts: Boolean = false
-    ): Option[Matchable]
+  def getOrder(orderId: String): Option[Matchable]
+
+  def cancelOrder(orderId: String): Option[Orderbook.Update]
+
+  def deleteRing(
+      ringId: String,
+      ringSettledSuccessfully: Boolean
+    ): Seq[MatchResult]
+
+  def deleteRingsBefore(timestamp: Long): Seq[MatchResult]
+  def deleteRingsOlderThan(ageInSeconds: Long): Seq[MatchResult]
 
   def getSellOrders(
       num: Int,
-      returnMatchableAmounts: Boolean = false
+      skip: Int = 0
     ): Seq[Matchable]
 
   def getBuyOrders(
       num: Int,
-      returnMatchableAmounts: Boolean = false
+      skip: Int = 0
     ): Seq[Matchable]
 
   def getNumOfOrders(): Int
   def getNumOfBuyOrders(): Int
   def getNumOfSellOrders(): Int
 
-  def getMetadata(): MarketMetadata
+  def submitOrder(
+      order: Matchable,
+      minFiatValue: Double = 0
+    ): MatchResult
 
   def triggerMatch(
       sellOrderAsTaker: Boolean,
