@@ -18,22 +18,18 @@ package org.loopring.lightcone.persistence.dals
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.ErrorCode._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
-
 import scala.concurrent._
 import org.loopring.lightcone.persistence.tables.OrderFilledBaseTable
 
-class OrderFilledDalInit()(
+class OrderFilledDalInit(
+  )(
     implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val config: Config,
-    val ec: ExecutionContext) {
-  val profile = dbConfig.profile
-  val db: JdbcProfile#Backend#Database = dbConfig.db
+    val ec: ExecutionContext)
+    extends BaseSeparateDal {
   val tableSeparate = config.getInt("separate.orderFilled")
 
   val tables = (0 until tableSeparate).toList.map { num =>
@@ -41,34 +37,29 @@ class OrderFilledDalInit()(
     TableQuery[clazz.OrderFilledTable]
   }
 
-  def createTable(): Future[Any] = {
+  def createTables(): Future[Any] = {
     Future(
       tables.map { p =>
         db.run(p.schema.create)
       }
     )
   }
+
+  def dropTables(): Future[Any] = {
+    Future(
+      tables.map { p =>
+        db.run(p.schema.drop)
+      }
+    )
+  }
 }
 
-trait OrderFilledDal {
-  def get()
-}
-
-class OrderFilledDalImpl(
-    tableIndex: Int
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext)
-    extends OrderFilledDal {
-  val profile = dbConfig.profile
-  val db: JdbcProfile#Backend#Database = dbConfig.db
+class OrderFilledDalImpl(tableIndex: Int) {
+  base: OrderFilledDalInit =>
   val clazz = new OrderFilledBaseTable(tableIndex)
   val query = TableQuery[clazz.OrderFilledTable]
-
-  def getRowHash(row: BlockData) = row.hash
 
   def get(): Unit = {
     db.run(query.take(1).result)
   }
-
 }

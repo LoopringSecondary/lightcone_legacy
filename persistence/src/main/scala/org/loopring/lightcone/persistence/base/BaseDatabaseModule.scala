@@ -19,11 +19,9 @@ package org.loopring.lightcone.persistence.base
 import com.typesafe.config.Config
 import slick.basic._
 import slick.jdbc.JdbcProfile
-
 import scala.concurrent.duration._
 import scala.concurrent._
 import com.typesafe.scalalogging.Logger
-import org.loopring.lightcone.persistence.dals.OrderFilledDalInit
 
 trait BaseDatabaseModule {
   implicit val dbConfig: DatabaseConfig[JdbcProfile]
@@ -32,6 +30,7 @@ trait BaseDatabaseModule {
   private[this] val logger = Logger(this.getClass)
 
   val tables: Seq[BaseDal[_, _]]
+  val separateTables: Seq[BaseSeparateDal]
 
   def createTables() = {
     try {
@@ -39,8 +38,10 @@ trait BaseDatabaseModule {
         Future.sequence(tables.map(_.createTable)),
         10.second
       )
-      //TODO du: mock
-      new OrderFilledDalInit().createTable()
+      Await.result(
+        Future.sequence(separateTables.map(_.createTables)),
+        10.second
+      )
     } catch {
       case e: Exception if e.getMessage.contains("already exists") =>
         logger.info(e.getMessage)
@@ -54,6 +55,10 @@ trait BaseDatabaseModule {
     try {
       Await.result(
         Future.sequence(tables.map(_.dropTable)),
+        10.second
+      )
+      Await.result(
+        Future.sequence(separateTables.map(_.dropTables)),
         10.second
       )
     } catch {

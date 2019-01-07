@@ -17,40 +17,41 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
-import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
+import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.proto.ErrorCode.ERR_UNEXPECTED_ACTOR_MSG
+import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent._
 
-object EthereumEventPersistorTestActor extends ShardedByAddress {
-  val name = "ethereum_event_persister_test"
+// main owner: 杜永丰
+object EthereumEventAccessActor extends ShardedByAddress {
+  val name = "ethereum_event_access"
 
   def startShardRegion(
-    )(
-      implicit system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      actors: Lookup[ActorRef]
-    ): ActorRef = {
+                      )(
+                        implicit system: ActorSystem,
+                        config: Config,
+                        ec: ExecutionContext,
+                        timeProvider: TimeProvider,
+                        timeout: Timeout,
+                        actors: Lookup[ActorRef]
+                      ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new EthereumEventPersistorActor()),
+      entityProps = Props(new EthereumEventAccessActor(numOfShards)),
       settings = ClusterShardingSettings(system).withRole(name),
       messageExtractor = messageExtractor
     )
   }
 
+  // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
     case req: SubmitOrder.Req =>
       req.rawOrder
@@ -64,19 +65,31 @@ object EthereumEventPersistorTestActor extends ShardedByAddress {
   }
 }
 
-class EthereumEventPersistorTestActor(
+class EthereumEventAccessActor(
+                                numOfShards: Int
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef])
-    extends ActorWithPathBasedConfig(EthereumEventPersistorTestActor.name) {
-
-  val txPersistorActors = new MapBasedLookup[ActorRef]()
+    extends ActorWithPathBasedConfig(EthereumEventAccessActor.name) {
+  val ethereumEventActors = new MapBasedLookup[ActorRef]()
 
   def receive: Receive = {
-    case _ =>
+    case req: Any => handleRequest(req)
+  }
+
+  val extractAddress = EthereumEventAccessActor.extractAddress.lift
+
+  private def handleRequest(req: Any) = extractAddress(req) match {
+    case Some(address) =>
+
+    case None =>
+      throw ErrorException(
+        ERR_UNEXPECTED_ACTOR_MSG,
+        s"$req cannot be handled by ${getClass.getName}"
+      )
   }
 
 }

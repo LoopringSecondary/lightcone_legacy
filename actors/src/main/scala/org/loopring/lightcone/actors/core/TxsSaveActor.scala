@@ -17,26 +17,17 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
-import akka.cluster.sharding._
-import akka.event.LoggingReceive
-import akka.pattern._
+import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Matchable
-import org.loopring.lightcone.proto.ErrorCode._
-import org.loopring.lightcone.proto.OrderStatus._
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.proto.ErrorCode.ERR_UNEXPECTED_ACTOR_MSG
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
-// main owner: 杜永丰
-object EthereumEventPersistorActor extends ShardedEvenly {
-  val name = "ethereum_event_persister"
+object TxsSaveActor extends ShardedByAddress {
+  val name = "txs_save"
 
   def startShardRegion(
     )(
@@ -50,25 +41,38 @@ object EthereumEventPersistorActor extends ShardedEvenly {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
-    entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new EthereumEventPersistorActor()),
+      entityProps = Props(new EthereumEventAccessActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       messageExtractor = messageExtractor
     )
   }
+
+  val extractAddress: PartialFunction[Any, String] = {
+    case req: SubmitOrder.Req =>
+      req.rawOrder
+        .map(_.owner)
+        .getOrElse {
+          throw ErrorException(
+            ERR_UNEXPECTED_ACTOR_MSG,
+            "SubmitOrder.Req.rawOrder must be nonEmpty."
+          )
+        }
+  }
 }
 
-class EthereumEventPersistorActor(
+class TxsSaveActor(
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef])
-    extends ActorWithPathBasedConfig(EthereumEventPersistorActor.name) {
+    extends ActorWithPathBasedConfig(TxsSaveActor.name) {
+
+  val txPersistorActors = new MapBasedLookup[ActorRef]()
 
   def receive: Receive = {
     case _ =>
