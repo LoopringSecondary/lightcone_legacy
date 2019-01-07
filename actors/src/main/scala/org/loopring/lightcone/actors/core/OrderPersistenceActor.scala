@@ -100,7 +100,6 @@ class OrderPersistenceActor(
 
     case SubmitOrder.Req(Some(raworder)) =>
       (for {
-        //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         saveRes <- dbModule.orderService.saveOrder(raworder)
       } yield {
         saveRes match {

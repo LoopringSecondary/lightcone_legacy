@@ -33,6 +33,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
+import org.web3j.utils.Numeric
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -166,6 +167,7 @@ class AccountManagerActor(
         }
       } yield cancelRes) sendTo sender
 
+    //为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
     case AddressBalanceUpdated(addr, token, newBalance) =>
       (for {
         _ <- Future.successful(assert(addr == address))
@@ -177,9 +179,25 @@ class AccountManagerActor(
         _ <- Future.successful(assert(addr == address))
       } yield
         updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))) sendTo sender
+
+    //todo:CutOffHandlerActor与该处是否重复
+    case req @ CutoffEvent(_, _, owner, "", cutoff) =>
+      log.info(s"received CutoffEvent ${req}")
+      accountCutoffState.setCutoff(cutoff)
+    case req @ CutoffEvent(_, _, owner, tokenPair, cutoff) =>
+      log.info(s"received CutoffEvent ${req}")
+      accountCutoffState
+        .setTradingPairCutoff(Numeric.toBigInt(req.tradingPair), req.cutoff)
+    case req: OrderFilledEvent =>
+      log.info(s"received OrderFilledEvent ${req}")
+      //收到filledEvent后，重新提交一次订单
+      for {
+        orderOpt <- dbModule.orderService.getOrder(req.orderHash)
+      } yield orderOpt.map(o => submitOrder(o))
   }
 
-  private def submitOrder(order: Order): Future[Order] = {
+  private def submitOrder(rawOrder: RawOrder): Future[Order] = {
+    val order: Order = rawOrder
     val matchable: Matchable = order
     for {
       _ <- getTokenManager(matchable.tokenS)
@@ -193,7 +211,41 @@ class AccountManagerActor(
         Seq(matchable.id)
       )).mapAs[GetFilledAmount.Res]
 
-      _ = log.debug(s"order history: orderHistoryRes")
+      filledAmountS = getFilledAmountRes.filledAmountSMap(matchable.id)
+      _ = log.debug(
+        s"ethereumQueryActor GetFilledAmount.Res $getFilledAmountRes"
+      )
+
+      state = rawOrder.state match {
+        case None =>
+          RawOrder.State(
+            createdAt = timeProvider.getTimeMillis(),
+            updatedAt = timeProvider.getTimeMillis(),
+            status = OrderStatus.STATUS_NEW,
+            outstandingAmountS = filledAmountS,
+            outstandingAmountB = byteString2BigInt(rawOrder.amountB) *
+              byteString2BigInt(filledAmountS) / byteString2BigInt(
+              rawOrder.amountS
+            ),
+            outstandingAmountFee = byteString2BigInt(rawOrder.amountFee) *
+              byteString2BigInt(filledAmountS) / byteString2BigInt(
+              rawOrder.amountS
+            )
+          )
+        case Some(s) =>
+          s.copy(
+            outstandingAmountS = filledAmountS,
+            outstandingAmountB = byteString2BigInt(rawOrder.amountB) *
+              byteString2BigInt(filledAmountS) / byteString2BigInt(
+              rawOrder.amountS
+            ),
+            outstandingAmountFee = byteString2BigInt(rawOrder.amountFee) *
+              byteString2BigInt(filledAmountS) / byteString2BigInt(
+              rawOrder.amountS
+            )
+          )
+      }
+      _ <- dbModule.orderService.updateAmount(rawOrder.id, state = state)
 
       _matchable = matchable.withFilledAmountS(
         getFilledAmountRes.filledAmountSMap(matchable.id)
