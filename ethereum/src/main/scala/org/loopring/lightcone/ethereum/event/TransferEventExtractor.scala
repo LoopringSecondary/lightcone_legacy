@@ -30,41 +30,51 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
       receipt: TransactionReceipt,
       blockTime: String
     ): Seq[PTransferEvent] = {
-    receipt.logs
-      .map(log => {
-        wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-          case Some(transfer: TransferEvent.Result) =>
-            Some(
-              PTransferEvent(
-                header = Some(getEventHeader(tx, receipt, blockTime)),
-                from = transfer.from,
-                to = transfer.receiver,
-                amount = transfer.amount.toByteArray
-              )
-            )
-          case Some(withdraw: WithdrawalEvent.Result) =>
-            Some(
-              PTransferEvent(
-                header = Some(getEventHeader(tx, receipt, blockTime)),
-                from = withdraw.src,
-                to = log.address,
-                amount = withdraw.wad.toByteArray
-              )
-            )
-          case Some(deposit: DepositEvent.Result) =>
-            Some(
-              PTransferEvent(
-                header = Some(getEventHeader(tx, receipt, blockTime)),
-                from = log.address,
-                to = deposit.dst,
-                amount = deposit.wad.toByteArray
-              )
-            )
-          case _ => None
-        }
-      })
-      .filter(_.nonEmpty)
-      .map(_.get)
+    val header = getEventHeader(tx, receipt, blockTime)
+
+   if(isSucceed(receipt.status)) {
+     receipt.logs.zipWithIndex
+       .map(item => {
+         val (log,index) = item
+         wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+           case Some(transfer: TransferEvent.Result) =>
+             Some(
+               PTransferEvent(
+                 header = Some(header.withLogIndex(index)),
+                 from = transfer.from,
+                 to = transfer.receiver,
+                 amount = transfer.amount.toByteArray
+               )
+             )
+           case Some(withdraw: WithdrawalEvent.Result) =>
+             Some(
+               PTransferEvent(
+                 header = Some(header.withLogIndex(index)),
+                 from = withdraw.src,
+                 to = log.address,
+                 amount = withdraw.wad.toByteArray
+               )
+             )
+           case Some(deposit: DepositEvent.Result) =>
+             Some(
+               PTransferEvent(
+                 header = Some(header.withLogIndex(index)),
+                 from = log.address,
+                 to = deposit.dst,
+                 amount = deposit.wad.toByteArray
+               )
+             )
+           case _ => None
+         }
+       })
+       .filter(_.nonEmpty)
+       .map(_.get)
+
+   }
+   }else{
+
+
+
 
   }
 }

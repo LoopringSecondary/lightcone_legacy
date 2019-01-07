@@ -24,6 +24,8 @@ import org.web3j.utils.Numeric
 
 class RingMinedEventExtractor() extends DataExtractor[PRingMinedEvent] {
 
+  val fillLength = 8 * 64
+
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt,
@@ -38,7 +40,6 @@ class RingMinedEventExtractor() extends DataExtractor[PRingMinedEvent] {
           case Some(event: RingMinedEvent.Result) =>
             val fillContent =
               Numeric.cleanHexPrefix(event._fills).substring(128)
-            val fillLength = 8 * 64
             val orderFilledEvents =
               (0 until (fillContent.length / fillLength)).map { index =>
                 fillContent.substring(
