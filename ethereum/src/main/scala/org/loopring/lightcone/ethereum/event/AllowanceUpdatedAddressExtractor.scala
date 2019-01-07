@@ -56,17 +56,19 @@ class AllowanceUpdatedAddressExtractor(config: Config)
             )
 
         case _ =>
-          wethAbi.unpackFunctionInput(tx.input) match {
-            case Some(param: ApproveFunction.Parms) =>
-              if (Address(param.spender).equals(delegateAddress))
-                allowanceAddresses.append(
-                  AllowanceUpdatedAddress(tx.from, tx.to)
-                )
-            case _ =>
-          }
+      }
+    }
+    if (isSucceed(receipt.status)) {
+      wethAbi.unpackFunctionInput(tx.input) match {
+        case Some(param: ApproveFunction.Parms) =>
+          if (Address(param.spender).equals(delegateAddress))
+            allowanceAddresses.append(
+              AllowanceUpdatedAddress(tx.from, tx.to)
+            )
+        case _ =>
       }
     }
 
-    allowanceAddresses.toSet.toSeq
+    allowanceAddresses.distinct
   }
 }

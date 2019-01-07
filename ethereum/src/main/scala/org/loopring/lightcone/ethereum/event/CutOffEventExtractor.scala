@@ -39,7 +39,8 @@ class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
             CutoffEvent(
               header = Some(getEventHeader(tx, receipt, blockTime)),
               cutoff = event._cutoff.longValue(),
-              broker = event._broker
+              broker = event._broker,
+              owner = event._broker
             )
           )
         case Some(event: AllOrdersCancelledByBrokerEvent.Result) =>
@@ -69,6 +70,7 @@ class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
               header = Some(getEventHeader(tx, receipt, blockTime)),
               cutoff = event._cutoff.longValue(),
               broker = event._broker,
+              owner = event._broker,
               tradingPair = convert2Hex(event._token1, event._token2)
             )
           )

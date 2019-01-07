@@ -37,12 +37,18 @@ class BalanceUpdatedAddressExtractor()
     val balanceAddresses = ListBuffer(
       BalanceUpdatedAddress(tx.from, Address.ZERO.toString())
     )
+    if (isSucceed(receipt.status) && receipt.logs.isEmpty &&
+        BigInt(Numeric.toBigInt(tx.value)) > 0) {
+      balanceAddresses.append(
+        BalanceUpdatedAddress(tx.to, Address.ZERO.toString())
+      )
+    }
     receipt.logs.foreach(log => {
       wethAbi.unpackEvent(log.data, log.topics.toArray) match {
         case Some(transfer: TransferEvent.Result) =>
-          Seq(
-            transfer.from -> log.address,
-            transfer.receiver -> log.address
+          balanceAddresses.append(
+            BalanceUpdatedAddress(transfer.from, log.address),
+            BalanceUpdatedAddress(transfer.receiver, log.address)
           )
         case Some(deposit: DepositEvent.Result) =>
           balanceAddresses.append(
@@ -53,28 +59,9 @@ class BalanceUpdatedAddressExtractor()
             BalanceUpdatedAddress(withdrawal.src, log.address)
           )
         case _ =>
-          if (Numeric.toBigInt(receipt.status).intValue() == 1) {
-            if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
-              balanceAddresses.append(
-                BalanceUpdatedAddress(receipt.to, Address.ZERO.toString())
-              )
-            }
-            wethAbi.unpackFunctionInput(tx.input) match {
-              case Some(param: TransferFunction.Parms) =>
-                balanceAddresses.append(
-                  BalanceUpdatedAddress(tx.from, tx.to),
-                  BalanceUpdatedAddress(param.to, tx.to)
-                )
-              case Some(param: TransferFromFunction.Parms) =>
-                balanceAddresses.append(
-                  BalanceUpdatedAddress(param.txFrom, tx.to),
-                  BalanceUpdatedAddress(param.to, tx.to)
-                )
-              case _ =>
-            }
-          }
       }
     })
-    balanceAddresses.toSet.toSeq
+
+    balanceAddresses.distinct
   }
 }
