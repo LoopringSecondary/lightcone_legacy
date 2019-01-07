@@ -83,6 +83,8 @@ class TokenMetadataRefresher(
   )
 
   override def receive: Receive = super.receive orElse LoggingReceive {
-    case _ =>
+    //todo: 需要接受BurnRate更新事件
+    case req: TokenBurnRateChangedEvent =>
+      log.info(s"received TokenBurnRateChangedEvent ${req}")
   }
 }
