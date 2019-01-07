@@ -107,20 +107,7 @@ message RetrieveOrdersToCancel {
     string broker       = 1;
     string owner        = 2;
     string trading_pair = 3;
-    int32  cutoff       = 4; // in seconds.
-}
-
-message CheckOrderActiveStatus {
-    message Req {
-        oneof order {
-            string   hash      = 1;
-            RawOrder raw_order = 2;
-        }
-    }
-
-    message Res {
-        bool active = 1;
-    }
+    int64  cutoff       = 4; // in seconds.
 }
 
 message GetOrderbook {

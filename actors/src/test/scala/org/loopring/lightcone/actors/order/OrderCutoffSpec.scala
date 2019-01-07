@@ -116,7 +116,7 @@ class OrderCutoffSpec
 
       // 4. send cutoff
       val txHash = "0x999"
-      val cutoff = OwnerCutoffEvent(
+      val cutoff = CutoffEvent(
         owner = owner,
         cutoff = timeProvider.getTimeSeconds().toInt + 100
       )

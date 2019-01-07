@@ -18,11 +18,7 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.lib.{
-  ErrorException,
-  MarketHashProvider,
-  SystemTimeProvider
-}
+import org.loopring.lightcone.lib.{ErrorException, SystemTimeProvider}
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.ErrorCode.ERR_INTERNAL_UNKNOWN
 import org.loopring.lightcone.proto._
@@ -75,9 +71,17 @@ class OrderServiceImpl @Inject()(
 
   // Mark the order as soft-cancelled. Returns error code if the order does not exist.
   def markOrderSoftCancelled(
-      orderHashes: Seq[String]
-    ): Future[Seq[UserCancelOrder.Res.Result]] =
-    cancelOrders(orderHashes, OrderStatus.STATUS_CANCELLED_BY_USER)
+      orderHashes: Seq[String],
+      status: OrderStatus
+    ): Future[Seq[UserCancelOrder.Res.Result]] = {
+    if (status != OrderStatus.STATUS_SOFT_CANCELLED_BY_USER && status != OrderStatus.STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR) {
+      throw ErrorException(
+        ErrorCode.ERR_INVALID_ARGUMENT,
+        "Invalid argument status"
+      )
+    }
+    cancelOrders(orderHashes, status)
+  }
 
   def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]] =
     orderDal.getOrders(hashes)

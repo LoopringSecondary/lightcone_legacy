@@ -160,7 +160,18 @@ class OrderDalImpl(
   implicit val TokenStandardColumnType = enumColumnType(TokenStandard)
   private[this] val logger = Logger(this.getClass)
 
-  val effectiveStatus = Set(
+  val failedStatus = Seq(
+    OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
+    OrderStatus.STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR,
+    OrderStatus.STATUS_CANCELLED_ON_CHAIN_BY_USER,
+    OrderStatus.STATUS_CANCELLED_ON_CHAIN_BY_USER_TRADING_PAIR,
+    OrderStatus.STATUS_CANCELLED_LOW_BALANCE,
+    OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE,
+    OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
+    OrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
+  )
+
+  val activeStatus = Set(
     OrderStatus.STATUS_NEW,
     OrderStatus.STATUS_PENDING,
     OrderStatus.STATUS_PARTIALLY_FILLED
@@ -544,8 +555,8 @@ class OrderDalImpl(
     }
     var filters = query
       .filter(_.owner === retrieveCondition.owner)
-      .filter(_.status inSet effectiveStatus)
-      .filter(_.validSince <= retrieveCondition.cutoff)
+      .filter(_.status inSet activeStatus)
+      .filter(_.validSince <= retrieveCondition.cutoff.toInt)
     if (retrieveCondition.tradingPair.nonEmpty) {
       filters = filters.filter(_.marketHash === retrieveCondition.tradingPair)
     }
@@ -593,13 +604,6 @@ class OrderDalImpl(
     ): Future[ErrorCode] =
     for {
       _ <- Future.unit
-      failedStatus = Seq(
-        OrderStatus.STATUS_CANCELLED_BY_USER,
-        OrderStatus.STATUS_CANCELLED_LOW_BALANCE,
-        OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE,
-        OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
-        OrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
-      )
       result <- if (!failedStatus.contains(status)) {
         Future.successful(0)
       } else {

@@ -71,67 +71,58 @@ class OrderCutoffHandlerActor(
     extends ActorWithPathBasedConfig(OrderCutoffHandlerActor.name)
     with ActorLogging {
   def mama = actors.get(MultiAccountManagerActor.name)
-
-  val batchSize =
-    if (selfConfig.getInt("batch-size") > 0) selfConfig.getInt("batch-size")
-    else 50
+  val batchSize = selfConfig.getInt("batch-size")
 
   def receive: Receive = {
 
     // TODO du: 收到任务后先存入db，一批处理完之后删除。
     // 如果执行失败，1. 自身重启时需要再恢复 2. 整体系统重启时直接删除不需要再恢复（accountManagerActor恢复时会处理cutoff）
     case req: OrdersCancelledEvent =>
-      dbModule.orderService.getOrders(req.orderHashes).map(cancelOrders)
+      dbModule.orderService
+        .getOrders(req.orderHashes)
+        .map(cancelOrders(_, OrderStatus.STATUS_CANCELLED_ON_CHAIN_BY_USER))
 
-    case req: OwnerCutoffEvent =>
+    case req: CutoffEvent =>
       if (req.owner.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
           "Owner could not be empty"
         )
-      log.info(s"Deal with cutoff:$req")
+      log.debug(s"Deal with cutoff:$req")
       self ! RetrieveOrdersToCancel(
         broker = req.broker,
         owner = req.owner,
-        cutoff = req.cutoff
-      )
-
-    case req: OwnerTradingPairCutoffEvent =>
-      if (req.owner.isEmpty || req.tradingPair.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Owner or tradingPair could not be empty"
-        )
-      log.info(s"Deal with cutoff:$req")
-      self ! RetrieveOrdersToCancel(
-        broker = req.broker,
-        owner = req.owner,
-        tradingPair = req.tradingPair,
         cutoff = req.cutoff
       )
 
     case req: RetrieveOrdersToCancel =>
-      dbModule.orderService.getCutoffAffectedOrders(req, batchSize).map { r =>
-        if (r.nonEmpty) {
-          log.info(
-            s"Handle cutoff:$req in a batch:$batchSize request, return ${r.length} orders to cancel"
-          )
-          cancelOrders(r).map { _ =>
-            self ! req
-          }
-        }
+      val cancelStatus = if (req.tradingPair.nonEmpty) {
+        OrderStatus.STATUS_CANCELLED_ON_CHAIN_BY_USER_TRADING_PAIR
+      } else {
+        OrderStatus.STATUS_CANCELLED_ON_CHAIN_BY_USER
       }
+      for {
+        affectOrders <- dbModule.orderService
+          .getCutoffAffectedOrders(req, batchSize)
+        _ = log.debug(
+          s"Handle cutoff:$req in a batch:$batchSize request, return ${affectOrders.length} orders to cancel"
+        )
+        _ <- cancelOrders(affectOrders, cancelStatus)
+      } yield if (affectOrders.nonEmpty) self ! req
 
     case m =>
       throw ErrorException(ERR_INTERNAL_UNKNOWN, s"Unhandled message: $m")
   }
 
-  private def cancelOrders(orders: Seq[RawOrder]): Future[ErrorCode] = {
+  private def cancelOrders(
+      orders: Seq[RawOrder],
+      status: OrderStatus
+    ): Future[Unit] = {
     val cancelOrderReqs = orders.map { o =>
       CancelOrder.Req(
         id = o.hash,
         owner = o.owner,
-        status = OrderStatus.STATUS_CANCELLED_BY_USER,
+        status = status,
         marketId = Some(MarketId(primary = o.tokenB, secondary = o.tokenS))
       )
     }
@@ -139,10 +130,10 @@ class OrderCutoffHandlerActor(
       notified <- Future.sequence(cancelOrderReqs.map(mama ? _))
       updated <- dbModule.orderService.updateOrdersStatus(
         orders.map(_.hash),
-        OrderStatus.STATUS_CANCELLED_BY_USER
+        status
       )
       _ = if (updated != ERR_NONE)
-        throw ErrorException(ERR_INTERNAL_UNKNOWN, "Update failed")
-    } yield updated
+        throw ErrorException(ERR_INTERNAL_UNKNOWN, "Update order status failed")
+    } yield Unit
   }
 }

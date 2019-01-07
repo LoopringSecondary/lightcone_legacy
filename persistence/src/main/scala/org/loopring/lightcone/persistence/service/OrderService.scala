@@ -28,7 +28,8 @@ trait OrderService {
 
   // Mark the order as soft-cancelled. Returns error code if the order does not exist.
   def markOrderSoftCancelled(
-      orderHashes: Seq[String]
+      orderHashes: Seq[String],
+      status: OrderStatus
     ): Future[Seq[UserCancelOrder.Res.Result]]
   def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]]
   def getOrder(hash: String): Future[Option[RawOrder]]
