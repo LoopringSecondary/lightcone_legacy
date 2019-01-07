@@ -19,8 +19,10 @@ package org.loopring.lightcone.core.depth
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import scala.collection.SortedMap
+import org.slf4s.Logging
 
-class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
+class OrderbookManagerImpl(config: MarketConfig)
+  extends OrderbookManager with Logging {
 
   private[depth] val viewMap = (0 until config.levels).map { level =>
     level -> new View(level)
@@ -37,18 +39,17 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
   }
 
   def getOrderbook(
-      level: Int,
-      size: Int,
-      price: Option[Double] = None
-    ) = {
+    level: Int,
+    size: Int,
+    price: Option[Double] = None) = {
     val p = price match {
       case Some(p) if p > 0 => p
-      case _                => latestPrice
+      case _ => latestPrice
     }
 
     viewMap.get(level) match {
       case Some(view) => view.getOrderbook(size, p)
-      case None       => Orderbook(p, Nil, Nil)
+      case None => Orderbook(p, Nil, Nil)
     }
   }
 
@@ -68,8 +69,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
         aggregationLevel,
         config.precisionForAmount,
         config.precisionForTotal,
-        false
-      ) with ConverstionSupport
+        false) with ConverstionSupport
 
     private val buySide =
       new OrderbookSide.Buys(
@@ -77,8 +77,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
         aggregationLevel,
         config.precisionForAmount,
         config.precisionForTotal,
-        false
-      ) with ConverstionSupport
+        false) with ConverstionSupport
 
     def processUpdate(update: Orderbook.Update) {
       update.sells.foreach(sellSide.increase)
@@ -88,14 +87,12 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
     def getDiff(update: Orderbook.Update) = {
       Orderbook.Update(
         update.sells.map(sellSide.getDiff),
-        update.buys.map(buySide.getDiff)
-      )
+        update.buys.map(buySide.getDiff))
     }
 
     def getOrderbook(
-        size: Int,
-        price: Double
-      ) = {
+      size: Int,
+      price: Double) = {
 
       val priceOpt =
         if (price > 0) Some(price)
@@ -120,7 +117,7 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
       // If the price is overlapping,we drop the top sell item
       sells =
         if (sells.headOption.map(_.price) == buys.headOption.map(_.price)) {
-          log.warning(s"order book overlapped ${buys} <> ${sells}")
+          log.warn(s"order book overlapped ${buys} <> ${sells}")
           sells.drop(1)
         } else {
           sells.take(size)
@@ -139,13 +136,11 @@ class OrderbookManagerImpl(config: MarketConfig) extends OrderbookManager {
         Orderbook.Item(
           priceFormat.format(slot.slot / priceScaling),
           amountFormat.format(slot.amount),
-          totalFormat.format(slot.total)
-        )
+          totalFormat.format(slot.total))
 
       def getDepth(
-          num: Int,
-          latestPrice: Option[Double]
-        ): Seq[Orderbook.Item] = {
+        num: Int,
+        latestPrice: Option[Double]): Seq[Orderbook.Item] = {
 
         val priceLimit = latestPrice.map(_ * priceScaling)
         getSlots(num, priceLimit).map(slotToItem(_))
