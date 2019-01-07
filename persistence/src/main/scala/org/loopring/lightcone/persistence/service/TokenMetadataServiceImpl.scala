@@ -38,5 +38,5 @@ class TokenMetadataServiceImpl @Inject()(
       token: String,
       burnDate: Double
     ): Future[ErrorCode] =
-    tokenMetadataDal.updateBurnRate(token: String, burnDate: Double)
+    tokenMetadataDal.updateBurnRate(token, burnDate)
 }
