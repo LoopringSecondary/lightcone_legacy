@@ -31,8 +31,8 @@ class EthereumBatchCallRequestBuilder {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val allowanceCallReqs =
-      batchErc20AllowanceReq(delegateAddress, owner, tokens, tag)
-    val balanceCallReqs = batchErc20BalanceReq(owner, tokens, tag)
+      buildBatchErc20AllowanceReq(delegateAddress, owner, tokens, tag)
+    val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens, tag)
 
     BatchCallContracts.Req(allowanceCallReqs ++ balanceCallReqs)
   }
@@ -43,7 +43,7 @@ class EthereumBatchCallRequestBuilder {
     ): BatchCallContracts.Req = {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
-    val balanceCallReqs = batchErc20BalanceReq(owner, tokens, tag)
+    val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens, tag)
     BatchCallContracts.Req(balanceCallReqs)
   }
 
@@ -55,7 +55,7 @@ class EthereumBatchCallRequestBuilder {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val allowanceCallReqs =
-      batchErc20AllowanceReq(delegateAddress, owner, tokens, tag)
+      buildBatchErc20AllowanceReq(delegateAddress, owner, tokens, tag)
     BatchCallContracts.Req(allowanceCallReqs)
   }
 
@@ -65,7 +65,7 @@ class EthereumBatchCallRequestBuilder {
       tag: String
     ): BatchCallContracts.Req = {
     val batchFilledAmountReqs =
-      batchFilledAmountReq(tradeHistoryAddress, req.orderIds, tag)
+      buildBatchFilledAmountReq(tradeHistoryAddress, req.orderIds, tag)
     BatchCallContracts.Req(batchFilledAmountReqs)
   }
 
@@ -102,7 +102,7 @@ class EthereumBatchCallRequestBuilder {
     BatchCallContracts.Req(ethCallReqs)
   }
 
-  private def batchErc20AllowanceReq(
+  private def buildBatchErc20AllowanceReq(
       delegateAddress: Address,
       owner: Address,
       tokens: Seq[Address],
@@ -118,7 +118,7 @@ class EthereumBatchCallRequestBuilder {
     })
   }
 
-  private def batchErc20BalanceReq(
+  private def buildBatchErc20BalanceReq(
       owner: Address,
       tokens: Seq[Address],
       tag: String = "latest"
@@ -132,11 +132,11 @@ class EthereumBatchCallRequestBuilder {
     }
   }
 
-  private def batchFilledAmountReq(
+  private def buildBatchFilledAmountReq(
       contractAddress: Address,
       orderHashes: Seq[String],
       tag: String = "latest"
-    ) = {
+    ):Seq[EthCall.Req] = {
     orderHashes.zipWithIndex.map { orderHash =>
       val data = tradeHistoryAbi.filled.pack(
         FilledFunction.Params(Numeric.hexStringToByteArray(orderHash._1))
