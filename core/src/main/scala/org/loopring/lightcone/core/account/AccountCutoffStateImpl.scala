@@ -28,13 +28,11 @@ class AccountCutoffStateImpl()(implicit timeProvider: TimeProvider)
   private val marketPairCutoffs = Map.empty[BigInt, Long]
   private var ownerCutoff: Long = -1L
 
-  def setCutoff(
-      marketId: MarketId,
+  def setTradingPairCutoff(
+      marketCode: BigInt,
       cutoff: Long
     ) = {
     if (!(cutoff <= timeProvider.getTimeSeconds())) {
-      val marketCode = Numeric.toBigInt(marketId.primary) xor
-        Numeric.toBigInt(marketId.secondary)
       marketPairCutoffs.get(marketCode) match {
         case None => marketPairCutoffs.put(marketCode, cutoff)
         case Some(c) =>

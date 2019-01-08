@@ -61,5 +61,6 @@ package object ethereum {
   val erc20Abi = ERC20ABI()
   val tradeHistoryAbi = TradeHistoryAbi()
   val ringSubmitterAbi = RingSubmitterAbi()
+  val burnRateTableAbi = BurnRateTableAbi()
 
 }

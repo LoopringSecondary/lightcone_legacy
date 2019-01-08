@@ -213,6 +213,15 @@ message GetCutoff {
     }
 }
 
+message GetBurnRate {
+    message Req {
+        string token = 1;
+    }
+    message Res {
+        double burn_rate = 1;
+    }
+}
+
 message UpdateBalanceAndAllowance {
     message Req {
         string address = 1;

@@ -24,6 +24,20 @@ import org.web3j.utils.Numeric
 class EthereumCallRequestBuilder {
 
   def buildRequest(
+      req: GetBurnRate.Req,
+      contractAddress: Address,
+      tag: String
+    ): EthCall.Req = {
+    val input = burnRateTableAbi.getBurnRate.pack(
+      GetBurnRateFunction.Params(
+        token = req.token
+      )
+    )
+    val param = TransactionParams(to = contractAddress.toString, data = input)
+    EthCall.Req(param = Some(param), tag = tag)
+  }
+
+  def buildRequest(
       req: GetOrderCancellation.Req,
       contractAddress: Address,
       tag: String
