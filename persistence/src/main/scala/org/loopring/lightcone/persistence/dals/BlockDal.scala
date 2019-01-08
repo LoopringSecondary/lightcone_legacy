@@ -33,19 +33,17 @@ trait BlockDal extends BaseDalImpl[BlockTable, BlockData] {
   def findMaxHeight(): Future[Option[Long]]
 
   def findBlocksInHeightRange(
-      heightFrom: Long,
-      heightTo: Long
-    ): Future[Seq[(Long, String)]]
+    heightFrom: Long,
+    heightTo: Long): Future[Seq[(Long, String)]]
   def count(): Future[Int]
   def obsolete(height: Long): Future[Unit]
 }
 
-class BlockDalImpl(
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext)
-    extends BlockDal {
-  val query = new TableQuery(c => new BlockTable("a", c))
+class BlockDalImpl()(
+  implicit val dbConfig: DatabaseConfig[JdbcProfile],
+  val ec: ExecutionContext)
+  extends BlockDal {
+  val query = TableQuery(new BlockTable("a")(_))
   def getRowHash(row: BlockData) = row.hash
 
   def saveBlock(block: BlockData): Future[ErrorCode] =
@@ -64,8 +62,7 @@ class BlockDalImpl(
       query
         .filter(_.hash === hash)
         .result
-        .headOption
-    )
+        .headOption)
   }
 
   def findByHeight(height: Long): Future[Option[BlockData]] = {
@@ -73,8 +70,7 @@ class BlockDalImpl(
       query
         .filter(_.height === height)
         .result
-        .headOption
-    )
+        .headOption)
   }
 
   def findMaxHeight(): Future[Option[Long]] = {
@@ -82,22 +78,19 @@ class BlockDalImpl(
       query
         .map(_.height)
         .max
-        .result
-    )
+        .result)
   }
 
   def findBlocksInHeightRange(
-      heightFrom: Long,
-      heightTo: Long
-    ): Future[Seq[(Long, String)]] = {
+    heightFrom: Long,
+    heightTo: Long): Future[Seq[(Long, String)]] = {
     db.run(
       query
         .filter(_.height >= heightFrom)
         .filter(_.height <= heightTo)
         .sortBy(_.height.asc.nullsFirst)
         .map(c => (c.height, c.hash))
-        .result
-    )
+        .result)
   }
 
   def count(): Future[Int] = {

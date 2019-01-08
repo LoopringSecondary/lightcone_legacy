@@ -21,9 +21,7 @@ import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
-class BlockTable(
-    a: String,
-    tag: Tag)
+class BlockTable(a: String)(tag: Tag)
     extends BaseTable[BlockData](tag, "T_BLOCKS" + a) {
 
   def id = hash
