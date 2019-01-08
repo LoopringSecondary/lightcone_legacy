@@ -62,7 +62,8 @@ trait AbiEvent[R] {
       data: String,
       topics: Array[String]
     )(
-      implicit mf: Manifest[R]
+      implicit
+      mf: Manifest[R]
     ): Option[R] = {
     val dataBytes = Numeric.hexStringToByteArray(data)
     val topicBytes = topics.map(Numeric.hexStringToByteArray)

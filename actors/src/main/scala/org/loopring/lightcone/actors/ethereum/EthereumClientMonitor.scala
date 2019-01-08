@@ -38,7 +38,8 @@ object EthereumClientMonitor {
   val name = "ethereum_client_monitor"
 
   def start(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -69,7 +70,8 @@ object EthereumClientMonitor {
 class EthereumClientMonitor(
     val name: String = EthereumClientMonitor.name
   )(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     val config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,

@@ -36,7 +36,8 @@ trait TokenBalanceDal extends BaseDalImpl[TokenBalanceTable, TokenBalance] {
 }
 
 class TokenBalanceDalImpl @Inject()(
-    implicit @Named("dbconfig-dal-token-balance") val dbConfig: DatabaseConfig[
+    implicit
+    @Named("dbconfig-dal-token-balance") val dbConfig: DatabaseConfig[
       JdbcProfile
     ],
     val ec: ExecutionContext)

@@ -22,7 +22,8 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 
 class DustOrderEvaluator @Inject()(
-    implicit @Named("dust-order-threshold") threshold: Double = 0.0,
+    implicit
+    @Named("dust-order-threshold") threshold: Double = 0.0,
     tve: TokenValueEstimator) {
 
   def isOriginalDust(order: Matchable) =

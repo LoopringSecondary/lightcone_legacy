@@ -39,11 +39,9 @@ trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
   def obsolete(height: Long): Future[Unit]
 }
 
-class TradeDalImpl(
-  )(
-    implicit @Named("dbconfig-dal-trade") val dbConfig: DatabaseConfig[
-      JdbcProfile
-    ],
+class TradeDalImpl @Inject()(
+    implicit
+    @Named("dbconfig-dal-trade") val dbConfig: DatabaseConfig[JdbcProfile],
     timeProvider: TimeProvider,
     val ec: ExecutionContext)
     extends TradeDal {

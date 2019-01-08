@@ -23,7 +23,8 @@ import org.slf4s.Logging
 
 final private[core] class AccountManagerImpl(
   )(
-    implicit orderPool: AccountOrderPool with UpdatedOrdersTracing)
+    implicit
+    orderPool: AccountOrderPool with UpdatedOrdersTracing)
     extends AccountManager
     with Logging {
   import OrderStatus._

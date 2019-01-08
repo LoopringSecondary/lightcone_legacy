@@ -115,7 +115,8 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
       message: Option[String] = None,
       data: Option[JValue] = None
     )(
-      implicit id: Option[String]
+      implicit
+      id: Option[String]
     ) =
     complete(
       JsonRpcResponse(

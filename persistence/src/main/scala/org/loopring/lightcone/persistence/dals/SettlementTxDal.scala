@@ -42,7 +42,8 @@ trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
 }
 
 class SettlementTxDalImpl @Inject()(
-    implicit @Named("dbconfig-dal-settlement-tx") val dbConfig: DatabaseConfig[
+    implicit
+    @Named("dbconfig-dal-settlement-tx") val dbConfig: DatabaseConfig[
       JdbcProfile
     ],
     val ec: ExecutionContext)

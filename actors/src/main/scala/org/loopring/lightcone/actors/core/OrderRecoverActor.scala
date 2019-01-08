@@ -44,7 +44,8 @@ object OrderRecoverActor extends ShardedEvenly {
     }
 
   def start(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -64,7 +65,8 @@ object OrderRecoverActor extends ShardedEvenly {
 
 class OrderRecoverActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,

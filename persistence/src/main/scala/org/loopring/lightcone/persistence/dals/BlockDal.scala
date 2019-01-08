@@ -43,7 +43,8 @@ trait BlockDal extends BaseDalImpl[BlockTable, BlockData] {
 }
 
 class BlockDalImpl @Inject()(
-    implicit @Named("dbconfig-dal-block") val dbConfig: DatabaseConfig[
+    implicit
+    @Named("dbconfig-dal-block") val dbConfig: DatabaseConfig[
       JdbcProfile
     ],
     val ec: ExecutionContext)

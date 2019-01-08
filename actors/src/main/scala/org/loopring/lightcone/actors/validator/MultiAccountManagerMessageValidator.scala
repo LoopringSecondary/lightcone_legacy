@@ -30,7 +30,8 @@ object MultiAccountManagerMessageValidator {
 // This class can be deleted in the future.
 final class MultiAccountManagerMessageValidator(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     timeProvider: TimeProvider,
     supportedMarkets: SupportedMarkets)
     extends MessageValidator {

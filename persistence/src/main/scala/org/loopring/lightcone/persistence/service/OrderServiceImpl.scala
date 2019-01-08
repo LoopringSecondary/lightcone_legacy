@@ -27,7 +27,8 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
 class OrderServiceImpl @Inject()(
-    implicit orderDal: OrderDal,
+    implicit
+    orderDal: OrderDal,
     @Named("db-execution-context") val ec: ExecutionContext)
     extends OrderService {
 

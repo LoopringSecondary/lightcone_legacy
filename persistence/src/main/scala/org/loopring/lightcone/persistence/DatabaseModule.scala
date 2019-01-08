@@ -28,12 +28,8 @@ class DatabaseModule @Inject()(
     val tokenMetadataDal: TokenMetadataDal,
     val orderDal: OrderDal,
     val tradeDal: TradeDal,
-    val addressDal: AddressDal,
     val tokenBalanceDal: TokenBalanceDal,
     val blockDal: BlockDal,
-    val transactionDal: TransactionDal,
-    val eventLogDal: EventLogDal,
-    val tokenTransferDal: TokenTransferDal,
     val settlementTxDal: SettlementTxDal,
     val orderStatusMonitorDal: OrderStatusMonitorDal,
     val orderService: OrderService,
@@ -42,19 +38,16 @@ class DatabaseModule @Inject()(
     val tradeService: TradeService,
     val settlementTxService: SettlementTxService
   )(
-    implicit @Named("db-execution-context") val ec: ExecutionContext)
+    implicit
+    @Named("db-execution-context") val ec: ExecutionContext)
     extends base.BaseDatabaseModule {
 
   val tables = Seq(
     tokenMetadataDal,
     orderDal,
     tradeDal,
-    addressDal,
     tokenBalanceDal,
     blockDal,
-    transactionDal,
-    eventLogDal,
-    tokenTransferDal,
     settlementTxDal,
     orderStatusMonitorDal
   )

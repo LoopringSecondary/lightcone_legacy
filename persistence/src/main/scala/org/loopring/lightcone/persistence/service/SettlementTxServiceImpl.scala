@@ -24,7 +24,8 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
 class SettlementTxServiceImpl @Inject()(
-    implicit submitTxDal: SettlementTxDal,
+    implicit
+    submitTxDal: SettlementTxDal,
     @Named("db-execution-context") val ec: ExecutionContext)
     extends SettlementTxService {
 

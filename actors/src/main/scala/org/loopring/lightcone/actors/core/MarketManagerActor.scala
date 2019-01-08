@@ -45,7 +45,8 @@ object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
   def start(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -92,7 +93,8 @@ object MarketManagerActor extends ShardedByMarket {
 class MarketManagerActor(
     markets: Map[String, MarketId]
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -112,7 +114,7 @@ class MarketManagerActor(
 
   var autoSwitchBackToReceive: Option[Cancellable] = None
 
-  val wethTokenAddress = config.getString("weth.address")
+  val wethTokenAddress = config.getString("relay.weth-address")
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
   val maxSettementFailuresPerOrder =

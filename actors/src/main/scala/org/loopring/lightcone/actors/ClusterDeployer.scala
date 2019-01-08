@@ -43,7 +43,8 @@ import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
 class ClusterDeployer @Inject()(
-    implicit actors: Lookup[ActorRef],
+    implicit
+    actors: Lookup[ActorRef],
     actorMaterializer: ActorMaterializer,
     brb: EthereumBatchCallRequestBuilder,
     cluster: Cluster,

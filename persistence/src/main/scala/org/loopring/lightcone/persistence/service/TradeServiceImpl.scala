@@ -25,7 +25,8 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
 class TradeServiceImpl @Inject()(
-    implicit tradeDal: TradeDal,
+    implicit
+    tradeDal: TradeDal,
     @Named("db-execution-context") val ec: ExecutionContext)
     extends TradeService {
 

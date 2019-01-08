@@ -25,7 +25,8 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
 class BlockServiceImpl @Inject()(
-    implicit blockDal: BlockDal,
+    implicit
+    blockDal: BlockDal,
     @Named("db-execution-context") val ec: ExecutionContext)
     extends BlockService {
 

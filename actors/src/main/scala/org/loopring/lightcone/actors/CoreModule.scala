@@ -47,11 +47,6 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
   override def configure(): Unit = {
 
-    // TODO(read from config)
-    bind[Double]
-      .annotatedWithName("dust-order-threshold")
-      .toInstance(0.0)
-
     val system = ActorSystem("Lightcone", config)
 
     bind[Config].toInstance(config)
@@ -59,33 +54,40 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[Cluster].toInstance(Cluster(system))
     bind[ActorMaterializer].toInstance(ActorMaterializer()(system))
 
-    bind[Timeout].toInstance(Timeout(2.second))
-    bind[TimeProvider].to[SystemTimeProvider]
-
-    bind[EthereumCallRequestBuilder]
-    bind[EthereumBatchCallRequestBuilder]
-
     bind[ExecutionContextExecutor].toInstance(system.dispatcher)
     bind[ExecutionContext].toInstance(system.dispatcher)
     bind[ExecutionContext]
       .annotatedWithName("db-execution-context")
       .toInstance(system.dispatchers.lookup("db-execution-context"))
 
-    bind[SupportedMarkets].toInstance(SupportedMarkets(config))
-    bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
+    bind[Timeout].toInstance(Timeout(2.second))
+    bind[TimeProvider].to[SystemTimeProvider]
 
+    // --- bind db configs ---------------------
+    // TODO(yongfeng): use different config for different dals
+    bindDBForNames(
+      DatabaseConfig.forConfig("db.default", config),
+      Seq(
+        "dbconfig-dal-token-metadata",
+        "dbconfig-dal-order",
+        "dbconfig-dal-trade",
+        "dbconfig-dal-token-balance",
+        "dbconfig-dal-block",
+        "dbconfig-dal-settlement-tx",
+        "dbconfig-dal-order-status-monitor"
+      )
+    )
+
+    // --- bind dals ---------------------
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].in[Singleton]
     bind[OrderDal].to[OrderDalImpl].in[Singleton]
     bind[TradeDal].to[TradeDalImpl].in[Singleton]
-    bind[AddressDal].to[AddressDalImpl].in[Singleton]
     bind[TokenBalanceDal].to[TokenBalanceDalImpl].in[Singleton]
     bind[BlockDal].to[BlockDalImpl].in[Singleton]
-    bind[TransactionDal].to[TransactionDalImpl].in[Singleton]
-    bind[EventLogDal].to[EventLogDalImpl].in[Singleton]
-    bind[TokenTransferDal].to[TokenTransferDalImpl].in[Singleton]
     bind[SettlementTxDal].to[SettlementTxDalImpl].in[Singleton]
     bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].in[Singleton]
 
+    // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].in[Singleton]
     bind[TokenMetadataService].to[TokenMetadataServiceImpl].in[Singleton]
     bind[TradeService].to[TradeServiceImpl].in[Singleton]
@@ -94,22 +96,36 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       .to[OrderStatusMonitorServiceImpl]
       .in[Singleton]
 
-    // val dbConfig: DatabaseConfig[JdbcProfile] =
-    //   DatabaseConfig.forConfig("db.default", config)
-
+    // --- bind local singletons ---------------------
     bind[DatabaseModule].in[Singleton]
     bind[TokenManager].in[Singleton]
+
+    bind[SupportedMarkets].toInstance(SupportedMarkets(config))
+    bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
+
+    // --- bind other classes ---------------------
+    bind[EthereumCallRequestBuilder]
+    bind[EthereumBatchCallRequestBuilder]
 
     bind[TokenValueEstimator]
     bind[DustOrderEvaluator]
     bind[RingIncomeEstimator].to[RingIncomeEstimatorImpl]
 
-    bind[TokenMetadataRefresher]
-    bind[EthereumEventExtractorActor]
-    bind[EthereumQueryActor]
-    bind[DatabaseQueryActor]
+    // --- bind primative types ---------------------
+    bind[Double]
+      .annotatedWithName("dust-order-threshold")
+      .toInstance(config.getDouble("relay.dust-order-threshold"))
 
-    // Cluster(system).registerOnMemberUp {
+  }
 
+  private def bindDBForNames(
+      instance: DatabaseConfig[JdbcProfile],
+      names: Seq[String]
+    ) = {
+    names.foreach { name =>
+      bind[DatabaseConfig[JdbcProfile]]
+        .annotatedWithName(name)
+        .toInstance(instance)
+    }
   }
 }

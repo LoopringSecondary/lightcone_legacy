@@ -26,7 +26,8 @@ class AccountTokenManagerImpl(
     val token: String,
     val maxNumOrders: Int = 1000
   )(
-    implicit orderPool: AccountOrderPool,
+    implicit
+    orderPool: AccountOrderPool,
     dustEvaluator: DustOrderEvaluator)
     extends AccountTokenManager
     with Logging {

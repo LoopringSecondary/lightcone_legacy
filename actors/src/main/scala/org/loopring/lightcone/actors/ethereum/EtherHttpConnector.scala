@@ -36,7 +36,8 @@ import scala.util._
 private[ethereum] class HttpConnector(
     node: EthereumProxySettings.Node
   )(
-    implicit val mat: ActorMaterializer)
+    implicit
+    val mat: ActorMaterializer)
     extends Actor
     with ActorLogging
     with Json4sSupport {

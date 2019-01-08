@@ -34,7 +34,8 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMeta] {
 }
 
 class TokenMetadataDalImpl @Inject()(
-    implicit @Named("dbconfig-dal-token-metadata") val dbConfig: DatabaseConfig[
+    implicit
+    @Named("dbconfig-dal-token-metadata") val dbConfig: DatabaseConfig[
       JdbcProfile
     ],
     val ec: ExecutionContext)

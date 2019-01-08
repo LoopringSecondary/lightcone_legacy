@@ -34,7 +34,8 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 class OrderDalImpl @Inject()(
-    implicit @Named("dbconfig-dal-order") val dbConfig: DatabaseConfig[
+    implicit
+    @Named("dbconfig-dal-order") val dbConfig: DatabaseConfig[
       JdbcProfile
     ],
     timeProvider: TimeProvider,

@@ -33,7 +33,8 @@ object EntryPointActor {
 
   def start(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeout: Timeout,
@@ -45,7 +46,8 @@ object EntryPointActor {
 
 class EntryPointActor(
   )(
-    implicit ec: ExecutionContext,
+    implicit
+    ec: ExecutionContext,
     timeout: Timeout,
     actors: Lookup[ActorRef])
     extends Actor

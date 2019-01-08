@@ -25,7 +25,8 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
 class OrderStatusMonitorServiceImpl @Inject()(
-    implicit orderStatusMonitorDal: OrderStatusMonitorDal,
+    implicit
+    orderStatusMonitorDal: OrderStatusMonitorDal,
     @Named("db-execution-context") val ec: ExecutionContext)
     extends OrderStatusMonitorService {
 
