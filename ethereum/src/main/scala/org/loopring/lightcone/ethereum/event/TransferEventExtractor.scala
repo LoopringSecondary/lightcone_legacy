@@ -21,6 +21,8 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{TransferEvent => PTransferEvent, _}
 import org.web3j.utils.Numeric
 
+import scala.collection.mutable.ListBuffer
+
 class TransferEventExtractor extends DataExtractor[PTransferEvent] {
 
   def extract(
@@ -29,14 +31,14 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
       blockTime: String
     ): Seq[PTransferEvent] = {
     val header = getEventHeader(tx, receipt, blockTime)
-
+    val transfers = ListBuffer.empty[PTransferEvent]
     if (isSucceed(receipt.status)) {
-      var transfers = receipt.logs.zipWithIndex
-        .flatMap(item => {
+       receipt.logs.zipWithIndex
+        .foreach(item => {
           val (log, index) = item
           wethAbi.unpackEvent(log.data, log.topics.toArray) match {
             case Some(transfer: TransferEvent.Result) =>
-              Seq(
+              transfers.append(
                 PTransferEvent(
                   header = Some(header.withLogIndex(index)),
                   from = transfer.from,
@@ -46,7 +48,7 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
                 )
               )
             case Some(withdraw: WithdrawalEvent.Result) =>
-              Seq(
+              transfers.append(
                 PTransferEvent(
                   header = Some(header.withLogIndex(index)),
                   from = withdraw.src,
@@ -63,7 +65,7 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
                 )
               )
             case Some(deposit: DepositEvent.Result) =>
-              Seq(
+              transfers.append(
                 PTransferEvent(
                   header = Some(header.withLogIndex(index)),
                   from = log.address,
@@ -84,7 +86,7 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
           }
         })
       if (BigInt(Numeric.toBigInt(tx.value)) > 0 && receipt.logs.isEmpty) {
-        transfers = transfers.+:(
+       transfers.append(
           PTransferEvent(
             header = Some(header),
             from = tx.from,
@@ -94,11 +96,10 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
           )
         )
       }
-      transfers
     } else {
       wethAbi.unpackFunctionInput(tx.input) match {
         case Some(transfer: TransferFunction.Parms) =>
-          Seq(
+          transfers.append(
             PTransferEvent(
               header = Some(header),
               from = tx.from,
