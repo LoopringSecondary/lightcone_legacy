@@ -78,10 +78,13 @@ class EthereumQueryActor(
   val LATEST = "latest"
 
   val delegateAddress =
-    config.getString("loopring_protocol.delegate-address")
+    Address(config.getString("loopring_protocol.delegate-address"))
 
   val tradeHistoryAddress =
-    config.getString("loopring_protocol.trade-history-address")
+    Address(config.getString("loopring_protocol.trade-history-address"))
+
+  val burnRateTableAddress =
+    Address(config.getString("loopring_protocol.burnrate-table-address"))
 
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
@@ -91,7 +94,7 @@ class EthereumQueryActor(
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
       val batchReqs = brb
         .buildRequest(
-          Address(delegateAddress),
+          delegateAddress,
           req.copy(tokens = erc20Tokens),
           tag
         )
@@ -175,20 +178,19 @@ class EthereumQueryActor(
       val tag = if (req.tag.isEmpty) LATEST else req.tag
       batchCallEthereum(
         sender,
-        brb.buildRequest(Address(delegateAddress), req, tag)
+        brb.buildRequest(delegateAddress, req, tag)
       ) { result =>
         val allowances = result.map { res =>
           byteArray2ByteString(Numeric.toBigInt(res).toByteArray)
         }
         GetAllowance.Res(owner, (tokens zip allowances).toMap)
-      }
 
     case req @ GetFilledAmount.Req(orderIds, _) =>
       val tag = if (req.tag.isEmpty) LATEST else req.tag
       batchCallEthereum(
         sender,
         brb
-          .buildRequest(Address(tradeHistoryAddress), req, tag)
+          .buildRequest(tradeHistoryAddress, req, tag)
       ) { result =>
         GetFilledAmount.Res(
           (orderIds zip result.map(
@@ -201,7 +203,7 @@ class EthereumQueryActor(
       val tag = if (req.tag.isEmpty) LATEST else req.tag
       callEthereum(
         sender,
-        rb.buildRequest(req, Address(tradeHistoryAddress), tag)
+        rb.buildRequest(req, tradeHistoryAddress, tag)
       ) { result =>
         GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
       }
@@ -210,9 +212,17 @@ class EthereumQueryActor(
       val tag = if (req.tag.isEmpty) LATEST else req.tag
       callEthereum(
         sender,
-        rb.buildRequest(req, Address(tradeHistoryAddress), tag)
+        rb.buildRequest(req, tradeHistoryAddress, LATEST)
       ) { result =>
         GetCutoff.Res(Numeric.toBigInt(result).toByteArray)
+      }
+
+    case req: GetBurnRate.Req =>
+      callEthereum(
+        sender,
+        rb.buildRequest(req, burnRateTableAddress, LATEST)
+      ) { result =>
+        GetBurnRate.Res(Numeric.toBigInt(result).doubleValue() / 1000)
       }
   }
 
