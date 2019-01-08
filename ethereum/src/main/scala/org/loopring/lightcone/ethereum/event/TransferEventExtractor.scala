@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.ethereum.event
 
+import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{TransferEvent => PTransferEvent, _}
@@ -23,7 +24,10 @@ import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
 
-class TransferEventExtractor extends DataExtractor[PTransferEvent] {
+class TransferEventExtractor(config: Config)
+    extends DataExtractor[PTransferEvent] {
+
+  val wethAddress = Address(config.getString("weth.address"))
 
   def extract(
       tx: Transaction,
@@ -84,7 +88,9 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
             case _ =>
           }
         })
-      if (BigInt(Numeric.toBigInt(tx.value)) > 0 && receipt.logs.isEmpty) {
+      if (BigInt(Numeric.toBigInt(tx.value)) > 0 && !Address(tx.to).equals(
+            wethAddress
+          )) {
         transfers.append(
           PTransferEvent(
             header = Some(header),
@@ -162,6 +168,17 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
                 amount = Numeric.toBigInt(tx.value).toByteArray
               )
             )
+            if (Address(tx.to).equals(wethAddress)) {
+              transfers.append(
+                PTransferEvent(
+                  header = Some(header),
+                  from = tx.to,
+                  to = tx.from,
+                  token = tx.to,
+                  amount = Numeric.toBigInt(tx.value).toByteArray
+                )
+              )
+            }
           }
       }
     }
