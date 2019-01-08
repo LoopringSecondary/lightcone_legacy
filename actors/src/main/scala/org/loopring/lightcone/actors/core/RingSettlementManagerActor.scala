@@ -89,7 +89,7 @@ class RingSettlementManagerActor(
       .asScala
       .map(minerConfig => {
         val miner = minerConfig.getString("transaction-origin")
-        val item = Address(miner).toString →
+        val item = Address(miner).toString ->
           context.actorOf(
             Props(
               new RingSettlementActor()(
@@ -121,19 +121,19 @@ class RingSettlementManagerActor(
       }
 
     case ba: AddressBalanceUpdated =>
-      if (ba.token.equals(Address.zeroAddress)) {
+      if (Address(ba.token).isZero) {
         val balance = BigInt(ba.balance.toByteArray)
         if (balance > miniMinerBalance && invalidRingSettlementActors.contains(
               ba.address
             )) {
-          ringSettlementActors += (ba.address → invalidRingSettlementActors(
+          ringSettlementActors += (ba.address -> invalidRingSettlementActors(
             ba.address
           ))
           invalidRingSettlementActors = invalidRingSettlementActors - ba.address
         } else if (balance <= miniMinerBalance && ringSettlementActors.contains(
                      ba.address
                    )) {
-          invalidRingSettlementActors += (ba.address → ringSettlementActors(
+          invalidRingSettlementActors += (ba.address -> ringSettlementActors(
             ba.address
           ))
           ringSettlementActors = ringSettlementActors - ba.address

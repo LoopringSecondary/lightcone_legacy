@@ -92,18 +92,12 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     )(
       implicit context: RingBatchContext
     ): String = {
-    val tokenSpendables = xRingBatch.orders
-      .map(
-        order =>
-          Seq(
-            (order.owner + order.tokenS),
-            (order.owner + order.getFeeParams.tokenFee)
-          )
+    val tokenSpendables = xRingBatch.orders.map { order =>
+      Seq(
+        (order.owner + order.tokenS),
+        (order.owner + order.getFeeParams.tokenFee)
       )
-      .flatten
-      .distinct
-      .zipWithIndex
-      .toMap
+    }.flatten.distinct.zipWithIndex.toMap
 
     val data = new Bitstream
     val tables = new Bitstream
@@ -370,7 +364,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
 
     val ordersWithDualAuthSig = xRingBatch.orders.map(order => {
       val orderParams = order.getParams
-      if (isValidAndNonzeroAddress(orderParams.dualAuthAddr)) {
+      if (isAddressValidAndNonZero(orderParams.dualAuthAddr)) {
         val privateKey = orderParams.dualAuthPrivateKey
         val dualAuthSig = signPrefixedMessage(hash, privateKey)
         val newOrderParams = orderParams.copy(dualAuthSig = dualAuthSig)

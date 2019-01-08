@@ -34,6 +34,7 @@ import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.ethereum.data.{Transaction, _}
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.ethereum.abi.SubmitRingsFunction
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -155,7 +156,10 @@ class RingSettlementActor(
         ringBatch = RingBatchGeneratorImpl.generateAndSignRingBatch(rawOrders)
         input = RingBatchGeneratorImpl.toSubmitableParamStr(ringBatch)
         tx = Transaction(
-          inputData = packRingToInput(input),
+          inputData = ringSubmitterAbi.submitRing.pack(
+            SubmitRingsFunction
+              .Params(data = Numeric.hexStringToByteArray(input))
+          ),
           nonce.get(),
           ring.gasLimit,
           ring.gasPrice,
