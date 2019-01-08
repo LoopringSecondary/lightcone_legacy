@@ -26,15 +26,15 @@ trait EthereumSupport {
   implicit val requestBuilder = new EthereumCallRequestBuilder
   implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
 
-  actors.add(
-    EthereumQueryActor.name,
-    EthereumQueryActor.start)
+  actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
   actors.add(
     EthereumQueryMessageValidator.name,
     MessageValidationActor(
       new EthereumQueryMessageValidator(),
       EthereumQueryActor.name,
-      EthereumQueryMessageValidator.name))
+      EthereumQueryMessageValidator.name
+    )
+  )
 
   if (!actors.contains(GasPriceActor.name)) {
     actors.add(GasPriceActor.name, GasPriceActor.start)

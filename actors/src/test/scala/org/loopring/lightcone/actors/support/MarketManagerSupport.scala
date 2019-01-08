@@ -27,7 +27,5 @@ trait MarketManagerSupport extends DatabaseModuleSupport {
     actors.add(GasPriceActor.name, GasPriceActor.start)
   }
 
-  actors.add(
-    RingSettlementManagerActor.name,
-    RingSettlementManagerActor.start)
+  actors.add(RingSettlementManagerActor.name, RingSettlementManagerActor.start)
 }

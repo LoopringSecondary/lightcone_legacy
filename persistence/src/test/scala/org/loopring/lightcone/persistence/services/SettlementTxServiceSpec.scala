@@ -24,6 +24,8 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
+
+  implicit val dal = new SettlementTxDalImpl()
   def getService = new SettlementTxServiceImpl()
 
   def createTables(): Future[Any] =

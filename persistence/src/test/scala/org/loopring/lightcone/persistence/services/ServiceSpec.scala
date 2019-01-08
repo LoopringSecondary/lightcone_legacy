@@ -46,7 +46,7 @@ trait ServiceSpec[S]
 
   implicit val ec = ExecutionContext.global
   implicit var dbConfig: DatabaseConfig[JdbcProfile] = _
-  val timeProvider = new SystemTimeProvider()
+  implicit val timeProvider = new SystemTimeProvider()
   def getService(): S
   var service: S = _
   def createTables(): Future[Any]

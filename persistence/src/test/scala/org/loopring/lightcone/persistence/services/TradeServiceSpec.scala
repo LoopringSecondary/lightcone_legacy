@@ -24,13 +24,14 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 class TradeServiceSpec extends ServiceSpec[TradeService] {
+  implicit val dal = new TradeDalImpl()
   def getService = new TradeServiceImpl()
   val tokenS = "0xaaaaaa1"
   val tokenB = "0xbbbbbb1"
 
   def createTables(): Future[Any] =
     for {
-      r <- new TradeDalImpl().createTable()
+      r <- dal.createTable()
     } yield r
 
   private def testSave(

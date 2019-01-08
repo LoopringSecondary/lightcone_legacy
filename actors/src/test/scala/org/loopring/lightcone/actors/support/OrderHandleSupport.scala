@@ -21,8 +21,6 @@ import org.loopring.lightcone.actors.core._
 trait OrderHandleSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
-  actors.add(
-    OrderPersistenceActor.name,
-    OrderPersistenceActor.start)
+  actors.add(OrderPersistenceActor.name, OrderPersistenceActor.start)
 
 }

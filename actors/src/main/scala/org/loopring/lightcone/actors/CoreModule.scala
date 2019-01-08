@@ -39,7 +39,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -60,9 +60,6 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       .annotatedWithName("db-execution-context")
       .toInstance(system.dispatchers.lookup("db-execution-context"))
 
-    bind[Timeout].toInstance(Timeout(2.second))
-    bind[TimeProvider].to[SystemTimeProvider]
-
     // --- bind db configs ---------------------
     // TODO(yongfeng): use different config for different dals
     bindDBForNames(
@@ -74,9 +71,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         "dbconfig-dal-token-balance",
         "dbconfig-dal-block",
         "dbconfig-dal-settlement-tx",
-        "dbconfig-dal-order-status-monitor"
-      )
-    )
+        "dbconfig-dal-order-status-monitor"))
 
     // --- bind dals ---------------------
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].in[Singleton]
@@ -103,7 +98,8 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[SupportedMarkets].toInstance(SupportedMarkets(config))
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
 
-    // --- bind other classes ---------------------
+    // --- bind other classes ---------------------TimePro
+    bind[TimeProvider].to[SystemTimeProvider]
     bind[EthereumCallRequestBuilder]
     bind[EthereumBatchCallRequestBuilder]
 
@@ -112,6 +108,9 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[RingIncomeEstimator].to[RingIncomeEstimatorImpl]
 
     // --- bind primative types ---------------------
+
+    bind[Timeout].toInstance(Timeout(2.second))
+
     bind[Double]
       .annotatedWithName("dust-order-threshold")
       .toInstance(config.getDouble("relay.dust-order-threshold"))
@@ -119,9 +118,8 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
   }
 
   private def bindDBForNames(
-      instance: DatabaseConfig[JdbcProfile],
-      names: Seq[String]
-    ) = {
+    instance: DatabaseConfig[JdbcProfile],
+    names: Seq[String]) = {
     names.foreach { name =>
       bind[DatabaseConfig[JdbcProfile]]
         .annotatedWithName(name)

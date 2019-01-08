@@ -26,6 +26,7 @@ import scala.concurrent.duration._
 import scala.math.BigInt
 
 class OrderServiceSpec extends ServiceSpec[OrderService] {
+  implicit val dal = new OrderDalImpl()
   def getService = new OrderServiceImpl()
   val tokenS = "0xaaaaaa1"
   val tokenB = "0xbbbbbb1"
