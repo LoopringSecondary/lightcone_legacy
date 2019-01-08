@@ -59,6 +59,7 @@ abstract class CommonSpec(configStr: String)
   implicit val ec = system.dispatcher
   implicit val config = system.settings.config
   implicit val materializer = ActorMaterializer()(system)
+  implicit val deployActorsIgnoringRoles = true
 
   //  log.info(s"init config: ${config}")
 

@@ -23,7 +23,7 @@ import org.loopring.lightcone.actors.validator._
 trait EthereumSupport {
   my: CommonSpec =>
 
-  implicit val deployActorsIgnoringRoles: Boolean
+  println("===========" + deployActorsIgnoringRoles)
   implicit val requestBuilder = new EthereumCallRequestBuilder
   implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
 
