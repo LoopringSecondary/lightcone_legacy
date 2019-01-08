@@ -76,15 +76,45 @@ class ClusterDeployer @Inject()(
     system.eventStream.subscribe(listener, classOf[UnhandledMessage])
     system.eventStream.subscribe(listener, classOf[DeadLetter])
 
+    actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
+
+    actors.add(
+      MultiAccountManagerMessageValidator.name,
+      MessageValidationActor(
+        new MultiAccountManagerMessageValidator(),
+        MultiAccountManagerActor.name,
+        MultiAccountManagerMessageValidator.name
+      )
+    )
+
+    actors.add(
+      DatabaseQueryMessageValidator.name,
+      MessageValidationActor(
+        new DatabaseQueryMessageValidator(),
+        DatabaseQueryActor.name,
+        DatabaseQueryMessageValidator.name
+      )
+    )
+
+    actors.add(
+      EthereumQueryMessageValidator.name,
+      MessageValidationActor(
+        new EthereumQueryMessageValidator(),
+        EthereumQueryActor.name,
+        EthereumQueryMessageValidator.name
+      )
+    )
+
+    actors.add(
+      OrderbookManagerMessageValidator.name,
+      MessageValidationActor(
+        new OrderbookManagerMessageValidator(),
+        OrderbookManagerActor.name,
+        OrderbookManagerMessageValidator.name
+      )
+    )
+
     Cluster(system).registerOnMemberUp {
-      val listener =
-        system.actorOf(Props[BadMessageListener], "bad_message_listener")
-
-      system.eventStream.subscribe(listener, classOf[UnhandledMessage])
-      system.eventStream.subscribe(listener, classOf[DeadLetter])
-
-      actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
-
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
       actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
@@ -107,53 +137,13 @@ class ClusterDeployer @Inject()(
 
       //-----------deploy singleton actors-----------
       actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
-
       actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
-
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
-
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
 
       actors.add(
         RingSettlementManagerActor.name,
         RingSettlementManagerActor.start
-      )
-
-      //-----------deploy local actors-----------
-      actors.add(
-        MultiAccountManagerMessageValidator.name,
-        MessageValidationActor(
-          new MultiAccountManagerMessageValidator(),
-          MultiAccountManagerActor.name,
-          MultiAccountManagerMessageValidator.name
-        )
-      )
-
-      actors.add(
-        DatabaseQueryMessageValidator.name,
-        MessageValidationActor(
-          new DatabaseQueryMessageValidator(),
-          DatabaseQueryActor.name,
-          DatabaseQueryMessageValidator.name
-        )
-      )
-
-      actors.add(
-        EthereumQueryMessageValidator.name,
-        MessageValidationActor(
-          new EthereumQueryMessageValidator(),
-          EthereumQueryActor.name,
-          EthereumQueryMessageValidator.name
-        )
-      )
-
-      actors.add(
-        OrderbookManagerMessageValidator.name,
-        MessageValidationActor(
-          new OrderbookManagerMessageValidator(),
-          OrderbookManagerActor.name,
-          OrderbookManagerMessageValidator.name
-        )
       )
 
       //-----------deploy local actors that depend on cluster aware actors-----------
