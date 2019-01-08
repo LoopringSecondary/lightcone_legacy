@@ -21,33 +21,12 @@ import com.typesafe.config.ConfigFactory
 import org.slf4s.Logging
 import net.codingwell.scalaguice.InjectorExtensions._
 import akka.actor.ActorRef
-import java.io.File
 
-object ClusterDeployer extends Object with Logging {
+class ClusterDeployer extends Object with Logging {
 
-  def deploy(configPathOpt: Option[String] = None) = {
-    log.info(s"--> config_path = ${configPathOpt}")
+  def deploy() {
 
-    val baseConfig = ConfigFactory.load()
-
-    val config = configPathOpt match {
-      case Some(path) if path.nonEmpty =>
-        ConfigFactory.parseFile(new File(path)).withFallback(baseConfig)
-      case _ =>
-        baseConfig
-    }
-
-    val configItems = Seq(
-      "akka.remote.netty.tcp.hostname",
-      "akka.remote.netty.tcp.port",
-      "akka.cluster.seed-nodes",
-      "akka.cluster.roles"
-    )
-
-    configItems foreach { i =>
-      log.info(s"--> $i = ${config.getString(i)}")
-    }
-
-    Guice.createInjector(new CoreModule(config))
+    // bind[DatabaseModule].in[Singleton]
+    // dbModule.createTables()
   }
 }

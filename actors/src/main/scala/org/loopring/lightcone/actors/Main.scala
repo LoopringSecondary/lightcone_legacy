@@ -24,11 +24,39 @@ import org.slf4s.Logging
 import net.codingwell.scalaguice.InjectorExtensions._
 import akka.actor._
 import scala.io.StdIn
+import java.io.File
 
 object Main extends App with Logging {
+
   val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
-  val injector = ClusterDeployer.deploy(configPathOpt)
+
+  log.info(s"--> config_path = ${configPathOpt}")
+
+  val baseConfig = ConfigFactory.load()
+
+  val config = configPathOpt match {
+    case Some(path) if path.nonEmpty =>
+      ConfigFactory.parseFile(new File(path)).withFallback(baseConfig)
+    case _ =>
+      baseConfig
+  }
+
+  val configItems = Seq(
+    "akka.remote.netty.tcp.hostname",
+    "akka.remote.netty.tcp.port",
+    "akka.cluster.seed-nodes",
+    "akka.cluster.roles"
+  )
+
+  configItems foreach { i =>
+    log.info(s"--> $i = ${config.getString(i)}")
+  }
+
+  val injector = Guice.createInjector(new CoreModule(config))
   val system = injector.instance[ActorSystem]
+
+  injector.instance[ClusterDeployer].deploy()
+
   val actors = injector.instance[Lookup[ActorRef]]
   actors.get(EntryPointActor.name)
 
@@ -42,4 +70,5 @@ object Main extends App with Logging {
 
   //Shutdown
   system.terminate()
+
 }
