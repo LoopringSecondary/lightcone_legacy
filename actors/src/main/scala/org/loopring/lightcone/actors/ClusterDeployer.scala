@@ -21,12 +21,37 @@ import com.typesafe.config.ConfigFactory
 import org.slf4s.Logging
 import net.codingwell.scalaguice.InjectorExtensions._
 import akka.actor.ActorRef
+import com.google.inject.Inject
+import org.loopring.lightcone.actors.base.Lookup
+import org.loopring.lightcone.actors.core._
+import akka.cluster._
+import akka.actor._
+import akka.util.Timeout
+import com.typesafe.config.Config
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.data._
+import scala.concurrent._
 
-class ClusterDeployer extends Object with Logging {
+class ClusterDeployer @Inject() (
+  implicit system: ActorSystem,
+  config: Config,
+  ec: ExecutionContext,
+  timeProvider: TimeProvider,
+  timeout: Timeout,
+  actors: Lookup[ActorRef])
+  extends Object
+  with Logging {
 
   def deploy() {
-
     // bind[DatabaseModule].in[Singleton]
     // dbModule.createTables()
+
+    Cluster(system).registerOnMemberUp {
+
+      actors.add(
+        EthereumEventExtractorActor.name,
+        EthereumEventExtractorActor.startShardRegion())
+    }
   }
 }
