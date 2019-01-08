@@ -25,16 +25,7 @@ import akka.pattern._
 import scala.concurrent.{Await, Future}
 
 class BalanceSpec
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "ethereum_access",
-                         | "multi_account_manager",
-                         | "ethereum_query",
-                         | "gas_price",
-                         | "orderbook_manager",
-                         | "ring_settlement",
-                         | "market_manager"]
-                         |""".stripMargin)
+    extends CommonSpec
     with EthereumSupport
     with MultiAccountManagerSupport
     with MarketManagerSupport

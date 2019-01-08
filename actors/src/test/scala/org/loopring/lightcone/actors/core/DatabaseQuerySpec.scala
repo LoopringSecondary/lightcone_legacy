@@ -23,9 +23,7 @@ import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
 import org.loopring.lightcone.proto._
 
 class DatabaseQuerySpec
-    extends CommonSpec("""
-                         |akka.cluster.roles=["database_query"]
-                         |""".stripMargin)
+    extends CommonSpec
     with DatabaseModuleSupport
     with DatabaseQueryMessageSupport
     with JsonrpcSupport

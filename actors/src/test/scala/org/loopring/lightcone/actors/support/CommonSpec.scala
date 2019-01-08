@@ -32,7 +32,7 @@ import scala.concurrent.duration._
 import scala.math.BigInt
 
 //启动system、以及必须的元素，包括system，TokenMetaData，等
-abstract class CommonSpec(configStr: String)
+abstract class CommonSpec(configStr: String = "")
     extends TestKit(
       ActorSystem(
         "Lightcone",
