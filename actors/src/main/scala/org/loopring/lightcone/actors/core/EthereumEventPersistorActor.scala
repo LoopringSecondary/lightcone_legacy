@@ -38,8 +38,7 @@ import scala.concurrent._
 object EthereumEventPersistorActor extends ShardedEvenly {
   val name = "ethereum_event_persister"
 
-  def startShardRegion(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,

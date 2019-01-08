@@ -26,16 +26,13 @@ trait MultiAccountManagerSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
   actors.add(
     MultiAccountManagerActor.name,
-    MultiAccountManagerActor.startShardRegion
-  )
+    MultiAccountManagerActor.start)
 
   actors.add(
     MultiAccountManagerMessageValidator.name,
     MessageValidationActor(
       new MultiAccountManagerMessageValidator(),
       MultiAccountManagerActor.name,
-      MultiAccountManagerMessageValidator.name
-    )
-  )
+      MultiAccountManagerMessageValidator.name))
 
 }

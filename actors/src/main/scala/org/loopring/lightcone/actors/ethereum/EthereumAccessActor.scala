@@ -33,8 +33,7 @@ import scala.util.{Failure, Random, Success}
 object EthereumAccessActor {
   val name = "ethereum_access"
 
-  def startSingleton(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,

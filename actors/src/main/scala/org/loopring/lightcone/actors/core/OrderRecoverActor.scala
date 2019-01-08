@@ -43,8 +43,7 @@ object OrderRecoverActor extends ShardedEvenly {
       }
     }
 
-  def startShardRegion(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,

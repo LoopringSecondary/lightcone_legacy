@@ -33,8 +33,7 @@ import scala.concurrent._
 object OrderStatusMonitorActor {
   val name = "order_status_monitor"
 
-  def startSingleton(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,

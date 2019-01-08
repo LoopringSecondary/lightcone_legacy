@@ -36,8 +36,7 @@ import scalapb.json4s.JsonFormat
 object OrderRecoverCoordinator extends {
   val name = "order_recover_coordinator"
 
-  def startSingleton(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,

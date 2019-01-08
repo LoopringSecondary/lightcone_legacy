@@ -42,8 +42,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
   def getTopicId(marketId: MarketId) =
     OrderbookManagerActor.name + "-" + getEntityId(marketId)
 
-  def startShardRegion(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,

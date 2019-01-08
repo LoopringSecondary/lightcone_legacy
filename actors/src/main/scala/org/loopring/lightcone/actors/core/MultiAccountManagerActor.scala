@@ -33,8 +33,7 @@ import scala.concurrent.duration._
 object MultiAccountManagerActor extends ShardedByAddress {
   val name = "multi_account_manager"
 
-  def startShardRegion(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,

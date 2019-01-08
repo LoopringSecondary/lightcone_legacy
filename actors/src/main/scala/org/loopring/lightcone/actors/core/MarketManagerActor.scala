@@ -44,8 +44,7 @@ import scala.concurrent.duration._
 object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
-  def startShardRegion(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,

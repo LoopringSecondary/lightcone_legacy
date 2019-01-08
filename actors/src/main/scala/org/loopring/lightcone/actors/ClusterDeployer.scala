@@ -31,27 +31,45 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.utils._
 import scala.concurrent._
+import org.loopring.lightcone.persistence._
+import org.loopring.lightcone.core.base._
 
-class ClusterDeployer @Inject() (
-  implicit system: ActorSystem,
-  config: Config,
-  ec: ExecutionContext,
-  timeProvider: TimeProvider,
-  timeout: Timeout,
-  actors: Lookup[ActorRef])
-  extends Object
-  with Logging {
+class ClusterDeployer @Inject()(
+    implicit system: ActorSystem,
+    config: Config,
+    actors: Lookup[ActorRef],
+    a1: TokenMetadataRefresher,
+    a2: EthereumEventExtractorActor,
+    a3: EthereumQueryActor,
+    a4: DatabaseQueryActor)
+    extends Object
+    with Logging {
 
   def deploy() {
     // bind[DatabaseModule].in[Singleton]
     // dbModule.createTables()
 
+    //-----------deploy local actors-----------
+    val listener =
+      system.actorOf(Props[BadMessageListener], BadMessageListener.name)
+
+    system.eventStream.subscribe(listener, classOf[UnhandledMessage])
+    system.eventStream.subscribe(listener, classOf[DeadLetter])
+
     Cluster(system).registerOnMemberUp {
+
+      actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
 
       actors.add(
         EthereumEventExtractorActor.name,
-        EthereumEventExtractorActor.startShardRegion())
+        EthereumEventExtractorActor.start
+      )
+
+      //-----------deploy sharded actors-----------
+      actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
+      actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
     }
   }
 }

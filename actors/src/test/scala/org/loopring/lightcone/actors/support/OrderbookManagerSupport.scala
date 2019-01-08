@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.support
 import akka.pattern._
 import org.loopring.lightcone.actors.core.OrderbookManagerActor
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.ethereum.data.{Address => LAddress}
+import org.loopring.lightcone.ethereum.data.{ Address => LAddress }
 import org.loopring.lightcone.proto._
 
 import scala.collection.JavaConverters._
@@ -28,16 +28,14 @@ import scala.concurrent.Await
 trait OrderbookManagerSupport {
   my: CommonSpec =>
 
-  actors.add(OrderbookManagerActor.name, OrderbookManagerActor.startShardRegion)
+  actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
   actors.add(
     OrderbookManagerMessageValidator.name,
     MessageValidationActor(
       new OrderbookManagerMessageValidator(),
       OrderbookManagerActor.name,
-      OrderbookManagerMessageValidator.name
-    )
-  )
+      OrderbookManagerMessageValidator.name))
 
   //todo：因暂时未完成recover，因此需要发起一次请求，将shard初始化成功
   config
@@ -47,8 +45,7 @@ trait OrderbookManagerSupport {
       val c = item.toConfig
       val marketId = MarketId(
         LAddress(c.getString("priamry")).toString,
-        LAddress(c.getString("secondary")).toString
-      )
+        LAddress(c.getString("secondary")).toString)
       val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))
       val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit
       Await.result(orderBookInitF, timeout.duration)

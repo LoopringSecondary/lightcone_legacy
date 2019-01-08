@@ -27,33 +27,33 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val dbModule = new DatabaseModule()
   dbModule.dropTables()
   dbModule.createTables()
-  actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
+  actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
 
-//  override val container = new MySQLContainer(
-//    mysqlImageVersion = Some("mysql:5.7.18"),
-//    databaseName = Some("lightcone_test"),
-//    mysqlUsername = Some("test"),
-//    mysqlPassword = Some("test")
-//  )
-//
-//  implicit var dbModule: DatabaseModule = _
-//  override def afterStart(): Unit = {
-//    implicit val dbConfig: DatabaseConfig[JdbcProfile] =
-//      DatabaseConfig.forConfig[JdbcProfile](
-//        "",
-//        ConfigFactory.parseString(s"""
-//        profile = "slick.jdbc.MySQLProfile$$"
-//        db {
-//          url="${container.jdbcUrl}?useSSL=false"
-//          user="${container.username}"
-//          password="${container.password}"
-//          driver="${container.driverClassName}"
-//          maxThreads = 4
-//        }""")
-//      )
-//    dbModule = new DatabaseModule()
-//    dbModule.createTables()
-//    actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
-//  }
+  //  override val container = new MySQLContainer(
+  //    mysqlImageVersion = Some("mysql:5.7.18"),
+  //    databaseName = Some("lightcone_test"),
+  //    mysqlUsername = Some("test"),
+  //    mysqlPassword = Some("test")
+  //  )
+  //
+  //  implicit var dbModule: DatabaseModule = _
+  //  override def afterStart(): Unit = {
+  //    implicit val dbConfig: DatabaseConfig[JdbcProfile] =
+  //      DatabaseConfig.forConfig[JdbcProfile](
+  //        "",
+  //        ConfigFactory.parseString(s"""
+  //        profile = "slick.jdbc.MySQLProfile$$"
+  //        db {
+  //          url="${container.jdbcUrl}?useSSL=false"
+  //          user="${container.username}"
+  //          password="${container.password}"
+  //          driver="${container.driverClassName}"
+  //          maxThreads = 4
+  //        }""")
+  //      )
+  //    dbModule = new DatabaseModule()
+  //    dbModule.createTables()
+  //    actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
+  //  }
 
 }

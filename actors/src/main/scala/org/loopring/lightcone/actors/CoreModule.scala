@@ -83,66 +83,59 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[DustOrderEvaluator]
     bind[RingIncomeEstimator].to[RingIncomeEstimatorImpl]
 
+    bind[TokenMetadataRefresher]
+    bind[EthereumEventExtractorActor]
+    bind[EthereumQueryActor]
+    bind[DatabaseQueryActor]
+
     // Cluster(system).registerOnMemberUp {
-    //-----------deploy local actors-----------
-    //todo:需要测试badMessage，可能有死循环
-    // val listener =
-    //   system.actorOf(Props[BadMessageListener], "bad_message_listener")
 
-    // system.eventStream.subscribe(listener, classOf[UnhandledMessage])
-    // system.eventStream.subscribe(listener, classOf[DeadLetter])
-
-    // actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
-
-    // //-----------deploy sharded actors-----------
-    // actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
-    // actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
-    // actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
-    // actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
+    // actors.add(GasPriceActor.name, GasPriceActor.start)
+    // actors.add(MarketManagerActor.name, MarketManagerActor.start)
     // actors.add(
     //   OrderPersistenceActor.name,
-    //   OrderPersistenceActor.startShardRegion
+    //   OrderPersistenceActor.start
     // )
-    // actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
+    // actors.add(OrderRecoverActor.name, OrderRecoverActor.start)
     // actors.add(
     //   MultiAccountManagerActor.name,
-    //   MultiAccountManagerActor.startShardRegion
+    //   MultiAccountManagerActor.start
     // )
 
     // actors.add(
     //   EthereumEventExtractorActor.name,
-    //   EthereumEventExtractorActor.startShardRegion
+    //   EthereumEventExtractorActor.start
     // )
     // actors.add(
     //   EthereumEventPersistorActor.name,
-    //   EthereumEventPersistorActor.startShardRegion
+    //   EthereumEventPersistorActor.start
     // )
 
     // actors.add(
     //   OrderbookManagerActor.name,
-    //   OrderbookManagerActor.startShardRegion
+    //   OrderbookManagerActor.start
     // )
 
     // //-----------deploy singleton actors-----------
-    // actors.add(EthereumAccessActor.name, EthereumAccessActor.startSingleton)
+    // actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
 
     // actors.add(
     //   OrderRecoverCoordinator.name,
-    //   OrderRecoverCoordinator.startSingleton
+    //   OrderRecoverCoordinator.start
     // )
 
     // actors.add(
     //   OrderStatusMonitorActor.name,
-    //   OrderStatusMonitorActor.startSingleton
+    //   OrderStatusMonitorActor.start
     // )
 
     // actors.add(
     //   EthereumClientMonitor.name,
-    //   EthereumClientMonitor.startSingleton
+    //   EthereumClientMonitor.start
     // )
     // actors.add(
     //   RingSettlementManagerActor.name,
-    //   RingSettlementManagerActor.startSingleton
+    //   RingSettlementManagerActor.start
     // )
 
     // //-----------deploy local actors-----------
@@ -189,7 +182,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     // if (cluster.selfRoles.contains("jsonrpc")) {
     //   val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
     //   with RpcBinding
-    //   server.start()
+    //   server.start
     // }
     // }
   }

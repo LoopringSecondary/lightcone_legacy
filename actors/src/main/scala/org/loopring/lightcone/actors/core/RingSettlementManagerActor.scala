@@ -35,8 +35,7 @@ import scala.util.Random
 object RingSettlementManagerActor {
   val name = "ring_settlement"
 
-  def startSingleton(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,

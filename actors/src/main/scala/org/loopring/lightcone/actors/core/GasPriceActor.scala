@@ -38,8 +38,7 @@ import scala.concurrent._
 object GasPriceActor extends ShardedEvenly {
   val name = "gas_price"
 
-  def startShardRegion(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,

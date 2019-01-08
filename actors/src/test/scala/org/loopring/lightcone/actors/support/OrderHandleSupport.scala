@@ -23,7 +23,6 @@ trait OrderHandleSupport extends DatabaseModuleSupport {
 
   actors.add(
     OrderPersistenceActor.name,
-    OrderPersistenceActor.startShardRegion
-  )
+    OrderPersistenceActor.start)
 
 }

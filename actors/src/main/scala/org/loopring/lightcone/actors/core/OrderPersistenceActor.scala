@@ -34,8 +34,7 @@ import scala.concurrent._
 object OrderPersistenceActor extends ShardedEvenly {
   val name = "order_handler"
 
-  def startShardRegion(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
@@ -105,10 +104,7 @@ class OrderPersistenceActor(
       } yield {
         saveRes match {
           case Right(errCode) =>
-            throw ErrorException(
-              errCode,
-              s"failed to submit order: $raworder"
-            )
+            throw ErrorException(errCode, s"failed to submit order: $raworder")
           case Left(resRawOrder) =>
             resRawOrder
         }

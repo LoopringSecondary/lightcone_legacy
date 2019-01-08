@@ -28,20 +28,17 @@ trait EthereumSupport {
 
   actors.add(
     EthereumQueryActor.name,
-    EthereumQueryActor.startShardRegion()
-  )
+    EthereumQueryActor.start)
   actors.add(
     EthereumQueryMessageValidator.name,
     MessageValidationActor(
       new EthereumQueryMessageValidator(),
       EthereumQueryActor.name,
-      EthereumQueryMessageValidator.name
-    )
-  )
+      EthereumQueryMessageValidator.name))
 
   if (!actors.contains(GasPriceActor.name)) {
-    actors.add(GasPriceActor.name, GasPriceActor.startShardRegion())
+    actors.add(GasPriceActor.name, GasPriceActor.start)
   }
-  actors.add(EthereumAccessActor.name, EthereumAccessActor.startSingleton())
-  actors.add(EthereumClientMonitor.name, EthereumClientMonitor.startSingleton())
+  actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
+  actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
 }

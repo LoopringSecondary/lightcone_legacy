@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.support
 
-import akka.actor.{PoisonPill, Props}
+import akka.actor.{ PoisonPill, Props }
 import akka.cluster.singleton.{
   ClusterSingletonManager,
   ClusterSingletonManagerSettings,
@@ -28,25 +28,20 @@ import org.loopring.lightcone.actors.core._
 trait RecoverSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
-  actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
+  actors.add(OrderRecoverActor.name, OrderRecoverActor.start)
 
   system.actorOf(
     ClusterSingletonManager.props(
       singletonProps = Props(new OrderRecoverCoordinator()),
       terminationMessage = PoisonPill,
-      settings = ClusterSingletonManagerSettings(system)
-    ),
-    OrderRecoverCoordinator.name
-  )
+      settings = ClusterSingletonManagerSettings(system)),
+    OrderRecoverCoordinator.name)
 
   actors.add(
     OrderRecoverCoordinator.name,
     system.actorOf(
       ClusterSingletonProxy.props(
         singletonManagerPath = s"/user/${OrderRecoverCoordinator.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${OrderRecoverCoordinator.name}_proxy"
-    )
-  )
+        settings = ClusterSingletonProxySettings(system)),
+      name = s"${OrderRecoverCoordinator.name}_proxy"))
 }

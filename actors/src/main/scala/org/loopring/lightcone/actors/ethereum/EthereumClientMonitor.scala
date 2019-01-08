@@ -37,8 +37,7 @@ import scala.util._
 object EthereumClientMonitor {
   val name = "ethereum_client_monitor"
 
-  def startSingleton(
-    )(
+  def start(
       implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
