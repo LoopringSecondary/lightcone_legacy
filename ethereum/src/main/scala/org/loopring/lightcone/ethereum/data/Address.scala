@@ -20,43 +20,47 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.ErrorCode
 import org.web3j.utils.Numeric
-import org.web3j.crypto.WalletUtils
 
 class Address(val value: BigInt) {
 
-  override def toString =
-    Numeric.toHexStringWithPrefixZeroPadded(value.bigInteger, 40)
+  assert(value <= BigInt("f" * 40, 16))
 
-  def toBigInt: BigInt = {
-    this.value
-  }
+  def toBigInt: BigInt = value
+
+  def isZero = (value == 0)
+  def isEmpty = (value == 0)
 
   def toBytes: Array[Byte] = {
     Numeric.toBytesPadded(value.bigInteger, 20)
   }
 
   def toByteString: ByteString = {
-    ByteString.copyFrom(this.value.toByteArray)
+    ByteString.copyFrom(value.toByteArray)
   }
 
   override def equals(obj: Any): Boolean =
     obj match {
-      case add: Address =>
-        this.value.equals(add.value)
+      case addr: Address =>
+        value.equals(addr.value)
       case _ =>
         false
     }
 
-  override def hashCode(): Int = {
-    this.value.hashCode()
+  override def hashCode(): Int = value.hashCode()
+
+  override def toString() = {
+    Numeric.toHexStringWithPrefixZeroPadded(value.bigInteger, 40)
   }
+
 }
 
 object Address {
 
-  val zeroAddress: String = "0x" + "0" * 40
+  val ZERO = Address(0)
 
-  val maxAddress: BigInt = BigInt("f" * 40, 16)
+  val MAX = Address(BigInt("f" * 40, 16))
+
+  def apply(value: BigInt): Address = new Address(value)
 
   def apply(bytes: Array[Byte]): Address = {
     assert(bytes.length <= 20)
@@ -67,13 +71,8 @@ object Address {
     apply(byteString.toByteArray)
   }
 
-  def apply(value: BigInt): Address = {
-    assert(value <= maxAddress)
-    new Address(value)
-  }
-
   def apply(addr: String): Address = {
-    apply(BigInt(Numeric.toBigInt(addr)))
+    apply(Numeric.toBigInt(addr))
   }
 
   def isValid(obj: Any): Boolean = {
@@ -83,7 +82,7 @@ object Address {
       case add: Array[Byte] =>
         add.length <= 20
       case add: BigInt =>
-        add <= maxAddress
+        add <= MAX.value
       case add: ByteString =>
         add.size() <= 20
       case _ =>

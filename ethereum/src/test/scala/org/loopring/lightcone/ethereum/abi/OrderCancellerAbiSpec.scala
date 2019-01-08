@@ -122,7 +122,7 @@ class OrderCancellerAbiSpec
 
   "encodeCancelAllOrdersFunction" should "encode cancel all orders function params to input" in {
     val cutOff = BigInt(1544614733)
-    val input = orderCancellerAbi.cancelAllOrdersFunction.pack(
+    val input = orderCancellerAbi.cancelAllOrders.pack(
       CancelAllOrdersFunction.Params(cutOff)
     )
     input should be(
@@ -133,7 +133,7 @@ class OrderCancellerAbiSpec
   "decodeCancelAllOrdersFunction" should "decode input to cancel all orders function params" in {
     val input =
       "0xbd545f53000000000000000000000000000000000000000000000000000000005c10f34d"
-    var params = orderCancellerAbi.cancelAllOrdersFunction.unpackInput(input)
+    var params = orderCancellerAbi.cancelAllOrders.unpackInput(input)
     info(params.toString)
     params.map { param =>
       param.cutoff.toString should be("1544614733")

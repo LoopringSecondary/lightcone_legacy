@@ -34,7 +34,7 @@ package object ethereum {
   }
 
   implicit def byteString2BigInt(bs: ByteString): BigInt =
-    BigInt(Numeric.toBigInt(bs.toByteArray))
+    Numeric.toBigInt(bs.toByteArray)
 
   def verifyEthereumSignature(
       hash: Array[Byte],
@@ -95,7 +95,7 @@ package object ethereum {
     )
   }
 
-  def isValidAndNonzeroAddress(addr: String) = addr match {
+  def isAddressValidAndNonZero(addr: String) = addr match {
     case ad if isValidAddress(addr) =>
       BigInt(Numeric.cleanHexPrefix(ad), 16) > 0
     case _ => false

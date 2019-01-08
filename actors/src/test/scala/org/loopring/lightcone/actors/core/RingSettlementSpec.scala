@@ -48,7 +48,7 @@ class RingSettlementSpec
   val users = selfConfig
     .getConfigList("users")
     .asScala
-    .map(config => config.getString("addr") → config.getString("key"))
+    .map(config => config.getString("addr") -> config.getString("key"))
 
   "Submit a ring tx " must {
     "tx successfully, order, balance, allowance must be right" in {
