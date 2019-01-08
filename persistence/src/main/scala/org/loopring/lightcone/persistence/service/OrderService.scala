@@ -21,8 +21,6 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 trait OrderService {
-  val orderDal: OrderDal
-
   // Save order to database, if the order already exist, return an error code.
   def saveOrder(order: RawOrder): Future[Either[RawOrder, ErrorCode]]
 

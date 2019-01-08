@@ -23,7 +23,7 @@ import scala.concurrent._
 import com.typesafe.scalalogging.Logger
 
 trait BaseDatabaseModule {
-  val dbConfig: DatabaseConfig[JdbcProfile]
+  // val dbConfig: DatabaseConfig[JdbcProfile]
   implicit val ec: ExecutionContext
   private[this] val logger = Logger(this.getClass)
 
@@ -31,10 +31,7 @@ trait BaseDatabaseModule {
 
   def createTables() = {
     try {
-      Await.result(
-        Future.sequence(tables.map(_.createTable)),
-        10.second
-      )
+      Await.result(Future.sequence(tables.map(_.createTable)), 10.second)
     } catch {
       case e: Exception if e.getMessage.contains("already exists") =>
         logger.info(e.getMessage)
@@ -46,10 +43,7 @@ trait BaseDatabaseModule {
 
   def dropTables() = {
     try {
-      Await.result(
-        Future.sequence(tables.map(_.dropTable)),
-        10.second
-      )
+      Await.result(Future.sequence(tables.map(_.dropTable)), 10.second)
     } catch {
       case e: Exception if e.getMessage.contains("Unknown table") =>
         logger.info(e.getMessage)

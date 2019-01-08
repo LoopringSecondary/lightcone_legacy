@@ -22,39 +22,40 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import slick.basic._
-import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
 class DatabaseModule @Inject()(
-    config: Config
+    val tokenMetadataDal: TokenMetadataDal,
+    val orderDal: OrderDal,
+    val tradeDal: TradeDal,
+    val addressDal: AddressDal,
+    val tokenBalanceDal: TokenBalanceDal,
+    val blockDal: BlockDal,
+    val transactionDal: TransactionDal,
+    val eventLogDal: EventLogDal,
+    val tokenTransferDal: TokenTransferDal,
+    val settlementTxDal: SettlementTxDal,
+    val orderStatusMonitorDal: OrderStatusMonitorDal,
+    val orderService: OrderService,
+    val orderStatusMonitorService: OrderStatusMonitorService,
+    val tokenMetadataService: TokenMetadataService,
+    val tradeService: TradeService,
+    val settlementTxService: SettlementTxService
   )(
     implicit @Named("db-execution-context") val ec: ExecutionContext)
     extends base.BaseDatabaseModule {
 
-  // TODO(dongw):
-  implicit val dbConfig: DatabaseConfig[JdbcProfile] = null
-
-  val orderService: OrderService = new OrderServiceImpl()
-  val tradeService: TradeService = new TradeServiceImpl()
-
-  val tokenMetadataService = new TokenMetadataServiceImpl()
-  val settlementTxService: SettlementTxService = new SettlementTxServiceImpl()
-  val blockService: BlockService = new BlockServiceImpl()
-
-  val orderStatusMonitorService: OrderStatusMonitorService =
-    new OrderStatusMonitorServiceImpl()
-
   val tables = Seq(
-    new TokenMetadataDalImpl(),
-    new OrderDalImpl(),
-    new TradeDalImpl(),
-    new AddressDalImpl(),
-    new TokenBalanceDalImpl(),
-    new BlockDalImpl(),
-    new TransactionDalImpl(),
-    new EventLogDalImpl(),
-    new TokenTransferDalImpl(),
-    new SettlementTxDalImpl(),
-    new OrderStatusMonitorDalImpl()
+    tokenMetadataDal,
+    orderDal,
+    tradeDal,
+    addressDal,
+    tokenBalanceDal,
+    blockDal,
+    transactionDal,
+    eventLogDal,
+    tokenTransferDal,
+    settlementTxDal,
+    orderStatusMonitorDal
   )
 }

@@ -18,24 +18,20 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.lib.{
-  ErrorException,
-  MarketHashProvider,
-  SystemTimeProvider
-}
-import org.loopring.lightcone.persistence.dals.{OrderDal, OrderDalImpl}
-import org.loopring.lightcone.proto.ErrorCode.ERR_INTERNAL_UNKNOWN
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.persistence.dals._
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
 class OrderServiceImpl @Inject()(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
-    @Named("db-execution-context") val ec: ExecutionContext)
+    timeProvider: TimeProvider,
+    orderDal: OrderDal
+  )(
+    implicit @Named("db-execution-context") val ec: ExecutionContext)
     extends OrderService {
-  val orderDal: OrderDal = new OrderDalImpl()
-  val timeProvider = new SystemTimeProvider()
 
   private def giveUserOrder(order: Option[RawOrder]): Option[RawOrder] = {
     order match {

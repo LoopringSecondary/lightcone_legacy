@@ -36,6 +36,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.persistence.dals._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -72,9 +73,20 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[SupportedMarkets].toInstance(SupportedMarkets(config))
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
 
+    bind[OrderDal].to[OrderDalImpl].in[Singleton]
+
     // val dbConfig: DatabaseConfig[JdbcProfile] =
     //   DatabaseConfig.forConfig("db.default", config)
-    // bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
+
+    // val orderService: OrderService = new OrderServiceImpl()
+    // val tradeService: TradeService = new TradeServiceImpl()
+
+    // val tokenMetadataService = new TokenMetadataServiceImpl()
+    // val settlementTxService: SettlementTxService = new SettlementTxServiceImpl()
+    // val blockService: BlockService = new BlockServiceImpl()
+
+    // val orderStatusMonitorService: OrderStatusMonitorService =
+    //   new OrderStatusMonitorServiceImpl()
 
     bind[DatabaseModule].in[Singleton]
     bind[TokenManager].in[Singleton]
