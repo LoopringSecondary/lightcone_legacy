@@ -33,7 +33,7 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
     val header = getEventHeader(tx, receipt, blockTime)
     val transfers = ListBuffer.empty[PTransferEvent]
     if (isSucceed(receipt.status)) {
-       receipt.logs.zipWithIndex
+      receipt.logs.zipWithIndex
         .foreach(item => {
           val (log, index) = item
           wethAbi.unpackEvent(log.data, log.topics.toArray) match {
@@ -82,11 +82,10 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
                 )
               )
             case _ =>
-              Seq.empty
           }
         })
       if (BigInt(Numeric.toBigInt(tx.value)) > 0 && receipt.logs.isEmpty) {
-       transfers.append(
+        transfers.append(
           PTransferEvent(
             header = Some(header),
             from = tx.from,
@@ -109,7 +108,7 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
             )
           )
         case Some(transferFrom: TransferFromFunction.Parms) =>
-          Seq(
+          transfers.append(
             PTransferEvent(
               header = Some(header),
               from = transferFrom.txFrom,
@@ -119,7 +118,7 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
             )
           )
         case Some(DepositFunction.Parms) =>
-          Seq(
+          transfers.append(
             PTransferEvent(
               header = Some(header),
               from = tx.to,
@@ -136,7 +135,7 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
             )
           )
         case Some(withdraw: WithdrawFunction.Parms) =>
-          Seq(
+          transfers.append(
             PTransferEvent(
               header = Some(header),
               from = tx.from,
@@ -154,7 +153,7 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
           )
         case _ =>
           if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
-            Seq(
+            transfers.append(
               PTransferEvent(
                 header = Some(header),
                 from = tx.from,
@@ -163,10 +162,9 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
                 amount = Numeric.toBigInt(tx.value).toByteArray
               )
             )
-          } else {
-            Seq.empty
           }
       }
     }
+    transfers
   }
 }
