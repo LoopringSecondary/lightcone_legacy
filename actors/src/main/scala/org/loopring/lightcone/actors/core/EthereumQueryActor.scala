@@ -40,7 +40,6 @@ object EthereumQueryActor extends ShardedEvenly {
   val name = "ethereum_query"
 
   def start(
-    )(
       implicit
       system: ActorSystem,
       config: Config,

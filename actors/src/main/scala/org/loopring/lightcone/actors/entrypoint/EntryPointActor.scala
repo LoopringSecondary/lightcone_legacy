@@ -32,7 +32,6 @@ object EntryPointActor {
   val name = "entrypoint"
 
   def start(
-    )(
       implicit
       system: ActorSystem,
       config: Config,

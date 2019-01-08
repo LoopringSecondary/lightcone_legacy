@@ -49,7 +49,6 @@ object EthereumEventExtractorActor {
   }
 
   def start(
-    )(
       implicit
       system: ActorSystem,
       config: Config,

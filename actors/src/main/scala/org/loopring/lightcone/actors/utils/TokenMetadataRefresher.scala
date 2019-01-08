@@ -38,7 +38,6 @@ object TokenMetadataRefresher {
   val name = "token_metadata_refresher"
 
   def start(
-    )(
       implicit
       system: ActorSystem,
       config: Config,

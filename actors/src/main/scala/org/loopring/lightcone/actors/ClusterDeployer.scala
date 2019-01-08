@@ -67,8 +67,7 @@ class ClusterDeployer @Inject()(
     with Logging {
 
   def deploy() {
-    // bind[DatabaseModule].in[Singleton]
-    // dbModule.createTables()
+    dbModule.createTables()
 
     //-----------deploy local actors-----------
     val listener =
@@ -166,7 +165,6 @@ class ClusterDeployer @Inject()(
         with RpcBinding
         server.start
       }
-
     }
   }
 }

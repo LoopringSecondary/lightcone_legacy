@@ -34,7 +34,6 @@ object DatabaseQueryActor extends ShardedEvenly {
   val name = "database_query"
 
   def start(
-    )(
       implicit
       system: ActorSystem,
       config: Config,
