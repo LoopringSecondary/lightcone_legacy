@@ -28,59 +28,52 @@ import org.loopring.lightcone.actors.base.safefuture._
 import akka.pattern._
 
 import scala.concurrent._
-import scala.util.{Failure, Random, Success}
+import scala.util.{ Failure, Random, Success }
 
 object EthereumAccessActor {
   val name = "ethereum_access"
 
   def start(
-      implicit
-      system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      actors: Lookup[ActorRef],
-      ma: ActorMaterializer,
-      ece: ExecutionContextExecutor,
-      deployActorsIgnoringRoles: Boolean
-    ): ActorRef = {
+    implicit system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    ma: ActorMaterializer,
+    ece: ExecutionContextExecutor,
+    deployActorsIgnoringRoles: Boolean): ActorRef = {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new EthereumAccessActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-      ),
-      name = EthereumAccessActor.name
-    )
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)),
+      name = EthereumAccessActor.name)
 
     system.actorOf(
       ClusterSingletonProxy.props(
         singletonManagerPath = s"/user/${EthereumAccessActor.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${EthereumAccessActor.name}_proxy"
-    )
+        settings = ClusterSingletonProxySettings(system)),
+      name = s"${EthereumAccessActor.name}_proxy")
   }
 }
 
 // TODO(yadong): 是否可以替代ActorSelection
-class EthereumAccessActor(
-  )(
-    implicit
-    val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val ma: ActorMaterializer,
-    val ece: ExecutionContextExecutor)
-    extends Actor
-    with Stash
-    with ActorLogging {
+// TODO(yadong): monitor可能在启动的时候还没有部署好。
+class EthereumAccessActor()(
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeProvider: TimeProvider,
+  val timeout: Timeout,
+  val actors: Lookup[ActorRef],
+  val ma: ActorMaterializer,
+  val ece: ExecutionContextExecutor)
+  extends Actor
+  with Stash
+  with ActorLogging {
 
-  private def monitor: ActorRef = actors.get(EthereumClientMonitor.name)
+  private def monitor = actors.get(EthereumClientMonitor.name)
   var connectionPools: Seq[(ActorSelection, Long)] = Nil
 
   override def preStart() = {
@@ -91,8 +84,7 @@ class EthereumAccessActor(
         connectionPools = res.nodes.map(
           node =>
             context
-              .actorSelection(node.path) -> node.height
-        )
+              .actorSelection(node.path) -> node.height)
         self ! Notify("initialized")
       case Failure(e) =>
         log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
@@ -125,8 +117,7 @@ class EthereumAccessActor(
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
-          message = "No accessible Ethereum node service"
-        )
+          message = "No accessible Ethereum node service")
       }
 
     case msg: JsonRpc.Request => {
@@ -135,8 +126,7 @@ class EthereumAccessActor(
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
-          message = "No accessible Ethereum node service"
-        )
+          message = "No accessible Ethereum node service")
       }
     }
 
@@ -146,8 +136,7 @@ class EthereumAccessActor(
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
-          message = "No accessible Ethereum node service"
-        )
+          message = "No accessible Ethereum node service")
       }
     }
   }

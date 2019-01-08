@@ -23,7 +23,6 @@ import org.loopring.lightcone.actors.validator._
 trait EthereumSupport {
   my: CommonSpec =>
 
-  println("===========" + deployActorsIgnoringRoles)
   implicit val requestBuilder = new EthereumCallRequestBuilder
   implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
 
@@ -33,13 +32,11 @@ trait EthereumSupport {
     MessageValidationActor(
       new EthereumQueryMessageValidator(),
       EthereumQueryActor.name,
-      EthereumQueryMessageValidator.name
-    )
-  )
+      EthereumQueryMessageValidator.name))
 
   if (!actors.contains(GasPriceActor.name)) {
     actors.add(GasPriceActor.name, GasPriceActor.start)
   }
-  actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
   actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
+  actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
 }

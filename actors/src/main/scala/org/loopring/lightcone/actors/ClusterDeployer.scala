@@ -107,13 +107,14 @@ class ClusterDeployer @Inject()(
       actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
       //-----------deploy singleton actors-----------
+      actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
+
       actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
 
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
 
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
 
-      actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
       actors.add(
         RingSettlementManagerActor.name,
         RingSettlementManagerActor.start
