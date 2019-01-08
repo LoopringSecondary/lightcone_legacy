@@ -16,19 +16,15 @@
 
 package org.loopring.lightcone.actors.support
 
-import akka.actor.Props
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.ethereum.{
-  EthereumAccessActor,
-  EthereumClientMonitor
-}
-import org.loopring.lightcone.actors.validator.{
-  EthereumQueryMessageValidator,
-  MessageValidationActor
-}
+import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.actors.validator._
 
 trait EthereumSupport {
   my: CommonSpec =>
+
+  implicit val requestBuilder = new EthereumCallRequestBuilder
+  implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
 
   actors.add(
     EthereumQueryActor.name,
