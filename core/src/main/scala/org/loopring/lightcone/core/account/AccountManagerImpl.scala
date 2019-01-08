@@ -55,17 +55,31 @@ final private[core] class AccountManagerImpl(
     tokens(token)
   }
 
+  def submitOrAdjustThenGetUpdatedOrders(
+      order: Matchable
+    ): (Boolean, Map[String, Matchable]) = this.synchronized {
+    if (this.orderPool.contains(order.id)) {
+      adjustAndGetUpdatedOrders(order.id, order.outstanding.amountS)
+    } else {
+      submitAndGetUpdatedOrders(order)
+    }
+  }
+
   def submitAndGetUpdatedOrders(
       order: Matchable
     ): (Boolean, Map[String, Matchable]) =
     this.synchronized {
-      if (this.orderPool.contains(order.id)) {
-        (false, Map.empty[String, Matchable])
-      } else {
-        val submitRes = this.submitOrder(order)
-        (submitRes, this.orderPool.takeUpdatedOrdersAsMap())
-      }
+      val submitRes = this.submitOrder(order)
+      (submitRes, this.orderPool.takeUpdatedOrdersAsMap())
     }
+
+  def adjustAndGetUpdatedOrders(
+      orderId: String,
+      outstandingAmountS: BigInt
+    ): (Boolean, Map[String, Matchable]) = this.synchronized {
+    val adjustRes = adjustOrder(orderId, outstandingAmountS)
+    (adjustRes, this.orderPool.takeUpdatedOrdersAsMap())
+  }
 
   //TODO(litao): What if an order is re-submitted?
   def submitOrder(order: Matchable): Boolean = this.synchronized {
@@ -104,7 +118,7 @@ final private[core] class AccountManagerImpl(
       case None => false
       case Some(order) =>
         orderPool.getOrder(orderId) map { order =>
-          orderPool += order.as(STATUS_CANCELLED_BY_USER)
+          orderPool += order.as(STATUS_SOFT_CANCELLED_BY_USER)
         }
 
         order.callOnTokenSAndTokenFee(_.release(order.id))

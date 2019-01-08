@@ -70,7 +70,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       val cancelReq = CancelOrder.Req(
         id = rawOrder.hash,
         owner = rawOrder.owner,
-        status = OrderStatus.STATUS_CANCELLED_BY_USER,
+        status = OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
         marketId = Some(MarketId(rawOrder.tokenS, rawOrder.tokenB))
       )
 
@@ -86,7 +86,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
         Await.result(getOrderFromDbF.mapTo[Option[RawOrder]], timeout.duration)
 
       getOrderFromDb map { o =>
-        o.getState.status should be(OrderStatus.STATUS_CANCELLED_BY_USER)
+        o.getState.status should be(OrderStatus.STATUS_SOFT_CANCELLED_BY_USER)
       }
 
       actors.get(OrderbookManagerActor.name) ! GetOrderbook.Req(

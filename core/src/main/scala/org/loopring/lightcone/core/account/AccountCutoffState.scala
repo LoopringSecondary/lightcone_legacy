@@ -20,8 +20,8 @@ import org.loopring.lightcone.proto.{MarketId, RawOrder}
 
 trait AccountCutoffState {
 
-  def setCutoff(
-      marketId: MarketId,
+  def setTradingPairCutoff(
+      marketCode: BigInt,
       cutoff: Long
     )
   def setCutoff(cutoff: Long)

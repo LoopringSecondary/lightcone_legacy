@@ -18,12 +18,8 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.lib.{
-  ErrorException,
-  MarketHashProvider,
-  SystemTimeProvider
-}
-import org.loopring.lightcone.persistence.dals.{OrderDal, OrderDalImpl}
+import org.loopring.lightcone.lib.{ErrorException, SystemTimeProvider}
+import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.ErrorCode.ERR_INTERNAL_UNKNOWN
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
@@ -72,30 +68,6 @@ class OrderServiceImpl @Inject()(
       }
     }
   }
-
-  // Mark the order as soft-cancelled. Returns error code if the order does not exist.
-  def markOrderSoftCancelled(
-      orderHashes: Seq[String]
-    ): Future[Seq[UserCancelOrder.Res.Result]] =
-    for {
-      updated <- orderDal.updateOrdersStatus(
-        orderHashes,
-        OrderStatus.STATUS_CANCELLED_BY_USER
-      )
-      selectOwners <- orderDal.getOrdersMap(orderHashes)
-    } yield {
-      if (updated == ErrorCode.ERR_NONE) {
-        orderHashes.map { orderHash =>
-          UserCancelOrder.Res.Result(
-            orderHash,
-            giveUserOrder(selectOwners.get(orderHash)),
-            ErrorCode.ERR_NONE
-          )
-        }
-      } else {
-        throw ErrorException(ERR_INTERNAL_UNKNOWN, "failed to update")
-      }
-    }
 
   def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]] =
     orderDal.getOrders(hashes)
@@ -162,6 +134,12 @@ class OrderServiceImpl @Inject()(
       skip
     )
 
+  def getCutoffAffectedOrders(
+      retrieveCondition: RetrieveOrdersToCancel,
+      take: Int
+    ): Future[Seq[RawOrder]] =
+    orderDal.getCutoffAffectedOrders(retrieveCondition, take)
+
   def getOrdersToActivate(
       latestProcessTime: Int,
       processTime: Int,
@@ -212,4 +190,31 @@ class OrderServiceImpl @Inject()(
       hash: String,
       state: RawOrder.State
     ): Future[ErrorCode] = orderDal.updateAmount(hash, state)
+
+  def cancelOrders(
+      orderHashes: Seq[String],
+      status: OrderStatus
+    ): Future[Seq[UserCancelOrder.Res.Result]] =
+    for {
+      updated <- orderDal.updateOrdersStatus(
+        orderHashes,
+        status
+      )
+      selectOwners <- orderDal.getOrdersMap(orderHashes)
+    } yield {
+      if (updated == ErrorCode.ERR_NONE) {
+        orderHashes.map { orderHash =>
+          UserCancelOrder.Res.Result(
+            orderHash,
+            giveUserOrder(selectOwners.get(orderHash)),
+            ErrorCode.ERR_NONE
+          )
+        }
+      } else {
+        throw ErrorException(
+          ERR_INTERNAL_UNKNOWN,
+          "Failed to update order status"
+        )
+      }
+    }
 }

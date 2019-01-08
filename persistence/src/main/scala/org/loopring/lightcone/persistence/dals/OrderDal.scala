@@ -108,6 +108,11 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       skip: CursorPaging
     ): Future[Seq[RawOrder]]
 
+  def getCutoffAffectedOrders(
+      retrieveCondition: RetrieveOrdersToCancel,
+      take: Int
+    ): Future[Seq[RawOrder]]
+
   def getOrdersToActivate(
       latestProcessTime: Int,
       processTime: Int,
@@ -154,6 +159,23 @@ class OrderDalImpl(
   implicit val OrderStatusColumnType = enumColumnType(OrderStatus)
   implicit val TokenStandardColumnType = enumColumnType(TokenStandard)
   private[this] val logger = Logger(this.getClass)
+
+  val failedStatus = Seq(
+    OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
+    OrderStatus.STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR,
+    OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER,
+    OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR,
+    OrderStatus.STATUS_CANCELLED_LOW_BALANCE,
+    OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE,
+    OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
+    OrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
+  )
+
+  val activeStatus = Set(
+    OrderStatus.STATUS_NEW,
+    OrderStatus.STATUS_PENDING,
+    OrderStatus.STATUS_PARTIALLY_FILLED
+  )
 
   def saveOrder(order: RawOrder): Future[PersistOrder.Res] = {
     db.run((query += order).asTry).map {
@@ -306,10 +328,10 @@ class OrderDalImpl(
       processTime: Int,
       skip: Option[Paging] = None
     ): Future[Seq[RawOrder]] = {
-    val availableStatus =
-      Seq(OrderStatus.STATUS_PENDING_ACTIVE)
+    val availableStatus: OrderStatus =
+      OrderStatus.STATUS_PENDING_ACTIVE
     var filters = query
-      .filter(_.status inSet availableStatus)
+      .filter(_.status === availableStatus)
       .filter(_.validSince >= latestProcessTime)
       .filter(_.validSince < processTime)
       .sortBy(_.sequenceId.asc)
@@ -470,9 +492,6 @@ class OrderDalImpl(
           r.nextInt
         )
     )
-    val concat: (String, String) => String = (left, right) => {
-      left + ", " + right
-    }
     val now = timeProvider.getTimeSeconds()
     val sql =
       sql"""
@@ -523,6 +542,30 @@ class OrderDalImpl(
     }
   }
 
+  def getCutoffAffectedOrders(
+      retrieveCondition: RetrieveOrdersToCancel,
+      take: Int
+    ): Future[Seq[RawOrder]] = {
+    //TODO du：暂时不考虑broker，owner必传
+    if (retrieveCondition.owner.isEmpty) {
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        "owner in CutoffEvent is empty"
+      )
+    }
+    var filters = query
+      .filter(_.owner === retrieveCondition.owner)
+      .filter(_.status inSet activeStatus)
+      .filter(_.validSince <= retrieveCondition.cutoff.toInt)
+    if (retrieveCondition.tradingPair.nonEmpty) {
+      filters = filters.filter(_.marketHash === retrieveCondition.tradingPair)
+    }
+    filters = filters
+      .sortBy(_.sequenceId.asc)
+      .take(take)
+    db.run(filters.result)
+  }
+
   def updateOrderStatus(
       hash: String,
       status: OrderStatus
@@ -561,13 +604,6 @@ class OrderDalImpl(
     ): Future[ErrorCode] =
     for {
       _ <- Future.unit
-      failedStatus = Seq(
-        OrderStatus.STATUS_CANCELLED_BY_USER,
-        OrderStatus.STATUS_CANCELLED_LOW_BALANCE,
-        OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE,
-        OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
-        OrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
-      )
       result <- if (!failedStatus.contains(status)) {
         Future.successful(0)
       } else {
