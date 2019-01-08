@@ -57,9 +57,6 @@ object Main extends App with Logging {
 
   injector.instance[ClusterDeployer].deploy()
 
-  val actors = injector.instance[Lookup[ActorRef]]
-  actors.get(EntryPointActor.name)
-
   sys.ShutdownHookThread {
     system.terminate()
   }
