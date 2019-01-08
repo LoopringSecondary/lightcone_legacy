@@ -31,7 +31,7 @@
   - [ ] [yongfeng] 所有和市场，包括orderbook相关的配置，应该都放到数据库里面，从配置文件里面移除。所有Token的信息也应该存入数据库。
   - [ ] [hongyu] 动态增加token和市场，动态停止某个市场（配置放入数据库）
   - [ ] [yangli] 集群监控
-  - [ ] [yadong] k线存储
+  - [ ] [yadong] k线存储(TimescaleDB and PipelineDB)
 
 
 - **v0.4** 主要功能包括
