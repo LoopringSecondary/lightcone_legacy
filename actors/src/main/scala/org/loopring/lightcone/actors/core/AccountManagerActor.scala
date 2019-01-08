@@ -191,6 +191,7 @@ class AccountManagerActor(
       log.debug(s"received OwnerTokenPairCutoffEvent ${req}")
       accountCutoffState
         .setTradingPairCutoff(Numeric.toBigInt(req.tradingPair), req.cutoff)
+ 
     //brokerCutoff
     //todo:暂时不处理
     case req @ CutoffEvent(Some(header), broker, owner, _, cutoff)
