@@ -30,8 +30,8 @@ class EthereumBatchCallRequestBuilder {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val allowanceCallReqs =
-      batchErc20AllowanceReq(delegateAddress, owner, tokens)
-    val balanceCallReqs = batchErc20BalanceReq(owner, tokens)
+      buildBatchErc20AllowanceReq(delegateAddress, owner, tokens)
+    val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens)
 
     BatchCallContracts.Req(allowanceCallReqs ++ balanceCallReqs)
   }
@@ -39,7 +39,7 @@ class EthereumBatchCallRequestBuilder {
   def buildRequest(req: GetBalance.Req): BatchCallContracts.Req = {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
-    val balanceCallReqs = batchErc20BalanceReq(owner, tokens)
+    val balanceCallReqs = buildBatchErc20BalanceReq(owner, tokens)
     BatchCallContracts.Req(balanceCallReqs)
   }
 
@@ -50,7 +50,7 @@ class EthereumBatchCallRequestBuilder {
     val owner = Address(req.address)
     val tokens = req.tokens.map(Address(_))
     val allowanceCallReqs =
-      batchErc20AllowanceReq(delegateAddress, owner, tokens)
+      buildBatchErc20AllowanceReq(delegateAddress, owner, tokens)
     BatchCallContracts.Req(allowanceCallReqs)
   }
 
@@ -59,11 +59,11 @@ class EthereumBatchCallRequestBuilder {
       req: GetFilledAmount.Req
     ): BatchCallContracts.Req = {
     val batchFilledAmountReqs =
-      batchFilledAmountReq(tradeHistoryAddress, req.orderIds)
+      buildBatchFilledAmountReq(tradeHistoryAddress, req.orderIds)
     BatchCallContracts.Req(batchFilledAmountReqs)
   }
 
-  private def batchErc20AllowanceReq(
+  private def buildBatchErc20AllowanceReq(
       delegateAddress: Address,
       owner: Address,
       tokens: Seq[Address],
@@ -79,7 +79,7 @@ class EthereumBatchCallRequestBuilder {
     })
   }
 
-  private def batchErc20BalanceReq(
+  private def buildBatchErc20BalanceReq(
       owner: Address,
       tokens: Seq[Address],
       tag: String = "latest"
@@ -93,7 +93,7 @@ class EthereumBatchCallRequestBuilder {
     }
   }
 
-  private def batchFilledAmountReq(
+  private def buildBatchFilledAmountReq(
       contractAddress: Address,
       orderHashes: Seq[String],
       tag: String = "latest"

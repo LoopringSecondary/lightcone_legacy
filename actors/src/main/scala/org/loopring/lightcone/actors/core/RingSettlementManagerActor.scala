@@ -121,7 +121,7 @@ class RingSettlementManagerActor(
       }
 
     case ba: AddressBalanceUpdated =>
-      if (ba.token.equals(Address.ZERO.toString())) {
+      if (Address(ba.token).isZero) {
         val balance = BigInt(ba.balance.toByteArray)
         if (balance > miniMinerBalance && invalidRingSettlementActors.contains(
               ba.address
