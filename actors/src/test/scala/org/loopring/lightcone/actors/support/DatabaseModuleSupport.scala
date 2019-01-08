@@ -43,7 +43,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   )
   container.starting()
 
-  // TODO(hongyu): Why we need to wait?
+  // // TODO(hongyu): Why we need to wait?
   Thread.sleep(10000)
 
   implicit val dbConfig: DatabaseConfig[JdbcProfile] =
