@@ -69,20 +69,6 @@ class OrderServiceImpl @Inject()(
     }
   }
 
-  // Mark the order as soft-cancelled. Returns error code if the order does not exist.
-  def markOrderSoftCancelled(
-      orderHashes: Seq[String],
-      status: OrderStatus
-    ): Future[Seq[UserCancelOrder.Res.Result]] = {
-    if (status != OrderStatus.STATUS_SOFT_CANCELLED_BY_USER && status != OrderStatus.STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR) {
-      throw ErrorException(
-        ErrorCode.ERR_INVALID_ARGUMENT,
-        "Invalid argument status"
-      )
-    }
-    cancelOrders(orderHashes, status)
-  }
-
   def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]] =
     orderDal.getOrders(hashes)
 
@@ -225,7 +211,10 @@ class OrderServiceImpl @Inject()(
           )
         }
       } else {
-        throw ErrorException(ERR_INTERNAL_UNKNOWN, "Failed to update order status")
+        throw ErrorException(
+          ERR_INTERNAL_UNKNOWN,
+          "Failed to update order status"
+        )
       }
     }
 }

@@ -80,7 +80,7 @@ class OrderCutoffHandlerActor(
     case req: OrdersCancelledEvent =>
       dbModule.orderService
         .getOrders(req.orderHashes)
-        .map(cancelOrders(_, OrderStatus.STATUS_CANCELLED_ON_CHAIN_BY_USER))
+        .map(cancelOrders(_, OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER))
 
     case req: CutoffEvent =>
       if (req.owner.isEmpty)
@@ -97,9 +97,9 @@ class OrderCutoffHandlerActor(
 
     case req: RetrieveOrdersToCancel =>
       val cancelStatus = if (req.tradingPair.nonEmpty) {
-        OrderStatus.STATUS_CANCELLED_ON_CHAIN_BY_USER_TRADING_PAIR
+        OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
       } else {
-        OrderStatus.STATUS_CANCELLED_ON_CHAIN_BY_USER
+        OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER
       }
       for {
         affectOrders <- dbModule.orderService
@@ -110,8 +110,6 @@ class OrderCutoffHandlerActor(
         _ <- cancelOrders(affectOrders, cancelStatus)
       } yield if (affectOrders.nonEmpty) self ! req
 
-    case m =>
-      throw ErrorException(ERR_INTERNAL_UNKNOWN, s"Unhandled message: $m")
   }
 
   private def cancelOrders(

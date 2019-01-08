@@ -75,7 +75,7 @@ class OrderPersistenceActor(
         case OrderStatus.STATUS_SOFT_CANCELLED_BY_USER |
             OrderStatus.STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR =>
           for {
-            cancelRes <- dbModule.orderService.markOrderSoftCancelled(
+            cancelRes <- dbModule.orderService.cancelOrders(
               Seq(req.id),
               req.status
             )
