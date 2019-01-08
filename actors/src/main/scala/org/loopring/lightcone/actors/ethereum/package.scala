@@ -62,10 +62,4 @@ package object ethereum {
   val tradeHistoryAbi = TradeHistoryAbi()
   val ringSubmitterAbi = RingSubmitterAbi()
 
-  def packRingToInput(data: String): String = {
-    ringSubmitterAbi.submitRing.pack(
-      SubmitRingsFunction.Params(data = Numeric.hexStringToByteArray(data))
-    )
-  }
-
 }

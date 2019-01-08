@@ -19,10 +19,26 @@ package org.loopring.lightcone.core.depth
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
-class OrderbookAggregatorImpl(priceDecimals: Int) extends OrderbookAggregator {
+class OrderbookAggregatorImpl(
+    priceDecimals: Int,
+    precisionForAmount: Int,
+    precisionForTotal: Int)
+    extends OrderbookAggregator {
 
-  private val sells = new OrderbookSide.Sells(priceDecimals, 0, true)
-  private val buys = new OrderbookSide.Buys(priceDecimals, 0, true)
+  private val sells = new OrderbookSide.Sells(
+    priceDecimals,
+    0,
+    precisionForAmount,
+    precisionForTotal,
+    true
+  )
+  private val buys = new OrderbookSide.Buys(
+    priceDecimals,
+    0,
+    precisionForAmount,
+    precisionForTotal,
+    true
+  )
   private val lastPrice: Double = 0
 
   def getOrderbookUpdate() =

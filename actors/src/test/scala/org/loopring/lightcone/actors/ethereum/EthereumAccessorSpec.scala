@@ -167,7 +167,7 @@ class EthereumAccessorSpec
     //    uncles <- (ethereumAccessActor ? BatchGetUncle.Req()
     //      .withReqs(
     //        Seq(
-    //          GetUncle.Req(
+    //          GetUncle.Req(sbt test:compile
     //            blockNum = "0x69555e",
     //            index = "0x0"
     //          )
