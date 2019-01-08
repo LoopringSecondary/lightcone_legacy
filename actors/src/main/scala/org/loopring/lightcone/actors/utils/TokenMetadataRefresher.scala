@@ -33,7 +33,6 @@ import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
-import com.google.inject.Inject
 
 object TokenMetadataRefresher {
   val name = "token_metadata_refresher"
@@ -41,14 +40,23 @@ object TokenMetadataRefresher {
   def start(
     )(
       implicit system: ActorSystem,
-      theActor: TokenMetadataRefresher
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule,
+      tokenManager: TokenManager
     ) = {
-    system.actorOf(Props(theActor), TokenMetadataRefresher.name)
+    system.actorOf(
+      Props(new TokenMetadataRefresher()),
+      TokenMetadataRefresher.name
+    )
   }
 }
 
 // main owner: 杜永丰
-class TokenMetadataRefresher @Inject()(
+class TokenMetadataRefresher(
   )(
     implicit val config: Config,
     val ec: ExecutionContext,

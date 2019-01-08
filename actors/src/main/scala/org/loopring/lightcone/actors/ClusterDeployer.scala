@@ -16,34 +16,50 @@
 
 package org.loopring.lightcone.actors
 
-import com.google.inject.Guice
-import com.typesafe.config.ConfigFactory
-import org.slf4s.Logging
-import net.codingwell.scalaguice.InjectorExtensions._
-import akka.actor.ActorRef
-import com.google.inject.Inject
-import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.actors.core._
-import akka.cluster._
 import akka.actor._
+import akka.cluster._
+import akka.cluster.singleton._
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import com.google.inject._
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
+import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.entrypoint._
+import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.utils._
-import scala.concurrent._
-import org.loopring.lightcone.persistence._
+import org.loopring.lightcone.actors.validator._
+import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.persistence.DatabaseModule
+import org.slf4s.Logging
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import slick.basic.DatabaseConfig
+import slick.jdbc.JdbcProfile
 
 class ClusterDeployer @Inject()(
-    implicit system: ActorSystem,
+    implicit actors: Lookup[ActorRef],
+    actorMaterializer: ActorMaterializer,
+    brb: EthereumBatchCallRequestBuilder,
+    cluster: Cluster,
     config: Config,
-    actors: Lookup[ActorRef],
-    a1: TokenMetadataRefresher,
-    a2: EthereumEventExtractorActor,
-    a3: EthereumQueryActor,
-    a4: DatabaseQueryActor)
+    dbModule: DatabaseModule,
+    dustOrderEvaluator: DustOrderEvaluator,
+    ec: ExecutionContext,
+    ece: ExecutionContextExecutor,
+    rb: EthereumCallRequestBuilder,
+    ringIncomeEstimator: RingIncomeEstimator,
+    supportedMarkets: SupportedMarkets,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    tokenManager: TokenManager,
+    tokenValueEstimator: TokenValueEstimator,
+    system: ActorSystem)
     extends Object
     with Logging {
 
@@ -59,17 +75,94 @@ class ClusterDeployer @Inject()(
     system.eventStream.subscribe(listener, classOf[DeadLetter])
 
     Cluster(system).registerOnMemberUp {
+      val listener =
+        system.actorOf(Props[BadMessageListener], "bad_message_listener")
+
+      system.eventStream.subscribe(listener, classOf[UnhandledMessage])
+      system.eventStream.subscribe(listener, classOf[DeadLetter])
 
       actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
+
+      //-----------deploy sharded actors-----------
+      actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
+      actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
+      actors.add(GasPriceActor.name, GasPriceActor.start)
+      actors.add(MarketManagerActor.name, MarketManagerActor.start)
+      actors.add(OrderPersistenceActor.name, OrderPersistenceActor.start)
+      actors.add(OrderRecoverActor.name, OrderRecoverActor.start)
+      actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
 
       actors.add(
         EthereumEventExtractorActor.name,
         EthereumEventExtractorActor.start
       )
+      actors.add(
+        EthereumEventPersistorActor.name,
+        EthereumEventPersistorActor.start
+      )
 
-      //-----------deploy sharded actors-----------
-      actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
-      actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
+      actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
+
+      //-----------deploy singleton actors-----------
+      actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
+
+      actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
+
+      actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
+
+      actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
+      actors.add(
+        RingSettlementManagerActor.name,
+        RingSettlementManagerActor.start
+      )
+
+      //-----------deploy local actors-----------
+      actors.add(
+        MultiAccountManagerMessageValidator.name,
+        MessageValidationActor(
+          new MultiAccountManagerMessageValidator(),
+          MultiAccountManagerActor.name,
+          MultiAccountManagerMessageValidator.name
+        )
+      )
+
+      actors.add(
+        DatabaseQueryMessageValidator.name,
+        MessageValidationActor(
+          new DatabaseQueryMessageValidator(),
+          DatabaseQueryActor.name,
+          DatabaseQueryMessageValidator.name
+        )
+      )
+
+      actors.add(
+        EthereumQueryMessageValidator.name,
+        MessageValidationActor(
+          new EthereumQueryMessageValidator(),
+          EthereumQueryActor.name,
+          EthereumQueryMessageValidator.name
+        )
+      )
+
+      actors.add(
+        OrderbookManagerMessageValidator.name,
+        MessageValidationActor(
+          new OrderbookManagerMessageValidator(),
+          OrderbookManagerActor.name,
+          OrderbookManagerMessageValidator.name
+        )
+      )
+
+      //-----------deploy local actors that depend on cluster aware actors-----------
+      actors.add(EntryPointActor.name, EntryPointActor.start)
+
+      //-----------deploy JSONRPC service-----------
+      if (cluster.selfRoles.contains("jsonrpc")) {
+        val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
+        with RpcBinding
+        server.start
+      }
+
     }
   }
 }

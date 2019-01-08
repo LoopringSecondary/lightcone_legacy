@@ -33,7 +33,6 @@ import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
-import com.google.inject.Inject
 
 // main owner: 李亚东
 object EthereumEventExtractorActor {
@@ -50,12 +49,17 @@ object EthereumEventExtractorActor {
   }
 
   def start(
+    )(
       implicit system: ActorSystem,
-      theActor: EthereumEventExtractorActor
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef]
     ): ActorRef = {
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(theActor),
+      entityProps = Props(new EthereumEventExtractorActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
@@ -63,7 +67,8 @@ object EthereumEventExtractorActor {
   }
 }
 
-class EthereumEventExtractorActor @Inject()(
+class EthereumEventExtractorActor(
+  )(
     implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,

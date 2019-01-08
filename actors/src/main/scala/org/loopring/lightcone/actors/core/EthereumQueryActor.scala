@@ -40,9 +40,15 @@ object EthereumQueryActor extends ShardedEvenly {
   val name = "ethereum_query"
 
   def start(
+    )(
       implicit system: ActorSystem,
-      theActor: EthereumQueryActor,
-      config: Config
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      rb: EthereumCallRequestBuilder,
+      brb: EthereumBatchCallRequestBuilder
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -51,7 +57,7 @@ object EthereumQueryActor extends ShardedEvenly {
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(theActor),
+      entityProps = Props(new EthereumQueryActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       messageExtractor = messageExtractor
     )

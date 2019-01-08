@@ -28,16 +28,20 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import scala.concurrent._
-import com.google.inject.Inject
 
 // main owner: 杜永丰
 object DatabaseQueryActor extends ShardedEvenly {
   val name = "database_query"
 
   def start(
+    )(
       implicit system: ActorSystem,
       config: Config,
-      theActor: DatabaseQueryActor
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -46,14 +50,14 @@ object DatabaseQueryActor extends ShardedEvenly {
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(theActor),
+      entityProps = Props(new DatabaseQueryActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       messageExtractor = messageExtractor
     )
   }
 }
 
-class DatabaseQueryActor @Inject()(
+class DatabaseQueryActor(
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
