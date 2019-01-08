@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
@@ -26,11 +28,13 @@ import scala.concurrent._
 
 trait TransactionDal extends BaseDalImpl[TransactionTable, TransactionData] {}
 
-class TransactionDalImpl(
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+class TransactionDalImpl @Inject()(
+    implicit @Named("dbconfig-dal-trade") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ],
     val ec: ExecutionContext)
     extends TransactionDal {
+
   val query = TableQuery[TransactionTable]
   def getRowHash(row: TransactionData) = row.hash
 }

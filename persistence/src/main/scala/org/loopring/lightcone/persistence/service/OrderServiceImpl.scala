@@ -27,10 +27,8 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
 class OrderServiceImpl @Inject()(
-    timeProvider: TimeProvider,
-    orderDal: OrderDal
-  )(
-    implicit @Named("db-execution-context") val ec: ExecutionContext)
+    implicit orderDal: OrderDal,
+    @Named("db-execution-context") val ec: ExecutionContext)
     extends OrderService {
 
   private def giveUserOrder(order: Option[RawOrder]): Option[RawOrder] = {

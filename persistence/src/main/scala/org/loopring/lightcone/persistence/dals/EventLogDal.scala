@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
@@ -26,9 +28,10 @@ import scala.concurrent._
 
 trait EventLogDal extends BaseDalImpl[EventLogTable, EventLogData] {}
 
-class EventLogDalImpl(
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+class EventLogDalImpl @Inject()(
+    implicit @Named("dbconfig-dal-evenglog") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ],
     val ec: ExecutionContext)
     extends EventLogDal {
   val query = TableQuery[EventLogTable]

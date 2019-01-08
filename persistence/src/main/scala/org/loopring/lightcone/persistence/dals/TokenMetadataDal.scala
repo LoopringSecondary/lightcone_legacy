@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
@@ -24,18 +26,21 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 import org.slf4s.Logging
+import com.google.inject.Inject
 
 trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMeta] {
 
   def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMeta]]
 }
 
-class TokenMetadataDalImpl(
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+class TokenMetadataDalImpl @Inject()(
+    implicit @Named("dbconfig-dal-token-metadata") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ],
     val ec: ExecutionContext)
     extends TokenMetadataDal
     with Logging {
+
   val query = TableQuery[TokenMetadataTable]
 
   private var tokens: Seq[TokenMeta] = Nil

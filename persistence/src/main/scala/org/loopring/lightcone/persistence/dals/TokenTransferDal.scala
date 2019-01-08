@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
@@ -27,9 +29,10 @@ import scala.concurrent._
 trait TokenTransferDal
     extends BaseDalImpl[TokenTransferTable, TokenTransferData] {}
 
-class TokenTransferDalImpl(
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+class TokenTransferDalImpl @Inject()(
+    implicit @Named("dbconfig-dal-token-transfer") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ],
     val ec: ExecutionContext)
     extends TokenTransferDal {
   val query = TableQuery[TokenTransferTable]

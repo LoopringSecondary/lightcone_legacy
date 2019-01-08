@@ -16,9 +16,11 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import com.typesafe.scalalogging.Logger
-import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
@@ -39,11 +41,13 @@ trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
 
 class TradeDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit @Named("dbconfig-dal-trade") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ],
+    timeProvider: TimeProvider,
     val ec: ExecutionContext)
     extends TradeDal {
   val query = TableQuery[TradeTable]
-  val timeProvider = new SystemTimeProvider()
   private[this] val logger = Logger(this.getClass)
 
   def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] = {

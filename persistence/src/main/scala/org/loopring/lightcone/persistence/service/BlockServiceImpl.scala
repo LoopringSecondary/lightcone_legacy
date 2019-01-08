@@ -18,17 +18,16 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.dals.{BlockDal, BlockDalImpl}
+import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.{BlockData, ErrorCode}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
 class BlockServiceImpl @Inject()(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit blockDal: BlockDal,
     @Named("db-execution-context") val ec: ExecutionContext)
     extends BlockService {
-  val blockDal: BlockDal = new BlockDalImpl()
 
   def saveBlock(block: BlockData): Future[ErrorCode] =
     blockDal.saveBlock(block)

@@ -16,8 +16,10 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.persistence.base.{enumColumnType, BaseDalImpl}
-import org.loopring.lightcone.persistence.tables.OrderStatusMonitorTable
+import com.google.inject.Inject
+import com.google.inject.name.Named
+import org.loopring.lightcone.persistence.base._
+import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto.OrderStatusMonitor
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
@@ -35,9 +37,10 @@ trait OrderStatusMonitorDal
 
 }
 
-class OrderStatusMonitorDalImpl(
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+class OrderStatusMonitorDalImpl @Inject()(
+    implicit @Named("dbconfig-dal-order-status-monitor") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ],
     val ec: ExecutionContext)
     extends OrderStatusMonitorDal {
   val query = TableQuery[OrderStatusMonitorTable]

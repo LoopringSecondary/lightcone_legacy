@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
@@ -40,9 +42,10 @@ trait BlockDal extends BaseDalImpl[BlockTable, BlockData] {
   def obsolete(height: Long): Future[Unit]
 }
 
-class BlockDalImpl(
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+class BlockDalImpl @Inject()(
+    implicit @Named("dbconfig-dal-block") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ],
     val ec: ExecutionContext)
     extends BlockDal {
   val query = TableQuery[BlockTable]

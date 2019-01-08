@@ -37,6 +37,7 @@ import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
+import org.loopring.lightcone.persistence.service._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -73,20 +74,28 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[SupportedMarkets].toInstance(SupportedMarkets(config))
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
 
+    bind[TokenMetadataDal].to[TokenMetadataDalImpl].in[Singleton]
     bind[OrderDal].to[OrderDalImpl].in[Singleton]
+    bind[TradeDal].to[TradeDalImpl].in[Singleton]
+    bind[AddressDal].to[AddressDalImpl].in[Singleton]
+    bind[TokenBalanceDal].to[TokenBalanceDalImpl].in[Singleton]
+    bind[BlockDal].to[BlockDalImpl].in[Singleton]
+    bind[TransactionDal].to[TransactionDalImpl].in[Singleton]
+    bind[EventLogDal].to[EventLogDalImpl].in[Singleton]
+    bind[TokenTransferDal].to[TokenTransferDalImpl].in[Singleton]
+    bind[SettlementTxDal].to[SettlementTxDalImpl].in[Singleton]
+    bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].in[Singleton]
+
+    bind[OrderService].to[OrderServiceImpl].in[Singleton]
+    bind[TokenMetadataService].to[TokenMetadataServiceImpl].in[Singleton]
+    bind[TradeService].to[TradeServiceImpl].in[Singleton]
+    bind[SettlementTxService].to[SettlementTxServiceImpl].in[Singleton]
+    bind[OrderStatusMonitorService]
+      .to[OrderStatusMonitorServiceImpl]
+      .in[Singleton]
 
     // val dbConfig: DatabaseConfig[JdbcProfile] =
     //   DatabaseConfig.forConfig("db.default", config)
-
-    // val orderService: OrderService = new OrderServiceImpl()
-    // val tradeService: TradeService = new TradeServiceImpl()
-
-    // val tokenMetadataService = new TokenMetadataServiceImpl()
-    // val settlementTxService: SettlementTxService = new SettlementTxServiceImpl()
-    // val blockService: BlockService = new BlockServiceImpl()
-
-    // val orderStatusMonitorService: OrderStatusMonitorService =
-    //   new OrderStatusMonitorServiceImpl()
 
     bind[DatabaseModule].in[Singleton]
     bind[TokenManager].in[Singleton]

@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
@@ -33,9 +35,10 @@ trait TokenBalanceDal extends BaseDalImpl[TokenBalanceTable, TokenBalance] {
     ): Future[Option[TokenBalance]]
 }
 
-class TokenBalanceDalImpl(
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+class TokenBalanceDalImpl @Inject()(
+    implicit @Named("dbconfig-dal-token-balance") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ],
     val ec: ExecutionContext)
     extends TokenBalanceDal {
   val query = TableQuery[TokenBalanceTable]

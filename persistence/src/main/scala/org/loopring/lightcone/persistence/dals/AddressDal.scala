@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
@@ -26,9 +28,10 @@ import scala.concurrent._
 
 trait AddressDal extends BaseDalImpl[AddressTable, AddressData] {}
 
-class AddressDalImpl(
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+class AddressDalImpl @Inject()(
+    implicit @Named("dbconfig-dal-address") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ],
     val ec: ExecutionContext)
     extends AddressDal {
   val query = TableQuery[AddressTable]
