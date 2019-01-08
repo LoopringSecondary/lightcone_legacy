@@ -79,7 +79,6 @@ object MultiAccountManagerActor extends ShardedByAddress {
 }
 
 class MultiAccountManagerActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

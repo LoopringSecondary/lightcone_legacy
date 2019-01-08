@@ -71,7 +71,6 @@ object EthereumEventExtractorActor {
 }
 
 class EthereumEventExtractorActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

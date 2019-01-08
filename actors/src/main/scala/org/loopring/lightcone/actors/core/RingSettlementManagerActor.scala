@@ -68,7 +68,6 @@ object RingSettlementManagerActor {
 }
 
 class RingSettlementManagerActor(
-  )(
     implicit
     system: ActorSystem,
     val config: Config,

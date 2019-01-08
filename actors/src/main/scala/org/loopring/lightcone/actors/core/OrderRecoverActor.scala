@@ -66,7 +66,6 @@ object OrderRecoverActor extends ShardedEvenly {
 }
 
 class OrderRecoverActor(
-  )(
     implicit
     val config: Config,
     ec: ExecutionContext,

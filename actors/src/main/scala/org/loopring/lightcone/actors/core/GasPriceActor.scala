@@ -65,7 +65,6 @@ object GasPriceActor extends ShardedEvenly {
 }
 
 class GasPriceActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

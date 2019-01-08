@@ -68,7 +68,6 @@ object EthereumAccessActor {
 // TODO(yadong): 是否可以替代ActorSelection
 // TODO(yadong): monitor可能在启动的时候还没有部署好。
 class EthereumAccessActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

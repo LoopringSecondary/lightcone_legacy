@@ -57,7 +57,6 @@ object TokenMetadataRefresher {
 
 // main owner: 杜永丰
 class TokenMetadataRefresher(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

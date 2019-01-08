@@ -60,7 +60,6 @@ object DatabaseQueryActor extends ShardedEvenly {
 }
 
 class DatabaseQueryActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

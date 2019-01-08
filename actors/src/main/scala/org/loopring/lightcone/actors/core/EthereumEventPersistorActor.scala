@@ -65,7 +65,6 @@ object EthereumEventPersistorActor extends ShardedEvenly {
 }
 
 class EthereumEventPersistorActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

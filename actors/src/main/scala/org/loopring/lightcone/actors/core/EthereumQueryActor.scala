@@ -67,7 +67,6 @@ object EthereumQueryActor extends ShardedEvenly {
 }
 
 class EthereumQueryActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

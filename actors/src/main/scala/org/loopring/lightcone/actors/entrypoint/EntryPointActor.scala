@@ -44,7 +44,6 @@ object EntryPointActor {
 }
 
 class EntryPointActor(
-  )(
     implicit
     ec: ExecutionContext,
     timeout: Timeout,

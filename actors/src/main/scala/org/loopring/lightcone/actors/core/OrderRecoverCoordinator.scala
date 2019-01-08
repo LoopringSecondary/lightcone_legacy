@@ -69,7 +69,6 @@ object OrderRecoverCoordinator extends {
 }
 
 class OrderRecoverCoordinator(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

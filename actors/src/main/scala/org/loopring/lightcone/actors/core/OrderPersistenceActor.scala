@@ -61,7 +61,6 @@ object OrderPersistenceActor extends ShardedEvenly {
 }
 
 class OrderPersistenceActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

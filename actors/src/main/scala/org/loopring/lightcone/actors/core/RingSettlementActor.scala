@@ -45,7 +45,6 @@ import scala.util._
 // main owner: 李亚东
 
 class RingSettlementActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,
