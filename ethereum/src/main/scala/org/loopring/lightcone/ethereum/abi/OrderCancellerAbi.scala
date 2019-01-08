@@ -45,7 +45,7 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
     abi.findFunction(searchByName(CancelOrdersFunction.name))
   )
 
-  val cancelAllOrdersFunction = CancelAllOrdersFunction(
+  val cancelAllOrders = CancelAllOrdersFunction(
     abi.findFunction(searchByName(CancelAllOrdersFunction.name))
   )
 
@@ -116,7 +116,7 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
           case CancelOrdersFunction.name =>
             cancelOrders.unpackInput(data)
           case CancelAllOrdersFunction.name =>
-            cancelAllOrdersFunction.unpackInput(data)
+            cancelAllOrders.unpackInput(data)
           case _ => None
         }
       case _ => None
