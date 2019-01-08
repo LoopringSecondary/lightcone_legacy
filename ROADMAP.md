@@ -30,7 +30,7 @@
   - [ ] [wangdong] 支持websocket
   - [ ] [yadong/hongyu] 以太坊分叉事件的处理
   - [ ] [yongfeng] 所有和市场，包括orderbook相关的配置，应该都放到数据库里面，从配置文件里面移除。所有Token的信息也应该存入数据库。
-  - [ ] [hongyu] 动态增加token和市场，动态停止某个市场
+  - [ ] [wangdong] 动态增加token和市场，动态停止某个市场
   - [ ] [yangli] 集群监控
   - [ ] [yangli] JSONRPC支持HTTPS, Akka Cluster支持SSL/TLS
 
