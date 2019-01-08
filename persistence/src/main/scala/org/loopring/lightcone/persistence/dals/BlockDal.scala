@@ -45,7 +45,7 @@ class BlockDalImpl(
     implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends BlockDal {
-  val query = TableQuery[BlockTable]
+  val query = new TableQuery(c => new BlockTable("a", c))
   def getRowHash(row: BlockData) = row.hash
 
   def saveBlock(block: BlockData): Future[ErrorCode] =
