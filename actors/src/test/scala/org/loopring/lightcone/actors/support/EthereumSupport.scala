@@ -32,7 +32,9 @@ trait EthereumSupport {
     MessageValidationActor(
       new EthereumQueryMessageValidator(),
       EthereumQueryActor.name,
-      EthereumQueryMessageValidator.name))
+      EthereumQueryMessageValidator.name
+    )
+  )
 
   if (!actors.contains(GasPriceActor.name)) {
     actors.add(GasPriceActor.name, GasPriceActor.start)
