@@ -19,6 +19,7 @@ package org.loopring.lightcone.core.market
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import com.google.inject.Inject
 
 trait RingIncomeEstimator {
   def getRingIncome(ring: MatchableRing): Double
@@ -29,9 +30,8 @@ trait RingIncomeEstimator {
     ): Boolean
 }
 
-final class RingIncomeEstimatorImpl(
-  )(
-    implicit tm: TokenManager,
+final class RingIncomeEstimatorImpl @Inject()(
+    tm: TokenManager,
     tve: TokenValueEstimator)
     extends RingIncomeEstimator {
 

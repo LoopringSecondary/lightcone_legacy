@@ -21,7 +21,7 @@ import akka.cluster._
 import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.google.inject.AbstractModule
+import com.google.inject._
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
@@ -55,13 +55,12 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[ActorSystem].toInstance(system)
     bind[Cluster].toInstance(cluster)
     bind[ActorMaterializer].toInstance(materializer)
+
     bind[Timeout].toInstance(timeout)
+    bind[TimeProvider].to[SystemTimeProvider]
 
-    implicit val requestBuilder = new EthereumCallRequestBuilder
-    bind[EthereumCallRequestBuilder].toInstance(requestBuilder)
-
-    implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
-    bind[EthereumBatchCallRequestBuilder].toInstance(batchRequestBuilder)
+    bind[EthereumCallRequestBuilder]
+    bind[EthereumBatchCallRequestBuilder]
 
     bind[ExecutionContextExecutor].toInstance(system.dispatcher)
     bind[ExecutionContext].toInstance(system.dispatcher)
@@ -70,28 +69,23 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       .toInstance(system.dispatchers.lookup("db-execution-context"))
 
     bind[SupportedMarkets].toInstance(SupportedMarkets(config))
-
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
-
-    bind[TimeProvider].to[SystemTimeProvider]
 
     // val dbConfig: DatabaseConfig[JdbcProfile] =
     //   DatabaseConfig.forConfig("db.default", config)
     // bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
 
-    bind[DatabaseModule] //.in[Singleton]
-    bind[TokenManager] //.in[Singleton]
+    bind[DatabaseModule].in[Singleton]
+    bind[TokenManager].in[Singleton]
 
-    // val tokenValueEstimator: TokenValueEstimator =
-    //   new TokenValueEstimator()
+    // TODO(read from config)
+    bind[Double]
+      .annotatedWithName("dust-order-threshold")
+      .toInstance(0.0)
+
     bind[TokenValueEstimator]
-
-    // val dustEvaluator: DustOrderEvaluator = new DustOrderEvaluator()
-    // bind[DustOrderEvaluator].toInstance(dustEvaluator)
-
-    // val ringIncomeEstimator: RingIncomeEstimator =
-    //   new RingIncomeEstimatorImpl()
-    // bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
+    bind[DustOrderEvaluator]
+    bind[RingIncomeEstimator].to[RingIncomeEstimatorImpl]
 
     Cluster(system).registerOnMemberUp {
       //-----------deploy local actors-----------

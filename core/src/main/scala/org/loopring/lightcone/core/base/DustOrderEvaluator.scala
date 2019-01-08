@@ -18,11 +18,12 @@ package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import com.google.inject.Inject
+import com.google.inject.name.Named
 
-class DustOrderEvaluator(
-    threshold: Double = 0.0
-  )(
-    implicit tve: TokenValueEstimator) {
+class DustOrderEvaluator @Inject()(
+    implicit @Named("dust-order-threshold") threshold: Double = 0.0,
+    tve: TokenValueEstimator) {
 
   def isOriginalDust(order: Matchable) =
     isDust(order.tokenS, order.original.amountS)
