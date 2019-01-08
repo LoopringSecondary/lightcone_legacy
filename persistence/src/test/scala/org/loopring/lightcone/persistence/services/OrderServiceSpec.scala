@@ -351,7 +351,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some(tokenB),
         Some(MarketHashProvider.convert2Hex(tokenS, tokenB))
       )
-      update <- service.markOrderSoftCancelled(
+      update <- service.cancelOrders(
         Seq(saved1.left.get.hash, saved3.left.get.hash),
         OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
       )
