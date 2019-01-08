@@ -41,9 +41,9 @@ trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
 
 class TradeDalImpl @Inject()(
     implicit
+    val ec: ExecutionContext,
     @Named("dbconfig-dal-trade") val dbConfig: DatabaseConfig[JdbcProfile],
-    timeProvider: TimeProvider,
-    val ec: ExecutionContext)
+    timeProvider: TimeProvider)
     extends TradeDal {
   val query = TableQuery[TradeTable]
   private[this] val logger = Logger(this.getClass)

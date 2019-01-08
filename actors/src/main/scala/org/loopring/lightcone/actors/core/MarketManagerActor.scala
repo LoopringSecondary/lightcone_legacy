@@ -52,8 +52,8 @@ object MarketManagerActor extends ShardedByMarket {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      tokenValueEstimator: TokenValueEstimator,
-      ringIncomeEstimator: RingIncomeEstimator,
+      tve: TokenValueEvaluator,
+      rie: RingIncomeEvaluator,
       dustOrderEvaluator: DustOrderEvaluator,
       tokenManager: TokenManager
     ): ActorRef = {
@@ -99,8 +99,8 @@ class MarketManagerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val tokenValueEstimator: TokenValueEstimator,
-    val ringIncomeEstimator: RingIncomeEstimator,
+    val tve: TokenValueEvaluator,
+    val rie: RingIncomeEvaluator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenManager: TokenManager)
     extends ActorWithPathBasedConfig(
@@ -257,7 +257,7 @@ class MarketManagerActor(
 
   private def getRequiredMinimalIncome(gasPrice: BigInt): Double = {
     val costinEth = gasLimitPerRingV2 * gasPrice
-    tokenValueEstimator.getEstimatedValue(wethTokenAddress, costinEth)
+    tve.getValue(wethTokenAddress, costinEth)
   }
 
   private def updateOrderbookAndSettleRings(

@@ -26,8 +26,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class TokenMetadataServiceImpl @Inject()(
     implicit
-    tokenMetadataDal: TokenMetadataDal,
-    @Named("db-execution-context") val ec: ExecutionContext)
+    val ec: ExecutionContext,
+    tokenMetadataDal: TokenMetadataDal)
     extends TokenMetadataService {
 
   def getTokens(reloadFromDatabase: Boolean): Future[Seq[TokenMeta]] =

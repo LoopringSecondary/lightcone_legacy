@@ -28,8 +28,8 @@ import scala.concurrent._
 
 class OrderServiceImpl @Inject()(
     implicit
-    orderDal: OrderDal,
-    @Named("db-execution-context") val ec: ExecutionContext)
+    val ec: ExecutionContext,
+    orderDal: OrderDal)
     extends OrderService {
 
   private def giveUserOrder(order: Option[RawOrder]): Option[RawOrder] = {

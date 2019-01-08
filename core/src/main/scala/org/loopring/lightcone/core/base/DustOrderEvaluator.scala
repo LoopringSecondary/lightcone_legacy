@@ -24,7 +24,7 @@ import com.google.inject.name.Named
 class DustOrderEvaluator @Inject()(
     implicit
     @Named("dust-order-threshold") threshold: Double = 0.0,
-    tve: TokenValueEstimator) {
+    tve: TokenValueEvaluator) {
 
   def isOriginalDust(order: Matchable) =
     isDust(order.tokenS, order.original.amountS)
@@ -42,6 +42,6 @@ class DustOrderEvaluator @Inject()(
       tokenS: String,
       amountS: BigInt
     ): Boolean = {
-    tve.getEstimatedValue(tokenS, amountS) < threshold
+    tve.getValue(tokenS, amountS) < threshold
   }
 }

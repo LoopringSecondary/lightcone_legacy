@@ -24,10 +24,7 @@ import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
 import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.market.{
-  RingIncomeEstimator,
-  RingIncomeEstimatorImpl
-}
+import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib.SystemTimeProvider
 import org.scalatest._
 import org.slf4s.Logging
@@ -76,13 +73,13 @@ abstract class CommonSpec(configStr: String)
   tokenManager.addToken(RDN_TOKEN)
   tokenManager.addToken(REP_TOKEN)
 
-  implicit val tokenValueEstimator = new TokenValueEstimator()
+  implicit val tve = new TokenValueEvaluator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
 
   //relay
   implicit val actors = new MapBasedLookup[ActorRef]()
-  implicit val ringIncomeEstimator: RingIncomeEstimator =
-    new RingIncomeEstimatorImpl()
+  implicit val rie: RingIncomeEvaluator =
+    new RingIncomeEvaluatorImpl()
 
   //actors
   //  val refresher = system.actorOf(

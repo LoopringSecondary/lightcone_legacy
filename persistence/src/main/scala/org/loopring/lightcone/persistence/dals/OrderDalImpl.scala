@@ -35,11 +35,9 @@ import scala.util.{Failure, Success}
 
 class OrderDalImpl @Inject()(
     implicit
-    @Named("dbconfig-dal-order") val dbConfig: DatabaseConfig[
-      JdbcProfile
-    ],
-    timeProvider: TimeProvider,
-    val ec: ExecutionContext)
+    val ec: ExecutionContext,
+    @Named("dbconfig-dal-order") val dbConfig: DatabaseConfig[JdbcProfile],
+    timeProvider: TimeProvider)
     extends OrderDal {
   val query = TableQuery[OrderTable]
   def getRowHash(row: RawOrder) = row.hash

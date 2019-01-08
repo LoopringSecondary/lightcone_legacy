@@ -26,8 +26,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class OrderStatusMonitorServiceImpl @Inject()(
     implicit
-    orderStatusMonitorDal: OrderStatusMonitorDal,
-    @Named("db-execution-context") val ec: ExecutionContext)
+    val ec: ExecutionContext,
+    orderStatusMonitorDal: OrderStatusMonitorDal)
     extends OrderStatusMonitorService {
 
   def updateLatestProcessingTime(event: OrderStatusMonitor): Future[Int] =

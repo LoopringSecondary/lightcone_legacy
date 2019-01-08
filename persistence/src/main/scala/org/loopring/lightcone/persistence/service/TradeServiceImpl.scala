@@ -26,8 +26,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class TradeServiceImpl @Inject()(
     implicit
-    tradeDal: TradeDal,
-    @Named("db-execution-context") val ec: ExecutionContext)
+    val ec: ExecutionContext,
+    tradeDal: TradeDal)
     extends TradeService {
 
   def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] =

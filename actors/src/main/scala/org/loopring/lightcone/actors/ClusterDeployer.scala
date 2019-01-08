@@ -54,12 +54,12 @@ class ClusterDeployer @Inject()(
     ec: ExecutionContext,
     ece: ExecutionContextExecutor,
     rb: EthereumCallRequestBuilder,
-    ringIncomeEstimator: RingIncomeEstimator,
+    rie: RingIncomeEvaluator,
     supportedMarkets: SupportedMarkets,
     timeProvider: TimeProvider,
     timeout: Timeout,
     tokenManager: TokenManager,
-    tokenValueEstimator: TokenValueEstimator,
+    tve: TokenValueEvaluator,
     system: ActorSystem)
     extends Object
     with Logging {

@@ -39,7 +39,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -71,7 +71,9 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         "dbconfig-dal-token-balance",
         "dbconfig-dal-block",
         "dbconfig-dal-settlement-tx",
-        "dbconfig-dal-order-status-monitor"))
+        "dbconfig-dal-order-status-monitor"
+      )
+    )
 
     // --- bind dals ---------------------
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].in[Singleton]
@@ -103,9 +105,9 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[EthereumCallRequestBuilder]
     bind[EthereumBatchCallRequestBuilder]
 
-    bind[TokenValueEstimator]
+    bind[TokenValueEvaluator]
     bind[DustOrderEvaluator]
-    bind[RingIncomeEstimator].to[RingIncomeEstimatorImpl]
+    bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
 
     // --- bind primative types ---------------------
 
@@ -118,8 +120,9 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
   }
 
   private def bindDBForNames(
-    instance: DatabaseConfig[JdbcProfile],
-    names: Seq[String]) = {
+      instance: DatabaseConfig[JdbcProfile],
+      names: Seq[String]
+    ) = {
     names.foreach { name =>
       bind[DatabaseConfig[JdbcProfile]]
         .annotatedWithName(name)

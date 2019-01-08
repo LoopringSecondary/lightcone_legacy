@@ -43,10 +43,10 @@ trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
 
 class SettlementTxDalImpl @Inject()(
     implicit
+    val ec: ExecutionContext,
     @Named("dbconfig-dal-settlement-tx") val dbConfig: DatabaseConfig[
       JdbcProfile
-    ],
-    val ec: ExecutionContext)
+    ])
     extends SettlementTxDal {
   private[this] val logger = Logger(this.getClass)
   val query = TableQuery[SettlementTxTable]

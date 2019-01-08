@@ -44,10 +44,8 @@ trait BlockDal extends BaseDalImpl[BlockTable, BlockData] {
 
 class BlockDalImpl @Inject()(
     implicit
-    @Named("dbconfig-dal-block") val dbConfig: DatabaseConfig[
-      JdbcProfile
-    ],
-    val ec: ExecutionContext)
+    val ec: ExecutionContext,
+    @Named("dbconfig-dal-block") val dbConfig: DatabaseConfig[JdbcProfile])
     extends BlockDal {
   val query = TableQuery[BlockTable]
   def getRowHash(row: BlockData) = row.hash

@@ -39,10 +39,10 @@ trait OrderStatusMonitorDal
 
 class OrderStatusMonitorDalImpl @Inject()(
     implicit
+    val ec: ExecutionContext,
     @Named("dbconfig-dal-order-status-monitor") val dbConfig: DatabaseConfig[
       JdbcProfile
-    ],
-    val ec: ExecutionContext)
+    ])
     extends OrderStatusMonitorDal {
   val query = TableQuery[OrderStatusMonitorTable]
 

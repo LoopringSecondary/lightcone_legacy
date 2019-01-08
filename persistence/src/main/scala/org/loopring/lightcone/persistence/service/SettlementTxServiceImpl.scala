@@ -25,8 +25,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class SettlementTxServiceImpl @Inject()(
     implicit
-    submitTxDal: SettlementTxDal,
-    @Named("db-execution-context") val ec: ExecutionContext)
+    val ec: ExecutionContext,
+    val submitTxDal: SettlementTxDal)
     extends SettlementTxService {
 
   def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res] =

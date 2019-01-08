@@ -16,13 +16,8 @@
 
 package org.loopring.lightcone.actors
 
-import com.dimafeng.testcontainers.MySQLContainer
-import com.typesafe.config.ConfigFactory
-import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.TokenMeta
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
 
 package object support {
 
@@ -66,31 +61,4 @@ package object support {
     1000
   )
 
-  val container = new MySQLContainer(
-    mysqlImageVersion = Some("mysql:5.7.18"),
-    databaseName = Some("lightcone_test"),
-    mysqlUsername = Some("test"),
-    mysqlPassword = Some("test")
-  )
-
-  implicit private val suiteDescription =
-    Description.createSuiteDescription(this.getClass)
-
-  container.starting()
-
-  Thread.sleep(10000)
-
-  val dbConfig1: DatabaseConfig[JdbcProfile] =
-    DatabaseConfig.forConfig[JdbcProfile](
-      "",
-      ConfigFactory.parseString(s"""
-        profile = "slick.jdbc.MySQLProfile$$"
-        db {
-          url="${container.jdbcUrl}?useSSL=false"
-          user="${container.username}"
-          password="${container.password}"
-          driver="${container.driverClassName}"
-          maxThreads = 4
-        }""")
-    )
 }
