@@ -85,7 +85,6 @@ class EthereumQueryActor(
 
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  //todo:还需要继续优化下
   def receive = LoggingReceive {
     case req: GetBalanceAndAllowances.Req =>
       val (ethToken, erc20Tokens) = req.tokens.partition(Address(_).isZero)
