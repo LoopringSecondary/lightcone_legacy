@@ -67,7 +67,7 @@ trait EthereumQueryMockSupport {
             )
           )
 
-      case GetFilledAmount.Req(orderIds) =>
+      case GetFilledAmount.Req(orderIds, _) =>
         sender ! GetFilledAmount.Res(
           orderIds.map(id => id -> ByteString.copyFrom("0", "UTF-8")).toMap
         )

@@ -44,23 +44,23 @@ class EthereumCallRequestBuilder {
       tag: String
     ): EthCall.Req = {
     val input = req match {
-      case GetCutoff.Req(broker, "", "") =>
+      case GetCutoff.Req(broker, "", "", _) =>
         tradeHistoryAbi.cutoffForBroker.pack(
           CutoffForBrokerFunction.Params(broker)
         )
 
-      case GetCutoff.Req(broker, owner, "") =>
+      case GetCutoff.Req(broker, owner, "", _) =>
         tradeHistoryAbi.cutoffForOwner.pack(
           CutoffForOwnerFunction.Params(broker, owner)
         )
 
-      case GetCutoff.Req(broker, "", tokenPair) =>
+      case GetCutoff.Req(broker, "", tokenPair, _) =>
         tradeHistoryAbi.cutoffForTradingPairBroker.pack(
           CutoffForTradingPairBrokerFunction
             .Params(broker, Numeric.hexStringToByteArray(tokenPair))
         )
 
-      case GetCutoff.Req(broker, owner, tokenPair) =>
+      case GetCutoff.Req(broker, owner, tokenPair, _) =>
         tradeHistoryAbi.cutoffForTradingPairOwner.pack(
           CutoffForTradingPairOwnerFunction
             .Params(broker, owner, Numeric.hexStringToByteArray(tokenPair))

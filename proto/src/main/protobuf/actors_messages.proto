@@ -139,6 +139,7 @@ message GetBalanceAndAllowances {
     message Req {
         string address = 1;
         repeated string tokens = 2;
+        string tag = 3;
     }
 
     message Res {
@@ -152,6 +153,7 @@ message GetBalance {
     message Req{
         string address = 1;
         repeated string tokens = 2;
+        string tag = 3;
     }
     message Res {
         string address = 1;
@@ -164,6 +166,7 @@ message GetAllowance {
     message Req{
         string address = 1;
         repeated string tokens = 2;
+        string tag = 3;
     }
     message Res {
         string address = 1;
@@ -186,6 +189,7 @@ message UpdateFilledAmount {
 message GetFilledAmount {
     message Req {
         repeated string order_ids = 1;
+        string tag = 2;
     }
 
     message Res {
@@ -197,6 +201,7 @@ message GetOrderCancellation {
     message Req {
         string broker = 1;
         string order_hash = 2;
+        string tag = 3;
     }
 
     message Res {
@@ -209,6 +214,7 @@ message GetCutoff {
         string broker = 1;
         string owner = 2;
         string token_pair = 3;
+        string tag = 4;
     }
     message Res {
         bytes cutoff = 1;

@@ -117,7 +117,7 @@ class TransferEventExtractor extends DataExtractor[PTransferEvent] {
               amount = transferFrom.amount.toByteArray
             )
           )
-        case Some(DepositFunction.Parms) =>
+        case Some(_: DepositFunction.Parms) =>
           transfers.append(
             PTransferEvent(
               header = Some(header),

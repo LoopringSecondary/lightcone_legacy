@@ -27,12 +27,14 @@ class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
       receipt: TransactionReceipt,
       blockTime: String
     ): Seq[CutoffEvent] = {
-    receipt.logs.map { log =>
+    val header = getEventHeader(tx, receipt, blockTime)
+    receipt.logs.zipWithIndex.map { item =>
+      val (log, index) = item
       loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
         case Some(event: AllOrdersCancelledEvent.Result) =>
           Some(
             CutoffEvent(
-              header = Some(getEventHeader(tx, receipt, blockTime)),
+              header = Some(header.withLogIndex(index)),
               cutoff = event._cutoff.longValue(),
               broker = event._broker,
               owner = event._broker
@@ -41,7 +43,7 @@ class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
         case Some(event: AllOrdersCancelledByBrokerEvent.Result) =>
           Some(
             CutoffEvent(
-              header = Some(getEventHeader(tx, receipt, blockTime)),
+              header = Some(header.withLogIndex(index)),
               cutoff = event._cutoff.longValue(),
               broker = event._broker,
               owner = event._owner
@@ -52,7 +54,7 @@ class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
             ) =>
           Some(
             CutoffEvent(
-              header = Some(getEventHeader(tx, receipt, blockTime)),
+              header = Some(header.withLogIndex(index)),
               cutoff = event._cutoff.longValue(),
               broker = event._broker,
               owner = event._owner,
@@ -62,7 +64,7 @@ class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
         case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
           Some(
             CutoffEvent(
-              header = Some(getEventHeader(tx, receipt, blockTime)),
+              header = Some(header.withLogIndex(index)),
               cutoff = event._cutoff.longValue(),
               broker = event._broker,
               owner = event._broker,
