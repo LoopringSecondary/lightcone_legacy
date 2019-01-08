@@ -118,7 +118,7 @@ final private[core] class AccountManagerImpl(
       case None => false
       case Some(order) =>
         orderPool.getOrder(orderId) map { order =>
-          orderPool += order.as(STATUS_CANCELLED_BY_USER)
+          orderPool += order.as(STATUS_SOFT_CANCELLED_BY_USER)
         }
 
         order.callOnTokenSAndTokenFee(_.release(order.id))

@@ -22,6 +22,7 @@ package org.loopring.lightcone.proto;
 import "actors_data.proto";
 import "core.proto";
 import "ethereum.proto";
+import "common.proto";
 
 /////////////////////////////////////////////////////////////////////
 // ONE WAY MESSAGES
@@ -100,6 +101,13 @@ message CancelOrder {
         string id = 1;
         OrderStatus status = 2; //取消的类型
     }
+}
+
+message RetrieveOrdersToCancel {
+    string broker       = 1;
+    string owner        = 2;
+    string trading_pair = 3;
+    int64  cutoff       = 4; // in seconds.
 }
 
 message GetOrderbook {

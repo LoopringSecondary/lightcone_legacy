@@ -126,14 +126,16 @@ class EntryPointSpec_SubmitSeveralOrder
       val cancelReq = CancelOrder.Req(
         rawOrders(0).hash,
         rawOrders(0).owner,
-        OrderStatus.STATUS_CANCELLED_BY_USER,
+        OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
         Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
       )
 
       val cancelF = singleRequest(cancelReq, "cancel_order")
       Await.result(cancelF, timeout.duration)
 
-      info("the first order's status in db should be STATUS_CANCELLED_BY_USER")
+      info(
+        "the first order's status in db should be STATUS_SOFT_CANCELLED_BY_USER"
+      )
       val assertOrderFromDbF2 = Future.sequence(rawOrders.map { o =>
         for {
           orderOpt <- dbModule.orderService.getOrder(o.hash)
@@ -142,7 +144,7 @@ class EntryPointSpec_SubmitSeveralOrder
             case Some(order) =>
               if (order.hash == rawOrders(0).hash) {
                 assert(
-                  order.getState.status == OrderStatus.STATUS_CANCELLED_BY_USER
+                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
                 )
               } else {
                 assert(order.getState.status == OrderStatus.STATUS_PENDING)
