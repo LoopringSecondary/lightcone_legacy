@@ -136,7 +136,7 @@ class EthereumBatchCallRequestBuilder {
       contractAddress: Address,
       orderHashes: Seq[String],
       tag: String = "latest"
-    ):Seq[EthCall.Req] = {
+    ): Seq[EthCall.Req] = {
     orderHashes.zipWithIndex.map { orderHash =>
       val data = tradeHistoryAbi.filled.pack(
         FilledFunction.Params(Numeric.hexStringToByteArray(orderHash._1))
