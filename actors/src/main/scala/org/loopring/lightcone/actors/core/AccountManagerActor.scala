@@ -27,7 +27,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Matchable
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
@@ -97,7 +97,7 @@ class AccountManagerActor(
   def normalReceive: Receive = LoggingReceive {
 
     case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
-      submitOrder(xraworder).map { _ =>
+      submitOrAdjustOrder(xraworder).map { _ =>
         ActorRecover.OrderRecoverResult(xraworder.id, true)
       }.sendTo(sender)
 
@@ -143,7 +143,7 @@ class AccountManagerActor(
             case STATUS_PENDING_ACTIVE =>
               val order: Order = resRawOrder
               Future.successful(order)
-            case _ => submitOrder(resRawOrder)
+            case _ => submitOrAdjustOrder(resRawOrder)
           }).mapAs[Order]
         } yield SubmitOrder.Res(Some(resOrder))
 
@@ -180,23 +180,33 @@ class AccountManagerActor(
       } yield
         updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))) sendTo sender
 
-    //todo:CutOffHandlerActor与该处是否重复
-    case req @ CutoffEvent(_, _, owner, "", cutoff) =>
-      log.info(s"received CutoffEvent ${req}")
+    //ownerCutoff
+    case req @ CutoffEvent(Some(header), broker, owner, "", cutoff)
+        if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+      log.debug(s"received OwnerCutoffEvent ${req}")
       accountCutoffState.setCutoff(cutoff)
-    case req @ CutoffEvent(_, _, owner, tokenPair, cutoff) =>
-      log.info(s"received CutoffEvent ${req}")
+    //ownerTokenPairCutoff  tokenPair ！= ""
+    case req @ CutoffEvent(Some(header), broker, owner, tokenPair, cutoff)
+        if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+      log.debug(s"received OwnerTokenPairCutoffEvent ${req}")
       accountCutoffState
         .setTradingPairCutoff(Numeric.toBigInt(req.tradingPair), req.cutoff)
-    case req: OrderFilledEvent =>
-      log.info(s"received OrderFilledEvent ${req}")
+    //brokerCutoff
+    //todo:暂时不处理
+    case req @ CutoffEvent(Some(header), broker, owner, _, cutoff)
+        if broker != owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+      log.debug(s"received BrokerCutoffEvent ${req}")
+
+    case req: OrderFilledEvent
+        if req.header.nonEmpty && req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+      log.debug(s"received OrderFilledEvent ${req}")
       //收到filledEvent后，重新提交一次订单
       for {
         orderOpt <- dbModule.orderService.getOrder(req.orderHash)
-      } yield orderOpt.map(o => submitOrder(o))
+      } yield orderOpt.map(o => submitOrAdjustOrder(o))
   }
 
-  private def submitOrder(rawOrder: RawOrder): Future[Order] = {
+  private def submitOrAdjustOrder(rawOrder: RawOrder): Future[Order] = {
     val order: Order = rawOrder
     val matchable: Matchable = order
     for {
@@ -216,36 +226,27 @@ class AccountManagerActor(
         s"ethereumQueryActor GetFilledAmount.Res $getFilledAmountRes"
       )
 
-      outstandingAmountB = byteString2BigInt(rawOrder.amountB) *
-        byteString2BigInt(filledAmountS) / byteString2BigInt(rawOrder.amountS)
-      outstandingAmountFee = byteString2BigInt(rawOrder.amountFee) *
-        byteString2BigInt(filledAmountS) / byteString2BigInt(rawOrder.amountS)
-      state = rawOrder.state match {
-        case None =>
+      _matchable = matchable.withFilledAmountS(filledAmountS)
+
+      state = rawOrder.state
+        .getOrElse(
           RawOrder.State(
             createdAt = timeProvider.getTimeMillis(),
             updatedAt = timeProvider.getTimeMillis(),
-            status = OrderStatus.STATUS_NEW,
-            outstandingAmountS = filledAmountS,
-            outstandingAmountB = outstandingAmountB,
-            outstandingAmountFee = outstandingAmountFee
+            status = OrderStatus.STATUS_NEW
           )
-        case Some(s) =>
-          s.copy(
-            outstandingAmountS = filledAmountS,
-            outstandingAmountB = outstandingAmountB,
-            outstandingAmountFee = outstandingAmountFee
-          )
-      }
+        )
+        .copy(
+          outstandingAmountS = filledAmountS,
+          outstandingAmountB = _matchable.outstanding.amountB,
+          outstandingAmountFee = _matchable.outstanding.amountFee
+        )
+
       _ <- dbModule.orderService.updateAmount(rawOrder.id, state = state)
 
-      _matchable = matchable.withFilledAmountS(
-        getFilledAmountRes.filledAmountSMap(matchable.id)
-      )
-      _ = log.info(s"submitting order to AccountManager: ${_matchable}")
-      (successful, updatedOrders) = manager.submitAndGetUpdatedOrders(
-        _matchable
-      )
+      _ = log.debug(s"submitting order to AccountManager: ${_matchable}")
+      (successful, updatedOrders) = manager
+        .submitOrAdjustThenGetUpdatedOrders(_matchable)
       _ = if (!successful)
         throw ErrorException(Error(matchable.status))
       _ = assert(updatedOrders.contains(_matchable.id))

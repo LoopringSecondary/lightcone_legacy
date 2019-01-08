@@ -82,9 +82,11 @@ class TokenMetadataRefresher(
     )
   )
 
+  override def preStart(): Unit = {}
+
   override def receive: Receive = super.receive orElse LoggingReceive {
     case req: TokenBurnRateChangedEvent =>
-      log.info(s"received TokenBurnRateChangedEvent ${req}")
+      log.debug(s"received TokenBurnRateChangedEvent ${req}")
       tokenMetadataService.updateBurnRate(req.token, req.burnRate)
       if (tokenManager.hasToken(req.token)) {
         tokenManager.addToken(
