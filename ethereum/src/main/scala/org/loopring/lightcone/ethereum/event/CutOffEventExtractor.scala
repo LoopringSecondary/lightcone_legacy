@@ -16,14 +16,9 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import org.loopring.lightcone.ethereum.abi.{
-  AllOrdersCancelledByBrokerEvent,
-  AllOrdersCancelledEvent,
-  AllOrdersCancelledForTradingPairByBrokerEvent,
-  AllOrdersCancelledForTradingPairEvent
-}
 import org.loopring.lightcone.lib.MarketHashProvider.convert2Hex
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.ethereum.abi._
 
 class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
 

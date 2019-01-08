@@ -17,14 +17,8 @@
 package org.loopring.lightcone.ethereum
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.ethereum.abi._
 
 package object event {
-  val erc20Abi = ERC20ABI()
-  val wethAbi = WETHABI()
-  val tradeHistoryAbi = TradeHistoryAbi()
-  val ringSubmitterAbi = RingSubmitterAbi()
-  val loopringProtocolAbi = LoopringProtocolAbi()
 
   implicit def bytes2ByteString(bytes: Array[Byte]): ByteString =
     ByteString.copyFrom(bytes)

@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import org.loopring.lightcone.ethereum.abi.TokenTierUpgradedEvent
+import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
 

@@ -16,10 +16,9 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import org.loopring.lightcone.ethereum.abi.{RingMinedEvent, SubmitRingsFunction}
+import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent}
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
 
 class RingMinedEventExtractor() extends DataExtractor[PRingMinedEvent] {

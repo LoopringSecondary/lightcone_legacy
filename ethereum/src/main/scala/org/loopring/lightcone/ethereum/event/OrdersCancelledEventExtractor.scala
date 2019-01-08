@@ -16,11 +16,11 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import org.loopring.lightcone.ethereum.abi.OrdersCancelledEvent
+import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto.{
-  OrdersCancelledEvent => POrdersCancelledEvent
+  OrdersCancelledEvent => POrdersCancelledEvent,
+  _
 }
-import org.loopring.lightcone.proto._
 
 class OrdersCancelledEventExtractor()
     extends DataExtractor[POrdersCancelledEvent] {

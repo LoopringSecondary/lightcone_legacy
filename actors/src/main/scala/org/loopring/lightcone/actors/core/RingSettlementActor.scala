@@ -34,7 +34,7 @@ import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.ethereum.data.{Transaction, _}
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.ethereum.abi.SubmitRingsFunction
+import org.loopring.lightcone.ethereum.abi._
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer

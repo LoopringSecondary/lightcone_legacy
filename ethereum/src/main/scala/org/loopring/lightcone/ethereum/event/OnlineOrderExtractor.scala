@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import org.loopring.lightcone.ethereum.abi.OrderSubmittedEvent
+import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
