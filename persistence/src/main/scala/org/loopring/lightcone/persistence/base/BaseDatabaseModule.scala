@@ -30,16 +30,11 @@ trait BaseDatabaseModule {
   private[this] val logger = Logger(this.getClass)
 
   val tables: Seq[BaseDal[_, _]]
-  val separateTables: Seq[BaseSeparateDal]
 
   def createTables() = {
     try {
       Await.result(
         Future.sequence(tables.map(_.createTable)),
-        10.second
-      )
-      Await.result(
-        Future.sequence(separateTables.map(_.createTables)),
         10.second
       )
     } catch {
@@ -55,10 +50,6 @@ trait BaseDatabaseModule {
     try {
       Await.result(
         Future.sequence(tables.map(_.dropTable)),
-        10.second
-      )
-      Await.result(
-        Future.sequence(separateTables.map(_.dropTables)),
         10.second
       )
     } catch {

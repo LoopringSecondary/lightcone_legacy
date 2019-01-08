@@ -27,7 +27,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 杜永丰
-object EthereumEventAccessActor extends ShardedEvenly {
+object EthereumEventAccessActor extends ShardedByAddress {
   val name = "ethereum_event_access"
 
   def startShardRegion(
@@ -42,7 +42,6 @@ object EthereumEventAccessActor extends ShardedEvenly {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
-    entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
     ClusterSharding(system).start(
       typeName = name,
@@ -51,9 +50,16 @@ object EthereumEventAccessActor extends ShardedEvenly {
       messageExtractor = messageExtractor
     )
   }
+
+  // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
+  val extractAddress: PartialFunction[Any, String] = {
+    case req: TransferEvent =>
+      req.from
+  }
 }
 
-class EthereumEventAccessActor()(
+class EthereumEventAccessActor(
+  )(
     implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
@@ -62,7 +68,10 @@ class EthereumEventAccessActor()(
     extends ActorWithPathBasedConfig(EthereumEventAccessActor.name) {
 
   def receive: Receive = {
-    case _ =>
+    case req: TransferEvent        =>
+    case req: OrdersCancelledEvent =>
+    case req: CutoffEvent          =>
+    case req: OrderFilledEvent     =>
   }
 
 }

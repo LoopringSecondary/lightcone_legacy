@@ -18,11 +18,7 @@ package org.loopring.lightcone.persistence.services
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.dals.{
-  BlockDalImpl,
-  BlockchainScanRecordDalInit,
-  OrderDalImpl
-}
+import org.loopring.lightcone.persistence.dals.BlockchainScanRecordDalImpl
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
@@ -32,10 +28,15 @@ class BlockchainScanRecordServiceSpec
     extends ServiceSpec[BlockchainScanRecordService] {
   def getService = new BlockchainScanRecordServiceImpl()
 
+  val blockchainScanRecordSeparate =
+    config.getInt("separate.blockchain_scan_record")
+
   def createTables(): Future[Any] =
-    for {
-      _ <- new BlockchainScanRecordDalInit().createTables()
-    } yield Unit
+    Future {
+      (0 until blockchainScanRecordSeparate).foreach { index =>
+        new BlockchainScanRecordDalImpl(index).createTable()
+      }
+    }
 
   private def testSave(
       txHash: String,
@@ -57,11 +58,14 @@ class BlockchainScanRecordServiceSpec
       txTo = txTo
     )
     val data = OrderFilledEvent(owner = "0x111").toByteArray
+
+    OrderFilledEvent.parseFrom(data)
+
     val r = BlockchainRecordData(
       header = Some(header),
       owner = owner,
       recordType = BlockchainRecordData.RecordType.TRANSFER,
-      data = ByteString.copyFrom(data)
+      eventData = ByteString.copyFrom(data)
     )
     service.saveRecord(r)
   }

@@ -19,7 +19,6 @@ package org.loopring.lightcone.persistence
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.typesafe.config.Config
-import org.loopring.lightcone.persistence.base.BaseSeparateDal
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import slick.basic._
@@ -43,6 +42,9 @@ class DatabaseModule @Inject()(
   val orderStatusMonitorService: OrderStatusMonitorService =
     new OrderStatusMonitorServiceImpl()
 
+  val blockchainScanRecordSeparate =
+    config.getInt("separate.blockchain_scan_record")
+
   val tables = Seq(
     new TokenMetadataDalImpl(),
     new OrderDalImpl(),
@@ -55,9 +57,8 @@ class DatabaseModule @Inject()(
     new TokenTransferDalImpl(),
     new SettlementTxDalImpl(),
     new OrderStatusMonitorDalImpl()
-  )
-
-  val separateTables = Seq(
-    new BlockchainScanRecordDalInit()
-  )
+  ) ++
+    (0 until blockchainScanRecordSeparate).map { index =>
+      new BlockchainScanRecordDalImpl(index)
+    }
 }

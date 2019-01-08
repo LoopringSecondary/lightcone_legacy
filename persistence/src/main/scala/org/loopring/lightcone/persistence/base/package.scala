@@ -19,6 +19,7 @@ package org.loopring.lightcone.persistence
 import slick.jdbc.MySQLProfile.api._
 import scala.reflect.ClassTag
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.proto.TransferEvent
 
 package object base {
 
@@ -33,4 +34,14 @@ package object base {
     ): BaseColumnType[T] =
     MappedColumnType
       .base[T, Int](enum => enum.value, int => enumCompanion.fromValue(int))
+
+  def transferEventColumnType(): BaseColumnType[Option[TransferEvent]] =
+    MappedColumnType
+      .base[Option[TransferEvent], Array[Byte]](
+        {
+          case Some(e) => e.toByteArray
+          case None => TransferEvent().toByteArray
+        },
+        bytes => Some(TransferEvent.parseFrom(bytes))
+      )
 }
