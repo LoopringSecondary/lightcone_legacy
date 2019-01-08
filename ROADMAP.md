@@ -22,22 +22,22 @@
   - [ ] [yadong/hongyu] **以太坊事件的解析和通知（但不包括分叉的处理）**
   - [ ] [hongyu] **以太坊事件处理（包括actor里面的处理，和数据库的一些更改操作）**
   - [ ] [hongyu] TokenMetadataRefresher启动以后应该自己询问费用代币的burn rate
+  - [ ] [yangli] JSONRPC支持HTTPS, Akka Cluster支持SSL/TLS
 
 
 - **v0.3** (目标1月末）主要功能包括
   - [ ] [wangdong] 支持websocket
   - [ ] [yadong/hongyu] 以太坊分叉事件的处理
-  - [ ] [yadong] JSONRPC支持HTTPS
-  - [ ] [yadong] Akka Cluster支持SSL/TLS
   - [ ] [yongfeng] 所有和市场，包括orderbook相关的配置，应该都放到数据库里面，从配置文件里面移除。所有Token的信息也应该存入数据库。
+  - [ ] [hongyu] 动态增加token和市场，动态停止某个市场（配置放入数据库）
+  - [ ] [yangli] 集群监控
+  - [ ] [yadong] k线存储
 
 
 - **v0.4** 主要功能包括
   - [ ] 更好的整集群集成测试
   - [ ] [yongfeng]redis缓存
   - [ ] 清理每个人的TODO
-  - [ ] 集群监控
-  - [ ] 动态增加token和市场，动态停止某个市场（配置放入数据库）
   - [ ] kongliang/yadong: 整理API文档，中文即可。包括json schema和json rpc。
-  - [ ] 特殊数据可用来存储k线
+
 
