@@ -27,7 +27,7 @@ import scala.concurrent.Await
 
 trait OrderbookManagerSupport {
   my: CommonSpec =>
-
+  implicit val deployActorsIgnoringRoles: Boolean
   actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
   actors.add(

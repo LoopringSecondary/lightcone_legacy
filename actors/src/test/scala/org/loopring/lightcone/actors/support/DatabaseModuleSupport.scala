@@ -59,7 +59,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
           maxThreads = 4
         }""")
     )
-
+  implicit val deployActorsIgnoringRoles = true
   implicit val tokenMetadataDal = new TokenMetadataDalImpl
   implicit val orderDal = new OrderDalImpl
   implicit val tradeDal = new TradeDalImpl

@@ -43,13 +43,16 @@ object RingSettlementManagerActor {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dbModule: DatabaseModule
+      dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new RingSettlementManagerActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       RingSettlementManagerActor.name
     )

@@ -22,6 +22,7 @@ import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.google.inject._
+import com.google.inject.name.Named
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
@@ -44,6 +45,7 @@ import slick.jdbc.JdbcProfile
 
 class ClusterDeployer @Inject()(
     implicit
+    @Named("ignore-cluster-roles") deployActorsIgnoringRoles: Boolean,
     actors: Lookup[ActorRef],
     actorMaterializer: ActorMaterializer,
     brb: EthereumBatchCallRequestBuilder,

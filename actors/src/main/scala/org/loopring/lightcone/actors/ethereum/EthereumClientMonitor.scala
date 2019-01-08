@@ -46,13 +46,15 @@ object EthereumClientMonitor {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       ma: ActorMaterializer,
-      ece: ExecutionContextExecutor
+      ece: ExecutionContextExecutor,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new EthereumClientMonitor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       name = EthereumClientMonitor.name
     )

@@ -42,16 +42,18 @@ object MultiAccountManagerActor extends ShardedByAddress {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dustEvaluator: DustOrderEvaluator,
-      dbModule: DatabaseModule
+      dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
 
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new MultiAccountManagerActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }

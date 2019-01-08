@@ -110,13 +110,15 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
 
     // --- bind primative types ---------------------
-
     bind[Timeout].toInstance(Timeout(2.second))
 
     bind[Double]
       .annotatedWithName("dust-order-threshold")
       .toInstance(config.getDouble("relay.dust-order-threshold"))
 
+    bind[Boolean]
+      .annotatedWithName("deploy-actors-ignoring-roles")
+      .toInstance(false)
   }
 
   private def bindDBForNames(

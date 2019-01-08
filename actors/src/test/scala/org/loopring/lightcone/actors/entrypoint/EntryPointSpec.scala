@@ -36,6 +36,8 @@ class EntryPointSpec
     with JsonrpcSupport
     with HttpSupport {
 
+  implicit val deployActorsIgnoringRoles = true
+
   "send an orderbook request" must {
     "receive a response without value" in {
       val getOrderBook = GetOrderbook.Req(

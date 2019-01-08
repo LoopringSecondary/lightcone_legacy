@@ -50,7 +50,8 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      tokenManager: TokenManager
+      tokenManager: TokenManager,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -70,10 +71,11 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
       }
       .toMap
 
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderbookManagerActor(markets)),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }

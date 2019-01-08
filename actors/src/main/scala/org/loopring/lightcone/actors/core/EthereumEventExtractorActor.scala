@@ -56,12 +56,15 @@ object EthereumEventExtractorActor {
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
-      actors: Lookup[ActorRef]
+      actors: Lookup[ActorRef],
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new EthereumEventExtractorActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       extractEntityId = extractEntityId,
       extractShardId = extractShardId
     )

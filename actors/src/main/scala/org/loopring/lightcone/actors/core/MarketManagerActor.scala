@@ -55,7 +55,8 @@ object MarketManagerActor extends ShardedByMarket {
       tve: TokenValueEvaluator,
       rie: RingIncomeEvaluator,
       dustOrderEvaluator: DustOrderEvaluator,
-      tokenManager: TokenManager
+      tokenManager: TokenManager,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val markets = config
@@ -72,10 +73,12 @@ object MarketManagerActor extends ShardedByMarket {
       }
       .toMap
 
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new MarketManagerActor(markets)),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
