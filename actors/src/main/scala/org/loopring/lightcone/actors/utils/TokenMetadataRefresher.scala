@@ -24,15 +24,13 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.core.EthereumQueryActor
 import org.loopring.lightcone.persistence._
-import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Matchable
-import org.loopring.lightcone.proto.ErrorCode._
-import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
+
 import scala.concurrent._
+import scala.util.{Failure, Success}
 
 object TokenMetadataRefresher {
   val name = "token_metadata_refresher"
@@ -66,10 +64,13 @@ class TokenMetadataRefresher(
     val dbModule: DatabaseModule,
     val tokenManager: TokenManager)
     extends Actor
+    with Stash
     with ActorLogging
     with RepeatedJobActor {
 
   private val tokenMetadataService = dbModule.tokenMetadataService
+
+  val ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
   val repeatedJobs = Seq(
     Job(
@@ -82,9 +83,38 @@ class TokenMetadataRefresher(
     )
   )
 
-  override def preStart(): Unit = {}
+  override def preStart(): Unit = {
+    val initialFuture = for {
+      tokensFromDb <- tokenMetadataService.getTokens(true)
+      tokens <- Future.sequence(tokensFromDb.map { token =>
+        for {
+          burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
+            token = token.address
+          )).mapTo[GetBurnRate.Res]
+        } yield token.copy(burnRate = burnRateRes.burnRate)
+      })
+    } yield tokenManager.reset(tokens)
 
-  override def receive: Receive = super.receive orElse LoggingReceive {
+    initialFuture onComplete {
+      case Success(validNonce) =>
+        self ! Notify("initialized")
+      case Failure(e) =>
+        log.error(s"Start token_metadata_refresher failed:${e.getMessage}")
+        context.stop(self)
+    }
+  }
+
+  override def receive: Receive = initialReceive
+
+  def initialReceive: Receive = {
+    case Notify("initialized", _) =>
+      unstashAll()
+      context.become(ready)
+    case _ =>
+      stash()
+  }
+
+  def ready: Receive = super.receive orElse LoggingReceive {
     case req: TokenBurnRateChangedEvent =>
       log.debug(s"received TokenBurnRateChangedEvent ${req}")
       tokenMetadataService.updateBurnRate(req.token, req.burnRate)
