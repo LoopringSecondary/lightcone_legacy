@@ -184,6 +184,7 @@ class EthereumQueryActor(
           byteArray2ByteString(Numeric.toBigInt(res).toByteArray)
         }
         GetAllowance.Res(owner, (tokens zip allowances).toMap)
+    }
 
     case req @ GetFilledAmount.Req(orderIds, _) =>
       val tag = if (req.tag.isEmpty) LATEST else req.tag
