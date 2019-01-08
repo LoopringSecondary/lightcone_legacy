@@ -17,7 +17,7 @@
 package org.loopring.lightcone.persistence.services
 
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.dals.SettlementTxDalImpl
+import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
@@ -25,13 +25,14 @@ import scala.concurrent.duration._
 
 class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
 
-  implicit val dal = new SettlementTxDalImpl()
-  def getService = new SettlementTxServiceImpl()
+  implicit var dal: SettlementTxDal = _
 
-  def createTables(): Future[Any] =
-    for {
-      r <- new SettlementTxDalImpl().createTable()
-    } yield r
+  def getService = {
+    dal = new SettlementTxDalImpl()
+    new SettlementTxServiceImpl()
+  }
+
+  def createTables(): Future[Any] = dal.createTable()
 
   private def testSave(
       txHash: String,

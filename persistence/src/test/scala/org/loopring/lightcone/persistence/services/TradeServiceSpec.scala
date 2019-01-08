@@ -17,22 +17,24 @@
 package org.loopring.lightcone.persistence.services
 
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.dals.TradeDalImpl
+import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.concurrent.duration._
 
 class TradeServiceSpec extends ServiceSpec[TradeService] {
-  implicit val dal = new TradeDalImpl()
-  def getService = new TradeServiceImpl()
+
+  implicit var dal: TradeDal = _
+
+  def getService = {
+    dal = new TradeDalImpl()
+    new TradeServiceImpl()
+  }
   val tokenS = "0xaaaaaa1"
   val tokenB = "0xbbbbbb1"
 
-  def createTables(): Future[Any] =
-    for {
-      r <- dal.createTable()
-    } yield r
+  def createTables(): Future[Any] = dal.createTable()
 
   private def testSave(
       txHash: String,
