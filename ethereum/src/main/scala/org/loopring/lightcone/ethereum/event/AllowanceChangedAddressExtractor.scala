@@ -18,16 +18,12 @@ package org.loopring.lightcone.ethereum.event
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{
-  AllowanceUpdatedAddress,
-  Transaction,
-  TransactionReceipt
-}
+import org.loopring.lightcone.proto.{AddressAllowanceUpdated, Transaction, TransactionReceipt}
 
 import scala.collection.mutable.ListBuffer
 
-class AllowanceUpdatedAddressExtractor(config: Config)
-    extends DataExtractor[AllowanceUpdatedAddress] {
+class AllowanceChangedAddressExtractor(config: Config)
+    extends DataExtractor[AddressAllowanceUpdated] {
 
   val delegateAddress =
     Address(config.getString("loopring_protocol.delegate-address"))
@@ -39,20 +35,20 @@ class AllowanceUpdatedAddressExtractor(config: Config)
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[AllowanceUpdatedAddress] = {
-    val allowanceAddresses = ListBuffer.empty[AllowanceUpdatedAddress]
+    ): Seq[AddressAllowanceUpdated] = {
+    val allowanceAddresses = ListBuffer.empty[AddressAllowanceUpdated]
     receipt.logs.foreach { log =>
       wethAbi.unpackEvent(log.data, log.topics.toArray) match {
         case Some(transfer: TransferEvent.Result) =>
           if (Address(receipt.to).equals(protocolAddress))
             allowanceAddresses.append(
-              AllowanceUpdatedAddress(transfer.from, log.address)
+              AddressAllowanceUpdated(transfer.from, log.address)
             )
 
         case Some(approval: ApprovalEvent.Result) =>
           if (Address(approval.spender).equals(delegateAddress))
             allowanceAddresses.append(
-              AllowanceUpdatedAddress(approval.owner, log.address)
+              AddressAllowanceUpdated(approval.owner, log.address)
             )
 
         case _ =>
@@ -63,7 +59,7 @@ class AllowanceUpdatedAddressExtractor(config: Config)
         case Some(param: ApproveFunction.Parms) =>
           if (Address(param.spender).equals(delegateAddress))
             allowanceAddresses.append(
-              AllowanceUpdatedAddress(tx.from, tx.to)
+              AddressAllowanceUpdated(tx.from, tx.to)
             )
         case _ =>
       }
