@@ -16,9 +16,9 @@
 
 package org.loopring.lightcone.actors.support
 
-import akka.actor.{ ActorRef, ActorSystem }
+import akka.actor.{ActorRef, ActorSystem}
 import akka.stream.ActorMaterializer
-import akka.testkit.{ ImplicitSender, TestKit }
+import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
@@ -35,18 +35,20 @@ import scala.math.BigInt
 
 //启动system、以及必须的元素，包括system，TokenMetaData，等
 abstract class CommonSpec(configStr: String = "")
-  extends TestKit(
-    ActorSystem(
-      "Lightcone",
-      ConfigFactory
-        .parseString(configStr)
-        .withFallback(ConfigFactory.load())))
-  with ImplicitSender
-  with Matchers
-  with WordSpecLike
-  with BeforeAndAfterEach
-  with BeforeAndAfterAll
-  with Logging {
+    extends TestKit(
+      ActorSystem(
+        "Lightcone",
+        ConfigFactory
+          .parseString(configStr)
+          .withFallback(ConfigFactory.load())
+      )
+    )
+    with ImplicitSender
+    with Matchers
+    with WordSpecLike
+    with BeforeAndAfterEach
+    with BeforeAndAfterAll
+    with Logging {
 
   override def afterAll: Unit = {
     super.afterAll()
