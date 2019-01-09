@@ -20,10 +20,12 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
+
 import scala.concurrent._
 import org.slf4s.Logging
 import com.google.inject.Inject
@@ -31,6 +33,11 @@ import com.google.inject.Inject
 trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMeta] {
 
   def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMeta]]
+
+  def updateBurnRate(
+      token: String,
+      burnDate: Double
+    ): Future[ErrorCode]
 }
 
 class TokenMetadataDalImpl @Inject()(
@@ -59,4 +66,20 @@ class TokenMetadataDalImpl @Inject()(
       Future.successful(tokens)
     }
   }
+
+  def updateBurnRate(
+      token: String,
+      burnRate: Double
+    ): Future[ErrorCode] =
+    for {
+      result <- db.run(
+        query
+          .filter(_.address === token)
+          .map(c => c.burnRate)
+          .update(burnRate)
+      )
+    } yield {
+      if (result >= 1) ERR_NONE
+      else ERR_PERSISTENCE_UPDATE_FAILED
+    }
 }

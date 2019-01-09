@@ -74,10 +74,12 @@ class OrderPersistenceActor(
   def receive: Receive = {
     case req: CancelOrder.Req =>
       (req.status match {
-        case OrderStatus.STATUS_CANCELLED_BY_USER =>
+        case OrderStatus.STATUS_SOFT_CANCELLED_BY_USER |
+            OrderStatus.STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR =>
           for {
-            cancelRes <- dbModule.orderService.markOrderSoftCancelled(
-              Seq(req.id)
+            cancelRes <- dbModule.orderService.cancelOrders(
+              Seq(req.id),
+              req.status
             )
           } yield {
             cancelRes.headOption match {
@@ -102,7 +104,6 @@ class OrderPersistenceActor(
 
     case SubmitOrder.Req(Some(raworder)) =>
       (for {
-        //todo：ERR_ORDER_ALREADY_EXIST PERS_ERR_DUPLICATE_INSERT 区别
         saveRes <- dbModule.orderService.saveOrder(raworder)
       } yield {
         saveRes match {

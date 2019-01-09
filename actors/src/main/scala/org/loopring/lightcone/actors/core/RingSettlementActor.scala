@@ -196,6 +196,8 @@ class RingSettlementActor(
   }
 
   //未被提交的交易需要使用新的gas price重新提交
+  //todo:现在逻辑是重新提交该环路，可能增加失败概率，但是长时不打块判断失败，
+  //todo：如果发送失败事件重新使用nonce，会大大增加代码复杂
   def resubmitTx(): Future[Unit] =
     for {
       gasPriceRes <- (gasPriceActor ? GetGasPrice.Req())

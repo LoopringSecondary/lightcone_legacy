@@ -41,6 +41,10 @@ trait AccountManager {
       outstandingAmountS: BigInt
     ): Boolean
 
+  def submitOrAdjustThenGetUpdatedOrders(
+      order: Matchable
+    ): (Boolean, Map[String, Matchable])
+
 }
 
 object AccountManager {

@@ -110,6 +110,11 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       skip: CursorPaging
     ): Future[Seq[RawOrder]]
 
+  def getCutoffAffectedOrders(
+      retrieveCondition: RetrieveOrdersToCancel,
+      take: Int
+    ): Future[Seq[RawOrder]]
+
   def getOrdersToActivate(
       latestProcessTime: Int,
       processTime: Int,

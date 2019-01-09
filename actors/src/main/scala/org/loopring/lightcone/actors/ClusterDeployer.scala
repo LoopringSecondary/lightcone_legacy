@@ -145,6 +145,8 @@ class ClusterDeployer @Inject()(
         RingSettlementManagerActor.start
       )
 
+      actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
+
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors.add(EntryPointActor.name, EntryPointActor.start)
 

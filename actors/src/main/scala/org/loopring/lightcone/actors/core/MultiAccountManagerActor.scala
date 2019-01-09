@@ -75,6 +75,8 @@ object MultiAccountManagerActor extends ShardedByAddress {
     case req: GetBalanceAndAllowances.Req             => req.address
     case req: AddressBalanceUpdated                   => req.address
     case req: AddressAllowanceUpdated                 => req.address
+    case req: CutoffEvent                             => req.owner //todo:暂不支持broker
+    case req: OrderFilledEvent                        => req.owner
   }
 }
 
