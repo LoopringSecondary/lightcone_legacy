@@ -28,13 +28,15 @@ trait RingBatchGenerator {
   def generateAndSignRingBatch(
       orders: Seq[Seq[RawOrder]]
     )(
-      implicit context: RingBatchContext
+      implicit
+      context: RingBatchContext
     ): RingBatch
 
   def toSubmitableParamStr(
       xRingBatch: RingBatch
     )(
-      implicit context: RingBatchContext
+      implicit
+      context: RingBatchContext
     ): String
 }
 
@@ -47,7 +49,8 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   def generateAndSignRingBatch(
       orders: Seq[Seq[RawOrder]]
     )(
-      implicit context: RingBatchContext
+      implicit
+      context: RingBatchContext
     ): RingBatch = {
     val orderValidator = RawOrderValidatorImpl
 
@@ -90,7 +93,8 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
   def toSubmitableParamStr(
       xRingBatch: RingBatch
     )(
-      implicit context: RingBatchContext
+      implicit
+      context: RingBatchContext
     ): String = {
     val tokenSpendables = xRingBatch.orders.map { order =>
       Seq(

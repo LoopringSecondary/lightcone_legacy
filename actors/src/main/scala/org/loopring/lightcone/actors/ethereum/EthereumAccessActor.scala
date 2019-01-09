@@ -36,7 +36,8 @@ object EthereumAccessActor {
 
   def startSingleton(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -67,7 +68,8 @@ object EthereumAccessActor {
 // TODO(yadong): 是否可以替代ActorSelection
 class EthereumAccessActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

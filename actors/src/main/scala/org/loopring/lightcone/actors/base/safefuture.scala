@@ -32,7 +32,8 @@ object safefuture {
   implicit class SafeFutureSupport[T](
       f: Future[T]
     )(
-      implicit ec: ExecutionContext) {
+      implicit
+      ec: ExecutionContext) {
 
     // Map a future to a certain type. All other types will throw ErrorException.
     def mapAs[S](implicit tag: ClassTag[S]): Future[S] = f map {
@@ -53,7 +54,8 @@ object safefuture {
         recipient: ActorRef,
         orginSender: ActorRef
       )(
-        implicit sender: ActorRef
+        implicit
+        sender: ActorRef
       ): Future[T] = {
       f onComplete {
         case Success(r) => recipient.tell(r, orginSender)
@@ -72,7 +74,8 @@ object safefuture {
         recipient: ActorRef,
         orginSenderOpt: Option[ActorRef] = None
       )(
-        implicit sender: ActorRef = Actor.noSender
+        implicit
+        sender: ActorRef = Actor.noSender
       ): Future[T] = {
       f onComplete {
         case Success(r) => recipient ! r

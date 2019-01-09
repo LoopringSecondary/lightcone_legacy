@@ -45,7 +45,8 @@ import scala.util._
 // Owner: Yadong & Kongliang
 class RingSettlementActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

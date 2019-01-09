@@ -37,7 +37,8 @@ trait OrderStatusMonitorDal
 
 class OrderStatusMonitorDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends OrderStatusMonitorDal {
   val query = TableQuery[OrderStatusMonitorTable]

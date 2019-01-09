@@ -29,7 +29,8 @@ trait TokenTransferDal
 
 class TokenTransferDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends TokenTransferDal {
   val query = TableQuery[TokenTransferTable]

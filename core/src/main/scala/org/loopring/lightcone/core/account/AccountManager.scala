@@ -51,6 +51,7 @@ object AccountManager {
 
   def default(
     )(
-      implicit orderPool: AccountOrderPool with UpdatedOrdersTracing
+      implicit
+      orderPool: AccountOrderPool with UpdatedOrdersTracing
     ): AccountManager = new AccountManagerImpl()
 }

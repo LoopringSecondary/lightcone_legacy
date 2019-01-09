@@ -31,7 +31,8 @@ trait RingIncomeEstimator {
 
 final class RingIncomeEstimatorImpl(
   )(
-    implicit tm: TokenManager,
+    implicit
+    tm: TokenManager,
     tve: TokenValueEstimator)
     extends RingIncomeEstimator {
 

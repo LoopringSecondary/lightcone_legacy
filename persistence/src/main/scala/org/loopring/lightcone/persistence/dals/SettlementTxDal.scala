@@ -41,7 +41,8 @@ trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
 
 class SettlementTxDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends SettlementTxDal {
   private[this] val logger = Logger(this.getClass)

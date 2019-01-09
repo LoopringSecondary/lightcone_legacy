@@ -41,7 +41,8 @@ object EthereumClientMonitor {
   def startSingleton(
       connectionPools: Seq[ActorRef] = Nil
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -74,7 +75,8 @@ class EthereumClientMonitor(
     val name: String = EthereumClientMonitor.name,
     connectionPools: Seq[ActorRef] = Nil
   )(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     val config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,

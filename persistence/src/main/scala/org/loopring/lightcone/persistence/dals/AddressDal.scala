@@ -28,7 +28,8 @@ trait AddressDal extends BaseDalImpl[AddressTable, AddressData] {}
 
 class AddressDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends AddressDal {
   val query = TableQuery[AddressTable]

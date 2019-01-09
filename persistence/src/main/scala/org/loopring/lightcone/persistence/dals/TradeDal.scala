@@ -39,7 +39,8 @@ trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
 
 class TradeDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends TradeDal {
   val query = TableQuery[TradeTable]

@@ -42,7 +42,8 @@ trait BlockDal extends BaseDalImpl[BlockTable, BlockData] {
 
 class BlockDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends BlockDal {
   val query = TableQuery[BlockTable]

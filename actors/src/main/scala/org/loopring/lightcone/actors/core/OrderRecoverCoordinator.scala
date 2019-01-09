@@ -39,7 +39,8 @@ object OrderRecoverCoordinator extends {
 
   def startSingleton(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -69,7 +70,8 @@ object OrderRecoverCoordinator extends {
 
 class OrderRecoverCoordinator(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
