@@ -42,8 +42,11 @@ class DatabaseModule @Inject()(
   val orderStatusMonitorService: OrderStatusMonitorService =
     new OrderStatusMonitorServiceImpl()
 
-  val blockchainScanRecordSeparate =
-    config.getInt("separate.blockchain_scan_record")
+  val transactionRecordService: TransactionRecordService =
+    new TransactionRecordServiceImpl()
+
+  val transactionRecordSeparate =
+    config.getInt("separate.transaction_record")
 
   val tables = Seq(
     new TokenMetadataDalImpl(),
@@ -58,7 +61,7 @@ class DatabaseModule @Inject()(
     new SettlementTxDalImpl(),
     new OrderStatusMonitorDalImpl()
   ) ++
-    (0 until blockchainScanRecordSeparate).map { index =>
-      new BlockchainScanRecordDalImpl(index)
+    (0 until transactionRecordSeparate).map { index =>
+      new TransactionRecordDalImpl(index)
     }
 }

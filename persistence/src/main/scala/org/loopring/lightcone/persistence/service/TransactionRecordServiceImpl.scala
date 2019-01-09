@@ -20,45 +20,46 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.typesafe.config.Config
 import org.loopring.lightcone.persistence.dals.{
-  BlockchainScanRecordDal,
-  BlockchainScanRecordDalImpl
+  TransactionRecordDal,
+  TransactionRecordDalImpl
 }
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
-import scala.collection.mutable.Map
 
-class BlockchainScanRecordServiceImpl @Inject()(
+class TransactionRecordServiceImpl @Inject()(
     implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val config: Config,
     @Named("db-execution-context") val ec: ExecutionContext)
-    extends BlockchainScanRecordService {
+    extends TransactionRecordService {
 
-  val dals: Map[Int, BlockchainScanRecordDal] = Map()
+  val dals: scala.collection.mutable.Map[Int, TransactionRecordDal] =
+    scala.collection.mutable.Map()
 
-  private def getDal(owner: String): BlockchainScanRecordDal = {
+  private def getDal(owner: String): TransactionRecordDal = {
     val separateIndex =
       Math.abs(
-        owner.hashCode % config.getInt("separate.blockchain_scan_record")
+        owner.substring(22).hashCode % config.getInt(
+          "separate.transaction_record"
+        )
       )
     if (!dals.contains(separateIndex)) {
-      dals += (separateIndex -> new BlockchainScanRecordDalImpl(separateIndex))
+      dals += (separateIndex -> new TransactionRecordDalImpl(separateIndex))
     }
     dals(separateIndex)
   }
 
   def saveRecord(
-      data: BlockchainRecordData
-    ): Future[PersistBlockchainRecord.Res] = {
-    getDal(data.owner).saveRecord(data)
-  }
+      record: TransactionRecord
+    ): Future[PersistTransactionRecord.Res] =
+    getDal(record.owner).saveRecord(record)
 
   def getRecordsByOwner(
       owner: String,
+      queryType: Option[GetTransactions.QueryType],
       sort: SortingType,
       paging: CursorPaging
-    ): Future[Seq[BlockchainRecordData]] = {
-    getDal(owner).getRecordsByOwner(owner, sort, paging)
-  }
+    ): Future[Seq[TransactionRecord]] =
+    getDal(owner).getRecordsByOwner(owner, queryType, sort, paging)
 }

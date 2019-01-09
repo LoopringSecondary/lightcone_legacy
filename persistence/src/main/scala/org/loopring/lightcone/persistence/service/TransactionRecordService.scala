@@ -19,15 +19,16 @@ package org.loopring.lightcone.persistence.service
 import org.loopring.lightcone.proto._
 import scala.concurrent.Future
 
-trait BlockchainScanRecordService {
+trait TransactionRecordService {
 
   def saveRecord(
-      data: BlockchainRecordData
-    ): Future[PersistBlockchainRecord.Res]
+      record: TransactionRecord
+    ): Future[PersistTransactionRecord.Res]
 
   def getRecordsByOwner(
       owner: String,
+      queryType: Option[GetTransactions.QueryType],
       sort: SortingType,
       paging: CursorPaging
-    ): Future[Seq[BlockchainRecordData]]
+    ): Future[Seq[TransactionRecord]]
 }

@@ -68,7 +68,6 @@ trait ServiceSpec[S]
     service = getService()
     val result = createTables()
     Await.result(result, 10.second)
-    // create tables不等索引建立完就会返回，执行查询会报错，sleep一下
     Thread.sleep(5000)
   }
 

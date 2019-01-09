@@ -167,78 +167,54 @@ message UpdateTxInBlock {
     }
 }
 
-message BlockchainRecordData {
+message TransactionRecord {
     enum RecordType {
         TRANSFER        = 0;
         ERC20_TRANSFER  = 1;
         ORDER_FILLED    = 2;
         ORDER_CANCELLED = 3;
     }
-    EventHeader header      = 1;
-    string      owner       = 2;
-    RecordType  record_type = 3;
-    int64       created_at  = 4;
-    bytes       event_data  = 5;
-
-//    oneof event_data {
-//        TransferEvent        transfer = 101;
-//        OrdersCancelledEvent orderCancelled = 102;
-//        CutoffEvent          cutoff = 103;
-//        OrderFilledEvent     filled = 104;
-//    }
+    message EventData {
+        oneof event {
+            TransferEvent        transfer = 101;
+            OrdersCancelledEvent orderCancelled = 102;
+            CutoffEvent          cutoff = 103;
+            OrderFilledEvent     filled = 104;
+        }
+    }
+    EventHeader header       = 1;
+    string      owner        = 2;
+    RecordType  record_type  = 3;
+    string      trading_pair = 4;
+    string      market       = 5; // LRC-WETH
+    string      shard_entity = 6;
+    int64       sequence_id  = 7;
+    EventData   event_data   = 8;
+    int64       created_at   = 9;
 }
 
-message TransferData {
-    EventHeader   header      = 1;
-    string        owner       = 2;
-    int64         created_at  = 3;
-    TransferEvent serialized  = 4;
-}
-
-message ERC20TransferData {
-    EventHeader   header      = 1;
-    string        owner       = 2;
-    string        from        = 3;
-    string        to          = 4;
-    string        token       = 5;
-    int64         created_at  = 6;
-    TransferEvent serialized  = 7;
-}
-
-message OrderCancelledData {
-    EventHeader          header      = 1;
-    string               broker      = 2;
-    string               owner       = 3;
-    string               order_hash  = 4;
-    string               market      = 5;
-    string               market_hash = 6;
-    int64                created_at  = 7;
-    OrdersCancelledEvent serialized  = 8;
-}
-
-//market,tokens,tokenb,side,ringIndex,ringHash
-message OrderFilledData {
-    EventHeader       header      = 1;
-    string            owner       = 2;
-    string            order_hash  = 3;
-    string            market      = 4;
-    string            market_hash = 5;
-    string            token_b     = 6;
-    string            token_s     = 7;
-    int32             is_buy      = 8; // 1:buy 0:sell for market value
-    int64             ring_index  = 9;
-    string            ring_hash   = 10;
-    int64             created_at  = 11;
-    OrderFilledEvent  serialized  = 12;
-}
-
-message PersistBlockchainRecord {
+message PersistTransactionRecord {
     message Req {
-        BlockchainRecordData data    = 1;
+        TransactionRecord record    = 1;
     }
     message Res {
-        BlockchainRecordData data          = 1;
-        bool                 already_exist = 2;
-        ErrorCode            error         = 3;
+        bool       already_exist = 1;
+        ErrorCode  error         = 2;
+    }
+}
+
+message GetTransactions {
+    message QueryType {
+        TransactionRecord.RecordType value  = 1;
+    }
+    message Req {
+        string        owner       = 1;
+        QueryType     query_type  = 2;
+        SortingType   sort        = 3;
+        CursorPaging  paging      = 4;
+    }
+
+    message Res {
+        repeated TransactionRecord records = 1;
     }
 }

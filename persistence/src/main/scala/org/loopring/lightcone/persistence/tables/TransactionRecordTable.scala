@@ -21,15 +21,16 @@ import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
-class Erc20TransferTable(tableNum: Int)(tag: Tag)
-    extends BaseTable[ERC20TransferData](
+class TransactionRecordTable(tableNum: Int)(tag: Tag)
+    extends BaseTable[TransactionRecord](
       tag,
-      s"ERC20_TRANSFER_$tableNum"
+      s"TRANSACTION_RECORD_$tableNum"
     ) {
   implicit val txStatusColumnType = enumColumnType(TxStatus)
   implicit val recordTypeColumnType = enumColumnType(
-    BlockchainRecordData.RecordType
+    TransactionRecord.RecordType
   )
+  implicit val dataColumnType = eventDataColumnType()
 
   def id = txHash
   def txHash = columnHash("tx_hash")
@@ -46,20 +47,21 @@ class Erc20TransferTable(tableNum: Int)(tag: Tag)
   def gasLimit = column[ByteString]("gas_limit")
   def gasUsed = column[ByteString]("gas_used")
   def owner = columnAddress("owner")
-  def from = columnAddress("from")
-  def to = columnAddress("to")
-  def token = columnAddress("token")
-  def serialized = column[ByteString]("serialized")
+  def recordType = column[TransactionRecord.RecordType]("record_type")
+  def tradingPair = column[String]("trading_pair")
+  def market = column[String]("market")
+  def eventData = column[Option[TransactionRecord.EventData]]("event_data")
   def createdAt = column[Long]("created_at")
+  def shardEntity = column[String]("shard_entity")
+  def sequenceId = column[Long]("sequence_id")
 
   // indexes
   def idx_owner = index("idx_owner", (owner), unique = false)
   def idx_owner_tx = index("idx_owner_tx", (owner, txHash), unique = true)
+  def idx_record_type = index("idx_record_type", (recordType), unique = false)
 
-  def idx_block_number =
-    index("idx_block_number", (blockNumber), unique = false)
-  def idx_tx_index = index("idx_tx_index", (txIndex), unique = false)
-  def idx_log_index = index("idx_log_index", (logIndex), unique = false)
+  def idx_sequence_id =
+    index("idx_sequence_id", (sequenceId), unique = false)
 
   def headerProjection =
     (
@@ -87,10 +89,12 @@ class Erc20TransferTable(tableNum: Int)(tag: Tag)
     (
       headerProjection,
       owner,
-      from,
-      to,
-      token,
-      createdAt,
-      serialized
-    ) <> ((ERC20TransferData.apply _).tupled, ERC20TransferData.unapply)
+      recordType,
+      tradingPair,
+      market,
+      shardEntity,
+      sequenceId,
+      eventData,
+      createdAt
+    ) <> ((TransactionRecord.apply _).tupled, TransactionRecord.unapply)
 }

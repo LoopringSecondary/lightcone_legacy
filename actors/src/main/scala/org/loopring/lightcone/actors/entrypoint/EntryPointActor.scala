@@ -84,6 +84,9 @@ class EntryPointActor(
     case _: GetOrdersForUser.Req | _: GetTrades.Req =>
       Some(DatabaseQueryMessageValidator.name)
 
+    case _: GetTransactions.Req =>
+      Some(EthereumEventAccessActor.name)
+
     case _ => None
   }
 

@@ -16,25 +16,24 @@
 
 package org.loopring.lightcone.persistence.services
 
-import com.google.protobuf.ByteString
-import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.dals.BlockchainScanRecordDalImpl
+import org.loopring.lightcone.persistence.dals.TransactionRecordDalImpl
 import org.loopring.lightcone.persistence.service._
+import org.loopring.lightcone.proto.TransactionRecord.RecordType
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-class BlockchainScanRecordServiceSpec
-    extends ServiceSpec[BlockchainScanRecordService] {
-  def getService = new BlockchainScanRecordServiceImpl()
+class TransactionRecordServiceSpec
+    extends ServiceSpec[TransactionRecordService] {
+  def getService = new TransactionRecordServiceImpl()
 
   val blockchainScanRecordSeparate =
-    config.getInt("separate.blockchain_scan_record")
+    config.getInt("separate.transaction_record")
 
   def createTables(): Future[Any] =
     Future {
       (0 until blockchainScanRecordSeparate).foreach { index =>
-        new BlockchainScanRecordDalImpl(index).createTable()
+        new TransactionRecordDalImpl(index).createTable()
       }
     }
 
@@ -47,7 +46,7 @@ class BlockchainScanRecordServiceSpec
       owner: String,
       txFrom: String,
       txTo: String
-    ): Future[PersistBlockchainRecord.Res] = {
+    ): Future[PersistTransactionRecord.Res] = {
     val header = EventHeader(
       txHash = txHash,
       txStatus = txStatus,
@@ -57,21 +56,21 @@ class BlockchainScanRecordServiceSpec
       txFrom = txFrom,
       txTo = txTo
     )
-    val data = OrderFilledEvent(owner = "0x111").toByteArray
-
-    OrderFilledEvent.parseFrom(data)
-
-    val r = BlockchainRecordData(
+    val data = OrderFilledEvent(owner = "0x111")
+    val r = TransactionRecord(
       header = Some(header),
       owner = owner,
-      recordType = BlockchainRecordData.RecordType.TRANSFER,
-      eventData = ByteString.copyFrom(data)
+      recordType = TransactionRecord.RecordType.TRANSFER,
+      eventData = Some(
+        TransactionRecord
+          .EventData(TransactionRecord.EventData.Event.Filled(data))
+      )
     )
     service.saveRecord(r)
   }
 
   "saveRecord" must "save a record successfully" in {
-    val owner = "0x-submitrecord-01"
+    val owner = "0xBe4C1cb10C2Be76798c4186ADbbC34356b358b52"
     val result = for {
       saved <- testSave(
         "0x-hash1",
@@ -85,11 +84,12 @@ class BlockchainScanRecordServiceSpec
       )
       query <- service.getRecordsByOwner(
         owner,
+        Some(RecordType.TRANSFER),
         SortingType.ASC,
         CursorPaging(size = 10)
       )
     } yield query
-    val res = Await.result(result.mapTo[Seq[BlockchainRecordData]], 5.second)
+    val res = Await.result(result.mapTo[Seq[TransactionRecord]], 5.second)
     res should not be empty
   }
 }

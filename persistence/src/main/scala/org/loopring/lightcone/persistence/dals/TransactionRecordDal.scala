@@ -25,74 +25,82 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
-import org.loopring.lightcone.persistence.tables.BlockchainScanRecordTable
+import org.loopring.lightcone.persistence.tables.TransactionRecordTable
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.util.{Failure, Success}
 
-trait BlockchainScanRecordDal
-    extends BaseDalImpl[BlockchainScanRecordTable, BlockchainRecordData] {
+trait TransactionRecordDal
+    extends BaseDalImpl[TransactionRecordTable, TransactionRecord] {
 
   def saveRecord(
-      record: BlockchainRecordData
-    ): Future[PersistBlockchainRecord.Res]
+      record: TransactionRecord
+    ): Future[PersistTransactionRecord.Res]
 
   def getRecordsByOwner(
       owner: String,
+      queryType: Option[GetTransactions.QueryType],
       sort: SortingType,
       paging: CursorPaging
-    ): Future[Seq[BlockchainRecordData]]
+    ): Future[Seq[TransactionRecord]]
 }
 
-class BlockchainScanRecordDalImpl(
+class TransactionRecordDalImpl(
     tableIndex: Int
   )(
     implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val config: Config,
     val ec: ExecutionContext)
-    extends BlockchainScanRecordDal {
-  val query = TableQuery(new BlockchainScanRecordTable(tableIndex)(_))
+    extends TransactionRecordDal {
+  val query = TableQuery(new TransactionRecordTable(tableIndex)(_))
   def getRowHash(row: RawOrder) = row.hash
   val timeProvider = new SystemTimeProvider()
+  implicit val txStatusColumnType = enumColumnType(TxStatus)
+  implicit val recordTypeColumnType = enumColumnType(
+    TransactionRecord.RecordType
+  )
+  implicit val dataColumnType = eventDataColumnType()
   private[this] val logger = Logger(this.getClass)
 
   def saveRecord(
-      record: BlockchainRecordData
-    ): Future[PersistBlockchainRecord.Res] = {
+      record: TransactionRecord
+    ): Future[PersistTransactionRecord.Res] = {
     db.run((query += record).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) => {
-        PersistBlockchainRecord.Res(
+        PersistTransactionRecord.Res(
           error = ERR_PERSISTENCE_DUPLICATE_INSERT,
-          data = None,
           alreadyExist = true
         )
       }
       case Failure(ex) => {
         logger.error(s"error : ${ex.getMessage}")
-        PersistBlockchainRecord
-          .Res(error = ERR_PERSISTENCE_INTERNAL, data = None)
+        PersistTransactionRecord
+          .Res(error = ERR_PERSISTENCE_INTERNAL)
       }
       case Success(x) =>
-        PersistBlockchainRecord.Res(error = ERR_NONE, data = Some(record))
+        PersistTransactionRecord.Res(error = ERR_NONE)
     }
   }
 
   def getRecordsByOwner(
       owner: String,
+      queryType: Option[GetTransactions.QueryType],
       sort: SortingType,
       paging: CursorPaging
-    ): Future[Seq[BlockchainRecordData]] = {
+    ): Future[Seq[TransactionRecord]] = {
     var filters = query
       .filter(_.owner === owner)
+    if (queryType.nonEmpty) {
+      filters = filters.filter(_.recordType === queryType.get.value)
+    }
+    if (paging.cursor > 0) {
+      filters = filters.filter(_.sequenceId > paging.cursor)
+    }
     filters = if (sort == SortingType.ASC) {
       filters.sortBy(c => (c.blockNumber.asc, c.txIndex.asc, c.logIndex.asc))
     } else {
       filters.sortBy(c => (c.blockNumber.desc, c.txIndex.desc, c.logIndex.desc))
     }
-    //TODO 改成blockNumber  txIndex logIndex
-//    if (paging.cursor > 0) {
-//      filters = filters.filter(_.sequenceId > paging.cursor)
-//    }
     if (paging.size > 0) {
       filters = filters.take(paging.size)
     }
