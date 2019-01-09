@@ -24,7 +24,7 @@ import org.loopring.lightcone.lib._
 import org.scalatest.BeforeAndAfterAll
 import org.junit.runner.Description
 import org.testcontainers.containers.wait.strategy.Wait
-import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
+import com.dimafeng.testcontainers.{ GenericContainer, MySQLContainer }
 import com.typesafe.config.ConfigFactory
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
@@ -32,61 +32,6 @@ import scala.concurrent._
 
 trait DatabaseModuleSupport extends BeforeAndAfterAll {
   my: CommonSpec =>
-
-  implicit private val suiteDescription =
-    Description.createSuiteDescription(this.getClass)
-
-  val mySqlContainer = new MySQLContainer(
-    mysqlImageVersion = Some("mysql:5.7.18"),
-    databaseName = Some("lightcone_test"),
-    mysqlUsername = Some("test"),
-    mysqlPassword = Some("test")
-  )
-
-  mySqlContainer.starting()
-
-  // TODO(hongyu): move ETH container to EthereumSupport.scala?
-  val ethContainer = GenericContainer(
-    "trufflesuite/ganache-cli:latest",
-    exposedPorts = Seq(8545),
-    waitStrategy = Wait.forListeningPort()
-  )
-  ethContainer.starting()
-
-  Thread.sleep(10000)
-
-  implicit val dbConfig: DatabaseConfig[JdbcProfile] =
-    DatabaseConfig.forConfig[JdbcProfile](
-      "",
-      ConfigFactory.parseString(s"""
-        profile = "slick.jdbc.MySQLProfile$$"
-        db {
-          url="${mySqlContainer.jdbcUrl}?useSSL=false"
-          user="${mySqlContainer.username}"
-          password="${mySqlContainer.password}"
-          driver="${mySqlContainer.driverClassName}"
-          maxThreads = 4
-        }""")
-    )
-
-  val ethConfigStr =
-    s"""ethereum_client_monitor {
-       |    pool-size = 1
-       |    check-interval-seconds = 10
-       |    healthy-threshold = 0.2
-       |    nodes = [
-       |        {
-       |        host = "${ethContainer.containerIpAddress}"
-       |        port = ${ethContainer
-         .mappedPort(8545)}
-       |        }
-       |    ]
-       |}""".stripMargin
-
-  println(
-    s""" ### host = "${ethContainer.containerIpAddress}" port = ${ethContainer
-      .mappedPort(8545)} """
-  )
 
   implicit val tokenMetadataDal = new TokenMetadataDalImpl
   implicit val orderDal = new OrderDalImpl
@@ -117,8 +62,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     orderStatusMonitorService,
     tokenMetadataService,
     tradeService,
-    settlementTxService
-  )
+    settlementTxService)
 
   dbModule.dropTables()
   dbModule.createTables()
