@@ -18,9 +18,7 @@ package org.loopring.lightcone.ethereum.event.processor
 
 import akka.actor.ActorRef
 
-trait Processor[R] {
-
-  val recipient: ActorRef
+class Processor[R](val recipient: ActorRef) {
 
   def process(data: R) = recipient ! data
 }

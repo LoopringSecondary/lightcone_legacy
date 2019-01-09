@@ -19,10 +19,12 @@ package org.loopring.lightcone.ethereum.event.processor
 import org.loopring.lightcone.ethereum.event.extractor.DataExtractor
 import org.loopring.lightcone.proto.BlockJob
 
+import scala.collection.mutable.ListBuffer
+
 trait DataExtractorWrapped[R] {
 
   val extractor: DataExtractor[R]
-  val processors: Map[String, Processor[R]] = Map.empty
+  val processor: Processor[R]
   var events = Seq.empty[R]
 
   def extractData(blockJob: BlockJob): Seq[R] = {
@@ -33,12 +35,9 @@ trait DataExtractorWrapped[R] {
   }
 
   def process() = {
-    processors.foreach { processor =>
-      {
-        events.foreach(processor._2.process)
-      }
-    }
+        events.foreach(processor.process)
   }
+
 
   def getData: Seq[R] = events
 

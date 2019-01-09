@@ -20,7 +20,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.event.extractor.AllowanceChangedAddressExtractor
 import org.loopring.lightcone.proto.AddressAllowanceUpdated
 
-class AllowanceChangedAddressExtractorWrapped(config: Config)
-    extends DataExtractorWrapped[AddressAllowanceUpdated] {
+class AllowanceChangedAddressExtractorWrapped(val processor: Processor[AddressAllowanceUpdated],config: Config)
+    extends DataExtractorWrapped[AddressAllowanceUpdated]() {
   val extractor = new AllowanceChangedAddressExtractor(config)
 }

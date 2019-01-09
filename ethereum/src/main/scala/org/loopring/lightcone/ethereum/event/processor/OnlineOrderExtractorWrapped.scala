@@ -16,12 +16,10 @@
 
 package org.loopring.lightcone.ethereum.event.processor
 
-import org.loopring.lightcone.ethereum.event.extractor.{
-  DataExtractor,
-  OnlineOrderExtractor
-}
+import org.loopring.lightcone.ethereum.event.extractor.{DataExtractor, OnlineOrderExtractor}
 import org.loopring.lightcone.proto.RawOrder
 
 class OnlineOrderExtractorWrapped() extends DataExtractorWrapped[RawOrder] {
   val extractor: DataExtractor[RawOrder] = new OnlineOrderExtractor()
+
 }

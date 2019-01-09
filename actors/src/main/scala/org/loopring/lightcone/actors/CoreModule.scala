@@ -99,6 +99,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       new RingIncomeEstimatorImpl()
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
+
     Cluster(system).registerOnMemberUp {
       //-----------deploy local actors-----------
       //todo:需要测试badMessage，可能有死循环
@@ -212,6 +213,8 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         with RpcBinding
         server.start()
       }
+
+
     }
   }
 }
