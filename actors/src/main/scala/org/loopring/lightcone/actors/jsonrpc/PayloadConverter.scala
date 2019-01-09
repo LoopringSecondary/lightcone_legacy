@@ -23,6 +23,7 @@ import org.loopring.lightcone.proto.ErrorCode
 
 import scala.reflect.runtime.universe.{typeOf, TypeTag}
 
+// Owner: Daniel
 class PayloadConverter[T <: Proto[T]: TypeTag, S <: Proto[S]: TypeTag](
     implicit tc: ProtoC[T],
     ts: ProtoC[S],

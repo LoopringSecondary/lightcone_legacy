@@ -39,7 +39,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-// main owner: 于红雨
+// Owner: Hongyu
 class AccountManagerActor(
     address: String
   )(

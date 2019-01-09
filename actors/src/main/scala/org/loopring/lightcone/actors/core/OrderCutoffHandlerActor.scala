@@ -28,6 +28,7 @@ import org.loopring.lightcone.proto.ErrorCode._
 import scala.concurrent.{ExecutionContext, Future}
 import org.loopring.lightcone.persistence.DatabaseModule
 
+// Owner: Yongfeng
 object OrderCutoffHandlerActor {
   val name = "order_cutoff_handler"
 
@@ -126,10 +127,8 @@ class OrderCutoffHandlerActor(
     }
     for {
       notified <- Future.sequence(cancelOrderReqs.map(mama ? _))
-      updated <- dbModule.orderService.updateOrdersStatus(
-        orders.map(_.hash),
-        status
-      )
+      updated <- dbModule.orderService
+        .updateOrdersStatus(orders.map(_.hash), status)
       _ = if (updated != ERR_NONE)
         throw ErrorException(ERR_INTERNAL_UNKNOWN, "Update order status failed")
     } yield Unit

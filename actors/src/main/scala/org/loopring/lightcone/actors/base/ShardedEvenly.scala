@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors.base
 import akka.cluster.sharding._
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 
+// Owner: Daniel
 trait ShardedEvenly extends Sharded {
   protected var entitiesPerShard: Int = 1
 

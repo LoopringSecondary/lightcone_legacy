@@ -20,6 +20,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
+// Owner: Yongfeng
 object DatabaseQueryMessageValidator {
   val name = "database_query_validator"
 }

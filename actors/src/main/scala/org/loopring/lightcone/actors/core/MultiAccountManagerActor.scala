@@ -30,6 +30,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
+// Owner: Hongyu
 object MultiAccountManagerActor extends ShardedByAddress {
   val name = "multi_account_manager"
 

@@ -35,7 +35,7 @@ import org.slf4s.Logging
 import scala.collection.JavaConverters._
 import scala.concurrent._
 
-// main owner: 于红雨
+// Owner: Hongyu
 object OrderbookManagerActor extends ShardedByMarket with Logging {
   val name = "orderbook_manager"
 

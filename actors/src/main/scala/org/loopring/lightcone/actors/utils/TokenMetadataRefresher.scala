@@ -32,6 +32,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
+// Owner: Hongyu
 object TokenMetadataRefresher {
   val name = "token_metadata_refresher"
 

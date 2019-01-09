@@ -33,6 +33,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 import scala.util._
 
+// Owner: Yadong
 class HttpConnector(
     node: EthereumProxySettings.Node
   )(

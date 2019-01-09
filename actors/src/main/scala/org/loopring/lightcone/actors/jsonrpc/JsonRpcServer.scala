@@ -25,6 +25,7 @@ import akka.util.Timeout
 import scala.io.StdIn
 import scala.concurrent.ExecutionContext
 
+// Owner: Daniel
 abstract class JsonRpcServer(
     val config: Config,
     val requestHandler: ActorRef

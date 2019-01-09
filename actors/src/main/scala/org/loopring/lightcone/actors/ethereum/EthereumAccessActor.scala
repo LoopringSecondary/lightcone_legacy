@@ -30,6 +30,7 @@ import akka.pattern._
 import scala.concurrent._
 import scala.util.{Failure, Random, Success}
 
+// Owner: Yadong
 object EthereumAccessActor {
   val name = "ethereum_access"
 

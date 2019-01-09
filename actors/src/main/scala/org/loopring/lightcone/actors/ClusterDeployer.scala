@@ -23,6 +23,7 @@ import net.codingwell.scalaguice.InjectorExtensions._
 import akka.actor.ActorRef
 import java.io.File
 
+// Owner: Daniel
 object ClusterDeployer extends Object with Logging {
 
   def deploy(configPathOpt: Option[String] = None) = {

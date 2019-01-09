@@ -36,6 +36,7 @@ import org.loopring.lightcone.actors.ethereum._
 
 import scala.concurrent.{ExecutionContext, Future}
 
+// Owner: Yadong
 object EthereumQueryActor extends ShardedEvenly {
   val name = "ethereum_query"
 
@@ -192,27 +193,21 @@ class EthereumQueryActor(
       }
 
     case req: GetOrderCancellation.Req =>
-      callEthereum(
-        sender,
-        rb.buildRequest(req, tradeHistoryAddress, LATEST)
-      ) { result =>
-        GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
+      callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress, LATEST)) {
+        result =>
+          GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
       }
 
     case req: GetCutoff.Req =>
-      callEthereum(
-        sender,
-        rb.buildRequest(req, tradeHistoryAddress, LATEST)
-      ) { result =>
-        GetCutoff.Res(Numeric.toBigInt(result).toByteArray)
+      callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress, LATEST)) {
+        result =>
+          GetCutoff.Res(Numeric.toBigInt(result).toByteArray)
       }
 
     case req: GetBurnRate.Req =>
-      callEthereum(
-        sender,
-        rb.buildRequest(req, burnRateTableAddress, LATEST)
-      ) { result =>
-        GetBurnRate.Res(Numeric.toBigInt(result).doubleValue() / 1000)
+      callEthereum(sender, rb.buildRequest(req, burnRateTableAddress, LATEST)) {
+        result =>
+          GetBurnRate.Res(Numeric.toBigInt(result).doubleValue() / 1000)
       }
   }
 

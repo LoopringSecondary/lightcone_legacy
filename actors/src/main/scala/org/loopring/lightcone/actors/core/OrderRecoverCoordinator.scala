@@ -33,6 +33,7 @@ import scala.concurrent.duration._
 import akka.serialization._
 import scalapb.json4s.JsonFormat
 
+// Owner: Daniel
 object OrderRecoverCoordinator extends {
   val name = "order_recover_coordinator"
 
