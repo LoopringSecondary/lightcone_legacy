@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.ethereum.event.extractor
 
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+import org.loopring.lightcone.ethereum.event._
 
 trait DataExtractor[R] {
 

@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.ethereum.event.extractor
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{TransferEvent => PTransferEvent, _}
 import org.web3j.utils.Numeric
+import org.loopring.lightcone.ethereum.event._
 
 import scala.collection.mutable.ListBuffer
 
