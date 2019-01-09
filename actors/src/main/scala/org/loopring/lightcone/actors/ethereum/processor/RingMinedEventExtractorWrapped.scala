@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.processor
+package org.loopring.lightcone.actors.ethereum.processor
 
-import org.loopring.lightcone.ethereum.event.extractor.{DataExtractor, OnlineOrderExtractor}
-import org.loopring.lightcone.proto.RawOrder
+import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.proto.RingMinedEvent
 
-class OnlineOrderExtractorWrapped() extends DataExtractorWrapped[RawOrder] {
-  val extractor: DataExtractor[RawOrder] = new OnlineOrderExtractor()
+class RingMinedEventExtractorWrapped()
+    extends DataExtractorWrapped[RingMinedEvent] {
+  val extractor: DataExtractor[RingMinedEvent] = new RingMinedEventExtractor()
 
+  override def process() = {
+    processors.foreach(processor => {
+      events.flatMap(_.fills).foreach(fill => processor.receiver ! fill)
+    })
+  }
 }

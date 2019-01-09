@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.processor
+package org.loopring.lightcone.actors.ethereum.processor
 
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.ethereum.event.extractor.BalanceChangedAddressExtractor
-import org.loopring.lightcone.proto.{AddressBalanceUpdated, BlockJob}
+import org.loopring.lightcone.ethereum.event.BalanceChangedAddressExtractor
+import org.loopring.lightcone.proto._
 
 class BalanceChangedAddressExtractorWrapped()
     extends DataExtractorWrapped[AddressBalanceUpdated] {
@@ -34,4 +34,6 @@ class BalanceChangedAddressExtractorWrapped()
     }
     events
   }
+
+  override def process(): Unit = {}
 }

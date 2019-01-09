@@ -265,14 +265,18 @@ message EventHeader {
     bytes tx_value = 8;
     int32 tx_index = 9;
     int32 log_index = 10;
+    int64 gas_price = 11;
+    int32 gas_limit = 12;
+    int32 gas_used = 13;
 }
 
 message TransferEvent {
     EventHeader header = 1;
-    string from = 2;
-    string to = 3;
-    string token = 4;
-    bytes amount = 5;
+    string owner = 2;
+    string from = 3;
+    string to = 4;
+    string token = 5;
+    bytes amount = 6;
 }
 
 //LOOPRING Cutoff

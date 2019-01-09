@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.processor
+package org.loopring.lightcone.actors.ethereum.processor
 
-import org.loopring.lightcone.ethereum.event.extractor.{
-  DataExtractor,
-  OrdersCancelledEventExtractor
-}
-import org.loopring.lightcone.proto.OrdersCancelledEvent
+import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.proto.RawOrder
 
-class OrdersCancelledEventExtractorWrapped()
-    extends DataExtractorWrapped[OrdersCancelledEvent] {
+//TODO(yadong) 暂时不处理线上订单
+class OnlineOrderExtractorWrapped() extends DataExtractorWrapped[RawOrder] {
+  val extractor: DataExtractor[RawOrder] = new OnlineOrderExtractor()
 
-  val extractor: DataExtractor[OrdersCancelledEvent] =
-    new OrdersCancelledEventExtractor()
 }

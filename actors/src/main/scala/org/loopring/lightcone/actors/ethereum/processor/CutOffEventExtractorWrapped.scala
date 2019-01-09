@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.processor
+package org.loopring.lightcone.actors.ethereum.processor
 
-import org.loopring.lightcone.ethereum.event.extractor.{
-  DataExtractor,
-  RingMinedEventExtractor
-}
-import org.loopring.lightcone.proto.RingMinedEvent
+import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.proto._
 
-class RingMinedEventExtractorWrapped()
-    extends DataExtractorWrapped[RingMinedEvent] {
-  val extractor: DataExtractor[RingMinedEvent] = new RingMinedEventExtractor()
+class CutOffEventExtractorWrapped() extends DataExtractorWrapped[CutoffEvent] {
+  val extractor: DataExtractor[CutoffEvent] = new CutOffEventExtractor()
 }

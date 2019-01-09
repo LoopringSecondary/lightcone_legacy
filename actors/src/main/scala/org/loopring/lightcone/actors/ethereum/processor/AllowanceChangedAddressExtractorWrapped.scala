@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.processor
+package org.loopring.lightcone.actors.ethereum.processor
 
-import akka.actor.ActorRef
+import com.typesafe.config.Config
+import org.loopring.lightcone.ethereum.event.AllowanceChangedAddressExtractor
+import org.loopring.lightcone.proto.AddressAllowanceUpdated
 
-class Processor[R](val recipient: ActorRef) {
-
-  def process(data: R) = recipient ! data
+class AllowanceChangedAddressExtractorWrapped(
+    val processor: Processor[AddressAllowanceUpdated]
+  )(
+    implicit config: Config)
+    extends DataExtractorWrapped[AddressAllowanceUpdated]() {
+  val extractor = new AllowanceChangedAddressExtractor(config)
 }

@@ -28,6 +28,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.actors.ethereum.processor._
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.actors.validator._
@@ -36,8 +37,11 @@ import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.actors.validator._
+import org.loopring.lightcone.ethereum.event.TransferEventExtractor
+import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
@@ -99,6 +103,36 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       new RingIncomeEstimatorImpl()
     bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
 
+    //TODO(yadong) 等待永丰的分支合并
+    val transferExtractor = new TransferEventExtractorWrapped()
+    transferExtractor.addProcessor(new Processor[TransferEvent]("", actors))
+    val tokenBurnRateExtractor = new TokenBurnRateEventExtractorWrapped()
+    tokenBurnRateExtractor.addProcessor(
+      new Processor[TokenBurnRateChangedEvent](
+        TokenMetadataRefresher.name,
+        actors
+      )
+    )
+    val ringMinedExtractor = new RingMinedEventExtractorWrapped()
+    ringMinedExtractor.addProcessor(
+      new Processor[RingMinedEvent](MultiAccountManagerActor.name, actors),
+      //TODO(yadong) 等待永丰分支合并
+      new Processor[RingMinedEvent]("", actors)
+    )
+    // TODO(yadong) 等待永丰分支合并
+    val ordersCancelledExtractor = new OrdersCancelledEventExtractorWrapped()
+    ordersCancelledExtractor.addProcessor(
+      new Processor[OrdersCancelledEvent]("", actors)
+    )
+    val cutOffExtractor = new CutOffEventExtractorWrapped()
+    cutOffExtractor.addProcessor(new Processor[CutoffEvent]("", actors))
+    val extractors = Seq(
+      transferExtractor,
+      tokenBurnRateExtractor,
+      ringMinedExtractor,
+      ordersCancelledExtractor,
+      cutOffExtractor
+    )
 
     Cluster(system).registerOnMemberUp {
       //-----------deploy local actors-----------
@@ -213,7 +247,6 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         with RpcBinding
         server.start()
       }
-
 
     }
   }

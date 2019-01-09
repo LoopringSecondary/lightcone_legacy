@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.processor
+package org.loopring.lightcone.actors.ethereum.processor
 
-import org.loopring.lightcone.ethereum.event.extractor.DataExtractor
+import org.loopring.lightcone.ethereum.event.DataExtractor
 import org.loopring.lightcone.proto.BlockJob
 
 import scala.collection.mutable.ListBuffer
@@ -24,7 +24,7 @@ import scala.collection.mutable.ListBuffer
 trait DataExtractorWrapped[R] {
 
   val extractor: DataExtractor[R]
-  val processor: Processor[R]
+  val processors: ListBuffer[Processor[R]] = ListBuffer.empty
   var events = Seq.empty[R]
 
   def extractData(blockJob: BlockJob): Seq[R] = {
@@ -35,9 +35,12 @@ trait DataExtractorWrapped[R] {
   }
 
   def process() = {
-        events.foreach(processor.process)
+    processors.foreach(processor => {
+      events.foreach(processor.process)
+    })
   }
 
+  def addProcessor(p: Processor[R]*) = processors.append(p: _*)
 
   def getData: Seq[R] = events
 

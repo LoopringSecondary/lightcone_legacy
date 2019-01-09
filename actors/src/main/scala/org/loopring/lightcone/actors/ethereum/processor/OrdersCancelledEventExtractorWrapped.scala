@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.processor
+package org.loopring.lightcone.actors.ethereum.processor
 
-import com.typesafe.config.Config
-import org.loopring.lightcone.ethereum.event.extractor.TransferEventExtractor
-import org.loopring.lightcone.proto.TransferEvent
+import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.proto.OrdersCancelledEvent
 
-class TransferEventExtractorWrapped(config: Config)
-    extends DataExtractorWrapped[TransferEvent] {
+class OrdersCancelledEventExtractorWrapped()
+    extends DataExtractorWrapped[OrdersCancelledEvent] {
 
-  val extractor = new TransferEventExtractor(config)
-
+  val extractor: DataExtractor[OrdersCancelledEvent] =
+    new OrdersCancelledEventExtractor()
 }

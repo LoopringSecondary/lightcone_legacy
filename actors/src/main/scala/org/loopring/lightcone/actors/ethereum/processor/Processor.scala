@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.processor
+package org.loopring.lightcone.actors.ethereum.processor
 
-import com.typesafe.config.Config
-import org.loopring.lightcone.ethereum.event.extractor.TokenBurnRateEventExtractor
-import org.loopring.lightcone.proto.TokenBurnRateChangedEvent
+import akka.actor.ActorRef
+import org.loopring.lightcone.actors.base.Lookup
 
-class TokenBurnRateEventExtractorWrapped(config: Config)
-    extends DataExtractorWrapped[TokenBurnRateChangedEvent] {
-  val extractor = new TokenBurnRateEventExtractor(config)
+class Processor[R](
+    val recipient: String,
+    actors: Lookup[ActorRef]) {
+
+  def receiver = actors.get(recipient)
+  def process(data: Any) = receiver ! data
 }

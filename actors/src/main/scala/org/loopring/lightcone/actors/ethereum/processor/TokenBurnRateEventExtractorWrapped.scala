@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.processor
+package org.loopring.lightcone.actors.ethereum.processor
 
-import org.loopring.lightcone.ethereum.event.extractor.{
-  CutOffEventExtractor,
-  DataExtractor
-}
-import org.loopring.lightcone.proto._
+import com.typesafe.config.Config
+import org.loopring.lightcone.ethereum.event.TokenBurnRateEventExtractor
+import org.loopring.lightcone.proto.TokenBurnRateChangedEvent
 
-class CutOffEventExtractorWrapped() extends DataExtractorWrapped[CutoffEvent] {
-  val extractor: DataExtractor[CutoffEvent] = new CutOffEventExtractor()
+class TokenBurnRateEventExtractorWrapped()(implicit val config: Config)
+    extends DataExtractorWrapped[TokenBurnRateChangedEvent] {
+  val extractor = new TokenBurnRateEventExtractor(config)
 }

@@ -14,13 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.processor
+package org.loopring.lightcone.actors.ethereum.processor
 
 import com.typesafe.config.Config
-import org.loopring.lightcone.ethereum.event.extractor.AllowanceChangedAddressExtractor
-import org.loopring.lightcone.proto.AddressAllowanceUpdated
+import org.loopring.lightcone.ethereum.event.TransferEventExtractor
+import org.loopring.lightcone.proto.TransferEvent
 
-class AllowanceChangedAddressExtractorWrapped(val processor: Processor[AddressAllowanceUpdated],config: Config)
-    extends DataExtractorWrapped[AddressAllowanceUpdated]() {
-  val extractor = new AllowanceChangedAddressExtractor(config)
+class TransferEventExtractorWrapped()(implicit val config: Config)
+    extends DataExtractorWrapped[TransferEvent] {
+
+  val extractor = new TransferEventExtractor(config)
+
+  override def process() = {
+    processors.foreach(processor => {
+      events.foreach(event => {
+        processor.process(event.withOwner(event.from))
+        processor.process(event.withOwner(event.to))
+      })
+    })
+  }
 }
