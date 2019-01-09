@@ -43,8 +43,7 @@ import scala.util.{Failure, Success}
 class AccountManagerActor(
     address: String
   )(
-    implicit
-    val config: Config,
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

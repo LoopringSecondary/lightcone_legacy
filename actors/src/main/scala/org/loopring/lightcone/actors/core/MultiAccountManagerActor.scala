@@ -34,8 +34,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
   val name = "multi_account_manager"
 
   def start(
-      implicit
-      system: ActorSystem,
+      implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -81,8 +80,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
 }
 
 class MultiAccountManagerActor(
-    implicit
-    val config: Config,
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

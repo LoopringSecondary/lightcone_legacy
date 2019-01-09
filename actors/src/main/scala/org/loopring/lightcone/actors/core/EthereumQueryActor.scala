@@ -40,8 +40,7 @@ object EthereumQueryActor extends ShardedEvenly {
   val name = "ethereum_query"
 
   def start(
-      implicit
-      system: ActorSystem,
+      implicit system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -67,8 +66,7 @@ object EthereumQueryActor extends ShardedEvenly {
 }
 
 class EthereumQueryActor(
-    implicit
-    val config: Config,
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -194,27 +192,21 @@ class EthereumQueryActor(
       }
 
     case req: GetOrderCancellation.Req =>
-      callEthereum(
-        sender,
-        rb.buildRequest(req, tradeHistoryAddress, LATEST)
-      ) { result =>
-        GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
+      callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress, LATEST)) {
+        result =>
+          GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
       }
 
     case req: GetCutoff.Req =>
-      callEthereum(
-        sender,
-        rb.buildRequest(req, tradeHistoryAddress, LATEST)
-      ) { result =>
-        GetCutoff.Res(Numeric.toBigInt(result).toByteArray)
+      callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress, LATEST)) {
+        result =>
+          GetCutoff.Res(Numeric.toBigInt(result).toByteArray)
       }
 
     case req: GetBurnRate.Req =>
-      callEthereum(
-        sender,
-        rb.buildRequest(req, burnRateTableAddress, LATEST)
-      ) { result =>
-        GetBurnRate.Res(Numeric.toBigInt(result).doubleValue() / 1000)
+      callEthereum(sender, rb.buildRequest(req, burnRateTableAddress, LATEST)) {
+        result =>
+          GetBurnRate.Res(Numeric.toBigInt(result).doubleValue() / 1000)
       }
   }
 
