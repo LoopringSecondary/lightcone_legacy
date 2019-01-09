@@ -29,7 +29,7 @@ import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 import org.loopring.lightcone.persistence.DatabaseModule
 import scala.concurrent._
 
-// main owner: 杜永丰
+// Owner: Yongfeng
 object OrderRecoverActor extends ShardedEvenly {
   val name = "order_recover"
 
@@ -45,7 +45,8 @@ object OrderRecoverActor extends ShardedEvenly {
 
   def startShardRegion(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -65,7 +66,8 @@ object OrderRecoverActor extends ShardedEvenly {
 
 class OrderRecoverActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,

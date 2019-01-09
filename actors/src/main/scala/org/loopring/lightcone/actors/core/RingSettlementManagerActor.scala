@@ -32,12 +32,14 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.util.Random
 
+// Owner: Hongyu
 object RingSettlementManagerActor {
   val name = "ring_settlement"
 
   def startSingleton(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -66,7 +68,8 @@ object RingSettlementManagerActor {
 
 class RingSettlementManagerActor(
   )(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     val config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,

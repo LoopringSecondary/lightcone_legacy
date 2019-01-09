@@ -40,13 +40,14 @@ import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-// main owner: 于红雨
+// Owenr: Hongyu
 object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
   def startShardRegion(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -93,7 +94,8 @@ object MarketManagerActor extends ShardedByMarket {
 class MarketManagerActor(
     markets: Map[String, MarketId]
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.jsonrpc
 
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 
+// Owner: Daniel
 trait JsonSupport extends Json4sSupport {
   implicit val serialization = org.json4s.native.Serialization
   implicit val parse = org.json4s.native.JsonParser

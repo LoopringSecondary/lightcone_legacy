@@ -30,13 +30,14 @@ import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
-// main owner: 于红雨
+// Owner: Yongfeng
 object OrderPersistenceActor extends ShardedEvenly {
   val name = "order_handler"
 
   def startShardRegion(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -60,7 +61,8 @@ object OrderPersistenceActor extends ShardedEvenly {
 
 class OrderPersistenceActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -75,10 +77,8 @@ class OrderPersistenceActor(
         case OrderStatus.STATUS_SOFT_CANCELLED_BY_USER |
             OrderStatus.STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR =>
           for {
-            cancelRes <- dbModule.orderService.cancelOrders(
-              Seq(req.id),
-              req.status
-            )
+            cancelRes <- dbModule.orderService
+              .cancelOrders(Seq(req.id), req.status)
           } yield {
             cancelRes.headOption match {
               case Some(res) =>
@@ -106,10 +106,7 @@ class OrderPersistenceActor(
       } yield {
         saveRes match {
           case Right(errCode) =>
-            throw ErrorException(
-              errCode,
-              s"failed to submit order: $raworder"
-            )
+            throw ErrorException(errCode, s"failed to submit order: $raworder")
           case Left(resRawOrder) =>
             resRawOrder
         }

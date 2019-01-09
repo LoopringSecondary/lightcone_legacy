@@ -150,7 +150,8 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
 
 class OrderDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends OrderDal {
   val query = TableQuery[OrderTable]

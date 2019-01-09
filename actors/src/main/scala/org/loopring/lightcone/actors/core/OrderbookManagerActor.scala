@@ -35,7 +35,7 @@ import org.slf4s.Logging
 import scala.collection.JavaConverters._
 import scala.concurrent._
 
-// main owner: 于红雨
+// Owner: Hongyu
 object OrderbookManagerActor extends ShardedByMarket with Logging {
   val name = "orderbook_manager"
 
@@ -44,7 +44,8 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
 
   def startShardRegion(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -89,7 +90,8 @@ class OrderbookManagerActor(
     markets: Map[String, MarketId],
     extractEntityId: String => String = OrderbookManagerActor.extractEntityId
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

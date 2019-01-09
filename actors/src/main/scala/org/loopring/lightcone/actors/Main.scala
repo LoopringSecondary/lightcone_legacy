@@ -25,6 +25,7 @@ import net.codingwell.scalaguice.InjectorExtensions._
 import akka.actor._
 import scala.io.StdIn
 
+// Owner: Daniel
 object Main extends App with Logging {
   val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
   val injector = ClusterDeployer.deploy(configPathOpt)

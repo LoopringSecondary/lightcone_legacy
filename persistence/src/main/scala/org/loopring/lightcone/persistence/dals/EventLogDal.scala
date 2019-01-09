@@ -28,7 +28,8 @@ trait EventLogDal extends BaseDalImpl[EventLogTable, EventLogData] {}
 
 class EventLogDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends EventLogDal {
   val query = TableQuery[EventLogTable]

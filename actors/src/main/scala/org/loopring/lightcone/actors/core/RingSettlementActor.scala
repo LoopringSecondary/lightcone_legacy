@@ -42,10 +42,11 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util._
 
-// main owner: 李亚东
+// Owner: Yadong & Kongliang
 class RingSettlementActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

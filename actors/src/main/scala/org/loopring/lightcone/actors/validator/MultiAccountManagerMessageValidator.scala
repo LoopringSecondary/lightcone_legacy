@@ -23,6 +23,8 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 
+// Owner: Hongyu
+
 object MultiAccountManagerMessageValidator {
   val name = "multi_account_manager_validator"
 }
@@ -30,7 +32,8 @@ object MultiAccountManagerMessageValidator {
 // This class can be deleted in the future.
 final class MultiAccountManagerMessageValidator(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     timeProvider: TimeProvider,
     supportedMarkets: SupportedMarkets)
     extends MessageValidator {

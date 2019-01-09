@@ -20,13 +20,15 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
+// Owner: Hongyu
 object OrderbookManagerMessageValidator {
   val name = "orderbook_manager_validator"
 }
 
 final class OrderbookManagerMessageValidator(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     supportedMarkets: SupportedMarkets)
     extends MessageValidator {
 

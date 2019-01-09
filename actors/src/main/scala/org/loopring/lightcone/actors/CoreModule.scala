@@ -41,6 +41,7 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
+// Owner: Daniel
 class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
   override def configure(): Unit = {

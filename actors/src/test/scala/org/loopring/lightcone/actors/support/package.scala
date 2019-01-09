@@ -67,6 +67,9 @@ package object support {
     1000
   )
 
+  // TODO(hongyu): All code below should be moved to other places, such as EthereumSupport.scala
+  // and DatabaseModuleSupport.scala.
+
   implicit private val suiteDescription =
     Description.createSuiteDescription(this.getClass)
 

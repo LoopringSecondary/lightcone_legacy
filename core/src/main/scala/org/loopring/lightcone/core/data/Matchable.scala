@@ -130,7 +130,8 @@ case class Matchable(
 
   private[core] def price(
     )(
-      implicit marketId: MarketId,
+      implicit
+      marketId: MarketId,
       tokenManager: TokenManager
     ) = {
     originalAmount / originalTotal
@@ -138,7 +139,8 @@ case class Matchable(
 
   private[core] def originalAmount(
     )(
-      implicit marketId: MarketId,
+      implicit
+      marketId: MarketId,
       tokenManager: TokenManager
     ) = {
     if (tokenS == marketId.secondary) fromWei(tokenS, original.amountS)
@@ -147,7 +149,8 @@ case class Matchable(
 
   private[core] def originalTotal(
     )(
-      implicit marketId: MarketId,
+      implicit
+      marketId: MarketId,
       tokenManager: TokenManager
     ) = {
     if (tokenS == marketId.secondary) fromWei(tokenB, original.amountB)
@@ -156,7 +159,8 @@ case class Matchable(
 
   private[core] def matchableAmount(
     )(
-      implicit marketId: MarketId,
+      implicit
+      marketId: MarketId,
       tokenManager: TokenManager
     ) = {
     if (tokenS == marketId.secondary) fromWei(tokenS, matchable.amountS)
@@ -165,7 +169,8 @@ case class Matchable(
 
   private[core] def matchableTotal(
     )(
-      implicit marketId: MarketId,
+      implicit
+      marketId: MarketId,
       tokenManager: TokenManager
     ) = {
     if (tokenS == marketId.secondary) fromWei(tokenB, matchable.amountB)
@@ -190,7 +195,8 @@ case class Matchable(
       tokenAddr: String,
       amount: BigInt
     )(
-      implicit tokenManager: TokenManager
+      implicit
+      tokenManager: TokenManager
     ) = {
     if (!tokenManager.hasToken(tokenAddr)) {
 

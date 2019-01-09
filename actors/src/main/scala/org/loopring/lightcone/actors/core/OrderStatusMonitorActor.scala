@@ -30,12 +30,14 @@ import org.loopring.lightcone.proto._
 
 import scala.concurrent._
 
+// Owner: Hongyu
 object OrderStatusMonitorActor {
   val name = "order_status_monitor"
 
   def startSingleton(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -67,7 +69,8 @@ object OrderStatusMonitorActor {
 class OrderStatusMonitorActor(
     val name: String = OrderStatusMonitorActor.name
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

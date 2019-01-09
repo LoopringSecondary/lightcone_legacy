@@ -21,6 +21,7 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
+// Owner: Yadong
 class EthereumBatchCallRequestBuilder {
 
   def buildRequest(

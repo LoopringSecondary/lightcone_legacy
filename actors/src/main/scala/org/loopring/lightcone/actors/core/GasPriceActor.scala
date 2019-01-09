@@ -34,13 +34,14 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
-// main owner: 李亚东
+// Owner: Yadong
 object GasPriceActor extends ShardedEvenly {
   val name = "gas_price"
 
   def startShardRegion(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -63,7 +64,8 @@ object GasPriceActor extends ShardedEvenly {
 
 class GasPriceActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

@@ -26,6 +26,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent._
 
+// Owner: Daniel
 object MessageValidationActor {
 
   def apply(
@@ -33,7 +34,8 @@ object MessageValidationActor {
       destinationName: String,
       name: String
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       ec: ExecutionContext,
       actors: Lookup[ActorRef]
     ): ActorRef =
@@ -47,7 +49,8 @@ class MessageValidationActor(
     destinationName: String,
     validator: MessageValidator
   )(
-    implicit val ec: ExecutionContext,
+    implicit
+    val ec: ExecutionContext,
     val actors: Lookup[ActorRef])
     extends Actor
     with ActorLogging {

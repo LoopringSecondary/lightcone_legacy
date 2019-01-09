@@ -26,7 +26,8 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
 class TokenMetadataServiceImpl @Inject()(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
     extends TokenMetadataService {
   val tokenMetadataDal = new TokenMetadataDalImpl()

@@ -34,13 +34,14 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
-// main owner: 杜永丰
+// Owner: Yongfeng
 object EthereumEventPersistorActor extends ShardedEvenly {
   val name = "ethereum_event_persister"
 
   def startShardRegion(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -63,7 +64,8 @@ object EthereumEventPersistorActor extends ShardedEvenly {
 
 class EthereumEventPersistorActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

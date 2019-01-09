@@ -34,7 +34,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
-// main owner: 李亚东
+// Owner: Yadong
 object EthereumEventExtractorActor {
   val name = "ethereum_event_extractor"
   private val shardId = "singleton"
@@ -50,7 +50,8 @@ object EthereumEventExtractorActor {
 
   def startShardRegion(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -69,7 +70,8 @@ object EthereumEventExtractorActor {
 
 class EthereumEventExtractorActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

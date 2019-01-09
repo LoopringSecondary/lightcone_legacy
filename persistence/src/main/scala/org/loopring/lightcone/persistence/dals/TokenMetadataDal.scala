@@ -39,7 +39,8 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMeta] {
 
 class TokenMetadataDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends TokenMetadataDal
     with Logging {

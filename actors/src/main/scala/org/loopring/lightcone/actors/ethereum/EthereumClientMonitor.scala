@@ -34,13 +34,15 @@ import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.util._
 
+// Owner: Yadong
 object EthereumClientMonitor {
   val name = "ethereum_client_monitor"
 
   def startSingleton(
       connectionPools: Seq[ActorRef] = Nil
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -73,7 +75,8 @@ class EthereumClientMonitor(
     val name: String = EthereumClientMonitor.name,
     connectionPools: Seq[ActorRef] = Nil
   )(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     val config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,

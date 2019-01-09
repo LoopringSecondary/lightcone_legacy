@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcModule
 import org.loopring.lightcone.proto._
 
+// Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
 
   ifReceive[GetOrderbook.Req].thenReply[GetOrderbook.Res]("orderbook")
@@ -30,15 +31,19 @@ trait RpcBinding extends JsonRpcModule {
   // db query
   ifReceive[GetOrdersForUser.Req]
     .thenReply[GetOrdersForUser.Res]("get_orders")
+
   ifReceive[GetTrades.Req]
     .thenReply[GetTrades.Res]("get_trades")
 
   //Ethereum Query
   ifReceive[GetAllowance.Req]
     .thenReply[GetAllowance.Res]("get_allowance")
+
   ifReceive[GetBalance.Req].thenReply[GetBalance.Res]("get_balance")
+
   ifReceive[GetBalanceAndAllowances.Req]
     .thenReply[GetBalanceAndAllowances.Res]("get_balance_and_allowance")
+
   ifReceive[GetFilledAmount.Req]
     .thenReply[GetFilledAmount.Res]("get_filled_amount")
 }

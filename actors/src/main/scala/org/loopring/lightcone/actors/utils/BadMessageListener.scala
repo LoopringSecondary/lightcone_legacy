@@ -24,6 +24,7 @@ import akka.util.Timeout
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.ErrorCode._
 
+// Owner: Daniel
 class BadMessageListener extends Actor with ActorLogging {
 
   def receive = {

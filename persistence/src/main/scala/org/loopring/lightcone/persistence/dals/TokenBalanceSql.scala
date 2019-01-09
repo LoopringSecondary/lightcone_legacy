@@ -35,7 +35,8 @@ trait TokenBalanceDal extends BaseDalImpl[TokenBalanceTable, TokenBalance] {
 
 class TokenBalanceDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends TokenBalanceDal {
   val query = TableQuery[TokenBalanceTable]

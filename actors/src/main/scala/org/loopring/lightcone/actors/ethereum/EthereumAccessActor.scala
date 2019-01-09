@@ -30,12 +30,14 @@ import akka.pattern._
 import scala.concurrent._
 import scala.util.{Failure, Random, Success}
 
+// Owner: Yadong
 object EthereumAccessActor {
   val name = "ethereum_access"
 
   def startSingleton(
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -66,7 +68,8 @@ object EthereumAccessActor {
 // TODO(yadong): 是否可以替代ActorSelection
 class EthereumAccessActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

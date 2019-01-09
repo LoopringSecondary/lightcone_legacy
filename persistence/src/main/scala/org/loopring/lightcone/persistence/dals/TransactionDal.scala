@@ -28,7 +28,8 @@ trait TransactionDal extends BaseDalImpl[TransactionTable, TransactionData] {}
 
 class TransactionDalImpl(
   )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends TransactionDal {
   val query = TableQuery[TransactionTable]
