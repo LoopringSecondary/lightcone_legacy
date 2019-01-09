@@ -32,7 +32,8 @@ object OrderCutoffHandlerActor {
   val name = "order_cutoff_handler"
 
   def start(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -64,7 +65,8 @@ object OrderCutoffHandlerActor {
 
 class OrderCutoffHandlerActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

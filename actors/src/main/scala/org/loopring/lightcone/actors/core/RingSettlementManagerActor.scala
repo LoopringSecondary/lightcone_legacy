@@ -36,7 +36,8 @@ object RingSettlementManagerActor {
   val name = "ring_settlement"
 
   def start(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -67,7 +68,8 @@ object RingSettlementManagerActor {
 }
 
 class RingSettlementManagerActor(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     val config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,

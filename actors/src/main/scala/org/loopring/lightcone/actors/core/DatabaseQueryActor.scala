@@ -34,7 +34,8 @@ object DatabaseQueryActor extends ShardedEvenly {
   val name = "database_query"
 
   def start(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -59,7 +60,8 @@ object DatabaseQueryActor extends ShardedEvenly {
 }
 
 class DatabaseQueryActor(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

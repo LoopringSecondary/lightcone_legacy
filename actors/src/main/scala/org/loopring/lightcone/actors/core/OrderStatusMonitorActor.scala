@@ -34,7 +34,8 @@ object OrderStatusMonitorActor {
   val name = "order_status_monitor"
 
   def start(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -68,7 +69,8 @@ object OrderStatusMonitorActor {
 class OrderStatusMonitorActor(
     val name: String = OrderStatusMonitorActor.name
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

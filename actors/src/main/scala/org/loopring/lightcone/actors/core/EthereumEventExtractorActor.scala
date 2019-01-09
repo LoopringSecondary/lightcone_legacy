@@ -39,7 +39,8 @@ object EthereumEventExtractorActor {
   val name = "ethereum_event_extractor"
 
   def start(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -70,7 +71,8 @@ object EthereumEventExtractorActor {
 }
 
 class EthereumEventExtractorActor(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

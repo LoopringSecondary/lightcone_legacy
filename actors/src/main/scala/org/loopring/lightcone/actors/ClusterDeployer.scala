@@ -43,7 +43,8 @@ import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
 class ClusterDeployer @Inject()(
-    implicit @Named("deploy-actors-ignoring-roles") deployActorsIgnoringRoles: Boolean,
+    implicit
+    @Named("deploy-actors-ignoring-roles") deployActorsIgnoringRoles: Boolean,
     actors: Lookup[ActorRef],
     actorMaterializer: ActorMaterializer,
     brb: EthereumBatchCallRequestBuilder,

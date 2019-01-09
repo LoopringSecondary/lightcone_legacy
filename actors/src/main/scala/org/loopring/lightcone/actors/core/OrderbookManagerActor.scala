@@ -43,7 +43,8 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
     OrderbookManagerActor.name + "-" + getEntityId(marketId)
 
   def start(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -90,7 +91,8 @@ class OrderbookManagerActor(
     markets: Map[String, MarketId],
     extractEntityId: String => String = OrderbookManagerActor.extractEntityId
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

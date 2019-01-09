@@ -39,7 +39,8 @@ object GasPriceActor extends ShardedEvenly {
   val name = "gas_price"
 
   def start(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -64,7 +65,8 @@ object GasPriceActor extends ShardedEvenly {
 }
 
 class GasPriceActor(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
