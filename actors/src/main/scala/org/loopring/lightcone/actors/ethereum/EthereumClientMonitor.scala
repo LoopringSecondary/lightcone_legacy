@@ -38,6 +38,7 @@ object EthereumClientMonitor {
   val name = "ethereum_client_monitor"
 
   def startSingleton(
+      connectionPools: Seq[ActorRef] = Nil
     )(
       implicit system: ActorSystem,
       config: Config,
@@ -50,7 +51,8 @@ object EthereumClientMonitor {
     ): ActorRef = {
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new EthereumClientMonitor()),
+        singletonProps =
+          Props(new EthereumClientMonitor(connectionPools = connectionPools)),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(name)
       ),
@@ -68,7 +70,8 @@ object EthereumClientMonitor {
 }
 
 class EthereumClientMonitor(
-    val name: String = EthereumClientMonitor.name
+    val name: String = EthereumClientMonitor.name,
+    connectionPools: Seq[ActorRef] = Nil
   )(
     implicit system: ActorSystem,
     val config: Config,
@@ -88,7 +91,6 @@ class EthereumClientMonitor(
 
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
-  var connectionPools: Seq[ActorRef] = Nil
   var nodes: Map[String, Long] = Map.empty
 
   val checkIntervalSeconds: Int = selfConfig.getInt("check-interval-seconds")
@@ -101,23 +103,8 @@ class EthereumClientMonitor(
       initialDalayInSeconds = checkIntervalSeconds
     )
   )
-  val poolSize = selfConfig.getInt("pool-size")
-
-  val nodesConfig = selfConfig.getConfigList("nodes").asScala.map { c =>
-    EthereumProxySettings
-      .Node(host = c.getString("host"), port = c.getInt("port"))
-  }
-
-  connectionPools = nodesConfig.zipWithIndex.map {
-    case (node, index) =>
-      val nodeName = s"ethereum_connector_http_$index"
-      val props =
-        Props(new HttpConnector(node))
-      context.actorOf(RoundRobinPool(poolSize).props(props), nodeName)
-  }
 
   override def preStart(): Unit = {
-    println(s"### nodesConfig ${nodesConfig}, ${connectionPools}")
 
     checkNodeHeight onComplete {
       case Success(_) =>
@@ -135,8 +122,7 @@ class EthereumClientMonitor(
     case Notify("initialized", _) =>
       context.become(normalReceive)
       unstashAll()
-    case msg =>
-      println(s"#### initialReceive stash ${msg}")
+    case _ =>
       stash()
   }
 
@@ -149,7 +135,7 @@ class EthereumClientMonitor(
   }
 
   def checkNodeHeight = {
-    log.info("start scheduler check highest block...")
+    log.debug("start scheduler check highest block...")
     val blockNumJsonRpcReq = JsonRpcReqWrapped(
       id = Random.nextInt(100),
       method = "eth_blockNumber",

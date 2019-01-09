@@ -102,7 +102,7 @@ package object support {
     )
 
   val ethConfigStr = s"""ethereum_client_monitor {
-                        |    pool-size = 10
+                        |    pool-size = 1
                         |    check-interval-seconds = 10
                         |    healthy-threshold = 0.2
                         |    nodes = [

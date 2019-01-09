@@ -33,7 +33,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 import scala.util._
 
-private[ethereum] class HttpConnector(
+class HttpConnector(
     node: EthereumProxySettings.Node
   )(
     implicit val mat: ActorMaterializer)
@@ -65,7 +65,7 @@ private[ethereum] class HttpConnector(
     )
   }
 
-  log.info(s"connecting Ethereum at ${node.host}:${node.port}")
+  log.debug(s"connecting Ethereum at ${node.host}:${node.port}")
 
   private val queue
     : SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])] =
@@ -100,12 +100,10 @@ private[ethereum] class HttpConnector(
   }
 
   private def post(entity: RequestEntity): Future[String] = {
-    println(s"#### post(entity ${entity}")
     for {
       httpResp <- request(
         HttpRequest(method = HttpMethods.POST, entity = entity)
       )
-      _ = println(s"#### httpResp  ${httpResp.entity}")
       jsonStr <- httpResp.entity.dataBytes.map(_.utf8String).runReduce(_ + _)
     } yield jsonStr
   }
@@ -167,7 +165,6 @@ private[ethereum] class HttpConnector(
 
   def receive: Receive = {
     case req: JsonRpc.Request =>
-      println(s"### req ${req}")
       post(req.json).map(JsonRpc.Response(_)) sendTo sender
 
     case r: SendRawTransaction.Req =>
