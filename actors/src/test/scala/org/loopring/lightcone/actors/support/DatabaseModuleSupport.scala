@@ -24,7 +24,7 @@ import org.loopring.lightcone.lib._
 import org.scalatest.BeforeAndAfterAll
 import org.junit.runner.Description
 import org.testcontainers.containers.wait.strategy.Wait
-import com.dimafeng.testcontainers.{ GenericContainer, MySQLContainer }
+import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
@@ -32,6 +32,8 @@ import scala.concurrent._
 
 trait DatabaseModuleSupport extends BeforeAndAfterAll {
   my: CommonSpec =>
+
+  implicit val dbConfig = dbConfig1
 
   implicit val tokenMetadataDal = new TokenMetadataDalImpl
   implicit val orderDal = new OrderDalImpl
@@ -62,7 +64,8 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     orderStatusMonitorService,
     tokenMetadataService,
     tradeService,
-    settlementTxService)
+    settlementTxService
+  )
 
   dbModule.dropTables()
   dbModule.createTables()
