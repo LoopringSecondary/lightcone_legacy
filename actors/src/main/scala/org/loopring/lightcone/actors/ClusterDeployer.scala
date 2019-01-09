@@ -124,10 +124,6 @@ class ClusterDeployer @Inject()(
       actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
       actors.add(
-        EthereumEventExtractorActor.name,
-        EthereumEventExtractorActor.start
-      )
-      actors.add(
         EthereumEventPersistorActor.name,
         EthereumEventPersistorActor.start
       )
@@ -135,15 +131,19 @@ class ClusterDeployer @Inject()(
       //-----------deploy singleton actors-----------
       actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start(Nil)) // TODO(hongyu): Nil?
       actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
+      actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
+
+      actors.add(
+        EthereumEventExtractorActor.name,
+        EthereumEventExtractorActor.start
+      )
 
       actors.add(
         RingSettlementManagerActor.name,
         RingSettlementManagerActor.start
       )
-
-      actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
 
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors.add(EntryPointActor.name, EntryPointActor.start)
