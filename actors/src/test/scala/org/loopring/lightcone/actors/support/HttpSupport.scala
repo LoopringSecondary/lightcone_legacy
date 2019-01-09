@@ -42,7 +42,8 @@ trait HttpSupport extends RpcBinding with Logging {
       req: Any,
       method: String
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       ec: ExecutionContext
     ) = {
     val json = req match {

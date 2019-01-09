@@ -44,7 +44,8 @@ trait OrderGenerateSupport {
       validSince: Int = (timeProvider.getTimeMillis / 1000).toInt,
       validUntil: Int = (timeProvider.getTimeMillis / 1000).toInt + 20000
     )(
-      implicit privateKey: Option[String] =
+      implicit
+      privateKey: Option[String] =
         Some("0x6549df526c28b1d92b0de63606cf039d3dc1846b114118367d8b161ec03256bf")
     ) = {
     val createAt = timeProvider.getTimeMillis
