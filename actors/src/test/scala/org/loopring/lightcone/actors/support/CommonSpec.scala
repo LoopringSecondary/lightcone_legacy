@@ -55,7 +55,7 @@ abstract class CommonSpec(configStr: String = "")
     TestKit.shutdownActorSystem(system, 10.seconds, false)
   }
 
-  val ethConfigStr = ""
+  val ethConfigStr: String
 
   //akka
   implicit val timeProvider = new SystemTimeProvider()

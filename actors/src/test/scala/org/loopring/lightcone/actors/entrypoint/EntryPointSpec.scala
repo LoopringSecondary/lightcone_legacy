@@ -30,6 +30,8 @@ class EntryPointSpec
     with JsonrpcSupport
     with HttpSupport {
 
+  val ethConfigStr = ""
+
   "send an orderbook request" must {
     "receive a response without value" in {
       val getOrderBook = GetOrderbook.Req(

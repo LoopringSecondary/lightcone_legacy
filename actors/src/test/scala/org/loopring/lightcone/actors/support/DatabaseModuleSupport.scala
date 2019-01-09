@@ -68,7 +68,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
         }""")
     )
 
-  override val ethConfigStr =
+  val ethConfigStr =
     s"""ethereum_client_monitor {
        |    pool-size = 1
        |    check-interval-seconds = 10

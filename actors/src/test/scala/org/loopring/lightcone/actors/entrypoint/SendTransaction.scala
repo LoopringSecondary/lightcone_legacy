@@ -33,6 +33,8 @@ import akka.pattern._
 import scala.concurrent.Await
 
 class SendTransaction extends CommonSpec with EthereumSupport {
+
+  val ethConfigStr = ""
   "send an orderbook request" must {
     "receive a response without value" in {
 
