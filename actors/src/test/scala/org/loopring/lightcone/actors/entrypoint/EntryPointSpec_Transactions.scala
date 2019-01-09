@@ -22,7 +22,6 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.lib.EventAccessProvider
 import org.loopring.lightcone.proto.TransactionRecord.EventData
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_Transactions

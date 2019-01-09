@@ -16,13 +16,15 @@
 
 package org.loopring.lightcone.lib
 
+import org.loopring.lightcone.proto.ErrorCode
+
 object EventAccessProvider {
 
   /**
     * 格式化生成排序id
-    * @param blockNumber 10位
-    * @param txIndex 4位
-    * @param logIndex 4位
+    * @param blockNumber 可支持到10位
+    * @param txIndex 固定4位
+    * @param logIndex 固定4位
     * @return
     */
   def generateSequenceId(
@@ -30,6 +32,11 @@ object EventAccessProvider {
       txIndex: Int,
       logIndex: Int
     ): Long = {
+    if (txIndex > 9999 || logIndex > 9999)
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        s"Parameters over limited of 9999: txIndex:$txIndex or logIndex:$logIndex"
+      )
     (blockNumber.toString + "%04d".format(txIndex) + "%04d".format(logIndex)).toLong
   }
 }
