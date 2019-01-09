@@ -26,6 +26,9 @@ import org.loopring.lightcone.proto.ErrorCode._
 
 object BadMessageListener {
   val name = "bad_message"
+
+  def start(implicit system: ActorSystem) =
+    system.actorOf(Props[BadMessageListener], BadMessageListener.name)
 }
 
 class BadMessageListener extends Actor with ActorLogging {

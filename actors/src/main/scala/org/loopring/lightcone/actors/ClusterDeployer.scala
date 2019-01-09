@@ -43,8 +43,7 @@ import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
 class ClusterDeployer @Inject()(
-    implicit
-    @Named("deploy-actors-ignoring-roles") deployActorsIgnoringRoles: Boolean,
+    implicit @Named("deploy-actors-ignoring-roles") deployActorsIgnoringRoles: Boolean,
     actors: Lookup[ActorRef],
     actorMaterializer: ActorMaterializer,
     brb: EthereumBatchCallRequestBuilder,
@@ -68,9 +67,7 @@ class ClusterDeployer @Inject()(
   def deploy() {
 
     //-----------deploy local actors-----------
-    val listener =
-      system.actorOf(Props[BadMessageListener], BadMessageListener.name)
-
+    val listener = BadMessageListener.start
     system.eventStream.subscribe(listener, classOf[UnhandledMessage])
     system.eventStream.subscribe(listener, classOf[DeadLetter])
 
