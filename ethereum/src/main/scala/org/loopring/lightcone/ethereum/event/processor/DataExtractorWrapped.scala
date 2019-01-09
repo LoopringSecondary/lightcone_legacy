@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.ethereum.event.processor
 
-import org.loopring.lightcone.ethereum.event.DataExtractor
+import org.loopring.lightcone.ethereum.event.extractor.DataExtractor
 import org.loopring.lightcone.proto.BlockJob
 
 trait DataExtractorWrapped[R] {

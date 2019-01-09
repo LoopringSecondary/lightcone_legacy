@@ -17,7 +17,7 @@
 package org.loopring.lightcone.ethereum.event.processor
 
 import com.typesafe.config.Config
-import org.loopring.lightcone.ethereum.event.TokenBurnRateEventExtractor
+import org.loopring.lightcone.ethereum.event.extractor.TokenBurnRateEventExtractor
 import org.loopring.lightcone.proto.TokenBurnRateChangedEvent
 
 class TokenBurnRateEventExtractorWrapped(config: Config)

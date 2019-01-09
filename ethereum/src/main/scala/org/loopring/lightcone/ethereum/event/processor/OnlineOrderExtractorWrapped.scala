@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.ethereum.event.processor
 
-import org.loopring.lightcone.ethereum.event.{
+import org.loopring.lightcone.ethereum.event.extractor.{
   DataExtractor,
   OnlineOrderExtractor
 }

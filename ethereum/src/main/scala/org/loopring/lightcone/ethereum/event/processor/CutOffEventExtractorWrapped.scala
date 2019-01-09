@@ -16,7 +16,10 @@
 
 package org.loopring.lightcone.ethereum.event.processor
 
-import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.ethereum.event.extractor.{
+  CutOffEventExtractor,
+  DataExtractor
+}
 import org.loopring.lightcone.proto._
 
 class CutOffEventExtractorWrapped() extends DataExtractorWrapped[CutoffEvent] {

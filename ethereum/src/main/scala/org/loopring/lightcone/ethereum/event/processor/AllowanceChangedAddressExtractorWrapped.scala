@@ -17,7 +17,7 @@
 package org.loopring.lightcone.ethereum.event.processor
 
 import com.typesafe.config.Config
-import org.loopring.lightcone.ethereum.event.AllowanceChangedAddressExtractor
+import org.loopring.lightcone.ethereum.event.extractor.AllowanceChangedAddressExtractor
 import org.loopring.lightcone.proto.AddressAllowanceUpdated
 
 class AllowanceChangedAddressExtractorWrapped(config: Config)

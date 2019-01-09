@@ -17,7 +17,7 @@
 package org.loopring.lightcone.ethereum.event.processor
 
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.ethereum.event.BalanceChangedAddressExtractor
+import org.loopring.lightcone.ethereum.event.extractor.BalanceChangedAddressExtractor
 import org.loopring.lightcone.proto.{AddressBalanceUpdated, BlockJob}
 
 class BalanceChangedAddressExtractorWrapped()

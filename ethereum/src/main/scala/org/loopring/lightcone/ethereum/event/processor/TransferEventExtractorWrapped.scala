@@ -17,7 +17,7 @@
 package org.loopring.lightcone.ethereum.event.processor
 
 import com.typesafe.config.Config
-import org.loopring.lightcone.ethereum.event.TransferEventExtractor
+import org.loopring.lightcone.ethereum.event.extractor.TransferEventExtractor
 import org.loopring.lightcone.proto.TransferEvent
 
 class TransferEventExtractorWrapped(config: Config)
