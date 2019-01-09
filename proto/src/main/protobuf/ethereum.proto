@@ -266,8 +266,8 @@ message EventHeader {
     int32 tx_index = 9;
     int32 log_index = 10;
     int64 gas_price = 11;
-    bytes gas_limit = 12;
-    bytes gas_used = 13;
+    int32 gas_limit = 12;
+    int32 gas_used = 13;
 }
 
 message TransferEvent {

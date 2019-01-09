@@ -20,7 +20,9 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.core.EthereumEventAccessActor
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.lib.EventAccessProvider
+import org.loopring.lightcone.proto.TransactionRecord.EventData
 import org.loopring.lightcone.proto._
+
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_Transactions
@@ -212,6 +214,38 @@ class EntryPointSpec_Transactions
       val r2 =
         Await.result(resonse2.mapTo[GetTransactions.Res], timeout.duration)
       assert(r2.records.length == 4)
+      r2.records.foreach {
+        _.eventData.getOrElse(EventData()).event match {
+          case TransactionRecord.EventData.Event.Transfer(e)
+              if e.token.isEmpty =>
+            assert(
+              e.header
+                .getOrElse(EventHeader())
+                .txHash == "0x016331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+            )
+          case TransactionRecord.EventData.Event.Transfer(e)
+              if e.token.nonEmpty =>
+            assert(
+              e.header
+                .getOrElse(EventHeader())
+                .txHash == "0x026331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+            )
+          case TransactionRecord.EventData.Event.OrderCancelled(e) =>
+            assert(
+              e.header
+                .getOrElse(EventHeader())
+                .txHash == "0x036331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+            )
+          case TransactionRecord.EventData.Event.Cutoff(e) => assert(false)
+          case TransactionRecord.EventData.Event.Filled(e) =>
+            assert(
+              e.header
+                .getOrElse(EventHeader())
+                .txHash == "0x056331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+            )
+          case _ => assert(false)
+        }
+      }
 
       // 8. get_transaction_count with txTo
       val resonse3 = singleRequest(
