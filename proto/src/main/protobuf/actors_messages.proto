@@ -22,6 +22,7 @@ package org.loopring.lightcone.proto;
 import "actors_data.proto";
 import "core.proto";
 import "ethereum.proto";
+import "common.proto";
 
 /////////////////////////////////////////////////////////////////////
 // ONE WAY MESSAGES
@@ -102,6 +103,13 @@ message CancelOrder {
     }
 }
 
+message RetrieveOrdersToCancel {
+    string broker       = 1;
+    string owner        = 2;
+    string trading_pair = 3;
+    int64  cutoff       = 4; // in seconds.
+}
+
 message GetOrderbook {
     message Req {
         int32 level = 2;
@@ -180,6 +188,37 @@ message GetFilledAmount {
 
     message Res {
         map<string, bytes> filled_amount_s_map = 1;
+    }
+}
+
+message GetOrderCancellation {
+    message Req {
+        string broker = 1;
+        string order_hash = 2;
+    }
+
+    message Res {
+       bool  cancelled = 1;
+    }
+}
+
+message GetCutoff {
+    message Req {
+        string broker = 1;
+        string owner = 2;
+        string token_pair = 3;
+    }
+    message Res {
+        bytes cutoff = 1;
+    }
+}
+
+message GetBurnRate {
+    message Req {
+        string token = 1;
+    }
+    message Res {
+        double burn_rate = 1;
     }
 }
 

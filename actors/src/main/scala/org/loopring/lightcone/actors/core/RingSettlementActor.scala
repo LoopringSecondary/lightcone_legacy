@@ -34,6 +34,7 @@ import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.ethereum.data.{Transaction, _}
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.ethereum.abi.SubmitRingsFunction
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -155,7 +156,10 @@ class RingSettlementActor(
         ringBatch = RingBatchGeneratorImpl.generateAndSignRingBatch(rawOrders)
         input = RingBatchGeneratorImpl.toSubmitableParamStr(ringBatch)
         tx = Transaction(
-          inputData = packRingToInput(input),
+          inputData = ringSubmitterAbi.submitRing.pack(
+            SubmitRingsFunction
+              .Params(data = Numeric.hexStringToByteArray(input))
+          ),
           nonce.get(),
           ring.gasLimit,
           ring.gasPrice,
@@ -191,6 +195,8 @@ class RingSettlementActor(
   }
 
   //未被提交的交易需要使用新的gas price重新提交
+  //todo:现在逻辑是重新提交该环路，可能增加失败概率，但是长时不打块判断失败，
+  //todo：如果发送失败事件重新使用nonce，会大大增加代码复杂
   def resubmitTx(): Future[Unit] =
     for {
       gasPriceRes <- (gasPriceActor ? GetGasPrice.Req())

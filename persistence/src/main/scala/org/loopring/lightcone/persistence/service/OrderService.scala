@@ -26,10 +26,6 @@ trait OrderService {
   // Save order to database, if the order already exist, return an error code.
   def saveOrder(order: RawOrder): Future[Either[RawOrder, ErrorCode]]
 
-  // Mark the order as soft-cancelled. Returns error code if the order does not exist.
-  def markOrderSoftCancelled(
-      orderHashes: Seq[String]
-    ): Future[Seq[UserCancelOrder.Res.Result]]
   def getOrders(hashes: Seq[String]): Future[Seq[RawOrder]]
   def getOrder(hash: String): Future[Option[RawOrder]]
 
@@ -61,6 +57,11 @@ trait OrderService {
       marketHashIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
       skip: CursorPaging
+    ): Future[Seq[RawOrder]]
+
+  def getCutoffAffectedOrders(
+      retrieveCondition: RetrieveOrdersToCancel,
+      take: Int
     ): Future[Seq[RawOrder]]
 
   //
@@ -103,4 +104,9 @@ trait OrderService {
       hash: String,
       state: RawOrder.State
     ): Future[ErrorCode]
+
+  def cancelOrders(
+      orderHashes: Seq[String],
+      status: OrderStatus
+    ): Future[Seq[UserCancelOrder.Res.Result]]
 }

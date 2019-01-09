@@ -57,6 +57,12 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
     bind[ActorMaterializer].toInstance(materializer)
     bind[Timeout].toInstance(timeout)
 
+    implicit val requestBuilder = new EthereumCallRequestBuilder
+    bind[EthereumCallRequestBuilder].toInstance(requestBuilder)
+
+    implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
+    bind[EthereumBatchCallRequestBuilder].toInstance(batchRequestBuilder)
+
     bind[ExecutionContextExecutor].toInstance(system.dispatcher)
     bind[ExecutionContext].toInstance(system.dispatcher)
     bind[ExecutionContext]
@@ -153,6 +159,11 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       actors.add(
         RingSettlementManagerActor.name,
         RingSettlementManagerActor.startSingleton
+      )
+
+      actors.add(
+        OrderCutoffHandlerActor.name,
+        OrderCutoffHandlerActor.startSingleton
       )
 
       //-----------deploy local actors-----------
