@@ -23,6 +23,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.ErrorCode._
@@ -73,13 +74,15 @@ class TransactionRecordActor(
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(TransactionRecordActor.name) {
 
   log.info(s"TransactionRecordActor with db: " + selfConfig.getConfig("db"))
+
+  val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
+  val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
 
   val dbConfig: DatabaseConfig[JdbcProfile] =
     DatabaseConfig.forConfig("db", selfConfig)
@@ -90,7 +93,7 @@ class TransactionRecordActor(
 
   def receive: Receive = {
     // ETH & ERC20
-    case req: TransferEvent =>
+    case req: TransferEvent if req.header.nonEmpty =>
       val header = req.header.get
       val recordType =
         if (req.token.nonEmpty) TransactionRecord.RecordType.ERC20_TRANSFER
@@ -99,62 +102,47 @@ class TransactionRecordActor(
         header = req.header,
         owner = req.owner,
         recordType = recordType,
-        createdAt = timeProvider.getTimeMillis(),
+        timestamp = 0L, // TODO(yongfeng): use block time, not current time.
         eventData = Some(
           TransactionRecord
             .EventData(TransactionRecord.EventData.Event.Transfer(req))
         ),
-        shardEntity = TransactionRecordActor.getEntityId(req.owner),
-        sequenceId = EventAccessProvider.generateSequenceId(
-          header.blockNumber,
-          header.txIndex,
-          header.logIndex
-        )
+        sequenceId = header.sequenceId
       )
       txRecordDal.saveRecord(record)
 
-    case req: OrdersCancelledEvent =>
+    case req: OrdersCancelledEvent if req.header.nonEmpty =>
       val header = req.header.get
       val record = TransactionRecord(
         header = req.header,
         owner = req.owner,
         recordType = TransactionRecord.RecordType.ORDER_CANCELLED,
-        createdAt = timeProvider.getTimeMillis(),
+        timestamp = 0L, // TODO(yongfeng): use block time, not current time.
         eventData = Some(
           TransactionRecord
             .EventData(TransactionRecord.EventData.Event.OrderCancelled(req))
         ),
-        shardEntity = TransactionRecordActor.getEntityId(req.owner),
-        sequenceId = EventAccessProvider.generateSequenceId(
-          header.blockNumber,
-          header.txIndex,
-          header.logIndex
-        )
+        sequenceId = header.sequenceId
       )
       txRecordDal.saveRecord(record)
 
-    case req: CutoffEvent =>
+    case req: CutoffEvent if req.header.nonEmpty =>
       val header = req.header.get
       val record = TransactionRecord(
         header = req.header,
         owner = req.owner,
         recordType = TransactionRecord.RecordType.ORDER_CANCELLED,
         tradingPair = req.tradingPair,
-        createdAt = timeProvider.getTimeMillis(),
+        timestamp = 0L, // TODO(yongfeng): use block time, not current time.
         eventData = Some(
           TransactionRecord
             .EventData(TransactionRecord.EventData.Event.Cutoff(req))
         ),
-        shardEntity = TransactionRecordActor.getEntityId(req.owner),
-        sequenceId = EventAccessProvider.generateSequenceId(
-          header.blockNumber,
-          header.txIndex,
-          header.logIndex
-        )
+        sequenceId = header.sequenceId
       )
       txRecordDal.saveRecord(record)
 
-    case req: OrderFilledEvent =>
+    case req: OrderFilledEvent if req.header.nonEmpty =>
       //TODO du：是否需要查询并验证订单存在
       for {
         order <- dbModule.orderService.getOrder(req.orderHash)
@@ -172,24 +160,20 @@ class TransactionRecordActor(
             owner = req.owner,
             recordType = TransactionRecord.RecordType.ORDER_FILLED,
             tradingPair = marketHash,
-            createdAt = timeProvider.getTimeMillis(),
+            timestamp = 0L, // TODO(yongfeng): use block time, not current time.
             eventData = Some(
               TransactionRecord
                 .EventData(TransactionRecord.EventData.Event.Filled(req))
             ),
-            shardEntity = TransactionRecordActor.getEntityId(req.owner),
-            sequenceId = EventAccessProvider.generateSequenceId(
-              header.blockNumber,
-              header.txIndex,
-              header.logIndex
-            )
+            sequenceId = header.sequenceId
           )
           txRecordDal.saveRecord(record)
         }
       } yield saved
 
     case req: GetTransactionRecords.Req =>
-      val paging = req.paging.getOrElse(CursorPaging(0, 50))
+      // TODO(yongfeng)： 如果用户指定了100000 作为defaultItemsPerPage 怎么办？？？？？
+      val paging = req.paging.getOrElse(CursorPaging(0, defaultItemsPerPage))
       txRecordDal
         .getRecordsByOwner(req.owner, req.queryType, req.sort, paging)
         .map(GetTransactionRecords.Res(_))

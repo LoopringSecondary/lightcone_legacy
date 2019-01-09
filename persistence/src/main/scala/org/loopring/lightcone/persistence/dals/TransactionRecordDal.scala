@@ -54,8 +54,7 @@ class TransactionRecordDalImpl(
     val partitionId: String,
     val dbConfig: DatabaseConfig[JdbcProfile]
   )(
-    implicit val timeProvider: TimeProvider,
-    val ec: ExecutionContext)
+    implicit val ec: ExecutionContext)
     extends TransactionRecordDal {
 
   implicit val txStatusColumnType = enumColumnType(TxStatus)

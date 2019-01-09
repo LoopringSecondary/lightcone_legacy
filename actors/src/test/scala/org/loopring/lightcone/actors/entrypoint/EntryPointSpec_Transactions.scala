@@ -18,8 +18,8 @@ package org.loopring.lightcone.actors.entrypoint
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.core.TransactionRecordActor
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.lib.EventAccessProvider
 import org.loopring.lightcone.proto.TransactionRecord.EventData
 import org.loopring.lightcone.proto._
 import scala.concurrent.{Await, Future}
@@ -167,7 +167,7 @@ class EntryPointSpec_Transactions
       Thread.sleep(5000)
 
       // 7. get_transactions with txFrom
-      val fromIndex = EventAccessProvider.generateSequenceId(blockNumber, 0, 0)
+      val fromIndex = EventHeader(blockNumber = blockNumber).sequenceId
       val paging: CursorPaging = CursorPaging(cursor = fromIndex, size = 50)
       val resonse2 = singleRequest(
         GetTransactionRecords
