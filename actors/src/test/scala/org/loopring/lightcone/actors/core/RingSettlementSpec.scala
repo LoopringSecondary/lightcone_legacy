@@ -35,7 +35,7 @@ class RingSettlementSpec
                          | "orderbook_manager",
                          | "market_manager"]
                          |""".stripMargin)
-    with EthereumSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with MultiAccountManagerSupport
     with OrderGenerateSupport
