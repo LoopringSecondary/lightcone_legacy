@@ -22,6 +22,7 @@ import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
+import org.loopring.lightcone.actors.ethereum.EthereumClientMonitor
 import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market.{
@@ -31,6 +32,7 @@ import org.loopring.lightcone.core.market.{
 import org.loopring.lightcone.lib.SystemTimeProvider
 import org.scalatest._
 import org.slf4s.Logging
+
 import scala.concurrent.duration._
 import scala.math.BigInt
 
@@ -60,7 +62,13 @@ abstract class CommonSpec(configStr: String)
   implicit val timeProvider = new SystemTimeProvider()
   implicit val timeout = Timeout(5 second)
   implicit val ec = system.dispatcher
-  implicit val config = system.settings.config
+  implicit val config = ConfigFactory
+    .parseString(ethConfigStr)
+    .withFallback(ConfigFactory.load())
+
+//  implicit val config = system.settings.config
+
+  println("########## ", config.getConfig(EthereumClientMonitor.name))
   implicit val materializer = ActorMaterializer()(system)
 
   //  log.info(s"init config: ${config}")
