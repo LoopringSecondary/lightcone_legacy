@@ -24,13 +24,17 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
+import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.JdbcProfile
+import slick.basic.DatabaseConfig
 
 // main owner: 杜永丰
-object EthereumEventAccessActor extends ShardedByAddress {
-  val name = "ethereum_event_access"
+object TransactionRecordActor extends ShardedByAddress {
+  val name = "transanction-record"
 
   def startShardRegion(
     )(
@@ -48,7 +52,7 @@ object EthereumEventAccessActor extends ShardedByAddress {
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new EthereumEventAccessActor()),
+      entityProps = Props(new TransactionRecordActor()),
       settings = ClusterShardingSettings(system).withRole(name),
       messageExtractor = messageExtractor
     )
@@ -56,22 +60,16 @@ object EthereumEventAccessActor extends ShardedByAddress {
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
-    case req: TransferEvent =>
-      req.owner
-    case req: CutoffEvent =>
-      req.owner
-    case req: OrdersCancelledEvent =>
-      req.owner
-    case req: OrderFilledEvent =>
-      req.owner
-    case req: GetTransactions.Req =>
-      req.owner
-    case req: GetTransactionCount.Req =>
-      req.owner
+    case req: TransferEvent                 => req.owner
+    case req: CutoffEvent                   => req.owner
+    case req: OrdersCancelledEvent          => req.owner
+    case req: OrderFilledEvent              => req.owner
+    case req: GetTransactionRecords.Req     => req.owner
+    case req: GetTransactionRecordCount.Req => req.owner
   }
 }
 
-class EthereumEventAccessActor(
+class TransactionRecordActor(
   )(
     implicit val config: Config,
     val ec: ExecutionContext,
@@ -79,7 +77,16 @@ class EthereumEventAccessActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(EthereumEventAccessActor.name) {
+    extends ActorWithPathBasedConfig(TransactionRecordActor.name) {
+
+  log.info(s"TransactionRecordActor with db: " + selfConfig.getConfig("db"))
+
+  val dbConfig: DatabaseConfig[JdbcProfile] =
+    DatabaseConfig.forConfig("db", selfConfig)
+
+  val txRecordDal: TransactionRecordDal =
+    new TransactionRecordDalImpl(entityId, dbConfig)
+  txRecordDal.createTable()
 
   def receive: Receive = {
     // ETH & ERC20
@@ -97,14 +104,14 @@ class EthereumEventAccessActor(
           TransactionRecord
             .EventData(TransactionRecord.EventData.Event.Transfer(req))
         ),
-        shardEntity = EthereumEventAccessActor.getEntityId(req.owner),
+        shardEntity = TransactionRecordActor.getEntityId(req.owner),
         sequenceId = EventAccessProvider.generateSequenceId(
           header.blockNumber,
           header.txIndex,
           header.logIndex
         )
       )
-      dbModule.transactionRecordService.saveRecord(record)
+      txRecordDal.saveRecord(record)
 
     case req: OrdersCancelledEvent =>
       val header = req.header.get
@@ -117,14 +124,14 @@ class EthereumEventAccessActor(
           TransactionRecord
             .EventData(TransactionRecord.EventData.Event.OrderCancelled(req))
         ),
-        shardEntity = EthereumEventAccessActor.getEntityId(req.owner),
+        shardEntity = TransactionRecordActor.getEntityId(req.owner),
         sequenceId = EventAccessProvider.generateSequenceId(
           header.blockNumber,
           header.txIndex,
           header.logIndex
         )
       )
-      dbModule.transactionRecordService.saveRecord(record)
+      txRecordDal.saveRecord(record)
 
     case req: CutoffEvent =>
       val header = req.header.get
@@ -138,14 +145,14 @@ class EthereumEventAccessActor(
           TransactionRecord
             .EventData(TransactionRecord.EventData.Event.Cutoff(req))
         ),
-        shardEntity = EthereumEventAccessActor.getEntityId(req.owner),
+        shardEntity = TransactionRecordActor.getEntityId(req.owner),
         sequenceId = EventAccessProvider.generateSequenceId(
           header.blockNumber,
           header.txIndex,
           header.logIndex
         )
       )
-      dbModule.transactionRecordService.saveRecord(record)
+      txRecordDal.saveRecord(record)
 
     case req: OrderFilledEvent =>
       //TODO du：是否需要查询并验证订单存在
@@ -170,28 +177,28 @@ class EthereumEventAccessActor(
               TransactionRecord
                 .EventData(TransactionRecord.EventData.Event.Filled(req))
             ),
-            shardEntity = EthereumEventAccessActor.getEntityId(req.owner),
+            shardEntity = TransactionRecordActor.getEntityId(req.owner),
             sequenceId = EventAccessProvider.generateSequenceId(
               header.blockNumber,
               header.txIndex,
               header.logIndex
             )
           )
-          dbModule.transactionRecordService.saveRecord(record)
+          txRecordDal.saveRecord(record)
         }
       } yield saved
 
-    case req: GetTransactions.Req =>
+    case req: GetTransactionRecords.Req =>
       val paging = req.paging.getOrElse(CursorPaging(0, 50))
-      dbModule.transactionRecordService
+      txRecordDal
         .getRecordsByOwner(req.owner, req.queryType, req.sort, paging)
-        .map(GetTransactions.Res(_))
+        .map(GetTransactionRecords.Res(_))
         .sendTo(sender)
 
-    case req: GetTransactionCount.Req =>
-      dbModule.transactionRecordService
+    case req: GetTransactionRecordCount.Req =>
+      txRecordDal
         .getRecordsCountByOwner(req.owner, req.queryType)
-        .map(GetTransactionCount.Res(_))
+        .map(GetTransactionRecordCount.Res(_))
         .sendTo(sender)
   }
 

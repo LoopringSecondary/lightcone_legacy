@@ -21,11 +21,12 @@ import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
-class TransactionRecordTable(tableNum: Int)(tag: Tag)
+class TransactionRecordTable(partitionId: String)(tag: Tag)
     extends BaseTable[TransactionRecord](
       tag,
-      s"TRANSACTION_RECORD_$tableNum"
+      s"TRANSACTION_RECORD_${partitionId.toUpperCase}"
     ) {
+
   implicit val txStatusColumnType = enumColumnType(TxStatus)
   implicit val recordTypeColumnType = enumColumnType(
     TransactionRecord.RecordType

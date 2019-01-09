@@ -203,7 +203,7 @@ message PersistTransactionRecord {
     }
 }
 
-message GetTransactions {
+message GetTransactionRecords {
     message QueryType {
         TransactionRecord.RecordType value  = 1;
     }
@@ -219,10 +219,10 @@ message GetTransactions {
     }
 }
 
-message GetTransactionCount {
+message GetTransactionRecordCount {
     message Req {
         string                     owner       = 1;
-        GetTransactions.QueryType  query_type  = 2;
+        GetTransactionRecords.QueryType  query_type  = 2;
     }
 
     message Res {

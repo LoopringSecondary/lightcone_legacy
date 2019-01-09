@@ -31,11 +31,10 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
   val validSince = 1
   val validUntil = timeProvider.getTimeSeconds()
 
-  def createTables(): Future[Any] =
-    for {
-      _ <- new OrderDalImpl().createTable()
-      r <- new BlockDalImpl().createTable()
-    } yield r
+  def createTables() = {
+    new OrderDalImpl().createTable()
+    new BlockDalImpl().createTable()
+  }
 
   private def testSave(
       owner: String,
