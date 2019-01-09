@@ -18,7 +18,11 @@ package org.loopring.lightcone.ethereum.event
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{AddressAllowanceUpdated, Transaction, TransactionReceipt}
+import org.loopring.lightcone.proto.{
+  AddressAllowanceUpdated,
+  Transaction,
+  TransactionReceipt
+}
 
 import scala.collection.mutable.ListBuffer
 

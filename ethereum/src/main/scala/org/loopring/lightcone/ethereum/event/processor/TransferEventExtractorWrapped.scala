@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.ethereum.event
+package org.loopring.lightcone.ethereum.event.processor
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.event.TransferEventExtractor
@@ -26,4 +26,3 @@ class TransferEventExtractorWrapped(config: Config)
   val extractor = new TransferEventExtractor(config)
 
 }
-

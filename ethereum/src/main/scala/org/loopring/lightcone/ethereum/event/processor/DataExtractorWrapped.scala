@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.ethereum.event
+package org.loopring.lightcone.ethereum.event.processor
 
-import org.loopring.lightcone.actors.ethereum.Processor
 import org.loopring.lightcone.ethereum.event.DataExtractor
 import org.loopring.lightcone.proto.BlockJob
 
 trait DataExtractorWrapped[R] {
 
   val extractor: DataExtractor[R]
-  val processors:Map[String,Processor[R]] = Map.empty
+  val processors: Map[String, Processor[R]] = Map.empty
   var events = Seq.empty[R]
 
   def extractData(blockJob: BlockJob): Seq[R] = {
@@ -34,9 +33,11 @@ trait DataExtractorWrapped[R] {
   }
 
   def process() = {
-    processors.foreach{processor => {
-      events.foreach(processor._2.process)
-    }}
+    processors.foreach { processor =>
+      {
+        events.foreach(processor._2.process)
+      }
+    }
   }
 
   def getData: Seq[R] = events
