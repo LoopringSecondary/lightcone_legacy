@@ -51,6 +51,7 @@ private[ethereum] class HttpConnector(
   val DEBUG_TIMEOUT_STR = "5s"
   val DEBUG_TRACER = "callTracer"
   val ETH_CALL = "eth_call"
+  val LATEST = "latest"
 
   val emptyError = EthRpcError(code = 500, error = "result is empty")
 
@@ -239,9 +240,10 @@ private[ethereum] class HttpConnector(
       } map JsonFormat
         .fromJsonString[GetBlockTransactionCount.Res] sendTo sender
 
-    case r: EthCall.Req =>
+    case r @ EthCall.Req(_, param, _) =>
+      val tag = if (r.tag.isEmpty) LATEST else r.tag
       sendMessage("eth_call") {
-        Seq(r.param, r.tag)
+        Seq(param, tag)
       } map JsonFormat.fromJsonString[EthCall.Res] sendTo sender
 
     case r: GetUncle.Req =>
@@ -252,11 +254,15 @@ private[ethereum] class HttpConnector(
 
     case batchR: BatchCallContracts.Req =>
       val batchReqs = batchR.reqs.map { singleReq =>
-        BatchMethod(
-          id = singleReq.id,
-          method = "eth_call",
-          params = Seq(singleReq.param, singleReq.tag)
-        )
+        {
+          val tag = if (singleReq.tag.isEmpty) LATEST else singleReq.tag
+          BatchMethod(
+            id = singleReq.id,
+            method = "eth_call",
+            params = Seq(singleReq.param, tag)
+          )
+        }
+
       }
       //这里无法直接解析成BatchCallContracts.Res
       batchSendMessages(batchReqs) map { json =>
@@ -271,7 +277,7 @@ private[ethereum] class HttpConnector(
     case batchR: BatchGetTransactionReceipts.Req =>
       val batchReqs = batchR.reqs.map { singleReq =>
         BatchMethod(
-          id = 0,
+          id = Random.nextInt(10000),
           method = "eth_getTransactionReceipt",
           params = Seq(singleReq.hash)
         )
@@ -289,7 +295,7 @@ private[ethereum] class HttpConnector(
     case batchR: BatchGetTransactions.Req =>
       val batchReqs = batchR.reqs.map { singleReq =>
         BatchMethod(
-          id = 0,
+          id = Random.nextInt(10000),
           method = "eth_getTransactionByHash",
           params = Seq(singleReq.hash)
         )
@@ -307,7 +313,7 @@ private[ethereum] class HttpConnector(
     case batchR: BatchGetUncle.Req => {
       val batchReqs = batchR.reqs.map { singleReq =>
         BatchMethod(
-          id = 0,
+          id = Random.nextInt(10000),
           method = "eth_getUncleByBlockNumberAndIndex",
           params = Seq(singleReq.blockNum, singleReq.index)
         )
@@ -324,11 +330,14 @@ private[ethereum] class HttpConnector(
 
     case batchR: BatchGetEthBalance.Req => {
       val batchReqs = batchR.reqs.map { singleReq =>
-        BatchMethod(
-          id = 0,
-          method = "eth_getBalance",
-          params = Seq(singleReq.address, singleReq.tag)
-        )
+        {
+          val tag = if (singleReq.tag.isEmpty) LATEST else singleReq.tag
+          BatchMethod(
+            id = Random.nextInt(10000),
+            method = "eth_getBalance",
+            params = Seq(singleReq.address, tag)
+          )
+        }
       }
       batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]

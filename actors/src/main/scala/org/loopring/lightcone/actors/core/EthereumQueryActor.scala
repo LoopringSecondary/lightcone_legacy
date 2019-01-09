@@ -75,8 +75,6 @@ class EthereumQueryActor(
     val brb: EthereumBatchCallRequestBuilder)
     extends ActorWithPathBasedConfig(EthereumQueryActor.name) {
 
-  val LATEST = "latest"
-
   val delegateAddress =
     config.getString("loopring_protocol.delegate-address")
 
@@ -86,16 +84,13 @@ class EthereumQueryActor(
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def receive = LoggingReceive {
-    case req @ GetBalanceAndAllowances.Req(owner, tokens, _) =>
-      val tag = if (req.tag.isEmpty) LATEST else req.tag
+    case req @ GetBalanceAndAllowances.Req(owner, tokens, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
-      val batchReqs = brb
-        .buildRequest(
+      val batchReqs = brb.buildRequest(
           Address(delegateAddress),
           req.copy(tokens = erc20Tokens),
           tag
         )
-
       (for {
         batchRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
@@ -135,8 +130,7 @@ class EthereumQueryActor(
         }
       } yield finalResult) sendTo sender
 
-    case req @ GetBalance.Req(owner, tokens, _) =>
-      val tag = if (req.tag.isEmpty) LATEST else req.tag
+    case req @ GetBalance.Req(owner, tokens, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
       val batchReqs = brb.buildRequest(req.copy(tokens = erc20Tokens), tag)
 
@@ -171,8 +165,7 @@ class EthereumQueryActor(
         }
       } yield finalResult) sendTo sender
 
-    case req @ GetAllowance.Req(owner, tokens, _) =>
-      val tag = if (req.tag.isEmpty) LATEST else req.tag
+    case req @ GetAllowance.Req(owner, tokens, tag) =>
       batchCallEthereum(
         sender,
         brb.buildRequest(Address(delegateAddress), req, tag)
@@ -183,8 +176,7 @@ class EthereumQueryActor(
         GetAllowance.Res(owner, (tokens zip allowances).toMap)
       }
 
-    case req @ GetFilledAmount.Req(orderIds, _) =>
-      val tag = if (req.tag.isEmpty) LATEST else req.tag
+    case req @ GetFilledAmount.Req(orderIds, tag) =>
       batchCallEthereum(
         sender,
         brb
@@ -198,19 +190,17 @@ class EthereumQueryActor(
       }
 
     case req: GetOrderCancellation.Req =>
-      val tag = if (req.tag.isEmpty) LATEST else req.tag
       callEthereum(
         sender,
-        rb.buildRequest(req, Address(tradeHistoryAddress), tag)
+        rb.buildRequest(req, Address(tradeHistoryAddress), req.tag)
       ) { result =>
         GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
       }
 
     case req: GetCutoff.Req =>
-      val tag = if (req.tag.isEmpty) LATEST else req.tag
       callEthereum(
         sender,
-        rb.buildRequest(req, Address(tradeHistoryAddress), tag)
+        rb.buildRequest(req, Address(tradeHistoryAddress), req.tag)
       ) { result =>
         GetCutoff.Res(Numeric.toBigInt(result).toByteArray)
       }
