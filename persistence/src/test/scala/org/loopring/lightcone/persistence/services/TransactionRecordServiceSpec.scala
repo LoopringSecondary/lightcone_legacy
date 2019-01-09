@@ -84,7 +84,7 @@ class TransactionRecordServiceSpec
       )
       query <- service.getRecordsByOwner(
         owner,
-        Some(RecordType.TRANSFER),
+        Some(GetTransactions.QueryType(RecordType.TRANSFER)),
         SortingType.ASC,
         CursorPaging(size = 10)
       )
