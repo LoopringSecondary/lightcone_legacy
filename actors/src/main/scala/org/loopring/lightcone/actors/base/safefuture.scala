@@ -25,6 +25,8 @@ import scala.concurrent._
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 
+// Owner: Daniel
+
 object safefuture {
 
   implicit class SafeFutureSupport[T](

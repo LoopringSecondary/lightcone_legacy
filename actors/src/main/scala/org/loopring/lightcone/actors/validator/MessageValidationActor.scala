@@ -26,6 +26,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent._
 
+// Owner: Daniel
 object MessageValidationActor {
 
   def apply(

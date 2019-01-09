@@ -20,6 +20,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
+// Owner: Hongyu
 object OrderbookManagerMessageValidator {
   val name = "orderbook_manager_validator"
 }

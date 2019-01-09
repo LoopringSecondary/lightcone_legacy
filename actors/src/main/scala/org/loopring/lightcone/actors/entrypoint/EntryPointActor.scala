@@ -28,6 +28,7 @@ import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent.ExecutionContext
 
+// Owner: Hongyu
 object EntryPointActor {
   val name = "entrypoint"
 

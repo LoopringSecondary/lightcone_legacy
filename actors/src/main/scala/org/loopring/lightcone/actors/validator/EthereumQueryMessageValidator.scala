@@ -20,6 +20,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
 
+// Owner: Yadong
 object EthereumQueryMessageValidator {
   val name = "ethereum_query_validator"
 }

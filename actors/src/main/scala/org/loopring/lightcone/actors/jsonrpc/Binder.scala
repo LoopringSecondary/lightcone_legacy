@@ -26,6 +26,7 @@ import akka.actor._
 import akka.util.Timeout
 import scala.reflect.ClassTag
 
+// Owner: Daniel
 class Binder[T <: Proto[T]: TypeTag](
     implicit
     module: JsonRpcBinding,

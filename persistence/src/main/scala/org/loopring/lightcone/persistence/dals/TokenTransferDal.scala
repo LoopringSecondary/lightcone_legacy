@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.validator
+package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.proto.Error
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.persistence.base._
+import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto._
+import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.JdbcProfile
+import slick.basic._
+import scala.concurrent._
 
-// Example:
-// class MyMessageValidator extends MessageValidator {
-//   def validate = {
-//     case x: SomeMessageA => // pass as-is
-//     case x: SomeMessageB => x // pass as-is
-//     case x: SomeMessageC => x.copy(field=value) // modify
-//     // unhandled messages are passed as-is
-//
-//
+trait TokenTransferDal
+    extends BaseDalImpl[TokenTransferTable, TokenTransferData] {}
 
-// Owner: Daniel
-trait MessageValidator {
-  // Throw exceptions if validation failed.
-  def validate: PartialFunction[Any, Any]
+class TokenTransferDalImpl(
+  )(
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext)
+    extends TokenTransferDal {
+  val query = TableQuery[TokenTransferTable]
 }

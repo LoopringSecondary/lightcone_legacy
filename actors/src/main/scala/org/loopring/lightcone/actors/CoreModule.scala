@@ -44,6 +44,7 @@ import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import org.slf4s.Logging
 
+// Owner: Daniel
 class CoreModule(config: Config)
     extends AbstractModule
     with ScalaModule

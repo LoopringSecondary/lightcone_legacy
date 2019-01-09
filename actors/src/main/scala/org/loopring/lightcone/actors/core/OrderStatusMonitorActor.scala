@@ -30,6 +30,7 @@ import org.loopring.lightcone.proto._
 
 import scala.concurrent._
 
+// Owner: Hongyu
 object OrderStatusMonitorActor {
   val name = "order_status_monitor"
 
