@@ -61,7 +61,7 @@ object Main extends App with Logging {
 
   println(s"Hit RETURN to terminate")
 
-  StdIn.readLine()
+  while ("stopstopstop" != StdIn.readLine())
 
   //Shutdown
   system.terminate()
