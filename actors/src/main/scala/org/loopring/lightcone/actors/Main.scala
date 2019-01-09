@@ -52,14 +52,12 @@ object Main extends App with Logging {
     log.info(s"--> $i = ${config.getString(i)}")
   }
 
+  sys.ShutdownHookThread { system.terminate() }
+
   val injector = Guice.createInjector(new CoreModule(config))
   val system = injector.instance[ActorSystem]
 
   injector.instance[ClusterDeployer].deploy()
-
-  sys.ShutdownHookThread {
-    system.terminate()
-  }
 
   println(s"Hit RETURN to terminate")
 
