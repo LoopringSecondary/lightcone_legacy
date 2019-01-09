@@ -51,4 +51,6 @@ class DatabaseModule @Inject()(
     settlementTxDal,
     orderStatusMonitorDal
   )
+
+  createTables()
 }

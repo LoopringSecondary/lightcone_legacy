@@ -66,7 +66,6 @@ class ClusterDeployer @Inject()(
     with Logging {
 
   def deploy() {
-    dbModule.createTables()
 
     //-----------deploy local actors-----------
     val listener =
