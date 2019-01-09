@@ -38,31 +38,32 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.slf4s.Logging
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
-class ClusterDeployer @Inject() (
-  implicit @Named("deploy-actors-ignoring-roles") deployActorsIgnoringRoles: Boolean,
-  actors: Lookup[ActorRef],
-  actorMaterializer: ActorMaterializer,
-  brb: EthereumBatchCallRequestBuilder,
-  cluster: Cluster,
-  config: Config,
-  dbModule: DatabaseModule,
-  dustOrderEvaluator: DustOrderEvaluator,
-  ec: ExecutionContext,
-  ece: ExecutionContextExecutor,
-  rb: EthereumCallRequestBuilder,
-  rie: RingIncomeEvaluator,
-  supportedMarkets: SupportedMarkets,
-  timeProvider: TimeProvider,
-  timeout: Timeout,
-  tokenManager: TokenManager,
-  tve: TokenValueEvaluator,
-  system: ActorSystem)
-  extends Object
-  with Logging {
+class ClusterDeployer @Inject()(
+    implicit
+    @Named("deploy-actors-ignoring-roles") deployActorsIgnoringRoles: Boolean,
+    actors: Lookup[ActorRef],
+    actorMaterializer: ActorMaterializer,
+    brb: EthereumBatchCallRequestBuilder,
+    cluster: Cluster,
+    config: Config,
+    dbModule: DatabaseModule,
+    dustOrderEvaluator: DustOrderEvaluator,
+    ec: ExecutionContext,
+    ece: ExecutionContextExecutor,
+    rb: EthereumCallRequestBuilder,
+    rie: RingIncomeEvaluator,
+    supportedMarkets: SupportedMarkets,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    tokenManager: TokenManager,
+    tve: TokenValueEvaluator,
+    system: ActorSystem)
+    extends Object
+    with Logging {
 
   def deploy() {
     dbModule.createTables()
@@ -81,47 +82,56 @@ class ClusterDeployer @Inject() (
       MessageValidationActor(
         new MultiAccountManagerMessageValidator(),
         MultiAccountManagerActor.name,
-        MultiAccountManagerMessageValidator.name))
+        MultiAccountManagerMessageValidator.name
+      )
+    )
 
     actors.add(
       DatabaseQueryMessageValidator.name,
       MessageValidationActor(
         new DatabaseQueryMessageValidator(),
         DatabaseQueryActor.name,
-        DatabaseQueryMessageValidator.name))
+        DatabaseQueryMessageValidator.name
+      )
+    )
 
     actors.add(
       EthereumQueryMessageValidator.name,
       MessageValidationActor(
         new EthereumQueryMessageValidator(),
         EthereumQueryActor.name,
-        EthereumQueryMessageValidator.name))
+        EthereumQueryMessageValidator.name
+      )
+    )
 
     actors.add(
       OrderbookManagerMessageValidator.name,
       MessageValidationActor(
         new OrderbookManagerMessageValidator(),
         OrderbookManagerActor.name,
-        OrderbookManagerMessageValidator.name))
+        OrderbookManagerMessageValidator.name
+      )
+    )
 
     Cluster(system).registerOnMemberUp {
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
       actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
       actors.add(GasPriceActor.name, GasPriceActor.start)
-      actors.add(MarketManagerActor.name, MarketManagerActor.start)
       actors.add(OrderPersistenceActor.name, OrderPersistenceActor.start)
       actors.add(OrderRecoverActor.name, OrderRecoverActor.start)
       actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
+      actors.add(MarketManagerActor.name, MarketManagerActor.start)
+      actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
       actors.add(
         EthereumEventExtractorActor.name,
-        EthereumEventExtractorActor.start)
+        EthereumEventExtractorActor.start
+      )
       actors.add(
         EthereumEventPersistorActor.name,
-        EthereumEventPersistorActor.start)
-
-      actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
+        EthereumEventPersistorActor.start
+      )
 
       //-----------deploy singleton actors-----------
       actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start(Nil)) // TODO(hongyu): Nil?
@@ -131,7 +141,8 @@ class ClusterDeployer @Inject() (
 
       actors.add(
         RingSettlementManagerActor.name,
-        RingSettlementManagerActor.start)
+        RingSettlementManagerActor.start
+      )
 
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
 
@@ -140,10 +151,9 @@ class ClusterDeployer @Inject() (
 
       //-----------deploy JSONRPC service-----------
       if (deployActorsIgnoringRoles ||
-        cluster.selfRoles.contains("jsonrpc")) {
-        val server = new JsonRpcServer(
-          config,
-          actors.get(EntryPointActor.name)) with RpcBinding
+          cluster.selfRoles.contains("jsonrpc")) {
+        val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
+        with RpcBinding
         server.start
       }
     }

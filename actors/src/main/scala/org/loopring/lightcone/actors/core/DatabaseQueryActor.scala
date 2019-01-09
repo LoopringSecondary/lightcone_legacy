@@ -109,11 +109,11 @@ class DatabaseQueryActor(
             )
         }
       } yield GetOrdersForUser.Res(result, ErrorCode.ERR_NONE)) sendTo sender
+
     case req: GetTrades.Req =>
       (for {
         result <- dbModule.tradeService.getTrades(req)
       } yield GetTrades.Res(result)) sendTo sender
-    case m => logger.error(s"Unhandled message ${m}")
   }
 
 }
