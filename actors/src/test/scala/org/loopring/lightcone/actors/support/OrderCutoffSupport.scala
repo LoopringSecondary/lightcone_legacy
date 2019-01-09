@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.actors.support
 
-import org.loopring.lightcone.proto.{ErrorCode, TokenMeta}
+import org.loopring.lightcone.actors.core._
 
-import scala.concurrent.Future
+trait OrderCutoffSupport extends DatabaseModuleSupport {
+  my: CommonSpec =>
 
-trait TokenMetadataService {
-
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMeta]]
-
-  def updateBurnRate(
-      token: String,
-      burnDate: Double
-    ): Future[ErrorCode]
+  actors.add(
+    OrderCutoffHandlerActor.name,
+    OrderCutoffHandlerActor.startSingleton
+  )
 }

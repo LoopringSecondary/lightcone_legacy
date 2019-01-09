@@ -161,6 +161,11 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         RingSettlementManagerActor.startSingleton
       )
 
+      actors.add(
+        OrderCutoffHandlerActor.name,
+        OrderCutoffHandlerActor.startSingleton
+      )
+
       //-----------deploy local actors-----------
       actors.add(
         MultiAccountManagerMessageValidator.name,

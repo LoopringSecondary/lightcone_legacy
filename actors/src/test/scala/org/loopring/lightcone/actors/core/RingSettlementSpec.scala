@@ -29,7 +29,9 @@ class RingSettlementSpec
                          | "multi_account_manager",
                          | "ethereum_query",
                          | "order_handler",
+                         | "ring_settlement",
                          | "gas_price",
+                         | "ethereum_client_monitor",
                          | "orderbook_manager",
                          | "market_manager"]
                          |""".stripMargin)

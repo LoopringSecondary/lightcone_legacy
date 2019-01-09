@@ -77,7 +77,7 @@ class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
     updatedOrders.size should be(3)
 
     updatedOrders(order1.id).status should be(
-      OrderStatus.STATUS_CANCELLED_BY_USER
+      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
     )
     updatedOrders(order1.id).reserved should be(orderState(0 !, 0 !, 0 !))
     updatedOrders(order1.id).actual should be(orderState(0 !, 0 !, 0 !))
@@ -93,7 +93,7 @@ class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
     updatedOrders.size should be(2)
 
     updatedOrders(order2.id).status should be(
-      OrderStatus.STATUS_CANCELLED_BY_USER
+      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
     )
     updatedOrders(order2.id).reserved should be(orderState(0 !, 0 !, 0 !))
     updatedOrders(order2.id).actual should be(orderState(0 !, 0 !, 0 !))
@@ -121,7 +121,7 @@ class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
     updatedOrders.size should be(3)
 
     updatedOrders(order1.id).status should be(
-      OrderStatus.STATUS_CANCELLED_BY_USER
+      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
     )
     updatedOrders(order1.id).reserved should be(orderState(0 !, 0 !, 0 !))
     updatedOrders(order1.id).actual should be(orderState(0 !, 0 !, 0 !))
@@ -137,7 +137,7 @@ class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
     updatedOrders.size should be(2)
 
     updatedOrders(order2.id).status should be(
-      OrderStatus.STATUS_CANCELLED_BY_USER
+      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
     )
     updatedOrders(order2.id).reserved should be(orderState(0 !, 0 !, 0 !))
     updatedOrders(order2.id).actual should be(orderState(0 !, 0 !, 0 !))

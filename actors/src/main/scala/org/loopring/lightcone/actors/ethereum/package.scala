@@ -55,4 +55,5 @@ package object ethereum {
       id: Int,
       method: String,
       params: Seq[Any])
+
 }
