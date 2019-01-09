@@ -68,7 +68,7 @@ class EntryPointSpec_Transactions
   }
 
   "save & query some events" must {
-    "get the events" in {
+    "get the events record correctly" in {
       val txHash =
         "0x016331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
       val blockNumber = 70000001L
@@ -196,6 +196,7 @@ class EntryPointSpec_Transactions
 
       Thread.sleep(5000)
 
+      // 7. get_transactions with txFrom
       val fromIndex = EventAccessProvider.generateSequenceId(
         blockNumber,
         0,
@@ -210,6 +211,16 @@ class EntryPointSpec_Transactions
       val r2 =
         Await.result(resonse2.mapTo[GetTransactions.Res], timeout.duration)
       assert(r2.records.length == 4)
+
+      // 8. get_transaction_count with txTo
+      val resonse3 = singleRequest(
+        GetTransactionCount
+          .Req(owner = txTo, queryType = Some(GetTransactions.QueryType(TransactionRecord.RecordType.ERC20_TRANSFER))),
+        "get_transaction_count"
+      )
+      val r3 =
+        Await.result(resonse3.mapTo[GetTransactionCount.Res], timeout.duration)
+      assert(r3.count === 1)
     }
   }
 

@@ -31,4 +31,9 @@ trait TransactionRecordService {
       sort: SortingType,
       paging: CursorPaging
     ): Future[Seq[TransactionRecord]]
+
+  def getRecordsCountByOwner(
+      owner: String,
+      queryType: Option[GetTransactions.QueryType]
+    ): Future[Int]
 }

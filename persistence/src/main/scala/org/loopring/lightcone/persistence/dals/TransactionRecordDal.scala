@@ -43,6 +43,11 @@ trait TransactionRecordDal
       sort: SortingType,
       paging: CursorPaging
     ): Future[Seq[TransactionRecord]]
+
+  def getRecordsCountByOwner(
+      owner: String,
+      queryType: Option[GetTransactions.QueryType]
+    ): Future[Int]
 }
 
 class TransactionRecordDalImpl(
@@ -97,13 +102,25 @@ class TransactionRecordDalImpl(
       filters = filters.filter(_.sequenceId > paging.cursor)
     }
     filters = if (sort == SortingType.ASC) {
-      filters.sortBy(c => (c.blockNumber.asc, c.txIndex.asc, c.logIndex.asc))
+      filters.sortBy(_.sequenceId)
     } else {
-      filters.sortBy(c => (c.blockNumber.desc, c.txIndex.desc, c.logIndex.desc))
+      filters.sortBy(_.sequenceId.desc)
     }
     if (paging.size > 0) {
       filters = filters.take(paging.size)
     }
     db.run(filters.result)
+  }
+
+  def getRecordsCountByOwner(
+      owner: String,
+      queryType: Option[GetTransactions.QueryType]
+    ): Future[Int] = {
+    var filters = query
+      .filter(_.owner === owner)
+    if (queryType.nonEmpty) {
+      filters = filters.filter(_.recordType === queryType.get.value)
+    }
+    db.run(filters.size.result)
   }
 }

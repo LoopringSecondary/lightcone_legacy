@@ -62,4 +62,9 @@ class TransactionRecordServiceImpl @Inject()(
       paging: CursorPaging
     ): Future[Seq[TransactionRecord]] =
     getDal(owner).getRecordsByOwner(owner, queryType, sort, paging)
+
+  def getRecordsCountByOwner(
+      owner: String,
+      queryType: Option[GetTransactions.QueryType]
+    ): Future[Int] = getDal(owner).getRecordsCountByOwner(owner, queryType)
 }

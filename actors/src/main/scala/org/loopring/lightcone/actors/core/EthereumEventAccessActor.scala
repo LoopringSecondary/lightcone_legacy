@@ -25,7 +25,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
-import org.loopring.lightcone.proto.{TransactionRecord, _}
+import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // main owner: 杜永丰
@@ -65,6 +65,8 @@ object EthereumEventAccessActor extends ShardedByAddress {
     case req: OrderFilledEvent =>
       req.owner
     case req: GetTransactions.Req =>
+      req.owner
+    case req: GetTransactionCount.Req =>
       req.owner
   }
 }
@@ -186,6 +188,11 @@ class EthereumEventAccessActor(
         .map(GetTransactions.Res(_))
         .sendTo(sender)
 
+    case req: GetTransactionCount.Req =>
+      dbModule.transactionRecordService
+        .getRecordsCountByOwner(req.owner, req.queryType)
+        .map(GetTransactionCount.Res(_))
+        .sendTo(sender)
   }
 
 }

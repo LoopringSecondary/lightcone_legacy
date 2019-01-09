@@ -218,3 +218,14 @@ message GetTransactions {
         repeated TransactionRecord records = 1;
     }
 }
+
+message GetTransactionCount {
+    message Req {
+        string                     owner       = 1;
+        GetTransactions.QueryType  query_type  = 2;
+    }
+
+    message Res {
+        int32 count = 1;
+    }
+}
