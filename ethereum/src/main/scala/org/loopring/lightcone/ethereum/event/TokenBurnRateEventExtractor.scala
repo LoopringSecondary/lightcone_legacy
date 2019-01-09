@@ -16,14 +16,20 @@
 
 package org.loopring.lightcone.ethereum.event
 
+import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
-import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
+import scala.collection.JavaConverters._
 
-class TokenBurnRateEventExtractor(
-    rateMap: Map[String, Int],
-    base: Int)
+class TokenBurnRateEventExtractor(config: Config)
     extends DataExtractor[TokenBurnRateChangedEvent] {
+
+  val rateMap = config
+    .getConfigList("loopring_protocol.burn-rate-table.tiers")
+    .asScala
+    .map(config => config.getInt("tier") -> config.getInt("rate"))
+    .toMap
+  val base = config.getInt("loopring_protocol.burn-rate-table.base")
 
   def extract(
       tx: Transaction,
@@ -38,7 +44,7 @@ class TokenBurnRateEventExtractor(
             TokenBurnRateChangedEvent(
               header = Some(header.withLogIndex(log._2)),
               token = event.add,
-              burnRate = rateMap(Address(event.add).toString) / base.toDouble
+              burnRate = rateMap(event.tier.intValue()) / base.toDouble
             )
           )
         case _ =>
