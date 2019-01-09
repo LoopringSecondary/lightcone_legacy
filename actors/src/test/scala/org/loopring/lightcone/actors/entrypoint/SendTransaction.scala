@@ -20,10 +20,10 @@ import org.loopring.lightcone.actors.ethereum.{
   ringSubmitterAbi,
   EthereumAccessActor
 }
-import org.loopring.lightcone.actors.support.{CommonSpec, EthereumSupport}
+import org.loopring.lightcone.actors.support.{ CommonSpec, EthereumSupport }
 import org.loopring.lightcone.ethereum.abi.SubmitRingsFunction
 import org.loopring.lightcone.ethereum.ethereum.getSignedTxData
-import org.loopring.lightcone.ethereum.data.{Address, Transaction}
+import org.loopring.lightcone.ethereum.data.{ Address, Transaction }
 import org.loopring.lightcone.proto.EthGetBalance
 import org.scalatest.WordSpec
 import org.web3j.crypto.Credentials
@@ -33,33 +33,22 @@ import akka.pattern._
 import scala.concurrent.Await
 
 class SendTransaction
-    extends CommonSpec("""akka.cluster.roles=[
-                         | "order_handler",
-                         | "multi_account_manager",
-                         | "market_manager",
-                         | "orderbook_manager",
-                         | "gas_price",
-                         | "ethereum_access",
-                         | "ethereum_query",
-                         | "ethereum_client_monitor",
-                         | "ring_settlement"]""".stripMargin)
-    with EthereumSupport {
+  extends CommonSpec
+  with EthereumSupport {
   "send an orderbook request" must {
     "receive a response without value" in {
 
       val ethereumAccessorActor = actors.get(EthereumAccessActor.name)
       val f = (ethereumAccessorActor ? EthGetBalance.Req(
         address = Address("0xe5fd5be7c9a50358302de473db7818c7a91d1ec0").toString,
-        tag = "latest"
-      ))
+        tag = "latest"))
 
       val r = Await.result(f, timeout.duration)
       println(r)
 
       implicit val credentials: Credentials =
         Credentials.create(
-          "0x4e37ce13f9370ea0f86da42ffb24ef0f177ba7a1d777a78d050320e425a591df"
-        )
+          "0x4e37ce13f9370ea0f86da42ffb24ef0f177ba7a1d777a78d050320e425a591df")
 
       val tx = Transaction(
         inputData = "",
@@ -67,8 +56,7 @@ class SendTransaction
         gasLimit = BigInt("210000"),
         gasPrice = BigInt("200000"),
         to = "0xe5fd5be7c9a50358302de473db7818c7a91d1ec0",
-        value = BigInt("1000000000000000000")
-      )
+        value = BigInt("1000000000000000000"))
       val rawTx = getSignedTxData(tx)
 
       println(s"${rawTx}")

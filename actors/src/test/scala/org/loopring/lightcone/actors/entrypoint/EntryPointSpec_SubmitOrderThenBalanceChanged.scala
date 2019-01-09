@@ -18,27 +18,24 @@ package org.loopring.lightcone.actors.entrypoint
 
 import akka.pattern._
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.actors.core.{
-  EthereumQueryActor,
-  MultiAccountManagerActor
-}
+import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 class EntryPointSpec_SubmitOrderThenBalanceChanged
-    extends CommonSpec
-    with JsonrpcSupport
-    with HttpSupport
-    with OrderHandleSupport
-    with MultiAccountManagerSupport
-    with EthereumQueryMockSupport
-    with MarketManagerSupport
-    with OrderbookManagerSupport
-    with OrderGenerateSupport {
+  extends CommonSpec
+  with JsonrpcSupport
+  with HttpSupport
+  with OrderHandleSupport
+  with MultiAccountManagerSupport
+  with EthereumQueryMockSupport
+  with MarketManagerSupport
+  with OrderbookManagerSupport
+  with OrderGenerateSupport {
 
   "submit an order when the allowance is not enough" must {
     "store it but the depth is empty until allowance is enough" in {
@@ -46,16 +43,14 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       //设置余额
       val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances.Res(
         "",
-        Map("" -> BalanceAndAllowance("25".zeros(LRC_TOKEN.decimals)))
-      )
+        Map("" -> BalanceAndAllowance("25".zeros(LRC_TOKEN.decimals))))
       Await.result(f, timeout.duration)
 
       //下单情况
       val rawOrders = (0 until 1) map { i =>
         createRawOrder(
           amountS = "20".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
       }
 
       val f1 = Future.sequence(rawOrders.map { o =>
@@ -65,8 +60,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       val res = Await.result(f1, timeout.duration)
 
       info(
-        "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING"
-      )
+        "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING")
       val assertOrderFromDbF = Future.sequence(rawOrders.map { o =>
         for {
           orderOpt <- dbModule.orderService.getOrder(o.hash)
@@ -87,8 +81,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
-      )
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address)))
       val orderbookF = singleRequest(getOrderBook, "orderbook")
 
       val orderbookRes = Await.result(orderbookF, timeout.duration)
@@ -106,16 +99,12 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
           Map(
             "" -> BalanceAndAllowance(
               "25".zeros(LRC_TOKEN.decimals),
-              "25".zeros(LRC_TOKEN.decimals)
-            )
-          )
-        )
+              "25".zeros(LRC_TOKEN.decimals))))
       Await.result(setAllowanceF, timeout.duration)
       actors.get(MultiAccountManagerActor.name) ? AddressAllowanceUpdated(
         rawOrders(0).owner,
         LRC_TOKEN.address,
-        ByteString.copyFrom("15".zeros(LRC_TOKEN.decimals).toByteArray)
-      )
+        ByteString.copyFrom("15".zeros(LRC_TOKEN.decimals).toByteArray))
 
       Thread.sleep(1000)
       info("the depth should not be empty after allowance has been set.")
@@ -130,7 +119,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
             sells(0).price == "20.000000" &&
               sells(0).amount == "12.50000" &&
               sells(0).total == "0.62500" //todo:是不是个bug？ total 可以为小数吗？
-          )
+              )
           assert(buys.isEmpty)
         case _ => assert(false)
       }

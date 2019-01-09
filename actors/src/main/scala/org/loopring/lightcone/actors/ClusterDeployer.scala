@@ -38,32 +38,31 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.slf4s.Logging
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
-class ClusterDeployer @Inject()(
-    implicit
-    @Named("ignore-cluster-roles") deployActorsIgnoringRoles: Boolean,
-    actors: Lookup[ActorRef],
-    actorMaterializer: ActorMaterializer,
-    brb: EthereumBatchCallRequestBuilder,
-    cluster: Cluster,
-    config: Config,
-    dbModule: DatabaseModule,
-    dustOrderEvaluator: DustOrderEvaluator,
-    ec: ExecutionContext,
-    ece: ExecutionContextExecutor,
-    rb: EthereumCallRequestBuilder,
-    rie: RingIncomeEvaluator,
-    supportedMarkets: SupportedMarkets,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    tokenManager: TokenManager,
-    tve: TokenValueEvaluator,
-    system: ActorSystem)
-    extends Object
-    with Logging {
+class ClusterDeployer @Inject() (
+  implicit @Named("deploy-actors-ignoring-roles") deployActorsIgnoringRoles: Boolean,
+  actors: Lookup[ActorRef],
+  actorMaterializer: ActorMaterializer,
+  brb: EthereumBatchCallRequestBuilder,
+  cluster: Cluster,
+  config: Config,
+  dbModule: DatabaseModule,
+  dustOrderEvaluator: DustOrderEvaluator,
+  ec: ExecutionContext,
+  ece: ExecutionContextExecutor,
+  rb: EthereumCallRequestBuilder,
+  rie: RingIncomeEvaluator,
+  supportedMarkets: SupportedMarkets,
+  timeProvider: TimeProvider,
+  timeout: Timeout,
+  tokenManager: TokenManager,
+  tve: TokenValueEvaluator,
+  system: ActorSystem)
+  extends Object
+  with Logging {
 
   def deploy() {
     dbModule.createTables()
@@ -82,36 +81,28 @@ class ClusterDeployer @Inject()(
       MessageValidationActor(
         new MultiAccountManagerMessageValidator(),
         MultiAccountManagerActor.name,
-        MultiAccountManagerMessageValidator.name
-      )
-    )
+        MultiAccountManagerMessageValidator.name))
 
     actors.add(
       DatabaseQueryMessageValidator.name,
       MessageValidationActor(
         new DatabaseQueryMessageValidator(),
         DatabaseQueryActor.name,
-        DatabaseQueryMessageValidator.name
-      )
-    )
+        DatabaseQueryMessageValidator.name))
 
     actors.add(
       EthereumQueryMessageValidator.name,
       MessageValidationActor(
         new EthereumQueryMessageValidator(),
         EthereumQueryActor.name,
-        EthereumQueryMessageValidator.name
-      )
-    )
+        EthereumQueryMessageValidator.name))
 
     actors.add(
       OrderbookManagerMessageValidator.name,
       MessageValidationActor(
         new OrderbookManagerMessageValidator(),
         OrderbookManagerActor.name,
-        OrderbookManagerMessageValidator.name
-      )
-    )
+        OrderbookManagerMessageValidator.name))
 
     Cluster(system).registerOnMemberUp {
       //-----------deploy sharded actors-----------
@@ -125,12 +116,10 @@ class ClusterDeployer @Inject()(
 
       actors.add(
         EthereumEventExtractorActor.name,
-        EthereumEventExtractorActor.start
-      )
+        EthereumEventExtractorActor.start)
       actors.add(
         EthereumEventPersistorActor.name,
-        EthereumEventPersistorActor.start
-      )
+        EthereumEventPersistorActor.start)
 
       actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
@@ -142,8 +131,7 @@ class ClusterDeployer @Inject()(
 
       actors.add(
         RingSettlementManagerActor.name,
-        RingSettlementManagerActor.start
-      )
+        RingSettlementManagerActor.start)
 
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
 
@@ -151,9 +139,11 @@ class ClusterDeployer @Inject()(
       actors.add(EntryPointActor.name, EntryPointActor.start)
 
       //-----------deploy JSONRPC service-----------
-      if (cluster.selfRoles.contains("jsonrpc")) {
-        val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
-        with RpcBinding
+      if (deployActorsIgnoringRoles ||
+        cluster.selfRoles.contains("jsonrpc")) {
+        val server = new JsonRpcServer(
+          config,
+          actors.get(EntryPointActor.name)) with RpcBinding
         server.start
       }
     }
