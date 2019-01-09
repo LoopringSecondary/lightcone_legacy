@@ -45,6 +45,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
 
   mySqlContainer.starting()
 
+  // TODO(hongyu): move ETH container to EthereumSupport.scala?
   val ethContainer = GenericContainer(
     "trufflesuite/ganache-cli:latest",
     exposedPorts = Seq(8545),
