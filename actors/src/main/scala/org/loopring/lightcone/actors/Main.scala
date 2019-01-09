@@ -59,7 +59,7 @@ object Main extends App with Logging {
 
   injector.instance[ClusterDeployer].deploy()
 
-  println(s"Hit RETURN to terminate")
+  println(s"type `stopstopstop` to terminate")
 
   while ("stopstopstop" != StdIn.readLine())
 
