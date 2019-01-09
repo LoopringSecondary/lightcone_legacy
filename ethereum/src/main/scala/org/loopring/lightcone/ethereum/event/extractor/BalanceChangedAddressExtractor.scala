@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.ethereum.event.extractor
+
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{AddressBalanceUpdated, Transaction, TransactionReceipt}
+import org.loopring.lightcone.proto.{
+  AddressBalanceUpdated,
+  Transaction,
+  TransactionReceipt
+}
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
