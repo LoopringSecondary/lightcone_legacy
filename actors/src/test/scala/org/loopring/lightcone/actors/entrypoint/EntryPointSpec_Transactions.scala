@@ -85,15 +85,16 @@ class EntryPointSpec_Transactions
         txIndex = 1,
         logIndex = 0
       )
+      val actor = actors.get(EthereumEventAccessActor.name)
       // 1. eth transfer
-      actors.get(EthereumEventAccessActor.name) ! TransferEvent(
+      actor ! TransferEvent(
         header = Some(header1),
         owner = txFrom,
         from = txFrom,
         to = txTo,
         amount = ByteString.copyFrom("11", "utf-8")
       )
-      actors.get(EthereumEventAccessActor.name) ! TransferEvent(
+      actor ! TransferEvent(
         header = Some(header1),
         owner = txTo,
         from = txFrom,
@@ -107,7 +108,7 @@ class EntryPointSpec_Transactions
         txHash =
           "0x026331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
       )
-      actors.get(EthereumEventAccessActor.name) ! TransferEvent(
+      actor ! TransferEvent(
         header = Some(header2),
         owner = txFrom,
         from = txFrom,
@@ -115,7 +116,7 @@ class EntryPointSpec_Transactions
         token = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
         amount = ByteString.copyFrom("11", "utf-8")
       )
-      actors.get(EthereumEventAccessActor.name) ! TransferEvent(
+      actor ! TransferEvent(
         header = Some(header2),
         owner = txTo,
         from = txFrom,
@@ -131,7 +132,7 @@ class EntryPointSpec_Transactions
         txHash =
           "0x036331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
       )
-      actors.get(EthereumEventAccessActor.name) ! OrdersCancelledEvent(
+      actor ! OrdersCancelledEvent(
         header = Some(header3),
         owner = txFrom,
         orderHashes = Seq("0x1", "0x2")
@@ -144,7 +145,7 @@ class EntryPointSpec_Transactions
         txHash =
           "0x046331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
       )
-      actors.get(EthereumEventAccessActor.name) ! CutoffEvent(
+      actor ! CutoffEvent(
         header = Some(header4),
         owner = txTo,
         tradingPair = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
@@ -176,19 +177,19 @@ class EntryPointSpec_Transactions
         txHash =
           "0x056331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
       )
-      actors.get(EthereumEventAccessActor.name) ! OrderFilledEvent(
+      actor ! OrderFilledEvent(
         header = Some(header5),
         owner = txFrom,
         orderHash = orderHash
       )
-      actors.get(EthereumEventAccessActor.name) ! OrderFilledEvent(
+      actor ! OrderFilledEvent(
         header = Some(header5),
         owner = txTo,
         orderHash = orderHash
       )
 
       // 6. mock failed
-      actors.get(EthereumEventAccessActor.name) ! OrderFilledEvent(
+      actor ! OrderFilledEvent(
         header = Some(header5),
         owner = txTo,
         orderHash = orderHash
