@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.extractor
+package org.loopring.lightcone.ethereum.event
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._

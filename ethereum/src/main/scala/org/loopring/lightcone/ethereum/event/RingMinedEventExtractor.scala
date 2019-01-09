@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event.extractor
+package org.loopring.lightcone.ethereum.event
 
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.ethereum.event._
 
 class RingMinedEventExtractor() extends DataExtractor[PRingMinedEvent] {
 
