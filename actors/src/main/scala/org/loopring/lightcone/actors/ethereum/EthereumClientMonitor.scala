@@ -101,20 +101,23 @@ class EthereumClientMonitor(
       initialDalayInSeconds = checkIntervalSeconds
     )
   )
+  val poolSize = selfConfig.getInt("pool-size")
+
+  val nodesConfig = selfConfig.getConfigList("nodes").asScala.map { c =>
+    EthereumProxySettings
+      .Node(host = c.getString("host"), port = c.getInt("port"))
+  }
+
+  connectionPools = nodesConfig.zipWithIndex.map {
+    case (node, index) =>
+      val nodeName = s"ethereum_connector_http_$index"
+      val props =
+        Props(new HttpConnector(node))
+      context.actorOf(RoundRobinPool(poolSize).props(props), nodeName)
+  }
 
   override def preStart(): Unit = {
-    val poolSize = selfConfig.getInt("pool-size")
-    val nodesConfig = selfConfig.getConfigList("nodes").asScala.map { c =>
-      EthereumProxySettings
-        .Node(host = c.getString("host"), port = c.getInt("port"))
-    }
-    connectionPools = nodesConfig.zipWithIndex.map {
-      case (node, index) =>
-        val nodeName = s"ethereum_connector_http_$index"
-        val props =
-          Props(new HttpConnector(node))
-        context.actorOf(RoundRobinPool(poolSize).props(props), nodeName)
-    }
+    println(s"### nodesConfig ${nodesConfig}, ${connectionPools}")
 
     checkNodeHeight onComplete {
       case Success(_) =>
@@ -130,9 +133,10 @@ class EthereumClientMonitor(
 
   def initialReceive: Receive = {
     case Notify("initialized", _) =>
-      unstashAll()
       context.become(normalReceive)
-    case _ =>
+      unstashAll()
+    case msg =>
+      println(s"#### initialReceive stash ${msg}")
       stash()
   }
 
@@ -145,7 +149,7 @@ class EthereumClientMonitor(
   }
 
   def checkNodeHeight = {
-    log.debug("start scheduler check highest block...")
+    log.info("start scheduler check highest block...")
     val blockNumJsonRpcReq = JsonRpcReqWrapped(
       id = Random.nextInt(100),
       method = "eth_blockNumber",

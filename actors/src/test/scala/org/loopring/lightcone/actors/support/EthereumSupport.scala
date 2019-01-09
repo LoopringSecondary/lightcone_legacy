@@ -44,4 +44,5 @@ trait EthereumSupport {
   }
   actors.add(EthereumAccessActor.name, EthereumAccessActor.startSingleton())
   actors.add(EthereumClientMonitor.name, EthereumClientMonitor.startSingleton())
+
 }
