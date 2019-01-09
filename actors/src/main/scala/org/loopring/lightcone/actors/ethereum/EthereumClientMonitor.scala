@@ -38,6 +38,8 @@ object EthereumClientMonitor {
   val name = "ethereum_client_monitor"
 
   def start(
+      connectionPools: Seq[ActorRef]
+    )(
       implicit
       system: ActorSystem,
       config: Config,
@@ -52,7 +54,8 @@ object EthereumClientMonitor {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new EthereumClientMonitor()),
+        singletonProps =
+          Props(new EthereumClientMonitor(connectionPools = connectionPools)),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
@@ -70,7 +73,8 @@ object EthereumClientMonitor {
 }
 
 class EthereumClientMonitor(
-    val name: String = EthereumClientMonitor.name
+    val name: String = EthereumClientMonitor.name,
+    connectionPools: Seq[ActorRef] = Nil
   )(
     implicit
     system: ActorSystem,
@@ -91,7 +95,6 @@ class EthereumClientMonitor(
 
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
-  var connectionPools: Seq[ActorRef] = Nil
   var nodes: Map[String, Long] = Map.empty
 
   val checkIntervalSeconds: Int = selfConfig.getInt("check-interval-seconds")
@@ -106,18 +109,6 @@ class EthereumClientMonitor(
   )
 
   override def preStart(): Unit = {
-    val poolSize = selfConfig.getInt("pool-size")
-    val nodesConfig = selfConfig.getConfigList("nodes").asScala.map { c =>
-      EthereumProxySettings
-        .Node(host = c.getString("host"), port = c.getInt("port"))
-    }
-    connectionPools = nodesConfig.zipWithIndex.map {
-      case (node, index) =>
-        val nodeName = s"ethereum_connector_http_$index"
-        val props =
-          Props(new HttpConnector(node))
-        context.actorOf(RoundRobinPool(poolSize).props(props), nodeName)
-    }
 
     checkNodeHeight onComplete {
       case Success(_) =>
@@ -133,8 +124,8 @@ class EthereumClientMonitor(
 
   def initialReceive: Receive = {
     case Notify("initialized", _) =>
-      unstashAll()
       context.become(normalReceive)
+      unstashAll()
     case _ =>
       stash()
   }

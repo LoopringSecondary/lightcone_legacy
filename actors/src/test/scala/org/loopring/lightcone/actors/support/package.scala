@@ -60,5 +60,4 @@ package object support {
     "REP",
     1000
   )
-
 }

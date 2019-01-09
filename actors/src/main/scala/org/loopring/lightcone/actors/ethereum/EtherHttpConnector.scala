@@ -33,7 +33,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 import scala.util._
 
-private[ethereum] class HttpConnector(
+class HttpConnector(
     node: EthereumProxySettings.Node
   )(
     implicit

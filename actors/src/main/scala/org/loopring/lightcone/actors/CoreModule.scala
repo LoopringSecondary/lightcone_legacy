@@ -67,7 +67,6 @@ class CoreModule(config: Config)
       .toInstance(system.dispatchers.lookup("db-execution-context"))
 
     // --- bind db configs ---------------------
-
     bindDatabaseConfigProviderForNames(
       "dbconfig-dal-token-metadata",
       "dbconfig-dal-order",

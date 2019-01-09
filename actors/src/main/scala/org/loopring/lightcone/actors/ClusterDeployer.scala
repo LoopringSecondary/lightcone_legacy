@@ -135,7 +135,7 @@ class ClusterDeployer @Inject()(
       actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
       //-----------deploy singleton actors-----------
-      actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
+      actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start(Nil)) // TODO(hongyu): Nil?
       actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)

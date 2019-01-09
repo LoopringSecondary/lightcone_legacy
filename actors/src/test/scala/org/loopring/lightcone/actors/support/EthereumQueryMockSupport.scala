@@ -61,12 +61,15 @@ trait EthereumQueryMockSupport {
         sender !
           GetBalanceAndAllowances.Res(
             req.address,
-            Map(
-              req.tokens(0) -> BalanceAndAllowance(
-                ByteString.copyFrom(balance.toByteArray),
-                ByteString.copyFrom(allowance.toByteArray)
+            req.tokens.map { t =>
+              (
+                t,
+                BalanceAndAllowance(
+                  ByteString.copyFrom(balance.toByteArray),
+                  ByteString.copyFrom(allowance.toByteArray)
+                )
               )
-            )
+            }.toMap
           )
 
       case GetFilledAmount.Req(orderIds) =>

@@ -26,6 +26,7 @@ import scala.concurrent.duration._
 class RingSettlementSpec
     extends CommonSpec
     with EthereumSupport
+    with EthereumQueryMockSupport
     with MarketManagerSupport
     with MultiAccountManagerSupport
     with OrderGenerateSupport

@@ -23,7 +23,8 @@ import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.lib._
 import org.scalatest.BeforeAndAfterAll
 import org.junit.runner.Description
-import com.dimafeng.testcontainers.MySQLContainer
+import org.testcontainers.containers.wait.strategy.Wait
+import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
@@ -35,15 +36,22 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit private val suiteDescription =
     Description.createSuiteDescription(this.getClass)
 
-  val container = new MySQLContainer(
+  val mySqlContainer = new MySQLContainer(
     mysqlImageVersion = Some("mysql:5.7.18"),
     databaseName = Some("lightcone_test"),
     mysqlUsername = Some("test"),
     mysqlPassword = Some("test")
   )
-  container.starting()
 
-  // // TODO(hongyu): Why we need to wait?
+  mySqlContainer.starting()
+
+  val ethContainer = GenericContainer(
+    "trufflesuite/ganache-cli:latest",
+    exposedPorts = Seq(8545),
+    waitStrategy = Wait.forListeningPort()
+  )
+  ethContainer.starting()
+
   Thread.sleep(10000)
 
   implicit val dbConfig: DatabaseConfig[JdbcProfile] =
@@ -52,13 +60,33 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
       ConfigFactory.parseString(s"""
         profile = "slick.jdbc.MySQLProfile$$"
         db {
-          url="${container.jdbcUrl}?useSSL=false"
-          user="${container.username}"
-          password="${container.password}"
-          driver="${container.driverClassName}"
+          url="${mySqlContainer.jdbcUrl}?useSSL=false"
+          user="${mySqlContainer.username}"
+          password="${mySqlContainer.password}"
+          driver="${mySqlContainer.driverClassName}"
           maxThreads = 4
         }""")
     )
+
+  override val ethConfigStr =
+    s"""ethereum_client_monitor {
+       |    pool-size = 1
+       |    check-interval-seconds = 10
+       |    healthy-threshold = 0.2
+       |    nodes = [
+       |        {
+       |        host = "${ethContainer.containerIpAddress}"
+       |        port = ${ethContainer
+         .mappedPort(8545)}
+       |        }
+       |    ]
+       |}""".stripMargin
+
+  println(
+    s""" ### host = "${ethContainer.containerIpAddress}" port = ${ethContainer
+      .mappedPort(8545)} """
+  )
+
   implicit val tokenMetadataDal = new TokenMetadataDalImpl
   implicit val orderDal = new OrderDalImpl
   implicit val tradeDal = new TradeDalImpl
@@ -95,7 +123,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   dbModule.createTables()
   actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
 
-  //  override val container = new MySQLContainer(
+  //  override val mySqlContainer = new MySQLContainer(
   //    mysqlImageVersion = Some("mysql:5.7.18"),
   //    databaseName = Some("lightcone_test"),
   //    mysqlUsername = Some("test"),
@@ -110,10 +138,10 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   //        ConfigFactory.parseString(s"""
   //        profile = "slick.jdbc.MySQLProfile$$"
   //        db {
-  //          url="${container.jdbcUrl}?useSSL=false"
-  //          user="${container.username}"
-  //          password="${container.password}"
-  //          driver="${container.driverClassName}"
+  //          url="${mySqlContainer.jdbcUrl}?useSSL=false"
+  //          user="${mySqlContainer.username}"
+  //          password="${mySqlContainer.password}"
+  //          driver="${mySqlContainer.driverClassName}"
   //          maxThreads = 4
   //        }""")
   //      )
