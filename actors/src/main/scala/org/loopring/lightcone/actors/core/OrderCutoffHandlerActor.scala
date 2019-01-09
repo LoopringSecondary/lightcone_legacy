@@ -28,6 +28,7 @@ import org.loopring.lightcone.proto.ErrorCode._
 import scala.concurrent.{ExecutionContext, Future}
 import org.loopring.lightcone.persistence.DatabaseModule
 
+// Owner: Yongfeng
 object OrderCutoffHandlerActor {
   val name = "order_cutoff_handler"
 

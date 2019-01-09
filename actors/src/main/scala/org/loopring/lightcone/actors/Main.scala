@@ -26,6 +26,7 @@ import akka.actor._
 import scala.io.StdIn
 import java.io.File
 
+// Owner: Daniel
 object Main extends App with Logging {
 
   val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)

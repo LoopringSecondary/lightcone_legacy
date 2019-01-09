@@ -32,6 +32,7 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.util.Random
 
+// Owner: Hongyu
 object RingSettlementManagerActor {
   val name = "ring_settlement"
 

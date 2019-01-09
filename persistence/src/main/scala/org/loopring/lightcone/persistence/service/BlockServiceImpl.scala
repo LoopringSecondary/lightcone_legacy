@@ -27,7 +27,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class BlockServiceImpl @Inject()(
     implicit
     blockDal: BlockDal,
-    @Named("db-execution-context") val ec: ExecutionContext)
+    val ec: ExecutionContext)
     extends BlockService {
 
   def saveBlock(block: BlockData): Future[ErrorCode] =

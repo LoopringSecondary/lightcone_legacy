@@ -30,7 +30,7 @@ import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
-// main owner: 于红雨
+// Owner: Yongfeng
 object OrderPersistenceActor extends ShardedEvenly {
   val name = "order_handler"
 

@@ -16,8 +16,14 @@
 
 package org.loopring.lightcone.actors
 
+import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
+import com.typesafe.config.ConfigFactory
+import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.TokenMeta
+import org.testcontainers.containers.wait.strategy.Wait
+import slick.basic.DatabaseConfig
+import slick.jdbc.JdbcProfile
 
 package object support {
 
@@ -60,4 +66,62 @@ package object support {
     "REP",
     1000
   )
+
+  // TODO(hongyu): All code below should be moved to other places, such as EthereumSupport.scala
+  // and DatabaseModuleSupport.scala.
+
+  implicit private val suiteDescription =
+    Description.createSuiteDescription(this.getClass)
+
+  val mysqlContainer = new MySQLContainer(
+    mysqlImageVersion = Some("mysql:5.7.18"),
+    databaseName = Some("lightcone_test"),
+    mysqlUsername = Some("test"),
+    mysqlPassword = Some("test")
+  )
+
+  mysqlContainer.starting()
+
+  val ethContainer = GenericContainer(
+    "trufflesuite/ganache-cli:latest",
+    exposedPorts = Seq(8545),
+    waitStrategy = Wait.forListeningPort()
+  )
+
+  ethContainer.starting()
+
+  Thread.sleep(10000)
+
+  val dbConfig1: DatabaseConfig[JdbcProfile] =
+    DatabaseConfig.forConfig[JdbcProfile](
+      "",
+      ConfigFactory.parseString(s"""
+        profile = "slick.jdbc.MySQLProfile$$"
+        db {
+          url="${mysqlContainer.jdbcUrl}?useSSL=false"
+          user="${mysqlContainer.username}"
+          password="${mysqlContainer.password}"
+          driver="${mysqlContainer.driverClassName}"
+          maxThreads = 4
+        }""")
+    )
+
+  val ethConfigStr = s"""ethereum_client_monitor {
+                        |    pool-size = 1
+                        |    check-interval-seconds = 10
+                        |    healthy-threshold = 0.2
+                        |    nodes = [
+                        |        {
+                        |        host = "${ethContainer.containerIpAddress}"
+                        |        port = ${ethContainer.mappedPort(8545)}
+                        |        }
+                        |    ]
+                        |}""".stripMargin
+
+  println(s"""
+    host = ${ethContainer.containerIpAddress}
+    port = ${ethContainer.mappedPort(8545)}
+    """)
+
+  Thread.sleep(2000)
 }

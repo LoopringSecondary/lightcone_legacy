@@ -29,7 +29,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
-// main owner: 杜永丰
+// Owner: Yongfeng
 object DatabaseQueryActor extends ShardedEvenly {
   val name = "database_query"
 

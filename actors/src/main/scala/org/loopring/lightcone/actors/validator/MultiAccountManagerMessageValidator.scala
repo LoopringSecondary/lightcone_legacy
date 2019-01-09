@@ -23,6 +23,8 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 
+// Owner: Hongyu
+
 object MultiAccountManagerMessageValidator {
   val name = "multi_account_manager_validator"
 }

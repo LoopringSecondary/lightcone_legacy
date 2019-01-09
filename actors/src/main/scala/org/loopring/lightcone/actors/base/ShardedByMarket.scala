@@ -21,6 +21,7 @@ import org.loopring.lightcone.proto.MarketId
 import org.web3j.utils.Numeric
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 
+// Owner: Daniel
 trait ShardedByMarket extends Sharded {
   val extractMarketId: PartialFunction[Any, MarketId]
 

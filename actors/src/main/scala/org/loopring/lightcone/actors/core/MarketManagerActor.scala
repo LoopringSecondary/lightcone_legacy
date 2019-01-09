@@ -40,7 +40,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-// main owner: 于红雨
+// Owenr: Hongyu
 object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
