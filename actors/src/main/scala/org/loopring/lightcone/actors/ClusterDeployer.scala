@@ -67,10 +67,7 @@ class ClusterDeployer @Inject()(
   def deploy() {
 
     //-----------deploy local actors-----------
-    val listener = BadMessageListener.start
-    system.eventStream.subscribe(listener, classOf[UnhandledMessage])
-    system.eventStream.subscribe(listener, classOf[DeadLetter])
-
+    actors.add(BadMessageListener.name, BadMessageListener.start)
     actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
 
     actors.add(
