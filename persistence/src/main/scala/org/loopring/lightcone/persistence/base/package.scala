@@ -35,16 +35,6 @@ package object base {
     MappedColumnType
       .base[T, Int](enum => enum.value, int => enumCompanion.fromValue(int))
 
-  def transferEventColumnType(): BaseColumnType[Option[TransferEvent]] =
-    MappedColumnType
-      .base[Option[TransferEvent], Array[Byte]](
-        {
-          case Some(e) => e.toByteArray
-          case None    => TransferEvent().toByteArray
-        },
-        bytes => Some(TransferEvent.parseFrom(bytes))
-      )
-
   def eventDataColumnType(): BaseColumnType[TransactionRecord.EventData] =
     MappedColumnType
       .base[TransactionRecord.EventData, Array[Byte]](

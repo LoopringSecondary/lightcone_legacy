@@ -216,7 +216,13 @@ class EntryPointSpec_Transactions
       // 8. get_transaction_count with txTo
       val resonse3 = singleRequest(
         GetTransactionCount
-          .Req(owner = txTo, queryType = Some(GetTransactions.QueryType(TransactionRecord.RecordType.ERC20_TRANSFER))),
+          .Req(
+            owner = txTo,
+            queryType = Some(
+              GetTransactions
+                .QueryType(TransactionRecord.RecordType.ERC20_TRANSFER)
+            )
+          ),
         "get_transaction_count"
       )
       val r3 =
