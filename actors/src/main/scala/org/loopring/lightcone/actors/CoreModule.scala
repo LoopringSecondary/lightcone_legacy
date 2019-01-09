@@ -42,8 +42,14 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
+import org.slf4s.Logging
 
-class CoreModule(config: Config) extends AbstractModule with ScalaModule {
+class CoreModule(config: Config)
+    extends AbstractModule
+    with ScalaModule
+    with Logging {
+
+  private var dbConfigMap = Map.empty[String, DatabaseConfig[JdbcProfile]]
 
   override def configure(): Unit = {
 
@@ -61,18 +67,15 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       .toInstance(system.dispatchers.lookup("db-execution-context"))
 
     // --- bind db configs ---------------------
-    // TODO(yongfeng): use different config for different dals
-    bindDBForNames(
-      DatabaseConfig.forConfig("db.default", config),
-      Seq(
-        "dbconfig-dal-token-metadata",
-        "dbconfig-dal-order",
-        "dbconfig-dal-trade",
-        "dbconfig-dal-token-balance",
-        "dbconfig-dal-block",
-        "dbconfig-dal-settlement-tx",
-        "dbconfig-dal-order-status-monitor"
-      )
+
+    bindDatabaseConfigProviderForNames(
+      "dbconfig-dal-token-metadata",
+      "dbconfig-dal-order",
+      "dbconfig-dal-trade",
+      "dbconfig-dal-token-balance",
+      "dbconfig-dal-block",
+      "dbconfig-dal-settlement-tx",
+      "dbconfig-dal-order-status-monitor"
     )
 
     // --- bind dals ---------------------
@@ -121,14 +124,31 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       .toInstance(false)
   }
 
-  private def bindDBForNames(
-      instance: DatabaseConfig[JdbcProfile],
-      names: Seq[String]
-    ) = {
+  private def bindDatabaseConfigProviderForNames(names: String*) = {
+    bind[DatabaseConfig[JdbcProfile]]
+      .toProvider(new Provider[DatabaseConfig[JdbcProfile]] {
+        def get() = getDbConfigByKey("db.default")
+      })
+
     names.foreach { name =>
       bind[DatabaseConfig[JdbcProfile]]
         .annotatedWithName(name)
-        .toInstance(instance)
+        .toProvider(new Provider[DatabaseConfig[JdbcProfile]] {
+          def get() = getDbConfigByKey(s"db.${name}")
+        })
+    }
+  }
+
+  private def getDbConfigByKey(key: String) = {
+    dbConfigMap.get(key) match {
+      case None =>
+        val dbConfig: DatabaseConfig[JdbcProfile] =
+          DatabaseConfig.forConfig(key, config)
+        log.info(s"creating DatabaseConfig instance for config key: $key")
+        dbConfigMap += key -> dbConfig
+        dbConfig
+      case Some(dbConfig) =>
+        dbConfig
     }
   }
 }
