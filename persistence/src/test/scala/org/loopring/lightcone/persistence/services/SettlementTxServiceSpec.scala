@@ -26,9 +26,10 @@ import scala.concurrent.duration._
 class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
   def getService = new SettlementTxServiceImpl()
 
-  def createTables() = {
-    new SettlementTxDalImpl().createTable()
-  }
+  def createTables(): Future[Any] =
+    for {
+      r <- new SettlementTxDalImpl().createTable()
+    } yield r
 
   private def testSave(
       txHash: String,

@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.persistence.dals.SettlementTxDal
+import org.loopring.lightcone.persistence.base._
+import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
-import scala.concurrent.Future
+import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.JdbcProfile
+import slick.basic._
+import scala.concurrent._
 
-trait SettlementTxService {
+trait TransactionDal extends BaseDalImpl[TransactionTable, TransactionData] {}
 
-  val submitTxDal: SettlementTxDal
-  def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res]
-  // get all pending txs with given owner, from_nonce is a optional parameter(>=)
-  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res]
-
-  // update address's all txs status below or equals the given nonce to BLOCK
-  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res]
+class TransactionDalImpl(
+  )(
+    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    val ec: ExecutionContext)
+    extends TransactionDal {
+  val query = TableQuery[TransactionTable]
+  def getRowHash(row: TransactionData) = row.hash
 }

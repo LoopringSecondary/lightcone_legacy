@@ -26,7 +26,8 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
 class DatabaseModule @Inject()(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
+    implicit
+    val dbConfig: DatabaseConfig[JdbcProfile],
     val config: Config,
     @Named("db-execution-context") val ec: ExecutionContext)
     extends base.BaseDatabaseModule {
@@ -41,6 +42,12 @@ class DatabaseModule @Inject()(
   val orderStatusMonitorService: OrderStatusMonitorService =
     new OrderStatusMonitorServiceImpl()
 
+  val transactionRecordService: TransactionRecordService =
+    new TransactionRecordServiceImpl()
+
+  val transactionRecordSeparate =
+    config.getInt("separate.transaction_record")
+
   val tables = Seq(
     new TokenMetadataDalImpl(),
     new OrderDalImpl(),
@@ -48,9 +55,13 @@ class DatabaseModule @Inject()(
     new AddressDalImpl(),
     new TokenBalanceDalImpl(),
     new BlockDalImpl(),
+    new TransactionDalImpl(),
     new EventLogDalImpl(),
     new TokenTransferDalImpl(),
     new SettlementTxDalImpl(),
     new OrderStatusMonitorDalImpl()
-  )
+  ) ++
+    (0 until transactionRecordSeparate).map { index =>
+      new TransactionRecordDalImpl(index)
+    }
 }

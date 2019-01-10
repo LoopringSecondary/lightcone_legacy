@@ -17,9 +17,9 @@
 package org.loopring.lightcone.actors.entrypoint
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.actors.core.TransactionRecordActor
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.core.EthereumEventAccessActor
 import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.lib.EventAccessProvider
 import org.loopring.lightcone.proto.TransactionRecord.EventData
 import org.loopring.lightcone.proto._
 import scala.concurrent.{Await, Future}
@@ -35,6 +35,38 @@ class EntryPointSpec_Transactions
     with OrderHandleSupport
     with OrderGenerateSupport
     with EthereumEventAccessSupport {
+
+  private def testSave(
+      txHash: String,
+      txStatus: TxStatus,
+      blockNumber: Long,
+      txIndex: Int = 0,
+      logIndex: Int = 0,
+      owner: String,
+      txFrom: String,
+      txTo: String
+    ): Future[PersistTransactionRecord.Res] = {
+    val header = EventHeader(
+      txHash = txHash,
+      txStatus = txStatus,
+      blockNumber = blockNumber,
+      txIndex = txIndex,
+      logIndex = logIndex,
+      txFrom = txFrom,
+      txTo = txTo
+    )
+    val data = OrderFilledEvent(owner = "0x111")
+    val r = TransactionRecord(
+      header = Some(header),
+      owner = owner,
+      recordType = TransactionRecord.RecordType.TRANSFER,
+      eventData = Some(
+        TransactionRecord
+          .EventData(TransactionRecord.EventData.Event.Filled(data))
+      )
+    )
+    dbModule.transactionRecordService.saveRecord(r)
+  }
 
   "save & query some events" must {
     "get the events record correctly" in {
@@ -54,7 +86,7 @@ class EntryPointSpec_Transactions
         txIndex = 1,
         logIndex = 0
       )
-      val actor = actors.get(TransactionRecordActor.name)
+      val actor = actors.get(EthereumEventAccessActor.name)
       // 1. eth transfer
       actor ! TransferEvent(
         header = Some(header1),
@@ -167,18 +199,19 @@ class EntryPointSpec_Transactions
       Thread.sleep(5000)
 
       // 7. get_transactions with txFrom
-      val fromIndex = EventHeader(blockNumber = blockNumber).sequenceId
+      val fromIndex = EventAccessProvider.generateSequenceId(
+        blockNumber,
+        0,
+        0
+      )
       val paging: CursorPaging = CursorPaging(cursor = fromIndex, size = 50)
       val resonse2 = singleRequest(
-        GetTransactionRecords
+        GetTransactions
           .Req(owner = txFrom, sort = SortingType.DESC, paging = Some(paging)),
         "get_transactions"
       )
       val r2 =
-        Await.result(
-          resonse2.mapTo[GetTransactionRecords.Res],
-          timeout.duration
-        )
+        Await.result(resonse2.mapTo[GetTransactions.Res], timeout.duration)
       assert(r2.records.length == 4)
       r2.records.foreach {
         _.eventData.getOrElse(EventData()).event match {
@@ -215,21 +248,18 @@ class EntryPointSpec_Transactions
 
       // 8. get_transaction_count with txTo
       val resonse3 = singleRequest(
-        GetTransactionRecordCount
+        GetTransactionCount
           .Req(
             owner = txTo,
             queryType = Some(
-              GetTransactionRecords
+              GetTransactions
                 .QueryType(TransactionRecord.RecordType.ERC20_TRANSFER)
             )
           ),
         "get_transaction_count"
       )
       val r3 =
-        Await.result(
-          resonse3.mapTo[GetTransactionRecordCount.Res],
-          timeout.duration
-        )
+        Await.result(resonse3.mapTo[GetTransactionCount.Res], timeout.duration)
       assert(r3.count === 1)
     }
   }

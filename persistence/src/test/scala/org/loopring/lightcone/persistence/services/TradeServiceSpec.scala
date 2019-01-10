@@ -28,9 +28,10 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
   val tokenS = "0xaaaaaa1"
   val tokenB = "0xbbbbbb1"
 
-  def createTables() {
-    new TradeDalImpl().createTable()
-  }
+  def createTables(): Future[Any] =
+    for {
+      r <- new TradeDalImpl().createTable()
+    } yield r
 
   private def testSave(
       txHash: String,

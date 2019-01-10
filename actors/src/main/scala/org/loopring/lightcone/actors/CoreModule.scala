@@ -130,8 +130,8 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
         EthereumEventExtractorActor.startShardRegion
       )
       actors.add(
-        TransactionRecordActor.name,
-        TransactionRecordActor.startShardRegion
+        EthereumEventAccessActor.name,
+        EthereumEventAccessActor.startShardRegion
       )
 
       actors.add(

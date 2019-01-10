@@ -37,8 +37,8 @@ trait BaseDal[T <: BaseTable[A], A] {
   def deleteById(id: String): Future[Int]
   def deleteById(ids: Seq[String]): Future[Int]
 
-  def createTable(): Unit
-  def dropTable(): Unit
+  def createTable(): Future[Any]
+  def dropTable(): Future[Any]
   def displayTableSchema(): Unit
 
   // take random data for testing

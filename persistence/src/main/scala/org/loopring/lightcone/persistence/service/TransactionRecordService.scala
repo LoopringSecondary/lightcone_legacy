@@ -16,17 +16,24 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.persistence.dals.SettlementTxDal
 import org.loopring.lightcone.proto._
 import scala.concurrent.Future
 
-trait SettlementTxService {
+trait TransactionRecordService {
 
-  val submitTxDal: SettlementTxDal
-  def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res]
-  // get all pending txs with given owner, from_nonce is a optional parameter(>=)
-  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res]
+  def saveRecord(
+      record: TransactionRecord
+    ): Future[PersistTransactionRecord.Res]
 
-  // update address's all txs status below or equals the given nonce to BLOCK
-  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res]
+  def getRecordsByOwner(
+      owner: String,
+      queryType: Option[GetTransactions.QueryType],
+      sort: SortingType,
+      paging: CursorPaging
+    ): Future[Seq[TransactionRecord]]
+
+  def getRecordsCountByOwner(
+      owner: String,
+      queryType: Option[GetTransactions.QueryType]
+    ): Future[Int]
 }
