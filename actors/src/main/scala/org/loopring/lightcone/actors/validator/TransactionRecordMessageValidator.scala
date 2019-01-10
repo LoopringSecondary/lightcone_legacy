@@ -21,11 +21,11 @@ import org.loopring.lightcone.actors.core.TransactionRecordActor
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
-object TransactionRecordValidator {
+object TransactionRecordMessageValidator {
   val name = "transaction_record_validator"
 }
 
-final class TransactionRecordValidator()(implicit val config: Config)
+final class TransactionRecordMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
   val transactionRecordConfig = config.getConfig(TransactionRecordActor.name)
@@ -36,43 +36,52 @@ final class TransactionRecordValidator()(implicit val config: Config)
 
   def validate = {
     case req: TransferEvent =>
-      baseEventValidate(req.header, req.owner)
+      validate(req.header, req.owner)
       req
+
     case req: CutoffEvent =>
-      baseEventValidate(req.header, req.owner)
+      validate(req.header, req.owner)
       req
+
     case req: OrdersCancelledEvent =>
-      baseEventValidate(req.header, req.owner)
+      validate(req.header, req.owner)
       req
+
     case req: OrderFilledEvent =>
-      baseEventValidate(req.header, req.owner)
+      validate(req.header, req.owner)
       if (req.orderHash.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
           "Parameter orderHash is empty"
         )
       req
+
     case req: GetTransactionRecords.Req =>
       if (req.owner.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
           "Parameter owner could not be empty"
         )
+
       req.paging match {
         case Some(p) if p.size > maxItemsPerPage =>
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
             s"Parameter size of paging is larger than $maxItemsPerPage"
           )
+
         case Some(p) if p.cursor < 0 =>
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
             s"Invalid parameter cursor of paging:${p.cursor}"
           )
+
         case Some(_) => req
+
         case None =>
           req.copy(paging = Some(CursorPaging(size = defaultItemsPerPage)))
       }
+
     case req: GetTransactionRecordCount.Req =>
       if (req.owner.isEmpty)
         throw ErrorException(
@@ -82,31 +91,38 @@ final class TransactionRecordValidator()(implicit val config: Config)
       req
   }
 
-  private def baseEventValidate(
+  private def validate(
       headerOpt: Option[EventHeader],
       owner: String
-    ): Unit = {
+    ) {
     if (headerOpt.isEmpty || owner.isEmpty)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
         "Parameter header and owner could not be empty"
       )
+
     val header = headerOpt.get
-    if (header.blockNumber < 0 || header.txIndex < 0 || header.logIndex < 0 || header.eventIndex < 0)
+    if (header.blockNumber < 0 ||
+        header.txIndex < 0 ||
+        header.logIndex < 0 ||
+        header.eventIndex < 0)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
         s"Invalid index in header:$header"
       )
+
     if (header.blockNumber > 99999999)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
         s"Parameter blockNumber larger than 99999999 in ${header}"
       )
+
     if (header.txIndex > 9999 || header.logIndex > 9999)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
         s"Parameters txIndex or logIndex larger than 9999 in ${header}"
       )
+
     if (header.eventIndex > 999)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,

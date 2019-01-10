@@ -20,7 +20,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.validator.{
   MessageValidationActor,
-  TransactionRecordValidator
+  TransactionRecordMessageValidator
 }
 
 trait EthereumEventAccessSupport extends DatabaseModuleSupport {
@@ -37,11 +37,11 @@ trait EthereumEventAccessSupport extends DatabaseModuleSupport {
   )
 
   actors.add(
-    TransactionRecordValidator.name,
+    TransactionRecordMessageValidator.name,
     MessageValidationActor(
-      new TransactionRecordValidator(),
+      new TransactionRecordMessageValidator(),
       TransactionRecordActor.name,
-      TransactionRecordValidator.name
+      TransactionRecordMessageValidator.name
     )
   )
 

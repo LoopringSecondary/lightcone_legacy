@@ -32,18 +32,20 @@ package object data {
   implicit class RichEventHeader(header: EventHeader) {
 
     def sequenceId() = {
-      if (header.txIndex > 9999 || header.logIndex > 9999)
+      if (header.txIndex >= 4096 || header.logIndex >= 4096) // pow(2, 12)
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"txIndex or logIndex larger than 9999 in ${header}"
+          s"txIndex or logIndex >= 4096 in ${header}"
         )
-      if (header.eventIndex > 999)
+      if (header.eventIndex >= 1024) // pow(2, 10)
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"eventIndex larger than 999 in ${header}"
+          s"eventIndex >= 1024 in ${header}"
         )
-      // 最大可表示：8位blockNum(目前7位) 4位txIndex 4位logIndex 3位eventIndex
-      header.blockNumber * 100000000000L + header.txIndex * 10000000 + header.logIndex * 1000 + header.eventIndex
+      header.blockNumber << 34 +
+        header.txIndex << 22 +
+        header.logIndex << 10 +
+        header.eventIndex
     }
   }
 

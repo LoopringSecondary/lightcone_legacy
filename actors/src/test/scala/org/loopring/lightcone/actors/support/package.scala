@@ -119,29 +119,25 @@ package object support {
                         |}""".stripMargin
 
   val transactionReCordConfigStr = s"""
-     transaction-record_0 {
-        db {
-           profile = "slick.jdbc.MySQLProfile$$"
-           db {
-             url="${mysqlContainer.jdbcUrl}?useSSL=false"
-             user="${mysqlContainer.username}"
-             password="${mysqlContainer.password}"
-             driver="${mysqlContainer.driverClassName}"
-             maxThreads = 4
-           }
-        }
+     db.transaction-record.shard_0 {
+         profile = "slick.jdbc.MySQLProfile$$"
+         db {
+           url="${mysqlContainer.jdbcUrl}?useSSL=false"
+           user="${mysqlContainer.username}"
+           password="${mysqlContainer.password}"
+           driver="${mysqlContainer.driverClassName}"
+           maxThreads = 4
+         }
      }
-     transaction-record_1 {
-        db {
-           profile = "slick.jdbc.MySQLProfile$$"
-           db {
-             url="${mysqlContainer.jdbcUrl}?useSSL=false"
-             user="${mysqlContainer.username}"
-             password="${mysqlContainer.password}"
-             driver="${mysqlContainer.driverClassName}"
-             maxThreads = 4
-           }
-        }
+     db.transaction-record.shard_1 {
+         profile = "slick.jdbc.MySQLProfile$$"
+         db {
+           url="${mysqlContainer.jdbcUrl}?useSSL=false"
+           user="${mysqlContainer.username}"
+           password="${mysqlContainer.password}"
+           driver="${mysqlContainer.driverClassName}"
+           maxThreads = 4
+         }
      }
     """.stripMargin
 

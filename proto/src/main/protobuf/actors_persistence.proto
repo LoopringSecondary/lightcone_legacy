@@ -193,7 +193,7 @@ message TransactionRecord {
 
 message PersistTransactionRecord {
     message Req {
-        TransactionRecord record    = 1;
+        TransactionRecord transaction   = 1;
     }
     message Res {
         bool       already_exist = 1;
@@ -213,7 +213,7 @@ message GetTransactionRecords {
     }
 
     message Res {
-        repeated TransactionRecord records = 1;
+        repeated TransactionRecord transactions = 1;
     }
 }
 

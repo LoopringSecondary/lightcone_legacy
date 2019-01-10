@@ -49,6 +49,7 @@ trait RpcBinding extends JsonRpcModule {
 
   ifReceive[GetTransactionRecords.Req]
     .thenReply[GetTransactionRecords.Res]("get_transactions")
+
   ifReceive[GetTransactionRecordCount.Req]
     .thenReply[GetTransactionRecordCount.Res]("get_transaction_count")
 

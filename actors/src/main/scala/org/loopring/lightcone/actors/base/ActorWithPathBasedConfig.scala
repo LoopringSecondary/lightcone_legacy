@@ -38,7 +38,7 @@ abstract class ActorWithPathBasedConfig(
   protected val entityId = extractEntityId(self.path.name).replace("$", "")
 
   override val selfConfig = try {
-    config.getConfig(entityId).withFallback(selfConfig_)
+    selfConfig_.getConfig(entityId).withFallback(selfConfig_)
   } catch {
     case e: Throwable =>
       log.warning(s"NO CONFIG FOUND for actor with path: ${self.path.name}")
