@@ -189,7 +189,7 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
 
       actors.add(
         EthereumClientMonitor.name,
-        EthereumClientMonitor.startSingleton
+        EthereumClientMonitor.startSingleton()
       )
       actors.add(
         RingSettlementManagerActor.name,
