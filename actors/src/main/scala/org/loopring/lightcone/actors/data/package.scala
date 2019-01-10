@@ -29,18 +29,6 @@ package object data {
       balance: BigInt,
       allowance: BigInt)
 
-  implicit class RichEventHeader(header: EventHeader) {
-
-    def sequenceId() = {
-      if (header.txIndex > 9999 || header.logIndex > 9999)
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"txIndex or logIndex larger than 9999 in ${header}"
-        )
-      header.blockNumber * 100000000 + header.txIndex * 10000 + header.logIndex
-    }
-  }
-
   ///////////
 
   implicit def byteString2BigInt(bytes: ByteString): BigInt = {

@@ -50,7 +50,7 @@ trait ServiceSpec[S]
   val timeProvider = new SystemTimeProvider()
   def getService(): S
   var service: S = _
-  def createTables(): Unit
+  def createTables(): Future[Any]
 
   override def afterStart(): Unit = {
     dbConfig = DatabaseConfig.forConfig[JdbcProfile](
@@ -66,7 +66,9 @@ trait ServiceSpec[S]
         }""")
     )
     service = getService()
-    createTables()
+    val result = createTables()
+    Await.result(result, 10.second)
+    Thread.sleep(5000)
   }
 
   override def beforeAll = {

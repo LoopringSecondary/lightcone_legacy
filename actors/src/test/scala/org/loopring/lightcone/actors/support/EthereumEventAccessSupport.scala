@@ -21,8 +21,8 @@ import org.loopring.lightcone.actors.core._
 trait EthereumEventAccessSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
   actors.add(
-    TransactionRecordActor.name,
-    TransactionRecordActor.startShardRegion
+    EthereumEventAccessActor.name,
+    EthereumEventAccessActor.startShardRegion
   )
 
 }

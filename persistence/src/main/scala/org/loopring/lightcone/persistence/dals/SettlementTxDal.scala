@@ -44,6 +44,7 @@ class SettlementTxDalImpl(
     implicit val dbConfig: DatabaseConfig[JdbcProfile],
     val ec: ExecutionContext)
     extends SettlementTxDal {
+  private[this] val logger = Logger(this.getClass)
   val query = TableQuery[SettlementTxTable]
   val timeProvider = new SystemTimeProvider()
   implicit val StatusCxolumnType = enumColumnType(SettlementTx.Status)
