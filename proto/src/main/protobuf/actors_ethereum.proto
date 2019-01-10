@@ -92,6 +92,17 @@ message EthGetBalance {
     }
 }
 
+message BatchGetEthBalance {
+    message Req {
+        repeated EthGetBalance.Req reqs = 1;
+    }
+
+    message Res {
+        repeated EthGetBalance.Res resps = 1;
+    }
+}
+
+
 // eth_getTransactionByHash
 message GetTransactionByHash {
     message Req {
@@ -280,6 +291,8 @@ message BatchGetUncle {
     }
 }
 
+
+
 /// 合约ITradeHistory中的数据结构，可以通过查询合约，或者
 /// 解析合约事件得到下面的数据：
 
@@ -290,6 +303,24 @@ message BatchGetUncle {
 //     bytes used_gas = 4;
 //     int64 block_number = 5;
 // }
+
+/////////////////////////////////////////////////////////////////////
+// ETHEREUM EVENT EXTRACT MESSAGES
+/////////////////////////////////////////////////////////////////////
+
+message RawBlockData{
+    int64 height = 1;
+    string hash = 2;
+    string  miner = 3;
+    string timestamp = 4;
+    repeated string uncles = 5;
+    repeated Transaction txs = 6;
+    repeated TransactionReceipt receipts = 7;
+}
+
+message BlockImplementTask {
+    repeated int64 heights = 1;
+}
 
 
 

@@ -22,6 +22,13 @@ import scala.reflect.ClassTag
 
 package object abi {
 
+  val erc20Abi = ERC20ABI()
+  val wethAbi = WETHABI()
+  val tradeHistoryAbi = TradeHistoryAbi()
+  val ringSubmitterAbi = RingSubmitterAbi()
+  val loopringProtocolAbi = LoopringProtocolAbi()
+  val burnRateTableAbi = BurnRateTableAbi()
+
   private def getAnnotationValue[T](tree: Tree)(implicit ct: ClassTag[T]): T =
     tree match {
       case Literal(Constant(str: T)) => str
