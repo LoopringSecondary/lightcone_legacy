@@ -29,25 +29,5 @@ class OrdersCancelledEventExtractor()
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[POrdersCancelledEvent] = {
-    val header = getEventHeader(tx, receipt, blockTime)
-    receipt.logs.zipWithIndex.map { item =>
-      {
-        val (log, index) = item
-        loopringProtocolAbi
-          .unpackEvent(log.data, log.topics.toArray) match {
-          case Some(event: OrdersCancelledEvent.Result) =>
-            Some(
-              POrdersCancelledEvent(
-                header = Some(header.withLogIndex(index)),
-                broker = event.address,
-                orderHashes = event._orderHashes
-              )
-            )
-          case _ =>
-            None
-        }
-      }
-    }.filter(_.nonEmpty).map(_.get)
-  }
+    ): Seq[POrdersCancelledEvent] = ???
 }

@@ -40,36 +40,5 @@ class AllowanceChangedAddressExtractor(config: Config)
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[AddressAllowanceUpdated] = {
-    val allowanceAddresses = ListBuffer.empty[AddressAllowanceUpdated]
-    receipt.logs.foreach { log =>
-      wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-        case Some(transfer: TransferEvent.Result) =>
-          if (Address(receipt.to).equals(protocolAddress))
-            allowanceAddresses.append(
-              AddressAllowanceUpdated(transfer.from, log.address)
-            )
-
-        case Some(approval: ApprovalEvent.Result) =>
-          if (Address(approval.spender).equals(delegateAddress))
-            allowanceAddresses.append(
-              AddressAllowanceUpdated(approval.owner, log.address)
-            )
-
-        case _ =>
-      }
-    }
-    if (isSucceed(receipt.status)) {
-      wethAbi.unpackFunctionInput(tx.input) match {
-        case Some(param: ApproveFunction.Parms) =>
-          if (Address(param.spender).equals(delegateAddress))
-            allowanceAddresses.append(
-              AddressAllowanceUpdated(tx.from, tx.to)
-            )
-        case _ =>
-      }
-    }
-
-    allowanceAddresses.distinct
-  }
+    ): Seq[AddressAllowanceUpdated] = ???
 }

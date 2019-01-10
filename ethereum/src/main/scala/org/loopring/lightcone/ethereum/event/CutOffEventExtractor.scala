@@ -26,54 +26,5 @@ class CutOffEventExtractor() extends DataExtractor[CutoffEvent] {
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[CutoffEvent] = {
-    val header = getEventHeader(tx, receipt, blockTime)
-    receipt.logs.zipWithIndex.map { item =>
-      val (log, index) = item
-      loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-        case Some(event: AllOrdersCancelledEvent.Result) =>
-          Some(
-            CutoffEvent(
-              header = Some(header.withLogIndex(index)),
-              cutoff = event._cutoff.longValue(),
-              broker = event._broker,
-              owner = event._broker
-            )
-          )
-        case Some(event: AllOrdersCancelledByBrokerEvent.Result) =>
-          Some(
-            CutoffEvent(
-              header = Some(header.withLogIndex(index)),
-              cutoff = event._cutoff.longValue(),
-              broker = event._broker,
-              owner = event._owner
-            )
-          )
-        case Some(
-            event: AllOrdersCancelledForTradingPairByBrokerEvent.Result
-            ) =>
-          Some(
-            CutoffEvent(
-              header = Some(header.withLogIndex(index)),
-              cutoff = event._cutoff.longValue(),
-              broker = event._broker,
-              owner = event._owner,
-              tradingPair = convert2Hex(event._token1, event._token2)
-            )
-          )
-        case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
-          Some(
-            CutoffEvent(
-              header = Some(header.withLogIndex(index)),
-              cutoff = event._cutoff.longValue(),
-              broker = event._broker,
-              owner = event._broker,
-              tradingPair = convert2Hex(event._token1, event._token2)
-            )
-          )
-        case _ =>
-          None
-      }
-    }.filter(_.nonEmpty).map(_.get)
-  }
+    ): Seq[CutoffEvent] = ???
 }
