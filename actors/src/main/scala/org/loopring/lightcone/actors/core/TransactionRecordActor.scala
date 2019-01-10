@@ -95,8 +95,7 @@ class TransactionRecordActor(
 
   def receive: Receive = {
     // ETH & ERC20
-    case req: TransferEvent if req.header.nonEmpty =>
-      println("______________________________", req)
+    case req: TransferEvent =>
       val header = req.header.get
       val recordType =
         if (req.token.nonEmpty) TransactionRecord.RecordType.ERC20_TRANSFER
@@ -113,8 +112,7 @@ class TransactionRecordActor(
       )
       txRecordDal.saveRecord(record)
 
-    case req: OrdersCancelledEvent if req.header.nonEmpty =>
-      println("______________________________", req)
+    case req: OrdersCancelledEvent =>
       val header = req.header.get
       val record = TransactionRecord(
         header = req.header,
@@ -128,8 +126,7 @@ class TransactionRecordActor(
       )
       txRecordDal.saveRecord(record)
 
-    case req: CutoffEvent if req.header.nonEmpty =>
-      println("______________________________", req)
+    case req: CutoffEvent =>
       val header = req.header.get
       val record = TransactionRecord(
         header = req.header,
@@ -144,8 +141,7 @@ class TransactionRecordActor(
       )
       txRecordDal.saveRecord(record)
 
-    case req: OrderFilledEvent if req.header.nonEmpty =>
-      println("______________________________", req)
+    case req: OrderFilledEvent =>
       //TODO du：是否需要查询并验证订单存在
       for {
         order <- dbModule.orderService.getOrder(req.orderHash)
@@ -174,10 +170,8 @@ class TransactionRecordActor(
       } yield saved
 
     case req: GetTransactionRecords.Req =>
-      // TODO(yongfeng)： 如果用户指定了100000 作为defaultItemsPerPage 怎么办？？？？？
-      val paging = req.paging.getOrElse(CursorPaging(0, defaultItemsPerPage))
       txRecordDal
-        .getRecordsByOwner(req.owner, req.queryType, req.sort, paging)
+        .getRecordsByOwner(req.owner, req.queryType, req.sort, req.paging.get)
         .map(GetTransactionRecords.Res(_))
         .sendTo(sender)
 

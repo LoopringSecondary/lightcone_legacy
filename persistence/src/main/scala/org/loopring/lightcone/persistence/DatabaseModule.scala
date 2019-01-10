@@ -35,6 +35,7 @@ class DatabaseModule @Inject()(
     val orderStatusMonitorService: OrderStatusMonitorService,
     val tokenMetadataService: TokenMetadataService,
     val tradeService: TradeService,
+    val blockService: BlockService,
     val settlementTxService: SettlementTxService
   )(
     implicit

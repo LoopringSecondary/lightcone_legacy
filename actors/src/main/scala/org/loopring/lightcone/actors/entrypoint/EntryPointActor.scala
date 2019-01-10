@@ -86,7 +86,7 @@ class EntryPointActor(
       Some(DatabaseQueryMessageValidator.name)
 
     case _: GetTransactionRecords.Req | _: GetTransactionRecordCount.Req =>
-      Some(TransactionRecordActor.name)
+      Some(TransactionRecordValidator.name)
 
     case _ => None
   }

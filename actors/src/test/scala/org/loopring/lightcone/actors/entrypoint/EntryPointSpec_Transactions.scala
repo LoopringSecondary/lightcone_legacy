@@ -20,16 +20,21 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.core.TransactionRecordActor
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.actors.validator.TransactionRecordValidator
 import org.loopring.lightcone.proto.TransactionRecord.EventData
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.lib.ErrorException
+
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_Transactions
     extends CommonSpec("""
                          |akka.cluster.roles=[
                          | "order_handler",
-                         | "ethereum_event_access"]
+                         | "transaction-record"]
                          |""".stripMargin)
+    with DatabaseModuleSupport
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport
@@ -54,7 +59,7 @@ class EntryPointSpec_Transactions
         txIndex = 1,
         logIndex = 0
       )
-      val actor = actors.get(TransactionRecordActor.name)
+      val actor = actors.get(TransactionRecordValidator.name)
       // 1. eth transfer
       actor ! TransferEvent(
         header = Some(header1),
@@ -157,9 +162,21 @@ class EntryPointSpec_Transactions
         orderHash = orderHash
       )
 
-      // 6. mock failed
+      // 6.1 mock failed (duplicated sequenceId)
       actor ! OrderFilledEvent(
         header = Some(header5),
+        owner = txTo,
+        orderHash = orderHash
+      )
+      // 6.2 mock failed (invalid sequenceId)
+      val header6 = header1.copy(
+        blockNumber = 100,
+        txIndex = 10000,
+        logIndex = 20000,
+        eventIndex = 30000
+      )
+      actor ! OrderFilledEvent(
+        header = Some(header6),
         owner = txTo,
         orderHash = orderHash
       )
@@ -231,7 +248,72 @@ class EntryPointSpec_Transactions
           timeout.duration
         )
       assert(r3.count === 1)
+
+      // 9.1 get_transactions invalid parameters: cursor
+      val paging1: CursorPaging = CursorPaging(cursor = -1, size = 50)
+      val resonse4 = singleRequest(
+        GetTransactionRecords
+          .Req(owner = txFrom, sort = SortingType.DESC, paging = Some(paging1)),
+        "get_transactions"
+      )
+      try {
+        Await.result(
+          resonse4.mapAs[GetTransactionRecords.Res],
+          timeout.duration
+        )
+        assert(false)
+      } catch {
+        case e: ErrorException =>
+          if (e.getMessage()
+                .indexOf("Invalid parameter cursor of paging:-1") > -1)
+            assert(true)
+          else assert(false)
+        case _: Throwable => assert(false)
+      }
+
+      // 9.2 get_transactions invalid parameters: size
+      val paging2: CursorPaging = CursorPaging(cursor = 1, size = 5000)
+      val resonse5 = singleRequest(
+        GetTransactionRecords
+          .Req(owner = txFrom, sort = SortingType.DESC, paging = Some(paging2)),
+        "get_transactions"
+      )
+      try {
+        Await.result(
+          resonse5.mapAs[GetTransactionRecords.Res],
+          timeout.duration
+        )
+        assert(false)
+      } catch {
+        case e: ErrorException =>
+          if (e.getMessage()
+                .indexOf("Parameter size of paging is larger than 50") > -1)
+            assert(true)
+          else assert(false)
+        case _: Throwable => assert(false)
+      }
+
+      // 9.3 get_transactions empty owner
+      val resonse6 = singleRequest(
+        GetTransactionRecords
+          .Req(sort = SortingType.DESC, paging = Some(paging)),
+        "get_transactions"
+      )
+      try {
+        Await.result(
+          resonse6.mapAs[GetTransactionRecords.Res],
+          timeout.duration
+        )
+        assert(false)
+      } catch {
+        case e: ErrorException =>
+          if (e.getMessage()
+                .indexOf("Parameter owner could not be empty") > -1)
+            assert(true)
+          else assert(false)
+        case _: Throwable => assert(false)
+      }
+
     }
   }
-
 }

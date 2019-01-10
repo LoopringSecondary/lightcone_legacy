@@ -16,13 +16,33 @@
 
 package org.loopring.lightcone.actors.support
 
+import com.typesafe.config.{Config, ConfigFactory}
 import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.validator.{
+  MessageValidationActor,
+  TransactionRecordValidator
+}
 
 trait EthereumEventAccessSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
+
+  val config1 = ConfigFactory
+    .parseString(transactionReCordConfigStr)
+    .withFallback(ConfigFactory.load())
+
   actors.add(
     TransactionRecordActor.name,
-    TransactionRecordActor.start
+    TransactionRecordActor
+      .start()(system, config1, ec, timeProvider, timeout, actors, dbModule)
+  )
+
+  actors.add(
+    TransactionRecordValidator.name,
+    MessageValidationActor(
+      new TransactionRecordValidator(),
+      TransactionRecordActor.name,
+      TransactionRecordValidator.name
+    )
   )
 
 }

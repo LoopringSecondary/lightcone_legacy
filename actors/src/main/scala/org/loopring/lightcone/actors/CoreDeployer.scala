@@ -107,6 +107,15 @@ class CoreDeployer @Inject()(
       )
     )
 
+    actors.add(
+      TransactionRecordValidator.name,
+      MessageValidationActor(
+        new TransactionRecordValidator(),
+        TransactionRecordActor.name,
+        TransactionRecordValidator.name
+      )
+    )
+
     Cluster(system).registerOnMemberUp {
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)

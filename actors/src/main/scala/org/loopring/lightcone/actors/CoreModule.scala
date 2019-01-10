@@ -94,6 +94,7 @@ class CoreModule(config: Config)
     bind[OrderStatusMonitorService]
       .to[OrderStatusMonitorServiceImpl]
       .in[Singleton]
+    bind[BlockService].to[BlockServiceImpl].in[Singleton]
 
     // --- bind local singletons ---------------------
     bind[DatabaseModule].in[Singleton]

@@ -42,11 +42,6 @@ package object data {
           ErrorCode.ERR_INTERNAL_UNKNOWN,
           s"eventIndex larger than 999 in ${header}"
         )
-      println(
-        "+++++++++++++++++++",
-        header,
-        (header.blockNumber * 100000000000L + header.txIndex * 10000000 + header.logIndex * 1000 + header.eventIndex)
-      )
       // 最大可表示：8位blockNum(目前7位) 4位txIndex 4位logIndex 3位eventIndex
       header.blockNumber * 100000000000L + header.txIndex * 10000000 + header.logIndex * 1000 + header.eventIndex
     }
