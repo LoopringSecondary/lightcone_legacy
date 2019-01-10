@@ -16,10 +16,7 @@
 
 package org.loopring.lightcone.actors.entrypoint
 
-import org.loopring.lightcone.actors.ethereum.{
-  ringSubmitterAbi,
-  EthereumAccessActor
-}
+import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.actors.support.{CommonSpec, EthereumSupport}
 import org.loopring.lightcone.ethereum.abi.SubmitRingsFunction
 import org.loopring.lightcone.ethereum.ethereum.getSignedTxData
