@@ -24,10 +24,7 @@ import org.loopring.lightcone.actors.validator.{
 
 trait MultiAccountManagerSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
-  actors.add(
-    MultiAccountManagerActor.name,
-    MultiAccountManagerActor.startShardRegion
-  )
+  actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
 
   actors.add(
     MultiAccountManagerMessageValidator.name,

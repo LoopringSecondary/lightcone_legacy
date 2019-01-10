@@ -32,24 +32,28 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.util.Random
 
+// Owner: Hongyu
 object RingSettlementManagerActor {
   val name = "ring_settlement"
 
-  def startSingleton(
-    )(
-      implicit system: ActorSystem,
+  def start(
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dbModule: DatabaseModule
+      dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new RingSettlementManagerActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       RingSettlementManagerActor.name
     )
@@ -65,8 +69,8 @@ object RingSettlementManagerActor {
 }
 
 class RingSettlementManagerActor(
-  )(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     val config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,

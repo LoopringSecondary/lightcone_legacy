@@ -19,8 +19,9 @@ package org.loopring.lightcone.core.market
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import com.google.inject.Inject
 
-trait RingIncomeEstimator {
+trait RingIncomeEvaluator {
   def getRingIncome(ring: MatchableRing): Double
 
   def isProfitable(
@@ -29,11 +30,11 @@ trait RingIncomeEstimator {
     ): Boolean
 }
 
-final class RingIncomeEstimatorImpl(
-  )(
-    implicit tm: TokenManager,
-    tve: TokenValueEstimator)
-    extends RingIncomeEstimator {
+final class RingIncomeEvaluatorImpl @Inject()(
+    implicit
+    tm: TokenManager,
+    tve: TokenValueEvaluator)
+    extends RingIncomeEvaluator {
 
   def getRingIncome(ring: MatchableRing) =
     getExpectedFillIncomeFiatValue(ring.maker) +
@@ -53,18 +54,15 @@ final class RingIncomeEstimatorImpl(
     val rate = (1 - order.walletSplitPercentage) *
       (1 - tm.getBurnRate(order.tokenFee))
 
-    val fiatFee = rate * tve.getEstimatedValue(
-      order.tokenFee,
-      pending.amountFee
-    )
+    val fiatFee = rate * tve.getValue(order.tokenFee, pending.amountFee)
 
     // when we do not know the price of tokenS, try to use tokenB's price to calculate
     // the price.
     val fiatMargin =
       if (tm.hasToken(order.tokenS)) {
-        tve.getEstimatedValue(order.tokenS, amountMargin)
+        tve.getValue(order.tokenS, amountMargin)
       } else {
-        tve.getEstimatedValue(
+        tve.getValue(
           order.tokenB,
           Rational(amountMargin * order.amountS, order.amountB)
         )

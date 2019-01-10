@@ -21,7 +21,7 @@ import akka.cluster._
 import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.google.inject.AbstractModule
+import com.google.inject._
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
@@ -31,37 +31,35 @@ import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.actors.validator._
+import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.actors.validator._
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
+import org.loopring.lightcone.persistence.dals._
+import org.loopring.lightcone.persistence.service._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import slick.basic.DatabaseConfig
+import slick.jdbc.JdbcProfile
+import org.slf4s.Logging
 
-class CoreModule(config: Config) extends AbstractModule with ScalaModule {
+// Owner: Daniel
+class CoreModule(config: Config)
+    extends AbstractModule
+    with ScalaModule
+    with Logging {
+
+  private var dbConfigMap = Map.empty[String, DatabaseConfig[JdbcProfile]]
 
   override def configure(): Unit = {
-    implicit val system = ActorSystem("Lightcone", config)
-    implicit val cluster = Cluster(system)
-    implicit val materializer = ActorMaterializer()(system)
-    implicit val timeout = Timeout(2 second)
-    implicit val ec = system.dispatcher
-    implicit val c_ = config
+
+    val system = ActorSystem("Lightcone", config)
 
     bind[Config].toInstance(config)
     bind[ActorSystem].toInstance(system)
-    bind[Cluster].toInstance(cluster)
-    bind[ActorMaterializer].toInstance(materializer)
-    bind[Timeout].toInstance(timeout)
-
-    implicit val requestBuilder = new EthereumCallRequestBuilder
-    bind[EthereumCallRequestBuilder].toInstance(requestBuilder)
-
-    implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
-    bind[EthereumBatchCallRequestBuilder].toInstance(batchRequestBuilder)
+    bind[Cluster].toInstance(Cluster(system))
+    bind[ActorMaterializer].toInstance(ActorMaterializer()(system))
 
     bind[ExecutionContextExecutor].toInstance(system.dispatcher)
     bind[ExecutionContext].toInstance(system.dispatcher)
@@ -69,149 +67,88 @@ class CoreModule(config: Config) extends AbstractModule with ScalaModule {
       .annotatedWithName("db-execution-context")
       .toInstance(system.dispatchers.lookup("db-execution-context"))
 
-    implicit val supportedMarkets: SupportedMarkets = SupportedMarkets(config)
+    // --- bind db configs ---------------------
+    bindDatabaseConfigProviderForNames(
+      "dbconfig-dal-token-metadata",
+      "dbconfig-dal-order",
+      "dbconfig-dal-trade",
+      "dbconfig-dal-token-balance",
+      "dbconfig-dal-block",
+      "dbconfig-dal-settlement-tx",
+      "dbconfig-dal-order-status-monitor"
+    )
 
-    implicit val actors = new MapBasedLookup[ActorRef]()
-    bind[Lookup[ActorRef]].toInstance(actors)
+    // --- bind dals ---------------------
+    bind[TokenMetadataDal].to[TokenMetadataDalImpl].in[Singleton]
+    bind[OrderDal].to[OrderDalImpl].in[Singleton]
+    bind[TradeDal].to[TradeDalImpl].in[Singleton]
+    bind[TokenBalanceDal].to[TokenBalanceDalImpl].in[Singleton]
+    bind[BlockDal].to[BlockDalImpl].in[Singleton]
+    bind[SettlementTxDal].to[SettlementTxDalImpl].in[Singleton]
+    bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].in[Singleton]
 
-    implicit val timeProvider: TimeProvider = new SystemTimeProvider()
-    bind[TimeProvider].toInstance(timeProvider)
+    // --- bind db services ---------------------
+    bind[OrderService].to[OrderServiceImpl].in[Singleton]
+    bind[TokenMetadataService].to[TokenMetadataServiceImpl].in[Singleton]
+    bind[TradeService].to[TradeServiceImpl].in[Singleton]
+    bind[SettlementTxService].to[SettlementTxServiceImpl].in[Singleton]
+    bind[OrderStatusMonitorService]
+      .to[OrderStatusMonitorServiceImpl]
+      .in[Singleton]
 
-    implicit val dbConfig: DatabaseConfig[JdbcProfile] =
-      DatabaseConfig.forConfig("db.default", config)
-    bind[DatabaseConfig[JdbcProfile]].toInstance(dbConfig)
+    // --- bind local singletons ---------------------
+    bind[DatabaseModule].in[Singleton]
+    bind[TokenManager].in[Singleton]
 
-    implicit val dbModule = new DatabaseModule()
-    bind[DatabaseModule].toInstance(dbModule)
-    dbModule.createTables()
+    bind[SupportedMarkets].toInstance(SupportedMarkets(config))
+    bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
 
-    implicit val tm = new TokenManager()
-    bind[TokenManager].toInstance(tm)
+    // --- bind other classes ---------------------
+    bind[TimeProvider].to[SystemTimeProvider]
+    bind[EthereumCallRequestBuilder]
+    bind[EthereumBatchCallRequestBuilder]
 
-    implicit val tokenValueEstimator: TokenValueEstimator =
-      new TokenValueEstimator()
-    bind[TokenValueEstimator].toInstance(tokenValueEstimator)
+    bind[TokenValueEvaluator]
+    bind[DustOrderEvaluator]
+    bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
 
-    implicit val dustEvaluator: DustOrderEvaluator = new DustOrderEvaluator()
-    bind[DustOrderEvaluator].toInstance(dustEvaluator)
+    // --- bind primative types ---------------------
+    bind[Timeout].toInstance(Timeout(2.second))
 
-    implicit val ringIncomeEstimator: RingIncomeEstimator =
-      new RingIncomeEstimatorImpl()
-    bind[RingIncomeEstimator].toInstance(ringIncomeEstimator)
+    bind[Double]
+      .annotatedWithName("dust-order-threshold")
+      .toInstance(config.getDouble("relay.dust-order-threshold"))
 
-    Cluster(system).registerOnMemberUp {
-      //-----------deploy local actors-----------
-      //todo:需要测试badMessage，可能有死循环
-      val listener =
-        system.actorOf(Props[BadMessageListener], "bad_message_listener")
+    bind[Boolean]
+      .annotatedWithName("deploy-actors-ignoring-roles")
+      .toInstance(false)
+  }
 
-      system.eventStream.subscribe(listener, classOf[UnhandledMessage])
-      system.eventStream.subscribe(listener, classOf[DeadLetter])
+  private def bindDatabaseConfigProviderForNames(names: String*) = {
+    bind[DatabaseConfig[JdbcProfile]]
+      .toProvider(new Provider[DatabaseConfig[JdbcProfile]] {
+        def get() = getDbConfigByKey("db.default")
+      })
 
-      actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
+    names.foreach { name =>
+      bind[DatabaseConfig[JdbcProfile]]
+        .annotatedWithName(name)
+        .toProvider(new Provider[DatabaseConfig[JdbcProfile]] {
+          def get() = getDbConfigByKey(s"db.${name}")
+        })
+    }
+  }
 
-      //-----------deploy sharded actors-----------
-      actors.add(EthereumQueryActor.name, EthereumQueryActor.startShardRegion)
-      actors.add(DatabaseQueryActor.name, DatabaseQueryActor.startShardRegion)
-      actors.add(GasPriceActor.name, GasPriceActor.startShardRegion)
-      actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
-      actors.add(
-        OrderPersistenceActor.name,
-        OrderPersistenceActor.startShardRegion
-      )
-      actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
-      actors.add(
-        MultiAccountManagerActor.name,
-        MultiAccountManagerActor.startShardRegion
-      )
-
-      actors.add(
-        EthereumEventExtractorActor.name,
-        EthereumEventExtractorActor.startShardRegion
-      )
-      actors.add(
-        EthereumEventPersistorActor.name,
-        EthereumEventPersistorActor.startShardRegion
-      )
-
-      actors.add(
-        OrderbookManagerActor.name,
-        OrderbookManagerActor.startShardRegion
-      )
-
-      //-----------deploy singleton actors-----------
-      actors.add(EthereumAccessActor.name, EthereumAccessActor.startSingleton)
-
-      actors.add(
-        OrderRecoverCoordinator.name,
-        OrderRecoverCoordinator.startSingleton
-      )
-
-      actors.add(
-        OrderStatusMonitorActor.name,
-        OrderStatusMonitorActor.startSingleton
-      )
-
-      actors.add(
-        EthereumClientMonitor.name,
-        EthereumClientMonitor.startSingleton()
-      )
-      actors.add(
-        RingSettlementManagerActor.name,
-        RingSettlementManagerActor.startSingleton
-      )
-
-      actors.add(
-        OrderCutoffHandlerActor.name,
-        OrderCutoffHandlerActor.startSingleton
-      )
-
-      //-----------deploy local actors-----------
-      actors.add(
-        MultiAccountManagerMessageValidator.name,
-        MessageValidationActor(
-          new MultiAccountManagerMessageValidator(),
-          MultiAccountManagerActor.name,
-          MultiAccountManagerMessageValidator.name
-        )
-      )
-
-      actors.add(
-        DatabaseQueryMessageValidator.name,
-        MessageValidationActor(
-          new DatabaseQueryMessageValidator(),
-          DatabaseQueryActor.name,
-          DatabaseQueryMessageValidator.name
-        )
-      )
-
-      actors.add(
-        EthereumQueryMessageValidator.name,
-        MessageValidationActor(
-          new EthereumQueryMessageValidator(),
-          EthereumQueryActor.name,
-          EthereumQueryMessageValidator.name
-        )
-      )
-
-      actors.add(
-        OrderbookManagerMessageValidator.name,
-        MessageValidationActor(
-          new OrderbookManagerMessageValidator(),
-          OrderbookManagerActor.name,
-          OrderbookManagerMessageValidator.name
-        )
-      )
-
-      //-----------deploy local actors that depend on cluster aware actors-----------
-      actors.add(EntryPointActor.name, EntryPointActor.start)
-
-      //-----------deploy JSONRPC service-----------
-      if (cluster.selfRoles.contains("jsonrpc")) {
-        val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
-        with RpcBinding
-        server.start()
-      }
+  private def getDbConfigByKey(key: String) = {
+    dbConfigMap.get(key) match {
+      case None =>
+        val dbConfig: DatabaseConfig[JdbcProfile] =
+          DatabaseConfig.forConfig(key, config)
+        log.info(s"creating DatabaseConfig instance for config key: $key")
+        dbConfigMap += key -> dbConfig
+        dbConfig
+      case Some(dbConfig) =>
+        dbConfig
     }
   }
 }

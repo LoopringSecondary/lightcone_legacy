@@ -23,6 +23,7 @@ import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 import scala.collection.JavaConverters._
 
+// Owner: Hongyu
 case class SupportedMarkets(config: Config) {
 
   private val markets = config

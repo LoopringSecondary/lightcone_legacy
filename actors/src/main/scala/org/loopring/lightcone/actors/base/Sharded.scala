@@ -18,6 +18,8 @@ package org.loopring.lightcone.actors.base
 
 import akka.cluster.sharding._
 
+// Owner: Daniel
+
 trait Sharded {
   val name: String
   protected var numOfShards: Int = 1

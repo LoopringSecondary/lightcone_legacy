@@ -26,14 +26,17 @@ import akka.actor._
 import akka.util.Timeout
 import scala.reflect.ClassTag
 
+// Owner: Daniel
 class Binder[T <: Proto[T]: TypeTag](
-    implicit module: JsonRpcBinding,
+    implicit
+    module: JsonRpcBinding,
     ps: ProtoSerializer) {
 
   def thenReply[S <: Proto[S]: TypeTag](
       method: String
     )(
-      implicit tc: ProtoC[T],
+      implicit
+      tc: ProtoC[T],
       cs: ClassTag[S],
       ts: ProtoC[S]
     ) = {

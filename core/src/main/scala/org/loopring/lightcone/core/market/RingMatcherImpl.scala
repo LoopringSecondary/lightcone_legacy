@@ -21,7 +21,7 @@ import org.loopring.lightcone.proto._
 import org.slf4s.Logging
 import ErrorCode._
 
-class RingMatcherImpl()(implicit rie: RingIncomeEstimator)
+class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
     extends RingMatcher
     with Logging {
 

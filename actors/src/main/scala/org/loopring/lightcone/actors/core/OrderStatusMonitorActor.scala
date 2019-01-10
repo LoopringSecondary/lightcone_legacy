@@ -30,12 +30,13 @@ import org.loopring.lightcone.proto._
 
 import scala.concurrent._
 
+// Owner: Hongyu
 object OrderStatusMonitorActor {
   val name = "order_status_monitor"
 
-  def startSingleton(
-    )(
-      implicit system: ActorSystem,
+  def start(
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -43,13 +44,15 @@ object OrderStatusMonitorActor {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
       ma: ActorMaterializer,
-      ece: ExecutionContextExecutor
+      ece: ExecutionContextExecutor,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new OrderStatusMonitorActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       name = OrderStatusMonitorActor.name
     )
@@ -67,7 +70,8 @@ object OrderStatusMonitorActor {
 class OrderStatusMonitorActor(
     val name: String = OrderStatusMonitorActor.name
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

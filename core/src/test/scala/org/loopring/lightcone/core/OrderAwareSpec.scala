@@ -37,7 +37,7 @@ trait OrderAwareSpec extends CommonSpec {
     .addToken(TokenMeta(DAI, 20, 0.3, "DAI", 7.0))
     .addToken(TokenMeta(WETH, 23, 0.4, "WETH", 0.5))
 
-  implicit val tve = new TokenValueEstimator
+  implicit val tve = new TokenValueEvaluator
 
   implicit val dustEvaluator = new DustOrderEvaluator
 

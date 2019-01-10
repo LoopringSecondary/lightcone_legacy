@@ -25,11 +25,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class MultiAccountManagerSpec_Sharding
-    extends CommonSpec("""
-                         akka.cluster.roles=[
-                         | "order_handler",
-                         | "multi_account_manager"]
-                         |""".stripMargin)
+    extends CommonSpec
     with MultiAccountManagerSupport
     with OrderHandleSupport {
 

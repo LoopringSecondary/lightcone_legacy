@@ -21,6 +21,7 @@ import com.typesafe.config.Config
 import scala.concurrent._
 import collection.JavaConverters._
 
+// Owner: Daniel
 trait NamedBasedConfig {
   val name: String
   val config: Config // the global config

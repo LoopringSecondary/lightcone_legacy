@@ -78,7 +78,8 @@ package object ethereum {
   def getSignedTxData(
       tx: Transaction
     )(
-      implicit credentials: Credentials
+      implicit
+      credentials: Credentials
     ): String = {
     val rawTransaction = RawTransaction
       .createTransaction(

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.services
+package org.loopring.lightcone.persistence.service
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
 import com.google.protobuf.ByteString
@@ -46,7 +46,7 @@ trait ServiceSpec[S]
 
   implicit val ec = ExecutionContext.global
   implicit var dbConfig: DatabaseConfig[JdbcProfile] = _
-  val timeProvider = new SystemTimeProvider()
+  implicit val timeProvider = new SystemTimeProvider()
   def getService(): S
   var service: S = _
   def createTables(): Future[Any]
@@ -65,8 +65,7 @@ trait ServiceSpec[S]
         }""")
     )
     service = getService()
-    val result = createTables()
-    Await.result(result, 5.second)
+    Await.result(createTables(), 5.second)
   }
 
   override def beforeAll = {

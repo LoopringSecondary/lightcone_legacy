@@ -30,6 +30,7 @@ trait BlockService {
       heightFrom: Long,
       heightTo: Long
     ): Future[Seq[(Long, String)]]
+
   def count(): Future[Int]
   def obsolete(height: Long): Future[Unit]
 }

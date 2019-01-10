@@ -34,27 +34,31 @@ import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.util._
 
+// Owner: Yadong
 object EthereumClientMonitor {
   val name = "ethereum_client_monitor"
 
-  def startSingleton(
-      connectionPools: Seq[ActorRef] = Nil
+  def start(
+      connectionPools: Seq[ActorRef]
     )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
       ma: ActorMaterializer,
-      ece: ExecutionContextExecutor
+      ece: ExecutionContextExecutor,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps =
           Props(new EthereumClientMonitor(connectionPools = connectionPools)),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       name = EthereumClientMonitor.name
     )
@@ -73,7 +77,8 @@ class EthereumClientMonitor(
     val name: String = EthereumClientMonitor.name,
     connectionPools: Seq[ActorRef] = Nil
   )(
-    implicit system: ActorSystem,
+    implicit
+    system: ActorSystem,
     val config: Config,
     ec: ExecutionContext,
     timeProvider: TimeProvider,

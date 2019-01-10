@@ -25,10 +25,7 @@ import org.loopring.lightcone.actors.base.MapBasedLookup
 import org.loopring.lightcone.actors.ethereum.EthereumClientMonitor
 import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.market.{
-  RingIncomeEstimator,
-  RingIncomeEstimatorImpl
-}
+import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib.SystemTimeProvider
 import org.scalatest._
 import org.slf4s.Logging
@@ -37,7 +34,7 @@ import scala.concurrent.duration._
 import scala.math.BigInt
 
 //启动system、以及必须的元素，包括system，TokenMetaData，等
-abstract class CommonSpec(configStr: String)
+abstract class CommonSpec(configStr: String = "")
     extends TestKit(
       ActorSystem(
         "Lightcone",
@@ -66,10 +63,9 @@ abstract class CommonSpec(configStr: String)
     .parseString(ethConfigStr)
     .withFallback(ConfigFactory.load())
 
-//  implicit val config = system.settings.config
-
   println("########## ", config.getConfig(EthereumClientMonitor.name))
   implicit val materializer = ActorMaterializer()(system)
+  implicit val deployActorsIgnoringRoles = true
 
   //  log.info(s"init config: ${config}")
 
@@ -84,13 +80,13 @@ abstract class CommonSpec(configStr: String)
   tokenManager.addToken(RDN_TOKEN)
   tokenManager.addToken(REP_TOKEN)
 
-  implicit val tokenValueEstimator = new TokenValueEstimator()
+  implicit val tve = new TokenValueEvaluator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
 
   //relay
   implicit val actors = new MapBasedLookup[ActorRef]()
-  implicit val ringIncomeEstimator: RingIncomeEstimator =
-    new RingIncomeEstimatorImpl()
+  implicit val rie: RingIncomeEvaluator =
+    new RingIncomeEvaluatorImpl()
 
   //actors
   //  val refresher = system.actorOf(

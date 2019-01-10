@@ -28,24 +28,28 @@ import org.loopring.lightcone.proto.ErrorCode._
 import scala.concurrent.{ExecutionContext, Future}
 import org.loopring.lightcone.persistence.DatabaseModule
 
+// Owner: Yongfeng
 object OrderCutoffHandlerActor {
   val name = "order_cutoff_handler"
 
-  def startSingleton(
-    )(
-      implicit system: ActorSystem,
+  def start(
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
       dbModule: DatabaseModule,
-      actors: Lookup[ActorRef]
+      actors: Lookup[ActorRef],
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new OrderCutoffHandlerActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       OrderCutoffHandlerActor.name
     )
@@ -62,7 +66,8 @@ object OrderCutoffHandlerActor {
 
 class OrderCutoffHandlerActor(
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -126,10 +131,8 @@ class OrderCutoffHandlerActor(
     }
     for {
       notified <- Future.sequence(cancelOrderReqs.map(mama ? _))
-      updated <- dbModule.orderService.updateOrdersStatus(
-        orders.map(_.hash),
-        status
-      )
+      updated <- dbModule.orderService
+        .updateOrdersStatus(orders.map(_.hash), status)
       _ = if (updated != ERR_NONE)
         throw ErrorException(ERR_INTERNAL_UNKNOWN, "Update order status failed")
     } yield Unit
