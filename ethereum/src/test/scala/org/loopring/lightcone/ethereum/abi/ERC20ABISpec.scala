@@ -64,7 +64,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     transferOpt match {
       case None =>
       case Some(transfer) =>
-        transfer.from should be("0x0681d8db095565fe8a346fa0277bffde9c0edbbf")
+        transfer.sender should be("0x0681d8db095565fe8a346fa0277bffde9c0edbbf")
         transfer.receiver should be(
           "0xf105c622edc68b9e4e813e631cb534940f5cc509"
         )
@@ -232,7 +232,7 @@ class ERC20ABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val transferOpt = erc20abi.unpackEvent(data, topics.toArray)
     transferOpt match {
       case Some(transfer: TransferEvent.Result) =>
-        transfer.from should be("0x0681d8db095565fe8a346fa0277bffde9c0edbbf")
+        transfer.sender should be("0x0681d8db095565fe8a346fa0277bffde9c0edbbf")
         transfer.receiver should be(
           "0xf105c622edc68b9e4e813e631cb534940f5cc509"
         )

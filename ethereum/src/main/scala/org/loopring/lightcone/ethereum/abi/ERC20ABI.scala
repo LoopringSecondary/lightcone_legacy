@@ -194,7 +194,7 @@ object TransferEvent {
   def apply(event: SABI.Event): TransferEvent = new TransferEvent(event)
 
   case class Result(
-      @(ContractAnnotation @field)("from", 0) from: String,
+      @(ContractAnnotation @field)("sender", 0) sender: String,
       @(ContractAnnotation @field)("receiver", 1) receiver: String,
       @(ContractAnnotation @field)("amount", 2) amount: BigInt)
 
