@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.actors.support
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.Props
 import akka.routing.RoundRobinPool
 import org.loopring.lightcone.actors.core._
@@ -27,10 +29,43 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
 import scala.util.Random
 import akka.pattern._
+import com.dimafeng.testcontainers.GenericContainer
+import com.typesafe.config.ConfigFactory
+import org.junit.runner.Description
+import org.loopring.lightcone.actors.support.MysqlDocker.mysqlContainer
+import org.rnorth.ducttape.TimeoutException
+import org.rnorth.ducttape.unreliables.Unreliables
+import org.testcontainers.containers.ContainerLaunchException
+import org.testcontainers.containers.wait.strategy.Wait
+import akka.pattern._
+import org.loopring.lightcone.actors.jsonrpc.JsonSupport
+
 import scala.concurrent.duration._
+
+object EthereumDocker {
+
+  implicit private val suiteDescription =
+    Description.createSuiteDescription(this.getClass)
+
+  val ethContainer = GenericContainer(
+    "kongliangzhong/loopring-ganache:v2",
+    exposedPorts = Seq(8545),
+    waitStrategy = Wait.forListeningPort()
+  )
+
+  ethContainer.starting()
+}
 
 trait EthereumSupport {
   my: CommonSpec =>
+
+  val ethNodesConfigStr = s"""|nodes : [
+                              |        {
+                              |        host = "${EthereumDocker.ethContainer.containerIpAddress}"
+                              |        port = ${EthereumDocker.ethContainer
+                               .mappedPort(8545)}
+                              |        }
+                              |]""".stripMargin
 
   implicit val requestBuilder = new EthereumCallRequestBuilder
   implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
@@ -49,13 +84,17 @@ trait EthereumSupport {
     actors.add(GasPriceActor.name, GasPriceActor.start)
   }
 
-  val ethMonitorConfig = config.getConfig(EthereumClientMonitor.name)
-  val poolSize = ethMonitorConfig.getInt("pool-size")
+  val poolSize =
+    config.getConfig(EthereumClientMonitor.name).getInt("pool-size")
 
-  val nodesConfig = ethMonitorConfig.getConfigList("nodes").asScala.map { c =>
-    EthereumProxySettings
-      .Node(host = c.getString("host"), port = c.getInt("port"))
-  }
+  val nodesConfig = ConfigFactory
+    .parseString(ethNodesConfigStr)
+    .getConfigList("nodes")
+    .asScala
+    .map { c =>
+      EthereumProxySettings
+        .Node(host = c.getString("host"), port = c.getInt("port"))
+    }
 
   val connectionPools = (nodesConfig.zipWithIndex.map {
     case (node, index) =>
@@ -65,10 +104,32 @@ trait EthereumSupport {
       system.actorOf(props, nodeName)
   }).toSeq
 
-  Thread.sleep(2000) //需要等待HttpConnector初始化，完成1s不足，需要2s
+  val blockNumJsonRpcReq = JsonRpc.Request(
+    "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":64}"
+  )
+
+  //必须等待connectionPools启动完毕才能启动monitor和accessActor
+  try Unreliables.retryUntilTrue(
+    10,
+    TimeUnit.SECONDS,
+    () => {
+      val f =
+        (connectionPools(0) ? blockNumJsonRpcReq).mapTo[JsonRpc.Response]
+      val res = Await.result(f, timeout.duration)
+      res.json != ""
+    }
+  )
+  catch {
+    case e: TimeoutException =>
+      throw new ContainerLaunchException(
+        "Timed out waiting for container port to open mysqlContainer should be listening)"
+      )
+  }
+
   actors.add(
     EthereumClientMonitor.name,
     EthereumClientMonitor.start(connectionPools)
   )
   actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
+
 }

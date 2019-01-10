@@ -22,7 +22,6 @@ import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
-import org.loopring.lightcone.actors.ethereum.EthereumClientMonitor
 import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
@@ -59,11 +58,9 @@ abstract class CommonSpec(configStr: String = "")
   implicit val timeProvider = new SystemTimeProvider()
   implicit val timeout = Timeout(5 second)
   implicit val ec = system.dispatcher
-  implicit val config = ConfigFactory
-    .parseString(ethConfigStr)
-    .withFallback(ConfigFactory.load())
 
-  println("########## ", config.getConfig(EthereumClientMonitor.name))
+  implicit val config = system.settings.config
+
   implicit val materializer = ActorMaterializer()(system)
   implicit val deployActorsIgnoringRoles = true
 

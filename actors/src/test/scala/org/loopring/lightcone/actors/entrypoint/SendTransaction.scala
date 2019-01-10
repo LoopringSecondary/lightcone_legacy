@@ -16,15 +16,12 @@
 
 package org.loopring.lightcone.actors.entrypoint
 
-import org.loopring.lightcone.actors.ethereum.{
-  ringSubmitterAbi,
-  EthereumAccessActor
-}
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.actors.support.{CommonSpec, EthereumSupport}
-import org.loopring.lightcone.ethereum.abi.SubmitRingsFunction
+import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.ethereum.getSignedTxData
 import org.loopring.lightcone.ethereum.data.{Address, Transaction}
-import org.loopring.lightcone.proto.EthGetBalance
+import org.loopring.lightcone.proto._
 import org.scalatest.WordSpec
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
@@ -39,12 +36,28 @@ class SendTransaction extends CommonSpec with EthereumSupport {
 
       val ethereumAccessorActor = actors.get(EthereumAccessActor.name)
       val f = (ethereumAccessorActor ? EthGetBalance.Req(
-        address = Address("0xe5fd5be7c9a50358302de473db7818c7a91d1ec0").toString,
+        address = Address("0xe20cf871f1646d8651ee9dc95aab1d93160b3467").toString,
         tag = "latest"
       ))
 
-      val r = Await.result(f, timeout.duration)
-      println(r)
+      val r = Await.result(f.mapTo[EthGetBalance.Res], timeout.duration)
+      info(s"${r.result}, ${r.error}")
+
+      val data = erc20Abi.allowance.pack(
+        AllowanceFunction.Parms(
+          _owner = "0xe20cf871f1646d8651ee9dc95aab1d93160b3467",
+          _spender = "0xCa66Ffaf17e4B600563f6af032456AA7B05a6975"
+        )
+      )
+      val param = TransactionParams(
+        to = "0x97241525fe425C90eBe5A41127816dcFA5954b06",
+        data = data
+      )
+
+      val f1 = (ethereumAccessorActor ? EthCall.Req(1, Some(param), "latest"))
+
+      val r1 = Await.result(f1.mapTo[EthCall.Res], timeout.duration)
+      info(s"${r1.result}, ${r1.error}")
 
       implicit val credentials: Credentials =
         Credentials.create(
