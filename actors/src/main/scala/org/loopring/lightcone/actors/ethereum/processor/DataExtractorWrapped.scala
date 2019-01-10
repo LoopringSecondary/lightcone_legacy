@@ -27,7 +27,7 @@ trait DataExtractorWrapped[R] {
   val processors: ListBuffer[Processor[R]] = ListBuffer.empty
   var events = Seq.empty[R]
 
-  def extractData(blockJob: BlockJob): Seq[R] = {
+  def extract(blockJob: BlockJob): Seq[R] = {
     events = (blockJob.txs zip blockJob.receipts).flatMap { item =>
       extractor.extract(item._1, item._2, blockJob.timestamp)
     }
