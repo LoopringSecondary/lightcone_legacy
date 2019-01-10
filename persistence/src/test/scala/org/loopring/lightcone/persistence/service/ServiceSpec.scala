@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.services
+package org.loopring.lightcone.persistence.service
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
 import com.google.protobuf.ByteString
