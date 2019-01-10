@@ -22,7 +22,7 @@ import org.loopring.lightcone.proto._
 
 import scala.collection.JavaConverters._
 
-class TokenBurnRateEventExtractor(config: Config)
+class TokenBurnRateEventExtractor()(implicit config: Config)
     extends EventExtractor[TokenBurnRateChangedEvent] {
 
   val rateMap = config
