@@ -21,11 +21,12 @@ import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 
-class TransactionRecordTable(tableNum: Int)(tag: Tag)
+class TransactionRecordTable(partitionId: String)(tag: Tag)
     extends BaseTable[TransactionRecord](
       tag,
-      s"TRANSACTION_RECORD_$tableNum"
+      s"TRANSACTION_RECORD_${partitionId.toUpperCase}"
     ) {
+
   implicit val txStatusColumnType = enumColumnType(TxStatus)
   implicit val recordTypeColumnType = enumColumnType(
     TransactionRecord.RecordType
@@ -43,6 +44,7 @@ class TransactionRecordTable(tableNum: Int)(tag: Tag)
   def txValue = column[ByteString]("tx_value")
   def txIndex = column[Int]("tx_index")
   def logIndex = column[Int]("log_index")
+  def eventIndex = column[Int]("event_index")
   def gasPrice = column[Long]("gas_price")
   def gasLimit = column[Int]("gas_limit")
   def gasUsed = column[Int]("gas_used")
@@ -52,16 +54,16 @@ class TransactionRecordTable(tableNum: Int)(tag: Tag)
   def market = column[String]("market")
   def eventData = column[Option[TransactionRecord.EventData]]("event_data")
   def createdAt = column[Long]("created_at")
-  def shardEntity = column[String]("shard_entity")
-  def sequenceId = column[Long]("sequence_id")
+  def sequenceId = column[Long]("sequence_id", O.PrimaryKey)
 
   // indexes
   def idx_owner = index("idx_owner", (owner), unique = false)
-  def idx_owner_tx = index("idx_owner_tx", (owner, txHash), unique = true)
-  def idx_record_type = index("idx_record_type", (recordType), unique = false)
 
-  def idx_sequence_id =
-    index("idx_sequence_id", (sequenceId), unique = false)
+  def idx_owner_type =
+    index("idx_owner_type", (owner, recordType), unique = false)
+
+  def idx_from_to_type =
+    index("idx_from_to_type", (txFrom, txTo, recordType), unique = false)
 
   def headerProjection =
     (
@@ -75,6 +77,7 @@ class TransactionRecordTable(tableNum: Int)(tag: Tag)
       txValue,
       txIndex,
       logIndex,
+      eventIndex,
       gasPrice,
       gasLimit,
       gasUsed
@@ -92,9 +95,7 @@ class TransactionRecordTable(tableNum: Int)(tag: Tag)
       recordType,
       tradingPair,
       market,
-      shardEntity,
       sequenceId,
-      eventData,
-      createdAt
+      eventData
     ) <> ((TransactionRecord.apply _).tupled, TransactionRecord.unapply)
 }

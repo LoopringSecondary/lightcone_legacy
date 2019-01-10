@@ -14,26 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.actors.support
 
-import org.loopring.lightcone.proto._
-import scala.concurrent.Future
+import org.loopring.lightcone.actors.core._
 
-trait TransactionRecordService {
+trait EthereumEventAccessSupport extends DatabaseModuleSupport {
+  my: CommonSpec =>
+  actors.add(
+    TransactionRecordActor.name,
+    TransactionRecordActor.start
+  )
 
-  def saveRecord(
-      record: TransactionRecord
-    ): Future[PersistTransactionRecord.Res]
-
-  def getRecordsByOwner(
-      owner: String,
-      queryType: Option[GetTransactions.QueryType],
-      sort: SortingType,
-      paging: CursorPaging
-    ): Future[Seq[TransactionRecord]]
-
-  def getRecordsCountByOwner(
-      owner: String,
-      queryType: Option[GetTransactions.QueryType]
-    ): Future[Int]
 }

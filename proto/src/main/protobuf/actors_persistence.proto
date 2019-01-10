@@ -187,10 +187,8 @@ message TransactionRecord {
     RecordType  record_type  = 3;
     string      trading_pair = 4;
     string      market       = 5; // LRC-WETH
-    string      shard_entity = 6;
-    int64       sequence_id  = 7;
-    EventData   event_data   = 8;
-    int64       created_at   = 9;
+    int64       sequence_id  = 6;
+    EventData   event_data   = 7;
 }
 
 message PersistTransactionRecord {
@@ -203,7 +201,7 @@ message PersistTransactionRecord {
     }
 }
 
-message GetTransactions {
+message GetTransactionRecords {
     message QueryType {
         TransactionRecord.RecordType value  = 1;
     }
@@ -219,10 +217,10 @@ message GetTransactions {
     }
 }
 
-message GetTransactionCount {
+message GetTransactionRecordCount {
     message Req {
         string                     owner       = 1;
-        GetTransactions.QueryType  query_type  = 2;
+        GetTransactionRecords.QueryType  query_type  = 2;
     }
 
     message Res {

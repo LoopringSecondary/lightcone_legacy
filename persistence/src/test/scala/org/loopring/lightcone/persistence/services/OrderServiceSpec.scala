@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.persistence.services
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.dals._
+import org.loopring.lightcone.persistence.service.{OrderService, OrderServiceImpl}
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -36,7 +37,10 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
   val validSince = 1
   val validUntil = timeProvider.getTimeSeconds()
 
-  def createTables(): Future[Any] = dal.createTable()
+  def createTables() = {
+    new OrderDalImpl().createTable()
+    new BlockDalImpl().createTable()
+  }
 
   private def testSave(
       owner: String,

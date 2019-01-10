@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.persistence.services
 
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.dals._
+import org.loopring.lightcone.persistence.service.{SettlementTxService, SettlementTxServiceImpl}
 import org.loopring.lightcone.proto._
+
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -31,7 +33,7 @@ class SettlementTxServiceSpec extends ServiceSpec[SettlementTxService] {
     new SettlementTxServiceImpl()
   }
 
-  def createTables(): Future[Any] = dal.createTable()
+  def createTables(): Unit = dal.createTable()
 
   private def testSave(
       txHash: String,

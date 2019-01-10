@@ -82,7 +82,6 @@ class CoreModule(config: Config)
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].in[Singleton]
     bind[OrderDal].to[OrderDalImpl].in[Singleton]
     bind[TradeDal].to[TradeDalImpl].in[Singleton]
-    bind[TokenBalanceDal].to[TokenBalanceDalImpl].in[Singleton]
     bind[BlockDal].to[BlockDalImpl].in[Singleton]
     bind[SettlementTxDal].to[SettlementTxDalImpl].in[Singleton]
     bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].in[Singleton]

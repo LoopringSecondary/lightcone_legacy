@@ -29,6 +29,29 @@ package object data {
       balance: BigInt,
       allowance: BigInt)
 
+  implicit class RichEventHeader(header: EventHeader) {
+
+    def sequenceId() = {
+      if (header.txIndex > 9999 || header.logIndex > 9999)
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"txIndex or logIndex larger than 9999 in ${header}"
+        )
+      if (header.eventIndex > 999)
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"eventIndex larger than 999 in ${header}"
+        )
+      println(
+        "+++++++++++++++++++",
+        header,
+        (header.blockNumber * 100000000000L + header.txIndex * 10000000 + header.logIndex * 1000 + header.eventIndex)
+      )
+      // 最大可表示：8位blockNum(目前7位) 4位txIndex 4位logIndex 3位eventIndex
+      header.blockNumber * 100000000000L + header.txIndex * 10000000 + header.logIndex * 1000 + header.eventIndex
+    }
+  }
+
   ///////////
 
   implicit def byteString2BigInt(bytes: ByteString): BigInt = {

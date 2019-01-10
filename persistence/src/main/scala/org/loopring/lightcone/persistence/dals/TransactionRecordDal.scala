@@ -19,7 +19,7 @@ package org.loopring.lightcone.persistence.dals
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.Logger
-import org.loopring.lightcone.lib.SystemTimeProvider
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
@@ -39,88 +39,13 @@ trait TransactionRecordDal
 
   def getRecordsByOwner(
       owner: String,
-      queryType: Option[GetTransactions.QueryType],
+      queryType: Option[GetTransactionRecords.QueryType],
       sort: SortingType,
       paging: CursorPaging
     ): Future[Seq[TransactionRecord]]
 
   def getRecordsCountByOwner(
       owner: String,
-      queryType: Option[GetTransactions.QueryType]
+      queryType: Option[GetTransactionRecords.QueryType]
     ): Future[Int]
-}
-
-class TransactionRecordDalImpl(
-    tableIndex: Int
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
-    val config: Config,
-    val ec: ExecutionContext)
-    extends TransactionRecordDal {
-  val query = TableQuery(new TransactionRecordTable(tableIndex)(_))
-  def getRowHash(row: RawOrder) = row.hash
-  val timeProvider = new SystemTimeProvider()
-  implicit val txStatusColumnType = enumColumnType(TxStatus)
-  implicit val recordTypeColumnType = enumColumnType(
-    TransactionRecord.RecordType
-  )
-  implicit val dataColumnType = eventDataColumnType()
-  private[this] val logger = Logger(this.getClass)
-
-  def saveRecord(
-      record: TransactionRecord
-    ): Future[PersistTransactionRecord.Res] = {
-    db.run((query += record).asTry).map {
-      case Failure(e: MySQLIntegrityConstraintViolationException) => {
-        PersistTransactionRecord.Res(
-          error = ERR_PERSISTENCE_DUPLICATE_INSERT,
-          alreadyExist = true
-        )
-      }
-      case Failure(ex) => {
-        logger.error(s"error : ${ex.getMessage}")
-        PersistTransactionRecord
-          .Res(error = ERR_PERSISTENCE_INTERNAL)
-      }
-      case Success(x) =>
-        PersistTransactionRecord.Res(error = ERR_NONE)
-    }
-  }
-
-  def getRecordsByOwner(
-      owner: String,
-      queryType: Option[GetTransactions.QueryType],
-      sort: SortingType,
-      paging: CursorPaging
-    ): Future[Seq[TransactionRecord]] = {
-    var filters = query
-      .filter(_.owner === owner)
-    if (queryType.nonEmpty) {
-      filters = filters.filter(_.recordType === queryType.get.value)
-    }
-    if (paging.cursor > 0) {
-      filters = filters.filter(_.sequenceId > paging.cursor)
-    }
-    filters = if (sort == SortingType.ASC) {
-      filters.sortBy(_.sequenceId)
-    } else {
-      filters.sortBy(_.sequenceId.desc)
-    }
-    if (paging.size > 0) {
-      filters = filters.take(paging.size)
-    }
-    db.run(filters.result)
-  }
-
-  def getRecordsCountByOwner(
-      owner: String,
-      queryType: Option[GetTransactions.QueryType]
-    ): Future[Int] = {
-    var filters = query
-      .filter(_.owner === owner)
-    if (queryType.nonEmpty) {
-      filters = filters.filter(_.recordType === queryType.get.value)
-    }
-    db.run(filters.size.result)
-  }
 }

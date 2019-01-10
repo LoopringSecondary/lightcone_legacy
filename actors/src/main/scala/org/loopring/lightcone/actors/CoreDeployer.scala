@@ -119,8 +119,8 @@ class CoreDeployer @Inject()(
       actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
       actors.add(
-        EthereumEventPersistorActor.name,
-        EthereumEventPersistorActor.start
+        TransactionRecordActor.name,
+        TransactionRecordActor.start
       )
 
       //-----------deploy singleton actors-----------

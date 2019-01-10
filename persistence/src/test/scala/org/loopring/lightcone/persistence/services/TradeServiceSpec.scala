@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.persistence.services
 
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.dals._
+import org.loopring.lightcone.persistence.service.{TradeService, TradeServiceImpl}
 import org.loopring.lightcone.proto._
+
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -33,7 +35,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
   val tokenS = "0xaaaaaa1"
   val tokenB = "0xbbbbbb1"
 
-  def createTables(): Future[Any] = dal.createTable()
+  def createTables(): Unit = dal.createTable()
 
   private def testSave(
       txHash: String,
