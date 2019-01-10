@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.services
+package org.loopring.lightcone.persistence.service
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.dals._
-import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.concurrent.duration._
