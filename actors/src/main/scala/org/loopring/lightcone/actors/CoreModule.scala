@@ -38,6 +38,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
+import org.loopring.lightcone.ethereum.event._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -77,6 +78,16 @@ class CoreModule(config: Config)
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-order-status-monitor"
     )
+
+    // --- bind event extractors ---------------------
+    bind[AllowanceChangedAddressExtractor]
+    bind[BalanceChangedAddressExtractor]
+    bind[CutoffEventExtractor]
+    bind[OnchainOrderExtractor]
+    bind[OrdersCancelledEventExtractor]
+    bind[RingMinedEventExtractor]
+    bind[TokenBurnRateEventExtractor]
+    bind[TransferEventExtractor]
 
     // --- bind dals ---------------------
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].in[Singleton]

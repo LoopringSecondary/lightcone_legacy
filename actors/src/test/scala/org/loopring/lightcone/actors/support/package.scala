@@ -90,7 +90,7 @@ package object support {
 
   ethContainer.starting()
 
-  Thread.sleep(10000)
+  // Thread.sleep(2000)
 
   val dbConfig1: DatabaseConfig[JdbcProfile] =
     DatabaseConfig.forConfig[JdbcProfile](
