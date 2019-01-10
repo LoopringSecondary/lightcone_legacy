@@ -38,7 +38,7 @@ abstract class EventDispatcher[R, T](implicit extractor: EventExtractor[R]) {
   }
 }
 
-trait NonDerivable[R, T] { self: EventDispatcher[R, T] =>
+trait NonDerivable[R] { self: EventDispatcher[R, R] =>
   def derive(event: R) = Seq(event)
 }
 
