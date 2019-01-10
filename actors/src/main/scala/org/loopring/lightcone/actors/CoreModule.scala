@@ -51,7 +51,7 @@ class CoreModule(config: Config)
     with ScalaModule
     with Logging {
 
-  private var dbConfigMap = Map.empty[String, DatabaseConfig[JdbcProfile]]
+  val dbConfigManager = new DatabaseConfigManager(config)
 
   override def configure(): Unit = {
 
@@ -69,6 +69,8 @@ class CoreModule(config: Config)
       .toInstance(system.dispatchers.lookup("db-execution-context"))
 
     // --- bind db configs ---------------------
+    bind[DatabaseConfigManager].toInstance(dbConfigManager)
+
     bindDatabaseConfigProviderForNames(
       "dbconfig-dal-token-metadata",
       "dbconfig-dal-order",
@@ -138,28 +140,15 @@ class CoreModule(config: Config)
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]
       .toProvider(new Provider[DatabaseConfig[JdbcProfile]] {
-        def get() = getDbConfigByKey("db.default")
+        def get() = dbConfigManager.getDatabaseConfig("db.default")
       })
 
     names.foreach { name =>
       bind[DatabaseConfig[JdbcProfile]]
         .annotatedWithName(name)
         .toProvider(new Provider[DatabaseConfig[JdbcProfile]] {
-          def get() = getDbConfigByKey(s"db.${name}")
+          def get() = dbConfigManager.getDatabaseConfig(s"db.${name}")
         })
-    }
-  }
-
-  private def getDbConfigByKey(key: String) = {
-    dbConfigMap.get(key) match {
-      case None =>
-        val dbConfig: DatabaseConfig[JdbcProfile] =
-          DatabaseConfig.forConfig(key, config)
-        log.info(s"creating DatabaseConfig instance for config key: $key")
-        dbConfigMap += key -> dbConfig
-        dbConfig
-      case Some(dbConfig) =>
-        dbConfig
     }
   }
 }
