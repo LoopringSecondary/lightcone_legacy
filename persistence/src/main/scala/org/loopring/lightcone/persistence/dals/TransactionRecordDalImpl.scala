@@ -31,7 +31,7 @@ import org.loopring.lightcone.proto._
 import scala.util.{Failure, Success}
 
 class TransactionRecordDalImpl(
-    val partitionId: String,
+    val shardId: String,
     val dbConfig: DatabaseConfig[JdbcProfile]
   )(
     implicit
@@ -44,7 +44,7 @@ class TransactionRecordDalImpl(
   )
   implicit val dataColumnType = eventDataColumnType()
 
-  val query = TableQuery(new TransactionRecordTable(partitionId)(_))
+  val query = TableQuery(new TransactionRecordTable(shardId)(_))
 
   def getRowHash(row: RawOrder) = row.hash
 
