@@ -20,7 +20,6 @@ import com.google.protobuf.ByteString
 
 package object event {
 
-  implicit def bytes2ByteString(bytes: Array[Byte]): ByteString =
-    ByteString.copyFrom(bytes)
+  implicit def bytes2ByteString(bytes: Array[Byte]) = ByteString.copyFrom(bytes)
 
 }
