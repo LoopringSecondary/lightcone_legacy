@@ -22,7 +22,7 @@ import org.loopring.lightcone.proto.{
   _
 }
 
-class OrdersCancelledEventExtractor()
+class OrdersCancelledEventExtractor
     extends EventExtractor[POrdersCancelledEvent] {
 
   def extract(
