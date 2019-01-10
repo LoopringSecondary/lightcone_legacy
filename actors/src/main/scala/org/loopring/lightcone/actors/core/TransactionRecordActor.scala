@@ -39,15 +39,18 @@ import TransactionRecord.EventData.Event
 object TransactionRecordActor extends ShardedByAddress {
   val name = "transaction-record"
 
-  def start()(
-    implicit system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    dbModule: DatabaseModule,
-    deployActorsIgnoringRoles: Boolean): ActorRef = {
+  def start(
+    )(
+      implicit
+      system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
+    ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -57,34 +60,39 @@ object TransactionRecordActor extends ShardedByAddress {
       typeName = name,
       entityProps = Props(new TransactionRecordActor()),
       settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor)
+      messageExtractor = messageExtractor
+    )
   }
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
-    case req: TransferEvent => req.owner
-    case req: CutoffEvent => req.owner
-    case req: OrdersCancelledEvent => req.owner
-    case req: OrderFilledEvent => req.owner
-    case req: GetTransactionRecords.Req => req.owner
+    case req: TransferEvent                 => req.owner
+    case req: CutoffEvent                   => req.owner
+    case req: OrdersCancelledEvent          => req.owner
+    case req: OrderFilledEvent              => req.owner
+    case req: GetTransactionRecords.Req     => req.owner
     case req: GetTransactionRecordCount.Req => req.owner
   }
 }
 
-class TransactionRecordActor()(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef],
-  val dbModule: DatabaseModule)
-  extends ActorWithPathBasedConfig(
-    TransactionRecordActor.name,
-    TransactionRecordActor.extractEntityId) {
+class TransactionRecordActor(
+  )(
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
+    val dbModule: DatabaseModule)
+    extends ActorWithPathBasedConfig(
+      TransactionRecordActor.name,
+      TransactionRecordActor.extractEntityId
+    ) {
 
   val dbConfigKey = s"db.transaction-record.shard_${entityId}"
   log.info(
     s"TransactionRecordActor with db configuration ($dbConfigKey): ",
-    config.getConfig(dbConfigKey))
+    config.getConfig(dbConfigKey)
+  )
 
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
   val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
@@ -110,8 +118,10 @@ class TransactionRecordActor()(
         recordType = recordType,
         eventData = Some(
           TransactionRecord
-            .EventData(Event.Transfer(req))),
-        sequenceId = header.sequenceId)
+            .EventData(Event.Transfer(req))
+        ),
+        sequenceId = header.sequenceId
+      )
       txRecordDal.saveRecord(record)
 
     case req: OrdersCancelledEvent =>
@@ -122,8 +132,10 @@ class TransactionRecordActor()(
         recordType = ORDER_CANCELLED,
         eventData = Some(
           TransactionRecord
-            .EventData(Event.OrderCancelled(req))),
-        sequenceId = header.sequenceId)
+            .EventData(Event.OrderCancelled(req))
+        ),
+        sequenceId = header.sequenceId
+      )
       txRecordDal.saveRecord(record)
 
     case req: CutoffEvent =>
@@ -135,8 +147,10 @@ class TransactionRecordActor()(
         tradingPair = req.tradingPair,
         eventData = Some(
           TransactionRecord
-            .EventData(Event.Cutoff(req))),
-        sequenceId = header.sequenceId)
+            .EventData(Event.Cutoff(req))
+        ),
+        sequenceId = header.sequenceId
+      )
       txRecordDal.saveRecord(record)
 
     case req: OrderFilledEvent =>
@@ -146,7 +160,8 @@ class TransactionRecordActor()(
         saved = if (order.isEmpty) {
           Future.successful(
             PersistTransactionRecord
-              .Res(error = ErrorCode.ERR_ORDER_VALIDATION_NOT_PERSISTED))
+              .Res(error = ErrorCode.ERR_ORDER_VALIDATION_NOT_PERSISTED)
+          )
         } else {
           val header = req.header.get
           val marketHash =
@@ -158,8 +173,10 @@ class TransactionRecordActor()(
             tradingPair = marketHash,
             eventData = Some(
               TransactionRecord
-                .EventData(Event.Filled(req))),
-            sequenceId = header.sequenceId)
+                .EventData(Event.Filled(req))
+            ),
+            sequenceId = header.sequenceId
+          )
           txRecordDal.saveRecord(record)
         }
       } yield saved
