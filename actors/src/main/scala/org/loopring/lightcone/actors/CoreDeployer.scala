@@ -42,7 +42,7 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
-class ClusterDeployer @Inject()(
+class CoreDeployer @Inject()(
     implicit
     @Named("deploy-actors-ignoring-roles") deployActorsIgnoringRoles: Boolean,
     actors: Lookup[ActorRef],
@@ -124,7 +124,8 @@ class ClusterDeployer @Inject()(
       )
 
       //-----------deploy singleton actors-----------
-      actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start(Nil)) // TODO(hongyu): Nil?
+      // TODO(hongyu): Nil?
+      actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start(Nil))
       actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)

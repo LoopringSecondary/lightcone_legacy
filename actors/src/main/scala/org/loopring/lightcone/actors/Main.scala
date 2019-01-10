@@ -58,7 +58,7 @@ object Main extends App with Logging {
   val injector = Guice.createInjector(new CoreModule(config))
   val system = injector.instance[ActorSystem]
 
-  injector.instance[ClusterDeployer].deploy()
+  injector.instance[CoreDeployer].deploy()
 
   println(s"type `stopstopstop` to terminate")
 

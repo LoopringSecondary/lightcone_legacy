@@ -103,7 +103,7 @@ class CoreModule(config: Config)
     bind[SupportedMarkets].toInstance(SupportedMarkets(config))
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
 
-    // --- bind other classes ---------------------TimePro
+    // --- bind other classes ---------------------
     bind[TimeProvider].to[SystemTimeProvider]
     bind[EthereumCallRequestBuilder]
     bind[EthereumBatchCallRequestBuilder]
