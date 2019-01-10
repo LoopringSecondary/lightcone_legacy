@@ -50,6 +50,7 @@ class CoreDeployer @Inject()(
     brb: EthereumBatchCallRequestBuilder,
     cluster: Cluster,
     config: Config,
+    dcm: DatabaseConfigManager,
     dbModule: DatabaseModule,
     dustOrderEvaluator: DustOrderEvaluator,
     ec: ExecutionContext,

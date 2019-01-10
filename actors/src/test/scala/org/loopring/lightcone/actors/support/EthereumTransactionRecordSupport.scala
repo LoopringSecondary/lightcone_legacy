@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.support
 
 import com.typesafe.config.{Config, ConfigFactory}
+import org.loopring.lightcone.actors.DatabaseConfigManager
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.validator.{
   MessageValidationActor,
@@ -30,6 +31,8 @@ trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
     .parseString(transactionRecordConfigStr)
     .withFallback(ConfigFactory.load())
 
+  val dcm = new DatabaseConfigManager(config1)
+
   actors.add(
     TransactionRecordActor.name,
     TransactionRecordActor
@@ -41,6 +44,7 @@ trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
         timeout,
         actors,
         dbModule,
+        dcm,
         true
       )
   )

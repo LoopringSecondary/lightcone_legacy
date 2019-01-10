@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.actors.DatabaseConfigManager
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
@@ -49,6 +50,7 @@ object TransactionRecordActor extends ShardedByAddress {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
+      databaseConfigManager: DatabaseConfigManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
@@ -82,11 +84,14 @@ class TransactionRecordActor(
     val ec: ExecutionContext,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule)
+    val dbModule: DatabaseModule,
+    val databaseConfigManager: DatabaseConfigManager)
     extends ActorWithPathBasedConfig(
       TransactionRecordActor.name,
       TransactionRecordActor.extractEntityId
     ) {
+  val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
+  val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
 
   val dbConfigKey = s"db.transaction-record.shard_${entityId}"
   log.info(
@@ -94,14 +99,11 @@ class TransactionRecordActor(
     config.getConfig(dbConfigKey)
   )
 
-  val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
-  val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
-
-  val dbConfig: DatabaseConfig[JdbcProfile] =
-    DatabaseConfig.forConfig(dbConfigKey, config)
-
   val txRecordDal: TransactionRecordDal =
-    new TransactionRecordDalImpl(shardId = entityId, dbConfig)
+    new TransactionRecordDalImpl(
+      shardId = entityId,
+      databaseConfigManager.getDatabaseConfig(dbConfigKey)
+    )
 
   txRecordDal.createTable()
 
