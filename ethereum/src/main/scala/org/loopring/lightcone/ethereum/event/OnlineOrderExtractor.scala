@@ -20,7 +20,7 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
-class OnlineOrderExtractor() extends DataExtractor[RawOrder] {
+class OnlineOrderExtractor() extends EventExtractor[RawOrder] {
 
   def extract(
       tx: Transaction,

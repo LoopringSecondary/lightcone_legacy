@@ -27,8 +27,8 @@ import org.loopring.lightcone.proto.{
 
 import scala.collection.mutable.ListBuffer
 
-class AllowanceChangedAddressExtractor(config: Config)
-    extends DataExtractor[AddressAllowanceUpdated] {
+class AllowanceChangedAddressExtractor()(implicit config: Config)
+    extends EventExtractor[AddressAllowanceUpdated] {
 
   val delegateAddress =
     Address(config.getString("loopring_protocol.delegate-address"))

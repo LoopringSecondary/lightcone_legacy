@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto.{
 }
 
 class OrdersCancelledEventExtractor()
-    extends DataExtractor[POrdersCancelledEvent] {
+    extends EventExtractor[POrdersCancelledEvent] {
 
   def extract(
       tx: Transaction,
