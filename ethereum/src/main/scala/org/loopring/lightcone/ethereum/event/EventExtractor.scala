@@ -41,7 +41,10 @@ trait EventExtractor[R] {
       txStatus = getStatus(receipt.status),
       blockHash = tx.blockHash,
       blockTimestamp = Numeric.toBigInt(blockTime).longValue(),
-      blockNumber = Numeric.toBigInt(tx.blockNumber).longValue()
+      blockNumber = Numeric.toBigInt(tx.blockNumber).longValue(),
+      gasPrice = Numeric.toBigInt(tx.gasPrice).longValue(),
+      gasLimit = Numeric.toBigInt(tx.gas).intValue(),
+      gasUsed = Numeric.toBigInt(receipt.gasUsed).intValue()
     )
   }
 
