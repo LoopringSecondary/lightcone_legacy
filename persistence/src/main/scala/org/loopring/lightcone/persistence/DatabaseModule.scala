@@ -18,39 +18,39 @@ package org.loopring.lightcone.persistence
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
+import com.typesafe.config.Config
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import slick.basic._
-import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
 class DatabaseModule @Inject()(
+    val tokenMetadataDal: TokenMetadataDal,
+    val orderDal: OrderDal,
+    val tradeDal: TradeDal,
+    val tokenBalanceDal: TokenBalanceDal,
+    val blockDal: BlockDal,
+    val settlementTxDal: SettlementTxDal,
+    val orderStatusMonitorDal: OrderStatusMonitorDal,
+    val orderService: OrderService,
+    val orderStatusMonitorService: OrderStatusMonitorService,
+    val tokenMetadataService: TokenMetadataService,
+    val tradeService: TradeService,
+    val settlementTxService: SettlementTxService
+  )(
     implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
     @Named("db-execution-context") val ec: ExecutionContext)
     extends base.BaseDatabaseModule {
 
-  val orderService: OrderService = new OrderServiceImpl()
-  val tradeService: TradeService = new TradeServiceImpl()
-
-  val tokenMetadataService = new TokenMetadataServiceImpl()
-  val settlementTxService: SettlementTxService = new SettlementTxServiceImpl()
-  val blockService: BlockService = new BlockServiceImpl()
-
-  val orderStatusMonitorService: OrderStatusMonitorService =
-    new OrderStatusMonitorServiceImpl()
-
   val tables = Seq(
-    new TokenMetadataDalImpl(),
-    new OrderDalImpl(),
-    new TradeDalImpl(),
-    new AddressDalImpl(),
-    new TokenBalanceDalImpl(),
-    new BlockDalImpl(),
-    new TransactionDalImpl(),
-    new EventLogDalImpl(),
-    new TokenTransferDalImpl(),
-    new SettlementTxDalImpl(),
-    new OrderStatusMonitorDalImpl()
+    tokenMetadataDal,
+    orderDal,
+    tradeDal,
+    tokenBalanceDal,
+    blockDal,
+    settlementTxDal,
+    orderStatusMonitorDal
   )
+
+  createTables()
 }

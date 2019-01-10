@@ -21,6 +21,7 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
+// Owner: Yadong
 class EthereumCallRequestBuilder {
 
   def buildRequest(
@@ -29,9 +30,7 @@ class EthereumCallRequestBuilder {
       tag: String
     ): EthCall.Req = {
     val input = burnRateTableAbi.getBurnRate.pack(
-      GetBurnRateFunction.Params(
-        token = req.token
-      )
+      GetBurnRateFunction.Params(token = req.token)
     )
     val param = TransactionParams(to = contractAddress.toString, data = input)
     EthCall.Req(param = Some(param), tag = tag)

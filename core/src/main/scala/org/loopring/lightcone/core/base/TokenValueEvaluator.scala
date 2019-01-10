@@ -16,13 +16,14 @@
 
 package org.loopring.lightcone.core.base
 
+import com.google.inject.Inject
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
 // TODO(dongw): we need a price provider
-class TokenValueEstimator()(implicit tm: TokenManager) {
+class TokenValueEvaluator @Inject()()(implicit tm: TokenManager) {
 
-  def getEstimatedValue(
+  def getValue(
       tokenAddr: String,
       amount: BigInt
     ): Double = {

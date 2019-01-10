@@ -20,6 +20,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
+// Owner: Yongfeng
 object DatabaseQueryMessageValidator {
   val name = "database_query_validator"
 }
@@ -27,15 +28,8 @@ object DatabaseQueryMessageValidator {
 final class DatabaseQueryMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
-  // Throws exception if validation fails.
+  //TODO(yongfeng): Throws exception if validation fails.
   def validate = {
-    case req: PersistOrder.Req =>
-      if (req.order.isEmpty || (req.order.get.state.nonEmpty && req.order.get.state.get.status !=
-            OrderStatus.STATUS_NEW))
-        throw ErrorException(Error(ErrorCode.ERR_PERSISTENCE_INVALID_DATA))
-    case req: UserCancelOrder.Req =>
-      if (req.orderHashes.isEmpty)
-        throw ErrorException(Error(ErrorCode.ERR_PERSISTENCE_INVALID_DATA))
     case req: GetOrdersForUser.Req => req
     case req: GetTrades.Req        => req
   }

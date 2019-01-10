@@ -35,10 +35,7 @@ trait EthereumSupport {
   implicit val requestBuilder = new EthereumCallRequestBuilder
   implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
 
-  actors.add(
-    EthereumQueryActor.name,
-    EthereumQueryActor.startShardRegion()
-  )
+  actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
   actors.add(
     EthereumQueryMessageValidator.name,
     MessageValidationActor(
@@ -49,7 +46,7 @@ trait EthereumSupport {
   )
 
   if (!actors.contains(GasPriceActor.name)) {
-    actors.add(GasPriceActor.name, GasPriceActor.startShardRegion())
+    actors.add(GasPriceActor.name, GasPriceActor.start)
   }
 
   val ethMonitorConfig = config.getConfig(EthereumClientMonitor.name)
@@ -71,8 +68,7 @@ trait EthereumSupport {
   Thread.sleep(2000) //需要等待HttpConnector初始化，完成1s不足，需要2s
   actors.add(
     EthereumClientMonitor.name,
-    EthereumClientMonitor.startSingleton(connectionPools)
+    EthereumClientMonitor.start(connectionPools)
   )
-  actors.add(EthereumAccessActor.name, EthereumAccessActor.startSingleton())
-
+  actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
 }

@@ -28,7 +28,7 @@ import org.web3j.utils.Numeric
 import scala.collection.mutable.ListBuffer
 
 class BalanceChangedAddressExtractor()
-    extends DataExtractor[AddressBalanceUpdated] {
+    extends EventExtractor[AddressBalanceUpdated] {
 
   def extract(
       tx: Transaction,

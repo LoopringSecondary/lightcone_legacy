@@ -21,7 +21,6 @@ import org.loopring.lightcone.proto.OrderStatusMonitor
 import scala.concurrent.Future
 
 trait OrderStatusMonitorService {
-  val orderStatusMonitorDal: OrderStatusMonitorDal
 
   def updateLatestProcessingTime(event: OrderStatusMonitor): Future[Int]
 

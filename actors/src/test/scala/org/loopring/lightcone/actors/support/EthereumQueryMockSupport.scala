@@ -32,7 +32,8 @@ trait EthereumQueryMockSupport {
 
   class EthereumAccessMockActor(
     )(
-      implicit ec: ExecutionContext,
+      implicit
+      ec: ExecutionContext,
       timeout: Timeout)
       extends Actor
       with ActorLogging {
@@ -46,7 +47,8 @@ trait EthereumQueryMockSupport {
 
   class EthereumQueryForRecoveryMockActor(
     )(
-      implicit ec: ExecutionContext,
+      implicit
+      ec: ExecutionContext,
       timeout: Timeout)
       extends Actor
       with ActorLogging {

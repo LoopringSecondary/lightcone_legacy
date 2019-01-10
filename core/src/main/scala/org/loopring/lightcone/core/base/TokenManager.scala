@@ -19,8 +19,9 @@ package org.loopring.lightcone.core.base
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 
-class TokenManager(defaultBurnRate: Double = 0.2) {
+class TokenManager() {
 
+  val defaultBurnRate: Double = 0.2
   private var addressMap = Map.empty[String, Token]
 
   def reset(metas: Seq[TokenMeta]) = this.synchronized {

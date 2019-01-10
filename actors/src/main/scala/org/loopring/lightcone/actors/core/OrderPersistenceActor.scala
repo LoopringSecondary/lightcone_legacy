@@ -30,37 +30,39 @@ import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
-// main owner: 于红雨
+// Owner: Yongfeng
 object OrderPersistenceActor extends ShardedEvenly {
   val name = "order_handler"
 
-  def startShardRegion(
-    )(
-      implicit system: ActorSystem,
+  def start(
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dbModule: DatabaseModule
+      dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
     entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderPersistenceActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
 }
 
 class OrderPersistenceActor(
-  )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -75,10 +77,8 @@ class OrderPersistenceActor(
         case OrderStatus.STATUS_SOFT_CANCELLED_BY_USER |
             OrderStatus.STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR =>
           for {
-            cancelRes <- dbModule.orderService.cancelOrders(
-              Seq(req.id),
-              req.status
-            )
+            cancelRes <- dbModule.orderService
+              .cancelOrders(Seq(req.id), req.status)
           } yield {
             cancelRes.headOption match {
               case Some(res) =>
@@ -106,10 +106,7 @@ class OrderPersistenceActor(
       } yield {
         saveRes match {
           case Right(errCode) =>
-            throw ErrorException(
-              errCode,
-              s"failed to submit order: $raworder"
-            )
+            throw ErrorException(errCode, s"failed to submit order: $raworder")
           case Left(resRawOrder) =>
             resRawOrder
         }

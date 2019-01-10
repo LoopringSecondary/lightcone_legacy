@@ -33,24 +33,27 @@ import scala.concurrent.duration._
 import akka.serialization._
 import scalapb.json4s.JsonFormat
 
+// Owner: Daniel
 object OrderRecoverCoordinator extends {
   val name = "order_recover_coordinator"
 
-  def startSingleton(
-    )(
-      implicit system: ActorSystem,
+  def start(
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dustEvaluator: DustOrderEvaluator
+      dustEvaluator: DustOrderEvaluator,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new OrderRecoverCoordinator()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       OrderRecoverCoordinator.name
     )
@@ -67,8 +70,8 @@ object OrderRecoverCoordinator extends {
 }
 
 class OrderRecoverCoordinator(
-  )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

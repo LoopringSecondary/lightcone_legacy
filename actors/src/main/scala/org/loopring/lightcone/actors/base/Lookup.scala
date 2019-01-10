@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.base
 import org.slf4s.Logging
 
+// Owner: Daniel
 trait Lookup[T] {
   def size(): Int
   def get(name: String): T

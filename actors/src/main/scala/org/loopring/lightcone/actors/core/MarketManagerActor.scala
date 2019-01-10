@@ -40,22 +40,23 @@ import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-// main owner: 于红雨
+// Owenr: Hongyu
 object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
-  def startShardRegion(
-    )(
-      implicit system: ActorSystem,
+  def start(
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      tokenValueEstimator: TokenValueEstimator,
-      ringIncomeEstimator: RingIncomeEstimator,
+      tve: TokenValueEvaluator,
+      rie: RingIncomeEvaluator,
       dustOrderEvaluator: DustOrderEvaluator,
-      tokenManager: TokenManager
+      tokenManager: TokenManager,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val markets = config
@@ -72,10 +73,12 @@ object MarketManagerActor extends ShardedByMarket {
       }
       .toMap
 
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
+
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new MarketManagerActor(markets)),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
@@ -93,13 +96,14 @@ object MarketManagerActor extends ShardedByMarket {
 class MarketManagerActor(
     markets: Map[String, MarketId]
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val tokenValueEstimator: TokenValueEstimator,
-    val ringIncomeEstimator: RingIncomeEstimator,
+    val tve: TokenValueEvaluator,
+    val rie: RingIncomeEvaluator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val tokenManager: TokenManager)
     extends ActorWithPathBasedConfig(
@@ -113,7 +117,7 @@ class MarketManagerActor(
 
   var autoSwitchBackToReceive: Option[Cancellable] = None
 
-  val wethTokenAddress = config.getString("weth.address")
+  val wethTokenAddress = config.getString("relay.weth-address")
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
   val maxSettementFailuresPerOrder =
@@ -256,7 +260,7 @@ class MarketManagerActor(
 
   private def getRequiredMinimalIncome(gasPrice: BigInt): Double = {
     val costinEth = gasLimitPerRingV2 * gasPrice
-    tokenValueEstimator.getEstimatedValue(wethTokenAddress, costinEth)
+    tve.getValue(wethTokenAddress, costinEth)
   }
 
   private def updateOrderbookAndSettleRings(

@@ -24,6 +24,19 @@ import akka.util.Timeout
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.ErrorCode._
 
+// Owner: Daniel
+object BadMessageListener {
+  val name = "bad_message"
+
+  def start(implicit system: ActorSystem) = {
+    val actor =
+      system.actorOf(Props[BadMessageListener], BadMessageListener.name)
+    system.eventStream.subscribe(actor, classOf[UnhandledMessage])
+    system.eventStream.subscribe(actor, classOf[DeadLetter])
+    actor
+  }
+}
+
 class BadMessageListener extends Actor with ActorLogging {
 
   def receive = {

@@ -308,7 +308,7 @@ message BatchGetUncle {
 // ETHEREUM EVENT EXTRACT MESSAGES
 /////////////////////////////////////////////////////////////////////
 
-message BlockJob{
+message RawBlockData{
     int64 height = 1;
     string hash = 2;
     string  miner = 3;
@@ -321,6 +321,3 @@ message BlockJob{
 message BlockImplementTask {
     repeated int64 heights = 1;
 }
-
-
-

@@ -30,16 +30,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.Orderbook.Item
 
 class RecoverOrderSpec
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "order_handler",
-                         | "multi_account_manager",
-                         | "market_manager",
-                         | "orderbook_manager",
-                         | "gas_price",
-                         | "order_recover",
-                         | "ring_settlement"]
-                         |""".stripMargin)
+    extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport

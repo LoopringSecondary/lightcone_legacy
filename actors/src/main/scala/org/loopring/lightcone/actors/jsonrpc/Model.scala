@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.jsonrpc
 import org.json4s.JsonAST.JValue
 
+// Owner: Daniel
 case class JsonRpcRequest(
     jsonrpc: String,
     method: String,

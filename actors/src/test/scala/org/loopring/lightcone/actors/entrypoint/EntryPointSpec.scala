@@ -25,16 +25,12 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.Await
 
 class EntryPointSpec
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "market_manager",
-                         | "orderbook_manager",
-                         | "gas_price",
-                         | "ring_settlement"]
-                         |""".stripMargin)
+    extends CommonSpec
     with OrderbookManagerSupport
     with JsonrpcSupport
     with HttpSupport {
+
+  val ethConfigStr = ""
 
   "send an orderbook request" must {
     "receive a response without value" in {

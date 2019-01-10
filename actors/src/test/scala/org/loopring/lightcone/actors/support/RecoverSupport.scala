@@ -28,7 +28,7 @@ import org.loopring.lightcone.actors.core._
 trait RecoverSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
-  actors.add(OrderRecoverActor.name, OrderRecoverActor.startShardRegion)
+  actors.add(OrderRecoverActor.name, OrderRecoverActor.start)
 
   system.actorOf(
     ClusterSingletonManager.props(

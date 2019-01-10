@@ -34,13 +34,13 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
   implicit val marketId = MarketId(primary = WETH, secondary = GTO)
 
   implicit var fakeDustOrderEvaluator: DustOrderEvaluator = _
-  implicit var fackRingIncomeEstimator: RingIncomeEstimator = _
+  implicit var fackRingIncomeEvaluator: RingIncomeEvaluator = _
   var marketManager: MarketManager = _
 
   override def beforeEach() {
     super.beforeEach()
     nextId = 1
-    fackRingIncomeEstimator = stub[RingIncomeEstimator]
+    fackRingIncomeEvaluator = stub[RingIncomeEvaluator]
     fakeDustOrderEvaluator = stub[DustOrderEvaluator]
 
     marketManager = new MarketManagerImpl(
@@ -62,8 +62,8 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
     (fakeDustOrderEvaluator.isActualDust _).when(*).returns(false)
     (fakeDustOrderEvaluator.isMatchableDust _).when(*).returns(false)
 
-    (fackRingIncomeEstimator.getRingIncome _).when(*).returns(1)
-    (fackRingIncomeEstimator
+    (fackRingIncomeEvaluator.getRingIncome _).when(*).returns(1)
+    (fackRingIncomeEvaluator
       .isProfitable(_: MatchableRing, _: Double))
       .when(*, *)
       .returns(true)

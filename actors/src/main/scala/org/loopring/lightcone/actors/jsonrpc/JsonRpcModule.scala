@@ -34,6 +34,7 @@ import scala.concurrent.duration._
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
+// Owner: Daniel
 trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
   val requestHandler: ActorRef
   val config: Config
@@ -115,7 +116,8 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
       message: Option[String] = None,
       data: Option[JValue] = None
     )(
-      implicit id: Option[String]
+      implicit
+      id: Option[String]
     ) =
     complete(
       JsonRpcResponse(
