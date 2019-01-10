@@ -108,11 +108,11 @@ class CoreDeployer @Inject()(
     )
 
     actors.add(
-      TransactionRecordValidator.name,
+      TransactionRecordMessageValidator.name,
       MessageValidationActor(
-        new TransactionRecordValidator(),
+        new TransactionRecordMessageValidator(),
         TransactionRecordActor.name,
-        TransactionRecordValidator.name
+        TransactionRecordMessageValidator.name
       )
     )
 
@@ -127,10 +127,7 @@ class CoreDeployer @Inject()(
       actors.add(MarketManagerActor.name, MarketManagerActor.start)
       actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
-      actors.add(
-        TransactionRecordActor.name,
-        TransactionRecordActor.start
-      )
+      actors.add(TransactionRecordActor.name, TransactionRecordActor.start)
 
       //-----------deploy singleton actors-----------
       // TODO(hongyu): Nil?

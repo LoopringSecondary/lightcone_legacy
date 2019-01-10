@@ -20,7 +20,7 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.core.TransactionRecordActor
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.actors.validator.TransactionRecordValidator
+import org.loopring.lightcone.actors.validator.TransactionRecordMessageValidator
 import org.loopring.lightcone.proto.TransactionRecord.EventData
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
@@ -29,11 +29,7 @@ import org.loopring.lightcone.lib.ErrorException
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_Transactions
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "order_handler",
-                         | "transaction-record"]
-                         |""".stripMargin)
+    extends CommonSpec
     with DatabaseModuleSupport
     with JsonrpcSupport
     with HttpSupport
@@ -59,7 +55,7 @@ class EntryPointSpec_Transactions
         txIndex = 1,
         logIndex = 0
       )
-      val actor = actors.get(TransactionRecordValidator.name)
+      val actor = actors.get(TransactionRecordMessageValidator.name)
       // 1. eth transfer
       actor ! TransferEvent(
         header = Some(header1),
@@ -196,8 +192,8 @@ class EntryPointSpec_Transactions
           resonse2.mapTo[GetTransactionRecords.Res],
           timeout.duration
         )
-      assert(r2.records.length == 4)
-      r2.records.foreach {
+      assert(r2.transactions.length == 4)
+      r2.transactions.foreach {
         _.eventData.getOrElse(EventData()).event match {
           case TransactionRecord.EventData.Event.Transfer(e)
               if e.token.isEmpty =>

@@ -32,6 +32,8 @@ import scala.concurrent._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic.DatabaseConfig
+import TransactionRecord.RecordType._
+import TransactionRecord.EventData.Event
 
 // main owner: 杜永丰
 object TransactionRecordActor extends ShardedByAddress {
@@ -81,16 +83,21 @@ class TransactionRecordActor(
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(TransactionRecordActor.name) {
 
-  log.info(s"TransactionRecordActor with db: " + selfConfig.getConfig("db"))
+  val dbConfigKey = s"db.transaction-record.shard_${entityId}"
+  log.info(
+    s"TransactionRecordActor with db configuration: ",
+    config.getConfig(dbConfigKey)
+  )
 
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
   val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
 
   val dbConfig: DatabaseConfig[JdbcProfile] =
-    DatabaseConfig.forConfig("db", selfConfig)
+    DatabaseConfig.forConfig(dbConfigKey, config)
 
   val txRecordDal: TransactionRecordDal =
     new TransactionRecordDalImpl(entityId, dbConfig)
+
   txRecordDal.createTable()
 
   def receive: Receive = {
@@ -98,15 +105,15 @@ class TransactionRecordActor(
     case req: TransferEvent =>
       val header = req.header.get
       val recordType =
-        if (req.token.nonEmpty) TransactionRecord.RecordType.ERC20_TRANSFER
-        else TransactionRecord.RecordType.TRANSFER
+        if (req.token.nonEmpty) ERC20_TRANSFER
+        else TRANSFER
       val record = TransactionRecord(
         header = req.header,
         owner = req.owner,
         recordType = recordType,
         eventData = Some(
           TransactionRecord
-            .EventData(TransactionRecord.EventData.Event.Transfer(req))
+            .EventData(Event.Transfer(req))
         ),
         sequenceId = header.sequenceId
       )
@@ -117,10 +124,10 @@ class TransactionRecordActor(
       val record = TransactionRecord(
         header = req.header,
         owner = req.owner,
-        recordType = TransactionRecord.RecordType.ORDER_CANCELLED,
+        recordType = ORDER_CANCELLED,
         eventData = Some(
           TransactionRecord
-            .EventData(TransactionRecord.EventData.Event.OrderCancelled(req))
+            .EventData(Event.OrderCancelled(req))
         ),
         sequenceId = header.sequenceId
       )
@@ -131,11 +138,11 @@ class TransactionRecordActor(
       val record = TransactionRecord(
         header = req.header,
         owner = req.owner,
-        recordType = TransactionRecord.RecordType.ORDER_CANCELLED,
+        recordType = ORDER_CANCELLED,
         tradingPair = req.tradingPair,
         eventData = Some(
           TransactionRecord
-            .EventData(TransactionRecord.EventData.Event.Cutoff(req))
+            .EventData(Event.Cutoff(req))
         ),
         sequenceId = header.sequenceId
       )
@@ -157,11 +164,11 @@ class TransactionRecordActor(
           val record = TransactionRecord(
             header = req.header,
             owner = req.owner,
-            recordType = TransactionRecord.RecordType.ORDER_FILLED,
+            recordType = ORDER_FILLED,
             tradingPair = marketHash,
             eventData = Some(
               TransactionRecord
-                .EventData(TransactionRecord.EventData.Event.Filled(req))
+                .EventData(Event.Filled(req))
             ),
             sequenceId = header.sequenceId
           )

@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.services
+package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.dals._
-import org.loopring.lightcone.persistence.service.{
-  TradeService,
-  TradeServiceImpl
-}
 import org.loopring.lightcone.proto._
 
 import scala.concurrent._
