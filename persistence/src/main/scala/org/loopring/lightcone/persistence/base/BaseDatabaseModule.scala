@@ -17,13 +17,11 @@
 package org.loopring.lightcone.persistence.base
 
 import slick.basic._
-import slick.jdbc.JdbcProfile
 import scala.concurrent.duration._
 import scala.concurrent._
 import com.typesafe.scalalogging.Logger
 
 trait BaseDatabaseModule {
-  // val dbConfig: DatabaseConfig[JdbcProfile]
   implicit val ec: ExecutionContext
   private[this] val logger = Logger(this.getClass)
 
