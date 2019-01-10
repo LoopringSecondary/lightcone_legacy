@@ -92,26 +92,26 @@ class CoreModule(config: Config)
     bind[TransferEventExtractor]
 
     // --- bind dals ---------------------
-    bind[TokenMetadataDal].to[TokenMetadataDalImpl].in[Singleton]
-    bind[OrderDal].to[OrderDalImpl].in[Singleton]
-    bind[TradeDal].to[TradeDalImpl].in[Singleton]
-    bind[TokenBalanceDal].to[TokenBalanceDalImpl].in[Singleton]
-    bind[BlockDal].to[BlockDalImpl].in[Singleton]
-    bind[SettlementTxDal].to[SettlementTxDalImpl].in[Singleton]
-    bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].in[Singleton]
+    bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
+    bind[OrderDal].to[OrderDalImpl].asEagerSingleton
+    bind[TradeDal].to[TradeDalImpl].asEagerSingleton
+    bind[TokenBalanceDal].to[TokenBalanceDalImpl].asEagerSingleton
+    bind[BlockDal].to[BlockDalImpl].asEagerSingleton
+    bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
+    bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------
-    bind[OrderService].to[OrderServiceImpl].in[Singleton]
-    bind[TokenMetadataService].to[TokenMetadataServiceImpl].in[Singleton]
-    bind[TradeService].to[TradeServiceImpl].in[Singleton]
-    bind[SettlementTxService].to[SettlementTxServiceImpl].in[Singleton]
+    bind[OrderService].to[OrderServiceImpl].asEagerSingleton
+    bind[TokenMetadataService].to[TokenMetadataServiceImpl].asEagerSingleton
+    bind[TradeService].to[TradeServiceImpl].asEagerSingleton
+    bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[OrderStatusMonitorService]
       .to[OrderStatusMonitorServiceImpl]
-      .in[Singleton]
+      .asEagerSingleton
 
     // --- bind local singletons ---------------------
-    bind[DatabaseModule].in[Singleton]
-    bind[TokenManager].in[Singleton]
+    bind[DatabaseModule].asEagerSingleton
+    bind[TokenManager].asEagerSingleton
 
     bind[SupportedMarkets].toInstance(SupportedMarkets(config))
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
