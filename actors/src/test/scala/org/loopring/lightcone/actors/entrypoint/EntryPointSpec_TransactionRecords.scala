@@ -28,14 +28,14 @@ import org.loopring.lightcone.lib.ErrorException
 
 import scala.concurrent.{Await, Future}
 
-class EntryPointSpec_Transactions
+class EntryPointSpec_TransactionRecords
     extends CommonSpec
     with DatabaseModuleSupport
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport
     with OrderGenerateSupport
-    with EthereumEventAccessSupport {
+    with EthereumTransactionRecordSupport {
 
   "save & query some events" must {
     "get the events record correctly" in {

@@ -118,7 +118,7 @@ package object support {
                         |    ]
                         |}""".stripMargin
 
-  val transactionReCordConfigStr = s"""
+  val transactionRecordConfigStr = s"""
      db.transaction-record.shard_0 {
          profile = "slick.jdbc.MySQLProfile$$"
          db {

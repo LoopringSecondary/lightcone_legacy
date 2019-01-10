@@ -23,17 +23,26 @@ import org.loopring.lightcone.actors.validator.{
   TransactionRecordMessageValidator
 }
 
-trait EthereumEventAccessSupport extends DatabaseModuleSupport {
+trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
   val config1 = ConfigFactory
-    .parseString(transactionReCordConfigStr)
+    .parseString(transactionRecordConfigStr)
     .withFallback(ConfigFactory.load())
 
   actors.add(
     TransactionRecordActor.name,
     TransactionRecordActor
-      .start()(system, config1, ec, timeProvider, timeout, actors, dbModule)
+      .start()(
+        system,
+        config1,
+        ec,
+        timeProvider,
+        timeout,
+        actors,
+        dbModule,
+        true
+      )
   )
 
   actors.add(
