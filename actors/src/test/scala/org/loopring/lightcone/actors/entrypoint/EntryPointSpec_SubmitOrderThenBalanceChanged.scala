@@ -18,10 +18,7 @@ package org.loopring.lightcone.actors.entrypoint
 
 import akka.pattern._
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.actors.core.{
-  EthereumQueryActor,
-  MultiAccountManagerActor
-}
+import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
@@ -30,15 +27,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_SubmitOrderThenBalanceChanged
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "order_handler",
-                         | "multi_account_manager",
-                         | "market_manager",
-                         | "orderbook_manager",
-                         | "gas_price",
-                         | "ring_settlement"]
-                         |""".stripMargin)
+    extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport

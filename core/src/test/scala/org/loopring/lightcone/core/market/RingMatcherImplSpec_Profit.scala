@@ -24,7 +24,7 @@ import ErrorCode._
 
 class RingMatcherImplSpec_Profit extends OrderAwareSpec {
 
-  val nonProfitable = new RingIncomeEstimator {
+  val nonProfitable = new RingIncomeEvaluator {
     def getRingIncome(ring: MatchableRing) = 0
 
     def isProfitable(
@@ -33,7 +33,7 @@ class RingMatcherImplSpec_Profit extends OrderAwareSpec {
       ) = false
   }
 
-  val alwaysProfitable = new RingIncomeEstimator {
+  val alwaysProfitable = new RingIncomeEvaluator {
     def getRingIncome(ring: MatchableRing) = Long.MaxValue
 
     def isProfitable(

@@ -16,16 +16,12 @@
 
 package org.loopring.lightcone.persistence.base
 
-import com.typesafe.config.Config
 import slick.basic._
-import slick.jdbc.JdbcProfile
 import scala.concurrent.duration._
 import scala.concurrent._
 import com.typesafe.scalalogging.Logger
 
 trait BaseDatabaseModule {
-  implicit val dbConfig: DatabaseConfig[JdbcProfile]
-  implicit val config: Config
   implicit val ec: ExecutionContext
   private[this] val logger = Logger(this.getClass)
 
@@ -33,10 +29,7 @@ trait BaseDatabaseModule {
 
   def createTables() = {
     try {
-      Await.result(
-        Future.sequence(tables.map(_.createTable)),
-        10.second
-      )
+      Await.result(Future.sequence(tables.map(_.createTable)), 10.second)
     } catch {
       case e: Exception if e.getMessage.contains("already exists") =>
         logger.info(e.getMessage)
@@ -48,10 +41,7 @@ trait BaseDatabaseModule {
 
   def dropTables() = {
     try {
-      Await.result(
-        Future.sequence(tables.map(_.dropTable)),
-        10.second
-      )
+      Await.result(Future.sequence(tables.map(_.dropTable)), 10.second)
     } catch {
       case e: Exception if e.getMessage.contains("Unknown table") =>
         logger.info(e.getMessage)

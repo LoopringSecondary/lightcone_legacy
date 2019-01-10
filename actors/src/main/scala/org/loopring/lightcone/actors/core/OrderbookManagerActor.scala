@@ -35,22 +35,23 @@ import org.slf4s.Logging
 import scala.collection.JavaConverters._
 import scala.concurrent._
 
-// main owner: 于红雨
+// Owner: Hongyu
 object OrderbookManagerActor extends ShardedByMarket with Logging {
   val name = "orderbook_manager"
 
   def getTopicId(marketId: MarketId) =
     OrderbookManagerActor.name + "-" + getEntityId(marketId)
 
-  def startShardRegion(
-    )(
-      implicit system: ActorSystem,
+  def start(
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      tokenManager: TokenManager
+      tokenManager: TokenManager,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
@@ -70,10 +71,11 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
       }
       .toMap
 
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderbookManagerActor(markets)),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
@@ -89,7 +91,8 @@ class OrderbookManagerActor(
     markets: Map[String, MarketId],
     extractEntityId: String => String = OrderbookManagerActor.extractEntityId
   )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

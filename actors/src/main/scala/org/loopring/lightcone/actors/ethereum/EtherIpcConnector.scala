@@ -25,6 +25,7 @@ import jnr.unixsocket._
 import org.loopring.lightcone.proto._
 import scalapb.json4s.JsonFormat
 
+// Owner: Yadong
 private[ethereum] class IpcConnector(node: EthereumProxySettings.Node)
     extends Actor
     with ActorLogging {

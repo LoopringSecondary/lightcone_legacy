@@ -26,6 +26,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.pattern.ask
 
+// Owner: Daniel
 trait JsonRpcBinding {
 
   private var bindings = Map.empty[String, PayloadConverter[_, _]]

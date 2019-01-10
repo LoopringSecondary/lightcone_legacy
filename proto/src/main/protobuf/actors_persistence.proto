@@ -29,9 +29,9 @@ import "ethereum.proto";
 /////////////////////////////////////////////////////////////////////
 
 message PersistOrder {
-    message Req {
-        RawOrder order    = 1;
-    }
+    // message Req {
+    //     RawOrder order    = 1;
+    // }
     message Res {
         RawOrder order    = 1;
         bool already_exist      = 2;
@@ -103,9 +103,9 @@ message GetOrdersForUser {
 }
 
 message UserCancelOrder {
-    message Req {
-        repeated string order_hashes = 1;
-    }
+    // message Req {
+    //     repeated string order_hashes = 1;
+    // }
 
     message Res {
         message Result {

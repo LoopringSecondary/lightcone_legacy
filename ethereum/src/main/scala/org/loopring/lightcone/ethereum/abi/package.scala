@@ -29,7 +29,8 @@ package object abi {
 
   private[abi] def getContractAnnontationIdx[T](
     )(
-      implicit mf: Manifest[T]
+      implicit
+      mf: Manifest[T]
     ): Seq[Int] = {
     val typ = typeOf[T]
     (typ.members.filter { m =>

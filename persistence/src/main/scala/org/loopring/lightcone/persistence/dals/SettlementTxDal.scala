@@ -16,6 +16,8 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib.{ErrorException, SystemTimeProvider}
@@ -39,10 +41,12 @@ trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
   def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res]
 }
 
-class SettlementTxDalImpl(
-  )(
-    implicit val dbConfig: DatabaseConfig[JdbcProfile],
-    val ec: ExecutionContext)
+class SettlementTxDalImpl @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    @Named("dbconfig-dal-settlement-tx") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ])
     extends SettlementTxDal {
   private[this] val logger = Logger(this.getClass)
   val query = TableQuery[SettlementTxTable]

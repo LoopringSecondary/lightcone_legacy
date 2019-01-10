@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto._
 
 class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
 
-  implicit val alwaysProfitable = new RingIncomeEstimator {
+  implicit val alwaysProfitable = new RingIncomeEvaluator {
     def getRingIncome(ring: MatchableRing) = Long.MaxValue
 
     def isProfitable(

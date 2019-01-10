@@ -22,15 +22,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.Await
 
 class EntryPointSpec_Depth
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "order_handler",
-                         | "multi_account_manager",
-                         | "market_manager",
-                         | "orderbook_manager",
-                         | "gas_price",
-                         | "ring_settlement"]
-                         |""".stripMargin)
+    extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport

@@ -32,12 +32,13 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
+// Owner: Hongyu
 object TokenMetadataRefresher {
   val name = "token_metadata_refresher"
 
   def start(
-    )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
@@ -55,8 +56,8 @@ object TokenMetadataRefresher {
 
 // main owner: 杜永丰
 class TokenMetadataRefresher(
-  )(
-    implicit val config: Config,
+    implicit
+    val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,

@@ -34,9 +34,9 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
-// Owner: Yadong
-object GasPriceActor extends ShardedEvenly {
-  val name = "gas_price"
+// Owner: Yongfeng
+object EthereumEventPersistorActor extends ShardedEvenly {
+  val name = "ethereum_event_persister"
 
   def start(
       implicit
@@ -57,32 +57,24 @@ object GasPriceActor extends ShardedEvenly {
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new GasPriceActor()),
+      entityProps = Props(new EthereumEventPersistorActor()),
       settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
 }
 
-class GasPriceActor(
+class EthereumEventPersistorActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef])
-    extends ActorWithPathBasedConfig(GasPriceActor.name) {
-
-  private var gasPrice = BigInt(selfConfig.getString("default"))
+    extends ActorWithPathBasedConfig(EthereumEventPersistorActor.name) {
 
   def receive: Receive = {
-
-    case SetGasPrice.Req(price) =>
-      sender ! SetGasPrice.Res(gasPrice)
-      gasPrice = price
-
-    case req: GetGasPrice.Req =>
-      sender ! GetGasPrice.Res(gasPrice)
+    case _ =>
   }
 
 }

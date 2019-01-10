@@ -28,12 +28,13 @@ import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent.ExecutionContext
 
+// Owner: Hongyu
 object EntryPointActor {
   val name = "entrypoint"
 
   def start(
-    )(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeout: Timeout,
@@ -44,8 +45,8 @@ object EntryPointActor {
 }
 
 class EntryPointActor(
-  )(
-    implicit ec: ExecutionContext,
+    implicit
+    ec: ExecutionContext,
     timeout: Timeout,
     actors: Lookup[ActorRef])
     extends Actor

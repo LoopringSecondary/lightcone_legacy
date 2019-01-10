@@ -24,22 +24,47 @@ import org.slf4s.Logging
 import net.codingwell.scalaguice.InjectorExtensions._
 import akka.actor._
 import scala.io.StdIn
+import java.io.File
 
+// Owner: Daniel
 object Main extends App with Logging {
-  val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
-  val injector = ClusterDeployer.deploy(configPathOpt)
-  val system = injector.instance[ActorSystem]
-  val actors = injector.instance[Lookup[ActorRef]]
-  actors.get(EntryPointActor.name)
 
-  sys.ShutdownHookThread {
-    system.terminate()
+  val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
+
+  log.info(s"--> config_path = ${configPathOpt}")
+
+  val baseConfig = ConfigFactory.load()
+
+  val config = configPathOpt match {
+    case Some(path) if path.nonEmpty =>
+      ConfigFactory.parseFile(new File(path)).withFallback(baseConfig)
+    case _ =>
+      baseConfig
   }
 
-  println(s"Hit RETURN to terminate")
+  val configItems = Seq(
+    "akka.remote.netty.tcp.hostname",
+    "akka.remote.netty.tcp.port",
+    "akka.cluster.seed-nodes",
+    "akka.cluster.roles"
+  )
 
-  StdIn.readLine()
+  configItems foreach { i =>
+    log.info(s"--> $i = ${config.getString(i)}")
+  }
+
+  sys.ShutdownHookThread { system.terminate() }
+
+  val injector = Guice.createInjector(new CoreModule(config))
+  val system = injector.instance[ActorSystem]
+
+  injector.instance[CoreDeployer].deploy()
+
+  println(s"type `stopstopstop` to terminate")
+
+  while ("stopstopstop" != StdIn.readLine())
 
   //Shutdown
   system.terminate()
+
 }

@@ -28,6 +28,8 @@ import org.loopring.lightcone.proto.ErrorCode._
 //     // unhandled messages are passed as-is
 //
 //
+
+// Owner: Daniel
 trait MessageValidator {
   // Throw exceptions if validation failed.
   def validate: PartialFunction[Any, Any]

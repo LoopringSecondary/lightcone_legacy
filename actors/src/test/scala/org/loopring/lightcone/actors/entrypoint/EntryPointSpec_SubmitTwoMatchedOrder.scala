@@ -23,15 +23,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class EntryPointSpec_SubmitTwoMatchedOrder
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "order_handler",
-                         | "multi_account_manager",
-                         | "market_manager",
-                         | "orderbook_manager",
-                         | "gas_price",
-                         | "ring_settlement"]
-                         |""".stripMargin)
+    extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport

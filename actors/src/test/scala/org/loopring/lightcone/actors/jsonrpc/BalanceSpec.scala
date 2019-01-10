@@ -25,18 +25,8 @@ import akka.pattern._
 import scala.concurrent.{Await, Future}
 
 class BalanceSpec
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "ethereum_access",
-                         | "multi_account_manager",
-                         | "ethereum_query",
-                         | "gas_price",
-                         | "order_handler",
-                         | "ethereum_client_monitor",
-                         | "orderbook_manager",
-                         | "ring_settlement",
-                         | "market_manager"]
-                         |""".stripMargin)
+    extends CommonSpec
+    with EthereumSupport
     with EthereumQueryMockSupport
     with MultiAccountManagerSupport
     with MarketManagerSupport
@@ -67,9 +57,7 @@ class BalanceSpec
       val r = for {
         firstQuery <- singleRequest(getBalanceReq, method)
         _ <- (actors.get(MultiAccountManagerMessageValidator.name) ? SubmitOrder
-          .Req(
-            Some(maker)
-          )).mapTo[SubmitOrder.Res]
+          .Req(Some(maker))).mapTo[SubmitOrder.Res]
         secondQuery <- singleRequest(getBalanceReq, method)
       } yield (firstQuery, secondQuery)
       val res = Await.result(r, timeout.duration)
