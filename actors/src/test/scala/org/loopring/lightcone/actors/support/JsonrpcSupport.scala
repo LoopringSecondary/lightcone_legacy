@@ -24,7 +24,6 @@ import akka.http.scaladsl.model._
 import org.loopring.lightcone.actors.RpcBinding
 import org.loopring.lightcone.actors.entrypoint.EntryPointActor
 import org.loopring.lightcone.actors.jsonrpc.{JsonRpcServer, JsonSupport}
-import org.loopring.lightcone.actors.support.MysqlDocker.mysqlContainer
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException

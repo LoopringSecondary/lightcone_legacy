@@ -79,19 +79,19 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       })
 
       //orderbook
-      Thread.sleep(1000)
       info("the depth should be empty when allowance is not enough")
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF = singleRequest(getOrderBook, "orderbook")
-
-      val orderbookRes = Await.result(orderbookF, timeout.duration)
+      val orderbookRes = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) => orderbook.sells.isEmpty
+      )
       orderbookRes match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          info(s"sells: ${sells}, buys:${buys}")
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
           assert(sells.isEmpty && buys.isEmpty)
         case _ => assert(false)
       }
@@ -114,19 +114,20 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
         ByteString.copyFrom("15".zeros(LRC_TOKEN.decimals).toByteArray)
       )
 
-      Thread.sleep(1000)
       info("the depth should not be empty after allowance has been set.")
-      val orderbookF1 = singleRequest(getOrderBook, "orderbook")
 
-      val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
+      val orderbookRes1 = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
       orderbookRes1 match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          info(s"sells: ${sells}, buys: ${buys}")
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 1)
           assert(
             sells(0).price == "20.000000" &&
               sells(0).amount == "12.50000" &&
-              sells(0).total == "0.62500" //todo:是不是个bug？ total 可以为小数吗？
+              sells(0).total == "0.62500"
           )
           assert(buys.isEmpty)
         case _ => assert(false)

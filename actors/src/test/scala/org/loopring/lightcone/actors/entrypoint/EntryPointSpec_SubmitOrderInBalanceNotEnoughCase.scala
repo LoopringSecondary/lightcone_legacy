@@ -105,19 +105,19 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       })
 
       //orderbook
-      Thread.sleep(1000)
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF = singleRequest(getOrderBook, "orderbook")
-
-      val orderbookRes = Await.result(orderbookF, timeout.duration)
+      val orderbookRes = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
       orderbookRes match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          info(s"sells: ${sells}， buys: ${buys}")
-          assert(sells.size == 1)
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(sells.nonEmpty)
           assert(
             sells(0).price == "20.000000" &&
               sells(0).amount == "20.00000" &&
@@ -162,17 +162,18 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
         }
       })
 
-      Thread.sleep(1000)
       info(
         "the result of orderbook should be empty after cancel the first order."
       )
-      val orderbookF1 = singleRequest(getOrderBook, "orderbook")
 
-      val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
+      val orderbookRes1 = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) => orderbook.sells.isEmpty
+      )
       orderbookRes1 match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          assert(sells.isEmpty)
-          assert(buys.isEmpty)
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(buys.isEmpty && buys.isEmpty)
         case _ => assert(false)
       }
     }

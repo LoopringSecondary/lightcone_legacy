@@ -16,11 +16,16 @@
 
 package org.loopring.lightcone.actors
 
+import java.util.concurrent.TimeUnit
+
 import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.TokenMeta
+import org.rnorth.ducttape.TimeoutException
+import org.rnorth.ducttape.unreliables.Unreliables
+import org.testcontainers.containers.ContainerLaunchException
 import org.testcontainers.containers.wait.strategy.Wait
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
@@ -66,4 +71,64 @@ package object support {
     "REP",
     1000
   )
+
+  // TODO(hongyu): All code below should be moved to other places, such as EthereumSupport.scala
+  // and DatabaseModuleSupport.scala.
+
+  implicit private val suiteDescription =
+    Description.createSuiteDescription(this.getClass)
+
+  val mysqlContainer = new MySQLContainer(
+    mysqlImageVersion = Some("mysql:5.7.18"),
+    databaseName = Some("lightcone_test"),
+    mysqlUsername = Some("test"),
+    mysqlPassword = Some("test")
+  )
+  mysqlContainer.starting()
+
+  //todo:暂时未生效
+//  try Unreliables.retryUntilTrue(
+//    10,
+//    TimeUnit.SECONDS,
+//    () => {
+//      mysqlContainer.mappedPort(3306) > 0
+//    }
+//  )
+//  catch {
+//    case e: TimeoutException =>
+//      throw new ContainerLaunchException(
+//        "Timed out waiting for container port to open mysqlContainer should be listening)"
+//      )
+//  }
+
+  Thread.sleep(2000)
+
+  val ethContainer = GenericContainer(
+    "kongliangzhong/loopring-ganache:v2",
+    exposedPorts = Seq(8545),
+    waitStrategy = Wait.forListeningPort()
+  )
+
+  ethContainer.starting()
+
+  val dbConfig1: DatabaseConfig[JdbcProfile] =
+    DatabaseConfig.forConfig[JdbcProfile](
+      "",
+      ConfigFactory.parseString(s"""
+        profile = "slick.jdbc.MySQLProfile$$"
+        db {
+          url="${mysqlContainer.jdbcUrl}?useSSL=false"
+          user="${mysqlContainer.username}"
+          password="${mysqlContainer.password}"
+          driver="${mysqlContainer.driverClassName}"
+          maxThreads = 4
+        }""")
+    )
+
+  val ethNodesConfigStr = s"""|nodes:[
+                              | {
+                              |  host = "${ethContainer.containerIpAddress}"
+                              |  port = ${ethContainer.mappedPort(8545)}
+                              | }
+                              |]""".stripMargin
 }

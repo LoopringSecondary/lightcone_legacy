@@ -32,7 +32,6 @@ import akka.pattern._
 import com.dimafeng.testcontainers.GenericContainer
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
-import org.loopring.lightcone.actors.support.MysqlDocker.mysqlContainer
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
@@ -42,30 +41,22 @@ import org.loopring.lightcone.actors.jsonrpc.JsonSupport
 
 import scala.concurrent.duration._
 
-object EthereumDocker {
-
-  implicit private val suiteDescription =
-    Description.createSuiteDescription(this.getClass)
-
-  val ethContainer = GenericContainer(
-    "kongliangzhong/loopring-ganache:v2",
-    exposedPorts = Seq(8545),
-    waitStrategy = Wait.forListeningPort()
-  )
-
-  ethContainer.starting()
-}
+//object EthereumDocker {
+//
+//  implicit private val suiteDescription =
+//    Description.createSuiteDescription(this.getClass)
+//
+//  val ethContainer = GenericContainer(
+//    "kongliangzhong/loopring-ganache:v2",
+//    exposedPorts = Seq(8545),
+//    waitStrategy = Wait.forListeningPort()
+//  )
+//
+//  ethContainer.starting()
+//}
 
 trait EthereumSupport {
   my: CommonSpec =>
-
-  val ethNodesConfigStr = s"""|nodes : [
-                              |        {
-                              |        host = "${EthereumDocker.ethContainer.containerIpAddress}"
-                              |        port = ${EthereumDocker.ethContainer
-                               .mappedPort(8545)}
-                              |        }
-                              |]""".stripMargin
 
   implicit val requestBuilder = new EthereumCallRequestBuilder
   implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
