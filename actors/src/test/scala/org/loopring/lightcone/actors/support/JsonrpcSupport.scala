@@ -43,32 +43,32 @@ trait JsonrpcSupport extends JsonSupport {
   Future { server.start }
 
   //必须等待jsonRpcServer启动完成
-    try Unreliables.retryUntilTrue(
-      10,
-      TimeUnit.SECONDS,
-      () => {
-        val f = Http().singleRequest(
-          HttpRequest(
-            method = HttpMethods.POST,
-            entity = HttpEntity(
-              ContentTypes.`application/json`,
-              serialization.write("[]")
-            ),
-            uri = Uri(
-              s"http://127.0.0.1:${config.getString("jsonrpc.http.port")}/" +
-                s"${config.getString("jsonrpc.endpoint")}/${config.getString("jsonrpc.loopring")}"
-            )
+  try Unreliables.retryUntilTrue(
+    10,
+    TimeUnit.SECONDS,
+    () => {
+      val f = Http().singleRequest(
+        HttpRequest(
+          method = HttpMethods.POST,
+          entity = HttpEntity(
+            ContentTypes.`application/json`,
+            serialization.write("[]")
+          ),
+          uri = Uri(
+            s"http://127.0.0.1:${config.getString("jsonrpc.http.port")}/" +
+              s"${config.getString("jsonrpc.endpoint")}/${config.getString("jsonrpc.loopring")}"
           )
         )
-        val res = Await.result(f, timeout.duration)
-        res.status.intValue() <= 500
-      }
-    )
-    catch {
-      case e: TimeoutException =>
-        throw new ContainerLaunchException(
-          "Timed out waiting for jsonrpcServer starting.)"
-        )
+      )
+      val res = Await.result(f, timeout.duration)
+      res.status.intValue() <= 500
     }
+  )
+  catch {
+    case e: TimeoutException =>
+      throw new ContainerLaunchException(
+        "Timed out waiting for jsonrpcServer starting.)"
+      )
+  }
 
 }

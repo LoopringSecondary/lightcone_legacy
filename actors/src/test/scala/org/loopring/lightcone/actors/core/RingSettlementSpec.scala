@@ -77,35 +77,33 @@ class RingSettlementSpec
           .mapAs[SubmitOrder.Res]
       Await.result(submitOrder1F, timeout.duration)
 
-      val orderbook1F = singleRequest(getOrderBook1, "orderbook")
-        .mapAs[GetOrderbook.Res]
-        .map(_.getOrderbook)
-      val orderbook1 = Await.result(orderbook1F, timeout.duration)
-
-      assert(orderbook1.buys.isEmpty)
-      assert(orderbook1.sells.size == 1)
-      orderbook1.sells.head match {
-        case Orderbook.Item(price, amount, total) =>
-          assert(amount.toDouble == "10".toDouble)
-          assert(price.toDouble == "10".toDouble)
-          assert(total.toDouble == "1".toDouble)
-        case _ =>
+      val orderbookRes1 = expectOrderbookRes(
+        getOrderBook1,
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
+      orderbookRes1 match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(buys.isEmpty)
+          assert(sells.size == 1)
+          val head = sells.head
+          assert(head.amount.toDouble == "10".toDouble)
+          assert(head.price.toDouble == "10".toDouble)
+          assert(head.total.toDouble == "1".toDouble)
+        case _ => assert(false)
       }
 
       val submitOrder2F =
         singleRequest(SubmitOrder.Req(Some(order2)), submit_order)
           .mapAs[SubmitOrder.Res]
       Await.result(submitOrder2F, timeout.duration)
-      Thread.sleep(1000)
-      val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
-        .mapAs[GetOrderbook.Res]
-        .map(_.getOrderbook)
 
-      val orderbook2 = Await.result(orderbookF2, timeout.duration)
-
-      println(orderbook2)
-      //      assert(orderbook2.buys.isEmpty)
-      //      assert(orderbook2.sells.isEmpty)
+      val orderbookRes2 = expectOrderbookRes(
+        getOrderBook1,
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
+      //todo(yadong): 该处判断应该是什么
+      info(s"${orderbookRes2}")
     }
   }
 
