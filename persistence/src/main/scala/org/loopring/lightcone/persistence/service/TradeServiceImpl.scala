@@ -18,7 +18,7 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.dals.{TradeDal, TradeDalImpl}
+import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
@@ -26,10 +26,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class TradeServiceImpl @Inject()(
     implicit
-    val dbConfig: DatabaseConfig[JdbcProfile],
-    @Named("db-execution-context") val ec: ExecutionContext)
+    val ec: ExecutionContext,
+    tradeDal: TradeDal)
     extends TradeService {
-  val tradeDal: TradeDal = new TradeDalImpl()
 
   def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] =
     tradeDal.saveTrade(trade)

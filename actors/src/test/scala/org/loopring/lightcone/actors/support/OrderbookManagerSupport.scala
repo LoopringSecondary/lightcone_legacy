@@ -27,8 +27,7 @@ import scala.concurrent.Await
 
 trait OrderbookManagerSupport {
   my: CommonSpec =>
-
-  actors.add(OrderbookManagerActor.name, OrderbookManagerActor.startShardRegion)
+  actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
   actors.add(
     OrderbookManagerMessageValidator.name,

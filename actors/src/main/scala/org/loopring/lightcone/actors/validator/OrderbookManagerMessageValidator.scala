@@ -26,7 +26,6 @@ object OrderbookManagerMessageValidator {
 }
 
 final class OrderbookManagerMessageValidator(
-  )(
     implicit
     val config: Config,
     supportedMarkets: SupportedMarkets)

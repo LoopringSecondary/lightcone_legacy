@@ -21,8 +21,5 @@ import org.loopring.lightcone.actors.core._
 trait OrderCutoffSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
-  actors.add(
-    OrderCutoffHandlerActor.name,
-    OrderCutoffHandlerActor.startSingleton
-  )
+  actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
 }

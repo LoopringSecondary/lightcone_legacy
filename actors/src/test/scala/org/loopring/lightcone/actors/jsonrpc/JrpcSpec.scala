@@ -24,17 +24,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.Await
 
 class JrpcSpec
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "ethereum_access",
-                         | "multi_account_manager",
-                         | "ethereum_query",
-                         | "gas_price",
-                         | "ethereum_client_monitor",
-                         | "orderbook_manager",
-                         | "ring_settlement",
-                         | "market_manager"]
-                         |""".stripMargin)
+    extends CommonSpec
     with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport

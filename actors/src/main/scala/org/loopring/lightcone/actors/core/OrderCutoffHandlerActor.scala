@@ -32,8 +32,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 object OrderCutoffHandlerActor {
   val name = "order_cutoff_handler"
 
-  def startSingleton(
-    )(
+  def start(
       implicit
       system: ActorSystem,
       config: Config,
@@ -41,13 +40,16 @@ object OrderCutoffHandlerActor {
       timeProvider: TimeProvider,
       timeout: Timeout,
       dbModule: DatabaseModule,
-      actors: Lookup[ActorRef]
+      actors: Lookup[ActorRef],
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new OrderCutoffHandlerActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       OrderCutoffHandlerActor.name
     )

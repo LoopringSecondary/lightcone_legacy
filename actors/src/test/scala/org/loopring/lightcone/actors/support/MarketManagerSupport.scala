@@ -21,14 +21,11 @@ import org.loopring.lightcone.actors.core._
 trait MarketManagerSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
-  actors.add(MarketManagerActor.name, MarketManagerActor.startShardRegion)
+  actors.add(MarketManagerActor.name, MarketManagerActor.start)
 
   if (!actors.contains(GasPriceActor.name)) {
-    actors.add(GasPriceActor.name, GasPriceActor.startShardRegion())
+    actors.add(GasPriceActor.name, GasPriceActor.start)
   }
 
-  actors.add(
-    RingSettlementManagerActor.name,
-    RingSettlementManagerActor.startSingleton()
-  )
+  actors.add(RingSettlementManagerActor.name, RingSettlementManagerActor.start)
 }

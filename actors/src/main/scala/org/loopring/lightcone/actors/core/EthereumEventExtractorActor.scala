@@ -17,7 +17,7 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
-import akka.cluster.sharding._
+import akka.cluster.singleton._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
@@ -37,39 +37,40 @@ import scala.concurrent._
 // Owner: Yadong
 object EthereumEventExtractorActor {
   val name = "ethereum_event_extractor"
-  private val shardId = "singleton"
 
-  private val extractEntityId: ShardRegion.ExtractEntityId = {
-    case msg @ Notify("start", _) =>
-      (shardId, msg) //todo:该数据结构并没有包含sharding信息，无法sharding
-  }
-
-  private val extractShardId: ShardRegion.ExtractShardId = {
-    case Notify("start", _) => shardId
-  }
-
-  def startShardRegion(
-    )(
+  def start(
       implicit
       system: ActorSystem,
       config: Config,
       ec: ExecutionContext,
       timeProvider: TimeProvider,
       timeout: Timeout,
-      actors: Lookup[ActorRef]
+      actors: Lookup[ActorRef],
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new EthereumEventExtractorActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
-      extractEntityId = extractEntityId,
-      extractShardId = extractShardId
+
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = Props(new EthereumEventExtractorActor()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
+      ),
+      name = EthereumEventExtractorActor.name
     )
+
+    system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = s"/user/${EthereumEventExtractorActor.name}",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"${EthereumEventExtractorActor.name}_proxy"
+    )
+
   }
 }
 
 class EthereumEventExtractorActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

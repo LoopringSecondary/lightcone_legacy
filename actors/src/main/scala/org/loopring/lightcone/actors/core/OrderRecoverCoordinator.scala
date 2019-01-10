@@ -37,8 +37,7 @@ import scalapb.json4s.JsonFormat
 object OrderRecoverCoordinator extends {
   val name = "order_recover_coordinator"
 
-  def startSingleton(
-    )(
+  def start(
       implicit
       system: ActorSystem,
       config: Config,
@@ -46,13 +45,15 @@ object OrderRecoverCoordinator extends {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dustEvaluator: DustOrderEvaluator
+      dustEvaluator: DustOrderEvaluator,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new OrderRecoverCoordinator()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       OrderRecoverCoordinator.name
     )
@@ -69,7 +70,6 @@ object OrderRecoverCoordinator extends {
 }
 
 class OrderRecoverCoordinator(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

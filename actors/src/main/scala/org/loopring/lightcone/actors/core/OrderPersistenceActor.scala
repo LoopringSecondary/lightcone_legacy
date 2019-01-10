@@ -34,8 +34,7 @@ import scala.concurrent._
 object OrderPersistenceActor extends ShardedEvenly {
   val name = "order_handler"
 
-  def startShardRegion(
-    )(
+  def start(
       implicit
       system: ActorSystem,
       config: Config,
@@ -43,24 +42,25 @@ object OrderPersistenceActor extends ShardedEvenly {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dbModule: DatabaseModule
+      dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
     entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderPersistenceActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
 }
 
 class OrderPersistenceActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

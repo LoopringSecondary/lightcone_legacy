@@ -33,8 +33,7 @@ import scala.concurrent._
 object DatabaseQueryActor extends ShardedEvenly {
   val name = "database_query"
 
-  def startShardRegion(
-    )(
+  def start(
       implicit
       system: ActorSystem,
       config: Config,
@@ -42,24 +41,25 @@ object DatabaseQueryActor extends ShardedEvenly {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dbModule: DatabaseModule
+      dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
     entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new DatabaseQueryActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
 }
 
 class DatabaseQueryActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -109,11 +109,11 @@ class DatabaseQueryActor(
             )
         }
       } yield GetOrdersForUser.Res(result, ErrorCode.ERR_NONE)) sendTo sender
+
     case req: GetTrades.Req =>
       (for {
         result <- dbModule.tradeService.getTrades(req)
       } yield GetTrades.Res(result)) sendTo sender
-    case m => logger.error(s"Unhandled message ${m}")
   }
 
 }

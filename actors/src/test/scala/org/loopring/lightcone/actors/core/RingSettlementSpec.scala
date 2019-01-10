@@ -24,17 +24,8 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 class RingSettlementSpec
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "multi_account_manager",
-                         | "ethereum_query",
-                         | "order_handler",
-                         | "ring_settlement",
-                         | "gas_price",
-                         | "ethereum_client_monitor",
-                         | "orderbook_manager",
-                         | "market_manager"]
-                         |""".stripMargin)
+    extends CommonSpec
+    with EthereumSupport
     with EthereumQueryMockSupport
     with MarketManagerSupport
     with MultiAccountManagerSupport
@@ -81,16 +72,13 @@ class RingSettlementSpec
         amountS = "1".zeros(18)
       )(Some(users(1)._2))
 
-      val submitOrder1F = singleRequest(
-        SubmitOrder.Req(Some(order1)),
-        submit_order
-      ).mapAs[SubmitOrder.Res]
+      val submitOrder1F =
+        singleRequest(SubmitOrder.Req(Some(order1)), submit_order)
+          .mapAs[SubmitOrder.Res]
       Await.result(submitOrder1F, timeout.duration)
 
-      val orderbook1F = singleRequest(
-        getOrderBook1,
-        "orderbook"
-      ).mapAs[GetOrderbook.Res]
+      val orderbook1F = singleRequest(getOrderBook1, "orderbook")
+        .mapAs[GetOrderbook.Res]
         .map(_.getOrderbook)
       val orderbook1 = Await.result(orderbook1F, timeout.duration)
 
@@ -104,23 +92,20 @@ class RingSettlementSpec
         case _ =>
       }
 
-      val submitOrder2F = singleRequest(
-        SubmitOrder.Req(Some(order2)),
-        submit_order
-      ).mapAs[SubmitOrder.Res]
+      val submitOrder2F =
+        singleRequest(SubmitOrder.Req(Some(order2)), submit_order)
+          .mapAs[SubmitOrder.Res]
       Await.result(submitOrder2F, timeout.duration)
       Thread.sleep(1000)
-      val orderbookF2 = singleRequest(
-        getOrderBook1,
-        "orderbook"
-      ).mapAs[GetOrderbook.Res]
+      val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
+        .mapAs[GetOrderbook.Res]
         .map(_.getOrderbook)
 
       val orderbook2 = Await.result(orderbookF2, timeout.duration)
 
       println(orderbook2)
-//      assert(orderbook2.buys.isEmpty)
-//      assert(orderbook2.sells.isEmpty)
+      //      assert(orderbook2.buys.isEmpty)
+      //      assert(orderbook2.sells.isEmpty)
     }
   }
 

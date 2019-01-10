@@ -23,15 +23,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_SubmitOrdersOfDifferentMarket
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "order_handler",
-                         | "multi_account_manager",
-                         | "market_manager",
-                         | "orderbook_manager",
-                         | "gas_price",
-                         | "ring_settlement"]
-                         |""".stripMargin)
+    extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport

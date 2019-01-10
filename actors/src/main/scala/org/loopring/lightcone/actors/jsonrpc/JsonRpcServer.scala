@@ -39,7 +39,7 @@ abstract class JsonRpcServer(
   val host = config.getString("jsonrpc.http.host")
   val port = config.getInt("jsonrpc.http.port")
 
-  def start() = {
+  def start = {
     startServer(host, port, system)
     println(s"started jsonrpc at ${host}:${port}")
   }

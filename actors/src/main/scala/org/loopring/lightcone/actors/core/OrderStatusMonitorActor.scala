@@ -34,8 +34,7 @@ import scala.concurrent._
 object OrderStatusMonitorActor {
   val name = "order_status_monitor"
 
-  def startSingleton(
-    )(
+  def start(
       implicit
       system: ActorSystem,
       config: Config,
@@ -45,13 +44,15 @@ object OrderStatusMonitorActor {
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
       ma: ActorMaterializer,
-      ece: ExecutionContextExecutor
+      ece: ExecutionContextExecutor,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new OrderStatusMonitorActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       name = OrderStatusMonitorActor.name
     )

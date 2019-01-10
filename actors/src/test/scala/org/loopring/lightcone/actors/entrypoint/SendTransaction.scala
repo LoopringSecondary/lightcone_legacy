@@ -32,18 +32,8 @@ import akka.pattern._
 
 import scala.concurrent.Await
 
-class SendTransaction
-    extends CommonSpec("""akka.cluster.roles=[
-                         | "order_handler",
-                         | "multi_account_manager",
-                         | "market_manager",
-                         | "orderbook_manager",
-                         | "gas_price",
-                         | "ethereum_access",
-                         | "ethereum_query",
-                         | "ethereum_client_monitor",
-                         | "ring_settlement"]""".stripMargin)
-    with EthereumSupport {
+class SendTransaction extends CommonSpec with EthereumSupport {
+
   "send an orderbook request" must {
     "receive a response without value" in {
 

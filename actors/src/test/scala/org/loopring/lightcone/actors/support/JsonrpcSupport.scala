@@ -32,6 +32,6 @@ trait JsonrpcSupport {
 
   val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
   with RpcBinding
-  Future { server.start() }
+  Future { server.start }
   Thread.sleep(5000)
 }

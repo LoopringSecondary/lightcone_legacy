@@ -34,8 +34,7 @@ import scala.concurrent.duration._
 object MultiAccountManagerActor extends ShardedByAddress {
   val name = "multi_account_manager"
 
-  def startShardRegion(
-    )(
+  def start(
       implicit
       system: ActorSystem,
       config: Config,
@@ -44,16 +43,18 @@ object MultiAccountManagerActor extends ShardedByAddress {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dustEvaluator: DustOrderEvaluator,
-      dbModule: DatabaseModule
+      dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
 
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new MultiAccountManagerActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
@@ -81,7 +82,6 @@ object MultiAccountManagerActor extends ShardedByAddress {
 }
 
 class MultiAccountManagerActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

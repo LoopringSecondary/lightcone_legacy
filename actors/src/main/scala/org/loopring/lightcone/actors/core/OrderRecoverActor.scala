@@ -43,8 +43,7 @@ object OrderRecoverActor extends ShardedEvenly {
       }
     }
 
-  def startShardRegion(
-    )(
+  def start(
       implicit
       system: ActorSystem,
       config: Config,
@@ -53,19 +52,20 @@ object OrderRecoverActor extends ShardedEvenly {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
-      supportedMarkets: SupportedMarkets
+      supportedMarkets: SupportedMarkets,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new OrderRecoverActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
 }
 
 class OrderRecoverActor(
-  )(
     implicit
     val config: Config,
     ec: ExecutionContext,

@@ -34,8 +34,7 @@ import scala.util.{Failure, Random, Success}
 object EthereumAccessActor {
   val name = "ethereum_access"
 
-  def startSingleton(
-    )(
+  def start(
       implicit
       system: ActorSystem,
       config: Config,
@@ -44,13 +43,15 @@ object EthereumAccessActor {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       ma: ActorMaterializer,
-      ece: ExecutionContextExecutor
+      ece: ExecutionContextExecutor,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new EthereumAccessActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       name = EthereumAccessActor.name
     )
@@ -66,8 +67,8 @@ object EthereumAccessActor {
 }
 
 // TODO(yadong): 是否可以替代ActorSelection
+// TODO(yadong): monitor可能在启动的时候还没有部署好。
 class EthereumAccessActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -80,7 +81,7 @@ class EthereumAccessActor(
     with Stash
     with ActorLogging {
 
-  private def monitor: ActorRef = actors.get(EthereumClientMonitor.name)
+  private def monitor = actors.get(EthereumClientMonitor.name)
   var connectionPools: Seq[(ActorSelection, Long)] = Nil
 
   override def preStart() = {

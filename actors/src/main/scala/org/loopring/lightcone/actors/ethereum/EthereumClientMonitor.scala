@@ -38,8 +38,8 @@ import scala.util._
 object EthereumClientMonitor {
   val name = "ethereum_client_monitor"
 
-  def startSingleton(
-      connectionPools: Seq[ActorRef] = Nil
+  def start(
+      connectionPools: Seq[ActorRef]
     )(
       implicit
       system: ActorSystem,
@@ -49,14 +49,16 @@ object EthereumClientMonitor {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       ma: ActorMaterializer,
-      ece: ExecutionContextExecutor
+      ece: ExecutionContextExecutor,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps =
           Props(new EthereumClientMonitor(connectionPools = connectionPools)),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
       name = EthereumClientMonitor.name
     )

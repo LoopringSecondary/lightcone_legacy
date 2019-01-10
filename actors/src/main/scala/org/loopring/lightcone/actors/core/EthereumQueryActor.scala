@@ -40,8 +40,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object EthereumQueryActor extends ShardedEvenly {
   val name = "ethereum_query"
 
-  def startShardRegion(
-    )(
+  def start(
       implicit
       system: ActorSystem,
       config: Config,
@@ -50,24 +49,25 @@ object EthereumQueryActor extends ShardedEvenly {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       rb: EthereumCallRequestBuilder,
-      brb: EthereumBatchCallRequestBuilder
+      brb: EthereumBatchCallRequestBuilder,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
     entitiesPerShard = selfConfig.getInt("entities-per-shard")
 
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new EthereumQueryActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
 }
 
 class EthereumQueryActor(
-  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,

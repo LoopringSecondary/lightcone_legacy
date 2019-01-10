@@ -79,6 +79,7 @@ package object support {
     mysqlUsername = Some("test"),
     mysqlPassword = Some("test")
   )
+
   mysqlContainer.starting()
 
   val ethContainer = GenericContainer(
@@ -86,6 +87,7 @@ package object support {
     exposedPorts = Seq(8545),
     waitStrategy = Wait.forListeningPort()
   )
+
   ethContainer.starting()
 
   Thread.sleep(10000)
@@ -116,10 +118,10 @@ package object support {
                         |    ]
                         |}""".stripMargin
 
-  println(
-    s""" ### host = "${ethContainer.containerIpAddress}" port = ${ethContainer
-      .mappedPort(8545)} """
-  )
+  println(s"""
+    host = ${ethContainer.containerIpAddress}
+    port = ${ethContainer.mappedPort(8545)}
+    """)
 
   Thread.sleep(2000)
 }
