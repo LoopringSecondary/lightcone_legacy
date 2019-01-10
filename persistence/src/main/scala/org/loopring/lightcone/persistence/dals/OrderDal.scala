@@ -158,7 +158,6 @@ class OrderDalImpl(
   val timeProvider = new SystemTimeProvider()
   implicit val OrderStatusColumnType = enumColumnType(OrderStatus)
   implicit val TokenStandardColumnType = enumColumnType(TokenStandard)
-  private[this] val logger = Logger(this.getClass)
 
   val failedStatus = Seq(
     OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,

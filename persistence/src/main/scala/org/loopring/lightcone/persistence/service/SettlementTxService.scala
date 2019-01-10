@@ -22,7 +22,6 @@ import scala.concurrent.Future
 
 trait SettlementTxService {
 
-  val submitTxDal: SettlementTxDal
   def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res]
   // get all pending txs with given owner, from_nonce is a optional parameter(>=)
   def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res]

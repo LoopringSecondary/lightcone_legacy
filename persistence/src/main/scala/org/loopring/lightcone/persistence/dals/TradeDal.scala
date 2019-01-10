@@ -44,7 +44,6 @@ class TradeDalImpl(
     extends TradeDal {
   val query = TableQuery[TradeTable]
   val timeProvider = new SystemTimeProvider()
-  private[this] val logger = Logger(this.getClass)
 
   def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] = {
     db.run(
