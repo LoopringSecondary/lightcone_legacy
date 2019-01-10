@@ -35,7 +35,7 @@ abstract class ActorWithPathBasedConfig(
     extends Actor
     with ActorLogging
     with NamedBasedConfig {
-  protected val entityId = extractEntityId(self.path.name).replace("$", "")
+  protected val entityId = extractEntityId(self.path.name.replace("$", ""))
 
   override val selfConfig = try {
     selfConfig_.getConfig(entityId).withFallback(selfConfig_)

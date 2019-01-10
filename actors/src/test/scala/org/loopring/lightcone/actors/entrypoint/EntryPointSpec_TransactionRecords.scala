@@ -28,14 +28,17 @@ import org.loopring.lightcone.lib.ErrorException
 
 import scala.concurrent.{Await, Future}
 
-class EntryPointSpec_Transactions
+import TransactionRecord.EventData.Event
+import TransactionRecord.RecordType._
+
+class EntryPointSpec_TransactionRecords
     extends CommonSpec
     with DatabaseModuleSupport
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport
     with OrderGenerateSupport
-    with EthereumEventAccessSupport {
+    with EthereumTransactionRecordSupport {
 
   "save & query some events" must {
     "get the events record correctly" in {
@@ -195,28 +198,26 @@ class EntryPointSpec_Transactions
       assert(r2.transactions.length == 4)
       r2.transactions.foreach {
         _.eventData.getOrElse(EventData()).event match {
-          case TransactionRecord.EventData.Event.Transfer(e)
-              if e.token.isEmpty =>
+          case Event.Transfer(e) if e.token.isEmpty =>
             assert(
               e.header
                 .getOrElse(EventHeader())
                 .txHash == "0x016331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
             )
-          case TransactionRecord.EventData.Event.Transfer(e)
-              if e.token.nonEmpty =>
+          case Event.Transfer(e) if e.token.nonEmpty =>
             assert(
               e.header
                 .getOrElse(EventHeader())
                 .txHash == "0x026331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
             )
-          case TransactionRecord.EventData.Event.OrderCancelled(e) =>
+          case Event.OrderCancelled(e) =>
             assert(
               e.header
                 .getOrElse(EventHeader())
                 .txHash == "0x036331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
             )
-          case TransactionRecord.EventData.Event.Cutoff(e) => assert(false)
-          case TransactionRecord.EventData.Event.Filled(e) =>
+          case Event.Cutoff(e) => assert(false)
+          case Event.Filled(e) =>
             assert(
               e.header
                 .getOrElse(EventHeader())
@@ -233,7 +234,7 @@ class EntryPointSpec_Transactions
             owner = txTo,
             queryType = Some(
               GetTransactionRecords
-                .QueryType(TransactionRecord.RecordType.ERC20_TRANSFER)
+                .QueryType(ERC20_TRANSFER)
             )
           ),
         "get_transaction_count"

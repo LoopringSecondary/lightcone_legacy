@@ -48,16 +48,18 @@ object TransactionRecordActor extends ShardedByAddress {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      dbModule: DatabaseModule
+      dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
 
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new TransactionRecordActor()),
-      settings = ClusterShardingSettings(system).withRole(name),
+      settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
@@ -81,11 +83,14 @@ class TransactionRecordActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(TransactionRecordActor.name) {
+    extends ActorWithPathBasedConfig(
+      TransactionRecordActor.name,
+      TransactionRecordActor.extractEntityId
+    ) {
 
   val dbConfigKey = s"db.transaction-record.shard_${entityId}"
   log.info(
-    s"TransactionRecordActor with db configuration: ",
+    s"TransactionRecordActor with db configuration ($dbConfigKey): ",
     config.getConfig(dbConfigKey)
   )
 
@@ -96,7 +101,7 @@ class TransactionRecordActor(
     DatabaseConfig.forConfig(dbConfigKey, config)
 
   val txRecordDal: TransactionRecordDal =
-    new TransactionRecordDalImpl(entityId, dbConfig)
+    new TransactionRecordDalImpl(shardId = entityId, dbConfig)
 
   txRecordDal.createTable()
 
