@@ -24,8 +24,8 @@ import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
 
-class TransferEventExtractor(config: Config)
-    extends DataExtractor[PTransferEvent] {
+class TransferEventExtractor()(implicit config: Config)
+    extends EventExtractor[PTransferEvent] {
 
   val wethAddress = Address(config.getString("weth.address"))
 

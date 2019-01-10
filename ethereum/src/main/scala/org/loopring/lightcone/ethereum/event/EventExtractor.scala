@@ -19,7 +19,7 @@ package org.loopring.lightcone.ethereum.event
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
-trait DataExtractor[R] {
+trait EventExtractor[R] {
 
   def extract(
       tx: Transaction,

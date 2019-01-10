@@ -21,7 +21,7 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
 
-class RingMinedEventExtractor() extends DataExtractor[PRingMinedEvent] {
+class RingMinedEventExtractor() extends EventExtractor[PRingMinedEvent] {
 
   val fillLength: Int = 8 * 64
 
