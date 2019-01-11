@@ -40,17 +40,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.{Await, Future}
 
 class OrderCutoffSpec
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "order_handler",
-                         | "multi_account_manager",
-                         | "market_manager",
-                         | "orderbook_manager",
-                         | "gas_price",
-                         | "order_cutoff_handler",
-                         | "ethereum_access",
-                         | "ring_settlement"]
-                         |""".stripMargin)
+    extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport
