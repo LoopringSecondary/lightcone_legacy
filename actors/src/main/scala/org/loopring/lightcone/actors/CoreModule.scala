@@ -38,6 +38,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
+import org.loopring.lightcone.ethereum.event._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -50,7 +51,7 @@ class CoreModule(config: Config)
     with ScalaModule
     with Logging {
 
-  private var dbConfigMap = Map.empty[String, DatabaseConfig[JdbcProfile]]
+  val dbConfigManager = new DatabaseConfigManager(config)
 
   override def configure(): Unit = {
 
@@ -68,6 +69,8 @@ class CoreModule(config: Config)
       .toInstance(system.dispatchers.lookup("db-execution-context"))
 
     // --- bind db configs ---------------------
+    bind[DatabaseConfigManager].toInstance(dbConfigManager)
+
     bindDatabaseConfigProviderForNames(
       "dbconfig-dal-token-metadata",
       "dbconfig-dal-order",
@@ -78,27 +81,37 @@ class CoreModule(config: Config)
       "dbconfig-dal-order-status-monitor"
     )
 
+    // --- bind event extractors ---------------------
+    bind[AllowanceChangedAddressExtractor]
+    bind[BalanceChangedAddressExtractor]
+    bind[CutoffEventExtractor]
+    bind[OnchainOrderExtractor]
+    bind[OrdersCancelledEventExtractor]
+    bind[RingMinedEventExtractor]
+    bind[TokenBurnRateEventExtractor]
+    bind[TransferEventExtractor]
+
     // --- bind dals ---------------------
-    bind[TokenMetadataDal].to[TokenMetadataDalImpl].in[Singleton]
-    bind[OrderDal].to[OrderDalImpl].in[Singleton]
-    bind[TradeDal].to[TradeDalImpl].in[Singleton]
-    bind[TokenBalanceDal].to[TokenBalanceDalImpl].in[Singleton]
-    bind[BlockDal].to[BlockDalImpl].in[Singleton]
-    bind[SettlementTxDal].to[SettlementTxDalImpl].in[Singleton]
-    bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].in[Singleton]
+    bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
+    bind[OrderDal].to[OrderDalImpl].asEagerSingleton
+    bind[TradeDal].to[TradeDalImpl].asEagerSingleton
+    bind[TokenBalanceDal].to[TokenBalanceDalImpl].asEagerSingleton
+    bind[BlockDal].to[BlockDalImpl].asEagerSingleton
+    bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
+    bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------
-    bind[OrderService].to[OrderServiceImpl].in[Singleton]
-    bind[TokenMetadataService].to[TokenMetadataServiceImpl].in[Singleton]
-    bind[TradeService].to[TradeServiceImpl].in[Singleton]
-    bind[SettlementTxService].to[SettlementTxServiceImpl].in[Singleton]
+    bind[OrderService].to[OrderServiceImpl].asEagerSingleton
+    bind[TokenMetadataService].to[TokenMetadataServiceImpl].asEagerSingleton
+    bind[TradeService].to[TradeServiceImpl].asEagerSingleton
+    bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[OrderStatusMonitorService]
       .to[OrderStatusMonitorServiceImpl]
-      .in[Singleton]
+      .asEagerSingleton
 
     // --- bind local singletons ---------------------
-    bind[DatabaseModule].in[Singleton]
-    bind[TokenManager].in[Singleton]
+    bind[DatabaseModule].asEagerSingleton
+    bind[TokenManager].asEagerSingleton
 
     bind[SupportedMarkets].toInstance(SupportedMarkets(config))
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
@@ -127,28 +140,15 @@ class CoreModule(config: Config)
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]
       .toProvider(new Provider[DatabaseConfig[JdbcProfile]] {
-        def get() = getDbConfigByKey("db.default")
+        def get() = dbConfigManager.getDatabaseConfig("db.default")
       })
 
     names.foreach { name =>
       bind[DatabaseConfig[JdbcProfile]]
         .annotatedWithName(name)
         .toProvider(new Provider[DatabaseConfig[JdbcProfile]] {
-          def get() = getDbConfigByKey(s"db.${name}")
+          def get() = dbConfigManager.getDatabaseConfig(s"db.${name}")
         })
-    }
-  }
-
-  private def getDbConfigByKey(key: String) = {
-    dbConfigMap.get(key) match {
-      case None =>
-        val dbConfig: DatabaseConfig[JdbcProfile] =
-          DatabaseConfig.forConfig(key, config)
-        log.info(s"creating DatabaseConfig instance for config key: $key")
-        dbConfigMap += key -> dbConfig
-        dbConfig
-      case Some(dbConfig) =>
-        dbConfig
     }
   }
 }
