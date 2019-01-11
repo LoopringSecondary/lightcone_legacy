@@ -40,16 +40,16 @@ import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.ethereum.event._
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import org.slf4s.Logging
 
 // Owner: Daniel
 class CoreModule(config: Config)
-  extends AbstractModule
-  with ScalaModule
-  with Logging {
+    extends AbstractModule
+    with ScalaModule
+    with Logging {
 
   val dbConfigManager = new DatabaseConfigManager(config)
 
@@ -78,7 +78,8 @@ class CoreModule(config: Config)
       "dbconfig-dal-token-balance",
       "dbconfig-dal-block",
       "dbconfig-dal-settlement-tx",
-      "dbconfig-dal-order-status-monitor")
+      "dbconfig-dal-order-status-monitor"
+    )
 
     // --- bind event extractors ---------------------
     bind[AllowanceChangedAddressExtractor]

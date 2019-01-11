@@ -36,7 +36,7 @@ trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
   actors.add(
     TransactionRecordActor.name,
     TransactionRecordActor
-      .start()(
+      .start(
         system,
         config1,
         ec,

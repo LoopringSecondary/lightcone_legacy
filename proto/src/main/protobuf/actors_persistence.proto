@@ -176,10 +176,10 @@ message TransactionRecord {
     }
     message EventData {
         oneof event {
-            TransferEvent        transfer = 101;
+            TransferEvent        transfer       = 101;
             OrdersCancelledEvent orderCancelled = 102;
-            CutoffEvent          cutoff = 103;
-            OrderFilledEvent     filled = 104;
+            CutoffEvent          cutoff         = 103;
+            OrderFilledEvent     filled         = 104;
         }
     }
     EventHeader header       = 1;

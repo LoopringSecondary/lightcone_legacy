@@ -26,7 +26,7 @@ object TransactionRecordMessageValidator {
 }
 
 final class TransactionRecordMessageValidator()(implicit val config: Config)
-  extends MessageValidator {
+    extends MessageValidator {
 
   val transactionRecordConfig = config.getConfig(TransactionRecordActor.name)
 
@@ -52,25 +52,29 @@ final class TransactionRecordMessageValidator()(implicit val config: Config)
       if (req.orderHash.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter orderHash is empty")
+          "Parameter orderHash is empty"
+        )
       req
 
     case req: GetTransactionRecords.Req =>
       if (req.owner.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter owner could not be empty")
+          "Parameter owner could not be empty"
+        )
 
       req.paging match {
         case Some(p) if p.size > maxItemsPerPage =>
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Parameter size of paging is larger than $maxItemsPerPage")
+            s"Parameter size of paging is larger than $maxItemsPerPage"
+          )
 
         case Some(p) if p.cursor < 0 =>
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Invalid parameter cursor of paging:${p.cursor}")
+            s"Invalid parameter cursor of paging:${p.cursor}"
+          )
 
         case Some(_) => req
 
@@ -82,52 +86,60 @@ final class TransactionRecordMessageValidator()(implicit val config: Config)
       if (req.owner.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter owner could not be empty")
+          "Parameter owner could not be empty"
+        )
       req
   }
 
   private def validate(
-    headerOpt: Option[EventHeader],
-    owner: String) {
+      headerOpt: Option[EventHeader],
+      owner: String
+    ) {
     if (headerOpt.isEmpty || owner.isEmpty)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
-        "Parameter header and owner could not be empty")
+        "Parameter header and owner could not be empty"
+      )
 
     val header = headerOpt.get
     if (header.txHash.isEmpty ||
-      header.blockHash.isEmpty ||
-      header.blockTimestamp < 0 ||
-      header.txFrom.isEmpty ||
-      header.txTo.isEmpty ||
-      header.gasPrice < 0 ||
-      header.gasLimit < 0 ||
-      header.gasUsed < 0)
+        header.blockHash.isEmpty ||
+        header.blockTimestamp < 0 ||
+        header.txFrom.isEmpty ||
+        header.txTo.isEmpty ||
+        header.gasPrice < 0 ||
+        header.gasLimit < 0 ||
+        header.gasUsed < 0)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
-        s"Invalid value in header:$header")
+        s"Invalid value in header:$header"
+      )
 
     if (header.blockNumber < 0 ||
-      header.txIndex < 0 ||
-      header.logIndex < 0 ||
-      header.eventIndex < 0)
+        header.txIndex < 0 ||
+        header.logIndex < 0 ||
+        header.eventIndex < 0)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
-        s"Invalid index in header:$header")
+        s"Invalid index in header:$header"
+      )
 
     if (header.blockNumber > 500000000)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
-        s"Parameter blockNumber larger than 500000000 in ${header}")
+        s"Parameter blockNumber larger than 500000000 in ${header}"
+      )
 
     if (header.txIndex > 4096 || header.logIndex > 4096)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
-        s"Parameters txIndex or logIndex larger than 4096 in ${header}")
+        s"Parameters txIndex or logIndex larger than 4096 in ${header}"
+      )
 
     if (header.eventIndex > 1024)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
-        s"Parameter eventIndex larger than 1024 in ${header}")
+        s"Parameter eventIndex larger than 1024 in ${header}"
+      )
   }
 }
