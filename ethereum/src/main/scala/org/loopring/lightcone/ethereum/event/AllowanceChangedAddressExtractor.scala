@@ -57,7 +57,7 @@ class AllowanceChangedAddressExtractor @Inject()(implicit config: Config)
         case _ =>
       }
     }
-    if (isSucceed(receipt.status) && tx.input.size > 10) {
+    if (isSucceed(receipt.status)) {
       wethAbi.unpackFunctionInput(tx.input) match {
         case Some(param: ApproveFunction.Parms) =>
           if (Address(param.spender).equals(delegateAddress))

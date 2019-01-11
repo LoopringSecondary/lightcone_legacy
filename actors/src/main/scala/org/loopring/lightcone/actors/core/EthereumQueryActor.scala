@@ -76,14 +76,16 @@ class EthereumQueryActor(
     val brb: EthereumBatchCallRequestBuilder)
     extends ActorWithPathBasedConfig(EthereumQueryActor.name) {
 
+  val loopringConfig = config.getConfig("loopring_protocol")
+
   val delegateAddress =
-    Address(config.getString("loopring_protocol.delegate-address"))
+    Address(loopringConfig.getString("delegate-address"))
 
   val tradeHistoryAddress =
-    Address(config.getString("loopring_protocol.trade-history-address"))
+    Address(loopringConfig.getString("trade-history-address"))
 
   val burnRateTableAddress =
-    Address(config.getString("loopring_protocol.burnrate-table-address"))
+    Address(loopringConfig.getString("burnrate-table-address"))
 
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
@@ -188,7 +190,7 @@ class EthereumQueryActor(
       ) { result =>
         GetFilledAmount.Res(
           (orderIds zip result.map(
-            res => ByteString.copyFrom(Numeric.hexStringToByteArray(res))
+            res => byteArray2ByteString(Numeric.toBigInt(res).toByteArray)
           )).toMap
         )
       }

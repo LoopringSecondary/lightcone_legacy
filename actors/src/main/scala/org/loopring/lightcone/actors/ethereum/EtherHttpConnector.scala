@@ -145,27 +145,6 @@ class HttpConnector(
     } yield jsonStr
   }
 
-  private def toResponseWrapped: PartialFunction[String, JsonRpcResWrapped] = {
-    case json: String => parse(json).extract[JsonRpcResWrapped]
-  }
-
-  private def toResponseListWrapped
-    : PartialFunction[String, Seq[JsonRpcResWrapped]] = {
-    case json: String => parse(json).extract[Seq[JsonRpcResWrapped]]
-  }
-
-  private def checkResponseWrapped
-    : PartialFunction[JsonRpcResWrapped, Boolean] = {
-    case res: JsonRpcResWrapped => res.result.toString.isEmpty
-  }
-
-  private def checkResponseListWrapped
-    : PartialFunction[Seq[JsonRpcResWrapped], Boolean] = {
-    case res: Seq[JsonRpcResWrapped] => res.isEmpty
-  }
-
-  private def hex2BigInt(s: String) = BigInt(s.replace("0x", ""), 16)
-
   def receive: Receive = {
     case req: JsonRpc.Request =>
       post(req.json).map(JsonRpc.Response(_)) sendTo sender
