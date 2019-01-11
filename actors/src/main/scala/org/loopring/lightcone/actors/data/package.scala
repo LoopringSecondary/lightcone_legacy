@@ -32,6 +32,11 @@ package object data {
   implicit class RichEventHeader(header: EventHeader) {
 
     def sequenceId() = {
+      if (header.blockNumber > 500000000) // < pow(2, 29)
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"blockNumber >= 500000000 in ${header}"
+        )
       if (header.txIndex >= 4096 || header.logIndex >= 4096) // pow(2, 12)
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
@@ -42,10 +47,10 @@ package object data {
           ErrorCode.ERR_INTERNAL_UNKNOWN,
           s"eventIndex >= 1024 in ${header}"
         )
-      header.blockNumber << 34 +
-        header.txIndex << 22 +
-        header.logIndex << 10 +
-        header.eventIndex
+      val b: Long = header.blockNumber << 34
+      val t: Long = header.txIndex.toLong << 22
+      val l: Long = header.logIndex.toLong << 10
+      b + t + l + header.eventIndex
     }
   }
 

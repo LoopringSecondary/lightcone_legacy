@@ -22,7 +22,7 @@ import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
 object TransactionRecordMessageValidator {
-  val name = "transaction_record_validator"
+  val name = "transaction_record_message_validator"
 }
 
 final class TransactionRecordMessageValidator()(implicit val config: Config)
@@ -111,22 +111,22 @@ final class TransactionRecordMessageValidator()(implicit val config: Config)
         s"Invalid index in header:$header"
       )
 
-    if (header.blockNumber > 99999999)
+    if (header.blockNumber > 500000000)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
-        s"Parameter blockNumber larger than 99999999 in ${header}"
+        s"Parameter blockNumber larger than 500000000 in ${header}"
       )
 
-    if (header.txIndex > 9999 || header.logIndex > 9999)
+    if (header.txIndex > 4096 || header.logIndex > 4096)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
-        s"Parameters txIndex or logIndex larger than 9999 in ${header}"
+        s"Parameters txIndex or logIndex larger than 4096 in ${header}"
       )
 
-    if (header.eventIndex > 999)
+    if (header.eventIndex > 1024)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
-        s"Parameter eventIndex larger than 999 in ${header}"
+        s"Parameter eventIndex larger than 1024 in ${header}"
       )
   }
 }

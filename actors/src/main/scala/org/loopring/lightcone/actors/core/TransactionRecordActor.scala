@@ -156,31 +156,23 @@ class TransactionRecordActor(
       txRecordDal.saveRecord(record)
 
     case req: OrderFilledEvent =>
-      //TODO du：是否需要查询并验证订单存在
       for {
         order <- dbModule.orderService.getOrder(req.orderHash)
-        saved = if (order.isEmpty) {
-          Future.successful(
-            PersistTransactionRecord
-              .Res(error = ErrorCode.ERR_ORDER_VALIDATION_NOT_PERSISTED)
-          )
-        } else {
-          val header = req.header.get
-          val marketHash =
-            MarketHashProvider.convert2Hex(order.get.tokenS, order.get.tokenB)
-          val record = TransactionRecord(
-            header = req.header,
-            owner = req.owner,
-            recordType = ORDER_FILLED,
-            tradingPair = marketHash,
-            eventData = Some(
-              TransactionRecord
-                .EventData(Event.Filled(req))
-            ),
-            sequenceId = header.sequenceId
-          )
-          txRecordDal.saveRecord(record)
-        }
+        header = req.header.get
+        marketHash = if (order.isEmpty) ""
+        else MarketHashProvider.convert2Hex(order.get.tokenS, order.get.tokenB)
+        record = TransactionRecord(
+          header = req.header,
+          owner = req.owner,
+          recordType = ORDER_FILLED,
+          tradingPair = marketHash,
+          eventData = Some(
+            TransactionRecord
+              .EventData(Event.Filled(req))
+          ),
+          sequenceId = header.sequenceId
+        )
+        saved <- txRecordDal.saveRecord(record)
       } yield saved
 
     case req: GetTransactionRecords.Req =>

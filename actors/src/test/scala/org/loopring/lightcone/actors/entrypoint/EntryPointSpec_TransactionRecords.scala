@@ -55,8 +55,7 @@ class EntryPointSpec_TransactionRecords
         blockTimestamp = timeProvider.getTimeSeconds(),
         txFrom = txFrom,
         txTo = txTo,
-        txIndex = 1,
-        logIndex = 0
+        txIndex = 1
       )
       val actor = actors.get(TransactionRecordMessageValidator.name)
       // 1. eth transfer
@@ -68,7 +67,7 @@ class EntryPointSpec_TransactionRecords
         amount = ByteString.copyFrom("11", "utf-8")
       )
       actor ! TransferEvent(
-        header = Some(header1),
+        header = Some(header1.copy(eventIndex = 1)),
         owner = txTo,
         from = txFrom,
         to = txTo,
@@ -90,7 +89,7 @@ class EntryPointSpec_TransactionRecords
         amount = ByteString.copyFrom("11", "utf-8")
       )
       actor ! TransferEvent(
-        header = Some(header2),
+        header = Some(header2.copy(eventIndex = 1)),
         owner = txTo,
         from = txFrom,
         to = txTo,
@@ -156,7 +155,7 @@ class EntryPointSpec_TransactionRecords
         orderHash = orderHash
       )
       actor ! OrderFilledEvent(
-        header = Some(header5),
+        header = Some(header5.copy(eventIndex = 1)),
         owner = txTo,
         orderHash = orderHash
       )
@@ -308,6 +307,63 @@ class EntryPointSpec_TransactionRecords
                 .indexOf("Parameter owner could not be empty") > -1)
             assert(true)
           else assert(false)
+        case _: Throwable => assert(false)
+      }
+    }
+  }
+
+  "test sequenceId" must {
+    "get sequenceId correctly" in {
+      val correctHeader = EventHeader(
+        blockNumber = 8000000,
+        txIndex = 1,
+        logIndex = 2,
+        eventIndex = 3
+      )
+      // 1. correct
+      val s1 = correctHeader.sequenceId
+      val max = EventHeader(
+        blockNumber = 500000000,
+        txIndex = 4095,
+        logIndex = 4095,
+        eventIndex = 1023
+      ).sequenceId
+      assert(s1 == 137438953476196355L && max == 8589934609179869183L)
+      // 2. invalid
+      try {
+        correctHeader.copy(blockNumber = 500000001).sequenceId
+        assert(false)
+      } catch {
+        case e: ErrorException
+            if e.getMessage().indexOf("blockNumber >= 500000000") > -1 =>
+          assert(true)
+        case _: Throwable => assert(false)
+      }
+      try {
+        correctHeader.copy(txIndex = 4096).sequenceId
+        assert(false)
+      } catch {
+        case e: ErrorException
+            if e.getMessage().indexOf("txIndex or logIndex >= 4096") > -1 =>
+          assert(true)
+        case _: Throwable => assert(false)
+      }
+      try {
+        correctHeader.copy(logIndex = 4096).sequenceId
+        assert(false)
+      } catch {
+        case e: ErrorException
+            if e.getMessage().indexOf("txIndex or logIndex >= 4096") > -1 =>
+          assert(true)
+        case _: Throwable => assert(false)
+      }
+      try {
+        correctHeader.copy(eventIndex = 1024).sequenceId
+        assert(false)
+      } catch {
+        case e: ErrorException
+            if e.getMessage().indexOf("eventIndex >= 1024") > -1 =>
+          assert(true)
         case _: Throwable => assert(false)
       }
 
