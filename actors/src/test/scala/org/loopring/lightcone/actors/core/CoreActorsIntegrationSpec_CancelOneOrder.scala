@@ -33,7 +33,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
+    with EthereumSupport
     with OrderGenerateSupport {
 
   "submiting one from OrderHandleActor" must {

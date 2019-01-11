@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors
 
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
@@ -127,4 +128,6 @@ package object support {
                               |  port = ${ethContainer.mappedPort(8545)}
                               | }
                               |]""".stripMargin
+
+  val addressGenerator = new AtomicInteger(100000000)
 }

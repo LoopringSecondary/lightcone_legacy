@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.support
 
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.Props
 import akka.routing.RoundRobinPool
@@ -210,4 +211,11 @@ trait EthereumSupport {
     )
   }
 
+  def getUniqueAccountWithoutEth = {
+    Credentials.create(
+      Numeric.toHexStringWithPrefix(
+        BigInt(addressGenerator.getAndIncrement()).bigInteger
+      )
+    )
+  }
 }

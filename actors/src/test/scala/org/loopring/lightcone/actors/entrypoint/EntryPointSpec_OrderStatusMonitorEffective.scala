@@ -29,7 +29,7 @@ class EntryPointSpec_OrderStatusMonitorEffective
     with OrderHandleSupport
     with MultiAccountManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
+    with EthereumSupport
     with MarketManagerSupport
     with OrderGenerateSupport
     with OrderStatusMonitorSupport {

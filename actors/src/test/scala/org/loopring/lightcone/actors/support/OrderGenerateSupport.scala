@@ -34,7 +34,6 @@ trait OrderGenerateSupport {
   my: CommonSpec =>
 
   def createRawOrder(
-      owner: String = accounts(0).getAddress,
       tokenS: String = LRC_TOKEN.address,
       tokenB: String = WETH_TOKEN.address,
       amountS: BigInt = "10".zeros(18),
@@ -45,12 +44,12 @@ trait OrderGenerateSupport {
       validUntil: Int = (timeProvider.getTimeMillis / 1000).toInt + 20000
     )(
       implicit
-      privateKey: Option[Credentials] = Some(accounts(0))
+      credentials: Credentials = accounts(0)
     ) = {
     val createAt = timeProvider.getTimeMillis
     val marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
     val order = RawOrder(
-      owner = owner,
+      owner = credentials.getAddress,
       version = 0,
       tokenS = tokenS,
       tokenB = tokenB,
@@ -76,7 +75,7 @@ trait OrderGenerateSupport {
         .getEntityId(MarketId(primary = tokenS, secondary = tokenB))
         .toInt,
       addressShardId = MultiAccountManagerActor
-        .getEntityId(owner, 100)
+        .getEntityId(credentials.getAddress, 100)
         .toInt
     )
 
@@ -90,7 +89,7 @@ trait OrderGenerateSupport {
               hash,
               Numeric
                 .toHexStringWithPrefix(
-                  privateKey.get.getEcKeyPair.getPrivateKey
+                  credentials.getEcKeyPair.getPrivateKey
                 )
             )
         )

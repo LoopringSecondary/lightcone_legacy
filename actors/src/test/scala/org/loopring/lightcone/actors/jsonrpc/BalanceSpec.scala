@@ -27,7 +27,6 @@ import scala.concurrent.{Await, Future}
 class BalanceSpec
     extends CommonSpec
     with EthereumSupport
-    with EthereumQueryMockSupport
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderHandleSupport
@@ -43,10 +42,9 @@ class BalanceSpec
   "send an query balance request" must {
     "receive a response with balance" in {
       val method = "get_balance_and_allowance"
-      val owner = "0x53a356c45cffc4c5d4e54bbececb60dbf5de9c8b"
       val getBalanceReq =
         GetBalanceAndAllowances.Req(
-          owner,
+          accounts(0).getAddress,
           tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
         )
       val maker = createRawOrder(

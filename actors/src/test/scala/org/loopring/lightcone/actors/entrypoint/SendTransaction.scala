@@ -17,7 +17,7 @@
 package org.loopring.lightcone.actors.entrypoint
 
 import org.loopring.lightcone.actors.ethereum._
-import org.loopring.lightcone.actors.support.{CommonSpec, EthereumSupport}
+import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.ethereum.getSignedTxData
 import org.loopring.lightcone.ethereum.data.{Address, Transaction}
@@ -27,7 +27,7 @@ import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 import akka.pattern._
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 
 class SendTransaction extends CommonSpec with EthereumSupport {
 
@@ -35,20 +35,48 @@ class SendTransaction extends CommonSpec with EthereumSupport {
     "receive a response without value" in {
 
       val ethereumAccessorActor = actors.get(EthereumAccessActor.name)
-      val f = (ethereumAccessorActor ? EthGetBalance.Req(
-        address = Address("0xe20cf871f1646d8651ee9dc95aab1d93160b3467").toString,
-        tag = "latest"
-      ))
+//      val f = (ethereumAccessorActor ? EthGetBalance.Req(
+//        address = accounts(1).getAddress,
+//        tag = "latest"
+//      ))
+//
+//      val r = Await.result(f.mapTo[EthGetBalance.Res], timeout.duration)
+//      info(s"${r.result}, ${r.error}")
 
-      val r = Await.result(f.mapTo[EthGetBalance.Res], timeout.duration)
-      info(s"${r.result}, ${r.error}")
+//      val f2 =
+//        transferEth(accounts(1).getAddress, BigInt("100000000"))(accounts(0))
+//
+//      val f3 = (ethereumAccessorActor ? EthGetBalance.Req(
+//        address = accounts(1).getAddress,
+//        tag = "latest"
+//      ))
+//
+//      val r3 = Await.result(f3.mapTo[EthGetBalance.Res], timeout.duration)
+//      info(s"${r3.result}, ${r3.error}")
 
-      val data = erc20Abi.allowance.pack(
-        AllowanceFunction.Parms(
-          _owner = "0xe20cf871f1646d8651ee9dc95aab1d93160b3467",
-          _spender = "0xCa66Ffaf17e4B600563f6af032456AA7B05a6975"
+      val f = Future.sequence(
+        Seq(
+          transferErc20(
+            accounts(1).getAddress,
+            LRC_TOKEN.address,
+            "30".zeros(LRC_TOKEN.decimals)
+          )(accounts(0)),
+          approveErc20(
+            "0xCa66Ffaf17e4B600563f6af032456AA7B05a6975",
+            LRC_TOKEN.address,
+            "30".zeros(LRC_TOKEN.decimals)
+          )(accounts(1))
         )
       )
+      //todo: allowance 为0 的逻辑是什么，accountmanager与marketmanager中是否需要保存
+      Await.result(f, timeout.duration)
+
+      val data = erc20Abi.balanceOf.pack(
+        BalanceOfFunction.Parms(
+          _owner = accounts(1).getAddress
+        )
+      )
+
       val param = TransactionParams(
         to = "0x97241525fe425C90eBe5A41127816dcFA5954b06",
         data = data
@@ -59,22 +87,6 @@ class SendTransaction extends CommonSpec with EthereumSupport {
       val r1 = Await.result(f1.mapTo[EthCall.Res], timeout.duration)
       info(s"${r1.result}, ${r1.error}")
 
-      implicit val credentials: Credentials =
-        Credentials.create(
-          "0x4e37ce13f9370ea0f86da42ffb24ef0f177ba7a1d777a78d050320e425a591df"
-        )
-
-      val tx = Transaction(
-        inputData = "",
-        nonce = 0,
-        gasLimit = BigInt("210000"),
-        gasPrice = BigInt("200000"),
-        to = "0xe5fd5be7c9a50358302de473db7818c7a91d1ec0",
-        value = BigInt("1000000000000000000")
-      )
-      val rawTx = getSignedTxData(tx)
-
-      println(s"${rawTx}")
     }
   }
 }

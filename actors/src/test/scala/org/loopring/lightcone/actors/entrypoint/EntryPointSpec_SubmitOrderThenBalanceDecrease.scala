@@ -32,33 +32,48 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with EthereumQueryMockSupport
+    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport {
 
+  val account = getUniqueAccountWithoutEth
+
+  override def beforeAll(): Unit = {
+    //设置余额
+    info("set the balance and allowance is enough befor submit an order")
+    val f = Future.sequence(
+      Seq(
+        transferEth(
+          account.getAddress,
+          "10".zeros(WETH_TOKEN.decimals)
+        )(accounts(0)),
+        transferErc20(
+          account.getAddress,
+          LRC_TOKEN.address,
+          "25".zeros(LRC_TOKEN.decimals)
+        )(accounts(0)),
+        approveErc20(
+          config.getString("loopring_protocol.delegate-address"),
+          LRC_TOKEN.address,
+          "25".zeros(LRC_TOKEN.decimals)
+        )(account)
+      )
+    )
+
+    Await.result(f, timeout.duration)
+    super.beforeAll()
+  }
+
   "submit an order when the balance and allowance enough" must {
     "store it and affect depth when allowance is enough" in {
-
-      //设置余额
-      info("set the balance and allowance is enough befor submit an order")
-      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances.Res(
-        "",
-        Map(
-          "" -> BalanceAndAllowance(
-            "25".zeros(LRC_TOKEN.decimals),
-            "25".zeros(LRC_TOKEN.decimals)
-          )
-        )
-      )
-      Await.result(f, timeout.duration)
 
       //下单情况
       val rawOrders = (0 until 1) map { i =>
         createRawOrder(
           amountS = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )
+        )(account)
       }
 
       val f1 = Future.sequence(rawOrders.map { o =>
@@ -110,16 +125,15 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       }
 
       info("then make balance is not enough.")
-      val setAllowanceF = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances
-        .Res(
-          "",
-          Map(
-            "" -> BalanceAndAllowance(
-              "0".zeros(LRC_TOKEN.decimals),
-              "25".zeros(LRC_TOKEN.decimals)
-            )
-          )
+      val setAllowanceF = Future.sequence(
+        Seq(
+          transferErc20(
+            accounts(0).getAddress,
+            LRC_TOKEN.address,
+            "10".zeros(LRC_TOKEN.decimals)
+          )(account)
         )
+      )
       Await.result(setAllowanceF, timeout.duration)
 
       actors.get(MultiAccountManagerActor.name) ? AddressBalanceUpdated(

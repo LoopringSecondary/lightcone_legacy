@@ -26,7 +26,6 @@ import scala.concurrent.duration._
 class RingSettlementSpec
     extends CommonSpec
     with EthereumSupport
-    with EthereumQueryMockSupport
     with MarketManagerSupport
     with MultiAccountManagerSupport
     with OrderGenerateSupport
@@ -35,16 +34,39 @@ class RingSettlementSpec
     with JsonrpcSupport
     with HttpSupport {
 
-  def selfConfig = config.getConfig(RingSettlementManagerActor.name)
   def orderHandler = actors.get(OrderPersistenceActor.name)
 
-  val users = selfConfig
-    .getConfigList("users")
-    .asScala
-    .map(config => config.getString("addr") -> config.getString("key"))
+  val account1 = getUniqueAccountWithoutEth
+  override def beforeAll(): Unit = {
+    //设置余额
+    info("set the balance and allowance is enough befor submit an order")
+    val f = Future.sequence(
+      Seq(
+        transferEth(
+          account1.getAddress,
+          "10".zeros(WETH_TOKEN.decimals)
+        )(accounts(0)),
+        transferErc20(
+          account1.getAddress,
+          LRC_TOKEN.address,
+          "30".zeros(LRC_TOKEN.decimals)
+        )(accounts(0)),
+        approveErc20(
+          config.getString("loopring_protocol.delegate-address"),
+          LRC_TOKEN.address,
+          "30".zeros(LRC_TOKEN.decimals)
+        )(account1)
+      )
+    )
+
+    Await.result(f, timeout.duration)
+    super.beforeAll()
+  }
 
   "Submit a ring tx " must {
     "tx successfully, order, balance, allowance must be right" in {
+
+      val account0 = accounts(0)
 
       val getBaMethod = "get_balance_and_allowance"
       val submit_order = "submit_order"
@@ -53,24 +75,14 @@ class RingSettlementSpec
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val getBalanceReqs =
-        users.unzip._1.map(
-          user =>
-            GetBalanceAndAllowances.Req(
-              user,
-              tokens =
-                Seq(LRC_TOKEN.address, WETH_TOKEN.address, GTO_TOKEN.address)
-            )
-        )
 
-      val order1 = createRawOrder(owner = users.head._1)(Some(users.head._2))
+      val order1 = createRawOrder()(account1)
       val order2 = createRawOrder(
-        owner = users(1)._1,
         tokenB = LRC_TOKEN.address,
         tokenS = WETH_TOKEN.address,
         amountB = "10".zeros(18),
         amountS = "1".zeros(18)
-      )(Some(users(1)._2))
+      )(account0)
 
       val submitOrder1F =
         singleRequest(SubmitOrder.Req(Some(order1)), submit_order)
