@@ -46,7 +46,6 @@ trait EventExtractor[R] {
       gasLimit = Numeric.toBigInt(tx.gas).intValue(),
       gasUsed = Numeric.toBigInt(receipt.gasUsed).intValue()
     )
-  }
 
   def getStatus(status: String): TxStatus = {
     if (isSucceed(status)) TxStatus.TX_STATUS_SUCCESS

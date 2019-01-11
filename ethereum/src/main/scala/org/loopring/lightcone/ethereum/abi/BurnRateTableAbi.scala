@@ -40,17 +40,24 @@ class BurnRateTableAbi(abiJson: String) extends AbiWrap(abiJson) {
       data: String,
       topics: Array[String]
     ): Option[Any] = {
-    val event: SABI.Event = abi.findEvent(
-      searchBySignature(Numeric.hexStringToByteArray(topics.head))
-    )
-    event match {
-      case _: SABI.Event =>
-        event.name match {
-          case TokenTierUpgradedEvent.name =>
-            tokenTierUpgradedEvent.unpack(data, topics)
-          case _ => None
-        }
-      case _ => None
+    try {
+      val event: SABI.Event = abi.findEvent(
+        searchBySignature(
+          Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
+        )
+      )
+      event match {
+        case _: SABI.Event =>
+          event.name match {
+            case TokenTierUpgradedEvent.name =>
+              tokenTierUpgradedEvent.unpack(data, topics)
+            case _ => None
+          }
+        case _ => None
+      }
+    } catch {
+      case _: Throwable =>
+        None
     }
   }
 

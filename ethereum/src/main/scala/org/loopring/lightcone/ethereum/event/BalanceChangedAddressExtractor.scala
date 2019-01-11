@@ -18,7 +18,11 @@ package org.loopring.lightcone.ethereum.event
 
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.{
+  AddressBalanceUpdated,
+  Transaction,
+  TransactionReceipt
+}
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
@@ -34,7 +38,7 @@ class BalanceChangedAddressExtractor
     val balanceAddresses = ListBuffer(
       AddressBalanceUpdated(tx.from, Address.ZERO.toString())
     )
-    if (isSucceed(receipt.status) && receipt.logs.isEmpty &&
+    if (isSucceed(receipt.status) &&
         BigInt(Numeric.toBigInt(tx.value)) > 0) {
       balanceAddresses.append(
         AddressBalanceUpdated(tx.to, Address.ZERO.toString())
@@ -58,7 +62,6 @@ class BalanceChangedAddressExtractor
         case _ =>
       }
     })
-
     balanceAddresses.distinct
   }
 }
