@@ -85,22 +85,23 @@ class RingMinedEventExtractor extends EventExtractor[PRingMinedEvent] {
       receipt: TransactionReceipt,
       header: Option[EventHeader]
     ): OrderFilledEvent = {
+    val data = Numeric.cleanHexPrefix(fill)
     OrderFilledEvent(
       header = header,
-      owner = Address(fill.substring(2 + 64 * 1, 2 + 64 * 2)).toString,
-      orderHash = fill.substring(0, 2 + 64 * 1),
+      orderHash = Numeric.prependHexPrefix(data.substring(0, 64 * 1)),
+      owner = Address(data.substring(64 * 1, 64 * 2)).toString,
       ringHash = event._ringHash,
       ringIndex = event._ringIndex.longValue(),
       filledAmountS =
-        Numeric.toBigInt(fill.substring(2 + 64 * 3, 2 + 64 * 4)).toByteArray,
+        Numeric.toBigInt(data.substring(64 * 3, 64 * 4)).toByteArray,
       filledAmountFee = Numeric
-        .toBigInt(fill.substring(2 + 64 * 5, 2 + 64 * 6))
+        .toBigInt(data.substring(64 * 5, 64 * 6))
         .toByteArray,
       feeAmountS = Numeric
-        .toBigInt(fill.substring(2 + 64 * 6, 2 + 64 * 7))
+        .toBigInt(data.substring(64 * 6, 64 * 7))
         .toByteArray,
       feeAmountB = Numeric
-        .toBigInt(fill.substring(2 + 64 * 7, 2 + 64 * 8))
+        .toBigInt(data.substring(64 * 7, 64 * 8))
         .toByteArray,
       feeRecipient = event._feeRecipient
     )
