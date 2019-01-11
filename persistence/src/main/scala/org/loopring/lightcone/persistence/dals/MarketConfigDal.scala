@@ -16,7 +16,24 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import com.google.inject.Inject
-import com.google.inject.name.Named
+import org.loopring.lightcone.persistence.base.BaseDalImpl
+import org.loopring.lightcone.persistence.tables.MarketConfigTable
+import org.loopring.lightcone.proto.MarketConfig
+import scala.concurrent.Future
 
-trait MarketConfigDal {}
+trait MarketConfigDal extends BaseDalImpl[MarketConfigTable, MarketConfig] {
+  def saveConfigs(configs: Seq[MarketConfig]): Future[Int]
+
+  def getAllConfigs(): Future[Seq[MarketConfig]]
+
+  def getConfig(marketHash: String): Future[Option[MarketConfig]]
+
+  def getConfig(
+      primary: String,
+      secondary: String
+    ): Future[Option[MarketConfig]]
+
+  def getConfigs(marketHashes: Seq[String]): Future[Seq[MarketConfig]]
+
+  def updateConfig(config: MarketConfig): Future[Int]
+}

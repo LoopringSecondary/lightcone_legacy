@@ -16,7 +16,6 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
@@ -29,12 +28,46 @@ import scala.concurrent._
 import org.slf4s.Logging
 import com.google.inject.Inject
 
-trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
+class TokenMetadataDalImpl @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    @Named("dbconfig-dal-token-metadata") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ])
+    extends TokenMetadataDal
+    with Logging {
 
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMetadata]]
+  val query = TableQuery[TokenMetadataTable]
+
+  private var tokens: Seq[TokenMetadata] = Nil
+
+  def getTokens(reloadFromDatabase: Boolean = false) = {
+    if (reloadFromDatabase || tokens.isEmpty) {
+      db.run(query.take(Int.MaxValue).result).map { tokens_ =>
+        tokens = tokens_
+        log.info(
+          s"token metadata retrieved>> ${tokens.mkString("\n", "\n", "\n")}"
+        )
+        tokens
+      }
+    } else {
+      Future.successful(tokens)
+    }
+  }
 
   def updateBurnRate(
       token: String,
-      burnDate: Double
-    ): Future[ErrorCode]
+      burnRate: Double
+    ): Future[ErrorCode] =
+    for {
+      result <- db.run(
+        query
+          .filter(_.address === token)
+          .map(c => c.burnRate)
+          .update(burnRate)
+      )
+    } yield {
+      if (result >= 1) ERR_NONE
+      else ERR_PERSISTENCE_UPDATE_FAILED
+    }
 }

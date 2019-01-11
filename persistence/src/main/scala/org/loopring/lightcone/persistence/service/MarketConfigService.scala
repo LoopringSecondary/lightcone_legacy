@@ -16,14 +16,22 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.proto.{ErrorCode, TokenMetadata}
+import org.loopring.lightcone.proto._
 import scala.concurrent.Future
 
-trait TokenMetadataService {
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMetadata]]
+trait MarketConfigService {
+  def saveConfigs(configs: Seq[MarketConfig]): Future[Int]
 
-  def updateBurnRate(
-      token: String,
-      burnDate: Double
-    ): Future[ErrorCode]
+  def getAllConfigs(): Future[Seq[MarketConfig]]
+
+  def getConfig(marketHash: String): Future[Option[MarketConfig]]
+
+  def getConfig(
+      primary: String,
+      secondary: String
+    ): Future[Option[MarketConfig]]
+
+  def getConfigs(marketHashes: Seq[String]): Future[Seq[MarketConfig]]
+
+  def updateConfig(config: MarketConfig): Future[Int]
 }

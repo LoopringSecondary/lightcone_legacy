@@ -16,7 +16,15 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import com.google.inject.Inject
-import com.google.inject.name.Named
+import org.loopring.lightcone.persistence.base.BaseDalImpl
+import org.loopring.lightcone.persistence.tables.TokenConfigTable
+import org.loopring.lightcone.proto.TokenConfig
+import scala.concurrent.Future
 
-trait TokenConfigDal {}
+trait TokenConfigDal extends BaseDalImpl[TokenConfigTable, TokenConfig] {
+  def saveConfigs(configs: Seq[TokenConfig]): Future[Int]
+  def getAllConfigs(): Future[Seq[TokenConfig]]
+  def getConfig(address: String): Future[Option[TokenConfig]]
+  def getConfigs(addresses: Seq[String]): Future[Seq[TokenConfig]]
+  def updateConfig(config: TokenConfig): Future[Int]
+}

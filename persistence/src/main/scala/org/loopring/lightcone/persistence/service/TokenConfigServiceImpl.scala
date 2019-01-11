@@ -17,25 +17,27 @@
 package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
-import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals._
-import org.loopring.lightcone.proto.{ErrorCode, TokenMetadata}
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
+import org.loopring.lightcone.proto._
 import scala.concurrent.{ExecutionContext, Future}
 
-class TokenMetadataServiceImpl @Inject()(
+class TokenConfigServiceImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    tokenMetadataDal: TokenMetadataDal)
-    extends TokenMetadataService {
+    tokenConfigDal: TokenConfigDal)
+    extends TokenConfigService {
 
-  def getTokens(reloadFromDatabase: Boolean): Future[Seq[TokenMetadata]] =
-    tokenMetadataDal.getTokens(reloadFromDatabase)
+  def saveConfigs(configs: Seq[TokenConfig]): Future[Int] =
+    tokenConfigDal.saveConfigs(configs)
 
-  def updateBurnRate(
-      token: String,
-      burnDate: Double
-    ): Future[ErrorCode] =
-    tokenMetadataDal.updateBurnRate(token, burnDate)
+  def getAllConfigs(): Future[Seq[TokenConfig]] = tokenConfigDal.getAllConfigs()
+
+  def getConfig(address: String): Future[Option[TokenConfig]] =
+    tokenConfigDal.getConfig(address)
+
+  def getConfigs(addresses: Seq[String]): Future[Seq[TokenConfig]] =
+    tokenConfigDal.getConfigs(addresses)
+
+  def updateConfig(config: TokenConfig): Future[Int] =
+    tokenConfigDal.updateConfig(config)
 }

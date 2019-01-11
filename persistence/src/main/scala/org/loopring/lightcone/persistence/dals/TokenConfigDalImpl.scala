@@ -16,25 +16,37 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
-import org.slf4s.Logging
 import com.google.inject.Inject
+import org.loopring.lightcone.lib.TimeProvider
 
-trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
+class TokenConfigDalImpl @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    @Named("dbconfig-dal-token-config") val dbConfig: DatabaseConfig[
+      JdbcProfile
+    ],
+    timeProvider: TimeProvider)
+    extends TokenConfigDal {
 
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMetadata]]
+  val query = TableQuery[TokenConfigTable]
 
-  def updateBurnRate(
-      token: String,
-      burnDate: Double
-    ): Future[ErrorCode]
+  def saveConfigs(configs: Seq[TokenConfig]): Future[Int] = insert(configs)
+
+  def getAllConfigs(): Future[Seq[TokenConfig]] =
+    db.run(query.result)
+
+  def getConfig(address: String): Future[Option[TokenConfig]] =
+    db.run(query.filter(_.address === address).take(1).result.headOption)
+
+  def getConfigs(addresses: Seq[String]): Future[Seq[TokenConfig]] =
+    db.run(query.filter(_.address inSet addresses).result)
+
+  def updateConfig(config: TokenConfig): Future[Int] = insertOrUpdate(config)
 }

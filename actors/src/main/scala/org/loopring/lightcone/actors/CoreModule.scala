@@ -99,6 +99,8 @@ class CoreModule(config: Config)
     bind[BlockDal].to[BlockDalImpl].asEagerSingleton
     bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
     bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
+    bind[MarketConfigDal].to[MarketConfigDalImpl].asEagerSingleton
+    bind[TokenConfigDal].to[TokenConfigDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
@@ -108,6 +110,8 @@ class CoreModule(config: Config)
     bind[OrderStatusMonitorService]
       .to[OrderStatusMonitorServiceImpl]
       .asEagerSingleton
+    bind[MarketConfigService].to[MarketConfigServiceImpl].asEagerSingleton
+    bind[TokenConfigService].to[TokenConfigServiceImpl].asEagerSingleton
 
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton

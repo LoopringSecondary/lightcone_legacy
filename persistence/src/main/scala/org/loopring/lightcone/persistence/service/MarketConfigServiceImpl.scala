@@ -17,25 +17,34 @@
 package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
-import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals._
-import org.loopring.lightcone.proto.{ErrorCode, TokenMetadata}
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
+import org.loopring.lightcone.proto._
 import scala.concurrent.{ExecutionContext, Future}
 
-class TokenMetadataServiceImpl @Inject()(
+class MarketConfigServiceImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    tokenMetadataDal: TokenMetadataDal)
-    extends TokenMetadataService {
+    marketConfigDal: MarketConfigDal)
+    extends MarketConfigService {
 
-  def getTokens(reloadFromDatabase: Boolean): Future[Seq[TokenMetadata]] =
-    tokenMetadataDal.getTokens(reloadFromDatabase)
+  def saveConfigs(configs: Seq[MarketConfig]): Future[Int] =
+    marketConfigDal.saveConfigs(configs)
 
-  def updateBurnRate(
-      token: String,
-      burnDate: Double
-    ): Future[ErrorCode] =
-    tokenMetadataDal.updateBurnRate(token, burnDate)
+  def getAllConfigs(): Future[Seq[MarketConfig]] =
+    marketConfigDal.getAllConfigs()
+
+  def getConfig(marketHash: String): Future[Option[MarketConfig]] =
+    marketConfigDal.getConfig(marketHash)
+
+  def getConfig(
+      primary: String,
+      secondary: String
+    ): Future[Option[MarketConfig]] =
+    marketConfigDal.getConfig(primary, secondary)
+
+  def getConfigs(marketHashes: Seq[String]): Future[Seq[MarketConfig]] =
+    marketConfigDal.getConfigs(marketHashes)
+
+  def updateConfig(config: MarketConfig): Future[Int] =
+    marketConfigDal.updateConfig(config)
 }

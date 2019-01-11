@@ -14,27 +14,32 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.dals
+package org.loopring.lightcone.persistence.tables
 
-import com.google.inject.Inject
-import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
-import slick.jdbc.JdbcProfile
-import slick.basic._
-import scala.concurrent._
-import org.slf4s.Logging
-import com.google.inject.Inject
 
-trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
+class TokenConfigTable(tag: Tag)
+    extends BaseTable[TokenConfig](tag, "T_TOKEN_CONFIG") {
 
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMetadata]]
+  def id = address
+  def address = columnAddress("address", O.PrimaryKey)
+  def symbol = column[String]("symbol")
+  def decimals = column[Int]("decimals")
+  def name = column[String]("name")
+  def unit = column[String]("unit")
+  def website = column[String]("website")
+  def precision = column[Int]("precision")
 
-  def updateBurnRate(
-      token: String,
-      burnDate: Double
-    ): Future[ErrorCode]
+  def * =
+    (
+      address,
+      symbol,
+      decimals,
+      name,
+      unit,
+      website,
+      precision
+    ) <> ((TokenConfig.apply _).tupled, TokenConfig.unapply)
 }
