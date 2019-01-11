@@ -20,7 +20,7 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib.MarketHashProvider.convert2Hex
 import org.loopring.lightcone.proto._
 
-class CutOffEventExtractor() extends EventExtractor[CutoffEvent] {
+class CutoffEventExtractor extends EventExtractor[CutoffEvent] {
 
   def extract(
       tx: Transaction,

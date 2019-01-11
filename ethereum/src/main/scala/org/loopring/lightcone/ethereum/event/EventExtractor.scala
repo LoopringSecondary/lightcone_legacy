@@ -31,7 +31,7 @@ trait EventExtractor[R] {
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): EventHeader = {
+    ) =
     EventHeader(
       txHash = tx.hash,
       txFrom = tx.from,
@@ -46,17 +46,18 @@ trait EventExtractor[R] {
       gasLimit = Numeric.toBigInt(tx.gas).intValue(),
       gasUsed = Numeric.toBigInt(receipt.gasUsed).intValue()
     )
-  }
 
   def getStatus(status: String): TxStatus = {
-    if (isSucceed(status)) {
-      TxStatus.TX_STATUS_SUCCESS
-    } else {
-      TxStatus.TX_STATUS_FAILED
-    }
+    if (isSucceed(status)) TxStatus.TX_STATUS_SUCCESS
+    else TxStatus.TX_STATUS_FAILED
+
   }
 
   def isSucceed(status: String): Boolean = {
-    Numeric.toBigInt(status).intValue() == 1
+    try {
+      Numeric.toBigInt(status).intValue() == 1
+    } catch {
+      case e: Throwable => false
+    }
   }
 }

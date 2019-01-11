@@ -40,19 +40,26 @@ class AuthorizableAbi(abiJson: String) extends AbiWrap(abiJson) {
       data: String,
       topics: Array[String]
     ): Option[Any] = {
-    val event: SABI.Event = abi.findEvent(
-      searchBySignature(Numeric.hexStringToByteArray(topics.head))
-    )
-    event match {
-      case _: SABI.Event =>
-        event.name match {
-          case AddressAuthorizedEvent.name =>
-            addressAuthorizedEvent.unpack(data, topics)
-          case AddressDeauthorizedEvent.name =>
-            addressDeauthorizedEvent.unpack(data, topics)
-          case _ => None
-        }
-      case _ => None
+    try {
+      val event: SABI.Event = abi.findEvent(
+        searchBySignature(
+          Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
+        )
+      )
+      event match {
+        case _: SABI.Event =>
+          event.name match {
+            case AddressAuthorizedEvent.name =>
+              addressAuthorizedEvent.unpack(data, topics)
+            case AddressDeauthorizedEvent.name =>
+              addressDeauthorizedEvent.unpack(data, topics)
+            case _ => None
+          }
+        case _ => None
+      }
+    } catch {
+      case _: Throwable =>
+        None
     }
   }
 

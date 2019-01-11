@@ -27,7 +27,7 @@ import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
 
-class BalanceChangedAddressExtractor()
+class BalanceChangedAddressExtractor
     extends EventExtractor[AddressBalanceUpdated] {
 
   def extract(
@@ -38,7 +38,7 @@ class BalanceChangedAddressExtractor()
     val balanceAddresses = ListBuffer(
       AddressBalanceUpdated(tx.from, Address.ZERO.toString())
     )
-    if (isSucceed(receipt.status) && receipt.logs.isEmpty &&
+    if (isSucceed(receipt.status) &&
         BigInt(Numeric.toBigInt(tx.value)) > 0) {
       balanceAddresses.append(
         AddressBalanceUpdated(tx.to, Address.ZERO.toString())
@@ -62,7 +62,6 @@ class BalanceChangedAddressExtractor()
         case _ =>
       }
     })
-
     balanceAddresses.distinct
   }
 }
