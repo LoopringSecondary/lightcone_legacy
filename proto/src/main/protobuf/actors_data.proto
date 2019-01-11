@@ -189,7 +189,7 @@ message MarketConfig {
     int32  levels = 6;
     int32  precision_for_amount = 7;
     int32  precision_for_total = 8;
-    int32  effective = 9; // 0:false 1:true
+    int32  active = 9; // 0:false 1:true
 }
 
 message MarketMetadata {

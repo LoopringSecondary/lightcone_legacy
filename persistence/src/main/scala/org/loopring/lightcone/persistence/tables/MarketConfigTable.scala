@@ -33,7 +33,7 @@ class MarketConfigTable(tag: Tag)
   def levels = column[Int]("levels")
   def precisionForAmount = column[Int]("precision_for_amount")
   def precisionForTotal = column[Int]("precision_for_total")
-  def effective = column[Int]("effective")
+  def active = column[Int]("active")
 
   def idx_primary_secondary =
     index("idx_primary_secondary", (primary, secondary), unique = true)
@@ -59,6 +59,6 @@ class MarketConfigTable(tag: Tag)
       levels,
       precisionForAmount,
       precisionForTotal,
-      effective
+      active
     ) <> ((MarketConfig.apply _).tupled, MarketConfig.unapply)
 }
