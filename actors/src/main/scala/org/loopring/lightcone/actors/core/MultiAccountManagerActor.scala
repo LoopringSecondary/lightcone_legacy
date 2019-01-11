@@ -164,7 +164,7 @@ class MultiAccountManagerActor(
   private def handleRequest(req: Any) = extractAddress(req) match {
     case Some(address) => accountManagerActorFor(address) forward req
     case None =>
-      throw ErrorException(
+      sender ! Error(
         ERR_UNEXPECTED_ACTOR_MSG,
         s"$req cannot be handled by ${getClass.getName}"
       )
