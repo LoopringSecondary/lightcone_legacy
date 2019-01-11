@@ -25,9 +25,9 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 import slick.basic.DatabaseConfig
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.concurrent.duration._
 import slick.jdbc.JdbcProfile
+
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.math.BigInt
 
 trait ServiceSpec[S]
@@ -49,7 +49,7 @@ trait ServiceSpec[S]
   implicit val timeProvider = new SystemTimeProvider()
   def getService(): S
   var service: S = _
-  def createTables(): Future[Any]
+  def createTables(): Unit
 
   override def afterStart(): Unit = {
     dbConfig = DatabaseConfig.forConfig[JdbcProfile](
@@ -65,7 +65,7 @@ trait ServiceSpec[S]
         }""")
     )
     service = getService()
-    Await.result(createTables(), 5.second)
+    createTables()
   }
 
   override def beforeAll = {

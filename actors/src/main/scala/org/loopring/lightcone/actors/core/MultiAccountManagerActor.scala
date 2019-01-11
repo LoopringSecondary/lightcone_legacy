@@ -90,7 +90,10 @@ class MultiAccountManagerActor(
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(MultiAccountManagerActor.name)
+    extends ActorWithPathBasedConfig(
+      MultiAccountManagerActor.name,
+      MultiAccountManagerActor.extractEntityId
+    )
     with ActorLogging {
 
   log.info(s"=======> starting MultiAccountManagerActor ${self.path}")

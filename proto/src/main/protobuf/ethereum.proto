@@ -258,13 +258,17 @@ message EventHeader {
     string tx_hash = 1;
     TxStatus tx_status = 2;
     string block_hash = 3;
-    int64 block_number = 4;
+    int64  block_number = 4;
     int64  block_timestamp   = 5;
     string tx_from = 6;
     string tx_to = 7;
-    bytes tx_value = 8;
-    int32 tx_index = 9;
-    int32 log_index = 10;
+    bytes  tx_value = 8;
+    int32  tx_index = 9;
+    int32  log_index = 10;
+    int32  event_index = 11; // ringMinedEvent解析出所有filled事件的固定顺序
+    int64  gas_price = 12;
+    int32  gas_limit = 13;
+    int32  gas_used = 14;
 }
 
 message TransferEvent {
@@ -280,8 +284,9 @@ message TransferEvent {
 
 message OrdersCancelledEvent {
     EventHeader header = 1;
-    string broker = 2;
-    repeated string order_hashes = 3;
+    string owner  = 2;
+    string broker = 3;
+    repeated string order_hashes = 4;
 }
 
 message CutoffEvent {
@@ -320,4 +325,3 @@ message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
     string fee_recipient = 4;
     repeated OrderFilledEvent fills = 5;
 }
-

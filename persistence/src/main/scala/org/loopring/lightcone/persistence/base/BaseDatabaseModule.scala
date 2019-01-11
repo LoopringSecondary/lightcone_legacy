@@ -16,40 +16,14 @@
 
 package org.loopring.lightcone.persistence.base
 
-import slick.basic._
-import scala.concurrent.duration._
 import scala.concurrent._
-import com.typesafe.scalalogging.Logger
 
 trait BaseDatabaseModule {
   implicit val ec: ExecutionContext
-  private[this] val logger = Logger(this.getClass)
 
   val tables: Seq[BaseDal[_, _]]
 
-  def createTables() = {
-    try {
-      Await.result(Future.sequence(tables.map(_.createTable)), 10.second)
-    } catch {
-      case e: Exception if e.getMessage.contains("already exists") =>
-        logger.info(e.getMessage)
-      case e: Exception =>
-        logger.error("Failed to create MySQL tables: " + e.getMessage)
-        System.exit(0)
-    }
-  }
-
-  def dropTables() = {
-    try {
-      Await.result(Future.sequence(tables.map(_.dropTable)), 10.second)
-    } catch {
-      case e: Exception if e.getMessage.contains("Unknown table") =>
-        logger.info(e.getMessage)
-      case e: Exception =>
-        logger.error("Failed to drop MySQL tables: " + e.getMessage)
-        System.exit(0)
-    }
-  }
-
+  def createTables() = tables.map(_.createTable)
+  def dropTables() = tables.map(_.dropTable)
   def displayTableSchemas() = tables.map(_.displayTableSchema)
 }

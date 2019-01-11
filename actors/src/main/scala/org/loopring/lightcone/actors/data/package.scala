@@ -29,6 +29,31 @@ package object data {
       balance: BigInt,
       allowance: BigInt)
 
+  implicit class RichEventHeader(header: EventHeader) {
+
+    def sequenceId() = {
+      if (header.blockNumber > 500000000) // < pow(2, 29)
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"blockNumber >= 500000000 in ${header}"
+        )
+      if (header.txIndex >= 4096 || header.logIndex >= 4096) // pow(2, 12)
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"txIndex or logIndex >= 4096 in ${header}"
+        )
+      if (header.eventIndex >= 1024) // pow(2, 10)
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"eventIndex >= 1024 in ${header}"
+        )
+      val b: Long = header.blockNumber << 34
+      val t: Long = header.txIndex.toLong << 22
+      val l: Long = header.logIndex.toLong << 10
+      b + t + l + header.eventIndex
+    }
+  }
+
   ///////////
 
   implicit def byteString2BigInt(bytes: ByteString): BigInt = {

@@ -16,27 +16,36 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import com.google.inject.Inject
-import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
+import com.typesafe.config.Config
 import com.typesafe.scalalogging.Logger
-import org.loopring.lightcone.lib.{ErrorException, SystemTimeProvider}
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
+import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.JdbcProfile
+import slick.basic._
+import scala.concurrent._
+import org.loopring.lightcone.persistence.tables.TransactionRecordTable
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
-import slick.jdbc.MySQLProfile.api._
-import slick.jdbc.{GetResult, JdbcProfile}
-import slick.basic._
-import slick.lifted.Query
-import scala.concurrent._
 import scala.util.{Failure, Success}
 
-trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
-  def saveTx(tx: SettlementTx): Future[PersistSettlementTx.Res]
-  // get all pending txs with given owner
-  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res]
+trait TransactionRecordDal
+    extends BaseDalImpl[TransactionRecordTable, TransactionRecord] {
 
-  // update address's all txs status below or equals the given nonce to BLOCK
-  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res]
+  def saveRecord(
+      record: TransactionRecord
+    ): Future[PersistTransactionRecord.Res]
+
+  def getRecordsByOwner(
+      owner: String,
+      queryType: Option[GetTransactionRecords.QueryType],
+      sort: SortingType,
+      paging: CursorPaging
+    ): Future[Seq[TransactionRecord]]
+
+  def getRecordsCountByOwner(
+      owner: String,
+      queryType: Option[GetTransactionRecords.QueryType]
+    ): Future[Int]
 }
