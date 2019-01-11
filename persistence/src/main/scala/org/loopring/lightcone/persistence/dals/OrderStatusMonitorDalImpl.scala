@@ -20,37 +20,34 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto._
-import slick.jdbc.MySQLProfile.api._
+import org.loopring.lightcone.proto.OrderStatusMonitor
+import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-import slick.basic._
-import scala.concurrent._
+import slick.jdbc.MySQLProfile.api._
+import scala.concurrent.{ExecutionContext, Future}
 
-trait TokenBalanceDal extends BaseDalImpl[TokenBalanceTable, TokenBalance] {
-  def getBalances(address: String): Future[Seq[TokenBalance]]
-
-  def getBalance(
-      address: String,
-      token: String
-    ): Future[Option[TokenBalance]]
-}
-
-class TokenBalanceDalImpl @Inject()(
+class OrderStatusMonitorDalImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    @Named("dbconfig-dal-token-balance") val dbConfig: DatabaseConfig[
+    @Named("dbconfig-dal-order-status-monitor") val dbConfig: DatabaseConfig[
       JdbcProfile
     ])
-    extends TokenBalanceDal {
-  val query = TableQuery[TokenBalanceTable]
+    extends OrderStatusMonitorDal {
+  val query = TableQuery[OrderStatusMonitorTable]
 
-  def getBalances(address: String) =
-    findByFilter(_.address === address)
+  def updateLatestProcessingTime(event: OrderStatusMonitor): Future[Int] = {
+    db.run(query.insertOrUpdate(event))
+  }
 
-  def getBalance(
-      address: String,
-      token: String
-    ) =
-    findByFilter(r => r.address === address && r.token === token)
-      .map(_.headOption)
+  def getLatestProcessingTime(
+      monitoringType: String
+    ): Future[Option[OrderStatusMonitor]] =
+    db.run(
+      query
+        .filter(_.monitoringType === monitoringType)
+        .take(1)
+        .result
+        .headOption
+    )
+
 }

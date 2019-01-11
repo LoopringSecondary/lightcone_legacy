@@ -95,7 +95,6 @@ class CoreModule(config: Config)
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[OrderDal].to[OrderDalImpl].asEagerSingleton
     bind[TradeDal].to[TradeDalImpl].asEagerSingleton
-    bind[TokenBalanceDal].to[TokenBalanceDalImpl].asEagerSingleton
     bind[BlockDal].to[BlockDalImpl].asEagerSingleton
     bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
     bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
@@ -105,6 +104,8 @@ class CoreModule(config: Config)
     bind[TokenMetadataService].to[TokenMetadataServiceImpl].asEagerSingleton
     bind[TradeService].to[TradeServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
+    bind[BlockService].to[BlockServiceImpl].asEagerSingleton
+
     bind[OrderStatusMonitorService]
       .to[OrderStatusMonitorServiceImpl]
       .asEagerSingleton
