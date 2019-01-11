@@ -129,5 +129,7 @@ package object support {
                               | }
                               |]""".stripMargin
 
+  //便于生成全局唯一的地址
   val addressGenerator = new AtomicInteger(100000000)
+
 }

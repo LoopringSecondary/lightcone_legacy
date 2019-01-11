@@ -94,7 +94,7 @@ abstract class CommonSpec(configStr: String = "")
   //  system.eventStream.subscribe(listener, classOf[UnhandledMessage])
   //  system.eventStream.subscribe(listener, classOf[DeadLetter])
 
-  Thread.sleep(5000) //暂停5s，等待集群准备完毕
+  Thread.sleep(4000) //暂停3s，等待集群准备完毕
 
   implicit class RichString(s: String) {
     def zeros(size: Int): BigInt = BigInt(s + "0" * size)

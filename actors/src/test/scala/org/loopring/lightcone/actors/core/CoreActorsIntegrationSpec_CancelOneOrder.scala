@@ -31,9 +31,9 @@ class CoreActorsIntegrationSpec_CancelOneOrder
     extends CommonSpec
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumSupport
     with OrderGenerateSupport {
 
   "submiting one from OrderHandleActor" must {
