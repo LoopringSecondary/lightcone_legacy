@@ -17,14 +17,23 @@
 package org.loopring.lightcone.actors.ethereum
 
 import akka.actor.ActorRef
+import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.ethereum.event.EventExtractor
+import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.actors.data._
+import org.web3j.utils.Numeric
+import akka.pattern._
+import akka.util.Timeout
 
-import org.loopring.lightcone.proto.RawBlockData
+import scala.concurrent.ExecutionContext
 
 abstract class EventDispatcher[R, T](implicit extractor: EventExtractor[R]) {
 
   def derive(event: R): Seq[T]
+
   def targets: Seq[ActorRef]
 
   def extractThenDispatchEvents(block: RawBlockData) {
@@ -50,4 +59,58 @@ abstract class NameBasedEventDispatcher[R, T](
     lookup: Lookup[ActorRef])
     extends EventDispatcher[R, T] {
   def targets: Seq[ActorRef] = names.map(lookup.get)
+}
+
+object EventDispatcher {
+
+  def getDefaultDispatchers(
+    )(
+      implicit
+      actors: Lookup[ActorRef],
+      config: Config,
+      brb: EthereumBatchCallRequestBuilder,
+      timeout: Timeout,
+      ec: ExecutionContext
+    ): Seq[EventDispatcher[_, _]] = {
+
+    implicit val cutOffExtractor = new CutOffEventExtractor()
+    implicit val ordersCancelledExtractor = new OrdersCancelledEventExtractor()
+    implicit val tokenBurnRateExtractor = new TokenBurnRateEventExtractor()
+    implicit val transferExtractor = new TransferEventExtractor()
+    implicit val ringMinedExtractor = new RingMinedEventExtractor()
+    implicit val addressAllowanceUpdatedExtractor =
+      new AllowanceChangedAddressExtractor()
+    implicit val balanceChangedAddressExtractor =
+      new BalanceChangedAddressExtractor()
+
+    //TODO(yadong)指定具体的ActorRef name
+    Seq(
+      new NameBasedEventDispatcher[CutoffEvent, CutoffEvent](Seq(""))
+      with NonDerivable[CutoffEvent, CutoffEvent],
+      new NameBasedEventDispatcher[OrdersCancelledEvent, OrdersCancelledEvent](
+        Seq("")
+      ) with NonDerivable[OrdersCancelledEvent, OrdersCancelledEvent],
+      new NameBasedEventDispatcher[
+        TokenBurnRateChangedEvent,
+        TokenBurnRateChangedEvent
+      ](
+        Seq("")
+      ) with NonDerivable[TokenBurnRateChangedEvent, TokenBurnRateChangedEvent],
+      new NameBasedEventDispatcher[TransferEvent, TransferEvent](
+        Seq("")
+      ) {
+        override def derive(event: TransferEvent): Seq[TransferEvent] = {
+          Seq(event.withOwner(event.from), event.withOwner(event.to))
+        }
+      },
+      new NameBasedEventDispatcher[RingMinedEvent, OrderFilledEvent](
+        Seq("")
+      ) {
+        override def derive(event: RingMinedEvent): Seq[OrderFilledEvent] =
+          event.fills
+      },
+      new BalanceEventDispatcher(Seq("")),
+      new AllowanceEventDispatcher(Seq(""))
+    )
+  }
 }
