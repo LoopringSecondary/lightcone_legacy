@@ -102,6 +102,23 @@ final class TransactionRecordMessageValidator()(implicit val config: Config)
       )
 
     val header = headerOpt.get
+    if (header.txHash.isEmpty ||
+        header.blockHash.isEmpty ||
+        header.blockNumber < 0 ||
+        header.blockTimestamp < 0 ||
+        header.txFrom.isEmpty ||
+        header.txTo.isEmpty ||
+        header.txIndex < 0 ||
+        header.logIndex < 0 ||
+        header.eventIndex < 0 ||
+        header.gasPrice < 0 ||
+        header.gasLimit < 0 ||
+        header.gasUsed < 0)
+      throw ErrorException(
+        ErrorCode.ERR_INVALID_ARGUMENT,
+        s"Invalid header:$header"
+      )
+
     if (header.blockNumber < 0 ||
         header.txIndex < 0 ||
         header.logIndex < 0 ||
