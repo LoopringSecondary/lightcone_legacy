@@ -16,13 +16,14 @@
 
 package org.loopring.lightcone.ethereum.event
 
+import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
 
 import scala.collection.JavaConverters._
 
-class TokenBurnRateEventExtractor()(implicit config: Config)
+class TokenBurnRateEventExtractor @Inject()(implicit config: Config)
     extends EventExtractor[TokenBurnRateChangedEvent] {
 
   val rateMap = config

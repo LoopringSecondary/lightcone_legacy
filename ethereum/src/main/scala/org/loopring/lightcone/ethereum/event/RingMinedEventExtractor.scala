@@ -16,12 +16,13 @@
 
 package org.loopring.lightcone.ethereum.event
 
+import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
 
-class RingMinedEventExtractor() extends EventExtractor[PRingMinedEvent] {
+class RingMinedEventExtractor extends EventExtractor[PRingMinedEvent] {
 
   val fillLength: Int = 8 * 64
 

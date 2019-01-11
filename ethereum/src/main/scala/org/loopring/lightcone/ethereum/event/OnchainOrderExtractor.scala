@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum
+package org.loopring.lightcone.ethereum.event
 
-import com.google.protobuf.ByteString
+import org.loopring.lightcone.ethereum.abi._
+import org.loopring.lightcone.proto._
+import org.web3j.utils.Numeric
 
-package object event {
+class OnchainOrderExtractor extends EventExtractor[RawOrder] {
 
-  implicit def bytes2ByteString(bytes: Array[Byte]) = ByteString.copyFrom(bytes)
-
+  def extract(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
+    ): Seq[RawOrder] = ???
 }

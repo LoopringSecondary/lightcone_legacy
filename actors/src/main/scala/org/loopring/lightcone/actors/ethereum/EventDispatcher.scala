@@ -27,7 +27,7 @@ abstract class EventDispatcher[R, T](implicit extractor: EventExtractor[R]) {
   def derive(event: R): Seq[T]
   def targets: Seq[ActorRef]
 
-  def extractThenDispatchEvents(block: RawBlockData) {
+  def dispatch(block: RawBlockData) {
     (block.txs zip block.receipts).foreach { item =>
       extractor.extract(item._1, item._2, block.timestamp).foreach { e =>
         derive(e).foreach { e =>
@@ -38,7 +38,7 @@ abstract class EventDispatcher[R, T](implicit extractor: EventExtractor[R]) {
   }
 }
 
-trait NonDerivable[R, T] { self: EventDispatcher[R, T] =>
+trait NonDerivable[R] { self: EventDispatcher[R, R] =>
   def derive(event: R) = Seq(event)
 }
 

@@ -16,25 +16,19 @@
 
 package org.loopring.lightcone.ethereum.event
 
+import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{
-  AddressAllowanceUpdated,
-  Transaction,
-  TransactionReceipt
-}
-
+import org.loopring.lightcone.proto._
 import scala.collection.mutable.ListBuffer
 
-class AllowanceChangedAddressExtractor()(implicit config: Config)
+class AllowanceChangedAddressExtractor @Inject()(implicit config: Config)
     extends EventExtractor[AddressAllowanceUpdated] {
 
-  val delegateAddress =
-    Address(config.getString("loopring_protocol.delegate-address"))
-
-  val protocolAddress =
-    Address(config.getString("loopring_protocol.protocol-address"))
+  val protocolConf = config.getConfig("loopring_protocol")
+  val delegateAddress = Address(protocolConf.getString("delegate-address"))
+  val protocolAddress = Address(protocolConf.getString("protocol-address"))
 
   def extract(
       tx: Transaction,

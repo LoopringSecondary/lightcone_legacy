@@ -18,16 +18,12 @@ package org.loopring.lightcone.ethereum.event
 
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{
-  AddressBalanceUpdated,
-  Transaction,
-  TransactionReceipt
-}
+import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
 
-class BalanceChangedAddressExtractor()
+class BalanceChangedAddressExtractor
     extends EventExtractor[AddressBalanceUpdated] {
 
   def extract(
