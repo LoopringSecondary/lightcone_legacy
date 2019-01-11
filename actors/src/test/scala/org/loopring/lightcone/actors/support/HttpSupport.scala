@@ -102,11 +102,11 @@ trait HttpSupport extends RpcBinding with Logging {
       assertFun: Orderbook => Boolean,
       expectTimeout: Option[Timeout] = None
     ) = {
-    val now = System.currentTimeMillis()
-    var res: Option[Orderbook] = None
+    var resOpt: Option[Orderbook] = None
     val timeout1 = if (expectTimeout.isEmpty) timeout else expectTimeout.get
-    while (res.isEmpty && System
-             .currentTimeMillis() <= now + timeout1.duration.toMillis) {
+    val lastTime = System.currentTimeMillis() + timeout1.duration.toMillis
+    while (resOpt.isEmpty && System
+             .currentTimeMillis() <= lastTime) {
       val orderbookF = singleRequest(
         getOrderBook,
         "orderbook"
@@ -115,14 +115,50 @@ trait HttpSupport extends RpcBinding with Logging {
       orderbookRes match {
         case GetOrderbook.Res(Some(orderbook)) =>
           if (assertFun(orderbook)) {
-            res = Some(orderbook)
+            resOpt = Some(orderbook)
           }
       }
-      if (res.isEmpty) {
+      if (resOpt.isEmpty) {
         Thread.sleep(200)
       }
     }
-    res
+    if (resOpt.isEmpty) {
+      throw new Exception(
+        s"Timed out waiting for expectOrderbookRes of req:${getOrderBook} "
+      )
+    }
+    resOpt
+  }
+
+  def expectBalanceRes(
+      req: GetBalanceAndAllowances.Req,
+      assertFun: GetBalanceAndAllowances.Res => Boolean,
+      expectTimeout: Timeout = timeout
+    ) = {
+    var resOpt: Option[GetBalanceAndAllowances.Res] = None
+    val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
+
+    //必须等待jsonRpcServer启动完成
+    while (resOpt.isEmpty && System
+             .currentTimeMillis() <= lastTime) {
+      val getBalanceResF =
+        singleRequest(req, "get_balance_and_allowance")
+      val res = Await.result(
+        getBalanceResF.mapTo[GetBalanceAndAllowances.Res],
+        timeout.duration
+      )
+      if (assertFun(res)) {
+        resOpt = Some(res)
+      } else {
+        Thread.sleep(200)
+      }
+    }
+    if (resOpt.isEmpty) {
+      throw new Exception(
+        s"Timed out waiting for expectBalanceRes of req:${req} "
+      )
+    }
+    resOpt
   }
 
 }

@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.core
 
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 
@@ -36,9 +37,9 @@ class RingSettlementSpec
   def orderHandler = actors.get(OrderPersistenceActor.name)
 
   val account1 = getUniqueAccountWithoutEth
+  //设置余额
+  info("set the balance and allowance is enough befor submit an order")
   override def beforeAll(): Unit = {
-    //设置余额
-    info("set the balance and allowance is enough befor submit an order")
     val f = Future.sequence(
       Seq(
         transferEth(
@@ -74,13 +75,13 @@ class RingSettlementSpec
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-
       val order1 = createRawOrder()(account1)
+
       val order2 = createRawOrder(
         tokenB = LRC_TOKEN.address,
         tokenS = WETH_TOKEN.address,
-        amountB = "10".zeros(18),
-        amountS = "1".zeros(18)
+        amountB = order1.amountS,
+        amountS = order1.amountB
       )(account0)
 
       val submitOrder1F =
@@ -115,6 +116,25 @@ class RingSettlementSpec
       )
       //todo(yadong): 该处判断应该是什么
       info(s"${orderbookRes2}")
+
+      Thread.sleep(500) //必须等待才能获取正确的余额，？？？
+      info("the weth balance of account0 must be changed.")
+      val resOpt = expectBalanceRes(
+        GetBalanceAndAllowances.Req(
+          account1.getAddress,
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),
+        (res: GetBalanceAndAllowances.Res) => {
+          val wethBalance: BigInt =
+            res.balanceAndAllowanceMap(WETH_TOKEN.address).balance
+          wethBalance > 0
+        }
+      )
+      info(s"balance of account0 : ${resOpt.get}")
+      val wethBalance: BigInt =
+        resOpt.get.balanceAndAllowanceMap(WETH_TOKEN.address).balance
+      assert(wethBalance == byteString2BigInt(order1.amountB))
+
     }
   }
 
