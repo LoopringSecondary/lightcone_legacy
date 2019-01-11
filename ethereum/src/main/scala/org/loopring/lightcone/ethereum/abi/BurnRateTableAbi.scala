@@ -56,8 +56,7 @@ class BurnRateTableAbi(abiJson: String) extends AbiWrap(abiJson) {
         case _ => None
       }
     } catch {
-      case _: Throwable =>
-        None
+      case _: Throwable => None
     }
   }
 

@@ -75,8 +75,7 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
         case _ => None
       }
     } catch {
-      case _: Throwable =>
-        None
+      case _: Throwable => None
     }
   }
 

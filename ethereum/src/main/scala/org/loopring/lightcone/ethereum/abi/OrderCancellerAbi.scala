@@ -103,8 +103,7 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
         case _ => None
       }
     } catch {
-      case _: Throwable =>
-        None
+      case _: Throwable => None
     }
   }
 
@@ -133,8 +132,7 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
         case _ => None
       }
     } catch {
-      case _: Throwable =>
-        None
+      case _: Throwable => None
     }
   }
 }

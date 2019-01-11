@@ -63,8 +63,7 @@ class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
         case _ => None
       }
     } catch {
-      case _: Throwable =>
-        None
+      case _: Throwable => None
     }
   }
 
@@ -85,8 +84,7 @@ class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
         case _ => None
       }
     } catch {
-      case _: Throwable =>
-        None
+      case _: Throwable => None
     }
 
   }
