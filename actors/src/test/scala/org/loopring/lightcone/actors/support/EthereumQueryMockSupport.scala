@@ -17,13 +17,12 @@
 package org.loopring.lightcone.actors.support
 
 import akka.actor.{Actor, ActorLogging, Props}
-import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.core.EthereumQueryActor
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
+import org.loopring.lightcone.proto._
 
 import scala.concurrent.ExecutionContext
 

@@ -17,12 +17,7 @@
 package org.loopring.lightcone.actors.support
 
 import akka.actor.{PoisonPill, Props}
-import akka.cluster.singleton.{
-  ClusterSingletonManager,
-  ClusterSingletonManagerSettings,
-  ClusterSingletonProxy,
-  ClusterSingletonProxySettings
-}
+import akka.cluster.singleton._
 import org.loopring.lightcone.actors.core._
 
 trait RecoverSupport extends DatabaseModuleSupport {

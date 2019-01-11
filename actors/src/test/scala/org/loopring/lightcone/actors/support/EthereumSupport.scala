@@ -17,35 +17,25 @@
 package org.loopring.lightcone.actors.support
 
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.Props
-import akka.routing.RoundRobinPool
+import akka.pattern._
+import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.proto._
-
-import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
-import scala.util.Random
-import akka.pattern._
-import com.dimafeng.testcontainers.GenericContainer
-import com.typesafe.config.ConfigFactory
-import org.junit.runner.Description
-import org.rnorth.ducttape.TimeoutException
-import org.rnorth.ducttape.unreliables.Unreliables
-import org.testcontainers.containers.ContainerLaunchException
-import org.testcontainers.containers.wait.strategy.Wait
-import akka.pattern._
-import org.loopring.lightcone.actors.jsonrpc.JsonSupport
 import org.loopring.lightcone.ethereum.abi.{ApproveFunction, TransferFunction}
 import org.loopring.lightcone.ethereum.data.Transaction
 import org.loopring.lightcone.ethereum.ethereum.getSignedTxData
+import org.loopring.lightcone.proto._
+import org.rnorth.ducttape.TimeoutException
+import org.rnorth.ducttape.unreliables.Unreliables
+import org.testcontainers.containers.ContainerLaunchException
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 
-import scala.concurrent.duration._
+import scala.collection.JavaConverters._
+import scala.concurrent.Await
 
 //object EthereumDocker {
 //

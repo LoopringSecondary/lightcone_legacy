@@ -26,10 +26,10 @@ import org.loopring.lightcone.actors.RpcBinding
 import org.loopring.lightcone.actors.jsonrpc.{JsonRpcRequest, JsonRpcResponse}
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
+import org.slf4s.Logging
 import scalapb.json4s.JsonFormat
 
 import scala.concurrent.{Await, ExecutionContext}
-import org.slf4s.Logging
 
 trait HttpSupport extends RpcBinding with Logging {
   val config: Config

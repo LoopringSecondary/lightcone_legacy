@@ -17,9 +17,9 @@
 package org.loopring.lightcone.actors.support
 
 import org.loopring.lightcone.actors.core.DatabaseQueryActor
+import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
-import org.loopring.lightcone.persistence._
 import org.scalatest.BeforeAndAfterAll
 
 trait DatabaseModuleSupport extends BeforeAndAfterAll {

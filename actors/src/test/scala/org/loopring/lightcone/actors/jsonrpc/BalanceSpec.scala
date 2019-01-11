@@ -16,13 +16,13 @@
 
 package org.loopring.lightcone.actors.jsonrpc
 
+import akka.pattern._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.validator._
-import akka.pattern._
+import org.loopring.lightcone.proto._
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 
 class BalanceSpec
     extends CommonSpec

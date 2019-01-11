@@ -16,12 +16,11 @@
 
 package org.loopring.lightcone.actors.core
 
+import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
-import scala.collection.JavaConverters._
+
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 
 class RingSettlementSpec
     extends CommonSpec

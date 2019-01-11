@@ -16,13 +16,10 @@
 
 package org.loopring.lightcone.actors.entrypoint
 
-import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 
 class EntryPointSpec_SubmitSeveralOrder
     extends CommonSpec

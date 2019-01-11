@@ -16,7 +16,6 @@
 
 package org.loopring.lightcone.actors
 
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
@@ -24,9 +23,6 @@ import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.TokenMeta
-import org.rnorth.ducttape.TimeoutException
-import org.rnorth.ducttape.unreliables.Unreliables
-import org.testcontainers.containers.ContainerLaunchException
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
 import slick.basic.DatabaseConfig

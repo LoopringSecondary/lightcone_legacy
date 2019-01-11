@@ -17,10 +17,10 @@
 package org.loopring.lightcone.actors.core
 
 import org.loopring.lightcone.actors.support._
-import scala.concurrent.{Await, Future}
-import scala.concurrent.Future
-import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
+import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
+
+import scala.concurrent.{Await, Future}
 
 class DatabaseQuerySpec
     extends CommonSpec

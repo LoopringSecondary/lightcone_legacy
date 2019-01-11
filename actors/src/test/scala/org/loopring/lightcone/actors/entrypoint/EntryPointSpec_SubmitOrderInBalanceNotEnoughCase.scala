@@ -16,13 +16,10 @@
 
 package org.loopring.lightcone.actors.entrypoint
 
-import akka.pattern._
-import org.loopring.lightcone.actors.core.EthereumQueryActor
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.data._
-import org.web3j.crypto.Credentials
-import org.web3j.utils.Numeric
+
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase

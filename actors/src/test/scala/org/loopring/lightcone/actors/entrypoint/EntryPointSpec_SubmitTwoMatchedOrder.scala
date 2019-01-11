@@ -20,7 +20,6 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
 
 class EntryPointSpec_SubmitTwoMatchedOrder
     extends CommonSpec

@@ -35,8 +35,8 @@ package org.loopring.lightcone.actors.order
 import akka.pattern._
 import org.loopring.lightcone.actors.core.OrderCutoffHandlerActor
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.proto.Orderbook.Item
 import org.loopring.lightcone.proto._
+
 import scala.concurrent.{Await, Future}
 
 class OrderCutoffSpec
