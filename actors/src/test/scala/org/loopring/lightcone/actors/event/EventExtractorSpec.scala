@@ -26,56 +26,54 @@ import org.web3j.utils.Numeric
 class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
 
   val weth = Address("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
-  val selfConfig = ConfigFactory.parseString(s"""weth {
-                                                |address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-                                                |}
-                                                |loopring_protocol {
-                                                |  protocol-address = "0x8d8812b72d1e4ffCeC158D25f56748b7d67c1e78"
-                                                |  delegate-address = "0x17233e07c67d086464fD408148c3ABB56245FA64"
-                                                |  gas-limit-per-ring-v2 = "1000000",
-                                                |    burn-rate-table {
-                                                |    base = 1000,
-                                                |    tiers = [
-                                                |      {
-                                                |        name = "TIER_1"
-                                                |        tier = 3,
-                                                |        rate = 25
-                                                |      },
-                                                |      {
-                                                |        name = "TIER_2"
-                                                |        tier = 2,
-                                                |        rate = 150
-                                                |      },
-                                                |      {
-                                                |        name = "TIER_3"
-                                                |        tier = 1,
-                                                |        rate = 300
-                                                |      },
-                                                |      {
-                                                |        name = "TIER_4"
-                                                |        tier = 0,
-                                                |        rate = 500
-                                                |      },
-                                                |    ]
-                                                |  }
-                                                |}
-     """.stripMargin)
+  val selfConfigStr = s"""weth {
+                         |address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+                         |}
+                         |loopring_protocol {
+                         |  protocol-address = "0x8d8812b72d1e4ffCeC158D25f56748b7d67c1e78"
+                         |  delegate-address = "0x17233e07c67d086464fD408148c3ABB56245FA64"
+                         |  gas-limit-per-ring-v2 = "1000000",
+                         |    burn-rate-table {
+                         |    base = 1000,
+                         |    tiers = [
+                         |      {
+                         |        name = "TIER_1"
+                         |        tier = 3,
+                         |        rate = 25
+                         |      },
+                         |      {
+                         |        name = "TIER_2"
+                         |        tier = 2,
+                         |        rate = 150
+                         |      },
+                         |      {
+                         |        name = "TIER_3"
+                         |        tier = 1,
+                         |        rate = 300
+                         |      },
+                         |      {
+                         |        name = "TIER_4"
+                         |        tier = 0,
+                         |        rate = 500
+                         |      },
+                         |    ]
+                         |  }
+                         |}
+     """.stripMargin
+
+  val selfConfig = ConfigFactory.parseString(selfConfigStr)
 
   val transferExtractor = new TransferEventExtractor()(selfConfig)
 
   val transfers = (blockData.txs zip blockData.receipts).flatMap { item =>
-    {
-      transferExtractor.extract(item._1, item._2, blockData.timestamp)
-    }
+    transferExtractor.extract(item._1, item._2, blockData.timestamp)
   }
   val (eths, tokens) = transfers.partition(tr => Address(tr.token).isZero)
 
   val cutOffExtractor = new CutoffEventExtractor()
 
   val cutOffs = (blockData.txs zip blockData.receipts).flatMap { item =>
-    {
-      cutOffExtractor.extract(item._1, item._2, blockData.timestamp)
-    }
+    cutOffExtractor.extract(item._1, item._2, blockData.timestamp)
   }
 
   cutOffs.isEmpty should be(true)
@@ -83,9 +81,7 @@ class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
   val onChainOrderExtractor = new OnchainOrderExtractor()
 
   val onChainOrders = (blockData.txs zip blockData.receipts).flatMap { item =>
-    {
-      onChainOrderExtractor.extract(item._1, item._2, blockData.timestamp)
-    }
+    onChainOrderExtractor.extract(item._1, item._2, blockData.timestamp)
   }
   onChainOrders.isEmpty should be(true)
 
@@ -93,36 +89,28 @@ class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
 
   val orderCancelledEvents = (blockData.txs zip blockData.receipts).flatMap {
     item =>
-      {
-        orderCanceledExtractor.extract(item._1, item._2, blockData.timestamp)
-      }
+      orderCanceledExtractor.extract(item._1, item._2, blockData.timestamp)
   }
   orderCancelledEvents.isEmpty should be(true)
 
   val ringMinedEventExtractor = new RingMinedEventExtractor()
 
   val rings = (blockData.txs zip blockData.receipts).flatMap { item =>
-    {
-      ringMinedEventExtractor.extract(item._1, item._2, blockData.timestamp)
-    }
+    ringMinedEventExtractor.extract(item._1, item._2, blockData.timestamp)
   }
   rings.isEmpty should be(true)
 
   val tokenBurnRateExtractor = new TokenBurnRateEventExtractor()(selfConfig)
 
   val tokenBurnRates = (blockData.txs zip blockData.receipts).flatMap { item =>
-    {
-      tokenBurnRateExtractor.extract(item._1, item._2, blockData.timestamp)
-    }
+    tokenBurnRateExtractor.extract(item._1, item._2, blockData.timestamp)
   }
   tokenBurnRates.isEmpty should be(true)
 
   val balanceExtractor = new BalanceChangedAddressExtractor
 
   val balances = (blockData.txs zip blockData.receipts).flatMap { item =>
-    {
-      balanceExtractor.extract(item._1, item._2, blockData.timestamp)
-    }
+    balanceExtractor.extract(item._1, item._2, blockData.timestamp)
   }.distinct
 
   val transferBalances = (transfers
@@ -141,9 +129,7 @@ class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
   val allowanceExtractor = new AllowanceChangedAddressExtractor()(selfConfig)
 
   val allowances = (blockData.txs zip blockData.receipts).flatMap { item =>
-    {
-      allowanceExtractor.extract(item._1, item._2, blockData.timestamp)
-    }
+    allowanceExtractor.extract(item._1, item._2, blockData.timestamp)
   }.distinct
 
   allowances.size should be(2)

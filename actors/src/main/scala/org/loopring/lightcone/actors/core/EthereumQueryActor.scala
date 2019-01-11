@@ -92,11 +92,8 @@ class EthereumQueryActor(
   def receive = LoggingReceive {
     case req @ GetBalanceAndAllowances.Req(owner, tokens, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
-      val batchReqs = brb.buildRequest(
-        delegateAddress,
-        req.copy(tokens = erc20Tokens),
-        tag
-      )
+      val batchReqs =
+        brb.buildRequest(delegateAddress, req.copy(tokens = erc20Tokens), tag)
       (for {
         batchRes <- (ethereumAccessorActor ? batchReqs)
           .mapAs[BatchCallContracts.Res]
@@ -145,7 +142,7 @@ class EthereumQueryActor(
           .mapAs[BatchCallContracts.Res]
 
         balances = batchRes.resps.map { res =>
-          byteArray2ByteString(Numeric.toBigInt(res.result).toByteArray)
+          ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
         }
 
         result = GetBalance.Res(owner, (erc20Tokens zip balances).toMap)
@@ -172,14 +169,12 @@ class EthereumQueryActor(
       } yield finalResult) sendTo sender
 
     case req @ GetAllowance.Req(owner, tokens, tag) =>
-      batchCallEthereum(
-        sender,
-        brb.buildRequest(delegateAddress, req, tag)
-      ) { result =>
-        val allowances = result.map { res =>
-          byteArray2ByteString(Numeric.toBigInt(res).toByteArray)
-        }
-        GetAllowance.Res(owner, (tokens zip allowances).toMap)
+      batchCallEthereum(sender, brb.buildRequest(delegateAddress, req, tag)) {
+        result =>
+          val allowances = result.map { res =>
+            ByteString.copyFrom(Numeric.toBigInt(res).toByteArray)
+          }
+          GetAllowance.Res(owner, (tokens zip allowances).toMap)
       }
 
     case req @ GetFilledAmount.Req(orderIds, tag) =>
@@ -190,33 +185,27 @@ class EthereumQueryActor(
       ) { result =>
         GetFilledAmount.Res(
           (orderIds zip result.map(
-            res => byteArray2ByteString(Numeric.toBigInt(res).toByteArray)
+            res => ByteString.copyFrom(Numeric.toBigInt(res).toByteArray)
           )).toMap
         )
       }
 
     case req: GetOrderCancellation.Req =>
-      callEthereum(
-        sender,
-        rb.buildRequest(req, tradeHistoryAddress, req.tag)
-      ) { result =>
-        GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
+      callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress, req.tag)) {
+        result =>
+          GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
       }
 
     case req: GetCutoff.Req =>
-      callEthereum(
-        sender,
-        rb.buildRequest(req, tradeHistoryAddress, req.tag)
-      ) { result =>
-        GetCutoff.Res(Numeric.toBigInt(result).toByteArray)
+      callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress, req.tag)) {
+        result =>
+          GetCutoff.Res(Numeric.toBigInt(result).toByteArray)
       }
 
     case req: GetBurnRate.Req =>
-      callEthereum(
-        sender,
-        rb.buildRequest(req, burnRateTableAddress, req.tag)
-      ) { result =>
-        GetBurnRate.Res(Numeric.toBigInt(result).doubleValue() / 1000)
+      callEthereum(sender, rb.buildRequest(req, burnRateTableAddress, req.tag)) {
+        result =>
+          GetBurnRate.Res(Numeric.toBigInt(result).doubleValue() / 1000)
       }
   }
 
