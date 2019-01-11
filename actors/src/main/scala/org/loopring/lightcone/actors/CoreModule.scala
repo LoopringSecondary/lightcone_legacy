@@ -111,7 +111,6 @@ class CoreModule(config: Config)
 
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
 
-
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton
     bind[TokenManager].asEagerSingleton

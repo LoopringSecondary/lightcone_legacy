@@ -21,11 +21,6 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.ethereum.event._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.actors.data._
-import org.web3j.utils.Numeric
-import akka.pattern._
 import akka.util.Timeout
 
 import scala.concurrent.ExecutionContext
@@ -73,7 +68,7 @@ object EventDispatcher {
       ec: ExecutionContext
     ): Seq[EventDispatcher[_, _]] = {
 
-    implicit val cutOffExtractor = new CutOffEventExtractor()
+    implicit val cutOffExtractor = new CutoffEventExtractor()
     implicit val ordersCancelledExtractor = new OrdersCancelledEventExtractor()
     implicit val tokenBurnRateExtractor = new TokenBurnRateEventExtractor()
     implicit val transferExtractor = new TransferEventExtractor()
@@ -86,16 +81,16 @@ object EventDispatcher {
     //TODO(yadong)指定具体的ActorRef name
     Seq(
       new NameBasedEventDispatcher[CutoffEvent, CutoffEvent](Seq(""))
-      with NonDerivable[CutoffEvent, CutoffEvent],
+      with NonDerivable[CutoffEvent],
       new NameBasedEventDispatcher[OrdersCancelledEvent, OrdersCancelledEvent](
         Seq("")
-      ) with NonDerivable[OrdersCancelledEvent, OrdersCancelledEvent],
+      ) with NonDerivable[OrdersCancelledEvent],
       new NameBasedEventDispatcher[
         TokenBurnRateChangedEvent,
         TokenBurnRateChangedEvent
       ](
         Seq("")
-      ) with NonDerivable[TokenBurnRateChangedEvent, TokenBurnRateChangedEvent],
+      ) with NonDerivable[TokenBurnRateChangedEvent],
       new NameBasedEventDispatcher[TransferEvent, TransferEvent](
         Seq("")
       ) {

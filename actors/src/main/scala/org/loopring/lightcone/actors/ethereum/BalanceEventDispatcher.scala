@@ -42,9 +42,9 @@ class BalanceEventDispatcher(
       AddressBalanceUpdated,
       AddressBalanceUpdated
     ](names)
-    with NonDerivable[AddressBalanceUpdated, AddressBalanceUpdated] {
+    with NonDerivable[AddressBalanceUpdated] {
 
-  override def extractThenDispatchEvents(block: RawBlockData) = {
+  override def dispatch(block: RawBlockData) = {
 
     val miners: Seq[String] = block.uncles.+:(block.miner)
     val events = (block.txs zip block.receipts).flatMap { item =>

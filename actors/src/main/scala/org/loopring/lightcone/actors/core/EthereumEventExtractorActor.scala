@@ -163,7 +163,7 @@ class EthereumEventExtractorActor(
             receipts = receipts.map(_.get)
           )
           dispatchers.foreach(
-            dispatcher => dispatcher.extractThenDispatchEvents(rawBlockData)
+            dispatcher => dispatcher.dispatch(rawBlockData)
           )
           dbModule.blockService.saveBlock(
             BlockData(

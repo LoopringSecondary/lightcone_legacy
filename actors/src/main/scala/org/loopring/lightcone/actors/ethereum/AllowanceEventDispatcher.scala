@@ -44,9 +44,9 @@ class AllowanceEventDispatcher(
       AddressAllowanceUpdated,
       AddressAllowanceUpdated
     ](names)
-    with NonDerivable[AddressAllowanceUpdated, AddressAllowanceUpdated] {
+    with NonDerivable[AddressAllowanceUpdated] {
 
-  override def extractThenDispatchEvents(block: RawBlockData) = {
+  override def dispatch(block: RawBlockData) = {
     val delegateAddress = Address(
       config.getString("loopring_protocol.delegate-address")
     )
