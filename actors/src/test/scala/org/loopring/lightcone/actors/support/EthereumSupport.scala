@@ -23,7 +23,7 @@ import akka.routing.RoundRobinPool
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.proto.{EthereumProxySettings, JsonRpc}
+import org.loopring.lightcone.proto._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
@@ -38,6 +38,11 @@ import org.testcontainers.containers.ContainerLaunchException
 import org.testcontainers.containers.wait.strategy.Wait
 import akka.pattern._
 import org.loopring.lightcone.actors.jsonrpc.JsonSupport
+import org.loopring.lightcone.ethereum.abi.{ApproveFunction, TransferFunction}
+import org.loopring.lightcone.ethereum.data.Transaction
+import org.loopring.lightcone.ethereum.ethereum.getSignedTxData
+import org.web3j.crypto.Credentials
+import org.web3j.utils.Numeric
 
 import scala.concurrent.duration._
 
@@ -122,5 +127,87 @@ trait EthereumSupport {
     EthereumClientMonitor.start(connectionPools)
   )
   actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
+
+  def transferEth(
+      to: String,
+      amount: BigInt
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val tx = Transaction(
+      inputData = "",
+      nonce = 0,
+      gasLimit = BigInt("210000"),
+      gasPrice = BigInt("200000"),
+      to = to,
+      value = amount
+    )
+    sendTransaction(tx)
+  }
+
+  def transferErc20(
+      to: String,
+      token: String,
+      amount: BigInt
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val input = erc20Abi.transfer.pack(
+      TransferFunction.Parms(to, amount)
+    )
+    val tx = Transaction(
+      inputData = input,
+      nonce = 0,
+      gasLimit = BigInt("210000"),
+      gasPrice = BigInt("200000"),
+      to = token,
+      value = 0
+    )
+    sendTransaction(tx)
+  }
+
+  def approveErc20(
+      spender: String,
+      token: String,
+      amount: BigInt
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val input = erc20Abi.approve.pack(
+      ApproveFunction.Parms(spender, amount)
+    )
+    val tx = Transaction(
+      inputData = input,
+      nonce = 0,
+      gasLimit = BigInt("210000"),
+      gasPrice = BigInt("200000"),
+      to = token,
+      value = 0
+    )
+    sendTransaction(tx)
+  }
+
+  def sendTransaction(
+      txWithoutNonce: Transaction
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val getNonceF = (actors.get(EthereumAccessActor.name) ? GetNonce.Req(
+      credentials.getAddress,
+      "latest"
+    ))
+    val getNonceRes =
+      Await.result(getNonceF.mapTo[GetNonce.Res], timeout.duration)
+    val tx = txWithoutNonce.copy(
+      nonce = Numeric.toBigInt(getNonceRes.result).intValue()
+    )
+    actors.get(EthereumAccessActor.name) ? SendRawTransaction.Req(
+      getSignedTxData(tx)
+    )
+  }
 
 }

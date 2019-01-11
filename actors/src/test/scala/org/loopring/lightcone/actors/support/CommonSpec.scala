@@ -74,8 +74,6 @@ abstract class CommonSpec(configStr: String = "")
   tokenManager.addToken(WETH_TOKEN)
   tokenManager.addToken(LRC_TOKEN)
   tokenManager.addToken(GTO_TOKEN)
-  tokenManager.addToken(RDN_TOKEN)
-  tokenManager.addToken(REP_TOKEN)
 
   implicit val tve = new TokenValueEvaluator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
