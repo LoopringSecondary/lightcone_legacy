@@ -118,6 +118,29 @@ package object support {
                         |    ]
                         |}""".stripMargin
 
+  val transactionRecordConfigStr = s"""
+     db.transaction-record.shard_0 {
+         profile = "slick.jdbc.MySQLProfile$$"
+         db {
+           url="${mysqlContainer.jdbcUrl}?useSSL=false"
+           user="${mysqlContainer.username}"
+           password="${mysqlContainer.password}"
+           driver="${mysqlContainer.driverClassName}"
+           maxThreads = 4
+         }
+     }
+     db.transaction-record.shard_1 {
+         profile = "slick.jdbc.MySQLProfile$$"
+         db {
+           url="${mysqlContainer.jdbcUrl}?useSSL=false"
+           user="${mysqlContainer.username}"
+           password="${mysqlContainer.password}"
+           driver="${mysqlContainer.driverClassName}"
+           maxThreads = 4
+         }
+     }
+    """.stripMargin
+
   println(s"""
     host = ${ethContainer.containerIpAddress}
     port = ${ethContainer.mappedPort(8545)}

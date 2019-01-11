@@ -68,7 +68,7 @@ class DatabaseQueryActor(
     val actors: Lookup[ActorRef],
     dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
-  private[this] val logger = Logger(this.getClass)
+  val logger = Logger(this.getClass)
 
   def receive: Receive = LoggingReceive {
     case req: GetOrdersForUser.Req =>

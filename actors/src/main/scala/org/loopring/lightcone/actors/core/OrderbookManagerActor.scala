@@ -88,8 +88,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
 }
 
 class OrderbookManagerActor(
-    markets: Map[String, MarketId],
-    extractEntityId: String => String = OrderbookManagerActor.extractEntityId
+    markets: Map[String, MarketId]
   )(
     implicit
     val config: Config,
@@ -100,7 +99,7 @@ class OrderbookManagerActor(
     val tokenManager: TokenManager)
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
-      extractEntityId
+      OrderbookManagerActor.extractEntityId
     ) {
   val marketId = markets(entityId)
   val mediator = DistributedPubSub(context.system).mediator

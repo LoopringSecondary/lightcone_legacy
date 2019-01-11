@@ -50,6 +50,7 @@ class CoreDeployer @Inject()(
     brb: EthereumBatchCallRequestBuilder,
     cluster: Cluster,
     config: Config,
+    dcm: DatabaseConfigManager,
     dbModule: DatabaseModule,
     dustOrderEvaluator: DustOrderEvaluator,
     ec: ExecutionContext,
@@ -107,6 +108,15 @@ class CoreDeployer @Inject()(
       )
     )
 
+    actors.add(
+      TransactionRecordMessageValidator.name,
+      MessageValidationActor(
+        new TransactionRecordMessageValidator(),
+        TransactionRecordActor.name,
+        TransactionRecordMessageValidator.name
+      )
+    )
+
     Cluster(system).registerOnMemberUp {
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
@@ -118,10 +128,7 @@ class CoreDeployer @Inject()(
       actors.add(MarketManagerActor.name, MarketManagerActor.start)
       actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
-      actors.add(
-        EthereumEventPersistorActor.name,
-        EthereumEventPersistorActor.start
-      )
+      actors.add(TransactionRecordActor.name, TransactionRecordActor.start)
 
       //-----------deploy singleton actors-----------
       // TODO(hongyu): Nil?

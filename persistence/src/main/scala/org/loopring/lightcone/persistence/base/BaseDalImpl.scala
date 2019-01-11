@@ -19,11 +19,14 @@ package org.loopring.lightcone.persistence.base
 import slick.lifted.CanBeQueryCondition
 import slick.basic._
 import slick.jdbc.JdbcProfile
+import scala.concurrent.duration._
 import scala.concurrent._
+import com.typesafe.scalalogging.Logger
 
 trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
   implicit val ec: ExecutionContext
   val dbConfig: DatabaseConfig[JdbcProfile]
+  val logger = Logger(this.getClass)
 
   val profile = dbConfig.profile
   val db: JdbcProfile#Backend#Database = dbConfig.db
@@ -57,13 +60,28 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
   def deleteById(ids: Seq[String]): Future[Int] =
     db.run(query.filter(_.id.inSet(ids)).delete)
 
-  def createTable(): Future[Any] = {
-    // query.schma.create.statements.foreach(println)
-    db.run(DBIO.seq(query.schema.create))
+  def createTable() = {
+    try {
+      Await.result(db.run(DBIO.seq(query.schema.create)), 10.second)
+    } catch {
+      case e: Exception if e.getMessage.contains("already exists") =>
+        logger.info(e.getMessage)
+      case e: Exception =>
+        logger.error("Failed to create MySQL tables: " + e.getMessage)
+        System.exit(0)
+    }
   }
 
-  def dropTable(): Future[Any] = {
-    db.run(DBIO.seq(query.schema.drop))
+  def dropTable() = {
+    try {
+      Await.result(db.run(DBIO.seq(query.schema.drop)), 10.second)
+    } catch {
+      case e: Exception if e.getMessage.contains("Unknown table") =>
+        logger.info(e.getMessage)
+      case e: Exception =>
+        logger.error("Failed to drop MySQL tables: " + e.getMessage)
+        System.exit(0)
+    }
   }
 
   def displayTableSchema() = {

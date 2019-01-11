@@ -62,7 +62,7 @@ trait DalSpec[D <: BaseDal[_, _]]
         }""")
     )
     dal = getDal()
-    Await.result(dal.createTable(), 5.second)
+    dal.createTable()
   }
 
   override def beforeAll = {
