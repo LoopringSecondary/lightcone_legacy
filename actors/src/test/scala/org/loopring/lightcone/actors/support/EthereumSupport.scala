@@ -37,20 +37,6 @@ import org.web3j.utils.Numeric
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 
-//object EthereumDocker {
-//
-//  implicit private val suiteDescription =
-//    Description.createSuiteDescription(this.getClass)
-//
-//  val ethContainer = GenericContainer(
-//    "kongliangzhong/loopring-ganache:v2",
-//    exposedPorts = Seq(8545),
-//    waitStrategy = Wait.forListeningPort()
-//  )
-//
-//  ethContainer.starting()
-//}
-
 trait EthereumSupport {
   my: CommonSpec =>
 
@@ -109,7 +95,7 @@ trait EthereumSupport {
   catch {
     case e: TimeoutException =>
       throw new ContainerLaunchException(
-        "Timed out waiting for container port to open mysqlContainer should be listening)"
+        "Timed out waiting for connectionPools init.)"
       )
   }
 

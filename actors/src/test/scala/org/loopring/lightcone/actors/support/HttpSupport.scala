@@ -98,19 +98,16 @@ trait HttpSupport extends RpcBinding with Logging {
   }
 
   def expectOrderbookRes(
-      getOrderBook: GetOrderbook.Req,
+      req: GetOrderbook.Req,
       assertFun: Orderbook => Boolean,
       expectTimeout: Option[Timeout] = None
     ) = {
     var resOpt: Option[Orderbook] = None
     val timeout1 = if (expectTimeout.isEmpty) timeout else expectTimeout.get
     val lastTime = System.currentTimeMillis() + timeout1.duration.toMillis
-    while (resOpt.isEmpty && System
-             .currentTimeMillis() <= lastTime) {
-      val orderbookF = singleRequest(
-        getOrderBook,
-        "orderbook"
-      )
+    while (resOpt.isEmpty &&
+           System.currentTimeMillis() <= lastTime) {
+      val orderbookF = singleRequest(req, "orderbook")
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
         case GetOrderbook.Res(Some(orderbook)) =>
@@ -124,7 +121,7 @@ trait HttpSupport extends RpcBinding with Logging {
     }
     if (resOpt.isEmpty) {
       throw new Exception(
-        s"Timed out waiting for expectOrderbookRes of req:${getOrderBook} "
+        s"Timed out waiting for expectOrderbookRes of req:${req} "
       )
     }
     resOpt
@@ -139,8 +136,8 @@ trait HttpSupport extends RpcBinding with Logging {
     val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
 
     //必须等待jsonRpcServer启动完成
-    while (resOpt.isEmpty && System
-             .currentTimeMillis() <= lastTime) {
+    while (resOpt.isEmpty &&
+           System.currentTimeMillis() <= lastTime) {
       val getBalanceResF =
         singleRequest(req, "get_balance_and_allowance")
       val res = Await.result(
