@@ -17,7 +17,6 @@
 package org.loopring.lightcone.actors.entrypoint
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.actors.core.TransactionRecordActor
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.TransactionRecordMessageValidator

@@ -28,9 +28,59 @@ object DatabaseQueryMessageValidator {
 final class DatabaseQueryMessageValidator()(implicit val config: Config)
     extends MessageValidator {
 
-  //TODO(yongfeng): Throws exception if validation fails.
+  val defaultItemsPerPage =
+    config.getInt("default-items-per-page")
+  val maxItemsPerPage = config.getInt("max-items-per-page")
+
   def validate = {
-    case req: GetOrdersForUser.Req => req
-    case req: GetTrades.Req        => req
+    case req: GetOrdersForUser.Req =>
+      if (req.owner.isEmpty)
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          "Parameter owner could not be empty"
+        )
+      req.skip match {
+        case Some(s) if s.size > maxItemsPerPage =>
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            s"Parameter size of paging is larger than $maxItemsPerPage"
+          )
+
+        case Some(s) if s.skip < 0 =>
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            s"Invalid parameter skip of paging:${s.skip}"
+          )
+
+        case Some(_) => req
+
+        case None =>
+          req.copy(skip = Some(Paging(size = defaultItemsPerPage)))
+      }
+
+    case req: GetTrades.Req =>
+      if (req.owner.isEmpty)
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          "Parameter owner could not be empty"
+        )
+      req.skip match {
+        case Some(s) if s.size > maxItemsPerPage =>
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            s"Parameter size of paging is larger than $maxItemsPerPage"
+          )
+
+        case Some(s) if s.skip < 0 =>
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            s"Invalid parameter skip of paging:${s.skip}"
+          )
+
+        case Some(_) => req
+
+        case None =>
+          req.copy(skip = Some(Paging(size = defaultItemsPerPage)))
+      }
   }
 }
