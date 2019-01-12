@@ -34,9 +34,9 @@ import scala.util.Try
 // Owner: Daniel
 object Main extends App with Logging {
   // TODO(hongyu): choose one only
-  Kamon.addReporter(new PrometheusReporter())
   Kamon.addReporter(new ZipkinReporter())
-  Kamon.addReporter(new DatadogAgentReporter())
+  // Kamon.addReporter(new PrometheusReporter())
+  // Kamon.addReporter(new DatadogAgentReporter())
 
   val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
 
