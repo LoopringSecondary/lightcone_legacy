@@ -28,7 +28,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with EthereumQueryMockSupport
+    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport {
@@ -84,7 +84,6 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       })
 
       //orderbook
-      Thread.sleep(1000)
       info("then test the orderbook of LRC-WETH")
       val orderbookLrcF = singleRequest(
         GetOrderbook
@@ -92,10 +91,14 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
         "orderbook"
       )
 
-      val orderbookLrcRes = Await.result(orderbookLrcF, timeout.duration)
-      orderbookLrcRes match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          info(s"sells: ${sells}")
+      val orderbookRes = expectOrderbookRes(
+        GetOrderbook
+          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
+      orderbookRes match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 2)
           assert(
             sells(0).price == "10.000000" &&
@@ -165,16 +168,21 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
         }
       })
 
-      Thread.sleep(1000)
       val orderbookF1 = singleRequest(
         GetOrderbook
           .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
         "orderbook"
       )
 
-      val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
+      val orderbookRes1 = expectOrderbookRes(
+        GetOrderbook
+          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+        (orderbook: Orderbook) =>
+          orderbook.sells.nonEmpty && orderbook.sells(0).total == "1.00000"
+      )
       orderbookRes1 match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 2)
           assert(
             sells(0).price == "10.000000" &&
@@ -189,6 +197,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
           assert(buys.isEmpty)
         case _ => assert(false)
       }
+
     }
   }
 

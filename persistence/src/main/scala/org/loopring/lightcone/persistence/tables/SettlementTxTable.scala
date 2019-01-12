@@ -25,7 +25,7 @@ class SettlementTxTable(tag: Tag)
   implicit val StatusCxolumnType = enumColumnType(SettlementTx.Status)
 
   def id = txHash
-  def txHash = columnAddress("tx_hash")
+  def txHash = columnHash("tx_hash")
   def from = columnAddress("from")
   def to = columnAddress("to")
   def gas = column[String]("gas")

@@ -52,8 +52,7 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
         case _ => None
       }
     } catch {
-      case _: Throwable =>
-        None
+      case _: Throwable => None
     }
   }
 
@@ -76,8 +75,7 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
         case _ => None
       }
     } catch {
-      case _: Throwable =>
-        None
+      case _: Throwable => None
     }
   }
 

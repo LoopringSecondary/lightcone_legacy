@@ -16,11 +16,10 @@
 
 package org.loopring.lightcone.actors.jsonrpc
 
-import org.scalatest._
-import org.scalamock.scalatest._
-import org.loopring.lightcone.proto._
-import org.slf4s.Logging
 import org.loopring.lightcone.lib.ProtoSerializer
+import org.loopring.lightcone.proto._
+import org.scalatest._
+import org.slf4s.Logging
 
 class PayloadConverterSpec extends FlatSpec with Matchers with Logging {
   implicit val ps = new ProtoSerializer()

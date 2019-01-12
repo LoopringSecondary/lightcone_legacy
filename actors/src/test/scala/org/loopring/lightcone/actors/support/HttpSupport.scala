@@ -26,10 +26,10 @@ import org.loopring.lightcone.actors.RpcBinding
 import org.loopring.lightcone.actors.jsonrpc.{JsonRpcRequest, JsonRpcResponse}
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
+import org.slf4s.Logging
 import scalapb.json4s.JsonFormat
 
 import scala.concurrent.{Await, ExecutionContext}
-import org.slf4s.Logging
 
 trait HttpSupport extends RpcBinding with Logging {
   val config: Config
@@ -98,31 +98,64 @@ trait HttpSupport extends RpcBinding with Logging {
   }
 
   def expectOrderbookRes(
-      getOrderBook: GetOrderbook.Req,
+      req: GetOrderbook.Req,
       assertFun: Orderbook => Boolean,
       expectTimeout: Option[Timeout] = None
     ) = {
-    val now = System.currentTimeMillis()
-    var res: Option[Orderbook] = None
+    var resOpt: Option[Orderbook] = None
     val timeout1 = if (expectTimeout.isEmpty) timeout else expectTimeout.get
-    while (res.isEmpty && System
-             .currentTimeMillis() <= now + timeout1.duration.toMillis) {
-      val orderbookF = singleRequest(
-        getOrderBook,
-        "orderbook"
-      )
+    val lastTime = System.currentTimeMillis() + timeout1.duration.toMillis
+    while (resOpt.isEmpty &&
+           System.currentTimeMillis() <= lastTime) {
+      val orderbookF = singleRequest(req, "orderbook")
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
         case GetOrderbook.Res(Some(orderbook)) =>
           if (assertFun(orderbook)) {
-            res = Some(orderbook)
+            resOpt = Some(orderbook)
           }
       }
-      if (res.isEmpty) {
+      if (resOpt.isEmpty) {
         Thread.sleep(200)
       }
     }
-    res
+    if (resOpt.isEmpty) {
+      throw new Exception(
+        s"Timed out waiting for expectOrderbookRes of req:${req} "
+      )
+    }
+    resOpt
+  }
+
+  def expectBalanceRes(
+      req: GetBalanceAndAllowances.Req,
+      assertFun: GetBalanceAndAllowances.Res => Boolean,
+      expectTimeout: Timeout = timeout
+    ) = {
+    var resOpt: Option[GetBalanceAndAllowances.Res] = None
+    val lastTime = System.currentTimeMillis() + timeout.duration.toMillis
+
+    //必须等待jsonRpcServer启动完成
+    while (resOpt.isEmpty &&
+           System.currentTimeMillis() <= lastTime) {
+      val getBalanceResF =
+        singleRequest(req, "get_balance_and_allowance")
+      val res = Await.result(
+        getBalanceResF.mapTo[GetBalanceAndAllowances.Res],
+        timeout.duration
+      )
+      if (assertFun(res)) {
+        resOpt = Some(res)
+      } else {
+        Thread.sleep(200)
+      }
+    }
+    if (resOpt.isEmpty) {
+      throw new Exception(
+        s"Timed out waiting for expectBalanceRes of req:${req} "
+      )
+    }
+    resOpt
   }
 
 }

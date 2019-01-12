@@ -16,9 +16,6 @@
 
 package org.loopring.lightcone.actors.entrypoint
 
-import akka.actor.ActorRef
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 
@@ -29,8 +26,6 @@ class EntryPointSpec
     with OrderbookManagerSupport
     with JsonrpcSupport
     with HttpSupport {
-
-  val ethConfigStr = ""
 
   "send an orderbook request" must {
     "receive a response without value" in {

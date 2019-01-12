@@ -19,34 +19,22 @@ package org.loopring.lightcone.actors.order
 import akka.pattern._
 import org.loopring.lightcone.actors.core.OrderCutoffHandlerActor
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.proto.Orderbook.Item
 import org.loopring.lightcone.proto._
+
 import scala.concurrent.{Await, Future}
 
 class OrderCutoffSpec
-    extends CommonSpec("""
-                         |akka.cluster.roles=[
-                         | "order_handler",
-                         | "multi_account_manager",
-                         | "market_manager",
-                         | "orderbook_manager",
-                         | "gas_price",
-                         | "order_cutoff_handler",
-                         | "ethereum_access",
-                         | "ring_settlement"]
-                         |""".stripMargin)
+    extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
     with OrderHandleSupport
-    with EthereumQueryMockSupport
+    with EthereumSupport
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport
     with OrderCutoffSupport {
-  val owner = "0x4fb7f2bfab7b39722808f75f009f45e6e106881d"
-  implicit val privateKey =
-    "a0492cc79eac96a23a235ad99c386c27c8b30ee50a94e4b379900c6467e9ea6e"
+  val owner = accounts(0).getAddress
 
   private def testSaves(orders: Seq[RawOrder]): Future[Seq[Any]] = {
     Future.sequence(orders.map { order =>
@@ -57,17 +45,15 @@ class OrderCutoffSpec
   private def testSaveOrder(): Future[Seq[Any]] = {
     val rawOrders = ((0 until 6) map { i =>
       createRawOrder(
-        owner = owner,
         amountS = "10".zeros(LRC_TOKEN.decimals),
         amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-      )(Some(privateKey))
+      )(accounts(0))
     }) ++
       ((0 until 4) map { i =>
         val o = createRawOrder(
-          owner = owner,
           amountS = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )(Some(privateKey))
+        )(accounts(0))
         o.copy(
           state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
         )
@@ -89,7 +75,6 @@ class OrderCutoffSpec
           case _ => assert(false)
         }
       }
-      Thread.sleep(5000)
 
       // 2. get orders
       val orders1 =
@@ -107,12 +92,29 @@ class OrderCutoffSpec
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
+
+      val orderbookRes1 = expectOrderbookRes(
+        getOrderBook1,
+        (orderbook: Orderbook) =>
+          orderbook.sells.nonEmpty && orderbook.sells.length === 2
+      )
+      orderbookRes1 match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(
+            sells(0).price == "10.000000" &&
+              sells(0).amount == "60.00000" &&
+              sells(0).total == "6.00000"
+          )
+          assert(
+            sells(1).price == "20.000000" &&
+              sells(1).amount == "80.00000" &&
+              sells(1).total == "4.00000"
+          )
+        case _ => assert(false)
+      }
+
       val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
-      val orderbookRes1 =
-        Await
-          .result(orderbookF1.mapTo[GetOrderbook.Res], timeout.duration)
-          .orderbook
-          .get
 
       // 4. send cutoff
       val txHash = "0x999"
@@ -121,9 +123,20 @@ class OrderCutoffSpec
         cutoff = timeProvider.getTimeSeconds().toInt + 100
       )
       actors.get(OrderCutoffHandlerActor.name) ? cutoff
-      Thread.sleep(5000)
 
-      // 5. get orders
+      // 5. get orderbook first， waiting cutoffevent finish
+      val orderbookRes2 = expectOrderbookRes(
+        getOrderBook1,
+        (orderbook: Orderbook) => orderbook.sells.isEmpty
+      )
+      orderbookRes2 match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(sells.isEmpty && buys.isEmpty)
+        case _ => assert(false)
+      }
+
+      // 6. get orders
       val orders2 =
         dbModule.orderService.getOrders(
           Set(OrderStatus.STATUS_NEW, OrderStatus.STATUS_PENDING),
@@ -133,24 +146,6 @@ class OrderCutoffSpec
         Await.result(orders2.mapTo[Seq[RawOrder]], timeout.duration)
       assert(resOrder2.length === 0)
 
-      // 5. orderbook
-      val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
-      val orderbookRes2 =
-        Await
-          .result(orderbookF2.mapTo[GetOrderbook.Res], timeout.duration)
-          .orderbook
-          .get
-      assert(
-        orderbookRes1.sells.nonEmpty && orderbookRes1.sells.length === 2 && orderbookRes1.buys.isEmpty
-      )
-      orderbookRes1.sells.foreach(_ match {
-        case Item("10.000000", "60.00000", "6.00000") => assert(true)
-        case Item("20.000000", "80.00000", "4.00000") => assert(true)
-        case _                                        => assert(false)
-      })
-      assert(
-        orderbookRes2.sells.isEmpty && orderbookRes2.buys.isEmpty
-      )
     }
   }
 
