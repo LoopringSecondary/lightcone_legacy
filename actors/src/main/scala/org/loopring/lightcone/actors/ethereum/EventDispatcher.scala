@@ -61,7 +61,6 @@ abstract class NameBasedEventDispatcher[R, T](
 object EventDispatcher {
 
   def getDefaultDispatchers(
-    )(
       implicit
       actors: Lookup[ActorRef],
       config: Config,

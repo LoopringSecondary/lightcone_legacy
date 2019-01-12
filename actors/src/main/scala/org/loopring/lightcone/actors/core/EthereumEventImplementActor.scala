@@ -87,7 +87,6 @@ class EthereumEventImplementActor(
   def ethereumAccessorActor: ActorRef = actors.get(EthereumAccessActor.name)
 
   override def receive: Receive = {
-
     case Notify("next", _) =>
       if (taskQueue.nonEmpty) {
         currentBlockNumber = taskQueue.dequeue()
@@ -97,7 +96,6 @@ class EthereumEventImplementActor(
       }
     case Notify("current", _) =>
       process()
-
     case BlockImplementTask(blocks) =>
       taskQueue.enqueue(blocks: _*)
   }
@@ -115,7 +113,7 @@ class EthereumEventImplementActor(
         .map(_.resps.map(_.result))
       uncles <- if (block.uncles.nonEmpty) {
         val batchGetUnclesReq = BatchGetUncle.Req(
-          block.uncles.zipWithIndex.unzip._2.map(
+          block.uncles.indices.map(
             index =>
               GetUncle.Req(
                 block.number,

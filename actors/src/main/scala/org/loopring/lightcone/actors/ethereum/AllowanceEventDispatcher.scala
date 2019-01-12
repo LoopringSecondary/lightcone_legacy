@@ -20,7 +20,7 @@ import akka.actor.ActorRef
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.actors.data.byteArray2ByteString
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.ethereum.event.EventExtractor
 import org.loopring.lightcone.actors.base.safefuture._
@@ -52,7 +52,7 @@ class AllowanceEventDispatcher(
     )
     val events = (block.txs zip block.receipts).flatMap { item =>
       extractor.extract(item._1, item._2, block.timestamp)
-    }
+    }.distinct
     val batchCallReq = brb.buildRequest(delegateAddress, events, "")
     for {
       tokenAllowances <- (lookup.get(EthereumAccessActor.name) ? batchCallReq)
@@ -63,7 +63,7 @@ class AllowanceEventDispatcher(
       (events zip tokenAllowances).foreach(
         item =>
           targets
-            .foreach(_ ! item._1.withBalance(byteArray2ByteString(item._2)))
+            .foreach(_ ! item._1.withBalance(item._2))
       )
     }
   }

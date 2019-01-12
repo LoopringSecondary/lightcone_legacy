@@ -93,6 +93,7 @@ class RingMinedEventExtractor extends EventExtractor[PRingMinedEvent] {
       header = header,
       orderHash = Numeric.prependHexPrefix(data.substring(0, 64 * 1)),
       owner = Address(data.substring(64 * 1, 64 * 2)).toString,
+      tokenS = Address(fill.substring(64 * 2, 64 * 3)).toString,
       ringHash = event._ringHash,
       ringIndex = event._ringIndex.longValue(),
       filledAmountS =

@@ -87,17 +87,7 @@ class EthereumEventExtractorActor(
   def ethereumImplementActor: ActorRef =
     actors.get(EthereumEventImplementActor.name)
 
-  override def preStart(): Unit = initial()
-
-  override def preRestart(
-      reason: Throwable,
-      message: Option[Any]
-    ) = {
-    super.preRestart(reason, message)
-    initial()
-  }
-
-  def initial() = {
+  override def preStart(): Unit = {
     for {
       handledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
       maxBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
@@ -136,7 +126,7 @@ class EthereumEventExtractorActor(
       }
       uncles <- if (blockOpt.isDefined && blockOpt.get.uncles.nonEmpty) {
         val batchGetUnclesReq = BatchGetUncle.Req(
-          blockOpt.get.uncles.zipWithIndex.unzip._2.map(
+          blockOpt.get.uncles.indices.map(
             index =>
               GetUncle.Req(
                 blockOpt.get.number,

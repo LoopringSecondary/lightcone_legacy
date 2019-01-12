@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.ethereum
 import akka.actor.ActorRef
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.actors.data.byteArray2ByteString
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.ethereum.event.EventExtractor
 import org.loopring.lightcone.actors.base.safefuture._
@@ -47,16 +47,15 @@ class BalanceEventDispatcher(
   override def dispatch(block: RawBlockData) = {
 
     val miners: Seq[String] = block.uncles.+:(block.miner)
-    val events = (block.txs zip block.receipts).flatMap { item =>
+    val events = ((block.txs zip block.receipts).flatMap { item =>
       extractor.extract(item._1, item._2, block.timestamp)
     } ++ miners.map(
       miner =>
         AddressBalanceUpdated(address = miner, token = Address.ZERO.toString())
-    )
-
+    )).distinct
     val (ethAddress, tokenAddresses) =
       events.partition(addr => Address(addr.address).isZero)
-    val batchCallReq = brb.buildRequest(tokenAddresses, "")
+    val batchCallReq = brb.buildRequest(tokenAddresses, "latest")
     for {
       tokenBalances <- (lookup.get(EthereumAccessActor.name) ? batchCallReq)
         .mapAs[BatchCallContracts.Res]
@@ -74,12 +73,12 @@ class BalanceEventDispatcher(
       (tokenAddresses zip tokenBalances).foreach(
         item =>
           targets
-            .foreach(_ ! item._1.withBalance(byteArray2ByteString(item._2)))
+            .foreach(_ ! item._1.withBalance(item._2))
       )
       (ethAddress zip ethBalances).foreach(
         item =>
           targets
-            .foreach(_ ! item._1.withBalance(byteArray2ByteString(item._2)))
+            .foreach(_ ! item._1.withBalance(item._2))
       )
     }
   }
