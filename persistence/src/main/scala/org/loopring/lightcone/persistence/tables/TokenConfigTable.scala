@@ -31,10 +31,23 @@ class TokenConfigTable(tag: Tag)
   def unit = column[String]("unit")
   def website = column[String]("website")
   def precision = column[Int]("precision")
+  def isSupportTransfer = column[Boolean]("is_support_transfer")
+  def isSupportTrade = column[Boolean]("is_support_trade")
   def burnRate = column[Double]("burn_rate")
   def currentPrice = column[Double]("current_price")
   def createdAt = column[Long]("created_at")
   def updatedAt = column[Long]("updated_at")
+
+  def metadataProjection =
+    (
+      burnRate,
+      currentPrice
+    ) <> ({ tuple =>
+      Option((TokenConfig.Metadata.apply _).tupled(tuple))
+    }, { paramsOpt: Option[TokenConfig.Metadata] =>
+      val params = paramsOpt.getOrElse(TokenConfig.Metadata())
+      TokenConfig.Metadata.unapply(params)
+    })
 
   def * =
     (
@@ -45,8 +58,9 @@ class TokenConfigTable(tag: Tag)
       unit,
       website,
       precision,
-      burnRate,
-      currentPrice,
+      isSupportTransfer,
+      isSupportTrade,
+      metadataProjection,
       createdAt,
       updatedAt
     ) <> ((TokenConfig.apply _).tupled, TokenConfig.unapply)

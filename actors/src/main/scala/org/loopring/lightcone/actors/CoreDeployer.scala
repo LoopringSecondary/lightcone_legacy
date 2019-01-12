@@ -50,6 +50,7 @@ class CoreDeployer @Inject()(
     brb: EthereumBatchCallRequestBuilder,
     cluster: Cluster,
     config: Config,
+    dcm: DatabaseConfigManager,
     dbModule: DatabaseModule,
     dustOrderEvaluator: DustOrderEvaluator,
     ec: ExecutionContext,
@@ -107,6 +108,15 @@ class CoreDeployer @Inject()(
       )
     )
 
+    actors.add(
+      TransactionRecordMessageValidator.name,
+      MessageValidationActor(
+        new TransactionRecordMessageValidator(),
+        TransactionRecordActor.name,
+        TransactionRecordMessageValidator.name
+      )
+    )
+
     Cluster(system).registerOnMemberUp {
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
@@ -118,13 +128,11 @@ class CoreDeployer @Inject()(
       actors.add(MarketManagerActor.name, MarketManagerActor.start)
       actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
-      actors.add(
-        EthereumEventPersistorActor.name,
-        EthereumEventPersistorActor.start
-      )
+      actors.add(TransactionRecordActor.name, TransactionRecordActor.start)
 
       //-----------deploy singleton actors-----------
-      // TODO(hongyu): Nil?
+      // TODO(hongyu): 不能是Nil，需要完善，但是还没考虑好，EtherHttpConnector需要提前完成初始化，
+      // 但是又不需要在启动每个实例时都初始化
       actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start(Nil))
       actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)

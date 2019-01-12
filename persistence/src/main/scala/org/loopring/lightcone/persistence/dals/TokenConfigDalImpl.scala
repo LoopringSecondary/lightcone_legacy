@@ -42,11 +42,5 @@ class TokenConfigDalImpl @Inject()(
   def getAllConfigs(): Future[Seq[TokenConfig]] =
     db.run(query.result)
 
-  def getConfig(address: String): Future[Option[TokenConfig]] =
-    db.run(query.filter(_.address === address).take(1).result.headOption)
-
-  def getConfigs(addresses: Seq[String]): Future[Seq[TokenConfig]] =
-    db.run(query.filter(_.address inSet addresses).result)
-
   def updateConfig(config: TokenConfig): Future[Int] = insertOrUpdate(config)
 }

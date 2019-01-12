@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.persistence.dals
 
+import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
@@ -39,7 +40,7 @@ class TokenMetadataDalImpl @Inject()(
 
   val query = TableQuery[TokenMetadataTable]
 
-  private var tokens: Seq[TokenMetadata] = Nil
+  private var tokens: Seq[TokenMeta] = Nil
 
   def getTokens(reloadFromDatabase: Boolean = false) = {
     if (reloadFromDatabase || tokens.isEmpty) {

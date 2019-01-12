@@ -54,18 +54,26 @@ class TradeHistoryAbi(abiJson: String) extends AbiWrap(abiJson) {
     ): Option[Any] = None
 
   override def unpackFunctionInput(data: String): Option[Any] = {
-    val funSig =
-      Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
-    val func = abi.findFunction(searchBySignature(funSig))
-    func match {
-      case _: SABI.Function =>
-        func.name match {
-          case FilledFunction.name =>
-            filled.unpackInput(data)
-          case _ => None
-        }
-      case _ => None
+
+    try {
+      val funSig =
+        Numeric.hexStringToByteArray(
+          Numeric.cleanHexPrefix(data).substring(0, 8)
+        )
+      val func = abi.findFunction(searchBySignature(funSig))
+      func match {
+        case _: SABI.Function =>
+          func.name match {
+            case FilledFunction.name =>
+              filled.unpackInput(data)
+            case _ => None
+          }
+        case _ => None
+      }
+    } catch {
+      case _: Throwable => None
     }
+
   }
 }
 

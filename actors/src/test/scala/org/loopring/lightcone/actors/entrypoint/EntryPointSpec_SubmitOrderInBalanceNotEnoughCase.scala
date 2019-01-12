@@ -16,11 +16,10 @@
 
 package org.loopring.lightcone.actors.entrypoint
 
-import akka.pattern._
-import org.loopring.lightcone.actors.core.EthereumQueryActor
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.data._
+
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
@@ -29,36 +28,36 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with EthereumQueryMockSupport
+    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport {
 
+  val account = getUniqueAccountWithoutEth
+
+  override def beforeAll(): Unit = {
+    val f = Future.sequence(
+      Seq(
+        transferEth(account.getAddress, "10")(accounts(0)),
+        transferLRC(account.getAddress, "30")(accounts(0)),
+        approveLRCToDelegate("30")(account)
+      )
+    )
+
+    Await.result(f, timeout.duration)
+    super.beforeAll()
+  }
+
   "submit several order when the balance is not enough" must {
     "the fisrt should be submit success and the second should be failed" in {
-
-      //设置余额
-      //todo: allowance 为0 的逻辑是什么，accountmanager与marketmanager中是否需要保存
-      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances.Res(
-        "",
-        Map(
-          "" -> BalanceAndAllowance(
-            "30".zeros(LRC_TOKEN.decimals),
-            "30".zeros(LRC_TOKEN.decimals)
-          )
-        )
-      )
-      Await.result(f, timeout.duration)
 
       //下单情况
       val rawOrders = (0 until 2) map { i =>
         createRawOrder(
           amountS = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )
+        )(account)
       }
-
-      //      info(s"## rawOrders ${rawOrders}")
 
       val f1 =
         singleRequest(SubmitOrder.Req(Some(rawOrders(0))), "submit_order").recover {
@@ -104,20 +103,21 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
         }
       })
 
+      info("the orderbook.sells.size should be 1")
       //orderbook
-      Thread.sleep(1000)
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF = singleRequest(getOrderBook, "orderbook")
-
-      val orderbookRes = Await.result(orderbookF, timeout.duration)
+      val orderbookRes = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
       orderbookRes match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          info(s"sells: ${sells}， buys: ${buys}")
-          assert(sells.size == 1)
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(sells.nonEmpty)
           assert(
             sells(0).price == "20.000000" &&
               sells(0).amount == "20.00000" &&
@@ -162,17 +162,18 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
         }
       })
 
-      Thread.sleep(1000)
       info(
         "the result of orderbook should be empty after cancel the first order."
       )
-      val orderbookF1 = singleRequest(getOrderBook, "orderbook")
 
-      val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
+      val orderbookRes1 = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) => orderbook.sells.isEmpty
+      )
       orderbookRes1 match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          assert(sells.isEmpty)
-          assert(buys.isEmpty)
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(sells.isEmpty && buys.isEmpty)
         case _ => assert(false)
       }
     }

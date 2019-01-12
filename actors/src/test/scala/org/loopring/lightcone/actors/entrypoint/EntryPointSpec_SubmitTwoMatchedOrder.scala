@@ -20,7 +20,6 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
 
 class EntryPointSpec_SubmitTwoMatchedOrder
     extends CommonSpec
@@ -28,7 +27,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with EthereumQueryMockSupport
+    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport {
@@ -50,31 +49,25 @@ class EntryPointSpec_SubmitTwoMatchedOrder
         timeout.duration
       )
 
-      var orderbook =
-        Await.result(
-          singleRequest(
-            GetOrderbook.Req(
-              0,
-              100,
-              Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
-            ),
-            "orderbook"
-          ),
-          timeout.duration
-        )
-
-      orderbook should be(
+      info("getOrderbook after submit one order with market: LRC-WETH")
+      val orderbookRes3 = expectOrderbookRes(
         GetOrderbook
-          .Res(
-            Some(
-              Orderbook(
-                0.0,
-                Seq(Orderbook.Item("10.000000", "10.00000", "1.00000")),
-                Nil
-              )
-            )
-          )
+          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
       )
+      orderbookRes3 match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"price:${lastPrice}, sells:${sells}, buys:${buys}")
+          assert(lastPrice == 0.0)
+          assert(sells.size == 1)
+          assert(
+            sells(0).price == "10.000000" &&
+              sells(0).amount == "10.00000" &&
+              sells(0).total == "1.00000"
+          )
+          assert(buys.isEmpty)
+        case _ => assert(false)
+      }
 
       // -----------------------
       val order2 =
@@ -92,31 +85,28 @@ class EntryPointSpec_SubmitTwoMatchedOrder
         timeout.duration
       )
 
-      Thread.sleep(1000)
-
-      orderbook = Await.result(
-        singleRequest(
-          GetOrderbook
-            .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
-          "orderbook"
-        ),
-        timeout.duration
+      info(
+        "get orderbook after submit the sencond order with market: WETH-LRC and half amount of the first order."
       )
-
-      //  println("======" + orderbook)
-
-      orderbook should be(
+      val orderbookRes = expectOrderbookRes(
         GetOrderbook
-          .Res(
-            Some(
-              Orderbook(
-                10.0,
-                Seq(Orderbook.Item("10.000000", "5.00000", "0.50000")),
-                Nil
-              )
-            )
-          )
+          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+        (orderbook: Orderbook) =>
+          orderbook.sells.nonEmpty && orderbook.latestPrice == 10.0
       )
+      orderbookRes match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"price:${lastPrice}, sells:${sells}, buys:${buys}")
+          assert(sells.size == 1)
+          assert(lastPrice == 10.0)
+          assert(
+            sells(0).price == "10.000000" &&
+              sells(0).amount == "5.00000" &&
+              sells(0).total == "0.50000"
+          )
+          assert(buys.isEmpty)
+        case _ => assert(false)
+      }
 
       // -----------------------
       val order3 =
@@ -125,7 +115,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
           tokenS = WETH_TOKEN.address,
           amountB = "10".zeros(LRC_TOKEN.decimals) / 2,
           tokenB = LRC_TOKEN.address,
-          amountFee = "10".zeros(LRC_TOKEN.decimals),
+          amountFee = "11".zeros(LRC_TOKEN.decimals),
           tokenFee = LRC_TOKEN.address
         )
 
@@ -134,23 +124,19 @@ class EntryPointSpec_SubmitTwoMatchedOrder
         timeout.duration
       )
 
-      Thread.sleep(1000)
-
-      orderbook = Await.result(
-        singleRequest(
-          GetOrderbook
-            .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
-          "orderbook"
-        ),
-        timeout.duration
-      )
-
-      //  println("======" + orderbook)
-
-      orderbook should be(
+      info("submit a order like order2, then the orderbook should be empty.")
+      val orderbookRes1 = expectOrderbookRes(
         GetOrderbook
-          .Res(Some(Orderbook(10.0, Nil, Nil)))
+          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+        (orderbook: Orderbook) =>
+          orderbook.sells.isEmpty && orderbook.buys.isEmpty
       )
+      orderbookRes1 match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(buys.isEmpty && sells.isEmpty)
+        case _ => assert(false)
+      }
 
       // -----------------------
       val order4 =
@@ -159,7 +145,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
           tokenS = WETH_TOKEN.address,
           amountB = "10".zeros(LRC_TOKEN.decimals) / 2,
           tokenB = LRC_TOKEN.address,
-          amountFee = "10".zeros(LRC_TOKEN.decimals),
+          amountFee = "14".zeros(LRC_TOKEN.decimals),
           tokenFee = LRC_TOKEN.address
         )
 
@@ -168,31 +154,26 @@ class EntryPointSpec_SubmitTwoMatchedOrder
         timeout.duration
       )
 
-      Thread.sleep(1000)
+      info("submit one more order and the orderbook should be nonEmpty")
 
-      orderbook = Await.result(
-        singleRequest(
-          GetOrderbook
-            .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
-          "orderbook"
-        ),
-        timeout.duration
-      )
-
-      //  println("======" + orderbook)
-
-      orderbook should be(
+      val orderbookRes2 = expectOrderbookRes(
         GetOrderbook
-          .Res(
-            Some(
-              Orderbook(
-                10.0,
-                Nil,
-                Seq(Orderbook.Item("10.000000", "5.00000", "0.50000"))
-              )
-            )
-          )
+          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+        (orderbook: Orderbook) => orderbook.buys.nonEmpty
       )
+      info(s"orderbookRes2 ${orderbookRes2}")
+      orderbookRes2 match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(buys.size == 1)
+          assert(
+            buys(0).price == "10.000000" &&
+              buys(0).amount == "5.00000" &&
+              buys(0).total == "0.50000"
+          )
+          assert(sells.isEmpty)
+        case _ => assert(false)
+      }
 
     }
   }

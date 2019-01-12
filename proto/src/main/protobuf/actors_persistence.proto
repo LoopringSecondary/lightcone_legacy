@@ -22,6 +22,7 @@ package org.loopring.lightcone.proto;
 import "common.proto";
 import "core.proto";
 import "actors_data.proto";
+import "ethereum.proto";
 
 /////////////////////////////////////////////////////////////////////
 // TWO WAY DATABASE-RELATED REQUEST-RESPONSES
@@ -163,5 +164,66 @@ message UpdateTxInBlock {
 
     message Res {
         ErrorCode error = 1;
+    }
+}
+
+message TransactionRecord {
+    enum RecordType {
+        TRANSFER        = 0;
+        ERC20_TRANSFER  = 1;
+        ORDER_FILLED    = 2;
+        ORDER_CANCELLED = 3;
+    }
+    message EventData {
+        oneof event {
+            TransferEvent        transfer       = 101;
+            OrdersCancelledEvent orderCancelled = 102;
+            CutoffEvent          cutoff         = 103;
+            OrderFilledEvent     filled         = 104;
+        }
+    }
+    EventHeader header       = 1;
+    string      owner        = 2;
+    RecordType  record_type  = 3;
+    string      trading_pair = 4;
+    string      market       = 5; // LRC-WETH
+    int64       sequence_id  = 6;
+    EventData   event_data   = 7;
+}
+
+message PersistTransactionRecord {
+    message Req {
+        TransactionRecord transaction   = 1;
+    }
+    message Res {
+        bool       already_exist = 1;
+        ErrorCode  error         = 2;
+    }
+}
+
+message GetTransactionRecords {
+    message QueryType {
+        TransactionRecord.RecordType value  = 1;
+    }
+    message Req {
+        string        owner       = 1;
+        QueryType     query_type  = 2;
+        SortingType   sort        = 3;
+        CursorPaging  paging      = 4;
+    }
+
+    message Res {
+        repeated TransactionRecord transactions = 1;
+    }
+}
+
+message GetTransactionRecordCount {
+    message Req {
+        string                     owner       = 1;
+        GetTransactionRecords.QueryType  query_type  = 2;
+    }
+
+    message Res {
+        int32 count = 1;
     }
 }

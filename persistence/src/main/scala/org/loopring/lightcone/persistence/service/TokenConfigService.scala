@@ -22,7 +22,5 @@ import scala.concurrent.Future
 trait TokenConfigService {
   def saveConfigs(configs: Seq[TokenConfig]): Future[Int]
   def getAllConfigs(): Future[Seq[TokenConfig]]
-  def getConfig(address: String): Future[Option[TokenConfig]]
-  def getConfigs(addresses: Seq[String]): Future[Seq[TokenConfig]]
   def updateConfig(config: TokenConfig): Future[Int]
 }

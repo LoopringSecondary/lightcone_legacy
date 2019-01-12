@@ -102,7 +102,7 @@ class AccountManagerActor(
         ActorRecover.OrderRecoverResult(xraworder.id, true)
       }.sendTo(sender)
 
-    case GetBalanceAndAllowances.Req(addr, tokens) =>
+    case GetBalanceAndAllowances.Req(addr, tokens, _) =>
       assert(addr == address)
       (for {
         managers <- getTokenManagers(tokens)

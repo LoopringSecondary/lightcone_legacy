@@ -29,9 +29,9 @@ import scala.concurrent._
 import org.slf4s.Logging
 import com.google.inject.Inject
 
-trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
+trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMeta] {
 
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMetadata]]
+  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMeta]]
 
   def updateBurnRate(
       token: String,

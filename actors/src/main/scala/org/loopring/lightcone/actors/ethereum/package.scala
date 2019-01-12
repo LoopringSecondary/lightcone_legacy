@@ -20,9 +20,7 @@ import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.write
 import org.json4s._
-import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
-import org.web3j.utils.Numeric
 
 package object ethereum {
 
@@ -57,10 +55,5 @@ package object ethereum {
       id: Int,
       method: String,
       params: Seq[Any])
-
-  val erc20Abi = ERC20ABI()
-  val tradeHistoryAbi = TradeHistoryAbi()
-  val ringSubmitterAbi = RingSubmitterAbi()
-  val burnRateTableAbi = BurnRateTableAbi()
 
 }

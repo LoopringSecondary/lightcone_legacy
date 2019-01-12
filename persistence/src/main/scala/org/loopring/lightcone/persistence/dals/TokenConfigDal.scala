@@ -24,7 +24,5 @@ import scala.concurrent.Future
 trait TokenConfigDal extends BaseDalImpl[TokenConfigTable, TokenConfig] {
   def saveConfigs(configs: Seq[TokenConfig]): Future[Int]
   def getAllConfigs(): Future[Seq[TokenConfig]]
-  def getConfig(address: String): Future[Option[TokenConfig]]
-  def getConfigs(addresses: Seq[String]): Future[Seq[TokenConfig]]
   def updateConfig(config: TokenConfig): Future[Int]
 }

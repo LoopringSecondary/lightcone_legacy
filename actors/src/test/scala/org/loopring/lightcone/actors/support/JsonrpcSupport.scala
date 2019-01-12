@@ -16,14 +16,21 @@
 
 package org.loopring.lightcone.actors.support
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.Props
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model._
 import org.loopring.lightcone.actors.RpcBinding
 import org.loopring.lightcone.actors.entrypoint.EntryPointActor
-import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
+import org.loopring.lightcone.actors.jsonrpc.{JsonRpcServer, JsonSupport}
+import org.rnorth.ducttape.TimeoutException
+import org.rnorth.ducttape.unreliables.Unreliables
+import org.testcontainers.containers.ContainerLaunchException
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 
-trait JsonrpcSupport {
+trait JsonrpcSupport extends JsonSupport {
   my: CommonSpec =>
   actors.add(
     EntryPointActor.name,
@@ -33,5 +40,34 @@ trait JsonrpcSupport {
   val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
   with RpcBinding
   Future { server.start }
-  Thread.sleep(5000)
+
+  //必须等待jsonRpcServer启动完成
+  try Unreliables.retryUntilTrue(
+    10,
+    TimeUnit.SECONDS,
+    () => {
+      val f = Http().singleRequest(
+        HttpRequest(
+          method = HttpMethods.POST,
+          entity = HttpEntity(
+            ContentTypes.`application/json`,
+            serialization.write("[]")
+          ),
+          uri = Uri(
+            s"http://127.0.0.1:${config.getString("jsonrpc.http.port")}/" +
+              s"${config.getString("jsonrpc.endpoint")}/${config.getString("jsonrpc.loopring")}"
+          )
+        )
+      )
+      val res = Await.result(f, timeout.duration)
+      res.status.intValue() <= 500
+    }
+  )
+  catch {
+    case e: TimeoutException =>
+      throw new ContainerLaunchException(
+        "Timed out waiting for jsonrpcServer starting.)"
+      )
+  }
+
 }

@@ -17,13 +17,11 @@
 package org.loopring.lightcone.persistence.tables
 
 import org.loopring.lightcone.persistence.base._
-import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
-import com.google.protobuf.ByteString
 
 class TokenMetadataTable(tag: Tag)
-    extends BaseTable[TokenMetadata](tag, "T_TOKEN_METADATA") {
+    extends BaseTable[TokenMeta](tag, "T_TOKEN_METADATA") {
 
   def id = address
   def address = columnAddress("address")
@@ -33,5 +31,5 @@ class TokenMetadataTable(tag: Tag)
   def currentPrice = column[Double]("current_price")
 
   def * =
-    (address, decimals, burnRate, symbol, currentPrice) <> ((TokenMetadata.apply _).tupled, TokenMetadata.unapply)
+    (address, decimals, burnRate, symbol, currentPrice) <> ((TokenMeta.apply _).tupled, TokenMeta.unapply)
 }

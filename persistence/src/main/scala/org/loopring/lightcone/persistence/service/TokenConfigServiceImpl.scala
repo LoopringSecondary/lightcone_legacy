@@ -32,12 +32,6 @@ class TokenConfigServiceImpl @Inject()(
 
   def getAllConfigs(): Future[Seq[TokenConfig]] = tokenConfigDal.getAllConfigs()
 
-  def getConfig(address: String): Future[Option[TokenConfig]] =
-    tokenConfigDal.getConfig(address)
-
-  def getConfigs(addresses: Seq[String]): Future[Seq[TokenConfig]] =
-    tokenConfigDal.getConfigs(addresses)
-
   def updateConfig(config: TokenConfig): Future[Int] =
     tokenConfigDal.updateConfig(config)
 }

@@ -32,10 +32,10 @@ trait OrderAwareSpec extends CommonSpec {
   val WETH = "0x00000000004"
 
   implicit val tm = new TokenManager()
-    .addToken(TokenMetadata(LRC, 0, 0.1, "LRC", 1.0))
-    .addToken(TokenMetadata(GTO, 10, 0.2, "GTO", 1400.0))
-    .addToken(TokenMetadata(DAI, 20, 0.3, "DAI", 7.0))
-    .addToken(TokenMetadata(WETH, 23, 0.4, "WETH", 0.5))
+    .addToken(TokenMeta(LRC, 0, 0.1, "LRC", 1.0))
+    .addToken(TokenMeta(GTO, 10, 0.2, "GTO", 1400.0))
+    .addToken(TokenMeta(DAI, 20, 0.3, "DAI", 7.0))
+    .addToken(TokenMeta(WETH, 23, 0.4, "WETH", 0.5))
 
   implicit val tve = new TokenValueEvaluator
 

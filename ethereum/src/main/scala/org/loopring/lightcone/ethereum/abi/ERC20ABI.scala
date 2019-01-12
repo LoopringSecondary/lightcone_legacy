@@ -65,42 +65,55 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
       data: String,
       topics: Array[String]
     ): Option[Any] = {
-    val event: SABI.Event = abi.findEvent(
-      searchBySignature(Numeric.hexStringToByteArray(topics.head))
-    )
-    event match {
-      case _: SABI.Event =>
-        event.name match {
-          case ApprovalEvent.name =>
-            approvalEvent.unpack(data, topics)
-          case TransferEvent.name =>
-            transferEvent.unpack(data, topics)
-          case _ => None
-        }
-      case _ => None
+
+    try {
+      val event: SABI.Event = abi.findEvent(
+        searchBySignature(
+          Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
+        )
+      )
+      event match {
+        case _: SABI.Event =>
+          event.name match {
+            case ApprovalEvent.name =>
+              approvalEvent.unpack(data, topics)
+            case TransferEvent.name =>
+              transferEvent.unpack(data, topics)
+            case _ => None
+          }
+        case _ => None
+      }
+    } catch {
+      case _: Throwable => None
     }
   }
 
   override def unpackFunctionInput(data: String): Option[Any] = {
-    val funSig =
-      Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
-    val func = abi.findFunction(searchBySignature(funSig))
-    func match {
-      case _: SABI.Function =>
-        func.name match {
-          case TransferFunction.name =>
-            transfer.unpackInput(data)
-          case TransferFromFunction.name =>
-            transferFrom.unpackInput(data)
-          case ApproveFunction.name =>
-            approve.unpackInput(data)
-          case BalanceOfFunction.name =>
-            balanceOf.unpackInput(data)
-          case AllowanceFunction.name =>
-            allowance.unpackInput(data)
-          case _ => None
-        }
-      case _ => None
+    try {
+      val funSig =
+        Numeric.hexStringToByteArray(
+          Numeric.cleanHexPrefix(data).substring(0, 8)
+        )
+      val func = abi.findFunction(searchBySignature(funSig))
+      func match {
+        case _: SABI.Function =>
+          func.name match {
+            case TransferFunction.name =>
+              transfer.unpackInput(data)
+            case TransferFromFunction.name =>
+              transferFrom.unpackInput(data)
+            case ApproveFunction.name =>
+              approve.unpackInput(data)
+            case BalanceOfFunction.name =>
+              balanceOf.unpackInput(data)
+            case AllowanceFunction.name =>
+              allowance.unpackInput(data)
+            case _ => None
+          }
+        case _ => None
+      }
+    } catch {
+      case _: Throwable => None
     }
   }
 
@@ -194,7 +207,7 @@ object TransferEvent {
   def apply(event: SABI.Event): TransferEvent = new TransferEvent(event)
 
   case class Result(
-      @(ContractAnnotation @field)("sender", 0) sender: String,
+      @(ContractAnnotation @field)("from", 0) from: String,
       @(ContractAnnotation @field)("receiver", 1) receiver: String,
       @(ContractAnnotation @field)("amount", 2) amount: BigInt)
 

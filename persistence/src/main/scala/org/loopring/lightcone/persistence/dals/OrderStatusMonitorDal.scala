@@ -36,29 +36,3 @@ trait OrderStatusMonitorDal
     ): Future[Option[OrderStatusMonitor]]
 
 }
-
-class OrderStatusMonitorDalImpl @Inject()(
-    implicit
-    val ec: ExecutionContext,
-    @Named("dbconfig-dal-order-status-monitor") val dbConfig: DatabaseConfig[
-      JdbcProfile
-    ])
-    extends OrderStatusMonitorDal {
-  val query = TableQuery[OrderStatusMonitorTable]
-
-  def updateLatestProcessingTime(event: OrderStatusMonitor): Future[Int] = {
-    db.run(query.insertOrUpdate(event))
-  }
-
-  def getLatestProcessingTime(
-      monitoringType: String
-    ): Future[Option[OrderStatusMonitor]] =
-    db.run(
-      query
-        .filter(_.monitoringType === monitoringType)
-        .take(1)
-        .result
-        .headOption
-    )
-
-}

@@ -32,7 +32,7 @@ import scala.concurrent._
 
 // Owner: Yongfeng
 object OrderPersistenceActor extends ShardedEvenly {
-  val name = "order_handler"
+  val name = "order_persistence"
 
   def start(
       implicit
