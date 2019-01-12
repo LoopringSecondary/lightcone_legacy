@@ -163,19 +163,22 @@ message EthereumProxySettings {
 }
 
 message TokenConfig {
-    string address    = 1;
-    string symbol     = 2;
-    int32  decimals   = 3;
-    string name       = 4;
-    string unit       = 5;
-    string website    = 6;
-    int32  precision  = 7;
-    double burnRate   = 8;
-    double current_price = 9;
-    bool   is_support_transfer = 10; // 1:support
-    bool   is_support_trade = 11; // 1:support
-    int64  created_at = 12;
-    int64  updated_at = 13;
+    message Metadata {
+        double burnRate   = 1;
+        double current_price = 2;
+    }
+    string   address    = 1;
+    string   symbol     = 2;
+    int32    decimals   = 3;
+    string   name       = 4;
+    string   unit       = 5;
+    string   website    = 6;
+    int32    precision  = 7;
+    bool     is_support_transfer = 8; // 1:support
+    bool     is_support_trade = 9; // 1:support
+    Metadata metadata = 10;
+    int64    created_at = 11;
+    int64    updated_at = 12;
 }
 
 //TODO du: delete,合并入TokenConfig
