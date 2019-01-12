@@ -37,5 +37,22 @@ class TokenBurnRateEventExtractor @Inject()(implicit config: Config)
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[TokenBurnRateChangedEvent] = ???
+    ): Seq[TokenBurnRateChangedEvent] = {
+    val header = getEventHeader(tx, receipt, blockTime)
+    receipt.logs.zipWithIndex.map { item =>
+      val (log, index) = item
+      loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+        case Some(event: TokenTierUpgradedEvent.Result) =>
+          Some(
+            TokenBurnRateChangedEvent(
+              header = Some(header.withLogIndex(index)),
+              token = event.add,
+              burnRate = rateMap(event.tier.intValue()) / base.toDouble
+            )
+          )
+        case _ =>
+          None
+      }
+    }.filter(_.nonEmpty).map(_.get)
+  }
 }

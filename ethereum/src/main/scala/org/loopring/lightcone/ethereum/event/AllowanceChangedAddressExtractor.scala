@@ -20,7 +20,12 @@ import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.{
+  AddressAllowanceUpdated,
+  Transaction,
+  TransactionReceipt
+}
+
 import scala.collection.mutable.ListBuffer
 
 class AllowanceChangedAddressExtractor @Inject()(implicit config: Config)
@@ -34,5 +39,35 @@ class AllowanceChangedAddressExtractor @Inject()(implicit config: Config)
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[AddressAllowanceUpdated] = ???
+    ): Seq[AddressAllowanceUpdated] = {
+    val allowanceAddresses = ListBuffer.empty[AddressAllowanceUpdated]
+    receipt.logs.foreach { log =>
+      wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+        case Some(transfer: TransferEvent.Result) =>
+          if (Address(receipt.to).equals(protocolAddress))
+            allowanceAddresses.append(
+              AddressAllowanceUpdated(transfer.from, log.address)
+            )
+
+        case Some(approval: ApprovalEvent.Result) =>
+          if (Address(approval.spender).equals(delegateAddress))
+            allowanceAddresses.append(
+              AddressAllowanceUpdated(approval.owner, log.address)
+            )
+        case _ =>
+      }
+    }
+    if (isSucceed(receipt.status)) {
+      wethAbi.unpackFunctionInput(tx.input) match {
+        case Some(param: ApproveFunction.Parms) =>
+          if (Address(param.spender).equals(delegateAddress))
+            allowanceAddresses.append(
+              AddressAllowanceUpdated(tx.from, tx.to)
+            )
+        case _ =>
+      }
+    }
+
+    allowanceAddresses.distinct
+  }
 }

@@ -44,35 +44,49 @@ class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
       data: String,
       topics: Array[String]
     ): Option[Any] = {
-    val event: SABI.Event = abi.findEvent(
-      searchBySignature(Numeric.hexStringToByteArray(topics.head))
-    )
-    event match {
-      case _: SABI.Event =>
-        event.name match {
-          case RingMinedEvent.name =>
-            ringMinedEvent.unpack(data, topics)
-          case InvalidRingEvent.name =>
-            invalidRingEvent.unpack(data, topics)
-          case _ => None
-        }
-      case _ => None
+
+    try {
+      val event: SABI.Event = abi.findEvent(
+        searchBySignature(
+          Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
+        )
+      )
+      event match {
+        case _: SABI.Event =>
+          event.name match {
+            case RingMinedEvent.name =>
+              ringMinedEvent.unpack(data, topics)
+            case InvalidRingEvent.name =>
+              invalidRingEvent.unpack(data, topics)
+            case _ => None
+          }
+        case _ => None
+      }
+    } catch {
+      case _: Throwable => None
     }
   }
 
   override def unpackFunctionInput(data: String): Option[Any] = {
-    val funSig =
-      Numeric.hexStringToByteArray(Numeric.cleanHexPrefix(data).substring(0, 8))
-    val func = abi.findFunction(searchBySignature(funSig))
-    func match {
-      case _: SABI.Function =>
-        func.name match {
-          case SubmitRingsFunction.name =>
-            submitRing.unpackInput(data)
-          case _ => None
-        }
-      case _ => None
+    try {
+      val funSig =
+        Numeric.hexStringToByteArray(
+          Numeric.cleanHexPrefix(data).substring(0, 8)
+        )
+      val func = abi.findFunction(searchBySignature(funSig))
+      func match {
+        case _: SABI.Function =>
+          func.name match {
+            case SubmitRingsFunction.name =>
+              submitRing.unpackInput(data)
+            case _ => None
+          }
+        case _ => None
+      }
+    } catch {
+      case _: Throwable => None
     }
+
   }
 
 }
