@@ -181,9 +181,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
     assert(pendingRingPool.ringMap.size == 10)
     assert(pendingRingPool.orderMap.size == 20)
     assert(pendingRingPool.getOrderPendingAmountS(hash("taker-1")) == 100)
-    assert(
-      pendingRingPool.getOrderPendingAmountS(hash("taker-new-1")) == 0
-    )
+    assert(pendingRingPool.getOrderPendingAmountS(hash("taker-new-1")) == 0)
     assert(pendingRingPool.getOrderPendingAmountS(hash("maker-1")) == 100)
     assert(pendingRingPool.getOrderPendingAmountS(hash("maker-2")) == 100)
 
