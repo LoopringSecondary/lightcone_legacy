@@ -110,8 +110,6 @@ class CoreModule(config: Config)
       .to[OrderStatusMonitorServiceImpl]
       .asEagerSingleton
 
-    bind[BlockService].to[BlockServiceImpl].asEagerSingleton
-
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton
     bind[TokenManager].asEagerSingleton

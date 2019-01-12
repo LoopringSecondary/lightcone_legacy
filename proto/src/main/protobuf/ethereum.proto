@@ -325,4 +325,3 @@ message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
     string fee_recipient = 4;
     repeated OrderFilledEvent fills = 5;
 }
-
