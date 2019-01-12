@@ -42,17 +42,9 @@ class RingSettlementSpec
   override def beforeAll(): Unit = {
     val f = Future.sequence(
       Seq(
-        transferEth(
-          account1.getAddress,
-          "10"
-        )(accounts(0)),
-        transferLRC(
-          account1.getAddress,
-          "30"
-        )(accounts(0)),
-        approveLRCToDelegate(
-          "30"
-        )(account1)
+        transferEth(account1.getAddress, "10")(accounts(0)),
+        transferLRC(account1.getAddress, "30")(accounts(0)),
+        approveLRCToDelegate("30")(account1)
       )
     )
 

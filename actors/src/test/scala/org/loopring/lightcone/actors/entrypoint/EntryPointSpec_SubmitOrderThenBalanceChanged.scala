@@ -40,14 +40,8 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
   override def beforeAll(): Unit = {
     val f = Future.sequence(
       Seq(
-        transferEth(
-          account.getAddress,
-          "10"
-        )(accounts(0)),
-        transferLRC(
-          account.getAddress,
-          "25"
-        )(accounts(0))
+        transferEth(account.getAddress, "10")(accounts(0)),
+        transferLRC(account.getAddress, "25")(accounts(0))
       )
     )
 

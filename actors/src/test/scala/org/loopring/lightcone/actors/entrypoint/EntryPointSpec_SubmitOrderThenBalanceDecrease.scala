@@ -42,17 +42,9 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
     info("set the balance and allowance is enough befor submit an order")
     val f = Future.sequence(
       Seq(
-        transferEth(
-          account.getAddress,
-          "10"
-        )(accounts(0)),
-        transferLRC(
-          account.getAddress,
-          "25"
-        )(accounts(0)),
-        approveLRCToDelegate(
-          "25"
-        )(account)
+        transferEth(account.getAddress, "10")(accounts(0)),
+        transferLRC(account.getAddress, "25")(accounts(0)),
+        approveLRCToDelegate("25")(account)
       )
     )
 
@@ -120,14 +112,8 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       }
 
       info("then make balance is not enough.")
-      val setAllowanceF = Future.sequence(
-        Seq(
-          transferLRC(
-            accounts(0).getAddress,
-            "10"
-          )(account)
-        )
-      )
+      val setAllowanceF =
+        Future.sequence(Seq(transferLRC(accounts(0).getAddress, "10")(account)))
       Await.result(setAllowanceF, timeout.duration)
 
       actors.get(MultiAccountManagerActor.name) ? AddressBalanceUpdated(

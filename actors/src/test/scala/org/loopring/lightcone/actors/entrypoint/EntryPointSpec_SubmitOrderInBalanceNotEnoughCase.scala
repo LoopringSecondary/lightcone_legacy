@@ -38,17 +38,9 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
   override def beforeAll(): Unit = {
     val f = Future.sequence(
       Seq(
-        transferEth(
-          account.getAddress,
-          "10"
-        )(accounts(0)),
-        transferLRC(
-          account.getAddress,
-          "30"
-        )(accounts(0)),
-        approveLRCToDelegate(
-          "30"
-        )(account)
+        transferEth(account.getAddress, "10")(accounts(0)),
+        transferLRC(account.getAddress, "30")(accounts(0)),
+        approveLRCToDelegate("30")(account)
       )
     )
 
