@@ -25,9 +25,18 @@ import net.codingwell.scalaguice.InjectorExtensions._
 import akka.actor._
 import scala.io.StdIn
 import java.io.File
+import kamon.Kamon
+import kamon.prometheus.PrometheusReporter
+import kamon.zipkin.ZipkinReporter
+import kamon.datadog.DatadogAgentReporter
+import scala.util.Try
 
 // Owner: Daniel
 object Main extends App with Logging {
+  // TODO(hongyu): choose one only
+  Kamon.addReporter(new PrometheusReporter())
+  Kamon.addReporter(new ZipkinReporter())
+  Kamon.addReporter(new DatadogAgentReporter())
 
   val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
 
@@ -53,7 +62,7 @@ object Main extends App with Logging {
     log.info(s"--> $i = ${config.getString(i)}")
   }
 
-  sys.ShutdownHookThread { system.terminate() }
+  sys.ShutdownHookThread { terminiate() }
 
   val injector = Guice.createInjector(new CoreModule(config))
   val system = injector.instance[ActorSystem]
@@ -62,9 +71,13 @@ object Main extends App with Logging {
 
   println(s"type `stopstopstop` to terminate")
 
-  while ("stopstopstop" != StdIn.readLine())
+  while ("stopstopstop" != StdIn.readLine()) {}
 
-  //Shutdown
-  system.terminate()
+  terminiate()
+
+  private def terminiate() = {
+    Try(system.terminate())
+    // Try(Kamon.shutdown())
+  }
 
 }
