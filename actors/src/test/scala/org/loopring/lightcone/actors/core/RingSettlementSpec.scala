@@ -73,6 +73,7 @@ class RingSettlementSpec
         amountS = order1.amountB
       )(account0)
 
+      info("submit the first order.")
       val submitOrder1F =
         singleRequest(SubmitOrder.Req(Some(order1)), submit_order)
           .mapAs[SubmitOrder.Res]
@@ -94,6 +95,7 @@ class RingSettlementSpec
         case _ => assert(false)
       }
 
+      info("submit the second order.")
       val submitOrder2F =
         singleRequest(SubmitOrder.Req(Some(order2)), submit_order)
           .mapAs[SubmitOrder.Res]
@@ -101,7 +103,7 @@ class RingSettlementSpec
 
       val orderbookRes2 = expectOrderbookRes(
         getOrderBook1,
-        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+        (orderbook: Orderbook) => orderbook.sells.isEmpty
       )
       //todo(yadong): 该处判断应该是什么
       info(s"${orderbookRes2}")
