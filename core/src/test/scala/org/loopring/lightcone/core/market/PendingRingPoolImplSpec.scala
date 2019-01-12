@@ -32,7 +32,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
     (0 until 10) foreach { i =>
       val makerExpectFill = ExpectedMatchableFill(
         order = Matchable(
-          id = hash(s"maker-${i}"),
+          id = hash(s"maker-$i"),
           tokenS = LRC,
           tokenB = WETH,
           tokenFee = LRC,
@@ -43,7 +43,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
       )
       val takerExpectFill = ExpectedMatchableFill(
         order = Matchable(
-          id = hash(s"taker-${i}"),
+          id = hash(s"taker-$i"),
           tokenS = WETH,
           tokenB = LRC,
           tokenFee = LRC,
