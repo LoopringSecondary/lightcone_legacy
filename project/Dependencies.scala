@@ -6,6 +6,7 @@ object Dependencies {
   val akkaVersion = "2.5.18"
   val json4sVersion = "3.6.2"
   val scalapbVersion = scalapb.compiler.Version.scalapbVersion
+  val kamonVersion = "1.0.1"
 
   lazy val testDependency = Seq(
     "org.scalatest" %% "scalatest" % "3.0.5" % Test,
@@ -58,6 +59,15 @@ object Dependencies {
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion,
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf")
 
+  lazy val monitoringDependencies = Seq(
+    "io.kamon" %% "kamon-core" % "1.1.0",
+    "io.kamon" %% "kamon-jmx" % "0.6.7",
+    "io.kamon" %% "kamon-akka-2.5" % "1.0.1",
+    "io.kamon" %% "kamon-akka-http-2.5" % "1.0.1",
+    "io.kamon" %% "kamon-zipkin" % "1.0.0",
+    "io.kamon" %% "kamon-datadog" % "1.0.0",
+    "io.kamon" %% "kamon-prometheus" % "1.1.1")
+
   lazy val dependency4Lib = commonDependency ++
     json4sDependency ++
     testDependency
@@ -85,6 +95,7 @@ object Dependencies {
     httpDependency ++
     akkaDependency ++
     json4sDependency ++
+    monitoringDependencies ++
     testDependency
 
   lazy val dependency4Indexer = dependency4Persistence ++
