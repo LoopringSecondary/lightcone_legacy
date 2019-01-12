@@ -16,24 +16,19 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern._
-import akka.util.Timeout
-import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.lib.MarketHashProvider
-import org.loopring.lightcone.proto
 import org.loopring.lightcone.proto._
 
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.Await
 
 class CoreActorsIntegrationSpec_CancelOneOrder
     extends CommonSpec
     with OrderHandleSupport
     with MultiAccountManagerSupport
+    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with EthereumQueryMockSupport
     with OrderGenerateSupport {
 
   "submiting one from OrderHandleActor" must {

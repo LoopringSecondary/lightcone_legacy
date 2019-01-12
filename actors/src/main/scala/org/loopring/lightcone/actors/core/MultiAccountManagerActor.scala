@@ -163,10 +163,11 @@ class MultiAccountManagerActor(
     case req: Any => handleRequest(req)
   }
 
+  //todo(hongyu):以太坊的事件如 AddressBalanceUpdated和AddressAllowanceUpdated 不应该触发创建AccountManagerActor
   private def handleRequest(req: Any) = extractAddress(req) match {
     case Some(address) => accountManagerActorFor(address) forward req
     case None =>
-      throw ErrorException(
+      sender ! Error(
         ERR_UNEXPECTED_ACTOR_MSG,
         s"$req cannot be handled by ${getClass.getName}"
       )

@@ -16,18 +16,26 @@
 
 package org.loopring.lightcone.actors.support
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.Props
-import akka.routing.RoundRobinPool
+import akka.pattern._
+import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.proto.{EthereumProxySettings, JsonRpc}
+import org.loopring.lightcone.ethereum.data.Transaction
+import org.loopring.lightcone.ethereum.ethereum.getSignedTxData
+import org.loopring.lightcone.proto._
+import org.rnorth.ducttape.TimeoutException
+import org.rnorth.ducttape.unreliables.Unreliables
+import org.testcontainers.containers.ContainerLaunchException
+import org.web3j.crypto.Credentials
+import org.web3j.utils.Numeric
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
-import scala.util.Random
-import akka.pattern._
-import scala.concurrent.duration._
+import scala.concurrent.Await
 
 trait EthereumSupport {
   my: CommonSpec =>
@@ -49,13 +57,17 @@ trait EthereumSupport {
     actors.add(GasPriceActor.name, GasPriceActor.start)
   }
 
-  val ethMonitorConfig = config.getConfig(EthereumClientMonitor.name)
-  val poolSize = ethMonitorConfig.getInt("pool-size")
+  val poolSize =
+    config.getConfig(EthereumClientMonitor.name).getInt("pool-size")
 
-  val nodesConfig = ethMonitorConfig.getConfigList("nodes").asScala.map { c =>
-    EthereumProxySettings
-      .Node(host = c.getString("host"), port = c.getInt("port"))
-  }
+  val nodesConfig = ConfigFactory
+    .parseString(ethNodesConfigStr)
+    .getConfigList("nodes")
+    .asScala
+    .map { c =>
+      EthereumProxySettings
+        .Node(host = c.getString("host"), port = c.getInt("port"))
+    }
 
   val connectionPools = (nodesConfig.zipWithIndex.map {
     case (node, index) =>
@@ -65,10 +77,190 @@ trait EthereumSupport {
       system.actorOf(props, nodeName)
   }).toSeq
 
-  Thread.sleep(2000) //需要等待HttpConnector初始化，完成1s不足，需要2s
+  val blockNumJsonRpcReq = JsonRpc.Request(
+    "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":64}"
+  )
+
+  //必须等待connectionPools启动完毕才能启动monitor和accessActor
+  try Unreliables.retryUntilTrue(
+    10,
+    TimeUnit.SECONDS,
+    () => {
+      val f =
+        (connectionPools(0) ? blockNumJsonRpcReq).mapTo[JsonRpc.Response]
+      val res = Await.result(f, timeout.duration)
+      res.json != ""
+    }
+  )
+  catch {
+    case e: TimeoutException =>
+      throw new ContainerLaunchException(
+        "Timed out waiting for connectionPools init.)"
+      )
+  }
+
   actors.add(
     EthereumClientMonitor.name,
     EthereumClientMonitor.start(connectionPools)
   )
   actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
+
+  def transferEth(
+      to: String,
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val tx = Transaction(
+      inputData = "",
+      nonce = 0,
+      gasLimit = BigInt("210000"),
+      gasPrice = BigInt("200000"),
+      to = to,
+      value = amountStr.zeros(WETH_TOKEN.decimals)
+    )
+    sendTransaction(tx)
+  }
+
+  def transferErc20(
+      to: String,
+      token: String,
+      amount: BigInt
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val input = erc20Abi.transfer.pack(
+      TransferFunction.Parms(to, amount)
+    )
+    val tx = Transaction(
+      inputData = input,
+      nonce = 0,
+      gasLimit = BigInt("210000"),
+      gasPrice = BigInt("200000"),
+      to = token,
+      value = 0
+    )
+    sendTransaction(tx)
+  }
+
+  def transferWETH(
+      to: String,
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    transferErc20(to, WETH_TOKEN.address, amountStr.zeros(WETH_TOKEN.decimals))
+  }
+
+  def transferLRC(
+      to: String,
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    transferErc20(to, LRC_TOKEN.address, amountStr.zeros(LRC_TOKEN.decimals))
+  }
+
+  def transferGTO(
+      to: String,
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    transferErc20(to, GTO_TOKEN.address, amountStr.zeros(GTO_TOKEN.decimals))
+  }
+
+  def approveErc20(
+      spender: String,
+      token: String,
+      amount: BigInt
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val input = erc20Abi.approve.pack(
+      ApproveFunction.Parms(spender, amount)
+    )
+    val tx = Transaction(
+      inputData = input,
+      nonce = 0,
+      gasLimit = BigInt("210000"),
+      gasPrice = BigInt("200000"),
+      to = token,
+      value = 0
+    )
+    sendTransaction(tx)
+  }
+
+  def approveWETHToDelegate(
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    approveErc20(
+      config.getString("loopring_protocol.delegate-address"),
+      WETH_TOKEN.address,
+      amountStr.zeros(WETH_TOKEN.decimals)
+    )
+  }
+
+  def approveLRCToDelegate(
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    approveErc20(
+      config.getString("loopring_protocol.delegate-address"),
+      LRC_TOKEN.address,
+      amountStr.zeros(LRC_TOKEN.decimals)
+    )
+  }
+
+  def approveGTOToDelegate(
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    approveErc20(
+      config.getString("loopring_protocol.delegate-address"),
+      GTO_TOKEN.address,
+      amountStr.zeros(GTO_TOKEN.decimals)
+    )
+  }
+
+  def sendTransaction(
+      txWithoutNonce: Transaction
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val getNonceF = (actors.get(EthereumAccessActor.name) ? GetNonce.Req(
+      credentials.getAddress,
+      "latest"
+    ))
+    val getNonceRes =
+      Await.result(getNonceF.mapTo[GetNonce.Res], timeout.duration)
+    val tx = txWithoutNonce.copy(
+      nonce = Numeric.toBigInt(getNonceRes.result).intValue()
+    )
+    actors.get(EthereumAccessActor.name) ? SendRawTransaction.Req(
+      getSignedTxData(tx)
+    )
+  }
+
+  def getUniqueAccountWithoutEth = {
+    Credentials.create(
+      Numeric.toHexStringWithPrefix(
+        BigInt(addressGenerator.getAndIncrement()).bigInteger
+      )
+    )
+  }
 }

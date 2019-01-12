@@ -16,11 +16,10 @@
 
 package org.loopring.lightcone.actors.jsonrpc
 
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto
 import org.loopring.lightcone.proto._
+
 import scala.concurrent.Await
 
 class JrpcSpec
@@ -44,8 +43,8 @@ class JrpcSpec
           2,
           Some(
             MarketId(
-              "0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1",
-              "0x8B75225571ff31B58F95C704E05044D5CF6B32BF"
+              LRC_TOKEN.address,
+              WETH_TOKEN.address
             )
           )
         ),

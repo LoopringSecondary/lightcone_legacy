@@ -22,7 +22,6 @@ import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
-import org.loopring.lightcone.actors.ethereum.EthereumClientMonitor
 import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
@@ -59,11 +58,9 @@ abstract class CommonSpec(configStr: String = "")
   implicit val timeProvider = new SystemTimeProvider()
   implicit val timeout = Timeout(5 second)
   implicit val ec = system.dispatcher
-  implicit val config = ConfigFactory
-    .parseString(ethConfigStr)
-    .withFallback(ConfigFactory.load())
 
-  println("########## ", config.getConfig(EthereumClientMonitor.name))
+  implicit val config = system.settings.config
+
   implicit val materializer = ActorMaterializer()(system)
   implicit val deployActorsIgnoringRoles = true
 
@@ -77,8 +74,6 @@ abstract class CommonSpec(configStr: String = "")
   tokenManager.addToken(WETH_TOKEN)
   tokenManager.addToken(LRC_TOKEN)
   tokenManager.addToken(GTO_TOKEN)
-  tokenManager.addToken(RDN_TOKEN)
-  tokenManager.addToken(REP_TOKEN)
 
   implicit val tve = new TokenValueEvaluator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
@@ -99,7 +94,7 @@ abstract class CommonSpec(configStr: String = "")
   //  system.eventStream.subscribe(listener, classOf[UnhandledMessage])
   //  system.eventStream.subscribe(listener, classOf[DeadLetter])
 
-  Thread.sleep(5000) //暂停5s，等待集群准备完毕
+  Thread.sleep(4000) //暂停4s，等待集群准备完毕
 
   implicit class RichString(s: String) {
     def zeros(size: Int): BigInt = BigInt(s + "0" * size)

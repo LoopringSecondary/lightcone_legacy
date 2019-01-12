@@ -30,6 +30,81 @@ class RingMinedEventExtractor extends EventExtractor[PRingMinedEvent] {
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[PRingMinedEvent] = ???
+    ): Seq[PRingMinedEvent] = {
+    val header = getEventHeader(tx, receipt, blockTime)
+    if (isSucceed(receipt.status)) {
+      receipt.logs.zipWithIndex.map { item =>
+        {
+          val (log, index) = item
+          loopringProtocolAbi
+            .unpackEvent(log.data, log.topics.toArray) match {
+            case Some(event: RingMinedEvent.Result) =>
+              val fillContent =
+                Numeric.cleanHexPrefix(event._fills).substring(128)
+              val orderFilledEvents =
+                (0 until (fillContent.length / fillLength)).map { index =>
+                  fillContent.substring(
+                    index * fillLength,
+                    fillLength * (index + 1)
+                  )
+                }.map { fill =>
+                  fillToOrderFilledEvent(
+                    fill,
+                    event,
+                    receipt,
+                    Some(header.withLogIndex(index))
+                  )
+                }
+              Some(
+                PRingMinedEvent(
+                  header = Some(header.withLogIndex(index)),
+                  ringIndex = event._ringIndex.longValue(),
+                  ringHash = event._ringHash,
+                  fills = orderFilledEvents
+                )
+              )
+            case _ =>
+              None
+          }
+        }
+      }.filter(_.nonEmpty).map(_.get)
+    } else {
+      ringSubmitterAbi.unpackFunctionInput(tx.input) match {
+        case Some(params: SubmitRingsFunction.Params) =>
+          val ringData = params.data
+          //TODO (yadong) 等待孔亮的提供具体的解析方法
+          Seq.empty
+        case _ =>
+          Seq.empty
+      }
+    }
+  }
+  private def fillToOrderFilledEvent(
+      fill: String,
+      event: RingMinedEvent.Result,
+      receipt: TransactionReceipt,
+      header: Option[EventHeader]
+    ): OrderFilledEvent = {
+    val data = Numeric.cleanHexPrefix(fill)
+    OrderFilledEvent(
+      header = header,
+      orderHash = Numeric.prependHexPrefix(data.substring(0, 64 * 1)),
+      owner = Address(data.substring(64 * 1, 64 * 2)).toString,
+      ringHash = event._ringHash,
+      ringIndex = event._ringIndex.longValue(),
+      filledAmountS =
+        Numeric.toBigInt(data.substring(64 * 3, 64 * 4)).toByteArray,
+      filledAmountFee = Numeric
+        .toBigInt(data.substring(64 * 5, 64 * 6))
+        .toByteArray,
+      feeAmountS = Numeric
+        .toBigInt(data.substring(64 * 6, 64 * 7))
+        .toByteArray,
+      feeAmountB = Numeric
+        .toBigInt(data.substring(64 * 7, 64 * 8))
+        .toByteArray,
+      feeRecipient = event._feeRecipient
+    )
+  }
 
 }

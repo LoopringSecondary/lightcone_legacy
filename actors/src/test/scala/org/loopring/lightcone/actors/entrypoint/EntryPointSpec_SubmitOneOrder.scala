@@ -27,7 +27,7 @@ class EntryPointSpec_SubmitOneOrder
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with EthereumQueryMockSupport
+    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport {
