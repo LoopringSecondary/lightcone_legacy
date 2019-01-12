@@ -18,7 +18,11 @@ package org.loopring.lightcone.ethereum.event
 
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.{
+  AddressBalanceUpdated,
+  Transaction,
+  TransactionReceipt
+}
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
@@ -30,5 +34,34 @@ class BalanceChangedAddressExtractor
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[AddressBalanceUpdated] = ???
+    ): Seq[AddressBalanceUpdated] = {
+    val balanceAddresses = ListBuffer(
+      AddressBalanceUpdated(tx.from, Address.ZERO.toString())
+    )
+    if (isSucceed(receipt.status) &&
+        BigInt(Numeric.toBigInt(tx.value)) > 0) {
+      balanceAddresses.append(
+        AddressBalanceUpdated(tx.to, Address.ZERO.toString())
+      )
+    }
+    receipt.logs.foreach(log => {
+      wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+        case Some(transfer: TransferEvent.Result) =>
+          balanceAddresses.append(
+            AddressBalanceUpdated(transfer.from, log.address),
+            AddressBalanceUpdated(transfer.receiver, log.address)
+          )
+        case Some(deposit: DepositEvent.Result) =>
+          balanceAddresses.append(
+            AddressBalanceUpdated(deposit.dst, log.address)
+          )
+        case Some(withdrawal: WithdrawalEvent.Result) =>
+          balanceAddresses.append(
+            AddressBalanceUpdated(withdrawal.src, log.address)
+          )
+        case _ =>
+      }
+    })
+    balanceAddresses.distinct
+  }
 }

@@ -100,4 +100,5 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
       case _ =>
     }
   }
+
 }
