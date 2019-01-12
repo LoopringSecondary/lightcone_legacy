@@ -107,7 +107,7 @@ trait EthereumSupport {
 
   def transferEth(
       to: String,
-      amount: BigInt
+      amountStr: String
     )(
       implicit
       credentials: Credentials
@@ -118,7 +118,7 @@ trait EthereumSupport {
       gasLimit = BigInt("210000"),
       gasPrice = BigInt("200000"),
       to = to,
-      value = amount
+      value = amountStr.zeros(WETH_TOKEN.decimals)
     )
     sendTransaction(tx)
   }
@@ -145,6 +145,36 @@ trait EthereumSupport {
     sendTransaction(tx)
   }
 
+  def transferWETH(
+      to: String,
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    transferErc20(to, WETH_TOKEN.address, amountStr.zeros(WETH_TOKEN.decimals))
+  }
+
+  def transferLRC(
+      to: String,
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    transferErc20(to, LRC_TOKEN.address, amountStr.zeros(LRC_TOKEN.decimals))
+  }
+
+  def transferGTO(
+      to: String,
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    transferErc20(to, GTO_TOKEN.address, amountStr.zeros(GTO_TOKEN.decimals))
+  }
+
   def approveErc20(
       spender: String,
       token: String,
@@ -165,6 +195,45 @@ trait EthereumSupport {
       value = 0
     )
     sendTransaction(tx)
+  }
+
+  def approveWETHToDelegate(
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    approveErc20(
+      config.getString("loopring_protocol.delegate-address"),
+      WETH_TOKEN.address,
+      amountStr.zeros(WETH_TOKEN.decimals)
+    )
+  }
+
+  def approveLRCToDelegate(
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    approveErc20(
+      config.getString("loopring_protocol.delegate-address"),
+      LRC_TOKEN.address,
+      amountStr.zeros(LRC_TOKEN.decimals)
+    )
+  }
+
+  def approveGTOToDelegate(
+      amountStr: String
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    approveErc20(
+      config.getString("loopring_protocol.delegate-address"),
+      GTO_TOKEN.address,
+      amountStr.zeros(GTO_TOKEN.decimals)
+    )
   }
 
   def sendTransaction(

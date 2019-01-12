@@ -40,17 +40,14 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       Seq(
         transferEth(
           account.getAddress,
-          "10".zeros(WETH_TOKEN.decimals)
+          "10"
         )(accounts(0)),
-        transferErc20(
+        transferLRC(
           account.getAddress,
-          LRC_TOKEN.address,
-          "30".zeros(LRC_TOKEN.decimals)
+          "30"
         )(accounts(0)),
-        approveErc20(
-          config.getString("loopring_protocol.delegate-address"),
-          LRC_TOKEN.address,
-          "30".zeros(LRC_TOKEN.decimals)
+        approveLRCToDelegate(
+          "30"
         )(account)
       )
     )

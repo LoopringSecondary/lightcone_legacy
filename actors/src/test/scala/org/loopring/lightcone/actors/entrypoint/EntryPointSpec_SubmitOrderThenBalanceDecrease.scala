@@ -44,17 +44,14 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       Seq(
         transferEth(
           account.getAddress,
-          "10".zeros(WETH_TOKEN.decimals)
+          "10"
         )(accounts(0)),
-        transferErc20(
+        transferLRC(
           account.getAddress,
-          LRC_TOKEN.address,
-          "25".zeros(LRC_TOKEN.decimals)
+          "25"
         )(accounts(0)),
-        approveErc20(
-          config.getString("loopring_protocol.delegate-address"),
-          LRC_TOKEN.address,
-          "25".zeros(LRC_TOKEN.decimals)
+        approveLRCToDelegate(
+          "25"
         )(account)
       )
     )
@@ -125,10 +122,9 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       info("then make balance is not enough.")
       val setAllowanceF = Future.sequence(
         Seq(
-          transferErc20(
+          transferLRC(
             accounts(0).getAddress,
-            LRC_TOKEN.address,
-            "10".zeros(LRC_TOKEN.decimals)
+            "10"
           )(account)
         )
       )

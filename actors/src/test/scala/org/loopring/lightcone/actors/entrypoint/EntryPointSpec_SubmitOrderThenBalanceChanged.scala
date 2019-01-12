@@ -42,12 +42,11 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
       Seq(
         transferEth(
           account.getAddress,
-          "10".zeros(WETH_TOKEN.decimals)
+          "10"
         )(accounts(0)),
-        transferErc20(
+        transferLRC(
           account.getAddress,
-          LRC_TOKEN.address,
-          "25".zeros(LRC_TOKEN.decimals)
+          "25"
         )(accounts(0))
       )
     )

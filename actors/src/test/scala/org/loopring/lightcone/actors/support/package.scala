@@ -104,10 +104,7 @@ package object support {
 
   ethContainer.starting()
 
-  val dbConfig1: DatabaseConfig[JdbcProfile] =
-    DatabaseConfig.forConfig[JdbcProfile](
-      "",
-      ConfigFactory.parseString(s"""
+  val mysqlConfigStr = s"""
         profile = "slick.jdbc.MySQLProfile$$"
         db {
           url="${mysqlContainer.jdbcUrl}?useSSL=false"
@@ -115,8 +112,22 @@ package object support {
           password="${mysqlContainer.password}"
           driver="${mysqlContainer.driverClassName}"
           maxThreads = 4
-        }""")
+        }"""
+
+  val dbConfig1: DatabaseConfig[JdbcProfile] =
+    DatabaseConfig.forConfig[JdbcProfile](
+      "",
+      ConfigFactory.parseString(mysqlConfigStr)
     )
+
+  val transactionRecordConfigStr = s"""
+     db.transaction-record.shard_0 {
+         $mysqlConfigStr
+     }
+     db.transaction-record.shard_1 {
+         $mysqlConfigStr
+     }
+    """.stripMargin
 
   val ethNodesConfigStr = s"""|nodes:[
                               | {
@@ -126,7 +137,7 @@ package object support {
                               |]""".stripMargin
 
   //便于生成全局唯一的地址
-  val addressGenerator = new AtomicInteger(100000000)
+  val addressGenerator = new AtomicInteger(100000)
 
   val ethConfigStr = s"""ethereum_client_monitor {
                         |    pool-size = 1
@@ -139,33 +150,5 @@ package object support {
                         |        }
                         |    ]
                         |}""".stripMargin
-
-  val transactionRecordConfigStr = s"""
-     db.transaction-record.shard_0 {
-         profile = "slick.jdbc.MySQLProfile$$"
-         db {
-           url="${mysqlContainer.jdbcUrl}?useSSL=false"
-           user="${mysqlContainer.username}"
-           password="${mysqlContainer.password}"
-           driver="${mysqlContainer.driverClassName}"
-           maxThreads = 4
-         }
-     }
-     db.transaction-record.shard_1 {
-         profile = "slick.jdbc.MySQLProfile$$"
-         db {
-           url="${mysqlContainer.jdbcUrl}?useSSL=false"
-           user="${mysqlContainer.username}"
-           password="${mysqlContainer.password}"
-           driver="${mysqlContainer.driverClassName}"
-           maxThreads = 4
-         }
-     }
-    """.stripMargin
-
-  println(s"""
-    host = ${ethContainer.containerIpAddress}
-    port = ${ethContainer.mappedPort(8545)}
-    """)
 
 }
