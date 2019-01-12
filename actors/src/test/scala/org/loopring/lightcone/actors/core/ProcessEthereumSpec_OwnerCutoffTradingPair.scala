@@ -123,7 +123,7 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
       }
 
       info(
-        "it will receive an JsonRpcErr with ERR_ORDER_VALIDATION_INVALID_CUTOFF when orders that ValidSince <= cutoff"
+        "it will receive an JsonRpcErr with ERR_ORDER_VALIDATION_INVALID_CUTOFF when submit orders that ValidSince <= cutoff"
       )
       val order3 = createRawOrder(
         validSince = timeProvider.getTimeSeconds().toInt - 100
