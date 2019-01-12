@@ -22,7 +22,8 @@ import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.ethereum.event._
 import org.loopring.lightcone.proto._
 import akka.util.Timeout
-import org.loopring.lightcone.actors.core.MultiAccountManagerActor
+import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.utils.TokenMetadataRefresher
 
 import scala.concurrent.ExecutionContext
 
@@ -69,45 +70,51 @@ object EventDispatcher {
       ec: ExecutionContext
     ): Seq[EventDispatcher[_, _]] = {
 
-    implicit val cutOffExtractor = new CutoffEventExtractor()
-    implicit val ordersCancelledExtractor = new OrdersCancelledEventExtractor()
-    implicit val tokenBurnRateExtractor = new TokenBurnRateEventExtractor()
-    implicit val transferExtractor = new TransferEventExtractor()
-    implicit val ringMinedExtractor = new RingMinedEventExtractor()
+    implicit val cutoffExtractor = new CutoffEventExtractor
+    implicit val ordersCancelledExtractor = new OrdersCancelledEventExtractor
+    implicit val tokenBurnRateExtractor = new TokenBurnRateEventExtractor
+    implicit val transferExtractor = new TransferEventExtractor
+    implicit val ringMinedExtractor = new RingMinedEventExtractor
     implicit val addressAllowanceUpdatedExtractor =
-      new AllowanceChangedAddressExtractor()
+      new AllowanceChangedAddressExtractor
     implicit val balanceChangedAddressExtractor =
-      new BalanceChangedAddressExtractor()
+      new BalanceChangedAddressExtractor
 
-    //TODO(yadong)指定具体的ActorRef name
     Seq(
-      new NameBasedEventDispatcher[CutoffEvent, CutoffEvent](Seq(""))
-      with NonDerivable[CutoffEvent],
+      new NameBasedEventDispatcher[CutoffEvent, CutoffEvent](
+        Seq(
+          TransactionRecordActor.name,
+          OrderCutoffHandlerActor.name,
+          MultiAccountManagerActor.name
+        )
+      ) with NonDerivable[CutoffEvent],
       new NameBasedEventDispatcher[OrdersCancelledEvent, OrdersCancelledEvent](
-        Seq("")
+        Seq(TransactionRecordActor.name, OrderCutoffHandlerActor.name)
       ) with NonDerivable[OrdersCancelledEvent],
       new NameBasedEventDispatcher[
         TokenBurnRateChangedEvent,
         TokenBurnRateChangedEvent
       ](
-        Seq("")
+        Seq(TokenMetadataRefresher.name)
       ) with NonDerivable[TokenBurnRateChangedEvent],
       new NameBasedEventDispatcher[TransferEvent, TransferEvent](
-        Seq("")
+        Seq(TransactionRecordActor.name)
       ) {
         def derive(event: TransferEvent): Seq[TransferEvent] = {
           Seq(event.withOwner(event.from), event.withOwner(event.to))
         }
       },
       new NameBasedEventDispatcher[RingMinedEvent, OrderFilledEvent](
-        Seq("")
+        Seq(TransactionRecordActor.name, MultiAccountManagerActor.name)
       ) {
         def derive(event: RingMinedEvent): Seq[OrderFilledEvent] = event.fills
       },
       new NameBasedEventDispatcher[RingMinedEvent, RingMinedEvent](
-        Seq(MultiAccountManagerActor.name)
+        Seq(MarketManagerActor.name)
       ) with NonDerivable[RingMinedEvent],
-      new BalanceEventDispatcher(Seq(MultiAccountManagerActor.name)),
+      new BalanceEventDispatcher(
+        Seq(MultiAccountManagerActor.name, RingSettlementManagerActor.name)
+      ),
       new AllowanceEventDispatcher(Seq(MultiAccountManagerActor.name))
     )
   }

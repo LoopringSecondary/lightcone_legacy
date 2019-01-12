@@ -41,7 +41,8 @@ class OrdersCancelledEventExtractor
               POrdersCancelledEvent(
                 header = Some(header.withLogIndex(index)),
                 broker = event.address,
-                orderHashes = event._orderHashes
+                orderHashes = event._orderHashes,
+                owner = event.address
               )
             )
           case _ =>

@@ -46,14 +46,17 @@ class RingMinedEventExtractor extends EventExtractor[PRingMinedEvent] {
                   fillContent.substring(
                     index * fillLength,
                     fillLength * (index + 1)
-                  )
-                }.map { fill =>
-                  fillToOrderFilledEvent(
-                    fill,
-                    event,
-                    receipt,
-                    Some(header.withLogIndex(index))
-                  )
+                  ) -> index
+                }.map {
+                  case (fill, eventIndex) =>
+                    fillToOrderFilledEvent(
+                      fill,
+                      event,
+                      receipt,
+                      Some(
+                        header.copy(logIndex = index, eventIndex = eventIndex)
+                      )
+                    )
                 }
               Some(
                 PRingMinedEvent(
