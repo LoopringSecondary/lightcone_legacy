@@ -33,18 +33,6 @@ class MarketConfigServiceImpl @Inject()(
   def getAllConfigs(): Future[Seq[MarketConfig]] =
     marketConfigDal.getAllConfigs()
 
-  def getConfig(marketHash: String): Future[Option[MarketConfig]] =
-    marketConfigDal.getConfig(marketHash)
-
-  def getConfig(
-      primary: String,
-      secondary: String
-    ): Future[Option[MarketConfig]] =
-    marketConfigDal.getConfig(primary, secondary)
-
-  def getConfigs(marketHashes: Seq[String]): Future[Seq[MarketConfig]] =
-    marketConfigDal.getConfigs(marketHashes)
-
   def updateConfig(config: MarketConfig): Future[Int] =
     marketConfigDal.updateConfig(config)
 }

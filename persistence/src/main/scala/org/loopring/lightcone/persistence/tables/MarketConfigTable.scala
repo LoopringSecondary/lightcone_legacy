@@ -18,22 +18,41 @@ package org.loopring.lightcone.persistence.tables
 
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.MarketConfig._
 import slick.jdbc.MySQLProfile.api._
 
 class MarketConfigTable(tag: Tag)
     extends BaseTable[MarketConfig](tag, "T_MARKET_CONFIG") {
+  implicit val operationStatusColumnType = enumColumnType(OperationStatus)
+  implicit val metadataColumnType = enumColumnType(ViewStatus)
 
   def id = marketHash
   def marketHash = columnAddress("market_hash", O.PrimaryKey)
+
+  // MarketId
   def primary = columnAddress("primary")
   def secondary = columnAddress("secondary")
+
   def maxNumbersOfOrders = column[Int]("max_numbers_of_orders")
   def priceDecimals = column[Int]("price_decimals")
   def recoverBatchSize = column[Int]("recover_batch_size")
   def levels = column[Int]("levels")
   def precisionForAmount = column[Int]("precision_for_amount")
   def precisionForTotal = column[Int]("precision_for_total")
-  def active = column[Int]("active")
+  def operationStatus = column[OperationStatus]("operation_status")
+  def viewStatus = column[ViewStatus]("view_status")
+
+  // Metadata
+  def numBuys = column[Int]("num_buys")
+  def numSells = column[Int]("num_sells")
+  def numOrders = column[Int]("num_orders")
+  def bestBuyPrice = column[Double]("best_buy_price")
+  def bestSellPrice = column[Double]("best_sell_price")
+  def latestPrice = column[Double]("latest_price")
+  def isLastTakerSell = column[Boolean]("is_last_taker_sell")
+
+  def createdAt = column[Long]("created_at")
+  def updatedAt = column[Long]("updated_at")
 
   def idx_primary_secondary =
     index("idx_primary_secondary", (primary, secondary), unique = true)
@@ -49,6 +68,22 @@ class MarketConfigTable(tag: Tag)
       MarketId.unapply(params)
     })
 
+  def metadataProjection =
+    (
+      numBuys,
+      numSells,
+      numOrders,
+      bestBuyPrice,
+      bestSellPrice,
+      latestPrice,
+      isLastTakerSell
+    ) <> ({ tuple =>
+      Option((Metadata.apply _).tupled(tuple))
+    }, { paramsOpt: Option[Metadata] =>
+      val params = paramsOpt.getOrElse(Metadata())
+      Metadata.unapply(params)
+    })
+
   def * =
     (
       marketIdProjection,
@@ -59,6 +94,10 @@ class MarketConfigTable(tag: Tag)
       levels,
       precisionForAmount,
       precisionForTotal,
-      active
+      operationStatus,
+      viewStatus,
+      metadataProjection,
+      createdAt,
+      updatedAt
     ) <> ((MarketConfig.apply _).tupled, MarketConfig.unapply)
 }

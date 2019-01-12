@@ -39,34 +39,7 @@ class MarketConfigDalImpl @Inject()(
   def saveConfigs(configs: Seq[MarketConfig]): Future[Int] = insert(configs)
 
   def getAllConfigs(): Future[Seq[MarketConfig]] =
-    db.run(query.filter(_.active === 1).result)
-
-  def getConfig(marketHash: String): Future[Option[MarketConfig]] =
-    db.run(
-      query
-        .filter(_.marketHash === marketHash)
-        .filter(_.active === 1)
-        .take(1)
-        .result
-        .headOption
-    )
-
-  def getConfig(
-      primary: String,
-      secondary: String
-    ): Future[Option[MarketConfig]] =
-    db.run(
-      query
-        .filter(_.primary === primary)
-        .filter(_.secondary === secondary)
-        .filter(_.active === 1)
-        .take(1)
-        .result
-        .headOption
-    )
-
-  def getConfigs(marketHashes: Seq[String]): Future[Seq[MarketConfig]] =
-    db.run(query.filter(_.marketHash inSet marketHashes).result)
+    db.run(query.result)
 
   def updateConfig(config: MarketConfig): Future[Int] = insertOrUpdate(config)
 }

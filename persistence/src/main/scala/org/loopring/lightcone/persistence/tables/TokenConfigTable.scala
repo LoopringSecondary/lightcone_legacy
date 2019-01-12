@@ -31,6 +31,10 @@ class TokenConfigTable(tag: Tag)
   def unit = column[String]("unit")
   def website = column[String]("website")
   def precision = column[Int]("precision")
+  def burnRate = column[Double]("burn_rate")
+  def currentPrice = column[Double]("current_price")
+  def createdAt = column[Long]("created_at")
+  def updatedAt = column[Long]("updated_at")
 
   def * =
     (
@@ -40,6 +44,10 @@ class TokenConfigTable(tag: Tag)
       name,
       unit,
       website,
-      precision
+      precision,
+      burnRate,
+      currentPrice,
+      createdAt,
+      updatedAt
     ) <> ((TokenConfig.apply _).tupled, TokenConfig.unapply)
 }

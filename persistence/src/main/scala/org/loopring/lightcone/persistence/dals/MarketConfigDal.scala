@@ -26,14 +26,5 @@ trait MarketConfigDal extends BaseDalImpl[MarketConfigTable, MarketConfig] {
 
   def getAllConfigs(): Future[Seq[MarketConfig]]
 
-  def getConfig(marketHash: String): Future[Option[MarketConfig]]
-
-  def getConfig(
-      primary: String,
-      secondary: String
-    ): Future[Option[MarketConfig]]
-
-  def getConfigs(marketHashes: Seq[String]): Future[Seq[MarketConfig]]
-
   def updateConfig(config: MarketConfig): Future[Int]
 }

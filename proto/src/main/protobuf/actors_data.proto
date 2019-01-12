@@ -170,8 +170,13 @@ message TokenConfig {
     string unit       = 5;
     string website    = 6;
     int32  precision  = 7;
+    double burnRate   = 8;
+    double current_price = 9;
+    int64  created_at = 10;
+    int64  updated_at = 11;
 }
 
+//TODO du: delete,合并入TokenConfig
 message TokenMetadata {
     string address          = 1;
     int32  decimals         = 2;
@@ -181,17 +186,40 @@ message TokenMetadata {
 }
 
 message MarketConfig {
-    MarketId market_id = 1;
-    string market_hash = 2;
-    int32  max_numbers_of_orders = 3;
-    int32  price_decimals = 4;
-    int32  recover_batch_size = 5;
-    int32  levels = 6;
-    int32  precision_for_amount = 7;
-    int32  precision_for_total = 8;
-    int32  active = 9; // 0:false 1:true
+    enum OperationStatus {
+        READONLY  = 0; // 市场对用户还可看到，可读订单(用户，relay)，继续撮合，但不接收提交订单请求。是否可处理softCancel？
+        STOPPED   = 1; // 停止所有请求
+        COMPLETE  = 2; // 所有功能可用
+    }
+    enum ViewStatus {
+        SEARCHABLE = 0; // 只能搜索查到
+        VISIBLE    = 1; // 用户可见，也可搜索到
+    }
+    message Metadata {
+        int32  num_buys             = 1;
+        int32  num_sells            = 2;
+        int32  num_orders           = 3;
+        double best_buy_price       = 5;
+        double best_sell_price      = 6;
+        double latest_price         = 7;
+        bool   is_last_taker_sell   = 8;
+    }
+    MarketId        market_id = 1;
+    string          market_hash = 2;
+    int32           max_numbers_of_orders = 3;
+    int32           price_decimals = 4;
+    int32           recover_batch_size = 5;
+    int32           levels = 6;
+    int32           precision_for_amount = 7;
+    int32           precision_for_total = 8;
+    OperationStatus operation_status  = 9;
+    ViewStatus      view_status = 10;
+    Metadata        metadata = 11;
+    int64           created_at = 12;
+    int64           updated_at = 13;
 }
 
+//TODO du: delete，合并入MarketConfig
 message MarketMetadata {
     int32  num_buys             = 1;
     int32  num_sells            = 2;
