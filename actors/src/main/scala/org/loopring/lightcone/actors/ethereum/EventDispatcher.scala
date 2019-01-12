@@ -22,6 +22,7 @@ import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.ethereum.event._
 import org.loopring.lightcone.proto._
 import akka.util.Timeout
+import org.loopring.lightcone.actors.core.MultiAccountManagerActor
 
 import scala.concurrent.ExecutionContext
 
@@ -94,18 +95,20 @@ object EventDispatcher {
       new NameBasedEventDispatcher[TransferEvent, TransferEvent](
         Seq("")
       ) {
-        override def derive(event: TransferEvent): Seq[TransferEvent] = {
+        def derive(event: TransferEvent): Seq[TransferEvent] = {
           Seq(event.withOwner(event.from), event.withOwner(event.to))
         }
       },
       new NameBasedEventDispatcher[RingMinedEvent, OrderFilledEvent](
         Seq("")
       ) {
-        override def derive(event: RingMinedEvent): Seq[OrderFilledEvent] =
-          event.fills
+        def derive(event: RingMinedEvent): Seq[OrderFilledEvent] = event.fills
       },
-      new BalanceEventDispatcher(Seq("")),
-      new AllowanceEventDispatcher(Seq(""))
+      new NameBasedEventDispatcher[RingMinedEvent, RingMinedEvent](
+        Seq(MultiAccountManagerActor.name)
+      ) with NonDerivable[RingMinedEvent],
+      new BalanceEventDispatcher(Seq(MultiAccountManagerActor.name)),
+      new AllowanceEventDispatcher(Seq(MultiAccountManagerActor.name))
     )
   }
 }
