@@ -28,7 +28,6 @@ class DatabaseModule @Inject()(
     val tokenMetadataDal: TokenMetadataDal,
     val orderDal: OrderDal,
     val tradeDal: TradeDal,
-    val tokenBalanceDal: TokenBalanceDal,
     val blockDal: BlockDal,
     val settlementTxDal: SettlementTxDal,
     val orderStatusMonitorDal: OrderStatusMonitorDal,
@@ -47,7 +46,6 @@ class DatabaseModule @Inject()(
     tokenMetadataDal,
     orderDal,
     tradeDal,
-    tokenBalanceDal,
     blockDal,
     settlementTxDal,
     orderStatusMonitorDal
