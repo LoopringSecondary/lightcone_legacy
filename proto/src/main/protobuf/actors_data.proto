@@ -172,8 +172,10 @@ message TokenConfig {
     int32  precision  = 7;
     double burnRate   = 8;
     double current_price = 9;
-    int64  created_at = 10;
-    int64  updated_at = 11;
+    bool   is_support_transfer = 10; // 1:support
+    bool   is_support_trade = 11; // 1:support
+    int64  created_at = 12;
+    int64  updated_at = 13;
 }
 
 //TODO du: delete,合并入TokenConfig
