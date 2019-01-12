@@ -19,11 +19,9 @@ package org.loopring.lightcone.actors.entrypoint
 import akka.pattern._
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_SubmitOrderThenBalanceDecrease
@@ -32,33 +30,37 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with EthereumQueryMockSupport
+    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport {
 
+  val account = getUniqueAccountWithoutEth
+
+  override def beforeAll(): Unit = {
+    //设置余额
+    info("set the balance and allowance is enough befor submit an order")
+    val f = Future.sequence(
+      Seq(
+        transferEth(account.getAddress, "10")(accounts(0)),
+        transferLRC(account.getAddress, "25")(accounts(0)),
+        approveLRCToDelegate("25")(account)
+      )
+    )
+
+    Await.result(f, timeout.duration)
+    super.beforeAll()
+  }
+
   "submit an order when the balance and allowance enough" must {
     "store it and affect depth when allowance is enough" in {
-
-      //设置余额
-      info("set the balance and allowance is enough befor submit an order")
-      val f = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances.Res(
-        "",
-        Map(
-          "" -> BalanceAndAllowance(
-            "25".zeros(LRC_TOKEN.decimals),
-            "25".zeros(LRC_TOKEN.decimals)
-          )
-        )
-      )
-      Await.result(f, timeout.duration)
 
       //下单情况
       val rawOrders = (0 until 1) map { i =>
         createRawOrder(
           amountS = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )
+        )(account)
       }
 
       val f1 = Future.sequence(rawOrders.map { o =>
@@ -92,12 +94,13 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF = singleRequest(getOrderBook, "orderbook")
-
-      val orderbookRes = Await.result(orderbookF, timeout.duration)
+      val orderbookRes = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
       orderbookRes match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          info(s"sells: ${sells}, buys:${buys}")
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 1)
           assert(
             sells(0).price == "20.000000" &&
@@ -109,16 +112,8 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
       }
 
       info("then make balance is not enough.")
-      val setAllowanceF = actors.get(EthereumQueryActor.name) ? GetBalanceAndAllowances
-        .Res(
-          "",
-          Map(
-            "" -> BalanceAndAllowance(
-              "0".zeros(LRC_TOKEN.decimals),
-              "25".zeros(LRC_TOKEN.decimals)
-            )
-          )
-        )
+      val setAllowanceF =
+        Future.sequence(Seq(transferLRC(accounts(0).getAddress, "10")(account)))
       Await.result(setAllowanceF, timeout.duration)
 
       actors.get(MultiAccountManagerActor.name) ? AddressBalanceUpdated(
@@ -127,16 +122,16 @@ class EntryPointSpec_SubmitOrderThenBalanceDecrease
         ByteString.copyFrom("10".zeros(LRC_TOKEN.decimals).toByteArray)
       )
 
-      Thread.sleep(1000)
       info("the depth should be empty after balance change to 10.")
-      val orderbookF1 = singleRequest(getOrderBook, "orderbook")
 
-      val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
+      val orderbookRes1 = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) => orderbook.sells.isEmpty
+      )
       orderbookRes1 match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          info(s"sells: ${sells}, buys: ${buys}")
-          assert(sells.isEmpty)
-          assert(buys.isEmpty)
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(sells.isEmpty && buys.isEmpty)
         case _ => assert(false)
       }
     }

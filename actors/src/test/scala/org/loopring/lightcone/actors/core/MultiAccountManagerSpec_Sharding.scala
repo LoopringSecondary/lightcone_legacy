@@ -43,7 +43,8 @@ class MultiAccountManagerSpec_Sharding
   "send a request" must {
     "create an AccountManager and be received by it" in {
       //todo:此处需要进一步测试分片的正确性
-      val cancelReq = CancelOrder.Req("0x11111", "0xaaaaa")
+      val cancelReq =
+        CancelOrder.Req(id = "0x11111", owner = accounts(0).getAddress)
       val f = actors.get(MultiAccountManagerActor.name) ? cancelReq
       val res = Await.result(f, timeout.duration)
       info(s"return is : ${res}")

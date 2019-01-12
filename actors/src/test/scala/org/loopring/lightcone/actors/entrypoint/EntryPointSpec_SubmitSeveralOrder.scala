@@ -16,13 +16,10 @@
 
 package org.loopring.lightcone.actors.entrypoint
 
-import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 
 class EntryPointSpec_SubmitSeveralOrder
     extends CommonSpec
@@ -30,7 +27,7 @@ class EntryPointSpec_SubmitSeveralOrder
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with EthereumQueryMockSupport
+    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport {
@@ -82,18 +79,24 @@ class EntryPointSpec_SubmitSeveralOrder
       })
 
       //orderbook
-      Thread.sleep(1000)
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF = singleRequest(getOrderBook, "orderbook")
 
-      val orderbookRes = Await.result(orderbookF, timeout.duration)
+      val orderbookRes = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) =>
+          orderbook.sells.nonEmpty &&
+            orderbook.sells.size == 3 &&
+            orderbook.sells(0).total == "2.00000" &&
+            orderbook.sells(1).total == "2.00000" &&
+            orderbook.sells(2).total == "2.00000"
+      )
       orderbookRes match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
-          info(s"sells: ${sells}")
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 3)
           assert(
             sells(0).price == "10.000000" &&
@@ -147,12 +150,14 @@ class EntryPointSpec_SubmitSeveralOrder
         }
       })
 
-      Thread.sleep(1000)
-      val orderbookF1 = singleRequest(getOrderBook, "orderbook")
-
-      val orderbookRes1 = Await.result(orderbookF1, timeout.duration)
+      val orderbookRes1 = expectOrderbookRes(
+        getOrderBook,
+        (orderbook: Orderbook) =>
+          orderbook.sells.nonEmpty && orderbook.sells(0).total == "1.00000"
+      )
       orderbookRes1 match {
-        case GetOrderbook.Res(Some(Orderbook(lastPrice, sells, buys))) =>
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 3)
           assert(
             sells(0).price == "10.000000" &&

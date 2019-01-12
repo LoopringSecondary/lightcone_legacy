@@ -17,10 +17,10 @@
 package org.loopring.lightcone.actors.core
 
 import org.loopring.lightcone.actors.support._
-import scala.concurrent.{Await, Future}
-import scala.concurrent.Future
-import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
+import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
+
+import scala.concurrent.{Await, Future}
 
 class DatabaseQuerySpec
     extends CommonSpec
@@ -50,16 +50,14 @@ class DatabaseQuerySpec
 
   "send an orders request" must {
     "receive a response without orders" in {
-      val owner = "0xa111dae0a3e4e146bcaf0fe782be5afb14041a10"
       val rawOrders = (0 until 6) map { i =>
         createRawOrder(
-          owner = owner,
           amountS = "10".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )
       }
       val request = GetOrdersForUser.Req(
-        owner = owner,
+        owner = accounts(0).getAddress,
         statuses = Seq(OrderStatus.STATUS_NEW),
         market = GetOrdersForUser.Req.Market
           .Pair(

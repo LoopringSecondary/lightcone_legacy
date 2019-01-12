@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.support
 import org.loopring.lightcone.actors.core._
 
 trait MarketManagerSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+  my: CommonSpec with EthereumSupport =>
 
   actors.add(MarketManagerActor.name, MarketManagerActor.start)
 

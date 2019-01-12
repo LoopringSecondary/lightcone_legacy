@@ -16,17 +16,16 @@
 
 package org.loopring.lightcone.actors.core
 
+import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
-import scala.collection.JavaConverters._
+
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 
 class RingSettlementSpec
     extends CommonSpec
     with EthereumSupport
-    with EthereumQueryMockSupport
     with MarketManagerSupport
     with MultiAccountManagerSupport
     with OrderGenerateSupport
@@ -35,16 +34,28 @@ class RingSettlementSpec
     with JsonrpcSupport
     with HttpSupport {
 
-  def selfConfig = config.getConfig(RingSettlementManagerActor.name)
   def orderHandler = actors.get(OrderPersistenceActor.name)
 
-  val users = selfConfig
-    .getConfigList("users")
-    .asScala
-    .map(config => config.getString("addr") -> config.getString("key"))
+  val account1 = getUniqueAccountWithoutEth
+  //设置余额
+  info("set the balance and allowance is enough befor submit an order")
+  override def beforeAll(): Unit = {
+    val f = Future.sequence(
+      Seq(
+        transferEth(account1.getAddress, "10")(accounts(0)),
+        transferLRC(account1.getAddress, "30")(accounts(0)),
+        approveLRCToDelegate("30")(account1)
+      )
+    )
+
+    Await.result(f, timeout.duration)
+    super.beforeAll()
+  }
 
   "Submit a ring tx " must {
     "tx successfully, order, balance, allowance must be right" in {
+
+      val account0 = accounts(0)
 
       val getBaMethod = "get_balance_and_allowance"
       val submit_order = "submit_order"
@@ -53,59 +64,66 @@ class RingSettlementSpec
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val getBalanceReqs =
-        users.unzip._1.map(
-          user =>
-            GetBalanceAndAllowances.Req(
-              user,
-              tokens =
-                Seq(LRC_TOKEN.address, WETH_TOKEN.address, GTO_TOKEN.address)
-            )
-        )
+      val order1 = createRawOrder()(account1)
 
-      val order1 = createRawOrder(owner = users.head._1)(Some(users.head._2))
       val order2 = createRawOrder(
-        owner = users(1)._1,
         tokenB = LRC_TOKEN.address,
         tokenS = WETH_TOKEN.address,
-        amountB = "10".zeros(18),
-        amountS = "1".zeros(18)
-      )(Some(users(1)._2))
+        amountB = order1.amountS,
+        amountS = order1.amountB
+      )(account0)
 
       val submitOrder1F =
         singleRequest(SubmitOrder.Req(Some(order1)), submit_order)
           .mapAs[SubmitOrder.Res]
       Await.result(submitOrder1F, timeout.duration)
 
-      val orderbook1F = singleRequest(getOrderBook1, "orderbook")
-        .mapAs[GetOrderbook.Res]
-        .map(_.getOrderbook)
-      val orderbook1 = Await.result(orderbook1F, timeout.duration)
-
-      assert(orderbook1.buys.isEmpty)
-      assert(orderbook1.sells.size == 1)
-      orderbook1.sells.head match {
-        case Orderbook.Item(price, amount, total) =>
-          assert(amount.toDouble == "10".toDouble)
-          assert(price.toDouble == "10".toDouble)
-          assert(total.toDouble == "1".toDouble)
-        case _ =>
+      val orderbookRes1 = expectOrderbookRes(
+        getOrderBook1,
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
+      orderbookRes1 match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(buys.isEmpty)
+          assert(sells.size == 1)
+          val head = sells.head
+          assert(head.amount.toDouble == "10".toDouble)
+          assert(head.price.toDouble == "10".toDouble)
+          assert(head.total.toDouble == "1".toDouble)
+        case _ => assert(false)
       }
 
       val submitOrder2F =
         singleRequest(SubmitOrder.Req(Some(order2)), submit_order)
           .mapAs[SubmitOrder.Res]
       Await.result(submitOrder2F, timeout.duration)
-      Thread.sleep(1000)
-      val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
-        .mapAs[GetOrderbook.Res]
-        .map(_.getOrderbook)
 
-      val orderbook2 = Await.result(orderbookF2, timeout.duration)
+      val orderbookRes2 = expectOrderbookRes(
+        getOrderBook1,
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
+      //todo(yadong): 该处判断应该是什么
+      info(s"${orderbookRes2}")
 
-      println(orderbook2)
-      //      assert(orderbook2.buys.isEmpty)
-      //      assert(orderbook2.sells.isEmpty)
+      Thread.sleep(500) //必须等待才能获取正确的余额，？？？
+      info("the weth balance of account0 must be changed.")
+      val resOpt = expectBalanceRes(
+        GetBalanceAndAllowances.Req(
+          account1.getAddress,
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),
+        (res: GetBalanceAndAllowances.Res) => {
+          val wethBalance: BigInt =
+            res.balanceAndAllowanceMap(WETH_TOKEN.address).balance
+          wethBalance > 0
+        }
+      )
+      info(s"balance of account0 : ${resOpt.get}")
+      val wethBalance: BigInt =
+        resOpt.get.balanceAndAllowanceMap(WETH_TOKEN.address).balance
+      assert(wethBalance == byteString2BigInt(order1.amountB))
+
     }
   }
 
