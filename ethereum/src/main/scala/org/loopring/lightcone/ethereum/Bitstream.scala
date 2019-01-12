@@ -18,9 +18,8 @@ package org.loopring.lightcone.ethereum
 
 import org.web3j.utils.Numeric
 
-class Bitstream() {
+class Bitstream(private var data: String = "") {
   private val ADDRESS_LENGTH = 20
-  private var data: String = ""
 
   def getData = if (data.length == 0) "0x0" else "0x" + data
 
@@ -145,4 +144,26 @@ class Bitstream() {
     data ++= x
     offset
   }
+
+  private def hex2Int(hex: String): Int = Integer.parseInt(hex, 16)
+
+  def extractUint16(offset: Int): Int = hex2Int(extractBytesX(offset, 2))
+
+  def extractUint32(offset: Int): Int = hex2Int(extractBytesX(offset, 4))
+
+  def extractUint(offset: Int): Int = hex2Int(extractBytesX(offset, 32))
+
+  def extractAddress(offset: Int) = "0x" + extractBytesX(offset, 20)
+
+  def extractBytesX(
+      offset: Int,
+      numBytes: Int
+    ) = {
+    val start = offset * 2
+    val end = start + numBytes * 2
+
+    require(this.data.length > end, "substring index out of range.")
+    this.data.substring(start, end)
+  }
+
 }
