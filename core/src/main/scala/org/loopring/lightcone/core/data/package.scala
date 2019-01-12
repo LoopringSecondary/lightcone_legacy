@@ -31,13 +31,20 @@ package object data {
     def id = raw.order.id
   }
 
+  def createRingIdByOrderHash(
+      orderhash1: String,
+      orderhash2: String
+    ) = {
+    val hash = Numeric.toBigInt(orderhash1) xor
+      Numeric.toBigInt(orderhash2)
+    Numeric.toHexString(hash.toByteArray).toLowerCase()
+  }
+
   implicit class RichOrderRing(raw: MatchableRing) {
 
     // Switching maker and taker should have the same id.
     def id(): String = {
-      val hash = BigInt(Hash.sha3(raw.maker.id.getBytes)) ^
-        BigInt(Hash.sha3(raw.taker.id.getBytes()))
-      Numeric.toHexString(hash.toByteArray)
+      createRingIdByOrderHash(raw.maker.id, raw.taker.id)
     }
 
     //中间价格，可以在显示深度价格时使用,简单的中间价

@@ -124,7 +124,7 @@ class AccountManagerActor(
       (for {
         _ <- for {
           //check通过再保存到数据库，以及后续处理
-          _ <- Future.successful(accountCutoffState.isOrderCutoff(raworder))
+          _ <- Future { accountCutoffState.isOrderCutoff(raworder) }
           _ <- isOrderCanceled(raworder) //取消订单，单独查询以太坊
         } yield Unit
         newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
@@ -253,16 +253,21 @@ class AccountManagerActor(
       _ = if (!successful)
         throw ErrorException(Error(matchable.status))
       _ = assert(updatedOrders.contains(_matchable.id))
-      _ = log.debug(s"assert contains order:  ${updatedOrders(_matchable.id)}")
+      _ = log.debug(
+        s"updatedOrders: ${updatedOrders.size} assert contains order:  ${updatedOrders(_matchable.id)}"
+      )
       res <- Future.sequence {
         updatedOrders.map { o =>
           for {
             //需要更新到数据库
             _ <- dbModule.orderService.updateOrderStatus(o._2.id, o._2.status)
           } yield {
-            marketManagerActor ! SubmitSimpleOrder(
-              order = Some(o._2.copy(_reserved = None, _outstanding = None))
-            )
+            //todo: 上次取消的订单，会在下次再提交订单时出现在updateOrders，是否是个bug？？
+            if (o._2.status == OrderStatus.STATUS_PENDING || o._2.status == OrderStatus.STATUS_NEW) {
+              marketManagerActor ! SubmitSimpleOrder(
+                order = Some(o._2.copy(_reserved = None, _outstanding = None))
+              )
+            }
           }
         }
       }

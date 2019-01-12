@@ -106,7 +106,7 @@ class RingSettlementSpec
       //todo(yadong): 该处判断应该是什么
       info(s"${orderbookRes2}")
 
-      Thread.sleep(500) //必须等待才能获取正确的余额，？？？
+      Thread.sleep(1000) //必须等待才能获取正确的余额，？？？
       info("the weth balance of account0 must be changed.")
       val resOpt = expectBalanceRes(
         GetBalanceAndAllowances.Req(
