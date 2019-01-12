@@ -187,7 +187,7 @@ message TokenMeta {
 
 message MarketConfig {
     enum OperationStatus {
-        READONLY  = 0; // TODO du：和东哥确认逻辑：市场对用户还可看到，可读订单(用户，relay)，继续撮合，但不接收提交订单请求。是否可处理cancel？
+        READONLY  = 0; // 市场对用户还可看到，可读订单(用户，relay)，继续撮合，但不接收提交订单请求。是否可处理cancel？
         STOPPED   = 1; // 停止所有请求
         COMPLETE  = 2; // 完整功能
     }
