@@ -32,7 +32,7 @@ class TokenValueEvaluator @Inject()()(implicit tm: TokenManager) {
     else {
       val token = tm.getToken(tokenAddr)
       (Rational(token.fromWei(amount)) *
-        Rational(token.meta.currentPrice)).doubleValue
+        Rational(token.meta.usdPrice)).doubleValue
     }
   }
 

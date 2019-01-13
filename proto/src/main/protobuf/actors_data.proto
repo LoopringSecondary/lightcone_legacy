@@ -162,32 +162,29 @@ message EthereumProxySettings {
     repeated Node nodes             = 4;
 }
 
-message TokenConfig {
-    message Metadata {
-        double burnRate   = 1;
-        double current_price = 2;
+message TokenMetadata {
+    enum Type {
+        TOKEN_TYPE_ERC20       = 0;
+        TOKEN_TYPE_ERC1400     = 1;
     }
-    string   address    = 1;
-    string   symbol     = 2;
-    int32    decimals   = 3;
-    string   name       = 4;
-    string   unit       = 5;
-    string   website    = 6;
-    int32    precision  = 7;
-    bool     is_support_transfer = 8; // 1:support
-    bool     is_support_trade = 9; // 1:support
-    Metadata metadata = 10;
-    int64    created_at = 11;
-    int64    updated_at = 12;
-}
 
-//TODO du: delete,合并入TokenConfig
-message TokenMeta {
-    string address          = 1;
-    int32  decimals         = 2;
-    double burnRate         = 3;
-    string symbol           = 4;
-    double current_price    = 5;
+    enum Status {
+        DISABLED    = 0; // This token is NOT displyed in walelt
+        ENABLED     = 1;  // This token is displayed in wallet.
+    }
+
+    Type     type                   = 1;
+    Status   status                 = 2;
+    string   symbol                 = 3;
+    string   name                   = 4;
+    string   address                = 5;
+    string   unit                   = 6;
+    int32    decimals               = 7;
+    string   website_url            = 8;
+    int32    precision              = 9;
+    double   burn_rate              = 10;
+    double   usd_price              = 11;
+    int64    updated_at             = 12;
 }
 
 message MarketConfig {
