@@ -62,7 +62,7 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tokenManager: TokenManager,
     tve: TokenValueEvaluator,
-    dispatchers: Seq[EventDispatcher[_, _]],
+    dispatchers: Seq[EventDispatcher[_]],
     system: ActorSystem)
     extends Object
     with Logging {

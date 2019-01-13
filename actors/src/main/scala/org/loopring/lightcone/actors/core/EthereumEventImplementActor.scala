@@ -46,7 +46,7 @@ object EthereumEventImplementActor {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
-      dispatchers: Seq[EventDispatcher[_, _]],
+      dispatchers: Seq[EventDispatcher[_]],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
@@ -78,7 +78,7 @@ class EthereumEventImplementActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dispatchers: Seq[EventDispatcher[_, _]],
+    val dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(EthereumEventImplementActor.name) {
 
@@ -115,10 +115,8 @@ class EthereumEventImplementActor(
         val batchGetUnclesReq = BatchGetUncle.Req(
           block.uncles.indices.map(
             index =>
-              GetUncle.Req(
-                block.number,
-                Numeric.prependHexPrefix(index.toHexString)
-              )
+              GetUncle
+                .Req(block.number, Numeric.prependHexPrefix(index.toHexString))
           )
         )
         (ethereumAccessorActor ? batchGetUnclesReq)
@@ -138,9 +136,7 @@ class EthereumEventImplementActor(
           txs = block.transactions,
           receipts = receipts.map(_.get)
         )
-        dispatchers.foreach(
-          dispatcher => dispatcher.dispatch(rawBlockData)
-        )
+        dispatchers.foreach(dispatcher => dispatcher.dispatch(rawBlockData))
         dbModule.blockService.saveBlock(
           BlockData(
             hash = rawBlockData.hash,
