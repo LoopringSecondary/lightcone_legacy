@@ -24,15 +24,15 @@ import org.scalatest._
 class OrderbookManagerImplSpec extends CommonSpec {
   var obm: OrderbookManager = _
 
-  val config = MarketConfig(
-    levels = 2,
+  val metadata = MarketMetadata(
+    orderbookAggLevels = 2,
     priceDecimals = 5,
     precisionForAmount = 2,
     precisionForTotal = 1
   )
 
   override def beforeEach() {
-    obm = new OrderbookManagerImpl(config)
+    obm = new OrderbookManagerImpl(metadata)
   }
 
   "OrderbookManagerImplSpec" should "return empty order book after initialized" in {
