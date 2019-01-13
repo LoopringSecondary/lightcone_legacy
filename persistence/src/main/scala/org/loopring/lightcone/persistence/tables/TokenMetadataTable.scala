@@ -68,6 +68,12 @@ class TokenMetadataTable(tag: Tag)
   def usdPrice = column[Double]("usd_price")
   def updateAt = column[Long]("update_at")
 
+  def idx_type = index("idx_type", (`type`), unique = false)
+  def idx_status = index("idx_status", (status), unique = false)
+  def idx_symbol = index("idx_symbol", (symbol), unique = true)
+  def idx_name = index("idx_name", (name), unique = true)
+  def idx_address = index("idx_address", (address), unique = true)
+
   def * =
     (
       `type`,

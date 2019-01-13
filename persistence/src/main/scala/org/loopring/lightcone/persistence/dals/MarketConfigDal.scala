@@ -19,4 +19,4 @@ package org.loopring.lightcone.persistence.dals
 import com.google.inject.Inject
 import com.google.inject.name.Named
 
-trait MarketConfigDal {}
+trait MarketMetadataDal {}

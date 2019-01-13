@@ -21,12 +21,13 @@ import org.loopring.lightcone.proto._
 import scala.collection.SortedMap
 import org.slf4s.Logging
 
-class OrderbookManagerImpl(config: MarketConfig)
+class OrderbookManagerImpl(metadata: MarketMetadata)
     extends OrderbookManager
     with Logging {
 
-  private[depth] val viewMap = (0 until config.levels).map { level =>
-    level -> new View(level)
+  private[depth] val viewMap = (0 until metadata.orderbookAggLevels).map {
+    level =>
+      level -> new View(level)
   }.toMap
 
   private var latestPrice: Double = 0
@@ -61,25 +62,25 @@ class OrderbookManagerImpl(config: MarketConfig)
 
   private[depth] class View(aggregationLevel: Int) {
 
-    private val priceFormat = s"%.${config.priceDecimals - aggregationLevel}f"
-    private val amountFormat = s"%.${config.precisionForAmount}f"
-    private val totalFormat = s"%.${config.precisionForTotal}f"
+    private val priceFormat = s"%.${metadata.priceDecimals - aggregationLevel}f"
+    private val amountFormat = s"%.${metadata.precisionForAmount}f"
+    private val totalFormat = s"%.${metadata.precisionForTotal}f"
 
     private val sellSide =
       new OrderbookSide.Sells(
-        config.priceDecimals,
+        metadata.priceDecimals,
         aggregationLevel,
-        config.precisionForAmount,
-        config.precisionForTotal,
+        metadata.precisionForAmount,
+        metadata.precisionForTotal,
         false
       ) with ConverstionSupport
 
     private val buySide =
       new OrderbookSide.Buys(
-        config.priceDecimals,
+        metadata.priceDecimals,
         aggregationLevel,
-        config.precisionForAmount,
-        config.precisionForTotal,
+        metadata.precisionForAmount,
+        metadata.precisionForTotal,
         false
       ) with ConverstionSupport
 
