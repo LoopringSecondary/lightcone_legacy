@@ -19,7 +19,7 @@ package org.loopring.lightcone.persistence.service
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals._
-import org.loopring.lightcone.proto.{ErrorCode, TokenMeta}
+import org.loopring.lightcone.proto.{ErrorCode, TokenMetadata}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
@@ -31,7 +31,7 @@ class TokenMetadataServiceImpl @Inject()(
     tokenMetadataDal: TokenMetadataDal)
     extends TokenMetadataService {
 
-  def getTokens(reloadFromDatabase: Boolean): Future[Seq[TokenMeta]] =
+  def getTokens(reloadFromDatabase: Boolean): Future[Seq[TokenMetadata]] =
     tokenMetadataDal.getTokens(reloadFromDatabase)
 
   def updateBurnRate(
