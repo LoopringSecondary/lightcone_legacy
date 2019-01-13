@@ -24,17 +24,17 @@ class TokenManager() {
   val defaultBurnRate: Double = 0.2
   private var addressMap = Map.empty[String, Token]
 
-  def reset(metas: Seq[TokenMeta]) = this.synchronized {
+  def reset(metas: Seq[TokenMetadata]) = this.synchronized {
     addressMap = Map.empty
     metas.foreach(addToken)
   }
 
-  def addToken(meta: TokenMeta) = this.synchronized {
+  def addToken(meta: TokenMetadata) = this.synchronized {
     addressMap += meta.address -> new Token(meta)
     this
   }
 
-  def addTokens(meta: Seq[TokenMeta]) = {
+  def addTokens(meta: Seq[TokenMetadata]) = {
     meta.foreach(addToken)
     this
   }

@@ -40,7 +40,7 @@ class TokenMetadataDalImpl @Inject()(
 
   val query = TableQuery[TokenMetadataTable]
 
-  private var tokens: Seq[TokenMeta] = Nil
+  private var tokens: Seq[TokenMetadata] = Nil
 
   def getTokens(reloadFromDatabase: Boolean = false) = {
     if (reloadFromDatabase || tokens.isEmpty) {

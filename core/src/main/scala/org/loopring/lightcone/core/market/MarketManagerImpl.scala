@@ -220,8 +220,8 @@ class MarketManagerImpl(
     }
   }
 
-  def getMetadata() =
-    MarketMetadata(
+  def getStats() =
+    MarketStats(
       numBuys = buys.size,
       numSells = sells.size,
       numOrders = orderMap.size,

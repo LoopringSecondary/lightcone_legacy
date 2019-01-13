@@ -16,12 +16,12 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.proto.{ErrorCode, TokenMeta}
+import org.loopring.lightcone.proto.{ErrorCode, TokenMetadata}
 
 import scala.concurrent.Future
 
 trait TokenMetadataService {
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMeta]]
+  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMetadata]]
 
   def updateBurnRate(
       token: String,
