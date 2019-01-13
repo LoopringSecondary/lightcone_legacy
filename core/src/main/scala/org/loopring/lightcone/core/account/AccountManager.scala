@@ -16,7 +16,6 @@
 
 package org.loopring.lightcone.core.account
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.lib.TimeProvider
 
 trait AccountManager {
   def hasTokenManager(token: String): Boolean
@@ -28,21 +27,8 @@ trait AccountManager {
       tm: AccountTokenManager
     ): AccountTokenManager
 
-  def submitOrder(order: Matchable): Boolean
-
-  def submitAndGetUpdatedOrders(
-      order: Matchable
-    ): (Boolean, Map[String, Matchable])
-
-  def cancelOrder(orderId: String): Boolean
-
-  def adjustOrder(
-      orderId: String,
-      outstandingAmountS: BigInt
-    ): Boolean
-
-  def submitOrAdjustThenGetUpdatedOrders(
-      order: Matchable
+  def handleChangeEventThenGetUpdatedOrders[T](
+      req: T
     ): (Boolean, Map[String, Matchable])
 
 }

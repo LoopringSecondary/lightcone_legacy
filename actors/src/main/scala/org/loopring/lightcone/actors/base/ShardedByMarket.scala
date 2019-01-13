@@ -16,19 +16,16 @@
 
 package org.loopring.lightcone.actors.base
 
-import akka.cluster.sharding._
-import org.loopring.lightcone.proto.MarketId
-import org.web3j.utils.Numeric
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
+import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.proto.MarketId
 
 // Owner: Daniel
 trait ShardedByMarket extends Sharded {
   val extractMarketId: PartialFunction[Any, MarketId]
 
   def getEntityId(marketId: MarketId): String = {
-    val xorValue = Numeric.toBigInt(marketId.primary) xor
-      Numeric.toBigInt(marketId.secondary)
-    Math.abs(xorValue.hashCode).toString
+    Math.abs(marketId.eig().hashCode).toString
   }
 
   def extractEntityId(actorName: String) = actorName.split("_").last

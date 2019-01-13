@@ -16,12 +16,15 @@
 
 package org.loopring.lightcone.actors
 
+import java.math.BigInteger
+
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
+import org.web3j.utils.Numeric
 
 package object data {
 
@@ -55,7 +58,7 @@ package object data {
   }
 
   ///////////
-
+  //todo:core.AccountManagerImp中也有使用，需要统一
   implicit def byteString2BigInt(bytes: ByteString): BigInt = {
     if (bytes.size() > 0) BigInt(bytes.toByteArray)
     else BigInt(0)
@@ -198,4 +201,12 @@ package object data {
       case STATUS_CANCELLED_DUPLICIATE      => ERR_ORDER_ALREADY_EXIST
       case _                                => ERR_INTERNAL_UNKNOWN
     }
+
+  implicit class RichMarketId(marketId: MarketId) {
+
+    def eig(): BigInteger = {
+      Numeric.toBigInt(marketId.primary) xor
+        Numeric.toBigInt(marketId.secondary)
+    }
+  }
 }

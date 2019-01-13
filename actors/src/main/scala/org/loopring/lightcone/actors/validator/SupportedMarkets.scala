@@ -17,10 +17,12 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+
 import scala.collection.JavaConverters._
 
 // Owner: Hongyu
@@ -37,9 +39,7 @@ case class SupportedMarkets(config: Config) {
     .toSet
 
   def contains(marketId: MarketId) = {
-    val eig = Numeric.toBigInt(marketId.primary) xor
-      Numeric.toBigInt(marketId.secondary)
-    markets.contains(eig)
+    markets.contains(marketId.eig())
   }
 
   def assertmarketIdIsValid(marketIdOpt: Option[MarketId]): Option[MarketId] = {
@@ -62,5 +62,9 @@ case class SupportedMarkets(config: Config) {
       primary = Address(marketId.primary).toString,
       secondary = Address(marketId.secondary).toString
     )
+  }
+
+  def allMarketIdEig() = {
+    markets
   }
 }
