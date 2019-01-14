@@ -17,7 +17,6 @@
 package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
-import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.{ErrorCode, TokenMetadata}
 import scala.concurrent.{ExecutionContext, Future}
@@ -47,10 +46,10 @@ class TokenMetadataServiceImpl @Inject()(
 
   def updateBurnRate(
       token: String,
-      burnDate: Double
+      burnRate: Double
     ): Future[ErrorCode] =
-    tokenMetadataDal.updateBurnRate(token, burnDate)
+    tokenMetadataDal.updateBurnRate(token, burnRate)
 
-  def disableToken(address: Address): Future[ErrorCode] =
+  def disableToken(address: String): Future[ErrorCode] =
     tokenMetadataDal.disableToken(address)
 }

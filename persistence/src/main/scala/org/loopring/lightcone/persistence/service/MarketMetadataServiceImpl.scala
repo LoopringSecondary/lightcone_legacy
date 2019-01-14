@@ -45,9 +45,9 @@ class MarketMetadataServiceImpl @Inject()(
   def getMarketsById(marketIds: Seq[MarketId]): Future[Seq[MarketMetadata]] =
     marketMetadataDal.getMarketsByIds(marketIds)
 
-  def disableMarket(market: MarketId): Future[ErrorCode] =
-    marketMetadataDal.disableMarket(market)
+  def disableMarketById(market: MarketId): Future[ErrorCode] =
+    marketMetadataDal.disableMarketById(market)
 
-  def disableMarket(marketHash: String): Future[ErrorCode] =
-    marketMetadataDal.disableMarket(marketHash)
+  def disableMarketByHash(marketHash: String): Future[ErrorCode] =
+    marketMetadataDal.disableMarketByHash(marketHash)
 }

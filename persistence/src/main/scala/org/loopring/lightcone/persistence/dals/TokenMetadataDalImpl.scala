@@ -27,7 +27,6 @@ import scala.concurrent._
 import org.slf4s.Logging
 import com.google.inject.Inject
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
-import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.persistence.base.enumColumnType
 import scala.util.{Failure, Success}
@@ -106,11 +105,11 @@ class TokenMetadataDalImpl @Inject()(
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def disableToken(address: Address): Future[ErrorCode] =
+  def disableToken(address: String): Future[ErrorCode] =
     for {
       result <- db.run(
         query
-          .filter(_.address === address.toString)
+          .filter(_.address === address)
           .map(c => (c.status, c.updateAt))
           .update(TokenMetadata.Status.DISABLED, timeProvider.getTimeMillis())
       )

@@ -100,7 +100,7 @@ class MarketMetadataDalImpl @Inject()(
         .result
     )
 
-  def disableMarket(market: MarketId): Future[ErrorCode] =
+  def disableMarketById(market: MarketId): Future[ErrorCode] =
     for {
       result <- db.run(
         query
@@ -114,7 +114,7 @@ class MarketMetadataDalImpl @Inject()(
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def disableMarket(marketHash: String): Future[ErrorCode] =
+  def disableMarketByHash(marketHash: String): Future[ErrorCode] =
     for {
       result <- db.run(
         query

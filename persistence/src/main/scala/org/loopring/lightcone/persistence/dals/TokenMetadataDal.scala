@@ -20,7 +20,6 @@ import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
-import org.loopring.lightcone.ethereum.data.Address
 
 trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
 
@@ -36,8 +35,8 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
 
   def updateBurnRate(
       token: String,
-      burnDate: Double
+      burnRate: Double
     ): Future[ErrorCode]
 
-  def disableToken(address: Address): Future[ErrorCode]
+  def disableToken(address: String): Future[ErrorCode]
 }

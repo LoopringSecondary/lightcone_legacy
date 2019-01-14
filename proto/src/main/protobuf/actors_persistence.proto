@@ -227,3 +227,77 @@ message GetTransactionRecordCount {
         int32 count = 1;
     }
 }
+
+message SaveTokenMetadatas {
+    message Req {
+        repeated TokenMetadata tokens = 1;
+    }
+
+    message Res {
+        repeated string saved_addresses = 1;
+    }
+}
+
+message UpdateTokenMetadata {
+    message Req {
+        TokenMetadata token = 1;
+    }
+
+    message Res {
+        ErrorCode  error = 1;
+    }
+}
+
+message UpdateTokenBurnRate {
+    message Req {
+        string address   = 1;
+        double burn_rate = 2;
+    }
+
+    message Res {
+        ErrorCode  error = 1;
+    }
+}
+
+message DisableToken {
+    message Req {
+        string address = 1;
+    }
+
+    message Res {
+        ErrorCode  error = 1;
+    }
+}
+
+message SaveMarketMetadatas {
+    message Req {
+        repeated MarketMetadata markets = 1;
+    }
+
+    message Res {
+        repeated string saved_market_hashes = 1;
+    }
+}
+
+message UpdateMarketMetadata {
+    message Req {
+        MarketMetadata market = 1;
+    }
+
+    message Res {
+        ErrorCode  error = 1;
+    }
+}
+
+message DisableMarket {
+    message Req {
+        oneof market {
+            MarketId market_id   = 1;
+            string   market_hash = 2;
+        }
+    }
+
+    message Res {
+        ErrorCode  error = 1;
+    }
+}

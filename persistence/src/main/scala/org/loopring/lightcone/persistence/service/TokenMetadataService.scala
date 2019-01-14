@@ -34,8 +34,8 @@ trait TokenMetadataService {
 
   def updateBurnRate(
       token: String,
-      burnDate: Double
+      burnRate: Double
     ): Future[ErrorCode]
 
-  def disableToken(address: Address): Future[ErrorCode]
+  def disableToken(address: String): Future[ErrorCode]
 }
