@@ -70,7 +70,7 @@ class DatabaseQueryActor(
     extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
   val logger = Logger(this.getClass)
 
-  def receive: Receive = LoggingReceive {
+  def ready: Receive = LoggingReceive {
     case req: GetOrdersForUser.Req =>
       (for {
         result <- req.market match {

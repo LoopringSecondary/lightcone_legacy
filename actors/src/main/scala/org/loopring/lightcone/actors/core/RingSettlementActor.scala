@@ -51,9 +51,8 @@ class RingSettlementActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
-    extends Actor
+    extends InitializationFaultTolerentActor
     with Stash
-    with ActorLogging
     with RepeatedJobActor {
 
   val selfConfig = config.getConfig(RingSettlementManagerActor.name)
@@ -97,35 +96,20 @@ class RingSettlementActor(
 
   import ethereum._
 
-  override def preStart(): Unit = {
-    val initialFuture = (ethereumAccessActor ? GetNonce.Req(
+  override def initialize() = {
+    (ethereumAccessActor ? GetNonce.Req(
       owner = ringContext.transactionOrigin,
       tag = "latest"
     )).mapAs[GetNonce.Res]
       .map(_.result)
-
-    initialFuture onComplete {
-      case Success(validNonce) =>
+      .map { validNonce =>
         nonce.set(Numeric.toBigInt(validNonce).intValue())
-        self ! Notify("initialized")
-      case Failure(e) =>
-        log.error(s"Start ring settlement actor failed:${e.getMessage}")
-        context.stop(self)
-    }
+        context.become(ready)
+        self ! Notify("handle_settle_rings")
+      }
   }
 
-  override def receive: Receive = initialReceive
-
-  def initialReceive: Receive = {
-    case Notify("initialized", _) =>
-      unstashAll()
-      context.become(ready)
-      self ! Notify("handle_settle_rings")
-    case _ =>
-      stash()
-  }
-
-  def ready: Receive = super.receive orElse LoggingReceive {
+  def ready: Receive = super.receiveRepeatdJobs orElse LoggingReceive {
     case req: SettleRings =>
       val rings: Seq[Seq[OrderRing]] = truncReq2Rings(req)
       taskQueue.enqueue(rings.map(ring => {

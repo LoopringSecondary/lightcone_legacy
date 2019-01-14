@@ -89,7 +89,7 @@ class EthereumQueryActor(
 
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  def receive = LoggingReceive {
+  def ready = LoggingReceive {
     case req @ GetBalanceAndAllowances.Req(owner, tokens, tag) =>
       val (ethToken, erc20Tokens) = tokens.partition(Address(_).isZero)
       val batchReqs =

@@ -71,7 +71,7 @@ class AccountManagerActor(
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   override def preStart() = {
-    //todo:eth请求还未就绪，等待就绪再完善该部分~
+    //TODO(hongyu):可以假设ETH的actor可用。
     val fu = Future.successful(Unit)
     fu onComplete {
       case Success(res) =>

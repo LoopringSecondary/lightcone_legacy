@@ -118,7 +118,7 @@ class OrderbookManagerActor(
 
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
-  def receive: Receive = LoggingReceive {
+  def ready: Receive = LoggingReceive {
 
     case req: Orderbook.Update =>
       log.info(s"receive Orderbook.Update ${req}")

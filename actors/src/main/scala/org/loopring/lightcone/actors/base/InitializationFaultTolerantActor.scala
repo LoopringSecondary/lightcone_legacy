@@ -20,6 +20,7 @@ import akka.actor._
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
+import org.loopring.lightcone.proto.Notify
 
 abstract class InitializationFaultTolerentActor
     extends Actor
@@ -27,9 +28,11 @@ abstract class InitializationFaultTolerentActor
     with ActorLogging {
   implicit val ec: ExecutionContext
 
-  def initialize(): Future[Unit]
+  def initialize(): Future[Unit] = Future.successful {
+    context.become(ready)
+  }
 
-  def initialized: Receive
+  def ready: Receive
 
   val initializationMaxRetries = 20
   val initializationDelayFactor = 2
@@ -41,34 +44,39 @@ abstract class InitializationFaultTolerentActor
   private var _initializationRetries = 0
 
   if (selfInitialize) {
-    self ! "start"
+    self ! Notify("initialize")
   }
 
   def receive: Receive = {
-    case "start" =>
+    case Notify("initialize", _) =>
+      log.info(
+        s"initializing ${self.path.name}, attempt ${_initializationRetries}..."
+      )
+
       initialize() onComplete {
         case Success(res) =>
-          log.info(
-            s"---->>> ${self.path.name} initialization done, ",
-            s"entered `initialized` state"
-          )
-          context.become(initialized)
+          log.info(s"---### ${self.path.name} initialization done, ")
 
         case Failure(e) =>
           if (_initializationRetries >= initializationMaxRetries) {
             log.error(
-              s"---->>> ${self.path.name} initialization failed ",
+              s"---### ${self.path.name} initialization failed ",
               s"after ${initializationMaxRetries} retries: ",
               e
             )
+            throw e
           } else {
             log.warning(
-              s"---->>> ${self.path.name} initialization failed, ",
+              s"---### ${self.path.name} initialization failed, ",
               s"will  retry in ${_initializationDelay} seconds"
             )
 
             context.system.scheduler
-              .scheduleOnce(_initializationDelay.seconds, self, "start")
+              .scheduleOnce(
+                _initializationDelay.seconds,
+                self,
+                Notify("initialize")
+              )
 
             _initializationRetries += 1
             _initializationDelay = Math.min(
@@ -78,6 +86,6 @@ abstract class InitializationFaultTolerentActor
           }
       }
 
-    case _ => stash()
+    case _ =>
   }
 }

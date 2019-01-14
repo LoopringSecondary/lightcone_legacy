@@ -115,7 +115,7 @@ class MarketManagerActor(
   implicit val marketId = markets(entityId)
   log.info(s"=======> starting MarketManagerActor ${self.path} for ${marketId}")
 
-  var autoSwitchBackToReceive: Option[Cancellable] = None
+  var autoSwitchBackToReady: Option[Cancellable] = None
 
   val wethTokenAddress = config.getString("relay.weth-address")
   val skiprecover = selfConfig.getBoolean("skip-recover")
@@ -154,27 +154,26 @@ class MarketManagerActor(
     DistributedPubSub(context.system).mediator
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
 
-  override def preStart(): Unit = {
-    super.preStart()
-
-    autoSwitchBackToReceive = Some(
-      context.system.scheduler
-        .scheduleOnce(
-          maxRecoverDurationMinutes.minute,
-          self,
-          ActorRecover.Finished(true)
-        )
-    )
-
-    if (skiprecover) {
-      log.warning(s"actor recover skipped: ${self.path}")
+  override def initialize() = {
+    if (skiprecover) Future.successful {
+      log.debug(s"actor recover skipped: ${self.path}")
+      context.become(ready)
     } else {
-
       log.debug(s"actor recover started: ${self.path}")
-      actors.get(OrderRecoverCoordinator.name) !
-        ActorRecover.Request(marketId = Some(marketId))
-
-      context.become(recover)
+      for {
+        _ <- actors.get(OrderRecoverCoordinator.name) ?
+          ActorRecover.Request(marketId = Some(marketId))
+      } yield {
+        autoSwitchBackToReady = Some(
+          context.system.scheduler
+            .scheduleOnce(
+              maxRecoverDurationMinutes.minute,
+              self,
+              ActorRecover.Finished(true)
+            )
+        )
+        context.become(recover)
+      }
     }
   }
 
@@ -184,10 +183,10 @@ class MarketManagerActor(
       submitOrder(order.copy(submittedAt = timeProvider.getTimeMillis))
 
     case msg @ ActorRecover.Finished(timeout) =>
-      autoSwitchBackToReceive.foreach(_.cancel)
-      autoSwitchBackToReceive = None
+      autoSwitchBackToReady.foreach(_.cancel)
+      autoSwitchBackToReady = None
       s"market manager `${entityId}` recover completed (timeout=${timeout})"
-      context.become(receive)
+      context.become(ready)
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
@@ -197,7 +196,7 @@ class MarketManagerActor(
       )
   }
 
-  def receive: Receive = {
+  def ready: Receive = {
 
     case SubmitSimpleOrder(_, Some(order)) =>
       submitOrder(order).sendTo(sender)
