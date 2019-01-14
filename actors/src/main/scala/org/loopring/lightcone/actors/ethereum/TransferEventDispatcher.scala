@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.ethereum
 
+import com.google.inject.Inject
 import akka.actor.ActorRef
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
@@ -25,26 +26,21 @@ import org.loopring.lightcone.proto._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class TransferEventDispatcher(
+class TransferEventDispatcher @Inject()(
     implicit
-    timeout: Timeout,
-    lookup: Lookup[ActorRef],
-    extractor: EventExtractor[TransferEvent],
+    val lookup: Lookup[ActorRef],
+    val extractor: EventExtractor[TransferEvent],
     val ec: ExecutionContext)
     extends NameBasedEventDispatcher[TransferEvent] {
 
   val names = Seq(TransactionRecordActor.name)
 
-  override def derive(block: RawBlockData): Future[Seq[TransferEvent]] =
-    Future {
-      val items = block.txs zip block.receipts
-      items.flatMap { item =>
-        extractor
-          .extract(item._1, item._2, block.timestamp)
-          .flatMap(
-            event => Seq(event.withOwner(event.from), event.withOwner(event.to))
-          )
-      }
-
-    }
+  override def derive(
+      block: RawBlockData,
+      events: Seq[TransferEvent]
+    ) = Future.successful {
+    events.map { event =>
+      Seq(event.withOwner(event.from), event.withOwner(event.to))
+    }.flatten
+  }
 }

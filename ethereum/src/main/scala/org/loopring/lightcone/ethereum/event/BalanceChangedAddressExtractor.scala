@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.ethereum.event
 
+import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{

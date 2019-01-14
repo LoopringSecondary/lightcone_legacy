@@ -16,8 +16,8 @@
 
 package org.loopring.lightcone.actors.ethereum
 
+import com.google.inject.Inject
 import akka.actor.ActorRef
-import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.ethereum.event.EventExtractor
@@ -25,11 +25,10 @@ import org.loopring.lightcone.proto.OrdersCancelledEvent
 
 import scala.concurrent.ExecutionContext
 
-class OrdersCancelledEventDispatcher(
+class OrdersCancelledEventDispatcher @Inject()(
     implicit
-    timeout: Timeout,
-    lookup: Lookup[ActorRef],
-    extractor: EventExtractor[OrdersCancelledEvent],
+    val lookup: Lookup[ActorRef],
+    val extractor: EventExtractor[OrdersCancelledEvent],
     val ec: ExecutionContext)
     extends NameBasedEventDispatcher[OrdersCancelledEvent] {
 

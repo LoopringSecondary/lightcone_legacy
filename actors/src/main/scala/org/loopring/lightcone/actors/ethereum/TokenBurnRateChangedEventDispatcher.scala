@@ -16,8 +16,8 @@
 
 package org.loopring.lightcone.actors.ethereum
 
+import com.google.inject.Inject
 import akka.actor.ActorRef
-import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.utils.TokenMetadataRefresher
 import org.loopring.lightcone.ethereum.event.EventExtractor
@@ -25,14 +25,12 @@ import org.loopring.lightcone.proto.TokenBurnRateChangedEvent
 
 import scala.concurrent.ExecutionContext
 
-class TokenBurnRateChangedEventDispatcher(
+class TokenBurnRateChangedEventDispatcher @Inject()(
     implicit
-    timeout: Timeout,
-    lookup: Lookup[ActorRef],
-    extractor: EventExtractor[TokenBurnRateChangedEvent],
+    val lookup: Lookup[ActorRef],
+    val extractor: EventExtractor[TokenBurnRateChangedEvent],
     val ec: ExecutionContext)
     extends NameBasedEventDispatcher[TokenBurnRateChangedEvent] {
 
   val names = Seq(TokenMetadataRefresher.name)
-
 }
