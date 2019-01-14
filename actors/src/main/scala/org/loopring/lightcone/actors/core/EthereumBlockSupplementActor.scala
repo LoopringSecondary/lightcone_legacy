@@ -119,7 +119,7 @@ class EthereumBlockSupplementActor(
           )
         )
         (ethereumAccessorActor ? batchGetUnclesReq)
-          .mapTo[BatchGetUncle.Res]
+          .mapAs[BatchGetUncle.Res]
           .map(_.resps.map(_.result.get.miner))
       } else {
         Future.successful(Seq.empty)
