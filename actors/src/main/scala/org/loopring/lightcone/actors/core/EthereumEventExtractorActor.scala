@@ -102,7 +102,7 @@ class EthereumEventExtractorActor(
     }
   }
 
-  def receive: Receive = {
+  def ready: Receive = {
     case Notify("next", _) =>
       process()
   }
@@ -169,6 +169,4 @@ class EthereumEventExtractorActor(
           .scheduleOnce(15 seconds, self, Notify("next"))
       }
     }
-  }
-
 }

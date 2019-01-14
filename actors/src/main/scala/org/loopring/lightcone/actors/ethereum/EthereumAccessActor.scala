@@ -97,7 +97,7 @@ class EthereumAccessActor(
         self ! Notify("initialized")
       case Failure(e) =>
         log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
-        context.stop(self)
+        throw e
     }
   }
 
