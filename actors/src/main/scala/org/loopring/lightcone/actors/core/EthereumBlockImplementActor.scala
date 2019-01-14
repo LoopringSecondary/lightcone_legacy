@@ -18,23 +18,22 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.singleton._
-import akka.util.Timeout
 import akka.pattern._
+import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.ethereum._
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
-object EthereumEventImplementActor {
+object EthereumBlockImplementActor {
   val name = "ethereum_event_implement"
 
   def start(
@@ -53,34 +52,34 @@ object EthereumEventImplementActor {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new EthereumEventImplementActor()),
+        singletonProps = Props(new EthereumBlockImplementActor()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
-      name = EthereumEventImplementActor.name
+      name = EthereumBlockImplementActor.name
     )
 
     system.actorOf(
       ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${EthereumEventImplementActor.name}",
+        singletonManagerPath = s"/user/${EthereumBlockImplementActor.name}",
         settings = ClusterSingletonProxySettings(system)
       ),
-      name = s"${EthereumEventImplementActor.name}_proxy"
+      name = s"${EthereumBlockImplementActor.name}_proxy"
     )
   }
 
 }
 
-class EthereumEventImplementActor(
+class EthereumBlockImplementActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dispatchers: Seq[EventDispatcher[_]],
+    dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(EthereumEventImplementActor.name) {
+    extends ActorWithPathBasedConfig(EthereumBlockImplementActor.name) {
 
   val taskQueue = new mutable.Queue[Long]()
   var currentBlockNumber = 0L
@@ -136,7 +135,7 @@ class EthereumEventImplementActor(
           txs = block.transactions,
           receipts = receipts.map(_.get)
         )
-        dispatchers.foreach(dispatcher => dispatcher.dispatch(rawBlockData))
+        dispatchers.foreach(_.dispatch(rawBlockData))
         dbModule.blockService.saveBlock(
           BlockData(
             hash = rawBlockData.hash,

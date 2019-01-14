@@ -39,6 +39,8 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.proto.{AddressAllowanceUpdated, RingMinedEvent}
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -91,6 +93,16 @@ class CoreModule(config: Config)
     bind[TokenBurnRateEventExtractor]
     bind[TransferEventExtractor]
 
+    // --- bind event dispatchers ---------------------
+    bind[AllowanceEventDispatcher]
+    bind[BalanceEventDispatcher]
+    bind[OrdersCancelledEventDispatcher]
+    bind[OrderFilledEventDispatcher]
+    bind[RingMinedEventDispatcher]
+    bind[TokenBurnRateChangedEventDispatcher]
+    bind[TransferEventDispatcher]
+    bind[CutoffEventDispatcher]
+
     // --- bind dals ---------------------
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[OrderDal].to[OrderDalImpl].asEagerSingleton
@@ -136,6 +148,31 @@ class CoreModule(config: Config)
     bind[Boolean]
       .annotatedWithName("deploy-actors-ignoring-roles")
       .toInstance(false)
+  }
+
+  @Provides
+  private def guiceDispathcerProvider(
+      balanceEventDispatcher: BalanceEventDispatcher,
+      allowanceEventDispatcher: AllowanceEventDispatcher,
+      ringMinedEventDispatcher: RingMinedEventDispatcher,
+      orderFilledEventDispatcher: OrderFilledEventDispatcher,
+      ordersCancelledEventDispatcher: OrdersCancelledEventDispatcher,
+      cutoffEventDispatcher: CutoffEventDispatcher,
+      tokenBurnRateChangedEventDispatcher: TokenBurnRateChangedEventDispatcher,
+      transferEventDispatcher: TransferEventDispatcher
+    ): Seq[EventDispatcher[_]] = {
+
+    Seq(
+      balanceEventDispatcher,
+      allowanceEventDispatcher,
+      cutoffEventDispatcher,
+      orderFilledEventDispatcher,
+      ordersCancelledEventDispatcher,
+      ringMinedEventDispatcher,
+      tokenBurnRateChangedEventDispatcher,
+      transferEventDispatcher
+    )
+
   }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {

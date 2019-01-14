@@ -26,8 +26,9 @@ import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 import akka.pattern._
+import org.loopring.lightcone.actors.core._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class BalanceEventDispatcher(
     implicit
@@ -38,46 +39,50 @@ class BalanceEventDispatcher(
     val ec: ExecutionContext)
     extends NameBasedEventDispatcher[AddressBalanceUpdated] {
 
-  val names: Seq[String] = ???
+  val names: Seq[String] =
+    Seq(MultiAccountManagerActor.name, RingSettlementManagerActor.name)
 
-  //TODO(yadong): 不要从新定义dispatch方法，而是改写derive方法。
-
-  // override def dispatch(block: RawBlockData) = {
-
-  //   val miners: Seq[String] = block.uncles.+:(block.miner)
-  //   val events = ((block.txs zip block.receipts).flatMap { item =>
-  //     extractor.extract(item._1, item._2, block.timestamp)
-  //   } ++ miners.map(
-  //     miner =>
-  //       AddressBalanceUpdated(address = miner, token = Address.ZERO.toString())
-  //   )).distinct
-  //   val (ethAddress, tokenAddresses) =
-  //     events.partition(addr => Address(addr.address).isZero)
-  //   val batchCallReq = brb.buildRequest(tokenAddresses, "latest")
-  //   for {
-  //     tokenBalances <- (lookup.get(EthereumAccessActor.name) ? batchCallReq)
-  //       .mapAs[BatchCallContracts.Res]
-  //       .map(_.resps.map(_.result))
-  //       .map(_.map(res => Numeric.toBigInt(res).toByteArray))
-  //     ethBalances <- (lookup.get(EthereumAccessActor.name) ? BatchGetEthBalance
-  //       .Req(
-  //         reqs =
-  //           ethAddress.map(addr => EthGetBalance.Req(address = addr.address))
-  //       ))
-  //       .mapAs[BatchGetEthBalance.Res]
-  //       .map(_.resps.map(_.result))
-  //       .map(_.map(res => Numeric.toBigInt(res).toByteArray))
-  //   } yield {
-  //     (tokenAddresses zip tokenBalances).foreach(
-  //       item =>
-  //         targets
-  //           .foreach(_ ! item._1.withBalance(item._2))
-  //     )
-  //     (ethAddress zip ethBalances).foreach(
-  //       item =>
-  //         targets
-  //           .foreach(_ ! item._1.withBalance(item._2))
-  //     )
-  //   }
-  // }
+  override def derive(
+      block: RawBlockData
+    ): Future[Seq[AddressBalanceUpdated]] = {
+    val items = block.txs zip block.receipts
+    val miners: Seq[AddressBalanceUpdated] = block.uncles
+      .+:(block.miner)
+      .map(
+        addr =>
+          AddressBalanceUpdated(
+            address = addr,
+            token = Address.ZERO.toString()
+          )
+      )
+    val events = items.flatMap { item =>
+      extractor.extract(item._1, item._2, block.timestamp)
+    }
+    val distEvents = (events ++ miners).distinct
+    val (ethAddress, tokenAddresses) = distEvents.partition(
+      addr => Address(addr.address).isZero
+    )
+    val batchCallReq = brb.buildRequest(tokenAddresses, "latest")
+    for {
+      tokenBalances <- (lookup.get(EthereumAccessActor.name) ? batchCallReq)
+        .mapAs[BatchCallContracts.Res]
+        .map(_.resps.map(_.result))
+        .map(_.map(res => Numeric.toBigInt(res).toByteArray))
+      ethBalances <- (lookup.get(EthereumAccessActor.name) ? BatchGetEthBalance
+        .Req(
+          reqs =
+            ethAddress.map(addr => EthGetBalance.Req(address = addr.address))
+        ))
+        .mapAs[BatchGetEthBalance.Res]
+        .map(_.resps.map(_.result))
+        .map(_.map(res => Numeric.toBigInt(res).toByteArray))
+    } yield {
+      (tokenAddresses zip tokenBalances).map(
+        item => item._1.withBalance(item._2)
+      ) ++
+        (ethAddress zip ethBalances).map(
+          item => item._1.withBalance(item._2)
+        )
+    }
+  }
 }

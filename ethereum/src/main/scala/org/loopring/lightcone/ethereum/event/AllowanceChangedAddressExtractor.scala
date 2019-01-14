@@ -27,11 +27,9 @@ import org.loopring.lightcone.proto.{
 }
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent._
 
 class AllowanceChangedAddressExtractor @Inject()(
     implicit
-    ec: ExecutionContext,
     config: Config)
     extends EventExtractor[AddressAllowanceUpdated] {
 
@@ -43,7 +41,7 @@ class AllowanceChangedAddressExtractor @Inject()(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Future[Seq[AddressAllowanceUpdated]] = Future {
+    ): Seq[AddressAllowanceUpdated] = {
     val allowanceAddresses = ListBuffer.empty[AddressAllowanceUpdated]
     receipt.logs.foreach { log =>
       wethAbi.unpackEvent(log.data, log.topics.toArray) match {

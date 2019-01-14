@@ -16,20 +16,17 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib.MarketHashProvider.convert2Hex
 import org.loopring.lightcone.proto._
-import scala.concurrent._
 
-class CutoffEventExtractor @Inject()(implicit ec: ExecutionContext)
-    extends EventExtractor[CutoffEvent] {
+class CutoffEventExtractor extends EventExtractor[CutoffEvent] {
 
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Future[Seq[CutoffEvent]] = Future {
+    ): Seq[CutoffEvent] = {
     val header = getEventHeader(tx, receipt, blockTime)
     receipt.logs.zipWithIndex.map { item =>
       val (log, index) = item

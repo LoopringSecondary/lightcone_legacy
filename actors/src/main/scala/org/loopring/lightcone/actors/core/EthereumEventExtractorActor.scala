@@ -85,7 +85,7 @@ class EthereumEventExtractorActor(
   def ethereumAccessorActor: ActorRef = actors.get(EthereumAccessActor.name)
 
   def ethereumImplementActor: ActorRef =
-    actors.get(EthereumEventImplementActor.name)
+    actors.get(EthereumBlockImplementActor.name)
 
   override def preStart(): Unit = {
     for {
@@ -152,7 +152,8 @@ class EthereumEventExtractorActor(
             txs = blockOpt.get.transactions,
             receipts = receipts.map(_.get)
           )
-          dispatchers.foreach(dispatcher => dispatcher.dispatch(rawBlockData))
+          dispatchers.foreach(_.dispatch(rawBlockData))
+
           dbModule.blockService.saveBlock(
             BlockData(
               hash = rawBlockData.hash,

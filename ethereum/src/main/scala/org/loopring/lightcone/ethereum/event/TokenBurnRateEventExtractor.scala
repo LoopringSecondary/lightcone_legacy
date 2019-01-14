@@ -26,7 +26,6 @@ import scala.concurrent._
 
 class TokenBurnRateEventExtractor @Inject()(
     implicit
-    ec: ExecutionContext,
     config: Config)
     extends EventExtractor[TokenBurnRateChangedEvent] {
 
@@ -41,7 +40,7 @@ class TokenBurnRateEventExtractor @Inject()(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Future[Seq[TokenBurnRateChangedEvent]] = Future {
+    ): Seq[TokenBurnRateChangedEvent] = {
     val header = getEventHeader(tx, receipt, blockTime)
     receipt.logs.zipWithIndex.map { item =>
       val (log, index) = item

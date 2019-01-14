@@ -28,8 +28,9 @@ import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 import akka.pattern._
+import org.loopring.lightcone.actors.core.MultiAccountManagerActor
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class AllowanceEventDispatcher(
     implicit
@@ -41,30 +42,26 @@ class AllowanceEventDispatcher(
     val ec: ExecutionContext)
     extends NameBasedEventDispatcher[AddressAllowanceUpdated] {
 
-  // TODO(yadong): 直接在这里吗配置好
-  val names: Seq[String] = ???
+  val names: Seq[String] = Seq(MultiAccountManagerActor.name)
 
-  //TODO(yadong): 不要从新定义dispatch方法，而是改写derive方法。
-
-  // override def dispatch(block: RawBlockData) = {
-  //   val delegateAddress = Address(
-  //     config.getString("loopring_protocol.delegate-address")
-  //   )
-  //   val events = (block.txs zip block.receipts).flatMap { item =>
-  //     extractor.extract(item._1, item._2, block.timestamp)
-  //   }.distinct
-  //   val batchCallReq = brb.buildRequest(delegateAddress, events, "")
-  //   for {
-  //     tokenAllowances <- (lookup.get(EthereumAccessActor.name) ? batchCallReq)
-  //       .mapAs[BatchCallContracts.Res]
-  //       .map(_.resps.map(_.result))
-  //       .map(_.map(res => Numeric.toBigInt(res).toByteArray))
-  //   } yield {
-  //     (events zip tokenAllowances).foreach(
-  //       item =>
-  //         targets
-  //           .foreach(_ ! item._1.withBalance(item._2))
-  //     )
-  //   }
-  // }
+  val delegateAddress = Address(
+    config.getString("loopring_protocol.delegate-address")
+  )
+  override def derive(
+      block: RawBlockData
+    ): Future[Seq[AddressAllowanceUpdated]] = {
+    val items = block.txs zip block.receipts
+    val events: Seq[AddressAllowanceUpdated] = items.flatMap { item =>
+      extractor.extract(item._1, item._2, block.timestamp)
+    }
+    val batchCallReq = brb.buildRequest(delegateAddress, events, "latest")
+    for {
+      tokenAllowances <- (lookup.get(EthereumAccessActor.name) ? batchCallReq)
+        .mapAs[BatchCallContracts.Res]
+        .map(_.resps.map(_.result))
+        .map(_.map(res => Numeric.toBigInt(res).toByteArray))
+    } yield {
+      (events zip tokenAllowances).map(item => item._1.withBalance(item._2))
+    }
+  }
 }

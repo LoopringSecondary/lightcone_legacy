@@ -16,15 +16,12 @@
 
 package org.loopring.lightcone.ethereum.event
 
-import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
-import scala.concurrent._
 
-class RingMinedEventExtractor @Inject()(implicit ec: ExecutionContext)
-    extends EventExtractor[PRingMinedEvent] {
+class RingMinedEventExtractor extends EventExtractor[PRingMinedEvent] {
 
   val fillLength: Int = 8 * 64
 
@@ -32,7 +29,7 @@ class RingMinedEventExtractor @Inject()(implicit ec: ExecutionContext)
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Future[Seq[PRingMinedEvent]] = Future {
+    ): Seq[PRingMinedEvent] = {
     val header = getEventHeader(tx, receipt, blockTime)
     if (isSucceed(receipt.status)) {
       receipt.logs.zipWithIndex.map { item =>

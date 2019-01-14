@@ -32,25 +32,22 @@ abstract class EventDispatcher[R <: AnyRef](
     extractor: EventExtractor[R]) {
   implicit val ec: ExecutionContext
 
-  def derive(event: R): Future[Seq[AnyRef]] = Future.successful(Seq(event))
-
   def targets: Seq[ActorRef]
+
+  def derive(block: RawBlockData): Future[Seq[AnyRef]] = Future {
+    val items = block.txs zip block.receipts
+    items.flatMap { item =>
+      extractor.extract(item._1, item._2, block.timestamp)
+    }
+  }
 
   // Never override this method!!!
   def dispatch(block: RawBlockData): Future[Int] = {
-    val items = block.txs zip block.receipts
     for {
-      events: Seq[R] <- Future
-        .sequence(items.map { item =>
-          extractor.extract(item._1, item._2, block.timestamp)
-        })
-        .map(_.flatten)
-
-      derived: Seq[AnyRef] <- Future.sequence(events.map(derive(_)))
+      derived: Seq[AnyRef] <- derive(block)
       _ = derived.foreach { e =>
         targets.foreach(_ ! e)
       }
-
     } yield derived.size
   }
 }
