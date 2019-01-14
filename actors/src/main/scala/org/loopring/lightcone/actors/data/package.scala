@@ -204,7 +204,7 @@ package object data {
 
   implicit class RichMarketId(marketId: MarketId) {
 
-    def eig(): BigInteger = {
+    def key(): BigInteger = {
       Numeric.toBigInt(marketId.primary) xor
         Numeric.toBigInt(marketId.secondary)
     }

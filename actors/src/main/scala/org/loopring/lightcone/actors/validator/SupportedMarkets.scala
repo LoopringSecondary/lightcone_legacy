@@ -28,7 +28,7 @@ import scala.collection.JavaConverters._
 // Owner: Hongyu
 case class SupportedMarkets(config: Config) {
 
-  private val markets = config
+  private val marketsKeys = config
     .getObjectList("markets")
     .asScala
     .map { item =>
@@ -39,7 +39,7 @@ case class SupportedMarkets(config: Config) {
     .toSet
 
   def contains(marketId: MarketId) = {
-    markets.contains(marketId.eig())
+    marketsKeys.contains(marketId.key)
   }
 
   def assertmarketIdIsValid(marketIdOpt: Option[MarketId]): Option[MarketId] = {
@@ -64,7 +64,5 @@ case class SupportedMarkets(config: Config) {
     )
   }
 
-  def allMarketIdEig() = {
-    markets
-  }
+  def getMarketKeys() = marketsKeys
 }

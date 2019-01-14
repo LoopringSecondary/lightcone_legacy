@@ -73,7 +73,7 @@ class AccountManagerActor(
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   override def preStart() = {
-    val cutoffReqs = (supportedMarkets.allMarketIdEig() map { m =>
+    val cutoffReqs = (supportedMarkets.getMarketKeys() map { m =>
       for {
         res <- (ethereumQueryActor ? GetCutoff.Req(
           broker = address,
@@ -95,10 +95,7 @@ class AccountManagerActor(
         accountCutoffState.setCutoff(cutoff.toLong)
       })
 
-    val fu = Future.sequence(
-      cutoffReqs
-    )
-    fu onComplete {
+    Future.sequence(cutoffReqs) onComplete {
       case Success(res) =>
         self ! Notify("initialized")
       case Failure(e) =>
@@ -295,25 +292,6 @@ class AccountManagerActor(
           //需要更新到数据库
           _ <- dbModule.orderService.updateOrderStatus(o._2.id, o._2.status)
         } yield {
-//          STATUS_NEW = 0;
-//          STATUS_PENDING = 1;
-//          STATUS_EXPIRED = 2;
-//          STATUS_DUST_ORDER = 3;
-//          STATUS_PARTIALLY_FILLED = 4;
-//          STATUS_COMPLETELY_FILLED = 5;
-//          STATUS_SOFT_CANCELLED_BY_USER = 6;
-//          STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR = 7;
-//          STATUS_ONCHAIN_CANCELLED_BY_USER = 8;
-//          STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR = 9;
-//          STATUS_PENDING_ACTIVE = 10;
-//          STATUS_TOO_MANY_RING_FAILURES = 11;
-//          STATUS_CANCELLED_LOW_BALANCE = 100;
-//          STATUS_CANCELLED_LOW_FEE_BALANCE = 101;
-//          STATUS_CANCELLED_TOO_MANY_ORDERS = 102;
-//          STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 103;
-//          STATUS_CANCELLED_DUPLICIATE = 200;
-//          STATUS_INVALID_DATA = 201;
-//          STATUS_UNSUPPORTED_MARKET = 202;
           val order = o._2
           order.status match {
             //新订单、或者匹配一部分的订单
