@@ -227,3 +227,14 @@ message GetTransactionRecordCount {
         int32 count = 1;
     }
 }
+
+message PersistDealtRecord {
+    message Req {
+        DealtRecord data    = 1;
+    }
+    message Res {
+        DealtRecord record  = 1;
+        bool already_exist  = 2;
+        ErrorCode error     = 3;
+    }
+}

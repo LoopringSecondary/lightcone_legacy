@@ -296,3 +296,18 @@ message NodeBlockHeight{
     string path = 1;
     int64 height = 2;
 }
+
+// Used as statistical data, such as a histogram
+message DealtRecord {
+    enum DealType {
+        IN   = 0;
+        OUT  = 1;
+    }
+    string     tx_hash        = 1;
+    string     primary_token  = 2;
+    string     base_token     = 3;
+    int64      dealt_at       = 4;
+    double     amount         = 5;
+    double     price          = 6;
+    DealType   type           = 7;
+}
