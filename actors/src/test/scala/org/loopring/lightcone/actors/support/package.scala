@@ -22,7 +22,7 @@ import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.TokenMeta
+import org.loopring.lightcone.proto.TokenMetadata
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
 import slick.basic.DatabaseConfig
@@ -30,28 +30,28 @@ import slick.jdbc.JdbcProfile
 
 package object support {
 
-  val WETH_TOKEN = TokenMeta(
-    Address("0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc").toString,
-    18,
-    0.4,
-    "WETH",
-    1000
+  val WETH_TOKEN = TokenMetadata(
+    address = Address("0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc").toString,
+    decimals = 18,
+    burnRate = 0.4,
+    symbol = "WETH",
+    usdPrice = 1000
   )
 
-  val LRC_TOKEN = TokenMeta(
-    Address("0x97241525fe425C90eBe5A41127816dcFA5954b06").toString,
-    18,
-    0.4,
-    "LRC",
-    1000
+  val LRC_TOKEN = TokenMetadata(
+    address = Address("0x97241525fe425C90eBe5A41127816dcFA5954b06").toString,
+    decimals = 18,
+    burnRate = 0.4,
+    symbol = "LRC",
+    usdPrice = 1000
   )
 
-  val GTO_TOKEN = TokenMeta(
-    Address("0x2D7233F72AF7a600a8EbdfA85558C047c1C8F795").toString,
-    18,
-    0.4,
-    "GTO",
-    1000
+  val GTO_TOKEN = TokenMetadata(
+    address = Address("0x2D7233F72AF7a600a8EbdfA85558C047c1C8F795").toString,
+    decimals = 18,
+    burnRate = 0.4,
+    symbol = "GTO",
+    usdPrice = 1000
   )
 
   //第一个地址为特殊地址，eth以及erc20金额和授权，都足够大
@@ -80,19 +80,19 @@ package object support {
   mysqlContainer.starting()
 
   //todo:暂时未生效
-//  try Unreliables.retryUntilTrue(
-//    10,
-//    TimeUnit.SECONDS,
-//    () => {
-//      mysqlContainer.mappedPort(3306) > 0
-//    }
-//  )
-//  catch {
-//    case e: TimeoutException =>
-//      throw new ContainerLaunchException(
-//        "Timed out waiting for container port to open mysqlContainer should be listening)"
-//      )
-//  }
+  //  try Unreliables.retryUntilTrue(
+  //    10,
+  //    TimeUnit.SECONDS,
+  //    () => {
+  //      mysqlContainer.mappedPort(3306) > 0
+  //    }
+  //  )
+  //  catch {
+  //    case e: TimeoutException =>
+  //      throw new ContainerLaunchException(
+  //        "Timed out waiting for container port to open mysqlContainer should be listening)"
+  //      )
+  //  }
 
   Thread.sleep(2000)
 
@@ -115,10 +115,8 @@ package object support {
         }"""
 
   val dbConfig1: DatabaseConfig[JdbcProfile] =
-    DatabaseConfig.forConfig[JdbcProfile](
-      "",
-      ConfigFactory.parseString(mysqlConfigStr)
-    )
+    DatabaseConfig
+      .forConfig[JdbcProfile]("", ConfigFactory.parseString(mysqlConfigStr))
 
   val transactionRecordConfigStr = s"""
      db.transaction-record.shard_0 {

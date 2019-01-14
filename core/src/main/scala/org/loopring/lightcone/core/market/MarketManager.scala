@@ -32,7 +32,7 @@ trait MarketManager {
   val marketId: MarketId
   val pendingRingPool: PendingRingPool
 
-  def getMetadata(): MarketMetadata
+  def getStats(): MarketStats
 
   def getOrder(orderId: String): Option[Matchable]
 
