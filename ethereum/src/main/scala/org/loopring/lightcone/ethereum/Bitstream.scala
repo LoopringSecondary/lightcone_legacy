@@ -17,6 +17,7 @@
 package org.loopring.lightcone.ethereum
 
 import org.web3j.utils.Numeric
+import com.google.protobuf.ByteString
 
 class Bitstream(private var data: String = "") {
   private val ADDRESS_LENGTH = 20
@@ -147,11 +148,16 @@ class Bitstream(private var data: String = "") {
 
   private def hex2Int(hex: String): Int = Integer.parseInt(hex, 16)
 
+  def extractUint8(offset: Int): Int = hex2Int(extractBytesX(offset, 1))
+
   def extractUint16(offset: Int): Int = hex2Int(extractBytesX(offset, 2))
 
   def extractUint32(offset: Int): Int = hex2Int(extractBytesX(offset, 4))
 
-  def extractUint(offset: Int): Int = hex2Int(extractBytesX(offset, 32))
+  def extractUint(offset: Int): ByteString = {
+    val hexStr = extractBytesX(offset, 32)
+    ByteString.copyFromUtf8(hexStr)
+  }
 
   def extractAddress(offset: Int) = "0x" + extractBytesX(offset, 20)
 

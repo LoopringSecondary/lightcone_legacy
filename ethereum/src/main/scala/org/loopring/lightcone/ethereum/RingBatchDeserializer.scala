@@ -18,66 +18,137 @@ package org.loopring.lightcone.ethereum.data
 
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.ethereum._
+import com.google.protobuf.ByteString
+import org.web3j.utils.Numeric
 
 trait RingBatchDeserializer {
-  def deserialize(encoded: String): Either[ErrorCode, RingBatch]
+  def deserialize: Either[ErrorCode, RingBatch]
 }
 
-class SimpleRingBatchDeserializer extends RingBatchDeserializer {
+class SimpleRingBatchDeserializer(encoded: String = "")
+    extends RingBatchDeserializer {
+  import ethereum._
 
-  def deserialize(encoded: String): Either[ErrorCode, RingBatch] = {
-    val stream = new Bitstream(encoded)
+  val dataStream = new Bitstream(encoded)
 
+  private var tableOffSet: Int = 0
+  private var dataOffset: Int = 0
+
+  def deserialize: Either[ErrorCode, RingBatch] =
     try {
-      val version = stream.extractUint16(0)
-      val numOrders = stream.extractUint16(2)
-      val numRings = stream.extractUint16(4)
-      val numSpendables = stream.extractUint16(6)
+      val version = dataStream.extractUint16(0)
+      val numOrders = dataStream.extractUint16(2)
+      val numRings = dataStream.extractUint16(4)
+      val numSpendables = dataStream.extractUint16(6)
 
-      val miningDataOffset = 8
-      val orderDataOffset = miningDataOffset + 3 * 2
-      val ringDataOffset = orderDataOffset + (30 * 2) * numOrders
-      val dataBlobOffset = ringDataOffset + (9 * numRings) + 32
+      val miningTableOffset = 8
+      val orderTableOffset = miningTableOffset + 3 * 2
+      val ringDataOffset = orderTableOffset + (30 * 2) * numOrders
+      dataOffset = ringDataOffset + (9 * numRings) + 32
 
-      val ringBatchWithMiningData = setMiningData(encoded, miningDataOffset)
+      val ringBatchWithMiningData = setMiningData(miningTableOffset)
       val ringBatchWithOrders =
         setupOrders(
-          encoded,
           ringBatchWithMiningData,
-          orderDataOffset,
+          orderTableOffset,
           numOrders
         )
       val ringBatchWithRings =
-        assembleRings(encoded, ringBatchWithOrders, ringDataOffset, numRings)
+        assembleRings(ringBatchWithOrders, ringDataOffset, numRings)
 
       Right(ringBatchWithRings)
     } catch {
       case _: Throwable => Left(ErrorCode.ERR_DESERIALIZE_INVALID_ENCODED_DATA)
     }
+
+  private def setMiningData(miningTableOffset: Int) = {
+    this.tableOffSet = miningTableOffset
+    val feeRecipient = nextAddress
+    val miner = nextAddress
+    val sig = nextBytes
+
+    new RingBatch(feeRecipient = feeRecipient, miner = miner, sig = sig)
   }
 
-  def setMiningData(
-      encoded: String,
-      miningDataOffset: Int
-    ) = {
-    ???
-  }
-
-  def setupOrders(
-      encoded: String,
+  private def setupOrders(
       ringBatch: RingBatch,
-      orderDataOffset: Int,
+      orderTableOffset: Int,
       numOrders: Int
     ) = {
-    ???
+    this.tableOffSet = orderTableOffset
+    val orders = (0 until numOrders).map(i => assembleOrder)
+    ringBatch.copy(orders = orders)
   }
 
-  def assembleRings(
-      encoded: String,
+  private def assembleRings(
       ringBatch: RingBatch,
       ringDataOffset: Int,
       numRings: Int
     ) = {
-    ???
+    var ringOffset = ringDataOffset
+    val rings = (0 until numRings) map { _ =>
+      ringOffset += 1
+      val ringSize = dataStream.extractUint8(ringOffset)
+      var orderOffset = ringOffset
+      val orderIndexes = (0 until ringSize) map { _ =>
+        val orderIndex = dataStream.extractUint8(orderOffset)
+        orderOffset += 1
+        orderIndex
+      }
+
+      ringOffset += 8
+      new RingBatch.Ring(orderIndexes)
+    }
+
+    ringBatch.copy(rings = rings)
   }
+
+  private def getNextOffset = {
+    val offset = dataStream.extractUint16(tableOffSet)
+    tableOffSet += 2
+    offset
+  }
+
+  private def nextUint16 = getNextOffset
+
+  private def nextUint = {
+    val offset = getNextOffset * 4
+    if (offset > 0) {
+      dataStream.extractUint(dataOffset + offset)
+    } else {
+      ByteString.EMPTY
+    }
+  }
+
+  private def nextAddress = {
+    val offset = getNextOffset * 4
+    if (offset > 0) {
+      dataStream.extractAddress(dataOffset + offset)
+    } else {
+      ""
+    }
+  }
+
+  private def nextBytes = {
+    val offset = getNextOffset * 4
+    if (offset > 0) {
+      val len = dataStream.extractUint(dataOffset + offset).toInt
+      "0x" + dataStream.extractBytesX(dataOffset + offset + 32, len)
+    } else {
+      ""
+    }
+  }
+
+  private def assembleOrder = {
+    val order = new RawOrder(
+      version = nextUint16,
+      owner = nextAddress,
+      tokenS = nextAddress,
+      tokenB = nextAddress,
+      amountS = nextUint
+    )
+
+    order
+  }
+
 }
