@@ -47,16 +47,18 @@ class AllowanceEventDispatcher(
   val delegateAddress = Address(
     config.getString("loopring_protocol.delegate-address")
   )
+  def ethereumAccessor = lookup.get(EthereumAccessActor.name)
+
   override def derive(
       block: RawBlockData
     ): Future[Seq[AddressAllowanceUpdated]] = {
     val items = block.txs zip block.receipts
     val events: Seq[AddressAllowanceUpdated] = items.flatMap { item =>
       extractor.extract(item._1, item._2, block.timestamp)
-    }
+    }.distinct
     val batchCallReq = brb.buildRequest(delegateAddress, events, "latest")
     for {
-      tokenAllowances <- (lookup.get(EthereumAccessActor.name) ? batchCallReq)
+      tokenAllowances <- (ethereumAccessor ? batchCallReq)
         .mapAs[BatchCallContracts.Res]
         .map(_.resps.map(_.result))
         .map(_.map(res => Numeric.toBigInt(res).toByteArray))

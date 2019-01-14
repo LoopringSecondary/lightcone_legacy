@@ -318,7 +318,7 @@ message RawBlockData{
     repeated TransactionReceipt receipts = 7;
 }
 
-message BlockImplementTask {
+message BlockSupplementTask {
     repeated int64 heights = 1;
 }
 

@@ -74,13 +74,13 @@ class EthereumBatchCallRequestBuilder {
       addresses: Seq[AddressBalanceUpdated],
       tag: String
     ): BatchCallContracts.Req = {
-    val balanceCallReqs = addresses.zipWithIndex.map { item =>
-      val (address, index) = item
-      val data = erc20Abi.balanceOf.pack(
-        BalanceOfFunction.Parms(_owner = address.address.toString)
-      )
-      val param = TransactionParams(to = address.token, data = data)
-      EthCall.Req(index, Some(param), tag)
+    val balanceCallReqs = addresses.zipWithIndex.map {
+      case (address, index) =>
+        val data = erc20Abi.balanceOf.pack(
+          BalanceOfFunction.Parms(_owner = address.address.toString)
+        )
+        val param = TransactionParams(to = address.token, data = data)
+        EthCall.Req(index, Some(param), tag)
     }
     BatchCallContracts.Req(balanceCallReqs)
   }
@@ -90,16 +90,16 @@ class EthereumBatchCallRequestBuilder {
       addresses: Seq[AddressAllowanceUpdated],
       tag: String
     ): BatchCallContracts.Req = {
-    val balanceCallReqs = addresses.zipWithIndex.map { item =>
-      val (address, index) = item
-      val data = erc20Abi.allowance.pack(
-        AllowanceFunction.Parms(
-          _owner = address.address,
-          _spender = delegateAddress.toString()
+    val balanceCallReqs = addresses.zipWithIndex.map {
+      case (address, index) =>
+        val data = erc20Abi.allowance.pack(
+          AllowanceFunction.Parms(
+            _owner = address.address,
+            _spender = delegateAddress.toString()
+          )
         )
-      )
-      val param = TransactionParams(to = address.token, data = data)
-      EthCall.Req(index, Some(param), tag)
+        val param = TransactionParams(to = address.token, data = data)
+        EthCall.Req(index, Some(param), tag)
     }
     BatchCallContracts.Req(balanceCallReqs)
   }

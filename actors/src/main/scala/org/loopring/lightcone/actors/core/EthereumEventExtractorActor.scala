@@ -79,9 +79,7 @@ class EthereumEventExtractorActor(
     val dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
-
-  var currentBlockNumber: BigInt = BigInt(-1)
-
+  var currentBlockNumber: BigInt = _
   def ethereumAccessorActor: ActorRef = actors.get(EthereumAccessActor.name)
 
   def ethereumImplementActor: ActorRef =
@@ -96,7 +94,7 @@ class EthereumEventExtractorActor(
     } yield {
       currentBlockNumber = maxBlock - 1
       if (handledBlock.isDefined && handledBlock.get < maxBlock - 1) {
-        ethereumImplementActor ! BlockImplementTask(
+        ethereumImplementActor ! BlockSupplementTask(
           handledBlock.get + 1 until maxBlock.longValue()
         )
       }
@@ -153,7 +151,6 @@ class EthereumEventExtractorActor(
             receipts = receipts.map(_.get)
           )
           dispatchers.foreach(_.dispatch(rawBlockData))
-
           dbModule.blockService.saveBlock(
             BlockData(
               hash = rawBlockData.hash,
@@ -162,6 +159,7 @@ class EthereumEventExtractorActor(
             )
           )
           currentBlockNumber += 1
+          self ! Notify("next")
         } else {
           context.system.scheduler
             .scheduleOnce(1 seconds, self, Notify("next"))

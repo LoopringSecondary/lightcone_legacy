@@ -42,6 +42,8 @@ class BalanceEventDispatcher(
   val names: Seq[String] =
     Seq(MultiAccountManagerActor.name, RingSettlementManagerActor.name)
 
+  def ethereumAccessor = lookup.get(EthereumAccessActor.name)
+
   override def derive(
       block: RawBlockData
     ): Future[Seq[AddressBalanceUpdated]] = {
@@ -64,7 +66,7 @@ class BalanceEventDispatcher(
     )
     val batchCallReq = brb.buildRequest(tokenAddresses, "latest")
     for {
-      tokenBalances <- (lookup.get(EthereumAccessActor.name) ? batchCallReq)
+      tokenBalances <- (ethereumAccessor ? batchCallReq)
         .mapAs[BatchCallContracts.Res]
         .map(_.resps.map(_.result))
         .map(_.map(res => Numeric.toBigInt(res).toByteArray))
@@ -74,8 +76,7 @@ class BalanceEventDispatcher(
             ethAddress.map(addr => EthGetBalance.Req(address = addr.address))
         ))
         .mapAs[BatchGetEthBalance.Res]
-        .map(_.resps.map(_.result))
-        .map(_.map(res => Numeric.toBigInt(res).toByteArray))
+        .map(_.resps.map(res => Numeric.toBigInt(res.result).toByteArray))
     } yield {
       (tokenAddresses zip tokenBalances).map(
         item => item._1.withBalance(item._2)

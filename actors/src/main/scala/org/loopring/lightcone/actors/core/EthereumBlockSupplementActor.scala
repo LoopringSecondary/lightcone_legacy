@@ -95,7 +95,7 @@ class EthereumBlockSupplementActor(
       }
     case Notify("current", _) =>
       process()
-    case BlockImplementTask(blocks) =>
+    case BlockSupplementTask(blocks) =>
       taskQueue.enqueue(blocks: _*)
   }
 
@@ -138,11 +138,12 @@ class EthereumBlockSupplementActor(
         dispatchers.foreach(_.dispatch(rawBlockData))
         dbModule.blockService.saveBlock(
           BlockData(
-            hash = rawBlockData.hash,
+            hash = block.hash,
             height = rawBlockData.height,
-            timestamp = Numeric.toBigInt(rawBlockData.timestamp).longValue()
+            timestamp = Numeric.toBigInt(block.timestamp).longValue()
           )
         )
+        self ! Notify("next")
       } else {
         context.system.scheduler
           .scheduleOnce(1 seconds, self, Notify("current"))

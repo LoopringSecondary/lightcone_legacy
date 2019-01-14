@@ -17,14 +17,9 @@
 package org.loopring.lightcone.actors.ethereum
 
 import akka.actor.ActorRef
-import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.ethereum.event._
 import org.loopring.lightcone.proto._
-import akka.util.Timeout
-import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.utils.TokenMetadataRefresher
-
 import scala.concurrent._
 
 abstract class EventDispatcher[R <: AnyRef](
