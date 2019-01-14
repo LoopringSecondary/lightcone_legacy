@@ -29,10 +29,15 @@ abstract class InitializationRetryActor
   implicit val ec: ExecutionContext
 
   def initialize(): Future[Unit] = Future.successful {
-    context.become(ready)
+    becomeReady()
   }
 
   def ready: Receive
+
+  def becomeReady() = {
+    context.become(ready)
+    unstashAll()
+  }
 
   val initializationMaxRetries = 20
   val initializationDelayFactor = 2
@@ -87,5 +92,6 @@ abstract class InitializationRetryActor
       }
 
     case _ =>
+      stash()
   }
 }
