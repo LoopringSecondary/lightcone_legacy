@@ -33,10 +33,6 @@ trait MarketMetadataService {
 
   def getMarketsByHash(marketHashes: Seq[String]): Future[Seq[MarketMetadata]]
 
-  def getMarketsById(marketIds: Seq[MarketId]): Future[Seq[MarketMetadata]]
-
-  def disableMarketById(market: MarketId): Future[ErrorCode]
-
   def disableMarketByHash(marketHash: String): Future[ErrorCode]
 
 }

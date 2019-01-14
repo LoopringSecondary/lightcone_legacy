@@ -114,20 +114,8 @@ class MetadataManagerActor(
         .map(UpdateMarketMetadata.Res(_))
 
     case req: DisableMarket.Req =>
-      req.market match {
-        case DisableMarket.Req.Market.MarketHash(value) =>
-          dbModule.marketMetadataService
-            .disableMarketByHash(value)
-            .map(DisableMarket.Res(_))
-        case DisableMarket.Req.Market.MarketId(value) =>
-          dbModule.marketMetadataService
-            .disableMarketById(value)
-            .map(DisableMarket.Res(_))
-        case DisableMarket.Req.Market.Empty =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            "Parameter market could not be empty"
-          )
-      }
+      dbModule.marketMetadataService
+        .disableMarketByHash(req.marketHash)
+        .map(DisableMarket.Res(_))
   }
 }
