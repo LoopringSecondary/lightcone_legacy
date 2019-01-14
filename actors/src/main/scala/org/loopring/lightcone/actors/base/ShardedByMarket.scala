@@ -25,7 +25,7 @@ trait ShardedByMarket extends Sharded {
   val extractMarketId: PartialFunction[Any, MarketId]
 
   def getEntityId(marketId: MarketId): String = {
-    Math.abs(marketId.eig().hashCode).toString
+    Math.abs(marketId.key().hashCode).toString
   }
 
   def extractEntityId(actorName: String) = actorName.split("_").last
