@@ -78,25 +78,11 @@ final class MetadataManagerValidator()(implicit val config: Config)
       req
 
     case req: DisableMarket.Req =>
-      req.market match {
-        case DisableMarket.Req.Market.MarketHash(value) =>
-          if (value.isEmpty)
-            throw ErrorException(
-              ErrorCode.ERR_INVALID_ARGUMENT,
-              "Parameter marketHash could not be empty"
-            )
-        case DisableMarket.Req.Market.MarketId(value) =>
-          if (value.primary.isEmpty || value.secondary.isEmpty)
-            throw ErrorException(
-              ErrorCode.ERR_INVALID_ARGUMENT,
-              "Parameter primary or secondary could not be empty"
-            )
-        case DisableMarket.Req.Market.Empty =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            "Parameter market could not be empty"
-          )
-      }
+      if (req.marketHash.isEmpty)
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          "Parameter marketHash could not be empty"
+        )
       req
   }
 }
