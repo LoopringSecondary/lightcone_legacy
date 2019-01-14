@@ -27,27 +27,26 @@ import scala.concurrent._
 import org.slf4s.Logging
 import com.google.inject.Inject
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
-import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.persistence.base.enumColumnType
 import scala.util.{Failure, Success}
 
-class TokenMetadataDalImpl @Inject()(
+class MarketMetadataDalImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    @Named("dbconfig-dal-token-metadata") val dbConfig: DatabaseConfig[
+    @Named("dbconfig-dal-market-metadata") val dbConfig: DatabaseConfig[
       JdbcProfile
     ],
     timeProvider: TimeProvider)
-    extends TokenMetadataDal
+    extends MarketMetadataDal
     with Logging {
-  val query = TableQuery[TokenMetadataTable]
-  implicit val statusColumnType = enumColumnType(TokenMetadata.Status)
+  val query = TableQuery[MarketMetadataTable]
+  implicit val statusColumnType = enumColumnType(MarketMetadata.Status)
 
-  private var tokens: Seq[TokenMetadata] = Nil
+  private var markets: Seq[MarketMetadata] = Nil
 
-  def saveToken(tokenMetadata: TokenMetadata): Future[ErrorCode] =
-    db.run((query += tokenMetadata).asTry).map {
+  def saveMarket(marketMetadata: MarketMetadata): Future[ErrorCode] =
+    db.run((query += marketMetadata).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) =>
         ERR_PERSISTENCE_DUPLICATE_INSERT
       case Failure(ex) =>
@@ -56,15 +55,15 @@ class TokenMetadataDalImpl @Inject()(
       case Success(x) => ERR_NONE
     }
 
-  def saveTokens(tokenMetadatas: Seq[TokenMetadata]): Future[Seq[String]] =
+  def saveMarkets(marketMetadatas: Seq[MarketMetadata]): Future[Seq[String]] =
     for {
-      _ <- Future.sequence(tokenMetadatas.map(saveToken))
-      query <- getTokens(tokenMetadatas.map(_.address))
-    } yield query.map(_.address)
+      _ <- Future.sequence(marketMetadatas.map(saveMarket))
+      query <- getMarketsByHashes(marketMetadatas.map(_.marketHash))
+    } yield query.map(_.marketHash)
 
-  def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode] =
+  def updateMarket(marketMetadata: MarketMetadata): Future[ErrorCode] =
     for {
-      result <- db.run(query.insertOrUpdate(tokenMetadata))
+      result <- db.run(query.insertOrUpdate(marketMetadata))
     } yield {
       if (result == 1) {
         ERR_NONE
@@ -73,46 +72,55 @@ class TokenMetadataDalImpl @Inject()(
       }
     }
 
-  def getTokens(reloadFromDatabase: Boolean = false) = {
-    if (reloadFromDatabase || tokens.isEmpty) {
-      db.run(query.take(Int.MaxValue).result).map { tokens_ =>
-        tokens = tokens_
+  def getMarkets(
+      reloadFromDatabase: Boolean = false
+    ): Future[Seq[MarketMetadata]] =
+    if (reloadFromDatabase || markets.isEmpty) {
+      db.run(query.result).map { markets_ =>
+        markets = markets_
         log.info(
-          s"token metadata retrieved>> ${tokens.mkString("\n", "\n", "\n")}"
+          s"market metadata retrieved>> ${markets.mkString("\n", "\n", "\n")}"
         )
-        tokens
+        markets
       }
     } else {
-      Future.successful(tokens)
+      Future.successful(markets)
     }
-  }
 
-  def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]] =
-    db.run(query.filter(_.address inSet tokens).result)
+  def getMarketsByHashes(
+      marketHashes: Seq[String]
+    ): Future[Seq[MarketMetadata]] =
+    db.run(query.filter(_.marketHash inSet marketHashes).result)
 
-  def updateBurnRate(
-      token: String,
-      burnRate: Double
-    ): Future[ErrorCode] =
+  def getMarketsByIds(marketIds: Seq[MarketId]): Future[Seq[MarketMetadata]] =
+    db.run(
+      query
+        .filter(_.primary inSet marketIds.map(_.primary))
+        .filter(_.secondary inSet marketIds.map(_.secondary))
+        .result
+    )
+
+  def disableMarket(market: MarketId): Future[ErrorCode] =
     for {
       result <- db.run(
         query
-          .filter(_.address === token)
-          .map(c => (c.burnRate, c.updateAt))
-          .update(burnRate, timeProvider.getTimeMillis())
+          .filter(_.primary === market.primary)
+          .filter(_.secondary === market.secondary)
+          .map(c => (c.status, c.updateAt))
+          .update(MarketMetadata.Status.DISABLED, timeProvider.getTimeMillis())
       )
     } yield {
       if (result >= 1) ERR_NONE
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def disableToken(address: Address): Future[ErrorCode] =
+  def disableMarket(marketHash: String): Future[ErrorCode] =
     for {
       result <- db.run(
         query
-          .filter(_.address === address.toString)
+          .filter(_.marketHash === marketHash)
           .map(c => (c.status, c.updateAt))
-          .update(TokenMetadata.Status.DISABLED, timeProvider.getTimeMillis())
+          .update(MarketMetadata.Status.DISABLED, timeProvider.getTimeMillis())
       )
     } yield {
       if (result >= 1) ERR_NONE

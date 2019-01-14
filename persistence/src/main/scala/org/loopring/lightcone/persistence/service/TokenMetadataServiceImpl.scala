@@ -17,12 +17,9 @@
 package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
-import com.google.inject.name.Named
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.{ErrorCode, TokenMetadata}
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class TokenMetadataServiceImpl @Inject()(
@@ -31,12 +28,29 @@ class TokenMetadataServiceImpl @Inject()(
     tokenMetadataDal: TokenMetadataDal)
     extends TokenMetadataService {
 
-  def getTokens(reloadFromDatabase: Boolean): Future[Seq[TokenMetadata]] =
+  def saveToken(tokenMetadata: TokenMetadata): Future[ErrorCode] =
+    tokenMetadataDal.saveToken(tokenMetadata)
+
+  def saveTokens(tokenMetadatas: Seq[TokenMetadata]): Future[Seq[String]] =
+    tokenMetadataDal.saveTokens(tokenMetadatas)
+
+  def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode] =
+    tokenMetadataDal.updateToken(tokenMetadata)
+
+  def getTokens(
+      reloadFromDatabase: Boolean = false
+    ): Future[Seq[TokenMetadata]] =
     tokenMetadataDal.getTokens(reloadFromDatabase)
+
+  def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]] =
+    tokenMetadataDal.getTokens(tokens)
 
   def updateBurnRate(
       token: String,
       burnDate: Double
     ): Future[ErrorCode] =
     tokenMetadataDal.updateBurnRate(token, burnDate)
+
+  def disableToken(address: Address): Future[ErrorCode] =
+    tokenMetadataDal.disableToken(address)
 }

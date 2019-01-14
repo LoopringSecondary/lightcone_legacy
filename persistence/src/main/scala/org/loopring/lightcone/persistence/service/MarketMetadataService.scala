@@ -16,26 +16,27 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{ErrorCode, TokenMetadata}
+import org.loopring.lightcone.proto.{ErrorCode, MarketId, MarketMetadata}
 import scala.concurrent.Future
 
-trait TokenMetadataService {
+trait MarketMetadataService {
 
-  def saveToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
+  def saveMarket(marketMetadata: MarketMetadata): Future[ErrorCode]
 
-  def saveTokens(tokenMetadatas: Seq[TokenMetadata]): Future[Seq[String]]
+  def saveMarkets(marketMetadatas: Seq[MarketMetadata]): Future[Seq[String]]
 
-  def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
+  def updateMarket(marketMetadata: MarketMetadata): Future[ErrorCode]
 
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMetadata]]
+  def getMarkets(
+      reloadFromDatabase: Boolean = false
+    ): Future[Seq[MarketMetadata]]
 
-  def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]]
+  def getMarketsByHash(marketHashes: Seq[String]): Future[Seq[MarketMetadata]]
 
-  def updateBurnRate(
-      token: String,
-      burnDate: Double
-    ): Future[ErrorCode]
+  def getMarketsById(marketIds: Seq[MarketId]): Future[Seq[MarketMetadata]]
 
-  def disableToken(address: Address): Future[ErrorCode]
+  def disableMarket(market: MarketId): Future[ErrorCode]
+
+  def disableMarket(marketHash: String): Future[ErrorCode]
+
 }
