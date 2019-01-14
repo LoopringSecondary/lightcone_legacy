@@ -394,10 +394,8 @@ class AccountManagerActor(
         updatedOrders.values.map { order =>
           order.status match {
             case STATUS_CANCELLED_LOW_BALANCE |
-                 STATUS_CANCELLED_LOW_FEE_BALANCE |
-                 STATUS_PENDING |
-                 STATUS_COMPLETELY_FILLED |
-                 STATUS_PARTIALLY_FILLED =>
+                STATUS_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
+                STATUS_COMPLETELY_FILLED | STATUS_PARTIALLY_FILLED =>
               Future.successful(Unit)
             case status =>
               log.error(

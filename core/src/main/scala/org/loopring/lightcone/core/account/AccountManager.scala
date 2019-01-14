@@ -27,6 +27,15 @@ trait AccountManager {
       tm: AccountTokenManager
     ): AccountTokenManager
 
+  def submitOrder(order: Matchable): Boolean
+
+  def cancelOrder(orderId: String): Boolean
+
+  def adjustOrder(
+      orderId: String,
+      outstandingAmountS: BigInt
+    ): Boolean
+
   def handleChangeEventThenGetUpdatedOrders[T](
       req: T
     ): (Boolean, Map[String, Matchable])
