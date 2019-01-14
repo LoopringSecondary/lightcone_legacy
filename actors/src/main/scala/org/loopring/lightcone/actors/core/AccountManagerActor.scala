@@ -25,6 +25,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
@@ -65,15 +66,36 @@ class AccountManagerActor(
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
   val accountCutoffState = new AccountCutoffStateImpl()
+  val supportedMarkets = SupportedMarkets(config)
 
   protected def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   override def preStart() = {
-    //TODO(hongyu):可以假设ETH的actor可用。
-    val fu = Future.successful(Unit)
-    fu onComplete {
+    val cutoffReqs = (supportedMarkets.getMarketKeys() map { m =>
+      for {
+        res <- (ethereumQueryActor ? GetCutoff.Req(
+          broker = address,
+          owner = address,
+          tokenPair = Numeric.toHexStringWithPrefix(m)
+        )).mapAs[GetCutoff.Res]
+      } yield {
+        val cutoff: BigInt = res.cutoff
+        accountCutoffState.setTradingPairCutoff(m, cutoff.toLong)
+      }
+    }) +
+      (for {
+        res <- (ethereumQueryActor ? GetCutoff.Req(
+          broker = address,
+          owner = address
+        )).mapAs[GetCutoff.Res]
+      } yield {
+        val cutoff: BigInt = res.cutoff
+        accountCutoffState.setCutoff(cutoff.toLong)
+      })
+
+    Future.sequence(cutoffReqs) onComplete {
       case Success(res) =>
         self ! Notify("initialized")
       case Failure(e) =>
@@ -124,7 +146,7 @@ class AccountManagerActor(
       (for {
         _ <- for {
           //check通过再保存到数据库，以及后续处理
-          _ <- Future.successful(accountCutoffState.isOrderCutoff(raworder))
+          _ <- Future { accountCutoffState.isOrderCutoff(raworder) }
           _ <- isOrderCanceled(raworder) //取消订单，单独查询以太坊
         } yield Unit
         newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
@@ -154,11 +176,14 @@ class AccountManagerActor(
       val originalSender = sender
       (for {
         _ <- Future.successful(assert(req.owner == address))
-        cancelRes <- (orderPersistenceActor ? req)
+        persistenceRes <- (orderPersistenceActor ? req)
           .mapAs[CancelOrder.Res]
-        _ = if (manager.cancelOrder(req.id))
+        (cancelRes, updatedOrders) = manager
+          .handleChangeEventThenGetUpdatedOrders(req)
+        _ <- processUpdatedOrders(updatedOrders - req.id)
+        _ = if (cancelRes) {
           marketManagerActor.tell(req, originalSender)
-        else {
+        } else {
           //在目前没有使用eventlog的情况下，哪怕manager中并没有该订单，则仍需要发送到MarketManager
           marketManagerActor ! req
           throw ErrorException(
@@ -166,31 +191,29 @@ class AccountManagerActor(
             s"no order found with id: ${req.id}"
           )
         }
-      } yield cancelRes) sendTo sender
+      } yield persistenceRes) sendTo sender
 
     //为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
-    case AddressBalanceUpdated(addr, token, newBalance) =>
+    case req @ AddressBalanceUpdated(addr, token, newBalance) =>
       (for {
         _ <- Future.successful(assert(addr == address))
-      } yield
-        updateBalanceOrAllowance(token, newBalance, _.setBalance(_))) sendTo sender
+      } yield updateBalanceOrAllowance(token, req)) sendTo sender
 
-    case AddressAllowanceUpdated(addr, token, newBalance) =>
+    case req @ AddressAllowanceUpdated(addr, token, newBalance) =>
       (for {
         _ <- Future.successful(assert(addr == address))
-      } yield
-        updateBalanceOrAllowance(token, newBalance, _.setAllowance(_))) sendTo sender
+      } yield updateBalanceOrAllowance(token, req)) sendTo sender
 
     //ownerCutoff
     case req @ CutoffEvent(Some(header), broker, owner, "", cutoff)
         if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
-      log.debug(s"received OwnerCutoffEvent ${req}")
+      log.debug(s"received OwnerCutoffEvent $req")
       accountCutoffState.setCutoff(cutoff)
 
     //ownerTokenPairCutoff  tokenPair ！= ""
     case req @ CutoffEvent(Some(header), broker, owner, tokenPair, cutoff)
         if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
-      log.debug(s"received OwnerTokenPairCutoffEvent ${req}")
+      log.debug(s"received OwnerTokenPairCutoffEvent $req")
       accountCutoffState
         .setTradingPairCutoff(Numeric.toBigInt(req.tradingPair), req.cutoff)
 
@@ -198,7 +221,7 @@ class AccountManagerActor(
     //todo:暂时不处理
     case req @ CutoffEvent(Some(header), broker, owner, _, cutoff)
         if broker != owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
-      log.debug(s"received BrokerCutoffEvent ${req}")
+      log.debug(s"received BrokerCutoffEvent $req")
 
     case req: OrderFilledEvent
         if req.header.nonEmpty && req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS =>
@@ -213,9 +236,9 @@ class AccountManagerActor(
     val order: Order = rawOrder
     val matchable: Matchable = order
     for {
-      _ <- getTokenManager(matchable.tokenS)
+      _ <- getTokenManagers(Seq(matchable.tokenS))
       _ <- if (matchable.amountFee > 0 && matchable.tokenS != matchable.tokenFee)
-        getTokenManager(matchable.tokenFee)
+        getTokenManagers(Seq(matchable.tokenFee))
       else
         Future.successful(Unit)
 
@@ -249,48 +272,62 @@ class AccountManagerActor(
 
       _ = log.debug(s"submitting order to AccountManager: ${_matchable}")
       (successful, updatedOrders) = manager
-        .submitOrAdjustThenGetUpdatedOrders(_matchable)
+        .handleChangeEventThenGetUpdatedOrders(_matchable)
       _ = if (!successful)
         throw ErrorException(Error(matchable.status))
       _ = assert(updatedOrders.contains(_matchable.id))
-      _ = log.debug(s"assert contains order:  ${updatedOrders(_matchable.id)}")
-      res <- Future.sequence {
-        updatedOrders.map { o =>
-          for {
-            //需要更新到数据库
-            _ <- dbModule.orderService.updateOrderStatus(o._2.id, o._2.status)
-          } yield {
-            marketManagerActor ! SubmitSimpleOrder(
-              order = Some(o._2.copy(_reserved = None, _outstanding = None))
-            )
-          }
-        }
-      }
+      _ = log.debug(
+        s"updatedOrders: ${updatedOrders.size} assert contains order:  ${updatedOrders(_matchable.id)}"
+      )
+      res <- processUpdatedOrders(updatedOrders)
       matchable_ = updatedOrders(_matchable.id)
       order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
     } yield order_
   }
 
-  private def getTokenManager(token: String): Future[AccountTokenManager] = {
-    if (manager.hasTokenManager(token)) {
-      Future.successful(manager.getTokenManager(token))
-    } else {
-      log.debug(s"getTokenManager0 ${token}")
-      for {
-        res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
-          address,
-          Seq(token)
-        )).mapAs[GetBalanceAndAllowances.Res]
-        tm = new AccountTokenManagerImpl(
-          token,
-          config.getInt("account_manager.max_order_num")
-        )
-        ba: BalanceAndAllowanceBigInt = res.balanceAndAllowanceMap(token)
-        _ = tm.setBalanceAndAllowance(ba.balance, ba.allowance)
-        tokenManager = manager.getOrUpdateTokenManager(token, tm)
-        _ = log.debug(s"getTokenManager5 ${token}")
-
-      } yield tokenManager
+  private def processUpdatedOrders(updatedOrders: Map[String, Matchable]) = {
+    Future.sequence {
+      updatedOrders.map { o =>
+        for {
+          //需要更新到数据库
+          _ <- dbModule.orderService.updateOrderStatus(o._2.id, o._2.status)
+        } yield {
+          val order = o._2
+          order.status match {
+            //新订单、或者匹配一部分的订单
+            case STATUS_NEW | STATUS_PENDING | STATUS_PARTIALLY_FILLED =>
+              marketManagerActor ! SubmitSimpleOrder(
+                order = Some(o._2.copy(_reserved = None, _outstanding = None))
+              )
+            //取消的订单
+            case STATUS_EXPIRED | STATUS_DUST_ORDER |
+                STATUS_SOFT_CANCELLED_BY_USER |
+                STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR |
+                STATUS_ONCHAIN_CANCELLED_BY_USER |
+                STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR |
+                STATUS_TOO_MANY_RING_FAILURES | STATUS_CANCELLED_LOW_BALANCE |
+                STATUS_CANCELLED_LOW_FEE_BALANCE |
+                STATUS_CANCELLED_TOO_MANY_ORDERS |
+                STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS |
+                STATUS_CANCELLED_DUPLICIATE =>
+              marketManagerActor ! CancelOrder.Req(
+                id = order.id,
+                marketId = Some(MarketId(order.tokenS, order.tokenB))
+              )
+            //完全匹配，则仍然是删掉该订单
+            case STATUS_COMPLETELY_FILLED =>
+              marketManagerActor ! CancelOrder.Req(
+                id = order.id,
+                marketId = Some(MarketId(order.tokenS, order.tokenB))
+              )
+            case _ =>
+              throw ErrorException(
+                ErrorCode.ERR_INVALID_ORDER_DATA,
+                s"not supproted order.status in AccountManager"
+              )
+          }
+        }
+      }
     }
   }
 
@@ -318,41 +355,26 @@ class AccountManagerActor(
       _ = tms.foreach(tm => {
         val ba = res.balanceAndAllowanceMap(tm.token)
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
-        manager.addTokenManager(tm)
+        manager.getOrUpdateTokenManager(tm.token, tm)
       })
-      tokenMangers <- Future.sequence(tokens.map(getTokenManager))
+      tokenMangers = tokens.map(manager.getTokenManager)
     } yield tokenMangers
   }
 
-  private def updateBalanceOrAllowance(
+  private def updateBalanceOrAllowance[T](
       token: String,
-      amount: BigInt,
-      method: (AccountTokenManager, BigInt) => Unit
+      req: T
     ) =
     for {
-      tm <- getTokenManager(token)
-      _ = method(tm, amount)
-      updatedOrders = orderPool.takeUpdatedOrders()
+      tm <- getTokenManagers(Seq(token))
+      (_, updatedOrders) = manager.handleChangeEventThenGetUpdatedOrders(req)
       _ <- Future.sequence {
-        updatedOrders.map { order =>
+        updatedOrders.values.map { order =>
           order.status match {
             case STATUS_CANCELLED_LOW_BALANCE |
-                STATUS_CANCELLED_LOW_FEE_BALANCE =>
-              for {
-                _ <- dbModule.orderService
-                  .updateOrderStatus(order.id, order.status)
-              } yield {
-                marketManagerActor ! CancelOrder.Req(
-                  id = order.id,
-                  marketId = Some(MarketId(order.tokenS, order.tokenB))
-                )
-              }
-            case STATUS_PENDING =>
-              //allowance的改变需要更新到marketManager
-              for {
-                _ <- marketManagerActor ? SubmitSimpleOrder(order = Some(order))
-              } yield Unit
-
+                STATUS_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
+                STATUS_COMPLETELY_FILLED | STATUS_PARTIALLY_FILLED =>
+              Future.successful(Unit)
             case status =>
               log.error(
                 s"unexpected order status caused by balance/allowance upate: $status"
@@ -364,14 +386,17 @@ class AccountManagerActor(
           }
         }
       }
+      _ <- processUpdatedOrders(updatedOrders)
     } yield Unit
 
   def isOrderCanceled(rawOrder: RawOrder) =
     for {
-      //todo:eth请求还未就绪，等待就绪再完善该部分~
-      isCanceled <- Future.successful(false)
+      res <- (ethereumQueryActor ? GetOrderCancellation.Req(
+        broker = address,
+        orderHash = rawOrder.hash
+      )).mapAs[GetOrderCancellation.Res]
     } yield
-      if (isCanceled)
+      if (res.cancelled)
         throw ErrorException(
           ERR_ORDER_VALIDATION_INVALID_CUTOFF,
           s"this order has been canceled."

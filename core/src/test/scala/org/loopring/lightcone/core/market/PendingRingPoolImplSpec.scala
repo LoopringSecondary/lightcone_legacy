@@ -19,9 +19,7 @@ package org.loopring.lightcone.core.market
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.base._
-import org.scalatest._
+import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 
 class PendingRingPoolImplSpec extends OrderAwareSpec {
@@ -34,7 +32,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
     (0 until 10) foreach { i =>
       val makerExpectFill = ExpectedMatchableFill(
         order = Matchable(
-          id = "maker-" + i,
+          id = hash(s"maker-$i"),
           tokenS = LRC,
           tokenB = WETH,
           tokenFee = LRC,
@@ -45,7 +43,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
       )
       val takerExpectFill = ExpectedMatchableFill(
         order = Matchable(
-          id = "taker-" + i,
+          id = hash(s"taker-$i"),
           tokenS = WETH,
           tokenB = LRC,
           tokenFee = LRC,
@@ -69,15 +67,15 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
 
     assert(pendingRingPool.ringMap.size == 10)
     assert(pendingRingPool.orderMap.size == 20)
-    assert(pendingRingPool.getOrderPendingAmountS("taker-1") == 100)
-    assert(pendingRingPool.getOrderPendingAmountS("maker-1") == 100)
-    assert(pendingRingPool.getOrderPendingAmountS("maker-2") == 100)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("taker-1")) == 100)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("maker-1")) == 100)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("maker-2")) == 100)
 
     //继续使用taker-1与maker-1时，需要金额保持不变
     info("继续添加 taker-1 与maker-1的环路") //或者可以改变，继续相加
     val makerExpectFill = ExpectedMatchableFill(
       order = Matchable(
-        id = "maker-1",
+        id = hash("maker-1"),
         tokenS = LRC,
         tokenB = WETH,
         tokenFee = LRC,
@@ -88,7 +86,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
     )
     val takerExpectFill = ExpectedMatchableFill(
       order = Matchable(
-        id = "taker-1",
+        id = hash("taker-1"),
         tokenS = WETH,
         tokenB = LRC,
         tokenFee = LRC,
@@ -110,14 +108,14 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
     pendingRingPool.addRing(ring)
     assert(pendingRingPool.ringMap.size == 10)
     assert(pendingRingPool.orderMap.size == 20)
-    assert(pendingRingPool.getOrderPendingAmountS("taker-1") == 100)
-    assert(pendingRingPool.getOrderPendingAmountS("maker-1") == 100)
-    assert(pendingRingPool.getOrderPendingAmountS("maker-2") == 100)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("taker-1")) == 100)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("maker-1")) == 100)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("maker-2")) == 100)
 
     info("使用新的taker-new-1, 将maker-1完全吃掉")
     val takerExpectFillNew1 = ExpectedMatchableFill(
       order = Matchable(
-        id = "taker-new-1",
+        id = hash("taker-new-1"),
         tokenS = WETH,
         tokenB = LRC,
         tokenFee = LRC,
@@ -139,9 +137,9 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
     pendingRingPool.addRing(ring1)
     assert(pendingRingPool.ringMap.size == 11)
     assert(pendingRingPool.orderMap.size == 21)
-    assert(pendingRingPool.getOrderPendingAmountS("taker-1") == 100)
-    assert(pendingRingPool.getOrderPendingAmountS("maker-1") == 200)
-    assert(pendingRingPool.getOrderPendingAmountS("maker-2") == 100)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("taker-1")) == 100)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("maker-1")) == 200)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("maker-2")) == 100)
 
   }
 
@@ -149,7 +147,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
     info("删除maker-1与taker-new-1的环路")
     val makerExpectFill = ExpectedMatchableFill(
       order = Matchable(
-        id = "maker-1",
+        id = hash("maker-1"),
         tokenS = LRC,
         tokenB = WETH,
         tokenFee = LRC,
@@ -160,7 +158,7 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
     )
     val takerExpectFillNew1 = ExpectedMatchableFill(
       order = Matchable(
-        id = "taker-new-1",
+        id = hash("taker-new-1"),
         tokenS = WETH,
         tokenB = LRC,
         tokenFee = LRC,
@@ -182,14 +180,18 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
     pendingRingPool.deleteRing(ring1.id)
     assert(pendingRingPool.ringMap.size == 10)
     assert(pendingRingPool.orderMap.size == 20)
-    assert(pendingRingPool.getOrderPendingAmountS("taker-1") == 100)
-    assert(pendingRingPool.getOrderPendingAmountS("taker-new-1") == 0)
-    assert(pendingRingPool.getOrderPendingAmountS("maker-1") == 100)
-    assert(pendingRingPool.getOrderPendingAmountS("maker-2") == 100)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("taker-1")) == 100)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("taker-new-1")) == 0)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("maker-1")) == 100)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("maker-2")) == 100)
 
     info("将环路全部删除")
     pendingRingPool.reset()
     assert(pendingRingPool.orderMap.isEmpty && pendingRingPool.ringMap.isEmpty)
-    assert(pendingRingPool.getOrderPendingAmountS("taker-1") == 0)
+    assert(pendingRingPool.getOrderPendingAmountS(hash("taker-1")) == 0)
+  }
+
+  def hash(s: String) = {
+    Numeric.toHexString(Hash.sha3(s.getBytes()))
   }
 }
