@@ -71,7 +71,7 @@ class OrderPersistenceActor(
     extends ActorWithPathBasedConfig(OrderPersistenceActor.name) {
 
   //save order to db first, then send to AccountManager
-  def receive: Receive = {
+  def ready: Receive = {
     case req: CancelOrder.Req =>
       (req.status match {
         case OrderStatus.STATUS_SOFT_CANCELLED_BY_USER |

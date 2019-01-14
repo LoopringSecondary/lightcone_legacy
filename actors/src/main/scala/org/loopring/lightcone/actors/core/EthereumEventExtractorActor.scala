@@ -79,7 +79,7 @@ class EthereumEventExtractorActor(
     val actors: Lookup[ActorRef])
     extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
 
-  def receive: Receive = {
+  def ready: Receive = {
     case _ =>
   }
 

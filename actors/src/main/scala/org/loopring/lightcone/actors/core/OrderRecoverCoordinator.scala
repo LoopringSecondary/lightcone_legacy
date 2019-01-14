@@ -85,7 +85,7 @@ class OrderRecoverCoordinator(
   var pendingBatch = ActorRecover.RequestBatch(batchId = 1)
   var batchTimer: Option[Cancellable] = None
 
-  def receive: Receive = {
+  def ready: Receive = {
 
     case req: ActorRecover.Request =>
       cancelBatchTimer()
@@ -106,6 +106,8 @@ class OrderRecoverCoordinator(
       log.info(s"current pending batch recovery request: ${pendingBatch}")
 
       startBatchTimer()
+
+//      sender ! req
 
     case req: ActorRecover.Timeout =>
       if (pendingBatch.requestMap.nonEmpty) {

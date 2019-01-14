@@ -105,7 +105,7 @@ class TransactionRecordActor(
 
   txRecordDal.createTable()
 
-  def receive: Receive = {
+  def ready: Receive = {
     // ETH & ERC20
     case req: TransferEvent =>
       val header = req.header.get

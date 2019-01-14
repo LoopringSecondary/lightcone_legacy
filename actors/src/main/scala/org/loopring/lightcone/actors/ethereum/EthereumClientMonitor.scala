@@ -131,7 +131,7 @@ class EthereumClientMonitor(
       stash()
   }
 
-  def normalReceive: Receive = super.receive orElse {
+  def normalReceive: Receive = super.receiveRepeatdJobs orElse {
     case _: GetNodeBlockHeight.Req =>
       sender ! GetNodeBlockHeight.Res(
         nodes.toSeq

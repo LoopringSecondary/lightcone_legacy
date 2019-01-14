@@ -49,7 +49,7 @@ trait RepeatedJobActor { actor: Actor with ActorLogging =>
     }
   }
 
-  def receive: Receive = {
+  def receiveRepeatdJobs: Receive = {
     case Notify("run-job", name) =>
       jobMap.get(name) foreach { job =>
         job.sequence += 1

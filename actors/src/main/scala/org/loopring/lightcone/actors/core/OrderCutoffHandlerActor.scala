@@ -78,7 +78,7 @@ class OrderCutoffHandlerActor(
   def mama = actors.get(MultiAccountManagerActor.name)
   val batchSize = selfConfig.getInt("batch-size")
 
-  def receive: Receive = {
+  def ready: Receive = {
 
     // TODO du: 收到任务后先存入db，一批处理完之后删除。
     // 如果执行失败，1. 自身重启时需要再恢复 2. 整体系统重启时直接删除不需要再恢复（accountManagerActor恢复时会处理cutoff）
