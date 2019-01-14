@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.ethereum
 
+import com.google.inject.Inject
 import akka.actor.ActorRef
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -31,40 +32,39 @@ import akka.pattern._
 import scala.concurrent.ExecutionContext
 
 class AllowanceEventDispatcher(
-    names: Seq[String]
-  )(
     implicit
     extractor: EventExtractor[AddressAllowanceUpdated],
     lookup: Lookup[ActorRef],
     config: Config,
     brb: EthereumBatchCallRequestBuilder,
     timeout: Timeout,
-    ec: ExecutionContext)
-    extends NameBasedEventDispatcher[
-      AddressAllowanceUpdated,
-      AddressAllowanceUpdated
-    ](names)
-    with NonDerivable[AddressAllowanceUpdated] {
+    val ec: ExecutionContext)
+    extends NameBasedEventDispatcher[AddressAllowanceUpdated] {
 
-  override def dispatch(block: RawBlockData) = {
-    val delegateAddress = Address(
-      config.getString("loopring_protocol.delegate-address")
-    )
-    val events = (block.txs zip block.receipts).flatMap { item =>
-      extractor.extract(item._1, item._2, block.timestamp)
-    }.distinct
-    val batchCallReq = brb.buildRequest(delegateAddress, events, "")
-    for {
-      tokenAllowances <- (lookup.get(EthereumAccessActor.name) ? batchCallReq)
-        .mapAs[BatchCallContracts.Res]
-        .map(_.resps.map(_.result))
-        .map(_.map(res => Numeric.toBigInt(res).toByteArray))
-    } yield {
-      (events zip tokenAllowances).foreach(
-        item =>
-          targets
-            .foreach(_ ! item._1.withBalance(item._2))
-      )
-    }
-  }
+  // TODO(yadong): 直接在这里吗配置好
+  val names: Seq[String] = ???
+
+  //TODO(yadong): 不要从新定义dispatch方法，而是改写derive方法。
+
+  // override def dispatch(block: RawBlockData) = {
+  //   val delegateAddress = Address(
+  //     config.getString("loopring_protocol.delegate-address")
+  //   )
+  //   val events = (block.txs zip block.receipts).flatMap { item =>
+  //     extractor.extract(item._1, item._2, block.timestamp)
+  //   }.distinct
+  //   val batchCallReq = brb.buildRequest(delegateAddress, events, "")
+  //   for {
+  //     tokenAllowances <- (lookup.get(EthereumAccessActor.name) ? batchCallReq)
+  //       .mapAs[BatchCallContracts.Res]
+  //       .map(_.resps.map(_.result))
+  //       .map(_.map(res => Numeric.toBigInt(res).toByteArray))
+  //   } yield {
+  //     (events zip tokenAllowances).foreach(
+  //       item =>
+  //         targets
+  //           .foreach(_ ! item._1.withBalance(item._2))
+  //     )
+  //   }
+  // }
 }

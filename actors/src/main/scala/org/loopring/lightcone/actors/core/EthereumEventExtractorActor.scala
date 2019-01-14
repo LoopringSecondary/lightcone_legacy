@@ -45,7 +45,7 @@ object EthereumEventExtractorActor {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
-      dispatchers: Seq[EventDispatcher[_, _]],
+      dispatchers: Seq[EventDispatcher[_]],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
@@ -76,7 +76,7 @@ class EthereumEventExtractorActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dispatchers: Seq[EventDispatcher[_, _]],
+    val dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
 
@@ -152,9 +152,7 @@ class EthereumEventExtractorActor(
             txs = blockOpt.get.transactions,
             receipts = receipts.map(_.get)
           )
-          dispatchers.foreach(
-            dispatcher => dispatcher.dispatch(rawBlockData)
-          )
+          dispatchers.foreach(dispatcher => dispatcher.dispatch(rawBlockData))
           dbModule.blockService.saveBlock(
             BlockData(
               hash = rawBlockData.hash,

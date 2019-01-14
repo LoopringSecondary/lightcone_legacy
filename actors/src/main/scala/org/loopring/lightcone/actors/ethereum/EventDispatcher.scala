@@ -25,96 +25,41 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.utils.TokenMetadataRefresher
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent._
 
-abstract class EventDispatcher[R, T](implicit extractor: EventExtractor[R]) {
+abstract class EventDispatcher[R <: AnyRef](
+    implicit
+    extractor: EventExtractor[R]) {
+  implicit val ec: ExecutionContext
 
-  def derive(event: R): Seq[T]
+  def derive(event: R): Future[Seq[AnyRef]] = Future.successful(Seq(event))
 
   def targets: Seq[ActorRef]
 
-  def dispatch(block: RawBlockData) {
-    (block.txs zip block.receipts).foreach { item =>
-      extractor.extract(item._1, item._2, block.timestamp).foreach { e =>
-        derive(e).foreach { e =>
-          targets.foreach(_ ! e)
-        }
+  // Never override this method!!!
+  def dispatch(block: RawBlockData): Future[Int] = {
+    val items = block.txs zip block.receipts
+    for {
+      events: Seq[R] <- Future
+        .sequence(items.map { item =>
+          extractor.extract(item._1, item._2, block.timestamp)
+        })
+        .map(_.flatten)
+
+      derived: Seq[AnyRef] <- Future.sequence(events.map(derive(_)))
+      _ = derived.foreach { e =>
+        targets.foreach(_ ! e)
       }
-    }
+
+    } yield derived.size
   }
 }
 
-trait NonDerivable[R] { self: EventDispatcher[R, R] =>
-  def derive(event: R) = Seq(event)
-}
-
-abstract class NameBasedEventDispatcher[R, T](
-    names: Seq[String]
-  )(
+abstract class NameBasedEventDispatcher[R <: AnyRef](
     implicit
     extractor: EventExtractor[R],
     lookup: Lookup[ActorRef])
-    extends EventDispatcher[R, T] {
+    extends EventDispatcher[R] {
+  val names: Seq[String]
   def targets: Seq[ActorRef] = names.map(lookup.get)
-}
-
-object EventDispatcher {
-
-  def getDefaultDispatchers(
-      implicit
-      actors: Lookup[ActorRef],
-      config: Config,
-      brb: EthereumBatchCallRequestBuilder,
-      timeout: Timeout,
-      ec: ExecutionContext
-    ): Seq[EventDispatcher[_, _]] = {
-
-    implicit val cutoffExtractor = new CutoffEventExtractor
-    implicit val ordersCancelledExtractor = new OrdersCancelledEventExtractor
-    implicit val tokenBurnRateExtractor = new TokenBurnRateEventExtractor
-    implicit val transferExtractor = new TransferEventExtractor
-    implicit val ringMinedExtractor = new RingMinedEventExtractor
-    implicit val addressAllowanceUpdatedExtractor =
-      new AllowanceChangedAddressExtractor
-    implicit val balanceChangedAddressExtractor =
-      new BalanceChangedAddressExtractor
-
-    Seq(
-      new NameBasedEventDispatcher[CutoffEvent, CutoffEvent](
-        Seq(
-          TransactionRecordActor.name,
-          OrderCutoffHandlerActor.name,
-          MultiAccountManagerActor.name
-        )
-      ) with NonDerivable[CutoffEvent],
-      new NameBasedEventDispatcher[OrdersCancelledEvent, OrdersCancelledEvent](
-        Seq(TransactionRecordActor.name, OrderCutoffHandlerActor.name)
-      ) with NonDerivable[OrdersCancelledEvent],
-      new NameBasedEventDispatcher[
-        TokenBurnRateChangedEvent,
-        TokenBurnRateChangedEvent
-      ](
-        Seq(TokenMetadataRefresher.name)
-      ) with NonDerivable[TokenBurnRateChangedEvent],
-      new NameBasedEventDispatcher[TransferEvent, TransferEvent](
-        Seq(TransactionRecordActor.name)
-      ) {
-        def derive(event: TransferEvent): Seq[TransferEvent] = {
-          Seq(event.withOwner(event.from), event.withOwner(event.to))
-        }
-      },
-      new NameBasedEventDispatcher[RingMinedEvent, OrderFilledEvent](
-        Seq(TransactionRecordActor.name, MultiAccountManagerActor.name)
-      ) {
-        def derive(event: RingMinedEvent): Seq[OrderFilledEvent] = event.fills
-      },
-      new NameBasedEventDispatcher[RingMinedEvent, RingMinedEvent](
-        Seq(MarketManagerActor.name)
-      ) with NonDerivable[RingMinedEvent],
-      new BalanceEventDispatcher(
-        Seq(MultiAccountManagerActor.name, RingSettlementManagerActor.name)
-      ),
-      new AllowanceEventDispatcher(Seq(MultiAccountManagerActor.name))
-    )
-  }
 }

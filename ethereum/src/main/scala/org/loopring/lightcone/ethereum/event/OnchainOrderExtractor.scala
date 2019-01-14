@@ -16,17 +16,20 @@
 
 package org.loopring.lightcone.ethereum.event
 
+import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+import scala.concurrent._
 
-class OnchainOrderExtractor extends EventExtractor[RawOrder] {
+class OnchainOrderExtractor @Inject()(implicit ec: ExecutionContext)
+    extends EventExtractor[RawOrder] {
 
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[RawOrder] = {
+    ): Future[Seq[RawOrder]] = Future {
     receipt.logs.map { log =>
       loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
         case Some(event: OrderSubmittedEvent.Result) =>

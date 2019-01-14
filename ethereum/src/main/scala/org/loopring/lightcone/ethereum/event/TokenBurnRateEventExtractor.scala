@@ -22,8 +22,12 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
 
 import scala.collection.JavaConverters._
+import scala.concurrent._
 
-class TokenBurnRateEventExtractor @Inject()(implicit config: Config)
+class TokenBurnRateEventExtractor @Inject()(
+    implicit
+    ec: ExecutionContext,
+    config: Config)
     extends EventExtractor[TokenBurnRateChangedEvent] {
 
   val rateMap = config
@@ -37,7 +41,7 @@ class TokenBurnRateEventExtractor @Inject()(implicit config: Config)
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[TokenBurnRateChangedEvent] = {
+    ): Future[Seq[TokenBurnRateChangedEvent]] = Future {
     val header = getEventHeader(tx, receipt, blockTime)
     receipt.logs.zipWithIndex.map { item =>
       val (log, index) = item
