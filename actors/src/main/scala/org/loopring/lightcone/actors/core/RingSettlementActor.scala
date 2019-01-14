@@ -51,7 +51,7 @@ class RingSettlementActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
-    extends InitializationFaultTolerentActor
+    extends InitializationRetryActor
     with Stash
     with RepeatedJobActor {
 

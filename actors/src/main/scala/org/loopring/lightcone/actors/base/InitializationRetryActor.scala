@@ -22,7 +22,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 import org.loopring.lightcone.proto.Notify
 
-abstract class InitializationFaultTolerentActor
+abstract class InitializationRetryActor
     extends Actor
     with Stash
     with ActorLogging {
