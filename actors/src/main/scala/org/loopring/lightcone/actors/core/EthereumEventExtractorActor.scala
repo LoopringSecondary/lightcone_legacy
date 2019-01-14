@@ -85,7 +85,7 @@ class EthereumEventExtractorActor(
   def ethereumAccessorActor: ActorRef = actors.get(EthereumAccessActor.name)
 
   def ethereumImplementActor: ActorRef =
-    actors.get(EthereumBlockImplementActor.name)
+    actors.get(EthereumBlockSupplementActor.name)
 
   override def preStart(): Unit = {
     for {

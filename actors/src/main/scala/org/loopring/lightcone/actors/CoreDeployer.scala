@@ -145,8 +145,8 @@ class CoreDeployer @Inject()(
         EthereumEventExtractorActor.start
       )
       actors.add(
-        EthereumBlockImplementActor.name,
-        EthereumBlockImplementActor.start
+        EthereumBlockSupplementActor.name,
+        EthereumBlockSupplementActor.start
       )
       actors.add(
         RingSettlementManagerActor.name,

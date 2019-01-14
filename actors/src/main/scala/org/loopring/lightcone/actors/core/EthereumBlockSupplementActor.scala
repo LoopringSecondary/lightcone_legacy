@@ -33,8 +33,8 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
-object EthereumBlockImplementActor {
-  val name = "ethereum_event_implement"
+object EthereumBlockSupplementActor {
+  val name = "ethereum_block_supplement"
 
   def start(
       implicit
@@ -52,25 +52,25 @@ object EthereumBlockImplementActor {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new EthereumBlockImplementActor()),
+        singletonProps = Props(new EthereumBlockSupplementActor()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
-      name = EthereumBlockImplementActor.name
+      name = EthereumBlockSupplementActor.name
     )
 
     system.actorOf(
       ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${EthereumBlockImplementActor.name}",
+        singletonManagerPath = s"/user/${EthereumBlockSupplementActor.name}",
         settings = ClusterSingletonProxySettings(system)
       ),
-      name = s"${EthereumBlockImplementActor.name}_proxy"
+      name = s"${EthereumBlockSupplementActor.name}_proxy"
     )
   }
 
 }
 
-class EthereumBlockImplementActor(
+class EthereumBlockSupplementActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -79,7 +79,7 @@ class EthereumBlockImplementActor(
     val actors: Lookup[ActorRef],
     dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(EthereumBlockImplementActor.name) {
+    extends ActorWithPathBasedConfig(EthereumBlockSupplementActor.name) {
 
   val taskQueue = new mutable.Queue[Long]()
   var currentBlockNumber = 0L

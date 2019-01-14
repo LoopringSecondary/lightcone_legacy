@@ -39,7 +39,6 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.ethereum.event._
-import org.loopring.lightcone.proto.{AddressAllowanceUpdated, RingMinedEvent}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
