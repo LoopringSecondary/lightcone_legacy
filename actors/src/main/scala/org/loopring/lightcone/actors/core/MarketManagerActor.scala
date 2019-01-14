@@ -27,7 +27,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Matchable
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
@@ -89,10 +89,13 @@ object MarketManagerActor extends ShardedByMarket {
       MarketId(order.tokenS, order.tokenB)
     case CancelOrder.Req(_, _, _, Some(marketId)) =>
       marketId
+    case req: RingMinedEvent if req.fills.size >= 2 =>
+      MarketId(req.fills(0).tokenS, req.fills(1).tokenS)
   }
 
 }
 
+//todo:撮合应该有个暂停撮合提交的逻辑，适用于：区块落后太多、没有可用的RingSettlement等情况
 class MarketManagerActor(
     markets: Map[String, MarketId]
   )(
@@ -227,9 +230,29 @@ class MarketManagerActor(
           .foreach { updateOrderbookAndSettleRings(_, gasPrice) }
       } yield Unit
 
+    case RingMinedEvent(Some(header), _, _, _, fills) =>
+      Future {
+        val ringhash =
+          createRingIdByOrderHash(fills(0).orderHash, fills(1).orderHash)
+        if (header.txStatus == TxStatus.TX_STATUS_SUCCESS) {
+          manager.deleteRing(ringhash, true)
+        } else if (header.txStatus == TxStatus.TX_STATUS_FAILED) {
+          val matchResults = manager.deleteRing(ringhash, false)
+          if (matchResults.nonEmpty) {
+            for {
+              res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
+              gasPrice: BigInt = res.gasPrice
+              _ = matchResults.map { matchResult =>
+                updateOrderbookAndSettleRings(matchResult, gasPrice)
+              }
+
+            } yield Unit
+          }
+        }
+      } sendTo sender
   }
 
-  private def submitOrder(order: Order): Future[Unit] = {
+  private def submitOrder(order: Order): Future[Unit] = Future {
     assert(
       order.actual.nonEmpty,
       "order in SubmitSimpleOrder miss `actual` field"
@@ -253,7 +276,6 @@ class MarketManagerActor(
 
       case s =>
         log.error(s"unexpected order status in SubmitSimpleOrder: $s")
-        Future.successful(Unit)
     }
   }
 
