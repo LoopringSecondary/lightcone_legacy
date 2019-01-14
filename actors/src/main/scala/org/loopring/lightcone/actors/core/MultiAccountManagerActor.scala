@@ -124,7 +124,7 @@ class MultiAccountManagerActor(
   override def initialize() = {
     if (skiprecover) Future.successful {
       log.debug(s"actor recover skipped: ${self.path}")
-      context.become(ready)
+      becomeReady()
     } else {
       log.debug(s"actor recover started: ${self.path}")
       for {

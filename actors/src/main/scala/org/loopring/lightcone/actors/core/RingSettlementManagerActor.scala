@@ -37,40 +37,47 @@ object RingSettlementManagerActor {
   val name = "ring_settlement"
 
   def start(
-    implicit system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    dbModule: DatabaseModule,
-    deployActorsIgnoringRoles: Boolean): ActorRef = {
+      implicit
+      system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
+    ): ActorRef = {
 
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new RingSettlementManagerActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)),
-      RingSettlementManagerActor.name)
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
+      ),
+      RingSettlementManagerActor.name
+    )
 
     system.actorOf(
       ClusterSingletonProxy.props(
         singletonManagerPath = s"/user/${RingSettlementManagerActor.name}",
-        settings = ClusterSingletonProxySettings(system)),
-      name = s"${RingSettlementManagerActor.name}_proxy")
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"${RingSettlementManagerActor.name}_proxy"
+    )
   }
 }
 
 class RingSettlementManagerActor(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  system: ActorSystem,
-  timeProvider: TimeProvider,
-  timeout: Timeout,
-  actors: Lookup[ActorRef],
-  dbModule: DatabaseModule)
-  extends InitializationRetryActor {
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    system: ActorSystem,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    dbModule: DatabaseModule)
+    extends InitializationRetryActor {
 
   val selfConfig = config.getConfig(RingSettlementManagerActor.name)
 
@@ -92,7 +99,10 @@ class RingSettlementManagerActor(
               timeProvider = timeProvider,
               timeout = timeout,
               actors = actors,
-              dbModule = dbModule)))
+              dbModule = dbModule
+            )
+          )
+        )
       item
     })
     .toMap
@@ -106,21 +116,26 @@ class RingSettlementManagerActor(
       } else {
         sender ! ErrorException(
           ERR_INTERNAL_UNKNOWN,
-          message = "no invalid miner to handle this XSettleRingsReq")
+          message = "no invalid miner to handle this XSettleRingsReq"
+        )
       }
 
     case ba: AddressBalanceUpdated =>
       if (Address(ba.token).isZero) {
         val balance = BigInt(ba.balance.toByteArray)
         if (balance > miniMinerBalance && invalidRingSettlementActors.contains(
-          ba.address)) {
+              ba.address
+            )) {
           ringSettlementActors += (ba.address -> invalidRingSettlementActors(
-            ba.address))
+            ba.address
+          ))
           invalidRingSettlementActors = invalidRingSettlementActors - ba.address
         } else if (balance <= miniMinerBalance && ringSettlementActors.contains(
-          ba.address)) {
+                     ba.address
+                   )) {
           invalidRingSettlementActors += (ba.address -> ringSettlementActors(
-            ba.address))
+            ba.address
+          ))
           ringSettlementActors = ringSettlementActors - ba.address
         }
       }

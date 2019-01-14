@@ -104,7 +104,7 @@ class RingSettlementActor(
       .map(_.result)
       .map { validNonce =>
         nonce.set(Numeric.toBigInt(validNonce).intValue())
-        context.become(ready)
+        becomeReady()
         self ! Notify("handle_settle_rings")
       }
   }
