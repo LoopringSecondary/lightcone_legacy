@@ -35,6 +35,8 @@ object EthereumAccessActor {
   val name = "ethereum_access"
 
   def start(
+      connectionPools: Seq[ActorRef] = Nil
+    )(
       implicit
       system: ActorSystem,
       config: Config,
@@ -49,7 +51,7 @@ object EthereumAccessActor {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new EthereumAccessActor()),
+        singletonProps = Props(new EthereumAccessActor(connectionPools)),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
@@ -66,9 +68,9 @@ object EthereumAccessActor {
   }
 }
 
-// TODO(yadong): 是否可以替代ActorSelection
-// TODO(yadong): monitor可能在启动的时候还没有部署好。
 class EthereumAccessActor(
+    connectionPools: Seq[ActorRef]
+  )(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -77,50 +79,35 @@ class EthereumAccessActor(
     val actors: Lookup[ActorRef],
     val ma: ActorMaterializer,
     val ece: ExecutionContextExecutor)
-    extends Actor
-    with Stash
-    with ActorLogging {
+    extends InitializationRetryActor {
 
   private def monitor = actors.get(EthereumClientMonitor.name)
-  var connectionPools: Seq[(ActorSelection, Long)] = Nil
+  var connectors: Seq[(ActorRef, Long)] = Nil
 
-  override def preStart() = {
-    val fu = (monitor ? GetNodeBlockHeight.Req())
+  override def initialize() = {
+    (monitor ? GetNodeBlockHeight.Req())
       .mapAs[GetNodeBlockHeight.Res]
-    fu onComplete {
-      case Success(res) =>
-        connectionPools = res.nodes.map(
+      .map { res =>
+        connectors = res.nodes.map(
           node =>
-            context
-              .actorSelection(node.path) -> node.height
+            connectionPools
+              .find(_.path.toString.equals(node.path))
+              .get -> node.height
         )
-        self ! Notify("initialized")
-      case Failure(e) =>
-        log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
-        throw e
-    }
+        becomeReady()
+      }
   }
 
-  override def receive: Receive = initialReceive
-
-  def initialReceive: Receive = {
-    case Notify("initialized", _) =>
-      unstashAll()
-      context.become(normalReceive)
-    case _: NodeBlockHeight =>
-    case _ =>
-      stash()
-  }
-
-  def normalReceive: Receive = {
+  def ready: Receive = {
     case node: NodeBlockHeight =>
-      connectionPools = (connectionPools.toMap +
-        (context.actorSelection(node.path) -> node.height)).toSeq
+      connectors = (connectors.toMap +
+        (connectionPools
+          .find(_.path.toString.equals(node.path))
+          .get -> node.height)).toSeq
         .filter(_._2 >= 0)
         .sortWith(_._2 > _._2)
-
     case req: JsonRpc.RequestWithHeight =>
-      val validPools = connectionPools.filter(_._2 > req.height)
+      val validPools = connectors.filter(_._2 > req.height)
       if (validPools.nonEmpty) {
         validPools(Random.nextInt(validPools.size))._1 forward req.req
       } else {
@@ -131,8 +118,8 @@ class EthereumAccessActor(
       }
 
     case msg: JsonRpc.Request => {
-      if (connectionPools.nonEmpty) {
-        connectionPools.head._1 forward msg
+      if (connectors.nonEmpty) {
+        connectors.head._1 forward msg
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
@@ -142,8 +129,8 @@ class EthereumAccessActor(
     }
 
     case msg: ProtoBuf[_] => {
-      if (connectionPools.nonEmpty) {
-        connectionPools.head._1 forward msg
+      if (connectors.nonEmpty) {
+        connectors.head._1 forward msg
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
