@@ -22,24 +22,33 @@ import org.loopring.lightcone.ethereum.event._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
-abstract class EventDispatcher[R <: AnyRef](
-    implicit
-    extractor: EventExtractor[R]) {
+trait EventDispatcher[R <: AnyRef] {
   implicit val ec: ExecutionContext
+  val extractor: EventExtractor[R]
 
   def targets: Seq[ActorRef]
 
-  def derive(block: RawBlockData): Future[Seq[AnyRef]] = Future {
-    val items = block.txs zip block.receipts
-    items.flatMap { item =>
-      extractor.extract(item._1, item._2, block.timestamp)
-    }
-  }
+  // TODO(yadong): 我觉得则个derive方法完全没有必要。
+  def derive(
+      block: RawBlockData,
+      events: Seq[R]
+    ): Future[Seq[AnyRef]] =
+    Future.successful(events)
 
   // Never override this method!!!
   def dispatch(block: RawBlockData): Future[Int] = {
+    val items = block.txs zip block.receipts
+    // val events = items.map { item =>
+    //   extractor.extract(item._1, item._2, block.timestamp)
+    // }.flatten.distinct
+
     for {
-      derived: Seq[AnyRef] <- derive(block)
+      events <- Future
+        .sequence(items.map { item =>
+          extractor.extract(item._1, item._2, block.timestamp)
+        })
+        .map(_.flatten)
+      derived <- derive(block, events)
       _ = derived.foreach { e =>
         targets.foreach(_ ! e)
       }
@@ -47,11 +56,8 @@ abstract class EventDispatcher[R <: AnyRef](
   }
 }
 
-abstract class NameBasedEventDispatcher[R <: AnyRef](
-    implicit
-    extractor: EventExtractor[R],
-    lookup: Lookup[ActorRef])
-    extends EventDispatcher[R] {
+trait NameBasedEventDispatcher[R <: AnyRef] extends EventDispatcher[R] {
   val names: Seq[String]
+  val lookup: Lookup[ActorRef]
   def targets: Seq[ActorRef] = names.map(lookup.get)
 }

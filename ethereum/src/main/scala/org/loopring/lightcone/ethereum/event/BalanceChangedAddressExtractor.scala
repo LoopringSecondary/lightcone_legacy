@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.ethereum.event
 
+import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{
@@ -25,15 +26,16 @@ import org.loopring.lightcone.proto.{
 }
 import org.web3j.utils.Numeric
 import scala.collection.mutable.ListBuffer
+import scala.concurrent._
 
-class BalanceChangedAddressExtractor
+class BalanceChangedAddressExtractor @Inject()(implicit ec: ExecutionContext)
     extends EventExtractor[AddressBalanceUpdated] {
 
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[AddressBalanceUpdated] = {
+    ): Future[Seq[AddressBalanceUpdated]] = Future {
     val balanceAddresses =
       ListBuffer(AddressBalanceUpdated(tx.from, Address.ZERO.toString()))
     if (isSucceed(receipt.status) &&

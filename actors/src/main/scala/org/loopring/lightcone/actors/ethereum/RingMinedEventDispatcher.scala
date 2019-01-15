@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.ethereum
 
+import com.google.inject.Inject
 import akka.actor.ActorRef
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
@@ -25,12 +26,11 @@ import org.loopring.lightcone.proto.RingMinedEvent
 
 import scala.concurrent.ExecutionContext
 
-class RingMinedEventDispatcher(
+class RingMinedEventDispatcher @Inject()(
     implicit
-    timeout: Timeout,
-    lookup: Lookup[ActorRef],
-    extractor: EventExtractor[RingMinedEvent],
+    val lookup: Lookup[ActorRef],
+    val extractor: EventExtractor[RingMinedEvent],
     val ec: ExecutionContext)
     extends NameBasedEventDispatcher[RingMinedEvent] {
-  val names: Seq[String] = Seq(MarketManagerActor.name)
+  val names = Seq(MarketManagerActor.name)
 }

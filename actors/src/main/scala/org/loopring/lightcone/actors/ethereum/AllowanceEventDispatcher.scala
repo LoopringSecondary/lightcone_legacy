@@ -32,13 +32,13 @@ import org.loopring.lightcone.actors.core.MultiAccountManagerActor
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AllowanceEventDispatcher(
+class AllowanceEventDispatcher @Inject()(
     implicit
-    extractor: EventExtractor[AddressAllowanceUpdated],
-    lookup: Lookup[ActorRef],
     config: Config,
     brb: EthereumBatchCallRequestBuilder,
     timeout: Timeout,
+    val extractor: EventExtractor[AddressAllowanceUpdated],
+    val lookup: Lookup[ActorRef],
     val ec: ExecutionContext)
     extends NameBasedEventDispatcher[AddressAllowanceUpdated] {
 
@@ -49,21 +49,21 @@ class AllowanceEventDispatcher(
   )
   def ethereumAccessor = lookup.get(EthereumAccessActor.name)
 
-  override def derive(
-      block: RawBlockData
-    ): Future[Seq[AddressAllowanceUpdated]] = {
-    val items = block.txs zip block.receipts
-    val events: Seq[AddressAllowanceUpdated] = items.flatMap { item =>
-      extractor.extract(item._1, item._2, block.timestamp)
-    }.distinct
-    val batchCallReq = brb.buildRequest(delegateAddress, events, "latest")
-    for {
-      tokenAllowances <- (ethereumAccessor ? batchCallReq)
-        .mapAs[BatchCallContracts.Res]
-        .map(_.resps.map(_.result))
-        .map(_.map(res => Numeric.toBigInt(res).toByteArray))
-    } yield {
-      (events zip tokenAllowances).map(item => item._1.withBalance(item._2))
-    }
-  }
+  // override def derive(
+  //     block: RawBlockData
+  //   ): Future[Seq[AddressAllowanceUpdated]] = {
+  //   val items = block.txs zip block.receipts
+  //   val events: Seq[AddressAllowanceUpdated] = items.flatMap { item =>
+  //     extractor.extract(item._1, item._2, block.timestamp)
+  //   }.distinct
+  //   val batchCallReq = brb.buildRequest(delegateAddress, events, "latest")
+  //   for {
+  //     tokenAllowances <- (ethereumAccessor ? batchCallReq)
+  //       .mapAs[BatchCallContracts.Res]
+  //       .map(_.resps.map(_.result))
+  //       .map(_.map(res => Numeric.toBigInt(res).toByteArray))
+  //   } yield {
+  //     (events zip tokenAllowances).map(item => item._1.withBalance(item._2))
+  //   }
+  // }
 }

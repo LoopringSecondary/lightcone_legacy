@@ -16,8 +16,8 @@
 
 package org.loopring.lightcone.actors.ethereum
 
+import com.google.inject.Inject
 import akka.actor.ActorRef
-import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.ethereum.event.EventExtractor
@@ -25,11 +25,10 @@ import org.loopring.lightcone.proto.CutoffEvent
 
 import scala.concurrent.ExecutionContext
 
-class CutoffEventDispatcher(
+class CutoffEventDispatcher @Inject()(
     implicit
-    timeout: Timeout,
-    lookup: Lookup[ActorRef],
-    extractor: EventExtractor[CutoffEvent],
+    val lookup: Lookup[ActorRef],
+    val extractor: EventExtractor[CutoffEvent],
     val ec: ExecutionContext)
     extends NameBasedEventDispatcher[CutoffEvent] {
 

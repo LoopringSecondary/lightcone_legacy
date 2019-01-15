@@ -25,8 +25,10 @@ import scala.collection.JavaConverters._
 import scala.concurrent._
 
 class TokenBurnRateEventExtractor @Inject()(
+    config: Config
+  )(
     implicit
-    config: Config)
+    ec: ExecutionContext)
     extends EventExtractor[TokenBurnRateChangedEvent] {
 
   val rateMap = config
@@ -40,7 +42,7 @@ class TokenBurnRateEventExtractor @Inject()(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[TokenBurnRateChangedEvent] = {
+    ): Future[Seq[TokenBurnRateChangedEvent]] = Future {
     val header = getEventHeader(tx, receipt, blockTime)
     receipt.logs.zipWithIndex.map { item =>
       val (log, index) = item

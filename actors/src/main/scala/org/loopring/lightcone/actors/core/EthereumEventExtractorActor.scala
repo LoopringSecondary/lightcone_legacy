@@ -79,11 +79,11 @@ class EthereumEventExtractorActor(
     val dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
-  var currentBlockNumber: BigInt = _
-  def ethereumAccessorActor: ActorRef = actors.get(EthereumAccessActor.name)
 
-  def ethereumImplementActor: ActorRef =
-    actors.get(EthereumBlockSupplementActor.name)
+  var currentBlockNumber: BigInt = _
+  def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
+
+  def ethereumImplementActor = actors.get(MissingBlocksEventExtractorActor.name)
 
   override def preStart(): Unit = {
     for {
@@ -169,4 +169,5 @@ class EthereumEventExtractorActor(
           .scheduleOnce(15 seconds, self, Notify("next"))
       }
     }
+  }
 }

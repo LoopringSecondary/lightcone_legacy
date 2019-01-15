@@ -16,29 +16,28 @@
 
 package org.loopring.lightcone.actors.ethereum
 
+import com.google.inject.Inject
 import akka.actor.ActorRef
-import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.ethereum.event.EventExtractor
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
-class OrderFilledEventDispatcher(
+// TODO(yadong)
+class OrderFilledEventDispatcher @Inject()(
     implicit
-    timeout: Timeout,
-    lookup: Lookup[ActorRef],
-    extractor: EventExtractor[RingMinedEvent],
+    val lookup: Lookup[ActorRef],
+    val extractor: EventExtractor[RingMinedEvent],
     val ec: ExecutionContext)
     extends NameBasedEventDispatcher[RingMinedEvent] {
 
   val names = Seq(TransactionRecordActor.name, MultiAccountManagerActor.name)
 
-  override def derive(block: RawBlockData): Future[Seq[OrderFilledEvent]] =
-    Future {
-      val items = block.txs zip block.receipts
-      items.flatMap { item =>
-        extractor.extract(item._1, item._2, block.timestamp).flatMap(_.fills)
-      }
-    }
+  override def derive(
+      block: RawBlockData,
+      events: Seq[RingMinedEvent]
+    ) = Future.successful {
+    events.map(_.fills).flatten
+  }
 }
