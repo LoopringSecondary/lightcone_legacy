@@ -21,6 +21,7 @@ import com.google.protobuf.ByteString
 
 class Bitstream(private var data: String = "") {
   private val ADDRESS_LENGTH = 20
+  private val Uint256Max = BigInt("f" * 64, 16)
 
   def getData = if (data.length == 0) "0x0" else "0x" + data
 
@@ -54,6 +55,18 @@ class Bitstream(private var data: String = "") {
       forceAppend: Boolean = true
     ) =
     addBigInt(num, 2, forceAppend)
+
+  def addInt16(
+      num: BigInt,
+      forceAppend: Boolean = true
+    ) =
+    if (num >= 0) {
+      addBigInt(num, 2, forceAppend)
+    } else {
+      val negUint256 = Uint256Max + num + 1
+      val int16Str = negUint256.toString(16).substring(60, 64)
+      addHex(int16Str, forceAppend)
+    }
 
   def addUint32(
       num: BigInt,
@@ -106,7 +119,6 @@ class Bitstream(private var data: String = "") {
     ) =
     insert(Numeric.cleanHexPrefix(Numeric.toHexString(bytes)), forceAppend)
 
-  // TODO(kongliang): 负数问题
   private def addBigInt(
       num: BigInt,
       numBytes: Int,
@@ -151,6 +163,18 @@ class Bitstream(private var data: String = "") {
   def extractUint8(offset: Int): Int = hex2Int(extractBytesX(offset, 1))
 
   def extractUint16(offset: Int): Int = hex2Int(extractBytesX(offset, 2))
+
+  def extractInt16(offset: Int): Int = {
+    val hex = extractBytesX(offset, 2)
+    val uint16 = BigInt(hex, 16)
+    val resBigInt = if ((uint16 >> 15) == 1) {
+      uint16 - BigInt("ffff", 16) - 1
+    } else {
+      uint16
+    }
+
+    resBigInt.toInt
+  }
 
   def extractUint32(offset: Int): Int = hex2Int(extractBytesX(offset, 4))
 

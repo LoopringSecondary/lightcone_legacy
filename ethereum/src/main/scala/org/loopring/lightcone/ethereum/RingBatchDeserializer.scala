@@ -111,6 +111,12 @@ class SimpleRingBatchDeserializer(encoded: String = "")
 
   private def nextUint16() = getNextOffset
 
+  private def nextInt16() = {
+    val offset = dataStream.extractInt16(tableOffSet)
+    tableOffSet += 2
+    offset
+  }
+
   private def nextUint32() = {
     val offset = getNextOffset * 4
     if (offset > 0) {
@@ -185,7 +191,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
     val feeParams = new RawOrder.FeeParams(
       tokenFee = nextAddress,
       amountFee = nextUint,
-      waiveFeePercentage = nextUint16,
+      waiveFeePercentage = nextInt16,
       tokenSFeePercentage = nextUint16,
       tokenBFeePercentage = nextUint16,
       tokenRecipient = nextAddress,

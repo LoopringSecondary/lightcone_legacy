@@ -262,7 +262,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
       insertDefault(tables)
     }
 
-    tables.addUint16(orderFeeParams.waiveFeePercentage, true)
+    tables.addInt16(orderFeeParams.waiveFeePercentage, true)
     tables.addUint16(orderFeeParams.tokenSFeePercentage, true)
     tables.addUint16(orderFeeParams.tokenBFeePercentage, true)
 
