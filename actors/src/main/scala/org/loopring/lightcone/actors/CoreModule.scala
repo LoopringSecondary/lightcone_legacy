@@ -170,7 +170,7 @@ class CoreModule(config: Config)
   }
 
   @Provides
-  private def guiceDispathcerProvider(
+  private def getEventDispathcers(
       balanceEventDispatcher: NameBasedEventDispatcher[AddressBalanceUpdated],
       ringMinedEventDispatcher: NameBasedEventDispatcher[RingMinedEvent],
       orderFilledEventDispatcher: NameBasedEventDispatcher[RingMinedEvent],
