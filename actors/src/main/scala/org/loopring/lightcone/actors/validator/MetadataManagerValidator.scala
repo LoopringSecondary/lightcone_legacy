@@ -20,6 +20,10 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
+object MetadataManagerValidator {
+  val name = "metadata_manager_validator"
+}
+
 final class MetadataManagerValidator()(implicit val config: Config)
     extends MessageValidator {
 

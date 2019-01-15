@@ -117,6 +117,15 @@ class CoreDeployer @Inject()(
       )
     )
 
+    actors.add(
+      MetadataManagerValidator.name,
+      MessageValidationActor(
+        new MetadataManagerValidator(),
+        MetadataManagerActor.name,
+        MetadataManagerValidator.name
+      )
+    )
+
     Cluster(system).registerOnMemberUp {
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)

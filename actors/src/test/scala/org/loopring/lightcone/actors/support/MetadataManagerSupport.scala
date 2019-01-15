@@ -20,9 +20,22 @@ import org.loopring.lightcone.actors.core.{
   MetadataManagerActor,
   OrderCutoffHandlerActor
 }
+import org.loopring.lightcone.actors.validator.{
+  MessageValidationActor,
+  MetadataManagerValidator
+}
 
 trait MetadataManagerSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
   actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
+
+  actors.add(
+    MetadataManagerValidator.name,
+    MessageValidationActor(
+      new MetadataManagerValidator(),
+      MetadataManagerActor.name,
+      MetadataManagerValidator.name
+    )
+  )
 }

@@ -23,6 +23,7 @@ import akka.testkit.TestProbe
 import akka.util.Timeout
 import org.loopring.lightcone.actors.core.MetadataManagerActor
 import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.actors.validator.MetadataManagerValidator
 import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
@@ -44,7 +45,7 @@ class MetadataManagerSpec
   val mediator = DistributedPubSub(system).mediator
   mediator ! Subscribe(MetadataManagerActor.tokenChangedTopicId, probe.ref)
   mediator ! Subscribe(MetadataManagerActor.marketChangedTopicId, probe.ref)
-  val actor = actors.get(MetadataManagerActor.name)
+  val actor = actors.get(MetadataManagerValidator.name)
 
   "load tokens config" must {
     "get all tokens config" in {
@@ -228,26 +229,26 @@ class MetadataManagerSpec
       val res1 = Await.result(r1.mapTo[Seq[MarketMetadata]], 5.second)
       assert(res1.length == markets.length)
 
-//      info("save a new market: ABC-LRC")
-//      val ABC = "0x244929a8141d2134d9323e65309fb46e4a983840"
-//      val marketIdAbcLrc = MarketId(primary = ABC, secondary = LRC)
-//      val abcLrc = MarketMetadata(
-//        status = MarketMetadata.Status.READONLY,
-//        secondaryTokenSymbol = "ABC",
-//        primaryTokenSymbol = "LRC",
-//        maxNumbersOfOrders = 1000,
-//        priceDecimals = 3,
-//        orderbookAggLevels = 1,
-//        precisionForAmount = 11,
-//        precisionForTotal = 6,
-//        browsableInWallet = true,
-//        updatedAt = timeProvider.getTimeMillis,
-//        marketId = Some(marketIdAbcLrc),
-//        marketHash = MarketHashProvider.convert2Hex(ABC, LRC)
-//      )
-//      val r2 = dbModule.marketMetadataService.saveMarket(abcLrc)
-//      val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
-//      assert(res2 == ErrorCode.ERR_NONE)
+      info("save a new market: ABC-LRC")
+      val ABC = "0x244929a8141d2134d9323e65309fb46e4a983840"
+      val marketIdAbcLrc = MarketId(primary = ABC, secondary = LRC)
+      val abcLrc = MarketMetadata(
+        status = MarketMetadata.Status.READONLY,
+        secondaryTokenSymbol = "ABC",
+        primaryTokenSymbol = "LRC",
+        maxNumbersOfOrders = 1000,
+        priceDecimals = 3,
+        orderbookAggLevels = 1,
+        precisionForAmount = 11,
+        precisionForTotal = 6,
+        browsableInWallet = true,
+        updatedAt = timeProvider.getTimeMillis,
+        marketId = Some(marketIdAbcLrc),
+        marketHash = MarketHashProvider.convert2Hex(ABC, LRC)
+      )
+      val r2 = dbModule.marketMetadataService.saveMarket(abcLrc)
+      val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
+      assert(res2 == ErrorCode.ERR_NONE)
 
       info("update Lrc-Weth market config")
       val r3 = dbModule.marketMetadataService.updateMarket(
