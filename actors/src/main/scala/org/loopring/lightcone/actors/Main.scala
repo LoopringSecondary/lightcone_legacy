@@ -44,7 +44,7 @@ import scala.util.Try
 
 // Owner: Daniel
 object Main extends App with Logging {
-//  Kamon.loadReportersFromConfig()
+  Kamon.loadReportersFromConfig()
 
   val configPathOpt = Option(System.getenv("LIGHTCONE_CONFIG_PATH")).map(_.trim)
 
@@ -165,7 +165,7 @@ object Main extends App with Logging {
 
   private def terminiate() = {
     Try(system.terminate())
-//    Try(Kamon.stopAllReporters())
+    Try(Kamon.stopAllReporters())
   }
 
 }

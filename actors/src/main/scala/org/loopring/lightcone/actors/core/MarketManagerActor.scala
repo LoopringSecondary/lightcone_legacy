@@ -253,7 +253,6 @@ class MarketManagerActor(
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {
-    log.info(s"#### marketmanager ${order}")
     assert(
       order.actual.nonEmpty,
       "order in SubmitSimpleOrder miss `actual` field"
@@ -265,14 +264,11 @@ class MarketManagerActor(
           // get ring settlement cost
           res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
 
-          _ = log.info(s"### submitOrder11 ${res}")
           gasPrice: BigInt = res.gasPrice
           minRequiredIncome = getRequiredMinimalIncome(gasPrice)
-          _ = log.info(s"### submitOrder22 ${minRequiredIncome}")
 
           // submit order to reserve balance and allowance
           matchResult = manager.submitOrder(matchable, minRequiredIncome)
-          _ = log.info(s"### submitOrder33 ${matchResult}")
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
         } yield Unit
@@ -304,9 +300,6 @@ class MarketManagerActor(
 
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
-    log.info(
-      s"#### updateOrderbookAndSettleRings ${matchResult}, ${ou.sells}, ${ou.buys}"
-    )
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
       orderbookManagerMediator ! Publish(
         OrderbookManagerActor.getTopicId(marketId),
