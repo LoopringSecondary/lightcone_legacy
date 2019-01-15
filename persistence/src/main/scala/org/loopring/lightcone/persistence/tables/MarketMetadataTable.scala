@@ -46,7 +46,7 @@ class MarketMetadataTable(tag: Tag)
   def primary = columnAddress("primary")
   def secondary = columnAddress("secondary")
 
-  def marketHash = columnAddress("market_hash", O.PrimaryKey)
+  def marketHash = columnAddress("market_hash", O.PrimaryKey, O.Unique)
 
   def idx_tokens_symbol =
     index(
