@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
@@ -22,8 +22,9 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
 import scala.concurrent._
+import org.loopring.lightcone.actors.data._
 
-class RingMinedEventExtractor @Inject()(implicit ec: ExecutionContext)
+class RingMinedEventExtractor @Inject()(implicit val ec: ExecutionContext)
     extends EventExtractor[PRingMinedEvent] {
 
   val fillLength: Int = 8 * 64
@@ -56,7 +57,10 @@ class RingMinedEventExtractor @Inject()(implicit ec: ExecutionContext)
                       event,
                       receipt,
                       Some(
-                        header.copy(logIndex = index, eventIndex = eventIndex)
+                        header.copy(
+                          logIndex = index,
+                          eventIndex = eventIndex
+                        )
                       )
                     )
                 }
@@ -92,7 +96,7 @@ class RingMinedEventExtractor @Inject()(implicit ec: ExecutionContext)
     ): OrderFilledEvent = {
     val data = Numeric.cleanHexPrefix(fill)
     OrderFilledEvent(
-      header = header,
+      header,
       orderHash = Numeric.prependHexPrefix(data.substring(0, 64 * 1)),
       owner = Address(data.substring(64 * 1, 64 * 2)).toString,
       tokenS = Address(fill.substring(64 * 2, 64 * 3)).toString,

@@ -17,16 +17,17 @@
 package org.loopring.lightcone.actors.event
 
 import com.typesafe.config.ConfigFactory
+import org.loopring.lightcone.actors.ethereum.event._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.ethereum.event._
 import org.loopring.lightcone.proto.AddressBalanceUpdated
-import org.web3j.utils.Numeric
-import scala.concurrent._
-import scala.concurrent.duration._
-import akka.util.Timeout
 
-class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
+import scala.concurrent._
+
+class EventExtractorSpec
+    extends CommonSpec
+    with EventExtractorSupport
+    with EthereumSupport {
 
   override def beforeAll() {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
@@ -75,72 +76,64 @@ class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
 
       val selfConfig = ConfigFactory.parseString(selfConfigStr)
 
-      val transferExtractor = new TransferEventExtractor(selfConfig)
+      val transferExtractor = new TransferEventExtractor()(selfConfig, ec)
 
-      val transfers = (blockData.txs zip blockData.receipts).flatMap { item =>
+      val transfers =
         Await.result(
-          transferExtractor.extract(item._1, item._2, blockData.timestamp),
+          transferExtractor.extract(blockData),
           timeout.duration
         )
-      }
       val (eths, tokens) = transfers.partition(tr => Address(tr.token).isZero)
 
       val cutOffExtractor = new CutoffEventExtractor()
 
-      val cutOffs = (blockData.txs zip blockData.receipts).flatMap { item =>
+      val cutOffs =
         Await.result(
-          cutOffExtractor.extract(item._1, item._2, blockData.timestamp),
+          cutOffExtractor.extract(blockData),
           timeout.duration
         )
-      }
 
       cutOffs.isEmpty should be(true)
 
       val onChainOrderExtractor = new OnchainOrderExtractor()
 
-      val onChainOrders = (blockData.txs zip blockData.receipts).flatMap {
-        item =>
-          Await.result(
-            onChainOrderExtractor
-              .extract(item._1, item._2, blockData.timestamp),
-            timeout.duration
-          )
-      }
+      val onChainOrders =
+        Await.result(
+          onChainOrderExtractor
+            .extract(blockData),
+          timeout.duration
+        )
       onChainOrders.isEmpty should be(true)
 
       val orderCanceledExtractor = new OrdersCancelledEventExtractor()
 
       val orderCancelledEvents =
-        (blockData.txs zip blockData.receipts).flatMap { item =>
-          Await.result(
-            orderCanceledExtractor
-              .extract(item._1, item._2, blockData.timestamp),
-            timeout.duration
-          )
-        }
+        Await.result(
+          orderCanceledExtractor
+            .extract(blockData),
+          timeout.duration
+        )
       orderCancelledEvents.isEmpty should be(true)
 
       val ringMinedEventExtractor = new RingMinedEventExtractor()
 
-      val rings = (blockData.txs zip blockData.receipts).flatMap { item =>
+      val rings =
         Await.result(
           ringMinedEventExtractor
-            .extract(item._1, item._2, blockData.timestamp),
+            .extract(blockData),
           timeout.duration
         )
-      }
       rings.isEmpty should be(true)
 
-      val tokenBurnRateExtractor = new TokenBurnRateEventExtractor(selfConfig)
+      val tokenBurnRateExtractor =
+        new TokenBurnRateEventExtractor()(selfConfig, ec)
 
-      val tokenBurnRates = (blockData.txs zip blockData.receipts).flatMap {
-        item =>
-          Await.result(
-            tokenBurnRateExtractor
-              .extract(item._1, item._2, blockData.timestamp),
-            timeout.duration
-          )
-      }
+      val tokenBurnRates =
+        Await.result(
+          tokenBurnRateExtractor
+            .extract(blockData),
+          timeout.duration
+        )
       tokenBurnRates.isEmpty should be(true)
 
       val balanceExtractor = new BalanceChangedAddressExtractor
@@ -166,7 +159,13 @@ class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
       (balances.size == transferBalances.size) should be(true)
 
       val allowanceExtractor =
-        new AllowanceChangedAddressExtractor(selfConfig)
+        new AllowanceChangedAddressExtractor()(
+          selfConfig,
+          brb,
+          timeout,
+          actors,
+          ec
+        )
 
       val allowances = (blockData.txs zip blockData.receipts).flatMap { item =>
         Await.result(

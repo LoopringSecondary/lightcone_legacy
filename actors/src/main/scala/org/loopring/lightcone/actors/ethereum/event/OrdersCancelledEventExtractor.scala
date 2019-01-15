@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
@@ -24,7 +24,7 @@ import org.loopring.lightcone.proto.{
 }
 import scala.concurrent._
 
-class OrdersCancelledEventExtractor @Inject()(implicit ec: ExecutionContext)
+class OrdersCancelledEventExtractor @Inject()(implicit val ec: ExecutionContext)
     extends EventExtractor[POrdersCancelledEvent] {
 
   def extract(
@@ -33,9 +33,8 @@ class OrdersCancelledEventExtractor @Inject()(implicit ec: ExecutionContext)
       blockTime: String
     ): Future[Seq[POrdersCancelledEvent]] = Future {
     val header = getEventHeader(tx, receipt, blockTime)
-    receipt.logs.zipWithIndex.map { item =>
-      {
-        val (log, index) = item
+    receipt.logs.zipWithIndex.map {
+      case (log, index) =>
         loopringProtocolAbi
           .unpackEvent(log.data, log.topics.toArray) match {
           case Some(event: OrdersCancelledEvent.Result) =>
@@ -49,8 +48,8 @@ class OrdersCancelledEventExtractor @Inject()(implicit ec: ExecutionContext)
             )
           case _ =>
             None
+
         }
-      }
     }.filter(_.nonEmpty).map(_.get)
   }
 }

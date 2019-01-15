@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.ethereum
 
 import akka.actor.ActorRef
 import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.actors.ethereum.event._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
@@ -28,36 +28,19 @@ trait EventDispatcher[R <: AnyRef] {
 
   def targets: Seq[ActorRef]
 
-  // TODO(yadong): 我觉得则个derive方法完全没有必要。
-  def derive(
-      block: RawBlockData,
-      events: Seq[R]
-    ): Future[Seq[AnyRef]] =
-    Future.successful(events)
-
   // Never override this method!!!
   def dispatch(block: RawBlockData): Future[Int] = {
-    val items = block.txs zip block.receipts
-    // val events = items.map { item =>
-    //   extractor.extract(item._1, item._2, block.timestamp)
-    // }.flatten.distinct
-
     for {
-      events <- Future
-        .sequence(items.map { item =>
-          extractor.extract(item._1, item._2, block.timestamp)
-        })
-        .map(_.flatten)
-      derived <- derive(block, events)
-      _ = derived.foreach { e =>
+      events <- extractor.extract(block)
+      _ = events.foreach { e =>
         targets.foreach(_ ! e)
       }
-    } yield derived.size
+    } yield events.size
   }
 }
 
-trait NameBasedEventDispatcher[R <: AnyRef] extends EventDispatcher[R] {
-  val names: Seq[String]
+abstract class NameBasedEventDispatcher[R <: AnyRef](names: Seq[String])
+    extends EventDispatcher[R] {
   val lookup: Lookup[ActorRef]
   def targets: Seq[ActorRef] = names.map(lookup.get)
 }

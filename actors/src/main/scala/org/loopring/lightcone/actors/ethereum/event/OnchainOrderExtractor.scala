@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 import scala.concurrent._
+import org.loopring.lightcone.actors.data._
 
-class OnchainOrderExtractor @Inject()(implicit ec: ExecutionContext)
+class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
     extends EventExtractor[RawOrder] {
 
   def extract(

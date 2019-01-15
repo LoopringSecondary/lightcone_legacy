@@ -27,6 +27,7 @@ import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
+import org.loopring.lightcone.actors.ethereum.Dispatchers._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.utils._
@@ -38,7 +39,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
-import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.actors.ethereum.event._
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.duration._
