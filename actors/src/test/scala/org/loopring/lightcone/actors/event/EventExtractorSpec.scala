@@ -22,6 +22,9 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.ethereum.event._
 import org.loopring.lightcone.proto.AddressBalanceUpdated
 import org.web3j.utils.Numeric
+import scala.concurrent._
+import scala.concurrent.duration._
+import akka.util.Timeout
 
 class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
 
@@ -72,17 +75,23 @@ class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
 
       val selfConfig = ConfigFactory.parseString(selfConfigStr)
 
-      val transferExtractor = new TransferEventExtractor()(selfConfig)
+      val transferExtractor = new TransferEventExtractor(selfConfig)
 
       val transfers = (blockData.txs zip blockData.receipts).flatMap { item =>
-        transferExtractor.extract(item._1, item._2, blockData.timestamp)
+        Await.result(
+          transferExtractor.extract(item._1, item._2, blockData.timestamp),
+          timeout.duration
+        )
       }
       val (eths, tokens) = transfers.partition(tr => Address(tr.token).isZero)
 
       val cutOffExtractor = new CutoffEventExtractor()
 
       val cutOffs = (blockData.txs zip blockData.receipts).flatMap { item =>
-        cutOffExtractor.extract(item._1, item._2, blockData.timestamp)
+        Await.result(
+          cutOffExtractor.extract(item._1, item._2, blockData.timestamp),
+          timeout.duration
+        )
       }
 
       cutOffs.isEmpty should be(true)
@@ -91,7 +100,11 @@ class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
 
       val onChainOrders = (blockData.txs zip blockData.receipts).flatMap {
         item =>
-          onChainOrderExtractor.extract(item._1, item._2, blockData.timestamp)
+          Await.result(
+            onChainOrderExtractor
+              .extract(item._1, item._2, blockData.timestamp),
+            timeout.duration
+          )
       }
       onChainOrders.isEmpty should be(true)
 
@@ -99,29 +112,44 @@ class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
 
       val orderCancelledEvents =
         (blockData.txs zip blockData.receipts).flatMap { item =>
-          orderCanceledExtractor.extract(item._1, item._2, blockData.timestamp)
+          Await.result(
+            orderCanceledExtractor
+              .extract(item._1, item._2, blockData.timestamp),
+            timeout.duration
+          )
         }
       orderCancelledEvents.isEmpty should be(true)
 
       val ringMinedEventExtractor = new RingMinedEventExtractor()
 
       val rings = (blockData.txs zip blockData.receipts).flatMap { item =>
-        ringMinedEventExtractor.extract(item._1, item._2, blockData.timestamp)
+        Await.result(
+          ringMinedEventExtractor
+            .extract(item._1, item._2, blockData.timestamp),
+          timeout.duration
+        )
       }
       rings.isEmpty should be(true)
 
-      val tokenBurnRateExtractor = new TokenBurnRateEventExtractor()(selfConfig)
+      val tokenBurnRateExtractor = new TokenBurnRateEventExtractor(selfConfig)
 
       val tokenBurnRates = (blockData.txs zip blockData.receipts).flatMap {
         item =>
-          tokenBurnRateExtractor.extract(item._1, item._2, blockData.timestamp)
+          Await.result(
+            tokenBurnRateExtractor
+              .extract(item._1, item._2, blockData.timestamp),
+            timeout.duration
+          )
       }
       tokenBurnRates.isEmpty should be(true)
 
       val balanceExtractor = new BalanceChangedAddressExtractor
 
       val balances = (blockData.txs zip blockData.receipts).flatMap { item =>
-        balanceExtractor.extract(item._1, item._2, blockData.timestamp)
+        Await.result(
+          balanceExtractor.extract(item._1, item._2, blockData.timestamp),
+          timeout.duration
+        )
       }.distinct
 
       val transferBalances = (transfers
@@ -138,10 +166,13 @@ class EventExtractorSpec extends CommonSpec with EventExtractorSupport {
       (balances.size == transferBalances.size) should be(true)
 
       val allowanceExtractor =
-        new AllowanceChangedAddressExtractor()(selfConfig)
+        new AllowanceChangedAddressExtractor(selfConfig)
 
       val allowances = (blockData.txs zip blockData.receipts).flatMap { item =>
-        allowanceExtractor.extract(item._1, item._2, blockData.timestamp)
+        Await.result(
+          allowanceExtractor.extract(item._1, item._2, blockData.timestamp),
+          timeout.duration
+        )
       }.distinct
 
       allowances.size should be(2)

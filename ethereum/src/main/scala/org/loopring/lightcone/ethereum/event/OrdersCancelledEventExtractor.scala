@@ -16,20 +16,22 @@
 
 package org.loopring.lightcone.ethereum.event
 
+import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto.{
   OrdersCancelledEvent => POrdersCancelledEvent,
   _
 }
+import scala.concurrent._
 
-class OrdersCancelledEventExtractor
+class OrdersCancelledEventExtractor @Inject()(implicit ec: ExecutionContext)
     extends EventExtractor[POrdersCancelledEvent] {
 
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[POrdersCancelledEvent] = {
+    ): Future[Seq[POrdersCancelledEvent]] = Future {
     val header = getEventHeader(tx, receipt, blockTime)
     receipt.logs.zipWithIndex.map { item =>
       {

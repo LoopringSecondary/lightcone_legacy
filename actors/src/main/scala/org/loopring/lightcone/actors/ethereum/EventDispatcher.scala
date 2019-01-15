@@ -28,6 +28,7 @@ trait EventDispatcher[R <: AnyRef] {
 
   def targets: Seq[ActorRef]
 
+  // TODO(yadong): 我觉得则个derive方法完全没有必要。
   def derive(
       block: RawBlockData,
       events: Seq[R]
@@ -37,10 +38,16 @@ trait EventDispatcher[R <: AnyRef] {
   // Never override this method!!!
   def dispatch(block: RawBlockData): Future[Int] = {
     val items = block.txs zip block.receipts
-    val events = items.map { item =>
-      extractor.extract(item._1, item._2, block.timestamp)
-    }.flatten.distinct
+    // val events = items.map { item =>
+    //   extractor.extract(item._1, item._2, block.timestamp)
+    // }.flatten.distinct
+
     for {
+      events <- Future
+        .sequence(items.map { item =>
+          extractor.extract(item._1, item._2, block.timestamp)
+        })
+        .map(_.flatten)
       derived <- derive(block, events)
       _ = derived.foreach { e =>
         targets.foreach(_ ! e)

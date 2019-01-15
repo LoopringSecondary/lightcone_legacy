@@ -24,10 +24,13 @@ import org.loopring.lightcone.proto.{TransferEvent => PTransferEvent, _}
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent._
 
 class TransferEventExtractor @Inject()(
+    config: Config
+  )(
     implicit
-    config: Config)
+    ec: ExecutionContext)
     extends EventExtractor[PTransferEvent] {
 
   val wethAddress = Address(config.getString("weth.address"))
@@ -36,7 +39,7 @@ class TransferEventExtractor @Inject()(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[PTransferEvent] = {
+    ): Future[Seq[PTransferEvent]] = Future {
     val header = getEventHeader(tx, receipt, blockTime)
     val transfers = ListBuffer.empty[PTransferEvent]
     if (isSucceed(receipt.status)) {

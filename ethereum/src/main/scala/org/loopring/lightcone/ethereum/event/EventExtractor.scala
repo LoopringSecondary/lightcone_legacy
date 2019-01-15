@@ -18,6 +18,7 @@ package org.loopring.lightcone.ethereum.event
 
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+import scala.concurrent.Future
 
 trait EventExtractor[R] {
 
@@ -25,7 +26,7 @@ trait EventExtractor[R] {
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[R]
+    ): Future[Seq[R]]
 
   def getEventHeader(
       tx: Transaction,
