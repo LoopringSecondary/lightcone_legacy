@@ -83,7 +83,7 @@ class EthereumEventExtractorActor(
   var currentBlockNumber: BigInt = _
   def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  def ethereumImplementActor = actors.get(MissingBlocksEventExtractorActor.name)
+  def missingBlockEventExtractorActor = actors.get(MissingBlocksEventExtractorActor.name)
 
   override def preStart(): Unit = {
     for {
@@ -94,7 +94,7 @@ class EthereumEventExtractorActor(
     } yield {
       currentBlockNumber = maxBlock - 1
       if (handledBlock.isDefined && handledBlock.get < maxBlock - 1) {
-        ethereumImplementActor ! BlockSupplementTask(
+        missingBlockEventExtractorActor ! BlockSupplementTask(
           handledBlock.get + 1 until maxBlock.longValue()
         )
       }
@@ -103,8 +103,7 @@ class EthereumEventExtractorActor(
   }
 
   def ready: Receive = {
-    case Notify("next", _) =>
-      process()
+    case Notify("next", _) => process()
   }
 
   def process(): Unit = {
@@ -166,7 +165,7 @@ class EthereumEventExtractorActor(
         }
       } else {
         context.system.scheduler
-          .scheduleOnce(15 seconds, self, Notify("next"))
+          .scheduleOnce(5 seconds, self, Notify("next"))
       }
     }
   }
