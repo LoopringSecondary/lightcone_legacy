@@ -75,7 +75,7 @@ class GasPriceActor(
 
   private var gasPrice = BigInt(selfConfig.getString("default"))
 
-  def receive: Receive = {
+  def ready: Receive = {
 
     case SetGasPrice.Req(price) =>
       sender ! SetGasPrice.Res(gasPrice)

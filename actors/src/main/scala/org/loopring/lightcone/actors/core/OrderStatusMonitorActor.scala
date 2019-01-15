@@ -116,6 +116,8 @@ class OrderStatusMonitorActor(
     )
   )
 
+  def receive = super.receiveRepeatdJobs
+
   def runJob(
       processFunction: (Int, Int, Option[Paging]) => Future[Int],
       latestProcessTimeOpt: Option[Int] = None,
