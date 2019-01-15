@@ -135,7 +135,7 @@ class CoreDeployer @Inject()(
       // TODO(hongyu): 不能是Nil，需要完善，但是还没考虑好，EtherHttpConnector需要提前完成初始化，
       // 但是又不需要在启动每个实例时都初始化
       actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start(Nil))
-      actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
+      actors.add(EthereumAccessActor.name, EthereumAccessActor.start(Nil))
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)

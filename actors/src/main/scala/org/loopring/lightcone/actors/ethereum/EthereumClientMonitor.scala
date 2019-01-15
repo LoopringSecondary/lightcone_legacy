@@ -74,23 +74,19 @@ object EthereumClientMonitor {
 }
 
 class EthereumClientMonitor(
-    val name: String = EthereumClientMonitor.name,
     connectionPools: Seq[ActorRef] = Nil
   )(
     implicit
     system: ActorSystem,
     val config: Config,
-    ec: ExecutionContext,
+    val ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef],
     ma: ActorMaterializer,
     ece: ExecutionContextExecutor)
-    extends Actor
-    with Stash
-    with ActorLogging
-    with RepeatedJobActor
-    with NamedBasedConfig {
+    extends ActorWithPathBasedConfig(EthereumClientMonitor.name)
+    with RepeatedJobActor {
 
   implicit val formats = DefaultFormats
 
@@ -109,29 +105,13 @@ class EthereumClientMonitor(
     )
   )
 
-  override def preStart(): Unit = {
-
-    checkNodeHeight onComplete {
-      case Success(_) =>
-        self ! Notify("initialized")
-        super.preStart()
-      case Failure(e) =>
-        log.error(s"Failed to start EthereumClientMonitor:${e.getMessage} ")
-        context.stop(self)
+  override def initialize(): Future[Unit] = {
+    checkNodeHeight.map { _ =>
+      becomeReady()
     }
   }
 
-  override def receive: Receive = initialReceive
-
-  def initialReceive: Receive = {
-    case Notify("initialized", _) =>
-      context.become(normalReceive)
-      unstashAll()
-    case _ =>
-      stash()
-  }
-
-  def normalReceive: Receive = super.receiveRepeatdJobs orElse {
+  def ready: Receive = super.receiveRepeatdJobs orElse {
     case _: GetNodeBlockHeight.Req =>
       sender ! GetNodeBlockHeight.Res(
         nodes.toSeq
