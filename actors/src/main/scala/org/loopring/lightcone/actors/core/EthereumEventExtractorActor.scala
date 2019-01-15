@@ -85,7 +85,7 @@ class EthereumEventExtractorActor(
 
   def missingBlockEventExtractorActor = actors.get(MissingBlocksEventExtractorActor.name)
 
-  override def preStart(): Unit = {
+  override def initialize():Future[Unit] = {
     for {
       handledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
       maxBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
@@ -98,6 +98,7 @@ class EthereumEventExtractorActor(
           handledBlock.get + 1 until maxBlock.longValue()
         )
       }
+      becomeReady()
       self ! Notify("next")
     }
   }
