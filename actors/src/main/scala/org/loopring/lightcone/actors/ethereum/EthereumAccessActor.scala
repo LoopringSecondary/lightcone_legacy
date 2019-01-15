@@ -35,7 +35,7 @@ object EthereumAccessActor {
   val name = "ethereum_access"
 
   def start(
-      connectionPools: Seq[ActorRef] = Nil
+      connectionPools: Seq[ActorRef]
     )(
       implicit
       system: ActorSystem,
