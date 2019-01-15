@@ -84,5 +84,12 @@ final class MetadataManagerValidator()(implicit val config: Config)
           "Parameter marketHash could not be empty"
         )
       req
+
+    case req: LoadTokenMetadata.Req =>
+      req
+
+    case req: LoadMarketMetadata.Req =>
+      req
+
   }
 }

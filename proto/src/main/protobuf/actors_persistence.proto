@@ -269,6 +269,16 @@ message DisableToken {
     }
 }
 
+message LoadTokenMetadata {
+    message Req {
+
+    }
+
+    message Res {
+        repeated TokenMetadata tokens = 1;
+    }
+}
+
 message SaveMarketMetadatas {
     message Req {
         repeated MarketMetadata markets = 1;
@@ -296,5 +306,15 @@ message DisableMarket {
 
     message Res {
         ErrorCode  error = 1;
+    }
+}
+
+message LoadMarketMetadata {
+    message Req {
+
+    }
+
+    message Res {
+        repeated MarketMetadata markets = 1;
     }
 }

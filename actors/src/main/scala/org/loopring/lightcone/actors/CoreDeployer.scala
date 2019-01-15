@@ -138,6 +138,7 @@ class CoreDeployer @Inject()(
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
+      actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
 
       actors.add(
         EthereumEventExtractorActor.name,

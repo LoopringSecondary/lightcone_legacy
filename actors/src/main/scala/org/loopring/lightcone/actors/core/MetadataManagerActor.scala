@@ -17,25 +17,25 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
-import akka.cluster.singleton.{
-  ClusterSingletonManager,
-  ClusterSingletonManagerSettings,
-  ClusterSingletonProxy,
-  ClusterSingletonProxySettings
-}
-import akka.pattern._
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
+import akka.cluster.singleton._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent.{ExecutionContext, Future}
 
 // Owner: Yongfeng
 object MetadataManagerActor {
   val name = "metadata_manager"
+  val tokenType = "tokens"
+  val marketType = "markets"
+
+  val marketChangedTopicId = MetadataManagerActor.name + "-" + marketType + "-changed"
+  val tokenChangedTopicId = MetadataManagerActor.name + "-" + tokenType + "-changed"
 
   def start(
       implicit
@@ -78,10 +78,31 @@ class MetadataManagerActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(OrderCutoffHandlerActor.name)
+    extends ActorWithPathBasedConfig(MetadataManagerActor.name)
+    with RepeatedJobActor
     with ActorLogging {
 
-  def receive: Receive = {
+  val repeatedDelayInSeconds = selfConfig.getInt("delay-in-seconds")
+  val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
+
+  val mediator = DistributedPubSub(context.system).mediator
+
+  val repeatedJobs = Seq(
+    Job(
+      name = "load_tokens_metadata",
+      dalayInSeconds = repeatedDelayInSeconds, // 10 minute
+      initialDalayInSeconds = initialDelayInSeconds,
+      run = () => runJob(MetadataManagerActor.tokenType)
+    ),
+    Job(
+      name = "load_markets_metadata",
+      dalayInSeconds = repeatedDelayInSeconds, // 10 minute
+      initialDalayInSeconds = initialDelayInSeconds,
+      run = () => runJob(MetadataManagerActor.marketType)
+    )
+  )
+
+  def ready: Receive = super.receiveRepeatdJobs orElse {
 
     case req: SaveTokenMetadatas.Req =>
       dbModule.tokenMetadataService
@@ -117,5 +138,62 @@ class MetadataManagerActor(
       dbModule.marketMetadataService
         .disableMarketByHash(req.marketHash)
         .map(DisableMarket.Res(_))
+
+    case req: LoadTokenMetadata.Req =>
+      dbModule.tokenMetadataService
+        .getTokens()
+        .map(LoadTokenMetadata.Res(_))
+
+    case req: LoadMarketMetadata.Req =>
+      dbModule.marketMetadataService
+        .getMarkets()
+        .map(LoadMarketMetadata.Res(_))
+  }
+
+  private def runJob(jobType: String): Future[Unit] = {
+    log.info(s"MetadataManager run job:$jobType")
+    jobType match {
+      case MetadataManagerActor.tokenType =>
+        for {
+          loadFromMemery <- dbModule.tokenMetadataService.getTokens()
+          loadFromDb <- dbModule.tokenMetadataService.getTokens(true)
+        } yield {
+          val sortedMemResult = loadFromMemery.sortWith(sortTokenByAddress)
+          val sortedDbResult = loadFromDb.sortWith(sortTokenByAddress)
+          if (sortedDbResult.length != sortedMemResult.length || sortedDbResult != sortedMemResult)
+            mediator ! Publish(
+              MetadataManagerActor.tokenChangedTopicId,
+              MetadataChanged(MetadataChanged.Changed.Tokens(true))
+            )
+        }
+
+      case MetadataManagerActor.marketType =>
+        for {
+          loadFromMemery <- dbModule.marketMetadataService.getMarkets()
+          loadFromDb <- dbModule.marketMetadataService.getMarkets(true)
+        } yield {
+          val sortedMemResult = loadFromMemery.sortWith(sortMarketByHash)
+          val sortedDbResult = loadFromDb.sortWith(sortMarketByHash)
+          if (sortedDbResult.length != sortedMemResult.length || sortedDbResult != sortedMemResult)
+            mediator ! Publish(
+              MetadataManagerActor.marketChangedTopicId,
+              MetadataChanged(MetadataChanged.Changed.Markets(true))
+            )
+        }
+    }
+  }
+
+  private def sortTokenByAddress(
+      t1: TokenMetadata,
+      t2: TokenMetadata
+    ) = {
+    Math.abs(t1.address.hashCode) > Math.abs(t2.address.hashCode)
+  }
+
+  private def sortMarketByHash(
+      m1: MarketMetadata,
+      m2: MarketMetadata
+    ) = {
+    Math.abs(m1.marketHash.hashCode) > Math.abs(m2.marketHash.hashCode)
   }
 }
