@@ -115,7 +115,7 @@ class TokenMetadataRefresher(
       stash()
   }
 
-  def ready: Receive = super.receive orElse LoggingReceive {
+  def ready: Receive = super.receiveRepeatdJobs orElse LoggingReceive {
     case req: TokenBurnRateChangedEvent =>
       log.debug(s"received TokenBurnRateChangedEvent ${req}")
       tokenMetadataService.updateBurnRate(req.token, req.burnRate)

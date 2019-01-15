@@ -14,18 +14,31 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.actors.ethereum.event
 
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.data._
 import org.web3j.utils.Numeric
 
+import scala.concurrent.{ExecutionContext, Future}
+
 trait EventExtractor[R] {
+
+  implicit val ec: ExecutionContext
+
+  def extract(block: RawBlockData): Future[Seq[R]] =
+    Future
+      .sequence((block.txs zip block.receipts).map {
+        case (tx, receipt) =>
+          extract(tx, receipt, block.timestamp)
+      })
+      .map(_.flatten)
 
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[R]
+    ): Future[Seq[R]]
 
   def getEventHeader(
       tx: Transaction,

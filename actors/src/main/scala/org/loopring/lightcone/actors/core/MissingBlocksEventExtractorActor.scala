@@ -33,8 +33,8 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
-object EthereumBlockSupplementActor {
-  val name = "ethereum_block_supplement"
+object MissingBlocksEventExtractorActor {
+  val name = "missing_blocks_event_extractor"
 
   def start(
       implicit
@@ -52,25 +52,27 @@ object EthereumBlockSupplementActor {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new EthereumBlockSupplementActor()),
+        singletonProps = Props(new MissingBlocksEventExtractorActor()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
-      name = EthereumBlockSupplementActor.name
+      name = MissingBlocksEventExtractorActor.name
     )
 
     system.actorOf(
-      ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${EthereumBlockSupplementActor.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${EthereumBlockSupplementActor.name}_proxy"
+      ClusterSingletonProxy
+        .props(
+          singletonManagerPath =
+            s"/user/${MissingBlocksEventExtractorActor.name}",
+          settings = ClusterSingletonProxySettings(system)
+        ),
+      name = s"${MissingBlocksEventExtractorActor.name}_proxy"
     )
   }
 
 }
 
-class EthereumBlockSupplementActor(
+class MissingBlocksEventExtractorActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -79,13 +81,13 @@ class EthereumBlockSupplementActor(
     val actors: Lookup[ActorRef],
     dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(EthereumBlockSupplementActor.name) {
+    extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name) {
 
   val taskQueue = new mutable.Queue[Long]()
   var currentBlockNumber = 0L
   def ethereumAccessorActor: ActorRef = actors.get(EthereumAccessActor.name)
 
-  override def receive: Receive = {
+  override def ready: Receive = {
     case Notify("next", _) =>
       if (taskQueue.nonEmpty) {
         currentBlockNumber = taskQueue.dequeue()

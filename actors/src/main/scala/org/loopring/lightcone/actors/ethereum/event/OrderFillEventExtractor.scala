@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.ethereum
+package org.loopring.lightcone.actors.ethereum.event
 
-import akka.actor.ActorRef
-import akka.util.Timeout
-import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.ethereum.event.EventExtractor
-import org.loopring.lightcone.proto.CutoffEvent
+import com.google.inject.Inject
+import org.loopring.lightcone.proto.{
+  OrderFilledEvent,
+  Transaction,
+  TransactionReceipt
+}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
-class CutoffEventDispatcher(
+class OrderFillEventExtractor @Inject()(
     implicit
-    timeout: Timeout,
-    lookup: Lookup[ActorRef],
-    extractor: EventExtractor[CutoffEvent],
+    extractor: RingMinedEventExtractor,
     val ec: ExecutionContext)
-    extends NameBasedEventDispatcher[CutoffEvent] {
+    extends EventExtractor[OrderFilledEvent] {
 
-  val names = Seq(
-    TransactionRecordActor.name,
-    OrderCutoffHandlerActor.name,
-    MultiAccountManagerActor.name
-  )
-
+  def extract(
+      tx: Transaction,
+      receipt: TransactionReceipt,
+      blockTime: String
+    ): Future[Seq[OrderFilledEvent]] =
+    extractor.extract(tx, receipt, blockTime).map(_.flatMap(_.fills))
 }

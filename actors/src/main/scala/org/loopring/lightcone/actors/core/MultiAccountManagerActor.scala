@@ -26,8 +26,8 @@ import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
-
-import scala.concurrent.ExecutionContext
+import akka.pattern.ask
+import scala.concurrent._
 import scala.concurrent.duration._
 
 // Owner: Hongyu
@@ -98,13 +98,15 @@ class MultiAccountManagerActor(
 
   log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
 
+  var autoSwitchBackToReady: Option[Cancellable] = None
+
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
   val maxRecoverDurationMinutes =
     selfConfig.getInt("max-recover-duration-minutes")
 
   val accountManagerActors = new MapBasedLookup[ActorRef]()
-  var autoSwitchBackToReceive: Option[Cancellable] = None
+
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
@@ -119,37 +121,35 @@ class MultiAccountManagerActor(
         Restart
     }
 
-  override def preStart(): Unit = {
-    super.preStart()
-
-    autoSwitchBackToReceive = Some(
-      context.system.scheduler
-        .scheduleOnce(
-          maxRecoverDurationMinutes.minute,
-          self,
-          ActorRecover.Finished(true)
-        )
-    )
-
-    if (skiprecover) {
-      log.warning(s"actor recover skipped: ${self.path}")
+  override def initialize() = {
+    if (skiprecover) Future.successful {
+      log.debug(s"actor recover skipped: ${self.path}")
+      becomeReady()
     } else {
-
       log.debug(s"actor recover started: ${self.path}")
-      actors.get(OrderRecoverCoordinator.name) !
-        ActorRecover.Request(addressShardingEntity = entityId)
-
-      context.become(recover)
+      for {
+        _ <- actors.get(OrderRecoverCoordinator.name) ?
+          ActorRecover.Request(addressShardingEntity = entityId)
+      } yield {
+        autoSwitchBackToReady = Some(
+          context.system.scheduler
+            .scheduleOnce(
+              maxRecoverDurationMinutes.minute,
+              self,
+              ActorRecover.Finished(true)
+            )
+        )
+        context.become(recover)
+      }
     }
   }
 
   def recover: Receive = {
-
     case req: ActorRecover.RecoverOrderReq => handleRequest(req)
 
     case ActorRecover.Finished(timeout) =>
       s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
-      context.become(receive)
+      context.become(ready)
 
     case msg: Any =>
       log.warning(s"message not handled during recover")
@@ -159,7 +159,7 @@ class MultiAccountManagerActor(
       )
   }
 
-  def receive: Receive = {
+  def ready: Receive = {
     case req: Any => handleRequest(req)
   }
 

@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
-
 import scala.collection.JavaConverters._
 import scala.concurrent._
 
 class TokenBurnRateEventExtractor @Inject()(
     implicit
-    config: Config)
+    val config: Config,
+    val ec: ExecutionContext)
     extends EventExtractor[TokenBurnRateChangedEvent] {
 
   val rateMap = config
@@ -40,7 +40,7 @@ class TokenBurnRateEventExtractor @Inject()(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[TokenBurnRateChangedEvent] = {
+    ): Future[Seq[TokenBurnRateChangedEvent]] = Future {
     val header = getEventHeader(tx, receipt, blockTime)
     receipt.logs.zipWithIndex.map { item =>
       val (log, index) = item

@@ -14,34 +14,66 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.actors.ethereum.event
 
+import akka.actor.ActorRef
+import akka.pattern._
+import akka.util.Timeout
 import com.google.inject.Inject
 import com.typesafe.config.Config
+import org.loopring.lightcone.actors.base.Lookup
+import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.ethereum.abi._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{
-  AddressAllowanceUpdated,
-  Transaction,
-  TransactionReceipt
-}
+import org.loopring.lightcone.proto.{TransferEvent => _, _}
+import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent._
 
 class AllowanceChangedAddressExtractor @Inject()(
     implicit
-    config: Config)
+    val config: Config,
+    val brb: EthereumBatchCallRequestBuilder,
+    val timeout: Timeout,
+    val lookup: Lookup[ActorRef],
+    val ec: ExecutionContext)
     extends EventExtractor[AddressAllowanceUpdated] {
 
   val protocolConf = config.getConfig("loopring_protocol")
   val delegateAddress = Address(protocolConf.getString("delegate-address"))
   val protocolAddress = Address(protocolConf.getString("protocol-address"))
 
+  def ethereumAccessor = lookup.get(EthereumAccessActor.name)
+
+  override def extract(
+      block: RawBlockData
+    ): Future[Seq[AddressAllowanceUpdated]] = {
+    for {
+      events <- Future
+        .sequence((block.txs zip block.receipts).map {
+          case (tx, receipt) =>
+            extract(tx, receipt, block.timestamp)
+        })
+        .map(_.flatten.distinct)
+      batchCallReq = brb.buildRequest(delegateAddress, events, "latest")
+      tokenAllowances <- (ethereumAccessor ? batchCallReq)
+        .mapAs[BatchCallContracts.Res]
+        .map(_.resps.map(res => Numeric.toBigInt(res.result).toByteArray))
+    } yield {
+      (events zip tokenAllowances).map(
+        item => item._1.withBalance(item._2)
+      )
+    }
+  }
+
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[AddressAllowanceUpdated] = {
+    ): Future[Seq[AddressAllowanceUpdated]] = Future {
     val allowanceAddresses = ListBuffer.empty[AddressAllowanceUpdated]
     receipt.logs.foreach { log =>
       wethAbi.unpackEvent(log.data, log.topics.toArray) match {
@@ -63,11 +95,12 @@ class AllowanceChangedAddressExtractor @Inject()(
       wethAbi.unpackFunctionInput(tx.input) match {
         case Some(param: ApproveFunction.Parms) =>
           if (Address(param.spender).equals(delegateAddress))
-            allowanceAddresses.append(AddressAllowanceUpdated(tx.from, tx.to))
+            allowanceAddresses.append(
+              AddressAllowanceUpdated(tx.from, tx.to)
+            )
         case _ =>
       }
     }
-
-    allowanceAddresses.distinct
+    allowanceAddresses
   }
 }

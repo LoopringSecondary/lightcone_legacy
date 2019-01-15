@@ -27,6 +27,7 @@ import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
+import org.loopring.lightcone.actors.ethereum.Dispatchers._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.utils._
@@ -38,7 +39,8 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
-import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.actors.ethereum.event._
+import org.loopring.lightcone.proto._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -83,39 +85,58 @@ class CoreModule(config: Config)
     )
 
     // --- bind event extractors ---------------------
-    bind[AllowanceChangedAddressExtractor]
-    bind[BalanceChangedAddressExtractor]
-    bind[CutoffEventExtractor]
-    bind[OnchainOrderExtractor]
-    bind[OrdersCancelledEventExtractor]
-    bind[RingMinedEventExtractor]
-    bind[TokenBurnRateEventExtractor]
-    bind[TransferEventExtractor]
+    bind[EventExtractor[AddressAllowanceUpdated]]
+      .to[AllowanceChangedAddressExtractor]
+
+    bind[EventExtractor[AddressBalanceUpdated]]
+      .to[BalanceChangedAddressExtractor]
+
+    bind[EventExtractor[OrdersCancelledEvent]]
+      .to[OrdersCancelledEventExtractor]
+
+    bind[EventExtractor[CutoffEvent]].to[CutoffEventExtractor]
+    bind[EventExtractor[RawOrder]].to[OnchainOrderExtractor]
+
+    bind[EventExtractor[TokenBurnRateChangedEvent]]
+      .to[TokenBurnRateEventExtractor]
+
+    bind[EventExtractor[RingMinedEvent]].to[RingMinedEventExtractor]
+    bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
 
     // --- bind event dispatchers ---------------------
-    bind[AllowanceEventDispatcher]
-    bind[BalanceEventDispatcher]
-    bind[OrdersCancelledEventDispatcher]
-    bind[OrderFilledEventDispatcher]
-    bind[RingMinedEventDispatcher]
-    bind[TokenBurnRateChangedEventDispatcher]
-    bind[TransferEventDispatcher]
-    bind[CutoffEventDispatcher]
+    bind[NameBasedEventDispatcher[AddressAllowanceUpdated]]
+      .to[AllowanceEventDispatcher]
+
+    bind[NameBasedEventDispatcher[AddressBalanceUpdated]]
+      .to[BalanceEventDispatcher]
+
+    bind[NameBasedEventDispatcher[OrdersCancelledEvent]]
+      .to[OrdersCancelledEventDispatcher]
+
+    bind[NameBasedEventDispatcher[RingMinedEvent]]
+      .to[OrderFilledEventDispatcher]
+
+    bind[NameBasedEventDispatcher[TokenBurnRateChangedEvent]]
+      .to[TokenBurnRateChangedEventDispatcher]
+
+    bind[NameBasedEventDispatcher[RingMinedEvent]].to[RingMinedEventDispatcher]
+    bind[NameBasedEventDispatcher[TransferEvent]].to[TransferEventDispatcher]
+    bind[NameBasedEventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
 
     // --- bind dals ---------------------
-    bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[OrderDal].to[OrderDalImpl].asEagerSingleton
     bind[TradeDal].to[TradeDalImpl].asEagerSingleton
     bind[BlockDal].to[BlockDalImpl].asEagerSingleton
     bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
     bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
+    bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
-    bind[TokenMetadataService].to[TokenMetadataServiceImpl].asEagerSingleton
     bind[TradeService].to[TradeServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
+    bind[TokenMetadataService].to[TokenMetadataServiceImpl].asEagerSingleton
 
     bind[OrderStatusMonitorService]
       .to[OrderStatusMonitorServiceImpl]
@@ -151,28 +172,31 @@ class CoreModule(config: Config)
 
   @Provides
   private def guiceDispathcerProvider(
-      balanceEventDispatcher: BalanceEventDispatcher,
-      allowanceEventDispatcher: AllowanceEventDispatcher,
-      ringMinedEventDispatcher: RingMinedEventDispatcher,
-      orderFilledEventDispatcher: OrderFilledEventDispatcher,
-      ordersCancelledEventDispatcher: OrdersCancelledEventDispatcher,
-      cutoffEventDispatcher: CutoffEventDispatcher,
-      tokenBurnRateChangedEventDispatcher: TokenBurnRateChangedEventDispatcher,
-      transferEventDispatcher: TransferEventDispatcher
-    ): Seq[EventDispatcher[_]] = {
-
+      balanceEventDispatcher: NameBasedEventDispatcher[AddressBalanceUpdated],
+      ringMinedEventDispatcher: NameBasedEventDispatcher[RingMinedEvent],
+      orderFilledEventDispatcher: NameBasedEventDispatcher[RingMinedEvent],
+      cutoffEventDispatcher: NameBasedEventDispatcher[CutoffEvent],
+      transferEventDispatcher: NameBasedEventDispatcher[TransferEvent],
+      allowanceEventDispatcher: NameBasedEventDispatcher[
+        AddressAllowanceUpdated
+      ],
+      ordersCancelledEventDispatcher: NameBasedEventDispatcher[
+        OrdersCancelledEvent
+      ],
+      tokenBurnRateChangedEventDispatcher: NameBasedEventDispatcher[
+        TokenBurnRateChangedEvent
+      ]
+    ): Seq[EventDispatcher[_]] =
     Seq(
       balanceEventDispatcher,
-      allowanceEventDispatcher,
-      cutoffEventDispatcher,
-      orderFilledEventDispatcher,
-      ordersCancelledEventDispatcher,
       ringMinedEventDispatcher,
-      tokenBurnRateChangedEventDispatcher,
-      transferEventDispatcher
+      orderFilledEventDispatcher,
+      cutoffEventDispatcher,
+      transferEventDispatcher,
+      allowanceEventDispatcher,
+      ordersCancelledEventDispatcher,
+      tokenBurnRateChangedEventDispatcher
     )
-
-  }
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
     bind[DatabaseConfig[JdbcProfile]]

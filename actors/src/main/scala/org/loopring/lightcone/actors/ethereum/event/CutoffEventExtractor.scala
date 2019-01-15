@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.actors.ethereum.event
 
+import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib.MarketHashProvider.convert2Hex
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.{
+  CutoffEvent,
+  Transaction,
+  TransactionReceipt
+}
 
-class CutoffEventExtractor extends EventExtractor[CutoffEvent] {
+import scala.concurrent._
+
+class CutoffEventExtractor @Inject()(implicit val ec: ExecutionContext)
+    extends EventExtractor[CutoffEvent] {
 
   def extract(
       tx: Transaction,
       receipt: TransactionReceipt,
       blockTime: String
-    ): Seq[CutoffEvent] = {
+    ): Future[Seq[CutoffEvent]] = Future {
     val header = getEventHeader(tx, receipt, blockTime)
     receipt.logs.zipWithIndex.map { item =>
       val (log, index) = item

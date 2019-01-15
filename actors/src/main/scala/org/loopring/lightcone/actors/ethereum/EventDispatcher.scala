@@ -18,40 +18,29 @@ package org.loopring.lightcone.actors.ethereum
 
 import akka.actor.ActorRef
 import org.loopring.lightcone.actors.base.Lookup
-import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.actors.ethereum.event._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
-abstract class EventDispatcher[R <: AnyRef](
-    implicit
-    extractor: EventExtractor[R]) {
+trait EventDispatcher[R <: AnyRef] {
   implicit val ec: ExecutionContext
+  val extractor: EventExtractor[R]
 
   def targets: Seq[ActorRef]
-
-  def derive(block: RawBlockData): Future[Seq[AnyRef]] = Future {
-    val items = block.txs zip block.receipts
-    items.flatMap { item =>
-      extractor.extract(item._1, item._2, block.timestamp)
-    }
-  }
 
   // Never override this method!!!
   def dispatch(block: RawBlockData): Future[Int] = {
     for {
-      derived: Seq[AnyRef] <- derive(block)
-      _ = derived.foreach { e =>
+      events <- extractor.extract(block)
+      _ = events.foreach { e =>
         targets.foreach(_ ! e)
       }
-    } yield derived.size
+    } yield events.size
   }
 }
 
-abstract class NameBasedEventDispatcher[R <: AnyRef](
-    implicit
-    extractor: EventExtractor[R],
-    lookup: Lookup[ActorRef])
+abstract class NameBasedEventDispatcher[R <: AnyRef](names: Seq[String])
     extends EventDispatcher[R] {
-  val names: Seq[String]
+  val lookup: Lookup[ActorRef]
   def targets: Seq[ActorRef] = names.map(lookup.get)
 }

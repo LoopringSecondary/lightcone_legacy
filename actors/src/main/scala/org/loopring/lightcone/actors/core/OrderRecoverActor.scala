@@ -68,7 +68,7 @@ object OrderRecoverActor extends ShardedEvenly {
 class OrderRecoverActor(
     implicit
     val config: Config,
-    ec: ExecutionContext,
+    val ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef],
@@ -84,7 +84,7 @@ class OrderRecoverActor(
   def coordinator = actors.get(OrderRecoverCoordinator.name)
   def mama = actors.get(MultiAccountManagerActor.name)
 
-  def receive: Receive = {
+  def ready: Receive = {
     case req: ActorRecover.RequestBatch =>
       log.info(s"started order recover - $req")
       batch = req
