@@ -25,10 +25,8 @@ import scala.concurrent._
 trait EventDispatcher[R <: AnyRef] {
   implicit val ec: ExecutionContext
   val extractor: EventExtractor[R]
-
   def targets: Seq[ActorRef]
 
-  // Never override this method!!!
   def dispatch(block: RawBlockData): Future[Int] = {
     for {
       events <- extractor.extract(block)

@@ -42,20 +42,20 @@ class TokenBurnRateEventExtractor @Inject()(
       blockTime: String
     ): Future[Seq[TokenBurnRateChangedEvent]] = Future {
     val header = getEventHeader(tx, receipt, blockTime)
-    receipt.logs.zipWithIndex.map { item =>
-      val (log, index) = item
-      loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-        case Some(event: TokenTierUpgradedEvent.Result) =>
-          Some(
-            TokenBurnRateChangedEvent(
-              header = Some(header.withLogIndex(index)),
-              token = event.add,
-              burnRate = rateMap(event.tier.intValue()) / base.toDouble
+    receipt.logs.zipWithIndex.map {
+      case (log, index) =>
+        loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+          case Some(event: TokenTierUpgradedEvent.Result) =>
+            Some(
+              TokenBurnRateChangedEvent(
+                header = Some(header.withLogIndex(index)),
+                token = event.add,
+                burnRate = rateMap(event.tier.intValue()) / base.toDouble
+              )
             )
-          )
-        case _ =>
-          None
-      }
+          case _ =>
+            None
+        }
     }.filter(_.nonEmpty).map(_.get)
   }
 }

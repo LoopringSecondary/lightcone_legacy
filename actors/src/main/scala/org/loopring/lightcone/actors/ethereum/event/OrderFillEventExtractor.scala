@@ -17,11 +17,7 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
-import org.loopring.lightcone.proto.{
-  OrderFilledEvent,
-  Transaction,
-  TransactionReceipt
-}
+import org.loopring.lightcone.proto._
 
 import scala.concurrent.{ExecutionContext, Future}
 

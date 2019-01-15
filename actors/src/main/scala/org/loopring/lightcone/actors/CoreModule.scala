@@ -104,24 +104,24 @@ class CoreModule(config: Config)
     bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
 
     // --- bind event dispatchers ---------------------
-    bind[NameBasedEventDispatcher[AddressAllowanceUpdated]]
+    bind[EventDispatcher[AddressAllowanceUpdated]]
       .to[AllowanceEventDispatcher]
 
-    bind[NameBasedEventDispatcher[AddressBalanceUpdated]]
+    bind[EventDispatcher[AddressBalanceUpdated]]
       .to[BalanceEventDispatcher]
 
-    bind[NameBasedEventDispatcher[OrdersCancelledEvent]]
+    bind[EventDispatcher[OrdersCancelledEvent]]
       .to[OrdersCancelledEventDispatcher]
 
-    bind[NameBasedEventDispatcher[RingMinedEvent]]
+    bind[EventDispatcher[RingMinedEvent]]
       .to[OrderFilledEventDispatcher]
 
-    bind[NameBasedEventDispatcher[TokenBurnRateChangedEvent]]
+    bind[EventDispatcher[TokenBurnRateChangedEvent]]
       .to[TokenBurnRateChangedEventDispatcher]
 
-    bind[NameBasedEventDispatcher[RingMinedEvent]].to[RingMinedEventDispatcher]
-    bind[NameBasedEventDispatcher[TransferEvent]].to[TransferEventDispatcher]
-    bind[NameBasedEventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
+    bind[EventDispatcher[RingMinedEvent]].to[RingMinedEventDispatcher]
+    bind[EventDispatcher[TransferEvent]].to[TransferEventDispatcher]
+    bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
 
     // --- bind dals ---------------------
     bind[OrderDal].to[OrderDalImpl].asEagerSingleton

@@ -18,10 +18,7 @@ package org.loopring.lightcone.actors.ethereum.event
 
 import akka.actor.ActorRef
 import com.google.inject.Inject
-import org.loopring.lightcone.actors.ethereum.{
-  EthereumAccessActor,
-  EthereumBatchCallRequestBuilder
-}
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.web3j.utils.Numeric

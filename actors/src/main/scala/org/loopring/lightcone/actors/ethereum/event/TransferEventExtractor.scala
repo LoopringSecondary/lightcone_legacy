@@ -42,9 +42,8 @@ class TransferEventExtractor @Inject()(
     val transfers = ListBuffer.empty[PTransferEvent]
     val header = getEventHeader(tx, receipt, blockTime)
     if (isSucceed(receipt.status)) {
-      receipt.logs.zipWithIndex
-        .foreach(item => {
-          val (log, index) = item
+      receipt.logs.zipWithIndex.foreach {
+        case (log, index) =>
           wethAbi.unpackEvent(log.data, log.topics.toArray) match {
             case Some(transfer: TransferEvent.Result) =>
               transfers.append(
@@ -92,12 +91,12 @@ class TransferEventExtractor @Inject()(
               )
             case _ =>
           }
-        })
+      }
       if (BigInt(Numeric.toBigInt(tx.value)) > 0 && !Address(tx.to)
             .equals(wethAddress)) {
         transfers.append(
           PTransferEvent(
-            Some(header),
+            header = Some(header),
             from = tx.from,
             to = tx.to,
             token = Address.ZERO.toString(),
@@ -110,7 +109,7 @@ class TransferEventExtractor @Inject()(
         case Some(transfer: TransferFunction.Parms) =>
           transfers.append(
             PTransferEvent(
-              Some(header),
+              header = Some(header),
               from = tx.from,
               to = transfer.to,
               token = tx.to,
@@ -120,7 +119,7 @@ class TransferEventExtractor @Inject()(
         case Some(transferFrom: TransferFromFunction.Parms) =>
           transfers.append(
             PTransferEvent(
-              Some(header),
+              header = Some(header),
               from = transferFrom.txFrom,
               to = transferFrom.to,
               token = tx.to,
@@ -130,14 +129,14 @@ class TransferEventExtractor @Inject()(
         case Some(_: DepositFunction.Parms) =>
           transfers.append(
             PTransferEvent(
-              Some(header),
+              header = Some(header),
               from = tx.to,
               to = tx.from,
               token = tx.to,
               amount = Numeric.toBigInt(tx.value).toByteArray
             ),
             PTransferEvent(
-              Some(header),
+              header = Some(header),
               from = tx.from,
               to = tx.to,
               token = Address.ZERO.toString(),
@@ -147,14 +146,14 @@ class TransferEventExtractor @Inject()(
         case Some(withdraw: WithdrawFunction.Parms) =>
           transfers.append(
             PTransferEvent(
-              Some(header),
+              header = Some(header),
               from = tx.from,
               to = tx.to,
               token = tx.to,
               amount = withdraw.wad.toByteArray
             ),
             PTransferEvent(
-              Some(header),
+              header = Some(header),
               from = tx.to,
               to = tx.from,
               token = Address.ZERO.toString(),
@@ -165,7 +164,7 @@ class TransferEventExtractor @Inject()(
           if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
             transfers.append(
               PTransferEvent(
-                Some(header),
+                header = Some(header),
                 from = tx.from,
                 to = tx.to,
                 token = Address.ZERO.toString(),
@@ -175,7 +174,7 @@ class TransferEventExtractor @Inject()(
             if (Address(tx.to).equals(wethAddress)) {
               transfers.append(
                 PTransferEvent(
-                  Some(header),
+                  header = Some(header),
                   from = tx.to,
                   to = tx.from,
                   token = tx.to,

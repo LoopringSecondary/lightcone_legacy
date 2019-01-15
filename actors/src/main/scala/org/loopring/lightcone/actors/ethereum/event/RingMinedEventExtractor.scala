@@ -36,9 +36,8 @@ class RingMinedEventExtractor @Inject()(implicit val ec: ExecutionContext)
     ): Future[Seq[PRingMinedEvent]] = Future {
     val header = getEventHeader(tx, receipt, blockTime)
     if (isSucceed(receipt.status)) {
-      receipt.logs.zipWithIndex.map { item =>
-        {
-          val (log, index) = item
+      receipt.logs.zipWithIndex.map {
+        case (log, index) =>
           loopringProtocolAbi
             .unpackEvent(log.data, log.topics.toArray) match {
             case Some(event: RingMinedEvent.Result) =>
@@ -75,7 +74,6 @@ class RingMinedEventExtractor @Inject()(implicit val ec: ExecutionContext)
             case _ =>
               None
           }
-        }
       }.filter(_.nonEmpty).map(_.get)
     } else {
       ringSubmitterAbi.unpackFunctionInput(tx.input) match {
