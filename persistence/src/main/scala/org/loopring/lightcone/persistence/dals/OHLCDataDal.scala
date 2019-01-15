@@ -17,14 +17,21 @@
 package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base.BaseDalImpl
-import org.loopring.lightcone.persistence.tables.{DealtRecordTable}
+import org.loopring.lightcone.persistence.tables.{OHLCDataTable}
 
 import scala.concurrent.Future
 import org.loopring.lightcone.proto._
 
-trait DealtRecordDal extends BaseDalImpl[DealtRecordTable, DealtRecord] {
+trait OHLCDataDal extends BaseDalImpl[OHLCDataTable, RawData] {
 
   // Save a order to the database and returns the saved order and indicate
-  def saveDealtRecord(record: DealtRecord): Future[PersistDealtRecord.Res]
+  def saveRawData(record: RawData): Future[PersistRawData.Res]
+
+  def getOHLCData(
+      marketId: String,
+      interval: String,
+      beginTime: Long,
+      endTime: Long
+    ): Future[GetOHLCData.Res]
 
 }

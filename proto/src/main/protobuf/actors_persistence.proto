@@ -228,13 +228,25 @@ message GetTransactionRecordCount {
     }
 }
 
-message PersistDealtRecord {
+message PersistRawData {
     message Req {
-        DealtRecord data    = 1;
+        RawData data    = 1;
     }
     message Res {
-        DealtRecord record  = 1;
-        bool already_exist  = 2;
-        ErrorCode error     = 3;
+        RawData record  = 1;
+        ErrorCode error  = 2;
+    }
+}
+
+message GetOHLCData {
+    message Req {
+        string  marketId    = 1;
+        string  interval    = 2;
+        int64   beginTime   = 3;
+        int64   endTime     = 4;
+    }
+
+    message Res {
+        repeated OHLCData data = 1;
     }
 }

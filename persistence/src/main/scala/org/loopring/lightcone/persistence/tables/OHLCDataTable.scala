@@ -20,27 +20,21 @@ import org.loopring.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
 
-class DealtRecordTable(tag: Tag)
-    extends BaseTable[DealtRecord](tag, "T_DEALT_RECORD") {
-  implicit val DealTypeColumnType = enumColumnType(DealtRecord.DealType)
+class OHLCDataTable(tag: Tag) extends BaseTable[RawData](tag, "T_OHLC_DATA") {
 
   def id = txHash
   def txHash = columnHash("tx_hash")
-  def primaryToken = column[String]("primary_token")
-  def baseToken = column[String]("base_token")
+  def marketId = column[String]("market_id")
   def dealtAt = column[Long]("dealt_at")
-  def amount = column[Double]("amount")
+  def volume = column[Double]("volume")
   def price = column[Double]("price")
-  def dealType = column[DealtRecord.DealType]("deal_tpye")
 
   def * =
     (
       txHash,
-      primaryToken,
-      baseToken,
+      marketId,
       dealtAt,
-      amount,
-      price,
-      dealType
-    ) <> ((DealtRecord.apply _).tupled, DealtRecord.unapply)
+      volume,
+      price
+    ) <> ((RawData.apply _).tupled, RawData.unapply)
 }

@@ -53,7 +53,8 @@ object Dependencies {
   lazy val driverDependency = Seq(
     "com.github.etaty" %% "rediscala" % "1.8.0",
     "com.lightbend.akka" %% "akka-stream-alpakka-slick" % "0.20",
-    "mysql" % "mysql-connector-java" % "5.1.47")
+    "mysql" % "mysql-connector-java" % "5.1.47",
+    "org.postgresql" % "postgresql" % "42.2.5")
 
   lazy val scalapbDependency = Seq(
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion,

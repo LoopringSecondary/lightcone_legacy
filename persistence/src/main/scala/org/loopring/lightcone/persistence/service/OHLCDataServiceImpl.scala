@@ -17,26 +17,32 @@
 package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
-import org.loopring.lightcone.persistence.dals.DealtRecordDal
-import org.loopring.lightcone.proto.{DealtRecord, ErrorCode}
+import org.loopring.lightcone.persistence.dals.OHLCDataDal
+import org.loopring.lightcone.proto.{ErrorCode, GetOHLCData, OHLCData, RawData}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DealtRecordServiceImpl @Inject()(
+class OHLCDataServiceImpl @Inject()(
     implicit
-    dealtRecordDal: DealtRecordDal,
+    ohlcDataDal: OHLCDataDal,
     val ec: ExecutionContext)
-    extends DealtRecordService {
+    extends OHLCDataService {
 
-  def saveDealtRecord(
-      record: DealtRecord
-    ): Future[Either[DealtRecord, ErrorCode]] =
-    dealtRecordDal.saveDealtRecord(record).map { r =>
+  def saveRawData(record: RawData): Future[Either[RawData, ErrorCode]] =
+    ohlcDataDal.saveRawData(record).map { r =>
       if (r.error == ErrorCode.ERR_NONE) {
         Left(r.record.get)
       } else {
         Right(r.error)
       }
     }
+
+  def getOHLCData(request: GetOHLCData.Req): Future[GetOHLCData.Res] =
+    ohlcDataDal.getOHLCData(
+      request.marketId,
+      request.interval,
+      request.beginTime,
+      request.endTime
+    )
 
 }

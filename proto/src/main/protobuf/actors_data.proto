@@ -298,16 +298,20 @@ message NodeBlockHeight{
 }
 
 // Used as statistical data, such as a histogram
-message DealtRecord {
-    enum DealType {
-        IN   = 0;
-        OUT  = 1;
-    }
+message RawData {
     string     tx_hash        = 1;
-    string     primary_token  = 2;
-    string     base_token     = 3;
-    int64      dealt_at       = 4;
-    double     amount         = 5;
-    double     price          = 6;
-    DealType   type           = 7;
+    string     market_id      = 2;
+    int64      dealt_at       = 3;
+    double     volume         = 4;
+    double     price          = 5;
+}
+
+message OHLCData {
+    string     time             = 1;
+    string     marked_id        = 2;
+    double     volume           = 3;
+    double     opening_price    = 4;
+    double     closing_price    = 5;
+    double     highest_price    = 6;
+    double     lowest_price     = 7;
 }
