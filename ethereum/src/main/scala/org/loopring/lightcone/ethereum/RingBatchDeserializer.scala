@@ -29,7 +29,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
     extends RingBatchDeserializer {
   import ethereum._
 
-  val dataStream = new Bitstream(encoded)
+  val dataStream = new Bitstream(Numeric.cleanHexPrefix(encoded))
 
   private var tableOffSet: Int = 0
   private var dataOffset: Int = 0
@@ -58,7 +58,9 @@ class SimpleRingBatchDeserializer(encoded: String = "")
 
       Right(ringBatchWithRings)
     } catch {
-      case _: Throwable => Left(ErrorCode.ERR_DESERIALIZE_INVALID_ENCODED_DATA)
+      case e: Throwable =>
+        e.printStackTrace
+        Left(ErrorCode.ERR_DESERIALIZE_INVALID_ENCODED_DATA)
     }
 
   private def setMiningData(miningTableOffset: Int) = {
@@ -66,6 +68,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
     val feeRecipient = nextAddress
     val miner = nextAddress
     val sig = nextBytes
+    // val sig = ""
 
     new RingBatch(feeRecipient = feeRecipient, miner = miner, sig = sig)
   }
@@ -131,7 +134,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
     if (offset > 0) {
       dataStream.extractUint(dataOffset + offset)
     } else {
-      ByteString.EMPTY
+      BigInt(0)
     }
   }
 

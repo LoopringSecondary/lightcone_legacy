@@ -178,9 +178,9 @@ class Bitstream(private var data: String = "") {
 
   def extractUint32(offset: Int): Int = hex2Int(extractBytesX(offset, 4))
 
-  def extractUint(offset: Int): ByteString = {
+  def extractUint(offset: Int): BigInt = {
     val hexStr = extractBytesX(offset, 32)
-    ByteString.copyFromUtf8(hexStr)
+    BigInt(hexStr, 16)
   }
 
   def extractAddress(offset: Int) = "0x" + extractBytesX(offset, 20)
