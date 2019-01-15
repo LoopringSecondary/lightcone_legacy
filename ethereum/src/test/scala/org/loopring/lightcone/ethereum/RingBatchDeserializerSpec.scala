@@ -116,10 +116,20 @@ class RingBatchDeserializerSpec extends FlatSpec with Matchers {
 
     assert(paramStr == expectedParamStr, "generate wrong paramstr")
 
-    val ringBatchDecoded = SimpleRingBatchDeserializer.deserialize(expectedParamStr);
-    assert(ringBatch.feeRecipient == ringBatchDecoded.feeRecipient,
-      "decoded field not equal with original one.")
-    assert(ringBatch.miner == ringBatchDecoded.miner,
-      "decoded field not equal with original one.")
+    val deserializer = new SimpleRingBatchDeserializer(expectedParamStr)
+
+    deserializer.deserialize match {
+      case Right(ringBatchDecoded) =>
+        assert(
+          ringBatch.feeRecipient == ringBatchDecoded.feeRecipient,
+          "decoded field not equal with original one."
+        )
+        assert(
+          ringBatch.miner == ringBatchDecoded.miner,
+          "decoded field not equal with original one."
+        )
+      case Left(err) =>
+        assert(false, "deserialize failed:" + err.name)
+    }
   }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.ethereum
 
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.ethereum._
@@ -103,15 +103,24 @@ class SimpleRingBatchDeserializer(encoded: String = "")
     ringBatch.copy(rings = rings)
   }
 
-  private def getNextOffset = {
+  private def getNextOffset() = {
     val offset = dataStream.extractUint16(tableOffSet)
     tableOffSet += 2
     offset
   }
 
-  private def nextUint16 = getNextOffset
+  private def nextUint16() = getNextOffset
 
-  private def nextUint = {
+  private def nextUint32() = {
+    val offset = getNextOffset * 4
+    if (offset > 0) {
+      dataStream.extractUint32(dataOffset + offset)
+    } else {
+      0
+    }
+  }
+
+  private def nextUint() = {
     val offset = getNextOffset * 4
     if (offset > 0) {
       dataStream.extractUint(dataOffset + offset)
@@ -120,7 +129,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
     }
   }
 
-  private def nextAddress = {
+  private def nextAddress() = {
     val offset = getNextOffset * 4
     if (offset > 0) {
       dataStream.extractAddress(dataOffset + offset)
@@ -129,7 +138,16 @@ class SimpleRingBatchDeserializer(encoded: String = "")
     }
   }
 
-  private def nextBytes = {
+  private def nextBytes32() = {
+    val offset = getNextOffset * 4
+    if (offset > 0) {
+      "0x" + dataStream.extractBytesX(dataOffset + offset, 32)
+    } else {
+      "0x" + "0" * 64
+    }
+  }
+
+  private def nextBytes() = {
     val offset = getNextOffset * 4
     if (offset > 0) {
       val len = dataStream.extractUint(dataOffset + offset).toInt
@@ -145,10 +163,54 @@ class SimpleRingBatchDeserializer(encoded: String = "")
       owner = nextAddress,
       tokenS = nextAddress,
       tokenB = nextAddress,
-      amountS = nextUint
+      amountS = nextUint,
+      amountB = nextUint,
+      validSince = nextUint32
     )
 
-    order
+    nextUint16() // tokenSpendableS, ignore
+    nextUint16() // tokenSpendableB, ignore
+
+    val params = new RawOrder.Params(
+      dualAuthAddr = nextAddress,
+      broker = nextAddress,
+      orderInterceptor = nextAddress,
+      wallet = nextAddress,
+      validUntil = nextUint32,
+      sig = nextBytes,
+      dualAuthSig = nextBytes,
+      allOrNone = nextUint16 > 0
+    )
+
+    val feeParams = new RawOrder.FeeParams(
+      tokenFee = nextAddress,
+      amountFee = nextUint,
+      waiveFeePercentage = nextUint16,
+      tokenSFeePercentage = nextUint16,
+      tokenBFeePercentage = nextUint16,
+      tokenRecipient = nextAddress,
+      walletSplitPercentage = nextUint16
+    )
+
+    val params2 = params.copy(
+      tokenStandardS = TokenStandard.fromValue(nextUint16),
+      tokenStandardB = TokenStandard.fromValue(nextUint16),
+      tokenStandardFee = TokenStandard.fromValue(nextUint16)
+    )
+
+    val erc1400Params = new RawOrder.ERC1400Params(
+      trancheS = nextBytes32,
+      trancheB = nextBytes32,
+      transferDataS = nextBytes
+    )
+
+    val order2 = order.copy(
+      params = Some(params2),
+      feeParams = Some(feeParams),
+      erc1400Params = Some(erc1400Params)
+    )
+
+    order2
   }
 
 }
