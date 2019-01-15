@@ -111,8 +111,6 @@ class CoreDeployer @Inject()(
         RingSettlementManagerActor.start
       )
 
-      println(s"### actors ${actors.all()}")
-
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors.add(EntryPointActor.name, EntryPointActor.start)
 
@@ -120,7 +118,7 @@ class CoreDeployer @Inject()(
       //-----------deploy local actors-----------
       //todo:有死循环的bug
       //    actors.add(BadMessageListener.name, BadMessageListener.start)
-//      actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
+      actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
 
       actors.add(
         MultiAccountManagerMessageValidator.name,
