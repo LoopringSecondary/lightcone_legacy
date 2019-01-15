@@ -162,11 +162,11 @@ class MarketManagerActor(
       log.debug(s"actor recover skipped: ${self.path}")
       becomeReady()
     } else {
-      log.debug(s"actor recover started: ${self.path}")
-      for {
-        _ <- actors.get(OrderRecoverCoordinator.name) ?
+      Future {
+        context.become(recover)
+        log.info(s"actor recover started: ${self.path}")
+        actors.get(OrderRecoverCoordinator.name) !
           ActorRecover.Request(marketId = Some(marketId))
-      } yield {
         autoSwitchBackToReady = Some(
           context.system.scheduler
             .scheduleOnce(
@@ -175,7 +175,6 @@ class MarketManagerActor(
               ActorRecover.Finished(true)
             )
         )
-        context.become(recover)
       }
     }
   }
@@ -192,11 +191,12 @@ class MarketManagerActor(
       context.become(ready)
 
     case msg: Any =>
-      log.warning(s"message not handled during recover")
-      sender ! Error(
-        ERR_REJECTED_DURING_RECOVER,
-        s"market manager `${entityId}` is being recovered"
-      )
+      log.warning(s"message not handled during recover, ${msg}, ${sender}")
+    //todo:sender是自己，不能发送给sender
+//      sender ! Error(
+//        ERR_REJECTED_DURING_RECOVER,
+//        s"market manager `${entityId}` is being recovered"
+//      )
   }
 
   def ready: Receive = {
@@ -253,6 +253,7 @@ class MarketManagerActor(
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {
+    log.info(s"#### marketmanager ${order}")
     assert(
       order.actual.nonEmpty,
       "order in SubmitSimpleOrder miss `actual` field"
@@ -264,12 +265,14 @@ class MarketManagerActor(
           // get ring settlement cost
           res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
 
+          _ = log.info(s"### submitOrder11 ${res}")
           gasPrice: BigInt = res.gasPrice
           minRequiredIncome = getRequiredMinimalIncome(gasPrice)
+          _ = log.info(s"### submitOrder22 ${minRequiredIncome}")
 
           // submit order to reserve balance and allowance
           matchResult = manager.submitOrder(matchable, minRequiredIncome)
-
+          _ = log.info(s"### submitOrder33 ${matchResult}")
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
         } yield Unit
@@ -301,6 +304,9 @@ class MarketManagerActor(
 
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
+    log.info(
+      s"#### updateOrderbookAndSettleRings ${matchResult}, ${ou.sells}, ${ou.buys}"
+    )
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
       orderbookManagerMediator ! Publish(
         OrderbookManagerActor.getTopicId(marketId),

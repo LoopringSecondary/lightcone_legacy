@@ -127,10 +127,11 @@ class MultiAccountManagerActor(
       becomeReady()
     } else {
       log.debug(s"actor recover started: ${self.path}")
-      for {
-        _ <- actors.get(OrderRecoverCoordinator.name) ?
+      Future {
+        context.become(recover)
+        actors.get(OrderRecoverCoordinator.name) !
           ActorRecover.Request(addressShardingEntity = entityId)
-      } yield {
+
         autoSwitchBackToReady = Some(
           context.system.scheduler
             .scheduleOnce(
@@ -139,7 +140,6 @@ class MultiAccountManagerActor(
               ActorRecover.Finished(true)
             )
         )
-        context.become(recover)
       }
     }
   }
@@ -152,11 +152,11 @@ class MultiAccountManagerActor(
       context.become(ready)
 
     case msg: Any =>
-      log.warning(s"message not handled during recover")
-      sender ! Error(
-        ERR_REJECTED_DURING_RECOVER,
-        s"account manager ${entityId} is being recovered"
-      )
+      log.warning(s"message not handled during recover, ${msg}, ${sender}")
+//      sender ! Error(
+//        ERR_REJECTED_DURING_RECOVER,
+//        s"account manager ${entityId} is being recovered"
+//      )
   }
 
   def ready: Receive = {
