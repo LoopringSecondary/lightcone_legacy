@@ -137,7 +137,6 @@ class CoreModule(config: Config)
     bind[TradeService].to[TradeServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
-    bind[TokenMetadataService].to[TokenMetadataServiceImpl].asEagerSingleton
 
     bind[OrderStatusMonitorService]
       .to[OrderStatusMonitorServiceImpl]

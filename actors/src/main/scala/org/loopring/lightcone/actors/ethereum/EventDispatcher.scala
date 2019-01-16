@@ -39,11 +39,11 @@ trait EventDispatcher[R <: AnyRef] {
 
 class NameBasedEventDispatcher[R <: AnyRef](
     names: Seq[String],
-    lookup: Lookup[ActorRef]
+    actors: Lookup[ActorRef]
   )(
     implicit
     val ec: ExecutionContext,
     val extractor: EventExtractor[R])
     extends EventDispatcher[R] {
-  def targets: Seq[ActorRef] = names.map(lookup.get)
+  def targets: Seq[ActorRef] = names.map(actors.get)
 }

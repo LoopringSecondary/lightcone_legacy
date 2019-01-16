@@ -21,36 +21,36 @@ import com.google.inject.Inject
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum.event.EventExtractor
-import org.loopring.lightcone.actors.utils.TokenMetadataRefresher
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.proto._
 import scala.concurrent.ExecutionContext
 
 object Dispatchers {
 
   class RingMinedEventDispatcher @Inject()(
-      lookup: Lookup[ActorRef]
+      actors: Lookup[ActorRef]
     )(
       implicit
       ec: ExecutionContext,
       extractor: EventExtractor[RingMinedEvent])
       extends NameBasedEventDispatcher[RingMinedEvent](
         names = Seq(MarketManagerActor.name),
-        lookup
+        actors
       )
 
   class AllowanceEventDispatcher @Inject()(
-      lookup: Lookup[ActorRef]
+      actors: Lookup[ActorRef]
     )(
       implicit
       extractor: EventExtractor[AddressAllowanceUpdated],
       ec: ExecutionContext)
       extends NameBasedEventDispatcher[AddressAllowanceUpdated](
         names = Seq(MultiAccountManagerActor.name),
-        lookup
+        actors
       )
 
   class BalanceEventDispatcher @Inject()(
-      lookup: Lookup[ActorRef]
+      actors: Lookup[ActorRef]
     )(
       implicit
       extractor: EventExtractor[AddressBalanceUpdated],
@@ -58,11 +58,11 @@ object Dispatchers {
       extends NameBasedEventDispatcher[AddressBalanceUpdated](
         names =
           Seq(MultiAccountManagerActor.name, RingSettlementManagerActor.name),
-        lookup
+        actors
       )
 
   class CutoffEventDispatcher @Inject()(
-      lookup: Lookup[ActorRef]
+      actors: Lookup[ActorRef]
     )(
       implicit
       extractor: EventExtractor[CutoffEvent],
@@ -73,51 +73,51 @@ object Dispatchers {
           OrderCutoffHandlerActor.name,
           MultiAccountManagerActor.name
         ),
-        lookup
+        actors
       )
 
   class OrderFilledEventDispatcher @Inject()(
-      lookup: Lookup[ActorRef]
+      actors: Lookup[ActorRef]
     )(
       implicit
       extractor: EventExtractor[RingMinedEvent],
       ec: ExecutionContext)
       extends NameBasedEventDispatcher[RingMinedEvent](
         names = Seq(TransactionRecordActor.name, MultiAccountManagerActor.name),
-        lookup
+        actors
       )
 
   class OrdersCancelledEventDispatcher @Inject()(
-      lookup: Lookup[ActorRef]
+      actors: Lookup[ActorRef]
     )(
       implicit
       extractor: EventExtractor[OrdersCancelledEvent],
       ec: ExecutionContext)
       extends NameBasedEventDispatcher[OrdersCancelledEvent](
         names = Seq(TransactionRecordActor.name, OrderCutoffHandlerActor.name),
-        lookup
+        actors
       )
 
   class TokenBurnRateChangedEventDispatcher @Inject()(
-      lookup: Lookup[ActorRef]
+      actors: Lookup[ActorRef]
     )(
       implicit
       extractor: EventExtractor[TokenBurnRateChangedEvent],
       ec: ExecutionContext)
       extends NameBasedEventDispatcher[TokenBurnRateChangedEvent](
-        names = Seq(TokenMetadataRefresher.name),
-        lookup
+        names = Seq(MetadataRefresher.name),
+        actors
       )
 
   class TransferEventDispatcher @Inject()(
-      lookup: Lookup[ActorRef]
+      actors: Lookup[ActorRef]
     )(
       implicit
       extractor: EventExtractor[TransferEvent],
       ec: ExecutionContext)
       extends NameBasedEventDispatcher[TransferEvent](
         names = Seq(TransactionRecordActor.name),
-        lookup
+        actors
       )
 
 }
