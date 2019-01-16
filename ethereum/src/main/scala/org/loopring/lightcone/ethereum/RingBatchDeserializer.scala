@@ -201,20 +201,17 @@ class SimpleRingBatchDeserializer(encoded: String = "")
       walletSplitPercentage = nextUint16
     )
 
-    val params2 = params.copy(
+    val erc1400Params = new RawOrder.ERC1400Params(
       tokenStandardS = TokenStandard.fromValue(nextUint16),
       tokenStandardB = TokenStandard.fromValue(nextUint16),
-      tokenStandardFee = TokenStandard.fromValue(nextUint16)
-    )
-
-    val erc1400Params = new RawOrder.ERC1400Params(
+      tokenStandardFee = TokenStandard.fromValue(nextUint16),
       trancheS = nextBytes32,
       trancheB = nextBytes32,
       transferDataS = nextBytes
     )
 
     val order2 = order.copy(
-      params = Some(params2),
+      params = Some(params),
       feeParams = Some(feeParams),
       erc1400Params = Some(erc1400Params)
     )
