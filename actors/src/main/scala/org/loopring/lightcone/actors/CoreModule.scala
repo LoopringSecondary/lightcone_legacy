@@ -94,12 +94,11 @@ class CoreModule(config: Config)
     bind[EventExtractor[OrdersCancelledEvent]]
       .to[OrdersCancelledEventExtractor]
 
-    bind[EventExtractor[CutoffEvent]].to[CutoffEventExtractor]
-    bind[EventExtractor[RawOrder]].to[OnchainOrderExtractor]
-
     bind[EventExtractor[TokenBurnRateChangedEvent]]
       .to[TokenBurnRateEventExtractor]
 
+    bind[EventExtractor[CutoffEvent]].to[CutoffEventExtractor]
+    bind[EventExtractor[RawOrder]].to[OnchainOrderExtractor]
     bind[EventExtractor[RingMinedEvent]].to[RingMinedEventExtractor]
     bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
 
@@ -171,7 +170,7 @@ class CoreModule(config: Config)
   }
 
   @Provides
-  private def guiceDispathcerProvider(
+  private def getEventDispathcers(
       balanceEventDispatcher: NameBasedEventDispatcher[AddressBalanceUpdated],
       ringMinedEventDispatcher: NameBasedEventDispatcher[RingMinedEvent],
       orderFilledEventDispatcher: NameBasedEventDispatcher[RingMinedEvent],
