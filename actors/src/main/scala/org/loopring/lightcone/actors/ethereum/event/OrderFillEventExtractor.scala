@@ -27,10 +27,6 @@ class OrderFillEventExtractor @Inject()(
     val ec: ExecutionContext)
     extends EventExtractor[OrderFilledEvent] {
 
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Future[Seq[OrderFilledEvent]] =
-    extractor.extract(tx, receipt, blockTime).map(_.flatMap(_.fills))
+  def extract(block: RawBlockData): Future[Seq[OrderFilledEvent]] =
+    extractor.extract(block).map(_.flatMap(_.fills))
 }

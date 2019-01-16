@@ -29,61 +29,60 @@ class RingMinedEventExtractor @Inject()(implicit val ec: ExecutionContext)
 
   val fillLength: Int = 8 * 64
 
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Future[Seq[PRingMinedEvent]] = Future {
-    val header = getEventHeader(tx, receipt, blockTime)
-    if (isSucceed(receipt.status)) {
-      receipt.logs.zipWithIndex.map {
-        case (log, index) =>
-          loopringProtocolAbi
-            .unpackEvent(log.data, log.topics.toArray) match {
-            case Some(event: RingMinedEvent.Result) =>
-              val fillContent =
-                Numeric.cleanHexPrefix(event._fills).substring(128)
-              val orderFilledEvents =
-                (0 until (fillContent.length / fillLength)).map { index =>
-                  fillContent.substring(
-                    index * fillLength,
-                    fillLength * (index + 1)
-                  ) -> index
-                }.map {
-                  case (fill, eventIndex) =>
-                    fillToOrderFilledEvent(
-                      fill,
-                      event,
-                      receipt,
-                      Some(
-                        header.copy(
-                          logIndex = index,
-                          eventIndex = eventIndex
+  def extract(block: RawBlockData): Future[Seq[PRingMinedEvent]] = Future {
+    (block.txs zip block.receipts).flatMap {
+      case (tx, receipt) =>
+        val header = getEventHeader(tx, receipt, block.timestamp)
+        if (isSucceed(receipt.status)) {
+          receipt.logs.zipWithIndex.map {
+            case (log, index) =>
+              loopringProtocolAbi
+                .unpackEvent(log.data, log.topics.toArray) match {
+                case Some(event: RingMinedEvent.Result) =>
+                  val fillContent =
+                    Numeric.cleanHexPrefix(event._fills).substring(128)
+                  val orderFilledEvents =
+                    (0 until (fillContent.length / fillLength)).map { index =>
+                      fillContent.substring(
+                        index * fillLength,
+                        fillLength * (index + 1)
+                      ) -> index
+                    }.map {
+                      case (fill, eventIndex) =>
+                        fillToOrderFilledEvent(
+                          fill,
+                          event,
+                          receipt,
+                          Some(
+                            header.copy(
+                              logIndex = index,
+                              eventIndex = eventIndex
+                            )
+                          )
                         )
-                      )
+                    }
+                  Some(
+                    PRingMinedEvent(
+                      header = Some(header.withLogIndex(index)),
+                      ringIndex = event._ringIndex.longValue(),
+                      ringHash = event._ringHash,
+                      fills = orderFilledEvents
                     )
-                }
-              Some(
-                PRingMinedEvent(
-                  header = Some(header.withLogIndex(index)),
-                  ringIndex = event._ringIndex.longValue(),
-                  ringHash = event._ringHash,
-                  fills = orderFilledEvents
-                )
-              )
+                  )
+                case _ =>
+                  None
+              }
+          }.filter(_.nonEmpty).map(_.get)
+        } else {
+          ringSubmitterAbi.unpackFunctionInput(tx.input) match {
+            case Some(params: SubmitRingsFunction.Params) =>
+              val ringData = params.data
+              //TODO (yadong) 等待孔亮的提供具体的解析方法
+              Seq.empty
             case _ =>
-              None
+              Seq.empty
           }
-      }.filter(_.nonEmpty).map(_.get)
-    } else {
-      ringSubmitterAbi.unpackFunctionInput(tx.input) match {
-        case Some(params: SubmitRingsFunction.Params) =>
-          val ringData = params.data
-          //TODO (yadong) 等待孔亮的提供具体的解析方法
-          Seq.empty
-        case _ =>
-          Seq.empty
-      }
+        }
     }
   }
   private def fillToOrderFilledEvent(

@@ -87,7 +87,7 @@ class MissingBlocksEventExtractorActor(
   var currentBlockNumber = 0L
   def ethereumAccessorActor: ActorRef = actors.get(EthereumAccessActor.name)
 
-  override def ready: Receive = {
+  def ready: Receive = {
     case Notify("next", _) =>
       if (taskQueue.nonEmpty) {
         currentBlockNumber = taskQueue.dequeue()
@@ -97,8 +97,8 @@ class MissingBlocksEventExtractorActor(
       }
     case Notify("current", _) =>
       process()
-    case BlockSupplementTask(blocks) =>
-      taskQueue.enqueue(blocks: _*)
+    case ProcessMissingBlocks(blockStart, blockEnd) =>
+      taskQueue.enqueue(blockStart to blockEnd: _*)
   }
 
   def process(): Unit = {

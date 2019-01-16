@@ -28,80 +28,96 @@ import scala.concurrent.ExecutionContext
 object Dispatchers {
 
   class RingMinedEventDispatcher @Inject()(
+      lookup: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val ec: ExecutionContext,
-      val extractor: EventExtractor[RingMinedEvent])
+      ec: ExecutionContext,
+      extractor: EventExtractor[RingMinedEvent])
       extends NameBasedEventDispatcher[RingMinedEvent](
-        names = Seq(MarketManagerActor.name)
+        names = Seq(MarketManagerActor.name),
+        lookup
       )
 
   class AllowanceEventDispatcher @Inject()(
+      lookup: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[AddressAllowanceUpdated],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[AddressAllowanceUpdated],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[AddressAllowanceUpdated](
-        names = Seq(MultiAccountManagerActor.name)
+        names = Seq(MultiAccountManagerActor.name),
+        lookup
       )
 
   class BalanceEventDispatcher @Inject()(
+      lookup: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[AddressBalanceUpdated],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[AddressBalanceUpdated],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[AddressBalanceUpdated](
         names =
-          Seq(MultiAccountManagerActor.name, RingSettlementManagerActor.name)
+          Seq(MultiAccountManagerActor.name, RingSettlementManagerActor.name),
+        lookup
       )
 
   class CutoffEventDispatcher @Inject()(
+      lookup: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[CutoffEvent],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[CutoffEvent],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[CutoffEvent](
         names = Seq(
           TransactionRecordActor.name,
           OrderCutoffHandlerActor.name,
           MultiAccountManagerActor.name
-        )
+        ),
+        lookup
       )
 
   class OrderFilledEventDispatcher @Inject()(
+      lookup: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[RingMinedEvent],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[RingMinedEvent],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[RingMinedEvent](
-        names = Seq(TransactionRecordActor.name, MultiAccountManagerActor.name)
+        names = Seq(TransactionRecordActor.name, MultiAccountManagerActor.name),
+        lookup
       )
 
   class OrdersCancelledEventDispatcher @Inject()(
+      lookup: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[OrdersCancelledEvent],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[OrdersCancelledEvent],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[OrdersCancelledEvent](
-        names = Seq(TransactionRecordActor.name, OrderCutoffHandlerActor.name)
+        names = Seq(TransactionRecordActor.name, OrderCutoffHandlerActor.name),
+        lookup
       )
 
   class TokenBurnRateChangedEventDispatcher @Inject()(
+      lookup: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[TokenBurnRateChangedEvent],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[TokenBurnRateChangedEvent],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[TokenBurnRateChangedEvent](
-        names = Seq(TokenMetadataRefresher.name)
+        names = Seq(TokenMetadataRefresher.name),
+        lookup
       )
 
   class TransferEventDispatcher @Inject()(
+      lookup: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[TransferEvent],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[TransferEvent],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[TransferEvent](
-        names = Seq(TransactionRecordActor.name)
+        names = Seq(TransactionRecordActor.name),
+        lookup
       )
 
 }

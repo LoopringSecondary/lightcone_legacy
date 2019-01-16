@@ -19,69 +19,65 @@ package org.loopring.lightcone.actors.ethereum.event
 import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib.MarketHashProvider.convert2Hex
-import org.loopring.lightcone.proto.{
-  CutoffEvent,
-  Transaction,
-  TransactionReceipt
-}
+import org.loopring.lightcone.proto.{CutoffEvent, RawBlockData}
 
 import scala.concurrent._
 
 class CutoffEventExtractor @Inject()(implicit val ec: ExecutionContext)
     extends EventExtractor[CutoffEvent] {
 
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Future[Seq[CutoffEvent]] = Future {
-    val header = getEventHeader(tx, receipt, blockTime)
-    receipt.logs.zipWithIndex.map {
-      case (log, index) =>
-        loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-          case Some(event: AllOrdersCancelledEvent.Result) =>
-            Some(
-              CutoffEvent(
-                header = Some(header.withLogIndex(index)),
-                cutoff = event._cutoff.longValue(),
-                broker = event._broker,
-                owner = event._broker
-              )
-            )
-          case Some(event: AllOrdersCancelledByBrokerEvent.Result) =>
-            Some(
-              CutoffEvent(
-                header = Some(header.withLogIndex(index)),
-                cutoff = event._cutoff.longValue(),
-                broker = event._broker,
-                owner = event._owner
-              )
-            )
-          case Some(
-              event: AllOrdersCancelledForTradingPairByBrokerEvent.Result
-              ) =>
-            Some(
-              CutoffEvent(
-                header = Some(header.withLogIndex(index)),
-                cutoff = event._cutoff.longValue(),
-                broker = event._broker,
-                owner = event._owner,
-                tradingPair = convert2Hex(event._token1, event._token2)
-              )
-            )
-          case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
-            Some(
-              CutoffEvent(
-                header = Some(header.withLogIndex(index)),
-                cutoff = event._cutoff.longValue(),
-                broker = event._broker,
-                owner = event._broker,
-                tradingPair = convert2Hex(event._token1, event._token2)
-              )
-            )
-          case _ =>
-            None
-        }
-    }.filter(_.nonEmpty).map(_.get)
+  def extract(block: RawBlockData): Future[Seq[CutoffEvent]] = Future {
+    (block.txs zip block.receipts).flatMap {
+      case (tx, receipt) =>
+        val header = getEventHeader(tx, receipt, block.timestamp)
+        receipt.logs.zipWithIndex.map {
+          case (log, index) =>
+            loopringProtocolAbi
+              .unpackEvent(log.data, log.topics.toArray) match {
+              case Some(event: AllOrdersCancelledEvent.Result) =>
+                Some(
+                  CutoffEvent(
+                    header = Some(header.withLogIndex(index)),
+                    cutoff = event._cutoff.longValue(),
+                    broker = event._broker,
+                    owner = event._broker
+                  )
+                )
+              case Some(event: AllOrdersCancelledByBrokerEvent.Result) =>
+                Some(
+                  CutoffEvent(
+                    header = Some(header.withLogIndex(index)),
+                    cutoff = event._cutoff.longValue(),
+                    broker = event._broker,
+                    owner = event._owner
+                  )
+                )
+              case Some(
+                  event: AllOrdersCancelledForTradingPairByBrokerEvent.Result
+                  ) =>
+                Some(
+                  CutoffEvent(
+                    header = Some(header.withLogIndex(index)),
+                    cutoff = event._cutoff.longValue(),
+                    broker = event._broker,
+                    owner = event._owner,
+                    tradingPair = convert2Hex(event._token1, event._token2)
+                  )
+                )
+              case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
+                Some(
+                  CutoffEvent(
+                    header = Some(header.withLogIndex(index)),
+                    cutoff = event._cutoff.longValue(),
+                    broker = event._broker,
+                    owner = event._broker,
+                    tradingPair = convert2Hex(event._token1, event._token2)
+                  )
+                )
+              case _ =>
+                None
+            }
+        }.filter(_.nonEmpty).map(_.get)
+    }
   }
 }

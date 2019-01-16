@@ -26,19 +26,7 @@ trait EventExtractor[R] {
 
   implicit val ec: ExecutionContext
 
-  def extract(block: RawBlockData): Future[Seq[R]] =
-    Future
-      .sequence((block.txs zip block.receipts).map {
-        case (tx, receipt) =>
-          extract(tx, receipt, block.timestamp)
-      })
-      .map(_.flatten)
-
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Future[Seq[R]]
+  def extract(block: RawBlockData): Future[Seq[R]]
 
   def getEventHeader(
       tx: Transaction,

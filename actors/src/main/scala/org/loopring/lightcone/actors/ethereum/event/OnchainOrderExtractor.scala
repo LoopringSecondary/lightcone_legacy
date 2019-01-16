@@ -26,19 +26,17 @@ import org.loopring.lightcone.actors.data._
 class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
     extends EventExtractor[RawOrder] {
 
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Future[Seq[RawOrder]] = Future {
-    receipt.logs.map { log =>
-      loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-        case Some(event: OrderSubmittedEvent.Result) =>
-          Some(extractOrderFromEvent(event))
-        case _ =>
-          None
-      }
-    }.filter(_.nonEmpty).map(_.get)
+  def extract(block: RawBlockData): Future[Seq[RawOrder]] = Future {
+    block.receipts.flatMap { receipt =>
+      receipt.logs.map { log =>
+        loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+          case Some(event: OrderSubmittedEvent.Result) =>
+            Some(extractOrderFromEvent(event))
+          case _ =>
+            None
+        }
+      }.filter(_.nonEmpty).map(_.get)
+    }
   }
 
   private def extractOrderFromEvent(

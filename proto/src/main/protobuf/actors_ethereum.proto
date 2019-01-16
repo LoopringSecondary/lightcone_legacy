@@ -318,8 +318,9 @@ message RawBlockData{
     repeated TransactionReceipt receipts = 7;
 }
 
-message BlockSupplementTask {
-    repeated int64 heights = 1;
+message ProcessMissingBlocks {
+     int64 block_start = 1;
+     int64 block_end = 2;
 }
 
 

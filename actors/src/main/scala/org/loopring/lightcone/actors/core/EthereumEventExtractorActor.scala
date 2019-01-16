@@ -95,8 +95,9 @@ class EthereumEventExtractorActor(
     } yield {
       currentBlockNumber = maxBlock - 1
       if (handledBlock.isDefined && handledBlock.get < maxBlock - 1) {
-        missingBlockEventExtractorActor ! BlockSupplementTask(
-          handledBlock.get + 1 until maxBlock.longValue()
+        missingBlockEventExtractorActor ! ProcessMissingBlocks(
+          handledBlock.get + 1,
+          currentBlockNumber.longValue()
         )
       }
       becomeReady()

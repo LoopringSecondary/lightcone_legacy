@@ -27,29 +27,30 @@ import scala.concurrent._
 class OrdersCancelledEventExtractor @Inject()(implicit val ec: ExecutionContext)
     extends EventExtractor[POrdersCancelledEvent] {
 
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Future[Seq[POrdersCancelledEvent]] = Future {
-    val header = getEventHeader(tx, receipt, blockTime)
-    receipt.logs.zipWithIndex.map {
-      case (log, index) =>
-        loopringProtocolAbi
-          .unpackEvent(log.data, log.topics.toArray) match {
-          case Some(event: OrdersCancelledEvent.Result) =>
-            Some(
-              POrdersCancelledEvent(
-                header = Some(header.withLogIndex(index)),
-                broker = event.address,
-                orderHashes = event._orderHashes,
-                owner = event.address
-              )
-            )
-          case _ =>
-            None
+  def extract(block: RawBlockData): Future[Seq[POrdersCancelledEvent]] =
+    Future {
+      (block.txs zip block.receipts).flatMap {
+        case (tx, receipt) =>
+          val header = getEventHeader(tx, receipt, block.timestamp)
+          receipt.logs.zipWithIndex.map {
+            case (log, index) =>
+              loopringProtocolAbi
+                .unpackEvent(log.data, log.topics.toArray) match {
+                case Some(event: OrdersCancelledEvent.Result) =>
+                  Some(
+                    POrdersCancelledEvent(
+                      header = Some(header.withLogIndex(index)),
+                      broker = event.address,
+                      orderHashes = event._orderHashes,
+                      owner = event.address
+                    )
+                  )
+                case _ =>
+                  None
 
-        }
-    }.filter(_.nonEmpty).map(_.get)
-  }
+              }
+          }.filter(_.nonEmpty).map(_.get)
+
+      }
+    }
 }
