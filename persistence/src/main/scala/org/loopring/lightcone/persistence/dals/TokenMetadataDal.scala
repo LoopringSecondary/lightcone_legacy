@@ -31,7 +31,7 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
 
   def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]]
 
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMetadata]]
+  def getTokens(): Future[Seq[TokenMetadata]]
 
   def updateBurnRate(
       token: String,

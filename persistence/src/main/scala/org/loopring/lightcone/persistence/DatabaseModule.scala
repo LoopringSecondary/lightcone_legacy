@@ -34,11 +34,9 @@ class DatabaseModule @Inject()(
     val marketMetadataDal: MarketMetadataDal,
     val orderService: OrderService,
     val orderStatusMonitorService: OrderStatusMonitorService,
-    val tokenMetadataService: TokenMetadataService,
     val tradeService: TradeService,
     val blockService: BlockService,
-    val settlementTxService: SettlementTxService,
-    val marketMetadataService: MarketMetadataService
+    val settlementTxService: SettlementTxService
   )(
     implicit
     @Named("db-execution-context") val ec: ExecutionContext)

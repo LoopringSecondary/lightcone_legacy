@@ -30,9 +30,7 @@ trait MarketMetadataDal
 
   def updateMarket(marketMetadata: MarketMetadata): Future[ErrorCode]
 
-  def getMarkets(
-      reloadFromDatabase: Boolean = false
-    ): Future[Seq[MarketMetadata]]
+  def getMarkets(): Future[Seq[MarketMetadata]]
 
   def getMarketsByHashes(
       marketsHashes: Seq[String]

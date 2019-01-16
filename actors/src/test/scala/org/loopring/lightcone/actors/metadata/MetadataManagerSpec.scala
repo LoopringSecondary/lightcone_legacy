@@ -126,12 +126,12 @@ class MetadataManagerSpec
       Thread.sleep(3000)
 
       info("query the tokens")
-      val r1 = dbModule.tokenMetadataService.getTokens(tokens.map(_.address))
+      val r1 = dbModule.tokenMetadataDal.getTokens(tokens.map(_.address))
       val res1 = Await.result(r1.mapTo[Seq[TokenMetadata]], 5.second)
       assert(res1.length == tokens.length)
 
       info("save a new token config: DEF")
-      val r2 = dbModule.tokenMetadataService.saveToken(
+      val r2 = dbModule.tokenMetadataDal.saveToken(
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.DISABLED,
@@ -149,7 +149,7 @@ class MetadataManagerSpec
       assert(res2 == ErrorCode.ERR_NONE)
 
       info("update LRC token config")
-      val r3 = dbModule.tokenMetadataService.updateToken(
+      val r3 = dbModule.tokenMetadataDal.updateToken(
         lrc.copy(burnRate = 0.2, usdPrice = 20)
       )
       val res3 = Await.result(r3.mapTo[ErrorCode], 5.second)
@@ -220,7 +220,7 @@ class MetadataManagerSpec
       Thread.sleep(3000)
 
       info("query the markets")
-      val r1 = dbModule.marketMetadataService.getMarketsByHash(
+      val r1 = dbModule.marketMetadataDal.getMarketsByHashes(
         markets.map(_.marketHash)
       )
       val res1 = Await.result(r1.mapTo[Seq[MarketMetadata]], 5.second)
@@ -243,12 +243,12 @@ class MetadataManagerSpec
         marketId = Some(marketIdAbcLrc),
         marketHash = MarketHashProvider.convert2Hex(ABC, LRC)
       )
-      val r2 = dbModule.marketMetadataService.saveMarket(abcLrc)
+      val r2 = dbModule.marketMetadataDal.saveMarket(abcLrc)
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
       assert(res2 == ErrorCode.ERR_NONE)
 
       info("update Lrc-Weth market config")
-      val r3 = dbModule.marketMetadataService.updateMarket(
+      val r3 = dbModule.marketMetadataDal.updateMarket(
         marketLrcWeth
           .copy(priceDecimals = 2, status = MarketMetadata.Status.READONLY)
       )

@@ -38,13 +38,10 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val orderService = new OrderServiceImpl
   implicit val orderStatusMonitorService =
     new OrderStatusMonitorServiceImpl
-  implicit val tokenMetadataService =
-    new TokenMetadataServiceImpl
   implicit val tradeService = new TradeServiceImpl
   implicit val blockService = new BlockServiceImpl()
   implicit val settlementTxService =
     new SettlementTxServiceImpl
-  implicit val marketMetadataService = new MarketMetadataServiceImpl()
 
   implicit val dbModule = new DatabaseModule(
     tokenMetadataDal,
@@ -56,11 +53,9 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     marketMetadataDal,
     orderService,
     orderStatusMonitorService,
-    tokenMetadataService,
     tradeService,
     blockService,
-    settlementTxService,
-    marketMetadataService
+    settlementTxService
   )
 
   dbModule.dropTables()

@@ -70,7 +70,7 @@ class CoreDeployer @Inject()(
 
     //-----------deploy local actors-----------
     actors.add(BadMessageListener.name, BadMessageListener.start)
-    actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
+    actors.add(MetadataRefresher.name, MetadataRefresher.start)
 
     actors.add(
       MultiAccountManagerMessageValidator.name,

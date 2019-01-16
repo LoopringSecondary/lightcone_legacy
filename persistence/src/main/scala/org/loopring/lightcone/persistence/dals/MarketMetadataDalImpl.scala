@@ -43,8 +43,6 @@ class MarketMetadataDalImpl @Inject()(
   val query = TableQuery[MarketMetadataTable]
   implicit val statusColumnType = enumColumnType(MarketMetadata.Status)
 
-  private var markets: Seq[MarketMetadata] = Nil
-
   def saveMarket(marketMetadata: MarketMetadata): Future[ErrorCode] =
     db.run((query += marketMetadata).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) =>
@@ -72,20 +70,8 @@ class MarketMetadataDalImpl @Inject()(
       }
     }
 
-  def getMarkets(
-      reloadFromDatabase: Boolean = false
-    ): Future[Seq[MarketMetadata]] =
-    if (reloadFromDatabase || markets.isEmpty) {
-      db.run(query.result).map { markets_ =>
-        markets = markets_
-        log.info(
-          s"market metadata retrieved>> ${markets.mkString("\n", "\n", "\n")}"
-        )
-        markets
-      }
-    } else {
-      Future.successful(markets)
-    }
+  def getMarkets(): Future[Seq[MarketMetadata]] =
+    db.run(query.result)
 
   def getMarketsByHashes(
       marketHashes: Seq[String]

@@ -103,11 +103,9 @@ class CoreModule(config: Config)
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
-    bind[TokenMetadataService].to[TokenMetadataServiceImpl].asEagerSingleton
     bind[TradeService].to[TradeServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
-    bind[MarketMetadataService].to[MarketMetadataServiceImpl].asEagerSingleton
 
     bind[OrderStatusMonitorService]
       .to[OrderStatusMonitorServiceImpl]

@@ -43,8 +43,6 @@ class TokenMetadataDalImpl @Inject()(
   val query = TableQuery[TokenMetadataTable]
   implicit val statusColumnType = enumColumnType(TokenMetadata.Status)
 
-  private var tokens: Seq[TokenMetadata] = Nil
-
   def saveToken(tokenMetadata: TokenMetadata): Future[ErrorCode] =
     db.run((query += tokenMetadata).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) =>
@@ -72,19 +70,8 @@ class TokenMetadataDalImpl @Inject()(
       }
     }
 
-  def getTokens(reloadFromDatabase: Boolean = false) = {
-    if (reloadFromDatabase || tokens.isEmpty) {
-      db.run(query.take(Int.MaxValue).result).map { tokens_ =>
-        tokens = tokens_
-        log.info(
-          s"token metadata retrieved>> ${tokens.mkString("\n", "\n", "\n")}"
-        )
-        tokens
-      }
-    } else {
-      Future.successful(tokens)
-    }
-  }
+  def getTokens() =
+    db.run(query.take(Int.MaxValue).result)
 
   def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]] =
     db.run(query.filter(_.address inSet tokens).result)
