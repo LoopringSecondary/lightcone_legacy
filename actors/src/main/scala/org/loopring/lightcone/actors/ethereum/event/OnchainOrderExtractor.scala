@@ -61,16 +61,7 @@ class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
             Numeric.toBigInt(data.substring(64 * 9, 64 * 10)).intValue(),
           allOrNone = Numeric
             .toBigInt(data.substring(64 * 10, 64 * 11))
-            .intValue() == 1,
-          tokenStandardS = TokenStandard.fromValue(
-            Numeric.toBigInt(data.substring(64 * 17, 64 * 18)).intValue()
-          ),
-          tokenStandardB = TokenStandard.fromValue(
-            Numeric.toBigInt(data.substring(64 * 18, 64 * 19)).intValue()
-          ),
-          tokenStandardFee = TokenStandard.fromValue(
-            Numeric.toBigInt(data.substring(64 * 19, 64 * 20)).intValue()
-          )
+            .intValue() == 1
         )
       ),
       hash = event.orderHash,
@@ -91,6 +82,15 @@ class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
       ),
       erc1400Params = Some(
         RawOrder.ERC1400Params(
+          tokenStandardS = TokenStandard.fromValue(
+            Numeric.toBigInt(data.substring(64 * 17, 64 * 18)).intValue()
+          ),
+          tokenStandardB = TokenStandard.fromValue(
+            Numeric.toBigInt(data.substring(64 * 18, 64 * 19)).intValue()
+          ),
+          tokenStandardFee = TokenStandard.fromValue(
+            Numeric.toBigInt(data.substring(64 * 19, 64 * 20)).intValue()
+          ),
           trancheS = Numeric.prependHexPrefix(data.substring(64 * 20, 64 * 21)),
           trancheB = Numeric.prependHexPrefix(data.substring(64 * 21, 64 * 22)),
           transferDataS =

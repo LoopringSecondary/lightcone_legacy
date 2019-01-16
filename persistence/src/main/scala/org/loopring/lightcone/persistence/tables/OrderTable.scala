@@ -112,9 +112,6 @@ class OrderTable(tag: Tag) extends BaseTable[RawOrder](tag, "T_ORDERS") {
       sig,
       dualAuthPrivKey,
       allOrNone,
-      tokenStandardS,
-      tokenStandardB,
-      tokenStandardFee,
       dualAuthAddrPrivateKey
     ) <> ({ tuple =>
       Option((RawOrder.Params.apply _).tupled(tuple))
@@ -140,7 +137,14 @@ class OrderTable(tag: Tag) extends BaseTable[RawOrder](tag, "T_ORDERS") {
     })
 
   def erc1400ParamsProjection =
-    (trancheS, trancheB, trancheDataS) <> ({ tuple =>
+    (
+      tokenStandardS,
+      tokenStandardB,
+      tokenStandardFee,
+      trancheS,
+      trancheB,
+      trancheDataS
+    ) <> ({ tuple =>
       Option((RawOrder.ERC1400Params.apply _).tupled(tuple))
     }, { paramsOpt: Option[RawOrder.ERC1400Params] =>
       val params = paramsOpt.getOrElse(RawOrder.ERC1400Params())
