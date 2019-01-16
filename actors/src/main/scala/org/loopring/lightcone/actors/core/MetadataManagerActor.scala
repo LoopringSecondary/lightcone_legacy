@@ -124,24 +124,36 @@ class MetadataManagerActor(
       (for {
         saved <- dbModule.tokenMetadataDal
           .saveTokens(req.tokens)
-        _ = mediator ! Publish(
-          MetadataManagerActor.pubsubTopic,
-          MetadataChanged()
-        )
-      } yield SaveTokenMetadatas.Res(saved)).sendTo(sender)
+        tokens_ <- dbModule.tokenMetadataDal.getTokens()
+      } yield {
+        if (saved.nonEmpty) {
+          tokens = tokens_.toSet
+          mediator ! Publish(
+            MetadataManagerActor.pubsubTopic,
+            MetadataChanged()
+          )
+        }
+        SaveTokenMetadatas.Res(saved)
+      }).sendTo(sender)
 
     case req: UpdateTokenMetadata.Req =>
       (for {
         burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
           token = req.token.get.address
         )).mapTo[GetBurnRate.Res]
-        _ <- dbModule.tokenMetadataDal
+        updated <- dbModule.tokenMetadataDal
           .updateToken(req.token.get.copy(burnRate = burnRateRes.burnRate))
-        _ = mediator ! Publish(
-          MetadataManagerActor.pubsubTopic,
-          MetadataChanged()
-        )
-      } yield UpdateTokenMetadata.Res()).sendTo(sender)
+        tokens_ <- dbModule.tokenMetadataDal.getTokens()
+      } yield {
+        if (updated == ErrorCode.ERR_NONE) {
+          tokens = tokens_.toSet
+          mediator ! Publish(
+            MetadataManagerActor.pubsubTopic,
+            MetadataChanged()
+          )
+        }
+        UpdateTokenMetadata.Res(updated)
+      }).sendTo(sender)
 
     case req: UpdateTokenBurnRate.Req =>
       (for {
@@ -150,51 +162,81 @@ class MetadataManagerActor(
         )).mapTo[GetBurnRate.Res]
         updated <- dbModule.tokenMetadataDal
           .updateBurnRate(req.address, burnRateRes.burnRate)
-        _ = mediator ! Publish(
-          MetadataManagerActor.pubsubTopic,
-          MetadataChanged()
-        )
-      } yield UpdateTokenBurnRate.Res(updated)).sendTo(sender)
+        tokens_ <- dbModule.tokenMetadataDal.getTokens()
+      } yield {
+        if (updated == ErrorCode.ERR_NONE) {
+          tokens = tokens_.toSet
+          mediator ! Publish(
+            MetadataManagerActor.pubsubTopic,
+            MetadataChanged()
+          )
+        }
+        UpdateTokenBurnRate.Res(updated)
+      }).sendTo(sender)
 
     case req: DisableToken.Req =>
       (for {
         updated <- dbModule.tokenMetadataDal
           .disableToken(req.address)
-        _ = mediator ! Publish(
-          MetadataManagerActor.pubsubTopic,
-          MetadataChanged()
-        )
-      } yield DisableToken.Res(updated)).sendTo(sender)
+        tokens_ <- dbModule.tokenMetadataDal.getTokens()
+      } yield {
+        if (updated == ErrorCode.ERR_NONE) {
+          tokens = tokens_.toSet
+          mediator ! Publish(
+            MetadataManagerActor.pubsubTopic,
+            MetadataChanged()
+          )
+        }
+        DisableToken.Res(updated)
+      }).sendTo(sender)
 
     case req: SaveMarketMetadatas.Req =>
       (for {
         saved <- dbModule.marketMetadataDal
           .saveMarkets(req.markets)
-        _ = mediator ! Publish(
-          MetadataManagerActor.pubsubTopic,
-          MetadataChanged()
-        )
-      } yield SaveMarketMetadatas.Res(saved)).sendTo(sender)
+        markets_ <- dbModule.marketMetadataDal.getMarkets()
+      } yield {
+        if (saved.nonEmpty) {
+          markets = markets_.toSet
+          mediator ! Publish(
+            MetadataManagerActor.pubsubTopic,
+            MetadataChanged()
+          )
+        }
+        SaveMarketMetadatas.Res(saved)
+      }).sendTo(sender)
 
     case req: UpdateMarketMetadata.Req =>
       (for {
         updated <- dbModule.marketMetadataDal
           .updateMarket(req.market.get)
-        _ = mediator ! Publish(
-          MetadataManagerActor.pubsubTopic,
-          MetadataChanged()
-        )
-      } yield UpdateMarketMetadata.Res(updated)).sendTo(sender)
+        markets_ <- dbModule.marketMetadataDal.getMarkets()
+      } yield {
+        if (updated == ErrorCode.ERR_NONE) {
+          markets = markets_.toSet
+          mediator ! Publish(
+            MetadataManagerActor.pubsubTopic,
+            MetadataChanged()
+          )
+        }
+        UpdateMarketMetadata.Res(updated)
+      }).sendTo(sender)
 
     case req: DisableMarket.Req =>
       (for {
         disabled <- dbModule.marketMetadataDal
           .disableMarketByHash(req.marketHash)
-        _ = mediator ! Publish(
-          MetadataManagerActor.pubsubTopic,
-          MetadataChanged()
-        )
-      } yield DisableMarket.Res(disabled)).sendTo(sender)
+        markets_ <- dbModule.marketMetadataDal.getMarkets()
+      } yield {
+        if (disabled == ErrorCode.ERR_NONE) {
+          markets = markets_.toSet
+          mediator ! Publish(
+            MetadataManagerActor.pubsubTopic,
+            MetadataChanged()
+          )
+        }
+        DisableMarket.Res(disabled)
+      }).sendTo(sender)
 
     case req: LoadTokenMetadata.Req =>
       Future.successful(LoadTokenMetadata.Res(tokens.toSeq)).sendTo(sender)
