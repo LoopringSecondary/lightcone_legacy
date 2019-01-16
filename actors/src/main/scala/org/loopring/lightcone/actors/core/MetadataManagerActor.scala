@@ -31,11 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 // Owner: Yongfeng
 object MetadataManagerActor {
   val name = "metadata_manager"
-  val tokenType = "tokens"
-  val marketType = "markets"
-
-  val marketChangedTopicId = MetadataManagerActor.name + "-" + marketType + "-changed"
-  val tokenChangedTopicId = MetadataManagerActor.name + "-" + tokenType + "-changed"
+  val pubsubTopic = "TOKEN_MARKET_METADATA_CHANGE"
 
   def start(
       implicit
@@ -82,23 +78,17 @@ class MetadataManagerActor(
     with RepeatedJobActor
     with ActorLogging {
 
-  val repeatedDelayInSeconds = selfConfig.getInt("delay-in-seconds")
+  val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
 
   val mediator = DistributedPubSub(context.system).mediator
 
   val repeatedJobs = Seq(
     Job(
-      name = "load_tokens_metadata",
-      dalayInSeconds = repeatedDelayInSeconds, // 10 minute
+      name = "load_tokens_markets_metadata",
+      dalayInSeconds = refreshIntervalInSeconds,
       initialDalayInSeconds = initialDelayInSeconds,
-      run = () => runJob(MetadataManagerActor.tokenType)
-    ),
-    Job(
-      name = "load_markets_metadata",
-      dalayInSeconds = repeatedDelayInSeconds, // 10 minute
-      initialDalayInSeconds = initialDelayInSeconds,
-      run = () => runJob(MetadataManagerActor.marketType)
+      run = () => runJob()
     )
   )
 
@@ -150,50 +140,22 @@ class MetadataManagerActor(
         .map(LoadMarketMetadata.Res(_))
   }
 
-  private def runJob(jobType: String): Future[Unit] = {
-    log.info(s"MetadataManager run job:$jobType")
-    jobType match {
-      case MetadataManagerActor.tokenType =>
-        for {
-          loadFromMemery <- dbModule.tokenMetadataService.getTokens()
-          loadFromDb <- dbModule.tokenMetadataService.getTokens(true)
-        } yield {
-          val sortedMemResult = loadFromMemery.sortWith(sortTokenByAddress)
-          val sortedDbResult = loadFromDb.sortWith(sortTokenByAddress)
-          if (sortedDbResult.length != sortedMemResult.length || sortedDbResult != sortedMemResult)
-            mediator ! Publish(
-              MetadataManagerActor.tokenChangedTopicId,
-              MetadataChanged(MetadataChanged.Changed.Tokens(true))
-            )
-        }
-
-      case MetadataManagerActor.marketType =>
-        for {
-          loadFromMemery <- dbModule.marketMetadataService.getMarkets()
-          loadFromDb <- dbModule.marketMetadataService.getMarkets(true)
-        } yield {
-          val sortedMemResult = loadFromMemery.sortWith(sortMarketByHash)
-          val sortedDbResult = loadFromDb.sortWith(sortMarketByHash)
-          if (sortedDbResult.length != sortedMemResult.length || sortedDbResult != sortedMemResult)
-            mediator ! Publish(
-              MetadataManagerActor.marketChangedTopicId,
-              MetadataChanged(MetadataChanged.Changed.Markets(true))
-            )
-        }
+  private def runJob(): Future[Unit] = {
+    log.info("MetadataManagerActor run tokens and markets reload job")
+    for {
+      loadTokens <- dbModule.tokenMetadataService.getTokens()
+      loadTokensFromDb <- dbModule.tokenMetadataService.getTokens(true)
+      loadMarkets <- dbModule.marketMetadataService.getMarkets()
+      loadMarketsFromDb <- dbModule.marketMetadataService.getMarkets(true)
+    } yield {
+      if (loadTokens.length != loadTokensFromDb.length ||
+          loadMarkets.length != loadMarketsFromDb.length ||
+          loadTokens != loadTokensFromDb ||
+          loadMarkets != loadMarketsFromDb)
+        mediator ! Publish(
+          MetadataManagerActor.pubsubTopic,
+          MetadataChanged()
+        )
     }
-  }
-
-  private def sortTokenByAddress(
-      t1: TokenMetadata,
-      t2: TokenMetadata
-    ) = {
-    Math.abs(t1.address.hashCode) > Math.abs(t2.address.hashCode)
-  }
-
-  private def sortMarketByHash(
-      m1: MarketMetadata,
-      m2: MarketMetadata
-    ) = {
-    Math.abs(m1.marketHash.hashCode) > Math.abs(m2.marketHash.hashCode)
   }
 }

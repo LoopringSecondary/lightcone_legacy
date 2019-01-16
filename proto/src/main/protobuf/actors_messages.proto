@@ -293,8 +293,5 @@ message GetNodeBlockHeight {
 }
 
 message MetadataChanged {
-    oneof Changed {
-        bool tokens  = 1;
-        bool markets = 2;
-    }
+
 }

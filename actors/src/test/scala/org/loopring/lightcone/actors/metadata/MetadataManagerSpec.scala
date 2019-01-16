@@ -18,9 +18,7 @@ package org.loopring.lightcone.actors.metadata
 
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
-import akka.pattern._
 import akka.testkit.TestProbe
-import akka.util.Timeout
 import org.loopring.lightcone.actors.core.MetadataManagerActor
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.MetadataManagerValidator
@@ -43,8 +41,7 @@ class MetadataManagerSpec
 
   val probe = TestProbe()
   val mediator = DistributedPubSub(system).mediator
-  mediator ! Subscribe(MetadataManagerActor.tokenChangedTopicId, probe.ref)
-  mediator ! Subscribe(MetadataManagerActor.marketChangedTopicId, probe.ref)
+  mediator ! Subscribe(MetadataManagerActor.pubsubTopic, probe.ref)
   val actor = actors.get(MetadataManagerValidator.name)
 
   "load tokens config" must {
@@ -160,7 +157,7 @@ class MetadataManagerSpec
       Thread.sleep(3000)
 
       info("subscriber should received the message")
-      probe.expectMsg(MetadataChanged(MetadataChanged.Changed.Tokens(true)))
+      probe.expectMsg(MetadataChanged())
     }
   }
 
@@ -260,7 +257,7 @@ class MetadataManagerSpec
       Thread.sleep(3000)
 
       info("subscriber should received the message")
-      probe.expectMsg(MetadataChanged(MetadataChanged.Changed.Markets(true)))
+      probe.expectMsg(MetadataChanged())
     }
   }
 
