@@ -18,6 +18,8 @@ package org.loopring.lightcone.actors.core
 import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor._
 import akka.cluster.sharding._
+import akka.pattern.ask
+import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
@@ -26,7 +28,7 @@ import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
-import akka.pattern.ask
+
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -127,11 +129,14 @@ class MultiAccountManagerActor(
       becomeReady()
     } else {
       log.debug(s"actor recover started: ${self.path}")
-      Future {
-        context.become(recover)
-        actors.get(OrderRecoverCoordinator.name) !
-          ActorRecover.Request(addressShardingEntity = entityId)
-
+      context.become(recover)
+      for {
+        _ <- actors.get(OrderRecoverCoordinator.name) ?
+          ActorRecover.Request(
+            addressShardingEntity = entityId,
+            sender = Serialization.serializedActorPath(self)
+          )
+      } yield {
         autoSwitchBackToReady = Some(
           context.system.scheduler
             .scheduleOnce(
@@ -153,10 +158,13 @@ class MultiAccountManagerActor(
 
     case msg: Any =>
       log.warning(s"message not handled during recover, ${msg}, ${sender}")
-//      sender ! Error(
-//        ERR_REJECTED_DURING_RECOVER,
-//        s"account manager ${entityId} is being recovered"
-//      )
+      //sender 是自己时，不再发送Error信息
+      if (sender != self) {
+        sender ! Error(
+          ERR_REJECTED_DURING_RECOVER,
+          s"account manager ${entityId} is being recovered"
+        )
+      }
   }
 
   def ready: Receive = {

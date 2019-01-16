@@ -34,6 +34,7 @@ import java.io.File
 
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import kamon.Kamon
 import org.loopring.lightcone.actors.core.OrderbookManagerActor
 import org.loopring.lightcone.actors.ethereum.HttpConnector
 import org.loopring.lightcone.core.base.TokenManager

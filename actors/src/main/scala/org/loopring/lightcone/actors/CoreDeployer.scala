@@ -16,18 +16,13 @@
 
 package org.loopring.lightcone.actors
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor._
-import akka.pattern._
 import akka.cluster._
-import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.google.inject._
 import com.google.inject.name.Named
 import com.typesafe.config.Config
-import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
@@ -37,16 +32,11 @@ import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
-import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.proto._
 import org.slf4s.Logging
 
-import scala.concurrent.duration._
 import scala.concurrent._
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
 
 class CoreDeployer @Inject()(
     implicit
@@ -116,9 +106,9 @@ class CoreDeployer @Inject()(
 
       //todo:优化部署步骤
       //-----------deploy local actors-----------
-      //todo:有死循环的bug
-      //    actors.add(BadMessageListener.name, BadMessageListener.start)
-      actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
+      actors.add(BadMessageListener.name, BadMessageListener.start)
+      //todo:暂时不启动TokenMetadataRefresher
+//      actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
 
       actors.add(
         MultiAccountManagerMessageValidator.name,

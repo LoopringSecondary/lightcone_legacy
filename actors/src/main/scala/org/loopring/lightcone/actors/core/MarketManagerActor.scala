@@ -21,6 +21,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.cluster.sharding._
 import akka.pattern.ask
+import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
@@ -162,11 +163,15 @@ class MarketManagerActor(
       log.debug(s"actor recover skipped: ${self.path}")
       becomeReady()
     } else {
-      Future {
-        context.become(recover)
-        log.info(s"actor recover started: ${self.path}")
-        actors.get(OrderRecoverCoordinator.name) !
-          ActorRecover.Request(marketId = Some(marketId))
+      log.debug(s"actor recover started: ${self.path}")
+      context.become(recover)
+      for {
+        _ <- actors.get(OrderRecoverCoordinator.name) ?
+          ActorRecover.Request(
+            marketId = Some(marketId),
+            sender = Serialization.serializedActorPath(self)
+          )
+      } yield {
         autoSwitchBackToReady = Some(
           context.system.scheduler
             .scheduleOnce(
@@ -192,11 +197,13 @@ class MarketManagerActor(
 
     case msg: Any =>
       log.warning(s"message not handled during recover, ${msg}, ${sender}")
-    //todo:sender是自己，不能发送给sender
-//      sender ! Error(
-//        ERR_REJECTED_DURING_RECOVER,
-//        s"market manager `${entityId}` is being recovered"
-//      )
+      //sender 是自己时，不再发送Error信息
+      if (sender != self) {
+        sender ! Error(
+          ERR_REJECTED_DURING_RECOVER,
+          s"market manager `${entityId}` is being recovered"
+        )
+      }
   }
 
   def ready: Receive = {
