@@ -106,9 +106,7 @@ class EthereumClientMonitor(
   )
 
   override def initialize(): Future[Unit] = {
-    checkNodeHeight.map { _ =>
-      becomeReady()
-    }
+    checkNodeHeight.map(_ => becomeReady())
   }
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
