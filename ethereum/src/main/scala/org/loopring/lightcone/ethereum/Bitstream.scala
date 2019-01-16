@@ -17,10 +17,13 @@
 package org.loopring.lightcone.ethereum
 
 import org.web3j.utils.Numeric
+import com.google.protobuf.ByteString
 
-class Bitstream() {
+class Bitstream(initData: String = "") {
   private val ADDRESS_LENGTH = 20
-  private var data: String = ""
+  private val Uint256Max = BigInt("f" * 64, 16)
+
+  private var data = initData
 
   def getData = if (data.length == 0) "0x0" else "0x" + data
 
@@ -54,6 +57,18 @@ class Bitstream() {
       forceAppend: Boolean = true
     ) =
     addBigInt(num, 2, forceAppend)
+
+  def addInt16(
+      num: BigInt,
+      forceAppend: Boolean = true
+    ) =
+    if (num >= 0) {
+      addBigInt(num, 2, forceAppend)
+    } else {
+      val negUint256 = Uint256Max + num + 1
+      val int16Str = negUint256.toString(16).substring(60, 64)
+      addHex(int16Str, forceAppend)
+    }
 
   def addUint32(
       num: BigInt,
@@ -106,7 +121,6 @@ class Bitstream() {
     ) =
     insert(Numeric.cleanHexPrefix(Numeric.toHexString(bytes)), forceAppend)
 
-  // TODO(kongliang): 负数问题
   private def addBigInt(
       num: BigInt,
       numBytes: Int,
@@ -145,4 +159,5 @@ class Bitstream() {
     data ++= x
     offset
   }
+
 }
