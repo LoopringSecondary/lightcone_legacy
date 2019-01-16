@@ -28,7 +28,7 @@ import org.loopring.lightcone.proto._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object MissingBlocksEventExtractorActor {
+object MissingBlocksEventExtraction {
   val name = "missing_blocks_event_extractor"
 
   def start(
@@ -47,27 +47,26 @@ object MissingBlocksEventExtractorActor {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new MissingBlocksEventExtractorActor()),
+        singletonProps = Props(new MissingBlocksEventExtraction()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
-      name = MissingBlocksEventExtractorActor.name
+      name = MissingBlocksEventExtraction.name
     )
 
     system.actorOf(
       ClusterSingletonProxy
         .props(
-          singletonManagerPath =
-            s"/user/${MissingBlocksEventExtractorActor.name}",
+          singletonManagerPath = s"/user/${MissingBlocksEventExtraction.name}",
           settings = ClusterSingletonProxySettings(system)
         ),
-      name = s"${MissingBlocksEventExtractorActor.name}_proxy"
+      name = s"${MissingBlocksEventExtraction.name}_proxy"
     )
   }
 
 }
 
-class MissingBlocksEventExtractorActor(
+class MissingBlocksEventExtraction(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -75,27 +74,27 @@ class MissingBlocksEventExtractorActor(
     val actors: Lookup[ActorRef],
     val dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name)
-    with EventExtractorActor {
-  val NEXT_RANGE = "next_range"
-  override def initialize(): Future[Unit] = Future.successful {
+    extends ActorWithPathBasedConfig(MissingBlocksEventExtraction.name)
+    with EventExtraction {
+  val NEXT_RANGE = Notify("next_range")
+
+  override def initialize() = Future.successful {
     becomeReady()
-    self ! Notify(NEXT_RANGE)
+    self ! NEXT_RANGE
   }
 
-  override def ready: Receive = super.ready orElse {
-    case Notify(NEXT_RANGE, _) =>
+  def ready: Receive = handleMessage orElse {
+    case NEXT_RANGE =>
     //TODO（yadong）等待永丰的接口来查询最新的Missing blocks
   }
 
-  override def process: Future[_] = {
-    super.process.map(
+  def process =
+    processEvents.map(
       _ =>
         // TODO (yadong) 等待永丰的接口标记已经处理的高度
         if (blockData.height == blockEnd) {
-          self ! Notify(NEXT_RANGE)
+          self ! NEXT_RANGE
         }
     )
 
-  }
 }

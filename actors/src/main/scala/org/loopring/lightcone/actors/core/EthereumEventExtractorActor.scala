@@ -32,7 +32,7 @@ import org.web3j.utils.Numeric
 import scala.concurrent._
 
 // Owner: Yadong
-object EthereumEventExtractorActor {
+object EthereumEventExtraction {
   val name = "ethereum_event_extractor"
 
   def start(
@@ -51,24 +51,24 @@ object EthereumEventExtractorActor {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new EthereumEventExtractorActor()),
+        singletonProps = Props(new EthereumEventExtraction()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
-      name = EthereumEventExtractorActor.name
+      name = EthereumEventExtraction.name
     )
 
     system.actorOf(
       ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${EthereumEventExtractorActor.name}",
+        singletonManagerPath = s"/user/${EthereumEventExtraction.name}",
         settings = ClusterSingletonProxySettings(system)
       ),
-      name = s"${EthereumEventExtractorActor.name}_proxy"
+      name = s"${EthereumEventExtraction.name}_proxy"
     )
   }
 }
 
-class EthereumEventExtractorActor(
+class EthereumEventExtraction(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -76,8 +76,8 @@ class EthereumEventExtractorActor(
     val actors: Lookup[ActorRef],
     val dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name)
-    with EventExtractorActor {
+    extends ActorWithPathBasedConfig(EthereumEventExtraction.name)
+    with EventExtraction {
 
   override def initialize(): Future[Unit] = {
     val startBlock = selfConfig.getLong("start_block")
@@ -88,7 +88,7 @@ class EthereumEventExtractorActor(
         .map(res => Numeric.toBigInt(res.result).longValue())
       blockStart = lastHandledBlock.getOrElse(startBlock)
       missing = currentBlock > blockStart + 1
-      //TODO (yadong) 等待永丰的接口,做DB操作
+      //TODO(yadong:) 等待永丰的接口,做DB操作
       _ = if (missing) {
         dbModule.blockService.saveBlock(BlockData(height = currentBlock - 1))
         ProcessingMissingBlocks(blockStart, currentBlock)
@@ -96,7 +96,9 @@ class EthereumEventExtractorActor(
     } yield {
       blockData = RawBlockData(height = currentBlock - 1)
       becomeReady()
-      self ! Notify(NEXT)
+      self ! GET_BLOCK
     }
   }
+
+  def ready = handleMessage
 }

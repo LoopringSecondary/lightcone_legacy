@@ -35,12 +35,12 @@ import scala.concurrent._
 class BalanceChangedAddressExtractor @Inject()(
     implicit
     brb: EthereumBatchCallRequestBuilder,
-    lookup: Lookup[ActorRef],
+    actors: Lookup[ActorRef],
     timeout: Timeout,
     val ec: ExecutionContext)
     extends EventExtractor[AddressBalanceUpdated] {
 
-  def ethereumAccessor = lookup.get(EthereumAccessActor.name)
+  def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
   def extract(block: RawBlockData): Future[Seq[AddressBalanceUpdated]] = {
     val balanceAddresses = ListBuffer.empty[AddressBalanceUpdated]
@@ -81,9 +81,8 @@ class BalanceChangedAddressExtractor @Inject()(
           AddressBalanceUpdated(address = addr, token = Address.ZERO.toString())
       )
     val distEvents = (balanceAddresses ++ miners).distinct
-    val (ethAddress, tokenAddresses) = distEvents.partition(
-      addr => Address(addr.address).isZero
-    )
+    val (ethAddress, tokenAddresses) =
+      distEvents.partition(addr => Address(addr.address).isZero)
     val batchCallReq = brb.buildRequest(tokenAddresses, "latest")
     for {
       tokenBalances <- if (tokenAddresses.nonEmpty) {
