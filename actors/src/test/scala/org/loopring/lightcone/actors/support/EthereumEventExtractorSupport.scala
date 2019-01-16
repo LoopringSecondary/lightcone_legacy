@@ -1,8 +1,8 @@
 package org.loopring.lightcone.actors.support
 
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.ethereum._
-import org.loopring.lightcone.ethereum.event._
+import org.loopring.lightcone.actors.ethereum.Dispatchers._
+import org.loopring.lightcone.actors.ethereum.event._
 trait EthereumEventExtractorSupport {
   my:CommonSpec =>
 
@@ -13,6 +13,7 @@ trait EthereumEventExtractorSupport {
   implicit val tokenBurnRateExtractor = new TokenBurnRateEventExtractor
   implicit val transferExtractor = new TransferEventExtractor
   implicit val ringMinedExtractor = new RingMinedEventExtractor
+  implicit val orderFillEventExtractor = new OrderFillEventExtractor
 
   implicit val dispatchers = Seq(
     new CutoffEventDispatcher,
@@ -26,5 +27,5 @@ trait EthereumEventExtractorSupport {
   )
 
   actors.add(EthereumEventExtractorActor.name,EthereumEventExtractorActor.start)
-  actors.add(EthereumBlockSupplementActor.name,EthereumBlockSupplementActor.start)
+  actors.add(MissingBlocksEventExtractorActor.name,MissingBlocksEventExtractorActor.start)
 }

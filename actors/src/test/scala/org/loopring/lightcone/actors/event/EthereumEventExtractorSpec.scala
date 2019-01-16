@@ -17,6 +17,10 @@
 package org.loopring.lightcone.actors.event
 
 import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.base.safefuture._
+
+import scala.concurrent.Await
 
 class EthereumEventExtractorSpec
     extends CommonSpec
@@ -28,11 +32,44 @@ class EthereumEventExtractorSpec
     with OrderbookManagerSupport
     with EthereumEventExtractorSupport
   {
-
     "ethereum event extractor actor test" must {
-
       "correctly extract all kinds events from ethereum blocks" in {
+        val getBaMethod = "get_balance_and_allowance"
+        val submit_order = "submit_order"
+        val account0 = accounts(0)
+        val getOrderBook1 = GetOrderbook.Req(
+          0,
+          100,
+          Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        )
+        val order1 = createRawOrder()(account1)
+        val order2 = createRawOrder(
+          tokenB = LRC_TOKEN.address,
+          tokenS = WETH_TOKEN.address,
+          amountB = order1.amountS,
+          amountS = order1.amountB
+        )(account0)
 
+        val ba1F = singleRequest(GetBalanceAndAllowances.Req(
+          accounts(0).getAddress,
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),getBaMethod).mapAs[GetBalanceAndAllowances.Res]
+
+        val ba1 = Await.result(ba1F,timeout.duration)
+
+        val ba2F = singleRequest(GetBalanceAndAllowances.Req(
+          accounts(1).getAddress,
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),getBaMethod).mapAs[GetBalanceAndAllowances.Res]
+
+        val ba2 = Await.result(ba2F,timeout.duration)
+
+
+        info("submit the first order.")
+        val submitOrder1F =
+          singleRequest(SubmitOrder.Req(Some(order1)), submit_order)
+            .mapAs[SubmitOrder.Res]
+        Await.result(submitOrder1F, timeout.duration)
 
 
 
