@@ -28,7 +28,7 @@ import org.loopring.lightcone.proto._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object MissingBlocksEventExtraction {
+object MissingBlocksEventExtractorActor {
   val name = "missing_blocks_event_extractor"
 
   def start(
@@ -47,26 +47,27 @@ object MissingBlocksEventExtraction {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new MissingBlocksEventExtraction()),
+        singletonProps = Props(new MissingBlocksEventExtractorActor()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
-      name = MissingBlocksEventExtraction.name
+      name = MissingBlocksEventExtractorActor.name
     )
 
     system.actorOf(
       ClusterSingletonProxy
         .props(
-          singletonManagerPath = s"/user/${MissingBlocksEventExtraction.name}",
+          singletonManagerPath =
+            s"/user/${MissingBlocksEventExtractorActor.name}",
           settings = ClusterSingletonProxySettings(system)
         ),
-      name = s"${MissingBlocksEventExtraction.name}_proxy"
+      name = s"${MissingBlocksEventExtractorActor.name}_proxy"
     )
   }
 
 }
 
-class MissingBlocksEventExtraction(
+class MissingBlocksEventExtractorActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -74,7 +75,7 @@ class MissingBlocksEventExtraction(
     val actors: Lookup[ActorRef],
     val dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(MissingBlocksEventExtraction.name)
+    extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name)
     with EventExtraction {
   val NEXT_RANGE = Notify("next_range")
 

@@ -32,7 +32,7 @@ import org.web3j.utils.Numeric
 import scala.concurrent._
 
 // Owner: Yadong
-object EthereumEventExtraction {
+object EthereumEventExtractorActor {
   val name = "ethereum_event_extractor"
 
   def start(
@@ -51,24 +51,24 @@ object EthereumEventExtraction {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new EthereumEventExtraction()),
+        singletonProps = Props(new EthereumEventExtractorActor()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
-      name = EthereumEventExtraction.name
+      name = EthereumEventExtractorActor.name
     )
 
     system.actorOf(
       ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${EthereumEventExtraction.name}",
+        singletonManagerPath = s"/user/${EthereumEventExtractorActor.name}",
         settings = ClusterSingletonProxySettings(system)
       ),
-      name = s"${EthereumEventExtraction.name}_proxy"
+      name = s"${EthereumEventExtractorActor.name}_proxy"
     )
   }
 }
 
-class EthereumEventExtraction(
+class EthereumEventExtractorActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -76,7 +76,7 @@ class EthereumEventExtraction(
     val actors: Lookup[ActorRef],
     val dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(EthereumEventExtraction.name)
+    extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name)
     with EventExtraction {
 
   override def initialize(): Future[Unit] = {

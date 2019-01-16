@@ -17,7 +17,7 @@
 
 - 亚东：
     - RingSettlementActor
-    - EthereumEventExtraction
+    - EthereumEventExtractorActor
     - OrderHistoryActor
     - AccountBalanceActor
     - GasPriceActor

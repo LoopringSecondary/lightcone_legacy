@@ -150,10 +150,13 @@ class CoreDeployer @Inject()(
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
       actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
 
-      actors.add(EthereumEventExtraction.name, EthereumEventExtraction.start)
       actors.add(
-        MissingBlocksEventExtraction.name,
-        MissingBlocksEventExtraction.start
+        EthereumEventExtractorActor.name,
+        EthereumEventExtractorActor.start
+      )
+      actors.add(
+        MissingBlocksEventExtractorActor.name,
+        MissingBlocksEventExtractorActor.start
       )
       actors.add(
         RingSettlementManagerActor.name,
