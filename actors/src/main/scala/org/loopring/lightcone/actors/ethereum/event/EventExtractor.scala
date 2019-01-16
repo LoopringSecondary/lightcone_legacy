@@ -61,4 +61,13 @@ trait EventExtractor[R] {
       case e: Throwable => false
     }
   }
+
+  def formatHex(str: String): String = {
+    if (Numeric.cleanHexPrefix(str).isEmpty) {
+      str + "0"
+    } else {
+      str
+    }
+  }
+
 }

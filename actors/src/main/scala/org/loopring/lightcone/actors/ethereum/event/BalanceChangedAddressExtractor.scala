@@ -50,7 +50,7 @@ class BalanceChangedAddressExtractor @Inject()(
           AddressBalanceUpdated(tx.from, Address.ZERO.toString())
         )
         if (isSucceed(receipt.status) &&
-            BigInt(Numeric.toBigInt(tx.value)) > 0) {
+            BigInt(Numeric.toBigInt(formatHex(tx.value))) > 0) {
           balanceAddresses.append(
             AddressBalanceUpdated(tx.to, Address.ZERO.toString())
           )
@@ -86,16 +86,29 @@ class BalanceChangedAddressExtractor @Inject()(
     )
     val batchCallReq = brb.buildRequest(tokenAddresses, "latest")
     for {
-      tokenBalances <- (ethereumAccessor ? batchCallReq)
-        .mapAs[BatchCallContracts.Res]
-        .map(_.resps.map(_.result))
-        .map(_.map(res => Numeric.toBigInt(res).toByteArray))
-      ethBalances <- (ethereumAccessor ? BatchGetEthBalance
-        .Req(
-          ethAddress.map(addr => EthGetBalance.Req(address = addr.address))
-        ))
-        .mapAs[BatchGetEthBalance.Res]
-        .map(_.resps.map(res => Numeric.toBigInt(res.result).toByteArray))
+      tokenBalances <- if (tokenAddresses.nonEmpty) {
+        (ethereumAccessor ? batchCallReq)
+          .mapAs[BatchCallContracts.Res]
+          .map(
+            _.resps
+              .map(res => Numeric.toBigInt(formatHex(res.result)).toByteArray)
+          )
+      } else {
+        Future.successful(Seq.empty)
+      }
+      ethBalances <- if (ethAddress.nonEmpty) {
+        (ethereumAccessor ? BatchGetEthBalance
+          .Req(
+            ethAddress.map(addr => EthGetBalance.Req(address = addr.address))
+          ))
+          .mapAs[BatchGetEthBalance.Res]
+          .map(
+            _.resps
+              .map(res => Numeric.toBigInt(formatHex(res.result)).toByteArray)
+          )
+      } else {
+        Future.successful(Seq.empty)
+      }
     } yield {
       (tokenAddresses zip tokenBalances).map(
         item => item._1.withBalance(item._2)

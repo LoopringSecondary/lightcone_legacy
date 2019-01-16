@@ -138,12 +138,13 @@ class EventExtractorSpec
 
       val balanceExtractor = new BalanceChangedAddressExtractor
 
-      val balances = (blockData.txs zip blockData.receipts).flatMap { item =>
-        Await.result(
-          balanceExtractor.extract(item._1, item._2, blockData.timestamp),
-          timeout.duration
-        )
-      }.distinct
+      val balances =
+        Await
+          .result(
+            balanceExtractor.extract(blockData),
+            timeout.duration
+          )
+          .distinct
 
       val transferBalances = (transfers
         .filter(_.header.get.txStatus.isTxStatusSuccess)
@@ -154,8 +155,9 @@ class EventExtractorSpec
           )
         }) ++ blockData.txs.map(
         tx => AddressBalanceUpdated(tx.from, Address.ZERO.toString())
-      )).distinct.filterNot(ba => Address(ba.address).equals(weth))
-
+      ) ++ blockData.uncles.+:(blockData.miner).map { miner =>
+        AddressBalanceUpdated(miner, Address.ZERO.toString())
+      }).distinct.filterNot(ba => Address(ba.address).equals(weth))
       (balances.size == transferBalances.size) should be(true)
 
       val allowanceExtractor =
@@ -167,12 +169,10 @@ class EventExtractorSpec
           ec
         )
 
-      val allowances = (blockData.txs zip blockData.receipts).flatMap { item =>
-        Await.result(
-          allowanceExtractor.extract(item._1, item._2, blockData.timestamp),
-          timeout.duration
-        )
-      }.distinct
+      val allowances =
+        Await
+          .result(allowanceExtractor.extract(blockData), timeout.duration)
+          .distinct
 
       allowances.size should be(2)
     }

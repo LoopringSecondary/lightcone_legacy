@@ -90,15 +90,16 @@ class TransferEventExtractor @Inject()(
                 case _ =>
               }
           }
-          if (BigInt(Numeric.toBigInt(tx.value)) > 0 && !Address(tx.to)
-                .equals(wethAddress)) {
+          if (BigInt(Numeric.toBigInt(formatHex(tx.value))) > 0 && !Address(
+                tx.to
+              ).equals(wethAddress)) {
             transfers.append(
               PTransferEvent(
                 header = Some(header),
                 from = tx.from,
                 to = tx.to,
                 token = Address.ZERO.toString(),
-                amount = Numeric.toBigInt(tx.value).toByteArray
+                amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
               )
             )
           }
@@ -131,14 +132,14 @@ class TransferEventExtractor @Inject()(
                   from = tx.to,
                   to = tx.from,
                   token = tx.to,
-                  amount = Numeric.toBigInt(tx.value).toByteArray
+                  amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
                 ),
                 PTransferEvent(
                   header = Some(header),
                   from = tx.from,
                   to = tx.to,
                   token = Address.ZERO.toString(),
-                  amount = Numeric.toBigInt(tx.value).toByteArray
+                  amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
                 )
               )
             case Some(withdraw: WithdrawFunction.Parms) =>
@@ -159,14 +160,14 @@ class TransferEventExtractor @Inject()(
                 )
               )
             case _ =>
-              if (BigInt(Numeric.toBigInt(tx.value)) > 0) {
+              if (BigInt(Numeric.toBigInt(formatHex(tx.value))) > 0) {
                 transfers.append(
                   PTransferEvent(
                     header = Some(header),
                     from = tx.from,
                     to = tx.to,
                     token = Address.ZERO.toString(),
-                    amount = Numeric.toBigInt(tx.value).toByteArray
+                    amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
                   )
                 )
                 if (Address(tx.to).equals(wethAddress)) {
@@ -176,7 +177,7 @@ class TransferEventExtractor @Inject()(
                       from = tx.to,
                       to = tx.from,
                       token = tx.to,
-                      amount = Numeric.toBigInt(tx.value).toByteArray
+                      amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
                     )
                   )
                 }

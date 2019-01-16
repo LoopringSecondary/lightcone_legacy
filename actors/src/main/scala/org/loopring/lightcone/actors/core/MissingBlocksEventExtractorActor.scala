@@ -76,80 +76,31 @@ class MissingBlocksEventExtractorActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    dispatchers: Seq[EventDispatcher[_]],
+    val dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name) {
-
-  val taskQueue = new mutable.Queue[Long]()
-  var currentBlockNumber = 0L
-  def ethereumAccessorActor: ActorRef = actors.get(EthereumAccessActor.name)
-
-  def ready: Receive = {
-    case Notify("next", _) =>
-      if (taskQueue.nonEmpty) {
-        currentBlockNumber = taskQueue.dequeue()
-        process()
-      } else {
-        context.system.scheduler.scheduleOnce(30 seconds, self, Notify("next"))
-      }
-    case Notify("current", _) =>
-      process()
-    case ProcessMissingBlocks(blockStart, blockEnd) =>
-      taskQueue.enqueue(blockStart to blockEnd: _*)
+    extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name)
+    with EventExtractorActor {
+  val NEXT_RANGE = "next_range"
+  override def initialize(): Future[Unit] = Future.successful {
+    becomeReady()
+    self ! Notify(NEXT_RANGE)
   }
 
-  def process(): Unit = {
-    for {
-      block <- (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(
-        Numeric.toHexString(BigInt(currentBlockNumber).toByteArray)
-      )).mapAs[GetBlockWithTxObjectByNumber.Res]
-        .map(_.result.get)
-      receipts <- (ethereumAccessorActor ? BatchGetTransactionReceipts.Req(
-        block.transactions
-          .map(tx => GetTransactionReceipt.Req(tx.hash))
-      )).mapAs[BatchGetTransactionReceipts.Res]
-        .map(_.resps.map(_.result))
-      uncles <- if (block.uncles.nonEmpty) {
-        val batchGetUnclesReq = BatchGetUncle.Req(
-          block.uncles.indices.map(
-            index =>
-              GetUncle
-                .Req(block.number, Numeric.prependHexPrefix(index.toHexString))
-          )
-        )
-        (ethereumAccessorActor ? batchGetUnclesReq)
-          .mapAs[BatchGetUncle.Res]
-          .map(_.resps.map(_.result.get.miner))
-      } else {
-        Future.successful(Seq.empty)
-      }
-    } yield {
-      if (receipts.forall(_.nonEmpty)) {
-        val rawBlockData = RawBlockData(
-          hash = block.hash,
-          height = Numeric.toBigInt(block.number).longValue(),
-          timestamp = block.timestamp,
-          miner = block.miner,
-          uncles = uncles,
-          txs = block.transactions,
-          receipts = receipts.map(_.get)
-        )
-        dispatchers.foreach(_.dispatch(rawBlockData))
-        dbModule.blockService.saveBlock(
-          BlockData(
-            hash = block.hash,
-            height = rawBlockData.height,
-            timestamp = Numeric.toBigInt(block.timestamp).longValue()
-          )
-        )
-        self ! Notify("next")
-      } else {
-        context.system.scheduler
-          .scheduleOnce(1 seconds, self, Notify("current"))
-      }
-    }
+  override def ready: Receive = super.ready orElse {
+    case Notify(NEXT_RANGE, _) =>
+      //TODO（yadong）等待永丰的接口来查询最新的Missing blocks
+  }
+
+  override def process: Future[_] = {
+    super.process.map(
+      _ =>
+        // TODO (yadong) 等待永丰的接口标记已经处理的高度
+        if (blockData.height == blockEnd) {
+          self ! Notify(NEXT_RANGE)
+        }
+    )
+
   }
 }
