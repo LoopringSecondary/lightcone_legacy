@@ -19,13 +19,17 @@ package org.loopring.lightcone.actors.metadata
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.testkit.TestProbe
-import org.loopring.lightcone.actors.core.MetadataManagerActor
+import org.loopring.lightcone.actors.core.{
+  EthereumQueryActor,
+  MetadataManagerActor
+}
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.MetadataManagerValidator
-import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import akka.pattern._
+import org.loopring.lightcone.lib.MarketHashProvider
 
 class MetadataManagerSpec
     extends CommonSpec
@@ -43,6 +47,7 @@ class MetadataManagerSpec
   val mediator = DistributedPubSub(system).mediator
   mediator ! Subscribe(MetadataManagerActor.pubsubTopic, probe.ref)
   val actor = actors.get(MetadataManagerValidator.name)
+  val ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
   "load tokens config" must {
     "get all tokens config" in {
@@ -123,12 +128,20 @@ class MetadataManagerSpec
         )
       )
       actor ! SaveTokenMetadatas.Req(tokens)
+      info("waiting 3s for repeatJob to reload tokens config")
       Thread.sleep(3000)
 
-      info("query the tokens")
+      info("query the tokens from db")
       val r1 = dbModule.tokenMetadataDal.getTokens(tokens.map(_.address))
       val res1 = Await.result(r1.mapTo[Seq[TokenMetadata]], 5.second)
       assert(res1.length == tokens.length)
+
+      info("send a message to load tokens config")
+      val q1 = Await.result(
+        (actor ? LoadTokenMetadata.Req()).mapTo[LoadTokenMetadata.Res],
+        5.second
+      )
+      assert(q1.tokens.length == tokens.length)
 
       info("save a new token config: DEF")
       val r2 = dbModule.tokenMetadataDal.saveToken(
@@ -148,16 +161,52 @@ class MetadataManagerSpec
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
       assert(res2 == ErrorCode.ERR_NONE)
 
-      info("update LRC token config")
-      val r3 = dbModule.tokenMetadataDal.updateToken(
-        lrc.copy(burnRate = 0.2, usdPrice = 20)
+      val burnRateRes = Await.result(
+        (ethereumQueryActor ? GetBurnRate.Req(
+          token = lrc.address
+        )).mapTo[GetBurnRate.Res],
+        5.second
       )
-      val res3 = Await.result(r3.mapTo[ErrorCode], 5.second)
-      assert(res3 == ErrorCode.ERR_NONE)
+
+      info(
+        s"send a message to update burn-rate :{burnRate = 0.2, usdPrice = 20}, but will query ethereum and replace burnRate as :${burnRateRes.burnRate}"
+      )
+      val updated = Await.result(
+        (actor ? UpdateTokenMetadata.Req(
+          Some(lrc.copy(burnRate = 0.2, usdPrice = 20))
+        )).mapTo[UpdateTokenMetadata.Res],
+        5.second
+      )
+      assert(updated.error == ErrorCode.ERR_NONE)
+      val query1 = Await.result(
+        dbModule.tokenMetadataDal
+          .getTokens(Seq(lrc.address))
+          .mapTo[Seq[TokenMetadata]],
+        5.second
+      )
+      assert(
+        query1.length == 1 && query1.head.burnRate === burnRateRes.burnRate && query1.head.usdPrice == 20
+      )
       Thread.sleep(3000)
 
       info("subscriber should received the message")
       probe.expectMsg(MetadataChanged())
+
+      info("send a message to disable lrc")
+      val disabled = Await.result(
+        (actor ? DisableToken.Req(lrc.address)).mapTo[DisableToken.Res],
+        5 second
+      )
+      assert(disabled.error == ErrorCode.ERR_NONE)
+      val query2 = Await.result(
+        dbModule.tokenMetadataDal
+          .getTokens(Seq(lrc.address))
+          .mapTo[Seq[TokenMetadata]],
+        5.second
+      )
+      assert(
+        query2.nonEmpty && query2.head.status == TokenMetadata.Status.DISABLED
+      )
     }
   }
 
@@ -219,12 +268,19 @@ class MetadataManagerSpec
       actor ! SaveMarketMetadatas.Req(markets)
       Thread.sleep(3000)
 
-      info("query the markets")
+      info("query the markets from db")
       val r1 = dbModule.marketMetadataDal.getMarketsByHashes(
         markets.map(_.marketHash)
       )
       val res1 = Await.result(r1.mapTo[Seq[MarketMetadata]], 5.second)
       assert(res1.length == markets.length)
+
+      info("send a message to load markets config")
+      val q1 = Await.result(
+        (actor ? LoadMarketMetadata.Req()).mapTo[LoadMarketMetadata.Res],
+        5.second
+      )
+      assert(q1.markets.length == markets.length)
 
       info("save a new market: ABC-LRC")
       val ABC = "0x244929a8141d2134d9323e65309fb46e4a983840"
@@ -247,14 +303,44 @@ class MetadataManagerSpec
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
       assert(res2 == ErrorCode.ERR_NONE)
 
-      info("update Lrc-Weth market config")
-      val r3 = dbModule.marketMetadataDal.updateMarket(
-        marketLrcWeth
-          .copy(priceDecimals = 2, status = MarketMetadata.Status.READONLY)
+      info(
+        s"send a message to update :{priceDecimals = 2, status = MarketMetadata.Status.READONLY}"
       )
-      val res3 = Await.result(r3.mapTo[ErrorCode], 5.second)
-      assert(res3 == ErrorCode.ERR_NONE)
+      val updated = Await.result(
+        (actor ? UpdateMarketMetadata.Req(
+          Some(
+            marketLrcWeth
+              .copy(priceDecimals = 2, status = MarketMetadata.Status.READONLY)
+          )
+        )).mapTo[UpdateMarketMetadata.Res],
+        5.second
+      )
+      assert(updated.error == ErrorCode.ERR_NONE)
+      val q11 = dbModule.marketMetadataDal.getMarketsByHashes(
+        Seq(marketLrcWeth.marketHash)
+      )
+      val res11 = Await.result(q11.mapTo[Seq[MarketMetadata]], 5.second)
+      assert(
+        res11.length == 1 && res11.head.priceDecimals == 2 && res11.head.status == MarketMetadata.Status.READONLY
+      )
       Thread.sleep(3000)
+
+      info("send a message to disable lrc-weth")
+      val disabled = Await.result(
+        (actor ? DisableMarket.Req(marketLrcWeth.marketHash))
+          .mapTo[DisableMarket.Res],
+        5 second
+      )
+      assert(disabled.error == ErrorCode.ERR_NONE)
+      val query2 = Await.result(
+        dbModule.marketMetadataDal
+          .getMarketsByHashes(Seq(marketLrcWeth.marketHash))
+          .mapTo[Seq[MarketMetadata]],
+        5.second
+      )
+      assert(
+        query2.nonEmpty && query2.head.status == MarketMetadata.Status.DISABLED
+      )
 
       info("subscriber should received the message")
       probe.expectMsg(MetadataChanged())

@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.lib.MarketHashProvider
-import org.loopring.lightcone.persistence.dals._
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
-import scala.concurrent._
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class MarketMetadataServiceSpec extends ServiceSpec[MarketMetadataService] {
-
-  implicit var dal: MarketMetadataDal = _
-
-  def getService = {
-    dal = new MarketMetadataDalImpl()
-    new MarketMetadataServiceImpl()
-  }
-
-  def createTables(): Unit = dal.createTable()
+class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
+  def getDal = new MarketMetadataDalImpl()
 
   "save markets config" must "save some markets config" in {
     info("save 3 market configs")
@@ -87,12 +79,12 @@ class MarketMetadataServiceSpec extends ServiceSpec[MarketMetadataService] {
         marketHash = MarketHashProvider.convert2Hex(WETH, ZRX)
       )
     )
-    val r1 = service.saveMarkets(markets)
+    val r1 = dal.saveMarkets(markets)
     val res1 = Await.result(r1.mapTo[Seq[String]], 5.second)
     assert(res1.length == markets.length)
 
     info("query the markets config just saved")
-    val r2 = service.getMarketsByHash(markets.map(_.marketHash))
+    val r2 = dal.getMarketsByHashes(markets.map(_.marketHash))
     val res2 = Await.result(r2.mapTo[Seq[MarketMetadata]], 5.second)
     assert(res2.length == markets.length)
     res2 foreach {
@@ -142,10 +134,10 @@ class MarketMetadataServiceSpec extends ServiceSpec[MarketMetadataService] {
 
     info("duplicate market save should return error")
     val market1 = lrcWeth.copy(priceDecimals = 10)
-    val r3 = service.saveMarket(market1)
+    val r3 = dal.saveMarket(market1)
     val res3 = Await.result(r3.mapTo[ErrorCode], 5.second)
     assert(res3 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
-    val r4 = service.getMarketsByHash(Seq(lrcWeth.marketHash))
+    val r4 = dal.getMarketsByHashes(Seq(lrcWeth.marketHash))
     val res4 = Await.result(r4.mapTo[Seq[MarketMetadata]], 5.second)
     assert(res4.length == 1)
     val lrcWeth1 = res4.find(_.secondaryTokenSymbol == "LRC")
@@ -154,7 +146,7 @@ class MarketMetadataServiceSpec extends ServiceSpec[MarketMetadataService] {
     info(
       "should not save market with too long address :0xBe4C1cb10C2Be76798c4186ADbbC34356b358b521"
     )
-    val r5 = service.saveMarket(
+    val r5 = dal.saveMarket(
       lrcWeth.copy(
         marketId = Some(
           MarketId(
@@ -166,7 +158,7 @@ class MarketMetadataServiceSpec extends ServiceSpec[MarketMetadataService] {
     )
     val res5 = Await.result(r5.mapTo[ErrorCode], 5.second)
     assert(res5 == ErrorCode.ERR_PERSISTENCE_INTERNAL)
-    val r6 = service.getMarkets(true)
+    val r6 = dal.getMarkets()
     val res6 = Await.result(r6.mapTo[Seq[MarketMetadata]], 5.second)
     assert(res6.nonEmpty && res6.length == markets.length)
 
@@ -175,7 +167,7 @@ class MarketMetadataServiceSpec extends ServiceSpec[MarketMetadataService] {
     )
     val bnbWeth =
       res2.find(_.secondaryTokenSymbol == "BNB").getOrElse(MarketMetadata())
-    val r9 = service.updateMarket(
+    val r9 = dal.updateMarket(
       bnbWeth.copy(
         status = MarketMetadata.Status.ENABLED,
         maxNumbersOfOrders = 2000,
@@ -188,7 +180,7 @@ class MarketMetadataServiceSpec extends ServiceSpec[MarketMetadataService] {
     )
     val res9 = Await.result(r9.mapTo[ErrorCode], 5.second)
     assert(res9 == ErrorCode.ERR_NONE)
-    val r10 = service.getMarketsByHash(Seq(bnbWeth.marketHash))
+    val r10 = dal.getMarketsByHashes(Seq(bnbWeth.marketHash))
     val res10 = Await.result(r10.mapTo[Seq[MarketMetadata]], 5.second)
     val bnb1 =
       res10.find(_.secondaryTokenSymbol == "BNB").getOrElse(MarketMetadata())
@@ -205,5 +197,4 @@ class MarketMetadataServiceSpec extends ServiceSpec[MarketMetadataService] {
         && bnb1.marketHash == MarketHashProvider.convert2Hex(WETH, BNB)
     )
   }
-
 }
