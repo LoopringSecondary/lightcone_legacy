@@ -85,8 +85,8 @@ class MetadataManagerActor(
   val mediator = DistributedPubSub(context.system).mediator
   val ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
-  private var tokens: Set[TokenMetadata] = Set.empty
-  private var markets: Set[MarketMetadata] = Set.empty
+  private var tokens = Seq.empty[TokenMetadata]
+  private var markets = Seq.empty[MarketMetadata]
 
   override def initialize() =
     for {
@@ -104,12 +104,9 @@ class MetadataManagerActor(
         } yield token.copy(burnRate = burnRateRes.burnRate)
       })
     } yield {
-      tokens = tokensUpdated.toSet
-      markets = markets_.toSet
-      mediator ! Publish(
-        MetadataManagerActor.pubsubTopic,
-        MetadataChanged()
-      )
+      tokens = tokensUpdated
+      markets = markets_
+      mediator ! Publish(MetadataManagerActor.pubsubTopic, MetadataChanged())
       becomeReady()
     }
 
@@ -118,7 +115,7 @@ class MetadataManagerActor(
       name = "load_tokens_markets_metadata",
       dalayInSeconds = refreshIntervalInSeconds,
       initialDalayInSeconds = initialDelayInSeconds,
-      run = () => syncConfigs()
+      run = () => syncMetadata()
     )
   )
 
@@ -126,16 +123,11 @@ class MetadataManagerActor(
 
     case req: SaveTokenMetadatas.Req =>
       (for {
-        saved <- dbModule.tokenMetadataDal
-          .saveTokens(req.tokens)
+        saved <- dbModule.tokenMetadataDal.saveTokens(req.tokens)
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
         if (saved.nonEmpty) {
-          tokens = tokens_.toSet
-          mediator ! Publish(
-            MetadataManagerActor.pubsubTopic,
-            MetadataChanged()
-          )
+          checkAndPublish(Some(tokens_), None)
         }
         SaveTokenMetadatas.Res(saved)
       }).sendTo(sender)
@@ -145,18 +137,14 @@ class MetadataManagerActor(
         burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
           token = req.token.get.address
         )).mapTo[GetBurnRate.Res]
-        updated <- dbModule.tokenMetadataDal
+        result <- dbModule.tokenMetadataDal
           .updateToken(req.token.get.copy(burnRate = burnRateRes.burnRate))
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
-        if (updated == ErrorCode.ERR_NONE) {
-          tokens = tokens_.toSet
-          mediator ! Publish(
-            MetadataManagerActor.pubsubTopic,
-            MetadataChanged()
-          )
+        if (result == ErrorCode.ERR_NONE) {
+          checkAndPublish(Some(tokens_), None)
         }
-        UpdateTokenMetadata.Res(updated)
+        UpdateTokenMetadata.Res(result)
       }).sendTo(sender)
 
     case req: UpdateTokenBurnRate.Req =>
@@ -164,34 +152,26 @@ class MetadataManagerActor(
         burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
           token = req.address
         )).mapTo[GetBurnRate.Res]
-        updated <- dbModule.tokenMetadataDal
+        result <- dbModule.tokenMetadataDal
           .updateBurnRate(req.address, burnRateRes.burnRate)
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
-        if (updated == ErrorCode.ERR_NONE) {
-          tokens = tokens_.toSet
-          mediator ! Publish(
-            MetadataManagerActor.pubsubTopic,
-            MetadataChanged()
-          )
+        if (result == ErrorCode.ERR_NONE) {
+          checkAndPublish(Some(tokens_), None)
         }
-        UpdateTokenBurnRate.Res(updated)
+        UpdateTokenBurnRate.Res(result)
       }).sendTo(sender)
 
     case req: DisableToken.Req =>
       (for {
-        updated <- dbModule.tokenMetadataDal
+        result <- dbModule.tokenMetadataDal
           .disableToken(req.address)
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
-        if (updated == ErrorCode.ERR_NONE) {
-          tokens = tokens_.toSet
-          mediator ! Publish(
-            MetadataManagerActor.pubsubTopic,
-            MetadataChanged()
-          )
+        if (result == ErrorCode.ERR_NONE) {
+          checkAndPublish(Some(tokens_), None)
         }
-        DisableToken.Res(updated)
+        DisableToken.Res(result)
       }).sendTo(sender)
 
     case req: SaveMarketMetadatas.Req =>
@@ -201,73 +181,75 @@ class MetadataManagerActor(
         markets_ <- dbModule.marketMetadataDal.getMarkets()
       } yield {
         if (saved.nonEmpty) {
-          markets = markets_.toSet
-          mediator ! Publish(
-            MetadataManagerActor.pubsubTopic,
-            MetadataChanged()
-          )
+          checkAndPublish(None, Some(markets_))
         }
         SaveMarketMetadatas.Res(saved)
       }).sendTo(sender)
 
     case req: UpdateMarketMetadata.Req =>
       (for {
-        updated <- dbModule.marketMetadataDal
+        result <- dbModule.marketMetadataDal
           .updateMarket(req.market.get)
         markets_ <- dbModule.marketMetadataDal.getMarkets()
       } yield {
-        if (updated == ErrorCode.ERR_NONE) {
-          markets = markets_.toSet
-          mediator ! Publish(
-            MetadataManagerActor.pubsubTopic,
-            MetadataChanged()
-          )
+        if (result == ErrorCode.ERR_NONE) {
+          checkAndPublish(None, Some(markets_))
         }
-        UpdateMarketMetadata.Res(updated)
+        UpdateMarketMetadata.Res(result)
       }).sendTo(sender)
 
     case req: DisableMarket.Req =>
       (for {
-        disabled <- dbModule.marketMetadataDal
+        result <- dbModule.marketMetadataDal
           .disableMarketByHash(req.marketHash)
         markets_ <- dbModule.marketMetadataDal.getMarkets()
       } yield {
-        if (disabled == ErrorCode.ERR_NONE) {
-          markets = markets_.toSet
-          mediator ! Publish(
-            MetadataManagerActor.pubsubTopic,
-            MetadataChanged()
-          )
+        if (result == ErrorCode.ERR_NONE) {
+          checkAndPublish(None, Some(markets_))
         }
-        DisableMarket.Res(disabled)
+        DisableMarket.Res(result)
       }).sendTo(sender)
 
     case req: LoadTokenMetadata.Req =>
-      Future.successful(LoadTokenMetadata.Res(tokens.toSeq)).sendTo(sender)
+      sender ! LoadTokenMetadata.Res(tokens)
 
     case req: LoadMarketMetadata.Req =>
-      Future.successful(LoadMarketMetadata.Res(markets.toSeq)).sendTo(sender)
+      sender ! LoadMarketMetadata.Res(markets)
   }
 
-  private def syncConfigs(): Future[Unit] = {
+  private def publish() = {
+    mediator ! Publish(MetadataManagerActor.pubsubTopic, MetadataChanged())
+  }
+
+  private def checkAndPublish(
+      tokensOpt: Option[Seq[TokenMetadata]],
+      marketsOpt: Option[Seq[MarketMetadata]]
+    ) {
+    var notify = false
+    tokensOpt foreach { tokens_ =>
+      if (tokens_ != tokens) {
+        notify = true
+        tokens = tokens_
+      }
+    }
+
+    marketsOpt foreach { markets_ =>
+      if (markets_ != markets) {
+        notify = true
+        markets = markets_
+      }
+    }
+
+    if (notify) publish()
+  }
+
+  private def syncMetadata() = {
     log.info("MetadataManagerActor run tokens and markets reload job")
     for {
-      loadTokens <- dbModule.tokenMetadataDal.getTokens()
-      loadMarkets <- dbModule.marketMetadataDal.getMarkets()
+      tokens_ <- dbModule.tokenMetadataDal.getTokens()
+      markets_ <- dbModule.marketMetadataDal.getMarkets()
     } yield {
-      val tokensSet = loadTokens.toSet
-      val marketsSet = loadMarkets.toSet
-      if (tokensSet.diff(tokens).nonEmpty || tokens
-            .diff(tokensSet)
-            .nonEmpty || marketsSet.diff(markets).nonEmpty || markets
-            .diff(marketsSet)
-            .nonEmpty)
-        mediator ! Publish(
-          MetadataManagerActor.pubsubTopic,
-          MetadataChanged()
-        )
-      tokens = tokensSet
-      markets = marketsSet
+      checkAndPublish(Some(tokens_), Some(markets_))
     }
   }
 }
