@@ -296,3 +296,10 @@ message NodeBlockHeight{
     string path = 1;
     int64 height = 2;
 }
+
+message MissingBlocksRecord {
+    int64  block_start          = 1;
+    int64  block_end            = 2;
+    int64  last_handled_block   = 3;
+    int64  sequence_id          = 4;
+}

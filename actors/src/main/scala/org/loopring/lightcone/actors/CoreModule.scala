@@ -78,7 +78,8 @@ class CoreModule(config: Config)
       "dbconfig-dal-token-balance",
       "dbconfig-dal-block",
       "dbconfig-dal-settlement-tx",
-      "dbconfig-dal-order-status-monitor"
+      "dbconfig-dal-order-status-monitor",
+      "dbconfig-dal-missing-blocks-record"
     )
 
     // --- bind event extractors ---------------------
