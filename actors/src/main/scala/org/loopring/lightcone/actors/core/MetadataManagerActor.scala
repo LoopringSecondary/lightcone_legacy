@@ -106,6 +106,10 @@ class MetadataManagerActor(
     } yield {
       tokens = tokensUpdated.toSet
       markets = markets_.toSet
+      mediator ! Publish(
+        MetadataManagerActor.pubsubTopic,
+        MetadataChanged()
+      )
       becomeReady()
     }
 
