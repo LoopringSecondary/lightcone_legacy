@@ -71,7 +71,7 @@ trait EthereumSupport {
 
   val connectionPools = (nodesConfig.zipWithIndex.map {
     case (node, index) =>
-      val nodeName = s"ethereum_connector_http_$index"
+      val nodeName = s"http_connector_$index"
       val props =
         Props(new HttpConnector(node))
       val actor = system.actorOf(props, nodeName)

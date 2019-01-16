@@ -91,11 +91,10 @@ class EthereumClientMonitor(
 
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
-  def connectionPools = HttpConnector.connectorNames(config).map {
-    case (nodeName, _) => actors.get(nodeName)
-  }
-
-  var nodes: Map[String, Long] = Map.empty
+  var nodes: Map[String, NodeBlockHeight] =
+    HttpConnector.connectorNames(config).map {
+      case (nodeName, _) => nodeName -> NodeBlockHeight(nodeName, -1L)
+    }
 
   val checkIntervalSeconds: Int = selfConfig.getInt("check-interval-seconds")
 
@@ -133,8 +132,7 @@ class EthereumClientMonitor(
   def normalReceive: Receive = super.receiveRepeatdJobs orElse {
     case _: GetNodeBlockHeight.Req =>
       sender ! GetNodeBlockHeight.Res(
-        nodes.toSeq
-          .map(node => NodeBlockHeight(path = node._1, height = node._2))
+        nodes.map(_._2).toSeq
       )
   }
 
@@ -146,26 +144,33 @@ class EthereumClientMonitor(
       params = None
     )
     import JsonRpcResWrapped._
-    Future.sequence(connectionPools.map { g =>
-      for {
-        blockNumResp: Long <- (g ? blockNumJsonRpcReq.toProto)
-          .mapAs[JsonRpc.Response]
-          .map(toJsonRpcResWrapped)
-          .map(_.result)
-          .map(anyHexToLong)
-          .recover {
-            case e: Exception =>
-              log
-                .error(s"exception on getting blockNumber: $g: ${e.getMessage}")
-              -1L
+    Future.sequence(nodes.map {
+      case (nodeName, nodeBlockHeight) =>
+        if (actors.contains(nodeName)) {
+          val actor = actors.get(nodeName)
+          for {
+            blockNumResp: Long <- (actor ? blockNumJsonRpcReq.toProto)
+              .mapAs[JsonRpc.Response]
+              .map(toJsonRpcResWrapped)
+              .map(_.result)
+              .map(anyHexToLong)
+              .recover {
+                case e: Exception =>
+                  log
+                    .error(
+                      s"exception on getting blockNumber: ${actor}: ${e.getMessage}"
+                    )
+                  -1L
+              }
+          } yield {
+            val nodeBlockHeight =
+              NodeBlockHeight(nodeName = nodeName, height = blockNumResp)
+            nodes = nodes + (nodeName -> nodeBlockHeight)
+            ethereumAccessor ! nodeBlockHeight
           }
-      } yield {
-        nodes = nodes + (g.path.toString -> blockNumResp)
-        ethereumAccessor ! NodeBlockHeight(
-          path = g.path.toString,
-          height = blockNumResp
-        )
-      }
+        } else {
+          Future.successful(Unit)
+        }
     })
   }
 
