@@ -22,11 +22,7 @@ import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.actors.base.{
-  ActorWithPathBasedConfig,
-  EventExtractorActor,
-  Lookup
-}
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
@@ -34,7 +30,6 @@ import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
 import scala.concurrent._
-import scala.concurrent.duration._
 
 // Owner: Yadong
 object EthereumEventExtractorActor {

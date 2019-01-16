@@ -18,19 +18,14 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.singleton._
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
-import org.web3j.utils.Numeric
 
-import scala.collection.mutable
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 object MissingBlocksEventExtractorActor {
@@ -90,7 +85,7 @@ class MissingBlocksEventExtractorActor(
 
   override def ready: Receive = super.ready orElse {
     case Notify(NEXT_RANGE, _) =>
-      //TODO（yadong）等待永丰的接口来查询最新的Missing blocks
+    //TODO（yadong）等待永丰的接口来查询最新的Missing blocks
   }
 
   override def process: Future[_] = {
