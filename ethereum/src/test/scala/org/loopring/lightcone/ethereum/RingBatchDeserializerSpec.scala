@@ -133,12 +133,12 @@ class RingBatchDeserializerSpec extends FlatSpec with Matchers {
           "decoded field not equal with original one."
         )
 
-        // TODO: not pass, need to be fixed.
-        // ringBatchDecoded.orders zip ringBatch.orders foreach { pair =>
-        //   val (o1, o2) = pair
-        //   val o1Hash = RawOrderValidatorImpl.calculateOrderHash(o1)
-        //   assert(o1Hash == o2.hash, "order hash not match")
-        // }
+      // TODO: not pass, need to be fixed.
+      // ringBatchDecoded.orders zip ringBatch.orders foreach { pair =>
+      //   val (o1, o2) = pair
+      //   val o1Hash = RawOrderValidatorImpl.calculateOrderHash(o1)
+      //   assert(o1Hash == o2.hash, "order hash not match")
+      // }
       case Left(err) =>
         assert(false, "deserialize failed:" + err.name)
     }

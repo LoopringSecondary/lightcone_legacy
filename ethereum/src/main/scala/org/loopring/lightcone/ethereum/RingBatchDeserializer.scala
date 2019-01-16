@@ -29,17 +29,17 @@ class SimpleRingBatchDeserializer(encoded: String = "")
     extends RingBatchDeserializer {
   import ethereum._
 
-  val dataStream = new Bitstream(Numeric.cleanHexPrefix(encoded))
+  val bitExtractor = new BitExtractor(Numeric.cleanHexPrefix(encoded))
 
   private var tableOffSet: Int = 0
   private var dataOffset: Int = 0
 
   def deserialize: Either[ErrorCode, RingBatch] =
     try {
-      val version = dataStream.extractUint16(0)
-      val numOrders = dataStream.extractUint16(2)
-      val numRings = dataStream.extractUint16(4)
-      val numSpendables = dataStream.extractUint16(6)
+      val version = bitExtractor.extractUint16(0)
+      val numOrders = bitExtractor.extractUint16(2)
+      val numRings = bitExtractor.extractUint16(4)
+      val numSpendables = bitExtractor.extractUint16(6)
 
       val miningTableOffset = 8
       val orderTableOffset = miningTableOffset + 3 * 2
@@ -60,7 +60,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
     } catch {
       case e: Throwable =>
         e.printStackTrace
-        Left(ErrorCode.ERR_DESERIALIZE_INVALID_ENCODED_DATA)
+        Left(ErrorCode.ERR_SERIALIZATION_ENCODED_DATA_INVALID)
     }
 
   private def setMiningData(miningTableOffset: Int) = {
@@ -91,10 +91,10 @@ class SimpleRingBatchDeserializer(encoded: String = "")
     var ringOffset = ringDataOffset
     val rings = (0 until numRings) map { _ =>
       ringOffset += 1
-      val ringSize = dataStream.extractUint8(ringOffset)
+      val ringSize = bitExtractor.extractUint8(ringOffset)
       var orderOffset = ringOffset
       val orderIndexes = (0 until ringSize) map { _ =>
-        val orderIndex = dataStream.extractUint8(orderOffset)
+        val orderIndex = bitExtractor.extractUint8(orderOffset)
         orderOffset += 1
         orderIndex
       }
@@ -107,7 +107,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
   }
 
   private def getNextOffset() = {
-    val offset = dataStream.extractUint16(tableOffSet)
+    val offset = bitExtractor.extractUint16(tableOffSet)
     tableOffSet += 2
     offset
   }
@@ -115,7 +115,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
   private def nextUint16() = getNextOffset
 
   private def nextInt16() = {
-    val offset = dataStream.extractInt16(tableOffSet)
+    val offset = bitExtractor.extractInt16(tableOffSet)
     tableOffSet += 2
     offset
   }
@@ -123,7 +123,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
   private def nextUint32() = {
     val offset = getNextOffset * 4
     if (offset > 0) {
-      dataStream.extractUint32(dataOffset + offset)
+      bitExtractor.extractUint32(dataOffset + offset)
     } else {
       0
     }
@@ -132,7 +132,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
   private def nextUint() = {
     val offset = getNextOffset * 4
     if (offset > 0) {
-      dataStream.extractUint(dataOffset + offset)
+      bitExtractor.extractUint(dataOffset + offset)
     } else {
       BigInt(0)
     }
@@ -141,7 +141,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
   private def nextAddress() = {
     val offset = getNextOffset * 4
     if (offset > 0) {
-      dataStream.extractAddress(dataOffset + offset)
+      bitExtractor.extractAddress(dataOffset + offset)
     } else {
       ""
     }
@@ -150,7 +150,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
   private def nextBytes32() = {
     val offset = getNextOffset * 4
     if (offset > 0) {
-      "0x" + dataStream.extractBytesX(dataOffset + offset, 32)
+      "0x" + bitExtractor.extractBytesX(dataOffset + offset, 32)
     } else {
       "0x" + "0" * 64
     }
@@ -159,8 +159,8 @@ class SimpleRingBatchDeserializer(encoded: String = "")
   private def nextBytes() = {
     val offset = getNextOffset * 4
     if (offset > 0) {
-      val len = dataStream.extractUint(dataOffset + offset).toInt
-      "0x" + dataStream.extractBytesX(dataOffset + offset + 32, len)
+      val len = bitExtractor.extractUint(dataOffset + offset).toInt
+      "0x" + bitExtractor.extractBytesX(dataOffset + offset + 32, len)
     } else {
       ""
     }
@@ -220,6 +220,47 @@ class SimpleRingBatchDeserializer(encoded: String = "")
     )
 
     order2
+  }
+
+  class BitExtractor(data: String) {
+    private def hex2Int(hex: String): Int = Integer.parseInt(hex, 16)
+
+    def extractUint8(offset: Int): Int = hex2Int(extractBytesX(offset, 1))
+
+    def extractUint16(offset: Int): Int = hex2Int(extractBytesX(offset, 2))
+
+    def extractInt16(offset: Int): Int = {
+      val hex = extractBytesX(offset, 2)
+      val uint16 = BigInt(hex, 16)
+      val resBigInt = if ((uint16 >> 15) == 1) {
+        uint16 - BigInt("ffff", 16) - 1
+      } else {
+        uint16
+      }
+
+      resBigInt.toInt
+    }
+
+    def extractUint32(offset: Int): Int = hex2Int(extractBytesX(offset, 4))
+
+    def extractUint(offset: Int): BigInt = {
+      val hexStr = extractBytesX(offset, 32)
+      BigInt(hexStr, 16)
+    }
+
+    def extractAddress(offset: Int) = "0x" + extractBytesX(offset, 20)
+
+    def extractBytesX(
+        offset: Int,
+        numBytes: Int
+      ) = {
+      val start = offset * 2
+      val end = start + numBytes * 2
+
+      require(this.data.length > end, "substring index out of range.")
+      this.data.substring(start, end)
+    }
+
   }
 
 }

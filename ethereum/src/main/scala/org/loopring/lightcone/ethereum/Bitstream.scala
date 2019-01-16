@@ -19,9 +19,11 @@ package org.loopring.lightcone.ethereum
 import org.web3j.utils.Numeric
 import com.google.protobuf.ByteString
 
-class Bitstream(private var data: String = "") {
+class Bitstream(initData: String = "") {
   private val ADDRESS_LENGTH = 20
   private val Uint256Max = BigInt("f" * 64, 16)
+
+  private var data = initData
 
   def getData = if (data.length == 0) "0x0" else "0x" + data
 
@@ -156,44 +158,6 @@ class Bitstream(private var data: String = "") {
 
     data ++= x
     offset
-  }
-
-  private def hex2Int(hex: String): Int = Integer.parseInt(hex, 16)
-
-  def extractUint8(offset: Int): Int = hex2Int(extractBytesX(offset, 1))
-
-  def extractUint16(offset: Int): Int = hex2Int(extractBytesX(offset, 2))
-
-  def extractInt16(offset: Int): Int = {
-    val hex = extractBytesX(offset, 2)
-    val uint16 = BigInt(hex, 16)
-    val resBigInt = if ((uint16 >> 15) == 1) {
-      uint16 - BigInt("ffff", 16) - 1
-    } else {
-      uint16
-    }
-
-    resBigInt.toInt
-  }
-
-  def extractUint32(offset: Int): Int = hex2Int(extractBytesX(offset, 4))
-
-  def extractUint(offset: Int): BigInt = {
-    val hexStr = extractBytesX(offset, 32)
-    BigInt(hexStr, 16)
-  }
-
-  def extractAddress(offset: Int) = "0x" + extractBytesX(offset, 20)
-
-  def extractBytesX(
-      offset: Int,
-      numBytes: Int
-    ) = {
-    val start = offset * 2
-    val end = start + numBytes * 2
-
-    require(this.data.length > end, "substring index out of range.")
-    this.data.substring(start, end)
   }
 
 }
