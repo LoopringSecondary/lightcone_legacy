@@ -319,9 +319,6 @@ class OrderDalImpl @Inject()(
           r.nextString,
           r.nextString,
           r.nextBoolean,
-          TokenStandard.fromValue(r.nextInt),
-          TokenStandard.fromValue(r.nextInt),
-          TokenStandard.fromValue(r.nextInt),
           r.nextString
         )
     )
@@ -338,7 +335,15 @@ class OrderDalImpl @Inject()(
         )
     )
     implicit val erc1400ParamsResult = GetResult[RawOrder.ERC1400Params](
-      r => RawOrder.ERC1400Params(r.nextString, r.nextString, r.nextString)
+      r =>
+        RawOrder.ERC1400Params(
+          TokenStandard.fromValue(r.nextInt),
+          TokenStandard.fromValue(r.nextInt),
+          TokenStandard.fromValue(r.nextInt),
+          r.nextString,
+          r.nextString,
+          r.nextString
+        )
     )
     implicit val stateResult = GetResult[RawOrder.State](
       r =>
