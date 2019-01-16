@@ -16,27 +16,25 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.persistence.base.BaseDalImpl
+import org.loopring.lightcone.persistence.tables.MarketMetadataTable
 import org.loopring.lightcone.proto._
-import scala.concurrent._
+import scala.concurrent.Future
 
-trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
+trait MarketMetadataDal
+    extends BaseDalImpl[MarketMetadataTable, MarketMetadata] {
 
-  def saveToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
+  def saveMarket(marketMetadata: MarketMetadata): Future[ErrorCode]
 
-  def saveTokens(tokenMetadatas: Seq[TokenMetadata]): Future[Seq[String]]
+  def saveMarkets(marketMetadatas: Seq[MarketMetadata]): Future[Seq[String]]
 
-  def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
+  def updateMarket(marketMetadata: MarketMetadata): Future[ErrorCode]
 
-  def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]]
+  def getMarkets(): Future[Seq[MarketMetadata]]
 
-  def getTokens(): Future[Seq[TokenMetadata]]
+  def getMarketsByHashes(
+      marketsHashes: Seq[String]
+    ): Future[Seq[MarketMetadata]]
 
-  def updateBurnRate(
-      token: String,
-      burnRate: Double
-    ): Future[ErrorCode]
-
-  def disableToken(address: String): Future[ErrorCode]
+  def disableMarketByHash(marketHash: String): Future[ErrorCode]
 }

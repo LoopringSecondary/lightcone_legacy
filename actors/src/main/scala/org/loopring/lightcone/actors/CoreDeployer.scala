@@ -71,7 +71,7 @@ class CoreDeployer @Inject()(
 
     //-----------deploy local actors-----------
     actors.add(BadMessageListener.name, BadMessageListener.start)
-    actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
+    actors.add(MetadataRefresher.name, MetadataRefresher.start)
 
     actors.add(
       MultiAccountManagerMessageValidator.name,
@@ -118,6 +118,15 @@ class CoreDeployer @Inject()(
       )
     )
 
+    actors.add(
+      MetadataManagerValidator.name,
+      MessageValidationActor(
+        new MetadataManagerValidator(),
+        MetadataManagerActor.name,
+        MetadataManagerValidator.name
+      )
+    )
+
     Cluster(system).registerOnMemberUp {
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
@@ -139,6 +148,7 @@ class CoreDeployer @Inject()(
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
+      actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
 
       actors.add(
         EthereumEventExtractorActor.name,
