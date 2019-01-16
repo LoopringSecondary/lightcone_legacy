@@ -62,6 +62,7 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tokenManager: TokenManager,
     tve: TokenValueEvaluator,
+    dispatchers: Seq[EventDispatcher[_]],
     system: ActorSystem)
     extends Object
     with Logging {
@@ -143,7 +144,10 @@ class CoreDeployer @Inject()(
         EthereumEventExtractorActor.name,
         EthereumEventExtractorActor.start
       )
-
+      actors.add(
+        MissingBlocksEventExtractorActor.name,
+        MissingBlocksEventExtractorActor.start
+      )
       actors.add(
         RingSettlementManagerActor.name,
         RingSettlementManagerActor.start
