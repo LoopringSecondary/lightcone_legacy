@@ -19,18 +19,16 @@ package org.loopring.lightcone.actors.ethereum
 import akka.actor._
 import akka.cluster.singleton._
 import akka.pattern.ask
-import akka.routing.RoundRobinPool
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.json4s.DefaultFormats
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.lib.TimeProvider
+import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
-import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.util._
 
@@ -39,7 +37,6 @@ object EthereumClientMonitor {
   val name = "ethereum_client_monitor"
 
   def start(
-      connectionPools: Seq[ActorRef]
     )(
       implicit
       system: ActorSystem,
@@ -55,8 +52,7 @@ object EthereumClientMonitor {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps =
-          Props(new EthereumClientMonitor(connectionPools = connectionPools)),
+        singletonProps = Props(new EthereumClientMonitor()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
@@ -74,8 +70,7 @@ object EthereumClientMonitor {
 }
 
 class EthereumClientMonitor(
-    val name: String = EthereumClientMonitor.name,
-    connectionPools: Seq[ActorRef] = Nil
+    val name: String = EthereumClientMonitor.name
   )(
     implicit
     system: ActorSystem,
@@ -95,6 +90,10 @@ class EthereumClientMonitor(
   implicit val formats = DefaultFormats
 
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
+
+  def connectionPools = HttpConnector.connectorNames(config).map {
+    case (nodeName, _) => actors.get(nodeName)
+  }
 
   var nodes: Map[String, Long] = Map.empty
 

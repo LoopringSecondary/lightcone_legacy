@@ -74,7 +74,9 @@ trait EthereumSupport {
       val nodeName = s"ethereum_connector_http_$index"
       val props =
         Props(new HttpConnector(node))
-      system.actorOf(props, nodeName)
+      val actor = system.actorOf(props, nodeName)
+      actors.add(nodeName, actor)
+      actor
   }).toSeq
 
   val blockNumJsonRpcReq = JsonRpc.Request(
@@ -101,7 +103,7 @@ trait EthereumSupport {
 
   actors.add(
     EthereumClientMonitor.name,
-    EthereumClientMonitor.start(connectionPools)
+    EthereumClientMonitor.start
   )
   actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
 

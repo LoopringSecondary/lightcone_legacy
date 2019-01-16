@@ -62,9 +62,9 @@ class CoreDeployer @Inject()(
     extends Object
     with Logging {
 
-  def deploy(connectionPools: Seq[ActorRef]) {
+  def deploy() {
 
-    //todo: OnMemberUp只有执行有时间限制，超时会有TimeoutException
+    //todo: OnMemberUp执行有时间限制，超时会有TimeoutException
     Cluster(system).registerOnMemberUp {
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
@@ -78,13 +78,15 @@ class CoreDeployer @Inject()(
 
       actors.add(TransactionRecordActor.name, TransactionRecordActor.start)
 
-      //-----------deploy singleton actors-----------
-      // TODO(hongyu): 不能是Nil，需要完善，但是还没考虑好，EtherHttpConnector需要提前完成初始化，
-      // 但是又不需要在启动每个实例时都初始化
+      //deploy ethereum conntionPools
+      HttpConnector.start.foreach {
+        case (name, actor) => actors.add(name, actor)
+      }
 
+      //-----------deploy singleton actors-----------
       actors.add(
         EthereumClientMonitor.name,
-        EthereumClientMonitor.start(connectionPools)
+        EthereumClientMonitor.start
       )
       actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
@@ -104,11 +106,9 @@ class CoreDeployer @Inject()(
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors.add(EntryPointActor.name, EntryPointActor.start)
 
-      //todo:优化部署步骤
       //-----------deploy local actors-----------
       actors.add(BadMessageListener.name, BadMessageListener.start)
-      //todo:暂时不启动TokenMetadataRefresher
-//      actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
+      actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
 
       actors.add(
         MultiAccountManagerMessageValidator.name,
@@ -162,6 +162,8 @@ class CoreDeployer @Inject()(
         with RpcBinding
         server.start
       }
+
+      actors.add(InitializerActor.name, InitializerActor.start)
     }
   }
 }

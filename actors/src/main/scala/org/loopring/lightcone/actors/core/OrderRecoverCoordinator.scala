@@ -100,7 +100,7 @@ class OrderRecoverCoordinator(
 
       startBatchTimer()
 
-//      sender ! req
+      sender ! req
 
     case req: ActorRecover.Timeout =>
       if (pendingBatch.requestMap.nonEmpty) {

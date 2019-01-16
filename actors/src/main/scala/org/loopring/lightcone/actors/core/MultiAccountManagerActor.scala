@@ -28,6 +28,7 @@ import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
+import org.web3j.utils._
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -80,6 +81,8 @@ object MultiAccountManagerActor extends ShardedByAddress {
     case req: AddressAllowanceUpdated                 => req.address
     case req: CutoffEvent                             => req.owner //todo:暂不支持broker
     case req: OrderFilledEvent                        => req.owner
+    case Notify(InitializerActor.NOTIFY_MSG, address) =>
+      Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
   }
 }
 
