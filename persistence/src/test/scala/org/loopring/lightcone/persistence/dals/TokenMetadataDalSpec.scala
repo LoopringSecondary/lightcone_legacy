@@ -14,23 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto._
-import scala.concurrent._
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class TokenMetadataServiceSpec extends ServiceSpec[TokenMetadataService] {
-
-  implicit var dal: TokenMetadataDal = _
-
-  def getService = {
-    dal = new TokenMetadataDalImpl()
-    new TokenMetadataServiceImpl()
-  }
-
-  def createTables(): Unit = dal.createTable()
+class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
+  def getDal = new TokenMetadataDalImpl()
 
   "save tokens config" must "save some token configs" in {
     info("save 3 token configs")
@@ -73,12 +64,12 @@ class TokenMetadataServiceSpec extends ServiceSpec[TokenMetadataService] {
         usdPrice = 7
       )
     )
-    val r1 = service.saveTokens(tokens1)
+    val r1 = dal.saveTokens(tokens1)
     val res1 = Await.result(r1.mapTo[Seq[String]], 5.second)
     assert(res1.length == tokens1.length)
 
     info("query the token configs just saved")
-    val r2 = service.getTokens(tokens1.map(_.address))
+    val r2 = dal.getTokens(tokens1.map(_.address))
     val res2 = Await.result(r2.mapTo[Seq[TokenMetadata]], 5.second)
     assert(res2.length == tokens1.length)
     val lrc = res2.find(_.symbol == "LRC").getOrElse(TokenMetadata())
@@ -97,10 +88,10 @@ class TokenMetadataServiceSpec extends ServiceSpec[TokenMetadataService] {
 
     info("duplicate token address save should return error")
     val token3 = lrc.copy(precision = 8)
-    val r3 = service.saveToken(token3)
+    val r3 = dal.saveToken(token3)
     val res3 = Await.result(r3.mapTo[ErrorCode], 5.second)
     assert(res3 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
-    val r4 = service.getTokens(Seq(token3.address))
+    val r4 = dal.getTokens(Seq(token3.address))
     val res4 = Await.result(r4.mapTo[Seq[TokenMetadata]], 5.second)
     assert(res4.length == 1)
     val lrc1 = res4.find(_.symbol == "LRC")
@@ -109,21 +100,21 @@ class TokenMetadataServiceSpec extends ServiceSpec[TokenMetadataService] {
     info(
       "should not save token with too long address :0xBe4C1cb10C2Be76798c4186ADbbC34356b358b521"
     )
-    val r5 = service.saveToken(
+    val r5 = dal.saveToken(
       lrc.copy(address = "0xBe4C1cb10C2Be76798c4186ADbbC34356b358b521")
     )
     val res5 = Await.result(r5.mapTo[ErrorCode], 5.second)
     assert(res5 == ErrorCode.ERR_PERSISTENCE_INTERNAL)
-    val r6 = service.getTokens(Seq(lrc.address))
+    val r6 = dal.getTokens(Seq(lrc.address))
     val res6 = Await.result(r6.mapTo[Seq[TokenMetadata]], 5.second)
     val lrc2 = res4.find(_.symbol == "LRC")
     assert(lrc2.nonEmpty && lrc2.get.address == lrcAddress)
 
     info("update LRC's burn rate")
-    val r7 = service.updateBurnRate(lrcAddress, 0.5)
+    val r7 = dal.updateBurnRate(lrcAddress, 0.5)
     val res7 = Await.result(r7.mapTo[ErrorCode], 5.second)
     assert(res7 == ErrorCode.ERR_NONE)
-    val r8 = service.getTokens(Seq(lrcAddress))
+    val r8 = dal.getTokens(Seq(lrcAddress))
     val res8 = Await.result(r8.mapTo[Seq[TokenMetadata]], 5.second)
     val lrc3 = res8.find(_.symbol == "LRC")
     assert(
@@ -146,7 +137,7 @@ class TokenMetadataServiceSpec extends ServiceSpec[TokenMetadataService] {
         bnb.burnRate == 0.2 &&
         bnb.usdPrice == 8
     )
-    val r9 = service.updateToken(
+    val r9 = dal.updateToken(
       bnb.copy(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC1400,
         status = TokenMetadata.Status.DISABLED,
@@ -161,7 +152,7 @@ class TokenMetadataServiceSpec extends ServiceSpec[TokenMetadataService] {
     )
     val res9 = Await.result(r9.mapTo[ErrorCode], 5.second)
     assert(res9 == ErrorCode.ERR_NONE)
-    val r10 = service.getTokens(Seq(bnb.address))
+    val r10 = dal.getTokens(Seq(bnb.address))
     val res10 = Await.result(r10.mapTo[Seq[TokenMetadata]], 5.second)
     val bnb1 = res10.find(_.symbol == "BNB1").getOrElse(TokenMetadata())
     assert(
@@ -177,5 +168,4 @@ class TokenMetadataServiceSpec extends ServiceSpec[TokenMetadataService] {
         bnb1.usdPrice == 7
     )
   }
-
 }
