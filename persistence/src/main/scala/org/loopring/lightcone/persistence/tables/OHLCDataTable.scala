@@ -20,8 +20,12 @@ import org.loopring.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
 
+object OHLCDataTable {
+  val tableName = "T_OHLC_DATA"
+}
+
 class OHLCDataTable(tag: Tag)
-    extends BaseTable[OHLCRawData](tag, "T_OHLC_DATA") {
+    extends BaseTable[OHLCRawData](tag, OHLCDataTable.tableName) {
 
   def id = txHash
   def ringIndex = column[Long]("ring_index")
@@ -33,15 +37,12 @@ class OHLCDataTable(tag: Tag)
   def price = column[Double]("price", O.SqlType("DOUBLE PRECISION"))
 
   def * =
-    (
-      ringIndex,
-      txHash,
-      marketKey,
-      time,
-      quality,
-      amount,
-      price
-    ) <> ((OHLCRawData.apply _).tupled, OHLCRawData.unapply)
+    (ringIndex, txHash, marketKey, time, quality, amount, price) <> ((OHLCRawData.apply _).tupled, OHLCRawData.unapply)
 
   def pk = primaryKey("pk_r_t", (ringIndex, txHash))
+
+  def idx_market_key = index("idx_market_key", (marketKey), unique = false)
+
+  def idx_market_key_time =
+    index("idx_market_key_time", (marketKey, time), unique = false)
 }

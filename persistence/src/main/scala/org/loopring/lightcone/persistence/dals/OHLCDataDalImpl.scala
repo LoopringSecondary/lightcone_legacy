@@ -17,10 +17,7 @@
 package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.tables.OHLCDataTable
-import org.loopring.lightcone.proto.ErrorCode.{
-  ERR_NONE,
-  ERR_PERSISTENCE_INTERNAL
-}
+import org.loopring.lightcone.proto.ErrorCode._
 import slick.basic.DatabaseConfig
 import slick.lifted.TableQuery
 
@@ -38,27 +35,25 @@ import scala.util.{Failure, Success}
 class OHLCDataDalImpl @Inject()(
     implicit
     val ec: ExecutionContext,
-    @Named("dbconfig-dal-ohlc-data") val dbConfig: DatabaseConfig[
-      JdbcProfile
-    ])
+    @Named("dbconfig-dal-ohlc-data") val dbConfig: DatabaseConfig[JdbcProfile])
     extends OHLCDataDal {
 
   val query = TableQuery[OHLCDataTable]
 
-  def saveData(record: OHLCRawData): Future[PersistRawData.Res] = {
+  def saveData(record: OHLCRawData): Future[PersistOHLCData.Res] = {
     insertOrUpdate(record).map {
       case 0 =>
         logger.error("saving OHLC raw data failed")
-        PersistRawData.Res(error = ERR_PERSISTENCE_INTERNAL, record = None)
+        PersistOHLCData.Res(error = ERR_PERSISTENCE_INTERNAL)
       case _ => {
-        PersistRawData.Res(error = ERR_NONE, record = Some(record))
+        PersistOHLCData.Res(error = ERR_NONE, record = Some(record))
       }
 
     }
   }
 
   def getOHLCData(
-      marketId: String,
+      marketKey: String,
       interval: Long,
       beginTime: Long,
       endTime: Long
@@ -76,21 +71,22 @@ class OHLCDataDalImpl @Inject()(
           r.nextDouble
         )
     )
-    val tableName = "T_OHLC_DATA"
-    val sql =
-      sql"""select
-        time_bucket($interval, time) as starting_point
-        t.market_id,
-        MAX(price) as highest_price,
-        MIN(price) as lowest_price,
-        SUM(volume_a) as volume_a_sum,
-        SUM(volume_b) as volume_b_sum,
-        first(price, time) as opening_price,
-        last(price, time) as closing_price
-        from $tableName t where market_key = marketKey
-        and time < $beginTime and time > $endTime GROUP BY time_flag"""
-        .as[OHLCData]
-    db.run(sql).map(r => GetOHLCData.Res(r.toSeq))
 
+    val sql = sql"""select
+        time_bucket($interval, time) AS starting_point
+        t.market_key,
+        MAX(price) AS highest_price,
+        MIN(price) AS lowest_price,
+        SUM(quality) AS volume_a_sum,
+        SUM(amount) AS volume_b_sum,
+        first(price, time) AS opening_price,
+        last(price, time) AS closing_price
+        FROM ${OHLCDataTable.tableName} t
+        WHERE market_key = marketKey
+        AND time < $beginTime AND
+        time > $endTime GROUP BY time_flag
+        """.as[OHLCData]
+
+    db.run(sql).map(r => GetOHLCData.Res(r.toSeq))
   }
 }

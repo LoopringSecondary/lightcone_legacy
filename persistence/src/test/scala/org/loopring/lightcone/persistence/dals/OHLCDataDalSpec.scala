@@ -16,12 +16,13 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.proto.{OHLCRawData, PersistRawData}
+import org.loopring.lightcone.proto.{OHLCRawData, PersistOHLCData}
 import org.loopring.lightcone.proto.ErrorCode.ERR_NONE
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
+// TODO(yangli): add more tests here expecially query-related tests.
 class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
   def getDal = new OHLCDataDalImpl()
 
@@ -38,7 +39,7 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
       price = 3.5
     )
     val result = dal.saveData(data)
-    val res = Await.result(result.mapTo[PersistRawData.Res], 5.second)
+    val res = Await.result(result.mapTo[PersistOHLCData.Res], 5.second)
     res.error should be(ERR_NONE)
     res.record.get should be(data)
   }

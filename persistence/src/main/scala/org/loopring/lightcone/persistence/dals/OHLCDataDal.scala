@@ -25,10 +25,10 @@ import org.loopring.lightcone.proto._
 trait OHLCDataDal extends BaseDalImpl[OHLCDataTable, OHLCRawData] {
 
   // Save a order to the database and returns the saved order and indicate
-  def saveData(record: OHLCRawData): Future[PersistRawData.Res]
+  def saveData(record: OHLCRawData): Future[PersistOHLCData.Res]
 
   def getOHLCData(
-      marketId: String,
+      marketKey: String,
       interval: Long,
       beginTime: Long,
       endTime: Long

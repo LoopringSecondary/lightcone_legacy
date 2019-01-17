@@ -228,7 +228,7 @@ message GetTransactionRecordCount {
     }
 }
 
-message PersistRawData {
+message PersistOHLCData {
     message Req {
         OHLCRawData data    = 1;
     }
