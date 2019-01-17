@@ -21,6 +21,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.cluster.sharding._
 import akka.pattern.ask
+import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
@@ -91,6 +92,10 @@ object MarketManagerActor extends ShardedByMarket {
       marketId
     case req: RingMinedEvent if req.fills.size >= 2 =>
       MarketId(req.fills(0).tokenS, req.fills(1).tokenS)
+    case Notify(AliveKeeperActor.NOTIFY_MSG, marketIdStr) =>
+      val tokens = marketIdStr.split("-")
+      val (primary, secondary) = (tokens(0), tokens(1))
+      MarketId(primary, secondary)
   }
 
 }
@@ -163,9 +168,13 @@ class MarketManagerActor(
       becomeReady()
     } else {
       log.debug(s"actor recover started: ${self.path}")
+      context.become(recover)
       for {
         _ <- actors.get(OrderRecoverCoordinator.name) ?
-          ActorRecover.Request(marketId = Some(marketId))
+          ActorRecover.Request(
+            marketId = Some(marketId),
+            sender = Serialization.serializedActorPath(self)
+          )
       } yield {
         autoSwitchBackToReady = Some(
           context.system.scheduler
@@ -175,7 +184,6 @@ class MarketManagerActor(
               ActorRecover.Finished(true)
             )
         )
-        context.become(recover)
       }
     }
   }
@@ -192,11 +200,14 @@ class MarketManagerActor(
       context.become(ready)
 
     case msg: Any =>
-      log.warning(s"message not handled during recover")
-      sender ! Error(
-        ERR_REJECTED_DURING_RECOVER,
-        s"market manager `${entityId}` is being recovered"
-      )
+      log.warning(s"message not handled during recover, ${msg}, ${sender}")
+      //sender 是自己时，不再发送Error信息
+      if (sender != self) {
+        sender ! Error(
+          ERR_REJECTED_DURING_RECOVER,
+          s"market manager `${entityId}` is being recovered"
+        )
+      }
   }
 
   def ready: Receive = {
@@ -269,7 +280,6 @@ class MarketManagerActor(
 
           // submit order to reserve balance and allowance
           matchResult = manager.submitOrder(matchable, minRequiredIncome)
-
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
         } yield Unit

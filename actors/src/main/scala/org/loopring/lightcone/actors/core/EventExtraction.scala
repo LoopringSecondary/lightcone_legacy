@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.base
+package org.loopring.lightcone.actors.core
 
 import akka.actor.ActorRef
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.actors.ethereum.{
-  EthereumAccessActor,
-  EventDispatcher
-}
+import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.proto._
 import akka.pattern._
 import akka.util.Timeout
@@ -33,45 +31,49 @@ import org.web3j.utils.Numeric
 
 import scala.util.{Failure, Success}
 
-trait EventExtractorActor {
+trait EventExtraction {
   actor: ActorWithPathBasedConfig =>
   implicit val timeout: Timeout
   implicit val actors: Lookup[ActorRef]
   implicit val dispatchers: Seq[EventDispatcher[_]]
   implicit val dbModule: DatabaseModule
   var blockData: RawBlockData = _
-  val NEXT = "next"
-  val INCOMPLETE = "incomplete"
-  val COMPLETED = "completed"
 
-  var blockEnd = Long.MaxValue
+  val GET_BLOCK = Notify("get_block")
+  val RETRIEVE_RECEIPTS = Notify("retrieve_receipts")
+  val PROCESS_EVENTS = Notify("process_events")
+
+  var untilBlock = Long.MaxValue
   def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
-  def ready: Receive = {
-    case Notify(NEXT, _) =>
+  def handleMessage: Receive = {
+    case GET_BLOCK =>
+      assert(blockData != null)
+
       getBlockData(blockData.height + 1).map {
         case Some(block) =>
           blockData = block
-          self ! Notify(INCOMPLETE)
+          self ! RETRIEVE_RECEIPTS
         case None =>
-          context.system.scheduler.scheduleOnce(5 seconds, self, Notify(NEXT))
+          context.system.scheduler
+            .scheduleOnce(1 seconds, self, GET_BLOCK)
       }
-    case Notify(INCOMPLETE, _) =>
+    case RETRIEVE_RECEIPTS =>
       for {
         receipts <- getAllReceipts
       } yield {
         if (receipts.forall(_.nonEmpty)) {
           blockData = blockData.withReceipts(receipts.map(_.get))
-          self ! Notify(COMPLETED)
+          self ! PROCESS_EVENTS
         } else {
           context.system.scheduler
-            .scheduleOnce(500 millis, self, Notify(INCOMPLETE))
+            .scheduleOnce(500 millis, self, RETRIEVE_RECEIPTS)
         }
       }
-    case Notify(COMPLETED, _) =>
-      process onComplete {
+    case PROCESS_EVENTS =>
+      processEvents onComplete {
         case Success(_) =>
-          if (blockData.height < blockEnd) self ! Notify(NEXT)
+          if (blockData.height < untilBlock) self ! GET_BLOCK
         case Failure(e) =>
           log.error(
             s" Actor: $name extracts ethereum events failed with error:${e.getMessage}"
@@ -122,7 +124,7 @@ trait EventExtractorActor {
     )).mapAs[BatchGetTransactionReceipts.Res]
       .map(_.resps.map(_.result))
 
-  def process: Future[_] = {
+  def processEvents: Future[_] = {
     dispatchers.foreach(_.dispatch(blockData))
     dbModule.blockService.saveBlock(
       BlockData(

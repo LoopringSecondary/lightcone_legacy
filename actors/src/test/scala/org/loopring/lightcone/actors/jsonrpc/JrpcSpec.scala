@@ -25,6 +25,7 @@ import scala.concurrent.Await
 class JrpcSpec
     extends CommonSpec
     with EthereumSupport
+    with MetadataManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with JsonrpcSupport

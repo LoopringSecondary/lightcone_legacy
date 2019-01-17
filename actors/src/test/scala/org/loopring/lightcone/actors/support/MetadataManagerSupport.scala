@@ -16,12 +16,19 @@
 
 package org.loopring.lightcone.actors.support
 
+import java.util.concurrent.TimeUnit
 import org.loopring.lightcone.actors.core.MetadataManagerActor
 import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.actors.validator.{
   MessageValidationActor,
   MetadataManagerValidator
 }
+import org.loopring.lightcone.proto.{JsonRpc, LoadTokenMetadata}
+import org.rnorth.ducttape.TimeoutException
+import org.rnorth.ducttape.unreliables.Unreliables
+import org.testcontainers.containers.ContainerLaunchException
+import akka.pattern._
+import scala.concurrent.Await
 
 trait MetadataManagerSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
@@ -35,6 +42,24 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
       MetadataManagerValidator.name
     )
   )
+  try Unreliables.retryUntilTrue(
+    10,
+    TimeUnit.SECONDS,
+    () => {
+      val f =
+        (actors.get(MetadataManagerActor.name) ? LoadTokenMetadata.Req())
+          .mapTo[LoadTokenMetadata.Res]
+      val res = Await.result(f, timeout.duration)
+      res.tokens.nonEmpty
+    }
+  )
+  catch {
+    case e: TimeoutException =>
+      throw new ContainerLaunchException(
+        "Timed out waiting for connectionPools init.)"
+      )
+  }
   actors.add(MetadataRefresher.name, MetadataRefresher.start)
-  supportedMarkets.reset
+
+  supportedMarkets.reset(Seq(LRC_WETH_MARKET, GTO_WETH_MARKET))
 }

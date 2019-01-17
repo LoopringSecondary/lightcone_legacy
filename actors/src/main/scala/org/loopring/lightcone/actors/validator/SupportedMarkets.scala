@@ -16,45 +16,43 @@
 
 package org.loopring.lightcone.actors.validator
 
-import java.math.BigInteger
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.{ErrorException, MarketHashProvider}
 import org.loopring.lightcone.proto._
-import org.web3j.utils.Numeric
 
 // Owner: Hongyu
 case class SupportedMarkets(config: Config) {
 
-  private var disabledMarketsKey: Set[BigInteger] = Set.empty
-  private var enabledMarketsKey: Set[BigInteger] = Set.empty
-  private var readOnlyMarketsKey: Set[BigInteger] = Set.empty
-  private var marketsMetadataMap = Map.empty[String, MarketMetadata]
+  // marketHash -> MarketId
+  private var disabledMarkets: Map[String, MarketId] = Map.empty
+  private var enabledMarkets: Map[String, MarketId] = Map.empty
+  private var readOnlyMarkets: Map[String, MarketId] = Map.empty
+  private var metadatas = Map.empty[String, MarketMetadata]
 
   private def toMarketHashInBigInt(
       primary: String,
       secondary: String
-    ): BigInteger =
-    Numeric.toBigInt(primary) xor Numeric.toBigInt(secondary)
+    ): String = MarketHashProvider.convert2Hex(primary, secondary)
 
   def reset(metas: Seq[MarketMetadata]) = this.synchronized {
-    marketsMetadataMap = Map.empty
-    disabledMarketsKey = Set.empty
-    enabledMarketsKey = Set.empty
-    readOnlyMarketsKey = Set.empty
+    metadatas = Map.empty
+    disabledMarkets = Map.empty
+    enabledMarkets = Map.empty
+    readOnlyMarkets = Map.empty
     metas.foreach(addMarket)
   }
 
   def addMarket(meta: MarketMetadata) = this.synchronized {
-    marketsMetadataMap += meta.marketHash -> meta
+    metadatas += meta.marketHash -> meta
     meta.status match {
       case MarketMetadata.Status.DISABLED =>
-        disabledMarketsKey += Numeric.toBigInt(meta.marketHash)
+        disabledMarkets += meta.marketHash -> meta.marketId.get
       case MarketMetadata.Status.ENABLED =>
-        enabledMarketsKey += Numeric.toBigInt(meta.marketHash)
+        enabledMarkets += meta.marketHash -> meta.marketId.get
       case MarketMetadata.Status.READONLY =>
-        readOnlyMarketsKey += Numeric.toBigInt(meta.marketHash)
+        readOnlyMarkets += meta.marketHash -> meta.marketId.get
       case m =>
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
@@ -70,7 +68,7 @@ case class SupportedMarkets(config: Config) {
   }
 
   def contains(marketId: MarketId) = {
-    enabledMarketsKey.contains(marketId.key)
+    enabledMarkets.contains(marketId.key.toString(16))
   }
 
   def assertmarketIdIsValid(marketIdOpt: Option[MarketId]): Option[MarketId] = {
@@ -95,5 +93,7 @@ case class SupportedMarkets(config: Config) {
     )
   }
 
-  def getMarketKeys() = enabledMarketsKey
+  def getAvailableMarkets() = enabledMarkets
+
+  def getAvaliableMarketKeys() = enabledMarkets.keySet
 }

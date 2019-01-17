@@ -25,13 +25,13 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
-
 import scala.collection.JavaConverters._
 import scala.concurrent._
 
@@ -51,22 +51,17 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       tokenManager: TokenManager,
+      supportedMarkets: SupportedMarkets,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("instances-per-market")
 
-    val markets = config
-      .getObjectList("markets")
-      .asScala
-      .map { item =>
-        val c = item.toConfig
-        val marketId =
-          MarketId(
-            LAddress(c.getString("primary")).toString,
-            LAddress(c.getString("secondary")).toString
-          )
+    val markets = supportedMarkets
+      .getAvailableMarkets()
+      .values
+      .map { marketId =>
         getEntityId(marketId) -> marketId
       }
       .toMap
@@ -84,6 +79,10 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
   val extractMarketId: PartialFunction[Any, MarketId] = {
     case GetOrderbook.Req(_, _, Some(marketId))    => marketId
     case Orderbook.Update(_, _, _, Some(marketId)) => marketId
+    case Notify(AliveKeeperActor.NOTIFY_MSG, marketIdStr) =>
+      val tokens = marketIdStr.split("-")
+      val (primary, secondary) = (tokens(0), tokens(1))
+      MarketId(primary, secondary)
   }
 }
 
@@ -101,11 +100,14 @@ class OrderbookManagerActor(
       OrderbookManagerActor.name,
       OrderbookManagerActor.extractEntityId
     ) {
+  println("___________________", entityId)
   val marketId = markets(entityId)
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
 
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
+
+  println("___________________", marketIdHashedValue)
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
   // based on marketId

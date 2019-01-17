@@ -73,16 +73,19 @@ class AccountManagerActor(
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   override def preStart() = {
-    val cutoffReqs = (supportedMarkets.getMarketKeys() map { m =>
+    val cutoffReqs = (supportedMarkets.getAvaliableMarketKeys() map { m =>
       for {
         res <- (ethereumQueryActor ? GetCutoff.Req(
           broker = address,
           owner = address,
-          tokenPair = Numeric.toHexStringWithPrefix(m)
+          tokenPair = m
         )).mapAs[GetCutoff.Res]
       } yield {
         val cutoff: BigInt = res.cutoff
-        accountCutoffState.setTradingPairCutoff(m, cutoff.toLong)
+        accountCutoffState.setTradingPairCutoff(
+          Numeric.toBigInt(m),
+          cutoff.toLong
+        )
       }
     }) +
       (for {

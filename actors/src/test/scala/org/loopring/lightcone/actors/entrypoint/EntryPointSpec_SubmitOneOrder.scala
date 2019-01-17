@@ -25,9 +25,10 @@ class EntryPointSpec_SubmitOneOrder
     extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
+    with EthereumSupport
+    with MetadataManagerSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport {

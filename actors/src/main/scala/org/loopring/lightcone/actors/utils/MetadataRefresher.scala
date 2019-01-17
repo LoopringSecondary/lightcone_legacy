@@ -105,6 +105,7 @@ class MetadataRefresher(
 
   private def loadMarkets() =
     for {
+      _ <- Future.unit
       markets_ <- (metadataManagerActor ? LoadMarketMetadata.Req())
         .mapTo[LoadMarketMetadata.Res]
         .map(_.markets)
