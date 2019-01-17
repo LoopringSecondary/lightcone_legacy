@@ -53,7 +53,7 @@ class OHLCDataDalImpl @Inject()(
   }
 
   def getOHLCData(
-      marketId: String,
+      marketKey: String,
       interval: Long,
       beginTime: Long,
       endTime: Long
@@ -74,17 +74,19 @@ class OHLCDataDalImpl @Inject()(
 
     val sql = sql"""select
         time_bucket($interval, time) AS starting_point
-        t.market_id,
+        t.market_key,
         MAX(price) AS highest_price,
         MIN(price) AS lowest_price,
-        SUM(volume_a) AS volume_a_sum,
-        SUM(volume_b) AS volume_b_sum,
+        SUM(quality) AS volume_a_sum,
+        SUM(amount) AS volume_b_sum,
         first(price, time) AS opening_price,
         last(price, time) AS closing_price
-        FROM ${OHLCDataTable.tableName} t WHERE market_key = marketKey
-        AND time < $beginTime AND time > $endTime GROUP BY time_flag"""
-      .as[OHLCData]
-    db.run(sql).map(r => GetOHLCData.Res(r.toSeq))
+        FROM ${OHLCDataTable.tableName} t
+        WHERE market_key = marketKey
+        AND time < $beginTime AND
+        time > $endTime GROUP BY time_flag
+        """.as[OHLCData]
 
+    db.run(sql).map(r => GetOHLCData.Res(r.toSeq))
   }
 }
