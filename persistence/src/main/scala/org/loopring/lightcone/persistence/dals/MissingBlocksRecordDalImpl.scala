@@ -34,19 +34,23 @@ class MissingBlocksRecordDalImpl @Inject()(
     extends MissingBlocksRecordDal {
   val query = TableQuery[MissingBlocksRecordTable]
 
-  def saveMissingBlock(record: MissingBlocksRecord): Future[Int] = insert(record)
+  def saveMissingBlock(record: MissingBlocksRecord): Future[Int] =
+    insert(record)
 
-  def getAllMissingBlocks(): Future[Seq[MissingBlocksRecord]] = db.run(query.result)
+  def getOldestOne(): Future[Option[MissingBlocksRecord]] =
+    db.run(query.take(1).sortBy(_.sequenceId.asc).result.headOption)
 
   def updateProgress(
       sequenceId: Long,
       progressTo: Long
     ): Future[Int] =
-    db.run(query
+    db.run(
+      query
         .filter(_.sequenceId === sequenceId)
         .map(c => c.lastHandledBlock)
         .update(progressTo)
     )
 
-  def deleteRecord(sequenceId: Long): Future[Boolean] = db.run(query.filter(_.sequenceId === sequenceId).delete)
+  def deleteRecord(sequenceId: Long): Future[Boolean] =
+    db.run(query.filter(_.sequenceId === sequenceId).delete).map(_ > 0)
 }

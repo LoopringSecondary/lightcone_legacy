@@ -16,21 +16,25 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.persistence.base.BaseDalImpl
+import org.loopring.lightcone.persistence.tables.MarketMetadataTable
 import org.loopring.lightcone.proto._
-import scala.concurrent._
+import scala.concurrent.Future
 
-trait MissingBlocksRecordDal
-    extends BaseDalImpl[MissingBlocksRecordTable, MissingBlocksRecord] {
-  def saveMissingBlock(record: MissingBlocksRecord): Future[Int]
+trait MarketMetadataDal
+    extends BaseDalImpl[MarketMetadataTable, MarketMetadata] {
 
-  def getOldestOne(): Future[Option[MissingBlocksRecord]]
+  def saveMarket(marketMetadata: MarketMetadata): Future[ErrorCode]
 
-  def updateProgress(
-      sequenceId: Long,
-      progressTo: Long
-    ): Future[Int]
+  def saveMarkets(marketMetadatas: Seq[MarketMetadata]): Future[Seq[String]]
 
-  def deleteRecord(sequenceId: Long): Future[Boolean]
+  def updateMarket(marketMetadata: MarketMetadata): Future[ErrorCode]
+
+  def getMarkets(): Future[Seq[MarketMetadata]]
+
+  def getMarketsByHashes(
+      marketsHashes: Seq[String]
+    ): Future[Seq[MarketMetadata]]
+
+  def disableMarketByHash(marketHash: String): Future[ErrorCode]
 }

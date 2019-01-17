@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.actors.ethereum.event
 
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.actors.data._
 import org.web3j.utils.Numeric
+
+import scala.concurrent.{ExecutionContext, Future}
 
 trait EventExtractor[R] {
 
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Seq[R]
+  implicit val ec: ExecutionContext
+
+  def extract(block: RawBlockData): Future[Seq[R]]
 
   def getEventHeader(
       tx: Transaction,
@@ -60,4 +61,13 @@ trait EventExtractor[R] {
       case e: Throwable => false
     }
   }
+
+  def formatHex(str: String): String = {
+    if (Numeric.cleanHexPrefix(str).isEmpty) {
+      str + "0"
+    } else {
+      str
+    }
+  }
+
 }

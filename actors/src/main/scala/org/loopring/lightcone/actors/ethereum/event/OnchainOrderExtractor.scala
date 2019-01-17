@@ -14,27 +14,29 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.actors.ethereum.event
 
+import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+import scala.concurrent._
+import org.loopring.lightcone.actors.data._
 
-class OnchainOrderExtractor extends EventExtractor[RawOrder] {
+class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
+    extends EventExtractor[RawOrder] {
 
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Seq[RawOrder] = {
-    receipt.logs.map { log =>
-      loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-        case Some(event: OrderSubmittedEvent.Result) =>
-          Some(extractOrderFromEvent(event))
-        case _ =>
-          None
-      }
-    }.filter(_.nonEmpty).map(_.get)
+  def extract(block: RawBlockData): Future[Seq[RawOrder]] = Future {
+    block.receipts.flatMap { receipt =>
+      receipt.logs.map { log =>
+        loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+          case Some(event: OrderSubmittedEvent.Result) =>
+            Some(extractOrderFromEvent(event))
+          case _ =>
+            None
+        }
+      }.filter(_.nonEmpty).map(_.get)
+    }
   }
 
   private def extractOrderFromEvent(
@@ -59,16 +61,7 @@ class OnchainOrderExtractor extends EventExtractor[RawOrder] {
             Numeric.toBigInt(data.substring(64 * 9, 64 * 10)).intValue(),
           allOrNone = Numeric
             .toBigInt(data.substring(64 * 10, 64 * 11))
-            .intValue() == 1,
-          tokenStandardS = TokenStandard.fromValue(
-            Numeric.toBigInt(data.substring(64 * 17, 64 * 18)).intValue()
-          ),
-          tokenStandardB = TokenStandard.fromValue(
-            Numeric.toBigInt(data.substring(64 * 18, 64 * 19)).intValue()
-          ),
-          tokenStandardFee = TokenStandard.fromValue(
-            Numeric.toBigInt(data.substring(64 * 19, 64 * 20)).intValue()
-          )
+            .intValue() == 1
         )
       ),
       hash = event.orderHash,
@@ -89,6 +82,15 @@ class OnchainOrderExtractor extends EventExtractor[RawOrder] {
       ),
       erc1400Params = Some(
         RawOrder.ERC1400Params(
+          tokenStandardS = TokenStandard.fromValue(
+            Numeric.toBigInt(data.substring(64 * 17, 64 * 18)).intValue()
+          ),
+          tokenStandardB = TokenStandard.fromValue(
+            Numeric.toBigInt(data.substring(64 * 18, 64 * 19)).intValue()
+          ),
+          tokenStandardFee = TokenStandard.fromValue(
+            Numeric.toBigInt(data.substring(64 * 19, 64 * 20)).intValue()
+          ),
           trancheS = Numeric.prependHexPrefix(data.substring(64 * 20, 64 * 21)),
           trancheB = Numeric.prependHexPrefix(data.substring(64 * 21, 64 * 22)),
           transferDataS =

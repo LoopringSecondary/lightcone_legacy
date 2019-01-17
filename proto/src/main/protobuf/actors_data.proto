@@ -48,9 +48,6 @@ message RawOrder {
         string sig                                 = 6;
         string dual_auth_sig                       = 7;
         bool   all_or_none                         = 8;
-        TokenStandard token_standard_s             = 9;
-        TokenStandard token_standard_b             = 10;
-        TokenStandard token_standard_fee           = 11;
         string dual_auth_private_key               = 12;
     }
 
@@ -65,9 +62,13 @@ message RawOrder {
     }
 
     message ERC1400Params {
-        string    tranche_s            = 53;
-        string    tranche_b            = 54;
-        string    transfer_data_s      = 55;
+        TokenStandard token_standard_s    = 1;
+        TokenStandard token_standard_b    = 2;
+        TokenStandard token_standard_fee  = 3;
+        
+        string    tranche_s            = 4;
+        string    tranche_b            = 5;
+        string    transfer_data_s      = 6;
     }
 
     // // The following fieds are not part of Loopring's order definition but
