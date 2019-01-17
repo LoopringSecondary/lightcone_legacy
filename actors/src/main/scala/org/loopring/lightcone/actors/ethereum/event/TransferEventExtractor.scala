@@ -39,6 +39,7 @@ class TransferEventExtractor @Inject()(
     (block.txs zip block.receipts).foreach {
       case (tx, receipt) =>
         val header = getEventHeader(tx, receipt, block.timestamp)
+        val txValue = BigInt(Numeric.toBigInt(formatHex(tx.value)))
         if (isSucceed(receipt.status)) {
           receipt.logs.zipWithIndex.foreach {
             case (log, index) =>
@@ -50,7 +51,7 @@ class TransferEventExtractor @Inject()(
                       from = transfer.from,
                       to = transfer.receiver,
                       token = log.address,
-                      amount = transfer.amount.toByteArray
+                      amount = transfer.amount
                     )
                   )
                 case Some(withdraw: WithdrawalEvent.Result) =>
@@ -60,14 +61,14 @@ class TransferEventExtractor @Inject()(
                       from = withdraw.src,
                       to = log.address,
                       token = log.address,
-                      amount = withdraw.wad.toByteArray
+                      amount = withdraw.wad
                     ),
                     PTransferEvent(
                       Some(header.withLogIndex(index)),
                       from = log.address,
                       to = withdraw.src,
                       token = Address.ZERO.toString(),
-                      amount = withdraw.wad.toByteArray
+                      amount = withdraw.wad
                     )
                   )
                 case Some(deposit: DepositEvent.Result) =>
@@ -77,20 +78,20 @@ class TransferEventExtractor @Inject()(
                       from = log.address,
                       to = deposit.dst,
                       token = log.address,
-                      amount = deposit.wad.toByteArray
+                      amount = deposit.wad
                     ),
                     PTransferEvent(
                       Some(header.withLogIndex(index)),
                       from = deposit.dst,
                       to = log.address,
                       token = Address.ZERO.toString(),
-                      amount = deposit.wad.toByteArray
+                      amount = deposit.wad
                     )
                   )
                 case _ =>
               }
           }
-          if (BigInt(Numeric.toBigInt(formatHex(tx.value))) > 0 && !Address(
+          if (txValue > 0 && !Address(
                 tx.to
               ).equals(wethAddress)) {
             transfers.append(
@@ -99,7 +100,7 @@ class TransferEventExtractor @Inject()(
                 from = tx.from,
                 to = tx.to,
                 token = Address.ZERO.toString(),
-                amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
+                amount = txValue
               )
             )
           }
@@ -112,7 +113,7 @@ class TransferEventExtractor @Inject()(
                   from = tx.from,
                   to = transfer.to,
                   token = tx.to,
-                  amount = transfer.amount.toByteArray
+                  amount = transfer.amount
                 )
               )
             case Some(transferFrom: TransferFromFunction.Parms) =>
@@ -122,7 +123,7 @@ class TransferEventExtractor @Inject()(
                   from = transferFrom.txFrom,
                   to = transferFrom.to,
                   token = tx.to,
-                  amount = transferFrom.amount.toByteArray
+                  amount = transferFrom.amount
                 )
               )
             case Some(_: DepositFunction.Parms) =>
@@ -132,14 +133,14 @@ class TransferEventExtractor @Inject()(
                   from = tx.to,
                   to = tx.from,
                   token = tx.to,
-                  amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
+                  amount = txValue
                 ),
                 PTransferEvent(
                   header = Some(header),
                   from = tx.from,
                   to = tx.to,
                   token = Address.ZERO.toString(),
-                  amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
+                  amount = txValue
                 )
               )
             case Some(withdraw: WithdrawFunction.Parms) =>
@@ -149,25 +150,25 @@ class TransferEventExtractor @Inject()(
                   from = tx.from,
                   to = tx.to,
                   token = tx.to,
-                  amount = withdraw.wad.toByteArray
+                  amount = withdraw.wad
                 ),
                 PTransferEvent(
                   header = Some(header),
                   from = tx.to,
                   to = tx.from,
                   token = Address.ZERO.toString(),
-                  amount = withdraw.wad.toByteArray
+                  amount = withdraw.wad
                 )
               )
             case _ =>
-              if (BigInt(Numeric.toBigInt(formatHex(tx.value))) > 0) {
+              if (txValue > 0) {
                 transfers.append(
                   PTransferEvent(
                     header = Some(header),
                     from = tx.from,
                     to = tx.to,
                     token = Address.ZERO.toString(),
-                    amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
+                    amount = txValue
                   )
                 )
                 if (Address(tx.to).equals(wethAddress)) {
@@ -177,7 +178,7 @@ class TransferEventExtractor @Inject()(
                       from = tx.to,
                       to = tx.from,
                       token = tx.to,
-                      amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
+                      amount = txValue
                     )
                   )
                 }

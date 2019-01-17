@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
+import com.typesafe.config.Config
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.{ExecutionContext, Future}
