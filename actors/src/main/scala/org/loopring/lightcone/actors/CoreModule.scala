@@ -41,7 +41,6 @@ import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.actors.ethereum.event._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -82,7 +81,8 @@ class CoreModule(config: Config)
       "dbconfig-dal-block",
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-order-status-monitor",
-      "dbconfig-dal-market-metadata"
+      "dbconfig-dal-market-metadata",
+      "dbconfig-dal-missing-blocks-record"
     )
 
     // --- bind event extractors ---------------------
