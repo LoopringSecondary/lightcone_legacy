@@ -43,7 +43,7 @@ trait EventExtraction {
   val RETRIEVE_RECEIPTS = Notify("retrieve_receipts")
   val PROCESS_EVENTS = Notify("process_events")
 
-  var blockEnd = Long.MaxValue //TODO(yadong:) WHY?
+  var untilBlock = Long.MaxValue
   def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def handleMessage: Receive = {
@@ -73,8 +73,7 @@ trait EventExtraction {
     case PROCESS_EVENTS =>
       processEvents onComplete {
         case Success(_) =>
-          // TODO(yadong): when will blockData.height >= blockEnd?
-          if (blockData.height < blockEnd) self ! GET_BLOCK
+          if (blockData.height < untilBlock) self ! GET_BLOCK
         case Failure(e) =>
           log.error(
             s" Actor: $name extracts ethereum events failed with error:${e.getMessage}"

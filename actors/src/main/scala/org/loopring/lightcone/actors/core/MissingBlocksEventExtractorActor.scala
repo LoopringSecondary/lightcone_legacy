@@ -93,7 +93,7 @@ class MissingBlocksEventExtractorActor(
     processEvents.map(
       _ =>
         // TODO (yadong) 等待永丰的接口标记已经处理的高度
-        if (blockData.height == blockEnd) {
+        if (blockData.height >= untilBlock) {
           self ! NEXT_RANGE
         }
     )
