@@ -38,7 +38,7 @@ class AllowanceChangedAddressExtractor @Inject()(
     val config: Config,
     val brb: EthereumBatchCallRequestBuilder,
     val timeout: Timeout,
-    val lookup: Lookup[ActorRef],
+    val actors: Lookup[ActorRef],
     val ec: ExecutionContext)
     extends EventExtractor[AddressAllowanceUpdated] {
 
@@ -46,7 +46,7 @@ class AllowanceChangedAddressExtractor @Inject()(
   val delegateAddress = Address(protocolConf.getString("delegate-address"))
   val protocolAddress = Address(protocolConf.getString("protocol-address"))
 
-  def ethereumAccessor = lookup.get(EthereumAccessActor.name)
+  def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
   def extract(block: RawBlockData): Future[Seq[AddressAllowanceUpdated]] = {
     val allowanceAddresses = ListBuffer.empty[AddressAllowanceUpdated]
@@ -93,9 +93,7 @@ class AllowanceChangedAddressExtractor @Inject()(
         Future.successful(Seq.empty)
       }
     } yield {
-      (events zip tokenAllowances).map(
-        item => item._1.withBalance(item._2)
-      )
+      (events zip tokenAllowances).map(item => item._1.withBalance(item._2))
     }
   }
 

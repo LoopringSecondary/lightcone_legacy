@@ -76,26 +76,26 @@ class MissingBlocksEventExtractorActor(
     val dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name)
-    with EventExtractorActor {
-  val NEXT_RANGE = "next_range"
-  override def initialize(): Future[Unit] = Future.successful {
+    with EventExtraction {
+  val NEXT_RANGE = Notify("next_range")
+
+  override def initialize() = Future.successful {
     becomeReady()
-    self ! Notify(NEXT_RANGE)
+    self ! NEXT_RANGE
   }
 
-  override def ready: Receive = super.ready orElse {
-    case Notify(NEXT_RANGE, _) =>
+  def ready: Receive = handleMessage orElse {
+    case NEXT_RANGE =>
     //TODO（yadong）等待永丰的接口来查询最新的Missing blocks
   }
 
-  override def process: Future[_] = {
-    super.process.map(
+  def process =
+    processEvents.map(
       _ =>
         // TODO (yadong) 等待永丰的接口标记已经处理的高度
-        if (blockData.height == blockEnd) {
-          self ! Notify(NEXT_RANGE)
+        if (blockData.height >= untilBlock) {
+          self ! NEXT_RANGE
         }
     )
 
-  }
 }
