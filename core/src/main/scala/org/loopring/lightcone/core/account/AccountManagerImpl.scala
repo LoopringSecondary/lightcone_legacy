@@ -108,7 +108,12 @@ final private[core] class AccountManagerImpl(
       outstandingAmountS: BigInt
     ): (Boolean, Map[String, Matchable]) = this.synchronized {
     val adjustRes = adjustOrder(orderId, outstandingAmountS)
-    (adjustRes, this.orderPool.takeUpdatedOrdersAsMap())
+    //todo: 该处，如果没有变化的话，是否未返回该订单
+    (
+      adjustRes,
+      this.orderPool
+        .takeUpdatedOrdersAsMap() + (orderId -> orderPool.getOrder(orderId).get)
+    )
   }
 
   //TODO(litao): What if an order is re-submitted?
