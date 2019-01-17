@@ -45,7 +45,7 @@ trait OrderbookManagerSupport {
     .map { item =>
       val c = item.toConfig
       val marketId = MarketId(
-        LAddress(c.getString("priamry")).toString,
+        LAddress(c.getString("primary")).toString,
         LAddress(c.getString("secondary")).toString
       )
       val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))

@@ -64,7 +64,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
         val c = item.toConfig
         val marketId =
           MarketId(
-            LAddress(c.getString("priamry")).toString,
+            LAddress(c.getString("primary")).toString,
             LAddress(c.getString("secondary")).toString
           )
         getEntityId(marketId) -> marketId

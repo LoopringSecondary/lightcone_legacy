@@ -295,3 +295,14 @@ message GetNodeBlockHeight {
 message MetadataChanged {
 
 }
+
+message GetMetadatas {
+    message Req {
+
+    }
+
+    message Res {
+        repeated TokenMetadata  tokens  = 1;
+        repeated MarketMetadata markets = 2;
+    }
+}

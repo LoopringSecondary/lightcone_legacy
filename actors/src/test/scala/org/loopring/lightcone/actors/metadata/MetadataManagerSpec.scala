@@ -29,6 +29,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.lib.MarketHashProvider
 
 class MetadataManagerSpec
@@ -127,9 +128,17 @@ class MetadataManagerSpec
           usdPrice = 1
         )
       )
-      actor ! SaveTokenMetadatas.Req(tokens)
+
+      val saved = Await.result(
+        (actor ? SaveTokenMetadatas.Req(tokens)).mapTo[SaveTokenMetadatas.Res],
+        5.second
+      )
+      assert(saved.savedAddresses.length == tokens.length)
       info("waiting 3s for repeatJob to reload tokens config")
       Thread.sleep(3000)
+
+      info("subscriber should received the message")
+      probe.expectMsg(MetadataChanged())
 
       info("query the tokens from db")
       val r1 = dbModule.tokenMetadataDal.getTokens(tokens.map(_.address))
@@ -187,10 +196,6 @@ class MetadataManagerSpec
       assert(
         query1.length == 1 && query1.head.burnRate === burnRateRes.burnRate && query1.head.usdPrice == 20
       )
-      Thread.sleep(3000)
-
-      info("subscriber should received the message")
-      probe.expectMsg(MetadataChanged())
 
       info("send a message to disable lrc")
       val disabled = Await.result(
@@ -268,6 +273,9 @@ class MetadataManagerSpec
       actor ! SaveMarketMetadatas.Req(markets)
       Thread.sleep(3000)
 
+      info("subscriber should received the message")
+      probe.expectMsg(MetadataChanged())
+
       info("query the markets from db")
       val r1 = dbModule.marketMetadataDal.getMarketsByHashes(
         markets.map(_.marketHash)
@@ -323,7 +331,6 @@ class MetadataManagerSpec
       assert(
         res11.length == 1 && res11.head.priceDecimals == 2 && res11.head.status == MarketMetadata.Status.READONLY
       )
-      Thread.sleep(3000)
 
       info("send a message to disable lrc-weth")
       val disabled = Await.result(
@@ -341,9 +348,14 @@ class MetadataManagerSpec
       assert(
         query2.nonEmpty && query2.head.status == MarketMetadata.Status.DISABLED
       )
+    }
+  }
 
-      info("subscriber should received the message")
-      probe.expectMsg(MetadataChanged())
+  "get metadatas" must {
+    "call JRPC and get result" in {
+      val r = singleRequest(GetMetadatas.Req(), "get_metadatas")
+      val res = Await.result(r.mapTo[GetMetadatas.Res], timeout.duration)
+      assert(res.tokens.length == 7 && res.markets.length == 4)
     }
   }
 

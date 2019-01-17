@@ -66,7 +66,7 @@ object MarketManagerActor extends ShardedByMarket {
         val c = item.toConfig
         val marketId =
           MarketId(
-            LAddress(c.getString("priamry")).toString,
+            LAddress(c.getString("primary")).toString,
             LAddress(c.getString("secondary")).toString
           )
         MarketManagerActor.getEntityId(marketId) -> marketId
