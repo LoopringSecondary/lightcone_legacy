@@ -56,7 +56,7 @@ class HttpConnector(
   val LATEST = "latest"
   val JSONRPC_V = "2.0"
 
-  val emptyError = EthRpcError(code = 500, error = "result is empty")
+  val emptyError = EthRpcError(code = 500, message = "result is empty")
 
   private val poolClientFlow: Flow[
     (HttpRequest, Promise[HttpResponse]),
