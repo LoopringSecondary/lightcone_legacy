@@ -18,7 +18,7 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import org.loopring.lightcone.persistence.dals.OHLCDataDal
-import org.loopring.lightcone.proto.{ErrorCode, GetOHLCData, OHLCRawData}
+import org.loopring.lightcone.proto._
 
 import scala.concurrent.{ExecutionContext, Future}
 
