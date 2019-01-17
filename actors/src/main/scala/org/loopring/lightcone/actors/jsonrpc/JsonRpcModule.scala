@@ -66,7 +66,10 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
             } else {
               getPayloadConverter(method) match {
                 case None =>
-                  replyWithError(-32601)
+                  replyWithError(
+                    -32601,
+                    Some(s"The method `${method}` could not be found.")
+                  )
 
                 case Some(converter) =>
                   jsonReq.params.map(converter.convertToRequest) match {
