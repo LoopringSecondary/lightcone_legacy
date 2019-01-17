@@ -79,7 +79,7 @@ class MissingBlocksEventExtractorActor(
     with EventExtraction {
   val NEXT_RANGE = Notify("next_range")
 
-  override var untilBlock: Long = 0L //初始化为0，开始不需要获取区块
+  var untilBlock: Long = 0L //初始化为0，开始不需要获取区块
 
   override def initialize() = Future.successful {
     becomeReady()
