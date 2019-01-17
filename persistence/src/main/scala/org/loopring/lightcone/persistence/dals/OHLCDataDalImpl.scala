@@ -45,35 +45,6 @@ class OHLCDataDalImpl @Inject()(
 
   val query = TableQuery[OHLCDataTable]
 
-  /*override def createTable() = {
-    implicit val getOHLCResult = GetResult[Any](
-      r =>
-        Any(
-          r.nextString()
-        )
-    )
-    val sql =
-      sql"""create table "T_OHLC_DATA"(
-        "ring_index" BIGINT NOT NULL,
-        "tx_hash" VARCHAR(66) NOT NULL,
-        "market_key" TEXT NOT NULL,
-        "dealt_at" BIGINT NOT NULL,
-        "volume_a" DOUBLE PRECISION NOT NULL,
-        "volume_b" DOUBLE PRECISION NOT NULL,
-        "price" DOUBLE PRECISION NOT NULL,
-        PRIMARY KEY (ring_index, tx_hash))"""
-        .as[Any]
-    try {
-      db.run(sql)
-    } catch {
-      case e: Exception if e.getMessage.contains("already exists") =>
-        logger.info(e.getMessage)
-      case e: Exception =>
-        logger.error("Failed to create MySQL tables: " + e.getMessage)
-        System.exit(0)
-    }
-  }*/
-
   def saveData(record: OHLCRawData): Future[PersistRawData.Res] = {
     insertOrUpdate(record).map {
       case 0 =>
