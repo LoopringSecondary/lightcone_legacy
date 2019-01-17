@@ -19,18 +19,16 @@ package org.loopring.lightcone.actors.ethereum
 import akka.actor._
 import akka.cluster.singleton._
 import akka.pattern.ask
-import akka.routing.RoundRobinPool
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.json4s.DefaultFormats
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.lib.TimeProvider
+import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
-import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.util._
 
@@ -39,7 +37,6 @@ object EthereumClientMonitor {
   val name = "ethereum_client_monitor"
 
   def start(
-      connectionPools: Seq[ActorRef]
     )(
       implicit
       system: ActorSystem,
@@ -55,8 +52,7 @@ object EthereumClientMonitor {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps =
-          Props(new EthereumClientMonitor(connectionPools = connectionPools)),
+        singletonProps = Props(new EthereumClientMonitor()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
@@ -74,25 +70,31 @@ object EthereumClientMonitor {
 }
 
 class EthereumClientMonitor(
-    connectionPools: Seq[ActorRef] = Nil
+    val name: String = EthereumClientMonitor.name
   )(
     implicit
     system: ActorSystem,
     val config: Config,
-    val ec: ExecutionContext,
+    ec: ExecutionContext,
     timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef],
     ma: ActorMaterializer,
     ece: ExecutionContextExecutor)
-    extends ActorWithPathBasedConfig(EthereumClientMonitor.name)
-    with RepeatedJobActor {
+    extends Actor
+    with Stash
+    with ActorLogging
+    with RepeatedJobActor
+    with NamedBasedConfig {
 
   implicit val formats = DefaultFormats
 
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
-  var nodes: Map[String, Long] = Map.empty
+  var nodes: Map[String, NodeBlockHeight] =
+    HttpConnector.connectorNames(config).map {
+      case (nodeName, _) => nodeName -> NodeBlockHeight(nodeName, -1L)
+    }
 
   val checkIntervalSeconds: Int = selfConfig.getInt("check-interval-seconds")
 
@@ -105,15 +107,32 @@ class EthereumClientMonitor(
     )
   )
 
-  override def initialize(): Future[Unit] = {
-    checkNodeHeight.map(_ => becomeReady())
+  override def preStart(): Unit = {
+
+    checkNodeHeight onComplete {
+      case Success(_) =>
+        self ! Notify("initialized")
+        super.preStart()
+      case Failure(e) =>
+        log.error(s"Failed to start EthereumClientMonitor:${e.getMessage} ")
+        context.stop(self)
+    }
   }
 
-  def ready: Receive = super.receiveRepeatdJobs orElse {
+  override def receive: Receive = initialReceive
+
+  def initialReceive: Receive = {
+    case Notify("initialized", _) =>
+      context.become(normalReceive)
+      unstashAll()
+    case _ =>
+      stash()
+  }
+
+  def normalReceive: Receive = super.receiveRepeatdJobs orElse {
     case _: GetNodeBlockHeight.Req =>
       sender ! GetNodeBlockHeight.Res(
-        nodes.toSeq
-          .map(node => NodeBlockHeight(path = node._1, height = node._2))
+        nodes.map(_._2).toSeq
       )
   }
 
@@ -125,26 +144,33 @@ class EthereumClientMonitor(
       params = None
     )
     import JsonRpcResWrapped._
-    Future.sequence(connectionPools.map { g =>
-      for {
-        blockNumResp: Long <- (g ? blockNumJsonRpcReq.toProto)
-          .mapAs[JsonRpc.Response]
-          .map(toJsonRpcResWrapped)
-          .map(_.result)
-          .map(anyHexToLong)
-          .recover {
-            case e: Exception =>
-              log
-                .error(s"exception on getting blockNumber: $g: ${e.getMessage}")
-              -1L
+    Future.sequence(nodes.map {
+      case (nodeName, nodeBlockHeight) =>
+        if (actors.contains(nodeName)) {
+          val actor = actors.get(nodeName)
+          for {
+            blockNumResp: Long <- (actor ? blockNumJsonRpcReq.toProto)
+              .mapAs[JsonRpc.Response]
+              .map(toJsonRpcResWrapped)
+              .map(_.result)
+              .map(anyHexToLong)
+              .recover {
+                case e: Exception =>
+                  log
+                    .error(
+                      s"exception on getting blockNumber: ${actor}: ${e.getMessage}"
+                    )
+                  -1L
+              }
+          } yield {
+            val nodeBlockHeight =
+              NodeBlockHeight(nodeName = nodeName, height = blockNumResp)
+            nodes = nodes + (nodeName -> nodeBlockHeight)
+            ethereumAccessor ! nodeBlockHeight
           }
-      } yield {
-        nodes = nodes + (g.path.toString -> blockNumResp)
-        ethereumAccessor ! NodeBlockHeight(
-          path = g.path.toString,
-          height = blockNumResp
-        )
-      }
+        } else {
+          Future.successful(Unit)
+        }
     })
   }
 

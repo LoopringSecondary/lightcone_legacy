@@ -41,6 +41,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
+import scala.concurrent._
 
 class CoreDeployer @Inject()(
     implicit
@@ -62,6 +63,7 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tokenManager: TokenManager,
     tve: TokenValueEvaluator,
+    dispatchers: Seq[EventDispatcher[_]],
     system: ActorSystem)
     extends Object
     with Logging {
@@ -69,54 +71,7 @@ class CoreDeployer @Inject()(
   def deploy() {
 
     //-----------deploy local actors-----------
-    actors.add(BadMessageListener.name, BadMessageListener.start)
-    actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
-
-    actors.add(
-      MultiAccountManagerMessageValidator.name,
-      MessageValidationActor(
-        new MultiAccountManagerMessageValidator(),
-        MultiAccountManagerActor.name,
-        MultiAccountManagerMessageValidator.name
-      )
-    )
-
-    actors.add(
-      DatabaseQueryMessageValidator.name,
-      MessageValidationActor(
-        new DatabaseQueryMessageValidator(),
-        DatabaseQueryActor.name,
-        DatabaseQueryMessageValidator.name
-      )
-    )
-
-    actors.add(
-      EthereumQueryMessageValidator.name,
-      MessageValidationActor(
-        new EthereumQueryMessageValidator(),
-        EthereumQueryActor.name,
-        EthereumQueryMessageValidator.name
-      )
-    )
-
-    actors.add(
-      OrderbookManagerMessageValidator.name,
-      MessageValidationActor(
-        new OrderbookManagerMessageValidator(),
-        OrderbookManagerActor.name,
-        OrderbookManagerMessageValidator.name
-      )
-    )
-
-    actors.add(
-      TransactionRecordMessageValidator.name,
-      MessageValidationActor(
-        new TransactionRecordMessageValidator(),
-        TransactionRecordActor.name,
-        TransactionRecordMessageValidator.name
-      )
-    )
-
+    //todo: OnMemberUp执行有时间限制，超时会有TimeoutException
     Cluster(system).registerOnMemberUp {
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
@@ -130,20 +85,30 @@ class CoreDeployer @Inject()(
 
       actors.add(TransactionRecordActor.name, TransactionRecordActor.start)
 
+      //deploy ethereum conntionPools
+      HttpConnector.start.foreach {
+        case (name, actor) => actors.add(name, actor)
+      }
+
       //-----------deploy singleton actors-----------
-      // TODO(hongyu): 不能是Nil，需要完善，但是还没考虑好，EtherHttpConnector需要提前完成初始化，
-      // 但是又不需要在启动每个实例时都初始化
-      actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start(Nil))
-      actors.add(EthereumAccessActor.name, EthereumAccessActor.start(Nil))
+      actors.add(
+        EthereumClientMonitor.name,
+        EthereumClientMonitor.start
+      )
+      actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
+      actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
 
       actors.add(
         EthereumEventExtractorActor.name,
         EthereumEventExtractorActor.start
       )
-
+      actors.add(
+        MissingBlocksEventExtractorActor.name,
+        MissingBlocksEventExtractorActor.start
+      )
       actors.add(
         RingSettlementManagerActor.name,
         RingSettlementManagerActor.start
@@ -152,6 +117,65 @@ class CoreDeployer @Inject()(
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors.add(EntryPointActor.name, EntryPointActor.start)
 
+      //-----------deploy local actors-----------
+      actors.add(BadMessageListener.name, BadMessageListener.start)
+      actors.add(MetadataRefresher.name, MetadataRefresher.start)
+
+      actors.add(
+        MultiAccountManagerMessageValidator.name,
+        MessageValidationActor(
+          new MultiAccountManagerMessageValidator(),
+          MultiAccountManagerActor.name,
+          MultiAccountManagerMessageValidator.name
+        )
+      )
+
+      actors.add(
+        DatabaseQueryMessageValidator.name,
+        MessageValidationActor(
+          new DatabaseQueryMessageValidator(),
+          DatabaseQueryActor.name,
+          DatabaseQueryMessageValidator.name
+        )
+      )
+
+      actors.add(
+        EthereumQueryMessageValidator.name,
+        MessageValidationActor(
+          new EthereumQueryMessageValidator(),
+          EthereumQueryActor.name,
+          EthereumQueryMessageValidator.name
+        )
+      )
+
+      actors.add(
+        OrderbookManagerMessageValidator.name,
+        MessageValidationActor(
+          new OrderbookManagerMessageValidator(),
+          OrderbookManagerActor.name,
+          OrderbookManagerMessageValidator.name
+        )
+      )
+
+      actors.add(
+        TransactionRecordMessageValidator.name,
+        MessageValidationActor(
+          new TransactionRecordMessageValidator(),
+          TransactionRecordActor.name,
+          TransactionRecordMessageValidator.name
+        )
+      )
+
+      actors.add(
+        MetadataManagerValidator.name,
+        MessageValidationActor(
+          new MetadataManagerValidator(),
+          MetadataManagerActor.name,
+          MetadataManagerValidator.name
+        )
+      )
+
+      actors.add(AliveKeeperActor.name, AliveKeeperActor.start)
       //-----------deploy JSONRPC service-----------
       if (deployActorsIgnoringRoles ||
           cluster.selfRoles.contains("jsonrpc")) {

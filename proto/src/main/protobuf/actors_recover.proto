@@ -31,6 +31,7 @@ message ActorRecover {
     message Request {
         string address_sharding_entity = 1;
         MarketId market_id = 2;
+        string sender = 3;
     }
 
     message CancelFor {

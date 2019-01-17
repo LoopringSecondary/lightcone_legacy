@@ -40,8 +40,8 @@ import scala.concurrent.Await
 trait EthereumSupport {
   my: CommonSpec =>
 
-  implicit val requestBuilder = new EthereumCallRequestBuilder
-  implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
+  implicit val rb = new EthereumCallRequestBuilder
+  implicit val brb = new EthereumBatchCallRequestBuilder
 
   actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
   actors.add(
@@ -71,10 +71,12 @@ trait EthereumSupport {
 
   val connectionPools = (nodesConfig.zipWithIndex.map {
     case (node, index) =>
-      val nodeName = s"ethereum_connector_http_$index"
+      val nodeName = s"http_connector_$index"
       val props =
         Props(new HttpConnector(node))
-      system.actorOf(props, nodeName)
+      val actor = system.actorOf(props, nodeName)
+      actors.add(nodeName, actor)
+      actor
   }).toSeq
 
   val blockNumJsonRpcReq = JsonRpc.Request(
@@ -101,7 +103,7 @@ trait EthereumSupport {
 
   actors.add(
     EthereumClientMonitor.name,
-    EthereumClientMonitor.start(connectionPools)
+    EthereumClientMonitor.start
   )
   actors.add(
     EthereumAccessActor.name,

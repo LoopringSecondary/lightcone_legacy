@@ -80,6 +80,9 @@ enum ErrorCode{
     ERR_ORDER_VALIDATION_INVALID_CUTOFF                     = 2012;
     ERR_ORDER_VALIDATION_NOT_PERSISTED                      = 2013;
 
+    // submitRings param deserialize error
+    ERR_SERIALIZATION_ENCODED_DATA_INVALID                  = 2101;
+
     //3001 -- 4000 core actors error
     ERR_ORDER_ALREADY_EXIST             = 3001;
     ERR_ORDER_NOT_EXIST                 = 3002;
