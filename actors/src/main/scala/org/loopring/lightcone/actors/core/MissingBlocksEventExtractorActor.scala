@@ -25,6 +25,7 @@ import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
+import scala.concurrent.duration._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -78,6 +79,8 @@ class MissingBlocksEventExtractorActor(
     extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name)
     with EventExtraction {
   val NEXT_RANGE = Notify("next_range")
+  var sequenceId = 0L
+  val delayInSeconds = selfConfig.getLong("delay_in_seconds")
 
   override def initialize() = Future.successful {
     becomeReady()
@@ -86,16 +89,31 @@ class MissingBlocksEventExtractorActor(
 
   def ready: Receive = handleMessage orElse {
     case NEXT_RANGE =>
-    //TODO（yadong）等待永丰的接口来查询最新的Missing blocks
+      for {
+        missingBlocksOpt <- dbModule.missingBlocksRecordDal.getOldestOne()
+      } yield {
+        if (missingBlocksOpt.isDefined) {
+          val missingBlocks = missingBlocksOpt.get
+          blockData = RawBlockData(missingBlocks.lastHandledBlock - 1)
+          untilBlock = missingBlocks.blockEnd
+          sequenceId = missingBlocks.sequenceId
+          self ! GET_BLOCK
+        } else {
+          context.system.scheduler
+            .scheduleOnce(delayInSeconds seconds, self, NEXT_RANGE)
+        }
+      }
   }
 
   def process =
     processEvents.map(
-      _ =>
-        // TODO (yadong) 等待永丰的接口标记已经处理的高度
+      _ => {
+        dbModule.missingBlocksRecordDal
+          .updateProgress(sequenceId, blockData.height)
         if (blockData.height >= untilBlock) {
           self ! NEXT_RANGE
         }
+      }
     )
 
 }

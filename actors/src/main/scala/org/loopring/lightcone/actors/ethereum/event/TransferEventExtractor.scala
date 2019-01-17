@@ -99,7 +99,7 @@ class TransferEventExtractor @Inject()(
                 from = tx.from,
                 to = tx.to,
                 token = Address.ZERO.toString(),
-                amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
+                amount = hex2ArrayBytes(tx.value)
               )
             )
           }
@@ -132,14 +132,14 @@ class TransferEventExtractor @Inject()(
                   from = tx.to,
                   to = tx.from,
                   token = tx.to,
-                  amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
+                  amount = hex2ArrayBytes(tx.value)
                 ),
                 PTransferEvent(
                   header = Some(header),
                   from = tx.from,
                   to = tx.to,
                   token = Address.ZERO.toString(),
-                  amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
+                  amount = hex2ArrayBytes(tx.value)
                 )
               )
             case Some(withdraw: WithdrawFunction.Parms) =>
@@ -167,7 +167,7 @@ class TransferEventExtractor @Inject()(
                     from = tx.from,
                     to = tx.to,
                     token = Address.ZERO.toString(),
-                    amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
+                    amount = hex2ArrayBytes(tx.value)
                   )
                 )
                 if (Address(tx.to).equals(wethAddress)) {
@@ -177,7 +177,7 @@ class TransferEventExtractor @Inject()(
                       from = tx.to,
                       to = tx.from,
                       token = tx.to,
-                      amount = Numeric.toBigInt(formatHex(tx.value)).toByteArray
+                      amount = hex2ArrayBytes(tx.value)
                     )
                   )
                 }

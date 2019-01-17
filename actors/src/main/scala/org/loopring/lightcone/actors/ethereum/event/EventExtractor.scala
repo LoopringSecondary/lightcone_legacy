@@ -63,11 +63,10 @@ trait EventExtractor[R] {
   }
 
   def formatHex(str: String): String = {
-    if (Numeric.cleanHexPrefix(str).isEmpty) {
-      str + "0"
-    } else {
-      str
-    }
+    if (Numeric.cleanHexPrefix(str).isEmpty) str + "0" else str
   }
 
+  def hex2ArrayBytes(str: String): Array[Byte] = {
+    Numeric.toBigInt(formatHex(str)).toByteArray
+  }
 }

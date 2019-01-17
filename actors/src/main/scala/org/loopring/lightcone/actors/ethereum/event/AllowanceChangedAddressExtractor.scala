@@ -87,7 +87,7 @@ class AllowanceChangedAddressExtractor @Inject()(
           .mapAs[BatchCallContracts.Res]
           .map(
             _.resps
-              .map(res => Numeric.toBigInt(formatHex(res.result)).toByteArray)
+              .map(res => hex2ArrayBytes(res.result))
           )
       } else {
         Future.successful(Seq.empty)
