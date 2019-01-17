@@ -28,18 +28,21 @@ import scala.collection.JavaConverters._
 // Owner: Hongyu
 case class SupportedMarkets(config: Config) {
 
-  private val marketsKeys = config
+  val markets = config
     .getObjectList("markets")
     .asScala
     .map { item =>
       val c = item.toConfig
-      Numeric.toBigInt(c.getString("priamry")) xor
-        Numeric.toBigInt(c.getString("secondary"))
+      val marketId = MarketId(
+        Address(c.getString("priamry")).toString(),
+        Address(c.getString("secondary")).toString()
+      )
+      marketId.key -> marketId
     }
-    .toSet
+    .toMap
 
   def contains(marketId: MarketId) = {
-    marketsKeys.contains(marketId.key)
+    markets.contains(marketId.key)
   }
 
   def assertmarketIdIsValid(marketIdOpt: Option[MarketId]): Option[MarketId] = {
@@ -64,5 +67,6 @@ case class SupportedMarkets(config: Config) {
     )
   }
 
-  def getMarketKeys() = marketsKeys
+  def getMarketKeys() = markets.keySet
+
 }

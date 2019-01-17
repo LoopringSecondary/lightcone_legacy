@@ -81,7 +81,8 @@ class CoreModule(config: Config)
       "dbconfig-dal-token-balance",
       "dbconfig-dal-block",
       "dbconfig-dal-settlement-tx",
-      "dbconfig-dal-order-status-monitor"
+      "dbconfig-dal-order-status-monitor",
+      "dbconfig-dal-market-metadata"
     )
 
     // --- bind event extractors ---------------------
@@ -128,6 +129,7 @@ class CoreModule(config: Config)
     bind[BlockDal].to[BlockDalImpl].asEagerSingleton
     bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
     bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
+    bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------
@@ -135,7 +137,6 @@ class CoreModule(config: Config)
     bind[TradeService].to[TradeServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
-    bind[TokenMetadataService].to[TokenMetadataServiceImpl].asEagerSingleton
 
     bind[OrderStatusMonitorService]
       .to[OrderStatusMonitorServiceImpl]

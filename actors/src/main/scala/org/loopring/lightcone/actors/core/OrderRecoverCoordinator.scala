@@ -15,23 +15,18 @@
  */
 
 package org.loopring.lightcone.actors.core
-import akka.actor.SupervisorStrategy.Restart
 import akka.actor._
-import akka.cluster.sharding._
 import akka.cluster.singleton._
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.ErrorCode._
+import scalapb.json4s.JsonFormat
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import akka.serialization._
-import scalapb.json4s.JsonFormat
 
 // Owner: Daniel
 object OrderRecoverCoordinator extends {
@@ -90,24 +85,22 @@ class OrderRecoverCoordinator(
     case req: ActorRecover.Request =>
       cancelBatchTimer()
 
-      val requesterPath = Serialization.serializedActorPath(sender)
-
       activeBatches.filter {
-        case (_, batch) => batch.requestMap.contains(requesterPath)
+        case (_, batch) => batch.requestMap.contains(req.sender)
       }.foreach {
         case (orderRecoverActor, _) =>
           // Notify the actor to stop handling the request in a previous batch
-          orderRecoverActor ! ActorRecover.CancelFor(requesterPath)
+          orderRecoverActor ! ActorRecover.CancelFor(req.sender)
       }
 
-      val requestMap = pendingBatch.requestMap + (requesterPath -> req)
+      val requestMap = pendingBatch.requestMap + (req.sender -> req)
       pendingBatch = pendingBatch.copy(requestMap = requestMap)
 
       log.info(s"current pending batch recovery request: ${pendingBatch}")
 
       startBatchTimer()
 
-//      sender ! req
+      sender ! req
 
     case req: ActorRecover.Timeout =>
       if (pendingBatch.requestMap.nonEmpty) {

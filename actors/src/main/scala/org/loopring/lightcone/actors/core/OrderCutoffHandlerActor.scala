@@ -27,6 +27,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.ErrorCode._
 import scala.concurrent.{ExecutionContext, Future}
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.actors.base.safefuture._
 
 // Owner: Yongfeng
 object OrderCutoffHandlerActor {
@@ -86,6 +87,7 @@ class OrderCutoffHandlerActor(
       dbModule.orderService
         .getOrders(req.orderHashes)
         .map(cancelOrders(_, OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER))
+        .sendTo(sender)
 
     case req: CutoffEvent =>
       if (req.owner.isEmpty)

@@ -77,7 +77,7 @@ class EthereumEventExtractorActor(
     val dispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name)
-    with EventExtractorActor {
+    with EventExtraction {
 
   override def initialize(): Future[Unit] = {
     val startBlock = selfConfig.getLong("start_block")
@@ -88,7 +88,7 @@ class EthereumEventExtractorActor(
         .map(res => Numeric.toBigInt(res.result).longValue())
       blockStart = lastHandledBlock.getOrElse(startBlock)
       missing = currentBlock > blockStart + 1
-      //TODO (yadong) 等待永丰的接口,做DB操作
+      //TODO(yadong:) 等待永丰的接口,做DB操作
       _ = if (missing) {
         dbModule.blockService.saveBlock(BlockData(height = currentBlock - 1))
         ProcessingMissingBlocks(blockStart, currentBlock)
@@ -96,7 +96,9 @@ class EthereumEventExtractorActor(
     } yield {
       blockData = RawBlockData(height = currentBlock - 1)
       becomeReady()
-      self ! Notify(NEXT)
+      self ! GET_BLOCK
     }
   }
+
+  def ready = handleMessage
 }
