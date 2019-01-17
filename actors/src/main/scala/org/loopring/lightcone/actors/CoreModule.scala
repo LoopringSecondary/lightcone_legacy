@@ -180,7 +180,9 @@ class CoreModule(config: Config)
       transferEventDispatcher: EventDispatcher[TransferEvent],
       allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdated],
       ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
-      tokenBurnRateChangedEventDispatcher: EventDispatcher[TokenBurnRateChangedEvent]
+      tokenBurnRateChangedEventDispatcher: EventDispatcher[
+        TokenBurnRateChangedEvent
+      ]
     ): Seq[EventDispatcher[_]] =
     Seq(
       balanceEventDispatcher,
