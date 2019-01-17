@@ -81,7 +81,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
     case req: AddressAllowanceUpdated                 => req.address
     case req: CutoffEvent                             => req.owner //todo:暂不支持broker
     case req: OrderFilledEvent                        => req.owner
-    case Notify(InitializerActor.NOTIFY_MSG, address) =>
+    case Notify(AliveKeeperActor.NOTIFY_MSG, address) =>
       Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
   }
 }

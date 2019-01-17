@@ -92,7 +92,7 @@ object MarketManagerActor extends ShardedByMarket {
       marketId
     case req: RingMinedEvent if req.fills.size >= 2 =>
       MarketId(req.fills(0).tokenS, req.fills(1).tokenS)
-    case Notify(InitializerActor.NOTIFY_MSG, marketIdStr) =>
+    case Notify(AliveKeeperActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
       MarketId(primary, secondary)

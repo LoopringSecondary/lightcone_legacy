@@ -155,6 +155,7 @@ class CoreDeployer @Inject()(
         )
       )
 
+      actors.add(AliveKeeperActor.name, AliveKeeperActor.start)
       //-----------deploy JSONRPC service-----------
       if (deployActorsIgnoringRoles ||
           cluster.selfRoles.contains("jsonrpc")) {
@@ -162,8 +163,6 @@ class CoreDeployer @Inject()(
         with RpcBinding
         server.start
       }
-
-      actors.add(InitializerActor.name, InitializerActor.start)
     }
   }
 }

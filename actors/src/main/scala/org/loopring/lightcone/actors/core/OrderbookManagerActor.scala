@@ -85,7 +85,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
   val extractMarketId: PartialFunction[Any, MarketId] = {
     case GetOrderbook.Req(_, _, Some(marketId))    => marketId
     case Orderbook.Update(_, _, _, Some(marketId)) => marketId
-    case Notify(InitializerActor.NOTIFY_MSG, marketIdStr) =>
+    case Notify(AliveKeeperActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
       MarketId(primary, secondary)

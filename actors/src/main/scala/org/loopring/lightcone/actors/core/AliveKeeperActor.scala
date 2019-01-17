@@ -33,7 +33,7 @@ import scala.concurrent._
 
 //目标：需要恢复的以及初始化花费时间较长的
 //定时keepalive, 定时给需要监控的发送req，确认各个shard等需要初始化的运行正常，否则会触发他们的启动恢复
-object InitializerActor {
+object AliveKeeperActor {
   val name = "initializer"
   val NOTIFY_MSG = "init"
 
@@ -53,24 +53,24 @@ object InitializerActor {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new InitializerActor()),
+        singletonProps = Props(new AliveKeeperActor()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
-      InitializerActor.name
+      AliveKeeperActor.name
     )
 
     system.actorOf(
       ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${InitializerActor.name}",
+        singletonManagerPath = s"/user/${AliveKeeperActor.name}",
         settings = ClusterSingletonProxySettings(system)
       ),
-      name = s"${InitializerActor.name}_proxy"
+      name = s"${AliveKeeperActor.name}_proxy"
     )
   }
 }
 
-class InitializerActor @Inject()(
+class AliveKeeperActor @Inject()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -78,30 +78,32 @@ class InitializerActor @Inject()(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val supportedMarkets: SupportedMarkets)
-    extends ActorWithPathBasedConfig(InitializerActor.name) {
+    extends ActorWithPathBasedConfig(AliveKeeperActor.name)
+    with RepeatedJobActor {
 
   val orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   val marketManagerActor = actors.get(MarketManagerActor.name)
   val multiAccountManagerActor = actors.get(MultiAccountManagerActor.name)
 
-  override def initialize(): Future[Unit] = {
-    for {
-      _ <- initEtherHttpConnector()
-      _ <- initOrderbookManager()
-      _ <- initMarketManager()
-      _ <- initAccountManager()
-      _ <- super.initialize()
-    } yield Unit
-  }
+  val repeatedJobs = Seq(
+    Job(
+      name = "keep-alive",
+      dalayInSeconds = 60, // 10 minutes
+      run = () =>
+        for {
+          _ <- initEtherHttpConnector()
+          _ <- initOrderbookManager()
+          _ <- initMarketManager()
+          _ <- initAccountManager()
+        } yield Unit
+    )
+  )
 
-  //是否需要监听memberup
-  def ready: Receive = {
-    //todo:监听token、market以及memberup
-    case "" =>
-  }
+  //定时发送请求，来各个需要初始化的actor保持可用
+  def ready: Receive = receiveRepeatdJobs
 
   //todo: market的配置读取，可以等待永丰处理完毕再优化
-  def initOrderbookManager(): Future[Unit] =
+  private def initOrderbookManager(): Future[Unit] =
     for {
       _ <- Future.sequence(supportedMarkets.markets map {
         case (_, marketId) =>
@@ -112,7 +114,7 @@ class InitializerActor @Inject()(
       })
     } yield Unit
 
-  def initMarketManager(): Future[Unit] =
+  private def initMarketManager(): Future[Unit] =
     for {
       _ <- Future.sequence(supportedMarkets.markets map {
         case (_, marketId) =>
@@ -123,7 +125,7 @@ class InitializerActor @Inject()(
       })
     } yield Unit
 
-  def initAccountManager(): Future[Unit] = {
+  private def initAccountManager(): Future[Unit] = {
     val numsOfShards = config.getInt("multi_account_manager.num-of-shards")
     for {
       _ <- Future.sequence((0 until numsOfShards) map { i =>
@@ -132,7 +134,7 @@ class InitializerActor @Inject()(
     } yield Unit
   }
 
-  def initEtherHttpConnector(): Future[Unit] =
+  private def initEtherHttpConnector(): Future[Unit] =
     for {
       _ <- Future.sequence(HttpConnector.connectorNames(config).map {
         case (nodeName, node) => actors.get(nodeName) ? Notify("init")
