@@ -25,19 +25,19 @@ import scala.concurrent.duration._
 class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
   def getDal = new OHLCDataDalImpl()
 
-  "saveOHLCRawData" must "save a OHLCRawData with ringIndex 1000" in {
+  "saveOHLCData" must "save a OHLC raw data with ringIndex 1000" in {
     println("saveRawData")
     val data = OHLCRawData(
       ringIndex = 1000,
       txHash =
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf51",
-      marketId = "111222",
-      dealtAt = 1547049600000L,
-      volumeA = 2.5,
-      volumeB = 1000,
+      marketKey = "111222",
+      time = 1547049600000L,
+      quality = 2.5,
+      amount = 1000,
       price = 3.5
     )
-    val result = dal.saveRawData(data)
+    val result = dal.saveData(data)
     val res = Await.result(result.mapTo[PersistRawData.Res], 5.second)
     res.error should be(ERR_NONE)
     res.record.get should be(data)

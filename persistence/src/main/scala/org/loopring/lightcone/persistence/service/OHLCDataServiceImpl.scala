@@ -28,8 +28,8 @@ class OHLCDataServiceImpl @Inject()(
     val ec: ExecutionContext)
     extends OHLCDataService {
 
-  def saveRawData(record: OHLCRawData): Future[Either[OHLCRawData, ErrorCode]] =
-    ohlcDataDal.saveRawData(record).map { r =>
+  def saveData(record: OHLCRawData): Future[Either[OHLCRawData, ErrorCode]] =
+    ohlcDataDal.saveData(record).map { r =>
       if (r.error == ErrorCode.ERR_NONE) {
         Left(r.record.get)
       } else {

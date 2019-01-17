@@ -22,7 +22,7 @@ import scala.concurrent.Future
 
 trait OHLCDataService {
 
-  def saveRawData(record: OHLCRawData): Future[Either[OHLCRawData, ErrorCode]]
+  def saveData(record: OHLCRawData): Future[Either[OHLCRawData, ErrorCode]]
 
   def getOHLCData(request: GetOHLCData.Req): Future[GetOHLCData.Res]
 }

@@ -45,7 +45,7 @@ class OHLCDataDalImpl @Inject()(
 
   val query = TableQuery[OHLCDataTable]
 
-  override def createTable() = {
+  /*override def createTable() = {
     implicit val getOHLCResult = GetResult[Any](
       r =>
         Any(
@@ -56,7 +56,7 @@ class OHLCDataDalImpl @Inject()(
       sql"""create table "T_OHLC_DATA"(
         "ring_index" BIGINT NOT NULL,
         "tx_hash" VARCHAR(66) NOT NULL,
-        "market_id" TEXT NOT NULL,
+        "market_key" TEXT NOT NULL,
         "dealt_at" BIGINT NOT NULL,
         "volume_a" DOUBLE PRECISION NOT NULL,
         "volume_b" DOUBLE PRECISION NOT NULL,
@@ -72,9 +72,9 @@ class OHLCDataDalImpl @Inject()(
         logger.error("Failed to create MySQL tables: " + e.getMessage)
         System.exit(0)
     }
-  }
+  }*/
 
-  def saveRawData(record: OHLCRawData): Future[PersistRawData.Res] = {
+  def saveData(record: OHLCRawData): Future[PersistRawData.Res] = {
     insertOrUpdate(record).map {
       case 0 =>
         logger.error("saving OHLC raw data failed")
@@ -108,7 +108,7 @@ class OHLCDataDalImpl @Inject()(
     val tableName = "T_OHLC_DATA"
     val sql =
       sql"""select
-        time_bucket($interval, time) as time_flag
+        time_bucket($interval, time) as starting_point
         t.market_id,
         MAX(price) as highest_price,
         MIN(price) as lowest_price,
@@ -116,7 +116,7 @@ class OHLCDataDalImpl @Inject()(
         SUM(volume_b) as volume_b_sum,
         first(price, time) as opening_price,
         last(price, time) as closing_price
-        from $tableName t where market_id = marketId
+        from $tableName t where market_key = marketKey
         and time < $beginTime and time > $endTime GROUP BY time_flag"""
         .as[OHLCData]
     db.run(sql).map(r => GetOHLCData.Res(r.toSeq))

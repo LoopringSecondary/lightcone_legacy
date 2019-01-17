@@ -24,22 +24,22 @@ class OHLCDataTable(tag: Tag)
     extends BaseTable[OHLCRawData](tag, "T_OHLC_DATA") {
 
   def id = txHash
-  def ringIndex = column[Long]("ring_index", O.PrimaryKey)
+  def ringIndex = column[Long]("ring_index")
   def txHash = columnHash("tx_hash")
-  def marketId = column[String]("market_id")
-  def dealtAt = column[Long]("dealt_at")
-  def volumeA = column[Double]("volume_a")
-  def volumeB = column[Double]("volume_b")
-  def price = column[Double]("price")
+  def marketKey = column[String]("market_key")
+  def time = column[Long]("time")
+  def quality = column[Double]("quality", O.SqlType("DOUBLE PRECISION"))
+  def amount = column[Double]("amount", O.SqlType("DOUBLE PRECISION"))
+  def price = column[Double]("price", O.SqlType("DOUBLE PRECISION"))
 
   def * =
     (
       ringIndex,
       txHash,
-      marketId,
-      dealtAt,
-      volumeA,
-      volumeB,
+      marketKey,
+      time,
+      quality,
+      amount,
       price
     ) <> ((OHLCRawData.apply _).tupled, OHLCRawData.unapply)
 
