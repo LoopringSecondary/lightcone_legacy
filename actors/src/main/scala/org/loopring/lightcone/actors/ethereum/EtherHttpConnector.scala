@@ -44,8 +44,7 @@ object HttpConnector {
   val name = "http_connector"
 
   def connectorNames(
-      config: Config
-    ): Map[String, EthereumProxySettings.Node] = {
+    config: Config): Map[String, EthereumProxySettings.Node] = {
     config
       .getConfigList("ethereum_client_monitor.nodes")
       .asScala
@@ -60,16 +59,14 @@ object HttpConnector {
   }
 
   def start(
-      implicit
-      system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      actors: Lookup[ActorRef],
-      dbModule: DatabaseModule,
-      deployActorsIgnoringRoles: Boolean
-    ): Map[String, ActorRef] = {
+    implicit system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    dbModule: DatabaseModule,
+    deployActorsIgnoringRoles: Boolean): Map[String, ActorRef] = {
 
     val materializer = ActorMaterializer()(system)
     connectorNames(config).map {
@@ -79,30 +76,24 @@ object HttpConnector {
           ClusterSingletonManager.props(
             singletonProps = Props(new HttpConnector(node)(materializer)),
             terminationMessage = PoisonPill,
-            settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-          ),
-          nodeName
-        )
+            settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)),
+          nodeName)
         nodeName -> system.actorOf(
           ClusterSingletonProxy.props(
             singletonManagerPath = s"/user/${nodeName}",
-            settings = ClusterSingletonProxySettings(system)
-          ),
-          name = s"${nodeName}_proxy"
-        )
+            settings = ClusterSingletonProxySettings(system)),
+          name = s"${nodeName}_proxy")
     }
   }
 }
 
 // Owner: Yadong
 class HttpConnector(
-    node: EthereumProxySettings.Node
-  )(
-    implicit
-    val mat: ActorMaterializer)
-    extends Actor
-    with ActorLogging
-    with Json4sSupport {
+  node: EthereumProxySettings.Node)(
+    implicit val mat: ActorMaterializer)
+  extends Actor
+  with ActorLogging
+  with Json4sSupport {
 
   import context.dispatcher
 
@@ -117,32 +108,28 @@ class HttpConnector(
   val LATEST = "latest"
   val JSONRPC_V = "2.0"
 
-  val emptyError = EthRpcError(code = 500, message = "result is empty")
+  val emptyError = EthRpcError(code = 500)
 
-  private val poolClientFlow: Flow[
-    (HttpRequest, Promise[HttpResponse]),
-    (Try[HttpResponse], Promise[HttpResponse]),
-    Http.HostConnectionPool
-  ] = {
+  private val poolClientFlow: Flow[ //
+  (HttpRequest, Promise[HttpResponse]), //
+  (Try[HttpResponse], Promise[HttpResponse]), //
+  Http.HostConnectionPool] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](
       host = node.host,
-      port = node.port
-    )
+      port = node.port)
   }
 
   log.debug(s"connecting Ethereum at ${node.host}:${node.port}")
 
-  private val queue
-    : SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])] =
+  private val queue: SourceQueueWithComplete[(HttpRequest, Promise[HttpResponse])] =
     Source
       .queue[(HttpRequest, Promise[HttpResponse])](
         500,
-        OverflowStrategy.backpressure
-      )
+        OverflowStrategy.backpressure)
       .via(poolClientFlow)
       .toMat(Sink.foreach({
         case (Success(resp), p) => p.success(resp)
-        case (Failure(e), p)    => p.failure(e)
+        case (Failure(e), p) => p.failure(e)
       }))(Keep.left)
       .run()(mat)
 
@@ -167,8 +154,7 @@ class HttpConnector(
   private def post(entity: RequestEntity): Future[String] = {
     for {
       httpResp <- request(
-        HttpRequest(method = HttpMethods.POST, entity = entity)
-      )
+        HttpRequest(method = HttpMethods.POST, entity = entity))
       jsonStr <- httpResp.entity.dataBytes.map(_.utf8String).runReduce(_ + _)
     } yield jsonStr
   }
@@ -178,8 +164,7 @@ class HttpConnector(
       id = Random.nextInt(100),
       jsonrpc = JSONRPC_V,
       method = method,
-      params = params
-    )
+      params = params)
     log.debug(s"reqeust: ${org.json4s.native.Serialization.write(jsonRpc)}")
 
     for {
@@ -190,15 +175,13 @@ class HttpConnector(
 
   }
   private def batchSendMessages(
-      methodList: Seq[BatchMethod]
-    ): Future[String] = {
+    methodList: Seq[BatchMethod]): Future[String] = {
     val jsonRpcList = methodList.map { x =>
       JsonRpcReqWrapped(
         id = if (x.id >= 0) x.id else randInt(),
         jsonrpc = JSONRPC_V,
         method = x.method,
-        params = x.params
-      )
+        params = x.params)
     }
 
     for {
@@ -300,8 +283,7 @@ class HttpConnector(
           BatchMethod(
             id = singleReq.id,
             method = "eth_call",
-            params = Seq(singleReq.param, normalizeTag(singleReq.tag))
-          )
+            params = Seq(singleReq.param, normalizeTag(singleReq.tag)))
         }
 
       }
@@ -321,8 +303,7 @@ class HttpConnector(
         BatchMethod(
           id = randInt(),
           method = "eth_getTransactionReceipt",
-          params = Seq(singleReq.hash)
-        )
+          params = Seq(singleReq.hash))
       }
       //这里无法直接解析成BatchGetTransactionReceipts.Res
       batchSendMessages(batchReqs) map { json =>
@@ -339,8 +320,7 @@ class HttpConnector(
         BatchMethod(
           id = randInt(),
           method = "eth_getTransactionByHash",
-          params = Seq(singleReq.hash)
-        )
+          params = Seq(singleReq.hash))
       }
       //这里无法直接解析成BatchGetTransactions.Res
       batchSendMessages(batchReqs) map { json =>
@@ -357,8 +337,7 @@ class HttpConnector(
         BatchMethod(
           id = randInt(),
           method = "eth_getUncleByBlockNumberAndIndex",
-          params = Seq(singleReq.blockNum, singleReq.index)
-        )
+          params = Seq(singleReq.blockNum, singleReq.index))
       }
       batchSendMessages(batchReqs) map { json =>
         val resps = parse(json).values.asInstanceOf[List[Map[String, Any]]]
@@ -376,8 +355,7 @@ class HttpConnector(
           BatchMethod(
             id = randInt(),
             method = "eth_getBalance",
-            params = Seq(singleReq.address, normalizeTag(singleReq.tag))
-          )
+            params = Seq(singleReq.address, normalizeTag(singleReq.tag)))
         }
       }
       batchSendMessages(batchReqs) map { json =>
@@ -399,15 +377,14 @@ class HttpConnector(
 }
 
 private case class DebugParams(
-    timeout: String,
-    tracer: String)
+  timeout: String,
+  tracer: String)
 
 private class EmptyValueSerializer
-    extends CustomSerializer[String](
-      _ =>
-        ({
-          case JNull => ""
-        }, {
-          case "" => JNothing
-        })
-    )
+  extends CustomSerializer[String](
+    _ =>
+      ({
+        case JNull => ""
+      }, {
+        case "" => JNothing
+      }))
