@@ -16,13 +16,13 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.proto.{ErrorCode, GetOHLCData, RawData}
+import org.loopring.lightcone.proto.{ErrorCode, GetOHLCData, OHLCRawData}
 
 import scala.concurrent.Future
 
 trait OHLCDataService {
 
-  def saveRawData(record: RawData): Future[Either[RawData, ErrorCode]]
+  def saveRawData(record: OHLCRawData): Future[Either[OHLCRawData, ErrorCode]]
 
   def getOHLCData(request: GetOHLCData.Req): Future[GetOHLCData.Res]
 }

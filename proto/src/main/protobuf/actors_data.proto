@@ -20,6 +20,7 @@ option java_multiple_files = true;
 package org.loopring.lightcone.proto;
 
 import "core.proto";
+import "google/protobuf/timestamp.proto";
 
 enum TokenStandard {
     ERC20           = 0;
@@ -298,20 +299,23 @@ message NodeBlockHeight{
 }
 
 // Used as statistical data, such as a histogram
-message RawData {
-    string     tx_hash        = 1;
-    string     market_id      = 2;
-    int64      dealt_at       = 3;
-    double     volume         = 4;
-    double     price          = 5;
+message OHLCRawData {
+    int64      ring_index     = 1;
+    string     tx_hash        = 2;
+    string     market_id      = 3;
+    int64      dealt_at       = 4;
+    double     volume_a       = 6;
+    double     volume_b       = 7;
+    double     price          = 8;
 }
 
 message OHLCData {
-    string     time             = 1;
+    int64      time             = 1;
     string     marked_id        = 2;
-    double     volume           = 3;
-    double     opening_price    = 4;
-    double     closing_price    = 5;
-    double     highest_price    = 6;
-    double     lowest_price     = 7;
+    double     volume_a_sum     = 3;
+    double     volumeB_b_sum    = 4;
+    double     opening_price    = 5;
+    double     closing_price    = 6;
+    double     highest_price    = 7;
+    double     lowest_price     = 8;
 }

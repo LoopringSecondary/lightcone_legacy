@@ -16,7 +16,6 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.persistence.tables.OHLCDataTable
 import org.loopring.lightcone.proto.ErrorCode.{
   ERR_NONE,
@@ -28,6 +27,7 @@ import slick.lifted.TableQuery
 import scala.concurrent.{ExecutionContext, Future}
 import com.google.inject.Inject
 import com.google.inject.name.Named
+import com.google.protobuf.any.Any
 import org.loopring.lightcone.proto._
 import org.postgresql.util.PSQLException
 import slick.jdbc.PostgresProfile.api._
@@ -40,24 +40,47 @@ class OHLCDataDalImpl @Inject()(
     val ec: ExecutionContext,
     @Named("dbconfig-dal-ohlc-data") val dbConfig: DatabaseConfig[
       JdbcProfile
-    ],
-    timeProvider: TimeProvider)
+    ])
     extends OHLCDataDal {
 
   val query = TableQuery[OHLCDataTable]
 
-  def saveRawData(record: RawData): Future[PersistRawData.Res] = {
-    db.run((query += record).asTry).map {
-      case Success(x) =>
-        PersistRawData.Res(error = ERR_NONE, record = Some(record))
-      // unique key violation
-      case Failure(e: PSQLException if(e.getSQLState == "23505") => {
-        logger.warn(s"warn : ${e.getMessage}")
-        PersistRawData.Res(error = ERR_NONE, record = Some(record))
-      }
-      case Failure(ex) => {
-        logger.error(s"error : ${ex.getMessage}")
+  override def createTable() = {
+    implicit val getOHLCResult = GetResult[Any](
+      r =>
+        Any(
+          r.nextString()
+        )
+    )
+    val sql =
+      sql"""create table "T_OHLC_DATA"(
+        "ring_index" BIGINT NOT NULL,
+        "tx_hash" VARCHAR(66) NOT NULL,
+        "market_id" TEXT NOT NULL,
+        "dealt_at" BIGINT NOT NULL,
+        "volume_a" DOUBLE PRECISION NOT NULL,
+        "volume_b" DOUBLE PRECISION NOT NULL,
+        "price" DOUBLE PRECISION NOT NULL,
+        PRIMARY KEY (ring_index, tx_hash))"""
+        .as[Any]
+    try {
+      db.run(sql)
+    } catch {
+      case e: Exception if e.getMessage.contains("already exists") =>
+        logger.info(e.getMessage)
+      case e: Exception =>
+        logger.error("Failed to create MySQL tables: " + e.getMessage)
+        System.exit(0)
+    }
+  }
+
+  def saveRawData(record: OHLCRawData): Future[PersistRawData.Res] = {
+    insertOrUpdate(record).map {
+      case 0 =>
+        logger.error("saving OHLC raw data failed")
         PersistRawData.Res(error = ERR_PERSISTENCE_INTERNAL, record = None)
+      case _ => {
+        PersistRawData.Res(error = ERR_NONE, record = Some(record))
       }
 
     }
@@ -65,7 +88,7 @@ class OHLCDataDalImpl @Inject()(
 
   def getOHLCData(
       marketId: String,
-      interval: String,
+      interval: Long,
       beginTime: Long,
       endTime: Long
     ): Future[GetOHLCData.Res] = {
@@ -73,7 +96,7 @@ class OHLCDataDalImpl @Inject()(
     implicit val getOHLCResult = GetResult[OHLCData](
       r =>
         OHLCData(
-          r.nextString,
+          r.nextInt,
           r.nextString,
           r.nextDouble,
           r.nextDouble,
@@ -84,15 +107,17 @@ class OHLCDataDalImpl @Inject()(
     )
     val tableName = "T_OHLC_DATA"
     val sql =
-      sql"""select time_bucket($interval, time) as time_flag
-          t.market_id,
-          MAX(price) as highest_price,
-          MIN(price) as lowest_price,
-          SUM(volume) as volume,
-          first(price, time) as opening_price,
-          last(price, time) as closing_price
-         from $tableName t where market_id = marketId
-         and time < $beginTime and time > $endTime GROUP BY time_flag"""
+      sql"""select
+        time_bucket($interval, time) as time_flag
+        t.market_id,
+        MAX(price) as highest_price,
+        MIN(price) as lowest_price,
+        SUM(volume_a) as volume_a_sum,
+        SUM(volume_b) as volume_b_sum,
+        first(price, time) as opening_price,
+        last(price, time) as closing_price
+        from $tableName t where market_id = marketId
+        and time < $beginTime and time > $endTime GROUP BY time_flag"""
         .as[OHLCData]
     db.run(sql).map(r => GetOHLCData.Res(r.toSeq))
 

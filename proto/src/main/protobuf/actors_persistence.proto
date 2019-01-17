@@ -230,18 +230,18 @@ message GetTransactionRecordCount {
 
 message PersistRawData {
     message Req {
-        RawData data    = 1;
+        OHLCRawData data    = 1;
     }
     message Res {
-        RawData record  = 1;
-        ErrorCode error  = 2;
+        OHLCRawData record  = 1;
+        ErrorCode error     = 2;
     }
 }
 
 message GetOHLCData {
     message Req {
         string  marketId    = 1;
-        string  interval    = 2;
+        int64   interval    = 2;
         int64   beginTime   = 3;
         int64   endTime     = 4;
     }

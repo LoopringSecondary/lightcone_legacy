@@ -18,7 +18,7 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.inject.Inject
 import org.loopring.lightcone.persistence.dals.OHLCDataDal
-import org.loopring.lightcone.proto.{ErrorCode, GetOHLCData, OHLCData, RawData}
+import org.loopring.lightcone.proto.{ErrorCode, GetOHLCData, OHLCRawData}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,7 +28,7 @@ class OHLCDataServiceImpl @Inject()(
     val ec: ExecutionContext)
     extends OHLCDataService {
 
-  def saveRawData(record: RawData): Future[Either[RawData, ErrorCode]] =
+  def saveRawData(record: OHLCRawData): Future[Either[OHLCRawData, ErrorCode]] =
     ohlcDataDal.saveRawData(record).map { r =>
       if (r.error == ErrorCode.ERR_NONE) {
         Left(r.record.get)
