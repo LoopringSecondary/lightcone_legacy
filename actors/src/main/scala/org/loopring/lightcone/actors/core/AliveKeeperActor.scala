@@ -34,7 +34,7 @@ import scala.concurrent._
 //目标：需要恢复的以及初始化花费时间较长的
 //定时keepalive, 定时给需要监控的发送req，确认各个shard等需要初始化的运行正常，否则会触发他们的启动恢复
 object AliveKeeperActor {
-  val name = "initializer"
+  val name = "alive_keeper"
   val NOTIFY_MSG = "init"
 
   def start(
