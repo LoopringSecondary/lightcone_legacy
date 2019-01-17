@@ -100,14 +100,11 @@ class OrderbookManagerActor(
       OrderbookManagerActor.name,
       OrderbookManagerActor.extractEntityId
     ) {
-  println("___________________", entityId)
   val marketId = markets(entityId)
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
 
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
-
-  println("___________________", marketIdHashedValue)
 
   // TODO(yongfeng): load marketconfig from database throught a service interface
   // based on marketId
