@@ -80,9 +80,9 @@ object Dispatchers {
       actors: Lookup[ActorRef]
     )(
       implicit
-      extractor: EventExtractor[RingMinedEvent],
+      extractor: EventExtractor[OrderFilledEvent],
       ec: ExecutionContext)
-      extends NameBasedEventDispatcher[RingMinedEvent](
+      extends NameBasedEventDispatcher[OrderFilledEvent](
         names = Seq(TransactionRecordActor.name, MultiAccountManagerActor.name),
         actors
       )

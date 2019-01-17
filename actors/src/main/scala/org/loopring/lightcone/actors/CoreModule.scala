@@ -102,6 +102,7 @@ class CoreModule(config: Config)
     bind[EventExtractor[RawOrder]].to[OnchainOrderExtractor]
     bind[EventExtractor[RingMinedEvent]].to[RingMinedEventExtractor]
     bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
+    bind[EventExtractor[OrderFilledEvent]].to[OrderFillEventExtractor]
 
     // --- bind event dispatchers ---------------------
     bind[EventDispatcher[AddressAllowanceUpdated]]
@@ -113,7 +114,7 @@ class CoreModule(config: Config)
     bind[EventDispatcher[OrdersCancelledEvent]]
       .to[OrdersCancelledEventDispatcher]
 
-    bind[EventDispatcher[RingMinedEvent]]
+    bind[EventDispatcher[OrderFilledEvent]]
       .to[OrderFilledEventDispatcher]
 
     bind[EventDispatcher[TokenBurnRateChangedEvent]]
@@ -171,21 +172,15 @@ class CoreModule(config: Config)
   }
 
   @Provides
-  private def getEventDispathcers(
-      balanceEventDispatcher: NameBasedEventDispatcher[AddressBalanceUpdated],
-      ringMinedEventDispatcher: NameBasedEventDispatcher[RingMinedEvent],
-      orderFilledEventDispatcher: NameBasedEventDispatcher[RingMinedEvent],
-      cutoffEventDispatcher: NameBasedEventDispatcher[CutoffEvent],
-      transferEventDispatcher: NameBasedEventDispatcher[TransferEvent],
-      allowanceEventDispatcher: NameBasedEventDispatcher[
-        AddressAllowanceUpdated
-      ],
-      ordersCancelledEventDispatcher: NameBasedEventDispatcher[
-        OrdersCancelledEvent
-      ],
-      tokenBurnRateChangedEventDispatcher: NameBasedEventDispatcher[
-        TokenBurnRateChangedEvent
-      ]
+  def getEventDispathcers(
+      balanceEventDispatcher: EventDispatcher[AddressBalanceUpdated],
+      ringMinedEventDispatcher: EventDispatcher[RingMinedEvent],
+      orderFilledEventDispatcher: EventDispatcher[OrderFilledEvent],
+      cutoffEventDispatcher: EventDispatcher[CutoffEvent],
+      transferEventDispatcher: EventDispatcher[TransferEvent],
+      allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdated],
+      ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
+      tokenBurnRateChangedEventDispatcher: EventDispatcher[TokenBurnRateChangedEvent]
     ): Seq[EventDispatcher[_]] =
     Seq(
       balanceEventDispatcher,
