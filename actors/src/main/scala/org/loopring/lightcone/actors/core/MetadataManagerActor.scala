@@ -150,7 +150,7 @@ class MetadataManagerActor(
       }).sendTo(sender)
 
     case req: TokenBurnRateChangedEvent =>
-      if (req.header.nonEmpty && req.getHeader.txStatus == TX_STATUS_SUCCESS) {
+      if (req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess) {
         (for {
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = req.token
