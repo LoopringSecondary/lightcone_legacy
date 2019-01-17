@@ -40,8 +40,8 @@ import scala.concurrent.Await
 trait EthereumSupport {
   my: CommonSpec =>
 
-  implicit val requestBuilder = new EthereumCallRequestBuilder
-  implicit val batchRequestBuilder = new EthereumBatchCallRequestBuilder
+  implicit val rb = new EthereumCallRequestBuilder
+  implicit val brb = new EthereumBatchCallRequestBuilder
 
   actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
   actors.add(

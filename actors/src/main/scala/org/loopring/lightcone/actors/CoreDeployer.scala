@@ -18,11 +18,13 @@ package org.loopring.lightcone.actors
 
 import akka.actor._
 import akka.cluster._
+import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.google.inject._
 import com.google.inject.name.Named
 import com.typesafe.config.Config
+import net.codingwell.scalaguice.ScalaModule
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
@@ -35,7 +37,10 @@ import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.slf4s.Logging
-
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import slick.basic.DatabaseConfig
+import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
 class CoreDeployer @Inject()(
@@ -58,12 +63,16 @@ class CoreDeployer @Inject()(
     timeout: Timeout,
     tokenManager: TokenManager,
     tve: TokenValueEvaluator,
+    dispatchers: Seq[EventDispatcher[_]],
     system: ActorSystem)
     extends Object
     with Logging {
 
   def deploy() {
 
+    //-----------deploy local actors-----------
+    actors.add(BadMessageListener.name, BadMessageListener.start)
+    actors.add(MetadataRefresher.name, MetadataRefresher.start)
     //todo: OnMemberUp执行有时间限制，超时会有TimeoutException
     Cluster(system).registerOnMemberUp {
       //-----------deploy sharded actors-----------
