@@ -93,6 +93,9 @@ case class SupportedMarkets(config: Config) {
     )
   }
 
+  def getByMarketHash(marketHash: String): MarketMetadata =
+    metadatas(marketHash)
+
   def getAvailableMarkets() = enabledMarkets
 
   def getAvaliableMarketKeys() = enabledMarkets.keySet

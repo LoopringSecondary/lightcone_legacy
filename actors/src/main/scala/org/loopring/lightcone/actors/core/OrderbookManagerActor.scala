@@ -95,7 +95,8 @@ class OrderbookManagerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val tokenManager: TokenManager)
+    val tokenManager: TokenManager,
+    val supportedMarkets: SupportedMarkets)
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
       OrderbookManagerActor.extractEntityId
@@ -106,15 +107,9 @@ class OrderbookManagerActor(
 
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
 
-  // TODO(yongfeng): load marketconfig from database throught a service interface
-  // based on marketId
-  val marketMetadata = MarketMetadata(
-    orderbookAggLevels = selfConfig.getInt("levels"),
-    priceDecimals = selfConfig.getInt("price-decimals"),
-    precisionForAmount = selfConfig.getInt("precision-for-amount"),
-    precisionForTotal = selfConfig.getInt("precision-for-total")
+  val marketMetadata = supportedMarkets.getByMarketHash(
+    MarketHashProvider.convert2Hex(marketId.primary, marketId.secondary)
   )
-
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
   def ready: Receive = LoggingReceive {
