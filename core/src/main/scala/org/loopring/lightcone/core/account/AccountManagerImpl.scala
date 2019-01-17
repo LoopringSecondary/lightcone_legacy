@@ -17,7 +17,6 @@
 package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
 
@@ -55,14 +54,37 @@ final private[core] class AccountManagerImpl(
     tokens(token)
   }
 
-  def submitOrAdjustThenGetUpdatedOrders(
-      order: Matchable
+  def handleChangeEventThenGetUpdatedOrders[T](
+      req: T
     ): (Boolean, Map[String, Matchable]) = this.synchronized {
-    if (this.orderPool.contains(order.id)) {
-      adjustAndGetUpdatedOrders(order.id, order.outstanding.amountS)
-    } else {
-      submitAndGetUpdatedOrders(order)
+
+    req match {
+      case order: Matchable =>
+        if (this.orderPool.contains(order.id)) {
+          adjustAndGetUpdatedOrders(order.id, order.outstanding.amountS)
+        } else {
+          submitAndGetUpdatedOrders(order)
+        }
+      case cancelReq: CancelOrder.Req =>
+        cancelAndGetUpdatedOrders(cancelReq)
+      case evt: AddressBalanceUpdated =>
+        if (tokens.contains(evt.token)) {
+          tokens(evt.token).setBalance(BigInt(evt.balance.toByteArray))
+          (true, this.orderPool.takeUpdatedOrdersAsMap())
+        } else {
+          (false, this.orderPool.takeUpdatedOrdersAsMap())
+        }
+      case evt: AddressAllowanceUpdated =>
+        if (tokens.contains(evt.token)) {
+          //todo:ByteString转BigInt的方式需要与actors.data中相同
+          tokens(evt.token).setAllowance(BigInt(evt.balance.toByteArray))
+          (true, this.orderPool.takeUpdatedOrdersAsMap())
+        } else {
+          (false, this.orderPool.takeUpdatedOrdersAsMap())
+        }
+      case _ => (false, this.orderPool.takeUpdatedOrdersAsMap())
     }
+
   }
 
   def submitAndGetUpdatedOrders(
@@ -73,12 +95,25 @@ final private[core] class AccountManagerImpl(
       (submitRes, this.orderPool.takeUpdatedOrdersAsMap())
     }
 
+  def cancelAndGetUpdatedOrders(
+      cancelReq: CancelOrder.Req
+    ): (Boolean, Map[String, Matchable]) =
+    this.synchronized {
+      val cancelRes = this.cancelOrder(cancelReq.id)
+      (cancelRes, this.orderPool.takeUpdatedOrdersAsMap())
+    }
+
   def adjustAndGetUpdatedOrders(
       orderId: String,
       outstandingAmountS: BigInt
     ): (Boolean, Map[String, Matchable]) = this.synchronized {
     val adjustRes = adjustOrder(orderId, outstandingAmountS)
-    (adjustRes, this.orderPool.takeUpdatedOrdersAsMap())
+    //todo: 该处，如果没有变化的话，是否未返回该订单
+    (
+      adjustRes,
+      this.orderPool
+        .takeUpdatedOrdersAsMap() + (orderId -> orderPool.getOrder(orderId).get)
+    )
   }
 
   //TODO(litao): What if an order is re-submitted?

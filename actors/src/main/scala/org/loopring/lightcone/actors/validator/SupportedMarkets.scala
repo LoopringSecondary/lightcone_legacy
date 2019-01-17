@@ -17,29 +17,32 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+
 import scala.collection.JavaConverters._
 
 // Owner: Hongyu
 case class SupportedMarkets(config: Config) {
 
-  private val markets = config
+  val markets = config
     .getObjectList("markets")
     .asScala
     .map { item =>
       val c = item.toConfig
-      Numeric.toBigInt(c.getString("priamry")) xor
-        Numeric.toBigInt(c.getString("secondary"))
+      val marketId = MarketId(
+        Address(c.getString("priamry")).toString(),
+        Address(c.getString("secondary")).toString()
+      )
+      marketId.key -> marketId
     }
-    .toSet
+    .toMap
 
   def contains(marketId: MarketId) = {
-    val eig = Numeric.toBigInt(marketId.primary) xor
-      Numeric.toBigInt(marketId.secondary)
-    markets.contains(eig)
+    markets.contains(marketId.key)
   }
 
   def assertmarketIdIsValid(marketIdOpt: Option[MarketId]): Option[MarketId] = {
@@ -63,4 +66,7 @@ case class SupportedMarkets(config: Config) {
       secondary = Address(marketId.secondary).toString
     )
   }
+
+  def getMarketKeys() = markets.keySet
+
 }

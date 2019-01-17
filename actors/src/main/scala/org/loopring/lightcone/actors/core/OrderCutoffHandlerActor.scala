@@ -27,6 +27,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.ErrorCode._
 import scala.concurrent.{ExecutionContext, Future}
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.actors.base.safefuture._
 
 // Owner: Yongfeng
 object OrderCutoffHandlerActor {
@@ -78,7 +79,7 @@ class OrderCutoffHandlerActor(
   def mama = actors.get(MultiAccountManagerActor.name)
   val batchSize = selfConfig.getInt("batch-size")
 
-  def receive: Receive = {
+  def ready: Receive = {
 
     // TODO du: 收到任务后先存入db，一批处理完之后删除。
     // 如果执行失败，1. 自身重启时需要再恢复 2. 整体系统重启时直接删除不需要再恢复（accountManagerActor恢复时会处理cutoff）
@@ -86,6 +87,7 @@ class OrderCutoffHandlerActor(
       dbModule.orderService
         .getOrders(req.orderHashes)
         .map(cancelOrders(_, OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER))
+        .sendTo(sender)
 
     case req: CutoffEvent =>
       if (req.owner.isEmpty)

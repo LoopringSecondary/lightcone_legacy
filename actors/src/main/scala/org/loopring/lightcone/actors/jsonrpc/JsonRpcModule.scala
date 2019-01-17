@@ -47,7 +47,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
 
   val myExceptionHandler: ExceptionHandler = ExceptionHandler {
     case e: ErrorException =>
-      replyWithError(e.error.code.value, Some(e.error.message))(None)
+      replyWithError(e.error.code.value, Some(e.getMessage()))(None)
 
     case e: Throwable =>
       replyWithError(-32603, Some(e.getMessage))(None)
@@ -66,7 +66,10 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
             } else {
               getPayloadConverter(method) match {
                 case None =>
-                  replyWithError(-32601)
+                  replyWithError(
+                    -32601,
+                    Some(s"The method `${method}` could not be found.")
+                  )
 
                 case Some(converter) =>
                   jsonReq.params.map(converter.convertToRequest) match {

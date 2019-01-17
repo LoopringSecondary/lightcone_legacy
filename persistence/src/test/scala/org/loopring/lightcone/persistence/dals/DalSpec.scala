@@ -26,6 +26,7 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import com.dimafeng.testcontainers._
 import com.typesafe.config._
+import org.loopring.lightcone.lib.SystemTimeProvider
 
 trait DalSpec[D <: BaseDal[_, _]]
     extends FlatSpec
@@ -33,6 +34,7 @@ trait DalSpec[D <: BaseDal[_, _]]
     with BeforeAndAfterAll
     with Matchers {
   implicit val ec = ExecutionContext.global
+  implicit val timeProvider = new SystemTimeProvider()
 
   override val container = new MySQLContainer(
     configurationOverride = Some("db"),

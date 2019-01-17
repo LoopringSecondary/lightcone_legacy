@@ -262,7 +262,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
       insertDefault(tables)
     }
 
-    tables.addUint16(orderFeeParams.waiveFeePercentage, true)
+    tables.addInt16(orderFeeParams.waiveFeePercentage, true)
     tables.addUint16(orderFeeParams.tokenSFeePercentage, true)
     tables.addUint16(orderFeeParams.tokenBFeePercentage, true)
 
@@ -274,9 +274,9 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
     }
 
     tables.addUint16(orderFeeParams.walletSplitPercentage, true)
-    tables.addUint16(orderParams.tokenStandardS.value, true)
-    tables.addUint16(orderParams.tokenStandardB.value, true)
-    tables.addUint16(orderParams.tokenStandardFee.value, true)
+    tables.addUint16(orderErc1400Params.tokenStandardS.value, true)
+    tables.addUint16(orderErc1400Params.tokenStandardB.value, true)
+    tables.addUint16(orderErc1400Params.tokenStandardFee.value, true)
 
     if (orderErc1400Params.trancheS.length > 0) {
       insertOffset(tables, data.addHex(orderErc1400Params.trancheS, false))

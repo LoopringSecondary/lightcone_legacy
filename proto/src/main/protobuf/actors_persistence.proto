@@ -250,3 +250,93 @@ message GetOHLCData {
         repeated OHLCData data = 1;
     }
 }
+message SaveTokenMetadatas {
+    message Req {
+        repeated TokenMetadata tokens = 1;
+    }
+
+    message Res {
+        repeated string saved_addresses = 1;
+    }
+}
+
+message UpdateTokenMetadata {
+    message Req {
+        TokenMetadata token = 1;
+    }
+
+    message Res {
+        ErrorCode  error = 1;
+    }
+}
+
+message UpdateTokenBurnRate {
+    message Req {
+        string address   = 1;
+        double burn_rate = 2;
+    }
+
+    message Res {
+        ErrorCode  error = 1;
+    }
+}
+
+message DisableToken {
+    message Req {
+        string address = 1;
+    }
+
+    message Res {
+        ErrorCode  error = 1;
+    }
+}
+
+message LoadTokenMetadata {
+    message Req {
+
+    }
+
+    message Res {
+        repeated TokenMetadata tokens = 1;
+    }
+}
+
+message SaveMarketMetadatas {
+    message Req {
+        repeated MarketMetadata markets = 1;
+    }
+
+    message Res {
+        repeated string saved_market_hashes = 1;
+    }
+}
+
+message UpdateMarketMetadata {
+    message Req {
+        MarketMetadata market = 1;
+    }
+
+    message Res {
+        ErrorCode  error = 1;
+    }
+}
+
+message DisableMarket {
+    message Req {
+        string   market_hash = 1;
+    }
+
+    message Res {
+        ErrorCode  error = 1;
+    }
+}
+
+message LoadMarketMetadata {
+    message Req {
+
+    }
+
+    message Res {
+        repeated MarketMetadata markets = 1;
+    }
+}

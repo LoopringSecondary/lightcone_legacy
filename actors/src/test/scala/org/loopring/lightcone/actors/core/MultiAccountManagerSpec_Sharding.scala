@@ -27,6 +27,7 @@ import scala.concurrent.duration._
 class MultiAccountManagerSpec_Sharding
     extends CommonSpec
     with MultiAccountManagerSupport
+    with EthereumSupport
     with OrderHandleSupport {
 
   val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {

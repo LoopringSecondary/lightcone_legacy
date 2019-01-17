@@ -70,48 +70,44 @@ object RingSettlementManagerActor {
 
 class RingSettlementManagerActor(
     implicit
-    system: ActorSystem,
     val config: Config,
-    ec: ExecutionContext,
+    val ec: ExecutionContext,
+    system: ActorSystem,
     timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef],
     dbModule: DatabaseModule)
-    extends Actor {
+    extends InitializationRetryActor {
 
   val selfConfig = config.getConfig(RingSettlementManagerActor.name)
-
-  var ringSettlementActors: Map[String, ActorRef] = Map.empty
 
   var invalidRingSettlementActors = mutable.HashMap.empty[String, ActorRef]
 
   val miniMinerBalance = BigInt(selfConfig.getString("mini-miner-balance"))
 
-  override def preStart() = {
-    ringSettlementActors = selfConfig
-      .getConfigList("miners")
-      .asScala
-      .map(minerConfig => {
-        val miner = minerConfig.getString("transaction-origin")
-        val item = Address(miner).toString ->
-          context.actorOf(
-            Props(
-              new RingSettlementActor()(
-                config = minerConfig.withFallback(config),
-                ec = ec,
-                timeProvider = timeProvider,
-                timeout = timeout,
-                actors = actors,
-                dbModule = dbModule
-              )
+  var ringSettlementActors: Map[String, ActorRef] = selfConfig
+    .getConfigList("miners")
+    .asScala
+    .map(minerConfig => {
+      val miner = minerConfig.getString("transaction-origin")
+      val item = Address(miner).toString ->
+        context.actorOf(
+          Props(
+            new RingSettlementActor()(
+              config = minerConfig.withFallback(config),
+              ec = ec,
+              timeProvider = timeProvider,
+              timeout = timeout,
+              actors = actors,
+              dbModule = dbModule
             )
           )
-        item
-      })
-      .toMap
-  }
+        )
+      item
+    })
+    .toMap
 
-  override def receive: Receive = {
+  def ready: Receive = {
     case req: SettleRings =>
       if (ringSettlementActors.nonEmpty) {
         ringSettlementActors

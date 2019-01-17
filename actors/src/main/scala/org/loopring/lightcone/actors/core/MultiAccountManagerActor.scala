@@ -18,6 +18,8 @@ package org.loopring.lightcone.actors.core
 import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor._
 import akka.cluster.sharding._
+import akka.pattern.ask
+import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
@@ -26,8 +28,9 @@ import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
+import org.web3j.utils._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent._
 import scala.concurrent.duration._
 
 // Owner: Hongyu
@@ -78,6 +81,8 @@ object MultiAccountManagerActor extends ShardedByAddress {
     case req: AddressAllowanceUpdated                 => req.address
     case req: CutoffEvent                             => req.owner //todo:暂不支持broker
     case req: OrderFilledEvent                        => req.owner
+    case Notify(AliveKeeperActor.NOTIFY_MSG, address) =>
+      Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
   }
 }
 
@@ -98,13 +103,15 @@ class MultiAccountManagerActor(
 
   log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
 
+  var autoSwitchBackToReady: Option[Cancellable] = None
+
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
   val maxRecoverDurationMinutes =
     selfConfig.getInt("max-recover-duration-minutes")
 
   val accountManagerActors = new MapBasedLookup[ActorRef]()
-  var autoSwitchBackToReceive: Option[Cancellable] = None
+
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
@@ -119,47 +126,51 @@ class MultiAccountManagerActor(
         Restart
     }
 
-  override def preStart(): Unit = {
-    super.preStart()
-
-    autoSwitchBackToReceive = Some(
-      context.system.scheduler
-        .scheduleOnce(
-          maxRecoverDurationMinutes.minute,
-          self,
-          ActorRecover.Finished(true)
-        )
-    )
-
-    if (skiprecover) {
-      log.warning(s"actor recover skipped: ${self.path}")
+  override def initialize() = {
+    if (skiprecover) Future.successful {
+      log.debug(s"actor recover skipped: ${self.path}")
+      becomeReady()
     } else {
-
       log.debug(s"actor recover started: ${self.path}")
-      actors.get(OrderRecoverCoordinator.name) !
-        ActorRecover.Request(addressShardingEntity = entityId)
-
       context.become(recover)
+      for {
+        _ <- actors.get(OrderRecoverCoordinator.name) ?
+          ActorRecover.Request(
+            addressShardingEntity = entityId,
+            sender = Serialization.serializedActorPath(self)
+          )
+      } yield {
+        autoSwitchBackToReady = Some(
+          context.system.scheduler
+            .scheduleOnce(
+              maxRecoverDurationMinutes.minute,
+              self,
+              ActorRecover.Finished(true)
+            )
+        )
+      }
     }
   }
 
   def recover: Receive = {
-
     case req: ActorRecover.RecoverOrderReq => handleRequest(req)
 
     case ActorRecover.Finished(timeout) =>
       s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
-      context.become(receive)
+      context.become(ready)
 
     case msg: Any =>
-      log.warning(s"message not handled during recover")
-      sender ! Error(
-        ERR_REJECTED_DURING_RECOVER,
-        s"account manager ${entityId} is being recovered"
-      )
+      log.warning(s"message not handled during recover, ${msg}, ${sender}")
+      //sender 是自己时，不再发送Error信息
+      if (sender != self) {
+        sender ! Error(
+          ERR_REJECTED_DURING_RECOVER,
+          s"account manager ${entityId} is being recovered"
+        )
+      }
   }
 
-  def receive: Receive = {
+  def ready: Receive = {
     case req: Any => handleRequest(req)
   }
 

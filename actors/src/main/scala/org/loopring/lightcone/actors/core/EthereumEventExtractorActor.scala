@@ -18,20 +18,17 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.singleton._
-import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.lib._
-import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Matchable
-import org.loopring.lightcone.proto.ErrorCode._
-import org.loopring.lightcone.proto.OrderStatus._
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.proto._
+import org.web3j.utils.Numeric
+
 import scala.concurrent._
 
 // Owner: Yadong
@@ -46,6 +43,8 @@ object EthereumEventExtractorActor {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
+      dbModule: DatabaseModule,
+      dispatchers: Seq[EventDispatcher[_]],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
@@ -66,7 +65,6 @@ object EthereumEventExtractorActor {
       ),
       name = s"${EthereumEventExtractorActor.name}_proxy"
     )
-
   }
 }
 
@@ -74,13 +72,33 @@ class EthereumEventExtractorActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef])
-    extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
+    val actors: Lookup[ActorRef],
+    val dispatchers: Seq[EventDispatcher[_]],
+    val dbModule: DatabaseModule)
+    extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name)
+    with EventExtraction {
 
-  def receive: Receive = {
-    case _ =>
+  override def initialize(): Future[Unit] = {
+    val startBlock = selfConfig.getLong("start_block")
+    for {
+      lastHandledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
+      currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
+        .mapAs[GetBlockNumber.Res]
+        .map(res => Numeric.toBigInt(res.result).longValue())
+      blockStart = lastHandledBlock.getOrElse(startBlock)
+      missing = currentBlock > blockStart + 1
+      //TODO(yadong:) 等待永丰的接口,做DB操作
+      _ = if (missing) {
+        dbModule.blockService.saveBlock(BlockData(height = currentBlock - 1))
+        ProcessingMissingBlocks(blockStart, currentBlock)
+      }
+    } yield {
+      blockData = RawBlockData(height = currentBlock - 1)
+      becomeReady()
+      self ! GET_BLOCK
+    }
   }
 
+  def ready = handleMessage
 }

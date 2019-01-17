@@ -21,13 +21,14 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.cluster.sharding._
 import akka.pattern.ask
+import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Matchable
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
@@ -89,10 +90,17 @@ object MarketManagerActor extends ShardedByMarket {
       MarketId(order.tokenS, order.tokenB)
     case CancelOrder.Req(_, _, _, Some(marketId)) =>
       marketId
+    case req: RingMinedEvent if req.fills.size >= 2 =>
+      MarketId(req.fills(0).tokenS, req.fills(1).tokenS)
+    case Notify(AliveKeeperActor.NOTIFY_MSG, marketIdStr) =>
+      val tokens = marketIdStr.split("-")
+      val (primary, secondary) = (tokens(0), tokens(1))
+      MarketId(primary, secondary)
   }
 
 }
 
+//todo:撮合应该有个暂停撮合提交的逻辑，适用于：区块落后太多、没有可用的RingSettlement等情况
 class MarketManagerActor(
     markets: Map[String, MarketId]
   )(
@@ -115,7 +123,7 @@ class MarketManagerActor(
   implicit val marketId = markets(entityId)
   log.info(s"=======> starting MarketManagerActor ${self.path} for ${marketId}")
 
-  var autoSwitchBackToReceive: Option[Cancellable] = None
+  var autoSwitchBackToReady: Option[Cancellable] = None
 
   val wethTokenAddress = config.getString("relay.weth-address")
   val skiprecover = selfConfig.getBoolean("skip-recover")
@@ -154,27 +162,29 @@ class MarketManagerActor(
     DistributedPubSub(context.system).mediator
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
 
-  override def preStart(): Unit = {
-    super.preStart()
-
-    autoSwitchBackToReceive = Some(
-      context.system.scheduler
-        .scheduleOnce(
-          maxRecoverDurationMinutes.minute,
-          self,
-          ActorRecover.Finished(true)
-        )
-    )
-
-    if (skiprecover) {
-      log.warning(s"actor recover skipped: ${self.path}")
+  override def initialize() = {
+    if (skiprecover) Future.successful {
+      log.debug(s"actor recover skipped: ${self.path}")
+      becomeReady()
     } else {
-
       log.debug(s"actor recover started: ${self.path}")
-      actors.get(OrderRecoverCoordinator.name) !
-        ActorRecover.Request(marketId = Some(marketId))
-
       context.become(recover)
+      for {
+        _ <- actors.get(OrderRecoverCoordinator.name) ?
+          ActorRecover.Request(
+            marketId = Some(marketId),
+            sender = Serialization.serializedActorPath(self)
+          )
+      } yield {
+        autoSwitchBackToReady = Some(
+          context.system.scheduler
+            .scheduleOnce(
+              maxRecoverDurationMinutes.minute,
+              self,
+              ActorRecover.Finished(true)
+            )
+        )
+      }
     }
   }
 
@@ -184,20 +194,23 @@ class MarketManagerActor(
       submitOrder(order.copy(submittedAt = timeProvider.getTimeMillis))
 
     case msg @ ActorRecover.Finished(timeout) =>
-      autoSwitchBackToReceive.foreach(_.cancel)
-      autoSwitchBackToReceive = None
+      autoSwitchBackToReady.foreach(_.cancel)
+      autoSwitchBackToReady = None
       s"market manager `${entityId}` recover completed (timeout=${timeout})"
-      context.become(receive)
+      context.become(ready)
 
     case msg: Any =>
-      log.warning(s"message not handled during recover")
-      sender ! Error(
-        ERR_REJECTED_DURING_RECOVER,
-        s"market manager `${entityId}` is being recovered"
-      )
+      log.warning(s"message not handled during recover, ${msg}, ${sender}")
+      //sender 是自己时，不再发送Error信息
+      if (sender != self) {
+        sender ! Error(
+          ERR_REJECTED_DURING_RECOVER,
+          s"market manager `${entityId}` is being recovered"
+        )
+      }
   }
 
-  def receive: Receive = {
+  def ready: Receive = {
 
     case SubmitSimpleOrder(_, Some(order)) =>
       submitOrder(order).sendTo(sender)
@@ -228,9 +241,29 @@ class MarketManagerActor(
           .foreach { updateOrderbookAndSettleRings(_, gasPrice) }
       } yield Unit
 
+    case RingMinedEvent(Some(header), _, _, _, fills) =>
+      Future {
+        val ringhash =
+          createRingIdByOrderHash(fills(0).orderHash, fills(1).orderHash)
+        if (header.txStatus == TxStatus.TX_STATUS_SUCCESS) {
+          manager.deleteRing(ringhash, true)
+        } else if (header.txStatus == TxStatus.TX_STATUS_FAILED) {
+          val matchResults = manager.deleteRing(ringhash, false)
+          if (matchResults.nonEmpty) {
+            for {
+              res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
+              gasPrice: BigInt = res.gasPrice
+              _ = matchResults.map { matchResult =>
+                updateOrderbookAndSettleRings(matchResult, gasPrice)
+              }
+
+            } yield Unit
+          }
+        }
+      } sendTo sender
   }
 
-  private def submitOrder(order: Order): Future[Unit] = {
+  private def submitOrder(order: Order): Future[Unit] = Future {
     assert(
       order.actual.nonEmpty,
       "order in SubmitSimpleOrder miss `actual` field"
@@ -247,14 +280,12 @@ class MarketManagerActor(
 
           // submit order to reserve balance and allowance
           matchResult = manager.submitOrder(matchable, minRequiredIncome)
-
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
         } yield Unit
 
       case s =>
         log.error(s"unexpected order status in SubmitSimpleOrder: $s")
-        Future.successful(Unit)
     }
   }
 

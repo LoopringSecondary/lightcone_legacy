@@ -82,22 +82,37 @@ class EthereumAccessActor(
     with ActorLogging {
 
   private def monitor = actors.get(EthereumClientMonitor.name)
-  var connectionPools: Seq[(ActorSelection, Long)] = Nil
+
+  var connectionPools: Seq[ActorRef] = HttpConnector
+    .connectorNames(config)
+    .filter(node => actors.contains(node._1))
+    .map {
+      case (nodeName, _) => actors.get(nodeName)
+    }
+    .toSeq
+
+  var nodes: Seq[NodeBlockHeight] = HttpConnector
+    .connectorNames(config)
+    .map {
+      case (nodeName, _) => NodeBlockHeight(nodeName, -1L)
+    }
+    .toSeq
 
   override def preStart() = {
     val fu = (monitor ? GetNodeBlockHeight.Req())
       .mapAs[GetNodeBlockHeight.Res]
+
     fu onComplete {
       case Success(res) =>
-        connectionPools = res.nodes.map(
-          node =>
-            context
-              .actorSelection(node.path) -> node.height
-        )
+        connectionPools = res.nodes
+          .filter(_.height > 0)
+          .filter(node => actors.contains(node.nodeName))
+          .sortWith(_.height > _.height)
+          .map(node => actors.get(node.nodeName))
         self ! Notify("initialized")
       case Failure(e) =>
         log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
-        context.stop(self)
+        throw e
     }
   }
 
@@ -114,15 +129,18 @@ class EthereumAccessActor(
 
   def normalReceive: Receive = {
     case node: NodeBlockHeight =>
-      connectionPools = (connectionPools.toMap +
-        (context.actorSelection(node.path) -> node.height)).toSeq
-        .filter(_._2 >= 0)
-        .sortWith(_._2 > _._2)
+      nodes = nodes :+ node
+      connectionPools = nodes
+        .filter(_.height > 0)
+        .filter(node => actors.contains(node.nodeName))
+        .sortWith(_.height > _.height)
+        .map(node => actors.get(node.nodeName))
 
     case req: JsonRpc.RequestWithHeight =>
-      val validPools = connectionPools.filter(_._2 > req.height)
+      val validPools = nodes.filter(_.height >= req.height)
       if (validPools.nonEmpty) {
-        validPools(Random.nextInt(validPools.size))._1 forward req.req
+        val nodeName = validPools(Random.nextInt(validPools.size)).nodeName
+        actors.get(nodeName) forward req.req
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
@@ -132,7 +150,7 @@ class EthereumAccessActor(
 
     case msg: JsonRpc.Request => {
       if (connectionPools.nonEmpty) {
-        connectionPools.head._1 forward msg
+        connectionPools.head forward msg
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
@@ -143,7 +161,7 @@ class EthereumAccessActor(
 
     case msg: ProtoBuf[_] => {
       if (connectionPools.nonEmpty) {
-        connectionPools.head._1 forward msg
+        connectionPools.head forward msg
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
