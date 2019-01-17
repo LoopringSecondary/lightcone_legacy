@@ -105,7 +105,7 @@ object Dispatchers {
       extractor: EventExtractor[TokenBurnRateChangedEvent],
       ec: ExecutionContext)
       extends NameBasedEventDispatcher[TokenBurnRateChangedEvent](
-        names = Seq(MetadataRefresher.name),
+        names = Seq(MetadataManagerActor.name),
         actors
       )
 

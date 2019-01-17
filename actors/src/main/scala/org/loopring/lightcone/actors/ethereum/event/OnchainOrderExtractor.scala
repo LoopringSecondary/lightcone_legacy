@@ -17,25 +17,38 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
+import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+
 import scala.concurrent._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.ethereum.data.Address
 
-class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
+class OnchainOrderExtractor @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    val config: Config)
     extends EventExtractor[RawOrder] {
+
+  val ringSubmitterAddress =
+    Address(config.getString("loopring_protocol.protocol-address")).toString()
 
   def extract(block: RawBlockData): Future[Seq[RawOrder]] = Future {
     block.receipts.flatMap { receipt =>
-      receipt.logs.map { log =>
-        loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-          case Some(event: OrderSubmittedEvent.Result) =>
-            Some(extractOrderFromEvent(event))
-          case _ =>
-            None
-        }
-      }.filter(_.nonEmpty).map(_.get)
+      if (receipt.contractAddress.equalsIgnoreCase(ringSubmitterAddress)) {
+        receipt.logs.map { log =>
+          loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+            case Some(event: OrderSubmittedEvent.Result) =>
+              Some(extractOrderFromEvent(event))
+            case _ =>
+              None
+          }
+        }.filter(_.nonEmpty).map(_.get)
+      } else {
+        Seq.empty
+      }
     }
   }
 
@@ -48,8 +61,8 @@ class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
       owner = Numeric.prependHexPrefix(data.substring(0, 64)),
       tokenS = Numeric.prependHexPrefix(data.substring(64, 64 * 2)),
       tokenB = Numeric.prependHexPrefix(data.substring(64 * 2, 64 * 3)),
-      amountS = Numeric.toBigInt(data.substring(64 * 3, 64 * 4)).toByteArray,
-      amountB = Numeric.toBigInt(data.substring(64 * 4, 64 * 5)).toByteArray,
+      amountS = BigInt(Numeric.toBigInt(data.substring(64 * 3, 64 * 4))),
+      amountB = BigInt(Numeric.toBigInt(data.substring(64 * 4, 64 * 5))),
       validSince = Numeric.toBigInt(data.substring(64 * 5, 64 * 6)).intValue(),
       params = Some(
         RawOrder.Params(
@@ -68,8 +81,7 @@ class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
       feeParams = Some(
         RawOrder.FeeParams(
           tokenFee = Numeric.prependHexPrefix(data.substring(64 * 11, 64 * 12)),
-          amountFee =
-            Numeric.toBigInt(data.substring(64 * 12, 64 * 13)).toByteArray,
+          amountFee = BigInt(Numeric.toBigInt(data.substring(64 * 12, 64 * 13))),
           tokenBFeePercentage =
             Numeric.toBigInt(data.substring(64 * 13, 64 * 14)).intValue(),
           tokenSFeePercentage =

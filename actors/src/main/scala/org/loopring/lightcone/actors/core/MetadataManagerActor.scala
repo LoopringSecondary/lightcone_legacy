@@ -26,9 +26,11 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
+
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.proto.TxStatus.TX_STATUS_SUCCESS
 
 // Owner: Yongfeng
 object MetadataManagerActor {
@@ -147,20 +149,22 @@ class MetadataManagerActor(
         UpdateTokenMetadata.Res(result)
       }).sendTo(sender)
 
-    case req: UpdateTokenBurnRate.Req =>
-      (for {
-        burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
-          token = req.address
-        )).mapTo[GetBurnRate.Res]
-        result <- dbModule.tokenMetadataDal
-          .updateBurnRate(req.address, burnRateRes.burnRate)
-        tokens_ <- dbModule.tokenMetadataDal.getTokens()
-      } yield {
-        if (result == ErrorCode.ERR_NONE) {
-          checkAndPublish(Some(tokens_), None)
-        }
-        UpdateTokenBurnRate.Res(result)
-      }).sendTo(sender)
+    case req: TokenBurnRateChangedEvent =>
+      if (req.header.nonEmpty && req.getHeader.txStatus == TX_STATUS_SUCCESS) {
+        (for {
+          burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
+            token = req.token
+          )).mapTo[GetBurnRate.Res]
+          result <- dbModule.tokenMetadataDal
+            .updateBurnRate(req.token, burnRateRes.burnRate)
+          tokens_ <- dbModule.tokenMetadataDal.getTokens()
+        } yield {
+          if (result == ErrorCode.ERR_NONE) {
+            checkAndPublish(Some(tokens_), None)
+          }
+          UpdateTokenBurnRate.Res(result)
+        }).sendTo(sender)
+      }
 
     case req: DisableToken.Req =>
       (for {
