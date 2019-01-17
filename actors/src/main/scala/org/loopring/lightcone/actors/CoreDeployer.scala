@@ -71,8 +71,6 @@ class CoreDeployer @Inject()(
   def deploy() {
 
     //-----------deploy local actors-----------
-    actors.add(BadMessageListener.name, BadMessageListener.start)
-    actors.add(MetadataRefresher.name, MetadataRefresher.start)
     //todo: OnMemberUp执行有时间限制，超时会有TimeoutException
     Cluster(system).registerOnMemberUp {
       //-----------deploy sharded actors-----------
@@ -101,12 +99,16 @@ class CoreDeployer @Inject()(
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
+      actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
 
       actors.add(
         EthereumEventExtractorActor.name,
         EthereumEventExtractorActor.start
       )
-
+      actors.add(
+        MissingBlocksEventExtractorActor.name,
+        MissingBlocksEventExtractorActor.start
+      )
       actors.add(
         RingSettlementManagerActor.name,
         RingSettlementManagerActor.start
@@ -117,7 +119,7 @@ class CoreDeployer @Inject()(
 
       //-----------deploy local actors-----------
       actors.add(BadMessageListener.name, BadMessageListener.start)
-      actors.add(TokenMetadataRefresher.name, TokenMetadataRefresher.start)
+      actors.add(MetadataRefresher.name, MetadataRefresher.start)
 
       actors.add(
         MultiAccountManagerMessageValidator.name,
@@ -161,6 +163,15 @@ class CoreDeployer @Inject()(
           new TransactionRecordMessageValidator(),
           TransactionRecordActor.name,
           TransactionRecordMessageValidator.name
+        )
+      )
+
+      actors.add(
+        MetadataManagerValidator.name,
+        MessageValidationActor(
+          new MetadataManagerValidator(),
+          MetadataManagerActor.name,
+          MetadataManagerValidator.name
         )
       )
 
