@@ -90,12 +90,14 @@ class AliveKeeperActor @Inject()(
       name = "keep-alive",
       dalayInSeconds = 60, // 10 minutes
       run = () =>
-        for {
-          _ <- initEtherHttpConnector()
-          _ <- initOrderbookManager()
-          _ <- initMarketManager()
-          _ <- initAccountManager()
-        } yield Unit
+        Future.sequence(
+          Seq(
+            initEtherHttpConnector(),
+            initOrderbookManager(),
+            initMarketManager(),
+            initAccountManager()
+          )
+        )
     )
   )
 
