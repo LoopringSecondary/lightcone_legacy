@@ -318,10 +318,5 @@ message RawBlockData{
     repeated TransactionReceipt receipts = 7;
 }
 
-message ProcessingMissingBlocks {
-     int64 block_start = 1;
-     int64 block_end = 2;
-}
-
 
 
