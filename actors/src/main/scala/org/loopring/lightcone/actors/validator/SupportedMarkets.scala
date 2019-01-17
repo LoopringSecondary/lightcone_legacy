@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.validator
 
+import java.math.BigInteger
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.ethereum.data.Address
@@ -23,39 +24,43 @@ import org.loopring.lightcone.lib.{ErrorException, MarketHashProvider}
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
-import scala.collection.JavaConverters._
-
 // Owner: Hongyu
 case class SupportedMarkets(config: Config) {
 
-  private var disabledMarketsKey:Set[BigInt] = Set.empty
-  private var enabledMarketsKey = config
-    .getObjectList("markets")
-    .asScala
-    .map { item =>
-      val c = item.toConfig
-      toMarketHashInBigInt(c.getString("primary"), c.getString("secondary"))
-    }
-    .toSet
-  private var readOnlyMarketsKey = Set.empty
-
+  private var disabledMarketsKey: Set[BigInteger] = Set.empty
+  private var enabledMarketsKey: Set[BigInteger] = Set.empty
+  private var readOnlyMarketsKey: Set[BigInteger] = Set.empty
   private var marketsMetadataMap = Map.empty[String, MarketMetadata]
 
-  private def toMarketHashInBigInt(primary:String, secondary: String): BigInt =
+  private def toMarketHashInBigInt(
+      primary: String,
+      secondary: String
+    ): BigInteger =
     Numeric.toBigInt(primary) xor Numeric.toBigInt(secondary)
 
   def reset(metas: Seq[MarketMetadata]) = this.synchronized {
     marketsMetadataMap = Map.empty
-    disabledMarketsKey = metas.filter(_.status == MarketMetadata.Status.DISABLED).map(m=> toMarketHashInBigInt()).toSet
-
+    disabledMarketsKey = Set.empty
+    enabledMarketsKey = Set.empty
+    readOnlyMarketsKey = Set.empty
     metas.foreach(addMarket)
   }
 
   def addMarket(meta: MarketMetadata) = this.synchronized {
     marketsMetadataMap += meta.marketHash -> meta
-    println(1111111, supportedMarketsKeys)
-    supportedMarketsKeys = supportedMarketsKeys + Numeric.toBigInt(meta.marketHash)
-    println(2222222, supportedMarketsKeys)
+    meta.status match {
+      case MarketMetadata.Status.DISABLED =>
+        disabledMarketsKey += Numeric.toBigInt(meta.marketHash)
+      case MarketMetadata.Status.ENABLED =>
+        enabledMarketsKey += Numeric.toBigInt(meta.marketHash)
+      case MarketMetadata.Status.READONLY =>
+        readOnlyMarketsKey += Numeric.toBigInt(meta.marketHash)
+      case m =>
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"Unhandled market metadata status:$m"
+        )
+    }
     this
   }
 
@@ -65,7 +70,7 @@ case class SupportedMarkets(config: Config) {
   }
 
   def contains(marketId: MarketId) = {
-    supportedMarketsKeys.contains(marketId.key)
+    enabledMarketsKey.contains(marketId.key)
   }
 
   def assertmarketIdIsValid(marketIdOpt: Option[MarketId]): Option[MarketId] = {
@@ -90,5 +95,5 @@ case class SupportedMarkets(config: Config) {
     )
   }
 
-  def getMarketKeys() = supportedMarketsKeys
+  def getMarketKeys() = enabledMarketsKey
 }

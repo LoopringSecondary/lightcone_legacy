@@ -36,4 +36,5 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
     )
   )
   actors.add(MetadataRefresher.name, MetadataRefresher.start)
+  supportedMarkets.reset
 }
