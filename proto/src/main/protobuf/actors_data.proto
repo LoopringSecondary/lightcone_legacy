@@ -313,7 +313,7 @@ message OHLCData {
     int64      time             = 1;
     string     marked_id        = 2;
     double     volume_a_sum     = 3;
-    double     volumeB_b_sum    = 4;
+    double     volume_b_sum     = 4;
     double     opening_price    = 5;
     double     closing_price    = 6;
     double     highest_price    = 7;
