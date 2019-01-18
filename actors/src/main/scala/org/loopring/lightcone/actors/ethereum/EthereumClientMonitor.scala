@@ -88,6 +88,8 @@ class EthereumClientMonitor(
 
   val checkIntervalSeconds: Int = selfConfig.getInt("check-interval-seconds")
 
+  println(s"checkIntervalSeconds ${checkIntervalSeconds}")
+
   override val repeatedJobs: Seq[Job] = Seq(
     Job(
       name = EthereumClientMonitor.name,

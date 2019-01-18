@@ -107,7 +107,7 @@ trait EthereumSupport {
   )
   actors.add(
     EthereumAccessActor.name,
-    EthereumAccessActor.start(connectionPools)
+    EthereumAccessActor.start
   )
 
   def transferEth(
