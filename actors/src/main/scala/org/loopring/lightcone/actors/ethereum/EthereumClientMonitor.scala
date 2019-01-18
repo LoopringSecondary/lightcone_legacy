@@ -70,24 +70,14 @@ object EthereumClientMonitor {
 }
 
 class EthereumClientMonitor(
-    val name: String = EthereumClientMonitor.name
-  )(
     implicit
-    system: ActorSystem,
     val config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    ma: ActorMaterializer,
-    ece: ExecutionContextExecutor)
-    extends Actor
-    with Stash
-    with ActorLogging
-    with RepeatedJobActor
-    with NamedBasedConfig {
-
-  implicit val formats = DefaultFormats
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef])
+    extends ActorWithPathBasedConfig(EthereumClientMonitor.name)
+    with RepeatedJobActor {
 
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
@@ -102,75 +92,53 @@ class EthereumClientMonitor(
     Job(
       name = EthereumClientMonitor.name,
       dalayInSeconds = checkIntervalSeconds,
-      run = () => checkNodeHeight,
+      run = () =>
+        for {
+          _ <- syncNodeHeight
+        } yield {
+          if (actors.contains(EthereumAccessActor.name)) {
+            nodes.values.foreach { node =>
+              ethereumAccessor ! node
+            }
+          }
+        },
       initialDalayInSeconds = checkIntervalSeconds
     )
   )
 
-  override def preStart(): Unit = {
-
-    checkNodeHeight onComplete {
-      case Success(_) =>
-        self ! Notify("initialized")
-        super.preStart()
-      case Failure(e) =>
-        log.error(s"Failed to start EthereumClientMonitor:${e.getMessage} ")
-        context.stop(self)
-    }
+  override def initialize(): Future[Unit] = {
+    syncNodeHeight.map(_ => becomeReady())
   }
 
-  override def receive: Receive = initialReceive
-
-  def initialReceive: Receive = {
-    case Notify("initialized", _) =>
-      context.become(normalReceive)
-      unstashAll()
-    case _ =>
-      stash()
-  }
-
-  def normalReceive: Receive = super.receiveRepeatdJobs orElse {
+  def ready: Receive = super.receiveRepeatdJobs orElse {
     case _: GetNodeBlockHeight.Req =>
       sender ! GetNodeBlockHeight.Res(
-        nodes.map(_._2).toSeq
+        nodes.values.toSeq
       )
   }
 
-  def checkNodeHeight = {
+  def syncNodeHeight = {
     log.debug("start scheduler check highest block...")
-    val blockNumJsonRpcReq = JsonRpcReqWrapped(
-      id = Random.nextInt(100),
-      method = "eth_blockNumber",
-      params = None
-    )
-    import JsonRpcResWrapped._
-    Future.sequence(nodes.map {
-      case (nodeName, nodeBlockHeight) =>
-        if (actors.contains(nodeName)) {
-          val actor = actors.get(nodeName)
-          for {
-            blockNumResp: Long <- (actor ? blockNumJsonRpcReq.toProto)
-              .mapAs[JsonRpc.Response]
-              .map(toJsonRpcResWrapped)
-              .map(_.result)
-              .map(anyHexToLong)
-              .recover {
-                case e: Exception =>
-                  log
-                    .error(
-                      s"exception on getting blockNumber: ${actor}: ${e.getMessage}"
-                    )
-                  -1L
-              }
-          } yield {
-            val nodeBlockHeight =
-              NodeBlockHeight(nodeName = nodeName, height = blockNumResp)
-            nodes = nodes + (nodeName -> nodeBlockHeight)
-            ethereumAccessor ! nodeBlockHeight
+    Future.sequence(nodes.keys.filter(actors.contains).map { nodeName =>
+      val actor = actors.get(nodeName)
+      for {
+        blockNumResp: Long <- (actor ? GetBlockNumber.Req())
+          .mapAs[GetBlockNumber.Res]
+          .map(_.result)
+          .map(anyHexToLong)
+          .recover {
+            case e: Exception =>
+              log
+                .error(
+                  s"exception on getting blockNumber: ${actor}: ${e.getMessage}"
+                )
+              -1L
           }
-        } else {
-          Future.successful(Unit)
-        }
+      } yield {
+        val nodeBlockHeight =
+          NodeBlockHeight(nodeName = nodeName, height = blockNumResp)
+        nodes = nodes + (nodeName -> nodeBlockHeight)
+      }
     })
   }
 
