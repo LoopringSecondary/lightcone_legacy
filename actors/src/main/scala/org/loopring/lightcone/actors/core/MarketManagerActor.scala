@@ -197,7 +197,7 @@ class MarketManagerActor(
       autoSwitchBackToReady.foreach(_.cancel)
       autoSwitchBackToReady = None
       s"market manager `${entityId}` recover completed (timeout=${timeout})"
-      context.become(ready)
+      becomeReady()
 
     case msg: Any =>
       log.warning(s"message not handled during recover, ${msg}, ${sender}")

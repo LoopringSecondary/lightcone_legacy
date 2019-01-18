@@ -389,6 +389,8 @@ class HttpConnector(
         BatchGetEthBalance.Res(txResps)
       } sendTo sender
     }
+    case req @ Notify("init", _) =>
+      sender ! req
   }
 
   private def normalizeTag(tag: String) =

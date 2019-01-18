@@ -81,14 +81,15 @@ class AliveKeeperActor @Inject()(
     extends ActorWithPathBasedConfig(AliveKeeperActor.name)
     with RepeatedJobActor {
 
-  val orderbookManagerActor = actors.get(OrderbookManagerActor.name)
-  val marketManagerActor = actors.get(MarketManagerActor.name)
-  val multiAccountManagerActor = actors.get(MultiAccountManagerActor.name)
+  def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  def marketManagerActor = actors.get(MarketManagerActor.name)
+  def multiAccountManagerActor = actors.get(MultiAccountManagerActor.name)
 
   val repeatedJobs = Seq(
     Job(
       name = "keep-alive",
       dalayInSeconds = 60, // 10 minutes
+      initialDalayInSeconds = 10,
       run = () =>
         Future.sequence(
           Seq(

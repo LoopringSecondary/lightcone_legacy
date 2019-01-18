@@ -28,7 +28,9 @@ import org.loopring.lightcone.actors.core.MetadataManagerActor
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
+
 import scala.concurrent._
+import scala.util._
 
 // Owner: Hongyu
 object MetadataRefresher {
@@ -70,15 +72,22 @@ class MetadataRefresher(
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(MetadataManagerActor.pubsubTopic, self)
 
-  override def initialize() =
-    for {
+  override def initialize() = {
+    val f = for {
       tokens <- (metadataManagerActor ? LoadTokenMetadata.Req())
         .mapTo[LoadTokenMetadata.Res]
         .map(_.tokens)
     } yield {
       tokenManager.reset(tokens)
-      becomeReady()
     }
+    f onComplete {
+      case Success(value) =>
+        becomeReady()
+      case Failure(e) =>
+        throw e
+    }
+    f
+  }
 
   def ready: Receive = {
     case req: MetadataChanged =>

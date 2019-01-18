@@ -97,16 +97,22 @@ class RingSettlementActor(
   import ethereum._
 
   override def initialize() = {
-    (ethereumAccessActor ? GetNonce.Req(
+    val f = (ethereumAccessActor ? GetNonce.Req(
       owner = ringContext.transactionOrigin,
       tag = "latest"
     )).mapAs[GetNonce.Res]
       .map(_.result)
       .map { validNonce =>
         nonce.set(Numeric.toBigInt(validNonce).intValue())
+      }
+    f onComplete {
+      case Success(value) =>
         becomeReady()
         self ! Notify("handle_settle_rings")
-      }
+      case Failure(e) =>
+        throw e
+    }
+    f
   }
 
   def ready: Receive = super.receiveRepeatdJobs orElse LoggingReceive {
