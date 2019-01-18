@@ -35,6 +35,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val orderStatusMonitorDal =
     new OrderStatusMonitorDalImpl
   implicit val marketMetadataDal = new MarketMetadataDalImpl()
+  implicit val missingBlocksRecordDal = new MissingBlocksRecordDalImpl()
   implicit val orderService = new OrderServiceImpl
   implicit val orderStatusMonitorService =
     new OrderStatusMonitorServiceImpl
@@ -51,6 +52,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     settlementTxDal,
     orderStatusMonitorDal,
     marketMetadataDal,
+    missingBlocksRecordDal,
     orderService,
     orderStatusMonitorService,
     tradeService,
