@@ -33,11 +33,13 @@ package object ethereum {
     case _                       => BigInt(x, 16)
   }
 
-  implicit def byteString2BigInt(bs: ByteString): BigInt =
-    Numeric.toBigInt(bs.toByteArray)
+  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
+    if (bytes.size() > 0) BigInt(bytes.toByteArray)
+    else BigInt(0)
+  }
 
-  implicit def bigInt2ByteString(bi: BigInt): ByteString =
-    ByteString.copyFrom(bi.toByteArray)
+  implicit def bigInt2ByteString(b: BigInt): ByteString =
+    ByteString.copyFrom(b.toByteArray)
 
   def verifyEthereumSignature(
       hash: Array[Byte],

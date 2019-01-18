@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum
+package org.loopring.lightcone.actors.ethereum.event
 
-import com.google.protobuf.ByteString
+import com.google.inject.Inject
+import com.typesafe.config.Config
+import org.loopring.lightcone.proto._
 
-package object event {
+import scala.concurrent.{ExecutionContext, Future}
 
-  implicit def bytes2ByteString(bytes: Array[Byte]) = ByteString.copyFrom(bytes)
+class OrderFillEventExtractor @Inject()(
+    implicit
+    extractor: RingMinedEventExtractor,
+    val ec: ExecutionContext)
+    extends EventExtractor[OrderFilledEvent] {
 
+  def extract(block: RawBlockData): Future[Seq[OrderFilledEvent]] =
+    extractor.extract(block).map(_.flatMap(_.fills))
 }

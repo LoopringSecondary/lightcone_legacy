@@ -16,9 +16,7 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
@@ -28,33 +26,55 @@ import slick.basic._
 import scala.concurrent._
 import org.slf4s.Logging
 import com.google.inject.Inject
+import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
+import org.loopring.lightcone.lib.TimeProvider
+import org.loopring.lightcone.persistence.base.enumColumnType
+import scala.util.{Failure, Success}
 
 class TokenMetadataDalImpl @Inject()(
     implicit
     val ec: ExecutionContext,
     @Named("dbconfig-dal-token-metadata") val dbConfig: DatabaseConfig[
       JdbcProfile
-    ])
+    ],
+    timeProvider: TimeProvider)
     extends TokenMetadataDal
     with Logging {
-
   val query = TableQuery[TokenMetadataTable]
+  implicit val statusColumnType = enumColumnType(TokenMetadata.Status)
 
-  private var tokens: Seq[TokenMetadata] = Nil
-
-  def getTokens(reloadFromDatabase: Boolean = false) = {
-    if (reloadFromDatabase || tokens.isEmpty) {
-      db.run(query.take(Int.MaxValue).result).map { tokens_ =>
-        tokens = tokens_
-        log.info(
-          s"token metadata retrieved>> ${tokens.mkString("\n", "\n", "\n")}"
-        )
-        tokens
-      }
-    } else {
-      Future.successful(tokens)
+  def saveToken(tokenMetadata: TokenMetadata): Future[ErrorCode] =
+    db.run((query += tokenMetadata).asTry).map {
+      case Failure(e: MySQLIntegrityConstraintViolationException) =>
+        ERR_PERSISTENCE_DUPLICATE_INSERT
+      case Failure(ex) =>
+        logger.error(s"error : ${ex.getMessage}")
+        ERR_PERSISTENCE_INTERNAL
+      case Success(x) => ERR_NONE
     }
-  }
+
+  def saveTokens(tokenMetadatas: Seq[TokenMetadata]): Future[Seq[String]] =
+    for {
+      _ <- Future.sequence(tokenMetadatas.map(saveToken))
+      query <- getTokens(tokenMetadatas.map(_.address))
+    } yield query.map(_.address)
+
+  def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode] =
+    for {
+      result <- db.run(query.insertOrUpdate(tokenMetadata))
+    } yield {
+      if (result == 1) {
+        ERR_NONE
+      } else {
+        ERR_PERSISTENCE_INTERNAL
+      }
+    }
+
+  def getTokens() =
+    db.run(query.take(Int.MaxValue).result)
+
+  def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]] =
+    db.run(query.filter(_.address inSet tokens).result)
 
   def updateBurnRate(
       token: String,
@@ -64,8 +84,21 @@ class TokenMetadataDalImpl @Inject()(
       result <- db.run(
         query
           .filter(_.address === token)
-          .map(c => c.burnRate)
-          .update(burnRate)
+          .map(c => (c.burnRate, c.updateAt))
+          .update(burnRate, timeProvider.getTimeMillis())
+      )
+    } yield {
+      if (result >= 1) ERR_NONE
+      else ERR_PERSISTENCE_UPDATE_FAILED
+    }
+
+  def disableToken(address: String): Future[ErrorCode] =
+    for {
+      result <- db.run(
+        query
+          .filter(_.address === address)
+          .map(c => (c.status, c.updateAt))
+          .update(TokenMetadata.Status.DISABLED, timeProvider.getTimeMillis())
       )
     } yield {
       if (result >= 1) ERR_NONE

@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.event
+package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
-
 import scala.collection.JavaConverters._
+import scala.concurrent._
 
-class TokenBurnRateEventExtractor @Inject()(implicit config: Config)
+class TokenBurnRateEventExtractor @Inject()(
+    implicit
+    val config: Config,
+    val ec: ExecutionContext)
     extends EventExtractor[TokenBurnRateChangedEvent] {
 
   val rateMap = config
@@ -33,26 +36,27 @@ class TokenBurnRateEventExtractor @Inject()(implicit config: Config)
     .toMap
   val base = config.getInt("loopring_protocol.burn-rate-table.base")
 
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Seq[TokenBurnRateChangedEvent] = {
-    val header = getEventHeader(tx, receipt, blockTime)
-    receipt.logs.zipWithIndex.map { item =>
-      val (log, index) = item
-      loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-        case Some(event: TokenTierUpgradedEvent.Result) =>
-          Some(
-            TokenBurnRateChangedEvent(
-              header = Some(header.withLogIndex(index)),
-              token = event.add,
-              burnRate = rateMap(event.tier.intValue()) / base.toDouble
-            )
-          )
-        case _ =>
-          None
+  def extract(block: RawBlockData): Future[Seq[TokenBurnRateChangedEvent]] =
+    Future {
+      (block.txs zip block.receipts).flatMap {
+        case (tx, receipt) =>
+          val header = getEventHeader(tx, receipt, block.timestamp)
+          receipt.logs.zipWithIndex.map {
+            case (log, index) =>
+              loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+                case Some(event: TokenTierUpgradedEvent.Result) =>
+                  Some(
+                    TokenBurnRateChangedEvent(
+                      header = Some(header.withLogIndex(index)),
+                      token = event.add,
+                      burnRate = rateMap(event.tier.intValue()) / base.toDouble
+                    )
+                  )
+                case _ =>
+                  None
+              }
+          }.filter(_.nonEmpty).map(_.get)
+
       }
-    }.filter(_.nonEmpty).map(_.get)
-  }
+    }
 }
