@@ -88,56 +88,57 @@ class EthereumClientMonitor(
 
   val checkIntervalSeconds: Int = selfConfig.getInt("check-interval-seconds")
 
-  println(s"checkIntervalSeconds ${checkIntervalSeconds}")
-
   override val repeatedJobs: Seq[Job] = Seq(
     Job(
       name = EthereumClientMonitor.name,
       dalayInSeconds = checkIntervalSeconds,
-      run = () => checkNodeHeight,
+      run = () =>
+        for {
+          _ <- syncNodeHeight
+        } yield {
+          if (actors.contains(EthereumAccessActor.name)) {
+            nodes.values.foreach { node =>
+              ethereumAccessor ! node
+            }
+          }
+        },
       initialDalayInSeconds = checkIntervalSeconds
     )
   )
 
   override def initialize(): Future[Unit] = {
-    checkNodeHeight.map(_ => becomeReady())
+    syncNodeHeight.map(_ => becomeReady())
   }
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
     case _: GetNodeBlockHeight.Req =>
       sender ! GetNodeBlockHeight.Res(
-        nodes.map(_._2).toSeq
+        nodes.values.toSeq
       )
   }
 
-  def checkNodeHeight = {
+  def syncNodeHeight = {
     log.debug("start scheduler check highest block...")
-    Future.sequence(nodes.map {
-      case (nodeName, nodeBlockHeight) =>
-        if (actors.contains(nodeName)) {
-          val actor = actors.get(nodeName)
-          for {
-            blockNumResp: Long <- (actor ? GetBlockNumber.Req())
-              .mapAs[GetBlockNumber.Res]
-              .map(_.result)
-              .map(anyHexToLong)
-              .recover {
-                case e: Exception =>
-                  log
-                    .error(
-                      s"exception on getting blockNumber: ${actor}: ${e.getMessage}"
-                    )
-                  -1L
-              }
-          } yield {
-            val nodeBlockHeight =
-              NodeBlockHeight(nodeName = nodeName, height = blockNumResp)
-            nodes = nodes + (nodeName -> nodeBlockHeight)
-            ethereumAccessor ! nodeBlockHeight
+    Future.sequence(nodes.keys.filter(actors.contains).map { nodeName =>
+      val actor = actors.get(nodeName)
+      for {
+        blockNumResp: Long <- (actor ? GetBlockNumber.Req())
+          .mapAs[GetBlockNumber.Res]
+          .map(_.result)
+          .map(anyHexToLong)
+          .recover {
+            case e: Exception =>
+              log
+                .error(
+                  s"exception on getting blockNumber: ${actor}: ${e.getMessage}"
+                )
+              -1L
           }
-        } else {
-          Future.successful(Unit)
-        }
+      } yield {
+        val nodeBlockHeight =
+          NodeBlockHeight(nodeName = nodeName, height = blockNumResp)
+        nodes = nodes + (nodeName -> nodeBlockHeight)
+      }
     })
   }
 

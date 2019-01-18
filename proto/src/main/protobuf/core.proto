@@ -98,6 +98,7 @@ enum ErrorCode{
     ERR_UNSUPPORTED_MESSAGE             = 3012;
     ERR_FAILED_HANDLE_MSG               = 3013;
     ERR_REJECTED_DURING_RECOVER         = 3014;
+    ERR_ACTOR_NOT_READY                 = 3015;
 
     //4001 -- 5000 persistence Error
     ERR_PERSISTENCE_INVALID_DATA        = 4001;
