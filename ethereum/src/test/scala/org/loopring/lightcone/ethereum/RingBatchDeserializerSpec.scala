@@ -109,6 +109,7 @@ class RingBatchDeserializerSpec extends FlatSpec with Matchers {
       generator.generateAndSignRingBatch(Seq(Seq(order1, order2)))
 
     // ringBatch.orders.foreach(o => println(o.hash))
+    // println(s"original ring batch: ${ringBatch.toProtoString}")
 
     val paramStr = generator.toSubmitableParamStr(ringBatch)
     // println(s"paramStr:$paramStr")
@@ -133,12 +134,13 @@ class RingBatchDeserializerSpec extends FlatSpec with Matchers {
           "decoded field not equal with original one."
         )
 
-      // TODO: not pass, need to be fixed.
-      // ringBatchDecoded.orders zip ringBatch.orders foreach { pair =>
-      //   val (o1, o2) = pair
-      //   val o1Hash = RawOrderValidatorImpl.calculateOrderHash(o1)
-      //   assert(o1Hash == o2.hash, "order hash not match")
-      // }
+        // println(s"ringBatchDecoded: ${ringBatchDecoded.toProtoString}")
+
+        ringBatchDecoded.orders zip ringBatch.orders foreach { pair =>
+          val (o1, o2) = pair
+          val o1Hash = RawOrderValidatorImpl.calculateOrderHash(o1)
+          assert(o1Hash == o2.hash, "order hash not match")
+        }
       case Left(err) =>
         assert(false, "deserialize failed:" + err.name)
     }

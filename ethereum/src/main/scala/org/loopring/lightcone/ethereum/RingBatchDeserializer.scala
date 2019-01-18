@@ -25,7 +25,11 @@ trait RingBatchDeserializer {
   def deserialize: Either[ErrorCode, RingBatch]
 }
 
-class SimpleRingBatchDeserializer(encoded: String = "")
+class SimpleRingBatchDeserializer(
+    encoded: String = ""
+  )(
+    implicit
+    context: RingBatchContext)
     extends RingBatchDeserializer {
   import ethereum._
 
@@ -191,7 +195,7 @@ class SimpleRingBatchDeserializer(encoded: String = "")
       allOrNone = nextUint16 > 0
     )
 
-    val feeParams = new RawOrder.FeeParams(
+    var feeParams = new RawOrder.FeeParams(
       tokenFee = nextAddress,
       amountFee = nextUint,
       waiveFeePercentage = nextInt16,
@@ -200,6 +204,10 @@ class SimpleRingBatchDeserializer(encoded: String = "")
       tokenRecipient = nextAddress,
       walletSplitPercentage = nextUint16
     )
+
+    if (!isAddressValidAndNonZero(feeParams.tokenFee)) {
+      feeParams = feeParams.copy(tokenFee = context.lrcAddress)
+    }
 
     val erc1400Params = new RawOrder.ERC1400Params(
       tokenStandardS = TokenStandard.fromValue(nextUint16),
@@ -210,13 +218,11 @@ class SimpleRingBatchDeserializer(encoded: String = "")
       transferDataS = nextBytes
     )
 
-    val order2 = order.copy(
+    order.copy(
       params = Some(params),
       feeParams = Some(feeParams),
       erc1400Params = Some(erc1400Params)
     )
-
-    order2
   }
 
   class BitExtractor(data: String) {
