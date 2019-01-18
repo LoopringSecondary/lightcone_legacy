@@ -70,24 +70,14 @@ object EthereumClientMonitor {
 }
 
 class EthereumClientMonitor(
-    val name: String = EthereumClientMonitor.name
-  )(
     implicit
-    system: ActorSystem,
     val config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    ma: ActorMaterializer,
-    ece: ExecutionContextExecutor)
-    extends Actor
-    with Stash
-    with ActorLogging
-    with RepeatedJobActor
-    with NamedBasedConfig {
-
-  implicit val formats = DefaultFormats
+    val ec: ExecutionContext,
+    val timeProvider: TimeProvider,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef])
+    extends ActorWithPathBasedConfig(EthereumClientMonitor.name)
+    with RepeatedJobActor {
 
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
@@ -107,29 +97,11 @@ class EthereumClientMonitor(
     )
   )
 
-  override def preStart(): Unit = {
-
-    checkNodeHeight onComplete {
-      case Success(_) =>
-        self ! Notify("initialized")
-        super.preStart()
-      case Failure(e) =>
-        log.error(s"Failed to start EthereumClientMonitor:${e.getMessage} ")
-        context.stop(self)
-    }
+  override def initialize(): Future[Unit] = {
+    checkNodeHeight.map(_ => becomeReady())
   }
 
-  override def receive: Receive = initialReceive
-
-  def initialReceive: Receive = {
-    case Notify("initialized", _) =>
-      context.become(normalReceive)
-      unstashAll()
-    case _ =>
-      stash()
-  }
-
-  def normalReceive: Receive = super.receiveRepeatdJobs orElse {
+  def ready: Receive = super.receiveRepeatdJobs orElse {
     case _: GetNodeBlockHeight.Req =>
       sender ! GetNodeBlockHeight.Res(
         nodes.map(_._2).toSeq
@@ -138,20 +110,13 @@ class EthereumClientMonitor(
 
   def checkNodeHeight = {
     log.debug("start scheduler check highest block...")
-    val blockNumJsonRpcReq = JsonRpcReqWrapped(
-      id = Random.nextInt(100),
-      method = "eth_blockNumber",
-      params = None
-    )
-    import JsonRpcResWrapped._
     Future.sequence(nodes.map {
       case (nodeName, nodeBlockHeight) =>
         if (actors.contains(nodeName)) {
           val actor = actors.get(nodeName)
           for {
-            blockNumResp: Long <- (actor ? blockNumJsonRpcReq.toProto)
-              .mapAs[JsonRpc.Response]
-              .map(toJsonRpcResWrapped)
+            blockNumResp: Long <- (actor ? GetBlockNumber.Req())
+              .mapAs[GetBlockNumber.Res]
               .map(_.result)
               .map(anyHexToLong)
               .recover {

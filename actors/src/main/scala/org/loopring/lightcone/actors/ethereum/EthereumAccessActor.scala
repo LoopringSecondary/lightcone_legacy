@@ -74,9 +74,7 @@ class EthereumAccessActor(
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val ma: ActorMaterializer,
-    val ece: ExecutionContextExecutor)
+    val actors: Lookup[ActorRef])
     extends Actor
     with Stash
     with ActorLogging {
