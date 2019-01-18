@@ -23,8 +23,10 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.actors.data._
+
 import scala.concurrent._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.ethereum.SimpleRingBatchDeserializer
 
 class RingMinedEventExtractor @Inject()(
     implicit
@@ -84,8 +86,24 @@ class RingMinedEventExtractor @Inject()(
           ringSubmitterAbi.unpackFunctionInput(tx.input) match {
             case Some(params: SubmitRingsFunction.Params) =>
               val ringData = params.data
-              //TODO (yadong) 等待孔亮的提供具体的解析方法
-              Seq.empty
+              new SimpleRingBatchDeserializer(Numeric.toHexString(ringData)).deserialize match {
+                case Left(_) =>
+                  Seq.empty
+                case Right(ringBatch) =>
+                  ringBatch.rings.map { ring =>
+                    PRingMinedEvent(
+                      header = Some(header),
+                      fills = ring.orderIndexes.map(index => {
+                        val order = ringBatch.orders(index)
+                        OrderFilledEvent(
+                          header = Some(header),
+                          orderHash = order.hash,
+                          tokenS = order.tokenS
+                        )
+                      })
+                    )
+                  }
+              }
             case _ =>
               Seq.empty
           }
