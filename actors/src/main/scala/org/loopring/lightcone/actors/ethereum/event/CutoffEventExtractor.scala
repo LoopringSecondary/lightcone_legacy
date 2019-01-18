@@ -17,18 +17,28 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
+import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.MarketHashProvider.convert2Hex
 import org.loopring.lightcone.proto.{CutoffEvent, RawBlockData}
 
 import scala.concurrent._
 
-class CutoffEventExtractor @Inject()(implicit val ec: ExecutionContext)
+class CutoffEventExtractor @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    val config: Config)
     extends EventExtractor[CutoffEvent] {
+
+  val orderCancelAddress = Address(
+    config.getString("loopring_protocol.order-cancel-address")
+  ).toString()
 
   def extract(block: RawBlockData): Future[Seq[CutoffEvent]] = Future {
     (block.txs zip block.receipts).flatMap {
-      case (tx, receipt) =>
+      //通过地址判断下cancel事件
+      case (tx, receipt) if tx.to.equalsIgnoreCase(orderCancelAddress) =>
         val header = getEventHeader(tx, receipt, block.timestamp)
         receipt.logs.zipWithIndex.map {
           case (log, index) =>
@@ -78,6 +88,7 @@ class CutoffEventExtractor @Inject()(implicit val ec: ExecutionContext)
                 None
             }
         }.filter(_.nonEmpty).map(_.get)
+      case _ => Seq.empty
     }
   }
 }
