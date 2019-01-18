@@ -52,7 +52,7 @@ final class MetadataManager() extends Logging {
 
   def addToken(meta: TokenMetadata) = this.synchronized {
     addressMap += meta.address.toLowerCase() -> new Token(meta)
-    symbolMap += meta.symbol.toLowerCase() -> new Token(meta)
+    symbolMap += meta.symbol.toUpperCase() -> new Token(meta)
     this
   }
 
@@ -63,7 +63,7 @@ final class MetadataManager() extends Logging {
 
   def hasToken(addr: String) = addressMap.contains(addr.toLowerCase())
 
-  def hasSymbol(symbol: String) = symbolMap.contains(symbol.toLowerCase())
+  def hasSymbol(symbol: String) = symbolMap.contains(symbol.toUpperCase())
 
   def getToken(addr: String) = {
     // assert(hasToken(addr.toLowerCase()), s"token no found for address $addr")
@@ -72,7 +72,7 @@ final class MetadataManager() extends Logging {
 
   def getTokenBySymbol(symbol: String) = {
     // assert(hasSymbol(symbol.toLowerCase()), s"token no found for symbol $symbol")
-    symbolMap.get(symbol.toLowerCase())
+    symbolMap.get(symbol.toUpperCase())
   }
 
   def getBurnRate(addr: String) =
