@@ -16,7 +16,21 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import com.google.inject.Inject
-import com.google.inject.name.Named
+import org.loopring.lightcone.persistence.base._
+import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto._
+import scala.concurrent._
 
-trait MarketMetadataDal {}
+trait MissingBlocksRecordDal
+    extends BaseDalImpl[MissingBlocksRecordTable, MissingBlocksRecord] {
+  def saveMissingBlock(record: MissingBlocksRecord): Future[Int]
+
+  def getOldestOne(): Future[Option[MissingBlocksRecord]]
+
+  def updateProgress(
+      sequenceId: Long,
+      progressTo: Long
+    ): Future[Int]
+
+  def deleteRecord(sequenceId: Long): Future[Boolean]
+}

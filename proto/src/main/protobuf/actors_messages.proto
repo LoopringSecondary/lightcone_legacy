@@ -291,3 +291,7 @@ message GetNodeBlockHeight {
         repeated NodeBlockHeight nodes = 1;
     }
 }
+
+message MetadataChanged {
+
+}

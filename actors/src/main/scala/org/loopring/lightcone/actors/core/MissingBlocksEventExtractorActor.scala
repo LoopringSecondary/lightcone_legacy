@@ -18,19 +18,15 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.singleton._
-import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
-import org.web3j.utils.Numeric
-
-import scala.collection.mutable
 import scala.concurrent.duration._
+
 import scala.concurrent.{ExecutionContext, Future}
 
 object MissingBlocksEventExtractorActor {
@@ -76,80 +72,50 @@ class MissingBlocksEventExtractorActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    dispatchers: Seq[EventDispatcher[_]],
+    val eventDispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name) {
+    extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name)
+    with EventExtraction {
+  val NEXT_RANGE = Notify("next_range")
+  var sequenceId = 0L
+  val delayInSeconds = selfConfig.getLong("delay_in_seconds")
 
-  val taskQueue = new mutable.Queue[Long]()
-  var currentBlockNumber = 0L
-  def ethereumAccessorActor: ActorRef = actors.get(EthereumAccessActor.name)
+  var untilBlock: Long = 0L //初始化为0，开始不需要获取区块
 
-  override def ready: Receive = {
-    case Notify("next", _) =>
-      if (taskQueue.nonEmpty) {
-        currentBlockNumber = taskQueue.dequeue()
-        process()
-      } else {
-        context.system.scheduler.scheduleOnce(30 seconds, self, Notify("next"))
-      }
-    case Notify("current", _) =>
-      process()
-    case BlockSupplementTask(blocks) =>
-      taskQueue.enqueue(blocks: _*)
+  override def initialize() = Future.successful {
+    becomeReady()
+    self ! NEXT_RANGE
   }
 
-  def process(): Unit = {
-    for {
-      block <- (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(
-        Numeric.toHexString(BigInt(currentBlockNumber).toByteArray)
-      )).mapAs[GetBlockWithTxObjectByNumber.Res]
-        .map(_.result.get)
-      receipts <- (ethereumAccessorActor ? BatchGetTransactionReceipts.Req(
-        block.transactions
-          .map(tx => GetTransactionReceipt.Req(tx.hash))
-      )).mapAs[BatchGetTransactionReceipts.Res]
-        .map(_.resps.map(_.result))
-      uncles <- if (block.uncles.nonEmpty) {
-        val batchGetUnclesReq = BatchGetUncle.Req(
-          block.uncles.indices.map(
-            index =>
-              GetUncle
-                .Req(block.number, Numeric.prependHexPrefix(index.toHexString))
-          )
-        )
-        (ethereumAccessorActor ? batchGetUnclesReq)
-          .mapAs[BatchGetUncle.Res]
-          .map(_.resps.map(_.result.get.miner))
-      } else {
-        Future.successful(Seq.empty)
+  def ready: Receive = handleMessage orElse {
+    case NEXT_RANGE =>
+      for {
+        missingBlocksOpt <- dbModule.missingBlocksRecordDal.getOldestOne()
+      } yield {
+        if (missingBlocksOpt.isDefined) {
+          val missingBlocks = missingBlocksOpt.get
+          blockData = RawBlockData(missingBlocks.lastHandledBlock - 1)
+          untilBlock = missingBlocks.blockEnd
+          sequenceId = missingBlocks.sequenceId
+          self ! GET_BLOCK
+        } else {
+          context.system.scheduler
+            .scheduleOnce(delayInSeconds seconds, self, NEXT_RANGE)
+        }
       }
-    } yield {
-      if (receipts.forall(_.nonEmpty)) {
-        val rawBlockData = RawBlockData(
-          hash = block.hash,
-          height = Numeric.toBigInt(block.number).longValue(),
-          timestamp = block.timestamp,
-          miner = block.miner,
-          uncles = uncles,
-          txs = block.transactions,
-          receipts = receipts.map(_.get)
-        )
-        dispatchers.foreach(_.dispatch(rawBlockData))
-        dbModule.blockService.saveBlock(
-          BlockData(
-            hash = block.hash,
-            height = rawBlockData.height,
-            timestamp = Numeric.toBigInt(block.timestamp).longValue()
-          )
-        )
-        self ! Notify("next")
-      } else {
-        context.system.scheduler
-          .scheduleOnce(1 seconds, self, Notify("current"))
-      }
-    }
   }
+
+  def process =
+    processEvents.map(
+      _ => {
+        dbModule.missingBlocksRecordDal
+          .updateProgress(sequenceId, blockData.height)
+        if (blockData.height >= untilBlock) {
+          self ! NEXT_RANGE
+        }
+      }
+    )
+
 }

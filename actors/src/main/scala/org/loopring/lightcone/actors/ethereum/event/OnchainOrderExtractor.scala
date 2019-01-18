@@ -17,28 +17,39 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
+import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+
 import scala.concurrent._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.ethereum.data.Address
 
-class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
+class OnchainOrderExtractor @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    val config: Config)
     extends EventExtractor[RawOrder] {
 
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Future[Seq[RawOrder]] = Future {
-    receipt.logs.map { log =>
-      loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
-        case Some(event: OrderSubmittedEvent.Result) =>
-          Some(extractOrderFromEvent(event))
-        case _ =>
-          None
+  val ringSubmitterAddress =
+    Address(config.getString("loopring_protocol.protocol-address")).toString()
+
+  def extract(block: RawBlockData): Future[Seq[RawOrder]] = Future {
+    block.receipts.flatMap { receipt =>
+      if (receipt.contractAddress.equalsIgnoreCase(ringSubmitterAddress)) {
+        receipt.logs.map { log =>
+          loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
+            case Some(event: OrderSubmittedEvent.Result) =>
+              Some(extractOrderFromEvent(event))
+            case _ =>
+              None
+          }
+        }.filter(_.nonEmpty).map(_.get)
+      } else {
+        Seq.empty
       }
-    }.filter(_.nonEmpty).map(_.get)
+    }
   }
 
   private def extractOrderFromEvent(
@@ -50,8 +61,8 @@ class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
       owner = Numeric.prependHexPrefix(data.substring(0, 64)),
       tokenS = Numeric.prependHexPrefix(data.substring(64, 64 * 2)),
       tokenB = Numeric.prependHexPrefix(data.substring(64 * 2, 64 * 3)),
-      amountS = Numeric.toBigInt(data.substring(64 * 3, 64 * 4)).toByteArray,
-      amountB = Numeric.toBigInt(data.substring(64 * 4, 64 * 5)).toByteArray,
+      amountS = BigInt(Numeric.toBigInt(data.substring(64 * 3, 64 * 4))),
+      amountB = BigInt(Numeric.toBigInt(data.substring(64 * 4, 64 * 5))),
       validSince = Numeric.toBigInt(data.substring(64 * 5, 64 * 6)).intValue(),
       params = Some(
         RawOrder.Params(
@@ -63,24 +74,14 @@ class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
             Numeric.toBigInt(data.substring(64 * 9, 64 * 10)).intValue(),
           allOrNone = Numeric
             .toBigInt(data.substring(64 * 10, 64 * 11))
-            .intValue() == 1,
-          tokenStandardS = TokenStandard.fromValue(
-            Numeric.toBigInt(data.substring(64 * 17, 64 * 18)).intValue()
-          ),
-          tokenStandardB = TokenStandard.fromValue(
-            Numeric.toBigInt(data.substring(64 * 18, 64 * 19)).intValue()
-          ),
-          tokenStandardFee = TokenStandard.fromValue(
-            Numeric.toBigInt(data.substring(64 * 19, 64 * 20)).intValue()
-          )
+            .intValue() == 1
         )
       ),
       hash = event.orderHash,
       feeParams = Some(
         RawOrder.FeeParams(
           tokenFee = Numeric.prependHexPrefix(data.substring(64 * 11, 64 * 12)),
-          amountFee =
-            Numeric.toBigInt(data.substring(64 * 12, 64 * 13)).toByteArray,
+          amountFee = BigInt(Numeric.toBigInt(data.substring(64 * 12, 64 * 13))),
           tokenBFeePercentage =
             Numeric.toBigInt(data.substring(64 * 13, 64 * 14)).intValue(),
           tokenSFeePercentage =
@@ -93,6 +94,15 @@ class OnchainOrderExtractor @Inject()(implicit val ec: ExecutionContext)
       ),
       erc1400Params = Some(
         RawOrder.ERC1400Params(
+          tokenStandardS = TokenStandard.fromValue(
+            Numeric.toBigInt(data.substring(64 * 17, 64 * 18)).intValue()
+          ),
+          tokenStandardB = TokenStandard.fromValue(
+            Numeric.toBigInt(data.substring(64 * 18, 64 * 19)).intValue()
+          ),
+          tokenStandardFee = TokenStandard.fromValue(
+            Numeric.toBigInt(data.substring(64 * 19, 64 * 20)).intValue()
+          ),
           trancheS = Numeric.prependHexPrefix(data.substring(64 * 20, 64 * 21)),
           trancheB = Numeric.prependHexPrefix(data.substring(64 * 21, 64 * 22)),
           transferDataS =

@@ -26,19 +26,7 @@ trait EventExtractor[R] {
 
   implicit val ec: ExecutionContext
 
-  def extract(block: RawBlockData): Future[Seq[R]] =
-    Future
-      .sequence((block.txs zip block.receipts).map {
-        case (tx, receipt) =>
-          extract(tx, receipt, block.timestamp)
-      })
-      .map(_.flatten)
-
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Future[Seq[R]]
+  def extract(block: RawBlockData): Future[Seq[R]]
 
   def getEventHeader(
       tx: Transaction,
@@ -49,7 +37,7 @@ trait EventExtractor[R] {
       txHash = tx.hash,
       txFrom = tx.from,
       txTo = tx.to,
-      txValue = Numeric.toBigInt(tx.value).toByteArray,
+      txValue = BigInt(Numeric.toBigInt(tx.value)),
       txIndex = Numeric.toBigInt(tx.transactionIndex).intValue(),
       txStatus = getStatus(receipt.status),
       blockHash = tx.blockHash,
@@ -72,5 +60,13 @@ trait EventExtractor[R] {
     } catch {
       case e: Throwable => false
     }
+  }
+
+  def formatHex(str: String): String = {
+    if (Numeric.cleanHexPrefix(str).isEmpty) str + "0" else str
+  }
+
+  def hex2ArrayBytes(str: String): Array[Byte] = {
+    Numeric.toBigInt(formatHex(str)).toByteArray
   }
 }

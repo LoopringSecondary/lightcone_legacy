@@ -38,7 +38,7 @@ class AllowanceChangedAddressExtractor @Inject()(
     val config: Config,
     val brb: EthereumBatchCallRequestBuilder,
     val timeout: Timeout,
-    val lookup: Lookup[ActorRef],
+    val actors: Lookup[ActorRef],
     val ec: ExecutionContext)
     extends EventExtractor[AddressAllowanceUpdated] {
 
@@ -46,61 +46,55 @@ class AllowanceChangedAddressExtractor @Inject()(
   val delegateAddress = Address(protocolConf.getString("delegate-address"))
   val protocolAddress = Address(protocolConf.getString("protocol-address"))
 
-  def ethereumAccessor = lookup.get(EthereumAccessActor.name)
+  def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
-  override def extract(
-      block: RawBlockData
-    ): Future[Seq[AddressAllowanceUpdated]] = {
-    for {
-      events <- Future
-        .sequence((block.txs zip block.receipts).map {
-          case (tx, receipt) =>
-            extract(tx, receipt, block.timestamp)
-        })
-        .map(_.flatten.distinct)
-      batchCallReq = brb.buildRequest(delegateAddress, events, "latest")
-      tokenAllowances <- (ethereumAccessor ? batchCallReq)
-        .mapAs[BatchCallContracts.Res]
-        .map(_.resps.map(res => Numeric.toBigInt(res.result).toByteArray))
-    } yield {
-      (events zip tokenAllowances).map(
-        item => item._1.withBalance(item._2)
-      )
-    }
-  }
-
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Future[Seq[AddressAllowanceUpdated]] = Future {
+  def extract(block: RawBlockData): Future[Seq[AddressAllowanceUpdated]] = {
     val allowanceAddresses = ListBuffer.empty[AddressAllowanceUpdated]
-    receipt.logs.foreach { log =>
-      wethAbi.unpackEvent(log.data, log.topics.toArray) match {
-        case Some(transfer: TransferEvent.Result) =>
-          if (Address(receipt.to).equals(protocolAddress))
-            allowanceAddresses.append(
-              AddressAllowanceUpdated(transfer.from, log.address)
-            )
+    (block.txs zip block.receipts).foreach {
+      case (tx, receipt) =>
+        receipt.logs.foreach { log =>
+          wethAbi.unpackEvent(log.data, log.topics.toArray) match {
+            case Some(transfer: TransferEvent.Result) =>
+              if (Address(receipt.to).equals(protocolAddress))
+                allowanceAddresses.append(
+                  AddressAllowanceUpdated(transfer.from, log.address)
+                )
 
-        case Some(approval: ApprovalEvent.Result) =>
-          if (Address(approval.spender).equals(delegateAddress))
-            allowanceAddresses.append(
-              AddressAllowanceUpdated(approval.owner, log.address)
-            )
-        case _ =>
-      }
+            case Some(approval: ApprovalEvent.Result) =>
+              if (Address(approval.spender).equals(delegateAddress))
+                allowanceAddresses.append(
+                  AddressAllowanceUpdated(approval.owner, log.address)
+                )
+            case _ =>
+          }
+        }
+        if (isSucceed(receipt.status)) {
+          wethAbi.unpackFunctionInput(tx.input) match {
+            case Some(param: ApproveFunction.Parms) =>
+              if (Address(param.spender).equals(delegateAddress))
+                allowanceAddresses.append(
+                  AddressAllowanceUpdated(tx.from, tx.to)
+                )
+            case _ =>
+          }
+        }
     }
-    if (isSucceed(receipt.status)) {
-      wethAbi.unpackFunctionInput(tx.input) match {
-        case Some(param: ApproveFunction.Parms) =>
-          if (Address(param.spender).equals(delegateAddress))
-            allowanceAddresses.append(
-              AddressAllowanceUpdated(tx.from, tx.to)
-            )
-        case _ =>
+    val events = allowanceAddresses.distinct
+    for {
+      tokenAllowances <- if (events.nonEmpty) {
+        val batchCallReq = brb.buildRequest(delegateAddress, events, "latest")
+        (ethereumAccessor ? batchCallReq)
+          .mapAs[BatchCallContracts.Res]
+          .map(
+            _.resps
+              .map(res => hex2ArrayBytes(res.result))
+          )
+      } else {
+        Future.successful(Seq.empty)
       }
+    } yield {
+      (events zip tokenAllowances).map(item => item._1.withBalance(item._2))
     }
-    allowanceAddresses
   }
+
 }

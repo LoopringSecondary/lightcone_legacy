@@ -48,7 +48,7 @@ message JsonRpc {
 
 message EthRpcError {
     int32 code = 1;
-    string error = 2;
+    string message = 2;
 }
 
 message GetBlockNumber {
@@ -316,10 +316,6 @@ message RawBlockData{
     repeated string uncles = 5;
     repeated Transaction txs = 6;
     repeated TransactionReceipt receipts = 7;
-}
-
-message BlockSupplementTask {
-    repeated int64 heights = 1;
 }
 
 

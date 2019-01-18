@@ -21,8 +21,8 @@ import akka.cluster.singleton._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
@@ -30,7 +30,6 @@ import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
 import scala.concurrent._
-import scala.concurrent.duration._
 
 // Owner: Yadong
 object EthereumEventExtractorActor {
@@ -73,101 +72,37 @@ class EthereumEventExtractorActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dispatchers: Seq[EventDispatcher[_]],
+    val eventDispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name) {
+    extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name)
+    with EventExtraction {
 
-  var currentBlockNumber: BigInt = _
-  def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
+  var untilBlock: Long = Long.MaxValue //最大值，保证一直获取区块
 
-  def missingBlockEventExtractorActor = actors.get(MissingBlocksEventExtractorActor.name)
-
-  override def initialize():Future[Unit] = {
+  override def initialize(): Future[Unit] = {
+    val startBlock = selfConfig.getLong("start_block")
     for {
-      handledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
-      maxBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
+      lastHandledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
+      currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
         .mapAs[GetBlockNumber.Res]
-        .map(res => BigInt(Numeric.toBigInt(res.result)))
-    } yield {
-      currentBlockNumber = maxBlock - 1
-      if (handledBlock.isDefined && handledBlock.get < maxBlock - 1) {
-        missingBlockEventExtractorActor ! BlockSupplementTask(
-          handledBlock.get + 1 until maxBlock.longValue()
+        .map(res => Numeric.toBigInt(res.result).longValue())
+      blockStart = lastHandledBlock.getOrElse(startBlock)
+      missing = currentBlock > blockStart + 1
+      _ = if (missing) {
+        dbModule.blockService.saveBlock(BlockData(height = currentBlock - 1))
+        dbModule.missingBlocksRecordDal.saveMissingBlock(
+          MissingBlocksRecord(blockStart, currentBlock, blockStart - 1)
         )
       }
+    } yield {
+      blockData = RawBlockData(height = currentBlock - 1)
       becomeReady()
-      self ! Notify("next")
+      self ! GET_BLOCK
     }
   }
 
-  def ready: Receive = {
-    case Notify("next", _) => process()
-  }
+  def ready = handleMessage
 
-  def process(): Unit = {
-    for {
-      blockOpt <- (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req(
-        Numeric.toHexString((currentBlockNumber + 1).toByteArray)
-      )).mapAs[GetBlockWithTxObjectByNumber.Res]
-        .map(_.result)
-      receipts <- if (blockOpt.isDefined) {
-        (ethereumAccessorActor ? BatchGetTransactionReceipts.Req(
-          blockOpt.get.transactions
-            .map(tx => GetTransactionReceipt.Req(tx.hash))
-        )).mapAs[BatchGetTransactionReceipts.Res]
-          .map(_.resps.map(_.result))
-      } else {
-        Future.successful(Seq.empty)
-      }
-      uncles <- if (blockOpt.isDefined && blockOpt.get.uncles.nonEmpty) {
-        val batchGetUnclesReq = BatchGetUncle.Req(
-          blockOpt.get.uncles.indices.map(
-            index =>
-              GetUncle.Req(
-                blockOpt.get.number,
-                Numeric.prependHexPrefix(index.toHexString)
-              )
-          )
-        )
-        (ethereumAccessorActor ? batchGetUnclesReq)
-          .mapAs[BatchGetUncle.Res]
-          .map(_.resps.map(_.result.get.miner))
-      } else {
-        Future.successful(Seq.empty)
-      }
-    } yield {
-      if (blockOpt.isDefined) {
-        if (receipts.forall(_.nonEmpty)) {
-          val rawBlockData = RawBlockData(
-            hash = blockOpt.get.hash,
-            height = Numeric.toBigInt(blockOpt.get.number).longValue(),
-            timestamp = blockOpt.get.timestamp,
-            miner = blockOpt.get.miner,
-            uncles = uncles,
-            txs = blockOpt.get.transactions,
-            receipts = receipts.map(_.get)
-          )
-          dispatchers.foreach(_.dispatch(rawBlockData))
-          dbModule.blockService.saveBlock(
-            BlockData(
-              hash = rawBlockData.hash,
-              height = rawBlockData.height,
-              timestamp = Numeric.toBigInt(rawBlockData.timestamp).longValue()
-            )
-          )
-          currentBlockNumber += 1
-          self ! Notify("next")
-        } else {
-          context.system.scheduler
-            .scheduleOnce(1 seconds, self, Notify("next"))
-        }
-      } else {
-        context.system.scheduler
-          .scheduleOnce(5 seconds, self, Notify("next"))
-      }
-    }
-  }
 }

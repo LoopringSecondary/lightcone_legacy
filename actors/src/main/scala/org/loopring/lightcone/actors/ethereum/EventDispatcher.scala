@@ -25,10 +25,8 @@ import scala.concurrent._
 trait EventDispatcher[R <: AnyRef] {
   implicit val ec: ExecutionContext
   val extractor: EventExtractor[R]
-
   def targets: Seq[ActorRef]
 
-  // Never override this method!!!
   def dispatch(block: RawBlockData): Future[Int] = {
     for {
       events <- extractor.extract(block)
@@ -39,8 +37,13 @@ trait EventDispatcher[R <: AnyRef] {
   }
 }
 
-abstract class NameBasedEventDispatcher[R <: AnyRef](names: Seq[String])
+class NameBasedEventDispatcher[R <: AnyRef](
+    names: Seq[String],
+    actors: Lookup[ActorRef]
+  )(
+    implicit
+    val ec: ExecutionContext,
+    val extractor: EventExtractor[R])
     extends EventDispatcher[R] {
-  val lookup: Lookup[ActorRef]
-  def targets: Seq[ActorRef] = names.map(lookup.get)
+  def targets: Seq[ActorRef] = names.map(actors.get)
 }

@@ -16,25 +16,27 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import com.google.inject.Inject
-import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
-import slick.jdbc.MySQLProfile.api._
-import slick.jdbc.JdbcProfile
-import slick.basic._
 import scala.concurrent._
-import org.slf4s.Logging
-import com.google.inject.Inject
 
 trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
 
-  def getTokens(reloadFromDatabase: Boolean = false): Future[Seq[TokenMetadata]]
+  def saveToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
+
+  def saveTokens(tokenMetadatas: Seq[TokenMetadata]): Future[Seq[String]]
+
+  def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
+
+  def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]]
+
+  def getTokens(): Future[Seq[TokenMetadata]]
 
   def updateBurnRate(
       token: String,
-      burnDate: Double
+      burnRate: Double
     ): Future[ErrorCode]
+
+  def disableToken(address: String): Future[ErrorCode]
 }

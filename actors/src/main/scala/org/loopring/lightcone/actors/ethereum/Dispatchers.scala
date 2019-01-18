@@ -21,87 +21,103 @@ import com.google.inject.Inject
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum.event.EventExtractor
-import org.loopring.lightcone.actors.utils.TokenMetadataRefresher
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.proto._
 import scala.concurrent.ExecutionContext
 
 object Dispatchers {
 
   class RingMinedEventDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val ec: ExecutionContext,
-      val extractor: EventExtractor[RingMinedEvent])
+      ec: ExecutionContext,
+      extractor: EventExtractor[RingMinedEvent])
       extends NameBasedEventDispatcher[RingMinedEvent](
-        names = Seq(MarketManagerActor.name)
+        names = Seq(MarketManagerActor.name),
+        actors
       )
 
   class AllowanceEventDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[AddressAllowanceUpdated],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[AddressAllowanceUpdated],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[AddressAllowanceUpdated](
-        names = Seq(MultiAccountManagerActor.name)
+        names = Seq(MultiAccountManagerActor.name),
+        actors
       )
 
   class BalanceEventDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[AddressBalanceUpdated],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[AddressBalanceUpdated],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[AddressBalanceUpdated](
         names =
-          Seq(MultiAccountManagerActor.name, RingSettlementManagerActor.name)
+          Seq(MultiAccountManagerActor.name, RingSettlementManagerActor.name),
+        actors
       )
 
   class CutoffEventDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[CutoffEvent],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[CutoffEvent],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[CutoffEvent](
         names = Seq(
           TransactionRecordActor.name,
           OrderCutoffHandlerActor.name,
           MultiAccountManagerActor.name
-        )
+        ),
+        actors
       )
 
   class OrderFilledEventDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[RingMinedEvent],
-      val ec: ExecutionContext)
-      extends NameBasedEventDispatcher[RingMinedEvent](
-        names = Seq(TransactionRecordActor.name, MultiAccountManagerActor.name)
+      extractor: EventExtractor[OrderFilledEvent],
+      ec: ExecutionContext)
+      extends NameBasedEventDispatcher[OrderFilledEvent](
+        names = Seq(TransactionRecordActor.name, MultiAccountManagerActor.name),
+        actors
       )
 
   class OrdersCancelledEventDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[OrdersCancelledEvent],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[OrdersCancelledEvent],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[OrdersCancelledEvent](
-        names = Seq(TransactionRecordActor.name, OrderCutoffHandlerActor.name)
+        names = Seq(TransactionRecordActor.name, OrderCutoffHandlerActor.name),
+        actors
       )
 
   class TokenBurnRateChangedEventDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[TokenBurnRateChangedEvent],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[TokenBurnRateChangedEvent],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[TokenBurnRateChangedEvent](
-        names = Seq(TokenMetadataRefresher.name)
+        names = Seq(MetadataManagerActor.name),
+        actors
       )
 
   class TransferEventDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
       implicit
-      val lookup: Lookup[ActorRef],
-      val extractor: EventExtractor[TransferEvent],
-      val ec: ExecutionContext)
+      extractor: EventExtractor[TransferEvent],
+      ec: ExecutionContext)
       extends NameBasedEventDispatcher[TransferEvent](
-        names = Seq(TransactionRecordActor.name)
+        names = Seq(TransactionRecordActor.name),
+        actors
       )
 
 }

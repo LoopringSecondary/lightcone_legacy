@@ -40,12 +40,19 @@ object BadMessageListener {
 class BadMessageListener extends Actor with ActorLogging {
 
   def receive = {
-    case u: UnhandledMessage =>
-      log.debug(s"invalid request: $u")
-      sender ! Error(ERR_UNEXPECTED_ACTOR_MSG, "invalid request")
-
-    case d: DeadLetter =>
-      log.warning(s"failed to handle request: $d")
-      sender ! Error(ERR_FAILED_HANDLE_MSG, "failed to handle request")
+    case UnhandledMessage(
+        message: Any,
+        sender: ActorRef,
+        recipient: ActorRef
+        ) =>
+      log.error(s"""UnhandledMessage:
+                   |  message: $message
+                   |  sender: $sender
+                   |  recipient: $recipient""".stripMargin)
+    case DeadLetter(message: Any, sender: ActorRef, recipient: ActorRef) =>
+      log.warning(s"""DeadLetter:
+                     |  message: $message
+                     |  sender: $sender
+                     |  recipient: $recipient""".stripMargin)
   }
 }

@@ -59,7 +59,7 @@ class TokenMetadataTable(tag: Tag)
   def status = column[TokenMetadata.Status]("status")
   def symbol = column[String]("symbol", O.SqlType("VARCHAR(20)"))
   def name = column[String]("name", O.SqlType("VARCHAR(50)"))
-  def address = columnAddress("address")
+  def address = columnAddress("address", O.PrimaryKey, O.Unique)
   def unit = column[String]("unit")
   def decimals = column[Int]("decimals")
   def websiteUrl = column[String]("website_url")
@@ -72,7 +72,6 @@ class TokenMetadataTable(tag: Tag)
   def idx_status = index("idx_status", (status), unique = false)
   def idx_symbol = index("idx_symbol", (symbol), unique = true)
   def idx_name = index("idx_name", (name), unique = true)
-  def idx_address = index("idx_address", (address), unique = true)
 
   def * =
     (

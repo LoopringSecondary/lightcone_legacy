@@ -17,75 +17,98 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
+import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
-import scala.concurrent._
 import org.loopring.lightcone.actors.data._
 
-class RingMinedEventExtractor @Inject()(implicit val ec: ExecutionContext)
+import scala.concurrent._
+import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.ethereum.SimpleRingBatchDeserializer
+
+class RingMinedEventExtractor @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    config: Config)
     extends EventExtractor[PRingMinedEvent] {
 
+  val ringSubmitterAddress =
+    Address(config.getString("loopring_protocol.protocol-address")).toString()
   val fillLength: Int = 8 * 64
 
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Future[Seq[PRingMinedEvent]] = Future {
-    val header = getEventHeader(tx, receipt, blockTime)
-    if (isSucceed(receipt.status)) {
-      receipt.logs.zipWithIndex.map { item =>
-        {
-          val (log, index) = item
-          loopringProtocolAbi
-            .unpackEvent(log.data, log.topics.toArray) match {
-            case Some(event: RingMinedEvent.Result) =>
-              val fillContent =
-                Numeric.cleanHexPrefix(event._fills).substring(128)
-              val orderFilledEvents =
-                (0 until (fillContent.length / fillLength)).map { index =>
-                  fillContent.substring(
-                    index * fillLength,
-                    fillLength * (index + 1)
-                  ) -> index
-                }.map {
-                  case (fill, eventIndex) =>
-                    fillToOrderFilledEvent(
-                      fill,
-                      event,
-                      receipt,
-                      Some(
-                        header.copy(
-                          logIndex = index,
-                          eventIndex = eventIndex
+  def extract(block: RawBlockData): Future[Seq[PRingMinedEvent]] = Future {
+    (block.txs zip block.receipts).flatMap {
+      case (tx, receipt) if tx.to.equalsIgnoreCase(ringSubmitterAddress) =>
+        val header = getEventHeader(tx, receipt, block.timestamp)
+        if (isSucceed(receipt.status)) {
+          receipt.logs.zipWithIndex.map {
+            case (log, index) =>
+              loopringProtocolAbi
+                .unpackEvent(log.data, log.topics.toArray) match {
+                case Some(event: RingMinedEvent.Result) =>
+                  val fillContent =
+                    Numeric.cleanHexPrefix(event._fills).substring(128)
+                  val orderFilledEvents =
+                    (0 until (fillContent.length / fillLength)).map { index =>
+                      fillContent.substring(
+                        index * fillLength,
+                        fillLength * (index + 1)
+                      ) -> index
+                    }.map {
+                      case (fill, eventIndex) =>
+                        fillToOrderFilledEvent(
+                          fill,
+                          event,
+                          receipt,
+                          Some(
+                            header.copy(
+                              logIndex = index,
+                              eventIndex = eventIndex
+                            )
+                          )
                         )
-                      )
+                    }
+                  Some(
+                    PRingMinedEvent(
+                      header = Some(header.withLogIndex(index)),
+                      ringIndex = event._ringIndex.longValue(),
+                      ringHash = event._ringHash,
+                      fills = orderFilledEvents
                     )
-                }
-              Some(
-                PRingMinedEvent(
-                  header = Some(header.withLogIndex(index)),
-                  ringIndex = event._ringIndex.longValue(),
-                  ringHash = event._ringHash,
-                  fills = orderFilledEvents
-                )
-              )
+                  )
+                case _ =>
+                  None
+              }
+          }.filter(_.nonEmpty).map(_.get)
+        } else {
+          ringSubmitterAbi.unpackFunctionInput(tx.input) match {
+            case Some(params: SubmitRingsFunction.Params) =>
+              val ringData = params.data
+              new SimpleRingBatchDeserializer(Numeric.toHexString(ringData)).deserialize match {
+                case Left(_) =>
+                  Seq.empty
+                case Right(ringBatch) =>
+                  ringBatch.rings.map { ring =>
+                    PRingMinedEvent(
+                      header = Some(header),
+                      fills = ring.orderIndexes.map(index => {
+                        val order = ringBatch.orders(index)
+                        OrderFilledEvent(
+                          header = Some(header),
+                          orderHash = order.hash,
+                          tokenS = order.tokenS
+                        )
+                      })
+                    )
+                  }
+              }
             case _ =>
-              None
+              Seq.empty
           }
         }
-      }.filter(_.nonEmpty).map(_.get)
-    } else {
-      ringSubmitterAbi.unpackFunctionInput(tx.input) match {
-        case Some(params: SubmitRingsFunction.Params) =>
-          val ringData = params.data
-          //TODO (yadong) 等待孔亮的提供具体的解析方法
-          Seq.empty
-        case _ =>
-          Seq.empty
-      }
+      case _ => Seq.empty
     }
   }
   private def fillToOrderFilledEvent(
@@ -102,17 +125,19 @@ class RingMinedEventExtractor @Inject()(implicit val ec: ExecutionContext)
       tokenS = Address(fill.substring(64 * 2, 64 * 3)).toString,
       ringHash = event._ringHash,
       ringIndex = event._ringIndex.longValue(),
-      filledAmountS =
-        Numeric.toBigInt(data.substring(64 * 3, 64 * 4)).toByteArray,
-      filledAmountFee = Numeric
-        .toBigInt(data.substring(64 * 5, 64 * 6))
-        .toByteArray,
-      feeAmountS = Numeric
-        .toBigInt(data.substring(64 * 6, 64 * 7))
-        .toByteArray,
-      feeAmountB = Numeric
-        .toBigInt(data.substring(64 * 7, 64 * 8))
-        .toByteArray,
+      filledAmountS = BigInt(Numeric.toBigInt(data.substring(64 * 3, 64 * 4))),
+      filledAmountFee = BigInt(
+        Numeric
+          .toBigInt(data.substring(64 * 5, 64 * 6))
+      ),
+      feeAmountS = BigInt(
+        Numeric
+          .toBigInt(data.substring(64 * 6, 64 * 7))
+      ),
+      feeAmountB = BigInt(
+        Numeric
+          .toBigInt(data.substring(64 * 7, 64 * 8))
+      ),
       feeRecipient = event._feeRecipient
     )
   }

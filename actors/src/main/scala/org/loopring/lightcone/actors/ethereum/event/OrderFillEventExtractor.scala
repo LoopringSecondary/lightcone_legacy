@@ -17,11 +17,7 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
-import org.loopring.lightcone.proto.{
-  OrderFilledEvent,
-  Transaction,
-  TransactionReceipt
-}
+import org.loopring.lightcone.proto._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,10 +27,8 @@ class OrderFillEventExtractor @Inject()(
     val ec: ExecutionContext)
     extends EventExtractor[OrderFilledEvent] {
 
-  def extract(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ): Future[Seq[OrderFilledEvent]] =
-    extractor.extract(tx, receipt, blockTime).map(_.flatMap(_.fills))
+  def extract(block: RawBlockData): Future[Seq[OrderFilledEvent]] =
+    extractor
+      .extract(block)
+      .map(_.filter(_.header.get.txStatus.isTxStatusSuccess).flatMap(_.fills))
 }
