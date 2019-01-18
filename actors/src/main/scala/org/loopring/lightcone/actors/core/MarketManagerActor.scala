@@ -36,7 +36,6 @@ import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
-
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -56,23 +55,13 @@ object MarketManagerActor extends ShardedByMarket {
       tve: TokenValueEvaluator,
       rie: RingIncomeEvaluator,
       dustOrderEvaluator: DustOrderEvaluator,
-      tokenManager: TokenManager,
+      metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
-    val markets = config
-      .getObjectList("markets")
-      .asScala
-      .map { item =>
-        val c = item.toConfig
-        val marketId =
-          MarketId(
-            LAddress(c.getString("primary")).toString,
-            LAddress(c.getString("secondary")).toString
-          )
-        MarketManagerActor.getEntityId(marketId) -> marketId
-      }
-      .toMap
+    val markets = metadataManager.getValidMarketIds.values.map { marketId =>
+      MarketManagerActor.getEntityId(marketId) -> marketId
+    }.toMap
 
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
 
@@ -92,7 +81,7 @@ object MarketManagerActor extends ShardedByMarket {
       marketId
     case req: RingMinedEvent if req.fills.size >= 2 =>
       MarketId(req.fills(0).tokenS, req.fills(1).tokenS)
-    case Notify(AliveKeeperActor.NOTIFY_MSG, marketIdStr) =>
+    case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
       MarketId(primary, secondary)
@@ -113,7 +102,7 @@ class MarketManagerActor(
     val tve: TokenValueEvaluator,
     val rie: RingIncomeEvaluator,
     val dustOrderEvaluator: DustOrderEvaluator,
-    val tokenManager: TokenManager)
+    val metadataManager: MetadataManager)
     extends ActorWithPathBasedConfig(
       MarketManagerActor.name,
       MarketManagerActor.extractEntityId
@@ -149,7 +138,7 @@ class MarketManagerActor(
 
   val manager = new MarketManagerImpl(
     marketId,
-    tokenManager,
+    metadataManager,
     ringMatcher,
     pendingRingPool,
     dustOrderEvaluator,

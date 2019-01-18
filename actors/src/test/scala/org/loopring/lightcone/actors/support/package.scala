@@ -91,6 +91,17 @@ package object support {
       MarketHashProvider.convert2Hex(GTO_TOKEN.address, WETH_TOKEN.address)
   )
 
+  val TOKENS = Seq(
+    WETH_TOKEN,
+    LRC_TOKEN,
+    GTO_TOKEN
+  )
+
+  val MARKETS = Seq(
+    LRC_WETH_MARKET,
+    GTO_WETH_MARKET
+  )
+
   //第一个地址为特殊地址，eth以及erc20金额和授权，都足够大
   val accounts = Seq(
     "0x7c71142c72a019568cf848ac7b805d21f2e0fd8bc341e8314580de11c6a397bf",

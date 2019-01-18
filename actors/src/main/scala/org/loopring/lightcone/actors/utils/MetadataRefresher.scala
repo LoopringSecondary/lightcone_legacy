@@ -25,7 +25,6 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core.MetadataManagerActor
-import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
@@ -44,8 +43,7 @@ object MetadataRefresher {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
-      tokenManager: TokenManager,
-      supportedMarkets: SupportedMarkets
+      metadataManager: MetadataManager
     ) = {
     system.actorOf(
       Props(new MetadataRefresher()),
@@ -63,8 +61,7 @@ class MetadataRefresher(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule,
-    val tokenManager: TokenManager,
-    val supportedMarkets: SupportedMarkets)
+    val metadataManager: MetadataManager)
     extends InitializationRetryActor
     with Stash
     with ActorLogging {
@@ -78,39 +75,32 @@ class MetadataRefresher(
 
   override def initialize() =
     for {
-      _ <- loadTokens()
-      _ <- loadMarkets()
+      _ <- refreshMetadata()
     } yield becomeReady()
 
   def ready: Receive = {
     case _: MetadataChanged =>
       for {
-        _ <- loadTokens()
-        _ <- loadMarkets()
+        _ <- refreshMetadata()
       } yield Unit
 
     case _: GetMetadatas.Req =>
       sender ! GetMetadatas.Res(tokens = tokens, markets = markets)
   }
 
-  private def loadTokens() =
+  private def refreshMetadata() =
     for {
       tokens_ <- (metadataManagerActor ? LoadTokenMetadata.Req())
         .mapTo[LoadTokenMetadata.Res]
         .map(_.tokens)
-    } yield {
-      tokens = tokens_
-      tokenManager.reset(tokens_)
-    }
-
-  private def loadMarkets() =
-    for {
-      _ <- Future.unit
       markets_ <- (metadataManagerActor ? LoadMarketMetadata.Req())
         .mapTo[LoadMarketMetadata.Res]
         .map(_.markets)
     } yield {
+      assert(tokens_.nonEmpty)
+      assert(markets_.nonEmpty)
+      tokens = tokens_
       markets = markets_
-      supportedMarkets.reset(markets_)
+      metadataManager.reset(tokens_, markets_)
     }
 }

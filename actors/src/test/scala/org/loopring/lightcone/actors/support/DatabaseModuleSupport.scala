@@ -61,14 +61,8 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   dbModule.dropTables()
   dbModule.createTables()
 
-  tokenMetadataDal.saveTokens(
-    Seq(
-      LRC_TOKEN,
-      GTO_TOKEN,
-      WETH_TOKEN
-    )
-  )
-  marketMetadataDal.saveMarkets(Seq(LRC_WETH_MARKET, GTO_WETH_MARKET))
+  tokenMetadataDal.saveTokens(TOKENS)
+  marketMetadataDal.saveMarkets(MARKETS)
 
   actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
 }

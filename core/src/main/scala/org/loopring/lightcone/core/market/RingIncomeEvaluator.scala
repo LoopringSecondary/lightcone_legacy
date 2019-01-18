@@ -32,7 +32,7 @@ trait RingIncomeEvaluator {
 
 final class RingIncomeEvaluatorImpl @Inject()(
     implicit
-    tm: TokenManager,
+    mm: MetadataManager,
     tve: TokenValueEvaluator)
     extends RingIncomeEvaluator {
 
@@ -52,14 +52,14 @@ final class RingIncomeEvaluatorImpl @Inject()(
       (fill.order, fill.pending, fill.amountMargin)
 
     val rate = (1 - order.walletSplitPercentage) *
-      (1 - tm.getBurnRate(order.tokenFee))
+      (1 - mm.getBurnRate(order.tokenFee))
 
     val fiatFee = rate * tve.getValue(order.tokenFee, pending.amountFee)
 
     // when we do not know the price of tokenS, try to use tokenB's price to calculate
     // the price.
     val fiatMargin =
-      if (tm.hasToken(order.tokenS)) {
+      if (mm.hasToken(order.tokenS)) {
         tve.getValue(order.tokenS, amountMargin)
       } else {
         tve.getValue(

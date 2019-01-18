@@ -25,14 +25,12 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
-import scala.collection.JavaConverters._
 import scala.concurrent._
 
 // Owner: Hongyu
@@ -50,21 +48,16 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      tokenManager: TokenManager,
-      supportedMarkets: SupportedMarkets,
+      metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("instances-per-market")
 
-    val markets = supportedMarkets
-      .getAvailableMarkets()
-      .values
-      .map { marketId =>
-        getEntityId(marketId) -> marketId
-      }
-      .toMap
+    val markets = metadataManager.getValidMarketIds.values.map { marketId =>
+      getEntityId(marketId) -> marketId
+    }.toMap
 
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
@@ -79,7 +72,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
   val extractMarketId: PartialFunction[Any, MarketId] = {
     case GetOrderbook.Req(_, _, Some(marketId))    => marketId
     case Orderbook.Update(_, _, _, Some(marketId)) => marketId
-    case Notify(AliveKeeperActor.NOTIFY_MSG, marketIdStr) =>
+    case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
       MarketId(primary, secondary)
@@ -95,8 +88,7 @@ class OrderbookManagerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val tokenManager: TokenManager,
-    val supportedMarkets: SupportedMarkets)
+    val metadataManager: MetadataManager)
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
       OrderbookManagerActor.extractEntityId
@@ -105,11 +97,17 @@ class OrderbookManagerActor(
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
 
+  val marketMetadata = metadataManager
+    .getMarketMetadata(marketId)
+    .getOrElse(
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        s"not found market:$marketId config"
+      )
+    )
+
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
 
-  val marketMetadata = supportedMarkets.getByMarketHash(
-    MarketHashProvider.convert2Hex(marketId.primary, marketId.secondary)
-  )
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
   def ready: Receive = LoggingReceive {

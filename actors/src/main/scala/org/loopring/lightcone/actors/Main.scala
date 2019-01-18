@@ -23,9 +23,7 @@ import com.google.inject.Guice
 import com.typesafe.config.ConfigFactory
 import kamon.Kamon
 import net.codingwell.scalaguice.InjectorExtensions._
-import org.loopring.lightcone.core.base.TokenManager
 import org.slf4s.Logging
-
 import scala.io.StdIn
 import scala.util.Try
 
@@ -61,8 +59,6 @@ object Main extends App with Logging {
 
   val injector = Guice.createInjector(new CoreModule(config))
   val system = injector.instance[ActorSystem]
-
-  val tokenManager = injector.instance[TokenManager]
 
   injector.instance[CoreDeployer].deploy()
 

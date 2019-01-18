@@ -38,18 +38,10 @@ trait OrderbookManagerSupport {
   )
 
   //todo：因暂时未完成recover，因此需要发起一次请求，将shard初始化成功
-  config
-    .getObjectList("markets")
-    .asScala
-    .map { item =>
-      val c = item.toConfig
-      val marketId = MarketId(
-        LAddress(c.getString("primary")).toString,
-        LAddress(c.getString("secondary")).toString
-      )
-      val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))
-      val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit
-      Await.result(orderBookInitF, timeout.duration)
-    }
+  metadataManager.getValidMarketIds.values.map { marketId =>
+    val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))
+    val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit
+    Await.result(orderBookInitF, timeout.duration)
+  }
 
 }

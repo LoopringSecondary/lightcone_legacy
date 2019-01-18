@@ -26,6 +26,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto._
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
+import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.persistence.DatabaseModule
 import scala.concurrent._
 
@@ -52,7 +53,7 @@ object OrderRecoverActor extends ShardedEvenly {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
-      supportedMarkets: SupportedMarkets,
+      metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
@@ -73,7 +74,7 @@ class OrderRecoverActor(
     timeout: Timeout,
     actors: Lookup[ActorRef],
     dbModule: DatabaseModule,
-    supportedMarkets: SupportedMarkets)
+    metadataManager: MetadataManager)
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
 
   val batchSize = selfConfig.getInt("batch-size")
@@ -108,7 +109,7 @@ class OrderRecoverActor(
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
         // filter unsupported markets
         availableOrders = orders.filter { o =>
-          supportedMarkets.contains(MarketId(o.tokenS, o.tokenB))
+          metadataManager.isValidMarket(MarketId(o.tokenS, o.tokenB))
         }.map { o =>
           val marketHash =
             MarketHashProvider.convert2Hex(o.tokenS, o.tokenB)

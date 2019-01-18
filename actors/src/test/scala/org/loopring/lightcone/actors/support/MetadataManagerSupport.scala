@@ -61,5 +61,5 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
   }
   actors.add(MetadataRefresher.name, MetadataRefresher.start)
 
-  supportedMarkets.reset(Seq(LRC_WETH_MARKET, GTO_WETH_MARKET))
+  metadataManager.reset(TOKENS, MARKETS)
 }

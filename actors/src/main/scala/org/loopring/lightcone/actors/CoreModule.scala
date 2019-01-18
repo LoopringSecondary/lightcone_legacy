@@ -144,9 +144,8 @@ class CoreModule(config: Config)
 
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton
-    bind[TokenManager].asEagerSingleton
+    bind[MetadataManager].asEagerSingleton
 
-    bind[SupportedMarkets].toInstance(SupportedMarkets(config))
     bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
 
     // --- bind other classes ---------------------
