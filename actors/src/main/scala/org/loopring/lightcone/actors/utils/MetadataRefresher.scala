@@ -29,6 +29,7 @@ import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
+import scala.util.{Failure, Success}
 
 // Owner: Hongyu
 object MetadataRefresher {
@@ -73,10 +74,14 @@ class MetadataRefresher(
   private var tokens = Seq.empty[TokenMetadata]
   private var markets = Seq.empty[MarketMetadata]
 
-  override def initialize() =
-    for {
-      _ <- refreshMetadata()
-    } yield becomeReady()
+  override def initialize() = {
+    val f = refreshMetadata()
+    f onComplete {
+      case Success(_) => becomeReady()
+      case Failure(e) => throw e
+    }
+    f
+  }
 
   def ready: Receive = {
     case _: MetadataChanged =>
