@@ -72,8 +72,7 @@ abstract class InitializationRetryActor
             throw e
           } else {
             log.warning(
-              s"---### ${self.path.name} initialization failed, ",
-              s"will  retry in ${_initializationDelay} seconds"
+              s"---### ${self.path.name} initialization failed, will  retry in ${_initializationDelay} seconds, ${e.printStackTrace()} "
             )
 
             context.system.scheduler

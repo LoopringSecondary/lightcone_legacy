@@ -79,8 +79,6 @@ class EthereumClientMonitor(
     extends ActorWithPathBasedConfig(EthereumClientMonitor.name)
     with RepeatedJobActor {
 
-  def ethereumAccessor = actors.get(EthereumAccessActor.name)
-
   var nodes: Map[String, NodeBlockHeight] =
     HttpConnector.connectorNames(config).map {
       case (nodeName, _) => nodeName -> NodeBlockHeight(nodeName, -1L)
@@ -88,29 +86,41 @@ class EthereumClientMonitor(
 
   val checkIntervalSeconds: Int = selfConfig.getInt("check-interval-seconds")
 
-  println(s"checkIntervalSeconds ${checkIntervalSeconds}")
-
   override val repeatedJobs: Seq[Job] = Seq(
     Job(
       name = EthereumClientMonitor.name,
       dalayInSeconds = checkIntervalSeconds,
-      run = () => checkNodeHeight,
+      run = () =>
+        for {
+          _ <- syncNodeHeight()
+        } yield {
+          nodes.foreach { n =>
+            actors.get(EthereumAccessActor.name) ! n._2
+          }
+        },
       initialDalayInSeconds = checkIntervalSeconds
     )
   )
 
-  override def initialize(): Future[Unit] = {
-    checkNodeHeight.map(_ => becomeReady())
-  }
+  override def initialize(): Future[Unit] =
+    for {
+      _ <- syncNodeHeight()
+    } yield {
+      if (actors.contains(EthereumAccessActor.name)) {
+        nodes.foreach { n =>
+          actors.get(EthereumAccessActor.name) ! n._2
+        }
+      }
+    }
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
     case _: GetNodeBlockHeight.Req =>
       sender ! GetNodeBlockHeight.Res(
-        nodes.map(_._2).toSeq
+        nodes.values.toSeq
       )
   }
 
-  def checkNodeHeight = {
+  def syncNodeHeight() = {
     log.debug("start scheduler check highest block...")
     Future.sequence(nodes.map {
       case (nodeName, nodeBlockHeight) =>
@@ -125,7 +135,7 @@ class EthereumClientMonitor(
                 case e: Exception =>
                   log
                     .error(
-                      s"exception on getting blockNumber: ${actor}: ${e.getMessage}"
+                      s"exception on getting blockNumber: $actor: ${e.getMessage}"
                     )
                   -1L
               }
@@ -133,7 +143,6 @@ class EthereumClientMonitor(
             val nodeBlockHeight =
               NodeBlockHeight(nodeName = nodeName, height = blockNumResp)
             nodes = nodes + (nodeName -> nodeBlockHeight)
-            ethereumAccessor ! nodeBlockHeight
           }
         } else {
           Future.successful(Unit)
