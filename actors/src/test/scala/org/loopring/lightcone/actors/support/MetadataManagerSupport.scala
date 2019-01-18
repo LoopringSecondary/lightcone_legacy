@@ -59,7 +59,7 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
         "Timed out waiting for connectionPools init.)"
       )
   }
-  actors.add(MetadataRefresher.name, MetadataRefresher.start)
-
   metadataManager.reset(TOKENS, MARKETS)
+
+  actors.add(MetadataRefresher.name, MetadataRefresher.start)
 }

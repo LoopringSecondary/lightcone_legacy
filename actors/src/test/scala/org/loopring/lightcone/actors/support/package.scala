@@ -62,10 +62,10 @@ package object support {
     secondaryTokenSymbol = LRC_TOKEN.symbol,
     primaryTokenSymbol = WETH_TOKEN.symbol,
     maxNumbersOfOrders = 1000,
-    priceDecimals = 8,
+    priceDecimals = 6,
     orderbookAggLevels = 6,
-    precisionForAmount = 4,
-    precisionForTotal = 4,
+    precisionForAmount = 5,
+    precisionForTotal = 5,
     browsableInWallet = true,
     marketId = Some(
       MarketId(primary = WETH_TOKEN.address, secondary = LRC_TOKEN.address)
@@ -81,8 +81,8 @@ package object support {
     maxNumbersOfOrders = 500,
     priceDecimals = 6,
     orderbookAggLevels = 5,
-    precisionForAmount = 6,
-    precisionForTotal = 6,
+    precisionForAmount = 5,
+    precisionForTotal = 5,
     browsableInWallet = true,
     marketId = Some(
       MarketId(primary = WETH_TOKEN.address, secondary = GTO_TOKEN.address)

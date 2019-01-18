@@ -34,5 +34,4 @@ trait MultiAccountManagerSupport extends DatabaseModuleSupport {
       MultiAccountManagerMessageValidator.name
     )
   )
-
 }
