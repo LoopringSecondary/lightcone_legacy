@@ -18,12 +18,14 @@ package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
+import org.slf4s.Logging
 
-final class MetadataManager() {
+final class MetadataManager() extends Logging {
 
   // tokens[address, token]
   val defaultBurnRate: Double = 0.2
   private var addressMap = Map.empty[String, Token]
+  private var symbolMap = Map.empty[String, Token]
 
   // markets[marketKey, marketId]
   private var disabledMarkets: Map[String, MarketId] = Map.empty
@@ -49,7 +51,8 @@ final class MetadataManager() {
   }
 
   def addToken(meta: TokenMetadata) = this.synchronized {
-    addressMap += meta.address -> new Token(meta)
+    addressMap += meta.address.toLowerCase() -> new Token(meta)
+    symbolMap += meta.symbol.toLowerCase() -> new Token(meta)
     this
   }
 
@@ -58,21 +61,31 @@ final class MetadataManager() {
     this
   }
 
-  def hasToken(addr: String) = addressMap.contains(addr)
+  def hasToken(addr: String) = addressMap.contains(addr.toLowerCase())
+
+  def hasSymbol(symbol: String) = symbolMap.contains(symbol.toLowerCase())
 
   def getToken(addr: String) = {
-    assert(hasToken(addr), s"token no found for address $addr")
-    addressMap.get(addr)
+    // assert(hasToken(addr.toLowerCase()), s"token no found for address $addr")
+    addressMap.get(addr.toLowerCase())
+  }
+
+  def getTokenBySymbol(symbol: String) = {
+    // assert(hasSymbol(symbol.toLowerCase()), s"token no found for symbol $symbol")
+    symbolMap.get(symbol.toLowerCase())
   }
 
   def getBurnRate(addr: String) =
-    addressMap.get(addr).map(_.meta.burnRate).getOrElse(defaultBurnRate)
+    addressMap
+      .get(addr.toLowerCase())
+      .map(_.meta.burnRate)
+      .getOrElse(defaultBurnRate)
 
   def getTokens = addressMap.values.toSeq
 
   def addMarket(meta: MarketMetadata) = this.synchronized {
-    marketMetadatasMap += meta.marketHash -> meta
-    val itemMap = meta.marketHash -> meta.marketId.get
+    marketMetadatasMap += meta.marketHash.toLowerCase() -> meta
+    val itemMap = meta.marketHash.toLowerCase() -> meta.marketId.get
     validMarkets += itemMap
     meta.status match {
       case MarketMetadata.Status.DISABLED =>
@@ -102,7 +115,7 @@ final class MetadataManager() {
   }
 
   def getMarketMetadata(marketKey: String): Option[MarketMetadata] =
-    marketMetadatasMap.get(marketKey)
+    marketMetadatasMap.get(marketKey.toLowerCase())
 
   def getMarketMetadata(marketId: MarketId): Option[MarketMetadata] =
     getMarketMetadata(MarketKey(marketId).toString)
@@ -128,14 +141,14 @@ final class MetadataManager() {
 
   // check market is valid (has metadata config)
   def isValidMarket(marketKey: String): Boolean =
-    marketMetadatasMap.contains(marketKey)
+    marketMetadatasMap.contains(marketKey.toLowerCase())
 
   def isValidMarket(marketId: MarketId): Boolean =
     isValidMarket(MarketKey(marketId).toString)
 
   // check market is at enabled status
   def isEnabledMarket(marketKey: String): Boolean =
-    enabledMarkets.contains(marketKey)
+    enabledMarkets.contains(marketKey.toLowerCase())
 
   def isEnabledMarket(marketId: MarketId): Boolean =
     isEnabledMarket(MarketKey(marketId).toString)

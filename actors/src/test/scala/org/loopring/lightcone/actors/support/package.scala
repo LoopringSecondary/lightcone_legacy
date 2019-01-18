@@ -36,7 +36,8 @@ package object support {
     burnRate = 0.4,
     symbol = "WETH",
     name = "WETH",
-    usdPrice = 1000
+    usdPrice = 1000,
+    status = TokenMetadata.Status.ENABLED
   )
 
   val LRC_TOKEN = TokenMetadata(
@@ -45,7 +46,8 @@ package object support {
     burnRate = 0.4,
     symbol = "LRC",
     name = "LRC",
-    usdPrice = 1000
+    usdPrice = 1000,
+    status = TokenMetadata.Status.ENABLED
   )
 
   val GTO_TOKEN = TokenMetadata(
@@ -54,7 +56,8 @@ package object support {
     burnRate = 0.4,
     symbol = "GTO",
     name = "GTO",
-    usdPrice = 1000
+    usdPrice = 1000,
+    status = TokenMetadata.Status.ENABLED
   )
 
   val LRC_WETH_MARKET = MarketMetadata(
