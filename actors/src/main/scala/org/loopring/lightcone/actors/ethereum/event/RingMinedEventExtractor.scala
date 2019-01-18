@@ -17,21 +17,28 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
+import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
+import org.loopring.lightcone.actors.data._
 import scala.concurrent._
 import org.loopring.lightcone.actors.data._
 
-class RingMinedEventExtractor @Inject()(implicit val ec: ExecutionContext)
+class RingMinedEventExtractor @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    config: Config)
     extends EventExtractor[PRingMinedEvent] {
 
+  val ringSubmitterAddress =
+    Address(config.getString("loopring_protocol.protocol-address")).toString()
   val fillLength: Int = 8 * 64
 
   def extract(block: RawBlockData): Future[Seq[PRingMinedEvent]] = Future {
     (block.txs zip block.receipts).flatMap {
-      case (tx, receipt) =>
+      case (tx, receipt) if tx.to.equalsIgnoreCase(ringSubmitterAddress) =>
         val header = getEventHeader(tx, receipt, block.timestamp)
         if (isSucceed(receipt.status)) {
           receipt.logs.zipWithIndex.map {
@@ -83,6 +90,7 @@ class RingMinedEventExtractor @Inject()(implicit val ec: ExecutionContext)
               Seq.empty
           }
         }
+      case _ => Seq.empty
     }
   }
   private def fillToOrderFilledEvent(
@@ -99,17 +107,19 @@ class RingMinedEventExtractor @Inject()(implicit val ec: ExecutionContext)
       tokenS = Address(fill.substring(64 * 2, 64 * 3)).toString,
       ringHash = event._ringHash,
       ringIndex = event._ringIndex.longValue(),
-      filledAmountS =
-        Numeric.toBigInt(data.substring(64 * 3, 64 * 4)).toByteArray,
-      filledAmountFee = Numeric
-        .toBigInt(data.substring(64 * 5, 64 * 6))
-        .toByteArray,
-      feeAmountS = Numeric
-        .toBigInt(data.substring(64 * 6, 64 * 7))
-        .toByteArray,
-      feeAmountB = Numeric
-        .toBigInt(data.substring(64 * 7, 64 * 8))
-        .toByteArray,
+      filledAmountS = BigInt(Numeric.toBigInt(data.substring(64 * 3, 64 * 4))),
+      filledAmountFee = BigInt(
+        Numeric
+          .toBigInt(data.substring(64 * 5, 64 * 6))
+      ),
+      feeAmountS = BigInt(
+        Numeric
+          .toBigInt(data.substring(64 * 6, 64 * 7))
+      ),
+      feeAmountB = BigInt(
+        Numeric
+          .toBigInt(data.substring(64 * 7, 64 * 8))
+      ),
       feeRecipient = event._feeRecipient
     )
   }

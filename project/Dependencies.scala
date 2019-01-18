@@ -30,7 +30,7 @@ object Dependencies {
 
   lazy val json4sDependency = Seq(
     "org.json4s" %% "json4s-native" % json4sVersion,
-    "com.thesamet.scalapb" %% "scalapb-json4s" % "0.7.2")
+    "com.thesamet.scalapb" %% "scalapb-json4s" % "0.7.1")
 
   lazy val ethereumDependency = Seq(
     "org.web3j" % "core" % "4.1.0",

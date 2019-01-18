@@ -80,9 +80,9 @@ object Dispatchers {
       actors: Lookup[ActorRef]
     )(
       implicit
-      extractor: EventExtractor[RingMinedEvent],
+      extractor: EventExtractor[OrderFilledEvent],
       ec: ExecutionContext)
-      extends NameBasedEventDispatcher[RingMinedEvent](
+      extends NameBasedEventDispatcher[OrderFilledEvent](
         names = Seq(TransactionRecordActor.name, MultiAccountManagerActor.name),
         actors
       )
@@ -105,7 +105,7 @@ object Dispatchers {
       extractor: EventExtractor[TokenBurnRateChangedEvent],
       ec: ExecutionContext)
       extends NameBasedEventDispatcher[TokenBurnRateChangedEvent](
-        names = Seq(MetadataRefresher.name),
+        names = Seq(MetadataManagerActor.name),
         actors
       )
 
