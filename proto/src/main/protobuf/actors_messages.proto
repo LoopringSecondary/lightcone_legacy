@@ -211,7 +211,7 @@ message GetCutoff {
     message Req {
         string broker = 1;
         string owner = 2;
-        string token_pair = 3;
+        string market_key = 3;
         string tag = 4;
     }
     message Res {

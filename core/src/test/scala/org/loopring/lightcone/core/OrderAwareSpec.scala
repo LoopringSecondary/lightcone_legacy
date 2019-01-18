@@ -31,7 +31,7 @@ trait OrderAwareSpec extends CommonSpec {
   val DAI = "0x00000000003"
   val WETH = "0x00000000004"
 
-  implicit val tm = new TokenManager()
+  implicit val tm = new MetadataManager()
     .addToken(
       TokenMetadata(
         address = LRC,

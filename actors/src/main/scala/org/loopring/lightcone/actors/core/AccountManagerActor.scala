@@ -76,7 +76,7 @@ class AccountManagerActor(
         res <- (ethereumQueryActor ? GetCutoff.Req(
           broker = address,
           owner = address,
-          tokenPair = m
+          marketKey = m
         )).mapAs[GetCutoff.Res]
       } yield {
         val cutoff: BigInt = res.cutoff
