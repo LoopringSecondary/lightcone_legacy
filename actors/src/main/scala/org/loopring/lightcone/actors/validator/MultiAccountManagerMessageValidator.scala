@@ -42,7 +42,7 @@ final class MultiAccountManagerMessageValidator(
     config.getConfig(MultiAccountManagerActor.name)
   val numOfShards = multiAccountConfig.getInt("num-of-shards")
 
-  val orderValidator: RawOrderValidator = RawOrderValidatorImpl
+  val orderValidator: RawOrderValidator = Protocol2RawOrderValidator
 
   def validate = {
     case req @ CancelOrder.Req(_, owner, _, marketId) =>

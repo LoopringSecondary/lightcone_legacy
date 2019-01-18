@@ -137,8 +137,10 @@ class RingSettlementActor(
               )
             )
         })
-        ringBatch = RingBatchGeneratorImpl.generateAndSignRingBatch(rawOrders)
-        input = RingBatchGeneratorImpl.toSubmitableParamStr(ringBatch)
+        ringBatch = Protocol2RingBatchGenerator.generateAndSignRingBatch(
+          rawOrders
+        )
+        input = Protocol2RingBatchGenerator.toSubmitableParamStr(ringBatch)
         tx = Transaction(
           inputData = ringSubmitterAbi.submitRing.pack(
             SubmitRingsFunction
