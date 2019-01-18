@@ -40,7 +40,7 @@ trait RingBatchGenerator {
     ): String
 }
 
-object RingBatchGeneratorImpl extends RingBatchGenerator {
+object Protocol2RingBatchGenerator extends RingBatchGenerator {
   import ethereum._
 
   val OrderVersion = 0
@@ -52,7 +52,7 @@ object RingBatchGeneratorImpl extends RingBatchGenerator {
       implicit
       context: RingBatchContext
     ): RingBatch = {
-    val orderValidator = RawOrderValidatorImpl
+    val orderValidator = Protocol2RawOrderValidator
 
     val ordersWithHash = orders.map(
       ordersOfRing =>
