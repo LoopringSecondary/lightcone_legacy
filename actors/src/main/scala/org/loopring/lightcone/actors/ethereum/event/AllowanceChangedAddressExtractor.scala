@@ -80,7 +80,6 @@ class AllowanceChangedAddressExtractor @Inject()(
         }
     }
     val events = allowanceAddresses.distinct
-    val batchCallReq = brb.buildRequest(delegateAddress, events, "latest")
     for {
       tokenAllowances <- if (events.nonEmpty) {
         (ethereumAccessor ? batchCallReq)

@@ -37,7 +37,7 @@ trait EventExtractor[R] {
       txHash = tx.hash,
       txFrom = tx.from,
       txTo = tx.to,
-      txValue = Numeric.toBigInt(tx.value).toByteArray,
+      txValue = BigInt(Numeric.toBigInt(tx.value)),
       txIndex = Numeric.toBigInt(tx.transactionIndex).intValue(),
       txStatus = getStatus(receipt.status),
       blockHash = tx.blockHash,

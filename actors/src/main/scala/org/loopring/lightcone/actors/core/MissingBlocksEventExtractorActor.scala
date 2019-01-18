@@ -74,13 +74,15 @@ class MissingBlocksEventExtractorActor(
     val ec: ExecutionContext,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dispatchers: Seq[EventDispatcher[_]],
+    val eventDispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name)
     with EventExtraction {
   val NEXT_RANGE = Notify("next_range")
   var sequenceId = 0L
   val delayInSeconds = selfConfig.getLong("delay_in_seconds")
+
+  var untilBlock: Long = 0L //初始化为0，开始不需要获取区块
 
   override def initialize() = Future.successful {
     becomeReady()

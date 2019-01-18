@@ -33,7 +33,7 @@ trait EventExtraction {
   actor: ActorWithPathBasedConfig =>
   implicit val timeout: Timeout
   implicit val actors: Lookup[ActorRef]
-  implicit val dispatchers: Seq[EventDispatcher[_]]
+  implicit val eventDispatchers: Seq[EventDispatcher[_]]
   implicit val dbModule: DatabaseModule
   var blockData: RawBlockData = _
 
@@ -41,7 +41,8 @@ trait EventExtraction {
   val RETRIEVE_RECEIPTS = Notify("retrieve_receipts")
   val PROCESS_EVENTS = Notify("process_events")
 
-  var untilBlock = Long.MaxValue
+  var untilBlock: Long
+
   def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def handleMessage: Receive = {
@@ -123,7 +124,7 @@ trait EventExtraction {
       .map(_.resps.map(_.result))
 
   def processEvents: Future[_] = {
-    dispatchers.foreach(_.dispatch(blockData))
+    eventDispatchers.foreach(_.dispatch(blockData))
     dbModule.blockService.saveBlock(
       BlockData(
         hash = blockData.hash,

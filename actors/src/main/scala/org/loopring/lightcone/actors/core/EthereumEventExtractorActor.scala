@@ -74,10 +74,12 @@ class EthereumEventExtractorActor(
     val ec: ExecutionContext,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dispatchers: Seq[EventDispatcher[_]],
+    val eventDispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name)
     with EventExtraction {
+
+  var untilBlock: Long = Long.MaxValue //最大值，保证一直获取区块
 
   override def initialize(): Future[Unit] = {
     val startBlock = selfConfig.getLong("start_block")
@@ -102,4 +104,5 @@ class EthereumEventExtractorActor(
   }
 
   def ready = handleMessage
+
 }
