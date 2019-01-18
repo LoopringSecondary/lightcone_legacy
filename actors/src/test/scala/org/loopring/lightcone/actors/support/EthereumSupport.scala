@@ -105,9 +105,10 @@ trait EthereumSupport {
     EthereumClientMonitor.name,
     EthereumClientMonitor.start
   )
+  Thread.sleep(1000)
   actors.add(
     EthereumAccessActor.name,
-    EthereumAccessActor.start(connectionPools)
+    EthereumAccessActor.start
   )
 
   def transferEth(
