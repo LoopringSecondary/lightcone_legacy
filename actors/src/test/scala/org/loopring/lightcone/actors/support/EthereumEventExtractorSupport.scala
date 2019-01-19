@@ -20,8 +20,20 @@ import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum.Dispatchers._
 import org.loopring.lightcone.actors.ethereum.event._
 
-trait EthereumEventExtractorSupport {
-  my: CommonSpec with EthereumSupport with DatabaseModuleSupport =>
+trait EthereumEventExtractorSupport
+    extends DatabaseModuleSupport
+    with EthereumSupport
+    with MetadataManagerSupport
+    with JsonrpcSupport
+    with HttpSupport
+    with OrderHandleSupport
+    with MultiAccountManagerSupport
+    with OrderCutoffSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport
+    with DatabaseQueryMessageSupport
+    with EthereumTransactionRecordSupport {
+  my: CommonSpec =>
 
   implicit val balanceExtractor = new BalanceChangedAddressExtractor
   implicit val allowanceExtractor = new AllowanceChangedAddressExtractor

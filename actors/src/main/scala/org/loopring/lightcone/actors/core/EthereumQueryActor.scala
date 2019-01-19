@@ -185,7 +185,10 @@ class EthereumQueryActor(
       ) { result =>
         GetFilledAmount.Res(
           (orderIds zip result.map(
-            res => ByteString.copyFrom(Numeric.toBigInt(res).toByteArray)
+            res => {
+              println(Numeric.toBigInt(res))
+              ByteString.copyFrom(Numeric.toBigInt(res).toByteArray)
+            }
           )).toMap
         )
       }

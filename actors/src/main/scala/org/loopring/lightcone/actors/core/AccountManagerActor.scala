@@ -226,7 +226,7 @@ class AccountManagerActor(
 
     case req: OrderFilledEvent
         if req.header.nonEmpty && req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS =>
-      log.debug(s"received OrderFilledEvent ${req}")
+      println(s"received OrderFilledEvent ${req}")
       //收到filledEvent后，submitOrAdjustOrder会调用adjust方法
       for {
         orderOpt <- dbModule.orderService.getOrder(req.orderHash)
@@ -260,7 +260,7 @@ class AccountManagerActor(
           RawOrder.State(
             createdAt = timeProvider.getTimeMillis(),
             updatedAt = timeProvider.getTimeMillis(),
-            status = OrderStatus.STATUS_NEW
+            status = _matchable.status
           )
         )
         .copy(
