@@ -198,6 +198,8 @@ class MarketManagerActor(
   }
 
   def ready: Receive = {
+    case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
+      sender ! req
 
     case SubmitSimpleOrder(_, Some(order)) =>
       submitOrder(order).sendTo(sender)
@@ -251,6 +253,7 @@ class MarketManagerActor(
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {
+    log.debug(s"marketmanager.submitOrder ${order}")
     assert(
       order.actual.nonEmpty,
       "order in SubmitSimpleOrder miss `actual` field"
@@ -267,6 +270,7 @@ class MarketManagerActor(
 
           // submit order to reserve balance and allowance
           matchResult = manager.submitOrder(matchable, minRequiredIncome)
+          _ = log.debug(s"matchResult, ${matchResult}")
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
         } yield Unit

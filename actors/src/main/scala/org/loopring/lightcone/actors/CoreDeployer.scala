@@ -74,8 +74,7 @@ class CoreDeployer @Inject()(
   def deploy() {
 
     //-----------deploy local actors-----------
-    //      actors.add(BadMessageListener.name, BadMessageListener.start)
-    actors.add(MetadataRefresher.name, MetadataRefresher.start)
+    actors.add(BadMessageListener.name, BadMessageListener.start)
 
     actors.add(
       MultiAccountManagerMessageValidator.name,
@@ -138,9 +137,8 @@ class CoreDeployer @Inject()(
       HttpConnector.start.foreach {
         case (name, actor) => actors.add(name, actor)
       }
-      val blockNumJsonRpcReq = JsonRpc.Request(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":64}"
-      )
+
+      //todo:需要再次确认启动依赖顺序问题
       var inited = false
       while (!inited) {
         try {
@@ -168,7 +166,6 @@ class CoreDeployer @Inject()(
         EthereumClientMonitor.name,
         EthereumClientMonitor.start
       )
-      Thread.sleep(1000)
       actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
@@ -203,13 +200,15 @@ class CoreDeployer @Inject()(
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors.add(EntryPointActor.name, EntryPointActor.start)
 
+      actors.add(MetadataRefresher.name, MetadataRefresher.start)
+
       actors.add(KeepAliveActor.name, KeepAliveActor.start)
       //-----------deploy JSONRPC service-----------
       if (deployActorsIgnoringRoles ||
           cluster.selfRoles.contains("jsonrpc")) {
         val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
         with RpcBinding
-        server.start
+        Future { server.start }
       }
     }
   }

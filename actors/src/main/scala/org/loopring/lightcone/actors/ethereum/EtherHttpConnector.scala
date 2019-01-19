@@ -31,6 +31,7 @@ import org.json4s.jackson.Serialization
 import org.json4s.native.JsonMethods.parse
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.core.KeepAliveActor
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
@@ -208,6 +209,9 @@ class HttpConnector(
   }
 
   def receive: Receive = {
+    case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
+      sender ! req
+
     case req: JsonRpc.Request =>
       post(req.json).map(JsonRpc.Response(_)) sendTo sender
 

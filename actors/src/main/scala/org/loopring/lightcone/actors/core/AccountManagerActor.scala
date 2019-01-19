@@ -119,6 +119,8 @@ class AccountManagerActor(
   }
 
   def normalReceive: Receive = LoggingReceive {
+    case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
+      sender ! req
 
     case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
       submitOrAdjustOrder(xraworder).map { _ =>
@@ -236,6 +238,7 @@ class AccountManagerActor(
   private def submitOrAdjustOrder(rawOrder: RawOrder): Future[Order] = {
     val order: Order = rawOrder
     val matchable: Matchable = order
+    log.info(s"### submitOrAdjustOrder ${order}")
     for {
       _ <- getTokenManagers(Seq(matchable.tokenS))
       _ <- if (matchable.amountFee > 0 && matchable.tokenS != matchable.tokenFee)
@@ -249,7 +252,7 @@ class AccountManagerActor(
       )).mapAs[GetFilledAmount.Res]
 
       filledAmountS = getFilledAmountRes.filledAmountSMap(matchable.id)
-      _ = log.debug(
+      _ = log.info(
         s"ethereumQueryActor GetFilledAmount.Res $getFilledAmountRes"
       )
 
@@ -271,13 +274,13 @@ class AccountManagerActor(
 
       _ <- dbModule.orderService.updateAmount(rawOrder.id, state = state)
 
-      _ = log.debug(s"submitting order to AccountManager: ${_matchable}")
+      _ = log.info(s"submitting order to AccountManager: ${_matchable}")
       (successful, updatedOrders) = manager
         .handleChangeEventThenGetUpdatedOrders(_matchable)
       _ = if (!successful)
         throw ErrorException(Error(matchable.status))
       _ = assert(updatedOrders.contains(_matchable.id))
-      _ = log.debug(
+      _ = log.info(
         s"updatedOrders: ${updatedOrders.size} assert contains order:  ${updatedOrders(_matchable.id)}"
       )
       res <- processUpdatedOrders(updatedOrders)

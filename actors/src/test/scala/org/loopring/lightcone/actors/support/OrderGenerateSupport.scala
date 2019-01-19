@@ -25,13 +25,14 @@ import org.loopring.lightcone.ethereum.{
   Protocol2RawOrderValidator,
   Protocol2RingBatchGenerator
 }
-import org.loopring.lightcone.lib.MarketHashProvider
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 
+import scala.math.BigInt
+
 trait OrderGenerateSupport {
-  my: CommonSpec =>
 
   def createRawOrder(
       tokenS: String = LRC_TOKEN.address,

@@ -175,11 +175,11 @@ class MarketManagerImpl(
                 )
               )
               ) =>
-            log.debug(s"match error: $error")
+            log.error(s"match error: $error")
             ordersToAddBack :+= maker
 
           case Some((maker, Left(error))) =>
-            log.debug(s"match error: $error")
+            log.error(s"match error: $error")
             ordersToAddBack :+= maker
             recursivelyMatchOrders()
 
@@ -198,12 +198,19 @@ class MarketManagerImpl(
             }
 
           case None =>
-          // log.debug("no maker found")
+            log.info("no maker found")
         }
       }
 
       if (!dustOrderEvaluator.isMatchableDust(taker)) {
-        recursivelyMatchOrders()
+        try {
+          recursivelyMatchOrders()
+        } catch {
+          case e: Exception =>
+            log.error(
+              s"####111 addOrder eer ${e.printStackTrace()}, ${e.getCause}, ${e.getMessage}"
+            )
+        }
       }
 
       // we alsways need to add the taker back even if it is pending fully-matched

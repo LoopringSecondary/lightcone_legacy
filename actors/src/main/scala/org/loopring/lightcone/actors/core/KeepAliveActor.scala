@@ -34,7 +34,7 @@ import scala.concurrent._
 //定时keepalive, 定时给需要监控的发送req，确认各个shard等需要初始化的运行正常，否则会触发他们的启动恢复
 object KeepAliveActor {
   val name = "alive_keeper"
-  val NOTIFY_MSG = "init"
+  val NOTIFY_MSG = "heartbeat"
 
   def start(
       implicit
@@ -77,7 +77,7 @@ class KeepAliveActor @Inject()(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val metadataManager: MetadataManager)
-    extends ActorWithPathBasedConfig(KeepAliveActor.name)
+    extends InitializationRetryActor
     with RepeatedJobActor {
 
   def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
@@ -110,7 +110,7 @@ class KeepAliveActor @Inject()(
       _ <- Future.sequence(metadataManager.getValidMarketIds map {
         case (_, marketId) =>
           orderbookManagerActor ? Notify(
-            "init",
+            KeepAliveActor.NOTIFY_MSG,
             marketId.primary + "-" + marketId.secondary
           )
       })
@@ -121,7 +121,7 @@ class KeepAliveActor @Inject()(
       _ <- Future.sequence(metadataManager.getValidMarketIds map {
         case (_, marketId) =>
           marketManagerActor ? Notify(
-            "init",
+            KeepAliveActor.NOTIFY_MSG,
             marketId.primary + "-" + marketId.secondary
           )
       })
@@ -131,7 +131,7 @@ class KeepAliveActor @Inject()(
     val numsOfShards = config.getInt("multi_account_manager.num-of-shards")
     for {
       _ <- Future.sequence((0 until numsOfShards) map { i =>
-        multiAccountManagerActor ? Notify("init", i.toString)
+        multiAccountManagerActor ? Notify(KeepAliveActor.NOTIFY_MSG, i.toString)
       })
     } yield Unit
   }
@@ -139,7 +139,8 @@ class KeepAliveActor @Inject()(
   private def initEtherHttpConnector(): Future[Unit] =
     for {
       _ <- Future.sequence(HttpConnector.connectorNames(config).map {
-        case (nodeName, node) => actors.get(nodeName) ? Notify("init")
+        case (nodeName, node) =>
+          actors.get(nodeName) ? Notify(KeepAliveActor.NOTIFY_MSG)
       })
     } yield Unit
 

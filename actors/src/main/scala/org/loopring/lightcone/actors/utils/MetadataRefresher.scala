@@ -67,7 +67,7 @@ class MetadataRefresher(
     extends InitializationRetryActor
     with Stash
     with ActorLogging {
-  val metadataManagerActor = actors.get(MetadataManagerActor.name)
+  def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(MetadataManagerActor.pubsubTopic, self)
