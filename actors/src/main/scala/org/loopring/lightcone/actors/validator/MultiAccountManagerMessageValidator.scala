@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
@@ -34,18 +35,18 @@ final class MultiAccountManagerMessageValidator(
     implicit
     val config: Config,
     timeProvider: TimeProvider,
-    supportedMarkets: SupportedMarkets)
+    metadataManager: MetadataManager)
     extends MessageValidator {
 
   val multiAccountConfig =
     config.getConfig(MultiAccountManagerActor.name)
   val numOfShards = multiAccountConfig.getInt("num-of-shards")
 
-  val orderValidator: RawOrderValidator = RawOrderValidatorImpl
+  val orderValidator: RawOrderValidator = Protocol2RawOrderValidator
 
   def validate = {
     case req @ CancelOrder.Req(_, owner, _, marketId) =>
-      supportedMarkets.assertmarketIdIsValid(marketId)
+      metadataManager.assertMarketIdIsValid(marketId)
       req.copy(owner = Address.normalizeAddress(owner))
 
     case req: SubmitSimpleOrder =>
@@ -56,7 +57,7 @@ final class MultiAccountManagerMessageValidator(
             s"bad request:${req}"
           )
         case Some(order) =>
-          supportedMarkets.assertmarketIdIsValid(
+          metadataManager.assertMarketIdIsValid(
             MarketId(order.tokenS, order.tokenB)
           )
           req.copy(

@@ -27,10 +27,11 @@ class EntryPointSpec_OrderStatusMonitorEffective
     extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
+    with EthereumSupport
+    with MetadataManagerSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
     with OrderbookManagerSupport
-    with EthereumSupport
     with MarketManagerSupport
     with OrderGenerateSupport
     with OrderStatusMonitorSupport {

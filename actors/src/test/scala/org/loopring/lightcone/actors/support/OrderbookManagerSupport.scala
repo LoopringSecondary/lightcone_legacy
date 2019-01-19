@@ -21,12 +21,11 @@ import org.loopring.lightcone.actors.core.OrderbookManagerActor
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.proto._
-
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 
 trait OrderbookManagerSupport {
-  my: CommonSpec =>
+  my: CommonSpec with MetadataManagerSupport =>
   actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
   actors.add(
@@ -39,18 +38,10 @@ trait OrderbookManagerSupport {
   )
 
   //todo：因暂时未完成recover，因此需要发起一次请求，将shard初始化成功
-  config
-    .getObjectList("markets")
-    .asScala
-    .map { item =>
-      val c = item.toConfig
-      val marketId = MarketId(
-        LAddress(c.getString("priamry")).toString,
-        LAddress(c.getString("secondary")).toString
-      )
-      val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))
-      val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit
-      Await.result(orderBookInitF, timeout.duration)
-    }
+  metadataManager.getValidMarketIds.values.map { marketId =>
+    val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))
+    val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit
+    Await.result(orderBookInitF, timeout.duration)
+  }
 
 }

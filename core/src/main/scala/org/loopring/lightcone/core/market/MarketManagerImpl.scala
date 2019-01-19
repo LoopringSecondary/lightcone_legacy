@@ -20,7 +20,6 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.base._
-
 import org.slf4s.Logging
 import scala.annotation.tailrec
 import scala.collection.mutable.{Map, SortedSet}
@@ -43,7 +42,7 @@ object MarketManagerImpl {
 
 class MarketManagerImpl(
     val marketId: MarketId,
-    val tokenManager: TokenManager,
+    val metadataManager: MetadataManager,
     val ringMatcher: RingMatcher,
     val pendingRingPool: PendingRingPool,
     val dustOrderEvaluator: DustOrderEvaluator,
@@ -58,7 +57,7 @@ class MarketManagerImpl(
   import OrderStatus._
 
   private implicit val marketId_ = marketId
-  private implicit val tm_ = tokenManager
+  private implicit val mm_ = metadataManager
   private implicit val ordering = defaultOrdering()
 
   private var isLastTakerSell = false

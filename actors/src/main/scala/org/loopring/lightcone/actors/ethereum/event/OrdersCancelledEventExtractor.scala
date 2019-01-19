@@ -17,20 +17,30 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
+import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{
   OrdersCancelledEvent => POrdersCancelledEvent,
   _
 }
+
 import scala.concurrent._
 
-class OrdersCancelledEventExtractor @Inject()(implicit val ec: ExecutionContext)
+class OrdersCancelledEventExtractor @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    config: Config)
     extends EventExtractor[POrdersCancelledEvent] {
+
+  val orderCancelAddress = Address(
+    config.getString("loopring_protocol.order-cancel-address")
+  ).toString()
 
   def extract(block: RawBlockData): Future[Seq[POrdersCancelledEvent]] =
     Future {
       (block.txs zip block.receipts).flatMap {
-        case (tx, receipt) =>
+        case (tx, receipt) if tx.to.equalsIgnoreCase(orderCancelAddress) =>
           val header = getEventHeader(tx, receipt, block.timestamp)
           receipt.logs.zipWithIndex.map {
             case (log, index) =>
@@ -50,7 +60,7 @@ class OrdersCancelledEventExtractor @Inject()(implicit val ec: ExecutionContext)
 
               }
           }.filter(_.nonEmpty).map(_.get)
-
+        case _ => Seq.empty
       }
     }
 }

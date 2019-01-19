@@ -26,6 +26,7 @@ import scala.concurrent.{Await, Future}
 class RingSettlementSpec
     extends CommonSpec
     with EthereumSupport
+    with MetadataManagerSupport
     with MarketManagerSupport
     with MultiAccountManagerSupport
     with OrderGenerateSupport

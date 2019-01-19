@@ -24,9 +24,10 @@ import scala.concurrent.Await
 
 class CoreActorsIntegrationSpec_CancelOneOrder
     extends CommonSpec
+    with EthereumSupport
+    with MetadataManagerSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport {

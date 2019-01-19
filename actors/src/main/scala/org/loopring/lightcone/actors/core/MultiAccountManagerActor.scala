@@ -18,15 +18,17 @@ package org.loopring.lightcone.actors.core
 import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor._
 import akka.cluster.sharding._
+import akka.pattern.ask
+import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.core.base.DustOrderEvaluator
+import org.loopring.lightcone.core.base.{DustOrderEvaluator, MetadataManager}
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
-import akka.pattern.ask
+import org.web3j.utils._
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -44,6 +46,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
       actors: Lookup[ActorRef],
       dustEvaluator: DustOrderEvaluator,
       dbModule: DatabaseModule,
+      metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
@@ -78,6 +81,8 @@ object MultiAccountManagerActor extends ShardedByAddress {
     case req: AddressAllowanceUpdated                 => req.address
     case req: CutoffEvent                             => req.owner //todo:暂不支持broker
     case req: OrderFilledEvent                        => req.owner
+    case Notify(KeepAliveActor.NOTIFY_MSG, address) =>
+      Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
   }
 }
 
@@ -89,7 +94,8 @@ class MultiAccountManagerActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator,
-    val dbModule: DatabaseModule)
+    val dbModule: DatabaseModule,
+    val metadataManager: MetadataManager)
     extends ActorWithPathBasedConfig(
       MultiAccountManagerActor.name,
       MultiAccountManagerActor.extractEntityId
@@ -127,9 +133,13 @@ class MultiAccountManagerActor(
       becomeReady()
     } else {
       log.debug(s"actor recover started: ${self.path}")
+      context.become(recover)
       for {
         _ <- actors.get(OrderRecoverCoordinator.name) ?
-          ActorRecover.Request(addressShardingEntity = entityId)
+          ActorRecover.Request(
+            addressShardingEntity = entityId,
+            sender = Serialization.serializedActorPath(self)
+          )
       } yield {
         autoSwitchBackToReady = Some(
           context.system.scheduler
@@ -139,7 +149,6 @@ class MultiAccountManagerActor(
               ActorRecover.Finished(true)
             )
         )
-        context.become(recover)
       }
     }
   }
@@ -152,11 +161,14 @@ class MultiAccountManagerActor(
       context.become(ready)
 
     case msg: Any =>
-      log.warning(s"message not handled during recover")
-      sender ! Error(
-        ERR_REJECTED_DURING_RECOVER,
-        s"account manager ${entityId} is being recovered"
-      )
+      log.warning(s"message not handled during recover, ${msg}, ${sender}")
+      //sender 是自己时，不再发送Error信息
+      if (sender != self) {
+        sender ! Error(
+          ERR_REJECTED_DURING_RECOVER,
+          s"account manager ${entityId} is being recovered"
+        )
+      }
   }
 
   def ready: Receive = {

@@ -17,21 +17,82 @@
 package org.loopring.lightcone.actors.ethereum
 
 import akka.actor._
+import akka.cluster.singleton._
 import akka.http.scaladsl._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.stream._
 import akka.stream.scaladsl._
+import akka.util.Timeout
+import com.typesafe.config.Config
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s._
-import org.json4s.native.JsonMethods.parse
 import org.json4s.jackson.Serialization
+import org.json4s.native.JsonMethods.parse
+import org.loopring.lightcone.actors.base.Lookup
+import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.lib.TimeProvider
+import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import scalapb.json4s.JsonFormat
-import org.loopring.lightcone.actors.base.safefuture._
 
+import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.util._
+
+object HttpConnector {
+  val name = "http_connector"
+
+  def connectorNames(
+      config: Config
+    ): Map[String, EthereumProxySettings.Node] = {
+    config
+      .getConfigList("ethereum_client_monitor.nodes")
+      .asScala
+      .zipWithIndex
+      .map {
+        case (c, index) =>
+          val node = EthereumProxySettings
+            .Node(host = c.getString("host"), port = c.getInt("port"))
+          s"${name}_$index" -> node
+      }
+      .toMap
+  }
+
+  def start(
+      implicit
+      system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule,
+      deployActorsIgnoringRoles: Boolean
+    ): Map[String, ActorRef] = {
+
+    val materializer = ActorMaterializer()(system)
+    connectorNames(config).map {
+      case (nodeName, node) =>
+        val roleOpt = if (deployActorsIgnoringRoles) None else Some(nodeName)
+        system.actorOf(
+          ClusterSingletonManager.props(
+            singletonProps = Props(new HttpConnector(node)(materializer)),
+            terminationMessage = PoisonPill,
+            settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
+          ),
+          nodeName
+        )
+        nodeName -> system.actorOf(
+          ClusterSingletonProxy.props(
+            singletonManagerPath = s"/user/${nodeName}",
+            settings = ClusterSingletonProxySettings(system)
+          ),
+          name = s"${nodeName}_proxy"
+        )
+    }
+  }
+}
 
 // Owner: Yadong
 class HttpConnector(
@@ -56,11 +117,11 @@ class HttpConnector(
   val LATEST = "latest"
   val JSONRPC_V = "2.0"
 
-  val emptyError = EthRpcError(code = 500, error = "result is empty")
+  val emptyError = EthRpcError(code = 500)
 
-  private val poolClientFlow: Flow[
-    (HttpRequest, Promise[HttpResponse]),
-    (Try[HttpResponse], Promise[HttpResponse]),
+  private val poolClientFlow: Flow[ //
+    (HttpRequest, Promise[HttpResponse]), //
+    (Try[HttpResponse], Promise[HttpResponse]), //
     Http.HostConnectionPool
   ] = {
     Http().cachedHostConnectionPool[Promise[HttpResponse]](

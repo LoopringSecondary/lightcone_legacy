@@ -16,16 +16,15 @@
 
 package org.loopring.lightcone.actors
 
+import java.io.File
+
+import akka.actor._
 import com.google.inject.Guice
 import com.typesafe.config.ConfigFactory
-import org.loopring.lightcone.actors.entrypoint.EntryPointActor
-import org.loopring.lightcone.actors.base.Lookup
-import org.slf4s.Logging
-import net.codingwell.scalaguice.InjectorExtensions._
-import akka.actor._
-import scala.io.StdIn
-import java.io.File
 import kamon.Kamon
+import net.codingwell.scalaguice.InjectorExtensions._
+import org.slf4s.Logging
+import scala.io.StdIn
 import scala.util.Try
 
 // Owner: Daniel
@@ -53,7 +52,7 @@ object Main extends App with Logging {
   )
 
   configItems foreach { i =>
-    log.info(s"--> $i = ${config.getString(i)}")
+    log.info(s"--> $i = ${config.getValue(i)}")
   }
 
   sys.ShutdownHookThread { terminiate() }

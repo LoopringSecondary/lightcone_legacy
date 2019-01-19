@@ -25,7 +25,6 @@ import org.loopring.lightcone.actors.core.{
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto.Orderbook.Item
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -33,9 +32,10 @@ class RecoverOrderSpec
     extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
+    with EthereumSupport
+    with MetadataManagerSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport
@@ -141,10 +141,6 @@ class RecoverOrderSpec
       implicit val timeout = Timeout(100 second)
       val r = actors.get(OrderRecoverCoordinator.name) ? request1
       val res = Await.result(r, timeout.duration)
-      res match {
-        case ActorRecover.Finished(b) => assert(true)
-        case _                        => assert(false)
-      }
       // 4. get depth
       Thread.sleep(5000)
       val orderbookF2 = singleRequest(getOrderBook1, "orderbook")

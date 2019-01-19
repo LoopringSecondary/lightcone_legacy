@@ -22,8 +22,8 @@ import org.loopring.lightcone.actors.core.{
   MultiAccountManagerActor
 }
 import org.loopring.lightcone.ethereum.{
-  RawOrderValidatorImpl,
-  RingBatchGeneratorImpl
+  Protocol2RawOrderValidator,
+  Protocol2RingBatchGenerator
 }
 import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto._
@@ -79,12 +79,12 @@ trait OrderGenerateSupport {
         .toInt
     )
 
-    val hash = RawOrderValidatorImpl.calculateOrderHash(order)
+    val hash = Protocol2RawOrderValidator.calculateOrderHash(order)
     order
       .withHash(hash)
       .withParams(
         order.params.get.withSig(
-          RingBatchGeneratorImpl
+          Protocol2RingBatchGenerator
             .signPrefixedMessage(
               hash,
               Numeric

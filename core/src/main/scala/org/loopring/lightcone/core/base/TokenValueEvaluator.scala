@@ -18,19 +18,27 @@ package org.loopring.lightcone.core.base
 
 import com.google.inject.Inject
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
 // TODO(dongw): we need a price provider
-class TokenValueEvaluator @Inject()()(implicit tm: TokenManager) {
+class TokenValueEvaluator @Inject()()(implicit mm: MetadataManager) {
 
   def getValue(
       tokenAddr: String,
       amount: BigInt
     ): Double = {
     if (amount.signum <= 0) 0
-    else if (!tm.hasToken(tokenAddr)) 0
+    else if (!mm.hasToken(tokenAddr)) 0
     else {
-      val token = tm.getToken(tokenAddr)
+      val token = mm
+        .getToken(tokenAddr)
+        .getOrElse(
+          throw ErrorException(
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
+            s"not found token:$tokenAddr"
+          )
+        )
       (Rational(token.fromWei(amount)) *
         Rational(token.meta.usdPrice)).doubleValue
     }

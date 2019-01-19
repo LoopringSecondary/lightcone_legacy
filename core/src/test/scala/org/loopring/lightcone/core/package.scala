@@ -17,13 +17,21 @@
 package org.loopring.lightcone
 
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
 package object core {
   implicit class RichDoubleValue(v: Double) {
 
-    def toWei(tokenAddr: String)(implicit tm: base.TokenManager) = {
-      tm.getToken(tokenAddr).toWei(v)
+    def toWei(tokenAddr: String)(implicit tm: base.MetadataManager) = {
+      tm.getToken(tokenAddr)
+        .getOrElse(
+          throw ErrorException(
+            ErrorCode.ERR_INTERNAL_UNKNOWN,
+            s"token no found for address $tokenAddr"
+          )
+        )
+        .toWei(v)
     }
 
     def ! = BigInt(v.toLong)

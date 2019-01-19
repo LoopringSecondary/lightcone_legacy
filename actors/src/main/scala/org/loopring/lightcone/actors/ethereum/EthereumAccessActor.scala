@@ -66,63 +66,68 @@ object EthereumAccessActor {
   }
 }
 
-// TODO(yadong): 是否可以替代ActorSelection
-// TODO(yadong): monitor可能在启动的时候还没有部署好。
 class EthereumAccessActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val ma: ActorMaterializer,
-    val ece: ExecutionContextExecutor)
-    extends Actor
-    with Stash
-    with ActorLogging {
+    val actors: Lookup[ActorRef])
+    extends ActorWithPathBasedConfig(EthereumAccessActor.name) {
 
   private def monitor = actors.get(EthereumClientMonitor.name)
-  var connectionPools: Seq[(ActorSelection, Long)] = Nil
 
-  override def preStart() = {
-    val fu = (monitor ? GetNodeBlockHeight.Req())
-      .mapAs[GetNodeBlockHeight.Res]
-    fu onComplete {
-      case Success(res) =>
-        connectionPools = res.nodes.map(
-          node =>
-            context
-              .actorSelection(node.path) -> node.height
+  var connectionPools: Seq[ActorRef] = HttpConnector
+    .connectorNames(config)
+    .filter(node => actors.contains(node._1))
+    .map {
+      case (nodeName, _) => actors.get(nodeName)
+    }
+    .toSeq
+
+  var nodes: Seq[NodeBlockHeight] = HttpConnector
+    .connectorNames(config)
+    .map {
+      case (nodeName, _) => NodeBlockHeight(nodeName, -1L)
+    }
+    .toSeq
+
+  override def initialize(): Future[Unit] = {
+    if (actors.contains(EthereumClientMonitor.name)) {
+      (monitor ? GetNodeBlockHeight.Req())
+        .mapAs[GetNodeBlockHeight.Res]
+        .map { res =>
+          connectionPools = res.nodes
+            .filter(_.height > 0)
+            .filter(node => actors.contains(node.nodeName))
+            .sortWith(_.height > _.height)
+            .map(node => actors.get(node.nodeName))
+          becomeReady()
+        }
+    } else {
+      Future.failed(
+        ErrorException(
+          ErrorCode.ERR_ACTOR_NOT_READY,
+          "Ethereum client monitor is not ready"
         )
-        self ! Notify("initialized")
-      case Failure(e) =>
-        log.error(s"failed to start EthereumAccessActor: ${e.getMessage}")
-        throw e
+      )
     }
   }
 
-  override def receive: Receive = initialReceive
-
-  def initialReceive: Receive = {
-    case Notify("initialized", _) =>
-      unstashAll()
-      context.become(normalReceive)
-    case _: NodeBlockHeight =>
-    case _ =>
-      stash()
-  }
-
-  def normalReceive: Receive = {
+  def ready: Receive = {
     case node: NodeBlockHeight =>
-      connectionPools = (connectionPools.toMap +
-        (context.actorSelection(node.path) -> node.height)).toSeq
-        .filter(_._2 >= 0)
-        .sortWith(_._2 > _._2)
+      nodes = nodes.dropWhile(nbh => nbh.nodeName.equals(node.nodeName)) :+ node
+      connectionPools = nodes
+        .filter(_.height > 0)
+        .filter(node => actors.contains(node.nodeName))
+        .sortWith(_.height > _.height)
+        .map(node => actors.get(node.nodeName))
 
     case req: JsonRpc.RequestWithHeight =>
-      val validPools = connectionPools.filter(_._2 > req.height)
+      val validPools = nodes.filter(_.height >= req.height)
       if (validPools.nonEmpty) {
-        validPools(Random.nextInt(validPools.size))._1 forward req.req
+        val nodeName = validPools(Random.nextInt(validPools.size)).nodeName
+        actors.get(nodeName) forward req.req
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
@@ -132,7 +137,7 @@ class EthereumAccessActor(
 
     case msg: JsonRpc.Request => {
       if (connectionPools.nonEmpty) {
-        connectionPools.head._1 forward msg
+        connectionPools.head forward msg
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,
@@ -143,7 +148,7 @@ class EthereumAccessActor(
 
     case msg: ProtoBuf[_] => {
       if (connectionPools.nonEmpty) {
-        connectionPools.head._1 forward msg
+        connectionPools.head forward msg
       } else {
         sender ! ErrorException(
           code = ErrorCode.ERR_NO_ACCESSIBLE_ETHEREUM_NODE,

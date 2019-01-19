@@ -29,6 +29,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.core.base.MetadataManager
 
 // Owner: Yongfeng
 object MetadataManagerActor {
@@ -44,6 +45,7 @@ object MetadataManagerActor {
       timeout: Timeout,
       dbModule: DatabaseModule,
       actors: Lookup[ActorRef],
+      metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
@@ -75,6 +77,7 @@ class MetadataManagerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
+    val metadataManager: MetadataManager,
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(MetadataManagerActor.name)
     with RepeatedJobActor
@@ -97,15 +100,18 @@ class MetadataManagerActor(
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = token.address
           )).mapTo[GetBurnRate.Res]
+          //TODO(du) 以太坊节点返回的不对，暂时mock 0.4
           _ <- if (token.burnRate != burnRateRes.burnRate)
             dbModule.tokenMetadataDal
-              .updateBurnRate(token.address, burnRateRes.burnRate)
+              .updateBurnRate(token.address, 0.4)
           else Future.successful(Unit)
-        } yield token.copy(burnRate = burnRateRes.burnRate)
+        } yield token.copy(burnRate = 0.4)
       })
     } yield {
       tokens = tokensUpdated
       markets = markets_
+      metadataManager.reset(tokens, markets)
+
       mediator ! Publish(MetadataManagerActor.pubsubTopic, MetadataChanged())
       becomeReady()
     }
@@ -147,20 +153,22 @@ class MetadataManagerActor(
         UpdateTokenMetadata.Res(result)
       }).sendTo(sender)
 
-    case req: UpdateTokenBurnRate.Req =>
-      (for {
-        burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
-          token = req.address
-        )).mapTo[GetBurnRate.Res]
-        result <- dbModule.tokenMetadataDal
-          .updateBurnRate(req.address, burnRateRes.burnRate)
-        tokens_ <- dbModule.tokenMetadataDal.getTokens()
-      } yield {
-        if (result == ErrorCode.ERR_NONE) {
-          checkAndPublish(Some(tokens_), None)
-        }
-        UpdateTokenBurnRate.Res(result)
-      }).sendTo(sender)
+    case req: TokenBurnRateChangedEvent =>
+      if (req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess) {
+        (for {
+          burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
+            token = req.token
+          )).mapTo[GetBurnRate.Res]
+          result <- dbModule.tokenMetadataDal
+            .updateBurnRate(req.token, burnRateRes.burnRate)
+          tokens_ <- dbModule.tokenMetadataDal.getTokens()
+        } yield {
+          if (result == ErrorCode.ERR_NONE) {
+            checkAndPublish(Some(tokens_), None)
+          }
+          UpdateTokenBurnRate.Res(result)
+        }).sendTo(sender)
+      }
 
     case req: DisableToken.Req =>
       (for {

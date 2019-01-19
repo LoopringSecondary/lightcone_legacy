@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.ethereum.event
+package org.loopring.lightcone.core.base
 
-import com.google.inject.Inject
-import com.typesafe.config.Config
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.lib.MarketHashProvider
+import org.loopring.lightcone.proto.MarketId
 
-import scala.concurrent.{ExecutionContext, Future}
+class MarketKey(marketId: MarketId) {
 
-class OrderFillEventExtractor @Inject()(
-    implicit
-    extractor: RingMinedEventExtractor,
-    val ec: ExecutionContext)
-    extends EventExtractor[OrderFilledEvent] {
+  def toHexString =
+    MarketHashProvider.convert2Hex(marketId.primary, marketId.secondary)
+  override def toString = toHexString
+}
 
-  def extract(block: RawBlockData): Future[Seq[OrderFilledEvent]] =
-    extractor.extract(block).map(_.flatMap(_.fills))
+object MarketKey {
+  def apply(marketId: MarketId): MarketKey = new MarketKey(marketId)
+
+  def apply(
+      primary: String,
+      secondary: String
+    ): MarketKey = apply(MarketId(primary, secondary))
 }

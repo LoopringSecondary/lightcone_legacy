@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.ErrorCode._
 
 class RawOrderValidatorSpec extends FlatSpec with Matchers {
-  val validator: RawOrderValidator = RawOrderValidatorImpl
+  val validator: RawOrderValidator = Protocol2RawOrderValidator
 
   "calculateOrderHash" should "be able to get hash of an order" in {
     val wethAddress = "0x3B39f10dC98b3fcd86a6d4837ff2BdF410710B94"
