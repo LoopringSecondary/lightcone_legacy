@@ -84,10 +84,7 @@ class MetadataRefresher(
   }
 
   def ready: Receive = {
-    case _: MetadataChanged =>
-      for {
-        _ <- refreshMetadata()
-      } yield Unit
+    case _: MetadataChanged => refreshMetadata()
 
     case _: GetMetadatas.Req =>
       sender ! GetMetadatas.Res(tokens = tokens, markets = markets)
