@@ -203,16 +203,7 @@ class MarketManagerImpl(
       }
 
       if (!dustOrderEvaluator.isMatchableDust(taker)) {
-        try {
-          recursivelyMatchOrders()
-        } catch {
-          case e: Exception =>
-            log.error(
-              s"occurs err when trying to match orders ${e
-                .printStackTrace()}, ${e.getCause}, ${e.getMessage}"
-            )
-            throw e
-        }
+        recursivelyMatchOrders()
       }
 
       // we alsways need to add the taker back even if it is pending fully-matched
