@@ -39,10 +39,9 @@ class OHLCDataServiceImpl @Inject()(
 
   def getOHLCData(request: GetOHLCData.Req): Future[GetOHLCData.Res] =
     ohlcDataDal.getOHLCData(
-      request.marketId,
-      request.interval,
+      request.marketKey,
+      request.interval.value,
       request.beginTime,
       request.endTime
     )
-
 }

@@ -32,7 +32,8 @@ trait DalPostgreSpec[D <: BaseDal[_, _]]
     with Matchers {
   implicit val ec = ExecutionContext.global
 
-  override val container = PostgreSQLContainer("postgres:10.4")
+  override val container = PostgreSQLContainer("timescale/timescaledb:latest")
+
   Class.forName(container.driverClassName)
 
   implicit var dbConfig: DatabaseConfig[JdbcProfile] = _

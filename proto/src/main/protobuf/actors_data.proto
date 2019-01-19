@@ -312,8 +312,8 @@ message OHLCRawData {
 message OHLCData {
     int64      starting_point   = 1;
     string     market_key       = 2;
-    double     volume_a_sum     = 3;
-    double     volume_b_sum     = 4;
+    double     quality          = 3;
+    double     amount           = 4;
     double     opening_price    = 5;
     double     closing_price    = 6;
     double     highest_price    = 7;

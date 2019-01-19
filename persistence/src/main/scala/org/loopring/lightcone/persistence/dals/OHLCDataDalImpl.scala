@@ -21,16 +21,15 @@ import org.loopring.lightcone.proto.ErrorCode._
 import slick.basic.DatabaseConfig
 import slick.lifted.TableQuery
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.google.protobuf.any.Any
 import org.loopring.lightcone.proto._
-import org.postgresql.util.PSQLException
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 
-import scala.util.{Failure, Success}
+import scala.concurrent.duration._
 
 class OHLCDataDalImpl @Inject()(
     implicit
@@ -40,13 +39,42 @@ class OHLCDataDalImpl @Inject()(
 
   val query = TableQuery[OHLCDataTable]
 
+  override def createTable() = {
+    implicit val getOHLCResult = GetResult[Any](r => Any(r.nextString()))
+    val sqlCreateExtention =
+      sql"""CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE""".as[Any]
+    try {
+      Await.result(db.run(sqlCreateExtention), 10.second)
+    } catch {
+      case e: Exception =>
+        logger.error("Failed to create timescaledb extension: " + e.getMessage)
+        System.exit(0)
+    }
+
+    super.createTable()
+
+    val sqlCreateHypertable =
+      sql"""SELECT CREATE_HYPERTABLE('"T_OHLC_DATA"', 'time', CHUNK_TIME_INTERVAL => 604800)"""
+        .as[Any]
+    try {
+      Await.result(db.run(sqlCreateHypertable), 10.second)
+    } catch {
+      case e: Exception if e.getMessage.contains("already a hypertable") =>
+        logger.info(e.getMessage)
+      case e: Exception =>
+        logger.error("Failed to create hypertable: " + e.getMessage)
+        System.exit(0)
+    }
+  }
+
   def saveData(record: OHLCRawData): Future[PersistOHLCData.Res] = {
-    insertOrUpdate(record).map {
-      case 0 =>
-        logger.error("saving OHLC raw data failed")
-        PersistOHLCData.Res(error = ERR_PERSISTENCE_INTERNAL)
-      case _ => {
+    for {
+      result <- db.run(query.insertOrUpdate(record))
+    } yield {
+      if (result == 1) {
         PersistOHLCData.Res(error = ERR_NONE, record = Some(record))
+      } else {
+        PersistOHLCData.Res(error = ERR_PERSISTENCE_INTERNAL)
       }
 
     }
@@ -58,7 +86,6 @@ class OHLCDataDalImpl @Inject()(
       beginTime: Long,
       endTime: Long
     ): Future[GetOHLCData.Res] = {
-    // query result set getters
     implicit val getOHLCResult = GetResult[OHLCData](
       r =>
         OHLCData(
@@ -68,23 +95,25 @@ class OHLCDataDalImpl @Inject()(
           r.nextDouble,
           r.nextDouble,
           r.nextDouble,
+          r.nextDouble,
           r.nextDouble
         )
     )
 
     val sql = sql"""select
-        time_bucket($interval, time) AS starting_point
-        t.market_key,
+        TIME_BUCKET($interval, time) AS starting_point,
+        t.market_key AS market_key,
+        SUM(quality) AS quality_sum,
+        SUM(amount) AS amount_sum,
+        FIRST(price, time) AS opening_price,
+        LAST(price, time) AS closing_price,
         MAX(price) AS highest_price,
-        MIN(price) AS lowest_price,
-        SUM(quality) AS volume_a_sum,
-        SUM(amount) AS volume_b_sum,
-        first(price, time) AS opening_price,
-        last(price, time) AS closing_price
-        FROM ${OHLCDataTable.tableName} t
-        WHERE market_key = marketKey
-        AND time < $beginTime AND
-        time > $endTime GROUP BY time_flag
+        MIN(price) AS lowest_price
+        FROM "T_OHLC_DATA" t
+        WHERE market_key = ${marketKey}
+        AND time > ${beginTime} AND
+        time < ${endTime} GROUP BY starting_point,market_key
+        ORDER BY starting_point DESC
         """.as[OHLCData]
 
     db.run(sql).map(r => GetOHLCData.Res(r.toSeq))
