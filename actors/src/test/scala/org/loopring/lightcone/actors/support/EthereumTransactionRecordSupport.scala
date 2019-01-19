@@ -58,4 +58,6 @@ trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
     )
   )
 
+  Thread.sleep(2000)
+
 }
