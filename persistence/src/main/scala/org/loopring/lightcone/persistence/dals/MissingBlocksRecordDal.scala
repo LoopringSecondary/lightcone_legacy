@@ -26,6 +26,7 @@ trait MissingBlocksRecordDal
   // will return saved sequenceId
   def saveMissingBlock(record: MissingBlocksRecord): Future[Long]
 
+  // order by insert sequence, get the earliest one
   def getOldestOne(): Future[Option[MissingBlocksRecord]]
 
   def updateProgress(
