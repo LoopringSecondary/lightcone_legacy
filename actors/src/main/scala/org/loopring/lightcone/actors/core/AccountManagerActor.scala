@@ -25,7 +25,6 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
@@ -35,7 +34,6 @@ import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
-
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -51,7 +49,8 @@ class AccountManagerActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator,
-    val dbModule: DatabaseModule)
+    val dbModule: DatabaseModule,
+    val metadataManager: MetadataManager)
     extends Actor
     with Stash
     with ActorLogging {
@@ -66,23 +65,25 @@ class AccountManagerActor(
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
   val accountCutoffState = new AccountCutoffStateImpl()
-  val supportedMarkets = SupportedMarkets(config)
 
   protected def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   override def preStart() = {
-    val cutoffReqs = (supportedMarkets.getMarketKeys() map { m =>
+    val cutoffReqs = (metadataManager.getValidMarketKeys map { m =>
       for {
         res <- (ethereumQueryActor ? GetCutoff.Req(
           broker = address,
           owner = address,
-          tokenPair = Numeric.toHexStringWithPrefix(m)
+          marketKey = m
         )).mapAs[GetCutoff.Res]
       } yield {
         val cutoff: BigInt = res.cutoff
-        accountCutoffState.setTradingPairCutoff(m, cutoff.toLong)
+        accountCutoffState.setTradingPairCutoff(
+          Numeric.toBigInt(m),
+          cutoff.toLong
+        )
       }
     }) +
       (for {

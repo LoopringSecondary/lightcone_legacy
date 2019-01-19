@@ -62,10 +62,9 @@ class CoreDeployer @Inject()(
     ece: ExecutionContextExecutor,
     rb: EthereumCallRequestBuilder,
     rie: RingIncomeEvaluator,
-    supportedMarkets: SupportedMarkets,
+    metadataManager: MetadataManager,
     timeProvider: TimeProvider,
     timeout: Timeout,
-    tokenManager: TokenManager,
     tve: TokenValueEvaluator,
     dispatchers: Seq[EventDispatcher[_]],
     system: ActorSystem)
@@ -204,7 +203,7 @@ class CoreDeployer @Inject()(
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors.add(EntryPointActor.name, EntryPointActor.start)
 
-      actors.add(AliveKeeperActor.name, AliveKeeperActor.start)
+      actors.add(KeepAliveActor.name, KeepAliveActor.start)
       //-----------deploy JSONRPC service-----------
       if (deployActorsIgnoringRoles ||
           cluster.selfRoles.contains("jsonrpc")) {

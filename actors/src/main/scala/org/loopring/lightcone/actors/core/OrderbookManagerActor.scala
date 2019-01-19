@@ -25,14 +25,12 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
-import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
-
-import scala.collection.JavaConverters._
 import scala.concurrent._
 
 // Owner: Hongyu
@@ -50,32 +48,17 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      tokenManager: TokenManager,
+      metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("instances-per-market")
 
-    //todo：永丰完成只有优化
-    val markets = config
-      .getObjectList("markets")
-      .asScala
-      .map { item =>
-        val c = item.toConfig
-        val marketId =
-          MarketId(
-            LAddress(c.getString("priamry")).toString,
-            LAddress(c.getString("secondary")).toString
-          )
-        getEntityId(marketId) -> marketId
-      }
-      .toMap
-
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new OrderbookManagerActor(markets)),
+      entityProps = Props(new OrderbookManagerActor()),
       settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
@@ -85,7 +68,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
   val extractMarketId: PartialFunction[Any, MarketId] = {
     case GetOrderbook.Req(_, _, Some(marketId))    => marketId
     case Orderbook.Update(_, _, _, Some(marketId)) => marketId
-    case Notify(AliveKeeperActor.NOTIFY_MSG, marketIdStr) =>
+    case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
       MarketId(primary, secondary)
@@ -93,7 +76,6 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
 }
 
 class OrderbookManagerActor(
-    markets: Map[String, MarketId]
   )(
     implicit
     val config: Config,
@@ -101,25 +83,29 @@ class OrderbookManagerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val tokenManager: TokenManager)
+    val metadataManager: MetadataManager)
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
       OrderbookManagerActor.extractEntityId
     ) {
-  val marketId = markets(entityId)
+
+  val marketId = metadataManager.getValidMarketIds.values
+    .find(m => getEntityId(m) == entityId)
+    .get
+
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
 
-  val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
+  val marketMetadata = metadataManager
+    .getMarketMetadata(marketId)
+    .getOrElse(
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        s"not found market:$marketId config"
+      )
+    )
 
-  // TODO(yongfeng): load marketconfig from database throught a service interface
-  // based on marketId
-  val marketMetadata = MarketMetadata(
-    orderbookAggLevels = selfConfig.getInt("levels"),
-    priceDecimals = selfConfig.getInt("price-decimals"),
-    precisionForAmount = selfConfig.getInt("precision-for-amount"),
-    precisionForTotal = selfConfig.getInt("precision-for-total")
-  )
+  val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
 
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 

@@ -25,7 +25,6 @@ import org.loopring.lightcone.actors.core.{
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto.Orderbook.Item
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -33,9 +32,10 @@ class RecoverOrderSpec
     extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
+    with EthereumSupport
+    with MetadataManagerSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with EthereumSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with OrderGenerateSupport

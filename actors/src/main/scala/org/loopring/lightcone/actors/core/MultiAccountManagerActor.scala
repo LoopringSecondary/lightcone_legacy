@@ -23,13 +23,12 @@ import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.core.base.DustOrderEvaluator
+import org.loopring.lightcone.core.base.{DustOrderEvaluator, MetadataManager}
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import org.web3j.utils._
-
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -47,6 +46,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
       actors: Lookup[ActorRef],
       dustEvaluator: DustOrderEvaluator,
       dbModule: DatabaseModule,
+      metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
@@ -81,7 +81,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
     case req: AddressAllowanceUpdated                 => req.address
     case req: CutoffEvent                             => req.owner //todo:暂不支持broker
     case req: OrderFilledEvent                        => req.owner
-    case Notify(AliveKeeperActor.NOTIFY_MSG, address) =>
+    case Notify(KeepAliveActor.NOTIFY_MSG, address) =>
       Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
   }
 }
@@ -94,7 +94,8 @@ class MultiAccountManagerActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator,
-    val dbModule: DatabaseModule)
+    val dbModule: DatabaseModule,
+    val metadataManager: MetadataManager)
     extends ActorWithPathBasedConfig(
       MultiAccountManagerActor.name,
       MultiAccountManagerActor.extractEntityId

@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Publish
+import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import akka.cluster.singleton._
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -26,10 +26,10 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.core.base.MetadataManager
 
 import scala.util._
 
@@ -47,6 +47,7 @@ object MetadataManagerActor {
       timeout: Timeout,
       dbModule: DatabaseModule,
       actors: Lookup[ActorRef],
+      metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
@@ -78,6 +79,7 @@ class MetadataManagerActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
+    val metadataManager: MetadataManager,
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(MetadataManagerActor.name)
     with RepeatedJobActor
@@ -100,15 +102,17 @@ class MetadataManagerActor(
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = token.address
           )).mapTo[GetBurnRate.Res]
+          //TODO(du) 以太坊节点返回的不对，暂时mock 0.4
           _ <- if (token.burnRate != burnRateRes.burnRate)
             dbModule.tokenMetadataDal
-              .updateBurnRate(token.address, burnRateRes.burnRate)
+              .updateBurnRate(token.address, 0.4)
           else Future.successful(Unit)
-        } yield token.copy(burnRate = burnRateRes.burnRate)
+        } yield token.copy(burnRate = 0.4)
       })
     } yield {
       tokens = tokensUpdated
       markets = markets_
+      metadataManager.reset(tokens, markets)
     }
     f onComplete {
       case Success(_) =>

@@ -24,7 +24,6 @@ import com.typesafe.config.ConfigFactory
 import kamon.Kamon
 import net.codingwell.scalaguice.InjectorExtensions._
 import org.slf4s.Logging
-
 import scala.io.StdIn
 import scala.util.Try
 
