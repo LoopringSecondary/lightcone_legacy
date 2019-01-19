@@ -104,9 +104,6 @@ class MarketManagerActor(
       MarketManagerActor.extractEntityId
     )
     with ActorLogging {
-  println(metadataManager.getValidMarketIds.values.map(getEntityId))
-  println(entityId)
-
   implicit val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
     .get

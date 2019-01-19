@@ -36,8 +36,7 @@ final class TransactionRecordMessageValidator()(implicit val config: Config)
 
   def validate = {
     case req: TransferEvent =>
-      println(s"validator transfer event:${req}")
-//      validate(req.header, req.owner)
+      validate(req.header, req.owner)
       req
 
     case req: CutoffEvent =>

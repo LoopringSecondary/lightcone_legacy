@@ -259,7 +259,7 @@ class AccountManagerActor(
           RawOrder.State(
             createdAt = timeProvider.getTimeMillis(),
             updatedAt = timeProvider.getTimeMillis(),
-            status = _matchable.status
+            status = OrderStatus.STATUS_NEW
           )
         )
         .copy(
