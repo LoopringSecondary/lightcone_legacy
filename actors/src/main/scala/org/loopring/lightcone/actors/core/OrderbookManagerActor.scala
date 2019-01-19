@@ -25,9 +25,9 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
-import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
@@ -55,14 +55,10 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("instances-per-market")
 
-    val markets = metadataManager.getValidMarketIds.values.map { marketId =>
-      getEntityId(marketId) -> marketId
-    }.toMap
-
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new OrderbookManagerActor(markets)),
+      entityProps = Props(new OrderbookManagerActor()),
       settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
@@ -80,7 +76,6 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
 }
 
 class OrderbookManagerActor(
-    markets: Map[String, MarketId]
   )(
     implicit
     val config: Config,
@@ -93,7 +88,11 @@ class OrderbookManagerActor(
       OrderbookManagerActor.name,
       OrderbookManagerActor.extractEntityId
     ) {
-  val marketId = markets(entityId)
+
+  val marketId = metadataManager.getValidMarketIds.values
+    .find(m => getEntityId(m) == entityId)
+    .get
+
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
 

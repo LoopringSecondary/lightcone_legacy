@@ -26,6 +26,7 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
@@ -36,6 +37,7 @@ import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
+
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -58,16 +60,11 @@ object MarketManagerActor extends ShardedByMarket {
       metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val markets = metadataManager.getValidMarketIds.values.map { marketId =>
-      MarketManagerActor.getEntityId(marketId) -> marketId
-    }.toMap
-
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new MarketManagerActor(markets)),
+      entityProps = Props(new MarketManagerActor()),
       settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
@@ -91,7 +88,6 @@ object MarketManagerActor extends ShardedByMarket {
 
 //todo:撮合应该有个暂停撮合提交的逻辑，适用于：区块落后太多、没有可用的RingSettlement等情况
 class MarketManagerActor(
-    markets: Map[String, MarketId]
   )(
     implicit
     val config: Config,
@@ -108,8 +104,10 @@ class MarketManagerActor(
       MarketManagerActor.extractEntityId
     )
     with ActorLogging {
+  implicit val marketId = metadataManager.getValidMarketIds.values
+    .find(m => getEntityId(m) == entityId)
+    .get
 
-  implicit val marketId = markets(entityId)
   log.info(s"=======> starting MarketManagerActor ${self.path} for ${marketId}")
 
   var autoSwitchBackToReady: Option[Cancellable] = None

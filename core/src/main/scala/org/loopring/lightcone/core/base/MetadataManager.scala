@@ -32,7 +32,6 @@ final class MetadataManager() extends Logging {
   private var enabledMarkets: Map[String, MarketId] = Map.empty
   private var readOnlyMarkets: Map[String, MarketId] = Map.empty
 
-  private var validMarkets: Map[String, MarketId] = Map.empty
   private var marketMetadatasMap = Map.empty[String, MarketMetadata]
 
   def reset(
@@ -45,7 +44,6 @@ final class MetadataManager() extends Logging {
     disabledMarkets = Map.empty
     enabledMarkets = Map.empty
     readOnlyMarkets = Map.empty
-    validMarkets = Map.empty
     marketMetadatasMap = Map.empty
     markets.foreach(addMarket)
   }
@@ -86,7 +84,6 @@ final class MetadataManager() extends Logging {
   def addMarket(meta: MarketMetadata) = this.synchronized {
     marketMetadatasMap += meta.marketHash.toLowerCase() -> meta
     val itemMap = meta.marketHash.toLowerCase() -> meta.marketId.get
-    validMarkets += itemMap
     meta.status match {
       case MarketMetadata.Status.DISABLED =>
         disabledMarkets += itemMap
@@ -155,7 +152,7 @@ final class MetadataManager() extends Logging {
 
   def getValidMarketKeys = marketMetadatasMap.keySet
 
-  def getValidMarketIds = validMarkets
+  def getValidMarketIds = enabledMarkets ++ readOnlyMarkets ++ disabledMarkets
 
   def getEnabledMarketIds = enabledMarkets
 
