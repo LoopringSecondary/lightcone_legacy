@@ -225,7 +225,8 @@ message GetBurnRate {
         string tag  = 2;
     }
     message Res {
-        double burn_rate = 1;
+        double for_market = 1;
+        double for_p2p = 2;
     }
 }
 

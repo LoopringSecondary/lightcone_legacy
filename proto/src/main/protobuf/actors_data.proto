@@ -183,9 +183,10 @@ message TokenMetadata {
     int32    decimals               = 7;
     string   website_url            = 8;
     int32    precision              = 9;
-    double   burn_rate              = 10;
-    double   usd_price              = 11;
-    int64    updated_at             = 12;
+    double   burn_rate_for_market   = 10;
+    double   burn_rate_for_p2p      = 11;
+    double   usd_price              = 12;
+    int64    updated_at             = 13;
 }
 
 message MarketMetadata {

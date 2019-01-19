@@ -52,7 +52,7 @@ final class RingIncomeEvaluatorImpl @Inject()(
       (fill.order, fill.pending, fill.amountMargin)
 
     val rate = (1 - order.walletSplitPercentage) *
-      (1 - mm.getBurnRate(order.tokenFee))
+      (1 - mm.getBurnRate(order.tokenFee).forMarket)
 
     val fiatFee = rate * tve.getValue(order.tokenFee, pending.amountFee)
 

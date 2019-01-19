@@ -35,7 +35,8 @@ trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
 
   def updateBurnRate(
       token: String,
-      burnRate: Double
+      burnRateForMarket: Double,
+      burnRateForP2P: Double
     ): Future[ErrorCode]
 
   def disableToken(address: String): Future[ErrorCode]

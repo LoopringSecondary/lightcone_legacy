@@ -78,14 +78,19 @@ class TokenMetadataDalImpl @Inject()(
 
   def updateBurnRate(
       token: String,
-      burnRate: Double
+      burnRateForMarket: Double,
+      burnRateForP2P: Double
     ): Future[ErrorCode] =
     for {
       result <- db.run(
         query
           .filter(_.address === token)
-          .map(c => (c.burnRate, c.updateAt))
-          .update(burnRate, timeProvider.getTimeMillis())
+          .map(c => (c.burnRateForMarket, c.burnRateForP2P, c.updateAt))
+          .update(
+            burnRateForMarket,
+            burnRateForP2P,
+            timeProvider.getTimeMillis()
+          )
       )
     } yield {
       if (result >= 1) ERR_NONE
