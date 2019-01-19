@@ -159,7 +159,7 @@ class CoreDeployer @Inject()(
         }
       }
 
-      //按照模块分布，因为在使用actors.get，有先后顺序，
+      //todo：按照模块分布，因为启动有依赖顺序
 
       //-----------deploy singleton actors-----------
       actors.add(
