@@ -208,8 +208,10 @@ class MarketManagerImpl(
         } catch {
           case e: Exception =>
             log.error(
-              s"####111 addOrder eer ${e.printStackTrace()}, ${e.getCause}, ${e.getMessage}"
+              s"occurs err when trying to match orders ${e
+                .printStackTrace()}, ${e.getCause}, ${e.getMessage}"
             )
+            throw e
         }
       }
 

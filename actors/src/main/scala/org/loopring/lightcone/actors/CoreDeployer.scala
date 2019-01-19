@@ -208,7 +208,7 @@ class CoreDeployer @Inject()(
           cluster.selfRoles.contains("jsonrpc")) {
         val server = new JsonRpcServer(config, actors.get(EntryPointActor.name))
         with RpcBinding
-        Future { server.start }
+        server.start
       }
     }
   }
