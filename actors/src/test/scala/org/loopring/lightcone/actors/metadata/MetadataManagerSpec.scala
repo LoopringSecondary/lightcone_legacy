@@ -35,12 +35,7 @@ class MetadataManagerSpec
     extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
-    with OrderHandleSupport
-    with MultiAccountManagerSupport
     with EthereumSupport
-    with MarketManagerSupport
-    with OrderbookManagerSupport
-    with OrderGenerateSupport
     with MetadataManagerSupport {
 
   val probe = TestProbe()
@@ -55,10 +50,10 @@ class MetadataManagerSpec
       val lrc = TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
         status = TokenMetadata.Status.ENABLED,
-        symbol = "LRC",
-        name = "Loopring Token",
+        symbol = "AAA",
+        name = "AAA Token",
         address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
-        unit = "LRC",
+        unit = "AAA",
         decimals = 18,
         precision = 6,
         burnRate = 0.1,
@@ -81,10 +76,10 @@ class MetadataManagerSpec
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.ENABLED,
-          symbol = "BCD",
-          name = "BCD Token",
+          symbol = "BBB",
+          name = "BBB Token",
           address = "0x989fcbc46845a290e971a6303ef3753fb039d8d5",
-          unit = "BCD",
+          unit = "BBB",
           decimals = 9,
           precision = 3,
           burnRate = 1.1,
@@ -93,10 +88,10 @@ class MetadataManagerSpec
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.ENABLED,
-          symbol = "BNB",
-          name = "Binance Token",
+          symbol = "BBC",
+          name = "BBC Token",
           address = "0x61a11f3d1f3b4dbd3f780f004773e620daf065c4",
-          unit = "BNB",
+          unit = "BBC",
           decimals = 18,
           precision = 6,
           burnRate = 0.2,
@@ -105,10 +100,10 @@ class MetadataManagerSpec
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.ENABLED,
-          symbol = "0x",
-          name = "ZeroX Token",
+          symbol = "CCC",
+          name = "CCC Token",
           address = "0x34a381433f45230390d750113aab46c65129ffab",
-          unit = "0x",
+          unit = "CCC",
           decimals = 18,
           precision = 6,
           burnRate = 0.3,
@@ -127,9 +122,17 @@ class MetadataManagerSpec
           usdPrice = 1
         )
       )
-      actor ! SaveTokenMetadatas.Req(tokens)
+
+      val saved = Await.result(
+        (actor ? SaveTokenMetadatas.Req(tokens)).mapTo[SaveTokenMetadatas.Res],
+        5.second
+      )
+      assert(saved.savedAddresses.length == tokens.length)
       info("waiting 3s for repeatJob to reload tokens config")
       Thread.sleep(3000)
+
+      info("subscriber should received the message")
+      probe.expectMsg(MetadataChanged())
 
       info("query the tokens from db")
       val r1 = dbModule.tokenMetadataDal.getTokens(tokens.map(_.address))
@@ -141,7 +144,7 @@ class MetadataManagerSpec
         (actor ? LoadTokenMetadata.Req()).mapTo[LoadTokenMetadata.Res],
         5.second
       )
-      assert(q1.tokens.length == tokens.length)
+      assert(q1.tokens.length >= tokens.length)
 
       info("save a new token config: DEF")
       val r2 = dbModule.tokenMetadataDal.saveToken(
@@ -187,10 +190,6 @@ class MetadataManagerSpec
       assert(
         query1.length == 1 && query1.head.burnRate === burnRateRes.burnRate && query1.head.usdPrice == 20
       )
-      Thread.sleep(3000)
-
-      info("subscriber should received the message")
-      probe.expectMsg(MetadataChanged())
 
       info("send a message to disable lrc")
       val disabled = Await.result(
@@ -213,17 +212,17 @@ class MetadataManagerSpec
   "load markets config" must {
     "get all markets config" in {
       info("save some markets config")
-      val LRC = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
-      val BNB = "0x9b9211a2ce4eEE9c5619d54E5CD9f967A68FBE23"
-      val ZRX = "0x7b22713f2e818fad945af5a3618a2814f102cbe0"
-      val WETH = "0x45245bc59219eeaaf6cd3f382e078a461ff9de7b"
-      val marketIdLrcWeth = MarketId(primary = WETH, secondary = LRC)
-      val marketIdBnbWeth = MarketId(primary = WETH, secondary = BNB)
-      val marketIdZrxdWeth = MarketId(primary = WETH, secondary = ZRX)
+      val AAA = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
+      val BBB = "0x9b9211a2ce4eEE9c5619d54E5CD9f967A68FBE23"
+      val CCC = "0x7b22713f2e818fad945af5a3618a2814f102cbe0"
+      val DDD = "0x45245bc59219eeaaf6cd3f382e078a461ff9de7b"
+      val marketIdLrcWeth = MarketId(primary = DDD, secondary = AAA)
+      val marketIdBnbWeth = MarketId(primary = DDD, secondary = BBB)
+      val marketIdZrxdWeth = MarketId(primary = DDD, secondary = CCC)
       val marketLrcWeth = MarketMetadata(
         status = MarketMetadata.Status.ENABLED,
-        secondaryTokenSymbol = "LRC",
-        primaryTokenSymbol = "WETH",
+        secondaryTokenSymbol = "AAA",
+        primaryTokenSymbol = "DDD",
         maxNumbersOfOrders = 1000,
         priceDecimals = 8,
         orderbookAggLevels = 1,
@@ -232,14 +231,14 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdLrcWeth),
-        marketHash = MarketHashProvider.convert2Hex(WETH, LRC)
+        marketHash = MarketHashProvider.convert2Hex(DDD, AAA)
       )
       val markets = Seq(
         marketLrcWeth,
         MarketMetadata(
           status = MarketMetadata.Status.DISABLED,
-          secondaryTokenSymbol = "BNB",
-          primaryTokenSymbol = "WETH",
+          secondaryTokenSymbol = "BBB",
+          primaryTokenSymbol = "DDD",
           maxNumbersOfOrders = 1000,
           priceDecimals = 8,
           orderbookAggLevels = 1,
@@ -248,12 +247,12 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketId = Some(marketIdBnbWeth),
-          marketHash = MarketHashProvider.convert2Hex(WETH, BNB)
+          marketHash = MarketHashProvider.convert2Hex(DDD, BBB)
         ),
         MarketMetadata(
           status = MarketMetadata.Status.READONLY,
-          secondaryTokenSymbol = "ZRX",
-          primaryTokenSymbol = "WETH",
+          secondaryTokenSymbol = "CCC",
+          primaryTokenSymbol = "DDD",
           maxNumbersOfOrders = 1000,
           priceDecimals = 8,
           orderbookAggLevels = 1,
@@ -262,11 +261,14 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketId = Some(marketIdZrxdWeth),
-          marketHash = MarketHashProvider.convert2Hex(WETH, ZRX)
+          marketHash = MarketHashProvider.convert2Hex(DDD, CCC)
         )
       )
       actor ! SaveMarketMetadatas.Req(markets)
       Thread.sleep(3000)
+
+      info("subscriber should received the message")
+      probe.expectMsg(MetadataChanged())
 
       info("query the markets from db")
       val r1 = dbModule.marketMetadataDal.getMarketsByHashes(
@@ -280,15 +282,15 @@ class MetadataManagerSpec
         (actor ? LoadMarketMetadata.Req()).mapTo[LoadMarketMetadata.Res],
         5.second
       )
-      assert(q1.markets.length == markets.length)
+      assert(q1.markets.length >= markets.length)
 
       info("save a new market: ABC-LRC")
       val ABC = "0x244929a8141d2134d9323e65309fb46e4a983840"
-      val marketIdAbcLrc = MarketId(primary = ABC, secondary = LRC)
+      val marketIdAbcLrc = MarketId(primary = ABC, secondary = AAA)
       val abcLrc = MarketMetadata(
         status = MarketMetadata.Status.READONLY,
         secondaryTokenSymbol = "ABC",
-        primaryTokenSymbol = "LRC",
+        primaryTokenSymbol = "AAA",
         maxNumbersOfOrders = 1000,
         priceDecimals = 3,
         orderbookAggLevels = 1,
@@ -297,7 +299,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdAbcLrc),
-        marketHash = MarketHashProvider.convert2Hex(ABC, LRC)
+        marketHash = MarketHashProvider.convert2Hex(ABC, AAA)
       )
       val r2 = dbModule.marketMetadataDal.saveMarket(abcLrc)
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
@@ -323,7 +325,6 @@ class MetadataManagerSpec
       assert(
         res11.length == 1 && res11.head.priceDecimals == 2 && res11.head.status == MarketMetadata.Status.READONLY
       )
-      Thread.sleep(3000)
 
       info("send a message to disable lrc-weth")
       val disabled = Await.result(
@@ -341,9 +342,14 @@ class MetadataManagerSpec
       assert(
         query2.nonEmpty && query2.head.status == MarketMetadata.Status.DISABLED
       )
+    }
+  }
 
-      info("subscriber should received the message")
-      probe.expectMsg(MetadataChanged())
+  "get metadatas" must {
+    "call JRPC and get result" in {
+      val r = singleRequest(GetMetadatas.Req(), "get_metadatas")
+      val res = Await.result(r.mapTo[GetMetadatas.Res], timeout.duration)
+      assert(res.tokens.length >= 7 && res.markets.length >= 4)
     }
   }
 

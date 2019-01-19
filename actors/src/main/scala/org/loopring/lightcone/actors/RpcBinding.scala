@@ -35,6 +35,15 @@ trait RpcBinding extends JsonRpcModule {
   ifReceive[GetTrades.Req]
     .thenReply[GetTrades.Res]("get_trades")
 
+  ifReceive[GetTransactionRecords.Req]
+    .thenReply[GetTransactionRecords.Res]("get_transactions")
+
+  ifReceive[GetTransactionRecordCount.Req]
+    .thenReply[GetTransactionRecordCount.Res]("get_transaction_count")
+
+  ifReceive[GetMetadatas.Req]
+    .thenReply[GetMetadatas.Res]("get_metadatas")
+
   //Ethereum Query
   ifReceive[GetAllowance.Req]
     .thenReply[GetAllowance.Res]("get_allowance")
@@ -46,11 +55,5 @@ trait RpcBinding extends JsonRpcModule {
 
   ifReceive[GetFilledAmount.Req]
     .thenReply[GetFilledAmount.Res]("get_filled_amount")
-
-  ifReceive[GetTransactionRecords.Req]
-    .thenReply[GetTransactionRecords.Res]("get_transactions")
-
-  ifReceive[GetTransactionRecordCount.Req]
-    .thenReply[GetTransactionRecordCount.Res]("get_transaction_count")
 
 }

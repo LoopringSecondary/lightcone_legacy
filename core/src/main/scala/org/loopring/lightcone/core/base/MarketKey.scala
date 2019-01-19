@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.support
+package org.loopring.lightcone.core.base
 
-import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.validator.{
-  MessageValidationActor,
-  MultiAccountManagerMessageValidator
+import org.loopring.lightcone.lib.MarketHashProvider
+import org.loopring.lightcone.proto.MarketId
+
+class MarketKey(marketId: MarketId) {
+
+  def toHexString =
+    MarketHashProvider.convert2Hex(marketId.primary, marketId.secondary)
+  override def toString = toHexString
 }
 
-trait MultiAccountManagerSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
-  actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
+object MarketKey {
+  def apply(marketId: MarketId): MarketKey = new MarketKey(marketId)
 
-  actors.add(
-    MultiAccountManagerMessageValidator.name,
-    MessageValidationActor(
-      new MultiAccountManagerMessageValidator(),
-      MultiAccountManagerActor.name,
-      MultiAccountManagerMessageValidator.name
-    )
-  )
+  def apply(
+      primary: String,
+      secondary: String
+    ): MarketKey = apply(MarketId(primary, secondary))
 }

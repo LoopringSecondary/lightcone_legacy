@@ -29,6 +29,7 @@ import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
+import scala.util.{Failure, Success}
 
 // Owner: Hongyu
 object MetadataRefresher {
@@ -43,7 +44,7 @@ object MetadataRefresher {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
-      tokenManager: TokenManager
+      metadataManager: MetadataManager
     ) = {
     system.actorOf(
       Props(new MetadataRefresher()),
@@ -61,7 +62,7 @@ class MetadataRefresher(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule,
-    val tokenManager: TokenManager)
+    val metadataManager: MetadataManager)
     extends InitializationRetryActor
     with Stash
     with ActorLogging {
@@ -70,23 +71,38 @@ class MetadataRefresher(
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(MetadataManagerActor.pubsubTopic, self)
 
-  override def initialize() =
-    for {
-      tokens <- (metadataManagerActor ? LoadTokenMetadata.Req())
-        .mapTo[LoadTokenMetadata.Res]
-        .map(_.tokens)
-    } yield {
-      tokenManager.reset(tokens)
-      becomeReady()
+  private var tokens = Seq.empty[TokenMetadata]
+  private var markets = Seq.empty[MarketMetadata]
+
+  override def initialize() = {
+    val f = refreshMetadata()
+    f onComplete {
+      case Success(_) => becomeReady()
+      case Failure(e) => throw e
     }
+    f
+  }
 
   def ready: Receive = {
-    case req: MetadataChanged =>
-      (metadataManagerActor ? LoadTokenMetadata.Req())
-        .mapTo[LoadTokenMetadata.Res]
-        .map { res =>
-          tokenManager.reset(res.tokens)
-        }
-    //TODO(du): Market ?
+    case _: MetadataChanged => refreshMetadata()
+
+    case _: GetMetadatas.Req =>
+      sender ! GetMetadatas.Res(tokens = tokens, markets = markets)
   }
+
+  private def refreshMetadata() =
+    for {
+      tokens_ <- (metadataManagerActor ? LoadTokenMetadata.Req())
+        .mapTo[LoadTokenMetadata.Res]
+        .map(_.tokens)
+      markets_ <- (metadataManagerActor ? LoadMarketMetadata.Req())
+        .mapTo[LoadMarketMetadata.Res]
+        .map(_.markets)
+    } yield {
+      assert(tokens_.nonEmpty)
+      assert(markets_.nonEmpty)
+      tokens = tokens_
+      markets = markets_
+      metadataManager.reset(tokens_, markets_)
+    }
 }

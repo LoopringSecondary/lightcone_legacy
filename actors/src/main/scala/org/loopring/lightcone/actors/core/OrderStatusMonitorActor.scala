@@ -27,7 +27,6 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent._
 
 // Owner: Hongyu

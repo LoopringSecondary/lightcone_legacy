@@ -17,12 +17,12 @@
 package org.loopring.lightcone.actors
 
 import java.util.concurrent.atomic.AtomicInteger
-
 import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.TokenMetadata
+import org.loopring.lightcone.lib.MarketHashProvider
+import org.loopring.lightcone.proto.{MarketId, MarketMetadata, TokenMetadata}
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
 import slick.basic.DatabaseConfig
@@ -35,7 +35,9 @@ package object support {
     decimals = 18,
     burnRate = 0.4,
     symbol = "WETH",
-    usdPrice = 1000
+    name = "WETH",
+    usdPrice = 1000,
+    status = TokenMetadata.Status.ENABLED
   )
 
   val LRC_TOKEN = TokenMetadata(
@@ -43,7 +45,9 @@ package object support {
     decimals = 18,
     burnRate = 0.4,
     symbol = "LRC",
-    usdPrice = 1000
+    name = "LRC",
+    usdPrice = 1000,
+    status = TokenMetadata.Status.ENABLED
   )
 
   val GTO_TOKEN = TokenMetadata(
@@ -51,7 +55,54 @@ package object support {
     decimals = 18,
     burnRate = 0.4,
     symbol = "GTO",
-    usdPrice = 1000
+    name = "GTO",
+    usdPrice = 1000,
+    status = TokenMetadata.Status.ENABLED
+  )
+
+  val LRC_WETH_MARKET = MarketMetadata(
+    status = MarketMetadata.Status.ENABLED,
+    secondaryTokenSymbol = LRC_TOKEN.symbol,
+    primaryTokenSymbol = WETH_TOKEN.symbol,
+    maxNumbersOfOrders = 1000,
+    priceDecimals = 6,
+    orderbookAggLevels = 6,
+    precisionForAmount = 5,
+    precisionForTotal = 5,
+    browsableInWallet = true,
+    marketId = Some(
+      MarketId(primary = WETH_TOKEN.address, secondary = LRC_TOKEN.address)
+    ),
+    marketHash =
+      MarketHashProvider.convert2Hex(LRC_TOKEN.address, WETH_TOKEN.address)
+  )
+
+  val GTO_WETH_MARKET = MarketMetadata(
+    status = MarketMetadata.Status.ENABLED,
+    secondaryTokenSymbol = GTO_TOKEN.symbol,
+    primaryTokenSymbol = WETH_TOKEN.symbol,
+    maxNumbersOfOrders = 500,
+    priceDecimals = 6,
+    orderbookAggLevels = 5,
+    precisionForAmount = 5,
+    precisionForTotal = 5,
+    browsableInWallet = true,
+    marketId = Some(
+      MarketId(primary = WETH_TOKEN.address, secondary = GTO_TOKEN.address)
+    ),
+    marketHash =
+      MarketHashProvider.convert2Hex(GTO_TOKEN.address, WETH_TOKEN.address)
+  )
+
+  val TOKENS = Seq(
+    WETH_TOKEN,
+    LRC_TOKEN,
+    GTO_TOKEN
+  )
+
+  val MARKETS = Seq(
+    LRC_WETH_MARKET,
+    GTO_WETH_MARKET
   )
 
   //第一个地址为特殊地址，eth以及erc20金额和授权，都足够大

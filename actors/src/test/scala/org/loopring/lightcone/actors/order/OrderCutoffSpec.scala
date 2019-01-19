@@ -27,8 +27,9 @@ class OrderCutoffSpec
     extends CommonSpec
     with JsonrpcSupport
     with HttpSupport
-    with OrderHandleSupport
     with EthereumSupport
+    with MetadataManagerSupport
+    with OrderHandleSupport
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
