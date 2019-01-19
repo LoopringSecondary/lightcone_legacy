@@ -75,6 +75,64 @@ class CoreDeployer @Inject()(
   def deploy() {
 
     //-----------deploy local actors-----------
+    //      actors.add(BadMessageListener.name, BadMessageListener.start)
+    actors.add(MetadataRefresher.name, MetadataRefresher.start)
+
+    actors.add(
+      MultiAccountManagerMessageValidator.name,
+      MessageValidationActor(
+        new MultiAccountManagerMessageValidator(),
+        MultiAccountManagerActor.name,
+        MultiAccountManagerMessageValidator.name
+      )
+    )
+
+    actors.add(
+      DatabaseQueryMessageValidator.name,
+      MessageValidationActor(
+        new DatabaseQueryMessageValidator(),
+        DatabaseQueryActor.name,
+        DatabaseQueryMessageValidator.name
+      )
+    )
+
+    actors.add(
+      EthereumQueryMessageValidator.name,
+      MessageValidationActor(
+        new EthereumQueryMessageValidator(),
+        EthereumQueryActor.name,
+        EthereumQueryMessageValidator.name
+      )
+    )
+
+    actors.add(
+      OrderbookManagerMessageValidator.name,
+      MessageValidationActor(
+        new OrderbookManagerMessageValidator(),
+        OrderbookManagerActor.name,
+        OrderbookManagerMessageValidator.name
+      )
+    )
+
+    actors.add(
+      TransactionRecordMessageValidator.name,
+      MessageValidationActor(
+        new TransactionRecordMessageValidator(),
+        TransactionRecordActor.name,
+        TransactionRecordMessageValidator.name
+      )
+    )
+
+    actors.add(
+      MetadataManagerValidator.name,
+      MessageValidationActor(
+        new MetadataManagerValidator(),
+        MetadataManagerActor.name,
+        MetadataManagerValidator.name
+      )
+    )
+
+    //-----------deploy local actors-----------
     //todo: OnMemberUp执行有时间限制，超时会有TimeoutException
     Cluster(system).registerOnMemberUp {
       //deploy ethereum conntionPools
@@ -145,64 +203,6 @@ class CoreDeployer @Inject()(
 
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors.add(EntryPointActor.name, EntryPointActor.start)
-
-      //-----------deploy local actors-----------
-//      actors.add(BadMessageListener.name, BadMessageListener.start)
-      actors.add(MetadataRefresher.name, MetadataRefresher.start)
-
-      actors.add(
-        MultiAccountManagerMessageValidator.name,
-        MessageValidationActor(
-          new MultiAccountManagerMessageValidator(),
-          MultiAccountManagerActor.name,
-          MultiAccountManagerMessageValidator.name
-        )
-      )
-
-      actors.add(
-        DatabaseQueryMessageValidator.name,
-        MessageValidationActor(
-          new DatabaseQueryMessageValidator(),
-          DatabaseQueryActor.name,
-          DatabaseQueryMessageValidator.name
-        )
-      )
-
-      actors.add(
-        EthereumQueryMessageValidator.name,
-        MessageValidationActor(
-          new EthereumQueryMessageValidator(),
-          EthereumQueryActor.name,
-          EthereumQueryMessageValidator.name
-        )
-      )
-
-      actors.add(
-        OrderbookManagerMessageValidator.name,
-        MessageValidationActor(
-          new OrderbookManagerMessageValidator(),
-          OrderbookManagerActor.name,
-          OrderbookManagerMessageValidator.name
-        )
-      )
-
-      actors.add(
-        TransactionRecordMessageValidator.name,
-        MessageValidationActor(
-          new TransactionRecordMessageValidator(),
-          TransactionRecordActor.name,
-          TransactionRecordMessageValidator.name
-        )
-      )
-
-      actors.add(
-        MetadataManagerValidator.name,
-        MessageValidationActor(
-          new MetadataManagerValidator(),
-          MetadataManagerActor.name,
-          MetadataManagerValidator.name
-        )
-      )
 
       actors.add(AliveKeeperActor.name, AliveKeeperActor.start)
       //-----------deploy JSONRPC service-----------
