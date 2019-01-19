@@ -23,6 +23,7 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
@@ -87,6 +88,8 @@ class EntryPointActor(
 
     case _: GetTransactionRecords.Req | _: GetTransactionRecordCount.Req =>
       Some(TransactionRecordMessageValidator.name)
+
+    case _: GetMetadatas.Req => Some(MetadataRefresher.name)
 
     case _ => None
   }

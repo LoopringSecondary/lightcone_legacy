@@ -26,6 +26,7 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
@@ -56,29 +57,14 @@ object MarketManagerActor extends ShardedByMarket {
       tve: TokenValueEvaluator,
       rie: RingIncomeEvaluator,
       dustOrderEvaluator: DustOrderEvaluator,
-      tokenManager: TokenManager,
+      metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val markets = config
-      .getObjectList("markets")
-      .asScala
-      .map { item =>
-        val c = item.toConfig
-        val marketId =
-          MarketId(
-            LAddress(c.getString("priamry")).toString,
-            LAddress(c.getString("secondary")).toString
-          )
-        MarketManagerActor.getEntityId(marketId) -> marketId
-      }
-      .toMap
-
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
 
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new MarketManagerActor(markets)),
+      entityProps = Props(new MarketManagerActor()),
       settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
@@ -92,7 +78,7 @@ object MarketManagerActor extends ShardedByMarket {
       marketId
     case req: RingMinedEvent if req.fills.size >= 2 =>
       MarketId(req.fills(0).tokenS, req.fills(1).tokenS)
-    case Notify(AliveKeeperActor.NOTIFY_MSG, marketIdStr) =>
+    case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
       MarketId(primary, secondary)
@@ -102,7 +88,6 @@ object MarketManagerActor extends ShardedByMarket {
 
 //todo:撮合应该有个暂停撮合提交的逻辑，适用于：区块落后太多、没有可用的RingSettlement等情况
 class MarketManagerActor(
-    markets: Map[String, MarketId]
   )(
     implicit
     val config: Config,
@@ -113,14 +98,16 @@ class MarketManagerActor(
     val tve: TokenValueEvaluator,
     val rie: RingIncomeEvaluator,
     val dustOrderEvaluator: DustOrderEvaluator,
-    val tokenManager: TokenManager)
+    val metadataManager: MetadataManager)
     extends ActorWithPathBasedConfig(
       MarketManagerActor.name,
       MarketManagerActor.extractEntityId
     )
     with ActorLogging {
+  implicit val marketId = metadataManager.getValidMarketIds.values
+    .find(m => getEntityId(m) == entityId)
+    .get
 
-  implicit val marketId = markets(entityId)
   log.info(s"=======> starting MarketManagerActor ${self.path} for ${marketId}")
 
   var autoSwitchBackToReady: Option[Cancellable] = None
@@ -149,7 +136,7 @@ class MarketManagerActor(
 
   val manager = new MarketManagerImpl(
     marketId,
-    tokenManager,
+    metadataManager,
     ringMatcher,
     pendingRingPool,
     dustOrderEvaluator,

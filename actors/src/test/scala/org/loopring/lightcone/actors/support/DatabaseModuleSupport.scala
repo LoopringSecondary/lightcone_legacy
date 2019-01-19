@@ -62,6 +62,9 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
 
   dbModule.dropTables()
   dbModule.createTables()
-  actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
 
+  tokenMetadataDal.saveTokens(TOKENS)
+  marketMetadataDal.saveMarkets(MARKETS)
+
+  actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
 }

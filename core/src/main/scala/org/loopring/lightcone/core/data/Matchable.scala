@@ -132,7 +132,7 @@ case class Matchable(
     )(
       implicit
       marketId: MarketId,
-      tokenManager: TokenManager
+      metadataManager: MetadataManager
     ) = {
     originalAmount / originalTotal
   }
@@ -141,7 +141,7 @@ case class Matchable(
     )(
       implicit
       marketId: MarketId,
-      tokenManager: TokenManager
+      metadataManager: MetadataManager
     ) = {
     if (tokenS == marketId.secondary) fromWei(tokenS, original.amountS)
     else fromWei(tokenB, original.amountB)
@@ -151,7 +151,7 @@ case class Matchable(
     )(
       implicit
       marketId: MarketId,
-      tokenManager: TokenManager
+      metadataManager: MetadataManager
     ) = {
     if (tokenS == marketId.secondary) fromWei(tokenB, original.amountB)
     else fromWei(tokenS, original.amountS)
@@ -161,7 +161,7 @@ case class Matchable(
     )(
       implicit
       marketId: MarketId,
-      tokenManager: TokenManager
+      metadataManager: MetadataManager
     ) = {
     if (tokenS == marketId.secondary) fromWei(tokenS, matchable.amountS)
     else fromWei(tokenB, matchable.amountB)
@@ -171,7 +171,7 @@ case class Matchable(
     )(
       implicit
       marketId: MarketId,
-      tokenManager: TokenManager
+      metadataManager: MetadataManager
     ) = {
     if (tokenS == marketId.secondary) fromWei(tokenB, matchable.amountB)
     else fromWei(tokenS, matchable.amountS)
@@ -196,16 +196,23 @@ case class Matchable(
       amount: BigInt
     )(
       implicit
-      tokenManager: TokenManager
+      metadataManager: MetadataManager
     ) = {
-    if (!tokenManager.hasToken(tokenAddr)) {
+    if (!metadataManager.hasToken(tokenAddr)) {
 
       throw ErrorException(
         ERR_MATCHING_TOKEN_METADATA_UNAVAILABLE,
         s"no metadata available for token $tokenAddr"
       )
     }
-    val token = tokenManager.getToken(tokenAddr)
+    val token = metadataManager
+      .getToken(tokenAddr)
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found token:$tokenAddr"
+        )
+      )
     token.fromWei(amount)
   }
 }

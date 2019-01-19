@@ -24,16 +24,15 @@ import com.typesafe.config.Config
 import javax.inject.Inject
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.ethereum.HttpConnector
-import org.loopring.lightcone.actors.validator.SupportedMarkets
+import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
-
 import scala.concurrent._
 
 //目标：需要恢复的以及初始化花费时间较长的
 //定时keepalive, 定时给需要监控的发送req，确认各个shard等需要初始化的运行正常，否则会触发他们的启动恢复
-object AliveKeeperActor {
+object KeepAliveActor {
   val name = "alive_keeper"
   val NOTIFY_MSG = "init"
 
@@ -45,7 +44,7 @@ object AliveKeeperActor {
       timeProvider: TimeProvider,
       timeout: Timeout,
       actors: Lookup[ActorRef],
-      supportedMarkets: SupportedMarkets,
+      metadataManager: MetadataManager,
       dbModule: DatabaseModule,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
@@ -53,32 +52,32 @@ object AliveKeeperActor {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
-        singletonProps = Props(new AliveKeeperActor()),
+        singletonProps = Props(new KeepAliveActor()),
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
       ),
-      AliveKeeperActor.name
+      KeepAliveActor.name
     )
 
     system.actorOf(
       ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${AliveKeeperActor.name}",
+        singletonManagerPath = s"/user/${KeepAliveActor.name}",
         settings = ClusterSingletonProxySettings(system)
       ),
-      name = s"${AliveKeeperActor.name}_proxy"
+      name = s"${KeepAliveActor.name}_proxy"
     )
   }
 }
 
-class AliveKeeperActor @Inject()(
+class KeepAliveActor @Inject()(
     implicit
     val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val supportedMarkets: SupportedMarkets)
-    extends ActorWithPathBasedConfig(AliveKeeperActor.name)
+    val metadataManager: MetadataManager)
+    extends ActorWithPathBasedConfig(KeepAliveActor.name)
     with RepeatedJobActor {
 
   val orderbookManagerActor = actors.get(OrderbookManagerActor.name)
@@ -107,7 +106,7 @@ class AliveKeeperActor @Inject()(
   //todo: market的配置读取，可以等待永丰处理完毕再优化
   private def initOrderbookManager(): Future[Unit] =
     for {
-      _ <- Future.sequence(supportedMarkets.markets map {
+      _ <- Future.sequence(metadataManager.getValidMarketIds map {
         case (_, marketId) =>
           orderbookManagerActor ? Notify(
             "init",
@@ -118,7 +117,7 @@ class AliveKeeperActor @Inject()(
 
   private def initMarketManager(): Future[Unit] =
     for {
-      _ <- Future.sequence(supportedMarkets.markets map {
+      _ <- Future.sequence(metadataManager.getValidMarketIds map {
         case (_, marketId) =>
           marketManagerActor ? Notify(
             "init",

@@ -22,7 +22,6 @@ import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
-import org.loopring.lightcone.actors.validator.SupportedMarkets
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib.SystemTimeProvider
@@ -66,14 +65,7 @@ abstract class CommonSpec(configStr: String = "")
 
   //  log.info(s"init config: ${config}")
 
-  implicit val supportedMarkets: SupportedMarkets = SupportedMarkets(config)
-
-  //token info
-  implicit val tokenManager = new TokenManager()
-
-  tokenManager.addToken(WETH_TOKEN)
-  tokenManager.addToken(LRC_TOKEN)
-  tokenManager.addToken(GTO_TOKEN)
+  implicit val metadataManager = new MetadataManager()
 
   implicit val tve = new TokenValueEvaluator()
   implicit val dustOrderEvaluator = new DustOrderEvaluator()
