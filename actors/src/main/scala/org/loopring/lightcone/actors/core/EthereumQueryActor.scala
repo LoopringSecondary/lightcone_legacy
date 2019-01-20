@@ -74,7 +74,7 @@ class EthereumQueryActor(
     val actors: Lookup[ActorRef],
     val rb: EthereumCallRequestBuilder,
     val brb: EthereumBatchCallRequestBuilder)
-    extends ActorWithPathBasedConfig(EthereumQueryActor.name) {
+    extends InitializationRetryActor {
 
   val loopringConfig = config.getConfig("loopring_protocol")
 

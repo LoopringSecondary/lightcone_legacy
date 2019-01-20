@@ -30,7 +30,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 trait EventExtraction {
-  actor: ActorWithPathBasedConfig =>
+  actor: InitializationRetryActor =>
   implicit val timeout: Timeout
   implicit val actors: Lookup[ActorRef]
   implicit val eventDispatchers: Seq[EventDispatcher[_]]
@@ -75,7 +75,7 @@ trait EventExtraction {
           if (blockData.height < untilBlock) self ! GET_BLOCK
         case Failure(e) =>
           log.error(
-            s" Actor: $name extracts ethereum events failed with error:${e.getMessage}"
+            s" Actor: ${self.path.address} extracts ethereum events failed with error:${e.getMessage}"
           )
       }
   }

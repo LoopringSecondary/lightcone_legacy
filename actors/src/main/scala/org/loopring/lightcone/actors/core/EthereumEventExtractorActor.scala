@@ -30,6 +30,7 @@ import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
 import scala.concurrent._
+import scala.util._
 
 // Owner: Yadong
 object EthereumEventExtractorActor {
@@ -82,8 +83,8 @@ class EthereumEventExtractorActor(
   var untilBlock: Long = Long.MaxValue //最大值，保证一直获取区块
 
   override def initialize(): Future[Unit] = {
-    val startBlock = selfConfig.getLong("start_block")
-    for {
+    val startBlock = selfConfig.getLong("start-block")
+    val f = for {
       lastHandledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
       currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
         .mapAs[GetBlockNumber.Res]
@@ -98,9 +99,15 @@ class EthereumEventExtractorActor(
       }
     } yield {
       blockData = RawBlockData(height = currentBlock - 1)
-      becomeReady()
-      self ! GET_BLOCK
     }
+    f onComplete {
+      case Success(value) =>
+        becomeReady()
+        self ! GET_BLOCK
+      case Failure(e) =>
+        throw e
+    }
+    f
   }
 
   def ready = handleMessage

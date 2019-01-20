@@ -14,6 +14,7 @@ object Dependencies {
     "org.scalacheck" %% "scalacheck" % "1.13.4" % Test,
     "com.dimafeng" %% "testcontainers-scala" % "0.22.0" % Test,
     "org.testcontainers" % "mysql" % "1.10.3" % Test,
+    "org.testcontainers" % "postgresql" % "1.10.3" % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion % Test)
@@ -53,7 +54,8 @@ object Dependencies {
   lazy val driverDependency = Seq(
     "com.github.etaty" %% "rediscala" % "1.8.0",
     "com.lightbend.akka" %% "akka-stream-alpakka-slick" % "0.20",
-    "mysql" % "mysql-connector-java" % "5.1.47")
+    "mysql" % "mysql-connector-java" % "5.1.47",
+    "org.postgresql" % "postgresql" % "42.2.5")
 
   lazy val scalapbDependency = Seq(
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion,

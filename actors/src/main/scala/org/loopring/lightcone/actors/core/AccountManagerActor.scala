@@ -119,6 +119,8 @@ class AccountManagerActor(
   }
 
   def normalReceive: Receive = LoggingReceive {
+    case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
+      sender ! req
 
     case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
       submitOrAdjustOrder(xraworder).map { _ =>
@@ -235,6 +237,7 @@ class AccountManagerActor(
   private def submitOrAdjustOrder(rawOrder: RawOrder): Future[Order] = {
     val order: Order = rawOrder
     val matchable: Matchable = order
+    log.debug(s"### submitOrAdjustOrder ${order}")
     for {
       _ <- getTokenManagers(Seq(matchable.tokenS))
       _ <- if (matchable.amountFee > 0 && matchable.tokenS != matchable.tokenFee)

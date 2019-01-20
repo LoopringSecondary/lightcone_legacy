@@ -55,7 +55,7 @@ class MessageValidationActor(
     extends Actor
     with ActorLogging {
 
-  private val destinationActor = actors.get(destinationName)
+  private def destinationActor = actors.get(destinationName)
   private val validate = validator.validate.lift
 
   override def receive: Receive = {

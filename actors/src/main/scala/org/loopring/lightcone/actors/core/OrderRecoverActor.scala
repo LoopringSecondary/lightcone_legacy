@@ -186,6 +186,10 @@ class OrderRecoverActor(
         OrderStatus.STATUS_PENDING,
         OrderStatus.STATUS_PARTIALLY_FILLED
       )
+      log.debug(
+        s"the requset params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${status}, ${marketHashIds}, ${addressShardIds}"
+      )
+
       dbModule.orderService.getOrdersForRecover(
         status,
         marketHashIds,
