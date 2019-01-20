@@ -51,8 +51,12 @@ final class MetadataManager() extends Logging {
   }
 
   def addToken(meta: TokenMetadata) = this.synchronized {
-    addressMap += meta.address.toLowerCase() -> new Token(meta)
-    symbolMap += meta.symbol.toUpperCase() -> new Token(meta)
+    val m = meta.copy(
+      address = meta.address.toLowerCase(),
+      symbol = meta.symbol.toUpperCase()
+    )
+    addressMap += m.address -> new Token(m)
+    symbolMap += m.symbol -> new Token(m)
     this
   }
 
@@ -84,6 +88,25 @@ final class MetadataManager() extends Logging {
   def getTokens = addressMap.values.toSeq
 
   def addMarket(meta: MarketMetadata) = this.synchronized {
+    val marketId = meta.marketId.getOrElse(
+      throw ErrorException(ErrorCode.ERR_INVALID_ARGUMENT, "marketId is empty")
+    )
+    if (MarketKey(marketId).toHexString != meta.marketHash.toLowerCase())
+      throw ErrorException(
+        ErrorCode.ERR_INVALID_ARGUMENT,
+        s"marketId:$marketId mismatch marketHash:${meta.marketHash}"
+      )
+    val m = meta.copy(
+      primaryTokenSymbol = meta.primaryTokenSymbol.toUpperCase(),
+      secondaryTokenSymbol = meta.secondaryTokenSymbol.toUpperCase(),
+      marketId = Some(
+        MarketId(
+          primary = marketId.primary.toLowerCase(),
+          secondary = marketId.secondary.toLowerCase()
+        )
+      ),
+      marketHash = meta.marketHash.toLowerCase()
+    )
     marketMetadatasMap += meta.marketHash.toLowerCase() -> meta
     val itemMap = meta.marketHash.toLowerCase() -> meta.marketId.get
     meta.status match {

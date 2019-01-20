@@ -51,6 +51,34 @@ object MetadataRefresher {
       MetadataRefresher.name
     )
   }
+
+  def formatToken(token: TokenMetadata): TokenMetadata =
+    token.copy(
+      address = token.address.toLowerCase(),
+      symbol = token.symbol.toUpperCase()
+    )
+
+  def formatMarket(market: MarketMetadata): MarketMetadata = {
+    val marketId = market.marketId.getOrElse(
+      throw ErrorException(ErrorCode.ERR_INVALID_ARGUMENT, "marketId is empty")
+    )
+    if (MarketKey(marketId).toHexString != market.marketHash.toLowerCase())
+      throw ErrorException(
+        ErrorCode.ERR_INVALID_ARGUMENT,
+        s"marketId:$marketId mismatch marketHash:${market.marketHash}"
+      )
+    market.copy(
+      primaryTokenSymbol = market.primaryTokenSymbol.toUpperCase(),
+      secondaryTokenSymbol = market.secondaryTokenSymbol.toUpperCase(),
+      marketId = Some(
+        MarketId(
+          primary = marketId.primary.toLowerCase(),
+          secondary = marketId.secondary.toLowerCase()
+        )
+      ),
+      marketHash = market.marketHash.toLowerCase()
+    )
+  }
 }
 
 // main owner: 杜永丰

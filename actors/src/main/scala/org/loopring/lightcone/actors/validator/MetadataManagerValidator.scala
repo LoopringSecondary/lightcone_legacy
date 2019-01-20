@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
@@ -34,7 +35,9 @@ final class MetadataManagerValidator()(implicit val config: Config)
           ErrorCode.ERR_INVALID_ARGUMENT,
           "Parameter tokens could not be empty"
         )
-      req
+      // address toLowerCase, symbol toUpperCase
+      val tokens = req.tokens.map(MetadataRefresher.formatToken)
+      req.copy(tokens = tokens)
 
     case req: UpdateTokenMetadata.Req =>
       if (req.token.isEmpty)
@@ -42,7 +45,8 @@ final class MetadataManagerValidator()(implicit val config: Config)
           ErrorCode.ERR_INVALID_ARGUMENT,
           "Parameter token could not be empty"
         )
-      req
+      // address toLowerCase, symbol toUpperCase
+      req.copy(token = Some(MetadataRefresher.formatToken(req.token.get)))
 
     case req: UpdateTokenBurnRate.Req =>
       if (req.address.isEmpty)
@@ -66,7 +70,8 @@ final class MetadataManagerValidator()(implicit val config: Config)
           ErrorCode.ERR_INVALID_ARGUMENT,
           "Parameter markets could not be empty"
         )
-      req
+      val markets = req.markets.map(MetadataRefresher.formatMarket)
+      req.copy(markets = markets)
 
     case req: UpdateMarketMetadata.Req =>
       if (req.market.isEmpty)
@@ -74,7 +79,7 @@ final class MetadataManagerValidator()(implicit val config: Config)
           ErrorCode.ERR_INVALID_ARGUMENT,
           "Parameter market could not be empty"
         )
-      req
+      req.copy(market = Some(MetadataRefresher.formatMarket(req.market.get)))
 
     case req: DisableMarket.Req =>
       if (req.marketHash.isEmpty)

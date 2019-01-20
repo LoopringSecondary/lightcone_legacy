@@ -29,6 +29,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.lib.MarketHashProvider
 
 class MetadataManagerSpec
@@ -358,6 +359,49 @@ class MetadataManagerSpec
       val r = singleRequest(GetMetadatas.Req(), "get_metadatas")
       val res = Await.result(r.mapTo[GetMetadatas.Res], timeout.duration)
       assert(res.tokens.length >= 7 && res.markets.length >= 4)
+    }
+  }
+
+  "token and market format" must {
+    "format address and symbol" in {
+      println("_____________ ")
+      val a = TokenMetadata(
+        `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
+        status = TokenMetadata.Status.ENABLED,
+        symbol = "AAA",
+        name = "AAA Token",
+        address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
+        unit = "AAA",
+        decimals = 18,
+        precision = 6,
+        burnRateForMarket = 0.1,
+        burnRateForP2P = 0.2,
+        usdPrice = 10
+      )
+      val b = TokenMetadata(
+        `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
+        status = TokenMetadata.Status.ENABLED,
+        symbol = "abc",
+        name = "ABC Token",
+        address = "0x255Aa6DF07540Cb5d3d297f0D0D4D84cb52bc8e6",
+        unit = "ABC",
+        decimals = 18,
+        precision = 6,
+        burnRateForMarket = 0.3,
+        burnRateForP2P = 0.4,
+        usdPrice = 8
+      )
+      info("token A and formatedA should same")
+      val formatedA = MetadataRefresher.formatToken(a)
+      println("_____________ ", a, formatedA)
+      assert(formatedA.address == a.address && formatedA.symbol == a.symbol)
+
+      info("token B formated address and symbol should same with formatedB")
+      val formatedB = MetadataRefresher.formatToken(b)
+      assert(
+        b.address.toLowerCase() == formatedB.address && b.symbol
+          .toUpperCase() == formatedB.symbol
+      )
     }
   }
 
