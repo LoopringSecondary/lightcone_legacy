@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors.base
+package org.loopring.lightcone.actors.core
 
 import akka.actor.ActorRef
 import akka.pattern._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.base.{InitializationRetryActor, Lookup}
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._

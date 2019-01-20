@@ -57,7 +57,4 @@ trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
       TransactionRecordMessageValidator.name
     )
   )
-
-  Thread.sleep(2000)
-
 }
