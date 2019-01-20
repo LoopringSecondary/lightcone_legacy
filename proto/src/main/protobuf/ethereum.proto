@@ -318,9 +318,13 @@ message BurnRate {
     double for_p2p = 2;
 }
 message TokenBurnRateChangedEvent {
+    message BurnRate {
+        double for_market = 1;
+        double for_p2p = 2;
+    }
     EventHeader header = 1;
-    string token = 2;
-    double burnRate = 3;
+    string      token = 2;
+    BurnRate    burn_rate = 3;
 }
 
 message RingMinedEvent {   //include InvalidRing and RingMined and failed tx

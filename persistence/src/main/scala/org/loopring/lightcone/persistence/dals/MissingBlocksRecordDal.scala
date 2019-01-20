@@ -23,8 +23,10 @@ import scala.concurrent._
 
 trait MissingBlocksRecordDal
     extends BaseDalImpl[MissingBlocksRecordTable, MissingBlocksRecord] {
-  def saveMissingBlock(record: MissingBlocksRecord): Future[Int]
+  // will return saved sequenceId
+  def saveMissingBlock(record: MissingBlocksRecord): Future[Long]
 
+  // order by insert sequence, get the earliest one
   def getOldestOne(): Future[Option[MissingBlocksRecord]]
 
   def updateProgress(

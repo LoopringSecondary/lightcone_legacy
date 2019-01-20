@@ -17,35 +17,8 @@
 package org.loopring.lightcone.persistence.tables
 
 import org.loopring.lightcone.persistence.base._
-import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
-import com.google.protobuf.ByteString
-
-// message TokenMetadata {
-//     enum Type {
-//         TOKEN_TYPE_ERC20       = 0;
-//         TOKEN_TYPE_ERC1400     = 1;
-//     }
-
-//     enum Status {
-//         DISABLED    = 0; // This token is NOT displyed in walelt
-//         ENABLED     = 1;  // This token is displayed in wallet.
-//     }
-
-// Type     type                   = 1;
-// Status   status                 = 2;
-// string   symbol                 = 3;
-// string   name                   = 4;
-// string   address                = 5;
-// string   unit                   = 6;
-// int32    decimals               = 7;
-// string   website_url            = 8;
-// int32    precision              = 9;
-// double   burn_rate              = 10;
-// double   usd_price              = 11;
-// int64    updated_at             = 12;
-// }
 
 class TokenMetadataTable(tag: Tag)
     extends BaseTable[TokenMetadata](tag, "T_TOKEN_METADATA") {
@@ -64,7 +37,8 @@ class TokenMetadataTable(tag: Tag)
   def decimals = column[Int]("decimals")
   def websiteUrl = column[String]("website_url")
   def precision = column[Int]("precision")
-  def burnRate = column[Double]("burn_rate")
+  def burnRateForMarket = column[Double]("burn_rate_for_market")
+  def burnRateForP2P = column[Double]("burn_rate_for_p2p")
   def usdPrice = column[Double]("usd_price")
   def updateAt = column[Long]("update_at")
 
@@ -84,7 +58,8 @@ class TokenMetadataTable(tag: Tag)
       decimals,
       websiteUrl,
       precision,
-      burnRate,
+      burnRateForMarket,
+      burnRateForP2P,
       usdPrice,
       updateAt
     ) <> ((TokenMetadata.apply _).tupled, TokenMetadata.unapply)

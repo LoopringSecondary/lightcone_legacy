@@ -250,8 +250,7 @@ message UpdateTokenMetadata {
 
 message UpdateTokenBurnRate {
     message Req {
-        string address   = 1;
-        double burn_rate = 2;
+        string address  = 1;
     }
 
     message Res {
