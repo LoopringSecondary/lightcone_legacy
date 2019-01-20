@@ -39,9 +39,10 @@ abstract class InitializationRetryActor
     unstashAll()
   }
 
-  val initializationMaxRetries = 20
-  val initializationDelayFactor = 2
-  val initializationDelaySeconds = 10
+  //todo:正式部署需要适当放大该参数
+  val initializationMaxRetries = 120
+  val initializationDelayFactor = 1
+  val initializationDelaySeconds = 2
   val initializationDelaySecondsMax = 60
   val selfInitialize = true
 
@@ -55,25 +56,22 @@ abstract class InitializationRetryActor
   def receive: Receive = {
     case Notify("initialize", _) =>
       log.info(
-        s"initializing ${self.path.name}, attempt ${_initializationRetries}..."
+        s"initializing ${self.path}, attempt ${_initializationRetries}..."
       )
 
       initialize() onComplete {
         case Success(res) =>
-          log.info(s"---### ${self.path.name} initialization done, ")
+          log.info(s"---### ${self.path} initialization done, ")
 
         case Failure(e) =>
           if (_initializationRetries >= initializationMaxRetries) {
             log.error(
-              s"---### ${self.path.name} initialization failed ",
-              s"after ${initializationMaxRetries} retries: ",
-              e
+              s"---### ${self.path} initialization failed after ${initializationMaxRetries} retries: ${e.printStackTrace()}"
             )
             throw e
           } else {
             log.warning(
-              s"---### ${self.path.name} initialization failed, ",
-              s"will  retry in ${_initializationDelay} seconds"
+              s"---### ${self.path} initialization failed, will  retry in ${_initializationDelay} seconds, ${e.printStackTrace()} "
             )
 
             context.system.scheduler

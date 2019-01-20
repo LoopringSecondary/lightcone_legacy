@@ -54,7 +54,6 @@ abstract class CommonSpec(configStr: String = "")
   }
 
   //akka
-  implicit val timeProvider = new SystemTimeProvider()
   implicit val timeout = Timeout(5 second)
   implicit val ec = system.dispatcher
 
@@ -88,7 +87,4 @@ abstract class CommonSpec(configStr: String = "")
 
   Thread.sleep(4000) //暂停4s，等待集群准备完毕
 
-  implicit class RichString(s: String) {
-    def zeros(size: Int): BigInt = BigInt(s + "0" * size)
-  }
 }

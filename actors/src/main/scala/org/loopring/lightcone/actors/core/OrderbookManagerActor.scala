@@ -110,6 +110,8 @@ class OrderbookManagerActor(
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
   def ready: Receive = LoggingReceive {
+    case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
+      sender ! req
 
     case req: Orderbook.Update =>
       log.info(s"receive Orderbook.Update ${req}")

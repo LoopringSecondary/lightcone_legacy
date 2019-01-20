@@ -158,7 +158,7 @@ class MultiAccountManagerActor(
 
     case ActorRecover.Finished(timeout) =>
       s"multi-account manager ${entityId} recover completed (timeout=${timeout})"
-      context.become(ready)
+      becomeReady()
 
     case msg: Any =>
       log.warning(s"message not handled during recover, ${msg}, ${sender}")

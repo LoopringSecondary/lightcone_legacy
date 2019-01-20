@@ -31,6 +31,8 @@ import akka.pattern._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.core.base.MetadataManager
 
+import scala.util._
+
 // Owner: Yongfeng
 object MetadataManagerActor {
   val name = "metadata_manager"
@@ -86,13 +88,13 @@ class MetadataManagerActor(
   val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
 
   val mediator = DistributedPubSub(context.system).mediator
-  val ethereumQueryActor = actors.get(EthereumQueryActor.name)
+  private def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
   private var tokens = Seq.empty[TokenMetadata]
   private var markets = Seq.empty[MarketMetadata]
 
-  override def initialize() =
-    for {
+  override def initialize() = {
+    val f = for {
       tokens_ <- dbModule.tokenMetadataDal.getTokens()
       markets_ <- dbModule.marketMetadataDal.getMarkets()
       tokensUpdated <- Future.sequence(tokens_.map { token =>
@@ -111,10 +113,16 @@ class MetadataManagerActor(
       tokens = tokensUpdated
       markets = markets_
       metadataManager.reset(tokens, markets)
-
-      mediator ! Publish(MetadataManagerActor.pubsubTopic, MetadataChanged())
-      becomeReady()
     }
+    f onComplete {
+      case Success(_) =>
+        mediator ! Publish(MetadataManagerActor.pubsubTopic, MetadataChanged())
+        becomeReady()
+      case Failure(e) =>
+        throw e
+    }
+    f
+  }
 
   val repeatedJobs = Seq(
     Job(

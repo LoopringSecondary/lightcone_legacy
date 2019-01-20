@@ -50,6 +50,7 @@ object Main extends App with Logging {
     "akka.cluster.seed-nodes",
     "akka.cluster.roles"
   )
+  log.debug(s"----> config = ${config}")
 
   configItems foreach { i =>
     log.info(s"--> $i = ${config.getValue(i)}")
