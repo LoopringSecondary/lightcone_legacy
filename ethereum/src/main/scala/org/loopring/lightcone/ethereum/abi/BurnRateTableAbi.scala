@@ -86,7 +86,7 @@ object GetBurnRateFunction {
   case class Params(@(ContractAnnotation @field)("token", 0) token: String)
 
   case class Result(
-      @(ContractAnnotation @field)("burnRate", 0) burnRate: BigInt)
+      @(ContractAnnotation @field)("burnRate", 0) burnRate: String)
 
   def apply(entry: SABI.Function): GetBurnRateFunction =
     new GetBurnRateFunction(entry)

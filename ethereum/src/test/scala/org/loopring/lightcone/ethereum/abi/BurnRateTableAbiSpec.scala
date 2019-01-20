@@ -59,6 +59,7 @@ class BurnRateTableAbiSpec
     val resp =
       "0x0000000000000000000000000000000000000000000000000000000000050032"
     val result = burnRateTableAbi.getBurnRate.unpackResult(resp)
+    println(result)
     result.map { res =>
       res.burnRate.toString should be("327730")
     }

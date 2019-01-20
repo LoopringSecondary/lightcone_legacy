@@ -32,7 +32,12 @@ class TokenBurnRateEventExtractor @Inject()(
   val rateMap = config
     .getConfigList("loopring_protocol.burn-rate-table.tiers")
     .asScala
-    .map(config => config.getInt("tier") -> config.getInt("rate"))
+    .map(config => {
+      val key = config.getInt("tier")
+      val rateConfig = config.getConfig("rate")
+      val rate = rateConfig.getInt("market") -> rateConfig.getInt("p2p")
+      key -> rate
+    })
     .toMap
   val base = config.getInt("loopring_protocol.burn-rate-table.base")
 
@@ -45,11 +50,15 @@ class TokenBurnRateEventExtractor @Inject()(
             case (log, index) =>
               loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
                 case Some(event: TokenTierUpgradedEvent.Result) =>
+                  val rate = rateMap(event.tier.intValue())
                   Some(
                     TokenBurnRateChangedEvent(
                       header = Some(header.withLogIndex(index)),
                       token = event.add,
-                      burnRate = rateMap(event.tier.intValue()) / base.toDouble
+                      burnRate = BurnRate(
+                        forMarket = rate._1 / base.doubleValue(),
+                        forP2P = rate._2 / base.doubleValue()
+                      )
                     )
                   )
                 case _ =>

@@ -225,7 +225,7 @@ message GetBurnRate {
         string tag  = 2;
     }
     message Res {
-        double burn_rate = 1;
+        BurnRate burn_rate = 1;
     }
 }
 
