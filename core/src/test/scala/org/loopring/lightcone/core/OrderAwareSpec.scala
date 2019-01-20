@@ -36,8 +36,8 @@ trait OrderAwareSpec extends CommonSpec {
       TokenMetadata(
         address = LRC,
         decimals = 0,
-        burnRateForMarket = 0.1,
-        burnRateForP2P = 0.1,
+        burnRateForMarket = 0.2,
+        burnRateForP2P = 0.2,
         symbol = "LRC",
         usdPrice = 1.0
       )
@@ -66,8 +66,8 @@ trait OrderAwareSpec extends CommonSpec {
       TokenMetadata(
         address = WETH,
         decimals = 23,
-        burnRateForMarket = 0.4,
-        burnRateForP2P = 0.4,
+        burnRateForMarket = 0.3,
+        burnRateForP2P = 0.3,
         symbol = "WETH",
         usdPrice = 0.5
       )
