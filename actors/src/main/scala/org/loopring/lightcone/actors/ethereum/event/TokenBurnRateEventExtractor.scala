@@ -20,6 +20,7 @@ import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.TokenBurnRateChangedEvent._
 import scala.collection.JavaConverters._
 import scala.concurrent._
 
@@ -55,9 +56,11 @@ class TokenBurnRateEventExtractor @Inject()(
                     TokenBurnRateChangedEvent(
                       header = Some(header.withLogIndex(index)),
                       token = event.add,
-                      burnRate = BurnRate(
-                        forMarket = rate._1 / base.doubleValue(),
-                        forP2P = rate._2 / base.doubleValue()
+                      burnRate = Some(
+                        BurnRate(
+                          forMarket = rate._1 / base.doubleValue(),
+                          forP2P = rate._2 / base.doubleValue()
+                        )
                       )
                     )
                   )

@@ -87,6 +87,8 @@ class EthereumQueryActor(
   val burnRateTableAddress =
     Address(loopringConfig.getString("burnrate-table-address"))
 
+  val base = loopringConfig.getInt("burn-rate-table.base")
+
   protected def ethereumAccessorActor = actors.get(EthereumAccessActor.name)
 
   def ready = LoggingReceive {
@@ -205,7 +207,16 @@ class EthereumQueryActor(
     case req: GetBurnRate.Req =>
       callEthereum(sender, rb.buildRequest(req, burnRateTableAddress, req.tag)) {
         result =>
-          GetBurnRate.Res(Numeric.toBigInt(result).doubleValue() / 1000)
+          {
+            val formatResult = Numeric.cleanHexPrefix(result)
+            val p2pRate = Numeric
+              .toBigInt(formatResult.substring(56, 60))
+              .doubleValue() / base
+            val marketRate = Numeric
+              .toBigInt(result.substring(60))
+              .doubleValue() / base
+            GetBurnRate.Res(forMarket = marketRate, forP2P = p2pRate)
+          }
       }
   }
 

@@ -313,10 +313,6 @@ message OrderFilledEvent {
     string fee_recipient = 12;
     string token_s = 13;
 }
-message BurnRate {
-    double for_market = 1;
-    double for_p2p = 2;
-}
 message TokenBurnRateChangedEvent {
     message BurnRate {
         double for_market = 1;
