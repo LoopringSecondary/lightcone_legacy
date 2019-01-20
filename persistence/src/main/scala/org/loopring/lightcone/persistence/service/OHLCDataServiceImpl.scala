@@ -28,20 +28,22 @@ class OHLCDataServiceImpl @Inject()(
     val ec: ExecutionContext)
     extends OHLCDataService {
 
-  def saveData(record: OHLCRawData): Future[Either[OHLCRawData, ErrorCode]] =
-    ohlcDataDal.saveData(record).map { r =>
-      if (r.error == ErrorCode.ERR_NONE) {
-        Left(r.record.get)
-      } else {
-        Right(r.error)
-      }
-    }
+  def saveData(req: PersistOHLCData.Req): Future[PersistOHLCData.Res] =
+    ohlcDataDal.saveData(req.data.get)
 
-  def getOHLCData(request: GetOHLCData.Req): Future[GetOHLCData.Res] =
-    ohlcDataDal.getOHLCData(
-      request.marketKey,
-      request.interval.value,
-      request.beginTime,
-      request.endTime
-    )
+  def getOHLCData(request: GetOHLCData.Req): Future[GetOHLCData.Res] = {
+    ohlcDataDal
+      .getOHLCData(
+        request.marketKey,
+        request.interval.value,
+        request.beginTime,
+        request.endTime
+      )
+      .map(
+        r =>
+          GetOHLCData.Res(
+            ohlcData = r.map(t => OHLCData(data = t))
+          )
+      )
+  }
 }

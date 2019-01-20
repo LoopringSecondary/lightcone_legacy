@@ -32,6 +32,6 @@ trait OHLCDataDal extends BaseDalImpl[OHLCDataTable, OHLCRawData] {
       interval: Long,
       beginTime: Long,
       endTime: Long
-    ): Future[GetOHLCData.Res]
+    ): Future[Seq[Seq[Double]]]
 
 }

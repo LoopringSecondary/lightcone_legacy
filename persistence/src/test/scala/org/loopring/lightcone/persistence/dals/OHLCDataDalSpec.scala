@@ -25,7 +25,6 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
   def getDal = new OHLCDataDalImpl()
 
   "saveOHLCData" must "save a OHLC raw data with ringIndex 1000" in {
-    println("saveRawData")
     val data1 = OHLCRawData(
       ringIndex = 1000,
       txHash =
@@ -76,20 +75,17 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
     val beginTime = 1547682050
     val endTime = 1547682850
     val queryResult = dal.getOHLCData(marketKey, interval, beginTime, endTime)
-    val queryRes = Await.result(queryResult.mapTo[GetOHLCData.Res], 5.second)
-    queryRes.data.length == 2 should be(true)
-
-    val ohlcData =
-      queryRes.data.find(_.startingPoint == 1547682650).getOrElse(OHLCData())
+    val queryRes = Await.result(queryResult.mapTo[Seq[Seq[Double]]], 5.second)
+    queryRes.length == 2 should be(true)
+    val array0 = queryRes(0)
     assert(
-      ohlcData.startingPoint == 1547682650 &&
-        ohlcData.marketKey == "111222" &&
-        ohlcData.quality == 60.5 &&
-        ohlcData.amount == 1550.0 &&
-        ohlcData.openingPrice == 50.0 &&
-        ohlcData.closingPrice == 100.0 &&
-        ohlcData.highestPrice == 100.0 &&
-        ohlcData.lowestPrice == 50.0
+      array0(0).toLong == 1547682650 &&
+        array0(1) == 60.5 &&
+        array0(2) == 1550.0 &&
+        array0(3) == 50.0 &&
+        array0(4) == 100.0 &&
+        array0(5) == 100.0 &&
+        array0(6) == 50.0
     )
   }
 }

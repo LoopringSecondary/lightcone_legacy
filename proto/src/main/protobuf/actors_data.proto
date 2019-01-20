@@ -310,12 +310,12 @@ message OHLCRawData {
 }
 
 message OHLCData {
-    int64      starting_point   = 1;
-    string     market_key       = 2;
+    repeated  double  data      = 1;
+    /*int64    starting_point   = 2;
     double     quality          = 3;
     double     amount           = 4;
     double     opening_price    = 5;
     double     closing_price    = 6;
     double     highest_price    = 7;
-    double     lowest_price     = 8;
+    double     lowest_price     = 8;*/
 }

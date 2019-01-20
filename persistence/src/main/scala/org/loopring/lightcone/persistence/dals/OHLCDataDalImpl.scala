@@ -30,6 +30,7 @@ import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 
 import scala.concurrent.duration._
+import scala.util._
 
 class OHLCDataDalImpl @Inject()(
     implicit
@@ -85,12 +86,12 @@ class OHLCDataDalImpl @Inject()(
       interval: Long,
       beginTime: Long,
       endTime: Long
-    ): Future[GetOHLCData.Res] = {
-    implicit val getOHLCResult = GetResult[OHLCData](
+    ): Future[Seq[Seq[Double]]] = {
+
+    implicit val result = GetResult[Seq[Double]](
       r =>
-        OHLCData(
-          r.nextInt,
-          r.nextString,
+        Seq(
+          r.nextDouble,
           r.nextDouble,
           r.nextDouble,
           r.nextDouble,
@@ -102,20 +103,19 @@ class OHLCDataDalImpl @Inject()(
 
     val sql = sql"""select
         TIME_BUCKET($interval, time) AS starting_point,
-        t.market_key AS market_key,
         SUM(quality) AS quality_sum,
         SUM(amount) AS amount_sum,
-        FIRST(price, time) AS opening_price,
-        LAST(price, time) AS closing_price,
+        FIRST(price, time) AS closing_price,
+        LAST(price, time) AS opening_price,
         MAX(price) AS highest_price,
         MIN(price) AS lowest_price
         FROM "T_OHLC_DATA" t
         WHERE market_key = ${marketKey}
         AND time > ${beginTime} AND
-        time < ${endTime} GROUP BY starting_point,market_key
+        time < ${endTime} GROUP BY starting_point
         ORDER BY starting_point DESC
-        """.as[OHLCData]
+        """.as[Seq[Double]]
 
-    db.run(sql).map(r => GetOHLCData.Res(r.toSeq))
+    db.run(sql)
   }
 }

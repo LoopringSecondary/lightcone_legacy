@@ -240,19 +240,19 @@ message PersistOHLCData {
 
 message GetOHLCData {
     enum Interval {
-        ZERO_INTERVAL      = 0; // don't use it
-        ONE_MINUTES        = 60;
-        FIVE_MINUTES       = 300;
-        FIFTEEN_MINUTES    = 900;
-        THIRTY_MINUTES     = 1800;
-        ONE_HOUR           = 3600;
-        TWO_HOURS          = 7200;
-        FOUR_HOURS         = 14400;
-        TWELVE_HOURS       = 43200;
-        ONE_DAY            = 86400;
-        THREE_DAYS         = 259200;
-        FIVE_DAYS          = 432000;
-        ONE_WEEK           = 604800;
+        OHCL_INTERVAL_INVALID            = 0; // don't use it
+        OHLC_INTERVAL_ONE_MINUTES        = 60;
+        OHLC_INTERVAL_FIVE_MINUTES       = 300;
+        OHLC_INTERVAL_FIFTEEN_MINUTES    = 900;
+        OHLC_INTERVAL_THIRTY_MINUTES     = 1800;
+        OHLC_INTERVAL_ONE_HOUR           = 3600;
+        OHLC_INTERVAL_TWO_HOURS          = 7200;
+        OHLC_INTERVAL_FOUR_HOURS         = 14400;
+        OHLC_INTERVAL_TWELVE_HOURS       = 43200;
+        OHLC_INTERVAL_ONE_DAY            = 86400;
+        OHLC_INTERVAL_THREE_DAYS         = 259200;
+        OHLC_INTERVAL_FIVE_DAYS          = 432000;
+        OHLC_INTERVAL_ONE_WEEK           = 604800;
     }
 
     message Req {
@@ -263,7 +263,7 @@ message GetOHLCData {
     }
 
     message Res {
-        repeated OHLCData data = 1;
+        repeated OHLCData ohlc_data  = 1;
     }
 }
 message SaveTokenMetadatas {
