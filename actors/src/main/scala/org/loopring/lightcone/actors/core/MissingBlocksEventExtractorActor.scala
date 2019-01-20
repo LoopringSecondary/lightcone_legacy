@@ -76,7 +76,7 @@ class MissingBlocksEventExtractorActor(
     val actors: Lookup[ActorRef],
     val eventDispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends InitializationRetryActor
+    extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name)
     with EventExtraction {
   val NEXT_RANGE = Notify("next_range")
   var sequenceId = 0L

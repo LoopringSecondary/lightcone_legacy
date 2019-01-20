@@ -50,25 +50,33 @@ class EventExtractorSpec
                              |    base = 1000,
                              |    tiers = [
                              |      {
-                             |        name = "TIER_1"
                              |        tier = 3,
-                             |        rate = 25
+                             |        rate {
+                             |          market:50,
+                             |          p2p:5
+                             |        }
                              |      },
                              |      {
-                             |        name = "TIER_2"
                              |        tier = 2,
-                             |        rate = 150
+                             |        rate {
+                             |          market:200,
+                             |          p2p:20
+                             |        }
                              |      },
                              |      {
-                             |        name = "TIER_3"
                              |        tier = 1,
-                             |        rate = 300
+                             |        rate {
+                             |          market:400,
+                             |          p2p:30
+                             |        }
                              |      },
                              |      {
-                             |        name = "TIER_4"
                              |        tier = 0,
-                             |        rate = 500
-                             |      },
+                             |        rate {
+                             |          market:600,
+                             |          p2p:60
+                             |        }
+                             |      }
                              |    ]
                              |  }
                              |}

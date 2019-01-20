@@ -20,6 +20,7 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent.Await
+import org.web3j.crypto.Credentials
 
 class BalanceAndTransferEventExtractorSpec
     extends CommonSpec
@@ -29,33 +30,23 @@ class BalanceAndTransferEventExtractorSpec
     "correctly extract balance update events and transfer events from ethereum blocks" in {
       val getBaMethod = "get_balance_and_allowance"
       val account0 = accounts.head
-      val account1 = accounts(1)
-      val ba1 = Await.result(
-        singleRequest(
-          GetBalanceAndAllowances.Req(
-            account0.getAddress,
-            tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
-          ),
-          getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
-        timeout.duration
+      val account2 = Credentials.create(
+        "0x30dfe4fc0145d0b092c6738b82b547d5ff609f182b5992a3f31cda67b2b93f95"
       )
-
       val ba2 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
-            account1.getAddress,
+            account2.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
         ).mapAs[GetBalanceAndAllowances.Res],
         timeout.duration
       )
-      val lrc_ba1 = ba1.balanceAndAllowanceMap(LRC_TOKEN.address)
       val lrc_ba2 = ba2.balanceAndAllowanceMap(LRC_TOKEN.address)
       info("transfer to account1 1000 LRC")
       Await.result(
-        transferLRC(account1.getAddress, "1000")(account0),
+        transferLRC(account2.getAddress, "1000")(account0),
         timeout.duration
       )
       Thread.sleep(1000)
@@ -63,7 +54,7 @@ class BalanceAndTransferEventExtractorSpec
         singleRequest(
           GetTransactionRecords
             .Req(
-              owner = account0.getAddress,
+              owner = account2.getAddress,
               sort = SortingType.DESC,
               paging = Some(CursorPaging(cursor = 0, size = 50))
             ),
@@ -73,33 +64,18 @@ class BalanceAndTransferEventExtractorSpec
       )
       transfers.size should be(1)
 
-      val ba1_1 = Await.result(
-        singleRequest(
-          GetBalanceAndAllowances.Req(
-            account0.getAddress,
-            tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
-          ),
-          getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
-        timeout.duration
-      )
-
       val ba2_1 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
-            account1.getAddress,
+            account2.getAddress,
             tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
           ),
           getBaMethod
         ).mapAs[GetBalanceAndAllowances.Res],
         timeout.duration
       )
-      val lrc_ba1_1 = ba1_1.balanceAndAllowanceMap(LRC_TOKEN.address)
       val lrc_ba2_1 = ba2_1.balanceAndAllowanceMap(LRC_TOKEN.address)
 
-      (BigInt(lrc_ba1.balance.toByteArray) - BigInt(
-        lrc_ba1_1.balance.toByteArray
-      )).toString() should be("1000" + "0" * LRC_TOKEN.decimals)
       (BigInt(lrc_ba2_1.balance.toByteArray) - BigInt(
         lrc_ba2.balance.toByteArray
       )).toString() should be("1000" + "0" * LRC_TOKEN.decimals)
