@@ -41,7 +41,7 @@ abstract class InitializationRetryActor
 
   val initializationMaxRetries = 120
   val initializationDelayFactor = 1
-  val initializationDelaySeconds = 2
+  val initializationDelaySeconds = 10
   val initializationDelaySecondsMax = 60
   val selfInitialize = true
 
