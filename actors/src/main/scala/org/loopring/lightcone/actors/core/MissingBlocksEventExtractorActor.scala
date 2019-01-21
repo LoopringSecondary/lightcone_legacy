@@ -113,6 +113,7 @@ class MissingBlocksEventExtractorActor(
         dbModule.missingBlocksRecordDal
           .updateProgress(sequenceId, blockData.height)
         if (blockData.height >= untilBlock) {
+          dbModule.missingBlocksRecordDal.deleteRecord(sequenceId)
           self ! NEXT_RANGE
         }
       }
