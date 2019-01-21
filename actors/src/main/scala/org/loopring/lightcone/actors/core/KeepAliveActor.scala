@@ -147,7 +147,7 @@ class KeepAliveActor @Inject()(
 
   def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
     marketMetadata.status match {
-      case MarketMetadata.Status.ENABLED =>
+      case MarketMetadata.Status.ENABLED | MarketMetadata.Status.READONLY => //READONLY也需要保持orderbook等数据的可用
         val marketId = marketMetadata.getMarketId
         for {
           _ <- Future.sequence(
