@@ -29,7 +29,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   val loopringConfig = config.getConfig("loopring_protocol")
 
-  val rates = config
+  val rates = loopringConfig
     .getConfigList("burn-rate-table.tiers")
     .asScala
     .map(conf => {
@@ -41,7 +41,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
     .sortWith(_._1 < _._1)
     .head
     ._2
-  val base = config.getInt("burn-rate-table.base")
+  val base = loopringConfig.getInt("burn-rate-table.base")
 
   // tokens[address, token]
   val defaultBurnRateForMarket: Double = rates._1.doubleValue() / base
