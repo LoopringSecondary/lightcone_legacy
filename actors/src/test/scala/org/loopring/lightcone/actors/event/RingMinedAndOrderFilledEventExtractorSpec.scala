@@ -82,7 +82,7 @@ class RingMinedAndOrderFilledEventExtractorSpec
       info(s"${account2.getAddress} approve WETH")
       Await.result(approveWETHToDelegate("1000000")(account2), timeout.duration)
 
-      Thread.sleep(2000)
+      Thread.sleep(1000)
       val ba1_1 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
