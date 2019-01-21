@@ -17,7 +17,6 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
-import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{TransferEvent => PTransferEvent, _}
@@ -30,7 +29,6 @@ import scala.concurrent._
 
 class TransferEventExtractor @Inject()(
     implicit
-    val config: Config,
     val ec: ExecutionContext,
     val metadataManager: MetadataManager)
     extends EventExtractor[PTransferEvent] {
