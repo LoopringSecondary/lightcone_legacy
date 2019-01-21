@@ -17,7 +17,6 @@
 package org.loopring.lightcone.actors.order
 
 import java.util.concurrent.TimeUnit
-
 import akka.pattern._
 import org.loopring.lightcone.actors.core.{
   MetadataManagerActor,
@@ -28,7 +27,6 @@ import org.loopring.lightcone.proto._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -139,11 +137,11 @@ class OrderCutoffJobSpec
       assert(res2)
       val q1 = dbModule.orderCutoffJobDal.getJobs()
       val q11 = Await.result(q1.mapTo[Seq[OrderCutoffJob]], 5 second)
-      assert(q11.length == 1)
+      assert(q11.length == 2)
 
-      info("start cutoff handler will handle the cutoff jobs")
+      info("run cutoffHandlerActor will handle the cutoff jobs")
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
-      Thread.sleep(2000)
+      Thread.sleep(3000)
 
       try Unreliables.retryUntilTrue(
         10,
