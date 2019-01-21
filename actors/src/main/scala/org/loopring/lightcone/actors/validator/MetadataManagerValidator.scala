@@ -36,7 +36,7 @@ final class MetadataManagerValidator()(implicit val config: Config)
           "Parameter tokens could not be empty"
         )
       // address toLowerCase, symbol toUpperCase
-      val tokens = req.tokens.map(MetadataManager.formatToken)
+      val tokens = req.tokens.map(MetadataManager.normalizeToken)
       req.copy(tokens = tokens)
 
     case req: UpdateTokenMetadata.Req =>
@@ -46,7 +46,7 @@ final class MetadataManagerValidator()(implicit val config: Config)
           "Parameter token could not be empty"
         )
       // address toLowerCase, symbol toUpperCase
-      req.copy(token = Some(MetadataManager.formatToken(req.token.get)))
+      req.copy(token = Some(MetadataManager.normalizeToken(req.token.get)))
 
     case req: UpdateTokenBurnRate.Req =>
       if (req.address.isEmpty)
@@ -70,7 +70,7 @@ final class MetadataManagerValidator()(implicit val config: Config)
           ErrorCode.ERR_INVALID_ARGUMENT,
           "Parameter markets could not be empty"
         )
-      val markets = req.markets.map(MetadataManager.formatMarket)
+      val markets = req.markets.map(MetadataManager.normalizeMarket)
       req.copy(markets = markets)
 
     case req: UpdateMarketMetadata.Req =>
@@ -79,7 +79,7 @@ final class MetadataManagerValidator()(implicit val config: Config)
           ErrorCode.ERR_INVALID_ARGUMENT,
           "Parameter market could not be empty"
         )
-      req.copy(market = Some(MetadataManager.formatMarket(req.market.get)))
+      req.copy(market = Some(MetadataManager.normalizeMarket(req.market.get)))
 
     case req: DisableMarket.Req =>
       if (req.marketHash.isEmpty)

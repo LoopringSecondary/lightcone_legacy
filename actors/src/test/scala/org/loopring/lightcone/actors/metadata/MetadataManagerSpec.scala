@@ -219,9 +219,8 @@ class MetadataManagerSpec
       assert(res2 == ErrorCode.ERR_NONE)
 
       val burnRateRes = Await.result(
-        (ethereumQueryActor ? GetBurnRate.Req(
-          token = lrc.address
-        )).mapTo[GetBurnRate.Res],
+        (ethereumQueryActor ? GetBurnRate.Req(token = lrc.address))
+          .mapTo[GetBurnRate.Res],
         5.second
       )
       info(
@@ -326,9 +325,8 @@ class MetadataManagerSpec
       probe.expectMsg(MetadataChanged())
 
       info("query the markets from db")
-      val r1 = dbModule.marketMetadataDal.getMarketsByHashes(
-        markets.map(_.marketHash)
-      )
+      val r1 =
+        dbModule.marketMetadataDal.getMarketsByHashes(markets.map(_.marketHash))
       val res1 = Await.result(r1.mapTo[Seq[MarketMetadata]], 5.second)
       assert(res1.length == markets.length)
 
@@ -437,14 +435,14 @@ class MetadataManagerSpec
         usdPrice = 8
       )
       info("token A and formatedA should same")
-      val formatedA = MetadataManager.formatToken(a)
+      val formatedA = MetadataManager.normalizeToken(a)
       assert(
         formatedA.address == a.address && formatedA.symbol == a.symbol
           .toUpperCase()
       )
 
       info("token B formated address and symbol should same with formatedB")
-      val formatedB = MetadataManager.formatToken(b)
+      val formatedB = MetadataManager.normalizeToken(b)
       assert(
         b.address.toLowerCase() == formatedB.address && b.symbol
           .toUpperCase() == formatedB.symbol
@@ -469,7 +467,7 @@ class MetadataManagerSpec
         marketId = Some(marketId),
         marketHash = MarketHashProvider.convert2Hex(BBB, AAA)
       )
-      val formatedMarket = MetadataManager.formatMarket(market)
+      val formatedMarket = MetadataManager.normalizeMarket(market)
       assert(
         market.primaryTokenSymbol == "bbb" &&
           formatedMarket.primaryTokenSymbol == "BBB"

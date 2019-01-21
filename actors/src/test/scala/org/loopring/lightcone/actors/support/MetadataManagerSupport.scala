@@ -61,8 +61,8 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
       )
   }
   metadataManager.reset(
-    TOKENS.map(MetadataManager.formatToken),
-    MARKETS.map(MetadataManager.formatMarket)
+    TOKENS.map(MetadataManager.normalizeToken),
+    MARKETS.map(MetadataManager.normalizeMarket)
   )
 
   actors.add(MetadataRefresher.name, MetadataRefresher.start)

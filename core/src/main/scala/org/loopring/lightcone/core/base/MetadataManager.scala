@@ -26,13 +26,13 @@ import scala.collection.JavaConverters._
 
 object MetadataManager {
 
-  def formatToken(token: TokenMetadata): TokenMetadata =
+  def normalizeToken(token: TokenMetadata): TokenMetadata =
     token.copy(
       address = token.address.toLowerCase(),
       symbol = token.symbol.toUpperCase()
     )
 
-  def formatMarket(market: MarketMetadata): MarketMetadata = {
+  def normalizeMarket(market: MarketMetadata): MarketMetadata = {
     val marketId = market.marketId.getOrElse(
       throw ErrorException(ErrorCode.ERR_INVALID_ARGUMENT, "marketId is empty")
     )
@@ -102,7 +102,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
   }
 
   def addToken(meta: TokenMetadata) = this.synchronized {
-    val m = MetadataManager.formatToken(meta)
+    val m = MetadataManager.normalizeToken(meta)
     val token = new Token(m)
     addressMap += m.address -> token
     symbolMap += m.symbol -> token
@@ -137,7 +137,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
   def getTokens = addressMap.values.toSeq
 
   def addMarket(meta: MarketMetadata) = this.synchronized {
-    val m = MetadataManager.formatMarket(meta)
+    val m = MetadataManager.normalizeMarket(meta)
     marketMetadatasMap += m.marketHash -> m
     val itemMap = m.marketHash -> m.marketId.get
     m.status match {

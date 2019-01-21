@@ -46,10 +46,7 @@ object MetadataRefresher {
       dbModule: DatabaseModule,
       metadataManager: MetadataManager
     ) = {
-    system.actorOf(
-      Props(new MetadataRefresher()),
-      MetadataRefresher.name
-    )
+    system.actorOf(Props(new MetadataRefresher()), MetadataRefresher.name)
   }
 }
 
@@ -101,8 +98,8 @@ class MetadataRefresher(
     } yield {
       assert(tokens_.nonEmpty)
       assert(markets_.nonEmpty)
-      tokens = tokens_.map(MetadataManager.formatToken)
-      markets = markets_.map(MetadataManager.formatMarket)
+      tokens = tokens_.map(MetadataManager.normalizeToken)
+      markets = markets_.map(MetadataManager.normalizeMarket)
       metadataManager.reset(tokens_, markets_)
     }
 }
