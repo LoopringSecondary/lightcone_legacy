@@ -7,6 +7,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.proto.OHLCRawData
 
 import scala.concurrent.ExecutionContext
 
@@ -40,8 +41,20 @@ object OHLCRawDataPersistenceActor extends ShardedEvenly {
 }
 
 
-class OHLCRawDataPersistenceActor extends ActorWithPathBasedConfig(OHLCRawDataPersistenceActor.name){
+class OHLCRawDataPersistenceActor()(      implicit
+                                          val config: Config,
+                                          val ec: ExecutionContext,
+                                          val timeProvider: TimeProvider,
+                                          val timeout: Timeout,
+                                          val actors: Lookup[ActorRef],
+                                          val dbModule: DatabaseModule) extends ActorWithPathBasedConfig(OHLCRawDataPersistenceActor.name){
 
+
+  override def ready: Receive = {
+    case data:OHLCRawData  =>
+      //TODO (yangli) 存储接收到的 OHLCRawData
+      dbModule
+  }
 
 
 
