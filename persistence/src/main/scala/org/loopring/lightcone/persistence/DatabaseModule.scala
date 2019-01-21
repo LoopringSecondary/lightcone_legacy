@@ -32,6 +32,7 @@ class DatabaseModule @Inject()(
     val settlementTxDal: SettlementTxDal,
     val orderStatusMonitorDal: OrderStatusMonitorDal,
     val marketMetadataDal: MarketMetadataDal,
+    val missingBlocksRecordDal: MissingBlocksRecordDal,
     val orderService: OrderService,
     val orderStatusMonitorService: OrderStatusMonitorService,
     val tradeService: TradeService,
@@ -49,7 +50,8 @@ class DatabaseModule @Inject()(
     blockDal,
     settlementTxDal,
     orderStatusMonitorDal,
-    marketMetadataDal
+    marketMetadataDal,
+    missingBlocksRecordDal
   )
 
   createTables()

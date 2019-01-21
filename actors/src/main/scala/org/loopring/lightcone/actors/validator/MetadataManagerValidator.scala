@@ -50,11 +50,6 @@ final class MetadataManagerValidator()(implicit val config: Config)
           ErrorCode.ERR_INVALID_ARGUMENT,
           "Parameter address could not be empty"
         )
-      if (req.burnRate <= 0)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter burnRate <= 0"
-        )
       req
 
     case req: DisableToken.Req =>

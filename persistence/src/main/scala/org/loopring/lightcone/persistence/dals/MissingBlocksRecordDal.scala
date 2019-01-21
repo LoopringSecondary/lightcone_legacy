@@ -21,23 +21,18 @@ import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
-trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {
+trait MissingBlocksRecordDal
+    extends BaseDalImpl[MissingBlocksRecordTable, MissingBlocksRecord] {
+  // will return saved sequenceId
+  def saveMissingBlock(record: MissingBlocksRecord): Future[Long]
 
-  def saveToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
+  // order by insert sequence, get the earliest one
+  def getOldestOne(): Future[Option[MissingBlocksRecord]]
 
-  def saveTokens(tokenMetadatas: Seq[TokenMetadata]): Future[Seq[String]]
+  def updateProgress(
+      sequenceId: Long,
+      progressTo: Long
+    ): Future[Int]
 
-  def updateToken(tokenMetadata: TokenMetadata): Future[ErrorCode]
-
-  def getTokens(tokens: Seq[String]): Future[Seq[TokenMetadata]]
-
-  def getTokens(): Future[Seq[TokenMetadata]]
-
-  def updateBurnRate(
-      token: String,
-      burnRateForMarket: Double,
-      burnRateForP2P: Double
-    ): Future[ErrorCode]
-
-  def disableToken(address: String): Future[ErrorCode]
+  def deleteRecord(sequenceId: Long): Future[Boolean]
 }

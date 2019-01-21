@@ -36,7 +36,8 @@ package object support {
   val WETH_TOKEN = TokenMetadata(
     address = Address("0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc").toString,
     decimals = 18,
-    burnRate = 0.4,
+    burnRateForMarket = 0.4,
+    burnRateForP2P = 0.5,
     symbol = "WETH",
     name = "WETH",
     usdPrice = 1000,
@@ -46,7 +47,8 @@ package object support {
   val LRC_TOKEN = TokenMetadata(
     address = Address("0x97241525fe425C90eBe5A41127816dcFA5954b06").toString,
     decimals = 18,
-    burnRate = 0.4,
+    burnRateForMarket = 0.4,
+    burnRateForP2P = 0.5,
     symbol = "LRC",
     name = "LRC",
     usdPrice = 1000,
@@ -56,7 +58,8 @@ package object support {
   val GTO_TOKEN = TokenMetadata(
     address = Address("0x2D7233F72AF7a600a8EbdfA85558C047c1C8F795").toString,
     decimals = 18,
-    burnRate = 0.4,
+    burnRateForMarket = 0.4,
+    burnRateForP2P = 0.5,
     symbol = "GTO",
     name = "GTO",
     usdPrice = 1000,

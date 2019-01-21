@@ -102,12 +102,21 @@ class MetadataManagerActor(
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = token.address
           )).mapTo[GetBurnRate.Res]
-          //TODO(du) 以太坊节点返回的不对，暂时mock 0.4
-          _ <- if (token.burnRate != burnRateRes.burnRate)
+          //TODO(du): mock response
+          mock = burnRateRes.copy(forMarket = 0.4, forP2P = 0.4)
+          _ <- if (token.burnRateForMarket != mock.forMarket || token.burnRateForP2P != mock.forP2P)
             dbModule.tokenMetadataDal
-              .updateBurnRate(token.address, 0.4)
+              .updateBurnRate(
+                token.address,
+                mock.forMarket,
+                mock.forP2P
+              )
           else Future.successful(Unit)
-        } yield token.copy(burnRate = 0.4)
+        } yield
+          token.copy(
+            burnRateForMarket = mock.forMarket,
+            burnRateForP2P = mock.forP2P
+          )
       })
     } yield {
       tokens = tokensUpdated
@@ -152,7 +161,12 @@ class MetadataManagerActor(
           token = req.token.get.address
         )).mapTo[GetBurnRate.Res]
         result <- dbModule.tokenMetadataDal
-          .updateToken(req.token.get.copy(burnRate = burnRateRes.burnRate))
+          .updateToken(
+            req.token.get.copy(
+              burnRateForMarket = burnRateRes.forMarket,
+              burnRateForP2P = burnRateRes.forP2P
+            )
+          )
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
         if (result == ErrorCode.ERR_NONE) {
@@ -168,7 +182,11 @@ class MetadataManagerActor(
             token = req.token
           )).mapTo[GetBurnRate.Res]
           result <- dbModule.tokenMetadataDal
-            .updateBurnRate(req.token, burnRateRes.burnRate)
+            .updateBurnRate(
+              req.token,
+              burnRateRes.forMarket,
+              burnRateRes.forP2P
+            )
           tokens_ <- dbModule.tokenMetadataDal.getTokens()
         } yield {
           if (result == ErrorCode.ERR_NONE) {

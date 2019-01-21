@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors.ethereum.event
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
+import org.loopring.lightcone.proto.TokenBurnRateChangedEvent.BurnRate
 import org.loopring.lightcone.proto._
 import scala.collection.JavaConverters._
 import scala.concurrent._
@@ -45,11 +46,12 @@ class TokenBurnRateEventExtractor @Inject()(
             case (log, index) =>
               loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
                 case Some(event: TokenTierUpgradedEvent.Result) =>
+                  //TODO(yadong):burnRate = rateMap(event.tier.intValue()) / base.toDouble
                   Some(
                     TokenBurnRateChangedEvent(
                       header = Some(header.withLogIndex(index)),
                       token = event.add,
-                      burnRate = rateMap(event.tier.intValue()) / base.toDouble
+                      burnRate = Some(BurnRate(0.1, 0.1))
                     )
                   )
                 case _ =>

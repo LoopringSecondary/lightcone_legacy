@@ -56,7 +56,8 @@ class MetadataManagerSpec
         unit = "AAA",
         decimals = 18,
         precision = 6,
-        burnRate = 0.1,
+        burnRateForMarket = 0.1,
+        burnRateForP2P = 0.2,
         usdPrice = 10
       )
       val tokens = Seq(
@@ -70,7 +71,8 @@ class MetadataManagerSpec
           unit = "ABC",
           decimals = 18,
           precision = 6,
-          burnRate = 0.2,
+          burnRateForMarket = 0.3,
+          burnRateForP2P = 0.4,
           usdPrice = 8
         ),
         TokenMetadata(
@@ -82,7 +84,8 @@ class MetadataManagerSpec
           unit = "BBB",
           decimals = 9,
           precision = 3,
-          burnRate = 1.1,
+          burnRateForMarket = 0.1,
+          burnRateForP2P = 0.3,
           usdPrice = 1
         ),
         TokenMetadata(
@@ -94,7 +97,8 @@ class MetadataManagerSpec
           unit = "BBC",
           decimals = 18,
           precision = 6,
-          burnRate = 0.2,
+          burnRateForMarket = 0.2,
+          burnRateForP2P = 0.1,
           usdPrice = 8
         ),
         TokenMetadata(
@@ -106,7 +110,8 @@ class MetadataManagerSpec
           unit = "CCC",
           decimals = 18,
           precision = 6,
-          burnRate = 0.3,
+          burnRateForMarket = 0.6,
+          burnRateForP2P = 0.8,
           usdPrice = 7
         ),
         TokenMetadata(
@@ -118,7 +123,8 @@ class MetadataManagerSpec
           unit = "CDE",
           decimals = 6,
           precision = 3,
-          burnRate = 1.1,
+          burnRateForMarket = 0.1,
+          burnRateForP2P = 0.9,
           usdPrice = 1
         )
       )
@@ -157,7 +163,8 @@ class MetadataManagerSpec
           unit = "DEF",
           decimals = 6,
           precision = 3,
-          burnRate = 1.1,
+          burnRateForMarket = 0.5,
+          burnRateForP2P = 0.5,
           usdPrice = 1
         )
       )
@@ -170,13 +177,13 @@ class MetadataManagerSpec
         )).mapTo[GetBurnRate.Res],
         5.second
       )
-
       info(
-        s"send a message to update burn-rate :{burnRate = 0.2, usdPrice = 20}, but will query ethereum and replace burnRate as :${burnRateRes.burnRate}"
+        s"send a message to update burn-rate :{burnRate = 0.2, usdPrice = 20}, but will query ethereum and" +
+          s" replace forMarket as :${burnRateRes.forMarket}, forP2P as :${burnRateRes.forP2P}"
       )
       val updated = Await.result(
         (actor ? UpdateTokenMetadata.Req(
-          Some(lrc.copy(burnRate = 0.2, usdPrice = 20))
+          Some(lrc.copy(burnRateForMarket = 0.2, usdPrice = 20))
         )).mapTo[UpdateTokenMetadata.Res],
         5.second
       )
@@ -188,7 +195,8 @@ class MetadataManagerSpec
         5.second
       )
       assert(
-        query1.length == 1 && query1.head.burnRate === burnRateRes.burnRate && query1.head.usdPrice == 20
+        query1.length == 1 && query1.head.burnRateForMarket === burnRateRes.forMarket &&
+          query1.head.burnRateForP2P == burnRateRes.forP2P && query1.head.usdPrice == 20
       )
 
       info("send a message to disable lrc")

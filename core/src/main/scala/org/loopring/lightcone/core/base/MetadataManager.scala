@@ -18,12 +18,14 @@ package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
 
 final class MetadataManager() extends Logging {
 
   // tokens[address, token]
-  val defaultBurnRate: Double = 0.2
+  val defaultBurnRateForMarket: Double = 0.2
+  val defaultBurnRateForP2P: Double = 0.2
   private var addressMap = Map.empty[String, Token]
   private var symbolMap = Map.empty[String, Token]
 
@@ -76,8 +78,8 @@ final class MetadataManager() extends Logging {
   def getBurnRate(addr: String) =
     addressMap
       .get(addr.toLowerCase())
-      .map(_.meta.burnRate)
-      .getOrElse(defaultBurnRate)
+      .map(m => BurnRate(m.meta.burnRateForMarket, m.meta.burnRateForP2P))
+      .getOrElse(BurnRate(defaultBurnRateForMarket, defaultBurnRateForP2P))
 
   def getTokens = addressMap.values.toSeq
 
