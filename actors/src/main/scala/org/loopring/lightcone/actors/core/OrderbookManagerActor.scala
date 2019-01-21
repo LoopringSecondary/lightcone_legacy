@@ -113,6 +113,7 @@ class OrderbookManagerActor(
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
   override def initialize() = {
+    //todo: 还未完成，确认请求的参数以及处理等
     val f = for {
       _ <- actors.get(MarketManagerActor.name) ? GetOrderbookUpdate.Req()
     } yield {}
