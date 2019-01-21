@@ -106,14 +106,14 @@ class MetadataManagerActor(
             dbModule.tokenMetadataDal
               .updateBurnRate(
                 token.address,
-                mock.forMarket,
-                mock.forP2P
+                burnRateRes.forMarket,
+                burnRateRes.forP2P
               )
           else Future.successful(Unit)
         } yield
           token.copy(
-            burnRateForMarket = mock.forMarket,
-            burnRateForP2P = mock.forP2P
+            burnRateForMarket = burnRateRes.forMarket,
+            burnRateForP2P = burnRateRes.forP2P
           )
       })
     } yield {

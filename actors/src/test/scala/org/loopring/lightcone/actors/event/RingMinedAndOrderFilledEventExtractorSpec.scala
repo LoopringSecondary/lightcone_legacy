@@ -59,11 +59,11 @@ class RingMinedAndOrderFilledEventExtractorSpec
         timeout.duration
       )
       Await.result(
-        transferEth(account1.getAddress, "1000")(account0),
+        transferEth(account1.getAddress, "100")(account0),
         timeout.duration
       )
       Await.result(
-        transferEth(account2.getAddress, "1000")(account0),
+        transferEth(account2.getAddress, "100")(account0),
         timeout.duration
       )
       info("transfer to account1 1000 LRC and approve")
@@ -82,7 +82,7 @@ class RingMinedAndOrderFilledEventExtractorSpec
       info(s"${account2.getAddress} approve WETH")
       Await.result(approveWETHToDelegate("1000000")(account2), timeout.duration)
 
-      Thread.sleep(1000)
+      Thread.sleep(2000)
       val ba1_1 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
@@ -129,7 +129,7 @@ class RingMinedAndOrderFilledEventExtractorSpec
           .mapAs[SubmitOrder.Res],
         timeout.duration
       )
-      Thread.sleep(10000)
+      Thread.sleep(6000)
 
       val ba1_2 = Await.result(
         singleRequest(
@@ -153,8 +153,8 @@ class RingMinedAndOrderFilledEventExtractorSpec
         timeout.duration
       )
       val lrc_ba1_2 = ba1_2.balanceAndAllowanceMap(LRC_TOKEN.address)
-      val weth_ba1_2 = ba1_2.balanceAndAllowanceMap(WETH_TOKEN.address)
       val lrc_ba2_2 = ba2_2.balanceAndAllowanceMap(LRC_TOKEN.address)
+      val weth_ba1_2 = ba1_2.balanceAndAllowanceMap(WETH_TOKEN.address)
       val weth_ba2_2 = ba2_2.balanceAndAllowanceMap(WETH_TOKEN.address)
 
       (BigInt(weth_ba1_2.balance.toByteArray) - BigInt(
@@ -163,11 +163,11 @@ class RingMinedAndOrderFilledEventExtractorSpec
 
       (BigInt(lrc_ba1_1.balance.toByteArray) - BigInt(
         lrc_ba1_2.balance.toByteArray
-      )).toString() should be("13" + "0" * WETH_TOKEN.decimals)
+      )).toString() should be("13" + "0" * LRC_TOKEN.decimals)
 
       (BigInt(lrc_ba1_1.allowance.toByteArray) - BigInt(
         lrc_ba1_2.allowance.toByteArray
-      )).toString() should be("13" + "0" * WETH_TOKEN.decimals)
+      )).toString() should be("13" + "0" * LRC_TOKEN.decimals)
 
       (BigInt(lrc_ba2_2.balance.toByteArray) - BigInt(
         lrc_ba2_1.balance.toByteArray

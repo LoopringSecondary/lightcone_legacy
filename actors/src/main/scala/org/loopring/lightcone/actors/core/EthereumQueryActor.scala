@@ -213,7 +213,7 @@ class EthereumQueryActor(
               .toBigInt(formatResult.substring(56, 60))
               .doubleValue() / base
             val marketRate = Numeric
-              .toBigInt(result.substring(60))
+              .toBigInt(formatResult.substring(60))
               .doubleValue() / base
             GetBurnRate.Res(forMarket = marketRate, forP2P = p2pRate)
           }
