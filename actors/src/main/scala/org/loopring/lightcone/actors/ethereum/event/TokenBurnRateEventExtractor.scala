@@ -58,8 +58,8 @@ class TokenBurnRateEventExtractor @Inject()(
                       token = event.add,
                       burnRate = Some(
                         BurnRate(
-                          forMarket = rate._1 / base.doubleValue(),
-                          forP2P = rate._2 / base.doubleValue()
+                          forMarket = rate._1.doubleValue() / base,
+                          forP2P = rate._2.doubleValue() / base
                         )
                       )
                     )
