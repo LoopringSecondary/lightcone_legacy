@@ -107,7 +107,7 @@ class EthereumClientMonitor(
   )
 
   override def initialize(): Future[Unit] = {
-    for {
+    val f = for {
       _ <- syncNodeHeight
     } yield {
       if (actors.contains(EthereumAccessActor.name)) {
@@ -115,8 +115,14 @@ class EthereumClientMonitor(
           ethereumAccessor ! node
         }
       }
-      becomeReady()
     }
+    f onComplete {
+      case Success(_) =>
+        becomeReady()
+      case Failure(e) =>
+        throw e
+    }
+    f
   }
 
   def ready: Receive = super.receiveRepeatdJobs orElse {

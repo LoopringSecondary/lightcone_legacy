@@ -24,14 +24,11 @@ import org.loopring.lightcone.proto.AddressBalanceUpdated
 
 import scala.concurrent._
 
-class EventExtractorSpec
+class BasicEventExtractorSpec
     extends CommonSpec
-    with EventExtractorSupport
-    with EthereumSupport {
-
-  override def beforeAll() {
-    info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
-  }
+    with EthereumSupport
+    with MetadataManagerSupport
+    with EventExtractorSupport {
 
   "extract all kind of events " must {
 
@@ -51,28 +48,28 @@ class EventExtractorSpec
                              |    tiers = [
                              |      {
                              |        tier = 3,
-                             |        rate {
+                             |        rates {
                              |          market:50,
                              |          p2p:5
                              |        }
                              |      },
                              |      {
                              |        tier = 2,
-                             |        rate {
+                             |        rates {
                              |          market:200,
                              |          p2p:20
                              |        }
                              |      },
                              |      {
                              |        tier = 1,
-                             |        rate {
+                             |        rates {
                              |          market:400,
                              |          p2p:30
                              |        }
                              |      },
                              |      {
                              |        tier = 0,
-                             |        rate {
+                             |        rates {
                              |          market:600,
                              |          p2p:60
                              |        }
@@ -84,7 +81,8 @@ class EventExtractorSpec
 
       val selfConfig = ConfigFactory.parseString(selfConfigStr)
 
-      val transferExtractor = new TransferEventExtractor()(selfConfig, ec)
+      val transferExtractor =
+        new TransferEventExtractor()
 
       val transfers =
         Await.result(

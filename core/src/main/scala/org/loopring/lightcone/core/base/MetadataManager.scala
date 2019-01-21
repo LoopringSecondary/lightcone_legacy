@@ -16,16 +16,36 @@
 
 package org.loopring.lightcone.core.base
 
+import com.google.inject.Inject
+import com.typesafe.config.Config
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
+import scala.collection.JavaConverters._
 
-final class MetadataManager() extends Logging {
+final class MetadataManager @Inject()(implicit val config: Config)
+    extends Logging {
+
+  val loopringConfig = config.getConfig("loopring_protocol")
+
+  val rates = loopringConfig
+    .getConfigList("burn-rate-table.tiers")
+    .asScala
+    .map(conf => {
+      val key = conf.getInt("tier")
+      val ratesConfig = conf.getConfig("rates")
+      val rates = ratesConfig.getInt("market") -> ratesConfig.getInt("p2p")
+      key -> rates
+    })
+    .sortWith(_._1 < _._1)
+    .head
+    ._2
+  val base = loopringConfig.getInt("burn-rate-table.base")
 
   // tokens[address, token]
-  val defaultBurnRateForMarket: Double = 0.2
-  val defaultBurnRateForP2P: Double = 0.2
+  val defaultBurnRateForMarket: Double = rates._1.doubleValue() / base
+  val defaultBurnRateForP2P: Double = rates._2.doubleValue() / base
   private var addressMap = Map.empty[String, Token]
   private var symbolMap = Map.empty[String, Token]
 
