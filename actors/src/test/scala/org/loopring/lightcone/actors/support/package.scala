@@ -17,16 +17,19 @@
 package org.loopring.lightcone.actors
 
 import java.util.concurrent.atomic.AtomicInteger
+
 import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib.MarketHashProvider
+import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
 import org.loopring.lightcone.proto.{MarketId, MarketMetadata, TokenMetadata}
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
+
+import scala.math.BigInt
 
 package object support {
 
@@ -203,4 +206,9 @@ package object support {
                         |    ]
                         |}""".stripMargin
 
+  implicit class RichString(s: String) {
+    def zeros(size: Int): BigInt = BigInt(s + "0" * size)
+  }
+
+  implicit val timeProvider = new SystemTimeProvider()
 }
