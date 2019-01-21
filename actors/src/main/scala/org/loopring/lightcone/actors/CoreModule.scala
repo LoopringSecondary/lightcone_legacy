@@ -103,6 +103,7 @@ class CoreModule(config: Config)
     bind[EventExtractor[RingMinedEvent]].to[RingMinedEventExtractor]
     bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
     bind[EventExtractor[OrderFilledEvent]].to[OrderFillEventExtractor]
+    bind[EventExtractor[OHLCRawData]].to[OHLCRawDataExtractor]
 
     // --- bind event dispatchers ---------------------
     bind[EventDispatcher[AddressAllowanceUpdated]]
@@ -123,6 +124,7 @@ class CoreModule(config: Config)
     bind[EventDispatcher[RingMinedEvent]].to[RingMinedEventDispatcher]
     bind[EventDispatcher[TransferEvent]].to[TransferEventDispatcher]
     bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
+    bind[EventDispatcher[OHLCRawData]].to[OHLCRawDataEventDispatcher]
 
     // --- bind dals ---------------------
     bind[OrderDal].to[OrderDalImpl].asEagerSingleton
@@ -181,7 +183,8 @@ class CoreModule(config: Config)
       ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
       tokenBurnRateChangedEventDispatcher: EventDispatcher[
         TokenBurnRateChangedEvent
-      ]
+      ],
+      oHLCRawDataEventDispatcher: EventDispatcher[OHLCRawData]
     ): Seq[EventDispatcher[_]] =
     Seq(
       balanceEventDispatcher,
@@ -191,7 +194,8 @@ class CoreModule(config: Config)
       transferEventDispatcher,
       allowanceEventDispatcher,
       ordersCancelledEventDispatcher,
-      tokenBurnRateChangedEventDispatcher
+      tokenBurnRateChangedEventDispatcher,
+      oHLCRawDataEventDispatcher
     )
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {

@@ -120,4 +120,15 @@ object Dispatchers {
         actors
       )
 
+  class OHLCRawDataEventDispatcher @Inject()(
+                                            actors:Lookup[ActorRef]
+                                            )(
+                                              implicit
+                                              extractor: EventExtractor[OHLCRawData],
+                                              ec: ExecutionContext)
+    extends NameBasedEventDispatcher[OHLCRawData](
+      names = Seq(OHLCRawDataPersistenceActor.name),
+      actors
+    )
+
 }
