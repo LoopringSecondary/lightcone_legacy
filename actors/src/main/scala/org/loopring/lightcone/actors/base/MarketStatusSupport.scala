@@ -21,7 +21,7 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.MetadataManager
 
 trait MarketStatusSupport {
-  actor: ActorWithPathBasedConfig =>
+  actor: InitializationRetryActor =>
   val metadataManager: MetadataManager
 
   metadataManager.subscribMarket(processMarketmetaChange)

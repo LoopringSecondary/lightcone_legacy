@@ -78,7 +78,8 @@ class KeepAliveActor @Inject()(
     val actors: Lookup[ActorRef],
     val metadataManager: MetadataManager)
     extends InitializationRetryActor
-    with RepeatedJobActor {
+    with RepeatedJobActor
+    with MarketStatusSupport {
 
   def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   def marketManagerActor = actors.get(MarketManagerActor.name)
@@ -143,5 +144,27 @@ class KeepAliveActor @Inject()(
           actors.get(nodeName) ? Notify(KeepAliveActor.NOTIFY_MSG)
       })
     } yield Unit
+
+  def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
+    marketMetadata.status match {
+      case MarketMetadata.Status.ENABLED =>
+        val marketId = marketMetadata.getMarketId
+        for {
+          _ <- Future.sequence(
+            Seq(
+              orderbookManagerActor ? Notify(
+                KeepAliveActor.NOTIFY_MSG,
+                marketId.primary + "-" + marketId.secondary
+              ),
+              marketManagerActor ? Notify(
+                KeepAliveActor.NOTIFY_MSG,
+                marketId.primary + "-" + marketId.secondary
+              )
+            )
+          )
+        } yield Unit
+      case _ => //READONLY时，也需要在恢复时，继续接受订单提供给orderbook，
+    }
+  }
 
 }
