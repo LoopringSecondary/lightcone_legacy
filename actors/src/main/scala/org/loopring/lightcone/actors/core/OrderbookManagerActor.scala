@@ -29,6 +29,7 @@ import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.lib.MarketHashProvider._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
 import scala.concurrent._
@@ -136,7 +137,7 @@ class OrderbookManagerActor(
   def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
     marketMetadata.status match {
       case MarketMetadata.Status.DISABLED
-        if marketMetadata.getMarketId.entityId == entityId =>
+          if marketMetadata.getMarketId.entityId == entityId =>
         context.stop(self)
       case _ => //READONLY的不处理，需要能继续可以查询得到orderbook
     }

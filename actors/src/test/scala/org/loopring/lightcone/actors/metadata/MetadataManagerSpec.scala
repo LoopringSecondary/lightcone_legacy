@@ -29,7 +29,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._
-import org.loopring.lightcone.lib.MarketHashProvider
+import org.loopring.lightcone.lib.MarketHashProvider._
 
 class MetadataManagerSpec
     extends CommonSpec
@@ -239,7 +239,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdLrcWeth),
-        marketHash = MarketHashProvider.convert2Hex(DDD, AAA)
+        marketHash = MarketId(DDD, AAA).keyHex()
       )
       val markets = Seq(
         marketLrcWeth,
@@ -255,7 +255,7 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketId = Some(marketIdBnbWeth),
-          marketHash = MarketHashProvider.convert2Hex(DDD, BBB)
+          marketHash = MarketId(DDD, BBB).keyHex()
         ),
         MarketMetadata(
           status = MarketMetadata.Status.READONLY,
@@ -269,7 +269,7 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketId = Some(marketIdZrxdWeth),
-          marketHash = MarketHashProvider.convert2Hex(DDD, CCC)
+          marketHash = MarketId(DDD, CCC).keyHex()
         )
       )
       actor ! SaveMarketMetadatas.Req(markets)
@@ -307,7 +307,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdAbcLrc),
-        marketHash = MarketHashProvider.convert2Hex(ABC, AAA)
+        marketHash = MarketId(ABC, AAA).keyHex()
       )
       val r2 = dbModule.marketMetadataDal.saveMarket(abcLrc)
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)

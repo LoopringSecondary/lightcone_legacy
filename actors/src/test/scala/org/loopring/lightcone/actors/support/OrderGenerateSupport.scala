@@ -25,7 +25,7 @@ import org.loopring.lightcone.ethereum.{
   Protocol2RawOrderValidator,
   Protocol2RingBatchGenerator
 }
-import org.loopring.lightcone.lib._
+import org.loopring.lightcone.lib.MarketHashProvider._
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
@@ -48,7 +48,7 @@ trait OrderGenerateSupport {
       credentials: Credentials = accounts(0)
     ) = {
     val createAt = timeProvider.getTimeMillis
-    val marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
+    val marketHash = MarketId(tokenS, tokenB).keyHex()
     val order = RawOrder(
       owner = credentials.getAddress,
       version = 0,

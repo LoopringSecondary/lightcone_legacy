@@ -22,7 +22,8 @@ import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
+import org.loopring.lightcone.lib.SystemTimeProvider
+import org.loopring.lightcone.lib.MarketHashProvider._
 import org.loopring.lightcone.proto.{MarketId, MarketMetadata, TokenMetadata}
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
@@ -79,8 +80,7 @@ package object support {
     marketId = Some(
       MarketId(primary = WETH_TOKEN.address, secondary = LRC_TOKEN.address)
     ),
-    marketHash =
-      MarketHashProvider.convert2Hex(LRC_TOKEN.address, WETH_TOKEN.address)
+    marketHash = MarketId(LRC_TOKEN.address, WETH_TOKEN.address).keyHex()
   )
 
   val GTO_WETH_MARKET = MarketMetadata(
@@ -96,8 +96,7 @@ package object support {
     marketId = Some(
       MarketId(primary = WETH_TOKEN.address, secondary = GTO_TOKEN.address)
     ),
-    marketHash =
-      MarketHashProvider.convert2Hex(GTO_TOKEN.address, WETH_TOKEN.address)
+    marketHash = MarketId(GTO_TOKEN.address, WETH_TOKEN.address).keyHex()
   )
 
   val TOKENS = Seq(

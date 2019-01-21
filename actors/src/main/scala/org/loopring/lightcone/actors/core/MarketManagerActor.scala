@@ -35,6 +35,7 @@ import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.lib.MarketHashProvider._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 
@@ -318,7 +319,7 @@ class MarketManagerActor(
   def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
     marketMetadata.status match {
       case MarketMetadata.Status.DISABLED
-        if marketMetadata.getMarketId.entityId == entityId =>
+          if marketMetadata.getMarketId.entityId == entityId =>
         context.stop(self)
 //      case MarketMetadata.Status.READONLY
 //        if marketMetadata.getMarketId.entityId == entityId =>

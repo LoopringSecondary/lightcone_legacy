@@ -18,8 +18,8 @@ package org.loopring.lightcone.actors.base
 
 import akka.actor.Actor
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.{MarketId, MarketMetadata}
+import org.loopring.lightcone.lib.MarketHashProvider._
 
 // Owner: Daniel
 trait ShardedByMarket extends Sharded {

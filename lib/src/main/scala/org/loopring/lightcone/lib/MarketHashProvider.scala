@@ -16,6 +16,10 @@
 
 package org.loopring.lightcone.lib
 
+import java.math.BigInteger
+
+import org.loopring.lightcone.proto.MarketId
+
 object MarketHashProvider {
 
   private def removePrefix(address: String): String = {
@@ -23,6 +27,24 @@ object MarketHashProvider {
       address.substring(2).trim
     } else {
       address.trim
+    }
+  }
+
+  implicit class RichMarketId(marketId: MarketId) {
+
+    def key(): BigInt = {
+      BigInt(removePrefix(marketId.primary), 16) ^ BigInt(
+        removePrefix(marketId.secondary),
+        16
+      )
+    }
+
+    def keyHex(): String = {
+      ("0x" + marketId.key().toString(16)).toLowerCase()
+    }
+
+    def entityId(): String = {
+      Math.abs(marketId.key().hashCode).toString
     }
   }
 

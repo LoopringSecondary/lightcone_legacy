@@ -201,16 +201,4 @@ package object data {
       case STATUS_CANCELLED_DUPLICIATE      => ERR_ORDER_ALREADY_EXIST
       case _                                => ERR_INTERNAL_UNKNOWN
     }
-
-  implicit class RichMarketId(marketId: MarketId) {
-
-    def key(): BigInteger = {
-      Numeric.toBigInt(marketId.primary) xor
-        Numeric.toBigInt(marketId.secondary)
-    }
-
-    def entityId(): String = {
-      Math.abs(marketId.key().hashCode).toString
-    }
-  }
 }
