@@ -70,7 +70,6 @@ class OHLCRawDataPersistenceActor(
   override def ready: Receive = {
     case data: OHLCRawData =>
       //TODO (yangli) 存储接收到的 OHLCRawData
-      dbModule
   }
 
 }
