@@ -20,7 +20,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
-
+import org.web3j.utils.Numeric
 import scala.concurrent.Await
 
 class RingMinedAndOrderFilledEventExtractorSpec
@@ -177,22 +177,22 @@ class RingMinedAndOrderFilledEventExtractorSpec
         weth_ba2_2.balance.toByteArray
       )).toString() should be("1" + "0" * WETH_TOKEN.decimals)
 
-//      val getOrder1 = Await.result(
-//        dbModule.orderService.getOrder(order1.hash),
-//        timeout.duration
-//      )
-//      println(
-//        Numeric.toBigInt(getOrder1.get.getState.outstandingAmountS.toByteArray)
-//      )
-//      println(getOrder1.get.getState.status)
-//      val getOrder2 = Await.result(
-//        dbModule.orderService.getOrder(order2.hash),
-//        timeout.duration
-//      )
-//      println(
-//        Numeric.toBigInt(getOrder2.get.getState.outstandingAmountS.toByteArray)
-//      )
-//      println(getOrder2.get.getState.status)
+      val getOrder1 = Await.result(
+        dbModule.orderService.getOrder(order1.hash),
+        timeout.duration
+      )
+      println(
+        Numeric.toBigInt(getOrder1.get.getState.outstandingAmountS.toByteArray)
+      )
+      println(getOrder1.get.getState.status)
+      val getOrder2 = Await.result(
+        dbModule.orderService.getOrder(order2.hash),
+        timeout.duration
+      )
+      println(
+        Numeric.toBigInt(getOrder2.get.getState.outstandingAmountS.toByteArray)
+      )
+      println(getOrder2.get.getState.status)
 
     }
   }
