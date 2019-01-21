@@ -84,6 +84,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
     }
   }
 
+  //todo: token为disable时，是否应该把相应的市场都删除
   private def addToken(meta: TokenMetadata) = this.synchronized {
     addressMap += meta.address.toLowerCase() -> new Token(meta)
     symbolMap += meta.symbol.toUpperCase() -> new Token(meta)
