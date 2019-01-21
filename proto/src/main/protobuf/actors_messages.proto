@@ -307,3 +307,16 @@ message GetMetadatas {
         repeated MarketMetadata markets = 2;
     }
 }
+
+message GetOrderbookUpdate {
+    message Req {
+            int32 limit = 1;
+            int32 skip = 2;
+            MarketId market_id = 3;
+    }
+
+    message Res {
+        repeated Orderbook.Update updates = 1;
+    }
+}
+

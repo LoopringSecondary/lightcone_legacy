@@ -250,6 +250,9 @@ class MarketManagerActor(
           }
         }
       } sendTo sender
+
+    case req @ GetOrderbookUpdate.Req(_, _, _) =>
+
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {
