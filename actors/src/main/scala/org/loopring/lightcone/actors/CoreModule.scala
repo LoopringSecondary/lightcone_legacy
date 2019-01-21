@@ -82,7 +82,8 @@ class CoreModule(config: Config)
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-order-status-monitor",
       "dbconfig-dal-market-metadata",
-      "dbconfig-dal-missing-blocks-record"
+      "dbconfig-dal-missing-blocks-record",
+      "dbconfig-dal-order-cutoff-job"
     )
 
     // --- bind event extractors ---------------------
@@ -132,6 +133,7 @@ class CoreModule(config: Config)
     bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
+    bind[OrderCutoffJobDal].to[OrderCutoffJobDalImpl].asEagerSingleton
 
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton

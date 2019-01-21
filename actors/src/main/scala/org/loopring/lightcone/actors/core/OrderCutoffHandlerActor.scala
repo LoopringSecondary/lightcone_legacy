@@ -28,6 +28,7 @@ import org.loopring.lightcone.proto.ErrorCode._
 import scala.concurrent.{ExecutionContext, Future}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.actors.base.safefuture._
+import scala.util.{Failure, Success}
 
 // Owner: Yongfeng
 object OrderCutoffHandlerActor {
@@ -79,15 +80,51 @@ class OrderCutoffHandlerActor(
   def mama = actors.get(MultiAccountManagerActor.name)
   val batchSize = selfConfig.getInt("batch-size")
 
+  override def initialize() = {
+    val f = dbModule.orderCutoffJobDal.getJobs()
+    f onComplete {
+      case Success(r) =>
+        becomeReady()
+        r.foreach { job =>
+          self ! RetrieveOrdersToCancel(
+            broker = job.broker,
+            owner = job.owner,
+            tradingPair = job.tradingPair,
+            cutoff = job.cutoff
+          )
+        }
+      case Failure(e) =>
+        throw e
+    }
+    Future.unit
+  }
+
   def ready: Receive = {
 
-    // TODO du: 收到任务后先存入db，一批处理完之后删除。
-    // 如果执行失败，1. 自身重启时需要再恢复 2. 整体系统重启时直接删除不需要再恢复（accountManagerActor恢复时会处理cutoff）
     case req: OrdersCancelledEvent =>
-      dbModule.orderService
-        .getOrders(req.orderHashes)
-        .map(cancelOrders(_, OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER))
-        .sendTo(sender)
+      (for {
+        orders <- dbModule.orderService.getOrders(req.orderHashes)
+        result <- if (orders.nonEmpty) {
+          for {
+            _ <- cancelOrders(
+              orders,
+              OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER
+            )
+            cancelled <- dbModule.orderService
+              .getOrders(req.orderHashes)
+              .map { o =>
+                o.filter(
+                  r =>
+                    r.state
+                      .getOrElse(RawOrder.State())
+                      .status == OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER
+                )
+              }
+          } yield cancelled
+        } else {
+          Future.successful(Seq.empty)
+        }
+      } yield CancelOrders.Res(result.map(_.hash))).sendTo(sender)
 
     case req: CutoffEvent =>
       if (req.owner.isEmpty)
@@ -96,11 +133,26 @@ class OrderCutoffHandlerActor(
           "owner in CutoffEvent is empty"
         )
       log.debug(s"Deal with cutoff:$req")
-      self ! RetrieveOrdersToCancel(
-        broker = req.broker,
-        owner = req.owner,
-        cutoff = req.cutoff
-      )
+      for {
+        result <- dbModule.orderCutoffJobDal
+          .saveJob(
+            OrderCutoffJob(
+              broker = req.broker,
+              owner = req.owner,
+              tradingPair = req.tradingPair,
+              cutoff = req.cutoff,
+              createAt = timeProvider.getTimeMillis()
+            )
+          )
+      } yield {
+        if (result)
+          self ! RetrieveOrdersToCancel(
+            broker = req.broker,
+            owner = req.owner,
+            tradingPair = req.tradingPair,
+            cutoff = req.cutoff
+          )
+      }
 
     case req: RetrieveOrdersToCancel =>
       val cancelStatus = if (req.tradingPair.nonEmpty) {
@@ -114,7 +166,18 @@ class OrderCutoffHandlerActor(
         _ = log.debug(
           s"Handle cutoff:$req in a batch:$batchSize request, return ${affectOrders.length} orders to cancel"
         )
-        _ <- cancelOrders(affectOrders, cancelStatus)
+        _ <- if (affectOrders.nonEmpty) {
+          cancelOrders(affectOrders, cancelStatus)
+        } else {
+          dbModule.orderCutoffJobDal.deleteJob(
+            OrderCutoffJob(
+              broker = req.broker,
+              owner = req.owner,
+              tradingPair = req.tradingPair,
+              cutoff = req.cutoff
+            )
+          )
+        }
       } yield if (affectOrders.nonEmpty) self ! req
 
   }
@@ -122,7 +185,7 @@ class OrderCutoffHandlerActor(
   private def cancelOrders(
       orders: Seq[RawOrder],
       status: OrderStatus
-    ): Future[Unit] = {
+    ): Future[ErrorCode] = {
     val cancelOrderReqs = orders.map { o =>
       CancelOrder.Req(
         id = o.hash,
@@ -132,11 +195,11 @@ class OrderCutoffHandlerActor(
       )
     }
     for {
-      notified <- Future.sequence(cancelOrderReqs.map(mama ? _))
+      _ <- Future.sequence(cancelOrderReqs.map(mama ? _))
       updated <- dbModule.orderService
         .updateOrdersStatus(orders.map(_.hash), status)
       _ = if (updated != ERR_NONE)
         throw ErrorException(ERR_INTERNAL_UNKNOWN, "Update order status failed")
-    } yield Unit
+    } yield updated
   }
 }
