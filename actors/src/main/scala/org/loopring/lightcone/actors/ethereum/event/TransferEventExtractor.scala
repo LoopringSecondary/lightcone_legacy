@@ -17,22 +17,25 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
-import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{TransferEvent => PTransferEvent, _}
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.base.MetadataManager
 import org.web3j.utils.Numeric
+
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 
 class TransferEventExtractor @Inject()(
     implicit
-    val config: Config,
-    val ec: ExecutionContext)
+    val ec: ExecutionContext,
+    val metadataManager: MetadataManager)
     extends EventExtractor[PTransferEvent] {
-  // TODO (yadong) 等待永丰的PR完成，改成从统一的数据库获取。
-  val wethAddress = Address(config.getString("weth.address"))
+
+  val wethAddress = Address(
+    metadataManager.getTokenBySymbol("weth").get.meta.address
+  )
 
   def extract(block: RawBlockData): Future[Seq[PTransferEvent]] = Future {
     val transfers = ListBuffer.empty[PTransferEvent]

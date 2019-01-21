@@ -65,7 +65,7 @@ message RawOrder {
         TokenStandard token_standard_s    = 1;
         TokenStandard token_standard_b    = 2;
         TokenStandard token_standard_fee  = 3;
-        
+
         string    tranche_s            = 4;
         string    tranche_b            = 5;
         string    transfer_data_s      = 6;

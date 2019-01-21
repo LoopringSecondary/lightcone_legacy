@@ -42,6 +42,10 @@ trait EthereumSupport {
 
   implicit val rb = new EthereumCallRequestBuilder
   implicit val brb = new EthereumBatchCallRequestBuilder
+  val orderCancellerAbi = OrderCancellerAbi()
+
+  val orderCancelAddress =
+    config.getString("loopring_protocol.order-cancel-address")
 
   actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
   actors.add(
@@ -78,6 +82,8 @@ trait EthereumSupport {
       actors.add(nodeName, actor)
       actor
   }).toSeq
+
+  Thread.sleep(1000)
 
   val blockNumJsonRpcReq = JsonRpc.Request(
     "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":64}"
@@ -260,6 +266,73 @@ trait EthereumSupport {
     actors.get(EthereumAccessActor.name) ? SendRawTransaction.Req(
       getSignedTxData(tx)
     )
+  }
+
+  def cancelOrders(
+      orderHashes: Seq[String]
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val input = orderCancellerAbi.cancelOrders.pack(
+      CancelOrdersFunction.Params(
+        Numeric.hexStringToByteArray(
+          orderHashes.map(Numeric.cleanHexPrefix).mkString("")
+        )
+      )
+    )
+    val tx = Transaction(
+      inputData = input,
+      nonce = 0,
+      gasLimit = BigInt("210000"),
+      gasPrice = BigInt("200000"),
+      to = orderCancelAddress,
+      value = 0
+    )
+    sendTransaction(tx)
+  }
+
+  def cancelAllOrders(
+      cutoff: BigInt
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+
+    val input = orderCancellerAbi.cancelAllOrders.pack(
+      CancelAllOrdersFunction.Params(cutoff)
+    )
+    val tx = Transaction(
+      inputData = input,
+      nonce = 0,
+      gasLimit = BigInt("210000"),
+      gasPrice = BigInt("200000"),
+      to = orderCancelAddress,
+      value = 0
+    )
+    sendTransaction(tx)
+  }
+
+  def cancelAllOrdersByTokenPair(
+      cutoff: BigInt,
+      token1: String = LRC_TOKEN.address,
+      token2: String = WETH_TOKEN.address
+    )(
+      implicit
+      credentials: Credentials
+    ) = {
+    val input = orderCancellerAbi.cancelAllOrdersForTradingPair.pack(
+      CancelAllOrdersForTradingPairFunction.Params(token1, token2, cutoff)
+    )
+    val tx = Transaction(
+      inputData = input,
+      nonce = 0,
+      gasLimit = BigInt("210000"),
+      gasPrice = BigInt("200000"),
+      to = orderCancelAddress,
+      value = 0
+    )
+    sendTransaction(tx)
   }
 
   def getUniqueAccountWithoutEth = {

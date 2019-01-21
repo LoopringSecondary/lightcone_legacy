@@ -19,8 +19,8 @@ package org.loopring.lightcone.actors.ethereum.event
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
-import org.loopring.lightcone.proto.TokenBurnRateChangedEvent.BurnRate
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.TokenBurnRateChangedEvent._
 import scala.collection.JavaConverters._
 import scala.concurrent._
 
@@ -33,7 +33,12 @@ class TokenBurnRateEventExtractor @Inject()(
   val rateMap = config
     .getConfigList("loopring_protocol.burn-rate-table.tiers")
     .asScala
-    .map(config => config.getInt("tier") -> config.getInt("rate"))
+    .map(conf => {
+      val key = conf.getInt("tier")
+      val ratesConfig = conf.getConfig("rates")
+      val rates = ratesConfig.getInt("market") -> ratesConfig.getInt("p2p")
+      key -> rates
+    })
     .toMap
   val base = config.getInt("loopring_protocol.burn-rate-table.base")
 
@@ -46,12 +51,17 @@ class TokenBurnRateEventExtractor @Inject()(
             case (log, index) =>
               loopringProtocolAbi.unpackEvent(log.data, log.topics.toArray) match {
                 case Some(event: TokenTierUpgradedEvent.Result) =>
-                  //TODO(yadong):burnRate = rateMap(event.tier.intValue()) / base.toDouble
+                  val rates = rateMap(event.tier.intValue())
                   Some(
                     TokenBurnRateChangedEvent(
                       header = Some(header.withLogIndex(index)),
                       token = event.add,
-                      burnRate = Some(BurnRate(0.1, 0.1))
+                      burnRate = Some(
+                        BurnRate(
+                          forMarket = rates._1.doubleValue() / base,
+                          forP2P = rates._2.doubleValue() / base
+                        )
+                      )
                     )
                   )
                 case _ =>
