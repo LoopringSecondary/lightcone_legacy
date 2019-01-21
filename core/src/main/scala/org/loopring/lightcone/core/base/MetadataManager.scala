@@ -55,8 +55,9 @@ final class MetadataManager() extends Logging {
       address = meta.address.toLowerCase(),
       symbol = meta.symbol.toUpperCase()
     )
-    addressMap += m.address -> new Token(m)
-    symbolMap += m.symbol -> new Token(m)
+    val token = new Token(m)
+    addressMap += m.address -> token
+    symbolMap += m.symbol -> token
     this
   }
 
