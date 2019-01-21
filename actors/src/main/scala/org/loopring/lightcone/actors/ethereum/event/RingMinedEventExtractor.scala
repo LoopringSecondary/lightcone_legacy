@@ -26,19 +26,21 @@ import org.loopring.lightcone.actors.data._
 
 import scala.concurrent._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.ethereum.SimpleRingBatchDeserializer
 
 class RingMinedEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
-    config: Config)
+    config: Config,
+    metadataManager: MetadataManager)
     extends EventExtractor[PRingMinedEvent] {
 
   val ringSubmitterAddress =
     Address(config.getString("loopring_protocol.protocol-address")).toString()
 
   implicit val ringBatchContext = RingBatchContext(
-    lrcAddress = config.getString("ring_settlement.lrc-address")
+    lrcAddress = metadataManager.getTokenBySymbol("lrc").get.meta.address
   )
   val fillLength: Int = 8 * 64
 

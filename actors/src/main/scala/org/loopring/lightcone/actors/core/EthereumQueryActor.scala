@@ -174,7 +174,7 @@ class EthereumQueryActor(
       batchCallEthereum(sender, brb.buildRequest(delegateAddress, req, tag)) {
         result =>
           val allowances = result.map { res =>
-            byteArray2ByteString(Numeric.toBigInt(res).toByteArray)
+            bigInt2ByteString(BigInt(Numeric.toBigInt(res)))
           }
           GetAllowance.Res(owner, (tokens zip allowances).toMap)
       }
@@ -187,7 +187,7 @@ class EthereumQueryActor(
       ) { result =>
         GetFilledAmount.Res(
           (orderIds zip result.map(
-            res => byteArray2ByteString(Numeric.toBigInt(res).toByteArray)
+            res => bigInt2ByteString(BigInt(Numeric.toBigInt(res)))
           )).toMap
         )
       }
