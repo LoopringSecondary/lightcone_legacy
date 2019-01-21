@@ -46,7 +46,8 @@ class OHLCRawDataExtractor @Inject()(
           ring.fills.zipWithIndex.map {
             case (fill, index) =>
               val _fill =
-                if (index + 1 >= ring.fills.size) ring.fills.head else ring.fills(index + 1)
+                if (index + 1 >= ring.fills.size) ring.fills.head
+                else ring.fills(index + 1)
               val marketKey = convert2Hex(fill.tokenS, _fill.tokenS)
               if (metadataManager.isValidMarket(marketKey)) {
                 val marketMetadata =
