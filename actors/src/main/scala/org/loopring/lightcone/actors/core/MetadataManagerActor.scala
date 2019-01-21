@@ -102,20 +102,18 @@ class MetadataManagerActor(
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = token.address
           )).mapTo[GetBurnRate.Res]
-          //TODO(du): mock response
-          mock = burnRateRes.copy(forMarket = 0.4, forP2P = 0.4)
-          _ <- if (token.burnRateForMarket != mock.forMarket || token.burnRateForP2P != mock.forP2P)
+          _ <- if (token.burnRateForMarket != burnRateRes.forMarket || token.burnRateForP2P != burnRateRes.forP2P)
             dbModule.tokenMetadataDal
               .updateBurnRate(
                 token.address,
-                mock.forMarket,
-                mock.forP2P
+                burnRateRes.forMarket,
+                burnRateRes.forP2P
               )
           else Future.successful(Unit)
         } yield
           token.copy(
-            burnRateForMarket = mock.forMarket,
-            burnRateForP2P = mock.forP2P
+            burnRateForMarket = burnRateRes.forMarket,
+            burnRateForP2P = burnRateRes.forP2P
           )
       })
     } yield {

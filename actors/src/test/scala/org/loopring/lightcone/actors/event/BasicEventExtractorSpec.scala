@@ -24,14 +24,11 @@ import org.loopring.lightcone.proto.AddressBalanceUpdated
 
 import scala.concurrent._
 
-class EventExtractorSpec
+class BasicEventExtractorSpec
     extends CommonSpec
-    with EventExtractorSupport
-    with EthereumSupport {
-
-  override def beforeAll() {
-    info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
-  }
+    with EthereumSupport
+    with MetadataManagerSupport
+    with EventExtractorSupport {
 
   "extract all kind of events " must {
 
@@ -50,25 +47,33 @@ class EventExtractorSpec
                              |    base = 1000,
                              |    tiers = [
                              |      {
-                             |        name = "TIER_1"
                              |        tier = 3,
-                             |        rate = 25
+                             |        rates {
+                             |          market:50,
+                             |          p2p:5
+                             |        }
                              |      },
                              |      {
-                             |        name = "TIER_2"
                              |        tier = 2,
-                             |        rate = 150
+                             |        rates {
+                             |          market:200,
+                             |          p2p:20
+                             |        }
                              |      },
                              |      {
-                             |        name = "TIER_3"
                              |        tier = 1,
-                             |        rate = 300
+                             |        rates {
+                             |          market:400,
+                             |          p2p:30
+                             |        }
                              |      },
                              |      {
-                             |        name = "TIER_4"
                              |        tier = 0,
-                             |        rate = 500
-                             |      },
+                             |        rates {
+                             |          market:600,
+                             |          p2p:60
+                             |        }
+                             |      }
                              |    ]
                              |  }
                              |}
@@ -76,7 +81,8 @@ class EventExtractorSpec
 
       val selfConfig = ConfigFactory.parseString(selfConfigStr)
 
-      val transferExtractor = new TransferEventExtractor()(selfConfig, ec)
+      val transferExtractor =
+        new TransferEventExtractor()
 
       val transfers =
         Await.result(

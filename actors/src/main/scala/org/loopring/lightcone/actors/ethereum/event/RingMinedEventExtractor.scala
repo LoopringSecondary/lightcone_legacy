@@ -23,17 +23,25 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.actors.data._
+
 import scala.concurrent._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.ethereum.SimpleRingBatchDeserializer
 
 class RingMinedEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
-    config: Config)
+    config: Config,
+    metadataManager: MetadataManager)
     extends EventExtractor[PRingMinedEvent] {
 
   val ringSubmitterAddress =
     Address(config.getString("loopring_protocol.protocol-address")).toString()
+
+  implicit val ringBatchContext = RingBatchContext(
+    lrcAddress = metadataManager.getTokenBySymbol("lrc").get.meta.address
+  )
   val fillLength: Int = 8 * 64
 
   def extract(block: RawBlockData): Future[Seq[PRingMinedEvent]] = Future {
@@ -46,8 +54,7 @@ class RingMinedEventExtractor @Inject()(
               loopringProtocolAbi
                 .unpackEvent(log.data, log.topics.toArray) match {
                 case Some(event: RingMinedEvent.Result) =>
-                  val fillContent =
-                    Numeric.cleanHexPrefix(event._fills).substring(128)
+                  val fillContent = Numeric.cleanHexPrefix(event._fills)
                   val orderFilledEvents =
                     (0 until (fillContent.length / fillLength)).map { index =>
                       fillContent.substring(
@@ -84,8 +91,24 @@ class RingMinedEventExtractor @Inject()(
           ringSubmitterAbi.unpackFunctionInput(tx.input) match {
             case Some(params: SubmitRingsFunction.Params) =>
               val ringData = params.data
-              //TODO (yadong) 等待孔亮的提供具体的解析方法
-              Seq.empty
+              new SimpleRingBatchDeserializer(Numeric.toHexString(ringData)).deserialize match {
+                case Left(_) =>
+                  Seq.empty
+                case Right(ringBatch) =>
+                  ringBatch.rings.map { ring =>
+                    PRingMinedEvent(
+                      header = Some(header),
+                      fills = ring.orderIndexes.map(index => {
+                        val order = ringBatch.orders(index)
+                        OrderFilledEvent(
+                          header = Some(header),
+                          orderHash = order.hash,
+                          tokenS = order.tokenS
+                        )
+                      })
+                    )
+                  }
+              }
             case _ =>
               Seq.empty
           }
@@ -108,6 +131,7 @@ class RingMinedEventExtractor @Inject()(
       ringHash = event._ringHash,
       ringIndex = event._ringIndex.longValue(),
       filledAmountS = BigInt(Numeric.toBigInt(data.substring(64 * 3, 64 * 4))),
+      split = BigInt(Numeric.toBigInt(data.substring(64 * 4, 64 * 5))),
       filledAmountFee = BigInt(
         Numeric
           .toBigInt(data.substring(64 * 5, 64 * 6))
