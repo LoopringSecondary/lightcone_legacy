@@ -51,7 +51,9 @@ class AccountManagerActor(
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager)
-    extends InitializationRetryActor {
+    extends Actor
+    with Stash
+    with ActorLogging {
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
@@ -68,7 +70,7 @@ class AccountManagerActor(
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
-  override def initialize() = {
+  override def preStart() = {
     val cutoffReqs = (metadataManager.getValidMarketKeys map { m =>
       for {
         res <- (ethereumQueryActor ? GetCutoff.Req(
@@ -94,71 +96,29 @@ class AccountManagerActor(
         accountCutoffState.setCutoff(cutoff.toLong)
       })
 
-    val f = for {
-      _ <- Future.sequence(cutoffReqs)
-    } yield {}
-
-    f onComplete {
-    case Success(value) =>
-      becomeReady()
-    case Failure(e) =>
-      throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"failed to start AccountManagerActor: ${e.getMessage}"
-      )
+    Future.sequence(cutoffReqs) onComplete {
+      case Success(res) =>
+        self ! Notify("initialized")
+      case Failure(e) =>
+        log.error(s"failed to start AccountManagerActor: ${e.getMessage}")
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"failed to start AccountManagerActor: ${e.getMessage}"
+        )
     }
-    f
   }
 
-//  override def preStart() = {
-//    val cutoffReqs = (metadataManager.getValidMarketKeys map { m =>
-//      for {
-//        res <- (ethereumQueryActor ? GetCutoff.Req(
-//          broker = address,
-//          owner = address,
-//          marketKey = m
-//        )).mapAs[GetCutoff.Res]
-//      } yield {
-//        val cutoff: BigInt = res.cutoff
-//        accountCutoffState.setTradingPairCutoff(
-//          Numeric.toBigInt(m),
-//          cutoff.toLong
-//        )
-//      }
-//    }) +
-//      (for {
-//        res <- (ethereumQueryActor ? GetCutoff.Req(
-//          broker = address,
-//          owner = address
-//        )).mapAs[GetCutoff.Res]
-//      } yield {
-//        val cutoff: BigInt = res.cutoff
-//        accountCutoffState.setCutoff(cutoff.toLong)
-//      })
-//
-//    Future.sequence(cutoffReqs) onComplete {
-//      case Success(res) =>
-//        self ! Notify("initialized")
-//      case Failure(e) =>
-//        log.error(s"failed to start AccountManagerActor: ${e.getMessage}")
-//        throw ErrorException(
-//          ErrorCode.ERR_INTERNAL_UNKNOWN,
-//          s"failed to start AccountManagerActor: ${e.getMessage}"
-//        )
-//    }
-//  }
-//
-//  def receive: Receive = initialReceive
-//
-//  def initialReceive: Receive = {
-//    case Notify("initialized", _) =>
-//      unstashAll()
-//      context.become(normalReceive)
-//    case _ =>
-//      stash()
-//  }
+  def receive: Receive = initialReceive
 
-  def ready: Receive = LoggingReceive {
+  def initialReceive: Receive = {
+    case Notify("initialized", _) =>
+      unstashAll()
+      context.become(normalReceive)
+    case _ =>
+      stash()
+  }
+
+  def normalReceive: Receive = LoggingReceive {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
