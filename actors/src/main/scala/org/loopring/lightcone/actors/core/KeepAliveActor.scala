@@ -106,6 +106,7 @@ class KeepAliveActor @Inject()(
   def ready: Receive = receiveRepeatdJobs
 
   //todo: 激活的market包含什么，disable、enable、readonly
+  //todo:disable的是否不应该再激活了
   private def initOrderbookManager(): Future[Unit] =
     for {
       _ <- Future.sequence(metadataManager.getValidMarketIds map {

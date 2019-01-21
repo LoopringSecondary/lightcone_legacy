@@ -316,7 +316,6 @@ class MarketManagerActor(
   def recoverOrder(xraworder: RawOrder): Future[Any] =
     submitOrder(xraworder)
 
-  //todo:是否会提交到该market，需要先确定marketMetadata.validMarket的用处，如果已经做了处理则不需再次处理
   def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
     marketMetadata.status match {
       case MarketMetadata.Status.DISABLED
