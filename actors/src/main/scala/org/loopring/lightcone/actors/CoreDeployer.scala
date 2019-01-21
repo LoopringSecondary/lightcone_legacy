@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors
 
 import akka.actor._
+import akka.pattern._
 import akka.cluster._
 import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
@@ -36,11 +37,14 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.proto.{JsonRpc, Notify}
 import org.slf4s.Logging
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
+
 import scala.concurrent._
 
 class CoreDeployer @Inject()(
@@ -70,24 +74,92 @@ class CoreDeployer @Inject()(
   def deploy() {
 
     //-----------deploy local actors-----------
+    actors.add(BadMessageListener.name, BadMessageListener.start)
+
+    actors.add(
+      MultiAccountManagerMessageValidator.name,
+      MessageValidationActor(
+        new MultiAccountManagerMessageValidator(),
+        MultiAccountManagerActor.name,
+        MultiAccountManagerMessageValidator.name
+      )
+    )
+
+    actors.add(
+      DatabaseQueryMessageValidator.name,
+      MessageValidationActor(
+        new DatabaseQueryMessageValidator(),
+        DatabaseQueryActor.name,
+        DatabaseQueryMessageValidator.name
+      )
+    )
+
+    actors.add(
+      EthereumQueryMessageValidator.name,
+      MessageValidationActor(
+        new EthereumQueryMessageValidator(),
+        EthereumQueryActor.name,
+        EthereumQueryMessageValidator.name
+      )
+    )
+
+    actors.add(
+      OrderbookManagerMessageValidator.name,
+      MessageValidationActor(
+        new OrderbookManagerMessageValidator(),
+        OrderbookManagerActor.name,
+        OrderbookManagerMessageValidator.name
+      )
+    )
+
+    actors.add(
+      TransactionRecordMessageValidator.name,
+      MessageValidationActor(
+        new TransactionRecordMessageValidator(),
+        TransactionRecordActor.name,
+        TransactionRecordMessageValidator.name
+      )
+    )
+
+    actors.add(
+      MetadataManagerValidator.name,
+      MessageValidationActor(
+        new MetadataManagerValidator(),
+        MetadataManagerActor.name,
+        MetadataManagerValidator.name
+      )
+    )
+
+    //-----------deploy local actors-----------
     //todo: OnMemberUp执行有时间限制，超时会有TimeoutException
     Cluster(system).registerOnMemberUp {
-      //-----------deploy sharded actors-----------
-      actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
-      actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
-      actors.add(GasPriceActor.name, GasPriceActor.start)
-      actors.add(OrderPersistenceActor.name, OrderPersistenceActor.start)
-      actors.add(OrderRecoverActor.name, OrderRecoverActor.start)
-      actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
-      actors.add(MarketManagerActor.name, MarketManagerActor.start)
-      actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
-
-      actors.add(TransactionRecordActor.name, TransactionRecordActor.start)
-
       //deploy ethereum conntionPools
       HttpConnector.start.foreach {
         case (name, actor) => actors.add(name, actor)
       }
+
+      //todo:需要再次确认启动依赖顺序问题
+      var inited = false
+      while (!inited) {
+        try {
+          val f =
+            Future.sequence(HttpConnector.connectorNames(config).map {
+              case (nodeName, node) =>
+                val f1 = actors.get(nodeName) ? Notify("init")
+                val r = Await.result(f1, timeout.duration)
+                println(s"####  init111  HttpConnector  ${r}")
+                Future.unit
+            })
+          Await.result(f, timeout.duration)
+          Thread.sleep(500)
+          inited = true
+        } catch {
+          case e: Exception =>
+            println(s"#### init HttpConnector ${e.printStackTrace}")
+        }
+      }
+
+      //todo：按照模块分布，因为启动有依赖顺序
 
       //-----------deploy singleton actors-----------
       actors.add(
@@ -113,66 +185,22 @@ class CoreDeployer @Inject()(
         RingSettlementManagerActor.start
       )
 
+      //-----------deploy sharded actors-----------
+      actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
+      actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
+      actors.add(GasPriceActor.name, GasPriceActor.start)
+      actors.add(OrderPersistenceActor.name, OrderPersistenceActor.start)
+      actors.add(OrderRecoverActor.name, OrderRecoverActor.start)
+      actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
+      actors.add(MarketManagerActor.name, MarketManagerActor.start)
+      actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
+
+      actors.add(TransactionRecordActor.name, TransactionRecordActor.start)
+
       //-----------deploy local actors that depend on cluster aware actors-----------
       actors.add(EntryPointActor.name, EntryPointActor.start)
 
-      //-----------deploy local actors-----------
-      actors.add(BadMessageListener.name, BadMessageListener.start)
       actors.add(MetadataRefresher.name, MetadataRefresher.start)
-
-      actors.add(
-        MultiAccountManagerMessageValidator.name,
-        MessageValidationActor(
-          new MultiAccountManagerMessageValidator(),
-          MultiAccountManagerActor.name,
-          MultiAccountManagerMessageValidator.name
-        )
-      )
-
-      actors.add(
-        DatabaseQueryMessageValidator.name,
-        MessageValidationActor(
-          new DatabaseQueryMessageValidator(),
-          DatabaseQueryActor.name,
-          DatabaseQueryMessageValidator.name
-        )
-      )
-
-      actors.add(
-        EthereumQueryMessageValidator.name,
-        MessageValidationActor(
-          new EthereumQueryMessageValidator(),
-          EthereumQueryActor.name,
-          EthereumQueryMessageValidator.name
-        )
-      )
-
-      actors.add(
-        OrderbookManagerMessageValidator.name,
-        MessageValidationActor(
-          new OrderbookManagerMessageValidator(),
-          OrderbookManagerActor.name,
-          OrderbookManagerMessageValidator.name
-        )
-      )
-
-      actors.add(
-        TransactionRecordMessageValidator.name,
-        MessageValidationActor(
-          new TransactionRecordMessageValidator(),
-          TransactionRecordActor.name,
-          TransactionRecordMessageValidator.name
-        )
-      )
-
-      actors.add(
-        MetadataManagerValidator.name,
-        MessageValidationActor(
-          new MetadataManagerValidator(),
-          MetadataManagerActor.name,
-          MetadataManagerValidator.name
-        )
-      )
 
       actors.add(KeepAliveActor.name, KeepAliveActor.start)
       //-----------deploy JSONRPC service-----------

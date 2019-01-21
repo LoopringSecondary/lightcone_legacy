@@ -28,8 +28,9 @@ import org.loopring.lightcone.actors.core.MetadataManagerActor
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
+
 import scala.concurrent._
-import scala.util.{Failure, Success}
+import scala.util._
 
 // Owner: Hongyu
 object MetadataRefresher {
@@ -94,7 +95,7 @@ class MetadataRefresher(
     extends InitializationRetryActor
     with Stash
     with ActorLogging {
-  val metadataManagerActor = actors.get(MetadataManagerActor.name)
+  def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(MetadataManagerActor.pubsubTopic, self)

@@ -30,37 +30,40 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
       TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
         status = TokenMetadata.Status.ENABLED,
-        symbol = "LRC",
-        name = "Loopring Token",
+        symbol = "T1",
+        name = "T1 Token",
         address = lrcAddress,
-        unit = "LRC",
+        unit = "T1",
         decimals = 18,
         precision = 6,
-        burnRate = 0.1,
+        burnRateForMarket = 0.1,
+        burnRateForP2P = 0.1,
         usdPrice = 10
       ),
       TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
         status = TokenMetadata.Status.ENABLED,
-        symbol = "BNB",
-        name = "Binance Token",
+        symbol = "T2",
+        name = "T2 Token",
         address = "0x222",
-        unit = "BNB",
+        unit = "T2",
         decimals = 18,
         precision = 6,
-        burnRate = 0.2,
+        burnRateForMarket = 0.2,
+        burnRateForP2P = 0.2,
         usdPrice = 8
       ),
       TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
         status = TokenMetadata.Status.ENABLED,
-        symbol = "0x",
-        name = "ZeroX Token",
+        symbol = "T3",
+        name = "T3 Token",
         address = "0x333",
-        unit = "0x",
+        unit = "T3",
         decimals = 18,
         precision = 6,
-        burnRate = 0.3,
+        burnRateForMarket = 0.3,
+        burnRateForP2P = 0.3,
         usdPrice = 7
       )
     )
@@ -72,17 +75,18 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val r2 = dal.getTokens(tokens1.map(_.address))
     val res2 = Await.result(r2.mapTo[Seq[TokenMetadata]], 5.second)
     assert(res2.length == tokens1.length)
-    val lrc = res2.find(_.symbol == "LRC").getOrElse(TokenMetadata())
+    val lrc = res2.find(_.symbol == "T1").getOrElse(TokenMetadata())
     assert(
       lrc.`type` == TokenMetadata.Type.TOKEN_TYPE_ERC20 &&
         lrc.status == TokenMetadata.Status.ENABLED &&
-        lrc.symbol == "LRC" &&
-        lrc.name == "Loopring Token" &&
+        lrc.symbol == "T1" &&
+        lrc.name == "T1 Token" &&
         lrc.address == lrcAddress &&
-        lrc.unit == "LRC" &&
+        lrc.unit == "T1" &&
         lrc.decimals == 18 &&
         lrc.precision == 6 &&
-        lrc.burnRate == 0.1 &&
+        lrc.burnRateForMarket == 0.1 &&
+        lrc.burnRateForP2P == 0.1 &&
         lrc.usdPrice == 10
     )
 
@@ -94,7 +98,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val r4 = dal.getTokens(Seq(token3.address))
     val res4 = Await.result(r4.mapTo[Seq[TokenMetadata]], 5.second)
     assert(res4.length == 1)
-    val lrc1 = res4.find(_.symbol == "LRC")
+    val lrc1 = res4.find(_.symbol == "T1")
     assert(lrc1.nonEmpty && lrc1.get.precision == 6)
 
     info(
@@ -107,46 +111,48 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     assert(res5 == ErrorCode.ERR_PERSISTENCE_INTERNAL)
     val r6 = dal.getTokens(Seq(lrc.address))
     val res6 = Await.result(r6.mapTo[Seq[TokenMetadata]], 5.second)
-    val lrc2 = res4.find(_.symbol == "LRC")
+    val lrc2 = res4.find(_.symbol == "T1")
     assert(lrc2.nonEmpty && lrc2.get.address == lrcAddress)
 
     info("update LRC's burn rate")
-    val r7 = dal.updateBurnRate(lrcAddress, 0.5)
+    val r7 = dal.updateBurnRate(lrcAddress, 0.5, 0.6)
     val res7 = Await.result(r7.mapTo[ErrorCode], 5.second)
     assert(res7 == ErrorCode.ERR_NONE)
     val r8 = dal.getTokens(Seq(lrcAddress))
     val res8 = Await.result(r8.mapTo[Seq[TokenMetadata]], 5.second)
-    val lrc3 = res8.find(_.symbol == "LRC")
+    val lrc3 = res8.find(_.symbol == "T1")
     assert(
-      lrc3.nonEmpty && lrc3.get.address == lrcAddress && lrc3.get.burnRate == 0.5
+      lrc3.nonEmpty && lrc3.get.address == lrcAddress && lrc3.get.burnRateForMarket == 0.5 && lrc3.get.burnRateForP2P == 0.6
     )
 
     info(
-      "update BNB's type, status, symbol, name, unit, decimal, website, precision, burn rate, usd price"
+      "update T2's type, status, symbol, name, unit, decimal, website, precision, burn rate, usd price"
     )
-    val bnb = res2.find(_.symbol == "BNB").getOrElse(TokenMetadata())
+    val bnb = res2.find(_.symbol == "T2").getOrElse(TokenMetadata())
     assert(
       bnb.`type` == TokenMetadata.Type.TOKEN_TYPE_ERC20 &&
         bnb.status == TokenMetadata.Status.ENABLED &&
-        bnb.symbol == "BNB" &&
-        bnb.name == "Binance Token" &&
+        bnb.symbol == "T2" &&
+        bnb.name == "T2 Token" &&
         bnb.address == "0x222" &&
-        bnb.unit == "BNB" &&
+        bnb.unit == "T2" &&
         bnb.decimals == 18 &&
         bnb.precision == 6 &&
-        bnb.burnRate == 0.2 &&
+        bnb.burnRateForMarket == 0.2 &&
+        bnb.burnRateForP2P == 0.2 &&
         bnb.usdPrice == 8
     )
     val r9 = dal.updateToken(
       bnb.copy(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC1400,
         status = TokenMetadata.Status.DISABLED,
-        symbol = "BNB1",
-        name = "Biance Token1",
-        unit = "BNB1",
+        symbol = "T2_",
+        name = "T2_ Token",
+        unit = "T2_",
         decimals = 12,
         precision = 8,
-        burnRate = 0.5,
+        burnRateForMarket = 0.5,
+        burnRateForP2P = 0.6,
         usdPrice = 7
       )
     )
@@ -154,17 +160,18 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     assert(res9 == ErrorCode.ERR_NONE)
     val r10 = dal.getTokens(Seq(bnb.address))
     val res10 = Await.result(r10.mapTo[Seq[TokenMetadata]], 5.second)
-    val bnb1 = res10.find(_.symbol == "BNB1").getOrElse(TokenMetadata())
+    val bnb1 = res10.find(_.symbol == "T2_").getOrElse(TokenMetadata())
     assert(
       bnb1.`type` == TokenMetadata.Type.TOKEN_TYPE_ERC1400 &&
         bnb1.status == TokenMetadata.Status.DISABLED &&
-        bnb1.symbol == "BNB1" &&
-        bnb1.name == "Biance Token1" &&
-        bnb1.unit == "BNB1" &&
+        bnb1.symbol == "T2_" &&
+        bnb1.name == "T2_ Token" &&
+        bnb1.unit == "T2_" &&
         bnb1.address == "0x222" &&
         bnb1.decimals == 12 &&
         bnb1.precision == 8 &&
-        bnb1.burnRate == 0.5 &&
+        bnb1.burnRateForMarket == 0.5 &&
+        bnb1.burnRateForP2P == 0.6 &&
         bnb1.usdPrice == 7
     )
   }

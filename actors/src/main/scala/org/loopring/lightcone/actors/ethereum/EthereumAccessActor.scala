@@ -73,7 +73,7 @@ class EthereumAccessActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef])
-    extends ActorWithPathBasedConfig(EthereumAccessActor.name) {
+    extends InitializationRetryActor {
 
   private def monitor = actors.get(EthereumClientMonitor.name)
 
