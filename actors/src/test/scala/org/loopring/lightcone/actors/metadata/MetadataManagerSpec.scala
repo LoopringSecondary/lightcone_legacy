@@ -26,7 +26,6 @@ import org.loopring.lightcone.actors.core.{
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.MetadataManagerValidator
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._
@@ -73,7 +72,12 @@ class MetadataManagerSpec
             .toLowerCase()
         )
 
-        val meta3 = metadataManager.getMarketMetadata(m.marketId.get)
+        val meta3 = metadataManager.getMarketMetadata(
+          MarketId(
+            primary = m.marketId.get.primary.toLowerCase(),
+            secondary = m.marketId.get.secondary.toLowerCase()
+          )
+        )
         val meta4 = metadataManager.getMarketMetadata(
           MarketId(
             primary = "0x" + m.marketId.get.primary.substring(2).toUpperCase(),

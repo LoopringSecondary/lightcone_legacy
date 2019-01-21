@@ -82,10 +82,7 @@ final class MetadataManager() extends Logging {
   }
 
   def addToken(meta: TokenMetadata) = this.synchronized {
-    val m = meta.copy(
-      address = meta.address.toLowerCase(),
-      symbol = meta.symbol.toUpperCase()
-    )
+    val m = MetadataManager.formatToken(meta)
     val token = new Token(m)
     addressMap += m.address -> token
     symbolMap += m.symbol -> token
@@ -120,27 +117,9 @@ final class MetadataManager() extends Logging {
   def getTokens = addressMap.values.toSeq
 
   def addMarket(meta: MarketMetadata) = this.synchronized {
-    val marketId = meta.marketId.getOrElse(
-      throw ErrorException(ErrorCode.ERR_INVALID_ARGUMENT, "marketId is empty")
-    )
-    if (MarketKey(marketId).toHexString != meta.marketHash.toLowerCase())
-      throw ErrorException(
-        ErrorCode.ERR_INVALID_ARGUMENT,
-        s"marketId:$marketId mismatch marketHash:${meta.marketHash}"
-      )
-    val m = meta.copy(
-      primaryTokenSymbol = meta.primaryTokenSymbol.toUpperCase(),
-      secondaryTokenSymbol = meta.secondaryTokenSymbol.toUpperCase(),
-      marketId = Some(
-        MarketId(
-          primary = marketId.primary.toLowerCase(),
-          secondary = marketId.secondary.toLowerCase()
-        )
-      ),
-      marketHash = meta.marketHash.toLowerCase()
-    )
-    marketMetadatasMap += m.marketHash.toLowerCase() -> m
-    val itemMap = m.marketHash.toLowerCase() -> m.marketId.get
+    val m = MetadataManager.formatMarket(meta)
+    marketMetadatasMap += m.marketHash -> m
+    val itemMap = m.marketHash -> m.marketId.get
     m.status match {
       case MarketMetadata.Status.DISABLED =>
         disabledMarkets += itemMap
@@ -214,4 +193,6 @@ final class MetadataManager() extends Logging {
   def getEnabledMarketIds = enabledMarkets
 
   def getDisabledMarketIds = disabledMarkets
+
+  def getReadOnlyMarketIds = readOnlyMarkets
 }
