@@ -207,6 +207,8 @@ class EthereumQueryActor(
         result =>
           GetBurnRate.Res(Numeric.toBigInt(result).doubleValue() / 1000)
       }
+    case req: Notify =>
+      sender ! req
   }
 
   private def callEthereum(

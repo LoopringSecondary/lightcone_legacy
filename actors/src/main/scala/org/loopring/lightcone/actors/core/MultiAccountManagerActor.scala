@@ -135,6 +135,7 @@ class MultiAccountManagerActor(
       log.debug(s"actor recover started: ${self.path}")
       context.become(recover)
       for {
+        _ <- actors.get(EthereumQueryActor.name) ? Notify() //检测以太坊准备好之后才发起恢复请求
         _ <- actors.get(OrderRecoverCoordinator.name) ?
           ActorRecover.Request(
             addressShardingEntity = entityId,
