@@ -19,6 +19,7 @@ package org.loopring.lightcone.core.base
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.lib.MarketHashProvider._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
@@ -150,7 +151,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
     marketMetadatasMap.get(marketKey.toLowerCase())
 
   def getMarketMetadata(marketId: MarketId): Option[MarketMetadata] =
-    getMarketMetadata(MarketKey(marketId).toString)
+    getMarketMetadata(marketId.keyHex())
 
   def assertMarketIdIsValid(marketIdOpt: Option[MarketId]): Option[MarketId] = {
     marketIdOpt match {
@@ -176,14 +177,14 @@ final class MetadataManager @Inject()(implicit val config: Config)
     marketMetadatasMap.contains(marketKey.toLowerCase())
 
   def isValidMarket(marketId: MarketId): Boolean =
-    isValidMarket(MarketKey(marketId).toString)
+    isValidMarket(marketId.keyHex())
 
   // check market is at enabled status
   def isEnabledMarket(marketKey: String): Boolean =
     enabledMarkets.contains(marketKey.toLowerCase())
 
   def isEnabledMarket(marketId: MarketId): Boolean =
-    isEnabledMarket(MarketKey(marketId).toString)
+    isEnabledMarket(marketId.keyHex())
 
   def getValidMarketKeys = marketMetadatasMap.keySet
 

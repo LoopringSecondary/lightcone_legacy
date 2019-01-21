@@ -50,8 +50,6 @@ abstract class CommonSpec(configStr: String = "")
 
   info(s"sbt actors/'testOnly *${this.getClass}'")
 
-
-
   override def afterAll: Unit = {
     info(s"${this.getClass} finished.")
     super.afterAll()
