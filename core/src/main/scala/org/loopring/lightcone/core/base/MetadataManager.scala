@@ -56,6 +56,9 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   private var marketMetadatasMap = Map.empty[String, MarketMetadata]
 
+  var marketSubscribees = Set.empty[(MarketMetadata) => Unit]
+  var tokenSubscribees = Set.empty[(TokenMetadata) => Unit]
+
   def reset(
       tokens: Seq[TokenMetadata],
       markets: Seq[MarketMetadata]
@@ -68,15 +71,25 @@ final class MetadataManager @Inject()(implicit val config: Config)
     readOnlyMarkets = Map.empty
     marketMetadatasMap = Map.empty
     markets.foreach(addMarket)
+
+    //subscribe
+    tokens.foreach { t =>
+      tokenSubscribees foreach (_(t))
+    }
+    markets.foreach { m =>
+      {
+        marketSubscribees foreach (_(m))
+      }
+    }
   }
 
-  def addToken(meta: TokenMetadata) = this.synchronized {
+  private def addToken(meta: TokenMetadata) = this.synchronized {
     addressMap += meta.address.toLowerCase() -> new Token(meta)
     symbolMap += meta.symbol.toUpperCase() -> new Token(meta)
     this
   }
 
-  def addTokens(meta: Seq[TokenMetadata]) = {
+  private def addTokens(meta: Seq[TokenMetadata]) = {
     meta.foreach(addToken)
     this
   }
@@ -103,7 +116,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   def getTokens = addressMap.values.toSeq
 
-  def addMarket(meta: MarketMetadata) = this.synchronized {
+  private def addMarket(meta: MarketMetadata) = this.synchronized {
     marketMetadatasMap += meta.marketHash.toLowerCase() -> meta
     val itemMap = meta.marketHash.toLowerCase() -> meta.marketId.get
     meta.status match {
@@ -122,7 +135,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
     this
   }
 
-  def addMarkets(meta: Seq[MarketMetadata]) = {
+  private def addMarkets(meta: Seq[MarketMetadata]) = {
     meta.foreach(addMarket)
     this
   }
@@ -179,4 +192,13 @@ final class MetadataManager @Inject()(implicit val config: Config)
   def getEnabledMarketIds = enabledMarkets
 
   def getDisabledMarketIds = disabledMarkets
+
+  def subscribToken(subFun: (TokenMetadata) => Unit) = {
+    tokenSubscribees = tokenSubscribees + subFun
+  }
+
+  def subscribMarket(subFun: (MarketMetadata) => Unit) = {
+    marketSubscribees = marketSubscribees + subFun
+  }
+
 }

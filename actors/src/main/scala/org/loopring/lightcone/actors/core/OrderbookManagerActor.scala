@@ -32,6 +32,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
 import scala.concurrent._
+import org.loopring.lightcone.actors.data._
 
 // Owner: Hongyu
 object OrderbookManagerActor extends ShardedByMarket with Logging {
@@ -87,7 +88,8 @@ class OrderbookManagerActor(
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
       OrderbookManagerActor.extractEntityId
-    ) {
+    )
+    with MarketStatusSupport {
 
   val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
@@ -130,4 +132,14 @@ class OrderbookManagerActor(
     case msg => log.info(s"not supported msg:${msg}, ${marketId}")
 
   }
+
+  def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
+    marketMetadata.status match {
+      case MarketMetadata.Status.DISABLED
+        if marketMetadata.getMarketId.entityId == entityId =>
+        context.stop(self)
+      case _ => //READONLY的不处理，需要能继续可以查询得到orderbook
+    }
+  }
+
 }

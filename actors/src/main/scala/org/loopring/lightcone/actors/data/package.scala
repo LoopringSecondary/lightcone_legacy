@@ -208,5 +208,9 @@ package object data {
       Numeric.toBigInt(marketId.primary) xor
         Numeric.toBigInt(marketId.secondary)
     }
+
+    def entityId(): String = {
+      Math.abs(marketId.key().hashCode).toString
+    }
   }
 }

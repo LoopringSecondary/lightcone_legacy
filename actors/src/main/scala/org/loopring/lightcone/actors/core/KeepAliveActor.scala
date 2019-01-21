@@ -104,7 +104,7 @@ class KeepAliveActor @Inject()(
   //定时发送请求，来各个需要初始化的actor保持可用
   def ready: Receive = receiveRepeatdJobs
 
-  //todo: market的配置读取，可以等待永丰处理完毕再优化
+  //todo: 激活的market包含什么，disable、enable、readonly
   private def initOrderbookManager(): Future[Unit] =
     for {
       _ <- Future.sequence(metadataManager.getValidMarketIds map {
