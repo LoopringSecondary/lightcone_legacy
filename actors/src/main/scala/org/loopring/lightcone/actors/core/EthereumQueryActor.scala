@@ -32,24 +32,22 @@ import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.ethereum._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 // Owner: Yadong
 object EthereumQueryActor extends ShardedEvenly {
   val name = "ethereum_query"
 
   def start(
-      implicit
-      system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      actors: Lookup[ActorRef],
-      rb: EthereumCallRequestBuilder,
-      brb: EthereumBatchCallRequestBuilder,
-      deployActorsIgnoringRoles: Boolean
-    ): ActorRef = {
+    implicit system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    rb: EthereumCallRequestBuilder,
+    brb: EthereumBatchCallRequestBuilder,
+    deployActorsIgnoringRoles: Boolean): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -60,21 +58,19 @@ object EthereumQueryActor extends ShardedEvenly {
       typeName = name,
       entityProps = Props(new EthereumQueryActor()),
       settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+      messageExtractor = messageExtractor)
   }
 }
 
 class EthereumQueryActor(
-    implicit
-    val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val rb: EthereumCallRequestBuilder,
-    val brb: EthereumBatchCallRequestBuilder)
-    extends InitializationRetryActor {
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeProvider: TimeProvider,
+  val timeout: Timeout,
+  val actors: Lookup[ActorRef],
+  val rb: EthereumCallRequestBuilder,
+  val brb: EthereumBatchCallRequestBuilder)
+  extends InitializationRetryActor {
 
   val loopringConfig = config.getConfig("loopring_protocol")
 
@@ -115,8 +111,7 @@ class EthereumQueryActor(
           case head :: tail =>
             (ethereumAccessorActor ? EthGetBalance.Req(
               address = Address(owner).toString,
-              tag
-            )).mapAs[EthGetBalance.Res].map(Some(_))
+              tag)).mapAs[EthGetBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
 
@@ -125,9 +120,7 @@ class EthereumQueryActor(
             balanceAndAllowanceMap = result.balanceAndAllowanceMap +
               (ethToken.head -> BalanceAndAllowance(
                 BigInt(Numeric.toBigInt(ethRes.get.result)),
-                BigInt(0)
-              ))
-          )
+                BigInt(0))))
         } else {
           result
         }
@@ -151,8 +144,7 @@ class EthereumQueryActor(
           case head :: tail =>
             (ethereumAccessorActor ? EthGetBalance.Req(
               address = Address(owner).toString,
-              tag
-            )).mapAs[EthGetBalance.Res].map(Some(_))
+              tag)).mapAs[EthGetBalance.Res].map(Some(_))
           case Nil => Future.successful(None)
         }
 
@@ -160,9 +152,7 @@ class EthereumQueryActor(
           result.copy(
             balanceMap = result.balanceMap +
               (Address.ZERO.toString -> BigInt(
-                Numeric.toBigInt(ethRes.get.result)
-              ))
-          )
+                Numeric.toBigInt(ethRes.get.result))))
         } else {
           result
         }
@@ -181,14 +171,11 @@ class EthereumQueryActor(
       batchCallEthereum(
         sender,
         brb
-          .buildRequest(tradeHistoryAddress, req, tag)
-      ) { result =>
-        GetFilledAmount.Res(
-          (orderIds zip result.map(
-            res => ByteString.copyFrom(Numeric.toBigInt(res).toByteArray)
-          )).toMap
-        )
-      }
+          .buildRequest(tradeHistoryAddress, req, tag)) { result =>
+          GetFilledAmount.Res(
+            (orderIds zip result.map(
+              res => ByteString.copyFrom(Numeric.toBigInt(res).toByteArray))).toMap)
+        }
 
     case req: GetOrderCancellation.Req =>
       callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress, req.tag)) {
@@ -207,15 +194,13 @@ class EthereumQueryActor(
         result =>
           GetBurnRate.Res(Numeric.toBigInt(result).doubleValue() / 1000)
       }
-    case req: Notify =>
+    case req @ Notify("echo", _) =>
       sender ! req
   }
 
   private def callEthereum(
-      sender: ActorRef,
-      req: AnyRef
-    )(resp: String => AnyRef
-    ) = {
+    sender: ActorRef,
+    req: AnyRef)(resp: String => AnyRef) = {
     (ethereumAccessorActor ? req)
       .mapAs[EthCall.Res]
       .map(_.result)
@@ -224,10 +209,8 @@ class EthereumQueryActor(
   }
 
   private def batchCallEthereum(
-      sender: ActorRef,
-      batchReq: AnyRef
-    )(resp: Seq[String] => AnyRef
-    ) = {
+    sender: ActorRef,
+    batchReq: AnyRef)(resp: Seq[String] => AnyRef) = {
     (ethereumAccessorActor ? batchReq)
       .mapAs[BatchCallContracts.Res]
       .map(_.resps.map(_.result))
