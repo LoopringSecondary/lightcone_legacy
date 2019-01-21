@@ -28,6 +28,7 @@ import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
 import akka.pattern._
+import org.loopring.lightcone.core.base.MetadataManager
 import scala.concurrent.Await
 
 trait MetadataManagerSupport extends DatabaseModuleSupport {
@@ -60,8 +61,8 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
       )
   }
   metadataManager.reset(
-    TOKENS.map(MetadataRefresher.formatToken),
-    MARKETS.map(MetadataRefresher.formatMarket)
+    TOKENS.map(MetadataManager.formatToken),
+    MARKETS.map(MetadataManager.formatMarket)
   )
 
   actors.add(MetadataRefresher.name, MetadataRefresher.start)

@@ -21,6 +21,37 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
 
+object MetadataManager {
+
+  def formatToken(token: TokenMetadata): TokenMetadata =
+    token.copy(
+      address = token.address.toLowerCase(),
+      symbol = token.symbol.toUpperCase()
+    )
+
+  def formatMarket(market: MarketMetadata): MarketMetadata = {
+    val marketId = market.marketId.getOrElse(
+      throw ErrorException(ErrorCode.ERR_INVALID_ARGUMENT, "marketId is empty")
+    )
+    if (MarketKey(marketId).toHexString != market.marketHash.toLowerCase())
+      throw ErrorException(
+        ErrorCode.ERR_INVALID_ARGUMENT,
+        s"marketId:$marketId mismatch marketHash:${market.marketHash}"
+      )
+    market.copy(
+      primaryTokenSymbol = market.primaryTokenSymbol.toUpperCase(),
+      secondaryTokenSymbol = market.secondaryTokenSymbol.toUpperCase(),
+      marketId = Some(
+        MarketId(
+          primary = marketId.primary.toLowerCase(),
+          secondary = marketId.secondary.toLowerCase()
+        )
+      ),
+      marketHash = market.marketHash.toLowerCase()
+    )
+  }
+}
+
 final class MetadataManager() extends Logging {
 
   // tokens[address, token]
@@ -108,9 +139,9 @@ final class MetadataManager() extends Logging {
       ),
       marketHash = meta.marketHash.toLowerCase()
     )
-    marketMetadatasMap += meta.marketHash.toLowerCase() -> meta
-    val itemMap = meta.marketHash.toLowerCase() -> meta.marketId.get
-    meta.status match {
+    marketMetadatasMap += m.marketHash.toLowerCase() -> m
+    val itemMap = m.marketHash.toLowerCase() -> m.marketId.get
+    m.status match {
       case MarketMetadata.Status.DISABLED =>
         disabledMarkets += itemMap
       case MarketMetadata.Status.ENABLED =>

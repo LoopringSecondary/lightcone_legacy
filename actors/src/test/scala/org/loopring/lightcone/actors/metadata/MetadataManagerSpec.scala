@@ -26,10 +26,12 @@ import org.loopring.lightcone.actors.core.{
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.MetadataManagerValidator
 import org.loopring.lightcone.proto._
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._
 import org.loopring.lightcone.actors.utils.MetadataRefresher
+import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.lib.MarketHashProvider
 
 class MetadataManagerSpec
@@ -431,14 +433,14 @@ class MetadataManagerSpec
         usdPrice = 8
       )
       info("token A and formatedA should same")
-      val formatedA = MetadataRefresher.formatToken(a)
+      val formatedA = MetadataManager.formatToken(a)
       assert(
         formatedA.address == a.address && formatedA.symbol == a.symbol
           .toUpperCase()
       )
 
       info("token B formated address and symbol should same with formatedB")
-      val formatedB = MetadataRefresher.formatToken(b)
+      val formatedB = MetadataManager.formatToken(b)
       assert(
         b.address.toLowerCase() == formatedB.address && b.symbol
           .toUpperCase() == formatedB.symbol
@@ -463,7 +465,7 @@ class MetadataManagerSpec
         marketId = Some(marketId),
         marketHash = MarketHashProvider.convert2Hex(BBB, AAA)
       )
-      val formatedMarket = MetadataRefresher.formatMarket(market)
+      val formatedMarket = MetadataManager.formatMarket(market)
       assert(
         market.primaryTokenSymbol == "bbb" &&
           formatedMarket.primaryTokenSymbol == "BBB"
