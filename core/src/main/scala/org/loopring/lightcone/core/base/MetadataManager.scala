@@ -26,8 +26,8 @@ final class MetadataManager() extends Logging {
   // tokens[address, token]
   val defaultBurnRateForMarket: Double = 0.2
   val defaultBurnRateForP2P: Double = 0.2
-  private var addressMap = Map.empty[String, Token]
-  private var symbolMap = Map.empty[String, Token]
+  private var addressMap: Map[String, Token] = Map.empty
+  private var symbolMap: Map[String, Token] = Map.empty
 
   // markets[marketKey, marketId]
   private var disabledMarkets: Map[String, MarketId] = Map.empty

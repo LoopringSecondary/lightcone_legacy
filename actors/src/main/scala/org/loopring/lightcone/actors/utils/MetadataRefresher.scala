@@ -28,7 +28,6 @@ import org.loopring.lightcone.actors.core.MetadataManagerActor
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent._
 import scala.util._
 
@@ -130,8 +129,8 @@ class MetadataRefresher(
     } yield {
       assert(tokens_.nonEmpty)
       assert(markets_.nonEmpty)
-      tokens = tokens_
-      markets = markets_
+      tokens = tokens_.map(MetadataRefresher.formatToken)
+      markets = markets_.map(MetadataRefresher.formatMarket)
       metadataManager.reset(tokens_, markets_)
     }
 }

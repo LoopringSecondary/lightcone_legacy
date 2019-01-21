@@ -46,6 +46,46 @@ class MetadataManagerSpec
   val ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
   "load tokens config" must {
+    "initialized metadataManager completely" in {
+      info("check tokens: address at lower and upper case")
+      assert(metadataManager.getTokens.length >= TOKENS.length) // in case added some tokens after initialized (metadataManager.addToken(token))
+      TOKENS.foreach { t =>
+        val meta1 = metadataManager.getToken(t.address.toLowerCase())
+        val meta2 =
+          metadataManager.getToken("0x" + t.address.substring(2).toUpperCase())
+        assert(
+          meta1.nonEmpty && meta2.nonEmpty && meta1.get.meta.address == meta2.get.meta.address && meta1.get.meta.address == meta1.get.meta.address
+            .toLowerCase()
+        )
+      }
+      info("check markets: market addresses at lower and upper case")
+      assert(metadataManager.getValidMarketKeys.size >= MARKETS.length)
+      MARKETS.foreach { m =>
+        val meta1 =
+          metadataManager.getMarketMetadata(m.marketHash.toLowerCase())
+        val meta2 = metadataManager.getMarketMetadata(
+          "0x" + m.marketHash.substring(2).toUpperCase()
+        )
+        assert(
+          meta1.nonEmpty && meta2.nonEmpty && meta1.get.marketHash == meta2.get.marketHash && meta1.get.marketHash == meta1.get.marketHash
+            .toLowerCase()
+        )
+
+        val meta3 = metadataManager.getMarketMetadata(m.marketId.get)
+        val meta4 = metadataManager.getMarketMetadata(
+          MarketId(
+            primary = "0x" + m.marketId.get.primary.substring(2).toUpperCase(),
+            secondary = "0x" + m.marketId.get.secondary
+              .substring(2)
+              .toUpperCase()
+          )
+        )
+        assert(
+          meta3.nonEmpty && meta4.nonEmpty && meta3.get.marketHash == meta4.get.marketHash
+        )
+      }
+    }
+
     "get all tokens config" in {
       info("save some tokens config")
       val lrc = TokenMetadata(
@@ -363,15 +403,14 @@ class MetadataManagerSpec
   }
 
   "token and market format" must {
-    "format address and symbol" in {
-      println("_____________ ")
+    "format token address and symbol" in {
       val a = TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
         status = TokenMetadata.Status.ENABLED,
-        symbol = "AAA",
-        name = "AAA Token",
+        symbol = "aaa",
+        name = "aaa Token",
         address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
-        unit = "AAA",
+        unit = "aaa",
         decimals = 18,
         precision = 6,
         burnRateForMarket = 0.1,
@@ -393,14 +432,57 @@ class MetadataManagerSpec
       )
       info("token A and formatedA should same")
       val formatedA = MetadataRefresher.formatToken(a)
-      println("_____________ ", a, formatedA)
-      assert(formatedA.address == a.address && formatedA.symbol == a.symbol)
+      assert(
+        formatedA.address == a.address && formatedA.symbol == a.symbol
+          .toUpperCase()
+      )
 
       info("token B formated address and symbol should same with formatedB")
       val formatedB = MetadataRefresher.formatToken(b)
       assert(
         b.address.toLowerCase() == formatedB.address && b.symbol
           .toUpperCase() == formatedB.symbol
+      )
+    }
+
+    "format market" in {
+      val AAA = "0xF51DF14E49DA86ABC6F1D8CCC0B3A6B7B7C90CA6"
+      val BBB = "0x9B9211A2CE4EEE9C5619D54E5CD9F967A68FBE23"
+      val marketId = MarketId(primary = BBB, secondary = AAA)
+      val market = MarketMetadata(
+        status = MarketMetadata.Status.ENABLED,
+        secondaryTokenSymbol = "aaa",
+        primaryTokenSymbol = "bbb",
+        maxNumbersOfOrders = 1000,
+        priceDecimals = 8,
+        orderbookAggLevels = 1,
+        precisionForAmount = 11,
+        precisionForTotal = 12,
+        browsableInWallet = true,
+        updatedAt = timeProvider.getTimeMillis,
+        marketId = Some(marketId),
+        marketHash = MarketHashProvider.convert2Hex(BBB, AAA)
+      )
+      val formatedMarket = MetadataRefresher.formatMarket(market)
+      assert(
+        market.primaryTokenSymbol == "bbb" &&
+          formatedMarket.primaryTokenSymbol == "BBB"
+      )
+      assert(
+        market.secondaryTokenSymbol == "aaa" &&
+          formatedMarket.secondaryTokenSymbol == "AAA"
+      )
+      val formatedMarketId = formatedMarket.marketId.get
+      assert(
+        marketId.primary == "0x9B9211A2CE4EEE9C5619D54E5CD9F967A68FBE23" &&
+          formatedMarketId.primary == "0x9b9211a2ce4eee9c5619d54e5cd9f967a68fbe23"
+      )
+      assert(
+        marketId.secondary == "0xF51DF14E49DA86ABC6F1D8CCC0B3A6B7B7C90CA6" &&
+          formatedMarketId.secondary == "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
+      )
+      assert(
+        market.marketHash == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285" && formatedMarket.marketHash == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285"
       )
     }
   }
