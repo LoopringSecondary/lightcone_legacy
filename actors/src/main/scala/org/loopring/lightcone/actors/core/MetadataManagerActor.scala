@@ -29,8 +29,8 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.core.base.MetadataManager
-
 import scala.util._
 
 // Owner: Yongfeng
@@ -117,8 +117,10 @@ class MetadataManagerActor(
           )
       })
     } yield {
-      tokens = tokensUpdated
-      markets = markets_
+      assert(tokensUpdated nonEmpty)
+      assert(markets_ nonEmpty)
+      tokens = tokensUpdated.map(MetadataManager.normalizeToken)
+      markets = markets_.map(MetadataManager.normalizeMarket)
       metadataManager.reset(tokens, markets)
     }
     f onComplete {

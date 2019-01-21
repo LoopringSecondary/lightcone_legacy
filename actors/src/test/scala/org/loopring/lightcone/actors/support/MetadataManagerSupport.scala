@@ -28,6 +28,7 @@ import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
 import akka.pattern._
+import org.loopring.lightcone.core.base.MetadataManager
 import scala.concurrent.Await
 
 trait MetadataManagerSupport extends DatabaseModuleSupport {
@@ -59,7 +60,10 @@ trait MetadataManagerSupport extends DatabaseModuleSupport {
         "Timed out waiting for connectionPools init.)"
       )
   }
-  metadataManager.reset(TOKENS, MARKETS)
+  metadataManager.reset(
+    TOKENS.map(MetadataManager.normalizeToken),
+    MARKETS.map(MetadataManager.normalizeMarket)
+  )
 
   actors.add(MetadataRefresher.name, MetadataRefresher.start)
 }
