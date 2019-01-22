@@ -82,7 +82,7 @@ class BalanceChangedAddressExtractor @Inject()(
       )
     val distEvents = (balanceAddresses ++ miners).distinct
     val (ethAddress, tokenAddresses) =
-      distEvents.partition(addr => Address(addr.address).isZero)
+      distEvents.partition(addr => Address(addr.token).isZero)
     val batchCallReq = brb.buildRequest(tokenAddresses, "latest")
     for {
       tokenBalances <- if (tokenAddresses.nonEmpty) {

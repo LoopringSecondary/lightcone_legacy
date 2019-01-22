@@ -106,7 +106,6 @@ class RingSettlementSpec
         getOrderBook1,
         (orderbook: Orderbook) => orderbook.sells.isEmpty
       )
-      //todo(yadong): 该处判断应该是什么
       info(s"${orderbookRes2}")
 
       Thread.sleep(1000) //必须等待才能获取正确的余额，？？？

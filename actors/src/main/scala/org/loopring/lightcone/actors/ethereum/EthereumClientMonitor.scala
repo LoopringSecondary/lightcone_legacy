@@ -107,7 +107,22 @@ class EthereumClientMonitor(
   )
 
   override def initialize(): Future[Unit] = {
-    syncNodeHeight.map(_ => becomeReady())
+    val f = for {
+      _ <- syncNodeHeight
+    } yield {
+      if (actors.contains(EthereumAccessActor.name)) {
+        nodes.values.foreach { node =>
+          ethereumAccessor ! node
+        }
+      }
+    }
+    f onComplete {
+      case Success(_) =>
+        becomeReady()
+      case Failure(e) =>
+        throw e
+    }
+    f
   }
 
   def ready: Receive = super.receiveRepeatdJobs orElse {

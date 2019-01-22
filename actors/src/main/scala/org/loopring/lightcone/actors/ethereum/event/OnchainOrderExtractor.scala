@@ -55,8 +55,7 @@ class OnchainOrderExtractor @Inject()(
   private def extractOrderFromEvent(
       event: OrderSubmittedEvent.Result
     ): RawOrder = {
-    // 去掉head 2 * 64
-    val data = Numeric.cleanHexPrefix(event.orderData).substring(128)
+    val data = Numeric.cleanHexPrefix(event.orderData)
     RawOrder(
       owner = Numeric.prependHexPrefix(data.substring(0, 64)),
       tokenS = Numeric.prependHexPrefix(data.substring(64, 64 * 2)),

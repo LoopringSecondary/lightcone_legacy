@@ -57,5 +57,4 @@ trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
       TransactionRecordMessageValidator.name
     )
   )
-
 }

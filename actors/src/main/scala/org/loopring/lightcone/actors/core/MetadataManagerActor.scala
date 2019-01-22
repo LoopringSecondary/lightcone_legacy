@@ -29,8 +29,8 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.core.base.MetadataManager
-
 import scala.util._
 
 // Owner: Yongfeng
@@ -102,25 +102,25 @@ class MetadataManagerActor(
           burnRateRes <- (ethereumQueryActor ? GetBurnRate.Req(
             token = token.address
           )).mapTo[GetBurnRate.Res]
-          //TODO(du): mock response
-          mock = burnRateRes.copy(forMarket = 0.4, forP2P = 0.4)
-          _ <- if (token.burnRateForMarket != mock.forMarket || token.burnRateForP2P != mock.forP2P)
+          _ <- if (token.burnRateForMarket != burnRateRes.forMarket || token.burnRateForP2P != burnRateRes.forP2P)
             dbModule.tokenMetadataDal
               .updateBurnRate(
                 token.address,
-                mock.forMarket,
-                mock.forP2P
+                burnRateRes.forMarket,
+                burnRateRes.forP2P
               )
           else Future.successful(Unit)
         } yield
           token.copy(
-            burnRateForMarket = mock.forMarket,
-            burnRateForP2P = mock.forP2P
+            burnRateForMarket = burnRateRes.forMarket,
+            burnRateForP2P = burnRateRes.forP2P
           )
       })
     } yield {
-      tokens = tokensUpdated
-      markets = markets_
+      assert(tokensUpdated nonEmpty)
+      assert(markets_ nonEmpty)
+      tokens = tokensUpdated.map(MetadataManager.normalizeToken)
+      markets = markets_.map(MetadataManager.normalizeMarket)
       metadataManager.reset(tokens, markets)
     }
     f onComplete {

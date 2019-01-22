@@ -91,10 +91,11 @@ class EthereumEventExtractorActor(
         .map(res => Numeric.toBigInt(res.result).longValue())
       blockStart = lastHandledBlock.getOrElse(startBlock)
       missing = currentBlock > blockStart + 1
-      //TODO(yadong:) 等待永丰的接口,做DB操作
       _ = if (missing) {
         dbModule.blockService.saveBlock(BlockData(height = currentBlock - 1))
-        ProcessingMissingBlocks(blockStart, currentBlock)
+        dbModule.missingBlocksRecordDal.saveMissingBlock(
+          MissingBlocksRecord(blockStart, currentBlock, blockStart - 1)
+        )
       }
     } yield {
       blockData = RawBlockData(height = currentBlock - 1)

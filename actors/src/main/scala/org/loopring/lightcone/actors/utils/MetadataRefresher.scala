@@ -28,7 +28,6 @@ import org.loopring.lightcone.actors.core.MetadataManagerActor
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent._
 import scala.util._
 
@@ -47,10 +46,7 @@ object MetadataRefresher {
       dbModule: DatabaseModule,
       metadataManager: MetadataManager
     ) = {
-    system.actorOf(
-      Props(new MetadataRefresher()),
-      MetadataRefresher.name
-    )
+    system.actorOf(Props(new MetadataRefresher()), MetadataRefresher.name)
   }
 }
 
@@ -102,8 +98,8 @@ class MetadataRefresher(
     } yield {
       assert(tokens_.nonEmpty)
       assert(markets_.nonEmpty)
-      tokens = tokens_
-      markets = markets_
+      tokens = tokens_.map(MetadataManager.normalizeToken)
+      markets = markets_.map(MetadataManager.normalizeMarket)
       metadataManager.reset(tokens_, markets_)
     }
 }
