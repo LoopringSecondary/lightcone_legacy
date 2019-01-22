@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.support
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.DatabaseConfigManager
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.validator.{MessageValidationActor, TransactionRecordMessageValidator}
+import org.loopring.lightcone.actors.validator._
 
 trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
   my: CommonSpec =>

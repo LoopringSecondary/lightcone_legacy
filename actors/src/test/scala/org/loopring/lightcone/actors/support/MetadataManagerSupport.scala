@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import akka.pattern._
 import org.loopring.lightcone.actors.core.MetadataManagerActor
 import org.loopring.lightcone.actors.utils.MetadataRefresher
-import org.loopring.lightcone.actors.validator.{MessageValidationActor, MetadataManagerValidator}
+import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.proto.LoadTokenMetadata
 import org.rnorth.ducttape.TimeoutException

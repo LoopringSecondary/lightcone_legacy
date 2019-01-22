@@ -17,7 +17,7 @@
 package org.loopring.lightcone.actors.support
 
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.validator.{MessageValidationActor, MultiAccountManagerMessageValidator}
+import org.loopring.lightcone.actors.validator._
 
 trait MultiAccountManagerSupport extends DatabaseModuleSupport {
   my: CommonSpec =>

@@ -20,7 +20,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.pattern._
 import akka.testkit.TestProbe
-import org.loopring.lightcone.actors.core.{EthereumQueryActor, MetadataManagerActor}
+import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.MetadataManagerValidator
 import org.loopring.lightcone.core.base.MetadataManager

@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.recover
 
 import akka.pattern._
 import akka.util.Timeout
-import org.loopring.lightcone.actors.core.{MultiAccountManagerActor, OrderRecoverCoordinator}
+import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto.Orderbook.Item
 import org.loopring.lightcone.proto._
