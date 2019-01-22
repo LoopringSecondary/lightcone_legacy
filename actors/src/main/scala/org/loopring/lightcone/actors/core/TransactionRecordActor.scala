@@ -35,6 +35,7 @@ import slick.jdbc.JdbcProfile
 import slick.basic.DatabaseConfig
 import TransactionRecord.RecordType._
 import TransactionRecord.EventData.Event
+import org.loopring.lightcone.ethereum.data.Address
 
 // main owner: 杜永丰
 object TransactionRecordActor extends ShardedByAddress {
@@ -109,9 +110,10 @@ class TransactionRecordActor(
     // ETH & ERC20
     case req: TransferEvent =>
       val header = req.header.get
+      val token = Address(req.token)
       val recordType =
-        if (req.token.nonEmpty) ERC20_TRANSFER
-        else TRANSFER
+        if (token.isZero) TRANSFER
+        else ERC20_TRANSFER
       val record = TransactionRecord(
         header = req.header,
         owner = req.owner,

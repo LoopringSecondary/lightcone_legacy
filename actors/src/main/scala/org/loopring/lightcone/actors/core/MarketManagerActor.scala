@@ -37,7 +37,6 @@ import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
-
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -82,6 +81,13 @@ object MarketManagerActor extends ShardedByMarket {
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
       MarketId(primary, secondary)
+    case GetOrderbookUpdates.Req(marketId) =>
+      marketId.getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          "marketId is empty"
+        )
+      )
   }
 
 }
@@ -250,6 +256,9 @@ class MarketManagerActor(
           }
         }
       } sendTo sender
+
+    case GetOrderbookUpdates.Req(_) =>
+      sender ! GetOrderbookUpdates.Res(manager.getOrderbookUpdates)
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {

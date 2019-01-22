@@ -18,10 +18,11 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
+import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.util.Timeout
+import akka.pattern.ask
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
@@ -32,6 +33,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
 import scala.concurrent._
+import scala.util.{Failure, Success}
 
 // Owner: Hongyu
 object OrderbookManagerActor extends ShardedByMarket with Logging {
@@ -108,6 +110,22 @@ class OrderbookManagerActor(
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
 
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
+
+  val marketManagerActor = actors.get(MarketManagerActor.name)
+
+  override def initialize() = {
+    val orderbookUpdates =
+      (marketManagerActor ? GetOrderbookUpdates.Req(Some(marketId)))
+        .mapTo[GetOrderbookUpdates.Res]
+    orderbookUpdates onComplete {
+      case Success(updates) =>
+        updates.updates.foreach(manager.processUpdate)
+        becomeReady()
+      case Failure(e) =>
+        throw e
+    }
+    Future.successful(Unit)
+  }
 
   def ready: Receive = LoggingReceive {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>

@@ -71,6 +71,8 @@ class MarketManagerImpl(
   private[core] val sides =
     Map(marketId.primary -> buys, marketId.secondary -> sells)
 
+  private[core] var orderbookUpdates: Seq[Orderbook.Update] = Seq.empty
+
   def getNumOfOrders = orderMap.size
   def getNumOfSellOrders = sells.size
   def getNumOfBuyOrders = buys.size
@@ -95,7 +97,9 @@ class MarketManagerImpl(
   def cancelOrder(orderId: String): Option[Orderbook.Update] =
     this.synchronized {
       removeOrder(orderId) map { _ =>
-        aggregator.getOrderbookUpdate()
+        val orderbookUpdate = aggregator.getOrderbookUpdate()
+        orderbookUpdates :+= orderbookUpdate
+        orderbookUpdate
       }
     }
 
@@ -214,6 +218,7 @@ class MarketManagerImpl(
       val orderbookUpdate = aggregator
         .getOrderbookUpdate()
         .copy(latestPrice = latestPrice)
+      orderbookUpdates :+= orderbookUpdate
 
       MatchResult(taker, rings, orderbookUpdate)
     }
@@ -280,4 +285,6 @@ class MarketManagerImpl(
       .sortWith(_.submittedAt < _.submittedAt)
       .map(submitOrder(_, minFiatValue))
   }
+
+  def getOrderbookUpdates: Seq[Orderbook.Update] = orderbookUpdates
 }
