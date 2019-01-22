@@ -26,7 +26,6 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto.OHLCRawData
 import org.loopring.lightcone.actors.base.safefuture._
-
 import scala.concurrent.ExecutionContext
 
 object OHLCRawDataPersistenceActor extends ShardedEvenly {

@@ -43,6 +43,7 @@ trait EthereumEventExtractorSupport
   implicit val transferExtractor = new TransferEventExtractor
   implicit val ringMinedExtractor = new RingMinedEventExtractor
   implicit val orderFillEventExtractor = new OrderFillEventExtractor
+  implicit val oHLCRawDataExtractor = new OHLCRawDataExtractor
 
   implicit val dispatchers = Seq(
     new CutoffEventDispatcher(actors),
@@ -52,7 +53,8 @@ trait EthereumEventExtractorSupport
     new OrderFilledEventDispatcher(actors),
     new RingMinedEventDispatcher(actors),
     new BalanceEventDispatcher(actors),
-    new AllowanceEventDispatcher(actors)
+    new AllowanceEventDispatcher(actors),
+    new OHLCRawDataEventDispatcher(actors)
   )
 
   actors.add(
@@ -62,5 +64,9 @@ trait EthereumEventExtractorSupport
   actors.add(
     MissingBlocksEventExtractorActor.name,
     MissingBlocksEventExtractorActor.start
+  )
+  actors.add(
+    OHLCRawDataPersistenceActor.name,
+    OHLCRawDataPersistenceActor.start
   )
 }

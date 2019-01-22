@@ -80,7 +80,7 @@ class OHLCRawDataExtractor @Inject()(
               } else {
                 None
               }
-          }.filter(_.isDefined).map(_.get)
+          }.filter(_.isDefined).map(_.get).distinct
         }
       }
   }
@@ -92,19 +92,19 @@ class OHLCRawDataExtractor @Inject()(
       secondToken: Token,
       marketMetadata: MarketMetadata
     ): (Double, Double) = {
-    val qualityInWei =
-      if (Address(primaryToken.meta.address).equals(Address(fill.tokenS)))
-        Numeric.toBigInt(fill.filledAmountS.toByteArray)
-      else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
-    val quality: Double = primaryToken
-      .fromWei(qualityInWei, marketMetadata.precisionForAmount)
-      .doubleValue()
     val amountInWei =
-      if (Address(secondToken.meta.address).equals(Address(fill.tokenS)))
+      if (Address(primaryToken.meta.address).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
       else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
     val amount: Double = secondToken
       .fromWei(amountInWei, marketMetadata.precisionForTotal)
+      .doubleValue()
+    val qualityInWei =
+      if (Address(secondToken.meta.address).equals(Address(fill.tokenS)))
+        Numeric.toBigInt(fill.filledAmountS.toByteArray)
+      else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
+    val quality: Double = primaryToken
+      .fromWei(qualityInWei, marketMetadata.precisionForAmount)
       .doubleValue()
     quality -> amount
   }
