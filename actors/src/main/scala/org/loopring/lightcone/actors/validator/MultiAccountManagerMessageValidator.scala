@@ -46,8 +46,10 @@ final class MultiAccountManagerMessageValidator(
   val orderValidator: RawOrderValidator = Protocol2RawOrderValidator
 
   def validate = {
-    case req @ CancelOrder.Req(_, owner, _, marketId) =>
-      metadataManager.assertMarketIdIsValid(marketId)
+    case req @ CancelOrder.Req(_, owner, _, Some(marketId)) =>
+      if (!metadataManager.getEnabledMarketIds.contains(marketId.keyHex())) {
+        throw ErrorException(ErrorCode.ERR_INVALID_MARKET, s"marketId:${marketId} is unabled")
+      }
       req.copy(
         owner = Address.normalizeAddress(owner),
         marketId = Some(req.getMarketId.toLowerCase())
@@ -59,18 +61,6 @@ final class MultiAccountManagerMessageValidator(
         tokens = req.tokens.map(Address.normalizeAddress)
       )
 
-    case req: AddressBalanceUpdated =>
-      req.copy(
-        address = Address.normalizeAddress(req.address),
-        token = Address.normalizeAddress(req.token)
-      )
-
-    case req: AddressAllowanceUpdated =>
-      req.copy(
-        address = Address.normalizeAddress(req.address),
-        token = Address.normalizeAddress(req.token)
-      )
-
     case req @ SubmitOrder.Req(Some(order)) =>
       orderValidator.validate(order) match {
         case Left(errorCode) =>
@@ -79,15 +69,19 @@ final class MultiAccountManagerMessageValidator(
             message = s"invalid order in SubmitOrder.Req:$order"
           )
         case Right(rawOrder) =>
+          val marketId =
+            MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
+          if (!metadataManager.getEnabledMarketIds.contains(marketId.keyHex())) {
+            throw ErrorException(ErrorCode.ERR_INVALID_MARKET, s"marketId:${marketId} is unabled")
+          }
+          metadataManager.assertMarketIdIsValid(Some(marketId))
+
           val now = timeProvider.getTimeMillis
           val state = RawOrder.State(
             createdAt = now,
             updatedAt = now,
             status = OrderStatus.STATUS_NEW
           )
-          val marketId =
-            MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
-          metadataManager.assertMarketIdIsValid(Some(marketId))
           req.withRawOrder(
             rawOrder.copy(
               hash = rawOrder.hash.toLowerCase(),
