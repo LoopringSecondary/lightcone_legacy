@@ -100,7 +100,7 @@ class OrderbookManagerActor(
   mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
 
   val marketMetadata = metadataManager
-    .getMarketMetadata(marketId)
+    .getMarketMetadata(marketId.keyHex())
     .getOrElse(
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,

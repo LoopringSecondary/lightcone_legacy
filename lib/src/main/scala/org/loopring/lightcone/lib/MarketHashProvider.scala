@@ -46,5 +46,12 @@ object MarketHashProvider {
     def entityId(): String = {
       Math.abs(marketId.key().hashCode).toString
     }
+
+    def toLowerCase(): MarketId = {
+      marketId.copy(
+        primary = marketId.primary.toLowerCase(),
+        secondary = marketId.secondary.toLowerCase()
+      )
+    }
   }
 }

@@ -110,7 +110,7 @@ class OrderRecoverActor(
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
         // filter unsupported markets
         availableOrders = orders.filter { o =>
-          metadataManager.isValidMarket(MarketId(o.tokenS, o.tokenB))
+          metadataManager.isValidMarket(MarketId(o.tokenS, o.tokenB).keyHex())
         }.map { o =>
           val marketHash =
             MarketId(o.tokenS, o.tokenB).keyHex()

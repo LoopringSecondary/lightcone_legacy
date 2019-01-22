@@ -185,33 +185,23 @@ final class MetadataManager @Inject()(implicit val config: Config)
   def getMarketMetadata(marketKey: String): Option[MarketMetadata] =
     marketMetadatasMap.get(marketKey.toLowerCase())
 
-  def getMarketMetadata(marketId: MarketId): Option[MarketMetadata] =
-    getMarketMetadata(marketId.keyHex())
-
   def assertMarketIdIsValid(marketIdOpt: Option[MarketId]): Boolean = {
     marketIdOpt match {
       case None =>
         throw ErrorException(ErrorCode.ERR_INVALID_MARKET)
       case Some(marketId) =>
-        assertMarketIdIsValid(marketId)
+        if (!isValidMarket(marketId.keyHex()))
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_MARKET,
+            s"invalid market: $marketIdOpt"
+          )
+        true
     }
-  }
-
-  def assertMarketIdIsValid(marketId: MarketId): Boolean = {
-    if (!isValidMarket(marketId))
-      throw ErrorException(
-        ErrorCode.ERR_INVALID_MARKET,
-        s"invalid market: ${marketId}"
-      )
-    true
   }
 
   // check market is valid (has metadata config)
   def isValidMarket(marketKey: String): Boolean =
     getValidMarketIds.contains(marketKey.toLowerCase())
-
-  def isValidMarket(marketId: MarketId): Boolean =
-    isValidMarket(marketId.keyHex())
 
   // check market is at enabled status
   def isEnabledMarket(marketKey: String): Boolean =

@@ -77,7 +77,7 @@ class MetadataManagerSpec
           MarketId(
             primary = m.marketId.get.primary.toLowerCase(),
             secondary = m.marketId.get.secondary.toLowerCase()
-          )
+          ).keyHex()
         )
         val meta4 = metadataManager.getMarketMetadata(
           MarketId(
@@ -85,7 +85,7 @@ class MetadataManagerSpec
             secondary = "0x" + m.marketId.get.secondary
               .substring(2)
               .toUpperCase()
-          )
+          ).keyHex()
         )
         assert(
           meta3.nonEmpty && meta4.nonEmpty && meta3.get.marketHash == meta4.get.marketHash
