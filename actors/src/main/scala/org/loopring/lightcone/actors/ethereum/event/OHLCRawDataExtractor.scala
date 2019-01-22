@@ -17,7 +17,7 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
-import org.loopring.lightcone.core.base.{MetadataManager, Token}
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.lib.MarketHashProvider._
@@ -68,7 +68,7 @@ class OHLCRawDataExtractor @Inject()(
                   OHLCRawData(
                     ringIndex = ring.ringIndex,
                     txHash = ring.header.get.txHash,
-                    marketKey = convert2Hex(fill.tokenS, _fill.tokenS),
+                    marketKey = marketKey,
                     time = ring.header.get.blockTimestamp,
                     quality = quality,
                     amount = amount,
