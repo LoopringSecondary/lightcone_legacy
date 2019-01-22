@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.core
 
+import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
@@ -30,6 +31,47 @@ trait OrderAwareSpec extends CommonSpec {
   val GTO = "0x00000000001"
   val DAI = "0x00000000003"
   val WETH = "0x00000000004"
+
+  val configStr =
+    """
+      |loopring_protocol {
+      |  burn-rate-table {
+      |    base = 1000,
+      |    tiers = [
+      |      {
+      |        tier = 3,
+      |        rates {
+      |          market:50,
+      |          p2p:5
+      |        }
+      |      },
+      |      {
+      |        tier = 2,
+      |        rates {
+      |          market:200,
+      |          p2p:20
+      |        }
+      |      },
+      |      {
+      |        tier = 1,
+      |        rates {
+      |          market:400,
+      |          p2p:30
+      |        }
+      |      },
+      |      {
+      |        tier = 0,
+      |        rates {
+      |          market:600,
+      |          p2p:60
+      |        }
+      |      },
+      |    ]
+      |  }
+      |}
+    """.stripMargin
+
+  implicit val config = ConfigFactory.parseString(configStr)
 
   implicit val tm = new MetadataManager()
     .addToken(
