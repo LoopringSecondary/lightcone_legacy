@@ -74,6 +74,10 @@ class GasPriceActor(
     extends ActorWithPathBasedConfig(GasPriceActor.name) {
 
   private var gasPrice = BigInt(selfConfig.getString("default"))
+  private val blockSize = selfConfig.getInt("block-size")
+  private val excludePercent = selfConfig.getInt("exclude_percent")
+
+  var blocks: Seq[BlockGasPrices] = Seq.empty
 
   def ready: Receive = {
 
@@ -83,6 +87,19 @@ class GasPriceActor(
 
     case req: GetGasPrice.Req =>
       sender ! GetGasPrice.Res(gasPrice)
+
+    case block: BlockGasPrices =>
+      if (blocks.size >= blockSize) {
+        blocks = blocks.drop(1)
+      }
+      blocks = blocks.+:(block)
+      calculateGasPrices
   }
 
+  def calculateGasPrices = {
+    val gasPrices = blocks.flatMap(_.gasPrices).sortWith(_ > _)
+    val excludeAmount = gasPrices.size * excludePercent / 100
+    val gasPricesInUse = gasPrices.drop(excludeAmount).dropRight(excludeAmount)
+    gasPrice = gasPricesInUse.sum / gasPricesInUse.size
+  }
 }

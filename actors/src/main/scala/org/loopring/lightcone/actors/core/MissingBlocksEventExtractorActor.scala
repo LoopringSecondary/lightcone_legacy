@@ -107,8 +107,8 @@ class MissingBlocksEventExtractorActor(
       }
   }
 
-  def process =
-    processEvents.map(
+  override def processEvents =
+    super.processEvents.map(
       _ => {
         dbModule.missingBlocksRecordDal
           .updateProgress(sequenceId, blockData.height)

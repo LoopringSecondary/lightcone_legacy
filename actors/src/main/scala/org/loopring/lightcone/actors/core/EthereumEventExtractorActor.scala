@@ -81,6 +81,7 @@ class EthereumEventExtractorActor(
     with EventExtraction {
 
   var untilBlock: Long = Long.MaxValue //最大值，保证一直获取区块
+  def gasPriceActor = actors.get(GasPriceActor.name)
 
   override def initialize(): Future[Unit] = {
     val startBlock = selfConfig.getLong("start-block")
@@ -111,5 +112,17 @@ class EthereumEventExtractorActor(
   }
 
   def ready = handleMessage
+
+  override def processEvents =
+    super.processEvents.map(
+      _ => {
+        gasPriceActor ! BlockGasPrices(
+          height = blockData.height,
+          gasPrices = blockData.txs.map { tx =>
+            Numeric.toBigInt(tx.gasPrice).longValue()
+          }
+        )
+      }
+    )
 
 }
