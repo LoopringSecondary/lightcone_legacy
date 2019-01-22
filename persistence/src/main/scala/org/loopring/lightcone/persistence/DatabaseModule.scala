@@ -18,10 +18,8 @@ package org.loopring.lightcone.persistence
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import com.typesafe.config.Config
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
-import slick.basic._
 import scala.concurrent._
 
 class DatabaseModule @Inject()(

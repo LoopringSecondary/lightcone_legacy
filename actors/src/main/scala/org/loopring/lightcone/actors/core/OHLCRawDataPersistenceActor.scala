@@ -29,7 +29,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent.ExecutionContext
 
 object OHLCRawDataPersistenceActor extends ShardedEvenly {
-  val name = "OHLCRawData_persistence"
+  val name = "ohlc_persistence"
 
   def start(
       implicit
@@ -68,7 +68,7 @@ class OHLCRawDataPersistenceActor(
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(OHLCRawDataPersistenceActor.name) {
 
-  override def ready: Receive = {
+  def ready: Receive = {
     case data: OHLCRawData =>
       (for {
         saveRes <- dbModule.ohlcDataDal.saveData(data)
