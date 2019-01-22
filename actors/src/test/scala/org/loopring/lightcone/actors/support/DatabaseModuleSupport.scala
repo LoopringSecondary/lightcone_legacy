@@ -16,11 +16,18 @@
 
 package org.loopring.lightcone.actors.support
 
+import com.google.inject.name.Named
+import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.core.DatabaseQueryActor
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import org.scalatest.BeforeAndAfterAll
+import slick.basic.DatabaseConfig
+import slick.driver.JdbcProfile
+import slick.jdbc.JdbcProfile
+
+import scala.concurrent.ExecutionContext
 
 trait DatabaseModuleSupport extends BeforeAndAfterAll {
   my: CommonSpec =>
@@ -44,6 +51,9 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val settlementTxService =
     new SettlementTxServiceImpl
 
+  implicit val ohlcDataDal =
+    new OHLCDataDalImpl()(ec = ec, dbConfig = dbConfig_postgre)
+
   implicit val dbModule = new DatabaseModule(
     tokenMetadataDal,
     orderDal,
@@ -53,6 +63,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     orderStatusMonitorDal,
     marketMetadataDal,
     missingBlocksRecordDal,
+    ohlcDataDal,
     orderService,
     orderStatusMonitorService,
     tradeService,

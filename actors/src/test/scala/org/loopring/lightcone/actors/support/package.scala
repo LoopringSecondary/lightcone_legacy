@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
+import com.dimafeng.testcontainers._
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
@@ -136,6 +136,9 @@ package object support {
   )
   mysqlContainer.starting()
 
+  val postgreContainer = PostgreSQLContainer("timescale/timescaledb:latest")
+  postgreContainer.starting()
+
   //todo:暂时未生效
   //  try Unreliables.retryUntilTrue(
   //    10,
@@ -174,6 +177,20 @@ package object support {
   val dbConfig1: DatabaseConfig[JdbcProfile] =
     DatabaseConfig
       .forConfig[JdbcProfile]("", ConfigFactory.parseString(mysqlConfigStr))
+
+  val postgreConfigStr = s"""
+        profile = "slick.jdbc.PostgresProfile$$"
+        db {
+          url="${postgreContainer.jdbcUrl}"
+          user="${postgreContainer.username}"
+          password="${postgreContainer.password}"
+          driver="${postgreContainer.driverClassName}"
+          maxThreads = 4
+        }"""
+
+  val dbConfig_postgre: DatabaseConfig[JdbcProfile] =
+    DatabaseConfig
+      .forConfig[JdbcProfile]("", ConfigFactory.parseString(postgreConfigStr))
 
   val transactionRecordConfigStr = s"""
      db.transaction-record.shard_0 {

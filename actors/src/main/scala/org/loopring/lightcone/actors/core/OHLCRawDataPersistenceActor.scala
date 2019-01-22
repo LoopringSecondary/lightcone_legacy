@@ -21,9 +21,11 @@ import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.lib.TimeProvider
+import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto.OHLCRawData
+import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent.ExecutionContext
 
@@ -69,7 +71,18 @@ class OHLCRawDataPersistenceActor(
 
   override def ready: Receive = {
     case data: OHLCRawData =>
-      //TODO (yangli) 存储接收到的 OHLCRawData
+      (for {
+        saveRes <- dbModule.ohlcDataDal.saveData(data)
+      } yield {
+        saveRes.error match {
+          case ERR_NONE =>
+            saveRes.record
+          case _ =>
+            throw ErrorException(
+              saveRes.error,
+              s"failed to save ohlcRawData: $data"
+            )
+        }
+      }) sendTo sender
   }
-
 }

@@ -82,7 +82,8 @@ class CoreModule(config: Config)
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-order-status-monitor",
       "dbconfig-dal-market-metadata",
-      "dbconfig-dal-missing-blocks-record"
+      "dbconfig-dal-missing-blocks-record",
+      "dbconfig-dal-ohlc-data"
     )
 
     // --- bind event extractors ---------------------
