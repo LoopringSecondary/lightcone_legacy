@@ -309,9 +309,7 @@ message GetMetadatas {
 }
 
 message CancelOrders {
-    message Req {
-
-    }
+    message Req {}
 
     message Res {
         repeated string cancelled_order_hashes = 1;
