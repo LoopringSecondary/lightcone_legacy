@@ -59,7 +59,7 @@ final class MultiAccountManagerMessageValidator(
           )
         case Some(order) =>
           metadataManager.assertMarketIdIsValid(
-            MarketId(order.tokenS, order.tokenB)
+            Some(MarketId(order.tokenS, order.tokenB))
           )
           req.copy(
             order = Some(
@@ -105,14 +105,27 @@ final class MultiAccountManagerMessageValidator(
             updatedAt = now,
             status = OrderStatus.STATUS_NEW
           )
-          val marketHash =
-            MarketId(rawOrder.tokenS, rawOrder.tokenB).keyHex()
           val marketId =
             MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
+          metadataManager.assertMarketIdIsValid(Some(marketId))
           req.withRawOrder(
             rawOrder.copy(
+              hash = rawOrder.hash.toLowerCase(),
+              owner = Address.normalizeAddress(rawOrder.owner),
+              tokenS = Address.normalizeAddress(rawOrder.tokenS),
+              tokenB = Address.normalizeAddress(rawOrder.tokenB),
+              params = Some(rawOrder.getParams.copy(
+                dualAuthAddr = Address.normalizeAddress(rawOrder.getParams.dualAuthAddr),
+                broker = Address.normalizeAddress(rawOrder.getParams.broker),
+                orderInterceptor = Address.normalizeAddress(rawOrder.getParams.orderInterceptor),
+                wallet = Address.normalizeAddress(rawOrder.getParams.wallet)
+              )),
+              feeParams = Some(rawOrder.getFeeParams.copy(
+                tokenFee = Address.normalizeAddress(rawOrder.getFeeParams.tokenFee),
+                tokenRecipient = Address.normalizeAddress(rawOrder.getFeeParams.tokenRecipient)
+              )),
               state = Some(state),
-              marketHash = marketHash,
+              marketHash = marketId.keyHex(),
               marketHashId = MarketManagerActor.getEntityId(marketId).toInt,
               addressShardId = MultiAccountManagerActor
                 .getEntityId(order.owner, numOfShards)

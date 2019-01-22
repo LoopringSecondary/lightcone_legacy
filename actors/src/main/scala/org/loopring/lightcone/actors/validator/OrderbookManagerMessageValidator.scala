@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.core.base.MetadataManager
-import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.lib.MarketHashProvider._
 import org.loopring.lightcone.proto._
 
 // Owner: Hongyu
@@ -35,7 +35,7 @@ final class OrderbookManagerMessageValidator(
   // Throws exception if validation fails.
   def validate = {
     case msg @ GetOrderbook.Req(_, _, marketIdOpt) =>
-      val marketIdInternal = metadataManager.assertMarketIdIsValid(marketIdOpt)
-      msg.copy(marketId = marketIdInternal)
+      metadataManager.assertMarketIdIsValid(marketIdOpt)
+      msg.copy(marketId = marketIdOpt.map(_.toLowerCase()))
   }
 }
