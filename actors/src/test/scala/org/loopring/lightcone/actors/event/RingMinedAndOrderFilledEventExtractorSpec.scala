@@ -178,22 +178,22 @@ class RingMinedAndOrderFilledEventExtractorSpec
         weth_ba2_2.balance.toByteArray
       )).toString() should be("1" + "0" * WETH_TOKEN.decimals)
 
-      val getOrder1 = Await.result(
-        dbModule.orderService.getOrder(order1.hash),
-        timeout.duration
-      )
-      println(
-        byteString2BigInt(getOrder1.get.getState.outstandingAmountS)
-      )
-      println(getOrder1.get.getState.status)
-      val getOrder2 = Await.result(
-        dbModule.orderService.getOrder(order2.hash),
-        timeout.duration
-      )
-      println(
-        byteString2BigInt(getOrder2.get.getState.outstandingAmountS)
-      )
-      println(getOrder2.get.getState.status)
+//      val getOrder1 = Await.result(
+//        dbModule.orderService.getOrder(order1.hash),
+//        timeout.duration
+//      )
+//      println(
+//        byteString2BigInt(getOrder1.get.getState.outstandingAmountS)
+//      )
+//      println(getOrder1.get.getState.status)
+//      val getOrder2 = Await.result(
+//        dbModule.orderService.getOrder(order2.hash),
+//        timeout.duration
+//      )
+//      println(
+//        byteString2BigInt(getOrder2.get.getState.outstandingAmountS)
+//      )
+//      println(getOrder2.get.getState.status)
 
     }
   }
