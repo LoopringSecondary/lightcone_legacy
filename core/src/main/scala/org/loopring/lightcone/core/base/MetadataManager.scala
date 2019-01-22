@@ -109,9 +109,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
       tokenSubscribees foreach (_(t))
     }
     markets.foreach { m =>
-      {
-        marketSubscribees foreach (_(m))
-      }
+      marketSubscribees foreach (_(m))
     }
   }
 
