@@ -48,7 +48,10 @@ final class MultiAccountManagerMessageValidator(
   def validate = {
     case req @ CancelOrder.Req(_, owner, _, Some(marketId)) =>
       if (!metadataManager.getEnabledMarketIds.contains(marketId.keyHex())) {
-        throw ErrorException(ErrorCode.ERR_INVALID_MARKET, s"marketId:${marketId} is unabled")
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_MARKET,
+          s"marketId:${marketId} is unabled"
+        )
       }
       req.copy(
         owner = Address.normalizeAddress(owner),
@@ -72,7 +75,10 @@ final class MultiAccountManagerMessageValidator(
           val marketId =
             MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
           if (!metadataManager.getEnabledMarketIds.contains(marketId.keyHex())) {
-            throw ErrorException(ErrorCode.ERR_INVALID_MARKET, s"marketId:${marketId} is unabled")
+            throw ErrorException(
+              ErrorCode.ERR_INVALID_MARKET,
+              s"marketId:${marketId} is unabled"
+            )
           }
           metadataManager.assertMarketIdIsValid(Some(marketId))
 
