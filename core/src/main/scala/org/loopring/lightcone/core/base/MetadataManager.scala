@@ -25,6 +25,37 @@ import org.loopring.lightcone.proto.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
 import scala.collection.JavaConverters._
 
+object MetadataManager {
+
+  def normalizeToken(token: TokenMetadata): TokenMetadata =
+    token.copy(
+      address = token.address.toLowerCase(),
+      symbol = token.symbol.toUpperCase()
+    )
+
+  def normalizeMarket(market: MarketMetadata): MarketMetadata = {
+    val marketId = market.marketId.getOrElse(
+      throw ErrorException(ErrorCode.ERR_INVALID_ARGUMENT, "marketId is empty")
+    )
+    if (MarketKey(marketId).toHexString != market.marketHash.toLowerCase())
+      throw ErrorException(
+        ErrorCode.ERR_INVALID_ARGUMENT,
+        s"marketId:$marketId mismatch marketHash:${market.marketHash}"
+      )
+    market.copy(
+      primaryTokenSymbol = market.primaryTokenSymbol.toUpperCase(),
+      secondaryTokenSymbol = market.secondaryTokenSymbol.toUpperCase(),
+      marketId = Some(
+        MarketId(
+          primary = marketId.primary.toLowerCase(),
+          secondary = marketId.secondary.toLowerCase()
+        )
+      ),
+      marketHash = market.marketHash.toLowerCase()
+    )
+  }
+}
+
 final class MetadataManager @Inject()(implicit val config: Config)
     extends Logging {
 
@@ -86,8 +117,10 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   //todo: token为disable时，是否应该把相应的市场都删除
   private def addToken(meta: TokenMetadata) = this.synchronized {
-    addressMap += meta.address.toLowerCase() -> new Token(meta)
-    symbolMap += meta.symbol.toUpperCase() -> new Token(meta)
+    val m = MetadataManager.normalizeToken(meta)
+    val token = new Token(m)
+    addressMap += m.address -> token
+    symbolMap += m.symbol -> token
     this
   }
 
@@ -118,10 +151,11 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   def getTokens = addressMap.values.toSeq
 
-  private def addMarket(meta: MarketMetadata) = this.synchronized {
-    marketMetadatasMap += meta.marketHash.toLowerCase() -> meta
-    val itemMap = meta.marketHash.toLowerCase() -> meta.marketId.get
-    meta.status match {
+  def addMarket(meta: MarketMetadata) = this.synchronized {
+    val m = MetadataManager.normalizeMarket(meta)
+    marketMetadatasMap += m.marketHash -> m
+    val itemMap = m.marketHash -> m.marketId.get
+    m.status match {
       case MarketMetadata.Status.DISABLED =>
         disabledMarkets += itemMap
       case MarketMetadata.Status.ENABLED =>
@@ -203,4 +237,5 @@ final class MetadataManager @Inject()(implicit val config: Config)
     marketSubscribees = marketSubscribees + subFun
   }
 
+  def getReadOnlyMarketIds = readOnlyMarkets
 }

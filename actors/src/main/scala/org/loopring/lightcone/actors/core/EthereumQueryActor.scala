@@ -218,6 +218,8 @@ class EthereumQueryActor(
             GetBurnRate.Res(forMarket = marketRate, forP2P = p2pRate)
           }
       }
+    case req @ Notify("echo", _) =>
+      sender ! req
   }
 
   private def callEthereum(
