@@ -466,7 +466,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketId),
-        marketHash = MarketHashProvider.convert2Hex(BBB, AAA)
+        marketHash = MarketId(BBB, AAA).keyHex()
       )
       val formatedMarket = MetadataManager.normalizeMarket(market)
       assert(

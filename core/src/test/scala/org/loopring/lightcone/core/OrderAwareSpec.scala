@@ -73,47 +73,42 @@ trait OrderAwareSpec extends CommonSpec {
 
   implicit val config = ConfigFactory.parseString(configStr)
 
+  val tokens = Seq(
+    TokenMetadata(
+      address = LRC,
+      decimals = 0,
+      burnRateForMarket = 0.2,
+      burnRateForP2P = 0.2,
+      symbol = "LRC",
+      usdPrice = 1.0
+    ),
+    TokenMetadata(
+      address = GTO,
+      decimals = 10,
+      burnRateForMarket = 0.2,
+      burnRateForP2P = 0.2,
+      symbol = "GTO",
+      usdPrice = 1400.0
+    ),
+    TokenMetadata(
+      address = DAI,
+      decimals = 20,
+      burnRateForMarket = 0.3,
+      burnRateForP2P = 0.3,
+      symbol = "DAI",
+      usdPrice = 7.0
+    ),
+    TokenMetadata(
+      address = WETH,
+      decimals = 23,
+      burnRateForMarket = 0.3,
+      burnRateForP2P = 0.3,
+      symbol = "WETH",
+      usdPrice = 0.5
+    )
+  )
   implicit val tm = new MetadataManager()
-    .addToken(
-      TokenMetadata(
-        address = LRC,
-        decimals = 0,
-        burnRateForMarket = 0.2,
-        burnRateForP2P = 0.2,
-        symbol = "LRC",
-        usdPrice = 1.0
-      )
-    )
-    .addToken(
-      TokenMetadata(
-        address = GTO,
-        decimals = 10,
-        burnRateForMarket = 0.2,
-        burnRateForP2P = 0.2,
-        symbol = "GTO",
-        usdPrice = 1400.0
-      )
-    )
-    .addToken(
-      TokenMetadata(
-        address = DAI,
-        decimals = 20,
-        burnRateForMarket = 0.3,
-        burnRateForP2P = 0.3,
-        symbol = "DAI",
-        usdPrice = 7.0
-      )
-    )
-    .addToken(
-      TokenMetadata(
-        address = WETH,
-        decimals = 23,
-        burnRateForMarket = 0.3,
-        burnRateForP2P = 0.3,
-        symbol = "WETH",
-        usdPrice = 0.5
-      )
-    )
+  tm.reset(tokens, Seq.empty)
 
   implicit val tve = new TokenValueEvaluator
 
