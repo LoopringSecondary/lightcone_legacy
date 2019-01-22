@@ -48,31 +48,11 @@ final class MultiAccountManagerMessageValidator(
   def validate = {
     case req @ CancelOrder.Req(_, owner, _, marketId) =>
       metadataManager.assertMarketIdIsValid(marketId)
-      req.copy(owner = Address.normalizeAddress(owner))
+      req.copy(
+        owner = Address.normalizeAddress(owner),
+        marketId = Some(req.getMarketId.toLowerCase())
+      )
 
-    case req: SubmitSimpleOrder =>
-      req.order match {
-        case None =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            s"bad request:${req}"
-          )
-        case Some(order) =>
-          metadataManager.assertMarketIdIsValid(
-            Some(MarketId(order.tokenS, order.tokenB))
-          )
-          req.copy(
-            order = Some(
-              order.copy(
-                tokenB = Address.normalizeAddress(order.tokenB),
-                tokenS = Address.normalizeAddress(order.tokenS),
-                tokenFee = Address.normalizeAddress(order.tokenFee)
-              )
-            ),
-            owner = Address.normalizeAddress(req.owner)
-          )
-      }
-    case req: ActorRecover.RecoverOrderReq => req
     case req: GetBalanceAndAllowances.Req =>
       req.copy(
         address = Address.normalizeAddress(req.address),
@@ -114,16 +94,23 @@ final class MultiAccountManagerMessageValidator(
               owner = Address.normalizeAddress(rawOrder.owner),
               tokenS = Address.normalizeAddress(rawOrder.tokenS),
               tokenB = Address.normalizeAddress(rawOrder.tokenB),
-              params = Some(rawOrder.getParams.copy(
-                dualAuthAddr = Address.normalizeAddress(rawOrder.getParams.dualAuthAddr),
-                broker = Address.normalizeAddress(rawOrder.getParams.broker),
-                orderInterceptor = Address.normalizeAddress(rawOrder.getParams.orderInterceptor),
-                wallet = Address.normalizeAddress(rawOrder.getParams.wallet)
-              )),
-              feeParams = Some(rawOrder.getFeeParams.copy(
-                tokenFee = Address.normalizeAddress(rawOrder.getFeeParams.tokenFee),
-                tokenRecipient = Address.normalizeAddress(rawOrder.getFeeParams.tokenRecipient)
-              )),
+              params = Some(
+                rawOrder.getParams.copy(
+                  dualAuthAddr = rawOrder.getParams.dualAuthAddr.toLowerCase,
+                  broker = rawOrder.getParams.broker.toLowerCase(),
+                  orderInterceptor =
+                    rawOrder.getParams.orderInterceptor.toLowerCase(),
+                  wallet = rawOrder.getParams.wallet.toLowerCase()
+                )
+              ),
+              feeParams = Some(
+                rawOrder.getFeeParams.copy(
+                  tokenFee =
+                    Address.normalizeAddress(rawOrder.getFeeParams.tokenFee),
+                  tokenRecipient =
+                    rawOrder.getFeeParams.tokenRecipient.toLowerCase()
+                )
+              ),
               state = Some(state),
               marketHash = marketId.keyHex(),
               marketHashId = MarketManagerActor.getEntityId(marketId).toInt,

@@ -16,9 +16,8 @@
 
 package org.loopring.lightcone.actors.base
 
-import org.loopring.lightcone.proto.MarketMetadata
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.proto.MarketMetadata
 
 trait MarketStatusSupport {
   actor: InitializationRetryActor =>

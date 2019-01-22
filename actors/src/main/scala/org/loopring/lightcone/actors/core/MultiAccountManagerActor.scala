@@ -25,6 +25,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.core.base.{DustOrderEvaluator, MetadataManager}
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
+import org.loopring.lightcone.lib.MarketHashProvider._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
@@ -35,6 +36,8 @@ import scala.concurrent.duration._
 // Owner: Hongyu
 object MultiAccountManagerActor extends ShardedByAddress {
   val name = "multi_account_manager"
+
+  var metadataManager: MetadataManager = _
 
   def start(
       implicit
@@ -49,6 +52,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
       metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+    this.metadataManager = metadataManager
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -62,9 +66,13 @@ object MultiAccountManagerActor extends ShardedByAddress {
     )
   }
 
-  // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
+  //如果message不包含一个有效的address，就不做处理，不要返回“默认值”
+  //todo: 在validator 中已经做了拦截，该出再做一次，用于recover过滤
   val extractAddress: PartialFunction[Any, String] = {
     case req: SubmitOrder.Req =>
+      metadataManager.assertMarketIdIsValid(
+        Some(MarketId(req.getRawOrder.tokenS, req.getRawOrder.tokenB))
+      )
       req.rawOrder
         .map(_.owner)
         .getOrElse {
@@ -74,13 +82,19 @@ object MultiAccountManagerActor extends ShardedByAddress {
           )
         }
 
-    case ActorRecover.RecoverOrderReq(Some(raworder)) => raworder.owner
-    case req: CancelOrder.Req                         => req.owner
-    case req: GetBalanceAndAllowances.Req             => req.address
-    case req: AddressBalanceUpdated                   => req.address
-    case req: AddressAllowanceUpdated                 => req.address
-    case req: CutoffEvent                             => req.owner //todo:暂不支持broker
-    case req: OrderFilledEvent                        => req.owner
+    case ActorRecover.RecoverOrderReq(Some(raworder)) =>
+      metadataManager.assertMarketIdIsValid(
+        Some(MarketId(raworder.tokenS, raworder.tokenB))
+      )
+      raworder.owner
+    case req: CancelOrder.Req =>
+      metadataManager.assertMarketIdIsValid(req.marketId)
+      req.owner
+    case req: GetBalanceAndAllowances.Req => req.address
+    case req: AddressBalanceUpdated       => req.address
+    case req: AddressAllowanceUpdated     => req.address
+    case req: CutoffEvent                 => req.owner //todo:暂不支持broker
+    case req: OrderFilledEvent            => req.owner
     case Notify(KeepAliveActor.NOTIFY_MSG, address) =>
       Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
   }
