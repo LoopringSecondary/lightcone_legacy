@@ -321,9 +321,6 @@ class MarketManagerActor(
       case MarketMetadata.Status.DISABLED
           if marketMetadata.getMarketId.entityId == entityId =>
         context.stop(self)
-//      case MarketMetadata.Status.READONLY
-//        if marketMetadata.getMarketId.entityId == entityId =>
-//        context.stop(self)
       case _ => //READONLY时，也需要在恢复时，继续接受订单提供给orderbook，
     }
   }

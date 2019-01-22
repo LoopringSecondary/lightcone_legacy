@@ -151,7 +151,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   def getTokens = addressMap.values.toSeq
 
-  def addMarket(meta: MarketMetadata) = this.synchronized {
+  private def addMarket(meta: MarketMetadata) = this.synchronized {
     val m = MetadataManager.normalizeMarket(meta)
     marketMetadatasMap += m.marketHash -> m
     val itemMap = m.marketHash -> m.marketId.get
@@ -188,28 +188,27 @@ final class MetadataManager @Inject()(implicit val config: Config)
   def getMarketMetadata(marketId: MarketId): Option[MarketMetadata] =
     getMarketMetadata(marketId.keyHex())
 
-  def assertMarketIdIsValid(marketIdOpt: Option[MarketId]): Option[MarketId] = {
+  def assertMarketIdIsValid(marketIdOpt: Option[MarketId]): Boolean = {
     marketIdOpt match {
       case None =>
         throw ErrorException(ErrorCode.ERR_INVALID_MARKET)
       case Some(marketId) =>
-        val marketIdRes = assertMarketIdIsValid(marketId)
-        Some(marketIdRes)
+        assertMarketIdIsValid(marketId)
     }
   }
 
-  def assertMarketIdIsValid(marketId: MarketId): MarketId = {
+  def assertMarketIdIsValid(marketId: MarketId): Boolean = {
     if (!isValidMarket(marketId))
       throw ErrorException(
         ErrorCode.ERR_INVALID_MARKET,
         s"invalid market: ${marketId}"
       )
-    marketId
+    true
   }
 
   // check market is valid (has metadata config)
   def isValidMarket(marketKey: String): Boolean =
-    marketMetadatasMap.contains(marketKey.toLowerCase())
+    getValidMarketIds.contains(marketKey.toLowerCase())
 
   def isValidMarket(marketId: MarketId): Boolean =
     isValidMarket(marketId.keyHex())
@@ -221,13 +220,13 @@ final class MetadataManager @Inject()(implicit val config: Config)
   def isEnabledMarket(marketId: MarketId): Boolean =
     isEnabledMarket(marketId.keyHex())
 
-  def getValidMarketKeys = marketMetadatasMap.keySet
-
-  def getValidMarketIds = enabledMarkets ++ readOnlyMarkets ++ disabledMarkets
+  def getValidMarketIds = enabledMarkets ++ readOnlyMarkets
 
   def getEnabledMarketIds = enabledMarkets
 
   def getDisabledMarketIds = disabledMarkets
+
+  def getReadOnlyMarketIds = readOnlyMarkets
 
   def subscribToken(subFun: (TokenMetadata) => Unit) = {
     tokenSubscribees = tokenSubscribees + subFun
@@ -237,5 +236,4 @@ final class MetadataManager @Inject()(implicit val config: Config)
     marketSubscribees = marketSubscribees + subFun
   }
 
-  def getReadOnlyMarketIds = readOnlyMarkets
 }

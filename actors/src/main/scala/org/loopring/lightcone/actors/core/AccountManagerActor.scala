@@ -23,6 +23,7 @@ import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.lib.MarketHashProvider._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
@@ -71,21 +72,21 @@ class AccountManagerActor(
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   override def preStart() = {
-    val cutoffReqs = (metadataManager.getValidMarketKeys map { m =>
+    val cutoffReqs = (metadataManager.getValidMarketIds map { m =>
       for {
         res <- (ethereumQueryActor ? GetCutoff.Req(
           broker = address,
           owner = address,
-          marketKey = m
+          marketKey = m._2.keyHex()
         )).mapAs[GetCutoff.Res]
       } yield {
         val cutoff: BigInt = res.cutoff
         accountCutoffState.setTradingPairCutoff(
-          Numeric.toBigInt(m),
+          m._2.key(),
           cutoff.toLong
         )
       }
-    }) +
+    }).toSeq :+
       (for {
         res <- (ethereumQueryActor ? GetCutoff.Req(
           broker = address,
@@ -95,7 +96,6 @@ class AccountManagerActor(
         val cutoff: BigInt = res.cutoff
         accountCutoffState.setCutoff(cutoff.toLong)
       })
-
     Future.sequence(cutoffReqs) onComplete {
       case Success(res) =>
         self ! Notify("initialized")

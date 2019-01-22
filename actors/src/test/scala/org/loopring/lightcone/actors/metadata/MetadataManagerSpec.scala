@@ -61,7 +61,7 @@ class MetadataManagerSpec
         )
       }
       info("check markets: market addresses at lower and upper case")
-      assert(metadataManager.getValidMarketKeys.size >= MARKETS.length)
+      assert(metadataManager.getValidMarketIds.size >= MARKETS.length)
       MARKETS.foreach { m =>
         val meta1 =
           metadataManager.getMarketMetadata(m.marketHash.toLowerCase())
