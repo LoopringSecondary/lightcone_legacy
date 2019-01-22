@@ -19,9 +19,8 @@ package org.loopring.lightcone.actors.support
 import akka.pattern._
 import org.loopring.lightcone.actors.core.OrderbookManagerActor
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.proto._
-import scala.collection.JavaConverters._
+
 import scala.concurrent.Await
 
 trait OrderbookManagerSupport {

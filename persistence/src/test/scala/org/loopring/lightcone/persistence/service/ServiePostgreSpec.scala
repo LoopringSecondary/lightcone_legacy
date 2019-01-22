@@ -18,11 +18,11 @@ package org.loopring.lightcone.persistence.service
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
-import scala.concurrent.{ExecutionContext}
+import scala.concurrent.ExecutionContext
 
 trait ServicePostgreSpec[S]
     extends FlatSpec

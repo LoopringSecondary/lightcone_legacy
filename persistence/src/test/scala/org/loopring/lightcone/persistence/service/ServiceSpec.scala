@@ -19,8 +19,8 @@ package org.loopring.lightcone.persistence.service
 import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
 import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
-import org.loopring.lightcone.lib.SystemTimeProvider
 import org.loopring.lightcone.lib.MarketHashProvider._
+import org.loopring.lightcone.lib.SystemTimeProvider
 import org.loopring.lightcone.proto._
 import org.scalatest._
 import org.web3j.crypto.Hash

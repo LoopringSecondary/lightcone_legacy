@@ -19,10 +19,9 @@ package org.loopring.lightcone.actors.deploy
 import org.json4s.NoTypeHints
 import org.json4s.native.Serialization
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcRequest
-import org.loopring.lightcone.actors.support.OrderGenerateSupport
+import org.loopring.lightcone.actors.support.{OrderGenerateSupport, _}
 import org.loopring.lightcone.proto._
 import org.scalatest.{Matchers, WordSpec}
-import org.loopring.lightcone.actors.support._
 import scalapb.json4s.JsonFormat
 
 //todo:后续继续测试完善

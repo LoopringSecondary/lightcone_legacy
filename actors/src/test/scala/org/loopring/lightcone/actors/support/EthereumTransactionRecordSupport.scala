@@ -16,13 +16,10 @@
 
 package org.loopring.lightcone.actors.support
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.DatabaseConfigManager
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.actors.validator.{
-  MessageValidationActor,
-  TransactionRecordMessageValidator
-}
+import org.loopring.lightcone.actors.validator.{MessageValidationActor, TransactionRecordMessageValidator}
 
 trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
   my: CommonSpec =>

@@ -20,7 +20,7 @@ import org.loopring.lightcone.persistence.dals.{OHLCDataDal, OHLCDataDalImpl}
 import org.loopring.lightcone.proto.GetOHLCData.Interval
 import org.loopring.lightcone.proto._
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {

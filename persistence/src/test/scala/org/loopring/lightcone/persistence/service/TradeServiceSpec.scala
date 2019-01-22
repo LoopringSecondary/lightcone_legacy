@@ -16,7 +16,6 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.lib._
 import org.loopring.lightcone.lib.MarketHashProvider._
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto._

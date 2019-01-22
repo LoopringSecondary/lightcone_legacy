@@ -19,13 +19,9 @@ package org.loopring.lightcone.actors.support
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.native.JsonMethods.parse
-import org.loopring.lightcone.proto.{
-  GetBlockWithTxObjectByNumber,
-  GetTransactionReceipt,
-  RawBlockData
-}
-import scalapb.json4s.JsonFormat
+import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+import scalapb.json4s.JsonFormat
 
 import scala.io.Source
 

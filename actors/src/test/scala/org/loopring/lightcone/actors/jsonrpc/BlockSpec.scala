@@ -16,11 +16,11 @@
 
 package org.loopring.lightcone.actors.jsonrpc
 
+import akka.pattern._
+import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.actors.support.{CommonSpec, EthereumSupport}
 import org.loopring.lightcone.proto.GetBlockWithTxObjectByNumber
-import akka.pattern._
-import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent.Await
 

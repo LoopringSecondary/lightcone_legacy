@@ -17,10 +17,7 @@
 package org.loopring.lightcone.actors.support
 
 import org.loopring.lightcone.actors.core.DatabaseQueryActor
-import org.loopring.lightcone.actors.validator.{
-  DatabaseQueryMessageValidator,
-  MessageValidationActor
-}
+import org.loopring.lightcone.actors.validator.{DatabaseQueryMessageValidator, MessageValidationActor}
 
 trait DatabaseQueryMessageSupport extends DatabaseModuleSupport {
   my: CommonSpec =>

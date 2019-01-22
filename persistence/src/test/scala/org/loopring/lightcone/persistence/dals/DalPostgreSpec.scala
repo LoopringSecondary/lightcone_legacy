@@ -19,7 +19,7 @@ package org.loopring.lightcone.persistence.dals
 import com.dimafeng.testcontainers._
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.persistence.base.BaseDal
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 

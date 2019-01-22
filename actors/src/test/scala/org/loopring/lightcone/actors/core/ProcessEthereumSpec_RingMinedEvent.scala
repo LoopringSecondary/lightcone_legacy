@@ -18,10 +18,10 @@ package org.loopring.lightcone.actors.core
 
 import akka.pattern._
 import akka.testkit.TestProbe
-import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.proto._
+
 import scala.concurrent.{Await, Future}
 
 class ProcessEthereumSpec_RingMinedEvent
