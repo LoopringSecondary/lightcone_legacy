@@ -21,7 +21,6 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
-import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib.data._
@@ -102,10 +101,10 @@ class EthereumQueryActor(
         (allowanceResps, balanceResps) = batchRes.resps.partition(_.id % 2 == 0)
 
         allowances = allowanceResps.map { res =>
-          Numeric.toBigInt(res.result).toByteArray
+          BigInt(Numeric.toBigInt(res.result))
         }
         balances = balanceResps.map { res =>
-          Numeric.toBigInt(res.result).toByteArray
+          BigInt(Numeric.toBigInt(res.result))
         }
         balanceAndAllowance = (balances zip allowances).map { ba =>
           BalanceAndAllowance(ba._1, ba._2)
@@ -144,7 +143,7 @@ class EthereumQueryActor(
           .mapAs[BatchCallContracts.Res]
 
         balances = batchRes.resps.map { res =>
-          ByteString.copyFrom(Numeric.toBigInt(res.result).toByteArray)
+          bigInt2ByteString(BigInt(Numeric.toBigInt(res.result)))
         }
 
         result = GetBalance.Res(owner, (erc20Tokens zip balances).toMap)
@@ -201,7 +200,7 @@ class EthereumQueryActor(
     case req: GetCutoff.Req =>
       callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress, req.tag)) {
         result =>
-          GetCutoff.Res(Numeric.toBigInt(result).toByteArray)
+          GetCutoff.Res(BigInt(Numeric.toBigInt(result)))
       }
 
     case req: GetBurnRate.Req =>
