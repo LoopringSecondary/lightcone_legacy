@@ -190,7 +190,17 @@ class TransferEventExtractor @Inject()(
         }
     }
     transfers.flatMap(
-      event => Seq(event.withOwner(event.from), event.withOwner(event.to))
+      event =>
+        Seq(
+          event.copy(
+            owner = event.from,
+            header = event.header.map(_.withEventIndex(0))
+          ),
+          event.copy(
+            owner = event.to,
+            header = event.header.map(_.withEventIndex(1))
+          )
+        )
     )
   }
 }
