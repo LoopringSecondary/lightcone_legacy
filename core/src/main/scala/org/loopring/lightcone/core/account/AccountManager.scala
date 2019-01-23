@@ -41,20 +41,15 @@ trait AccountManager {
   // hard cancel multiple orders
   def setCutoff(cutoff: Long): Int
 
-  // def setCutoff(
-  //     cutoff: Long,
-  //     tokenS: String,
-  //     tokenB: String
-  //   ): Int
+  def setCutoff(
+      cutoff: Long,
+      tokenS: String,
+      tokenB: String
+    ): Int
 
   def adjustOrder(
       orderId: String,
       outstandingAmountS: BigInt
     ): Boolean
-
-  // TODO(dongw): not sure what this method means!
-  def handleChangeEventThenGetUpdatedOrders[T](
-      req: T
-    ): (Boolean, Map[String, Matchable])
 
 }

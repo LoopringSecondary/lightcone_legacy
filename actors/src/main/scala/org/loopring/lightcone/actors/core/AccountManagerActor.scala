@@ -291,8 +291,16 @@ class AccountManagerActor(
       _ <- dbModule.orderService.updateAmount(rawOrder.id, state = state)
 
       _ = log.debug(s"submitting order to AccountManager: ${_matchable}")
-      (successful, updatedOrders) = manager
-        .handleChangeEventThenGetUpdatedOrders(_matchable)
+
+      (successful, updatedOrders) = manager.synchronized {
+        val res = if (orderPool.contains(order.id)) {
+          manager.adjustOrder(order.id, order.outstanding.get.amountS)
+        } else {
+          manager.submitOrder(order)
+        }
+        (res, orderPool.takeUpdatedOrdersAsMap)
+      }
+
       _ = if (!successful)
         throw ErrorException(Error(matchable.status))
       _ = assert(updatedOrders.contains(_matchable.id))

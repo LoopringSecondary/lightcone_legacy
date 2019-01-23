@@ -51,43 +51,6 @@ final private[core] class AccountManagerImpl(
     tokens(tm.token)
   }
 
-  // TODO(hongyu): we should really delte this method.
-  def handleChangeEventThenGetUpdatedOrders[T](
-      req: T
-    ): (Boolean, Map[String, Matchable]) = this.synchronized {
-
-    req match {
-      case order: Matchable =>
-        if (this.orderPool.contains(order.id)) {
-          adjustAndGetUpdatedOrders(order.id, order.outstanding.amountS)
-        } else {
-          submitAndGetUpdatedOrders(order)
-        }
-    }
-
-  }
-
-  private def submitAndGetUpdatedOrders(
-      order: Matchable
-    ): (Boolean, Map[String, Matchable]) =
-    this.synchronized {
-      val submitRes = this.submitOrder(order)
-      (submitRes, this.orderPool.takeUpdatedOrdersAsMap())
-    }
-
-  private def adjustAndGetUpdatedOrders(
-      orderId: String,
-      outstandingAmountS: BigInt
-    ): (Boolean, Map[String, Matchable]) = this.synchronized {
-    val adjustRes = adjustOrder(orderId, outstandingAmountS)
-    //todo: 该处，如果没有变化的话，是否未返回该订单
-    (
-      adjustRes,
-      this.orderPool
-        .takeUpdatedOrdersAsMap() + (orderId -> orderPool.getOrder(orderId).get)
-    )
-  }
-
   def submitOrder(order: Matchable): Boolean = {
     val order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
 
