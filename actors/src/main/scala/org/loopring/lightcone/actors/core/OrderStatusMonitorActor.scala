@@ -24,9 +24,12 @@ import akka.stream.ActorMaterializer
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.lib.MarketHashProvider._
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.proto._
+
 import scala.concurrent._
 
 // Owner: Hongyu
@@ -75,7 +78,9 @@ class OrderStatusMonitorActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule)
+    val dbModule: DatabaseModule,
+    val metadataManager:MetadataManager
+)
     extends Actor
     with ActorLogging
     with NamedBasedConfig
@@ -199,16 +204,21 @@ class OrderStatusMonitorActor(
       orders <- dbModule.orderService
         .getOrdersToExpire(latestProcessTime, processTime)
       _ <- Future.sequence(orders.map { o =>
-        val cancelReq = CancelOrder.Req(
-          o.hash,
-          o.owner,
-          OrderStatus.STATUS_EXPIRED,
-          Some(MarketId(o.tokenS, o.tokenB))
-        )
-        (actors.get(MultiAccountManagerActor.name) ? cancelReq).recover {
-          //发送到AccountManger失败后，会尝试发送个MarketManager, 因为需要在AccountManger未启动的情况下通知到MarketManager
-          case e: Exception =>
-            actors.get(MarketManagerActor.name) ? cancelReq
+        //只有是有效的订单才会发送该取消订单的数据
+        if (metadataManager.isValidMarket(MarketId(o.tokenS, o.tokenB).keyHex())) {
+          val cancelReq = CancelOrder.Req(
+            o.hash,
+            o.owner,
+            OrderStatus.STATUS_EXPIRED,
+            Some(MarketId(o.tokenS, o.tokenB))
+          )
+          (actors.get(MultiAccountManagerActor.name) ? cancelReq).recover {
+            //发送到AccountManger失败后，会尝试发送个MarketManager, 因为需要在AccountManger未启动的情况下通知到MarketManager
+            case e: Exception =>
+              actors.get(MarketManagerActor.name) ? cancelReq
+          }
+        } else {
+          Future.unit
         }
       })
       //发送到AccountManager之后，更新状态到数据库

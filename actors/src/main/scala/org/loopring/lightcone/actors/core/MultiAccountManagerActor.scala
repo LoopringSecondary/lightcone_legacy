@@ -69,27 +69,15 @@ object MultiAccountManagerActor extends ShardedByAddress {
   //如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   //在validator 中已经做了拦截，该处再做一次，用于recover过滤
   val extractAddress: PartialFunction[Any, String] = {
-    case req: SubmitOrder.Req =>
-      metadataManager.assertMarketIdIsValid(
-        Some(MarketId(req.getRawOrder.tokenS, req.getRawOrder.tokenB))
-      )
-      req.rawOrder
-        .map(_.owner)
-        .getOrElse {
-          throw ErrorException(
-            ERR_UNEXPECTED_ACTOR_MSG,
-            "SubmitOrder.Req.rawOrder must be nonEmpty."
-          )
-        }
-
-    case ActorRecover.RecoverOrderReq(Some(raworder)) =>
-      metadataManager.assertMarketIdIsValid(
-        Some(MarketId(raworder.tokenS, raworder.tokenB))
-      )
+    case SubmitOrder.Req(Some(rawOrder))
+      if metadataManager.isValidMarket(MarketId(rawOrder.tokenS, rawOrder.tokenB).keyHex()) =>
+      rawOrder.owner
+    case ActorRecover.RecoverOrderReq(Some(raworder))
+      if metadataManager.isValidMarket(MarketId(raworder.tokenS, raworder.tokenB).keyHex()) =>
       raworder.owner
-    case req: CancelOrder.Req =>
-      metadataManager.assertMarketIdIsValid(req.marketId)
-      req.owner
+    case CancelOrder.Req(_, owner, _, Some(marketId))
+      if metadataManager.isValidMarket(marketId.keyHex())=>
+      owner
     case req: GetBalanceAndAllowances.Req => req.address
     case req: AddressBalanceUpdated       => req.address
     case req: AddressAllowanceUpdated     => req.address
