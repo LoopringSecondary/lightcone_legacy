@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.core.account
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.OrderStatus
 
 object AccountManager {
@@ -23,6 +24,7 @@ object AccountManager {
   def default(
     )(
       implicit
+      dustEvaluator: DustOrderEvaluator,
       orderPool: AccountOrderPool with UpdatedOrdersTracing
     ): AccountManager = new AccountManagerImpl()
 }
