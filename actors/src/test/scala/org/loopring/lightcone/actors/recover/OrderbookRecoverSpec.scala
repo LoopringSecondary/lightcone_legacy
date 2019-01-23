@@ -1,0 +1,190 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.loopring.lightcone.actors.recover
+
+import akka.actor.PoisonPill
+import akka.pattern._
+import akka.util.Timeout
+import org.loopring.lightcone.actors.core.{
+  MarketManagerActor,
+  OrderbookManagerActor
+}
+import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.actors.validator.OrderbookManagerMessageValidator
+import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto.Orderbook.Item
+import org.loopring.lightcone.proto._
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.math.BigInt
+
+class OrderbookRecoverSpec
+    extends CommonSpec
+    with JsonrpcSupport
+    with HttpSupport
+    with EthereumSupport
+    with MetadataManagerSupport
+    with OrderHandleSupport
+    with MultiAccountManagerSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport
+    with OrderGenerateSupport {
+
+  private def testSaves(orders: Seq[RawOrder]): Future[Seq[Any]] = {
+    Future.sequence(orders.map { order =>
+      singleRequest(SubmitOrder.Req(Some(order)), "submit_order")
+    })
+  }
+
+  private def testSaveOrder(): Future[Seq[Any]] = {
+    val rawOrders = ((0 until 6) map { i =>
+      createRawOrder(
+        amountS = "10".zeros(LRC_TOKEN.decimals),
+        amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+      )(accounts(0))
+    }) ++
+      ((0 until 4) map { i =>
+        val o = createRawOrder(
+          amountS = "20".zeros(LRC_TOKEN.decimals),
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        )(accounts(0))
+        o.copy(
+          state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
+        )
+        o
+      })
+    testSaves(rawOrders)
+  }
+
+  "recover an orderbook" must {
+    "get market's orderbook updates" in {
+      info("submit some orders")
+      val f = testSaveOrder()
+      val res = Await.result(f.mapTo[Seq[SubmitOrder.Res]], timeout.duration)
+      res.map {
+        case SubmitOrder.Res(Some(order)) =>
+          info(s" response ${order}")
+          order.status should be(OrderStatus.STATUS_PENDING)
+        case _ => assert(false)
+      }
+
+      info("get orders")
+      val orders1 =
+        dbModule.orderService.getOrders(
+          Set(OrderStatus.STATUS_NEW, OrderStatus.STATUS_PENDING),
+          Set(accounts(0).getAddress)
+        )
+      val resOrder1 =
+        Await.result(orders1.mapTo[Seq[RawOrder]], timeout.duration)
+      assert(resOrder1.length === 10)
+
+      info("get orderbook from orderbookManagerActor")
+      Thread.sleep(3000)
+      val marketId = MarketId(LRC_TOKEN.address, WETH_TOKEN.address)
+      val getOrderBook1 = GetOrderbook.Req(
+        0,
+        100,
+        Some(marketId)
+      )
+      val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
+      val orderbookRes1 =
+        Await.result(orderbookF1.mapTo[GetOrderbook.Res], timeout.duration)
+      orderbookRes1.orderbook match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(
+            sells(0).price == "10.000000" &&
+              sells(0).amount == "60.00000" &&
+              sells(0).total == "6.00000"
+          )
+          assert(
+            sells(1).price == "20.000000" &&
+              sells(1).amount == "80.00000" &&
+              sells(1).total == "4.00000"
+          )
+        case _ => assert(false)
+      }
+
+      info(
+        "get orderbookUpdate from marketManagerActor(stored in marketManager)"
+      )
+      val r1 = Await.result(
+        (actors.get(MarketManagerActor.name) ? GetOrderbookUpdate.Req(
+          Some(marketId)
+        )).mapTo[GetOrderbookUpdate.Res],
+        timeout.duration
+      )
+      // TODO Some(Update(List(Slot(10000000,60.0,6.0), Slot(20000000,80.0,4.0)),List(),0.0,None))
+
+      info("kill orderbookManagerActor")
+      system.actorSelection(
+        "akka://Lightcone/system/sharding/orderbook_manager/orderbook_manager_464977589/orderbook_manager_464977589"
+      ) ! PoisonPill
+      system.actorSelection(
+        "akka://Lightcone/system/sharding/orderbook_manager/orderbook_manager_1749215251/orderbook_manager_1749215251"
+      ) ! PoisonPill
+      //actors.get(OrderbookManagerActor.name) ! PoisonPill
+      actors.get(OrderbookManagerMessageValidator.name) ! PoisonPill
+      actors.del(OrderbookManagerMessageValidator.name)
+      actors.del(OrderbookManagerActor.name)
+      Thread.sleep(1000)
+
+      info("get orderbook will got timeout after delete orderbookManagerActor")
+      val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
+      try {
+        val orderbookRes2 =
+          Await.result(orderbookF2.mapTo[GetOrderbook.Res], timeout.duration)
+        assert(false)
+      } catch {
+        case e: ErrorException
+            if e.error.code == ErrorCode.ERR_INTERNAL_UNKNOWN && e
+              .getMessage()
+              .indexOf("not found actor: orderbook_manager_validator") > -1 =>
+          assert(true)
+        case e: Throwable => assert(false)
+      }
+      Thread.sleep(3000)
+
+      info("restart orderbookManagerActor")
+      startOrderbookSupport
+
+      assert(actors.contains(OrderbookManagerActor.name))
+
+      info("resend orderbook request")
+      val orderbookF3 = singleRequest(getOrderBook1, "orderbook")
+      val orderbookRes3 =
+        Await.result(orderbookF3.mapTo[GetOrderbook.Res], timeout.duration)
+      orderbookRes3.orderbook match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          info(s"sells:${sells}, buys:${buys}")
+          assert(
+            sells(0).price == "10.000000" &&
+              sells(0).amount == "60.00000" &&
+              sells(0).total == "6.00000"
+          )
+          assert(
+            sells(1).price == "20.000000" &&
+              sells(1).amount == "80.00000" &&
+              sells(1).total == "4.00000"
+          )
+        case _ => assert(false)
+      }
+
+    }
+  }
+
+}

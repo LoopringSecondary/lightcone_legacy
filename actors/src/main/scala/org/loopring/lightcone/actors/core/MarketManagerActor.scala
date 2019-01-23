@@ -81,7 +81,7 @@ object MarketManagerActor extends ShardedByMarket {
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
       MarketId(primary, secondary)
-    case GetOrderbookUpdates.Req(marketId) =>
+    case GetOrderbookUpdate.Req(marketId) =>
       marketId.getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
@@ -149,6 +149,8 @@ class MarketManagerActor(
     aggregator,
     maxSettementFailuresPerOrder
   )
+
+  val orderbookGetRecordNum = selfConfig.getInt("orderbook-get-record-num")
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerMediator =
@@ -257,8 +259,10 @@ class MarketManagerActor(
         }
       } sendTo sender
 
-    case GetOrderbookUpdates.Req(_) =>
-      sender ! GetOrderbookUpdates.Res(manager.getOrderbookUpdates)
+    case GetOrderbookUpdate.Req(_) =>
+      sender ! GetOrderbookUpdate.Res(
+        Some(manager.getOrderbookUpdate(orderbookGetRecordNum))
+      )
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {

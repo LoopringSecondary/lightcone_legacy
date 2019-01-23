@@ -114,12 +114,15 @@ class OrderbookManagerActor(
   val marketManagerActor = actors.get(MarketManagerActor.name)
 
   override def initialize() = {
-    val orderbookUpdates =
-      (marketManagerActor ? GetOrderbookUpdates.Req(Some(marketId)))
-        .mapTo[GetOrderbookUpdates.Res]
-    orderbookUpdates onComplete {
-      case Success(updates) =>
-        updates.updates.foreach(manager.processUpdate)
+    val orderbookUpdate =
+      (marketManagerActor ? GetOrderbookUpdate.Req(Some(marketId)))
+        .mapTo[GetOrderbookUpdate.Res]
+    orderbookUpdate onComplete {
+      case Success(orderbookRes) =>
+        orderbookRes.update match {
+          case Some(orderbook) => manager.processUpdate(orderbook)
+          case _               => Unit
+        }
         becomeReady()
       case Failure(e) =>
         throw e
