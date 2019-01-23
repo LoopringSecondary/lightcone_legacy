@@ -44,24 +44,37 @@ class BalanceAndTransferEventExtractorSpec
         timeout.duration
       )
       val lrc_ba2 = ba2.balanceAndAllowanceMap(LRC_TOKEN.address)
-      info("transfer to account1 1000 LRC")
+      info(
+        s"transfer to account2:${account2.getAddress} 10 LRC, current balance : ${BigInt(lrc_ba2.balance.toByteArray)}"
+      )
       Await.result(
-        transferLRC(account2.getAddress, "1000")(account0),
+        transferLRC(account2.getAddress, "10")(account0),
         timeout.duration
       )
-      Thread.sleep(1000)
-      val transfers = Await.result(
-        singleRequest(
-          GetTransactionRecords
-            .Req(
-              owner = account2.getAddress,
-              sort = SortingType.DESC,
-              paging = Some(CursorPaging(cursor = 0, size = 50))
-            ),
-          "get_transactions"
-        ).mapAs[GetTransactionRecords.Res].map(_.transactions),
-        timeout.duration
-      )
+//      Thread.sleep(2000)
+      var expectedTransfers = false
+      var transfers: Seq[TransactionRecord] = Seq.empty
+      var i = 0
+      while (!expectedTransfers && i <= 20) {
+        i = i + 1
+        transfers = Await.result(
+          singleRequest(
+            GetTransactionRecords
+              .Req(
+                owner = account2.getAddress,
+                sort = SortingType.DESC,
+                paging = Some(CursorPaging(size = 50))
+              ),
+            "get_transactions"
+          ).mapAs[GetTransactionRecords.Res].map(_.transactions),
+          timeout.duration
+        )
+        if (transfers.isEmpty) {
+          Thread.sleep(500)
+        } else {
+          expectedTransfers = true
+        }
+      }
       transfers.size should be(1)
 
       val ba2_1 = Await.result(
@@ -78,7 +91,7 @@ class BalanceAndTransferEventExtractorSpec
 
       (BigInt(lrc_ba2_1.balance.toByteArray) - BigInt(
         lrc_ba2.balance.toByteArray
-      )).toString() should be("1000" + "0" * LRC_TOKEN.decimals)
+      )).toString() should be("10" + "0" * LRC_TOKEN.decimals)
     }
   }
 

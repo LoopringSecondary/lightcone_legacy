@@ -162,12 +162,15 @@ package object support {
 
   val mysqlConfigStr = s"""
         profile = "slick.jdbc.MySQLProfile$$"
+        maxConnections = 3
+        minConnections = 2
+        numThreads = 2
         db {
           url="${mysqlContainer.jdbcUrl}?useSSL=false"
           user="${mysqlContainer.username}"
           password="${mysqlContainer.password}"
           driver="${mysqlContainer.driverClassName}"
-          maxThreads = 4
+          maxThreads = 2
         }"""
 
   val dbConfig1: DatabaseConfig[JdbcProfile] =

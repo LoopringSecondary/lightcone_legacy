@@ -97,13 +97,21 @@ class TransactionRecordActor(
     s"TransactionRecordActor with db configuration ($dbConfigKey): ${config.getConfig(dbConfigKey)}"
   )
 
+  val dbConfig = databaseConfigManager.getDatabaseConfig(dbConfigKey)
+
   val txRecordDal: TransactionRecordDal =
     new TransactionRecordDalImpl(
       shardId = entityId,
-      databaseConfigManager.getDatabaseConfig(dbConfigKey)
+      dbConfig
     )
 
   txRecordDal.createTable()
+
+  //todo[yongfeng]:现在只是简单测试，还需要进一步的测试
+  override def postStop(): Unit = {
+    dbConfig.db.close()
+    super.postStop()
+  }
 
   def ready: Receive = {
     // ETH & ERC20
