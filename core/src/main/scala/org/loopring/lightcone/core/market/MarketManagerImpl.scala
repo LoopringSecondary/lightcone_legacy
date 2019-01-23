@@ -95,8 +95,7 @@ class MarketManagerImpl(
   def cancelOrder(orderId: String): Option[Orderbook.Update] =
     this.synchronized {
       removeOrder(orderId) map { _ =>
-        val orderbookUpdate = aggregator.getOrderbookUpdate()
-        orderbookUpdate
+        aggregator.getOrderbookUpdate()
       }
     }
 
