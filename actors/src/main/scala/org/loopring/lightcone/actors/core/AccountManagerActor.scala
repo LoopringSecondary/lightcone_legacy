@@ -406,6 +406,6 @@ class AccountManagerActor(
           s"this order has been canceled."
         )
 
-  //todo:disable market则需要将订单等删除
+  //todo:disable market则需要将订单从内存中删除
 
 }

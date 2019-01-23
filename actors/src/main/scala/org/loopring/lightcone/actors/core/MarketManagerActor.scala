@@ -318,8 +318,11 @@ class MarketManagerActor(
 
   def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
     marketMetadata.status match {
-      case MarketMetadata.Status.DISABLED
+      case MarketMetadata.Status.ACTIVE
           if marketMetadata.getMarketId.entityId == entityId =>
+        log.info(
+          s"this actor:${self.path} will be to stoped, due to the status of this market has been changed to DISABLED."
+        )
         context.stop(self)
       case _ => //READONLY时，也需要在恢复时，继续接受订单提供给orderbook，
     }

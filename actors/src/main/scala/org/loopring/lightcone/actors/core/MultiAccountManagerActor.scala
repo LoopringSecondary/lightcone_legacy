@@ -67,7 +67,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
   }
 
   //如果message不包含一个有效的address，就不做处理，不要返回“默认值”
-  //todo: 在validator 中已经做了拦截，该出再做一次，用于recover过滤
+  //在validator 中已经做了拦截，该处再做一次，用于recover过滤
   val extractAddress: PartialFunction[Any, String] = {
     case req: SubmitOrder.Req =>
       metadataManager.assertMarketIdIsValid(
@@ -130,7 +130,6 @@ class MultiAccountManagerActor(
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
-  //todo: 完成recovery后，需要再次测试异常恢复情况
   override val supervisorStrategy =
     AllForOneStrategy() {
       case e: Exception =>

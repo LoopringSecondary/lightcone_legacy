@@ -105,8 +105,6 @@ class KeepAliveActor @Inject()(
   //定时发送请求，来各个需要初始化的actor保持可用
   def ready: Receive = receiveRepeatdJobs
 
-  //todo: 激活的market包含什么，disable、enable、readonly
-  //todo:disable的是否不应该再激活了
   private def initOrderbookManager(): Future[Unit] =
     for {
       _ <- Future.sequence(metadataManager.getValidMarketIds map {
@@ -148,7 +146,7 @@ class KeepAliveActor @Inject()(
 
   def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
     marketMetadata.status match {
-      case MarketMetadata.Status.ENABLED |
+      case MarketMetadata.Status.ACTIVE |
           MarketMetadata.Status.READONLY => //READONLY也需要保持orderbook等数据的可用
         val marketId = marketMetadata.getMarketId
         for {

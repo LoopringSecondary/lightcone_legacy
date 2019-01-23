@@ -93,7 +93,7 @@ class MetadataManagerSpec
       info("save some tokens config")
       val lrc = TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-        status = TokenMetadata.Status.ENABLED,
+        status = TokenMetadata.Status.VIEWABLE,
         symbol = "AAA",
         name = "AAA Token",
         address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
@@ -108,7 +108,7 @@ class MetadataManagerSpec
         lrc,
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.ENABLED,
+          status = TokenMetadata.Status.VIEWABLE,
           symbol = "ABC",
           name = "ABC Token",
           address = "0x255Aa6DF07540Cb5d3d297f0D0D4D84cb52bc8e6",
@@ -121,7 +121,7 @@ class MetadataManagerSpec
         ),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.ENABLED,
+          status = TokenMetadata.Status.VIEWABLE,
           symbol = "BBB",
           name = "BBB Token",
           address = "0x989fcbc46845a290e971a6303ef3753fb039d8d5",
@@ -134,7 +134,7 @@ class MetadataManagerSpec
         ),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.ENABLED,
+          status = TokenMetadata.Status.VIEWABLE,
           symbol = "BBC",
           name = "BBC Token",
           address = "0x61a11f3d1f3b4dbd3f780f004773e620daf065c4",
@@ -147,7 +147,7 @@ class MetadataManagerSpec
         ),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.ENABLED,
+          status = TokenMetadata.Status.VIEWABLE,
           symbol = "CCC",
           name = "CCC Token",
           address = "0x34a381433f45230390d750113aab46c65129ffab",
@@ -160,7 +160,7 @@ class MetadataManagerSpec
         ),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.DISABLED,
+          status = TokenMetadata.Status.UNVIEWABLE,
           symbol = "CDE",
           name = "CDE Token",
           address = "0xfdeda15e2922c5ed41fc1fdf36da2fb2623666b3",
@@ -200,7 +200,7 @@ class MetadataManagerSpec
       val r2 = dbModule.tokenMetadataDal.saveToken(
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.DISABLED,
+          status = TokenMetadata.Status.UNVIEWABLE,
           symbol = "DEF",
           name = "DEF Token",
           address = "0x244929a8141d2134d9323e65309fb46e4a983840",
@@ -255,7 +255,7 @@ class MetadataManagerSpec
         5.second
       )
       assert(
-        query2.nonEmpty && query2.head.status == TokenMetadata.Status.DISABLED
+        query2.nonEmpty && query2.head.status == TokenMetadata.Status.UNVIEWABLE
       )
     }
   }
@@ -271,7 +271,7 @@ class MetadataManagerSpec
       val marketIdBnbWeth = MarketId(primary = DDD, secondary = BBB)
       val marketIdZrxdWeth = MarketId(primary = DDD, secondary = CCC)
       val marketLrcWeth = MarketMetadata(
-        status = MarketMetadata.Status.ENABLED,
+        status = MarketMetadata.Status.ACTIVE,
         secondaryTokenSymbol = "AAA",
         primaryTokenSymbol = "DDD",
         maxNumbersOfOrders = 1000,
@@ -287,7 +287,7 @@ class MetadataManagerSpec
       val markets = Seq(
         marketLrcWeth,
         MarketMetadata(
-          status = MarketMetadata.Status.DISABLED,
+          status = MarketMetadata.Status.TERMINATED,
           secondaryTokenSymbol = "BBB",
           primaryTokenSymbol = "DDD",
           maxNumbersOfOrders = 1000,
@@ -390,7 +390,7 @@ class MetadataManagerSpec
         5.second
       )
       assert(
-        query2.nonEmpty && query2.head.status == MarketMetadata.Status.DISABLED
+        query2.nonEmpty && query2.head.status == MarketMetadata.Status.TERMINATED
       )
     }
   }
@@ -407,7 +407,7 @@ class MetadataManagerSpec
     "format token address and symbol" in {
       val a = TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-        status = TokenMetadata.Status.ENABLED,
+        status = TokenMetadata.Status.VIEWABLE,
         symbol = "aaa",
         name = "aaa Token",
         address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
@@ -420,7 +420,7 @@ class MetadataManagerSpec
       )
       val b = TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-        status = TokenMetadata.Status.ENABLED,
+        status = TokenMetadata.Status.VIEWABLE,
         symbol = "abc",
         name = "ABC Token",
         address = "0x255Aa6DF07540Cb5d3d297f0D0D4D84cb52bc8e6",
@@ -451,7 +451,7 @@ class MetadataManagerSpec
       val BBB = "0x9B9211A2CE4EEE9C5619D54E5CD9F967A68FBE23"
       val marketId = MarketId(primary = BBB, secondary = AAA)
       val market = MarketMetadata(
-        status = MarketMetadata.Status.ENABLED,
+        status = MarketMetadata.Status.ACTIVE,
         secondaryTokenSymbol = "aaa",
         primaryTokenSymbol = "bbb",
         maxNumbersOfOrders = 1000,

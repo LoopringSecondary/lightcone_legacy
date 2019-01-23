@@ -103,7 +103,7 @@ class TokenMetadataDalImpl @Inject()(
         query
           .filter(_.address === address)
           .map(c => (c.status, c.updateAt))
-          .update(TokenMetadata.Status.DISABLED, timeProvider.getTimeMillis())
+          .update(TokenMetadata.Status.UNVIEWABLE, timeProvider.getTimeMillis())
       )
     } yield {
       if (result >= 1) ERR_NONE

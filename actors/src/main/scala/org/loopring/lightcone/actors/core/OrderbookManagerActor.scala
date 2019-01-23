@@ -136,7 +136,7 @@ class OrderbookManagerActor(
 
   def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
     marketMetadata.status match {
-      case MarketMetadata.Status.DISABLED
+      case MarketMetadata.Status.ACTIVE
           if marketMetadata.getMarketId.entityId == entityId =>
         context.stop(self)
       case _ => //READONLY的不处理，需要能继续可以查询得到orderbook

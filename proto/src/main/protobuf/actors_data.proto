@@ -170,8 +170,8 @@ message TokenMetadata {
     }
 
     enum Status {
-        DISABLED    = 0; // This token is NOT displyed in walelt
-        ENABLED     = 1;  // This token is displayed in wallet.
+        VIEWABLE    = 0; // This token is NOT displyed in walelt
+        UNVIEWABLE     = 1;  // This token is displayed in wallet.
     }
 
     Type     type                   = 1;
@@ -191,8 +191,8 @@ message TokenMetadata {
 
 message MarketMetadata {
     enum Status {
-        DISABLED  = 0;
-        ENABLED   = 1;
+        TERMINATED  = 0;
+        ACTIVE   = 1;
         READONLY  = 2;
     }
 

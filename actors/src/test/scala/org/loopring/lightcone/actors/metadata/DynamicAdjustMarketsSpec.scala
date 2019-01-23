@@ -122,7 +122,7 @@ class DynamicAdjustMarketsSpec
                 MarketId(rawOrder.tokenS, rawOrder.tokenB).keyHex()
               )
               .get
-              .copy(status = MarketMetadata.Status.ENABLED)
+              .copy(status = MarketMetadata.Status.TERMINATED)
           )
         )
       Await.result(disableMarketF, timeout.duration)
@@ -184,11 +184,11 @@ class DynamicAdjustMarketsSpec
 
   def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
     marketMetadata.status match {
-      case MarketMetadata.Status.DISABLED =>
+      case MarketMetadata.Status.TERMINATED =>
         system.log.info(s"receive DisabledEvent, ${marketMetadata}")
       case MarketMetadata.Status.READONLY =>
         system.log.info(s"receive ReadonlyEvent, ${marketMetadata}")
-      case MarketMetadata.Status.ENABLED =>
+      case MarketMetadata.Status.ACTIVE =>
         system.log.info(s"receive EnabledEvent, ${marketMetadata}")
       case msg =>
         system.log.info(s"receive Unkown msg:${msg}")

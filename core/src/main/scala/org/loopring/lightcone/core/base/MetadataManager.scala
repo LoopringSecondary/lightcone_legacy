@@ -154,9 +154,9 @@ final class MetadataManager @Inject()(implicit val config: Config)
     marketMetadatasMap += m.marketHash -> m
     val itemMap = m.marketHash -> m.marketId.get
     m.status match {
-      case MarketMetadata.Status.DISABLED =>
+      case MarketMetadata.Status.TERMINATED =>
         disabledMarkets += itemMap
-      case MarketMetadata.Status.ENABLED =>
+      case MarketMetadata.Status.ACTIVE =>
         enabledMarkets += itemMap
       case MarketMetadata.Status.READONLY =>
         readOnlyMarkets += itemMap
