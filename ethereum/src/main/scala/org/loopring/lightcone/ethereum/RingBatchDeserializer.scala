@@ -19,6 +19,7 @@ package org.loopring.lightcone.ethereum
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.ethereum._
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.lib.data._
 import org.web3j.utils.Numeric
 
 trait RingBatchDeserializer {
