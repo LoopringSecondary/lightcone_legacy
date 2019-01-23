@@ -47,6 +47,7 @@ object OrderStatusMonitorActor {
       dbModule: DatabaseModule,
       ma: ActorMaterializer,
       ece: ExecutionContextExecutor,
+      metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
@@ -79,8 +80,7 @@ class OrderStatusMonitorActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule,
-    val metadataManager:MetadataManager
-)
+    val metadataManager: MetadataManager)
     extends Actor
     with ActorLogging
     with NamedBasedConfig
@@ -205,7 +205,8 @@ class OrderStatusMonitorActor(
         .getOrdersToExpire(latestProcessTime, processTime)
       _ <- Future.sequence(orders.map { o =>
         //只有是有效的订单才会发送该取消订单的数据
-        if (metadataManager.isValidMarket(MarketId(o.tokenS, o.tokenB).keyHex())) {
+        if (metadataManager
+              .isValidMarket(MarketId(o.tokenS, o.tokenB).keyHex())) {
           val cancelReq = CancelOrder.Req(
             o.hash,
             o.owner,

@@ -76,11 +76,13 @@ object MarketManagerActor extends ShardedByMarket {
   //READONLY的不能在该处处理，需要在validtor中截取，因为该处还需要将orderbook等恢复
   val extractMarketId: PartialFunction[Any, MarketId] = {
     case SubmitSimpleOrder(_, Some(order))
-      if metadataManager.isValidMarket(MarketId(order.tokenS, order.tokenB).keyHex()) =>
+        if metadataManager.isValidMarket(
+          MarketId(order.tokenS, order.tokenB).keyHex()
+        ) =>
       MarketId(order.tokenS, order.tokenB)
 
     case CancelOrder.Req(_, _, _, Some(marketId))
-      if metadataManager.isValidMarket(marketId.keyHex()) =>
+        if metadataManager.isValidMarket(marketId.keyHex()) =>
       marketId
     case req: RingMinedEvent if req.fills.size >= 2 =>
       MarketId(req.fills(0).tokenS, req.fills(1).tokenS)

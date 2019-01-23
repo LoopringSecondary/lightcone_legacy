@@ -70,13 +70,17 @@ object MultiAccountManagerActor extends ShardedByAddress {
   //在validator 中已经做了拦截，该处再做一次，用于recover过滤
   val extractAddress: PartialFunction[Any, String] = {
     case SubmitOrder.Req(Some(rawOrder))
-      if metadataManager.isValidMarket(MarketId(rawOrder.tokenS, rawOrder.tokenB).keyHex()) =>
+        if metadataManager.isValidMarket(
+          MarketId(rawOrder.tokenS, rawOrder.tokenB).keyHex()
+        ) =>
       rawOrder.owner
     case ActorRecover.RecoverOrderReq(Some(raworder))
-      if metadataManager.isValidMarket(MarketId(raworder.tokenS, raworder.tokenB).keyHex()) =>
+        if metadataManager.isValidMarket(
+          MarketId(raworder.tokenS, raworder.tokenB).keyHex()
+        ) =>
       raworder.owner
     case CancelOrder.Req(_, owner, _, Some(marketId))
-      if metadataManager.isValidMarket(marketId.keyHex())=>
+        if metadataManager.isValidMarket(marketId.keyHex()) =>
       owner
     case req: GetBalanceAndAllowances.Req => req.address
     case req: AddressBalanceUpdated       => req.address
