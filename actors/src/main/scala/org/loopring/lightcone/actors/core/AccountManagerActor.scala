@@ -124,7 +124,7 @@ class AccountManagerActor(
       sender ! req
 
     case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
-      submitOrAdjustOrder(xraworder).map { _ =>
+      submitOrder(xraworder).map { _ =>
         ActorRecover.OrderRecoverResult(xraworder.id, true)
       }.sendTo(sender)
 
@@ -170,7 +170,7 @@ class AccountManagerActor(
             case STATUS_PENDING_ACTIVE =>
               val order: Order = resRawOrder
               Future.successful(order)
-            case _ => submitOrAdjustOrder(resRawOrder)
+            case _ => submitOrder(resRawOrder)
           }).mapAs[Order]
         } yield SubmitOrder.Res(Some(resOrder))
 
@@ -229,12 +229,24 @@ class AccountManagerActor(
       log.debug(s"received OwnerCutoffEvent $req")
       accountCutoffState.setCutoff(cutoff)
 
+      val updatedOrders = manager.synchronized {
+        manager.setCutoff(cutoff)
+        orderPool.takeUpdatedOrdersAsMap
+      }
+      processUpdatedOrders(updatedOrders)
+
     //ownerTokenPairCutoff  tokenPair ！= ""
-    case req @ CutoffEvent(Some(header), broker, owner, tokenPair, cutoff)
+    case req @ CutoffEvent(Some(header), broker, owner, marketKey, cutoff)
         if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received OwnerTokenPairCutoffEvent $req")
       accountCutoffState
-        .setTradingPairCutoff(Numeric.toBigInt(req.tradingPair), req.cutoff)
+        .setTradingPairCutoff(Numeric.toBigInt(marketKey), req.cutoff)
+
+      val updatedOrders = manager.synchronized {
+        manager.setCutoff(cutoff, marketKey)
+        orderPool.takeUpdatedOrdersAsMap
+      }
+      processUpdatedOrders(updatedOrders)
 
     //brokerCutoff
     //todo:暂时不处理
@@ -245,16 +257,15 @@ class AccountManagerActor(
     case req: OrderFilledEvent
         if req.header.nonEmpty && req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received OrderFilledEvent ${req}")
-      //收到filledEvent后，submitOrAdjustOrder会调用adjust方法
       for {
         orderOpt <- dbModule.orderService.getOrder(req.orderHash)
-      } yield orderOpt.map(o => submitOrAdjustOrder(o))
+      } yield orderOpt.map(o => submitOrder(o))
   }
 
-  private def submitOrAdjustOrder(rawOrder: RawOrder): Future[Order] = {
+  private def submitOrder(rawOrder: RawOrder): Future[Order] = {
     val order: Order = rawOrder
     val matchable: Matchable = order
-    log.debug(s"### submitOrAdjustOrder ${order}")
+    log.debug(s"### submitOrder ${order}")
     for {
       _ <- getTokenManagers(Seq(matchable.tokenS))
       _ <- if (matchable.amountFee > 0 && matchable.tokenS != matchable.tokenFee)
@@ -283,12 +294,13 @@ class AccountManagerActor(
           )
         )
         .copy(
-          outstandingAmountS = filledAmountS,
+          outstandingAmountS = _matchable.outstanding.amountS,
           outstandingAmountB = _matchable.outstanding.amountB,
           outstandingAmountFee = _matchable.outstanding.amountFee
         )
 
-      _ <- dbModule.orderService.updateAmount(rawOrder.id, state = state)
+      // TODO(hongyu): 这个地方是不是要和下面的processUpdatedOrders 合并在一起？
+      _ <- dbModule.orderService.updateAmounts(rawOrder.id, state = state)
 
       _ = log.debug(s"submitting order to AccountManager: ${_matchable}")
 

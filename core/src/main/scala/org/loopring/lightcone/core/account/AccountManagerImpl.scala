@@ -101,13 +101,13 @@ final private[core] class AccountManagerImpl(
 
   def setCutoff(
       cutoff: Long,
-      tokenS: String,
-      tokenB: String
+      marketKey: String
     ): Int = {
     val orders = orderPool.orders.filter { order =>
-      order.validSince <= cutoff &&
-      order.tokenS == tokenS &&
-      order.tokenB == tokenB
+      order.validSince <= cutoff //&&
+    // order.tokenS == tokenS &&
+    // order.tokenB == tokenB
+    // TODO(yadong)
     }
 
     orders.foreach { order =>

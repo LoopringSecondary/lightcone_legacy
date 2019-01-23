@@ -509,7 +509,7 @@ class OrderDalImpl @Inject()(
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def updateAmount(
+  def updateAmounts(
       hash: String,
       state: RawOrder.State
     ): Future[ErrorCode] =

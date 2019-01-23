@@ -43,8 +43,7 @@ trait AccountManager {
 
   def setCutoff(
       cutoff: Long,
-      tokenS: String,
-      tokenB: String
+      marketKey: String
     ): Int
 
   def adjustOrder(
