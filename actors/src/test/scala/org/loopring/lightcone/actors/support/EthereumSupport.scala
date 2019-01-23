@@ -146,6 +146,16 @@ trait EthereumSupport {
     val input = erc20Abi.transfer.pack(
       TransferFunction.Parms(to, amount)
     )
+    val balanceOfF = (actors.get(EthereumQueryActor.name) ? GetBalance.Req(
+      credentials.getAddress,
+      Seq(token),
+      "latest"
+    ))
+    val balance =
+      Await.result(balanceOfF.mapTo[GetBalance.Res], timeout.duration)
+    println(
+      s"#### input ${input}, ${amount}, ${BigInt(balance.balanceMap(token).toByteArray)}"
+    )
     val tx = Transaction(
       inputData = input,
       nonce = 0,
@@ -336,10 +346,12 @@ trait EthereumSupport {
   }
 
   def getUniqueAccountWithoutEth = {
-    Credentials.create(
+    val account = Credentials.create(
       Numeric.toHexStringWithPrefix(
         BigInt(addressGenerator.getAndIncrement()).bigInteger
       )
     )
+    info(s"${this.getClass} uniqueAccount: ${account.getAddress()}")
+    account
   }
 }

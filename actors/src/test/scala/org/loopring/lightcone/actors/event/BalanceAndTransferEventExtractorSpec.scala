@@ -47,10 +47,11 @@ class BalanceAndTransferEventExtractorSpec
       info(
         s"transfer to account2:${account2.getAddress}, account0:${accounts(0).getAddress} 1000 LRC, current balance : ${BigInt(lrc_ba2.balance.toByteArray)}"
       )
-      Await.result(
-        transferLRC(account2.getAddress, "10")(account0),
+      val tx = Await.result(
+        transferLRC(account2.getAddress, "1000")(account0),
         timeout.duration
       )
+      info(s"# BalanceAndTransferEventExtractorSpec transferLRC: ${tx}")
 //      Thread.sleep(2000)
       var expectedTransfers = false
       var transfers: Seq[TransactionRecord] = Seq.empty
