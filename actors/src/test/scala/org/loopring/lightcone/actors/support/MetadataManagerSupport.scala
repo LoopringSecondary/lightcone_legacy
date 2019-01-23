@@ -30,8 +30,8 @@ import org.testcontainers.containers.ContainerLaunchException
 
 import scala.concurrent.Await
 
-trait MetadataManagerSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+trait MetadataManagerSupport {
+  my: CommonSpec with DatabaseModuleSupport =>
 
   actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
   actors.add(

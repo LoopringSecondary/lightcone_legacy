@@ -30,6 +30,7 @@ trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
 
   val dcm = new DatabaseConfigManager(config1)
 
+  log.info(s"#### EthereumTransactionRecordSupport ${config1} ")
   actors.add(
     TransactionRecordActor.name,
     TransactionRecordActor

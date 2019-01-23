@@ -30,9 +30,8 @@ class AllowanceEventExtractorSpec
   "ethereum event extractor actor test" must {
     "correctly extract Approval events from ethereum blocks" in {
       val getBaMethod = "get_balance_and_allowance"
-      val account1 = Credentials.create(
-        "0xd90ff3f9d2d9778f27965930480c222a7a49ef3e3a8c64fae78a1d841456847d"
-      )
+      val account1 = getUniqueAccountWithoutEth
+
       val ba = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(

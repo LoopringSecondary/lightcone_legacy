@@ -35,6 +35,7 @@ class MetadataManagerSpec
     with JsonrpcSupport
     with HttpSupport
     with EthereumSupport
+    with DatabaseModuleSupport
     with MetadataManagerSupport {
 
   val probe = TestProbe()
