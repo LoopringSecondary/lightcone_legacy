@@ -45,7 +45,7 @@ class BalanceAndTransferEventExtractorSpec
       )
       val lrc_ba2 = ba2.balanceAndAllowanceMap(LRC_TOKEN.address)
       info(
-        s"transfer to account2:${account2.getAddress} 10 LRC, current balance : ${BigInt(lrc_ba2.balance.toByteArray)}"
+        s"transfer to account2:${account2.getAddress}, account0:${accounts(0).getAddress} 1000 LRC, current balance : ${BigInt(lrc_ba2.balance.toByteArray)}"
       )
       Await.result(
         transferLRC(account2.getAddress, "10")(account0),
@@ -91,7 +91,7 @@ class BalanceAndTransferEventExtractorSpec
 
       (BigInt(lrc_ba2_1.balance.toByteArray) - BigInt(
         lrc_ba2.balance.toByteArray
-      )).toString() should be("10" + "0" * LRC_TOKEN.decimals)
+      )).toString() should be("1000" + "0" * LRC_TOKEN.decimals)
     }
   }
 
