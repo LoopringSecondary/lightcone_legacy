@@ -122,14 +122,15 @@ message Order {
     bytes amount_s                  = 5;
     bytes amount_b                  = 6;
     bytes amount_fee                = 7;
-    int64 submitted_at              = 8;
-    int32 num_attempts              = 9;
-    OrderStatus status              = 10;
-    double wallet_split_percentage  = 11;
-    OrderState outstanding          = 12;
-    OrderState reserved             = 13;
-    OrderState actual               = 14;
-    OrderState matchable            = 15;
+    int64 valid_since               = 8;
+    int64 submitted_at              = 9;
+    int32 num_attempts              = 10;
+    OrderStatus status              = 11;
+    double wallet_split_percentage  = 12;
+    OrderState outstanding          = 13;
+    OrderState reserved             = 14;
+    OrderState actual               = 15;
+    OrderState matchable            = 16;
 }
 
 message ExpectedOrderFill {

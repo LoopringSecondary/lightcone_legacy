@@ -44,6 +44,7 @@ case class Matchable(
     amountS: BigInt = 0,
     amountB: BigInt = 0,
     amountFee: BigInt = 0,
+    validSince: Long = -1,
     submittedAt: Long = -1,
     numAttempts: Int = 0,
     status: OrderStatus = STATUS_NEW,
