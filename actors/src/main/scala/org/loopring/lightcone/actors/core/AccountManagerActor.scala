@@ -182,8 +182,11 @@ class AccountManagerActor(
         _ <- Future.successful(assert(req.owner == address))
         persistenceRes <- (orderPersistenceActor ? req)
           .mapAs[CancelOrder.Res]
-        (cancelRes, updatedOrders) = manager
-          .handleChangeEventThenGetUpdatedOrders(req)
+
+        (cancelRes, updatedOrders) = manager.synchronized {
+          (manager.cancelOrder(req.id), orderPool.takeUpdatedOrdersAsMap())
+        }
+
         _ <- processUpdatedOrders(updatedOrders - req.id)
         _ = if (cancelRes) {
           marketManagerActor.tell(req, originalSender)
@@ -199,14 +202,26 @@ class AccountManagerActor(
 
     //为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
     case req: AddressBalanceUpdated =>
-      (for {
-        _ <- Future.successful(assert(req.address == address))
-      } yield updateBalanceOrAllowance(req.token, req)) sendTo sender
+      assert(req.address == address)
+
+      updateBalanceOrAllowance(req.token) {
+        val tm = manager.getTokenManager(req.token)
+        manager.synchronized {
+          tm.setBalance(BigInt(req.balance.toByteArray))
+          orderPool.takeUpdatedOrdersAsMap
+        }
+      }
 
     case req: AddressAllowanceUpdated =>
-      (for {
-        _ <- Future.successful(assert(req.address == address))
-      } yield updateBalanceOrAllowance(req.token, req)) sendTo sender
+      assert(req.address == address)
+
+      updateBalanceOrAllowance(req.token) {
+        val tm = manager.getTokenManager(req.token)
+        manager.synchronized {
+          tm.setAllowance(BigInt(req.allowance.toByteArray))
+          orderPool.takeUpdatedOrdersAsMap
+        }
+      }
 
     //ownerCutoff
     case req @ CutoffEvent(Some(header), broker, owner, "", cutoff)
@@ -366,13 +381,13 @@ class AccountManagerActor(
     } yield tokenMangers
   }
 
-  private def updateBalanceOrAllowance[T](
-      token: String,
-      req: T
+  private def updateBalanceOrAllowance(
+      token: String
+    )(getUpdatedOrders: => Map[String, Matchable]
     ) =
     for {
-      tm <- getTokenManagers(Seq(token))
-      (_, updatedOrders) = manager.handleChangeEventThenGetUpdatedOrders(req)
+      _ <- getTokenManagers(Seq(token))
+      updatedOrders = getUpdatedOrders
       _ <- Future.sequence {
         updatedOrders.values.map { order =>
           order.status match {

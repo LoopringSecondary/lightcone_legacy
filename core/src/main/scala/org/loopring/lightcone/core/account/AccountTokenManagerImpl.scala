@@ -61,11 +61,11 @@ class AccountTokenManagerImpl(
   // Initlize the balance and allowance and triger rebalancing.
   // Returns the ids of orders to delete
 
-  def setBalance(balance: BigInt) = this.synchronized {
+  def setBalance(balance: BigInt) = {
     setBalanceAndAllowance(balance, this.allowance)
   }
 
-  def setAllowance(allowance: BigInt) = this.synchronized {
+  def setAllowance(allowance: BigInt) = {
     setBalanceAndAllowance(this.balance, allowance)
   }
 
