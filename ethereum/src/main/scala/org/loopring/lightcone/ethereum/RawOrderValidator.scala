@@ -24,6 +24,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.lib.data._
 
 trait RawOrderValidator {
   def calculateOrderHash(order: RawOrder): String

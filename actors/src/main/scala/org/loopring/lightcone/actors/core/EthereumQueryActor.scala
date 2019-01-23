@@ -24,7 +24,7 @@ import akka.util.Timeout
 import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.TimeProvider
