@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// TODO(yongfeng): merge with MarketKey class and move the class in Core.
 package org.loopring.lightcone.lib
 
 object MarketHashProvider {
