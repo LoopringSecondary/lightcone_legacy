@@ -34,7 +34,7 @@ final private[core] class AccountManagerImpl(
     tokens.contains(token)
   }
 
-  def addTokenManager(tm: AccountTokenManager) = this.synchronized {
+  def addTokenManager(tm: AccountTokenManager) = {
     assert(!hasTokenManager(tm.token))
     tokens += tm.token -> tm
     tm
@@ -45,15 +45,13 @@ final private[core] class AccountManagerImpl(
     tokens(token)
   }
 
-  def getOrUpdateTokenManager(
-      token: String,
-      tm: AccountTokenManager
-    ): AccountTokenManager = this.synchronized {
-    if (!hasTokenManager(token))
+  def getOrUpdateTokenManager(tm: AccountTokenManager): AccountTokenManager = {
+    if (!hasTokenManager(tm.token))
       tokens += tm.token -> tm
-    tokens(token)
+    tokens(tm.token)
   }
 
+  // TODO(hongyu): we should really delte this method.
   def handleChangeEventThenGetUpdatedOrders[T](
       req: T
     ): (Boolean, Map[String, Matchable]) = this.synchronized {
@@ -65,8 +63,10 @@ final private[core] class AccountManagerImpl(
         } else {
           submitAndGetUpdatedOrders(order)
         }
+
       case cancelReq: CancelOrder.Req =>
         cancelAndGetUpdatedOrders(cancelReq)
+
       case evt: AddressBalanceUpdated =>
         if (tokens.contains(evt.token)) {
           tokens(evt.token).setBalance(BigInt(evt.balance.toByteArray))
@@ -74,6 +74,7 @@ final private[core] class AccountManagerImpl(
         } else {
           (false, this.orderPool.takeUpdatedOrdersAsMap())
         }
+
       case evt: AddressAllowanceUpdated =>
         if (tokens.contains(evt.token)) {
           //todo:ByteString转BigInt的方式需要与actors.data中相同
@@ -82,12 +83,13 @@ final private[core] class AccountManagerImpl(
         } else {
           (false, this.orderPool.takeUpdatedOrdersAsMap())
         }
+
       case _ => (false, this.orderPool.takeUpdatedOrdersAsMap())
     }
 
   }
 
-  def submitAndGetUpdatedOrders(
+  private def submitAndGetUpdatedOrders(
       order: Matchable
     ): (Boolean, Map[String, Matchable]) =
     this.synchronized {
@@ -95,15 +97,16 @@ final private[core] class AccountManagerImpl(
       (submitRes, this.orderPool.takeUpdatedOrdersAsMap())
     }
 
-  def cancelAndGetUpdatedOrders(
+  private def cancelAndGetUpdatedOrders(
       cancelReq: CancelOrder.Req
     ): (Boolean, Map[String, Matchable]) =
     this.synchronized {
-      val cancelRes = this.cancelOrder(cancelReq.id)
+      val cancelRes =
+        this.cancelOrder(cancelReq.id)
       (cancelRes, this.orderPool.takeUpdatedOrdersAsMap())
     }
 
-  def adjustAndGetUpdatedOrders(
+  private def adjustAndGetUpdatedOrders(
       orderId: String,
       outstandingAmountS: BigInt
     ): (Boolean, Map[String, Matchable]) = this.synchronized {
@@ -116,10 +119,8 @@ final private[core] class AccountManagerImpl(
     )
   }
 
-  //TODO(litao): What if an order is re-submitted?
-  def submitOrder(order: Matchable): Boolean = this.synchronized {
-    val order_ =
-      order.copy(_reserved = None, _actual = None, _matchable = None)
+  def submitOrder(order: Matchable): Boolean = {
+    val order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
 
     if (order_.amountS <= 0) {
       orderPool += order_.as(STATUS_INVALID_DATA)
@@ -148,24 +149,46 @@ final private[core] class AccountManagerImpl(
     return true
   }
 
-  def cancelOrder(orderId: String): Boolean = this.synchronized {
+  def cancelOrder(orderId: String): Boolean = {
     orderPool.getOrder(orderId) match {
       case None => false
       case Some(order) =>
-        orderPool.getOrder(orderId) map { order =>
-          orderPool += order.as(STATUS_SOFT_CANCELLED_BY_USER)
-        }
-
-        order.callOnTokenSAndTokenFee(_.release(order.id))
+        cancelOrderInternal(order, STATUS_SOFT_CANCELLED_BY_USER)
         true
     }
+  }
+
+  def setCutoff(cutoff: Long): Int = {
+    val orders = orderPool.orders.filter(_.validSince <= cutoff)
+
+    orders.foreach { order =>
+      cancelOrderInternal(order, STATUS_ONCHAIN_CANCELLED_BY_USER)
+    }
+    orders.size
+  }
+
+  def setCutoff(
+      cutoff: Long,
+      tokenS: String,
+      tokenB: String
+    ): Int = {
+    val orders = orderPool.orders.filter { order =>
+      order.validSince <= cutoff &&
+      order.tokenS == tokenS &&
+      order.tokenB == tokenB
+    }
+
+    orders.foreach { order =>
+      cancelOrderInternal(order, STATUS_ONCHAIN_CANCELLED_BY_USER)
+    }
+    orders.size
   }
 
   // adjust order's outstanding size
   def adjustOrder(
       orderId: String,
       outstandingAmountS: BigInt
-    ): Boolean = this.synchronized {
+    ): Boolean = {
     orderPool.getOrder(orderId) match {
       case None => false
       case Some(order) =>
@@ -175,6 +198,16 @@ final private[core] class AccountManagerImpl(
         true
     }
   }
+
+  private def cancelOrderInternal(
+      order: Matchable,
+      afterCancellationStatus: OrderStatus
+    ) = {
+    orderPool += order.as(afterCancellationStatus)
+    order.callOnTokenSAndTokenFee(_.release(order.id))
+  }
+
+  ///-------
 
   implicit private class MagicOrder(order: Matchable) {
 

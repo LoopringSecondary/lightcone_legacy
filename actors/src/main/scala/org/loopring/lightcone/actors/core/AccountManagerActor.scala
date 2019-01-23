@@ -198,15 +198,15 @@ class AccountManagerActor(
       } yield persistenceRes) sendTo sender
 
     //为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
-    case req @ AddressBalanceUpdated(addr, token, newBalance) =>
+    case req: AddressBalanceUpdated =>
       (for {
-        _ <- Future.successful(assert(addr == address))
-      } yield updateBalanceOrAllowance(token, req)) sendTo sender
+        _ <- Future.successful(assert(req.address == address))
+      } yield updateBalanceOrAllowance(req.token, req)) sendTo sender
 
-    case req @ AddressAllowanceUpdated(addr, token, newBalance) =>
+    case req: AddressAllowanceUpdated =>
       (for {
-        _ <- Future.successful(assert(addr == address))
-      } yield updateBalanceOrAllowance(token, req)) sendTo sender
+        _ <- Future.successful(assert(req.address == address))
+      } yield updateBalanceOrAllowance(req.token, req)) sendTo sender
 
     //ownerCutoff
     case req @ CutoffEvent(Some(header), broker, owner, "", cutoff)
@@ -360,7 +360,7 @@ class AccountManagerActor(
       _ = tms.foreach(tm => {
         val ba = res.balanceAndAllowanceMap(tm.token)
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
-        manager.getOrUpdateTokenManager(tm.token, tm)
+        manager.getOrUpdateTokenManager(tm)
       })
       tokenMangers = tokens.map(manager.getTokenManager)
     } yield tokenMangers
@@ -380,14 +380,12 @@ class AccountManagerActor(
                 STATUS_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
                 STATUS_COMPLETELY_FILLED | STATUS_PARTIALLY_FILLED =>
               Future.successful(Unit)
+
             case status =>
-              log.error(
+              val msg =
                 s"unexpected order status caused by balance/allowance upate: $status"
-              )
-              throw ErrorException(
-                ErrorCode.ERR_INTERNAL_UNKNOWN,
-                s"unexpected order status caused by balance/allowance upate: $status"
-              )
+              log.error(msg)
+              throw ErrorException(ErrorCode.ERR_INTERNAL_UNKNOWN, msg)
           }
         }
       }

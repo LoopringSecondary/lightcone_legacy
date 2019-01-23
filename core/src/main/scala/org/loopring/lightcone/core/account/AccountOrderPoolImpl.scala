@@ -29,6 +29,7 @@ class AccountOrderPoolImpl() extends AccountOrderPool with Logging {
   def getOrder(id: String) = orderMap.get(id)
   def contains(id: String) = orderMap.contains(id)
   def size: Int = orderMap.size
+  def orders() = orderMap.values
 
   def addCallback(callback: Callback) = this.synchronized {
     callbacks += callback
