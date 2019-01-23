@@ -164,7 +164,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val bnb1 = res10.find(_.symbol == "T2_").getOrElse(TokenMetadata())
     assert(
       bnb1.`type` == TokenMetadata.Type.TOKEN_TYPE_ERC1400 &&
-        bnb1.status == TokenMetadata.Status.VIEWABLE &&
+        bnb1.status == TokenMetadata.Status.UNVIEWABLE &&
         bnb1.symbol == "T2_" &&
         bnb1.name == "T2_ Token" &&
         bnb1.unit == "T2_" &&

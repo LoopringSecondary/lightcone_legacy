@@ -244,7 +244,7 @@ class MetadataManagerSpec
 
       info("send a message to disable lrc")
       val disabled = Await.result(
-        (actor ? DisableToken.Req(lrc.address)).mapTo[DisableToken.Res],
+        (actor ? UnviewableToken.Req(lrc.address)).mapTo[UnviewableToken.Res],
         5 second
       )
       assert(disabled.error == ErrorCode.ERR_NONE)
@@ -378,8 +378,8 @@ class MetadataManagerSpec
 
       info("send a message to disable lrc-weth")
       val disabled = Await.result(
-        (actor ? DisableMarket.Req(marketLrcWeth.marketHash))
-          .mapTo[DisableMarket.Res],
+        (actor ? TerminateMarket.Req(marketLrcWeth.marketHash))
+          .mapTo[TerminateMarket.Res],
         5 second
       )
       assert(disabled.error == ErrorCode.ERR_NONE)

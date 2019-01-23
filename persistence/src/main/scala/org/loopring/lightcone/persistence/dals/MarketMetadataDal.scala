@@ -36,5 +36,5 @@ trait MarketMetadataDal
       marketsHashes: Seq[String]
     ): Future[Seq[MarketMetadata]]
 
-  def disableMarketByHash(marketHash: String): Future[ErrorCode]
+  def terminateMarketByHash(marketHash: String): Future[ErrorCode]
 }

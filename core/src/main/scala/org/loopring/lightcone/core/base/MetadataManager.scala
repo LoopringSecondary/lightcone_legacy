@@ -82,8 +82,8 @@ final class MetadataManager @Inject()(implicit val config: Config)
   private var symbolMap = Map.empty[String, Token]
 
   // markets[marketKey, marketId]
-  private var disabledMarkets: Map[String, MarketId] = Map.empty
-  private var enabledMarkets: Map[String, MarketId] = Map.empty
+  private var terminatedMarkets: Map[String, MarketId] = Map.empty
+  private var activeMarkets: Map[String, MarketId] = Map.empty
   private var readOnlyMarkets: Map[String, MarketId] = Map.empty
 
   private var marketMetadatasMap = Map.empty[String, MarketMetadata]
@@ -98,8 +98,8 @@ final class MetadataManager @Inject()(implicit val config: Config)
     addressMap = Map.empty
     tokens.foreach(addToken)
 
-    disabledMarkets = Map.empty
-    enabledMarkets = Map.empty
+    terminatedMarkets = Map.empty
+    activeMarkets = Map.empty
     readOnlyMarkets = Map.empty
     marketMetadatasMap = Map.empty
     markets.foreach(addMarket)
@@ -113,7 +113,6 @@ final class MetadataManager @Inject()(implicit val config: Config)
     }
   }
 
-  //todo: token为disable时，是否应该把相应的市场都删除
   private def addToken(meta: TokenMetadata) = this.synchronized {
     val m = MetadataManager.normalizeToken(meta)
     val token = new Token(m)
@@ -155,9 +154,9 @@ final class MetadataManager @Inject()(implicit val config: Config)
     val itemMap = m.marketHash -> m.marketId.get
     m.status match {
       case MarketMetadata.Status.TERMINATED =>
-        disabledMarkets += itemMap
+        terminatedMarkets += itemMap
       case MarketMetadata.Status.ACTIVE =>
-        enabledMarkets += itemMap
+        activeMarkets += itemMap
       case MarketMetadata.Status.READONLY =>
         readOnlyMarkets += itemMap
       case m =>
@@ -202,17 +201,17 @@ final class MetadataManager @Inject()(implicit val config: Config)
     getValidMarketIds.contains(marketKey.toLowerCase())
 
   // check market is at enabled status
-  def isEnabledMarket(marketKey: String): Boolean =
-    enabledMarkets.contains(marketKey.toLowerCase())
+  def isActiveMarket(marketKey: String): Boolean =
+    activeMarkets.contains(marketKey.toLowerCase())
 
-  def isEnabledMarket(marketId: MarketId): Boolean =
-    isEnabledMarket(marketId.keyHex())
+  def isActiveMarket(marketId: MarketId): Boolean =
+    isActiveMarket(marketId.keyHex())
 
-  def getValidMarketIds = enabledMarkets ++ readOnlyMarkets
+  def getValidMarketIds = activeMarkets ++ readOnlyMarkets
 
-  def getEnabledMarketIds = enabledMarkets
+  def getEnabledMarketIds = activeMarkets
 
-  def getDisabledMarketIds = disabledMarkets
+  def getTerminatedMarketIds = terminatedMarkets
 
   def getReadOnlyMarketIds = readOnlyMarkets
 

@@ -196,16 +196,16 @@ class MetadataManagerActor(
         }).sendTo(sender)
       }
 
-    case req: DisableToken.Req =>
+    case req: UnviewableToken.Req =>
       (for {
         result <- dbModule.tokenMetadataDal
-          .disableToken(req.address)
+          .unviewableToken(req.address)
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
         if (result == ErrorCode.ERR_NONE) {
           checkAndPublish(Some(tokens_), None)
         }
-        DisableToken.Res(result)
+        UnviewableToken.Res(result)
       }).sendTo(sender)
 
     case req: SaveMarketMetadatas.Req =>
@@ -232,16 +232,16 @@ class MetadataManagerActor(
         UpdateMarketMetadata.Res(result)
       }).sendTo(sender)
 
-    case req: DisableMarket.Req =>
+    case req: TerminateMarket.Req =>
       (for {
         result <- dbModule.marketMetadataDal
-          .disableMarketByHash(req.marketHash)
+          .terminateMarketByHash(req.marketHash)
         markets_ <- dbModule.marketMetadataDal.getMarkets()
       } yield {
         if (result == ErrorCode.ERR_NONE) {
           checkAndPublish(None, Some(markets_))
         }
-        DisableMarket.Res(result)
+        TerminateMarket.Res(result)
       }).sendTo(sender)
 
     case req: LoadTokenMetadata.Req =>

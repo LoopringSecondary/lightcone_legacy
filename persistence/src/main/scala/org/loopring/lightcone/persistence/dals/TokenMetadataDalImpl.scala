@@ -97,7 +97,7 @@ class TokenMetadataDalImpl @Inject()(
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def disableToken(address: String): Future[ErrorCode] =
+  def unviewableToken(address: String): Future[ErrorCode] =
     for {
       result <- db.run(
         query

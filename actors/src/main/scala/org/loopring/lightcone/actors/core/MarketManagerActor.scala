@@ -72,7 +72,7 @@ object MarketManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  //todo:READONLY的不能在该处处理，需要在validtor中截取，因为该处还需要将orderbook等恢复
+  //READONLY的不能在该处处理，需要在validtor中截取，因为该处还需要将orderbook等恢复
   val extractMarketId: PartialFunction[Any, MarketId] = {
     case SubmitSimpleOrder(_, Some(order)) =>
       MarketId(order.tokenS, order.tokenB)

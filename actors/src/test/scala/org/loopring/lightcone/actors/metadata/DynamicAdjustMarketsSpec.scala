@@ -96,7 +96,7 @@ class DynamicAdjustMarketsSpec
 
       info("send disabled event")
 
-      val disableMarketF = actors.get(MetadataManagerActor.name) ? DisableMarket
+      val disableMarketF = actors.get(MetadataManagerActor.name) ? TerminateMarket
         .Req(MarketId(rawOrder.tokenS, rawOrder.tokenB).keyHex())
       Await.result(disableMarketF, timeout.duration)
       actors.get(MetadataRefresher.name) ! MetadataChanged()
@@ -122,7 +122,7 @@ class DynamicAdjustMarketsSpec
                 MarketId(rawOrder.tokenS, rawOrder.tokenB).keyHex()
               )
               .get
-              .copy(status = MarketMetadata.Status.TERMINATED)
+              .copy(status = MarketMetadata.Status.ACTIVE)
           )
         )
       Await.result(disableMarketF, timeout.duration)
