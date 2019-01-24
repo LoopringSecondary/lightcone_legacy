@@ -66,7 +66,7 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
         ),
         broker = accounts(0).getAddress,
         owner = accounts(0).getAddress,
-        tradingPair = Numeric.toHexStringNoPrefix(
+        marketKey = Numeric.toHexStringNoPrefix(
           Numeric.toBigInt(LRC_TOKEN.address) xor Numeric.toBigInt(
             WETH_TOKEN.address
           )

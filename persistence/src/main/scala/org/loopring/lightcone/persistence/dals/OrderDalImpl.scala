@@ -543,4 +543,41 @@ class OrderDalImpl @Inject()(
       if (result >= 1) ERR_NONE
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
+
+  def updateOrderAmountAndStatus(
+      hash: String,
+      state: RawOrder.State
+    ): Future[ErrorCode] =
+    for {
+      result <- db.run(
+        query
+          .filter(_.hash === hash)
+          .map(
+            c =>
+              (
+                c.actualAmountS,
+                c.actualAmountB,
+                c.actualAmountFee,
+                c.outstandingAmountS,
+                c.outstandingAmountB,
+                c.outstandingAmountFee,
+                c.status,
+                c.updatedAt
+              )
+          )
+          .update(
+            state.actualAmountS,
+            state.actualAmountB,
+            state.actualAmountFee,
+            state.outstandingAmountS,
+            state.outstandingAmountB,
+            state.outstandingAmountFee,
+            state.status,
+            timeProvider.getTimeMillis
+          )
+      )
+    } yield {
+      if (result >= 1) ERR_NONE
+      else ERR_PERSISTENCE_UPDATE_FAILED
+    }
 }
