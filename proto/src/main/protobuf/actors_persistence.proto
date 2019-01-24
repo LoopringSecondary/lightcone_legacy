@@ -88,7 +88,7 @@ message GetOrdersForUser {
     message Req {
         oneof market {
             MarketPair pair        = 1; // tokenS -> tokenB
-            string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+            string     market_key  = 2; // tokenS -> tokenB && tokenB -> tokenS
         }
         string   owner                 = 3;
         repeated OrderStatus statuses = 4;
@@ -121,7 +121,7 @@ message GetTrades {
     message Req {
         oneof market {
             MarketPair pair        = 1; // tokenS -> tokenB
-            string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+            string     market_key  = 2; // tokenS -> tokenB && tokenB -> tokenS
         }
         string owner   = 3;
         SortingType sort     = 4;
@@ -322,7 +322,7 @@ message SaveMarketMetadatas {
     }
 
     message Res {
-        repeated string saved_market_hashes = 1;
+        repeated string saved_market_key es = 1;
     }
 }
 
@@ -338,7 +338,7 @@ message UpdateMarketMetadata {
 
 message DisableMarket {
     message Req {
-        string   market_hash = 1;
+        string   market_key  = 1;
     }
 
     message Res {
