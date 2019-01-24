@@ -111,4 +111,5 @@ class EthereumEventExtractorActor(
   }
 
   def ready = handleMessage
+
 }
