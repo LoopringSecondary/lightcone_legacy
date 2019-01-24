@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.core
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Stash}
+import akka.actor.{ActorRef, Stash}
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
@@ -33,7 +33,7 @@ import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.ethereum.data.{Transaction, _}
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.ethereum.abi._
 
 import scala.collection.mutable
