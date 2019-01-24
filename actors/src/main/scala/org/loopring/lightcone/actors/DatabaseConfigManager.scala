@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors
 import com.typesafe.config.Config
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
+import scala.util.Try
 
 class DatabaseConfigManager(config: Config) {
   private var nameMap = Map.empty[String, Config]
@@ -44,6 +45,6 @@ class DatabaseConfigManager(config: Config) {
     }
 
   def close() = confMap.map {
-    case (_, cnf) => cnf.db.close()
+    case (_, cnf) => Try(cnf.db.close())
   }
 }
