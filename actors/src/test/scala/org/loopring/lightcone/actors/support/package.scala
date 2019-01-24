@@ -80,7 +80,7 @@ package object support {
     marketId = Some(
       MarketId(primary = WETH_TOKEN.address, secondary = LRC_TOKEN.address)
     ),
-    marketHash = MarketKey(LRC_TOKEN.address, WETH_TOKEN.address).toString
+    marketKey = MarketKey(LRC_TOKEN.address, WETH_TOKEN.address).toString
   )
 
   val GTO_WETH_MARKET = MarketMetadata(
@@ -96,7 +96,7 @@ package object support {
     marketId = Some(
       MarketId(primary = WETH_TOKEN.address, secondary = GTO_TOKEN.address)
     ),
-    marketHash = MarketKey(GTO_TOKEN.address, WETH_TOKEN.address).toString
+    marketKey = MarketKey(GTO_TOKEN.address, WETH_TOKEN.address).toString
   )
 
   val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
