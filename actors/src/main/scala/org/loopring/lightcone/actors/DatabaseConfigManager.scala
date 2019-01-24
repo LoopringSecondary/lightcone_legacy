@@ -42,4 +42,11 @@ class DatabaseConfigManager(config: Config) {
         confMap += conf -> databaseConfig
         databaseConfig
     }
+
+  def close() = {
+    confMap.map {
+      case (_, cnf) =>
+        cnf.db.close()
+    }
+  }
 }
