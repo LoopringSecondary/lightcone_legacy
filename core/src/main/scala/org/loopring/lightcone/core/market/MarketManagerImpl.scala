@@ -175,11 +175,11 @@ class MarketManagerImpl(
                 )
               )
               ) =>
-            log.error(s"match error: $error")
+            log.debug(s"match error: $error")
             ordersToAddBack :+= maker
 
           case Some((maker, Left(error))) =>
-            log.error(s"match error: $error")
+            log.debug(s"match error: $error")
             ordersToAddBack :+= maker
             recursivelyMatchOrders()
 

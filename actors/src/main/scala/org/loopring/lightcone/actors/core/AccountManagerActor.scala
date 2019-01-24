@@ -124,7 +124,7 @@ class AccountManagerActor(
       sender ! req
 
     case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
-      submitOrAdjustOrder(xraworder).map { _ =>
+      submitOrder(xraworder).map { _ =>
         ActorRecover.OrderRecoverResult(xraworder.id, true)
       }.sendTo(sender)
 
@@ -170,7 +170,7 @@ class AccountManagerActor(
             case STATUS_PENDING_ACTIVE =>
               val order: Order = resRawOrder
               Future.successful(order)
-            case _ => submitOrAdjustOrder(resRawOrder)
+            case _ => submitOrder(resRawOrder)
           }).mapAs[Order]
         } yield SubmitOrder.Res(Some(resOrder))
 
@@ -182,8 +182,11 @@ class AccountManagerActor(
         _ <- Future.successful(assert(req.owner == address))
         persistenceRes <- (orderPersistenceActor ? req)
           .mapAs[CancelOrder.Res]
-        (cancelRes, updatedOrders) = manager
-          .handleChangeEventThenGetUpdatedOrders(req)
+
+        (cancelRes, updatedOrders) = manager.synchronized {
+          (manager.cancelOrder(req.id), orderPool.takeUpdatedOrdersAsMap())
+        }
+
         _ <- processUpdatedOrders(updatedOrders - req.id)
         _ = if (cancelRes) {
           marketManagerActor.tell(req, originalSender)
@@ -198,15 +201,27 @@ class AccountManagerActor(
       } yield persistenceRes) sendTo sender
 
     //为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
-    case req @ AddressBalanceUpdated(addr, token, newBalance) =>
-      (for {
-        _ <- Future.successful(assert(addr == address))
-      } yield updateBalanceOrAllowance(token, req)) sendTo sender
+    case req: AddressBalanceUpdated =>
+      assert(req.address == address)
 
-    case req @ AddressAllowanceUpdated(addr, token, newBalance) =>
-      (for {
-        _ <- Future.successful(assert(addr == address))
-      } yield updateBalanceOrAllowance(token, req)) sendTo sender
+      updateBalanceOrAllowance(req.token) {
+        val tm = manager.getTokenManager(req.token)
+        manager.synchronized {
+          tm.setBalance(BigInt(req.balance.toByteArray))
+          orderPool.takeUpdatedOrdersAsMap
+        }
+      }
+
+    case req: AddressAllowanceUpdated =>
+      assert(req.address == address)
+
+      updateBalanceOrAllowance(req.token) {
+        val tm = manager.getTokenManager(req.token)
+        manager.synchronized {
+          tm.setAllowance(BigInt(req.allowance.toByteArray))
+          orderPool.takeUpdatedOrdersAsMap
+        }
+      }
 
     //ownerCutoff
     case req @ CutoffEvent(Some(header), broker, owner, "", cutoff)
@@ -214,12 +229,24 @@ class AccountManagerActor(
       log.debug(s"received OwnerCutoffEvent $req")
       accountCutoffState.setCutoff(cutoff)
 
+      val updatedOrders = manager.synchronized {
+        manager.setCutoff(cutoff)
+        orderPool.takeUpdatedOrdersAsMap
+      }
+      processUpdatedOrders(updatedOrders)
+
     //ownerTokenPairCutoff  tokenPair ！= ""
-    case req @ CutoffEvent(Some(header), broker, owner, tokenPair, cutoff)
+    case req @ CutoffEvent(Some(header), broker, owner, marketKey, cutoff)
         if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received OwnerTokenPairCutoffEvent $req")
       accountCutoffState
-        .setTradingPairCutoff(Numeric.toBigInt(req.tradingPair), req.cutoff)
+        .setTradingPairCutoff(Numeric.toBigInt(marketKey), req.cutoff)
+
+      val updatedOrders = manager.synchronized {
+        manager.setCutoff(cutoff, marketKey)
+        orderPool.takeUpdatedOrdersAsMap
+      }
+      processUpdatedOrders(updatedOrders)
 
     //brokerCutoff
     //todo:暂时不处理
@@ -230,22 +257,20 @@ class AccountManagerActor(
     case req: OrderFilledEvent
         if req.header.nonEmpty && req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received OrderFilledEvent ${req}")
-      //收到filledEvent后，submitOrAdjustOrder会调用adjust方法
       for {
         orderOpt <- dbModule.orderService.getOrder(req.orderHash)
-      } yield orderOpt.map(o => submitOrAdjustOrder(o))
+      } yield orderOpt.map(o => submitOrder(o))
   }
 
-  private def submitOrAdjustOrder(rawOrder: RawOrder): Future[Order] = {
+  private def submitOrder(rawOrder: RawOrder): Future[Order] = {
     val order: Order = rawOrder
     val matchable: Matchable = order
-    log.debug(s"### submitOrAdjustOrder ${order}")
+    log.debug(s"### submitOrder ${order}")
     for {
-      _ <- getTokenManagers(Seq(matchable.tokenS))
       _ <- if (matchable.amountFee > 0 && matchable.tokenS != matchable.tokenFee)
-        getTokenManagers(Seq(matchable.tokenFee))
+        getTokenManagers(Seq(matchable.tokenS, matchable.tokenFee))
       else
-        Future.successful(Unit)
+        getTokenManagers(Seq(matchable.tokenS))
 
       // Update the order's _outstanding field.
       getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmount.Req(
@@ -257,35 +282,23 @@ class AccountManagerActor(
         s"ethereumQueryActor GetFilledAmount.Res $getFilledAmountRes"
       )
 
-      _matchable = matchable.withFilledAmountS(filledAmountS)
+      (successful, updatedOrders) = manager.synchronized {
+        val res = if (orderPool.contains(order.id)) {
+          manager.adjustOrder(order.id, order.outstanding.get.amountS)
+        } else {
+          manager.submitOrder(order)
+        }
+        (res, orderPool.takeUpdatedOrdersAsMap)
+      }
 
-      state = rawOrder.state
-        .getOrElse(
-          RawOrder.State(
-            createdAt = timeProvider.getTimeMillis(),
-            updatedAt = timeProvider.getTimeMillis(),
-            status = OrderStatus.STATUS_NEW
-          )
-        )
-        .copy(
-          outstandingAmountS = filledAmountS,
-          outstandingAmountB = _matchable.outstanding.amountB,
-          outstandingAmountFee = _matchable.outstanding.amountFee
-        )
-
-      _ <- dbModule.orderService.updateAmount(rawOrder.id, state = state)
-
-      _ = log.debug(s"submitting order to AccountManager: ${_matchable}")
-      (successful, updatedOrders) = manager
-        .handleChangeEventThenGetUpdatedOrders(_matchable)
       _ = if (!successful)
         throw ErrorException(Error(matchable.status))
-      _ = assert(updatedOrders.contains(_matchable.id))
+      _ = assert(updatedOrders.contains(matchable.id))
       _ = log.debug(
-        s"updatedOrders: ${updatedOrders.size} assert contains order:  ${updatedOrders(_matchable.id)}"
+        s"updatedOrders: ${updatedOrders.size} assert contains order:  ${updatedOrders(matchable.id)}"
       )
       res <- processUpdatedOrders(updatedOrders)
-      matchable_ = updatedOrders(_matchable.id)
+      matchable_ = updatedOrders(matchable.id)
       order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
     } yield order_
   }
@@ -293,9 +306,19 @@ class AccountManagerActor(
   private def processUpdatedOrders(updatedOrders: Map[String, Matchable]) = {
     Future.sequence {
       updatedOrders.map { o =>
+        val state = RawOrder.State(
+          actualAmountS = o._2.actual.amountS,
+          actualAmountB = o._2.actual.amountB,
+          actualAmountFee = o._2.actual.amountFee,
+          outstandingAmountS = o._2.outstanding.amountS,
+          outstandingAmountB = o._2.outstanding.amountB,
+          outstandingAmountFee = o._2.outstanding.amountFee,
+          status = o._2.status
+        )
         for {
           //需要更新到数据库
-          _ <- dbModule.orderService.updateOrderStatus(o._2.id, o._2.status)
+          //todo[yongfeng]:暂时添加接口，需要永丰根据目前的使用优化dal的接口
+          _ <- dbModule.orderService.updateOrderAmountAndStatus(o._2.id, state)
         } yield {
           val order = o._2
           order.status match {
@@ -360,19 +383,19 @@ class AccountManagerActor(
       _ = tms.foreach(tm => {
         val ba = res.balanceAndAllowanceMap(tm.token)
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
-        manager.getOrUpdateTokenManager(tm.token, tm)
+        manager.getOrUpdateTokenManager(tm)
       })
       tokenMangers = tokens.map(manager.getTokenManager)
     } yield tokenMangers
   }
 
-  private def updateBalanceOrAllowance[T](
-      token: String,
-      req: T
+  private def updateBalanceOrAllowance(
+      token: String
+    )(getUpdatedOrders: => Map[String, Matchable]
     ) =
     for {
-      tm <- getTokenManagers(Seq(token))
-      (_, updatedOrders) = manager.handleChangeEventThenGetUpdatedOrders(req)
+      _ <- getTokenManagers(Seq(token))
+      updatedOrders = getUpdatedOrders
       _ <- Future.sequence {
         updatedOrders.values.map { order =>
           order.status match {
@@ -380,14 +403,12 @@ class AccountManagerActor(
                 STATUS_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
                 STATUS_COMPLETELY_FILLED | STATUS_PARTIALLY_FILLED =>
               Future.successful(Unit)
+
             case status =>
-              log.error(
+              val msg =
                 s"unexpected order status caused by balance/allowance upate: $status"
-              )
-              throw ErrorException(
-                ErrorCode.ERR_INTERNAL_UNKNOWN,
-                s"unexpected order status caused by balance/allowance upate: $status"
-              )
+              log.error(msg)
+              throw ErrorException(ErrorCode.ERR_INTERNAL_UNKNOWN, msg)
           }
         }
       }

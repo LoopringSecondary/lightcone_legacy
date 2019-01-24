@@ -185,7 +185,7 @@ message TransactionRecord {
     EventHeader header       = 1;
     string      owner        = 2;
     RecordType  record_type  = 3;
-    string      trading_pair = 4;
+    string      market_key = 4;
     string      market       = 5; // LRC-WETH
     int64       sequence_id  = 6;
     EventData   event_data   = 7;
