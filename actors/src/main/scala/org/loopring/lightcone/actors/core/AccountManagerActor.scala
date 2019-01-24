@@ -267,11 +267,10 @@ class AccountManagerActor(
     val matchable: Matchable = order
     log.debug(s"### submitOrder ${order}")
     for {
-      _ <- getTokenManagers(Seq(matchable.tokenS))
       _ <- if (matchable.amountFee > 0 && matchable.tokenS != matchable.tokenFee)
-        getTokenManagers(Seq(matchable.tokenFee))
+        getTokenManagers(Seq(matchable.tokenS, matchable.tokenFee))
       else
-        Future.successful(Unit)
+        getTokenManagers(Seq(matchable.tokenS))
 
       // Update the order's _outstanding field.
       getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmount.Req(
@@ -282,27 +281,6 @@ class AccountManagerActor(
       _ = log.debug(
         s"ethereumQueryActor GetFilledAmount.Res $getFilledAmountRes"
       )
-
-      _matchable = matchable.withFilledAmountS(filledAmountS)
-
-      state = rawOrder.state
-        .getOrElse(
-          RawOrder.State(
-            createdAt = timeProvider.getTimeMillis(),
-            updatedAt = timeProvider.getTimeMillis(),
-            status = OrderStatus.STATUS_NEW
-          )
-        )
-        .copy(
-          outstandingAmountS = _matchable.outstanding.amountS,
-          outstandingAmountB = _matchable.outstanding.amountB,
-          outstandingAmountFee = _matchable.outstanding.amountFee
-        )
-
-      // TODO(hongyu): 这个地方是不是要和下面的processUpdatedOrders 合并在一起？
-      _ <- dbModule.orderService.updateAmounts(rawOrder.id, state = state)
-
-      _ = log.debug(s"submitting order to AccountManager: ${_matchable}")
 
       (successful, updatedOrders) = manager.synchronized {
         val res = if (orderPool.contains(order.id)) {
@@ -315,12 +293,12 @@ class AccountManagerActor(
 
       _ = if (!successful)
         throw ErrorException(Error(matchable.status))
-      _ = assert(updatedOrders.contains(_matchable.id))
+      _ = assert(updatedOrders.contains(matchable.id))
       _ = log.debug(
-        s"updatedOrders: ${updatedOrders.size} assert contains order:  ${updatedOrders(_matchable.id)}"
+        s"updatedOrders: ${updatedOrders.size} assert contains order:  ${updatedOrders(matchable.id)}"
       )
       res <- processUpdatedOrders(updatedOrders)
-      matchable_ = updatedOrders(_matchable.id)
+      matchable_ = updatedOrders(matchable.id)
       order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
     } yield order_
   }
@@ -328,9 +306,18 @@ class AccountManagerActor(
   private def processUpdatedOrders(updatedOrders: Map[String, Matchable]) = {
     Future.sequence {
       updatedOrders.map { o =>
+        val state = RawOrder.State(
+          actualAmountS = o._2.actual.amountS,
+          actualAmountB = o._2.actual.amountB,
+          actualAmountFee = o._2.actual.amountFee,
+          outstandingAmountS = o._2.outstanding.amountS,
+          outstandingAmountB = o._2.outstanding.amountB,
+          outstandingAmountFee = o._2.outstanding.amountFee,
+          status = o._2.status
+        )
         for {
           //需要更新到数据库
-          _ <- dbModule.orderService.updateOrderStatus(o._2.id, o._2.status)
+          _ <- dbModule.orderService.updateOrderAmountAndStatus(o._2.id, state)
         } yield {
           val order = o._2
           order.status match {
