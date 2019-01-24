@@ -75,7 +75,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
+      marketKeySet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[SortingType] = None,
       skip: Option[Paging] = None
@@ -86,7 +86,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketKey: Option[String] = None,
       feeToken: Option[String] = None,
       sort: Option[SortingType] = None,
       skip: Option[Paging] = None
@@ -98,15 +98,15 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketKey: Option[String] = None,
       feeToken: Option[String] = None
     ): Future[Int]
 
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
       statuses: Set[OrderStatus],
-      marketHashIdSet: Set[Int] = Set.empty,
-      addressShardIdSet: Set[Int] = Set.empty,
+      marketShardSet: Set[Int] = Set.empty,
+      accountShardSet: Set[Int] = Set.empty,
       skip: CursorPaging
     ): Future[Seq[RawOrder]]
 

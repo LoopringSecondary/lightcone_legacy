@@ -20,7 +20,8 @@ import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
-
+import org.web3j.utils.Numeric
+import org.loopring.lightcone.actors.data._
 import scala.concurrent.Await
 
 class RingMinedAndOrderFilledEventExtractorSpec
@@ -129,7 +130,7 @@ class RingMinedAndOrderFilledEventExtractorSpec
           .mapAs[SubmitOrder.Res],
         timeout.duration
       )
-      Thread.sleep(6000)
+      Thread.sleep(10000)
 
       val ba1_2 = Await.result(
         singleRequest(
@@ -182,7 +183,7 @@ class RingMinedAndOrderFilledEventExtractorSpec
 //        timeout.duration
 //      )
 //      println(
-//        Numeric.toBigInt(getOrder1.get.getState.outstandingAmountS.toByteArray)
+//        byteString2BigInt(getOrder1.get.getState.outstandingAmountS)
 //      )
 //      println(getOrder1.get.getState.status)
 //      val getOrder2 = Await.result(
@@ -190,7 +191,7 @@ class RingMinedAndOrderFilledEventExtractorSpec
 //        timeout.duration
 //      )
 //      println(
-//        Numeric.toBigInt(getOrder2.get.getState.outstandingAmountS.toByteArray)
+//        byteString2BigInt(getOrder2.get.getState.outstandingAmountS)
 //      )
 //      println(getOrder2.get.getState.status)
 

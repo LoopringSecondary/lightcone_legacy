@@ -49,7 +49,7 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
   def blockHeight = column[Long]("block_height")
   def blockTimestamp = column[Long]("block_timestamp")
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
-  def marketHash = columnAddress("market_hash")
+  def marketKey = columnAddress("market_key")
 
   // indexes
   def idx_tx_hash = index("idx_tx_hash", (txHash), unique = true)
@@ -59,7 +59,7 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
   def idx_ring_index = index("idx_ring_index", (ringIndex), unique = false)
   def idx_token_s = index("idx_token_s", (tokenS), unique = false)
   def idx_token_b = index("idx_token_b", (tokenB), unique = false)
-  def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
+  def idx_market_key = index("idx_market_key", (marketKey), unique = false)
 
   def idx_block_height =
     index("idx_block_height", (blockHeight), unique = false)
@@ -92,7 +92,7 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
       amountB,
       tokenS,
       tokenB,
-      marketHash,
+      marketKey,
       split,
       feeParamsProjection,
       createdAt,
