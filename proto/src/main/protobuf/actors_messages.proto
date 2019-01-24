@@ -306,7 +306,7 @@ message GetMetadatas {
     }
 }
 
-message GetOrderbookUpdate {
+message GetOrderbookSlots {
     message Req {
         MarketId market_id = 1;
     }

@@ -281,6 +281,6 @@ class MarketManagerImpl(
       .map(submitOrder(_, minFiatValue))
   }
 
-  def getOrderbookUpdate(num: Int): Orderbook.Update =
+  def getOrderbookSlots(num: Int): Orderbook.Update =
     aggregator.getOrderbookSlots(num)
 }

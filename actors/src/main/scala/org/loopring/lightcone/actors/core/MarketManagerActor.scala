@@ -81,7 +81,7 @@ object MarketManagerActor extends ShardedByMarket {
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
       MarketId(primary, secondary)
-    case GetOrderbookUpdate.Req(marketId) =>
+    case GetOrderbookSlots.Req(marketId) =>
       marketId.getOrElse(
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
@@ -134,10 +134,18 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
+  val marketMetadata = metadataManager
+    .getMarketMetadata(marketId)
+    .getOrElse(
+      throw ErrorException(
+        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        s"not found market: $marketId metaadta"
+      )
+    )
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-    selfConfig.getInt("price-decimals"),
-    selfConfig.getInt("precision-for-amount"),
-    selfConfig.getInt("precision-for-total")
+    marketMetadata.priceDecimals,
+    marketMetadata.precisionForAmount,
+    marketMetadata.precisionForTotal
   )
 
   val manager = new MarketManagerImpl(
@@ -259,9 +267,9 @@ class MarketManagerActor(
         }
       } sendTo sender
 
-    case GetOrderbookUpdate.Req(_) =>
-      sender ! GetOrderbookUpdate.Res(
-        Some(manager.getOrderbookUpdate(orderbookGetRecordNum))
+    case GetOrderbookSlots.Req(_) =>
+      sender ! GetOrderbookSlots.Res(
+        Some(manager.getOrderbookSlots(orderbookGetRecordNum))
       )
   }
 

@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.support
 
 import java.util.concurrent.TimeUnit
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.proto.{GetOrderbookUpdate, LoadTokenMetadata}
+import org.loopring.lightcone.proto.{GetOrderbookSlots, LoadTokenMetadata}
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
@@ -36,12 +36,12 @@ trait MarketManagerSupport extends DatabaseModuleSupport {
     () => {
       val f = Future.sequence(metadataManager.getValidMarketIds.values.map {
         marketId =>
-          actors.get(MarketManagerActor.name) ? GetOrderbookUpdate.Req(
+          actors.get(MarketManagerActor.name) ? GetOrderbookSlots.Req(
             Some(marketId)
           )
       })
       val res =
-        Await.result(f.mapTo[Seq[GetOrderbookUpdate.Res]], timeout.duration)
+        Await.result(f.mapTo[Seq[GetOrderbookSlots.Res]], timeout.duration)
       res.nonEmpty
     }
   )

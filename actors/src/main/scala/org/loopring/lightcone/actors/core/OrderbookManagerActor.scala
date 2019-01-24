@@ -115,8 +115,8 @@ class OrderbookManagerActor(
 
   override def initialize() = {
     val orderbookUpdate =
-      (marketManagerActor ? GetOrderbookUpdate.Req(Some(marketId)))
-        .mapTo[GetOrderbookUpdate.Res]
+      (marketManagerActor ? GetOrderbookSlots.Req(Some(marketId)))
+        .mapTo[GetOrderbookSlots.Res]
     orderbookUpdate onComplete {
       case Success(orderbookRes) =>
         orderbookRes.update match {
@@ -148,6 +148,7 @@ class OrderbookManagerActor(
             s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}"
           )
       } sendTo sender
+
     case msg => log.info(s"not supported msg:${msg}, ${marketId}")
 
   }
