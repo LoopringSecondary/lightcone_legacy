@@ -188,8 +188,7 @@ class CoreModule(config: Config)
       blockGasPricesDispatcher: EventDispatcher[BlockGasPrices],
       tokenBurnRateChangedEventDispatcher: EventDispatcher[
         TokenBurnRateChangedEvent
-      ],
-      
+      ]
     ): Seq[EventDispatcher[_]] =
     Seq(
       balanceEventDispatcher,

@@ -18,10 +18,10 @@ package org.loopring.lightcone.actors.event
 
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-import org.web3j.crypto.Credentials
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.core.OHLCDataHandlerActor
-import org.loopring.lightcone.lib.MarketHashProvider._
+import org.web3j.crypto.Credentials
 import akka.pattern._
 
 import scala.concurrent.Await
@@ -116,16 +116,16 @@ class OHLCRawDataExtractorSpec
         timeout.duration
       )
       Thread.sleep(2000)
-      val marketKey = convert2Hex(LRC_TOKEN.address, WETH_TOKEN.address)
-//      val ohlcDatas = Await.result(
-//        dbModule.ohlcDataDal.getOHLCData(
-//          marketKey,
-//          60,
-//          timeProvider.getTimeSeconds() - 600,
-//          timeProvider.getTimeSeconds()
-//        ),
-//        timeout.duration
-//      )
+      val marketKey = MarketKey(LRC_TOKEN.address, WETH_TOKEN.address).toString
+      //      val ohlcDatas = Await.result(
+      //        dbModule.ohlcDataDal.getOHLCData(
+      //          marketKey,
+      //          60,
+      //          timeProvider.getTimeSeconds() - 600,
+      //          timeProvider.getTimeSeconds()
+      //        ),
+      //        timeout.duration
+      //      )
 
       val oHLCDatas = Await.result(
         (oHLCDataHandlerActor ? GetOHLCData.Req(

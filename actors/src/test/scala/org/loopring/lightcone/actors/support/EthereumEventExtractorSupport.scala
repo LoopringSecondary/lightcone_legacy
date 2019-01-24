@@ -55,7 +55,7 @@ trait EthereumEventExtractorSupport
     new RingMinedEventDispatcher(actors),
     new BalanceEventDispatcher(actors),
     new AllowanceEventDispatcher(actors),
-    new OHLCRawDataEventDispatcher(actors)
+    new OHLCRawDataEventDispatcher(actors),
     new BlockGasPricesDispatcher(actors)
   )
 
@@ -67,8 +67,5 @@ trait EthereumEventExtractorSupport
     MissingBlocksEventExtractorActor.name,
     MissingBlocksEventExtractorActor.start
   )
-  actors.add(
-    OHLCDataHandlerActor.name,
-    OHLCDataHandlerActor.start
-  )
+  actors.add(OHLCDataHandlerActor.name, OHLCDataHandlerActor.start)
 }

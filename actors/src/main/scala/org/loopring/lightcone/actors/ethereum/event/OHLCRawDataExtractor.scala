@@ -20,7 +20,6 @@ import com.google.inject.Inject
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.lib.MarketHashProvider._
 import org.web3j.utils.Numeric
 
 import scala.concurrent._
@@ -48,15 +47,21 @@ class OHLCRawDataExtractor @Inject()(
               val _fill =
                 if (index + 1 >= ring.fills.size) ring.fills.head
                 else ring.fills(index + 1)
-              val marketKey = convert2Hex(fill.tokenS, _fill.tokenS)
-              if (metadataManager.isValidMarket(marketKey)) {
+
+              val marketKey = MarketKey(fill.tokenS, _fill.tokenS).toString
+
+              if (!metadataManager.isValidMarket(marketKey)) None
+              else {
                 val marketMetadata =
                   metadataManager.getMarketMetadata(marketKey).get
+
                 val marketId = marketMetadata.getMarketId
+
                 val primaryToken =
                   metadataManager.getToken(marketId.primary).get
                 val secondToken =
                   metadataManager.getToken(marketId.secondary).get
+
                 val (quality, amount) = getAmounts(
                   fill,
                   _fill,
@@ -64,6 +69,7 @@ class OHLCRawDataExtractor @Inject()(
                   secondToken,
                   marketMetadata
                 )
+
                 Some(
                   OHLCRawData(
                     ringIndex = ring.ringIndex,
@@ -77,8 +83,6 @@ class OHLCRawDataExtractor @Inject()(
                       .doubleValue()
                   )
                 )
-              } else {
-                None
               }
           }.filter(_.isDefined).map(_.get).distinct
         }
@@ -96,16 +100,20 @@ class OHLCRawDataExtractor @Inject()(
       if (Address(primaryToken.meta.address).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
       else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
+
     val amount: Double = secondToken
       .fromWei(amountInWei, marketMetadata.precisionForTotal)
       .doubleValue()
+
     val qualityInWei =
       if (Address(secondToken.meta.address).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
       else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
+
     val quality: Double = primaryToken
       .fromWei(qualityInWei, marketMetadata.precisionForAmount)
       .doubleValue()
+
     quality -> amount
   }
 }
