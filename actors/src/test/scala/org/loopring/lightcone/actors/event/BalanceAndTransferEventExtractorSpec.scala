@@ -30,9 +30,8 @@ class BalanceAndTransferEventExtractorSpec
     "correctly extract balance update events and transfer events from ethereum blocks" in {
       val getBaMethod = "get_balance_and_allowance"
       val account0 = accounts.head
-      val account2 = Credentials.create(
-        "0x30dfe4fc0145d0b092c6738b82b547d5ff609f182b5992a3f31cda67b2b93f95"
-      )
+      val account2 = getUniqueAccountWithoutEth
+
       val ba2 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
