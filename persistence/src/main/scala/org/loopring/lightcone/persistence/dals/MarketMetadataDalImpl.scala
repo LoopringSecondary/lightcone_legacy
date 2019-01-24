@@ -73,10 +73,10 @@ class MarketMetadataDalImpl @Inject()(
   def getMarkets(): Future[Seq[MarketMetadata]] =
     db.run(query.result)
 
-  def getMarketsByKey(marketKeyes: Seq[String]): Future[Seq[MarketMetadata]] =
-    db.run(query.filter(_.marketKey inSet marketKeyes).result)
+  def getMarketsByKey(marketKeys: Seq[String]): Future[Seq[MarketMetadata]] =
+    db.run(query.filter(_.marketKey inSet marketKeys).result)
 
-  def disableMarketByHash(marketKey: String): Future[ErrorCode] =
+  def disableMarketByKey(marketKey: String): Future[ErrorCode] =
     for {
       result <- db.run(
         query
