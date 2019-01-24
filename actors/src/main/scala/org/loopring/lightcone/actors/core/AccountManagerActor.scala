@@ -317,6 +317,7 @@ class AccountManagerActor(
         )
         for {
           //需要更新到数据库
+          //todo[yongfeng]:暂时添加接口，需要永丰根据目前的使用优化dal的接口
           _ <- dbModule.orderService.updateOrderAmountAndStatus(o._2.id, state)
         } yield {
           val order = o._2
