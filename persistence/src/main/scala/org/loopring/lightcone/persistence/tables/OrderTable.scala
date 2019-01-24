@@ -77,8 +77,8 @@ class OrderTable(tag: Tag) extends BaseTable[RawOrder](tag, "T_ORDERS") {
   def actualAmountFee = columnAmount("actual_amount_fee")
 
   // Shard
-  def addressShardId = column[Int]("address_shard_id")
-  def marketKeyId = column[Int]("market_hash_id")
+  def accountShard = column[Int]("address_shard_id")
+  def marketShard = column[Int]("market_hash_id")
 
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
   def marketKey = columnAddress("market_hash")
@@ -97,10 +97,10 @@ class OrderTable(tag: Tag) extends BaseTable[RawOrder](tag, "T_ORDERS") {
   def idx_market_hash = index("idx_market_hash", (marketKey), unique = false)
 
   def idx_address_shard_id =
-    index("idx_address_shard_id", (addressShardId), unique = false)
+    index("idx_address_shard_id", (accountShard), unique = false)
 
   def idx_market_hash_id =
-    index("idx_market_hash_id", (marketKeyId), unique = false)
+    index("idx_market_hash_id", (marketShard), unique = false)
 
   def paramsProjection =
     (
@@ -187,7 +187,7 @@ class OrderTable(tag: Tag) extends BaseTable[RawOrder](tag, "T_ORDERS") {
       stateProjection,
       sequenceId,
       marketKey,
-      addressShardId,
-      marketKeyId
+      accountShard,
+      marketShard
     ) <> ((RawOrder.apply _).tupled, RawOrder.unapply)
 }

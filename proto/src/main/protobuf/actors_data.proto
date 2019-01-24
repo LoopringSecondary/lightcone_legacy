@@ -102,9 +102,9 @@ message RawOrder {
     ERC1400Params erc1400_params      = 12;
     State state                       = 13;
     int64  sequence_id                = 14;
-    string market_key                = 15;
-    int32  address_shard_id           = 16;
-    int32  market_key_id             = 17;
+    string market_key                 = 15;
+    int32  account_shard              = 16; // TODO(hongyu): why save this to DB?
+    int32  market_shard               = 17; // TODO(hongyu): what is this?
 }
 
 

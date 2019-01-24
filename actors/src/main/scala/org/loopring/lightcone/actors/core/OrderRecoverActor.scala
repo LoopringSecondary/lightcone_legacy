@@ -116,8 +116,8 @@ class OrderRecoverActor(
           val marketKey = MarketKey(marketId).toString
           o.copy(
             marketKey = marketKey,
-            marketKeyId = MarketManagerActor.getEntityId(marketId).toInt,
-            addressShardId = MultiAccountManagerActor
+            marketShard = MarketManagerActor.getEntityId(marketId).toInt,
+            accountShard = MultiAccountManagerActor
               .getEntityId(o.owner, numOfShards)
               .toInt
           )
@@ -167,16 +167,16 @@ class OrderRecoverActor(
       lastOrderSeqId: Long
     ): Future[Seq[RawOrder]] = {
     if (batch.requestMap.nonEmpty) {
-      var addressShardIds: Set[Int] = Set.empty
-      var marketKeyIds: Set[Int] = Set.empty
+      var accountShards: Set[Int] = Set.empty
+      var marketShards: Set[Int] = Set.empty
       batch.requestMap.foreach {
         case (_, request) => {
           if ("" != request.addressShardingEntity)
-            addressShardIds += request.addressShardingEntity.toInt
+            accountShards += request.addressShardingEntity.toInt
           if (request.marketId.nonEmpty) {
-            val marketKeyId =
+            val marketShard =
               MarketManagerActor.getEntityId(request.marketId.get).toInt
-            marketKeyIds += marketKeyId
+            marketShards += marketShard
           }
         }
       }
@@ -186,13 +186,13 @@ class OrderRecoverActor(
         OrderStatus.STATUS_PARTIALLY_FILLED
       )
       log.debug(
-        s"the requset params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${status}, ${marketKeyIds}, ${addressShardIds}"
+        s"the requset params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${status}, ${marketShards}, ${accountShards}"
       )
 
       dbModule.orderService.getOrdersForRecover(
         status,
-        marketKeyIds,
-        addressShardIds,
+        marketShards,
+        accountShards,
         CursorPaging(lastOrderSeqId, batchSize)
       )
     } else {

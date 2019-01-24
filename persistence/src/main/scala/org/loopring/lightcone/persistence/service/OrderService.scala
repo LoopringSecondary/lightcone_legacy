@@ -52,8 +52,8 @@ trait OrderService {
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
       statuses: Set[OrderStatus],
-      marketKeyIdSet: Set[Int] = Set.empty,
-      addressShardIdSet: Set[Int] = Set.empty,
+      marketShardSet: Set[Int] = Set.empty,
+      accountShardSet: Set[Int] = Set.empty,
       skip: CursorPaging
     ): Future[Seq[RawOrder]]
 

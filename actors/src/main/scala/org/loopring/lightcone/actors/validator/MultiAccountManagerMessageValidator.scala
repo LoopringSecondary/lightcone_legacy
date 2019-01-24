@@ -112,8 +112,8 @@ final class MultiAccountManagerMessageValidator(
             rawOrder.copy(
               state = Some(state),
               marketKey = marketKey,
-              marketKeyId = MarketManagerActor.getEntityId(marketId).toInt,
-              addressShardId = MultiAccountManagerActor
+              marketShard = MarketManagerActor.getEntityId(marketId).toInt,
+              accountShard = MultiAccountManagerActor
                 .getEntityId(order.owner, numOfShards)
                 .toInt
             )

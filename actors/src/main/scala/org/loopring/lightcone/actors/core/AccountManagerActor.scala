@@ -214,10 +214,10 @@ class AccountManagerActor(
       log.debug(s"received OwnerCutoffEvent $req")
       accountCutoffState.setCutoff(cutoff)
 
-    //ownerTokenPairCutoff  marketKey ！= ""
+    //ownerMarketKeyCutoff  marketKey ！= ""
     case req @ CutoffEvent(Some(header), broker, owner, marketKey, cutoff)
         if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
-      log.debug(s"received OwnerTokenPairCutoffEvent $req")
+      log.debug(s"received OwnerMarketKeyCutoffEvent $req")
       accountCutoffState
         .setTradingPairCutoff(Numeric.toBigInt(req.marketKey), req.cutoff)
 

@@ -88,7 +88,7 @@ class CutOffEventExtractorSpec
 
       info("cancel all orders by set cutOff and token pair")
       Await.result(
-        cancelAllOrdersByTokenPair(timeProvider.getTimeSeconds())(account0),
+        cancelAllOrdersByMarketKey(timeProvider.getTimeSeconds())(account0),
         timeout.duration
       )
       Thread.sleep(1000)

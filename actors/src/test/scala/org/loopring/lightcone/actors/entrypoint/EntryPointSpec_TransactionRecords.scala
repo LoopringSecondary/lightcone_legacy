@@ -131,8 +131,8 @@ class EntryPointSpec_TransactionRecords
           hash = orderHash,
           tokenS = tokenS,
           tokenB = tokenB,
-          addressShardId = 1,
-          marketKeyId = 1
+          accountShard = 1,
+          marketShard = 1
         )
       )
       val r1 = Await.result(
