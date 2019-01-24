@@ -112,17 +112,4 @@ class EthereumEventExtractorActor(
   }
 
   def ready = handleMessage
-
-  override def processEvents =
-    super.processEvents.map(
-      _ => {
-        gasPriceActor ! BlockGasPrices(
-          height = blockData.height,
-          gasPrices = blockData.txs.map { tx =>
-            Numeric.toBigInt(tx.gasPrice).longValue()
-          }
-        )
-      }
-    )
-
 }
