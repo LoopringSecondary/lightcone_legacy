@@ -25,59 +25,49 @@ import org.web3j.utils.Numeric
 class EthereumCallRequestBuilder {
 
   def buildRequest(
-      req: GetBurnRate.Req,
-      contractAddress: Address,
-      tag: String
-    ): EthCall.Req = {
+    req: GetBurnRate.Req,
+    contractAddress: Address,
+    tag: String): EthCall.Req = {
     val input = burnRateTableAbi.getBurnRate.pack(
-      GetBurnRateFunction.Params(token = req.token)
-    )
+      GetBurnRateFunction.Params(token = req.token))
     val param = TransactionParams(to = contractAddress.toString, data = input)
     EthCall.Req(param = Some(param), tag = tag)
   }
 
   def buildRequest(
-      req: GetOrderCancellation.Req,
-      contractAddress: Address,
-      tag: String
-    ): EthCall.Req = {
+    req: GetOrderCancellation.Req,
+    contractAddress: Address,
+    tag: String): EthCall.Req = {
     val input = tradeHistoryAbi.cancelled.pack(
       CancelledFunction.Params(
         broker = req.broker,
-        orderHash = Numeric.hexStringToByteArray(req.orderHash)
-      )
-    )
+        orderHash = Numeric.hexStringToByteArray(req.orderHash)))
     val param = TransactionParams(to = contractAddress.toString, data = input)
     EthCall.Req(param = Some(param), tag = tag)
   }
 
   def buildRequest(
-      req: GetCutoff.Req,
-      contractAddress: Address,
-      tag: String
-    ): EthCall.Req = {
+    req: GetCutoff.Req,
+    contractAddress: Address,
+    tag: String): EthCall.Req = {
     val input = req match {
       case GetCutoff.Req(broker, "", "", _) =>
         tradeHistoryAbi.cutoffForBroker.pack(
-          CutoffForBrokerFunction.Params(broker)
-        )
+          CutoffForBrokerFunction.Params(broker))
 
       case GetCutoff.Req(broker, owner, "", _) =>
         tradeHistoryAbi.cutoffForOwner.pack(
-          CutoffForOwnerFunction.Params(broker, owner)
-        )
+          CutoffForOwnerFunction.Params(broker, owner))
 
       case GetCutoff.Req(broker, "", marketKey, _) =>
-        tradeHistoryAbi.cutoffForTradingPairBroker.pack(
-          CutoffForTradingPairBrokerFunction
-            .Params(broker, Numeric.hexStringToByteArray(marketKey))
-        )
+        tradeHistoryAbi.cutoffForMarketKeyBroker.pack(
+          CutoffForMarketKeyBrokerFunction
+            .Params(broker, Numeric.hexStringToByteArray(marketKey)))
 
       case GetCutoff.Req(broker, owner, marketKey, _) =>
-        tradeHistoryAbi.cutoffForTradingPairOwner.pack(
-          CutoffForTradingPairOwnerFunction
-            .Params(broker, owner, Numeric.hexStringToByteArray(marketKey))
-        )
+        tradeHistoryAbi.cutoffForMarketKeyOwner.pack(
+          CutoffForMarketKeyOwnerFunction
+            .Params(broker, owner, Numeric.hexStringToByteArray(marketKey)))
     }
 
     val param = TransactionParams(to = contractAddress.toString, data = input)

@@ -37,14 +37,12 @@ import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 // Owner: Hongyu
 class AccountManagerActor(
-    address: String
-  )(
-    implicit
-    val config: Config,
+  address: String)(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -52,9 +50,9 @@ class AccountManagerActor(
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager)
-    extends Actor
-    with Stash
-    with ActorLogging {
+  extends Actor
+  with Stash
+  with ActorLogging {
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
@@ -77,21 +75,18 @@ class AccountManagerActor(
         res <- (ethereumQueryActor ? GetCutoff.Req(
           broker = address,
           owner = address,
-          marketKey = m
-        )).mapAs[GetCutoff.Res]
+          marketKey = m)).mapAs[GetCutoff.Res]
       } yield {
         val cutoff: BigInt = res.cutoff
         accountCutoffState.setTradingPairCutoff(
           Numeric.toBigInt(m),
-          cutoff.toLong
-        )
+          cutoff.toLong)
       }
     }) +
       (for {
         res <- (ethereumQueryActor ? GetCutoff.Req(
           broker = address,
-          owner = address
-        )).mapAs[GetCutoff.Res]
+          owner = address)).mapAs[GetCutoff.Res]
       } yield {
         val cutoff: BigInt = res.cutoff
         accountCutoffState.setCutoff(cutoff.toLong)
@@ -104,8 +99,7 @@ class AccountManagerActor(
         log.error(s"failed to start AccountManagerActor: ${e.getMessage}")
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"failed to start AccountManagerActor: ${e.getMessage}"
-        )
+          s"failed to start AccountManagerActor: ${e.getMessage}")
     }
   }
 
@@ -139,8 +133,7 @@ class AccountManagerActor(
               manager.getBalance(),
               manager.getAllowance(),
               manager.getAvailableBalance(),
-              manager.getAvailableAllowance()
-            )
+              manager.getAvailableAllowance())
         }
       } yield {
         GetBalanceAndAllowances.Res(address, balanceAndAllowanceMap)
@@ -157,9 +150,7 @@ class AccountManagerActor(
           raworder.copy(
             state = Some(
               raworder.getState
-                .copy(status = OrderStatus.STATUS_PENDING_ACTIVE)
-            )
-          )
+                .copy(status = OrderStatus.STATUS_PENDING_ACTIVE)))
         } else raworder
 
         res <- for {
@@ -192,8 +183,7 @@ class AccountManagerActor(
           marketManagerActor ! req
           throw ErrorException(
             ERR_FAILED_HANDLE_MSG,
-            s"no order found with id: ${req.id}"
-          )
+            s"no order found with id: ${req.id}")
         }
       } yield persistenceRes) sendTo sender
 
@@ -209,26 +199,22 @@ class AccountManagerActor(
       } yield updateBalanceOrAllowance(token, req)) sendTo sender
 
     //ownerCutoff
-    case req @ CutoffEvent(Some(header), broker, owner, "", cutoff)
-        if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+    case req @ CutoffEvent(Some(header), broker, owner, "", cutoff) if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received OwnerCutoffEvent $req")
       accountCutoffState.setCutoff(cutoff)
 
-    //ownerMarketKeyCutoff  marketKey ！= ""
-    case req @ CutoffEvent(Some(header), broker, owner, marketKey, cutoff)
-        if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
-      log.debug(s"received OwnerMarketKeyCutoffEvent $req")
+    //ownerTradingPairCutoff  marketKey ！= ""
+    case req @ CutoffEvent(Some(header), broker, owner, marketKey, cutoff) if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+      log.debug(s"received OwnerTradingPairCutoffEvent $req")
       accountCutoffState
         .setTradingPairCutoff(Numeric.toBigInt(req.marketKey), req.cutoff)
 
     //brokerCutoff
     //todo:暂时不处理
-    case req @ CutoffEvent(Some(header), broker, owner, _, cutoff)
-        if broker != owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+    case req @ CutoffEvent(Some(header), broker, owner, _, cutoff) if broker != owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received BrokerCutoffEvent $req")
 
-    case req: OrderFilledEvent
-        if req.header.nonEmpty && req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+    case req: OrderFilledEvent if req.header.nonEmpty && req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received OrderFilledEvent ${req}")
       //收到filledEvent后，submitOrAdjustOrder会调用adjust方法
       for {
@@ -249,13 +235,11 @@ class AccountManagerActor(
 
       // Update the order's _outstanding field.
       getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmount.Req(
-        Seq(matchable.id)
-      )).mapAs[GetFilledAmount.Res]
+        Seq(matchable.id))).mapAs[GetFilledAmount.Res]
 
       filledAmountS = getFilledAmountRes.filledAmountSMap(matchable.id)
       _ = log.debug(
-        s"ethereumQueryActor GetFilledAmount.Res $getFilledAmountRes"
-      )
+        s"ethereumQueryActor GetFilledAmount.Res $getFilledAmountRes")
 
       _matchable = matchable.withFilledAmountS(filledAmountS)
 
@@ -264,14 +248,11 @@ class AccountManagerActor(
           RawOrder.State(
             createdAt = timeProvider.getTimeMillis(),
             updatedAt = timeProvider.getTimeMillis(),
-            status = OrderStatus.STATUS_NEW
-          )
-        )
+            status = OrderStatus.STATUS_NEW))
         .copy(
           outstandingAmountS = filledAmountS,
           outstandingAmountB = _matchable.outstanding.amountB,
-          outstandingAmountFee = _matchable.outstanding.amountFee
-        )
+          outstandingAmountFee = _matchable.outstanding.amountFee)
 
       _ <- dbModule.orderService.updateAmount(rawOrder.id, state = state)
 
@@ -282,8 +263,7 @@ class AccountManagerActor(
         throw ErrorException(Error(matchable.status))
       _ = assert(updatedOrders.contains(_matchable.id))
       _ = log.debug(
-        s"updatedOrders: ${updatedOrders.size} assert contains order:  ${updatedOrders(_matchable.id)}"
-      )
+        s"updatedOrders: ${updatedOrders.size} assert contains order:  ${updatedOrders(_matchable.id)}")
       res <- processUpdatedOrders(updatedOrders)
       matchable_ = updatedOrders(_matchable.id)
       order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
@@ -302,34 +282,30 @@ class AccountManagerActor(
             //新订单、或者匹配一部分的订单
             case STATUS_NEW | STATUS_PENDING | STATUS_PARTIALLY_FILLED =>
               marketManagerActor ! SubmitSimpleOrder(
-                order = Some(o._2.copy(_reserved = None, _outstanding = None))
-              )
+                order = Some(o._2.copy(_reserved = None, _outstanding = None)))
             //取消的订单
             case STATUS_EXPIRED | STATUS_DUST_ORDER |
-                STATUS_SOFT_CANCELLED_BY_USER |
-                STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR |
-                STATUS_ONCHAIN_CANCELLED_BY_USER |
-                STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR |
-                STATUS_TOO_MANY_RING_FAILURES | STATUS_CANCELLED_LOW_BALANCE |
-                STATUS_CANCELLED_LOW_FEE_BALANCE |
-                STATUS_CANCELLED_TOO_MANY_ORDERS |
-                STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS |
-                STATUS_CANCELLED_DUPLICIATE =>
+              STATUS_SOFT_CANCELLED_BY_USER |
+              STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR |
+              STATUS_ONCHAIN_CANCELLED_BY_USER |
+              STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR |
+              STATUS_TOO_MANY_RING_FAILURES | STATUS_CANCELLED_LOW_BALANCE |
+              STATUS_CANCELLED_LOW_FEE_BALANCE |
+              STATUS_CANCELLED_TOO_MANY_ORDERS |
+              STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS |
+              STATUS_CANCELLED_DUPLICIATE =>
               marketManagerActor ! CancelOrder.Req(
                 id = order.id,
-                marketId = Some(MarketId(order.tokenS, order.tokenB))
-              )
+                marketId = Some(MarketId(order.tokenS, order.tokenB)))
             //完全匹配，则仍然是删掉该订单
             case STATUS_COMPLETELY_FILLED =>
               marketManagerActor ! CancelOrder.Req(
                 id = order.id,
-                marketId = Some(MarketId(order.tokenS, order.tokenB))
-              )
+                marketId = Some(MarketId(order.tokenS, order.tokenB)))
             case _ =>
               throw ErrorException(
                 ErrorCode.ERR_INVALID_ORDER_DATA,
-                s"not supproted order.status in AccountManager"
-              )
+                s"not supproted order.status in AccountManager")
           }
         }
       }
@@ -337,16 +313,14 @@ class AccountManagerActor(
   }
 
   private def getTokenManagers(
-      tokens: Seq[String]
-    ): Future[Seq[AccountTokenManager]] = {
+    tokens: Seq[String]): Future[Seq[AccountTokenManager]] = {
     val tokensWithoutMaster =
       tokens.filterNot(token => manager.hasTokenManager(token))
     for {
       res <- if (tokensWithoutMaster.nonEmpty) {
         (ethereumQueryActor ? GetBalanceAndAllowances.Req(
           address,
-          tokensWithoutMaster
-        )).mapAs[GetBalanceAndAllowances.Res]
+          tokensWithoutMaster)).mapAs[GetBalanceAndAllowances.Res]
       } else {
         Future.successful(GetBalanceAndAllowances.Res())
       }
@@ -354,9 +328,7 @@ class AccountManagerActor(
         token =>
           new AccountTokenManagerImpl(
             token,
-            config.getInt("account_manager.max_order_num")
-          )
-      )
+            config.getInt("account_manager.max_order_num")))
       _ = tms.foreach(tm => {
         val ba = res.balanceAndAllowanceMap(tm.token)
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
@@ -367,9 +339,8 @@ class AccountManagerActor(
   }
 
   private def updateBalanceOrAllowance[T](
-      token: String,
-      req: T
-    ) =
+    token: String,
+    req: T) =
     for {
       tm <- getTokenManagers(Seq(token))
       (_, updatedOrders) = manager.handleChangeEventThenGetUpdatedOrders(req)
@@ -377,17 +348,15 @@ class AccountManagerActor(
         updatedOrders.values.map { order =>
           order.status match {
             case STATUS_CANCELLED_LOW_BALANCE |
-                STATUS_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
-                STATUS_COMPLETELY_FILLED | STATUS_PARTIALLY_FILLED =>
+              STATUS_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
+              STATUS_COMPLETELY_FILLED | STATUS_PARTIALLY_FILLED =>
               Future.successful(Unit)
             case status =>
               log.error(
-                s"unexpected order status caused by balance/allowance upate: $status"
-              )
+                s"unexpected order status caused by balance/allowance upate: $status")
               throw ErrorException(
                 ErrorCode.ERR_INTERNAL_UNKNOWN,
-                s"unexpected order status caused by balance/allowance upate: $status"
-              )
+                s"unexpected order status caused by balance/allowance upate: $status")
           }
         }
       }
@@ -398,13 +367,10 @@ class AccountManagerActor(
     for {
       res <- (ethereumQueryActor ? GetOrderCancellation.Req(
         broker = address,
-        orderHash = rawOrder.hash
-      )).mapAs[GetOrderCancellation.Res]
-    } yield
-      if (res.cancelled)
-        throw ErrorException(
-          ERR_ORDER_VALIDATION_INVALID_CUTOFF,
-          s"this order has been canceled."
-        )
+        orderHash = rawOrder.hash)).mapAs[GetOrderCancellation.Res]
+    } yield if (res.cancelled)
+      throw ErrorException(
+        ERR_ORDER_VALIDATION_INVALID_CUTOFF,
+        s"this order has been canceled.")
 
 }

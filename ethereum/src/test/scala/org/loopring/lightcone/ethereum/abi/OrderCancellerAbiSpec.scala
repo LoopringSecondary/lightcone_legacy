@@ -20,9 +20,9 @@ import org.scalatest._
 import org.web3j.utils.Numeric
 
 class OrderCancellerAbiSpec
-    extends FlatSpec
-    with Matchers
-    with BeforeAndAfterAll {
+  extends FlatSpec
+  with Matchers
+  with BeforeAndAfterAll {
 
   val orderCancellerAbi = OrderCancellerAbi()
 
@@ -38,8 +38,7 @@ class OrderCancellerAbiSpec
     val input = orderCancellerAbi.cancelOrders.pack(params)
     info(input)
     input should be(
-      "0xa383de3a000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000207aa6bab45d654cbf3c335730c58f62ab93449d1099968659b7a9f96fdda603f8"
-    )
+      "0xa383de3a000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000207aa6bab45d654cbf3c335730c58f62ab93449d1099968659b7a9f96fdda603f8")
   }
 
   "decodeCancelOrdersFunction" should "decode  function input  to  CancelOrdersFunction function params" in {
@@ -50,9 +49,7 @@ class OrderCancellerAbiSpec
     params.map(
       param =>
         Numeric.toHexString(param.orderHashes) should be(
-          "0x7aa6bab45d654cbf3c335730c58f62ab93449d1099968659b7a9f96fdda603f8"
-        )
-    )
+          "0x7aa6bab45d654cbf3c335730c58f62ab93449d1099968659b7a9f96fdda603f8"))
   }
 
   "decodeOrdersCancelledEvent" should "decode event data to OrdersCancelledEvent Result" in {
@@ -60,8 +57,7 @@ class OrderCancellerAbiSpec
       "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000017aa6bab45d654cbf3c335730c58f62ab93449d1099968659b7a9f96fdda603f8"
     val topics = Seq(
       "0xa4f958623cd4c90b4a1213ca9f26b442398e4efad078048b6730c826fa4e5da1",
-      "0x000000000000000000000000cc1cf2a03c023e12426b0047c3d07e30f4e1d103"
-    )
+      "0x000000000000000000000000cc1cf2a03c023e12426b0047c3d07e30f4e1d103")
     val result =
       orderCancellerAbi.ordersCancelledEvent.unpack(data, topics.toArray)
 
@@ -69,31 +65,29 @@ class OrderCancellerAbiSpec
       res.address should be("0xcc1cf2a03c023e12426b0047c3d07e30f4e1d103")
       res._orderHashes.length should be(1)
       res._orderHashes.head should be(
-        "0x7aa6bab45d654cbf3c335730c58f62ab93449d1099968659b7a9f96fdda603f8"
-      )
+        "0x7aa6bab45d654cbf3c335730c58f62ab93449d1099968659b7a9f96fdda603f8")
     })
   }
 
-  "encodeCancelAllOrdersForTradingPairFunction" should "encode CancelAllOrdersForTradingPairFunction Params to input" in {
+  "encodeCancelAllOrdersForMarketKeyFunction" should "encode CancelAllOrdersForMarketKeyFunction Params to input" in {
     val token1 = "0x5399b819f14e55683bd90cacb61f13203bef4d63"
     val token2 = "0xb6beb7c8a3394098c485172d5636c1e107fee6f6"
     val cutOff = BigInt(1544612294)
     val params =
-      CancelAllOrdersForTradingPairFunction.Params(token1, token2, cutOff)
-    val input = orderCancellerAbi.cancelAllOrdersForTradingPair.pack(params)
+      CancelAllOrdersForMarketKeyFunction.Params(token1, token2, cutOff)
+    val input = orderCancellerAbi.cancelAllOrdersForMarketKey.pack(params)
 
     input should be(
-      "0xeac5c1900000000000000000000000005399b819f14e55683bd90cacb61f13203bef4d63000000000000000000000000b6beb7c8a3394098c485172d5636c1e107fee6f6000000000000000000000000000000000000000000000000000000005c10e9c6"
-    )
+      "0xeac5c1900000000000000000000000005399b819f14e55683bd90cacb61f13203bef4d63000000000000000000000000b6beb7c8a3394098c485172d5636c1e107fee6f6000000000000000000000000000000000000000000000000000000005c10e9c6")
 
   }
 
-  "decodeCancelAllOrdersForTradingPairFunction" should "decode input data to cancelAllOrdersForTradingPair Params" in {
+  "decodeCancelAllOrdersForMarketKeyFunction" should "decode input data to cancelAllOrdersForMarketKey Params" in {
     val input =
       "0xeac5c1900000000000000000000000005399b819f14e55683bd90cacb61f13203bef4d63000000000000000000000000b6beb7c8a3394098c485172d5636c1e107fee6f6000000000000000000000000000000000000000000000000000000005c10e9c6"
 
     val params =
-      orderCancellerAbi.cancelAllOrdersForTradingPair.unpackInput(input)
+      orderCancellerAbi.cancelAllOrdersForMarketKey.unpackInput(input)
     info(params.toString)
     params.foreach { param =>
       param.token1 should be("0x5399b819f14e55683bd90cacb61f13203bef4d63")
@@ -102,14 +96,13 @@ class OrderCancellerAbiSpec
     }
   }
 
-  "decodeAllOrdersCancelledForTradingPairEvent" should "decode event data to AllOrdersCancelledForTradingPairEvent Result" in {
+  "decodeAllOrdersCancelledForMarketKeyEvent" should "decode event data to AllOrdersCancelledForMarketKeyEvent Result" in {
     val data =
       "0x0000000000000000000000005399b819f14e55683bd90cacb61f13203bef4d63000000000000000000000000b6beb7c8a3394098c485172d5636c1e107fee6f6000000000000000000000000000000000000000000000000000000005c10e9c6"
     val topics = Seq(
       "0x03010b5cc0bf0153a225153a75169278a98eb21343f06fbff672a758a85b64a6",
-      "0x00000000000000000000000007d24603d5fb6cdff728a7be7a04a26b7fcc20d9"
-    )
-    val result = orderCancellerAbi.allOrdersCancelledForTradingPairEvent
+      "0x00000000000000000000000007d24603d5fb6cdff728a7be7a04a26b7fcc20d9")
+    val result = orderCancellerAbi.allOrdersCancelledForMarketKeyEvent
       .unpack(data, topics.toArray)
     info(result.toString)
     result.foreach(res => {
@@ -123,11 +116,9 @@ class OrderCancellerAbiSpec
   "encodeCancelAllOrdersFunction" should "encode cancel all orders function params to input" in {
     val cutOff = BigInt(1544614733)
     val input = orderCancellerAbi.cancelAllOrders.pack(
-      CancelAllOrdersFunction.Params(cutOff)
-    )
+      CancelAllOrdersFunction.Params(cutOff))
     input should be(
-      "0xbd545f53000000000000000000000000000000000000000000000000000000005c10f34d"
-    )
+      "0xbd545f53000000000000000000000000000000000000000000000000000000005c10f34d")
   }
 
   "decodeCancelAllOrdersFunction" should "decode input to cancel all orders function params" in {
@@ -145,8 +136,7 @@ class OrderCancellerAbiSpec
       "0x000000000000000000000000000000000000000000000000000000005c10f34d"
     val topics = Seq(
       "0x83a782ac7424737a1190d4668474e765f07d603de0485a081dbc343ac1b02099",
-      "0x000000000000000000000000cc1cf2a03c023e12426b0047c3d07e30f4e1d103"
-    )
+      "0x000000000000000000000000cc1cf2a03c023e12426b0047c3d07e30f4e1d103")
     val result =
       orderCancellerAbi.allOrdersCancelledEvent.unpack(data, topics.toArray)
     info(result.toString)
@@ -156,30 +146,28 @@ class OrderCancellerAbiSpec
     }
   }
 
-  "encodeCancelAllOrdersForTradingPairOfOwnerFunction" should "encode CancelAllOrdersForTradingPairOfOwnerFunction params to input" in {
+  "encodeCancelAllOrdersForMarketKeyOfOwnerFunction" should "encode CancelAllOrdersForMarketKeyOfOwnerFunction params to input" in {
     val owner = "0x07d24603d5fb6cdff728a7be7a04a26b7fcc20d9"
     val token1 = "0xcbb0b3d6dc184aa31625d94fc03db7965cbfb7f7"
     val token2 = "0x1a81b84927c57e94e5dd99b02af4119d47035506"
     val cutOff = BigInt(1544615992)
-    val params = CancelAllOrdersForTradingPairOfOwnerFunction.Params(
+    val params = CancelAllOrdersForMarketKeyOfOwnerFunction.Params(
       owner = owner,
       token1 = token1,
       token2 = token2,
-      cutoff = cutOff
-    )
+      cutoff = cutOff)
     val input =
-      orderCancellerAbi.cancelAllOrdersForTradingPairOfOwner.pack(params)
+      orderCancellerAbi.cancelAllOrdersForMarketKeyOfOwner.pack(params)
 
     input should be(
-      "0x22baa82600000000000000000000000007d24603d5fb6cdff728a7be7a04a26b7fcc20d9000000000000000000000000cbb0b3d6dc184aa31625d94fc03db7965cbfb7f70000000000000000000000001a81b84927c57e94e5dd99b02af4119d47035506000000000000000000000000000000000000000000000000000000005c10f838"
-    )
+      "0x22baa82600000000000000000000000007d24603d5fb6cdff728a7be7a04a26b7fcc20d9000000000000000000000000cbb0b3d6dc184aa31625d94fc03db7965cbfb7f70000000000000000000000001a81b84927c57e94e5dd99b02af4119d47035506000000000000000000000000000000000000000000000000000000005c10f838")
   }
 
-  "decodeCancelAllOrdersForTradingPairOfOwnerFunction" should "decode input to cancelAllOrdersForTradingPairOfOwner Params" in {
+  "decodeCancelAllOrdersForMarketKeyOfOwnerFunction" should "decode input to cancelAllOrdersForMarketKeyOfOwner Params" in {
     val input =
       "0x22baa82600000000000000000000000007d24603d5fb6cdff728a7be7a04a26b7fcc20d9000000000000000000000000cbb0b3d6dc184aa31625d94fc03db7965cbfb7f70000000000000000000000001a81b84927c57e94e5dd99b02af4119d47035506000000000000000000000000000000000000000000000000000000005c10f838"
     val params =
-      orderCancellerAbi.cancelAllOrdersForTradingPairOfOwner.unpackInput(input)
+      orderCancellerAbi.cancelAllOrdersForMarketKeyOfOwner.unpackInput(input)
     info(params.toString)
     params.map { param =>
       OrdersCancelledEvent
@@ -191,15 +179,14 @@ class OrderCancellerAbiSpec
     }
   }
 
-  "decodeCancelAllOrdersForTradingPairOfOwnerEvent" should "decode event data to CancelAllOrdersForTradingPairOfOwner result" in {
+  "decodeCancelAllOrdersForMarketKeyOfOwnerEvent" should "decode event data to CancelAllOrdersForMarketKeyOfOwner result" in {
     val data =
       "0x000000000000000000000000cbb0b3d6dc184aa31625d94fc03db7965cbfb7f70000000000000000000000001a81b84927c57e94e5dd99b02af4119d47035506000000000000000000000000000000000000000000000000000000005c10f838"
     val topics = Seq(
       "0x97bda78b7834715d21505da9c8801f7528412b8b3a6d49e6acad56a0ca9c5086",
       "0x000000000000000000000000317863d48454d193f1df864b9b374cd397157dd4",
-      "0x00000000000000000000000007d24603d5fb6cdff728a7be7a04a26b7fcc20d9"
-    )
-    val result = orderCancellerAbi.allOrdersCancelledForTradingPairByBrokerEvent
+      "0x00000000000000000000000007d24603d5fb6cdff728a7be7a04a26b7fcc20d9")
+    val result = orderCancellerAbi.allOrdersCancelledForMarketKeyByBrokerEvent
       .unpack(data, topics.toArray)
     result.map { res =>
       {
@@ -218,8 +205,7 @@ class OrderCancellerAbiSpec
     val params = CancelAllOrdersOfOwnerFunction.Params(owner, cutoff)
     val input = orderCancellerAbi.cancelAllOrdersOfOwner.pack(params)
     input should be(
-      "0x543b5fa4000000000000000000000000cc1cf2a03c023e12426b0047c3d07e30f4e1d103000000000000000000000000000000000000000000000000000000005c10ff3f"
-    )
+      "0x543b5fa4000000000000000000000000cc1cf2a03c023e12426b0047c3d07e30f4e1d103000000000000000000000000000000000000000000000000000000005c10ff3f")
 
   }
 
@@ -240,8 +226,7 @@ class OrderCancellerAbiSpec
     val topics = Seq(
       "0x6c1800f274202aaab5d7cdb6ef958ce1c3a6ffe82696c4a872f11547485e36c4",
       "0x000000000000000000000000317863d48454d193f1df864b9b374cd397157dd4",
-      "0x000000000000000000000000cc1cf2a03c023e12426b0047c3d07e30f4e1d103"
-    )
+      "0x000000000000000000000000cc1cf2a03c023e12426b0047c3d07e30f4e1d103")
     val result = orderCancellerAbi.allOrdersCancelledByBrokerEvent
       .unpack(data, topics.toArray)
     result.map { res =>

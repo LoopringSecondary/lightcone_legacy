@@ -17,85 +17,70 @@
 package org.loopring.lightcone.ethereum.abi
 
 import scala.io.Source
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.{ Abi => SABI }
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
 
 class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
 
-  val cancelAllOrdersForTradingPair =
-    CancelAllOrdersForTradingPairFunction(
-      abi.findFunction(searchByName(CancelAllOrdersForTradingPairFunction.name))
-    )
+  val cancelAllOrdersForMarketKey =
+    CancelAllOrdersForMarketKeyFunction(
+      abi.findFunction(searchByName(CancelAllOrdersForMarketKeyFunction.name)))
 
-  val cancelAllOrdersForTradingPairOfOwner =
-    CancelAllOrdersForTradingPairOfOwnerFunction(
+  val cancelAllOrdersForMarketKeyOfOwner =
+    CancelAllOrdersForMarketKeyOfOwnerFunction(
       abi.findFunction(
-        searchByName(CancelAllOrdersForTradingPairOfOwnerFunction.name)
-      )
-    )
+        searchByName(CancelAllOrdersForMarketKeyOfOwnerFunction.name)))
 
   val cancelAllOrdersOfOwner =
     CancelAllOrdersOfOwnerFunction(
-      abi.findFunction(searchByName(CancelAllOrdersOfOwnerFunction.name))
-    )
+      abi.findFunction(searchByName(CancelAllOrdersOfOwnerFunction.name)))
 
   val cancelOrders = CancelOrdersFunction(
-    abi.findFunction(searchByName(CancelOrdersFunction.name))
-  )
+    abi.findFunction(searchByName(CancelOrdersFunction.name)))
 
   val cancelAllOrders = CancelAllOrdersFunction(
-    abi.findFunction(searchByName(CancelAllOrdersFunction.name))
-  )
+    abi.findFunction(searchByName(CancelAllOrdersFunction.name)))
 
   val ordersCancelledEvent = OrdersCancelledEvent(
-    abi.findEvent(searchByName(OrdersCancelledEvent.name))
-  )
+    abi.findEvent(searchByName(OrdersCancelledEvent.name)))
 
-  val allOrdersCancelledForTradingPairEvent =
-    AllOrdersCancelledForTradingPairEvent(
-      abi.findEvent(searchByName(AllOrdersCancelledForTradingPairEvent.name))
-    )
+  val allOrdersCancelledForMarketKeyEvent =
+    AllOrdersCancelledForMarketKeyEvent(
+      abi.findEvent(searchByName(AllOrdersCancelledForMarketKeyEvent.name)))
 
   val allOrdersCancelledEvent = AllOrdersCancelledEvent(
-    abi.findEvent(searchByName(AllOrdersCancelledEvent.name))
-  )
+    abi.findEvent(searchByName(AllOrdersCancelledEvent.name)))
 
-  val allOrdersCancelledForTradingPairByBrokerEvent =
-    AllOrdersCancelledForTradingPairByBrokerEvent(
+  val allOrdersCancelledForMarketKeyByBrokerEvent =
+    AllOrdersCancelledForMarketKeyByBrokerEvent(
       abi.findEvent(
-        searchByName(AllOrdersCancelledForTradingPairByBrokerEvent.name)
-      )
-    )
+        searchByName(AllOrdersCancelledForMarketKeyByBrokerEvent.name)))
 
   val allOrdersCancelledByBrokerEvent = AllOrdersCancelledByBrokerEvent(
-    abi.findEvent(searchByName(AllOrdersCancelledByBrokerEvent.name))
-  )
+    abi.findEvent(searchByName(AllOrdersCancelledByBrokerEvent.name)))
 
   override def unpackEvent(
-      data: String,
-      topics: Array[String]
-    ): Option[Any] = {
+    data: String,
+    topics: Array[String]): Option[Any] = {
 
     try {
       val event: SABI.Event = abi.findEvent(
         searchBySignature(
-          Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
-        )
-      )
+          Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))))
 
       event match {
         case _: SABI.Event =>
           event.name match {
             case OrdersCancelledEvent.name =>
               ordersCancelledEvent.unpack(data, topics)
-            case AllOrdersCancelledForTradingPairEvent.name =>
-              allOrdersCancelledForTradingPairEvent.unpack(data, topics)
+            case AllOrdersCancelledForMarketKeyEvent.name =>
+              allOrdersCancelledForMarketKeyEvent.unpack(data, topics)
             case AllOrdersCancelledEvent.name =>
               allOrdersCancelledEvent.unpack(data, topics)
-            case AllOrdersCancelledForTradingPairByBrokerEvent.name =>
-              allOrdersCancelledForTradingPairByBrokerEvent.unpack(data, topics)
+            case AllOrdersCancelledForMarketKeyByBrokerEvent.name =>
+              allOrdersCancelledForMarketKeyByBrokerEvent.unpack(data, topics)
             case AllOrdersCancelledByBrokerEvent.name =>
               allOrdersCancelledByBrokerEvent.unpack(data, topics)
             case _ => None
@@ -111,16 +96,15 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
     try {
       val funSig =
         Numeric.hexStringToByteArray(
-          Numeric.cleanHexPrefix(data).substring(0, 8)
-        )
+          Numeric.cleanHexPrefix(data).substring(0, 8))
       val func = abi.findFunction(searchBySignature(funSig))
       func match {
         case _: SABI.Function =>
           func.name match {
-            case CancelAllOrdersForTradingPairFunction.name =>
-              cancelAllOrdersForTradingPair.unpackInput(data)
-            case CancelAllOrdersForTradingPairOfOwnerFunction.name =>
-              cancelAllOrdersForTradingPairOfOwner.unpackInput(data)
+            case CancelAllOrdersForMarketKeyFunction.name =>
+              cancelAllOrdersForMarketKey.unpackInput(data)
+            case CancelAllOrdersForMarketKeyOfOwnerFunction.name =>
+              cancelAllOrdersForMarketKeyOfOwner.unpackInput(data)
             case CancelAllOrdersOfOwnerFunction.name =>
               cancelAllOrdersOfOwner.unpackInput(data)
             case CancelOrdersFunction.name =>
@@ -140,69 +124,59 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
 object OrderCancellerAbi {
 
   val jsonStr: String =
-    "[{\"constant\":false,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"token1\",\"type\":\"address\"},{\"name\":\"token2\",\"type\":\"address\"},{\"name\":\"cutoff\",\"type\":\"uint256\"}],\"name\":\"cancelAllOrdersForTradingPairOfOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"cutoff\",\"type\":\"uint256\"}],\"name\":\"cancelAllOrdersOfOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"orderHashes\",\"type\":\"bytes\"}],\"name\":\"cancelOrders\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"cutoff\",\"type\":\"uint256\"}],\"name\":\"cancelAllOrders\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token1\",\"type\":\"address\"},{\"name\":\"token2\",\"type\":\"address\"},{\"name\":\"cutoff\",\"type\":\"uint256\"}],\"name\":\"cancelAllOrdersForTradingPair\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_orderHashes\",\"type\":\"bytes32[]\"}],\"name\":\"OrdersCancelled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_token1\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_token2\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_cutoff\",\"type\":\"uint256\"}],\"name\":\"AllOrdersCancelledForTradingPair\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_cutoff\",\"type\":\"uint256\"}],\"name\":\"AllOrdersCancelled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_orderHashes\",\"type\":\"bytes32[]\"}],\"name\":\"OrdersCancelledByBroker\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_token1\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_token2\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_cutoff\",\"type\":\"uint256\"}],\"name\":\"AllOrdersCancelledForTradingPairByBroker\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_cutoff\",\"type\":\"uint256\"}],\"name\":\"AllOrdersCancelledByBroker\",\"type\":\"event\"}]"
+    "[{\"constant\":false,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"token1\",\"type\":\"address\"},{\"name\":\"token2\",\"type\":\"address\"},{\"name\":\"cutoff\",\"type\":\"uint256\"}],\"name\":\"cancelAllOrdersForMarketKeyOfOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"cutoff\",\"type\":\"uint256\"}],\"name\":\"cancelAllOrdersOfOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"orderHashes\",\"type\":\"bytes\"}],\"name\":\"cancelOrders\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"cutoff\",\"type\":\"uint256\"}],\"name\":\"cancelAllOrders\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token1\",\"type\":\"address\"},{\"name\":\"token2\",\"type\":\"address\"},{\"name\":\"cutoff\",\"type\":\"uint256\"}],\"name\":\"cancelAllOrdersForMarketKey\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_orderHashes\",\"type\":\"bytes32[]\"}],\"name\":\"OrdersCancelled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_token1\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_token2\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_cutoff\",\"type\":\"uint256\"}],\"name\":\"AllOrdersCancelledForMarketKey\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_cutoff\",\"type\":\"uint256\"}],\"name\":\"AllOrdersCancelled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_orderHashes\",\"type\":\"bytes32[]\"}],\"name\":\"OrdersCancelledByBroker\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_token1\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_token2\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_cutoff\",\"type\":\"uint256\"}],\"name\":\"AllOrdersCancelledForMarketKeyByBroker\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_broker\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_cutoff\",\"type\":\"uint256\"}],\"name\":\"AllOrdersCancelledByBroker\",\"type\":\"event\"}]"
 
   def apply(abiJson: String): OrderCancellerAbi = new OrderCancellerAbi(abiJson)
 
   def apply(): OrderCancellerAbi = new OrderCancellerAbi(jsonStr)
 }
 
-class CancelAllOrdersForTradingPairFunction(val entry: SABI.Function)
-    extends AbiFunction[
-      CancelAllOrdersForTradingPairFunction.Params,
-      CancelAllOrdersForTradingPairFunction.Result
-    ] {}
+class CancelAllOrdersForMarketKeyFunction(val entry: SABI.Function)
+  extends AbiFunction[CancelAllOrdersForMarketKeyFunction.Params, CancelAllOrdersForMarketKeyFunction.Result] {}
 
-object CancelAllOrdersForTradingPairFunction {
-  val name = "cancelAllOrdersForTradingPair"
+object CancelAllOrdersForMarketKeyFunction {
+  val name = "cancelAllOrdersForMarketKey"
 
   case class Params(
-      @(ContractAnnotation @field)("token1", 0) token1: String,
-      @(ContractAnnotation @field)("token2", 1) token2: String,
-      @(ContractAnnotation @field)("cutoff", 2) cutoff: BigInt)
+    @(ContractAnnotation @field)("token1", 0) token1: String,
+    @(ContractAnnotation @field)("token2", 1) token2: String,
+    @(ContractAnnotation @field)("cutoff", 2) cutoff: BigInt)
 
   case class Result()
 
-  def apply(entry: SABI.Function): CancelAllOrdersForTradingPairFunction =
-    new CancelAllOrdersForTradingPairFunction(entry)
+  def apply(entry: SABI.Function): CancelAllOrdersForMarketKeyFunction =
+    new CancelAllOrdersForMarketKeyFunction(entry)
 }
 
-class CancelAllOrdersForTradingPairOfOwnerFunction(val entry: SABI.Function)
-    extends AbiFunction[
-      CancelAllOrdersForTradingPairOfOwnerFunction.Params,
-      CancelAllOrdersForTradingPairOfOwnerFunction.Result
-    ] {}
+class CancelAllOrdersForMarketKeyOfOwnerFunction(val entry: SABI.Function)
+  extends AbiFunction[CancelAllOrdersForMarketKeyOfOwnerFunction.Params, CancelAllOrdersForMarketKeyOfOwnerFunction.Result] {}
 
-object CancelAllOrdersForTradingPairOfOwnerFunction {
-  val name = "cancelAllOrdersForTradingPairOfOwner"
+object CancelAllOrdersForMarketKeyOfOwnerFunction {
+  val name = "cancelAllOrdersForMarketKeyOfOwner"
 
   case class Params(
-      @(ContractAnnotation @field)("owner", 0) owner: String,
-      @(ContractAnnotation @field)("token1", 1) token1: String,
-      @(ContractAnnotation @field)("token2", 2) token2: String,
-      @(ContractAnnotation @field)("cutoff", 3) cutoff: BigInt)
+    @(ContractAnnotation @field)("owner", 0) owner: String,
+    @(ContractAnnotation @field)("token1", 1) token1: String,
+    @(ContractAnnotation @field)("token2", 2) token2: String,
+    @(ContractAnnotation @field)("cutoff", 3) cutoff: BigInt)
 
   case class Result()
 
   def apply(
-      entry: SABI.Function
-    ): CancelAllOrdersForTradingPairOfOwnerFunction =
-    new CancelAllOrdersForTradingPairOfOwnerFunction(entry)
+    entry: SABI.Function): CancelAllOrdersForMarketKeyOfOwnerFunction =
+    new CancelAllOrdersForMarketKeyOfOwnerFunction(entry)
 }
 
 class CancelAllOrdersOfOwnerFunction(val entry: SABI.Function)
-    extends AbiFunction[
-      CancelAllOrdersOfOwnerFunction.Params,
-      CancelAllOrdersOfOwnerFunction.Result
-    ]
+  extends AbiFunction[CancelAllOrdersOfOwnerFunction.Params, CancelAllOrdersOfOwnerFunction.Result]
 
 object CancelAllOrdersOfOwnerFunction {
 
   val name = "cancelAllOrdersOfOwner"
 
   case class Params(
-      @(ContractAnnotation @field)("owner", 0) owner: String,
-      @(ContractAnnotation @field)("cutoff", 1) cutoff: BigInt)
+    @(ContractAnnotation @field)("owner", 0) owner: String,
+    @(ContractAnnotation @field)("cutoff", 1) cutoff: BigInt)
 
   case class Result()
 
@@ -211,16 +185,13 @@ object CancelAllOrdersOfOwnerFunction {
 }
 
 class CancelOrdersFunction(val entry: SABI.Function)
-    extends AbiFunction[
-      CancelOrdersFunction.Params,
-      CancelOrdersFunction.Result
-    ]
+  extends AbiFunction[CancelOrdersFunction.Params, CancelOrdersFunction.Result]
 
 object CancelOrdersFunction {
   val name = "cancelOrders"
 
   case class Params(
-      @(ContractAnnotation @field)("orderHashes", 0) orderHashes: Array[Byte])
+    @(ContractAnnotation @field)("orderHashes", 0) orderHashes: Array[Byte])
 
   case class Result()
 
@@ -229,10 +200,7 @@ object CancelOrdersFunction {
 }
 
 class CancelAllOrdersFunction(val entry: SABI.Function)
-    extends AbiFunction[
-      CancelAllOrdersFunction.Params,
-      CancelAllOrdersFunction.Params
-    ]
+  extends AbiFunction[CancelAllOrdersFunction.Params, CancelAllOrdersFunction.Params]
 
 object CancelAllOrdersFunction {
   val name = "cancelAllOrders"
@@ -246,77 +214,77 @@ object CancelAllOrdersFunction {
 }
 
 class OrdersCancelledEvent(val entry: SABI.Event)
-    extends AbiEvent[OrdersCancelledEvent.Result]
+  extends AbiEvent[OrdersCancelledEvent.Result]
 
 object OrdersCancelledEvent {
   val name = "OrdersCancelled"
   case class Result(
-      @(ContractAnnotation @field)("address", 0) address: String,
-      @(ContractAnnotation @field)("_orderHashes",
-          1) _orderHashes: Array[String])
+    @(ContractAnnotation @field)("address", 0) address: String,
+    @(ContractAnnotation @field)("_orderHashes",
+      1) _orderHashes: Array[String])
 
   def apply(entry: SABI.Event): OrdersCancelledEvent =
     new OrdersCancelledEvent(entry)
 }
 
-class AllOrdersCancelledForTradingPairEvent(val entry: SABI.Event)
-    extends AbiEvent[AllOrdersCancelledForTradingPairEvent.Result]
+class AllOrdersCancelledForMarketKeyEvent(val entry: SABI.Event)
+  extends AbiEvent[AllOrdersCancelledForMarketKeyEvent.Result]
 
-object AllOrdersCancelledForTradingPairEvent {
+object AllOrdersCancelledForMarketKeyEvent {
 
-  val name = "AllOrdersCancelledForTradingPair"
+  val name = "AllOrdersCancelledForMarketKey"
 
   case class Result(
-      @(ContractAnnotation @field)("_broker", 0) _broker: String,
-      @(ContractAnnotation @field)("_token1", 1) _token1: String,
-      @(ContractAnnotation @field)("_token2", 2) _token2: String,
-      @(ContractAnnotation @field)("_cutoff", 3) _cutoff: BigInt)
+    @(ContractAnnotation @field)("_broker", 0) _broker: String,
+    @(ContractAnnotation @field)("_token1", 1) _token1: String,
+    @(ContractAnnotation @field)("_token2", 2) _token2: String,
+    @(ContractAnnotation @field)("_cutoff", 3) _cutoff: BigInt)
 
-  def apply(entry: SABI.Event): AllOrdersCancelledForTradingPairEvent =
-    new AllOrdersCancelledForTradingPairEvent(entry)
+  def apply(entry: SABI.Event): AllOrdersCancelledForMarketKeyEvent =
+    new AllOrdersCancelledForMarketKeyEvent(entry)
 }
 
 class AllOrdersCancelledEvent(val entry: SABI.Event)
-    extends AbiEvent[AllOrdersCancelledEvent.Result]
+  extends AbiEvent[AllOrdersCancelledEvent.Result]
 
 object AllOrdersCancelledEvent {
   val name = "AllOrdersCancelled"
 
   case class Result(
-      @(ContractAnnotation @field)("_broker", 0) _broker: String,
-      @(ContractAnnotation @field)("_cutoff", 1) _cutoff: BigInt)
+    @(ContractAnnotation @field)("_broker", 0) _broker: String,
+    @(ContractAnnotation @field)("_cutoff", 1) _cutoff: BigInt)
 
   def apply(entry: SABI.Event): AllOrdersCancelledEvent =
     new AllOrdersCancelledEvent(entry)
 }
 
-class AllOrdersCancelledForTradingPairByBrokerEvent(val entry: SABI.Event)
-    extends AbiEvent[AllOrdersCancelledForTradingPairByBrokerEvent.Result]
+class AllOrdersCancelledForMarketKeyByBrokerEvent(val entry: SABI.Event)
+  extends AbiEvent[AllOrdersCancelledForMarketKeyByBrokerEvent.Result]
 
-object AllOrdersCancelledForTradingPairByBrokerEvent {
+object AllOrdersCancelledForMarketKeyByBrokerEvent {
 
-  val name = "AllOrdersCancelledForTradingPairByBroker"
+  val name = "AllOrdersCancelledForMarketKeyByBroker"
 
   case class Result(
-      @(ContractAnnotation @field)("_broker", 0) _broker: String,
-      @(ContractAnnotation @field)("_owner", 1) _owner: String,
-      @(ContractAnnotation @field)("_token1", 2) _token1: String,
-      @(ContractAnnotation @field)("_token2", 3) _token2: String,
-      @(ContractAnnotation @field)("_cutoff", 4) _cutoff: BigInt)
+    @(ContractAnnotation @field)("_broker", 0) _broker: String,
+    @(ContractAnnotation @field)("_owner", 1) _owner: String,
+    @(ContractAnnotation @field)("_token1", 2) _token1: String,
+    @(ContractAnnotation @field)("_token2", 3) _token2: String,
+    @(ContractAnnotation @field)("_cutoff", 4) _cutoff: BigInt)
 
-  def apply(entry: SABI.Event): AllOrdersCancelledForTradingPairByBrokerEvent =
-    new AllOrdersCancelledForTradingPairByBrokerEvent(entry)
+  def apply(entry: SABI.Event): AllOrdersCancelledForMarketKeyByBrokerEvent =
+    new AllOrdersCancelledForMarketKeyByBrokerEvent(entry)
 }
 
 class AllOrdersCancelledByBrokerEvent(val entry: SABI.Event)
-    extends AbiEvent[AllOrdersCancelledByBrokerEvent.Result]
+  extends AbiEvent[AllOrdersCancelledByBrokerEvent.Result]
 
 object AllOrdersCancelledByBrokerEvent {
   val name = "AllOrdersCancelledByBroker"
   case class Result(
-      @(ContractAnnotation @field)("_broker", 0) _broker: String,
-      @(ContractAnnotation @field)("_owner", 1) _owner: String,
-      @(ContractAnnotation @field)("_cutoff", 2) _cutoff: BigInt)
+    @(ContractAnnotation @field)("_broker", 0) _broker: String,
+    @(ContractAnnotation @field)("_owner", 1) _owner: String,
+    @(ContractAnnotation @field)("_cutoff", 2) _cutoff: BigInt)
 
   def apply(entry: SABI.Event): AllOrdersCancelledByBrokerEvent =
     new AllOrdersCancelledByBrokerEvent(entry)
