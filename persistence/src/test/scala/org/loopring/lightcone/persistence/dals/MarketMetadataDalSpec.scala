@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.lib.MarketHashProvider
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent.Await
@@ -48,7 +48,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdLrcWeth),
-        marketHash = MarketHashProvider.convert2Hex(WETH, LRC)
+        marketHash = MarketKey(WETH, LRC).toString
       ),
       MarketMetadata(
         status = MarketMetadata.Status.DISABLED,
@@ -62,7 +62,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdBnbWeth),
-        marketHash = MarketHashProvider.convert2Hex(WETH, BNB)
+        marketHash = MarketKey(WETH, BNB).toString
       ),
       MarketMetadata(
         status = MarketMetadata.Status.READONLY,
@@ -76,7 +76,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdZrxdWeth),
-        marketHash = MarketHashProvider.convert2Hex(WETH, ZRX)
+        marketHash = MarketKey(WETH, ZRX).toString
       )
     )
     val r1 = dal.saveMarkets(markets)
@@ -99,7 +99,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketId.contains(marketIdLrcWeth)
-            && m.marketHash == MarketHashProvider.convert2Hex(WETH, LRC)
+            && m.marketHash == MarketKey(WETH, LRC)
         )
       case m: MarketMetadata if m.secondaryTokenSymbol == "BNB" =>
         assert(
@@ -112,7 +112,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketId.contains(marketIdBnbWeth)
-            && m.marketHash == MarketHashProvider.convert2Hex(WETH, BNB)
+            && m.marketHash == MarketKey(WETH, BNB)
         )
       case m: MarketMetadata if m.secondaryTokenSymbol == "ZRX" =>
         assert(
@@ -125,7 +125,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketId.contains(marketIdZrxdWeth)
-            && m.marketHash == MarketHashProvider.convert2Hex(WETH, ZRX)
+            && m.marketHash == MarketKey(WETH, ZRX)
         )
       case _ => assert(false)
     }
@@ -194,7 +194,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         && bnb1.precisionForTotal == 33
         && !bnb1.browsableInWallet
         && bnb1.marketId.contains(marketIdBnbWeth)
-        && bnb1.marketHash == MarketHashProvider.convert2Hex(WETH, BNB)
+        && bnb1.marketHash == MarketKey(WETH, BNB)
     )
   }
 }

@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
@@ -105,7 +105,7 @@ final class MultiAccountManagerMessageValidator(
             status = OrderStatus.STATUS_NEW
           )
           val marketHash =
-            MarketHashProvider.convert2Hex(rawOrder.tokenS, rawOrder.tokenB)
+            MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
           val marketId =
             MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
           req.withRawOrder(

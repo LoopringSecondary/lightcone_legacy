@@ -26,7 +26,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto._
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
-import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.persistence.DatabaseModule
 import scala.concurrent._
 
@@ -111,10 +111,9 @@ class OrderRecoverActor(
         availableOrders = orders.filter { o =>
           metadataManager.isValidMarket(MarketId(o.tokenS, o.tokenB))
         }.map { o =>
-          val marketHash =
-            MarketHashProvider.convert2Hex(o.tokenS, o.tokenB)
           val marketId =
             MarketId(primary = o.tokenS, secondary = o.tokenB)
+          val marketHash = MarketKey(marketId).toString
           o.copy(
             marketHash = marketHash,
             marketHashId = MarketManagerActor.getEntityId(marketId).toInt,
