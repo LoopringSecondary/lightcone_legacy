@@ -100,7 +100,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         GetTrades.Req(
           owner = "0x-gettrades-state0-02",
           market = GetTrades.Req.Market
-            .MarketHash(MarketKey(tokenS, tokenB).toString)
+            .MarketKey(MarketKey(tokenS, tokenB).toString)
         )
       )
       query2 <- service.getTrades(
@@ -133,7 +133,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         GetTrades.Req(
           owner = "0x-counttrades-02",
           market = GetTrades.Req.Market
-            .MarketHash(MarketKey(tokenS, tokenB).toString)
+            .MarketKey(MarketKey(tokenS, tokenB).toString)
         )
       )
     } yield query
@@ -182,7 +182,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         GetTrades.Req(
           owner = owner,
           market = GetTrades.Req.Market
-            .MarketHash(MarketKey(tokenS, tokenB).toString)
+            .MarketKey(MarketKey(tokenS, tokenB).toString)
         )
       )
       _ <- service.obsolete(30L)
@@ -190,7 +190,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         GetTrades.Req(
           owner = owner,
           market = GetTrades.Req.Market
-            .MarketHash(MarketKey(tokenS, tokenB).toString)
+            .MarketKey(MarketKey(tokenS, tokenB).toString)
         )
       )
     } yield (count1, count2)

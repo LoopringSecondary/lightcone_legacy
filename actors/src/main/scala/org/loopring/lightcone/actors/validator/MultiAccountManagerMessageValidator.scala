@@ -109,14 +109,14 @@ final class MultiAccountManagerMessageValidator(
           val marketId =
             MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
 
-          val marketHash = MarketKey(marketId).toString
+          val marketKey = MarketKey(marketId).toString
 
           req.withRawOrder(
             rawOrder.copy(
               state = Some(state),
-              marketHash = marketHash,
-              marketHashId = MarketManagerActor.getEntityId(marketId).toInt,
-              addressShardId = MultiAccountManagerActor
+              marketKey = marketKey,
+              marketShard = MarketManagerActor.getEntityId(marketId).toInt,
+              accountShard = MultiAccountManagerActor
                 .getEntityId(order.owner, numOfShards)
                 .toInt
             )
