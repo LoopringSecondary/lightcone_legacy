@@ -89,7 +89,7 @@ class GasPriceActor(
       sender ! GetGasPrice.Res(gasPrice)
 
     case block: BlockGasPrices =>
-      if (blocks.size >= blockSize) {
+      if (blocks.size >= blockSize && block.height >= blocks.head.height) {
         blocks = blocks.drop(1)
       }
       blocks = blocks.+:(block)
