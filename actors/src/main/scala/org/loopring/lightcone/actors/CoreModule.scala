@@ -182,10 +182,10 @@ class CoreModule(config: Config)
       transferEventDispatcher: EventDispatcher[TransferEvent],
       allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdated],
       ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
+      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawData],
       tokenBurnRateChangedEventDispatcher: EventDispatcher[
         TokenBurnRateChangedEvent
-      ],
-      oHLCRawDataEventDispatcher: EventDispatcher[OHLCRawData]
+      ]
     ): Seq[EventDispatcher[_]] =
     Seq(
       balanceEventDispatcher,
@@ -195,8 +195,8 @@ class CoreModule(config: Config)
       transferEventDispatcher,
       allowanceEventDispatcher,
       ordersCancelledEventDispatcher,
-      tokenBurnRateChangedEventDispatcher,
-      oHLCRawDataEventDispatcher
+      ohlcRawDataEventDispatcher,
+      tokenBurnRateChangedEventDispatcher
     )
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
