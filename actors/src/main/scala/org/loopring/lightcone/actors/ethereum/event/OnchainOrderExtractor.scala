@@ -23,7 +23,7 @@ import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
 import scala.concurrent._
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.ethereum.data.Address
 
 class OnchainOrderExtractor @Inject()(

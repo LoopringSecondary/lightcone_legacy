@@ -25,6 +25,7 @@ import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+import org.loopring.lightcone.lib.data._
 
 package object data {
 
@@ -56,19 +57,6 @@ package object data {
       b + t + l + header.eventIndex
     }
   }
-
-  ///////////
-  //todo:core.AccountManagerImp中也有使用，需要统一
-  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
-    if (bytes.size() > 0) BigInt(bytes.toByteArray)
-    else BigInt(0)
-  }
-
-  implicit def bigInt2ByteString(b: BigInt): ByteString =
-    ByteString.copyFrom(b.toByteArray)
-
-  implicit def byteArray2ByteString(bytes: Array[Byte]) =
-    ByteString.copyFrom(bytes)
 
   implicit def balanceAndAlowance2BalanceAndAlowanceBigInt(
       xba: BalanceAndAllowance

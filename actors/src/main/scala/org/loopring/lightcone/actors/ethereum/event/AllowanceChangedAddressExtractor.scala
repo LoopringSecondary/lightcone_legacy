@@ -25,7 +25,7 @@ import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.ethereum.abi._
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{TransferEvent => _, _}
 import org.web3j.utils.Numeric
