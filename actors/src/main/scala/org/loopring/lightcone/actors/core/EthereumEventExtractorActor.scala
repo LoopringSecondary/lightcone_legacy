@@ -83,18 +83,18 @@ class EthereumEventExtractorActor(
   var untilBlock: Long = Long.MaxValue //最大值，保证一直获取区块
 
   override def initialize(): Future[Unit] = {
-    val startBlock = selfConfig.getLong("start-block")
+    val startBlock = Math.max(selfConfig.getLong("start-block"), 0)
     val f = for {
       lastHandledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
       currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
         .mapAs[GetBlockNumber.Res]
         .map(res => Numeric.toBigInt(res.result).longValue())
-      blockStart = lastHandledBlock.getOrElse(startBlock)
+      blockStart = lastHandledBlock.getOrElse(startBlock - 1)
       missing = currentBlock > blockStart + 1
       _ = if (missing) {
         dbModule.blockService.saveBlock(BlockData(height = currentBlock - 1))
         dbModule.missingBlocksRecordDal.saveMissingBlock(
-          MissingBlocksRecord(blockStart, currentBlock, blockStart - 1)
+          MissingBlocksRecord(blockStart + 1, currentBlock, blockStart)
         )
       }
     } yield {

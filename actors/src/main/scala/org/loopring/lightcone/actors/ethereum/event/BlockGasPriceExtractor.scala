@@ -18,9 +18,8 @@ package org.loopring.lightcone.actors.ethereum.event
 
 import akka.util.Timeout
 import com.google.inject.Inject
-import org.loopring.lightcone.proto.{BlockGasPrices, RawBlockData}
+import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class BlockGasPriceExtractor @Inject()(
