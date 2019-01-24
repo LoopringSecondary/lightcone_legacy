@@ -87,7 +87,8 @@ class OrderbookManagerActor(
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
       OrderbookManagerActor.extractEntityId
-    ) {
+    )
+    with MarketStatusSupport {
 
   val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
@@ -130,4 +131,17 @@ class OrderbookManagerActor(
     case msg => log.info(s"not supported msg:${msg}, ${marketId}")
 
   }
+
+  def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
+    marketMetadata.status match {
+      case MarketMetadata.Status.TERMINATED
+          if getEntityId(marketMetadata.getMarketId) == entityId =>
+        log.info(
+          s"this actor:${self.path} will be to stoped, due to the status of this market has been changed to TERMINATED."
+        )
+        context.stop(self)
+      case _ => //READONLY的不处理，需要能继续可以查询得到orderbook
+    }
+  }
+
 }

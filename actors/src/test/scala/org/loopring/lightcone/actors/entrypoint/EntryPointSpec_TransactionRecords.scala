@@ -17,16 +17,17 @@
 package org.loopring.lightcone.actors.entrypoint
 
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.TransactionRecordMessageValidator
-import org.loopring.lightcone.proto.TransactionRecord.EventData
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.lib.ErrorException
-import scala.concurrent.{Await, Future}
-import TransactionRecord.EventData.Event
-import TransactionRecord.RecordType._
+import org.loopring.lightcone.proto.TransactionRecord.EventData
+import org.loopring.lightcone.proto.TransactionRecord.EventData.Event
+import org.loopring.lightcone.proto.TransactionRecord.RecordType._
+import org.loopring.lightcone.proto._
+
+import scala.concurrent.Await
 
 class EntryPointSpec_TransactionRecords
     extends CommonSpec

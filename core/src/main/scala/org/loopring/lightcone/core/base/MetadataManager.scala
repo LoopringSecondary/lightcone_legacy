@@ -81,11 +81,14 @@ final class MetadataManager @Inject()(implicit val config: Config)
   private var symbolMap = Map.empty[String, Token]
 
   // markets[marketKey, marketId]
-  private var disabledMarkets: Map[String, MarketId] = Map.empty
-  private var enabledMarkets: Map[String, MarketId] = Map.empty
+  private var terminatedMarkets: Map[String, MarketId] = Map.empty
+  private var activeMarkets: Map[String, MarketId] = Map.empty
   private var readOnlyMarkets: Map[String, MarketId] = Map.empty
 
   private var marketMetadatasMap = Map.empty[String, MarketMetadata]
+
+  var marketSubscribees = Set.empty[(MarketMetadata) => Unit]
+  var tokenSubscribees = Set.empty[(TokenMetadata) => Unit]
 
   def reset(
       tokens: Seq[TokenMetadata],
@@ -94,14 +97,22 @@ final class MetadataManager @Inject()(implicit val config: Config)
     addressMap = Map.empty
     tokens.foreach(addToken)
 
-    disabledMarkets = Map.empty
-    enabledMarkets = Map.empty
+    terminatedMarkets = Map.empty
+    activeMarkets = Map.empty
     readOnlyMarkets = Map.empty
     marketMetadatasMap = Map.empty
     markets.foreach(addMarket)
+
+    //subscribe
+    tokens.foreach { t =>
+      tokenSubscribees foreach (_(t))
+    }
+    markets.foreach { m =>
+      marketSubscribees foreach (_(m))
+    }
   }
 
-  def addToken(meta: TokenMetadata) = this.synchronized {
+  private def addToken(meta: TokenMetadata) = this.synchronized {
     val m = MetadataManager.normalizeToken(meta)
     val token = new Token(m)
     addressMap += m.address -> token
@@ -109,7 +120,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
     this
   }
 
-  def addTokens(meta: Seq[TokenMetadata]) = {
+  private def addTokens(meta: Seq[TokenMetadata]) = {
     meta.foreach(addToken)
     this
   }
@@ -136,15 +147,15 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   def getTokens = addressMap.values.toSeq
 
-  def addMarket(meta: MarketMetadata) = this.synchronized {
+  private def addMarket(meta: MarketMetadata) = this.synchronized {
     val m = MetadataManager.normalizeMarket(meta)
     marketMetadatasMap += m.marketHash -> m
     val itemMap = m.marketHash -> m.marketId.get
     m.status match {
-      case MarketMetadata.Status.DISABLED =>
-        disabledMarkets += itemMap
-      case MarketMetadata.Status.ENABLED =>
-        enabledMarkets += itemMap
+      case MarketMetadata.Status.TERMINATED =>
+        terminatedMarkets += itemMap
+      case MarketMetadata.Status.ACTIVE =>
+        activeMarkets += itemMap
       case MarketMetadata.Status.READONLY =>
         readOnlyMarkets += itemMap
       case m =>
@@ -173,46 +184,57 @@ final class MetadataManager @Inject()(implicit val config: Config)
   def getMarketMetadata(marketId: MarketId): Option[MarketMetadata] =
     getMarketMetadata(MarketKey(marketId).toString)
 
-  def assertMarketIdIsValid(marketIdOpt: Option[MarketId]): Option[MarketId] = {
+  def assertMarketIdIsValid(marketIdOpt: Option[MarketId]): Boolean = {
     marketIdOpt match {
       case None =>
         throw ErrorException(ErrorCode.ERR_INVALID_MARKET)
       case Some(marketId) =>
-        val marketIdRes = assertMarketIdIsValid(marketId)
-        Some(marketIdRes)
+        if (!isValidMarket(MarketKey(marketId).toString))
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_MARKET,
+            s"invalid market: $marketIdOpt"
+          )
+        true
     }
   }
 
-  def assertMarketIdIsValid(marketId: MarketId): MarketId = {
+  def assertMarketIdIsValid(marketId: MarketId): Boolean = {
     if (!isValidMarket(marketId))
       throw ErrorException(
         ErrorCode.ERR_INVALID_MARKET,
         s"invalid market: ${marketId}"
       )
-    marketId
+    true
   }
 
   // check market is valid (has metadata config)
   def isValidMarket(marketKey: String): Boolean =
-    marketMetadatasMap.contains(marketKey.toLowerCase())
+    getValidMarketIds.contains(marketKey.toLowerCase())
 
   def isValidMarket(marketId: MarketId): Boolean =
     isValidMarket(MarketKey(marketId).toString)
 
   // check market is at enabled status
-  def isEnabledMarket(marketKey: String): Boolean =
-    enabledMarkets.contains(marketKey.toLowerCase())
+  def isActiveMarket(marketKey: String): Boolean =
+    activeMarkets.contains(marketKey.toLowerCase())
 
-  def isEnabledMarket(marketId: MarketId): Boolean =
-    isEnabledMarket(MarketKey(marketId).toString)
+  def isActiveMarket(marketId: MarketId): Boolean =
+    isActiveMarket(MarketKey(marketId).toString)
 
-  def getValidMarketKeys = marketMetadatasMap.keySet
+  def getValidMarketIds = activeMarkets ++ readOnlyMarkets
 
-  def getValidMarketIds = enabledMarkets ++ readOnlyMarkets ++ disabledMarkets
+  def getEnabledMarketIds = activeMarkets
 
-  def getEnabledMarketIds = enabledMarkets
-
-  def getDisabledMarketIds = disabledMarkets
+  def getTerminatedMarketIds = terminatedMarkets
 
   def getReadOnlyMarketIds = readOnlyMarkets
+
+  def subscribToken(subFun: (TokenMetadata) => Unit) = {
+    tokenSubscribees = tokenSubscribees + subFun
+  }
+
+  def subscribMarket(subFun: (MarketMetadata) => Unit) = {
+    marketSubscribees = marketSubscribees + subFun
+  }
+
 }

@@ -67,7 +67,9 @@ trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
       case e: Exception if e.getMessage.contains("already exists") =>
         logger.info(e.getMessage)
       case e: Exception =>
-        logger.error("Failed to create MySQL tables: " + e.getMessage)
+        logger.error(
+          s"Failed to create MySQL tables: ${e.getMessage}, ${db.source}"
+        )
         System.exit(0)
     }
   }

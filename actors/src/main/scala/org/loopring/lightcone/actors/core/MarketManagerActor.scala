@@ -47,6 +47,8 @@ import scala.concurrent.duration._
 object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
+  var metadataManager: MetadataManager = _
+
   def start(
       implicit
       system: ActorSystem,
@@ -62,6 +64,7 @@ object MarketManagerActor extends ShardedByMarket {
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
+    this.metadataManager = metadataManager
 
     ClusterSharding(system).start(
       typeName = name,
@@ -72,10 +75,16 @@ object MarketManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
+  //READONLY的不能在该处处理，需要在validtor中截取，因为该处还需要将orderbook等恢复
   val extractMarketId: PartialFunction[Any, MarketId] = {
-    case SubmitSimpleOrder(_, Some(order)) =>
+    case SubmitSimpleOrder(_, Some(order))
+        if metadataManager.isValidMarket(
+          MarketId(order.tokenS, order.tokenB)
+        ) =>
       MarketId(order.tokenS, order.tokenB)
-    case CancelOrder.Req(_, _, _, Some(marketId)) =>
+
+    case CancelOrder.Req(_, _, _, Some(marketId))
+        if metadataManager.isValidMarket(marketId) =>
       marketId
     case req: RingMinedEvent if req.fills.size >= 2 =>
       MarketId(req.fills(0).tokenS, req.fills(1).tokenS)
@@ -104,6 +113,7 @@ class MarketManagerActor(
       MarketManagerActor.name,
       MarketManagerActor.extractEntityId
     )
+    with MarketStatusSupport
     with ActorLogging {
   implicit val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
@@ -313,5 +323,17 @@ class MarketManagerActor(
 
   def recoverOrder(xraworder: RawOrder): Future[Any] =
     submitOrder(xraworder)
+
+  def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
+    marketMetadata.status match {
+      case MarketMetadata.Status.TERMINATED
+          if getEntityId(marketMetadata.getMarketId) == entityId =>
+        log.info(
+          s"this actor:${self.path} will be to stoped, due to the status of this market has been changed to TERMINATED."
+        )
+        context.stop(self)
+      case _ => //READONLY时，也需要在恢复时，继续接受订单提供给orderbook，
+    }
+  }
 
 }

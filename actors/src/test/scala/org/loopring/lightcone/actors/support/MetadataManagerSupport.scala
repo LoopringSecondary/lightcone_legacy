@@ -31,8 +31,8 @@ import akka.pattern._
 import org.loopring.lightcone.core.base.MetadataManager
 import scala.concurrent.Await
 
-trait MetadataManagerSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+trait MetadataManagerSupport {
+  my: CommonSpec with DatabaseModuleSupport =>
 
   actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
   actors.add(

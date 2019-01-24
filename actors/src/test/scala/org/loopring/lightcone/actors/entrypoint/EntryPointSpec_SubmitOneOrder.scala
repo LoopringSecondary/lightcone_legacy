@@ -26,6 +26,7 @@ class EntryPointSpec_SubmitOneOrder
     with JsonrpcSupport
     with HttpSupport
     with EthereumSupport
+    with DatabaseModuleSupport
     with MetadataManagerSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport

@@ -72,21 +72,21 @@ class AccountManagerActor(
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   override def preStart() = {
-    val cutoffReqs = (metadataManager.getValidMarketKeys map { m =>
+    val cutoffReqs = (metadataManager.getValidMarketIds map { m =>
       for {
         res <- (ethereumQueryActor ? GetCutoff.Req(
           broker = address,
           owner = address,
-          marketKey = m
+          marketKey = MarketKey(m._2).toString
         )).mapAs[GetCutoff.Res]
       } yield {
         val cutoff: BigInt = res.cutoff
         accountCutoffState.setTradingPairCutoff(
-          Numeric.toBigInt(m),
+          m._2.key(),
           cutoff.toLong
         )
       }
-    }) +
+    }).toSeq :+
       (for {
         res <- (ethereumQueryActor ? GetCutoff.Req(
           broker = address,
@@ -406,5 +406,7 @@ class AccountManagerActor(
           ERR_ORDER_VALIDATION_INVALID_CUTOFF,
           s"this order has been canceled."
         )
+
+  //todo:terminate market则需要将订单从内存中删除,但是不从数据库删除
 
 }

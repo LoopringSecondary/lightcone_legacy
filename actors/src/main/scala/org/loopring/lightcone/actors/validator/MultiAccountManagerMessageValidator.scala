@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.core.base.{MarketKey, MetadataManager}
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
@@ -45,49 +45,29 @@ final class MultiAccountManagerMessageValidator(
   val orderValidator: RawOrderValidator = Protocol2RawOrderValidator
 
   def validate = {
-    case req @ CancelOrder.Req(_, owner, _, marketId) =>
-      metadataManager.assertMarketIdIsValid(marketId)
-      req.copy(owner = Address.normalizeAddress(owner))
-
-    case req: SubmitSimpleOrder =>
-      req.order match {
-        case None =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            s"bad request:${req}"
-          )
-        case Some(order) =>
-          metadataManager.assertMarketIdIsValid(
-            MarketId(order.tokenS, order.tokenB)
-          )
-          req.copy(
-            order = Some(
-              order.copy(
-                tokenB = Address.normalizeAddress(order.tokenB),
-                tokenS = Address.normalizeAddress(order.tokenS),
-                tokenFee = Address.normalizeAddress(order.tokenFee)
-              )
-            ),
-            owner = Address.normalizeAddress(req.owner)
-          )
+    case req @ CancelOrder.Req(_, owner, _, Some(marketId)) =>
+      if (!metadataManager.getEnabledMarketIds.contains(
+            MarketKey(marketId).toString
+          )) {
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_MARKET,
+          s"marketId:${marketId} has been terminated"
+        )
       }
-    case req: ActorRecover.RecoverOrderReq => req
+      req.copy(
+        owner = Address.normalizeAddress(owner),
+        marketId = Some(
+          marketId.copy(
+            primary = marketId.primary.toLowerCase(),
+            secondary = marketId.secondary.toLowerCase()
+          )
+        )
+      )
+
     case req: GetBalanceAndAllowances.Req =>
       req.copy(
         address = Address.normalizeAddress(req.address),
         tokens = req.tokens.map(Address.normalizeAddress)
-      )
-
-    case req: AddressBalanceUpdated =>
-      req.copy(
-        address = Address.normalizeAddress(req.address),
-        token = Address.normalizeAddress(req.token)
-      )
-
-    case req: AddressAllowanceUpdated =>
-      req.copy(
-        address = Address.normalizeAddress(req.address),
-        token = Address.normalizeAddress(req.token)
       )
 
     case req @ SubmitOrder.Req(Some(order)) =>
@@ -98,18 +78,49 @@ final class MultiAccountManagerMessageValidator(
             message = s"invalid order in SubmitOrder.Req:$order"
           )
         case Right(rawOrder) =>
+          val marketId =
+            MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
+          val marketHash =
+            MarketHashProvider.convert2Hex(rawOrder.tokenS, rawOrder.tokenB)
+          if (!metadataManager.getEnabledMarketIds.contains(
+                MarketKey(marketId).toString
+              )) {
+            throw ErrorException(
+              ErrorCode.ERR_INVALID_MARKET,
+              s"marketId:${marketId} has been terminated"
+            )
+          }
+          metadataManager.assertMarketIdIsValid(Some(marketId))
+
           val now = timeProvider.getTimeMillis
           val state = RawOrder.State(
             createdAt = now,
             updatedAt = now,
             status = OrderStatus.STATUS_NEW
           )
-          val marketHash =
-            MarketHashProvider.convert2Hex(rawOrder.tokenS, rawOrder.tokenB)
-          val marketId =
-            MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
           req.withRawOrder(
             rawOrder.copy(
+              hash = rawOrder.hash.toLowerCase(),
+              owner = Address.normalizeAddress(rawOrder.owner),
+              tokenS = Address.normalizeAddress(rawOrder.tokenS),
+              tokenB = Address.normalizeAddress(rawOrder.tokenB),
+              params = Some(
+                rawOrder.getParams.copy(
+                  dualAuthAddr = rawOrder.getParams.dualAuthAddr.toLowerCase,
+                  broker = rawOrder.getParams.broker.toLowerCase(),
+                  orderInterceptor =
+                    rawOrder.getParams.orderInterceptor.toLowerCase(),
+                  wallet = rawOrder.getParams.wallet.toLowerCase()
+                )
+              ),
+              feeParams = Some(
+                rawOrder.getFeeParams.copy(
+                  tokenFee =
+                    Address.normalizeAddress(rawOrder.getFeeParams.tokenFee),
+                  tokenRecipient =
+                    rawOrder.getFeeParams.tokenRecipient.toLowerCase()
+                )
+              ),
               state = Some(state),
               marketHash = marketHash,
               marketHashId = MarketManagerActor.getEntityId(marketId).toInt,

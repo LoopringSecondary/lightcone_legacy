@@ -48,8 +48,10 @@ abstract class CommonSpec(configStr: String = "")
     with BeforeAndAfterAll
     with Logging {
 
+  info(s"sbt actors/'testOnly *${this.getClass.getSimpleName}'")
+
   override def afterAll: Unit = {
-    super.afterAll()
+    info(s"${this.getClass} finished.")
     TestKit.shutdownActorSystem(system, 10.seconds, false)
   }
 

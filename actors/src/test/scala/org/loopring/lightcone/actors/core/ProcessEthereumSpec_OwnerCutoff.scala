@@ -20,7 +20,6 @@ import akka.pattern._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
-import org.web3j.utils.Numeric
 
 import scala.concurrent.{Await, Future}
 
@@ -29,6 +28,7 @@ class ProcessEthereumSpec_OwnerCutoff
     with JsonrpcSupport
     with HttpSupport
     with EthereumSupport
+    with DatabaseModuleSupport
     with MetadataManagerSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport

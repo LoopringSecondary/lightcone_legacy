@@ -41,7 +41,7 @@ package object support {
     symbol = "WETH",
     name = "WETH",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
+    status = TokenMetadata.Status.VALID
   )
 
   val LRC_TOKEN = TokenMetadata(
@@ -52,7 +52,7 @@ package object support {
     symbol = "LRC",
     name = "LRC",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
+    status = TokenMetadata.Status.VALID
   )
 
   val GTO_TOKEN = TokenMetadata(
@@ -63,11 +63,11 @@ package object support {
     symbol = "GTO",
     name = "GTO",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
+    status = TokenMetadata.Status.VALID
   )
 
   val LRC_WETH_MARKET = MarketMetadata(
-    status = MarketMetadata.Status.ENABLED,
+    status = MarketMetadata.Status.ACTIVE,
     secondaryTokenSymbol = LRC_TOKEN.symbol,
     primaryTokenSymbol = WETH_TOKEN.symbol,
     maxNumbersOfOrders = 1000,
@@ -84,7 +84,7 @@ package object support {
   )
 
   val GTO_WETH_MARKET = MarketMetadata(
-    status = MarketMetadata.Status.ENABLED,
+    status = MarketMetadata.Status.ACTIVE,
     secondaryTokenSymbol = GTO_TOKEN.symbol,
     primaryTokenSymbol = WETH_TOKEN.symbol,
     maxNumbersOfOrders = 500,
@@ -163,12 +163,15 @@ package object support {
 
   val mysqlConfigStr = s"""
         profile = "slick.jdbc.MySQLProfile$$"
+        maxConnections = 3
+        minConnections = 2
+        numThreads = 2
         db {
           url="${mysqlContainer.jdbcUrl}?useSSL=false"
           user="${mysqlContainer.username}"
           password="${mysqlContainer.password}"
           driver="${mysqlContainer.driverClassName}"
-          maxThreads = 4
+          maxThreads = 2
         }"""
 
   val dbConfig1: DatabaseConfig[JdbcProfile] =

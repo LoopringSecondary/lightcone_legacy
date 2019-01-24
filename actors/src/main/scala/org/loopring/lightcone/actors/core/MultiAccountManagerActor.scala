@@ -36,6 +36,8 @@ import scala.concurrent.duration._
 object MultiAccountManagerActor extends ShardedByAddress {
   val name = "multi_account_manager"
 
+  var metadataManager: MetadataManager = _
+
   def start(
       implicit
       system: ActorSystem,
@@ -49,6 +51,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
       metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
+    this.metadataManager = metadataManager
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -62,25 +65,27 @@ object MultiAccountManagerActor extends ShardedByAddress {
     )
   }
 
-  // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
+  //如果message不包含一个有效的address，就不做处理，不要返回“默认值”
+  //在validator 中已经做了拦截，该处再做一次，用于recover过滤
   val extractAddress: PartialFunction[Any, String] = {
-    case req: SubmitOrder.Req =>
-      req.rawOrder
-        .map(_.owner)
-        .getOrElse {
-          throw ErrorException(
-            ERR_UNEXPECTED_ACTOR_MSG,
-            "SubmitOrder.Req.rawOrder must be nonEmpty."
-          )
-        }
-
-    case ActorRecover.RecoverOrderReq(Some(raworder)) => raworder.owner
-    case req: CancelOrder.Req                         => req.owner
-    case req: GetBalanceAndAllowances.Req             => req.address
-    case req: AddressBalanceUpdated                   => req.address
-    case req: AddressAllowanceUpdated                 => req.address
-    case req: CutoffEvent                             => req.owner //todo:暂不支持broker
-    case req: OrderFilledEvent                        => req.owner
+    case SubmitOrder.Req(Some(rawOrder))
+        if metadataManager.isValidMarket(
+          MarketId(rawOrder.tokenS, rawOrder.tokenB)
+        ) =>
+      rawOrder.owner
+    case ActorRecover.RecoverOrderReq(Some(raworder))
+        if metadataManager.isValidMarket(
+          MarketId(raworder.tokenS, raworder.tokenB)
+        ) =>
+      raworder.owner
+    case CancelOrder.Req(_, owner, _, Some(marketId))
+        if metadataManager.isValidMarket(marketId) =>
+      owner
+    case req: GetBalanceAndAllowances.Req => req.address
+    case req: AddressBalanceUpdated       => req.address
+    case req: AddressAllowanceUpdated     => req.address
+    case req: CutoffEvent                 => req.owner //todo:暂不支持broker
+    case req: OrderFilledEvent            => req.owner
     case Notify(KeepAliveActor.NOTIFY_MSG, address) =>
       Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
   }
@@ -116,7 +121,6 @@ class MultiAccountManagerActor(
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
-  //todo: 完成recovery后，需要再次测试异常恢复情况
   override val supervisorStrategy =
     AllForOneStrategy() {
       case e: Exception =>

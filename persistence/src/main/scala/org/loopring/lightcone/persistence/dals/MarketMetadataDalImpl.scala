@@ -78,13 +78,16 @@ class MarketMetadataDalImpl @Inject()(
     ): Future[Seq[MarketMetadata]] =
     db.run(query.filter(_.marketHash inSet marketHashes).result)
 
-  def disableMarketByHash(marketHash: String): Future[ErrorCode] =
+  def terminateMarketByHash(marketHash: String): Future[ErrorCode] =
     for {
       result <- db.run(
         query
           .filter(_.marketHash === marketHash)
           .map(c => (c.status, c.updateAt))
-          .update(MarketMetadata.Status.DISABLED, timeProvider.getTimeMillis())
+          .update(
+            MarketMetadata.Status.TERMINATED,
+            timeProvider.getTimeMillis()
+          )
       )
     } yield {
       if (result >= 1) ERR_NONE
