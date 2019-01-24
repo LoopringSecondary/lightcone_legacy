@@ -100,6 +100,8 @@ class GasPriceActor(
     val gasPrices = blocks.flatMap(_.gasPrices).sortWith(_ > _)
     val excludeAmount = gasPrices.size * excludePercent / 100
     val gasPricesInUse = gasPrices.drop(excludeAmount).dropRight(excludeAmount)
-    gasPrice = gasPricesInUse.sum / gasPricesInUse.size
+    if(gasPricesInUse.nonEmpty){
+      gasPrice = gasPricesInUse.sum / gasPricesInUse.size
+    }
   }
 }
