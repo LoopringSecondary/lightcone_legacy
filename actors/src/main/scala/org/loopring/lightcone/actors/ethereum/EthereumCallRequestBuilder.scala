@@ -67,16 +67,16 @@ class EthereumCallRequestBuilder {
           CutoffForOwnerFunction.Params(broker, owner)
         )
 
-      case GetCutoff.Req(broker, "", tokenPair, _) =>
+      case GetCutoff.Req(broker, "", marketKey, _) =>
         tradeHistoryAbi.cutoffForTradingPairBroker.pack(
           CutoffForTradingPairBrokerFunction
-            .Params(broker, Numeric.hexStringToByteArray(tokenPair))
+            .Params(broker, Numeric.hexStringToByteArray(marketKey))
         )
 
-      case GetCutoff.Req(broker, owner, tokenPair, _) =>
+      case GetCutoff.Req(broker, owner, marketKey, _) =>
         tradeHistoryAbi.cutoffForTradingPairOwner.pack(
           CutoffForTradingPairOwnerFunction
-            .Params(broker, owner, Numeric.hexStringToByteArray(tokenPair))
+            .Params(broker, owner, Numeric.hexStringToByteArray(marketKey))
         )
     }
 

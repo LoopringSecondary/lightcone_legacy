@@ -56,8 +56,8 @@ class MarketMetadataDalImpl @Inject()(
   def saveMarkets(marketMetadatas: Seq[MarketMetadata]): Future[Seq[String]] =
     for {
       _ <- Future.sequence(marketMetadatas.map(saveMarket))
-      query <- getMarketsByHashes(marketMetadatas.map(_.marketHash))
-    } yield query.map(_.marketHash)
+      query <- getMarketsByHashes(marketMetadatas.map(_.marketKey))
+    } yield query.map(_.marketKey)
 
   def updateMarket(marketMetadata: MarketMetadata): Future[ErrorCode] =
     for {
@@ -74,15 +74,15 @@ class MarketMetadataDalImpl @Inject()(
     db.run(query.result)
 
   def getMarketsByHashes(
-      marketHashes: Seq[String]
+      marketKeyes: Seq[String]
     ): Future[Seq[MarketMetadata]] =
-    db.run(query.filter(_.marketHash inSet marketHashes).result)
+    db.run(query.filter(_.marketKey inSet marketKeyes).result)
 
-  def disableMarketByHash(marketHash: String): Future[ErrorCode] =
+  def disableMarketByHash(marketKey: String): Future[ErrorCode] =
     for {
       result <- db.run(
         query
-          .filter(_.marketHash === marketHash)
+          .filter(_.marketKey === marketKey)
           .map(c => (c.status, c.updateAt))
           .update(MarketMetadata.Status.DISABLED, timeProvider.getTimeMillis())
       )

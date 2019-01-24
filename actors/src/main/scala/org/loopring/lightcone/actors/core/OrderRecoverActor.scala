@@ -113,10 +113,10 @@ class OrderRecoverActor(
         }.map { o =>
           val marketId =
             MarketId(primary = o.tokenS, secondary = o.tokenB)
-          val marketHash = MarketKey(marketId).toString
+          val marketKey = MarketKey(marketId).toString
           o.copy(
-            marketHash = marketHash,
-            marketHashId = MarketManagerActor.getEntityId(marketId).toInt,
+            marketKey = marketKey,
+            marketKeyId = MarketManagerActor.getEntityId(marketId).toInt,
             addressShardId = MultiAccountManagerActor
               .getEntityId(o.owner, numOfShards)
               .toInt
@@ -168,15 +168,15 @@ class OrderRecoverActor(
     ): Future[Seq[RawOrder]] = {
     if (batch.requestMap.nonEmpty) {
       var addressShardIds: Set[Int] = Set.empty
-      var marketHashIds: Set[Int] = Set.empty
+      var marketKeyIds: Set[Int] = Set.empty
       batch.requestMap.foreach {
         case (_, request) => {
           if ("" != request.addressShardingEntity)
             addressShardIds += request.addressShardingEntity.toInt
           if (request.marketId.nonEmpty) {
-            val marketHashId =
+            val marketKeyId =
               MarketManagerActor.getEntityId(request.marketId.get).toInt
-            marketHashIds += marketHashId
+            marketKeyIds += marketKeyId
           }
         }
       }
@@ -186,12 +186,12 @@ class OrderRecoverActor(
         OrderStatus.STATUS_PARTIALLY_FILLED
       )
       log.debug(
-        s"the requset params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${status}, ${marketHashIds}, ${addressShardIds}"
+        s"the requset params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${status}, ${marketKeyIds}, ${addressShardIds}"
       )
 
       dbModule.orderService.getOrdersForRecover(
         status,
-        marketHashIds,
+        marketKeyIds,
         addressShardIds,
         CursorPaging(lastOrderSeqId, batchSize)
       )

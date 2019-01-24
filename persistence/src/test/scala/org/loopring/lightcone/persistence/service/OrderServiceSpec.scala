@@ -70,14 +70,14 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     } yield result
   }
 
-  "marketHash" must "calculate a market hash by two address" in {
+  "marketKey" must "calculate a market hash by two address" in {
     val address1 = "0x50689da538c80f32f46fb224af5d9d06c3309633"
     val address2 = "0x6d0643f40c625a46d4ede0b11031b0907bc197d1"
 
-    val marketHash1 = MarketKey(address1, address2).toString
-    val marketHash2 = MarketKey(address2, address1).toString
+    val marketKey1 = MarketKey(address1, address2).toString
+    val marketKey2 = MarketKey(address2, address1).toString
     val t = MarketKey(address1, address2).toString
-    val r = marketHash1.equals(marketHash2) && t === "0x3d6ede5134aa557420825295bf6c2d96b8f101e2"
+    val r = marketKey1.equals(marketKey2) && t === "0x3d6ede5134aa557420825295bf6c2d96b8f101e2"
     r should be(true)
   }
 
@@ -264,12 +264,12 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val tokenB = "0xaaaaa02"
     val result = for {
       _ <- testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
-      marketHash = MarketKey(tokenS, tokenB)
-      marketHashIds = Set(Math.abs(marketHash.hashCode))
+      marketKey = MarketKey(tokenS, tokenB)
+      marketKeyIds = Set(Math.abs(marketKey.hashCode))
       addressShardIds = owners.map(a => Math.abs(a.hashCode % 100)).toSet
       query <- service.getOrdersForRecover(
         Set(OrderStatus.STATUS_NEW),
-        marketHashIds,
+        marketKeyIds,
         addressShardIds,
         CursorPaging(size = 100)
       )

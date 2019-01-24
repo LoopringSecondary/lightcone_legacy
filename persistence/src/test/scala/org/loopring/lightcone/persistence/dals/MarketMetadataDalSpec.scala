@@ -48,7 +48,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdLrcWeth),
-        marketHash = MarketKey(WETH, LRC).toString
+        marketKey = MarketKey(WETH, LRC).toString
       ),
       MarketMetadata(
         status = MarketMetadata.Status.DISABLED,
@@ -62,7 +62,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdBnbWeth),
-        marketHash = MarketKey(WETH, BNB).toString
+        marketKey = MarketKey(WETH, BNB).toString
       ),
       MarketMetadata(
         status = MarketMetadata.Status.READONLY,
@@ -76,7 +76,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdZrxdWeth),
-        marketHash = MarketKey(WETH, ZRX).toString
+        marketKey = MarketKey(WETH, ZRX).toString
       )
     )
     val r1 = dal.saveMarkets(markets)
@@ -84,7 +84,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     assert(res1.length == markets.length)
 
     info("query the markets config just saved")
-    val r2 = dal.getMarketsByHashes(markets.map(_.marketHash))
+    val r2 = dal.getMarketsByHashes(markets.map(_.marketKey))
     val res2 = Await.result(r2.mapTo[Seq[MarketMetadata]], 5.second)
     assert(res2.length == markets.length)
     res2 foreach {
@@ -99,7 +99,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketId.contains(marketIdLrcWeth)
-            && m.marketHash == MarketKey(WETH, LRC)
+            && m.marketKey == MarketKey(WETH, LRC)
         )
       case m: MarketMetadata if m.secondaryTokenSymbol == "BNB" =>
         assert(
@@ -112,7 +112,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketId.contains(marketIdBnbWeth)
-            && m.marketHash == MarketKey(WETH, BNB)
+            && m.marketKey == MarketKey(WETH, BNB)
         )
       case m: MarketMetadata if m.secondaryTokenSymbol == "ZRX" =>
         assert(
@@ -125,7 +125,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketId.contains(marketIdZrxdWeth)
-            && m.marketHash == MarketKey(WETH, ZRX)
+            && m.marketKey == MarketKey(WETH, ZRX)
         )
       case _ => assert(false)
     }
@@ -137,7 +137,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     val r3 = dal.saveMarket(market1)
     val res3 = Await.result(r3.mapTo[ErrorCode], 5.second)
     assert(res3 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
-    val r4 = dal.getMarketsByHashes(Seq(lrcWeth.marketHash))
+    val r4 = dal.getMarketsByHashes(Seq(lrcWeth.marketKey))
     val res4 = Await.result(r4.mapTo[Seq[MarketMetadata]], 5.second)
     assert(res4.length == 1)
     val lrcWeth1 = res4.find(_.secondaryTokenSymbol == "LRC")
@@ -180,7 +180,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     )
     val res9 = Await.result(r9.mapTo[ErrorCode], 5.second)
     assert(res9 == ErrorCode.ERR_NONE)
-    val r10 = dal.getMarketsByHashes(Seq(bnbWeth.marketHash))
+    val r10 = dal.getMarketsByHashes(Seq(bnbWeth.marketKey))
     val res10 = Await.result(r10.mapTo[Seq[MarketMetadata]], 5.second)
     val bnb1 =
       res10.find(_.secondaryTokenSymbol == "BNB").getOrElse(MarketMetadata())
@@ -194,7 +194,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         && bnb1.precisionForTotal == 33
         && !bnb1.browsableInWallet
         && bnb1.marketId.contains(marketIdBnbWeth)
-        && bnb1.marketHash == MarketKey(WETH, BNB)
+        && bnb1.marketKey == MarketKey(WETH, BNB)
     )
   }
 }

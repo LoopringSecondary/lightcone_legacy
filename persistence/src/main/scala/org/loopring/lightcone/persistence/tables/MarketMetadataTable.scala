@@ -25,7 +25,7 @@ class MarketMetadataTable(tag: Tag)
 
   implicit val statusColumnType = enumColumnType(MarketMetadata.Status)
 
-  def id = marketHash
+  def id = marketKey
 
   def status = column[MarketMetadata.Status]("status")
 
@@ -46,7 +46,7 @@ class MarketMetadataTable(tag: Tag)
   def primary = columnAddress("primary")
   def secondary = columnAddress("secondary")
 
-  def marketHash = columnAddress("market_hash", O.PrimaryKey, O.Unique)
+  def marketKey = columnAddress("market_hash", O.PrimaryKey, O.Unique)
 
   def idx_tokens_symbol =
     index(
@@ -78,6 +78,6 @@ class MarketMetadataTable(tag: Tag)
       browsableInWallet,
       updateAt,
       marketIdProjection,
-      marketHash
+      marketKey
     ) <> ((MarketMetadata.apply _).tupled, MarketMetadata.unapply)
 }

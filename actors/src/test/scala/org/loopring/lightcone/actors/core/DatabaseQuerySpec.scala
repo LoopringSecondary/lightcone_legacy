@@ -89,7 +89,7 @@ class DatabaseQuerySpec
       val tradesReq = GetTrades.Req(
         owner = owner,
         market = GetTrades.Req.Market
-          .MarketHash(MarketKey(tokenS, tokenB).toString),
+          .MarketKey(MarketKey(tokenS, tokenB).toString),
         skip = Some(Paging(0, 10)),
         sort = SortingType.ASC
       )

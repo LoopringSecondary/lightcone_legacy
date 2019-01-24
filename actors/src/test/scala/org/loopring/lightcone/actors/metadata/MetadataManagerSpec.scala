@@ -59,12 +59,12 @@ class MetadataManagerSpec
       assert(metadataManager.getValidMarketKeys.size >= MARKETS.length)
       MARKETS.foreach { m =>
         val meta1 =
-          metadataManager.getMarketMetadata(m.marketHash.toLowerCase())
+          metadataManager.getMarketMetadata(m.marketKey.toLowerCase())
         val meta2 = metadataManager.getMarketMetadata(
-          "0x" + m.marketHash.substring(2).toUpperCase()
+          "0x" + m.marketKey.substring(2).toUpperCase()
         )
         assert(
-          meta1.nonEmpty && meta2.nonEmpty && meta1.get.marketHash == meta2.get.marketHash && meta1.get.marketHash == meta1.get.marketHash
+          meta1.nonEmpty && meta2.nonEmpty && meta1.get.marketKey == meta2.get.marketKey && meta1.get.marketKey == meta1.get.marketKey
             .toLowerCase()
         )
 
@@ -83,7 +83,7 @@ class MetadataManagerSpec
           )
         )
         assert(
-          meta3.nonEmpty && meta4.nonEmpty && meta3.get.marketHash == meta4.get.marketHash
+          meta3.nonEmpty && meta4.nonEmpty && meta3.get.marketKey == meta4.get.marketKey
         )
       }
     }
@@ -281,7 +281,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdLrcWeth),
-        marketHash = MarketKey(marketIdLrcWeth).toString
+        marketKey = MarketKey(marketIdLrcWeth).toString
       )
       val markets = Seq(
         marketLrcWeth,
@@ -297,7 +297,7 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketId = Some(marketIdBnbWeth),
-          marketHash = MarketKey(marketIdBnbWeth).toString
+          marketKey = MarketKey(marketIdBnbWeth).toString
         ),
         MarketMetadata(
           status = MarketMetadata.Status.READONLY,
@@ -311,7 +311,7 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketId = Some(marketIdZrxdWeth),
-          marketHash = MarketKey(marketIdZrxdWeth).toString
+          marketKey = MarketKey(marketIdZrxdWeth).toString
         )
       )
       actor ! SaveMarketMetadatas.Req(markets)
@@ -322,7 +322,7 @@ class MetadataManagerSpec
 
       info("query the markets from db")
       val r1 =
-        dbModule.marketMetadataDal.getMarketsByHashes(markets.map(_.marketHash))
+        dbModule.marketMetadataDal.getMarketsByHashes(markets.map(_.marketKey))
       val res1 = Await.result(r1.mapTo[Seq[MarketMetadata]], 5.second)
       assert(res1.length == markets.length)
 
@@ -348,7 +348,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdAbcLrc),
-        marketHash = MarketKey(marketIdAbcLrc).toString
+        marketKey = MarketKey(marketIdAbcLrc).toString
       )
       val r2 = dbModule.marketMetadataDal.saveMarket(abcLrc)
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
@@ -368,7 +368,7 @@ class MetadataManagerSpec
       )
       assert(updated.error == ErrorCode.ERR_NONE)
       val q11 = dbModule.marketMetadataDal.getMarketsByHashes(
-        Seq(marketLrcWeth.marketHash)
+        Seq(marketLrcWeth.marketKey)
       )
       val res11 = Await.result(q11.mapTo[Seq[MarketMetadata]], 5.second)
       assert(
@@ -377,14 +377,14 @@ class MetadataManagerSpec
 
       info("send a message to disable lrc-weth")
       val disabled = Await.result(
-        (actor ? DisableMarket.Req(marketLrcWeth.marketHash))
+        (actor ? DisableMarket.Req(marketLrcWeth.marketKey))
           .mapTo[DisableMarket.Res],
         5 second
       )
       assert(disabled.error == ErrorCode.ERR_NONE)
       val query2 = Await.result(
         dbModule.marketMetadataDal
-          .getMarketsByHashes(Seq(marketLrcWeth.marketHash))
+          .getMarketsByHashes(Seq(marketLrcWeth.marketKey))
           .mapTo[Seq[MarketMetadata]],
         5.second
       )
@@ -461,7 +461,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketId),
-        marketHash = MarketKey(marketId).toString
+        marketKey = MarketKey(marketId).toString
       )
       val formatedMarket = MetadataManager.normalizeMarket(market)
       assert(
@@ -482,7 +482,7 @@ class MetadataManagerSpec
           formatedMarketId.secondary == "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
       )
       assert(
-        market.marketHash == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285" && formatedMarket.marketHash == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285"
+        market.marketKey == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285" && formatedMarket.marketKey == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285"
       )
     }
   }

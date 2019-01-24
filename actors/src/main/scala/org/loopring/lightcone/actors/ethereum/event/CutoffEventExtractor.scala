@@ -71,8 +71,7 @@ class CutoffEventExtractor @Inject()(
                     cutoff = event._cutoff.longValue(),
                     broker = event._broker,
                     owner = event._owner,
-                    tradingPair =
-                      MarketKey(event._token1, event._token2).toString
+                    marketKey = MarketKey(event._token1, event._token2).toString
                   )
                 )
               case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
@@ -82,8 +81,7 @@ class CutoffEventExtractor @Inject()(
                     cutoff = event._cutoff.longValue(),
                     broker = event._broker,
                     owner = event._broker,
-                    tradingPair =
-                      MarketKey(event._token1, event._token2).toString
+                    marketKey = MarketKey(event._token1, event._token2).toString
                   )
                 )
               case _ =>

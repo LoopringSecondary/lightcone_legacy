@@ -99,7 +99,7 @@ class OrderDalImpl @Inject()(
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
+      marketKeySet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       validTime: Option[Int] = None,
       sort: Option[SortingType] = None,
@@ -110,8 +110,8 @@ class OrderDalImpl @Inject()(
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
     if (tokenBSet.nonEmpty) filters = filters.filter(_.tokenB inSet tokenBSet)
-    if (marketHashSet.nonEmpty)
-      filters = filters.filter(_.marketHash inSet marketHashSet)
+    if (marketKeySet.nonEmpty)
+      filters = filters.filter(_.marketKey inSet marketKeySet)
     if (feeTokenSet.nonEmpty)
       filters = filters.filter(_.tokenFee inSet feeTokenSet)
     if (validTime.nonEmpty)
@@ -135,7 +135,7 @@ class OrderDalImpl @Inject()(
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
+      marketKeySet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[SortingType] = None,
       skip: Option[Paging] = None
@@ -145,7 +145,7 @@ class OrderDalImpl @Inject()(
       owners,
       tokenSSet,
       tokenBSet,
-      marketHashSet,
+      marketKeySet,
       feeTokenSet,
       None,
       sort,
@@ -159,7 +159,7 @@ class OrderDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketKey: Option[String] = None,
       feeToken: Option[String] = None,
       sort: Option[SortingType] = None,
       pagingOpt: Option[Paging] = None
@@ -169,8 +169,8 @@ class OrderDalImpl @Inject()(
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner)
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB)
-    if (marketHash.nonEmpty)
-      filters = filters.filter(_.marketHash === marketHash)
+    if (marketKey.nonEmpty)
+      filters = filters.filter(_.marketKey === marketKey)
     if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
     if (sort.nonEmpty) filters = sort.get match {
       case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
@@ -189,7 +189,7 @@ class OrderDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketKey: Option[String] = None,
       feeToken: Option[String] = None,
       sort: Option[SortingType] = None,
       skip: Option[Paging] = None
@@ -199,7 +199,7 @@ class OrderDalImpl @Inject()(
       owner,
       tokenS,
       tokenB,
-      marketHash,
+      marketKey,
       feeToken,
       sort,
       skip
@@ -256,7 +256,7 @@ class OrderDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketKey: Option[String] = None,
       feeToken: Option[String] = None
     ): Future[Int] = {
     val filters = queryOrderForUserFilters(
@@ -264,7 +264,7 @@ class OrderDalImpl @Inject()(
       owner,
       tokenS,
       tokenB,
-      marketHash,
+      marketKey,
       feeToken,
       None,
       None
@@ -274,24 +274,24 @@ class OrderDalImpl @Inject()(
 
   private def queryOrderForRecorverFilters(
       statuses: Set[OrderStatus],
-      marketHashIdSet: Set[Int] = Set.empty,
+      marketKeyIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
       paging: CursorPaging
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
-    if (marketHashIdSet.nonEmpty && addressShardIdSet.nonEmpty) {
+    if (marketKeyIdSet.nonEmpty && addressShardIdSet.nonEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketHashIdSet` and `addressShardIdSet` could not both not empty"
+        "Invalid parameters:`marketKeyIdSet` and `addressShardIdSet` could not both not empty"
       )
     }
-    if (marketHashIdSet.isEmpty && addressShardIdSet.isEmpty) {
+    if (marketKeyIdSet.isEmpty && addressShardIdSet.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketHashIdSet` and `addressShardIdSet` could not both empty"
+        "Invalid parameters:`marketKeyIdSet` and `addressShardIdSet` could not both empty"
       )
     }
-    var filters = if (marketHashIdSet.nonEmpty) {
-      query.filter(_.marketHashId inSet marketHashIdSet)
+    var filters = if (marketKeyIdSet.nonEmpty) {
+      query.filter(_.marketKeyId inSet marketKeyIdSet)
     } else {
       query.filter(_.addressShardId inSet addressShardIdSet)
     }
@@ -304,7 +304,7 @@ class OrderDalImpl @Inject()(
 
   private def queryOrderForMarketAndAddress(
       statuses: Set[OrderStatus],
-      marketHashIdSet: Set[Int] = Set.empty,
+      marketKeyIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
       paging: CursorPaging
     ): Future[Seq[RawOrder]] = {
@@ -391,7 +391,7 @@ class OrderDalImpl @Inject()(
         AND valid_until > ${now}
         AND sequence_id > ${paging.cursor}
         AND (
-          market_hash_id in (${marketHashIdSet.mkString(",")})
+          market_hash_id in (${marketKeyIdSet.mkString(",")})
           OR address_shard_id IN (${addressShardIdSet.mkString(",")})
         )
         ORDER BY sequence_id ASC
@@ -403,27 +403,27 @@ class OrderDalImpl @Inject()(
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
       statuses: Set[OrderStatus],
-      marketHashIdSet: Set[Int] = Set.empty,
+      marketKeyIdSet: Set[Int] = Set.empty,
       addressShardIdSet: Set[Int] = Set.empty,
       skip: CursorPaging
     ): Future[Seq[RawOrder]] = {
-    if (marketHashIdSet.isEmpty && addressShardIdSet.isEmpty) {
+    if (marketKeyIdSet.isEmpty && addressShardIdSet.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketHashIdSet` and `addressShardIdSet` could not both empty"
+        "Invalid parameters:`marketKeyIdSet` and `addressShardIdSet` could not both empty"
       )
     } else {
-      if (marketHashIdSet.nonEmpty && addressShardIdSet.nonEmpty) {
+      if (marketKeyIdSet.nonEmpty && addressShardIdSet.nonEmpty) {
         queryOrderForMarketAndAddress(
           statuses,
-          marketHashIdSet,
+          marketKeyIdSet,
           addressShardIdSet,
           skip
         )
       } else {
         val filters = queryOrderForRecorverFilters(
           statuses,
-          marketHashIdSet,
+          marketKeyIdSet,
           addressShardIdSet,
           skip
         )
@@ -447,8 +447,8 @@ class OrderDalImpl @Inject()(
       .filter(_.owner === retrieveCondition.owner)
       .filter(_.status inSet activeStatus)
       .filter(_.validSince <= retrieveCondition.cutoff.toInt)
-    if (retrieveCondition.tradingPair.nonEmpty) {
-      filters = filters.filter(_.marketHash === retrieveCondition.tradingPair)
+    if (retrieveCondition.marketKey.nonEmpty) {
+      filters = filters.filter(_.marketKey === retrieveCondition.marketKey)
     }
     filters = filters
       .sortBy(_.sequenceId.asc)

@@ -78,10 +78,10 @@ class OrderTable(tag: Tag) extends BaseTable[RawOrder](tag, "T_ORDERS") {
 
   // Shard
   def addressShardId = column[Int]("address_shard_id")
-  def marketHashId = column[Int]("market_hash_id")
+  def marketKeyId = column[Int]("market_hash_id")
 
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
-  def marketHash = columnAddress("market_hash")
+  def marketKey = columnAddress("market_hash")
 
   // indexes
   def idx_hash = index("idx_hash", (hash), unique = true)
@@ -94,13 +94,13 @@ class OrderTable(tag: Tag) extends BaseTable[RawOrder](tag, "T_ORDERS") {
   def idx_valid_until = index("idx_valid_until", (validUntil), unique = false)
   def idx_owner = index("idx_owner", (owner), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
-  def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
+  def idx_market_hash = index("idx_market_hash", (marketKey), unique = false)
 
   def idx_address_shard_id =
     index("idx_address_shard_id", (addressShardId), unique = false)
 
   def idx_market_hash_id =
-    index("idx_market_hash_id", (marketHashId), unique = false)
+    index("idx_market_hash_id", (marketKeyId), unique = false)
 
   def paramsProjection =
     (
@@ -186,8 +186,8 @@ class OrderTable(tag: Tag) extends BaseTable[RawOrder](tag, "T_ORDERS") {
       erc1400ParamsProjection,
       stateProjection,
       sequenceId,
-      marketHash,
+      marketKey,
       addressShardId,
-      marketHashId
+      marketKeyId
     ) <> ((RawOrder.apply _).tupled, RawOrder.unapply)
 }

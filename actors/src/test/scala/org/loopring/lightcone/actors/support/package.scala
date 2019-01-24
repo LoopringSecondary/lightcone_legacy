@@ -78,7 +78,7 @@ package object support {
     precisionForTotal = 5,
     browsableInWallet = true,
     marketId = Some(MarketId(WETH_TOKEN.address, LRC_TOKEN.address)),
-    marketHash =
+    marketKey =
       MarketKey(MarketId(WETH_TOKEN.address, LRC_TOKEN.address)).toString
   )
 
@@ -93,7 +93,7 @@ package object support {
     precisionForTotal = 5,
     browsableInWallet = true,
     marketId = Some(MarketId(WETH_TOKEN.address, GTO_TOKEN.address)),
-    marketHash =
+    marketKey =
       MarketKey(MarketId(WETH_TOKEN.address, GTO_TOKEN.address)).toString
   )
 

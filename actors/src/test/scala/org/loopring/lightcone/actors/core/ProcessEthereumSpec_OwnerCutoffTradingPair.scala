@@ -66,10 +66,9 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
         ),
         broker = accounts(0).getAddress,
         owner = accounts(0).getAddress,
-        tradingPair = Numeric.toHexStringNoPrefix(
-          Numeric.toBigInt(LRC_TOKEN.address) xor Numeric.toBigInt(
-            WETH_TOKEN.address
-          )
+        marketKey = Numeric.toHexStringNoPrefix(
+          Numeric.toBigInt(LRC_TOKEN.address) xor Numeric
+            .toBigInt(WETH_TOKEN.address)
         ),
         cutoff = timeProvider.getTimeSeconds().toInt + 100
       )
@@ -98,11 +97,8 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
       )
       Await.result(f10, timeout.duration)
       val res10 = expectOrderbookRes(
-        GetOrderbook.Req(
-          0,
-          100,
-          Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))
-        ),
+        GetOrderbook
+          .Req(0, 100, Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) => orderbook.sells.nonEmpty
       )
       assert(res10.get.sells.nonEmpty)

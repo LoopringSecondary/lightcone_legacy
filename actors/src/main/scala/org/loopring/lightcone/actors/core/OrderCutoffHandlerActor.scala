@@ -103,7 +103,7 @@ class OrderCutoffHandlerActor(
       )
 
     case req: RetrieveOrdersToCancel =>
-      val cancelStatus = if (req.tradingPair.nonEmpty) {
+      val cancelStatus = if (req.marketKey.nonEmpty) {
         OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
       } else {
         OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER

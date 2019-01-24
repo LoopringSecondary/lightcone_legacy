@@ -50,7 +50,7 @@ class TransactionRecordTable(shardId: String)(tag: Tag)
   def gasUsed = column[Int]("gas_used")
   def owner = columnAddress("owner")
   def recordType = column[TransactionRecord.RecordType]("record_type")
-  def tradingPair = column[String]("trading_pair")
+  def marketKey = column[String]("market_key")
   def market = column[String]("market")
   def eventData = column[Option[TransactionRecord.EventData]]("event_data")
   def createdAt = column[Long]("created_at")
@@ -93,7 +93,7 @@ class TransactionRecordTable(shardId: String)(tag: Tag)
       headerProjection,
       owner,
       recordType,
-      tradingPair,
+      marketKey,
       market,
       sequenceId,
       eventData

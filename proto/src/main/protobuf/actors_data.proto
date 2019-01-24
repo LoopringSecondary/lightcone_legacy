@@ -102,9 +102,9 @@ message RawOrder {
     ERC1400Params erc1400_params      = 12;
     State state                       = 13;
     int64  sequence_id                = 14;
-    string market_hash                = 15;
+    string market_key                = 15;
     int32  address_shard_id           = 16;
-    int32  market_hash_id             = 17;
+    int32  market_key_id             = 17;
 }
 
 
@@ -208,7 +208,7 @@ message MarketMetadata {
     int64           updated_at              = 10;
 
     MarketId        market_id               = 20; // computed
-    string          market_hash             = 21; // computed
+    string          market_key             = 21; // computed
 }
 
 message MarketStats {
@@ -265,7 +265,7 @@ message Trade {
     bytes  amount_b          = 8;
     string token_s           = 9;
     string token_b           = 10;
-    string market_hash       = 11;
+    string market_key       = 11;
     bytes  split             = 12; //tokenS
     Fees   fees              = 13;
     int64  created_at        = 14;
