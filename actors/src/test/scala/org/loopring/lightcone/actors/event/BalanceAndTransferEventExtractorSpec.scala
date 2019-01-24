@@ -34,7 +34,6 @@ class BalanceAndTransferEventExtractorSpec
         "0x30dfe4fc0145d0b092c6738b82b547d5ff609f182b5992a3f31cda67b2b93f95"
       )
       val account3 = getUniqueAccountWithoutEth
-      println(account3.getAddress)
       val ba2 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
