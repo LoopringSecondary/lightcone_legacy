@@ -22,7 +22,8 @@ import com.dimafeng.testcontainers.{GenericContainer, MySQLContainer}
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.{MarketId, MarketMetadata, TokenMetadata}
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
@@ -79,8 +80,7 @@ package object support {
     marketId = Some(
       MarketId(primary = WETH_TOKEN.address, secondary = LRC_TOKEN.address)
     ),
-    marketHash =
-      MarketHashProvider.convert2Hex(LRC_TOKEN.address, WETH_TOKEN.address)
+    marketKey = MarketKey(LRC_TOKEN.address, WETH_TOKEN.address).toString
   )
 
   val GTO_WETH_MARKET = MarketMetadata(
@@ -96,20 +96,12 @@ package object support {
     marketId = Some(
       MarketId(primary = WETH_TOKEN.address, secondary = GTO_TOKEN.address)
     ),
-    marketHash =
-      MarketHashProvider.convert2Hex(GTO_TOKEN.address, WETH_TOKEN.address)
+    marketKey = MarketKey(GTO_TOKEN.address, WETH_TOKEN.address).toString
   )
 
-  val TOKENS = Seq(
-    WETH_TOKEN,
-    LRC_TOKEN,
-    GTO_TOKEN
-  )
+  val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
 
-  val MARKETS = Seq(
-    LRC_WETH_MARKET,
-    GTO_WETH_MARKET
-  )
+  val MARKETS = Seq(LRC_WETH_MARKET, GTO_WETH_MARKET)
 
   //第一个地址为特殊地址，eth以及erc20金额和授权，都足够大
   val accounts = Seq(
@@ -163,12 +155,16 @@ package object support {
 
   val mysqlConfigStr = s"""
         profile = "slick.jdbc.MySQLProfile$$"
+        maxConnections = 5
+        minConnections = 1
+        numThreads = 2
+        maxLifetime = 0
         db {
           url="${mysqlContainer.jdbcUrl}?useSSL=false"
           user="${mysqlContainer.username}"
           password="${mysqlContainer.password}"
           driver="${mysqlContainer.driverClassName}"
-          maxThreads = 4
+          maxThreads = 2
         }"""
 
   val dbConfig1: DatabaseConfig[JdbcProfile] =

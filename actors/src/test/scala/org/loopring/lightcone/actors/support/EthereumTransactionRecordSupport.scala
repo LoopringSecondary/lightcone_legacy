@@ -27,6 +27,11 @@ import org.loopring.lightcone.actors.validator.{
 trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
+  override def afterAll: Unit = {
+    dcm.close()
+    super.afterAll
+  }
+
   val config1 = ConfigFactory
     .parseString(transactionRecordConfigStr)
     .withFallback(ConfigFactory.load())
