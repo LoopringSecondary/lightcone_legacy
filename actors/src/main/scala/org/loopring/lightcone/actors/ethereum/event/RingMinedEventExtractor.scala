@@ -22,10 +22,9 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.lib.data._
 
 import scala.concurrent._
-import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.ethereum.SimpleRingBatchDeserializer
 

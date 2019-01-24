@@ -18,7 +18,6 @@ package org.loopring.lightcone.ethereum
 
 import java.math.BigInteger
 
-import com.google.protobuf.ByteString
 import org.loopring.lightcone.ethereum.data.{Address, Transaction}
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
@@ -32,14 +31,6 @@ package object ethereum {
     case p if p.startsWith("0x") => BigInt(p, 16)
     case _                       => BigInt(x, 16)
   }
-
-  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
-    if (bytes.size() > 0) BigInt(bytes.toByteArray)
-    else BigInt(0)
-  }
-
-  implicit def bigInt2ByteString(b: BigInt): ByteString =
-    ByteString.copyFrom(b.toByteArray)
 
   def verifyEthereumSignature(
       hash: Array[Byte],

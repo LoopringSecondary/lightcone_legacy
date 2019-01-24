@@ -127,12 +127,16 @@ trait EventExtraction {
 
   def processEvents: Future[_] = {
     eventDispatchers.foreach(_.dispatch(blockData))
-    dbModule.blockService.saveBlock(
-      BlockData(
-        hash = blockData.hash,
-        height = blockData.height,
-        timestamp = Numeric.toBigInt(blockData.timestamp).longValue()
+    dbModule.blockService
+      .saveBlock(
+        BlockData(
+          hash = blockData.hash,
+          height = blockData.height,
+          timestamp = Numeric.toBigInt(blockData.timestamp).longValue()
+        )
       )
-    )
+      .map(_ => postProcessEvents)
   }
+  def postProcessEvents = ()
+
 }

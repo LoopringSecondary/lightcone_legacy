@@ -44,6 +44,7 @@ trait EthereumEventExtractorSupport
   implicit val ringMinedExtractor = new RingMinedEventExtractor
   implicit val orderFillEventExtractor = new OrderFillEventExtractor
   implicit val ohlcRawDataExtractor = new OHLCRawDataExtractor
+  implicit val gasPricesExtractor = new BlockGasPriceExtractor
 
   implicit val dispatchers = Seq(
     new CutoffEventDispatcher(actors),
@@ -55,6 +56,7 @@ trait EthereumEventExtractorSupport
     new BalanceEventDispatcher(actors),
     new AllowanceEventDispatcher(actors),
     new OHLCRawDataEventDispatcher(actors)
+    new BlockGasPricesDispatcher(actors)
   )
 
   actors.add(

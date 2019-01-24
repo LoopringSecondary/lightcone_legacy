@@ -131,4 +131,14 @@ object Dispatchers {
         actors
       )
 
+  class BlockGasPricesDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
+      implicit
+      extractor: EventExtractor[BlockGasPrices],
+      ec: ExecutionContext)
+      extends NameBasedEventDispatcher[BlockGasPrices](
+        names = Seq(GasPriceActor.name),
+        actors
+      )
 }

@@ -105,6 +105,7 @@ class CoreModule(config: Config)
     bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
     bind[EventExtractor[OrderFilledEvent]].to[OrderFillEventExtractor]
     bind[EventExtractor[OHLCRawData]].to[OHLCRawDataExtractor]
+    bind[EventExtractor[BlockGasPrices]].to[BlockGasPriceExtractor]
 
     // --- bind event dispatchers ---------------------
     bind[EventDispatcher[AddressAllowanceUpdated]]
@@ -126,6 +127,7 @@ class CoreModule(config: Config)
     bind[EventDispatcher[TransferEvent]].to[TransferEventDispatcher]
     bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
     bind[EventDispatcher[OHLCRawData]].to[OHLCRawDataEventDispatcher]
+    bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
 
     // --- bind dals ---------------------
     bind[OrderDal].to[OrderDalImpl].asEagerSingleton
@@ -183,9 +185,11 @@ class CoreModule(config: Config)
       allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdated],
       ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
       ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawData],
+      blockGasPricesDispatcher: EventDispatcher[BlockGasPrices],
       tokenBurnRateChangedEventDispatcher: EventDispatcher[
         TokenBurnRateChangedEvent
-      ]
+      ],
+      
     ): Seq[EventDispatcher[_]] =
     Seq(
       balanceEventDispatcher,
@@ -196,6 +200,7 @@ class CoreModule(config: Config)
       allowanceEventDispatcher,
       ordersCancelledEventDispatcher,
       ohlcRawDataEventDispatcher,
+      blockGasPricesDispatcher,
       tokenBurnRateChangedEventDispatcher
     )
 
