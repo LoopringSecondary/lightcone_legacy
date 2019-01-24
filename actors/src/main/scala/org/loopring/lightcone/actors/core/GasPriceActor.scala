@@ -75,7 +75,7 @@ class GasPriceActor(
 
   private var gasPrice = BigInt(selfConfig.getString("default"))
   private val blockSize = selfConfig.getInt("block-size")
-  private val excludePercent = selfConfig.getInt("exclude_percent")
+  private val excludePercent = selfConfig.getInt("exclude-percent")
 
   var blocks: Seq[BlockGasPrices] = Seq.empty
 
@@ -100,7 +100,7 @@ class GasPriceActor(
     val gasPrices = blocks.flatMap(_.gasPrices).sortWith(_ > _)
     val excludeAmount = gasPrices.size * excludePercent / 100
     val gasPricesInUse = gasPrices.drop(excludeAmount).dropRight(excludeAmount)
-    if(gasPricesInUse.nonEmpty){
+    if (gasPricesInUse.nonEmpty) {
       gasPrice = gasPricesInUse.sum / gasPricesInUse.size
     }
   }
