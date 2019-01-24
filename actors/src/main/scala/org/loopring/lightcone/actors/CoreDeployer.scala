@@ -195,8 +195,8 @@ class CoreDeployer @Inject()(
       actors.add(MarketManagerActor.name, MarketManagerActor.start)
       actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
       actors.add(
-        OHLCRawDataPersistenceActor.name,
-        OHLCRawDataPersistenceActor.start
+        OHLCDataHandlerActor.name,
+        OHLCDataHandlerActor.start
       )
 
       actors.add(TransactionRecordActor.name, TransactionRecordActor.start)

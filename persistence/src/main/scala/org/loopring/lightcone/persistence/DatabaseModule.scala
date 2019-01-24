@@ -36,7 +36,8 @@ class DatabaseModule @Inject()(
     val orderStatusMonitorService: OrderStatusMonitorService,
     val tradeService: TradeService,
     val blockService: BlockService,
-    val settlementTxService: SettlementTxService
+    val settlementTxService: SettlementTxService,
+    val ohlcDataService: OHLCDataService
   )(
     implicit
     @Named("db-execution-context") val ec: ExecutionContext)

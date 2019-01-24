@@ -17,19 +17,25 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
-import akka.cluster.sharding._
+import akka.cluster.singleton.{
+  ClusterSingletonManager,
+  ClusterSingletonManagerSettings,
+  ClusterSingletonProxy,
+  ClusterSingletonProxySettings
+}
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
-import org.loopring.lightcone.proto.OHLCRawData
+import org.loopring.lightcone.proto.{GetOHLCData, OHLCRawData}
 import org.loopring.lightcone.actors.base.safefuture._
+
 import scala.concurrent.ExecutionContext
 
-object OHLCRawDataPersistenceActor extends ShardedEvenly {
-  val name = "ohlc_persistence"
+object OHLCDataHandlerActor extends {
+  val name = "ohlc_data_handler"
 
   def start(
       implicit
@@ -43,21 +49,27 @@ object OHLCRawDataPersistenceActor extends ShardedEvenly {
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
 
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shards")
-    entitiesPerShard = selfConfig.getInt("entities-per-shard")
-
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new OHLCRawDataPersistenceActor()),
-      settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = Props(new OHLCDataHandlerActor()),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
+      ),
+      OHLCDataHandlerActor.name
+    )
+
+    system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = s"/user/${OHLCDataHandlerActor.name}",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"${OHLCDataHandlerActor.name}_proxy"
     )
   }
 }
 
-class OHLCRawDataPersistenceActor(
+class OHLCDataHandlerActor(
   )(
     implicit
     val config: Config,
@@ -66,7 +78,7 @@ class OHLCRawDataPersistenceActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(OHLCRawDataPersistenceActor.name) {
+    extends ActorWithPathBasedConfig(OHLCDataHandlerActor.name) {
 
   def ready: Receive = {
     case data: OHLCRawData =>
@@ -83,5 +95,8 @@ class OHLCRawDataPersistenceActor(
             )
         }
       }) sendTo sender
+
+    case req: GetOHLCData.Req =>
+      dbModule.ohlcDataService.getOHLCData(req).sendTo(sender)
   }
 }

@@ -66,7 +66,7 @@ trait EthereumEventExtractorSupport
     MissingBlocksEventExtractorActor.start
   )
   actors.add(
-    OHLCRawDataPersistenceActor.name,
-    OHLCRawDataPersistenceActor.start
+    OHLCDataHandlerActor.name,
+    OHLCDataHandlerActor.start
   )
 }

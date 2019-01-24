@@ -127,7 +127,7 @@ object Dispatchers {
       extractor: EventExtractor[OHLCRawData],
       ec: ExecutionContext)
       extends NameBasedEventDispatcher[OHLCRawData](
-        names = Seq(OHLCRawDataPersistenceActor.name),
+        names = Seq(OHLCDataHandlerActor.name),
         actors
       )
 

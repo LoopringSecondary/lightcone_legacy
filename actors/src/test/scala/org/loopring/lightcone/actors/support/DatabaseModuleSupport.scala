@@ -48,11 +48,12 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     new OrderStatusMonitorServiceImpl
   implicit val tradeService = new TradeServiceImpl
   implicit val blockService = new BlockServiceImpl()
-  implicit val settlementTxService =
-    new SettlementTxServiceImpl
+  implicit val settlementTxService = new SettlementTxServiceImpl
 
   implicit val ohlcDataDal =
     new OHLCDataDalImpl()(ec = ec, dbConfig = dbConfig_postgre)
+  implicit val ohlcDataService =
+    new OHLCDataServiceImpl()(ohlcDataDal = ohlcDataDal, ec = ec)
 
   implicit val dbModule = new DatabaseModule(
     tokenMetadataDal,
@@ -68,7 +69,8 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     orderStatusMonitorService,
     tradeService,
     blockService,
-    settlementTxService
+    settlementTxService,
+    ohlcDataService
   )
 
   dbModule.dropTables()

@@ -49,7 +49,7 @@ class BalanceAndTransferEventExtractorSpec
         transferLRC(account2.getAddress, "1000")(account0),
         timeout.duration
       )
-      Thread.sleep(1000)
+      Thread.sleep(2000)
       val transfers = Await.result(
         singleRequest(
           GetTransactionRecords
