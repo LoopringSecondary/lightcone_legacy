@@ -30,9 +30,8 @@ class BalanceAndTransferEventExtractorSpec
     "correctly extract balance update events and transfer events from ethereum blocks" in {
       val getBaMethod = "get_balance_and_allowance"
       val account0 = accounts.head
-      val account2 = Credentials.create(
-        "0x30dfe4fc0145d0b092c6738b82b547d5ff609f182b5992a3f31cda67b2b93f95"
-      )
+      val account2 = getUniqueAccountWithoutEth
+
       val ba2 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
@@ -49,7 +48,7 @@ class BalanceAndTransferEventExtractorSpec
         transferLRC(account2.getAddress, "1000")(account0),
         timeout.duration
       )
-      Thread.sleep(2000)
+      Thread.sleep(1000)
       val transfers = Await.result(
         singleRequest(
           GetTransactionRecords
@@ -63,19 +62,6 @@ class BalanceAndTransferEventExtractorSpec
         timeout.duration
       )
       transfers.size should be(1)
-      val transfers2 = Await.result(
-        singleRequest(
-          GetTransactionRecords
-            .Req(
-              owner = accounts(0).getAddress,
-              sort = SortingType.DESC,
-              paging = Some(CursorPaging(cursor = 0, size = 50))
-            ),
-          "get_transactions"
-        ).mapAs[GetTransactionRecords.Res].map(_.transactions),
-        timeout.duration
-      )
-      transfers2.size should be(1)
 
       val ba2_1 = Await.result(
         singleRequest(
