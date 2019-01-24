@@ -92,7 +92,7 @@ class GasPriceActor(
       if (blocks.size >= blockSize && block.height >= blocks.head.height) {
         blocks = blocks.drop(1)
       }
-      blocks = blocks.:+(block)
+      blocks = blocks.:+(block).sortWith(_ < _)
       calculateGasPrices
   }
 
