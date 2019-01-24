@@ -50,7 +50,7 @@ final class MultiAccountManagerMessageValidator(
       if (!metadataManager.getEnabledMarketIds.contains(marketId.keyHex())) {
         throw ErrorException(
           ErrorCode.ERR_INVALID_MARKET,
-          s"marketId:${marketId} is unabled"
+          s"marketId:${marketId} has been terminated"
         )
       }
       req.copy(
@@ -77,7 +77,7 @@ final class MultiAccountManagerMessageValidator(
           if (!metadataManager.getEnabledMarketIds.contains(marketId.keyHex())) {
             throw ErrorException(
               ErrorCode.ERR_INVALID_MARKET,
-              s"marketId:${marketId} is unabled"
+              s"marketId:${marketId} has been terminated"
             )
           }
           metadataManager.assertMarketIdIsValid(Some(marketId))

@@ -94,7 +94,7 @@ class MetadataManagerSpec
       info("save some tokens config")
       val lrc = TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-        status = TokenMetadata.Status.VIEWABLE,
+        status = TokenMetadata.Status.VALID,
         symbol = "AAA",
         name = "AAA Token",
         address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
@@ -109,7 +109,7 @@ class MetadataManagerSpec
         lrc,
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.VIEWABLE,
+          status = TokenMetadata.Status.VALID,
           symbol = "ABC",
           name = "ABC Token",
           address = "0x255Aa6DF07540Cb5d3d297f0D0D4D84cb52bc8e6",
@@ -122,7 +122,7 @@ class MetadataManagerSpec
         ),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.VIEWABLE,
+          status = TokenMetadata.Status.VALID,
           symbol = "BBB",
           name = "BBB Token",
           address = "0x989fcbc46845a290e971a6303ef3753fb039d8d5",
@@ -135,7 +135,7 @@ class MetadataManagerSpec
         ),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.VIEWABLE,
+          status = TokenMetadata.Status.VALID,
           symbol = "BBC",
           name = "BBC Token",
           address = "0x61a11f3d1f3b4dbd3f780f004773e620daf065c4",
@@ -148,7 +148,7 @@ class MetadataManagerSpec
         ),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.VIEWABLE,
+          status = TokenMetadata.Status.VALID,
           symbol = "CCC",
           name = "CCC Token",
           address = "0x34a381433f45230390d750113aab46c65129ffab",
@@ -161,7 +161,7 @@ class MetadataManagerSpec
         ),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.UNVIEWABLE,
+          status = TokenMetadata.Status.INVALID,
           symbol = "CDE",
           name = "CDE Token",
           address = "0xfdeda15e2922c5ed41fc1fdf36da2fb2623666b3",
@@ -201,7 +201,7 @@ class MetadataManagerSpec
       val r2 = dbModule.tokenMetadataDal.saveToken(
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-          status = TokenMetadata.Status.UNVIEWABLE,
+          status = TokenMetadata.Status.INVALID,
           symbol = "DEF",
           name = "DEF Token",
           address = "0x244929a8141d2134d9323e65309fb46e4a983840",
@@ -245,7 +245,7 @@ class MetadataManagerSpec
 
       info("send a message to disable lrc")
       val disabled = Await.result(
-        (actor ? UnviewableToken.Req(lrc.address)).mapTo[UnviewableToken.Res],
+        (actor ? INVALIDToken.Req(lrc.address)).mapTo[INVALIDToken.Res],
         5 second
       )
       assert(disabled.error == ErrorCode.ERR_NONE)
@@ -256,7 +256,7 @@ class MetadataManagerSpec
         5.second
       )
       assert(
-        query2.nonEmpty && query2.head.status == TokenMetadata.Status.UNVIEWABLE
+        query2.nonEmpty && query2.head.status == TokenMetadata.Status.INVALID
       )
     }
   }
@@ -408,7 +408,7 @@ class MetadataManagerSpec
     "format token address and symbol" in {
       val a = TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-        status = TokenMetadata.Status.VIEWABLE,
+        status = TokenMetadata.Status.VALID,
         symbol = "aaa",
         name = "aaa Token",
         address = "0x1c1b9d3819ab7a3da0353fe0f9e41d3f89192cf8",
@@ -421,7 +421,7 @@ class MetadataManagerSpec
       )
       val b = TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-        status = TokenMetadata.Status.VIEWABLE,
+        status = TokenMetadata.Status.VALID,
         symbol = "abc",
         name = "ABC Token",
         address = "0x255Aa6DF07540Cb5d3d297f0D0D4D84cb52bc8e6",

@@ -170,8 +170,8 @@ message TokenMetadata {
     }
 
     enum Status {
-        VIEWABLE    = 0; // This token is NOT displyed in walelt
-        UNVIEWABLE     = 1;  // This token is displayed in wallet.
+        VALID    = 0; // This token is NOT displyed in walelt
+        INVALID     = 1;  // This token is displayed in wallet.
     }
 
     Type     type                   = 1;

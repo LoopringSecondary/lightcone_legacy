@@ -42,7 +42,7 @@ package object support {
     symbol = "WETH",
     name = "WETH",
     usdPrice = 1000,
-    status = TokenMetadata.Status.VIEWABLE
+    status = TokenMetadata.Status.VALID
   )
 
   val LRC_TOKEN = TokenMetadata(
@@ -53,7 +53,7 @@ package object support {
     symbol = "LRC",
     name = "LRC",
     usdPrice = 1000,
-    status = TokenMetadata.Status.VIEWABLE
+    status = TokenMetadata.Status.VALID
   )
 
   val GTO_TOKEN = TokenMetadata(
@@ -64,7 +64,7 @@ package object support {
     symbol = "GTO",
     name = "GTO",
     usdPrice = 1000,
-    status = TokenMetadata.Status.VIEWABLE
+    status = TokenMetadata.Status.VALID
   )
 
   val LRC_WETH_MARKET = MarketMetadata(

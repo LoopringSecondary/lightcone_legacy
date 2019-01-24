@@ -136,8 +136,11 @@ class OrderbookManagerActor(
 
   def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
     marketMetadata.status match {
-      case MarketMetadata.Status.ACTIVE
+      case MarketMetadata.Status.TERMINATED
           if marketMetadata.getMarketId.entityId == entityId =>
+        log.info(
+          s"this actor:${self.path} will be to stoped, due to the status of this market has been changed to TERMINATED."
+        )
         context.stop(self)
       case _ => //READONLY的不处理，需要能继续可以查询得到orderbook
     }

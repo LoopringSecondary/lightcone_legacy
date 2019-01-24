@@ -30,7 +30,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val tokens1 = Seq(
       TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-        status = TokenMetadata.Status.VIEWABLE,
+        status = TokenMetadata.Status.VALID,
         symbol = "T1",
         name = "T1 Token",
         address = lrcAddress,
@@ -43,7 +43,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
       ),
       TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-        status = TokenMetadata.Status.VIEWABLE,
+        status = TokenMetadata.Status.VALID,
         symbol = "T2",
         name = "T2 Token",
         address = "0x222",
@@ -56,7 +56,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
       ),
       TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
-        status = TokenMetadata.Status.VIEWABLE,
+        status = TokenMetadata.Status.VALID,
         symbol = "T3",
         name = "T3 Token",
         address = "0x333",
@@ -79,7 +79,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val lrc = res2.find(_.symbol == "T1").getOrElse(TokenMetadata())
     assert(
       lrc.`type` == TokenMetadata.Type.TOKEN_TYPE_ERC20 &&
-        lrc.status == TokenMetadata.Status.VIEWABLE &&
+        lrc.status == TokenMetadata.Status.VALID &&
         lrc.symbol == "T1" &&
         lrc.name == "T1 Token" &&
         lrc.address == lrcAddress &&
@@ -132,7 +132,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val bnb = res2.find(_.symbol == "T2").getOrElse(TokenMetadata())
     assert(
       bnb.`type` == TokenMetadata.Type.TOKEN_TYPE_ERC20 &&
-        bnb.status == TokenMetadata.Status.VIEWABLE &&
+        bnb.status == TokenMetadata.Status.VALID &&
         bnb.symbol == "T2" &&
         bnb.name == "T2 Token" &&
         bnb.address == "0x222" &&
@@ -146,7 +146,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val r9 = dal.updateToken(
       bnb.copy(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC1400,
-        status = TokenMetadata.Status.UNVIEWABLE,
+        status = TokenMetadata.Status.INVALID,
         symbol = "T2_",
         name = "T2_ Token",
         unit = "T2_",
@@ -164,7 +164,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val bnb1 = res10.find(_.symbol == "T2_").getOrElse(TokenMetadata())
     assert(
       bnb1.`type` == TokenMetadata.Type.TOKEN_TYPE_ERC1400 &&
-        bnb1.status == TokenMetadata.Status.UNVIEWABLE &&
+        bnb1.status == TokenMetadata.Status.INVALID &&
         bnb1.symbol == "T2_" &&
         bnb1.name == "T2_ Token" &&
         bnb1.unit == "T2_" &&
