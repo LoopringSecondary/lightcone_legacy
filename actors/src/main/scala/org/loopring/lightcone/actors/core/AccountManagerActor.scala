@@ -286,7 +286,6 @@ class AccountManagerActor(
 
       _matchable = matchable.withFilledAmountS(filledAmountS)
 
-      // order_ = order.withFilledAmount
       (successful, updatedOrders) = manager.synchronized {
         val res = if (orderPool.contains(order.id)) {
           manager.adjustOrder(_matchable.id, _matchable.outstanding.amountS)
@@ -297,11 +296,6 @@ class AccountManagerActor(
       }
 
       _ = if (!successful) throw ErrorException(Error(matchable.status))
-
-      _ = assert(
-        updatedOrders.contains(matchable.id),
-        "order not in updatedOrders"
-      )
 
       _ = log.debug(s"updatedOrders: ${updatedOrders.size}}")
 
@@ -328,22 +322,26 @@ class AccountManagerActor(
 
           for {
             //需要更新到数据库
-            //TODO[yongfeng]:暂时添加接口，需要永丰根据目前的使用优化dal的接口
+            //TODO(yongfeng): 暂时添加接口，需要永丰根据目前的使用优化dal的接口
             _ <- dbModule.orderService
               .updateOrderState(order.id, state)
           } yield {
 
             order.status match {
               //新订单、或者匹配一部分的订单
-              case STATUS_NEW | STATUS_PENDING | STATUS_PARTIALLY_FILLED =>
+              case STATUS_NEW | //
+                  STATUS_PENDING | //
+                  STATUS_PARTIALLY_FILLED =>
                 marketManagerActor ! SubmitSimpleOrder(
                   order =
                     Some(order.copy(_reserved = None, _outstanding = None))
                 )
 
               //取消的订单
-              case STATUS_EXPIRED | STATUS_DUST_ORDER |
-                  STATUS_COMPLETELY_FILLED | STATUS_SOFT_CANCELLED_BY_USER |
+              case STATUS_EXPIRED | //
+                  STATUS_DUST_ORDER | //
+                  STATUS_COMPLETELY_FILLED | //
+                  STATUS_SOFT_CANCELLED_BY_USER |
                   STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR |
                   STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET |
                   STATUS_ONCHAIN_CANCELLED_BY_USER |
