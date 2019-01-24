@@ -88,6 +88,7 @@ trait EventExtraction {
         Numeric.toHexString(BigInt(blockNum).toByteArray)
       )).mapAs[GetBlockWithTxObjectByNumber.Res]
         .map(_.result)
+
       uncles <- if (blockOpt.isDefined && blockOpt.get.uncles.nonEmpty) {
         val batchGetUnclesReq = BatchGetUncle.Req(
           blockOpt.get.uncles.indices.map(
@@ -98,6 +99,7 @@ trait EventExtraction {
               )
           )
         )
+
         (ethereumAccessorActor ? batchGetUnclesReq)
           .mapAs[BatchGetUncle.Res]
           .map(_.resps.map(_.result.get.miner))
@@ -125,14 +127,19 @@ trait EventExtraction {
     )).mapAs[BatchGetTransactionReceipts.Res]
       .map(_.resps.map(_.result))
 
-  def processEvents: Future[_] = {
-    eventDispatchers.foreach(_.dispatch(blockData))
-    dbModule.blockService.saveBlock(
-      BlockData(
-        hash = blockData.hash,
-        height = blockData.height,
-        timestamp = Numeric.toBigInt(blockData.timestamp).longValue()
+  def processEvents: Future[Unit] =
+    for {
+      _ <- Future.sequence(eventDispatchers.map(_.dispatch(blockData)))
+      _ <- dbModule.blockService.saveBlock(
+        BlockData(
+          hash = blockData.hash,
+          height = blockData.height,
+          timestamp = Numeric.toBigInt(blockData.timestamp).longValue()
+        )
       )
-    )
-  }
+      _ <- postProcessEvents()
+    } yield Unit
+
+  def postProcessEvents(): Future[Unit] = Future.successful(Unit)
+
 }

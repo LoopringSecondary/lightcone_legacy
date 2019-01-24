@@ -22,6 +22,7 @@ import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
 
 // Owner: Hongyu
@@ -104,16 +105,18 @@ final class MultiAccountManagerMessageValidator(
             updatedAt = now,
             status = OrderStatus.STATUS_NEW
           )
-          val marketHash =
-            MarketHashProvider.convert2Hex(rawOrder.tokenS, rawOrder.tokenB)
+
           val marketId =
             MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
+
+          val marketKey = MarketKey(marketId).toString
+
           req.withRawOrder(
             rawOrder.copy(
               state = Some(state),
-              marketHash = marketHash,
-              marketHashId = MarketManagerActor.getEntityId(marketId).toInt,
-              addressShardId = MultiAccountManagerActor
+              marketKey = marketKey,
+              marketShard = MarketManagerActor.getEntityId(marketId).toInt,
+              accountShard = MultiAccountManagerActor
                 .getEntityId(order.owner, numOfShards)
                 .toInt
             )

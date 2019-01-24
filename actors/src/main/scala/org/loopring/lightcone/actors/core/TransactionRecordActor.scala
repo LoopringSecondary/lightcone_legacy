@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.actors.DatabaseConfigManager
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
@@ -41,17 +42,15 @@ object TransactionRecordActor extends ShardedByAddress {
   val name = "transaction-record"
 
   def start(
-      implicit
-      system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      actors: Lookup[ActorRef],
-      dbModule: DatabaseModule,
-      databaseConfigManager: DatabaseConfigManager,
-      deployActorsIgnoringRoles: Boolean
-    ): ActorRef = {
+    implicit system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    dbModule: DatabaseModule,
+    databaseConfigManager: DatabaseConfigManager,
+    deployActorsIgnoringRoles: Boolean): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("num-of-shards")
@@ -61,47 +60,42 @@ object TransactionRecordActor extends ShardedByAddress {
       typeName = name,
       entityProps = Props(new TransactionRecordActor()),
       settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+      messageExtractor = messageExtractor)
   }
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   val extractAddress: PartialFunction[Any, String] = {
-    case req: TransferEvent                 => req.owner
-    case req: CutoffEvent                   => req.owner
-    case req: OrdersCancelledEvent          => req.owner
-    case req: OrderFilledEvent              => req.owner
-    case req: GetTransactionRecords.Req     => req.owner
+    case req: TransferEvent => req.owner
+    case req: CutoffEvent => req.owner
+    case req: OrdersCancelledEvent => req.owner
+    case req: OrderFilledEvent => req.owner
+    case req: GetTransactionRecords.Req => req.owner
     case req: GetTransactionRecordCount.Req => req.owner
   }
 }
 
 class TransactionRecordActor(
-    implicit
-    val config: Config,
-    val ec: ExecutionContext,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule,
-    val databaseConfigManager: DatabaseConfigManager)
-    extends ActorWithPathBasedConfig(
-      TransactionRecordActor.name,
-      TransactionRecordActor.extractEntityId
-    ) {
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeout: Timeout,
+  val actors: Lookup[ActorRef],
+  val dbModule: DatabaseModule,
+  val databaseConfigManager: DatabaseConfigManager)
+  extends ActorWithPathBasedConfig(
+    TransactionRecordActor.name,
+    TransactionRecordActor.extractEntityId) {
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
   val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
 
   val dbConfigKey = s"db.transaction-record.shard_${entityId}"
   log.info(
     s"TransactionRecordActor with db configuration ($dbConfigKey): ",
-    config.getConfig(dbConfigKey)
-  )
+    config.getConfig(dbConfigKey))
 
   val txRecordDal: TransactionRecordDal =
     new TransactionRecordDalImpl(
       shardId = entityId,
-      databaseConfigManager.getDatabaseConfig(dbConfigKey)
-    )
+      databaseConfigManager.getDatabaseConfig(dbConfigKey))
 
   txRecordDal.createTable()
 
@@ -118,10 +112,8 @@ class TransactionRecordActor(
         recordType = recordType,
         eventData = Some(
           TransactionRecord
-            .EventData(Event.Transfer(req))
-        ),
-        sequenceId = header.sequenceId
-      )
+            .EventData(Event.Transfer(req))),
+        sequenceId = header.sequenceId)
       txRecordDal.saveRecord(record)
 
     case req: OrdersCancelledEvent =>
@@ -132,10 +124,8 @@ class TransactionRecordActor(
         recordType = ORDER_CANCELLED,
         eventData = Some(
           TransactionRecord
-            .EventData(Event.OrderCancelled(req))
-        ),
-        sequenceId = header.sequenceId
-      )
+            .EventData(Event.OrderCancelled(req))),
+        sequenceId = header.sequenceId)
       txRecordDal.saveRecord(record)
 
     case req: CutoffEvent =>
@@ -147,29 +137,25 @@ class TransactionRecordActor(
         marketKey = req.marketKey,
         eventData = Some(
           TransactionRecord
-            .EventData(Event.Cutoff(req))
-        ),
-        sequenceId = header.sequenceId
-      )
+            .EventData(Event.Cutoff(req))),
+        sequenceId = header.sequenceId)
       txRecordDal.saveRecord(record)
 
     case req: OrderFilledEvent =>
       for {
         order <- dbModule.orderService.getOrder(req.orderHash)
         header = req.header.get
-        marketHash = if (order.isEmpty) ""
-        else MarketHashProvider.convert2Hex(order.get.tokenS, order.get.tokenB)
+        marketKey = if (order.isEmpty) ""
+        else MarketKey(order.get.tokenS, order.get.tokenB).toString
         record = TransactionRecord(
           header = req.header,
           owner = req.owner,
           recordType = ORDER_FILLED,
-          marketKey = marketHash,
+          marketKey = marketKey,
           eventData = Some(
             TransactionRecord
-              .EventData(Event.Filled(req))
-          ),
-          sequenceId = header.sequenceId
-        )
+              .EventData(Event.Filled(req))),
+          sequenceId = header.sequenceId)
         saved <- txRecordDal.saveRecord(record)
       } yield saved
 

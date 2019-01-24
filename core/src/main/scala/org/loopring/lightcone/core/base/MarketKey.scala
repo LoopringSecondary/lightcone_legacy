@@ -16,15 +16,7 @@
 
 package org.loopring.lightcone.core.base
 
-import org.loopring.lightcone.lib.MarketHashProvider
 import org.loopring.lightcone.proto.MarketId
-
-class MarketKey(marketId: MarketId) {
-
-  def toHexString =
-    MarketHashProvider.convert2Hex(marketId.primary, marketId.secondary)
-  override def toString = toHexString
-}
 
 object MarketKey {
   def apply(marketId: MarketId): MarketKey = new MarketKey(marketId)
@@ -33,4 +25,18 @@ object MarketKey {
       primary: String,
       secondary: String
     ): MarketKey = apply(MarketId(primary, secondary))
+
+  def removePrefix(address: String): String = {
+    if (address.startsWith("0x")) address.substring(2).trim
+    else address.trim
+  }
+}
+
+class MarketKey(marketId: MarketId) {
+  import MarketKey._
+
+  val value = BigInt(removePrefix(marketId.secondary), 16) ^
+    BigInt(removePrefix(marketId.primary), 16)
+
+  override def toString = s"0x${value.toString(16).toLowerCase}"
 }

@@ -42,9 +42,9 @@ class OrderServiceImpl @Inject()(
           o.copy(
             state = Some(returnState),
             sequenceId = 0,
-            marketHash = "",
-            marketHashId = 0,
-            addressShardId = 0
+            marketKey = "",
+            marketShard = 0,
+            accountShard = 0
           )
         )
       case None => None
@@ -53,10 +53,10 @@ class OrderServiceImpl @Inject()(
 
   // Save order to database, if the order already exist, return an error code.
   def saveOrder(order: RawOrder): Future[Either[RawOrder, ErrorCode]] = {
-    if (order.addressShardId < 0 || order.marketHashId <= 0) {
+    if (order.accountShard < 0 || order.marketShard <= 0) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"Invalid addressShardId:[${order.addressShardId}] or marketHashId:[${order.marketHashId}]"
+        s"Invalid accountShard:[${order.accountShard}] or marketShard:[${order.marketShard}]"
       )
     }
     orderDal.saveOrder(order).map { r =>
@@ -79,7 +79,7 @@ class OrderServiceImpl @Inject()(
       owners: Set[String],
       tokenSSet: Set[String],
       tokenBSet: Set[String],
-      marketHashSet: Set[String],
+      marketKeySet: Set[String],
       feeTokenSet: Set[String],
       sort: Option[SortingType],
       skip: Option[Paging]
@@ -90,7 +90,7 @@ class OrderServiceImpl @Inject()(
         owners,
         tokenSSet,
         tokenBSet,
-        marketHashSet,
+        marketKeySet,
         feeTokenSet,
         sort,
         skip
@@ -102,7 +102,7 @@ class OrderServiceImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHashSet: Option[String] = None,
+      marketKeySet: Option[String] = None,
       feeTokenSet: Option[String] = None,
       sort: Option[SortingType] = None,
       skip: Option[Paging] = None
@@ -113,7 +113,7 @@ class OrderServiceImpl @Inject()(
         owner,
         tokenS,
         tokenB,
-        marketHashSet,
+        marketKeySet,
         feeTokenSet,
         sort,
         skip
@@ -122,14 +122,14 @@ class OrderServiceImpl @Inject()(
 
   def getOrdersForRecover(
       statuses: Set[OrderStatus],
-      marketHashIdSet: Set[Int] = Set.empty,
-      addressShardIdSet: Set[Int] = Set.empty,
+      marketShardSet: Set[Int] = Set.empty,
+      accountShardSet: Set[Int] = Set.empty,
       skip: CursorPaging
     ): Future[Seq[RawOrder]] =
     orderDal.getOrdersForRecover(
       statuses,
-      marketHashIdSet,
-      addressShardIdSet,
+      marketShardSet,
+      accountShardSet,
       skip
     )
 
@@ -159,7 +159,7 @@ class OrderServiceImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketKey: Option[String] = None,
       feeTokenSet: Option[String] = None
     ): Future[Int] =
     orderDal.countOrdersForUser(
@@ -167,7 +167,7 @@ class OrderServiceImpl @Inject()(
       owner,
       tokenS,
       tokenB,
-      marketHash,
+      marketKey,
       feeTokenSet
     )
 
