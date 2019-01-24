@@ -63,7 +63,7 @@ class CutoffEventExtractor @Inject()(
                   )
                 )
               case Some(
-                  event: AllOrdersCancelledForMarketKeyByBrokerEvent.Result
+                  event: AllOrdersCancelledForTradingPairByBrokerEvent.Result
                   ) =>
                 Some(
                   CutoffEvent(
@@ -74,7 +74,7 @@ class CutoffEventExtractor @Inject()(
                     marketKey = MarketKey(event._token1, event._token2).toString
                   )
                 )
-              case Some(event: AllOrdersCancelledForMarketKeyEvent.Result) =>
+              case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
                 Some(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),

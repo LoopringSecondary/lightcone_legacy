@@ -302,8 +302,8 @@ trait EthereumSupport {
       implicit
       credentials: Credentials
     ) = {
-    val input = orderCancellerAbi.cancelAllOrdersForMarketKey.pack(
-      CancelAllOrdersForMarketKeyFunction.Params(token1, token2, cutoff)
+    val input = orderCancellerAbi.cancelAllOrdersForTradingPair.pack(
+      CancelAllOrdersForTradingPairFunction.Params(token1, token2, cutoff)
     )
     val tx = Transaction(
       inputData = input,
