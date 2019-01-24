@@ -149,7 +149,7 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
       state: RawOrder.State
     ): Future[ErrorCode]
 
-  def updateOrderAmountAndStatus(
+  def updateOrderState(
       hash: String,
       state: RawOrder.State
     ): Future[ErrorCode]

@@ -50,10 +50,10 @@ class OrderDalImpl @Inject()(
     OrderStatus.STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR,
     OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER,
     OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR,
-    OrderStatus.STATUS_CANCELLED_LOW_BALANCE,
-    OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE,
-    OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
-    OrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
+    OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE,
+    OrderStatus.STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE,
+    OrderStatus.STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS,
+    OrderStatus.STATUS_SOFT_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
   )
 
   val activeStatus = Set(
@@ -544,7 +544,7 @@ class OrderDalImpl @Inject()(
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def updateOrderAmountAndStatus(
+  def updateOrderState(
       hash: String,
       state: RawOrder.State
     ): Future[ErrorCode] =

@@ -17,7 +17,7 @@
 package org.loopring.lightcone.core.account
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.proto.OrderStatus
+import org.loopring.lightcone.proto.{MarketId, OrderStatus}
 
 object AccountManager {
 
@@ -41,9 +41,11 @@ trait AccountManager {
   def cancelOrder(orderId: String): Boolean
 
   // hard cancel multiple orders
-  def setCutoff(cutoff: Long): Int
+  def handleCutoff(cutoff: Long): Int
 
-  def setCutoff(
+  def purgeOrders(marketId: MarketId): Int
+
+  def handleCutoff(
       cutoff: Long,
       marketKey: String
     ): Int

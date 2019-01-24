@@ -31,7 +31,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
@@ -55,6 +55,7 @@ class AccountManagerActor(
     extends Actor
     with Stash
     with ActorLogging {
+  import ErrorCode._
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
@@ -103,7 +104,7 @@ class AccountManagerActor(
       case Failure(e) =>
         log.error(s"failed to start AccountManagerActor: ${e.getMessage}")
         throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          ERR_INTERNAL_UNKNOWN,
           s"failed to start AccountManagerActor: ${e.getMessage}"
         )
     }
@@ -183,12 +184,12 @@ class AccountManagerActor(
         persistenceRes <- (orderPersistenceActor ? req)
           .mapAs[CancelOrder.Res]
 
-        (cancelRes, updatedOrders) = manager.synchronized {
+        (res, updatedOrders) = manager.synchronized {
           (manager.cancelOrder(req.id), orderPool.takeUpdatedOrdersAsMap())
         }
 
         _ <- processUpdatedOrders(updatedOrders - req.id)
-        _ = if (cancelRes) {
+        _ = if (res) {
           marketManagerActor.tell(req, originalSender)
         } else {
           //在目前没有使用eventlog的情况下，哪怕manager中并没有该订单，则仍需要发送到MarketManager
@@ -230,7 +231,7 @@ class AccountManagerActor(
       accountCutoffState.setCutoff(cutoff)
 
       val updatedOrders = manager.synchronized {
-        manager.setCutoff(cutoff)
+        manager.handleCutoff(cutoff)
         orderPool.takeUpdatedOrdersAsMap
       }
       processUpdatedOrders(updatedOrders)
@@ -243,7 +244,7 @@ class AccountManagerActor(
         .setTradingPairCutoff(Numeric.toBigInt(marketKey), req.cutoff)
 
       val updatedOrders = manager.synchronized {
-        manager.setCutoff(cutoff, marketKey)
+        manager.handleCutoff(cutoff, marketKey)
         orderPool.takeUpdatedOrdersAsMap
       }
       processUpdatedOrders(updatedOrders)
@@ -278,26 +279,34 @@ class AccountManagerActor(
       )).mapAs[GetFilledAmount.Res]
 
       filledAmountS = getFilledAmountRes.filledAmountSMap(matchable.id)
+
       _ = log.debug(
         s"ethereumQueryActor GetFilledAmount.Res $getFilledAmountRes"
       )
 
+      _matchable = matchable.withFilledAmountS(filledAmountS)
+
+      // order_ = order.withFilledAmount
       (successful, updatedOrders) = manager.synchronized {
         val res = if (orderPool.contains(order.id)) {
-          manager.adjustOrder(order.id, order.outstanding.get.amountS)
+          manager.adjustOrder(_matchable.id, _matchable.outstanding.amountS)
         } else {
-          manager.submitOrder(order)
+          manager.submitOrder(_matchable)
         }
         (res, orderPool.takeUpdatedOrdersAsMap)
       }
 
-      _ = if (!successful)
-        throw ErrorException(Error(matchable.status))
-      _ = assert(updatedOrders.contains(matchable.id))
-      _ = log.debug(
-        s"updatedOrders: ${updatedOrders.size} assert contains order:  ${updatedOrders(matchable.id)}"
+      _ = if (!successful) throw ErrorException(Error(matchable.status))
+
+      _ = assert(
+        updatedOrders.contains(matchable.id),
+        "order not in updatedOrders"
       )
+
+      _ = log.debug(s"updatedOrders: ${updatedOrders.size}}")
+
       res <- processUpdatedOrders(updatedOrders)
+
       matchable_ = updatedOrders(matchable.id)
       order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
     } yield order_
@@ -305,56 +314,58 @@ class AccountManagerActor(
 
   private def processUpdatedOrders(updatedOrders: Map[String, Matchable]) = {
     Future.sequence {
-      updatedOrders.map { o =>
-        val state = RawOrder.State(
-          actualAmountS = o._2.actual.amountS,
-          actualAmountB = o._2.actual.amountB,
-          actualAmountFee = o._2.actual.amountFee,
-          outstandingAmountS = o._2.outstanding.amountS,
-          outstandingAmountB = o._2.outstanding.amountB,
-          outstandingAmountFee = o._2.outstanding.amountFee,
-          status = o._2.status
-        )
-        for {
-          //需要更新到数据库
-          //todo[yongfeng]:暂时添加接口，需要永丰根据目前的使用优化dal的接口
-          _ <- dbModule.orderService.updateOrderAmountAndStatus(o._2.id, state)
-        } yield {
-          val order = o._2
-          order.status match {
-            //新订单、或者匹配一部分的订单
-            case STATUS_NEW | STATUS_PENDING | STATUS_PARTIALLY_FILLED =>
-              marketManagerActor ! SubmitSimpleOrder(
-                order = Some(o._2.copy(_reserved = None, _outstanding = None))
-              )
-            //取消的订单
-            case STATUS_EXPIRED | STATUS_DUST_ORDER |
-                STATUS_SOFT_CANCELLED_BY_USER |
-                STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR |
-                STATUS_ONCHAIN_CANCELLED_BY_USER |
-                STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR |
-                STATUS_TOO_MANY_RING_FAILURES | STATUS_CANCELLED_LOW_BALANCE |
-                STATUS_CANCELLED_LOW_FEE_BALANCE |
-                STATUS_CANCELLED_TOO_MANY_ORDERS |
-                STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS |
-                STATUS_CANCELLED_DUPLICIATE =>
-              marketManagerActor ! CancelOrder.Req(
-                id = order.id,
-                marketId = Some(MarketId(order.tokenS, order.tokenB))
-              )
-            //完全匹配，则仍然是删掉该订单
-            case STATUS_COMPLETELY_FILLED =>
-              marketManagerActor ! CancelOrder.Req(
-                id = order.id,
-                marketId = Some(MarketId(order.tokenS, order.tokenB))
-              )
-            case _ =>
-              throw ErrorException(
-                ErrorCode.ERR_INVALID_ORDER_DATA,
-                s"not supproted order.status in AccountManager"
-              )
+      updatedOrders.map {
+        case (id, order) =>
+          val state = RawOrder.State(
+            actualAmountS = order.actual.amountS,
+            actualAmountB = order.actual.amountB,
+            actualAmountFee = order.actual.amountFee,
+            outstandingAmountS = order.outstanding.amountS,
+            outstandingAmountB = order.outstanding.amountB,
+            outstandingAmountFee = order.outstanding.amountFee,
+            status = order.status
+          )
+
+          for {
+            //需要更新到数据库
+            //TODO[yongfeng]:暂时添加接口，需要永丰根据目前的使用优化dal的接口
+            _ <- dbModule.orderService
+              .updateOrderState(order.id, state)
+          } yield {
+
+            order.status match {
+              //新订单、或者匹配一部分的订单
+              case STATUS_NEW | STATUS_PENDING | STATUS_PARTIALLY_FILLED =>
+                marketManagerActor ! SubmitSimpleOrder(
+                  order =
+                    Some(order.copy(_reserved = None, _outstanding = None))
+                )
+
+              //取消的订单
+              case STATUS_EXPIRED | STATUS_DUST_ORDER |
+                  STATUS_COMPLETELY_FILLED | STATUS_SOFT_CANCELLED_BY_USER |
+                  STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR |
+                  STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET |
+                  STATUS_ONCHAIN_CANCELLED_BY_USER |
+                  STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR |
+                  STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES |
+                  STATUS_SOFT_CANCELLED_LOW_BALANCE |
+                  STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE |
+                  STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS |
+                  STATUS_SOFT_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS |
+                  STATUS_SOFT_CANCELLED_DUPLICIATE =>
+                marketManagerActor ! CancelOrder.Req(
+                  id = order.id,
+                  marketId = Some(MarketId(order.tokenS, order.tokenB))
+                )
+
+              case _ =>
+                throw ErrorException(
+                  ERR_INVALID_ORDER_DATA,
+                  s"not supproted order.status in AccountManager"
+                )
+            }
           }
-        }
       }
     }
   }
@@ -391,16 +402,16 @@ class AccountManagerActor(
 
   private def updateBalanceOrAllowance(
       token: String
-    )(getUpdatedOrders: => Map[String, Matchable]
+    )(retrieveUpdatedOrders: => Map[String, Matchable]
     ) =
     for {
       _ <- getTokenManagers(Seq(token))
-      updatedOrders = getUpdatedOrders
+      updatedOrders = retrieveUpdatedOrders
       _ <- Future.sequence {
         updatedOrders.values.map { order =>
           order.status match {
-            case STATUS_CANCELLED_LOW_BALANCE |
-                STATUS_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
+            case STATUS_SOFT_CANCELLED_LOW_BALANCE |
+                STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
                 STATUS_COMPLETELY_FILLED | STATUS_PARTIALLY_FILLED =>
               Future.successful(Unit)
 
@@ -408,7 +419,7 @@ class AccountManagerActor(
               val msg =
                 s"unexpected order status caused by balance/allowance upate: $status"
               log.error(msg)
-              throw ErrorException(ErrorCode.ERR_INTERNAL_UNKNOWN, msg)
+              throw ErrorException(ERR_INTERNAL_UNKNOWN, msg)
           }
         }
       }

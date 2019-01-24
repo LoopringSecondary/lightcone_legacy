@@ -20,19 +20,19 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
-    extends CommonSpec
-    with JsonrpcSupport
-    with HttpSupport
-    with EthereumSupport
-    with MetadataManagerSupport
-    with OrderHandleSupport
-    with MultiAccountManagerSupport
-    with MarketManagerSupport
-    with OrderbookManagerSupport
-    with OrderGenerateSupport {
+  extends CommonSpec
+  with JsonrpcSupport
+  with HttpSupport
+  with EthereumSupport
+  with MetadataManagerSupport
+  with OrderHandleSupport
+  with MultiAccountManagerSupport
+  with MarketManagerSupport
+  with OrderbookManagerSupport
+  with OrderGenerateSupport {
 
   val account = getUniqueAccountWithoutEth
 
@@ -41,9 +41,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       Seq(
         transferEth(account.getAddress, "10")(accounts(0)),
         transferLRC(account.getAddress, "30")(accounts(0)),
-        approveLRCToDelegate("30")(account)
-      )
-    )
+        approveLRCToDelegate("30")(account)))
 
     Await.result(f, timeout.duration)
     super.beforeAll()
@@ -56,16 +54,14 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       val rawOrders = (0 until 2) map { i =>
         createRawOrder(
           amountS = "20".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )(account)
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))(account)
       }
 
       val f1 =
         singleRequest(SubmitOrder.Req(Some(rawOrders(0))), "submit_order").recover {
           case e: Throwable =>
             info(
-              s"submit the second order shouldn't be success. it will occurs err: ${e} when submit order:${rawOrders(0)}"
-            )
+              s"submit the second order shouldn't be success. it will occurs err: ${e} when submit order:${rawOrders(0)}")
             Future.successful(Unit)
         }
 
@@ -74,16 +70,14 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
         singleRequest(SubmitOrder.Req(Some(rawOrders(1))), "submit_order").recover {
           case e: Throwable =>
             info(
-              s"submit the second order shouldn't be success. it will occurs err: ${e} when submit order:${rawOrders(1)}"
-            )
+              s"submit the second order shouldn't be success. it will occurs err: ${e} when submit order:${rawOrders(1)}")
             Future.successful(Unit)
         }
 
       Await.result(f2, timeout.duration)
 
       info(
-        "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING and STATUS_CANCELLED_LOW_BALANCE "
-      )
+        "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING and STATUS_SOFT_CANCELLED_LOW_BALANCE ")
       val assertOrderFromDbF = Future.sequence(rawOrders.map { o =>
         for {
           orderOpt <- dbModule.orderService.getOrder(o.hash)
@@ -95,8 +89,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
                 assert(order.getState.status == OrderStatus.STATUS_PENDING)
               } else {
                 assert(
-                  order.getState.status == OrderStatus.STATUS_CANCELLED_LOW_BALANCE
-                )
+                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE)
               }
             case None =>
               assert(false)
@@ -109,12 +102,10 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
-      )
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address)))
       val orderbookRes = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.nonEmpty
-      )
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty)
       orderbookRes match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
@@ -122,8 +113,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
           assert(
             sells(0).price == "20.000000" &&
               sells(0).amount == "20.00000" &&
-              sells(0).total == "1.00000"
-          )
+              sells(0).total == "1.00000")
           assert(buys.isEmpty)
         case _ => assert(false)
       }
@@ -133,15 +123,13 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
         rawOrders(0).hash,
         rawOrders(0).owner,
         OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
-        Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
-      )
+        Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB)))
 
       val cancelF = singleRequest(cancelReq, "cancel_order")
       Await.result(cancelF, timeout.duration)
 
       info(
-        "the first order's status in db should be STATUS_SOFT_CANCELLED_BY_USER"
-      )
+        "the first order's status in db should be STATUS_SOFT_CANCELLED_BY_USER")
       val assertOrderFromDbF2 = Future.sequence(rawOrders.map { o =>
         for {
           orderOpt <- dbModule.orderService.getOrder(o.hash)
@@ -150,12 +138,10 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
             case Some(order) =>
               if (order.hash == rawOrders(0).hash) {
                 assert(
-                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
-                )
+                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_BY_USER)
               } else {
                 assert(
-                  order.getState.status == OrderStatus.STATUS_CANCELLED_LOW_BALANCE
-                )
+                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE)
               }
             case None =>
               assert(false)
@@ -164,13 +150,11 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       })
 
       info(
-        "the result of orderbook should be empty after cancel the first order."
-      )
+        "the result of orderbook should be empty after cancel the first order.")
 
       val orderbookRes1 = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.isEmpty
-      )
+        (orderbook: Orderbook) => orderbook.sells.isEmpty)
       orderbookRes1 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")

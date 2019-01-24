@@ -61,13 +61,11 @@ class AccountTokenManagerImpl(
   // Initlize the balance and allowance and triger rebalancing.
   // Returns the ids of orders to delete
 
-  def setBalance(balance: BigInt) = {
+  def setBalance(balance: BigInt) =
     setBalanceAndAllowance(balance, this.allowance)
-  }
 
-  def setAllowance(allowance: BigInt) = {
+  def setAllowance(allowance: BigInt) =
     setBalanceAndAllowance(this.balance, allowance)
-  }
 
   def setBalanceAndAllowance(
       balance: BigInt,
@@ -165,8 +163,8 @@ class AccountTokenManagerImpl(
       val status =
         if (availableBalance >= requestedAmount) OrderStatus.STATUS_PENDING
         else if (token == order.tokenS)
-          OrderStatus.STATUS_CANCELLED_LOW_BALANCE
-        else OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE
+          OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
+        else OrderStatus.STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE
 
       if (status != OrderStatus.STATUS_PENDING) {
         ordersToDelete += order.id

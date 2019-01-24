@@ -138,7 +138,9 @@ class MarketManagerImpl(
       minFiatValue: Double
     ): MatchResult = {
     if (order.numAttempts > maxSettementFailuresPerOrder) {
-      MatchResult(order.copy(status = STATUS_TOO_MANY_RING_FAILURES))
+      MatchResult(
+        order.copy(status = STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES)
+      )
     } else if (dustOrderEvaluator.isOriginalDust(order)) {
       MatchResult(order.copy(status = STATUS_DUST_ORDER))
     } else if (dustOrderEvaluator.isActualDust(order)) {

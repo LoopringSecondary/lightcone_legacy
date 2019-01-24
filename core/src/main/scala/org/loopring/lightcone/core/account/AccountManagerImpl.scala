@@ -69,7 +69,7 @@ final private[core] class AccountManagerImpl(
 
     if (order_.callOnTokenS(_.hasTooManyOrders) ||
         order_.callOnTokenFee(_.hasTooManyOrders)) {
-      orderPool += order_.as(STATUS_CANCELLED_TOO_MANY_ORDERS)
+      orderPool += order_.as(STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS)
       return false
     }
 
@@ -92,7 +92,7 @@ final private[core] class AccountManagerImpl(
     }
   }
 
-  def setCutoff(cutoff: Long): Int = {
+  def handleCutoff(cutoff: Long): Int = {
     val orders = orderPool.orders.filter(_.validSince <= cutoff)
 
     orders.foreach { order =>
@@ -101,19 +101,31 @@ final private[core] class AccountManagerImpl(
     orders.size
   }
 
-  def setCutoff(
+  def handleCutoff(
       cutoff: Long,
       marketKey: String
     ): Int = {
     val orders = orderPool.orders.filter { order =>
-      order.validSince <= cutoff //&&
-    // order.tokenS == tokenS &&
-    // order.tokenB == tokenB
-    // TODO(yadong)
+      order.validSince <= cutoff &&
+      MarketKey(order.tokenS, order.tokenB).toString == marketKey
     }
 
     orders.foreach { order =>
       cancelOrderInternal(order, STATUS_ONCHAIN_CANCELLED_BY_USER)
+    }
+    orders.size
+  }
+
+  def purgeOrders(marketId: MarketId): Int = {
+    val orders = orderPool.orders.filter { order =>
+      (order.tokenS == marketId.secondary && order.tokenB == marketId.primary) ||
+      (order.tokenB == marketId.secondary && order.tokenS == marketId.primary)
+    }
+
+    orders.foreach { order =>
+      cancelOrderInternal(order, STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET)
+      // There may be many orders, so we have to clear updated orders here.
+      orderPool.takeUpdatedOrders()
     }
     orders.size
   }
