@@ -115,7 +115,7 @@ class OHLCRawDataExtractorSpec
           .mapAs[SubmitOrder.Res],
         timeout.duration
       )
-      Thread.sleep(6000)
+      Thread.sleep(2000)
       val marketKey = convert2Hex(LRC_TOKEN.address, WETH_TOKEN.address)
 //      val ohlcDatas = Await.result(
 //        dbModule.ohlcDataDal.getOHLCData(
