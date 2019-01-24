@@ -20,7 +20,9 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.actors.core.OHLCDataHandlerActor
 import org.loopring.lightcone.lib.MarketHashProvider._
+import akka.pattern._
 
 import scala.concurrent.Await
 
@@ -31,6 +33,8 @@ class OHLCRawDataExtractorSpec
 
   "ethereum event extractor actor test" must {
     "correctly extract all OHLC raw data from ethereum blocks" in {
+
+      def oHLCDataHandlerActor = actors.get(OHLCDataHandlerActor.name)
 
       val getBaMethod = "get_balance_and_allowance"
       val submit_order = "submit_order"
@@ -104,7 +108,7 @@ class OHLCRawDataExtractorSpec
           .mapAs[SubmitOrder.Res],
         timeout.duration
       )
-      Thread.sleep(100)
+      Thread.sleep(1000)
       val order3 = createRawOrder()(account1)
       Await.result(
         singleRequest(SubmitOrder.Req(Some(order3)), submit_order)
@@ -113,16 +117,26 @@ class OHLCRawDataExtractorSpec
       )
       Thread.sleep(6000)
       val marketKey = convert2Hex(LRC_TOKEN.address, WETH_TOKEN.address)
-      val ohlcDatas = Await.result(
-        dbModule.ohlcDataDal.getOHLCData(
+//      val ohlcDatas = Await.result(
+//        dbModule.ohlcDataDal.getOHLCData(
+//          marketKey,
+//          60,
+//          timeProvider.getTimeSeconds() - 600,
+//          timeProvider.getTimeSeconds()
+//        ),
+//        timeout.duration
+//      )
+
+      val oHLCDatas = Await.result(
+        (oHLCDataHandlerActor ? GetOHLCData.Req(
           marketKey,
-          60,
+          GetOHLCData.Interval.OHLC_INTERVAL_ONE_MINUTES,
           timeProvider.getTimeSeconds() - 600,
           timeProvider.getTimeSeconds()
-        ),
+        )).mapAs[GetOHLCData.Res],
         timeout.duration
       )
-      ohlcDatas.nonEmpty should be(true)
+      oHLCDatas.ohlcData.nonEmpty should be(true)
     }
   }
 }
