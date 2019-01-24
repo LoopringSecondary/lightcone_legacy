@@ -43,7 +43,7 @@ trait EthereumEventExtractorSupport
   implicit val transferExtractor = new TransferEventExtractor
   implicit val ringMinedExtractor = new RingMinedEventExtractor
   implicit val orderFillEventExtractor = new OrderFillEventExtractor
-  implicit val oHLCRawDataExtractor = new OHLCRawDataExtractor
+  implicit val ohlcRawDataExtractor = new OHLCRawDataExtractor
 
   implicit val dispatchers = Seq(
     new CutoffEventDispatcher(actors),
