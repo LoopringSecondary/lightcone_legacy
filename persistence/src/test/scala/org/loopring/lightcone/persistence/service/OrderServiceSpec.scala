@@ -18,6 +18,7 @@ package org.loopring.lightcone.persistence.service
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
@@ -72,10 +73,9 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
   "marketHash" must "calculate a market hash by two address" in {
     val address1 = "0x50689da538c80f32f46fb224af5d9d06c3309633"
     val address2 = "0x6d0643f40c625a46d4ede0b11031b0907bc197d1"
-    MarketHashProvider.convert2BigInt(address1, address2)
-    val marketHash1 = MarketHashProvider.convert2BigInt(address1, address2)
-    val marketHash2 = MarketHashProvider.convert2BigInt(address2, address1)
-    val t = MarketHashProvider.convert2Hex(address1, address2)
+    val marketHash1 = MarketKey(address1, address2).toString
+    val marketHash2 = MarketKey(address2, address1).toString
+    val t = MarketKey(address1, address2).toString
     marketHash1.equals(marketHash2) && t === "0x3d6ede5134aa557420825295bf6c2d96b8f101e2" should be(
       true
     )
@@ -134,7 +134,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         owners,
         Set(tokenS),
         Set(tokenB),
-        Set(MarketHashProvider.convert2Hex(tokenS, tokenB)),
+        Set(MarketKey(tokenS, tokenB).toString),
         Set.empty,
         Some(SortingType.ASC),
         None
@@ -164,7 +164,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         owners,
         Set.empty,
         Set.empty,
-        Set(MarketHashProvider.convert2Hex(tokenS, tokenB)),
+        Set(MarketKey(tokenS, tokenB).toString),
         Set.empty,
         Some(SortingType.ASC),
         None
@@ -217,7 +217,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some("0x-getordersfouser-03"),
         None,
         None,
-        Some(MarketHashProvider.convert2Hex(tokenS, tokenB)),
+        Some(MarketKey(tokenS, tokenB).toString),
         None,
         Some(SortingType.ASC),
         None
@@ -244,7 +244,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some("0x-countorders-05"),
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHashProvider.convert2Hex(tokenS, tokenB))
+        Some(MarketKey(tokenS, tokenB).toString)
       )
     } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
@@ -264,7 +264,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val tokenB = "0xaaaaa02"
     val result = for {
       _ <- testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
-      marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
+      marketHash = MarketKey(tokenS, tokenB).toString
       marketHashIds = Set(Math.abs(marketHash.hashCode))
       addressShardIds = owners.map(a => Math.abs(a.hashCode % 100)).toSet
       query <- service.getOrdersForRecover(
@@ -353,7 +353,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         None,
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHashProvider.convert2Hex(tokenS, tokenB))
+        Some(MarketKey(tokenS, tokenB).toString)
       )
       update <- service.cancelOrders(
         Seq(saved1.left.get.hash, saved3.left.get.hash),
@@ -364,14 +364,14 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         None,
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHashProvider.convert2Hex(tokenS, tokenB))
+        Some(MarketKey(tokenS, tokenB).toString)
       )
       query3 <- service.countOrdersForUser(
         Set(OrderStatus.STATUS_SOFT_CANCELLED_BY_USER),
         None,
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHashProvider.convert2Hex(tokenS, tokenB))
+        Some(MarketKey(tokenS, tokenB).toString)
       )
     } yield (update, query1, query2, query3)
     val res = Await.result(

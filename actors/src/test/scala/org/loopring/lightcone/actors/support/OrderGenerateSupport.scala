@@ -17,15 +17,13 @@
 package org.loopring.lightcone.actors.support
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.actors.core.{
-  MarketManagerActor,
-  MultiAccountManagerActor
-}
+import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.ethereum.{
   Protocol2RawOrderValidator,
   Protocol2RingBatchGenerator
 }
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
@@ -48,7 +46,7 @@ trait OrderGenerateSupport {
       credentials: Credentials = accounts(0)
     ) = {
     val createAt = timeProvider.getTimeMillis
-    val marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
+    val marketHash = MarketKey(tokenS, tokenB).toString
     val order = RawOrder(
       owner = credentials.getAddress,
       version = 0,
@@ -89,9 +87,7 @@ trait OrderGenerateSupport {
             .signPrefixedMessage(
               hash,
               Numeric
-                .toHexStringWithPrefix(
-                  credentials.getEcKeyPair.getPrivateKey
-                )
+                .toHexStringWithPrefix(credentials.getEcKeyPair.getPrivateKey)
             )
         )
       )

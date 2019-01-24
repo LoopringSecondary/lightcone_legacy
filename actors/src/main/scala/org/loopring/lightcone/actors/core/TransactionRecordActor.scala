@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.actors.DatabaseConfigManager
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
@@ -158,7 +159,7 @@ class TransactionRecordActor(
         order <- dbModule.orderService.getOrder(req.orderHash)
         header = req.header.get
         marketHash = if (order.isEmpty) ""
-        else MarketHashProvider.convert2Hex(order.get.tokenS, order.get.tokenB)
+        else MarketKey(order.get.tokenS, order.get.tokenB).toString
         record = TransactionRecord(
           header = req.header,
           owner = req.owner,

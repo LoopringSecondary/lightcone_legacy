@@ -22,6 +22,7 @@ import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto._
@@ -111,10 +112,9 @@ class OrderRecoverActor(
         availableOrders = orders.filter { o =>
           metadataManager.isValidMarket(MarketId(o.tokenS, o.tokenB))
         }.map { o =>
-          val marketHash =
-            MarketHashProvider.convert2Hex(o.tokenS, o.tokenB)
           val marketId =
             MarketId(primary = o.tokenS, secondary = o.tokenB)
+          val marketHash = MarketKey(marketId).toString
           o.copy(
             marketHash = marketHash,
             marketHashId = MarketManagerActor.getEntityId(marketId).toInt,

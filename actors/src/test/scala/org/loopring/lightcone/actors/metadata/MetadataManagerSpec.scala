@@ -19,10 +19,8 @@ package org.loopring.lightcone.actors.metadata
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.testkit.TestProbe
-import org.loopring.lightcone.actors.core.{
-  EthereumQueryActor,
-  MetadataManagerActor
-}
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.MetadataManagerValidator
 import org.loopring.lightcone.proto._
@@ -31,7 +29,6 @@ import scala.concurrent.{Await, Future}
 import akka.pattern._
 import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.core.base.MetadataManager
-import org.loopring.lightcone.lib.MarketHashProvider
 
 class MetadataManagerSpec
     extends CommonSpec
@@ -285,7 +282,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdLrcWeth),
-        marketHash = MarketHashProvider.convert2Hex(DDD, AAA)
+        marketHash = MarketKey(DDD, AAA).toString
       )
       val markets = Seq(
         marketLrcWeth,
@@ -301,7 +298,7 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketId = Some(marketIdBnbWeth),
-          marketHash = MarketHashProvider.convert2Hex(DDD, BBB)
+          marketHash = MarketKey(DDD, BBB).toString
         ),
         MarketMetadata(
           status = MarketMetadata.Status.READONLY,
@@ -315,7 +312,7 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketId = Some(marketIdZrxdWeth),
-          marketHash = MarketHashProvider.convert2Hex(DDD, CCC)
+          marketHash = MarketKey(DDD, CCC).toString
         )
       )
       actor ! SaveMarketMetadatas.Req(markets)
@@ -352,7 +349,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdAbcLrc),
-        marketHash = MarketHashProvider.convert2Hex(ABC, AAA)
+        marketHash = MarketKey(ABC, AAA).toString
       )
       val r2 = dbModule.marketMetadataDal.saveMarket(abcLrc)
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
@@ -465,7 +462,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketId),
-        marketHash = MarketHashProvider.convert2Hex(BBB, AAA)
+        marketHash = MarketKey(BBB, AAA).toString
       )
       val formatedMarket = MetadataManager.normalizeMarket(market)
       assert(

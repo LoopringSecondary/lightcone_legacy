@@ -36,7 +36,7 @@ object MetadataManager {
     val marketId = market.marketId.getOrElse(
       throw ErrorException(ErrorCode.ERR_INVALID_ARGUMENT, "marketId is empty")
     )
-    if (MarketKey(marketId).toHexString != market.marketHash.toLowerCase())
+    if (MarketKey(marketId).toString != market.marketHash.toLowerCase())
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
         s"marketId:$marketId mismatch marketHash:${market.marketHash}"
