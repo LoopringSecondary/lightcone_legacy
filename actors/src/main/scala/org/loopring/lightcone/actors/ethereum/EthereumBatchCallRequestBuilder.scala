@@ -104,6 +104,41 @@ class EthereumBatchCallRequestBuilder {
     BatchCallContracts.Req(balanceCallReqs)
   }
 
+  def buildRequest(
+      req: BatchGetCutoffs.Req,
+      tradeHistoryAddress: Address
+    ): BatchCallContracts.Req = {
+    val cutoffCallReqs = req.reqs.map { cutoffReq =>
+      val input = cutoffReq match {
+        case GetCutoff.Req(broker, "", "", _) =>
+          tradeHistoryAbi.cutoffForBroker.pack(
+            CutoffForBrokerFunction.Params(broker)
+          )
+
+        case GetCutoff.Req(broker, owner, "", _) =>
+          tradeHistoryAbi.cutoffForOwner.pack(
+            CutoffForOwnerFunction.Params(broker, owner)
+          )
+
+        case GetCutoff.Req(broker, "", tokenPair, _) =>
+          tradeHistoryAbi.cutoffForTradingPairBroker.pack(
+            CutoffForTradingPairBrokerFunction
+              .Params(broker, Numeric.hexStringToByteArray(tokenPair))
+          )
+
+        case GetCutoff.Req(broker, owner, tokenPair, _) =>
+          tradeHistoryAbi.cutoffForTradingPairOwner.pack(
+            CutoffForTradingPairOwnerFunction
+              .Params(broker, owner, Numeric.hexStringToByteArray(tokenPair))
+          )
+      }
+      val param =
+        TransactionParams(to = tradeHistoryAddress.toString, data = input)
+      EthCall.Req(param = Some(param), tag = cutoffReq.tag)
+    }
+    BatchCallContracts.Req(cutoffCallReqs)
+  }
+
   private def buildBatchErc20AllowanceReq(
       delegateAddress: Address,
       owner: Address,
