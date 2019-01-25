@@ -22,6 +22,7 @@ import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
+import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.lib.data._
@@ -249,8 +250,7 @@ class AccountManagerActor(
       }
       processUpdatedOrders(updatedOrders)
 
-    //brokerCutoff
-    //todo:暂时不处理
+    //Currently we do not support broker-level cutoff
     case req @ CutoffEvent(Some(header), broker, owner, _, cutoff)
         if broker != owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received BrokerCutoffEvent $req")
@@ -273,16 +273,12 @@ class AccountManagerActor(
       else
         getTokenManagers(Seq(matchable.tokenS))
 
-      // Update the order's _outstanding field.
       getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmount.Req(
         Seq(matchable.id)
       )).mapAs[GetFilledAmount.Res]
 
-      filledAmountS = getFilledAmountRes.filledAmountSMap(matchable.id)
-
-      _ = log.debug(
-        s"ethereumQueryActor GetFilledAmount.Res $getFilledAmountRes"
-      )
+      filledAmountS = getFilledAmountRes.filledAmountSMap
+        .getOrElse(matchable.id, ByteString.copyFrom("0".getBytes))
 
       _matchable = matchable.withFilledAmountS(filledAmountS)
 
@@ -297,16 +293,18 @@ class AccountManagerActor(
 
       _ = if (!successful) throw ErrorException(Error(matchable.status))
 
-      _ = log.debug(s"updatedOrders: ${updatedOrders.size}}")
+      _ = log.debug(
+        s"updated matchable ${_matchable}\nfound ${updatedOrders.size} updated orders"
+      )
 
       res <- processUpdatedOrders(updatedOrders)
 
-      matchable_ = updatedOrders(matchable.id)
+      matchable_ = updatedOrders.getOrElse(matchable.id, _matchable)
       order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
     } yield order_
   }
 
-  private def processUpdatedOrders(updatedOrders: Map[String, Matchable]) = {
+  private def processUpdatedOrders(updatedOrders: Map[String, Matchable]) =
     Future.sequence {
       updatedOrders.map {
         case (id, order) =>
@@ -323,21 +321,17 @@ class AccountManagerActor(
           for {
             //需要更新到数据库
             //TODO(yongfeng): 暂时添加接口，需要永丰根据目前的使用优化dal的接口
-            _ <- dbModule.orderService
-              .updateOrderState(order.id, state)
+            _ <- dbModule.orderService.updateOrderState(order.id, state)
           } yield {
 
             order.status match {
-              //新订单、或者匹配一部分的订单
               case STATUS_NEW | //
                   STATUS_PENDING | //
                   STATUS_PARTIALLY_FILLED =>
-                marketManagerActor ! SubmitSimpleOrder(
-                  order =
-                    Some(order.copy(_reserved = None, _outstanding = None))
-                )
+                log.debug(s"submitting order id=${order.id} to MMA")
+                val order_ = order.copy(_reserved = None, _outstanding = None)
+                marketManagerActor ! SubmitSimpleOrder(order = Some(order_))
 
-              //取消的订单
               case STATUS_EXPIRED | //
                   STATUS_DUST_ORDER | //
                   STATUS_COMPLETELY_FILLED | //
@@ -352,21 +346,22 @@ class AccountManagerActor(
                   STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS |
                   STATUS_SOFT_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS |
                   STATUS_SOFT_CANCELLED_DUPLICIATE =>
+                log.debug(s"cancelling order id=${order.id}")
+                val marketId = MarketId(order.tokenS, order.tokenB)
                 marketManagerActor ! CancelOrder.Req(
                   id = order.id,
-                  marketId = Some(MarketId(order.tokenS, order.tokenB))
+                  marketId = Some(marketId)
                 )
 
               case _ =>
                 throw ErrorException(
                   ERR_INVALID_ORDER_DATA,
-                  s"not supproted order.status in AccountManager"
+                  s"unexpected order status in: $order"
                 )
             }
           }
       }
     }
-  }
 
   private def getTokenManagers(
       tokens: Seq[String]

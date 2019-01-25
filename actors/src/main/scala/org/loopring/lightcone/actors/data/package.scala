@@ -20,6 +20,7 @@ import java.math.BigInteger
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto.OrderStatus._
@@ -38,17 +39,17 @@ package object data {
     def sequenceId() = {
       if (header.blockNumber > 500000000) // < pow(2, 29)
         throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          ERR_INTERNAL_UNKNOWN,
           s"blockNumber >= 500000000 in ${header}"
         )
       if (header.txIndex >= 4096 || header.logIndex >= 4096) // pow(2, 12)
         throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          ERR_INTERNAL_UNKNOWN,
           s"txIndex or logIndex >= 4096 in ${header}"
         )
       if (header.eventIndex >= 1024) // pow(2, 10)
         throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          ERR_INTERNAL_UNKNOWN,
           s"eventIndex >= 1024 in ${header}"
         )
       val b: Long = header.blockNumber << 34
@@ -193,10 +194,6 @@ package object data {
     }
 
   implicit class RichMarketId(marketId: MarketId) {
-
-    def key(): BigInteger = {
-      Numeric.toBigInt(marketId.primary) xor
-        Numeric.toBigInt(marketId.secondary)
-    }
+    def key() = MarketKey(marketId).toString
   }
 }
