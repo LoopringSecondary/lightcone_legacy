@@ -286,7 +286,11 @@ class AccountManagerActor(
         (res, orderPool.takeUpdatedOrdersAsMap)
       }
 
-      _ = if (!successful) throw ErrorException(Error(matchable.status))
+      _ = if (!successful)
+        throw ErrorException(
+          ERR_ORDER_VALIDATION_INVALID,
+          s"failed to submit order with status:${matchable.status} in AccountManagerActor."
+        )
 
       _ = log.debug(
         s"updated matchable ${_matchable}\nfound ${updatedOrders.size} updated orders"
@@ -380,11 +384,11 @@ class AccountManagerActor(
             config.getInt("account_manager.max_order_num")
           )
       )
-      _ = tms.foreach(tm => {
+      _ = tms.foreach { tm =>
         val ba = res.balanceAndAllowanceMap(tm.token)
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
         manager.getOrUpdateTokenManager(tm)
-      })
+      }
       tokenMangers = tokens.map(manager.getTokenManager)
     } yield tokenMangers
   }
