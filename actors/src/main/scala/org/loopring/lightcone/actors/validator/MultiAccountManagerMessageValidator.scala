@@ -81,11 +81,8 @@ final class MultiAccountManagerMessageValidator(
         case Right(rawOrder) =>
           val marketId =
             MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
-          val marketHash =
-            MarketHashProvider.convert2Hex(rawOrder.tokenS, rawOrder.tokenB)
-          if (!metadataManager.getEnabledMarketIds.contains(
-                MarketKey(marketId).toString
-              )) {
+          val marketKey = MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
+          if (!metadataManager.getEnabledMarketIds.contains(marketKey)) {
             throw ErrorException(
               ErrorCode.ERR_INVALID_MARKET,
               s"marketId:${marketId} has been terminated"
@@ -99,11 +96,6 @@ final class MultiAccountManagerMessageValidator(
             updatedAt = now,
             status = OrderStatus.STATUS_NEW
           )
-
-          val marketId =
-            MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
-
-          val marketKey = MarketKey(marketId).toString
 
           req.withRawOrder(
             rawOrder.copy(
@@ -131,7 +123,7 @@ final class MultiAccountManagerMessageValidator(
               state = Some(state),
               marketKey = marketKey,
               marketShard = MarketManagerActor.getEntityId(marketId).toInt,
-              addressShard = MultiAccountManagerActor
+              accountShard = MultiAccountManagerActor
                 .getEntityId(order.owner, numOfShards)
                 .toInt
             )

@@ -84,7 +84,7 @@ class AccountManagerActor(
       } yield {
         val cutoff: BigInt = res.cutoff
         accountCutoffState.setTradingPairCutoff(
-          m._2.key(),
+          MarketKey(m._2).value,
           cutoff.toLong
         )
       }

@@ -27,7 +27,6 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._
-import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.core.base.MetadataManager
 
 class MetadataManagerSpec
@@ -58,7 +57,7 @@ class MetadataManagerSpec
         )
       }
       info("check markets: market addresses at lower and upper case")
-      assert(metadataManager.getValidMarketKeys.size >= MARKETS.length)
+      assert(metadataManager.getValidMarketIds.size >= MARKETS.length)
       MARKETS.foreach { m =>
         val meta1 =
           metadataManager.getMarketMetadata(m.marketKey.toLowerCase())
