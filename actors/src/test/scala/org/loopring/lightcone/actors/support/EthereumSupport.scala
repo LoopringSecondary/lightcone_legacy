@@ -341,7 +341,9 @@ trait EthereumSupport {
         BigInt(addressGenerator.getAndIncrement()).bigInteger
       )
     )
-    info(s"${this.getClass.getSimpleName} got an uniqueAccount: ${account.getAddress()}")
+    info(
+      s"${this.getClass.getSimpleName} got an uniqueAccount: ${account.getAddress()}"
+    )
     account
   }
 }
