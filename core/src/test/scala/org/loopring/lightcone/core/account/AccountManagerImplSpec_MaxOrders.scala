@@ -21,6 +21,7 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.scalatest._
+import OrderStatus._
 
 class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
   "submit order" should "fail when max orders received for tokenS" in {
@@ -39,7 +40,7 @@ class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
     updatedOrders.size should be(1)
     orderPool.size == dai.maxNumOrders
     updatedOrders(order.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS
+      STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS
     )
   }
 
@@ -72,7 +73,7 @@ class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
     updatedOrders.size should be(1)
     orderPool.size == lrc.maxNumOrders
     updatedOrders(order.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS
+      STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS
     )
   }
 }
