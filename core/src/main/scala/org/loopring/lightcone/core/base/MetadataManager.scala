@@ -38,11 +38,13 @@ object MetadataManager {
     val marketId = market.marketId.getOrElse(
       throw ErrorException(ERR_INVALID_ARGUMENT, "marketId is empty")
     )
+
     if (MarketKey(marketId).toString != market.marketKey.toLowerCase())
       throw ErrorException(
         ERR_INVALID_ARGUMENT,
         s"marketId:$marketId mismatch marketKey:${market.marketKey}"
       )
+
     market.copy(
       primaryTokenSymbol = market.primaryTokenSymbol.toUpperCase(),
       secondaryTokenSymbol = market.secondaryTokenSymbol.toUpperCase(),
@@ -142,6 +144,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
     val m = MetadataManager.normalizeMarket(meta)
     marketMetadatasMap += m.marketKey -> m
     val itemMap = m.marketKey -> m.marketId.get
+
     m.status match {
       case MarketMetadata.Status.DISABLED =>
         disabledMarkets += itemMap
@@ -175,7 +178,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
         marketKey.toLowerCase,
         throw ErrorException(
           ERR_INTERNAL_UNKNOWN,
-          s"not metadata for market($marketKey)"
+          s"no metadata for market($marketKey)"
         )
       )
 

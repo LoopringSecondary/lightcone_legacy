@@ -101,6 +101,8 @@ class OrderbookManagerActor(
     .find(m => getEntityId(m) == entityId)
     .get
 
+  println("********** " + marketId)
+
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
 
@@ -112,19 +114,19 @@ class OrderbookManagerActor(
 
   val marketManagerActor = actors.get(MarketManagerActor.name)
 
-  override def initialize() = {
-    val f = syncOrderbookFromMarket()
-    f.onComplete {
-      case Success(_) =>
-        becomeReady()
-      case Failure(e) =>
-        log.error(
-          s"OrderbookManagerActor of marketId:[$marketId] initialize failed, cause: ${e.getMessage}"
-        )
-        throw e
-    }
-    f
-  }
+  // override def initialize() = {
+  //   val f = syncOrderbookFromMarket()
+  //   f.onComplete {
+  //     case Success(_) =>
+  //       becomeReady()
+  //     case Failure(e) =>
+  //       log.error(
+  //         s"OrderbookManagerActor of marketId:[$marketId] initialize failed, cause: ${e.getMessage}"
+  //       )
+  //       throw e
+  //   }
+  //   f
+  // }
 
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
@@ -134,7 +136,7 @@ class OrderbookManagerActor(
       name = "load_orderbook_from_market",
       dalayInSeconds = refreshIntervalInSeconds,
       initialDalayInSeconds = initialDelayInSeconds,
-      run = () => syncOrderbookFromMarket()
+      run = () => Future.successful(Unit) //syncOrderbookFromMarket()
     )
   )
 
