@@ -23,8 +23,7 @@ import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.base.{MarketKey, MetadataManager}
+import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.proto._
@@ -203,7 +202,7 @@ class OrderStatusMonitorActor(
       orders <- dbModule.orderService
         .getOrdersToExpire(latestProcessTime, processTime)
       _ <- Future.sequence(orders.map { o =>
-        //只有是有效的订单才会发送该取消订单的数据
+        //只有是有效的市场订单才会发送该取消订单的数据，否则只会更改数据库状态
         if (metadataManager
               .isValidMarket(MarketId(o.tokenS, o.tokenB))) {
           val cancelReq = CancelOrder.Req(

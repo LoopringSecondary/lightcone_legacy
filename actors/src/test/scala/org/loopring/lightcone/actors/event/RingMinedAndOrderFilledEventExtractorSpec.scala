@@ -33,8 +33,12 @@ class RingMinedAndOrderFilledEventExtractorSpec
       val getBaMethod = "get_balance_and_allowance"
       val submit_order = "submit_order"
       val account0 = accounts.head
-      val account1 = getUniqueAccountWithoutEth
-      val account2 = getUniqueAccountWithoutEth
+      val account1 = Credentials.create(
+        "0xdd2c4a5c56cb9b02f52d6c4bc56da9219290c3adbe76efc082dbfb98542a9641"
+      )
+      val account2 = Credentials.create(
+        "0x2cc04482d2fba83ff646d0aeacc7f5195fa2532859fdec917354ba4691e8444a"
+      )
       Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
