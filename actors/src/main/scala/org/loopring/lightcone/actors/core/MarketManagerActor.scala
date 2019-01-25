@@ -74,21 +74,19 @@ object MarketManagerActor extends ShardedByMarket {
   val extractMarketId: PartialFunction[Any, MarketId] = {
     case SubmitSimpleOrder(_, Some(order)) =>
       MarketId(order.tokenS, order.tokenB)
+
     case CancelOrder.Req(_, _, _, Some(marketId)) =>
       marketId
+
     case req: RingMinedEvent if req.fills.size >= 2 =>
       MarketId(req.fills(0).tokenS, req.fills(1).tokenS)
+
     case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
       MarketId(primary, secondary)
-    case GetOrderbookSlots.Req(marketId) =>
-      marketId.getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "marketId is empty"
-        )
-      )
+
+    case GetOrderbookSlots.Req(Some(marketId), _) => marketId
   }
 
 }
@@ -131,9 +129,6 @@ class MarketManagerActor(
   val gasLimitPerRingV2 = BigInt(
     config.getString("loopring_protocol.gas-limit-per-ring-v2")
   )
-
-  val orderbookRecoverSize =
-    selfConfig.getInt("orderbook-recover-size")
 
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
@@ -271,9 +266,9 @@ class MarketManagerActor(
         }
       } sendTo sender
 
-    case GetOrderbookSlots.Req(_) =>
+    case req: GetOrderbookSlots.Req =>
       sender ! GetOrderbookSlots.Res(
-        Some(manager.getOrderbookSlots(orderbookRecoverSize))
+        Some(manager.getOrderbookSlots(req.numOfSlots))
       )
   }
 

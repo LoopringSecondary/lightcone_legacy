@@ -68,8 +68,10 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
   val extractMarketId: PartialFunction[Any, MarketId] = {
-    case GetOrderbook.Req(_, _, Some(marketId))    => marketId
+    case GetOrderbook.Req(_, _, Some(marketId)) => marketId
+
     case Orderbook.Update(_, _, _, Some(marketId)) => marketId
+
     case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
@@ -91,6 +93,9 @@ class OrderbookManagerActor(
       OrderbookManagerActor.extractEntityId
     )
     with RepeatedJobActor {
+
+  val orderbookRecoverSize =
+    selfConfig.getInt("orderbook-recover-size")
 
   val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
@@ -166,8 +171,10 @@ class OrderbookManagerActor(
 
   private def syncOrderbookFromMarket() =
     for {
-      res <- (marketManagerActor ? GetOrderbookSlots.Req(Some(marketId)))
-        .mapTo[GetOrderbookSlots.Res]
+      res <- (marketManagerActor ? GetOrderbookSlots.Req(
+        Some(marketId),
+        orderbookRecoverSize
+      )).mapTo[GetOrderbookSlots.Res]
       _ = log.debug(s"orderbook synced: ${res}")
       _ = println("=========> GetOrderbookSlots.Res: " + res)
     } yield {
