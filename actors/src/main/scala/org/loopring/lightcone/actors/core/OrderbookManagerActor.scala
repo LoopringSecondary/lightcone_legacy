@@ -104,15 +104,7 @@ class OrderbookManagerActor(
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
 
-  def marketMetadata =
-    metadataManager
-      .getMarketMetadata(marketId)
-      .getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found market:$marketId config"
-        )
-      )
+  def marketMetadata = metadataManager.getMarketMetadata(marketId)
 
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
 

@@ -133,15 +133,7 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
-  def marketMetadata =
-    metadataManager
-      .getMarketMetadata(marketId)
-      .getOrElse(
-        throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"not found market: $marketId metaadta"
-        )
-      )
+  def marketMetadata = metadataManager.getMarketMetadata(marketId)
 
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
     marketMetadata.priceDecimals,

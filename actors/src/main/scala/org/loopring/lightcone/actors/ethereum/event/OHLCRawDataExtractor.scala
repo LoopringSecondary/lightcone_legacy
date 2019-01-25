@@ -53,7 +53,7 @@ class OHLCRawDataExtractor @Inject()(
               if (!metadataManager.isValidMarket(marketKey)) None
               else {
                 val marketMetadata =
-                  metadataManager.getMarketMetadata(marketKey).get
+                  metadataManager.getMarketMetadata(marketKey)
 
                 val marketId = marketMetadata.getMarketId
 

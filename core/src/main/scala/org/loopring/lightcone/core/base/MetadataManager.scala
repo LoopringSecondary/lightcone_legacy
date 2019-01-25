@@ -29,34 +29,28 @@ object MetadataManager {
   def normalizeToken(token: TokenMetadata): TokenMetadata =
     token.copy(
       address = token.address.toLowerCase(),
-      symbol = token.symbol.toUpperCase()
-    )
+      symbol = token.symbol.toUpperCase())
 
   def normalizeMarket(market: MarketMetadata): MarketMetadata = {
     val marketId = market.marketId.getOrElse(
-      throw ErrorException(ErrorCode.ERR_INVALID_ARGUMENT, "marketId is empty")
-    )
+      throw ErrorException(ErrorCode.ERR_INVALID_ARGUMENT, "marketId is empty"))
     if (MarketKey(marketId).toString != market.marketKey.toLowerCase())
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,
-        s"marketId:$marketId mismatch marketKey:${market.marketKey}"
-      )
+        s"marketId:$marketId mismatch marketKey:${market.marketKey}")
     market.copy(
       primaryTokenSymbol = market.primaryTokenSymbol.toUpperCase(),
       secondaryTokenSymbol = market.secondaryTokenSymbol.toUpperCase(),
       marketId = Some(
         MarketId(
           primary = marketId.primary.toLowerCase(),
-          secondary = marketId.secondary.toLowerCase()
-        )
-      ),
-      marketKey = market.marketKey.toLowerCase()
-    )
+          secondary = marketId.secondary.toLowerCase())),
+      marketKey = market.marketKey.toLowerCase())
   }
 }
 
-final class MetadataManager @Inject()(implicit val config: Config)
-    extends Logging {
+final class MetadataManager @Inject() (implicit val config: Config)
+  extends Logging {
 
   val loopringConfig = config.getConfig("loopring_protocol")
 
@@ -88,9 +82,8 @@ final class MetadataManager @Inject()(implicit val config: Config)
   private var marketMetadatasMap = Map.empty[String, MarketMetadata]
 
   def reset(
-      tokens: Seq[TokenMetadata],
-      markets: Seq[MarketMetadata]
-    ) = this.synchronized {
+    tokens: Seq[TokenMetadata],
+    markets: Seq[MarketMetadata]) = this.synchronized {
     addressMap = Map.empty
     tokens.foreach(addToken)
 
@@ -150,8 +143,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
       case m =>
         throw ErrorException(
           ErrorCode.ERR_INTERNAL_UNKNOWN,
-          s"Unhandled market metadata status:$m"
-        )
+          s"Unhandled market metadata status:$m")
     }
     this
   }
@@ -162,15 +154,19 @@ final class MetadataManager @Inject()(implicit val config: Config)
   }
 
   def getMarkets(
-      status: Set[MarketMetadata.Status] = Set.empty
-    ): Seq[MarketMetadata] = {
+    status: Set[MarketMetadata.Status] = Set.empty): Seq[MarketMetadata] = {
     marketMetadatasMap.values.filter(m => status.contains(m.status)).toSeq
   }
 
-  def getMarketMetadata(marketKey: String): Option[MarketMetadata] =
-    marketMetadatasMap.get(marketKey.toLowerCase())
+  def getMarketMetadata(marketKey: String): MarketMetadata =
+    marketMetadatasMap
+      .get(marketKey.toLowerCase)
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not metadata for market($marketKey)"))
 
-  def getMarketMetadata(marketId: MarketId): Option[MarketMetadata] =
+  def getMarketMetadata(marketId: MarketId): MarketMetadata =
     getMarketMetadata(MarketKey(marketId).toString)
 
   def assertMarketIdIsValid(marketIdOpt: Option[MarketId]): Option[MarketId] = {
@@ -187,8 +183,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
     if (!isValidMarket(marketId))
       throw ErrorException(
         ErrorCode.ERR_INVALID_MARKET,
-        s"invalid market: ${marketId}"
-      )
+        s"invalid market: ${marketId}")
     marketId
   }
 

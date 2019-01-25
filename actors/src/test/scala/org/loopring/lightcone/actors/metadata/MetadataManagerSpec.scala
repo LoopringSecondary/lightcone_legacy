@@ -65,7 +65,7 @@ class MetadataManagerSpec
           "0x" + m.marketKey.substring(2).toUpperCase()
         )
         assert(
-          meta1.nonEmpty && meta2.nonEmpty && meta1.get.marketKey == meta2.get.marketKey && meta1.get.marketKey == meta1.get.marketKey
+          meta1.marketKey == meta2.marketKey && meta1.marketKey == meta1.marketKey
             .toLowerCase()
         )
 
@@ -83,9 +83,7 @@ class MetadataManagerSpec
               .toUpperCase()
           )
         )
-        assert(
-          meta3.nonEmpty && meta4.nonEmpty && meta3.get.marketKey == meta4.get.marketKey
-        )
+        assert(meta3.marketKey == meta4.marketKey)
       }
     }
 
