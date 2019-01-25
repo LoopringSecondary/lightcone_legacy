@@ -26,6 +26,7 @@ class EntryPointSpec
     with EthereumSupport
     with MetadataManagerSupport
     with OrderbookManagerSupport
+    with MarketManagerSupport
     with JsonrpcSupport
     with HttpSupport {
 

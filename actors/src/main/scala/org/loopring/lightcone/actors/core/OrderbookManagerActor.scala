@@ -110,7 +110,7 @@ class OrderbookManagerActor(
 
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
-  val marketManagerActor = actors.get(MarketManagerActor.name)
+  def marketManagerActor = actors.get(MarketManagerActor.name)
 
   override def initialize() = {
     val f = syncOrderbookFromMarket()
