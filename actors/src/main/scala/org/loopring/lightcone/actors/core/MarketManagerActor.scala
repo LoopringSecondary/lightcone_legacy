@@ -158,8 +158,6 @@ class MarketManagerActor(
     maxSettementFailuresPerOrder
   )
 
-  val orderbookGetRecordNum = selfConfig.getInt("orderbook-get-record-num")
-
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerMediator =
     DistributedPubSub(context.system).mediator
@@ -269,7 +267,7 @@ class MarketManagerActor(
 
     case GetOrderbookSlots.Req(_) =>
       sender ! GetOrderbookSlots.Res(
-        Some(manager.getOrderbookSlots(orderbookGetRecordNum))
+        Some(manager.getOrderbookSlots(Integer.MAX_VALUE))
       )
   }
 
