@@ -200,7 +200,12 @@ class EthereumQueryActor(
     case req: GetCutoff.Req =>
       callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress, req.tag)) {
         result =>
-          GetCutoff.Res(BigInt(Numeric.toBigInt(result)))
+          GetCutoff.Res(
+            req.broker,
+            req.owner,
+            req.marketKey,
+            BigInt(Numeric.toBigInt(result))
+          )
       }
 
     case req: GetBurnRate.Req =>
