@@ -337,7 +337,6 @@ class AccountManagerActor(
                   STATUS_COMPLETELY_FILLED | //
                   STATUS_SOFT_CANCELLED_BY_USER |
                   STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR |
-                  STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET |
                   STATUS_ONCHAIN_CANCELLED_BY_USER |
                   STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR |
                   STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES |
@@ -346,17 +345,19 @@ class AccountManagerActor(
                   STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS |
                   STATUS_SOFT_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS |
                   STATUS_SOFT_CANCELLED_DUPLICIATE =>
-                log.debug(s"cancelling order id=${order.id}")
+                log.debug(
+                  s"cancelling order id=${order.id} status=${order.status}"
+                )
                 val marketId = MarketId(order.tokenS, order.tokenB)
                 marketManagerActor ! CancelOrder.Req(
                   id = order.id,
                   marketId = Some(marketId)
                 )
 
-              case _ =>
+              case status =>
                 throw ErrorException(
                   ERR_INVALID_ORDER_DATA,
-                  s"unexpected order status in: $order"
+                  s"unexpected order status: $status in: $order"
                 )
             }
           }
