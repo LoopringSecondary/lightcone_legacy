@@ -129,10 +129,8 @@ class RecoverOrderSpec
       // 2. save some orders in db
       testSaveOrder4Recover()
       // 3. recover
-      val marketLrcWeth = Some(
-        MarketId(primary = LRC_TOKEN.address, secondary = WETH_TOKEN.address)
-      )
-      val marketMock4 = Some(MarketId(primary = "0x041", secondary = "0x042"))
+      val marketLrcWeth = Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+      val marketMock4 = Some(MarketId("0x041", "0x042"))
       val request1 = ActorRecover.Request(
         addressShardingEntity = MultiAccountManagerActor
           .getEntityId(owner, 100),

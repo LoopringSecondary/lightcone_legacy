@@ -119,11 +119,11 @@ trait HttpSupport extends RpcBinding with Logging {
         Thread.sleep(200)
       }
     }
-    if (resOpt.isEmpty) {
-      throw new Exception(
-        s"Timed out waiting for expectOrderbookRes of req:${req} "
-      )
-    }
+    // if (resOpt.isEmpty) {
+    //   throw new Exception(
+    //     s"Timed out waiting for expectOrderbookRes of req:${req} "
+    //   )
+    // }
     resOpt
   }
 

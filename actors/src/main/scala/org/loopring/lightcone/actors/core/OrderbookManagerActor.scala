@@ -110,21 +110,7 @@ class OrderbookManagerActor(
 
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
-  val marketManagerActor = actors.get(MarketManagerActor.name)
-
-  override def initialize() = {
-    val f = syncOrderbookFromMarket()
-    f.onComplete {
-      case Success(_) =>
-        becomeReady()
-      case Failure(e) =>
-        log.error(
-          s"OrderbookManagerActor of marketId:[$marketId] initialize failed, cause: ${e.getMessage}"
-        )
-        throw e
-    }
-    f
-  }
+  def marketManagerActor = actors.get(MarketManagerActor.name)
 
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
@@ -134,7 +120,7 @@ class OrderbookManagerActor(
       name = "load_orderbook_from_market",
       dalayInSeconds = refreshIntervalInSeconds,
       initialDalayInSeconds = initialDelayInSeconds,
-      run = () => syncOrderbookFromMarket()
+      run = () => Future.successful(Unit) //syncOrderbookFromMarket()
     )
   )
 
@@ -156,9 +142,6 @@ class OrderbookManagerActor(
             s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}"
           )
       } sendTo sender
-
-    case msg => log.info(s"not supported msg:${msg}, ${marketId}")
-
   }
 
   private def syncOrderbookFromMarket() =

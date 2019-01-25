@@ -107,7 +107,7 @@ final class MultiAccountManagerMessageValidator(
           )
 
           val marketId =
-            MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
+            MarketId(rawOrder.tokenS, rawOrder.tokenB)
 
           val marketKey = MarketKey(marketId).toString
 

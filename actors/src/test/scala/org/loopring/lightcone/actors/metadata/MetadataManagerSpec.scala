@@ -40,8 +40,9 @@ class MetadataManagerSpec
   val probe = TestProbe()
   val mediator = DistributedPubSub(system).mediator
   mediator ! Subscribe(MetadataManagerActor.pubsubTopic, probe.ref)
-  val actor = actors.get(MetadataManagerValidator.name)
-  val ethereumQueryActor = actors.get(EthereumQueryActor.name)
+
+  def actor = actors.get(MetadataManagerValidator.name)
+  def ethereumQueryActor = actors.get(EthereumQueryActor.name)
 
   "load tokens config" must {
     "initialized metadataManager completely" in {
