@@ -112,31 +112,30 @@ class OrderbookManagerActor(
 
   def marketManagerActor = actors.get(MarketManagerActor.name)
 
-  override def initialize() = {
-    val f = syncOrderbookFromMarket()
-    f.onComplete {
-      case Success(_) =>
-        becomeReady()
-      case Failure(e) =>
-        log.error(
-          s"OrderbookManagerActor of marketId:[$marketId] initialize failed, cause: ${e.getMessage}"
-        )
-        throw e
-    }
-    f
-  }
+  // override def initialize() = {
+  //   val f = syncOrderbookFromMarket()
+  //   f.onComplete {
+  //     case Success(_) =>
+  //       becomeReady()
+  //     case Failure(e) =>
+  //       log.error(
+  //         s"OrderbookManagerActor of marketId:[$marketId] initialize failed, cause: ${e.getMessage}"
+  //       )
+  //       throw e
+  //   }
+  //   f
+  // }
 
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
-  val repeatedJobs = Seq(
-    Job(
-      name = "load_orderbook_from_market",
-      dalayInSeconds = refreshIntervalInSeconds,
-      initialDalayInSeconds = initialDelayInSeconds,
-      run = () => syncOrderbookFromMarket()
-    )
-  )
+  val repeatedJobs = Nil
+  // Seq(
+  // Job(
+  //   name = "load_orderbook_from_market",
+  //   dalayInSeconds = refreshIntervalInSeconds,
+  //   initialDalayInSeconds = initialDelayInSeconds,
+  //   run = () => syncOrderbookFromMarket()))
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
@@ -156,8 +155,6 @@ class OrderbookManagerActor(
             s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}"
           )
       } sendTo sender
-
-    case msg => log.info(s"not supported msg:${msg}, ${marketId}")
 
   }
 
