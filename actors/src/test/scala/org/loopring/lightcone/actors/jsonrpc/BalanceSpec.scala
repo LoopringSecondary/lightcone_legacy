@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.jsonrpc
 
 import akka.pattern._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto._

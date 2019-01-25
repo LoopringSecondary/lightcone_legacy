@@ -16,27 +16,19 @@
 
 package org.loopring.lightcone.lib
 
-object MarketHashProvider {
+import com.google.protobuf.ByteString
 
-  private def removePrefix(address: String): String = {
-    if (address.startsWith("0x")) {
-      address.substring(2).trim
-    } else {
-      address.trim
-    }
+package object data {
+
+  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
+    if (bytes.size() > 0) BigInt(bytes.toByteArray)
+    else BigInt(0)
   }
 
-  def convert2BigInt(
-      address1: String,
-      address2: String
-    ): BigInt = {
-    BigInt(removePrefix(address1), 16) ^ BigInt(removePrefix(address2), 16)
-  }
+  implicit def bigInt2ByteString(b: BigInt): ByteString =
+    ByteString.copyFrom(b.toByteArray)
 
-  def convert2Hex(
-      address1: String,
-      address2: String
-    ): String = {
-    "0x" + convert2BigInt(address1, address2).toString(16)
-  }
+  implicit def byteArray2ByteString(bytes: Array[Byte]) =
+    ByteString.copyFrom(bytes)
+
 }

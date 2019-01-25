@@ -17,7 +17,7 @@
 package org.loopring.lightcone.actors.core
 
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 

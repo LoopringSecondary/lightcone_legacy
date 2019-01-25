@@ -19,7 +19,8 @@ package org.loopring.lightcone.persistence.service
 import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
 import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
-import org.loopring.lightcone.lib.{MarketHashProvider, SystemTimeProvider}
+import org.loopring.lightcone.lib._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto.{OrderStatus, RawOrder}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import org.web3j.crypto.Hash
@@ -105,7 +106,7 @@ trait ServiceSpec[S]
     val until =
       if (validUntil > 0) validUntil else (createAt / 1000).toInt + 20000
     val param = RawOrder.Params(validUntil = until)
-    val marketHash = MarketHashProvider.convert2Hex(tokenS, tokenB)
+    val marketKey = MarketKey(tokenS, tokenB).toString
     val hash = Hash.sha3(
       BigInt(createAt).toByteArray ++
         Numeric.hexStringToByteArray(owner) ++
@@ -128,9 +129,9 @@ trait ServiceSpec[S]
       state = Some(state),
       feeParams = Some(fee),
       params = Some(param),
-      marketHash = marketHash,
-      marketHashId = Math.abs(marketHash.hashCode),
-      addressShardId = Math.abs(owner.hashCode % 100)
+      marketKey = marketKey,
+      marketShard = Math.abs(marketKey.hashCode),
+      accountShard = Math.abs(owner.hashCode % 100)
     )
   }
 }

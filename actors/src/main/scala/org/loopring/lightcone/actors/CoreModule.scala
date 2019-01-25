@@ -82,8 +82,44 @@ class CoreModule(config: Config)
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-order-status-monitor",
       "dbconfig-dal-market-metadata",
-      "dbconfig-dal-missing-blocks-record"
+      "dbconfig-dal-missing-blocks-record",
+      "dbconfig-dal-ohlc-data"
     )
+
+    // --- bind dals ---------------------
+    bind[OrderDal].to[OrderDalImpl].asEagerSingleton
+    bind[TradeDal].to[TradeDalImpl].asEagerSingleton
+    bind[BlockDal].to[BlockDalImpl].asEagerSingleton
+    bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
+    bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
+    bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
+    bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
+    bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
+    
+    // --- bind db services ---------------------
+    bind[OrderService].to[OrderServiceImpl].asEagerSingleton
+    bind[TradeService].to[TradeServiceImpl].asEagerSingleton
+    bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
+    bind[BlockService].to[BlockServiceImpl].asEagerSingleton
+
+    bind[OrderStatusMonitorService]
+      .to[OrderStatusMonitorServiceImpl]
+      .asEagerSingleton
+    
+    // --- bind local singletons ---------------------
+    bind[DatabaseModule].asEagerSingleton
+    bind[MetadataManager].asEagerSingleton
+
+    bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
+
+    // --- bind other classes ---------------------
+    bind[TimeProvider].to[SystemTimeProvider]
+    bind[EthereumCallRequestBuilder]
+    bind[EthereumBatchCallRequestBuilder]
+
+    bind[TokenValueEvaluator]
+    bind[DustOrderEvaluator]
+    bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
 
     // --- bind event extractors ---------------------
     bind[EventExtractor[AddressAllowanceUpdated]]
@@ -103,6 +139,8 @@ class CoreModule(config: Config)
     bind[EventExtractor[RingMinedEvent]].to[RingMinedEventExtractor]
     bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
     bind[EventExtractor[OrderFilledEvent]].to[OrderFillEventExtractor]
+    bind[EventExtractor[OHLCRawData]].to[OHLCRawDataExtractor]
+    bind[EventExtractor[BlockGasPrices]].to[BlockGasPriceExtractor]
 
     // --- bind event dispatchers ---------------------
     bind[EventDispatcher[AddressAllowanceUpdated]]
@@ -123,41 +161,8 @@ class CoreModule(config: Config)
     bind[EventDispatcher[RingMinedEvent]].to[RingMinedEventDispatcher]
     bind[EventDispatcher[TransferEvent]].to[TransferEventDispatcher]
     bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
-
-    // --- bind dals ---------------------
-    bind[OrderDal].to[OrderDalImpl].asEagerSingleton
-    bind[TradeDal].to[TradeDalImpl].asEagerSingleton
-    bind[BlockDal].to[BlockDalImpl].asEagerSingleton
-    bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
-    bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
-    bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
-    bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
-    bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
-
-    // --- bind db services ---------------------
-    bind[OrderService].to[OrderServiceImpl].asEagerSingleton
-    bind[TradeService].to[TradeServiceImpl].asEagerSingleton
-    bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
-    bind[BlockService].to[BlockServiceImpl].asEagerSingleton
-
-    bind[OrderStatusMonitorService]
-      .to[OrderStatusMonitorServiceImpl]
-      .asEagerSingleton
-
-    // --- bind local singletons ---------------------
-    bind[DatabaseModule].asEagerSingleton
-    bind[MetadataManager].asEagerSingleton
-
-    bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
-
-    // --- bind other classes ---------------------
-    bind[TimeProvider].to[SystemTimeProvider]
-    bind[EthereumCallRequestBuilder]
-    bind[EthereumBatchCallRequestBuilder]
-
-    bind[TokenValueEvaluator]
-    bind[DustOrderEvaluator]
-    bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
+    bind[EventDispatcher[OHLCRawData]].to[OHLCRawDataEventDispatcher]
+    bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -180,6 +185,8 @@ class CoreModule(config: Config)
       transferEventDispatcher: EventDispatcher[TransferEvent],
       allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdated],
       ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
+      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawData],
+      blockGasPricesDispatcher: EventDispatcher[BlockGasPrices],
       tokenBurnRateChangedEventDispatcher: EventDispatcher[
         TokenBurnRateChangedEvent
       ]
@@ -192,6 +199,8 @@ class CoreModule(config: Config)
       transferEventDispatcher,
       allowanceEventDispatcher,
       ordersCancelledEventDispatcher,
+      ohlcRawDataEventDispatcher,
+      blockGasPricesDispatcher,
       tokenBurnRateChangedEventDispatcher
     )
 

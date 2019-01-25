@@ -94,9 +94,10 @@ class MissingBlocksEventExtractorActor(
       for {
         missingBlocksOpt <- dbModule.missingBlocksRecordDal.getOldestOne()
       } yield {
+        println(s"missingBlocksOpt:${missingBlocksOpt}")
         if (missingBlocksOpt.isDefined) {
           val missingBlocks = missingBlocksOpt.get
-          blockData = RawBlockData(missingBlocks.lastHandledBlock - 1)
+          blockData = RawBlockData(height = missingBlocks.lastHandledBlock)
           untilBlock = missingBlocks.blockEnd
           sequenceId = missingBlocks.sequenceId
           self ! GET_BLOCK
@@ -107,16 +108,16 @@ class MissingBlocksEventExtractorActor(
       }
   }
 
-  def process =
-    processEvents.map(
-      _ => {
-        dbModule.missingBlocksRecordDal
-          .updateProgress(sequenceId, blockData.height)
-        if (blockData.height >= untilBlock) {
-          dbModule.missingBlocksRecordDal.deleteRecord(sequenceId)
-          self ! NEXT_RANGE
-        }
+  override def postProcessEvents =
+    for {
+      _ <- dbModule.missingBlocksRecordDal
+        .updateProgress(sequenceId, blockData.height)
+      needDelete = blockData.height >= untilBlock
+      _ <- if (!needDelete) Future.successful(Unit)
+      else dbModule.missingBlocksRecordDal.deleteRecord(sequenceId)
+      _ = if (needDelete) {
+        self ! NEXT_RANGE
       }
-    )
+    } yield Unit
 
 }

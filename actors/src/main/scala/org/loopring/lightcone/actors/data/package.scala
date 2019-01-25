@@ -20,11 +20,13 @@ import java.math.BigInteger
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+import org.loopring.lightcone.lib.data._
 
 package object data {
 
@@ -37,17 +39,17 @@ package object data {
     def sequenceId() = {
       if (header.blockNumber > 500000000) // < pow(2, 29)
         throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          ERR_INTERNAL_UNKNOWN,
           s"blockNumber >= 500000000 in ${header}"
         )
       if (header.txIndex >= 4096 || header.logIndex >= 4096) // pow(2, 12)
         throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          ERR_INTERNAL_UNKNOWN,
           s"txIndex or logIndex >= 4096 in ${header}"
         )
       if (header.eventIndex >= 1024) // pow(2, 10)
         throw ErrorException(
-          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          ERR_INTERNAL_UNKNOWN,
           s"eventIndex >= 1024 in ${header}"
         )
       val b: Long = header.blockNumber << 34
@@ -56,19 +58,6 @@ package object data {
       b + t + l + header.eventIndex
     }
   }
-
-  ///////////
-  //todo:core.AccountManagerImp中也有使用，需要统一
-  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
-    if (bytes.size() > 0) BigInt(bytes.toByteArray)
-    else BigInt(0)
-  }
-
-  implicit def bigInt2ByteString(b: BigInt): ByteString =
-    ByteString.copyFrom(b.toByteArray)
-
-  implicit def byteArray2ByteString(bytes: Array[Byte]) =
-    ByteString.copyFrom(bytes)
 
   implicit def balanceAndAlowance2BalanceAndAlowanceBigInt(
       xba: BalanceAndAllowance
@@ -89,6 +78,7 @@ package object data {
       amountS = order.amountS,
       amountB = order.amountB,
       amountFee = order.amountFee,
+      validSince = order.validSince,
       submittedAt = order.submittedAt,
       numAttempts = order.numAttempts,
       status = order.status,
@@ -108,6 +98,7 @@ package object data {
       amountS = matchable.amountS,
       amountB = matchable.amountB,
       amountFee = matchable.amountFee,
+      validSince = matchable.validSince,
       submittedAt = matchable.submittedAt,
       numAttempts = matchable.numAttempts,
       status = matchable.status,
@@ -195,18 +186,14 @@ package object data {
 
   implicit def convertOrderStatusToErrorCode(status: OrderStatus): ErrorCode =
     status match {
-      case STATUS_INVALID_DATA              => ERR_INVALID_ORDER_DATA
-      case STATUS_UNSUPPORTED_MARKET        => ERR_INVALID_MARKET
-      case STATUS_CANCELLED_TOO_MANY_ORDERS => ERR_TOO_MANY_ORDERS
-      case STATUS_CANCELLED_DUPLICIATE      => ERR_ORDER_ALREADY_EXIST
-      case _                                => ERR_INTERNAL_UNKNOWN
+      case STATUS_INVALID_DATA                   => ERR_INVALID_ORDER_DATA
+      case STATUS_UNSUPPORTED_MARKET             => ERR_INVALID_MARKET
+      case STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS => ERR_TOO_MANY_ORDERS
+      case STATUS_SOFT_CANCELLED_DUPLICIATE      => ERR_ORDER_ALREADY_EXIST
+      case _                                     => ERR_INTERNAL_UNKNOWN
     }
 
   implicit class RichMarketId(marketId: MarketId) {
-
-    def key(): BigInteger = {
-      Numeric.toBigInt(marketId.primary) xor
-        Numeric.toBigInt(marketId.secondary)
-    }
+    def key() = MarketKey(marketId).toString
   }
 }
