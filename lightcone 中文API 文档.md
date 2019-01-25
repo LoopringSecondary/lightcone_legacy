@@ -105,13 +105,13 @@
 
   Order结构：
 
-  - owner      	 Address
-  - version            Int
-  - tokenS            Address
-  - tokenB           Address
-  - AmountS       Hex String 
-  - AmountB       Hex String
-  -  validSince     Timestamp (seconds)
-  - validUntil       Timestamp (seconds)
+  - owner :  Address
+  - version :  Int
+  - tokenS : Address
+  - tokenB : Address
+  - AmountS : Hex String 
+  - AmountB : Hex String
+  -  validSince : Timestamp (seconds)
+  - validUntil : Timestamp (seconds)
 
 - 
