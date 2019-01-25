@@ -27,7 +27,6 @@ import scala.concurrent._
 class BasicEventExtractorSpec
     extends CommonSpec
     with EthereumSupport
-    with DatabaseModuleSupport
     with MetadataManagerSupport
     with EventExtractorSupport {
 

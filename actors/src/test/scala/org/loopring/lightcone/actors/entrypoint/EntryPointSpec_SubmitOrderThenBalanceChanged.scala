@@ -29,7 +29,6 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
     with JsonrpcSupport
     with HttpSupport
     with EthereumSupport
-    with DatabaseModuleSupport
     with MetadataManagerSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport

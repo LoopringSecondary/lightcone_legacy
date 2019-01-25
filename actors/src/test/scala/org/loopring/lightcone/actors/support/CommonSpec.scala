@@ -52,6 +52,7 @@ abstract class CommonSpec(configStr: String = "")
 
   override def afterAll: Unit = {
     info(s"${this.getClass} finished.")
+    super.afterAll()
     TestKit.shutdownActorSystem(system, 10.seconds, false)
   }
 

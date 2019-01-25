@@ -24,7 +24,6 @@ import scala.concurrent.Await
 class EntryPointSpec
     extends CommonSpec
     with EthereumSupport
-    with DatabaseModuleSupport
     with MetadataManagerSupport
     with OrderbookManagerSupport
     with JsonrpcSupport

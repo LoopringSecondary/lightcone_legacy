@@ -207,6 +207,15 @@ final class MetadataManager @Inject()(implicit val config: Config)
     true
   }
 
+  def assertMarketIdIsActive(marketId: MarketId): Boolean = {
+    if (!activeMarkets.contains(MarketKey(marketId).toString))
+      throw ErrorException(
+        ErrorCode.ERR_INVALID_MARKET,
+        s"marketId:${marketId} has been terminated"
+      )
+    true
+  }
+
   // check market is valid (has metadata config)
   def isValidMarket(marketKey: String): Boolean =
     getValidMarketIds.contains(marketKey.toLowerCase())
@@ -222,12 +231,6 @@ final class MetadataManager @Inject()(implicit val config: Config)
     isActiveMarket(MarketKey(marketId).toString)
 
   def getValidMarketIds = activeMarkets ++ readOnlyMarkets
-
-  def getEnabledMarketIds = activeMarkets
-
-  def getTerminatedMarketIds = terminatedMarkets
-
-  def getReadOnlyMarketIds = readOnlyMarkets
 
   def subscribToken(subFun: (TokenMetadata) => Unit) = {
     tokenSubscribees = tokenSubscribees + subFun

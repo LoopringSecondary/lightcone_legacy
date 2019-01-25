@@ -47,14 +47,7 @@ final class MultiAccountManagerMessageValidator(
 
   def validate = {
     case req @ CancelOrder.Req(_, owner, _, Some(marketId)) =>
-      if (!metadataManager.getEnabledMarketIds.contains(
-            MarketKey(marketId).toString
-          )) {
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_MARKET,
-          s"marketId:${marketId} has been terminated"
-        )
-      }
+      metadataManager.assertMarketIdIsActive(marketId)
       req.copy(
         owner = Address.normalizeAddress(owner),
         marketId = Some(
@@ -81,14 +74,9 @@ final class MultiAccountManagerMessageValidator(
         case Right(rawOrder) =>
           val marketId =
             MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
+          metadataManager.assertMarketIdIsActive(marketId)
+
           val marketKey = MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
-          if (!metadataManager.getEnabledMarketIds.contains(marketKey)) {
-            throw ErrorException(
-              ErrorCode.ERR_INVALID_MARKET,
-              s"marketId:${marketId} has been terminated"
-            )
-          }
-          metadataManager.assertMarketIdIsValid(Some(marketId))
 
           val now = timeProvider.getTimeMillis
           val state = RawOrder.State(

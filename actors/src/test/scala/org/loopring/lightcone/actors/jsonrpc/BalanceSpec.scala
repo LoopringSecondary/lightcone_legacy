@@ -28,7 +28,6 @@ import scala.concurrent.Await
 class BalanceSpec
     extends CommonSpec
     with EthereumSupport
-    with DatabaseModuleSupport
     with MetadataManagerSupport
     with MultiAccountManagerSupport
     with MarketManagerSupport

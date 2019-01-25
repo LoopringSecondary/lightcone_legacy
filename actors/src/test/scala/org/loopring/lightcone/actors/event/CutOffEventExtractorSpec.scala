@@ -16,9 +16,9 @@
 
 package org.loopring.lightcone.actors.event
 
-import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto.SubmitOrder
+import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent.Await
 

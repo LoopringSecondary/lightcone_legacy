@@ -75,7 +75,7 @@ object MarketManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  //READONLY的不能在该处处理，需要在validtor中截取，因为该处还需要将orderbook等恢复
+  //READONLY的不能在该处拦截，需要在validtor中截取，因为该处还需要将orderbook等恢复
   val extractMarketId: PartialFunction[Any, MarketId] = {
     case SubmitSimpleOrder(_, Some(order))
         if metadataManager.isValidMarket(
@@ -332,7 +332,7 @@ class MarketManagerActor(
           s"this actor:${self.path} will be to stoped, due to the status of this market has been changed to TERMINATED."
         )
         context.stop(self)
-      case _ => //READONLY时，也需要在恢复时，继续接受订单提供给orderbook，
+      case _ => //READONLY时，也需要在恢复时，继续接受订单提供给orderbook，因此不能stop
     }
   }
 

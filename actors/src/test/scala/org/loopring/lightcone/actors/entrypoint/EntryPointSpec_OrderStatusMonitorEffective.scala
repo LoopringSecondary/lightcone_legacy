@@ -28,7 +28,6 @@ class EntryPointSpec_OrderStatusMonitorEffective
     with JsonrpcSupport
     with HttpSupport
     with EthereumSupport
-    with DatabaseModuleSupport
     with MetadataManagerSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport

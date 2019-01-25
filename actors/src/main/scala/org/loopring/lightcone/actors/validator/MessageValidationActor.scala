@@ -60,11 +60,10 @@ class MessageValidationActor(
 
   override def receive: Receive = {
     case msg =>
-      log.info(s"### ${msg}")
       Future {
         validate(msg) match {
           case Some(validatedMsg) if validatedMsg != msg =>
-            log.info(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
+            log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
             validatedMsg
 
           case Some(validatedMsg) =>
