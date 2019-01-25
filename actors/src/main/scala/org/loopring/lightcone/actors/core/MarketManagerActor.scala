@@ -104,7 +104,9 @@ class MarketManagerActor(
       MarketManagerActor.name,
       MarketManagerActor.extractEntityId
     )
+    with RepeatedJobActor
     with ActorLogging {
+
   implicit val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
     .get
@@ -146,35 +148,39 @@ class MarketManagerActor(
   )
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
-  protected def orderbookManagerMediator =
+  protected def mediator =
     DistributedPubSub(context.system).mediator
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
 
-  override def initialize() = {
-    if (skiprecover) Future.successful {
-      log.debug(s"actor recover skipped: ${self.path}")
-      becomeReady()
-    } else {
-      log.debug(s"actor recover started: ${self.path}")
-      context.become(recover)
-      for {
-        _ <- actors.get(OrderRecoverCoordinator.name) ?
-          ActorRecover.Request(
-            marketId = Some(marketId),
-            sender = Serialization.serializedActorPath(self)
-          )
-      } yield {
-        autoSwitchBackToReady = Some(
-          context.system.scheduler
-            .scheduleOnce(
-              maxRecoverDurationMinutes.minute,
-              self,
-              ActorRecover.Finished(true)
+  var gasPrice: BigInt = _
+
+  override def initialize() =
+    for {
+      _ <- syncGasPrice()
+      _ <- if (skiprecover) Future.successful {
+        log.debug(s"actor recover skipped: ${self.path}")
+        becomeReady()
+      } else {
+        log.debug(s"actor recover started: ${self.path}")
+        context.become(recover)
+        for {
+          _ <- actors.get(OrderRecoverCoordinator.name) ?
+            ActorRecover.Request(
+              marketId = Some(marketId),
+              sender = Serialization.serializedActorPath(self)
             )
-        )
+        } yield {
+          autoSwitchBackToReady = Some(
+            context.system.scheduler
+              .scheduleOnce(
+                maxRecoverDurationMinutes.minute,
+                self,
+                ActorRecover.Finished(true)
+              )
+          )
+        }
       }
-    }
-  }
+    } yield Unit
 
   def recover: Receive = {
 
@@ -207,7 +213,7 @@ class MarketManagerActor(
 
     case CancelOrder.Req(orderId, _, _, _) =>
       manager.cancelOrder(orderId) foreach { orderbookUpdate =>
-        orderbookManagerMediator ! Publish(
+        mediator ! Publish(
           OrderbookManagerActor.getTopicId(marketId),
           orderbookUpdate.copy(marketId = Some(marketId))
         )
@@ -215,20 +221,20 @@ class MarketManagerActor(
       sender ! CancelOrder.Res(id = orderId)
 
     case GasPriceUpdated(_gasPrice) =>
-      val gasPrice: BigInt = _gasPrice
-      manager.triggerMatch(true, getRequiredMinimalIncome(gasPrice)) foreach {
+      this.gasPrice = _gasPrice
+      manager.triggerMatch(true, getRequiredMinimalIncome()) foreach {
         matchResult =>
-          updateOrderbookAndSettleRings(matchResult, gasPrice)
+          updateOrderbookAndSettleRings(matchResult)
       }
 
     case TriggerRematch(sellOrderAsTaker, offset) =>
       for {
-        res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
-        gasPrice: BigInt = res.gasPrice
-        minRequiredIncome = getRequiredMinimalIncome(gasPrice)
+
+        minRequiredIncome <- Future.successful(getRequiredMinimalIncome())
+
         _ = manager
           .triggerMatch(sellOrderAsTaker, minRequiredIncome, offset)
-          .foreach { updateOrderbookAndSettleRings(_, gasPrice) }
+          .foreach { updateOrderbookAndSettleRings(_) }
       } yield Unit
 
     case RingMinedEvent(Some(header), _, _, _, fills) =>
@@ -240,14 +246,9 @@ class MarketManagerActor(
         } else if (header.txStatus == TxStatus.TX_STATUS_FAILED) {
           val matchResults = manager.deleteRing(ringhash, false)
           if (matchResults.nonEmpty) {
-            for {
-              res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
-              gasPrice: BigInt = res.gasPrice
-              _ = matchResults.map { matchResult =>
-                updateOrderbookAndSettleRings(matchResult, gasPrice)
-              }
-
-            } yield Unit
+            matchResults.foreach { matchResult =>
+              updateOrderbookAndSettleRings(matchResult)
+            }
           }
         }
       } sendTo sender
@@ -261,19 +262,17 @@ class MarketManagerActor(
     )
     val matchable: Matchable = order
     order.status match {
-      case OrderStatus.STATUS_NEW | OrderStatus.STATUS_PENDING =>
+      case OrderStatus.STATUS_NEW | OrderStatus.STATUS_PENDING |
+          OrderStatus.STATUS_PARTIALLY_FILLED =>
         for {
           // get ring settlement cost
-          res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
-
-          gasPrice: BigInt = res.gasPrice
-          minRequiredIncome = getRequiredMinimalIncome(gasPrice)
+          minRequiredIncome <- Future.successful(getRequiredMinimalIncome())
 
           // submit order to reserve balance and allowance
           matchResult = manager.submitOrder(matchable, minRequiredIncome)
           _ = log.debug(s"matchResult, ${matchResult}")
           //settlement matchResult and update orderbook
-          _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
+          _ = updateOrderbookAndSettleRings(matchResult)
         } yield Unit
 
       case s =>
@@ -281,19 +280,14 @@ class MarketManagerActor(
     }
   }
 
-  private def getRequiredMinimalIncome(gasPrice: BigInt): Double = {
+  private def getRequiredMinimalIncome(): Double = {
     val costinEth = gasLimitPerRingV2 * gasPrice
     tve.getValue(wethTokenAddress, costinEth)
   }
 
-  private def updateOrderbookAndSettleRings(
-      matchResult: MatchResult,
-      gasPrice: BigInt
-    ) {
+  private def updateOrderbookAndSettleRings(matchResult: MatchResult) {
     // Settle rings
     if (matchResult.rings.nonEmpty) {
-      log.debug(s"rings: ${matchResult.rings}")
-
       settlementActor ! SettleRings(
         rings = matchResult.rings,
         gasLimit = gasLimitPerRingV2 * matchResult.rings.size,
@@ -304,7 +298,7 @@ class MarketManagerActor(
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerMediator ! Publish(
+      mediator ! Publish(
         OrderbookManagerActor.getTopicId(marketId),
         ou.copy(marketId = Some(marketId))
       )
@@ -313,5 +307,19 @@ class MarketManagerActor(
 
   def recoverOrder(xraworder: RawOrder): Future[Any] =
     submitOrder(xraworder)
+
+  def syncGasPrice(): Future[Unit] =
+    for {
+      res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
+    } yield this.gasPrice = res.gasPrice
+
+  val repeatedJobs = Seq(
+    Job(
+      name = "sync-gasprice",
+      dalayInSeconds = 60, // 10 minutes
+      initialDalayInSeconds = 10,
+      run = () => syncGasPrice()
+    )
+  )
 
 }

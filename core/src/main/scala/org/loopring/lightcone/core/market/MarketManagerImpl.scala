@@ -62,7 +62,7 @@ class MarketManagerImpl(
 
   private var isLastTakerSell = false
   private var latestPrice: Double = 0
-  private var minFiatValue: Double = 0
+  private var minRequiredIncome: Double = 0
 
   private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.primary
   private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.secondary
@@ -116,10 +116,10 @@ class MarketManagerImpl(
 
   def submitOrder(
       order: Matchable,
-      minFiatValue: Double
+      minRequiredIncome: Double
     ): MatchResult = this.synchronized {
-    this.minFiatValue = minFiatValue
-    matchOrders(order, minFiatValue)
+    this.minRequiredIncome = minRequiredIncome
+    matchOrders(order, minRequiredIncome)
 
   }
 
@@ -135,7 +135,7 @@ class MarketManagerImpl(
 
   private[core] def matchOrders(
       order: Matchable,
-      minFiatValue: Double
+      minRequiredIncome: Double
     ): MatchResult = {
     if (order.numAttempts > maxSettementFailuresPerOrder) {
       MatchResult(
@@ -156,7 +156,7 @@ class MarketManagerImpl(
       def recursivelyMatchOrders(): Unit = {
         popTopMakerOrder(taker).map { maker =>
           val matchResult =
-            ringMatcher.matchOrders(taker, maker, minFiatValue)
+            ringMatcher.matchOrders(taker, maker, minRequiredIncome)
 
           log.debug(s"""
                        | \n-- recursive matching (${taker.id} => ${maker.id}) --
@@ -280,6 +280,6 @@ class MarketManagerImpl(
         order.copy(numAttempts = order.numAttempts + 1)
       }
       .sortWith(_.submittedAt < _.submittedAt)
-      .map(submitOrder(_, minFiatValue))
+      .map(submitOrder(_, minRequiredIncome))
   }
 }
