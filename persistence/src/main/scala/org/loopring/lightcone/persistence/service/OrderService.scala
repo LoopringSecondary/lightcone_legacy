@@ -93,12 +93,17 @@ trait OrderService {
       status: OrderStatus
     ): Future[ErrorCode]
 
+  def updateOrderState(
+      hash: String,
+      state: RawOrder.State
+    ): Future[ErrorCode]
+
   def updateOrdersStatus(
       hashes: Seq[String],
       status: OrderStatus
     ): Future[ErrorCode]
 
-  def updateAmount(
+  def updateAmounts(
       hash: String,
       state: RawOrder.State
     ): Future[ErrorCode]

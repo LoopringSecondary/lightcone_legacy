@@ -313,7 +313,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val result = for {
       saved <- testSave(owner, OrderStatus.STATUS_NEW, tokenS, tokenB)
       _ = assert(saved.isLeft)
-      update <- service.updateAmount(saved.left.get.hash, state)
+      update <- service.updateAmounts(saved.left.get.hash, state)
       query <- service.getOrder(saved.left.get.hash)
     } yield (update, query)
     val res =

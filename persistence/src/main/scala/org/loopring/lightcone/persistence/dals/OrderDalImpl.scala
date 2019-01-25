@@ -50,10 +50,10 @@ class OrderDalImpl @Inject()(
     OrderStatus.STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR,
     OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER,
     OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR,
-    OrderStatus.STATUS_CANCELLED_LOW_BALANCE,
-    OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE,
-    OrderStatus.STATUS_CANCELLED_TOO_MANY_ORDERS,
-    OrderStatus.STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
+    OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE,
+    OrderStatus.STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE,
+    OrderStatus.STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS,
+    OrderStatus.STATUS_SOFT_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS
   )
 
   val activeStatus = Set(
@@ -509,7 +509,7 @@ class OrderDalImpl @Inject()(
       else ERR_PERSISTENCE_UPDATE_FAILED
     }
 
-  def updateAmount(
+  def updateAmounts(
       hash: String,
       state: RawOrder.State
     ): Future[ErrorCode] =
@@ -536,6 +536,43 @@ class OrderDalImpl @Inject()(
             state.outstandingAmountS,
             state.outstandingAmountB,
             state.outstandingAmountFee,
+            timeProvider.getTimeMillis
+          )
+      )
+    } yield {
+      if (result >= 1) ERR_NONE
+      else ERR_PERSISTENCE_UPDATE_FAILED
+    }
+
+  def updateOrderState(
+      hash: String,
+      state: RawOrder.State
+    ): Future[ErrorCode] =
+    for {
+      result <- db.run(
+        query
+          .filter(_.hash === hash)
+          .map(
+            c =>
+              (
+                c.actualAmountS,
+                c.actualAmountB,
+                c.actualAmountFee,
+                c.outstandingAmountS,
+                c.outstandingAmountB,
+                c.outstandingAmountFee,
+                c.status,
+                c.updatedAt
+              )
+          )
+          .update(
+            state.actualAmountS,
+            state.actualAmountB,
+            state.actualAmountFee,
+            state.outstandingAmountS,
+            state.outstandingAmountB,
+            state.outstandingAmountFee,
+            state.status,
             timeProvider.getTimeMillis
           )
       )
