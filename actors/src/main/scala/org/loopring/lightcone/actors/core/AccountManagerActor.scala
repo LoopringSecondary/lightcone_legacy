@@ -74,6 +74,7 @@ class AccountManagerActor(
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   override def preStart() = {
+    //todo:合并为批量查询，会在另一个pr里提交
     val cutoffReqs = (metadataManager.getValidMarketIds map { m =>
       for {
         res <- (ethereumQueryActor ? GetCutoff.Req(
