@@ -77,7 +77,7 @@ class EntryPointSpec_SubmitOneOrder
           println(s"sells:${sells}, buys:${buys}")
           assert(sells.nonEmpty)
           assert(
-            sells(0).price == "10.000000" &&
+            sells(0).price == "0.010000" &&
               //              sells(0).amount == "10.00000" &&
               sells(0).total == "1.00000"
           )

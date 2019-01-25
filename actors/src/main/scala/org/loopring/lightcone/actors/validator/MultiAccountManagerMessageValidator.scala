@@ -33,10 +33,11 @@ object MultiAccountManagerMessageValidator {
 
 // This class can be deleted in the future.
 final class MultiAccountManagerMessageValidator(
-  implicit val config: Config,
-  timeProvider: TimeProvider,
-  metadataManager: MetadataManager)
-  extends MessageValidator {
+    implicit
+    val config: Config,
+    timeProvider: TimeProvider,
+    metadataManager: MetadataManager)
+    extends MessageValidator {
 
   val multiAccountConfig =
     config.getConfig(MultiAccountManagerActor.name)
@@ -54,46 +55,56 @@ final class MultiAccountManagerMessageValidator(
         case None =>
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
-            s"bad request:${req}")
+            s"bad request:${req}"
+          )
         case Some(order) =>
           metadataManager.assertMarketIdIsValid(
-            MarketId(order.tokenS, order.tokenB))
+            MarketId(order.tokenS, order.tokenB)
+          )
           req.copy(
             order = Some(
               order.copy(
                 tokenB = Address.normalizeAddress(order.tokenB),
                 tokenS = Address.normalizeAddress(order.tokenS),
-                tokenFee = Address.normalizeAddress(order.tokenFee))),
-            owner = Address.normalizeAddress(req.owner))
+                tokenFee = Address.normalizeAddress(order.tokenFee)
+              )
+            ),
+            owner = Address.normalizeAddress(req.owner)
+          )
       }
     case req: ActorRecover.RecoverOrderReq => req
     case req: GetBalanceAndAllowances.Req =>
       req.copy(
         address = Address.normalizeAddress(req.address),
-        tokens = req.tokens.map(Address.normalizeAddress))
+        tokens = req.tokens.map(Address.normalizeAddress)
+      )
 
     case req: AddressBalanceUpdated =>
       req.copy(
         address = Address.normalizeAddress(req.address),
-        token = Address.normalizeAddress(req.token))
+        token = Address.normalizeAddress(req.token)
+      )
 
     case req: AddressAllowanceUpdated =>
       req.copy(
         address = Address.normalizeAddress(req.address),
-        token = Address.normalizeAddress(req.token))
+        token = Address.normalizeAddress(req.token)
+      )
 
     case req @ SubmitOrder.Req(Some(order)) =>
       orderValidator.validate(order) match {
         case Left(errorCode) =>
           throw ErrorException(
             errorCode,
-            message = s"invalid order in SubmitOrder.Req:$order")
+            message = s"invalid order in SubmitOrder.Req:$order"
+          )
         case Right(rawOrder) =>
           val now = timeProvider.getTimeMillis
           val state = RawOrder.State(
             createdAt = now,
             updatedAt = now,
-            status = OrderStatus.STATUS_NEW)
+            status = OrderStatus.STATUS_NEW
+          )
 
           val marketId =
             MarketId(rawOrder.tokenS, rawOrder.tokenB)
@@ -107,7 +118,9 @@ final class MultiAccountManagerMessageValidator(
               marketShard = MarketManagerActor.getEntityId(marketId).toInt,
               accountShard = MultiAccountManagerActor
                 .getEntityId(order.owner, numOfShards)
-                .toInt))
+                .toInt
+            )
+          )
       }
   }
 }

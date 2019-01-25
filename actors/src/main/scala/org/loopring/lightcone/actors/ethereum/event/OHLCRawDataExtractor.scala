@@ -24,11 +24,12 @@ import org.web3j.utils.Numeric
 
 import scala.concurrent._
 
-class OHLCRawDataExtractor @Inject() (
-  implicit extractor: RingMinedEventExtractor,
-  val ec: ExecutionContext,
-  val metadataManager: MetadataManager)
-  extends EventExtractor[OHLCRawData] {
+class OHLCRawDataExtractor @Inject()(
+    implicit
+    extractor: RingMinedEventExtractor,
+    val ec: ExecutionContext,
+    val metadataManager: MetadataManager)
+    extends EventExtractor[OHLCRawData] {
 
   def extract(block: RawBlockData): Future[Seq[OHLCRawData]] = {
     extractor
@@ -36,7 +37,8 @@ class OHLCRawDataExtractor @Inject() (
       .map { rings =>
         rings.filter(
           ring =>
-            ring.header.isDefined && ring.header.get.txStatus.isTxStatusSuccess)
+            ring.header.isDefined && ring.header.get.txStatus.isTxStatusSuccess
+        )
       }
       .map { rings =>
         rings.flatMap { ring =>
@@ -65,7 +67,8 @@ class OHLCRawDataExtractor @Inject() (
                   _fill,
                   primaryToken,
                   secondaryToken,
-                  marketMetadata)
+                  marketMetadata
+                )
 
                 Some(
                   OHLCRawData(
@@ -77,7 +80,9 @@ class OHLCRawDataExtractor @Inject() (
                     amount = amount,
                     price = BigDecimal(amount / quality)
                       .setScale(marketMetadata.priceDecimals)
-                      .doubleValue()))
+                      .doubleValue()
+                  )
+                )
               }
           }.filter(_.isDefined).map(_.get).distinct
         }
@@ -86,11 +91,12 @@ class OHLCRawDataExtractor @Inject() (
 
   // TODO(yangli): LRC-WETH market, LRC is the primary, WETH is the secondary.
   def getAmounts(
-    fill: OrderFilledEvent,
-    _fill: OrderFilledEvent,
-    primaryToken: Token,
-    secondaryToken: Token,
-    marketMetadata: MarketMetadata): (Double, Double) = {
+      fill: OrderFilledEvent,
+      _fill: OrderFilledEvent,
+      primaryToken: Token,
+      secondaryToken: Token,
+      marketMetadata: MarketMetadata
+    ): (Double, Double) = {
     val amountInWei =
       if (Address(primaryToken.meta.address).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)

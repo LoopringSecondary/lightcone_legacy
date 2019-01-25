@@ -26,23 +26,24 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto.Orderbook.Item
 import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{Await, Future}
 
 class RecoverOrderSpec
-  extends CommonSpec
-  with JsonrpcSupport
-  with HttpSupport
-  with EthereumSupport
-  with MetadataManagerSupport
-  with OrderHandleSupport
-  with MultiAccountManagerSupport
-  with MarketManagerSupport
-  with OrderbookManagerSupport
-  with OrderGenerateSupport
-  with RecoverSupport {
+    extends CommonSpec
+    with JsonrpcSupport
+    with HttpSupport
+    with EthereumSupport
+    with MetadataManagerSupport
+    with OrderHandleSupport
+    with MultiAccountManagerSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport
+    with OrderGenerateSupport
+    with RecoverSupport {
 
   private def testSaves(
-    orders: Seq[RawOrder]): Future[Seq[Either[RawOrder, ErrorCode]]] = {
+      orders: Seq[RawOrder]
+    ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
     for {
       result <- Future.sequence(orders.map { order =>
         dbModule.orderService.saveOrder(order)
@@ -50,18 +51,22 @@ class RecoverOrderSpec
     } yield result
   }
 
-  private def testSaveOrder4Recover(): Future[Seq[Either[RawOrder, ErrorCode]]] = {
+  private def testSaveOrder4Recover(
+    ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
     val rawOrders = ((0 until 6) map { i =>
       createRawOrder(
         amountS = "10".zeros(LRC_TOKEN.decimals),
-        amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
+        amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+      )
     }) ++
       ((0 until 4) map { i =>
         val o = createRawOrder(
           amountS = "20".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        )
         o.copy(
-          state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING)))
+          state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
+        )
         o
       }) ++
       ((0 until 3) map { i =>
@@ -69,9 +74,11 @@ class RecoverOrderSpec
           tokenS = "0x021",
           tokenB = "0x022",
           amountS = "11".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        )
         o.copy(
-          state = Some(o.state.get.copy(status = OrderStatus.STATUS_EXPIRED)))
+          state = Some(o.state.get.copy(status = OrderStatus.STATUS_EXPIRED))
+        )
         o
       }) ++
       ((0 until 5) map { i =>
@@ -79,9 +86,11 @@ class RecoverOrderSpec
           tokenS = "0x031",
           tokenB = "0x032",
           amountS = "12".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        )
         o.copy(
-          state = Some(o.state.get.copy(status = OrderStatus.STATUS_DUST_ORDER)))
+          state = Some(o.state.get.copy(status = OrderStatus.STATUS_DUST_ORDER))
+        )
         o
       }) ++
       ((0 until 2) map { i =>
@@ -89,10 +98,12 @@ class RecoverOrderSpec
           tokenS = "0x041",
           tokenB = "0x042",
           amountS = "13".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        )
         o.copy(
           state =
-            Some(o.state.get.copy(status = OrderStatus.STATUS_PARTIALLY_FILLED)))
+            Some(o.state.get.copy(status = OrderStatus.STATUS_PARTIALLY_FILLED))
+        )
         o
       })
     testSaves(rawOrders)
@@ -105,7 +116,8 @@ class RecoverOrderSpec
       val getOrderBook1 = GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address)))
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+      )
       val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
       val timeout1 = Timeout(5 second)
       val orderbookRes1 =
@@ -117,13 +129,13 @@ class RecoverOrderSpec
       // 2. save some orders in db
       testSaveOrder4Recover()
       // 3. recover
-      val marketLrcWeth = Some(
-        MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+      val marketLrcWeth = Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       val marketMock4 = Some(MarketId("0x041", "0x042"))
       val request1 = ActorRecover.Request(
         addressShardingEntity = MultiAccountManagerActor
           .getEntityId(owner, 100),
-        marketId = marketLrcWeth)
+        marketId = marketLrcWeth
+      )
       implicit val timeout = Timeout(100 second)
       val r = actors.get(OrderRecoverCoordinator.name) ? request1
       val res = Await.result(r, timeout.duration)
@@ -137,11 +149,12 @@ class RecoverOrderSpec
           .get
       assert(orderbookRes1.sells.isEmpty && orderbookRes1.buys.isEmpty)
       assert(
-        orderbookRes2.sells.nonEmpty && orderbookRes2.sells.length === 2 && orderbookRes2.buys.isEmpty)
+        orderbookRes2.sells.nonEmpty && orderbookRes2.sells.length === 2 && orderbookRes2.buys.isEmpty
+      )
       orderbookRes2.sells.foreach(_ match {
         case Item("10.000000", "60.00000", "6.00000") => assert(true)
         case Item("20.000000", "80.00000", "4.00000") => assert(true)
-        case _ => assert(false)
+        case _                                        => assert(false)
       })
     }
   }

@@ -23,13 +23,13 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.Await
 
 class JrpcSpec
-  extends CommonSpec
-  with EthereumSupport
-  with MetadataManagerSupport
-  with MarketManagerSupport
-  with OrderbookManagerSupport
-  with JsonrpcSupport
-  with HttpSupport {
+    extends CommonSpec
+    with EthereumSupport
+    with MetadataManagerSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport
+    with JsonrpcSupport
+    with HttpSupport {
 
   override def beforeAll() {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
@@ -39,8 +39,10 @@ class JrpcSpec
     "return correct responses" in {
       // 正确返回
       val resonse1 = singleRequest(
-        GetOrderbook.Req(0, 2, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
-        "orderbook")
+        GetOrderbook
+          .Req(0, 2, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+        "orderbook"
+      )
       // 只要返回了Orderbook类型就认为成功，其他会抛异常
       Await.result(resonse1.mapTo[GetOrderbook.Res], timeout.duration)
 
@@ -54,8 +56,9 @@ class JrpcSpec
         case e: ErrorException => e
       }
       result2 match {
-        case e: ErrorException if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
-          .contains("3010") =>
+        case e: ErrorException
+            if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
+              .contains("3010") =>
           assert(true)
         case _ =>
           assert(false)
@@ -65,8 +68,10 @@ class JrpcSpec
       val resonse3 = singleRequest(
         GetBalanceAndAllowances.Req(
           "0xb94065482ad64d4c2b9252358d746b39e820a582",
-          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)),
-        "get_balance_and_allowance")
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),
+        "get_balance_and_allowance"
+      )
       val result3 = try {
         Await.result(resonse3, timeout.duration)
       } catch {
@@ -74,8 +79,9 @@ class JrpcSpec
         case e: ErrorException => e
       }
       result3 match {
-        case e: ErrorException if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
-          .contains("not found actor") =>
+        case e: ErrorException
+            if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
+              .contains("not found actor") =>
           assert(true)
         case _ => assert(false)
       }
@@ -90,8 +96,9 @@ class JrpcSpec
         case e: ErrorException => e
       }
       result4 match {
-        case e: ErrorException if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
-          .contains("-32601") =>
+        case e: ErrorException
+            if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
+              .contains("-32601") =>
           assert(true)
         case _ =>
           assert(false)

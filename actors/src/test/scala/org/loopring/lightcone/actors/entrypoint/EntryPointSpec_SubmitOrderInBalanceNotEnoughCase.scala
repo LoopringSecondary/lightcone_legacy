@@ -120,7 +120,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.nonEmpty)
           assert(
-            sells(0).price == "20.000000" &&
+            sells(0).price == "0.050000" &&
               sells(0).amount == "20.00000" &&
               sells(0).total == "1.00000"
           )
