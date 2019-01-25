@@ -194,6 +194,7 @@ class CoreDeployer @Inject()(
       actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
       actors.add(MarketManagerActor.name, MarketManagerActor.start)
       actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
+      actors.add(OHLCDataHandlerActor.name, OHLCDataHandlerActor.start)
 
       actors.add(TransactionRecordActor.name, TransactionRecordActor.start)
 

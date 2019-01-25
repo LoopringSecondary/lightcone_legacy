@@ -1,6 +1,4 @@
-
-[![CircleCI](https://circleci.com/gh/Loopring/lightcone.svg?style=svg&circle-token=b0b326cac389ea05a6dc019b83a2691f8596688b)](https://circleci.com/gh/Loopring/lightcone) 
-> 注意：CircleCI并没有运行`persistence/test`和`actors/test`
+[![Build Status](https://semaphoreci.com/api/v1/projects/adecda77-2a3e-434e-8517-53a7dfd94586/2473633/shields_badge.svg)](https://semaphoreci.com/loopring/lightcone)
 
 # Lightcone Relay
 

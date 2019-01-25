@@ -235,7 +235,7 @@ class MetadataManagerActor(
     case req: DisableMarket.Req =>
       (for {
         result <- dbModule.marketMetadataDal
-          .disableMarketByHash(req.marketHash)
+          .disableMarketByKey(req.marketKey)
         markets_ <- dbModule.marketMetadataDal.getMarkets()
       } yield {
         if (result == ErrorCode.ERR_NONE) {

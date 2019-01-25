@@ -82,7 +82,8 @@ class CoreModule(config: Config)
       "dbconfig-dal-settlement-tx",
       "dbconfig-dal-order-status-monitor",
       "dbconfig-dal-market-metadata",
-      "dbconfig-dal-missing-blocks-record"
+      "dbconfig-dal-missing-blocks-record",
+      "dbconfig-dal-ohlc-data"
     )
 
     // --- bind dals ---------------------
@@ -137,6 +138,8 @@ class CoreModule(config: Config)
     bind[EventExtractor[RingMinedEvent]].to[RingMinedEventExtractor]
     bind[EventExtractor[TransferEvent]].to[TransferEventExtractor]
     bind[EventExtractor[OrderFilledEvent]].to[OrderFillEventExtractor]
+    bind[EventExtractor[OHLCRawData]].to[OHLCRawDataExtractor]
+    bind[EventExtractor[BlockGasPrices]].to[BlockGasPriceExtractor]
 
     // --- bind event dispatchers ---------------------
     bind[EventDispatcher[AddressAllowanceUpdated]]
@@ -157,6 +160,8 @@ class CoreModule(config: Config)
     bind[EventDispatcher[RingMinedEvent]].to[RingMinedEventDispatcher]
     bind[EventDispatcher[TransferEvent]].to[TransferEventDispatcher]
     bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
+    bind[EventDispatcher[OHLCRawData]].to[OHLCRawDataEventDispatcher]
+    bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -179,6 +184,8 @@ class CoreModule(config: Config)
       transferEventDispatcher: EventDispatcher[TransferEvent],
       allowanceEventDispatcher: EventDispatcher[AddressAllowanceUpdated],
       ordersCancelledEventDispatcher: EventDispatcher[OrdersCancelledEvent],
+      ohlcRawDataEventDispatcher: EventDispatcher[OHLCRawData],
+      blockGasPricesDispatcher: EventDispatcher[BlockGasPrices],
       tokenBurnRateChangedEventDispatcher: EventDispatcher[
         TokenBurnRateChangedEvent
       ]
@@ -191,6 +198,8 @@ class CoreModule(config: Config)
       transferEventDispatcher,
       allowanceEventDispatcher,
       ordersCancelledEventDispatcher,
+      ohlcRawDataEventDispatcher,
+      blockGasPricesDispatcher,
       tokenBurnRateChangedEventDispatcher
     )
 

@@ -17,7 +17,7 @@
 package org.loopring.lightcone.actors.core
 
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.lib.MarketHashProvider
+import org.loopring.lightcone.core.base.MarketKey
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.{Await, Future}
@@ -89,7 +89,7 @@ class DatabaseQuerySpec
       val tradesReq = GetTrades.Req(
         owner = owner,
         market = GetTrades.Req.Market
-          .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB)),
+          .MarketKey(MarketKey(tokenS, tokenB).toString),
         skip = Some(Paging(0, 10)),
         sort = SortingType.ASC
       )

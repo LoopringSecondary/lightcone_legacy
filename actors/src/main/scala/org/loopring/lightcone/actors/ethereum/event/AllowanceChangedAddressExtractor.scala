@@ -93,7 +93,7 @@ class AllowanceChangedAddressExtractor @Inject()(
         Future.successful(Seq.empty)
       }
     } yield {
-      (events zip tokenAllowances).map(item => item._1.withBalance(item._2))
+      (events zip tokenAllowances).map(item => item._1.withAllowance(item._2))
     }
   }
 
