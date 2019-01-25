@@ -80,11 +80,11 @@ class OrderbookRecoverSpec
     val rawOrders =
 
       ((0 until 1) map { i =>
-        val o = createRawOrder( // Buy LRC, price = 1/30 = 0.3333
+        val o = createRawOrder( // Buy LRC, price = 1/20 = 0.05
           tokenS = WETH_TOKEN.address,
           tokenB = LRC_TOKEN.address,
           amountS = "1".zeros(WETH_TOKEN.decimals),
-          amountB = "30".zeros(LRC_TOKEN.decimals),
+          amountB = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )(account2)
         o.copy(
@@ -93,10 +93,10 @@ class OrderbookRecoverSpec
         o
       }) ++
         ((0 until 1) map { i =>
-          val o = createRawOrder( // Sell LRC, price = 1/20 = 0.2
+          val o = createRawOrder( // Sell LRC, price = 1/30 = 0.33333
             tokenS = LRC_TOKEN.address,
             tokenB = WETH_TOKEN.address,
-            amountS = "20".zeros(LRC_TOKEN.decimals),
+            amountS = "30".zeros(LRC_TOKEN.decimals),
             amountB = "1".zeros(WETH_TOKEN.decimals),
             amountFee = (i + 1).toString.zeros(LRC_TOKEN.decimals)
           )(account1)

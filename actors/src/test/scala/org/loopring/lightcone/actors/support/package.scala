@@ -24,7 +24,7 @@ import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.proto.{MarketId, MarketMetadata, TokenMetadata}
+import org.loopring.lightcone.proto.{ MarketId, MarketMetadata, TokenMetadata }
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
 import slick.basic.DatabaseConfig
@@ -42,8 +42,7 @@ package object support {
     symbol = "WETH",
     name = "WETH",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
-  )
+    status = TokenMetadata.Status.ENABLED)
 
   val LRC_TOKEN = TokenMetadata(
     address = Address("0x97241525fe425C90eBe5A41127816dcFA5954b06").toString,
@@ -53,8 +52,7 @@ package object support {
     symbol = "LRC",
     name = "LRC",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
-  )
+    status = TokenMetadata.Status.ENABLED)
 
   val GTO_TOKEN = TokenMetadata(
     address = Address("0x2D7233F72AF7a600a8EbdfA85558C047c1C8F795").toString,
@@ -64,8 +62,7 @@ package object support {
     symbol = "GTO",
     name = "GTO",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
-  )
+    status = TokenMetadata.Status.ENABLED)
 
   val LRC_WETH_MARKET = MarketMetadata(
     status = MarketMetadata.Status.ENABLED,
@@ -77,11 +74,8 @@ package object support {
     precisionForAmount = 5,
     precisionForTotal = 5,
     browsableInWallet = true,
-    marketId = Some(
-      MarketId(primary = LRC_TOKEN.address, secondary = WETH_TOKEN.address)
-    ),
-    marketKey = MarketKey(LRC_TOKEN.address, WETH_TOKEN.address).toString
-  )
+    marketId = Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address)),
+    marketKey = MarketKey(LRC_TOKEN.address, WETH_TOKEN.address).toString)
 
   val GTO_WETH_MARKET = MarketMetadata(
     status = MarketMetadata.Status.ENABLED,
@@ -94,10 +88,8 @@ package object support {
     precisionForTotal = 5,
     browsableInWallet = true,
     marketId = Some(
-      MarketId(primary = GTO_TOKEN.address, secondary = WETH_TOKEN.address)
-    ),
-    marketKey = MarketKey(GTO_TOKEN.address, WETH_TOKEN.address).toString
-  )
+      MarketId(primary = GTO_TOKEN.address, secondary = WETH_TOKEN.address)),
+    marketKey = MarketKey(GTO_TOKEN.address, WETH_TOKEN.address).toString)
 
   val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
 
@@ -114,8 +106,7 @@ package object support {
     "0x86768554c0bdef3a377d2dd180249936db7010a097d472293ae7808536ea45a9",
     "0x6be54ed053274a3cda0f03aa9f9ddd4cafbb7bd03ceffe8731ed76c0f0be3297",
     "0x05a94ee2777a19a7e1ed0c58d2d61b857bb9cd712168cd16848163f12eb80e45",
-    "0x324b720be128e8cacb16395deac8b1332d02da4b2577d4cd94cc453302320ea7"
-  ).map(Credentials.create)
+    "0x324b720be128e8cacb16395deac8b1332d02da4b2577d4cd94cc453302320ea7").map(Credentials.create)
 
   implicit private val suiteDescription =
     Description.createSuiteDescription(this.getClass)
@@ -124,8 +115,7 @@ package object support {
     mysqlImageVersion = Some("mysql:5.7.18"),
     databaseName = Some("lightcone_test"),
     mysqlUsername = Some("test"),
-    mysqlPassword = Some("test")
-  )
+    mysqlPassword = Some("test"))
   mysqlContainer.starting()
 
   val postgreContainer = PostgreSQLContainer("timescale/timescaledb:latest")
@@ -151,8 +141,7 @@ package object support {
   val ethContainer = GenericContainer(
     "kongliangzhong/loopring-ganache:v2",
     exposedPorts = Seq(8545),
-    waitStrategy = Wait.forListeningPort()
-  )
+    waitStrategy = Wait.forListeningPort())
 
   ethContainer.starting()
 

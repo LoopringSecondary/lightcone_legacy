@@ -25,7 +25,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.ErrorCode._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.actors.base.safefuture._
 
@@ -34,48 +34,40 @@ object OrderCutoffHandlerActor {
   val name = "order_cutoff_handler"
 
   def start(
-      implicit
-      system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      dbModule: DatabaseModule,
-      actors: Lookup[ActorRef],
-      deployActorsIgnoringRoles: Boolean
-    ): ActorRef = {
+    implicit system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    dbModule: DatabaseModule,
+    actors: Lookup[ActorRef],
+    deployActorsIgnoringRoles: Boolean): ActorRef = {
 
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     system.actorOf(
       ClusterSingletonManager.props(
         singletonProps = Props(new OrderCutoffHandlerActor()),
         terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-      ),
-      OrderCutoffHandlerActor.name
-    )
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)),
+      OrderCutoffHandlerActor.name)
 
     system.actorOf(
       ClusterSingletonProxy.props(
         singletonManagerPath = s"/user/${OrderCutoffHandlerActor.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${OrderCutoffHandlerActor.name}_proxy"
-    )
+        settings = ClusterSingletonProxySettings(system)),
+      name = s"${OrderCutoffHandlerActor.name}_proxy")
   }
 }
 
-class OrderCutoffHandlerActor(
-  )(
-    implicit
-    val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(OrderCutoffHandlerActor.name)
-    with ActorLogging {
+class OrderCutoffHandlerActor()(
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeProvider: TimeProvider,
+  val timeout: Timeout,
+  val actors: Lookup[ActorRef],
+  val dbModule: DatabaseModule)
+  extends ActorWithPathBasedConfig(OrderCutoffHandlerActor.name)
+  with ActorLogging {
   def mama = actors.get(MultiAccountManagerActor.name)
   val batchSize = selfConfig.getInt("batch-size")
 
@@ -93,14 +85,12 @@ class OrderCutoffHandlerActor(
       if (req.owner.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
-          "owner in CutoffEvent is empty"
-        )
+          "owner in CutoffEvent is empty")
       log.debug(s"Deal with cutoff:$req")
       self ! RetrieveOrdersToCancel(
         broker = req.broker,
         owner = req.owner,
-        cutoff = req.cutoff
-      )
+        cutoff = req.cutoff)
 
     case req: RetrieveOrdersToCancel =>
       val cancelStatus = if (req.tradingPair.nonEmpty) {
@@ -112,24 +102,21 @@ class OrderCutoffHandlerActor(
         affectOrders <- dbModule.orderService
           .getCutoffAffectedOrders(req, batchSize)
         _ = log.debug(
-          s"Handle cutoff:$req in a batch:$batchSize request, return ${affectOrders.length} orders to cancel"
-        )
+          s"Handle cutoff:$req in a batch:$batchSize request, return ${affectOrders.length} orders to cancel")
         _ <- cancelOrders(affectOrders, cancelStatus)
       } yield if (affectOrders.nonEmpty) self ! req
 
   }
 
   private def cancelOrders(
-      orders: Seq[RawOrder],
-      status: OrderStatus
-    ): Future[Unit] = {
+    orders: Seq[RawOrder],
+    status: OrderStatus): Future[Unit] = {
     val cancelOrderReqs = orders.map { o =>
       CancelOrder.Req(
         id = o.hash,
         owner = o.owner,
         status = status,
-        marketId = Some(MarketId(primary = o.tokenB, secondary = o.tokenS))
-      )
+        marketId = Some(MarketId(o.tokenB, o.tokenS)))
     }
     for {
       notified <- Future.sequence(cancelOrderReqs.map(mama ? _))

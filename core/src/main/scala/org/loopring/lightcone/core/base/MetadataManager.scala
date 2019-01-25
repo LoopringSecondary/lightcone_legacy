@@ -50,8 +50,8 @@ object MetadataManager {
       secondaryTokenSymbol = market.secondaryTokenSymbol.toUpperCase(),
       marketId = Some(
         MarketId(
-          primary = marketId.primary.toLowerCase(),
-          secondary = marketId.secondary.toLowerCase()
+          marketId.primary.toLowerCase(),
+          marketId.secondary.toLowerCase()
         )
       ),
       marketKey = market.marketKey.toLowerCase()
@@ -203,7 +203,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   // check market is valid (has metadata config)
   def isValidMarket(marketKey: String): Boolean =
-    marketMetadatasMap.contains(marketKey.toLowerCase())
+    marketMetadatasMap.contains(marketKey)
 
   def isValidMarket(marketId: MarketId): Boolean =
     isValidMarket(MarketKey(marketId).toString)

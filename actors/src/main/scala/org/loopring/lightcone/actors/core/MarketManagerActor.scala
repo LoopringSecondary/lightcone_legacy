@@ -34,7 +34,7 @@ import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.core.market._
-import org.loopring.lightcone.ethereum.data.{Address => LAddress}
+import org.loopring.lightcone.ethereum.data.{ Address => LAddress }
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
@@ -47,27 +47,24 @@ object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
   def start(
-      implicit
-      system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      actors: Lookup[ActorRef],
-      tve: TokenValueEvaluator,
-      rie: RingIncomeEvaluator,
-      dustOrderEvaluator: DustOrderEvaluator,
-      metadataManager: MetadataManager,
-      deployActorsIgnoringRoles: Boolean
-    ): ActorRef = {
+    implicit system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    tve: TokenValueEvaluator,
+    rie: RingIncomeEvaluator,
+    dustOrderEvaluator: DustOrderEvaluator,
+    metadataManager: MetadataManager,
+    deployActorsIgnoringRoles: Boolean): ActorRef = {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
 
     ClusterSharding(system).start(
       typeName = name,
       entityProps = Props(new MarketManagerActor()),
       settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+      messageExtractor = messageExtractor)
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
@@ -83,8 +80,7 @@ object MarketManagerActor extends ShardedByMarket {
 
     case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
-      val (primary, secondary) = (tokens(0), tokens(1))
-      MarketId(primary, secondary)
+      MarketId(tokens(0), tokens(1))
 
     case GetOrderbookSlots.Req(Some(marketId), _) => marketId
   }
@@ -92,23 +88,20 @@ object MarketManagerActor extends ShardedByMarket {
 }
 
 //todo:撮合应该有个暂停撮合提交的逻辑，适用于：区块落后太多、没有可用的RingSettlement等情况
-class MarketManagerActor(
-  )(
-    implicit
-    val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val tve: TokenValueEvaluator,
-    val rie: RingIncomeEvaluator,
-    val dustOrderEvaluator: DustOrderEvaluator,
-    val metadataManager: MetadataManager)
-    extends ActorWithPathBasedConfig(
-      MarketManagerActor.name,
-      MarketManagerActor.extractEntityId
-    )
-    with ActorLogging {
+class MarketManagerActor()(
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeProvider: TimeProvider,
+  val timeout: Timeout,
+  val actors: Lookup[ActorRef],
+  val tve: TokenValueEvaluator,
+  val rie: RingIncomeEvaluator,
+  val dustOrderEvaluator: DustOrderEvaluator,
+  val metadataManager: MetadataManager)
+  extends ActorWithPathBasedConfig(
+    MarketManagerActor.name,
+    MarketManagerActor.extractEntityId)
+  with ActorLogging {
   implicit val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
     .get
@@ -127,8 +120,7 @@ class MarketManagerActor(
     selfConfig.getInt("max-recover-duration-minutes")
 
   val gasLimitPerRingV2 = BigInt(
-    config.getString("loopring_protocol.gas-limit-per-ring-v2")
-  )
+    config.getString("loopring_protocol.gas-limit-per-ring-v2"))
 
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
@@ -138,8 +130,7 @@ class MarketManagerActor(
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
     marketMetadata.priceDecimals,
     marketMetadata.precisionForAmount,
-    marketMetadata.precisionForTotal
-  )
+    marketMetadata.precisionForTotal)
 
   val manager = new MarketManagerImpl(
     marketId,
@@ -148,8 +139,7 @@ class MarketManagerActor(
     pendingRingPool,
     dustOrderEvaluator,
     aggregator,
-    maxSettementFailuresPerOrder
-  )
+    maxSettementFailuresPerOrder)
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def orderbookManagerMediator =
@@ -160,24 +150,22 @@ class MarketManagerActor(
     if (skiprecover) Future.successful {
       log.debug(s"actor recover skipped: ${self.path}")
       becomeReady()
-    } else {
+    }
+    else {
       log.debug(s"actor recover started: ${self.path}")
       context.become(recover)
       for {
         _ <- actors.get(OrderRecoverCoordinator.name) ?
           ActorRecover.Request(
             marketId = Some(marketId),
-            sender = Serialization.serializedActorPath(self)
-          )
+            sender = Serialization.serializedActorPath(self))
       } yield {
         autoSwitchBackToReady = Some(
           context.system.scheduler
             .scheduleOnce(
               maxRecoverDurationMinutes.minute,
               self,
-              ActorRecover.Finished(true)
-            )
-        )
+              ActorRecover.Finished(true)))
       }
     }
   }
@@ -199,8 +187,7 @@ class MarketManagerActor(
       if (sender != self) {
         sender ! Error(
           ERR_REJECTED_DURING_RECOVER,
-          s"market manager `${entityId}` is being recovered"
-        )
+          s"market manager `${entityId}` is being recovered")
       }
   }
 
@@ -215,8 +202,7 @@ class MarketManagerActor(
       manager.cancelOrder(orderId) foreach { orderbookUpdate =>
         orderbookManagerMediator ! Publish(
           OrderbookManagerActor.getTopicId(marketId),
-          orderbookUpdate.copy(marketId = Some(marketId))
-        )
+          orderbookUpdate.copy(marketId = Some(marketId)))
       }
       sender ! CancelOrder.Res(id = orderId)
 
@@ -260,16 +246,14 @@ class MarketManagerActor(
 
     case req: GetOrderbookSlots.Req =>
       sender ! GetOrderbookSlots.Res(
-        Some(manager.getOrderbookSlots(req.numOfSlots))
-      )
+        Some(manager.getOrderbookSlots(req.numOfSlots)))
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {
     log.debug(s"marketmanager.submitOrder ${order}")
     assert(
       order.actual.nonEmpty,
-      "order in SubmitSimpleOrder miss `actual` field"
-    )
+      "order in SubmitSimpleOrder miss `actual` field")
     val matchable: Matchable = order
     order.status match {
       case OrderStatus.STATUS_NEW | OrderStatus.STATUS_PENDING =>
@@ -298,9 +282,8 @@ class MarketManagerActor(
   }
 
   private def updateOrderbookAndSettleRings(
-      matchResult: MatchResult,
-      gasPrice: BigInt
-    ) {
+    matchResult: MatchResult,
+    gasPrice: BigInt) {
     // Settle rings
     if (matchResult.rings.nonEmpty) {
       log.debug(s"rings: ${matchResult.rings}")
@@ -308,8 +291,7 @@ class MarketManagerActor(
       settlementActor ! SettleRings(
         rings = matchResult.rings,
         gasLimit = gasLimitPerRingV2 * matchResult.rings.size,
-        gasPrice = gasPrice
-      )
+        gasPrice = gasPrice)
     }
 
     // Update order book (depth)
@@ -317,8 +299,7 @@ class MarketManagerActor(
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
       orderbookManagerMediator ! Publish(
         OrderbookManagerActor.getTopicId(marketId),
-        ou.copy(marketId = Some(marketId))
-      )
+        ou.copy(marketId = Some(marketId)))
     }
   }
 
