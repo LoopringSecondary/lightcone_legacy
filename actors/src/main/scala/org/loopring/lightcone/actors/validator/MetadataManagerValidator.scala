@@ -82,10 +82,10 @@ final class MetadataManagerValidator()(implicit val config: Config)
       req.copy(market = Some(MetadataManager.normalizeMarket(req.market.get)))
 
     case req: TerminateMarket.Req =>
-      if (req.marketHash.isEmpty)
+      if (req.marketKey.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter marketHash could not be empty"
+          "Parameter marketKey could not be empty"
         )
       req
 

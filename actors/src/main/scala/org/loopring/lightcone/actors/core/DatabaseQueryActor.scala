@@ -85,7 +85,7 @@ class DatabaseQueryActor(
               Some(req.sort),
               req.skip
             )
-          case GetOrdersForUser.Req.Market.MarketHash(value) =>
+          case GetOrdersForUser.Req.Market.MarketKey(value) =>
             dbModule.orderService.getOrdersForUser(
               req.statuses.toSet,
               Some(req.owner),

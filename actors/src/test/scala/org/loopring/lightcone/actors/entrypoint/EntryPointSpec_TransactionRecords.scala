@@ -118,7 +118,7 @@ class EntryPointSpec_TransactionRecords
       actor ! CutoffEvent(
         header = Some(header4),
         owner = txTo,
-        tradingPair = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
+        marketKey = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
         cutoff = timeProvider.getTimeSeconds()
       )
 
@@ -132,8 +132,8 @@ class EntryPointSpec_TransactionRecords
           hash = orderHash,
           tokenS = tokenS,
           tokenB = tokenB,
-          addressShardId = 1,
-          marketHashId = 1
+          accountShard = 1,
+          marketShard = 1
         )
       )
       val r1 = Await.result(

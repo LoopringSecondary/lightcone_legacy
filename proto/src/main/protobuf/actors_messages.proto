@@ -58,7 +58,7 @@ message AddressBalanceUpdated {
 message AddressAllowanceUpdated {
     string address = 1;
     string token = 2;
-    bytes balance = 3;
+    bytes allowance = 3;
 }
 
 message GasPriceUpdated {

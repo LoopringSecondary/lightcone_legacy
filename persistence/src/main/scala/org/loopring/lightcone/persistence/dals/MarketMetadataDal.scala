@@ -32,9 +32,8 @@ trait MarketMetadataDal
 
   def getMarkets(): Future[Seq[MarketMetadata]]
 
-  def getMarketsByHashes(
-      marketsHashes: Seq[String]
-    ): Future[Seq[MarketMetadata]]
+  def getMarketsByKey(marketsHashes: Seq[String]): Future[Seq[MarketMetadata]]
 
-  def terminateMarketByHash(marketHash: String): Future[ErrorCode]
+  //todo:change name
+  def terminateMarketByHash(marketKey: String): Future[ErrorCode]
 }

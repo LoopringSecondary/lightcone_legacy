@@ -87,12 +87,12 @@ message GetOrderByHash {
 message GetOrdersForUser {
     message Req {
         oneof market {
-            MarketPair pair        = 1; // tokenS -> tokenB
-            string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+            MarketPair pair             = 1; // tokenS -> tokenB
+            string     market_key       = 2; // tokenS -> tokenB && tokenB -> tokenS
         }
-        string   owner                 = 3;
-        repeated OrderStatus statuses = 4;
-        SortingType    sort                  = 5;
+        string   owner                  = 3;
+        repeated OrderStatus statuses   = 4;
+        SortingType    sort             = 5;
         Paging    skip                  = 6;
     }
 
@@ -109,9 +109,9 @@ message UserCancelOrder {
 
     message Res {
         message Result {
-            string    order_hash = 1;
-            RawOrder  order      = 2;
-            ErrorCode error      = 3;
+            string    order_hash        = 1;
+            RawOrder  order             = 2;
+            ErrorCode error             = 3;
         }
         repeated Result updated_result = 1;
     }
@@ -120,12 +120,12 @@ message UserCancelOrder {
 message GetTrades {
     message Req {
         oneof market {
-            MarketPair pair        = 1; // tokenS -> tokenB
-            string     market_hash = 2; // tokenS -> tokenB && tokenB -> tokenS
+            MarketPair pair         = 1; // tokenS -> tokenB
+            string     market_key   = 2; // tokenS -> tokenB && tokenB -> tokenS
         }
-        string owner   = 3;
-        SortingType sort     = 4;
-        Paging skip     = 5;
+        string owner                = 3;
+        SortingType sort            = 4;
+        Paging skip                 = 5;
     }
 
     message Res {
@@ -185,7 +185,7 @@ message TransactionRecord {
     EventHeader header       = 1;
     string      owner        = 2;
     RecordType  record_type  = 3;
-    string      trading_pair = 4;
+    string      market_key = 4;
     string      market       = 5; // LRC-WETH
     int64       sequence_id  = 6;
     EventData   event_data   = 7;
@@ -219,8 +219,8 @@ message GetTransactionRecords {
 
 message GetTransactionRecordCount {
     message Req {
-        string                     owner       = 1;
-        GetTransactionRecords.QueryType  query_type  = 2;
+        string owner                                = 1;
+        GetTransactionRecords.QueryType query_type  = 2;
     }
 
     message Res {
@@ -322,7 +322,7 @@ message SaveMarketMetadatas {
     }
 
     message Res {
-        repeated string saved_market_hashes = 1;
+        repeated string market_key = 1;
     }
 }
 
@@ -338,7 +338,7 @@ message UpdateMarketMetadata {
 
 message TerminateMarket {
     message Req {
-        string   market_hash = 1;
+        string   market_key  = 1;
     }
 
     message Res {

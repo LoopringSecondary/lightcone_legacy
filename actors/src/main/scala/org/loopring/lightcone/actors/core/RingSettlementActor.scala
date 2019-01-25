@@ -29,12 +29,12 @@ import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.ethereum.data.{Transaction, _}
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.ethereum.abi._
+import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -93,6 +93,7 @@ class RingSettlementActor(
 
   private def ethereumAccessActor = actors.get(EthereumAccessActor.name)
   private def gasPriceActor = actors.get(GasPriceActor.name)
+  private def marketManagerActor = actors.get(MarketManagerActor.name)
 
   import ethereum._
 
@@ -166,7 +167,19 @@ class RingSettlementActor(
           saveTx(tx, resp)
           nonce.getAndIncrement()
         } else {
-          //TODO 通知MarketManager等失败消息
+          rawOrders.foreach(orders => {
+            val header = Some(EventHeader(txStatus = TxStatus.TX_STATUS_FAILED))
+            marketManagerActor ! PRingMinedEvent(
+              header = header,
+              fills = orders.map { order =>
+                OrderFilledEvent(
+                  header = header,
+                  orderHash = order.hash,
+                  tokenS = order.tokenS
+                )
+              }
+            )
+          })
         }
         self ! Notify("handle_settle_rings")
       }
@@ -186,7 +199,6 @@ class RingSettlementActor(
     rings
   }
 
-  //未被提交的交易需要使用新的gas price重新提交
   //todo:现在逻辑是重新提交该环路，可能增加失败概率，但是长时不打块判断失败，
   //todo：如果发送失败事件重新使用nonce，会大大增加代码复杂
   def resubmitTx(): Future[Unit] =

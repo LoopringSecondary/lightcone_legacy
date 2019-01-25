@@ -83,7 +83,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       Await.result(f2, timeout.duration)
 
       info(
-        "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING and STATUS_CANCELLED_LOW_BALANCE "
+        "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING and STATUS_SOFT_CANCELLED_LOW_BALANCE "
       )
       val assertOrderFromDbF = Future.sequence(rawOrders.map { o =>
         for {
@@ -96,7 +96,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
                 assert(order.getState.status == OrderStatus.STATUS_PENDING)
               } else {
                 assert(
-                  order.getState.status == OrderStatus.STATUS_CANCELLED_LOW_BALANCE
+                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
                 )
               }
             case None =>
@@ -155,7 +155,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
                 )
               } else {
                 assert(
-                  order.getState.status == OrderStatus.STATUS_CANCELLED_LOW_BALANCE
+                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
                 )
               }
             case None =>
