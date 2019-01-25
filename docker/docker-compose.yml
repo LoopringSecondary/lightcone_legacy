@@ -11,7 +11,7 @@ services:
       CLUSTER_IP: seed
       CLUSTER_PORT: 2552
       SEED_IP: seed
-      NODE_ROLES: '["database_query", "ethereum_event_extractor", "ethereum_query", "gas_price", "market_manager", "multi_account_manager", "orderbook_manager", "order_cutoff_handler", "order_persistence", "order_recover", "order_recover_coordinator", "order_status_monitor", "ring_settlement", "transaction-record"]'
+      NODE_ROLES: '["database_query", "ethereum_event_extractor", "ethereum_query", "gas_price", "market_manager", "multi_account_manager", "orderbook_manager", "order_cutoff_handler", "order_persistence", "order_recover", "order_recover_coordinator", "order_status_monitor", "ring_settlement", "transaction_record"]'
   ethereum:
     image: org.loopring/lightcone_actors:latest
     shm_size: 500m

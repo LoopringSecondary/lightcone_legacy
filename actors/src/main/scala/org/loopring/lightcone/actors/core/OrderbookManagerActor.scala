@@ -99,14 +99,15 @@ class OrderbookManagerActor(
   val mediator = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
 
-  val marketMetadata = metadataManager
-    .getMarketMetadata(marketId)
-    .getOrElse(
-      throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"not found market:$marketId config"
+  def marketMetadata =
+    metadataManager
+      .getMarketMetadata(marketId)
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found market:$marketId config"
+        )
       )
-    )
 
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
 
@@ -115,7 +116,8 @@ class OrderbookManagerActor(
   val marketManagerActor = actors.get(MarketManagerActor.name)
 
   override def initialize() = {
-    syncOrderbookFromMarket() onComplete {
+    val f = syncOrderbookFromMarket()
+    f.onComplete {
       case Success(_) =>
         becomeReady()
       case Failure(e) =>
@@ -124,7 +126,7 @@ class OrderbookManagerActor(
         )
         throw e
     }
-    Future.successful(Unit)
+    f
   }
 
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
@@ -162,15 +164,17 @@ class OrderbookManagerActor(
 
   }
 
-  private def syncOrderbookFromMarket() = {
-    log.info("OrderbookManagerActor run orderbook load job")
+  private def syncOrderbookFromMarket() =
     for {
-      orderbookUpdate <- (marketManagerActor ? GetOrderbookSlots.Req(
-        Some(marketId)
-      )).mapTo[GetOrderbookSlots.Res]
+      res <- (marketManagerActor ? GetOrderbookSlots.Req(Some(marketId)))
+        .mapTo[GetOrderbookSlots.Res]
+      _ = log.debug(s"orderbook synced: ${res}")
+      _ = println("=========> GetOrderbookSlots.Res: " + res)
     } yield {
-      if (orderbookUpdate.slots.nonEmpty)
-        manager.processUpdate(orderbookUpdate.slots.get)
+      if (res.update.nonEmpty) {
+        manager.reset()
+        manager.processUpdate(res.update.get)
+      }
     }
-  }
+
 }

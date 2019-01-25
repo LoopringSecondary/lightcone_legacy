@@ -40,7 +40,7 @@ import org.loopring.lightcone.ethereum.data.Address
 
 // main owner: 杜永丰
 object TransactionRecordActor extends ShardedByAddress {
-  val name = "transaction-record"
+  val name = "transaction_record"
 
   def start(
       implicit
@@ -93,7 +93,7 @@ class TransactionRecordActor(
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
   val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
 
-  val dbConfigKey = s"db.transaction-record.shard_${entityId}"
+  val dbConfigKey = s"db.transaction_record.shard_${entityId}"
   log.info(
     s"TransactionRecordActor with db configuration ($dbConfigKey): ",
     config.getConfig(dbConfigKey)

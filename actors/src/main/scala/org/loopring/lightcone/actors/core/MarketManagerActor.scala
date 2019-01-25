@@ -132,20 +132,22 @@ class MarketManagerActor(
     config.getString("loopring_protocol.gas-limit-per-ring-v2")
   )
 
-  val getOrderbookNumForEachSide =
-    selfConfig.getInt("get-orderbook-num-for-each-side")
+  val orderbookRecoverSize =
+    selfConfig.getInt("orderbook-recover-size")
 
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
-  val marketMetadata = metadataManager
-    .getMarketMetadata(marketId)
-    .getOrElse(
-      throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"not found market: $marketId metaadta"
+  def marketMetadata =
+    metadataManager
+      .getMarketMetadata(marketId)
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"not found market: $marketId metaadta"
+        )
       )
-    )
+
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
     marketMetadata.priceDecimals,
     marketMetadata.precisionForAmount,
@@ -271,7 +273,7 @@ class MarketManagerActor(
 
     case GetOrderbookSlots.Req(_) =>
       sender ! GetOrderbookSlots.Res(
-        Some(manager.getOrderbookSlots(getOrderbookNumForEachSide))
+        Some(manager.getOrderbookSlots(orderbookRecoverSize))
       )
   }
 
