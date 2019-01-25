@@ -59,14 +59,14 @@ class OHLCRawDataExtractor @Inject()(
 
                 val primaryToken =
                   metadataManager.getToken(marketId.primary).get
-                val secondToken =
+                val secondaryToken =
                   metadataManager.getToken(marketId.secondary).get
 
                 val (quality, amount) = getAmounts(
                   fill,
                   _fill,
                   primaryToken,
-                  secondToken,
+                  secondaryToken,
                   marketMetadata
                 )
 
@@ -89,11 +89,12 @@ class OHLCRawDataExtractor @Inject()(
       }
   }
 
+  // TODO(yangli): LRC-WETH market, LRC is the primary, WETH is the secondary.
   def getAmounts(
       fill: OrderFilledEvent,
       _fill: OrderFilledEvent,
       primaryToken: Token,
-      secondToken: Token,
+      secondaryToken: Token,
       marketMetadata: MarketMetadata
     ): (Double, Double) = {
     val amountInWei =
@@ -101,19 +102,19 @@ class OHLCRawDataExtractor @Inject()(
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
       else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
 
-    val amount: Double = secondToken
+    val amount: Double = secondaryToken
       .fromWei(amountInWei, marketMetadata.precisionForTotal)
       .doubleValue()
 
-    val qualityInWei =
-      if (Address(secondToken.meta.address).equals(Address(fill.tokenS)))
+    val totalInWei =
+      if (Address(secondaryToken.meta.address).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
       else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
 
-    val quality: Double = primaryToken
-      .fromWei(qualityInWei, marketMetadata.precisionForAmount)
+    val total: Double = primaryToken
+      .fromWei(totalInWei, marketMetadata.precisionForAmount)
       .doubleValue()
 
-    quality -> amount
+    total -> amount
   }
 }

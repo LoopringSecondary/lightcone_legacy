@@ -71,7 +71,7 @@ trait OrderGenerateSupport {
       params = Some(RawOrder.Params(validUntil = validUntil)),
       marketKey = marketKey,
       marketShard = MarketManagerActor
-        .getEntityId(MarketId(primary = tokenS, secondary = tokenB))
+        .getEntityId(MarketId(tokenS, tokenB))
         .toInt,
       accountShard = MultiAccountManagerActor
         .getEntityId(credentials.getAddress, 100)

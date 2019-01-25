@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
+import akka.cluster.pubsub.DistributedPubSubMediator.{ Publish, Subscribe }
 import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.util.Timeout
@@ -33,7 +33,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
 import scala.concurrent._
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 // Owner: Hongyu
 object OrderbookManagerActor extends ShardedByMarket with Logging {
@@ -43,16 +43,14 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
     OrderbookManagerActor.name + "-" + getEntityId(marketId)
 
   def start(
-      implicit
-      system: ActorSystem,
-      config: Config,
-      ec: ExecutionContext,
-      timeProvider: TimeProvider,
-      timeout: Timeout,
-      actors: Lookup[ActorRef],
-      metadataManager: MetadataManager,
-      deployActorsIgnoringRoles: Boolean
-    ): ActorRef = {
+    implicit system: ActorSystem,
+    config: Config,
+    ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    metadataManager: MetadataManager,
+    deployActorsIgnoringRoles: Boolean): ActorRef = {
 
     val selfConfig = config.getConfig(name)
     numOfShards = selfConfig.getInt("instances-per-market")
@@ -62,8 +60,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
       typeName = name,
       entityProps = Props(new OrderbookManagerActor()),
       settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+      messageExtractor = messageExtractor)
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
@@ -79,20 +76,17 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
   }
 }
 
-class OrderbookManagerActor(
-  )(
-    implicit
-    val config: Config,
-    val ec: ExecutionContext,
-    val timeProvider: TimeProvider,
-    val timeout: Timeout,
-    val actors: Lookup[ActorRef],
-    val metadataManager: MetadataManager)
-    extends ActorWithPathBasedConfig(
-      OrderbookManagerActor.name,
-      OrderbookManagerActor.extractEntityId
-    )
-    with RepeatedJobActor {
+class OrderbookManagerActor()(
+  implicit val config: Config,
+  val ec: ExecutionContext,
+  val timeProvider: TimeProvider,
+  val timeout: Timeout,
+  val actors: Lookup[ActorRef],
+  val metadataManager: MetadataManager)
+  extends ActorWithPathBasedConfig(
+    OrderbookManagerActor.name,
+    OrderbookManagerActor.extractEntityId)
+  with RepeatedJobActor {
 
   val orderbookRecoverSize =
     selfConfig.getInt("orderbook-recover-size")
@@ -111,20 +105,6 @@ class OrderbookManagerActor(
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
   def marketManagerActor = actors.get(MarketManagerActor.name)
-
-  // override def initialize() = {
-  //   val f = syncOrderbookFromMarket()
-  //   f.onComplete {
-  //     case Success(_) =>
-  //       becomeReady()
-  //     case Failure(e) =>
-  //       log.error(
-  //         s"OrderbookManagerActor of marketId:[$marketId] initialize failed, cause: ${e.getMessage}"
-  //       )
-  //       throw e
-  //   }
-  //   f
-  // }
 
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
@@ -152,18 +132,15 @@ class OrderbookManagerActor(
         else
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
-            s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}"
-          )
+            s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}")
       } sendTo sender
-
   }
 
   private def syncOrderbookFromMarket() =
     for {
       res <- (marketManagerActor ? GetOrderbookSlots.Req(
         Some(marketId),
-        orderbookRecoverSize
-      )).mapTo[GetOrderbookSlots.Res]
+        orderbookRecoverSize)).mapTo[GetOrderbookSlots.Res]
       _ = log.debug(s"orderbook synced: ${res}")
       _ = println("=========> GetOrderbookSlots.Res: " + res)
     } yield {

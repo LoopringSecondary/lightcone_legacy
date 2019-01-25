@@ -39,16 +39,8 @@ class JrpcSpec
     "return correct responses" in {
       // 正确返回
       val resonse1 = singleRequest(
-        GetOrderbook.Req(
-          0,
-          2,
-          Some(
-            MarketId(
-              LRC_TOKEN.address,
-              WETH_TOKEN.address
-            )
-          )
-        ),
+        GetOrderbook
+          .Req(0, 2, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
         "orderbook"
       )
       // 只要返回了Orderbook类型就认为成功，其他会抛异常

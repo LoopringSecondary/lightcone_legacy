@@ -137,7 +137,7 @@ class EntryPointSpec_SubmitOrderThenBalanceChanged
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 1)
           assert(
-            sells(0).price == "20.000000" &&
+            sells(0).price == "0.050000" &&
               sells(0).amount == "12.50000" &&
               sells(0).total == "0.62500"
           )

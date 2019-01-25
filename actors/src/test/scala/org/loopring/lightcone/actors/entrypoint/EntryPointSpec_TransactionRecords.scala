@@ -54,7 +54,7 @@ class EntryPointSpec_TransactionRecords
         txTo = txTo,
         txIndex = 1
       )
-      val actor = actors.get(TransactionRecordMessageValidator.name)
+      def actor = actors.get(TransactionRecordMessageValidator.name)
       // 1. eth transfer
       actor ! TransferEvent(
         header = Some(header1),
@@ -63,6 +63,7 @@ class EntryPointSpec_TransactionRecords
         to = txTo,
         amount = ByteString.copyFrom("11", "utf-8")
       )
+
       actor ! TransferEvent(
         header = Some(header1.copy(eventIndex = 1)),
         owner = txTo,

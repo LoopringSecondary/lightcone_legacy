@@ -62,7 +62,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
           assert(lastPrice == 0.0)
           assert(sells.size == 1)
           assert(
-            sells(0).price == "10.000000" &&
+            sells(0).price == "0.100000" &&
               sells(0).amount == "10.00000" &&
               sells(0).total == "1.00000"
           )

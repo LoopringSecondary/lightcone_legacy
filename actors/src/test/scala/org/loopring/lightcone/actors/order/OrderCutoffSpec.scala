@@ -103,15 +103,16 @@ class OrderCutoffSpec
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(
-            sells(0).price == "10.000000" &&
-              sells(0).amount == "60.00000" &&
-              sells(0).total == "6.00000"
+            sells(0).price == "0.050000" &&
+              sells(0).amount == "80.00000" &&
+              sells(0).total == "4.00000"
           )
           assert(
-            sells(1).price == "20.000000" &&
-              sells(1).amount == "80.00000" &&
-              sells(1).total == "4.00000"
+            sells(1).price == "0.100000" &&
+              sells(1).amount == "60.00000" &&
+              sells(1).total == "6.00000"
           )
+
         case _ => assert(false)
       }
 

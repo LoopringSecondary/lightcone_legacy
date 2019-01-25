@@ -98,27 +98,25 @@ class EntryPointSpec_Depth
       orderbookRes1 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
-          assert(sells.size == 4)
+          assert(sells.size == 3)
           assert(
-            sells(0).price == "1.234568" &&
-              sells(0).amount == "1.23457" &&
-              sells(0).total == "1.00000"
+            sells(0).price == "0.309161" &&
+              sells(0).amount == "6.46913" &&
+              sells(0).total == "2.00000"
           )
+
           assert(
-            sells(1).price == "2.234568" &&
+            sells(1).price == "0.447514" &&
               sells(1).amount == "2.23457" &&
               sells(1).total == "1.00000"
           )
+
           assert(
-            sells(2).price == "3.234567" &&
-              sells(2).amount == "3.23457" &&
+            sells(2).price == "0.810001" &&
+              sells(2).amount == "1.23457" &&
               sells(2).total == "1.00000"
           )
-          assert(
-            sells(3).price == "3.234568" &&
-              sells(3).amount == "3.23457" &&
-              sells(3).total == "1.00000"
-          )
+
         case _ => assert(false)
       }
 
@@ -137,20 +135,23 @@ class EntryPointSpec_Depth
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 3)
           assert(
-            sells(0).price == "1.23457" &&
-              sells(0).amount == "1.23457" &&
-              sells(0).total == "1.00000"
+            sells(0).price == "0.30917" &&
+              sells(0).amount == "6.46913" &&
+              sells(0).total == "2.00000"
           )
+
           assert(
-            sells(1).price == "2.23457" &&
+            sells(1).price == "0.44752" &&
               sells(1).amount == "2.23457" &&
               sells(1).total == "1.00000"
           )
+
           assert(
-            sells(2).price == "3.23457" &&
-              sells(2).amount == "6.46913" &&
-              sells(2).total == "2.00000"
+            sells(2).price == "0.81001" &&
+              sells(2).amount == "1.23457" &&
+              sells(2).total == "1.00000"
           )
+
         case _ => assert(false)
       }
 
