@@ -131,6 +131,9 @@ class MarketManagerActor(
     config.getString("loopring_protocol.gas-limit-per-ring-v2")
   )
 
+  val getOrderbookNumForEachSide =
+    selfConfig.getInt("get-orderbook-num-for-each-side")
+
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
@@ -267,7 +270,7 @@ class MarketManagerActor(
 
     case GetOrderbookSlots.Req(_) =>
       sender ! GetOrderbookSlots.Res(
-        Some(manager.getOrderbookSlots(Integer.MAX_VALUE))
+        Some(manager.getOrderbookSlots(getOrderbookNumForEachSide))
       )
   }
 

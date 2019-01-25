@@ -312,6 +312,6 @@ message GetOrderbookSlots {
     }
 
     message Res {
-        Orderbook.Update update = 1;
+        Orderbook.Update slots = 1;
     }
 }

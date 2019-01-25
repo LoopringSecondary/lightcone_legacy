@@ -89,7 +89,8 @@ class OrderbookManagerActor(
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
       OrderbookManagerActor.extractEntityId
-    ) {
+    )
+    with RepeatedJobActor {
 
   val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
@@ -114,23 +115,31 @@ class OrderbookManagerActor(
   val marketManagerActor = actors.get(MarketManagerActor.name)
 
   override def initialize() = {
-    val orderbookUpdate =
-      (marketManagerActor ? GetOrderbookSlots.Req(Some(marketId)))
-        .mapTo[GetOrderbookSlots.Res]
-    orderbookUpdate onComplete {
-      case Success(orderbookRes) =>
-        orderbookRes.update match {
-          case Some(orderbook) => manager.processUpdate(orderbook)
-          case _               => Unit
-        }
+    syncOrderbookFromMarket() onComplete {
+      case Success(_) =>
         becomeReady()
       case Failure(e) =>
+        log.error(
+          s"OrderbookManagerActor of marketId:[$marketId] initialize failed, cause: ${e.getMessage}"
+        )
         throw e
     }
     Future.successful(Unit)
   }
 
-  def ready: Receive = LoggingReceive {
+  val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
+  val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
+
+  val repeatedJobs = Seq(
+    Job(
+      name = "load_orderbook_from_market",
+      dalayInSeconds = refreshIntervalInSeconds,
+      initialDalayInSeconds = initialDelayInSeconds,
+      run = () => syncOrderbookFromMarket()
+    )
+  )
+
+  def ready: Receive = super.receiveRepeatdJobs orElse {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
@@ -151,5 +160,17 @@ class OrderbookManagerActor(
 
     case msg => log.info(s"not supported msg:${msg}, ${marketId}")
 
+  }
+
+  private def syncOrderbookFromMarket() = {
+    log.info("OrderbookManagerActor run orderbook load job")
+    for {
+      orderbookUpdate <- (marketManagerActor ? GetOrderbookSlots.Req(
+        Some(marketId)
+      )).mapTo[GetOrderbookSlots.Res]
+    } yield {
+      if (orderbookUpdate.slots.nonEmpty)
+        manager.processUpdate(orderbookUpdate.slots.get)
+    }
   }
 }
