@@ -47,7 +47,7 @@ class AccountCutoffStateImpl()(implicit timeProvider: TimeProvider)
       if (ownerCutoff < cutoff) ownerCutoff = cutoff
   }
 
-  def isOrderCutoff(rawOrder: RawOrder) = {
+  def checkOrderCutoff(rawOrder: RawOrder) = {
     if (ownerCutoff >= rawOrder.validSince) {
       throw ErrorException(
         ERR_ORDER_VALIDATION_INVALID_CUTOFF,

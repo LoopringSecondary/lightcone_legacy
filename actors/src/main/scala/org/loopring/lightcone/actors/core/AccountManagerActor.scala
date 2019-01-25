@@ -150,11 +150,9 @@ class AccountManagerActor(
 
     case req @ SubmitOrder.Req(Some(raworder)) =>
       (for {
-        _ <- for {
-          //check通过再保存到数据库，以及后续处理
-          _ <- Future { accountCutoffState.isOrderCutoff(raworder) }
-          _ <- isOrderCanceled(raworder) //取消订单，单独查询以太坊
-        } yield Unit
+        //check通过再保存到数据库，以及后续处理
+        _ <- Future { accountCutoffState.checkOrderCutoff(raworder) }
+        _ <- checkOrderCanceled(raworder) //取消订单，单独查询以太坊
         newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
           raworder.copy(
             state = Some(
@@ -164,19 +162,16 @@ class AccountManagerActor(
           )
         } else raworder
 
-        res <- for {
-          resRawOrder <- (orderPersistenceActor ? req
-            .copy(rawOrder = Some(newRaworder)))
-            .mapAs[RawOrder]
-          resOrder <- (resRawOrder.getState.status match {
-            case STATUS_PENDING_ACTIVE =>
-              val order: Order = resRawOrder
-              Future.successful(order)
-            case _ => submitOrder(resRawOrder)
-          }).mapAs[Order]
-        } yield SubmitOrder.Res(Some(resOrder))
-
-      } yield res) sendTo sender
+        resRawOrder <- (orderPersistenceActor ? req
+          .copy(rawOrder = Some(newRaworder)))
+          .mapAs[RawOrder]
+        resOrder <- (resRawOrder.getState.status match {
+          case STATUS_PENDING_ACTIVE =>
+            val order: Order = resRawOrder
+            Future.successful(resRawOrder)
+          case _ => submitOrder(resRawOrder)
+        }).mapAs[Order]
+      } yield SubmitOrder.Res(Some(resOrder))) sendTo sender
 
     case req: CancelOrder.Req =>
       val originalSender = sender
@@ -420,7 +415,7 @@ class AccountManagerActor(
       _ <- processUpdatedOrders(updatedOrders)
     } yield Unit
 
-  def isOrderCanceled(rawOrder: RawOrder) =
+  def checkOrderCanceled(rawOrder: RawOrder) =
     for {
       res <- (ethereumQueryActor ? GetOrderCancellation.Req(
         broker = address,
