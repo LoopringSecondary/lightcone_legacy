@@ -223,13 +223,6 @@ final class MetadataManager @Inject()(implicit val config: Config)
   def isValidMarket(marketId: MarketId): Boolean =
     isValidMarket(MarketKey(marketId).toString)
 
-  // check market is at enabled status
-  def isActiveMarket(marketKey: String): Boolean =
-    activeMarkets.contains(marketKey.toLowerCase())
-
-  def isActiveMarket(marketId: MarketId): Boolean =
-    isActiveMarket(MarketKey(marketId).toString)
-
   def getValidMarketIds = activeMarkets ++ readOnlyMarkets
 
   def subscribToken(subFun: (TokenMetadata) => Unit) = {
