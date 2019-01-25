@@ -160,17 +160,17 @@ class OrderbookRecoverSpec
       orderbookRes1.orderbook match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
-//          assert(sells.nonEmpty)
-//          assert(
-//            sells(0).price == "10.000000" &&
-//              sells(0).amount == "60.00000" &&
-//              sells(0).total == "6.00000"
-//          )
-//          assert(
-//            sells(1).price == "20.000000" &&
-//              sells(1).amount == "80.00000" &&
-//              sells(1).total == "4.00000"
-//          )
+          assert(sells.nonEmpty && buys.nonEmpty)
+          assert(
+            sells(0).price == "20.000000" &&
+              sells(0).amount == "20.00000" &&
+              sells(0).total == "1.00000"
+          )
+          assert(
+            buys(0).price == "30.000000" &&
+              buys(0).amount == "30.00000" &&
+              buys(0).total == "1.00000"
+          )
         case _ => assert(false)
       }
 
