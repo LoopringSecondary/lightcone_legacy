@@ -3,17 +3,38 @@
 Order结构：
 
 - owner :  Address
-- version :  Int
+- version :  Hex String 
 - tokenS : Address
 - tokenB : Address
-- tokenFee：Address
 - amountS : Hex String 
 - amountB : Hex String
-- amountFee：Hex String
 - validSince : Hex String (seconds)
-- validUntil : Hex String (seconds)
-- signType: Int (0 代表Ethereum Sign ,1 代表EIP712签名方式)
-- signature : Hex String
+- params: 
+  - broker: Address （可选）
+  - dualAuthAddr:Address
+  - dualAuthPrivateKey:Hex String
+  - validUntil : Hex String (seconds，可选，不设置时代表该订单永远有效)  
+  - allOrNone：Hex String 
+  - wallet :Address  * 不确定含义
+  - orderInterceptor: Address * 不确定含义
+  - dualAuthSig: Hex String
+  - sig : Hex String
+- feeParams:
+  - tokenRecipient:  Address（token 收款地址，一般为owner）
+  - amountFee：Hex String
+  - tokenFee：Address
+  - waiveFeePercentaget : Hex String
+  - tokenSFeePercentage : Hex String
+  - tokenBFeePercentage:   Hex String
+  - walletSplitPercentage:  Hex String
+- ERC1400Params:
+  - tokenStandardS : Hex String ("0x0" 代表 ERC20 ，"0x1"代表ERC1400)
+  - tokenStandardB: Hex String  ("0x0" 代表 ERC20 ，"0x1"代表ERC1400)
+  - tokenStandardFee : Hex String  ("0x0" 代表 ERC20 ，"0x1"代表ERC1400)
+  - trancheS : Hex String    * 不确定含义
+  - trancheS: Hex String    * 不确定含义
+  - transferDataS : Hex String   * 不确定含义
+- signType: Hex String  (0 代表Ethereum Sign ,1 代表EIP712签名方式)
 
 ### JSON-RPC 接口
 
@@ -123,7 +144,37 @@ Order结构：
 
   参数：
 
-  {"jsonrpc":"2.0","method":"loopring_submitOrder","params":[{"owner":"0xb94065482ad64d4c2b9252358d746b39e820a582","version":0,"tokenS":"0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2","tokenB":"0xef68e7c694f40c8202821edf525de3782458639f","tokenFee":"0xef68e7c694f40c8202821edf525de3782458639f","amountS":"0xde0b6b3a7640000","amountB":"0x3635c9adc5dea00000","amountFee":"0xde0b6b3a7640000","validSince":"0x5c4b0cb3","signType":0,signature":"0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"}],"id":1}
+  ```json
+  {
+    "jsonrpc": "2.0",
+    "method": "loopring_submitOrder",
+    "params": [
+      {
+        "owner": "0xb94065482ad64d4c2b9252358d746b39e820a582",
+        "version": "0x0",
+        "tokenS": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "tokenB": "0xef68e7c694f40c8202821edf525de3782458639f",
+        "amountS": "0xde0b6b3a7640000",
+        "validSince": "0x5c4b0cb3",
+        "amountB": "0x3635c9adc5dea00000",
+        "params": {
+          "validUnit": "0x5c4cacb3",
+          "allOrNone": "0x0",
+          "sig": "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b",
+          "dualAuthAddr": "0x7ebdf3751f63a5fc1742ba98ee34392ce82fa8dd",
+          "dualAuthPrivateKey": "0xc3d695ee4fcb7f14b8cf08a1d588736264ff0d34d6b9b0893a820fe01d1086a6",
+          
+        },
+        "feeParams": {
+          "tokenFee": "0xef68e7c694f40c8202821edf525de3782458639f",
+          "amountFee": "0xde0b6b3a7640000"
+        },
+        "signType": "0x0"
+      }
+    ],
+    "id": 1
+  }
+  ```
 
   返回：
 
@@ -183,26 +234,40 @@ Order结构：
 
   ```json
   {
-    "id":1,
+    "id": 1,
     "jsonrpc": "2.0",
-     "result":{
-         "pageNum":1,
-         "pageSize":50,
-         "total":60,
-         "records":[{
-              "owner": "0xb94065482ad64d4c2b9252358d746b39e820a582",
-    			"version": 0,
-    			"tokenS": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    			"tokenB": "0xef68e7c694f40c8202821edf525de3782458639f",
-    			"tokenFee": "0xef68e7c694f40c8202821edf525de3782458639f",
-    			"amountS": "0xde0b6b3a7640000",
-    			"amountB": "0x3635c9adc5dea00000",
-    			"amountFee": "0xde0b6b3a7640000",
-    			"validSince": "0x5c4b0cb3",
-    			 "status" :0,
-    			"signType":0, 								   "signature":"0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
-            },...]
-      }
+    "result": {
+      "pageNum": 1,
+      "pageSize": 50,
+      "total": 60,
+      "records": [
+        {
+          {
+            "owner": "0xb94065482ad64d4c2b9252358d746b39e820a582",
+            "version": "0x0",
+            "tokenS": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            "tokenB": "0xef68e7c694f40c8202821edf525de3782458639f",
+            "amountS": "0xde0b6b3a7640000",
+            "validSince": "0x5c4b0cb3",
+            "amountB": "0x3635c9adc5dea00000",
+            "params": {
+              "validUnit": "0x5c4cacb3",
+              "allOrNone": "0x0",
+              "sig": "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b",
+              "dualAuthAddr": "0x7ebdf3751f63a5fc1742ba98ee34392ce82fa8dd",
+              "dualAuthPrivateKey": "0xc3d695ee4fcb7f14b8cf08a1d588736264ff0d34d6b9b0893a820fe01d1086a6",
+              
+            },
+            "feeParams": {
+              "tokenFee": "0xef68e7c694f40c8202821edf525de3782458639f",
+              "amountFee": "0xde0b6b3a7640000"
+            },
+            "signType": "0x0"
+          }
+        },
+        ...
+      ]
+    }
   }
   ```
 
@@ -216,25 +281,34 @@ Order结构：
 
   ```json
   {
-    "id":1,
+    "id": 1,
     "jsonrpc": "2.0",
-     "result":{
-     		"owner": "0xb94065482ad64d4c2b9252358d746b39e820a582",
-    		"version": 0,
-    		"tokenS": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    		"tokenB": "0xef68e7c694f40c8202821edf525de3782458639f",
-    		"tokenFee": "0xef68e7c694f40c8202821edf525de3782458639f",
-    		"amountS": "0xde0b6b3a7640000",
-    		"amountB": "0x3635c9adc5dea00000",
-    		"amountFee": "0xde0b6b3a7640000",
-    		"validSince": "0x5c4b0cb3",
-    		 "status" :0,
-    		"signType":0,    		"signature":"0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
+    "result": {
+      {
+        "owner": "0xb94065482ad64d4c2b9252358d746b39e820a582",
+        "version": "0x0",
+        "tokenS": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "tokenB": "0xef68e7c694f40c8202821edf525de3782458639f",
+        "amountS": "0xde0b6b3a7640000",
+        "validSince": "0x5c4b0cb3",
+        "amountB": "0x3635c9adc5dea00000",
+        "params": {
+          "validUnit": "0x5c4cacb3",
+          "allOrNone": "0x0",
+          "sig": "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b",
+          "dualAuthAddr": "0x7ebdf3751f63a5fc1742ba98ee34392ce82fa8dd",
+          "dualAuthPrivateKey": "0xc3d695ee4fcb7f14b8cf08a1d588736264ff0d34d6b9b0893a820fe01d1086a6",
+          
+        },
+        "feeParams": {
+          "tokenFee": "0xef68e7c694f40c8202821edf525de3782458639f",
+          "amountFee": "0xde0b6b3a7640000"
+        },
+        "signType": "0x0"
       }
+    }
   }
   ```
-
-  
 
 - ##### getTrades （目前还没有实现）
 
@@ -457,18 +531,37 @@ Order结构：
   返回：
 
   ```json
-  [{
-    "owner": "0xb94065482ad64d4c2b9252358d746b39e820a582",
-    "version": 0,
-    "tokenS": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    "tokenB": "0xef68e7c694f40c8202821edf525de3782458639f",
-    "tokenFee": "0xef68e7c694f40c8202821edf525de3782458639f",
-    "amountS": "0xde0b6b3a7640000",
-    "amountB": "0x3635c9adc5dea00000",
-    "amountFee": "0xde0b6b3a7640000",
-    "validSince": "0x5c4b0cb3",
-     "status" :0,
-    "signType":0, "signature":"0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"},...]
+  [
+    {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        {
+          "owner": "0xb94065482ad64d4c2b9252358d746b39e820a582",
+          "version": "0x0",
+          "tokenS": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+          "tokenB": "0xef68e7c694f40c8202821edf525de3782458639f",
+          "amountS": "0xde0b6b3a7640000",
+          "validSince": "0x5c4b0cb3",
+          "amountB": "0x3635c9adc5dea00000",
+          "params": {
+            "validUnit": "0x5c4cacb3",
+            "allOrNone": "0x0",
+            "sig": "0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b",
+            "dualAuthAddr": "0x7ebdf3751f63a5fc1742ba98ee34392ce82fa8dd",
+            "dualAuthPrivateKey": "0xc3d695ee4fcb7f14b8cf08a1d588736264ff0d34d6b9b0893a820fe01d1086a6",
+            
+          },
+          "feeParams": {
+            "tokenFee": "0xef68e7c694f40c8202821edf525de3782458639f",
+            "amountFee": "0xde0b6b3a7640000"
+          },
+          "signType": "0x0"
+        }
+      }
+    },
+    ...
+  ]
   ```
 
 - ##### trades
