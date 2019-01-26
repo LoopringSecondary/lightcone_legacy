@@ -128,6 +128,7 @@ class OrderbookManagerActor(
       sender ! req
 
     case req: Orderbook.Update =>
+      println(s"-----------receive Orderbook.Update ${req}")
       log.info(s"receive Orderbook.Update ${req}")
       manager.processUpdate(req)
 

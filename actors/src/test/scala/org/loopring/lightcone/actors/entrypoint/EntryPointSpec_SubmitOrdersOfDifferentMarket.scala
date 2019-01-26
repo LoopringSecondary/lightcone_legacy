@@ -89,7 +89,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       val orderbookLrcF = singleRequest(
         GetOrderbook
           .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
-        "orderbook"
+        "get_orderbook"
       )
 
       val orderbookRes = expectOrderbookRes(
@@ -120,7 +120,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       val orderbookGtoF = singleRequest(
         GetOrderbook
           .Req(0, 100, Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))),
-        "orderbook"
+        "get_orderbook"
       )
 
       val orderbookGtoRes = Await.result(orderbookGtoF, timeout.duration)
@@ -173,7 +173,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       val orderbookF1 = singleRequest(
         GetOrderbook
           .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
-        "orderbook"
+        "get_orderbook"
       )
 
       val orderbookRes1 = expectOrderbookRes(

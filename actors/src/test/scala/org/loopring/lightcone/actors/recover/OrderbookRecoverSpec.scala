@@ -66,22 +66,20 @@ class OrderbookRecoverSpec
   }
 
   private def testSaves(orders: Seq[RawOrder]): Future[Seq[Any]] = {
-    orders.map { order =>
-      val f = singleRequest(SubmitOrder.Req(Some(order)), "submit_order")
-      Await.result(f, timeout.duration)
-    }
-    Future.successful(Seq.empty)
+    Future.sequence(orders.map { order =>
+      singleRequest(SubmitOrder.Req(Some(order)), "submit_order")
+    })
   }
 
   private def testSaveOrder(): Future[Seq[Any]] = {
     val rawOrders =
 
       ((0 until 1) map { i =>
-        val o = createRawOrder( // Buy LRC, price = 1/20 = 0.05
-          tokenS = WETH_TOKEN.address,
-          tokenB = LRC_TOKEN.address,
-          amountS = "1".zeros(WETH_TOKEN.decimals),
-          amountB = "20".zeros(LRC_TOKEN.decimals),
+        val o = createRawOrder( // sell 20 LRC, price = 1/20 = 0.05
+          tokenB = WETH_TOKEN.address,
+          tokenS = LRC_TOKEN.address,
+          amountB = "1".zeros(WETH_TOKEN.decimals),
+          amountS = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )(account2)
         o.copy(
@@ -90,11 +88,11 @@ class OrderbookRecoverSpec
         o
       }) ++
         ((0 until 1) map { i =>
-          val o = createRawOrder( // Sell LRC, price = 1/30 = 0.33333
-            tokenS = LRC_TOKEN.address,
-            tokenB = WETH_TOKEN.address,
-            amountS = "30".zeros(LRC_TOKEN.decimals),
-            amountB = "1".zeros(WETH_TOKEN.decimals),
+          val o = createRawOrder( // buy 30 LRC, price = 1/30 = 0.033333
+            tokenB = LRC_TOKEN.address,
+            tokenS = WETH_TOKEN.address,
+            amountB = "30".zeros(LRC_TOKEN.decimals),
+            amountS = "1".zeros(WETH_TOKEN.decimals),
             amountFee = (i + 1).toString.zeros(LRC_TOKEN.decimals)
           )(account1)
           o.copy(
@@ -126,51 +124,51 @@ class OrderbookRecoverSpec
 
   "recover an orderbook" must {
     "get market's orderbook updates" in {
-      // info("submit some orders")
-      // val f = testSaveOrder()
-      // val res = Await.result(f.mapTo[Seq[SubmitOrder.Res]], timeout.duration)
-      // res.map {
-      //   case SubmitOrder.Res(Some(order)) =>
-      //     info(s" response ${order}")
-      //     order.status should be(OrderStatus.STATUS_PENDING)
-      //   case _ => assert(false)
-      // }
+      info("submit some orders")
+      val f = testSaveOrder()
+      val res = Await.result(f.mapTo[Seq[SubmitOrder.Res]], timeout.duration)
+      res.map {
+        case SubmitOrder.Res(Some(order)) =>
+          info(s" response ${order}")
+          order.status should be(OrderStatus.STATUS_PENDING)
+        case _ => assert(false)
+      }
 
-      // info("get orders")
-      // val orders1 =
-      //   dbModule.orderService.getOrders(
-      //     Set(OrderStatus.STATUS_NEW, OrderStatus.STATUS_PENDING),
-      //     Set(account1.getAddress, account2.getAddress)
-      //   )
-      // val resOrder1 =
-      //   Await.result(orders1.mapTo[Seq[RawOrder]], timeout.duration)
-      // //assert(resOrder1.length === 12)
+      info("get orders")
+      val orders1 =
+        dbModule.orderService.getOrders(
+          Set(OrderStatus.STATUS_NEW, OrderStatus.STATUS_PENDING),
+          Set(account1.getAddress, account2.getAddress)
+        )
+      val resOrder1 =
+        Await.result(orders1.mapTo[Seq[RawOrder]], timeout.duration)
+      //assert(resOrder1.length === 12)
 
-      // info("get orderbook from orderbookManagerActor")
+      info("get orderbook from orderbookManagerActor")
 
-      // Thread.sleep(5000)
-      // val marketId = MarketId(LRC_TOKEN.address, WETH_TOKEN.address)
-      // val getOrderBook1 = GetOrderbook.Req(0, 100, Some(marketId))
-      // val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
-      // val orderbookRes1 =
-      //   Await.result(orderbookF1.mapTo[GetOrderbook.Res], timeout.duration)
+      Thread.sleep(2000)
+      val marketId = MarketId(LRC_TOKEN.address, WETH_TOKEN.address)
+      val getOrderBook1 = GetOrderbook.Req(0, 100, Some(marketId))
+      val orderbookF1 = singleRequest(getOrderBook1, "get_orderbook")
+      val orderbookRes1 =
+        Await.result(orderbookF1.mapTo[GetOrderbook.Res], timeout.duration)
 
-      // orderbookRes1.orderbook match {
-      //   case Some(Orderbook(lastPrice, sells, buys)) =>
-      //     println(s"~~~~~~sells:${sells}, \nbuys:${buys}")
-      //     assert(sells.nonEmpty && buys.nonEmpty)
-      //     assert(
-      //       sells(0).price == "20.000000" &&
-      //         sells(0).amount == "20.00000" &&
-      //         sells(0).total == "1.00000"
-      //     )
-      //     assert(
-      //       buys(0).price == "30.000000" &&
-      //         buys(0).amount == "30.00000" &&
-      //         buys(0).total == "1.00000"
-      //     )
-      //   case _ => assert(false)
-      // }
+      orderbookRes1.orderbook match {
+        case Some(Orderbook(lastPrice, sells, buys)) =>
+          println(s"~~~~~~sells:${sells}, \nbuys:${buys}")
+          assert(sells.nonEmpty && buys.nonEmpty)
+          assert(
+            buys(0).price == "0.033334" &&
+              buys(0).amount == "30.00000" &&
+              buys(0).total == "1.00000"
+          )
+          assert(
+            sells(0).price == "0.050000" &&
+              sells(0).amount == "20.00000" &&
+              sells(0).total == "1.00000"
+          )
+        case _ => assert(false)
+      }
 
       //      info(
       //        "get orderbookUpdate from marketManagerActor(stored in marketManager)"
@@ -215,7 +213,7 @@ class OrderbookRecoverSpec
       //      Thread.sleep(5000)
       //
       //      info("get orderbook will got timeout after delete orderbookManagerActor")
-      //      val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
+      //      val orderbookF2 = singleRequest(getOrderBook1, "get_orderbook")
       //      try {
       //        val orderbookRes2 =
       //          Await.result(orderbookF2.mapTo[GetOrderbook.Res], timeout.duration)
@@ -239,7 +237,7 @@ class OrderbookRecoverSpec
       //      assert(actors.contains(OrderbookManagerActor.name))
       //
       //      info("resend orderbook request")
-      //      val orderbookF3 = singleRequest(getOrderBook1, "orderbook")
+      //      val orderbookF3 = singleRequest(getOrderBook1, "get_orderbook")
       //      val orderbookRes3 =
       //        Await.result(orderbookF3.mapTo[GetOrderbook.Res], timeout.duration)
       //      orderbookRes3.orderbook match {

@@ -281,6 +281,7 @@ class MarketManagerActor(
 
           // submit order to reserve balance and allowance
           matchResult = manager.submitOrder(matchable, minRequiredIncome)
+
           _ = log.debug(s"matchResult, ${matchResult}")
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
@@ -313,6 +314,7 @@ class MarketManagerActor(
 
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
+
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
       orderbookManagerMediator ! Publish(
         OrderbookManagerActor.getTopicId(marketId),

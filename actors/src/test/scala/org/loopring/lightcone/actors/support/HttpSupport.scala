@@ -107,7 +107,7 @@ trait HttpSupport extends RpcBinding with Logging {
     val lastTime = System.currentTimeMillis() + timeout1.duration.toMillis
     while (resOpt.isEmpty &&
            System.currentTimeMillis() <= lastTime) {
-      val orderbookF = singleRequest(req, "orderbook")
+      val orderbookF = singleRequest(req, "get_orderbook")
       val orderbookRes = Await.result(orderbookF, timeout.duration)
       orderbookRes match {
         case GetOrderbook.Res(Some(orderbook)) =>

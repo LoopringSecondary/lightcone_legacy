@@ -116,7 +116,7 @@ class OrderCutoffSpec
         case _ => assert(false)
       }
 
-      val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
+      val orderbookF1 = singleRequest(getOrderBook1, "get_orderbook")
 
       // 4. send cutoff
       val txHash = "0x999"

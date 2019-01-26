@@ -118,7 +118,7 @@ class RecoverOrderSpec
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
+      val orderbookF1 = singleRequest(getOrderBook1, "get_orderbook")
       val timeout1 = Timeout(5 second)
       val orderbookRes1 =
         Await
@@ -141,7 +141,7 @@ class RecoverOrderSpec
       val res = Await.result(r, timeout.duration)
       // 4. get depth
       Thread.sleep(5000)
-      val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
+      val orderbookF2 = singleRequest(getOrderBook1, "get_orderbook")
       val orderbookRes2 =
         Await
           .result(orderbookF2.mapTo[GetOrderbook.Res], timeout1.duration)
