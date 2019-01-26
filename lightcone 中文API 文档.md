@@ -1,6 +1,6 @@
 ## lightcone relay 中文API 文档
 
-Order结构：
+### Order结构：
 
 - owner :  Address
 - version :  Hex String 
@@ -504,7 +504,9 @@ Order结构：
 
   详情见 [Ethereum JSON RPC API](https://github.com/ethereum/wiki/wiki/JSON-RPC)
 
-#### Socket接口
+### Socket接口
+
+#### 普通接口
 
 - ##### assets
 
@@ -632,6 +634,8 @@ Order结构：
   }
   ```
 
+  #### 高级接口
+
 - ##### transfers
 
   订阅用户的transfer事件信息
@@ -676,6 +680,4 @@ Order结构：
     "status":0
    },...]
   ```
-
-  ​	
 
