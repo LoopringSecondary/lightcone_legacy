@@ -151,9 +151,10 @@ class MarketManagerActor(
   )
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
-  protected def orderbookManagerMediator =
-    DistributedPubSub(context.system).mediator
+//  protected def orderbookManagerMediator =
+//    DistributedPubSub(context.system).mediator
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
+  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
 
   override def initialize() = {
     if (skiprecover) Future.successful {
@@ -212,10 +213,7 @@ class MarketManagerActor(
 
     case CancelOrder.Req(orderId, _, _, _) =>
       manager.cancelOrder(orderId) foreach { orderbookUpdate =>
-        orderbookManagerMediator ! Publish(
-          OrderbookManagerActor.getTopicId(marketId),
-          orderbookUpdate.copy(marketId = Some(marketId))
-        )
+        orderbookManagerActor ! orderbookUpdate.copy(marketId = Some(marketId))
       }
       sender ! CancelOrder.Res(id = orderId)
 
@@ -316,10 +314,7 @@ class MarketManagerActor(
     val ou = matchResult.orderbookUpdate
 
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerMediator ! Publish(
-        OrderbookManagerActor.getTopicId(marketId),
-        ou.copy(marketId = Some(marketId))
-      )
+      orderbookManagerActor ! ou.copy(marketId = Some(marketId))
     }
   }
 

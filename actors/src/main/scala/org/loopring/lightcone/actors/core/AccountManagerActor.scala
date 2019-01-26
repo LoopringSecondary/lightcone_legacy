@@ -292,7 +292,7 @@ class AccountManagerActor(
       }
 
       _ = if (!successful) {
-        val error = matchable.status match {
+        val error = updatedOrders(matchable.id).status match {
           case STATUS_INVALID_DATA                   => ERR_INVALID_ORDER_DATA
           case STATUS_UNSUPPORTED_MARKET             => ERR_INVALID_MARKET
           case STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS => ERR_TOO_MANY_ORDERS

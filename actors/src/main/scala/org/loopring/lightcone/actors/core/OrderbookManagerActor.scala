@@ -101,9 +101,6 @@ class OrderbookManagerActor(
     .find(m => getEntityId(m) == entityId)
     .get
 
-  val mediator = DistributedPubSub(context.system).mediator
-  mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
-
   def marketMetadata = metadataManager.getMarketMetadata(marketId)
 
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
@@ -115,20 +112,20 @@ class OrderbookManagerActor(
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
-  val repeatedJobs = Nil
-  // Seq(
-  // Job(
-  //   name = "load_orderbook_from_market",
-  //   dalayInSeconds = refreshIntervalInSeconds,
-  //   initialDalayInSeconds = initialDelayInSeconds,
-  //   run = () => syncOrderbookFromMarket()))
+  val repeatedJobs = Seq(
+    Job(
+      name = "load_orderbook_from_market",
+      dalayInSeconds = refreshIntervalInSeconds,
+      initialDalayInSeconds = initialDelayInSeconds,
+      run = () => syncOrderbookFromMarket()
+    )
+  )
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
     case req: Orderbook.Update =>
-      println(s"-----------receive Orderbook.Update ${req}")
       log.info(s"receive Orderbook.Update ${req}")
       manager.processUpdate(req)
 
@@ -151,7 +148,6 @@ class OrderbookManagerActor(
         orderbookRecoverSize
       )).mapTo[GetOrderbookSlots.Res]
       _ = log.debug(s"orderbook synced: ${res}")
-      _ = println("=========> GetOrderbookSlots.Res: " + res)
     } yield {
       if (res.update.nonEmpty) {
         manager.processUpdate(res.update.get)

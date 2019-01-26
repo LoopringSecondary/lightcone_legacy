@@ -27,6 +27,7 @@ import org.loopring.lightcone.lib.ErrorException
 import scala.concurrent.{Await, Future}
 import TransactionRecord.EventData.Event
 import TransactionRecord.RecordType._
+import org.loopring.lightcone.ethereum.data.Address
 
 class EntryPointSpec_TransactionRecords
     extends CommonSpec
@@ -55,12 +56,13 @@ class EntryPointSpec_TransactionRecords
         txIndex = 1
       )
       def actor = actors.get(TransactionRecordMessageValidator.name)
-      // 1. eth transfer
+      info("save eth transfer for both sender and receiver")
       actor ! TransferEvent(
         header = Some(header1),
         owner = txFrom,
         from = txFrom,
         to = txTo,
+        token = "0",
         amount = ByteString.copyFrom("11", "utf-8")
       )
 
@@ -69,9 +71,10 @@ class EntryPointSpec_TransactionRecords
         owner = txTo,
         from = txFrom,
         to = txTo,
+        token = "0",
         amount = ByteString.copyFrom("11", "utf-8")
       )
-      // 2. erc20 transfer
+      info("save erc20 transfer for both sender and receiver")
       val header2 = header1.copy(
         txIndex = 2,
         logIndex = 0,
@@ -95,7 +98,7 @@ class EntryPointSpec_TransactionRecords
         amount = ByteString.copyFrom("11", "utf-8")
       )
 
-      // 3. cancelled
+      info("save cancelled from sender")
       val header3 = header1.copy(
         txIndex = 3,
         logIndex = 0,
@@ -108,7 +111,7 @@ class EntryPointSpec_TransactionRecords
         orderHashes = Seq("0x1", "0x2")
       )
 
-      // 4. cutoff
+      info("save cutoff from receiver")
       val header4 = header1.copy(
         txIndex = 4,
         logIndex = 0,
@@ -122,7 +125,7 @@ class EntryPointSpec_TransactionRecords
         cutoff = timeProvider.getTimeSeconds()
       )
 
-      // 5.1 save a order
+      info("save a order and submit 2 orderFilledEvents (will query order)")
       val orderHash = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
       val tokenS = "0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1"
       val tokenB = "0x8B75225571ff31B58F95C704E05044D5CF6B32BF"
@@ -140,7 +143,6 @@ class EntryPointSpec_TransactionRecords
         response1.mapTo[Either[RawOrder, ErrorCode]],
         timeout.duration
       )
-      // 5.2 filled
       val header5 = header1.copy(
         txIndex = 5,
         logIndex = 0,
@@ -158,13 +160,14 @@ class EntryPointSpec_TransactionRecords
         orderHash = orderHash
       )
 
-      // 6.1 mock failed (duplicated sequenceId)
+      info("test some failed condition (duplicated sequenceId)")
       actor ! OrderFilledEvent(
         header = Some(header5),
         owner = txTo,
         orderHash = orderHash
       )
-      // 6.2 mock failed (invalid sequenceId)
+
+      info("test some failed condition (invalid sequenceId)")
       val header6 = header1.copy(
         blockNumber = 100,
         txIndex = 10000,
@@ -179,7 +182,7 @@ class EntryPointSpec_TransactionRecords
 
       Thread.sleep(5000)
 
-      // 7. get_transactions with txFrom
+      info("get_transactions with txFrom to check saved record num")
       val fromIndex = EventHeader(blockNumber = blockNumber).sequenceId
       val paging: CursorPaging = CursorPaging(cursor = fromIndex, size = 50)
       val resonse2 = singleRequest(
@@ -195,13 +198,13 @@ class EntryPointSpec_TransactionRecords
       assert(r2.transactions.length == 4)
       r2.transactions.foreach {
         _.eventData.getOrElse(EventData()).event match {
-          case Event.Transfer(e) if e.token.isEmpty =>
+          case Event.Transfer(e) if Address(e.token).isZero =>
             assert(
               e.header
                 .getOrElse(EventHeader())
                 .txHash == "0x016331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
             )
-          case Event.Transfer(e) if e.token.nonEmpty =>
+          case Event.Transfer(e) if !Address(e.token).isZero =>
             assert(
               e.header
                 .getOrElse(EventHeader())
@@ -224,7 +227,7 @@ class EntryPointSpec_TransactionRecords
         }
       }
 
-      // 8. get_transaction_count with txTo
+      info("get_transactions with txTo to check saved record num")
       val resonse3 = singleRequest(
         GetTransactionRecordCount
           .Req(
@@ -243,7 +246,7 @@ class EntryPointSpec_TransactionRecords
         )
       assert(r3.count === 1)
 
-      // 9.1 get_transactions invalid parameters: cursor
+      info("get_transactions some bad request: invalid parameters: cursor")
       val paging1: CursorPaging = CursorPaging(cursor = -1, size = 50)
       val resonse4 = singleRequest(
         GetTransactionRecords
@@ -265,7 +268,7 @@ class EntryPointSpec_TransactionRecords
         case _: Throwable => assert(false)
       }
 
-      // 9.2 get_transactions invalid parameters: size
+      info("get_transactions some bad request: invalid parameters: size")
       val paging2: CursorPaging = CursorPaging(cursor = 1, size = 5000)
       val resonse5 = singleRequest(
         GetTransactionRecords
@@ -287,7 +290,7 @@ class EntryPointSpec_TransactionRecords
         case _: Throwable => assert(false)
       }
 
-      // 9.3 get_transactions empty owner
+      info("get_transactions some bad request: empty owner")
       val resonse6 = singleRequest(
         GetTransactionRecords
           .Req(sort = SortingType.DESC, paging = Some(paging)),

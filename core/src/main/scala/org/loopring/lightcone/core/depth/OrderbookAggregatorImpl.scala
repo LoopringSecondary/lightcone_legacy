@@ -54,12 +54,6 @@ class OrderbookAggregatorImpl(
       amount: Double,
       total: Double
     ) = this.synchronized {
-
-    println("-------->>>")
-    println(
-      s"isSell $isSell, increase: $increase, price: $price, amount: $amount, total: $total"
-    )
-    println("<<<--------")
     if (price > 0 && amount > 0 && total > 0) {
       val side = if (isSell) sells else buys
       if (increase) side.increase(price, amount, total)
