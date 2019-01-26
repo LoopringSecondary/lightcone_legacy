@@ -151,8 +151,6 @@ class MarketManagerActor(
   )
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
-//  protected def orderbookManagerMediator =
-//    DistributedPubSub(context.system).mediator
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
 
