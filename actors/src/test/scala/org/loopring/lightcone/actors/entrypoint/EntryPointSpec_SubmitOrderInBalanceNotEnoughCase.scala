@@ -19,8 +19,9 @@ package org.loopring.lightcone.actors.entrypoint
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.{Await, Future}
+
+import OrderStatus._
 
 class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
     extends CommonSpec
@@ -92,10 +93,10 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
             case Some(order) =>
               assert(order.sequenceId > 0)
               if (order.id == rawOrders(0).hash) {
-                assert(order.getState.status == OrderStatus.STATUS_PENDING)
+                assert(order.getState.status == STATUS_PENDING)
               } else {
                 assert(
-                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
+                  order.getState.status == STATUS_SOFT_CANCELLED_LOW_BALANCE
                 )
               }
             case None =>
@@ -132,7 +133,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       val cancelReq = CancelOrder.Req(
         rawOrders(0).hash,
         rawOrders(0).owner,
-        OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
+        STATUS_SOFT_CANCELLED_BY_USER,
         Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
       )
 
@@ -149,12 +150,10 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
           orderOpt match {
             case Some(order) =>
               if (order.hash == rawOrders(0).hash) {
-                assert(
-                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
-                )
+                assert(order.getState.status == STATUS_SOFT_CANCELLED_BY_USER)
               } else {
                 assert(
-                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
+                  order.getState.status == STATUS_SOFT_CANCELLED_LOW_BALANCE
                 )
               }
             case None =>
