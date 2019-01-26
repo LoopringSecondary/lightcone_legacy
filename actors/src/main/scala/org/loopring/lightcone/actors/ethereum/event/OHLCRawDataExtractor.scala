@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
@@ -89,7 +89,7 @@ class OHLCRawDataExtractor @Inject()(
       }
   }
 
-  // TODO(yangli): LRC-WETH market, LRC is the primary, WETH is the secondary.
+  // LRC-WETH market, LRC is the primary, WETH is the secondary.
   def getAmounts(
       fill: OrderFilledEvent,
       _fill: OrderFilledEvent,
@@ -115,6 +115,6 @@ class OHLCRawDataExtractor @Inject()(
       .fromWei(totalInWei, marketMetadata.precisionForTotal)
       .doubleValue()
 
-    total -> amount
+    amount -> total
   }
 }
