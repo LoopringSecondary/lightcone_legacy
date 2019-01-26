@@ -71,6 +71,8 @@ class MetadataRefresher(
   private var tokens = Seq.empty[TokenMetadata]
   private var markets = Seq.empty[MarketMetadata]
 
+  private var subscribees = Seq.empty[ActorRef]
+
   override def initialize() = {
     val f = refreshMetadata()
     f onComplete {
@@ -81,7 +83,12 @@ class MetadataRefresher(
   }
 
   def ready: Receive = {
-    case _: MetadataChanged => refreshMetadata()
+    case req: MetadataChanged =>
+      refreshMetadata()
+      subscribees.foreach(_ ! req)
+
+    case req: SubscribeMetadataChanged =>
+      subscribees = subscribees :+ sender
 
     case _: GetMetadatas.Req =>
       sender ! GetMetadatas.Res(tokens = tokens, markets = markets)

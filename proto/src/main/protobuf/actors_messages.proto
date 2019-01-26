@@ -297,9 +297,11 @@ message MetadataChanged {
 
 }
 
+message SubscribeMetadataChanged {
+}
+
 message GetMetadatas {
     message Req {
-
     }
 
     message Res {

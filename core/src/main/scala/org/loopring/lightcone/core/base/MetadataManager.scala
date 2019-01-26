@@ -87,9 +87,6 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   private var marketMetadatasMap = Map.empty[String, MarketMetadata]
 
-  var marketSubscribees = Set.empty[(MarketMetadata) => Unit]
-  var tokenSubscribees = Set.empty[(TokenMetadata) => Unit]
-
   def reset(
       tokens: Seq[TokenMetadata],
       markets: Seq[MarketMetadata]
@@ -102,14 +99,6 @@ final class MetadataManager @Inject()(implicit val config: Config)
     readOnlyMarkets = Map.empty
     marketMetadatasMap = Map.empty
     markets.foreach(addMarket)
-
-    //subscribe
-    tokens.foreach { t =>
-      tokenSubscribees foreach (_(t))
-    }
-    markets.foreach { m =>
-      marketSubscribees foreach (_(m))
-    }
   }
 
   private def addToken(meta: TokenMetadata) = this.synchronized {
@@ -224,13 +213,5 @@ final class MetadataManager @Inject()(implicit val config: Config)
     isValidMarket(MarketKey(marketId).toString)
 
   def getValidMarketIds = activeMarkets ++ readOnlyMarkets
-
-  def subscribToken(subFun: (TokenMetadata) => Unit) = {
-    tokenSubscribees = tokenSubscribees + subFun
-  }
-
-  def subscribMarket(subFun: (MarketMetadata) => Unit) = {
-    marketSubscribees = marketSubscribees + subFun
-  }
 
 }

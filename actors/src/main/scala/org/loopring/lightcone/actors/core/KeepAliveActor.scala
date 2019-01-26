@@ -78,8 +78,7 @@ class KeepAliveActor @Inject()(
     val actors: Lookup[ActorRef],
     val metadataManager: MetadataManager)
     extends InitializationRetryActor
-    with RepeatedJobActor
-    with MarketStatusSupport {
+    with RepeatedJobActor {
 
   def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
   def marketManagerActor = actors.get(MarketManagerActor.name)
@@ -105,6 +104,7 @@ class KeepAliveActor @Inject()(
   //定时发送请求，来各个需要初始化的actor保持可用
   def ready: Receive = receiveRepeatdJobs
 
+  //todo: market的配置读取，可以等待永丰处理完毕再优化
   private def initOrderbookManager(): Future[Unit] =
     for {
       _ <- Future.sequence(metadataManager.getValidMarketIds map {
@@ -143,22 +143,5 @@ class KeepAliveActor @Inject()(
           actors.get(nodeName) ? Notify(KeepAliveActor.NOTIFY_MSG)
       })
     } yield Unit
-
-  def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
-    marketMetadata.status match {
-      case MarketMetadata.Status.ACTIVE |
-          MarketMetadata.Status.READONLY => //READONLY也需要保持orderbook等数据的可用
-        val marketId = marketMetadata.getMarketId
-        orderbookManagerActor ! Notify(
-          KeepAliveActor.NOTIFY_MSG,
-          marketId.primary + "-" + marketId.secondary
-        )
-        marketManagerActor ! Notify(
-          KeepAliveActor.NOTIFY_MSG,
-          marketId.primary + "-" + marketId.secondary
-        )
-      case _ => //READONLY时，也需要在恢复时，继续接受订单提供给orderbook，
-    }
-  }
 
 }

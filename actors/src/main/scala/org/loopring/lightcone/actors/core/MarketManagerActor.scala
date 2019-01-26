@@ -28,6 +28,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
@@ -113,7 +114,6 @@ class MarketManagerActor(
       MarketManagerActor.name,
       MarketManagerActor.extractEntityId
     )
-    with MarketStatusSupport
     with ActorLogging {
   implicit val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
@@ -159,32 +159,35 @@ class MarketManagerActor(
   protected def orderbookManagerMediator =
     DistributedPubSub(context.system).mediator
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
+  protected def metadataRefresher = actors.get(MetadataRefresher.name)
 
-  override def initialize() = {
-    if (skiprecover) Future.successful {
-      log.debug(s"actor recover skipped: ${self.path}")
-      becomeReady()
-    } else {
-      log.debug(s"actor recover started: ${self.path}")
-      context.become(recover)
-      for {
-        _ <- actors.get(OrderRecoverCoordinator.name) ?
-          ActorRecover.Request(
-            marketId = Some(marketId),
-            sender = Serialization.serializedActorPath(self)
-          )
-      } yield {
-        autoSwitchBackToReady = Some(
-          context.system.scheduler
-            .scheduleOnce(
-              maxRecoverDurationMinutes.minute,
-              self,
-              ActorRecover.Finished(true)
+  override def initialize() =
+    for {
+      _ <- metadataRefresher ? SubscribeMetadataChanged()
+      _ <- if (skiprecover) Future.successful {
+        log.debug(s"actor recover skipped: ${self.path}")
+        becomeReady()
+      } else {
+        log.debug(s"actor recover started: ${self.path}")
+        context.become(recover)
+        for {
+          _ <- actors.get(OrderRecoverCoordinator.name) ?
+            ActorRecover.Request(
+              marketId = Some(marketId),
+              sender = Serialization.serializedActorPath(self)
             )
-        )
+        } yield {
+          autoSwitchBackToReady = Some(
+            context.system.scheduler
+              .scheduleOnce(
+                maxRecoverDurationMinutes.minute,
+                self,
+                ActorRecover.Finished(true)
+              )
+          )
+        }
       }
-    }
-  }
+    } yield Unit
 
   def recover: Receive = {
 
@@ -261,6 +264,14 @@ class MarketManagerActor(
           }
         }
       } sendTo sender
+
+    case req: MetadataChanged =>
+      val metadataOpt = metadataManager.getMarketMetadata(marketId)
+      metadataOpt match {
+        case None => context.system.stop(self)
+        case Some(metadata) if metadata.status.isTerminated =>
+          context.system.stop(self)
+      }
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {
@@ -323,17 +334,5 @@ class MarketManagerActor(
 
   def recoverOrder(xraworder: RawOrder): Future[Any] =
     submitOrder(xraworder)
-
-  def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
-    marketMetadata.status match {
-      case MarketMetadata.Status.TERMINATED
-          if getEntityId(marketMetadata.getMarketId) == entityId =>
-        log.info(
-          s"this actor:${self.path} will be to stoped, due to the status of this market has been changed to TERMINATED."
-        )
-        context.stop(self)
-      case _ => //READONLY时，也需要在恢复时，继续接受订单提供给orderbook，因此不能stop
-    }
-  }
 
 }

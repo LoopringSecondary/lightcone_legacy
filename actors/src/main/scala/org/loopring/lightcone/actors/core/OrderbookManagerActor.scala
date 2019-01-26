@@ -26,11 +26,13 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
+
 import scala.concurrent._
 
 // Owner: Hongyu
@@ -87,8 +89,7 @@ class OrderbookManagerActor(
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
       OrderbookManagerActor.extractEntityId
-    )
-    with MarketStatusSupport {
+    ) {
 
   val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
@@ -110,6 +111,9 @@ class OrderbookManagerActor(
 
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
+  //todo:因OrderbookManager重写，因此暂时如此处理，等待重构完成之后再修改
+  actors.get(MetadataRefresher.name) ! SubscribeMetadataChanged()
+
   def ready: Receive = LoggingReceive {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
@@ -128,20 +132,14 @@ class OrderbookManagerActor(
             s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}"
           )
       } sendTo sender
+    case req: MetadataChanged =>
+      val metadataOpt = metadataManager.getMarketMetadata(marketId)
+      metadataOpt match {
+        case None => context.system.stop(self)
+        case Some(metadata) if metadata.status.isTerminated =>
+          context.system.stop(self)
+      }
     case msg => log.info(s"not supported msg:${msg}, ${marketId}")
 
   }
-
-  def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
-    marketMetadata.status match {
-      case MarketMetadata.Status.TERMINATED
-          if getEntityId(marketMetadata.getMarketId) == entityId =>
-        log.info(
-          s"this actor:${self.path} will be to stoped, due to the status of this market has been changed to TERMINATED."
-        )
-        context.stop(self)
-      case _ => //READONLY的不处理，需要能继续可以查询得到orderbook
-    }
-  }
-
 }

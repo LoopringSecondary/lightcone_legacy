@@ -203,6 +203,7 @@ class OrderStatusMonitorActor(
         .getOrdersToExpire(latestProcessTime, processTime)
       _ <- Future.sequence(orders.map { o =>
         //只有是有效的市场订单才会发送该取消订单的数据，否则只会更改数据库状态
+        //todo:review时，其他的修改，在另一个pr提交
         if (metadataManager
               .isValidMarket(MarketId(o.tokenS, o.tokenB))) {
           val cancelReq = CancelOrder.Req(
