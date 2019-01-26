@@ -163,7 +163,6 @@ class MarketManagerActor(
 
   override def initialize() =
     for {
-      _ <- metadataRefresher ? SubscribeMetadataChanged()
       _ <- if (skiprecover) Future.successful {
         log.debug(s"actor recover skipped: ${self.path}")
         becomeReady()
@@ -187,7 +186,9 @@ class MarketManagerActor(
           )
         }
       }
-    } yield Unit
+    } yield {
+      metadataRefresher ! SubscribeMetadataChanged()
+    }
 
   def recover: Receive = {
 
@@ -266,6 +267,7 @@ class MarketManagerActor(
       } sendTo sender
 
     case req: MetadataChanged =>
+      log.info("#### MetadataChanged")
       val metadataOpt = metadataManager.getMarketMetadata(marketId)
       metadataOpt match {
         case None => context.system.stop(self)
@@ -275,7 +277,7 @@ class MarketManagerActor(
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {
-    log.debug(s"marketmanager.submitOrder ${order}")
+    log.info(s"marketmanager.submitOrder ${order}")
     assert(
       order.actual.nonEmpty,
       "order in SubmitSimpleOrder miss `actual` field"

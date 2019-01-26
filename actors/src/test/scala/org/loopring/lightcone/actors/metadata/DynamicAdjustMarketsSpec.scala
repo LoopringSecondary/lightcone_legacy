@@ -39,8 +39,6 @@ class DynamicAdjustMarketsSpec
     with OrderbookManagerSupport
     with OrderGenerateSupport {
 
-  metadataManager.subscribMarket(processMarketmetaChange)
-
   "change a market to mode of TERMINATE" must {
     "return an error with ERR_INVALID_MARKET submiting an order, orderbook" in {
 
@@ -59,7 +57,6 @@ class DynamicAdjustMarketsSpec
         case _ => assert(false)
       }
 
-      //      Thread.sleep(1000)
       info("this order must be saved in db.")
       val getOrderF = dbModule.orderService.getOrder(rawOrder.hash)
 
@@ -178,19 +175,6 @@ class DynamicAdjustMarketsSpec
           assert(sells.nonEmpty)
         case _ => assert(false)
       }
-    }
-  }
-
-  def processMarketmetaChange(marketMetadata: MarketMetadata): Unit = {
-    marketMetadata.status match {
-      case MarketMetadata.Status.TERMINATED =>
-        system.log.info(s"receive TerminatedEvent, ${marketMetadata}")
-      case MarketMetadata.Status.READONLY =>
-        system.log.info(s"receive ReadonlyEvent, ${marketMetadata}")
-      case MarketMetadata.Status.ACTIVE =>
-        system.log.info(s"receive ActiveEvent, ${marketMetadata}")
-      case msg =>
-        system.log.info(s"receive Unkown msg:${msg}")
     }
   }
 

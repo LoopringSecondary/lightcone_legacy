@@ -24,8 +24,8 @@ import org.loopring.lightcone.proto._
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 
-trait OrderbookManagerSupport {
-  my: CommonSpec with MetadataManagerSupport =>
+trait OrderbookManagerSupport extends MetadataManagerSupport {
+  my: CommonSpec =>
   actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
   actors.add(

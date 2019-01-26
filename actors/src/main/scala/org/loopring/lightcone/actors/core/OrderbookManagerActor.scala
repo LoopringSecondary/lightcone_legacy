@@ -138,6 +138,10 @@ class OrderbookManagerActor(
         case None => context.system.stop(self)
         case Some(metadata) if metadata.status.isTerminated =>
           context.system.stop(self)
+        case Some(metadata) =>
+          log.debug(
+            s"metadata.status is ${metadata.status},so needn't to stop self"
+          )
       }
     case msg => log.info(s"not supported msg:${msg}, ${marketId}")
 
