@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 

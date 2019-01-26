@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.ethereum.event
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
-import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.lib.data._
