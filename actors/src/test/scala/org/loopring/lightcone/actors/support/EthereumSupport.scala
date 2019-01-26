@@ -26,6 +26,7 @@ import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.ethereum.data.Transaction
+import org.loopring.lightcone.ethereum.data.formatHex
 import org.loopring.lightcone.ethereum.ethereum.getSignedTxData
 import org.loopring.lightcone.proto._
 import org.rnorth.ducttape.TimeoutException
@@ -261,7 +262,7 @@ trait EthereumSupport {
     val getNonceRes =
       Await.result(getNonceF.mapTo[GetNonce.Res], timeout.duration)
     val tx = txWithoutNonce.copy(
-      nonce = Numeric.toBigInt(getNonceRes.result).intValue()
+      nonce = Numeric.toBigInt(formatHex(getNonceRes.result)).intValue()
     )
     actors.get(EthereumAccessActor.name) ? SendRawTransaction.Req(
       getSignedTxData(tx)

@@ -89,7 +89,7 @@ class OHLCRawDataExtractor @Inject()(
       }
   }
 
-  // TODO(yangli): LRC-WETH market, LRC is the primary, WETH is the secondary.
+  // LRC-WETH market, LRC is the primary, WETH is the secondary.
   def getAmounts(
       fill: OrderFilledEvent,
       _fill: OrderFilledEvent,
@@ -115,6 +115,6 @@ class OHLCRawDataExtractor @Inject()(
       .fromWei(totalInWei, marketMetadata.precisionForTotal)
       .doubleValue()
 
-    total -> amount
+    amount -> total
   }
 }
