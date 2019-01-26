@@ -149,20 +149,14 @@ class KeepAliveActor @Inject()(
       case MarketMetadata.Status.ACTIVE |
           MarketMetadata.Status.READONLY => //READONLY也需要保持orderbook等数据的可用
         val marketId = marketMetadata.getMarketId
-        for {
-          _ <- Future.sequence(
-            Seq(
-              orderbookManagerActor ? Notify(
-                KeepAliveActor.NOTIFY_MSG,
-                marketId.primary + "-" + marketId.secondary
-              ),
-              marketManagerActor ? Notify(
-                KeepAliveActor.NOTIFY_MSG,
-                marketId.primary + "-" + marketId.secondary
-              )
-            )
-          )
-        } yield Unit
+        orderbookManagerActor ! Notify(
+          KeepAliveActor.NOTIFY_MSG,
+          marketId.primary + "-" + marketId.secondary
+        )
+        marketManagerActor ! Notify(
+          KeepAliveActor.NOTIFY_MSG,
+          marketId.primary + "-" + marketId.secondary
+        )
       case _ => //READONLY时，也需要在恢复时，继续接受订单提供给orderbook，
     }
   }
