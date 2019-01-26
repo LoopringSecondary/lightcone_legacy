@@ -112,6 +112,7 @@ class OrderbookRecoverSpec
       checkOrderbookUpdateAsExpected(orderbookRes)
 
       info("kill orderbookManagerActor")
+      // TODO(du) 只测试了shard的actor死掉的情况，包括coordinator在内所有的actor挂掉的情况没有正确的测试，类似初始化加载的过程
       //      val cluster = Cluster(system)
       //      cluster.leave(cluster.selfAddress)
       system.actorSelection(
