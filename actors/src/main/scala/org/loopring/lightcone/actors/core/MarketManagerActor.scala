@@ -267,17 +267,20 @@ class MarketManagerActor(
       } sendTo sender
 
     case req: MetadataChanged =>
-      log.info("#### MetadataChanged")
       val metadataOpt = metadataManager.getMarketMetadata(marketId)
       metadataOpt match {
         case None => context.system.stop(self)
         case Some(metadata) if metadata.status.isTerminated =>
           context.system.stop(self)
+        case Some(metadata) =>
+          log.debug(
+            s"metadata.status is ${metadata.status},so needn't to stop ${self.path.address}"
+          )
       }
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {
-    log.info(s"marketmanager.submitOrder ${order}")
+    log.debug(s"marketmanager.submitOrder ${order}")
     assert(
       order.actual.nonEmpty,
       "order in SubmitSimpleOrder miss `actual` field"

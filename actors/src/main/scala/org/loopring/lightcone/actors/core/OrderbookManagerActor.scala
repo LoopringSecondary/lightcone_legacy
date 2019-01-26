@@ -140,7 +140,7 @@ class OrderbookManagerActor(
           context.system.stop(self)
         case Some(metadata) =>
           log.debug(
-            s"metadata.status is ${metadata.status},so needn't to stop self"
+            s"metadata.status is ${metadata.status},so needn't to stop ${self.path.address}"
           )
       }
     case msg => log.info(s"not supported msg:${msg}, ${marketId}")
