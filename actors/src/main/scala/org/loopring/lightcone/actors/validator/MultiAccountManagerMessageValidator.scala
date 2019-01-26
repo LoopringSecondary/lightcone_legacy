@@ -72,11 +72,10 @@ final class MultiAccountManagerMessageValidator(
             message = s"invalid order in SubmitOrder.Req:$order"
           )
         case Right(rawOrder) =>
-          val marketId =
-            MarketId(primary = rawOrder.tokenS, secondary = rawOrder.tokenB)
-          metadataManager.assertMarketIdIsActive(marketId)
+          val marketId = MarketId(rawOrder.tokenS, rawOrder.tokenB)
+          val marketKey = MarketKey(marketId).toString
 
-          val marketKey = MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
+          metadataManager.assertMarketIdIsActive(marketId)
 
           val now = timeProvider.getTimeMillis
           val state = RawOrder.State(

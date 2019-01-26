@@ -18,10 +18,11 @@ package org.loopring.lightcone.actors.core
 
 import akka.actor._
 import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
+import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.util.Timeout
+import akka.pattern.ask
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
@@ -34,6 +35,7 @@ import org.loopring.lightcone.proto._
 import org.slf4s.Logging
 
 import scala.concurrent._
+import scala.util.{Failure, Success}
 
 // Owner: Hongyu
 object OrderbookManagerActor extends ShardedByMarket with Logging {
@@ -68,8 +70,10 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
   val extractMarketId: PartialFunction[Any, MarketId] = {
-    case GetOrderbook.Req(_, _, Some(marketId))    => marketId
+    case GetOrderbook.Req(_, _, Some(marketId)) => marketId
+
     case Orderbook.Update(_, _, _, Some(marketId)) => marketId
+
     case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
@@ -89,32 +93,34 @@ class OrderbookManagerActor(
     extends ActorWithPathBasedConfig(
       OrderbookManagerActor.name,
       OrderbookManagerActor.extractEntityId
-    ) {
+    )
+    with RepeatedJobActor {
+
+  val orderbookRecoverSize = selfConfig.getInt("orderbook-recover-size")
+  val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
+  val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
   val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
     .get
 
-  val mediator = DistributedPubSub(context.system).mediator
-  mediator ! Subscribe(OrderbookManagerActor.getTopicId(marketId), self)
-
-  val marketMetadata = metadataManager
-    .getMarketMetadata(marketId)
-    .getOrElse(
-      throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"not found market:$marketId config"
-      )
-    )
-
+  def marketMetadata = metadataManager.getMarketMetadata(marketId)
+  def marketManagerActor = actors.get(MarketManagerActor.name)
   val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
-
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
-  // TODO:因OrderbookManager重写，因此暂时如此处理，等待重构完成之后再修改
+  val repeatedJobs = Seq(
+    Job(
+      name = "load_orderbook_from_market",
+      dalayInSeconds = refreshIntervalInSeconds,
+      initialDalayInSeconds = initialDelayInSeconds,
+      run = () => syncOrderbookFromMarket()
+    )
+  )
+
   actors.get(MetadataRefresher.name) ! SubscribeMetadataChanged()
 
-  def ready: Receive = LoggingReceive {
+  def ready: Receive = super.receiveRepeatdJobs orElse {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
@@ -132,6 +138,7 @@ class OrderbookManagerActor(
             s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}"
           )
       } sendTo sender
+
     case req: MetadataChanged =>
       val metadataOpt = metadataManager.getMarketMetadata(marketId)
       metadataOpt match {
@@ -143,7 +150,19 @@ class OrderbookManagerActor(
             s"metadata.status is ${metadata.status},so needn't to stop ${self.path.address}"
           )
       }
-    case msg => log.info(s"not supported msg:${msg}, ${marketId}")
-
   }
+
+  private def syncOrderbookFromMarket() =
+    for {
+      res <- (marketManagerActor ? GetOrderbookSlots.Req(
+        Some(marketId),
+        orderbookRecoverSize
+      )).mapTo[GetOrderbookSlots.Res]
+      _ = log.debug(s"orderbook synced: ${res}")
+    } yield {
+      if (res.update.nonEmpty) {
+        manager.processUpdate(res.update.get)
+      }
+    }
+
 }

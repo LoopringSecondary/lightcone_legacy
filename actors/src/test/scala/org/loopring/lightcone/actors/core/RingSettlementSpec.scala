@@ -67,11 +67,11 @@ class RingSettlementSpec
       )
       val order1 = createRawOrder()(account1)
 
-      val order2 = createRawOrder(
-        tokenB = LRC_TOKEN.address,
+      val order2 = createRawOrder( // by LRC
         tokenS = WETH_TOKEN.address,
-        amountB = order1.amountS,
-        amountS = order1.amountB
+        tokenB = LRC_TOKEN.address,
+        amountS = order1.amountB,
+        amountB = order1.amountS
       )(account0)
 
       info("submit the first order.")
@@ -90,8 +90,8 @@ class RingSettlementSpec
           assert(buys.isEmpty)
           assert(sells.size == 1)
           val head = sells.head
+          assert(head.price.toDouble == "0.1".toDouble)
           assert(head.amount.toDouble == "10".toDouble)
-          assert(head.price.toDouble == "10".toDouble)
           assert(head.total.toDouble == "1".toDouble)
         case _ => assert(false)
       }

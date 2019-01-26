@@ -22,7 +22,7 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.json4s.DefaultFormats
+import org.loopring.lightcone.ethereum.data.formatHex
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.lib.TimeProvider
@@ -158,7 +158,7 @@ class EthereumClientMonitor(
   }
 
   def anyHexToLong: PartialFunction[Any, Long] = {
-    case s: String => Numeric.toBigInt(s).longValue()
+    case s: String => Numeric.toBigInt(formatHex(s)).longValue()
     case _         => -1L
   }
 }

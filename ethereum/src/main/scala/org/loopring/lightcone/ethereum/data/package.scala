@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.depth
+package org.loopring.lightcone.ethereum
 
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
+import org.web3j.utils.Numeric
 
-trait OrderbookManager {
-  def processUpdate(update: Orderbook.Update): Unit
+package object data {
 
-  def getOrderbook(
-      level: Int,
-      size: Int,
-      price: Option[Double] = None
-    ): Orderbook
+  def formatHex(str: String): String = {
+    if (Numeric.cleanHexPrefix(str).isEmpty) str + "0" else str
+  }
 
-  def reset(): Unit
 }

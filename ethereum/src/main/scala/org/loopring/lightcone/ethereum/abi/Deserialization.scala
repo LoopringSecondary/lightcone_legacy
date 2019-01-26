@@ -17,10 +17,9 @@
 package org.loopring.lightcone.ethereum.abi
 
 import java.math.BigInteger
-
 import org.web3j.utils.Numeric
-
 import scala.reflect.Manifest
+import org.loopring.lightcone.ethereum.data.formatHex
 import scala.reflect.runtime.universe._
 
 object Deserialization {
@@ -47,7 +46,7 @@ object Deserialization {
         case bs: Array[Byte] => BigInt(bs) == 1
         case b: BigInt       => b == 1
         case b: BigInteger   => BigInt(b) == 1
-        case b: String       => BigInt(Numeric.toBigInt(b)) == 1
+        case b: String       => BigInt(Numeric.toBigInt(formatHex(b))) == 1
       }
     } else if (r =:= typeOf[Array[String]]) {
       p match {

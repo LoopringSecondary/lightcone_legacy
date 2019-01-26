@@ -26,6 +26,7 @@ class EntryPointSpec
     with EthereumSupport
     with MetadataManagerSupport
     with OrderbookManagerSupport
+    with MarketManagerSupport
     with JsonrpcSupport
     with HttpSupport {
 
@@ -36,7 +37,7 @@ class EntryPointSpec
         2,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val f = singleRequest(getOrderBook, "orderbook")
+      val f = singleRequest(getOrderBook, "get_orderbook")
 
       val res = Await.result(f, timeout.duration)
       res match {

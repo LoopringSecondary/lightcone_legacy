@@ -39,7 +39,6 @@ import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
-
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -93,8 +92,9 @@ object MarketManagerActor extends ShardedByMarket {
 
     case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
-      val (primary, secondary) = (tokens(0), tokens(1))
-      MarketId(primary, secondary)
+      MarketId(tokens(0), tokens(1))
+
+    case GetOrderbookSlots.Req(Some(marketId), _) => marketId
   }
 
 }
@@ -141,10 +141,12 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
+  def marketMetadata = metadataManager.getMarketMetadata(marketId)
+
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-    selfConfig.getInt("price-decimals"),
-    selfConfig.getInt("precision-for-amount"),
-    selfConfig.getInt("precision-for-total")
+    marketMetadata.priceDecimals,
+    marketMetadata.precisionForAmount,
+    marketMetadata.precisionForTotal
   )
 
   val manager = new MarketManagerImpl(
@@ -158,8 +160,6 @@ class MarketManagerActor(
   )
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
-  protected def orderbookManagerMediator =
-    DistributedPubSub(context.system).mediator
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
   protected def metadataRefresher = actors.get(MetadataRefresher.name)
 
@@ -222,10 +222,7 @@ class MarketManagerActor(
 
     case CancelOrder.Req(orderId, _, _, _) =>
       manager.cancelOrder(orderId) foreach { orderbookUpdate =>
-        orderbookManagerMediator ! Publish(
-          OrderbookManagerActor.getTopicId(marketId),
-          orderbookUpdate.copy(marketId = Some(marketId))
-        )
+        orderbookManagerActor ! orderbookUpdate.copy(marketId = Some(marketId))
       }
       sender ! CancelOrder.Res(id = orderId)
 
@@ -283,6 +280,11 @@ class MarketManagerActor(
         case Some(metadata) =>
           log.info(s"metadata changed: $metadata")
       }
+
+    case req: GetOrderbookSlots.Req =>
+      sender ! GetOrderbookSlots.Res(
+        Some(manager.getOrderbookSlots(req.numOfSlots))
+      )
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {
@@ -303,6 +305,7 @@ class MarketManagerActor(
 
           // submit order to reserve balance and allowance
           matchResult = manager.submitOrder(matchable, minRequiredIncome)
+
           _ = log.debug(s"matchResult, ${matchResult}")
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
@@ -335,11 +338,9 @@ class MarketManagerActor(
 
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
+
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerMediator ! Publish(
-        OrderbookManagerActor.getTopicId(marketId),
-        ou.copy(marketId = Some(marketId))
-      )
+      orderbookManagerActor ! ou.copy(marketId = Some(marketId))
     }
   }
 
