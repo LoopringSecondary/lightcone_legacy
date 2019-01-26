@@ -190,7 +190,17 @@ Order结构：
          "pageSize":50,
          "total":60,
          "records":[{
-                ...  
+              "owner": "0xb94065482ad64d4c2b9252358d746b39e820a582",
+    			"version": 0,
+    			"tokenS": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    			"tokenB": "0xef68e7c694f40c8202821edf525de3782458639f",
+    			"tokenFee": "0xef68e7c694f40c8202821edf525de3782458639f",
+    			"amountS": "0xde0b6b3a7640000",
+    			"amountB": "0x3635c9adc5dea00000",
+    			"amountFee": "0xde0b6b3a7640000",
+    			"validSince": "0x5c4b0cb3",
+    			 "status" :0,
+    			"signType":0, 								   "signature":"0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
             },...]
       }
   }
@@ -209,7 +219,17 @@ Order结构：
     "id":1,
     "jsonrpc": "2.0",
      "result":{
-     		...
+     		"owner": "0xb94065482ad64d4c2b9252358d746b39e820a582",
+    		"version": 0,
+    		"tokenS": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    		"tokenB": "0xef68e7c694f40c8202821edf525de3782458639f",
+    		"tokenFee": "0xef68e7c694f40c8202821edf525de3782458639f",
+    		"amountS": "0xde0b6b3a7640000",
+    		"amountB": "0x3635c9adc5dea00000",
+    		"amountFee": "0xde0b6b3a7640000",
+    		"validSince": "0x5c4b0cb3",
+    		 "status" :0,
+    		"signType":0,    		"signature":"0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"
       }
   }
   ```
@@ -448,8 +468,7 @@ Order结构：
     "amountFee": "0xde0b6b3a7640000",
     "validSince": "0x5c4b0cb3",
      "status" :0,
-    "signType": 0,
-  signature":"0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"},...]
+    "signType":0, "signature":"0xa3f20717a250c2b0b729b7e5becbff67fdaef7e0699da4de7ca5895b02a170a12d887fd3b17bfdce3481f10bea41f45ba9f709d39ce8325427b57afcfc994cee1b"},...]
   ```
 
 - ##### trades
