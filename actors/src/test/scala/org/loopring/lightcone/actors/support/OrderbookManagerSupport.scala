@@ -18,10 +18,7 @@ package org.loopring.lightcone.actors.support
 
 import java.util.concurrent.TimeUnit
 import akka.pattern._
-import org.loopring.lightcone.actors.core.{
-  MarketManagerActor,
-  OrderbookManagerActor
-}
+import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.proto._
@@ -31,11 +28,10 @@ import org.testcontainers.containers.ContainerLaunchException
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
 
+trait OrderbookManagerSupport extends MetadataManagerSupport {
+  my: CommonSpec =>
 
-trait OrderbookManagerSupport {
-  my: CommonSpec with MetadataManagerSupport =>
-
-  def startOrderbookSupport = {
+  def startOrderbookSupport() = {
     actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
 
     actors.add(
@@ -47,13 +43,6 @@ trait OrderbookManagerSupport {
       )
     )
 
-  }
-  // TODO：因暂时未完成recover，因此需要发起一次请求，将shard初始化成功
-  metadataManager.getValidMarketIds.values.map { marketId =>
-    val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))
-    val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit
-    Await.result(orderBookInitF, timeout.duration)
-
     try Unreliables.retryUntilTrue(
       10,
       TimeUnit.SECONDS,
@@ -63,7 +52,8 @@ trait OrderbookManagerSupport {
             val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))
             actors.get(OrderbookManagerActor.name) ? orderBookInit
         })
-        val res = Await.result(f.mapTo[Seq[GetOrderbook.Res]], timeout.duration)
+        val res =
+          Await.result(f.mapTo[Seq[GetOrderbook.Res]], timeout.duration)
         res.nonEmpty
       }
     )
@@ -74,7 +64,14 @@ trait OrderbookManagerSupport {
         )
     }
 
+    // TODO：因暂时未完成recover，因此需要发起一次请求，将shard初始化成功
+    metadataManager.getValidMarketIds.values.map { marketId =>
+      val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))
+      val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit
+      Await.result(orderBookInitF, timeout.duration)
+    }
+  }
 
-  startOrderbookSupport
+  startOrderbookSupport()
 
 }

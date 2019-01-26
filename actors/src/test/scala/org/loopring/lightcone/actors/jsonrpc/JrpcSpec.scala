@@ -23,13 +23,13 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.Await
 
 class JrpcSpec
-  extends CommonSpec
-  with EthereumSupport
-  with MetadataManagerSupport
-  with MarketManagerSupport
-  with OrderbookManagerSupport
-  with JsonrpcSupport
-  with HttpSupport {
+    extends CommonSpec
+    with EthereumSupport
+    with MetadataManagerSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport
+    with JsonrpcSupport
+    with HttpSupport {
 
   "send serval JRPC requests" must {
     "return correct responses" in {
@@ -55,8 +55,9 @@ class JrpcSpec
         case e: ErrorException => e
       }
       result2 match {
-        case e: ErrorException if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
-          .contains("ERR_UNEXPECTED_ACTOR_MSG") =>
+        case e: ErrorException
+            if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
+              .contains("ERR_UNEXPECTED_ACTOR_MSG") =>
           assert(true)
         case _ =>
           assert(false)
@@ -66,8 +67,10 @@ class JrpcSpec
       val resonse3 = singleRequest(
         GetBalanceAndAllowances.Req(
           "0xb94065482ad64d4c2b9252358d746b39e820a582",
-          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)),
-        "get_balance_and_allowance")
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+        ),
+        "get_balance_and_allowance"
+      )
       val result3 = try {
         Await.result(resonse3, timeout.duration)
       } catch {
@@ -75,8 +78,9 @@ class JrpcSpec
         case e: ErrorException => e
       }
       result3 match {
-        case e: ErrorException if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
-          .contains("not found actor") =>
+        case e: ErrorException
+            if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
+              .contains("not found actor") =>
           assert(true)
         case _ => assert(false)
       }
@@ -91,8 +95,9 @@ class JrpcSpec
         case e: ErrorException => e
       }
       result4 match {
-        case e: ErrorException if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
-          .contains("-32601") =>
+        case e: ErrorException
+            if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
+              .contains("-32601") =>
           assert(true)
         case _ =>
           assert(false)

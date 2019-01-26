@@ -85,10 +85,7 @@ class AccountManagerActor(
           )).mapAs[GetCutoff.Res]
         } yield {
           val cutoff: BigInt = res.cutoff
-          accountCutoffState.setTradingPairCutoff(
-            marketKey,
-            cutoff.toLong
-          )
+          accountCutoffState.setTradingPairCutoff(marketKey, cutoff.toLong)
         }
     }.toSeq
 
@@ -244,7 +241,7 @@ class AccountManagerActor(
         if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received OwnerTokenPairCutoffEvent $req")
       accountCutoffState
-        .setTradingPairCutoff(Numeric.toBigInt(marketKey), req.cutoff)
+        .setTradingPairCutoff(marketKey, req.cutoff)
 
       val updatedOrders = manager.synchronized {
         manager.handleCutoff(cutoff, marketKey)

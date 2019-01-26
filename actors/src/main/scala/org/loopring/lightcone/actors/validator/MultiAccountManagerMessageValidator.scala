@@ -73,9 +73,9 @@ final class MultiAccountManagerMessageValidator(
           )
         case Right(rawOrder) =>
           val marketId = MarketId(rawOrder.tokenS, rawOrder.tokenB)
-          val marketKey = MarketKey(marketId).toString
-
           metadataManager.assertMarketIdIsActive(marketId)
+
+          val marketKey = MarketKey(marketId).toString
 
           val now = timeProvider.getTimeMillis
           val state = RawOrder.State(

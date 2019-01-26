@@ -117,7 +117,7 @@ class MarketManagerActor(
       MarketManagerActor.extractEntityId
     )
     with ActorLogging {
-  implicit val marketId = metadataManager.getValidMarketIds.values
+  implicit val marketId: MarketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
     .get
 
@@ -162,6 +162,7 @@ class MarketManagerActor(
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
   protected def metadataRefresher = actors.get(MetadataRefresher.name)
+  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
 
   override def initialize() =
     for {
@@ -265,7 +266,11 @@ class MarketManagerActor(
       } sendTo sender
 
     case req: MetadataChanged =>
-      val metadataOpt = metadataManager.getMarketMetadata(marketId)
+      val metadataOpt = try {
+        Option(metadataManager.getMarketMetadata(marketId))
+      } catch {
+        case _: Throwable => None
+      }
       metadataOpt match {
         case None =>
           log.warning("I'm stopping myself as the market metadata is not found")

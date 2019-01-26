@@ -140,7 +140,11 @@ class OrderbookManagerActor(
       } sendTo sender
 
     case req: MetadataChanged =>
-      val metadataOpt = metadataManager.getMarketMetadata(marketId)
+      val metadataOpt = try {
+        Option(metadataManager.getMarketMetadata(marketId))
+      } catch {
+        case _: Throwable => None
+      }
       metadataOpt match {
         case None => context.system.stop(self)
         case Some(metadata) if metadata.status.isTerminated =>

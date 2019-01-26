@@ -82,7 +82,7 @@ class DynamicAdjustMarketsSpec
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.nonEmpty)
           assert(
-            sells(0).price == "10.000000" &&
+            sells(0).price == "0.100000" &&
               sells(0).amount == "10.00000" &&
               sells(0).total == "1.00000"
           )
@@ -110,32 +110,37 @@ class DynamicAdjustMarketsSpec
       }
 
       info("change this market to ACTIVE")
-      val enableMarketF = actors.get(MetadataManagerActor.name) ? UpdateMarketMetadata
-        .Req(
+      val enableMarketF = actors.get(MetadataManagerActor.name) ?
+        UpdateMarketMetadata.Req(
           Some(
             metadataManager
               .getMarketMetadata(
                 MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
               )
-              .get
               .copy(status = MarketMetadata.Status.ACTIVE)
           )
         )
+
       Await.result(terminateMarketF, timeout.duration)
+
       actors.get(MetadataRefresher.name) ! MetadataChanged()
       Thread.sleep(1000)
       val f3 = actors.get(OrderbookManagerActor.name) ? getOrderBook
       Await.result(f3, timeout.duration)
+
       val f2 = singleRequest(SubmitOrder.Req(Some(rawOrder1)), "submit_order")
       Await.result(f2, timeout.duration)
+
       val orderbookRes2 = expectOrderbookRes(
         getOrderBook,
         (orderbook: Orderbook) => orderbook.sells.nonEmpty
       )
+
       orderbookRes2 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.nonEmpty)
+
         case _ => assert(false)
       }
 
@@ -147,12 +152,12 @@ class DynamicAdjustMarketsSpec
               .getMarketMetadata(
                 MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
               )
-              .get
               .copy(status = MarketMetadata.Status.READONLY)
           )
         )
       Await.result(terminateMarketF, timeout.duration)
       actors.get(MetadataRefresher.name) ! MetadataChanged()
+
       Thread.sleep(1000)
       info("can't submit order in mode of READONLY")
       val rawOrder4 =
@@ -164,11 +169,13 @@ class DynamicAdjustMarketsSpec
         case e: Exception =>
           info(s"can't be submitted, res: ${e.getMessage}")
       }
+
       info("can get response when getOrderbook in mode of READONLY")
       val orderbookRes4 = expectOrderbookRes(
         getOrderBook,
         (orderbook: Orderbook) => orderbook.sells.nonEmpty
       )
+
       orderbookRes4 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")

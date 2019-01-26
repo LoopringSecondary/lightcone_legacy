@@ -22,28 +22,27 @@ import akka.pattern._
 import org.loopring.lightcone.lib.ErrorException
 import org.web3j.utils.Numeric
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 class ProcessEthereumSpec_OwnerCutoffTradingPair
-    extends CommonSpec
-    with JsonrpcSupport
-    with HttpSupport
-    with EthereumSupport
-    with MetadataManagerSupport
-    with OrderHandleSupport
-    with MultiAccountManagerSupport
-    with MarketManagerSupport
-    with OrderbookManagerSupport
-    with OrderCutoffSupport
-    with OrderGenerateSupport {
+  extends CommonSpec
+  with JsonrpcSupport
+  with HttpSupport
+  with EthereumSupport
+  with MetadataManagerSupport
+  with OrderHandleSupport
+  with MultiAccountManagerSupport
+  with MarketManagerSupport
+  with OrderbookManagerSupport
+  with OrderCutoffSupport
+  with OrderGenerateSupport {
 
   "AccountMangerActor should reject orders after receive cutoff event" must {
     "reject the specific market orders after receive OwnerTradingPairCutoff event" in {
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
-      )
+        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address)))
       info("make sure accountManagerActor can receive orders")
 
       val order1 = createRawOrder()(accounts(0))
@@ -53,64 +52,48 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
 
       val res = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.nonEmpty
-      )
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty)
       assert(res.get.sells.nonEmpty)
 
       info(
-        "send a cutoff event to OrderCutoffHandlerActor and MultiAccountManagerActor"
-      )
+        "send a cutoff event to OrderCutoffHandlerActor and MultiAccountManagerActor")
       val cutoff = CutoffEvent(
         header = Some(
-          EventHeader(txHash = "0x1111", txStatus = TxStatus.TX_STATUS_SUCCESS)
-        ),
+          EventHeader(txHash = "0x1111", txStatus = TxStatus.TX_STATUS_SUCCESS)),
         broker = accounts(0).getAddress,
         owner = accounts(0).getAddress,
         marketKey = Numeric.toHexStringNoPrefix(
-          Numeric.toBigInt(LRC_TOKEN.address) xor Numeric.toBigInt(
-            WETH_TOKEN.address
-          )
-        ),
-        cutoff = timeProvider.getTimeSeconds().toInt + 100
-      )
+          Numeric.toBigInt(LRC_TOKEN.address) xor Numeric
+            .toBigInt(WETH_TOKEN.address)),
+        cutoff = timeProvider.getTimeSeconds().toInt + 100)
       val sendCutoffF = Future.sequence(
         Seq(
           actors.get(OrderCutoffHandlerActor.name) ? cutoff,
-          actors.get(MultiAccountManagerActor.name) ? cutoff
-        )
-      )
+          actors.get(MultiAccountManagerActor.name) ? cutoff))
       info("orderbook should empty after process cutoff")
       val res1 = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.isEmpty
-      )
+        (orderbook: Orderbook) => orderbook.sells.isEmpty)
       assert(res1.get.sells.isEmpty)
 
       info("make sure it has no effect to the orders of other market")
 
       val orderWithOtherMarket =
         createRawOrder(tokenS = GTO_TOKEN.address, tokenB = WETH_TOKEN.address)(
-          accounts(0)
-        )
+          accounts(0))
       val f10 = singleRequest(
         SubmitOrder.Req(Some(orderWithOtherMarket)),
-        "submit_order"
-      )
+        "submit_order")
       Await.result(f10, timeout.duration)
       val res10 = expectOrderbookRes(
-        GetOrderbook.Req(
-          0,
-          100,
-          Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))
-        ),
-        (orderbook: Orderbook) => orderbook.sells.nonEmpty
-      )
+        GetOrderbook
+          .Req(0, 100, Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))),
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty)
       assert(res10.get.sells.nonEmpty)
 
       info("confirm it still can receive orders that ValidSince > cutoff")
       val order2 = createRawOrder(
-        validSince = timeProvider.getTimeSeconds().toInt + 1000
-      )(accounts(0))
+        validSince = timeProvider.getTimeSeconds().toInt + 1000)(accounts(0))
       val f2 = singleRequest(SubmitOrder.Req(Some(order2)), "submit_order")
       Await.result(f2, timeout.duration)
       val getOrderF = dbModule.orderService.getOrder(order2.hash)
@@ -118,17 +101,15 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
       getOrder match {
         case Some(order) =>
           assert(
-            order.sequenceId > 0 && order.getState.status == OrderStatus.STATUS_PENDING_ACTIVE
-          )
+            order.sequenceId > 0 && order.getState.status == OrderStatus.STATUS_PENDING_ACTIVE)
         case None => assert(false)
       }
 
       info(
-        "it will receive an JsonRpcErr with ERR_ORDER_VALIDATION_INVALID_CUTOFF when submit orders that ValidSince <= cutoff"
-      )
+        "it will receive an JsonRpcErr with ERR_ORDER_VALIDATION_INVALID_CUTOFF" +
+          "  when submit orders that ValidSince <= cutoff")
       val order3 = createRawOrder(
-        validSince = timeProvider.getTimeSeconds().toInt - 100
-      )(accounts(0))
+        validSince = timeProvider.getTimeSeconds().toInt - 100)(accounts(0))
       try {
         val f3 = singleRequest(SubmitOrder.Req(Some(order3)), "submit_order")
         Await.result(f3, timeout.duration)
@@ -137,10 +118,9 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
           info(e.getMessage())
           assert(e.getMessage().contains("ERR_ORDER_VALIDATION_INVALID_CUTOFF"))
       }
-      val res3 = expectOrderbookRes(
-        getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.isEmpty
-      )
+      val res3 = expectOrderbookRes(getOrderBook, (orderbook: Orderbook) => {
+        orderbook.sells.isEmpty
+      })
       assert(res3.get.sells.isEmpty)
     }
   }
