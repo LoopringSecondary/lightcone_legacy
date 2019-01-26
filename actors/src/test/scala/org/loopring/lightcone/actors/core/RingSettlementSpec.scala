@@ -70,8 +70,8 @@ class RingSettlementSpec
       val order2 = createRawOrder( // by LRC
         tokenS = WETH_TOKEN.address,
         tokenB = LRC_TOKEN.address,
-        amountB = order1.amountS,
-        amountS = order1.amountB
+        amountS = order1.amountB,
+        amountB = order1.amountS
       )(account0)
 
       info("submit the first order.")
