@@ -85,7 +85,6 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
       ) with ConverstionSupport
 
     def processUpdate(update: Orderbook.Update) {
-      // println("=====update: " + update)
       update.sells.foreach(sellSide.increase)
       update.buys.foreach(buySide.increase)
     }
