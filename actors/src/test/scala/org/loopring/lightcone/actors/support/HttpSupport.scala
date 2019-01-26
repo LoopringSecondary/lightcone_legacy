@@ -35,7 +35,7 @@ trait HttpSupport extends RpcBinding with Logging {
   val config: Config
   implicit val materializer: ActorMaterializer
 
-  //todo:for test, not need it
+  // TODO:for test, not need it
   override val requestHandler: ActorRef = ActorRef.noSender
 
   def singleRequest(

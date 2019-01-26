@@ -74,40 +74,39 @@ class AccountManagerActor(
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   override def preStart() = {
-    val cutoffReqs = (metadataManager.getValidMarketKeys map { m =>
-      for {
-        res <- (ethereumQueryActor ? GetCutoff.Req(
-          broker = address,
-          owner = address,
-          marketKey = m
-        )).mapAs[GetCutoff.Res]
-      } yield {
-        val cutoff: BigInt = res.cutoff
-        accountCutoffState.setTradingPairCutoff(
-          Numeric.toBigInt(m),
-          cutoff.toLong
-        )
-      }
-    }) +
-      (for {
-        res <- (ethereumQueryActor ? GetCutoff.Req(
-          broker = address,
-          owner = address
-        )).mapAs[GetCutoff.Res]
-      } yield {
-        val cutoff: BigInt = res.cutoff
-        accountCutoffState.setCutoff(cutoff.toLong)
-      })
+    // TODO:合并为批量查询，会在另一个pr里提交
+    val f1 = metadataManager.getValidMarketIds.map {
+      case (marketKey, marketId) =>
+        for {
+          res <- (ethereumQueryActor ? GetCutoff.Req(
+            broker = address,
+            owner = address,
+            marketKey = marketKey
+          )).mapAs[GetCutoff.Res]
+        } yield {
+          val cutoff: BigInt = res.cutoff
+          accountCutoffState.setTradingPairCutoff(marketKey, cutoff.toLong)
+        }
+    }.toSeq
 
-    Future.sequence(cutoffReqs) onComplete {
+    val f2 = for {
+      res <- (ethereumQueryActor ? GetCutoff.Req(
+        broker = address,
+        owner = address
+      )).mapAs[GetCutoff.Res]
+    } yield {
+      val cutoff: BigInt = res.cutoff
+      accountCutoffState.setCutoff(cutoff.toLong)
+    }
+
+    Future.sequence(f1 :+ f2) onComplete {
       case Success(res) =>
         self ! Notify("initialized")
+
       case Failure(e) =>
-        log.error(s"failed to start AccountManagerActor: ${e.getMessage}")
-        throw ErrorException(
-          ERR_INTERNAL_UNKNOWN,
-          s"failed to start AccountManagerActor: ${e.getMessage}"
-        )
+        val err = s"failed to start: ${e.getMessage}"
+        log.error(err)
+        throw ErrorException(ERR_INTERNAL_UNKNOWN, err)
     }
   }
 
@@ -242,7 +241,7 @@ class AccountManagerActor(
         if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received OwnerTokenPairCutoffEvent $req")
       accountCutoffState
-        .setTradingPairCutoff(Numeric.toBigInt(marketKey), req.cutoff)
+        .setTradingPairCutoff(marketKey, req.cutoff)
 
       val updatedOrders = manager.synchronized {
         manager.handleCutoff(cutoff, marketKey)
@@ -444,5 +443,7 @@ class AccountManagerActor(
           ERR_ORDER_VALIDATION_INVALID_CUTOFF,
           s"this order has been canceled."
         )
+
+  // TODO:terminate market则需要将订单从内存中删除,但是不从数据库删除
 
 }

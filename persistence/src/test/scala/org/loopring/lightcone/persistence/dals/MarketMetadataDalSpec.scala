@@ -37,7 +37,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     val marketIdZrxdWeth = MarketId(ZRX, WETH)
     val markets = Seq(
       MarketMetadata(
-        status = MarketMetadata.Status.ENABLED,
+        status = MarketMetadata.Status.ACTIVE,
         primaryTokenSymbol = "LRC",
         secondaryTokenSymbol = "WETH",
         maxNumbersOfOrders = 1000,
@@ -51,7 +51,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         marketKey = MarketKey(WETH, LRC).toString
       ),
       MarketMetadata(
-        status = MarketMetadata.Status.DISABLED,
+        status = MarketMetadata.Status.TERMINATED,
         primaryTokenSymbol = "BNB",
         secondaryTokenSymbol = "WETH",
         maxNumbersOfOrders = 1000,
@@ -90,7 +90,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     res2 foreach {
       case m: MarketMetadata if m.primaryTokenSymbol == "LRC" =>
         assert(
-          m.status == MarketMetadata.Status.ENABLED
+          m.status == MarketMetadata.Status.ACTIVE
             && m.secondaryTokenSymbol == "WETH"
             && m.maxNumbersOfOrders == 1000
             && m.priceDecimals == 8
@@ -103,7 +103,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         )
       case m: MarketMetadata if m.primaryTokenSymbol == "BNB" =>
         assert(
-          m.status == MarketMetadata.Status.DISABLED
+          m.status == MarketMetadata.Status.TERMINATED
             && m.secondaryTokenSymbol == "WETH"
             && m.maxNumbersOfOrders == 1000
             && m.priceDecimals == 8
@@ -165,7 +165,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
       res2.find(_.primaryTokenSymbol == "BNB").getOrElse(MarketMetadata())
     val r9 = dal.updateMarket(
       bnbWeth.copy(
-        status = MarketMetadata.Status.ENABLED,
+        status = MarketMetadata.Status.ACTIVE,
         maxNumbersOfOrders = 2000,
         priceDecimals = 3,
         orderbookAggLevels = 2,
@@ -181,7 +181,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     val bnb1 =
       res10.find(_.primaryTokenSymbol == "BNB").getOrElse(MarketMetadata())
     assert(
-      bnb1.status == MarketMetadata.Status.ENABLED
+      bnb1.status == MarketMetadata.Status.ACTIVE
         && bnb1.secondaryTokenSymbol == "WETH"
         && bnb1.maxNumbersOfOrders == 2000
         && bnb1.priceDecimals == 3

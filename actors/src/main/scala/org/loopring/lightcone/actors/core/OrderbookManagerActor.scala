@@ -27,11 +27,13 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
+
 import scala.concurrent._
 import scala.util.{Failure, Success}
 
@@ -94,23 +96,18 @@ class OrderbookManagerActor(
     )
     with RepeatedJobActor {
 
-  val orderbookRecoverSize =
-    selfConfig.getInt("orderbook-recover-size")
+  val orderbookRecoverSize = selfConfig.getInt("orderbook-recover-size")
+  val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
+  val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
   val marketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
     .get
 
   def marketMetadata = metadataManager.getMarketMetadata(marketId)
-
-  val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
-
-  val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
-
   def marketManagerActor = actors.get(MarketManagerActor.name)
-
-  val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
-  val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
+  val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
+  val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
   val repeatedJobs = Seq(
     Job(
@@ -120,6 +117,8 @@ class OrderbookManagerActor(
       run = () => syncOrderbookFromMarket()
     )
   )
+
+  actors.get(MetadataRefresher.name) ! SubscribeMetadataChanged()
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
@@ -139,6 +138,22 @@ class OrderbookManagerActor(
             s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}"
           )
       } sendTo sender
+
+    case req: MetadataChanged =>
+      val metadataOpt = try {
+        Option(metadataManager.getMarketMetadata(marketId))
+      } catch {
+        case _: Throwable => None
+      }
+      metadataOpt match {
+        case None => context.system.stop(self)
+        case Some(metadata) if metadata.status.isTerminated =>
+          context.system.stop(self)
+        case Some(metadata) =>
+          log.debug(
+            s"metadata.status is ${metadata.status},so needn't to stop ${self.path.address}"
+          )
+      }
   }
 
   private def syncOrderbookFromMarket() =

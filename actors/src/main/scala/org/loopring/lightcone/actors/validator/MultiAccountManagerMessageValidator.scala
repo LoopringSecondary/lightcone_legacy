@@ -46,49 +46,22 @@ final class MultiAccountManagerMessageValidator(
   val orderValidator: RawOrderValidator = Protocol2RawOrderValidator
 
   def validate = {
-    case req @ CancelOrder.Req(_, owner, _, marketId) =>
-      metadataManager.assertMarketIdIsValid(marketId)
-      req.copy(owner = Address.normalizeAddress(owner))
+    case req @ CancelOrder.Req(_, owner, _, Some(marketId)) =>
+      metadataManager.assertMarketIdIsActive(marketId)
+      req.copy(
+        owner = Address.normalizeAddress(owner),
+        marketId = Some(
+          marketId.copy(
+            primary = marketId.primary.toLowerCase(),
+            secondary = marketId.secondary.toLowerCase()
+          )
+        )
+      )
 
-    case req: SubmitSimpleOrder =>
-      req.order match {
-        case None =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            s"bad request:${req}"
-          )
-        case Some(order) =>
-          metadataManager.assertMarketIdIsValid(
-            MarketId(order.tokenS, order.tokenB)
-          )
-          req.copy(
-            order = Some(
-              order.copy(
-                tokenB = Address.normalizeAddress(order.tokenB),
-                tokenS = Address.normalizeAddress(order.tokenS),
-                tokenFee = Address.normalizeAddress(order.tokenFee)
-              )
-            ),
-            owner = Address.normalizeAddress(req.owner)
-          )
-      }
-    case req: ActorRecover.RecoverOrderReq => req
     case req: GetBalanceAndAllowances.Req =>
       req.copy(
         address = Address.normalizeAddress(req.address),
         tokens = req.tokens.map(Address.normalizeAddress)
-      )
-
-    case req: AddressBalanceUpdated =>
-      req.copy(
-        address = Address.normalizeAddress(req.address),
-        token = Address.normalizeAddress(req.token)
-      )
-
-    case req: AddressAllowanceUpdated =>
-      req.copy(
-        address = Address.normalizeAddress(req.address),
-        token = Address.normalizeAddress(req.token)
       )
 
     case req @ SubmitOrder.Req(Some(order)) =>
@@ -99,6 +72,11 @@ final class MultiAccountManagerMessageValidator(
             message = s"invalid order in SubmitOrder.Req:$order"
           )
         case Right(rawOrder) =>
+          val marketId = MarketId(rawOrder.tokenS, rawOrder.tokenB)
+          metadataManager.assertMarketIdIsActive(marketId)
+
+          val marketKey = MarketKey(marketId).toString
+
           val now = timeProvider.getTimeMillis
           val state = RawOrder.State(
             createdAt = now,
@@ -106,13 +84,29 @@ final class MultiAccountManagerMessageValidator(
             status = OrderStatus.STATUS_NEW
           )
 
-          val marketId =
-            MarketId(rawOrder.tokenS, rawOrder.tokenB)
-
-          val marketKey = MarketKey(marketId).toString
-
           req.withRawOrder(
             rawOrder.copy(
+              hash = rawOrder.hash.toLowerCase(),
+              owner = Address.normalizeAddress(rawOrder.owner),
+              tokenS = Address.normalizeAddress(rawOrder.tokenS),
+              tokenB = Address.normalizeAddress(rawOrder.tokenB),
+              params = Some(
+                rawOrder.getParams.copy(
+                  dualAuthAddr = rawOrder.getParams.dualAuthAddr.toLowerCase,
+                  broker = rawOrder.getParams.broker.toLowerCase(),
+                  orderInterceptor =
+                    rawOrder.getParams.orderInterceptor.toLowerCase(),
+                  wallet = rawOrder.getParams.wallet.toLowerCase()
+                )
+              ),
+              feeParams = Some(
+                rawOrder.getFeeParams.copy(
+                  tokenFee =
+                    Address.normalizeAddress(rawOrder.getFeeParams.tokenFee),
+                  tokenRecipient =
+                    rawOrder.getFeeParams.tokenRecipient.toLowerCase()
+                )
+              ),
               state = Some(state),
               marketKey = marketKey,
               marketShard = MarketManagerActor.getEntityId(marketId).toInt,

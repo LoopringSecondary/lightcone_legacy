@@ -28,6 +28,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
@@ -46,6 +47,8 @@ import scala.concurrent.duration._
 object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
 
+  var metadataManager: MetadataManager = _
+
   def start(
       implicit
       system: ActorSystem,
@@ -61,6 +64,7 @@ object MarketManagerActor extends ShardedByMarket {
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
+    this.metadataManager = metadataManager
 
     ClusterSharding(system).start(
       typeName = name,
@@ -71,11 +75,16 @@ object MarketManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
+  //READONLY的不能在该处拦截，需要在validtor中截取，因为该处还需要将orderbook等恢复
   val extractMarketId: PartialFunction[Any, MarketId] = {
-    case SubmitSimpleOrder(_, Some(order)) =>
+    case SubmitSimpleOrder(_, Some(order))
+        if metadataManager.isValidMarket(
+          MarketId(order.tokenS, order.tokenB)
+        ) =>
       MarketId(order.tokenS, order.tokenB)
 
-    case CancelOrder.Req(_, _, _, Some(marketId)) =>
+    case CancelOrder.Req(_, _, _, Some(marketId))
+        if metadataManager.isValidMarket(marketId) =>
       marketId
 
     case req: RingMinedEvent if req.fills.size >= 2 =>
@@ -90,7 +99,7 @@ object MarketManagerActor extends ShardedByMarket {
 
 }
 
-//todo:撮合应该有个暂停撮合提交的逻辑，适用于：区块落后太多、没有可用的RingSettlement等情况
+// TODO:撮合应该有个暂停撮合提交的逻辑，适用于：区块落后太多、没有可用的RingSettlement等情况
 class MarketManagerActor(
   )(
     implicit
@@ -108,7 +117,7 @@ class MarketManagerActor(
       MarketManagerActor.extractEntityId
     )
     with ActorLogging {
-  implicit val marketId = metadataManager.getValidMarketIds.values
+  implicit val marketId: MarketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
     .get
 
@@ -152,33 +161,36 @@ class MarketManagerActor(
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
+  protected def metadataRefresher = actors.get(MetadataRefresher.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
 
-  override def initialize() = {
-    if (skiprecover) Future.successful {
-      log.debug(s"actor recover skipped: ${self.path}")
-      becomeReady()
-    } else {
-      log.debug(s"actor recover started: ${self.path}")
-      context.become(recover)
-      for {
-        _ <- actors.get(OrderRecoverCoordinator.name) ?
-          ActorRecover.Request(
-            marketId = Some(marketId),
-            sender = Serialization.serializedActorPath(self)
-          )
-      } yield {
-        autoSwitchBackToReady = Some(
-          context.system.scheduler
-            .scheduleOnce(
-              maxRecoverDurationMinutes.minute,
-              self,
-              ActorRecover.Finished(true)
+  override def initialize() =
+    for {
+      _ <- if (skiprecover) Future.successful {
+        log.debug(s"actor recover skipped: ${self.path}")
+        becomeReady()
+      } else {
+        log.debug(s"actor recover started: ${self.path}")
+        context.become(recover)
+        for {
+          _ <- actors.get(OrderRecoverCoordinator.name) ?
+            ActorRecover.Request(
+              marketId = Some(marketId),
+              sender = Serialization.serializedActorPath(self)
             )
-        )
+        } yield {
+          autoSwitchBackToReady = Some(
+            context.system.scheduler
+              .scheduleOnce(
+                maxRecoverDurationMinutes.minute,
+                self,
+                ActorRecover.Finished(true)
+              )
+          )
+        }
       }
-    }
-  }
+      _ = metadataRefresher ! SubscribeMetadataChanged()
+    } yield Unit
 
   def recover: Receive = {
 
@@ -252,6 +264,27 @@ class MarketManagerActor(
           }
         }
       } sendTo sender
+
+    case req: MetadataChanged =>
+      val metadataOpt = try {
+        Option(metadataManager.getMarketMetadata(marketId))
+      } catch {
+        case _: Throwable => None
+      }
+      metadataOpt match {
+        case None =>
+          log.warning("I'm stopping myself as the market metadata is not found")
+          context.system.stop(self)
+
+        case Some(metadata) if metadata.status.isTerminated =>
+          log.warning(
+            s"I'm stopping myself as the market is terminiated: $metadata"
+          )
+          context.system.stop(self)
+
+        case Some(metadata) =>
+          log.info(s"metadata changed: $metadata")
+      }
 
     case req: GetOrderbookSlots.Req =>
       sender ! GetOrderbookSlots.Res(

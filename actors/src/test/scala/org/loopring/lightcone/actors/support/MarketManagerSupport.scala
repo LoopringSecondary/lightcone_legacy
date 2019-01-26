@@ -25,8 +25,10 @@ import org.testcontainers.containers.ContainerLaunchException
 import scala.concurrent.{Await, Future}
 import akka.pattern.ask
 
-trait MarketManagerSupport extends DatabaseModuleSupport {
-  my: CommonSpec with EthereumSupport with MarketManagerSupport =>
+trait MarketManagerSupport
+    extends DatabaseModuleSupport
+    with MetadataManagerSupport {
+  my: CommonSpec with EthereumSupport =>
 
   actors.add(MarketManagerActor.name, MarketManagerActor.start)
 

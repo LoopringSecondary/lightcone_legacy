@@ -337,10 +337,14 @@ trait EthereumSupport {
   }
 
   def getUniqueAccountWithoutEth = {
-    Credentials.create(
+    val account = Credentials.create(
       Numeric.toHexStringWithPrefix(
         BigInt(addressGenerator.getAndIncrement()).bigInteger
       )
     )
+    info(
+      s"${this.getClass.getSimpleName} got an uniqueAccount: ${account.getAddress()}"
+    )
+    account
   }
 }

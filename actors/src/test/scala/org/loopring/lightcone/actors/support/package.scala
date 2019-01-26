@@ -42,7 +42,7 @@ package object support {
     symbol = "WETH",
     name = "WETH",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
+    status = TokenMetadata.Status.VALID
   )
 
   val LRC_TOKEN = TokenMetadata(
@@ -53,7 +53,7 @@ package object support {
     symbol = "LRC",
     name = "LRC",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
+    status = TokenMetadata.Status.VALID
   )
 
   val GTO_TOKEN = TokenMetadata(
@@ -64,11 +64,11 @@ package object support {
     symbol = "GTO",
     name = "GTO",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
+    status = TokenMetadata.Status.VALID
   )
 
   val LRC_WETH_MARKET = MarketMetadata(
-    status = MarketMetadata.Status.ENABLED,
+    status = MarketMetadata.Status.ACTIVE,
     primaryTokenSymbol = LRC_TOKEN.symbol,
     secondaryTokenSymbol = WETH_TOKEN.symbol,
     maxNumbersOfOrders = 1000,
@@ -82,7 +82,7 @@ package object support {
   )
 
   val GTO_WETH_MARKET = MarketMetadata(
-    status = MarketMetadata.Status.ENABLED,
+    status = MarketMetadata.Status.ACTIVE,
     primaryTokenSymbol = GTO_TOKEN.symbol,
     secondaryTokenSymbol = WETH_TOKEN.symbol,
     maxNumbersOfOrders = 500,
@@ -129,7 +129,7 @@ package object support {
   val postgreContainer = PostgreSQLContainer("timescale/timescaledb:latest")
   postgreContainer.starting()
 
-  //todo:暂时未生效
+  // TODO:暂时未生效
   //  try Unreliables.retryUntilTrue(
   //    10,
   //    TimeUnit.SECONDS,

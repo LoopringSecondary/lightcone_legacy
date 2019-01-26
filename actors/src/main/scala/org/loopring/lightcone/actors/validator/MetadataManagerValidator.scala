@@ -56,7 +56,7 @@ final class MetadataManagerValidator()(implicit val config: Config)
         )
       req
 
-    case req: DisableToken.Req =>
+    case req: InvalidateToken.Req =>
       if (req.address.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
@@ -81,7 +81,7 @@ final class MetadataManagerValidator()(implicit val config: Config)
         )
       req.copy(market = Some(MetadataManager.normalizeMarket(req.market.get)))
 
-    case req: DisableMarket.Req =>
+    case req: TerminateMarket.Req =>
       if (req.marketKey.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,

@@ -67,9 +67,8 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
         broker = accounts(0).getAddress,
         owner = accounts(0).getAddress,
         marketKey = Numeric.toHexStringNoPrefix(
-          Numeric.toBigInt(LRC_TOKEN.address) xor Numeric.toBigInt(
-            WETH_TOKEN.address
-          )
+          Numeric.toBigInt(LRC_TOKEN.address) xor Numeric
+            .toBigInt(WETH_TOKEN.address)
         ),
         cutoff = timeProvider.getTimeSeconds().toInt + 100
       )
@@ -98,11 +97,8 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
       )
       Await.result(f10, timeout.duration)
       val res10 = expectOrderbookRes(
-        GetOrderbook.Req(
-          0,
-          100,
-          Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))
-        ),
+        GetOrderbook
+          .Req(0, 100, Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) => orderbook.sells.nonEmpty
       )
       assert(res10.get.sells.nonEmpty)
@@ -124,7 +120,8 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
       }
 
       info(
-        "it will receive an JsonRpcErr with ERR_ORDER_VALIDATION_INVALID_CUTOFF when submit orders that ValidSince <= cutoff"
+        "it will receive an JsonRpcErr with ERR_ORDER_VALIDATION_INVALID_CUTOFF" +
+          "  when submit orders that ValidSince <= cutoff"
       )
       val order3 = createRawOrder(
         validSince = timeProvider.getTimeSeconds().toInt - 100
@@ -137,10 +134,9 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
           info(e.getMessage())
           assert(e.getMessage().contains("ERR_ORDER_VALIDATION_INVALID_CUTOFF"))
       }
-      val res3 = expectOrderbookRes(
-        getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.isEmpty
-      )
+      val res3 = expectOrderbookRes(getOrderBook, (orderbook: Orderbook) => {
+        orderbook.sells.isEmpty
+      })
       assert(res3.get.sells.isEmpty)
     }
   }

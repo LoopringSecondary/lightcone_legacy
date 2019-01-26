@@ -296,7 +296,7 @@ message UpdateTokenBurnRate {
     }
 }
 
-message DisableToken {
+message InvalidateToken {
     message Req {
         string address = 1;
     }
@@ -336,7 +336,7 @@ message UpdateMarketMetadata {
     }
 }
 
-message DisableMarket {
+message TerminateMarket {
     message Req {
         string   market_key  = 1;
     }
