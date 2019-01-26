@@ -313,8 +313,8 @@ message OHLCRawData {
     string     tx_hash        = 2;
     string     market_key     = 3;
     int64      time           = 4;
-    double     quality        = 6;
-    double     amount         = 7;
+    double     amount        = 6;
+    double     total         = 7;
     double     price          = 8;
 }
 

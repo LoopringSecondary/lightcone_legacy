@@ -31,8 +31,8 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf51",
       marketKey = "111222",
       time = 1547682550,
-      quality = 2.5,
-      amount = 1000,
+      amount = 2.5,
+      total = 1000,
       price = 400
     )
     val result1 = dal.saveData(data1)
@@ -46,8 +46,8 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
       marketKey = "111222",
       time = 1547682650,
-      quality = 50,
-      amount = 500,
+      amount = 50,
+      total = 500,
       price = 50
     )
     val result2 = dal.saveData(data2)
@@ -61,8 +61,8 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf65",
       marketKey = "111222",
       time = 1547682675,
-      quality = 10.5,
-      amount = 1050,
+      amount = 10.5,
+      total = 1050,
       price = 100
     )
     val result3 = dal.saveData(data3)

@@ -62,7 +62,7 @@ class OHLCRawDataExtractor @Inject()(
                 val secondaryToken =
                   metadataManager.getToken(marketId.secondary).get
 
-                val (quality, amount) = getAmounts(
+                val (amount, total) = getAmounts(
                   fill,
                   _fill,
                   primaryToken,
@@ -76,9 +76,9 @@ class OHLCRawDataExtractor @Inject()(
                     txHash = ring.header.get.txHash,
                     marketKey = marketKey,
                     time = ring.header.get.blockTimestamp,
-                    quality = quality,
                     amount = amount,
-                    price = BigDecimal(amount / quality)
+                    total = total,
+                    price = BigDecimal(total / amount)
                       .setScale(marketMetadata.priceDecimals)
                       .doubleValue()
                   )
@@ -103,7 +103,7 @@ class OHLCRawDataExtractor @Inject()(
       else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
 
     val amount: Double = secondaryToken
-      .fromWei(amountInWei, marketMetadata.precisionForTotal)
+      .fromWei(amountInWei, marketMetadata.precisionForAmount)
       .doubleValue()
 
     val totalInWei =
@@ -112,7 +112,7 @@ class OHLCRawDataExtractor @Inject()(
       else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
 
     val total: Double = primaryToken
-      .fromWei(totalInWei, marketMetadata.precisionForAmount)
+      .fromWei(totalInWei, marketMetadata.precisionForTotal)
       .doubleValue()
 
     total -> amount
