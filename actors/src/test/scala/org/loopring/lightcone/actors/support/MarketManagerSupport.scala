@@ -26,7 +26,7 @@ import scala.concurrent.{Await, Future}
 import akka.pattern.ask
 
 trait MarketManagerSupport extends DatabaseModuleSupport {
-  my: CommonSpec with EthereumSupport =>
+  my: CommonSpec with EthereumSupport with MarketManagerSupport =>
 
   actors.add(MarketManagerActor.name, MarketManagerActor.start)
 

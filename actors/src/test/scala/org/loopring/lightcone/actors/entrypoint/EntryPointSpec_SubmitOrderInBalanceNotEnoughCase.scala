@@ -19,8 +19,9 @@ package org.loopring.lightcone.actors.entrypoint
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.{Await, Future}
+
+import OrderStatus._
 
 class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
     extends CommonSpec
@@ -82,7 +83,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       Await.result(f2, timeout.duration)
 
       info(
-        "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING and STATUS_CANCELLED_LOW_BALANCE "
+        "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING and STATUS_SOFT_CANCELLED_LOW_BALANCE "
       )
       val assertOrderFromDbF = Future.sequence(rawOrders.map { o =>
         for {
@@ -92,10 +93,10 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
             case Some(order) =>
               assert(order.sequenceId > 0)
               if (order.id == rawOrders(0).hash) {
-                assert(order.getState.status == OrderStatus.STATUS_PENDING)
+                assert(order.getState.status == STATUS_PENDING)
               } else {
                 assert(
-                  order.getState.status == OrderStatus.STATUS_CANCELLED_LOW_BALANCE
+                  order.getState.status == STATUS_SOFT_CANCELLED_LOW_BALANCE
                 )
               }
             case None =>
@@ -120,7 +121,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.nonEmpty)
           assert(
-            sells(0).price == "20.000000" &&
+            sells(0).price == "0.050000" &&
               sells(0).amount == "20.00000" &&
               sells(0).total == "1.00000"
           )
@@ -132,7 +133,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
       val cancelReq = CancelOrder.Req(
         rawOrders(0).hash,
         rawOrders(0).owner,
-        OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
+        STATUS_SOFT_CANCELLED_BY_USER,
         Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
       )
 
@@ -149,12 +150,10 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
           orderOpt match {
             case Some(order) =>
               if (order.hash == rawOrders(0).hash) {
-                assert(
-                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
-                )
+                assert(order.getState.status == STATUS_SOFT_CANCELLED_BY_USER)
               } else {
                 assert(
-                  order.getState.status == OrderStatus.STATUS_CANCELLED_LOW_BALANCE
+                  order.getState.status == STATUS_SOFT_CANCELLED_LOW_BALANCE
                 )
               }
             case None =>

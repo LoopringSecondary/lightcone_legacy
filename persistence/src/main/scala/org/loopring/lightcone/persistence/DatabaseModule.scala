@@ -18,10 +18,8 @@ package org.loopring.lightcone.persistence
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import com.typesafe.config.Config
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
-import slick.basic._
 import scala.concurrent._
 
 class DatabaseModule @Inject()(
@@ -33,11 +31,13 @@ class DatabaseModule @Inject()(
     val orderStatusMonitorDal: OrderStatusMonitorDal,
     val marketMetadataDal: MarketMetadataDal,
     val missingBlocksRecordDal: MissingBlocksRecordDal,
+    val ohlcDataDal: OHLCDataDal,
     val orderService: OrderService,
     val orderStatusMonitorService: OrderStatusMonitorService,
     val tradeService: TradeService,
     val blockService: BlockService,
-    val settlementTxService: SettlementTxService
+    val settlementTxService: SettlementTxService,
+    val ohlcDataService: OHLCDataService
   )(
     implicit
     @Named("db-execution-context") val ec: ExecutionContext)
@@ -51,7 +51,8 @@ class DatabaseModule @Inject()(
     settlementTxDal,
     orderStatusMonitorDal,
     marketMetadataDal,
-    missingBlocksRecordDal
+    missingBlocksRecordDal,
+    ohlcDataDal
   )
 
   createTables()

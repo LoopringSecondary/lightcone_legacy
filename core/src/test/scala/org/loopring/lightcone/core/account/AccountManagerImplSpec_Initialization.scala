@@ -38,7 +38,7 @@ class AccountManagerImplSpec_Initialization extends OrderAwareSpec {
 
     updatedOrders foreach {
       case (id, order) =>
-        order.status should be(OrderStatus.STATUS_CANCELLED_LOW_BALANCE)
+        order.status should be(OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE)
     }
   }
 
@@ -58,7 +58,9 @@ class AccountManagerImplSpec_Initialization extends OrderAwareSpec {
 
     updatedOrders foreach {
       case (id, order) =>
-        order.status should be(OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE)
+        order.status should be(
+          OrderStatus.STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE
+        )
     }
   }
 

@@ -21,6 +21,7 @@ import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.actors.DatabaseConfigManager
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
@@ -39,7 +40,7 @@ import org.loopring.lightcone.ethereum.data.Address
 
 // main owner: 杜永丰
 object TransactionRecordActor extends ShardedByAddress {
-  val name = "transaction-record"
+  val name = "transaction_record"
 
   def start(
       implicit
@@ -92,7 +93,7 @@ class TransactionRecordActor(
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
   val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
 
-  val dbConfigKey = s"db.transaction-record.shard_${entityId}"
+  val dbConfigKey = s"db.transaction_record.shard_${entityId}"
   log.info(
     s"TransactionRecordActor with db configuration ($dbConfigKey): ",
     config.getConfig(dbConfigKey)
@@ -146,7 +147,7 @@ class TransactionRecordActor(
         header = req.header,
         owner = req.owner,
         recordType = ORDER_CANCELLED,
-        tradingPair = req.tradingPair,
+        marketKey = req.marketKey,
         eventData = Some(
           TransactionRecord
             .EventData(Event.Cutoff(req))
@@ -159,13 +160,13 @@ class TransactionRecordActor(
       for {
         order <- dbModule.orderService.getOrder(req.orderHash)
         header = req.header.get
-        marketHash = if (order.isEmpty) ""
-        else MarketHashProvider.convert2Hex(order.get.tokenS, order.get.tokenB)
+        marketKey = if (order.isEmpty) ""
+        else MarketKey(order.get.tokenS, order.get.tokenB).toString
         record = TransactionRecord(
           header = req.header,
           owner = req.owner,
           recordType = ORDER_FILLED,
-          tradingPair = marketHash,
+          marketKey = marketKey,
           eventData = Some(
             TransactionRecord
               .EventData(Event.Filled(req))

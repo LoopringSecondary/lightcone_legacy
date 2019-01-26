@@ -17,6 +17,7 @@
 package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto._
 
@@ -99,7 +100,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         GetTrades.Req(
           owner = "0x-gettrades-state0-02",
           market = GetTrades.Req.Market
-            .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+            .MarketKey(MarketKey(tokenS, tokenB).toString)
         )
       )
       query2 <- service.getTrades(
@@ -132,7 +133,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         GetTrades.Req(
           owner = "0x-counttrades-02",
           market = GetTrades.Req.Market
-            .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+            .MarketKey(MarketKey(tokenS, tokenB).toString)
         )
       )
     } yield query
@@ -181,7 +182,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         GetTrades.Req(
           owner = owner,
           market = GetTrades.Req.Market
-            .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+            .MarketKey(MarketKey(tokenS, tokenB).toString)
         )
       )
       _ <- service.obsolete(30L)
@@ -189,7 +190,7 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
         GetTrades.Req(
           owner = owner,
           market = GetTrades.Req.Market
-            .MarketHash(MarketHashProvider.convert2Hex(tokenS, tokenB))
+            .MarketKey(MarketKey(tokenS, tokenB).toString)
         )
       )
     } yield (count1, count2)

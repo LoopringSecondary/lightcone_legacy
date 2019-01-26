@@ -14,19 +14,29 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.depth
+package org.loopring.lightcone.actors.ethereum.event
 
-import org.loopring.lightcone.core.data._
+import akka.util.Timeout
+import com.google.inject.Inject
 import org.loopring.lightcone.proto._
+import org.web3j.utils.Numeric
+import scala.concurrent.{ExecutionContext, Future}
 
-trait OrderbookManager {
-  def processUpdate(update: Orderbook.Update): Unit
+class BlockGasPriceExtractor @Inject()(
+    implicit
+    val timeout: Timeout,
+    val ec: ExecutionContext)
+    extends EventExtractor[BlockGasPrices] {
 
-  def getOrderbook(
-      level: Int,
-      size: Int,
-      price: Option[Double] = None
-    ): Orderbook
-
-  def reset(): Unit
+  override def extract(block: RawBlockData): Future[Seq[BlockGasPrices]] =
+    Future {
+      Seq(
+        BlockGasPrices(
+          height = block.height,
+          gasPrices = block.txs.map { tx =>
+            Numeric.toBigInt(tx.gasPrice).longValue()
+          }
+        )
+      )
+    }
 }

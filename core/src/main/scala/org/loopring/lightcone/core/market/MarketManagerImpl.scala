@@ -64,12 +64,12 @@ class MarketManagerImpl(
   private var latestPrice: Double = 0
   private var minFiatValue: Double = 0
 
-  private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.primary
-  private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.secondary
+  private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.secondary
+  private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.primary
 
   private[core] val orderMap = Map.empty[String, Matchable]
   private[core] val sides =
-    Map(marketId.primary -> buys, marketId.secondary -> sells)
+    Map(marketId.primary -> sells, marketId.secondary -> buys)
 
   def getNumOfOrders = orderMap.size
   def getNumOfSellOrders = sells.size
@@ -138,7 +138,9 @@ class MarketManagerImpl(
       minFiatValue: Double
     ): MatchResult = {
     if (order.numAttempts > maxSettementFailuresPerOrder) {
-      MatchResult(order.copy(status = STATUS_TOO_MANY_RING_FAILURES))
+      MatchResult(
+        order.copy(status = STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES)
+      )
     } else if (dustOrderEvaluator.isOriginalDust(order)) {
       MatchResult(order.copy(status = STATUS_DUST_ORDER))
     } else if (dustOrderEvaluator.isActualDust(order)) {
@@ -175,16 +177,16 @@ class MarketManagerImpl(
                 )
               )
               ) =>
-            log.error(s"match error: $error")
+            log.debug(s"match error: $error")
             ordersToAddBack :+= maker
 
           case Some((maker, Left(error))) =>
-            log.error(s"match error: $error")
+            log.debug(s"match error: $error")
             ordersToAddBack :+= maker
             recursivelyMatchOrders()
 
           case Some((maker, Right(ring))) =>
-            isLastTakerSell = (taker.tokenS == marketId.secondary)
+            isLastTakerSell = (taker.tokenS == marketId.primary)
             rings :+= ring
             latestPrice = (taker.price + maker.price) / 2
 
@@ -215,6 +217,7 @@ class MarketManagerImpl(
         .getOrderbookUpdate()
         .copy(latestPrice = latestPrice)
 
+      // println("MMI: orderbookUpdate: " + orderbookUpdate)
       MatchResult(taker, rings, orderbookUpdate)
     }
   }

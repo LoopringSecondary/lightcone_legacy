@@ -120,4 +120,25 @@ object Dispatchers {
         actors
       )
 
+  class OHLCRawDataEventDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
+      implicit
+      extractor: EventExtractor[OHLCRawData],
+      ec: ExecutionContext)
+      extends NameBasedEventDispatcher[OHLCRawData](
+        names = Seq(OHLCDataHandlerActor.name),
+        actors
+      )
+
+  class BlockGasPricesDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
+      implicit
+      extractor: EventExtractor[BlockGasPrices],
+      ec: ExecutionContext)
+      extends NameBasedEventDispatcher[BlockGasPrices](
+        names = Seq(GasPriceActor.name),
+        actors
+      )
 }

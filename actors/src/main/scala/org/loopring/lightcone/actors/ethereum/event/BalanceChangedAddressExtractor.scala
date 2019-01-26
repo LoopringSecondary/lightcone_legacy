@@ -26,7 +26,7 @@ import akka.pattern._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.proto.{TransferEvent => _, _}
 
 import scala.collection.mutable.ListBuffer

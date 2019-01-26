@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.proto.{TransferEvent => PTransferEvent, _}
-import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.core.base.MetadataManager
 import org.web3j.utils.Numeric
 
@@ -190,7 +190,17 @@ class TransferEventExtractor @Inject()(
         }
     }
     transfers.flatMap(
-      event => Seq(event.withOwner(event.from), event.withOwner(event.to))
+      event =>
+        Seq(
+          event.copy(
+            owner = event.from,
+            header = event.header.map(_.withEventIndex(0))
+          ),
+          event.copy(
+            owner = event.to,
+            header = event.header.map(_.withEventIndex(1))
+          )
+        )
     )
   }
 }

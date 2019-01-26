@@ -21,6 +21,7 @@ import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
@@ -42,8 +43,7 @@ class TradeDalImpl @Inject()(
   def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] = {
     db.run(
         (query += trade.copy(
-          marketHash =
-            MarketHashProvider.convert2Hex(trade.tokenS, trade.tokenB),
+          marketKey = MarketKey(trade.tokenS, trade.tokenB).toString,
           createdAt = timeProvider.getTimeSeconds()
         )).asTry
       )
@@ -65,7 +65,7 @@ class TradeDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketKey: Option[String] = None,
       sort: Option[SortingType] = None,
       pagingOpt: Option[Paging] = None
     ): Query[TradeTable, TradeTable#TableElementType, Seq] = {
@@ -73,8 +73,8 @@ class TradeDalImpl @Inject()(
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner.get)
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS.get)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB.get)
-    if (marketHash.nonEmpty)
-      filters = filters.filter(_.marketHash === marketHash.get)
+    if (marketKey.nonEmpty)
+      filters = filters.filter(_.marketKey === marketKey.get)
     if (sort.nonEmpty) filters = sort.get match {
       case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
       case SortingType.DESC => filters.sortBy(_.sequenceId.desc)
@@ -89,8 +89,8 @@ class TradeDalImpl @Inject()(
 
   def getTrades(request: GetTrades.Req): Future[Seq[Trade]] = {
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
-    val (tokenS, tokenB, marketHash) = request.market match {
-      case GetTrades.Req.Market.MarketHash(v) => (None, None, Some(v))
+    val (tokenS, tokenB, marketKey) = request.market match {
+      case GetTrades.Req.Market.MarketKey(v) => (None, None, Some(v))
       case GetTrades.Req.Market.Pair(v) =>
         (Some(v.tokenS), Some(v.tokenB), None)
       case _ => (None, None, None)
@@ -99,7 +99,7 @@ class TradeDalImpl @Inject()(
       owner,
       tokenS,
       tokenB,
-      marketHash,
+      marketKey,
       Some(request.sort),
       request.skip
     )
@@ -108,8 +108,8 @@ class TradeDalImpl @Inject()(
 
   def countTrades(request: GetTrades.Req): Future[Int] = {
     val owner = if (request.owner.isEmpty) None else Some(request.owner)
-    val (tokenS, tokenB, marketHash) = request.market match {
-      case GetTrades.Req.Market.MarketHash(v) => (None, None, Some(v))
+    val (tokenS, tokenB, marketKey) = request.market match {
+      case GetTrades.Req.Market.MarketKey(v) => (None, None, Some(v))
       case GetTrades.Req.Market.Pair(v) =>
         (Some(v.tokenS), Some(v.tokenB), None)
       case _ => (None, None, None)
@@ -118,7 +118,7 @@ class TradeDalImpl @Inject()(
       owner,
       tokenS,
       tokenB,
-      marketHash,
+      marketKey,
       Some(request.sort),
       request.skip
     )

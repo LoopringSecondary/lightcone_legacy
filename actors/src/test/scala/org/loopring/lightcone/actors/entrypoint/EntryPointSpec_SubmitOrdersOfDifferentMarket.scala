@@ -89,7 +89,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       val orderbookLrcF = singleRequest(
         GetOrderbook
           .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
-        "orderbook"
+        "get_orderbook"
       )
 
       val orderbookRes = expectOrderbookRes(
@@ -102,15 +102,16 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 2)
           assert(
-            sells(0).price == "10.000000" &&
-              sells(0).amount == "20.00000" &&
+            sells(0).price == "0.033334" &&
+              sells(0).amount == "60.00000" &&
               sells(0).total == "2.00000"
           )
           assert(
-            sells(1).price == "30.000000" &&
-              sells(1).amount == "60.00000" &&
+            sells(1).price == "0.100000" &&
+              sells(1).amount == "20.00000" &&
               sells(1).total == "2.00000"
           )
+
           assert(buys.isEmpty)
         case _ => assert(false)
       }
@@ -119,7 +120,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       val orderbookGtoF = singleRequest(
         GetOrderbook
           .Req(0, 100, Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))),
-        "orderbook"
+        "get_orderbook"
       )
 
       val orderbookGtoRes = Await.result(orderbookGtoF, timeout.duration)
@@ -128,7 +129,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
           info(s"sells: ${sells}")
           assert(sells.size == 1)
           assert(
-            sells(0).price == "20.000000" &&
+            sells(0).price == "0.050000" &&
               sells(0).amount == "40.00000" &&
               sells(0).total == "2.00000"
           )
@@ -172,29 +173,31 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       val orderbookF1 = singleRequest(
         GetOrderbook
           .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
-        "orderbook"
+        "get_orderbook"
       )
 
       val orderbookRes1 = expectOrderbookRes(
         GetOrderbook
           .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) =>
-          orderbook.sells.nonEmpty && orderbook.sells(0).total == "1.00000"
+          orderbook.sells.nonEmpty && orderbook.sells(0).total == "2.00000"
       )
+
       orderbookRes1 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 2)
           assert(
-            sells(0).price == "10.000000" &&
-              sells(0).amount == "10.00000" &&
-              sells(0).total == "1.00000"
+            sells(0).price == "0.033334" &&
+              sells(0).amount == "60.00000" &&
+              sells(0).total == "2.00000"
           )
           assert(
-            sells(1).price == "30.000000" &&
-              sells(1).amount == "60.00000" &&
-              sells(1).total == "2.00000"
+            sells(1).price == "0.100000" &&
+              sells(1).amount == "10.00000" &&
+              sells(1).total == "1.00000"
           )
+
           assert(buys.isEmpty)
         case _ => assert(false)
       }

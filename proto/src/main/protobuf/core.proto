@@ -25,35 +25,35 @@ package org.loopring.lightcone.proto;
 /////////////////////////////////////////////////////////////////////
 
 enum OrderStatus {
-    STATUS_NEW = 0;
-    STATUS_PENDING = 1;
-    STATUS_EXPIRED = 2;
-    STATUS_DUST_ORDER = 3;
-    STATUS_PARTIALLY_FILLED = 4;
-    STATUS_COMPLETELY_FILLED = 5;
-    STATUS_SOFT_CANCELLED_BY_USER = 6;
-    STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR = 7;
-    STATUS_ONCHAIN_CANCELLED_BY_USER = 8;
-    STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR = 9;
-    STATUS_PENDING_ACTIVE = 10;
-    STATUS_TOO_MANY_RING_FAILURES = 11;
+    STATUS_NEW                      = 0;
+    STATUS_PENDING                  = 1;
+    STATUS_EXPIRED                  = 2;
+    STATUS_DUST_ORDER               = 3;
+    STATUS_PARTIALLY_FILLED         = 4;
+    STATUS_COMPLETELY_FILLED        = 5;
+    STATUS_PENDING_ACTIVE           = 6;
 
-    STATUS_CANCELLED_LOW_BALANCE = 100;
-    STATUS_CANCELLED_LOW_FEE_BALANCE = 101;
-    STATUS_CANCELLED_TOO_MANY_ORDERS = 102;
-    STATUS_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS = 103;
+    STATUS_ONCHAIN_CANCELLED_BY_USER                    = 10;
+    STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR       = 11;
 
-    // TODO(dongw): the following should be error code
-    STATUS_CANCELLED_DUPLICIATE = 200;
-    STATUS_INVALID_DATA = 201;
-    STATUS_UNSUPPORTED_MARKET = 202;
+    STATUS_SOFT_CANCELLED_BY_USER                       = 12;
+    STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR          = 13;
+    STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET            = 14;
+    STATUS_SOFT_CANCELLED_LOW_BALANCE                   = 15;
+    STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE               = 16;
+    STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS               = 17;
+    STATUS_SOFT_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS   = 18;
+    STATUS_SOFT_CANCELLED_DUPLICIATE                    = 19;
+    STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES        = 20;
+
+    STATUS_INVALID_DATA                 = 201;
+    STATUS_UNSUPPORTED_MARKET           = 202;
 }
 
 enum ErrorCode{
-    // 0 NONE ERROR
-    ERR_NONE = 0;
-    ERR_INTERNAL_UNKNOWN = 1;
-    ERR_INVALID_ARGUMENT = 2;
+    ERR_NONE                = 0;
+    ERR_INTERNAL_UNKNOWN    = 1;
+    ERR_INVALID_ARGUMENT    = 2;
 
     //1001 -- 2000 Matching Error
     ERR_MATCHING_ORDERS_NOT_TRADABLE            = 1001;
@@ -118,6 +118,7 @@ message Error{
     string message = 2;
 }
 
+// For LRC-WETH market, the primary is LRC, secondary is WETH
 message MarketId {
     string primary = 1;
     string secondary = 2;

@@ -102,9 +102,9 @@ message RawOrder {
     ERC1400Params erc1400_params      = 12;
     State state                       = 13;
     int64  sequence_id                = 14;
-    string market_hash                = 15;
-    int32  address_shard_id           = 16;
-    int32  market_hash_id             = 17;
+    string market_key                 = 15;
+    int32  account_shard              = 16;
+    int32  market_shard               = 17;
 }
 
 
@@ -122,14 +122,15 @@ message Order {
     bytes amount_s                  = 5;
     bytes amount_b                  = 6;
     bytes amount_fee                = 7;
-    int64 submitted_at              = 8;
-    int32 num_attempts              = 9;
-    OrderStatus status              = 10;
-    double wallet_split_percentage  = 11;
-    OrderState outstanding          = 12;
-    OrderState reserved             = 13;
-    OrderState actual               = 14;
-    OrderState matchable            = 15;
+    int64 valid_since               = 8;
+    int64 submitted_at              = 9;
+    int32 num_attempts              = 10;
+    OrderStatus status              = 11;
+    double wallet_split_percentage  = 12;
+    OrderState outstanding          = 13;
+    OrderState reserved             = 14;
+    OrderState actual               = 15;
+    OrderState matchable            = 16;
 }
 
 message ExpectedOrderFill {
@@ -208,7 +209,7 @@ message MarketMetadata {
     int64           updated_at              = 10;
 
     MarketId        market_id               = 20; // computed
-    string          market_hash             = 21; // computed
+    string          market_key              = 21; // computed
 }
 
 message MarketStats {
@@ -265,7 +266,7 @@ message Trade {
     bytes  amount_b          = 8;
     string token_s           = 9;
     string token_b           = 10;
-    string market_hash       = 11;
+    string market_key        = 11;
     bytes  split             = 12; //tokenS
     Fees   fees              = 13;
     int64  created_at        = 14;
@@ -312,8 +313,8 @@ message OHLCRawData {
     string     tx_hash        = 2;
     string     market_key     = 3;
     int64      time           = 4;
-    double     quality        = 6;
-    double     amount         = 7;
+    double     amount        = 6;
+    double     total         = 7;
     double     price          = 8;
 }
 
