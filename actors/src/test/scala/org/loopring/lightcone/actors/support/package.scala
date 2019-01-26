@@ -131,7 +131,7 @@ package object support {
   val postgreContainer = PostgreSQLContainer("timescale/timescaledb:latest")
   postgreContainer.starting()
 
-  //todo:暂时未生效
+  // TODO:暂时未生效
   //  try Unreliables.retryUntilTrue(
   //    10,
   //    TimeUnit.SECONDS,

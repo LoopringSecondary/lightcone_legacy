@@ -296,7 +296,7 @@ message UpdateTokenBurnRate {
     }
 }
 
-message InvalidToken {
+message InvalidateToken {
     message Req {
         string address = 1;
     }

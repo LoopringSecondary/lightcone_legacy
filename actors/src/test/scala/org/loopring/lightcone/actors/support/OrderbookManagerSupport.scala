@@ -37,7 +37,7 @@ trait OrderbookManagerSupport extends MetadataManagerSupport {
     )
   )
 
-  //todo：因暂时未完成recover，因此需要发起一次请求，将shard初始化成功
+  // TODO：因暂时未完成recover，因此需要发起一次请求，将shard初始化成功
   metadataManager.getValidMarketIds.values.map { marketId =>
     val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))
     val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit

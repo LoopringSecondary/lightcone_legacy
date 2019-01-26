@@ -73,19 +73,23 @@ object MultiAccountManagerActor extends ShardedByAddress {
           MarketId(rawOrder.tokenS, rawOrder.tokenB)
         ) =>
       rawOrder.owner
+
     case ActorRecover.RecoverOrderReq(Some(raworder))
         if metadataManager.isValidMarket(
           MarketId(raworder.tokenS, raworder.tokenB)
         ) =>
       raworder.owner
+
     case CancelOrder.Req(_, owner, _, Some(marketId))
         if metadataManager.isValidMarket(marketId) =>
       owner
+
     case req: GetBalanceAndAllowances.Req => req.address
     case req: AddressBalanceUpdated       => req.address
     case req: AddressAllowanceUpdated     => req.address
-    case req: CutoffEvent                 => req.owner //todo:暂不支持broker
+    case req: CutoffEvent                 => req.owner // TODO:暂不支持broker
     case req: OrderFilledEvent            => req.owner
+
     case Notify(KeepAliveActor.NOTIFY_MSG, address) =>
       Numeric.toHexStringWithPrefix(BigInt(address).bigInteger)
   }
@@ -121,7 +125,7 @@ class MultiAccountManagerActor(
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
-  //todo: 完成recovery后，需要再次测试异常恢复情况
+  // TODO: 完成recovery后，需要再次测试异常恢复情况
   override val supervisorStrategy =
     AllForOneStrategy() {
       case e: Exception =>
@@ -181,7 +185,7 @@ class MultiAccountManagerActor(
     case req: Any => handleRequest(req)
   }
 
-  //todo(hongyu):以太坊的事件如 AddressBalanceUpdated和AddressAllowanceUpdated 不应该触发创建AccountManagerActor
+  // TODO(hongyu):以太坊的事件如 AddressBalanceUpdated和AddressAllowanceUpdated 不应该触发创建AccountManagerActor
   private def handleRequest(req: Any) = extractAddress(req) match {
     case Some(address) => accountManagerActorFor(address) forward req
     case None =>

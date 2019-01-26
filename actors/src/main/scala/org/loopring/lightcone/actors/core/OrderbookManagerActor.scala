@@ -111,7 +111,7 @@ class OrderbookManagerActor(
 
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
-  //todo:因OrderbookManager重写，因此暂时如此处理，等待重构完成之后再修改
+  // TODO:因OrderbookManager重写，因此暂时如此处理，等待重构完成之后再修改
   actors.get(MetadataRefresher.name) ! SubscribeMetadataChanged()
 
   def ready: Receive = LoggingReceive {

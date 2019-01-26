@@ -49,7 +49,7 @@ object safefuture {
     }
 
     // Forward the future to a receiver but will send back an Error to sender in case of exception.
-    //todo:直接使用forward无法使用，暂时以该方式实现功能，后续可以优化
+    // TODO:直接使用forward无法使用，暂时以该方式实现功能，后续可以优化
     def forwardTo(
         recipient: ActorRef,
         orginSender: ActorRef

@@ -241,7 +241,7 @@ class OrderDalImpl @Inject()(
     var filters = query
       .filter(_.status inSet availableStatus)
       .filter(_.validUntil >= latestProcessTime)
-      .filter(_.validUntil < processTime) //todo:需要确认下
+      .filter(_.validUntil < processTime) // TODO:需要确认下
       .sortBy(_.sequenceId.asc)
     filters = skip match {
       case Some(s) => filters.drop(s.skip).take(s.size)

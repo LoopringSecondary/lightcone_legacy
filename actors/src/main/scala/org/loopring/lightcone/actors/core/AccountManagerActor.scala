@@ -74,8 +74,8 @@ class AccountManagerActor(
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   override def preStart() = {
-    //todo:合并为批量查询，会在另一个pr里提交
-    val cutoffReqs = (metadataManager.getValidMarketIds map {
+    // TODO:合并为批量查询，会在另一个pr里提交
+    val f1 = metadataManager.getValidMarketIds.map {
       case (marketKey, marketId) =>
         for {
           res <- (ethereumQueryActor ? GetCutoff.Req(
@@ -90,26 +90,26 @@ class AccountManagerActor(
             cutoff.toLong
           )
         }
-    }).toSeq :+
-      (for {
-        res <- (ethereumQueryActor ? GetCutoff.Req(
-          broker = address,
-          owner = address
-        )).mapAs[GetCutoff.Res]
-      } yield {
-        val cutoff: BigInt = res.cutoff
-        accountCutoffState.setCutoff(cutoff.toLong)
-      })
+    }.toSeq
 
-    Future.sequence(cutoffReqs) onComplete {
+    val f2 = for {
+      res <- (ethereumQueryActor ? GetCutoff.Req(
+        broker = address,
+        owner = address
+      )).mapAs[GetCutoff.Res]
+    } yield {
+      val cutoff: BigInt = res.cutoff
+      accountCutoffState.setCutoff(cutoff.toLong)
+    }
+
+    Future.sequence(f1 :+ f2) onComplete {
       case Success(res) =>
         self ! Notify("initialized")
+
       case Failure(e) =>
-        log.error(s"failed to start AccountManagerActor: ${e.getMessage}")
-        throw ErrorException(
-          ERR_INTERNAL_UNKNOWN,
-          s"failed to start AccountManagerActor: ${e.getMessage}"
-        )
+        val err = s"failed to start: ${e.getMessage}"
+        log.error(err)
+        throw ErrorException(ERR_INTERNAL_UNKNOWN, err)
     }
   }
 
@@ -435,6 +435,6 @@ class AccountManagerActor(
           s"this order has been canceled."
         )
 
-  //todo:terminate market则需要将订单从内存中删除,但是不从数据库删除
+  // TODO:terminate market则需要将订单从内存中删除,但是不从数据库删除
 
 }
