@@ -44,16 +44,18 @@ class OrderbookRecoverSpec
     with OrderbookManagerSupport
     with OrderGenerateSupport {
 
+  import OrderStatus._
+
   val account1 = getUniqueAccountWithoutEth
   val account2 = getUniqueAccountWithoutEth
 
   override def beforeAll(): Unit = {
     val f = Future.sequence(
       Seq(
-        transferEth(account1.getAddress, "10")(accounts(0)),
+        transferEth(account1.getAddress, "100")(accounts(0)),
         transferLRC(account1.getAddress, "200")(accounts(0)),
         approveLRCToDelegate("2000")(account1),
-        transferEth(account2.getAddress, "10")(accounts(0)),
+        transferEth(account2.getAddress, "100")(accounts(0)),
         transferWETH(account2.getAddress, "100")(accounts(0)),
         transferLRC(account2.getAddress, "200")(accounts(0)),
         approveLRCToDelegate("2000")(account2),
@@ -73,33 +75,27 @@ class OrderbookRecoverSpec
 
   private def testSaveOrder(): Future[Seq[Any]] = {
     val rawOrders =
-
+      //  ((0 until 1) map { i =>
+      //   val o = createRawOrder( // sell 20 LRC, price = 1/20 = 0.05
+      //     tokenB = WETH_TOKEN.address,
+      //     tokenS = LRC_TOKEN.address,
+      //     amountB = "1".zeros(WETH_TOKEN.decimals),
+      //     amountS = "20".zeros(LRC_TOKEN.decimals),
+      //     amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))(account2)
+      //   o.copy(
+      //     state = Some(o.state.get.copy(status = STATUS_PENDING)))
+      // })
+      // ++
       ((0 until 1) map { i =>
-        val o = createRawOrder( // sell 20 LRC, price = 1/20 = 0.05
-          tokenB = WETH_TOKEN.address,
-          tokenS = LRC_TOKEN.address,
-          amountB = "1".zeros(WETH_TOKEN.decimals),
-          amountS = "20".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )(account2)
-        o.copy(
-          state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
-        )
-        o
-      }) ++
-        ((0 until 1) map { i =>
-          val o = createRawOrder( // buy 30 LRC, price = 1/30 = 0.033333
-            tokenB = LRC_TOKEN.address,
-            tokenS = WETH_TOKEN.address,
-            amountB = "30".zeros(LRC_TOKEN.decimals),
-            amountS = "1".zeros(WETH_TOKEN.decimals),
-            amountFee = (i + 1).toString.zeros(LRC_TOKEN.decimals)
-          )(account1)
-          o.copy(
-            state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
-          )
-          o
-        })
+        val o = createRawOrder( // buy 30 LRC, price = 1/30 = 0.033333
+          tokenS = WETH_TOKEN.address,
+          tokenB = LRC_TOKEN.address,
+          amountS = "1".zeros(WETH_TOKEN.decimals),
+          amountB = "30".zeros(LRC_TOKEN.decimals),
+          amountFee = (i + 1).toString.zeros(LRC_TOKEN.decimals)
+        )(account1)
+        o.copy(state = Some(o.state.get.copy(status = STATUS_PENDING)))
+      })
     //    ++ ((0 until 1) map { i =>
     //        createRawOrder(
     //          amountS = "10".zeros(LRC_TOKEN.decimals),
@@ -115,7 +111,7 @@ class OrderbookRecoverSpec
     //          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
     //        )(account2)
     //        o.copy(
-    //          state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
+    //          state = Some(o.state.get.copy(status = STATUS_PENDING))
     //        )
     //        o
     //      })
@@ -130,14 +126,14 @@ class OrderbookRecoverSpec
       res.map {
         case SubmitOrder.Res(Some(order)) =>
           info(s" response ${order}")
-          order.status should be(OrderStatus.STATUS_PENDING)
+          order.status should be(STATUS_PENDING)
         case _ => assert(false)
       }
 
       info("get orders")
       val orders1 =
         dbModule.orderService.getOrders(
-          Set(OrderStatus.STATUS_NEW, OrderStatus.STATUS_PENDING),
+          Set(STATUS_NEW, STATUS_PENDING),
           Set(account1.getAddress, account2.getAddress)
         )
       val resOrder1 =
