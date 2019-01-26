@@ -123,7 +123,8 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
       var sells = sellSide.getDepth(size + 1, priceOpt)
       // If the price is overlapping,we drop the top sell item
       sells =
-        if (sells.headOption.map(_.price) == buys.headOption.map(_.price)) {
+        if (sells.headOption.isDefined &&
+            sells.headOption.map(_.price) == buys.headOption.map(_.price)) {
           log.warn(s"order book overlapped ${buys} <> ${sells}")
           sells.drop(1)
         } else {

@@ -60,6 +60,7 @@ object Main extends App with Logging {
 
   val injector = Guice.createInjector(new CoreModule(config))
   val system = injector.instance[ActorSystem]
+  val dbManager = injector.instance[DatabaseConfigManager]
 
   injector.instance[CoreDeployer].deploy()
 
@@ -71,6 +72,7 @@ object Main extends App with Logging {
 
   private def terminiate() = {
     Try(system.terminate())
+    Try(dbManager.close())
     Try(Kamon.stopAllReporters())
   }
 

@@ -29,7 +29,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(
-      OrderStatus.STATUS_CANCELLED_LOW_BALANCE
+      OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
     )
   }
 
@@ -39,7 +39,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(
-      OrderStatus.STATUS_CANCELLED_LOW_FEE_BALANCE
+      OrderStatus.STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE
     )
   }
 

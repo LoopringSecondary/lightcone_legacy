@@ -318,5 +318,9 @@ message RawBlockData{
     repeated TransactionReceipt receipts = 7;
 }
 
+message BlockGasPrices {
+    int64 height = 1;
+    repeated int64 gas_prices = 2;
+}
 
 

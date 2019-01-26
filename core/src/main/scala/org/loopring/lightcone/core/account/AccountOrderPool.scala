@@ -28,6 +28,7 @@ trait AccountOrderPool {
   def getOrder(id: String): Option[Matchable]
   def contains(id: String): Boolean
   def size: Int
+  def orders: Iterable[Matchable]
 
   def addCallback(callback: Callback): Unit
   def removeCallback(callback: Callback): Unit
