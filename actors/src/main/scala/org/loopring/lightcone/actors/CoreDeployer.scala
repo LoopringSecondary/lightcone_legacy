@@ -131,14 +131,14 @@ class CoreDeployer @Inject()(
     )
 
     //-----------deploy local actors-----------
-    //todo: OnMemberUp执行有时间限制，超时会有TimeoutException
+    // TODO: OnMemberUp执行有时间限制，超时会有TimeoutException
     Cluster(system).registerOnMemberUp {
       //deploy ethereum conntionPools
       HttpConnector.start.foreach {
         case (name, actor) => actors.add(name, actor)
       }
 
-      //todo:需要再次确认启动依赖顺序问题
+      // TODO:需要再次确认启动依赖顺序问题
       var inited = false
       while (!inited) {
         try {
@@ -159,13 +159,10 @@ class CoreDeployer @Inject()(
         }
       }
 
-      //todo：按照模块分布，因为启动有依赖顺序
+      // TODO：按照模块分布，因为启动有依赖顺序
 
       //-----------deploy singleton actors-----------
-      actors.add(
-        EthereumClientMonitor.name,
-        EthereumClientMonitor.start
-      )
+      actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
       actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
       actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)

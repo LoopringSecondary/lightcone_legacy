@@ -196,16 +196,16 @@ class MetadataManagerActor(
         }).sendTo(sender)
       }
 
-    case req: InvalidToken.Req =>
+    case req: InvalidateToken.Req =>
       (for {
         result <- dbModule.tokenMetadataDal
-          .invalidToken(req.address)
+          .InvalidateToken(req.address)
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
         if (result == ErrorCode.ERR_NONE) {
           checkAndPublish(Some(tokens_), None)
         }
-        InvalidToken.Res(result)
+        InvalidateToken.Res(result)
       }).sendTo(sender)
 
     case req: SaveMarketMetadatas.Req =>

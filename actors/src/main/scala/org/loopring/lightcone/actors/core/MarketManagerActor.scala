@@ -87,8 +87,10 @@ object MarketManagerActor extends ShardedByMarket {
     case CancelOrder.Req(_, _, _, Some(marketId))
         if metadataManager.isValidMarket(marketId) =>
       marketId
+
     case req: RingMinedEvent if req.fills.size >= 2 =>
       MarketId(req.fills(0).tokenS, req.fills(1).tokenS)
+
     case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
       val (primary, secondary) = (tokens(0), tokens(1))
@@ -97,7 +99,7 @@ object MarketManagerActor extends ShardedByMarket {
 
 }
 
-//todo:撮合应该有个暂停撮合提交的逻辑，适用于：区块落后太多、没有可用的RingSettlement等情况
+// TODO:撮合应该有个暂停撮合提交的逻辑，适用于：区块落后太多、没有可用的RingSettlement等情况
 class MarketManagerActor(
   )(
     implicit
@@ -186,9 +188,8 @@ class MarketManagerActor(
           )
         }
       }
-    } yield {
-      metadataRefresher ! SubscribeMetadataChanged()
-    }
+      _ = metadataRefresher ! SubscribeMetadataChanged()
+    } yield Unit
 
   def recover: Receive = {
 
@@ -269,13 +270,18 @@ class MarketManagerActor(
     case req: MetadataChanged =>
       val metadataOpt = metadataManager.getMarketMetadata(marketId)
       metadataOpt match {
-        case None => context.system.stop(self)
-        case Some(metadata) if metadata.status.isTerminated =>
+        case None =>
+          log.warning("I'm stopping myself as the market metadata is not found")
           context.system.stop(self)
-        case Some(metadata) =>
-          log.debug(
-            s"metadata.status is ${metadata.status},so needn't to stop ${self.path.address}"
+
+        case Some(metadata) if metadata.status.isTerminated =>
+          log.warning(
+            s"I'm stopping myself as the market is terminiated: $metadata"
           )
+          context.system.stop(self)
+
+        case Some(metadata) =>
+          log.info(s"metadata changed: $metadata")
       }
   }
 

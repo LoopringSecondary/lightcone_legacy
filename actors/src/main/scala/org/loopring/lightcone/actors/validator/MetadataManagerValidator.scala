@@ -56,7 +56,7 @@ final class MetadataManagerValidator()(implicit val config: Config)
         )
       req
 
-    case req: InvalidToken.Req =>
+    case req: InvalidateToken.Req =>
       if (req.address.isEmpty)
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,

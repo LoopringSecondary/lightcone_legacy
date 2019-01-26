@@ -39,7 +39,7 @@ abstract class InitializationRetryActor
     unstashAll()
   }
 
-  //todo:正式部署需要适当放大该参数
+  // TODO:正式部署需要适当放大该参数
   val initializationMaxRetries = 120
   val initializationDelayFactor = 1
   val initializationDelaySeconds = 2

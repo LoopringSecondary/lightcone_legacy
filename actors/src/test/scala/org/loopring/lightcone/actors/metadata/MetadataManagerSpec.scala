@@ -244,7 +244,7 @@ class MetadataManagerSpec
 
       info("send a message to disable lrc")
       val disabled = Await.result(
-        (actor ? InvalidToken.Req(lrc.address)).mapTo[InvalidToken.Res],
+        (actor ? InvalidateToken.Req(lrc.address)).mapTo[InvalidateToken.Res],
         5 second
       )
       assert(disabled.error == ErrorCode.ERR_NONE)

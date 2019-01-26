@@ -94,7 +94,8 @@ class TransactionRecordActor(
 
   val dbConfigKey = s"db.transaction-record.shard_${entityId}"
   log.info(
-    s"TransactionRecordActor with db configuration: $dbConfigKey - ${config.getConfig(dbConfigKey)}"
+    s"TransactionRecordActor with db configuration: $dbConfigKey ",
+    s"- ${config.getConfig(dbConfigKey)}"
   )
 
   val txRecordDal: TransactionRecordDal =
