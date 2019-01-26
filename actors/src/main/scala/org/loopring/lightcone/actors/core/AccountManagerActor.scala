@@ -75,20 +75,21 @@ class AccountManagerActor(
 
   override def preStart() = {
     //todo:合并为批量查询，会在另一个pr里提交
-    val cutoffReqs = (metadataManager.getValidMarketIds map { m =>
-      for {
-        res <- (ethereumQueryActor ? GetCutoff.Req(
-          broker = address,
-          owner = address,
-          marketKey = MarketKey(m._2).toString
-        )).mapAs[GetCutoff.Res]
-      } yield {
-        val cutoff: BigInt = res.cutoff
-        accountCutoffState.setTradingPairCutoff(
-          MarketKey(m._2).value,
-          cutoff.toLong
-        )
-      }
+    val cutoffReqs = (metadataManager.getValidMarketIds map {
+      case (marketKey, marketId) =>
+        for {
+          res <- (ethereumQueryActor ? GetCutoff.Req(
+            broker = address,
+            owner = address,
+            marketKey = marketKey
+          )).mapAs[GetCutoff.Res]
+        } yield {
+          val cutoff: BigInt = res.cutoff
+          accountCutoffState.setTradingPairCutoff(
+            MarketKey(marketId).value,
+            cutoff.toLong
+          )
+        }
     }).toSeq :+
       (for {
         res <- (ethereumQueryActor ? GetCutoff.Req(
