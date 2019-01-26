@@ -298,12 +298,21 @@ message MetadataChanged {
 }
 
 message GetMetadatas {
-    message Req {
-
-    }
+    message Req {}
 
     message Res {
         repeated TokenMetadata  tokens  = 1;
         repeated MarketMetadata markets = 2;
+    }
+}
+
+message GetOrderbookSlots {
+    message Req {
+        MarketId market_id      = 1;
+        int32 num_of_slots      = 2;
+    }
+
+    message Res {
+        Orderbook.Update update = 1;
     }
 }

@@ -109,6 +109,7 @@ enum ErrorCode{
     //5001 -- 6000 ethereum Error
     ERR_ETHEREUM_ILLEGAL_ADDRESS        = 5001;
     ERR_NO_ACCESSIBLE_ETHEREUM_NODE     = 5002;
+    ERR_UNEXPECTED_RESPONSE             = 5003;
     // 5001 and beyound for other
 
 }
@@ -118,6 +119,7 @@ message Error{
     string message = 2;
 }
 
+// For LRC-WETH market, the primary is LRC, secondary is WETH
 message MarketId {
     string primary = 1;
     string secondary = 2;

@@ -36,10 +36,11 @@ import slick.jdbc.JdbcProfile
 import slick.basic.DatabaseConfig
 import TransactionRecord.RecordType._
 import TransactionRecord.EventData.Event
+import org.loopring.lightcone.ethereum.data.Address
 
 // main owner: 杜永丰
 object TransactionRecordActor extends ShardedByAddress {
-  val name = "transaction-record"
+  val name = "transaction_record"
 
   def start(
       implicit
@@ -92,7 +93,7 @@ class TransactionRecordActor(
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
   val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
 
-  val dbConfigKey = s"db.transaction-record.shard_${entityId}"
+  val dbConfigKey = s"db.transaction_record.shard_${entityId}"
   log.info(
     s"TransactionRecordActor with db configuration ($dbConfigKey): ",
     config.getConfig(dbConfigKey)
@@ -110,9 +111,10 @@ class TransactionRecordActor(
     // ETH & ERC20
     case req: TransferEvent =>
       val header = req.header.get
+      val token = Address(req.token)
       val recordType =
-        if (req.token.nonEmpty) ERC20_TRANSFER
-        else TRANSFER
+        if (token.isZero) TRANSFER
+        else ERC20_TRANSFER
       val record = TransactionRecord(
         header = req.header,
         owner = req.owner,

@@ -32,14 +32,14 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     val ZRX = "0x7b22713f2e818fad945af5a3618a2814f102cbe0"
     val WETH = "0x45245bc59219eeaaf6cd3f382e078a461ff9de7b"
 
-    val marketIdLrcWeth = MarketId(primary = WETH, secondary = LRC)
-    val marketIdBnbWeth = MarketId(primary = WETH, secondary = BNB)
-    val marketIdZrxdWeth = MarketId(primary = WETH, secondary = ZRX)
+    val marketIdLrcWeth = MarketId(LRC, WETH)
+    val marketIdBnbWeth = MarketId(BNB, WETH)
+    val marketIdZrxdWeth = MarketId(ZRX, WETH)
     val markets = Seq(
       MarketMetadata(
         status = MarketMetadata.Status.ENABLED,
-        secondaryTokenSymbol = "LRC",
-        primaryTokenSymbol = "WETH",
+        primaryTokenSymbol = "LRC",
+        secondaryTokenSymbol = "WETH",
         maxNumbersOfOrders = 1000,
         priceDecimals = 8,
         orderbookAggLevels = 1,
@@ -52,8 +52,8 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
       ),
       MarketMetadata(
         status = MarketMetadata.Status.DISABLED,
-        secondaryTokenSymbol = "BNB",
-        primaryTokenSymbol = "WETH",
+        primaryTokenSymbol = "BNB",
+        secondaryTokenSymbol = "WETH",
         maxNumbersOfOrders = 1000,
         priceDecimals = 8,
         orderbookAggLevels = 1,
@@ -66,8 +66,8 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
       ),
       MarketMetadata(
         status = MarketMetadata.Status.READONLY,
-        secondaryTokenSymbol = "ZRX",
-        primaryTokenSymbol = "WETH",
+        primaryTokenSymbol = "ZRX",
+        secondaryTokenSymbol = "WETH",
         maxNumbersOfOrders = 1000,
         priceDecimals = 8,
         orderbookAggLevels = 1,
@@ -76,7 +76,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketId = Some(marketIdZrxdWeth),
-        marketKey = MarketKey(WETH, ZRX).toString
+        marketKey = MarketKey(ZRX, WETH).toString
       )
     )
     val r1 = dal.saveMarkets(markets)
@@ -88,10 +88,10 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     val res2 = Await.result(r2.mapTo[Seq[MarketMetadata]], 5.second)
     assert(res2.length == markets.length)
     res2 foreach {
-      case m: MarketMetadata if m.secondaryTokenSymbol == "LRC" =>
+      case m: MarketMetadata if m.primaryTokenSymbol == "LRC" =>
         assert(
           m.status == MarketMetadata.Status.ENABLED
-            && m.primaryTokenSymbol == "WETH"
+            && m.secondaryTokenSymbol == "WETH"
             && m.maxNumbersOfOrders == 1000
             && m.priceDecimals == 8
             && m.orderbookAggLevels == 1
@@ -99,12 +99,12 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketId.contains(marketIdLrcWeth)
-            && m.marketKey == MarketKey(WETH, LRC).toString
+            && m.marketKey == MarketKey(LRC, WETH).toString
         )
-      case m: MarketMetadata if m.secondaryTokenSymbol == "BNB" =>
+      case m: MarketMetadata if m.primaryTokenSymbol == "BNB" =>
         assert(
           m.status == MarketMetadata.Status.DISABLED
-            && m.primaryTokenSymbol == "WETH"
+            && m.secondaryTokenSymbol == "WETH"
             && m.maxNumbersOfOrders == 1000
             && m.priceDecimals == 8
             && m.orderbookAggLevels == 1
@@ -112,12 +112,12 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketId.contains(marketIdBnbWeth)
-            && m.marketKey == MarketKey(WETH, BNB).toString
+            && m.marketKey == MarketKey(BNB, WETH).toString
         )
-      case m: MarketMetadata if m.secondaryTokenSymbol == "ZRX" =>
+      case m: MarketMetadata if m.primaryTokenSymbol == "ZRX" =>
         assert(
           m.status == MarketMetadata.Status.READONLY
-            && m.primaryTokenSymbol == "WETH"
+            && m.secondaryTokenSymbol == "WETH"
             && m.maxNumbersOfOrders == 1000
             && m.priceDecimals == 8
             && m.orderbookAggLevels == 1
@@ -125,12 +125,12 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketId.contains(marketIdZrxdWeth)
-            && m.marketKey == MarketKey(WETH, ZRX).toString
+            && m.marketKey == MarketKey(ZRX, WETH).toString
         )
       case _ => assert(false)
     }
     val lrcWeth =
-      res2.find(_.secondaryTokenSymbol == "LRC").getOrElse(MarketMetadata())
+      res2.find(_.primaryTokenSymbol == "LRC").getOrElse(MarketMetadata())
 
     info("duplicate market save should return error")
     val market1 = lrcWeth.copy(priceDecimals = 10)
@@ -140,7 +140,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     val r4 = dal.getMarketsByKey(Seq(lrcWeth.marketKey))
     val res4 = Await.result(r4.mapTo[Seq[MarketMetadata]], 5.second)
     assert(res4.length == 1)
-    val lrcWeth1 = res4.find(_.secondaryTokenSymbol == "LRC")
+    val lrcWeth1 = res4.find(_.primaryTokenSymbol == "LRC")
     assert(lrcWeth1.nonEmpty && lrcWeth1.get.priceDecimals == 8)
 
     info(
@@ -148,12 +148,8 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     )
     val r5 = dal.saveMarket(
       lrcWeth.copy(
-        marketId = Some(
-          MarketId(
-            primary = WETH,
-            secondary = "0xBe4C1cb10C2Be76798c4186ADbbC34356b358b521"
-          )
-        )
+        marketId =
+          Some(MarketId("0xBe4C1cb10C2Be76798c4186ADbbC34356b358b521", WETH))
       )
     )
     val res5 = Await.result(r5.mapTo[ErrorCode], 5.second)
@@ -166,7 +162,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
       "update BNB's status, maxNumbersOfOrders, priceDecimals, orderbookAggLevels, precisionForAmount, precisionForTotal, browsableInWallet"
     )
     val bnbWeth =
-      res2.find(_.secondaryTokenSymbol == "BNB").getOrElse(MarketMetadata())
+      res2.find(_.primaryTokenSymbol == "BNB").getOrElse(MarketMetadata())
     val r9 = dal.updateMarket(
       bnbWeth.copy(
         status = MarketMetadata.Status.ENABLED,
@@ -183,10 +179,10 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     val r10 = dal.getMarketsByKey(Seq(bnbWeth.marketKey))
     val res10 = Await.result(r10.mapTo[Seq[MarketMetadata]], 5.second)
     val bnb1 =
-      res10.find(_.secondaryTokenSymbol == "BNB").getOrElse(MarketMetadata())
+      res10.find(_.primaryTokenSymbol == "BNB").getOrElse(MarketMetadata())
     assert(
       bnb1.status == MarketMetadata.Status.ENABLED
-        && bnb1.primaryTokenSymbol == "WETH"
+        && bnb1.secondaryTokenSymbol == "WETH"
         && bnb1.maxNumbersOfOrders == 2000
         && bnb1.priceDecimals == 3
         && bnb1.orderbookAggLevels == 2
@@ -194,7 +190,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         && bnb1.precisionForTotal == 33
         && !bnb1.browsableInWallet
         && bnb1.marketId.contains(marketIdBnbWeth)
-        && bnb1.marketKey == MarketKey(WETH, BNB).toString
+        && bnb1.marketKey == MarketKey(BNB, WETH).toString
     )
   }
 }

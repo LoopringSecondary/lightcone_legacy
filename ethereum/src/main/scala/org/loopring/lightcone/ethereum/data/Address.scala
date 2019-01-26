@@ -20,6 +20,7 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.ErrorCode
 import org.web3j.utils.Numeric
+import org.loopring.lightcone.lib.data._
 
 class Address(val value: BigInt) {
 
@@ -72,7 +73,7 @@ object Address {
   }
 
   def apply(addr: String): Address = {
-    apply(Numeric.toBigInt(addr))
+    apply(Numeric.toBigInt(formatHex(addr)))
   }
 
   def isValid(obj: Any): Boolean = {

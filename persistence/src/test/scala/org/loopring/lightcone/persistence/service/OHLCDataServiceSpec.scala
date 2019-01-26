@@ -45,8 +45,8 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
             "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
           marketKey = "111222",
           time = 1547682650,
-          quality = 10,
-          amount = 100,
+          amount = 10,
+          total = 100,
           price = 10
         )
       )
@@ -62,8 +62,8 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
       marketKey = "111222",
       time = 1547682655,
-      quality = 50,
-      amount = 200,
+      amount = 50,
+      total = 200,
       price = 50
     )
     val result1 = dal.saveData(record1)
@@ -79,8 +79,8 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
             "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf50",
           marketKey = "111222",
           time = 1547682750,
-          quality = 100,
-          amount = 500,
+          amount = 100,
+          total = 500,
           price = 100
         )
       )

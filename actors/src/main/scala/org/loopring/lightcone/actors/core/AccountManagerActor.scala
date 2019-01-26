@@ -32,7 +32,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.ethereum.data.formatHex
 import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
@@ -291,7 +291,19 @@ class AccountManagerActor(
         (res, orderPool.takeUpdatedOrdersAsMap)
       }
 
-      _ = if (!successful) throw ErrorException(Error(matchable.status))
+      _ = if (!successful) {
+        val error = updatedOrders(matchable.id).status match {
+          case STATUS_INVALID_DATA                   => ERR_INVALID_ORDER_DATA
+          case STATUS_UNSUPPORTED_MARKET             => ERR_INVALID_MARKET
+          case STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS => ERR_TOO_MANY_ORDERS
+          case STATUS_SOFT_CANCELLED_DUPLICIATE      => ERR_ORDER_ALREADY_EXIST
+          case other =>
+            log.error(s"unexpected failure order status $other")
+            ERR_INTERNAL_UNKNOWN
+        }
+
+        throw ErrorException(Error(error))
+      }
 
       _ = log.debug(
         s"updated matchable ${_matchable}\nfound ${updatedOrders.size} updated orders"

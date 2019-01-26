@@ -184,15 +184,6 @@ package object data {
     )
   }
 
-  implicit def convertOrderStatusToErrorCode(status: OrderStatus): ErrorCode =
-    status match {
-      case STATUS_INVALID_DATA                   => ERR_INVALID_ORDER_DATA
-      case STATUS_UNSUPPORTED_MARKET             => ERR_INVALID_MARKET
-      case STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS => ERR_TOO_MANY_ORDERS
-      case STATUS_SOFT_CANCELLED_DUPLICIATE      => ERR_ORDER_ALREADY_EXIST
-      case _                                     => ERR_INTERNAL_UNKNOWN
-    }
-
   implicit class RichMarketId(marketId: MarketId) {
     def key() = MarketKey(marketId).toString
   }
