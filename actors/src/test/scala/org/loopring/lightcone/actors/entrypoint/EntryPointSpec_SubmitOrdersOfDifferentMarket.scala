@@ -180,7 +180,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
         GetOrderbook
           .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) =>
-          orderbook.sells.nonEmpty && orderbook.sells(0).total == "1.00000"
+          orderbook.sells.nonEmpty && orderbook.sells(0).total == "2.00000"
       )
 
       orderbookRes1 match {

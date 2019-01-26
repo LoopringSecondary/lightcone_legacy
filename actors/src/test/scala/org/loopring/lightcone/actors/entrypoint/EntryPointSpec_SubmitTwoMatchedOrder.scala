@@ -93,15 +93,15 @@ class EntryPointSpec_SubmitTwoMatchedOrder
         GetOrderbook
           .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) =>
-          orderbook.sells.nonEmpty && orderbook.latestPrice == 10.0
+          orderbook.sells.nonEmpty && orderbook.latestPrice == 0.1
       )
       orderbookRes match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"price:${lastPrice}, sells:${sells}, buys:${buys}")
           assert(sells.size == 1)
-          assert(lastPrice == 10.0)
+          assert(lastPrice == 0.1)
           assert(
-            sells(0).price == "10.000000" &&
+            sells(0).price == "0.100000" &&
               sells(0).amount == "5.00000" &&
               sells(0).total == "0.50000"
           )
@@ -168,7 +168,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
           info(s"sells:${sells}, buys:${buys}")
           assert(buys.size == 1)
           assert(
-            buys(0).price == "10.000000" &&
+            buys(0).price == "0.100000" &&
               buys(0).amount == "5.00000" &&
               buys(0).total == "0.50000"
           )

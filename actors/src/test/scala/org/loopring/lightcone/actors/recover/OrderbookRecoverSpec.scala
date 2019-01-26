@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.recover
 
 import akka.actor.PoisonPill
 import akka.cluster.Cluster
-import akka.cluster.sharding.{ ClusterSharding, ShardRegion }
+import akka.cluster.sharding.{ClusterSharding, ShardRegion}
 import akka.pattern._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.core._
@@ -28,21 +28,21 @@ import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.Orderbook.Item
 import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{Await, Future}
 import scala.math.BigInt
 
 class OrderbookRecoverSpec
-  extends CommonSpec
-  with JsonrpcSupport
-  with HttpSupport
-  with EthereumSupport
-  with DatabaseModuleSupport
-  with MetadataManagerSupport
-  with OrderHandleSupport
-  with MultiAccountManagerSupport
-  with MarketManagerSupport
-  with OrderbookManagerSupport
-  with OrderGenerateSupport {
+    extends CommonSpec
+    with JsonrpcSupport
+    with HttpSupport
+    with EthereumSupport
+    with DatabaseModuleSupport
+    with MetadataManagerSupport
+    with OrderHandleSupport
+    with MultiAccountManagerSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport
+    with OrderGenerateSupport {
 
   val account1 = getUniqueAccountWithoutEth
   val account2 = getUniqueAccountWithoutEth
@@ -57,7 +57,9 @@ class OrderbookRecoverSpec
         transferWETH(account2.getAddress, "100")(accounts(0)),
         transferLRC(account2.getAddress, "200")(accounts(0)),
         approveLRCToDelegate("2000")(account2),
-        approveWETHToDelegate("1000")(account2)))
+        approveWETHToDelegate("1000")(account2)
+      )
+    )
 
     Await.result(f, timeout.duration)
     super.beforeAll()
@@ -80,9 +82,11 @@ class OrderbookRecoverSpec
           tokenB = LRC_TOKEN.address,
           amountS = "1".zeros(WETH_TOKEN.decimals),
           amountB = "20".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))(account2)
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        )(account2)
         o.copy(
-          state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING)))
+          state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
+        )
         o
       }) ++
         ((0 until 1) map { i =>
@@ -91,9 +95,11 @@ class OrderbookRecoverSpec
             tokenB = WETH_TOKEN.address,
             amountS = "30".zeros(LRC_TOKEN.decimals),
             amountB = "1".zeros(WETH_TOKEN.decimals),
-            amountFee = (i + 1).toString.zeros(LRC_TOKEN.decimals))(account1)
+            amountFee = (i + 1).toString.zeros(LRC_TOKEN.decimals)
+          )(account1)
           o.copy(
-            state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING)))
+            state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
+          )
           o
         })
     //    ++ ((0 until 1) map { i =>

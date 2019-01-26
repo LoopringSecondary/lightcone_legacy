@@ -151,11 +151,12 @@ class RecoverOrderSpec
       assert(
         orderbookRes2.sells.nonEmpty && orderbookRes2.sells.length === 2 && orderbookRes2.buys.isEmpty
       )
-      orderbookRes2.sells.foreach(_ match {
-        case Item("10.000000", "60.00000", "6.00000") => assert(true)
-        case Item("20.000000", "80.00000", "4.00000") => assert(true)
-        case _                                        => assert(false)
-      })
+      orderbookRes2.sells should be(
+        Seq(
+          Item("0.050000", "80.00000", "4.00000"),
+          Item("0.100000", "60.00000", "6.00000")
+        )
+      )
     }
   }
 

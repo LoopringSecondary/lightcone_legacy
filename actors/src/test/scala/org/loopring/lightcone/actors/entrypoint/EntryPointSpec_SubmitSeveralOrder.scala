@@ -158,7 +158,7 @@ class EntryPointSpec_SubmitSeveralOrder
       val orderbookRes1 = expectOrderbookRes(
         getOrderBook,
         (orderbook: Orderbook) =>
-          orderbook.sells.nonEmpty && orderbook.sells(0).total == "1.00000"
+          orderbook.sells.nonEmpty && orderbook.sells(0).total == "2.00000"
       )
       orderbookRes1 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
