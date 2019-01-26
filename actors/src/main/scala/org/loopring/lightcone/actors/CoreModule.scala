@@ -86,6 +86,40 @@ class CoreModule(config: Config)
       "dbconfig-dal-ohlc-data"
     )
 
+    // --- bind dals ---------------------
+    bind[OrderDal].to[OrderDalImpl].asEagerSingleton
+    bind[TradeDal].to[TradeDalImpl].asEagerSingleton
+    bind[BlockDal].to[BlockDalImpl].asEagerSingleton
+    bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
+    bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
+    bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
+    bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
+    bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
+    // --- bind db services ---------------------
+    bind[OrderService].to[OrderServiceImpl].asEagerSingleton
+    bind[TradeService].to[TradeServiceImpl].asEagerSingleton
+    bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
+    bind[BlockService].to[BlockServiceImpl].asEagerSingleton
+
+    bind[OrderStatusMonitorService]
+      .to[OrderStatusMonitorServiceImpl]
+      .asEagerSingleton
+
+    // --- bind local singletons ---------------------
+    bind[DatabaseModule].asEagerSingleton
+    bind[MetadataManager].asEagerSingleton
+
+    bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
+
+    // --- bind other classes ---------------------
+    bind[TimeProvider].to[SystemTimeProvider]
+    bind[EthereumCallRequestBuilder]
+    bind[EthereumBatchCallRequestBuilder]
+
+    bind[TokenValueEvaluator]
+    bind[DustOrderEvaluator]
+    bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
+
     // --- bind event extractors ---------------------
     bind[EventExtractor[AddressAllowanceUpdated]]
       .to[AllowanceChangedAddressExtractor]
@@ -128,40 +162,6 @@ class CoreModule(config: Config)
     bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
     bind[EventDispatcher[OHLCRawData]].to[OHLCRawDataEventDispatcher]
     bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
-
-    // --- bind dals ---------------------
-    bind[OrderDal].to[OrderDalImpl].asEagerSingleton
-    bind[TradeDal].to[TradeDalImpl].asEagerSingleton
-    bind[BlockDal].to[BlockDalImpl].asEagerSingleton
-    bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
-    bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
-    bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
-    bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
-
-    // --- bind db services ---------------------
-    bind[OrderService].to[OrderServiceImpl].asEagerSingleton
-    bind[TradeService].to[TradeServiceImpl].asEagerSingleton
-    bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
-    bind[BlockService].to[BlockServiceImpl].asEagerSingleton
-
-    bind[OrderStatusMonitorService]
-      .to[OrderStatusMonitorServiceImpl]
-      .asEagerSingleton
-
-    // --- bind local singletons ---------------------
-    bind[DatabaseModule].asEagerSingleton
-    bind[MetadataManager].asEagerSingleton
-
-    bind[Lookup[ActorRef]].toInstance(new MapBasedLookup[ActorRef]())
-
-    // --- bind other classes ---------------------
-    bind[TimeProvider].to[SystemTimeProvider]
-    bind[EthereumCallRequestBuilder]
-    bind[EthereumBatchCallRequestBuilder]
-
-    bind[TokenValueEvaluator]
-    bind[DustOrderEvaluator]
-    bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))

@@ -84,8 +84,7 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
 object OrderBookAbi {
 
   val abiJsonStr: String =
-    "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"orderSubmitted\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"orderData\",\"type\":\"bytes\"}],\"name\":\"submitOrder\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"orderHash\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"orderData\",\"type\":\"bytes\"}],\"name\":\"OrderSubmitted\",\"type\":\"event\"}]"
-
+    Source.fromResource("version20/IOrderBook.abi").mkString
   def apply(abiJson: String): OrderBookAbi = new OrderBookAbi(abiJson)
 
   def apply(): OrderBookAbi = new OrderBookAbi(abiJsonStr)
