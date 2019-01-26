@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.ethereum.event
 
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.lib.data._
+import org.loopring.lightcone.ethereum.data.formatHex
 import org.web3j.utils.Numeric
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -60,10 +61,6 @@ trait EventExtractor[R] {
     } catch {
       case e: Throwable => false
     }
-  }
-
-  def formatHex(str: String): String = {
-    if (Numeric.cleanHexPrefix(str).isEmpty) str + "0" else str
   }
 
   def hex2ArrayBytes(str: String): Array[Byte] = {

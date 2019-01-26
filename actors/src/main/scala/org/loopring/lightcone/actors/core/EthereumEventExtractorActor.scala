@@ -24,6 +24,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.ethereum.data.formatHex
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
@@ -88,7 +89,7 @@ class EthereumEventExtractorActor(
       lastHandledBlock: Option[Long] <- dbModule.blockService.findMaxHeight()
       currentBlock <- (ethereumAccessorActor ? GetBlockNumber.Req())
         .mapAs[GetBlockNumber.Res]
-        .map(res => Numeric.toBigInt(res.result).longValue())
+        .map(res => Numeric.toBigInt(formatHex(res.result)).longValue())
       blockStart = lastHandledBlock.getOrElse(startBlock - 1)
       missing = currentBlock > blockStart + 1
       _ = if (missing) {
