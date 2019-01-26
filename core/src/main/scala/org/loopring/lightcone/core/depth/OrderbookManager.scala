@@ -27,5 +27,6 @@ trait OrderbookManager {
       size: Int,
       price: Option[Double] = None
     ): Orderbook
+
   def reset(): Unit
 }

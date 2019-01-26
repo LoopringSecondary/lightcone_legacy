@@ -127,28 +127,20 @@ case class Matchable(
     copy(_reserved = None, _actual = None, _matchable = None)
 
   private[core] def isSell()(implicit marketId: MarketId) =
-    (tokenS == marketId.secondary)
+    (tokenS == marketId.primary)
 
+  // for LRC-WETH market, this returns the number of WETH divided by the number of LRC
   private[core] def price(
     )(
       implicit
       marketId: MarketId,
       metadataManager: MetadataManager
     ) = {
-    originalAmount / originalTotal
+    originalTotal / originalAmount
   }
 
+  // for LRC-WETH market, this returns the number of LRC
   private[core] def originalAmount(
-    )(
-      implicit
-      marketId: MarketId,
-      metadataManager: MetadataManager
-    ) = {
-    if (tokenS == marketId.secondary) fromWei(tokenS, original.amountS)
-    else fromWei(tokenB, original.amountB)
-  }
-
-  private[core] def originalTotal(
     )(
       implicit
       marketId: MarketId,
@@ -158,17 +150,19 @@ case class Matchable(
     else fromWei(tokenS, original.amountS)
   }
 
-  private[core] def matchableAmount(
+  // for LRC-WETH market, this returns the number of WETH
+  private[core] def originalTotal(
     )(
       implicit
       marketId: MarketId,
       metadataManager: MetadataManager
     ) = {
-    if (tokenS == marketId.secondary) fromWei(tokenS, matchable.amountS)
-    else fromWei(tokenB, matchable.amountB)
+    if (tokenS == marketId.secondary) fromWei(tokenS, original.amountS)
+    else fromWei(tokenB, original.amountB)
   }
 
-  private[core] def matchableTotal(
+  // for LRC-WETH market, this returns the number of LRC
+  private[core] def matchableAmount(
     )(
       implicit
       marketId: MarketId,
@@ -176,6 +170,17 @@ case class Matchable(
     ) = {
     if (tokenS == marketId.secondary) fromWei(tokenB, matchable.amountB)
     else fromWei(tokenS, matchable.amountS)
+  }
+
+  // for LRC-WETH market, this returns the number of WETH
+  private[core] def matchableTotal(
+    )(
+      implicit
+      marketId: MarketId,
+      metadataManager: MetadataManager
+    ) = {
+    if (tokenS == marketId.secondary) fromWei(tokenS, matchable.amountS)
+    else fromWei(tokenB, matchable.amountB)
   }
 
   private def updateActual() = {

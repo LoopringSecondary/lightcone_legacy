@@ -95,7 +95,7 @@ class CoreModule(config: Config)
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
-    
+
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
     bind[TradeService].to[TradeServiceImpl].asEagerSingleton
@@ -105,7 +105,7 @@ class CoreModule(config: Config)
     bind[OrderStatusMonitorService]
       .to[OrderStatusMonitorServiceImpl]
       .asEagerSingleton
-    
+
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton
     bind[MetadataManager].asEagerSingleton

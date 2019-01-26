@@ -118,6 +118,7 @@ message Error{
     string message = 2;
 }
 
+// For LRC-WETH market, the primary is LRC, secondary is WETH
 message MarketId {
     string primary = 1;
     string secondary = 2;

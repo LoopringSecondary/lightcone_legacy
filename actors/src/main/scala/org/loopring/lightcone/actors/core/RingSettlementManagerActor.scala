@@ -139,7 +139,5 @@ class RingSettlementManagerActor(
           ringSettlementActors = ringSettlementActors - ba.address
         }
       }
-    case msg =>
-      println(s"ring settlement manager received $msg")
   }
 }

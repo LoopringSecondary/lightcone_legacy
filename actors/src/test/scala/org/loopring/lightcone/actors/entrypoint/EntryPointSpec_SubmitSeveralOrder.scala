@@ -99,21 +99,25 @@ class EntryPointSpec_SubmitSeveralOrder
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 3)
+
           assert(
-            sells(0).price == "10.000000" &&
-              sells(0).amount == "20.00000" &&
+            sells(0).price == "0.033334" &&
+              sells(0).amount == "60.00000" &&
               sells(0).total == "2.00000"
           )
+
           assert(
-            sells(1).price == "20.000000" &&
+            sells(1).price == "0.050000" &&
               sells(1).amount == "40.00000" &&
               sells(1).total == "2.00000"
           )
+
           assert(
-            sells(2).price == "30.000000" &&
-              sells(2).amount == "60.00000" &&
+            sells(2).price == "0.100000" &&
+              sells(2).amount == "20.00000" &&
               sells(2).total == "2.00000"
           )
+
           assert(buys.isEmpty)
         case _ => assert(false)
       }
@@ -154,27 +158,30 @@ class EntryPointSpec_SubmitSeveralOrder
       val orderbookRes1 = expectOrderbookRes(
         getOrderBook,
         (orderbook: Orderbook) =>
-          orderbook.sells.nonEmpty && orderbook.sells(0).total == "1.00000"
+          orderbook.sells.nonEmpty && orderbook.sells(0).total == "2.00000"
       )
       orderbookRes1 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
           assert(sells.size == 3)
           assert(
-            sells(0).price == "10.000000" &&
-              sells(0).amount == "10.00000" &&
-              sells(0).total == "1.00000"
+            sells(0).price == "0.033334" &&
+              sells(0).amount == "60.00000" &&
+              sells(0).total == "2.00000"
           )
+
           assert(
-            sells(1).price == "20.000000" &&
+            sells(1).price == "0.050000" &&
               sells(1).amount == "40.00000" &&
               sells(1).total == "2.00000"
           )
+
           assert(
-            sells(2).price == "30.000000" &&
-              sells(2).amount == "60.00000" &&
-              sells(2).total == "2.00000"
+            sells(2).price == "0.100000" &&
+              sells(2).amount == "10.00000" &&
+              sells(2).total == "1.00000"
           )
+
           assert(buys.isEmpty)
         case _ => assert(false)
       }
