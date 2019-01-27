@@ -24,27 +24,42 @@ import scala.reflect.ClassTag
 
 import org.loopring.lightcone.proto.ErrorCode
 
-import scala.reflect.runtime.universe.{typeOf, TypeTag}
+import scala.reflect.runtime.universe.{ typeOf, TypeTag }
 
 // Owner: Daniel
-class PayloadConverter[T <: AnyRef: TypeTag, S <: AnyRef: TypeTag](
-    implicit
-    cs: ClassTag[S]) {
+abstract class TypedJsonSerializer[T <: AnyRef: TypeTag] {
+  def fromJson(json: JValue): T
+  def toJson(t: Any): JValue
+}
+
+class Json4sTypedJsonSerializer[T <: AnyRef: TypeTag](implicit ct: ClassTag[T])
+  extends TypedJsonSerializer[T] {
   implicit val formats = Serialization.formats(NoTypeHints)
 
-  def fromJson(json: JValue): S = json.extract[S]
+  def fromJson(json: JValue): T = json.extract[T]
 
-  def toJson(s: Any): JValue = {
-    s match {
-      case err: ErrorException =>
-        throw err
-      case _ =>
-        if (!cs.runtimeClass.isInstance(s))
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"expect ${typeOf[T].typeSymbol.name} get ${s.getClass.getName}"
-          )
-        Extraction.decompose(s)
-    }
+  def toJson(t: Any): JValue = t match {
+    case err: ErrorException => throw err
+    case _ =>
+      if (!ct.runtimeClass.isInstance(t))
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"expect ${typeOf[T].typeSymbol.name} get ${t.getClass.getName}")
+      Extraction.decompose[T](t)
   }
+}
+
+class RpcSerializer[T <: AnyRef: TypeTag, S <: AnyRef: TypeTag](
+  implicit ct: ClassTag[T],
+  cs: ClassTag[S]) {
+
+  implicit val formats = Serialization.formats(NoTypeHints)
+  private val reqSerializer = new Json4sTypedJsonSerializer[T]
+  private val resSerializer = new Json4sTypedJsonSerializer[S]
+
+  def requestToJson(req: Any) = reqSerializer.toJson(req)
+  def jsonToRequest(json: JValue) = reqSerializer.fromJson(json)
+
+  def responseToJson(resp: Any) = resSerializer.toJson(resp)
+  def jsonToResponse(json: JValue) = resSerializer.fromJson(json)
 }

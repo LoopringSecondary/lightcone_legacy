@@ -27,14 +27,13 @@ import org.loopring.lightcone.actors.jsonrpc._
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
-import scalapb.json4s.JsonFormat
+import org.json4s._
 
 import scala.concurrent.{Await, ExecutionContext}
 
 trait HttpSupport extends RpcBinding with Logging {
   val config: Config
   implicit val materializer: ActorMaterializer
-
   // TODO:for test, not need it
   override val requestHandler: ActorRef = ActorRef.noSender
 
@@ -46,9 +45,7 @@ trait HttpSupport extends RpcBinding with Logging {
       system: ActorSystem,
       ec: ExecutionContext
     ) = {
-    val json = req match {
-      case m: scalapb.GeneratedMessage => JsonFormat.toJson(m)
-    }
+    val json = Extraction.decompose(req)
     val reqJson = JsonRpcRequest("2.0", method, Some(json), Some("1"))
     for {
       response <- Http().singleRequest(
@@ -70,8 +67,7 @@ trait HttpSupport extends RpcBinding with Logging {
             val j = parse.parse(r.data.utf8String).extract[JsonRpcResponse]
             j.result match {
               case Some(r1) =>
-                getPayloadConverter(method).get
-                  .fromJson(r1)
+                getRpcSerializer(method).get.jsonToResponse(r1)
               case None =>
                 j.error match {
                   case Some(err) =>

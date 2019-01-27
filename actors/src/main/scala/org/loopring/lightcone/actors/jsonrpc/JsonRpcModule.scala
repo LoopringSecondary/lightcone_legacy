@@ -64,7 +64,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
             if (id.isEmpty) {
               replyWithError(-32000, Some("`id missing"))
             } else {
-              getPayloadConverter(method) match {
+              getRpcSerializer(method) match {
                 case None =>
                   replyWithError(
                     -32601,
@@ -72,7 +72,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                   )
 
                 case Some(converter) =>
-                  jsonReq.params.map(converter.fromJson) match {
+                  jsonReq.params.map(converter.requestToJson) match {
                     case None =>
                       replyWithError(
                         -32602,
@@ -86,7 +86,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                       }
 
                       onSuccess(f) { resp =>
-                        replyWith(converter.toJson(resp))
+                        replyWith(converter.responseToJson(resp))
                       }
                   }
               }

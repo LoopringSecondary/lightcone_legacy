@@ -32,8 +32,9 @@ class Binder[T <: AnyRef: TypeTag](implicit module: JsonRpcBinding) {
       method: String
     )(
       implicit
+      ct: ClassTag[T],
       cs: ClassTag[S]
     ) = {
-    module.addPayloadConverter(method, new PayloadConverter[T, S])
+    module.addRpcSerializer(method, new RpcSerializer[T, S])
   }
 }

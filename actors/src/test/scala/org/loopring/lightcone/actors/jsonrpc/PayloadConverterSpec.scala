@@ -16,17 +16,24 @@
 
 package org.loopring.lightcone.actors.jsonrpc
 
-import org.loopring.lightcone.lib.ProtoSerializer
 import org.loopring.lightcone.proto._
 import org.scalatest._
 import org.slf4s.Logging
 
-class PayloadConverterSpec extends FlatSpec with Matchers with Logging {
-  implicit val ps = new ProtoSerializer()
-  val serializer = new PayloadConverter[RawOrder, RawOrder]
+class RpcSerializerSpec extends FlatSpec with Matchers with Logging {
+  val serializer = new RpcSerializer[RawOrder, RawOrder]
+
   val order = new RawOrder(tokenS = "aaa")
 
-  val json = serializer.toJson(order)
-  val order_ = serializer.fromJson(json)
-  order_ should be(order)
+  {
+    val json = serializer.requestToJson(order)
+    val order_ = serializer.jsonToRequest(json)
+    order_ should be(order)
+  }
+
+  {
+    val json = serializer.responseToJson(order)
+    val order_ = serializer.jsonToResponse(json)
+    order_ should be(order)
+  }
 }
