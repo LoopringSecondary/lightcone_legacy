@@ -16,7 +16,6 @@
 
 package org.loopring.lightcone.actors.jsonrpc
 
-import org.loopring.lightcone.lib.ProtoSerializer
 import org.loopring.lightcone.proto._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -27,18 +26,13 @@ import akka.util.Timeout
 import scala.reflect.ClassTag
 
 // Owner: Daniel
-class Binder[T <: Proto[T]: TypeTag](
-    implicit
-    module: JsonRpcBinding,
-    ps: ProtoSerializer) {
+class Binder[T <: AnyRef: TypeTag](implicit module: JsonRpcBinding) {
 
-  def thenReply[S <: Proto[S]: TypeTag](
+  def thenReply[S <: AnyRef: TypeTag](
       method: String
     )(
       implicit
-      tc: ProtoC[T],
-      cs: ClassTag[S],
-      ts: ProtoC[S]
+      cs: ClassTag[S]
     ) = {
     module.addPayloadConverter(method, new PayloadConverter[T, S])
   }

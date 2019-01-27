@@ -18,24 +18,23 @@ package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.lib._
 import org.json4s.JsonAST.JValue
+import org.json4s._
+import org.json4s.native.Serialization
 import scala.reflect.ClassTag
+
 import org.loopring.lightcone.proto.ErrorCode
 
 import scala.reflect.runtime.universe.{typeOf, TypeTag}
 
 // Owner: Daniel
-class PayloadConverter[T <: Proto[T]: TypeTag, S <: Proto[S]: TypeTag](
+class PayloadConverter[T <: AnyRef: TypeTag, S <: AnyRef: TypeTag](
     implicit
-    tc: ProtoC[T],
-    ts: ProtoC[S],
-    cs: ClassTag[S],
-    ps: ProtoSerializer) {
+    cs: ClassTag[S]) {
+  implicit val formats = Serialization.formats(NoTypeHints)
 
-  def convertToRequest(str: JValue): T = ps.deserialize[T](str).get
+  def fromJson(json: JValue): S = json.extract[S]
 
-  def convertToResponse(str: JValue): S = ps.deserialize[S](str).get
-
-  def convertFromResponse(s: Any): JValue = {
+  def toJson(s: Any): JValue = {
     s match {
       case err: ErrorException =>
         throw err
@@ -45,7 +44,7 @@ class PayloadConverter[T <: Proto[T]: TypeTag, S <: Proto[S]: TypeTag](
             ErrorCode.ERR_INTERNAL_UNKNOWN,
             s"expect ${typeOf[T].typeSymbol.name} get ${s.getClass.getName}"
           )
-        ps.serialize[S](s.asInstanceOf[S]).get
+        Extraction.decompose(s)
     }
   }
 }

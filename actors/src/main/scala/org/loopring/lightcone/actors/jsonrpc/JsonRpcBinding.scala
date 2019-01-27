@@ -33,11 +33,11 @@ trait JsonRpcBinding {
   implicit private val module_ = this
   implicit private val ps = new ProtoSerializer
 
-  def ifReceive[T <: Proto[T]: TypeTag] = new Binder[T]
+  def ifReceive[T <: AnyRef: TypeTag] = new Binder[T]
 
   private[jsonrpc] def addPayloadConverter[
-      T <: Proto[T]: TypeTag,
-      S <: Proto[S]: TypeTag
+      T <: AnyRef: TypeTag,
+      S <: AnyRef: TypeTag
     ](method: String,
       ps: PayloadConverter[T, S]
     ) = {

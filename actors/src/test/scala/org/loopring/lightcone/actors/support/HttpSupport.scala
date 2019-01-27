@@ -68,11 +68,10 @@ trait HttpSupport extends RpcBinding with Logging {
         case StatusCodes.OK =>
           response.entity.toStrict(timeout.duration).map { r =>
             val j = parse.parse(r.data.utf8String).extract[JsonRpcResponse]
-
             j.result match {
               case Some(r1) =>
                 getPayloadConverter(method).get
-                  .convertToResponse(r1)
+                  .fromJson(r1)
               case None =>
                 j.error match {
                   case Some(err) =>
