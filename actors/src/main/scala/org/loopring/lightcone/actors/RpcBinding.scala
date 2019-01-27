@@ -22,11 +22,20 @@ import org.loopring.lightcone.proto._
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
 
-  method("get_orderbook").accepts[GetOrderbook.Req].replies[GetOrderbook.Res]
+  // implicit def convert(a: GetOrderbook.Req) = a
 
-  method("submit_order").accepts[SubmitOrder.Req].replies[SubmitOrder.Res]
+  method("get_orderbook") //
+    .accepts[GetOrderbook.Req] //
+    // .accepts[GetOrderbook.Req, GetOrderbook.Req] //
+    .replies[GetOrderbook.Res]
 
-  method("cancel_order").accepts[CancelOrder.Req].replies[CancelOrder.Res]
+  method("submit_order") //
+    .accepts[SubmitOrder.Req] //
+    .replies[SubmitOrder.Res]
+
+  method("cancel_order") //
+    .accepts[CancelOrder.Req] //
+    .replies[CancelOrder.Res]
 
   // // db query
   method("get_orders")
@@ -54,7 +63,9 @@ trait RpcBinding extends JsonRpcModule {
     .accepts[GetAllowance.Req]
     .replies[GetAllowance.Res]
 
-  method("get_balance").accepts[GetBalance.Req].replies[GetBalance.Res]
+  method("get_balance") //
+    .accepts[GetBalance.Req] //
+    .replies[GetBalance.Res]
 
   method("get_balance_and_allowance")
     .accepts[GetBalanceAndAllowances.Req]

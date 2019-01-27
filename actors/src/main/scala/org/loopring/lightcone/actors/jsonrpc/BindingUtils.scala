@@ -109,25 +109,13 @@ class Reply[
     module: JsonRpcBinding,
     ps: ProtoSerializer) {
 
+  module.addReply(this)
+
   def jsonToInternalRequest(str: JValue): B =
     requestConverter(ps.deserialize[A](str).get)
 
   def jsonToExternalResponse(str: JValue): D =
     ps.deserialize[D](str).get
-
-  // def requestToJson(s: Any): JValue = {
-  //   s match {
-  //     case err: ErrorException =>
-  //       throw err
-  //     case _ =>
-  //       if (!ca.runtimeClass.isInstance(s))
-  //         throw ErrorException(
-  //           ErrorCode.ERR_INTERNAL_UNKNOWN,
-  //           s"expect ${typeOf[A].typeSymbol.name} get ${s.getClass.getName}"
-  //         )
-  //       ps.serialize[A](s.asInstanceOf[A]).get
-  //   }
-  // }
 
   def internalResponseToJson(s: Any): JValue = {
     s match {
