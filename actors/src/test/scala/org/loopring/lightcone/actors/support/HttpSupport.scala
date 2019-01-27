@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors.support
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
+import org.loopring.lightcone.lib._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -71,8 +72,8 @@ trait HttpSupport extends RpcBinding with Logging {
 
             j.result match {
               case Some(r1) =>
-                getPayloadConverter(method).get
-                  .convertToResponse(r1)
+                getReply(method).get
+                  .jsonToExternalResponse(r1)
               case None =>
                 j.error match {
                   case Some(err) =>

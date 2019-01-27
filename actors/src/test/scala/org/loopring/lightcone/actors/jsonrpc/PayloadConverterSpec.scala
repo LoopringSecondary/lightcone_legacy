@@ -22,11 +22,11 @@ import org.scalatest._
 import org.slf4s.Logging
 
 class PayloadConverterSpec extends FlatSpec with Matchers with Logging {
-  implicit val ps = new ProtoSerializer()
-  val serializer = new PayloadConverter[RawOrder, RawOrder]
-  val order = new RawOrder(tokenS = "aaa")
+  // implicit val ps = new ProtoSerializer()
+  // val serializer = new PayloadConverter[RawOrder, RawOrder]
+  // val order = new RawOrder(tokenS = "aaa")
 
-  val json = serializer.convertFromResponse(order)
-  val order_ = serializer.convertToRequest(json)
-  order_ should be(order)
+  // val json = serializer.internalResponseToJson(order)
+  // val order_ = serializer.jsonToInternalRequest(json)
+  // order_ should be(order)
 }
