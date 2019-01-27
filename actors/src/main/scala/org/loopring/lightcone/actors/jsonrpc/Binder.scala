@@ -24,22 +24,16 @@ import akka.pattern.ask
 import scala.reflect.runtime.universe._
 import akka.actor._
 import akka.util.Timeout
-import scala.reflect.ClassTag
+import scala.reflect._
 
 // Owner: Daniel
-class Binder[T0, T <: Proto[T]: TypeTag](
+class Binder[T0 <: AnyRef: Manifest, T <: AnyRef: Manifest](
     method: String
   )(
     implicit
-    module: JsonRpcBinding,
-    ps: ProtoSerializer) {
+    module: JsonRpcBinding) {
 
-  def replies[S <: Proto[S]: TypeTag, S0 <: AnyRef](
-      implicit
-      tc: ProtoC[T],
-      cs: ClassTag[S],
-      ts: ProtoC[S]
-    ) = {
+  def replies[S <: AnyRef: Manifest, S0 <: AnyRef: Manifest] = {
     module.addPayloadConverter(method, new PayloadConverter[T0, T, S, S0])
   }
 

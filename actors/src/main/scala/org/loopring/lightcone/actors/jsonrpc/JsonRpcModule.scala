@@ -72,7 +72,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                   )
 
                 case Some(converter) =>
-                  jsonReq.params.map(converter.convertToRequest) match {
+                  jsonReq.params.map(converter.jsonToRequest) match {
                     case None =>
                       replyWithError(
                         -32602,
@@ -86,7 +86,7 @@ trait JsonRpcModule extends JsonRpcBinding with JsonSupport {
                       }
 
                       onSuccess(f) { resp =>
-                        replyWith(converter.convertFromResponse(resp))
+                        replyWith(converter.responseToJson(resp))
                       }
                   }
               }

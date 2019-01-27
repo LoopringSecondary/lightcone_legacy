@@ -26,7 +26,7 @@ class PayloadConverterSpec extends FlatSpec with Matchers with Logging {
   val serializer = new PayloadConverter[RawOrder, RawOrder]
   val order = new RawOrder(tokenS = "aaa")
 
-  val json = serializer.convertFromResponse(order)
-  val order_ = serializer.convertToRequest(json)
+  val json = serializer.responseToJson(order)
+  val order_ = serializer.jsonToRequest(json)
   order_ should be(order)
 }

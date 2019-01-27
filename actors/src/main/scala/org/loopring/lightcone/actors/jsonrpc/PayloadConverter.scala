@@ -17,35 +17,35 @@
 package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.lib._
-import org.json4s.JsonAST.JValue
-import scala.reflect.ClassTag
+import scala.reflect._
 import org.loopring.lightcone.proto.ErrorCode
+import org.json4s._
+import org.json4s.JsonAST.JValue
+import org.json4s.native.Serialization
 
 import scala.reflect.runtime.universe.{typeOf, TypeTag}
 
 // Owner: Daniel
-class PayloadConverter[T0, T <: Proto[T]: TypeTag, S <: Proto[S]: TypeTag, S0](
+class PayloadConverter[
+    T0 <: AnyRef: Manifest,
+    T <: AnyRef: Manifest,
+    S <: AnyRef: Manifest,
+    S0 <: AnyRef: Manifest
+  ](
     implicit
-    tc: ProtoC[T],
-    ts: ProtoC[S],
-    cs: ClassTag[S],
-    ps: ProtoSerializer) {
+    cs: ClassTag[S]) {
+  implicit val formats = Serialization.formats(NoTypeHints)
 
-  def convertToRequest(str: JValue): T = ps.deserialize[T](str).get
+  def jsonToRequest(str: JValue): T = str.extract[T]
 
-  def convertToResponse(str: JValue): S = ps.deserialize[S](str).get
-
-  def convertFromResponse(s: Any): JValue = {
-    s match {
-      case err: ErrorException =>
-        throw err
-      case _ =>
-        if (!cs.runtimeClass.isInstance(s))
-          throw ErrorException(
-            ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"expect ${typeOf[T].typeSymbol.name} get ${s.getClass.getName}"
-          )
-        ps.serialize[S](s.asInstanceOf[S]).get
-    }
+  def responseToJson(s: Any): JValue = s match {
+    case err: ErrorException => throw err
+    case _ =>
+      if (!cs.runtimeClass.isInstance(s))
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"expect ${typeOf[T].typeSymbol.name} get ${s.getClass.getName}"
+        )
+      Extraction.decompose(s)
   }
 }

@@ -34,10 +34,10 @@ trait JsonRpcBinding {
   implicit private val ps = new ProtoSerializer
 
   private[jsonrpc] def addPayloadConverter[ //
-      T0, //
-      T <: Proto[T]: TypeTag, //
-      S <: Proto[S]: TypeTag, //
-      S0
+      T0 <: AnyRef: Manifest, //
+      T <: AnyRef: Manifest, //
+      S <: AnyRef: Manifest, //
+      S0 <: AnyRef: Manifest
     ](method: String,
       ps: PayloadConverter[T0, T, S, S0]
     ) = {
@@ -48,6 +48,8 @@ trait JsonRpcBinding {
   def getPayloadConverter(method: String) = bindings.get(method)
 
   implicit class RichString(method: String) {
-    def accepts[T0, T <: Proto[T]: TypeTag] = new Binder[T0, T](method)
+
+    def accepts[T0 <: AnyRef: Manifest, T <: AnyRef: Manifest] =
+      new Binder[T0, T](method)
   }
 }
