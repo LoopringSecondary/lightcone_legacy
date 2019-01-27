@@ -22,7 +22,7 @@ import org.loopring.lightcone.proto._
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
 
-  ifReceive[GetOrderbook.Req].thenReply[GetOrderbook.Res]("orderbook")
+  ifReceive[GetOrderbook.Req].thenReply[GetOrderbook.Res]("get_orderbook")
 
   ifReceive[SubmitOrder.Req].thenReply[SubmitOrder.Res]("submit_order")
 

@@ -118,7 +118,7 @@ class RecoverOrderSpec
         100,
         Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
       )
-      val orderbookF1 = singleRequest(getOrderBook1, "orderbook")
+      val orderbookF1 = singleRequest(getOrderBook1, "get_orderbook")
       val timeout1 = Timeout(5 second)
       val orderbookRes1 =
         Await
@@ -129,10 +129,8 @@ class RecoverOrderSpec
       // 2. save some orders in db
       testSaveOrder4Recover()
       // 3. recover
-      val marketLrcWeth = Some(
-        MarketId(primary = LRC_TOKEN.address, secondary = WETH_TOKEN.address)
-      )
-      val marketMock4 = Some(MarketId(primary = "0x041", secondary = "0x042"))
+      val marketLrcWeth = Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+      val marketMock4 = Some(MarketId("0x041", "0x042"))
       val request1 = ActorRecover.Request(
         addressShardingEntity = MultiAccountManagerActor
           .getEntityId(owner, 100),
@@ -143,7 +141,7 @@ class RecoverOrderSpec
       val res = Await.result(r, timeout.duration)
       // 4. get depth
       Thread.sleep(5000)
-      val orderbookF2 = singleRequest(getOrderBook1, "orderbook")
+      val orderbookF2 = singleRequest(getOrderBook1, "get_orderbook")
       val orderbookRes2 =
         Await
           .result(orderbookF2.mapTo[GetOrderbook.Res], timeout1.duration)
@@ -153,11 +151,12 @@ class RecoverOrderSpec
       assert(
         orderbookRes2.sells.nonEmpty && orderbookRes2.sells.length === 2 && orderbookRes2.buys.isEmpty
       )
-      orderbookRes2.sells.foreach(_ match {
-        case Item("10.000000", "60.00000", "6.00000") => assert(true)
-        case Item("20.000000", "80.00000", "4.00000") => assert(true)
-        case _                                        => assert(false)
-      })
+      orderbookRes2.sells should be(
+        Seq(
+          Item("0.050000", "80.00000", "4.00000"),
+          Item("0.100000", "60.00000", "6.00000")
+        )
+      )
     }
   }
 

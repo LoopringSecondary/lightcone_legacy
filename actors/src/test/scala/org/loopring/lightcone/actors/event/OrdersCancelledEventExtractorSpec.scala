@@ -28,7 +28,7 @@ class OrdersCancelledEventExtractorSpec
     with OrderGenerateSupport {
 
   "ethereum event extractor actor test" must {
-    "correctly extract order cancelled  events from ethereum blocks" in {
+    "correctly extract order cancelled events from ethereum blocks" in {
       info("submit the first order.")
 
       val submit_order = "submit_order"
@@ -57,15 +57,14 @@ class OrdersCancelledEventExtractorSpec
         cancelOrders(Seq(order1.hash))(account0).mapAs[SendRawTransaction.Res],
         timeout.duration
       )
-      Thread.sleep(1000)
+      Thread.sleep(2000)
       val getOrder_2 = Await.result(
         dbModule.orderService.getOrder(order1.hash),
         timeout.duration
       )
-      getOrder_2.get.getState.status.isStatusOnchainCancelledByUser should be(
-        true
+      getOrder_2.get.getState.status should be(
+        OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER
       )
-
     }
   }
 }

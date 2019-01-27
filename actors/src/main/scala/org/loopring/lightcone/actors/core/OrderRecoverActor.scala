@@ -113,7 +113,7 @@ class OrderRecoverActor(
           metadataManager.isValidMarket(MarketId(o.tokenS, o.tokenB))
         }.map { o =>
           val marketId =
-            MarketId(primary = o.tokenS, secondary = o.tokenB)
+            MarketId(o.tokenS, o.tokenB)
           val marketKey = MarketKey(marketId).toString
           o.copy(
             marketKey = marketKey,

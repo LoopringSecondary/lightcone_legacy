@@ -42,7 +42,7 @@ package object support {
     symbol = "WETH",
     name = "WETH",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
+    status = TokenMetadata.Status.VALID
   )
 
   val LRC_TOKEN = TokenMetadata(
@@ -53,7 +53,7 @@ package object support {
     symbol = "LRC",
     name = "LRC",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
+    status = TokenMetadata.Status.VALID
   )
 
   val GTO_TOKEN = TokenMetadata(
@@ -64,29 +64,27 @@ package object support {
     symbol = "GTO",
     name = "GTO",
     usdPrice = 1000,
-    status = TokenMetadata.Status.ENABLED
+    status = TokenMetadata.Status.VALID
   )
 
   val LRC_WETH_MARKET = MarketMetadata(
-    status = MarketMetadata.Status.ENABLED,
-    secondaryTokenSymbol = LRC_TOKEN.symbol,
-    primaryTokenSymbol = WETH_TOKEN.symbol,
+    status = MarketMetadata.Status.ACTIVE,
+    primaryTokenSymbol = LRC_TOKEN.symbol,
+    secondaryTokenSymbol = WETH_TOKEN.symbol,
     maxNumbersOfOrders = 1000,
     priceDecimals = 6,
     orderbookAggLevels = 6,
     precisionForAmount = 5,
     precisionForTotal = 5,
     browsableInWallet = true,
-    marketId = Some(
-      MarketId(primary = WETH_TOKEN.address, secondary = LRC_TOKEN.address)
-    ),
+    marketId = Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address)),
     marketKey = MarketKey(LRC_TOKEN.address, WETH_TOKEN.address).toString
   )
 
   val GTO_WETH_MARKET = MarketMetadata(
-    status = MarketMetadata.Status.ENABLED,
-    secondaryTokenSymbol = GTO_TOKEN.symbol,
-    primaryTokenSymbol = WETH_TOKEN.symbol,
+    status = MarketMetadata.Status.ACTIVE,
+    primaryTokenSymbol = GTO_TOKEN.symbol,
+    secondaryTokenSymbol = WETH_TOKEN.symbol,
     maxNumbersOfOrders = 500,
     priceDecimals = 6,
     orderbookAggLevels = 5,
@@ -94,7 +92,7 @@ package object support {
     precisionForTotal = 5,
     browsableInWallet = true,
     marketId = Some(
-      MarketId(primary = WETH_TOKEN.address, secondary = GTO_TOKEN.address)
+      MarketId(primary = GTO_TOKEN.address, secondary = WETH_TOKEN.address)
     ),
     marketKey = MarketKey(GTO_TOKEN.address, WETH_TOKEN.address).toString
   )
@@ -131,7 +129,7 @@ package object support {
   val postgreContainer = PostgreSQLContainer("timescale/timescaledb:latest")
   postgreContainer.starting()
 
-  //todo:暂时未生效
+  // TODO:暂时未生效
   //  try Unreliables.retryUntilTrue(
   //    10,
   //    TimeUnit.SECONDS,
@@ -189,10 +187,10 @@ package object support {
       .forConfig[JdbcProfile]("", ConfigFactory.parseString(postgreConfigStr))
 
   val transactionRecordConfigStr = s"""
-     db.transaction-record.shard_0 {
+     db.transaction_record.shard_0 {
          $mysqlConfigStr
      }
-     db.transaction-record.shard_1 {
+     db.transaction_record.shard_1 {
          $mysqlConfigStr
      }
     """.stripMargin

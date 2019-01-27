@@ -28,6 +28,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
@@ -38,7 +39,6 @@ import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
-
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -46,6 +46,8 @@ import scala.concurrent.duration._
 // Owenr: Hongyu
 object MarketManagerActor extends ShardedByMarket {
   val name = "market_manager"
+
+  var metadataManager: MetadataManager = _
 
   def start(
       implicit
@@ -62,6 +64,7 @@ object MarketManagerActor extends ShardedByMarket {
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
+    this.metadataManager = metadataManager
 
     ClusterSharding(system).start(
       typeName = name,
@@ -72,22 +75,31 @@ object MarketManagerActor extends ShardedByMarket {
   }
 
   // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
+  //READONLY的不能在该处拦截，需要在validtor中截取，因为该处还需要将orderbook等恢复
   val extractMarketId: PartialFunction[Any, MarketId] = {
-    case SubmitSimpleOrder(_, Some(order)) =>
+    case SubmitSimpleOrder(_, Some(order))
+        if metadataManager.isValidMarket(
+          MarketId(order.tokenS, order.tokenB)
+        ) =>
       MarketId(order.tokenS, order.tokenB)
-    case CancelOrder.Req(_, _, _, Some(marketId)) =>
+
+    case CancelOrder.Req(_, _, _, Some(marketId))
+        if metadataManager.isValidMarket(marketId) =>
       marketId
+
     case req: RingMinedEvent if req.fills.size >= 2 =>
       MarketId(req.fills(0).tokenS, req.fills(1).tokenS)
+
     case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
-      val (primary, secondary) = (tokens(0), tokens(1))
-      MarketId(primary, secondary)
+      MarketId(tokens(0), tokens(1))
+
+    case GetOrderbookSlots.Req(Some(marketId), _) => marketId
   }
 
 }
 
-//todo:撮合应该有个暂停撮合提交的逻辑，适用于：区块落后太多、没有可用的RingSettlement等情况
+// TODO:撮合应该有个暂停撮合提交的逻辑，适用于：区块落后太多、没有可用的RingSettlement等情况
 class MarketManagerActor(
   )(
     implicit
@@ -106,10 +118,7 @@ class MarketManagerActor(
     )
     with RepeatedJobActor
     with ActorLogging {
-
-  implicit val marketId = metadataManager.getValidMarketIds.values
-    .find(m => getEntityId(m) == entityId)
-    .get
+  implicit val marketId: MarketId = metadataManager.getValidMarketIds.values
 
   log.info(s"=======> starting MarketManagerActor ${self.path} for ${marketId}")
 
@@ -131,10 +140,12 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
+  def marketMetadata = metadataManager.getMarketMetadata(marketId)
+
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
-    selfConfig.getInt("price-decimals"),
-    selfConfig.getInt("precision-for-amount"),
-    selfConfig.getInt("precision-for-total")
+    marketMetadata.priceDecimals,
+    marketMetadata.precisionForAmount,
+    marketMetadata.precisionForTotal
   )
 
   val manager = new MarketManagerImpl(
@@ -148,9 +159,9 @@ class MarketManagerActor(
   )
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
-  protected def mediator =
-    DistributedPubSub(context.system).mediator
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
+  protected def metadataRefresher = actors.get(MetadataRefresher.name)
+  protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
 
   var gasPrice: BigInt = _
 
@@ -180,6 +191,7 @@ class MarketManagerActor(
           )
         }
       }
+      _ = metadataRefresher ! SubscribeMetadataChanged()
     } yield Unit
 
   def recover: Receive = {
@@ -213,10 +225,7 @@ class MarketManagerActor(
 
     case CancelOrder.Req(orderId, _, _, _) =>
       manager.cancelOrder(orderId) foreach { orderbookUpdate =>
-        mediator ! Publish(
-          OrderbookManagerActor.getTopicId(marketId),
-          orderbookUpdate.copy(marketId = Some(marketId))
-        )
+        orderbookManagerActor ! orderbookUpdate.copy(marketId = Some(marketId))
       }
       sender ! CancelOrder.Res(id = orderId)
 
@@ -252,6 +261,32 @@ class MarketManagerActor(
           }
         }
       } sendTo sender
+
+    case req: MetadataChanged =>
+      val metadataOpt = try {
+        Option(metadataManager.getMarketMetadata(marketId))
+      } catch {
+        case _: Throwable => None
+      }
+      metadataOpt match {
+        case None =>
+          log.warning("I'm stopping myself as the market metadata is not found")
+          context.system.stop(self)
+
+        case Some(metadata) if metadata.status.isTerminated =>
+          log.warning(
+            s"I'm stopping myself as the market is terminiated: $metadata"
+          )
+          context.system.stop(self)
+
+        case Some(metadata) =>
+          log.info(s"metadata changed: $metadata")
+      }
+
+    case req: GetOrderbookSlots.Req =>
+      sender ! GetOrderbookSlots.Res(
+        Some(manager.getOrderbookSlots(req.numOfSlots))
+      )
   }
 
   private def submitOrder(order: Order): Future[Unit] = Future {
@@ -270,6 +305,7 @@ class MarketManagerActor(
 
           // submit order to reserve balance and allowance
           matchResult = manager.submitOrder(matchable, minRequiredIncome)
+
           _ = log.debug(s"matchResult, ${matchResult}")
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult)
@@ -297,11 +333,9 @@ class MarketManagerActor(
 
     // Update order book (depth)
     val ou = matchResult.orderbookUpdate
+
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      mediator ! Publish(
-        OrderbookManagerActor.getTopicId(marketId),
-        ou.copy(marketId = Some(marketId))
-      )
+      orderbookManagerActor ! ou.copy(marketId = Some(marketId))
     }
   }
 

@@ -64,12 +64,12 @@ class MarketManagerImpl(
   private var latestPrice: Double = 0
   private var minRequiredIncome: Double = 0
 
-  private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.primary
-  private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.secondary
+  private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.secondary
+  private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.primary
 
   private[core] val orderMap = Map.empty[String, Matchable]
   private[core] val sides =
-    Map(marketId.primary -> buys, marketId.secondary -> sells)
+    Map(marketId.primary -> sells, marketId.secondary -> buys)
 
   def getNumOfOrders = orderMap.size
   def getNumOfSellOrders = sells.size
@@ -186,7 +186,7 @@ class MarketManagerImpl(
             recursivelyMatchOrders()
 
           case Some((maker, Right(ring))) =>
-            isLastTakerSell = (taker.tokenS == marketId.secondary)
+            isLastTakerSell = (taker.tokenS == marketId.primary)
             rings :+= ring
             latestPrice = (taker.price + maker.price) / 2
 
@@ -217,6 +217,7 @@ class MarketManagerImpl(
         .getOrderbookUpdate()
         .copy(latestPrice = latestPrice)
 
+      // println("MMI: orderbookUpdate: " + orderbookUpdate)
       MatchResult(taker, rings, orderbookUpdate)
     }
   }
@@ -282,4 +283,7 @@ class MarketManagerImpl(
       .sortWith(_.submittedAt < _.submittedAt)
       .map(submitOrder(_, minRequiredIncome))
   }
+
+  def getOrderbookSlots(num: Int): Orderbook.Update =
+    aggregator.getOrderbookSlots(num)
 }

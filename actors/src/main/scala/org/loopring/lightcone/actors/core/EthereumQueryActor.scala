@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor._
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
@@ -25,12 +25,13 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
-import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib.TimeProvider
+import org.loopring.lightcone.ethereum.data._
+import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.ethereum._
+
 import scala.concurrent.{ExecutionContext, Future}
 
 // Owner: Yadong
@@ -101,10 +102,10 @@ class EthereumQueryActor(
         (allowanceResps, balanceResps) = batchRes.resps.partition(_.id % 2 == 0)
 
         allowances = allowanceResps.map { res =>
-          BigInt(Numeric.toBigInt(res.result))
+          BigInt(Numeric.toBigInt(formatHex(res.result)))
         }
         balances = balanceResps.map { res =>
-          BigInt(Numeric.toBigInt(res.result))
+          BigInt(Numeric.toBigInt(formatHex(res.result)))
         }
         balanceAndAllowance = (balances zip allowances).map { ba =>
           BalanceAndAllowance(ba._1, ba._2)
@@ -125,7 +126,7 @@ class EthereumQueryActor(
           result.copy(
             balanceAndAllowanceMap = result.balanceAndAllowanceMap +
               (ethToken.head -> BalanceAndAllowance(
-                BigInt(Numeric.toBigInt(ethRes.get.result)),
+                BigInt(Numeric.toBigInt(formatHex(ethRes.get.result))),
                 BigInt(0)
               ))
           )
@@ -142,7 +143,7 @@ class EthereumQueryActor(
           .mapAs[BatchCallContracts.Res]
 
         balances = batchRes.resps.map { res =>
-          bigInt2ByteString(BigInt(Numeric.toBigInt(res.result)))
+          bigInt2ByteString(BigInt(Numeric.toBigInt(formatHex(res.result))))
         }
 
         result = GetBalance.Res(owner, (erc20Tokens zip balances).toMap)
@@ -160,7 +161,7 @@ class EthereumQueryActor(
           result.copy(
             balanceMap = result.balanceMap +
               (Address.ZERO.toString -> BigInt(
-                Numeric.toBigInt(ethRes.get.result)
+                Numeric.toBigInt(formatHex(ethRes.get.result))
               ))
           )
         } else {
@@ -172,7 +173,7 @@ class EthereumQueryActor(
       batchCallEthereum(sender, brb.buildRequest(delegateAddress, req)) {
         result =>
           val allowances = result.map { res =>
-            bigInt2ByteString(BigInt(Numeric.toBigInt(res)))
+            bigInt2ByteString(BigInt(Numeric.toBigInt(formatHex(res))))
           }
           GetAllowance.Res(owner, (tokens zip allowances).toMap)
       }
@@ -185,7 +186,7 @@ class EthereumQueryActor(
       ) { result =>
         GetFilledAmount.Res(
           (orderIds zip result.map(
-            res => bigInt2ByteString(BigInt(Numeric.toBigInt(res)))
+            res => bigInt2ByteString(BigInt(Numeric.toBigInt(formatHex(res))))
           )).toMap
         )
       }
@@ -193,7 +194,9 @@ class EthereumQueryActor(
     case req: GetOrderCancellation.Req =>
       callEthereum(sender, rb.buildRequest(req, tradeHistoryAddress)) {
         result =>
-          GetOrderCancellation.Res(Numeric.toBigInt(result).intValue() == 1)
+          GetOrderCancellation.Res(
+            Numeric.toBigInt(formatHex(result)).intValue() == 1
+          )
       }
 
     case req: GetCutoff.Req =>
@@ -203,7 +206,7 @@ class EthereumQueryActor(
             req.broker,
             req.owner,
             req.marketKey,
-            BigInt(Numeric.toBigInt(result))
+            BigInt(Numeric.toBigInt(formatHex(result)))
           )
       }
     case req: BatchGetCutoffs.Req =>
@@ -227,13 +230,20 @@ class EthereumQueryActor(
         result =>
           {
             val formatResult = Numeric.cleanHexPrefix(result)
-            val p2pRate = Numeric
-              .toBigInt(formatResult.substring(56, 60))
-              .doubleValue() / base
-            val marketRate = Numeric
-              .toBigInt(formatResult.substring(60))
-              .doubleValue() / base
-            GetBurnRate.Res(forMarket = marketRate, forP2P = p2pRate)
+            if (formatResult.length == 64) {
+              val p2pRate = Numeric
+                .toBigInt(formatHex(formatResult.substring(56, 60)))
+                .doubleValue() / base
+              val marketRate = Numeric
+                .toBigInt(formatHex(formatResult.substring(60)))
+                .doubleValue() / base
+              GetBurnRate.Res(forMarket = marketRate, forP2P = p2pRate)
+            } else {
+              throw ErrorException(
+                ErrorCode.ERR_UNEXPECTED_RESPONSE,
+                "unexpected response"
+              )
+            }
           }
       }
     case req @ Notify("echo", _) =>

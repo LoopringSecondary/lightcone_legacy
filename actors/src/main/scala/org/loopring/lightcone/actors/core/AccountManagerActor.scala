@@ -33,7 +33,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.ethereum.data.formatHex
 import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
@@ -73,6 +73,43 @@ class AccountManagerActor(
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
+  override def preStart() = {
+    // TODO:合并为批量查询，会在另一个pr里提交
+    val f1 = metadataManager.getValidMarketIds.map {
+      case (marketKey, marketId) =>
+        for {
+          res <- (ethereumQueryActor ? GetCutoff.Req(
+            broker = address,
+            owner = address,
+            marketKey = marketKey
+          )).mapAs[GetCutoff.Res]
+        } yield {
+          val cutoff: BigInt = res.cutoff
+          accountCutoffState.setTradingPairCutoff(marketKey, cutoff.toLong)
+        }
+    }.toSeq
+
+    val f2 = for {
+      res <- (ethereumQueryActor ? GetCutoff.Req(
+        broker = address,
+        owner = address
+      )).mapAs[GetCutoff.Res]
+    } yield {
+      val cutoff: BigInt = res.cutoff
+      accountCutoffState.setCutoff(cutoff.toLong)
+    }
+
+    Future.sequence(f1 :+ f2) onComplete {
+      case Success(res) =>
+        self ! Notify("initialized")
+
+      case Failure(e) =>
+        val err = s"failed to start: ${e.getMessage}"
+        log.error(err)
+        throw ErrorException(ERR_INTERNAL_UNKNOWN, err)
+    }
+  }
+
   override def initialize() = {
     val batchCutoffReq = BatchGetCutoffs.Req(
       (metadataManager.getValidMarketKeys map { m =>
@@ -109,6 +146,16 @@ class AccountManagerActor(
     }
 
     syncCutoff
+  }
+
+  def receive: Receive = initialReceive
+
+  def initialReceive: Receive = {
+    case Notify("initialized", _) =>
+      unstashAll()
+      context.become(normalReceive)
+    case _ =>
+      stash()
   }
 
   def ready: Receive = LoggingReceive {
@@ -276,11 +323,22 @@ class AccountManagerActor(
         (res, orderPool.takeUpdatedOrdersAsMap)
       }
 
-      _ = if (!successful)
+      _ = if (!successful) {
+        val error = updatedOrders(matchable.id).status match {
+          case STATUS_INVALID_DATA                   => ERR_INVALID_ORDER_DATA
+          case STATUS_UNSUPPORTED_MARKET             => ERR_INVALID_MARKET
+          case STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS => ERR_TOO_MANY_ORDERS
+          case STATUS_SOFT_CANCELLED_DUPLICIATE      => ERR_ORDER_ALREADY_EXIST
+          case other =>
+            log.error(s"unexpected failure order status $other")
+            ERR_INTERNAL_UNKNOWN
+        }
+
         throw ErrorException(
-          ERR_ORDER_VALIDATION_INVALID,
+          error,
           s"failed to submit order with status:${matchable.status} in AccountManagerActor."
         )
+      }
 
       _ = log.debug(
         s"updated matchable ${_matchable}\nfound ${updatedOrders.size} updated orders"
@@ -421,5 +479,7 @@ class AccountManagerActor(
           ERR_ORDER_VALIDATION_INVALID_CUTOFF,
           s"this order has been canceled."
         )
+
+  // TODO:terminate market则需要将订单从内存中删除,但是不从数据库删除
 
 }

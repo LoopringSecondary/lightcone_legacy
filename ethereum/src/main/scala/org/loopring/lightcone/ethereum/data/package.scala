@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.account
+package org.loopring.lightcone.ethereum
 
-import org.loopring.lightcone.proto.{MarketId, RawOrder}
+import org.web3j.utils.Numeric
 
-trait AccountCutoffState {
+package object data {
 
-  def setTradingPairCutoff(
-      marketKey: String,
-      cutoff: Long
-    )
-  def setCutoff(cutoff: Long)
-  def checkOrderCutoff(rawOrder: RawOrder)
+  def formatHex(str: String): String = {
+    if (Numeric.cleanHexPrefix(str).isEmpty) str + "0" else str
+  }
+
 }

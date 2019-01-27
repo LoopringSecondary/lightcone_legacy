@@ -21,6 +21,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.ethereum.data.formatHex
 import akka.pattern._
 import akka.util.Timeout
 import org.loopring.lightcone.persistence.DatabaseModule
@@ -110,7 +111,7 @@ trait EventExtraction {
         block =>
           RawBlockData(
             hash = block.hash,
-            height = Numeric.toBigInt(block.number).longValue(),
+            height = Numeric.toBigInt(formatHex(block.number)).longValue(),
             timestamp = block.timestamp,
             miner = block.miner,
             uncles = uncles,
@@ -134,7 +135,8 @@ trait EventExtraction {
         BlockData(
           hash = blockData.hash,
           height = blockData.height,
-          timestamp = Numeric.toBigInt(blockData.timestamp).longValue()
+          timestamp =
+            Numeric.toBigInt(formatHex(blockData.timestamp)).longValue()
         )
       )
       _ <- postProcessEvents()

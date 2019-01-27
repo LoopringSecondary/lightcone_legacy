@@ -89,7 +89,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
           Seq(ring),
           Orderbook
             .Update()
-            .copy(latestPrice = (100000.0 / 101 + 100000.0 / 100) / 2)
+            .copy(latestPrice = (101 / 100000.0 + 100 / 100000.0) / 2)
         )
     )
 
@@ -124,7 +124,7 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
           Seq(ring),
           Orderbook
             .Update()
-            .copy(latestPrice = (100000.0 / 101 + 100000.0 / 100) / 2)
+            .copy(latestPrice = (101 / 100000.0 + 100 / 100000.0) / 2)
         )
     )
 

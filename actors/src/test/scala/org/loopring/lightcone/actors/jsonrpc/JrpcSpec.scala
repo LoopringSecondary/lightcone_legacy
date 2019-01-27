@@ -31,42 +31,33 @@ class JrpcSpec
     with JsonrpcSupport
     with HttpSupport {
 
-  override def beforeAll() {
-    info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
-  }
-
   "send serval JRPC requests" must {
     "return correct responses" in {
       // 正确返回
       val resonse1 = singleRequest(
-        GetOrderbook.Req(
-          0,
-          2,
-          Some(
-            MarketId(
-              LRC_TOKEN.address,
-              WETH_TOKEN.address
-            )
-          )
-        ),
-        "orderbook"
+        GetOrderbook
+          .Req(0, 2, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+        "get_orderbook"
       )
       // 只要返回了Orderbook类型就认为成功，其他会抛异常
       Await.result(resonse1.mapTo[GetOrderbook.Res], timeout.duration)
 
-      // 1. 没有在EntryPoint绑定过的request消息类型; 错误的request类型 => 反序列化为默认的proto对象，进入validator
+      // 1. 没有在EntryPoint绑定过的request消息类型;
+      //    错误的request类型 => 反序列化为默认的proto对象，不支持进入validator
       // 2. 错误的validate请求
-      val resonse2 = singleRequest(GetOrderbook.Req(0, 2, None), "orderbook")
+      val resonse2 =
+        singleRequest(GetOrderbook.Req(0, 2, None), "get_orderbook")
       val result2 = try {
         Await.result(resonse2, timeout.duration)
       } catch {
-        // ErrorException(ERR_INTERNAL_UNKNOWN: msg:JsonRpcError(3010,Some(),None))
+        // ErrorException(ERR_UNEXPECTED_ACTOR_MSG:
+        // unexpected msg of org.loopring.lightcone.proto.GetOrderbook$Req)
         case e: ErrorException => e
       }
       result2 match {
         case e: ErrorException
             if e.error.code === ErrorCode.ERR_INTERNAL_UNKNOWN && e.error.message
-              .contains("3010") =>
+              .contains("ERR_UNEXPECTED_ACTOR_MSG") =>
           assert(true)
         case _ =>
           assert(false)

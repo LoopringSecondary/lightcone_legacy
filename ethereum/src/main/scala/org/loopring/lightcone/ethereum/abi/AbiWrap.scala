@@ -73,7 +73,7 @@ trait AbiEvent[R] {
   }
 }
 
-//todo:最好是再彻底重写Abi,不再使用SolidityAbi
+// TODO:最好是再彻底重写Abi,不再使用SolidityAbi
 abstract class AbiWrap(abiJson: String) {
 
   protected var abi = SABI.fromJson(abiJson)
@@ -84,7 +84,7 @@ abstract class AbiWrap(abiJson: String) {
   private[abi] def searchByName[T <: SABI.Entry](name: String): Predicate[T] =
     x => x.name.equals(name)
 
-  //todo: test 字节数组的相等
+  // TODO: test 字节数组的相等
   private[abi] def searchBySignature[T <: SABI.Entry](
       signature: Array[Byte]
     ): Predicate[T] =

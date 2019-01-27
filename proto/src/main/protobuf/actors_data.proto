@@ -171,8 +171,8 @@ message TokenMetadata {
     }
 
     enum Status {
-        DISABLED    = 0; // This token is NOT displyed in walelt
-        ENABLED     = 1;  // This token is displayed in wallet.
+        VALID    = 0; // This token is NOT displyed in walelt
+        INVALID     = 1;  // This token is displayed in wallet.
     }
 
     Type     type                   = 1;
@@ -192,8 +192,8 @@ message TokenMetadata {
 
 message MarketMetadata {
     enum Status {
-        DISABLED  = 0;
-        ENABLED   = 1;
+        TERMINATED  = 0;
+        ACTIVE   = 1;
         READONLY  = 2;
     }
 
@@ -313,8 +313,8 @@ message OHLCRawData {
     string     tx_hash        = 2;
     string     market_key     = 3;
     int64      time           = 4;
-    double     quality        = 6;
-    double     amount         = 7;
+    double     amount        = 6;
+    double     total         = 7;
     double     price          = 8;
 }
 

@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors.support
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.native.JsonMethods.parse
+import org.loopring.lightcone.ethereum.data.formatHex
 import org.loopring.lightcone.proto.{
   GetBlockWithTxObjectByNumber,
   GetTransactionReceipt,
@@ -55,7 +56,7 @@ trait EventExtractorSupport {
   })
 
   val blockData = RawBlockData(
-    height = Numeric.toBigInt(block.number).longValue(),
+    height = Numeric.toBigInt(formatHex(block.number)).longValue(),
     hash = block.hash,
     txs = block.transactions,
     uncles = block.uncles,
