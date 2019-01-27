@@ -27,19 +27,20 @@ import akka.util.Timeout
 import scala.reflect.ClassTag
 
 // Owner: Daniel
-class Binder[T <: Proto[T]: TypeTag](
+class Binder[T0, T <: Proto[T]: TypeTag](
+    method: String
+  )(
     implicit
     module: JsonRpcBinding,
     ps: ProtoSerializer) {
 
-  def thenReply[S <: Proto[S]: TypeTag](
-      method: String
-    )(
+  def replies[S <: Proto[S]: TypeTag, S0 <: AnyRef](
       implicit
       tc: ProtoC[T],
       cs: ClassTag[S],
       ts: ProtoC[S]
     ) = {
-    module.addPayloadConverter(method, new PayloadConverter[T, S])
+    module.addPayloadConverter(method, new PayloadConverter[T0, T, S, S0])
   }
+
 }

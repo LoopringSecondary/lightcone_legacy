@@ -29,21 +29,25 @@ import akka.pattern.ask
 // Owner: Daniel
 trait JsonRpcBinding {
 
-  private var bindings = Map.empty[String, PayloadConverter[_, _]]
+  private var bindings = Map.empty[String, PayloadConverter[_, _, _, _]]
   implicit private val module_ = this
   implicit private val ps = new ProtoSerializer
 
-  def ifReceive[T <: Proto[T]: TypeTag] = new Binder[T]
-
-  private[jsonrpc] def addPayloadConverter[
-      T <: Proto[T]: TypeTag,
-      S <: Proto[S]: TypeTag
+  private[jsonrpc] def addPayloadConverter[ //
+      T0, //
+      T <: Proto[T]: TypeTag, //
+      S <: Proto[S]: TypeTag, //
+      S0
     ](method: String,
-      ps: PayloadConverter[T, S]
+      ps: PayloadConverter[T0, T, S, S0]
     ) = {
     assert(!bindings.contains(method), s"method ${method} already bound")
     bindings = bindings + (method -> ps)
   }
 
   def getPayloadConverter(method: String) = bindings.get(method)
+
+  implicit class RichString(method: String) {
+    def accepts[T0, T <: Proto[T]: TypeTag] = new Binder[T0, T](method)
+  }
 }

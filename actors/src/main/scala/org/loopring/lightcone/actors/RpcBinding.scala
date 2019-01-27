@@ -22,38 +22,54 @@ import org.loopring.lightcone.proto._
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
 
-  ifReceive[GetOrderbook.Req].thenReply[GetOrderbook.Res]("get_orderbook")
+  "get_orderbook"
+    .accepts[GetOrderbook.Req, GetOrderbook.Req]
+    .replies[GetOrderbook.Res, GetOrderbook.Res]
 
-  ifReceive[SubmitOrder.Req].thenReply[SubmitOrder.Res]("submit_order")
+  "submit_order"
+    .accepts[SubmitOrder.Req, SubmitOrder.Req]
+    .replies[SubmitOrder.Res, SubmitOrder.Res]
 
-  ifReceive[CancelOrder.Req].thenReply[CancelOrder.Res]("cancel_order")
+  "cancel_order"
+    .accepts[CancelOrder.Req, CancelOrder.Req]
+    .replies[CancelOrder.Res, CancelOrder.Res]
 
   // db query
-  ifReceive[GetOrdersForUser.Req]
-    .thenReply[GetOrdersForUser.Res]("get_orders")
+  "get_orders"
+    .accepts[GetOrdersForUser.Req, GetOrdersForUser.Req]
+    .replies[GetOrdersForUser.Res, GetOrdersForUser.Res]
 
-  ifReceive[GetTrades.Req]
-    .thenReply[GetTrades.Res]("get_trades")
+  "get_trades"
+    .accepts[GetTrades.Req, GetTrades.Req]
+    .replies[GetTrades.Res, GetTrades.Res]
 
-  ifReceive[GetTransactionRecords.Req]
-    .thenReply[GetTransactionRecords.Res]("get_transactions")
+  "get_transactions"
+    .accepts[GetTransactionRecords.Req, GetTransactionRecords.Req]
+    .replies[GetTransactionRecords.Res, GetTransactionRecords.Res]
 
-  ifReceive[GetTransactionRecordCount.Req]
-    .thenReply[GetTransactionRecordCount.Res]("get_transaction_count")
+  "get_transaction_count"
+    .accepts[GetTransactionRecordCount.Req, GetTransactionRecordCount.Req]
+    .replies[GetTransactionRecordCount.Res, GetTransactionRecordCount.Res]
 
-  ifReceive[GetMetadatas.Req]
-    .thenReply[GetMetadatas.Res]("get_metadatas")
+  "get_metadatas"
+    .accepts[GetMetadatas.Req, GetMetadatas.Req]
+    .replies[GetMetadatas.Res, GetMetadatas.Res]
 
   //Ethereum Query
-  ifReceive[GetAllowance.Req]
-    .thenReply[GetAllowance.Res]("get_allowance")
+  "get_allowance"
+    .accepts[GetAllowance.Req, GetAllowance.Req]
+    .replies[GetAllowance.Res, GetAllowance.Res]
 
-  ifReceive[GetBalance.Req].thenReply[GetBalance.Res]("get_balance")
+  "get_balance"
+    .accepts[GetBalance.Req, GetBalance.Req]
+    .replies[GetBalance.Res, GetBalance.Res]
 
-  ifReceive[GetBalanceAndAllowances.Req]
-    .thenReply[GetBalanceAndAllowances.Res]("get_balance_and_allowance")
+  "get_balance_and_allowance"
+    .accepts[GetBalanceAndAllowances.Req, GetBalanceAndAllowances.Req]
+    .replies[GetBalanceAndAllowances.Res, GetBalanceAndAllowances.Res]
 
-  ifReceive[GetFilledAmount.Req]
-    .thenReply[GetFilledAmount.Res]("get_filled_amount")
+  "get_filled_amount"
+    .accepts[GetFilledAmount.Req, GetFilledAmount.Req]
+    .replies[GetFilledAmount.Res, GetFilledAmount.Res]
 
 }
