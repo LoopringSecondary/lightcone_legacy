@@ -35,7 +35,7 @@ final class OrderbookManagerMessageValidator(
   // Throws exception if validation fails.
   def validate = {
     case msg @ GetOrderbook.Req(_, _, Some(marketId)) =>
-      metadataManager.assertMarketIdIsValid(marketId)
+      metadataManager.assertMarketIdIsActiveOrReadOnly(marketId)
       msg.copy(
         marketId = Some(
           marketId.copy(

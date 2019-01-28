@@ -96,116 +96,53 @@ class OrderStatusMonitorActor(
       name = "activate_order",
       dalayInSeconds = repeatedDelayInSeconds, // 1 minute
       initialDalayInSeconds = initialDelayInSeconds,
-      run = () =>
-        runJob(
-          processFunction = activateOrders,
-          skipOpt = Some(Paging(0, batchSize)),
-          monitoringType = OrderStatusMonitor.MonitoringType.MONITORING_ACTIVATE,
-          leadOrLagSeconds = activateLaggingInSecond
-        )
+      run = () => activateOrders(0)
     ),
     Job(
       name = "expire_order",
       dalayInSeconds = repeatedDelayInSeconds, // 1 minute
       initialDalayInSeconds = initialDelayInSeconds,
-      run = () =>
-        runJob(
-          processFunction = expireOrders,
-          skipOpt = Some(Paging(0, batchSize)),
-          monitoringType = OrderStatusMonitor.MonitoringType.MONITORING_EXPIRE,
-          leadOrLagSeconds = expireLeadInSeconds
-        )
+      run = () => expireOrders(0)
     )
   )
 
-  def receive = super.receiveRepeatdJobs
+  def receive: Receive = super.receiveRepeatdJobs
 
-  def runJob(
-      processFunction: (Int, Int, Option[Paging]) => Future[Int],
-      latestProcessTimeOpt: Option[Int] = None,
-      processTimeOpt: Option[Int] = None,
-      skipOpt: Option[Paging] = None,
-      monitoringType: OrderStatusMonitor.MonitoringType,
-      leadOrLagSeconds: Int
-    ): Future[Unit] = {
+  private def activateOrders(runCnt: Int): Future[Int] =
     for {
-      (latestProcessTime, processTime) <- if (processTimeOpt.isEmpty)
-        getProcessTime(monitoringType, leadOrLagSeconds)
-      else
-        Future.successful(latestProcessTimeOpt.get, processTimeOpt.get)
-      orderSize <- processFunction(latestProcessTime, processTime, skipOpt)
-      _ = log.debug(s"latestProcessTime: ${latestProcessTime}, ${processTime}")
-      _ <- skipOpt match {
-        case None => //记录本次处理时间
-          dbModule.orderStatusMonitorService.updateLatestProcessingTime(
-            OrderStatusMonitor(
-              monitoringType = monitoringType.name,
-              processTime = processTime
-            )
-          )
-
-        case Some(skip) =>
-          if (orderSize >= skip.size && skip.skip / skip.size <= maxRetriesCount) {
-            runJob(
-              processFunction,
-              Some(latestProcessTime),
-              Some(processTime),
-              Some(skip.copy(skip = skip.skip + skip.size, size = skip.size)),
-              monitoringType,
-              leadOrLagSeconds
-            )
-          } else {
-            //记录本次处理时间
-            dbModule.orderStatusMonitorService.updateLatestProcessingTime(
-              OrderStatusMonitor(
-                monitoringType = monitoringType.name,
-                processTime = processTime
-              )
-            )
-          }
-      }
-    } yield Unit
-  }
-
-  private def activateOrders(
-      latestProcessTime: Int,
-      processTime: Int,
-      skipOpt: Option[Paging] = None
-    ): Future[Int] =
-    for {
-      orders <- dbModule.orderService.getOrdersToActivate(
-        latestProcessTime,
-        processTime,
-        skipOpt
-      )
+      orders <- dbModule.orderService
+        .getOrdersToActivate(activateLaggingInSecond, batchSize)
       _ <- Future.sequence(orders.map { o =>
-        actors
+        (actors
           .get(MultiAccountManagerActor.name) ? ActorRecover.RecoverOrderReq(
           Some(
             o.copy(
               state = Some(o.getState.copy(status = OrderStatus.STATUS_PENDING))
             )
           )
-        )
+        )).recover {
+          case e: Exception =>
+            log.error(
+              s" occurs error:${e.getMessage}, ${e.printStackTrace} when submit an order that become active."
+            )
+        }
       })
-      //还是需要更新数据库的
-      _ <- dbModule.orderService
-        .updateOrdersStatus(orders.map(_.hash), OrderStatus.STATUS_PENDING)
-    } yield orders.size
+    } yield {
+      val ordersSize = orders.size
+      if (ordersSize >= batchSize && runCnt <= maxRetriesCount) {
+        activateOrders(runCnt + 1)
+      }
+      ordersSize
+    }
 
-  private def expireOrders(
-      latestProcessTime: Int,
-      processTime: Int,
-      skipOpt: Option[Paging] = None
-    ): Future[Int] =
+  private def expireOrders(runCnt: Int): Future[Int] =
     for {
       orders <- dbModule.orderService
-        .getOrdersToExpire(latestProcessTime, processTime)
+        .getOrdersToExpire(expireLeadInSeconds, batchSize)
       _ <- Future.sequence(orders.map { o =>
         //只有是有效的市场订单才会发送该取消订单的数据，否则只会更改数据库状态
-        // TODO:review时，其他的修改，在另一个pr提交
         if (metadataManager
-              .isValidMarket(MarketId(o.tokenS, o.tokenB))) {
+              .isActiveOrReadOnlyMarket(MarketId(o.tokenS, o.tokenB))) {
           val cancelReq = CancelOrder.Req(
             o.hash,
             o.owner,
@@ -215,31 +152,17 @@ class OrderStatusMonitorActor(
           (actors.get(MultiAccountManagerActor.name) ? cancelReq).recover {
             //发送到AccountManger失败后，会尝试发送个MarketManager, 因为需要在AccountManger未启动的情况下通知到MarketManager
             case e: Exception =>
-              actors.get(MarketManagerActor.name) ? cancelReq
+              actors.get(MarketManagerActor.name) ! cancelReq
           }
         } else {
           Future.unit
         }
       })
-      //发送到AccountManager之后，更新状态到数据库
-      _ <- dbModule.orderService
-        .updateOrdersStatus(orders.map(_.hash), OrderStatus.STATUS_EXPIRED)
-    } yield orders.size
-
-  private def getProcessTime(
-      monitoringType: OrderStatusMonitor.MonitoringType,
-      leadOrLagSeconds: Int
-    ): Future[(Int, Int)] = {
-    val processTime = timeProvider.getTimeSeconds()
-    for {
-      lastEventOpt <- dbModule.orderStatusMonitorService
-        .getLatestProcessingTime(monitoringType.name)
-      latestProcessTime = if (lastEventOpt.isEmpty) 0
-      else lastEventOpt.get.processTime
-    } yield
-      (
-        latestProcessTime.toInt + leadOrLagSeconds,
-        processTime.toInt + leadOrLagSeconds
-      )
-  }
+    } yield {
+      val ordersSize = orders.size
+      if (ordersSize >= batchSize && runCnt <= maxRetriesCount) {
+        expireOrders(runCnt + 1)
+      }
+      ordersSize
+    }
 }

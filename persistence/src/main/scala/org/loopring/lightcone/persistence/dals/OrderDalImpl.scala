@@ -209,29 +209,26 @@ class OrderDalImpl @Inject()(
 
   //
   def getOrdersToActivate(
-      latestProcessTime: Int,
-      processTime: Int,
-      skip: Option[Paging] = None
+      activateLaggingInSecond: Int,
+      limit: Int
     ): Future[Seq[RawOrder]] = {
     val availableStatus: OrderStatus =
       OrderStatus.STATUS_PENDING_ACTIVE
     var filters = query
       .filter(_.status === availableStatus)
-      .filter(_.validSince >= latestProcessTime)
-      .filter(_.validSince < processTime)
-      .sortBy(_.sequenceId.asc)
-    filters = skip match {
-      case Some(s) => filters.drop(s.skip).take(s.size)
-      case None    => filters
-    }
+      .filter(
+        _.validSince >= timeProvider
+          .getTimeSeconds()
+          .toInt + activateLaggingInSecond
+      )
+      .sortBy(_.validSince.asc)
+      .take(limit)
     db.run(filters.result)
   }
 
-  //
   def getOrdersToExpire(
-      latestProcessTime: Int,
-      processTime: Int,
-      skip: Option[Paging] = None
+      expireLeadInSeconds: Int,
+      limit: Int
     ): Future[Seq[RawOrder]] = {
     val availableStatus = Seq(
       OrderStatus.STATUS_NEW,
@@ -240,13 +237,11 @@ class OrderDalImpl @Inject()(
     )
     var filters = query
       .filter(_.status inSet availableStatus)
-      .filter(_.validUntil >= latestProcessTime)
-      .filter(_.validUntil < processTime) // TODO:需要确认下
-      .sortBy(_.sequenceId.asc)
-    filters = skip match {
-      case Some(s) => filters.drop(s.skip).take(s.size)
-      case None    => filters
-    }
+      .filter(
+        _.validUntil < timeProvider.getTimeSeconds().toInt + expireLeadInSeconds
+      )
+      .sortBy(_.validUntil.asc)
+      .take(limit)
     db.run(filters.result)
   }
 

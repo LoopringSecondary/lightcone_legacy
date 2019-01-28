@@ -18,12 +18,16 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
+
+import scala.concurrent.ExecutionContext
 
 // Owner: Hongyu
 
@@ -36,27 +40,22 @@ final class MultiAccountManagerMessageValidator(
     implicit
     val config: Config,
     timeProvider: TimeProvider,
-    metadataManager: MetadataManager)
+    ec: ExecutionContext,
+    metadataManager: MetadataManager,
+    dbModule: DatabaseModule)
     extends MessageValidator {
 
   val multiAccountConfig =
     config.getConfig(MultiAccountManagerActor.name)
   val numOfShards = multiAccountConfig.getInt("num-of-shards")
 
-  val orderValidator: RawOrderValidator = Protocol2RawOrderValidator
+  val orderValidator: RawOrderValidator = RawOrderValidatorDefault
+  val cancelOrderValidator: CancelOrderValidator = new CancelOrderValidator()
 
   def validate = {
-    case req @ CancelOrder.Req(_, owner, _, Some(marketId)) =>
-      metadataManager.assertMarketIdIsActive(marketId)
-      req.copy(
-        owner = Address.normalizeAddress(owner),
-        marketId = Some(
-          marketId.copy(
-            primary = marketId.primary.toLowerCase(),
-            secondary = marketId.secondary.toLowerCase()
-          )
-        )
-      )
+    //todo:后续完成取消一个地址的各个市场的请求
+    case req: CancelOrder.Req =>
+      cancelOrderValidator.validate(req)
 
     case req: GetBalanceAndAllowances.Req =>
       req.copy(
@@ -117,4 +116,5 @@ final class MultiAccountManagerMessageValidator(
           )
       }
   }
+
 }

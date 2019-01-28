@@ -19,8 +19,8 @@ package org.loopring.lightcone.actors.support
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.ethereum.{
-  Protocol2RawOrderValidator,
-  Protocol2RingBatchGenerator
+  Protocol2RingBatchGenerator,
+  RawOrderValidatorDefault
 }
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
@@ -78,7 +78,7 @@ trait OrderGenerateSupport {
         .toInt
     )
 
-    val hash = Protocol2RawOrderValidator.calculateOrderHash(order)
+    val hash = RawOrderValidatorDefault.calculateOrderHash(order)
     order
       .withHash(hash)
       .withParams(
