@@ -64,12 +64,12 @@ class MarketManagerImpl(
   private var latestPrice: Double = 0
   private var minFiatValue: Double = 0
 
-  private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.secondary
-  private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.primary
+  private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.quoteToken
+  private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.baseToken
 
   private[core] val orderMap = Map.empty[String, Matchable]
   private[core] val sides =
-    Map(marketId.primary -> sells, marketId.secondary -> buys)
+    Map(marketId.baseToken -> sells, marketId.quoteToken -> buys)
 
   def getNumOfOrders = orderMap.size
   def getNumOfSellOrders = sells.size
@@ -186,7 +186,7 @@ class MarketManagerImpl(
             recursivelyMatchOrders()
 
           case Some((maker, Right(ring))) =>
-            isLastTakerSell = (taker.tokenS == marketId.primary)
+            isLastTakerSell = (taker.tokenS == marketId.baseToken)
             rings :+= ring
             latestPrice = (taker.price + maker.price) / 2
 
@@ -267,8 +267,8 @@ class MarketManagerImpl(
 
   private def updateOrderMatchable(order: Matchable): Matchable = {
     val pendingAmountS = pendingRingPool.getOrderPendingAmountS(order.id)
-    val matchableAmountS = (order.actual.amountS - pendingAmountS).max(0)
-    val scale = Rational(matchableAmountS, order.original.amountS)
+    val matchableBaseAmountS = (order.actual.amountS - pendingAmountS).max(0)
+    val scale = Rational(matchableBaseAmountS, order.original.amountS)
     order.copy(_matchable = Some(order.original.scaleBy(scale)))
   }
 
