@@ -41,7 +41,7 @@ class OHLCDataTable(tag: Tag)
   def * =
     (ringIndex, txHash, marketKey, time, baseAmount, quoteAmount, price) <> ((OHLCRawData.apply _).tupled, OHLCRawData.unapply)
 
-  def pk = primaryKey("pk_r_t_t", (ringIndex, txHash, time))
+  def pk = primaryKey("pk", (ringIndex, txHash, time))
   def idx_market_key = index("idx_market_key", (marketKey), unique = false)
 
   def idx_market_key_time =

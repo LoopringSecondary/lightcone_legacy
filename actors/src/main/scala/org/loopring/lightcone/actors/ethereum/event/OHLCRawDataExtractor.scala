@@ -84,7 +84,7 @@ class OHLCRawDataExtractor @Inject()(
       }
   }
 
-  // LRC-WETH market, LRC is the primary, WETH is the secondary.
+  // LRC-WETH market, LRC is the base token, WETH is the quote token.
   def getAmounts(
       fill: OrderFilledEvent,
       _fill: OrderFilledEvent,

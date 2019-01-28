@@ -30,10 +30,10 @@ class MarketMetadataTable(tag: Tag)
   def status = column[MarketMetadata.Status]("status")
 
   def quoteTokenSymbol =
-    column[String]("secondary_token_symbol", O.SqlType("VARCHAR(20)"))
+    column[String]("quote_token_symbol", O.SqlType("VARCHAR(20)"))
 
   def baseTokenSymbol =
-    column[String]("primary_token_symbol", O.SqlType("VARCHAR(20)"))
+    column[String]("base_token_symbol", O.SqlType("VARCHAR(20)"))
 
   def maxNumbersOfOrders = column[Int]("max_numbers_of_orders")
   def priceDecimals = column[Int]("price_decimals")

@@ -22,9 +22,9 @@ object MarketKey {
   def apply(marketId: MarketId): MarketKey = new MarketKey(marketId)
 
   def apply(
-      primary: String,
-      secondary: String
-    ): MarketKey = apply(MarketId(primary, secondary))
+      baseToken: String,
+      quoteToken: String
+    ): MarketKey = apply(MarketId(baseToken, quoteToken))
 
   def removePrefix(address: String): String = {
     if (address.startsWith("0x")) address.substring(2).trim

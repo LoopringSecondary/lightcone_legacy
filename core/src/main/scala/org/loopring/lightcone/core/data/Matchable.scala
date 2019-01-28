@@ -136,11 +136,11 @@ case class Matchable(
       marketId: MarketId,
       metadataManager: MetadataManager
     ) = {
-    originalTotal / originalAmount
+    originalQuoteAmount / originalBaseAmount
   }
 
   // for LRC-WETH market, this returns the number of LRC
-  private[core] def originalAmount(
+  private[core] def originalBaseAmount(
     )(
       implicit
       marketId: MarketId,
@@ -151,7 +151,7 @@ case class Matchable(
   }
 
   // for LRC-WETH market, this returns the number of WETH
-  private[core] def originalTotal(
+  private[core] def originalQuoteAmount(
     )(
       implicit
       marketId: MarketId,
@@ -162,7 +162,7 @@ case class Matchable(
   }
 
   // for LRC-WETH market, this returns the number of LRC
-  private[core] def matchableAmount(
+  private[core] def matchableBaseAmount(
     )(
       implicit
       marketId: MarketId,
@@ -173,7 +173,7 @@ case class Matchable(
   }
 
   // for LRC-WETH market, this returns the number of WETH
-  private[core] def matchableTotal(
+  private[core] def matchableQuoteAmount(
     )(
       implicit
       marketId: MarketId,
