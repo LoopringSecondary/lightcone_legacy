@@ -230,6 +230,7 @@ class AccountManagerActor(
       val originalSender = sender
       (for {
         _ <- Future.successful(assert(req.owner == address))
+        // Make sure PENDING-ACTIVE orders can be cancelled.
         persistenceRes <- (orderPersistenceActor ? req)
           .mapAs[CancelOrder.Res]
 
