@@ -47,7 +47,7 @@ class BalanceSpec
       val getBalanceReq =
         GetBalanceAndAllowances.Req(
           accounts(0).getAddress,
-          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+          tokens = Seq(LRC_TOKEN.name, WETH_TOKEN.address)
         )
       val maker = createRawOrder(
         amountS = "1".zeros(18),

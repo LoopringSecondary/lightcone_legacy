@@ -94,7 +94,6 @@ class MissingBlocksEventExtractorActor(
       for {
         missingBlocksOpt <- dbModule.missingBlocksRecordDal.getOldestOne()
       } yield {
-        println(s"missingBlocksOpt:${missingBlocksOpt}")
         if (missingBlocksOpt.isDefined) {
           val missingBlocks = missingBlocksOpt.get
           blockData = RawBlockData(height = missingBlocks.lastHandledBlock)
