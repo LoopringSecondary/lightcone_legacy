@@ -18,13 +18,15 @@ package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
 
 final private[core] class AccountManagerImpl(
     implicit
     dustEvaluator: DustOrderEvaluator,
-    orderPool: AccountOrderPool with UpdatedOrdersTracing)
+    orderPool: AccountOrderPool with UpdatedOrdersTracing,
+    timeProvider: TimeProvider)
     extends AccountManager
     with Logging {
   import OrderStatus._
@@ -32,25 +34,43 @@ final private[core] class AccountManagerImpl(
   private[core] implicit var tokens =
     Map.empty[String, AccountTokenManager]
 
-  def hasTokenManager(token: String): Boolean = {
-    tokens.contains(token)
+  def hasTokenManager(token: String): Boolean = tokens.synchronized {
+    val hasToken = tokens.contains(token)
+    if (hasToken) {
+      tokens(token).updatedTime = timeProvider.getTimeMillis()
+    }
+    hasToken
   }
 
-  def addTokenManager(tm: AccountTokenManager) = {
+  def addTokenManager(tm: AccountTokenManager) = tokens.synchronized {
     assert(!hasTokenManager(tm.token))
+    tm.updatedTime = timeProvider.getTimeMillis()
     tokens += tm.token -> tm
     tm
   }
 
   def getTokenManager(token: String): AccountTokenManager = {
     assert(hasTokenManager(token))
+    tokens(token).updatedTime = timeProvider.getTimeMillis()
     tokens(token)
   }
 
-  def getOrUpdateTokenManager(tm: AccountTokenManager): AccountTokenManager = {
-    if (!hasTokenManager(tm.token))
-      tokens += tm.token -> tm
-    tokens(tm.token)
+  def getOrUpdateTokenManager(tm: AccountTokenManager): AccountTokenManager =
+    tokens.synchronized {
+      if (!hasTokenManager(tm.token))
+        tokens += tm.token -> tm
+      tokens(tm.token).updatedTime = timeProvider.getTimeMillis()
+      tokens(tm.token)
+    }
+
+  def deleteExpiredTokenManager(ttl: Long): Unit = tokens.synchronized {
+    val currentTime = timeProvider.getTimeMillis()
+    tokens foreach {
+      case (token, tm) =>
+        if (tm.updatedTime + ttl <= currentTime) {
+          tokens -= token
+        }
+    }
   }
 
   def submitOrder(order: Matchable): Boolean = {

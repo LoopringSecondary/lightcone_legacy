@@ -77,6 +77,10 @@ class RingSettlementActor(
   val protocolAddress: String =
     config.getString("loopring_protocol.protocol-address")
 
+  val gasLimitPerRingV2 = BigInt(
+    config.getString("loopring_protocol.gas-limit-per-ring-v2")
+  )
+
   val chainId: Int = config.getInt(s"${EthereumClientMonitor.name}.chain_id")
 
   val taskQueue = new mutable.Queue[SettleRings]()
@@ -122,7 +126,7 @@ class RingSettlementActor(
       taskQueue.enqueue(rings.map(ring => {
         SettleRings(
           gasPrice = req.gasPrice,
-          gasLimit = BigInt(Numeric.toBigInt(req.gasLimit.toByteArray)) * ring.size / req.rings.size,
+          gasLimit = gasLimitPerRingV2 * ring.size,
           rings = ring
         )
       }): _*)

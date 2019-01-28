@@ -17,6 +17,7 @@
 package org.loopring.lightcone.core.account
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto.{MarketId, OrderStatus}
 
 object AccountManager {
@@ -25,7 +26,8 @@ object AccountManager {
     )(
       implicit
       dustEvaluator: DustOrderEvaluator,
-      orderPool: AccountOrderPool with UpdatedOrdersTracing
+      orderPool: AccountOrderPool with UpdatedOrdersTracing,
+      timeProvider: TimeProvider
     ): AccountManager = new AccountManagerImpl()
 }
 
@@ -34,6 +36,7 @@ trait AccountManager {
   def addTokenManager(tm: AccountTokenManager): AccountTokenManager
   def getTokenManager(token: String): AccountTokenManager
   def getOrUpdateTokenManager(tm: AccountTokenManager): AccountTokenManager
+  def deleteExpiredTokenManager(ttl: Long): Unit
 
   def submitOrder(order: Matchable): Boolean
 

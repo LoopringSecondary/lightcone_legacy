@@ -123,6 +123,8 @@ class MultiAccountManagerActor(
 
   val accountManagerActors = new MapBasedLookup[ActorRef]()
 
+  val tokenTTL = selfConfig.getLong("token-ttl-in-mills")
+
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
@@ -209,7 +211,8 @@ class MultiAccountManagerActor(
       log.info(s"created new account manager for address $address")
       accountManagerActors.add(
         address,
-        context.actorOf(Props(new AccountManagerActor(address)), address)
+        context
+          .actorOf(Props(new AccountManagerActor(address, tokenTTL)), address)
       )
     }
     accountManagerActors.get(address)

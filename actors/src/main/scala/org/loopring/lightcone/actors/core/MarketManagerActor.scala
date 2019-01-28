@@ -291,16 +291,18 @@ class MarketManagerActor(
       )
   }
 
-  private def submitOrder(order: Order): Future[Unit] = Future {
+  private def submitOrder(order: Order): Future[MatchResult] = {
     log.debug(s"marketmanager.submitOrder ${order}")
-    assert(
-      order.actual.nonEmpty,
-      "order in SubmitSimpleOrder miss `actual` field"
-    )
     val matchable: Matchable = order
     order.status match {
       case OrderStatus.STATUS_NEW | OrderStatus.STATUS_PENDING |
           OrderStatus.STATUS_PARTIALLY_FILLED =>
+        if (order.actual.isEmpty) {
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ORDER_DATA,
+            "order in SubmitSimpleOrder miss `actual` field"
+          )
+        }
         for {
           // get ring settlement cost
           minRequiredIncome <- Future.successful(getRequiredMinimalIncome())
@@ -311,10 +313,14 @@ class MarketManagerActor(
           _ = log.debug(s"matchResult, ${matchResult}")
           //settlement matchResult and update orderbook
           _ = updateOrderbookAndSettleRings(matchResult)
-        } yield Unit
+        } yield matchResult
 
       case s =>
         log.error(s"unexpected order status in SubmitSimpleOrder: $s")
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ORDER_DATA,
+          s"unexpected order status in SubmitSimpleOrder: $s"
+        )
     }
   }
 
@@ -328,7 +334,6 @@ class MarketManagerActor(
     if (matchResult.rings.nonEmpty) {
       settlementActor ! SettleRings(
         rings = matchResult.rings,
-        gasLimit = gasLimitPerRingV2 * matchResult.rings.size,
         gasPrice = gasPrice
       )
     }
