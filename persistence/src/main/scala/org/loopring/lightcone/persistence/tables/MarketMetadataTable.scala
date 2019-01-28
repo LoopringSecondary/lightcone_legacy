@@ -44,8 +44,8 @@ class MarketMetadataTable(tag: Tag)
   def updateAt = column[Long]("update_at")
 
   // MarketId
-  def baseToken = columnAddress("primary")
-  def quoteToken = columnAddress("secondary")
+  def baseToken = columnAddress("base_token")
+  def quoteToken = columnAddress("quote_token")
 
   def marketKey = columnAddress("market_key", O.PrimaryKey, O.Unique)
 
@@ -55,11 +55,11 @@ class MarketMetadataTable(tag: Tag)
       (baseTokenSymbol, quoteTokenSymbol),
       unique = true
     )
-  def idx_tokens = index("idx_tokens", (primary, secondary), unique = true)
+  def idx_tokens = index("idx_tokens", (baseToken, quoteToken), unique = true)
   def idx_status = index("idx_status", (status), unique = false)
 
   def marketIdProjection =
-    (primary, secondary) <> ({ tuple =>
+    (baseToken, quoteToken) <> ({ tuple =>
       Option((MarketId.apply _).tupled(tuple))
     }, { paramsOpt: Option[MarketId] =>
       val params = paramsOpt.getOrElse(MarketId())

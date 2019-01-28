@@ -103,8 +103,8 @@ class OHLCDataDalImpl @Inject()(
 
     val sql = sql"""select
         TIME_BUCKET($interval, time) AS starting_point,
-        SUM(amount) AS amount_sum,
-        SUM(total) AS total_sum,
+        SUM(base_amount) AS base_amount_sum,
+        SUM(quote_amount) AS quote_amount_sum,
         FIRST(price, time) AS closing_price,
         LAST(price, time) AS opening_price,
         MAX(price) AS highest_price,

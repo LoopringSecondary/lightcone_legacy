@@ -62,7 +62,7 @@ class OHLCRawDataExtractor @Inject()(
                 val quoteToken =
                   metadataManager.getToken(marketId.quoteToken).get
 
-                val (amount, total) =
+                val (baseAmount, quoteAmount) =
                   getAmounts(fill, _fill, baseToken, quoteToken, marketMetadata)
 
                 Some(
@@ -71,9 +71,9 @@ class OHLCRawDataExtractor @Inject()(
                     txHash = ring.header.get.txHash,
                     marketKey = marketKey,
                     time = ring.header.get.blockTimestamp,
-                    amount = amount,
-                    total = total,
-                    price = BigDecimal(total / amount)
+                    baseAmount = baseAmount,
+                    quoteAmount = quoteAmount,
+                    price = BigDecimal(quoteAmount / baseAmount)
                       .setScale(marketMetadata.priceDecimals)
                       .doubleValue()
                   )
