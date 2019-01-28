@@ -110,7 +110,6 @@ enum ErrorCode{
     ERR_ETHEREUM_ILLEGAL_ADDRESS        = 5001;
     ERR_NO_ACCESSIBLE_ETHEREUM_NODE     = 5002;
     ERR_UNEXPECTED_RESPONSE             = 5003;
-    ERR_UNEXPECTED_TOKEN                = 5004;
     // 5005 and beyound for other
 
 }
