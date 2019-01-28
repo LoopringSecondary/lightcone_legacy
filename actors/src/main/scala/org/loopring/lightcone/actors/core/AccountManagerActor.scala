@@ -20,7 +20,6 @@ import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern._
-import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
 import com.google.protobuf.ByteString
@@ -372,8 +371,6 @@ class AccountManagerActor(
                       )
                     case _ =>
                   }
-                  _ <- dbModule.orderService
-                    .updateOrderStatus(matchRes.taker.id, matchRes.taker.status)
                 } yield Unit
 
               case STATUS_EXPIRED | //

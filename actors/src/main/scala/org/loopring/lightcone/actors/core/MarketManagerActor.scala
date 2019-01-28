@@ -351,7 +351,8 @@ class MarketManagerActor(
 
   def syncGasPrice(): Future[Unit] =
     for {
-      res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
+      res <- (gasPriceActor ? GetGasPrice.Req())
+        .mapAs[GetGasPrice.Res]
     } yield this.gasPrice = res.gasPrice
 
   val repeatedJobs = Seq(
