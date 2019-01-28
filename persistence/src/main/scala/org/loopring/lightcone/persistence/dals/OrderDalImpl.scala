@@ -214,12 +214,13 @@ class OrderDalImpl @Inject()(
     ): Future[Seq[RawOrder]] = {
     val availableStatus: OrderStatus =
       OrderStatus.STATUS_PENDING_ACTIVE
+    val sinceTime = timeProvider
+      .getTimeSeconds()
+      .toInt + activateLaggingInSecond
     var filters = query
       .filter(_.status === availableStatus)
       .filter(
-        _.validSince >= timeProvider
-          .getTimeSeconds()
-          .toInt + activateLaggingInSecond
+        _.validSince >= sinceTime
       )
       .sortBy(_.validSince.asc)
       .take(limit)
@@ -235,10 +236,11 @@ class OrderDalImpl @Inject()(
       OrderStatus.STATUS_PENDING,
       OrderStatus.STATUS_PARTIALLY_FILLED
     )
+    val untilTime = timeProvider.getTimeSeconds().toInt + expireLeadInSeconds
     var filters = query
       .filter(_.status inSet availableStatus)
       .filter(
-        _.validUntil < timeProvider.getTimeSeconds().toInt + expireLeadInSeconds
+        _.validUntil < untilTime
       )
       .sortBy(_.validUntil.asc)
       .take(limit)

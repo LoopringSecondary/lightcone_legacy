@@ -192,7 +192,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
       case None =>
         throw ErrorException(ERR_INVALID_MARKET)
       case Some(marketId) =>
-        if (!isActiveOrReadOnlyMarket(MarketKey(marketId).toString))
+        if (!isMarketActiveOrReadOnly(MarketKey(marketId).toString))
           throw ErrorException(
             ErrorCode.ERR_INVALID_MARKET,
             s"invalid market: $marketIdOpt"
@@ -202,7 +202,7 @@ final class MetadataManager @Inject()(implicit val config: Config)
   }
 
   def assertMarketIdIsActiveOrReadOnly(marketId: MarketId): Boolean = {
-    if (!isActiveOrReadOnlyMarket(marketId))
+    if (!isMarketActiveOrReadOnly(marketId))
       throw ErrorException(ERR_INVALID_MARKET, s"invalid market: $marketId")
     true
   }
@@ -217,11 +217,11 @@ final class MetadataManager @Inject()(implicit val config: Config)
   }
 
   // check market is valid (has metadata config)
-  def isActiveOrReadOnlyMarket(marketKey: String): Boolean =
+  def isMarketActiveOrReadOnly(marketKey: String): Boolean =
     getValidMarketIds.contains(marketKey)
 
-  def isActiveOrReadOnlyMarket(marketId: MarketId): Boolean =
-    isActiveOrReadOnlyMarket(MarketKey(marketId).toString)
+  def isMarketActiveOrReadOnly(marketId: MarketId): Boolean =
+    isMarketActiveOrReadOnly(MarketKey(marketId).toString)
 
   def getValidMarketIds = activeMarkets ++ readOnlyMarkets
 

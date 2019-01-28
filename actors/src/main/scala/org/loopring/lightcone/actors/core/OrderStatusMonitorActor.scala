@@ -142,7 +142,7 @@ class OrderStatusMonitorActor(
       _ <- Future.sequence(orders.map { o =>
         //只有是有效的市场订单才会发送该取消订单的数据，否则只会更改数据库状态
         if (metadataManager
-              .isActiveOrReadOnlyMarket(MarketId(o.tokenS, o.tokenB))) {
+              .isMarketActiveOrReadOnly(MarketId(o.tokenS, o.tokenB))) {
           val cancelReq = CancelOrder.Req(
             o.hash,
             o.owner,
@@ -152,6 +152,9 @@ class OrderStatusMonitorActor(
           (actors.get(MultiAccountManagerActor.name) ? cancelReq).recover {
             //发送到AccountManger失败后，会尝试发送个MarketManager, 因为需要在AccountManger未启动的情况下通知到MarketManager
             case e: Exception =>
+              log.error(
+                s" occurs error:${e.getMessage}, ${e.printStackTrace} when cancel an order that become expired."
+              )
               actors.get(MarketManagerActor.name) ! cancelReq
           }
         } else {

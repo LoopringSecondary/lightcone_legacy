@@ -193,7 +193,6 @@ class AccountManagerActor(
         _ = if (res) {
           marketManagerActor.tell(req, originalSender)
         } else {
-          //在目前没有使用eventlog的情况下，哪怕manager中并没有该订单，则仍需要发送到MarketManager
           throw ErrorException(
             ERR_FAILED_HANDLE_MSG,
             s"no order found with id: ${req.id}"

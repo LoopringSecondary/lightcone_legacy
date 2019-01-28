@@ -24,7 +24,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base.safefuture._
 
-import scala.concurrent.{Future, _}
+import scala.concurrent._
 
 // Owner: Daniel
 object MessageValidationActor {
@@ -60,28 +60,30 @@ class MessageValidationActor(
 
   override def receive: Receive = {
     case msg =>
-      (validate(msg) match {
-        case validateFuture: Future[_] =>
-          validateFuture
+      (for {
+        res <- validate(msg) match {
+          case validateFuture: Future[_] =>
+            validateFuture
 
-        case Some(validateFuture: Future[_]) =>
-          validateFuture
+          case Some(validateFuture: Future[_]) =>
+            validateFuture
 
-        case Some(validatedMsg) if validatedMsg != msg =>
-          log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
-          Future.successful(validatedMsg)
+          case Some(validatedMsg) if validatedMsg != msg =>
+            log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
+            Future.successful(validatedMsg)
 
-        case Some(validatedMsg) =>
-          Future.successful(validatedMsg)
+          case Some(validatedMsg) =>
+            Future.successful(validatedMsg)
 
-        case _ =>
-          Future {
-            throw ErrorException(
-              ERR_UNEXPECTED_ACTOR_MSG,
-              s"unexpected msg of ${msg.getClass.getName}"
-            )
-          }
-      }) forwardTo (destinationActor, sender)
+          case _ =>
+            Future {
+              throw ErrorException(
+                ERR_UNEXPECTED_ACTOR_MSG,
+                s"unexpected msg of ${msg.getClass.getName}"
+              )
+            }
+        }
+      } yield res) forwardTo (destinationActor, sender)
 
   }
 }

@@ -53,7 +53,7 @@ final class MultiAccountManagerMessageValidator(
   val cancelOrderValidator: CancelOrderValidator = new CancelOrderValidator()
 
   def validate = {
-    //todo:后续完成取消一个地址的各个市场的请求
+    //TODO:后续完成取消一个地址的各个市场的请求
     case req: CancelOrder.Req =>
       cancelOrderValidator.validate(req)
 

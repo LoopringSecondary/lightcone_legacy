@@ -78,13 +78,13 @@ object MarketManagerActor extends ShardedByMarket {
   //READONLY的不能在该处拦截，需要在validtor中截取，因为该处还需要将orderbook等恢复
   val extractMarketId: PartialFunction[Any, MarketId] = {
     case SubmitSimpleOrder(_, Some(order))
-        if metadataManager.isActiveOrReadOnlyMarket(
+        if metadataManager.isMarketActiveOrReadOnly(
           MarketId(order.tokenS, order.tokenB)
         ) =>
       MarketId(order.tokenS, order.tokenB)
 
     case req: CancelOrder.Req
-        if req.marketId.nonEmpty && metadataManager.isActiveOrReadOnlyMarket(
+        if req.marketId.nonEmpty && metadataManager.isMarketActiveOrReadOnly(
           req.getMarketId
         ) =>
       req.getMarketId

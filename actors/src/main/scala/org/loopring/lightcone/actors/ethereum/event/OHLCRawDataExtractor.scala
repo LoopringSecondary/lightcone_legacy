@@ -50,7 +50,7 @@ class OHLCRawDataExtractor @Inject()(
 
               val marketKey = MarketKey(fill.tokenS, _fill.tokenS).toString
 
-              if (!metadataManager.isActiveOrReadOnlyMarket(marketKey)) None
+              if (!metadataManager.isMarketActiveOrReadOnly(marketKey)) None
               else {
                 val marketMetadata =
                   metadataManager.getMarketMetadata(marketKey)
