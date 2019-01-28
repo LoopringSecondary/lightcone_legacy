@@ -52,7 +52,7 @@ final class MultiAccountManagerMessageValidator(
       Address.normalizeAddress(token)
     } else {
       throw ErrorException(
-        code = ErrorCode.ERR_UNEXPECTED_TOKEN,
+        code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
         message = s"unexpected token $token"
       )
     }
