@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors.core
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 import akka.pattern._
+import org.loopring.lightcone.core.base.MarketKey
 import org.loopring.lightcone.lib.ErrorException
 import org.web3j.utils.Numeric
 
@@ -66,10 +67,7 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
         ),
         broker = accounts(0).getAddress,
         owner = accounts(0).getAddress,
-        marketKey = Numeric.toHexStringNoPrefix(
-          Numeric.toBigInt(LRC_TOKEN.address) xor Numeric
-            .toBigInt(WETH_TOKEN.address)
-        ),
+        marketKey = MarketKey(LRC_TOKEN.address, WETH_TOKEN.address).toString,
         cutoff = timeProvider.getTimeSeconds().toInt + 100
       )
       val sendCutoffF = Future.sequence(
@@ -124,7 +122,7 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
           "  when submit orders that ValidSince <= cutoff"
       )
       val order3 = createRawOrder(
-        validSince = timeProvider.getTimeSeconds().toInt - 100
+        validSince = timeProvider.getTimeSeconds().toInt - 1000
       )(accounts(0))
       try {
         val f3 = singleRequest(SubmitOrder.Req(Some(order3)), "submit_order")
