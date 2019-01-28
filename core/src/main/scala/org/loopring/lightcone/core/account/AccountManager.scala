@@ -35,6 +35,8 @@ trait AccountManager {
   def getTokenManager(token: String): AccountTokenManager
   def getOrUpdateTokenManager(tm: AccountTokenManager): AccountTokenManager
 
+  // submit a new order or re-submit an existing order.
+  // return true if the order is submitted or re-submitted successfully.
   def submitOrder(order: Matchable): Boolean
 
   // soft cancel an order
@@ -43,16 +45,11 @@ trait AccountManager {
   // hard cancel multiple orders
   def handleCutoff(cutoff: Long): Int
 
-  def purgeOrders(marketId: MarketId): Int
-
   def handleCutoff(
       cutoff: Long,
       marketKey: String
     ): Int
 
-  def adjustOrder(
-      orderId: String,
-      outstandingAmountS: BigInt
-    ): Boolean
+  def purgeOrders(marketId: MarketId): Int
 
 }

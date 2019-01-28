@@ -54,6 +54,8 @@ final private[core] class AccountManagerImpl(
   }
 
   def submitOrder(order: Matchable): Boolean = {
+    val existing = orderPool.getOrder(order.id).isDefined
+
     val order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
 
     if (order_.amountS <= 0) {
@@ -75,9 +77,7 @@ final private[core] class AccountManagerImpl(
 
     orderPool += order_.as(STATUS_NEW)
 
-    if (order_.callOnTokenSAndTokenFee(_.reserve(order_.id))) {
-      return false
-    }
+    order_.callOnTokenSAndTokenFee(_.reserve(order_.id))
 
     orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
     return true
@@ -128,22 +128,6 @@ final private[core] class AccountManagerImpl(
       orderPool.takeUpdatedOrders()
     }
     orders.size
-  }
-
-  // adjust order's outstanding size
-  def adjustOrder(
-      orderId: String,
-      outstandingAmountS: BigInt
-    ): Boolean = {
-    orderPool.getOrder(orderId) match {
-      case None => false
-      case Some(order) =>
-        val outstandingAmountS_ = order.amountS min outstandingAmountS
-        val order_ = order.withOutstandingAmountS(outstandingAmountS_)
-        orderPool += order_
-        order_.callOnTokenSAndTokenFee(_.adjust(order.id))
-        true
-    }
   }
 
   private def cancelOrderInternal(

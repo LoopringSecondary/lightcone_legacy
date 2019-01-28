@@ -53,7 +53,4 @@ trait AccountTokenManager {
 
   // Release balance/allowance for an order.
   def release(orderId: String): Set[String]
-
-  // Rebalance due to change of an order.
-  def adjust(orderId: String): Set[String]
 }

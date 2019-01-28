@@ -98,42 +98,28 @@ class AccountTokenManagerImpl(
 
   // Reserve balance/allowance for an order.
   def reserve(orderId: String): Set[String] = this.synchronized {
-    if (!orderPool.contains(orderId)) Set.empty[String]
-    else {
-      indexMap.get(orderId) match {
-        case Some(_) =>
-          // in case tokenS == tokenB
-          Set.empty[String]
-        case None =>
-          reservations :+= Reservation(orderId, 0, 0)
-          rebalance()
-      }
+    assert(orderPool.contains(orderId))
+    if (!indexMap.contains(orderId)) {
+
+      reservations :+= Reservation(orderId, 0, 0)
+    } else {
+      val order = orderPool(orderId)
+      val idx = indexMap(orderId)
+
+      cursor = idx - 1
     }
+    rebalance()
   }
 
   // Release balance/allowance for an order.
   def release(orderId: String): Set[String] = this.synchronized {
-    indexMap.get(orderId) match {
-      case None => Set.empty
-      case Some(idx) =>
-        reservations = reservations.patch(idx, Nil, 1)
-        indexMap -= orderId
-        // TODO(dongw): optimize cursor
-        cursor = idx - 1 // Performance issue
-        rebalance()
-    }
-  }
+    assert(indexMap.contains(orderId))
+    val idx = indexMap(orderId)
 
-  // Rebalance due to change of an order.
-  def adjust(orderId: String): Set[String] = this.synchronized {
-    indexMap.get(orderId) match {
-      case None => Set.empty
-      case Some(idx) =>
-        assert(orderPool.contains(orderId))
-        val order = orderPool(orderId)
-        cursor = idx - 1
-        rebalance()
-    }
+    reservations = reservations.patch(idx, Nil, 1)
+    indexMap -= orderId
+    cursor = idx - 1
+    rebalance()
   }
 
   private def getAccumulatedAtCursor(): (BigInt, BigInt) = {

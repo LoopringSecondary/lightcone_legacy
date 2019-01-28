@@ -283,12 +283,7 @@ class AccountManagerActor(
       _matchable = matchable.withFilledAmountS(filledAmountS)
 
       (successful, updatedOrders) = manager.synchronized {
-        val res = if (orderPool.contains(order.id)) {
-          manager.adjustOrder(_matchable.id, _matchable.outstanding.amountS)
-        } else {
-          manager.submitOrder(_matchable)
-        }
-        (res, orderPool.takeUpdatedOrdersAsMap)
+        (manager.submitOrder(_matchable), orderPool.takeUpdatedOrdersAsMap)
       }
 
       _ = if (!successful) {
