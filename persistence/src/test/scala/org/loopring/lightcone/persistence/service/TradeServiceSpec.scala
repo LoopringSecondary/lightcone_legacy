@@ -16,11 +16,12 @@
 
 package org.loopring.lightcone.persistence.service
 
+import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto._
-
+import org.loopring.lightcone.proto.GetTrades._
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -32,170 +33,205 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
     dal = new TradeDalImpl()
     new TradeServiceImpl()
   }
-  val tokenS = "0xaaaaaa1"
-  val tokenB = "0xbbbbbb1"
 
   def createTables(): Unit = dal.createTable()
 
-  private def testSave(
-      txHash: String,
-      owner: String,
-      tokenS: String,
-      tokenB: String,
-      blockHeight: Long
-    ): Future[Either[ErrorCode, String]] = {
+  "tradeService" must "save and query correctly" in {
+    info("save some trades")
+    val r1 = Await.result(
+      testSaveSomeTrades().mapTo[Seq[Either[ErrorCode, String]]],
+      5.second
+    )
+    assert(r1.length == 4)
+    r1.foreach { r =>
+      assert(r.isRight && r.right.get.nonEmpty)
+    }
+
+    info("save a duplicate trade(txHash and fillIndex) should return error")
+    val r2 = Await.result(
+      testDuplicateSave().mapTo[Either[ErrorCode, String]],
+      5.second
+    )
+    assert(
+      r2.isLeft && r2.left.get == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
+    )
+
+    info("query trades: by owner")
+    val q3 = Req(owner = owner1)
+    val r3 = Await.result(service.getTrades(q3).mapTo[Seq[Trade]], 5.second)
+    val c3 = Await.result(service.countTrades(q3).mapTo[Int], 5.second)
+    assert(r3.length == 2 && c3 == 2)
+
+    info("query trades: sort")
+    val q3_2 = Req(owner = owner1, sort = SortingType.DESC)
+    val r3_2 = Await.result(service.getTrades(q3_2).mapTo[Seq[Trade]], 5.second)
+    assert(r3_2.length == 2)
+    assert(r3.head == r3_2.last)
+
+    info("query trades: skip")
+    val q3_3 = Req(skip = Some(Paging(skip = 1, size = 10)))
+    val r3_3 = Await.result(service.getTrades(q3_3).mapTo[Seq[Trade]], 5.second)
+    assert(r3_3.length == 3)
+
+    info("query trades: by owner and market")
+    val q4 = Req(owner = owner1, market = Some(Req.Market(tokenS1, tokenB1)))
+    val r4 = Await.result(service.getTrades(q4).mapTo[Seq[Trade]], 5.second)
+    val c4 = Await.result(service.countTrades(q4).mapTo[Int], 5.second)
+    assert(r4.length == 1 && c4 == 1)
+    val q5 =
+      Req(owner = owner1, market = Some(Req.Market(tokenS1, tokenB1, true)))
+    val r5 = Await.result(service.getTrades(q5).mapTo[Seq[Trade]], 5.second)
+    val c5 = Await.result(service.countTrades(q5).mapTo[Int], 5.second)
+    assert(r5.length == 2 && c5 == 2)
+
+    info("query trades: by ring")
+    val q6 = Req(ring = Some(Req.Ring(hash2)))
+    val r6 = Await.result(service.getTrades(q6).mapTo[Seq[Trade]], 5.second)
+    val c6 = Await.result(service.countTrades(q6).mapTo[Int], 5.second)
+    assert(r6.length == 2 && c6 == 2)
+    val q7 = Req(ring = Some(Req.Ring(hash2, "2", "1")))
+    val r7 = Await.result(service.getTrades(q7).mapTo[Seq[Trade]], 5.second)
+    val c7 = Await.result(service.countTrades(q7).mapTo[Int], 5.second)
+    assert(r7.length == 1 && c7 == 1)
+    val q8 = Req(ring = Some(Req.Ring(hash2, "2", "2")))
+    val r8 = Await.result(service.getTrades(q8).mapTo[Seq[Trade]], 5.second)
+    val c8 = Await.result(service.countTrades(q8).mapTo[Int], 5.second)
+    assert(r8.isEmpty && c8 == 0)
+
+    info("query trades: full parameters")
+    val q9 = Req(
+      owner = owner1,
+      txHash = hash1,
+      orderHash = hash1,
+      market = Some(Req.Market(tokenS1, tokenB1)),
+      ring = Some(Req.Ring(hash1, "1", "0")),
+      wallet = wallet,
+      miner = miner
+    )
+    val r9 = Await.result(service.getTrades(q9).mapTo[Seq[Trade]], 5.second)
+    val c9 = Await.result(service.countTrades(q9).mapTo[Int], 5.second)
+    assert(r9.length == 1 && c9 == 1)
+    val q10 = Req(
+      owner = owner2,
+      txHash = hash1,
+      orderHash = hash1,
+      market = Some(Req.Market(tokenS1, tokenB1)),
+      ring = Some(Req.Ring(hash1, "1", "0")),
+      wallet = wallet,
+      miner = miner
+    )
+    val r10 = Await.result(service.getTrades(q10).mapTo[Seq[Trade]], 5.second)
+    val c10 = Await.result(service.countTrades(q10).mapTo[Int], 5.second)
+    assert(r10.isEmpty && c10 == 0)
+
+    info("obsolete")
+    Await.result(service.obsolete(11L).mapTo[Unit], 5.second)
+    val c11 = Await.result(
+      service.countTrades(Req(owner = owner1)).mapTo[Int],
+      5.second
+    )
+    val c12 = Await.result(
+      service.countTrades(Req(owner = owner2)).mapTo[Int],
+      5.second
+    )
+    assert(c11 == 2 && c12 == 0)
+  }
+
+  val owner1 = "0x4385adb3e6b88a6691ae24c8c317b7327d91a8ad"
+
+  val hash1 =
+    "0x36ea537d8f02693c7a0c4c0cd590906cfbbe654a96668555e50277b8bec7cc55"
+  val tokenS1 = "0x97241525fe425C90eBe5A41127816dcFA5954b06"
+  val tokenB1 = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc"
+  val owner2 = "0x373d6d769154edbba3049ffa4b40716b276dada8"
+
+  val hash2 =
+    "0xba2a688aae3307d96e39c03bfdba97889ed55b4992c8fb121b026273184d7ccc"
+  val tokenS2 = "0xa1c95e17f629d8bc5985f3f997760a575d56b0c2"
+  val tokenB2 = "0x14b0846eb7fe70cc155138e0da9ab990ffeacc23"
+  val miner = "0x624d520bab2e4ad83935fa503fb130614374e850"
+  val wallet = "0x74febeff16769960528c7f22acfa8e6df7f9cd53"
+
+  private def testSaveSomeTrades() = {
+    val trades = Seq(
+      Trade(
+        txHash = hash1,
+        orderHash = hash1,
+        owner = owner1,
+        tokenB = tokenB1,
+        tokenS = tokenS1,
+        amountB = ByteString.copyFrom("1", "UTF-8"),
+        amountS = ByteString.copyFrom("10", "UTF-8"),
+        blockHeight = 10,
+        ringHash = hash1,
+        ringIndex = 1,
+        fillIndex = 0,
+        miner = miner,
+        wallet = wallet
+      ),
+      Trade(
+        txHash = hash1,
+        orderHash = hash1,
+        owner = owner1,
+        tokenB = tokenS1,
+        tokenS = tokenB1,
+        amountB = ByteString.copyFrom("10", "UTF-8"),
+        amountS = ByteString.copyFrom("1", "UTF-8"),
+        blockHeight = 10,
+        ringHash = hash1,
+        ringIndex = 1,
+        fillIndex = 1,
+        miner = miner,
+        wallet = wallet
+      ),
+      Trade(
+        txHash = hash2,
+        orderHash = hash2,
+        owner = owner2,
+        tokenB = tokenB2,
+        tokenS = tokenS2,
+        amountB = ByteString.copyFrom("1", "UTF-8"),
+        amountS = ByteString.copyFrom("10", "UTF-8"),
+        blockHeight = 20,
+        ringHash = hash2,
+        ringIndex = 2,
+        fillIndex = 0,
+        miner = miner,
+        wallet = wallet
+      ),
+      Trade(
+        txHash = hash2,
+        orderHash = hash2,
+        owner = owner2,
+        tokenB = tokenS2,
+        tokenS = tokenB2,
+        amountB = ByteString.copyFrom("10", "UTF-8"),
+        amountS = ByteString.copyFrom("1", "UTF-8"),
+        blockHeight = 20,
+        ringHash = hash2,
+        ringIndex = 2,
+        fillIndex = 1,
+        miner = miner,
+        wallet = wallet
+      )
+    )
+    service.saveTrades(trades)
+  }
+
+  private def testDuplicateSave() = {
     service.saveTrade(
       Trade(
-        txHash = txHash,
-        owner = owner,
-        tokenB = tokenB,
-        tokenS = tokenS,
-        blockHeight = blockHeight
+        txHash = hash1,
+        owner = owner1,
+        tokenB = tokenS1,
+        tokenS = tokenB1,
+        amountB = ByteString.copyFrom("10", "UTF-8"),
+        amountS = ByteString.copyFrom("1", "UTF-8"),
+        blockHeight = 1,
+        ringHash = hash1,
+        ringIndex = 1,
+        fillIndex = 1
       )
     )
-  }
-
-  "saveTrade" must "save a trade with hash" in {
-    val hash = "0x-savetrade-01"
-    val result = for {
-      _ <- testSave(hash, hash, tokenS, tokenB, 1L)
-      _ <- testSave("0x-mock-01", "0x-mock-01", tokenS, tokenB, 1L)
-      _ <- testSave("0x-mock-02", "0x-mock-02", tokenS, tokenB, 1L)
-      query <- service.getTrades(
-        GetTrades.Req(
-          owner = hash,
-          market = GetTrades.Req.Market
-            .Pair(MarketPair(tokenB = tokenB, tokenS = tokenS))
-        )
-      )
-    } yield query
-    val res = Await.result(result.mapTo[Seq[Trade]], 5.second)
-    res.length == 1 should be(true)
-  }
-
-  "getTrades" must "get some trades with many query parameters" in {
-    val hashes = Set(
-      "0x-gettrades-state0-01",
-      "0x-gettrades-state0-02",
-      "0x-gettrades-state0-03",
-      "0x-gettrades-state0-04",
-      "0x-gettrades-state0-05"
-    )
-    val mockToken = Set(
-      "0x-gettrades-token-01",
-      "0x-gettrades-token-02",
-      "0x-gettrades-token-03",
-      "0x-gettrades-token-04"
-    )
-    val tokenS = "0xaaaaaaa2"
-    val tokenB = "0xbbbbbbb2"
-    val result = for {
-      _ <- Future.sequence(hashes.map { hash =>
-        testSave(hash, hash, tokenS, tokenB, 1L)
-      })
-      _ <- Future.sequence(mockToken.map { hash =>
-        testSave(hash, hash, "0x00001", "0x00002", 1L)
-      })
-      query1 <- service.getTrades(
-        GetTrades.Req(
-          owner = "0x-gettrades-state0-02",
-          market = GetTrades.Req.Market
-            .MarketKey(MarketKey(tokenS, tokenB).toString)
-        )
-      )
-      query2 <- service.getTrades(
-        GetTrades.Req(
-          owner = "0x-gettrades-token-02",
-          market = GetTrades.Req.Market
-            .Pair(MarketPair(tokenB = "0x00002", tokenS = "0x00001"))
-        )
-      )
-    } yield (query1, query2)
-    val res = Await.result(result.mapTo[(Seq[Trade], Seq[Trade])], 5.second)
-    val x = res._1.length === 1 && res._2.length === 1
-    x should be(true)
-  }
-
-  "countTrades" must "get trades count with many query parameters" in {
-    val owners = Set(
-      "0x-counttrades-01",
-      "0x-counttrades-02",
-      "0x-counttrades-03",
-      "0x-counttrades-04",
-      "0x-counttrades-05",
-      "0x-counttrades-06"
-    )
-    val result = for {
-      _ <- Future.sequence(owners.map { hash =>
-        testSave(hash, hash, tokenS, tokenB, 1L)
-      })
-      query <- service.countTrades(
-        GetTrades.Req(
-          owner = "0x-counttrades-02",
-          market = GetTrades.Req.Market
-            .MarketKey(MarketKey(tokenS, tokenB).toString)
-        )
-      )
-    } yield query
-    val res = Await.result(result.mapTo[Int], 5.second)
-    res should be(1)
-  }
-
-  "obsolete" must "obsolete some trades" in {
-    val txHashes1 = Set(
-      "0x-obsolete-01",
-      "0x-obsolete-02",
-      "0x-obsolete-03",
-      "0x-obsolete-04",
-      "0x-obsolete-05",
-      "0x-obsolete-06",
-      "0x-obsolete-07",
-      "0x-obsolete-08",
-      "0x-obsolete-09",
-      "0x-obsolete-10",
-      "0x-obsolete-11",
-      "0x-obsolete-12"
-    )
-    val txHashes2 = Set(
-      "0x-obsolete-101",
-      "0x-obsolete-102",
-      "0x-obsolete-103",
-      "0x-obsolete-104",
-      "0x-obsolete-105",
-      "0x-obsolete-106",
-      "0x-obsolete-107",
-      "0x-obsolete-108",
-      "0x-obsolete-109",
-      "0x-obsolete-110",
-      "0x-obsolete-111",
-      "0x-obsolete-112"
-    )
-    val owner = "0x-fixed-owner-01"
-    val result = for {
-      _ <- Future.sequence(txHashes1.map { hash =>
-        testSave(hash, owner, tokenS, tokenB, 100L)
-      })
-      _ <- Future.sequence(txHashes2.map { hash =>
-        testSave(hash, owner, tokenS, tokenB, 20L)
-      })
-      count1 <- service.countTrades(
-        GetTrades.Req(
-          owner = owner,
-          market = GetTrades.Req.Market
-            .MarketKey(MarketKey(tokenS, tokenB).toString)
-        )
-      )
-      _ <- service.obsolete(30L)
-      count2 <- service.countTrades(
-        GetTrades.Req(
-          owner = owner,
-          market = GetTrades.Req.Market
-            .MarketKey(MarketKey(tokenS, tokenB).toString)
-        )
-      )
-    } yield (count1, count2)
-    val res = Await.result(result.mapTo[(Int, Int)], 5.second)
-    val x = res._1 == 24 && res._2 == 12
-    x should be(true)
   }
 }
