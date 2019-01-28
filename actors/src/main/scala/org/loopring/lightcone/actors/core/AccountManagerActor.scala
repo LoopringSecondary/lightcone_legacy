@@ -112,6 +112,16 @@ class AccountManagerActor(
 //    }
 //  }
 
+  override def postRestart(reason: Throwable): Unit = {
+    log.info(s"### postRestart ${reason.printStackTrace()}")
+    super.postRestart(reason)
+  }
+
+  override def postStop(): Unit = {
+    log.info(s"#### postStop ")
+    super.postStop()
+  }
+
   override def preStart() = {
     self ! Notify("initialize")
   }
@@ -152,12 +162,13 @@ class AccountManagerActor(
 
       syncCutoff onComplete {
         case Success(_) =>
-          unstashAll()
-          context.become(normalReceive)
+          self ! Notify("initialized")
         case Failure(e) =>
           throw e
       }
-
+    case Notify("initialized", _) =>
+      context.become(normalReceive)
+      unstashAll()
     case _ =>
       stash()
   }
@@ -190,6 +201,7 @@ class AccountManagerActor(
       }).sendTo(sender)
 
     case req @ SubmitOrder.Req(Some(raworder)) =>
+      log.info(s"#### SubmitOrder.Req(Some(raworder)) ${req}")
       (for {
         //check通过再保存到数据库，以及后续处理
         _ <- Future { accountCutoffState.checkOrderCutoff(raworder) }

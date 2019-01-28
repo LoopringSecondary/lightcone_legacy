@@ -104,6 +104,7 @@ class MultiAccountManagerActor(
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule,
+    val system: ActorSystem,
     val metadataManager: MetadataManager)
     extends ActorWithPathBasedConfig(
       MultiAccountManagerActor.name,
