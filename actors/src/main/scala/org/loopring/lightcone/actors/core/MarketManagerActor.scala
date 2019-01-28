@@ -119,6 +119,8 @@ class MarketManagerActor(
     with RepeatedJobActor
     with ActorLogging {
   implicit val marketId: MarketId = metadataManager.getValidMarketIds.values
+    .find(m => getEntityId(m) == entityId)
+    .get
 
   log.info(s"=======> starting MarketManagerActor ${self.path} for ${marketId}")
 

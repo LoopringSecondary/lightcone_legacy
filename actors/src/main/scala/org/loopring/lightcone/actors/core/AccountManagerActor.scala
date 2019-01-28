@@ -55,7 +55,9 @@ class AccountManagerActor(
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager)
-    extends InitializationRetryActor {
+    extends Actor
+    with Stash
+    with ActorLogging {
   import ErrorCode._
 
   override val supervisorStrategy =
@@ -73,92 +75,94 @@ class AccountManagerActor(
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
+//  override def preStart() = {
+//    // TODO:合并为批量查询，会在另一个pr里提交
+//    val f1 = metadataManager.getValidMarketIds.map {
+//      case (marketKey, marketId) =>
+//        for {
+//          res <- (ethereumQueryActor ? GetCutoff.Req(
+//            broker = address,
+//            owner = address,
+//            marketKey = marketKey
+//          )).mapAs[GetCutoff.Res]
+//        } yield {
+//          val cutoff: BigInt = res.cutoff
+//          accountCutoffState.setTradingPairCutoff(marketKey, cutoff.toLong)
+//        }
+//    }.toSeq
+//
+//    val f2 = for {
+//      res <- (ethereumQueryActor ? GetCutoff.Req(
+//        broker = address,
+//        owner = address
+//      )).mapAs[GetCutoff.Res]
+//    } yield {
+//      val cutoff: BigInt = res.cutoff
+//      accountCutoffState.setCutoff(cutoff.toLong)
+//    }
+//
+//    Future.sequence(f1 :+ f2) onComplete {
+//      case Success(res) =>
+//
+//
+//      case Failure(e) =>
+//        val err = s"failed to start: ${e.getMessage}"
+//        log.error(err)
+//        throw ErrorException(ERR_INTERNAL_UNKNOWN, err)
+//    }
+//  }
+
   override def preStart() = {
-    // TODO:合并为批量查询，会在另一个pr里提交
-    val f1 = metadataManager.getValidMarketIds.map {
-      case (marketKey, marketId) =>
-        for {
-          res <- (ethereumQueryActor ? GetCutoff.Req(
-            broker = address,
-            owner = address,
-            marketKey = marketKey
-          )).mapAs[GetCutoff.Res]
-        } yield {
-          val cutoff: BigInt = res.cutoff
-          accountCutoffState.setTradingPairCutoff(marketKey, cutoff.toLong)
-        }
-    }.toSeq
-
-    val f2 = for {
-      res <- (ethereumQueryActor ? GetCutoff.Req(
-        broker = address,
-        owner = address
-      )).mapAs[GetCutoff.Res]
-    } yield {
-      val cutoff: BigInt = res.cutoff
-      accountCutoffState.setCutoff(cutoff.toLong)
-    }
-
-    Future.sequence(f1 :+ f2) onComplete {
-      case Success(res) =>
-        self ! Notify("initialized")
-
-      case Failure(e) =>
-        val err = s"failed to start: ${e.getMessage}"
-        log.error(err)
-        throw ErrorException(ERR_INTERNAL_UNKNOWN, err)
-    }
-  }
-
-  override def initialize() = {
-    val batchCutoffReq = BatchGetCutoffs.Req(
-      (metadataManager.getValidMarketKeys map { m =>
-        GetCutoff.Req(
-          broker = address,
-          owner = address,
-          marketKey = m
-        )
-      }).toSeq :+ GetCutoff.Req(
-        broker = address,
-        owner = address
-      )
-    )
-
-    val syncCutoff = for {
-      res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
-    } yield {
-      res.resps foreach { cutoffRes =>
-        val cutoff: BigInt = cutoffRes.cutoff
-        if (cutoffRes.marketKey.isEmpty) {
-          accountCutoffState.setCutoff(cutoff.toLong)
-        } else {
-          accountCutoffState.setTradingPairCutoff(
-            Numeric.toBigInt(cutoffRes.marketKey),
-            cutoff.toLong
-          )
-        }
-      }
-    }
-
-    syncCutoff onComplete {
-      case Success(_) => becomeReady()
-      case Failure(e) => throw e
-    }
-
-    syncCutoff
+    self ! Notify("initialize")
   }
 
   def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
-    case Notify("initialized", _) =>
-      unstashAll()
-      context.become(normalReceive)
+    case Notify("initialize", _) =>
+      val batchCutoffReq = BatchGetCutoffs.Req(
+        (metadataManager.getValidMarketIds map {
+          case (marketKey, marketId) =>
+            GetCutoff.Req(
+              broker = address,
+              owner = address,
+              marketKey = marketKey
+            )
+        }).toSeq :+ GetCutoff.Req(
+          broker = address,
+          owner = address
+        )
+      )
+
+      val syncCutoff = for {
+        res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
+      } yield {
+        res.resps foreach { cutoffRes =>
+          val cutoff: BigInt = cutoffRes.cutoff
+          if (cutoffRes.marketKey.isEmpty) {
+            accountCutoffState.setCutoff(cutoff.toLong)
+          } else {
+            accountCutoffState.setTradingPairCutoff(
+              cutoffRes.marketKey,
+              cutoff.toLong
+            )
+          }
+        }
+      }
+
+      syncCutoff onComplete {
+        case Success(_) =>
+          unstashAll()
+          context.become(normalReceive)
+        case Failure(e) =>
+          throw e
+      }
+
     case _ =>
       stash()
   }
 
-  def ready: Receive = LoggingReceive {
+  def normalReceive: Receive = LoggingReceive {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
@@ -274,7 +278,7 @@ class AccountManagerActor(
         if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received OwnerTokenPairCutoffEvent $req")
       accountCutoffState
-        .setTradingPairCutoff(Numeric.toBigInt(marketKey), req.cutoff)
+        .setTradingPairCutoff(marketKey, req.cutoff)
 
       val updatedOrders = manager.synchronized {
         manager.handleCutoff(cutoff, marketKey)
