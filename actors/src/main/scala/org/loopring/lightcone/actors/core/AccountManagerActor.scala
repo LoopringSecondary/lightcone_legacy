@@ -360,6 +360,18 @@ class AccountManagerActor(
                   matchRes <- (marketManagerActor ? SubmitSimpleOrder(
                     order = Some(order_)
                   )).mapAs[MatchResult]
+                  _ = matchRes.taker.status match {
+                    case STATUS_COMPLETELY_FILLED |
+                        STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES |
+                        STATUS_DUST_ORDER =>
+                      self ! CancelOrder.Req(
+                        matchRes.taker.id,
+                        address,
+                        matchRes.taker.status,
+                        Some(MarketId(order.tokenS, order.tokenB))
+                      )
+                    case _ =>
+                  }
                   _ <- dbModule.orderService
                     .updateOrderStatus(matchRes.taker.id, matchRes.taker.status)
                 } yield Unit
@@ -375,7 +387,6 @@ class AccountManagerActor(
                   STATUS_SOFT_CANCELLED_LOW_BALANCE |
                   STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE |
                   STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS |
-                  STATUS_SOFT_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS |
                   STATUS_SOFT_CANCELLED_DUPLICIATE =>
                 log.debug(
                   s"cancelling order id=${order.id} status=${order.status}"
@@ -392,7 +403,7 @@ class AccountManagerActor(
                   s"unexpected order status: $status in: $order"
                 )
             }
-          } yield {}
+          } yield Unit
       }
     }
 
@@ -461,7 +472,7 @@ class AccountManagerActor(
     } yield
       if (res.cancelled)
         throw ErrorException(
-          ERR_ORDER_VALIDATION_INVALID_CUTOFF,
+          ERR_ORDER_VALIDATION_INVALID_CANCELED,
           s"this order has been canceled."
         )
 
