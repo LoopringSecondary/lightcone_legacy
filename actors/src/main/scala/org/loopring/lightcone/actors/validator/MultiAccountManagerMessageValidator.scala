@@ -45,6 +45,19 @@ final class MultiAccountManagerMessageValidator(
 
   val orderValidator: RawOrderValidator = Protocol2RawOrderValidator
 
+  def normalizeAddress(token: String): String = {
+    if (metadataManager.hasSymbol(token)) {
+      metadataManager.getTokenBySymbol(token).get.meta.address
+    } else if (Address.isValid(token)) {
+      Address.normalizeAddress(token)
+    } else {
+      throw ErrorException(
+        code = ErrorCode.ERR_UNEXPECTED_TOKEN,
+        message = s"unexpected token $token"
+      )
+    }
+  }
+
   def validate = {
     case req @ CancelOrder.Req(_, owner, _, Some(marketId)) =>
       metadataManager.assertMarketIdIsActive(marketId)
@@ -61,7 +74,7 @@ final class MultiAccountManagerMessageValidator(
     case req: GetBalanceAndAllowances.Req =>
       req.copy(
         address = Address.normalizeAddress(req.address),
-        tokens = req.tokens.map(Address.normalizeAddress)
+        tokens = req.tokens.map(normalizeAddress)
       )
 
     case req @ SubmitOrder.Req(Some(order)) =>
