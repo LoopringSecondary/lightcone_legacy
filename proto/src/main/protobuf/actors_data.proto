@@ -198,8 +198,8 @@ message MarketMetadata {
     }
 
     Status          status                  = 1;
-    string          secondary_token_symbol  = 2;
-    string          primary_token_symbol    = 3;
+    string          quote_token_symbol      = 2;
+    string          base_token_symbol       = 3;
     int32           max_numbers_of_orders   = 4;
     int32           price_decimals          = 5;
     int32           orderbook_agg_levels    = 6;

@@ -127,7 +127,7 @@ case class Matchable(
     copy(_reserved = None, _actual = None, _matchable = None)
 
   private[core] def isSell()(implicit marketId: MarketId) =
-    (tokenS == marketId.primary)
+    (tokenS == marketId.baseToken)
 
   // for LRC-WETH market, this returns the number of WETH divided by the number of LRC
   private[core] def price(
@@ -146,7 +146,7 @@ case class Matchable(
       marketId: MarketId,
       metadataManager: MetadataManager
     ) = {
-    if (tokenS == marketId.secondary) fromWei(tokenB, original.amountB)
+    if (tokenS == marketId.quoteToken) fromWei(tokenB, original.amountB)
     else fromWei(tokenS, original.amountS)
   }
 
@@ -157,7 +157,7 @@ case class Matchable(
       marketId: MarketId,
       metadataManager: MetadataManager
     ) = {
-    if (tokenS == marketId.secondary) fromWei(tokenS, original.amountS)
+    if (tokenS == marketId.quoteToken) fromWei(tokenS, original.amountS)
     else fromWei(tokenB, original.amountB)
   }
 
@@ -168,7 +168,7 @@ case class Matchable(
       marketId: MarketId,
       metadataManager: MetadataManager
     ) = {
-    if (tokenS == marketId.secondary) fromWei(tokenB, matchable.amountB)
+    if (tokenS == marketId.quoteToken) fromWei(tokenB, matchable.amountB)
     else fromWei(tokenS, matchable.amountS)
   }
 
@@ -179,7 +179,7 @@ case class Matchable(
       marketId: MarketId,
       metadataManager: MetadataManager
     ) = {
-    if (tokenS == marketId.secondary) fromWei(tokenS, matchable.amountS)
+    if (tokenS == marketId.quoteToken) fromWei(tokenS, matchable.amountS)
     else fromWei(tokenB, matchable.amountB)
   }
 

@@ -57,18 +57,13 @@ class OHLCRawDataExtractor @Inject()(
 
                 val marketId = marketMetadata.getMarketId
 
-                val primaryToken =
-                  metadataManager.getToken(marketId.primary).get
-                val secondaryToken =
-                  metadataManager.getToken(marketId.secondary).get
+                val baseToken =
+                  metadataManager.getToken(marketId.baseToken).get
+                val quoteToken =
+                  metadataManager.getToken(marketId.quoteToken).get
 
-                val (amount, total) = getAmounts(
-                  fill,
-                  _fill,
-                  primaryToken,
-                  secondaryToken,
-                  marketMetadata
-                )
+                val (amount, total) =
+                  getAmounts(fill, _fill, baseToken, quoteToken, marketMetadata)
 
                 Some(
                   OHLCRawData(
@@ -93,25 +88,25 @@ class OHLCRawDataExtractor @Inject()(
   def getAmounts(
       fill: OrderFilledEvent,
       _fill: OrderFilledEvent,
-      primaryToken: Token,
-      secondaryToken: Token,
+      baseToken: Token,
+      quoteToken: Token,
       marketMetadata: MarketMetadata
     ): (Double, Double) = {
     val amountInWei =
-      if (Address(primaryToken.meta.address).equals(Address(fill.tokenS)))
+      if (Address(baseToken.meta.address).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
       else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
 
-    val amount: Double = secondaryToken
+    val amount: Double = quoteToken
       .fromWei(amountInWei, marketMetadata.precisionForAmount)
       .doubleValue()
 
     val totalInWei =
-      if (Address(secondaryToken.meta.address).equals(Address(fill.tokenS)))
+      if (Address(quoteToken.meta.address).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
       else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
 
-    val total: Double = primaryToken
+    val total: Double = baseToken
       .fromWei(totalInWei, marketMetadata.precisionForTotal)
       .doubleValue()
 

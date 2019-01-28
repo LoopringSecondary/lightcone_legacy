@@ -119,10 +119,10 @@ message Error{
     string message = 2;
 }
 
-// For LRC-WETH market, the primary is LRC, secondary is WETH
+// For LRC-WETH market, the base_token is LRC, quote_token is WETH
 message MarketId {
-    string primary = 1;
-    string secondary = 2;
+    string base_token = 1;
+    string quote_token = 2;
 }
 
 message Orderbook {

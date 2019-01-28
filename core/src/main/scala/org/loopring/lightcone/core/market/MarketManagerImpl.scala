@@ -64,12 +64,12 @@ class MarketManagerImpl(
   private var latestPrice: Double = 0
   private var minFiatValue: Double = 0
 
-  private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.secondary
-  private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.primary
+  private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.quoteToken
+  private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.baseToken
 
   private[core] val orderMap = Map.empty[String, Matchable]
   private[core] val sides =
-    Map(marketId.primary -> sells, marketId.secondary -> buys)
+    Map(marketId.baseToken -> sells, marketId.quoteToken -> buys)
 
   def getNumOfOrders = orderMap.size
   def getNumOfSellOrders = sells.size
@@ -186,7 +186,7 @@ class MarketManagerImpl(
             recursivelyMatchOrders()
 
           case Some((maker, Right(ring))) =>
-            isLastTakerSell = (taker.tokenS == marketId.primary)
+            isLastTakerSell = (taker.tokenS == marketId.baseToken)
             rings :+= ring
             latestPrice = (taker.price + maker.price) / 2
 

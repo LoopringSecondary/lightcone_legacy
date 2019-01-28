@@ -29,10 +29,10 @@ class MarketMetadataTable(tag: Tag)
 
   def status = column[MarketMetadata.Status]("status")
 
-  def secondaryTokenSymbol =
+  def quoteTokenSymbol =
     column[String]("secondary_token_symbol", O.SqlType("VARCHAR(20)"))
 
-  def primaryTokenSymbol =
+  def baseTokenSymbol =
     column[String]("primary_token_symbol", O.SqlType("VARCHAR(20)"))
 
   def maxNumbersOfOrders = column[Int]("max_numbers_of_orders")
@@ -44,15 +44,15 @@ class MarketMetadataTable(tag: Tag)
   def updateAt = column[Long]("update_at")
 
   // MarketId
-  def primary = columnAddress("primary")
-  def secondary = columnAddress("secondary")
+  def baseToken = columnAddress("primary")
+  def quoteToken = columnAddress("secondary")
 
   def marketKey = columnAddress("market_key", O.PrimaryKey, O.Unique)
 
   def idx_tokens_symbol =
     index(
       "idx_tokens_symbol",
-      (primaryTokenSymbol, secondaryTokenSymbol),
+      (baseTokenSymbol, quoteTokenSymbol),
       unique = true
     )
   def idx_tokens = index("idx_tokens", (primary, secondary), unique = true)
@@ -69,8 +69,8 @@ class MarketMetadataTable(tag: Tag)
   def * =
     (
       status,
-      secondaryTokenSymbol,
-      primaryTokenSymbol,
+      quoteTokenSymbol,
+      baseTokenSymbol,
       maxNumbersOfOrders,
       priceDecimals,
       orderbookAggLevels,

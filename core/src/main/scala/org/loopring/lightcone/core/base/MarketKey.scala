@@ -35,8 +35,8 @@ object MarketKey {
 class MarketKey(marketId: MarketId) {
   import MarketKey._
 
-  val value = BigInt(removePrefix(marketId.secondary), 16) ^
-    BigInt(removePrefix(marketId.primary), 16)
+  val value = BigInt(removePrefix(marketId.quoteToken), 16) ^
+    BigInt(removePrefix(marketId.baseToken), 16)
 
   override def toString = s"0x${value.toString(16).toLowerCase}"
 }
