@@ -22,9 +22,9 @@ object MarketKey {
   def apply(marketId: MarketId): MarketKey = new MarketKey(marketId)
 
   def apply(
-      primary: String,
-      secondary: String
-    ): MarketKey = apply(MarketId(primary, secondary))
+      baseToken: String,
+      quoteToken: String
+    ): MarketKey = apply(MarketId(baseToken, quoteToken))
 
   def removePrefix(address: String): String = {
     if (address.startsWith("0x")) address.substring(2).trim
@@ -35,8 +35,8 @@ object MarketKey {
 class MarketKey(marketId: MarketId) {
   import MarketKey._
 
-  val value = BigInt(removePrefix(marketId.secondary), 16) ^
-    BigInt(removePrefix(marketId.primary), 16)
+  val value = BigInt(removePrefix(marketId.quoteToken), 16) ^
+    BigInt(removePrefix(marketId.baseToken), 16)
 
   override def toString = s"0x${value.toString(16).toLowerCase}"
 }

@@ -17,16 +17,15 @@
 package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcModule
+import org.loopring.lightcone.actors.rpc.RpcDataConversions._
 import org.loopring.lightcone.proto._
 
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
-
-  // implicit def convert(a: GetOrderbook.Req) = a
-
-  method("get_orderbook") //
-    .accepts[GetOrderbook.Req] //
-    // .accepts[GetOrderbook.Req, GetOrderbook.Req] //
+  method("get_orderbook")
+  // .accepts[rpcdata.GetOrderbook.Req, GetOrderbook.Req]
+  // .replies[GetOrderbook.Res, rpcdata.GetOrderbook.Res]
+    .accepts[GetOrderbook.Req]
     .replies[GetOrderbook.Res]
 
   method("submit_order") //

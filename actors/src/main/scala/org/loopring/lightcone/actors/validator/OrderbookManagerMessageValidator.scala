@@ -39,8 +39,8 @@ final class OrderbookManagerMessageValidator(
       msg.copy(
         marketId = Some(
           marketId.copy(
-            primary = marketId.primary.toLowerCase(),
-            secondary = marketId.secondary.toLowerCase()
+            baseToken = marketId.baseToken.toLowerCase(),
+            quoteToken = marketId.quoteToken.toLowerCase()
           )
         )
       )
