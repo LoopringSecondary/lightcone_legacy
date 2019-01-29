@@ -52,11 +52,11 @@ final class MultiAccountManagerMessageValidator(
   val orderValidator: RawOrderValidator = RawOrderValidatorDefault
   val cancelOrderValidator: CancelOrderValidator = new CancelOrderValidator()
 
-  def normalizeAddress(token: String): String = {
+  def normalize(token: String): String = {
     if (metadataManager.hasSymbol(token)) {
       metadataManager.getTokenBySymbol(token).get.meta.address
     } else if (Address.isValid(token)) {
-      Address.normalizeAddress(token)
+      Address.normalize(token)
     } else {
       throw ErrorException(
         code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
@@ -72,8 +72,8 @@ final class MultiAccountManagerMessageValidator(
 
     case req: GetBalanceAndAllowances.Req =>
       req.copy(
-        address = Address.normalizeAddress(req.address),
-        tokens = req.tokens.map(normalizeAddress)
+        address = Address.normalize(req.address),
+        tokens = req.tokens.map(normalize)
       )
 
     case req @ SubmitOrder.Req(Some(order)) =>
@@ -99,9 +99,9 @@ final class MultiAccountManagerMessageValidator(
           req.withRawOrder(
             rawOrder.copy(
               hash = rawOrder.hash.toLowerCase(),
-              owner = Address.normalizeAddress(rawOrder.owner),
-              tokenS = Address.normalizeAddress(rawOrder.tokenS),
-              tokenB = Address.normalizeAddress(rawOrder.tokenB),
+              owner = Address.normalize(rawOrder.owner),
+              tokenS = Address.normalize(rawOrder.tokenS),
+              tokenB = Address.normalize(rawOrder.tokenB),
               params = Some(
                 rawOrder.getParams.copy(
                   dualAuthAddr = rawOrder.getParams.dualAuthAddr.toLowerCase,
@@ -113,8 +113,7 @@ final class MultiAccountManagerMessageValidator(
               ),
               feeParams = Some(
                 rawOrder.getFeeParams.copy(
-                  tokenFee =
-                    Address.normalizeAddress(rawOrder.getFeeParams.tokenFee),
+                  tokenFee = Address.normalize(rawOrder.getFeeParams.tokenFee),
                   tokenRecipient =
                     rawOrder.getFeeParams.tokenRecipient.toLowerCase()
                 )

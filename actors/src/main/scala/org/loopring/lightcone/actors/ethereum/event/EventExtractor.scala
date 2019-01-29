@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.ethereum.event
 
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.lib.data._
-import org.loopring.lightcone.ethereum.data.formatHex
+import org.loopring.lightcone.ethereum.data.{formatHex, Address}
 import org.web3j.utils.Numeric
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,8 +36,8 @@ trait EventExtractor[R] {
     ) =
     EventHeader(
       txHash = tx.hash,
-      txFrom = tx.from,
-      txTo = tx.to,
+      txFrom = Address.normalize(tx.from),
+      txTo = Address.normalize(tx.to),
       txValue = BigInt(Numeric.toBigInt(formatHex(tx.value))),
       txIndex = Numeric.toBigInt(formatHex(tx.transactionIndex)).intValue(),
       txStatus = getStatus(receipt.status),
