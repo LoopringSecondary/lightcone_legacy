@@ -61,7 +61,8 @@ class MessageValidationActor(
   override def receive: Receive = {
     case msg =>
       (for {
-        res <- validate(msg) match {
+        validateRes <- Future { validate(msg) }
+        res <- validateRes match {
           case validateFuture: Future[_] =>
             validateFuture
 
