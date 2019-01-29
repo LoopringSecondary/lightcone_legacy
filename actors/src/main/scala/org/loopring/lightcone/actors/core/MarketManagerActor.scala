@@ -239,14 +239,9 @@ class MarketManagerActor(
       }
 
     case TriggerRematch(sellOrderAsTaker, offset) =>
-      for {
-
-        minRequiredIncome <- Future.successful(getRequiredMinimalIncome())
-
-        _ = manager
-          .triggerMatch(sellOrderAsTaker, minRequiredIncome, offset)
-          .foreach { updateOrderbookAndSettleRings(_) }
-      } yield Unit
+      manager
+        .triggerMatch(sellOrderAsTaker, getRequiredMinimalIncome(), offset)
+        .foreach { updateOrderbookAndSettleRings(_) }
 
     case RingMinedEvent(Some(header), _, _, _, fills) =>
       Future {
@@ -291,7 +286,7 @@ class MarketManagerActor(
       )
   }
 
-  private def submitOrder(order: Order): Future[MatchResult] = {
+  private def submitOrder(order: Order): Future[MatchResult] = Future {
     log.debug(s"marketmanager.submitOrder ${order}")
     val matchable: Matchable = order
     order.status match {
@@ -303,17 +298,14 @@ class MarketManagerActor(
             "order in SubmitSimpleOrder miss `actual` field"
           )
         }
-        for {
-          // get ring settlement cost
-          minRequiredIncome <- Future.successful(getRequiredMinimalIncome())
+        // submit order to reserve balance and allowance
+        val matchResult =
+          manager.submitOrder(matchable, getRequiredMinimalIncome())
 
-          // submit order to reserve balance and allowance
-          matchResult = manager.submitOrder(matchable, minRequiredIncome)
-
-          _ = log.debug(s"matchResult, ${matchResult}")
-          //settlement matchResult and update orderbook
-          _ = updateOrderbookAndSettleRings(matchResult)
-        } yield matchResult
+        log.debug(s"matchResult, ${matchResult}")
+        //settlement matchResult and update orderbook
+        updateOrderbookAndSettleRings(matchResult)
+        matchResult
 
       case s =>
         log.error(s"unexpected order status in SubmitSimpleOrder: $s")

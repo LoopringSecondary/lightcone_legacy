@@ -35,23 +35,23 @@ final private[core] class AccountManagerImpl(
     Map.empty[String, AccountTokenManager]
 
   def hasTokenManager(token: String): Boolean = tokens.synchronized {
-    val hasToken = tokens.contains(token)
-    if (hasToken) {
-      tokens(token).updatedTime = timeProvider.getTimeMillis()
-    }
-    hasToken
+    tokens.contains(token)
   }
 
   def addTokenManager(tm: AccountTokenManager) = tokens.synchronized {
     assert(!hasTokenManager(tm.token))
-    tm.updatedTime = timeProvider.getTimeMillis()
     tokens += tm.token -> tm
     tm
   }
 
-  def getTokenManager(token: String): AccountTokenManager = {
+  def getTokenManager(
+      token: String,
+      forUserRequest: Boolean = false
+    ): AccountTokenManager = this.synchronized {
     assert(hasTokenManager(token))
-    tokens(token).updatedTime = timeProvider.getTimeMillis()
+    if (forUserRequest) {
+      tokens(token).requestCount += 1
+    }
     tokens(token)
   }
 
@@ -59,18 +59,21 @@ final private[core] class AccountManagerImpl(
     tokens.synchronized {
       if (!hasTokenManager(tm.token))
         tokens += tm.token -> tm
-      tokens(tm.token).updatedTime = timeProvider.getTimeMillis()
       tokens(tm.token)
     }
 
-  def deleteExpiredTokenManager(ttl: Long): Unit = tokens.synchronized {
+  def getTokenManagersToReset(
+      ttl: Long,
+      tokenMaxCountToReset: Int
+    ): Seq[AccountTokenManager] = {
     val currentTime = timeProvider.getTimeMillis()
-    tokens foreach {
-      case (token, tm) =>
-        if (tm.updatedTime + ttl <= currentTime) {
-          tokens -= token
-        }
-    }
+    tokens
+      .filter(
+        tm =>
+          tm._2.updatedTime + ttl <= currentTime || tm._2.requestCount >= tokenMaxCountToReset
+      )
+      .values
+      .toSeq
   }
 
   def submitOrder(order: Matchable): Boolean = {

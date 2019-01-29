@@ -44,8 +44,7 @@ import scala.util.{Failure, Success}
 
 // Owner: Hongyu
 class AccountManagerActor(
-    address: String,
-    tokenTTL: Long
+    address: String
   )(
     implicit
     val config: Config,
@@ -73,14 +72,37 @@ class AccountManagerActor(
   val manager = AccountManager.default
   val accountCutoffState = new AccountCutoffStateImpl()
 
+  val tokenTTL = config.getLong("account_manager.token-ttl-in-mills")
+
+  val tokenMaxCountToReset =
+    config.getInt("account_manager.token-max-count-to-reset")
+
+  val resetJobDelayInSeconds =
+    config.getInt("account_manager.reset-job-delay-in-second")
+
   val repeatedJobs = Seq(
     Job(
-      name = "delete-expired-token",
-      dalayInSeconds = 60, // 10 minutes
-      initialDalayInSeconds = 10,
-      run = () => Future { manager.deleteExpiredTokenManager(tokenTTL) }
+      name = "reset-token",
+      dalayInSeconds = resetJobDelayInSeconds,
+      run = () => resetTokenManager()
     )
   )
+
+  def resetTokenManager() = {
+    val tms = manager.getTokenManagersToReset(tokenTTL, tokenMaxCountToReset)
+    for {
+      res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
+        address,
+        tms.map(_.token)
+      )).mapAs[GetBalanceAndAllowances.Res]
+      _ = res.balanceAndAllowanceMap map {
+        case (token, ba) =>
+          manager
+            .getTokenManager(token)
+            .setBalanceAndAllowance(ba.balance, ba.allowance)
+      }
+    } yield Unit
+  }
 
   protected def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
@@ -149,7 +171,7 @@ class AccountManagerActor(
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
       assert(addr == address)
       (for {
-        managers <- getTokenManagers(tokens)
+        managers <- getTokenManagers(tokens, true)
         _ = assert(tokens.size == managers.size)
         balanceAndAllowanceMap = tokens.zip(managers).toMap.map {
           case (token, manager) =>
@@ -360,9 +382,7 @@ class AccountManagerActor(
                     order = Some(order_)
                   )).mapAs[MatchResult]
                   _ = matchRes.taker.status match {
-                    case STATUS_COMPLETELY_FILLED |
-                        STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES |
-                        STATUS_DUST_ORDER =>
+                    case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES =>
                       self ! CancelOrder.Req(
                         matchRes.taker.id,
                         address,
@@ -405,7 +425,8 @@ class AccountManagerActor(
     }
 
   private def getTokenManagers(
-      tokens: Seq[String]
+      tokens: Seq[String],
+      forUserRequest: Boolean = false
     ): Future[Seq[AccountTokenManager]] = {
     val tokensWithoutMaster =
       tokens.filterNot(token => manager.hasTokenManager(token))
@@ -430,7 +451,7 @@ class AccountManagerActor(
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
         manager.getOrUpdateTokenManager(tm)
       }
-      tokenMangers = tokens.map(manager.getTokenManager)
+      tokenMangers = tokens.map(t => manager.getTokenManager(t, forUserRequest))
     } yield tokenMangers
   }
 

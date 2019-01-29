@@ -74,6 +74,8 @@ class AccountTokenManagerImpl(
       balance: BigInt,
       allowance: BigInt
     ): Set[String] = this.synchronized {
+    this.requestCount = 0
+    this.updatedTime = timeProvider.getTimeMillis()
     val cursor1 =
       if (balance >= this.balance) cursor
       else {

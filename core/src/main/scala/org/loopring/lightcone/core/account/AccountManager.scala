@@ -34,9 +34,17 @@ object AccountManager {
 trait AccountManager {
   def hasTokenManager(token: String): Boolean
   def addTokenManager(tm: AccountTokenManager): AccountTokenManager
-  def getTokenManager(token: String): AccountTokenManager
+
+  def getTokenManager(
+      token: String,
+      forUserRequest: Boolean = false
+    ): AccountTokenManager
   def getOrUpdateTokenManager(tm: AccountTokenManager): AccountTokenManager
-  def deleteExpiredTokenManager(ttl: Long): Unit
+
+  def getTokenManagersToReset(
+      ttl: Long,
+      tokenMaxCountToReset: Int
+    ): Seq[AccountTokenManager]
 
   def submitOrder(order: Matchable): Boolean
 
