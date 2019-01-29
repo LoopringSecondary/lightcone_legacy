@@ -136,17 +136,6 @@ class OrderRecoverActor(
         // filter unsupported markets
         availableOrders = orders.filter { o =>
           metadataManager.isMarketActiveOrReadOnly(MarketId(o.tokenS, o.tokenB))
-        }.map { o =>
-          val marketId =
-            MarketId(o.tokenS, o.tokenB)
-          val marketKey = MarketKey(marketId).toString
-          o.copy(
-            marketKey = marketKey,
-            marketShard = MarketManagerActor.getEntityId(marketId).toInt,
-            accountShard = MultiAccountManagerActor
-              .getEntityId(o.owner, numOfShards)
-              .toInt
-          )
         }
         _ <- if (availableOrders.nonEmpty) {
           val reqs = availableOrders.map { order =>
