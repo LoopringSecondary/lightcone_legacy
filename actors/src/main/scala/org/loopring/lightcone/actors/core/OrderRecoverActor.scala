@@ -127,6 +127,7 @@ class OrderRecoverActor(
 
       sender ! batch // echo back to coordinator
       sender ! ActorRecover.Finished(false)
+      context.stop(self)
 
     case ActorRecover.RetrieveOrders(lastOrderSeqId) =>
       for {
@@ -162,6 +163,8 @@ class OrderRecoverActor(
               .foreach { actor =>
                 actor ! ActorRecover.Finished(false)
               }
+
+            context.stop(self)
         }
       }
   }
