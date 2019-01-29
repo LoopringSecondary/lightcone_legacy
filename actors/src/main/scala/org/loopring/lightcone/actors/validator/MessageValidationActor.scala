@@ -62,7 +62,7 @@ class MessageValidationActor(
     case msg =>
       val f = for {
         validateRes <- Future { validate(msg) }
-        res <- validateRes match {
+        res = validateRes match {
           case Some(validatedMsg) =>
             if (validatedMsg != msg)
               log.debug(
@@ -72,14 +72,13 @@ class MessageValidationActor(
             Future.successful(validatedMsg)
 
           case _ =>
-            Future.failed(
-              ErrorException(
-                ERR_UNEXPECTED_ACTOR_MSG,
-                s"unexpected msg of ${msg.getClass.getName}"
-              )
+            throw ErrorException(
+              ERR_UNEXPECTED_ACTOR_MSG,
+              s"unexpected msg of ${msg.getClass.getName}"
             )
         }
       } yield res
+
       f.forwardTo(destinationActor, sender)
   }
 }
