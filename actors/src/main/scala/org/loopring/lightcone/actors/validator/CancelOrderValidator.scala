@@ -26,6 +26,7 @@ import org.loopring.lightcone.proto._
 import org.web3j.utils._
 
 import scala.concurrent.ExecutionContext
+import scala.util.Try
 
 final class CancelOrderValidator(
     implicit
@@ -41,7 +42,9 @@ final class CancelOrderValidator(
       for {
         orderOpt <- dbModule.orderService.getOrder(req.id)
         order = orderOpt.getOrElse(
-          throw ErrorException(ErrorCode.ERR_ORDER_NOT_EXIST)
+          throw ErrorException(
+            ErrorCode.ERR_CANCEL_ORDER_VALIDATION_INVALID_SIG
+          )
         )
         marketId = MarketId(order.tokenS, order.tokenB)
         _ = metadataManager.assertMarketIdIsActive(marketId)
