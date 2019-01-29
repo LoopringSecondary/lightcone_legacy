@@ -24,6 +24,6 @@ trait RingMatcher {
   def matchOrders(
       taker: Matchable,
       maker: Matchable,
-      minFiatValue: Double
+      minRequiredIncome: Double
     ): Either[ErrorCode, MatchableRing]
 }
