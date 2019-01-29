@@ -17,7 +17,9 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
 // Owner: Yadong
@@ -25,24 +27,41 @@ object EthereumQueryMessageValidator {
   val name = "ethereum_query_validator"
 }
 
-final class EthereumQueryMessageValidator()(implicit val config: Config)
+final class EthereumQueryMessageValidator(
+  )(
+    implicit
+    metadataManager: MetadataManager,
+    val config: Config)
     extends MessageValidator {
+
+  def normalizeAddress(token: String): String = {
+    if (metadataManager.hasSymbol(token)) {
+      metadataManager.getTokenBySymbol(token).get.meta.address
+    } else if (Address.isValid(token)) {
+      Address.normalizeAddress(token)
+    } else {
+      throw ErrorException(
+        code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
+        message = s"unexpected token $token"
+      )
+    }
+  }
 
   // Throws exception if validation fails.
   def validate = {
     case req: GetBalanceAndAllowances.Req =>
       req
-        .copy(tokens = req.tokens.map(Address.normalizeAddress))
+        .copy(tokens = req.tokens.map(normalizeAddress))
         .copy(address = Address.normalizeAddress(req.address))
 
     case req: GetBalance.Req =>
       req
-        .copy(tokens = req.tokens.map(Address.normalizeAddress))
+        .copy(tokens = req.tokens.map(normalizeAddress))
         .copy(address = Address.normalizeAddress(req.address))
 
     case req: GetAllowance.Req =>
       req
-        .copy(tokens = req.tokens.map(Address.normalizeAddress))
+        .copy(tokens = req.tokens.map(normalizeAddress))
         .copy(address = Address.normalizeAddress(req.address))
 
     // case req: GetFilledAmount.Req =>

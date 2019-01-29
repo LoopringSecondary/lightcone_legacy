@@ -111,7 +111,7 @@ class KeepAliveActor @Inject()(
         case (_, marketId) =>
           orderbookManagerActor ? Notify(
             KeepAliveActor.NOTIFY_MSG,
-            marketId.primary + "-" + marketId.secondary
+            marketId.baseToken + "-" + marketId.quoteToken
           )
       })
     } yield Unit
@@ -122,7 +122,7 @@ class KeepAliveActor @Inject()(
         case (_, marketId) =>
           marketManagerActor ? Notify(
             KeepAliveActor.NOTIFY_MSG,
-            marketId.primary + "-" + marketId.secondary
+            marketId.baseToken + "-" + marketId.quoteToken
           )
       })
     } yield Unit

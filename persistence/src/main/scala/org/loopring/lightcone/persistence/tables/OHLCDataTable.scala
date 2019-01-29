@@ -32,14 +32,16 @@ class OHLCDataTable(tag: Tag)
   def txHash = columnHash("tx_hash")
   def marketKey = column[String]("market_key")
   def time = column[Long]("time")
-  def amount = column[Double]("amount", O.SqlType("DOUBLE PRECISION"))
-  def total = column[Double]("total", O.SqlType("DOUBLE PRECISION"))
+  def baseAmount = column[Double]("base_amount", O.SqlType("DOUBLE PRECISION"))
+
+  def quoteAmount =
+    column[Double]("quote_amount", O.SqlType("DOUBLE PRECISION"))
   def price = column[Double]("price", O.SqlType("DOUBLE PRECISION"))
 
   def * =
-    (ringIndex, txHash, marketKey, time, amount, total, price) <> ((OHLCRawData.apply _).tupled, OHLCRawData.unapply)
+    (ringIndex, txHash, marketKey, time, baseAmount, quoteAmount, price) <> ((OHLCRawData.apply _).tupled, OHLCRawData.unapply)
 
-  def pk = primaryKey("pk_r_t_t", (ringIndex, txHash, time))
+  def pk = primaryKey("pk", (ringIndex, txHash, time))
   def idx_market_key = index("idx_market_key", (marketKey), unique = false)
 
   def idx_market_key_time =

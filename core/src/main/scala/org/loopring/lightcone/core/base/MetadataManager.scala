@@ -46,12 +46,12 @@ object MetadataManager {
       )
 
     market.copy(
-      primaryTokenSymbol = market.primaryTokenSymbol.toUpperCase(),
-      secondaryTokenSymbol = market.secondaryTokenSymbol.toUpperCase(),
+      baseTokenSymbol = market.baseTokenSymbol.toUpperCase(),
+      quoteTokenSymbol = market.quoteTokenSymbol.toUpperCase(),
       marketId = Some(
         MarketId(
-          marketId.primary.toLowerCase(),
-          marketId.secondary.toLowerCase()
+          marketId.baseToken.toLowerCase(),
+          marketId.quoteToken.toLowerCase()
         )
       ),
       marketKey = market.marketKey.toLowerCase()
