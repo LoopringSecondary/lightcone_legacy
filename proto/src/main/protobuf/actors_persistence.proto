@@ -86,14 +86,16 @@ message GetOrderByHash {
 
 message GetOrdersForUser {
     message Req {
-        oneof market {
-            MarketPair pair             = 1; // tokenS -> tokenB
-            string     market_key       = 2; // tokenS -> tokenB && tokenB -> tokenS
+        message Market {
+            string token_s = 1;
+            string token_b = 2;
+            bool   is_query_both_side = 3; // 是否查询两个方向的订单
         }
-        string   owner                  = 3;
-        repeated OrderStatus statuses   = 4;
-        SortingType    sort             = 5;
-        Paging    skip                  = 6;
+        string               owner      = 1;
+        repeated OrderStatus statuses   = 2;
+        Market               market     = 3;
+        SortingType          sort       = 4;
+        Paging               skip       = 5;
     }
 
     message Res {
@@ -119,18 +121,47 @@ message UserCancelOrder {
 
 message GetTrades {
     message Req {
-        oneof market {
-            MarketPair pair         = 1; // tokenS -> tokenB
-            string     market_key   = 2; // tokenS -> tokenB && tokenB -> tokenS
+        message Market {
+            string token_s = 1;
+            string token_b = 2;
+            bool   is_query_both_side = 3; // 是否查询两个方向的订单
         }
-        string owner                = 3;
-        SortingType sort            = 4;
-        Paging skip                 = 5;
+        message Ring {
+            string  ring_hash         = 3;
+            string  ring_index        = 4; // 用string是为了避免定义成int时默认值是0，ringIndex和fillIndex从0开始
+            string  fill_index        = 5;
+        }
+        string      owner      = 1;
+        string      tx_hash    = 2;
+        string      order_hash = 3;
+        Ring        ring       = 4;
+        Market      market     = 5;
+        string      wallet     = 6;
+        string      miner      = 7;
+        SortingType sort       = 8;
+        Paging      skip       = 9;
     }
 
     message Res {
         repeated Trade  trades = 1;
-        ErrorCode       error  = 2;
+    }
+}
+
+message GetRings {
+    message Req {
+        message Ring {
+            oneof filter {
+                string ring_hash  = 1;
+                int64  ring_index = 2;
+            }
+        }
+        Ring        ring  = 1;
+        SortingType sort  = 2;
+        Paging      skip  = 3;
+    }
+
+    message Res {
+        repeated Ring rings = 1;
     }
 }
 

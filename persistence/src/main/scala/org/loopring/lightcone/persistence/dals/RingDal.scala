@@ -16,7 +16,15 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import com.google.inject.Inject
-import com.google.inject.name.Named
+import org.loopring.lightcone.persistence.base._
+import org.loopring.lightcone.persistence.tables._
+import org.loopring.lightcone.proto._
+import scala.concurrent._
 
-trait TokenConfigDal {}
+trait RingDal extends BaseDalImpl[RingTable, Ring] {
+  def saveRing(ring: Ring): Future[Either[ErrorCode, String]]
+  def saveRings(rings: Seq[Ring]): Future[Seq[Either[ErrorCode, String]]]
+  def getRings(request: GetRings.Req): Future[Seq[Ring]]
+  def countRings(request: GetRings.Req): Future[Int]
+  def obsolete(height: Long): Future[Unit]
+}

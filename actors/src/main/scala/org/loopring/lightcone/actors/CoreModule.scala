@@ -77,6 +77,7 @@ class CoreModule(config: Config)
       "dbconfig-dal-token-metadata",
       "dbconfig-dal-order",
       "dbconfig-dal-trade",
+      "dbconfig-dal-ring",
       "dbconfig-dal-token-balance",
       "dbconfig-dal-block",
       "dbconfig-dal-settlement-tx",

@@ -19,7 +19,7 @@ package org.loopring.lightcone.persistence
 import slick.jdbc.MySQLProfile.api._
 import scala.reflect.ClassTag
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.proto.{TransactionRecord, TransferEvent}
+import org.loopring.lightcone.proto.{Ring, TransactionRecord}
 
 package object base {
 
@@ -51,5 +51,15 @@ package object base {
           case None    => TransactionRecord.EventData().toByteArray
         },
         bytes => Some(TransactionRecord.EventData.parseFrom(bytes))
+      )
+
+  def ringFeesOptColumnType(): BaseColumnType[Option[Ring.Fees]] =
+    MappedColumnType
+      .base[Option[Ring.Fees], Array[Byte]](
+        {
+          case Some(e) => e.toByteArray
+          case None    => Ring.Fees().toByteArray
+        },
+        bytes => Some(Ring.Fees.parseFrom(bytes))
       )
 }

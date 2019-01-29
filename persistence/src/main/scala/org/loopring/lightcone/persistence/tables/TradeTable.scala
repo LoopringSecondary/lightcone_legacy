@@ -22,44 +22,53 @@ import org.loopring.lightcone.proto._
 
 class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
 
-  def id = txHash
-  def delegateAddress = columnAddress("delegate_address")
+  def id = ""
   def owner = columnAddress("owner")
   def orderHash = columnHash("order_hash")
   def ringHash = columnHash("ring_hash")
   def ringIndex = column[Long]("ring_index")
+  def fillIndex = column[Int]("fill_index")
   def txHash = columnHash("tx_hash")
   def amountS = columnAmount("amount_s")
   def amountB = columnAmount("amount_b")
   def tokenS = columnAddress("token_s")
   def tokenB = columnAddress("token_b")
+  def marketKey = columnAddress("market_key")
   def split = columnAmount("split")
 
   // fees
   def tokenFee = columnAddress("token_fee")
   def amountFee = columnAmount("amount_fee")
-  def tokenAmountS = columnAddress("token_amount_s")
   def feeAmountS = columnAmount("fee_amount_s")
-  def tokenAmountB = columnAddress("token_amount_b")
   def feeAmountB = columnAmount("fee_amount_b")
   def feeRecipient = columnAddress("fee_recipient")
+  def waiveFeePercentage = column[Int]("waive_fee_percentage")
+  def walletSplitPercentage = column[Int]("wallet_split_percentage")
 
-  def createdAt = column[Long]("created_at")
-  def updatedAt = column[Long]("updated_at")
+  def wallet = columnAddress("wallet")
+  def miner = columnAddress("miner")
   def blockHeight = column[Long]("block_height")
   def blockTimestamp = column[Long]("block_timestamp")
-  def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
-  def marketKey = columnAddress("market_key")
 
   // indexes
-  def idx_tx_hash = index("idx_tx_hash", (txHash), unique = true)
-  def idx_owner = index("idx_owner", (owner), unique = false)
-  def idx_order_hash = index("idx_order_hash", (orderHash), unique = false)
+  def pk = primaryKey("pk_txhash_fillindex", (txHash, fillIndex))
   def idx_ring_hash = index("idx_ring_hash", (ringHash), unique = false)
   def idx_ring_index = index("idx_ring_index", (ringIndex), unique = false)
-  def idx_token_s = index("idx_token_s", (tokenS), unique = false)
-  def idx_token_b = index("idx_token_b", (tokenB), unique = false)
-  def idx_market_key = index("idx_market_key", (marketKey), unique = false)
+  def idx_tx_hash = index("idx_tx_hash", (txHash), unique = false)
+  def idx_owner = index("idx_owner", (owner), unique = false)
+  def idx_order_hash = index("idx_order_hash", (orderHash), unique = false)
+
+  def idx_token_s_delegate_address =
+    index("idx_token_s", (tokenS), unique = false)
+
+  def idx_token_b_delegate_address =
+    index("idx_token_b", (tokenB), unique = false)
+
+  def idx_market_key_delegate_address =
+    index("idx_market_key", (marketKey), unique = false)
+
+  def idx_wallet = index("idx_wallet", (wallet), unique = false)
+  def idx_miner = index("idx_miner", (miner), unique = false)
 
   def idx_block_height =
     index("idx_block_height", (blockHeight), unique = false)
@@ -68,25 +77,25 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
     (
       tokenFee,
       amountFee,
-      tokenAmountS,
       feeAmountS,
-      tokenAmountB,
       feeAmountB,
-      feeRecipient
+      feeRecipient,
+      waiveFeePercentage,
+      walletSplitPercentage
     ) <> ({ tuple =>
-      Option((Trade.Fees.apply _).tupled(tuple))
-    }, { paramsOpt: Option[Trade.Fees] =>
-      val params = paramsOpt.getOrElse(Trade.Fees())
-      Trade.Fees.unapply(params)
+      Option((Trade.Fee.apply _).tupled(tuple))
+    }, { paramsOpt: Option[Trade.Fee] =>
+      val params = paramsOpt.getOrElse(Trade.Fee())
+      Trade.Fee.unapply(params)
     })
 
   def * =
     (
       owner,
-      delegateAddress,
       orderHash,
       ringHash,
       ringIndex,
+      fillIndex,
       txHash,
       amountS,
       amountB,
@@ -95,10 +104,9 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
       marketKey,
       split,
       feeParamsProjection,
-      createdAt,
-      updatedAt,
+      wallet,
+      miner,
       blockHeight,
-      blockTimestamp,
-      sequenceId
+      blockTimestamp
     ) <> ((Trade.apply _).tupled, Trade.unapply)
 }
