@@ -104,6 +104,7 @@ class OrderRecoverCoordinator(
       sender ! req
 
     case req: ActorRecover.Timeout =>
+      batchTimer = None
       if (pendingBatch.requestMap.nonEmpty) {
         actors.get(OrderRecoverActor.name) ! pendingBatch
         pendingBatch = ActorRecover.RequestBatch(pendingBatch.batchId + 1)
