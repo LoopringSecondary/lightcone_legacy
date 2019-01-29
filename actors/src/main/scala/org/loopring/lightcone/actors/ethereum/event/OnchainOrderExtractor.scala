@@ -57,18 +57,18 @@ class OnchainOrderExtractor @Inject()(
     ): RawOrder = {
     val data = Numeric.cleanHexPrefix(event.orderData)
     RawOrder(
-      owner = Numeric.prependHexPrefix(data.substring(0, 64)),
-      tokenS = Numeric.prependHexPrefix(data.substring(64, 64 * 2)),
-      tokenB = Numeric.prependHexPrefix(data.substring(64 * 2, 64 * 3)),
+      owner = Address.normalizeAddress(data.substring(0, 64)),
+      tokenS = Address.normalizeAddress(data.substring(64, 64 * 2)),
+      tokenB = Address.normalizeAddress(data.substring(64 * 2, 64 * 3)),
       amountS = BigInt(Numeric.toBigInt(data.substring(64 * 3, 64 * 4))),
       amountB = BigInt(Numeric.toBigInt(data.substring(64 * 4, 64 * 5))),
       validSince = Numeric.toBigInt(data.substring(64 * 5, 64 * 6)).intValue(),
       params = Some(
         RawOrder.Params(
-          broker = Numeric.prependHexPrefix(data.substring(64 * 6, 64 * 7)),
+          broker = Address.normalizeAddress(data.substring(64 * 6, 64 * 7)),
           orderInterceptor =
-            Numeric.prependHexPrefix(data.substring(64 * 7, 64 * 8)),
-          wallet = Numeric.prependHexPrefix(data.substring(64 * 8, 64 * 9)),
+            Address.normalizeAddress(data.substring(64 * 7, 64 * 8)),
+          wallet = Address.normalizeAddress(data.substring(64 * 8, 64 * 9)),
           validUntil =
             Numeric.toBigInt(data.substring(64 * 9, 64 * 10)).intValue(),
           allOrNone = Numeric
@@ -79,14 +79,14 @@ class OnchainOrderExtractor @Inject()(
       hash = event.orderHash,
       feeParams = Some(
         RawOrder.FeeParams(
-          tokenFee = Numeric.prependHexPrefix(data.substring(64 * 11, 64 * 12)),
+          tokenFee = Address.normalizeAddress(data.substring(64 * 11, 64 * 12)),
           amountFee = BigInt(Numeric.toBigInt(data.substring(64 * 12, 64 * 13))),
           tokenBFeePercentage =
             Numeric.toBigInt(data.substring(64 * 13, 64 * 14)).intValue(),
           tokenSFeePercentage =
             Numeric.toBigInt(data.substring(64 * 14, 64 * 15)).intValue(),
           tokenRecipient =
-            Numeric.prependHexPrefix(data.substring(64 * 15, 64 * 16)),
+            Address.normalizeAddress(data.substring(64 * 15, 64 * 16)),
           walletSplitPercentage =
             Numeric.toBigInt(data.substring(64 * 16, 64 * 17)).intValue()
         )

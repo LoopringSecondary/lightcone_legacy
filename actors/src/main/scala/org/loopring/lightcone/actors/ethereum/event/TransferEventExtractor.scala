@@ -193,10 +193,16 @@ class TransferEventExtractor @Inject()(
       event =>
         Seq(
           event.copy(
-            owner = event.from,
+            from = Address.normalizeAddress(event.from),
+            to = Address.normalizeAddress(event.to),
+            token = Address.normalizeAddress(event.token),
+            owner = Address.normalizeAddress(event.from),
             header = event.header.map(_.withEventIndex(0))
           ),
           event.copy(
+            from = Address.normalizeAddress(event.from),
+            to = Address.normalizeAddress(event.to),
+            token = Address.normalizeAddress(event.token),
             owner = event.to,
             header = event.header.map(_.withEventIndex(1))
           )

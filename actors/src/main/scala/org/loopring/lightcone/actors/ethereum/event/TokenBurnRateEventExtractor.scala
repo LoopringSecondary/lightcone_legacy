@@ -56,7 +56,7 @@ class TokenBurnRateEventExtractor @Inject()(
                   Some(
                     TokenBurnRateChangedEvent(
                       header = Some(header.withLogIndex(index)),
-                      token = event.add,
+                      token = Address.normalizeAddress(event.add),
                       burnRate = Some(
                         BurnRate(
                           forMarket = rates._1.doubleValue() / base,
