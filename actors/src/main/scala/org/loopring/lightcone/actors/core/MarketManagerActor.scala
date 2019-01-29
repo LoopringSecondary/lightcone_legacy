@@ -118,6 +118,7 @@ class MarketManagerActor(
       MarketManagerActor.name,
       MarketManagerActor.extractEntityId
     )
+    with RepeatedJobActor
     with ActorLogging {
   implicit val marketId: MarketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
@@ -135,6 +136,9 @@ class MarketManagerActor(
 
   val maxRecoverDurationMinutes =
     selfConfig.getInt("max-recover-duration-minutes")
+
+  val syncGasPriceDelayInSeconds =
+    selfConfig.getInt("sync-gasprice-delay-in-seconds")
 
   val gasLimitPerRingV2 = BigInt(
     config.getString("loopring_protocol.gas-limit-per-ring-v2")
@@ -166,8 +170,11 @@ class MarketManagerActor(
   protected def metadataRefresher = actors.get(MetadataRefresher.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
 
+  var gasPrice: BigInt = _
+
   override def initialize() =
     for {
+      _ <- syncGasPrice()
       _ <- if (skiprecover) Future.successful {
         log.debug(s"actor recover skipped: ${self.path}")
         becomeReady()
@@ -230,21 +237,16 @@ class MarketManagerActor(
       sender ! CancelOrder.Res(id = req.id, status = req.status)
 
     case GasPriceUpdated(_gasPrice) =>
-      val gasPrice: BigInt = _gasPrice
-      manager.triggerMatch(true, getRequiredMinimalIncome(gasPrice)) foreach {
+      this.gasPrice = _gasPrice
+      manager.triggerMatch(true, getRequiredMinimalIncome()) foreach {
         matchResult =>
-          updateOrderbookAndSettleRings(matchResult, gasPrice)
+          updateOrderbookAndSettleRings(matchResult)
       }
 
     case TriggerRematch(sellOrderAsTaker, offset) =>
-      for {
-        res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
-        gasPrice: BigInt = res.gasPrice
-        minRequiredIncome = getRequiredMinimalIncome(gasPrice)
-        _ = manager
-          .triggerMatch(sellOrderAsTaker, minRequiredIncome, offset)
-          .foreach { updateOrderbookAndSettleRings(_, gasPrice) }
-      } yield Unit
+      manager
+        .triggerMatch(sellOrderAsTaker, getRequiredMinimalIncome(), offset)
+        .foreach { updateOrderbookAndSettleRings(_) }
 
     case RingMinedEvent(Some(header), _, _, _, fills) =>
       Future {
@@ -255,14 +257,9 @@ class MarketManagerActor(
         } else if (header.txStatus == TxStatus.TX_STATUS_FAILED) {
           val matchResults = manager.deleteRing(ringhash, false)
           if (matchResults.nonEmpty) {
-            for {
-              res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
-              gasPrice: BigInt = res.gasPrice
-              _ = matchResults.map { matchResult =>
-                updateOrderbookAndSettleRings(matchResult, gasPrice)
-              }
-
-            } yield Unit
+            matchResults.foreach { matchResult =>
+              updateOrderbookAndSettleRings(matchResult)
+            }
           }
         }
       } sendTo sender
@@ -294,51 +291,46 @@ class MarketManagerActor(
       )
   }
 
-  private def submitOrder(order: Order): Future[Unit] = Future {
+  private def submitOrder(order: Order): Future[MatchResult] = Future {
     log.debug(s"marketmanager.submitOrder ${order}")
-    assert(
-      order.actual.nonEmpty,
-      "order in SubmitSimpleOrder miss `actual` field"
-    )
     val matchable: Matchable = order
     order.status match {
-      case OrderStatus.STATUS_NEW | OrderStatus.STATUS_PENDING =>
-        for {
-          // get ring settlement cost
-          res <- (gasPriceActor ? GetGasPrice.Req()).mapAs[GetGasPrice.Res]
+      case OrderStatus.STATUS_NEW | OrderStatus.STATUS_PENDING |
+          OrderStatus.STATUS_PARTIALLY_FILLED =>
+        if (order.actual.isEmpty) {
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ORDER_DATA,
+            "order in SubmitSimpleOrder miss `actual` field"
+          )
+        }
+        // submit order to reserve balance and allowance
+        val matchResult =
+          manager.submitOrder(matchable, getRequiredMinimalIncome())
 
-          gasPrice: BigInt = res.gasPrice
-          minRequiredIncome = getRequiredMinimalIncome(gasPrice)
-
-          // submit order to reserve balance and allowance
-          matchResult = manager.submitOrder(matchable, minRequiredIncome)
-
-          _ = log.debug(s"matchResult, ${matchResult}")
-          //settlement matchResult and update orderbook
-          _ = updateOrderbookAndSettleRings(matchResult, gasPrice)
-        } yield Unit
+        log.debug(s"matchResult, ${matchResult}")
+        //settlement matchResult and update orderbook
+        updateOrderbookAndSettleRings(matchResult)
+        matchResult
 
       case s =>
         log.error(s"unexpected order status in SubmitSimpleOrder: $s")
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ORDER_DATA,
+          s"unexpected order status in SubmitSimpleOrder: $s"
+        )
     }
   }
 
-  private def getRequiredMinimalIncome(gasPrice: BigInt): Double = {
+  private def getRequiredMinimalIncome(): Double = {
     val costinEth = gasLimitPerRingV2 * gasPrice
     tve.getValue(wethTokenAddress, costinEth)
   }
 
-  private def updateOrderbookAndSettleRings(
-      matchResult: MatchResult,
-      gasPrice: BigInt
-    ) {
+  private def updateOrderbookAndSettleRings(matchResult: MatchResult) {
     // Settle rings
     if (matchResult.rings.nonEmpty) {
-      log.debug(s"rings: ${matchResult.rings}")
-
       settlementActor ! SettleRings(
         rings = matchResult.rings,
-        gasLimit = gasLimitPerRingV2 * matchResult.rings.size,
         gasPrice = gasPrice
       )
     }
@@ -353,5 +345,19 @@ class MarketManagerActor(
 
   def recoverOrder(xraworder: RawOrder): Future[Any] =
     submitOrder(xraworder)
+
+  def syncGasPrice(): Future[Unit] =
+    for {
+      res <- (gasPriceActor ? GetGasPrice.Req())
+        .mapAs[GetGasPrice.Res]
+    } yield this.gasPrice = res.gasPrice
+
+  val repeatedJobs = Seq(
+    Job(
+      name = "sync-gasprice",
+      dalayInSeconds = syncGasPriceDelayInSeconds, // 10 minutes
+      run = () => syncGasPrice()
+    )
+  )
 
 }

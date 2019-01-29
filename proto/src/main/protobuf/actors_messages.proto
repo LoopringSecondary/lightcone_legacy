@@ -22,7 +22,6 @@ package org.loopring.lightcone.proto;
 import "actors_data.proto";
 import "core.proto";
 import "ethereum.proto";
-import "common.proto";
 
 /////////////////////////////////////////////////////////////////////
 // ONE WAY MESSAGES
@@ -216,7 +215,20 @@ message GetCutoff {
         string tag = 4;
     }
     message Res {
-        bytes cutoff = 1;
+        string broker = 1;
+        string owner = 2;
+        string market_key = 3;
+        bytes cutoff = 4;
+    }
+}
+
+message BatchGetCutoffs {
+    message Req {
+        repeated GetCutoff.Req reqs = 1;
+    }
+
+    message Res {
+        repeated GetCutoff.Res resps = 1;
     }
 }
 

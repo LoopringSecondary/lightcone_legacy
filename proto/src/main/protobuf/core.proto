@@ -42,9 +42,8 @@ enum OrderStatus {
     STATUS_SOFT_CANCELLED_LOW_BALANCE                   = 15;
     STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE               = 16;
     STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS               = 17;
-    STATUS_SOFT_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS   = 18;
-    STATUS_SOFT_CANCELLED_DUPLICIATE                    = 19;
-    STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES        = 20;
+    STATUS_SOFT_CANCELLED_DUPLICIATE                    = 18;
+    STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES        = 19;
 
     STATUS_INVALID_DATA                 = 201;
     STATUS_UNSUPPORTED_MARKET           = 202;
@@ -79,6 +78,8 @@ enum ErrorCode{
     ERR_ORDER_VALIDATION_INVALID                            = 2011;
     ERR_ORDER_VALIDATION_INVALID_CUTOFF                     = 2012;
     ERR_ORDER_VALIDATION_NOT_PERSISTED                      = 2013;
+    ERR_ORDER_VALIDATION_INVALID_CANCELED                      = 2014;
+
 
     // submitRings param deserialize error
     ERR_SERIALIZATION_ENCODED_DATA_INVALID                  = 2101;

@@ -78,7 +78,7 @@ trait EventExtraction {
           if (blockData.height < untilBlock) self ! GET_BLOCK
         case Failure(e) =>
           log.error(
-            s" Actor: ${self.path.address} extracts ethereum events failed with error:${e.getMessage}"
+            s" Actor: ${self.path} extracts ethereum events failed with error:${e.getMessage}"
           )
       }
   }

@@ -30,17 +30,20 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.ethereum.data.formatHex
 import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
+
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 // Owner: Hongyu
+//TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
 class AccountManagerActor(
     address: String
   )(
@@ -74,48 +77,52 @@ class AccountManagerActor(
   protected def orderPersistenceActor = actors.get(OrderPersistenceActor.name)
 
   override def preStart() = {
-    // TODO:合并为批量查询，会在另一个pr里提交
-    val f1 = metadataManager.getValidMarketIds.map {
-      case (marketKey, marketId) =>
-        for {
-          res <- (ethereumQueryActor ? GetCutoff.Req(
-            broker = address,
-            owner = address,
-            marketKey = marketKey
-          )).mapAs[GetCutoff.Res]
-        } yield {
-          val cutoff: BigInt = res.cutoff
-          accountCutoffState.setTradingPairCutoff(marketKey, cutoff.toLong)
-        }
-    }.toSeq
-
-    val f2 = for {
-      res <- (ethereumQueryActor ? GetCutoff.Req(
-        broker = address,
-        owner = address
-      )).mapAs[GetCutoff.Res]
-    } yield {
-      val cutoff: BigInt = res.cutoff
-      accountCutoffState.setCutoff(cutoff.toLong)
-    }
-
-    Future.sequence(f1 :+ f2) onComplete {
-      case Success(res) =>
-        self ! Notify("initialized")
-
-      case Failure(e) =>
-        val err = s"failed to start: ${e.getMessage}"
-        log.error(err)
-        throw ErrorException(ERR_INTERNAL_UNKNOWN, err)
-    }
+    self ! Notify("initialize")
   }
 
   def receive: Receive = initialReceive
 
   def initialReceive: Receive = {
+    case Notify("initialize", _) =>
+      val batchCutoffReq = BatchGetCutoffs.Req(
+        (metadataManager.getValidMarketIds map {
+          case (marketKey, marketId) =>
+            GetCutoff.Req(
+              broker = address,
+              owner = address,
+              marketKey = marketKey
+            )
+        }).toSeq :+ GetCutoff.Req(
+          broker = address,
+          owner = address
+        )
+      )
+
+      val syncCutoff = for {
+        res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
+      } yield {
+        res.resps foreach { cutoffRes =>
+          val cutoff: BigInt = cutoffRes.cutoff
+          if (cutoffRes.marketKey.isEmpty) {
+            accountCutoffState.setCutoff(cutoff.toLong)
+          } else {
+            accountCutoffState.setTradingPairCutoff(
+              cutoffRes.marketKey,
+              cutoff.toLong
+            )
+          }
+        }
+      }
+
+      syncCutoff onComplete {
+        case Success(_) =>
+          self ! Notify("initialized")
+        case Failure(e) =>
+          throw e
+      }
     case Notify("initialized", _) =>
-      unstashAll()
       context.become(normalReceive)
+      unstashAll()
     case _ =>
       stash()
   }
@@ -149,11 +156,9 @@ class AccountManagerActor(
 
     case req @ SubmitOrder.Req(Some(raworder)) =>
       (for {
-        _ <- for {
-          //check通过再保存到数据库，以及后续处理
-          _ <- Future { accountCutoffState.isOrderCutoff(raworder) }
-          _ <- isOrderCanceled(raworder) //取消订单，单独查询以太坊
-        } yield Unit
+        //check通过再保存到数据库，以及后续处理
+        _ <- Future { accountCutoffState.checkOrderCutoff(raworder) }
+        _ <- checkOrderCanceled(raworder) //取消订单，单独查询以太坊
         newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
           raworder.copy(
             state = Some(
@@ -163,19 +168,16 @@ class AccountManagerActor(
           )
         } else raworder
 
-        res <- for {
-          resRawOrder <- (orderPersistenceActor ? req
-            .copy(rawOrder = Some(newRaworder)))
-            .mapAs[RawOrder]
-          resOrder <- (resRawOrder.getState.status match {
-            case STATUS_PENDING_ACTIVE =>
-              val order: Order = resRawOrder
-              Future.successful(order)
-            case _ => submitOrder(resRawOrder)
-          }).mapAs[Order]
-        } yield SubmitOrder.Res(Some(resOrder))
-
-      } yield res) sendTo sender
+        resRawOrder <- (orderPersistenceActor ? req
+          .copy(rawOrder = Some(newRaworder)))
+          .mapAs[RawOrder]
+        resOrder <- (resRawOrder.getState.status match {
+          case STATUS_PENDING_ACTIVE =>
+            val order: Order = resRawOrder
+            Future.successful(order)
+          case _ => submitOrder(resRawOrder)
+        }).mapAs[Order]
+      } yield SubmitOrder.Res(Some(resOrder))) sendTo sender
 
     case req: CancelOrder.Req =>
       val originalSender = sender
@@ -300,7 +302,10 @@ class AccountManagerActor(
             ERR_INTERNAL_UNKNOWN
         }
 
-        throw ErrorException(Error(error))
+        throw ErrorException(
+          error,
+          s"failed to submit order with status:${matchable.status} in AccountManagerActor."
+        )
       }
 
       _ = log.debug(
@@ -332,15 +337,27 @@ class AccountManagerActor(
             //需要更新到数据库
             //TODO(yongfeng): 暂时添加接口，需要永丰根据目前的使用优化dal的接口
             _ <- dbModule.orderService.updateOrderState(order.id, state)
-          } yield {
-
-            order.status match {
+            _ <- order.status match {
               case STATUS_NEW | //
                   STATUS_PENDING | //
                   STATUS_PARTIALLY_FILLED =>
                 log.debug(s"submitting order id=${order.id} to MMA")
                 val order_ = order.copy(_reserved = None, _outstanding = None)
-                marketManagerActor ! SubmitSimpleOrder(order = Some(order_))
+                for {
+                  matchRes <- (marketManagerActor ? SubmitSimpleOrder(
+                    order = Some(order_)
+                  )).mapAs[MatchResult]
+                  _ = matchRes.taker.status match {
+                    case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES =>
+                      self ! CancelOrder.Req(
+                        matchRes.taker.id,
+                        address,
+                        matchRes.taker.status,
+                        Some(MarketId(order.tokenS, order.tokenB))
+                      )
+                    case _ =>
+                  }
+                } yield Unit
 
               case STATUS_EXPIRED | //
                   STATUS_DUST_ORDER | //
@@ -353,13 +370,12 @@ class AccountManagerActor(
                   STATUS_SOFT_CANCELLED_LOW_BALANCE |
                   STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE |
                   STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS |
-                  STATUS_SOFT_CANCELLED_TOO_MANY_FAILED_SETTLEMENTS |
                   STATUS_SOFT_CANCELLED_DUPLICIATE =>
                 log.debug(
                   s"cancelling order id=${order.id} status=${order.status}"
                 )
                 val marketId = MarketId(order.tokenS, order.tokenB)
-                marketManagerActor ! CancelOrder.Req(
+                marketManagerActor ? CancelOrder.Req(
                   id = order.id,
                   marketId = Some(marketId)
                 )
@@ -370,7 +386,7 @@ class AccountManagerActor(
                   s"unexpected order status: $status in: $order"
                 )
             }
-          }
+          } yield Unit
       }
     }
 
@@ -395,11 +411,11 @@ class AccountManagerActor(
             config.getInt("account_manager.max_order_num")
           )
       )
-      _ = tms.foreach(tm => {
+      _ = tms.foreach { tm =>
         val ba = res.balanceAndAllowanceMap(tm.token)
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
         manager.getOrUpdateTokenManager(tm)
-      })
+      }
       tokenMangers = tokens.map(manager.getTokenManager)
     } yield tokenMangers
   }
@@ -430,7 +446,7 @@ class AccountManagerActor(
       _ <- processUpdatedOrders(updatedOrders)
     } yield Unit
 
-  def isOrderCanceled(rawOrder: RawOrder) =
+  def checkOrderCanceled(rawOrder: RawOrder) =
     for {
       res <- (ethereumQueryActor ? GetOrderCancellation.Req(
         broker = address,
@@ -439,7 +455,7 @@ class AccountManagerActor(
     } yield
       if (res.cancelled)
         throw ErrorException(
-          ERR_ORDER_VALIDATION_INVALID_CUTOFF,
+          ERR_ORDER_VALIDATION_INVALID_CANCELED,
           s"this order has been canceled."
         )
 
