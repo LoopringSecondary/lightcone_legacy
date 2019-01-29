@@ -74,8 +74,8 @@ class AccountManagerActor(
 
   val tokenTTL = config.getLong("account_manager.token-ttl-in-mills")
 
-  val tokenMaxCountToReset =
-    config.getInt("account_manager.token-max-count-to-reset")
+  val requestCountToReset =
+    config.getInt("account_manager.request-count-to-reset")
 
   val resetJobDelayInSeconds =
     config.getInt("account_manager.reset-job-delay-in-second")
@@ -89,7 +89,7 @@ class AccountManagerActor(
   )
 
   def resetTokenManager() = {
-    val tms = manager.getTokenManagersToReset(tokenTTL, tokenMaxCountToReset)
+    val tms = manager.getTokenManagersToReset(tokenTTL, requestCountToReset)
     for {
       res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
         address,

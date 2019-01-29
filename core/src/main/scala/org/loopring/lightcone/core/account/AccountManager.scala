@@ -43,7 +43,7 @@ trait AccountManager {
 
   def getTokenManagersToReset(
       ttl: Long,
-      tokenMaxCountToReset: Int
+      requestCountToReset: Int
     ): Seq[AccountTokenManager]
 
   def submitOrder(order: Matchable): Boolean

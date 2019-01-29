@@ -64,13 +64,13 @@ final private[core] class AccountManagerImpl(
 
   def getTokenManagersToReset(
       ttl: Long,
-      tokenMaxCountToReset: Int
+      requestCountToReset: Int
     ): Seq[AccountTokenManager] = {
     val currentTime = timeProvider.getTimeMillis()
     tokens
       .filter(
         tm =>
-          tm._2.updatedTime + ttl <= currentTime || tm._2.requestCount >= tokenMaxCountToReset
+          tm._2.updatedTime + ttl <= currentTime || tm._2.requestCount >= requestCountToReset
       )
       .values
       .toSeq

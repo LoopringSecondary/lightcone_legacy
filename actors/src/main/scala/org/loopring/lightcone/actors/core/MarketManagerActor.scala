@@ -135,6 +135,9 @@ class MarketManagerActor(
   val maxRecoverDurationMinutes =
     selfConfig.getInt("max-recover-duration-minutes")
 
+  val syncGasPriceDelayInSeconds =
+    selfConfig.getInt("sync-gasprice-delay-in-seconds")
+
   val gasLimitPerRingV2 = BigInt(
     config.getString("loopring_protocol.gas-limit-per-ring-v2")
   )
@@ -350,8 +353,7 @@ class MarketManagerActor(
   val repeatedJobs = Seq(
     Job(
       name = "sync-gasprice",
-      dalayInSeconds = 60, // 10 minutes
-      initialDalayInSeconds = 10,
+      dalayInSeconds = syncGasPriceDelayInSeconds, // 10 minutes
       run = () => syncGasPrice()
     )
   )
