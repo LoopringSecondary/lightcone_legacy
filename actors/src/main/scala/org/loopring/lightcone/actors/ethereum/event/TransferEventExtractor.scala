@@ -94,9 +94,7 @@ class TransferEventExtractor @Inject()(
                 case _ =>
               }
           }
-          if (txValue > 0 && !Address(
-                tx.to
-              ).equals(wethAddress)) {
+          if (txValue > 0 && !Address(tx.to).equals(wethAddress)) {
             transfers.append(
               PTransferEvent(
                 header = Some(header),
@@ -193,16 +191,16 @@ class TransferEventExtractor @Inject()(
       event =>
         Seq(
           event.copy(
-            from = Address.normalizeAddress(event.from),
-            to = Address.normalizeAddress(event.to),
-            token = Address.normalizeAddress(event.token),
-            owner = Address.normalizeAddress(event.from),
+            from = Address.normalize(event.from),
+            to = Address.normalize(event.to),
+            token = Address.normalize(event.token),
+            owner = Address.normalize(event.from),
             header = event.header.map(_.withEventIndex(0))
           ),
           event.copy(
-            from = Address.normalizeAddress(event.from),
-            to = Address.normalizeAddress(event.to),
-            token = Address.normalizeAddress(event.token),
+            from = Address.normalize(event.from),
+            to = Address.normalize(event.to),
+            token = Address.normalize(event.token),
             owner = event.to,
             header = event.header.map(_.withEventIndex(1))
           )
