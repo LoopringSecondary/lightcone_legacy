@@ -69,8 +69,8 @@ package object support {
 
   val LRC_WETH_MARKET = MarketMetadata(
     status = MarketMetadata.Status.ACTIVE,
-    primaryTokenSymbol = LRC_TOKEN.symbol,
-    secondaryTokenSymbol = WETH_TOKEN.symbol,
+    baseTokenSymbol = LRC_TOKEN.symbol,
+    quoteTokenSymbol = WETH_TOKEN.symbol,
     maxNumbersOfOrders = 1000,
     priceDecimals = 6,
     orderbookAggLevels = 6,
@@ -83,8 +83,8 @@ package object support {
 
   val GTO_WETH_MARKET = MarketMetadata(
     status = MarketMetadata.Status.ACTIVE,
-    primaryTokenSymbol = GTO_TOKEN.symbol,
-    secondaryTokenSymbol = WETH_TOKEN.symbol,
+    baseTokenSymbol = GTO_TOKEN.symbol,
+    quoteTokenSymbol = WETH_TOKEN.symbol,
     maxNumbersOfOrders = 500,
     priceDecimals = 6,
     orderbookAggLevels = 5,
@@ -92,7 +92,7 @@ package object support {
     precisionForTotal = 5,
     browsableInWallet = true,
     marketId = Some(
-      MarketId(primary = GTO_TOKEN.address, secondary = WETH_TOKEN.address)
+      MarketId(baseToken = GTO_TOKEN.address, quoteToken = WETH_TOKEN.address)
     ),
     marketKey = MarketKey(GTO_TOKEN.address, WETH_TOKEN.address).toString
   )

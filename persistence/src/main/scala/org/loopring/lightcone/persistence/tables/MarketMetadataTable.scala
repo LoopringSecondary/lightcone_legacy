@@ -29,11 +29,11 @@ class MarketMetadataTable(tag: Tag)
 
   def status = column[MarketMetadata.Status]("status")
 
-  def secondaryTokenSymbol =
-    column[String]("secondary_token_symbol", O.SqlType("VARCHAR(20)"))
+  def quoteTokenSymbol =
+    column[String]("quote_token_symbol", O.SqlType("VARCHAR(20)"))
 
-  def primaryTokenSymbol =
-    column[String]("primary_token_symbol", O.SqlType("VARCHAR(20)"))
+  def baseTokenSymbol =
+    column[String]("base_token_symbol", O.SqlType("VARCHAR(20)"))
 
   def maxNumbersOfOrders = column[Int]("max_numbers_of_orders")
   def priceDecimals = column[Int]("price_decimals")
@@ -44,22 +44,22 @@ class MarketMetadataTable(tag: Tag)
   def updateAt = column[Long]("update_at")
 
   // MarketId
-  def primary = columnAddress("primary")
-  def secondary = columnAddress("secondary")
+  def baseToken = columnAddress("base_token")
+  def quoteToken = columnAddress("quote_token")
 
   def marketKey = columnAddress("market_key", O.PrimaryKey, O.Unique)
 
   def idx_tokens_symbol =
     index(
       "idx_tokens_symbol",
-      (primaryTokenSymbol, secondaryTokenSymbol),
+      (baseTokenSymbol, quoteTokenSymbol),
       unique = true
     )
-  def idx_tokens = index("idx_tokens", (primary, secondary), unique = true)
+  def idx_tokens = index("idx_tokens", (baseToken, quoteToken), unique = true)
   def idx_status = index("idx_status", (status), unique = false)
 
   def marketIdProjection =
-    (primary, secondary) <> ({ tuple =>
+    (baseToken, quoteToken) <> ({ tuple =>
       Option((MarketId.apply _).tupled(tuple))
     }, { paramsOpt: Option[MarketId] =>
       val params = paramsOpt.getOrElse(MarketId())
@@ -69,8 +69,8 @@ class MarketMetadataTable(tag: Tag)
   def * =
     (
       status,
-      secondaryTokenSymbol,
-      primaryTokenSymbol,
+      quoteTokenSymbol,
+      baseTokenSymbol,
       maxNumbersOfOrders,
       priceDecimals,
       orderbookAggLevels,

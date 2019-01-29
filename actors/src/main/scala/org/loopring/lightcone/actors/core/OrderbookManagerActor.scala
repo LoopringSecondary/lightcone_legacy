@@ -76,8 +76,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
 
     case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
       val tokens = marketIdStr.split("-")
-      val (primary, secondary) = (tokens(0), tokens(1))
-      MarketId(primary, secondary)
+      MarketId(tokens(0), tokens(1))
   }
 }
 

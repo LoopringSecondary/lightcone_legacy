@@ -72,14 +72,16 @@ class MetadataManagerSpec
 
         val meta3 = metadataManager.getMarketMetadata(
           MarketId(
-            primary = m.marketId.get.primary.toLowerCase(),
-            secondary = m.marketId.get.secondary.toLowerCase()
+            baseToken = m.marketId.get.baseToken.toLowerCase(),
+            quoteToken = m.marketId.get.quoteToken.toLowerCase()
           )
         )
         val meta4 = metadataManager.getMarketMetadata(
           MarketId(
-            primary = "0x" + m.marketId.get.primary.substring(2).toUpperCase(),
-            secondary = "0x" + m.marketId.get.secondary
+            baseToken = "0x" + m.marketId.get.baseToken
+              .substring(2)
+              .toUpperCase(),
+            quoteToken = "0x" + m.marketId.get.quoteToken
               .substring(2)
               .toUpperCase()
           )
@@ -266,13 +268,13 @@ class MetadataManagerSpec
       val BBB = "0x9b9211a2ce4eEE9c5619d54E5CD9f967A68FBE23"
       val CCC = "0x7b22713f2e818fad945af5a3618a2814f102cbe0"
       val DDD = "0x45245bc59219eeaaf6cd3f382e078a461ff9de7b"
-      val marketIdLrcWeth = MarketId(primary = DDD, secondary = AAA)
-      val marketIdBnbWeth = MarketId(primary = DDD, secondary = BBB)
-      val marketIdZrxdWeth = MarketId(primary = DDD, secondary = CCC)
+      val marketIdLrcWeth = MarketId(baseToken = DDD, quoteToken = AAA)
+      val marketIdBnbWeth = MarketId(baseToken = DDD, quoteToken = BBB)
+      val marketIdZrxdWeth = MarketId(baseToken = DDD, quoteToken = CCC)
       val marketLrcWeth = MarketMetadata(
         status = MarketMetadata.Status.ACTIVE,
-        secondaryTokenSymbol = "AAA",
-        primaryTokenSymbol = "DDD",
+        quoteTokenSymbol = "AAA",
+        baseTokenSymbol = "DDD",
         maxNumbersOfOrders = 1000,
         priceDecimals = 8,
         orderbookAggLevels = 1,
@@ -287,8 +289,8 @@ class MetadataManagerSpec
         marketLrcWeth,
         MarketMetadata(
           status = MarketMetadata.Status.TERMINATED,
-          secondaryTokenSymbol = "BBB",
-          primaryTokenSymbol = "DDD",
+          quoteTokenSymbol = "BBB",
+          baseTokenSymbol = "DDD",
           maxNumbersOfOrders = 1000,
           priceDecimals = 8,
           orderbookAggLevels = 1,
@@ -301,8 +303,8 @@ class MetadataManagerSpec
         ),
         MarketMetadata(
           status = MarketMetadata.Status.READONLY,
-          secondaryTokenSymbol = "CCC",
-          primaryTokenSymbol = "DDD",
+          quoteTokenSymbol = "CCC",
+          baseTokenSymbol = "DDD",
           maxNumbersOfOrders = 1000,
           priceDecimals = 8,
           orderbookAggLevels = 1,
@@ -335,11 +337,11 @@ class MetadataManagerSpec
 
       info("save a new market: ABC-LRC")
       val ABC = "0x244929a8141d2134d9323e65309fb46e4a983840"
-      val marketIdAbcLrc = MarketId(primary = ABC, secondary = AAA)
+      val marketIdAbcLrc = MarketId(baseToken = ABC, quoteToken = AAA)
       val abcLrc = MarketMetadata(
         status = MarketMetadata.Status.READONLY,
-        secondaryTokenSymbol = "ABC",
-        primaryTokenSymbol = "AAA",
+        quoteTokenSymbol = "ABC",
+        baseTokenSymbol = "AAA",
         maxNumbersOfOrders = 1000,
         priceDecimals = 3,
         orderbookAggLevels = 1,
@@ -447,11 +449,11 @@ class MetadataManagerSpec
     "format market" in {
       val AAA = "0xF51DF14E49DA86ABC6F1D8CCC0B3A6B7B7C90CA6"
       val BBB = "0x9B9211A2CE4EEE9C5619D54E5CD9F967A68FBE23"
-      val marketId = MarketId(primary = BBB, secondary = AAA)
+      val marketId = MarketId(baseToken = BBB, quoteToken = AAA)
       val market = MarketMetadata(
         status = MarketMetadata.Status.ACTIVE,
-        secondaryTokenSymbol = "aaa",
-        primaryTokenSymbol = "bbb",
+        quoteTokenSymbol = "aaa",
+        baseTokenSymbol = "bbb",
         maxNumbersOfOrders = 1000,
         priceDecimals = 8,
         orderbookAggLevels = 1,
@@ -464,21 +466,21 @@ class MetadataManagerSpec
       )
       val formatedMarket = MetadataManager.normalizeMarket(market)
       assert(
-        market.primaryTokenSymbol == "bbb" &&
-          formatedMarket.primaryTokenSymbol == "BBB"
+        market.baseTokenSymbol == "bbb" &&
+          formatedMarket.baseTokenSymbol == "BBB"
       )
       assert(
-        market.secondaryTokenSymbol == "aaa" &&
-          formatedMarket.secondaryTokenSymbol == "AAA"
+        market.quoteTokenSymbol == "aaa" &&
+          formatedMarket.quoteTokenSymbol == "AAA"
       )
       val formatedMarketId = formatedMarket.marketId.get
       assert(
-        marketId.primary == "0x9B9211A2CE4EEE9C5619D54E5CD9F967A68FBE23" &&
-          formatedMarketId.primary == "0x9b9211a2ce4eee9c5619d54e5cd9f967a68fbe23"
+        marketId.baseToken == "0x9B9211A2CE4EEE9C5619D54E5CD9F967A68FBE23" &&
+          formatedMarketId.baseToken == "0x9b9211a2ce4eee9c5619d54e5cd9f967a68fbe23"
       )
       assert(
-        marketId.secondary == "0xF51DF14E49DA86ABC6F1D8CCC0B3A6B7B7C90CA6" &&
-          formatedMarketId.secondary == "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
+        marketId.quoteToken == "0xF51DF14E49DA86ABC6F1D8CCC0B3A6B7B7C90CA6" &&
+          formatedMarketId.quoteToken == "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
       )
       assert(
         market.marketKey == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285" && formatedMarket.marketKey == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285"

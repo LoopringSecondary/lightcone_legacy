@@ -118,8 +118,8 @@ final private[core] class AccountManagerImpl(
 
   def purgeOrders(marketId: MarketId): Int = {
     val orders = orderPool.orders.filter { order =>
-      (order.tokenS == marketId.secondary && order.tokenB == marketId.primary) ||
-      (order.tokenB == marketId.secondary && order.tokenS == marketId.primary)
+      (order.tokenS == marketId.quoteToken && order.tokenB == marketId.baseToken) ||
+      (order.tokenB == marketId.quoteToken && order.tokenS == marketId.baseToken)
     }
 
     orders.foreach { order =>
