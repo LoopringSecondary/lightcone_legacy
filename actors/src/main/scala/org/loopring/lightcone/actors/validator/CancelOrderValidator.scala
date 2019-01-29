@@ -55,7 +55,7 @@ final class CancelOrderValidator(
             s"not authorized to cancel this order $req.id"
           )
         req.copy(
-          owner = Address.normalizeAddress(req.owner),
+          owner = Address.normalize(req.owner),
           status = OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
           marketId = Some(
             marketId.copy(
