@@ -92,6 +92,7 @@ class OrderRecoverCoordinator(
         case (orderRecoverActor, _) =>
           // Notify the actor to stop handling the request in a previous batch
           orderRecoverActor ! ActorRecover.CancelFor(req.sender)
+          activeBatches -= orderRecoverActor
       }
 
       val requestMap = pendingBatch.requestMap + (req.sender -> req)
