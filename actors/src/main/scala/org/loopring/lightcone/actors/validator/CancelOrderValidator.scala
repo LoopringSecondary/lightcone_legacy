@@ -49,8 +49,8 @@ final class CancelOrderValidator(
           status = OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
           marketId = Some(
             marketId.copy(
-              primary = marketId.primary.toLowerCase(),
-              secondary = marketId.secondary.toLowerCase()
+              baseToken = marketId.baseToken.toLowerCase(),
+              quoteToken = marketId.quoteToken.toLowerCase()
             )
           )
         )
