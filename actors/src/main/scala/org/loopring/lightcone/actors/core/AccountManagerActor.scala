@@ -43,6 +43,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 // Owner: Hongyu
+//TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
 class AccountManagerActor(
     address: String
   )(
@@ -57,7 +58,6 @@ class AccountManagerActor(
     val metadataManager: MetadataManager)
     extends Actor
     with Stash
-    with RepeatedJobActor
     with ActorLogging {
   import ErrorCode._
 
@@ -71,38 +71,6 @@ class AccountManagerActor(
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
   val manager = AccountManager.default
   val accountCutoffState = new AccountCutoffStateImpl()
-
-  val tokenTTL = config.getLong("account_manager.token-ttl-in-mills")
-
-  val requestCountToReset =
-    config.getInt("account_manager.request-count-to-reset")
-
-  val resetJobDelayInSeconds =
-    config.getInt("account_manager.reset-job-delay-in-second")
-
-  val repeatedJobs = Seq(
-    Job(
-      name = "reset-token",
-      dalayInSeconds = resetJobDelayInSeconds,
-      run = () => resetTokenManager()
-    )
-  )
-
-  def resetTokenManager() = {
-    val tms = manager.getTokenManagersToReset(tokenTTL, requestCountToReset)
-    for {
-      res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
-        address,
-        tms.map(_.token)
-      )).mapAs[GetBalanceAndAllowances.Res]
-      _ = res.balanceAndAllowanceMap map {
-        case (token, ba) =>
-          manager
-            .getTokenManager(token)
-            .setBalanceAndAllowance(ba.balance, ba.allowance)
-      }
-    } yield Unit
-  }
 
   protected def ethereumQueryActor = actors.get(EthereumQueryActor.name)
   protected def marketManagerActor = actors.get(MarketManagerActor.name)
@@ -171,7 +139,7 @@ class AccountManagerActor(
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
       assert(addr == address)
       (for {
-        managers <- getTokenManagers(tokens, true)
+        managers <- getTokenManagers(tokens)
         _ = assert(tokens.size == managers.size)
         balanceAndAllowanceMap = tokens.zip(managers).toMap.map {
           case (token, manager) =>
@@ -425,8 +393,7 @@ class AccountManagerActor(
     }
 
   private def getTokenManagers(
-      tokens: Seq[String],
-      forUserRequest: Boolean = false
+      tokens: Seq[String]
     ): Future[Seq[AccountTokenManager]] = {
     val tokensWithoutMaster =
       tokens.filterNot(token => manager.hasTokenManager(token))
@@ -451,7 +418,7 @@ class AccountManagerActor(
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
         manager.getOrUpdateTokenManager(tm)
       }
-      tokenMangers = tokens.map(t => manager.getTokenManager(t, forUserRequest))
+      tokenMangers = tokens.map(manager.getTokenManager)
     } yield tokenMangers
   }
 

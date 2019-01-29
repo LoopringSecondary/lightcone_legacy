@@ -18,15 +18,13 @@ package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
 
 final private[core] class AccountManagerImpl(
     implicit
     dustEvaluator: DustOrderEvaluator,
-    orderPool: AccountOrderPool with UpdatedOrdersTracing,
-    timeProvider: TimeProvider)
+    orderPool: AccountOrderPool with UpdatedOrdersTracing)
     extends AccountManager
     with Logging {
   import OrderStatus._
@@ -34,46 +32,25 @@ final private[core] class AccountManagerImpl(
   private[core] implicit var tokens =
     Map.empty[String, AccountTokenManager]
 
-  def hasTokenManager(token: String): Boolean = tokens.synchronized {
+  def hasTokenManager(token: String): Boolean = {
     tokens.contains(token)
   }
 
-  def addTokenManager(tm: AccountTokenManager) = tokens.synchronized {
+  def addTokenManager(tm: AccountTokenManager) = {
     assert(!hasTokenManager(tm.token))
     tokens += tm.token -> tm
     tm
   }
 
-  def getTokenManager(
-      token: String,
-      forUserRequest: Boolean = false
-    ): AccountTokenManager = this.synchronized {
+  def getTokenManager(token: String): AccountTokenManager = {
     assert(hasTokenManager(token))
-    if (forUserRequest) {
-      tokens(token).requestCount += 1
-    }
     tokens(token)
   }
 
-  def getOrUpdateTokenManager(tm: AccountTokenManager): AccountTokenManager =
-    tokens.synchronized {
-      if (!hasTokenManager(tm.token))
-        tokens += tm.token -> tm
-      tokens(tm.token)
-    }
-
-  def getTokenManagersToReset(
-      ttl: Long,
-      requestCountToReset: Int
-    ): Seq[AccountTokenManager] = {
-    val currentTime = timeProvider.getTimeMillis()
-    tokens
-      .filter(
-        tm =>
-          tm._2.updatedTime + ttl <= currentTime || tm._2.requestCount >= requestCountToReset
-      )
-      .values
-      .toSeq
+  def getOrUpdateTokenManager(tm: AccountTokenManager): AccountTokenManager = {
+    if (!hasTokenManager(tm.token))
+      tokens += tm.token -> tm
+    tokens(tm.token)
   }
 
   def submitOrder(order: Matchable): Boolean = {

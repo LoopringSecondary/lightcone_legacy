@@ -32,8 +32,6 @@ import OrderStatus._
 trait AccountTokenManager {
   val token: String
   val maxNumOrders: Int
-  var updatedTime: Long
-  var requestCount: Int = 0
 
   def getBalance(): BigInt
   def getAllowance(): BigInt

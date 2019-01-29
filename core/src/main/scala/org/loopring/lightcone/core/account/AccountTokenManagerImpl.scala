@@ -18,8 +18,8 @@ package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.proto._
+
 import org.slf4s.Logging
 
 class AccountTokenManagerImpl(
@@ -28,12 +28,9 @@ class AccountTokenManagerImpl(
   )(
     implicit
     orderPool: AccountOrderPool,
-    dustEvaluator: DustOrderEvaluator,
-    timeProvider: TimeProvider)
+    dustEvaluator: DustOrderEvaluator)
     extends AccountTokenManager
     with Logging {
-
-  override var updatedTime: Long = timeProvider.getTimeMillis()
 
   case class Reservation(
       orderId: String,
@@ -74,8 +71,6 @@ class AccountTokenManagerImpl(
       balance: BigInt,
       allowance: BigInt
     ): Set[String] = this.synchronized {
-    this.requestCount = 0
-    this.updatedTime = timeProvider.getTimeMillis()
     val cursor1 =
       if (balance >= this.balance) cursor
       else {
