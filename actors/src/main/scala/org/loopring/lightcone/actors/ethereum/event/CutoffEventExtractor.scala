@@ -49,8 +49,8 @@ class CutoffEventExtractor @Inject()(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
                     cutoff = event._cutoff.longValue(),
-                    broker = event._broker,
-                    owner = event._broker
+                    broker = Address.normalizeAddress(event._broker),
+                    owner = Address.normalizeAddress(event._broker)
                   )
                 )
               case Some(event: AllOrdersCancelledByBrokerEvent.Result) =>
@@ -58,8 +58,8 @@ class CutoffEventExtractor @Inject()(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
                     cutoff = event._cutoff.longValue(),
-                    broker = event._broker,
-                    owner = event._owner
+                    broker = Address.normalizeAddress(event._broker),
+                    owner = Address.normalizeAddress(event._owner)
                   )
                 )
               case Some(
@@ -69,8 +69,8 @@ class CutoffEventExtractor @Inject()(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
                     cutoff = event._cutoff.longValue(),
-                    broker = event._broker,
-                    owner = event._owner,
+                    broker = Address.normalizeAddress(event._broker),
+                    owner = Address.normalizeAddress(event._owner),
                     marketKey = MarketKey(event._token1, event._token2).toString
                   )
                 )
@@ -79,8 +79,8 @@ class CutoffEventExtractor @Inject()(
                   CutoffEvent(
                     header = Some(header.withLogIndex(index)),
                     cutoff = event._cutoff.longValue(),
-                    broker = event._broker,
-                    owner = event._broker,
+                    broker = Address.normalizeAddress(event._broker),
+                    owner = Address.normalizeAddress(event._broker),
                     marketKey = MarketKey(event._token1, event._token2).toString
                   )
                 )

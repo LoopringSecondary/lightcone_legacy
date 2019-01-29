@@ -113,7 +113,14 @@ class BalanceChangedAddressExtractor @Inject()(
       (tokenAddresses zip tokenBalances).map(
         item => item._1.withBalance(item._2)
       ) ++
-        (ethAddress zip ethBalances).map(item => item._1.withBalance(item._2))
+        (ethAddress zip ethBalances).map(
+          item =>
+            AddressBalanceUpdated(
+              address = Address.normalizeAddress(item._1.address),
+              token = Address.normalizeAddress(item._1.token),
+              balance = item._2
+            )
+        )
     }
   }
 
