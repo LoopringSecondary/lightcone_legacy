@@ -132,7 +132,6 @@ trait OrderAwareSpec extends CommonSpec {
     // println("----UO: " + order)
     // log.debug("order: " + order)
     }
-    implicit val timeProvider = new SystemTimeProvider()
     accountManager = AccountManager.default()
 
     lrc = new AccountTokenManagerImpl(LRC)
