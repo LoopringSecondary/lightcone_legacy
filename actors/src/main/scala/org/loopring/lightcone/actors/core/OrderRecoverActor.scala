@@ -102,8 +102,6 @@ class OrderRecoverActor(
       sender ! batch // echo back to coordinator
       self ! ActorRecover.RetrieveOrders(0L)
 
-      accountShardIds = Set.empty
-      marketKeyIds = Set.empty
       batch.requestMap.foreach {
         case (_, request) => {
           if ("" != request.addressShardingEntity)
