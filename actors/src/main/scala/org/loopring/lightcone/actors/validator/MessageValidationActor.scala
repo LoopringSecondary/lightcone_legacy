@@ -63,13 +63,12 @@ class MessageValidationActor(
       val f = for {
         validateRes <- Future { validate(msg) }
         res = validateRes match {
-          case Some(validatedMsg) =>
+          case Some(validatedMsg) if validatedMsg != null =>
             if (validatedMsg != msg)
               log.debug(
                 s"request rewritten from\n\t${msg} to\n\t${validatedMsg}"
               )
-
-            Future.successful(validatedMsg)
+            validatedMsg
 
           case _ =>
             throw ErrorException(
