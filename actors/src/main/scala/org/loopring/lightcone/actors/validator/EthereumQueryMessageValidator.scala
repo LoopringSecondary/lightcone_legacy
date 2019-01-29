@@ -27,10 +27,12 @@ object EthereumQueryMessageValidator {
   val name = "ethereum_query_validator"
 }
 
-final class EthereumQueryMessageValidator()(
-  implicit metadataManager: MetadataManager,
-  val config: Config)
-  extends MessageValidator {
+final class EthereumQueryMessageValidator(
+  )(
+    implicit
+    metadataManager: MetadataManager,
+    val config: Config)
+    extends MessageValidator {
 
   def normalize(token: String): String = {
     if (metadataManager.hasSymbol(token)) {
@@ -40,7 +42,8 @@ final class EthereumQueryMessageValidator()(
     } else {
       throw ErrorException(
         code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-        message = s"unexpected token $token")
+        message = s"unexpected token $token"
+      )
     }
   }
 

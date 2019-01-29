@@ -28,19 +28,20 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.proto.{ TransferEvent => _, _ }
+import org.loopring.lightcone.proto.{TransferEvent => _, _}
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 
-class AllowanceChangedAddressExtractor @Inject() (
-  implicit val config: Config,
-  val brb: EthereumBatchCallRequestBuilder,
-  val timeout: Timeout,
-  val actors: Lookup[ActorRef],
-  val ec: ExecutionContext)
-  extends EventExtractor[AddressAllowanceUpdated] {
+class AllowanceChangedAddressExtractor @Inject()(
+    implicit
+    val config: Config,
+    val brb: EthereumBatchCallRequestBuilder,
+    val timeout: Timeout,
+    val actors: Lookup[ActorRef],
+    val ec: ExecutionContext)
+    extends EventExtractor[AddressAllowanceUpdated] {
 
   val protocolConf = config.getConfig("loopring_protocol")
   val delegateAddress = Address(protocolConf.getString("delegate-address"))
@@ -57,12 +58,14 @@ class AllowanceChangedAddressExtractor @Inject() (
             case Some(transfer: TransferEvent.Result) =>
               if (Address(receipt.to).equals(protocolAddress))
                 allowanceAddresses.append(
-                  AddressAllowanceUpdated(transfer.from, log.address))
+                  AddressAllowanceUpdated(transfer.from, log.address)
+                )
 
             case Some(approval: ApprovalEvent.Result) =>
               if (Address(approval.spender).equals(delegateAddress))
                 allowanceAddresses.append(
-                  AddressAllowanceUpdated(approval.owner, log.address))
+                  AddressAllowanceUpdated(approval.owner, log.address)
+                )
             case _ =>
           }
         }
@@ -71,7 +74,8 @@ class AllowanceChangedAddressExtractor @Inject() (
             case Some(param: ApproveFunction.Parms) =>
               if (Address(param.spender).equals(delegateAddress))
                 allowanceAddresses.append(
-                  AddressAllowanceUpdated(tx.from, tx.to))
+                  AddressAllowanceUpdated(tx.from, tx.to)
+                )
             case _ =>
           }
         }
@@ -84,7 +88,8 @@ class AllowanceChangedAddressExtractor @Inject() (
           .mapAs[BatchCallContracts.Res]
           .map(
             _.resps
-              .map(res => BigInt(Numeric.toBigInt(formatHex(res.result)))))
+              .map(res => BigInt(Numeric.toBigInt(formatHex(res.result))))
+          )
       } else {
         Future.successful(Seq.empty)
       }
@@ -94,7 +99,9 @@ class AllowanceChangedAddressExtractor @Inject() (
           AddressAllowanceUpdated(
             address = Address.normalize(item._1.address),
             token = Address.normalize(item._1.token),
-            allowance = item._2))
+            allowance = item._2
+          )
+      )
     }
   }
 

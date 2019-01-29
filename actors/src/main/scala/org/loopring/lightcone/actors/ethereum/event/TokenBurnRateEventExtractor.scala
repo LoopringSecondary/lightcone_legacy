@@ -25,10 +25,11 @@ import org.loopring.lightcone.proto.TokenBurnRateChangedEvent._
 import scala.collection.JavaConverters._
 import scala.concurrent._
 
-class TokenBurnRateEventExtractor @Inject() (
-  implicit val config: Config,
-  val ec: ExecutionContext)
-  extends EventExtractor[TokenBurnRateChangedEvent] {
+class TokenBurnRateEventExtractor @Inject()(
+    implicit
+    val config: Config,
+    val ec: ExecutionContext)
+    extends EventExtractor[TokenBurnRateChangedEvent] {
 
   val rateMap = config
     .getConfigList("loopring_protocol.burn-rate-table.tiers")
@@ -59,7 +60,11 @@ class TokenBurnRateEventExtractor @Inject() (
                       burnRate = Some(
                         BurnRate(
                           forMarket = rates._1.doubleValue() / base,
-                          forP2P = rates._2.doubleValue() / base))))
+                          forP2P = rates._2.doubleValue() / base
+                        )
+                      )
+                    )
+                  )
                 case _ =>
                   None
               }

@@ -98,7 +98,8 @@ object Address {
       case _: Throwable =>
         throw ErrorException(
           ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-          message = s"invalid ethereum address:$address")
+          message = s"invalid ethereum address:$address"
+        )
     }
 
 }

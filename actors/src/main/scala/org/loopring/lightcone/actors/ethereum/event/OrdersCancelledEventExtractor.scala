@@ -27,13 +27,15 @@ import org.loopring.lightcone.proto.{
 
 import scala.concurrent._
 
-class OrdersCancelledEventExtractor @Inject() (
-  implicit val ec: ExecutionContext,
-  config: Config)
-  extends EventExtractor[POrdersCancelledEvent] {
+class OrdersCancelledEventExtractor @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    config: Config)
+    extends EventExtractor[POrdersCancelledEvent] {
 
   val orderCancelAddress = Address(
-    config.getString("loopring_protocol.order-cancel-address")).toString()
+    config.getString("loopring_protocol.order-cancel-address")
+  ).toString()
 
   def extract(block: RawBlockData): Future[Seq[POrdersCancelledEvent]] =
     Future {
@@ -44,17 +46,19 @@ class OrdersCancelledEventExtractor @Inject() (
             case (log, index) =>
               loopringProtocolAbi
                 .unpackEvent(log.data, log.topics.toArray) match {
-                  case Some(event: OrdersCancelledEvent.Result) =>
-                    Some(
-                      POrdersCancelledEvent(
-                        header = Some(header.withLogIndex(index)),
-                        broker = Address.normalize(event.address),
-                        orderHashes = event._orderHashes,
-                        owner = Address.normalize(event.address)))
-                  case _ =>
-                    None
+                case Some(event: OrdersCancelledEvent.Result) =>
+                  Some(
+                    POrdersCancelledEvent(
+                      header = Some(header.withLogIndex(index)),
+                      broker = Address.normalize(event.address),
+                      orderHashes = event._orderHashes,
+                      owner = Address.normalize(event.address)
+                    )
+                  )
+                case _ =>
+                  None
 
-                }
+              }
           }.filter(_.nonEmpty).map(_.get)
         case _ => Seq.empty
       }
