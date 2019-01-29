@@ -91,15 +91,14 @@ object Address {
     }
   }
 
-  def normalizeAddress(address: String): String =
+  def normalize(address: String): String =
     try {
       Address(address).toString
     } catch {
       case _: Throwable =>
         throw ErrorException(
           ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-          message = s"invalid ethereum address:$address"
-        )
+          message = s"invalid ethereum address:$address")
     }
 
 }

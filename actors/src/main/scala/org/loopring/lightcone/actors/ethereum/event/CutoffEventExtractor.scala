@@ -21,19 +21,17 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.core.base.MarketKey
-import org.loopring.lightcone.proto.{CutoffEvent, RawBlockData}
+import org.loopring.lightcone.proto.{ CutoffEvent, RawBlockData }
 
 import scala.concurrent._
 
-class CutoffEventExtractor @Inject()(
-    implicit
-    val ec: ExecutionContext,
-    val config: Config)
-    extends EventExtractor[CutoffEvent] {
+class CutoffEventExtractor @Inject() (
+  implicit val ec: ExecutionContext,
+  val config: Config)
+  extends EventExtractor[CutoffEvent] {
 
   val orderCancelAddress = Address(
-    config.getString("loopring_protocol.order-cancel-address")
-  ).toString()
+    config.getString("loopring_protocol.order-cancel-address")).toString()
 
   def extract(block: RawBlockData): Future[Seq[CutoffEvent]] = Future {
     (block.txs zip block.receipts).flatMap {
@@ -44,49 +42,41 @@ class CutoffEventExtractor @Inject()(
           case (log, index) =>
             loopringProtocolAbi
               .unpackEvent(log.data, log.topics.toArray) match {
-              case Some(event: AllOrdersCancelledEvent.Result) =>
-                Some(
-                  CutoffEvent(
-                    header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
-                    broker = Address.normalizeAddress(event._broker),
-                    owner = Address.normalizeAddress(event._broker)
-                  )
-                )
-              case Some(event: AllOrdersCancelledByBrokerEvent.Result) =>
-                Some(
-                  CutoffEvent(
-                    header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
-                    broker = Address.normalizeAddress(event._broker),
-                    owner = Address.normalizeAddress(event._owner)
-                  )
-                )
-              case Some(
+                case Some(event: AllOrdersCancelledEvent.Result) =>
+                  Some(
+                    CutoffEvent(
+                      header = Some(header.withLogIndex(index)),
+                      cutoff = event._cutoff.longValue(),
+                      broker = Address.normalize(event._broker),
+                      owner = Address.normalize(event._broker)))
+                case Some(event: AllOrdersCancelledByBrokerEvent.Result) =>
+                  Some(
+                    CutoffEvent(
+                      header = Some(header.withLogIndex(index)),
+                      cutoff = event._cutoff.longValue(),
+                      broker = Address.normalize(event._broker),
+                      owner = Address.normalize(event._owner)))
+                case Some(
                   event: AllOrdersCancelledForTradingPairByBrokerEvent.Result
                   ) =>
-                Some(
-                  CutoffEvent(
-                    header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
-                    broker = Address.normalizeAddress(event._broker),
-                    owner = Address.normalizeAddress(event._owner),
-                    marketKey = MarketKey(event._token1, event._token2).toString
-                  )
-                )
-              case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
-                Some(
-                  CutoffEvent(
-                    header = Some(header.withLogIndex(index)),
-                    cutoff = event._cutoff.longValue(),
-                    broker = Address.normalizeAddress(event._broker),
-                    owner = Address.normalizeAddress(event._broker),
-                    marketKey = MarketKey(event._token1, event._token2).toString
-                  )
-                )
-              case _ =>
-                None
-            }
+                  Some(
+                    CutoffEvent(
+                      header = Some(header.withLogIndex(index)),
+                      cutoff = event._cutoff.longValue(),
+                      broker = Address.normalize(event._broker),
+                      owner = Address.normalize(event._owner),
+                      marketKey = MarketKey(event._token1, event._token2).toString))
+                case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
+                  Some(
+                    CutoffEvent(
+                      header = Some(header.withLogIndex(index)),
+                      cutoff = event._cutoff.longValue(),
+                      broker = Address.normalize(event._broker),
+                      owner = Address.normalize(event._broker),
+                      marketKey = MarketKey(event._token1, event._token2).toString))
+                case _ =>
+                  None
+              }
         }.filter(_.nonEmpty).map(_.get)
       case _ => Seq.empty
     }

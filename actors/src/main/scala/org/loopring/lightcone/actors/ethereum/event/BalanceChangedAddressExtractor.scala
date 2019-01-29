@@ -28,18 +28,17 @@ import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.ethereum.data._
-import org.loopring.lightcone.proto.{TransferEvent => _, _}
+import org.loopring.lightcone.proto.{ TransferEvent => _, _ }
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 
-class BalanceChangedAddressExtractor @Inject()(
-    implicit
-    brb: EthereumBatchCallRequestBuilder,
-    actors: Lookup[ActorRef],
-    timeout: Timeout,
-    val ec: ExecutionContext)
-    extends EventExtractor[AddressBalanceUpdated] {
+class BalanceChangedAddressExtractor @Inject() (
+  implicit brb: EthereumBatchCallRequestBuilder,
+  actors: Lookup[ActorRef],
+  timeout: Timeout,
+  val ec: ExecutionContext)
+  extends EventExtractor[AddressBalanceUpdated] {
 
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
@@ -48,29 +47,24 @@ class BalanceChangedAddressExtractor @Inject()(
     (block.txs zip block.receipts).foreach {
       case (tx, receipt) =>
         balanceAddresses.append(
-          AddressBalanceUpdated(tx.from, Address.ZERO.toString())
-        )
+          AddressBalanceUpdated(tx.from, Address.ZERO.toString()))
         if (isSucceed(receipt.status) &&
-            BigInt(Numeric.toBigInt(formatHex(tx.value))) > 0) {
+          BigInt(Numeric.toBigInt(formatHex(tx.value))) > 0) {
           balanceAddresses.append(
-            AddressBalanceUpdated(tx.to, Address.ZERO.toString())
-          )
+            AddressBalanceUpdated(tx.to, Address.ZERO.toString()))
         }
         receipt.logs.foreach(log => {
           wethAbi.unpackEvent(log.data, log.topics.toArray) match {
             case Some(transfer: TransferEvent.Result) =>
               balanceAddresses.append(
                 AddressBalanceUpdated(transfer.from, log.address),
-                AddressBalanceUpdated(transfer.receiver, log.address)
-              )
+                AddressBalanceUpdated(transfer.receiver, log.address))
             case Some(deposit: DepositEvent.Result) =>
               balanceAddresses.append(
-                AddressBalanceUpdated(deposit.dst, log.address)
-              )
+                AddressBalanceUpdated(deposit.dst, log.address))
             case Some(withdrawal: WithdrawalEvent.Result) =>
               balanceAddresses.append(
-                AddressBalanceUpdated(withdrawal.src, log.address)
-              )
+                AddressBalanceUpdated(withdrawal.src, log.address))
             case _ =>
           }
         })
@@ -79,8 +73,7 @@ class BalanceChangedAddressExtractor @Inject()(
       .+:(block.miner)
       .map(
         addr =>
-          AddressBalanceUpdated(address = addr, token = Address.ZERO.toString())
-      )
+          AddressBalanceUpdated(address = addr, token = Address.ZERO.toString()))
     val distEvents = (balanceAddresses ++ miners).distinct
     val (ethAddress, tokenAddresses) =
       distEvents.partition(addr => Address(addr.token).isZero)
@@ -91,36 +84,30 @@ class BalanceChangedAddressExtractor @Inject()(
           .mapAs[BatchCallContracts.Res]
           .map(
             _.resps
-              .map(res => BigInt(Numeric.toBigInt(formatHex(res.result))))
-          )
+              .map(res => BigInt(Numeric.toBigInt(formatHex(res.result)))))
       } else {
         Future.successful(Seq.empty)
       }
       ethBalances <- if (ethAddress.nonEmpty) {
         (ethereumAccessor ? BatchGetEthBalance
           .Req(
-            ethAddress.map(addr => EthGetBalance.Req(address = addr.address))
-          ))
+            ethAddress.map(addr => EthGetBalance.Req(address = addr.address))))
           .mapAs[BatchGetEthBalance.Res]
           .map(
             _.resps
-              .map(res => BigInt(Numeric.toBigInt(formatHex(res.result))))
-          )
+              .map(res => BigInt(Numeric.toBigInt(formatHex(res.result)))))
       } else {
         Future.successful(Seq.empty)
       }
     } yield {
       (tokenAddresses zip tokenBalances).map(
-        item => item._1.withBalance(item._2)
-      ) ++
+        item => item._1.withBalance(item._2)) ++
         (ethAddress zip ethBalances).map(
           item =>
             AddressBalanceUpdated(
-              address = Address.normalizeAddress(item._1.address),
-              token = Address.normalizeAddress(item._1.token),
-              balance = item._2
-            )
-        )
+              address = Address.normalize(item._1.address),
+              token = Address.normalize(item._1.token),
+              balance = item._2))
     }
   }
 

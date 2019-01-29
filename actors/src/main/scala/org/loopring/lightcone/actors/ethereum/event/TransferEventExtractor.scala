@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.ethereum.event
 import com.google.inject.Inject
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data._
-import org.loopring.lightcone.proto.{TransferEvent => PTransferEvent, _}
+import org.loopring.lightcone.proto.{ TransferEvent => PTransferEvent, _ }
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.core.base.MetadataManager
 import org.web3j.utils.Numeric
@@ -27,15 +27,13 @@ import org.web3j.utils.Numeric
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 
-class TransferEventExtractor @Inject()(
-    implicit
-    val ec: ExecutionContext,
-    val metadataManager: MetadataManager)
-    extends EventExtractor[PTransferEvent] {
+class TransferEventExtractor @Inject() (
+  implicit val ec: ExecutionContext,
+  val metadataManager: MetadataManager)
+  extends EventExtractor[PTransferEvent] {
 
   val wethAddress = Address(
-    metadataManager.getTokenBySymbol("weth").get.meta.address
-  )
+    metadataManager.getTokenBySymbol("weth").get.meta.address)
 
   def extract(block: RawBlockData): Future[Seq[PTransferEvent]] = Future {
     val transfers = ListBuffer.empty[PTransferEvent]
@@ -54,9 +52,7 @@ class TransferEventExtractor @Inject()(
                       from = transfer.from,
                       to = transfer.receiver,
                       token = log.address,
-                      amount = transfer.amount
-                    )
-                  )
+                      amount = transfer.amount))
                 case Some(withdraw: WithdrawalEvent.Result) =>
                   transfers.append(
                     PTransferEvent(
@@ -64,16 +60,13 @@ class TransferEventExtractor @Inject()(
                       from = withdraw.src,
                       to = log.address,
                       token = log.address,
-                      amount = withdraw.wad
-                    ),
+                      amount = withdraw.wad),
                     PTransferEvent(
                       Some(header.withLogIndex(index)),
                       from = log.address,
                       to = withdraw.src,
                       token = Address.ZERO.toString(),
-                      amount = withdraw.wad
-                    )
-                  )
+                      amount = withdraw.wad))
                 case Some(deposit: DepositEvent.Result) =>
                   transfers.append(
                     PTransferEvent(
@@ -81,31 +74,25 @@ class TransferEventExtractor @Inject()(
                       from = log.address,
                       to = deposit.dst,
                       token = log.address,
-                      amount = deposit.wad
-                    ),
+                      amount = deposit.wad),
                     PTransferEvent(
                       Some(header.withLogIndex(index)),
                       from = deposit.dst,
                       to = log.address,
                       token = Address.ZERO.toString(),
-                      amount = deposit.wad
-                    )
-                  )
+                      amount = deposit.wad))
                 case _ =>
               }
           }
           if (txValue > 0 && !Address(
-                tx.to
-              ).equals(wethAddress)) {
+            tx.to).equals(wethAddress)) {
             transfers.append(
               PTransferEvent(
                 header = Some(header),
                 from = tx.from,
                 to = tx.to,
                 token = Address.ZERO.toString(),
-                amount = txValue
-              )
-            )
+                amount = txValue))
           }
         } else {
           wethAbi.unpackFunctionInput(tx.input) match {
@@ -116,9 +103,7 @@ class TransferEventExtractor @Inject()(
                   from = tx.from,
                   to = transfer.to,
                   token = tx.to,
-                  amount = transfer.amount
-                )
-              )
+                  amount = transfer.amount))
             case Some(transferFrom: TransferFromFunction.Parms) =>
               transfers.append(
                 PTransferEvent(
@@ -126,9 +111,7 @@ class TransferEventExtractor @Inject()(
                   from = transferFrom.txFrom,
                   to = transferFrom.to,
                   token = tx.to,
-                  amount = transferFrom.amount
-                )
-              )
+                  amount = transferFrom.amount))
             case Some(_: DepositFunction.Parms) =>
               transfers.append(
                 PTransferEvent(
@@ -136,16 +119,13 @@ class TransferEventExtractor @Inject()(
                   from = tx.to,
                   to = tx.from,
                   token = tx.to,
-                  amount = txValue
-                ),
+                  amount = txValue),
                 PTransferEvent(
                   header = Some(header),
                   from = tx.from,
                   to = tx.to,
                   token = Address.ZERO.toString(),
-                  amount = txValue
-                )
-              )
+                  amount = txValue))
             case Some(withdraw: WithdrawFunction.Parms) =>
               transfers.append(
                 PTransferEvent(
@@ -153,16 +133,13 @@ class TransferEventExtractor @Inject()(
                   from = tx.from,
                   to = tx.to,
                   token = tx.to,
-                  amount = withdraw.wad
-                ),
+                  amount = withdraw.wad),
                 PTransferEvent(
                   header = Some(header),
                   from = tx.to,
                   to = tx.from,
                   token = Address.ZERO.toString(),
-                  amount = withdraw.wad
-                )
-              )
+                  amount = withdraw.wad))
             case _ =>
               if (txValue > 0) {
                 transfers.append(
@@ -171,9 +148,7 @@ class TransferEventExtractor @Inject()(
                     from = tx.from,
                     to = tx.to,
                     token = Address.ZERO.toString(),
-                    amount = txValue
-                  )
-                )
+                    amount = txValue))
                 if (Address(tx.to).equals(wethAddress)) {
                   transfers.append(
                     PTransferEvent(
@@ -181,9 +156,7 @@ class TransferEventExtractor @Inject()(
                       from = tx.to,
                       to = tx.from,
                       token = tx.to,
-                      amount = txValue
-                    )
-                  )
+                      amount = txValue))
                 }
               }
           }
@@ -193,20 +166,16 @@ class TransferEventExtractor @Inject()(
       event =>
         Seq(
           event.copy(
-            from = Address.normalizeAddress(event.from),
-            to = Address.normalizeAddress(event.to),
-            token = Address.normalizeAddress(event.token),
-            owner = Address.normalizeAddress(event.from),
-            header = event.header.map(_.withEventIndex(0))
-          ),
+            from = Address.normalize(event.from),
+            to = Address.normalize(event.to),
+            token = Address.normalize(event.token),
+            owner = Address.normalize(event.from),
+            header = event.header.map(_.withEventIndex(0))),
           event.copy(
-            from = Address.normalizeAddress(event.from),
-            to = Address.normalizeAddress(event.to),
-            token = Address.normalizeAddress(event.token),
+            from = Address.normalize(event.from),
+            to = Address.normalize(event.to),
+            token = Address.normalize(event.token),
             owner = event.to,
-            header = event.header.map(_.withEventIndex(1))
-          )
-        )
-    )
+            header = event.header.map(_.withEventIndex(1)))))
   }
 }

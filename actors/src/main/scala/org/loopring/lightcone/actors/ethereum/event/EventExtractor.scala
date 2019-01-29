@@ -18,10 +18,10 @@ package org.loopring.lightcone.actors.ethereum.event
 
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.lib.data._
-import org.loopring.lightcone.ethereum.data.{formatHex, Address}
+import org.loopring.lightcone.ethereum.data.{ formatHex, Address }
 import org.web3j.utils.Numeric
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait EventExtractor[R] {
 
@@ -30,14 +30,13 @@ trait EventExtractor[R] {
   def extract(block: RawBlockData): Future[Seq[R]]
 
   def getEventHeader(
-      tx: Transaction,
-      receipt: TransactionReceipt,
-      blockTime: String
-    ) =
+    tx: Transaction,
+    receipt: TransactionReceipt,
+    blockTime: String) =
     EventHeader(
       txHash = tx.hash,
-      txFrom = Address.normalizeAddress(tx.from),
-      txTo = Address.normalizeAddress(tx.to),
+      txFrom = Address.normalize(tx.from),
+      txTo = Address.normalize(tx.to),
       txValue = BigInt(Numeric.toBigInt(formatHex(tx.value))),
       txIndex = Numeric.toBigInt(formatHex(tx.transactionIndex)).intValue(),
       txStatus = getStatus(receipt.status),
@@ -46,8 +45,7 @@ trait EventExtractor[R] {
       blockNumber = Numeric.toBigInt(formatHex(tx.blockNumber)).longValue(),
       gasPrice = Numeric.toBigInt(formatHex(tx.gasPrice)).longValue(),
       gasLimit = Numeric.toBigInt(formatHex(tx.gas)).intValue(),
-      gasUsed = Numeric.toBigInt(formatHex(receipt.gasUsed)).intValue()
-    )
+      gasUsed = Numeric.toBigInt(formatHex(receipt.gasUsed)).intValue())
 
   def getStatus(status: String): TxStatus = {
     if (isSucceed(status)) TxStatus.TX_STATUS_SUCCESS
