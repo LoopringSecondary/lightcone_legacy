@@ -18,10 +18,12 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.ethereum.ethereum._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
+import org.web3j.utils._
 
 import scala.concurrent.ExecutionContext
 
@@ -44,6 +46,11 @@ final class CancelOrderValidator(
         marketId = MarketId(order.tokenS, order.tokenB)
         _ = metadataManager.assertMarketIdIsActive(marketId)
       } yield {
+        if (!checkSign(req))
+          throw ErrorException(
+            ErrorCode.ERR_ORDER_VALIDATION_INVALID_SIG,
+            s"not authorized to cancel this order $req.id"
+          )
         req.copy(
           owner = Address.normalizeAddress(req.owner),
           status = OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
@@ -58,8 +65,18 @@ final class CancelOrderValidator(
     case _ => throw ErrorException(ErrorCode.ERR_INVALID_ARGUMENT)
   }
 
-  //TODO:impl it
+  //TODO:针对具体什么签名还未确定，目前只有单个订单，采用订单的签名简单测试
   private def checkSign(req: CancelOrder.Req): Boolean = {
-    true
+    val sigBytes = Numeric.hexStringToByteArray(req.sig)
+    val v = sigBytes(2)
+    val r = sigBytes.slice(3, 35)
+    val s = sigBytes.slice(35, 67)
+    verifyEthereumSignature(
+      Numeric.hexStringToByteArray(req.id),
+      r,
+      s,
+      v,
+      Address(req.owner)
+    )
   }
 }

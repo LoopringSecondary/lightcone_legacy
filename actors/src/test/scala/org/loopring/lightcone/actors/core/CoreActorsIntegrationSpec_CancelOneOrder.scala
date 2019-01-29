@@ -61,6 +61,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
         id = rawOrder.hash,
         owner = rawOrder.owner,
         status = OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
+        sig = rawOrder.getParams.sig,
         marketId = Some(MarketId(rawOrder.tokenS, rawOrder.tokenB))
       )
 
