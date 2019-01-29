@@ -5,6 +5,6 @@ package org.loopring.lightcone.proto.rpcdata;
 
 
 message GetOrderbook{
-    message Req {}
-    message Res {}
+    message Params {}
+    message Result {}
 }

@@ -20,12 +20,12 @@ import org.loopring.lightcone.proto._
 
 object RpcDataConversions {
   implicit def convertGetOrderbookReq(
-      r: rpcdata.GetOrderbook.Req
+      r: rpcdata.GetOrderbook.Params
     ): GetOrderbook.Req =
     null
 
   implicit def convertGetOrderbookRes(
       r: GetOrderbook.Res
-    ): rpcdata.GetOrderbook.Res =
+    ): rpcdata.GetOrderbook.Result =
     null
 }
