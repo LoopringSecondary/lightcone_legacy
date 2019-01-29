@@ -28,11 +28,11 @@ class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
   def matchOrders(
       taker: Matchable,
       maker: Matchable,
-      minFiatValue: Double = 0
+      minRequiredIncome: Double = 0
     ): Either[ErrorCode, MatchableRing] = {
     val ringOpt = makeRing(maker, taker)
     ringOpt match {
-      case Right(ring) if !rie.isProfitable(ring, minFiatValue) =>
+      case Right(ring) if !rie.isProfitable(ring, minRequiredIncome) =>
         Left(ERR_MATCHING_INCOME_TOO_SMALL)
       case other => other
     }

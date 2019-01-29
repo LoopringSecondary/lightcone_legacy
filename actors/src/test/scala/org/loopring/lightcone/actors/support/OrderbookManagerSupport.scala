@@ -28,8 +28,11 @@ import org.testcontainers.containers.ContainerLaunchException
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
 
-trait OrderbookManagerSupport extends MetadataManagerSupport {
-  my: CommonSpec =>
+trait OrderbookManagerSupport
+    extends MetadataManagerSupport
+    with DatabaseModuleSupport
+    with MarketManagerSupport {
+  my: CommonSpec with EthereumSupport =>
 
   def startOrderbookSupport() = {
     actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)
