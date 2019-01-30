@@ -21,7 +21,7 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.proto._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent._
 
 // Owner: Hongyu
 object OrderbookManagerMessageValidator {
