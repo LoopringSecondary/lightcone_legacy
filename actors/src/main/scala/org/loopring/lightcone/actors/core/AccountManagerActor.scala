@@ -148,12 +148,10 @@ class AccountManagerActor(
               id = raworder.hash,
               marketId = Some(MarketId(raworder.tokenS, raworder.tokenB))
             )
-            for {
-              _ <- dbModule.orderService.updateOrderStatus(
-                raworder.hash,
-                status
-              )
-            } yield Unit
+            dbModule.orderService.updateOrderStatus(raworder.hash, status).map {
+              _ =>
+                ActorRecover.OrderRecoverResult(raworder.hash, true)
+            }
           case _ =>
             submitOrder(raworder).map { _ =>
               ActorRecover.OrderRecoverResult(raworder.hash, true)
