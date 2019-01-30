@@ -84,19 +84,12 @@ class AccountManagerActor(
 
   def initialReceive: Receive = {
     case Notify("initialize", _) =>
-      val batchCutoffReq = BatchGetCutoffs.Req(
-        (metadataManager.getValidMarketIds map {
+      val batchCutoffReq =
+        BatchGetCutoffs.Req((metadataManager.getValidMarketIds map {
           case (marketKey, marketId) =>
-            GetCutoff.Req(
-              broker = address,
-              owner = address,
-              marketKey = marketKey
-            )
-        }).toSeq :+ GetCutoff.Req(
-          broker = address,
-          owner = address
-        )
-      )
+            GetCutoff
+              .Req(broker = address, owner = address, marketKey = marketKey)
+        }).toSeq :+ GetCutoff.Req(broker = address, owner = address))
 
       val syncCutoff = for {
         res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
@@ -133,7 +126,7 @@ class AccountManagerActor(
 
     case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
       submitOrder(xraworder).map { _ =>
-        ActorRecover.OrderRecoverResult(xraworder.id, true)
+        ActorRecover.OrderRecoverResult(xraworder.hash, true)
       }.sendTo(sender)
 
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
@@ -173,9 +166,10 @@ class AccountManagerActor(
           .mapAs[RawOrder]
         resOrder <- (resRawOrder.getState.status match {
           case STATUS_PENDING_ACTIVE =>
-            val order: Order = resRawOrder
-            Future.successful(order)
-          case _ => submitOrder(resRawOrder)
+            Future.successful(resRawOrder.toOrder)
+
+          case _ =>
+            submitOrder(resRawOrder)
         }).mapAs[Order]
       } yield SubmitOrder.Res(Some(resOrder))) sendTo sender
 
@@ -266,7 +260,7 @@ class AccountManagerActor(
   }
 
   private def submitOrder(rawOrder: RawOrder): Future[Order] = {
-    val order: Order = rawOrder
+    val order = rawOrder.toOrder
     val matchable: Matchable = order
     log.debug(s"### submitOrder ${order}")
     for {
