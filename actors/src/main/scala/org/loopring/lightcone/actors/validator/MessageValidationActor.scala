@@ -61,19 +61,15 @@ class MessageValidationActor(
   override def receive: Receive = {
     case msg =>
       val f = for {
-        //todo:需要测试，可能有更简单的写法
         validatedMsg <- validate(msg).getOrElse {
-          throw ErrorException(
-            ERR_UNEXPECTED_ACTOR_MSG,
-            s"unexpected msg of ${msg.getClass.getName}"
-          )
+          Future {
+            throw ErrorException(
+              ERR_UNEXPECTED_ACTOR_MSG,
+              s"unexpected msg of ${msg.getClass.getName}"
+            )
+          }
         }
-        _ = if (validatedMsg == null)
-          throw ErrorException(
-            ERR_UNEXPECTED_ACTOR_MSG,
-            s"unexpected msg of ${msg.getClass.getName}"
-          )
-        else if (validatedMsg != msg)
+        _ = if (validatedMsg != msg)
           log.debug(
             s"request rewritten from\n\t${msg} to\n\t${validatedMsg}"
           )
