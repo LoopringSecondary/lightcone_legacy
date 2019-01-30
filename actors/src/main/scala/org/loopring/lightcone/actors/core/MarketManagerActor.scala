@@ -342,7 +342,7 @@ class MarketManagerActor(
   }
 
   def recoverOrder(xraworder: RawOrder): Future[Any] =
-    submitOrder(xraworder)
+    submitOrder(xraworder.toOrder)
 
   def syncGasPrice(): Future[Unit] =
     for {
