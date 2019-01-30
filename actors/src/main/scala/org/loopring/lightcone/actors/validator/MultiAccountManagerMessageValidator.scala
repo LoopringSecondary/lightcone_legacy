@@ -33,10 +33,11 @@ object MultiAccountManagerMessageValidator {
 
 // This class can be deleted in the future.
 final class MultiAccountManagerMessageValidator(
-  implicit val config: Config,
-  timeProvider: TimeProvider,
-  metadataManager: MetadataManager)
-  extends MessageValidator {
+    implicit
+    val config: Config,
+    timeProvider: TimeProvider,
+    metadataManager: MetadataManager)
+    extends MessageValidator {
 
   import OrderStatus._
 
@@ -54,7 +55,8 @@ final class MultiAccountManagerMessageValidator(
     } else {
       throw ErrorException(
         code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
-        message = s"unexpected token $token")
+        message = s"unexpected token $token"
+      )
     }
   }
 
@@ -66,19 +68,24 @@ final class MultiAccountManagerMessageValidator(
         marketId = Some(
           marketId.copy(
             baseToken = marketId.baseToken.toLowerCase(),
-            quoteToken = marketId.quoteToken.toLowerCase())))
+            quoteToken = marketId.quoteToken.toLowerCase()
+          )
+        )
+      )
 
     case req: GetBalanceAndAllowances.Req =>
       req.copy(
         address = Address.normalize(req.address),
-        tokens = req.tokens.map(normalize))
+        tokens = req.tokens.map(normalize)
+      )
 
     case req @ SubmitOrder.Req(Some(order)) =>
       orderValidator.validate(order) match {
         case Left(errorCode) =>
           throw ErrorException(
             errorCode,
-            message = s"invalid order in SubmitOrder.Req:$order")
+            message = s"invalid order in SubmitOrder.Req:$order"
+          )
         case Right(rawOrder) =>
           val marketId = MarketId(rawOrder.tokenS, rawOrder.tokenB)
           metadataManager.assertMarketIdIsActive(marketId)
@@ -89,7 +96,8 @@ final class MultiAccountManagerMessageValidator(
           val state = RawOrder.State(
             createdAt = now,
             updatedAt = now,
-            status = STATUS_NEW)
+            status = STATUS_NEW
+          )
 
           req.withRawOrder(
             rawOrder.copy(
@@ -103,18 +111,24 @@ final class MultiAccountManagerMessageValidator(
                   broker = rawOrder.getParams.broker.toLowerCase(),
                   orderInterceptor =
                     rawOrder.getParams.orderInterceptor.toLowerCase(),
-                  wallet = rawOrder.getParams.wallet.toLowerCase())),
+                  wallet = rawOrder.getParams.wallet.toLowerCase()
+                )
+              ),
               feeParams = Some(
                 rawOrder.getFeeParams.copy(
                   tokenFee = Address.normalize(rawOrder.getFeeParams.tokenFee),
                   tokenRecipient =
-                    rawOrder.getFeeParams.tokenRecipient.toLowerCase())),
+                    rawOrder.getFeeParams.tokenRecipient.toLowerCase()
+                )
+              ),
               state = Some(state),
               marketKey = marketKey,
               marketShard = MarketManagerActor.getEntityId(marketId).toInt,
               accountShard = MultiAccountManagerActor
                 .getEntityId(order.owner, numOfShards)
-                .toInt))
+                .toInt
+            )
+          )
       }
   }
 }
