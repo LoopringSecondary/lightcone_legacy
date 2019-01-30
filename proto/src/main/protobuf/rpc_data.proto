@@ -5,6 +5,9 @@ package org.loopring.lightcone.proto.rpcdata;
 
 
 message GetOrderbook{
-    message Params {}
-    message Result {}
+    message Params {
+       int32 level = 1;
+       int32 size = 2;
+       string market =3;
+    }
 }

@@ -22,9 +22,9 @@ import org.loopring.lightcone.proto._
 
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
-  method("get_orderbook")
+  method("get_order_book")
     .accepts[rpcdata.GetOrderbook.Params, GetOrderbook.Req]
-    .replies[GetOrderbook.Res, rpcdata.GetOrderbook.Result]
+    .replies[GetOrderbook.Res]
 
   method("submit_order") //
     .accepts[SubmitOrder.Req] //

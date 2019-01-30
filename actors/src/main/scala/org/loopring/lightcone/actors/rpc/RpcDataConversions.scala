@@ -21,11 +21,13 @@ import org.loopring.lightcone.proto._
 object RpcDataConversions {
   implicit def convertGetOrderbookReq(
       r: rpcdata.GetOrderbook.Params
-    ): GetOrderbook.Req =
-    null
+    ): GetOrderbook.Req ={
+    val tokens = r.market.split("-")
+      GetOrderbook.Req(
+        level = r.level,
+        size = r.size,
+        marketId = Some()
+      )
+  }
 
-  implicit def convertGetOrderbookRes(
-      r: GetOrderbook.Res
-    ): rpcdata.GetOrderbook.Result =
-    null
 }
