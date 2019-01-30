@@ -146,10 +146,10 @@ object Dispatchers {
       actors: Lookup[ActorRef]
     )(
       implicit
-      extractor: EventExtractor[Ring],
+      extractor: EventExtractor[PersistRings.Req],
       ec: ExecutionContext)
-      extends NameBasedEventDispatcher[Ring](
-        names = Seq(""),
+      extends NameBasedEventDispatcher[PersistRings.Req](
+        names = Seq(EventPersistenceActor.name),
         actors
       )
 
@@ -157,10 +157,10 @@ object Dispatchers {
       actors: Lookup[ActorRef]
     )(
       implicit
-      extractor: EventExtractor[Trade],
+      extractor: EventExtractor[PersistTrades.Req],
       ec: ExecutionContext)
-      extends NameBasedEventDispatcher[Trade](
-        names = Seq(""),
+      extends NameBasedEventDispatcher[PersistTrades.Req](
+        names = Seq(EventPersistenceActor.name),
         actors
       )
 

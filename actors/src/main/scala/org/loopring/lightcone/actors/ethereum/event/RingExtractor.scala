@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
 import org.loopring.lightcone.core.base.MetadataManager
-import org.loopring.lightcone.proto.{RawBlockData, Ring}
+import org.loopring.lightcone.proto.{PersistRings, RawBlockData, Ring, Trade}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,11 +27,11 @@ class RingExtractor @Inject()(
     extractor: TradeExtractor,
     metadataManager: MetadataManager,
     val ec: ExecutionContext)
-    extends EventExtractor[Ring] {
+    extends EventExtractor[PersistRings.Req] {
 
-  def extract(block: RawBlockData): Future[Seq[Ring]] = {
-    extractor.extract(block).map { trades =>
-      trades
+  def extract(block: RawBlockData): Future[Seq[PersistRings.Req]] = {
+    extractor.extract(block).map(_.flatMap(_.trades)).map { trades =>
+      val rings = trades
         .groupBy(trade => trade.ringHash + trade.ringIndex)
         .values
         .map { trades =>
@@ -47,6 +47,7 @@ class RingExtractor @Inject()(
           )
         }
         .toSeq
+      Seq(PersistRings.Req(rings = rings))
     }
   }
 }

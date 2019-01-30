@@ -34,13 +34,13 @@ class TradeExtractor @Inject()(
     extractor: RingMinedEventExtractor,
     metadataManager: MetadataManager,
     val ec: ExecutionContext)
-    extends EventExtractor[Trade] {
+    extends EventExtractor[PersistTrades.Req] {
 
   implicit val ringBatchContext = RingBatchContext(
     lrcAddress = metadataManager.getTokenBySymbol("lrc").get.meta.address
   )
 
-  def extract(block: RawBlockData): Future[Seq[Trade]] = {
+  def extract(block: RawBlockData): Future[Seq[PersistTrades.Req]] = {
     for {
       rings <- extractor.extract(block).map { rings =>
         rings.filter(
@@ -50,7 +50,7 @@ class TradeExtractor @Inject()(
       }
       ringBatches = extractOrders(block)
       trades = extractTrades(rings, ringBatches)
-    } yield trades
+    } yield Seq(PersistTrades.Req(trades))
   }
 
   private def extractOrders(block: RawBlockData): Map[String, RingBatch] = {
@@ -91,7 +91,7 @@ class TradeExtractor @Inject()(
             .find(order => fill.orderHash.equalsIgnoreCase(order.hash))
             .get
           Trade(
-            owner = Address.normalizeAddress(fill.owner),
+            owner = Address.normalize(fill.owner),
             orderHash = fill.orderHash,
             ringHash = fill.ringHash,
             ringIndex = fill.ringIndex,
@@ -99,28 +99,26 @@ class TradeExtractor @Inject()(
             txHash = fill.header.get.txHash,
             amountS = fill.filledAmountS,
             amountB = _fill.filledAmountS,
-            tokenS = Address.normalizeAddress(fill.tokenS),
-            tokenB = Address.normalizeAddress(_fill.tokenS),
+            tokenS = Address.normalize(fill.tokenS),
+            tokenB = Address.normalize(_fill.tokenS),
             marketKey = marketKey,
             split = fill.split,
             fee = Some(
               Trade.Fee(
-                tokenFee =
-                  Address.normalizeAddress(order.feeParams.get.tokenFee),
+                tokenFee = Address.normalize(order.feeParams.get.tokenFee),
                 amountFee = fill.filledAmountFee,
                 feeAmountS = fill.feeAmountS,
                 feeAmountB = fill.feeAmountB,
-                feeRecipient = Address.normalizeAddress(fill.feeRecipient),
+                feeRecipient = Address.normalize(fill.feeRecipient),
                 waiveFeePercentage = order.getFeeParams.waiveFeePercentage,
                 walletSplitPercentage = order.getFeeParams.walletSplitPercentage
               )
             ),
-            wallet = Address.normalizeAddress(order.getParams.wallet),
-            miner = Address.normalizeAddress(ringBatch.miner),
+            wallet = Address.normalize(order.getParams.wallet),
+            miner = Address.normalize(ringBatch.miner),
             blockHeight = fill.header.get.blockNumber,
             blockTimestamp = fill.header.get.blockTimestamp
           )
-
       }
     }
   }

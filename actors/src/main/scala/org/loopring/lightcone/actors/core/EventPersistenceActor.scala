@@ -71,6 +71,7 @@ class EventPersistenceActor(
 
   def ready: Receive = LoggingReceive {
     case req: PersistTrades.Req =>
+      println(s"received trades req:$req")
       for {
         result <- dbModule.tradeService.saveTrades(req.trades)
       } yield {
@@ -80,6 +81,7 @@ class EventPersistenceActor(
       }
 
     case req: PersistRings.Req =>
+      println(s"received rings req:$req")
       for {
         result <- dbModule.ringService.saveRings(req.rings)
       } yield {
