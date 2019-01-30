@@ -63,7 +63,7 @@ class RingDalImpl @Inject()(
       sort: Option[SortingType] = None,
       pagingOpt: Option[Paging] = None
     ): Query[RingTable, RingTable#TableElementType, Seq] = {
-    var filters = query.filter(_.ringIndex > 0L)
+    var filters = query.filter(_.ringIndex >= 0L)
     filters = ring match {
       case Some(ring) =>
         ring.filter match {
