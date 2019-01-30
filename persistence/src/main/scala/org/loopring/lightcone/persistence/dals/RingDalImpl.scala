@@ -40,22 +40,22 @@ class RingDalImpl @Inject()(
     extends RingDal {
   val query = TableQuery[RingTable]
 
-  def saveRing(ring: Ring): Future[Either[ErrorCode, String]] = {
+  def saveRing(ring: Ring): Future[ErrorCode] = {
     db.run(
         (query += ring).asTry
       )
       .map {
         case Failure(e: MySQLIntegrityConstraintViolationException) =>
-          Left(ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
+          ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
         case Failure(ex) => {
           logger.error(s"error : ${ex.getMessage}")
-          Left(ErrorCode.ERR_PERSISTENCE_INTERNAL)
+          ErrorCode.ERR_PERSISTENCE_INTERNAL
         }
-        case Success(x) => Right(ring.ringHash)
+        case Success(x) => ErrorCode.ERR_NONE
       }
   }
 
-  def saveRings(rings: Seq[Ring]): Future[Seq[Either[ErrorCode, String]]] =
+  def saveRings(rings: Seq[Ring]): Future[Seq[ErrorCode]] =
     Future.sequence(rings.map(saveRing))
 
   private def queryFilters(

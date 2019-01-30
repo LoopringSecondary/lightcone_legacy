@@ -57,16 +57,9 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
   def idx_tx_hash = index("idx_tx_hash", (txHash), unique = false)
   def idx_owner = index("idx_owner", (owner), unique = false)
   def idx_order_hash = index("idx_order_hash", (orderHash), unique = false)
-
-  def idx_token_s_delegate_address =
-    index("idx_token_s", (tokenS), unique = false)
-
-  def idx_token_b_delegate_address =
-    index("idx_token_b", (tokenB), unique = false)
-
-  def idx_market_key_delegate_address =
-    index("idx_market_key", (marketKey), unique = false)
-
+  def idx_token_s = index("idx_token_s", (tokenS), unique = false)
+  def idx_token_b = index("idx_token_b", (tokenB), unique = false)
+  def idx_market_key = index("idx_market_key", (marketKey), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
   def idx_miner = index("idx_miner", (miner), unique = false)
 

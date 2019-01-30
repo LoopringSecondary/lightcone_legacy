@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.dals
+package org.loopring.lightcone.actors.support
 
-import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
-import org.loopring.lightcone.proto._
-import scala.concurrent._
+import org.loopring.lightcone.actors.core.{
+  DatabaseQueryActor,
+  EventPersistenceActor
+}
 
-trait RingDal extends BaseDalImpl[RingTable, Ring] {
-  def saveRing(ring: Ring): Future[ErrorCode]
-  def saveRings(rings: Seq[Ring]): Future[Seq[ErrorCode]]
-  def getRings(request: GetRings.Req): Future[Seq[Ring]]
-  def countRings(request: GetRings.Req): Future[Int]
-  def obsolete(height: Long): Future[Unit]
+trait EventPersistenceSupport extends DatabaseModuleSupport {
+  my: CommonSpec =>
+
+  actors.add(EventPersistenceActor.name, EventPersistenceActor.start)
 }

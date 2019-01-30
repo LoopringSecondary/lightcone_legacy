@@ -77,6 +77,8 @@ class OrderCutoffHandlerActor(
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(OrderCutoffHandlerActor.name)
     with ActorLogging {
+  import OrderStatus._
+
   def mama = actors.get(MultiAccountManagerActor.name)
   val batchSize = selfConfig.getInt("batch-size")
 
@@ -87,7 +89,7 @@ class OrderCutoffHandlerActor(
     case req: OrdersCancelledEvent =>
       dbModule.orderService
         .getOrders(req.orderHashes)
-        .map(cancelOrders(_, OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER))
+        .map(cancelOrders(_, STATUS_ONCHAIN_CANCELLED_BY_USER))
         .sendTo(sender)
 
     case req: CutoffEvent =>
@@ -105,9 +107,9 @@ class OrderCutoffHandlerActor(
 
     case req: RetrieveOrdersToCancel =>
       val cancelStatus = if (req.tradingPair.nonEmpty) {
-        OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
+        STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
       } else {
-        OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER
+        STATUS_ONCHAIN_CANCELLED_BY_USER
       }
       for {
         affectOrders <- dbModule.orderService

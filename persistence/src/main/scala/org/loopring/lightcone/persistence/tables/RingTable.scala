@@ -24,9 +24,9 @@ class RingTable(tag: Tag) extends BaseTable[Ring](tag, "T_RINGS") {
 
   implicit val feesColumnType = ringFeesOptColumnType()
 
-  def id = ringHash
-  def ringHash = columnHash("ring_hash", O.PrimaryKey)
-  def ringIndex = column[Long]("ring_index")
+  def id = ringIndex.toString()
+  def ringHash = columnHash("ring_hash")
+  def ringIndex = column[Long]("ring_index", O.PrimaryKey)
   def fillsAmount = column[Int]("fills_amount")
   def miner = columnAddress("miner")
   def txHash = columnHash("tx_hash")
@@ -35,7 +35,7 @@ class RingTable(tag: Tag) extends BaseTable[Ring](tag, "T_RINGS") {
   def blockTimestamp = column[Long]("block_timestamp")
 
   // indexes
-  def idx_ring_index = index("idx_ring_index", (ringIndex), unique = true)
+  def idx_ring_hash = index("idx_ring_hash", (ringHash), unique = false)
   def idx_tx_hash = index("idx_tx_hash", (txHash), unique = true)
   def idx_miner = index("idx_miner", (miner), unique = false)
 
