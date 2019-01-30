@@ -25,16 +25,15 @@ import com.typesafe.config.Config
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.ethereum.data.formatHex
-import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
@@ -59,7 +58,9 @@ class AccountManagerActor(
     extends Actor
     with Stash
     with ActorLogging {
+
   import ErrorCode._
+  import OrderStatus._
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
@@ -84,19 +85,12 @@ class AccountManagerActor(
 
   def initialReceive: Receive = {
     case Notify("initialize", _) =>
-      val batchCutoffReq = BatchGetCutoffs.Req(
-        (metadataManager.getValidMarketIds map {
+      val batchCutoffReq =
+        BatchGetCutoffs.Req((metadataManager.getValidMarketIds map {
           case (marketKey, marketId) =>
-            GetCutoff.Req(
-              broker = address,
-              owner = address,
-              marketKey = marketKey
-            )
-        }).toSeq :+ GetCutoff.Req(
-          broker = address,
-          owner = address
-        )
-      )
+            GetCutoff
+              .Req(broker = address, owner = address, marketKey = marketKey)
+        }).toSeq :+ GetCutoff.Req(broker = address, owner = address))
 
       val syncCutoff = for {
         res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
@@ -133,7 +127,7 @@ class AccountManagerActor(
 
     case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
       submitOrder(xraworder).map { _ =>
-        ActorRecover.OrderRecoverResult(xraworder.id, true)
+        ActorRecover.OrderRecoverResult(xraworder.hash, true)
       }.sendTo(sender)
 
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
@@ -160,12 +154,8 @@ class AccountManagerActor(
         _ <- Future { accountCutoffState.checkOrderCutoff(raworder) }
         _ <- checkOrderCanceled(raworder) //取消订单，单独查询以太坊
         newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
-          raworder.copy(
-            state = Some(
-              raworder.getState
-                .copy(status = OrderStatus.STATUS_PENDING_ACTIVE)
-            )
-          )
+          raworder.withStatus(STATUS_PENDING_ACTIVE)
+          raworder
         } else raworder
 
         resRawOrder <- (orderPersistenceActor ? req
@@ -173,8 +163,7 @@ class AccountManagerActor(
           .mapAs[RawOrder]
         resOrder <- (resRawOrder.getState.status match {
           case STATUS_PENDING_ACTIVE =>
-            val order: Order = resRawOrder
-            Future.successful(order)
+            Future.successful(resRawOrder.toOrder)
           case _ => submitOrder(resRawOrder)
         }).mapAs[Order]
       } yield SubmitOrder.Res(Some(resOrder))) sendTo sender
@@ -266,7 +255,7 @@ class AccountManagerActor(
   }
 
   private def submitOrder(rawOrder: RawOrder): Future[Order] = {
-    val order: Order = rawOrder
+    val order = rawOrder.toOrder
     val matchable: Matchable = order
     log.debug(s"### submitOrder ${order}")
     for {

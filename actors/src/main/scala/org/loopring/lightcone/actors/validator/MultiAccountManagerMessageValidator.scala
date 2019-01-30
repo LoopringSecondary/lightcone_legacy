@@ -39,6 +39,8 @@ final class MultiAccountManagerMessageValidator(
     metadataManager: MetadataManager)
     extends MessageValidator {
 
+  import OrderStatus._
+
   val multiAccountConfig =
     config.getConfig(MultiAccountManagerActor.name)
   val numOfShards = multiAccountConfig.getInt("num-of-shards")
@@ -94,7 +96,7 @@ final class MultiAccountManagerMessageValidator(
           val state = RawOrder.State(
             createdAt = now,
             updatedAt = now,
-            status = OrderStatus.STATUS_NEW
+            status = STATUS_NEW
           )
 
           req.withRawOrder(

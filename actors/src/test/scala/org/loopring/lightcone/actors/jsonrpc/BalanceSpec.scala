@@ -68,7 +68,7 @@ class BalanceSpec
           val bs: BigInt =
             s.balanceAndAllowanceMap(LRC_TOKEN.address).availableBalance
           val sold: BigInt = maker.amountS
-          val fee: BigInt = maker.amountFee
+          val fee: BigInt = maker.toOrder.amountFee
           info(s"matcheAmount: ${bf - bs}, expectAmount ${sold + fee}")
           assert(bf - bs >= sold + fee - 1000 && bf - bs <= sold + fee) //有计算的误差
         case _ => assert(false)

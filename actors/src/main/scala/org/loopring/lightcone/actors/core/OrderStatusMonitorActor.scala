@@ -23,6 +23,7 @@ import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence._
@@ -83,6 +84,8 @@ class OrderStatusMonitorActor(
     with ActorLogging
     with NamedBasedConfig
     with RepeatedJobActor {
+  import OrderStatusMonitor.MonitoringType._
+  import OrderStatus._
 
   val repeatedDelayInSeconds = selfConfig.getInt("delay-in-seconds")
   val activateLaggingInSecond = selfConfig.getInt("activate-lagging-seconds")
@@ -90,6 +93,9 @@ class OrderStatusMonitorActor(
   val batchSize = selfConfig.getInt("batch-size")
   val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
   val maxRetriesCount = 500
+
+  def mama = actors.get(MultiAccountManagerActor.name)
+  def mma = actors.get(MarketManagerActor.name)
 
   val repeatedJobs = Seq(
     Job(
@@ -100,7 +106,7 @@ class OrderStatusMonitorActor(
         runJob(
           processFunction = activateOrders,
           skipOpt = Some(Paging(0, batchSize)),
-          monitoringType = OrderStatusMonitor.MonitoringType.MONITORING_ACTIVATE,
+          monitoringType = MONITORING_ACTIVATE,
           leadOrLagSeconds = activateLaggingInSecond
         )
     ),
@@ -112,7 +118,7 @@ class OrderStatusMonitorActor(
         runJob(
           processFunction = expireOrders,
           skipOpt = Some(Paging(0, batchSize)),
-          monitoringType = OrderStatusMonitor.MonitoringType.MONITORING_EXPIRE,
+          monitoringType = MONITORING_EXPIRE,
           leadOrLagSeconds = expireLeadInSeconds
         )
     )
@@ -181,16 +187,12 @@ class OrderStatusMonitorActor(
       _ <- Future.sequence(orders.map { o =>
         actors
           .get(MultiAccountManagerActor.name) ? ActorRecover.RecoverOrderReq(
-          Some(
-            o.copy(
-              state = Some(o.getState.copy(status = OrderStatus.STATUS_PENDING))
-            )
-          )
+          Some(o.withStatus(STATUS_PENDING))
         )
       })
       //还是需要更新数据库的
       _ <- dbModule.orderService
-        .updateOrdersStatus(orders.map(_.hash), OrderStatus.STATUS_PENDING)
+        .updateOrdersStatus(orders.map(_.hash), STATUS_PENDING)
     } yield orders.size
 
   private def expireOrders(
@@ -209,13 +211,13 @@ class OrderStatusMonitorActor(
           val cancelReq = CancelOrder.Req(
             o.hash,
             o.owner,
-            OrderStatus.STATUS_EXPIRED,
+            STATUS_EXPIRED,
             Some(MarketId(o.tokenS, o.tokenB))
           )
-          (actors.get(MultiAccountManagerActor.name) ? cancelReq).recover {
+          (mama ? cancelReq).recover {
             //发送到AccountManger失败后，会尝试发送个MarketManager, 因为需要在AccountManger未启动的情况下通知到MarketManager
             case e: Exception =>
-              actors.get(MarketManagerActor.name) ? cancelReq
+              mma ? cancelReq
           }
         } else {
           Future.unit
@@ -223,7 +225,7 @@ class OrderStatusMonitorActor(
       })
       //发送到AccountManager之后，更新状态到数据库
       _ <- dbModule.orderService
-        .updateOrdersStatus(orders.map(_.hash), OrderStatus.STATUS_EXPIRED)
+        .updateOrdersStatus(orders.map(_.hash), STATUS_EXPIRED)
     } yield orders.size
 
   private def getProcessTime(
