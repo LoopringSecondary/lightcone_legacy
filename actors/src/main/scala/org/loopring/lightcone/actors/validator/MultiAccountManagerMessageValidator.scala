@@ -25,6 +25,7 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 
 import scala.concurrent._
@@ -71,7 +72,24 @@ final class MultiAccountManagerMessageValidator(
   def validate = {
     //TODO:后续完成取消一个地址的各个市场的请求
     case req: CancelOrder.Req =>
-      cancelOrderValidator.validate(req)
+      for {
+        orderOpt <- dbModule.orderService.getOrder(req.id)
+        order = orderOpt.getOrElse(
+          throw ErrorException(ERR_CANCEL_ORDER_VALIDATION_INVALID_SIG)
+        )
+        marketId = MarketId(order.tokenS, order.tokenB)
+        newReq = req.copy(
+          owner = Address.normalize(req.owner),
+          status = STATUS_SOFT_CANCELLED_BY_USER,
+          marketId = Some(
+            marketId.copy(
+              baseToken = marketId.baseToken.toLowerCase(),
+              quoteToken = marketId.quoteToken.toLowerCase()
+            )
+          )
+        )
+        _ <- cancelOrderValidator.validate(newReq)
+      } yield newReq
 
     case req: GetBalanceAndAllowances.Req =>
       Future {

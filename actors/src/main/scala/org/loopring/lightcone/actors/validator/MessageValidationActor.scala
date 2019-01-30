@@ -62,31 +62,22 @@ class MessageValidationActor(
     case msg =>
       val f = for {
         //todo:需要测试，可能有更简单的写法
-        validateRes <- {
-          val validateResOpt = validate(msg)
-          if (validateResOpt.isEmpty)
-            throw ErrorException(
-              ERR_UNEXPECTED_ACTOR_MSG,
-              s"unexpected msg of ${msg.getClass.getName}"
-            )
-          else validateResOpt.get
+        validatedMsg <- validate(msg).getOrElse {
+          throw ErrorException(
+            ERR_UNEXPECTED_ACTOR_MSG,
+            s"unexpected msg of ${msg.getClass.getName}"
+          )
         }
-
-        res = validateRes match {
-          case Some(validatedMsg) if validatedMsg != null =>
-            if (validatedMsg != msg)
-              log.debug(
-                s"request rewritten from\n\t${msg} to\n\t${validatedMsg}"
-              )
-            validatedMsg
-
-          case _ =>
-            throw ErrorException(
-              ERR_UNEXPECTED_ACTOR_MSG,
-              s"unexpected msg of ${msg.getClass.getName}"
-            )
-        }
-      } yield res
+        _ = if (validatedMsg == null)
+          throw ErrorException(
+            ERR_UNEXPECTED_ACTOR_MSG,
+            s"unexpected msg of ${msg.getClass.getName}"
+          )
+          else if (validatedMsg != msg)
+          log.debug(
+            s"request rewritten from\n\t${msg} to\n\t${validatedMsg}"
+          )
+      } yield validatedMsg
 
       f.forwardTo(destinationActor, sender)
   }

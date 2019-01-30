@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.core.TransactionRecordActor
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
@@ -77,7 +78,7 @@ final class TransactionRecordMessageValidator(
             "Parameter owner could not be empty"
           )
 
-        req.paging match {
+        val newReq = req.paging match {
           case Some(p) if p.size > maxItemsPerPage =>
             throw ErrorException(
               ErrorCode.ERR_INVALID_ARGUMENT,
@@ -95,6 +96,7 @@ final class TransactionRecordMessageValidator(
           case None =>
             req.copy(paging = Some(CursorPaging(size = defaultItemsPerPage)))
         }
+        newReq.copy(owner = Address.normalize(req.owner))
       }
 
     case req: GetTransactionRecordCount.Req =>
@@ -104,7 +106,7 @@ final class TransactionRecordMessageValidator(
             ErrorCode.ERR_INVALID_ARGUMENT,
             "Parameter owner could not be empty"
           )
-        req
+        req.copy(owner = Address.normalize(req.owner))
       }
   }
 
