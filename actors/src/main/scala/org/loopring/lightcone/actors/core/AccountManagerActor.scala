@@ -25,16 +25,15 @@ import com.typesafe.config.Config
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.market.MarketManager.MatchResult
 import org.loopring.lightcone.lib._
+import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.ethereum.data.formatHex
-import org.loopring.lightcone.proto.OrderStatus._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
 
@@ -59,7 +58,9 @@ class AccountManagerActor(
     extends Actor
     with Stash
     with ActorLogging {
+
   import ErrorCode._
+  import OrderStatus._
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
@@ -153,12 +154,8 @@ class AccountManagerActor(
         _ <- Future { accountCutoffState.checkOrderCutoff(raworder) }
         _ <- checkOrderCanceled(raworder) //取消订单，单独查询以太坊
         newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
-          raworder.copy(
-            state = Some(
-              raworder.getState
-                .copy(status = OrderStatus.STATUS_PENDING_ACTIVE)
-            )
-          )
+          raworder.withStatus(STATUS_PENDING_ACTIVE)
+          raworder
         } else raworder
 
         resRawOrder <- (orderPersistenceActor ? req
@@ -167,7 +164,6 @@ class AccountManagerActor(
         resOrder <- (resRawOrder.getState.status match {
           case STATUS_PENDING_ACTIVE =>
             Future.successful(resRawOrder.toOrder)
-
           case _ =>
             submitOrder(resRawOrder)
         }).mapAs[Order]

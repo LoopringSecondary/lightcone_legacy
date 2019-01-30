@@ -18,10 +18,8 @@ package org.loopring.lightcone.actors.recover
 
 import akka.pattern._
 import akka.util.Timeout
-import org.loopring.lightcone.actors.core.{
-  MultiAccountManagerActor,
-  OrderRecoverCoordinator
-}
+import org.loopring.lightcone.actors.core._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto.Orderbook.Item
 import org.loopring.lightcone.proto._
@@ -40,6 +38,8 @@ class RecoverOrderSpec
     with OrderbookManagerSupport
     with OrderGenerateSupport
     with RecoverSupport {
+
+  import OrderStatus._
 
   private def testSaves(
       orders: Seq[RawOrder]
@@ -64,10 +64,7 @@ class RecoverOrderSpec
           amountS = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )
-        o.copy(
-          state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
-        )
-        o
+        o.withStatus(STATUS_PENDING)
       }) ++
       ((0 until 3) map { i =>
         val o = createRawOrder(
@@ -76,10 +73,8 @@ class RecoverOrderSpec
           amountS = "11".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )
-        o.copy(
-          state = Some(o.state.get.copy(status = OrderStatus.STATUS_EXPIRED))
-        )
-        o
+        o.withStatus(STATUS_EXPIRED)
+
       }) ++
       ((0 until 5) map { i =>
         val o = createRawOrder(
@@ -88,10 +83,8 @@ class RecoverOrderSpec
           amountS = "12".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )
-        o.copy(
-          state = Some(o.state.get.copy(status = OrderStatus.STATUS_DUST_ORDER))
-        )
-        o
+        o.withStatus(STATUS_DUST_ORDER)
+
       }) ++
       ((0 until 2) map { i =>
         val o = createRawOrder(
@@ -100,11 +93,7 @@ class RecoverOrderSpec
           amountS = "13".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )
-        o.copy(
-          state =
-            Some(o.state.get.copy(status = OrderStatus.STATUS_PARTIALLY_FILLED))
-        )
-        o
+        o.withStatus(STATUS_PARTIALLY_FILLED)
       })
     testSaves(rawOrders)
   }

@@ -118,6 +118,8 @@ class MarketManagerActor(
     )
     with RepeatedJobActor
     with ActorLogging {
+  import OrderStatus._
+
   implicit val marketId: MarketId = metadataManager.getValidMarketIds.values
     .find(m => getEntityId(m) == entityId)
     .get
@@ -293,8 +295,7 @@ class MarketManagerActor(
     log.debug(s"marketmanager.submitOrder ${order}")
     val matchable: Matchable = order
     order.status match {
-      case OrderStatus.STATUS_NEW | OrderStatus.STATUS_PENDING |
-          OrderStatus.STATUS_PARTIALLY_FILLED =>
+      case STATUS_NEW | STATUS_PENDING | STATUS_PARTIALLY_FILLED =>
         if (order.actual.isEmpty) {
           throw ErrorException(
             ErrorCode.ERR_INVALID_ORDER_DATA,

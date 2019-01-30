@@ -147,7 +147,7 @@ package object data {
       MatchableRing(maker = orderRing.getMaker, taker = orderRing.getTaker)
     }
 
-  implicit def expectFill2XEcpectFill(
+  implicit def expectedMatchableFill2ExpectedOrderFill(
       fill: ExpectedMatchableFill
     ): ExpectedOrderFill =
     ExpectedOrderFill(
@@ -185,8 +185,8 @@ package object data {
         walletSplitPercentage = order.getFeeParams.waiveFeePercentage / 1000.0
       )
 
-    def withStatus(status: OrderStatus): RawOrder = {
-      val state = order.getState.copy(status = status)
+    def withStatus(newStatus: OrderStatus): RawOrder = {
+      val state = order.getState.copy(status = newStatus)
       order.copy(state = Some(state))
     }
   }
