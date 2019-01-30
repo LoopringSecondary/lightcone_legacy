@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
@@ -32,55 +33,105 @@ final class DatabaseQueryMessageValidator()(implicit val config: Config)
     config.getInt("default-items-per-page")
   val maxItemsPerPage = config.getInt("max-items-per-page")
 
+  val numberRegex = """^\d+$""".r
+
   def validate = {
     case req: GetOrdersForUser.Req =>
-      if (req.owner.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter owner could not be empty"
-        )
-      req.skip match {
-        case Some(s) if s.size > maxItemsPerPage =>
+      val owner =
+        if (req.owner.isEmpty)
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Parameter size of paging is larger than $maxItemsPerPage"
+            "Parameter owner could not be empty"
           )
-
-        case Some(s) if s.skip < 0 =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Invalid parameter skip of paging:${s.skip}"
-          )
-
-        case Some(_) => req
-
-        case None =>
-          req.copy(skip = Some(Paging(size = defaultItemsPerPage)))
+        else Address.normalizeAddress(req.owner)
+      val marketOpt = req.market match {
+        case Some(m) =>
+          val tokenS =
+            if (m.tokenS.nonEmpty) Address.normalizeAddress(m.tokenS) else ""
+          val tokenB =
+            if (m.tokenB.nonEmpty) Address.normalizeAddress(m.tokenB) else ""
+          Some(GetOrdersForUser.Req.Market(tokenS, tokenB, m.isQueryBothSide))
+        case _ => None
       }
+      req.copy(owner = owner, market = marketOpt, skip = getValidSkip(req.skip))
 
     case req: GetTrades.Req =>
-      if (req.owner.isEmpty)
+      val owner =
+        if (req.owner.nonEmpty) Address.normalizeAddress(req.owner) else ""
+      val txHash = if (req.txHash.nonEmpty) req.txHash.toLowerCase else ""
+      val orderHash =
+        if (req.orderHash.nonEmpty) req.orderHash.toLowerCase else ""
+      val ringOpt = req.ring match {
+        case Some(r) =>
+          val ringHash = if (r.ringHash.nonEmpty) r.ringHash.toLowerCase else ""
+          val ringIndex =
+            if (r.ringIndex.nonEmpty && !isValidNumber(r.ringIndex))
+              throw ErrorException(
+                ErrorCode.ERR_INVALID_ARGUMENT,
+                s"invalid ringIndex:${r.ringIndex}"
+              )
+            else r.ringIndex
+          val fillIndex =
+            if (r.fillIndex.nonEmpty && !isValidNumber(r.fillIndex))
+              throw ErrorException(
+                ErrorCode.ERR_INVALID_ARGUMENT,
+                s"invalid fillIndex:${r.fillIndex}"
+              )
+            else r.fillIndex
+          Some(GetTrades.Req.Ring(ringHash, ringIndex, fillIndex))
+        case _ => None
+      }
+      val marketOpt = req.market match {
+        case Some(m) =>
+          val tokenS =
+            if (m.tokenS.nonEmpty) Address.normalizeAddress(m.tokenS) else ""
+          val tokenB =
+            if (m.tokenB.nonEmpty) Address.normalizeAddress(m.tokenB) else ""
+          Some(GetTrades.Req.Market(tokenS, tokenB, m.isQueryBothSide))
+        case _ => None
+      }
+      val wallet =
+        if (req.wallet.nonEmpty) Address.normalizeAddress(req.wallet) else ""
+      val miner =
+        if (req.miner.nonEmpty) Address.normalizeAddress(req.miner) else ""
+      GetTrades.Req(
+        owner,
+        txHash,
+        orderHash,
+        ringOpt,
+        marketOpt,
+        wallet,
+        miner,
+        req.sort,
+        getValidSkip(req.skip)
+      )
+
+    case req: GetRings.Req =>
+      req.copy(skip = getValidSkip(req.skip))
+  }
+
+  private def isValidNumber(str: String) = {
+    numberRegex.findAllIn(str).nonEmpty
+  }
+
+  private def getValidSkip(paging: Option[Paging]) = {
+    paging match {
+      case Some(s) if s.size > maxItemsPerPage =>
         throw ErrorException(
           ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter owner could not be empty"
+          s"Parameter size of paging is larger than $maxItemsPerPage"
         )
-      req.skip match {
-        case Some(s) if s.size > maxItemsPerPage =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Parameter size of paging is larger than $maxItemsPerPage"
-          )
 
-        case Some(s) if s.skip < 0 =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Invalid parameter skip of paging:${s.skip}"
-          )
+      case Some(s) if s.skip < 0 =>
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          s"Invalid parameter skip of paging:${s.skip}"
+        )
 
-        case Some(_) => req
+      case Some(s) => paging
 
-        case None =>
-          req.copy(skip = Some(Paging(size = defaultItemsPerPage)))
-      }
+      case None =>
+        Some(Paging(size = defaultItemsPerPage))
+    }
   }
 }

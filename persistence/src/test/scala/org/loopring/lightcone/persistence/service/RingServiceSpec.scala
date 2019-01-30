@@ -19,6 +19,7 @@ package org.loopring.lightcone.persistence.service
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.GetRings._
+import org.loopring.lightcone.proto.Trade.Fee
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -37,23 +38,20 @@ class RingServiceSpec extends ServiceSpec[RingService] {
   "ringService" must "save and query correctly" in {
     info("save some rings")
     val r1 = Await.result(
-      testSaveSomeRings().mapTo[Seq[Either[ErrorCode, String]]],
+      testSaveSomeRings().mapTo[Seq[ErrorCode]],
       5.second
     )
-    assert(r1.length == 3)
-    r1.foreach { r =>
-      assert(r.isRight && r.right.get.nonEmpty)
-    }
+    assert(r1.length == 3 && !r1.exists(_ != ErrorCode.ERR_NONE))
 
     info(
       "save a duplicate ring(txHash, ringHash and ringIndex) should return error"
     )
     val r2 = Await.result(
-      testDuplicateSave().mapTo[Either[ErrorCode, String]],
+      testDuplicateSave().mapTo[ErrorCode],
       5.second
     )
     assert(
-      r2.isLeft && r2.left.get == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
+      r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
     )
 
     info("query rings: by ringHash and ringIndex")
@@ -66,6 +64,16 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     val c4 = Await.result(service.countRings(q4).mapTo[Int], 5.second)
     assert(r4.length == 1 && c4 == 1)
     assert(r3.head == r4.head)
+    r3.head.fees match {
+      case Some(f) =>
+        assert(f.fees.length == 2)
+        f.fees foreach {
+          case fee: Fee if fee == fee1 => assert(true)
+          case fee: Fee if fee == fee2 => assert(true)
+          case _                       => assert(false)
+        }
+      case None => assert(false)
+    }
 
     info("query rings: sort")
     val q5 = Req(sort = SortingType.DESC)
@@ -103,27 +111,28 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     "0x30f3c30128432ef6b0bbf3d89002a6af96768f74390ff3061a4f548848e669dc"
   val miner = "0x624d520bab2e4ad83935fa503fb130614374e850"
 
+  val fee1 = Trade.Fee(
+    tokenFee = "0x97241525fe425C90eBe5A41127816dcFA5954b06",
+    amountFee = ByteString.copyFrom("10", "UTF-8"),
+    feeAmountS = ByteString.copyFrom("11", "UTF-8"),
+    feeAmountB = ByteString.copyFrom("12", "UTF-8"),
+    feeRecipient = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
+    waiveFeePercentage = 10,
+    walletSplitPercentage = 5
+  )
+
+  val fee2 = Trade.Fee(
+    tokenFee = "0x2d92e8a4556e9100f1bd7709293f122f69d2cd2b",
+    amountFee = ByteString.copyFrom("20", "UTF-8"),
+    feeAmountS = ByteString.copyFrom("21", "UTF-8"),
+    feeAmountB = ByteString.copyFrom("22", "UTF-8"),
+    feeRecipient = "0xa1c95e17f629d8bc5985f3f997760a575d56b0c2",
+    waiveFeePercentage = 8,
+    walletSplitPercentage = 2
+  )
+
   val fees = Ring.Fees(
-    Seq(
-      Trade.Fee(
-        tokenFee = "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-        amountFee = ByteString.copyFrom("10", "UTF-8"),
-        feeAmountS = ByteString.copyFrom("11", "UTF-8"),
-        feeAmountB = ByteString.copyFrom("12", "UTF-8"),
-        feeRecipient = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
-        waiveFeePercentage = 10,
-        walletSplitPercentage = 5
-      ),
-      Trade.Fee(
-        tokenFee = "0x2d92e8a4556e9100f1bd7709293f122f69d2cd2b",
-        amountFee = ByteString.copyFrom("20", "UTF-8"),
-        feeAmountS = ByteString.copyFrom("21", "UTF-8"),
-        feeAmountB = ByteString.copyFrom("22", "UTF-8"),
-        feeRecipient = "0xa1c95e17f629d8bc5985f3f997760a575d56b0c2",
-        waiveFeePercentage = 8,
-        walletSplitPercentage = 2
-      )
-    )
+    Seq(fee1, fee2)
   )
 
   private def testSaveSomeRings() = {

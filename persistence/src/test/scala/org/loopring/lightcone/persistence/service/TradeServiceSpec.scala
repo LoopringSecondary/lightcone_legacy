@@ -39,21 +39,19 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
   "tradeService" must "save and query correctly" in {
     info("save some trades")
     val r1 = Await.result(
-      testSaveSomeTrades().mapTo[Seq[Either[ErrorCode, String]]],
+      testSaveSomeTrades().mapTo[Seq[ErrorCode]],
       5.second
     )
     assert(r1.length == 4)
-    r1.foreach { r =>
-      assert(r.isRight && r.right.get.nonEmpty)
-    }
+    assert(r1.length == 4 && !r1.exists(_ != ErrorCode.ERR_NONE))
 
     info("save a duplicate trade(txHash and fillIndex) should return error")
     val r2 = Await.result(
-      testDuplicateSave().mapTo[Either[ErrorCode, String]],
+      testDuplicateSave().mapTo[ErrorCode],
       5.second
     )
     assert(
-      r2.isLeft && r2.left.get == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
+      r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
     )
 
     info("query trades: by owner")

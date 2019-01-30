@@ -62,6 +62,7 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
   def idx_market_key = index("idx_market_key", (marketKey), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
   def idx_miner = index("idx_miner", (miner), unique = false)
+
   def idx_block_height =
     index("idx_block_height", (blockHeight), unique = false)
 
