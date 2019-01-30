@@ -387,15 +387,15 @@ class OrderDalImpl @Inject()(
       sql"""
         SELECT * FROM T_ORDERS
         WHERE `status` in (#${statuses.map(_.value).mkString(",")})
-        AND valid_since <= ${now}
-        AND valid_until > ${now}
-        AND sequence_id > ${paging.cursor}
+        AND valid_since <= #${now}
+        AND valid_until > #${now}
+        AND sequence_id > #${paging.cursor}
         AND (
-          market_shard in (${marketShardSet.mkString(",")})
-          OR account_shard IN (${accountShardSet.mkString(",")})
+          market_shard in (#${marketShardSet.mkString(",")})
+          OR account_shard IN (#${accountShardSet.mkString(",")})
         )
         ORDER BY sequence_id ASC
-        LIMIT ${paging.size}
+        LIMIT #${paging.size}
       """.as[RawOrder]
     db.run(sql).map(r => r.toSeq)
   }
