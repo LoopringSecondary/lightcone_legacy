@@ -17,8 +17,8 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.MetadataManager
-import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,12 +42,7 @@ final class OrderbookManagerMessageValidator(
       Future {
         metadataManager.assertMarketIdIsActiveOrReadOnly(marketId)
         msg.copy(
-          marketId = Some(
-            marketId.copy(
-              baseToken = marketId.baseToken.toLowerCase(),
-              quoteToken = marketId.quoteToken.toLowerCase()
-            )
-          )
+          marketId = Some(marketId.toLowerCase())
         )
       }
   }

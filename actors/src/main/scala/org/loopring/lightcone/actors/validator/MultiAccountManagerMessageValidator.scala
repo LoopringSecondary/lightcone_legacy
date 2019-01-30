@@ -81,12 +81,7 @@ final class MultiAccountManagerMessageValidator(
         newReq = req.copy(
           owner = Address.normalize(req.owner),
           status = STATUS_SOFT_CANCELLED_BY_USER,
-          marketId = Some(
-            marketId.copy(
-              baseToken = marketId.baseToken.toLowerCase(),
-              quoteToken = marketId.quoteToken.toLowerCase()
-            )
-          )
+          marketId = Some(marketId.toLowerCase())
         )
         _ <- cancelOrderValidator.validate(newReq)
       } yield newReq

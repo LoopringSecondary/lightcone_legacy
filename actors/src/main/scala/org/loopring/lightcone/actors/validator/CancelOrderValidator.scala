@@ -30,14 +30,10 @@ import scala.util.Try
 
 final class CancelOrderValidator(
     implicit
-    val config: Config,
-    timeProvider: TimeProvider,
     ec: ExecutionContext,
-    metadataManager: MetadataManager,
-    dbModule: DatabaseModule)
+    metadataManager: MetadataManager)
     extends MessageValidator {
   import ErrorCode._
-  import OrderStatus._
 
   override def validate = {
     case req: CancelOrder.Req =>

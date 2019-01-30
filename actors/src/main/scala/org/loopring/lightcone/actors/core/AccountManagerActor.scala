@@ -155,7 +155,6 @@ class AccountManagerActor(
         _ <- checkOrderCanceled(raworder) //取消订单，单独查询以太坊
         newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
           raworder.withStatus(STATUS_PENDING_ACTIVE)
-          raworder
         } else raworder
 
         resRawOrder <- (orderPersistenceActor ? req

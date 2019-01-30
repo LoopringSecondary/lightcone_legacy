@@ -73,7 +73,7 @@ class MessageValidationActor(
             ERR_UNEXPECTED_ACTOR_MSG,
             s"unexpected msg of ${msg.getClass.getName}"
           )
-          else if (validatedMsg != msg)
+        else if (validatedMsg != msg)
           log.debug(
             s"request rewritten from\n\t${msg} to\n\t${validatedMsg}"
           )
