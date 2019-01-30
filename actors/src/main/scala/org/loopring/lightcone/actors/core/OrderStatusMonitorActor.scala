@@ -84,6 +84,8 @@ class OrderStatusMonitorActor(
     with NamedBasedConfig
     with RepeatedJobActor {
 
+  import OrderStatus._
+
   val repeatedDelayInSeconds = selfConfig.getInt("delay-in-seconds")
   val activateLaggingInSecond = selfConfig.getInt("activate-lagging-seconds")
   val expireLeadInSeconds = selfConfig.getInt("expire-lead-seconds")
@@ -92,6 +94,9 @@ class OrderStatusMonitorActor(
 
   val ACTIVATE_ORDER_NOTIFY = Notify("activate_order")
   val EXPIRE_ORDER_NOTIFY = Notify("expire_order")
+
+  def mama = actors.get(MultiAccountManagerActor.name)
+  def mma = actors.get(MarketManagerActor.name)
 
   val repeatedJobs = Seq(
     Job(
@@ -113,62 +118,54 @@ class OrderStatusMonitorActor(
       for {
         orders <- dbModule.orderService
           .getOrdersToActivate(activateLaggingInSecond, batchSize)
+
         _ <- Future.sequence(orders.map { o =>
-          (actors
-            .get(MultiAccountManagerActor.name) ? ActorRecover.RecoverOrderReq(
-            Some(
-              o.copy(
-                state =
-                  Some(o.getState.copy(status = OrderStatus.STATUS_PENDING))
-              )
-            )
+          (mama ? ActorRecover.RecoverOrderReq(
+            Some(o.copy(state = Some(o.getState.copy(status = STATUS_PENDING))))
           )).recover {
             case e: Exception =>
               log.error(
-                s" occurs error:${e.getMessage}, ${e.printStackTrace} when submit an order that become active."
+                s" occurs error:${e.getMessage}, ${e.printStackTrace}",
+                " when submit an order that become active."
               )
           }
         })
-      } yield {
-        val ordersSize = orders.size
-        if (ordersSize >= batchSize) {
-          self ! ACTIVATE_ORDER_NOTIFY
-        }
-        ordersSize
-      }
+        _ = if (orders.size >= batchSize) self ! ACTIVATE_ORDER_NOTIFY
+      } yield orders.size
+
     case EXPIRE_ORDER_NOTIFY =>
       for {
         orders <- dbModule.orderService
           .getOrdersToExpire(expireLeadInSeconds, batchSize)
+
         _ <- Future.sequence(orders.map { o =>
           //只有是有效的市场订单才会发送该取消订单的数据，否则只会更改数据库状态
-          if (metadataManager
+          if (!metadataManager
                 .isMarketActiveOrReadOnly(MarketId(o.tokenS, o.tokenB))) {
+            Future.unit
+          } else {
             val cancelReq = CancelOrder.Req(
               o.hash,
               o.owner,
-              OrderStatus.STATUS_EXPIRED,
+              STATUS_EXPIRED,
               Some(MarketId(o.tokenS, o.tokenB))
             )
-            (actors.get(MultiAccountManagerActor.name) ? cancelReq).recover {
-              //发送到AccountManger失败后，会尝试发送个MarketManager, 因为需要在AccountManger未启动的情况下通知到MarketManager
+
+            (mama ? cancelReq).recover {
+              //发送到AccountManger失败后，会尝试发送个MarketManager,
+              // 因为需要在AccountManger未启动的情况下通知到MarketManager
               case e: Exception =>
                 log.error(
-                  s" occurs error:${e.getMessage}, ${e.printStackTrace} when cancel an order that become expired."
+                  s" occurs error:${e.getMessage}, ${e.printStackTrace} ",
+                  "when cancel an order that become expired."
                 )
-                actors.get(MarketManagerActor.name) ! cancelReq
+                mma ! cancelReq
             }
-          } else {
-            Future.unit
           }
         })
-      } yield {
-        val ordersSize = orders.size
-        if (ordersSize >= batchSize) {
-          self ! EXPIRE_ORDER_NOTIFY
-        }
-        ordersSize
-      }
+
+        _ = if (orders.size >= batchSize) self ! EXPIRE_ORDER_NOTIFY
+      } yield orders.size
   }
 
 }
