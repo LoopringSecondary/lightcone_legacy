@@ -34,11 +34,11 @@ final class EthereumQueryMessageValidator(
     val config: Config)
     extends MessageValidator {
 
-  def normalizeAddress(token: String): String = {
+  def normalize(token: String): String = {
     if (metadataManager.hasSymbol(token)) {
       metadataManager.getTokenBySymbol(token).get.meta.address
     } else if (Address.isValid(token)) {
-      Address.normalizeAddress(token)
+      Address.normalize(token)
     } else {
       throw ErrorException(
         code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
@@ -51,18 +51,18 @@ final class EthereumQueryMessageValidator(
   def validate = {
     case req: GetBalanceAndAllowances.Req =>
       req
-        .copy(tokens = req.tokens.map(normalizeAddress))
-        .copy(address = Address.normalizeAddress(req.address))
+        .copy(tokens = req.tokens.map(normalize))
+        .copy(address = Address.normalize(req.address))
 
     case req: GetBalance.Req =>
       req
-        .copy(tokens = req.tokens.map(normalizeAddress))
-        .copy(address = Address.normalizeAddress(req.address))
+        .copy(tokens = req.tokens.map(normalize))
+        .copy(address = Address.normalize(req.address))
 
     case req: GetAllowance.Req =>
       req
-        .copy(tokens = req.tokens.map(normalizeAddress))
-        .copy(address = Address.normalizeAddress(req.address))
+        .copy(tokens = req.tokens.map(normalize))
+        .copy(address = Address.normalize(req.address))
 
     // case req: GetFilledAmount.Req =>
   }

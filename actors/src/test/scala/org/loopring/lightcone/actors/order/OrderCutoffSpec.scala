@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors.order
 import akka.pattern._
 import org.loopring.lightcone.actors.core.OrderCutoffHandlerActor
 import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.{Await, Future}
@@ -55,10 +56,7 @@ class OrderCutoffSpec
           amountS = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
         )(accounts(0))
-        o.copy(
-          state = Some(o.state.get.copy(status = OrderStatus.STATUS_PENDING))
-        )
-        o
+        o.withStatus(OrderStatus.STATUS_PENDING)
       })
     testSaves(rawOrders)
   }

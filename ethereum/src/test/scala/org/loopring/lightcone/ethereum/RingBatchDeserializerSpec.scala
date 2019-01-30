@@ -138,8 +138,8 @@ class RingBatchDeserializerSpec extends FlatSpec with Matchers {
 
         ringBatchDecoded.orders zip ringBatch.orders foreach { pair =>
           val (o1, o2) = pair
-          val o1Hash = Protocol2RawOrderValidator.calculateOrderHash(o1)
-          assert(o1Hash == o2.hash, "order hash not match")
+          // val o1Hash = Protocol2RawOrderValidator.calculateOrderHash(o1)
+          assert(o1.hash == o2.hash, "order hash not match")
         }
       case Left(err) =>
         assert(false, "deserialize failed:" + err.name)

@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.market
+package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import scala.concurrent.Future
 
-trait RingMatcher {
-
-  def matchOrders(
-      taker: Matchable,
-      maker: Matchable,
-      minRequiredIncome: Double
-    ): Either[ErrorCode, MatchableRing]
+trait RingService {
+  def saveRing(ring: Ring): Future[Either[ErrorCode, String]]
+  def saveRings(trades: Seq[Ring]): Future[Seq[Either[ErrorCode, String]]]
+  def getRings(request: GetRings.Req): Future[Seq[Ring]]
+  def countRings(request: GetRings.Req): Future[Int]
+  def obsolete(height: Long): Future[Unit]
 }

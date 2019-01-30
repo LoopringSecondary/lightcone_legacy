@@ -91,7 +91,7 @@ object Address {
     }
   }
 
-  def normalizeAddress(address: String): String =
+  def normalize(address: String): String =
     try {
       Address(address).toString
     } catch {

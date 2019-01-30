@@ -24,8 +24,10 @@ import com.typesafe.config.Config
 import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
+import org.loopring.lightcone.core.base.MarketKey
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.proto.GetOrdersForUser._
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
@@ -72,48 +74,37 @@ class DatabaseQueryActor(
 
   def ready: Receive = LoggingReceive {
     case req: GetOrdersForUser.Req =>
+      val (tokenS, tokenB, marketKey) = getMarketQueryParameters(req.market)
       (for {
-        result <- req.market match {
-          case GetOrdersForUser.Req.Market.Empty =>
-            dbModule.orderService.getOrdersForUser(
-              req.statuses.toSet,
-              Some(req.owner),
-              None,
-              None,
-              None,
-              None,
-              Some(req.sort),
-              req.skip
-            )
-          case GetOrdersForUser.Req.Market.MarketKey(value) =>
-            dbModule.orderService.getOrdersForUser(
-              req.statuses.toSet,
-              Some(req.owner),
-              None,
-              None,
-              Some(value),
-              None,
-              Some(req.sort),
-              req.skip
-            )
-          case GetOrdersForUser.Req.Market.Pair(value) =>
-            dbModule.orderService.getOrdersForUser(
-              req.statuses.toSet,
-              Some(req.owner),
-              Some(value.tokenS),
-              Some(value.tokenB),
-              None,
-              None,
-              Some(req.sort),
-              req.skip
-            )
-        }
-      } yield GetOrdersForUser.Res(result, ErrorCode.ERR_NONE)) sendTo sender
+        result <- dbModule.orderService.getOrdersForUser(
+          req.statuses.toSet,
+          Some(req.owner),
+          tokenS,
+          tokenB,
+          marketKey,
+          None,
+          Some(req.sort),
+          req.skip
+        )
+      } yield Res(result, ErrorCode.ERR_NONE)) sendTo sender
 
     case req: GetTrades.Req =>
       (for {
         result <- dbModule.tradeService.getTrades(req)
       } yield GetTrades.Res(result)) sendTo sender
+  }
+
+  private def getMarketQueryParameters(marketOpt: Option[Req.Market]) = {
+    marketOpt match {
+      case Some(m)
+          if m.tokenS.nonEmpty && m.tokenB.nonEmpty && m.isQueryBothSide =>
+        (None, None, Some(MarketKey(m.tokenS, m.tokenB).toString))
+      case Some(m) if m.tokenS.nonEmpty && m.tokenB.nonEmpty =>
+        (Some(m.tokenS), Some(m.tokenB), None)
+      case Some(m) if m.tokenS.nonEmpty => (Some(m.tokenS), None, None)
+      case Some(m) if m.tokenB.nonEmpty => (None, Some(m.tokenB), None)
+      case None                         => (None, None, None)
+    }
   }
 
 }
