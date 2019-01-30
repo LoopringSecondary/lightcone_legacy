@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.core.TransactionRecordActor
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
@@ -63,7 +64,7 @@ final class TransactionRecordMessageValidator()(implicit val config: Config)
             ErrorCode.ERR_INVALID_ARGUMENT,
             "Parameter owner could not be empty"
           )
-        else req.owner.toLowerCase
+        else Address.normalize(req.owner)
       GetTransactionRecords.Req(
         owner,
         req.queryType,
@@ -78,7 +79,7 @@ final class TransactionRecordMessageValidator()(implicit val config: Config)
             ErrorCode.ERR_INVALID_ARGUMENT,
             "Parameter owner could not be empty"
           )
-        else req.owner.toLowerCase
+        else Address.normalize(req.owner)
       req.copy(owner = owner)
   }
 
