@@ -21,8 +21,8 @@ import com.google.inject.Inject
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum.event.EventExtractor
-import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.proto._
+
 import scala.concurrent.ExecutionContext
 
 object Dispatchers {
@@ -141,4 +141,27 @@ object Dispatchers {
         names = Seq(GasPriceActor.name),
         actors
       )
+
+  class RingDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
+      implicit
+      extractor: EventExtractor[Ring],
+      ec: ExecutionContext)
+      extends NameBasedEventDispatcher[Ring](
+        names = Seq(""),
+        actors
+      )
+
+  class TradeDispatcher @Inject()(
+      actors: Lookup[ActorRef]
+    )(
+      implicit
+      extractor: EventExtractor[Trade],
+      ec: ExecutionContext)
+      extends NameBasedEventDispatcher[Trade](
+        names = Seq(""),
+        actors
+      )
+
 }
