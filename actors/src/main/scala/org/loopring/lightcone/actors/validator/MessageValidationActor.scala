@@ -62,12 +62,12 @@ class MessageValidationActor(
     case msg =>
       val f = for {
         validatedMsg <- validate(msg).getOrElse {
-          Future {
-            throw ErrorException(
+          Future.failed(
+            ErrorException(
               ERR_UNEXPECTED_ACTOR_MSG,
               s"unexpected msg of ${msg.getClass.getName}"
             )
-          }
+          )
         }
         _ = if (validatedMsg != msg)
           log.debug(

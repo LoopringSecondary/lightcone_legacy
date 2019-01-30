@@ -108,14 +108,10 @@ final class MetadataManagerValidator(
       }
 
     case req: LoadTokenMetadata.Req =>
-      Future {
-        req
-      }
+      Future.successful(req)
 
     case req: LoadMarketMetadata.Req =>
-      Future {
-        req
-      }
+      Future.successful(req)
 
   }
 }
