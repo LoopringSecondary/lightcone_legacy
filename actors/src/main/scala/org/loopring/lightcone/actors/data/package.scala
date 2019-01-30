@@ -171,24 +171,22 @@ package object data {
 
   implicit class RichRawOrder(order: RawOrder) {
 
-    def toOrder(): Order = {
-      val feeParams = order.feeParams.getOrElse(RawOrder.FeeParams())
+    def toOrder(): Order =
       Order(
         id = order.hash,
         tokenS = order.tokenS,
         tokenB = order.tokenB,
-        tokenFee = feeParams.tokenFee,
+        tokenFee = order.getFeeParams.tokenFee,
         amountS = order.amountS,
         amountB = order.amountB,
-        amountFee = feeParams.amountFee,
+        amountFee = order.getFeeParams.amountFee,
         submittedAt = order.getState.createdAt,
         status = order.getState.status,
-        walletSplitPercentage = feeParams.waiveFeePercentage / 1000.0
+        walletSplitPercentage = order.getFeeParams.waiveFeePercentage / 1000.0
       )
-    }
 
-    def withStatus(status: OrderStatus): RawOrder = {
-      val state = order.getState.copy(status = status)
+    def withStatus(newStatus: OrderStatus): RawOrder = {
+      val state = order.getState.copy(status = newStatus)
       order.copy(state = Some(state))
     }
   }

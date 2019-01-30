@@ -94,6 +94,9 @@ class OrderStatusMonitorActor(
   val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
   val maxRetriesCount = 500
 
+  def mama = actors.get(MultiAccountManagerActor.name)
+  def mma = actors.get(MarketManagerActor.name)
+
   val repeatedJobs = Seq(
     Job(
       name = "activate_order",
@@ -211,10 +214,10 @@ class OrderStatusMonitorActor(
             STATUS_EXPIRED,
             Some(MarketId(o.tokenS, o.tokenB))
           )
-          (actors.get(MultiAccountManagerActor.name) ? cancelReq).recover {
+          (mama ? cancelReq).recover {
             //发送到AccountManger失败后，会尝试发送个MarketManager, 因为需要在AccountManger未启动的情况下通知到MarketManager
             case e: Exception =>
-              actors.get(MarketManagerActor.name) ? cancelReq
+              mma ? cancelReq
           }
         } else {
           Future.unit
