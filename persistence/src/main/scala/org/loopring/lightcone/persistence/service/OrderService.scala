@@ -64,16 +64,14 @@ trait OrderService {
 
   //
   def getOrdersToActivate(
-      latestProcessTime: Int,
-      processTime: Int,
-      skip: Option[Paging] = None
+      activateLaggingInSecond: Int,
+      limit: Int
     ): Future[Seq[RawOrder]]
 
   //
   def getOrdersToExpire(
-      latestProcessTime: Int,
-      processTime: Int,
-      skip: Option[Paging] = None
+      expireLeadInSeconds: Int,
+      limit: Int
     ): Future[Seq[RawOrder]]
 
   // Count the number of orders

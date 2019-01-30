@@ -67,7 +67,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
             info(
               s"submit the second order shouldn't be success. it will occurs err: ${e} when submit order:${rawOrders(0)}"
             )
-            Future.successful(Unit)
+            Future.unit
         }
 
       val res1 = Await.result(f1, timeout.duration)
@@ -77,7 +77,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
             info(
               s"submit the second order shouldn't be success. it will occurs err: ${e} when submit order:${rawOrders(1)}"
             )
-            Future.successful(Unit)
+            Future.unit
         }
 
       Await.result(f2, timeout.duration)
@@ -134,7 +134,8 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
         rawOrders(0).hash,
         rawOrders(0).owner,
         STATUS_SOFT_CANCELLED_BY_USER,
-        Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
+        Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB)),
+        rawOrders(0).getParams.sig
       )
 
       val cancelF = singleRequest(cancelReq, "cancel_order")

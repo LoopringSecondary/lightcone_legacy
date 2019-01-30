@@ -116,15 +116,13 @@ trait OrderDal extends BaseDalImpl[OrderTable, RawOrder] {
     ): Future[Seq[RawOrder]]
 
   def getOrdersToActivate(
-      latestProcessTime: Int,
-      processTime: Int,
-      skip: Option[Paging] = None
+      activateLaggingInSecond: Int,
+      limit: Int
     ): Future[Seq[RawOrder]]
 
   def getOrdersToExpire(
       latestProcessTime: Int,
-      processTime: Int,
-      skip: Option[Paging] = None
+      limit: Int
     ): Future[Seq[RawOrder]]
 
   // Update order's status and update the updated_at timestamp if changeUpdatedAtField is true.

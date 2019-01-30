@@ -155,7 +155,6 @@ class AccountManagerActor(
         _ <- checkOrderCanceled(raworder) //取消订单，单独查询以太坊
         newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
           raworder.withStatus(STATUS_PENDING_ACTIVE)
-          raworder
         } else raworder
 
         resRawOrder <- (orderPersistenceActor ? req
@@ -184,8 +183,6 @@ class AccountManagerActor(
         _ = if (res) {
           marketManagerActor.tell(req, originalSender)
         } else {
-          //在目前没有使用eventlog的情况下，哪怕manager中并没有该订单，则仍需要发送到MarketManager
-          marketManagerActor ! req
           throw ErrorException(
             ERR_FAILED_HANDLE_MSG,
             s"no order found with id: ${req.id}"
@@ -424,7 +421,7 @@ class AccountManagerActor(
             case STATUS_SOFT_CANCELLED_LOW_BALANCE |
                 STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
                 STATUS_COMPLETELY_FILLED | STATUS_PARTIALLY_FILLED =>
-              Future.successful(Unit)
+              Future.unit
 
             case status =>
               val msg =

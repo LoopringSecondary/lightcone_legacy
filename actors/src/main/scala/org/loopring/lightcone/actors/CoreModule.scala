@@ -80,7 +80,6 @@ class CoreModule(config: Config)
       "dbconfig-dal-token-balance",
       "dbconfig-dal-block",
       "dbconfig-dal-settlement-tx",
-      "dbconfig-dal-order-status-monitor",
       "dbconfig-dal-market-metadata",
       "dbconfig-dal-missing-blocks-record",
       "dbconfig-dal-ohlc-data"
@@ -91,7 +90,6 @@ class CoreModule(config: Config)
     bind[TradeDal].to[TradeDalImpl].asEagerSingleton
     bind[BlockDal].to[BlockDalImpl].asEagerSingleton
     bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
-    bind[OrderStatusMonitorDal].to[OrderStatusMonitorDalImpl].asEagerSingleton
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
     bind[TokenMetadataDal].to[TokenMetadataDalImpl].asEagerSingleton
     bind[MissingBlocksRecordDal].to[MissingBlocksRecordDalImpl].asEagerSingleton
@@ -101,10 +99,6 @@ class CoreModule(config: Config)
     bind[TradeService].to[TradeServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
-
-    bind[OrderStatusMonitorService]
-      .to[OrderStatusMonitorServiceImpl]
-      .asEagerSingleton
 
     // --- bind local singletons ---------------------
     bind[DatabaseModule].asEagerSingleton

@@ -19,6 +19,8 @@ package org.loopring.lightcone.actors.validator
 import org.loopring.lightcone.proto.Error
 import org.loopring.lightcone.proto.ErrorCode._
 
+import scala.concurrent.Future
+
 // Example:
 // class MyMessageValidator extends MessageValidator {
 //   def validate = {
@@ -32,5 +34,5 @@ import org.loopring.lightcone.proto.ErrorCode._
 // Owner: Daniel
 trait MessageValidator {
   // Throw exceptions if validation failed.
-  def validate: PartialFunction[Any, Any]
+  def validate: PartialFunction[Any, Future[Any]]
 }

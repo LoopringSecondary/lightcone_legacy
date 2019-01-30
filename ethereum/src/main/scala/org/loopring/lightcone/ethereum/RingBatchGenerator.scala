@@ -53,7 +53,7 @@ object Protocol2RingBatchGenerator extends RingBatchGenerator {
       implicit
       context: RingBatchContext
     ): RingBatch = {
-    val orderValidator = Protocol2RawOrderValidator
+    val orderValidator = RawOrderValidatorDefault
 
     val ordersWithHash = orders.map(
       ordersOfRing =>
