@@ -77,6 +77,7 @@ class OrderRecoverActor(
     dbModule: DatabaseModule,
     metadataManager: MetadataManager)
     extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
+  import OrderStatus._
 
   val batchSize = selfConfig.getInt("batch-size")
   var batch: ActorRecover.RequestBatch = _
@@ -86,11 +87,7 @@ class OrderRecoverActor(
   def coordinator = actors.get(OrderRecoverCoordinator.name)
   def mama = actors.get(MultiAccountManagerActor.name)
 
-  val orderStatus = Set(
-    OrderStatus.STATUS_NEW,
-    OrderStatus.STATUS_PENDING,
-    OrderStatus.STATUS_PARTIALLY_FILLED
-  )
+  val orderStatus = Set(STATUS_NEW, STATUS_PENDING, STATUS_PARTIALLY_FILLED)
   var accountShardIds: Set[Int] = Set.empty
   var marketKeyIds: Set[Int] = Set.empty
 
