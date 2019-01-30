@@ -39,17 +39,19 @@ final class MultiAccountManagerMessageValidator(
     metadataManager: MetadataManager)
     extends MessageValidator {
 
+  import OrderStatus._
+
   val multiAccountConfig =
     config.getConfig(MultiAccountManagerActor.name)
   val numOfShards = multiAccountConfig.getInt("num-of-shards")
 
   val orderValidator: RawOrderValidator = Protocol2RawOrderValidator
 
-  def normalizeAddress(token: String): String = {
+  def normalize(token: String): String = {
     if (metadataManager.hasSymbol(token)) {
       metadataManager.getTokenBySymbol(token).get.meta.address
     } else if (Address.isValid(token)) {
-      Address.normalizeAddress(token)
+      Address.normalize(token)
     } else {
       throw ErrorException(
         code = ErrorCode.ERR_ETHEREUM_ILLEGAL_ADDRESS,
@@ -62,7 +64,7 @@ final class MultiAccountManagerMessageValidator(
     case req @ CancelOrder.Req(_, owner, _, Some(marketId)) =>
       metadataManager.assertMarketIdIsActive(marketId)
       req.copy(
-        owner = Address.normalizeAddress(owner),
+        owner = Address.normalize(owner),
         marketId = Some(
           marketId.copy(
             baseToken = marketId.baseToken.toLowerCase(),
@@ -73,8 +75,8 @@ final class MultiAccountManagerMessageValidator(
 
     case req: GetBalanceAndAllowances.Req =>
       req.copy(
-        address = Address.normalizeAddress(req.address),
-        tokens = req.tokens.map(normalizeAddress)
+        address = Address.normalize(req.address),
+        tokens = req.tokens.map(normalize)
       )
 
     case req @ SubmitOrder.Req(Some(order)) =>
@@ -94,15 +96,15 @@ final class MultiAccountManagerMessageValidator(
           val state = RawOrder.State(
             createdAt = now,
             updatedAt = now,
-            status = OrderStatus.STATUS_NEW
+            status = STATUS_NEW
           )
 
           req.withRawOrder(
             rawOrder.copy(
               hash = rawOrder.hash.toLowerCase(),
-              owner = Address.normalizeAddress(rawOrder.owner),
-              tokenS = Address.normalizeAddress(rawOrder.tokenS),
-              tokenB = Address.normalizeAddress(rawOrder.tokenB),
+              owner = Address.normalize(rawOrder.owner),
+              tokenS = Address.normalize(rawOrder.tokenS),
+              tokenB = Address.normalize(rawOrder.tokenB),
               params = Some(
                 rawOrder.getParams.copy(
                   dualAuthAddr = rawOrder.getParams.dualAuthAddr.toLowerCase,
@@ -114,8 +116,7 @@ final class MultiAccountManagerMessageValidator(
               ),
               feeParams = Some(
                 rawOrder.getFeeParams.copy(
-                  tokenFee =
-                    Address.normalizeAddress(rawOrder.getFeeParams.tokenFee),
+                  tokenFee = Address.normalize(rawOrder.getFeeParams.tokenFee),
                   tokenRecipient =
                     rawOrder.getFeeParams.tokenRecipient.toLowerCase()
                 )

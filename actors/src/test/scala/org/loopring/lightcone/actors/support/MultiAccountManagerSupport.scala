@@ -22,7 +22,9 @@ import org.loopring.lightcone.actors.validator.{
   MultiAccountManagerMessageValidator
 }
 
-trait MultiAccountManagerSupport extends DatabaseModuleSupport {
+trait MultiAccountManagerSupport
+    extends DatabaseModuleSupport
+    with EthereumSupport {
   my: CommonSpec =>
   actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
 

@@ -219,11 +219,15 @@ class SimpleRingBatchDeserializer(
       transferDataS = nextBytes
     )
 
-    order.copy(
+    val orderWithoutHash = order.copy(
       params = Some(params),
       feeParams = Some(feeParams),
       erc1400Params = Some(erc1400Params)
     )
+
+    val orderHash =
+      Protocol2RawOrderValidator.calculateOrderHash(orderWithoutHash)
+    orderWithoutHash.copy(hash = orderHash);
   }
 
   class BitExtractor(data: String) {

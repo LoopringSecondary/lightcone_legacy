@@ -50,9 +50,9 @@ class OrdersCancelledEventExtractor @Inject()(
                   Some(
                     POrdersCancelledEvent(
                       header = Some(header.withLogIndex(index)),
-                      broker = event.address,
+                      broker = Address.normalize(event.address),
                       orderHashes = event._orderHashes,
-                      owner = event.address
+                      owner = Address.normalize(event.address)
                     )
                   )
                 case _ =>

@@ -147,7 +147,7 @@ package object data {
       MatchableRing(maker = orderRing.getMaker, taker = orderRing.getTaker)
     }
 
-  implicit def expectFill2XEcpectFill(
+  implicit def expectedMatchableFill2ExpectedOrderFill(
       fill: ExpectedMatchableFill
     ): ExpectedOrderFill =
     ExpectedOrderFill(
@@ -165,26 +165,29 @@ package object data {
       amountMargin = fill.amountMargin
     )
 
-  implicit def expectedMatchableFill2ExpectedOrderFill(
-      xraworder: RawOrder
-    ): Order = {
-
-    val feeParams = xraworder.feeParams.getOrElse(RawOrder.FeeParams())
-    Order(
-      id = xraworder.hash,
-      tokenS = xraworder.tokenS,
-      tokenB = xraworder.tokenB,
-      tokenFee = feeParams.tokenFee,
-      amountS = xraworder.amountS,
-      amountB = xraworder.amountB,
-      amountFee = feeParams.amountFee,
-      submittedAt = xraworder.getState.createdAt,
-      status = xraworder.getState.status,
-      walletSplitPercentage = feeParams.waiveFeePercentage / 1000.0
-    )
-  }
-
   implicit class RichMarketId(marketId: MarketId) {
     def key() = MarketKey(marketId).toString
+  }
+
+  implicit class RichRawOrder(order: RawOrder) {
+
+    def toOrder(): Order =
+      Order(
+        id = order.hash,
+        tokenS = order.tokenS,
+        tokenB = order.tokenB,
+        tokenFee = order.getFeeParams.tokenFee,
+        amountS = order.amountS,
+        amountB = order.amountB,
+        amountFee = order.getFeeParams.amountFee,
+        submittedAt = order.getState.createdAt,
+        status = order.getState.status,
+        walletSplitPercentage = order.getFeeParams.waiveFeePercentage / 1000.0
+      )
+
+    def withStatus(newStatus: OrderStatus): RawOrder = {
+      val state = order.getState.copy(status = newStatus)
+      order.copy(state = Some(state))
+    }
   }
 }

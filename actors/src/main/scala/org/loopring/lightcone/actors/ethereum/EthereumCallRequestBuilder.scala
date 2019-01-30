@@ -26,20 +26,18 @@ class EthereumCallRequestBuilder {
 
   def buildRequest(
       req: GetBurnRate.Req,
-      contractAddress: Address,
-      tag: String
+      contractAddress: Address
     ): EthCall.Req = {
     val input = burnRateTableAbi.getBurnRate.pack(
       GetBurnRateFunction.Params(token = req.token)
     )
     val param = TransactionParams(to = contractAddress.toString, data = input)
-    EthCall.Req(param = Some(param), tag = tag)
+    EthCall.Req(param = Some(param), tag = req.tag)
   }
 
   def buildRequest(
       req: GetOrderCancellation.Req,
-      contractAddress: Address,
-      tag: String
+      contractAddress: Address
     ): EthCall.Req = {
     val input = tradeHistoryAbi.cancelled.pack(
       CancelledFunction.Params(
@@ -48,13 +46,12 @@ class EthereumCallRequestBuilder {
       )
     )
     val param = TransactionParams(to = contractAddress.toString, data = input)
-    EthCall.Req(param = Some(param), tag = tag)
+    EthCall.Req(param = Some(param), tag = req.tag)
   }
 
   def buildRequest(
       req: GetCutoff.Req,
-      contractAddress: Address,
-      tag: String
+      contractAddress: Address
     ): EthCall.Req = {
     val input = req match {
       case GetCutoff.Req(broker, "", "", _) =>
@@ -81,7 +78,7 @@ class EthereumCallRequestBuilder {
     }
 
     val param = TransactionParams(to = contractAddress.toString, data = input)
-    EthCall.Req(param = Some(param), tag = tag)
+    EthCall.Req(param = Some(param), tag = req.tag)
   }
 
 }
