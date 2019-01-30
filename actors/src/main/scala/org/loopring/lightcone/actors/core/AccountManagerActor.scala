@@ -162,6 +162,7 @@ class AccountManagerActor(
               id = raworder.hash,
               marketId = Some(MarketId(raworder.tokenS, raworder.tokenB))
             )
+            throw e
         }
         submitRes <- submitOrder(raworder).map { _ =>
           ActorRecover.OrderRecoverResult(raworder.hash, true)
