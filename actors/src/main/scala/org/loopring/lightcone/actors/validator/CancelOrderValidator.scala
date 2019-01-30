@@ -36,27 +36,27 @@ final class CancelOrderValidator(
     metadataManager: MetadataManager,
     dbModule: DatabaseModule)
     extends MessageValidator {
+  import ErrorCode._
+  import OrderStatus._
 
   override def validate = {
     case req: CancelOrder.Req =>
       for {
         orderOpt <- dbModule.orderService.getOrder(req.id)
         order = orderOpt.getOrElse(
-          throw ErrorException(
-            ErrorCode.ERR_CANCEL_ORDER_VALIDATION_INVALID_SIG
-          )
+          throw ErrorException(ERR_CANCEL_ORDER_VALIDATION_INVALID_SIG)
         )
         marketId = MarketId(order.tokenS, order.tokenB)
         _ = metadataManager.assertMarketIdIsActive(marketId)
       } yield {
         if (!checkSign(req))
           throw ErrorException(
-            ErrorCode.ERR_ORDER_VALIDATION_INVALID_SIG,
+            ERR_ORDER_VALIDATION_INVALID_SIG,
             s"not authorized to cancel this order $req.id"
           )
         req.copy(
           owner = Address.normalize(req.owner),
-          status = OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
+          status = STATUS_SOFT_CANCELLED_BY_USER,
           marketId = Some(
             marketId.copy(
               baseToken = marketId.baseToken.toLowerCase(),
@@ -65,7 +65,7 @@ final class CancelOrderValidator(
           )
         )
       }
-    case _ => throw ErrorException(ErrorCode.ERR_INVALID_ARGUMENT)
+    case _ => throw ErrorException(ERR_INVALID_ARGUMENT)
   }
 
   //TODO:针对具体什么签名还未确定，目前只有单个订单，采用订单的签名简单测试

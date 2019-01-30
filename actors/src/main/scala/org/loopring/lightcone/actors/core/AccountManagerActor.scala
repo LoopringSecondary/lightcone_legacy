@@ -84,19 +84,12 @@ class AccountManagerActor(
 
   def initialReceive: Receive = {
     case Notify("initialize", _) =>
-      val batchCutoffReq = BatchGetCutoffs.Req(
-        (metadataManager.getValidMarketIds map {
+      val batchCutoffReq =
+        BatchGetCutoffs.Req((metadataManager.getValidMarketIds map {
           case (marketKey, marketId) =>
-            GetCutoff.Req(
-              broker = address,
-              owner = address,
-              marketKey = marketKey
-            )
-        }).toSeq :+ GetCutoff.Req(
-          broker = address,
-          owner = address
-        )
-      )
+            GetCutoff
+              .Req(broker = address, owner = address, marketKey = marketKey)
+        }).toSeq :+ GetCutoff.Req(broker = address, owner = address))
 
       val syncCutoff = for {
         res <- (ethereumQueryActor ? batchCutoffReq).mapAs[BatchGetCutoffs.Res]
@@ -433,7 +426,7 @@ class AccountManagerActor(
             case STATUS_SOFT_CANCELLED_LOW_BALANCE |
                 STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
                 STATUS_COMPLETELY_FILLED | STATUS_PARTIALLY_FILLED =>
-              Future.successful(Unit)
+              Future.unit
 
             case status =>
               val msg =
