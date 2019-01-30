@@ -131,43 +131,36 @@ class AccountManagerActor(
       //恢复时，如果订单已被取消，需要更新数据库状态
       val f = for {
         canceled <- isOrderCanceled(raworder)
-        _ <- Future {
-          if (canceled) {
-            dbModule.orderService.updateOrderStatus(
-              raworder.hash,
-              STATUS_ONCHAIN_CANCELLED_BY_USER
-            )
-            throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CANCELED)
-          } else if (accountCutoffState.isOwnerCutoff(raworder)) {
-            dbModule.orderService.updateOrderStatus(
-              raworder.hash,
-              STATUS_ONCHAIN_CANCELLED_BY_USER
-            )
-            throw ErrorException(
-              ERR_ORDER_VALIDATION_INVALID_CUTOFF
-            )
-          } else if (accountCutoffState.isMarketPairCutoff(raworder)) {
-            dbModule.orderService.updateOrderStatus(
-              raworder.hash,
-              STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
-            )
-            throw ErrorException(
-              ERR_ORDER_VALIDATION_INVALID_CUTOFF
-            )
-          }
-        }.recover {
-          case e: ErrorException =>
-            //如果有ErrorException的异常抛出，则仍需要通知marketManager
+
+        status = if (canceled) {
+          STATUS_ONCHAIN_CANCELLED_BY_USER
+        } else if (accountCutoffState.isOwnerCutoff(raworder)) {
+          STATUS_ONCHAIN_CANCELLED_BY_USER
+        } else if (accountCutoffState.isMarketPairCutoff(raworder)) {
+          STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
+        } else {
+          STATUS_PENDING
+        }
+        res <- status match {
+          case STATUS_ONCHAIN_CANCELLED_BY_USER |
+              STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR =>
             marketManagerActor ! CancelOrder.Req(
               id = raworder.hash,
               marketId = Some(MarketId(raworder.tokenS, raworder.tokenB))
             )
-            throw e
+            for {
+              _ <- dbModule.orderService.updateOrderStatus(
+                raworder.hash,
+                status
+              )
+            } yield Unit
+          case _ =>
+            submitOrder(raworder).map { _ =>
+              ActorRecover.OrderRecoverResult(raworder.hash, true)
+            }
         }
-        submitRes <- submitOrder(raworder).map { _ =>
-          ActorRecover.OrderRecoverResult(raworder.hash, true)
-        }
-      } yield submitRes
+      } yield res
+
       f.sendTo(sender)
 
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
