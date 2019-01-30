@@ -97,8 +97,8 @@ class AllowanceChangedAddressExtractor @Inject()(
       (events zip tokenAllowances).map(
         item =>
           AddressAllowanceUpdated(
-            address = Address.normalizeAddress(item._1.address),
-            token = Address.normalizeAddress(item._1.token),
+            address = Address.normalize(item._1.address),
+            token = Address.normalize(item._1.token),
             allowance = item._2
           )
       )

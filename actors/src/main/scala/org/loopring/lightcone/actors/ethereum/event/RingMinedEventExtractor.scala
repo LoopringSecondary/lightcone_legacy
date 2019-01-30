@@ -67,10 +67,8 @@ class RingMinedEventExtractor @Inject()(
                           event,
                           receipt,
                           Some(
-                            header.copy(
-                              logIndex = index,
-                              eventIndex = eventIndex
-                            )
+                            header
+                              .copy(logIndex = index, eventIndex = eventIndex)
                           )
                         )
                     }
@@ -102,7 +100,7 @@ class RingMinedEventExtractor @Inject()(
                         OrderFilledEvent(
                           header = Some(header),
                           orderHash = order.hash,
-                          tokenS = Address.normalizeAddress(order.tokenS)
+                          tokenS = Address.normalize(order.tokenS)
                         )
                       })
                     )
@@ -125,8 +123,8 @@ class RingMinedEventExtractor @Inject()(
     OrderFilledEvent(
       header,
       orderHash = Numeric.prependHexPrefix(data.substring(0, 64 * 1)),
-      owner = Address.normalizeAddress(data.substring(64 * 1, 64 * 2)),
-      tokenS = Address.normalizeAddress(fill.substring(64 * 2, 64 * 3)),
+      owner = Address.normalize(data.substring(64 * 1, 64 * 2)),
+      tokenS = Address.normalize(fill.substring(64 * 2, 64 * 3)),
       ringHash = event._ringHash,
       ringIndex = event._ringIndex.longValue(),
       filledAmountS = BigInt(Numeric.toBigInt(data.substring(64 * 3, 64 * 4))),
@@ -143,7 +141,7 @@ class RingMinedEventExtractor @Inject()(
         Numeric
           .toBigInt(data.substring(64 * 7, 64 * 8))
       ),
-      feeRecipient = Address.normalizeAddress(event._feeRecipient)
+      feeRecipient = Address.normalize(event._feeRecipient)
     )
   }
 

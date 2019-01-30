@@ -36,8 +36,8 @@ trait EventExtractor[R] {
     ) =
     EventHeader(
       txHash = tx.hash,
-      txFrom = Address.normalizeAddress(tx.from),
-      txTo = Address.normalizeAddress(tx.to),
+      txFrom = Address.normalize(tx.from),
+      txTo = Address.normalize(tx.to),
       txValue = BigInt(Numeric.toBigInt(formatHex(tx.value))),
       txIndex = Numeric.toBigInt(formatHex(tx.transactionIndex)).intValue(),
       txStatus = getStatus(receipt.status),
