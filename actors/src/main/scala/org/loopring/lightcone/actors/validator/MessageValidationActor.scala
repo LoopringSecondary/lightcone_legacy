@@ -61,7 +61,17 @@ class MessageValidationActor(
   override def receive: Receive = {
     case msg =>
       (for {
-        validateRes <- Future { validate(msg) }
+        //todo:需要测试，可能有更简单的写法
+        validateRes <- {
+          val validateResOpt = validate(msg)
+          if (validateResOpt.isEmpty)
+            throw ErrorException(
+              ERR_UNEXPECTED_ACTOR_MSG,
+              s"unexpected msg of ${msg.getClass.getName}"
+            )
+          else validateResOpt.get
+        }
+
         res <- validateRes match {
           case validateFuture: Future[_] =>
             validateFuture

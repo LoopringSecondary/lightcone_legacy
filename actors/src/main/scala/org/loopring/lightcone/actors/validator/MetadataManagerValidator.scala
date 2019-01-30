@@ -21,79 +21,101 @@ import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
+import scala.concurrent.{ExecutionContext, Future}
+
 object MetadataManagerValidator {
   val name = "metadata_manager_validator"
 }
 
-final class MetadataManagerValidator()(implicit val config: Config)
+final class MetadataManagerValidator(
+  )(
+    implicit
+    val config: Config,
+    ec: ExecutionContext)
     extends MessageValidator {
 
   def validate = {
     case req: SaveTokenMetadatas.Req =>
-      if (req.tokens.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter tokens could not be empty"
-        )
-      // address toLowerCase, symbol toUpperCase
-      val tokens = req.tokens.map(MetadataManager.normalizeToken)
-      req.copy(tokens = tokens)
+      Future {
+        if (req.tokens.isEmpty)
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "Parameter tokens could not be empty"
+          )
+        // address toLowerCase, symbol toUpperCase
+        val tokens = req.tokens.map(MetadataManager.normalizeToken)
+        req.copy(tokens = tokens)
+      }
 
     case req: UpdateTokenMetadata.Req =>
-      if (req.token.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter token could not be empty"
-        )
-      // address toLowerCase, symbol toUpperCase
-      req.copy(token = Some(MetadataManager.normalizeToken(req.token.get)))
+      Future {
+        if (req.token.isEmpty)
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "Parameter token could not be empty"
+          )
+        // address toLowerCase, symbol toUpperCase
+        req.copy(token = Some(MetadataManager.normalizeToken(req.token.get)))
+      }
 
     case req: UpdateTokenBurnRate.Req =>
-      if (req.address.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter address could not be empty"
-        )
-      req
-
+      Future {
+        if (req.address.isEmpty)
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "Parameter address could not be empty"
+          )
+        req
+      }
     case req: InvalidateToken.Req =>
-      if (req.address.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter address could not be empty"
-        )
-      req
-
+      Future {
+        if (req.address.isEmpty)
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "Parameter address could not be empty"
+          )
+        req
+      }
     case req: SaveMarketMetadatas.Req =>
-      if (req.markets.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter markets could not be empty"
-        )
-      val markets = req.markets.map(MetadataManager.normalizeMarket)
-      req.copy(markets = markets)
+      Future {
+        if (req.markets.isEmpty)
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "Parameter markets could not be empty"
+          )
+        val markets = req.markets.map(MetadataManager.normalizeMarket)
+        req.copy(markets = markets)
+      }
 
     case req: UpdateMarketMetadata.Req =>
-      if (req.market.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter market could not be empty"
-        )
-      req.copy(market = Some(MetadataManager.normalizeMarket(req.market.get)))
+      Future {
+        if (req.market.isEmpty)
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "Parameter market could not be empty"
+          )
+        req.copy(market = Some(MetadataManager.normalizeMarket(req.market.get)))
+      }
 
     case req: TerminateMarket.Req =>
-      if (req.marketKey.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter marketKey could not be empty"
-        )
-      req
+      Future {
+        if (req.marketKey.isEmpty)
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "Parameter marketKey could not be empty"
+          )
+        req
+      }
 
     case req: LoadTokenMetadata.Req =>
-      req
+      Future {
+        req
+      }
 
     case req: LoadMarketMetadata.Req =>
-      req
+      Future {
+        req
+      }
 
   }
 }

@@ -20,12 +20,18 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
+import scala.concurrent.{ExecutionContext, Future}
+
 // Owner: Yongfeng
 object DatabaseQueryMessageValidator {
   val name = "database_query_validator"
 }
 
-final class DatabaseQueryMessageValidator()(implicit val config: Config)
+final class DatabaseQueryMessageValidator(
+  )(
+    implicit
+    val config: Config,
+    ec: ExecutionContext)
     extends MessageValidator {
 
   val defaultItemsPerPage =
@@ -34,53 +40,56 @@ final class DatabaseQueryMessageValidator()(implicit val config: Config)
 
   def validate = {
     case req: GetOrdersForUser.Req =>
-      if (req.owner.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter owner could not be empty"
-        )
-      req.skip match {
-        case Some(s) if s.size > maxItemsPerPage =>
+      Future {
+        if (req.owner.isEmpty)
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Parameter size of paging is larger than $maxItemsPerPage"
+            "Parameter owner could not be empty"
           )
+        req.skip match {
+          case Some(s) if s.size > maxItemsPerPage =>
+            throw ErrorException(
+              ErrorCode.ERR_INVALID_ARGUMENT,
+              s"Parameter size of paging is larger than $maxItemsPerPage"
+            )
 
-        case Some(s) if s.skip < 0 =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Invalid parameter skip of paging:${s.skip}"
-          )
+          case Some(s) if s.skip < 0 =>
+            throw ErrorException(
+              ErrorCode.ERR_INVALID_ARGUMENT,
+              s"Invalid parameter skip of paging:${s.skip}"
+            )
 
-        case Some(_) => req
+          case Some(_) => req
 
-        case None =>
-          req.copy(skip = Some(Paging(size = defaultItemsPerPage)))
+          case None =>
+            req.copy(skip = Some(Paging(size = defaultItemsPerPage)))
+        }
       }
-
     case req: GetTrades.Req =>
-      if (req.owner.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter owner could not be empty"
-        )
-      req.skip match {
-        case Some(s) if s.size > maxItemsPerPage =>
+      Future {
+        if (req.owner.isEmpty)
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Parameter size of paging is larger than $maxItemsPerPage"
+            "Parameter owner could not be empty"
           )
+        req.skip match {
+          case Some(s) if s.size > maxItemsPerPage =>
+            throw ErrorException(
+              ErrorCode.ERR_INVALID_ARGUMENT,
+              s"Parameter size of paging is larger than $maxItemsPerPage"
+            )
 
-        case Some(s) if s.skip < 0 =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Invalid parameter skip of paging:${s.skip}"
-          )
+          case Some(s) if s.skip < 0 =>
+            throw ErrorException(
+              ErrorCode.ERR_INVALID_ARGUMENT,
+              s"Invalid parameter skip of paging:${s.skip}"
+            )
 
-        case Some(_) => req
+          case Some(_) => req
 
-        case None =>
-          req.copy(skip = Some(Paging(size = defaultItemsPerPage)))
+          case None =>
+            req.copy(skip = Some(Paging(size = defaultItemsPerPage)))
+        }
       }
   }
 }

@@ -27,7 +27,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 // Owner: Hongyu
 
@@ -37,6 +37,7 @@ object MultiAccountManagerMessageValidator {
 
 // This class can be deleted in the future.
 final class MultiAccountManagerMessageValidator(
+  )(
     implicit
     val config: Config,
     timeProvider: TimeProvider,
@@ -71,61 +72,67 @@ final class MultiAccountManagerMessageValidator(
       cancelOrderValidator.validate(req)
 
     case req: GetBalanceAndAllowances.Req =>
-      req.copy(
-        address = Address.normalize(req.address),
-        tokens = req.tokens.map(normalize)
-      )
+      Future {
+        req.copy(
+          address = Address.normalize(req.address),
+          tokens = req.tokens.map(normalize)
+        )
+      }
 
     case req @ SubmitOrder.Req(Some(order)) =>
-      orderValidator.validate(order) match {
-        case Left(errorCode) =>
-          throw ErrorException(
-            errorCode,
-            message = s"invalid order in SubmitOrder.Req:$order"
-          )
-        case Right(rawOrder) =>
-          val marketId = MarketId(rawOrder.tokenS, rawOrder.tokenB)
-          metadataManager.assertMarketIdIsActive(marketId)
-
-          val marketKey = MarketKey(marketId).toString
-
-          val now = timeProvider.getTimeMillis
-          val state = RawOrder.State(
-            createdAt = now,
-            updatedAt = now,
-            status = OrderStatus.STATUS_NEW
-          )
-
-          req.withRawOrder(
-            rawOrder.copy(
-              hash = rawOrder.hash.toLowerCase(),
-              owner = Address.normalize(rawOrder.owner),
-              tokenS = Address.normalize(rawOrder.tokenS),
-              tokenB = Address.normalize(rawOrder.tokenB),
-              params = Some(
-                rawOrder.getParams.copy(
-                  dualAuthAddr = rawOrder.getParams.dualAuthAddr.toLowerCase,
-                  broker = rawOrder.getParams.broker.toLowerCase(),
-                  orderInterceptor =
-                    rawOrder.getParams.orderInterceptor.toLowerCase(),
-                  wallet = rawOrder.getParams.wallet.toLowerCase()
-                )
-              ),
-              feeParams = Some(
-                rawOrder.getFeeParams.copy(
-                  tokenFee = Address.normalize(rawOrder.getFeeParams.tokenFee),
-                  tokenRecipient =
-                    rawOrder.getFeeParams.tokenRecipient.toLowerCase()
-                )
-              ),
-              state = Some(state),
-              marketKey = marketKey,
-              marketShard = MarketManagerActor.getEntityId(marketId).toInt,
-              accountShard = MultiAccountManagerActor
-                .getEntityId(order.owner, numOfShards)
-                .toInt
+      Future {
+        orderValidator.validate(order) match {
+          case Left(errorCode) =>
+            throw ErrorException(
+              errorCode,
+              message = s"invalid order in SubmitOrder.Req:$order"
             )
-          )
+          case Right(rawOrder) =>
+            val marketId = MarketId(rawOrder.tokenS, rawOrder.tokenB)
+            metadataManager.assertMarketIdIsActive(marketId)
+
+            val marketKey = MarketKey(marketId).toString
+
+            val now = timeProvider.getTimeMillis
+            val state = RawOrder.State(
+              createdAt = now,
+              updatedAt = now,
+              status = OrderStatus.STATUS_NEW
+            )
+
+            req.withRawOrder(
+              rawOrder.copy(
+                hash = rawOrder.hash.toLowerCase(),
+                owner = Address.normalize(rawOrder.owner),
+                tokenS = Address.normalize(rawOrder.tokenS),
+                tokenB = Address.normalize(rawOrder.tokenB),
+                params = Some(
+                  rawOrder.getParams.copy(
+                    dualAuthAddr = rawOrder.getParams.dualAuthAddr.toLowerCase,
+                    broker = rawOrder.getParams.broker.toLowerCase(),
+                    orderInterceptor =
+                      rawOrder.getParams.orderInterceptor.toLowerCase(),
+                    wallet = rawOrder.getParams.wallet.toLowerCase()
+                  )
+                ),
+                feeParams =
+                  Some(
+                    rawOrder.getFeeParams.copy(
+                      tokenFee =
+                        Address.normalize(rawOrder.getFeeParams.tokenFee),
+                      tokenRecipient =
+                        rawOrder.getFeeParams.tokenRecipient.toLowerCase()
+                    )
+                  ),
+                state = Some(state),
+                marketKey = marketKey,
+                marketShard = MarketManagerActor.getEntityId(marketId).toInt,
+                accountShard = MultiAccountManagerActor
+                  .getEntityId(order.owner, numOfShards)
+                  .toInt
+              )
+            )
+        }
       }
   }
 

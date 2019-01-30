@@ -22,6 +22,8 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
+import scala.concurrent._
+
 // Owner: Yadong
 object EthereumQueryMessageValidator {
   val name = "ethereum_query_validator"
@@ -31,7 +33,8 @@ final class EthereumQueryMessageValidator(
   )(
     implicit
     metadataManager: MetadataManager,
-    val config: Config)
+    val config: Config,
+    ec: ExecutionContext)
     extends MessageValidator {
 
   def normalize(token: String): String = {
@@ -50,19 +53,25 @@ final class EthereumQueryMessageValidator(
   // Throws exception if validation fails.
   def validate = {
     case req: GetBalanceAndAllowances.Req =>
-      req
-        .copy(tokens = req.tokens.map(normalize))
-        .copy(address = Address.normalize(req.address))
+      Future {
+        req
+          .copy(tokens = req.tokens.map(normalize))
+          .copy(address = Address.normalize(req.address))
+      }
 
     case req: GetBalance.Req =>
-      req
-        .copy(tokens = req.tokens.map(normalize))
-        .copy(address = Address.normalize(req.address))
+      Future {
+        req
+          .copy(tokens = req.tokens.map(normalize))
+          .copy(address = Address.normalize(req.address))
+      }
 
     case req: GetAllowance.Req =>
-      req
-        .copy(tokens = req.tokens.map(normalize))
-        .copy(address = Address.normalize(req.address))
+      Future {
+        req
+          .copy(tokens = req.tokens.map(normalize))
+          .copy(address = Address.normalize(req.address))
+      }
 
     // case req: GetFilledAmount.Req =>
   }

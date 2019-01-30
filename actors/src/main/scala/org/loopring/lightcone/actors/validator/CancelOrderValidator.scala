@@ -37,7 +37,7 @@ final class CancelOrderValidator(
     dbModule: DatabaseModule)
     extends MessageValidator {
 
-  override def validate: PartialFunction[Any, Any] = {
+  override def validate = {
     case req: CancelOrder.Req =>
       for {
         orderOpt <- dbModule.orderService.getOrder(req.id)
