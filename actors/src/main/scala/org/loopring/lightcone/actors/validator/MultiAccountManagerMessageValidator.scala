@@ -75,7 +75,7 @@ final class MultiAccountManagerMessageValidator(
       for {
         orderOpt <- dbModule.orderService.getOrder(req.id)
         order = orderOpt.getOrElse(
-          throw ErrorException(ERR_CANCEL_ORDER_VALIDATION_INVALID_SIG)
+          throw ErrorException(ERR_ORDER_VALIDATION_INVALID_SIG)
         )
         marketId = MarketId(order.tokenS, order.tokenB)
         newReq = req.copy(
