@@ -70,7 +70,6 @@ object Dispatchers {
       extends NameBasedEventDispatcher[CutoffEvent](
         names = Seq(
           TransactionRecordActor.name,
-          OrderCutoffHandlerActor.name,
           MultiAccountManagerActor.name
         ),
         actors
@@ -94,7 +93,7 @@ object Dispatchers {
       extractor: EventExtractor[OrdersCancelledEvent],
       ec: ExecutionContext)
       extends NameBasedEventDispatcher[OrdersCancelledEvent](
-        names = Seq(TransactionRecordActor.name, OrderCutoffHandlerActor.name),
+        names = Seq(TransactionRecordActor.name, MultiAccountManagerActor.name),
         actors
       )
 

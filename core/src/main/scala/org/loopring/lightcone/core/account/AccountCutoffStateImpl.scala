@@ -48,22 +48,11 @@ class AccountCutoffStateImpl()(implicit timeProvider: TimeProvider)
       if (ownerCutoff < cutoff) ownerCutoff = cutoff
   }
 
-  def checkOrderCutoff(rawOrder: RawOrder) = {
-    if (ownerCutoff >= rawOrder.validSince) {
-      throw ErrorException(
-        ERR_ORDER_VALIDATION_INVALID_CUTOFF,
-        s"this address has been set cutoff=$ownerCutoff."
-      )
-    }
-    val marketKey = MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
+  def isOwnerCutoff(rawOrder: RawOrder) = ownerCutoff >= rawOrder.validSince
 
-    if (marketPairCutoffs.contains(marketKey) &&
-        marketPairCutoffs(marketKey) > rawOrder.validSince) {
-      throw ErrorException(
-        ERR_ORDER_VALIDATION_INVALID_CUTOFF,
-        s"the market ${rawOrder.tokenS}-${rawOrder.tokenB} " +
-          s"of this address has been set cutoff=$ownerCutoff."
-      )
-    }
+  def isMarketPairCutoff(rawOrder: RawOrder) = {
+    val marketKey = MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
+    marketPairCutoffs.contains(marketKey) &&
+    marketPairCutoffs(marketKey) >= rawOrder.validSince
   }
 }

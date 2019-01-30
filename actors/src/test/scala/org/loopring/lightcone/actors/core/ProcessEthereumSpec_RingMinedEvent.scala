@@ -34,7 +34,6 @@ class ProcessEthereumSpec_RingMinedEvent
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with OrderCutoffSupport
     with OrderGenerateSupport {
 
   val ringSettlementProbe =

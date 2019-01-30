@@ -26,6 +26,7 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
@@ -110,6 +111,7 @@ class AccountManagerActor(
 
       syncCutoff onComplete {
         case Success(_) =>
+          actors.get(MetadataRefresher.name) ! SubscribeMetadataChanged()
           self ! Notify("initialized")
         case Failure(e) =>
           throw e
@@ -125,10 +127,40 @@ class AccountManagerActor(
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req
 
-    case ActorRecover.RecoverOrderReq(Some(xraworder)) =>
-      submitOrder(xraworder).map { _ =>
-        ActorRecover.OrderRecoverResult(xraworder.hash, true)
-      }.sendTo(sender)
+    case ActorRecover.RecoverOrderReq(Some(raworder)) =>
+      val f = for {
+        canceled <- isOrderCanceled(raworder)
+        _ <- Future {
+          if (canceled) {
+            dbModule.orderService.updateOrderStatus(
+              raworder.hash,
+              STATUS_ONCHAIN_CANCELLED_BY_USER
+            )
+            throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CANCELED)
+          }
+          if (accountCutoffState.isOwnerCutoff(raworder)) {
+            dbModule.orderService.updateOrderStatus(
+              raworder.hash,
+              STATUS_ONCHAIN_CANCELLED_BY_USER
+            )
+            throw ErrorException(
+              ERR_ORDER_VALIDATION_INVALID_CUTOFF
+            )
+          } else if (accountCutoffState.isMarketPairCutoff(raworder)) {
+            dbModule.orderService.updateOrderStatus(
+              raworder.hash,
+              STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
+            )
+            throw ErrorException(
+              ERR_ORDER_VALIDATION_INVALID_CUTOFF
+            )
+          }
+        }
+        submitRes <- submitOrder(raworder).map { _ =>
+          ActorRecover.OrderRecoverResult(raworder.hash, true)
+        }
+      } yield submitRes
+      f.sendTo(sender)
 
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
       assert(addr == address)
@@ -151,11 +183,28 @@ class AccountManagerActor(
     case req @ SubmitOrder.Req(Some(raworder)) =>
       (for {
         //check通过再保存到数据库，以及后续处理
-        _ <- Future { accountCutoffState.checkOrderCutoff(raworder) }
-        _ <- checkOrderCanceled(raworder) //取消订单，单独查询以太坊
+        _ <- Future {
+          if (accountCutoffState.isOwnerCutoff(raworder)) {
+            throw ErrorException(
+              ERR_ORDER_VALIDATION_INVALID_CUTOFF,
+              s"this address has set cutoff>=${raworder.getParams.validUntil}."
+            )
+          } else if (accountCutoffState.isMarketPairCutoff(raworder)) {
+            throw ErrorException(
+              ERR_ORDER_VALIDATION_INVALID_CUTOFF,
+              s"the market ${raworder.tokenS}-${raworder.tokenB} " +
+                s"of this address has set cutoff > =${raworder.getParams.validUntil}."
+            )
+          }
+        }
+        canceled <- isOrderCanceled(raworder) //取消订单，单独查询以太坊
+        _ = if (canceled)
+          throw ErrorException(
+            ERR_ORDER_VALIDATION_INVALID_CANCELED,
+            s"this order has been canceled."
+          )
         newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
           raworder.withStatus(STATUS_PENDING_ACTIVE)
-          raworder
         } else raworder
 
         resRawOrder <- (orderPersistenceActor ? req
@@ -246,12 +295,52 @@ class AccountManagerActor(
         if broker != owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received BrokerCutoffEvent $req")
 
+    case req: OrdersCancelledEvent
+        if req.header.nonEmpty && req.getHeader.txStatus.isTxStatusSuccess =>
+      for {
+        orders <- dbModule.orderService.getOrders(req.orderHashes)
+        _ = orders.foreach { o =>
+          val req = CancelOrder.Req(
+            id = o.hash,
+            owner = o.owner,
+            marketId =
+              Some(MarketId(baseToken = o.tokenS, quoteToken = o.tokenB)),
+            status = STATUS_ONCHAIN_CANCELLED_BY_USER
+          )
+          self ! req
+        }
+      } yield Unit
+
     case req: OrderFilledEvent
         if req.header.nonEmpty && req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received OrderFilledEvent ${req}")
       for {
         orderOpt <- dbModule.orderService.getOrder(req.orderHash)
       } yield orderOpt.map(o => submitOrder(o))
+
+    case req: MetadataChanged =>
+      //将terminate的market的订单从内存中删除，terminate的市场等已经被停止删除了，
+      // 因此不需要再发送给已经停止的market了，也不需要更改数据库状态，保持原状态就可以了
+      val marketIds =
+        metadataManager
+          .getMarkets(Set(MarketMetadata.Status.TERMINATED))
+          .map(_.getMarketId)
+
+      val marketKeys = marketIds.map { m =>
+        MarketKey(m).toString
+      }
+
+      val updatedOrders = (marketIds flatMap { marketId =>
+        manager.synchronized {
+          manager.purgeOrders(marketId)
+          orderPool.takeUpdatedOrdersAsMap
+        }
+      }).filterNot(
+          o => marketKeys.contains(MarketKey(o._2.tokenS, o._2.tokenB).toString)
+        )
+        .toMap
+
+      processUpdatedOrders(updatedOrders)
   }
 
   private def submitOrder(rawOrder: RawOrder): Future[Order] = {
@@ -437,19 +526,12 @@ class AccountManagerActor(
       _ <- processUpdatedOrders(updatedOrders)
     } yield Unit
 
-  def checkOrderCanceled(rawOrder: RawOrder) =
+  def isOrderCanceled(rawOrder: RawOrder) =
     for {
       res <- (ethereumQueryActor ? GetOrderCancellation.Req(
         broker = address,
         orderHash = rawOrder.hash
       )).mapAs[GetOrderCancellation.Res]
-    } yield
-      if (res.cancelled)
-        throw ErrorException(
-          ERR_ORDER_VALIDATION_INVALID_CANCELED,
-          s"this order has been canceled."
-        )
-
-  // TODO:terminate market则需要将订单从内存中删除,但是不从数据库删除
+    } yield res.cancelled
 
 }

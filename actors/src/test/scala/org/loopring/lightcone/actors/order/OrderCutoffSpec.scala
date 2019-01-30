@@ -17,9 +17,10 @@
 package org.loopring.lightcone.actors.order
 
 import akka.pattern._
-import org.loopring.lightcone.actors.core.OrderCutoffHandlerActor
+import org.loopring.lightcone.actors.core.MultiAccountManagerActor
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.proto.TxStatus.TX_STATUS_SUCCESS
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.{Await, Future}
@@ -34,9 +35,21 @@ class OrderCutoffSpec
     with MultiAccountManagerSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
-    with OrderGenerateSupport
-    with OrderCutoffSupport {
-  val owner = accounts(0).getAddress
+    with OrderGenerateSupport {
+  val owner = getUniqueAccountWithoutEth
+
+  override def beforeAll(): Unit = {
+    val f = Future.sequence(
+      Seq(
+        transferEth(owner.getAddress, "1000")(accounts(0)),
+        transferLRC(owner.getAddress, "3000")(accounts(0)),
+        approveLRCToDelegate("300")(owner)
+      )
+    )
+
+    Await.result(f, timeout.duration)
+    super.beforeAll()
+  }
 
   private def testSaves(orders: Seq[RawOrder]): Future[Seq[Any]] = {
     Future.sequence(orders.map { order =>
@@ -49,13 +62,13 @@ class OrderCutoffSpec
       createRawOrder(
         amountS = "10".zeros(LRC_TOKEN.decimals),
         amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-      )(accounts(0))
+      )(owner)
     }) ++
       ((0 until 4) map { i =>
         val o = createRawOrder(
           amountS = "20".zeros(LRC_TOKEN.decimals),
           amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )(accounts(0))
+        )(owner)
         o.withStatus(OrderStatus.STATUS_PENDING)
       })
     testSaves(rawOrders)
@@ -79,7 +92,7 @@ class OrderCutoffSpec
       val orders1 =
         dbModule.orderService.getOrders(
           Set(OrderStatus.STATUS_NEW, OrderStatus.STATUS_PENDING),
-          Set(owner)
+          Set(owner.getAddress)
         )
       val resOrder1 =
         Await.result(orders1.mapTo[Seq[RawOrder]], timeout.duration)
@@ -119,11 +132,15 @@ class OrderCutoffSpec
       // 4. send cutoff
       val txHash = "0x999"
       val cutoff = CutoffEvent(
-        owner = owner,
+        header =
+          Some(EventHeader(txStatus = TX_STATUS_SUCCESS, txHash = txHash)),
+        owner = owner.getAddress,
+        broker = owner.getAddress,
         cutoff = timeProvider.getTimeSeconds().toInt + 100
       )
-      actors.get(OrderCutoffHandlerActor.name) ? cutoff
+      actors.get(MultiAccountManagerActor.name) ? cutoff
 
+      Thread.sleep(10000)
       // 5. get orderbook first， waiting cutoffevent finish
       val orderbookRes2 = expectOrderbookRes(
         getOrderBook1,
@@ -140,7 +157,7 @@ class OrderCutoffSpec
       val orders2 =
         dbModule.orderService.getOrders(
           Set(OrderStatus.STATUS_NEW, OrderStatus.STATUS_PENDING),
-          Set(owner)
+          Set(owner.getAddress)
         )
       val resOrder2 =
         Await.result(orders2.mapTo[Seq[RawOrder]], timeout.duration)

@@ -164,7 +164,6 @@ class CoreDeployer @Inject()(
       //-----------deploy singleton actors-----------
       actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
       actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
-      actors.add(OrderCutoffHandlerActor.name, OrderCutoffHandlerActor.start)
       actors.add(OrderRecoverCoordinator.name, OrderRecoverCoordinator.start)
       actors.add(OrderStatusMonitorActor.name, OrderStatusMonitorActor.start)
       actors.add(MetadataManagerActor.name, MetadataManagerActor.start)

@@ -28,7 +28,6 @@ trait EthereumEventExtractorSupport
     with HttpSupport
     with OrderHandleSupport
     with MultiAccountManagerSupport
-    with OrderCutoffSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with DatabaseQueryMessageSupport
