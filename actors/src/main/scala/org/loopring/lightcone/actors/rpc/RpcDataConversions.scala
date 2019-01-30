@@ -15,19 +15,33 @@
  */
 
 package org.loopring.lightcone.actors.rpc
-
+import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 
 object RpcDataConversions {
+
   implicit def convertGetOrderbookReq(
       r: rpcdata.GetOrderbook.Params
-    ): GetOrderbook.Req ={
-    val tokens = r.market.split("-")
+    )(
+      implicit
+      metadataManager: MetadataManager
+    ): GetOrderbook.Req = {
+    val symbols = r.market.split("-")
+    val tokens = symbols.map(symb => metadataManager.getTokenBySymbol(symb))
+    if (tokens.forall(_.isDefined)) {
       GetOrderbook.Req(
         level = r.level,
         size = r.size,
-        marketId = Some()
+        marketId = Some(
+          MarketId(tokens.head.get.meta.address, tokens.last.get.meta.address)
+        )
       )
+    } else {
+      throw ErrorException(
+        ErrorCode.ERR_UNSUPPORTED_TOKEN,
+        s"unsupported token in ${r.market} "
+      )
+    }
   }
-
 }

@@ -18,10 +18,14 @@ package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcModule
 import org.loopring.lightcone.actors.rpc.RpcDataConversions._
+import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.proto._
 
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
+
+  implicit val metadataManager: MetadataManager
+
   method("get_order_book")
     .accepts[rpcdata.GetOrderbook.Params, GetOrderbook.Req]
     .replies[GetOrderbook.Res]

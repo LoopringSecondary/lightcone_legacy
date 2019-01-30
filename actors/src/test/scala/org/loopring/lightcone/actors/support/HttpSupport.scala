@@ -50,6 +50,7 @@ trait HttpSupport extends RpcBinding with Logging {
     val json = req match {
       case m: scalapb.GeneratedMessage => JsonFormat.toJson(m)
     }
+    println(json)
     val reqJson = JsonRpcRequest("2.0", method, Some(json), Some("1"))
     for {
       response <- Http().singleRequest(

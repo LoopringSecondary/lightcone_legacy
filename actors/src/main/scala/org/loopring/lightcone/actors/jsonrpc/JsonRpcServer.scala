@@ -22,6 +22,8 @@ import com.typesafe.config.Config
 import akka.http.scaladsl.server.HttpApp
 import akka.actor._
 import akka.util.Timeout
+import org.loopring.lightcone.core.base.MetadataManager
+
 import scala.io.StdIn
 import scala.concurrent.ExecutionContext
 
@@ -33,6 +35,7 @@ abstract class JsonRpcServer(
     implicit
     val system: ActorSystem,
     val timeout: Timeout,
+    val metadataManager: MetadataManager,
     val ec: ExecutionContext)
     extends HttpApp {
 
