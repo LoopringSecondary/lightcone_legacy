@@ -128,6 +128,7 @@ class AccountManagerActor(
       sender ! req
 
     case ActorRecover.RecoverOrderReq(Some(raworder)) =>
+      //恢复时，如果订单已被取消，需要更新数据库状态
       val f = for {
         canceled <- isOrderCanceled(raworder)
         _ <- Future {
@@ -137,8 +138,7 @@ class AccountManagerActor(
               STATUS_ONCHAIN_CANCELLED_BY_USER
             )
             throw ErrorException(ERR_ORDER_VALIDATION_INVALID_CANCELED)
-          }
-          if (accountCutoffState.isOwnerCutoff(raworder)) {
+          } else if (accountCutoffState.isOwnerCutoff(raworder)) {
             dbModule.orderService.updateOrderStatus(
               raworder.hash,
               STATUS_ONCHAIN_CANCELLED_BY_USER
@@ -155,6 +155,13 @@ class AccountManagerActor(
               ERR_ORDER_VALIDATION_INVALID_CUTOFF
             )
           }
+        }.recover {
+          case e: ErrorException =>
+            //如果有ErrorException的异常抛出，则仍需要通知marketManager
+            marketManagerActor ! CancelOrder.Req(
+              id = raworder.hash,
+              marketId = Some(MarketId(raworder.tokenS, raworder.tokenB))
+            )
         }
         submitRes <- submitOrder(raworder).map { _ =>
           ActorRecover.OrderRecoverResult(raworder.hash, true)
