@@ -27,7 +27,7 @@ class RingServiceImpl @Inject()(
     ringDal: RingDal)
     extends RingService {
 
-  def saveRing(ring: Ring): Future[Either[ErrorCode, String]] =
+  def saveRing(ring: Ring): Future[ErrorCode] =
     ringDal.saveRing(ring)
 
   def saveRings(rings: Seq[Ring]) = ringDal.saveRings(rings)

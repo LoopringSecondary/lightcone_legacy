@@ -41,7 +41,7 @@ class TradeDalImpl @Inject()(
     extends TradeDal {
   val query = TableQuery[TradeTable]
 
-  def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] = {
+  def saveTrade(trade: Trade): Future[ErrorCode] = {
     db.run(
         (query += trade.copy(
           marketKey = MarketKey(trade.tokenS, trade.tokenB).toString
@@ -49,17 +49,83 @@ class TradeDalImpl @Inject()(
       )
       .map {
         case Failure(e: MySQLIntegrityConstraintViolationException) =>
-          Left(ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
+          ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
         case Failure(ex) => {
           logger.error(s"error : ${ex.getMessage}")
-          Left(ErrorCode.ERR_PERSISTENCE_INTERNAL)
+          ErrorCode.ERR_PERSISTENCE_INTERNAL
         }
-        case Success(x) => Right(trade.txHash)
+        case Success(x) => ErrorCode.ERR_NONE
       }
   }
 
-  def saveTrades(trades: Seq[Trade]): Future[Seq[Either[ErrorCode, String]]] =
+  def saveTrades(trades: Seq[Trade]): Future[Seq[ErrorCode]] =
     Future.sequence(trades.map(saveTrade))
+
+  def getTrades(request: Req): Future[Seq[Trade]] = {
+    val ownerOpt = if (request.owner.isEmpty) None else Some(request.owner)
+    val (tokensOpt, tokenbOpt, marketKeyOpt) = getMarketQueryParameters(
+      request.market
+    )
+    val txHashOpt = if (request.txHash.nonEmpty) Some(request.txHash) else None
+    val orderHashOpt =
+      if (request.orderHash.nonEmpty) Some(request.orderHash) else None
+    val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
+      request.ring
+    )
+    val walletOpt = if (request.wallet.nonEmpty) Some(request.wallet) else None
+    val minerOpt = if (request.miner.nonEmpty) Some(request.miner) else None
+    val filters = queryFilters(
+      ownerOpt,
+      txHashOpt,
+      orderHashOpt,
+      ringHashOpt,
+      ringIndexOpt,
+      fillIndexOpt,
+      tokensOpt,
+      tokenbOpt,
+      marketKeyOpt,
+      walletOpt,
+      minerOpt,
+      Some(request.sort),
+      request.skip
+    )
+    db.run(filters.result)
+  }
+
+  def countTrades(request: Req): Future[Int] = {
+    val ownerOpt = if (request.owner.isEmpty) None else Some(request.owner)
+    val (tokensOpt, tokenbOpt, marketKeyOpt) = getMarketQueryParameters(
+      request.market
+    )
+    val txHashOpt = if (request.txHash.nonEmpty) Some(request.txHash) else None
+    val orderHashOpt =
+      if (request.orderHash.nonEmpty) Some(request.orderHash) else None
+    val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
+      request.ring
+    )
+    val walletOpt = if (request.wallet.nonEmpty) Some(request.wallet) else None
+    val minerOpt = if (request.miner.nonEmpty) Some(request.miner) else None
+    val filters = queryFilters(
+      ownerOpt,
+      txHashOpt,
+      orderHashOpt,
+      ringHashOpt,
+      ringIndexOpt,
+      fillIndexOpt,
+      tokensOpt,
+      tokenbOpt,
+      marketKeyOpt,
+      walletOpt,
+      minerOpt,
+      Some(request.sort),
+      request.skip
+    )
+    db.run(filters.size.result)
+  }
+
+  def obsolete(height: Long): Future[Unit] = {
+    db.run(query.filter(_.blockHeight >= height).delete).map(_ >= 0)
+  }
 
   private def queryFilters(
       owner: Option[String] = None,
@@ -76,7 +142,7 @@ class TradeDalImpl @Inject()(
       sort: Option[SortingType] = None,
       pagingOpt: Option[Paging] = None
     ): Query[TradeTable, TradeTable#TableElementType, Seq] = {
-    var filters = query.filter(_.ringIndex > 0L)
+    var filters = query.filter(_.ringIndex >= 0L)
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner.get)
     if (txHash.nonEmpty) filters = filters.filter(_.txHash === txHash.get)
     if (orderHash.nonEmpty)
@@ -102,64 +168,6 @@ class TradeDalImpl @Inject()(
       case None         => filters
     }
     filters
-  }
-
-  def getTrades(request: Req): Future[Seq[Trade]] = {
-    val owner = if (request.owner.isEmpty) None else Some(request.owner)
-    val (tokenS, tokenB, marketKey) = getMarketQueryParameters(request.market)
-    val txHash = if (request.txHash.nonEmpty) Some(request.txHash) else None
-    val orderHash =
-      if (request.orderHash.nonEmpty) Some(request.orderHash) else None
-    val (ringHash, ringIndex, fillIndex) = getRingQueryParameters(request.ring)
-    val wallet = if (request.wallet.nonEmpty) Some(request.wallet) else None
-    val miner = if (request.miner.nonEmpty) Some(request.miner) else None
-    val filters = queryFilters(
-      owner,
-      txHash,
-      orderHash,
-      ringHash,
-      ringIndex,
-      fillIndex,
-      tokenS,
-      tokenB,
-      marketKey,
-      wallet,
-      miner,
-      Some(request.sort),
-      request.skip
-    )
-    db.run(filters.result)
-  }
-
-  def countTrades(request: Req): Future[Int] = {
-    val owner = if (request.owner.isEmpty) None else Some(request.owner)
-    val (tokenS, tokenB, marketKey) = getMarketQueryParameters(request.market)
-    val txHash = if (request.txHash.nonEmpty) Some(request.txHash) else None
-    val orderHash =
-      if (request.orderHash.nonEmpty) Some(request.orderHash) else None
-    val (ringHash, ringIndex, fillIndex) = getRingQueryParameters(request.ring)
-    val wallet = if (request.wallet.nonEmpty) Some(request.wallet) else None
-    val miner = if (request.miner.nonEmpty) Some(request.miner) else None
-    val filters = queryFilters(
-      owner,
-      txHash,
-      orderHash,
-      ringHash,
-      ringIndex,
-      fillIndex,
-      tokenS,
-      tokenB,
-      marketKey,
-      wallet,
-      miner,
-      Some(request.sort),
-      request.skip
-    )
-    db.run(filters.size.result)
-  }
-
-  def obsolete(height: Long): Future[Unit] = {
-    db.run(query.filter(_.blockHeight >= height).delete).map(_ >= 0)
   }
 
   private def getMarketQueryParameters(marketOpt: Option[Req.Market]) = {

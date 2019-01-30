@@ -74,24 +74,44 @@ class DatabaseQueryActor(
 
   def ready: Receive = LoggingReceive {
     case req: GetOrdersForUser.Req =>
-      val (tokenS, tokenB, marketKey) = getMarketQueryParameters(req.market)
+      val (tokensOpt, tokenbOpt, marketKeyOpt) =
+        getMarketQueryParameters(req.market)
       (for {
         result <- dbModule.orderService.getOrdersForUser(
           req.statuses.toSet,
           Some(req.owner),
-          tokenS,
-          tokenB,
-          marketKey,
+          tokensOpt,
+          tokenbOpt,
+          marketKeyOpt,
           None,
           Some(req.sort),
           req.skip
         )
-      } yield Res(result, ErrorCode.ERR_NONE)) sendTo sender
+      } yield {
+        val resp = result.map { r =>
+          val params = r.params match {
+            case Some(o) => Some(o.copy(dualAuthPrivateKey = ""))
+            case None    => None
+          }
+          r.copy(
+            params = params,
+            marketKey = "",
+            accountShard = 0,
+            marketShard = 0
+          )
+        }
+        Res(resp, ErrorCode.ERR_NONE)
+      }) sendTo sender
 
     case req: GetTrades.Req =>
       (for {
         result <- dbModule.tradeService.getTrades(req)
       } yield GetTrades.Res(result)) sendTo sender
+
+    case req: GetRings.Req =>
+      (for {
+        result <- dbModule.ringService.getRings(req)
+      } yield GetRings.Res(result)) sendTo sender
   }
 
   private def getMarketQueryParameters(marketOpt: Option[Req.Market]) = {

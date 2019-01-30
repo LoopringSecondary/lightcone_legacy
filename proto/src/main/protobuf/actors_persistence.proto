@@ -119,6 +119,26 @@ message UserCancelOrder {
     }
 }
 
+message PersistTrades {
+    message Req {
+        repeated Trade trades = 1;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+    }
+}
+
+message PersistRings {
+    message Req {
+        repeated Ring rings = 1;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+    }
+}
+
 message GetTrades {
     message Req {
         message Market {
