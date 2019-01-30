@@ -43,13 +43,13 @@ final class DatabaseQueryMessageValidator()(implicit val config: Config)
             ErrorCode.ERR_INVALID_ARGUMENT,
             "Parameter owner could not be empty"
           )
-        else Address.normalizeAddress(req.owner)
+        else Address.normalize(req.owner)
       val marketOpt = req.market match {
         case Some(m) =>
           val tokenS =
-            if (m.tokenS.nonEmpty) Address.normalizeAddress(m.tokenS) else ""
+            if (m.tokenS.nonEmpty) Address.normalize(m.tokenS) else ""
           val tokenB =
-            if (m.tokenB.nonEmpty) Address.normalizeAddress(m.tokenB) else ""
+            if (m.tokenB.nonEmpty) Address.normalize(m.tokenB) else ""
           Some(GetOrdersForUser.Req.Market(tokenS, tokenB, m.isQueryBothSide))
         case _ => None
       }
@@ -57,7 +57,7 @@ final class DatabaseQueryMessageValidator()(implicit val config: Config)
 
     case req: GetTrades.Req =>
       val owner =
-        if (req.owner.nonEmpty) Address.normalizeAddress(req.owner) else ""
+        if (req.owner.nonEmpty) Address.normalize(req.owner) else ""
       val txHash = if (req.txHash.nonEmpty) req.txHash.toLowerCase else ""
       val orderHash =
         if (req.orderHash.nonEmpty) req.orderHash.toLowerCase else ""
@@ -84,16 +84,16 @@ final class DatabaseQueryMessageValidator()(implicit val config: Config)
       val marketOpt = req.market match {
         case Some(m) =>
           val tokenS =
-            if (m.tokenS.nonEmpty) Address.normalizeAddress(m.tokenS) else ""
+            if (m.tokenS.nonEmpty) Address.normalize(m.tokenS) else ""
           val tokenB =
-            if (m.tokenB.nonEmpty) Address.normalizeAddress(m.tokenB) else ""
+            if (m.tokenB.nonEmpty) Address.normalize(m.tokenB) else ""
           Some(GetTrades.Req.Market(tokenS, tokenB, m.isQueryBothSide))
         case _ => None
       }
       val wallet =
-        if (req.wallet.nonEmpty) Address.normalizeAddress(req.wallet) else ""
+        if (req.wallet.nonEmpty) Address.normalize(req.wallet) else ""
       val miner =
-        if (req.miner.nonEmpty) Address.normalizeAddress(req.miner) else ""
+        if (req.miner.nonEmpty) Address.normalize(req.miner) else ""
       GetTrades.Req(
         owner,
         txHash,

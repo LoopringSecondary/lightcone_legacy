@@ -74,14 +74,15 @@ class DatabaseQueryActor(
 
   def ready: Receive = LoggingReceive {
     case req: GetOrdersForUser.Req =>
-      val (tokenS, tokenB, marketKey) = getMarketQueryParameters(req.market)
+      val (tokensOpt, tokenbOpt, marketKeyOpt) =
+        getMarketQueryParameters(req.market)
       (for {
         result <- dbModule.orderService.getOrdersForUser(
           req.statuses.toSet,
           Some(req.owner),
-          tokenS,
-          tokenB,
-          marketKey,
+          tokensOpt,
+          tokenbOpt,
+          marketKeyOpt,
           None,
           Some(req.sort),
           req.skip

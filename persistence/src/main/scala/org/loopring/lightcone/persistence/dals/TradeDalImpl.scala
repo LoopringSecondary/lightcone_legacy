@@ -62,26 +62,30 @@ class TradeDalImpl @Inject()(
     Future.sequence(trades.map(saveTrade))
 
   def getTrades(request: Req): Future[Seq[Trade]] = {
-    val owner = if (request.owner.isEmpty) None else Some(request.owner)
-    val (tokenS, tokenB, marketKey) = getMarketQueryParameters(request.market)
-    val txHash = if (request.txHash.nonEmpty) Some(request.txHash) else None
-    val orderHash =
+    val ownerOpt = if (request.owner.isEmpty) None else Some(request.owner)
+    val (tokensOpt, tokenbOpt, marketKeyOpt) = getMarketQueryParameters(
+      request.market
+    )
+    val txHashOpt = if (request.txHash.nonEmpty) Some(request.txHash) else None
+    val orderHashOpt =
       if (request.orderHash.nonEmpty) Some(request.orderHash) else None
-    val (ringHash, ringIndex, fillIndex) = getRingQueryParameters(request.ring)
-    val wallet = if (request.wallet.nonEmpty) Some(request.wallet) else None
-    val miner = if (request.miner.nonEmpty) Some(request.miner) else None
+    val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
+      request.ring
+    )
+    val walletOpt = if (request.wallet.nonEmpty) Some(request.wallet) else None
+    val minerOpt = if (request.miner.nonEmpty) Some(request.miner) else None
     val filters = queryFilters(
-      owner,
-      txHash,
-      orderHash,
-      ringHash,
-      ringIndex,
-      fillIndex,
-      tokenS,
-      tokenB,
-      marketKey,
-      wallet,
-      miner,
+      ownerOpt,
+      txHashOpt,
+      orderHashOpt,
+      ringHashOpt,
+      ringIndexOpt,
+      fillIndexOpt,
+      tokensOpt,
+      tokenbOpt,
+      marketKeyOpt,
+      walletOpt,
+      minerOpt,
       Some(request.sort),
       request.skip
     )
@@ -89,26 +93,30 @@ class TradeDalImpl @Inject()(
   }
 
   def countTrades(request: Req): Future[Int] = {
-    val owner = if (request.owner.isEmpty) None else Some(request.owner)
-    val (tokenS, tokenB, marketKey) = getMarketQueryParameters(request.market)
-    val txHash = if (request.txHash.nonEmpty) Some(request.txHash) else None
-    val orderHash =
+    val ownerOpt = if (request.owner.isEmpty) None else Some(request.owner)
+    val (tokensOpt, tokenbOpt, marketKeyOpt) = getMarketQueryParameters(
+      request.market
+    )
+    val txHashOpt = if (request.txHash.nonEmpty) Some(request.txHash) else None
+    val orderHashOpt =
       if (request.orderHash.nonEmpty) Some(request.orderHash) else None
-    val (ringHash, ringIndex, fillIndex) = getRingQueryParameters(request.ring)
-    val wallet = if (request.wallet.nonEmpty) Some(request.wallet) else None
-    val miner = if (request.miner.nonEmpty) Some(request.miner) else None
+    val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
+      request.ring
+    )
+    val walletOpt = if (request.wallet.nonEmpty) Some(request.wallet) else None
+    val minerOpt = if (request.miner.nonEmpty) Some(request.miner) else None
     val filters = queryFilters(
-      owner,
-      txHash,
-      orderHash,
-      ringHash,
-      ringIndex,
-      fillIndex,
-      tokenS,
-      tokenB,
-      marketKey,
-      wallet,
-      miner,
+      ownerOpt,
+      txHashOpt,
+      orderHashOpt,
+      ringHashOpt,
+      ringIndexOpt,
+      fillIndexOpt,
+      tokensOpt,
+      tokenbOpt,
+      marketKeyOpt,
+      walletOpt,
+      minerOpt,
       Some(request.sort),
       request.skip
     )

@@ -75,7 +75,7 @@ class EventPersistenceActor(
         result <- dbModule.tradeService.saveTrades(req.trades)
       } yield {
         if (result.exists(_ != ErrorCode.ERR_NONE)) {
-          log.error(s"some of the trades save failed. trades:${req.trades}")
+          log.error(s"some of the trades save failed :${req.trades}")
         }
       }
 
@@ -84,7 +84,7 @@ class EventPersistenceActor(
         result <- dbModule.ringService.saveRings(req.rings)
       } yield {
         if (result.exists(_ != ErrorCode.ERR_NONE)) {
-          log.error(s"some of the rings save failed. trades:${req.rings}")
+          log.error(s"some of the rings save failed :${req.rings}")
         }
       }
   }
