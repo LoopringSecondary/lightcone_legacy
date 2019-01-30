@@ -167,6 +167,21 @@ class AccountManagerActor(
         }).mapAs[Order]
       } yield SubmitOrder.Res(Some(resOrder))) sendTo sender
 
+    case Cutoff.Req(owner, "", cutoff, _) =>
+      //TODO:是否需要记录下来，或者只生效一次
+      val updatedOrders = manager.synchronized {
+        manager.handleCutoff(cutoff)
+        orderPool.takeUpdatedOrdersAsMap
+      }
+      processUpdatedOrders(updatedOrders)
+
+    case Cutoff.Req(owner, marketKey, cutoff, _) =>
+      val updatedOrders = manager.synchronized {
+        manager.handleCutoff(cutoff, marketKey)
+        orderPool.takeUpdatedOrdersAsMap
+      }
+      processUpdatedOrders(updatedOrders)
+
     case req: CancelOrder.Req =>
       val originalSender = sender
       (for {

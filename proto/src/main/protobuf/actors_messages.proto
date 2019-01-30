@@ -103,6 +103,19 @@ message CancelOrder {
     }
 }
 
+message Cutoff {
+    message Req {
+        string owner        = 1;
+        string market_key   = 2;
+        int64  cutoff       = 3;
+        string sig = 4;
+    }
+
+    message Res {
+        ErrorCode error = 1;
+    }
+}
+
 message RetrieveOrdersToCancel {
     string broker       = 1;
     string owner        = 2;
