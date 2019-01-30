@@ -386,7 +386,7 @@ class OrderDalImpl @Inject()(
     val sql =
       sql"""
         SELECT * FROM T_ORDERS
-        WHERE `status` in (${statuses.map(_.value).mkString(",")})
+        WHERE `status` in (#${statuses.map(_.value).mkString(",")})
         AND valid_since <= ${now}
         AND valid_until > ${now}
         AND sequence_id > ${paging.cursor}

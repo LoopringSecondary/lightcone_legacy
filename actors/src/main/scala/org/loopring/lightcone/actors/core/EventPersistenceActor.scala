@@ -67,7 +67,6 @@ class EventPersistenceActor(
     val actors: Lookup[ActorRef],
     dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(EventPersistenceActor.name) {
-  val logger = Logger(this.getClass)
 
   def ready: Receive = LoggingReceive {
     case req: PersistTrades.Req =>

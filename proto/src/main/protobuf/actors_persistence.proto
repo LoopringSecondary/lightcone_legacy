@@ -100,7 +100,7 @@ message GetOrdersForUser {
 
     message Res {
         repeated RawOrder orders = 1;
-        ErrorCode error = 2;
+        int32             total  = 2;
     }
 }
 
@@ -163,7 +163,8 @@ message GetTrades {
     }
 
     message Res {
-        repeated Trade  trades = 1;
+        repeated Trade trades = 1;
+        int32          total  = 2;
     }
 }
 
@@ -182,6 +183,7 @@ message GetRings {
 
     message Res {
         repeated Ring rings = 1;
+        int32         total = 2;
     }
 }
 
