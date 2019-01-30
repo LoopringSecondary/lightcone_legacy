@@ -87,6 +87,14 @@ class DatabaseQueryActor(
           Some(req.sort),
           req.skip
         )
+        total <- dbModule.orderService.countOrdersForUser(
+          req.statuses.toSet,
+          Some(req.owner),
+          tokensOpt,
+          tokenbOpt,
+          marketKeyOpt,
+          None
+        )
       } yield {
         val resp = result.map { r =>
           val params = r.params match {
@@ -100,18 +108,20 @@ class DatabaseQueryActor(
             marketShard = 0
           )
         }
-        Res(resp, ErrorCode.ERR_NONE)
+        GetOrdersForUser.Res(resp, total)
       }) sendTo sender
 
     case req: GetTrades.Req =>
       (for {
         result <- dbModule.tradeService.getTrades(req)
-      } yield GetTrades.Res(result)) sendTo sender
+        total <- dbModule.tradeService.countTrades(req)
+      } yield GetTrades.Res(result, total)) sendTo sender
 
     case req: GetRings.Req =>
       (for {
         result <- dbModule.ringService.getRings(req)
-      } yield GetRings.Res(result)) sendTo sender
+        total <- dbModule.ringService.countRings(req)
+      } yield GetRings.Res(result, total)) sendTo sender
   }
 
   private def getMarketQueryParameters(marketOpt: Option[Req.Market]) = {

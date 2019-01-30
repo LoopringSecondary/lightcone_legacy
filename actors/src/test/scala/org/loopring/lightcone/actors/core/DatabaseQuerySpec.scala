@@ -87,8 +87,8 @@ class DatabaseQuerySpec
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case GetTrades.Res(trades) =>
-          assert(trades.nonEmpty && trades.length === 5)
+        case GetTrades.Res(trades, total) =>
+          assert(trades.nonEmpty && trades.length === 5 && total == 5)
         case _ => assert(false)
       }
     }

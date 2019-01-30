@@ -51,7 +51,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q3, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r3.trades.length == 2)
+      assert(r3.trades.length == 2 && r3.total == 2)
 
       info("query trades: sort")
       val q3_2 = GetTrades.Req(owner = owner1, sort = SortingType.DESC)
@@ -59,7 +59,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q3_2, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r3_2.trades.length == 2)
+      assert(r3_2.trades.length == 2 && r3_2.total == 2)
       assert(r3.trades.head == r3_2.trades.last)
 
       info("query trades: skip")
@@ -68,7 +68,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q3_3, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r3_3.trades.length == 3)
+      assert(r3_3.trades.length == 3 && r3_3.total == 3)
 
       info("query trades: by owner and market")
       val q4 = GetTrades.Req(
@@ -79,7 +79,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q4, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r4.trades.length == 1)
+      assert(r4.trades.length == 1 && r4.total == 1)
       val q5 =
         GetTrades.Req(
           owner = owner1,
@@ -89,7 +89,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q5, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r5.trades.length == 2)
+      assert(r5.trades.length == 2 && r5.total == 2)
 
       info("query trades: by ring")
       val q6 = GetTrades.Req(ring = Some(GetTrades.Req.Ring(hash2)))
@@ -97,19 +97,19 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q6, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r6.trades.length == 2)
+      assert(r6.trades.length == 2 && r6.total == 2)
       val q7 = GetTrades.Req(ring = Some(GetTrades.Req.Ring(hash2, "2", "1")))
       val r7 = Await.result(
         singleRequest(q7, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r7.trades.length == 1)
+      assert(r7.trades.length == 1 && r7.total == 1)
       val q8 = GetTrades.Req(ring = Some(GetTrades.Req.Ring(hash2, "2", "2")))
       val r8 = Await.result(
         singleRequest(q8, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r8.trades.isEmpty)
+      assert(r8.trades.isEmpty && r8.total == 0)
 
       info("query trades: full parameters")
       val q9 = GetTrades.Req(
@@ -125,7 +125,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q9, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r9.trades.length == 1)
+      assert(r9.trades.length == 1 && r9.total == 1)
       val q10 = GetTrades.Req(
         owner = owner2,
         txHash = hash1,
@@ -139,7 +139,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q10, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r10.trades.isEmpty)
+      assert(r10.trades.isEmpty && r10.total == 0)
 
       info("invalid ringIndex")
       val q11 =
@@ -187,7 +187,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q3, "get_rings").mapTo[GetRings.Res],
         5.second
       )
-      assert(r3.rings.length == 1)
+      assert(r3.rings.length == 1 && r3.total == 1)
       val q4 = GetRings.Req(
         ring = Some(GetRings.Req.Ring(GetRings.Req.Ring.Filter.RingIndex(11)))
       )
@@ -195,16 +195,11 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q4, "get_rings").mapTo[GetRings.Res],
         5.second
       )
-      assert(r4.rings.length == 1)
+      assert(r4.rings.length == 1 && r4.total == 1)
       assert(r3.rings.head == r4.rings.head)
       r3.rings.head.fees match {
         case Some(f) =>
-          assert(f.fees.length == 2)
-          f.fees foreach {
-            case fee: Fee if fee == fee1 => assert(true)
-            case fee: Fee if fee == fee2 => assert(true)
-            case _                       => assert(false)
-          }
+          assert(f.fees.length == 2 && f.fees == fees.fees)
         case None => assert(false)
       }
 
@@ -214,13 +209,13 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q5, "get_rings").mapTo[GetRings.Res],
         5.second
       )
-      assert(r5.rings.length == 3)
+      assert(r5.rings.length == 3 && r5.total == 3)
       val q6 = GetRings.Req(sort = SortingType.ASC)
       val r6 = Await.result(
         singleRequest(q6, "get_rings").mapTo[GetRings.Res],
         5.second
       )
-      assert(r6.rings.length == 3)
+      assert(r6.rings.length == 3 && r6.total == 3)
       assert(r5.rings.head == r6.rings.last)
 
       info("query rings: skip")
@@ -229,7 +224,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q7, "get_rings").mapTo[GetRings.Res],
         5.second
       )
-      assert(r7.rings.length == 2)
+      assert(r7.rings.length == 2 && r7.total == 2)
     }
   }
 
@@ -318,28 +313,27 @@ class EntryPointSpec_DatabaseQuery
   val hash3 =
     "0x30f3c30128432ef6b0bbf3d89002a6af96768f74390ff3061a4f548848e669dc"
 
-  val fee1 = Trade.Fee(
-    tokenFee = "0x97241525fe425C90eBe5A41127816dcFA5954b06",
-    amountFee = ByteString.copyFrom("10", "UTF-8"),
-    feeAmountS = ByteString.copyFrom("11", "UTF-8"),
-    feeAmountB = ByteString.copyFrom("12", "UTF-8"),
-    feeRecipient = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
-    waiveFeePercentage = 10,
-    walletSplitPercentage = 5
-  )
-
-  val fee2 = Trade.Fee(
-    tokenFee = "0x2d92e8a4556e9100f1bd7709293f122f69d2cd2b",
-    amountFee = ByteString.copyFrom("20", "UTF-8"),
-    feeAmountS = ByteString.copyFrom("21", "UTF-8"),
-    feeAmountB = ByteString.copyFrom("22", "UTF-8"),
-    feeRecipient = "0xa1c95e17f629d8bc5985f3f997760a575d56b0c2",
-    waiveFeePercentage = 8,
-    walletSplitPercentage = 2
-  )
-
   val fees = Ring.Fees(
-    Seq(fee1, fee2)
+    Seq(
+      Trade.Fee(
+        tokenFee = "0x97241525fe425C90eBe5A41127816dcFA5954b06",
+        amountFee = ByteString.copyFrom("10", "UTF-8"),
+        feeAmountS = ByteString.copyFrom("11", "UTF-8"),
+        feeAmountB = ByteString.copyFrom("12", "UTF-8"),
+        feeRecipient = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
+        waiveFeePercentage = 10,
+        walletSplitPercentage = 5
+      ),
+      Trade.Fee(
+        tokenFee = "0x2d92e8a4556e9100f1bd7709293f122f69d2cd2b",
+        amountFee = ByteString.copyFrom("20", "UTF-8"),
+        feeAmountS = ByteString.copyFrom("21", "UTF-8"),
+        feeAmountB = ByteString.copyFrom("22", "UTF-8"),
+        feeRecipient = "0xa1c95e17f629d8bc5985f3f997760a575d56b0c2",
+        waiveFeePercentage = 8,
+        walletSplitPercentage = 2
+      )
+    )
   )
 
   private def testSaveSomeRings() = {
