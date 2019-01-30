@@ -23,6 +23,7 @@ import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence._
@@ -83,7 +84,7 @@ class OrderStatusMonitorActor(
     with ActorLogging
     with NamedBasedConfig
     with RepeatedJobActor {
-
+  import OrderStatusMonitor.MonitoringType._
   import OrderStatus._
 
   val repeatedDelayInSeconds = selfConfig.getInt("delay-in-seconds")

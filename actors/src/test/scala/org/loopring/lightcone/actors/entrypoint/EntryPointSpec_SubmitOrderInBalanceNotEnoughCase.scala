@@ -92,7 +92,7 @@ class EntryPointSpec_SubmitOrderInBalanceNotEnoughCase
           orderOpt match {
             case Some(order) =>
               assert(order.sequenceId > 0)
-              if (order.id == rawOrders(0).hash) {
+              if (order.hash == rawOrders(0).hash) {
                 assert(order.getState.status == STATUS_PENDING)
               } else {
                 assert(

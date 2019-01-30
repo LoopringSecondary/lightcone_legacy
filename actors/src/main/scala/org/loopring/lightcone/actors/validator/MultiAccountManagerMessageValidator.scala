@@ -27,7 +27,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent._
 
 // Owner: Hongyu
 
@@ -45,6 +45,8 @@ final class MultiAccountManagerMessageValidator(
     metadataManager: MetadataManager,
     dbModule: DatabaseModule)
     extends MessageValidator {
+
+  import OrderStatus._
 
   val multiAccountConfig =
     config.getConfig(MultiAccountManagerActor.name)
@@ -97,7 +99,7 @@ final class MultiAccountManagerMessageValidator(
             val state = RawOrder.State(
               createdAt = now,
               updatedAt = now,
-              status = OrderStatus.STATUS_NEW
+              status = STATUS_NEW
             )
 
             req.withRawOrder(
