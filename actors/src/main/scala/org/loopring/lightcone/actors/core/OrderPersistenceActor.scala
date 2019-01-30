@@ -69,13 +69,14 @@ class OrderPersistenceActor(
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
     extends ActorWithPathBasedConfig(OrderPersistenceActor.name) {
+  import OrderStatus._
 
   //save order to db first, then send to AccountManager
   def ready: Receive = {
     case req: CancelOrder.Req =>
       (req.status match {
-        case OrderStatus.STATUS_SOFT_CANCELLED_BY_USER |
-            OrderStatus.STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR =>
+        case STATUS_SOFT_CANCELLED_BY_USER |
+            STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR =>
           for {
             cancelRes <- dbModule.orderService
               .cancelOrders(Seq(req.id), req.status)
