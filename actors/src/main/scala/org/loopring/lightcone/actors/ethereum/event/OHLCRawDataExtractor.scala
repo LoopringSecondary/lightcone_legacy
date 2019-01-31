@@ -93,7 +93,7 @@ class OHLCRawDataExtractor @Inject()(
     val totalInWei =
       if (Address(quoteToken.meta.address).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
-      else Numeric.toBigInt(fill.filledAmountS.toByteArray)
+      else Numeric.toBigInt(fill.filledAmountB.toByteArray)
 
     val total: Double = baseToken
       .fromWei(totalInWei, marketMetadata.precisionForTotal)

@@ -137,7 +137,11 @@ class RingMinedEventExtractor @Inject()(
             wallet = Address.normalize(order.getParams.wallet)
           )
         }
-        ring.copy(fills = fills, miner = Address.normalize(ringBatch.miner))
+        ring.copy(
+          fills = fills,
+          miner = Address.normalize(ringBatch.miner),
+          feeRecipient = Address.normalize(ringBatch.feeRecipient)
+        )
       } else {
         ring
       }
