@@ -26,7 +26,6 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.core.account._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
@@ -111,7 +110,6 @@ class AccountManagerActor(
 
       syncCutoff onComplete {
         case Success(_) =>
-          actors.get(MetadataRefresher.name) ! SubscribeMetadataChanged()
           self ! Notify("initialized")
         case Failure(e) =>
           throw e
@@ -353,6 +351,7 @@ class AccountManagerActor(
 
       val updatedOrders = (marketIds flatMap { marketId =>
         manager.synchronized {
+          //TODO:终止市场时，可能会影响其他市场的订单大小
           manager.purgeOrders(marketId)
           orderPool.takeUpdatedOrdersAsMap
         }

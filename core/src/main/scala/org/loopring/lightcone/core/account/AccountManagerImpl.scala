@@ -116,6 +116,7 @@ final private[core] class AccountManagerImpl(
     orders.size
   }
 
+  //TODO:终止市场时，可能会影响其他市场的订单大小
   def purgeOrders(marketId: MarketId): Int = {
     val orders = orderPool.orders.filter { order =>
       (order.tokenS == marketId.quoteToken && order.tokenB == marketId.baseToken) ||

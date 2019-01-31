@@ -43,6 +43,7 @@ trait AccountManager {
   // hard cancel multiple orders
   def handleCutoff(cutoff: Long): Int
 
+  //TODO:终止市场时，可能会影响其他市场的订单大小
   def purgeOrders(marketId: MarketId): Int
 
   def handleCutoff(

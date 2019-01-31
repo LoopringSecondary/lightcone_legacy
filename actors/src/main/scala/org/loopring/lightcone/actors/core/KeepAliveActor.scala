@@ -84,6 +84,8 @@ class KeepAliveActor @Inject()(
   def marketManagerActor = actors.get(MarketManagerActor.name)
   def multiAccountManagerActor = actors.get(MultiAccountManagerActor.name)
 
+  val numsOfAccountShards = config.getInt("multi_account_manager.num-of-shards")
+
   val repeatedJobs = Seq(
     Job(
       name = "keep-alive",
@@ -128,9 +130,8 @@ class KeepAliveActor @Inject()(
     } yield Unit
 
   private def initAccountManager(): Future[Unit] = {
-    val numsOfShards = config.getInt("multi_account_manager.num-of-shards")
     for {
-      _ <- Future.sequence((0 until numsOfShards) map { i =>
+      _ <- Future.sequence((0 until numsOfAccountShards) map { i =>
         multiAccountManagerActor ? Notify(KeepAliveActor.NOTIFY_MSG, i.toString)
       })
     } yield Unit

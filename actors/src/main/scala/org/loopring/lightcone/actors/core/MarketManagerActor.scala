@@ -17,8 +17,6 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
-import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.cluster.sharding._
 import akka.pattern.ask
 import akka.serialization.Serialization
@@ -28,7 +26,6 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
@@ -169,7 +166,6 @@ class MarketManagerActor(
 
   protected def gasPriceActor = actors.get(GasPriceActor.name)
   protected def settlementActor = actors.get(RingSettlementManagerActor.name)
-  protected def metadataRefresher = actors.get(MetadataRefresher.name)
   protected def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
 
   var gasPrice: BigInt = _
@@ -200,7 +196,6 @@ class MarketManagerActor(
           )
         }
       }
-      _ = metadataRefresher ! SubscribeMetadataChanged()
     } yield Unit
 
   def recover: Receive = {

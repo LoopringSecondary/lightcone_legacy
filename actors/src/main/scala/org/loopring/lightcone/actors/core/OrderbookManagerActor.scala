@@ -117,8 +117,6 @@ class OrderbookManagerActor(
     )
   )
 
-  actors.get(MetadataRefresher.name) ! SubscribeMetadataChanged()
-
   def ready: Receive = super.receiveRepeatdJobs orElse {
     case req @ Notify(KeepAliveActor.NOTIFY_MSG, _) =>
       sender ! req

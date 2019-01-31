@@ -17,6 +17,8 @@
 package org.loopring.lightcone.actors.core
 import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor._
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.cluster.sharding._
 import akka.pattern.ask
 import akka.serialization.Serialization
@@ -29,6 +31,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import org.web3j.utils._
+
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -138,33 +141,36 @@ class MultiAccountManagerActor(
       case e =>
         Restart
     }
+//  val mediator = DistributedPubSub(context.system).mediator
 
-  override def initialize() = {
-    if (skiprecover) Future.successful {
-      log.debug(s"actor recover skipped: ${self.path}")
-      becomeReady()
-    } else {
-      log.debug(s"actor recover started: ${self.path}")
-      context.become(recover)
-      for {
-        _ <- actors.get(EthereumQueryActor.name) ? Notify("echo") //检测以太坊准备好之后才发起恢复请求
-        _ <- actors.get(OrderRecoverCoordinator.name) ?
-          ActorRecover.Request(
-            addressShardingEntity = entityId,
-            sender = Serialization.serializedActorPath(self)
-          )
-      } yield {
-        autoSwitchBackToReady = Some(
-          context.system.scheduler
-            .scheduleOnce(
-              maxRecoverDurationMinutes.minute,
-              self,
-              ActorRecover.Finished(true)
+  override def initialize() =
+    for {
+//    _ <- mediator ? Subscribe(MetadataManagerActor.pubsubTopic, self)
+      _ <- if (skiprecover) Future.successful {
+        log.debug(s"actor recover skipped: ${self.path}")
+        becomeReady()
+      } else {
+        log.debug(s"actor recover started: ${self.path}")
+        context.become(recover)
+        for {
+          _ <- actors.get(EthereumQueryActor.name) ? Notify("echo") //检测以太坊准备好之后才发起恢复请求
+          _ <- actors.get(OrderRecoverCoordinator.name) ?
+            ActorRecover.Request(
+              addressShardingEntity = entityId,
+              sender = Serialization.serializedActorPath(self)
             )
-        )
+        } yield {
+          autoSwitchBackToReady = Some(
+            context.system.scheduler
+              .scheduleOnce(
+                maxRecoverDurationMinutes.minute,
+                self,
+                ActorRecover.Finished(true)
+              )
+          )
+        }
       }
-    }
-  }
+    } yield Unit
 
   def recover: Receive = {
     case req: ActorRecover.RecoverOrderReq => handleRequest(req)
@@ -185,6 +191,14 @@ class MultiAccountManagerActor(
   }
 
   def ready: Receive = {
+    case req: MetadataChanged =>
+      val marketIds =
+        metadataManager
+          .getMarkets(Set(MarketMetadata.Status.TERMINATED))
+          .map(_.getMarketId)
+      marketIds.foreach { m =>
+        accountManagerActors.all() foreach { _ ! req }
+      }
     case req: Any => handleRequest(req)
   }
 

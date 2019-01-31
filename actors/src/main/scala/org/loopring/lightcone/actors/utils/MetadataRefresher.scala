@@ -24,10 +24,11 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.actors.core.MetadataManagerActor
+import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
+
 import scala.concurrent._
 import scala.util._
 
@@ -66,15 +67,21 @@ class MetadataRefresher(
   def metadataManagerActor = actors.get(MetadataManagerActor.name)
 
   val mediator = DistributedPubSub(context.system).mediator
-  mediator ! Subscribe(MetadataManagerActor.pubsubTopic, self)
+
+  def orderbookManagerActor = actors.get(OrderbookManagerActor.name)
+  def marketManagerActor = actors.get(MarketManagerActor.name)
+  def multiAccountManagerActor = actors.get(MultiAccountManagerActor.name)
+  val numsOfAccountShards = config.getInt("multi_account_manager.num-of-shards")
 
   private var tokens = Seq.empty[TokenMetadata]
   private var markets = Seq.empty[MarketMetadata]
 
-  private var subscribees = Seq.empty[ActorRef]
-
   override def initialize() = {
-    val f = refreshMetadata()
+    val f = for {
+      _ <- mediator ? Subscribe(MetadataManagerActor.pubsubTopic, self)
+      _ <- refreshMetadata()
+    } yield {}
+
     f onComplete {
       case Success(_) => becomeReady()
       case Failure(e) => throw e
@@ -84,11 +91,13 @@ class MetadataRefresher(
 
   def ready: Receive = {
     case req: MetadataChanged =>
-      refreshMetadata()
-      subscribees.foreach(_ ! req)
-
-    case req: SubscribeMetadataChanged =>
-      subscribees = subscribees :+ sender
+      for {
+        _ <- refreshMetadata()
+        actors1 <- toNotifyActors()
+        _ = actors1.foreach { actor =>
+          actor ! req
+        }
+      } yield Unit
 
     case _: GetMetadatas.Req =>
       sender ! GetMetadatas.Res(tokens = tokens, markets = markets)
@@ -109,4 +118,45 @@ class MetadataRefresher(
       markets = markets_.map(MetadataManager.normalizeMarket)
       metadataManager.reset(tokens_, markets_)
     }
+
+  //TODO：经过简单的测试，但是仍要在集群环境下确认只会获取本地的actor
+  //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
+  private def toNotifyActors() = {
+    for {
+      accountManagerActors <- Future.sequence {
+        (0 until numsOfAccountShards) map { i =>
+          getLocalActorRef(
+            s"akka://${context.system.name}/system/sharding/" +
+              s"${MultiAccountManagerActor.name}/${i}/${MultiAccountManagerActor.name}_${i}"
+          )
+        }
+      }
+      marketOrOrderbookManagerActors <- Future.sequence {
+        metadataManager.getValidMarketIds flatMap {
+          case (_, marketId) =>
+            val entityId = MarketManagerActor.getEntityId(marketId)
+            val orderbookActor = getLocalActorRef(
+              s"akka://${context.system.name}/system/sharding/" +
+                s"${OrderbookManagerActor.name}/${OrderbookManagerActor.name}_${entityId}/${OrderbookManagerActor.name}_${entityId}"
+            )
+            val marketActor = getLocalActorRef(
+              s"akka://${context.system.name}/system/sharding/" +
+                s"${MarketManagerActor.name}/${MarketManagerActor.name}_${entityId}/${MarketManagerActor.name}_${entityId}"
+            )
+            Seq(orderbookActor, marketActor)
+        }
+      }
+    } yield
+      (accountManagerActors ++ marketOrOrderbookManagerActors)
+        .filterNot(_ == null)
+  }
+
+  private def getLocalActorRef(path: String): Future[ActorRef] = {
+    context.system
+      .actorSelection(path)
+      .resolveOne()
+      .recover {
+        case e: Exception => null
+      }
+  }
 }
