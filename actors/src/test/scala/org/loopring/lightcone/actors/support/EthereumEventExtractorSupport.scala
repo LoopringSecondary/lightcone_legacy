@@ -31,6 +31,7 @@ trait EthereumEventExtractorSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with DatabaseQueryMessageSupport
+    with RingAndTradePersistenceSupport
     with EthereumTransactionRecordSupport {
   my: CommonSpec =>
 

@@ -32,8 +32,8 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
-  def saveTrade(trade: Trade): Future[Either[ErrorCode, String]]
-  def saveTrades(trades: Seq[Trade]): Future[Seq[Either[ErrorCode, String]]]
+  def saveTrade(trade: Trade): Future[ErrorCode]
+  def saveTrades(trades: Seq[Trade]): Future[Seq[ErrorCode]]
   def getTrades(request: GetTrades.Req): Future[Seq[Trade]]
   def countTrades(request: GetTrades.Req): Future[Int]
   def obsolete(height: Long): Future[Unit]

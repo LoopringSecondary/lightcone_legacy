@@ -38,70 +38,12 @@ class RecoverOrderSpec
     with OrderbookManagerSupport
     with OrderGenerateSupport
     with RecoverSupport {
-
   import OrderStatus._
-
-  private def testSaves(
-      orders: Seq[RawOrder]
-    ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
-    for {
-      result <- Future.sequence(orders.map { order =>
-        dbModule.orderService.saveOrder(order)
-      })
-    } yield result
-  }
-
-  private def testSaveOrder4Recover(
-    ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
-    val rawOrders = ((0 until 6) map { i =>
-      createRawOrder(
-        amountS = "10".zeros(LRC_TOKEN.decimals),
-        amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-      )
-    }) ++
-      ((0 until 4) map { i =>
-        val o = createRawOrder(
-          amountS = "20".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )
-        o.withStatus(STATUS_PENDING)
-      }) ++
-      ((0 until 3) map { i =>
-        val o = createRawOrder(
-          tokenS = "0x021",
-          tokenB = "0x022",
-          amountS = "11".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )
-        o.withStatus(STATUS_EXPIRED)
-
-      }) ++
-      ((0 until 5) map { i =>
-        val o = createRawOrder(
-          tokenS = "0x031",
-          tokenB = "0x032",
-          amountS = "12".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )
-        o.withStatus(STATUS_DUST_ORDER)
-
-      }) ++
-      ((0 until 2) map { i =>
-        val o = createRawOrder(
-          tokenS = "0x041",
-          tokenB = "0x042",
-          amountS = "13".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )
-        o.withStatus(STATUS_PARTIALLY_FILLED)
-      })
-    testSaves(rawOrders)
-  }
 
   "recover an address" must {
     "get all effective orders and recover" in {
       val owner = "0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10"
-      // 1. select depth
+      info("select depth")
       val getOrderBook1 = GetOrderbook.Req(
         0,
         100,
@@ -115,11 +57,18 @@ class RecoverOrderSpec
           .orderbook
           .get
 
-      // 2. save some orders in db
-      testSaveOrder4Recover()
-      // 3. recover
+      info("save some orders in db")
+      val r1 = Await.result(testSaveOrder4Recover(), 5.second)
+      r1.foreach { r =>
+        assert(r.isLeft)
+      }
+      val orderHashes = r1.map(_.left.get.hash)
+      val r2 =
+        Await.result(dbModule.orderService.getOrders(orderHashes), 5.second)
+      assert(r2.length == orderHashes.length)
+
+      info("recover")
       val marketLrcWeth = Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
-      val marketMock4 = Some(MarketId("0x041", "0x042"))
       val request1 = ActorRecover.Request(
         addressShardingEntity = MultiAccountManagerActor
           .getEntityId(owner, 100),
@@ -128,8 +77,9 @@ class RecoverOrderSpec
       implicit val timeout = Timeout(100 second)
       val r = actors.get(OrderRecoverCoordinator.name) ? request1
       val res = Await.result(r, timeout.duration)
-      // 4. get depth
       Thread.sleep(5000)
+
+      info("get depth")
       val orderbookF2 = singleRequest(getOrderBook1, "get_orderbook")
       val orderbookRes2 =
         Await
@@ -147,6 +97,55 @@ class RecoverOrderSpec
         )
       )
     }
+  }
+
+  private def testSaves(
+      orders: Seq[RawOrder]
+    ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
+    for {
+      result <- Future.sequence(orders.map { order =>
+        dbModule.orderService.saveOrder(order)
+      })
+    } yield result
+  }
+
+  private def testSaveOrder4Recover(
+    ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
+    val rawOrders =
+      ((0 until 6) map { i =>
+        createRawOrder(
+          amountS = "10".zeros(LRC_TOKEN.decimals),
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+        )
+      }) ++
+        ((0 until 4) map { i =>
+          val o = createRawOrder(
+            amountS = "20".zeros(LRC_TOKEN.decimals),
+            amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+          )
+          o.withStatus(STATUS_PENDING)
+        }) ++
+        Seq(
+          createRawOrder(
+            tokenS = "0x021",
+            tokenB = "0x022",
+            amountS = "11".zeros(LRC_TOKEN.decimals),
+            amountFee = "3".zeros(LRC_TOKEN.decimals)
+          ).withStatus(STATUS_EXPIRED),
+          createRawOrder(
+            tokenS = "0x031",
+            tokenB = "0x032",
+            amountS = "12".zeros(LRC_TOKEN.decimals),
+            amountFee = "2".zeros(LRC_TOKEN.decimals)
+          ).withStatus(STATUS_DUST_ORDER),
+          createRawOrder(
+            tokenS = "0x041",
+            tokenB = "0x042",
+            amountS = "13".zeros(LRC_TOKEN.decimals),
+            amountFee = "5".zeros(LRC_TOKEN.decimals)
+          ).withStatus(STATUS_PARTIALLY_FILLED)
+        )
+    testSaves(rawOrders)
   }
 
 }

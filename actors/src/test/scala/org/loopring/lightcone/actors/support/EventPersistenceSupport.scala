@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.service
+package org.loopring.lightcone.actors.support
 
-import org.loopring.lightcone.proto._
-import scala.concurrent.Future
+import org.loopring.lightcone.actors.core.{
+  DatabaseQueryActor,
+  RingAndTradePersistenceActor
+}
 
-trait TradeService {
-  def saveTrade(trade: Trade): Future[ErrorCode]
-  def saveTrades(trades: Seq[Trade]): Future[Seq[ErrorCode]]
-  def getTrades(request: GetTrades.Req): Future[Seq[Trade]]
-  def countTrades(request: GetTrades.Req): Future[Int]
-  def obsolete(height: Long): Future[Unit]
+trait RingAndTradePersistenceSupport extends DatabaseModuleSupport {
+  my: CommonSpec =>
+
+  actors.add(
+    RingAndTradePersistenceActor.name,
+    RingAndTradePersistenceActor.start
+  )
 }

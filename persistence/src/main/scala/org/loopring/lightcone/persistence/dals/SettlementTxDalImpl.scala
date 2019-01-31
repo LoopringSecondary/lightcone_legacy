@@ -75,9 +75,9 @@ class SettlementTxDalImpl @Inject()(
       sql"""
         SELECT tx_hash, `from`, `to`, gas, gas_price, `value`, `data`, nonce, status, MAX(create_at) as create_at, update_at
         FROM T_SETTLEMENT_TXS
-        WHERE `from` = ${request.owner}
-          and status = ${SettlementTx.Status.PENDING.value}
-          and create_at <= ${request.timeBefore}
+        WHERE `from` = "#${request.owner}"
+          and status = #${SettlementTx.Status.PENDING.value}
+          and create_at <= #${request.timeBefore}
         GROUP BY `from`, nonce
         """
         .as[SettlementTx]

@@ -30,13 +30,13 @@ class TradeServiceImpl @Inject()(
     tradeDal: TradeDal)
     extends TradeService {
 
-  def saveTrade(trade: Trade): Future[Either[ErrorCode, String]] =
+  def saveTrade(trade: Trade): Future[ErrorCode] =
     tradeDal.saveTrade(trade)
 
+  def saveTrades(trades: Seq[Trade]) = tradeDal.saveTrades(trades)
+
   def getTrades(request: GetTrades.Req): Future[Seq[Trade]] =
-    tradeDal
-      .getTrades(request)
-      .map(_.map(r => r.copy(updatedAt = 0, sequenceId = 0)))
+    tradeDal.getTrades(request)
 
   def countTrades(request: GetTrades.Req): Future[Int] =
     tradeDal.countTrades(request)

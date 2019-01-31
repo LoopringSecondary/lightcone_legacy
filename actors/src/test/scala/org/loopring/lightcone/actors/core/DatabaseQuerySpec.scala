@@ -17,9 +17,7 @@
 package org.loopring.lightcone.actors.core
 
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.core.base.MarketKey
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.{Await, Future}
 
 class DatabaseQuerySpec
@@ -29,24 +27,6 @@ class DatabaseQuerySpec
     with JsonrpcSupport
     with OrderGenerateSupport
     with HttpSupport {
-
-  private def testSaveTrade(
-      txHash: String,
-      owner: String,
-      tokenS: String,
-      tokenB: String,
-      blockHeight: Long
-    ): Future[Either[ErrorCode, String]] = {
-    dbModule.tradeService.saveTrade(
-      Trade(
-        txHash = txHash,
-        owner = owner,
-        tokenB = tokenB,
-        tokenS = tokenS,
-        blockHeight = blockHeight
-      )
-    )
-  }
 
   "send an orders request" must {
     "receive a response without orders" in {
@@ -59,10 +39,10 @@ class DatabaseQuerySpec
       val request = GetOrdersForUser.Req(
         owner = accounts(0).getAddress,
         statuses = Seq(OrderStatus.STATUS_NEW),
-        market = GetOrdersForUser.Req.Market
-          .Pair(
-            MarketPair(tokenS = LRC_TOKEN.address, tokenB = WETH_TOKEN.address)
-          )
+        market = Some(
+          GetOrdersForUser.Req
+            .Market(LRC_TOKEN.address, WETH_TOKEN.address, true)
+        )
       )
       val r = for {
         _ <- Future.sequence(rawOrders.map { order =>
@@ -72,9 +52,9 @@ class DatabaseQuerySpec
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case GetOrdersForUser.Res(orders, error) =>
-          assert(orders.nonEmpty && orders.length === 6)
-          assert(error === ErrorCode.ERR_NONE)
+        case GetOrdersForUser.Res(orders, total) =>
+          assert(orders.nonEmpty && orders.length == 6)
+          assert(total == 6)
         case _ => assert(false)
       }
     }
@@ -88,8 +68,7 @@ class DatabaseQuerySpec
       val owner = "0xa112dae0a3e4e146bcaf0fe782be5afb14041a10"
       val tradesReq = GetTrades.Req(
         owner = owner,
-        market = GetTrades.Req.Market
-          .MarketKey(MarketKey(tokenS, tokenB).toString),
+        market = Some(GetTrades.Req.Market(tokenS, tokenB, true)),
         skip = Some(Paging(0, 10)),
         sort = SortingType.ASC
       )
@@ -108,11 +87,28 @@ class DatabaseQuerySpec
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case GetTrades.Res(trades, error) =>
-          assert(trades.nonEmpty && trades.length === 5)
-          assert(error === ErrorCode.ERR_NONE)
+        case GetTrades.Res(trades, total) =>
+          assert(trades.nonEmpty && trades.length === 5 && total == 5)
         case _ => assert(false)
       }
     }
+  }
+
+  private def testSaveTrade(
+      txHash: String,
+      owner: String,
+      tokenS: String,
+      tokenB: String,
+      blockHeight: Long
+    ): Future[ErrorCode] = {
+    dbModule.tradeService.saveTrade(
+      Trade(
+        txHash = txHash,
+        owner = owner,
+        tokenB = tokenB,
+        tokenS = tokenS,
+        blockHeight = blockHeight
+      )
+    )
   }
 }

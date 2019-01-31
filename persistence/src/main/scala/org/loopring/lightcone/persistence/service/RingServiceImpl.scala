@@ -16,13 +16,27 @@
 
 package org.loopring.lightcone.persistence.service
 
+import com.google.inject.Inject
+import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-trait TradeService {
-  def saveTrade(trade: Trade): Future[ErrorCode]
-  def saveTrades(trades: Seq[Trade]): Future[Seq[ErrorCode]]
-  def getTrades(request: GetTrades.Req): Future[Seq[Trade]]
-  def countTrades(request: GetTrades.Req): Future[Int]
-  def obsolete(height: Long): Future[Unit]
+class RingServiceImpl @Inject()(
+    implicit
+    val ec: ExecutionContext,
+    ringDal: RingDal)
+    extends RingService {
+
+  def saveRing(ring: Ring): Future[ErrorCode] =
+    ringDal.saveRing(ring)
+
+  def saveRings(rings: Seq[Ring]) = ringDal.saveRings(rings)
+
+  def getRings(request: GetRings.Req): Future[Seq[Ring]] =
+    ringDal.getRings(request)
+
+  def countRings(request: GetRings.Req): Future[Int] =
+    ringDal.countRings(request)
+
+  def obsolete(height: Long): Future[Unit] = ringDal.obsolete(height)
 }
