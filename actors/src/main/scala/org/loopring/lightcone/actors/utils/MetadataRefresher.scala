@@ -121,6 +121,7 @@ class MetadataRefresher(
 
   //TODO：经过简单的测试，但是仍要在集群环境下确认只会获取本地的actor
   //文档：https://doc.akka.io/docs/akka/2.5/general/addressing.html#actor-path-anchors
+  //获取需要通知的本地actors
   private def toNotifyActors() = {
     for {
       accountManagerActors <- Future.sequence {

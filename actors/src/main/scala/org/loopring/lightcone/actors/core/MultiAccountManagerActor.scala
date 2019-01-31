@@ -192,13 +192,7 @@ class MultiAccountManagerActor(
 
   def ready: Receive = {
     case req: MetadataChanged =>
-      val marketIds =
-        metadataManager
-          .getMarkets(Set(MarketMetadata.Status.TERMINATED))
-          .map(_.getMarketId)
-      marketIds.foreach { m =>
-        accountManagerActors.all() foreach { _ ! req }
-      }
+      accountManagerActors.all() foreach { _ ! req }
     case req: Any => handleRequest(req)
   }
 
