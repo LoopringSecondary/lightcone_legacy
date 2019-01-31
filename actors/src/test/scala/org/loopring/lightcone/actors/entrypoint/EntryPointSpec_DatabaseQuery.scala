@@ -35,7 +35,7 @@ class EntryPointSpec_DatabaseQuery
     with OrderHandleSupport
     with OrderGenerateSupport
     with DatabaseQueryMessageSupport
-    with EventPersistenceSupport {
+    with RingAndTradePersistenceSupport {
 
   val ringAndTradePersistActor = actors.get(RingAndTradePersistenceActor.name)
 
@@ -207,12 +207,7 @@ class EntryPointSpec_DatabaseQuery
             1,
             1
           )
-          assert(
-            f.fees.length == 2 && f.fees == Seq(
-              fee,
-              fee
-            )
-          )
+          assert(f.fees.length == 2 && f.fees == Seq(fee, fee))
         case None => assert(false)
       }
 
@@ -367,14 +362,8 @@ class EntryPointSpec_DatabaseQuery
       fill1,
       fill1.copy(tokenS = tempTokenb1, tokenB = tempTokens1, fillIndex = 1)
     )
-    val e1 = RingMinedEvent(
-      Some(header),
-      height1,
-      hash1,
-      feeRecipient,
-      fills1,
-      miner
-    )
+    val e1 =
+      RingMinedEvent(Some(header), height1, hash1, feeRecipient, fills1, miner)
 
     val tempTokens2 = fill2.tokenS
     val tempTokenb2 = fill2.tokenB

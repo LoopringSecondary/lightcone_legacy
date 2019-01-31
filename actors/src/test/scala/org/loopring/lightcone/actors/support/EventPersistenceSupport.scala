@@ -21,7 +21,7 @@ import org.loopring.lightcone.actors.core.{
   RingAndTradePersistenceActor
 }
 
-trait EventPersistenceSupport extends DatabaseModuleSupport {
+trait RingAndTradePersistenceSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
   actors.add(
