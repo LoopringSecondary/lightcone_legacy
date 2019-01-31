@@ -48,9 +48,9 @@ class AccountCutoffStateImpl()(implicit timeProvider: TimeProvider)
       if (ownerCutoff < cutoff) ownerCutoff = cutoff
   }
 
-  def isOwnerCutoff(rawOrder: RawOrder) = ownerCutoff >= rawOrder.validSince
+  def isOrderCutoffByOwner(rawOrder: RawOrder) = ownerCutoff >= rawOrder.validSince
 
-  def isMarketPairCutoff(rawOrder: RawOrder) = {
+  def isOrderCutoffByTradingPair(rawOrder: RawOrder) = {
     val marketKey = MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
     marketPairCutoffs.contains(marketKey) &&
     marketPairCutoffs(marketKey) >= rawOrder.validSince

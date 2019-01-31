@@ -25,6 +25,6 @@ trait AccountCutoffState {
       cutoff: Long
     )
   def setCutoff(cutoff: Long)
-  def isOwnerCutoff(rawOrder: RawOrder): Boolean
-  def isMarketPairCutoff(rawOrder: RawOrder): Boolean
+  def isOrderCutoffByOwner(rawOrder: RawOrder): Boolean
+  def isOrderCutoffByTradingPair(rawOrder: RawOrder): Boolean
 }

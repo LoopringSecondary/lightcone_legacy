@@ -134,9 +134,9 @@ class AccountManagerActor(
 
         status = if (canceled) {
           STATUS_ONCHAIN_CANCELLED_BY_USER
-        } else if (accountCutoffState.isOwnerCutoff(raworder)) {
+        } else if (accountCutoffState.isOrderCutoffByOwner(raworder)) {
           STATUS_ONCHAIN_CANCELLED_BY_USER
-        } else if (accountCutoffState.isMarketPairCutoff(raworder)) {
+        } else if (accountCutoffState.isOrderCutoffByTradingPair(raworder)) {
           STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR
         } else {
           STATUS_PENDING
@@ -183,12 +183,12 @@ class AccountManagerActor(
       (for {
         //check通过再保存到数据库，以及后续处理
         _ <- Future {
-          if (accountCutoffState.isOwnerCutoff(raworder)) {
+          if (accountCutoffState.isOrderCutoffByOwner(raworder)) {
             throw ErrorException(
               ERR_ORDER_VALIDATION_INVALID_CUTOFF,
               s"this address has set cutoff>=${raworder.getParams.validUntil}."
             )
-          } else if (accountCutoffState.isMarketPairCutoff(raworder)) {
+          } else if (accountCutoffState.isOrderCutoffByTradingPair(raworder)) {
             throw ErrorException(
               ERR_ORDER_VALIDATION_INVALID_CUTOFF,
               s"the market ${raworder.tokenS}-${raworder.tokenB} " +
