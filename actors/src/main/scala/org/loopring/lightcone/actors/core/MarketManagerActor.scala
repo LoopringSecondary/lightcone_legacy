@@ -250,7 +250,7 @@ class MarketManagerActor(
         .triggerMatch(sellOrderAsTaker, getRequiredMinimalIncome(), offset)
         .foreach { updateOrderbookAndSettleRings(_) }
 
-    case RingMinedEvent(Some(header), _, _, _, fills) =>
+    case RingMinedEvent(Some(header), _, _, _, fills, _) =>
       Future {
         val ringhash =
           createRingIdByOrderHash(fills(0).orderHash, fills(1).orderHash)

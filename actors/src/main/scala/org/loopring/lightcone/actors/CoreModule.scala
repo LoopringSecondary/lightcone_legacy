@@ -139,8 +139,6 @@ class CoreModule(config: Config)
     bind[EventExtractor[OrderFilledEvent]].to[OrderFillEventExtractor]
     bind[EventExtractor[OHLCRawData]].to[OHLCRawDataExtractor]
     bind[EventExtractor[BlockGasPrices]].to[BlockGasPriceExtractor]
-    bind[EventExtractor[PersistTrades.Req]].to[TradeExtractor]
-    bind[EventExtractor[PersistRings.Req]].to[RingExtractor]
 
     // --- bind event dispatchers ---------------------
     bind[EventDispatcher[AddressAllowanceUpdated]]
@@ -163,8 +161,6 @@ class CoreModule(config: Config)
     bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
     bind[EventDispatcher[OHLCRawData]].to[OHLCRawDataEventDispatcher]
     bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
-    bind[EventDispatcher[PersistTrades.Req]].to[TradeDispatcher]
-    bind[EventDispatcher[PersistRings.Req]].to[RingDispatcher]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
@@ -191,9 +187,7 @@ class CoreModule(config: Config)
       blockGasPricesDispatcher: EventDispatcher[BlockGasPrices],
       tokenBurnRateChangedEventDispatcher: EventDispatcher[
         TokenBurnRateChangedEvent
-      ],
-      tradesDispatcher: EventDispatcher[PersistTrades.Req],
-      ringDispatcher: EventDispatcher[PersistRings.Req]
+      ]
     ): Seq[EventDispatcher[_]] =
     Seq(
       balanceEventDispatcher,
@@ -205,9 +199,7 @@ class CoreModule(config: Config)
       ordersCancelledEventDispatcher,
       ohlcRawDataEventDispatcher,
       blockGasPricesDispatcher,
-      tokenBurnRateChangedEventDispatcher,
-      tradesDispatcher,
-      ringDispatcher
+      tokenBurnRateChangedEventDispatcher
     )
 
   private def bindDatabaseConfigProviderForNames(names: String*) = {
