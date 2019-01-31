@@ -35,13 +35,14 @@ final class CancelOrderValidator(
     extends MessageValidator {
   import ErrorCode._
 
+  //TODO：确定签名规则，单个订单，采用订单的签名简单测试
   override def validate = {
     case req: CancelOrder.Req =>
       Future {
         metadataManager.assertMarketIdIsActive(req.getMarketId)
-        if (!checkSign(req))
+        if (!checkSign(req.owner, req.id, req.sig))
           throw ErrorException(
-            ERR_ORDER_VALIDATION_INVALID_SIG,
+            ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG,
             s"not authorized to cancel this order $req.id"
           )
         req
@@ -49,18 +50,21 @@ final class CancelOrderValidator(
     case _ => throw ErrorException(ERR_INVALID_ARGUMENT)
   }
 
-  //TODO:针对具体什么签名还未确定，目前只有单个订单，采用订单的签名简单测试
-  private def checkSign(req: CancelOrder.Req): Boolean = {
-    val sigBytes = Numeric.hexStringToByteArray(req.sig)
+  private def checkSign(
+      owner: String,
+      data: String,
+      sig: String
+    ): Boolean = {
+    val sigBytes = Numeric.hexStringToByteArray(sig)
     val v = sigBytes(2)
     val r = sigBytes.slice(3, 35)
     val s = sigBytes.slice(35, 67)
     verifyEthereumSignature(
-      Numeric.hexStringToByteArray(req.id),
+      Numeric.hexStringToByteArray(data),
       r,
       s,
       v,
-      Address(req.owner)
+      Address(owner)
     )
   }
 }
