@@ -55,4 +55,9 @@ trait AccountManager {
       outstandingAmountS: BigInt
     ): Boolean
 
+  //TODO: 需要实现cancelOrdersInMarket与cancelAllOrders
+  //由用户由前端请求，按照address和市场取消订单
+  def cancelOrdersInMarket(marketKey: String): Int
+
+  def cancelAllOrders(): Int
 }

@@ -85,6 +85,7 @@ class RingAndTradePersistenceActor(
           header.blockTimestamp
         )
         for {
+          // TODO(du): 如果用事务需要在dal里注入dbModule
           savedRing <- dbModule.ringService.saveRing(ring)
           savedTrades <- dbModule.tradeService
             .saveTrades(tradeAndFees.map(_._2))

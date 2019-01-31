@@ -98,7 +98,7 @@ message CancelOrder {
     }
 
     message Res {
-        string id = 1;
+        ErrorCode error = 1;
         OrderStatus status = 2; //取消的类型
     }
 }

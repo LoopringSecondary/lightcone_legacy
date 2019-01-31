@@ -117,8 +117,8 @@ class TradeDalImpl @Inject()(
       marketKeyOpt,
       walletOpt,
       minerOpt,
-      Some(request.sort),
-      request.skip
+      None,
+      None
     )
     db.run(filters.size.result)
   }
