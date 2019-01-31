@@ -122,7 +122,7 @@ class OrderStatusMonitorActor(
 
         _ <- Future.sequence(orders.map { o =>
           (mama ? ActorRecover.RecoverOrderReq(
-            Some(o.copy(state = Some(o.getState.copy(status = STATUS_PENDING))))
+            Some(o.withStatus(STATUS_PENDING))
           )).recover {
             case e: Exception =>
               log.error(
