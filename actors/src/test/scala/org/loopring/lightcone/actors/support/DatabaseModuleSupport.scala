@@ -26,7 +26,6 @@ import org.scalatest.BeforeAndAfterAll
 import slick.basic.DatabaseConfig
 import slick.driver.JdbcProfile
 import slick.jdbc.JdbcProfile
-
 import scala.concurrent.ExecutionContext
 
 trait DatabaseModuleSupport extends BeforeAndAfterAll {
@@ -37,12 +36,14 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val tokenMetadataDal = new TokenMetadataDalImpl
   implicit val orderDal = new OrderDalImpl
   implicit val tradeDal = new TradeDalImpl
+  implicit val ringDal = new RingDalImpl
   implicit val blockDal = new BlockDalImpl
   implicit val settlementTxDal = new SettlementTxDalImpl
   implicit val marketMetadataDal = new MarketMetadataDalImpl()
   implicit val missingBlocksRecordDal = new MissingBlocksRecordDalImpl()
   implicit val orderService = new OrderServiceImpl
   implicit val tradeService = new TradeServiceImpl
+  implicit val ringService = new RingServiceImpl
   implicit val blockService = new BlockServiceImpl()
   implicit val settlementTxService = new SettlementTxServiceImpl
 
@@ -55,6 +56,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     tokenMetadataDal,
     orderDal,
     tradeDal,
+    ringDal,
     blockDal,
     settlementTxDal,
     marketMetadataDal,
@@ -62,6 +64,7 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     ohlcDataDal,
     orderService,
     tradeService,
+    ringService,
     blockService,
     settlementTxService,
     ohlcDataService

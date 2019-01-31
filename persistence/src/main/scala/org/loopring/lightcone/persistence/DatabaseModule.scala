@@ -26,6 +26,7 @@ class DatabaseModule @Inject()(
     val tokenMetadataDal: TokenMetadataDal,
     val orderDal: OrderDal,
     val tradeDal: TradeDal,
+    val ringDal: RingDal,
     val blockDal: BlockDal,
     val settlementTxDal: SettlementTxDal,
     val marketMetadataDal: MarketMetadataDal,
@@ -33,6 +34,7 @@ class DatabaseModule @Inject()(
     val ohlcDataDal: OHLCDataDal,
     val orderService: OrderService,
     val tradeService: TradeService,
+    val ringService: RingService,
     val blockService: BlockService,
     val settlementTxService: SettlementTxService,
     val ohlcDataService: OHLCDataService
@@ -45,6 +47,7 @@ class DatabaseModule @Inject()(
     tokenMetadataDal,
     orderDal,
     tradeDal,
+    ringDal,
     blockDal,
     settlementTxDal,
     marketMetadataDal,

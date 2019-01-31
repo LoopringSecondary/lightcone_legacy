@@ -19,10 +19,10 @@ package org.loopring.lightcone.persistence.service
 import org.loopring.lightcone.proto._
 import scala.concurrent.Future
 
-trait TradeService {
-  def saveTrade(trade: Trade): Future[ErrorCode]
-  def saveTrades(trades: Seq[Trade]): Future[Seq[ErrorCode]]
-  def getTrades(request: GetTrades.Req): Future[Seq[Trade]]
-  def countTrades(request: GetTrades.Req): Future[Int]
+trait RingService {
+  def saveRing(ring: Ring): Future[ErrorCode]
+  def saveRings(trades: Seq[Ring]): Future[Seq[ErrorCode]]
+  def getRings(request: GetRings.Req): Future[Seq[Ring]]
+  def countRings(request: GetRings.Req): Future[Int]
   def obsolete(height: Long): Future[Unit]
 }

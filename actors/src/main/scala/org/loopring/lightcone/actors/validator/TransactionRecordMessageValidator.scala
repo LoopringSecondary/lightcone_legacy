@@ -21,7 +21,6 @@ import org.loopring.lightcone.actors.core.TransactionRecordActor
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
-
 import scala.concurrent.{ExecutionContext, Future}
 
 object TransactionRecordMessageValidator {
@@ -72,42 +71,53 @@ final class TransactionRecordMessageValidator(
       }
     case req: GetTransactionRecords.Req =>
       Future {
-        if (req.owner.isEmpty)
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            "Parameter owner could not be empty"
-          )
-
-        val newReq = req.paging match {
-          case Some(p) if p.size > maxItemsPerPage =>
+        val owner =
+          if (req.owner.isEmpty)
             throw ErrorException(
               ErrorCode.ERR_INVALID_ARGUMENT,
-              s"Parameter size of paging is larger than $maxItemsPerPage"
+              "Parameter owner could not be empty"
             )
-
-          case Some(p) if p.cursor < 0 =>
-            throw ErrorException(
-              ErrorCode.ERR_INVALID_ARGUMENT,
-              s"Invalid parameter cursor of paging:${p.cursor}"
-            )
-
-          case Some(_) => req
-
-          case None =>
-            req.copy(paging = Some(CursorPaging(size = defaultItemsPerPage)))
-        }
-        newReq.copy(owner = Address.normalize(req.owner))
+          else Address.normalize(req.owner)
+        GetTransactionRecords.Req(
+          owner,
+          req.queryType,
+          req.sort,
+          getValidSkip(req.paging)
+        )
       }
 
     case req: GetTransactionRecordCount.Req =>
       Future {
-        if (req.owner.isEmpty)
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            "Parameter owner could not be empty"
-          )
-        req.copy(owner = Address.normalize(req.owner))
+        val owner =
+          if (req.owner.isEmpty)
+            throw ErrorException(
+              ErrorCode.ERR_INVALID_ARGUMENT,
+              "Parameter owner could not be empty"
+            )
+          else Address.normalize(req.owner)
+        req.copy(owner = owner)
       }
+  }
+
+  private def getValidSkip(paging: Option[CursorPaging]) = {
+    paging match {
+      case Some(s) if s.size > maxItemsPerPage =>
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          s"Parameter size of paging is larger than $maxItemsPerPage"
+        )
+
+      case Some(s) if s.cursor < 0 =>
+        throw ErrorException(
+          ErrorCode.ERR_INVALID_ARGUMENT,
+          s"Invalid parameter cursor of paging:${s.cursor}"
+        )
+
+      case Some(s) => paging
+
+      case None =>
+        Some(CursorPaging(size = defaultItemsPerPage))
+    }
   }
 
   private def validate(

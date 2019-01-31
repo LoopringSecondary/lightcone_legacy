@@ -28,7 +28,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.entrypoint._
 import org.loopring.lightcone.actors.ethereum.Dispatchers._
-import org.loopring.lightcone.actors.ethereum._
+import org.loopring.lightcone.actors.ethereum.{EventDispatcher, _}
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.actors.validator._
@@ -41,6 +41,7 @@ import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.actors.ethereum.event._
 import org.loopring.lightcone.proto._
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import slick.basic.DatabaseConfig
@@ -77,6 +78,7 @@ class CoreModule(config: Config)
       "dbconfig-dal-token-metadata",
       "dbconfig-dal-order",
       "dbconfig-dal-trade",
+      "dbconfig-dal-ring",
       "dbconfig-dal-token-balance",
       "dbconfig-dal-block",
       "dbconfig-dal-settlement-tx",
@@ -88,6 +90,7 @@ class CoreModule(config: Config)
     // --- bind dals ---------------------
     bind[OrderDal].to[OrderDalImpl].asEagerSingleton
     bind[TradeDal].to[TradeDalImpl].asEagerSingleton
+    bind[RingDal].to[RingDalImpl].asEagerSingleton
     bind[BlockDal].to[BlockDalImpl].asEagerSingleton
     bind[SettlementTxDal].to[SettlementTxDalImpl].asEagerSingleton
     bind[MarketMetadataDal].to[MarketMetadataDalImpl].asEagerSingleton
@@ -97,6 +100,7 @@ class CoreModule(config: Config)
     // --- bind db services ---------------------
     bind[OrderService].to[OrderServiceImpl].asEagerSingleton
     bind[TradeService].to[TradeServiceImpl].asEagerSingleton
+    bind[RingService].to[RingServiceImpl].asEagerSingleton
     bind[SettlementTxService].to[SettlementTxServiceImpl].asEagerSingleton
     bind[BlockService].to[BlockServiceImpl].asEagerSingleton
 
