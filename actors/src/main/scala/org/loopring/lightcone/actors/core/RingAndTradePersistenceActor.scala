@@ -21,11 +21,12 @@ import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config
-import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.core.base.MarketKey
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.proto.ErrorCode._
 import scala.concurrent._
 
 // Owner: Yongfeng
@@ -69,23 +70,68 @@ class RingAndTradePersistenceActor(
     extends ActorWithPathBasedConfig(RingAndTradePersistenceActor.name) {
 
   def ready: Receive = LoggingReceive {
-    case req: PersistTrades.Req =>
-      for {
-        result <- dbModule.tradeService.saveTrades(req.trades)
-      } yield {
-        if (result.exists(_ != ErrorCode.ERR_NONE)) {
-          log.error(s"some of the trades save failed :${req.trades}")
+    case e: RingMinedEvent =>
+      val header = e.header.getOrElse(EventHeader())
+      if (header.txStatus == TxStatus.TX_STATUS_SUCCESS) {
+        val tradeAndFees = getTradesToPersist(e)
+        val ring = Ring(
+          e.ringHash,
+          e.ringIndex,
+          e.fills.length,
+          e.miner,
+          header.txHash,
+          Some(Ring.Fees(tradeAndFees.map(_._1))),
+          header.blockNumber,
+          header.blockTimestamp
+        )
+        for {
+          savedRing <- dbModule.ringService.saveRing(ring)
+          savedTrades <- dbModule.tradeService
+            .saveTrades(tradeAndFees.map(_._2))
+        } yield {
+          if (savedRing != ERR_NONE) {
+            log.error(s"ring and trades saved failed :$e")
+          }
+          if (savedTrades.exists(_ != ERR_NONE)) {
+            log.error(s"trades saved failed :$e")
+          }
         }
       }
+  }
 
-    case req: PersistRings.Req =>
-      for {
-        result <- dbModule.ringService.saveRings(req.rings)
-      } yield {
-        if (result.exists(_ != ErrorCode.ERR_NONE)) {
-          log.error(s"some of the rings save failed :${req.rings}")
-        }
-      }
+  private def getTradesToPersist(e: RingMinedEvent) = {
+    val header = e.header.getOrElse(EventHeader())
+    e.fills.map { f =>
+      val fee = Trade.Fee(
+        f.tokenFee,
+        f.filledAmountFee,
+        f.feeAmountS,
+        f.feeAmountB,
+        e.feeRecipient,
+        f.waiveFeePercentage,
+        f.walletSplitPercentage
+      )
+      val trade = Trade(
+        f.owner,
+        f.orderHash,
+        f.ringHash,
+        f.ringIndex,
+        f.fillIndex,
+        header.txHash,
+        f.filledAmountS,
+        f.filledAmountB,
+        f.tokenS,
+        f.tokenB,
+        MarketKey(f.tokenS, f.tokenB).toString,
+        f.split,
+        Some(fee),
+        f.wallet,
+        e.miner,
+        header.blockNumber,
+        header.blockTimestamp
+      )
+      (fee, trade)
+    }
   }
 
 }
