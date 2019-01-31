@@ -17,9 +17,11 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
+import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.MetadataManager
-import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
+
+import scala.concurrent._
 
 // Owner: Hongyu
 object OrderbookManagerMessageValidator {
@@ -27,22 +29,21 @@ object OrderbookManagerMessageValidator {
 }
 
 final class OrderbookManagerMessageValidator(
+  )(
     implicit
     val config: Config,
+    ec: ExecutionContext,
     metadataManager: MetadataManager)
     extends MessageValidator {
 
   // Throws exception if validation fails.
   def validate = {
     case msg @ GetOrderbook.Req(_, _, Some(marketId)) =>
-      metadataManager.assertMarketIdIsValid(marketId)
-      msg.copy(
-        marketId = Some(
-          marketId.copy(
-            baseToken = marketId.baseToken.toLowerCase(),
-            quoteToken = marketId.quoteToken.toLowerCase()
-          )
+      Future {
+        metadataManager.assertMarketIdIsActiveOrReadOnly(marketId)
+        msg.copy(
+          marketId = Some(marketId.toLowerCase())
         )
-      )
+      }
   }
 }

@@ -142,6 +142,6 @@ trait EventExtraction {
       _ <- postProcessEvents()
     } yield Unit
 
-  def postProcessEvents(): Future[Unit] = Future.successful(Unit)
+  def postProcessEvents(): Future[Unit] = Future.unit
 
 }

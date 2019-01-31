@@ -127,7 +127,8 @@ class EntryPointSpec_SubmitSeveralOrder
         rawOrders(0).hash,
         rawOrders(0).owner,
         OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
-        Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB))
+        Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB)),
+        rawOrders(0).getParams.sig
       )
 
       val cancelF = singleRequest(cancelReq, "cancel_order")

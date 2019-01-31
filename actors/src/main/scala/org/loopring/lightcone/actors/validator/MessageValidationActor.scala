@@ -60,22 +60,21 @@ class MessageValidationActor(
 
   override def receive: Receive = {
     case msg =>
-      Future {
-        validate(msg) match {
-          case Some(validatedMsg) if validatedMsg != msg =>
-            log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
-            validatedMsg
-
-          case Some(validatedMsg) =>
-            validatedMsg
-
-          case _ =>
-            throw ErrorException(
+      val f = for {
+        validatedMsg <- validate(msg).getOrElse {
+          Future.failed(
+            ErrorException(
               ERR_UNEXPECTED_ACTOR_MSG,
               s"unexpected msg of ${msg.getClass.getName}"
             )
+          )
         }
-      } forwardTo (destinationActor, sender)
+        _ = if (validatedMsg != msg)
+          log.debug(
+            s"request rewritten from\n\t${msg} to\n\t${validatedMsg}"
+          )
+      } yield validatedMsg
 
+      f.forwardTo(destinationActor, sender)
   }
 }

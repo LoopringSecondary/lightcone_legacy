@@ -18,14 +18,21 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.core.TransactionRecordActor
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 object TransactionRecordMessageValidator {
   val name = "transaction_record_validator"
 }
 
-final class TransactionRecordMessageValidator()(implicit val config: Config)
+final class TransactionRecordMessageValidator(
+  )(
+    implicit
+    val config: Config,
+    ec: ExecutionContext)
     extends MessageValidator {
 
   val transactionRecordConfig = config.getConfig(TransactionRecordActor.name)
@@ -36,59 +43,71 @@ final class TransactionRecordMessageValidator()(implicit val config: Config)
 
   def validate = {
     case req: TransferEvent =>
-      validate(req.header, req.owner)
-      req
+      Future {
+        validate(req.header, req.owner)
+        req
+      }
 
     case req: CutoffEvent =>
-      validate(req.header, req.owner)
-      req
+      Future {
+        validate(req.header, req.owner)
+        req
+      }
 
     case req: OrdersCancelledEvent =>
-      validate(req.header, req.owner)
-      req
+      Future {
+        validate(req.header, req.owner)
+        req
+      }
 
     case req: OrderFilledEvent =>
-      validate(req.header, req.owner)
-      if (req.orderHash.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter orderHash is empty"
-        )
-      req
-
+      Future {
+        validate(req.header, req.owner)
+        if (req.orderHash.isEmpty)
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "Parameter orderHash is empty"
+          )
+        req
+      }
     case req: GetTransactionRecords.Req =>
-      if (req.owner.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter owner could not be empty"
-        )
-
-      req.paging match {
-        case Some(p) if p.size > maxItemsPerPage =>
+      Future {
+        if (req.owner.isEmpty)
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Parameter size of paging is larger than $maxItemsPerPage"
+            "Parameter owner could not be empty"
           )
 
-        case Some(p) if p.cursor < 0 =>
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            s"Invalid parameter cursor of paging:${p.cursor}"
-          )
+        val newReq = req.paging match {
+          case Some(p) if p.size > maxItemsPerPage =>
+            throw ErrorException(
+              ErrorCode.ERR_INVALID_ARGUMENT,
+              s"Parameter size of paging is larger than $maxItemsPerPage"
+            )
 
-        case Some(_) => req
+          case Some(p) if p.cursor < 0 =>
+            throw ErrorException(
+              ErrorCode.ERR_INVALID_ARGUMENT,
+              s"Invalid parameter cursor of paging:${p.cursor}"
+            )
 
-        case None =>
-          req.copy(paging = Some(CursorPaging(size = defaultItemsPerPage)))
+          case Some(_) => req
+
+          case None =>
+            req.copy(paging = Some(CursorPaging(size = defaultItemsPerPage)))
+        }
+        newReq.copy(owner = Address.normalize(req.owner))
       }
 
     case req: GetTransactionRecordCount.Req =>
-      if (req.owner.isEmpty)
-        throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
-          "Parameter owner could not be empty"
-        )
-      req
+      Future {
+        if (req.owner.isEmpty)
+          throw ErrorException(
+            ErrorCode.ERR_INVALID_ARGUMENT,
+            "Parameter owner could not be empty"
+          )
+        req.copy(owner = Address.normalize(req.owner))
+      }
   }
 
   private def validate(

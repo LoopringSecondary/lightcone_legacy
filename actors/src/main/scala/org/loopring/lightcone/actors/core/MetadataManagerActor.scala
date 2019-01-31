@@ -109,7 +109,7 @@ class MetadataManagerActor(
                 burnRateRes.forMarket,
                 burnRateRes.forP2P
               )
-          else Future.successful(Unit)
+          else Future.unit
         } yield
           token.copy(
             burnRateForMarket = burnRateRes.forMarket,
