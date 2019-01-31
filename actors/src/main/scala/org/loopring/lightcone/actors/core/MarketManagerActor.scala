@@ -236,7 +236,7 @@ class MarketManagerActor(
       manager.cancelOrder(req.id) foreach { orderbookUpdate =>
         orderbookManagerActor ! orderbookUpdate.copy(marketId = Some(marketId))
       }
-      sender ! CancelOrder.Res(id = req.id, status = req.status)
+      sender ! CancelOrder.Res(error = ERR_NONE, status = req.status)
 
     case GasPriceUpdated(_gasPrice) =>
       this.gasPrice = _gasPrice
