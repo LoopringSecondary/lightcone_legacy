@@ -299,20 +299,38 @@ message CutoffEvent {
 
 //LOOPRING RINGMINED
 message OrderFilledEvent {
+    message Fee {
+        // for market
+        string token_fee               = 1;
+        bytes  amount_fee              = 2;
+        // for p2p
+        bytes  fee_amount_s            = 3;
+        bytes  fee_amount_b            = 4;
+
+        string fee_recipient           = 5;
+        int32  waive_fee_percentage    = 6; // miner waive
+        int32  wallet_split_percentage = 7;
+    }
     EventHeader header = 1;
     string owner = 2;
     string order_hash = 3;
     string delegate_address  = 4;
     string ring_hash         = 5;
     int64  ring_index        = 6;
-    bytes  filled_amount_s     = 7;
-    bytes  split = 8;
-    bytes  filled_amount_fee = 9;
-    bytes  fee_amount_s = 10;
-    bytes  fee_amount_b = 11;
-    string fee_recipient = 12;
-    string token_s = 13;
+    int32  fill_index        = 7;
+    bytes  filled_amount_s     = 8;
+    bytes  filled_amount_b     = 9;
+    bytes  split = 10;
+    Fee    fee = 11;
+    string token_s = 12;
+    string token_b = 13;
+    string wallet = 14;
+    //    bytes  filled_amount_fee = 9;
+    //    bytes  fee_amount_s = 10;
+    //    bytes  fee_amount_b = 11;
+    //    string fee_recipient = 12;
 }
+
 message TokenBurnRateChangedEvent {
     message BurnRate {
         double for_market = 1;
@@ -325,8 +343,9 @@ message TokenBurnRateChangedEvent {
 
 message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
     EventHeader header = 1;
-    int64 ring_index = 2;
-    string ring_hash = 3;
-    string fee_recipient = 4;
-    repeated OrderFilledEvent fills = 5;
+    int64       ring_index = 2;
+    string      ring_hash = 3;
+    string      fee_recipient = 4;
+    repeated    OrderFilledEvent fills = 5;
+    string      miner = 6;
 }
