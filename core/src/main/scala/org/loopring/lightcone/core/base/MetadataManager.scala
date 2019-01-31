@@ -185,12 +185,14 @@ final class MetadataManager @Inject()(implicit val config: Config)
   def getMarketMetadata(marketId: MarketId): MarketMetadata =
     getMarketMetadata(MarketKey(marketId).toString)
 
-  def assertMarketIdIsValid(marketIdOpt: Option[MarketId]): Boolean = {
+  def assertMarketIdIsActiveOrReadOnly(
+      marketIdOpt: Option[MarketId]
+    ): Boolean = {
     marketIdOpt match {
       case None =>
         throw ErrorException(ERR_INVALID_MARKET)
       case Some(marketId) =>
-        if (!isValidMarket(MarketKey(marketId).toString))
+        if (!isMarketActiveOrReadOnly(MarketKey(marketId).toString))
           throw ErrorException(
             ErrorCode.ERR_INVALID_MARKET,
             s"invalid market: $marketIdOpt"
@@ -199,9 +201,9 @@ final class MetadataManager @Inject()(implicit val config: Config)
     }
   }
 
-  def assertMarketIdIsValid(marketId: MarketId): Boolean = {
-    if (!isValidMarket(marketId))
-      throw ErrorException(ERR_INVALID_MARKET, s"invalid market: ${marketId}")
+  def assertMarketIdIsActiveOrReadOnly(marketId: MarketId): Boolean = {
+    if (!isMarketActiveOrReadOnly(marketId))
+      throw ErrorException(ERR_INVALID_MARKET, s"invalid market: $marketId")
     true
   }
 
@@ -209,17 +211,17 @@ final class MetadataManager @Inject()(implicit val config: Config)
     if (!activeMarkets.contains(MarketKey(marketId).toString))
       throw ErrorException(
         ErrorCode.ERR_INVALID_MARKET,
-        s"marketId:${marketId} has been terminated"
+        s"marketId:$marketId has been terminated"
       )
     true
   }
 
   // check market is valid (has metadata config)
-  def isValidMarket(marketKey: String): Boolean =
+  def isMarketActiveOrReadOnly(marketKey: String): Boolean =
     getValidMarketIds.contains(marketKey)
 
-  def isValidMarket(marketId: MarketId): Boolean =
-    isValidMarket(MarketKey(marketId).toString)
+  def isMarketActiveOrReadOnly(marketId: MarketId): Boolean =
+    isMarketActiveOrReadOnly(MarketKey(marketId).toString)
 
   def getValidMarketIds = activeMarkets ++ readOnlyMarkets
 

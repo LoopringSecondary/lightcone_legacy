@@ -29,8 +29,8 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // Owner: Yongfeng
-object EventPersistenceActor extends ShardedEvenly {
-  val name = "event_persistence"
+object RingAndTradePersistenceActor extends ShardedEvenly {
+  val name = "ring_and_trade_persistence"
 
   def start(
       implicit
@@ -51,14 +51,14 @@ object EventPersistenceActor extends ShardedEvenly {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     ClusterSharding(system).start(
       typeName = name,
-      entityProps = Props(new EventPersistenceActor()),
+      entityProps = Props(new RingAndTradePersistenceActor()),
       settings = ClusterShardingSettings(system).withRole(roleOpt),
       messageExtractor = messageExtractor
     )
   }
 }
 
-class EventPersistenceActor(
+class RingAndTradePersistenceActor(
     implicit
     val config: Config,
     val ec: ExecutionContext,
@@ -66,7 +66,7 @@ class EventPersistenceActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(EventPersistenceActor.name) {
+    extends ActorWithPathBasedConfig(RingAndTradePersistenceActor.name) {
 
   def ready: Receive = LoggingReceive {
     case req: PersistTrades.Req =>

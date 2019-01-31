@@ -226,7 +226,7 @@ class SimpleRingBatchDeserializer(
     )
 
     val orderHash =
-      Protocol2RawOrderValidator.calculateOrderHash(orderWithoutHash)
+      RawOrderValidatorDefault.calculateOrderHash(orderWithoutHash)
     orderWithoutHash.copy(hash = orderHash);
   }
 

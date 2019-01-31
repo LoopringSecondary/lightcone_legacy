@@ -31,7 +31,7 @@ trait RawOrderValidator {
   def validate(order: RawOrder): Either[ErrorCode, RawOrder]
 }
 
-object Protocol2RawOrderValidator extends RawOrderValidator {
+object RawOrderValidatorDefault extends RawOrderValidator {
   import ethereum._
 
   val FeePercentageBase = 1000

@@ -59,8 +59,8 @@ object safefuture {
       ): Future[T] = {
       f onComplete {
         case Success(r) => recipient.tell(r, orginSender)
-        case Failure(f) =>
-          f match {
+        case Failure(failure) =>
+          failure match {
             case e: ErrorException =>
               orginSender ! e.error
             case e: Throwable => throw e
@@ -79,8 +79,8 @@ object safefuture {
       ): Future[T] = {
       f onComplete {
         case Success(r) => recipient ! r
-        case Failure(f) =>
-          f match {
+        case Failure(failure) =>
+          failure match {
             case e: ErrorException =>
               orginSenderOpt match {
                 case Some(orginSender) => orginSender ! e

@@ -132,7 +132,7 @@ class OrderRecoverActor(
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
         // filter unsupported markets
         availableOrders = orders.filter { o =>
-          metadataManager.isValidMarket(MarketId(o.tokenS, o.tokenB))
+          metadataManager.isMarketActiveOrReadOnly(MarketId(o.tokenS, o.tokenB))
         }
         _ <- if (availableOrders.nonEmpty) {
           val reqs = availableOrders.map { order =>
@@ -143,7 +143,7 @@ class OrderRecoverActor(
           )
           Future.sequence(reqs.map(mama ? _))
         } else {
-          Future.successful(Unit)
+          Future.unit
         }
       } yield {
         numOrders += orders.size

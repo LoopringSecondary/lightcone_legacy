@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.entrypoint
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.actors.core.EventPersistenceActor
+import org.loopring.lightcone.actors.core.RingAndTradePersistenceActor
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto.Trade.Fee
@@ -37,7 +37,7 @@ class EntryPointSpec_DatabaseQuery
     with DatabaseQueryMessageSupport
     with EventPersistenceSupport {
 
-  val eventPersistenceActor = actors.get(EventPersistenceActor.name)
+  val ringAndTradePersistActor = actors.get(RingAndTradePersistenceActor.name)
 
   "DatabaseQueryActor Entrypoint" must {
     "get trades" in {
@@ -306,7 +306,7 @@ class EntryPointSpec_DatabaseQuery
         wallet = wallet
       )
     )
-    eventPersistenceActor ! PersistTrades.Req(trades)
+    ringAndTradePersistActor ! PersistTrades.Req(trades)
     // dbModule.tradeService.saveTrades(trades)
   }
 
@@ -366,7 +366,7 @@ class EntryPointSpec_DatabaseQuery
         blockHeight = 120
       )
     )
-    eventPersistenceActor ! PersistRings.Req(rings)
+    ringAndTradePersistActor ! PersistRings.Req(rings)
     // dbModule.ringService.saveRings(rings)
   }
 

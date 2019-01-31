@@ -39,13 +39,9 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
   implicit val ringDal = new RingDalImpl
   implicit val blockDal = new BlockDalImpl
   implicit val settlementTxDal = new SettlementTxDalImpl
-  implicit val orderStatusMonitorDal =
-    new OrderStatusMonitorDalImpl
   implicit val marketMetadataDal = new MarketMetadataDalImpl()
   implicit val missingBlocksRecordDal = new MissingBlocksRecordDalImpl()
   implicit val orderService = new OrderServiceImpl
-  implicit val orderStatusMonitorService =
-    new OrderStatusMonitorServiceImpl
   implicit val tradeService = new TradeServiceImpl
   implicit val ringService = new RingServiceImpl
   implicit val blockService = new BlockServiceImpl()
@@ -63,12 +59,10 @@ trait DatabaseModuleSupport extends BeforeAndAfterAll {
     ringDal,
     blockDal,
     settlementTxDal,
-    orderStatusMonitorDal,
     marketMetadataDal,
     missingBlocksRecordDal,
     ohlcDataDal,
     orderService,
-    orderStatusMonitorService,
     tradeService,
     ringService,
     blockService,

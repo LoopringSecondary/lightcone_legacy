@@ -96,7 +96,7 @@ class DatabaseQueryActor(
           None
         )
       } yield {
-        val resp = result.map { r =>
+        val respOrder = result.map { r =>
           val params = r.params match {
             case Some(o) => Some(o.copy(dualAuthPrivateKey = ""))
             case None    => None
@@ -108,7 +108,7 @@ class DatabaseQueryActor(
             marketShard = 0
           )
         }
-        GetOrdersForUser.Res(resp, total)
+        GetOrdersForUser.Res(respOrder, total)
       }) sendTo sender
 
     case req: GetTrades.Req =>
