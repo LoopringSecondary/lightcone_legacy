@@ -90,7 +90,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     val q7 = Req(skip = Some(Paging(skip = 1, size = 10)))
     val r7 = Await.result(service.getRings(q7).mapTo[Seq[Ring]], 5.second)
     val c7 = Await.result(service.countRings(q7).mapTo[Int], 5.second)
-    assert(r7.length == 2 && c7 == 2)
+    assert(r7.length == 2 && c7 == 3)
 
     info("obsolete")
     Await.result(service.obsolete(120L).mapTo[Unit], 5.second)
