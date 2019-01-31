@@ -38,8 +38,6 @@ final class DatabaseQueryMessageValidator(
     config.getInt("default-items-per-page")
   val maxItemsPerPage = config.getInt("max-items-per-page")
 
-  val numberRegex = """^\d+$""".r
-
   def validate = {
     case req: GetOrdersForUser.Req =>
       Future {
@@ -123,7 +121,12 @@ final class DatabaseQueryMessageValidator(
   }
 
   private def isValidNumber(str: String) = {
-    numberRegex.findAllIn(str).nonEmpty
+    try {
+      str.toLong
+      true
+    } catch {
+      case _: Throwable => false
+    }
   }
 
   private def getValidSkip(paging: Option[Paging]) = {
