@@ -49,13 +49,11 @@ final class DatabaseQueryMessageValidator(
               ErrorCode.ERR_INVALID_ARGUMENT,
               "Parameter owner could not be empty"
             )
-          else Address.normalize(req.owner)
+          else normalizeAddress(req.owner)
         val marketOpt = req.market match {
           case Some(m) =>
-            val tokenS =
-              if (m.tokenS.nonEmpty) Address.normalize(m.tokenS) else ""
-            val tokenB =
-              if (m.tokenB.nonEmpty) Address.normalize(m.tokenB) else ""
+            val tokenS = normalizeAddress(m.tokenS)
+            val tokenB = normalizeAddress(m.tokenB)
             Some(GetOrdersForUser.Req.Market(tokenS, tokenB, m.isQueryBothSide))
           case _ => None
         }
@@ -68,15 +66,11 @@ final class DatabaseQueryMessageValidator(
 
     case req: GetTrades.Req =>
       Future {
-        val owner =
-          if (req.owner.nonEmpty) Address.normalize(req.owner) else ""
-        val txHash = if (req.txHash.nonEmpty) req.txHash.toLowerCase else ""
-        val orderHash =
-          if (req.orderHash.nonEmpty) req.orderHash.toLowerCase else ""
+        val owner = normalizeAddress(req.owner)
         val ringOpt = req.ring match {
           case Some(r) =>
             val ringHash =
-              if (r.ringHash.nonEmpty) r.ringHash.toLowerCase else ""
+              normalizeHash(r.ringHash)
             val ringIndex =
               if (r.ringIndex.nonEmpty && !isValidNumber(r.ringIndex))
                 throw ErrorException(
@@ -96,25 +90,19 @@ final class DatabaseQueryMessageValidator(
         }
         val marketOpt = req.market match {
           case Some(m) =>
-            val tokenS =
-              if (m.tokenS.nonEmpty) Address.normalize(m.tokenS) else ""
-            val tokenB =
-              if (m.tokenB.nonEmpty) Address.normalize(m.tokenB) else ""
+            val tokenS = normalizeAddress(m.tokenS)
+            val tokenB = normalizeAddress(m.tokenB)
             Some(GetTrades.Req.Market(tokenS, tokenB, m.isQueryBothSide))
           case _ => None
         }
-        val wallet =
-          if (req.wallet.nonEmpty) Address.normalize(req.wallet) else ""
-        val miner =
-          if (req.miner.nonEmpty) Address.normalize(req.miner) else ""
         GetTrades.Req(
           owner,
-          txHash,
-          orderHash,
+          normalizeHash(req.txHash),
+          normalizeHash(req.orderHash),
           ringOpt,
           marketOpt,
-          wallet,
-          miner,
+          normalizeAddress(req.wallet),
+          normalizeAddress(req.miner),
           req.sort,
           getValidSkip(req.skip)
         )
@@ -124,6 +112,14 @@ final class DatabaseQueryMessageValidator(
       Future {
         req.copy(skip = getValidSkip(req.skip))
       }
+  }
+
+  private def normalizeAddress(address: String) = {
+    if (address.nonEmpty) Address.normalize(address) else ""
+  }
+
+  private def normalizeHash(hash: String) = {
+    if (hash.nonEmpty) hash.toLowerCase else ""
   }
 
   private def isValidNumber(str: String) = {
