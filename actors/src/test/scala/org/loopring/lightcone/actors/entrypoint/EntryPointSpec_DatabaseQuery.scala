@@ -43,7 +43,7 @@ class EntryPointSpec_DatabaseQuery
     "init" in {
       info("save some ring and trades")
       testSaveSomeRings()
-      Thread.sleep(5000)
+      Thread.sleep(3000)
     }
 
     "get trades" in {
