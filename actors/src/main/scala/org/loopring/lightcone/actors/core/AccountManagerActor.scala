@@ -167,22 +167,31 @@ class AccountManagerActor(
         }).mapAs[Order]
       } yield SubmitOrder.Res(Some(resOrder))) sendTo sender
 
-    case Cutoff.Req(owner, "", cutoff, _) =>
-      //TODO:是否需要记录下来，或者只生效一次
-      val updatedOrders = manager.synchronized {
-        manager.handleCutoff(cutoff)
-        orderPool.takeUpdatedOrdersAsMap
-      }
-      processUpdatedOrders(updatedOrders)
+    case req @ CancelOrder.Req("", owner, _, None, _) => //按照Owner取消订单
+      val f = for {
+        _ <- Future { assert(req.owner == address) }
+        (res, updatedOrders) = manager.synchronized {
+          (manager.cancelAllOrders(), orderPool.takeUpdatedOrdersAsMap)
+        }
+        _ <- processUpdatedOrders(updatedOrders)
+      } yield CancelOrder.Res(ERR_NONE)
+      f.sendTo(sender)
 
-    case Cutoff.Req(owner, marketKey, cutoff, _) =>
-      val updatedOrders = manager.synchronized {
-        manager.handleCutoff(cutoff, marketKey)
-        orderPool.takeUpdatedOrdersAsMap
-      }
-      processUpdatedOrders(updatedOrders)
+    case req @ CancelOrder
+          .Req("", owner, _, Some(marketId), _) => //按照Owner-MarketId取消订单
+      val f = for {
+        _ <- Future { assert(req.owner == address) }
+        (res, updatedOrders) = manager.synchronized {
+          (
+            manager.cancelOrdersInMarket(MarketKey(marketId).toString),
+            orderPool.takeUpdatedOrdersAsMap
+          )
+        }
+        _ <- processUpdatedOrders(updatedOrders)
+      } yield CancelOrder.Res(ERR_NONE)
+      f.sendTo(sender)
 
-    case req: CancelOrder.Req =>
+    case req @ CancelOrder.Req(id, owner, status, _, _) =>
       val originalSender = sender
       (for {
         _ <- Future.successful(assert(req.owner == address))

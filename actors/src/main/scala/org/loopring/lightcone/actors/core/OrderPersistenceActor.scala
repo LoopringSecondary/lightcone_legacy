@@ -85,7 +85,7 @@ class OrderPersistenceActor(
               case Some(res) =>
                 if (res.order.isEmpty)
                   throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
-                CancelOrder.Res(req.id, req.status)
+                CancelOrder.Res(ERR_NONE, req.status)
               case None =>
                 throw ErrorException(ERR_ORDER_NOT_EXIST, "no such order")
             }
@@ -96,7 +96,7 @@ class OrderPersistenceActor(
               .updateOrderStatus(req.id, req.status)
           } yield
             cancelRes match {
-              case ERR_NONE => CancelOrder.Res(req.id, req.status) //取消成功
+              case ERR_NONE => CancelOrder.Res(ERR_NONE, req.status) //取消成功
               case _        => throw ErrorException(cancelRes)
             }
       }) sendTo sender

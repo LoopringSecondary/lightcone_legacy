@@ -70,18 +70,11 @@ final class MultiAccountManagerMessageValidator(
   }
 
   def validate = {
-    //TODO:后续完成取消一个地址的各个市场的请求
-    case req: Cutoff.Req =>
-      Future {
-        val newReq = req.copy(owner = Address.normalize(req.owner))
-        cancelOrderValidator.validate(req)
-        newReq
-      }
     case req: CancelOrder.Req =>
       for {
         orderOpt <- dbModule.orderService.getOrder(req.id)
         order = orderOpt.getOrElse(
-          throw ErrorException(ERR_CANCEL_ORDER_VALIDATION_INVALID_SIG)
+          throw ErrorException(ERR_ORDER_NOT_EXIST)
         )
         marketId = MarketId(order.tokenS, order.tokenB)
         newReq = req.copy(

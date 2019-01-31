@@ -42,17 +42,8 @@ final class CancelOrderValidator(
         metadataManager.assertMarketIdIsActive(req.getMarketId)
         if (!checkSign(req.owner, req.id, req.sig))
           throw ErrorException(
-            ERR_ORDER_VALIDATION_INVALID_SIG,
+            ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG,
             s"not authorized to cancel this order $req.id"
-          )
-        req
-      }
-    case req: Cutoff.Req =>
-      Future {
-        if (!checkSign(req.owner, req.marketKey, req.sig))
-          throw ErrorException(
-            ERR_ORDER_VALIDATION_INVALID_SIG,
-            s"not authorized to submit this cutoff"
           )
         req
       }
