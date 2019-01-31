@@ -18,50 +18,56 @@ package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcModule
 import org.loopring.lightcone.actors.rpc.RpcDataConversions._
-import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.proto._
 
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
-
-  implicit val metadataManager: MetadataManager
-
   method("get_order_book")
-    .accepts[rpcdata.GetOrderbook.Params, GetOrderbook.Req]
+    .accepts[GetOrderbook.Req]
     .replies[GetOrderbook.Res]
 
   method("submit_order") //
-    .accepts[SubmitOrder.Req] //
-    .replies[SubmitOrder.Res]
+    .accepts[RawOrder, SubmitOrder.Req] //
+    .replies[SubmitOrder.Res, rpcdata.SubmitOrder.Result]
 
-  method("cancel_order") //
+  method("cancel_order") // TODO 需要验签支持，目前结构中没有sig字段
     .accepts[CancelOrder.Req] //
     .replies[CancelOrder.Res]
 
   // // db query
-  method("get_orders")
-    .accepts[GetOrdersForUser.Req]
+  method("get_orders") //TODO GetOrdersForUser.Res 中缺少pageNum 和 pageSize
+    .accepts[rpcdata.GetOrders.Params, GetOrdersForUser.Req]
     .replies[GetOrdersForUser.Res]
 
-  method("get_trades")
-    .accepts[GetTrades.Req]
+  method("get_trades") //TODO GetTrades.Res 中缺少pageNum 和 pageSize
+    .accepts[rpcdata.GetTrades.Params, GetTrades.Req]
     .replies[GetTrades.Res]
 
-  method("get_rings")
-    .accepts[GetRings.Req]
+  method("get_rings") //TODO GetRings.Res 中缺少pageNum 和 pageSize
+    .accepts[rpcdata.GetRings.Params, GetRings.Req]
     .replies[GetRings.Res]
 
-  method("get_transactions")
-    .accepts[GetTransactionRecords.Req]
+  method("get_transactions") //TODO GetTransactionRecords.Res 中缺少pageNum, pageSize 和 total
+    .accepts[rpcdata.GetTransactions.Params, GetTransactionRecords.Req]
     .replies[GetTransactionRecords.Res]
 
+  //TODO 需要修改成get_nonce,暂未实现
   method("get_transaction_count")
     .accepts[GetTransactionRecordCount.Req]
     .replies[GetTransactionRecordCount.Res]
 
+  //TODO 前端暴露get_tokens 和 get_markets 接口,该接口还保留吗?
   method("get_metadatas")
     .accepts[GetMetadatas.Req]
     .replies[GetMetadatas.Res]
+
+  method("get_tokens")
+    .accepts[GetMetadatas.Req]
+    .replies[GetMetadatas.Res, rpcdata.GetTokens.Result]
+
+  method("get_market")
+    .accepts[GetMetadatas.Req]
+    .replies[GetMetadatas.Res, rpcdata.GetMarkets.Result]
 
   //Ethereum Query
   method("get_allowance")
