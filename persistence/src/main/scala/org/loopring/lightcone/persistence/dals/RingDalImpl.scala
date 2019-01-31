@@ -97,8 +97,8 @@ class RingDalImpl @Inject()(
   def countRings(request: GetRings.Req): Future[Int] = {
     val filters = queryFilters(
       request.ring,
-      Some(request.sort),
-      request.skip
+      None,
+      None
     )
     db.run(filters.size.result)
   }

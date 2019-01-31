@@ -40,18 +40,20 @@ class EntryPointSpec_DatabaseQuery
   val ringAndTradePersistActor = actors.get(RingAndTradePersistenceActor.name)
 
   "DatabaseQueryActor Entrypoint" must {
-    "get trades" in {
-      info("save some trades")
-      testSaveSomeTrades()
+    "init" in {
+      info("save some ring and trades")
+      testSaveSomeRings()
       Thread.sleep(2000)
+    }
 
+    "get trades" in {
       info("query trades: by owner")
       val q3 = GetTrades.Req(owner = owner1)
       val r3 = Await.result(
         singleRequest(q3, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r3.trades.length == 2 && r3.total == 2)
+      assert(r3.trades.length == 4 && r3.total == 4)
 
       info("query trades: sort")
       val q3_2 = GetTrades.Req(owner = owner1, sort = SortingType.DESC)
@@ -59,7 +61,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q3_2, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r3_2.trades.length == 2 && r3_2.total == 2)
+      assert(r3_2.trades.length == 4 && r3_2.total == 4)
       assert(r3.trades.head == r3_2.trades.last)
 
       info("query trades: skip")
@@ -68,7 +70,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q3_3, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
-      assert(r3_3.trades.length == 3 && r3_3.total == 3)
+      assert(r3_3.trades.length == 5 && r3_3.total == 6)
 
       info("query trades: by owner and market")
       val q4 = GetTrades.Req(
@@ -98,13 +100,13 @@ class EntryPointSpec_DatabaseQuery
         5.second
       )
       assert(r6.trades.length == 2 && r6.total == 2)
-      val q7 = GetTrades.Req(ring = Some(GetTrades.Req.Ring(hash2, "2", "1")))
+      val q7 = GetTrades.Req(ring = Some(GetTrades.Req.Ring(hash2, "11", "1")))
       val r7 = Await.result(
         singleRequest(q7, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
       assert(r7.trades.length == 1 && r7.total == 1)
-      val q8 = GetTrades.Req(ring = Some(GetTrades.Req.Ring(hash2, "2", "2")))
+      val q8 = GetTrades.Req(ring = Some(GetTrades.Req.Ring(hash2, "11", "2")))
       val r8 = Await.result(
         singleRequest(q8, "get_trades").mapTo[GetTrades.Res],
         5.second
@@ -117,7 +119,7 @@ class EntryPointSpec_DatabaseQuery
         txHash = hash1,
         orderHash = hash1,
         market = Some(GetTrades.Req.Market(tokenS1, tokenB1)),
-        ring = Some(GetTrades.Req.Ring(hash1, "1", "0")),
+        ring = Some(GetTrades.Req.Ring(hash1, "10", "0")),
         wallet = wallet,
         miner = miner
       )
@@ -175,10 +177,6 @@ class EntryPointSpec_DatabaseQuery
     }
 
     "get rings" in {
-      info("save some rings")
-      testSaveSomeRings()
-      Thread.sleep(2000)
-
       info("query rings: by ringHash and ringIndex")
       val q3 = GetRings.Req(
         ring = Some(GetRings.Req.Ring(GetRings.Req.Ring.Filter.RingHash(hash2)))
@@ -189,7 +187,8 @@ class EntryPointSpec_DatabaseQuery
       )
       assert(r3.rings.length == 1 && r3.total == 1)
       val q4 = GetRings.Req(
-        ring = Some(GetRings.Req.Ring(GetRings.Req.Ring.Filter.RingIndex(11)))
+        ring =
+          Some(GetRings.Req.Ring(GetRings.Req.Ring.Filter.RingIndex(height2)))
       )
       val r4 = Await.result(
         singleRequest(q4, "get_rings").mapTo[GetRings.Res],
@@ -199,7 +198,21 @@ class EntryPointSpec_DatabaseQuery
       assert(r3.rings.head == r4.rings.head)
       r3.rings.head.fees match {
         case Some(f) =>
-          assert(f.fees.length == 2 && f.fees == fees.fees)
+          val fee = Trade.Fee(
+            "0x97241525fe425C90eBe5A41127816dcFA5954b06",
+            ByteString.copyFrom("3", "UTF-8"),
+            ByteString.copyFrom("5", "UTF-8"),
+            ByteString.copyFrom("6", "UTF-8"),
+            feeRecipient,
+            1,
+            1
+          )
+          assert(
+            f.fees.length == 2 && f.fees == Seq(
+              fee,
+              fee
+            )
+          )
         case None => assert(false)
       }
 
@@ -224,7 +237,7 @@ class EntryPointSpec_DatabaseQuery
         singleRequest(q7, "get_rings").mapTo[GetRings.Res],
         5.second
       )
-      assert(r7.rings.length == 2 && r7.total == 2)
+      assert(r7.rings.length == 2 && r7.total == 3)
     }
   }
 
@@ -234,84 +247,22 @@ class EntryPointSpec_DatabaseQuery
     "0x36ea537d8f02693c7a0c4c0cd590906cfbbe654a96668555e50277b8bec7cc55"
   val tokenS1 = "0x97241525fe425C90eBe5A41127816dcFA5954b06"
   val tokenB1 = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc"
+  val height1 = 11
+
   val owner2 = "0x373d6d769154edbba3049ffa4b40716b276dada8"
 
   val hash2 =
     "0xba2a688aae3307d96e39c03bfdba97889ed55b4992c8fb121b026273184d7ccc"
   val tokenS2 = "0xa1c95e17f629d8bc5985f3f997760a575d56b0c2"
   val tokenB2 = "0x14b0846eb7fe70cc155138e0da9ab990ffeacc23"
+  val height2 = 22
   val miner = "0x624d520bab2e4ad83935fa503fb130614374e850"
   val wallet = "0x74febeff16769960528c7f22acfa8e6df7f9cd53"
-
-  private def testSaveSomeTrades() = {
-    val trades = Seq(
-      Trade(
-        txHash = hash1,
-        orderHash = hash1,
-        owner = owner1,
-        tokenB = tokenB1,
-        tokenS = tokenS1,
-        amountB = ByteString.copyFrom("1", "UTF-8"),
-        amountS = ByteString.copyFrom("10", "UTF-8"),
-        blockHeight = 10,
-        ringHash = hash1,
-        ringIndex = 1,
-        fillIndex = 0,
-        miner = miner,
-        wallet = wallet
-      ),
-      Trade(
-        txHash = hash1,
-        orderHash = hash1,
-        owner = owner1,
-        tokenB = tokenS1,
-        tokenS = tokenB1,
-        amountB = ByteString.copyFrom("10", "UTF-8"),
-        amountS = ByteString.copyFrom("1", "UTF-8"),
-        blockHeight = 10,
-        ringHash = hash1,
-        ringIndex = 1,
-        fillIndex = 1,
-        miner = miner,
-        wallet = wallet
-      ),
-      Trade(
-        txHash = hash2,
-        orderHash = hash2,
-        owner = owner2,
-        tokenB = tokenB2,
-        tokenS = tokenS2,
-        amountB = ByteString.copyFrom("1", "UTF-8"),
-        amountS = ByteString.copyFrom("10", "UTF-8"),
-        blockHeight = 20,
-        ringHash = hash2,
-        ringIndex = 2,
-        fillIndex = 0,
-        miner = miner,
-        wallet = wallet
-      ),
-      Trade(
-        txHash = hash2,
-        orderHash = hash2,
-        owner = owner2,
-        tokenB = tokenS2,
-        tokenS = tokenB2,
-        amountB = ByteString.copyFrom("10", "UTF-8"),
-        amountS = ByteString.copyFrom("1", "UTF-8"),
-        blockHeight = 20,
-        ringHash = hash2,
-        ringIndex = 2,
-        fillIndex = 1,
-        miner = miner,
-        wallet = wallet
-      )
-    )
-    ringAndTradePersistActor ! PersistTrades.Req(trades)
-    // dbModule.tradeService.saveTrades(trades)
-  }
+  val feeRecipient = "0x624d520bab2e4ad83935fa503fb130614374e850"
 
   val hash3 =
     "0x30f3c30128432ef6b0bbf3d89002a6af96768f74390ff3061a4f548848e669dc"
+  val height3 = 33
 
   val fees = Ring.Fees(
     Seq(
@@ -336,38 +287,129 @@ class EntryPointSpec_DatabaseQuery
     )
   )
 
+  val header = EventHeader(
+    txHash = hash1,
+    txStatus = TxStatus.TX_STATUS_SUCCESS,
+    blockHash = hash1,
+    blockNumber = height1
+  )
+
+  val fill1 = OrderFilledEvent(
+    Some(header),
+    owner1,
+    hash1,
+    "0x0",
+    hash1,
+    10,
+    0,
+    ByteString.copyFrom("10", "UTF-8"),
+    ByteString.copyFrom("1", "UTF-8"),
+    ByteString.copyFrom("2", "UTF-8"),
+    tokenS1,
+    tokenB1,
+    wallet,
+    1,
+    1,
+    "0x97241525fe425C90eBe5A41127816dcFA5954b06",
+    ByteString.copyFrom("3", "UTF-8"),
+    ByteString.copyFrom("5", "UTF-8"),
+    ByteString.copyFrom("6", "UTF-8")
+  )
+
+  val fill2 = OrderFilledEvent(
+    Some(header.copy(txHash = hash2, blockHash = hash2, blockNumber = height2)),
+    owner2,
+    hash2,
+    "0x0",
+    hash2,
+    11,
+    0,
+    ByteString.copyFrom("13", "UTF-8"),
+    ByteString.copyFrom("2", "UTF-8"),
+    ByteString.copyFrom("2", "UTF-8"),
+    tokenS2,
+    tokenB2,
+    wallet,
+    1,
+    1,
+    "0x97241525fe425C90eBe5A41127816dcFA5954b06",
+    ByteString.copyFrom("3", "UTF-8"),
+    ByteString.copyFrom("5", "UTF-8"),
+    ByteString.copyFrom("6", "UTF-8")
+  )
+
+  val fill3 = OrderFilledEvent(
+    Some(header.copy(txHash = hash3, blockHash = hash3, blockNumber = height2)),
+    owner1,
+    hash3,
+    "0x0",
+    hash3,
+    12,
+    0,
+    ByteString.copyFrom("53", "UTF-8"),
+    ByteString.copyFrom("7", "UTF-8"),
+    ByteString.copyFrom("3", "UTF-8"),
+    tokenS2,
+    tokenB2,
+    wallet,
+    1,
+    1,
+    "0x97241525fe425C90eBe5A41127816dcFA5954b06",
+    ByteString.copyFrom("3", "UTF-8"),
+    ByteString.copyFrom("5", "UTF-8"),
+    ByteString.copyFrom("6", "UTF-8")
+  )
+
   private def testSaveSomeRings() = {
-    val rings = Seq(
-      Ring(
-        ringHash = hash1,
-        ringIndex = 10,
-        fillsAmount = 2,
-        miner = miner,
-        txHash = hash1,
-        fees = Some(fees),
-        blockHeight = 100
-      ),
-      Ring(
-        ringHash = hash2,
-        ringIndex = 11,
-        fillsAmount = 2,
-        miner = miner,
-        txHash = hash2,
-        fees = Some(fees),
-        blockHeight = 110
-      ),
-      Ring(
-        ringHash = hash3,
-        ringIndex = 12,
-        fillsAmount = 2,
-        miner = miner,
-        txHash = hash3,
-        fees = Some(fees),
-        blockHeight = 120
-      )
+    val tempTokens1 = fill1.tokenS
+    val tempTokenb1 = fill1.tokenB
+    val fills1 = Seq(
+      fill1,
+      fill1.copy(tokenS = tempTokenb1, tokenB = tempTokens1, fillIndex = 1)
     )
-    ringAndTradePersistActor ! PersistRings.Req(rings)
-    // dbModule.ringService.saveRings(rings)
+    val e1 = RingMinedEvent(
+      Some(header),
+      height1,
+      hash1,
+      feeRecipient,
+      fills1,
+      miner
+    )
+
+    val tempTokens2 = fill2.tokenS
+    val tempTokenb2 = fill2.tokenB
+    val fills2 = Seq(
+      fill2,
+      fill2.copy(tokenS = tempTokenb2, tokenB = tempTokens2, fillIndex = 1)
+    )
+    val e2 = RingMinedEvent(
+      Some(
+        header.copy(txHash = hash2, blockHash = hash2, blockNumber = height2)
+      ),
+      height2,
+      hash2,
+      feeRecipient,
+      fills2,
+      miner
+    )
+
+    val fills3 = Seq(
+      fill3,
+      fill3.copy(tokenS = fill2.tokenB, tokenB = fill2.tokenS, fillIndex = 1)
+    )
+    val e3 = RingMinedEvent(
+      Some(
+        header.copy(txHash = hash3, blockHash = hash3, blockNumber = height3)
+      ),
+      height3,
+      hash3,
+      feeRecipient,
+      fills3,
+      miner
+    )
+    ringAndTradePersistActor ! e1
+    ringAndTradePersistActor ! e2
+    ringAndTradePersistActor ! e3
   }
 
 }
