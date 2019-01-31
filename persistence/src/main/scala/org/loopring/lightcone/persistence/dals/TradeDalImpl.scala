@@ -19,7 +19,6 @@ package org.loopring.lightcone.persistence.dals
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
-import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.persistence.base._
@@ -62,30 +61,24 @@ class TradeDalImpl @Inject()(
     Future.sequence(trades.map(saveTrade))
 
   def getTrades(request: Req): Future[Seq[Trade]] = {
-    val ownerOpt = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokensOpt, tokenbOpt, marketKeyOpt) = getMarketQueryParameters(
       request.market
     )
-    val txHashOpt = if (request.txHash.nonEmpty) Some(request.txHash) else None
-    val orderHashOpt =
-      if (request.orderHash.nonEmpty) Some(request.orderHash) else None
     val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
       request.ring
     )
-    val walletOpt = if (request.wallet.nonEmpty) Some(request.wallet) else None
-    val minerOpt = if (request.miner.nonEmpty) Some(request.miner) else None
     val filters = queryFilters(
-      ownerOpt,
-      txHashOpt,
-      orderHashOpt,
+      getOptString(request.owner),
+      getOptString(request.txHash),
+      getOptString(request.orderHash),
       ringHashOpt,
       ringIndexOpt,
       fillIndexOpt,
       tokensOpt,
       tokenbOpt,
       marketKeyOpt,
-      walletOpt,
-      minerOpt,
+      getOptString(request.wallet),
+      getOptString(request.miner),
       Some(request.sort),
       request.skip
     )
@@ -93,30 +86,24 @@ class TradeDalImpl @Inject()(
   }
 
   def countTrades(request: Req): Future[Int] = {
-    val ownerOpt = if (request.owner.isEmpty) None else Some(request.owner)
     val (tokensOpt, tokenbOpt, marketKeyOpt) = getMarketQueryParameters(
       request.market
     )
-    val txHashOpt = if (request.txHash.nonEmpty) Some(request.txHash) else None
-    val orderHashOpt =
-      if (request.orderHash.nonEmpty) Some(request.orderHash) else None
     val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
       request.ring
     )
-    val walletOpt = if (request.wallet.nonEmpty) Some(request.wallet) else None
-    val minerOpt = if (request.miner.nonEmpty) Some(request.miner) else None
     val filters = queryFilters(
-      ownerOpt,
-      txHashOpt,
-      orderHashOpt,
+      getOptString(request.owner),
+      getOptString(request.txHash),
+      getOptString(request.orderHash),
       ringHashOpt,
       ringIndexOpt,
       fillIndexOpt,
       tokensOpt,
       tokenbOpt,
       marketKeyOpt,
-      walletOpt,
-      minerOpt,
+      getOptString(request.wallet),
+      getOptString(request.miner),
       None,
       None
     )
@@ -125,6 +112,10 @@ class TradeDalImpl @Inject()(
 
   def obsolete(height: Long): Future[Unit] = {
     db.run(query.filter(_.blockHeight >= height).delete).map(_ >= 0)
+  }
+
+  private def getOptString(str: String) = {
+    if (str.nonEmpty) Some(str) else None
   }
 
   private def queryFilters(
@@ -186,7 +177,7 @@ class TradeDalImpl @Inject()(
   private def getRingQueryParameters(ringOpt: Option[Req.Ring]) = {
     ringOpt match {
       case Some(r) =>
-        val ringHash = if (r.ringHash.nonEmpty) Some(r.ringHash) else None
+        val ringHash = getOptString(r.ringHash)
         val ringIndex =
           if (r.ringIndex.nonEmpty) Some(r.ringIndex.toLong) else None
         val fillIndex =
