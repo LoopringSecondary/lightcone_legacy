@@ -21,6 +21,7 @@ import java.math.BigInteger
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto.OrderStatus._
@@ -167,6 +168,11 @@ package object data {
 
   implicit class RichMarketId(marketId: MarketId) {
     def key() = MarketKey(marketId).toString
+
+    def toLowerCase() = MarketId(
+      baseToken = Address.normalize(marketId.baseToken),
+      quoteToken = Address.normalize(marketId.quoteToken)
+    )
   }
 
   implicit class RichRawOrder(order: RawOrder) {

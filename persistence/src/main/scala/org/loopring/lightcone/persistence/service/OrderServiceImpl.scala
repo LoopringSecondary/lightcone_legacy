@@ -140,18 +140,16 @@ class OrderServiceImpl @Inject()(
     orderDal.getCutoffAffectedOrders(retrieveCondition, take)
 
   def getOrdersToActivate(
-      latestProcessTime: Int,
-      processTime: Int,
-      skip: Option[Paging] = None
+      activateLaggingInSecond: Int,
+      limit: Int
     ): Future[Seq[RawOrder]] =
-    orderDal.getOrdersToActivate(latestProcessTime, processTime)
+    orderDal.getOrdersToActivate(activateLaggingInSecond, limit)
 
   def getOrdersToExpire(
-      latestProcessTime: Int,
-      processTime: Int,
-      skip: Option[Paging] = None
+      expireLeadInSeconds: Int,
+      limit: Int
     ): Future[Seq[RawOrder]] =
-    orderDal.getOrdersToExpire(latestProcessTime, processTime)
+    orderDal.getOrdersToExpire(expireLeadInSeconds, limit)
 
   // Count the number of orders
   def countOrdersForUser(

@@ -52,9 +52,9 @@ class DatabaseQuerySpec
       } yield response
       val res = Await.result(r, timeout.duration)
       res match {
-        case GetOrdersForUser.Res(orders, error) =>
-          assert(orders.nonEmpty && orders.length === 6)
-          assert(error === ErrorCode.ERR_NONE)
+        case GetOrdersForUser.Res(orders, total) =>
+          assert(orders.nonEmpty && orders.length == 6)
+          assert(total == 6)
         case _ => assert(false)
       }
     }

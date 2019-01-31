@@ -112,7 +112,7 @@ class MissingBlocksEventExtractorActor(
       _ <- dbModule.missingBlocksRecordDal
         .updateProgress(sequenceId, blockData.height)
       needDelete = blockData.height >= untilBlock
-      _ <- if (!needDelete) Future.successful(Unit)
+      _ <- if (!needDelete) Future.unit
       else dbModule.missingBlocksRecordDal.deleteRecord(sequenceId)
       _ = if (needDelete) {
         self ! NEXT_RANGE

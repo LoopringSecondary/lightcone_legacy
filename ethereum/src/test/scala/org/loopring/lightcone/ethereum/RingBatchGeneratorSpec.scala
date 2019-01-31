@@ -85,7 +85,7 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
     val order1Owner = "0xFDa769A839DA57D88320E683cD20075f8f525a57"
     val order2Owner = "0xf5B3ab72F6E80d79202dBD37400447c11618f21f"
 
-    val validator: RawOrderValidator = Protocol2RawOrderValidator
+    val validator: RawOrderValidator = RawOrderValidatorDefault
     val generator: RingBatchGenerator = Protocol2RingBatchGenerator
     implicit val context: RingBatchContext = RingBatchContext()
       .withMiner(miner)

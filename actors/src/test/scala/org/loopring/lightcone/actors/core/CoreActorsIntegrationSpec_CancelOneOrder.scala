@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.core
 
 import akka.pattern._
 import org.loopring.lightcone.actors.support._
+import org.loopring.lightcone.actors.validator.MultiAccountManagerMessageValidator
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.Await
@@ -62,10 +63,11 @@ class CoreActorsIntegrationSpec_CancelOneOrder
         id = rawOrder.hash,
         owner = rawOrder.owner,
         status = STATUS_SOFT_CANCELLED_BY_USER,
+        sig = rawOrder.getParams.sig,
         marketId = Some(MarketId(rawOrder.tokenS, rawOrder.tokenB))
       )
 
-      val cancelResF = actors.get(MultiAccountManagerActor.name) ? cancelReq
+      val cancelResF = actors.get(MultiAccountManagerMessageValidator.name) ? cancelReq
 
       val cancelRes = Await.result(cancelResF, timeout.duration)
       info(s"submit res: ${cancelRes}")

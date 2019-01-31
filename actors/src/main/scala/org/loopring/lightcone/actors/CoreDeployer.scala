@@ -185,7 +185,10 @@ class CoreDeployer @Inject()(
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
       actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
-      actors.add(EventPersistenceActor.name, EventPersistenceActor.start)
+      actors.add(
+        RingAndTradePersistenceActor.name,
+        RingAndTradePersistenceActor.start
+      )
       actors.add(GasPriceActor.name, GasPriceActor.start)
       actors.add(OrderPersistenceActor.name, OrderPersistenceActor.start)
       actors.add(OrderRecoverActor.name, OrderRecoverActor.start)
