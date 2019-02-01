@@ -160,6 +160,7 @@ class CoreModule(config: Config)
     bind[EventDispatcher[TransferEvent]].to[TransferEventDispatcher]
     bind[EventDispatcher[CutoffEvent]].to[CutoffEventDispatcher]
     bind[EventDispatcher[OHLCRawData]].to[OHLCRawDataEventDispatcher]
+    bind[EventDispatcher[BlockGasPrices]].to[BlockGasPricesDispatcher]
 
     // --- bind primative types ---------------------
     bind[Timeout].toInstance(Timeout(2.second))
