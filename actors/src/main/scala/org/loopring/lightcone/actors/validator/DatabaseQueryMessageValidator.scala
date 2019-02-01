@@ -20,98 +20,113 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
+import scala.concurrent._
 
 // Owner: Yongfeng
 object DatabaseQueryMessageValidator {
   val name = "database_query_validator"
 }
 
-final class DatabaseQueryMessageValidator()(implicit val config: Config)
+final class DatabaseQueryMessageValidator(
+  )(
+    implicit
+    val config: Config,
+    ec: ExecutionContext)
     extends MessageValidator {
 
   val defaultItemsPerPage =
     config.getInt("default-items-per-page")
   val maxItemsPerPage = config.getInt("max-items-per-page")
 
-  val numberRegex = """^\d+$""".r
-
   def validate = {
     case req: GetOrdersForUser.Req =>
-      val owner =
-        if (req.owner.isEmpty)
-          throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
-            "Parameter owner could not be empty"
-          )
-        else Address.normalize(req.owner)
-      val marketOpt = req.market match {
-        case Some(m) =>
-          val tokenS =
-            if (m.tokenS.nonEmpty) Address.normalize(m.tokenS) else ""
-          val tokenB =
-            if (m.tokenB.nonEmpty) Address.normalize(m.tokenB) else ""
-          Some(GetOrdersForUser.Req.Market(tokenS, tokenB, m.isQueryBothSide))
-        case _ => None
+      Future {
+        val owner =
+          if (req.owner.isEmpty)
+            throw ErrorException(
+              ErrorCode.ERR_INVALID_ARGUMENT,
+              "Parameter owner could not be empty"
+            )
+          else normalizeAddress(req.owner)
+        val marketOpt = req.market match {
+          case Some(m) =>
+            val tokenS = normalizeAddress(m.tokenS)
+            val tokenB = normalizeAddress(m.tokenB)
+            Some(GetOrdersForUser.Req.Market(tokenS, tokenB, m.isQueryBothSide))
+          case _ => None
+        }
+        req.copy(
+          owner = owner,
+          market = marketOpt,
+          skip = getValidSkip(req.skip)
+        )
       }
-      req.copy(owner = owner, market = marketOpt, skip = getValidSkip(req.skip))
 
     case req: GetTrades.Req =>
-      val owner =
-        if (req.owner.nonEmpty) Address.normalize(req.owner) else ""
-      val txHash = if (req.txHash.nonEmpty) req.txHash.toLowerCase else ""
-      val orderHash =
-        if (req.orderHash.nonEmpty) req.orderHash.toLowerCase else ""
-      val ringOpt = req.ring match {
-        case Some(r) =>
-          val ringHash = if (r.ringHash.nonEmpty) r.ringHash.toLowerCase else ""
-          val ringIndex =
-            if (r.ringIndex.nonEmpty && !isValidNumber(r.ringIndex))
-              throw ErrorException(
-                ErrorCode.ERR_INVALID_ARGUMENT,
-                s"invalid ringIndex:${r.ringIndex}"
-              )
-            else r.ringIndex
-          val fillIndex =
-            if (r.fillIndex.nonEmpty && !isValidNumber(r.fillIndex))
-              throw ErrorException(
-                ErrorCode.ERR_INVALID_ARGUMENT,
-                s"invalid fillIndex:${r.fillIndex}"
-              )
-            else r.fillIndex
-          Some(GetTrades.Req.Ring(ringHash, ringIndex, fillIndex))
-        case _ => None
+      Future {
+        val owner = normalizeAddress(req.owner)
+        val ringOpt = req.ring match {
+          case Some(r) =>
+            val ringHash =
+              normalizeHash(r.ringHash)
+            val ringIndex =
+              if (r.ringIndex.nonEmpty && !isValidNumber(r.ringIndex))
+                throw ErrorException(
+                  ErrorCode.ERR_INVALID_ARGUMENT,
+                  s"invalid ringIndex:${r.ringIndex}"
+                )
+              else r.ringIndex
+            val fillIndex =
+              if (r.fillIndex.nonEmpty && !isValidNumber(r.fillIndex))
+                throw ErrorException(
+                  ErrorCode.ERR_INVALID_ARGUMENT,
+                  s"invalid fillIndex:${r.fillIndex}"
+                )
+              else r.fillIndex
+            Some(GetTrades.Req.Ring(ringHash, ringIndex, fillIndex))
+          case _ => None
+        }
+        val marketOpt = req.market match {
+          case Some(m) =>
+            val tokenS = normalizeAddress(m.tokenS)
+            val tokenB = normalizeAddress(m.tokenB)
+            Some(GetTrades.Req.Market(tokenS, tokenB, m.isQueryBothSide))
+          case _ => None
+        }
+        GetTrades.Req(
+          owner,
+          normalizeHash(req.txHash),
+          normalizeHash(req.orderHash),
+          ringOpt,
+          marketOpt,
+          normalizeAddress(req.wallet),
+          normalizeAddress(req.miner),
+          req.sort,
+          getValidSkip(req.skip)
+        )
       }
-      val marketOpt = req.market match {
-        case Some(m) =>
-          val tokenS =
-            if (m.tokenS.nonEmpty) Address.normalize(m.tokenS) else ""
-          val tokenB =
-            if (m.tokenB.nonEmpty) Address.normalize(m.tokenB) else ""
-          Some(GetTrades.Req.Market(tokenS, tokenB, m.isQueryBothSide))
-        case _ => None
-      }
-      val wallet =
-        if (req.wallet.nonEmpty) Address.normalize(req.wallet) else ""
-      val miner =
-        if (req.miner.nonEmpty) Address.normalize(req.miner) else ""
-      GetTrades.Req(
-        owner,
-        txHash,
-        orderHash,
-        ringOpt,
-        marketOpt,
-        wallet,
-        miner,
-        req.sort,
-        getValidSkip(req.skip)
-      )
 
     case req: GetRings.Req =>
-      req.copy(skip = getValidSkip(req.skip))
+      Future {
+        req.copy(skip = getValidSkip(req.skip))
+      }
+  }
+
+  private def normalizeAddress(address: String) = {
+    if (address.nonEmpty) Address.normalize(address) else ""
+  }
+
+  private def normalizeHash(hash: String) = {
+    if (hash.nonEmpty) hash.toLowerCase else ""
   }
 
   private def isValidNumber(str: String) = {
-    numberRegex.findAllIn(str).nonEmpty
+    try {
+      str.toLong
+      true
+    } catch {
+      case _: Throwable => false
+    }
   }
 
   private def getValidSkip(paging: Option[Paging]) = {

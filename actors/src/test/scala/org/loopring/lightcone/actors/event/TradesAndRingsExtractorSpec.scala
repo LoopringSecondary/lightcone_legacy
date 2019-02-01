@@ -87,7 +87,9 @@ class TradesAndRingsExtractorSpec
         singleRequest(treq1, "get_trades").mapTo[GetTrades.Res],
         5.second
       )
+
       assert(tres1.trades.length == 1)
+      println(tres1.trades.head)
 
       val treq2 = GetTrades.Req(owner = account2.getAddress)
       val tres2 = Await.result(
@@ -95,7 +97,7 @@ class TradesAndRingsExtractorSpec
         5.second
       )
       assert(tres2.trades.length == 1)
-
+      println(tres2.trades.head)
       val req = GetRings.Req()
       val res = Await.result(
         singleRequest(req, "get_rings").mapTo[GetRings.Res],

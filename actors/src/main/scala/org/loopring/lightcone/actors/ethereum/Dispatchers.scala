@@ -34,7 +34,7 @@ object Dispatchers {
       ec: ExecutionContext,
       extractor: EventExtractor[RingMinedEvent])
       extends NameBasedEventDispatcher[RingMinedEvent](
-        names = Seq(MarketManagerActor.name),
+        names = Seq(MarketManagerActor.name, RingAndTradePersistenceActor.name),
         actors
       )
 

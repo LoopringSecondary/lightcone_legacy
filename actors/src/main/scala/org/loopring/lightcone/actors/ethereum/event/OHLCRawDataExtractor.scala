@@ -42,43 +42,33 @@ class OHLCRawDataExtractor @Inject()(
       }
       .map { rings =>
         rings.flatMap { ring =>
-          ring.fills.zipWithIndex.map {
-            case (fill, index) =>
-              val _fill =
-                if (index + 1 >= ring.fills.size) ring.fills.head
-                else ring.fills(index + 1)
-
-              val marketKey = MarketKey(fill.tokenS, _fill.tokenS).toString
-
-              if (!metadataManager.isValidMarket(marketKey)) None
-              else {
-                val marketMetadata =
-                  metadataManager.getMarketMetadata(marketKey)
-
-                val marketId = marketMetadata.getMarketId
-
-                val baseToken =
-                  metadataManager.getToken(marketId.baseToken).get
-                val quoteToken =
-                  metadataManager.getToken(marketId.quoteToken).get
-
-                val (baseAmount, quoteAmount) =
-                  getAmounts(fill, _fill, baseToken, quoteToken, marketMetadata)
-
-                Some(
-                  OHLCRawData(
-                    ringIndex = ring.ringIndex,
-                    txHash = ring.header.get.txHash,
-                    marketKey = marketKey,
-                    time = ring.header.get.blockTimestamp,
-                    baseAmount = baseAmount,
-                    quoteAmount = quoteAmount,
-                    price = BigDecimal(quoteAmount / baseAmount)
-                      .setScale(marketMetadata.priceDecimals)
-                      .doubleValue()
-                  )
+          ring.fills.map { fill =>
+            val marketKey = MarketKey(fill.tokenS, fill.tokenB).toString
+            if (!metadataManager.isMarketActiveOrReadOnly(marketKey)) None
+            else {
+              val marketMetadata =
+                metadataManager.getMarketMetadata(marketKey)
+              val marketId = marketMetadata.getMarketId
+              val baseToken =
+                metadataManager.getToken(marketId.baseToken).get
+              val quoteToken =
+                metadataManager.getToken(marketId.quoteToken).get
+              val (baseAmount, quoteAmount) =
+                getAmounts(fill, baseToken, quoteToken, marketMetadata)
+              Some(
+                OHLCRawData(
+                  ringIndex = ring.ringIndex,
+                  txHash = ring.header.get.txHash,
+                  marketKey = marketKey,
+                  time = ring.header.get.blockTimestamp,
+                  baseAmount = baseAmount,
+                  quoteAmount = quoteAmount,
+                  price = BigDecimal(quoteAmount / baseAmount)
+                    .setScale(marketMetadata.priceDecimals)
+                    .doubleValue()
                 )
-              }
+              )
+            }
           }.filter(_.isDefined).map(_.get).distinct
         }
       }
@@ -87,7 +77,6 @@ class OHLCRawDataExtractor @Inject()(
   // LRC-WETH market, LRC is the base token, WETH is the quote token.
   def getAmounts(
       fill: OrderFilledEvent,
-      _fill: OrderFilledEvent,
       baseToken: Token,
       quoteToken: Token,
       marketMetadata: MarketMetadata
@@ -95,7 +84,7 @@ class OHLCRawDataExtractor @Inject()(
     val amountInWei =
       if (Address(baseToken.meta.address).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
-      else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
+      else Numeric.toBigInt(fill.filledAmountB.toByteArray)
 
     val amount: Double = quoteToken
       .fromWei(amountInWei, marketMetadata.precisionForAmount)
@@ -104,7 +93,7 @@ class OHLCRawDataExtractor @Inject()(
     val totalInWei =
       if (Address(quoteToken.meta.address).equals(Address(fill.tokenS)))
         Numeric.toBigInt(fill.filledAmountS.toByteArray)
-      else Numeric.toBigInt(_fill.filledAmountS.toByteArray)
+      else Numeric.toBigInt(fill.filledAmountB.toByteArray)
 
     val total: Double = baseToken
       .fromWei(totalInWei, marketMetadata.precisionForTotal)

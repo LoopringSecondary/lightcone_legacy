@@ -155,7 +155,6 @@ class AccountManagerActor(
         _ <- checkOrderCanceled(raworder) //取消订单，单独查询以太坊
         newRaworder = if (raworder.validSince > timeProvider.getTimeSeconds()) {
           raworder.withStatus(STATUS_PENDING_ACTIVE)
-          raworder
         } else raworder
 
         resRawOrder <- (orderPersistenceActor ? req
@@ -168,7 +167,31 @@ class AccountManagerActor(
         }).mapAs[Order]
       } yield SubmitOrder.Res(Some(resOrder))) sendTo sender
 
-    case req: CancelOrder.Req =>
+    case req @ CancelOrder.Req("", owner, _, None, _) => //按照Owner取消订单
+      val f = for {
+        _ <- Future { assert(req.owner == address) }
+        (res, updatedOrders) = manager.synchronized {
+          (manager.cancelAllOrders(), orderPool.takeUpdatedOrdersAsMap)
+        }
+        _ <- processUpdatedOrders(updatedOrders)
+      } yield CancelOrder.Res(ERR_NONE)
+      f.sendTo(sender)
+
+    case req @ CancelOrder
+          .Req("", owner, _, Some(marketId), _) => //按照Owner-MarketId取消订单
+      val f = for {
+        _ <- Future { assert(req.owner == address) }
+        (res, updatedOrders) = manager.synchronized {
+          (
+            manager.cancelOrdersInMarket(MarketKey(marketId).toString),
+            orderPool.takeUpdatedOrdersAsMap
+          )
+        }
+        _ <- processUpdatedOrders(updatedOrders)
+      } yield CancelOrder.Res(ERR_NONE)
+      f.sendTo(sender)
+
+    case req @ CancelOrder.Req(id, owner, status, _, _) =>
       val originalSender = sender
       (for {
         _ <- Future.successful(assert(req.owner == address))
@@ -184,8 +207,6 @@ class AccountManagerActor(
         _ = if (res) {
           marketManagerActor.tell(req, originalSender)
         } else {
-          //在目前没有使用eventlog的情况下，哪怕manager中并没有该订单，则仍需要发送到MarketManager
-          marketManagerActor ! req
           throw ErrorException(
             ERR_FAILED_HANDLE_MSG,
             s"no order found with id: ${req.id}"
@@ -424,7 +445,7 @@ class AccountManagerActor(
             case STATUS_SOFT_CANCELLED_LOW_BALANCE |
                 STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
                 STATUS_COMPLETELY_FILLED | STATUS_PARTIALLY_FILLED =>
-              Future.successful(Unit)
+              Future.unit
 
             case status =>
               val msg =

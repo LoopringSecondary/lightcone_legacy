@@ -18,11 +18,14 @@ package org.loopring.lightcone.actors.support
 
 import org.loopring.lightcone.actors.core.{
   DatabaseQueryActor,
-  EventPersistenceActor
+  RingAndTradePersistenceActor
 }
 
-trait EventPersistenceSupport extends DatabaseModuleSupport {
+trait RingAndTradePersistenceSupport extends DatabaseModuleSupport {
   my: CommonSpec =>
 
-  actors.add(EventPersistenceActor.name, EventPersistenceActor.start)
+  actors.add(
+    RingAndTradePersistenceActor.name,
+    RingAndTradePersistenceActor.start
+  )
 }

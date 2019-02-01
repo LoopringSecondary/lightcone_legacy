@@ -94,10 +94,11 @@ message CancelOrder {
         string owner = 2;
         OrderStatus status = 3; //取消的类型
         MarketId market_id = 4;
+        string sig = 5;
     }
 
     message Res {
-        string id = 1;
+        ErrorCode error = 1;
         OrderStatus status = 2; //取消的类型
     }
 }

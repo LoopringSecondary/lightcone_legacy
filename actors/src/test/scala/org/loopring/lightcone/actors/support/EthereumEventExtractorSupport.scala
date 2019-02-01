@@ -32,7 +32,7 @@ trait EthereumEventExtractorSupport
     with MarketManagerSupport
     with OrderbookManagerSupport
     with DatabaseQueryMessageSupport
-    with EventPersistenceSupport
+    with RingAndTradePersistenceSupport
     with EthereumTransactionRecordSupport {
   my: CommonSpec =>
 
@@ -46,8 +46,6 @@ trait EthereumEventExtractorSupport
   implicit val orderFillEventExtractor = new OrderFillEventExtractor
   implicit val ohlcRawDataExtractor = new OHLCRawDataExtractor
   implicit val gasPricesExtractor = new BlockGasPriceExtractor
-  implicit val tradesExtractor = new TradeExtractor
-  implicit val ringExtractor = new RingExtractor
 
   implicit val dispatchers = Seq(
     new CutoffEventDispatcher(actors),
@@ -59,9 +57,7 @@ trait EthereumEventExtractorSupport
     new BalanceEventDispatcher(actors),
     new AllowanceEventDispatcher(actors),
     new OHLCRawDataEventDispatcher(actors),
-    new BlockGasPricesDispatcher(actors),
-    new TradeDispatcher(actors),
-    new RingDispatcher(actors)
+    new BlockGasPricesDispatcher(actors)
   )
 
   actors.add(
