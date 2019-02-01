@@ -60,7 +60,7 @@ message UpdateOrderStatus {
 
     message Res {
         ErrorCode error = 1;
-}
+    }
 }
 
 message GetOrderByHash {
