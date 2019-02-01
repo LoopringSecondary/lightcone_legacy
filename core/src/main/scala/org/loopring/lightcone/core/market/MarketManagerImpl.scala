@@ -23,6 +23,7 @@ import org.loopring.lightcone.core.base._
 import org.slf4s.Logging
 import scala.annotation.tailrec
 import scala.collection.mutable.{Map, SortedSet}
+import spire.math.Rational
 
 object MarketManagerImpl {
   private def defaultOrdering() = new Ordering[Matchable] {

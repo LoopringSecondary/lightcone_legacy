@@ -25,6 +25,9 @@ object Dependencies {
     "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
     "ch.qos.logback" % "logback-classic" % logbackVersion)
 
+  lazy val coreDependency = Seq(
+    "org.typelevel" %% "spire" % "0.16.0")
+
   lazy val guiceDependency = Seq(
     "com.google.inject.extensions" % "guice-assistedinject" % "4.2.2",
     "net.codingwell" %% "scala-guice" % "4.2.2")
@@ -75,6 +78,7 @@ object Dependencies {
     testDependency
 
   lazy val dependency4Core = commonDependency ++
+    coreDependency ++
     ethereumDependency ++
     guiceDependency ++
     testDependency
