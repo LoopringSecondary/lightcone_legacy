@@ -112,10 +112,6 @@ enum ErrorCode{
     ERR_NO_ACCESSIBLE_ETHEREUM_NODE     = 5002;
     ERR_UNEXPECTED_RESPONSE             = 5003;
     // 5005 and beyound for other
-
-    //6001- 7000 rpc error
-    ERR_UNSUPPORTED_TOKEN = 6001;
-    ERR_UNSUPPORTED_MARKET = 6002;
 }
 
 message Error{

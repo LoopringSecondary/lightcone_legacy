@@ -22,7 +22,6 @@ import com.typesafe.config.Config
 import akka.http.scaladsl.server.HttpApp
 import akka.actor._
 import akka.util.Timeout
-
 import scala.io.StdIn
 import scala.concurrent.ExecutionContext
 

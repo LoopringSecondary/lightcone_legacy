@@ -141,27 +141,4 @@ object Dispatchers {
         names = Seq(GasPriceActor.name),
         actors
       )
-
-  class RingDispatcher @Inject()(
-      actors: Lookup[ActorRef]
-    )(
-      implicit
-      extractor: EventExtractor[PersistRings.Req],
-      ec: ExecutionContext)
-      extends NameBasedEventDispatcher[PersistRings.Req](
-        names = Seq(EventPersistenceActor.name),
-        actors
-      )
-
-  class TradeDispatcher @Inject()(
-      actors: Lookup[ActorRef]
-    )(
-      implicit
-      extractor: EventExtractor[PersistTrades.Req],
-      ec: ExecutionContext)
-      extends NameBasedEventDispatcher[PersistTrades.Req](
-        names = Seq(EventPersistenceActor.name),
-        actors
-      )
-
 }
