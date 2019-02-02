@@ -88,13 +88,13 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       info("then test the orderbook of LRC-WETH")
       val orderbookLrcF = singleRequest(
         GetOrderbook
-          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+          .Req(0, 100, Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))),
         "get_orderbook"
       )
 
       val orderbookRes = expectOrderbookRes(
         GetOrderbook
-          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+          .Req(0, 100, Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) => orderbook.sells.nonEmpty
       )
       orderbookRes match {
@@ -119,7 +119,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
       info("then test the orderbook of GTO-WETH")
       val orderbookGtoF = singleRequest(
         GetOrderbook
-          .Req(0, 100, Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))),
+          .Req(0, 100, Some(MarketPair(GTO_TOKEN.address, WETH_TOKEN.address))),
         "get_orderbook"
       )
 
@@ -142,7 +142,7 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
         rawOrders(0).hash,
         rawOrders(0).owner,
         OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
-        Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB)),
+        Some(MarketPair(rawOrders(0).tokenS, rawOrders(0).tokenB)),
         rawOrders(0).getParams.sig
       )
 
@@ -173,13 +173,13 @@ class EntryPointSpec_SubmitOrdersOfDifferentMarket
 
       val orderbookF1 = singleRequest(
         GetOrderbook
-          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+          .Req(0, 100, Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))),
         "get_orderbook"
       )
 
       val orderbookRes1 = expectOrderbookRes(
         GetOrderbook
-          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+          .Req(0, 100, Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) =>
           orderbook.sells.nonEmpty && orderbook.sells(0).total == "2.00000"
       )

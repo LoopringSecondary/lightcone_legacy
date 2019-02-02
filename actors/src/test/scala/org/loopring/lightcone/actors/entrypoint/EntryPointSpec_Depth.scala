@@ -87,7 +87,7 @@ class EntryPointSpec_Depth
       val getOrderBook1 = GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       )
 
       val orderbookRes1 = expectOrderbookRes(
@@ -124,7 +124,7 @@ class EntryPointSpec_Depth
       val getOrderBook2 = GetOrderbook.Req(
         1,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val orderbookRes2 = expectOrderbookRes(
         getOrderBook2,

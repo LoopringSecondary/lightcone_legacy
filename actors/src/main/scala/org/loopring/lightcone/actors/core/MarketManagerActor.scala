@@ -74,29 +74,29 @@ object MarketManagerActor extends ShardedByMarket {
     )
   }
 
-  // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
+  // 如果message不包含一个有效的marketPair，就不做处理，不要返回“默认值”
   //READONLY的不能在该处拦截，需要在validtor中截取，因为该处还需要将orderbook等恢复
-  val extractMarketId: PartialFunction[Any, MarketId] = {
+  val extractMarketPair: PartialFunction[Any, MarketPair] = {
     case SubmitSimpleOrder(_, Some(order))
         if metadataManager.isMarketActiveOrReadOnly(
-          MarketId(order.tokenS, order.tokenB)
+          MarketPair(order.tokenS, order.tokenB)
         ) =>
-      MarketId(order.tokenS, order.tokenB)
+      MarketPair(order.tokenS, order.tokenB)
 
     case req: CancelOrder.Req
-        if req.marketId.nonEmpty && metadataManager.isMarketActiveOrReadOnly(
-          req.getMarketId
+        if req.marketPair.nonEmpty && metadataManager.isMarketActiveOrReadOnly(
+          req.getMarketPair
         ) =>
-      req.getMarketId
+      req.getMarketPair
 
     case req: RingMinedEvent if req.fills.size >= 2 =>
-      MarketId(req.fills(0).tokenS, req.fills(1).tokenS)
+      MarketPair(req.fills(0).tokenS, req.fills(1).tokenS)
 
-    case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
-      val tokens = marketIdStr.split("-")
-      MarketId(tokens(0), tokens(1))
+    case Notify(KeepAliveActor.NOTIFY_MSG, marketPairStr) =>
+      val tokens = marketPairStr.split("-")
+      MarketPair(tokens(0), tokens(1))
 
-    case GetOrderbookSlots.Req(Some(marketId), _) => marketId
+    case GetOrderbookSlots.Req(Some(marketPair), _) => marketPair
   }
 
 }
@@ -122,11 +122,14 @@ class MarketManagerActor(
     with ActorLogging {
   import OrderStatus._
 
-  implicit val marketId: MarketId = metadataManager.getValidMarketIds.values
-    .find(m => getEntityId(m) == entityId)
-    .get
+  implicit val marketPair: MarketPair =
+    metadataManager.getValidMarketPairs.values
+      .find(m => getEntityId(m) == entityId)
+      .get
 
-  log.info(s"=======> starting MarketManagerActor ${self.path} for ${marketId}")
+  log.info(
+    s"=======> starting MarketManagerActor ${self.path} for ${marketPair}"
+  )
 
   var autoSwitchBackToReady: Option[Cancellable] = None
 
@@ -149,7 +152,7 @@ class MarketManagerActor(
   val ringMatcher = new RingMatcherImpl()
   val pendingRingPool = new PendingRingPoolImpl()
 
-  def marketMetadata = metadataManager.getMarketMetadata(marketId)
+  def marketMetadata = metadataManager.getMarketMetadata(marketPair)
 
   implicit val aggregator = new OrderAwareOrderbookAggregatorImpl(
     marketMetadata.priceDecimals,
@@ -158,7 +161,7 @@ class MarketManagerActor(
   )
 
   val manager = new MarketManagerImpl(
-    marketId,
+    marketPair,
     metadataManager,
     ringMatcher,
     pendingRingPool,
@@ -186,7 +189,7 @@ class MarketManagerActor(
         for {
           _ <- actors.get(OrderRecoverCoordinator.name) ?
             ActorRecover.Request(
-              marketId = Some(marketId),
+              marketPair = Some(marketPair),
               sender = Serialization.serializedActorPath(self)
             )
         } yield {
@@ -234,7 +237,9 @@ class MarketManagerActor(
 
     case req: CancelOrder.Req =>
       manager.cancelOrder(req.id) foreach { orderbookUpdate =>
-        orderbookManagerActor ! orderbookUpdate.copy(marketId = Some(marketId))
+        orderbookManagerActor ! orderbookUpdate.copy(
+          marketPair = Some(marketPair)
+        )
       }
       sender ! CancelOrder.Res(error = ERR_NONE, status = req.status)
 
@@ -268,7 +273,7 @@ class MarketManagerActor(
 
     case req: MetadataChanged =>
       val metadataOpt = try {
-        Option(metadataManager.getMarketMetadata(marketId))
+        Option(metadataManager.getMarketMetadata(marketPair))
       } catch {
         case _: Throwable => None
       }
@@ -340,7 +345,7 @@ class MarketManagerActor(
     val ou = matchResult.orderbookUpdate
 
     if (ou.sells.nonEmpty || ou.buys.nonEmpty) {
-      orderbookManagerActor ! ou.copy(marketId = Some(marketId))
+      orderbookManagerActor ! ou.copy(marketPair = Some(marketPair))
     }
   }
 

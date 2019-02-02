@@ -205,24 +205,22 @@ class EthereumQueryActor(
           GetCutoff.Res(
             req.broker,
             req.owner,
-            req.marketKey,
+            req.marketHash,
             BigInt(Numeric.toBigInt(formatHex(result)))
           )
       }
     case req: BatchGetCutoffs.Req =>
       batchCallEthereum(sender, brb.buildRequest(req, tradeHistoryAddress)) {
         result =>
-          BatchGetCutoffs.Res(
-            (req.reqs zip result).map {
-              case (cutoffReq, res) =>
-                GetCutoff.Res(
-                  cutoffReq.broker,
-                  cutoffReq.owner,
-                  cutoffReq.marketKey,
-                  BigInt(Numeric.toBigInt(res))
-                )
-            }
-          )
+          BatchGetCutoffs.Res((req.reqs zip result).map {
+            case (cutoffReq, res) =>
+              GetCutoff.Res(
+                cutoffReq.broker,
+                cutoffReq.owner,
+                cutoffReq.marketHash,
+                BigInt(Numeric.toBigInt(res))
+              )
+          })
       }
 
     case req: GetBurnRate.Req =>

@@ -47,7 +47,7 @@ class RecoverOrderSpec
       val getOrderBook1 = GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val orderbookF1 = singleRequest(getOrderBook1, "get_orderbook")
       val timeout1 = Timeout(5 second)
@@ -68,11 +68,12 @@ class RecoverOrderSpec
       assert(r2.length == orderHashes.length)
 
       info("recover")
-      val marketLrcWeth = Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+      val marketLrcWeth =
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       val request1 = ActorRecover.Request(
         addressShardingEntity = MultiAccountManagerActor
           .getEntityId(owner, 100),
-        marketId = marketLrcWeth
+        marketPair = marketLrcWeth
       )
       implicit val timeout = Timeout(100 second)
       val r = actors.get(OrderRecoverCoordinator.name) ? request1

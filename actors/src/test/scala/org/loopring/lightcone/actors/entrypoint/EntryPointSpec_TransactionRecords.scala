@@ -121,7 +121,7 @@ class EntryPointSpec_TransactionRecords
       actor ! CutoffEvent(
         header = Some(header4),
         owner = txTo,
-        marketKey = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
+        marketHash = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
         cutoff = timeProvider.getTimeSeconds()
       )
 

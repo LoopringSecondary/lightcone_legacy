@@ -35,7 +35,7 @@ class EntryPointSpec
       val getOrderBook = GetOrderbook.Req(
         0,
         2,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val f = singleRequest(getOrderBook, "get_orderbook")
 

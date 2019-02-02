@@ -116,10 +116,11 @@ class OHLCRawDataExtractorSpec
         timeout.duration
       )
       Thread.sleep(2000)
-      val marketKey = MarketKey(LRC_TOKEN.address, WETH_TOKEN.address).toString
+      val marketHash =
+        MarketHash(LRC_TOKEN.address, WETH_TOKEN.address).toString
       //      val ohlcDatas = Await.result(
       //        dbModule.ohlcDataDal.getOHLCData(
-      //          marketKey,
+      //          marketHash,
       //          60,
       //          timeProvider.getTimeSeconds() - 600,
       //          timeProvider.getTimeSeconds()
@@ -129,7 +130,7 @@ class OHLCRawDataExtractorSpec
 
       val oHLCDatas = Await.result(
         (oHLCDataHandlerActor ? GetOHLCData.Req(
-          marketKey,
+          marketHash,
           GetOHLCData.Interval.OHLC_INTERVAL_ONE_MINUTES,
           timeProvider.getTimeSeconds() - 600,
           timeProvider.getTimeSeconds()

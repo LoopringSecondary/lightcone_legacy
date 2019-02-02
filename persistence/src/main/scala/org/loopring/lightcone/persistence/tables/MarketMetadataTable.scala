@@ -25,7 +25,7 @@ class MarketMetadataTable(tag: Tag)
 
   implicit val statusColumnType = enumColumnType(MarketMetadata.Status)
 
-  def id = marketKey
+  def id = marketHash
 
   def status = column[MarketMetadata.Status]("status")
 
@@ -43,11 +43,11 @@ class MarketMetadataTable(tag: Tag)
   def browsableInWallet = column[Boolean]("browsable_in_wallet")
   def updateAt = column[Long]("update_at")
 
-  // MarketId
+  // MarketPair
   def baseToken = columnAddress("base_token")
   def quoteToken = columnAddress("quote_token")
 
-  def marketKey = columnAddress("market_key", O.PrimaryKey, O.Unique)
+  def marketHash = columnAddress("market_hash", O.PrimaryKey, O.Unique)
 
   def idx_tokens_symbol =
     index(
@@ -58,12 +58,12 @@ class MarketMetadataTable(tag: Tag)
   def idx_tokens = index("idx_tokens", (baseToken, quoteToken), unique = true)
   def idx_status = index("idx_status", (status), unique = false)
 
-  def marketIdProjection =
+  def marketPairProjection =
     (baseToken, quoteToken) <> ({ tuple =>
-      Option((MarketId.apply _).tupled(tuple))
-    }, { paramsOpt: Option[MarketId] =>
-      val params = paramsOpt.getOrElse(MarketId())
-      MarketId.unapply(params)
+      Option((MarketPair.apply _).tupled(tuple))
+    }, { paramsOpt: Option[MarketPair] =>
+      val params = paramsOpt.getOrElse(MarketPair())
+      MarketPair.unapply(params)
     })
 
   def * =
@@ -78,7 +78,7 @@ class MarketMetadataTable(tag: Tag)
       precisionForTotal,
       browsableInWallet,
       updateAt,
-      marketIdProjection,
-      marketKey
+      marketPairProjection,
+      marketHash
     ) <> ((MarketMetadata.apply _).tupled, MarketMetadata.unapply)
 }

@@ -218,7 +218,7 @@ message TransactionRecord {
     EventHeader header       = 1;
     string      owner        = 2;
     RecordType  record_type  = 3;
-    string      market_key = 4;
+    string      market_hash = 4;
     string      market       = 5; // LRC-WETH
     int64       sequence_id  = 6;
     EventData   event_data   = 7;
@@ -289,7 +289,7 @@ message GetOHLCData {
     }
 
     message Req {
-        string    market_key     = 1;
+        string    market_hash     = 1;
         Interval  interval       = 2;
         int64     beginTime      = 3;
         int64     endTime        = 4;
@@ -355,7 +355,7 @@ message SaveMarketMetadatas {
     }
 
     message Res {
-        repeated string market_key = 1;
+        repeated string market_hash = 1;
     }
 }
 
@@ -371,7 +371,7 @@ message UpdateMarketMetadata {
 
 message TerminateMarket {
     message Req {
-        string   market_key  = 1;
+        string   market_hash  = 1;
     }
 
     message Res {

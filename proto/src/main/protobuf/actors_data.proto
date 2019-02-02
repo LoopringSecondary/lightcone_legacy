@@ -97,7 +97,7 @@ message RawOrder {
     ERC1400Params erc1400_params      = 12;
     State state                       = 13;
     int64  sequence_id                = 14;
-    string market_key                 = 15;
+    string market_hash                 = 15;
     int32  account_shard              = 16;
     int32  market_shard               = 17;
 }
@@ -203,8 +203,8 @@ message MarketMetadata {
     bool            browsable_in_wallet     = 9;
     int64           updated_at              = 10;
 
-    MarketId        market_id               = 20; // computed
-    string          market_key              = 21; // computed
+    MarketPair        market_pair               = 20; // computed
+    string          market_hash              = 21; // computed
 }
 
 message MarketStats {
@@ -278,7 +278,7 @@ message Trade {
     bytes  amount_b          = 8;
     string token_s           = 9;
     string token_b           = 10;
-    string market_key        = 11;
+    string market_hash        = 11;
     bytes  split             = 12; // tokenS
     Fee    fee               = 13;
     string wallet            = 14;
@@ -322,7 +322,7 @@ message MissingBlocksRecord {
 message OHLCRawData {
     int64      ring_index     = 1;
     string     tx_hash        = 2;
-    string     market_key     = 3;
+    string     market_hash     = 3;
     int64      time           = 4;
     double     base_amount    = 6;
     double     quote_amount   = 7;

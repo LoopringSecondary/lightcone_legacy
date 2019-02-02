@@ -86,10 +86,10 @@ class AccountManagerActor(
   def initialReceive: Receive = {
     case Notify("initialize", _) =>
       val batchCutoffReq =
-        BatchGetCutoffs.Req((metadataManager.getValidMarketIds map {
-          case (marketKey, marketId) =>
+        BatchGetCutoffs.Req((metadataManager.getValidMarketPairs map {
+          case (marketHash, marketPair) =>
             GetCutoff
-              .Req(broker = address, owner = address, marketKey = marketKey)
+              .Req(broker = address, owner = address, marketHash = marketHash)
         }).toSeq :+ GetCutoff.Req(broker = address, owner = address))
 
       val syncCutoff = for {
@@ -97,11 +97,11 @@ class AccountManagerActor(
       } yield {
         res.resps foreach { cutoffRes =>
           val cutoff: BigInt = cutoffRes.cutoff
-          if (cutoffRes.marketKey.isEmpty) {
+          if (cutoffRes.marketHash.isEmpty) {
             accountCutoffState.setCutoff(cutoff.toLong)
           } else {
             accountCutoffState.setTradingPairCutoff(
-              cutoffRes.marketKey,
+              cutoffRes.marketHash,
               cutoff.toLong
             )
           }
@@ -178,12 +178,12 @@ class AccountManagerActor(
       f.sendTo(sender)
 
     case req @ CancelOrder
-          .Req("", owner, _, Some(marketId), _) => //按照Owner-MarketId取消订单
+          .Req("", owner, _, Some(marketPair), _) => //按照Owner-MarketPair取消订单
       val f = for {
         _ <- Future { assert(req.owner == address) }
         (res, updatedOrders) = manager.synchronized {
           (
-            manager.cancelOrdersInMarket(MarketKey(marketId).toString),
+            manager.cancelOrdersInMarket(MarketHash(marketPair).toString),
             orderPool.takeUpdatedOrdersAsMap
           )
         }
@@ -250,14 +250,14 @@ class AccountManagerActor(
       processUpdatedOrders(updatedOrders)
 
     //ownerTokenPairCutoff  tokenPair ！= ""
-    case req @ CutoffEvent(Some(header), broker, owner, marketKey, cutoff)
+    case req @ CutoffEvent(Some(header), broker, owner, marketHash, cutoff)
         if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
       log.debug(s"received OwnerTokenPairCutoffEvent $req")
       accountCutoffState
-        .setTradingPairCutoff(marketKey, req.cutoff)
+        .setTradingPairCutoff(marketHash, req.cutoff)
 
       val updatedOrders = manager.synchronized {
-        manager.handleCutoff(cutoff, marketKey)
+        manager.handleCutoff(cutoff, marketHash)
         orderPool.takeUpdatedOrdersAsMap
       }
       processUpdatedOrders(updatedOrders)
@@ -365,7 +365,7 @@ class AccountManagerActor(
                         matchRes.taker.id,
                         address,
                         matchRes.taker.status,
-                        Some(MarketId(order.tokenS, order.tokenB))
+                        Some(MarketPair(order.tokenS, order.tokenB))
                       )
                     case _ =>
                   }
@@ -386,10 +386,10 @@ class AccountManagerActor(
                 log.debug(
                   s"cancelling order id=${order.id} status=${order.status}"
                 )
-                val marketId = MarketId(order.tokenS, order.tokenB)
+                val marketPair = MarketPair(order.tokenS, order.tokenB)
                 marketManagerActor ? CancelOrder.Req(
                   id = order.id,
-                  marketId = Some(marketId)
+                  marketPair = Some(marketPair)
                 )
 
               case status =>

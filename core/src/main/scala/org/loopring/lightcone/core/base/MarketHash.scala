@@ -16,15 +16,15 @@
 
 package org.loopring.lightcone.core.base
 
-import org.loopring.lightcone.proto.MarketId
+import org.loopring.lightcone.proto.MarketPair
 
-object MarketKey {
-  def apply(marketId: MarketId): MarketKey = new MarketKey(marketId)
+object MarketHash {
+  def apply(marketPair: MarketPair): MarketHash = new MarketHash(marketPair)
 
   def apply(
       baseToken: String,
       quoteToken: String
-    ): MarketKey = apply(MarketId(baseToken, quoteToken))
+    ): MarketHash = apply(MarketPair(baseToken, quoteToken))
 
   def removePrefix(address: String): String = {
     if (address.startsWith("0x")) address.substring(2).trim
@@ -32,11 +32,11 @@ object MarketKey {
   }
 }
 
-class MarketKey(marketId: MarketId) {
-  import MarketKey._
+class MarketHash(marketPair: MarketPair) {
+  import MarketHash._
 
-  val value = BigInt(removePrefix(marketId.quoteToken), 16) ^
-    BigInt(removePrefix(marketId.baseToken), 16)
+  val value = BigInt(removePrefix(marketPair.quoteToken), 16) ^
+    BigInt(removePrefix(marketPair.baseToken), 16)
 
   override def toString = s"0x${value.toString(16).toLowerCase}"
 }

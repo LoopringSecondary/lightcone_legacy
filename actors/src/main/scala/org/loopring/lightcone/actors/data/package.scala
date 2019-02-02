@@ -166,13 +166,14 @@ package object data {
       amountMargin = fill.amountMargin
     )
 
-  implicit class RichMarketId(marketId: MarketId) {
-    def key() = MarketKey(marketId).toString
+  implicit class RichMarketPair(marketPair: MarketPair) {
+    def key() = MarketHash(marketPair).toString
 
-    def toLowerCase() = MarketId(
-      baseToken = Address.normalize(marketId.baseToken),
-      quoteToken = Address.normalize(marketId.quoteToken)
-    )
+    def toLowerCase() =
+      MarketPair(
+        baseToken = Address.normalize(marketPair.baseToken),
+        quoteToken = Address.normalize(marketPair.quoteToken)
+      )
   }
 
   implicit class RichRawOrder(order: RawOrder) {

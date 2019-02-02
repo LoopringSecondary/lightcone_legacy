@@ -17,7 +17,7 @@
 package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
-import org.loopring.lightcone.core.base.MarketKey
+import org.loopring.lightcone.core.base.MarketHash
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
@@ -30,15 +30,15 @@ class AccountCutoffStateImpl()(implicit timeProvider: TimeProvider)
   private var ownerCutoff: Long = -1L
 
   def setTradingPairCutoff(
-      marketKey: String,
+      marketHash: String,
       cutoff: Long
     ) = {
     if (!(cutoff <= timeProvider.getTimeSeconds())) {
-      marketPairCutoffs.get(marketKey) match {
-        case None => marketPairCutoffs.put(marketKey, cutoff)
+      marketPairCutoffs.get(marketHash) match {
+        case None => marketPairCutoffs.put(marketHash, cutoff)
         case Some(c) =>
           if (c < cutoff)
-            marketPairCutoffs.put(marketKey, cutoff)
+            marketPairCutoffs.put(marketHash, cutoff)
       }
     }
   }
@@ -55,10 +55,10 @@ class AccountCutoffStateImpl()(implicit timeProvider: TimeProvider)
         s"this address has been set cutoff=$ownerCutoff."
       )
     }
-    val marketKey = MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
+    val marketHash = MarketHash(rawOrder.tokenS, rawOrder.tokenB).toString
 
-    if (marketPairCutoffs.contains(marketKey) &&
-        marketPairCutoffs(marketKey) > rawOrder.validSince) {
+    if (marketPairCutoffs.contains(marketHash) &&
+        marketPairCutoffs(marketHash) > rawOrder.validSince) {
       throw ErrorException(
         ERR_ORDER_VALIDATION_INVALID_CUTOFF,
         s"the market ${rawOrder.tokenS}-${rawOrder.tokenB} " +

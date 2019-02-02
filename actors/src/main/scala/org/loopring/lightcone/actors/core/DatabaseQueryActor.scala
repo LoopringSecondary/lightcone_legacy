@@ -24,7 +24,7 @@ import com.typesafe.config.Config
 import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.core.base.MarketKey
+import org.loopring.lightcone.core.base.MarketHash
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.GetOrdersForUser._
@@ -74,7 +74,7 @@ class DatabaseQueryActor(
 
   def ready: Receive = LoggingReceive {
     case req: GetOrdersForUser.Req =>
-      val (tokensOpt, tokenbOpt, marketKeyOpt) =
+      val (tokensOpt, tokenbOpt, marketHashOpt) =
         getMarketQueryParameters(req.market)
       (for {
         result <- dbModule.orderService.getOrdersForUser(
@@ -82,7 +82,7 @@ class DatabaseQueryActor(
           Some(req.owner),
           tokensOpt,
           tokenbOpt,
-          marketKeyOpt,
+          marketHashOpt,
           None,
           Some(req.sort),
           req.skip
@@ -92,7 +92,7 @@ class DatabaseQueryActor(
           Some(req.owner),
           tokensOpt,
           tokenbOpt,
-          marketKeyOpt,
+          marketHashOpt,
           None
         )
       } yield {
@@ -103,7 +103,7 @@ class DatabaseQueryActor(
           }
           r.copy(
             params = params,
-            marketKey = "",
+            marketHash = "",
             accountShard = 0,
             marketShard = 0
           )
@@ -128,7 +128,7 @@ class DatabaseQueryActor(
     marketOpt match {
       case Some(m)
           if m.tokenS.nonEmpty && m.tokenB.nonEmpty && m.isQueryBothSide =>
-        (None, None, Some(MarketKey(m.tokenS, m.tokenB).toString))
+        (None, None, Some(MarketHash(m.tokenS, m.tokenB).toString))
       case Some(m) if m.tokenS.nonEmpty && m.tokenB.nonEmpty =>
         (Some(m.tokenS), Some(m.tokenB), None)
       case Some(m) if m.tokenS.nonEmpty => (Some(m.tokenS), None, None)

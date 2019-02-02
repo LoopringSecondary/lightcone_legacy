@@ -142,14 +142,14 @@ class OrderStatusMonitorActor(
         _ <- Future.sequence(orders.map { o =>
           //只有是有效的市场订单才会发送该取消订单的数据，否则只会更改数据库状态
           if (!metadataManager
-                .isMarketActiveOrReadOnly(MarketId(o.tokenS, o.tokenB))) {
+                .isMarketActiveOrReadOnly(MarketPair(o.tokenS, o.tokenB))) {
             Future.unit
           } else {
             val cancelReq = CancelOrder.Req(
               o.hash,
               o.owner,
               STATUS_EXPIRED,
-              Some(MarketId(o.tokenS, o.tokenB))
+              Some(MarketPair(o.tokenS, o.tokenB))
             )
 
             (mama ? cancelReq).recover {

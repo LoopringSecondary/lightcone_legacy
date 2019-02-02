@@ -107,22 +107,22 @@ class KeepAliveActor @Inject()(
   // TODO: market的配置读取，可以等待永丰处理完毕再优化
   private def initOrderbookManager(): Future[Unit] =
     for {
-      _ <- Future.sequence(metadataManager.getValidMarketIds map {
-        case (_, marketId) =>
+      _ <- Future.sequence(metadataManager.getValidMarketPairs map {
+        case (_, marketPair) =>
           orderbookManagerActor ? Notify(
             KeepAliveActor.NOTIFY_MSG,
-            marketId.baseToken + "-" + marketId.quoteToken
+            marketPair.baseToken + "-" + marketPair.quoteToken
           )
       })
     } yield Unit
 
   private def initMarketManager(): Future[Unit] =
     for {
-      _ <- Future.sequence(metadataManager.getValidMarketIds map {
-        case (_, marketId) =>
+      _ <- Future.sequence(metadataManager.getValidMarketPairs map {
+        case (_, marketPair) =>
           marketManagerActor ? Notify(
             KeepAliveActor.NOTIFY_MSG,
-            marketId.baseToken + "-" + marketId.quoteToken
+            marketPair.baseToken + "-" + marketPair.quoteToken
           )
       })
     } yield Unit

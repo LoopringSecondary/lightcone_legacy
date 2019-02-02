@@ -34,16 +34,11 @@ class OHLCDataServiceImpl @Inject()(
   def getOHLCData(request: GetOHLCData.Req): Future[GetOHLCData.Res] = {
     ohlcDataDal
       .getOHLCData(
-        request.marketKey,
+        request.marketHash,
         request.interval.value,
         request.beginTime,
         request.endTime
       )
-      .map(
-        r =>
-          GetOHLCData.Res(
-            ohlcData = r.map(t => OHLCData(data = t))
-          )
-      )
+      .map(r => GetOHLCData.Res(ohlcData = r.map(t => OHLCData(data = t))))
   }
 }

@@ -42,7 +42,7 @@ object MarketManagerImpl {
 }
 
 class MarketManagerImpl(
-    val marketId: MarketId,
+    val marketPair: MarketPair,
     val metadataManager: MetadataManager,
     val ringMatcher: RingMatcher,
     val pendingRingPool: PendingRingPool,
@@ -57,7 +57,7 @@ class MarketManagerImpl(
   import ErrorCode._
   import OrderStatus._
 
-  private implicit val marketId_ = marketId
+  private implicit val marketPair_ = marketPair
   private implicit val mm_ = metadataManager
   private implicit val ordering = defaultOrdering()
 
@@ -65,12 +65,12 @@ class MarketManagerImpl(
   private var latestPrice: Double = 0
   private var minRequiredIncome: Double = 0
 
-  private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketId.quoteToken
-  private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketId.baseToken
+  private[core] val buys = SortedSet.empty[Matchable] // order.tokenS == marketPair.quoteToken
+  private[core] val sells = SortedSet.empty[Matchable] // order.tokenS == marketPair.baseToken
 
   private[core] val orderMap = Map.empty[String, Matchable]
   private[core] val sides =
-    Map(marketId.baseToken -> sells, marketId.quoteToken -> buys)
+    Map(marketPair.baseToken -> sells, marketPair.quoteToken -> buys)
 
   def getNumOfOrders = orderMap.size
   def getNumOfSellOrders = sells.size
@@ -187,7 +187,7 @@ class MarketManagerImpl(
             recursivelyMatchOrders()
 
           case Some((maker, Right(ring))) =>
-            isLastTakerSell = (taker.tokenS == marketId.baseToken)
+            isLastTakerSell = (taker.tokenS == marketPair.baseToken)
             rings :+= ring
             latestPrice = (taker.price + maker.price) / 2
 

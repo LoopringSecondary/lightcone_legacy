@@ -32,7 +32,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
     def getTimeMillis = -1
   }
 
-  var marketId = MarketId(GTO, WETH)
+  var marketPair = MarketPair(GTO, WETH)
 
   var fackRingMatcher: RingMatcher = _
   var fakeDustOrderEvaluator: DustOrderEvaluator = _
@@ -48,7 +48,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
     fakeAggregator = stub[OrderAwareOrderbookAggregator]
 
     marketManager = new MarketManagerImpl(
-      marketId,
+      marketPair,
       tm,
       fackRingMatcher,
       fakePendingRingPool,

@@ -31,7 +31,7 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
     def getTimeMillis = -1
   }
 
-  implicit val marketId = MarketId(GTO, WETH)
+  implicit val marketPair = MarketPair(GTO, WETH)
 
   implicit var fakeDustOrderEvaluator: DustOrderEvaluator = _
   implicit var fackRingIncomeEvaluator: RingIncomeEvaluator = _
@@ -44,7 +44,7 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
     fakeDustOrderEvaluator = stub[DustOrderEvaluator]
 
     marketManager = new MarketManagerImpl(
-      marketId,
+      marketPair,
       tm,
       new RingMatcherImpl,
       new PendingRingPoolImpl,

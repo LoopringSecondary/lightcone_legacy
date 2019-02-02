@@ -48,7 +48,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       actors.get(OrderbookManagerActor.name) ! GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       )
 
       expectMsgPF() {
@@ -64,7 +64,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
         owner = rawOrder.owner,
         status = STATUS_SOFT_CANCELLED_BY_USER,
         sig = rawOrder.getParams.sig,
-        marketId = Some(MarketId(rawOrder.tokenS, rawOrder.tokenB))
+        marketPair = Some(MarketPair(rawOrder.tokenS, rawOrder.tokenB))
       )
 
       val cancelResF = actors.get(MultiAccountManagerMessageValidator.name) ? cancelReq
@@ -85,7 +85,7 @@ class CoreActorsIntegrationSpec_CancelOneOrder
       actors.get(OrderbookManagerActor.name) ! GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       )
 
       expectMsgPF() {

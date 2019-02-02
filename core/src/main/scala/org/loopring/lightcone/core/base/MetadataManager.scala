@@ -35,26 +35,26 @@ object MetadataManager {
     )
 
   def normalizeMarket(market: MarketMetadata): MarketMetadata = {
-    val marketId = market.marketId.getOrElse(
-      throw ErrorException(ERR_INVALID_ARGUMENT, "marketId is empty")
+    val marketPair = market.marketPair.getOrElse(
+      throw ErrorException(ERR_INVALID_ARGUMENT, "marketPair is empty")
     )
 
-    if (MarketKey(marketId).toString != market.marketKey.toLowerCase())
+    if (MarketHash(marketPair).toString != market.marketHash.toLowerCase())
       throw ErrorException(
         ERR_INVALID_ARGUMENT,
-        s"marketId:$marketId mismatch marketKey:${market.marketKey}"
+        s"marketPair:$marketPair mismatch marketHash:${market.marketHash}"
       )
 
     market.copy(
       baseTokenSymbol = market.baseTokenSymbol.toUpperCase(),
       quoteTokenSymbol = market.quoteTokenSymbol.toUpperCase(),
-      marketId = Some(
-        MarketId(
-          marketId.baseToken.toLowerCase(),
-          marketId.quoteToken.toLowerCase()
+      marketPair = Some(
+        MarketPair(
+          marketPair.baseToken.toLowerCase(),
+          marketPair.quoteToken.toLowerCase()
         )
       ),
-      marketKey = market.marketKey.toLowerCase()
+      marketHash = market.marketHash.toLowerCase()
     )
   }
 }
@@ -84,10 +84,10 @@ final class MetadataManager @Inject()(implicit val config: Config)
   private var addressMap = Map.empty[String, Token]
   private var symbolMap = Map.empty[String, Token]
 
-  // markets[marketKey, marketId]
-  private var terminatedMarkets: Map[String, MarketId] = Map.empty
-  private var activeMarkets: Map[String, MarketId] = Map.empty
-  private var readOnlyMarkets: Map[String, MarketId] = Map.empty
+  // markets[marketHash, marketPair]
+  private var terminatedMarkets: Map[String, MarketPair] = Map.empty
+  private var activeMarkets: Map[String, MarketPair] = Map.empty
+  private var readOnlyMarkets: Map[String, MarketPair] = Map.empty
 
   private var marketMetadatasMap = Map.empty[String, MarketMetadata]
 
@@ -142,8 +142,8 @@ final class MetadataManager @Inject()(implicit val config: Config)
 
   private def addMarket(meta: MarketMetadata) = this.synchronized {
     val m = MetadataManager.normalizeMarket(meta)
-    marketMetadatasMap += m.marketKey -> m
-    val itemMap = m.marketKey -> m.marketId.get
+    marketMetadatasMap += m.marketHash -> m
+    val itemMap = m.marketHash -> m.marketPair.get
 
     m.status match {
       case MarketMetadata.Status.TERMINATED =>
@@ -172,57 +172,57 @@ final class MetadataManager @Inject()(implicit val config: Config)
     marketMetadatasMap.values.filter(m => status.contains(m.status)).toSeq
   }
 
-  def getMarketMetadata(marketKey: String): MarketMetadata =
+  def getMarketMetadata(marketHash: String): MarketMetadata =
     marketMetadatasMap
       .getOrElse(
-        marketKey.toLowerCase,
+        marketHash.toLowerCase,
         throw ErrorException(
           ERR_INTERNAL_UNKNOWN,
-          s"no metadata for market($marketKey)"
+          s"no metadata for market($marketHash)"
         )
       )
 
-  def getMarketMetadata(marketId: MarketId): MarketMetadata =
-    getMarketMetadata(MarketKey(marketId).toString)
+  def getMarketMetadata(marketPair: MarketPair): MarketMetadata =
+    getMarketMetadata(MarketHash(marketPair).toString)
 
-  def assertMarketIdIsActiveOrReadOnly(
-      marketIdOpt: Option[MarketId]
+  def assertMarketPairIsActiveOrReadOnly(
+      marketPairOpt: Option[MarketPair]
     ): Boolean = {
-    marketIdOpt match {
+    marketPairOpt match {
       case None =>
         throw ErrorException(ERR_INVALID_MARKET)
-      case Some(marketId) =>
-        if (!isMarketActiveOrReadOnly(MarketKey(marketId).toString))
+      case Some(marketPair) =>
+        if (!isMarketActiveOrReadOnly(MarketHash(marketPair).toString))
           throw ErrorException(
             ErrorCode.ERR_INVALID_MARKET,
-            s"invalid market: $marketIdOpt"
+            s"invalid market: $marketPairOpt"
           )
         true
     }
   }
 
-  def assertMarketIdIsActiveOrReadOnly(marketId: MarketId): Boolean = {
-    if (!isMarketActiveOrReadOnly(marketId))
-      throw ErrorException(ERR_INVALID_MARKET, s"invalid market: $marketId")
+  def assertMarketPairIsActiveOrReadOnly(marketPair: MarketPair): Boolean = {
+    if (!isMarketActiveOrReadOnly(marketPair))
+      throw ErrorException(ERR_INVALID_MARKET, s"invalid market: $marketPair")
     true
   }
 
-  def assertMarketIdIsActive(marketId: MarketId): Boolean = {
-    if (!activeMarkets.contains(MarketKey(marketId).toString))
+  def assertMarketPairIsActive(marketPair: MarketPair): Boolean = {
+    if (!activeMarkets.contains(MarketHash(marketPair).toString))
       throw ErrorException(
         ErrorCode.ERR_INVALID_MARKET,
-        s"marketId:$marketId has been terminated"
+        s"marketPair:$marketPair has been terminated"
       )
     true
   }
 
   // check market is valid (has metadata config)
-  def isMarketActiveOrReadOnly(marketKey: String): Boolean =
-    getValidMarketIds.contains(marketKey)
+  def isMarketActiveOrReadOnly(marketHash: String): Boolean =
+    getValidMarketPairs.contains(marketHash)
 
-  def isMarketActiveOrReadOnly(marketId: MarketId): Boolean =
-    isMarketActiveOrReadOnly(MarketKey(marketId).toString)
+  def isMarketActiveOrReadOnly(marketPair: MarketPair): Boolean =
+    isMarketActiveOrReadOnly(MarketHash(marketPair).toString)
 
-  def getValidMarketIds = activeMarkets ++ readOnlyMarkets
+  def getValidMarketPairs = activeMarkets ++ readOnlyMarkets
 
 }

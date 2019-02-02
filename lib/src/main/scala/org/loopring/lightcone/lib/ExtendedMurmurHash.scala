@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.dals
+package org.loopring.lightcone.lib
 
-import org.loopring.lightcone.persistence.base.BaseDalImpl
-import org.loopring.lightcone.persistence.tables.{OHLCDataTable}
+import scala.util.hashing.MurmurHash3
 
-import scala.concurrent.Future
-import org.loopring.lightcone.proto._
+object MurmurHash64 {
+  private val seed = 0xf7ca7fd2
 
-trait OHLCDataDal extends BaseDalImpl[OHLCDataTable, OHLCRawData] {
-
-  // Save a order to the database and returns the saved order and indicate
-  def saveData(record: OHLCRawData): Future[PersistOHLCData.Res]
-
-  def getOHLCData(
-      marketHash: String,
-      interval: Long,
-      beginTime: Long,
-      endTime: Long
-    ): Future[Seq[Seq[Double]]]
-
+  def hash(u: String): Long = {
+    val a = MurmurHash3.stringHash(u, seed)
+    val b = MurmurHash3.stringHash(u.reverse, seed)
+    (a.toLong << 32) | (b & 0XFFFFFFFFL)
+  }
 }

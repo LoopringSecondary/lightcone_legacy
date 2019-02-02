@@ -147,7 +147,7 @@ class TransactionRecordActor(
         header = req.header,
         owner = req.owner,
         recordType = ORDER_CANCELLED,
-        marketKey = req.marketKey,
+        marketHash = req.marketHash,
         eventData = Some(
           TransactionRecord
             .EventData(Event.Cutoff(req))
@@ -160,13 +160,13 @@ class TransactionRecordActor(
       for {
         order <- dbModule.orderService.getOrder(req.orderHash)
         header = req.header.get
-        marketKey = if (order.isEmpty) ""
-        else MarketKey(order.get.tokenS, order.get.tokenB).toString
+        marketHash = if (order.isEmpty) ""
+        else MarketHash(order.get.tokenS, order.get.tokenB).toString
         record = TransactionRecord(
           header = req.header,
           owner = req.owner,
           recordType = ORDER_FILLED,
-          marketKey = marketKey,
+          marketHash = marketHash,
           eventData = Some(
             TransactionRecord
               .EventData(Event.Filled(req))

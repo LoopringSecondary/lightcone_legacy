@@ -53,7 +53,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
       info("getOrderbook after submit one order with market: LRC-WETH")
       val orderbookRes3 = expectOrderbookRes(
         GetOrderbook
-          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+          .Req(0, 100, Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) => orderbook.sells.nonEmpty
       )
       orderbookRes3 match {
@@ -91,7 +91,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
       )
       val orderbookRes = expectOrderbookRes(
         GetOrderbook
-          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+          .Req(0, 100, Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) =>
           orderbook.sells.nonEmpty && orderbook.latestPrice == 0.1
       )
@@ -128,7 +128,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
       info("submit a order like order2, then the orderbook should be empty.")
       val orderbookRes1 = expectOrderbookRes(
         GetOrderbook
-          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+          .Req(0, 100, Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) =>
           orderbook.sells.isEmpty && orderbook.buys.isEmpty
       )
@@ -159,7 +159,7 @@ class EntryPointSpec_SubmitTwoMatchedOrder
 
       val orderbookRes2 = expectOrderbookRes(
         GetOrderbook
-          .Req(0, 100, Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))),
+          .Req(0, 100, Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) => orderbook.buys.nonEmpty
       )
       info(s"orderbookRes2 ${orderbookRes2}")

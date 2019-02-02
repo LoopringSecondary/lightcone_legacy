@@ -83,7 +83,7 @@ class EntryPointSpec_SubmitSeveralOrder
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       )
 
       val orderbookRes = expectOrderbookRes(
@@ -127,7 +127,7 @@ class EntryPointSpec_SubmitSeveralOrder
         rawOrders(0).hash,
         rawOrders(0).owner,
         OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
-        Some(MarketId(rawOrders(0).tokenS, rawOrders(0).tokenB)),
+        Some(MarketPair(rawOrders(0).tokenS, rawOrders(0).tokenB)),
         rawOrders(0).getParams.sig
       )
 

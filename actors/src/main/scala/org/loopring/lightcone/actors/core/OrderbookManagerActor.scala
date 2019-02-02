@@ -41,8 +41,8 @@ import scala.util.{Failure, Success}
 object OrderbookManagerActor extends ShardedByMarket with Logging {
   val name = "orderbook_manager"
 
-  def getTopicId(marketId: MarketId) =
-    OrderbookManagerActor.name + "-" + getEntityId(marketId)
+  def getTopicId(marketPair: MarketPair) =
+    OrderbookManagerActor.name + "-" + getEntityId(marketPair)
 
   def start(
       implicit
@@ -68,15 +68,15 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
     )
   }
 
-  // 如果message不包含一个有效的marketId，就不做处理，不要返回“默认值”
-  val extractMarketId: PartialFunction[Any, MarketId] = {
-    case GetOrderbook.Req(_, _, Some(marketId)) => marketId
+  // 如果message不包含一个有效的marketPair，就不做处理，不要返回“默认值”
+  val extractMarketPair: PartialFunction[Any, MarketPair] = {
+    case GetOrderbook.Req(_, _, Some(marketPair)) => marketPair
 
-    case Orderbook.Update(_, _, _, Some(marketId)) => marketId
+    case Orderbook.Update(_, _, _, Some(marketPair)) => marketPair
 
-    case Notify(KeepAliveActor.NOTIFY_MSG, marketIdStr) =>
-      val tokens = marketIdStr.split("-")
-      MarketId(tokens(0), tokens(1))
+    case Notify(KeepAliveActor.NOTIFY_MSG, marketPairStr) =>
+      val tokens = marketPairStr.split("-")
+      MarketPair(tokens(0), tokens(1))
   }
 }
 
@@ -99,13 +99,13 @@ class OrderbookManagerActor(
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
-  val marketId = metadataManager.getValidMarketIds.values
+  val marketPair = metadataManager.getValidMarketPairs.values
     .find(m => getEntityId(m) == entityId)
     .get
 
-  def marketMetadata = metadataManager.getMarketMetadata(marketId)
+  def marketMetadata = metadataManager.getMarketMetadata(marketPair)
   def marketManagerActor = actors.get(MarketManagerActor.name)
-  val marketIdHashedValue = OrderbookManagerActor.getEntityId(marketId)
+  val marketPairHashedValue = OrderbookManagerActor.getEntityId(marketPair)
   val manager: OrderbookManager = new OrderbookManagerImpl(marketMetadata)
 
   val repeatedJobs = Seq(
@@ -127,20 +127,21 @@ class OrderbookManagerActor(
       log.info(s"receive Orderbook.Update ${req}")
       manager.processUpdate(req)
 
-    case GetOrderbook.Req(level, size, Some(marketId)) =>
+    case GetOrderbook.Req(level, size, Some(marketPair)) =>
       Future {
-        if (OrderbookManagerActor.getEntityId(marketId) == marketIdHashedValue)
+        if (OrderbookManagerActor
+              .getEntityId(marketPair) == marketPairHashedValue)
           GetOrderbook.Res(Option(manager.getOrderbook(level, size)))
         else
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
-            s"marketId doesn't match, expect: ${marketId} ,receive: ${marketId}"
+            s"marketPair doesn't match, expect: ${marketPair} ,receive: ${marketPair}"
           )
       } sendTo sender
 
     case req: MetadataChanged =>
       val metadataOpt = try {
-        Option(metadataManager.getMarketMetadata(marketId))
+        Option(metadataManager.getMarketMetadata(marketPair))
       } catch {
         case _: Throwable => None
       }
@@ -158,7 +159,7 @@ class OrderbookManagerActor(
   private def syncOrderbookFromMarket() =
     for {
       res <- (marketManagerActor ? GetOrderbookSlots.Req(
-        Some(marketId),
+        Some(marketPair),
         orderbookRecoverSize
       )).mapTo[GetOrderbookSlots.Res]
       _ = log.debug(s"orderbook synced: ${res}")

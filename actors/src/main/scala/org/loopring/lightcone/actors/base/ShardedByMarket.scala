@@ -18,14 +18,14 @@ package org.loopring.lightcone.actors.base
 
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.proto.MarketId
+import org.loopring.lightcone.proto.MarketPair
 
 // Owner: Daniel
 trait ShardedByMarket extends Sharded {
-  val extractMarketId: PartialFunction[Any, MarketId]
+  val extractMarketPair: PartialFunction[Any, MarketPair]
 
-  def getEntityId(marketId: MarketId): String = {
-    Math.abs(marketId.key().hashCode).toString
+  def getEntityId(marketPair: MarketPair): String = {
+    Math.abs(marketPair.key().hashCode).toString
   }
 
   def extractEntityId(actorName: String) = actorName.split("_").last
@@ -33,7 +33,7 @@ trait ShardedByMarket extends Sharded {
   val messageExtractor =
     new HashCodeMessageExtractor(Int.MaxValue) {
       override def entityId(msg: Any) = {
-        val entityIdOpt = (extractMarketId.lift)(msg).map(getEntityId)
+        val entityIdOpt = (extractMarketPair.lift)(msg).map(getEntityId)
         assert(entityIdOpt.isDefined, s"${msg} no entity id extracted")
         s"${name}_${entityIdOpt.get}"
       }
