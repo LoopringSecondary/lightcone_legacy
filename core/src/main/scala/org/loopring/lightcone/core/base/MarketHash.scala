@@ -21,19 +21,33 @@ import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.MurmurHash64
 
 object MarketHash {
-  def apply(marketPair: MarketPair): MarketHash = new MarketHash(marketPair)
+
+  def apply(marketPair: MarketPair): MarketHash =
+    new MarketHash(marketPair)
+
+  def apply(
+      baseToken: String,
+      quoteToken: String
+    ): MarketHash =
+    new MarketHash(MarketPair(baseToken, quoteToken))
 }
 
 class MarketHash(marketPair: MarketPair) {
   import MarketHash._
 
-  val bigIntValue =
+  val bigIntValue = try {
     Address(marketPair.baseToken).toBigInt ^
       Address(marketPair.quoteToken).toBigInt
+  } catch {
+    case _: Throwable => BigInt(0)
+  }
 
   def hashString() = s"0x${bigIntValue.toString(16)}"
 
-  def longId() = MurmurHash64.hash(hashString)
+  def longId() =
+    if (hashString == "0x0") 0L
+    else
+      MurmurHash64.hash(hashString)
 
   def getBytes() = bigIntValue.toByteArray
 

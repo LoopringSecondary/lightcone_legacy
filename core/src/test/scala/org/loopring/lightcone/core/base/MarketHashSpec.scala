@@ -32,4 +32,15 @@ class MarketHashSpec extends CommonSpec {
     marketHash1 should be(marketHash2)
     t should be("0x3d6ede5134aa557420825295bf6c2d96b8f101e2")
   }
+
+  "marketHash" must "return 0x0 as hash and 0 as id if any address is invalid" in {
+    val address1 = "0x50689da538c80f32f46fb224af5d9d06c3309633"
+    val address2 = "0xzzz"
+
+    val marketHash = MarketHash(MarketPair(address1, address2))
+
+    marketHash.toString should be("0x0")
+    marketHash.longId should be(0)
+
+  }
 }
