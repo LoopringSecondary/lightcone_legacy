@@ -167,8 +167,10 @@ class TradeDalImpl @Inject()(
       case Some(m)
           if m.tokenS.nonEmpty && m.tokenB.nonEmpty && m.isQueryBothSide =>
         (None, None, Some(MarketHash(MarketPair(m.tokenS, m.tokenB)).toString))
+  
       case Some(m) if m.tokenS.nonEmpty && m.tokenB.nonEmpty =>
         (Some(m.tokenS), Some(m.tokenB), None)
+  
       case Some(m) if m.tokenS.nonEmpty => (Some(m.tokenS), None, None)
       case Some(m) if m.tokenB.nonEmpty => (None, Some(m.tokenB), None)
       case None                         => (None, None, None)

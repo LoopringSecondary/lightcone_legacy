@@ -45,6 +45,7 @@ class OHLCRawDataExtractor @Inject()(
           ring.fills.map { fill =>
             val marketHash =
               MarketHash(MarketPair(fill.tokenS, fill.tokenB)).toString
+
             if (!metadataManager.isMarketActiveOrReadOnly(marketHash)) None
             else {
               val marketMetadata =
