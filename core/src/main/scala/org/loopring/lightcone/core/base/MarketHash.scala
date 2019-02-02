@@ -27,15 +27,15 @@ object MarketHash {
 class MarketHash(marketPair: MarketPair) {
   import MarketHash._
 
-  val hashString = {
-    val bigInt = (Address(marketPair.baseToken).toBigInt ^
-      Address(marketPair.quoteToken).toBigInt)
-    s"0x${bigInt.toString(16)}"
-  }
+  val bigIntValue =
+    Address(marketPair.baseToken).toBigInt ^
+      Address(marketPair.quoteToken).toBigInt
+
+  def hashString() = s"0x${bigIntValue.toString(16)}"
 
   def longId() = MurmurHash64.hash(hashString)
 
-  def getBytes() = hashString.getBytes
+  def getBytes() = bigIntValue.toByteArray
 
   override def toString() = hashString
 }
