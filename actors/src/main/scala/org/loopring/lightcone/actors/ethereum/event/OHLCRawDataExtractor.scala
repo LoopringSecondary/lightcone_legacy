@@ -18,6 +18,8 @@ package org.loopring.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
@@ -44,7 +46,7 @@ class OHLCRawDataExtractor @Inject()(
         rings.flatMap { ring =>
           ring.fills.map { fill =>
             val marketHash =
-              MarketHash(MarketPair(fill.tokenS, fill.tokenB)).toString
+              MarketPair(fill.tokenS, fill.tokenB).hashString
             if (!metadataManager.isMarketActiveOrReadOnly(marketHash)) None
             else {
               val marketMetadata =

@@ -46,8 +46,7 @@ class MarketHash(marketPair: MarketPair) {
 
   def longId() =
     if (hashString == "0x0") 0L
-    else
-      MurmurHash64.hash(hashString)
+    else Math.abs(MurmurHash64.hash(hashString))
 
   def getBytes() = bigIntValue.toByteArray
 

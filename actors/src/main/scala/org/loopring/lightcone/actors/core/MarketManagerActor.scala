@@ -258,7 +258,10 @@ class MarketManagerActor(
     case RingMinedEvent(Some(header), _, _, _, fills, _) =>
       Future {
         val ringhash =
-          createRingIdByOrderHash(fills(0).orderHash, fills(1).orderHash)
+          MatchableRing.createRingIdWithOrderHashes(
+            fills(0).orderHash,
+            fills(1).orderHash
+          )
         if (header.txStatus == TxStatus.TX_STATUS_SUCCESS) {
           manager.deleteRing(ringhash, true)
         } else if (header.txStatus == TxStatus.TX_STATUS_FAILED) {

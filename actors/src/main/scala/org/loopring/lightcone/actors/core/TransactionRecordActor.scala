@@ -26,6 +26,8 @@ import org.loopring.lightcone.actors.DatabaseConfigManager
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.ErrorCode._
@@ -161,7 +163,7 @@ class TransactionRecordActor(
         order <- dbModule.orderService.getOrder(req.orderHash)
         header = req.header.get
         marketHash = if (order.isEmpty) ""
-        else MarketHash(MarketPair(order.get.tokenS, order.get.tokenB)).toString
+        else MarketPair(order.get.tokenS, order.get.tokenB).hashString
         record = TransactionRecord(
           header = req.header,
           owner = req.owner,

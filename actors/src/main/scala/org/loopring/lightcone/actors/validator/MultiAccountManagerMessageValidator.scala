@@ -19,6 +19,8 @@ package org.loopring.lightcone.actors.validator
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.data._
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data.Address
@@ -78,7 +80,7 @@ final class MultiAccountManagerMessageValidator(
         newReq = req.copy(
           owner = Address.normalize(req.owner),
           status = STATUS_SOFT_CANCELLED_BY_USER,
-          marketPair = Some(marketPair.toLowerCase())
+          marketPair = Some(marketPair.normalized)
         )
         _ <- cancelOrderValidator.validate(newReq)
       } yield newReq
