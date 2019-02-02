@@ -103,11 +103,11 @@ final private[core] class AccountManagerImpl(
 
   def handleCutoff(
       cutoff: Long,
-      marketKey: String
+      marketHash: String
     ): Int = {
     val orders = orderPool.orders.filter { order =>
       order.validSince <= cutoff &&
-      MarketKey(order.tokenS, order.tokenB).toString == marketKey
+      MarketHash(order.tokenS, order.tokenB).toString == marketHash
     }
 
     orders.foreach { order =>
@@ -116,10 +116,10 @@ final private[core] class AccountManagerImpl(
     orders.size
   }
 
-  def purgeOrders(marketId: MarketId): Int = {
+  def purgeOrders(marketPair: MarketPair): Int = {
     val orders = orderPool.orders.filter { order =>
-      (order.tokenS == marketId.quoteToken && order.tokenB == marketId.baseToken) ||
-      (order.tokenB == marketId.quoteToken && order.tokenS == marketId.baseToken)
+      (order.tokenS == marketPair.quoteToken && order.tokenB == marketPair.baseToken) ||
+      (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
     }
 
     orders.foreach { order =>
@@ -148,7 +148,7 @@ final private[core] class AccountManagerImpl(
 
   //TODO: 需要实现cancelOrdersInMarket与cancelAllOrders
   //由用户由前端请求，按照address和市场取消订单
-  def cancelOrdersInMarket(marketKey: String): Int = ???
+  def cancelOrdersInMarket(marketHash: String): Int = ???
 
   def cancelAllOrders(): Int = ???
 

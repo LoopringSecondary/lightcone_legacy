@@ -99,7 +99,7 @@ class OrderDalImpl @Inject()(
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketKeySet: Set[String] = Set.empty,
+      marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       validTime: Option[Int] = None,
       sort: Option[SortingType] = None,
@@ -110,8 +110,8 @@ class OrderDalImpl @Inject()(
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
     if (tokenBSet.nonEmpty) filters = filters.filter(_.tokenB inSet tokenBSet)
-    if (marketKeySet.nonEmpty)
-      filters = filters.filter(_.marketKey inSet marketKeySet)
+    if (marketHashSet.nonEmpty)
+      filters = filters.filter(_.marketHash inSet marketHashSet)
     if (feeTokenSet.nonEmpty)
       filters = filters.filter(_.tokenFee inSet feeTokenSet)
     if (validTime.nonEmpty)
@@ -135,7 +135,7 @@ class OrderDalImpl @Inject()(
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketKeySet: Set[String] = Set.empty,
+      marketHashSet: Set[String] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[SortingType] = None,
       skip: Option[Paging] = None
@@ -145,7 +145,7 @@ class OrderDalImpl @Inject()(
       owners,
       tokenSSet,
       tokenBSet,
-      marketKeySet,
+      marketHashSet,
       feeTokenSet,
       None,
       sort,
@@ -159,7 +159,7 @@ class OrderDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketKey: Option[String] = None,
+      marketHash: Option[String] = None,
       feeToken: Option[String] = None,
       sort: Option[SortingType] = None,
       pagingOpt: Option[Paging] = None
@@ -169,8 +169,8 @@ class OrderDalImpl @Inject()(
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner)
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB)
-    if (marketKey.nonEmpty)
-      filters = filters.filter(_.marketKey === marketKey)
+    if (marketHash.nonEmpty)
+      filters = filters.filter(_.marketHash === marketHash)
     if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
     if (sort.nonEmpty) filters = sort.get match {
       case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
@@ -189,7 +189,7 @@ class OrderDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketKey: Option[String] = None,
+      marketHash: Option[String] = None,
       feeToken: Option[String] = None,
       sort: Option[SortingType] = None,
       skip: Option[Paging] = None
@@ -199,7 +199,7 @@ class OrderDalImpl @Inject()(
       owner,
       tokenS,
       tokenB,
-      marketKey,
+      marketHash,
       feeToken,
       sort,
       skip
@@ -219,9 +219,7 @@ class OrderDalImpl @Inject()(
       .toInt + activateLaggingInSecond
     var filters = query
       .filter(_.status === availableStatus)
-      .filter(
-        _.validSince >= sinceTime
-      )
+      .filter(_.validSince >= sinceTime)
       .sortBy(_.validSince.asc)
       .take(limit)
     db.run(filters.result)
@@ -239,9 +237,7 @@ class OrderDalImpl @Inject()(
     val untilTime = timeProvider.getTimeSeconds().toInt + expireLeadInSeconds
     var filters = query
       .filter(_.status inSet availableStatus)
-      .filter(
-        _.validUntil < untilTime
-      )
+      .filter(_.validUntil < untilTime)
       .sortBy(_.validUntil.asc)
       .take(limit)
     db.run(filters.result)
@@ -253,7 +249,7 @@ class OrderDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketKey: Option[String] = None,
+      marketHash: Option[String] = None,
       feeToken: Option[String] = None
     ): Future[Int] = {
     val filters = queryOrderForUserFilters(
@@ -261,7 +257,7 @@ class OrderDalImpl @Inject()(
       owner,
       tokenS,
       tokenB,
-      marketKey,
+      marketHash,
       feeToken,
       None,
       None
@@ -445,7 +441,7 @@ class OrderDalImpl @Inject()(
       .filter(_.status inSet activeStatus)
       .filter(_.validSince <= retrieveCondition.cutoff.toInt)
     if (retrieveCondition.tradingPair.nonEmpty) {
-      filters = filters.filter(_.marketKey === retrieveCondition.tradingPair)
+      filters = filters.filter(_.marketHash === retrieveCondition.tradingPair)
     }
     filters = filters
       .sortBy(_.sequenceId.asc)

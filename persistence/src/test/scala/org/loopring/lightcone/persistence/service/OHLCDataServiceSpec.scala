@@ -43,7 +43,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
           ringIndex = 1000,
           txHash =
             "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
-          marketKey = "111222",
+          marketHash = "111222",
           time = 1547682650,
           baseAmount = 10,
           quoteAmount = 100,
@@ -60,7 +60,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
       ringIndex = 1001,
       txHash =
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
-      marketKey = "111222",
+      marketHash = "111222",
       time = 1547682655,
       baseAmount = 50,
       quoteAmount = 200,
@@ -77,7 +77,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
           ringIndex = 1002,
           txHash =
             "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf50",
-          marketKey = "111222",
+          marketHash = "111222",
           time = 1547682750,
           baseAmount = 100,
           quoteAmount = 500,
@@ -88,7 +88,7 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
     val result2 = service.saveData(record2)
 
     val request = GetOHLCData.Req(
-      marketKey = "111222",
+      marketHash = "111222",
       interval = Interval.OHLC_INTERVAL_ONE_MINUTES,
       beginTime = 1547682050,
       endTime = 1547682850

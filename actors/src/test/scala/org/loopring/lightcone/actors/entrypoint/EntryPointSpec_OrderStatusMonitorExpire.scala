@@ -71,7 +71,7 @@ class EntryPointSpec_OrderStatusMonitorExpire
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       info("the sells in orderbook should be nonEmpty.")
       val orderbookRes = expectOrderbookRes(

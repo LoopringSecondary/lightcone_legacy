@@ -50,9 +50,9 @@ trait OrderbookManagerSupport
       10,
       TimeUnit.SECONDS,
       () => {
-        val f = Future.sequence(metadataManager.getValidMarketIds.values.map {
-          marketId =>
-            val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))
+        val f = Future.sequence(metadataManager.getValidMarketPairs.values.map {
+          marketPair =>
+            val orderBookInit = GetOrderbook.Req(0, 100, Some(marketPair))
             actors.get(OrderbookManagerActor.name) ? orderBookInit
         })
         val res =
@@ -68,8 +68,8 @@ trait OrderbookManagerSupport
     }
 
     // TODO：因暂时未完成recover，因此需要发起一次请求，将shard初始化成功
-    metadataManager.getValidMarketIds.values.map { marketId =>
-      val orderBookInit = GetOrderbook.Req(0, 100, Some(marketId))
+    metadataManager.getValidMarketPairs.values.map { marketPair =>
+      val orderBookInit = GetOrderbook.Req(0, 100, Some(marketPair))
       val orderBookInitF = actors.get(OrderbookManagerActor.name) ? orderBookInit
       Await.result(orderBookInitF, timeout.duration)
     }

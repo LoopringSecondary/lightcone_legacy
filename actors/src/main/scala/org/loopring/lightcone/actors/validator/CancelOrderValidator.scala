@@ -39,7 +39,7 @@ final class CancelOrderValidator(
   override def validate = {
     case req: CancelOrder.Req =>
       Future {
-        metadataManager.assertMarketIdIsActive(req.getMarketId)
+        metadataManager.assertMarketPairIsActive(req.getMarketPair)
         if (!checkSign(req.owner, req.id, req.sig))
           throw ErrorException(
             ERR_ORDER_VALIDATION_INVALID_CANCEL_SIG,

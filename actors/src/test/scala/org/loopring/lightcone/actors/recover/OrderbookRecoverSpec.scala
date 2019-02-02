@@ -91,8 +91,8 @@ class OrderbookRecoverSpec
 
       info("get orderbook from orderbookManagerActor")
       Thread.sleep(2000)
-      val marketId = MarketId(LRC_TOKEN.address, WETH_TOKEN.address)
-      val getOrderBook1 = GetOrderbook.Req(0, 100, Some(marketId))
+      val marketPair = MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)
+      val getOrderBook1 = GetOrderbook.Req(0, 100, Some(marketPair))
       val orderbookF1 = singleRequest(getOrderBook1, "get_orderbook")
       val orderbookRes1 =
         Await.result(orderbookF1.mapTo[GetOrderbook.Res], timeout.duration)
@@ -102,10 +102,8 @@ class OrderbookRecoverSpec
         "get orderbookUpdate from marketManagerActor(stored in marketManager)"
       )
       val r1 = Await.result(
-        (actors.get(MarketManagerActor.name) ? GetOrderbookSlots.Req(
-          Some(marketId),
-          100
-        )).mapTo[GetOrderbookSlots.Res],
+        (actors.get(MarketManagerActor.name) ? GetOrderbookSlots
+          .Req(Some(marketPair), 100)).mapTo[GetOrderbookSlots.Res],
         timeout.duration
       )
       val orderbookRes = r1.update.getOrElse(Orderbook.Update())

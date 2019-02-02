@@ -56,8 +56,8 @@ class MarketMetadataDalImpl @Inject()(
   def saveMarkets(marketMetadatas: Seq[MarketMetadata]): Future[Seq[String]] =
     for {
       _ <- Future.sequence(marketMetadatas.map(saveMarket))
-      query <- getMarketsByKey(marketMetadatas.map(_.marketKey))
-    } yield query.map(_.marketKey)
+      query <- getMarketsByKey(marketMetadatas.map(_.marketHash))
+    } yield query.map(_.marketHash)
 
   def updateMarket(marketMetadata: MarketMetadata): Future[ErrorCode] =
     for {
@@ -73,14 +73,14 @@ class MarketMetadataDalImpl @Inject()(
   def getMarkets(): Future[Seq[MarketMetadata]] =
     db.run(query.result)
 
-  def getMarketsByKey(marketKeys: Seq[String]): Future[Seq[MarketMetadata]] =
-    db.run(query.filter(_.marketKey inSet marketKeys).result)
+  def getMarketsByKey(marketHashs: Seq[String]): Future[Seq[MarketMetadata]] =
+    db.run(query.filter(_.marketHash inSet marketHashs).result)
 
-  def terminateMarketByKey(marketKey: String): Future[ErrorCode] =
+  def terminateMarketByKey(marketHash: String): Future[ErrorCode] =
     for {
       result <- db.run(
         query
-          .filter(_.marketKey === marketKey)
+          .filter(_.marketHash === marketHash)
           .map(c => (c.status, c.updateAt))
           .update(
             MarketMetadata.Status.TERMINATED,

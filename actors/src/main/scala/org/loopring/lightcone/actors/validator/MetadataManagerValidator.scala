@@ -99,10 +99,10 @@ final class MetadataManagerValidator(
 
     case req: TerminateMarket.Req =>
       Future {
-        if (req.marketKey.isEmpty)
+        if (req.marketHash.isEmpty)
           throw ErrorException(
             ErrorCode.ERR_INVALID_ARGUMENT,
-            "Parameter marketKey could not be empty"
+            "Parameter marketHash could not be empty"
           )
         req
       }

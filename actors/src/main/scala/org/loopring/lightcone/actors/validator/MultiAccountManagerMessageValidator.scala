@@ -73,14 +73,12 @@ final class MultiAccountManagerMessageValidator(
     case req: CancelOrder.Req =>
       for {
         orderOpt <- dbModule.orderService.getOrder(req.id)
-        order = orderOpt.getOrElse(
-          throw ErrorException(ERR_ORDER_NOT_EXIST)
-        )
-        marketId = MarketId(order.tokenS, order.tokenB)
+        order = orderOpt.getOrElse(throw ErrorException(ERR_ORDER_NOT_EXIST))
+        marketPair = MarketPair(order.tokenS, order.tokenB)
         newReq = req.copy(
           owner = Address.normalize(req.owner),
           status = STATUS_SOFT_CANCELLED_BY_USER,
-          marketId = Some(marketId.toLowerCase())
+          marketPair = Some(marketPair.toLowerCase())
         )
         _ <- cancelOrderValidator.validate(newReq)
       } yield newReq
@@ -102,10 +100,10 @@ final class MultiAccountManagerMessageValidator(
               message = s"invalid order in SubmitOrder.Req:$order"
             )
           case Right(rawOrder) =>
-            val marketId = MarketId(rawOrder.tokenS, rawOrder.tokenB)
-            metadataManager.assertMarketIdIsActive(marketId)
+            val marketPair = MarketPair(rawOrder.tokenS, rawOrder.tokenB)
+            metadataManager.assertMarketPairIsActive(marketPair)
 
-            val marketKey = MarketKey(marketId).toString
+            val marketHash = MarketHash(marketPair).toString
 
             val now = timeProvider.getTimeMillis
             val state = RawOrder.State(
@@ -139,8 +137,8 @@ final class MultiAccountManagerMessageValidator(
                     )
                   ),
                 state = Some(state),
-                marketKey = marketKey,
-                marketShard = MarketManagerActor.getEntityId(marketId).toInt,
+                marketHash = marketHash,
+                marketShard = MarketManagerActor.getEntityId(marketPair).toInt,
                 accountShard = MultiAccountManagerActor
                   .getEntityId(order.owner, numOfShards)
                   .toInt

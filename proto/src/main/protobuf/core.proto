@@ -121,7 +121,7 @@ message Error{
 }
 
 // For LRC-WETH market, the base_token is LRC, quote_token is WETH
-message MarketId {
+message MarketPair {
     string base_token = 1;
     string quote_token = 2;
 }
@@ -143,7 +143,7 @@ message Orderbook {
         repeated Slot sells = 1;
         repeated Slot buys = 2;
         double latest_price = 3;
-        MarketId market_id = 4;
+        MarketPair market_pair = 4;
     }
 
     double latestPrice = 1;

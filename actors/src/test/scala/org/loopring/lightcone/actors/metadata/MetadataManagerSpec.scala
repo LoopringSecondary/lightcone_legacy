@@ -58,35 +58,35 @@ class MetadataManagerSpec
         )
       }
       info("check markets: market addresses at lower and upper case")
-      assert(metadataManager.getValidMarketIds.size >= MARKETS.length)
+      assert(metadataManager.getValidMarketPairs.size >= MARKETS.length)
       MARKETS.foreach { m =>
         val meta1 =
-          metadataManager.getMarketMetadata(m.marketKey.toLowerCase())
+          metadataManager.getMarketMetadata(m.marketHash.toLowerCase())
         val meta2 = metadataManager.getMarketMetadata(
-          "0x" + m.marketKey.substring(2).toUpperCase()
+          "0x" + m.marketHash.substring(2).toUpperCase()
         )
         assert(
-          meta1.marketKey == meta2.marketKey && meta1.marketKey == meta1.marketKey
+          meta1.marketHash == meta2.marketHash && meta1.marketHash == meta1.marketHash
             .toLowerCase()
         )
 
         val meta3 = metadataManager.getMarketMetadata(
-          MarketId(
-            baseToken = m.marketId.get.baseToken.toLowerCase(),
-            quoteToken = m.marketId.get.quoteToken.toLowerCase()
+          MarketPair(
+            baseToken = m.marketPair.get.baseToken.toLowerCase(),
+            quoteToken = m.marketPair.get.quoteToken.toLowerCase()
           )
         )
         val meta4 = metadataManager.getMarketMetadata(
-          MarketId(
-            baseToken = "0x" + m.marketId.get.baseToken
+          MarketPair(
+            baseToken = "0x" + m.marketPair.get.baseToken
               .substring(2)
               .toUpperCase(),
-            quoteToken = "0x" + m.marketId.get.quoteToken
+            quoteToken = "0x" + m.marketPair.get.quoteToken
               .substring(2)
               .toUpperCase()
           )
         )
-        assert(meta3.marketKey == meta4.marketKey)
+        assert(meta3.marketHash == meta4.marketHash)
       }
     }
 
@@ -268,9 +268,9 @@ class MetadataManagerSpec
       val BBB = "0x9b9211a2ce4eEE9c5619d54E5CD9f967A68FBE23"
       val CCC = "0x7b22713f2e818fad945af5a3618a2814f102cbe0"
       val DDD = "0x45245bc59219eeaaf6cd3f382e078a461ff9de7b"
-      val marketIdLrcWeth = MarketId(baseToken = DDD, quoteToken = AAA)
-      val marketIdBnbWeth = MarketId(baseToken = DDD, quoteToken = BBB)
-      val marketIdZrxdWeth = MarketId(baseToken = DDD, quoteToken = CCC)
+      val marketPairLrcWeth = MarketPair(baseToken = DDD, quoteToken = AAA)
+      val marketPairBnbWeth = MarketPair(baseToken = DDD, quoteToken = BBB)
+      val marketPairZrxdWeth = MarketPair(baseToken = DDD, quoteToken = CCC)
       val marketLrcWeth = MarketMetadata(
         status = MarketMetadata.Status.ACTIVE,
         quoteTokenSymbol = "AAA",
@@ -282,8 +282,8 @@ class MetadataManagerSpec
         precisionForTotal = 12,
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
-        marketId = Some(marketIdLrcWeth),
-        marketKey = MarketKey(DDD, AAA).toString
+        marketPair = Some(marketPairLrcWeth),
+        marketHash = MarketHash(DDD, AAA).toString
       )
       val markets = Seq(
         marketLrcWeth,
@@ -298,8 +298,8 @@ class MetadataManagerSpec
           precisionForTotal = 12,
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
-          marketId = Some(marketIdBnbWeth),
-          marketKey = MarketKey(DDD, BBB).toString
+          marketPair = Some(marketPairBnbWeth),
+          marketHash = MarketHash(DDD, BBB).toString
         ),
         MarketMetadata(
           status = MarketMetadata.Status.READONLY,
@@ -312,8 +312,8 @@ class MetadataManagerSpec
           precisionForTotal = 12,
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
-          marketId = Some(marketIdZrxdWeth),
-          marketKey = MarketKey(DDD, CCC).toString
+          marketPair = Some(marketPairZrxdWeth),
+          marketHash = MarketHash(DDD, CCC).toString
         )
       )
       actor ! SaveMarketMetadatas.Req(markets)
@@ -324,7 +324,7 @@ class MetadataManagerSpec
 
       info("query the markets from db")
       val r1 =
-        dbModule.marketMetadataDal.getMarketsByKey(markets.map(_.marketKey))
+        dbModule.marketMetadataDal.getMarketsByKey(markets.map(_.marketHash))
       val res1 = Await.result(r1.mapTo[Seq[MarketMetadata]], 5.second)
       assert(res1.length == markets.length)
 
@@ -337,7 +337,7 @@ class MetadataManagerSpec
 
       info("save a new market: ABC-LRC")
       val ABC = "0x244929a8141d2134d9323e65309fb46e4a983840"
-      val marketIdAbcLrc = MarketId(baseToken = ABC, quoteToken = AAA)
+      val marketPairAbcLrc = MarketPair(baseToken = ABC, quoteToken = AAA)
       val abcLrc = MarketMetadata(
         status = MarketMetadata.Status.READONLY,
         quoteTokenSymbol = "ABC",
@@ -349,8 +349,8 @@ class MetadataManagerSpec
         precisionForTotal = 6,
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
-        marketId = Some(marketIdAbcLrc),
-        marketKey = MarketKey(ABC, AAA).toString
+        marketPair = Some(marketPairAbcLrc),
+        marketHash = MarketHash(ABC, AAA).toString
       )
       val r2 = dbModule.marketMetadataDal.saveMarket(abcLrc)
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
@@ -370,7 +370,9 @@ class MetadataManagerSpec
       )
       assert(updated.error == ErrorCode.ERR_NONE)
       val q11 =
-        dbModule.marketMetadataDal.getMarketsByKey(Seq(marketLrcWeth.marketKey))
+        dbModule.marketMetadataDal.getMarketsByKey(
+          Seq(marketLrcWeth.marketHash)
+        )
       val res11 = Await.result(q11.mapTo[Seq[MarketMetadata]], 5.second)
       assert(
         res11.length == 1 && res11.head.priceDecimals == 2 && res11.head.status == MarketMetadata.Status.READONLY
@@ -378,14 +380,14 @@ class MetadataManagerSpec
 
       info("send a message to disable lrc-weth")
       val disabled = Await.result(
-        (actor ? TerminateMarket.Req(marketLrcWeth.marketKey))
+        (actor ? TerminateMarket.Req(marketLrcWeth.marketHash))
           .mapTo[TerminateMarket.Res],
         5 second
       )
       assert(disabled.error == ErrorCode.ERR_NONE)
       val query2 = Await.result(
         dbModule.marketMetadataDal
-          .getMarketsByKey(Seq(marketLrcWeth.marketKey))
+          .getMarketsByKey(Seq(marketLrcWeth.marketHash))
           .mapTo[Seq[MarketMetadata]],
         5.second
       )
@@ -449,7 +451,7 @@ class MetadataManagerSpec
     "format market" in {
       val AAA = "0xF51DF14E49DA86ABC6F1D8CCC0B3A6B7B7C90CA6"
       val BBB = "0x9B9211A2CE4EEE9C5619D54E5CD9F967A68FBE23"
-      val marketId = MarketId(baseToken = BBB, quoteToken = AAA)
+      val marketPair = MarketPair(baseToken = BBB, quoteToken = AAA)
       val market = MarketMetadata(
         status = MarketMetadata.Status.ACTIVE,
         quoteTokenSymbol = "aaa",
@@ -461,8 +463,8 @@ class MetadataManagerSpec
         precisionForTotal = 12,
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
-        marketId = Some(marketId),
-        marketKey = MarketKey(BBB, AAA).toString
+        marketPair = Some(marketPair),
+        marketHash = MarketHash(BBB, AAA).toString
       )
       val formatedMarket = MetadataManager.normalizeMarket(market)
       assert(
@@ -473,17 +475,17 @@ class MetadataManagerSpec
         market.quoteTokenSymbol == "aaa" &&
           formatedMarket.quoteTokenSymbol == "AAA"
       )
-      val formatedMarketId = formatedMarket.marketId.get
+      val formatedMarketPair = formatedMarket.marketPair.get
       assert(
-        marketId.baseToken == "0x9B9211A2CE4EEE9C5619D54E5CD9F967A68FBE23" &&
-          formatedMarketId.baseToken == "0x9b9211a2ce4eee9c5619d54e5cd9f967a68fbe23"
+        marketPair.baseToken == "0x9B9211A2CE4EEE9C5619D54E5CD9F967A68FBE23" &&
+          formatedMarketPair.baseToken == "0x9b9211a2ce4eee9c5619d54e5cd9f967a68fbe23"
       )
       assert(
-        marketId.quoteToken == "0xF51DF14E49DA86ABC6F1D8CCC0B3A6B7B7C90CA6" &&
-          formatedMarketId.quoteToken == "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
+        marketPair.quoteToken == "0xF51DF14E49DA86ABC6F1D8CCC0B3A6B7B7C90CA6" &&
+          formatedMarketPair.quoteToken == "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
       )
       assert(
-        market.marketKey == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285" && formatedMarket.marketKey == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285"
+        market.marketHash == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285" && formatedMarket.marketHash == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285"
       )
     }
   }

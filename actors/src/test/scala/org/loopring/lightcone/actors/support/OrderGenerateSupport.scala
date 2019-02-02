@@ -42,7 +42,7 @@ trait OrderGenerateSupport {
       credentials: Credentials = accounts(0)
     ) = {
     val createAt = timeProvider.getTimeMillis
-    val marketKey = MarketKey(tokenS, tokenB).toString
+    val marketHash = MarketHash(tokenS, tokenB).toString
     val order = RawOrder(
       owner = credentials.getAddress,
       version = 0,
@@ -65,9 +65,9 @@ trait OrderGenerateSupport {
         )
       ),
       params = Some(RawOrder.Params(validUntil = validUntil)),
-      marketKey = marketKey,
+      marketHash = marketHash,
       marketShard = MarketManagerActor
-        .getEntityId(MarketId(tokenS, tokenB))
+        .getEntityId(MarketPair(tokenS, tokenB))
         .toInt,
       accountShard = MultiAccountManagerActor
         .getEntityId(credentials.getAddress, 100)

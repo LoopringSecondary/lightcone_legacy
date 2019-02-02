@@ -43,23 +43,23 @@ class OHLCRawDataExtractor @Inject()(
       .map { rings =>
         rings.flatMap { ring =>
           ring.fills.map { fill =>
-            val marketKey = MarketKey(fill.tokenS, fill.tokenB).toString
-            if (!metadataManager.isMarketActiveOrReadOnly(marketKey)) None
+            val marketHash = MarketHash(fill.tokenS, fill.tokenB).toString
+            if (!metadataManager.isMarketActiveOrReadOnly(marketHash)) None
             else {
               val marketMetadata =
-                metadataManager.getMarketMetadata(marketKey)
-              val marketId = marketMetadata.getMarketId
+                metadataManager.getMarketMetadata(marketHash)
+              val marketPair = marketMetadata.getMarketPair
               val baseToken =
-                metadataManager.getToken(marketId.baseToken).get
+                metadataManager.getToken(marketPair.baseToken).get
               val quoteToken =
-                metadataManager.getToken(marketId.quoteToken).get
+                metadataManager.getToken(marketPair.quoteToken).get
               val (baseAmount, quoteAmount) =
                 getAmounts(fill, baseToken, quoteToken, marketMetadata)
               Some(
                 OHLCRawData(
                   ringIndex = ring.ringIndex,
                   txHash = ring.header.get.txHash,
-                  marketKey = marketKey,
+                  marketHash = marketHash,
                   time = ring.header.get.blockTimestamp,
                   baseAmount = baseAmount,
                   quoteAmount = quoteAmount,

@@ -29,7 +29,7 @@ object MarketManager {
 trait MarketManager {
   import MarketManager._
 
-  val marketId: MarketId
+  val marketPair: MarketPair
   val pendingRingPool: PendingRingPool
 
   def getStats(): MarketStats

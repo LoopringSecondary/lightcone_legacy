@@ -36,10 +36,10 @@ trait MarketManagerSupport
     10,
     TimeUnit.SECONDS,
     () => {
-      val f = Future.sequence(metadataManager.getValidMarketIds.values.map {
-        marketId =>
+      val f = Future.sequence(metadataManager.getValidMarketPairs.values.map {
+        marketPair =>
           actors.get(MarketManagerActor.name) ? GetOrderbookSlots.Req(
-            Some(marketId)
+            Some(marketPair)
           )
       })
       val res =

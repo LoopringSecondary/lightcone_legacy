@@ -17,7 +17,7 @@
 package org.loopring.lightcone.core.account
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.proto.{MarketId, OrderStatus}
+import org.loopring.lightcone.proto.{MarketPair, OrderStatus}
 
 object AccountManager {
 
@@ -43,11 +43,11 @@ trait AccountManager {
   // hard cancel multiple orders
   def handleCutoff(cutoff: Long): Int
 
-  def purgeOrders(marketId: MarketId): Int
+  def purgeOrders(marketPair: MarketPair): Int
 
   def handleCutoff(
       cutoff: Long,
-      marketKey: String
+      marketHash: String
     ): Int
 
   def adjustOrder(
@@ -57,7 +57,7 @@ trait AccountManager {
 
   //TODO: 需要实现cancelOrdersInMarket与cancelAllOrders
   //由用户由前端请求，按照address和市场取消订单
-  def cancelOrdersInMarket(marketKey: String): Int
+  def cancelOrdersInMarket(marketHash: String): Int
 
   def cancelAllOrders(): Int
 }

@@ -128,14 +128,14 @@ case class Matchable(
   private[core] def clearStates() =
     copy(_reserved = None, _actual = None, _matchable = None)
 
-  private[core] def isSell()(implicit marketId: MarketId) =
-    (tokenS == marketId.baseToken)
+  private[core] def isSell()(implicit marketPair: MarketPair) =
+    (tokenS == marketPair.baseToken)
 
   // for LRC-WETH market, this returns the number of WETH divided by the number of LRC
   private[core] def price(
     )(
       implicit
-      marketId: MarketId,
+      marketPair: MarketPair,
       metadataManager: MetadataManager
     ) = {
     originalQuoteAmount / originalBaseAmount
@@ -145,10 +145,10 @@ case class Matchable(
   private[core] def originalBaseAmount(
     )(
       implicit
-      marketId: MarketId,
+      marketPair: MarketPair,
       metadataManager: MetadataManager
     ) = {
-    if (tokenS == marketId.quoteToken) fromWei(tokenB, original.amountB)
+    if (tokenS == marketPair.quoteToken) fromWei(tokenB, original.amountB)
     else fromWei(tokenS, original.amountS)
   }
 
@@ -156,10 +156,10 @@ case class Matchable(
   private[core] def originalQuoteAmount(
     )(
       implicit
-      marketId: MarketId,
+      marketPair: MarketPair,
       metadataManager: MetadataManager
     ) = {
-    if (tokenS == marketId.quoteToken) fromWei(tokenS, original.amountS)
+    if (tokenS == marketPair.quoteToken) fromWei(tokenS, original.amountS)
     else fromWei(tokenB, original.amountB)
   }
 
@@ -167,10 +167,10 @@ case class Matchable(
   private[core] def matchableBaseAmount(
     )(
       implicit
-      marketId: MarketId,
+      marketPair: MarketPair,
       metadataManager: MetadataManager
     ) = {
-    if (tokenS == marketId.quoteToken) fromWei(tokenB, matchable.amountB)
+    if (tokenS == marketPair.quoteToken) fromWei(tokenB, matchable.amountB)
     else fromWei(tokenS, matchable.amountS)
   }
 
@@ -178,10 +178,10 @@ case class Matchable(
   private[core] def matchableQuoteAmount(
     )(
       implicit
-      marketId: MarketId,
+      marketPair: MarketPair,
       metadataManager: MetadataManager
     ) = {
-    if (tokenS == marketId.quoteToken) fromWei(tokenS, matchable.amountS)
+    if (tokenS == marketPair.quoteToken) fromWei(tokenS, matchable.amountS)
     else fromWei(tokenB, matchable.amountB)
   }
 

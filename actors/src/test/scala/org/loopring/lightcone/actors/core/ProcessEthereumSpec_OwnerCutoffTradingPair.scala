@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.core
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
 import akka.pattern._
-import org.loopring.lightcone.core.base.MarketKey
+import org.loopring.lightcone.core.base.MarketHash
 import org.loopring.lightcone.lib.ErrorException
 import org.web3j.utils.Numeric
 
@@ -43,7 +43,7 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       info("make sure accountManagerActor can receive orders")
 
@@ -67,7 +67,7 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
         ),
         broker = accounts(0).getAddress,
         owner = accounts(0).getAddress,
-        marketKey = MarketKey(LRC_TOKEN.address, WETH_TOKEN.address).toString,
+        marketHash = MarketHash(LRC_TOKEN.address, WETH_TOKEN.address).toString,
         cutoff = timeProvider.getTimeSeconds().toInt + 100
       )
       val sendCutoffF = Future.sequence(
@@ -96,7 +96,7 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
       Await.result(f10, timeout.duration)
       val res10 = expectOrderbookRes(
         GetOrderbook
-          .Req(0, 100, Some(MarketId(GTO_TOKEN.address, WETH_TOKEN.address))),
+          .Req(0, 100, Some(MarketPair(GTO_TOKEN.address, WETH_TOKEN.address))),
         (orderbook: Orderbook) => orderbook.sells.nonEmpty
       )
       assert(res10.get.sells.nonEmpty)

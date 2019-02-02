@@ -70,19 +70,19 @@ object MultiAccountManagerActor extends ShardedByAddress {
   val extractAddress: PartialFunction[Any, String] = {
     case SubmitOrder.Req(Some(rawOrder))
         if metadataManager.isMarketActiveOrReadOnly(
-          MarketId(rawOrder.tokenS, rawOrder.tokenB)
+          MarketPair(rawOrder.tokenS, rawOrder.tokenB)
         ) =>
       rawOrder.owner
 
     case ActorRecover.RecoverOrderReq(Some(raworder))
         if metadataManager.isMarketActiveOrReadOnly(
-          MarketId(raworder.tokenS, raworder.tokenB)
+          MarketPair(raworder.tokenS, raworder.tokenB)
         ) =>
       raworder.owner
 
     case req: CancelOrder.Req
-        if req.marketId.nonEmpty && metadataManager.isMarketActiveOrReadOnly(
-          req.getMarketId
+        if req.marketPair.nonEmpty && metadataManager.isMarketActiveOrReadOnly(
+          req.getMarketPair
         ) =>
       req.owner
 

@@ -82,7 +82,7 @@ class OHLCDataDalImpl @Inject()(
   }
 
   def getOHLCData(
-      marketKey: String,
+      marketHash: String,
       interval: Long,
       beginTime: Long,
       endTime: Long
@@ -110,7 +110,7 @@ class OHLCDataDalImpl @Inject()(
         MAX(price) AS highest_price,
         MIN(price) AS lowest_price
         FROM "T_OHLC_DATA" t
-        WHERE market_key = ${marketKey}
+        WHERE market_hash = ${marketHash}
         AND time > ${beginTime} AND
         time < ${endTime} GROUP BY starting_point
         ORDER BY starting_point DESC

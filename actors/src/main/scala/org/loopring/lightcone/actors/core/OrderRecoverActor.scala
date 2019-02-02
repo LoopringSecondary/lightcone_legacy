@@ -89,7 +89,7 @@ class OrderRecoverActor(
 
   val orderStatus = Set(STATUS_NEW, STATUS_PENDING, STATUS_PARTIALLY_FILLED)
   var accountShardIds: Set[Int] = Set.empty
-  var marketKeyIds: Set[Int] = Set.empty
+  var marketHashIds: Set[Int] = Set.empty
 
   def ready: Receive = {
     case req: ActorRecover.RequestBatch =>
@@ -103,15 +103,15 @@ class OrderRecoverActor(
         case (_, request) => {
           if ("" != request.addressShardingEntity)
             accountShardIds += request.addressShardingEntity.toInt
-          if (request.marketId.nonEmpty) {
-            val marketKeyId =
-              MarketManagerActor.getEntityId(request.marketId.get).toInt
-            marketKeyIds += marketKeyId
+          if (request.marketPair.nonEmpty) {
+            val marketHashId =
+              MarketManagerActor.getEntityId(request.marketPair.get).toInt
+            marketHashIds += marketHashId
           }
         }
       }
       log.debug(
-        s"the request params of batch: ${batchSize}, ${marketKeyIds}, ${accountShardIds}"
+        s"the request params of batch: ${batchSize}, ${marketHashIds}, ${accountShardIds}"
       )
 
       context.become(recovering)
@@ -132,7 +132,9 @@ class OrderRecoverActor(
         lastOrderSeqIdOpt = orders.lastOption.map(_.sequenceId)
         // filter unsupported markets
         availableOrders = orders.filter { o =>
-          metadataManager.isMarketActiveOrReadOnly(MarketId(o.tokenS, o.tokenB))
+          metadataManager.isMarketActiveOrReadOnly(
+            MarketPair(o.tokenS, o.tokenB)
+          )
         }
         _ <- if (availableOrders.nonEmpty) {
           val reqs = availableOrders.map { order =>
@@ -182,11 +184,11 @@ class OrderRecoverActor(
     ): Future[Seq[RawOrder]] = {
     if (batch.requestMap.nonEmpty) {
       log.debug(
-        s"the request params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${orderStatus}, ${marketKeyIds}, ${accountShardIds}"
+        s"the request params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${orderStatus}, ${marketHashIds}, ${accountShardIds}"
       )
       dbModule.orderService.getOrdersForRecover(
         orderStatus,
-        marketKeyIds,
+        marketHashIds,
         accountShardIds,
         CursorPaging(lastOrderSeqId, batchSize)
       )

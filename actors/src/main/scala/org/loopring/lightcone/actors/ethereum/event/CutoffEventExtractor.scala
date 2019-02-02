@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data._
-import org.loopring.lightcone.core.base.MarketKey
+import org.loopring.lightcone.core.base.MarketHash
 import org.loopring.lightcone.proto.{CutoffEvent, RawBlockData}
 
 import scala.concurrent._
@@ -71,7 +71,8 @@ class CutoffEventExtractor @Inject()(
                     cutoff = event._cutoff.longValue(),
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._owner),
-                    marketKey = MarketKey(event._token1, event._token2).toString
+                    marketHash =
+                      MarketHash(event._token1, event._token2).toString
                   )
                 )
               case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
@@ -81,7 +82,8 @@ class CutoffEventExtractor @Inject()(
                     cutoff = event._cutoff.longValue(),
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._broker),
-                    marketKey = MarketKey(event._token1, event._token2).toString
+                    marketHash =
+                      MarketHash(event._token1, event._token2).toString
                   )
                 )
               case _ =>

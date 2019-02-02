@@ -22,7 +22,7 @@ import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.core.base.MarketKey
+import org.loopring.lightcone.core.base.MarketHash
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
@@ -123,7 +123,7 @@ class RingAndTradePersistenceActor(
         f.filledAmountB,
         f.tokenS,
         f.tokenB,
-        MarketKey(f.tokenS, f.tokenB).toString,
+        MarketHash(f.tokenS, f.tokenB).toString,
         f.split,
         Some(fee),
         f.wallet,

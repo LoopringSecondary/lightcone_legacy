@@ -21,7 +21,7 @@ import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.support.CommonSpec
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.utils.MetadataRefresher
-import org.loopring.lightcone.core.base.MarketKey
+import org.loopring.lightcone.core.base.MarketHash
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.Await
@@ -71,7 +71,7 @@ class DynamicAdjustMarketsSpec
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(MarketId(LRC_TOKEN.address, WETH_TOKEN.address))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       )
       val orderbookRes = expectOrderbookRes(
         getOrderBook,
@@ -93,7 +93,7 @@ class DynamicAdjustMarketsSpec
       info("send TERMINATE event")
 
       val terminateMarketF = actors.get(MetadataManagerActor.name) ? TerminateMarket
-        .Req(MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString)
+        .Req(MarketHash(rawOrder.tokenS, rawOrder.tokenB).toString)
       Await.result(terminateMarketF, timeout.duration)
       actors.get(MetadataRefresher.name) ! MetadataChanged()
       Thread.sleep(1000) //等待changed事件执行完毕
@@ -115,7 +115,7 @@ class DynamicAdjustMarketsSpec
           Some(
             metadataManager
               .getMarketMetadata(
-                MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
+                MarketHash(rawOrder.tokenS, rawOrder.tokenB).toString
               )
               .copy(status = MarketMetadata.Status.ACTIVE)
           )
@@ -150,7 +150,7 @@ class DynamicAdjustMarketsSpec
           Some(
             metadataManager
               .getMarketMetadata(
-                MarketKey(rawOrder.tokenS, rawOrder.tokenB).toString
+                MarketHash(rawOrder.tokenS, rawOrder.tokenB).toString
               )
               .copy(status = MarketMetadata.Status.READONLY)
           )

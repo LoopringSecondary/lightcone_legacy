@@ -28,7 +28,7 @@ trait OHLCDataDal extends BaseDalImpl[OHLCDataTable, OHLCRawData] {
   def saveData(record: OHLCRawData): Future[PersistOHLCData.Res]
 
   def getOHLCData(
-      marketKey: String,
+      marketHash: String,
       interval: Long,
       beginTime: Long,
       endTime: Long

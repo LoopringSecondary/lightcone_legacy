@@ -26,7 +26,7 @@ class OrderAwareOrderbookAggregatorImpl(
     precisionForTotal: Int
   )(
     implicit
-    marketId: MarketId,
+    marketPair: MarketPair,
     metadataManager: MetadataManager)
     extends OrderbookAggregatorImpl(
       priceDecimals,

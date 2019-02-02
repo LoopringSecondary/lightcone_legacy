@@ -131,7 +131,7 @@ class OrderCutoffHandlerActor(
         id = o.hash,
         owner = o.owner,
         status = status,
-        marketId = Some(MarketId(o.tokenB, o.tokenS))
+        marketPair = Some(MarketPair(o.tokenB, o.tokenS))
       )
     }
     for {

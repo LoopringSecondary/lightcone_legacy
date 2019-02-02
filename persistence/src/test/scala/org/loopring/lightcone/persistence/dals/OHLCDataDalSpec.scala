@@ -29,7 +29,7 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
       ringIndex = 1000,
       txHash =
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf51",
-      marketKey = "111222",
+      marketHash = "111222",
       time = 1547682550,
       baseAmount = 2.5,
       quoteAmount = 1000,
@@ -44,7 +44,7 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
       ringIndex = 1001,
       txHash =
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf55",
-      marketKey = "111222",
+      marketHash = "111222",
       time = 1547682650,
       baseAmount = 50,
       quoteAmount = 500,
@@ -59,7 +59,7 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
       ringIndex = 1002,
       txHash =
         "0x5fe632ccfcc381be803617c256eff21409093c35c4e4606963be0a042384cf65",
-      marketKey = "111222",
+      marketHash = "111222",
       time = 1547682675,
       baseAmount = 10.5,
       quoteAmount = 1050,
@@ -70,11 +70,11 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
     res3.error should be(ErrorCode.ERR_NONE)
     res3.record.get should be(data3)
 
-    val marketKey = "111222"
+    val marketHash = "111222"
     val interval = 50
     val beginTime = 1547682050
     val endTime = 1547682850
-    val queryResult = dal.getOHLCData(marketKey, interval, beginTime, endTime)
+    val queryResult = dal.getOHLCData(marketHash, interval, beginTime, endTime)
     val queryRes = Await.result(queryResult.mapTo[Seq[Seq[Double]]], 5.second)
     queryRes.length == 2 should be(true)
     val array0 = queryRes(0)
