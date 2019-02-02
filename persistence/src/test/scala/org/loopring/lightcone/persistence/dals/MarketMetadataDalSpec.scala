@@ -48,7 +48,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketPair = Some(marketPairLrcWeth),
-        marketHash = MarketHash(WETH, LRC).toString
+        marketHash = MarketHash(MarketPair(WETH, LRC)).toString
       ),
       MarketMetadata(
         status = MarketMetadata.Status.TERMINATED,
@@ -62,7 +62,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketPair = Some(marketPairBnbWeth),
-        marketHash = MarketHash(WETH, BNB).toString
+        marketHash = MarketHash(MarketPair(WETH, BNB)).toString
       ),
       MarketMetadata(
         status = MarketMetadata.Status.READONLY,
@@ -76,7 +76,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketPair = Some(marketPairZrxdWeth),
-        marketHash = MarketHash(ZRX, WETH).toString
+        marketHash = MarketHash(MarketPair(ZRX, WETH)).toString
       )
     )
     val r1 = dal.saveMarkets(markets)
@@ -99,7 +99,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketPair.contains(marketPairLrcWeth)
-            && m.marketHash == MarketHash(LRC, WETH).toString
+            && m.marketHash == MarketHash(MarketPair(LRC, WETH)).toString
         )
       case m: MarketMetadata if m.baseTokenSymbol == "BNB" =>
         assert(
@@ -112,7 +112,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketPair.contains(marketPairBnbWeth)
-            && m.marketHash == MarketHash(BNB, WETH).toString
+            && m.marketHash == MarketHash(MarketPair(BNB, WETH)).toString
         )
       case m: MarketMetadata if m.baseTokenSymbol == "ZRX" =>
         assert(
@@ -125,7 +125,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
             && m.precisionForTotal == 12
             && m.browsableInWallet
             && m.marketPair.contains(marketPairZrxdWeth)
-            && m.marketHash == MarketHash(ZRX, WETH).toString
+            && m.marketHash == MarketHash(MarketPair(ZRX, WETH)).toString
         )
       case _ => assert(false)
     }
@@ -190,7 +190,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
         && bnb1.precisionForTotal == 33
         && !bnb1.browsableInWallet
         && bnb1.marketPair.contains(marketPairBnbWeth)
-        && bnb1.marketHash == MarketHash(BNB, WETH).toString
+        && bnb1.marketHash == MarketHash(MarketPair(BNB, WETH)).toString
     )
   }
 }

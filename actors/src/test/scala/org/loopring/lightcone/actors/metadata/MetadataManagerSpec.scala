@@ -283,7 +283,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketPair = Some(marketPairLrcWeth),
-        marketHash = MarketHash(DDD, AAA).toString
+        marketHash = MarketHash(MarketPair(DDD, AAA)).toString
       )
       val markets = Seq(
         marketLrcWeth,
@@ -299,7 +299,7 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketPair = Some(marketPairBnbWeth),
-          marketHash = MarketHash(DDD, BBB).toString
+          marketHash = MarketHash(MarketPair(DDD, BBB)).toString
         ),
         MarketMetadata(
           status = MarketMetadata.Status.READONLY,
@@ -313,7 +313,7 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketPair = Some(marketPairZrxdWeth),
-          marketHash = MarketHash(DDD, CCC).toString
+          marketHash = MarketHash(MarketPair(DDD, CCC)).toString
         )
       )
       actor ! SaveMarketMetadatas.Req(markets)
@@ -350,7 +350,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketPair = Some(marketPairAbcLrc),
-        marketHash = MarketHash(ABC, AAA).toString
+        marketHash = MarketHash(MarketPair(ABC, AAA)).toString
       )
       val r2 = dbModule.marketMetadataDal.saveMarket(abcLrc)
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
@@ -464,7 +464,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketPair = Some(marketPair),
-        marketHash = MarketHash(BBB, AAA).toString
+        marketHash = MarketHash(MarketPair(BBB, AAA)).toString
       )
       val formatedMarket = MetadataManager.normalizeMarket(market)
       assert(

@@ -161,7 +161,7 @@ class TransactionRecordActor(
         order <- dbModule.orderService.getOrder(req.orderHash)
         header = req.header.get
         marketHash = if (order.isEmpty) ""
-        else MarketHash(order.get.tokenS, order.get.tokenB).toString
+        else MarketHash(MarketPair(order.get.tokenS, order.get.tokenB)).toString
         record = TransactionRecord(
           header = req.header,
           owner = req.owner,

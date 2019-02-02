@@ -16,26 +16,20 @@
 
 package org.loopring.lightcone.core.base
 
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.MarketPair
-import org.loopring.lightcone.ethereum.data.Address
-import org.loopring.lightcone.lib.MurmurHash64
+import org.loopring.lightcone.core.CommonSpec
+import org.scalatest._
 
-object MarketHash {
-  def apply(marketPair: MarketPair): MarketHash = new MarketHash(marketPair)
-}
+class MarketHashSpec extends CommonSpec {
 
-class MarketHash(marketPair: MarketPair) {
-  import MarketHash._
-
-  val hashString = {
-    val bigInt = (Address(marketPair.baseToken).toBigInt ^
-      Address(marketPair.quoteToken).toBigInt)
-    s"0x${bigInt.toString(16)}"
+  "marketHash" must "calculate a market hash by two address" in {
+    val address1 = "0x50689da538c80f32f46fb224af5d9d06c3309633"
+    val address2 = "0x6d0643f40c625a46d4ede0b11031b0907bc197d1"
+    val marketHash1 = MarketHash(MarketPair(address1, address2)).toString
+    val marketHash2 = MarketHash(MarketPair(address2, address1)).toString
+    val t = MarketHash(MarketPair(address1, address2)).toString
+    marketHash1 should be(marketHash2)
+    t should be("0x3d6ede5134aa557420825295bf6c2d96b8f101e2")
   }
-
-  def longId() = MurmurHash64.hash(hashString)
-
-  def getBytes() = hashString.getBytes
-
-  override def toString() = hashString
 }

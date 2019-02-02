@@ -93,7 +93,7 @@ class DynamicAdjustMarketsSpec
       info("send TERMINATE event")
 
       val terminateMarketF = actors.get(MetadataManagerActor.name) ? TerminateMarket
-        .Req(MarketHash(rawOrder.tokenS, rawOrder.tokenB).toString)
+        .Req(MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString)
       Await.result(terminateMarketF, timeout.duration)
       actors.get(MetadataRefresher.name) ! MetadataChanged()
       Thread.sleep(1000) //等待changed事件执行完毕
@@ -115,7 +115,7 @@ class DynamicAdjustMarketsSpec
           Some(
             metadataManager
               .getMarketMetadata(
-                MarketHash(rawOrder.tokenS, rawOrder.tokenB).toString
+                MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString
               )
               .copy(status = MarketMetadata.Status.ACTIVE)
           )
@@ -150,7 +150,7 @@ class DynamicAdjustMarketsSpec
           Some(
             metadataManager
               .getMarketMetadata(
-                MarketHash(rawOrder.tokenS, rawOrder.tokenB).toString
+                MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString
               )
               .copy(status = MarketMetadata.Status.READONLY)
           )

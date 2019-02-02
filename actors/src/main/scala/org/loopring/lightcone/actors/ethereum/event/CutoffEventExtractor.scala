@@ -21,7 +21,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.core.base.MarketHash
-import org.loopring.lightcone.proto.{CutoffEvent, RawBlockData}
+import org.loopring.lightcone.proto._
 
 import scala.concurrent._
 
@@ -71,8 +71,9 @@ class CutoffEventExtractor @Inject()(
                     cutoff = event._cutoff.longValue(),
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._owner),
-                    marketHash =
-                      MarketHash(event._token1, event._token2).toString
+                    marketHash = MarketHash(
+                      MarketPair(event._token1, event._token2)
+                    ).toString
                   )
                 )
               case Some(event: AllOrdersCancelledForTradingPairEvent.Result) =>
@@ -82,8 +83,9 @@ class CutoffEventExtractor @Inject()(
                     cutoff = event._cutoff.longValue(),
                     broker = Address.normalize(event._broker),
                     owner = Address.normalize(event._broker),
-                    marketHash =
-                      MarketHash(event._token1, event._token2).toString
+                    marketHash = MarketHash(
+                      MarketPair(event._token1, event._token2)
+                    ).toString
                   )
                 )
               case _ =>

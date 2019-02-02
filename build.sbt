@@ -23,7 +23,7 @@ lazy val ethereum = (project in file("ethereum"))
 
 lazy val core = (project in file("core"))
   .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(proto, lib)
+  .dependsOn(proto, lib, ethereum)
   .settings(basicSettings, libraryDependencies ++= dependency4Core)
   .dependsOn(proto)
 

@@ -78,7 +78,8 @@ package object support {
     precisionForTotal = 5,
     browsableInWallet = true,
     marketPair = Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)),
-    marketHash = MarketHash(LRC_TOKEN.address, WETH_TOKEN.address).toString
+    marketHash =
+      MarketHash(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)).toString
   )
 
   val GTO_WETH_MARKET = MarketMetadata(
@@ -94,7 +95,8 @@ package object support {
     marketPair = Some(
       MarketPair(baseToken = GTO_TOKEN.address, quoteToken = WETH_TOKEN.address)
     ),
-    marketHash = MarketHash(GTO_TOKEN.address, WETH_TOKEN.address).toString
+    marketHash =
+      MarketHash(MarketPair(GTO_TOKEN.address, WETH_TOKEN.address)).toString
   )
 
   val TOKENS = Seq(WETH_TOKEN, LRC_TOKEN, GTO_TOKEN)
