@@ -28,8 +28,9 @@ class MarketHash(marketPair: MarketPair) {
   import MarketHash._
 
   val hashString = {
-    (Address(marketPair.baseToken).toBigInt ^
-      Address(marketPair.quoteToken).toBigInt).toString(16)
+    val bigInt = (Address(marketPair.baseToken).toBigInt ^
+      Address(marketPair.quoteToken).toBigInt)
+    s"0x${bigInt.toString(16)}"
   }
 
   def longId() = MurmurHash64.hash(hashString)

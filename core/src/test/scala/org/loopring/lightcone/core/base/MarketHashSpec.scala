@@ -30,6 +30,6 @@ class MarketHashSpec extends CommonSpec {
     val marketHash2 = MarketHash(MarketPair(address2, address1)).toString
     val t = MarketHash(MarketPair(address1, address2)).toString
     marketHash1 should be(marketHash2)
-    t should be("3d6ede5134aa557420825295bf6c2d96b8f101e2")
+    t should be("0x3d6ede5134aa557420825295bf6c2d96b8f101e2")
   }
 }
