@@ -18,6 +18,7 @@ package org.loopring.lightcone.core
 
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
+import spire.math.Rational
 
 package object data {
   implicit class RichBigInt(this_ : BigInt) {
@@ -25,7 +26,7 @@ package object data {
     def max(that: BigInt): BigInt = if (this_ > that) this_ else that
   }
 
-  implicit def rational2BigInt(r: Rational) = r.bigintValue
+  implicit def rational2BigInt(r: Rational) = r.toBigInt
 
   implicit class RichExpectedFill(raw: ExpectedMatchableFill) {
     def id = raw.order.id

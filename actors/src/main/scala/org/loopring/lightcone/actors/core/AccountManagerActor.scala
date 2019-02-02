@@ -374,14 +374,14 @@ class AccountManagerActor(
               case STATUS_EXPIRED | //
                   STATUS_DUST_ORDER | //
                   STATUS_COMPLETELY_FILLED | //
-                  STATUS_SOFT_CANCELLED_BY_USER |
-                  STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR |
-                  STATUS_ONCHAIN_CANCELLED_BY_USER |
-                  STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR |
-                  STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES |
-                  STATUS_SOFT_CANCELLED_LOW_BALANCE |
-                  STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE |
-                  STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS |
+                  STATUS_SOFT_CANCELLED_BY_USER | //
+                  STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR | //
+                  STATUS_ONCHAIN_CANCELLED_BY_USER | //
+                  STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR | //
+                  STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES | //
+                  STATUS_SOFT_CANCELLED_LOW_BALANCE | //
+                  STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | //
+                  STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS | //
                   STATUS_SOFT_CANCELLED_DUPLICIATE =>
                 log.debug(
                   s"cancelling order id=${order.id} status=${order.status}"
@@ -443,8 +443,10 @@ class AccountManagerActor(
         updatedOrders.values.map { order =>
           order.status match {
             case STATUS_SOFT_CANCELLED_LOW_BALANCE |
-                STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | STATUS_PENDING |
-                STATUS_COMPLETELY_FILLED | STATUS_PARTIALLY_FILLED =>
+                STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | //
+                STATUS_PENDING | //
+                STATUS_COMPLETELY_FILLED | //
+                STATUS_PARTIALLY_FILLED =>
               Future.unit
 
             case status =>

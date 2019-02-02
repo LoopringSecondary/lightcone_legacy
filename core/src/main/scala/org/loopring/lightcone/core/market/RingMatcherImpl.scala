@@ -19,11 +19,13 @@ package org.loopring.lightcone.core.market
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.slf4s.Logging
-import ErrorCode._
+import spire.math.Rational
 
 class RingMatcherImpl()(implicit rie: RingIncomeEvaluator)
     extends RingMatcher
     with Logging {
+
+  import ErrorCode._
 
   def matchOrders(
       taker: Matchable,

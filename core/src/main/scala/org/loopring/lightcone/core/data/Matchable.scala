@@ -20,7 +20,7 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.ErrorCode._
-import OrderStatus._
+import spire.math.Rational
 
 case class MatchableState(
     amountS: BigInt = 0,
@@ -29,9 +29,9 @@ case class MatchableState(
 
   def scaleBy(ratio: Rational) =
     MatchableState(
-      (Rational(amountS) * ratio).bigintValue,
-      (Rational(amountB) * ratio).bigintValue,
-      (Rational(amountFee) * ratio).bigintValue
+      (Rational(amountS) * ratio).toBigInt,
+      (Rational(amountB) * ratio).toBigInt,
+      (Rational(amountFee) * ratio).toBigInt
     )
 }
 
@@ -47,12 +47,14 @@ case class Matchable(
     validSince: Long = -1,
     submittedAt: Long = -1,
     numAttempts: Int = 0,
-    status: OrderStatus = STATUS_NEW,
+    status: OrderStatus = OrderStatus.STATUS_NEW,
     walletSplitPercentage: Double = 0,
     _outstanding: Option[MatchableState] = None,
     _reserved: Option[MatchableState] = None,
     _actual: Option[MatchableState] = None,
     _matchable: Option[MatchableState] = None) {
+
+  import OrderStatus._
 
   lazy val original = MatchableState(amountS, amountB, amountFee)
 
@@ -101,7 +103,7 @@ case class Matchable(
   private[core] def withReservedAmount(v: BigInt)(implicit token: String) =
     if (token == tokenS && tokenFee == tokenS) {
       val r = Rational(amountS, amountFee + amountS)
-      val reservedAmountS = (Rational(v) * r).bigintValue()
+      val reservedAmountS = (Rational(v) * r).toBigInt
       copy(
         _reserved =
           Some(MatchableState(reservedAmountS, 0, v - reservedAmountS))

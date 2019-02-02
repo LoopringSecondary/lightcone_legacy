@@ -18,6 +18,7 @@ package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import spire.math.Rational
 
 class Token(val meta: TokenMetadata) {
   val scaling = Rational(BigInt(10).pow(meta.decimals))
@@ -35,5 +36,5 @@ class Token(val meta: TokenMetadata) {
   }
 
   def toWei(amount: Double): BigInt =
-    (Rational(amount) * scaling).bigintValue
+    (Rational(amount) * scaling).toBigInt
 }
