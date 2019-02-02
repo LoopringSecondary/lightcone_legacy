@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.core.implicits
 
-private[core] class RichBigInt(this_ : BigInt) {
+class RichBigInt(this_ : BigInt) {
   def min(that: BigInt): BigInt = if (this_ < that) this_ else that
   def max(that: BigInt): BigInt = if (this_ > that) this_ else that
 }

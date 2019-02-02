@@ -19,6 +19,7 @@ package org.loopring.lightcone
 import org.loopring.lightcone.proto.MarketPair
 import org.loopring.lightcone.core.base.MarketHash
 import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.core.data._
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 import spire.math.Rational
@@ -26,7 +27,11 @@ import spire.math.Rational
 package object core {
 
   // implicit classes
+  implicit class _RichDouble(raw: Double) extends implicits.RichDouble(raw)
   implicit class _RichBigInt(raw: BigInt) extends implicits.RichBigInt(raw)
+
+  implicit class _RichMatchable(raw: Matchable)
+      extends implicits.RichMatchable(raw)
   implicit class _RichMarketPair(raw: MarketPair)
       extends implicits.RichMarketPair(raw)
 

@@ -71,7 +71,7 @@ class RecoverOrderSpec
       val marketLrcWeth =
         Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       val request1 = ActorRecover.Request(
-        addressShardingEntity = MultiAccountManagerActor
+        accountEntity = MultiAccountManagerActor
           .getEntityId(owner, 100),
         marketPair = marketLrcWeth
       )

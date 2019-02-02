@@ -103,12 +103,7 @@ class DatabaseQueryActor(
             case Some(o) => Some(o.copy(dualAuthPrivateKey = ""))
             case None    => None
           }
-          r.copy(
-            params = params,
-            marketHash = "",
-            accountShard = 0,
-            marketShard = 0
-          )
+          r.copy(params = params, marketHash = "", accountEntity = "")
         }
         GetOrdersForUser.Res(respOrder, total)
       }) sendTo sender

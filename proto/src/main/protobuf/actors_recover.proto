@@ -29,7 +29,7 @@ import "actors_data.proto";
 
 message ActorRecover {
     message Request {
-        string address_sharding_entity = 1;
+        string account_entity = 1;
         MarketPair market_pair = 2;
         string sender = 3;
     }

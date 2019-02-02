@@ -16,17 +16,23 @@
 
 package org.loopring.lightcone.core.implicits
 
-import org.loopring.lightcone.proto.MarketPair
-import org.loopring.lightcone.core.base.MarketHash
-import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto._
 
-class RichMarketPair(marketPair: MarketPair) {
-  def hashString() = MarketHash(marketPair).toString
-  def longId() = MarketHash(marketPair).longId
+class RichDouble(v: Double) {
 
-  def normalized() =
-    MarketPair(
-      baseToken = Address.normalize(marketPair.baseToken),
-      quoteToken = Address.normalize(marketPair.quoteToken)
-    )
+  def toWei(tokenAddr: String)(implicit tm: MetadataManager) = {
+    tm.getToken(tokenAddr)
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"token no found for address $tokenAddr"
+        )
+      )
+      .toWei(v)
+  }
+
+  def ! = BigInt(v.toLong)
 }

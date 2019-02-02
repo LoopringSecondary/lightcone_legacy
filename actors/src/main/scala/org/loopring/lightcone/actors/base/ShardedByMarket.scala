@@ -24,7 +24,7 @@ import org.loopring.lightcone.proto.MarketPair
 trait ShardedByMarket extends Sharded {
   val extractMarketPair: PartialFunction[Any, MarketPair]
 
-  def getEntityId(marketPair: MarketPair): String = marketPair.longId.toString
+  def getEntityId(marketPair: MarketPair): String = marketPair.hashString
 
   def extractEntityId(actorName: String) = actorName.split("_").last
 

@@ -16,17 +16,16 @@
 
 package org.loopring.lightcone.core.implicits
 
-import org.loopring.lightcone.proto.MarketPair
-import org.loopring.lightcone.core.base.MarketHash
-import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.proto._
 
-class RichMarketPair(marketPair: MarketPair) {
-  def hashString() = MarketHash(marketPair).toString
-  def longId() = MarketHash(marketPair).longId
+class RichMatchable(order: Matchable) {
 
-  def normalized() =
-    MarketPair(
-      baseToken = Address.normalize(marketPair.baseToken),
-      quoteToken = Address.normalize(marketPair.quoteToken)
-    )
+  def asPending() =
+    order.copy(_matchable = order._actual, status = OrderStatus.STATUS_PENDING)
+
+  def withActualAsOriginal() = order.copy(_actual = Some(order.original))
+  def withMatchableAsActual() = order.copy(_matchable = Some(order.actual))
+  def matchableAsOriginal() = order.copy(_matchable = Some(order.original))
 }

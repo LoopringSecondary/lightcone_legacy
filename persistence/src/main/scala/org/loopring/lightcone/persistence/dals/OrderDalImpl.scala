@@ -267,26 +267,26 @@ class OrderDalImpl @Inject()(
 
   private def queryOrderForRecorverFilters(
       statuses: Set[OrderStatus],
-      marketShardSet: Set[Int] = Set.empty,
-      accountShardSet: Set[Int] = Set.empty,
+      marketHashSet: Set[String] = Set.empty,
+      accountEntitySet: Set[String] = Set.empty,
       paging: CursorPaging
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
-    if (marketShardSet.nonEmpty && accountShardSet.nonEmpty) {
+    if (marketHashSet.nonEmpty && accountEntitySet.nonEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketShardSet` and `accountShardSet` could not both not empty"
+        "Invalid parameters:`marketHashSet` and `accountEntitySet` could not both not empty"
       )
     }
-    if (marketShardSet.isEmpty && accountShardSet.isEmpty) {
+    if (marketHashSet.isEmpty && accountEntitySet.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketShardSet` and `accountShardSet` could not both empty"
+        "Invalid parameters:`marketHashSet` and `accountEntitySet` could not both empty"
       )
     }
-    var filters = if (marketShardSet.nonEmpty) {
-      query.filter(_.marketShard inSet marketShardSet)
+    var filters = if (marketHashSet.nonEmpty) {
+      query.filter(_.marketHash inSet marketHashSet)
     } else {
-      query.filter(_.accountShard inSet accountShardSet)
+      query.filter(_.accountEntity inSet accountEntitySet)
     }
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
     filters
@@ -297,8 +297,8 @@ class OrderDalImpl @Inject()(
 
   private def queryOrderForMarketAndAddress(
       statuses: Set[OrderStatus],
-      marketShardSet: Set[Int] = Set.empty,
-      accountShardSet: Set[Int] = Set.empty,
+      marketHashSet: Set[String] = Set.empty,
+      accountEntitySet: Set[String] = Set.empty,
       paging: CursorPaging
     ): Future[Seq[RawOrder]] = {
     implicit val paramsResult = GetResult[RawOrder.Params](
@@ -371,8 +371,7 @@ class OrderDalImpl @Inject()(
           Some(stateResult(r)),
           r.nextLong,
           r.nextString,
-          r.nextInt,
-          r.nextInt
+          r.nextString
         )
     )
     val now = timeProvider.getTimeSeconds()
@@ -384,8 +383,8 @@ class OrderDalImpl @Inject()(
         AND valid_until > #${now}
         AND sequence_id > #${paging.cursor}
         AND (
-          market_shard in (#${marketShardSet.mkString(",")})
-          OR account_shard IN (#${accountShardSet.mkString(",")})
+          market_shard in (#${marketHashSet.mkString(",")})
+          OR account_shard IN (#${accountEntitySet.mkString(",")})
         )
         ORDER BY sequence_id ASC
         LIMIT #${paging.size}
@@ -396,28 +395,28 @@ class OrderDalImpl @Inject()(
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
       statuses: Set[OrderStatus],
-      marketShardSet: Set[Int] = Set.empty,
-      accountShardSet: Set[Int] = Set.empty,
+      marketHashSet: Set[String],
+      accountEntitySet: Set[String],
       skip: CursorPaging
     ): Future[Seq[RawOrder]] = {
-    if (marketShardSet.isEmpty && accountShardSet.isEmpty) {
+    if (marketHashSet.isEmpty && accountEntitySet.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketShardSet` and `accountShardSet` could not both empty"
+        "Invalid parameters:`marketHashSet` and `accountEntitySet` could not both empty"
       )
     } else {
-      if (marketShardSet.nonEmpty && accountShardSet.nonEmpty) {
+      if (marketHashSet.nonEmpty && accountEntitySet.nonEmpty) {
         queryOrderForMarketAndAddress(
           statuses,
-          marketShardSet,
-          accountShardSet,
+          marketHashSet,
+          accountEntitySet,
           skip
         )
       } else {
         val filters = queryOrderForRecorverFilters(
           statuses,
-          marketShardSet,
-          accountShardSet,
+          marketHashSet,
+          accountEntitySet,
           skip
         )
         db.run(filters.result)

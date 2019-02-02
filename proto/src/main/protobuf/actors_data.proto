@@ -97,9 +97,8 @@ message RawOrder {
     ERC1400Params erc1400_params      = 12;
     State state                       = 13;
     int64  sequence_id                = 14;
-    string market_hash                 = 15;
-    int32  account_shard              = 16;
-    int32  market_shard               = 17;
+    string market_hash                = 15;
+    string account_entity             = 16;
 }
 
 

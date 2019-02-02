@@ -30,6 +30,10 @@ object MarketHash {
       quoteToken: String
     ): MarketHash =
     new MarketHash(MarketPair(baseToken, quoteToken))
+
+  def hashStringToLongId(hashString: String) =
+    if (hashString == "0x0") 0L
+    else Math.abs(MurmurHash64.hash(hashString))
 }
 
 class MarketHash(marketPair: MarketPair) {
@@ -44,9 +48,7 @@ class MarketHash(marketPair: MarketPair) {
 
   def hashString() = s"0x${bigIntValue.toString(16)}"
 
-  def longId() =
-    if (hashString == "0x0") 0L
-    else Math.abs(MurmurHash64.hash(hashString))
+  def longId() = hashStringToLongId(hashString)
 
   def getBytes() = bigIntValue.toByteArray
 
