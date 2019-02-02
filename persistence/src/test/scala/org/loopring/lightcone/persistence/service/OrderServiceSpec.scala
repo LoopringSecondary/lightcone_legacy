@@ -70,16 +70,6 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     } yield result
   }
 
-  "marketHash" must "calculate a market hash by two address" in {
-    val address1 = "0x50689da538c80f32f46fb224af5d9d06c3309633"
-    val address2 = "0x6d0643f40c625a46d4ede0b11031b0907bc197d1"
-    val marketHash1 = MarketHash(MarketPair(address1, address2)).toString
-    val marketHash2 = MarketHash(MarketPair(address2, address1)).toString
-    val t = MarketHash(MarketPair(address1, address2)).toString
-    marketHash1 should be(marketHash2)
-    t should be("3d6ede5134aa557420825295bf6c2d96b8f101e2")
-  }
-
   "submitOrder" must "save a order with hash" in {
     val owner = "0x-saveorder-state0-01"
     val result = for {
