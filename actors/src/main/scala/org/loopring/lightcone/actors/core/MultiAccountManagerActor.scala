@@ -107,15 +107,13 @@ class MultiAccountManagerActor(
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager)
-    extends ActorWithPathBasedConfig(
-      MultiAccountManagerActor.name,
-      MultiAccountManagerActor.extractEntityId
-    )
+    extends InitializationRetryActor
+    with ShardedWithLongEntityId
     with ActorLogging {
 
   log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
 
-  var autoSwitchBackToReady: Option[Cancellable] = None
+  val selfConfig = config.getConfig(MultiAccountManagerActor.name)
 
   val skiprecover = selfConfig.getBoolean("skip-recover")
 
@@ -125,6 +123,8 @@ class MultiAccountManagerActor(
   val accountManagerActors = new MapBasedLookup[ActorRef]()
 
   val extractAddress = MultiAccountManagerActor.extractAddress.lift
+
+  var autoSwitchBackToReady: Option[Cancellable] = None
 
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
   // TODO: 完成recovery后，需要再次测试异常恢复情况
@@ -149,7 +149,7 @@ class MultiAccountManagerActor(
         _ <- actors.get(EthereumQueryActor.name) ? Notify("echo") //检测以太坊准备好之后才发起恢复请求
         _ <- actors.get(OrderRecoverCoordinator.name) ?
           ActorRecover.Request(
-            addressShardingEntity = entityId,
+            addressShardingEntity = entityId.toString,
             sender = Serialization.serializedActorPath(self)
           )
       } yield {

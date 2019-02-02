@@ -114,13 +114,13 @@ class MarketManagerActor(
     val rie: RingIncomeEvaluator,
     val dustOrderEvaluator: DustOrderEvaluator,
     val metadataManager: MetadataManager)
-    extends ActorWithPathBasedConfig(
-      MarketManagerActor.name,
-      MarketManagerActor.extractEntityId
-    )
+    extends InitializationRetryActor
+    with ShardedWithLongEntityId
     with RepeatedJobActor
     with ActorLogging {
   import OrderStatus._
+
+  val selfConfig = config.getConfig(MarketManagerActor.name)
 
   implicit val marketPair: MarketPair =
     metadataManager.getValidMarketPairs.values

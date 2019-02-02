@@ -75,10 +75,11 @@ class OrderCutoffHandlerActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(OrderCutoffHandlerActor.name)
+    extends InitializationRetryActor
     with ActorLogging {
   import OrderStatus._
 
+  val selfConfig = config.getConfig(OrderCutoffHandlerActor.name)
   def mama = actors.get(MultiAccountManagerActor.name)
   val batchSize = selfConfig.getInt("batch-size")
 

@@ -17,27 +17,14 @@
 package org.loopring.lightcone.actors.base
 
 import akka.cluster.sharding._
-import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
+import akka.actor._
 
 // Owner: Daniel
-trait ShardedByAddress extends Sharded {
-  val extractAddress: PartialFunction[Any, String]
 
-  def getEntityId(
-      address: String,
-      numOfShards: Int
-    ): String =
-    Math.abs(address.hashCode % numOfShards).toString
+trait ShardedWithLongEntityId { me: Actor =>
 
-  def getEntityId(address: String): String =
-    getEntityId(address, numOfShards)
-
-  val messageExtractor =
-    new HashCodeMessageExtractor(numOfShards) {
-      override def entityId(msg: Any) = {
-        val entityIdOpt = (extractAddress.lift)(msg).map(getEntityId)
-        assert(entityIdOpt.isDefined, s"${msg} no entity id extracted")
-        s"${name}_${entityIdOpt.get}"
-      }
-    }
+  lazy val entityId: Long = {
+    val name = self.path.name.replace("$", "")
+    name.split("_").last.toLong
+  }
 }

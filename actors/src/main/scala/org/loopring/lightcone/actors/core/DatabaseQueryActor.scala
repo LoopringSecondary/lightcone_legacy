@@ -69,8 +69,9 @@ class DatabaseQueryActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(DatabaseQueryActor.name) {
+    extends InitializationRetryActor {
   val logger = Logger(this.getClass)
+  val selfConfig = config.getConfig(DatabaseQueryActor.name)
 
   def ready: Receive = LoggingReceive {
     case req: GetOrdersForUser.Req =>

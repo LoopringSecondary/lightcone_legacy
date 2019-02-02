@@ -86,10 +86,10 @@ class TransactionRecordActor(
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule,
     val databaseConfigManager: DatabaseConfigManager)
-    extends ActorWithPathBasedConfig(
-      TransactionRecordActor.name,
-      TransactionRecordActor.extractEntityId
-    ) {
+    extends InitializationRetryActor
+    with ShardedWithLongEntityId {
+
+  val selfConfig = config.getConfig(TransactionRecordActor.name)
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
   val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
 
@@ -101,7 +101,7 @@ class TransactionRecordActor(
 
   val txRecordDal: TransactionRecordDal =
     new TransactionRecordDalImpl(
-      shardId = entityId,
+      shardId = entityId.toString,
       databaseConfigManager.getDatabaseConfig(dbConfigKey)
     )
 

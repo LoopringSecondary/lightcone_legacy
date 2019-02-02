@@ -76,9 +76,10 @@ class EthereumClientMonitor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef])
-    extends ActorWithPathBasedConfig(EthereumClientMonitor.name)
+    extends InitializationRetryActor
     with RepeatedJobActor {
 
+  val selfConfig = config.getConfig(EthereumClientMonitor.name)
   def ethereumAccessor = actors.get(EthereumAccessActor.name)
 
   var nodes: Map[String, NodeBlockHeight] =
@@ -127,9 +128,7 @@ class EthereumClientMonitor(
 
   def ready: Receive = super.receiveRepeatdJobs orElse {
     case _: GetNodeBlockHeight.Req =>
-      sender ! GetNodeBlockHeight.Res(
-        nodes.values.toSeq
-      )
+      sender ! GetNodeBlockHeight.Res(nodes.values.toSeq)
   }
 
   def syncNodeHeight = {
