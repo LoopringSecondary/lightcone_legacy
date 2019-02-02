@@ -106,7 +106,6 @@ trait ServiceSpec[S]
     val until =
       if (validUntil > 0) validUntil else (createAt / 1000).toInt + 20000
     val param = RawOrder.Params(validUntil = until)
-    val marketHash = MarketHash(MarketPair(tokenS, tokenB)).toString
     val hash = Hash.sha3(
       BigInt(createAt).toByteArray ++
         Numeric.hexStringToByteArray(owner) ++
@@ -117,6 +116,7 @@ trait ServiceSpec[S]
         amountB.toByteArray ++
         amountFee.toByteArray
     )
+    val marketHash = MarketHash(MarketPair(tokenS, tokenB))
     RawOrder(
       owner = owner,
       hash = Numeric.toHexString(hash),
@@ -129,9 +129,9 @@ trait ServiceSpec[S]
       state = Some(state),
       feeParams = Some(fee),
       params = Some(param),
-      marketHash = marketHash,
-      marketShard = Math.abs(marketHash.hashCode),
-      accountShard = Math.abs(owner.hashCode % 100)
+      marketId = marketHash.longId,
+      marketShardEntity = marketHash.hashString,
+      accountShardEntity = Math.abs(owner.hashCode % 100).toString
     )
   }
 }

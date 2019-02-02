@@ -33,7 +33,7 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
   def amountB = columnAmount("amount_b")
   def tokenS = columnAddress("token_s")
   def tokenB = columnAddress("token_b")
-  def marketHash = columnAddress("market_hash")
+  def marketId = column[Long]("market_id")
   def split = columnAmount("split")
 
   // fees
@@ -59,7 +59,7 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
   def idx_order_hash = index("idx_order_hash", (orderHash), unique = false)
   def idx_token_s = index("idx_token_s", (tokenS), unique = false)
   def idx_token_b = index("idx_token_b", (tokenB), unique = false)
-  def idx_market_hash = index("idx_market_hash", (marketHash), unique = false)
+  def idx_market_id = index("idx_market_id", (marketId), unique = false)
   def idx_wallet = index("idx_wallet", (wallet), unique = false)
   def idx_miner = index("idx_miner", (miner), unique = false)
 
@@ -94,7 +94,7 @@ class TradeTable(tag: Tag) extends BaseTable[Trade](tag, "T_TRADES") {
       amountB,
       tokenS,
       tokenB,
-      marketHash,
+      marketId,
       split,
       feeParamsProjection,
       wallet,

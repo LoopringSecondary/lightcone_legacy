@@ -103,8 +103,6 @@ final class MultiAccountManagerMessageValidator(
             val marketPair = MarketPair(rawOrder.tokenS, rawOrder.tokenB)
             metadataManager.assertMarketPairIsActive(marketPair)
 
-            val marketHash = MarketHash(marketPair).toString
-
             val now = timeProvider.getTimeMillis
             val state = RawOrder.State(
               createdAt = now,
@@ -137,11 +135,10 @@ final class MultiAccountManagerMessageValidator(
                     )
                   ),
                 state = Some(state),
-                marketHash = marketHash,
-                marketShard = MarketManagerActor.getEntityId(marketPair).toInt,
-                accountShard = MultiAccountManagerActor
+                marketId = MarketHash(marketPair).longId,
+                marketShardEntity = MarketManagerActor.getEntityId(marketPair),
+                accountShardEntity = MultiAccountManagerActor
                   .getEntityId(order.owner, numOfShards)
-                  .toInt
               )
             )
         }

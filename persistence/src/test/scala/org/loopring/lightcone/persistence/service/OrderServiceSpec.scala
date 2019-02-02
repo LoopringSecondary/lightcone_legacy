@@ -123,7 +123,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         owners,
         Set(tokenS),
         Set(tokenB),
-        Set(MarketHash(MarketPair(tokenS, tokenB)).toString),
+        Set(MarketHash(MarketPair(tokenS, tokenB)).longId),
         Set.empty,
         Some(SortingType.ASC),
         None
@@ -153,7 +153,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         owners,
         Set.empty,
         Set.empty,
-        Set(MarketHash(MarketPair(tokenS, tokenB)).toString),
+        Set(MarketHash(MarketPair(tokenS, tokenB)).longId),
         Set.empty,
         Some(SortingType.ASC),
         None
@@ -206,7 +206,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some("0x-getordersfouser-03"),
         None,
         None,
-        Some(MarketHash(MarketPair(tokenS, tokenB)).toString),
+        Some(MarketHash(MarketPair(tokenS, tokenB)).longId),
         None,
         Some(SortingType.ASC),
         None
@@ -233,7 +233,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         Some("0x-countorders-05"),
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHash(MarketPair(tokenS, tokenB)).toString)
+        Some(MarketHash(MarketPair(tokenS, tokenB)).longId)
       )
     } yield query
     val res = Await.result(result.mapTo[Int], 5.second)
@@ -253,13 +253,14 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val tokenB = "0xaaaaa02"
     val result = for {
       _ <- testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
-      marketHash = MarketHash(MarketPair(tokenS, tokenB)).toString
-      marketHashIds = Set(Math.abs(marketHash.hashCode))
-      addressShardIds = owners.map(a => Math.abs(a.hashCode % 100)).toSet
+      marketPair = MarketPair(tokenS, tokenB)
+      marketId = MarketHash(marketPair).longId
+      marketShardEntities = Set("0")
+      accountShardEntities = Set("1", "2")
       query <- service.getOrdersForRecover(
         Set(OrderStatus.STATUS_NEW),
-        marketHashIds,
-        addressShardIds,
+        marketShardEntities,
+        accountShardEntities,
         CursorPaging(size = 100)
       )
     } yield query
@@ -342,7 +343,7 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         None,
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHash(MarketPair(tokenS, tokenB)).toString)
+        Some(MarketHash(MarketPair(tokenS, tokenB)).longId)
       )
       update <- service.cancelOrders(
         Seq(saved1.left.get.hash, saved3.left.get.hash),
@@ -353,14 +354,14 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
         None,
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHash(MarketPair(tokenS, tokenB)).toString)
+        Some(MarketHash(MarketPair(tokenS, tokenB)).longId)
       )
       query3 <- service.countOrdersForUser(
         Set(OrderStatus.STATUS_SOFT_CANCELLED_BY_USER),
         None,
         Some(tokenS),
         Some(tokenB),
-        Some(MarketHash(MarketPair(tokenS, tokenB)).toString)
+        Some(MarketHash(MarketPair(tokenS, tokenB)).longId)
       )
     } yield (update, query1, query2, query3)
     val res = Await.result(

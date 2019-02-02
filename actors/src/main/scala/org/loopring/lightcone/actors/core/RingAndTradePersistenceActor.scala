@@ -123,7 +123,7 @@ class RingAndTradePersistenceActor(
         f.filledAmountB,
         f.tokenS,
         f.tokenB,
-        MarketHash(MarketPair(f.tokenS, f.tokenB)).toString,
+        MarketHash(MarketPair(f.tokenS, f.tokenB)).longId,
         f.split,
         Some(fee),
         f.wallet,

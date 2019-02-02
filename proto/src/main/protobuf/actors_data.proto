@@ -96,10 +96,10 @@ message RawOrder {
     FeeParams fee_params              = 11;
     ERC1400Params erc1400_params      = 12;
     State state                       = 13;
-    int64  sequence_id                = 14;
-    string market_hash                 = 15;
-    int32  account_shard              = 16;
-    int32  market_shard               = 17;
+    int64 sequence_id                 = 14;
+    int64 market_id                   = 15;
+    string  account_shard_entity      = 16;
+    string  market_shard_entity       = 17;
 }
 
 
@@ -278,7 +278,7 @@ message Trade {
     bytes  amount_b          = 8;
     string token_s           = 9;
     string token_b           = 10;
-    string market_hash        = 11;
+    int64  market_id         = 11;
     bytes  split             = 12; // tokenS
     Fee    fee               = 13;
     string wallet            = 14;
