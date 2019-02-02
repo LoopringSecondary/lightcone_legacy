@@ -67,7 +67,9 @@ class ProcessEthereumSpec_OwnerCutoffTradingPair
         ),
         broker = accounts(0).getAddress,
         owner = accounts(0).getAddress,
-        marketHash = MarketHash(LRC_TOKEN.address, WETH_TOKEN.address).toString,
+        marketHash = MarketHash(
+          MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)
+        ).toString,
         cutoff = timeProvider.getTimeSeconds().toInt + 100
       )
       val sendCutoffF = Future.sequence(

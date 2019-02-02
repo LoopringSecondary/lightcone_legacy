@@ -21,7 +21,7 @@ import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.proto.{OrderStatus, RawOrder}
+import org.loopring.lightcone.proto._
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
@@ -106,7 +106,7 @@ trait ServiceSpec[S]
     val until =
       if (validUntil > 0) validUntil else (createAt / 1000).toInt + 20000
     val param = RawOrder.Params(validUntil = until)
-    val marketHash = MarketHash(tokenS, tokenB).toString
+    val marketHash = MarketHash(MarketPair(tokenS, tokenB)).toString
     val hash = Hash.sha3(
       BigInt(createAt).toByteArray ++
         Numeric.hexStringToByteArray(owner) ++

@@ -55,7 +55,7 @@ class AccountCutoffStateImpl()(implicit timeProvider: TimeProvider)
         s"this address has been set cutoff=$ownerCutoff."
       )
     }
-    val marketHash = MarketHash(rawOrder.tokenS, rawOrder.tokenB).toString
+    val marketHash = MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString
 
     if (marketPairCutoffs.contains(marketHash) &&
         marketPairCutoffs(marketHash) > rawOrder.validSince) {

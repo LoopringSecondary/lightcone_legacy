@@ -107,7 +107,7 @@ final private[core] class AccountManagerImpl(
     ): Int = {
     val orders = orderPool.orders.filter { order =>
       order.validSince <= cutoff &&
-      MarketHash(order.tokenS, order.tokenB).toString == marketHash
+      MarketHash(MarketPair(order.tokenS, order.tokenB)).toString == marketHash
     }
 
     orders.foreach { order =>

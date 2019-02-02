@@ -42,7 +42,7 @@ trait OrderGenerateSupport {
       credentials: Credentials = accounts(0)
     ) = {
     val createAt = timeProvider.getTimeMillis
-    val marketHash = MarketHash(tokenS, tokenB).toString
+    val marketHash = MarketHash(MarketPair(tokenS, tokenB)).toString
     val order = RawOrder(
       owner = credentials.getAddress,
       version = 0,

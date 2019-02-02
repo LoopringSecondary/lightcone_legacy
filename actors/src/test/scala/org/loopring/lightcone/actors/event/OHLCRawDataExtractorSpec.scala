@@ -117,7 +117,7 @@ class OHLCRawDataExtractorSpec
       )
       Thread.sleep(2000)
       val marketHash =
-        MarketHash(LRC_TOKEN.address, WETH_TOKEN.address).toString
+        MarketHash(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)).toString
       //      val ohlcDatas = Await.result(
       //        dbModule.ohlcDataDal.getOHLCData(
       //          marketHash,

@@ -17,26 +17,24 @@
 package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.proto.MarketPair
+import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.lib.MurmurHash64
 
 object MarketHash {
   def apply(marketPair: MarketPair): MarketHash = new MarketHash(marketPair)
-
-  def apply(
-      baseToken: String,
-      quoteToken: String
-    ): MarketHash = apply(MarketPair(baseToken, quoteToken))
-
-  def removePrefix(address: String): String = {
-    if (address.startsWith("0x")) address.substring(2).trim
-    else address.trim
-  }
 }
 
 class MarketHash(marketPair: MarketPair) {
   import MarketHash._
 
-  val value = BigInt(removePrefix(marketPair.quoteToken), 16) ^
-    BigInt(removePrefix(marketPair.baseToken), 16)
+  val hashString = {
+    (Address(marketPair.baseToken).toBigInt ^
+      Address(marketPair.quoteToken).toBigInt).toString(16)
+  }
 
-  override def toString = s"0x${value.toString(16).toLowerCase}"
+  def longId() = MurmurHash64.hash(hashString)
+
+  def getBytes() = hashString.getBytes
+
+  override def toString() = hashString
 }
