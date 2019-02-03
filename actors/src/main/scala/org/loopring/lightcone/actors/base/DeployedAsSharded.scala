@@ -55,7 +55,8 @@ trait DeployedAsSharded[T] extends Object with Logging {
     val numOfShardsPath = s"${name}.num-of-shards"
     assert(
       config.hasPath(numOfShardsPath),
-      s"no config for `${numOfShardsPath}`")
+      s"no config for `${numOfShardsPath}`"
+    )
     numOfShards = config.getInt(numOfShardsPath)
     assert(numOfShards > 0, "num of shards should be greater than 0")
 
@@ -68,10 +69,13 @@ trait DeployedAsSharded[T] extends Object with Logging {
   }
 
   def startSharding(
-    entityProps: Props)(
-      implicit system: ActorSystem,
+      entityProps: Props
+    )(
+      implicit
+      system: ActorSystem,
       config: Config,
-      deployActorsIgnoringRoles: Boolean) = {
+      deployActorsIgnoringRoles: Boolean
+    ) = {
     loadConfig()
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
 
@@ -79,7 +83,8 @@ trait DeployedAsSharded[T] extends Object with Logging {
       typeName = name,
       entityProps = entityProps,
       settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor)
+      messageExtractor = messageExtractor
+    )
   }
 }
 

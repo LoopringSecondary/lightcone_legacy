@@ -26,11 +26,10 @@ import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
-class OrderServiceImpl @Inject()(
-    implicit
-    val ec: ExecutionContext,
-    orderDal: OrderDal)
-    extends OrderService {
+class OrderServiceImpl @Inject() (
+  implicit val ec: ExecutionContext,
+  orderDal: OrderDal)
+  extends OrderService {
 
   private def giveUserOrder(order: Option[RawOrder]): Option[RawOrder] = {
     order match {
@@ -44,9 +43,7 @@ class OrderServiceImpl @Inject()(
             sequenceId = 0,
             marketHash = "",
             marketEntityId = 0,
-            addressEntityId = 0
-          )
-        )
+            addressEntityId = 0))
       case None => None
     }
   }
@@ -56,8 +53,8 @@ class OrderServiceImpl @Inject()(
     if (order.addressEntityId < 0 || order.marketEntityId < 0) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"Invalid addressEntityId:[${order.addressEntityId}] or marketEntityId:[${order.marketEntityId}]"
-      )
+        s"Invalid addressEntityId:[${order.addressEntityId}] or " +
+          s"marketEntityId:[${order.marketEntityId}]")
     }
     orderDal.saveOrder(order).map { r =>
       if (r.error == ErrorCode.ERR_NONE) {
@@ -75,15 +72,14 @@ class OrderServiceImpl @Inject()(
     orderDal.getOrder(hash)
 
   def getOrders(
-      statuses: Set[OrderStatus],
-      owners: Set[String],
-      tokenSSet: Set[String],
-      tokenBSet: Set[String],
-      marketHashSet: Set[String],
-      feeTokenSet: Set[String],
-      sort: Option[SortingType],
-      skip: Option[Paging]
-    ): Future[Seq[RawOrder]] =
+    statuses: Set[OrderStatus],
+    owners: Set[String],
+    tokenSSet: Set[String],
+    tokenBSet: Set[String],
+    marketHashSet: Set[String],
+    feeTokenSet: Set[String],
+    sort: Option[SortingType],
+    skip: Option[Paging]): Future[Seq[RawOrder]] =
     orderDal
       .getOrders(
         statuses,
@@ -93,20 +89,18 @@ class OrderServiceImpl @Inject()(
         marketHashSet,
         feeTokenSet,
         sort,
-        skip
-      )
+        skip)
       .map(_.map(r => giveUserOrder(Some(r)).get))
 
   def getOrdersForUser(
-      statuses: Set[OrderStatus],
-      owner: Option[String] = None,
-      tokenS: Option[String] = None,
-      tokenB: Option[String] = None,
-      marketHashSet: Option[String] = None,
-      feeTokenSet: Option[String] = None,
-      sort: Option[SortingType] = None,
-      skip: Option[Paging] = None
-    ): Future[Seq[RawOrder]] =
+    statuses: Set[OrderStatus],
+    owner: Option[String] = None,
+    tokenS: Option[String] = None,
+    tokenB: Option[String] = None,
+    marketHashSet: Option[String] = None,
+    feeTokenSet: Option[String] = None,
+    sort: Option[SortingType] = None,
+    skip: Option[Paging] = None): Future[Seq[RawOrder]] =
     orderDal
       .getOrdersForUser(
         statuses,
@@ -116,87 +110,74 @@ class OrderServiceImpl @Inject()(
         marketHashSet,
         feeTokenSet,
         sort,
-        skip
-      )
+        skip)
       .map(_.map(r => giveUserOrder(Some(r)).get))
 
   def getOrdersForRecover(
-      statuses: Set[OrderStatus],
-      marketEntityIds: Set[Long] = Set.empty,
-      accountEntityIds: Set[Long] = Set.empty,
-      skip: CursorPaging
-    ): Future[Seq[RawOrder]] =
+    statuses: Set[OrderStatus],
+    marketEntityIds: Set[Long] = Set.empty,
+    addressEntityIds: Set[Long] = Set.empty,
+    skip: CursorPaging): Future[Seq[RawOrder]] =
     orderDal.getOrdersForRecover(
       statuses,
       marketEntityIds,
-      accountEntityIds,
-      skip
-    )
+      addressEntityIds,
+      skip)
 
   def getCutoffAffectedOrders(
-      retrieveCondition: RetrieveOrdersToCancel,
-      take: Int
-    ): Future[Seq[RawOrder]] =
+    retrieveCondition: RetrieveOrdersToCancel,
+    take: Int): Future[Seq[RawOrder]] =
     orderDal.getCutoffAffectedOrders(retrieveCondition, take)
 
   def getOrdersToActivate(
-      activateLaggingInSecond: Int,
-      limit: Int
-    ): Future[Seq[RawOrder]] =
+    activateLaggingInSecond: Int,
+    limit: Int): Future[Seq[RawOrder]] =
     orderDal.getOrdersToActivate(activateLaggingInSecond, limit)
 
   def getOrdersToExpire(
-      expireLeadInSeconds: Int,
-      limit: Int
-    ): Future[Seq[RawOrder]] =
+    expireLeadInSeconds: Int,
+    limit: Int): Future[Seq[RawOrder]] =
     orderDal.getOrdersToExpire(expireLeadInSeconds, limit)
 
   // Count the number of orders
   def countOrdersForUser(
-      statuses: Set[OrderStatus],
-      owner: Option[String] = None,
-      tokenS: Option[String] = None,
-      tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
-      feeTokenSet: Option[String] = None
-    ): Future[Int] =
+    statuses: Set[OrderStatus],
+    owner: Option[String] = None,
+    tokenS: Option[String] = None,
+    tokenB: Option[String] = None,
+    marketHash: Option[String] = None,
+    feeTokenSet: Option[String] = None): Future[Int] =
     orderDal.countOrdersForUser(
       statuses,
       owner,
       tokenS,
       tokenB,
       marketHash,
-      feeTokenSet
-    )
+      feeTokenSet)
 
   def updateOrderStatus(
-      hash: String,
-      status: OrderStatus
-    ): Future[ErrorCode] = {
+    hash: String,
+    status: OrderStatus): Future[ErrorCode] = {
     orderDal.updateOrderStatus(hash, status)
   }
 
   def updateOrdersStatus(
-      hashes: Seq[String],
-      status: OrderStatus
-    ): Future[ErrorCode] = {
+    hashes: Seq[String],
+    status: OrderStatus): Future[ErrorCode] = {
     orderDal.updateOrdersStatus(hashes, status)
   }
 
   def updateOrderState(
-      hash: String,
-      state: RawOrder.State
-    ): Future[ErrorCode] = orderDal.updateOrderState(hash, state)
+    hash: String,
+    state: RawOrder.State): Future[ErrorCode] = orderDal.updateOrderState(hash, state)
 
   def updateAmounts(
-      hash: String,
-      state: RawOrder.State
-    ): Future[ErrorCode] = orderDal.updateAmounts(hash, state)
+    hash: String,
+    state: RawOrder.State): Future[ErrorCode] = orderDal.updateAmounts(hash, state)
 
   def cancelOrders(
-      orderHashes: Seq[String],
-      status: OrderStatus
-    ): Future[Seq[UserCancelOrder.Res.Result]] =
+    orderHashes: Seq[String],
+    status: OrderStatus): Future[Seq[UserCancelOrder.Res.Result]] =
     for {
       updated <- orderDal.updateOrdersStatus(orderHashes, status)
       selectOwners <- orderDal.getOrdersMap(orderHashes)
@@ -206,14 +187,12 @@ class OrderServiceImpl @Inject()(
           UserCancelOrder.Res.Result(
             orderHash,
             giveUserOrder(selectOwners.get(orderHash)),
-            ErrorCode.ERR_NONE
-          )
+            ErrorCode.ERR_NONE)
         }
       } else {
         throw ErrorException(
           ERR_INTERNAL_UNKNOWN,
-          "Failed to update order status"
-        )
+          "Failed to update order status")
       }
     }
 }

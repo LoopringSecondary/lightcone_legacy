@@ -39,28 +39,31 @@ object OrderRecoverActor extends DeployedAsShardedWithMessageId {
   }
 
   def start(
-    implicit system: ActorSystem,
-    config: Config,
-    ec: ExecutionContext,
-    timeProvider: TimeProvider,
-    timeout: Timeout,
-    actors: Lookup[ActorRef],
-    dbModule: DatabaseModule,
-    metadataManager: MetadataManager,
-    deployActorsIgnoringRoles: Boolean): ActorRef = {
+      implicit
+      system: ActorSystem,
+      config: Config,
+      ec: ExecutionContext,
+      timeProvider: TimeProvider,
+      timeout: Timeout,
+      actors: Lookup[ActorRef],
+      dbModule: DatabaseModule,
+      metadataManager: MetadataManager,
+      deployActorsIgnoringRoles: Boolean
+    ): ActorRef = {
     startSharding(Props(new OrderRecoverActor()))
   }
 }
 
 class OrderRecoverActor(
-  implicit val config: Config,
-  val ec: ExecutionContext,
-  timeProvider: TimeProvider,
-  timeout: Timeout,
-  actors: Lookup[ActorRef],
-  dbModule: DatabaseModule,
-  metadataManager: MetadataManager)
-  extends InitializationRetryActor {
+    implicit
+    val config: Config,
+    val ec: ExecutionContext,
+    timeProvider: TimeProvider,
+    timeout: Timeout,
+    actors: Lookup[ActorRef],
+    dbModule: DatabaseModule,
+    metadataManager: MetadataManager)
+    extends InitializationRetryActor {
   import OrderStatus._
 
   val selfConfig = config.getConfig(OrderRecoverActor.name)
@@ -95,7 +98,8 @@ class OrderRecoverActor(
         }
       }
       log.debug(
-        s"the request params of batch: ${batchSize}, ${marketEntityIds}, ${addressEntityIds}")
+        s"the request params of batch: ${batchSize}, ${marketEntityIds}, ${addressEntityIds}"
+      )
 
       context.become(recovering)
   }
@@ -116,14 +120,16 @@ class OrderRecoverActor(
         // filter unsupported markets
         availableOrders = orders.filter { o =>
           metadataManager.isMarketActiveOrReadOnly(
-            MarketPair(o.tokenS, o.tokenB))
+            MarketPair(o.tokenS, o.tokenB)
+          )
         }
         _ <- if (availableOrders.nonEmpty) {
           val reqs = availableOrders.map { order =>
             ActorRecover.RecoverOrderReq(Some(order))
           }
           log.info(
-            s"--> batch#${batch.batchId} recovering ${orders.size} orders (total=${numOrders})...")
+            s"--> batch#${batch.batchId} recovering ${orders.size} orders (total=${numOrders})..."
+          )
           Future.sequence(reqs.map(mama ? _))
         } else {
           Future.unit
@@ -160,16 +166,19 @@ class OrderRecoverActor(
   // parameters, the batch size, and the last order sequence id.
   // The last order in the returned list should be the most up-to-date one.
   def retrieveOrders(
-    batchSize: Int,
-    lastOrderSeqId: Long): Future[Seq[RawOrder]] = {
+      batchSize: Int,
+      lastOrderSeqId: Long
+    ): Future[Seq[RawOrder]] = {
     if (batch.requestMap.nonEmpty) {
       log.debug(
-        s"the request params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${orderStatus}, ${marketEntityIds}, ${addressEntityIds}")
+        s"the request params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${orderStatus}, ${marketEntityIds}, ${addressEntityIds}"
+      )
       dbModule.orderService.getOrdersForRecover(
         orderStatus,
         marketEntityIds,
         addressEntityIds,
-        CursorPaging(lastOrderSeqId, batchSize))
+        CursorPaging(lastOrderSeqId, batchSize)
+      )
     } else {
       Future.successful(Seq.empty)
     }
