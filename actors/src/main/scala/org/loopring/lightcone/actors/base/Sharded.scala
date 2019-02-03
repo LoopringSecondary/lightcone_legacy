@@ -21,6 +21,8 @@ import akka.actor._
 import akka.cluster.sharding._
 import akka.cluster.sharding.ShardRegion._
 import com.typesafe.config.Config
+import org.loopring.lightcone.proto.MarketPair
+import org.loopring.lightcone.actors.data._
 
 // Owner: Daniel
 
@@ -70,5 +72,18 @@ trait Sharded[T] extends Object with Logging {
       messageExtractor = messageExtractor
     )
   }
+}
 
+trait ShardedEvenly extends Sharded[Any] {
+
+  val extractShardingObject: PartialFunction[Any, Any] = {
+    case msg: Any => msg
+  }
+}
+
+trait ShardedByAddress extends Sharded[String]
+
+// Owner: Daniel
+trait ShardedByMarket extends Sharded[MarketPair] {
+  override def getEntityId(marketPair: MarketPair): Long = marketPair.longId
 }
