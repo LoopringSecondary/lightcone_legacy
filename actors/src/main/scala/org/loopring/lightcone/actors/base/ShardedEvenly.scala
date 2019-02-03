@@ -21,16 +21,14 @@ import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 
 // Owner: Daniel
 trait ShardedEvenly extends Sharded {
-  protected var entitiesPerShard: Int = 1
 
   def getEntityId(message: Any): String =
-    Math.abs(message.hashCode % numOfShards * entitiesPerShard).toString
+    Math.abs(message.hashCode).toString
 
-  protected val messageExtractor =
-    new HashCodeMessageExtractor(numOfShards) {
-      override def entityId(message: Any) = {
-        val eid = getEntityId(message)
-        s"${name}_${eid}"
-      }
+  def messageExtractor = new HashCodeMessageExtractor(numOfShards) {
+    override def entityId(message: Any) = {
+      val eid = getEntityId(message)
+      s"${name}_${eid}"
     }
+  }
 }

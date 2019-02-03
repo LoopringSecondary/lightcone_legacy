@@ -16,8 +16,10 @@
 
 package org.loopring.lightcone.actors.base
 
+import akka.actor._
 import akka.cluster.sharding._
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
+import com.typesafe.config.Config
 
 // Owner: Daniel
 trait ShardedByAddress extends Sharded {
@@ -32,7 +34,7 @@ trait ShardedByAddress extends Sharded {
   def getEntityId(address: String): String =
     getEntityId(address, numOfShards)
 
-  val messageExtractor =
+  def messageExtractor =
     new HashCodeMessageExtractor(numOfShards) {
       override def entityId(msg: Any) = {
         val entityIdOpt = (extractAddress.lift)(msg).map(getEntityId)

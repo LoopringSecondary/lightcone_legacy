@@ -33,7 +33,7 @@ import scala.concurrent.ExecutionContext
 import scala.util.Random
 
 // Owner: Hongyu
-object RingSettlementManagerActor {
+object RingSettlementManagerActor extends Singletoned {
   val name = "ring_settlement"
 
   def start(
@@ -47,24 +47,7 @@ object RingSettlementManagerActor {
       dbModule: DatabaseModule,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    system.actorOf(
-      ClusterSingletonManager.props(
-        singletonProps = Props(new RingSettlementManagerActor()),
-        terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-      ),
-      RingSettlementManagerActor.name
-    )
-
-    system.actorOf(
-      ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${RingSettlementManagerActor.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${RingSettlementManagerActor.name}_proxy"
-    )
+    startSingleton(Props(new RingSettlementManagerActor()))
   }
 }
 

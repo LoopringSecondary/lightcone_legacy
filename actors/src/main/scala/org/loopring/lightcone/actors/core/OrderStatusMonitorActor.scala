@@ -32,7 +32,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // Owner: Hongyu
-object OrderStatusMonitorActor {
+object OrderStatusMonitorActor extends Singletoned {
   val name = "order_status_monitor"
 
   def start(
@@ -49,23 +49,7 @@ object OrderStatusMonitorActor {
       metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    system.actorOf(
-      ClusterSingletonManager.props(
-        singletonProps = Props(new OrderStatusMonitorActor()),
-        terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-      ),
-      name = OrderStatusMonitorActor.name
-    )
-
-    system.actorOf(
-      ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${OrderStatusMonitorActor.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${OrderStatusMonitorActor.name}_proxy"
-    )
+    startSingleton(Props(new OrderStatusMonitorActor()))
   }
 }
 

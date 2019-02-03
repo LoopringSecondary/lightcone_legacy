@@ -54,17 +54,7 @@ object TransactionRecordActor extends ShardedByAddress {
       databaseConfigManager: DatabaseConfigManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shards")
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new TransactionRecordActor()),
-      settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+    startSharding(Props(new TransactionRecordActor()))
   }
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
@@ -87,7 +77,7 @@ class TransactionRecordActor(
     val dbModule: DatabaseModule,
     val databaseConfigManager: DatabaseConfigManager)
     extends InitializationRetryActor
-    with ShardedWithLongEntityId {
+    with ShardingEntityAware {
 
   val selfConfig = config.getConfig(TransactionRecordActor.name)
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")

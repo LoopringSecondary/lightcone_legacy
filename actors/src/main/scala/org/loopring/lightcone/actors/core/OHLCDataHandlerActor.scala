@@ -17,12 +17,6 @@
 package org.loopring.lightcone.actors.core
 
 import akka.actor._
-import akka.cluster.singleton.{
-  ClusterSingletonManager,
-  ClusterSingletonManagerSettings,
-  ClusterSingletonProxy,
-  ClusterSingletonProxySettings
-}
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
@@ -34,7 +28,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent.ExecutionContext
 
-object OHLCDataHandlerActor extends {
+object OHLCDataHandlerActor extends Singletoned {
   val name = "ohlc_data_handler"
 
   def start(
@@ -48,24 +42,7 @@ object OHLCDataHandlerActor extends {
       dbModule: DatabaseModule,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    system.actorOf(
-      ClusterSingletonManager.props(
-        singletonProps = Props(new OHLCDataHandlerActor()),
-        terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-      ),
-      OHLCDataHandlerActor.name
-    )
-
-    system.actorOf(
-      ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${OHLCDataHandlerActor.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${OHLCDataHandlerActor.name}_proxy"
-    )
+    startSingleton(Props(new OHLCDataHandlerActor()))
   }
 }
 

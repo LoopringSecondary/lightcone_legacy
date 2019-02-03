@@ -29,7 +29,7 @@ import scala.concurrent.duration._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object MissingBlocksEventExtractorActor {
+object MissingBlocksEventExtractorActor extends Singletoned {
   val name = "missing_blocks_event_extractor"
 
   def start(
@@ -44,26 +44,7 @@ object MissingBlocksEventExtractorActor {
       dispatchers: Seq[EventDispatcher[_]],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    system.actorOf(
-      ClusterSingletonManager.props(
-        singletonProps = Props(new MissingBlocksEventExtractorActor()),
-        terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-      ),
-      name = MissingBlocksEventExtractorActor.name
-    )
-
-    system.actorOf(
-      ClusterSingletonProxy
-        .props(
-          singletonManagerPath =
-            s"/user/${MissingBlocksEventExtractorActor.name}",
-          settings = ClusterSingletonProxySettings(system)
-        ),
-      name = s"${MissingBlocksEventExtractorActor.name}_proxy"
-    )
+    startSingleton(Props(new MissingBlocksEventExtractorActor()))
   }
 
 }

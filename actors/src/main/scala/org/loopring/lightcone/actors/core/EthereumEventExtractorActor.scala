@@ -34,7 +34,7 @@ import scala.concurrent._
 import scala.util._
 
 // Owner: Yadong
-object EthereumEventExtractorActor {
+object EthereumEventExtractorActor extends Singletoned {
   val name = "ethereum_event_extractor"
 
   def start(
@@ -49,24 +49,7 @@ object EthereumEventExtractorActor {
       dispatchers: Seq[EventDispatcher[_]],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    system.actorOf(
-      ClusterSingletonManager.props(
-        singletonProps = Props(new EthereumEventExtractorActor()),
-        terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-      ),
-      name = EthereumEventExtractorActor.name
-    )
-
-    system.actorOf(
-      ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${EthereumEventExtractorActor.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${EthereumEventExtractorActor.name}_proxy"
-    )
+    startSingleton(Props(new EthereumEventExtractorActor()))
   }
 }
 

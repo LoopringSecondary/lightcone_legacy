@@ -48,19 +48,7 @@ object GasPriceActor extends ShardedEvenly {
       actors: Lookup[ActorRef],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shards")
-    entitiesPerShard = selfConfig.getInt("entities-per-shard")
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new GasPriceActor()),
-      settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+    startSharding(Props(new GasPriceActor()))
   }
 }
 
