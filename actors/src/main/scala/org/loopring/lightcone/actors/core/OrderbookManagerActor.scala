@@ -55,17 +55,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
       metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("instances-per-market")
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new OrderbookManagerActor()),
-      settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+    startSharding(Props(new OrderbookManagerActor()))
   }
 
   // 如果message不包含一个有效的marketPair，就不做处理，不要返回“默认值”

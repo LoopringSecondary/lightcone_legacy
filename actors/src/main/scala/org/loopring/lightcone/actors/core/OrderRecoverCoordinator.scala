@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 // Owner: Daniel
-object OrderRecoverCoordinator extends {
+object OrderRecoverCoordinator extends Singletoned {
   val name = "order_recover_coordinator"
 
   def start(
@@ -43,23 +43,7 @@ object OrderRecoverCoordinator extends {
       dustEvaluator: DustOrderEvaluator,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    system.actorOf(
-      ClusterSingletonManager.props(
-        singletonProps = Props(new OrderRecoverCoordinator()),
-        terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-      ),
-      OrderRecoverCoordinator.name
-    )
-
-    system.actorOf(
-      ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${OrderRecoverCoordinator.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${OrderRecoverCoordinator.name}_proxy"
-    )
+    startSingleton(Props(new OrderRecoverCoordinator()))
   }
 
 }

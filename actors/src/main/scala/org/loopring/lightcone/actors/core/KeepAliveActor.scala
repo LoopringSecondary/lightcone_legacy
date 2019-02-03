@@ -32,7 +32,7 @@ import scala.concurrent._
 
 //目标：需要恢复的以及初始化花费时间较长的
 //定时keepalive, 定时给需要监控的发送req，确认各个shard等需要初始化的运行正常，否则会触发他们的启动恢复
-object KeepAliveActor {
+object KeepAliveActor extends Singletoned {
   val name = "alive_keeper"
   val NOTIFY_MSG = "heartbeat"
 
@@ -48,24 +48,7 @@ object KeepAliveActor {
       dbModule: DatabaseModule,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    system.actorOf(
-      ClusterSingletonManager.props(
-        singletonProps = Props(new KeepAliveActor()),
-        terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-      ),
-      KeepAliveActor.name
-    )
-
-    system.actorOf(
-      ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${KeepAliveActor.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${KeepAliveActor.name}_proxy"
-    )
+    startSingleton(Props(new KeepAliveActor()))
   }
 }
 

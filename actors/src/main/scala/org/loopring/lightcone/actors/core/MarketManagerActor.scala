@@ -63,15 +63,8 @@ object MarketManagerActor extends ShardedByMarket {
       metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
     this.metadataManager = metadataManager
-
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new MarketManagerActor()),
-      settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+    startSharding(Props(new MarketManagerActor()))
   }
 
   // 如果message不包含一个有效的marketPair，就不做处理，不要返回“默认值”

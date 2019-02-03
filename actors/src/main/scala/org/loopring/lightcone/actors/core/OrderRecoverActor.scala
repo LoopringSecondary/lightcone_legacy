@@ -35,7 +35,7 @@ import scala.concurrent._
 object OrderRecoverActor extends ShardedEvenly {
   val name = "order_recover"
 
-  override protected val messageExtractor =
+  override val messageExtractor =
     new HashCodeMessageExtractor(numOfShards) {
       override def entityId(message: Any) = message match {
         case req: ActorRecover.RequestBatch =>
@@ -57,13 +57,7 @@ object OrderRecoverActor extends ShardedEvenly {
       metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new OrderRecoverActor()),
-      settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+    startSharding(Props(new OrderRecoverActor()))
   }
 }
 

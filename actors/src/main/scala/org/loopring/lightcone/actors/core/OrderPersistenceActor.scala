@@ -45,18 +45,7 @@ object OrderPersistenceActor extends ShardedEvenly {
       dbModule: DatabaseModule,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shards")
-    entitiesPerShard = selfConfig.getInt("entities-per-shard")
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new OrderPersistenceActor()),
-      settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+    startSharding(Props(new OrderPersistenceActor()))
   }
 }
 

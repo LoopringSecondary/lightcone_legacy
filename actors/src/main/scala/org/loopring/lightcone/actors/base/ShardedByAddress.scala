@@ -16,8 +16,10 @@
 
 package org.loopring.lightcone.actors.base
 
+import akka.actor._
 import akka.cluster.sharding._
 import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
+import com.typesafe.config.Config
 
 // Owner: Daniel
 trait ShardedByAddress extends Sharded {

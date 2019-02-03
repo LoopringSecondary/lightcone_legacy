@@ -52,17 +52,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     this.metadataManager = metadataManager
-
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shards")
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = Props(new MultiAccountManagerActor()),
-      settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+    startSharding(Props(new MultiAccountManagerActor()))
   }
 
   //如果message不包含一个有效的address，就不做处理，不要返回“默认值”

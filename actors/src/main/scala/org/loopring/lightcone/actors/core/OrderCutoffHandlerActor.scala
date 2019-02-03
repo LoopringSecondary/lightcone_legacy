@@ -30,7 +30,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.actors.base.safefuture._
 
 // Owner: Yongfeng
-object OrderCutoffHandlerActor {
+object OrderCutoffHandlerActor extends Singletoned {
   val name = "order_cutoff_handler"
 
   def start(
@@ -44,24 +44,7 @@ object OrderCutoffHandlerActor {
       actors: Lookup[ActorRef],
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    system.actorOf(
-      ClusterSingletonManager.props(
-        singletonProps = Props(new OrderCutoffHandlerActor()),
-        terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-      ),
-      OrderCutoffHandlerActor.name
-    )
-
-    system.actorOf(
-      ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${OrderCutoffHandlerActor.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${OrderCutoffHandlerActor.name}_proxy"
-    )
+    startSingleton(Props(new OrderCutoffHandlerActor()))
   }
 }
 

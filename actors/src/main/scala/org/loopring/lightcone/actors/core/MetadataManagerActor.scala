@@ -34,7 +34,7 @@ import org.loopring.lightcone.core.base.MetadataManager
 import scala.util._
 
 // Owner: Yongfeng
-object MetadataManagerActor {
+object MetadataManagerActor extends Singletoned {
   val name = "metadata_manager"
   val pubsubTopic = "TOKEN_MARKET_METADATA_CHANGE"
 
@@ -50,24 +50,7 @@ object MetadataManagerActor {
       metadataManager: MetadataManager,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
-
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-    system.actorOf(
-      ClusterSingletonManager.props(
-        singletonProps = Props(new MetadataManagerActor()),
-        terminationMessage = PoisonPill,
-        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
-      ),
-      MetadataManagerActor.name
-    )
-
-    system.actorOf(
-      ClusterSingletonProxy.props(
-        singletonManagerPath = s"/user/${MetadataManagerActor.name}",
-        settings = ClusterSingletonProxySettings(system)
-      ),
-      name = s"${MetadataManagerActor.name}_proxy"
-    )
+    startSingleton(Props(new MetadataManagerActor()))
   }
 }
 
