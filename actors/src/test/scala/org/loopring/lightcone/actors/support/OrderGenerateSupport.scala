@@ -67,11 +67,9 @@ trait OrderGenerateSupport {
       params = Some(RawOrder.Params(validUntil = validUntil)),
       marketHash = marketHash,
       marketEntityId = MarketManagerActor
-        .getEntityId(MarketPair(tokenS, tokenB))
-        .toInt,
+        .getEntityId(MarketPair(tokenS, tokenB)),
       addressEntityId = MultiAccountManagerActor
         .getEntityId(credentials.getAddress)
-        .toInt
     )
 
     val hash = RawOrderValidatorDefault.calculateOrderHash(order)

@@ -56,7 +56,7 @@ class OrderServiceImpl @Inject()(
     if (order.addressEntityId < 0 || order.marketEntityId < 0) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"Invalid accountShard:[${order.addressEntityId}] or marketShard:[${order.marketEntityId}]"
+        s"Invalid addressEntityId:[${order.addressEntityId}] or marketEntityId:[${order.marketEntityId}]"
       )
     }
     orderDal.saveOrder(order).map { r =>
