@@ -34,7 +34,7 @@ import scala.concurrent._
 import scala.util._
 
 // Owner: Yadong
-object EthereumEventExtractorActor extends Singletoned {
+object EthereumEventExtractorActor extends DeployedAsSingleton {
   val name = "ethereum_event_extractor"
 
   def start(

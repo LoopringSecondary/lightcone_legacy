@@ -38,7 +38,7 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 // Owner: Hongyu
-object OrderbookManagerActor extends ShardedByMarket with Logging {
+object OrderbookManagerActor extends DeployedAsShardedByMarket with Logging {
   val name = "orderbook_manager"
 
   def getTopicId(marketPair: MarketPair) =

@@ -22,7 +22,7 @@ import com.typesafe.config.Config
 
 // Owner: Daniel
 
-trait Singletoned {
+trait DeployedAsSingleton {
   val name: String
 
   def startSingleton(

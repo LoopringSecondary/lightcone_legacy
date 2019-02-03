@@ -33,7 +33,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 // Owner: Hongyu
-object MultiAccountManagerActor extends ShardedByAddress {
+object MultiAccountManagerActor extends DeployedAsShardedByAddress {
   val name = "multi_account_manager"
 
   var metadataManager: MetadataManager = _

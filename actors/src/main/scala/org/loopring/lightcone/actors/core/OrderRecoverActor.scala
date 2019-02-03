@@ -32,7 +32,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import scala.concurrent._
 
 // Owner: Yongfeng
-object OrderRecoverActor extends ShardedEvenly {
+object OrderRecoverActor extends DeployedAsShardedEvenly {
   val name = "order_recover"
 
   override val messageExtractor =

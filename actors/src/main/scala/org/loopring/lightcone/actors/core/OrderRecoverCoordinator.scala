@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 // Owner: Daniel
-object OrderRecoverCoordinator extends Singletoned {
+object OrderRecoverCoordinator extends DeployedAsSingleton {
   val name = "order_recover_coordinator"
 
   def start(

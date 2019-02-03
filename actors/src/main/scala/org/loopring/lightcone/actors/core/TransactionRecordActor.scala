@@ -39,7 +39,7 @@ import TransactionRecord.EventData.Event
 import org.loopring.lightcone.ethereum.data.Address
 
 // main owner: 杜永丰
-object TransactionRecordActor extends ShardedByAddress {
+object TransactionRecordActor extends DeployedAsShardedByAddress {
   val name = "transaction_record"
 
   def start(

@@ -26,7 +26,7 @@ import org.loopring.lightcone.actors.data._
 
 // Owner: Daniel
 
-trait Sharded[T] extends Object with Logging {
+trait DeployedAsSharded[T] extends Object with Logging {
   val name: String
   var numOfShards: Int = _
 
@@ -74,16 +74,16 @@ trait Sharded[T] extends Object with Logging {
   }
 }
 
-trait ShardedEvenly extends Sharded[Any] {
+trait DeployedAsShardedEvenly extends DeployedAsSharded[Any] {
 
   val extractShardingObject: PartialFunction[Any, Any] = {
     case msg: Any => msg
   }
 }
 
-trait ShardedByAddress extends Sharded[String]
+trait DeployedAsShardedByAddress extends DeployedAsSharded[String]
 
 // Owner: Daniel
-trait ShardedByMarket extends Sharded[MarketPair] {
+trait DeployedAsShardedByMarket extends DeployedAsSharded[MarketPair] {
   override def getEntityId(marketPair: MarketPair): Long = marketPair.longId
 }

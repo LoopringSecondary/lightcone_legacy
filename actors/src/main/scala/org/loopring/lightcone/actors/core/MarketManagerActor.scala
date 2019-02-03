@@ -44,7 +44,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 // Owenr: Hongyu
-object MarketManagerActor extends ShardedByMarket {
+object MarketManagerActor extends DeployedAsShardedByMarket {
   val name = "market_manager"
 
   var metadataManager: MetadataManager = _

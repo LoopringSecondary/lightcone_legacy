@@ -34,7 +34,7 @@ import org.loopring.lightcone.core.base.MetadataManager
 import scala.util._
 
 // Owner: Yongfeng
-object MetadataManagerActor extends Singletoned {
+object MetadataManagerActor extends DeployedAsSingleton {
   val name = "metadata_manager"
   val pubsubTopic = "TOKEN_MARKET_METADATA_CHANGE"
 

@@ -30,7 +30,7 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.actors.base.safefuture._
 
 // Owner: Yongfeng
-object OrderCutoffHandlerActor extends Singletoned {
+object OrderCutoffHandlerActor extends DeployedAsSingleton {
   val name = "order_cutoff_handler"
 
   def start(

@@ -30,7 +30,7 @@ import org.loopring.lightcone.proto.ErrorCode._
 import scala.concurrent._
 
 // Owner: Yongfeng
-object RingAndTradePersistenceActor extends ShardedEvenly {
+object RingAndTradePersistenceActor extends DeployedAsShardedEvenly {
   val name = "ring_and_trade_persistence"
 
   def start(
