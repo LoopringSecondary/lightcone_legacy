@@ -254,11 +254,11 @@ class OrderServiceSpec extends ServiceSpec[OrderService] {
     val result = for {
       _ <- testSaves(owners, OrderStatus.STATUS_NEW, tokenS, tokenB)
       marketHash = MarketHash(MarketPair(tokenS, tokenB)).toString
-      marketHashIds = Set(Math.abs(marketHash.hashCode))
-      addressShardIds = owners.map(a => Math.abs(a.hashCode % 100)).toSet
+      marketEntityIds = Set(marketHash.hashCode.toLong.abs)
+      addressShardIds = owners.map(a => (a.hashCode % 100).toLong.abs).toSet
       query <- service.getOrdersForRecover(
         Set(OrderStatus.STATUS_NEW),
-        marketHashIds,
+        marketEntityIds,
         addressShardIds,
         CursorPaging(size = 100)
       )

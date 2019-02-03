@@ -130,8 +130,8 @@ trait ServiceSpec[S]
       feeParams = Some(fee),
       params = Some(param),
       marketHash = marketHash,
-      marketShard = Math.abs(marketHash.hashCode),
-      accountShard = Math.abs(owner.hashCode % 100)
+      marketEntityId = Math.abs(marketHash.hashCode),
+      addressEntityId = Math.abs(owner.hashCode % 100)
     )
   }
 }

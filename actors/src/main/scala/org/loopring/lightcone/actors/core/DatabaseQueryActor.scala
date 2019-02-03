@@ -94,8 +94,8 @@ class DatabaseQueryActor(
           r.copy(
             params = params,
             marketHash = "",
-            accountShard = 0,
-            marketShard = 0
+            addressEntityId = 0,
+            marketEntityId = 0
           )
         }
         GetOrdersForUser.Res(respOrder, total)

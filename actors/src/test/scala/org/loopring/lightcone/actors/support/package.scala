@@ -189,10 +189,10 @@ package object support {
       .forConfig[JdbcProfile]("", ConfigFactory.parseString(postgreConfigStr))
 
   val transactionRecordConfigStr = s"""
-     db.transaction_record.shard_0 {
+     db.transaction_record.entity_0 {
          $mysqlConfigStr
      }
-     db.transaction_record.shard_1 {
+     db.transaction_record.entity_1 {
          $mysqlConfigStr
      }
     """.stripMargin

@@ -24,20 +24,20 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto.Orderbook.Item
 import org.loopring.lightcone.proto._
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 class RecoverOrderSpec
-    extends CommonSpec
-    with JsonrpcSupport
-    with HttpSupport
-    with EthereumSupport
-    with MetadataManagerSupport
-    with OrderHandleSupport
-    with MultiAccountManagerSupport
-    with MarketManagerSupport
-    with OrderbookManagerSupport
-    with OrderGenerateSupport
-    with RecoverSupport {
+  extends CommonSpec
+  with JsonrpcSupport
+  with HttpSupport
+  with EthereumSupport
+  with MetadataManagerSupport
+  with OrderHandleSupport
+  with MultiAccountManagerSupport
+  with MarketManagerSupport
+  with OrderbookManagerSupport
+  with OrderGenerateSupport
+  with RecoverSupport {
   import OrderStatus._
 
   "recover an address" must {
@@ -47,8 +47,7 @@ class RecoverOrderSpec
       val getOrderBook1 = GetOrderbook.Req(
         0,
         100,
-        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
-      )
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)))
       val orderbookF1 = singleRequest(getOrderBook1, "get_orderbook")
       val timeout1 = Timeout(5 second)
       val orderbookRes1 =
@@ -71,11 +70,8 @@ class RecoverOrderSpec
       val marketLrcWeth =
         Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       val request1 = ActorRecover.Request(
-        addressShardingEntity = MultiAccountManagerActor
-          .getEntityId(owner)
-          .toString,
-        marketPair = marketLrcWeth
-      )
+        addressEntityId = MultiAccountManagerActor.getEntityId(owner),
+        marketPair = marketLrcWeth)
       implicit val timeout = Timeout(100 second)
       val r = actors.get(OrderRecoverCoordinator.name) ? request1
       val res = Await.result(r, timeout.duration)
@@ -90,20 +86,16 @@ class RecoverOrderSpec
           .get
       assert(orderbookRes1.sells.isEmpty && orderbookRes1.buys.isEmpty)
       assert(
-        orderbookRes2.sells.nonEmpty && orderbookRes2.sells.length === 2 && orderbookRes2.buys.isEmpty
-      )
+        orderbookRes2.sells.nonEmpty && orderbookRes2.sells.length === 2 && orderbookRes2.buys.isEmpty)
       orderbookRes2.sells should be(
         Seq(
           Item("0.050000", "80.00000", "4.00000"),
-          Item("0.100000", "60.00000", "6.00000")
-        )
-      )
+          Item("0.100000", "60.00000", "6.00000")))
     }
   }
 
   private def testSaves(
-      orders: Seq[RawOrder]
-    ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
+    orders: Seq[RawOrder]): Future[Seq[Either[RawOrder, ErrorCode]]] = {
     for {
       result <- Future.sequence(orders.map { order =>
         dbModule.orderService.saveOrder(order)
@@ -111,20 +103,17 @@ class RecoverOrderSpec
     } yield result
   }
 
-  private def testSaveOrder4Recover(
-    ): Future[Seq[Either[RawOrder, ErrorCode]]] = {
+  private def testSaveOrder4Recover(): Future[Seq[Either[RawOrder, ErrorCode]]] = {
     val rawOrders =
       ((0 until 6) map { i =>
         createRawOrder(
           amountS = "10".zeros(LRC_TOKEN.decimals),
-          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-        )
+          amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
       }) ++
         ((0 until 4) map { i =>
           val o = createRawOrder(
             amountS = "20".zeros(LRC_TOKEN.decimals),
-            amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
-          )
+            amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
           o.withStatus(STATUS_PENDING)
         }) ++
         Seq(
@@ -132,21 +121,17 @@ class RecoverOrderSpec
             tokenS = "0x021",
             tokenB = "0x022",
             amountS = "11".zeros(LRC_TOKEN.decimals),
-            amountFee = "3".zeros(LRC_TOKEN.decimals)
-          ).withStatus(STATUS_EXPIRED),
+            amountFee = "3".zeros(LRC_TOKEN.decimals)).withStatus(STATUS_EXPIRED),
           createRawOrder(
             tokenS = "0x031",
             tokenB = "0x032",
             amountS = "12".zeros(LRC_TOKEN.decimals),
-            amountFee = "2".zeros(LRC_TOKEN.decimals)
-          ).withStatus(STATUS_DUST_ORDER),
+            amountFee = "2".zeros(LRC_TOKEN.decimals)).withStatus(STATUS_DUST_ORDER),
           createRawOrder(
             tokenS = "0x041",
             tokenB = "0x042",
             amountS = "13".zeros(LRC_TOKEN.decimals),
-            amountFee = "5".zeros(LRC_TOKEN.decimals)
-          ).withStatus(STATUS_PARTIALLY_FILLED)
-        )
+            amountFee = "5".zeros(LRC_TOKEN.decimals)).withStatus(STATUS_PARTIALLY_FILLED))
     testSaves(rawOrders)
   }
 

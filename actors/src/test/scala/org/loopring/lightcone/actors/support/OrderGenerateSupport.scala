@@ -66,10 +66,10 @@ trait OrderGenerateSupport {
       ),
       params = Some(RawOrder.Params(validUntil = validUntil)),
       marketHash = marketHash,
-      marketShard = MarketManagerActor
+      marketEntityId = MarketManagerActor
         .getEntityId(MarketPair(tokenS, tokenB))
         .toInt,
-      accountShard = MultiAccountManagerActor
+      addressEntityId = MultiAccountManagerActor
         .getEntityId(credentials.getAddress)
         .toInt
     )

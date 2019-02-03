@@ -29,10 +29,11 @@ import org.loopring.lightcone.actors.data._
 trait DeployedAsSharded[T] extends Object with Logging {
   val name: String
   var numOfShards: Int = _
+  var numOfEntities: Int = _
 
   val extractShardingObject: PartialFunction[Any, T]
 
-  def getEntityId(obj: T): Long = Math.abs(obj.hashCode).toLong
+  def getEntityId(obj: T): Long
 
   def messageExtractor = new HashCodeMessageExtractor(numOfShards) {
     override def entityId(msg: Any) =
@@ -61,8 +62,15 @@ trait DeployedAsSharded[T] extends Object with Logging {
       config.hasPath(numOfShardsPath),
       s"no config for `${numOfShardsPath}`"
     )
-
     numOfShards = config.getInt(numOfShardsPath)
+
+    val numOfEntitiesPath = s"${name}.num-of-entities"
+    if (config.hasPath(numOfEntitiesPath)) {
+      numOfEntities = config.getInt(numOfEntitiesPath)
+    } else {
+      numOfEntities = numOfShards
+    }
+
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
 
     ClusterSharding(system).start(
@@ -79,11 +87,16 @@ trait DeployedAsShardedEvenly extends DeployedAsSharded[Any] {
   val extractShardingObject: PartialFunction[Any, Any] = {
     case msg: Any => msg
   }
+
+  def getEntityId(obj: Any) = (obj.hashCode % numOfEntities).abs
 }
 
-trait DeployedAsShardedByAddress extends DeployedAsSharded[String]
+trait DeployedAsShardedByAddress extends DeployedAsSharded[String] {
+
+  def getEntityId(addr: String) = (addr.hashCode % numOfEntities).abs
+}
 
 // Owner: Daniel
 trait DeployedAsShardedByMarket extends DeployedAsSharded[MarketPair] {
-  override def getEntityId(marketPair: MarketPair): Long = marketPair.longId
+  def getEntityId(marketPair: MarketPair) = marketPair.longId
 }

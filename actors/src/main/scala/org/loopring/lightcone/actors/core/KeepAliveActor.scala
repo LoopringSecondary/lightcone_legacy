@@ -111,7 +111,7 @@ class KeepAliveActor @Inject()(
     } yield Unit
 
   private def initAccountManager(): Future[Unit] = {
-    val numsOfShards = config.getInt("multi_account_manager.num-of-shards")
+    val numsOfShards = config.getInt("multi_account_manager.num-of-entities")
     for {
       _ <- Future.sequence((0 until numsOfShards) map { i =>
         multiAccountManagerActor ? Notify(KeepAliveActor.NOTIFY_MSG, i.toString)

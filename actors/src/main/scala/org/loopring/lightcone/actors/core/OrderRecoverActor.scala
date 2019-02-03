@@ -83,8 +83,8 @@ class OrderRecoverActor(
   def mama = actors.get(MultiAccountManagerActor.name)
 
   val orderStatus = Set(STATUS_NEW, STATUS_PENDING, STATUS_PARTIALLY_FILLED)
-  var accountShardIds: Set[Int] = Set.empty
-  var marketHashIds: Set[Int] = Set.empty
+  var addressEntityIds: Set[Long] = Set.empty
+  var marketEntityIds: Set[Long] = Set.empty
 
   def ready: Receive = {
     case req: ActorRecover.RequestBatch =>
@@ -96,17 +96,16 @@ class OrderRecoverActor(
 
       batch.requestMap.foreach {
         case (_, request) => {
-          if ("" != request.addressShardingEntity)
-            accountShardIds += request.addressShardingEntity.toInt
+          addressEntityIds += request.addressEntityId
           if (request.marketPair.nonEmpty) {
             val marketHashId =
-              MarketManagerActor.getEntityId(request.marketPair.get).toInt
-            marketHashIds += marketHashId
+              MarketManagerActor.getEntityId(request.marketPair.get)
+            marketEntityIds += marketHashId
           }
         }
       }
       log.debug(
-        s"the request params of batch: ${batchSize}, ${marketHashIds}, ${accountShardIds}"
+        s"the request params of batch: ${batchSize}, ${marketEntityIds}, ${addressEntityIds}"
       )
 
       context.become(recovering)
@@ -179,12 +178,12 @@ class OrderRecoverActor(
     ): Future[Seq[RawOrder]] = {
     if (batch.requestMap.nonEmpty) {
       log.debug(
-        s"the request params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${orderStatus}, ${marketHashIds}, ${accountShardIds}"
+        s"the request params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${orderStatus}, ${marketEntityIds}, ${addressEntityIds}"
       )
       dbModule.orderService.getOrdersForRecover(
         orderStatus,
-        marketHashIds,
-        accountShardIds,
+        marketEntityIds,
+        addressEntityIds,
         CursorPaging(lastOrderSeqId, batchSize)
       )
     } else {

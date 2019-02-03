@@ -140,7 +140,7 @@ class MultiAccountManagerActor(
         _ <- actors.get(EthereumQueryActor.name) ? Notify("echo") //检测以太坊准备好之后才发起恢复请求
         _ <- actors.get(OrderRecoverCoordinator.name) ?
           ActorRecover.Request(
-            addressShardingEntity = entityId.toString,
+            addressEntityId = entityId,
             sender = Serialization.serializedActorPath(self)
           )
       } yield {

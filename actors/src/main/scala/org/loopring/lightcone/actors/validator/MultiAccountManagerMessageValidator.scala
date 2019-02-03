@@ -137,10 +137,9 @@ final class MultiAccountManagerMessageValidator(
                   ),
                 state = Some(state),
                 marketHash = marketHash,
-                marketShard = MarketManagerActor.getEntityId(marketPair).toInt,
-                accountShard = MultiAccountManagerActor
+                marketEntityId = MarketManagerActor.getEntityId(marketPair),
+                addressEntityId = MultiAccountManagerActor
                   .getEntityId(order.owner)
-                  .toInt
               )
             )
         }
