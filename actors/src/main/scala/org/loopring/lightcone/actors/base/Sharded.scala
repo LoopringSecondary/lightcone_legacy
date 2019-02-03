@@ -25,8 +25,9 @@ import com.typesafe.config.Config
 
 trait Sharded {
   val name: String
-  val messageExtractor: MessageExtractor
   var numOfShards: Int = _
+
+  def messageExtractor: MessageExtractor
 
   def startSharding(
       entityProps: Props

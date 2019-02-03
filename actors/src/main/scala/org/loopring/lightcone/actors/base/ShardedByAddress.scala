@@ -34,7 +34,7 @@ trait ShardedByAddress extends Sharded {
   def getEntityId(address: String): String =
     getEntityId(address, numOfShards)
 
-  val messageExtractor =
+  def messageExtractor =
     new HashCodeMessageExtractor(numOfShards) {
       override def entityId(msg: Any) = {
         val entityIdOpt = (extractAddress.lift)(msg).map(getEntityId)

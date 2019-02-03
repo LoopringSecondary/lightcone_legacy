@@ -25,7 +25,7 @@ trait ShardedEvenly extends Sharded {
   def getEntityId(message: Any): String =
     Math.abs(message.hashCode).toString
 
-  val messageExtractor = new HashCodeMessageExtractor(numOfShards) {
+  def messageExtractor = new HashCodeMessageExtractor(numOfShards) {
     override def entityId(message: Any) = {
       val eid = getEntityId(message)
       s"${name}_${eid}"

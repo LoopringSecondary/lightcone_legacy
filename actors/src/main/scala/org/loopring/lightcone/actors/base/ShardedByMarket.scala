@@ -30,7 +30,7 @@ trait ShardedByMarket extends Sharded {
 
   def extractEntityId(actorName: String) = actorName.split("_").last
 
-  val messageExtractor =
+  def messageExtractor =
     new HashCodeMessageExtractor(Int.MaxValue) {
       override def entityId(msg: Any) = {
         val entityIdOpt = (extractMarketPair.lift)(msg).map(getEntityId)
