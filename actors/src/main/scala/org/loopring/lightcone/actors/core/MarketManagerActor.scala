@@ -115,10 +115,16 @@ class MarketManagerActor(
 
   val selfConfig = config.getConfig(MarketManagerActor.name)
 
-  implicit val marketPair: MarketPair =
+  implicit val marketPair = {
     metadataManager.getValidMarketPairs.values
-      .find(m => getEntityId(m) == entityId)
-      .get
+      .find(m => getEntityId(m) == entityId) match {
+      case Some(pair) => pair
+      case None =>
+        val error = s"unable to find market pair matching entity id ${entityId}"
+        log.error(error)
+        throw new IllegalStateException(error)
+    }
+  }
 
   log.info(
     s"=======> starting MarketManagerActor ${self.path} for ${marketPair}"

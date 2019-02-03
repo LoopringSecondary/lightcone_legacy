@@ -88,9 +88,16 @@ class OrderbookManagerActor(
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
-  val marketPair = metadataManager.getValidMarketPairs.values
-    .find(m => getEntityId(m) == entityId)
-    .get
+  val marketPair = {
+    metadataManager.getValidMarketPairs.values
+      .find(m => getEntityId(m) == entityId) match {
+      case Some(pair) => pair
+      case None =>
+        val error = s"unable to find market pair matching entity id ${entityId}"
+        log.error(error)
+        throw new IllegalStateException(error)
+    }
+  }
 
   def marketMetadata = metadataManager.getMarketMetadata(marketPair)
   def marketManagerActor = actors.get(MarketManagerActor.name)
