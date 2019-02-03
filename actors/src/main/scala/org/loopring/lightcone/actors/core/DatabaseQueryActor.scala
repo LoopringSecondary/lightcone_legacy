@@ -94,7 +94,7 @@ class DatabaseQueryActor(
           r.copy(
             params = params,
             marketHash = "",
-            addressEntityId = 0,
+            accountEntityId = 0,
             marketEntityId = 0
           )
         }

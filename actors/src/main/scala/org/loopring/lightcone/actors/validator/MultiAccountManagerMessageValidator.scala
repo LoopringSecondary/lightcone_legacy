@@ -138,7 +138,7 @@ final class MultiAccountManagerMessageValidator(
                 state = Some(state),
                 marketHash = marketHash,
                 marketEntityId = MarketManagerActor.getEntityId(marketPair),
-                addressEntityId = MultiAccountManagerActor
+                accountEntityId = MultiAccountManagerActor
                   .getEntityId(order.owner)
               )
             )

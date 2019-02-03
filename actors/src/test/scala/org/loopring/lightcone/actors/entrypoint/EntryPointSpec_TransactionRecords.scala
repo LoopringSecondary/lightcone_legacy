@@ -135,7 +135,7 @@ class EntryPointSpec_TransactionRecords
           hash = orderHash,
           tokenS = tokenS,
           tokenB = tokenB,
-          addressEntityId = 1,
+          accountEntityId = 1,
           marketEntityId = 1
         )
       )

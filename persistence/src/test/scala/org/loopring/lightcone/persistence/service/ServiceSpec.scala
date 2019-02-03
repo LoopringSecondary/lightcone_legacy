@@ -131,7 +131,7 @@ trait ServiceSpec[S]
       params = Some(param),
       marketHash = marketHash,
       marketEntityId = Math.abs(marketHash.hashCode),
-      addressEntityId = Math.abs(owner.hashCode % 100)
+      accountEntityId = Math.abs(owner.hashCode % 100)
     )
   }
 }

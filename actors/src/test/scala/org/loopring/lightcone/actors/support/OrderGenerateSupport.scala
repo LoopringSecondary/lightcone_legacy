@@ -68,7 +68,7 @@ trait OrderGenerateSupport {
       marketHash = marketHash,
       marketEntityId = MarketManagerActor
         .getEntityId(MarketPair(tokenS, tokenB)),
-      addressEntityId = MultiAccountManagerActor
+      accountEntityId = MultiAccountManagerActor
         .getEntityId(credentials.getAddress)
     )
 

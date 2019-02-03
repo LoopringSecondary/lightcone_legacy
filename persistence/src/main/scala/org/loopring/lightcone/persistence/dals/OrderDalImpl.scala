@@ -268,25 +268,25 @@ class OrderDalImpl @Inject()(
   private def queryOrderForRecorverFilters(
       statuses: Set[OrderStatus],
       marketEntityIds: Set[Long] = Set.empty,
-      addressEntityIds: Set[Long] = Set.empty,
+      accountEntityIds: Set[Long] = Set.empty,
       paging: CursorPaging
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
-    if (marketEntityIds.nonEmpty && addressEntityIds.nonEmpty) {
+    if (marketEntityIds.nonEmpty && accountEntityIds.nonEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketEntityIds` and `addressEntityIds` could not both not empty"
+        "Invalid parameters:`marketEntityIds` and `accountEntityIds` could not both not empty"
       )
     }
-    if (marketEntityIds.isEmpty && addressEntityIds.isEmpty) {
+    if (marketEntityIds.isEmpty && accountEntityIds.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketEntityIds` and `addressEntityIds` could not both empty"
+        "Invalid parameters:`marketEntityIds` and `accountEntityIds` could not both empty"
       )
     }
     var filters = if (marketEntityIds.nonEmpty) {
       query.filter(_.marketEntityId inSet marketEntityIds)
     } else {
-      query.filter(_.addressEntityId inSet addressEntityIds)
+      query.filter(_.accountEntityId inSet accountEntityIds)
     }
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
     filters
@@ -298,7 +298,7 @@ class OrderDalImpl @Inject()(
   private def queryOrderForMarketAndAddress(
       statuses: Set[OrderStatus],
       marketEntityIds: Set[Long] = Set.empty,
-      addressEntityIds: Set[Long] = Set.empty,
+      accountEntityIds: Set[Long] = Set.empty,
       paging: CursorPaging
     ): Future[Seq[RawOrder]] = {
     implicit val paramsResult = GetResult[RawOrder.Params](
@@ -385,7 +385,7 @@ class OrderDalImpl @Inject()(
         AND sequence_id > #${paging.cursor}
         AND (
           market_shard in (#${marketEntityIds.mkString(",")})
-          OR account_shard IN (#${addressEntityIds.mkString(",")})
+          OR account_shard IN (#${accountEntityIds.mkString(",")})
         )
         ORDER BY sequence_id ASC
         LIMIT #${paging.size}
@@ -397,27 +397,27 @@ class OrderDalImpl @Inject()(
   def getOrdersForRecover(
       statuses: Set[OrderStatus],
       marketEntityIds: Set[Long] = Set.empty,
-      addressEntityIds: Set[Long] = Set.empty,
+      accountEntityIds: Set[Long] = Set.empty,
       skip: CursorPaging
     ): Future[Seq[RawOrder]] = {
-    if (marketEntityIds.isEmpty && addressEntityIds.isEmpty) {
+    if (marketEntityIds.isEmpty && accountEntityIds.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketEntityIds` and `addressEntityIds` could not both empty"
+        "Invalid parameters:`marketEntityIds` and `accountEntityIds` could not both empty"
       )
     } else {
-      if (marketEntityIds.nonEmpty && addressEntityIds.nonEmpty) {
+      if (marketEntityIds.nonEmpty && accountEntityIds.nonEmpty) {
         queryOrderForMarketAndAddress(
           statuses,
           marketEntityIds,
-          addressEntityIds,
+          accountEntityIds,
           skip
         )
       } else {
         val filters = queryOrderForRecorverFilters(
           statuses,
           marketEntityIds,
-          addressEntityIds,
+          accountEntityIds,
           skip
         )
         db.run(filters.result)

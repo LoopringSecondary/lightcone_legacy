@@ -98,7 +98,7 @@ message RawOrder {
     State state                       = 13;
     int64  sequence_id                = 14;
     string market_hash                = 15;
-    int64  address_entity_id          = 16;
+    int64  account_entity_id          = 16;
     int64  market_entity_id           = 17;
 }
 

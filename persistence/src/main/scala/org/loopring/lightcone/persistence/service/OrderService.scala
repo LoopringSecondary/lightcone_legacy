@@ -53,7 +53,7 @@ trait OrderService {
   def getOrdersForRecover(
       statuses: Set[OrderStatus],
       marketEntityIds: Set[Long] = Set.empty,
-      addressEntityIds: Set[Long] = Set.empty,
+      accountEntityIds: Set[Long] = Set.empty,
       skip: CursorPaging
     ): Future[Seq[RawOrder]]
 

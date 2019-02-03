@@ -71,7 +71,7 @@ class RecoverOrderSpec
       val marketLrcWeth =
         Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       val request1 = ActorRecover.Request(
-        addressEntityId = MultiAccountManagerActor.getEntityId(owner),
+        accountEntityId = MultiAccountManagerActor.getEntityId(owner),
         marketPair = marketLrcWeth
       )
       implicit val timeout = Timeout(100 second)
