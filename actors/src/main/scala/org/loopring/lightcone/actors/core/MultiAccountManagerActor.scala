@@ -98,7 +98,7 @@ class MultiAccountManagerActor(
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager)
     extends InitializationRetryActor
-    with EntityIdAware
+    with ShardingEntityAware
     with ActorLogging {
 
   log.info(s"=======> starting MultiAccountManagerActor ${self.path}")

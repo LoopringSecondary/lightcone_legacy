@@ -80,7 +80,7 @@ class OrderbookManagerActor(
     val actors: Lookup[ActorRef],
     val metadataManager: MetadataManager)
     extends InitializationRetryActor
-    with EntityIdAware
+    with ShardingEntityAware
     with RepeatedJobActor {
 
   val selfConfig = config.getConfig(OrderbookManagerActor.name)

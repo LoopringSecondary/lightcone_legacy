@@ -33,7 +33,7 @@ import org.web3j.utils.Numeric
 import scala.util.{Failure, Success}
 
 trait EventExtraction {
-  actor: InitializationRetryActor =>
+  me: InitializationRetryActor =>
   implicit val timeout: Timeout
   implicit val actors: Lookup[ActorRef]
   implicit val eventDispatchers: Seq[EventDispatcher[_]]

@@ -108,7 +108,7 @@ class MarketManagerActor(
     val dustOrderEvaluator: DustOrderEvaluator,
     val metadataManager: MetadataManager)
     extends InitializationRetryActor
-    with EntityIdAware
+    with ShardingEntityAware
     with RepeatedJobActor
     with ActorLogging {
   import OrderStatus._

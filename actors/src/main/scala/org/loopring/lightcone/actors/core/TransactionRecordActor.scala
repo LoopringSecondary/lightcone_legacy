@@ -77,7 +77,7 @@ class TransactionRecordActor(
     val dbModule: DatabaseModule,
     val databaseConfigManager: DatabaseConfigManager)
     extends InitializationRetryActor
-    with EntityIdAware {
+    with ShardingEntityAware {
 
   val selfConfig = config.getConfig(TransactionRecordActor.name)
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")

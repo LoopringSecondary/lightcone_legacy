@@ -21,7 +21,7 @@ import akka.actor._
 
 // Owner: Daniel
 
-trait EntityIdAware { me: Actor =>
+trait ShardingEntityAware { me: Actor =>
 
   lazy val entityId: Long = {
     val name = self.path.name.replace("$", "")
