@@ -31,11 +31,12 @@ trait DeployedAsSharded[T] extends Object with Logging {
   var numOfShards: Int = _
   var numOfEntities: Int = _
 
-  val extractShardingObject: PartialFunction[Any, T]
+  protected val extractShardingObject: PartialFunction[Any, T]
 
   def getEntityId(obj: T): Long
 
   def messageExtractor = new HashCodeMessageExtractor(numOfShards) {
+
     override def entityId(msg: Any) =
       try {
         (extractShardingObject.lift)(msg)
@@ -49,20 +50,14 @@ trait DeployedAsSharded[T] extends Object with Logging {
       }
   }
 
-  def startSharding(
-      entityProps: Props
-    )(
-      implicit
-      system: ActorSystem,
-      config: Config,
-      deployActorsIgnoringRoles: Boolean
-    ) = {
+  // This method is used in tests to load configs.
+  def loadConfig()(implicit config: Config) {
     val numOfShardsPath = s"${name}.num-of-shards"
     assert(
       config.hasPath(numOfShardsPath),
-      s"no config for `${numOfShardsPath}`"
-    )
+      s"no config for `${numOfShardsPath}`")
     numOfShards = config.getInt(numOfShardsPath)
+    assert(numOfShards > 0, "num of shards should be greater than 0")
 
     val numOfEntitiesPath = s"${name}.num-of-entities"
     if (config.hasPath(numOfEntitiesPath)) {
@@ -70,15 +65,21 @@ trait DeployedAsSharded[T] extends Object with Logging {
     } else {
       numOfEntities = numOfShards
     }
+  }
 
+  def startSharding(
+    entityProps: Props)(
+      implicit system: ActorSystem,
+      config: Config,
+      deployActorsIgnoringRoles: Boolean) = {
+    loadConfig()
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
 
     ClusterSharding(system).start(
       typeName = name,
       entityProps = entityProps,
       settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
-    )
+      messageExtractor = messageExtractor)
   }
 }
 
@@ -89,6 +90,10 @@ trait DeployedAsShardedEvenly extends DeployedAsSharded[Any] {
   }
 
   def getEntityId(obj: Any) = (obj.hashCode % numOfEntities).abs
+}
+
+trait DeployedAsShardedWithMessageId extends DeployedAsSharded[Long] {
+  def getEntityId(id: Long) = id.abs
 }
 
 trait DeployedAsShardedByAddress extends DeployedAsSharded[String] {

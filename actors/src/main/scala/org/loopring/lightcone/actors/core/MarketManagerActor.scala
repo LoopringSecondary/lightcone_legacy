@@ -26,7 +26,6 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.lib.data._
@@ -117,7 +116,7 @@ class MarketManagerActor(
 
   implicit val marketPair = {
     metadataManager.getValidMarketPairs.values
-      .find(m => getEntityId(m) == entityId) match {
+      .find(m => MarketManagerActor.getEntityId(m) == entityId) match {
       case Some(pair) => pair
       case None =>
         val error = s"unable to find market pair matching entity id ${entityId}"

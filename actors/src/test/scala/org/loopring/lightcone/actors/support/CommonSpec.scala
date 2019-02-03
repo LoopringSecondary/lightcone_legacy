@@ -22,6 +22,7 @@ import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
+import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.lib.SystemTimeProvider
@@ -90,4 +91,15 @@ abstract class CommonSpec(configStr: String = "")
 
   Thread.sleep(4000) //暂停4s，等待集群准备完毕
 
+  // Load sharding configs.
+  DatabaseQueryActor.loadConfig()
+  EthereumQueryActor.loadConfig()
+  GasPriceActor.loadConfig()
+  MarketManagerActor.loadConfig()
+  MultiAccountManagerActor.loadConfig()
+  OrderbookManagerActor.loadConfig()
+  OrderPersistenceActor.loadConfig()
+  OrderRecoverActor.loadConfig()
+  RingAndTradePersistenceActor.loadConfig()
+  TransactionRecordActor.loadConfig()
 }
