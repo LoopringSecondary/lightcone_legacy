@@ -69,7 +69,7 @@ object MarketManagerActor extends ShardedByMarket {
 
   // 如果message不包含一个有效的marketPair，就不做处理，不要返回“默认值”
   //READONLY的不能在该处拦截，需要在validtor中截取，因为该处还需要将orderbook等恢复
-  val extractMarketPair: PartialFunction[Any, MarketPair] = {
+  val extractShardingObject: PartialFunction[Any, MarketPair] = {
     case SubmitSimpleOrder(_, Some(order))
         if metadataManager.isMarketActiveOrReadOnly(
           MarketPair(order.tokenS, order.tokenB)
@@ -117,7 +117,7 @@ class MarketManagerActor(
 
   implicit val marketPair: MarketPair =
     metadataManager.getValidMarketPairs.values
-      .find(m => getEntityId(m) == entityId.toString)
+      .find(m => getEntityId(m) == entityId)
       .get
 
   log.info(

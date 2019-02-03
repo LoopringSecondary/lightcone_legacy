@@ -21,26 +21,8 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.proto.MarketPair
 
 // Owner: Daniel
-trait ShardedByMarket extends Sharded {
-  val extractMarketPair: PartialFunction[Any, MarketPair]
+trait ShardedByMarket extends Sharded[MarketPair] {
+  val extractShardingObject: PartialFunction[Any, MarketPair]
 
-  def getEntityId(marketPair: MarketPair): String = {
-    Math.abs(marketPair.key().hashCode).toString
-  }
-
-  def extractEntityId(actorName: String) = actorName.split("_").last
-
-  def messageExtractor =
-    new HashCodeMessageExtractor(Int.MaxValue) {
-      override def entityId(msg: Any) = {
-        val entityIdOpt = (extractMarketPair.lift)(msg).map(getEntityId)
-        assert(entityIdOpt.isDefined, s"${msg} no entity id extracted")
-        s"${name}_${entityIdOpt.get}"
-      }
-
-      //shardid使用entityId，确保每个market都有且只有一个actor
-      override def shardId(message: Any): String = {
-        entityId(message)
-      }
-    }
+  override def getEntityId(marketPair: MarketPair): Long = marketPair.longId
 }

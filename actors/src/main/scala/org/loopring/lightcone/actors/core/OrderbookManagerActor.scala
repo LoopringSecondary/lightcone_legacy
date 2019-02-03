@@ -59,7 +59,7 @@ object OrderbookManagerActor extends ShardedByMarket with Logging {
   }
 
   // 如果message不包含一个有效的marketPair，就不做处理，不要返回“默认值”
-  val extractMarketPair: PartialFunction[Any, MarketPair] = {
+  val extractShardingObject: PartialFunction[Any, MarketPair] = {
     case GetOrderbook.Req(_, _, Some(marketPair)) => marketPair
 
     case Orderbook.Update(_, _, _, Some(marketPair)) => marketPair
@@ -89,7 +89,7 @@ class OrderbookManagerActor(
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
   val marketPair = metadataManager.getValidMarketPairs.values
-    .find(m => getEntityId(m) == entityId.toString)
+    .find(m => getEntityId(m) == entityId)
     .get
 
   def marketMetadata = metadataManager.getMarketMetadata(marketPair)

@@ -58,7 +58,7 @@ object TransactionRecordActor extends ShardedByAddress {
   }
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
-  val extractAddress: PartialFunction[Any, String] = {
+  val extractShardingObject: PartialFunction[Any, String] = {
     case req: TransferEvent                 => req.owner
     case req: CutoffEvent                   => req.owner
     case req: OrdersCancelledEvent          => req.owner

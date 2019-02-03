@@ -22,24 +22,4 @@ import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 import com.typesafe.config.Config
 
 // Owner: Daniel
-trait ShardedByAddress extends Sharded {
-  val extractAddress: PartialFunction[Any, String]
-
-  def getEntityId(
-      address: String,
-      numOfShards: Int
-    ): String =
-    Math.abs(address.hashCode % numOfShards).toString
-
-  def getEntityId(address: String): String =
-    getEntityId(address, numOfShards)
-
-  def messageExtractor =
-    new HashCodeMessageExtractor(numOfShards) {
-      override def entityId(msg: Any) = {
-        val entityIdOpt = (extractAddress.lift)(msg).map(getEntityId)
-        assert(entityIdOpt.isDefined, s"${msg} no entity id extracted")
-        s"${name}_${entityIdOpt.get}"
-      }
-    }
-}
+trait ShardedByAddress extends Sharded[String]

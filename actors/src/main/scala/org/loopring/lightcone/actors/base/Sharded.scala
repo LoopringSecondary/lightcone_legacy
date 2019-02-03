@@ -16,6 +16,7 @@
 
 package org.loopring.lightcone.actors.base
 
+import org.slf4s.Logging
 import akka.actor._
 import akka.cluster.sharding._
 import akka.cluster.sharding.ShardRegion._
@@ -23,11 +24,27 @@ import com.typesafe.config.Config
 
 // Owner: Daniel
 
-trait Sharded {
+trait Sharded[T] extends Object with Logging {
   val name: String
   var numOfShards: Int = _
 
-  def messageExtractor: MessageExtractor
+  val extractShardingObject: PartialFunction[Any, T]
+
+  def getEntityId(obj: T): Long = Math.abs(obj.hashCode).toLong
+
+  def messageExtractor = new HashCodeMessageExtractor(numOfShards) {
+    override def entityId(msg: Any) =
+      try {
+        (extractShardingObject.lift)(msg)
+          .map(getEntityId)
+          .map(entityId => s"${name}_${entityId}")
+          .getOrElse(null)
+      } catch {
+        case e: Throwable =>
+          log.warn("unable to extract entityId", e)
+          null
+      }
+  }
 
   def startSharding(
       entityProps: Props

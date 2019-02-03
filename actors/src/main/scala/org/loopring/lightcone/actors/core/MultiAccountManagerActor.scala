@@ -57,7 +57,7 @@ object MultiAccountManagerActor extends ShardedByAddress {
 
   //如果message不包含一个有效的address，就不做处理，不要返回“默认值”
   //在validator 中已经做了拦截，该处再做一次，用于recover过滤
-  val extractAddress: PartialFunction[Any, String] = {
+  val extractShardingObject: PartialFunction[Any, String] = {
     case SubmitOrder.Req(Some(rawOrder))
         if metadataManager.isMarketActiveOrReadOnly(
           MarketPair(rawOrder.tokenS, rawOrder.tokenB)
@@ -112,7 +112,8 @@ class MultiAccountManagerActor(
 
   val accountManagerActors = new MapBasedLookup[ActorRef]()
 
-  val extractAddress = MultiAccountManagerActor.extractAddress.lift
+  val extractShardingObject =
+    MultiAccountManagerActor.extractShardingObject.lift
 
   var autoSwitchBackToReady: Option[Cancellable] = None
 
@@ -178,7 +179,7 @@ class MultiAccountManagerActor(
   }
 
   // TODO(hongyu):以太坊的事件如 AddressBalanceUpdated和AddressAllowanceUpdated 不应该触发创建AccountManagerActor
-  private def handleRequest(req: Any) = extractAddress(req) match {
+  private def handleRequest(req: Any) = extractShardingObject(req) match {
     case Some(address) => {
       req match {
         case _: AddressBalanceUpdated | _: AddressAllowanceUpdated |

@@ -167,7 +167,8 @@ package object data {
     )
 
   implicit class RichMarketPair(marketPair: MarketPair) {
-    def key() = MarketHash(marketPair).toString
+    def hashString = MarketHash(marketPair).hashString
+    def longId = MarketHash(marketPair).longId
 
     def toLowerCase() =
       MarketPair(
