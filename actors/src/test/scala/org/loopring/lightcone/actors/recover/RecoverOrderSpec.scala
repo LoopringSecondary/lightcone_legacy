@@ -72,7 +72,8 @@ class RecoverOrderSpec
         Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
       val request1 = ActorRecover.Request(
         addressShardingEntity = MultiAccountManagerActor
-          .getEntityId(owner, 100),
+          .getEntityId(owner)
+          .toString,
         marketPair = marketLrcWeth
       )
       implicit val timeout = Timeout(100 second)

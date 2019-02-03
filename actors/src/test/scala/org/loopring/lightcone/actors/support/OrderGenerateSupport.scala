@@ -70,7 +70,7 @@ trait OrderGenerateSupport {
         .getEntityId(MarketPair(tokenS, tokenB))
         .toInt,
       accountShard = MultiAccountManagerActor
-        .getEntityId(credentials.getAddress, 100)
+        .getEntityId(credentials.getAddress)
         .toInt
     )
 
