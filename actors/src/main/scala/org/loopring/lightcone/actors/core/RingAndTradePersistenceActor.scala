@@ -67,7 +67,9 @@ class RingAndTradePersistenceActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(RingAndTradePersistenceActor.name) {
+    extends InitializationRetryActor {
+
+  val selfConfig = config.getConfig(RingAndTradePersistenceActor.name)
 
   def ready: Receive = LoggingReceive {
     case e: RingMinedEvent =>

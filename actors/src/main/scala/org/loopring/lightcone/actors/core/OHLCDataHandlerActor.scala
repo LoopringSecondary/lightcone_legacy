@@ -78,7 +78,8 @@ class OHLCDataHandlerActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(OHLCDataHandlerActor.name) {
+    extends InitializationRetryActor {
+  val selfConfig = config.getConfig(OHLCDataHandlerActor.name)
 
   def ready: Receive = {
     case data: OHLCRawData =>

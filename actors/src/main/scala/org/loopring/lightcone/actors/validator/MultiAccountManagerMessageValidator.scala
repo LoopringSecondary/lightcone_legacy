@@ -49,9 +49,8 @@ final class MultiAccountManagerMessageValidator(
 
   import OrderStatus._
 
-  val multiAccountConfig =
-    config.getConfig(MultiAccountManagerActor.name)
-  val numOfShards = multiAccountConfig.getInt("num-of-shards")
+  val selfConfig = config.getConfig(MultiAccountManagerActor.name)
+  val numOfShards = selfConfig.getInt("num-of-shards")
 
   val orderValidator: RawOrderValidator = RawOrderValidatorDefault
   val cancelOrderValidator: CancelOrderValidator = new CancelOrderValidator()

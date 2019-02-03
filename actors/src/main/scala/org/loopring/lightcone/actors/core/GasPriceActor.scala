@@ -71,7 +71,9 @@ class GasPriceActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef])
-    extends ActorWithPathBasedConfig(GasPriceActor.name) {
+    extends InitializationRetryActor {
+
+  val selfConfig = config.getConfig(GasPriceActor.name)
 
   private var gasPrice = BigInt(selfConfig.getString("default"))
   private val blockSize = selfConfig.getInt("block-size")

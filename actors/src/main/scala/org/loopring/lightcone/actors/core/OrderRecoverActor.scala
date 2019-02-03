@@ -76,9 +76,10 @@ class OrderRecoverActor(
     actors: Lookup[ActorRef],
     dbModule: DatabaseModule,
     metadataManager: MetadataManager)
-    extends ActorWithPathBasedConfig(OrderRecoverActor.name) {
+    extends InitializationRetryActor {
   import OrderStatus._
 
+  val selfConfig = config.getConfig(OrderRecoverActor.name)
   val batchSize = selfConfig.getInt("batch-size")
   var batch: ActorRecover.RequestBatch = _
   var numOrders = 0L

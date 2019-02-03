@@ -70,7 +70,6 @@ object OrderStatusMonitorActor {
 }
 
 class OrderStatusMonitorActor(
-    val name: String = OrderStatusMonitorActor.name
   )(
     implicit
     val config: Config,
@@ -82,10 +81,11 @@ class OrderStatusMonitorActor(
     val metadataManager: MetadataManager)
     extends Actor
     with ActorLogging
-    with NamedBasedConfig
     with RepeatedJobActor {
   import OrderStatusMonitor.MonitoringType._
   import OrderStatus._
+
+  val selfConfig = config.getConfig(OrderStatusMonitorActor.name)
 
   val repeatedDelayInSeconds = selfConfig.getInt("delay-in-seconds")
   val activateLaggingInSecond = selfConfig.getInt("activate-lagging-seconds")

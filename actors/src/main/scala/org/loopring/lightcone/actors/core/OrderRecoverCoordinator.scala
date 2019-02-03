@@ -73,8 +73,10 @@ class OrderRecoverCoordinator(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator)
-    extends ActorWithPathBasedConfig(OrderRecoverCoordinator.name)
+    extends InitializationRetryActor
     with ActorLogging {
+
+  val selfConfig = config.getConfig(OrderRecoverCoordinator.name)
 
   val batchTimeout = selfConfig.getInt("batch-timeout-seconds")
   var activeBatches = Map.empty[ActorRef, ActorRecover.RequestBatch]

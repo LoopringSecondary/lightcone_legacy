@@ -68,7 +68,7 @@ class OrderPersistenceActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(OrderPersistenceActor.name) {
+    extends InitializationRetryActor {
   import OrderStatus._
 
   //save order to db first, then send to AccountManager

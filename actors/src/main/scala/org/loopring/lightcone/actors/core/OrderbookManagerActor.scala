@@ -89,18 +89,17 @@ class OrderbookManagerActor(
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
     val metadataManager: MetadataManager)
-    extends ActorWithPathBasedConfig(
-      OrderbookManagerActor.name,
-      OrderbookManagerActor.extractEntityId
-    )
+    extends InitializationRetryActor
+    with ShardedWithLongEntityId
     with RepeatedJobActor {
 
+  val selfConfig = config.getConfig(OrderbookManagerActor.name)
   val orderbookRecoverSize = selfConfig.getInt("orderbook-recover-size")
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
   val marketPair = metadataManager.getValidMarketPairs.values
-    .find(m => getEntityId(m) == entityId)
+    .find(m => getEntityId(m) == entityId.toString)
     .get
 
   def marketMetadata = metadataManager.getMarketMetadata(marketPair)

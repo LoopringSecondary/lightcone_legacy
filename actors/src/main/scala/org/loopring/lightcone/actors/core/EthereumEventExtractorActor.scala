@@ -78,8 +78,10 @@ class EthereumEventExtractorActor(
     val actors: Lookup[ActorRef],
     val eventDispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(EthereumEventExtractorActor.name)
+    extends InitializationRetryActor
     with EventExtraction {
+
+  val selfConfig = config.getConfig(EthereumEventExtractorActor.name)
 
   var untilBlock: Long = Long.MaxValue //最大值，保证一直获取区块
 

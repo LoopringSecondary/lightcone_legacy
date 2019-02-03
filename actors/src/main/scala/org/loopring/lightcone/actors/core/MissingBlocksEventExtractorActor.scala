@@ -76,8 +76,10 @@ class MissingBlocksEventExtractorActor(
     val actors: Lookup[ActorRef],
     val eventDispatchers: Seq[EventDispatcher[_]],
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(MissingBlocksEventExtractorActor.name)
+    extends InitializationRetryActor
     with EventExtraction {
+
+  val selfConfig = config.getConfig(MissingBlocksEventExtractorActor.name)
   val NEXT_RANGE = Notify("next_range")
   var sequenceId = 0L
   val delayInSeconds = selfConfig.getLong("delay-in-seconds")

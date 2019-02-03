@@ -81,9 +81,10 @@ class MetadataManagerActor(
     val actors: Lookup[ActorRef],
     val metadataManager: MetadataManager,
     val dbModule: DatabaseModule)
-    extends ActorWithPathBasedConfig(MetadataManagerActor.name)
+    extends InitializationRetryActor
     with RepeatedJobActor
     with ActorLogging {
+  val selfConfig = config.getConfig(MetadataManagerActor.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
 
