@@ -124,7 +124,7 @@ class MarketManagerActor(
 
   implicit val marketPair: MarketPair =
     metadataManager.getValidMarketPairs.values
-      .find(m => getEntityId(m) == entityId)
+      .find(m => getEntityId(m) == entityId.toString)
       .get
 
   log.info(

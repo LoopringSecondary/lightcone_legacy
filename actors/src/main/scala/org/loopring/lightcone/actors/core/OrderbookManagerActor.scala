@@ -99,7 +99,7 @@ class OrderbookManagerActor(
   val initialDelayInSeconds = selfConfig.getInt("initial-delay-in-seconds")
 
   val marketPair = metadataManager.getValidMarketPairs.values
-    .find(m => getEntityId(m) == entityId)
+    .find(m => getEntityId(m) == entityId.toString)
     .get
 
   def marketMetadata = metadataManager.getMarketMetadata(marketPair)
