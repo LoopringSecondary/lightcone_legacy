@@ -37,8 +37,13 @@ trait Sharded {
       config: Config,
       deployActorsIgnoringRoles: Boolean
     ) = {
-    val selfConfig = config.getConfig(name)
-    numOfShards = selfConfig.getInt("num-of-shards")
+    val numOfShardsPath = s"${name}.num-of-shards"
+    assert(
+      config.hasPath(numOfShardsPath),
+      s"no config for `${numOfShardsPath}`"
+    )
+
+    numOfShards = config.getInt(numOfShardsPath)
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
 
     ClusterSharding(system).start(
