@@ -32,7 +32,7 @@ trait OrderService {
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
+      marketIds: Set[Long] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[SortingType] = None,
       skip: Option[Paging] = None
@@ -43,7 +43,7 @@ trait OrderService {
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHashSet: Option[String] = None,
+      marketIds: Option[Long] = None,
       feeTokenSet: Option[String] = None,
       sort: Option[SortingType] = None,
       skip: Option[Paging] = None
@@ -80,7 +80,7 @@ trait OrderService {
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketId: Option[Long] = None,
       feeTokenSet: Option[String] = None
     ): Future[Int]
 

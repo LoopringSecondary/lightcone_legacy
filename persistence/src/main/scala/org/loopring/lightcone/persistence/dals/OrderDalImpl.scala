@@ -32,6 +32,7 @@ import slick.basic._
 import slick.lifted.Query
 import scala.concurrent._
 import scala.util.{Failure, Success}
+import org.loopring.lightcone.core.base.MarketHash
 
 class OrderDalImpl @Inject()(
     implicit
@@ -99,7 +100,7 @@ class OrderDalImpl @Inject()(
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
+      marketIds: Set[Long] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       validTime: Option[Int] = None,
       sort: Option[SortingType] = None,
@@ -110,8 +111,8 @@ class OrderDalImpl @Inject()(
     if (owners.nonEmpty) filters = filters.filter(_.owner inSet owners)
     if (tokenSSet.nonEmpty) filters = filters.filter(_.tokenS inSet tokenSSet)
     if (tokenBSet.nonEmpty) filters = filters.filter(_.tokenB inSet tokenBSet)
-    if (marketHashSet.nonEmpty)
-      filters = filters.filter(_.marketHash inSet marketHashSet)
+    if (marketIds.nonEmpty)
+      filters = filters.filter(_.marketId inSet marketIds)
     if (feeTokenSet.nonEmpty)
       filters = filters.filter(_.tokenFee inSet feeTokenSet)
     if (validTime.nonEmpty)
@@ -135,7 +136,7 @@ class OrderDalImpl @Inject()(
       owners: Set[String] = Set.empty,
       tokenSSet: Set[String] = Set.empty,
       tokenBSet: Set[String] = Set.empty,
-      marketHashSet: Set[String] = Set.empty,
+      marketIds: Set[Long] = Set.empty,
       feeTokenSet: Set[String] = Set.empty,
       sort: Option[SortingType] = None,
       skip: Option[Paging] = None
@@ -145,7 +146,7 @@ class OrderDalImpl @Inject()(
       owners,
       tokenSSet,
       tokenBSet,
-      marketHashSet,
+      marketIds,
       feeTokenSet,
       None,
       sort,
@@ -159,7 +160,7 @@ class OrderDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketId: Option[Long] = None,
       feeToken: Option[String] = None,
       sort: Option[SortingType] = None,
       pagingOpt: Option[Paging] = None
@@ -169,8 +170,8 @@ class OrderDalImpl @Inject()(
     if (owner.nonEmpty) filters = filters.filter(_.owner === owner)
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB)
-    if (marketHash.nonEmpty)
-      filters = filters.filter(_.marketHash === marketHash)
+    if (marketId.nonEmpty)
+      filters = filters.filter(_.marketId === marketId)
     if (feeToken.nonEmpty) filters = filters.filter(_.tokenFee === feeToken)
     if (sort.nonEmpty) filters = sort.get match {
       case SortingType.ASC  => filters.sortBy(_.sequenceId.asc)
@@ -189,7 +190,7 @@ class OrderDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketId: Option[Long] = None,
       feeToken: Option[String] = None,
       sort: Option[SortingType] = None,
       skip: Option[Paging] = None
@@ -199,7 +200,7 @@ class OrderDalImpl @Inject()(
       owner,
       tokenS,
       tokenB,
-      marketHash,
+      marketId,
       feeToken,
       sort,
       skip
@@ -249,7 +250,7 @@ class OrderDalImpl @Inject()(
       owner: Option[String] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketId: Option[Long] = None,
       feeToken: Option[String] = None
     ): Future[Int] = {
     val filters = queryOrderForUserFilters(
@@ -257,7 +258,7 @@ class OrderDalImpl @Inject()(
       owner,
       tokenS,
       tokenB,
-      marketHash,
+      marketId,
       feeToken,
       None,
       None
@@ -374,7 +375,7 @@ class OrderDalImpl @Inject()(
           Some(erc1400ParamsResult(r)),
           Some(stateResult(r)),
           r.nextLong,
-          r.nextString,
+          r.nextLong,
           r.nextLong,
           r.nextLong
         )
@@ -447,8 +448,9 @@ class OrderDalImpl @Inject()(
       .filter(_.owner === retrieveCondition.owner)
       .filter(_.status inSet activeStatus)
       .filter(_.validSince <= retrieveCondition.cutoff.toInt)
-    if (retrieveCondition.tradingPair.nonEmpty) {
-      filters = filters.filter(_.marketHash === retrieveCondition.tradingPair)
+    if (retrieveCondition.marketHash.nonEmpty) {
+      val marketId = MarketHash.hashToId(retrieveCondition.marketHash)
+      filters = filters.filter(_.marketId === marketId)
     }
     filters = filters
       .sortBy(_.sequenceId.asc)

@@ -64,7 +64,7 @@ class DatabaseQueryActor(
 
   def ready: Receive = LoggingReceive {
     case req: GetOrdersForUser.Req =>
-      val (tokensOpt, tokenbOpt, marketHashOpt) =
+      val (tokensOpt, tokenbOpt, marketIdOpt) =
         getMarketQueryParameters(req.market)
       (for {
         result <- dbModule.orderService.getOrdersForUser(
@@ -72,7 +72,7 @@ class DatabaseQueryActor(
           Some(req.owner),
           tokensOpt,
           tokenbOpt,
-          marketHashOpt,
+          marketIdOpt,
           None,
           Some(req.sort),
           req.skip
@@ -82,7 +82,7 @@ class DatabaseQueryActor(
           Some(req.owner),
           tokensOpt,
           tokenbOpt,
-          marketHashOpt,
+          marketIdOpt,
           None
         )
       } yield {
@@ -93,7 +93,7 @@ class DatabaseQueryActor(
           }
           r.copy(
             params = params,
-            marketHash = "",
+            marketId = 0,
             accountEntityId = 0,
             marketEntityId = 0
           )
@@ -118,7 +118,7 @@ class DatabaseQueryActor(
     marketOpt match {
       case Some(m)
           if m.tokenS.nonEmpty && m.tokenB.nonEmpty && m.isQueryBothSide =>
-        (None, None, Some(MarketHash(MarketPair(m.tokenS, m.tokenB)).toString))
+        (None, None, Some(MarketHash(MarketPair(m.tokenS, m.tokenB)).longId))
       case Some(m) if m.tokenS.nonEmpty && m.tokenB.nonEmpty =>
         (Some(m.tokenS), Some(m.tokenB), None)
       case Some(m) if m.tokenS.nonEmpty => (Some(m.tokenS), None, None)

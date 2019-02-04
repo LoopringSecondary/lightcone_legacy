@@ -106,7 +106,7 @@ message CancelOrder {
 message RetrieveOrdersToCancel {
     string broker       = 1;
     string owner        = 2;
-    string trading_pair = 3;
+    string market_hash  = 3;
     int64  cutoff       = 4; // in seconds.
 }
 

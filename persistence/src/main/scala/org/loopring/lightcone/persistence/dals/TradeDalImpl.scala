@@ -43,8 +43,7 @@ class TradeDalImpl @Inject()(
   def saveTrade(trade: Trade): Future[ErrorCode] = {
     db.run(
         (query += trade.copy(
-          marketHash =
-            MarketHash(MarketPair(trade.tokenS, trade.tokenB)).toString
+          marketId = MarketHash(MarketPair(trade.tokenS, trade.tokenB)).longId
         )).asTry
       )
       .map {
@@ -62,7 +61,7 @@ class TradeDalImpl @Inject()(
     Future.sequence(trades.map(saveTrade))
 
   def getTrades(request: Req): Future[Seq[Trade]] = {
-    val (tokensOpt, tokenbOpt, marketHashOpt) = getMarketQueryParameters(
+    val (tokensOpt, tokenbOpt, marketIdOpt) = getMarketQueryParameters(
       request.market
     )
     val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
@@ -77,7 +76,7 @@ class TradeDalImpl @Inject()(
       fillIndexOpt,
       tokensOpt,
       tokenbOpt,
-      marketHashOpt,
+      marketIdOpt,
       getOptString(request.wallet),
       getOptString(request.miner),
       Some(request.sort),
@@ -87,7 +86,7 @@ class TradeDalImpl @Inject()(
   }
 
   def countTrades(request: Req): Future[Int] = {
-    val (tokensOpt, tokenbOpt, marketHashOpt) = getMarketQueryParameters(
+    val (tokensOpt, tokenbOpt, marketIdOpt) = getMarketQueryParameters(
       request.market
     )
     val (ringHashOpt, ringIndexOpt, fillIndexOpt) = getRingQueryParameters(
@@ -102,7 +101,7 @@ class TradeDalImpl @Inject()(
       fillIndexOpt,
       tokensOpt,
       tokenbOpt,
-      marketHashOpt,
+      marketIdOpt,
       getOptString(request.wallet),
       getOptString(request.miner),
       None,
@@ -128,7 +127,7 @@ class TradeDalImpl @Inject()(
       fillIndex: Option[Int] = None,
       tokenS: Option[String] = None,
       tokenB: Option[String] = None,
-      marketHash: Option[String] = None,
+      marketId: Option[Long] = None,
       wallet: Option[String] = None,
       miner: Option[String] = None,
       sort: Option[SortingType] = None,
@@ -146,8 +145,8 @@ class TradeDalImpl @Inject()(
       filters = filters.filter(_.fillIndex === fillIndex.get)
     if (tokenS.nonEmpty) filters = filters.filter(_.tokenS === tokenS.get)
     if (tokenB.nonEmpty) filters = filters.filter(_.tokenB === tokenB.get)
-    if (marketHash.nonEmpty)
-      filters = filters.filter(_.marketHash === marketHash.get)
+    if (marketId.nonEmpty)
+      filters = filters.filter(_.marketId === marketId.get)
     if (wallet.nonEmpty) filters = filters.filter(_.wallet === wallet.get)
     if (miner.nonEmpty) filters = filters.filter(_.miner === miner.get)
     filters = sort match {
@@ -166,7 +165,7 @@ class TradeDalImpl @Inject()(
     marketOpt match {
       case Some(m)
           if m.tokenS.nonEmpty && m.tokenB.nonEmpty && m.isQueryBothSide =>
-        (None, None, Some(MarketHash(MarketPair(m.tokenS, m.tokenB)).toString))
+        (None, None, Some(MarketHash(MarketPair(m.tokenS, m.tokenB)).longId))
 
       case Some(m) if m.tokenS.nonEmpty && m.tokenB.nonEmpty =>
         (Some(m.tokenS), Some(m.tokenB), None)

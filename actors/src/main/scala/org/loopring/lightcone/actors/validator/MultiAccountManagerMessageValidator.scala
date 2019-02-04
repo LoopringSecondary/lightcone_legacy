@@ -102,7 +102,7 @@ final class MultiAccountManagerMessageValidator(
             val marketPair = MarketPair(rawOrder.tokenS, rawOrder.tokenB)
             metadataManager.assertMarketPairIsActive(marketPair)
 
-            val marketHash = MarketHash(marketPair).toString
+            val marketId = MarketHash(marketPair).longId
 
             val now = timeProvider.getTimeMillis
             val state = RawOrder.State(
@@ -136,7 +136,7 @@ final class MultiAccountManagerMessageValidator(
                     )
                   ),
                 state = Some(state),
-                marketHash = marketHash,
+                marketId = marketId,
                 marketEntityId = MarketManagerActor.getEntityId(marketPair),
                 accountEntityId = MultiAccountManagerActor
                   .getEntityId(order.owner)
