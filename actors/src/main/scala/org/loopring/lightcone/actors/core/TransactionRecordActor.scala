@@ -137,7 +137,7 @@ class TransactionRecordActor(
         header = req.header,
         owner = req.owner,
         recordType = ORDER_CANCELLED,
-        marketHash = req.marketHash,
+        marketId = MarketHash.hashToId(req.marketHash),
         eventData = Some(
           TransactionRecord
             .EventData(Event.Cutoff(req))
@@ -156,7 +156,7 @@ class TransactionRecordActor(
           header = req.header,
           owner = req.owner,
           recordType = ORDER_FILLED,
-          marketHash = marketHash,
+          marketId = MarketHash.hashToId(marketHash),
           eventData = Some(
             TransactionRecord
               .EventData(Event.Filled(req))

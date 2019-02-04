@@ -218,8 +218,8 @@ message TransactionRecord {
     EventHeader header       = 1;
     string      owner        = 2;
     RecordType  record_type  = 3;
-    string      market_hash = 4;
-    string      market       = 5; // LRC-WETH
+    int64       market_id    = 4;
+    string      market_name  = 5; // LRC-WETH
     int64       sequence_id  = 6;
     EventData   event_data   = 7;
 }

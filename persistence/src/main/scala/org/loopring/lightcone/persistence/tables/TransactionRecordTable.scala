@@ -46,12 +46,12 @@ class TransactionRecordTable(shardId: String)(tag: Tag)
   def logIndex = column[Int]("log_index")
   def eventIndex = column[Int]("event_index")
   def gasPrice = column[Long]("gas_price")
-  def gasLimit = column[Int]("gas_limit")
+  def gasLimit = column[Int]("gFas_limit")
   def gasUsed = column[Int]("gas_used")
   def owner = columnAddress("owner")
   def recordType = column[TransactionRecord.RecordType]("record_type")
-  def tradingPair = column[String]("trading_pair")
-  def market = column[String]("market")
+  def marketId = column[Long]("market_id")
+  def marketName = column[String]("market_name")
   def eventData = column[Option[TransactionRecord.EventData]]("event_data")
   def createdAt = column[Long]("created_at")
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey)
@@ -93,8 +93,8 @@ class TransactionRecordTable(shardId: String)(tag: Tag)
       headerProjection,
       owner,
       recordType,
-      tradingPair,
-      market,
+      marketId,
+      marketName,
       sequenceId,
       eventData
     ) <> ((TransactionRecord.apply _).tupled, TransactionRecord.unapply)
