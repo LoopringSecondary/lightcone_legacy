@@ -23,7 +23,7 @@
 //     int64  updated_at_block     = 7;
 // }
 
-package org.loopring.lightcone.persistence.tables
+package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
 import scala.reflect.ClassTag

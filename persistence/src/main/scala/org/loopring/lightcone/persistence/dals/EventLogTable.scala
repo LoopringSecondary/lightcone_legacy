@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.tables
+package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
 import scala.reflect.ClassTag
@@ -22,26 +22,22 @@ import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
 import com.google.protobuf.ByteString
 
-class TokenTransferTable(tag: Tag)
-    extends BaseTable[TokenTransferData](tag, "T_TOKEN_TRANSFERS") {
+class EventLogTable(tag: Tag)
+    extends BaseTable[EventLogData](tag, "T_EVENT_LOGS") {
 
-  // how to generate the id???
   def id = column[String]("id", O.PrimaryKey)
   def height = column[Long]("height")
   def txHash = columnHash("tx_hash")
   def timestamp = column[Long]("timestamp")
-  def from = columnAddress("from")
-  def to = columnAddress("to")
-  def amount = columnAmount("amount")
-  def token = columnAddress("token")
+  def address = columnAddress("address")
+  def name = column[String]("name")
+  def data = column[ByteString]("data")
+  def topics = column[ByteString]("topics")
 
   // indexes
   def idx_height = index("idx_height", (height), unique = false)
   def idx_tx_hash = index("idx_tx_hash", (txHash), unique = false)
-  def idx_from = index("idx_from", (from), unique = false)
-  def idx_to = index("idx_to", (to), unique = false)
-  def idx_token = index("idx_token", (token), unique = false)
 
   def * =
-    (id, height, txHash, timestamp, from, to, amount, token) <> ((TokenTransferData.apply _).tupled, TokenTransferData.unapply)
+    (id, height, txHash, timestamp, address, name, data, topics) <> ((EventLogData.apply _).tupled, EventLogData.unapply)
 }

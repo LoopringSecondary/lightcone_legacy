@@ -16,7 +16,6 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.persistence.tables.OHLCDataTable
 import org.loopring.lightcone.proto.ErrorCode._
 import slick.basic.DatabaseConfig
 import slick.lifted.TableQuery

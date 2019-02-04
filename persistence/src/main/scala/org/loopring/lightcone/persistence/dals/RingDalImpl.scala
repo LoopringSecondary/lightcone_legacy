@@ -21,7 +21,7 @@ import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.persistence.tables._
+
 import org.loopring.lightcone.proto.GetTrades._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.GetRings.Req.Ring._
@@ -41,18 +41,15 @@ class RingDalImpl @Inject()(
   val query = TableQuery[RingTable]
 
   def saveRing(ring: Ring): Future[ErrorCode] = {
-    db.run(
-        (query += ring).asTry
-      )
-      .map {
-        case Failure(e: MySQLIntegrityConstraintViolationException) =>
-          ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
-        case Failure(ex) => {
-          logger.error(s"error : ${ex.getMessage}")
-          ErrorCode.ERR_PERSISTENCE_INTERNAL
-        }
-        case Success(x) => ErrorCode.ERR_NONE
+    db.run((query += ring).asTry).map {
+      case Failure(e: MySQLIntegrityConstraintViolationException) =>
+        ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
+      case Failure(ex) => {
+        logger.error(s"error : ${ex.getMessage}")
+        ErrorCode.ERR_PERSISTENCE_INTERNAL
       }
+      case Success(x) => ErrorCode.ERR_NONE
+    }
   }
 
   def saveRings(rings: Seq[Ring]): Future[Seq[ErrorCode]] =
@@ -86,20 +83,12 @@ class RingDalImpl @Inject()(
   }
 
   def getRings(request: GetRings.Req): Future[Seq[Ring]] = {
-    val filters = queryFilters(
-      request.ring,
-      Some(request.sort),
-      request.skip
-    )
+    val filters = queryFilters(request.ring, Some(request.sort), request.skip)
     db.run(filters.result)
   }
 
   def countRings(request: GetRings.Req): Future[Int] = {
-    val filters = queryFilters(
-      request.ring,
-      None,
-      None
-    )
+    val filters = queryFilters(request.ring, None, None)
     db.run(filters.size.result)
   }
 

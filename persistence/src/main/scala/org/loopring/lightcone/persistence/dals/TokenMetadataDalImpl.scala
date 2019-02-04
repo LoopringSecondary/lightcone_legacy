@@ -17,7 +17,7 @@
 package org.loopring.lightcone.persistence.dals
 
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.tables._
+
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._

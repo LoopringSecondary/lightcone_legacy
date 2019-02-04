@@ -23,7 +23,7 @@ import com.mysql.jdbc.exceptions.jdbc4._
 import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
+
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.ErrorCode._
 import slick.jdbc.MySQLProfile.api._

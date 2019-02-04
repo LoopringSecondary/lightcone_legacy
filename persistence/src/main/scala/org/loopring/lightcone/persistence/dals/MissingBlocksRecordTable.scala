@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.tables
+package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base.BaseTable
 import org.loopring.lightcone.proto.MissingBlocksRecord
@@ -32,11 +32,6 @@ class MissingBlocksRecordTable(tag: Tag)
   def sequenceId = column[Long]("sequence_id", O.PrimaryKey, O.AutoInc)
 
   def * =
-    (
-      blockStart,
-      blockEnd,
-      lastHandledBlock,
-      sequenceId
-    ) <> ((MissingBlocksRecord.apply _).tupled, MissingBlocksRecord.unapply)
+    (blockStart, blockEnd, lastHandledBlock, sequenceId) <> ((MissingBlocksRecord.apply _).tupled, MissingBlocksRecord.unapply)
 
 }

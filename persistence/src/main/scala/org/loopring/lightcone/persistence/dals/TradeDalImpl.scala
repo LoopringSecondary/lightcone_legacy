@@ -22,7 +22,7 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationExceptio
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
+
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.GetTrades._
 import slick.jdbc.MySQLProfile.api._

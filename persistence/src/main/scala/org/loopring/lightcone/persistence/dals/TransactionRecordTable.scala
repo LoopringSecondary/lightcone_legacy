@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.tables
+package org.loopring.lightcone.persistence.dals
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.persistence.base._

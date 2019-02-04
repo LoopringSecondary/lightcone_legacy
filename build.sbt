@@ -47,24 +47,25 @@ lazy val actors = (project in file("actors"))
     dockerSettings,
     libraryDependencies ++= dependency4Actors)
 
-lazy val indexer = (project in file("indexer"))
-  .enablePlugins(AutomateHeaderPlugin)
-  .enablePlugins(DockerComposePlugin)
-  .enablePlugins(sbtdocker.DockerPlugin)
-  .enablePlugins(JavaServerAppPackaging)
-  .enablePlugins(MultiJvmPlugin)
-  .configs(MultiJvm)
-  .settings(multiJvmSettings: _*)
-  .dependsOn(proto, lib, persistence)
-  .settings(
-    basicSettings,
-    dockerSettings,
-    libraryDependencies ++= dependency4Indexer)
+// lazy val indexer = (project in file("indexer"))
+//   .enablePlugins(AutomateHeaderPlugin)
+//   .enablePlugins(DockerComposePlugin)
+//   .enablePlugins(sbtdocker.DockerPlugin)
+//   .enablePlugins(JavaServerAppPackaging)
+//   .enablePlugins(MultiJvmPlugin)
+//   .configs(MultiJvm)
+//   .settings(multiJvmSettings: _*)
+//   .dependsOn(proto, lib, persistence)
+//   .settings(
+//     basicSettings,
+//     dockerSettings,
+//     libraryDependencies ++= dependency4Indexer)
+
 lazy val all = (project in file("."))
   .enablePlugins(DockerComposePlugin)
   .settings(docker := {
     (docker in actors).value
-    (docker in indexer).value
+    // (docker in indexer).value
   }, DockerComposeKeys.dockerImageCreationTask := docker.value)
-  .aggregate(proto, lib, ethereum, persistence, core, actors, indexer)
+  .aggregate(proto, lib, ethereum, persistence, core, actors)
   .withId("lightcone")
