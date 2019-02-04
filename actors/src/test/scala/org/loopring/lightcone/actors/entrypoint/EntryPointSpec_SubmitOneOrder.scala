@@ -74,7 +74,6 @@ class EntryPointSpec_SubmitOneOrder
       )
       orderbookRes match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
-          println(s"sells:${sells}, buys:${buys}")
           assert(sells.nonEmpty)
           assert(
             sells(0).price == "0.100000" &&

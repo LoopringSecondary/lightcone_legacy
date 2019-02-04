@@ -70,29 +70,33 @@ class OrderRecoverCoordinator(
   def ready: Receive = {
 
     case req: ActorRecover.Request =>
+      val senderPath = sender.path.toString
+      val request = req.copy(sender = senderPath)
+
       cancelBatchTimer()
 
       activeBatches.filter {
-        case (_, batch) => batch.requestMap.contains(req.sender)
+        case (_, batch) => batch.requestMap.contains(senderPath)
       }.foreach {
         case (orderRecoverActor, _) =>
           // Notify the actor to stop handling the request in a previous batch
-          orderRecoverActor ! ActorRecover.CancelFor(req.sender)
+          orderRecoverActor ! ActorRecover.CancelFor(request.sender)
           activeBatches -= orderRecoverActor
       }
 
-      val requestMap = pendingBatch.requestMap + (req.sender -> req)
+      val requestMap = pendingBatch.requestMap + (request.sender -> request)
       pendingBatch = pendingBatch.copy(requestMap = requestMap)
 
       log.info(s"current pending batch recovery request: ${pendingBatch}")
 
       startBatchTimer()
 
-      sender ! req
+      sender ! request
 
     case req: ActorRecover.Timeout =>
       batchTimer = None
       if (pendingBatch.requestMap.nonEmpty) {
+        println("=======pendingBatch " + pendingBatch)
         actors.get(OrderRecoverActor.name) ! pendingBatch
         pendingBatch = ActorRecover.RequestBatch(pendingBatch.batchId + 1)
       }

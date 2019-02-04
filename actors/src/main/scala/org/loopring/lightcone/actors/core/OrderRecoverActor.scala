@@ -171,8 +171,11 @@ class OrderRecoverActor(
     ): Future[Seq[RawOrder]] = {
     if (batch.requestMap.nonEmpty) {
       log.debug(
-        s"the request params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${orderStatus}, ${marketEntityIds}, ${accountEntityIds}"
+        "the request params of retrieveOrders: ",
+        s"${batchSize}, ${lastOrderSeqId}, ${orderStatus}, ",
+        s"${marketEntityIds}, ${accountEntityIds}"
       )
+
       dbModule.orderService.getOrdersForRecover(
         orderStatus,
         marketEntityIds,

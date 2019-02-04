@@ -42,7 +42,9 @@ class RecoverOrderSpec
 
   "recover an address" must {
     "get all effective orders and recover" in {
-      val owner = "0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10"
+      // this owner must be the same as `credentials.getAddress`
+      val owner = "0xe20cf871f1646d8651ee9dc95aab1d93160b3467"
+
       info("select depth")
       val getOrderBook1 = GetOrderbook.Req(
         0,
@@ -70,14 +72,16 @@ class RecoverOrderSpec
       info("recover")
       val marketLrcWeth =
         Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
+
       val request1 = ActorRecover.Request(
         accountEntityId = MultiAccountManagerActor.getEntityId(owner),
         marketPair = marketLrcWeth
       )
-      implicit val timeout = Timeout(100 second)
+
+      implicit val timeout = Timeout(3 second)
       val r = actors.get(OrderRecoverCoordinator.name) ? request1
       val res = Await.result(r, timeout.duration)
-      Thread.sleep(5000)
+      Thread.sleep(10000)
 
       info("get depth")
       val orderbookF2 = singleRequest(getOrderBook1, "get_orderbook")

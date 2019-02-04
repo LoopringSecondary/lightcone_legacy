@@ -63,6 +63,7 @@ class OrderDalImpl @Inject()(
   )
 
   def saveOrder(order: RawOrder): Future[PersistOrder.Res] = {
+    println("saveOrder: " + order)
     db.run((query += order).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) => {
         PersistOrder.Res(
@@ -315,6 +316,7 @@ class OrderDalImpl @Inject()(
           r.nextString
         )
     )
+
     implicit val feeParamsResult = GetResult[RawOrder.FeeParams](
       r =>
         RawOrder.FeeParams(
@@ -327,6 +329,7 @@ class OrderDalImpl @Inject()(
           r.nextInt
         )
     )
+
     implicit val erc1400ParamsResult = GetResult[RawOrder.ERC1400Params](
       r =>
         RawOrder.ERC1400Params(
@@ -338,6 +341,7 @@ class OrderDalImpl @Inject()(
           r.nextString
         )
     )
+
     implicit val stateResult = GetResult[RawOrder.State](
       r =>
         RawOrder.State(
@@ -354,6 +358,7 @@ class OrderDalImpl @Inject()(
           ByteString.copyFrom(r.nextBytes())
         )
     )
+
     implicit val totalResult = GetResult[RawOrder](
       r =>
         RawOrder(
@@ -371,8 +376,8 @@ class OrderDalImpl @Inject()(
           Some(stateResult(r)),
           r.nextLong,
           r.nextString,
-          r.nextInt,
-          r.nextInt
+          r.nextLong,
+          r.nextLong
         )
     )
     val now = timeProvider.getTimeSeconds()
@@ -384,8 +389,8 @@ class OrderDalImpl @Inject()(
         AND valid_until > #${now}
         AND sequence_id > #${paging.cursor}
         AND (
-          market_shard in (#${marketEntityIds.mkString(",")})
-          OR account_shard IN (#${accountEntityIds.mkString(",")})
+          market_entity_id in (#${marketEntityIds.mkString(",")})
+          OR account_entity_id IN (#${accountEntityIds.mkString(",")})
         )
         ORDER BY sequence_id ASC
         LIMIT #${paging.size}
@@ -400,10 +405,13 @@ class OrderDalImpl @Inject()(
       accountEntityIds: Set[Long] = Set.empty,
       skip: CursorPaging
     ): Future[Seq[RawOrder]] = {
+
+    println(s"recover: ${marketEntityIds} ${accountEntityIds}")
+
     if (marketEntityIds.isEmpty && accountEntityIds.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketEntityIds` and `accountEntityIds` could not both empty"
+        "Invalid parameters:`marketEntityIds` and `accountEntityIds` could not both be empty"
       )
     } else {
       if (marketEntityIds.nonEmpty && accountEntityIds.nonEmpty) {
