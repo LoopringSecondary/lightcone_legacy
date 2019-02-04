@@ -17,7 +17,6 @@
 package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
-
 import org.loopring.lightcone.proto._
 import scala.concurrent._
 
