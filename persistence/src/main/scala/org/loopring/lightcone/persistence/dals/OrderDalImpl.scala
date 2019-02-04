@@ -405,8 +405,6 @@ class OrderDalImpl @Inject()(
       skip: CursorPaging
     ): Future[Seq[RawOrder]] = {
 
-    println(s"recover: ${marketEntityIds} ${accountEntityIds}")
-
     if (marketEntityIds.isEmpty && accountEntityIds.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
