@@ -24,8 +24,10 @@ object MarketHash {
   def apply(marketPair: MarketPair): MarketHash = new MarketHash(marketPair)
 
   def hashToId(hash: String) = {
-    if (hash == "0x0" || hash == "") 0L
-    else MurmurHash64.hash(hash).abs
+    var h = hash.toLowerCase
+    h = if (h.startsWith("0x")) h.substring(2) else h
+    if (h == "") 0L
+    else MurmurHash64.hash(h).abs
   }
 }
 
