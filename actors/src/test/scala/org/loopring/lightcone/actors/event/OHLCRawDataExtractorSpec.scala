@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.event
 
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.core.OHLCDataHandlerActor
 import org.web3j.crypto.Credentials

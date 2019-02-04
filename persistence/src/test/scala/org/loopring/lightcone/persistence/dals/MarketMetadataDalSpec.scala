@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.core.base.MarketHash
+import org.loopring.lightcone.core.data.MarketHash
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.concurrent.Await

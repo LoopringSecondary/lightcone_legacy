@@ -21,7 +21,7 @@ import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.support.CommonSpec
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.utils.MetadataRefresher
-import org.loopring.lightcone.core.base.MarketHash
+import org.loopring.lightcone.core.data.MarketHash
 import org.loopring.lightcone.proto._
 
 import scala.concurrent.Await

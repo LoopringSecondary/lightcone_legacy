@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.GetTrades._

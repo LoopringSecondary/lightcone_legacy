@@ -24,7 +24,7 @@ import com.typesafe.config.Config
 import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.core.base.MarketHash
+import org.loopring.lightcone.core.data.MarketHash
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.GetOrdersForUser._

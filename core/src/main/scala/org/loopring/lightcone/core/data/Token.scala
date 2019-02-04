@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.base
+package org.loopring.lightcone.core.data
 
-import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import spire.math.Rational
 

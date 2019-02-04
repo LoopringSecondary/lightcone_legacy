@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.base
+package org.loopring.lightcone.core.data
 
 import org.loopring.lightcone.proto.MarketPair
 import org.loopring.lightcone.ethereum.data.Address

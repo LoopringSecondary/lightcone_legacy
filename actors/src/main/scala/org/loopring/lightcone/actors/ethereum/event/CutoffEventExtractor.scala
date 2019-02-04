@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data._
-import org.loopring.lightcone.core.base.MarketHash
+import org.loopring.lightcone.core.data.MarketHash
 import org.loopring.lightcone.proto._
 
 import scala.concurrent._

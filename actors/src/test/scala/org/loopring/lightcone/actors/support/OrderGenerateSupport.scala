@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.support
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.ethereum._
-import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric

@@ -21,7 +21,7 @@ import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.actors.DatabaseConfigManager
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._

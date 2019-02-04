@@ -17,7 +17,7 @@
 package org.loopring.lightcone.core.account
 
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
-import org.loopring.lightcone.core.base.MarketHash
+import org.loopring.lightcone.core.data.MarketHash
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import org.web3j.utils.Numeric
