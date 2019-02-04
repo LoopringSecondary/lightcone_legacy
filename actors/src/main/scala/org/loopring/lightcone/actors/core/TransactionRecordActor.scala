@@ -39,7 +39,7 @@ import TransactionRecord.EventData.Event
 import org.loopring.lightcone.ethereum.data.Address
 
 // main owner: 杜永丰
-object TransactionRecordActor extends ShardedByAddress {
+object TransactionRecordActor extends DeployedAsShardedByAddress {
   val name = "transaction_record"
 
   def start(
@@ -58,7 +58,7 @@ object TransactionRecordActor extends ShardedByAddress {
   }
 
   // 如果message不包含一个有效的address，就不做处理，不要返回“默认值”
-  val extractAddress: PartialFunction[Any, String] = {
+  val extractShardingObject: PartialFunction[Any, String] = {
     case req: TransferEvent                 => req.owner
     case req: CutoffEvent                   => req.owner
     case req: OrdersCancelledEvent          => req.owner
@@ -83,7 +83,7 @@ class TransactionRecordActor(
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")
   val maxItemsPerPage = selfConfig.getInt("max-items-per-page")
 
-  val dbConfigKey = s"db.transaction_record.shard_${entityId}"
+  val dbConfigKey = s"db.transaction_record.entity_${entityId}"
   log.info(
     s"TransactionRecordActor with db configuration: $dbConfigKey ",
     s"- ${config.getConfig(dbConfigKey)}"

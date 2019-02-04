@@ -29,7 +29,7 @@ import scala.concurrent.duration._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object MissingBlocksEventExtractorActor extends Singletoned {
+object MissingBlocksEventExtractorActor extends DeployedAsSingleton {
   val name = "missing_blocks_event_extractor"
 
   def start(

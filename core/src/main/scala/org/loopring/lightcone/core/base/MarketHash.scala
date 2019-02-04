@@ -33,7 +33,7 @@ class MarketHash(marketPair: MarketPair) {
     s"0x${bigInt.toString(16)}"
   }
 
-  def longId() = MurmurHash64.hash(hashString)
+  def longId() = MurmurHash64.hash(hashString).abs
 
   def getBytes() = hashString.getBytes
 

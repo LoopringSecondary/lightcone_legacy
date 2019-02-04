@@ -28,7 +28,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent.ExecutionContext
 
-object OHLCDataHandlerActor extends Singletoned {
+object OHLCDataHandlerActor extends DeployedAsSingleton {
   val name = "ohlc_data_handler"
 
   def start(

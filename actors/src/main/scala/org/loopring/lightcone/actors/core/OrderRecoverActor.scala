@@ -26,24 +26,17 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto._
-import akka.cluster.sharding.ShardRegion.HashCodeMessageExtractor
 import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.persistence.DatabaseModule
 import scala.concurrent._
 
 // Owner: Yongfeng
-object OrderRecoverActor extends ShardedEvenly {
+object OrderRecoverActor extends DeployedAsShardedWithMessageId {
   val name = "order_recover"
 
-  override val messageExtractor =
-    new HashCodeMessageExtractor(numOfShards) {
-      override def entityId(message: Any) = message match {
-        case req: ActorRecover.RequestBatch =>
-          name + "_batch" + req.batchId
-        case e: Any =>
-          throw new Exception(s"$e not expected by OrderRecoverActor")
-      }
-    }
+  val extractShardingObject: PartialFunction[Any, Long] = {
+    case req: ActorRecover.RequestBatch => req.batchId.toLong
+  }
 
   def start(
       implicit
@@ -83,8 +76,8 @@ class OrderRecoverActor(
   def mama = actors.get(MultiAccountManagerActor.name)
 
   val orderStatus = Set(STATUS_NEW, STATUS_PENDING, STATUS_PARTIALLY_FILLED)
-  var accountShardIds: Set[Int] = Set.empty
-  var marketHashIds: Set[Int] = Set.empty
+  var accountEntityIds: Set[Long] = Set.empty
+  var marketEntityIds: Set[Long] = Set.empty
 
   def ready: Receive = {
     case req: ActorRecover.RequestBatch =>
@@ -96,17 +89,16 @@ class OrderRecoverActor(
 
       batch.requestMap.foreach {
         case (_, request) => {
-          if ("" != request.addressShardingEntity)
-            accountShardIds += request.addressShardingEntity.toInt
+          accountEntityIds += request.accountEntityId
           if (request.marketPair.nonEmpty) {
             val marketHashId =
-              MarketManagerActor.getEntityId(request.marketPair.get).toInt
-            marketHashIds += marketHashId
+              MarketManagerActor.getEntityId(request.marketPair.get)
+            marketEntityIds += marketHashId
           }
         }
       }
       log.debug(
-        s"the request params of batch: ${batchSize}, ${marketHashIds}, ${accountShardIds}"
+        s"the request params of batch: ${batchSize}, ${marketEntityIds}, ${accountEntityIds}"
       )
 
       context.become(recovering)
@@ -179,12 +171,15 @@ class OrderRecoverActor(
     ): Future[Seq[RawOrder]] = {
     if (batch.requestMap.nonEmpty) {
       log.debug(
-        s"the request params of retrieveOrders: ${batchSize}, ${lastOrderSeqId}, ${orderStatus}, ${marketHashIds}, ${accountShardIds}"
+        "the request params of retrieveOrders: ",
+        s"${batchSize}, ${lastOrderSeqId}, ${orderStatus}, ",
+        s"${marketEntityIds}, ${accountEntityIds}"
       )
+
       dbModule.orderService.getOrdersForRecover(
         orderStatus,
-        marketHashIds,
-        accountShardIds,
+        marketEntityIds,
+        accountEntityIds,
         CursorPaging(lastOrderSeqId, batchSize)
       )
     } else {

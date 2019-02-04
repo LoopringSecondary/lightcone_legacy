@@ -147,7 +147,7 @@ class CoreDeployer @Inject()(
               case (nodeName, node) =>
                 val f1 = actors.get(nodeName) ? Notify("init")
                 val r = Await.result(f1, timeout.duration)
-                println(s"####  init111  HttpConnector  ${r}")
+                println(s"#### init HttpConnector ${r}")
                 Future.unit
             })
           Await.result(f, timeout.duration)

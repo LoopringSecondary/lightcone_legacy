@@ -267,26 +267,26 @@ class OrderDalImpl @Inject()(
 
   private def queryOrderForRecorverFilters(
       statuses: Set[OrderStatus],
-      marketShardSet: Set[Int] = Set.empty,
-      accountShardSet: Set[Int] = Set.empty,
+      marketEntityIds: Set[Long] = Set.empty,
+      accountEntityIds: Set[Long] = Set.empty,
       paging: CursorPaging
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
-    if (marketShardSet.nonEmpty && accountShardSet.nonEmpty) {
+    if (marketEntityIds.nonEmpty && accountEntityIds.nonEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketShardSet` and `accountShardSet` could not both not empty"
+        "Invalid parameters:`marketEntityIds` and `accountEntityIds` could not both not empty"
       )
     }
-    if (marketShardSet.isEmpty && accountShardSet.isEmpty) {
+    if (marketEntityIds.isEmpty && accountEntityIds.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketShardSet` and `accountShardSet` could not both empty"
+        "Invalid parameters:`marketEntityIds` and `accountEntityIds` could not both empty"
       )
     }
-    var filters = if (marketShardSet.nonEmpty) {
-      query.filter(_.marketShard inSet marketShardSet)
+    var filters = if (marketEntityIds.nonEmpty) {
+      query.filter(_.marketEntityId inSet marketEntityIds)
     } else {
-      query.filter(_.accountShard inSet accountShardSet)
+      query.filter(_.accountEntityId inSet accountEntityIds)
     }
     if (statuses.nonEmpty) filters = filters.filter(_.status inSet statuses)
     filters
@@ -297,8 +297,8 @@ class OrderDalImpl @Inject()(
 
   private def queryOrderForMarketAndAddress(
       statuses: Set[OrderStatus],
-      marketShardSet: Set[Int] = Set.empty,
-      accountShardSet: Set[Int] = Set.empty,
+      marketEntityIds: Set[Long] = Set.empty,
+      accountEntityIds: Set[Long] = Set.empty,
       paging: CursorPaging
     ): Future[Seq[RawOrder]] = {
     implicit val paramsResult = GetResult[RawOrder.Params](
@@ -315,6 +315,7 @@ class OrderDalImpl @Inject()(
           r.nextString
         )
     )
+
     implicit val feeParamsResult = GetResult[RawOrder.FeeParams](
       r =>
         RawOrder.FeeParams(
@@ -327,6 +328,7 @@ class OrderDalImpl @Inject()(
           r.nextInt
         )
     )
+
     implicit val erc1400ParamsResult = GetResult[RawOrder.ERC1400Params](
       r =>
         RawOrder.ERC1400Params(
@@ -338,6 +340,7 @@ class OrderDalImpl @Inject()(
           r.nextString
         )
     )
+
     implicit val stateResult = GetResult[RawOrder.State](
       r =>
         RawOrder.State(
@@ -354,6 +357,7 @@ class OrderDalImpl @Inject()(
           ByteString.copyFrom(r.nextBytes())
         )
     )
+
     implicit val totalResult = GetResult[RawOrder](
       r =>
         RawOrder(
@@ -371,8 +375,8 @@ class OrderDalImpl @Inject()(
           Some(stateResult(r)),
           r.nextLong,
           r.nextString,
-          r.nextInt,
-          r.nextInt
+          r.nextLong,
+          r.nextLong
         )
     )
     val now = timeProvider.getTimeSeconds()
@@ -384,8 +388,8 @@ class OrderDalImpl @Inject()(
         AND valid_until > #${now}
         AND sequence_id > #${paging.cursor}
         AND (
-          market_shard in (#${marketShardSet.mkString(",")})
-          OR account_shard IN (#${accountShardSet.mkString(",")})
+          market_entity_id in (#${marketEntityIds.mkString(",")})
+          OR account_entity_id IN (#${accountEntityIds.mkString(",")})
         )
         ORDER BY sequence_id ASC
         LIMIT #${paging.size}
@@ -396,28 +400,31 @@ class OrderDalImpl @Inject()(
   // Get some orders larger than given sequenceId. The orders are ascending sorted by sequenceId
   def getOrdersForRecover(
       statuses: Set[OrderStatus],
-      marketShardSet: Set[Int] = Set.empty,
-      accountShardSet: Set[Int] = Set.empty,
+      marketEntityIds: Set[Long] = Set.empty,
+      accountEntityIds: Set[Long] = Set.empty,
       skip: CursorPaging
     ): Future[Seq[RawOrder]] = {
-    if (marketShardSet.isEmpty && accountShardSet.isEmpty) {
+
+    println(s"recover: ${marketEntityIds} ${accountEntityIds}")
+
+    if (marketEntityIds.isEmpty && accountEntityIds.isEmpty) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        "Invalid parameters:`marketShardSet` and `accountShardSet` could not both empty"
+        "Invalid parameters:`marketEntityIds` and `accountEntityIds` could not both be empty"
       )
     } else {
-      if (marketShardSet.nonEmpty && accountShardSet.nonEmpty) {
+      if (marketEntityIds.nonEmpty && accountEntityIds.nonEmpty) {
         queryOrderForMarketAndAddress(
           statuses,
-          marketShardSet,
-          accountShardSet,
+          marketEntityIds,
+          accountEntityIds,
           skip
         )
       } else {
         val filters = queryOrderForRecorverFilters(
           statuses,
-          marketShardSet,
-          accountShardSet,
+          marketEntityIds,
+          accountEntityIds,
           skip
         )
         db.run(filters.result)

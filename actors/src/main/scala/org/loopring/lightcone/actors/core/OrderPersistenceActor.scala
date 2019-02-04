@@ -31,7 +31,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // Owner: Yongfeng
-object OrderPersistenceActor extends ShardedEvenly {
+object OrderPersistenceActor extends DeployedAsShardedEvenly {
   val name = "order_persistence"
 
   def start(

@@ -35,7 +35,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 
 // Owner: Yadong
-object GasPriceActor extends ShardedEvenly {
+object GasPriceActor extends DeployedAsShardedEvenly {
   val name = "gas_price"
 
   def start(

@@ -32,7 +32,7 @@ import scala.concurrent._
 
 //目标：需要恢复的以及初始化花费时间较长的
 //定时keepalive, 定时给需要监控的发送req，确认各个shard等需要初始化的运行正常，否则会触发他们的启动恢复
-object KeepAliveActor extends Singletoned {
+object KeepAliveActor extends DeployedAsSingleton {
   val name = "alive_keeper"
   val NOTIFY_MSG = "heartbeat"
 
@@ -111,7 +111,7 @@ class KeepAliveActor @Inject()(
     } yield Unit
 
   private def initAccountManager(): Future[Unit] = {
-    val numsOfShards = config.getInt("multi_account_manager.num-of-shards")
+    val numsOfShards = config.getInt("multi_account_manager.num-of-entities")
     for {
       _ <- Future.sequence((0 until numsOfShards) map { i =>
         multiAccountManagerActor ? Notify(KeepAliveActor.NOTIFY_MSG, i.toString)

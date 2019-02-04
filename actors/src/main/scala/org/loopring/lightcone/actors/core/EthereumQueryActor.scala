@@ -35,7 +35,7 @@ import org.loopring.lightcone.actors.ethereum._
 import scala.concurrent.{ExecutionContext, Future}
 
 // Owner: Yadong
-object EthereumQueryActor extends ShardedEvenly {
+object EthereumQueryActor extends DeployedAsShardedEvenly {
   val name = "ethereum_query"
 
   def start(

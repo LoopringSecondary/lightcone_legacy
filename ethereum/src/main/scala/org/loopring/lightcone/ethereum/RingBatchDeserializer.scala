@@ -53,11 +53,7 @@ class SimpleRingBatchDeserializer(
 
       val ringBatchWithMiningData = setMiningData(miningTableOffset)
       val ringBatchWithOrders =
-        setupOrders(
-          ringBatchWithMiningData,
-          orderTableOffset,
-          numOrders
-        )
+        setupOrders(ringBatchWithMiningData, orderTableOffset, numOrders)
       val ringBatchWithRings =
         assembleRings(ringBatchWithOrders, ringDataOffset, numRings)
 
@@ -146,7 +142,7 @@ class SimpleRingBatchDeserializer(
   private def nextAddress() = {
     val offset = getNextOffset * 4
     if (offset > 0) {
-      bitExtractor.extractAddress(dataOffset + offset)
+      bitExtractor.extractShardingObject(dataOffset + offset)
     } else {
       ""
     }
@@ -256,7 +252,7 @@ class SimpleRingBatchDeserializer(
       BigInt(hexStr, 16)
     }
 
-    def extractAddress(offset: Int) = "0x" + extractBytesX(offset, 20)
+    def extractShardingObject(offset: Int) = "0x" + extractBytesX(offset, 20)
 
     def extractBytesX(
         offset: Int,

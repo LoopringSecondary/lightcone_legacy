@@ -43,8 +43,8 @@ class OrderServiceImpl @Inject()(
             state = Some(returnState),
             sequenceId = 0,
             marketHash = "",
-            marketShard = 0,
-            accountShard = 0
+            marketEntityId = 0,
+            accountEntityId = 0
           )
         )
       case None => None
@@ -53,10 +53,11 @@ class OrderServiceImpl @Inject()(
 
   // Save order to database, if the order already exist, return an error code.
   def saveOrder(order: RawOrder): Future[Either[RawOrder, ErrorCode]] = {
-    if (order.accountShard < 0 || order.marketShard <= 0) {
+    if (order.accountEntityId < 0 || order.marketEntityId < 0) {
       throw ErrorException(
         ErrorCode.ERR_INTERNAL_UNKNOWN,
-        s"Invalid accountShard:[${order.accountShard}] or marketShard:[${order.marketShard}]"
+        s"Invalid accountEntityId:[${order.accountEntityId}] or " +
+          s"marketEntityId:[${order.marketEntityId}]"
       )
     }
     orderDal.saveOrder(order).map { r =>
@@ -122,14 +123,14 @@ class OrderServiceImpl @Inject()(
 
   def getOrdersForRecover(
       statuses: Set[OrderStatus],
-      marketShardSet: Set[Int] = Set.empty,
-      accountShardSet: Set[Int] = Set.empty,
+      marketEntityIds: Set[Long] = Set.empty,
+      accountEntityIds: Set[Long] = Set.empty,
       skip: CursorPaging
     ): Future[Seq[RawOrder]] =
     orderDal.getOrdersForRecover(
       statuses,
-      marketShardSet,
-      accountShardSet,
+      marketEntityIds,
+      accountEntityIds,
       skip
     )
 

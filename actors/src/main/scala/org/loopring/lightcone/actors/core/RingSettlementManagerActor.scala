@@ -33,7 +33,7 @@ import scala.concurrent.ExecutionContext
 import scala.util.Random
 
 // Owner: Hongyu
-object RingSettlementManagerActor extends Singletoned {
+object RingSettlementManagerActor extends DeployedAsSingleton {
   val name = "ring_settlement"
 
   def start(

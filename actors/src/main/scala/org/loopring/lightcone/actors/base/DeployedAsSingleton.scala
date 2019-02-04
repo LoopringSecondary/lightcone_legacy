@@ -17,41 +17,38 @@
 package org.loopring.lightcone.actors.base
 
 import akka.actor._
-import akka.cluster.sharding._
-import akka.cluster.sharding.ShardRegion._
+import akka.cluster.singleton._
 import com.typesafe.config.Config
 
 // Owner: Daniel
 
-trait Sharded {
+trait DeployedAsSingleton {
   val name: String
-  var numOfShards: Int = _
 
-  def messageExtractor: MessageExtractor
-
-  def startSharding(
-      entityProps: Props
+  def startSingleton(
+      singletonProps: Props
     )(
       implicit
       system: ActorSystem,
-      config: Config,
       deployActorsIgnoringRoles: Boolean
     ) = {
-    val numOfShardsPath = s"${name}.num-of-shards"
-    assert(
-      config.hasPath(numOfShardsPath),
-      s"no config for `${numOfShardsPath}`"
+
+    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = singletonProps,
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system).withRole(roleOpt)
+      ),
+      name
     )
 
-    numOfShards = config.getInt(numOfShardsPath)
-    val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)
-
-    ClusterSharding(system).start(
-      typeName = name,
-      entityProps = entityProps,
-      settings = ClusterShardingSettings(system).withRole(roleOpt),
-      messageExtractor = messageExtractor
+    system.actorOf(
+      ClusterSingletonProxy.props(
+        singletonManagerPath = s"/user/${name}",
+        settings = ClusterSingletonProxySettings(system)
+      ),
+      name = s"${name}_proxy"
     )
   }
-
 }

@@ -26,7 +26,6 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.actors.core.OrderbookManagerActor.getEntityId
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.lib.data._
@@ -44,7 +43,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 // Owenr: Hongyu
-object MarketManagerActor extends ShardedByMarket {
+object MarketManagerActor extends DeployedAsShardedByMarket {
   val name = "market_manager"
 
   var metadataManager: MetadataManager = _
@@ -69,7 +68,7 @@ object MarketManagerActor extends ShardedByMarket {
 
   // 如果message不包含一个有效的marketPair，就不做处理，不要返回“默认值”
   //READONLY的不能在该处拦截，需要在validtor中截取，因为该处还需要将orderbook等恢复
-  val extractMarketPair: PartialFunction[Any, MarketPair] = {
+  val extractShardingObject: PartialFunction[Any, MarketPair] = {
     case SubmitSimpleOrder(_, Some(order))
         if metadataManager.isMarketActiveOrReadOnly(
           MarketPair(order.tokenS, order.tokenB)
@@ -115,10 +114,16 @@ class MarketManagerActor(
 
   val selfConfig = config.getConfig(MarketManagerActor.name)
 
-  implicit val marketPair: MarketPair =
+  implicit val marketPair = {
     metadataManager.getValidMarketPairs.values
-      .find(m => getEntityId(m) == entityId.toString)
-      .get
+      .find(m => MarketManagerActor.getEntityId(m) == entityId) match {
+      case Some(pair) => pair
+      case None =>
+        val error = s"unable to find market pair matching entity id ${entityId}"
+        log.error(error)
+        throw new IllegalStateException(error)
+    }
+  }
 
   log.info(
     s"=======> starting MarketManagerActor ${self.path} for ${marketPair}"

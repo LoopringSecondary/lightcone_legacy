@@ -32,7 +32,7 @@ import org.loopring.lightcone.proto._
 import scala.concurrent._
 
 // Owner: Yongfeng
-object DatabaseQueryActor extends ShardedEvenly {
+object DatabaseQueryActor extends DeployedAsShardedEvenly {
   val name = "database_query"
 
   def start(
@@ -94,8 +94,8 @@ class DatabaseQueryActor(
           r.copy(
             params = params,
             marketHash = "",
-            accountShard = 0,
-            marketShard = 0
+            accountEntityId = 0,
+            marketEntityId = 0
           )
         }
         GetOrdersForUser.Res(respOrder, total)
