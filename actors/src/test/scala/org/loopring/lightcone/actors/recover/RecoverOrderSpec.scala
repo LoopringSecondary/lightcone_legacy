@@ -81,7 +81,7 @@ class RecoverOrderSpec
       implicit val timeout = Timeout(3 second)
       val r = actors.get(OrderRecoverCoordinator.name) ? request1
       val res = Await.result(r, timeout.duration)
-      Thread.sleep(10000)
+      Thread.sleep(5000)
 
       info("get depth")
       val orderbookF2 = singleRequest(getOrderBook1, "get_orderbook")

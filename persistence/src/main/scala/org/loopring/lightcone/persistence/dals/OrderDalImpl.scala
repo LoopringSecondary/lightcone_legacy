@@ -63,7 +63,6 @@ class OrderDalImpl @Inject()(
   )
 
   def saveOrder(order: RawOrder): Future[PersistOrder.Res] = {
-    println("saveOrder: " + order)
     db.run((query += order).asTry).map {
       case Failure(e: MySQLIntegrityConstraintViolationException) => {
         PersistOrder.Res(
