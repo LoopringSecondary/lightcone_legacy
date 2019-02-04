@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.indexer
+package org.loopring.lightcone.persistence.dals
 
-// The Ethereum indexer
-object Main {
+import org.loopring.lightcone.persistence.base.{enumColumnType, BaseTable}
+import org.loopring.lightcone.proto._
+import slick.jdbc.MySQLProfile.api._
 
-  def main(args: Array[String]): Unit = {}
+class OrderStatusMonitorTable(tag: Tag)
+    extends BaseTable[OrderStatusMonitor](tag, "T_ORDER_STATUS_MONITOR") {
+
+  def id = monitoringType
+  def processTime = column[Long]("process_time")
+  def monitoringType = column[String]("monitoring_type", O.PrimaryKey, O.Unique)
+
+  def * =
+    (monitoringType, processTime) <> ((OrderStatusMonitor.apply _).tupled, OrderStatusMonitor.unapply)
 
 }

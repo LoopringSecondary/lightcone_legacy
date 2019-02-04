@@ -25,7 +25,6 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
-import org.loopring.lightcone.persistence.tables.TransactionRecordTable
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import scala.util.{Failure, Success}

@@ -23,7 +23,6 @@ import com.mysql.jdbc.exceptions.jdbc4._
 import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.proto.ErrorCode._
 import slick.jdbc.MySQLProfile.api._
@@ -405,8 +404,6 @@ class OrderDalImpl @Inject()(
       accountEntityIds: Set[Long] = Set.empty,
       skip: CursorPaging
     ): Future[Seq[RawOrder]] = {
-
-    println(s"recover: ${marketEntityIds} ${accountEntityIds}")
 
     if (marketEntityIds.isEmpty && accountEntityIds.isEmpty) {
       throw ErrorException(

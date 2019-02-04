@@ -18,7 +18,7 @@ package org.loopring.lightcone.persistence.dals
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import org.loopring.lightcone.persistence.tables._
+
 import org.loopring.lightcone.proto.MissingBlocksRecord
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile

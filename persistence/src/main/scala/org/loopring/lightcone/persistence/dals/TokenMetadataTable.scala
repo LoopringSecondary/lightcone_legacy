@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.persistence.tables
+package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._

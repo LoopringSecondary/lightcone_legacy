@@ -22,7 +22,6 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationExceptio
 import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib.{ErrorException, SystemTimeProvider}
 import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.persistence.tables._
 import org.loopring.lightcone.proto.ErrorCode._
 import org.loopring.lightcone.proto._
 import slick.jdbc.MySQLProfile.api._
