@@ -16,12 +16,12 @@
 
 package org.loopring.lightcone.persistence.service
 
-import org.loopring.lightcone.persistence.dals.{ OHLCDataDal, OHLCDataDalImpl }
+import org.loopring.lightcone.persistence.dals.{OHLCDataDal, OHLCDataDalImpl}
 import org.loopring.lightcone.proto.GetOHLCData.Interval
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
@@ -48,7 +48,10 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
           time = 1547682650,
           baseAmount = 10,
           quoteAmount = 100,
-          price = 10)))
+          price = 10
+        )
+      )
+    )
     val result0 = service.saveData(record0)
     val res0 = Await.result(result0.mapTo[PersistOHLCData.Res], 5.second)
     res0.error should be(ErrorCode.ERR_NONE)
@@ -62,7 +65,8 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
       time = 1547682655,
       baseAmount = 50,
       quoteAmount = 200,
-      price = 50)
+      price = 50
+    )
     val result1 = dal.saveData(record1)
     val res1 = Await.result(result1.mapTo[PersistOHLCData.Res], 5.second)
     res1.error should be(ErrorCode.ERR_NONE)
@@ -78,14 +82,18 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
           time = 1547682750,
           baseAmount = 100,
           quoteAmount = 500,
-          price = 100)))
+          price = 100
+        )
+      )
+    )
     val result2 = service.saveData(record2)
 
     val request = GetOHLCData.Req(
       marketHash = "111222",
       interval = Interval.OHLC_INTERVAL_ONE_MINUTES,
       beginTime = 1547682050,
-      endTime = 1547682850)
+      endTime = 1547682850
+    )
     val resResult = service.getOHLCData(request)
     val res = Await.result(resResult.mapTo[GetOHLCData.Res], 5.second)
     val singleData = res.ohlcData(1).data
@@ -96,7 +104,8 @@ class OHLCDataServiceSpec extends ServicePostgreSpec[OHLCDataService] {
         singleData(3) == 10.0 &&
         singleData(4) == 50.0 &&
         singleData(5) == 50.0 &&
-        singleData(6) == 10.0)
+        singleData(6) == 10.0
+    )
     println(res)
   }
 }

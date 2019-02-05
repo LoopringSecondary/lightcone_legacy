@@ -15,6 +15,7 @@
  */
 
 package org.loopring.lightcone.core
+import org.loopring.lightcone.core.implicits._
 
 // import org.loopring.lightcone.core.OrderAwareSpec
 

@@ -15,6 +15,7 @@
  */
 
 package org.loopring.lightcone.core
+import org.loopring.lightcone.core.implicits._
 
 /// import org.loopring.lightcone.proto._
 
@@ -36,7 +37,8 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
     marketManager.submitOrder(buy3, 0)
 
     marketManager.getBuyOrders(5) should be(
-      Seq(buy1.asPending, buy2.asPending, buy3.asPending))
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
+    )
 
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))
@@ -64,7 +66,8 @@ class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
     marketManager.getSellOrders(100) should be(Seq(sell1.asPending))
 
     marketManager.getBuyOrders(5) should be(
-      Seq(buy1.asPending, buy2.asPending, buy3.asPending))
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
+    )
 
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))

@@ -15,7 +15,8 @@
  */
 
 package org.loopring.lightcone.core
-
+import org.loopring.lightcone.core.implicits._
+import org.loopring.lightcone.core.implicits._
 /// import org.loopring.lightcone.proto._
 
 import OrderStatus._
@@ -25,43 +26,43 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
 
   "MarketManager" should "not generate ring when ring matcher returns ERR_MATCHING_INCOME_TOO_SMALL error " +
     "and should put order inside the orderbook" in {
-      var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
-      var buyOrder = actualNotDust(sellGTO(100000, 100)) // price =  100000/100.0 = 1000.00
+    var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
+    var buyOrder = actualNotDust(sellGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
-      (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-      (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+    (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
-      (fackRingMatcher
-        .matchOrders(_: Matchable, _: Matchable, _: Double))
-        .when(*, *, *)
-        .returns(Left(ERR_MATCHING_INCOME_TOO_SMALL))
+    (fackRingMatcher
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
+      .when(*, *, *)
+      .returns(Left(ERR_MATCHING_INCOME_TOO_SMALL))
 
-      val sellResult = marketManager.submitOrder(sellOrder, 1)
-      sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
+    val sellResult = marketManager.submitOrder(sellOrder, 1)
+    sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
-      val buyResult = marketManager.submitOrder(buyOrder, 2)
-      buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
-    }
+    val buyResult = marketManager.submitOrder(buyOrder, 2)
+    buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
+  }
 
   "MarketManager" should "not generate ring when ring matcher returns ERR_MATCHING_ORDERS_NOT_TRADABLE error " +
     "and should put order inside the orderbook" in {
-      var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
-      var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
+    var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
+    var buyOrder = actualNotDust(buyGTO(100000, 100)) // price =  100000/100.0 = 1000.00
 
-      (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
-      (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
+    (fakePendingRingPool.getOrderPendingAmountS _).when(*).returns(0)
+    (fakeAggregator.getOrderbookUpdate _).when().returns(Orderbook.Update())
 
-      (fackRingMatcher
-        .matchOrders(_: Matchable, _: Matchable, _: Double))
-        .when(*, *, *)
-        .returns(Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
+    (fackRingMatcher
+      .matchOrders(_: Matchable, _: Matchable, _: Double))
+      .when(*, *, *)
+      .returns(Left(ERR_MATCHING_ORDERS_NOT_TRADABLE))
 
-      val sellResult = marketManager.submitOrder(sellOrder, 1)
-      sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
+    val sellResult = marketManager.submitOrder(sellOrder, 1)
+    sellResult should be(emptyMatchingResult(sellOrder, STATUS_PENDING))
 
-      val buyResult = marketManager.submitOrder(buyOrder, 2)
-      buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
-    }
+    val buyResult = marketManager.submitOrder(buyOrder, 2)
+    buyResult should be(emptyMatchingResult(buyOrder, STATUS_PENDING))
+  }
 
   "MarketManager" should "generate a ring for sell order as taker" in {
     var sellOrder = actualNotDust(sellGTO(100000, 101)) // price =  100000/101.0 = 989.12
@@ -87,7 +88,9 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
           Seq(ring),
           Orderbook
             .Update()
-            .copy(latestPrice = (101 / 100000.0 + 100 / 100000.0) / 2)))
+            .copy(latestPrice = (101 / 100000.0 + 100 / 100000.0) / 2)
+        )
+    )
 
     marketManager.getSellOrders(100) should be(Seq(sellOrder.asPending))
 
@@ -120,7 +123,9 @@ class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
           Seq(ring),
           Orderbook
             .Update()
-            .copy(latestPrice = (101 / 100000.0 + 100 / 100000.0) / 2)))
+            .copy(latestPrice = (101 / 100000.0 + 100 / 100000.0) / 2)
+        )
+    )
 
     marketManager.getSellOrders(100) should be(Seq(sellOrder.asPending))
     marketManager.getBuyOrders(100) should be(Seq(buyOrder.asPending))

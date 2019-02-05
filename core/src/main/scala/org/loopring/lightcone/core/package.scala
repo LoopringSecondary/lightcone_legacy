@@ -62,7 +62,22 @@ package object core {
     Numeric.toHexString(hash.toByteArray).toLowerCase()
   }
 
-  implicit class RichOrderRing(raw: MatchableRing) {
+  implicit class RichMatchable(order: Matchable) {
+
+    def asPending() =
+      order.copy(
+        _matchable = order._actual,
+        status = OrderStatus.STATUS_PENDING
+      )
+
+    def withActualAsOriginal() = order.copy(_actual = Some(order.original))
+
+    def withMatchableAsActual() = order.copy(_matchable = Some(order.actual))
+
+    def matchableAsOriginal() = order.copy(_matchable = Some(order.original))
+  }
+
+  implicit class RichMatchableRing(raw: MatchableRing) {
 
     // Switching maker and taker should have the same id.
     def id(): String = {

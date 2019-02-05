@@ -15,6 +15,7 @@
  */
 
 package org.loopring.lightcone.core
+import org.loopring.lightcone.core.implicits._
 
 import org.loopring.lightcone.lib._
 
@@ -50,9 +51,10 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
       new OrderAwareOrderbookAggregatorImpl(
         priceDecimals = 5,
         precisionForAmount = 4,
-        precisionForTotal = 4),
+        precisionForTotal = 4
+      ),
       100 // max matching attempts
-      )
+    )
 
     (fakeDustOrderEvaluator.isOriginalDust _).when(*).returns(false)
     (fakeDustOrderEvaluator.isOutstandingDust _).when(*).returns(false)
@@ -91,20 +93,23 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
   }
 
   private def createGTOSellOrder(
-    price: Double,
-    amount: Double) = {
+      price: Double,
+      amount: Double
+    ) = {
     sellGTO(amount, amount * price).withActualAsOriginal
   }
 
   private def createGTOBuyOrder(
-    price: Double,
-    amount: Double) = {
+      price: Double,
+      amount: Double
+    ) = {
     buyGTO(amount, amount * price).withActualAsOriginal
   }
 
   private def createRandomOrder(
-    price: Double,
-    amount: Double) = {
+      price: Double,
+      amount: Double
+    ) = {
     val rand = new util.Random()
     val p = price * (1 + (rand.nextInt % 5) / 100.0)
     val a = amount * (1 + (rand.nextInt % 20) / 100.0)

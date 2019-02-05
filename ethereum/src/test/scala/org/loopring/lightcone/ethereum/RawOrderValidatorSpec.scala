@@ -105,7 +105,8 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
     assert(validateRes2 == expectedRes2, "validate order not as expected.")
 
     val params3 = params2.withSig(
-      "0x00411b60253172658e0f1de6277245d4d1c8dd379259554b646c41513ecdfe0b19a205048ac90d2df4c6b61f321d2cc20a31b08e16e081724bec57a72db3c573db3dd4")
+      "0x00411b60253172658e0f1de6277245d4d1c8dd379259554b646c41513ecdfe0b19a205048ac90d2df4c6b61f321d2cc20a31b08e16e081724bec57a72db3c573db3dd4"
+    )
     val order3 = order2.withParams(params3)
     val validateRes3 = validator.validate(order3)
     val expectedRes3 = Right(order3)

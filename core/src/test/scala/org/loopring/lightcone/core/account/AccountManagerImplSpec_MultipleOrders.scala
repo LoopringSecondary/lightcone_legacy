@@ -15,6 +15,7 @@
  */
 
 package org.loopring.lightcone.core
+import org.loopring.lightcone.core.implicits._
 
 // import org.loopring.lightcone.core.OrderAwareSpec
 
@@ -37,7 +38,8 @@ class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(9)
     updatedOrders(order.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE)
+      OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
+    )
   }
 
   "last order" should "fail when available balance for tokenFee is smaller than required" in {
@@ -55,7 +57,8 @@ class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(9)
     updatedOrders(order.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE)
+      OrderStatus.STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE
+    )
   }
 
   "delete orders" should "scale up following orders according to tokenS" in {
@@ -75,7 +78,8 @@ class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
     updatedOrders.size should be(3)
 
     updatedOrders(order1.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER)
+      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
+    )
     updatedOrders(order1.id).reserved should be(orderState(0 !, 0 !, 0 !))
     updatedOrders(order1.id).actual should be(orderState(0 !, 0 !, 0 !))
 
@@ -90,7 +94,8 @@ class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
     updatedOrders.size should be(2)
 
     updatedOrders(order2.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER)
+      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
+    )
     updatedOrders(order2.id).reserved should be(orderState(0 !, 0 !, 0 !))
     updatedOrders(order2.id).actual should be(orderState(0 !, 0 !, 0 !))
 
@@ -117,7 +122,8 @@ class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
     updatedOrders.size should be(3)
 
     updatedOrders(order1.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER)
+      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
+    )
     updatedOrders(order1.id).reserved should be(orderState(0 !, 0 !, 0 !))
     updatedOrders(order1.id).actual should be(orderState(0 !, 0 !, 0 !))
 
@@ -132,7 +138,8 @@ class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
     updatedOrders.size should be(2)
 
     updatedOrders(order2.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER)
+      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
+    )
     updatedOrders(order2.id).reserved should be(orderState(0 !, 0 !, 0 !))
     updatedOrders(order2.id).actual should be(orderState(0 !, 0 !, 0 !))
 

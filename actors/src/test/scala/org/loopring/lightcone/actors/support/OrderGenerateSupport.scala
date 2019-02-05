@@ -29,15 +29,18 @@ import scala.math.BigInt
 trait OrderGenerateSupport {
 
   def createRawOrder(
-    tokenS: String = LRC_TOKEN.address,
-    tokenB: String = WETH_TOKEN.address,
-    amountS: BigInt = "10".zeros(18),
-    amountB: BigInt = "1".zeros(18),
-    tokenFee: String = LRC_TOKEN.address,
-    amountFee: BigInt = "3".zeros(18),
-    validSince: Int = (timeProvider.getTimeMillis / 1000).toInt,
-    validUntil: Int = (timeProvider.getTimeMillis / 1000).toInt + 20000)(
-      implicit credentials: Credentials = accounts(0)) = {
+      tokenS: String = LRC_TOKEN.address,
+      tokenB: String = WETH_TOKEN.address,
+      amountS: BigInt = "10".zeros(18),
+      amountB: BigInt = "1".zeros(18),
+      tokenFee: String = LRC_TOKEN.address,
+      amountFee: BigInt = "3".zeros(18),
+      validSince: Int = (timeProvider.getTimeMillis / 1000).toInt,
+      validUntil: Int = (timeProvider.getTimeMillis / 1000).toInt + 20000
+    )(
+      implicit
+      credentials: Credentials = accounts(0)
+    ) = {
     val createAt = timeProvider.getTimeMillis
     val marketId = MarketHash(MarketPair(tokenS, tokenB)).longId
     val owner = credentials.getAddress
@@ -53,17 +56,22 @@ trait OrderGenerateSupport {
         RawOrder.State(
           createdAt = createAt,
           updatedAt = createAt,
-          status = OrderStatus.STATUS_NEW)),
+          status = OrderStatus.STATUS_NEW
+        )
+      ),
       feeParams = Some(
         RawOrder.FeeParams(
           tokenFee = tokenFee,
-          amountFee = ByteString.copyFrom(amountFee.toByteArray))),
+          amountFee = ByteString.copyFrom(amountFee.toByteArray)
+        )
+      ),
       params = Some(RawOrder.Params(validUntil = validUntil)),
       marketId = marketId,
       marketEntityId = MarketManagerActor
         .getEntityId(MarketPair(tokenS, tokenB)),
       accountEntityId = MultiAccountManagerActor
-        .getEntityId(owner))
+        .getEntityId(owner)
+    )
 
     val hash = RawOrderValidatorDefault.calculateOrderHash(order)
     order
@@ -74,7 +82,10 @@ trait OrderGenerateSupport {
             .signPrefixedMessage(
               hash,
               Numeric
-                .toHexStringWithPrefix(credentials.getEcKeyPair.getPrivateKey))))
+                .toHexStringWithPrefix(credentials.getEcKeyPair.getPrivateKey)
+            )
+        )
+      )
 
   }
 

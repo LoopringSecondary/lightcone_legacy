@@ -15,6 +15,7 @@
  */
 
 package org.loopring.lightcone.core
+import org.loopring.lightcone.core.implicits._
 
 /// import org.loopring.lightcone.proto._
 
@@ -27,16 +28,18 @@ class RingMatcherImplSpec_Profit extends OrderAwareSpec {
     def getRingIncome(ring: MatchableRing) = 0
 
     def isProfitable(
-      ring: MatchableRing,
-      fiatValueThreshold: Double) = false
+        ring: MatchableRing,
+        fiatValueThreshold: Double
+      ) = false
   }
 
   val alwaysProfitable = new RingIncomeEvaluator {
     def getRingIncome(ring: MatchableRing) = Long.MaxValue
 
     def isProfitable(
-      ring: MatchableRing,
-      fiatValueThreshold: Double) = true
+        ring: MatchableRing,
+        fiatValueThreshold: Double
+      ) = true
   }
 
   val maker = sellDAI(10, 10).matchableAsOriginal
@@ -46,7 +49,8 @@ class RingMatcherImplSpec_Profit extends OrderAwareSpec {
     implicit val rie = nonProfitable
     val matcher = new RingMatcherImpl()
     matcher.matchOrders(taker, maker, 0) should be(
-      Left(ERR_MATCHING_INCOME_TOO_SMALL))
+      Left(ERR_MATCHING_INCOME_TOO_SMALL)
+    )
   }
 
   "RingMatcherImpl" should "match orders if the ring is indeed profitable" in {
@@ -62,12 +66,14 @@ class RingMatcherImplSpec_Profit extends OrderAwareSpec {
     matcher
       .matchOrders(
         sellDAI(10, 10).matchableAsOriginal,
-        buyDAI(10, 10).matchableAsOriginal)
+        buyDAI(10, 10).matchableAsOriginal
+      )
       .isRight should be(true)
 
     // match the same orders with `_matchable`
     matcher.matchOrders(sellDAI(10, 10), buyDAI(10, 10)) should be(
-      Left(ERR_MATCHING_TAKER_COMPLETELY_FILLED))
+      Left(ERR_MATCHING_TAKER_COMPLETELY_FILLED)
+    )
   }
 
 }

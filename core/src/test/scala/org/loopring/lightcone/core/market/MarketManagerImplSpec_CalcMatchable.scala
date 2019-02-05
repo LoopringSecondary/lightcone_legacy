@@ -15,6 +15,7 @@
  */
 
 package org.loopring.lightcone.core
+import org.loopring.lightcone.core.implicits._
 
 /// import org.loopring.lightcone.proto._
 
@@ -51,7 +52,8 @@ class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
           .copy(_matchable = Some(MatchableState(34, 34000, 0))),
         sellOrder.asPending.withActualAsOriginal
           .copy(_matchable = Some(MatchableState(99445, 100, 0))),
-        2.0)
+        2.0
+      )
       .once
   }
 

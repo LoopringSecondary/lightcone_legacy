@@ -20,19 +20,19 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_SubmitSeveralOrder
-  extends CommonSpec
-  with JsonrpcSupport
-  with HttpSupport
-  with EthereumSupport
-  with MetadataManagerSupport
-  with OrderHandleSupport
-  with MultiAccountManagerSupport
-  with MarketManagerSupport
-  with OrderbookManagerSupport
-  with OrderGenerateSupport {
+    extends CommonSpec
+    with JsonrpcSupport
+    with HttpSupport
+    with EthereumSupport
+    with MetadataManagerSupport
+    with OrderHandleSupport
+    with MultiAccountManagerSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport
+    with OrderGenerateSupport {
 
   "submit several order then cancel it" must {
     "get right response in EntryPoint,DbModule,Orderbook" in {
@@ -41,17 +41,20 @@ class EntryPointSpec_SubmitSeveralOrder
         ((0 until 2) map { i =>
           createRawOrder(
             amountS = "10".zeros(LRC_TOKEN.decimals),
-            amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
+            amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+          )
         }) ++
           ((0 until 2) map { i =>
             createRawOrder(
               amountS = "20".zeros(LRC_TOKEN.decimals),
-              amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
+              amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+            )
           }) ++
           ((0 until 2) map { i =>
             createRawOrder(
               amountS = "30".zeros(LRC_TOKEN.decimals),
-              amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals))
+              amountFee = (i + 4).toString.zeros(LRC_TOKEN.decimals)
+            )
           })
 
       val f1 = Future.sequence(rawOrders.map { o =>
@@ -61,7 +64,8 @@ class EntryPointSpec_SubmitSeveralOrder
       val res = Await.result(f1, timeout.duration)
 
       info(
-        "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING")
+        "the first order's sequenceId in db should > 0 and status should be STATUS_PENDING"
+      )
       val assertOrderFromDbF = Future.sequence(rawOrders.map { o =>
         for {
           orderOpt <- dbModule.orderService.getOrder(o.hash)
@@ -80,7 +84,8 @@ class EntryPointSpec_SubmitSeveralOrder
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
+      )
 
       val orderbookRes = expectOrderbookRes(
         getOrderBook,
@@ -89,7 +94,8 @@ class EntryPointSpec_SubmitSeveralOrder
             orderbook.sells.size == 3 &&
             orderbook.sells(0).total == "2.00000" &&
             orderbook.sells(1).total == "2.00000" &&
-            orderbook.sells(2).total == "2.00000")
+            orderbook.sells(2).total == "2.00000"
+      )
       orderbookRes match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
@@ -98,17 +104,20 @@ class EntryPointSpec_SubmitSeveralOrder
           assert(
             sells(0).price == "0.033334" &&
               sells(0).amount == "60.00000" &&
-              sells(0).total == "2.00000")
+              sells(0).total == "2.00000"
+          )
 
           assert(
             sells(1).price == "0.050000" &&
               sells(1).amount == "40.00000" &&
-              sells(1).total == "2.00000")
+              sells(1).total == "2.00000"
+          )
 
           assert(
             sells(2).price == "0.100000" &&
               sells(2).amount == "20.00000" &&
-              sells(2).total == "2.00000")
+              sells(2).total == "2.00000"
+          )
 
           assert(buys.isEmpty)
         case _ => assert(false)
@@ -120,13 +129,15 @@ class EntryPointSpec_SubmitSeveralOrder
         rawOrders(0).owner,
         OrderStatus.STATUS_SOFT_CANCELLED_BY_USER,
         Some(MarketPair(rawOrders(0).tokenS, rawOrders(0).tokenB)),
-        rawOrders(0).getParams.sig)
+        rawOrders(0).getParams.sig
+      )
 
       val cancelF = singleRequest(cancelReq, "cancel_order")
       Await.result(cancelF, timeout.duration)
 
       info(
-        "the first order's status in db should be STATUS_SOFT_CANCELLED_BY_USER")
+        "the first order's status in db should be STATUS_SOFT_CANCELLED_BY_USER"
+      )
       val assertOrderFromDbF2 = Future.sequence(rawOrders.map { o =>
         for {
           orderOpt <- dbModule.orderService.getOrder(o.hash)
@@ -135,7 +146,8 @@ class EntryPointSpec_SubmitSeveralOrder
             case Some(order) =>
               if (order.hash == rawOrders(0).hash) {
                 assert(
-                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_BY_USER)
+                  order.getState.status == OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
+                )
               } else {
                 assert(order.getState.status == OrderStatus.STATUS_PENDING)
               }
@@ -148,7 +160,8 @@ class EntryPointSpec_SubmitSeveralOrder
       val orderbookRes1 = expectOrderbookRes(
         getOrderBook,
         (orderbook: Orderbook) =>
-          orderbook.sells.nonEmpty && orderbook.sells(0).total == "2.00000")
+          orderbook.sells.nonEmpty && orderbook.sells(0).total == "2.00000"
+      )
       orderbookRes1 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
@@ -156,17 +169,20 @@ class EntryPointSpec_SubmitSeveralOrder
           assert(
             sells(0).price == "0.033334" &&
               sells(0).amount == "60.00000" &&
-              sells(0).total == "2.00000")
+              sells(0).total == "2.00000"
+          )
 
           assert(
             sells(1).price == "0.050000" &&
               sells(1).amount == "40.00000" &&
-              sells(1).total == "2.00000")
+              sells(1).total == "2.00000"
+          )
 
           assert(
             sells(2).price == "0.100000" &&
               sells(2).amount == "10.00000" &&
-              sells(2).total == "1.00000")
+              sells(2).total == "1.00000"
+          )
 
           assert(buys.isEmpty)
         case _ => assert(false)

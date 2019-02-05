@@ -27,17 +27,17 @@ import org.loopring.lightcone.proto._
 import scala.concurrent.Await
 
 class DynamicAdjustMarketsSpec
-  extends CommonSpec
-  with JsonrpcSupport
-  with HttpSupport
-  with EthereumSupport
-  with DatabaseModuleSupport
-  with MetadataManagerSupport
-  with OrderHandleSupport
-  with MultiAccountManagerSupport
-  with MarketManagerSupport
-  with OrderbookManagerSupport
-  with OrderGenerateSupport {
+    extends CommonSpec
+    with JsonrpcSupport
+    with HttpSupport
+    with EthereumSupport
+    with DatabaseModuleSupport
+    with MetadataManagerSupport
+    with OrderHandleSupport
+    with MultiAccountManagerSupport
+    with MarketManagerSupport
+    with OrderbookManagerSupport
+    with OrderGenerateSupport {
 
   "change a market to mode of TERMINATE" must {
     "return an error with ERR_INVALID_MARKET submiting an order, orderbook" in {
@@ -71,10 +71,12 @@ class DynamicAdjustMarketsSpec
       val getOrderBook = GetOrderbook.Req(
         0,
         100,
-        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)))
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
+      )
       val orderbookRes = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.nonEmpty)
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
       orderbookRes match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
@@ -82,7 +84,8 @@ class DynamicAdjustMarketsSpec
           assert(
             sells(0).price == "0.100000" &&
               sells(0).amount == "10.00000" &&
-              sells(0).total == "1.00000")
+              sells(0).total == "1.00000"
+          )
           assert(buys.isEmpty)
         case _ => assert(false)
       }
@@ -112,8 +115,11 @@ class DynamicAdjustMarketsSpec
           Some(
             metadataManager
               .getMarketMetadata(
-                MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString)
-              .copy(status = MarketMetadata.Status.ACTIVE)))
+                MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString
+              )
+              .copy(status = MarketMetadata.Status.ACTIVE)
+          )
+        )
 
       Await.result(terminateMarketF, timeout.duration)
 
@@ -127,7 +133,8 @@ class DynamicAdjustMarketsSpec
 
       val orderbookRes2 = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.nonEmpty)
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
 
       orderbookRes2 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
@@ -143,8 +150,11 @@ class DynamicAdjustMarketsSpec
           Some(
             metadataManager
               .getMarketMetadata(
-                MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString)
-              .copy(status = MarketMetadata.Status.READONLY)))
+                MarketHash(MarketPair(rawOrder.tokenS, rawOrder.tokenB)).toString
+              )
+              .copy(status = MarketMetadata.Status.READONLY)
+          )
+        )
       Await.result(terminateMarketF, timeout.duration)
       actors.get(MetadataRefresher.name) ! MetadataChanged()
 
@@ -163,7 +173,8 @@ class DynamicAdjustMarketsSpec
       info("can get response when getOrderbook in mode of READONLY")
       val orderbookRes4 = expectOrderbookRes(
         getOrderBook,
-        (orderbook: Orderbook) => orderbook.sells.nonEmpty)
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty
+      )
 
       orderbookRes4 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>

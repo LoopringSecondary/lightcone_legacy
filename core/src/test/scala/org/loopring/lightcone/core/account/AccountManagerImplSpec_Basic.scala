@@ -15,6 +15,7 @@
  */
 
 package org.loopring.lightcone.core
+import org.loopring.lightcone.core.implicits._
 
 // import org.loopring.lightcone.core.OrderAwareSpec
 
@@ -29,7 +30,8 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE)
+      OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
+    )
   }
 
   "submit order" should "fail when tokenFee balance is low" in {
@@ -38,7 +40,8 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE)
+      OrderStatus.STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE
+    )
   }
 
   "submit order" should "succeed when order consumes all tokenS but only part of tokenFee" in {
@@ -106,7 +109,8 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(
-      OrderStatus.STATUS_UNSUPPORTED_MARKET)
+      OrderStatus.STATUS_UNSUPPORTED_MARKET
+    )
   }
 
   "submit order" should "fail if tokenFee is not supported" in {
@@ -117,6 +121,7 @@ class AccountManagerImplSpec_Basic extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(0)
     updatedOrders(order.id).status should be(
-      OrderStatus.STATUS_UNSUPPORTED_MARKET)
+      OrderStatus.STATUS_UNSUPPORTED_MARKET
+    )
   }
 }

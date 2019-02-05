@@ -15,6 +15,7 @@
  */
 
 package org.loopring.lightcone.core
+import org.loopring.lightcone.core.implicits._
 
 import org.loopring.lightcone.lib._
 // import org.loopring.lightcone.core.OrderAwareSpec
@@ -36,25 +37,32 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
           tokenS = LRC,
           tokenB = WETH,
           tokenFee = LRC,
-          walletSplitPercentage = 0.2),
+          walletSplitPercentage = 0.2
+        ),
         pending = MatchableState(amountS = 200, amountFee = 200),
-        amountMargin = 100)
+        amountMargin = 100
+      )
       val takerExpectFill = ExpectedMatchableFill(
         order = Matchable(
           id = hash(s"taker-$i"),
           tokenS = WETH,
           tokenB = LRC,
           tokenFee = LRC,
-          walletSplitPercentage = 0.2),
+          walletSplitPercentage = 0.2
+        ),
         pending = MatchableState(amountS = 100, amountFee = 100),
-        amountMargin = 100)
+        amountMargin = 100
+      )
       val ring = MatchableRing(
         makerExpectFill.copy(
           amountMargin = 0,
-          pending = MatchableState(amountS = 100, amountFee = 10)),
+          pending = MatchableState(amountS = 100, amountFee = 10)
+        ),
         takerExpectFill.copy(
           amountMargin = 0,
-          pending = MatchableState(amountS = 100, amountFee = 0)))
+          pending = MatchableState(amountS = 100, amountFee = 0)
+        )
+      )
       pendingRingPool.addRing(ring)
     }
 
@@ -72,25 +80,32 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
         tokenS = LRC,
         tokenB = WETH,
         tokenFee = LRC,
-        walletSplitPercentage = 0.2),
+        walletSplitPercentage = 0.2
+      ),
       pending = MatchableState(amountS = 200, amountFee = 200),
-      amountMargin = 100)
+      amountMargin = 100
+    )
     val takerExpectFill = ExpectedMatchableFill(
       order = Matchable(
         id = hash("taker-1"),
         tokenS = WETH,
         tokenB = LRC,
         tokenFee = LRC,
-        walletSplitPercentage = 0.2),
+        walletSplitPercentage = 0.2
+      ),
       pending = MatchableState(amountS = 100, amountFee = 100),
-      amountMargin = 100)
+      amountMargin = 100
+    )
     val ring = MatchableRing(
       makerExpectFill.copy(
         amountMargin = 0,
-        pending = MatchableState(amountS = 100, amountFee = 10)),
+        pending = MatchableState(amountS = 100, amountFee = 10)
+      ),
       takerExpectFill.copy(
         amountMargin = 0,
-        pending = MatchableState(amountS = 100, amountFee = 0)))
+        pending = MatchableState(amountS = 100, amountFee = 0)
+      )
+    )
     pendingRingPool.addRing(ring)
     assert(pendingRingPool.ringMap.size == 10)
     assert(pendingRingPool.orderMap.size == 20)
@@ -105,16 +120,21 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
         tokenS = WETH,
         tokenB = LRC,
         tokenFee = LRC,
-        walletSplitPercentage = 0.2),
+        walletSplitPercentage = 0.2
+      ),
       pending = MatchableState(amountS = 100, amountFee = 100),
-      amountMargin = 100)
+      amountMargin = 100
+    )
     val ring1 = MatchableRing(
       makerExpectFill.copy(
         amountMargin = 0,
-        pending = MatchableState(amountS = 100, amountFee = 10)),
+        pending = MatchableState(amountS = 100, amountFee = 10)
+      ),
       takerExpectFillNew1.copy(
         amountMargin = 0,
-        pending = MatchableState(amountS = 100, amountFee = 0)))
+        pending = MatchableState(amountS = 100, amountFee = 0)
+      )
+    )
     pendingRingPool.addRing(ring1)
     assert(pendingRingPool.ringMap.size == 11)
     assert(pendingRingPool.orderMap.size == 21)
@@ -132,25 +152,32 @@ class PendingRingPoolImplSpec extends OrderAwareSpec {
         tokenS = LRC,
         tokenB = WETH,
         tokenFee = LRC,
-        walletSplitPercentage = 0.2),
+        walletSplitPercentage = 0.2
+      ),
       pending = MatchableState(amountS = 200, amountFee = 200),
-      amountMargin = 100)
+      amountMargin = 100
+    )
     val takerExpectFillNew1 = ExpectedMatchableFill(
       order = Matchable(
         id = hash("taker-new-1"),
         tokenS = WETH,
         tokenB = LRC,
         tokenFee = LRC,
-        walletSplitPercentage = 0.2),
+        walletSplitPercentage = 0.2
+      ),
       pending = MatchableState(amountS = 100, amountFee = 100),
-      amountMargin = 100)
+      amountMargin = 100
+    )
     val ring1 = MatchableRing(
       takerExpectFillNew1.copy(
         amountMargin = 0,
-        pending = MatchableState(amountS = 100, amountFee = 0)),
+        pending = MatchableState(amountS = 100, amountFee = 0)
+      ),
       makerExpectFill.copy(
         amountMargin = 0,
-        pending = MatchableState(amountS = 100, amountFee = 10)))
+        pending = MatchableState(amountS = 100, amountFee = 10)
+      )
+    )
     pendingRingPool.deleteRing(ring1.id)
     assert(pendingRingPool.ringMap.size == 10)
     assert(pendingRingPool.orderMap.size == 20)
