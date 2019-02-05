@@ -23,7 +23,7 @@ import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials

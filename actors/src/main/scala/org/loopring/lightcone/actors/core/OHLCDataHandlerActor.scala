@@ -22,9 +22,9 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.core.data.ErrorCode._
+import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.actors.base.safefuture._
 
 import scala.concurrent.ExecutionContext

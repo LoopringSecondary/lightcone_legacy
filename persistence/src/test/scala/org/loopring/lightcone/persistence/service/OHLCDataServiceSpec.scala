@@ -18,9 +18,9 @@ package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.persistence.dals.{OHLCDataDal, OHLCDataDalImpl}
 import org.loopring.lightcone.proto.GetOHLCData.Interval
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._

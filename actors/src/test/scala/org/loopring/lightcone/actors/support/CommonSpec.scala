@@ -23,8 +23,7 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.base.MapBasedLookup
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.lib.SystemTimeProvider
 import org.scalatest._
 import org.slf4s.Logging

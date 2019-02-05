@@ -35,7 +35,7 @@ import org.loopring.lightcone.actors.core.KeepAliveActor
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import scalapb.json4s.JsonFormat
 
 import scala.collection.JavaConverters._

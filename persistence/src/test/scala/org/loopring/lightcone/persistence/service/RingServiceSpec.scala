@@ -19,9 +19,9 @@ package org.loopring.lightcone.persistence.service
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.GetRings._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import scala.concurrent._
 import scala.concurrent.duration._
 

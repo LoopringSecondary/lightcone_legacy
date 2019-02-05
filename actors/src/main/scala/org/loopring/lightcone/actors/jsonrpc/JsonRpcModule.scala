@@ -17,9 +17,9 @@
 package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.json4s._
 import org.json4s.JsonAST.JValue
 import akka.actor._

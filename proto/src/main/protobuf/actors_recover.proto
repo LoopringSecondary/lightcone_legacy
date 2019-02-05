@@ -30,7 +30,7 @@ import "actors_data.proto";
 message ActorRecover {
     message Request {
         int64 account_entity_id = 1;
-        org.loopring.lightcone.core.data.MarketPair market_pair = 2;
+        org.loopring.lightcone.core.MarketPair market_pair = 2;
         string sender = 3;
     }
 

@@ -21,7 +21,7 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.proto.{TransferEvent => PTransferEvent, _}
 import org.loopring.lightcone.lib.data._
-import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.core.MetadataManager
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer

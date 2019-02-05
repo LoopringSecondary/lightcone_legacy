@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.core.data.ErrorCode._
+import org.loopring.lightcone.core.ErrorCode._
 import slick.basic.DatabaseConfig
 import slick.lifted.TableQuery
 
@@ -25,7 +25,7 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.google.protobuf.any.Any
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 

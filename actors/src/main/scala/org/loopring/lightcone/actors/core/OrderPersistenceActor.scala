@@ -20,7 +20,7 @@ import akka.actor._
 import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
@@ -28,9 +28,9 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.lib.{ErrorException, _}
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.core.data.ErrorCode._
+import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import scala.concurrent._
 
 // Owner: Yongfeng

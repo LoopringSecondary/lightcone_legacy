@@ -35,7 +35,7 @@ message PersistOrder {
     message Res {
         RawOrder order    = 1;
         bool already_exist      = 2;
-        org.loopring.lightcone.core.data.ErrorCode error = 3;
+        org.loopring.lightcone.core.ErrorCode error = 3;
     }
 }
 
@@ -47,19 +47,19 @@ message UpdateOrderState {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode error = 1;
+        org.loopring.lightcone.core.ErrorCode error = 1;
     }
 }
 
 message UpdateOrderStatus {
     message Req {
         string hash = 1;
-        org.loopring.lightcone.core.data.OrderStatus status = 2;
+        org.loopring.lightcone.core.OrderStatus status = 2;
         bool changeUpdatedAtField = 3;
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode error = 1;
+        org.loopring.lightcone.core.ErrorCode error = 1;
 }
 }
 
@@ -70,7 +70,7 @@ message GetOrderByHash {
 
     message Res {
         RawOrder order = 1;
-        org.loopring.lightcone.core.data.ErrorCode error = 2;
+        org.loopring.lightcone.core.ErrorCode error = 2;
     }
 
     message BatchReq {
@@ -79,7 +79,7 @@ message GetOrderByHash {
 
     message BatchRes {
         repeated RawOrder orders = 1;
-        org.loopring.lightcone.core.data.ErrorCode error = 2;
+        org.loopring.lightcone.core.ErrorCode error = 2;
     }
 }
 
@@ -92,7 +92,7 @@ message GetOrdersForUser {
             bool   is_query_both_side = 3; // 是否查询两个方向的订单
         }
         string               owner      = 1;
-        repeated org.loopring.lightcone.core.data.OrderStatus statuses   = 2;
+        repeated org.loopring.lightcone.core.OrderStatus statuses   = 2;
         Market               market     = 3;
         SortingType          sort       = 4;
         Paging               skip       = 5;
@@ -113,7 +113,7 @@ message UserCancelOrder {
         message Result {
             string    order_hash        = 1;
             RawOrder  order             = 2;
-            org.loopring.lightcone.core.data.ErrorCode error             = 3;
+            org.loopring.lightcone.core.ErrorCode error             = 3;
         }
         repeated Result updated_result = 1;
     }
@@ -173,7 +173,7 @@ message PersistSettlementTx {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode error = 1;
+        org.loopring.lightcone.core.ErrorCode error = 1;
     }
 }
 
@@ -196,7 +196,7 @@ message UpdateTxInBlock {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode error = 1;
+        org.loopring.lightcone.core.ErrorCode error = 1;
     }
 }
 
@@ -230,7 +230,7 @@ message PersistTransactionRecord {
     }
     message Res {
         bool       already_exist = 1;
-        org.loopring.lightcone.core.data.ErrorCode  error         = 2;
+        org.loopring.lightcone.core.ErrorCode  error         = 2;
     }
 }
 
@@ -267,7 +267,7 @@ message PersistOHLCData {
     }
     message Res {
         OHLCRawData record  = 1;
-        org.loopring.lightcone.core.data.ErrorCode error     = 2;
+        org.loopring.lightcone.core.ErrorCode error     = 2;
     }
 }
 
@@ -315,7 +315,7 @@ message UpdateTokenMetadata {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode  error = 1;
+        org.loopring.lightcone.core.ErrorCode  error = 1;
     }
 }
 
@@ -325,7 +325,7 @@ message UpdateTokenBurnRate {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode  error = 1;
+        org.loopring.lightcone.core.ErrorCode  error = 1;
     }
 }
 
@@ -335,7 +335,7 @@ message InvalidateToken {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode  error = 1;
+        org.loopring.lightcone.core.ErrorCode  error = 1;
     }
 }
 
@@ -365,7 +365,7 @@ message UpdateMarketMetadata {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode  error = 1;
+        org.loopring.lightcone.core.ErrorCode  error = 1;
     }
 }
 
@@ -375,7 +375,7 @@ message TerminateMarket {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode  error = 1;
+        org.loopring.lightcone.core.ErrorCode  error = 1;
     }
 }
 

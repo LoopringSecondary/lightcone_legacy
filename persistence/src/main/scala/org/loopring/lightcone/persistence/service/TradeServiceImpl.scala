@@ -19,9 +19,9 @@ package org.loopring.lightcone.persistence.service
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.persistence.dals._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}

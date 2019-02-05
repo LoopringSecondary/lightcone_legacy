@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.depth
+package org.loopring.lightcone.core
 
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.core.data._
+
 import scala.collection.SortedMap
 
 private[depth] object OrderbookSide {

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.data
+package org.loopring.lightcone.core
 
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+
 import spire.math.Rational
 
 class Token(val meta: TokenMetadata) {

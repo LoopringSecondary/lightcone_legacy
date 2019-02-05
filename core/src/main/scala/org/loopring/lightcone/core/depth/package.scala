@@ -16,9 +16,7 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
 
 package object depth {
   implicit class RichOrderbookSlot(this_ : Orderbook.Slot) {

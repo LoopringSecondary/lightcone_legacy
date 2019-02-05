@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.data
+package org.loopring.lightcone.core
 
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.MurmurHash64

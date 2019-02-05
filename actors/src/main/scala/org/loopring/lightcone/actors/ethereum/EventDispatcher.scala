@@ -20,7 +20,7 @@ import akka.actor.ActorRef
 import org.loopring.lightcone.actors.base.Lookup
 import org.loopring.lightcone.actors.ethereum.event._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import scala.concurrent._
 
 trait EventDispatcher[R <: AnyRef] {

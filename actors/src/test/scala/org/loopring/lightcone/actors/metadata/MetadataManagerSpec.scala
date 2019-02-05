@@ -19,16 +19,16 @@ package org.loopring.lightcone.actors.metadata
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import akka.testkit.TestProbe
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.MetadataManagerValidator
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._
-import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.core.MetadataManager
 
 class MetadataManagerSpec
     extends CommonSpec

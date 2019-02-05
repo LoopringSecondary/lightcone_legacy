@@ -25,7 +25,7 @@ import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.lib.TimeProvider
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import scala.concurrent.duration._
 
 import scala.concurrent.{ExecutionContext, Future}

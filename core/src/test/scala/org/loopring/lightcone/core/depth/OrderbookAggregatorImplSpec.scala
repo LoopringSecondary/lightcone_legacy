@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.depth
+package org.loopring.lightcone.core
 
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.core.data._
+
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+
 import org.loopring.lightcone.core.CommonSpec
 import org.scalatest._
 

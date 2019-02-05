@@ -18,9 +18,9 @@ package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 
 import scala.concurrent.Await
 

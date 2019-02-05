@@ -19,15 +19,15 @@ package org.loopring.lightcone.actors.validator
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.data._
-import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.core.MetadataManager
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.core.data.ErrorCode._
+import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 
 import scala.concurrent._
 

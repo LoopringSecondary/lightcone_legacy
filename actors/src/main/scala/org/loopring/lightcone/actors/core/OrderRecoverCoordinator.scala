@@ -20,10 +20,10 @@ import akka.cluster.singleton._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.core.base.DustOrderEvaluator
+import org.loopring.lightcone.core.DustOrderEvaluator
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import scalapb.json4s.JsonFormat
 
 import scala.concurrent.ExecutionContext
