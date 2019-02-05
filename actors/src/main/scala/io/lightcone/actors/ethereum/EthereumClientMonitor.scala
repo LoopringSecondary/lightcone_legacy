@@ -28,6 +28,7 @@ import io.lightcone.actors.base.safefuture._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.proto._
 import io.lightcone.core._
+import io.lightcone.ethereum._
 import org.web3j.utils.Numeric
 
 import scala.concurrent._
@@ -48,6 +49,7 @@ object EthereumClientMonitor {
       actors: Lookup[ActorRef],
       ma: ActorMaterializer,
       ece: ExecutionContextExecutor,
+      ringBatchGenerator: RingBatchGenerator,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     val roleOpt = if (deployActorsIgnoringRoles) None else Some(name)

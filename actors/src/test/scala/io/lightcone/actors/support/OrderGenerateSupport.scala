@@ -78,7 +78,7 @@ trait OrderGenerateSupport {
       .withHash(hash)
       .withParams(
         order.params.get.withSig(
-          Protocol2RingBatchGenerator
+          new Protocol2RingBatchGenerator()
             .signPrefixedMessage(
               hash,
               Numeric

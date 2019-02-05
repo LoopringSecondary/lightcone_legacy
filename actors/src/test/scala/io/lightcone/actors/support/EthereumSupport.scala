@@ -24,6 +24,7 @@ import com.typesafe.config.ConfigFactory
 import io.lightcone.actors.core._
 import io.lightcone.actors.ethereum._
 import io.lightcone.ethereum.abi._
+import io.lightcone.ethereum._
 import io.lightcone.actors.validator._
 
 import io.lightcone.ethereum.getSignedTxData
@@ -104,8 +105,11 @@ trait EthereumSupport {
       )
   }
 
+  implicit val rbg: RingBatchGenerator = new Protocol2RingBatchGenerator
+
   actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
   Thread.sleep(1000)
+
   actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
 
   def transferEth(

@@ -49,7 +49,8 @@ class RingSettlementActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule)
+    val dbModule: DatabaseModule,
+    val ringBatchGenerator: RingBatchGenerator)
     extends InitializationRetryActor
     with Stash
     with RepeatedJobActor {
@@ -150,10 +151,8 @@ class RingSettlementActor(
               )
             )
         })
-        ringBatch = Protocol2RingBatchGenerator.generateAndSignRingBatch(
-          rawOrders
-        )
-        input = Protocol2RingBatchGenerator.toSubmitableParamStr(ringBatch)
+        ringBatch = ringBatchGenerator.generateAndSignRingBatch(rawOrders)
+        input = ringBatchGenerator.toSubmitableParamStr(ringBatch)
         tx = Tx(
           inputData = ringSubmitterAbi.submitRing.pack(
             SubmitRingsFunction

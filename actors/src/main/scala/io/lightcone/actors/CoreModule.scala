@@ -119,6 +119,7 @@ class CoreModule(config: Config)
     bind[DustOrderEvaluator]
     bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
     bind[RawOrderValidator].to[RawOrderValidatorImpl]
+    bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
     // --- bind event extractors ---------------------
     bind[EventExtractor[AddressAllowanceUpdated]]

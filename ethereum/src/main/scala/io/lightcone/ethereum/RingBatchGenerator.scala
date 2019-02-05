@@ -42,8 +42,7 @@ trait RingBatchGenerator {
     ): String
 }
 
-// TODO(dongw): bind this, not use object
-object Protocol2RingBatchGenerator extends RingBatchGenerator {
+class Protocol2RingBatchGenerator extends RingBatchGenerator {
 
   val OrderVersion = 0
   val SerializationVersion = 0

@@ -30,6 +30,7 @@ import io.lightcone.actors.base._
 import io.lightcone.actors.core._
 import io.lightcone.actors.entrypoint._
 import io.lightcone.actors.ethereum._
+import io.lightcone.ethereum._
 import io.lightcone.actors.jsonrpc.JsonRpcServer
 import io.lightcone.actors.utils._
 import io.lightcone.actors.validator._
@@ -61,6 +62,8 @@ class CoreDeployer @Inject()(
     ece: ExecutionContextExecutor,
     rb: EthereumCallRequestBuilder,
     rie: RingIncomeEvaluator,
+    orderValidator: RawOrderValidator,
+    ringBatchGenerator: RingBatchGenerator,
     metadataManager: MetadataManager,
     timeProvider: TimeProvider,
     timeout: Timeout,
@@ -184,10 +187,12 @@ class CoreDeployer @Inject()(
       //-----------deploy sharded actors-----------
       actors.add(EthereumQueryActor.name, EthereumQueryActor.start)
       actors.add(DatabaseQueryActor.name, DatabaseQueryActor.start)
+
       actors.add(
         RingAndTradePersistenceActor.name,
         RingAndTradePersistenceActor.start
       )
+
       actors.add(GasPriceActor.name, GasPriceActor.start)
       actors.add(OrderPersistenceActor.name, OrderPersistenceActor.start)
       actors.add(OrderRecoverActor.name, OrderRecoverActor.start)
@@ -204,6 +209,7 @@ class CoreDeployer @Inject()(
       actors.add(MetadataRefresher.name, MetadataRefresher.start)
 
       actors.add(KeepAliveActor.name, KeepAliveActor.start)
+
       //-----------deploy JSONRPC service-----------
       if (deployActorsIgnoringRoles ||
           cluster.selfRoles.contains("jsonrpc")) {

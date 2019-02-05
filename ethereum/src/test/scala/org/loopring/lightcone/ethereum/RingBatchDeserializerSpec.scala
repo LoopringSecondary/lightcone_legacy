@@ -43,7 +43,7 @@ class RingBatchDeserializerSpec extends FlatSpec with Matchers {
     val order2Owner = "0xf5B3ab72F6E80d79202dBD37400447c11618f21f"
 
     implicit val validator: RawOrderValidator = new RawOrderValidatorImpl
-    implicit val generator: RingBatchGenerator = Protocol2RingBatchGenerator
+    implicit val generator: RingBatchGenerator = new Protocol2RingBatchGenerator
     implicit val context: RingBatchContext = RingBatchContext()
       .withMiner(miner)
       .withMinerPrivateKey(minerPrivKey)

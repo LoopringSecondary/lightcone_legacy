@@ -26,7 +26,7 @@ import org.web3j.utils.Numeric
 class RingBatchGeneratorSpec extends FlatSpec with Matchers {
 
   implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
-  val ringBatchGenerator = Protocol2RingBatchGenerator
+  val ringBatchGenerator = new Protocol2RingBatchGenerator
 
   "generateAndSignRingBatch" should "be able to generate a ring from order seqs" in {
     val miner = "0x23a51c5f860527f971d0587d130c64536256040d"
@@ -89,7 +89,7 @@ class RingBatchGeneratorSpec extends FlatSpec with Matchers {
     val order1Owner = "0xFDa769A839DA57D88320E683cD20075f8f525a57"
     val order2Owner = "0xf5B3ab72F6E80d79202dBD37400447c11618f21f"
 
-    val generator: RingBatchGenerator = Protocol2RingBatchGenerator
+    val generator: RingBatchGenerator = new Protocol2RingBatchGenerator
     implicit val context: RingBatchContext = RingBatchContext()
       .withMiner(miner)
       .withMinerPrivateKey(minerPrivKey)

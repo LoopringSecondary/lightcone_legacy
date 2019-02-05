@@ -26,7 +26,7 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.core.ErrorCode._
 import io.lightcone.proto._
 import io.lightcone.core._
-
+import io.lightcone.ethereum._
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
@@ -45,6 +45,7 @@ object RingSettlementManagerActor extends DeployedAsSingleton {
       timeout: Timeout,
       actors: Lookup[ActorRef],
       dbModule: DatabaseModule,
+      ringBatchGenerator: RingBatchGenerator,
       deployActorsIgnoringRoles: Boolean
     ): ActorRef = {
     startSingleton(Props(new RingSettlementManagerActor()))
@@ -59,7 +60,8 @@ class RingSettlementManagerActor(
     timeProvider: TimeProvider,
     timeout: Timeout,
     actors: Lookup[ActorRef],
-    dbModule: DatabaseModule)
+    dbModule: DatabaseModule,
+    ringBatchGenerator: RingBatchGenerator)
     extends InitializationRetryActor {
 
   val selfConfig = config.getConfig(RingSettlementManagerActor.name)
@@ -82,7 +84,8 @@ class RingSettlementManagerActor(
               timeProvider = timeProvider,
               timeout = timeout,
               actors = actors,
-              dbModule = dbModule
+              dbModule = dbModule,
+              ringBatchGenerator
             )
           )
         )
