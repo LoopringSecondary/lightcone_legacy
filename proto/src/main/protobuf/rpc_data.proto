@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.proto.rpcdata;
+package io.lightcone.proto.rpcdata;
 
 
 message GetOrderbook{
