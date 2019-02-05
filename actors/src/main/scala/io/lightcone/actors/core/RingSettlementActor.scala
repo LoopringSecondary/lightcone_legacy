@@ -32,7 +32,6 @@ import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
-import io.lightcone.ethereum.data.{Transaction, _}
 import io.lightcone.ethereum.abi._
 import io.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 
@@ -150,7 +149,7 @@ class RingSettlementActor(
           rawOrders
         )
         input = Protocol2RingBatchGenerator.toSubmitableParamStr(ringBatch)
-        tx = Transaction(
+        tx = Tx(
           inputData = ringSubmitterAbi.submitRing.pack(
             SubmitRingsFunction
               .Params(data = Numeric.hexStringToByteArray(input))
@@ -218,7 +217,7 @@ class RingSettlementActor(
         .map(_.txs)
       txs = ringTxs.map(
         (tx: SettlementTx) =>
-          Transaction(tx.data, tx.nonce.toInt, tx.gas, gasPriceRes, to = tx.to)
+          Tx(tx.data, tx.nonce.toInt, tx.gas, gasPriceRes, to = tx.to)
       )
       txResps <- Future.sequence(txs.map { tx =>
         val rawTx = getSignedTxData(tx)
@@ -233,7 +232,7 @@ class RingSettlementActor(
     }
 
   def saveTx(
-      tx: Transaction,
+      tx: Tx,
       res: SendRawTransaction.Res
     ): Future[PersistSettlementTx.Res] = {
     dbModule.settlementTxService.saveTx(

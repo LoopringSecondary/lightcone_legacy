@@ -19,7 +19,6 @@ package io.lightcone
 import java.math.BigInteger
 
 import io.lightcone.core._
-import io.lightcone.ethereum.data.Transaction
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress
@@ -72,12 +71,7 @@ package object ethereum {
     }
   }
 
-  def getSignedTxData(
-      tx: Transaction
-    )(
-      implicit
-      credentials: Credentials
-    ): String = {
+  def getSignedTxData(tx: Tx)(implicit credentials: Credentials): String = {
     val rawTransaction = RawTransaction
       .createTransaction(
         BigInteger.valueOf(tx.nonce),
