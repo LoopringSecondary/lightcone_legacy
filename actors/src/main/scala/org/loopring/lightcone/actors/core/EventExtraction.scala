@@ -22,7 +22,7 @@ import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
-import org.loopring.lightcone.ethereum.data.formatHex
+
 import akka.pattern._
 import akka.util.Timeout
 import org.loopring.lightcone.persistence.DatabaseModule

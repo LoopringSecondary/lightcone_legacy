@@ -19,7 +19,7 @@ package org.loopring.lightcone.ethereum.abi
 import java.math.BigInteger
 import org.web3j.utils.Numeric
 import scala.reflect.Manifest
-import org.loopring.lightcone.ethereum.data.formatHex
+import org.loopring.lightcone.core.formatHex
 import scala.reflect.runtime.universe._
 
 object Deserialization {

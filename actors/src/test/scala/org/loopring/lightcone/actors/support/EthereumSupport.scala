@@ -26,7 +26,7 @@ import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.ethereum.data.Transaction
-import org.loopring.lightcone.ethereum.data.formatHex
+
 import org.loopring.lightcone.ethereum.getSignedTxData
 import org.loopring.lightcone.proto.{Transaction => XTransaction, _}
 import org.loopring.lightcone.core._

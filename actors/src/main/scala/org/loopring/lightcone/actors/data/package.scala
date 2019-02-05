@@ -20,7 +20,6 @@ import java.math.BigInteger
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core._
-import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.core.OrderStatus._

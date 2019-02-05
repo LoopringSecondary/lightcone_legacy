@@ -18,7 +18,8 @@ package org.loopring.lightcone
 
 import java.math.BigInteger
 
-import org.loopring.lightcone.ethereum.data.{Address, Transaction}
+import org.loopring.lightcone.core._
+import org.loopring.lightcone.ethereum.data.Transaction
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress

@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor._
+import akka.actor.{Address => _, _}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.cluster.sharding._
@@ -31,7 +31,6 @@ import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.core.MarketManager.MatchResult
-import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.proto._

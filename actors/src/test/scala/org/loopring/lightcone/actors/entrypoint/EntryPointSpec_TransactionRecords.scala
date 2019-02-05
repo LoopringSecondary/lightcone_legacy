@@ -28,7 +28,6 @@ import org.loopring.lightcone.lib.ErrorException
 import scala.concurrent.{Await, Future}
 import TransactionRecord.EventData.Event
 import TransactionRecord.RecordType._
-import org.loopring.lightcone.ethereum.data.Address
 
 class EntryPointSpec_TransactionRecords
     extends CommonSpec

@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.dimafeng.testcontainers._
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
-import org.loopring.lightcone.ethereum.data.Address
+
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._

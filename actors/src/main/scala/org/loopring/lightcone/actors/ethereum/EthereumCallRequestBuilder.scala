@@ -17,7 +17,7 @@
 package org.loopring.lightcone.actors.ethereum
 
 import org.loopring.lightcone.ethereum.abi._
-import org.loopring.lightcone.ethereum.data.Address
+
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import org.web3j.utils.Numeric

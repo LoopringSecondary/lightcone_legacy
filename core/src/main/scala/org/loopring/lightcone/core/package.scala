@@ -19,8 +19,26 @@ package org.loopring.lightcone
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 import spire.math.Rational
+import com.google.protobuf.ByteString
 
 package object core {
+
+  // TODO(dongw):we need to remove this method.
+  def formatHex(str: String): String = {
+    if (Numeric.cleanHexPrefix(str).isEmpty) str + "0" else str
+  }
+
+  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
+    if (bytes.size() > 0) BigInt(bytes.toByteArray)
+    else BigInt(0)
+  }
+
+  implicit def bigInt2ByteString(b: BigInt): ByteString =
+    ByteString.copyFrom(b.toByteArray)
+
+  implicit def byteArray2ByteString(bytes: Array[Byte]) =
+    ByteString.copyFrom(bytes)
+
   implicit class RichOrderbookSlot(this_ : Orderbook.Slot) {
 
     def +(that: Orderbook.Slot) = {

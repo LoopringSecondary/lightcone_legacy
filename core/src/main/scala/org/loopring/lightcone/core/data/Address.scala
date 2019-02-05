@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.core
 
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.core.ErrorCode
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.lib.data._
 

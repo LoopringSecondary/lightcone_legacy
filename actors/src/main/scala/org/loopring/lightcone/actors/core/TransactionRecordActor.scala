@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor._
+import akka.actor.{Address => _, _}
 import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -36,7 +36,6 @@ import slick.jdbc.JdbcProfile
 import slick.basic.DatabaseConfig
 import TransactionRecord.RecordType._
 import TransactionRecord.EventData.Event
-import org.loopring.lightcone.ethereum.data.Address
 
 // main owner: 杜永丰
 object TransactionRecordActor extends DeployedAsShardedByAddress {

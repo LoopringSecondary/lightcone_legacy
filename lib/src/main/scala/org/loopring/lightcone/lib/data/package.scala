@@ -20,15 +20,15 @@ import com.google.protobuf.ByteString
 
 package object data {
 
-  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
-    if (bytes.size() > 0) BigInt(bytes.toByteArray)
-    else BigInt(0)
-  }
+  // implicit def byteString2BigInt(bytes: ByteString): BigInt = {
+  //   if (bytes.size() > 0) BigInt(bytes.toByteArray)
+  //   else BigInt(0)
+  // }
 
-  implicit def bigInt2ByteString(b: BigInt): ByteString =
-    ByteString.copyFrom(b.toByteArray)
+  // implicit def bigInt2ByteString(b: BigInt): ByteString =
+  //   ByteString.copyFrom(b.toByteArray)
 
-  implicit def byteArray2ByteString(bytes: Array[Byte]) =
-    ByteString.copyFrom(bytes)
+  // implicit def byteArray2ByteString(bytes: Array[Byte]) =
+  //   ByteString.copyFrom(bytes)
 
 }

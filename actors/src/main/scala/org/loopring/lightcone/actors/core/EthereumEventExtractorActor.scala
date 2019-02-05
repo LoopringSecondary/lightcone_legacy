@@ -24,7 +24,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.ethereum._
-import org.loopring.lightcone.ethereum.data.formatHex
+
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._

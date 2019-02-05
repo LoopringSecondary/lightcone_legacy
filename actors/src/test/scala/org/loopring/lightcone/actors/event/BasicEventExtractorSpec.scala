@@ -19,7 +19,8 @@ package org.loopring.lightcone.actors.event
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.actors.ethereum.event._
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.ethereum.data.Address
+import org.loopring.lightcone.core._
+
 import org.loopring.lightcone.proto.AddressBalanceUpdated
 
 import scala.concurrent._
@@ -85,19 +86,13 @@ class BasicEventExtractorSpec
         new TransferEventExtractor()
 
       val transfers =
-        Await.result(
-          transferExtractor.extract(blockData),
-          timeout.duration
-        )
+        Await.result(transferExtractor.extract(blockData), timeout.duration)
       val (eths, tokens) = transfers.partition(tr => Address(tr.token).isZero)
 
       val cutOffExtractor = new CutoffEventExtractor()
 
       val cutOffs =
-        Await.result(
-          cutOffExtractor.extract(blockData),
-          timeout.duration
-        )
+        Await.result(cutOffExtractor.extract(blockData), timeout.duration)
 
       cutOffs.isEmpty should be(true)
 
@@ -146,10 +141,7 @@ class BasicEventExtractorSpec
 
       val balances =
         Await
-          .result(
-            balanceExtractor.extract(blockData),
-            timeout.duration
-          )
+          .result(balanceExtractor.extract(blockData), timeout.duration)
           .distinct
 
       val transferBalances = (transfers

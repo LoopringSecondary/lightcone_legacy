@@ -22,7 +22,7 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.loopring.lightcone.ethereum.data.formatHex
+
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.lib.TimeProvider

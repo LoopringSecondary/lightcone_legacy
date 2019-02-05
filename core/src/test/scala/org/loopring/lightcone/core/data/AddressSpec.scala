@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.data
+package org.loopring.lightcone.core
 
 import org.scalatest._
 import org.web3j.utils.Numeric

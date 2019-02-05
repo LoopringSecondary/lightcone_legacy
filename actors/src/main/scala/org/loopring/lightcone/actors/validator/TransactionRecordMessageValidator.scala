@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.core.TransactionRecordActor
-import org.loopring.lightcone.ethereum.data.Address
+
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._

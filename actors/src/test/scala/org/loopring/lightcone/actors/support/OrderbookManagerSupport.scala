@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit
 import akka.pattern._
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import org.rnorth.ducttape.TimeoutException

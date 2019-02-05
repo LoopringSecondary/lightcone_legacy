@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors.core
 
-import akka.actor._
+import akka.actor.{Address => _, _}
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
@@ -26,7 +26,6 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
-import org.loopring.lightcone.ethereum.data.Address
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
