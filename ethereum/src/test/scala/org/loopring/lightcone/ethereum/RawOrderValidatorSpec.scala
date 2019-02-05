@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum
+package io.lightcone.ethereum
 
 import scala.util.Properties
 import org.scalatest._
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.core._
-import org.loopring.lightcone.proto._
+import io.lightcone.core._
+import io.lightcone.proto._
 
 class RawOrderValidatorSpec extends FlatSpec with Matchers {
   import ErrorCode._

@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.proto;
+package io.lightcone.proto;
 
 import "core.proto";
 import "actors_data.proto";
@@ -30,7 +30,7 @@ import "actors_data.proto";
 message ActorRecover {
     message Request {
         int64 account_entity_id = 1;
-        org.loopring.lightcone.core.MarketPair market_pair = 2;
+        io.lightcone.core.MarketPair market_pair = 2;
         string sender = 3;
     }
 
@@ -53,7 +53,7 @@ message ActorRecover {
     message Timeout{}
 
     message RecoverOrderReq {
-        org.loopring.lightcone.core.RawOrder  raw_order = 1;
+        io.lightcone.core.RawOrder  raw_order = 1;
     }
 
     message OrderRecoverResult {

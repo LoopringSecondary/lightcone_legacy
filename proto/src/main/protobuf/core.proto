@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.core;
+package io.lightcone.core;
 
 
 /////////////////////////////////////////////////////////////////////
@@ -195,7 +195,7 @@ message MarketMetadata {
     bool            browsable_in_wallet     = 9;
     int64           updated_at              = 10;
 
-    org.loopring.lightcone.core.MarketPair        market_pair               = 20; // computed
+    io.lightcone.core.MarketPair        market_pair               = 20; // computed
     string          market_hash              = 21; // computed
 }
 
@@ -252,7 +252,7 @@ message RawOrder  {
         int64 updated_at              = 102;
         int64 matched_at              = 103;
         int64 updated_at_block        = 104;
-        org.loopring.lightcone.core.OrderStatus status            = 105;
+        io.lightcone.core.OrderStatus status            = 105;
 
         bytes actual_amount_s         = 200;
         bytes actual_amount_b         = 201;

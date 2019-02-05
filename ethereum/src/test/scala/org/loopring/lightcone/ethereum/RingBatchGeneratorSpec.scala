@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum
+package io.lightcone.ethereum
 
 import org.scalatest._
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
+import io.lightcone.proto._
+import io.lightcone.core._
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
 
