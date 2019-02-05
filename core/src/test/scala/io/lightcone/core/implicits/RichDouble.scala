@@ -16,6 +16,20 @@
 
 package io.lightcone.core
 
-package object implicits {
-  implicit class _RichDouble(v: Double) extends RichDouble(v)
+/// import io.lightcone.proto._
+
+private[core] class RichDouble(v: Double) {
+
+  def toWei(tokenAddr: String)(implicit tm: MetadataManager) = {
+    tm.getToken(tokenAddr)
+      .getOrElse(
+        throw ErrorException(
+          ErrorCode.ERR_INTERNAL_UNKNOWN,
+          s"token no found for address $tokenAddr"
+        )
+      )
+      .toWei(v)
+  }
+
+  def ! = BigInt(v.toLong)
 }
