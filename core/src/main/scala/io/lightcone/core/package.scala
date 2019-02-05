@@ -23,52 +23,9 @@ import com.google.protobuf.ByteString
 
 package object core {
 
-  // TODO(dongw):we need to remove this method.
+  // TODO(dongw): we need to remove this method.
   def formatHex(str: String): String = {
     if (Numeric.cleanHexPrefix(str).isEmpty) str + "0" else str
-  }
-
-  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
-    if (bytes.size() > 0) BigInt(bytes.toByteArray)
-    else BigInt(0)
-  }
-
-  implicit def bigInt2ByteString(b: BigInt): ByteString =
-    ByteString.copyFrom(b.toByteArray)
-
-  implicit def byteArray2ByteString(bytes: Array[Byte]) =
-    ByteString.copyFrom(bytes)
-
-  implicit class RichOrderbookSlot(this_ : Orderbook.Slot) {
-
-    def +(that: Orderbook.Slot) = {
-      assert(this_.slot == that.slot)
-      Orderbook.Slot(
-        this_.slot,
-        this_.amount + that.amount,
-        this_.total + that.total
-      )
-    }
-
-    def -(that: Orderbook.Slot) = {
-      assert(this_.slot == that.slot)
-      Orderbook.Slot(
-        this_.slot,
-        this_.amount - that.amount,
-        this_.total - that.total
-      )
-    }
-  }
-
-  implicit class RichBigInt(this_ : BigInt) {
-    def min(that: BigInt): BigInt = if (this_ < that) this_ else that
-    def max(that: BigInt): BigInt = if (this_ > that) this_ else that
-  }
-
-  implicit def rational2BigInt(r: Rational) = r.toBigInt
-
-  implicit class RichExpectedFill(raw: ExpectedMatchableFill) {
-    def id = raw.order.id
   }
 
   def createRingIdByOrderHash(
@@ -80,45 +37,31 @@ package object core {
     Numeric.toHexString(hash.toByteArray).toLowerCase()
   }
 
-  implicit class RichMatchable(order: Matchable) {
-
-    def asPending() =
-      order.copy(
-        _matchable = order._actual,
-        status = OrderStatus.STATUS_PENDING
-      )
-
-    def withActualAsOriginal() = order.copy(_actual = Some(order.original))
-
-    def withMatchableAsActual() = order.copy(_matchable = Some(order.actual))
-
-    def matchableAsOriginal() = order.copy(_matchable = Some(order.original))
+  /// -----implicit methods -----
+  implicit def byteString2BigInt(bytes: ByteString): BigInt = {
+    if (bytes.size() > 0) BigInt(bytes.toByteArray)
+    else BigInt(0)
   }
 
-  implicit class RichMatchableRing(raw: MatchableRing) {
+  implicit def rational2BigInt(r: Rational) = r.toBigInt
 
-    // Switching maker and taker should have the same id.
-    def id(): String = {
-      createRingIdByOrderHash(raw.maker.id, raw.taker.id)
-    }
+  implicit def bigInt2ByteString(b: BigInt): ByteString =
+    ByteString.copyFrom(b.toByteArray)
 
-    //中间价格，可以在显示深度价格时使用,简单的中间价
-    //根据计价token来计算中间价格
-    def middleRate(feeToken: String): Double = {
-      val makerSellPrice =
-        Rational(raw.maker.order.amountS, raw.maker.order.amountB).doubleValue()
+  implicit def byteArray2ByteString(bytes: Array[Byte]) =
+    ByteString.copyFrom(bytes)
 
-      val takerSellPrice =
-        Rational(raw.taker.order.amountS, raw.taker.order.amountB).doubleValue()
+  /// -----implicit classes -----
+  implicit class _RichOrderbookSlot(raw: Orderbook.Slot)
+      extends RichOrderbookSlot(raw)
 
-      val productPrice = takerSellPrice * makerSellPrice
-      val rateOfPrice = Math.pow(productPrice, 0.5)
-      val priceByMaker = makerSellPrice * rateOfPrice
+  implicit class _RichBigInt(raw: BigInt) extends RichBigInt(raw)
 
-      if (raw.maker.order.tokenS == feeToken) priceByMaker
-      else 1 / priceByMaker
-    }
+  implicit class _RichExpectedFill(raw: ExpectedMatchableFill)
+      extends RichExpectedFill(raw)
 
-    def orders() = Seq(raw.maker.order, raw.taker.order)
-  }
+  implicit class _RichMatchable(raw: Matchable) extends RichMatchable(raw)
+
+  implicit class _RichMatchableRing(raw: MatchableRing)
+      extends RichMatchableRing(raw)
 }
