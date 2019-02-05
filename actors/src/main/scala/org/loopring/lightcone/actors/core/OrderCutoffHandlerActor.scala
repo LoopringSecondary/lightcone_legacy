@@ -24,7 +24,8 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.data._
 import scala.concurrent.{ExecutionContext, Future}
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.actors.base.safefuture._
@@ -61,6 +62,7 @@ class OrderCutoffHandlerActor(
     extends InitializationRetryActor
     with ActorLogging {
   import OrderStatus._
+  import ErrorCode._
 
   val selfConfig = config.getConfig(OrderCutoffHandlerActor.name)
   def mama = actors.get(MultiAccountManagerActor.name)

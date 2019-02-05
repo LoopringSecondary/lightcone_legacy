@@ -22,8 +22,9 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationExceptio
 import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib.{ErrorException, SystemTimeProvider}
 import org.loopring.lightcone.persistence.base._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 import slick.basic._
@@ -38,6 +39,8 @@ class SettlementTxDalImpl @Inject()(
       JdbcProfile
     ])
     extends SettlementTxDal {
+
+  import ErrorCode._
   val query = TableQuery[SettlementTxTable]
   val timeProvider = new SystemTimeProvider()
   implicit val StatusCxolumnType = enumColumnType(SettlementTx.Status)
@@ -103,13 +106,13 @@ class SettlementTxDalImpl @Inject()(
           .map(_.status)
           .update(SettlementTx.Status.FAILED)
       } else {
-        throw ErrorException(ErrorCode.ERR_PERSISTENCE_UPDATE_FAILED)
+        throw ErrorException(ERR_PERSISTENCE_UPDATE_FAILED)
       }
       // update others pending tx to failed
     } yield updateFaild).transactionally
     db.run(a).map { r =>
-      if (r >= 0) UpdateTxInBlock.Res(ErrorCode.ERR_NONE)
-      else UpdateTxInBlock.Res(ErrorCode.ERR_INTERNAL_UNKNOWN)
+      if (r >= 0) UpdateTxInBlock.Res(ERR_NONE)
+      else UpdateTxInBlock.Res(ERR_INTERNAL_UNKNOWN)
     }
   }
 }

@@ -18,6 +18,7 @@ package org.loopring.lightcone.core.depth
 
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 trait OrderAwareOrderbookAggregator extends OrderbookAggregator {
   def addOrder(order: Matchable): Unit

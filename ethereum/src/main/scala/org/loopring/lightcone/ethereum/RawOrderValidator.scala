@@ -21,9 +21,10 @@ import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.utils.Numeric
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data.ErrorCode
 import org.loopring.lightcone.lib.data._
 
 trait RawOrderValidator {
@@ -32,7 +33,7 @@ trait RawOrderValidator {
 }
 
 object RawOrderValidatorDefault extends RawOrderValidator {
-  import ethereum._
+  import ErrorCode._
 
   val FeePercentageBase = 1000
   val Eip191Header = "\u0019\u0001"

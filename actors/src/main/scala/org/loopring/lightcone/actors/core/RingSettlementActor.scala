@@ -99,8 +99,6 @@ class RingSettlementActor(
   private def gasPriceActor = actors.get(GasPriceActor.name)
   private def marketManagerActor = actors.get(MarketManagerActor.name)
 
-  import ethereum._
-
   override def initialize() = {
     val f = (ethereumAccessActor ? GetNonce.Req(
       owner = ringContext.transactionOrigin,

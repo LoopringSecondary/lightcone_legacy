@@ -20,6 +20,7 @@ import akka.pattern._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.web3j.utils.Numeric
 
 import scala.concurrent.{Await, Future}

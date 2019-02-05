@@ -17,6 +17,7 @@
 package org.loopring.lightcone.core.data
 
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import spire.math.Rational
 
 class Token(val meta: TokenMetadata) {

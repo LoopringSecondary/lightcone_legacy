@@ -17,11 +17,12 @@
 package org.loopring.lightcone.core.depth
 
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
 import scala.collection.SortedMap
 
 private[depth] object OrderbookSide {
+
+  import ErrorCode._
 
   class Sells(
       val priceDecimals: Int,
@@ -50,6 +51,8 @@ private[depth] trait OrderbookSide {
   val precisionForAmount: Int
   val precisionForTotal: Int
   implicit val ordering: Ordering[Long]
+
+  import ErrorCode._
 
   val aggregationScaling = Math.pow(10, aggregationLevel)
   val priceScaling = Math.pow(10, priceDecimals)

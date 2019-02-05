@@ -19,7 +19,9 @@ package org.loopring.lightcone.actors.validator
 import com.typesafe.config.Config
 import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,12 +36,14 @@ final class MetadataManagerValidator(
     ec: ExecutionContext)
     extends MessageValidator {
 
+  import ErrorCode._
+
   def validate = {
     case req: SaveTokenMetadatas.Req =>
       Future {
         if (req.tokens.isEmpty)
           throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
+            ERR_INVALID_ARGUMENT,
             "Parameter tokens could not be empty"
           )
         // address toLowerCase, symbol toUpperCase
@@ -51,7 +55,7 @@ final class MetadataManagerValidator(
       Future {
         if (req.token.isEmpty)
           throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
+            ERR_INVALID_ARGUMENT,
             "Parameter token could not be empty"
           )
         // address toLowerCase, symbol toUpperCase
@@ -62,7 +66,7 @@ final class MetadataManagerValidator(
       Future {
         if (req.address.isEmpty)
           throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
+            ERR_INVALID_ARGUMENT,
             "Parameter address could not be empty"
           )
         req
@@ -71,7 +75,7 @@ final class MetadataManagerValidator(
       Future {
         if (req.address.isEmpty)
           throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
+            ERR_INVALID_ARGUMENT,
             "Parameter address could not be empty"
           )
         req
@@ -80,7 +84,7 @@ final class MetadataManagerValidator(
       Future {
         if (req.markets.isEmpty)
           throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
+            ERR_INVALID_ARGUMENT,
             "Parameter markets could not be empty"
           )
         val markets = req.markets.map(MetadataManager.normalizeMarket)
@@ -91,7 +95,7 @@ final class MetadataManagerValidator(
       Future {
         if (req.market.isEmpty)
           throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
+            ERR_INVALID_ARGUMENT,
             "Parameter market could not be empty"
           )
         req.copy(market = Some(MetadataManager.normalizeMarket(req.market.get)))
@@ -101,7 +105,7 @@ final class MetadataManagerValidator(
       Future {
         if (req.marketHash.isEmpty)
           throw ErrorException(
-            ErrorCode.ERR_INVALID_ARGUMENT,
+            ERR_INVALID_ARGUMENT,
             "Parameter marketHash could not be empty"
           )
         req

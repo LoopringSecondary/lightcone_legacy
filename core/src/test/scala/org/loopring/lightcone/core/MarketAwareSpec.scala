@@ -20,6 +20,7 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.market._
 import org.loopring.lightcone.core.depth._
 import OrderStatus._

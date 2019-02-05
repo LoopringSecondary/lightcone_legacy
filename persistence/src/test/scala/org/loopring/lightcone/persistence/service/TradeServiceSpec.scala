@@ -19,8 +19,10 @@ package org.loopring.lightcone.persistence.service
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.base._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.GetTrades._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -38,21 +40,13 @@ class TradeServiceSpec extends ServiceSpec[TradeService] {
 
   "tradeService" must "save and query correctly" in {
     info("save some trades")
-    val r1 = Await.result(
-      testSaveSomeTrades().mapTo[Seq[ErrorCode]],
-      5.second
-    )
+    val r1 = Await.result(testSaveSomeTrades().mapTo[Seq[ErrorCode]], 5.second)
     assert(r1.length == 4)
     assert(r1.length == 4 && !r1.exists(_ != ErrorCode.ERR_NONE))
 
     info("save a duplicate trade(txHash and fillIndex) should return error")
-    val r2 = Await.result(
-      testDuplicateSave().mapTo[ErrorCode],
-      5.second
-    )
-    assert(
-      r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
-    )
+    val r2 = Await.result(testDuplicateSave().mapTo[ErrorCode], 5.second)
+    assert(r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
 
     info("query trades: by owner")
     val q3 = Req(owner = owner1)

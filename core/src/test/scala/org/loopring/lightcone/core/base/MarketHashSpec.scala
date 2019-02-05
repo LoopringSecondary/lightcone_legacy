@@ -17,7 +17,6 @@
 package org.loopring.lightcone.core.base
 
 import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto.MarketPair
 import org.loopring.lightcone.core.CommonSpec
 import org.scalatest._
 

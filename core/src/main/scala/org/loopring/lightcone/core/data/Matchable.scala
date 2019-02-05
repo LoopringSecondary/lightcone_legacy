@@ -18,8 +18,9 @@ package org.loopring.lightcone.core.data
 
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
 import spire.math.Rational
 
 case class MatchableState(
@@ -55,6 +56,7 @@ case class Matchable(
     _matchable: Option[MatchableState] = None) {
 
   import OrderStatus._
+  import ErrorCode._
 
   lazy val original = MatchableState(amountS, amountB, amountFee)
 

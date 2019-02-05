@@ -19,7 +19,9 @@ package org.loopring.lightcone.actors.validator
 import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scala.concurrent._
 
 // Owner: Yongfeng
@@ -34,6 +36,8 @@ final class DatabaseQueryMessageValidator(
     ec: ExecutionContext)
     extends MessageValidator {
 
+  import ErrorCode._
+
   val defaultItemsPerPage =
     config.getInt("default-items-per-page")
   val maxItemsPerPage = config.getInt("max-items-per-page")
@@ -44,7 +48,7 @@ final class DatabaseQueryMessageValidator(
         val owner =
           if (req.owner.isEmpty)
             throw ErrorException(
-              ErrorCode.ERR_INVALID_ARGUMENT,
+              ERR_INVALID_ARGUMENT,
               "Parameter owner could not be empty"
             )
           else normalizeAddress(req.owner)
@@ -72,14 +76,14 @@ final class DatabaseQueryMessageValidator(
             val ringIndex =
               if (r.ringIndex.nonEmpty && !isValidNumber(r.ringIndex))
                 throw ErrorException(
-                  ErrorCode.ERR_INVALID_ARGUMENT,
+                  ERR_INVALID_ARGUMENT,
                   s"invalid ringIndex:${r.ringIndex}"
                 )
               else r.ringIndex
             val fillIndex =
               if (r.fillIndex.nonEmpty && !isValidNumber(r.fillIndex))
                 throw ErrorException(
-                  ErrorCode.ERR_INVALID_ARGUMENT,
+                  ERR_INVALID_ARGUMENT,
                   s"invalid fillIndex:${r.fillIndex}"
                 )
               else r.fillIndex
@@ -133,13 +137,13 @@ final class DatabaseQueryMessageValidator(
     paging match {
       case Some(s) if s.size > maxItemsPerPage =>
         throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
+          ERR_INVALID_ARGUMENT,
           s"Parameter size of paging is larger than $maxItemsPerPage"
         )
 
       case Some(s) if s.skip < 0 =>
         throw ErrorException(
-          ErrorCode.ERR_INVALID_ARGUMENT,
+          ERR_INVALID_ARGUMENT,
           s"Invalid parameter skip of paging:${s.skip}"
         )
 

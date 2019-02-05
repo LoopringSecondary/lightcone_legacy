@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.event
 
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent.Await
 import org.web3j.crypto.Credentials

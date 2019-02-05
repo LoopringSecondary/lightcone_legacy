@@ -25,7 +25,9 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import org.loopring.lightcone.actors.base.safefuture._
@@ -67,6 +69,9 @@ class MetadataManagerActor(
     extends InitializationRetryActor
     with RepeatedJobActor
     with ActorLogging {
+
+  import ErrorCode._
+
   val selfConfig = config.getConfig(MetadataManagerActor.name)
   val refreshIntervalInSeconds = selfConfig.getInt("refresh-interval-seconds")
   val initialDelayInSeconds = selfConfig.getInt("initial-dalay-in-seconds")
@@ -153,7 +158,7 @@ class MetadataManagerActor(
           )
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
-        if (result == ErrorCode.ERR_NONE) {
+        if (result == ERR_NONE) {
           checkAndPublish(Some(tokens_), None)
         }
         UpdateTokenMetadata.Res(result)
@@ -173,7 +178,7 @@ class MetadataManagerActor(
             )
           tokens_ <- dbModule.tokenMetadataDal.getTokens()
         } yield {
-          if (result == ErrorCode.ERR_NONE) {
+          if (result == ERR_NONE) {
             checkAndPublish(Some(tokens_), None)
           }
           UpdateTokenBurnRate.Res(result)
@@ -186,7 +191,7 @@ class MetadataManagerActor(
           .InvalidateToken(req.address)
         tokens_ <- dbModule.tokenMetadataDal.getTokens()
       } yield {
-        if (result == ErrorCode.ERR_NONE) {
+        if (result == ERR_NONE) {
           checkAndPublish(Some(tokens_), None)
         }
         InvalidateToken.Res(result)
@@ -210,7 +215,7 @@ class MetadataManagerActor(
           .updateMarket(req.market.get)
         markets_ <- dbModule.marketMetadataDal.getMarkets()
       } yield {
-        if (result == ErrorCode.ERR_NONE) {
+        if (result == ERR_NONE) {
           checkAndPublish(None, Some(markets_))
         }
         UpdateMarketMetadata.Res(result)
@@ -222,7 +227,7 @@ class MetadataManagerActor(
           .terminateMarketByKey(req.marketHash)
         markets_ <- dbModule.marketMetadataDal.getMarkets()
       } yield {
-        if (result == ErrorCode.ERR_NONE) {
+        if (result == ERR_NONE) {
           checkAndPublish(None, Some(markets_))
         }
         TerminateMarket.Res(result)

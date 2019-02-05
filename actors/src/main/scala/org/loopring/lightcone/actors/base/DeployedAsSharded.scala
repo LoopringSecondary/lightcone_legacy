@@ -21,7 +21,7 @@ import akka.actor._
 import akka.cluster.sharding._
 import akka.cluster.sharding.ShardRegion._
 import com.typesafe.config.Config
-import org.loopring.lightcone.proto.MarketPair
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.actors.data._
 
 // Owner: Daniel

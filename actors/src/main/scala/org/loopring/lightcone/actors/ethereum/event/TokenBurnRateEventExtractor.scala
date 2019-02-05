@@ -21,6 +21,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.TokenBurnRateChangedEvent._
 import scala.collection.JavaConverters._
 import scala.concurrent._

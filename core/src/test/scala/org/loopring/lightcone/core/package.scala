@@ -19,6 +19,7 @@ package org.loopring.lightcone
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 package object core {
   implicit class RichDoubleValue(v: Double) {

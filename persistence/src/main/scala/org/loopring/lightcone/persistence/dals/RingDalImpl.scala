@@ -23,6 +23,8 @@ import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto.GetTrades._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.GetRings.Req.Ring._
 import slick.basic._
 import slick.jdbc.JdbcProfile

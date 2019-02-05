@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors.rpc
 
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 object RpcDataConversions {
   implicit def convertGetOrderbookReq(

@@ -17,6 +17,7 @@
 package org.loopring.lightcone.persistence.service
 
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 import scala.concurrent.Future
 

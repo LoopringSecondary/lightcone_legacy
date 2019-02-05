@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum
+package org.loopring.lightcone
 
 import java.math.BigInteger
 

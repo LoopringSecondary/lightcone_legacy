@@ -19,8 +19,9 @@ package org.loopring.lightcone.persistence.service
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.GetRings._
-import org.loopring.lightcone.proto.Trade.Fee
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -37,22 +38,14 @@ class RingServiceSpec extends ServiceSpec[RingService] {
 
   "ringService" must "save and query correctly" in {
     info("save some rings")
-    val r1 = Await.result(
-      testSaveSomeRings().mapTo[Seq[ErrorCode]],
-      5.second
-    )
+    val r1 = Await.result(testSaveSomeRings().mapTo[Seq[ErrorCode]], 5.second)
     assert(r1.length == 3 && !r1.exists(_ != ErrorCode.ERR_NONE))
 
     info(
       "save a duplicate ring(txHash, ringHash and ringIndex) should return error"
     )
-    val r2 = Await.result(
-      testDuplicateSave().mapTo[ErrorCode],
-      5.second
-    )
-    assert(
-      r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT
-    )
+    val r2 = Await.result(testDuplicateSave().mapTo[ErrorCode], 5.second)
+    assert(r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
 
     info("query rings: by ringHash and ringIndex")
     val q3 = Req(ring = Some(Req.Ring(Req.Ring.Filter.RingHash(hash2))))
@@ -68,9 +61,9 @@ class RingServiceSpec extends ServiceSpec[RingService] {
       case Some(f) =>
         assert(f.fees.length == 2)
         f.fees foreach {
-          case fee: Fee if fee == fee1 => assert(true)
-          case fee: Fee if fee == fee2 => assert(true)
-          case _                       => assert(false)
+          case fee: Trade.Fee if fee == fee1 => assert(true)
+          case fee: Trade.Fee if fee == fee2 => assert(true)
+          case _                             => assert(false)
         }
       case None => assert(false)
     }
@@ -94,10 +87,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
 
     info("obsolete")
     Await.result(service.obsolete(120L).mapTo[Unit], 5.second)
-    val c11 = Await.result(
-      service.countRings(Req()).mapTo[Int],
-      5.second
-    )
+    val c11 = Await.result(service.countRings(Req()).mapTo[Int], 5.second)
     assert(c11 == 2)
   }
 
@@ -131,9 +121,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     walletSplitPercentage = 2
   )
 
-  val fees = Ring.Fees(
-    Seq(fee1, fee2)
-  )
+  val fees = Ring.Fees(Seq(fee1, fee2))
 
   private def testSaveSomeRings() = {
     val rings = Seq(

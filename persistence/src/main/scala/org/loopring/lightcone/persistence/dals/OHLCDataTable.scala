@@ -19,6 +19,7 @@ package org.loopring.lightcone.persistence.dals
 import org.loopring.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 object OHLCDataTable {
   val tableName = "T_OHLC_DATA"

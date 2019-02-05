@@ -20,8 +20,9 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.dals._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent._
@@ -31,6 +32,8 @@ class OrderServiceImpl @Inject()(
     val ec: ExecutionContext,
     orderDal: OrderDal)
     extends OrderService {
+
+  import ErrorCode._
 
   private def giveUserOrder(order: Option[RawOrder]): Option[RawOrder] = {
     order match {

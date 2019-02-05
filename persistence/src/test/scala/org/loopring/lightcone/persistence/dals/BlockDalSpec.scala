@@ -17,11 +17,14 @@
 package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.data._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class BlockDalSpec extends DalSpec[BlockDal] {
+  import ErrorCode._
+
   def getDal = new BlockDalImpl()
 
   "saveBlock" must "save a block with hash 0x111" in {

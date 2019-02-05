@@ -41,6 +41,7 @@ import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.actors.ethereum.event._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}

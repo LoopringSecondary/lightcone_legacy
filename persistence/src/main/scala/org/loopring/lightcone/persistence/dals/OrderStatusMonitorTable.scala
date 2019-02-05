@@ -18,6 +18,7 @@ package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.persistence.base.{enumColumnType, BaseTable}
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import slick.jdbc.MySQLProfile.api._
 
 class OrderStatusMonitorTable(tag: Tag)

@@ -19,6 +19,7 @@ package org.loopring.lightcone.core.account
 import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.scalatest._
 
 class AccountManagerImplSpec_RequestAmount extends OrderAwareSpec {

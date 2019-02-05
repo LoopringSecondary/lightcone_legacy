@@ -18,8 +18,9 @@ package org.loopring.lightcone.persistence.dals
 
 import com.google.inject.name.Named
 
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
@@ -40,6 +41,9 @@ class MarketMetadataDalImpl @Inject()(
     timeProvider: TimeProvider)
     extends MarketMetadataDal
     with Logging {
+
+  import ErrorCode._
+
   val query = TableQuery[MarketMetadataTable]
   implicit val statusColumnType = enumColumnType(MarketMetadata.Status)
 

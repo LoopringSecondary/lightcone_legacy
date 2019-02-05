@@ -20,6 +20,7 @@ import org.loopring.lightcone.core.OrderAwareSpec
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.scalatest._
 
 class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {

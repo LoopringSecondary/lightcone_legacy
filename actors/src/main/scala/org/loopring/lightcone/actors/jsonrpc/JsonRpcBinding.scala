@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.jsonrpc
 
 import org.loopring.lightcone.lib.ProtoSerializer
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scalapb.json4s.JsonFormat
 import scala.reflect.runtime.universe._
 import akka.actor._

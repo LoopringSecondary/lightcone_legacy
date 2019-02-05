@@ -21,8 +21,9 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
-import org.loopring.lightcone.proto.Orderbook.Item
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.data._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -96,8 +97,8 @@ class RecoverOrderSpec
       )
       orderbookRes2.sells should be(
         Seq(
-          Item("0.050000", "80.00000", "4.00000"),
-          Item("0.100000", "60.00000", "6.00000")
+          Orderbook.Item("0.050000", "80.00000", "4.00000"),
+          Orderbook.Item("0.100000", "60.00000", "6.00000")
         )
       )
     }

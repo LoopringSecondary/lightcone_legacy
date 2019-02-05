@@ -19,6 +19,7 @@ package org.loopring.lightcone.persistence.dals
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import slick.jdbc.MySQLProfile.api._
 
 class TransactionRecordTable(shardId: String)(tag: Tag)

@@ -19,8 +19,9 @@ package org.loopring.lightcone.actors.validator
 import akka.actor._
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data.ErrorCode._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base.safefuture._
 
@@ -70,9 +71,7 @@ class MessageValidationActor(
           )
         }
         _ = if (validatedMsg != msg)
-          log.debug(
-            s"request rewritten from\n\t${msg} to\n\t${validatedMsg}"
-          )
+          log.debug(s"request rewritten from\n\t${msg} to\n\t${validatedMsg}")
       } yield validatedMsg
 
       f.forwardTo(destinationActor, sender)

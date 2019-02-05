@@ -19,6 +19,7 @@ package org.loopring.lightcone.core.account
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 import org.slf4s.Logging
 import OrderStatus._

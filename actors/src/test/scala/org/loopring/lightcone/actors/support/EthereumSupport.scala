@@ -27,8 +27,9 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.ethereum.data.Transaction
 import org.loopring.lightcone.ethereum.data.formatHex
-import org.loopring.lightcone.ethereum.ethereum.getSignedTxData
-import org.loopring.lightcone.proto._
+import org.loopring.lightcone.ethereum.getSignedTxData
+import org.loopring.lightcone.proto.{Transaction => XTransaction, _}
+import org.loopring.lightcone.core.data._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
@@ -91,16 +92,12 @@ trait EthereumSupport {
   )
 
   //必须等待connectionPools启动完毕才能启动monitor和accessActor
-  try Unreliables.retryUntilTrue(
-    10,
-    TimeUnit.SECONDS,
-    () => {
-      val f =
-        (connectionPools(0) ? blockNumJsonRpcReq).mapTo[JsonRpc.Response]
-      val res = Await.result(f, timeout.duration)
-      res.json != ""
-    }
-  )
+  try Unreliables.retryUntilTrue(10, TimeUnit.SECONDS, () => {
+    val f =
+      (connectionPools(0) ? blockNumJsonRpcReq).mapTo[JsonRpc.Response]
+    val res = Await.result(f, timeout.duration)
+    res.json != ""
+  })
   catch {
     case e: TimeoutException =>
       throw new ContainerLaunchException(
@@ -108,15 +105,9 @@ trait EthereumSupport {
       )
   }
 
-  actors.add(
-    EthereumClientMonitor.name,
-    EthereumClientMonitor.start
-  )
+  actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
   Thread.sleep(1000)
-  actors.add(
-    EthereumAccessActor.name,
-    EthereumAccessActor.start
-  )
+  actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
 
   def transferEth(
       to: String,
@@ -144,9 +135,7 @@ trait EthereumSupport {
       implicit
       credentials: Credentials
     ) = {
-    val input = erc20Abi.transfer.pack(
-      TransferFunction.Parms(to, amount)
-    )
+    val input = erc20Abi.transfer.pack(TransferFunction.Parms(to, amount))
     val tx = Transaction(
       inputData = input,
       nonce = 0,
@@ -196,9 +185,7 @@ trait EthereumSupport {
       implicit
       credentials: Credentials
     ) = {
-    val input = erc20Abi.approve.pack(
-      ApproveFunction.Parms(spender, amount)
-    )
+    val input = erc20Abi.approve.pack(ApproveFunction.Parms(spender, amount))
     val tx = Transaction(
       inputData = input,
       nonce = 0,
@@ -293,12 +280,7 @@ trait EthereumSupport {
     sendTransaction(tx)
   }
 
-  def cancelAllOrders(
-      cutoff: BigInt
-    )(
-      implicit
-      credentials: Credentials
-    ) = {
+  def cancelAllOrders(cutoff: BigInt)(implicit credentials: Credentials) = {
 
     val input = orderCancellerAbi.cancelAllOrders.pack(
       CancelAllOrdersFunction.Params(cutoff)

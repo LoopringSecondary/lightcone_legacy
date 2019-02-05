@@ -23,6 +23,7 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.core.base.DustOrderEvaluator
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scalapb.json4s.JsonFormat
 
 import scala.concurrent.ExecutionContext

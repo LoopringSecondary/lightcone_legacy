@@ -16,13 +16,16 @@
 
 package org.loopring.lightcone.persistence.dals
 
-import org.loopring.lightcone.core.data.MarketHash
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
+
+  import ErrorCode._
+
   def getDal = new MarketMetadataDalImpl()
 
   "save markets config" must "save some markets config" in {
@@ -136,7 +139,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
     val market1 = lrcWeth.copy(priceDecimals = 10)
     val r3 = dal.saveMarket(market1)
     val res3 = Await.result(r3.mapTo[ErrorCode], 5.second)
-    assert(res3 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
+    assert(res3 == ERR_PERSISTENCE_DUPLICATE_INSERT)
     val r4 = dal.getMarketsByKey(Seq(lrcWeth.marketHash))
     val res4 = Await.result(r4.mapTo[Seq[MarketMetadata]], 5.second)
     assert(res4.length == 1)
@@ -153,7 +156,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
       )
     )
     val res5 = Await.result(r5.mapTo[ErrorCode], 5.second)
-    assert(res5 == ErrorCode.ERR_PERSISTENCE_INTERNAL)
+    assert(res5 == ERR_PERSISTENCE_INTERNAL)
     val r6 = dal.getMarkets()
     val res6 = Await.result(r6.mapTo[Seq[MarketMetadata]], 5.second)
     assert(res6.nonEmpty && res6.length == markets.length)
@@ -175,7 +178,7 @@ class MarketMetadataDalSpec extends DalSpec[MarketMetadataDal] {
       )
     )
     val res9 = Await.result(r9.mapTo[ErrorCode], 5.second)
-    assert(res9 == ErrorCode.ERR_NONE)
+    assert(res9 == ERR_NONE)
     val r10 = dal.getMarketsByKey(Seq(bnbWeth.marketHash))
     val res10 = Await.result(r10.mapTo[Seq[MarketMetadata]], 5.second)
     val bnb1 =

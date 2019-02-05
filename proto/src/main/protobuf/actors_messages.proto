@@ -92,14 +92,14 @@ message CancelOrder {
     message Req {
         string id = 1;
         string owner = 2;
-        OrderStatus status = 3; //取消的类型
-        MarketPair market_pair = 4;
+        org.loopring.lightcone.core.data.OrderStatus status = 3; //取消的类型
+        org.loopring.lightcone.core.data.MarketPair market_pair = 4;
         string sig = 5;
     }
 
     message Res {
-        ErrorCode error = 1;
-        OrderStatus status = 2; //取消的类型
+        org.loopring.lightcone.core.data.ErrorCode error = 1;
+        org.loopring.lightcone.core.data.OrderStatus status = 2; //取消的类型
     }
 }
 
@@ -114,11 +114,11 @@ message GetOrderbook {
     message Req {
         int32 level = 2;
         int32 size = 1;
-        MarketPair market_pair = 3;
+        org.loopring.lightcone.core.data.MarketPair market_pair = 3;
     }
 
     message Res {
-        Orderbook orderbook = 1;
+        org.loopring.lightcone.core.data.Orderbook orderbook = 1;
     }
 }
 
@@ -143,7 +143,7 @@ message GetBalanceAndAllowances {
     message Res {
         string address = 1;
         map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
-        Error error = 3;
+        org.loopring.lightcone.core.data.Error error = 3;
     }
 }
 
@@ -156,7 +156,7 @@ message GetBalance {
     message Res {
         string address = 1;
         map<string, bytes> balance_map = 2;
-        Error error = 3;
+        org.loopring.lightcone.core.data.Error error = 3;
     }
 }
 
@@ -169,7 +169,7 @@ message GetAllowance {
     message Res {
         string address = 1;
         map<string, bytes> allowance_map = 2;
-        Error error = 3;
+        org.loopring.lightcone.core.data.Error error = 3;
     }
 }
 
@@ -180,7 +180,7 @@ message UpdateFilledAmount {
     }
 
     message Res {
-        ErrorCode error = 1;
+        org.loopring.lightcone.core.data.ErrorCode error = 1;
     }
 }
 
@@ -251,7 +251,7 @@ message UpdateBalanceAndAllowance {
     }
 
     message Res {
-        ErrorCode error = 1;
+        org.loopring.lightcone.core.data.ErrorCode error = 1;
         BalanceAndAllowance balance_and_allowance = 2;
     }
 }
@@ -294,7 +294,7 @@ message SaveBlock {
     }
 
     message Res {
-        Error error = 1;
+        org.loopring.lightcone.core.data.Error error = 1;
     }
 }
 
@@ -324,11 +324,11 @@ message GetMetadatas {
 
 message GetOrderbookSlots {
     message Req {
-        MarketPair market_pair      = 1;
+        org.loopring.lightcone.core.data.MarketPair market_pair      = 1;
         int32 num_of_slots      = 2;
     }
 
     message Res {
-        Orderbook.Update update = 1;
+        org.loopring.lightcone.core.data.Orderbook.Update update = 1;
     }
 }

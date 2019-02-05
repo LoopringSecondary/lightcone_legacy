@@ -21,6 +21,7 @@ import org.json4s.native.Serialization
 import org.json4s.native.Serialization.write
 import org.json4s._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 package object ethereum {
 

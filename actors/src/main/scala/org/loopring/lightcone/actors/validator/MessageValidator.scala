@@ -16,9 +16,6 @@
 
 package org.loopring.lightcone.actors.validator
 
-import org.loopring.lightcone.proto.Error
-import org.loopring.lightcone.proto.ErrorCode._
-
 import scala.concurrent.Future
 
 // Example:

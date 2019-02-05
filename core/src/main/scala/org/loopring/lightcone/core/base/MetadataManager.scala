@@ -21,6 +21,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
 import scala.collection.JavaConverters._

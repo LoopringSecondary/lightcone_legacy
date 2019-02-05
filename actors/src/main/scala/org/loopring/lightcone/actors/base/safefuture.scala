@@ -18,8 +18,8 @@ package org.loopring.lightcone.actors.base
 
 import akka.actor._
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto.Error
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.data.ErrorCode._
 
 import scala.concurrent._
 import scala.reflect.ClassTag

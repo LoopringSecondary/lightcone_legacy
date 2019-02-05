@@ -28,6 +28,7 @@ import org.loopring.lightcone.actors.core.MetadataManagerActor
 import org.loopring.lightcone.persistence._
 import org.loopring.lightcone.core.base._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scala.concurrent._
 import scala.util._
 

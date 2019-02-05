@@ -22,7 +22,8 @@ import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.data.ErrorCode._
 
 // Owner: Daniel
 object BadMessageListener {

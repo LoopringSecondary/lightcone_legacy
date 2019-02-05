@@ -20,6 +20,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 import scala.concurrent._
 

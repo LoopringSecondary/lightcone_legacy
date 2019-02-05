@@ -28,6 +28,7 @@ import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scala.concurrent._
 
 //目标：需要恢复的以及初始化花费时间较长的

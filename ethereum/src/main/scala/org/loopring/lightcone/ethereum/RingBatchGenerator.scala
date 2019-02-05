@@ -23,6 +23,7 @@ import org.loopring.lightcone.lib.data._
 import com.google.protobuf.ByteString
 
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 trait RingBatchGenerator {
 
@@ -42,7 +43,6 @@ trait RingBatchGenerator {
 }
 
 object Protocol2RingBatchGenerator extends RingBatchGenerator {
-  import ethereum._
 
   val OrderVersion = 0
   val SerializationVersion = 0

@@ -19,6 +19,8 @@ package org.loopring.lightcone.persistence.dals
 import org.loopring.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.data._
 
 class OrderTable(tag: Tag) extends BaseTable[RawOrder](tag, "T_ORDERS") {
 

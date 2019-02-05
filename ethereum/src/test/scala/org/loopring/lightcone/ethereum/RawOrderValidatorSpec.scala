@@ -19,10 +19,12 @@ package org.loopring.lightcone.ethereum
 import scala.util.Properties
 import org.scalatest._
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
 
 class RawOrderValidatorSpec extends FlatSpec with Matchers {
+  import ErrorCode._
   val validator: RawOrderValidator = RawOrderValidatorDefault
 
   "calculateOrderHash" should "be able to get hash of an order" in {
@@ -40,9 +42,7 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
 
     val feeParams1 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
-      .withAmountFee(
-        ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray)
-      )
+      .withAmountFee(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
       .withWalletSplitPercentage(10)
 
     val order1 = (new RawOrder)
@@ -79,9 +79,7 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
 
     val feeParams1 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
-      .withAmountFee(
-        ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray)
-      )
+      .withAmountFee(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
       .withTokenRecipient(order1Owner)
       .withWalletSplitPercentage(10)
 
@@ -136,9 +134,7 @@ class RawOrderValidatorSpec extends FlatSpec with Matchers {
 
     val feeParams2 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
-      .withAmountFee(
-        ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray)
-      )
+      .withAmountFee(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
       .withTokenRecipient(order2Owner)
       .withWalletSplitPercentage(20)
 

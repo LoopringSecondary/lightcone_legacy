@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors.core
 
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scala.concurrent.{Await, Future}
 
 class DatabaseQuerySpec

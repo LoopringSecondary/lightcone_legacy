@@ -24,6 +24,7 @@ import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.MetadataManagerValidator
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._

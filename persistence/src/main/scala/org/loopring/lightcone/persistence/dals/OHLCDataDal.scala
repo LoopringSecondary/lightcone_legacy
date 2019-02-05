@@ -20,6 +20,7 @@ import org.loopring.lightcone.persistence.base.BaseDalImpl
 
 import scala.concurrent.Future
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 
 trait OHLCDataDal extends BaseDalImpl[OHLCDataTable, OHLCRawData] {
 

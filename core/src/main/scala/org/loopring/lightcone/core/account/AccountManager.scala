@@ -17,7 +17,6 @@
 package org.loopring.lightcone.core.account
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.proto.{MarketPair, OrderStatus}
 
 object AccountManager {
 

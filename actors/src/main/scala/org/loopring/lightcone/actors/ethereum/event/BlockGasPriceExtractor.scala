@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors.ethereum.event
 import akka.util.Timeout
 import com.google.inject.Inject
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.ethereum.data._
 import org.web3j.utils.Numeric
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,13 +32,9 @@ class BlockGasPriceExtractor @Inject()(
 
   override def extract(block: RawBlockData): Future[Seq[BlockGasPrices]] =
     Future {
-      Seq(
-        BlockGasPrices(
-          height = block.height,
-          gasPrices = block.txs.map { tx =>
-            Numeric.toBigInt(formatHex(formatHex(tx.gasPrice))).longValue()
-          }
-        )
-      )
+      Seq(BlockGasPrices(height = block.height, gasPrices = block.txs.map {
+        tx =>
+          Numeric.toBigInt(formatHex(formatHex(tx.gasPrice))).longValue()
+      }))
     }
 }

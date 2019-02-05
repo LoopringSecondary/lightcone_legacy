@@ -22,6 +22,7 @@ import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric

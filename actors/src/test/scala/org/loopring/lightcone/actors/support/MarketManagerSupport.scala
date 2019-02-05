@@ -18,7 +18,8 @@ package org.loopring.lightcone.actors.support
 
 import java.util.concurrent.TimeUnit
 import org.loopring.lightcone.actors.core._
-import org.loopring.lightcone.proto.{GetOrderbookSlots, LoadTokenMetadata}
+import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException

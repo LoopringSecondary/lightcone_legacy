@@ -26,8 +26,9 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.core.base.{DustOrderEvaluator, MetadataManager}
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import org.web3j.utils._
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -100,6 +101,8 @@ class MultiAccountManagerActor(
     extends InitializationRetryActor
     with ShardingEntityAware
     with ActorLogging {
+
+  import ErrorCode._
 
   log.info(s"=======> starting MultiAccountManagerActor ${self.path}")
 

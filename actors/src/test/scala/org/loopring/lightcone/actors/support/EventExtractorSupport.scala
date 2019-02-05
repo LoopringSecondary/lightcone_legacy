@@ -20,11 +20,8 @@ import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.native.JsonMethods.parse
 import org.loopring.lightcone.ethereum.data.formatHex
-import org.loopring.lightcone.proto.{
-  GetBlockWithTxObjectByNumber,
-  GetTransactionReceipt,
-  RawBlockData
-}
+import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scalapb.json4s.JsonFormat
 import org.web3j.utils.Numeric
 

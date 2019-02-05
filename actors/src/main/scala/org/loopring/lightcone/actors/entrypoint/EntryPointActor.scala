@@ -25,8 +25,9 @@ import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.ethereum.EthereumAccessActor
 import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
+import org.loopring.lightcone.core.data._
 import scala.concurrent.ExecutionContext
 
 // Owner: Hongyu
@@ -52,6 +53,8 @@ class EntryPointActor(
     actors: Lookup[ActorRef])
     extends Actor
     with ActorLogging {
+
+  import ErrorCode._
 
   def receive = LoggingReceive {
     case msg: Any =>

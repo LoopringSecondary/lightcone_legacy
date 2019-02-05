@@ -24,7 +24,8 @@ import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.proto.ErrorCode._
+import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core.data._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 import slick.basic._
@@ -39,6 +40,8 @@ class OrderDalImpl @Inject()(
     @Named("dbconfig-dal-order") val dbConfig: DatabaseConfig[JdbcProfile],
     timeProvider: TimeProvider)
     extends OrderDal {
+
+  import ErrorCode._
 
   val query = TableQuery[OrderTable]
   def getRowHash(row: RawOrder) = row.hash
@@ -273,13 +276,13 @@ class OrderDalImpl @Inject()(
     ): Query[OrderTable, OrderTable#TableElementType, Seq] = {
     if (marketEntityIds.nonEmpty && accountEntityIds.nonEmpty) {
       throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        ERR_INTERNAL_UNKNOWN,
         "Invalid parameters:`marketEntityIds` and `accountEntityIds` could not both not empty"
       )
     }
     if (marketEntityIds.isEmpty && accountEntityIds.isEmpty) {
       throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        ERR_INTERNAL_UNKNOWN,
         "Invalid parameters:`marketEntityIds` and `accountEntityIds` could not both empty"
       )
     }
@@ -407,7 +410,7 @@ class OrderDalImpl @Inject()(
 
     if (marketEntityIds.isEmpty && accountEntityIds.isEmpty) {
       throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        ERR_INTERNAL_UNKNOWN,
         "Invalid parameters:`marketEntityIds` and `accountEntityIds` could not both be empty"
       )
     } else {
@@ -437,7 +440,7 @@ class OrderDalImpl @Inject()(
     //TODO du：暂时不考虑broker，owner必传
     if (retrieveCondition.owner.isEmpty) {
       throw ErrorException(
-        ErrorCode.ERR_INTERNAL_UNKNOWN,
+        ERR_INTERNAL_UNKNOWN,
         "owner in CutoffEvent is empty"
       )
     }
