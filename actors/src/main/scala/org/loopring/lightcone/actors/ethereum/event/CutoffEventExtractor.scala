@@ -22,7 +22,6 @@ import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.ethereum.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 
 import scala.concurrent._
 

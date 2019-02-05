@@ -19,7 +19,6 @@ package org.loopring.lightcone.persistence.dals
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 import scala.concurrent._
 
 trait TokenMetadataDal extends BaseDalImpl[TokenMetadataTable, TokenMetadata] {

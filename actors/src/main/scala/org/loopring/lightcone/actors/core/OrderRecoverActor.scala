@@ -26,7 +26,6 @@ import org.loopring.lightcone.core._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 import org.loopring.lightcone.core.MetadataManager
 import org.loopring.lightcone.persistence.DatabaseModule
 import scala.concurrent._

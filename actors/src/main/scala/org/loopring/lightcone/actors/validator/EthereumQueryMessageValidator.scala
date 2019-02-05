@@ -22,7 +22,6 @@ import org.loopring.lightcone.core.MetadataManager
 import org.loopring.lightcone.ethereum.data.Address
 import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 
 import scala.concurrent._
 

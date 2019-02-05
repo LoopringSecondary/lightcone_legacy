@@ -18,7 +18,6 @@ package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -35,8 +34,7 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
       time = 1547682550,
       baseAmount = 2.5,
       quoteAmount = 1000,
-      price = 400
-    )
+      price = 400)
     val result1 = dal.saveData(data1)
     val res1 = Await.result(result1.mapTo[PersistOHLCData.Res], 5.second)
     res1.error should be(ErrorCode.ERR_NONE)
@@ -50,8 +48,7 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
       time = 1547682650,
       baseAmount = 50,
       quoteAmount = 500,
-      price = 50
-    )
+      price = 50)
     val result2 = dal.saveData(data2)
     val res2 = Await.result(result2.mapTo[PersistOHLCData.Res], 5.second)
     res2.error should be(ErrorCode.ERR_NONE)
@@ -65,8 +62,7 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
       time = 1547682675,
       baseAmount = 10.5,
       quoteAmount = 1050,
-      price = 100
-    )
+      price = 100)
     val result3 = dal.saveData(data3)
     val res3 = Await.result(result3.mapTo[PersistOHLCData.Res], 5.second)
     res3.error should be(ErrorCode.ERR_NONE)
@@ -87,7 +83,6 @@ class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
         array0(3) == 50.0 &&
         array0(4) == 100.0 &&
         array0(5) == 100.0 &&
-        array0(6) == 50.0
-    )
+        array0(6) == 50.0)
   }
 }

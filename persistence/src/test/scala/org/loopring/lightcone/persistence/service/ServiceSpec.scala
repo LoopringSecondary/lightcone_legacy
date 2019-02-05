@@ -16,35 +16,33 @@
 
 package org.loopring.lightcone.persistence.service
 
-import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
+import com.dimafeng.testcontainers.{ ForAllTestContainer, MySQLContainer }
 import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.math.BigInt
 
 trait ServiceSpec[S]
-    extends FlatSpec
-    with ForAllTestContainer
-    with BeforeAndAfterAll
-    with Matchers {
+  extends FlatSpec
+  with ForAllTestContainer
+  with BeforeAndAfterAll
+  with Matchers {
 
   override val container = new MySQLContainer(
     configurationOverride = Some("db"),
     mysqlImageVersion = Some("mysql:5.7.18"),
     databaseName = Some("lightcone_test"),
     mysqlUsername = Some("test"),
-    mysqlPassword = Some("test")
-  )
+    mysqlPassword = Some("test"))
 
   implicit val ec = ExecutionContext.global
   implicit var dbConfig: DatabaseConfig[JdbcProfile] = _
@@ -64,16 +62,14 @@ trait ServiceSpec[S]
           password="${container.password}"
           driver="${container.driverClassName}"
           maxThreads = 1
-        }""")
-    )
+        }"""))
     service = getService()
     createTables()
   }
 
   override def beforeAll = {
     println(
-      s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
-    )
+      s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 
   implicit class RichString(s: String) {
@@ -81,28 +77,25 @@ trait ServiceSpec[S]
   }
 
   def generateRawOrder(
-      owner: String = "0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10",
-      tokenS: String = "0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1",
-      tokenB: String = "0x8B75225571ff31B58F95C704E05044D5CF6B32BF",
-      status: OrderStatus = OrderStatus.STATUS_NEW,
-      validSince: Int,
-      validUntil: Int,
-      amountS: BigInt = "10".zeros(18),
-      amountB: BigInt = "1".zeros(18),
-      tokenFee: String = "0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1",
-      amountFee: BigInt = "3".zeros(18)
-    ): RawOrder = {
+    owner: String = "0xb7e0dae0a3e4e146bcaf0fe782be5afb14041a10",
+    tokenS: String = "0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1",
+    tokenB: String = "0x8B75225571ff31B58F95C704E05044D5CF6B32BF",
+    status: OrderStatus = OrderStatus.STATUS_NEW,
+    validSince: Int,
+    validUntil: Int,
+    amountS: BigInt = "10".zeros(18),
+    amountB: BigInt = "1".zeros(18),
+    tokenFee: String = "0x1B56AC0087e5CB7624A04A80b1c28B60A30f28D1",
+    amountFee: BigInt = "3".zeros(18)): RawOrder = {
     val createAt = timeProvider.getTimeMillis
     val state =
       RawOrder.State(
         createdAt = createAt,
         updatedAt = createAt,
-        status = status
-      )
+        status = status)
     val fee = RawOrder.FeeParams(
       tokenFee = tokenFee,
-      amountFee = ByteString.copyFrom("111", "utf-8")
-    )
+      amountFee = ByteString.copyFrom("111", "utf-8"))
     val since = if (validSince > 0) validSince else (createAt / 1000).toInt
     val until =
       if (validUntil > 0) validUntil else (createAt / 1000).toInt + 20000
@@ -116,8 +109,7 @@ trait ServiceSpec[S]
         Numeric.hexStringToByteArray(tokenFee) ++
         amountS.toByteArray ++
         amountB.toByteArray ++
-        amountFee.toByteArray
-    )
+        amountFee.toByteArray)
     RawOrder(
       owner = owner,
       hash = Numeric.toHexString(hash),
@@ -132,7 +124,6 @@ trait ServiceSpec[S]
       params = Some(param),
       marketId = marketId,
       marketEntityId = Math.abs(marketId.hashCode),
-      accountEntityId = Math.abs(owner.hashCode % 100)
-    )
+      accountEntityId = Math.abs(owner.hashCode % 100))
   }
 }

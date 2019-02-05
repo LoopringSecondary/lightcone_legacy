@@ -31,12 +31,10 @@ import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.core.MarketManager.MatchResult
-import org.loopring.lightcone.core._
 import org.loopring.lightcone.ethereum.data.{Address => LAddress}
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._

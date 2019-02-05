@@ -33,7 +33,6 @@ import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.ethereum.data.formatHex
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 import org.web3j.utils.Numeric
 
 import scala.concurrent._

@@ -24,19 +24,18 @@ import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.MetadataManagerValidator
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 import akka.pattern._
 import org.loopring.lightcone.core.MetadataManager
 
 class MetadataManagerSpec
-    extends CommonSpec
-    with JsonrpcSupport
-    with HttpSupport
-    with EthereumSupport
-    with DatabaseModuleSupport
-    with MetadataManagerSupport {
+  extends CommonSpec
+  with JsonrpcSupport
+  with HttpSupport
+  with EthereumSupport
+  with DatabaseModuleSupport
+  with MetadataManagerSupport {
 
   val probe = TestProbe()
   val mediator = DistributedPubSub(system).mediator
@@ -55,8 +54,7 @@ class MetadataManagerSpec
           metadataManager.getToken("0x" + t.address.substring(2).toUpperCase())
         assert(
           meta1.nonEmpty && meta2.nonEmpty && meta1.get.meta.address == meta2.get.meta.address && meta1.get.meta.address == meta1.get.meta.address
-            .toLowerCase()
-        )
+            .toLowerCase())
       }
       info("check markets: market addresses at lower and upper case")
       assert(metadataManager.getValidMarketPairs.size >= MARKETS.length)
@@ -64,19 +62,15 @@ class MetadataManagerSpec
         val meta1 =
           metadataManager.getMarketMetadata(m.marketHash.toLowerCase())
         val meta2 = metadataManager.getMarketMetadata(
-          "0x" + m.marketHash.substring(2).toUpperCase()
-        )
+          "0x" + m.marketHash.substring(2).toUpperCase())
         assert(
           meta1.marketHash == meta2.marketHash && meta1.marketHash == meta1.marketHash
-            .toLowerCase()
-        )
+            .toLowerCase())
 
         val meta3 = metadataManager.getMarketMetadata(
           MarketPair(
             baseToken = m.marketPair.get.baseToken.toLowerCase(),
-            quoteToken = m.marketPair.get.quoteToken.toLowerCase()
-          )
-        )
+            quoteToken = m.marketPair.get.quoteToken.toLowerCase()))
         val meta4 = metadataManager.getMarketMetadata(
           MarketPair(
             baseToken = "0x" + m.marketPair.get.baseToken
@@ -84,9 +78,7 @@ class MetadataManagerSpec
               .toUpperCase(),
             quoteToken = "0x" + m.marketPair.get.quoteToken
               .substring(2)
-              .toUpperCase()
-          )
-        )
+              .toUpperCase()))
         assert(meta3.marketHash == meta4.marketHash)
       }
     }
@@ -104,8 +96,7 @@ class MetadataManagerSpec
         precision = 6,
         burnRateForMarket = 0.1,
         burnRateForP2P = 0.2,
-        usdPrice = 10
-      )
+        usdPrice = 10)
       val tokens = Seq(
         lrc,
         TokenMetadata(
@@ -119,8 +110,7 @@ class MetadataManagerSpec
           precision = 6,
           burnRateForMarket = 0.3,
           burnRateForP2P = 0.4,
-          usdPrice = 8
-        ),
+          usdPrice = 8),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
@@ -132,8 +122,7 @@ class MetadataManagerSpec
           precision = 3,
           burnRateForMarket = 0.1,
           burnRateForP2P = 0.3,
-          usdPrice = 1
-        ),
+          usdPrice = 1),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
@@ -145,8 +134,7 @@ class MetadataManagerSpec
           precision = 6,
           burnRateForMarket = 0.2,
           burnRateForP2P = 0.1,
-          usdPrice = 8
-        ),
+          usdPrice = 8),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.VALID,
@@ -158,8 +146,7 @@ class MetadataManagerSpec
           precision = 6,
           burnRateForMarket = 0.6,
           burnRateForP2P = 0.8,
-          usdPrice = 7
-        ),
+          usdPrice = 7),
         TokenMetadata(
           `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
           status = TokenMetadata.Status.INVALID,
@@ -171,14 +158,11 @@ class MetadataManagerSpec
           precision = 3,
           burnRateForMarket = 0.1,
           burnRateForP2P = 0.9,
-          usdPrice = 1
-        )
-      )
+          usdPrice = 1))
 
       val saved = Await.result(
         (actor ? SaveTokenMetadatas.Req(tokens)).mapTo[SaveTokenMetadatas.Res],
-        5.second
-      )
+        5.second)
       assert(saved.savedAddresses.length == tokens.length)
       info("waiting 3s for repeatJob to reload tokens config")
       Thread.sleep(3000)
@@ -194,8 +178,7 @@ class MetadataManagerSpec
       info("send a message to load tokens config")
       val q1 = Await.result(
         (actor ? LoadTokenMetadata.Req()).mapTo[LoadTokenMetadata.Res],
-        5.second
-      )
+        5.second)
       assert(q1.tokens.length >= tokens.length)
 
       info("save a new token config: DEF")
@@ -211,54 +194,43 @@ class MetadataManagerSpec
           precision = 3,
           burnRateForMarket = 0.5,
           burnRateForP2P = 0.5,
-          usdPrice = 1
-        )
-      )
+          usdPrice = 1))
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
       assert(res2 == ErrorCode.ERR_NONE)
 
       val burnRateRes = Await.result(
         (ethereumQueryActor ? GetBurnRate.Req(token = lrc.address))
           .mapTo[GetBurnRate.Res],
-        5.second
-      )
+        5.second)
       info(
         s"send a message to update burn-rate :{burnRate = 0.2, usdPrice = 20}, but will query ethereum and" +
-          s" replace forMarket as :${burnRateRes.forMarket}, forP2P as :${burnRateRes.forP2P}"
-      )
+          s" replace forMarket as :${burnRateRes.forMarket}, forP2P as :${burnRateRes.forP2P}")
       val updated = Await.result(
         (actor ? UpdateTokenMetadata.Req(
-          Some(lrc.copy(burnRateForMarket = 0.2, usdPrice = 20))
-        )).mapTo[UpdateTokenMetadata.Res],
-        5.second
-      )
+          Some(lrc.copy(burnRateForMarket = 0.2, usdPrice = 20)))).mapTo[UpdateTokenMetadata.Res],
+        5.second)
       assert(updated.error == ErrorCode.ERR_NONE)
       val query1 = Await.result(
         dbModule.tokenMetadataDal
           .getTokens(Seq(lrc.address))
           .mapTo[Seq[TokenMetadata]],
-        5.second
-      )
+        5.second)
       assert(
         query1.length == 1 && query1.head.burnRateForMarket === burnRateRes.forMarket &&
-          query1.head.burnRateForP2P == burnRateRes.forP2P && query1.head.usdPrice == 20
-      )
+          query1.head.burnRateForP2P == burnRateRes.forP2P && query1.head.usdPrice == 20)
 
       info("send a message to disable lrc")
       val disabled = Await.result(
         (actor ? InvalidateToken.Req(lrc.address)).mapTo[InvalidateToken.Res],
-        5 second
-      )
+        5 second)
       assert(disabled.error == ErrorCode.ERR_NONE)
       val query2 = Await.result(
         dbModule.tokenMetadataDal
           .getTokens(Seq(lrc.address))
           .mapTo[Seq[TokenMetadata]],
-        5.second
-      )
+        5.second)
       assert(
-        query2.nonEmpty && query2.head.status == TokenMetadata.Status.INVALID
-      )
+        query2.nonEmpty && query2.head.status == TokenMetadata.Status.INVALID)
     }
   }
 
@@ -284,8 +256,7 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketPair = Some(marketPairLrcWeth),
-        marketHash = MarketHash(MarketPair(DDD, AAA)).toString
-      )
+        marketHash = MarketHash(MarketPair(DDD, AAA)).toString)
       val markets = Seq(
         marketLrcWeth,
         MarketMetadata(
@@ -300,8 +271,7 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketPair = Some(marketPairBnbWeth),
-          marketHash = MarketHash(MarketPair(DDD, BBB)).toString
-        ),
+          marketHash = MarketHash(MarketPair(DDD, BBB)).toString),
         MarketMetadata(
           status = MarketMetadata.Status.READONLY,
           quoteTokenSymbol = "CCC",
@@ -314,9 +284,7 @@ class MetadataManagerSpec
           browsableInWallet = true,
           updatedAt = timeProvider.getTimeMillis,
           marketPair = Some(marketPairZrxdWeth),
-          marketHash = MarketHash(MarketPair(DDD, CCC)).toString
-        )
-      )
+          marketHash = MarketHash(MarketPair(DDD, CCC)).toString))
       actor ! SaveMarketMetadatas.Req(markets)
       Thread.sleep(3000)
 
@@ -332,8 +300,7 @@ class MetadataManagerSpec
       info("send a message to load markets config")
       val q1 = Await.result(
         (actor ? LoadMarketMetadata.Req()).mapTo[LoadMarketMetadata.Res],
-        5.second
-      )
+        5.second)
       assert(q1.markets.length >= markets.length)
 
       info("save a new market: ABC-LRC")
@@ -351,50 +318,40 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketPair = Some(marketPairAbcLrc),
-        marketHash = MarketHash(MarketPair(ABC, AAA)).toString
-      )
+        marketHash = MarketHash(MarketPair(ABC, AAA)).toString)
       val r2 = dbModule.marketMetadataDal.saveMarket(abcLrc)
       val res2 = Await.result(r2.mapTo[ErrorCode], 5.second)
       assert(res2 == ErrorCode.ERR_NONE)
 
       info(
-        s"send a message to update :{priceDecimals = 2, status = MarketMetadata.Status.READONLY}"
-      )
+        s"send a message to update :{priceDecimals = 2, status = MarketMetadata.Status.READONLY}")
       val updated = Await.result(
         (actor ? UpdateMarketMetadata.Req(
           Some(
             marketLrcWeth
-              .copy(priceDecimals = 2, status = MarketMetadata.Status.READONLY)
-          )
-        )).mapTo[UpdateMarketMetadata.Res],
-        5.second
-      )
+              .copy(priceDecimals = 2, status = MarketMetadata.Status.READONLY)))).mapTo[UpdateMarketMetadata.Res],
+        5.second)
       assert(updated.error == ErrorCode.ERR_NONE)
       val q11 =
         dbModule.marketMetadataDal.getMarketsByKey(
-          Seq(marketLrcWeth.marketHash)
-        )
+          Seq(marketLrcWeth.marketHash))
       val res11 = Await.result(q11.mapTo[Seq[MarketMetadata]], 5.second)
       assert(
-        res11.length == 1 && res11.head.priceDecimals == 2 && res11.head.status == MarketMetadata.Status.READONLY
-      )
+        res11.length == 1 && res11.head.priceDecimals == 2 && res11.head.status == MarketMetadata.Status.READONLY)
 
       info("send a message to disable lrc-weth")
       val disabled = Await.result(
         (actor ? TerminateMarket.Req(marketLrcWeth.marketHash))
           .mapTo[TerminateMarket.Res],
-        5 second
-      )
+        5 second)
       assert(disabled.error == ErrorCode.ERR_NONE)
       val query2 = Await.result(
         dbModule.marketMetadataDal
           .getMarketsByKey(Seq(marketLrcWeth.marketHash))
           .mapTo[Seq[MarketMetadata]],
-        5.second
-      )
+        5.second)
       assert(
-        query2.nonEmpty && query2.head.status == MarketMetadata.Status.TERMINATED
-      )
+        query2.nonEmpty && query2.head.status == MarketMetadata.Status.TERMINATED)
     }
   }
 
@@ -419,8 +376,7 @@ class MetadataManagerSpec
         precision = 6,
         burnRateForMarket = 0.1,
         burnRateForP2P = 0.2,
-        usdPrice = 10
-      )
+        usdPrice = 10)
       val b = TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
         status = TokenMetadata.Status.VALID,
@@ -432,21 +388,18 @@ class MetadataManagerSpec
         precision = 6,
         burnRateForMarket = 0.3,
         burnRateForP2P = 0.4,
-        usdPrice = 8
-      )
+        usdPrice = 8)
       info("token A and formatedA should same")
       val formatedA = MetadataManager.normalizeToken(a)
       assert(
         formatedA.address == a.address && formatedA.symbol == a.symbol
-          .toUpperCase()
-      )
+          .toUpperCase())
 
       info("token B formated address and symbol should same with formatedB")
       val formatedB = MetadataManager.normalizeToken(b)
       assert(
         b.address.toLowerCase() == formatedB.address && b.symbol
-          .toUpperCase() == formatedB.symbol
-      )
+          .toUpperCase() == formatedB.symbol)
     }
 
     "format market" in {
@@ -465,29 +418,23 @@ class MetadataManagerSpec
         browsableInWallet = true,
         updatedAt = timeProvider.getTimeMillis,
         marketPair = Some(marketPair),
-        marketHash = MarketHash(MarketPair(BBB, AAA)).toString
-      )
+        marketHash = MarketHash(MarketPair(BBB, AAA)).toString)
       val formatedMarket = MetadataManager.normalizeMarket(market)
       assert(
         market.baseTokenSymbol == "bbb" &&
-          formatedMarket.baseTokenSymbol == "BBB"
-      )
+          formatedMarket.baseTokenSymbol == "BBB")
       assert(
         market.quoteTokenSymbol == "aaa" &&
-          formatedMarket.quoteTokenSymbol == "AAA"
-      )
+          formatedMarket.quoteTokenSymbol == "AAA")
       val formatedMarketPair = formatedMarket.marketPair.get
       assert(
         marketPair.baseToken == "0x9B9211A2CE4EEE9C5619D54E5CD9F967A68FBE23" &&
-          formatedMarketPair.baseToken == "0x9b9211a2ce4eee9c5619d54e5cd9f967a68fbe23"
-      )
+          formatedMarketPair.baseToken == "0x9b9211a2ce4eee9c5619d54e5cd9f967a68fbe23")
       assert(
         marketPair.quoteToken == "0xF51DF14E49DA86ABC6F1D8CCC0B3A6B7B7C90CA6" &&
-          formatedMarketPair.quoteToken == "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
-      )
+          formatedMarketPair.quoteToken == "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6")
       assert(
-        market.marketHash == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285" && formatedMarket.marketHash == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285"
-      )
+        market.marketHash == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285" && formatedMarket.marketHash == "0x6e8fe0ec8794683790e80d829c6a5fd01146b285")
     }
   }
 

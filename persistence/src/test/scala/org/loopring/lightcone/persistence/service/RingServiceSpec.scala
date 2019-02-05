@@ -21,7 +21,6 @@ import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.proto.GetRings._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -42,8 +41,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     assert(r1.length == 3 && !r1.exists(_ != ErrorCode.ERR_NONE))
 
     info(
-      "save a duplicate ring(txHash, ringHash and ringIndex) should return error"
-    )
+      "save a duplicate ring(txHash, ringHash and ringIndex) should return error")
     val r2 = Await.result(testDuplicateSave().mapTo[ErrorCode], 5.second)
     assert(r2 == ErrorCode.ERR_PERSISTENCE_DUPLICATE_INSERT)
 
@@ -63,7 +61,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
         f.fees foreach {
           case fee: Trade.Fee if fee == fee1 => assert(true)
           case fee: Trade.Fee if fee == fee2 => assert(true)
-          case _                             => assert(false)
+          case _ => assert(false)
         }
       case None => assert(false)
     }
@@ -108,8 +106,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     feeAmountB = ByteString.copyFrom("12", "UTF-8"),
     feeRecipient = "0x7Cb592d18d0c49751bA5fce76C1aEc5bDD8941Fc",
     waiveFeePercentage = 10,
-    walletSplitPercentage = 5
-  )
+    walletSplitPercentage = 5)
 
   val fee2 = Trade.Fee(
     tokenFee = "0x2d92e8a4556e9100f1bd7709293f122f69d2cd2b",
@@ -118,8 +115,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
     feeAmountB = ByteString.copyFrom("22", "UTF-8"),
     feeRecipient = "0xa1c95e17f629d8bc5985f3f997760a575d56b0c2",
     waiveFeePercentage = 8,
-    walletSplitPercentage = 2
-  )
+    walletSplitPercentage = 2)
 
   val fees = Ring.Fees(Seq(fee1, fee2))
 
@@ -132,8 +128,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
         miner = miner,
         txHash = hash1,
         fees = Some(fees),
-        blockHeight = 100
-      ),
+        blockHeight = 100),
       Ring(
         ringHash = hash2,
         ringIndex = 11,
@@ -141,8 +136,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
         miner = miner,
         txHash = hash2,
         fees = Some(fees),
-        blockHeight = 110
-      ),
+        blockHeight = 110),
       Ring(
         ringHash = hash3,
         ringIndex = 12,
@@ -150,9 +144,7 @@ class RingServiceSpec extends ServiceSpec[RingService] {
         miner = miner,
         txHash = hash3,
         fees = Some(fees),
-        blockHeight = 120
-      )
-    )
+        blockHeight = 120))
     service.saveRings(rings)
   }
 
@@ -165,8 +157,6 @@ class RingServiceSpec extends ServiceSpec[RingService] {
         miner = miner,
         txHash = hash3,
         fees = Some(fees),
-        blockHeight = 100
-      )
-    )
+        blockHeight = 100))
   }
 }

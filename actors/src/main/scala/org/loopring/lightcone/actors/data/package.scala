@@ -25,7 +25,6 @@ import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.core.OrderStatus._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.lib.data._
 

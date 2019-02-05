@@ -27,7 +27,6 @@ import org.loopring.lightcone.core._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 
 import scala.concurrent._
 

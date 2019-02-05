@@ -27,7 +27,6 @@ import org.loopring.lightcone.actors.utils.MetadataRefresher
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 import scala.concurrent.ExecutionContext
 
 // Owner: Hongyu

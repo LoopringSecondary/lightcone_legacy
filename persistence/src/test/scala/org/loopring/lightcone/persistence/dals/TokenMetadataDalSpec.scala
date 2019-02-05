@@ -18,7 +18,6 @@ package org.loopring.lightcone.persistence.dals
 
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -40,8 +39,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         precision = 6,
         burnRateForMarket = 0.1,
         burnRateForP2P = 0.1,
-        usdPrice = 10
-      ),
+        usdPrice = 10),
       TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
         status = TokenMetadata.Status.VALID,
@@ -53,8 +51,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         precision = 6,
         burnRateForMarket = 0.2,
         burnRateForP2P = 0.2,
-        usdPrice = 8
-      ),
+        usdPrice = 8),
       TokenMetadata(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC20,
         status = TokenMetadata.Status.VALID,
@@ -66,9 +63,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         precision = 6,
         burnRateForMarket = 0.3,
         burnRateForP2P = 0.3,
-        usdPrice = 7
-      )
-    )
+        usdPrice = 7))
     val r1 = dal.saveTokens(tokens1)
     val res1 = Await.result(r1.mapTo[Seq[String]], 5.second)
     assert(res1.length == tokens1.length)
@@ -89,8 +84,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         lrc.precision == 6 &&
         lrc.burnRateForMarket == 0.1 &&
         lrc.burnRateForP2P == 0.1 &&
-        lrc.usdPrice == 10
-    )
+        lrc.usdPrice == 10)
 
     info("duplicate token address save should return error")
     val token3 = lrc.copy(precision = 8)
@@ -104,11 +98,9 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     assert(lrc1.nonEmpty && lrc1.get.precision == 6)
 
     info(
-      "should not save token with too long address :0xBe4C1cb10C2Be76798c4186ADbbC34356b358b521"
-    )
+      "should not save token with too long address :0xBe4C1cb10C2Be76798c4186ADbbC34356b358b521")
     val r5 = dal.saveToken(
-      lrc.copy(address = "0xBe4C1cb10C2Be76798c4186ADbbC34356b358b521")
-    )
+      lrc.copy(address = "0xBe4C1cb10C2Be76798c4186ADbbC34356b358b521"))
     val res5 = Await.result(r5.mapTo[ErrorCode], 5.second)
     assert(res5 == ErrorCode.ERR_PERSISTENCE_INTERNAL)
     val r6 = dal.getTokens(Seq(lrc.address))
@@ -124,12 +116,10 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
     val res8 = Await.result(r8.mapTo[Seq[TokenMetadata]], 5.second)
     val lrc3 = res8.find(_.symbol == "T1")
     assert(
-      lrc3.nonEmpty && lrc3.get.address == lrcAddress && lrc3.get.burnRateForMarket == 0.5 && lrc3.get.burnRateForP2P == 0.6
-    )
+      lrc3.nonEmpty && lrc3.get.address == lrcAddress && lrc3.get.burnRateForMarket == 0.5 && lrc3.get.burnRateForP2P == 0.6)
 
     info(
-      "update T2's type, status, symbol, name, unit, decimal, website, precision, burn rate, usd price"
-    )
+      "update T2's type, status, symbol, name, unit, decimal, website, precision, burn rate, usd price")
     val bnb = res2.find(_.symbol == "T2").getOrElse(TokenMetadata())
     assert(
       bnb.`type` == TokenMetadata.Type.TOKEN_TYPE_ERC20 &&
@@ -142,8 +132,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         bnb.precision == 6 &&
         bnb.burnRateForMarket == 0.2 &&
         bnb.burnRateForP2P == 0.2 &&
-        bnb.usdPrice == 8
-    )
+        bnb.usdPrice == 8)
     val r9 = dal.updateToken(
       bnb.copy(
         `type` = TokenMetadata.Type.TOKEN_TYPE_ERC1400,
@@ -155,9 +144,7 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         precision = 8,
         burnRateForMarket = 0.5,
         burnRateForP2P = 0.6,
-        usdPrice = 7
-      )
-    )
+        usdPrice = 7))
     val res9 = Await.result(r9.mapTo[ErrorCode], 5.second)
     assert(res9 == ErrorCode.ERR_NONE)
     val r10 = dal.getTokens(Seq(bnb.address))
@@ -174,7 +161,6 @@ class TokenMetadataDalSpec extends DalSpec[TokenMetadataDal] {
         bnb1.precision == 8 &&
         bnb1.burnRateForMarket == 0.5 &&
         bnb1.burnRateForP2P == 0.6 &&
-        bnb1.usdPrice == 7
-    )
+        bnb1.usdPrice == 7)
   }
 }
