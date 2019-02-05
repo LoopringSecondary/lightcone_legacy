@@ -17,10 +17,10 @@
 package io.lightcone.core
 
 case class Tx(
-  inputData: String,
-  nonce: Int,
-  gasLimit: BigInt,
-  gasPrice: BigInt,
-  to: String,
-  value: BigInt = BigInt(0),
-  chainId: Int = 1)
+    inputData: String,
+    nonce: Int,
+    gasLimit: BigInt,
+    gasPrice: BigInt,
+    to: String,
+    value: BigInt = BigInt(0),
+    chainId: Int = 1)

@@ -26,7 +26,6 @@ import io.lightcone.actors.base.safefuture._
 import io.lightcone.actors.ethereum._
 import io.lightcone.ethereum.abi._
 import io.lightcone.core._
-import io.lightcone.ethereum.data._
 
 import io.lightcone.proto.{TransferEvent => _, _}
 import org.web3j.utils.Numeric

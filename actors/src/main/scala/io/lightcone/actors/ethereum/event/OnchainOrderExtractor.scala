@@ -24,7 +24,6 @@ import io.lightcone.core._
 import org.web3j.utils.Numeric
 
 import scala.concurrent._
-import io.lightcone.ethereum.data._
 
 class OnchainOrderExtractor @Inject()(
     implicit

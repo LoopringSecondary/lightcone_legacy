@@ -30,6 +30,7 @@ class SimpleRingBatchDeserializer(
     encoded: String = ""
   )(
     implicit
+    rawOrderValidatorImpl: RawOrderValidator,
     context: RingBatchContext)
     extends RingBatchDeserializer {
 
@@ -221,7 +222,7 @@ class SimpleRingBatchDeserializer(
     )
 
     val orderHash =
-      RawOrderValidatorDefault.calculateOrderHash(orderWithoutHash)
+      rawOrderValidatorImpl.calculateOrderHash(orderWithoutHash)
     orderWithoutHash.copy(hash = orderHash);
   }
 

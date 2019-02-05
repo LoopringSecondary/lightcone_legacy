@@ -59,8 +59,10 @@ class RingSettlementActor(
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx =
     selfConfig.getInt("max-rings-in-one-tx")
+
   private val resendDelay =
     selfConfig.getInt("resend-delay_in_seconds")
+
   implicit val ringContext: RingBatchContext =
     RingBatchContext(
       lrcAddress = selfConfig.getString("lrc-address"),
@@ -70,8 +72,11 @@ class RingSettlementActor(
         Address(config.getString("transaction-origin")).toString,
       minerPrivateKey = config.getString("miner-privateKey")
     )
+
   implicit val credentials: Credentials =
     Credentials.create(config.getString("transaction-origin-private-key"))
+
+  implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
 
   val protocolAddress: String =
     config.getString("loopring_protocol.protocol-address")

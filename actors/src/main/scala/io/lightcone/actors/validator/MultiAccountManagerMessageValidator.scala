@@ -52,7 +52,7 @@ final class MultiAccountManagerMessageValidator(
   val selfConfig = config.getConfig(MultiAccountManagerActor.name)
   val numOfShards = selfConfig.getInt("num-of-shards")
 
-  val orderValidator: RawOrderValidator = RawOrderValidatorDefault
+  val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
   val cancelOrderValidator: CancelOrderValidator = new CancelOrderValidator()
 
   def normalize(token: String): String = {

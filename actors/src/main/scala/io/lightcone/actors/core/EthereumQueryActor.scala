@@ -24,7 +24,7 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.actors.base._
 import io.lightcone.actors.ethereum.EthereumAccessActor
-import io.lightcone.ethereum.data._
+
 import io.lightcone.lib._
 import io.lightcone.proto._
 import io.lightcone.core._

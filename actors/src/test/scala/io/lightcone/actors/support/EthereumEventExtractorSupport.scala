@@ -19,6 +19,7 @@ package io.lightcone.actors.support
 import io.lightcone.actors.core._
 import io.lightcone.actors.ethereum.Dispatchers._
 import io.lightcone.actors.ethereum.event._
+import io.lightcone.ethereum._
 
 trait EthereumEventExtractorSupport
     extends DatabaseModuleSupport
@@ -34,7 +35,9 @@ trait EthereumEventExtractorSupport
     with DatabaseQueryMessageSupport
     with RingAndTradePersistenceSupport
     with EthereumTransactionRecordSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
+
+  implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
 
   implicit val balanceExtractor = new BalanceChangedAddressExtractor
   implicit val allowanceExtractor = new AllowanceChangedAddressExtractor

@@ -23,14 +23,13 @@ import com.google.protobuf.ByteString
 import io.lightcone.proto._
 import io.lightcone.core._
 import io.lightcone.ethereum._
-import io.lightcone.ethereum.data._
 
 trait RawOrderValidator {
   def calculateOrderHash(order: RawOrder): String
   def validate(order: RawOrder): Either[ErrorCode, RawOrder]
 }
 
-object RawOrderValidatorDefault extends RawOrderValidator {
+class RawOrderValidatorImpl extends RawOrderValidator {
   import ErrorCode._
 
   val FeePercentageBase = 1000

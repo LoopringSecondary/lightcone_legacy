@@ -19,7 +19,7 @@ package io.lightcone.actors.ethereum.event
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
-import io.lightcone.ethereum.data._
+
 import io.lightcone.core._
 import io.lightcone.proto._
 

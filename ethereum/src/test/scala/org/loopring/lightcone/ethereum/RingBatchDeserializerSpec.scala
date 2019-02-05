@@ -42,8 +42,8 @@ class RingBatchDeserializerSpec extends FlatSpec with Matchers {
     val order1Owner = "0xFDa769A839DA57D88320E683cD20075f8f525a57"
     val order2Owner = "0xf5B3ab72F6E80d79202dBD37400447c11618f21f"
 
-    val validator: RawOrderValidator = RawOrderValidatorDefault
-    val generator: RingBatchGenerator = Protocol2RingBatchGenerator
+    implicit val validator: RawOrderValidator = new RawOrderValidatorImpl
+    implicit val generator: RingBatchGenerator = Protocol2RingBatchGenerator
     implicit val context: RingBatchContext = RingBatchContext()
       .withMiner(miner)
       .withMinerPrivateKey(minerPrivKey)
@@ -135,7 +135,7 @@ class RingBatchDeserializerSpec extends FlatSpec with Matchers {
 
         ringBatchDecoded.orders zip ringBatch.orders foreach { pair =>
           val (o1, o2) = pair
-          // val o1Hash = RawOrderValidatorDefault.calculateOrderHash(o1)
+          // val o1Hash = RawOrderValidatorImpl.calculateOrderHash(o1)
           assert(o1.hash == o2.hash, "order hash not match")
         }
       case Left(err) =>

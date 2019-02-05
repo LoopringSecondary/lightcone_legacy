@@ -30,6 +30,7 @@ trait RingBatchGenerator {
       orders: Seq[Seq[RawOrder]]
     )(
       implicit
+      rawOrderValidator: RawOrderValidator,
       context: RingBatchContext
     ): RingBatch
 
@@ -41,6 +42,7 @@ trait RingBatchGenerator {
     ): String
 }
 
+// TODO(dongw): bind this, not use object
 object Protocol2RingBatchGenerator extends RingBatchGenerator {
 
   val OrderVersion = 0
@@ -50,14 +52,14 @@ object Protocol2RingBatchGenerator extends RingBatchGenerator {
       orders: Seq[Seq[RawOrder]]
     )(
       implicit
+      rawOrderValidator: RawOrderValidator,
       context: RingBatchContext
     ): RingBatch = {
-    val orderValidator = RawOrderValidatorDefault
 
     val ordersWithHash = orders.map(
       ordersOfRing =>
         ordersOfRing.map(order => {
-          val hash = orderValidator.calculateOrderHash(order)
+          val hash = rawOrderValidator.calculateOrderHash(order)
           order.copy(hash = hash)
         })
     )

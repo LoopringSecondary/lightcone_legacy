@@ -73,7 +73,7 @@ trait OrderGenerateSupport {
         .getEntityId(owner)
     )
 
-    val hash = RawOrderValidatorDefault.calculateOrderHash(order)
+    val hash = new RawOrderValidatorImpl().calculateOrderHash(order)
     order
       .withHash(hash)
       .withParams(
