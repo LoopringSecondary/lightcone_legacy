@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.depth
+package org.loopring.lightcone.core
 
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.core.data._
+
 import scala.collection.SortedMap
 
-private[depth] object OrderbookSide {
+private[core] object OrderbookSide {
 
   import ErrorCode._
 
@@ -43,7 +43,7 @@ private[depth] object OrderbookSide {
       with OrderbookSide
 }
 
-private[depth] trait OrderbookSide {
+private[core] trait OrderbookSide {
   val isSell: Boolean
   val maintainUpdatedSlots: Boolean
   val priceDecimals: Int
@@ -158,13 +158,13 @@ private[depth] trait OrderbookSide {
     slots
   }
 
-  private[depth] def getAggregationSlotFor(slot: Long) = {
+  private[core] def getAggregationSlotFor(slot: Long) = {
     if (isSell)
       (Math.ceil(slot / aggregationScaling) * aggregationScaling).toLong
     else (Math.floor(slot / aggregationScaling) * aggregationScaling).toLong
   }
 
-  private[depth] def getSlotForPriceId(price: Double) = {
+  private[core] def getSlotForPriceId(price: Double) = {
     if (isSell) Math.ceil(price * priceScaling).toLong
     else Math.floor(price * priceScaling).toLong
   }

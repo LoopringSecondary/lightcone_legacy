@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.account
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.core.base._
+package org.loopring.lightcone.core
 
 object AccountManager {
 

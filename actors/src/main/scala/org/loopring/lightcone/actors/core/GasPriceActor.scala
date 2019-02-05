@@ -25,13 +25,10 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib.data._
-import org.loopring.lightcone.core.account._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data.Matchable
-import org.loopring.lightcone.core.data.ErrorCode._
-import org.loopring.lightcone.core.data.OrderStatus._
+import org.loopring.lightcone.core._
+import org.loopring.lightcone.core.ErrorCode._
+import org.loopring.lightcone.core.OrderStatus._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.actors.base.safefuture._
 import scala.concurrent._
 

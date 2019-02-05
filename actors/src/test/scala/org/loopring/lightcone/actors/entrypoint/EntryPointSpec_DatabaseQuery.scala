@@ -23,7 +23,7 @@ import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto.Trade.Fee
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import scala.concurrent.Await
 import scala.concurrent._
 import scala.concurrent.duration._

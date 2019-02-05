@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.ethereum.event
 import akka.util.Timeout
 import com.google.inject.Inject
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.ethereum.data._
 import org.web3j.utils.Numeric
 import scala.concurrent.{ExecutionContext, Future}

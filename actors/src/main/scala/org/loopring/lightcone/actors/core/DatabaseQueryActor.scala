@@ -24,12 +24,11 @@ import com.typesafe.config.Config
 import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.GetOrdersForUser._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
 import scala.concurrent._
 
 // Owner: Yongfeng

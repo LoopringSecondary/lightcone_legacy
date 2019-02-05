@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.entrypoint
 import akka.util.Timeout
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}

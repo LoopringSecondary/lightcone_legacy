@@ -15,30 +15,24 @@
  */
 
 package org.loopring.lightcone.core
+import org.loopring.lightcone.core.implicits._
 
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.scalatest._
+import org.scalamock.scalatest._
 
-package object depth {
-  implicit class RichOrderbookSlot(this_ : Orderbook.Slot) {
+import org.slf4s.Logging
 
-    def +(that: Orderbook.Slot) = {
-      assert(this_.slot == that.slot)
-      Orderbook.Slot(
-        this_.slot,
-        this_.amount + that.amount,
-        this_.total + that.total
-      )
-    }
+trait CommonSpec
+    extends FlatSpec
+    with BeforeAndAfterEach
+    with BeforeAndAfterAll
+    with Matchers
+    with MockFactory
+    with Logging {
 
-    def -(that: Orderbook.Slot) = {
-      assert(this_.slot == that.slot)
-      Orderbook.Slot(
-        this_.slot,
-        this_.amount - that.amount,
-        this_.total - that.total
-      )
-    }
+  override def beforeAll() {
+    println(
+      s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
+    )
   }
 }

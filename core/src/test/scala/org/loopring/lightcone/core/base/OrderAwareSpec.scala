@@ -15,14 +15,12 @@
  */
 
 package org.loopring.lightcone.core
+import org.loopring.lightcone.core.implicits._
 
 import com.typesafe.config.ConfigFactory
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.core.account._
+
+/// import org.loopring.lightcone.proto._
 
 trait OrderAwareSpec extends CommonSpec {
   var nextId = 1

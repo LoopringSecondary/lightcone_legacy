@@ -22,8 +22,7 @@ import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 
 import scala.concurrent.Await
 

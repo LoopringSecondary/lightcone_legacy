@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcModule
 import org.loopring.lightcone.actors.rpc.RpcDataConversions._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {

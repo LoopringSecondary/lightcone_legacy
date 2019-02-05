@@ -22,13 +22,10 @@ import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.lib._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.core.base.MetadataManager
 import org.loopring.lightcone.persistence.DatabaseModule
 import scala.concurrent._
 

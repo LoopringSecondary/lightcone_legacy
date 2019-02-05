@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.account
+package org.loopring.lightcone.core
 
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+/// import org.loopring.lightcone.proto._
 
 import org.slf4s.Logging
 
@@ -51,10 +48,10 @@ class AccountTokenManagerImpl(
   def getAvailableAllowance() = availableAllowance
 
   // `cursor1 indicates the index to begin rebalancing
-  private[account] var cursor: Int = -1
+  private[core] var cursor: Int = -1
   // indexMap is the map of order id to order's index in `reservations`
-  private[account] var indexMap = Map.empty[String, Int]
-  private[account] var reservations = Seq.empty[Reservation]
+  private[core] var indexMap = Map.empty[String, Int]
+  private[core] var reservations = Seq.empty[Reservation]
 
   def size() = reservations.size
   def hasTooManyOrders() = size >= maxNumOrders

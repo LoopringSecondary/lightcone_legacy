@@ -17,11 +17,10 @@
 package org.loopring.lightcone.actors.validator
 
 import com.typesafe.config.Config
-import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.core.MetadataManager
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.lib
 
-import org.loopring.lightcone.core.data.{Error, ErrorCode}
+import org.loopring.lightcone.core._
 
 final class ErrorException(val error: Error) extends Exception {
   override def getMessage() = s"ErrorException(${error.code}: ${error.message})"

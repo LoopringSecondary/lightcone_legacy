@@ -25,12 +25,12 @@ import org.loopring.lightcone.actors.validator.{
   MetadataManagerValidator
 }
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
 import akka.pattern._
-import org.loopring.lightcone.core.base.MetadataManager
+import org.loopring.lightcone.core.MetadataManager
 
 import scala.concurrent.Await
 

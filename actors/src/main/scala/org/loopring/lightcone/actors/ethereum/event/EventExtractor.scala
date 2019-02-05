@@ -17,7 +17,7 @@
 package org.loopring.lightcone.actors.ethereum.event
 
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.ethereum.data.{formatHex, Address}
 import org.web3j.utils.Numeric

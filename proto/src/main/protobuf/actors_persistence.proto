@@ -30,36 +30,36 @@ import "ethereum.proto";
 
 message PersistOrder {
     // message Req {
-    //     RawOrder order    = 1;
+    //     org.loopring.lightcone.core.RawOrder  order    = 1;
     // }
     message Res {
-        RawOrder order    = 1;
+        org.loopring.lightcone.core.RawOrder  order    = 1;
         bool already_exist      = 2;
-        org.loopring.lightcone.core.data.ErrorCode error = 3;
+        org.loopring.lightcone.core.ErrorCode error = 3;
     }
 }
 
 message UpdateOrderState {
     message Req {
         string hash = 1;
-        RawOrder.State state = 2;
+        org.loopring.lightcone.core.RawOrder .State state = 2;
         bool changeUpdatedAtField = 3;
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode error = 1;
+        org.loopring.lightcone.core.ErrorCode error = 1;
     }
 }
 
 message UpdateOrderStatus {
     message Req {
         string hash = 1;
-        org.loopring.lightcone.core.data.OrderStatus status = 2;
+        org.loopring.lightcone.core.OrderStatus status = 2;
         bool changeUpdatedAtField = 3;
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode error = 1;
+        org.loopring.lightcone.core.ErrorCode error = 1;
 }
 }
 
@@ -69,8 +69,8 @@ message GetOrderByHash {
     }
 
     message Res {
-        RawOrder order = 1;
-        org.loopring.lightcone.core.data.ErrorCode error = 2;
+        org.loopring.lightcone.core.RawOrder  order = 1;
+        org.loopring.lightcone.core.ErrorCode error = 2;
     }
 
     message BatchReq {
@@ -78,8 +78,8 @@ message GetOrderByHash {
     }
 
     message BatchRes {
-        repeated RawOrder orders = 1;
-        org.loopring.lightcone.core.data.ErrorCode error = 2;
+        repeated org.loopring.lightcone.core.RawOrder  orders = 1;
+        org.loopring.lightcone.core.ErrorCode error = 2;
     }
 }
 
@@ -92,14 +92,14 @@ message GetOrdersForUser {
             bool   is_query_both_side = 3; // 是否查询两个方向的订单
         }
         string               owner      = 1;
-        repeated org.loopring.lightcone.core.data.OrderStatus statuses   = 2;
+        repeated org.loopring.lightcone.core.OrderStatus statuses   = 2;
         Market               market     = 3;
         SortingType          sort       = 4;
         Paging               skip       = 5;
     }
 
     message Res {
-        repeated RawOrder orders = 1;
+        repeated org.loopring.lightcone.core.RawOrder  orders = 1;
         int32             total  = 2;
     }
 }
@@ -112,8 +112,8 @@ message UserCancelOrder {
     message Res {
         message Result {
             string    order_hash        = 1;
-            RawOrder  order             = 2;
-            org.loopring.lightcone.core.data.ErrorCode error             = 3;
+            org.loopring.lightcone.core.RawOrder   order             = 2;
+            org.loopring.lightcone.core.ErrorCode error             = 3;
         }
         repeated Result updated_result = 1;
     }
@@ -173,7 +173,7 @@ message PersistSettlementTx {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode error = 1;
+        org.loopring.lightcone.core.ErrorCode error = 1;
     }
 }
 
@@ -196,7 +196,7 @@ message UpdateTxInBlock {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode error = 1;
+        org.loopring.lightcone.core.ErrorCode error = 1;
     }
 }
 
@@ -230,7 +230,7 @@ message PersistTransactionRecord {
     }
     message Res {
         bool       already_exist = 1;
-        org.loopring.lightcone.core.data.ErrorCode  error         = 2;
+        org.loopring.lightcone.core.ErrorCode  error         = 2;
     }
 }
 
@@ -267,7 +267,7 @@ message PersistOHLCData {
     }
     message Res {
         OHLCRawData record  = 1;
-        org.loopring.lightcone.core.data.ErrorCode error     = 2;
+        org.loopring.lightcone.core.ErrorCode error     = 2;
     }
 }
 
@@ -301,7 +301,7 @@ message GetOHLCData {
 }
 message SaveTokenMetadatas {
     message Req {
-        repeated TokenMetadata tokens = 1;
+        repeated org.loopring.lightcone.core.TokenMetadata tokens = 1;
     }
 
     message Res {
@@ -311,11 +311,11 @@ message SaveTokenMetadatas {
 
 message UpdateTokenMetadata {
     message Req {
-        TokenMetadata token = 1;
+        org.loopring.lightcone.core.TokenMetadata token = 1;
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode  error = 1;
+        org.loopring.lightcone.core.ErrorCode  error = 1;
     }
 }
 
@@ -325,7 +325,7 @@ message UpdateTokenBurnRate {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode  error = 1;
+        org.loopring.lightcone.core.ErrorCode  error = 1;
     }
 }
 
@@ -335,7 +335,7 @@ message InvalidateToken {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode  error = 1;
+        org.loopring.lightcone.core.ErrorCode  error = 1;
     }
 }
 
@@ -345,13 +345,13 @@ message LoadTokenMetadata {
     }
 
     message Res {
-        repeated TokenMetadata tokens = 1;
+        repeated org.loopring.lightcone.core.TokenMetadata tokens = 1;
     }
 }
 
 message SaveMarketMetadatas {
     message Req {
-        repeated MarketMetadata markets = 1;
+        repeated org.loopring.lightcone.core.MarketMetadata markets = 1;
     }
 
     message Res {
@@ -361,11 +361,11 @@ message SaveMarketMetadatas {
 
 message UpdateMarketMetadata {
     message Req {
-        MarketMetadata market = 1;
+        org.loopring.lightcone.core.MarketMetadata market = 1;
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode  error = 1;
+        org.loopring.lightcone.core.ErrorCode  error = 1;
     }
 }
 
@@ -375,7 +375,7 @@ message TerminateMarket {
     }
 
     message Res {
-        org.loopring.lightcone.core.data.ErrorCode  error = 1;
+        org.loopring.lightcone.core.ErrorCode  error = 1;
     }
 }
 
@@ -385,6 +385,6 @@ message LoadMarketMetadata {
     }
 
     message Res {
-        repeated MarketMetadata markets = 1;
+        repeated org.loopring.lightcone.core.MarketMetadata markets = 1;
     }
 }

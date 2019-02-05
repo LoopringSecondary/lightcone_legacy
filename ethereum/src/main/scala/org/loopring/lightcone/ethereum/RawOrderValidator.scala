@@ -21,10 +21,9 @@ import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.utils.Numeric
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data._
-import org.loopring.lightcone.core.data.ErrorCode
 import org.loopring.lightcone.lib.data._
 
 trait RawOrderValidator {

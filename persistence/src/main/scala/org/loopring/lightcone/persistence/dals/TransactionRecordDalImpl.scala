@@ -25,9 +25,9 @@ import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
-import org.loopring.lightcone.core.data.ErrorCode._
+import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import scala.util.{Failure, Success}
 
 class TransactionRecordDalImpl(

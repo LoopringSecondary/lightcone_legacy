@@ -23,8 +23,7 @@ import com.typesafe.scalalogging.Logger
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.base._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._

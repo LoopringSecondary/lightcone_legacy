@@ -14,13 +14,34 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core
+package org.loopring.lightcone
 
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 import spire.math.Rational
 
-package object data {
+package object core {
+  implicit class RichOrderbookSlot(this_ : Orderbook.Slot) {
+
+    def +(that: Orderbook.Slot) = {
+      assert(this_.slot == that.slot)
+      Orderbook.Slot(
+        this_.slot,
+        this_.amount + that.amount,
+        this_.total + that.total
+      )
+    }
+
+    def -(that: Orderbook.Slot) = {
+      assert(this_.slot == that.slot)
+      Orderbook.Slot(
+        this_.slot,
+        this_.amount - that.amount,
+        this_.total - that.total
+      )
+    }
+  }
+
   implicit class RichBigInt(this_ : BigInt) {
     def min(that: BigInt): BigInt = if (this_ < that) this_ else that
     def max(that: BigInt): BigInt = if (this_ > that) this_ else that
@@ -41,7 +62,22 @@ package object data {
     Numeric.toHexString(hash.toByteArray).toLowerCase()
   }
 
-  implicit class RichOrderRing(raw: MatchableRing) {
+  implicit class RichMatchable(order: Matchable) {
+
+    def asPending() =
+      order.copy(
+        _matchable = order._actual,
+        status = OrderStatus.STATUS_PENDING
+      )
+
+    def withActualAsOriginal() = order.copy(_actual = Some(order.original))
+
+    def withMatchableAsActual() = order.copy(_matchable = Some(order.actual))
+
+    def matchableAsOriginal() = order.copy(_matchable = Some(order.original))
+  }
+
+  implicit class RichMatchableRing(raw: MatchableRing) {
 
     // Switching maker and taker should have the same id.
     def id(): String = {

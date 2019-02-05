@@ -33,8 +33,7 @@ import org.loopring.lightcone.actors.ethereum._
 import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto.{JsonRpc, Notify}

@@ -33,15 +33,13 @@ import org.loopring.lightcone.actors.jsonrpc.JsonRpcServer
 import org.loopring.lightcone.actors.utils._
 import org.loopring.lightcone.actors.validator._
 import org.loopring.lightcone.actors.validator._
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.market._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.persistence.service._
 import org.loopring.lightcone.actors.ethereum.event._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}

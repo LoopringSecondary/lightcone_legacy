@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.market
+package org.loopring.lightcone.core
+import org.loopring.lightcone.core.implicits._
+import org.loopring.lightcone.core.implicits._
+/// import org.loopring.lightcone.proto._
 
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.core._
 import OrderStatus._
 import ErrorCode._
 

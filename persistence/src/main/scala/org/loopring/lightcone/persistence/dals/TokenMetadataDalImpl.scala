@@ -18,9 +18,8 @@ package org.loopring.lightcone.persistence.dals
 
 import com.google.inject.name.Named
 
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._

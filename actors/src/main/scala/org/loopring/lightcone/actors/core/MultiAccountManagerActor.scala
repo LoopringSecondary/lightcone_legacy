@@ -23,12 +23,10 @@ import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.core.base.{DustOrderEvaluator, MetadataManager}
 import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.web3j.utils._
 import scala.concurrent._
 import scala.concurrent.duration._

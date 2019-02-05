@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors.entrypoint
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import scala.concurrent.{Await, Future}
 
 import OrderStatus._

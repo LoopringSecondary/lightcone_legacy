@@ -22,7 +22,7 @@ import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.TransactionRecordMessageValidator
 import org.loopring.lightcone.proto.TransactionRecord.EventData
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.lib.ErrorException
 import scala.concurrent.{Await, Future}

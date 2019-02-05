@@ -27,12 +27,9 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.utils.MetadataRefresher
-import org.loopring.lightcone.core.base._
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.core.depth._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+import org.loopring.lightcone.core._
 import org.slf4s.Logging
 
 import scala.concurrent._

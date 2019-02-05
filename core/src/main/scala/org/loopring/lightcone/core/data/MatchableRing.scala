@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.data
+package org.loopring.lightcone.core
 
 case class ExpectedMatchableFill(
     order: Matchable,

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.depth
+package org.loopring.lightcone.core
 
-private[depth] abstract class LongOrderingSupport(val isSell: Boolean) {
+private[core] abstract class LongOrderingSupport(val isSell: Boolean) {
 
   private lazy val asc = new Ordering[Long] {
 

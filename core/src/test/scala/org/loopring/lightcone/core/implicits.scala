@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone
+package org.loopring.lightcone.core
 
-import org.loopring.lightcone.core.data._
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+/// import org.loopring.lightcone.proto._
 
-package object core {
-  implicit class RichDoubleValue(v: Double) {
+package object implicits {
+  implicit class RichDouble(v: Double) {
 
-    def toWei(tokenAddr: String)(implicit tm: base.MetadataManager) = {
+    def toWei(tokenAddr: String)(implicit tm: MetadataManager) = {
       tm.getToken(tokenAddr)
         .getOrElse(
           throw ErrorException(
@@ -38,15 +36,4 @@ package object core {
     def ! = BigInt(v.toLong)
   }
 
-  implicit class RichMatchable(order: Matchable) {
-
-    def asPending() =
-      order.copy(
-        _matchable = order._actual,
-        status = OrderStatus.STATUS_PENDING
-      )
-    def withActualAsOriginal() = order.copy(_actual = Some(order.original))
-    def withMatchableAsActual() = order.copy(_matchable = Some(order.actual))
-    def matchableAsOriginal() = order.copy(_matchable = Some(order.original))
-  }
 }

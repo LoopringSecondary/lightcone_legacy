@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core.account
-import org.loopring.lightcone.core.data._
-import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core.data._
+package org.loopring.lightcone.core
+
+/// import org.loopring.lightcone.proto._
 
 import org.slf4s.Logging
 
 class AccountOrderPoolImpl() extends AccountOrderPool with Logging {
 
   private var callbacks = Set.empty[Callback]
-  private[account] var orderMap = Map.empty[String, Matchable]
+  private[core] var orderMap = Map.empty[String, Matchable]
 
   def apply(id: String) = orderMap(id)
   def getOrder(id: String) = orderMap.get(id)
