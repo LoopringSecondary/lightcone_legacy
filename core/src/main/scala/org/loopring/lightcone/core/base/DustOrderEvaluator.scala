@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import com.google.inject.Inject
 import com.google.inject.name.Named

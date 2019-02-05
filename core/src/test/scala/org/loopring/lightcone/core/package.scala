@@ -17,7 +17,7 @@
 package org.loopring.lightcone
 
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 package object core {
   implicit class RichDoubleValue(v: Double) {
@@ -27,9 +27,7 @@ package object core {
         .getOrElse(
           throw ErrorException(
             ErrorCode.ERR_INTERNAL_UNKNOWN,
-            s"token no found for address $tokenAddr"
-          )
-        )
+            s"token no found for address $tokenAddr"))
         .toWei(v)
     }
 
@@ -37,14 +35,15 @@ package object core {
   }
 
   implicit class RichMatchable(order: Matchable) {
-
     def asPending() =
       order.copy(
         _matchable = order._actual,
-        status = OrderStatus.STATUS_PENDING
-      )
+        status = OrderStatus.STATUS_PENDING)
+
     def withActualAsOriginal() = order.copy(_actual = Some(order.original))
+
     def withMatchableAsActual() = order.copy(_matchable = Some(order.actual))
+
     def matchableAsOriginal() = order.copy(_matchable = Some(order.original))
   }
 }

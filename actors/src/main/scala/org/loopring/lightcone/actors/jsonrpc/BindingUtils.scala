@@ -21,7 +21,7 @@ import scala.reflect.runtime.universe._
 import org.loopring.lightcone.lib._
 import org.json4s.JsonAST.JValue
 import scala.reflect.ClassTag
-import org.loopring.lightcone.core.ErrorCode
+import org.loopring.lightcone.core._
 
 import scala.reflect.runtime.universe.{typeOf, TypeTag}
 

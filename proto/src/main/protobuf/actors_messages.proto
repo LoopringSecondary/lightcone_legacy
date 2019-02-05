@@ -80,7 +80,7 @@ message OrderStatusMonitor {
 
 message SubmitOrder {
     message Req {
-        RawOrder raw_order = 1;
+        org.loopring.lightcone.core.RawOrder  raw_order = 1;
     }
 
     message Res {
@@ -317,8 +317,8 @@ message GetMetadatas {
     message Req {}
 
     message Res {
-        repeated TokenMetadata  tokens  = 1;
-        repeated MarketMetadata markets = 2;
+        repeated org.loopring.lightcone.core.TokenMetadata  tokens  = 1;
+        repeated org.loopring.lightcone.core.MarketMetadata markets = 2;
     }
 }
 

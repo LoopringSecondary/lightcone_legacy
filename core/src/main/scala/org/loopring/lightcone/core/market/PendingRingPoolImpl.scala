@@ -18,7 +18,7 @@ package org.loopring.lightcone.core
 
 import org.loopring.lightcone.lib._
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import org.slf4s.Logging
 

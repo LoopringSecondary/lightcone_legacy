@@ -22,7 +22,6 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.dals._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
-import org.loopring.lightcone.core._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent._

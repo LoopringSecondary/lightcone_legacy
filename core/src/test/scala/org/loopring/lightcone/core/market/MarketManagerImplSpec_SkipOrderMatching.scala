@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import OrderStatus._
 import ErrorCode._
@@ -36,8 +36,7 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
     marketManager.submitOrder(buy3, 0)
 
     marketManager.getBuyOrders(5) should be(
-      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
-    )
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending))
 
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))
@@ -60,16 +59,14 @@ class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
     var result = marketManager.submitOrder(sell1, 0)
 
     result = result.copy(
-      orderbookUpdate = result.orderbookUpdate.copy(latestPrice = 0.0)
-    )
+      orderbookUpdate = result.orderbookUpdate.copy(latestPrice = 0.0))
 
     result should be(MarketManager.MatchResult(sell1.asPending, Seq(ring)))
 
     marketManager.getSellOrders(100) should be(Seq(sell1.asPending))
 
     marketManager.getBuyOrders(5) should be(
-      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
-    )
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending))
 
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))

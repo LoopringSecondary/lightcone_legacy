@@ -16,9 +16,9 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.core.OrderAwareSpec
+// import org.loopring.lightcone.core.OrderAwareSpec
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import org.scalatest._
 
@@ -29,8 +29,7 @@ class AccountManagerImplSpec_TokenFeeIsTokenS extends OrderAwareSpec {
     submitOrder(order) should be(false)
     orderPool.size should be(0 !)
     updatedOrders(order.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE
-    )
+      OrderStatus.STATUS_SOFT_CANCELLED_LOW_BALANCE)
   }
 
   "when tokenS == tokenFee, submit order" should "reserve for both tokenS and tokenFee when allowance is suffcient" in {

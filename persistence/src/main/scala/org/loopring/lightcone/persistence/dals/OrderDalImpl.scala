@@ -31,7 +31,6 @@ import slick.basic._
 import slick.lifted.Query
 import scala.concurrent._
 import scala.util.{Failure, Success}
-import org.loopring.lightcone.core.MarketHash
 
 class OrderDalImpl @Inject()(
     implicit

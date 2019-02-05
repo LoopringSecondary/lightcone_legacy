@@ -14,13 +14,34 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core
+package org.loopring.lightcone
 
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 import spire.math.Rational
 
-package object data {
+package object core {
+  implicit class RichOrderbookSlot(this_ : Orderbook.Slot) {
+
+    def +(that: Orderbook.Slot) = {
+      assert(this_.slot == that.slot)
+      Orderbook.Slot(
+        this_.slot,
+        this_.amount + that.amount,
+        this_.total + that.total
+      )
+    }
+
+    def -(that: Orderbook.Slot) = {
+      assert(this_.slot == that.slot)
+      Orderbook.Slot(
+        this_.slot,
+        this_.amount - that.amount,
+        this_.total - that.total
+      )
+    }
+  }
+
   implicit class RichBigInt(this_ : BigInt) {
     def min(that: BigInt): BigInt = if (this_ < that) this_ else that
     def max(that: BigInt): BigInt = if (this_ > that) this_ else that

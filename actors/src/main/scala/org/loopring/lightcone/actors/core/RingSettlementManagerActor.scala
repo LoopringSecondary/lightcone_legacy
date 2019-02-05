@@ -23,7 +23,7 @@ import org.loopring.lightcone.actors.base._
 import akka.cluster.singleton._
 import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
-import org.loopring.lightcone.core.ErrorCode.ERR_INTERNAL_UNKNOWN
+import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.ethereum.data.Address

@@ -24,7 +24,6 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.ethereum._
 import org.loopring.lightcone.ethereum.data._
-import org.loopring.lightcone.core.ErrorCode
 import org.loopring.lightcone.lib.data._
 
 trait RawOrderValidator {

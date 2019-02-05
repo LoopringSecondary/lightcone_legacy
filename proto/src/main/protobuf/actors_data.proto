@@ -21,86 +21,7 @@ package org.loopring.lightcone.proto;
 
 import "core.proto";
 
-enum TokenStandard {
-    ERC20           = 0;
-    ERC1400         = 1;
-}
 
-enum SigningAlgorithm {
-    ALGO_ETHEREUM   = 0;
-    ALGO_EIP712     = 1;
-    ALGO_NONE       = 255;
-}
-
-// use bytes to represent big-numbers and string for addresses
-message RawOrder {
-    message Params {
-        string dual_auth_addr                      = 1;
-        string broker                              = 2;
-        string order_interceptor                   = 3;
-        string wallet                              = 4;
-        int32  valid_until                         = 5; // in seconds
-        string sig                                 = 6;
-        string dual_auth_sig                       = 7;
-        bool   all_or_none                         = 8;
-        string dual_auth_private_key               = 12;
-    }
-
-    message FeeParams {
-        string token_fee               = 1;
-        bytes  amount_fee              = 2;
-        int32  waive_fee_percentage    = 3;
-        int32  token_s_fee_percentage  = 4;
-        int32  token_b_fee_percentage  = 5;
-        string token_recipient         = 6;
-        int32  wallet_split_percentage = 7;
-    }
-
-    message ERC1400Params {
-        TokenStandard token_standard_s    = 1;
-        TokenStandard token_standard_b    = 2;
-        TokenStandard token_standard_fee  = 3;
-
-        string    tranche_s            = 4;
-        string    tranche_b            = 5;
-        string    transfer_data_s      = 6;
-    }
-
-    // // The following fieds are not part of Loopring's order definition but
-    // // will be provided as metadata
-    message State {
-        int64 created_at              = 101;
-        int64 updated_at              = 102;
-        int64 matched_at              = 103;
-        int64 updated_at_block        = 104;
-        org.loopring.lightcone.core.OrderStatus status            = 105;
-
-        bytes actual_amount_s         = 200;
-        bytes actual_amount_b         = 201;
-        bytes actual_amount_fee       = 202;
-        bytes outstanding_amount_s    = 203;
-        bytes outstanding_amount_b    = 204;
-        bytes outstanding_amount_fee  = 205;
-    }
-
-    // string  id          = 1; // order hash
-    string hash                       = 2;
-    int32  version                    = 3;
-    string owner                      = 4;
-    string token_s                    = 5;
-    string token_b                    = 6;
-    bytes  amount_s                   = 7;
-    bytes  amount_b                   = 8;
-    int32  valid_since                = 9; // in seconds
-    Params params                     = 10;
-    FeeParams fee_params              = 11;
-    ERC1400Params erc1400_params      = 12;
-    State state                       = 13;
-    int64  sequence_id                = 14;
-    int64  market_id                  = 15;
-    int64  account_entity_id          = 16;
-    int64  market_entity_id           = 17;
-}
 
 
 message OrderState {
@@ -159,63 +80,9 @@ message EthereumProxySettings {
     repeated Node nodes             = 4;
 }
 
-message TokenMetadata {
-    enum Type {
-        TOKEN_TYPE_ERC20       = 0;
-        TOKEN_TYPE_ERC1400     = 1;
-    }
 
-    enum Status {
-        VALID    = 0; // This token is NOT displyed in walelt
-        INVALID     = 1;  // This token is displayed in wallet.
-    }
 
-    Type     type                   = 1;
-    Status   status                 = 2;
-    string   symbol                 = 3;
-    string   name                   = 4;
-    string   address                = 5;
-    string   unit                   = 6;
-    int32    decimals               = 7;
-    string   website_url            = 8;
-    int32    precision              = 9;
-    double   burn_rate_for_market   = 10;
-    double   burn_rate_for_p2p      = 11;
-    double   usd_price              = 12;
-    int64    updated_at             = 13;
-}
 
-message MarketMetadata {
-    enum Status {
-        TERMINATED  = 0;
-        ACTIVE   = 1;
-        READONLY  = 2;
-    }
-
-    Status          status                  = 1;
-    string          quote_token_symbol      = 2;
-    string          base_token_symbol       = 3;
-    int32           max_numbers_of_orders   = 4;
-    int32           price_decimals          = 5;
-    int32           orderbook_agg_levels    = 6;
-    int32           precision_for_amount    = 7;
-    int32           precision_for_total     = 8;
-    bool            browsable_in_wallet     = 9;
-    int64           updated_at              = 10;
-
-    org.loopring.lightcone.core.MarketPair        market_pair               = 20; // computed
-    string          market_hash              = 21; // computed
-}
-
-message MarketStats {
-    int32  num_buys             = 1;
-    int32  num_sells            = 2;
-    int32  num_orders           = 3;
-    double best_buy_price       = 5;
-    double best_sell_price      = 6;
-    double latest_price         = 7;
-    bool   is_last_taker_sell   = 8;
-}
 
 message RingBatch {
     message Ring {
@@ -226,8 +93,8 @@ message RingBatch {
     string miner                    = 2;
     string sig                      = 3;
     repeated Ring rings             = 4;
-    repeated RawOrder orders        = 5;
-    SigningAlgorithm sign_algorithm = 6;
+    repeated org.loopring.lightcone.core.RawOrder  orders        = 5;
+    org.loopring.lightcone.core.SigningAlgorithm sign_algorithm = 6;
     string hash                     = 7;
     string transaction_origin       = 8;
 }

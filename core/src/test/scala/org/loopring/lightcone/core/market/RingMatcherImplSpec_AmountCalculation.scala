@@ -16,9 +16,9 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.core.OrderAwareSpec
+// import org.loopring.lightcone.core.OrderAwareSpec
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import spire.math.Rational
 
@@ -28,9 +28,8 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
     def getRingIncome(ring: MatchableRing) = Long.MaxValue
 
     def isProfitable(
-        ring: MatchableRing,
-        fiatValueThreshold: Double
-      ) = true
+      ring: MatchableRing,
+      fiatValueThreshold: Double) = true
   }
   val matcher = new RingMatcherImpl()
 
@@ -61,21 +60,17 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
     def testScale(scale: Rational) {
       val res = matcher.matchOrders(
         taker.copy(_matchable = Some(taker.original.scaleBy(scale))),
-        maker.copy(_matchable = Some(maker.original.scaleBy(scale)))
-      )
+        maker.copy(_matchable = Some(maker.original.scaleBy(scale))))
       val pending = maker.original.scaleBy(scale)
       val expectRing = MatchableRing(
         taker = ExpectedMatchableFill(
           order = taker.copy(_matchable = Some(MatchableState())),
           pending = taker.original.scaleBy(scale),
-          amountMargin = 33 !
-        ),
+          amountMargin = 33 !),
         maker = ExpectedMatchableFill(
           order = maker.copy(_matchable = Some(MatchableState(amountB = 33))),
           pending = pending.copy(amountB = pending.amountB - 33),
-          amountMargin = 0 !
-        )
-      )
+          amountMargin = 0 !))
       res.right.toOption should be(Some(expectRing))
     }
 

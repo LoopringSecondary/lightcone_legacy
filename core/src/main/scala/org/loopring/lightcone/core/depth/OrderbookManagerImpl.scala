@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import scala.collection.SortedMap
 import org.slf4s.Logging
@@ -25,7 +25,7 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
     extends OrderbookManager
     with Logging {
 
-  private[depth] val viewMap = (0 until metadata.orderbookAggLevels).map {
+  private[core] val viewMap = (0 until metadata.orderbookAggLevels).map {
     level =>
       level -> new View(level)
   }.toMap
@@ -60,7 +60,7 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
     viewMap.values.foreach(_.reset)
   }
 
-  private[depth] class View(aggregationLevel: Int) {
+  private[core] class View(aggregationLevel: Int) {
 
     private val priceFormat = s"%.${metadata.priceDecimals - aggregationLevel}f"
     private val amountFormat = s"%.${metadata.precisionForAmount}f"

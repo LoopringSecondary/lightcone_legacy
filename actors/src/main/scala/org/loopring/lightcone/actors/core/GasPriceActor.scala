@@ -26,7 +26,6 @@ import org.loopring.lightcone.lib._
 import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.core._
-import org.loopring.lightcone.core.Matchable
 import org.loopring.lightcone.core.ErrorCode._
 import org.loopring.lightcone.core.OrderStatus._
 import org.loopring.lightcone.proto._

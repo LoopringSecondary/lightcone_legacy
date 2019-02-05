@@ -18,7 +18,7 @@ package org.loopring.lightcone.core
 
 import org.loopring.lightcone.lib._
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import OrderStatus._
 import ErrorCode._
@@ -53,7 +53,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
       fakeDustOrderEvaluator,
       fakeAggregator,
       100 // max matching attempts
-    )
+      )
   }
 
   def actualNotDust(order: Matchable): Matchable = {
@@ -64,12 +64,10 @@ trait MarketAwareSpec extends OrderAwareSpec {
   }
 
   def emptyMatchingResult(
-      order: Matchable,
-      newStatus: OrderStatus
-    ) =
+    order: Matchable,
+    newStatus: OrderStatus) =
     MarketManager.MatchResult(
-      order.copy(_matchable = order._actual, status = newStatus)
-    )
+      order.copy(_matchable = order._actual, status = newStatus))
 
   def noMatchingActivity() = {
     (fackRingMatcher

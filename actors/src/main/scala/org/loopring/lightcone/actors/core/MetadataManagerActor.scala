@@ -31,7 +31,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.utils.MetadataRefresher
-import org.loopring.lightcone.core.MetadataManager
 import scala.util._
 
 // Owner: Yongfeng

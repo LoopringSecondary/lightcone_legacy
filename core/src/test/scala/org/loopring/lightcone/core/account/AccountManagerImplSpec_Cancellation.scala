@@ -16,9 +16,9 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.core.OrderAwareSpec
+// import org.loopring.lightcone.core.OrderAwareSpec
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import org.scalatest._
 
@@ -41,8 +41,7 @@ class AccountManagerImplSpec_Cancellation extends OrderAwareSpec {
     updatedOrders.size should be(1)
 
     updatedOrders(order1.id).status should be(
-      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER
-    )
+      OrderStatus.STATUS_SOFT_CANCELLED_BY_USER)
     updatedOrders(order1.id).reserved should be(orderState(0 !, 0 !, 0 !))
     updatedOrders(order1.id).actual should be(orderState(0 !, 0 !, 0 !))
 

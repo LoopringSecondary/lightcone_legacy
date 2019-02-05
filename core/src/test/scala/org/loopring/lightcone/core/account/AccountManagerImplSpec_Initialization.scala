@@ -16,9 +16,9 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.core.OrderAwareSpec
+// import org.loopring.lightcone.core.OrderAwareSpec
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import org.scalatest._
 
@@ -59,8 +59,7 @@ class AccountManagerImplSpec_Initialization extends OrderAwareSpec {
     updatedOrders foreach {
       case (id, order) =>
         order.status should be(
-          OrderStatus.STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE
-        )
+          OrderStatus.STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE)
     }
   }
 

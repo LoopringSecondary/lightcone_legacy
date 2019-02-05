@@ -16,9 +16,9 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.core.OrderAwareSpec
+// import org.loopring.lightcone.core.OrderAwareSpec
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import org.scalatest._
 

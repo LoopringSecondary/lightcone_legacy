@@ -19,7 +19,7 @@ package org.loopring.lightcone.core
 import com.google.inject.Inject
 
 import org.loopring.lightcone.lib.ErrorException
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import spire.math.Rational
 

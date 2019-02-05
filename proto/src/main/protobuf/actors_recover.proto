@@ -53,7 +53,7 @@ message ActorRecover {
     message Timeout{}
 
     message RecoverOrderReq {
-        RawOrder raw_order = 1;
+        org.loopring.lightcone.core.RawOrder  raw_order = 1;
     }
 
     message OrderRecoverResult {

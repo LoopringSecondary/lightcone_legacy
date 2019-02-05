@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import OrderStatus._
 import ErrorCode._
@@ -36,23 +36,19 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
     marketManager.submitOrder(buy3, 0)
 
     marketManager.getBuyOrders(5) should be(
-      Seq(buy1.asPending, buy2.asPending, buy3.asPending)
-    )
+      Seq(buy1.asPending, buy2.asPending, buy3.asPending))
 
     val sell1 = actualNotDust(sellGTO(BigInt(110000), BigInt(100), 0))
 
     val ring1 = MatchableRing(
       ExpectedMatchableFill(sell1, null),
-      ExpectedMatchableFill(buy1, null)
-    )
+      ExpectedMatchableFill(buy1, null))
     val ring2 = MatchableRing(
       ExpectedMatchableFill(sell1, null),
-      ExpectedMatchableFill(buy2, null)
-    )
+      ExpectedMatchableFill(buy2, null))
     val ring3 = MatchableRing(
       ExpectedMatchableFill(sell1, null),
-      ExpectedMatchableFill(buy3, null)
-    )
+      ExpectedMatchableFill(buy3, null))
 
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))
@@ -77,13 +73,11 @@ class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
 
     // remove the last price
     result = result.copy(
-      orderbookUpdate = result.orderbookUpdate.copy(latestPrice = 0.0)
-    )
+      orderbookUpdate = result.orderbookUpdate.copy(latestPrice = 0.0))
 
     result should be(
       MarketManager
-        .MatchResult(sell1.asPending, Seq(ring3, ring2, ring1))
-    )
+        .MatchResult(sell1.asPending, Seq(ring3, ring2, ring1)))
 
     (fackRingMatcher
       .matchOrders(_: Matchable, _: Matchable, _: Double))

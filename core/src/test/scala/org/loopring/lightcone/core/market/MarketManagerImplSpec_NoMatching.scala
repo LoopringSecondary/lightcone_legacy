@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.proto._
+/// import org.loopring.lightcone.proto._
 
 import OrderStatus._
 
@@ -63,8 +63,7 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     marketManager.getNumOfOrders() should be(2)
 
     marketManager.getSellOrders(3) should be(
-      Seq(order1.asPending, order2.asPending)
-    )
+      Seq(order1.asPending, order2.asPending))
 
     marketManager.getSellOrders(1) should be(Seq(order1.asPending))
 
@@ -91,8 +90,7 @@ class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {
     marketManager.getNumOfOrders() should be(2)
 
     marketManager.getBuyOrders(3) should be(
-      Seq(order1.asPending, order2.asPending)
-    )
+      Seq(order1.asPending, order2.asPending))
 
     marketManager.getBuyOrders(1) should be(Seq(order1.asPending))
 
