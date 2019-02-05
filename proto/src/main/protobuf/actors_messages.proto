@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package org.loopring.lightcone.proto;
+package io.lightcone.proto;
 
 import "actors_data.proto";
 import "core.proto";
@@ -80,7 +80,7 @@ message OrderStatusMonitor {
 
 message SubmitOrder {
     message Req {
-        RawOrder raw_order = 1;
+        io.lightcone.core.RawOrder  raw_order = 1;
     }
 
     message Res {
@@ -92,14 +92,14 @@ message CancelOrder {
     message Req {
         string id = 1;
         string owner = 2;
-        OrderStatus status = 3; //取消的类型
-        MarketPair market_pair = 4;
+        io.lightcone.core.OrderStatus status = 3; //取消的类型
+        io.lightcone.core.MarketPair market_pair = 4;
         string sig = 5;
     }
 
     message Res {
-        ErrorCode error = 1;
-        OrderStatus status = 2; //取消的类型
+        io.lightcone.core.ErrorCode error = 1;
+        io.lightcone.core.OrderStatus status = 2; //取消的类型
     }
 }
 
@@ -114,11 +114,11 @@ message GetOrderbook {
     message Req {
         int32 level = 2;
         int32 size = 1;
-        MarketPair market_pair = 3;
+        io.lightcone.core.MarketPair market_pair = 3;
     }
 
     message Res {
-        Orderbook orderbook = 1;
+        io.lightcone.core.Orderbook orderbook = 1;
     }
 }
 
@@ -143,7 +143,7 @@ message GetBalanceAndAllowances {
     message Res {
         string address = 1;
         map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
-        Error error = 3;
+        io.lightcone.core.Error error = 3;
     }
 }
 
@@ -156,7 +156,7 @@ message GetBalance {
     message Res {
         string address = 1;
         map<string, bytes> balance_map = 2;
-        Error error = 3;
+        io.lightcone.core.Error error = 3;
     }
 }
 
@@ -169,7 +169,7 @@ message GetAllowance {
     message Res {
         string address = 1;
         map<string, bytes> allowance_map = 2;
-        Error error = 3;
+        io.lightcone.core.Error error = 3;
     }
 }
 
@@ -180,7 +180,7 @@ message UpdateFilledAmount {
     }
 
     message Res {
-        ErrorCode error = 1;
+        io.lightcone.core.ErrorCode error = 1;
     }
 }
 
@@ -251,7 +251,7 @@ message UpdateBalanceAndAllowance {
     }
 
     message Res {
-        ErrorCode error = 1;
+        io.lightcone.core.ErrorCode error = 1;
         BalanceAndAllowance balance_and_allowance = 2;
     }
 }
@@ -294,7 +294,7 @@ message SaveBlock {
     }
 
     message Res {
-        Error error = 1;
+        io.lightcone.core.Error error = 1;
     }
 }
 
@@ -317,18 +317,18 @@ message GetMetadatas {
     message Req {}
 
     message Res {
-        repeated TokenMetadata  tokens  = 1;
-        repeated MarketMetadata markets = 2;
+        repeated io.lightcone.core.TokenMetadata  tokens  = 1;
+        repeated io.lightcone.core.MarketMetadata markets = 2;
     }
 }
 
 message GetOrderbookSlots {
     message Req {
-        MarketPair market_pair      = 1;
+        io.lightcone.core.MarketPair market_pair      = 1;
         int32 num_of_slots      = 2;
     }
 
     message Res {
-        Orderbook.Update update = 1;
+        io.lightcone.core.Orderbook.Update update = 1;
     }
 }

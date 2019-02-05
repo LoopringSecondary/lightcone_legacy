@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <filter class="org.loopring.lightcone.actors.utils.LogFilter" />
+        <filter class="io.lightcone.actors.utils.LogFilter" />
         <target>System.out</target>
         <encoder>
             <pattern>%X{akkaTimestamp} %-5level %X{akkaSource}[%logger{0}] >>>> %msg%n</pattern>
         </encoder>
     </appender>
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <filter class="org.loopring.lightcone.actors.utils.LogFilter" />
+        <filter class="io.lightcone.actors.utils.LogFilter" />
         <File>log/lightcone.log</File>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <fileNamePattern>log/lightcone_%i.log.bak</fileNamePattern>
@@ -23,7 +23,7 @@
         </encoder>
     </appender>
     <appender name="ERROR-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <filter class="org.loopring.lightcone.actors.utils.LogFilter" />
+        <filter class="io.lightcone.actors.utils.LogFilter" />
         <File>log/lightcone_error.log</File>
         <level>error</level>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">

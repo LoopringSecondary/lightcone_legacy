@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum.abi
+package io.lightcone.ethereum.abi
 
 import org.scalatest._
 import org.web3j.utils.Numeric
@@ -93,9 +93,8 @@ class RingSubmitterAbiSpec
   "decodeInvalidRingEvent" should "decode data to InvalidRingEvent result " in {
     val data =
       "0xea7d4e25f31194081fa0749437799e324b762e131575e7d3f9043b079503f77d"
-    val topics = Seq(
-      "0x977ca9d66ddf6e18cac50dbf89ee6dcce72d4635c60a13314945868798f73cdc"
-    )
+    val topics =
+      Seq("0x977ca9d66ddf6e18cac50dbf89ee6dcce72d4635c60a13314945868798f73cdc")
     val result = ringSubmitterAbi.invalidRingEvent.unpack(data, topics.toArray)
     result.map { res =>
       res._ringHash should be(

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum
+package io.lightcone.ethereum
 
 import scala.util.Properties
 import com.typesafe.config.ConfigFactory

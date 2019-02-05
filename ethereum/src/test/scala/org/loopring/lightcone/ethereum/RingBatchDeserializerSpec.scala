@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.ethereum
+package io.lightcone.ethereum
 
 import org.scalatest._
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.proto._
+import io.lightcone.proto._
+import io.lightcone.core._
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
 
@@ -63,9 +64,7 @@ class RingBatchDeserializerSpec extends FlatSpec with Matchers {
 
     val feeParams1 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
-      .withAmountFee(
-        ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray)
-      )
+      .withAmountFee(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
       .withTokenRecipient(order1Owner)
       .withWalletSplitPercentage(10)
 
@@ -88,9 +87,7 @@ class RingBatchDeserializerSpec extends FlatSpec with Matchers {
 
     val feeParams2 = (new RawOrder.FeeParams)
       .withTokenFee(lrcAddress)
-      .withAmountFee(
-        ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray)
-      )
+      .withAmountFee(ByteString.copyFrom(BigInt("1" + "0" * 18).toByteArray))
       .withTokenRecipient(order2Owner)
       .withWalletSplitPercentage(20)
 
