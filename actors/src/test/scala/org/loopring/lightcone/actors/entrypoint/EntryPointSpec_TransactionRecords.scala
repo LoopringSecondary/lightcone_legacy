@@ -24,7 +24,7 @@ import org.loopring.lightcone.proto.TransactionRecord.EventData
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.actors.base.safefuture._
-import org.loopring.lightcone.lib.ErrorException
+
 import scala.concurrent.{Await, Future}
 import TransactionRecord.EventData.Event
 import TransactionRecord.RecordType._

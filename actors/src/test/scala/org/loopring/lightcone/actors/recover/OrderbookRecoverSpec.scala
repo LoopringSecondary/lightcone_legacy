@@ -24,7 +24,7 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.core._
 import org.loopring.lightcone.actors.support._
 import org.loopring.lightcone.actors.validator.OrderbookManagerMessageValidator
-import org.loopring.lightcone.lib.ErrorException
+
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import scala.concurrent.duration._

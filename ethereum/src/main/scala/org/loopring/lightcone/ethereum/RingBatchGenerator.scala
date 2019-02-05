@@ -19,7 +19,6 @@ package org.loopring.lightcone.ethereum
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress
-import org.loopring.lightcone.lib.data._
 import com.google.protobuf.ByteString
 
 import org.loopring.lightcone.proto._

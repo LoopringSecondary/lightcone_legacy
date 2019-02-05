@@ -16,7 +16,6 @@
 
 package org.loopring.lightcone.actors.jsonrpc
 
-import org.loopring.lightcone.lib.ErrorException
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto._
 import org.json4s._

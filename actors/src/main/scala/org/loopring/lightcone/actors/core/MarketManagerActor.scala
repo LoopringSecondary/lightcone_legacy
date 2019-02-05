@@ -28,7 +28,6 @@ import org.loopring.lightcone.actors.base._
 import org.loopring.lightcone.actors.base.safefuture._
 import org.loopring.lightcone.actors.data._
 import org.loopring.lightcone.actors.utils.MetadataRefresher
-import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.core.MarketManager.MatchResult
 import org.loopring.lightcone.lib._

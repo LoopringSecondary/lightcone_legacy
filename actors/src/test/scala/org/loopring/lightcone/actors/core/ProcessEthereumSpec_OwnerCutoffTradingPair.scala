@@ -21,7 +21,7 @@ import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import akka.pattern._
 import org.loopring.lightcone.core.MarketHash
-import org.loopring.lightcone.lib.ErrorException
+
 import org.web3j.utils.Numeric
 
 import scala.concurrent.{Await, Future}

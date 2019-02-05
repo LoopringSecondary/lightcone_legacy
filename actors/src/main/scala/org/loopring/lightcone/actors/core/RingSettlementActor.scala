@@ -33,7 +33,6 @@ import org.loopring.lightcone.persistence.DatabaseModule
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 import org.loopring.lightcone.ethereum.data.{Transaction, _}
-import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.ethereum.abi._
 import org.loopring.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 

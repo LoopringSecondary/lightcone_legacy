@@ -25,7 +25,7 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import org.loopring.lightcone.actors.RpcBinding
 import org.loopring.lightcone.actors.jsonrpc._
-import org.loopring.lightcone.lib.ErrorException
+
 import org.loopring.lightcone.proto._
 import org.loopring.lightcone.core._
 import org.slf4s.Logging

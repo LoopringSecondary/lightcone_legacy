@@ -16,8 +16,6 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.lib.ErrorException
-
 import scala.collection.SortedMap
 
 private[core] object OrderbookSide {

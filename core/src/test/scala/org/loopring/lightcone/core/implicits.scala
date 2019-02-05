@@ -16,7 +16,6 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.lib.ErrorException
 /// import org.loopring.lightcone.proto._
 
 package object implicits {

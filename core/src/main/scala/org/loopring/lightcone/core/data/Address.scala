@@ -17,9 +17,7 @@
 package org.loopring.lightcone.core
 
 import com.google.protobuf.ByteString
-import org.loopring.lightcone.lib.ErrorException
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.lib.data._
 
 class Address(val value: BigInt) {
 

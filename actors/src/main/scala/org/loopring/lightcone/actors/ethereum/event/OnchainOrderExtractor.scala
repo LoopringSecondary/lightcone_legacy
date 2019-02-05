@@ -24,7 +24,6 @@ import org.loopring.lightcone.core._
 import org.web3j.utils.Numeric
 
 import scala.concurrent._
-import org.loopring.lightcone.lib.data._
 import org.loopring.lightcone.ethereum.data._
 
 class OnchainOrderExtractor @Inject()(

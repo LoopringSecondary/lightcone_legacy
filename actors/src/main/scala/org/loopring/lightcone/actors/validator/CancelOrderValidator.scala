@@ -20,7 +20,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.core._
 import org.loopring.lightcone.ethereum._
 
-import org.loopring.lightcone.lib.{ErrorException, TimeProvider}
+import org.loopring.lightcone.lib._
 import org.loopring.lightcone.persistence.DatabaseModule
 import org.loopring.lightcone.proto._
 import org.web3j.utils._
