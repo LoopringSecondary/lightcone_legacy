@@ -26,18 +26,18 @@ import io.lightcone.persistence._
 import io.lightcone.core._
 import io.lightcone.relayer.base._
 
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{Await, Future}
 import TransactionRecord.EventData.Event
 import TransactionRecord.RecordType._
 
 class EntryPointSpec_TransactionRecords
-  extends CommonSpec
-  with DatabaseModuleSupport
-  with JsonrpcSupport
-  with HttpSupport
-  with OrderHandleSupport
-  with OrderGenerateSupport
-  with EthereumTransactionRecordSupport {
+    extends CommonSpec
+    with DatabaseModuleSupport
+    with JsonrpcSupport
+    with HttpSupport
+    with OrderHandleSupport
+    with OrderGenerateSupport
+    with EthereumTransactionRecordSupport {
 
   "save & query some events" must {
     "get the events record correctly" in {
@@ -54,7 +54,8 @@ class EntryPointSpec_TransactionRecords
         blockTimestamp = timeProvider.getTimeSeconds(),
         txFrom = txFrom,
         txTo = txTo,
-        txIndex = 1)
+        txIndex = 1
+      )
       def actor = actors.get(TransactionRecordMessageValidator.name)
       info("save eth transfer for both sender and receiver")
       actor ! TransferEvent(
@@ -63,7 +64,8 @@ class EntryPointSpec_TransactionRecords
         from = txFrom,
         to = txTo,
         token = "0",
-        amount = ByteString.copyFrom("11", "utf-8"))
+        amount = ByteString.copyFrom("11", "utf-8")
+      )
 
       actor ! TransferEvent(
         header = Some(header1.copy(eventIndex = 1)),
@@ -71,50 +73,58 @@ class EntryPointSpec_TransactionRecords
         from = txFrom,
         to = txTo,
         token = "0",
-        amount = ByteString.copyFrom("11", "utf-8"))
+        amount = ByteString.copyFrom("11", "utf-8")
+      )
       info("save erc20 transfer for both sender and receiver")
       val header2 = header1.copy(
         txIndex = 2,
         logIndex = 0,
         txHash =
-          "0x026331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4")
+          "0x026331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+      )
       actor ! TransferEvent(
         header = Some(header2),
         owner = txFrom,
         from = txFrom,
         to = txTo,
         token = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
-        amount = ByteString.copyFrom("11", "utf-8"))
+        amount = ByteString.copyFrom("11", "utf-8")
+      )
       actor ! TransferEvent(
         header = Some(header2.copy(eventIndex = 1)),
         owner = txTo,
         from = txFrom,
         to = txTo,
         token = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
-        amount = ByteString.copyFrom("11", "utf-8"))
+        amount = ByteString.copyFrom("11", "utf-8")
+      )
 
       info("save cancelled from sender")
       val header3 = header1.copy(
         txIndex = 3,
         logIndex = 0,
         txHash =
-          "0x036331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4")
+          "0x036331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+      )
       actor ! OrdersCancelledEvent(
         header = Some(header3),
         owner = txFrom,
-        orderHashes = Seq("0x1", "0x2"))
+        orderHashes = Seq("0x1", "0x2")
+      )
 
       info("save cutoff from receiver")
       val header4 = header1.copy(
         txIndex = 4,
         logIndex = 0,
         txHash =
-          "0x046331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4")
+          "0x046331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+      )
       actor ! CutoffEvent(
         header = Some(header4),
         owner = txTo,
         marketHash = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6",
-        cutoff = timeProvider.getTimeSeconds())
+        cutoff = timeProvider.getTimeSeconds()
+      )
 
       info("save a order and submit 2 orderFilledEvents (will query order)")
       val orderHash = "0xf51df14e49da86abc6f1d8ccc0b3a6b7b7c90ca6"
@@ -127,40 +137,49 @@ class EntryPointSpec_TransactionRecords
           tokenS = tokenS,
           tokenB = tokenB,
           accountEntityId = 1,
-          marketEntityId = 1))
+          marketEntityId = 1
+        )
+      )
       val r1 = Await.result(
         response1.mapTo[Either[RawOrder, ErrorCode]],
-        timeout.duration)
+        timeout.duration
+      )
       val header5 = header1.copy(
         txIndex = 5,
         logIndex = 0,
         txHash =
-          "0x056331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4")
+          "0x056331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+      )
       actor ! OrderFilledEvent(
         header = Some(header5),
         owner = txFrom,
-        orderHash = orderHash)
+        orderHash = orderHash
+      )
       actor ! OrderFilledEvent(
         header = Some(header5.copy(eventIndex = 1)),
         owner = txTo,
-        orderHash = orderHash)
+        orderHash = orderHash
+      )
 
       info("test some failed condition (duplicated sequenceId)")
       actor ! OrderFilledEvent(
         header = Some(header5),
         owner = txTo,
-        orderHash = orderHash)
+        orderHash = orderHash
+      )
 
       info("test some failed condition (invalid sequenceId)")
       val header6 = header1.copy(
         blockNumber = 100,
         txIndex = 10000,
         logIndex = 20000,
-        eventIndex = 30000)
+        eventIndex = 30000
+      )
       actor ! OrderFilledEvent(
         header = Some(header6),
         owner = txTo,
-        orderHash = orderHash)
+        orderHash = orderHash
+      )
 
       Thread.sleep(5000)
 
@@ -170,11 +189,13 @@ class EntryPointSpec_TransactionRecords
       val resonse2 = singleRequest(
         GetTransactionRecords
           .Req(owner = txFrom, sort = SortingType.DESC, paging = Some(paging)),
-        "get_transactions")
+        "get_transactions"
+      )
       val r2 =
         Await.result(
           resonse2.mapTo[GetTransactionRecords.Res],
-          timeout.duration)
+          timeout.duration
+        )
       assert(r2.transactions.length == 4)
       r2.transactions.foreach {
         _.eventData.getOrElse(EventData()).event match {
@@ -182,23 +203,27 @@ class EntryPointSpec_TransactionRecords
             assert(
               e.header
                 .getOrElse(EventHeader())
-                .txHash == "0x016331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4")
+                .txHash == "0x016331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+            )
           case Event.Transfer(e) if !Address(e.token).isZero =>
             assert(
               e.header
                 .getOrElse(EventHeader())
-                .txHash == "0x026331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4")
+                .txHash == "0x026331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+            )
           case Event.OrderCancelled(e) =>
             assert(
               e.header
                 .getOrElse(EventHeader())
-                .txHash == "0x036331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4")
+                .txHash == "0x036331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+            )
           case Event.Cutoff(e) => assert(false)
           case Event.Filled(e) =>
             assert(
               e.header
                 .getOrElse(EventHeader())
-                .txHash == "0x056331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4")
+                .txHash == "0x056331920f91aa6f40e10c3e6c87e6d58aec01acb6e9a244983881d69bc0cff4"
+            )
           case _ => assert(false)
         }
       }
@@ -210,12 +235,16 @@ class EntryPointSpec_TransactionRecords
             owner = txTo,
             queryType = Some(
               GetTransactionRecords
-                .QueryType(ERC20_TRANSFER))),
-        "get_transaction_count")
+                .QueryType(ERC20_TRANSFER)
+            )
+          ),
+        "get_transaction_count"
+      )
       val r3 =
         Await.result(
           resonse3.mapTo[GetTransactionRecordCount.Res],
-          timeout.duration)
+          timeout.duration
+        )
       assert(r3.count === 1)
 
       info("get_transactions some bad request: invalid parameters: cursor")
@@ -223,16 +252,18 @@ class EntryPointSpec_TransactionRecords
       val resonse4 = singleRequest(
         GetTransactionRecords
           .Req(owner = txFrom, sort = SortingType.DESC, paging = Some(paging1)),
-        "get_transactions")
+        "get_transactions"
+      )
       try {
         Await.result(
           resonse4.mapAs[GetTransactionRecords.Res],
-          timeout.duration)
+          timeout.duration
+        )
         assert(false)
       } catch {
         case e: ErrorException =>
           if (e.getMessage()
-            .indexOf("Invalid parameter cursor of paging:-1") > -1)
+                .indexOf("Invalid parameter cursor of paging:-1") > -1)
             assert(true)
           else assert(false)
         case _: Throwable => assert(false)
@@ -243,16 +274,18 @@ class EntryPointSpec_TransactionRecords
       val resonse5 = singleRequest(
         GetTransactionRecords
           .Req(owner = txFrom, sort = SortingType.DESC, paging = Some(paging2)),
-        "get_transactions")
+        "get_transactions"
+      )
       try {
         Await.result(
           resonse5.mapAs[GetTransactionRecords.Res],
-          timeout.duration)
+          timeout.duration
+        )
         assert(false)
       } catch {
         case e: ErrorException =>
           if (e.getMessage()
-            .indexOf("Parameter size of paging is larger than 50") > -1)
+                .indexOf("Parameter size of paging is larger than 50") > -1)
             assert(true)
           else assert(false)
         case _: Throwable => assert(false)
@@ -262,16 +295,18 @@ class EntryPointSpec_TransactionRecords
       val resonse6 = singleRequest(
         GetTransactionRecords
           .Req(sort = SortingType.DESC, paging = Some(paging)),
-        "get_transactions")
+        "get_transactions"
+      )
       try {
         Await.result(
           resonse6.mapAs[GetTransactionRecords.Res],
-          timeout.duration)
+          timeout.duration
+        )
         assert(false)
       } catch {
         case e: ErrorException =>
           if (e.getMessage()
-            .indexOf("Parameter owner could not be empty") > -1)
+                .indexOf("Parameter owner could not be empty") > -1)
             assert(true)
           else assert(false)
         case _: Throwable => assert(false)
@@ -285,21 +320,24 @@ class EntryPointSpec_TransactionRecords
         blockNumber = 8000000,
         txIndex = 1,
         logIndex = 2,
-        eventIndex = 3)
+        eventIndex = 3
+      )
       // 1. correct
       val s1 = correctHeader.sequenceId
       val max = EventHeader(
         blockNumber = 500000000,
         txIndex = 4095,
         logIndex = 4095,
-        eventIndex = 1023).sequenceId
+        eventIndex = 1023
+      ).sequenceId
       assert(s1 == 137438953476196355L && max == 8589934609179869183L)
       // 2. invalid
       try {
         correctHeader.copy(blockNumber = 500000001).sequenceId
         assert(false)
       } catch {
-        case e: ErrorException if e.getMessage().indexOf("blockNumber >= 500000000") > -1 =>
+        case e: ErrorException
+            if e.getMessage().indexOf("blockNumber >= 500000000") > -1 =>
           assert(true)
         case _: Throwable => assert(false)
       }
@@ -307,7 +345,8 @@ class EntryPointSpec_TransactionRecords
         correctHeader.copy(txIndex = 4096).sequenceId
         assert(false)
       } catch {
-        case e: ErrorException if e.getMessage().indexOf("txIndex or logIndex >= 4096") > -1 =>
+        case e: ErrorException
+            if e.getMessage().indexOf("txIndex or logIndex >= 4096") > -1 =>
           assert(true)
         case _: Throwable => assert(false)
       }
@@ -315,7 +354,8 @@ class EntryPointSpec_TransactionRecords
         correctHeader.copy(logIndex = 4096).sequenceId
         assert(false)
       } catch {
-        case e: ErrorException if e.getMessage().indexOf("txIndex or logIndex >= 4096") > -1 =>
+        case e: ErrorException
+            if e.getMessage().indexOf("txIndex or logIndex >= 4096") > -1 =>
           assert(true)
         case _: Throwable => assert(false)
       }
@@ -323,7 +363,8 @@ class EntryPointSpec_TransactionRecords
         correctHeader.copy(eventIndex = 1024).sequenceId
         assert(false)
       } catch {
-        case e: ErrorException if e.getMessage().indexOf("eventIndex >= 1024") > -1 =>
+        case e: ErrorException
+            if e.getMessage().indexOf("eventIndex >= 1024") > -1 =>
           assert(true)
         case _: Throwable => assert(false)
       }

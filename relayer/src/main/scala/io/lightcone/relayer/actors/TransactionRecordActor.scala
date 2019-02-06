@@ -34,8 +34,6 @@ import scala.concurrent._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic.DatabaseConfig
-import TransactionRecord.RecordType._
-import TransactionRecord.EventData.Event
 
 // main owner: 杜永丰
 object TransactionRecordActor extends DeployedAsShardedByAddress {
@@ -77,6 +75,9 @@ class TransactionRecordActor(
     val databaseConfigManager: DatabaseConfigManager)
     extends InitializationRetryActor
     with ShardingEntityAware {
+
+  import TransactionRecord.RecordType._
+  import TransactionRecord.EventData.Event
 
   val selfConfig = config.getConfig(TransactionRecordActor.name)
   val defaultItemsPerPage = selfConfig.getInt("default-items-per-page")

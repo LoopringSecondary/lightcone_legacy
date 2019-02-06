@@ -25,31 +25,37 @@ import scala.concurrent.Await
 import org.web3j.crypto.Credentials
 
 class BalanceAndTransferEventExtractorSpec
-  extends CommonSpec
-  with EthereumEventExtractorSupport {
+    extends CommonSpec
+    with EthereumEventExtractorSupport {
 
   "ethereum balance update event and transfer event extractor actor test" must {
     "correctly extract balance update events and transfer events from ethereum blocks" in {
       val getBaMethod = "get_balance_and_allowance"
       val account0 = accounts.head
       val account2 = Credentials.create(
-        "0x30dfe4fc0145d0b092c6738b82b547d5ff609f182b5992a3f31cda67b2b93f95")
+        "0x30dfe4fc0145d0b092c6738b82b547d5ff609f182b5992a3f31cda67b2b93f95"
+      )
       val account3 = getUniqueAccountWithoutEth
       val ba2 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
             account2.getAddress,
-            tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)),
-          getBaMethod).mapAs[GetBalanceAndAllowances.Res],
-        timeout.duration)
+            tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+          ),
+          getBaMethod
+        ).mapAs[GetBalanceAndAllowances.Res],
+        timeout.duration
+      )
       val lrc_ba2 = ba2.balanceAndAllowanceMap(LRC_TOKEN.address)
       info("transfer to account1 1000 LRC")
       Await.result(
         transferEth(account2.getAddress, "10")(account0),
-        timeout.duration)
+        timeout.duration
+      )
       Await.result(
         transferLRC(account2.getAddress, "1000")(account0),
-        timeout.duration)
+        timeout.duration
+      )
       Thread.sleep(2000)
       val transfers = Await.result(
         singleRequest(
@@ -57,26 +63,34 @@ class BalanceAndTransferEventExtractorSpec
             .Req(
               owner = account2.getAddress,
               sort = SortingType.DESC,
-              paging = Some(CursorPaging(cursor = 0, size = 50))),
-          "get_transactions").mapAs[GetTransactionRecords.Res].map(_.transactions),
-        timeout.duration)
+              paging = Some(CursorPaging(cursor = 0, size = 50))
+            ),
+          "get_transactions"
+        ).mapAs[GetTransactionRecords.Res].map(_.transactions),
+        timeout.duration
+      )
       transfers.size should be(2)
 
       val ba2_1 = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
             account2.getAddress,
-            tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)),
-          getBaMethod).mapAs[GetBalanceAndAllowances.Res],
-        timeout.duration)
+            tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
+          ),
+          getBaMethod
+        ).mapAs[GetBalanceAndAllowances.Res],
+        timeout.duration
+      )
       val lrc_ba2_1 = ba2_1.balanceAndAllowanceMap(LRC_TOKEN.address)
 
       (BigInt(lrc_ba2_1.balance.toByteArray) - BigInt(
-        lrc_ba2.balance.toByteArray)).toString() should be("1000" + "0" * LRC_TOKEN.decimals)
+        lrc_ba2.balance.toByteArray
+      )).toString() should be("1000" + "0" * LRC_TOKEN.decimals)
 
       Await.result(
         transferWETH(account3.getAddress, "10")(account2),
-        timeout.duration)
+        timeout.duration
+      )
       Thread.sleep(2000)
       val transfers3 = Await.result(
         singleRequest(
@@ -84,9 +98,12 @@ class BalanceAndTransferEventExtractorSpec
             .Req(
               owner = account3.getAddress,
               sort = SortingType.DESC,
-              paging = Some(CursorPaging(cursor = 0, size = 50))),
-          "get_transactions").mapAs[GetTransactionRecords.Res].map(_.transactions),
-        timeout.duration)
+              paging = Some(CursorPaging(cursor = 0, size = 50))
+            ),
+          "get_transactions"
+        ).mapAs[GetTransactionRecords.Res].map(_.transactions),
+        timeout.duration
+      )
 
       transfers3.size should be(1)
       transfers3.head.header.get.txStatus.isTxStatusFailed should be(true)
@@ -97,9 +114,12 @@ class BalanceAndTransferEventExtractorSpec
             .Req(
               owner = account2.getAddress,
               sort = SortingType.DESC,
-              paging = Some(CursorPaging(cursor = 0, size = 50))),
-          "get_transactions").mapAs[GetTransactionRecords.Res].map(_.transactions),
-        timeout.duration)
+              paging = Some(CursorPaging(cursor = 0, size = 50))
+            ),
+          "get_transactions"
+        ).mapAs[GetTransactionRecords.Res].map(_.transactions),
+        timeout.duration
+      )
       transfers_2.size should be(3)
     }
   }

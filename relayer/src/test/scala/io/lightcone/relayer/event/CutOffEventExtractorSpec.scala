@@ -23,9 +23,9 @@ import io.lightcone.relayer.base._
 import scala.concurrent.Await
 
 class CutOffEventExtractorSpec
-  extends CommonSpec
-  with EthereumEventExtractorSupport
-  with OrderGenerateSupport {
+    extends CommonSpec
+    with EthereumEventExtractorSupport
+    with OrderGenerateSupport {
 
   "ethereum balance update event and transfer event extractor actor test" must {
     "correctly extract balance update events and transfer events from ethereum blocks" in {
@@ -38,13 +38,15 @@ class CutOffEventExtractorSpec
       Await.result(
         singleRequest(SubmitOrder.Req(Some(order1)), submit_order)
           .mapAs[SubmitOrder.Res],
-        timeout.duration)
+        timeout.duration
+      )
       Thread.sleep(1000)
 
       info("this order must be saved in db.")
       val getOrder2 = Await.result(
         dbModule.orderService.getOrder(order1.hash),
-        timeout.duration)
+        timeout.duration
+      )
       getOrder2 match {
         case Some(order) =>
           assert(order.sequenceId > 0)
@@ -53,26 +55,31 @@ class CutOffEventExtractorSpec
       info("cancel all orders by set cutOff")
       Await.result(
         cancelAllOrders(timeProvider.getTimeSeconds())(account0),
-        timeout.duration)
+        timeout.duration
+      )
       Thread.sleep(1000)
       val getOrder2_2 = Await.result(
         dbModule.orderService.getOrder(order1.hash),
-        timeout.duration)
+        timeout.duration
+      )
       getOrder2_2.get.getState.status.isStatusOnchainCancelledByUser should be(
-        true)
+        true
+      )
 
       info("submit second order")
       val order3 = createRawOrder()(account0)
       Await.result(
         singleRequest(SubmitOrder.Req(Some(order3)), submit_order)
           .mapAs[SubmitOrder.Res],
-        timeout.duration)
+        timeout.duration
+      )
       Thread.sleep(1000)
 
       info("this order must be saved in db.")
       val getOrder3 = Await.result(
         dbModule.orderService.getOrder(order3.hash),
-        timeout.duration)
+        timeout.duration
+      )
       getOrder3 match {
         case Some(order) =>
           assert(order.sequenceId > 0)
@@ -82,13 +89,16 @@ class CutOffEventExtractorSpec
       info("cancel all orders by set cutOff and token pair")
       Await.result(
         cancelAllOrdersByTokenPair(timeProvider.getTimeSeconds())(account0),
-        timeout.duration)
+        timeout.duration
+      )
       Thread.sleep(1000)
       val getOrder3_2 = Await.result(
         dbModule.orderService.getOrder(order3.hash),
-        timeout.duration)
+        timeout.duration
+      )
       getOrder3_2.get.getState.status.isStatusOnchainCancelledByUser should be(
-        true)
+        true
+      )
     }
 
   }
