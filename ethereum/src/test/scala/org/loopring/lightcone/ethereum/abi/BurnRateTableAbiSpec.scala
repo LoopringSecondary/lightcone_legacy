@@ -19,9 +19,9 @@ package io.lightcone.ethereum.abi
 import org.scalatest._
 
 class BurnRateTableAbiSpec
-  extends FlatSpec
-  with Matchers
-  with BeforeAndAfterAll {
+    extends FlatSpec
+    with Matchers
+    with BeforeAndAfterAll {
 
   val burnRateTableAbi = BurnRateTableAbi()
 
@@ -31,7 +31,8 @@ class BurnRateTableAbiSpec
 
   "encodeBurnBasePercentageFunction" should "encode BurnBasePercentageFunction Params to input" in {
     val input = burnRateTableAbi.burn_BASE_PERCENTAGE.pack(
-      BurnBasePercentageFunction.Params())
+      BurnBasePercentageFunction.Params()
+    )
     input should be("0xfed4dd1e")
   }
 
@@ -41,7 +42,7 @@ class BurnRateTableAbiSpec
     val result = burnRateTableAbi.burn_BASE_PERCENTAGE.unpackResult(resp)
     result match {
       case Some(res) => res.burnRate.toString should be("1000")
-      case _ =>
+      case _         =>
     }
   }
 
@@ -50,7 +51,8 @@ class BurnRateTableAbiSpec
     val params = GetBurnRateFunction.Params(token)
     val input = burnRateTableAbi.getBurnRate.pack(params)
     input should be(
-      "0x42b5f3750000000000000000000000006bfceb2cb021ec87cb2525811f5b7d4834037f62")
+      "0x42b5f3750000000000000000000000006bfceb2cb021ec87cb2525811f5b7d4834037f62"
+    )
   }
 
   "decodeGetBurnRateFunction" should "decode eth_call result to  GetBurnRateFunction Result" in {
@@ -68,7 +70,8 @@ class BurnRateTableAbiSpec
     val topics = Seq(
       "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
       "0x00000000000000000000000091e658c123e23f509201a99f30574f6548724639",
-      "0x0000000000000000000000000000000000000000000000000000000000000000")
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
+    )
     val result =
       burnRateTableAbi.tokenTierUpgradedEvent.unpack(data, topics.toArray)
 

@@ -29,16 +29,18 @@ package object abi {
   val loopringProtocolAbi = LoopringProtocolAbi()
   val burnRateTableAbi = BurnRateTableAbi()
 
-  private def getAnnotationValue[T](tree: Tree)(implicit ct: ClassTag[T]): T =
-    tree match {
-      case Literal(Constant(str: T)) => str
-    }
-
+  // TODO(hongyu): move this method to a class.
   private[abi] def getContractAnnontationIdx[T](
     )(
       implicit
       mf: Manifest[T]
     ): Seq[Int] = {
+
+    def getAnnotationValue[T](tree: Tree)(implicit ct: ClassTag[T]): T =
+      tree match {
+        case Literal(Constant(str: T)) => str
+      }
+
     val typ = typeOf[T]
     (typ.members.filter { m =>
       m.annotations.nonEmpty && m.annotations.exists(
