@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer.ethereum.event
 
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import org.web3j.utils.Numeric
 

@@ -21,7 +21,10 @@ import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
 
 import io.lightcone.core._
-import io.lightcone.proto.{OrdersCancelledEvent => POrdersCancelledEvent, _}
+import io.lightcone.relayer.data.{
+  OrdersCancelledEvent => POrdersCancelledEvent,
+  _
+}
 
 import scala.concurrent._
 

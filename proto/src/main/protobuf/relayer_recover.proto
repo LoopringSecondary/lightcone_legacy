@@ -17,10 +17,10 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package io.lightcone.proto;
+package io.lightcone.relayer.data;
 
 import "core.proto";
-import "relayer_data.proto";
+// import "relayer_common.proto";
 
 
 /////////////////////////////////////////////////////////////////////
@@ -53,7 +53,7 @@ message ActorRecover {
     message Timeout{}
 
     message RecoverOrderReq {
-        io.lightcone.core.RawOrder  raw_order = 1;
+        io.lightcone.core.RawOrder raw_order = 1;
     }
 
     message OrderRecoverResult {

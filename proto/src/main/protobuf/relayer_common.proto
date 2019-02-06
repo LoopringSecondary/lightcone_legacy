@@ -17,10 +17,10 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package io.lightcone.proto;
+package io.lightcone.relayer.data;
 
 import "core.proto";
-import "ethereum.proto";
+// import "ethereum.proto";
 
 message OrderState {
     bytes amount_s          = 1;

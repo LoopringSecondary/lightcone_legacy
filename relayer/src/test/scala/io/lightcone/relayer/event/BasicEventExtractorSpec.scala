@@ -22,7 +22,7 @@ import io.lightcone.ethereum._
 import io.lightcone.relayer.support._
 import io.lightcone.core._
 
-import io.lightcone.proto.AddressBalanceUpdated
+import io.lightcone.relayer.data.AddressBalanceUpdated
 
 import scala.concurrent._
 

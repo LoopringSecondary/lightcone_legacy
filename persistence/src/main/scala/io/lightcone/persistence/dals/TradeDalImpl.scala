@@ -23,8 +23,8 @@ import io.lightcone.lib._
 import io.lightcone.core._
 import io.lightcone.persistence._
 import io.lightcone.persistence.base._
-import io.lightcone.proto._
-import io.lightcone.proto.GetTrades._
+import io.lightcone.relayer.data._
+import io.lightcone.relayer.data.GetTrades._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._

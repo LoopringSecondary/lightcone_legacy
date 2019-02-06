@@ -19,7 +19,7 @@ package io.lightcone.persistence.dals
 import com.google.inject.Inject
 import com.google.inject.name.Named
 
-import io.lightcone.proto.MissingBlocksRecord
+import io.lightcone.relayer.data.MissingBlocksRecord
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._

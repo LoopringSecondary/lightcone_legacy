@@ -24,7 +24,7 @@
 //import io.lightcone.relayer.data._
 //import io.lightcone.relayer.support._
 //import io.lightcone.relayer.validator._
-//import io.lightcone.proto._
+//import io.lightcone.relayer.data._
 //import org.scalatest.WordSpec
 //import scala.concurrent.duration._
 //import scala.concurrent.{Await, ExecutionContext}

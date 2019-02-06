@@ -18,7 +18,7 @@ package io.lightcone.relayer.support
 
 import akka.testkit.TestProbe
 import io.lightcone.relayer.actors.MarketManagerActor
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 
 trait MarketManagerMockSupport {

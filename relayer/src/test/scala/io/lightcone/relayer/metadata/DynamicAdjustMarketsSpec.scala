@@ -22,7 +22,7 @@ import io.lightcone.core._
 import io.lightcone.relayer.support.CommonSpec
 import io.lightcone.relayer.support._
 
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 
 import scala.concurrent.Await
 

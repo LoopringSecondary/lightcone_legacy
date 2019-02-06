@@ -26,7 +26,7 @@ import io.lightcone.lib._
 import io.lightcone.core._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.core.ErrorCode._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 
 import scala.concurrent._
 

@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
 
-import io.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
+import io.lightcone.relayer.data.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
 
 import scala.concurrent._

@@ -18,7 +18,7 @@ package io.lightcone.relayer.jsonrpc
 
 import io.lightcone.relayer.ethereum.EthereumAccessActor
 import io.lightcone.relayer.support.{CommonSpec, EthereumSupport}
-import io.lightcone.proto.GetBlockWithTxObjectByNumber
+import io.lightcone.relayer.data.GetBlockWithTxObjectByNumber
 import akka.pattern._
 import io.lightcone.relayer.base._
 

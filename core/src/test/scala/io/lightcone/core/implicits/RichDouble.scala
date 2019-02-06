@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.proto._
+/// import io.lightcone.relayer.data._
 
 private[core] class RichDouble(v: Double) {
 

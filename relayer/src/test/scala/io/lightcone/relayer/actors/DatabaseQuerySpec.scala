@@ -18,7 +18,7 @@ package io.lightcone.relayer.actors
 
 import io.lightcone.relayer.support._
 import io.lightcone.persistence._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent.{Await, Future}
 

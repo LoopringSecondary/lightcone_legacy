@@ -23,7 +23,7 @@ import com.mysql.jdbc.exceptions.jdbc4._
 import com.typesafe.scalalogging.Logger
 import io.lightcone.lib._
 import io.lightcone.persistence.base._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.persistence._
 import io.lightcone.core._
 import slick.jdbc.MySQLProfile.api._

@@ -22,9 +22,9 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationExceptio
 import io.lightcone.core._
 import io.lightcone.persistence._
 import io.lightcone.lib._
-import io.lightcone.proto.GetTrades._
-import io.lightcone.proto._
-import io.lightcone.proto.GetRings.Req.Ring._
+import io.lightcone.relayer.data.GetTrades._
+import io.lightcone.relayer.data._
+import io.lightcone.relayer.data.GetRings.Req.Ring._
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._

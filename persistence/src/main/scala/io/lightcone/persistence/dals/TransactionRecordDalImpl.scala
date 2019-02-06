@@ -27,7 +27,7 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 import io.lightcone.core.ErrorCode._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.util.{Failure, Success}
 

@@ -20,7 +20,7 @@ import akka.actor._
 import akka.util.Timeout
 import io.lightcone.relayer.base._
 import io.lightcone.core.ErrorCode._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.relayer.base._

@@ -19,7 +19,7 @@ import io.lightcone.core.implicits._
 
 // import io.lightcone.core.OrderAwareSpec
 
-/// import io.lightcone.proto._
+/// import io.lightcone.relayer.data._
 
 import org.scalatest._
 import OrderStatus._

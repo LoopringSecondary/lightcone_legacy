@@ -17,7 +17,7 @@
 package io.lightcone.relayer.event
 
 import io.lightcone.relayer.support._
-import io.lightcone.proto.{GetRings, GetTrades, SubmitOrder}
+import io.lightcone.relayer.data.{GetRings, GetTrades, SubmitOrder}
 import io.lightcone.relayer.base._
 import scala.concurrent.duration._
 import scala.concurrent.Await

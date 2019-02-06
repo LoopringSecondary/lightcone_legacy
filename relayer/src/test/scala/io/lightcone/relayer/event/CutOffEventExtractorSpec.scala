@@ -17,7 +17,7 @@
 package io.lightcone.relayer.event
 
 import io.lightcone.relayer.support._
-import io.lightcone.proto.SubmitOrder
+import io.lightcone.relayer.data.SubmitOrder
 import io.lightcone.relayer.base._
 
 import scala.concurrent.Await

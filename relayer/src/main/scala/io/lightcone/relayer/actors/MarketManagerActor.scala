@@ -29,7 +29,7 @@ import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.lib._
 // import io.lightcone.core.ErrorCode._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._

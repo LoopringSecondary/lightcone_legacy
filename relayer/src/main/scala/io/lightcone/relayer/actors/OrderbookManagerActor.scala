@@ -26,7 +26,7 @@ import akka.pattern.ask
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
 import io.lightcone.lib._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import org.slf4s.Logging
 

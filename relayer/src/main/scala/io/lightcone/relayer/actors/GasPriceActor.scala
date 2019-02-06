@@ -27,7 +27,7 @@ import io.lightcone.relayer.base._
 import io.lightcone.core._
 import io.lightcone.core.ErrorCode._
 import io.lightcone.core.OrderStatus._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import scala.concurrent._
 
 // Owner: Yadong

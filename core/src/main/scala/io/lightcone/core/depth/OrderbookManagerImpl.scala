@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.proto._
+/// import io.lightcone.relayer.data._
 
 import scala.collection.SortedMap
 import org.slf4s.Logging

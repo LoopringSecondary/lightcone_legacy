@@ -17,7 +17,7 @@
 package io.lightcone.relayer.jsonrpc
 
 import io.lightcone.core._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import org.json4s._
 import org.json4s.JsonAST.JValue
 import akka.actor._

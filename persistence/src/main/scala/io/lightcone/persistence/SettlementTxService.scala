@@ -17,7 +17,7 @@
 package io.lightcone.persistence
 
 import io.lightcone.persistence.dals.SettlementTxDal
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent.Future
 

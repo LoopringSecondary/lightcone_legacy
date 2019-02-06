@@ -26,7 +26,7 @@ import com.typesafe.config.Config
 import io.lightcone.relayer.RpcBinding
 import io.lightcone.relayer.jsonrpc._
 
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import org.slf4s.Logging
 import scalapb.json4s.JsonFormat

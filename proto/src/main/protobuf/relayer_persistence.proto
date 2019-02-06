@@ -17,12 +17,12 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-package io.lightcone.proto;
+package io.lightcone.relayer.data;
 
 import "core.proto";
 import "persistence.proto";
-import "relayer_data.proto";
-import "relayer_ethereum2.proto";
+import "relayer_common.proto";
+import "relayer_ethereum.proto";
 
 /////////////////////////////////////////////////////////////////////
 // TWO WAY DATABASE-RELATED REQUEST-RESPONSES

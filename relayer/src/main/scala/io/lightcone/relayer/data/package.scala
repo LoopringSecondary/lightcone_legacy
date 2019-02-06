@@ -23,7 +23,7 @@ import io.lightcone.core._
 
 import io.lightcone.core.ErrorCode._
 import io.lightcone.core.OrderStatus._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import org.web3j.utils.Numeric
 
 package object data {
