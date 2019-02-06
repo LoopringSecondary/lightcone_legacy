@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.service
+package io.lightcone.persistence
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
 import com.google.protobuf.ByteString

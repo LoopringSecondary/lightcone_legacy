@@ -26,7 +26,7 @@ import io.lightcone.actors.base._
 import io.lightcone.actors.ethereum._
 
 import io.lightcone.lib._
-import io.lightcone.persistence.DatabaseModule
+import io.lightcone.persistence._
 import io.lightcone.proto._
 import io.lightcone.core._
 import org.web3j.utils.Numeric

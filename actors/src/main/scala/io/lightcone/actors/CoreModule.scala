@@ -37,7 +37,7 @@ import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
-import io.lightcone.persistence.service._
+import io.lightcone.persistence._
 import io.lightcone.actors.ethereum.event._
 import io.lightcone.ethereum._
 import io.lightcone.proto._

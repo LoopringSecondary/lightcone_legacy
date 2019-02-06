@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.service
+package io.lightcone.persistence
 
 import io.lightcone.persistence.dals.OrderDal
 import io.lightcone.core._
-import io.lightcone.proto._
+
 import scala.concurrent._
+
+// TODO(yongfeng): remove this dependency
+import io.lightcone.proto._
 
 trait OrderService {
   // Save order to database, if the order already exist, return an error code.

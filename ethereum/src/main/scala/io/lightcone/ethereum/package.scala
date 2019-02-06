@@ -88,6 +88,7 @@ package object ethereum {
   }
 
   // ----- implicit methods -----
+  // TODO(hongyu): create implicit classes instead of methods.
   implicit def int2BigInt(x: Int): BigInt = BigInt(x)
 
   implicit def string2BigInt(x: String): BigInt = x match {

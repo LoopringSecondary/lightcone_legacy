@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.service
+package io.lightcone.persistence
 
-import io.lightcone.persistence.dals.SettlementTxDal
 import io.lightcone.proto._
 import io.lightcone.core._
 import scala.concurrent.Future
 
-trait SettlementTxService {
-
-  def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res]
-  // get all pending txs with given owner, from_nonce is a optional parameter(>=)
-  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res]
-
-  // update address's all txs status below or equals the given nonce to BLOCK
-  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res]
+trait RingService {
+  def saveRing(ring: Ring): Future[ErrorCode]
+  def saveRings(trades: Seq[Ring]): Future[Seq[ErrorCode]]
+  def getRings(request: GetRings.Req): Future[Seq[Ring]]
+  def countRings(request: GetRings.Req): Future[Int]
+  def obsolete(height: Long): Future[Unit]
 }

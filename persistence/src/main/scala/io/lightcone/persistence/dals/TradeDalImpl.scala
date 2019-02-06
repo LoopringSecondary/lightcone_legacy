@@ -21,6 +21,7 @@ import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import io.lightcone.lib._
 import io.lightcone.core._
+import io.lightcone.persistence._
 import io.lightcone.persistence.base._
 import io.lightcone.proto._
 import io.lightcone.proto.GetTrades._

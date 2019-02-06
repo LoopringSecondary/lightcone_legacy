@@ -16,7 +16,7 @@
 
 package io.lightcone.persistence.dals
 
-import io.lightcone.proto._
+import io.lightcone.persistence._
 import io.lightcone.core._
 import scala.concurrent.Await
 import scala.concurrent.duration._

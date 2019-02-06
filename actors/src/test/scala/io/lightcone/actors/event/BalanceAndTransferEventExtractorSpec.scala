@@ -17,6 +17,7 @@
 package io.lightcone.actors.event
 
 import io.lightcone.actors.support._
+import io.lightcone.persistence._
 import io.lightcone.proto._
 import io.lightcone.core._
 import io.lightcone.actors.base.safefuture._

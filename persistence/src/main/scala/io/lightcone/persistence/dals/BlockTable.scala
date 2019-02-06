@@ -17,6 +17,7 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
+import io.lightcone.persistence._
 import slick.jdbc.MySQLProfile.api._
 import io.lightcone.proto._
 import io.lightcone.core._

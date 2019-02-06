@@ -19,7 +19,7 @@ package io.lightcone.persistence
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import io.lightcone.persistence.dals._
-import io.lightcone.persistence.service._
+import io.lightcone.persistence._
 import scala.concurrent._
 
 class DatabaseModule @Inject()(

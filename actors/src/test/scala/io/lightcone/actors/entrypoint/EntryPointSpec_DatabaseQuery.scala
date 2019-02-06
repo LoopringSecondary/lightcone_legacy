@@ -23,6 +23,7 @@ import io.lightcone.actors.data._
 import io.lightcone.actors.support._
 import io.lightcone.proto.Trade.Fee
 import io.lightcone.proto._
+import io.lightcone.persistence._
 import io.lightcone.core._
 import scala.concurrent.Await
 import scala.concurrent._

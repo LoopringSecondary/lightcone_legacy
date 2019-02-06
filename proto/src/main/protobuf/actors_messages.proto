@@ -21,6 +21,7 @@ package io.lightcone.proto;
 
 import "actors_data.proto";
 import "core.proto";
+import "persistence.proto";
 import "actors_ethereum2.proto";
 
 /////////////////////////////////////////////////////////////////////
@@ -290,7 +291,7 @@ message SetGasPrice {
 
 message SaveBlock {
     message Req {
-        BlockData block_data = 1;
+        io.lightcone.persistence.BlockData block_data = 1;
     }
 
     message Res {

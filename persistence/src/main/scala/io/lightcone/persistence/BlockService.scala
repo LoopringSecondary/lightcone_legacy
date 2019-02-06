@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.service
+package io.lightcone.persistence
 
-import io.lightcone.proto._
+import io.lightcone.persistence._
 import io.lightcone.core._
-
 import scala.concurrent.Future
 
-trait OHLCDataService {
+trait BlockService {
 
-  def saveData(record: PersistOHLCData.Req): Future[PersistOHLCData.Res]
+  def saveBlock(block: BlockData): Future[ErrorCode]
+  def findByHash(hash: String): Future[Option[BlockData]]
+  def findByHeight(height: Long): Future[Option[BlockData]]
+  def findMaxHeight(): Future[Option[Long]]
 
-  def getOHLCData(request: GetOHLCData.Req): Future[GetOHLCData.Res]
+  def findBlocksInHeightRange(
+      heightFrom: Long,
+      heightTo: Long
+    ): Future[Seq[(Long, String)]]
+
+  def count(): Future[Int]
+  def obsolete(height: Long): Future[Unit]
 }

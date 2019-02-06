@@ -21,7 +21,7 @@ import com.typesafe.config.ConfigFactory
 import io.lightcone.actors.core.DatabaseQueryActor
 import io.lightcone.persistence._
 import io.lightcone.persistence.dals._
-import io.lightcone.persistence.service._
+import io.lightcone.persistence._
 import org.scalatest.BeforeAndAfterAll
 import slick.basic.DatabaseConfig
 import slick.driver.JdbcProfile

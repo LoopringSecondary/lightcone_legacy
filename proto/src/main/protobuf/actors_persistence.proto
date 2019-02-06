@@ -21,6 +21,7 @@ package io.lightcone.proto;
 
 import "common.proto";
 import "core.proto";
+import "persistence.proto";
 import "actors_data.proto";
 import "actors_ethereum2.proto";
 
@@ -94,8 +95,8 @@ message GetOrdersForUser {
         string               owner      = 1;
         repeated io.lightcone.core.OrderStatus statuses   = 2;
         Market               market     = 3;
-        SortingType          sort       = 4;
-        Paging               skip       = 5;
+        io.lightcone.persistence.SortingType          sort       = 4;
+        io.lightcone.persistence.Paging               skip       = 5;
     }
 
     message Res {
@@ -138,8 +139,8 @@ message GetTrades {
         Market      market     = 5;
         string      wallet     = 6;
         string      miner      = 7;
-        SortingType sort       = 8;
-        Paging      skip       = 9;
+        io.lightcone.persistence.SortingType sort       = 8;
+        io.lightcone.persistence.Paging      skip       = 9;
     }
 
     message Res {
@@ -157,8 +158,8 @@ message GetRings {
             }
         }
         Ring        ring  = 1;
-        SortingType sort  = 2;
-        Paging      skip  = 3;
+        io.lightcone.persistence.SortingType sort  = 2;
+        io.lightcone.persistence.Paging      skip  = 3;
     }
 
     message Res {
@@ -241,8 +242,8 @@ message GetTransactionRecords {
     message Req {
         string        owner       = 1;
         QueryType     query_type  = 2;
-        SortingType   sort        = 3;
-        CursorPaging  paging      = 4;
+        io.lightcone.persistence.SortingType   sort        = 3;
+        io.lightcone.persistence.CursorPaging  paging      = 4;
     }
 
     message Res {

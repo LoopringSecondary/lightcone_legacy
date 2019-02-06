@@ -14,28 +14,41 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.service
+package io.lightcone.persistence
+
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import io.lightcone.persistence.dals._
-import io.lightcone.proto._
+import io.lightcone.persistence._
 import io.lightcone.core._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
-class SettlementTxServiceImpl @Inject()(
+class BlockServiceImpl @Inject()(
     implicit
-    val ec: ExecutionContext,
-    val submitTxDal: SettlementTxDal)
-    extends SettlementTxService {
+    blockDal: BlockDal,
+    val ec: ExecutionContext)
+    extends BlockService {
 
-  def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res] =
-    submitTxDal.saveTx(req.tx.get)
+  def saveBlock(block: BlockData): Future[ErrorCode] =
+    blockDal.saveBlock(block)
 
-  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res] =
-    submitTxDal.getPendingTxs(request)
+  def findByHash(hash: String): Future[Option[BlockData]] =
+    blockDal.findByHash(hash)
 
-  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res] =
-    submitTxDal.updateInBlock(request)
+  def findByHeight(height: Long): Future[Option[BlockData]] =
+    blockDal.findByHeight(height)
+
+  def findMaxHeight(): Future[Option[Long]] = blockDal.findMaxHeight()
+
+  def findBlocksInHeightRange(
+      heightFrom: Long,
+      heightTo: Long
+    ): Future[Seq[(Long, String)]] =
+    blockDal.findBlocksInHeightRange(heightFrom, heightTo)
+
+  def count(): Future[Int] = blockDal.count()
+
+  def obsolete(height: Long): Future[Unit] = blockDal.obsolete(height)
 }

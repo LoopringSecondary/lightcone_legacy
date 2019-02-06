@@ -14,32 +14,28 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.service
-
+package io.lightcone.persistence
 import com.google.inject.Inject
-import io.lightcone.persistence.dals.OHLCDataDal
+import com.google.inject.name.Named
+import io.lightcone.persistence.dals._
 import io.lightcone.proto._
 import io.lightcone.core._
-
+import slick.basic.DatabaseConfig
+import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 
-class OHLCDataServiceImpl @Inject()(
+class SettlementTxServiceImpl @Inject()(
     implicit
-    ohlcDataDal: OHLCDataDal,
-    val ec: ExecutionContext)
-    extends OHLCDataService {
+    val ec: ExecutionContext,
+    val submitTxDal: SettlementTxDal)
+    extends SettlementTxService {
 
-  def saveData(req: PersistOHLCData.Req): Future[PersistOHLCData.Res] =
-    ohlcDataDal.saveData(req.data.get)
+  def saveTx(req: PersistSettlementTx.Req): Future[PersistSettlementTx.Res] =
+    submitTxDal.saveTx(req.tx.get)
 
-  def getOHLCData(request: GetOHLCData.Req): Future[GetOHLCData.Res] = {
-    ohlcDataDal
-      .getOHLCData(
-        request.marketHash,
-        request.interval.value,
-        request.beginTime,
-        request.endTime
-      )
-      .map(r => GetOHLCData.Res(ohlcData = r.map(t => OHLCData(data = t))))
-  }
+  def getPendingTxs(request: GetPendingTxs.Req): Future[GetPendingTxs.Res] =
+    submitTxDal.getPendingTxs(request)
+
+  def updateInBlock(request: UpdateTxInBlock.Req): Future[UpdateTxInBlock.Res] =
+    submitTxDal.updateInBlock(request)
 }

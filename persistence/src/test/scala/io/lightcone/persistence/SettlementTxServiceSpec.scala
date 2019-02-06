@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.persistence.service
+package io.lightcone.persistence
 
 import io.lightcone.lib._
 import io.lightcone.persistence.dals._
