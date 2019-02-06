@@ -80,7 +80,7 @@ class TradeHistoryAbi(abiJson: String) extends AbiWrap(abiJson) {
 object TradeHistoryAbi {
 
   val jsonStr: String =
-    Source.fromResource("version20/ITradeHistory.abi").mkString
+    Source.fromResource("version2.0/ITradeHistory.abi").mkString
   def apply(abiJson: String): TradeHistoryAbi = new TradeHistoryAbi(abiJson)
 
   def apply(): TradeHistoryAbi = new TradeHistoryAbi(jsonStr)

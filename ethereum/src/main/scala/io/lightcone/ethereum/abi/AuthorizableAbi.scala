@@ -68,7 +68,7 @@ class AuthorizableAbi(abiJson: String) extends AbiWrap(abiJson) {
 object AuthorizableAbi {
 
   val jsonStr: String =
-    Source.fromResource("version20/Authorizable.abi").mkString
+    Source.fromResource("version2.0/Authorizable.abi").mkString
   def apply(abiJson: String): AuthorizableAbi = new AuthorizableAbi(abiJson)
 
   def apply(): AuthorizableAbi = new AuthorizableAbi(jsonStr)

@@ -94,7 +94,7 @@ class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
 object RingSubmitterAbi {
 
   val jsonStr: String =
-    Source.fromResource("version20/IRingSubmitter.abi").mkString
+    Source.fromResource("version2.0/IRingSubmitter.abi").mkString
   def apply(abiJson: String): RingSubmitterAbi = new RingSubmitterAbi(abiJson)
 
   def apply(): RingSubmitterAbi = new RingSubmitterAbi(jsonStr)

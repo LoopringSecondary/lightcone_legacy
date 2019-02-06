@@ -84,7 +84,7 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
 object OrderBookAbi {
 
   val abiJsonStr: String =
-    Source.fromResource("version20/IOrderBook.abi").mkString
+    Source.fromResource("version2.0/IOrderBook.abi").mkString
   def apply(abiJson: String): OrderBookAbi = new OrderBookAbi(abiJson)
 
   def apply(): OrderBookAbi = new OrderBookAbi(abiJsonStr)

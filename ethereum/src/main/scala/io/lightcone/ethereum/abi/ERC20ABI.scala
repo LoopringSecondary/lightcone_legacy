@@ -24,7 +24,7 @@ import scala.io.Source
 
 object ERC20Abi {
 
-  val erc20jsonstr = Source.fromResource("version20/ERC20Token.abi").mkString
+  val erc20jsonstr = Source.fromResource("version2.0/ERC20Token.abi").mkString
   def apply(): ERC20Abi = new ERC20Abi(erc20jsonstr)
 
   def apply(jsonstr: String) = new ERC20Abi(jsonstr)

@@ -67,7 +67,7 @@ class BurnRateTableAbi(abiJson: String) extends AbiWrap(abiJson) {
 object BurnRateTableAbi {
 
   val jsonStr: String =
-    Source.fromResource("version20/IBurnRateTable.abi").mkString
+    Source.fromResource("version2.0/IBurnRateTable.abi").mkString
   def apply(abiJson: String): BurnRateTableAbi = new BurnRateTableAbi(abiJson)
 
   def apply(): BurnRateTableAbi = new BurnRateTableAbi(jsonStr)

@@ -140,7 +140,7 @@ class OrderCancellerAbi(abiJson: String) extends AbiWrap(abiJson) {
 object OrderCancellerAbi {
 
   val jsonStr: String =
-    Source.fromResource("version20/IOrderCanceller.abi").mkString
+    Source.fromResource("version2.0/IOrderCanceller.abi").mkString
   def apply(abiJson: String): OrderCancellerAbi = new OrderCancellerAbi(abiJson)
 
   def apply(): OrderCancellerAbi = new OrderCancellerAbi(jsonStr)

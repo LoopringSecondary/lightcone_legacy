@@ -24,7 +24,7 @@ import scala.io.Source
 
 object WETHAbi {
 
-  val abijsonstr = Source.fromResource("version20/WETH.abi").mkString
+  val abijsonstr = Source.fromResource("version2.0/WETH.abi").mkString
 
   def apply(): WETHAbi = new WETHAbi(abijsonstr)
 
