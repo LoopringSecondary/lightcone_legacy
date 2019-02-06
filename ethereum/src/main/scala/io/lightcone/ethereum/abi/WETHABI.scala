@@ -16,22 +16,22 @@
 
 package io.lightcone.ethereum.abi
 
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
 import scala.io.Source
 
-object WETHABI {
+object WETHAbi {
 
   val abijsonstr = Source.fromResource("version20/WETH.abi").mkString
 
-  def apply(): WETHABI = new WETHABI(abijsonstr)
+  def apply(): WETHAbi = new WETHAbi(abijsonstr)
 
-  def apply(jsonstr: String) = new WETHABI(jsonstr)
+  def apply(jsonstr: String) = new WETHAbi(jsonstr)
 }
 
-class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
+class WETHAbi(abiJson: String) extends ERC20Abi(abiJson) {
 
   val deposit = DepositFunction(
     abi.findFunction(searchByName(DepositFunction.name))
@@ -54,13 +54,13 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
       topics: Array[String]
     ): Option[Any] = {
     try {
-      val event: SABI.Event = abi.findEvent(
+      val event: Abi.Event = abi.findEvent(
         searchBySignature(
           Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
         )
       )
       event match {
-        case _: SABI.Event =>
+        case _: Abi.Event =>
           event.name match {
             case ApprovalEvent.name =>
               approvalEvent.unpack(data, topics)
@@ -87,7 +87,7 @@ class WETHABI(abiJson: String) extends ERC20ABI(abiJson) {
         )
       val func = abi.findFunction(searchBySignature(funSig))
       func match {
-        case _: SABI.Function =>
+        case _: Abi.Function =>
           func.name match {
             case TransferFunction.name =>
               transfer.unpackInput(data)
@@ -122,10 +122,10 @@ object DepositFunction {
 
   case class Result()
 
-  def apply(entry: SABI.Function): DepositFunction = new DepositFunction(entry)
+  def apply(entry: Abi.Function): DepositFunction = new DepositFunction(entry)
 }
 
-class DepositFunction(val entry: SABI.Function)
+class DepositFunction(val entry: Abi.Function)
     extends AbiFunction[DepositFunction.Parms, DepositFunction.Result]
 
 object WithdrawFunction {
@@ -136,11 +136,11 @@ object WithdrawFunction {
 
   case class Result()
 
-  def apply(entry: SABI.Function): WithdrawFunction =
+  def apply(entry: Abi.Function): WithdrawFunction =
     new WithdrawFunction(entry)
 }
 
-class WithdrawFunction(val entry: SABI.Function)
+class WithdrawFunction(val entry: Abi.Function)
     extends AbiFunction[WithdrawFunction.Parms, WithdrawFunction.Result]
 
 object DepositEvent {
@@ -153,10 +153,10 @@ object DepositEvent {
       @(ContractAnnotation @field)("dst", 0) dst: String,
       @(ContractAnnotation @field)("wad", 1) wad: BigInt)
 
-  def apply(entry: SABI.Event): DepositEvent = new DepositEvent(entry)
+  def apply(entry: Abi.Event): DepositEvent = new DepositEvent(entry)
 }
 
-class DepositEvent(val entry: SABI.Event) extends AbiEvent[DepositEvent.Result]
+class DepositEvent(val entry: Abi.Event) extends AbiEvent[DepositEvent.Result]
 
 object WithdrawalEvent {
 
@@ -168,8 +168,8 @@ object WithdrawalEvent {
       @(ContractAnnotation @field)("src", 0) src: String,
       @(ContractAnnotation @field)("wad", 1) wad: BigInt)
 
-  def apply(entry: SABI.Event): WithdrawalEvent = new WithdrawalEvent(entry)
+  def apply(entry: Abi.Event): WithdrawalEvent = new WithdrawalEvent(entry)
 }
 
-class WithdrawalEvent(val entry: SABI.Event)
+class WithdrawalEvent(val entry: Abi.Event)
     extends AbiEvent[WithdrawalEvent.Result]

@@ -16,21 +16,21 @@
 
 package io.lightcone.ethereum.abi
 
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
 import scala.io.Source
 
-object ERC20ABI {
+object ERC20Abi {
 
   val erc20jsonstr = Source.fromResource("version20/ERC20Token.abi").mkString
-  def apply(): ERC20ABI = new ERC20ABI(erc20jsonstr)
+  def apply(): ERC20Abi = new ERC20Abi(erc20jsonstr)
 
-  def apply(jsonstr: String) = new ERC20ABI(jsonstr)
+  def apply(jsonstr: String) = new ERC20Abi(jsonstr)
 }
 
-class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
+class ERC20Abi(abiJson: String) extends AbiWrap(abiJson) {
 
   val transfer = TransferFunction(
     abi.findFunction(searchByName(TransferFunction.name))
@@ -66,13 +66,13 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
     ): Option[Any] = {
 
     try {
-      val event: SABI.Event = abi.findEvent(
+      val event: Abi.Event = abi.findEvent(
         searchBySignature(
           Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
         )
       )
       event match {
-        case _: SABI.Event =>
+        case _: Abi.Event =>
           event.name match {
             case ApprovalEvent.name =>
               approvalEvent.unpack(data, topics)
@@ -95,7 +95,7 @@ class ERC20ABI(abiJson: String) extends AbiWrap(abiJson) {
         )
       val func = abi.findFunction(searchBySignature(funSig))
       func match {
-        case _: SABI.Function =>
+        case _: Abi.Function =>
           func.name match {
             case TransferFunction.name =>
               transfer.unpackInput(data)
@@ -129,11 +129,11 @@ object TransferFunction {
 
   val name = "transfer"
 
-  def apply(function: SABI.Function): TransferFunction =
+  def apply(function: Abi.Function): TransferFunction =
     new TransferFunction(function)
 }
 
-class TransferFunction(val entry: SABI.Function)
+class TransferFunction(val entry: Abi.Function)
     extends AbiFunction[TransferFunction.Parms, TransferFunction.Result]
 
 object TransferFromFunction {
@@ -147,11 +147,11 @@ object TransferFromFunction {
 
   val name = "transferFrom"
 
-  def apply(function: SABI.Function): TransferFromFunction =
+  def apply(function: Abi.Function): TransferFromFunction =
     new TransferFromFunction(function)
 }
 
-class TransferFromFunction(val entry: SABI.Function)
+class TransferFromFunction(val entry: Abi.Function)
     extends AbiFunction[TransferFromFunction.Parms, TransferFromFunction.Result]
 
 object ApproveFunction {
@@ -164,11 +164,11 @@ object ApproveFunction {
 
   val name = "approve"
 
-  def apply(function: SABI.Function): ApproveFunction =
+  def apply(function: Abi.Function): ApproveFunction =
     new ApproveFunction(function)
 }
 
-class ApproveFunction(val entry: SABI.Function)
+class ApproveFunction(val entry: Abi.Function)
     extends AbiFunction[ApproveFunction.Parms, ApproveFunction.Result]
 
 object BalanceOfFunction {
@@ -177,11 +177,11 @@ object BalanceOfFunction {
 
   case class Result(@(ContractAnnotation @field)("balance", 0) balance: BigInt)
 
-  def apply(entry: SABI.Function): BalanceOfFunction =
+  def apply(entry: Abi.Function): BalanceOfFunction =
     new BalanceOfFunction(entry)
 }
 
-class BalanceOfFunction(val entry: SABI.Function)
+class BalanceOfFunction(val entry: Abi.Function)
     extends AbiFunction[BalanceOfFunction.Parms, BalanceOfFunction.Result]
 
 object AllowanceFunction {
@@ -193,17 +193,17 @@ object AllowanceFunction {
   case class Result(
       @(ContractAnnotation @field)("allowance", 0) allowance: BigInt)
 
-  def apply(entry: SABI.Function): AllowanceFunction =
+  def apply(entry: Abi.Function): AllowanceFunction =
     new AllowanceFunction(entry)
 }
 
-class AllowanceFunction(val entry: SABI.Function)
+class AllowanceFunction(val entry: Abi.Function)
     extends AbiFunction[AllowanceFunction.Parms, AllowanceFunction.Result]
 
 object TransferEvent {
   val name = "Transfer"
 
-  def apply(event: SABI.Event): TransferEvent = new TransferEvent(event)
+  def apply(event: Abi.Event): TransferEvent = new TransferEvent(event)
 
   case class Result(
       @(ContractAnnotation @field)("from", 0) from: String,
@@ -212,13 +212,12 @@ object TransferEvent {
 
 }
 
-class TransferEvent(val entry: SABI.Event)
-    extends AbiEvent[TransferEvent.Result]
+class TransferEvent(val entry: Abi.Event) extends AbiEvent[TransferEvent.Result]
 
 object ApprovalEvent {
   val name = "Approval"
 
-  def apply(event: SABI.Event): ApprovalEvent = new ApprovalEvent(event)
+  def apply(event: Abi.Event): ApprovalEvent = new ApprovalEvent(event)
 
   case class Result(
       @(ContractAnnotation @field)("owner", 0) owner: String,
@@ -226,5 +225,4 @@ object ApprovalEvent {
       @(ContractAnnotation @field)("amount", 2) amount: BigInt)
 }
 
-class ApprovalEvent(val entry: SABI.Event)
-    extends AbiEvent[ApprovalEvent.Result]
+class ApprovalEvent(val entry: Abi.Event) extends AbiEvent[ApprovalEvent.Result]

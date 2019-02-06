@@ -22,8 +22,8 @@ import scala.reflect.ClassTag
 
 package object abi {
 
-  val erc20Abi = ERC20ABI()
-  val wethAbi = WETHABI()
+  val erc20Abi = ERC20Abi()
+  val wethAbi = WETHAbi()
   val tradeHistoryAbi = TradeHistoryAbi()
   val ringSubmitterAbi = RingSubmitterAbi()
   val loopringProtocolAbi = LoopringProtocolAbi()

@@ -19,9 +19,9 @@ package io.lightcone.ethereum.abi
 import org.scalatest._
 import org.web3j.utils.Numeric
 
-class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
+class WETHAbiSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
-  val weth = WETHABI()
+  val weth = WETHAbi()
 
   override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
@@ -39,8 +39,7 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
     val input = weth.withdraw.pack(parms)
     info(input)
     input should be(
-      "0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000"
-    )
+      "0x2e1a7d4d0000000000000000000000000000000000000000000006425b02acb8d7bd0000")
   }
 
   "decodeDepositEvent" should "decode event data and assemble to class Deposit" in {
@@ -48,8 +47,7 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
       "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
     val topics = Array(
       "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c",
-      "0x00000000000000000000000033debb5ee65549ffa71116957da6db17a9d8fe57"
-    )
+      "0x00000000000000000000000033debb5ee65549ffa71116957da6db17a9d8fe57")
     val depositOpt = weth.depositEvent.unpack(data, topics)
     info(depositOpt.toString)
     depositOpt match {
@@ -77,8 +75,7 @@ class WETHABISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
       "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
     val topics = Array(
       "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c",
-      "0x00000000000000000000000033debb5ee65549ffa71116957da6db17a9d8fe57"
-    )
+      "0x00000000000000000000000033debb5ee65549ffa71116957da6db17a9d8fe57")
     val eventOpt = weth.unpackEvent(data, topics)
     info(eventOpt.toString)
     eventOpt match {
