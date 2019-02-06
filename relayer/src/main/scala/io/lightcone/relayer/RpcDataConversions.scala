@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package io.lightcone.relayer
 
-option java_multiple_files = true;
-package io.lightcone.proto;
+import io.lightcone.proto._
+import io.lightcone.core._
 
+object RpcDataConversions {
+  implicit def convertGetOrderbookReq(
+      r: rpc.GetOrderbook.Req
+    ): GetOrderbook.Req =
+    null
 
-/////////////////////////////////////////////////////////////////////
-// CONTAINS VERY GENERIC DATA TYPE, ONLY
-/////////////////////////////////////////////////////////////////////
-
+  implicit def convertGetOrderbookRes(
+      r: GetOrderbook.Res
+    ): rpc.GetOrderbook.Res =
+    null
+}

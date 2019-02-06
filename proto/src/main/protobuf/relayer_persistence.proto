@@ -19,7 +19,6 @@ syntax = "proto3";
 option java_multiple_files = true;
 package io.lightcone.proto;
 
-import "common.proto";
 import "core.proto";
 import "persistence.proto";
 import "relayer_data.proto";

@@ -17,12 +17,13 @@
 package io.lightcone.relayer
 
 import io.lightcone.relayer.jsonrpc.JsonRpcModule
-import io.lightcone.relayer.rpc.RpcDataConversions._
 import io.lightcone.proto._
 import io.lightcone.core._
 
 // Owner: Hongyu
 trait RpcBinding extends JsonRpcModule {
+  import RpcDataConversions._
+
   method("get_orderbook")
   // .accepts[rpcdata.GetOrderbook.Req, GetOrderbook.Req]
   // .replies[GetOrderbook.Res, rpcdata.GetOrderbook.Res]
