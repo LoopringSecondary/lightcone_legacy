@@ -20,7 +20,7 @@ import slick.jdbc.MySQLProfile.api._
 import slick.lifted.CanBeQueryCondition
 import scala.concurrent._
 
-trait BaseDal[T <: BaseTable[A], A] {
+private[persistence] trait BaseDal[T <: BaseTable[A], A] {
   def query: TableQuery[T]
 
   def tableName = query.baseTableRow.tableName

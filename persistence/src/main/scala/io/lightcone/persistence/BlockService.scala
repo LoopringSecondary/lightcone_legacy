@@ -16,7 +16,6 @@
 
 package io.lightcone.persistence
 
-import io.lightcone.persistence._
 import io.lightcone.core._
 import scala.concurrent.Future
 

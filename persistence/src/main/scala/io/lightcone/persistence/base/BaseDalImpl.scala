@@ -23,7 +23,8 @@ import scala.concurrent.duration._
 import scala.concurrent._
 import com.typesafe.scalalogging.Logger
 
-trait BaseDalImpl[T <: BaseTable[A], A] extends BaseDal[T, A] {
+private[persistence] trait BaseDalImpl[T <: BaseTable[A], A]
+    extends BaseDal[T, A] {
   implicit val ec: ExecutionContext
   val dbConfig: DatabaseConfig[JdbcProfile]
   val logger = Logger(this.getClass)

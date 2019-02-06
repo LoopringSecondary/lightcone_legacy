@@ -175,6 +175,9 @@ class RingMinedAndOrderFilledEventExtractorSpec
         lrc_ba2_1.balance.toByteArray
       )).toString() should be("7" + "0" * LRC_TOKEN.decimals)
 
+      println("---------" + weth_ba2_1.balance)
+      println("---------" + weth_ba2_2.balance)
+
       (BigInt(weth_ba2_1.balance.toByteArray) - BigInt(
         weth_ba2_2.balance.toByteArray
       )).toString() should be("1" + "0" * WETH_TOKEN.decimals)

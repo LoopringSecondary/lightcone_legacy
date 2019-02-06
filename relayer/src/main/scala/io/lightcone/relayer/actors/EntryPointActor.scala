@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.entrypoint
+package io.lightcone.relayer.actors
 
 import akka.actor._
 import akka.event.LoggingReceive

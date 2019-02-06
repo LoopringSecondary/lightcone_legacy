@@ -26,7 +26,6 @@ import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.actors._
-import io.lightcone.relayer.entrypoint._
 import io.lightcone.relayer.ethereum.Dispatchers._
 import io.lightcone.relayer.ethereum.{EventDispatcher, _}
 import io.lightcone.relayer.jsonrpc.JsonRpcServer

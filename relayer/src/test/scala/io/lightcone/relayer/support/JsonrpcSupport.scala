@@ -22,7 +22,7 @@ import akka.actor.Props
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import io.lightcone.relayer.RpcBinding
-import io.lightcone.relayer.entrypoint.EntryPointActor
+import io.lightcone.relayer.actors.EntryPointActor
 import io.lightcone.relayer.jsonrpc.{JsonRpcServer, JsonSupport}
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables

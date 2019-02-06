@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.jsonrpc
 
-import io.lightcone.relayer.entrypoint.EntryPointActor
 import io.lightcone.relayer.base.Lookup
 import com.typesafe.config.Config
 import akka.http.scaladsl.server.HttpApp
