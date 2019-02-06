@@ -22,13 +22,12 @@ import com.typesafe.config.Config
 import io.lightcone.relayer.base._
 import akka.cluster.singleton._
 import io.lightcone.lib._
-import io.lightcone.persistence.DatabaseModule
-import io.lightcone.core.ErrorCode._
+import io.lightcone.persistence._
 import io.lightcone.proto._
 import io.lightcone.core._
 import io.lightcone.ethereum._
 import scala.collection.JavaConverters._
-import scala.collection.mutable
+import scala.collection.mutable.HashMap
 import scala.concurrent.ExecutionContext
 import scala.util.Random
 
@@ -64,9 +63,11 @@ class RingSettlementManagerActor(
     ringBatchGenerator: RingBatchGenerator)
     extends InitializationRetryActor {
 
+  import ErrorCode._
+
   val selfConfig = config.getConfig(RingSettlementManagerActor.name)
 
-  var invalidRingSettlementActors = mutable.HashMap.empty[String, ActorRef]
+  var invalidRingSettlementActors = HashMap.empty[String, ActorRef]
 
   val miniMinerBalance = BigInt(selfConfig.getString("mini-miner-balance"))
 

@@ -22,9 +22,7 @@ import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
-
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.proto._

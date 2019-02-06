@@ -23,9 +23,9 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import javax.inject.Inject
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum.HttpConnector
+import io.lightcone.relayer.ethereum._
 import io.lightcone.lib._
-import io.lightcone.persistence.DatabaseModule
+import io.lightcone.persistence._
 import io.lightcone.proto._
 import io.lightcone.core._
 import scala.concurrent._

@@ -21,13 +21,11 @@ import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.lib._
-import io.lightcone.relayer.DatabaseConfigManager
-import io.lightcone.relayer.base._
+import io.lightcone.relayer._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
-import io.lightcone.core.ErrorCode._
 import io.lightcone.proto._
 import io.lightcone.core._
 import scala.concurrent._
@@ -75,6 +73,8 @@ class TransactionRecordActor(
     val databaseConfigManager: DatabaseConfigManager)
     extends InitializationRetryActor
     with ShardingEntityAware {
+
+  import ErrorCode._
 
   import TransactionRecord.RecordType._
   import TransactionRecord.EventData.Event

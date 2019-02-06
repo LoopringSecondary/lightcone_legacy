@@ -23,16 +23,12 @@ import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum.EthereumAccessActor
-
+import io.lightcone.relayer.ethereum._
 import io.lightcone.lib._
 import io.lightcone.proto._
 import io.lightcone.core._
 import org.web3j.utils.Numeric
-import io.lightcone.relayer.base._
-import io.lightcone.relayer.ethereum._
-
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent._
 
 // Owner: Yadong
 object EthereumQueryActor extends DeployedAsShardedEvenly {

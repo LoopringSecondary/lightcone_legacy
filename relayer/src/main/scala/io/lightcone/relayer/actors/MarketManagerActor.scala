@@ -25,13 +25,10 @@ import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
-
 import io.lightcone.core._
-import io.lightcone.core.MarketManager.MatchResult
 import io.lightcone.lib._
-import io.lightcone.core.ErrorCode._
+// import io.lightcone.core.ErrorCode._
 import io.lightcone.proto._
 import scala.collection.JavaConverters._
 import scala.concurrent._
@@ -105,7 +102,9 @@ class MarketManagerActor(
     with ShardingEntityAware
     with RepeatedJobActor
     with ActorLogging {
+  import ErrorCode._
   import OrderStatus._
+  import MarketManager.MatchResult
 
   val selfConfig = config.getConfig(MarketManagerActor.name)
 

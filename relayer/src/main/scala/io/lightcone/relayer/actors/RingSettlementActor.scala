@@ -25,18 +25,17 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.core._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.ethereum._
+import io.lightcone.ethereum.abi._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
-import io.lightcone.ethereum.abi._
+
 import io.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ListBuffer, Queue}
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util._
@@ -88,7 +87,7 @@ class RingSettlementActor(
 
   val chainId: Int = config.getInt(s"${EthereumClientMonitor.name}.chain_id")
 
-  val taskQueue = new mutable.Queue[SettleRings]()
+  val taskQueue = new Queue[SettleRings]()
 
   val repeatedJobs = Seq(
     Job(

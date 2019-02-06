@@ -21,14 +21,11 @@ import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.core._
-
-import io.lightcone.relayer.base._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.validator._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.core.ErrorCode._
 import io.lightcone.proto._
 import scala.concurrent._
 
@@ -61,6 +58,7 @@ class OrderPersistenceActor(
     val dbModule: DatabaseModule)
     extends InitializationRetryActor {
   import OrderStatus._
+  import ErrorCode._
 
   //save order to db first, then send to AccountManager
   def ready: Receive = {

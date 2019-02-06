@@ -20,10 +20,8 @@ import akka.actor._
 import akka.event.LoggingReceive
 import com.typesafe.config.Config
 import akka.util.Timeout
-import io.lightcone.relayer.base.Lookup
-import io.lightcone.relayer.actors._
-import io.lightcone.relayer.ethereum.EthereumAccessActor
-
+import io.lightcone.relayer.base._
+import io.lightcone.relayer.ethereum._
 import io.lightcone.relayer.validator._
 import io.lightcone.core._
 import io.lightcone.proto._
