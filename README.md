@@ -12,9 +12,9 @@
 
 You must have Docker and Docker-Compose installed.
 
-* To create a docker image file for the runnable program (in subproject actors), run `sbt docker`. A docker image with name "org.loopring/lightcone:latest" will be generated.
+* To create a docker image file for the runnable program (in subproject relayer), run `sbt docker`. A docker image with name "org.loopring/lightcone:latest" will be generated.
 * To publish the docker image, use `sbt dockerPush`.
-* To run in docker, run `docker run --add-host mysql-host:xx.xx.xx.xx --add-host ethereum-host:xx.xx.xx.xx -P -v /xxx/log:/log --shm-size 358716160 -d org.loopring/lightcone_actors:latest`
+* To run in docker, run `docker run --add-host mysql-host:xx.xx.xx.xx --add-host ethereum-host:xx.xx.xx.xx -P -v /xxx/log:/log --shm-size 358716160 -d org.loopring/lightcone_relayer:latest`
 * To run in docker-compose, run `docker-compose up --scale worker=3`
 
 

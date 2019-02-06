@@ -32,7 +32,7 @@ lazy val persistence = (project in file("persistence"))
   .dependsOn(proto, core, lib, ethereum)
   .settings(basicSettings, libraryDependencies ++= dependency4Persistence)
 
-lazy val actors = (project in file("actors"))
+lazy val relayer = (project in file("relayer"))
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(DockerComposePlugin)
   .enablePlugins(sbtdocker.DockerPlugin)
@@ -45,7 +45,7 @@ lazy val actors = (project in file("actors"))
   .settings(
     basicSettings,
     dockerSettings,
-    libraryDependencies ++= dependency4Actors)
+    libraryDependencies ++= dependency4Relayer)
 
 // lazy val indexer = (project in file("indexer"))
 //   .enablePlugins(AutomateHeaderPlugin)
@@ -64,8 +64,8 @@ lazy val actors = (project in file("actors"))
 lazy val all = (project in file("."))
   .enablePlugins(DockerComposePlugin)
   .settings(docker := {
-    (docker in actors).value
+    (docker in relayer).value
     // (docker in indexer).value
   }, DockerComposeKeys.dockerImageCreationTask := docker.value)
-  .aggregate(proto, lib, ethereum, persistence, core, actors)
+  .aggregate(proto, lib, ethereum, persistence, core, relayer)
   .withId("lightcone")
