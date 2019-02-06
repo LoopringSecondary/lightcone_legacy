@@ -19,41 +19,35 @@ package io.lightcone.relayer.event
 import io.lightcone.relayer.support._
 import io.lightcone.proto._
 import io.lightcone.core._
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 import org.web3j.crypto.Credentials
 
 import scala.concurrent.Await
 
 class AllowanceEventExtractorSpec
-    extends CommonSpec
-    with EthereumEventExtractorSupport {
+  extends CommonSpec
+  with EthereumEventExtractorSupport {
 
   "ethereum event extractor actor test" must {
     "correctly extract Approval events from ethereum blocks" in {
       val getBaMethod = "get_balance_and_allowance"
       val account1 = Credentials.create(
-        "0xd90ff3f9d2d9778f27965930480c222a7a49ef3e3a8c64fae78a1d841456847d"
-      )
+        "0xd90ff3f9d2d9778f27965930480c222a7a49ef3e3a8c64fae78a1d841456847d")
       val ba = Await.result(
         singleRequest(
           GetBalanceAndAllowances.Req(
             account1.getAddress,
-            tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
-          ),
-          getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
-        timeout.duration
-      )
+            tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)),
+          getBaMethod).mapAs[GetBalanceAndAllowances.Res],
+        timeout.duration)
 
       val lrc_ba = ba.balanceAndAllowanceMap(LRC_TOKEN.address)
       val weth_ba = ba.balanceAndAllowanceMap(WETH_TOKEN.address)
       info(
-        s"${account1.getAddress} allowance is ${BigInt(lrc_ba.allowance.toByteArray)}"
-      )
+        s"${account1.getAddress} allowance is ${BigInt(lrc_ba.allowance.toByteArray)}")
       Await.result(
         transferEth(account1.getAddress, "1000")(accounts.head),
-        timeout.duration
-      )
+        timeout.duration)
       info(s"${account1.getAddress} approve LRC")
       Await.result(approveLRCToDelegate("1000000")(account1), timeout.duration)
       info(s"${account1.getAddress} approve WETH")
@@ -63,28 +57,21 @@ class AllowanceEventExtractorSpec
         singleRequest(
           GetBalanceAndAllowances.Req(
             account1.getAddress,
-            tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
-          ),
-          getBaMethod
-        ).mapAs[GetBalanceAndAllowances.Res],
-        timeout.duration
-      )
+            tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)),
+          getBaMethod).mapAs[GetBalanceAndAllowances.Res],
+        timeout.duration)
       val lrc_ba2 = ba2.balanceAndAllowanceMap(LRC_TOKEN.address)
       val weth_ba2 = ba2.balanceAndAllowanceMap(WETH_TOKEN.address)
       info(
-        s"${account1.getAddress} LRC allowance is ${BigInt(lrc_ba2.allowance.toByteArray)}"
-      )
+        s"${account1.getAddress} LRC allowance is ${BigInt(lrc_ba2.allowance.toByteArray)}")
       info(
-        s"${account1.getAddress} WETH allowance is ${BigInt(weth_ba2.allowance.toByteArray)}"
-      )
+        s"${account1.getAddress} WETH allowance is ${BigInt(weth_ba2.allowance.toByteArray)}")
 
       (BigInt(lrc_ba2.allowance.toByteArray) - BigInt(
-        lrc_ba.allowance.toByteArray
-      )).toString() should be("1000000" + "0" * LRC_TOKEN.decimals)
+        lrc_ba.allowance.toByteArray)).toString() should be("1000000" + "0" * LRC_TOKEN.decimals)
 
       (BigInt(weth_ba2.allowance.toByteArray) - BigInt(
-        weth_ba.allowance.toByteArray
-      )).toString() should be("1000000" + "0" * WETH_TOKEN.decimals)
+        weth_ba.allowance.toByteArray)).toString() should be("1000000" + "0" * WETH_TOKEN.decimals)
     }
   }
 }

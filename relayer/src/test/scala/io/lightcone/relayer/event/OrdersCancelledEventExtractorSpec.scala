@@ -19,14 +19,14 @@ package io.lightcone.relayer.event
 import io.lightcone.relayer.support._
 import io.lightcone.proto._
 import io.lightcone.core._
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 
 import scala.concurrent.Await
 
 class OrdersCancelledEventExtractorSpec
-    extends CommonSpec
-    with EthereumEventExtractorSupport
-    with OrderGenerateSupport {
+  extends CommonSpec
+  with EthereumEventExtractorSupport
+  with OrderGenerateSupport {
 
   "ethereum event extractor actor test" must {
     "correctly extract order cancelled events from ethereum blocks" in {
@@ -38,15 +38,13 @@ class OrdersCancelledEventExtractorSpec
       Await.result(
         singleRequest(SubmitOrder.Req(Some(order1)), submit_order)
           .mapAs[SubmitOrder.Res],
-        timeout.duration
-      )
+        timeout.duration)
       Thread.sleep(1000)
 
       info("this order must be saved in db.")
       val getOrder = Await.result(
         dbModule.orderService.getOrder(order1.hash),
-        timeout.duration
-      )
+        timeout.duration)
       getOrder match {
         case Some(order) =>
           assert(order.sequenceId > 0)
@@ -56,16 +54,13 @@ class OrdersCancelledEventExtractorSpec
       info("cancel the order just submitted")
       Await.result(
         cancelOrders(Seq(order1.hash))(account0).mapAs[SendRawTransaction.Res],
-        timeout.duration
-      )
+        timeout.duration)
       Thread.sleep(2000)
       val getOrder_2 = Await.result(
         dbModule.orderService.getOrder(order1.hash),
-        timeout.duration
-      )
+        timeout.duration)
       getOrder_2.get.getState.status should be(
-        OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER
-      )
+        OrderStatus.STATUS_ONCHAIN_CANCELLED_BY_USER)
     }
   }
 }

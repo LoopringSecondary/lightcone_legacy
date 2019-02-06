@@ -23,7 +23,7 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.Logger
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule

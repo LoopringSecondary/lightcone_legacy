@@ -27,7 +27,7 @@ import io.lightcone.proto._
 import io.lightcone.core._
 import scala.concurrent.{ExecutionContext, Future}
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 
 // Owner: Yongfeng
 object OrderCutoffHandlerActor extends DeployedAsSingleton {

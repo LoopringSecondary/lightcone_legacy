@@ -22,7 +22,7 @@ import akka.util.Timeout
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.relayer.base.Lookup
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.ethereum.abi._
 import io.lightcone.core._

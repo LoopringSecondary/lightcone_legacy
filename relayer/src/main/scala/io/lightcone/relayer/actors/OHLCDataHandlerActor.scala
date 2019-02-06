@@ -25,7 +25,7 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.core.ErrorCode._
 import io.lightcone.proto._
 import io.lightcone.core._
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 
 import scala.concurrent.ExecutionContext
 

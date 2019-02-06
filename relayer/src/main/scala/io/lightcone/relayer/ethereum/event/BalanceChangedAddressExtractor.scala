@@ -25,7 +25,7 @@ import org.web3j.utils.Numeric
 import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.relayer.base.Lookup
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 import io.lightcone.core._
 
 import io.lightcone.proto.{TransferEvent => _, _}

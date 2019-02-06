@@ -23,7 +23,7 @@ import com.typesafe.config.Config
 import io.lightcone.lib._
 import io.lightcone.relayer.DatabaseConfigManager
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._

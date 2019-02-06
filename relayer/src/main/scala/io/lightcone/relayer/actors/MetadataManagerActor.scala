@@ -29,7 +29,7 @@ import io.lightcone.core._
 import io.lightcone.proto._
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 
 import scala.util._
 

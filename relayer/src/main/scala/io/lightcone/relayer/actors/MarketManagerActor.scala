@@ -25,7 +25,7 @@ import akka.serialization.Serialization
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 
 import io.lightcone.core._

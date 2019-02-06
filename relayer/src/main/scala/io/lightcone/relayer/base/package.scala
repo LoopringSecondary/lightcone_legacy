@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.relayer.base
+package io.lightcone.relayer
 
 import akka.actor._
 
@@ -27,7 +27,7 @@ import scala.util.{Failure, Success}
 
 // Owner: Daniel
 
-object safefuture {
+package object base {
 
   implicit class SafeFutureSupport[T](
       f: Future[T]

@@ -17,10 +17,10 @@
 package io.lightcone.relayer.jsonrpc
 
 import io.lightcone.relayer.ethereum.EthereumAccessActor
-import io.lightcone.relayer.support.{CommonSpec, EthereumSupport}
+import io.lightcone.relayer.support.{ CommonSpec, EthereumSupport }
 import io.lightcone.proto.GetBlockWithTxObjectByNumber
 import akka.pattern._
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 
 import scala.concurrent.Await
 
@@ -36,8 +36,7 @@ class BlockSpec extends CommonSpec with EthereumSupport {
         (ethereumAccessorActor ? GetBlockWithTxObjectByNumber.Req("0x20"))
           .mapAs[GetBlockWithTxObjectByNumber.Res]
           .map(_.result),
-        timeout.duration
-      )
+        timeout.duration)
       block.nonEmpty should be(true)
       println(block.get.hash)
     }

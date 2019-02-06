@@ -16,24 +16,24 @@
 
 package io.lightcone.relayer.actors
 
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.support._
 import io.lightcone.proto._
 import io.lightcone.core._
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 class RingSettlementSpec
-    extends CommonSpec
-    with EthereumSupport
-    with MetadataManagerSupport
-    with MarketManagerSupport
-    with MultiAccountManagerSupport
-    with OrderGenerateSupport
-    with OrderHandleSupport
-    with OrderbookManagerSupport
-    with JsonrpcSupport
-    with HttpSupport {
+  extends CommonSpec
+  with EthereumSupport
+  with MetadataManagerSupport
+  with MarketManagerSupport
+  with MultiAccountManagerSupport
+  with OrderGenerateSupport
+  with OrderHandleSupport
+  with OrderbookManagerSupport
+  with JsonrpcSupport
+  with HttpSupport {
 
   def orderHandler = actors.get(OrderPersistenceActor.name)
 
@@ -45,9 +45,7 @@ class RingSettlementSpec
       Seq(
         transferEth(account1.getAddress, "10")(accounts(0)),
         transferLRC(account1.getAddress, "30")(accounts(0)),
-        approveLRCToDelegate("30")(account1)
-      )
-    )
+        approveLRCToDelegate("30")(account1)))
 
     Await.result(f, timeout.duration)
     super.beforeAll()
@@ -63,16 +61,14 @@ class RingSettlementSpec
       val getOrderBook1 = GetOrderbook.Req(
         0,
         100,
-        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address))
-      )
+        Some(MarketPair(LRC_TOKEN.address, WETH_TOKEN.address)))
       val order1 = createRawOrder()(account1)
 
       val order2 = createRawOrder( // by LRC
         tokenS = WETH_TOKEN.address,
         tokenB = LRC_TOKEN.address,
         amountS = order1.amountB,
-        amountB = order1.amountS
-      )(account0)
+        amountB = order1.amountS)(account0)
 
       info("submit the first order.")
       val submitOrder1F =
@@ -82,8 +78,7 @@ class RingSettlementSpec
 
       val orderbookRes1 = expectOrderbookRes(
         getOrderBook1,
-        (orderbook: Orderbook) => orderbook.sells.nonEmpty
-      )
+        (orderbook: Orderbook) => orderbook.sells.nonEmpty)
       orderbookRes1 match {
         case Some(Orderbook(lastPrice, sells, buys)) =>
           info(s"sells:${sells}, buys:${buys}")
@@ -104,8 +99,7 @@ class RingSettlementSpec
 
       val orderbookRes2 = expectOrderbookRes(
         getOrderBook1,
-        (orderbook: Orderbook) => orderbook.sells.isEmpty
-      )
+        (orderbook: Orderbook) => orderbook.sells.isEmpty)
       info(s"${orderbookRes2}")
 
       Thread.sleep(1000) //必须等待才能获取正确的余额，？？？
@@ -113,14 +107,12 @@ class RingSettlementSpec
       val resOpt = expectBalanceRes(
         GetBalanceAndAllowances.Req(
           account1.getAddress,
-          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)
-        ),
+          tokens = Seq(LRC_TOKEN.address, WETH_TOKEN.address)),
         (res: GetBalanceAndAllowances.Res) => {
           val wethBalance: BigInt =
             res.balanceAndAllowanceMap(WETH_TOKEN.address).balance
           wethBalance > 0
-        }
-      )
+        })
       info(s"balance of account0 : ${resOpt.get}")
       val wethBalance: BigInt =
         resOpt.get.balanceAndAllowanceMap(WETH_TOKEN.address).balance

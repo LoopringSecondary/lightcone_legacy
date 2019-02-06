@@ -25,7 +25,7 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.core._
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.ethereum._
 import io.lightcone.lib._

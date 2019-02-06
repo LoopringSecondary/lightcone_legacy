@@ -18,7 +18,7 @@ package io.lightcone.relayer.actors
 
 import akka.actor.ActorRef
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.ethereum._
 import io.lightcone.proto._
 import io.lightcone.core._

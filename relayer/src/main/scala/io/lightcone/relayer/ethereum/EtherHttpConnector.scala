@@ -30,7 +30,7 @@ import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.native.JsonMethods.parse
 import io.lightcone.relayer.base.Lookup
-import io.lightcone.relayer.base.safefuture._
+import io.lightcone.relayer.base._
 import io.lightcone.relayer.actors.KeepAliveActor
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence.DatabaseModule
