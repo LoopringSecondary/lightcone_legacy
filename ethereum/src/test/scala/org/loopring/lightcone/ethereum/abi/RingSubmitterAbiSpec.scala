@@ -30,17 +30,17 @@ class RingSubmitterAbiSpec
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 
-  "encodeFEE_PERCENTAGE_BASEFunction" should "encode FEE_PERCENTAGE_BASEFunction Params to input" in {
-    val input = ringSubmitterAbi.fEE_PERCENTAGE_BASE.pack(
-      FEE_PERCENTAGE_BASEFunction.Params()
+  "encodeFeePercentageBaseFunction" should "encode FEE_PERCENTAGE_BASEFunction Params to input" in {
+    val input = ringSubmitterAbi.feePercentageBase.pack(
+      feePercentageBaseFunction.Params()
     )
     input should be("0xcd117ae6")
   }
 
-  "decodeFEE_PERCENTAGE_BASEFunctionResult" should "decode eth_call return data to FEE_PERCENTAGE_BASEFunction Result" in {
+  "decodeFeePercentageBaseFunctionResult" should "decode eth_call return data to FEE_PERCENTAGE_BASEFunction Result" in {
     val data =
       "0x00000000000000000000000000000000000000000000000000000000000003e8"
-    val result = ringSubmitterAbi.fEE_PERCENTAGE_BASE.unpackResult(data)
+    val result = ringSubmitterAbi.feePercentageBase.unpackResult(data)
 
     result.map { res =>
       res.base.toString() should be("1000")

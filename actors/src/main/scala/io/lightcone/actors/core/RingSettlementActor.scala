@@ -32,7 +32,6 @@ import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
-import io.lightcone.ethereum.data.{Transaction, _}
 import io.lightcone.ethereum.abi._
 import io.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 
@@ -50,7 +49,8 @@ class RingSettlementActor(
     val timeProvider: TimeProvider,
     val timeout: Timeout,
     val actors: Lookup[ActorRef],
-    val dbModule: DatabaseModule)
+    val dbModule: DatabaseModule,
+    val ringBatchGenerator: RingBatchGenerator)
     extends InitializationRetryActor
     with Stash
     with RepeatedJobActor {
@@ -60,8 +60,10 @@ class RingSettlementActor(
   //防止一个tx中的订单过多，超过 gaslimit
   private val maxRingsInOneTx =
     selfConfig.getInt("max-rings-in-one-tx")
+
   private val resendDelay =
     selfConfig.getInt("resend-delay_in_seconds")
+
   implicit val ringContext: RingBatchContext =
     RingBatchContext(
       lrcAddress = selfConfig.getString("lrc-address"),
@@ -71,8 +73,11 @@ class RingSettlementActor(
         Address(config.getString("transaction-origin")).toString,
       minerPrivateKey = config.getString("miner-privateKey")
     )
+
   implicit val credentials: Credentials =
     Credentials.create(config.getString("transaction-origin-private-key"))
+
+  implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
 
   val protocolAddress: String =
     config.getString("loopring_protocol.protocol-address")
@@ -146,11 +151,9 @@ class RingSettlementActor(
               )
             )
         })
-        ringBatch = Protocol2RingBatchGenerator.generateAndSignRingBatch(
-          rawOrders
-        )
-        input = Protocol2RingBatchGenerator.toSubmitableParamStr(ringBatch)
-        tx = Transaction(
+        ringBatch = ringBatchGenerator.generateAndSignRingBatch(rawOrders)
+        input = ringBatchGenerator.toSubmitableParamStr(ringBatch)
+        tx = Tx(
           inputData = ringSubmitterAbi.submitRing.pack(
             SubmitRingsFunction
               .Params(data = Numeric.hexStringToByteArray(input))
@@ -218,7 +221,7 @@ class RingSettlementActor(
         .map(_.txs)
       txs = ringTxs.map(
         (tx: SettlementTx) =>
-          Transaction(tx.data, tx.nonce.toInt, tx.gas, gasPriceRes, to = tx.to)
+          Tx(tx.data, tx.nonce.toInt, tx.gas, gasPriceRes, to = tx.to)
       )
       txResps <- Future.sequence(txs.map { tx =>
         val rawTx = getSignedTxData(tx)
@@ -233,7 +236,7 @@ class RingSettlementActor(
     }
 
   def saveTx(
-      tx: Transaction,
+      tx: Tx,
       res: SendRawTransaction.Res
     ): Future[PersistSettlementTx.Res] = {
     dbModule.settlementTxService.saveTx(

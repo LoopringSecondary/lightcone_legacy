@@ -24,8 +24,8 @@ import com.typesafe.config.ConfigFactory
 import io.lightcone.actors.core._
 import io.lightcone.actors.ethereum._
 import io.lightcone.ethereum.abi._
+import io.lightcone.ethereum._
 import io.lightcone.actors.validator._
-import io.lightcone.ethereum.data.Transaction
 
 import io.lightcone.ethereum.getSignedTxData
 import io.lightcone.proto.{Transaction => XTransaction, _}
@@ -105,8 +105,11 @@ trait EthereumSupport {
       )
   }
 
+  implicit val rbg: RingBatchGenerator = new Protocol2RingBatchGenerator
+
   actors.add(EthereumClientMonitor.name, EthereumClientMonitor.start)
   Thread.sleep(1000)
+
   actors.add(EthereumAccessActor.name, EthereumAccessActor.start)
 
   def transferEth(
@@ -116,7 +119,7 @@ trait EthereumSupport {
       implicit
       credentials: Credentials
     ) = {
-    val tx = Transaction(
+    val tx = Tx(
       inputData = "",
       nonce = 0,
       gasLimit = BigInt("210000"),
@@ -136,7 +139,7 @@ trait EthereumSupport {
       credentials: Credentials
     ) = {
     val input = erc20Abi.transfer.pack(TransferFunction.Parms(to, amount))
-    val tx = Transaction(
+    val tx = Tx(
       inputData = input,
       nonce = 0,
       gasLimit = BigInt("210000"),
@@ -186,7 +189,7 @@ trait EthereumSupport {
       credentials: Credentials
     ) = {
     val input = erc20Abi.approve.pack(ApproveFunction.Parms(spender, amount))
-    val tx = Transaction(
+    val tx = Tx(
       inputData = input,
       nonce = 0,
       gasLimit = BigInt("210000"),
@@ -236,12 +239,7 @@ trait EthereumSupport {
     )
   }
 
-  def sendTransaction(
-      txWithoutNonce: Transaction
-    )(
-      implicit
-      credentials: Credentials
-    ) = {
+  def sendTransaction(txWithoutNonce: Tx)(implicit credentials: Credentials) = {
     val getNonceF = (actors.get(EthereumAccessActor.name) ? GetNonce.Req(
       credentials.getAddress,
       "latest"
@@ -269,7 +267,7 @@ trait EthereumSupport {
         )
       )
     )
-    val tx = Transaction(
+    val tx = Tx(
       inputData = input,
       nonce = 0,
       gasLimit = BigInt("210000"),
@@ -285,7 +283,7 @@ trait EthereumSupport {
     val input = orderCancellerAbi.cancelAllOrders.pack(
       CancelAllOrdersFunction.Params(cutoff)
     )
-    val tx = Transaction(
+    val tx = Tx(
       inputData = input,
       nonce = 0,
       gasLimit = BigInt("210000"),
@@ -307,7 +305,7 @@ trait EthereumSupport {
     val input = orderCancellerAbi.cancelAllOrdersForTradingPair.pack(
       CancelAllOrdersForTradingPairFunction.Params(token1, token2, cutoff)
     )
-    val tx = Transaction(
+    val tx = Tx(
       inputData = input,
       nonce = 0,
       gasLimit = BigInt("210000"),

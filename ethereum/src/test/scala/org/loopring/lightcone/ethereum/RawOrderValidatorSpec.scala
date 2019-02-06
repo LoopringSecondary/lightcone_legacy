@@ -20,11 +20,10 @@ import scala.util.Properties
 import org.scalatest._
 import com.google.protobuf.ByteString
 import io.lightcone.core._
-import io.lightcone.proto._
 
 class RawOrderValidatorSpec extends FlatSpec with Matchers {
   import ErrorCode._
-  val validator: RawOrderValidator = RawOrderValidatorDefault
+  val validator: RawOrderValidator = new RawOrderValidatorImpl
 
   "calculateOrderHash" should "be able to get hash of an order" in {
     val wethAddress = "0x3B39f10dC98b3fcd86a6d4837ff2BdF410710B94"

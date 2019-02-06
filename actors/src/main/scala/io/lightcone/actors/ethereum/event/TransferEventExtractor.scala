@@ -18,7 +18,7 @@ package io.lightcone.actors.ethereum.event
 
 import com.google.inject.Inject
 import io.lightcone.ethereum.abi._
-import io.lightcone.ethereum.data._
+
 import io.lightcone.proto.{TransferEvent => PTransferEvent, _}
 import io.lightcone.core._
 import org.web3j.utils.Numeric

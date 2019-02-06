@@ -22,7 +22,7 @@ package io.lightcone.proto;
 import "common.proto";
 import "core.proto";
 import "actors_data.proto";
-import "ethereum.proto";
+import "actors_ethereum2.proto";
 
 /////////////////////////////////////////////////////////////////////
 // TWO WAY DATABASE-RELATED REQUEST-RESPONSES

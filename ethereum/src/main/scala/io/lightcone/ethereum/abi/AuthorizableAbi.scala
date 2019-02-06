@@ -16,7 +16,7 @@
 
 package io.lightcone.ethereum.abi
 
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -41,13 +41,13 @@ class AuthorizableAbi(abiJson: String) extends AbiWrap(abiJson) {
       topics: Array[String]
     ): Option[Any] = {
     try {
-      val event: SABI.Event = abi.findEvent(
+      val event: Abi.Event = abi.findEvent(
         searchBySignature(
           Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
         )
       )
       event match {
-        case _: SABI.Event =>
+        case _: Abi.Event =>
           event.name match {
             case AddressAuthorizedEvent.name =>
               addressAuthorizedEvent.unpack(data, topics)
@@ -68,13 +68,13 @@ class AuthorizableAbi(abiJson: String) extends AbiWrap(abiJson) {
 object AuthorizableAbi {
 
   val jsonStr: String =
-    Source.fromResource("version20/Authorizable.abi").mkString
+    Source.fromResource("version2.0/Authorizable.abi").mkString
   def apply(abiJson: String): AuthorizableAbi = new AuthorizableAbi(abiJson)
 
   def apply(): AuthorizableAbi = new AuthorizableAbi(jsonStr)
 }
 
-class IsAddressAuthorizedFunction(val entry: SABI.Function)
+class IsAddressAuthorizedFunction(val entry: Abi.Function)
     extends AbiFunction[
       IsAddressAuthorizedFunction.Params,
       IsAddressAuthorizedFunction.Result
@@ -88,11 +88,11 @@ object IsAddressAuthorizedFunction {
   case class Result(
       @(ContractAnnotation @field)("isAuthorized", 0) isAuthorized: Boolean)
 
-  def apply(entry: SABI.Function): IsAddressAuthorizedFunction =
+  def apply(entry: Abi.Function): IsAddressAuthorizedFunction =
     new IsAddressAuthorizedFunction(entry)
 }
 
-class AddressAuthorizedEvent(val entry: SABI.Event)
+class AddressAuthorizedEvent(val entry: Abi.Event)
     extends AbiEvent[AddressAuthorizedEvent.Result]
 
 object AddressAuthorizedEvent {
@@ -101,11 +101,11 @@ object AddressAuthorizedEvent {
 
   case class Result(@(ContractAnnotation @field)("addr", 0) addr: String)
 
-  def apply(entry: SABI.Event): AddressAuthorizedEvent =
+  def apply(entry: Abi.Event): AddressAuthorizedEvent =
     new AddressAuthorizedEvent(entry)
 }
 
-class AddressDeauthorizedEvent(val entry: SABI.Event)
+class AddressDeauthorizedEvent(val entry: Abi.Event)
     extends AbiEvent[AddressDeauthorizedEvent.Result]
 
 object AddressDeauthorizedEvent {
@@ -114,6 +114,6 @@ object AddressDeauthorizedEvent {
 
   case class Result(@(ContractAnnotation @field)("addr", 0) addr: String)
 
-  def apply(entry: SABI.Event): AddressDeauthorizedEvent =
+  def apply(entry: Abi.Event): AddressDeauthorizedEvent =
     new AddressDeauthorizedEvent(entry)
 }

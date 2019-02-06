@@ -73,12 +73,12 @@ trait OrderGenerateSupport {
         .getEntityId(owner)
     )
 
-    val hash = RawOrderValidatorDefault.calculateOrderHash(order)
+    val hash = new RawOrderValidatorImpl().calculateOrderHash(order)
     order
       .withHash(hash)
       .withParams(
         order.params.get.withSig(
-          Protocol2RingBatchGenerator
+          new Protocol2RingBatchGenerator()
             .signPrefixedMessage(
               hash,
               Numeric

@@ -16,7 +16,7 @@
 
 package io.lightcone.ethereum.abi
 
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -41,13 +41,13 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
       topics: Array[String]
     ): Option[Any] = {
     try {
-      val event: SABI.Event = abi.findEvent(
+      val event: Abi.Event = abi.findEvent(
         searchBySignature(
           Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
         )
       )
       event match {
-        case _: SABI.Event if event.name.equals(OrderSubmittedEvent.name) =>
+        case _: Abi.Event if event.name.equals(OrderSubmittedEvent.name) =>
           orderSubmittedEvent.unpack(data, topics)
         case _ => None
       }
@@ -64,7 +64,7 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
         )
       val func = abi.findFunction(searchBySignature(funSig))
       func match {
-        case _: SABI.Function =>
+        case _: Abi.Function =>
           func.name match {
             case OrderSubmittedFunction.name =>
               orderSubmitted.unpackInput(data)
@@ -84,7 +84,7 @@ class OrderBookAbi(abiJson: String) extends AbiWrap(abiJson) {
 object OrderBookAbi {
 
   val abiJsonStr: String =
-    Source.fromResource("version20/IOrderBook.abi").mkString
+    Source.fromResource("version2.0/IOrderBook.abi").mkString
   def apply(abiJson: String): OrderBookAbi = new OrderBookAbi(abiJson)
 
   def apply(): OrderBookAbi = new OrderBookAbi(abiJsonStr)
@@ -99,12 +99,12 @@ object OrderSubmittedFunction {
 
   val name = "orderSubmitted"
 
-  def apply(entry: SABI.Function): OrderSubmittedFunction =
+  def apply(entry: Abi.Function): OrderSubmittedFunction =
     new OrderSubmittedFunction(entry)
 
 }
 
-class OrderSubmittedFunction(val entry: SABI.Function)
+class OrderSubmittedFunction(val entry: Abi.Function)
     extends AbiFunction[
       OrderSubmittedFunction.Parms,
       OrderSubmittedFunction.Result
@@ -118,11 +118,11 @@ object SubmitOrderFunction {
 
   val name = "submitOrder"
 
-  def apply(entry: SABI.Function): SubmitOrderFunction =
+  def apply(entry: Abi.Function): SubmitOrderFunction =
     new SubmitOrderFunction(entry)
 }
 
-class SubmitOrderFunction(val entry: SABI.Function)
+class SubmitOrderFunction(val entry: Abi.Function)
     extends AbiFunction[SubmitOrderFunction.Parms, SubmitOrderFunction.Result]
 
 object OrderSubmittedEvent {
@@ -133,10 +133,10 @@ object OrderSubmittedEvent {
 
   val name = "OrderSubmitted"
 
-  def apply(entry: SABI.Event): OrderSubmittedEvent =
+  def apply(entry: Abi.Event): OrderSubmittedEvent =
     new OrderSubmittedEvent(entry)
 
 }
 
-class OrderSubmittedEvent(val entry: SABI.Event)
+class OrderSubmittedEvent(val entry: Abi.Event)
     extends AbiEvent[OrderSubmittedEvent.Result]

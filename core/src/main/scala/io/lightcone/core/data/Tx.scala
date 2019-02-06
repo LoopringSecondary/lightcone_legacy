@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package io.lightcone.ethereum.data
+package io.lightcone.core
 
-case class Transaction(
+case class Tx(
     inputData: String,
     nonce: Int,
     gasLimit: BigInt,

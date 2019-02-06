@@ -39,6 +39,7 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence.service._
 import io.lightcone.actors.ethereum.event._
+import io.lightcone.ethereum._
 import io.lightcone.proto._
 
 import scala.concurrent.duration._
@@ -117,6 +118,8 @@ class CoreModule(config: Config)
     bind[TokenValueEvaluator]
     bind[DustOrderEvaluator]
     bind[RingIncomeEvaluator].to[RingIncomeEvaluatorImpl]
+    bind[RawOrderValidator].to[RawOrderValidatorImpl]
+    bind[RingBatchGenerator].to[Protocol2RingBatchGenerator]
 
     // --- bind event extractors ---------------------
     bind[EventExtractor[AddressAllowanceUpdated]]

@@ -17,7 +17,7 @@
 package io.lightcone.ethereum.abi
 
 import scala.io.Source
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -28,8 +28,8 @@ class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
     abi.findFunction(searchByName(SubmitRingsFunction.name))
   )
 
-  val fEE_PERCENTAGE_BASE = FEE_PERCENTAGE_BASEFunction(
-    abi.findFunction(searchByName(FEE_PERCENTAGE_BASEFunction.name))
+  val feePercentageBase = feePercentageBaseFunction(
+    abi.findFunction(searchByName(feePercentageBaseFunction.name))
   )
 
   val ringMinedEvent = RingMinedEvent(
@@ -46,13 +46,13 @@ class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
     ): Option[Any] = {
 
     try {
-      val event: SABI.Event = abi.findEvent(
+      val event: Abi.Event = abi.findEvent(
         searchBySignature(
           Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
         )
       )
       event match {
-        case _: SABI.Event =>
+        case _: Abi.Event =>
           event.name match {
             case RingMinedEvent.name =>
               ringMinedEvent.unpack(data, topics)
@@ -75,7 +75,7 @@ class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
         )
       val func = abi.findFunction(searchBySignature(funSig))
       func match {
-        case _: SABI.Function =>
+        case _: Abi.Function =>
           func.name match {
             case SubmitRingsFunction.name =>
               submitRing.unpackInput(data)
@@ -94,13 +94,13 @@ class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {
 object RingSubmitterAbi {
 
   val jsonStr: String =
-    Source.fromResource("version20/IRingSubmitter.abi").mkString
+    Source.fromResource("version2.0/IRingSubmitter.abi").mkString
   def apply(abiJson: String): RingSubmitterAbi = new RingSubmitterAbi(abiJson)
 
   def apply(): RingSubmitterAbi = new RingSubmitterAbi(jsonStr)
 }
 
-class SubmitRingsFunction(val entry: SABI.Function)
+class SubmitRingsFunction(val entry: Abi.Function)
     extends AbiFunction[SubmitRingsFunction.Params, SubmitRingsFunction.Result]
 
 object SubmitRingsFunction {
@@ -109,29 +109,29 @@ object SubmitRingsFunction {
 
   case class Result()
 
-  def apply(entry: SABI.Function): SubmitRingsFunction =
+  def apply(entry: Abi.Function): SubmitRingsFunction =
     new SubmitRingsFunction(entry)
 }
 
-class FEE_PERCENTAGE_BASEFunction(val entry: SABI.Function)
+class feePercentageBaseFunction(val entry: Abi.Function)
     extends AbiFunction[
-      FEE_PERCENTAGE_BASEFunction.Params,
-      FEE_PERCENTAGE_BASEFunction.Result
+      feePercentageBaseFunction.Params,
+      feePercentageBaseFunction.Result
     ]
 
-object FEE_PERCENTAGE_BASEFunction {
+object feePercentageBaseFunction {
   val name = "FEE_PERCENTAGE_BASE"
 
   case class Params()
 
   case class Result(@(ContractAnnotation @field)("base", 0) base: BigInt)
 
-  def apply(entry: SABI.Function): FEE_PERCENTAGE_BASEFunction =
-    new FEE_PERCENTAGE_BASEFunction(entry)
+  def apply(entry: Abi.Function): feePercentageBaseFunction =
+    new feePercentageBaseFunction(entry)
 
 }
 
-class RingMinedEvent(val entry: SABI.Event)
+class RingMinedEvent(val entry: Abi.Event)
     extends AbiEvent[RingMinedEvent.Result]
 
 object RingMinedEvent {
@@ -144,11 +144,11 @@ object RingMinedEvent {
       @(ContractAnnotation @field)("_feeRecipient", 2) _feeRecipient: String,
       @(ContractAnnotation @field)("_fills", 3) _fills: String)
 
-  def apply(entry: SABI.Event): RingMinedEvent = new RingMinedEvent(entry)
+  def apply(entry: Abi.Event): RingMinedEvent = new RingMinedEvent(entry)
 
 }
 
-class InvalidRingEvent(val entry: SABI.Event)
+class InvalidRingEvent(val entry: Abi.Event)
     extends AbiEvent[InvalidRingEvent.Result]
 
 object InvalidRingEvent {
@@ -158,6 +158,6 @@ object InvalidRingEvent {
   case class Result(
       @(ContractAnnotation @field)("_ringHash", 0) _ringHash: String)
 
-  def apply(entry: SABI.Event): InvalidRingEvent = new InvalidRingEvent(entry)
+  def apply(entry: Abi.Event): InvalidRingEvent = new InvalidRingEvent(entry)
 
 }

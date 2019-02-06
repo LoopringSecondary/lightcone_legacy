@@ -27,7 +27,7 @@ import akka.util.Timeout
 import io.lightcone.actors.base.Lookup
 import io.lightcone.actors.base.safefuture._
 import io.lightcone.core._
-import io.lightcone.ethereum.data._
+
 import io.lightcone.proto.{TransferEvent => _, _}
 
 import scala.collection.mutable.ListBuffer

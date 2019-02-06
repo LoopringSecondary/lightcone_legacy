@@ -19,20 +19,13 @@ package io.lightcone
 import java.math.BigInteger
 
 import io.lightcone.core._
-import io.lightcone.ethereum.data.Transaction
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress
 
 package object ethereum {
-  implicit def int2BigInt(x: Int): BigInt = BigInt(x)
 
-  implicit def string2BigInt(x: String): BigInt = x match {
-    case n if n.length == 0      => BigInt(0)
-    case p if p.startsWith("0x") => BigInt(p, 16)
-    case _                       => BigInt(x, 16)
-  }
-
+  // TODO(dongw): move these methods to a class.
   def verifyEthereumSignature(
       hash: Array[Byte],
       r: Array[Byte],
@@ -72,12 +65,7 @@ package object ethereum {
     }
   }
 
-  def getSignedTxData(
-      tx: Transaction
-    )(
-      implicit
-      credentials: Credentials
-    ): String = {
+  def getSignedTxData(tx: Tx)(implicit credentials: Credentials): String = {
     val rawTransaction = RawTransaction
       .createTransaction(
         BigInteger.valueOf(tx.nonce),
@@ -98,5 +86,16 @@ package object ethereum {
       BigInt(Numeric.cleanHexPrefix(ad), 16) > 0
     case _ => false
   }
+
+  // ----- implicit methods -----
+  implicit def int2BigInt(x: Int): BigInt = BigInt(x)
+
+  implicit def string2BigInt(x: String): BigInt = x match {
+    case n if n.length == 0      => BigInt(0)
+    case p if p.startsWith("0x") => BigInt(p, 16)
+    case _                       => BigInt(x, 16)
+  }
+
+  // ----- implicit classes -----
 
 }

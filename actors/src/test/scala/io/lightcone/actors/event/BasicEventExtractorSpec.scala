@@ -18,6 +18,7 @@ package io.lightcone.actors.event
 
 import com.typesafe.config.ConfigFactory
 import io.lightcone.actors.ethereum.event._
+import io.lightcone.ethereum._
 import io.lightcone.actors.support._
 import io.lightcone.core._
 
@@ -95,6 +96,8 @@ class BasicEventExtractorSpec
         Await.result(cutOffExtractor.extract(blockData), timeout.duration)
 
       cutOffs.isEmpty should be(true)
+
+      implicit val orderValidator: RawOrderValidator = new RawOrderValidatorImpl
 
       val onChainOrderExtractor = new OnchainOrderExtractor()
 

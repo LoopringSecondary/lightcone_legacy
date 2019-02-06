@@ -22,23 +22,25 @@ import scala.reflect.ClassTag
 
 package object abi {
 
-  val erc20Abi = ERC20ABI()
-  val wethAbi = WETHABI()
+  val erc20Abi = ERC20Abi()
+  val wethAbi = WETHAbi()
   val tradeHistoryAbi = TradeHistoryAbi()
   val ringSubmitterAbi = RingSubmitterAbi()
   val loopringProtocolAbi = LoopringProtocolAbi()
   val burnRateTableAbi = BurnRateTableAbi()
 
-  private def getAnnotationValue[T](tree: Tree)(implicit ct: ClassTag[T]): T =
-    tree match {
-      case Literal(Constant(str: T)) => str
-    }
-
+  // TODO(hongyu): move this method to a class.
   private[abi] def getContractAnnontationIdx[T](
     )(
       implicit
       mf: Manifest[T]
     ): Seq[Int] = {
+
+    def getAnnotationValue[T](tree: Tree)(implicit ct: ClassTag[T]): T =
+      tree match {
+        case Literal(Constant(str: T)) => str
+      }
+
     val typ = typeOf[T]
     (typ.members.filter { m =>
       m.annotations.nonEmpty && m.annotations.exists(

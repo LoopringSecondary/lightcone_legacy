@@ -17,7 +17,7 @@
 package io.lightcone.ethereum.abi
 
 import scala.io.Source
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -62,7 +62,7 @@ class TradeHistoryAbi(abiJson: String) extends AbiWrap(abiJson) {
         )
       val func = abi.findFunction(searchBySignature(funSig))
       func match {
-        case _: SABI.Function =>
+        case _: Abi.Function =>
           func.name match {
             case FilledFunction.name =>
               filled.unpackInput(data)
@@ -80,13 +80,13 @@ class TradeHistoryAbi(abiJson: String) extends AbiWrap(abiJson) {
 object TradeHistoryAbi {
 
   val jsonStr: String =
-    Source.fromResource("version20/ITradeHistory.abi").mkString
+    Source.fromResource("version2.0/ITradeHistory.abi").mkString
   def apply(abiJson: String): TradeHistoryAbi = new TradeHistoryAbi(abiJson)
 
   def apply(): TradeHistoryAbi = new TradeHistoryAbi(jsonStr)
 }
 
-class FilledFunction(val entry: SABI.Function)
+class FilledFunction(val entry: Abi.Function)
     extends AbiFunction[FilledFunction.Params, FilledFunction.Result]
 
 object FilledFunction {
@@ -98,10 +98,10 @@ object FilledFunction {
 
   case class Result(@(ContractAnnotation @field)("amount", 0) amount: BigInt)
 
-  def apply(entry: SABI.Function): FilledFunction = new FilledFunction(entry)
+  def apply(entry: Abi.Function): FilledFunction = new FilledFunction(entry)
 }
 
-class CancelledFunction(val entry: SABI.Function)
+class CancelledFunction(val entry: Abi.Function)
     extends AbiFunction[CancelledFunction.Params, CancelledFunction.Result]
 
 object CancelledFunction {
@@ -113,11 +113,11 @@ object CancelledFunction {
   case class Result(
       @(ContractAnnotation @field)("cancelled", 0) cancelled: Boolean)
 
-  def apply(entry: SABI.Function): CancelledFunction =
+  def apply(entry: Abi.Function): CancelledFunction =
     new CancelledFunction(entry)
 }
 
-class CutoffForTradingPairBrokerFunction(val entry: SABI.Function)
+class CutoffForTradingPairBrokerFunction(val entry: Abi.Function)
     extends AbiFunction[
       CutoffForTradingPairBrokerFunction.Params,
       CutoffForTradingPairBrokerFunction.Result
@@ -133,11 +133,11 @@ object CutoffForTradingPairBrokerFunction {
 
   case class Result(@(ContractAnnotation @field)("cutOff", 0) cutOff: BigInt)
 
-  def apply(entry: SABI.Function): CutoffForTradingPairBrokerFunction =
+  def apply(entry: Abi.Function): CutoffForTradingPairBrokerFunction =
     new CutoffForTradingPairBrokerFunction(entry)
 }
 
-class CutoffForOwnerFunction(val entry: SABI.Function)
+class CutoffForOwnerFunction(val entry: Abi.Function)
     extends AbiFunction[
       CutoffForOwnerFunction.Params,
       CutoffForOwnerFunction.Result
@@ -152,11 +152,11 @@ object CutoffForOwnerFunction {
 
   case class Result(@(ContractAnnotation @field)("cutOff", 0) cutOff: BigInt)
 
-  def apply(entry: SABI.Function): CutoffForOwnerFunction =
+  def apply(entry: Abi.Function): CutoffForOwnerFunction =
     new CutoffForOwnerFunction(entry)
 }
 
-class CutoffForTradingPairOwnerFunction(val entry: SABI.Function)
+class CutoffForTradingPairOwnerFunction(val entry: Abi.Function)
     extends AbiFunction[
       CutoffForTradingPairOwnerFunction.Params,
       CutoffForTradingPairOwnerFunction.Result
@@ -172,11 +172,11 @@ object CutoffForTradingPairOwnerFunction {
 
   case class Result(@(ContractAnnotation @field)("cutOff", 0) cutOff: BigInt)
 
-  def apply(entry: SABI.Function): CutoffForTradingPairOwnerFunction =
+  def apply(entry: Abi.Function): CutoffForTradingPairOwnerFunction =
     new CutoffForTradingPairOwnerFunction(entry)
 }
 
-class CutoffForBrokerFunction(val entry: SABI.Function)
+class CutoffForBrokerFunction(val entry: Abi.Function)
     extends AbiFunction[
       CutoffForBrokerFunction.Params,
       CutoffForBrokerFunction.Result
@@ -189,6 +189,6 @@ object CutoffForBrokerFunction {
 
   case class Result(@(ContractAnnotation @field)("cutOff", 0) cutOff: BigInt)
 
-  def apply(entry: SABI.Function): CutoffForBrokerFunction =
+  def apply(entry: Abi.Function): CutoffForBrokerFunction =
     new CutoffForBrokerFunction(entry)
 }

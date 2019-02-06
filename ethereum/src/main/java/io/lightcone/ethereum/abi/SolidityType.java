@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.ethereum.solidity;
+package io.lightcone.ethereum.abi;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;

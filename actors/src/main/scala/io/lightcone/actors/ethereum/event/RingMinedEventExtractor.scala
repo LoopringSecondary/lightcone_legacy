@@ -19,19 +19,20 @@ package io.lightcone.actors.ethereum.event
 import com.google.inject.Inject
 import com.typesafe.config.Config
 import io.lightcone.ethereum.abi._
-import io.lightcone.ethereum.data._
+
 import io.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
 import org.web3j.utils.Numeric
 
 import scala.concurrent._
 import io.lightcone.core._
-import io.lightcone.ethereum.SimpleRingBatchDeserializer
+import io.lightcone.ethereum._
 
 class RingMinedEventExtractor @Inject()(
     implicit
     val ec: ExecutionContext,
     config: Config,
-    metadataManager: MetadataManager)
+    metadataManager: MetadataManager,
+    rawOrderValidator: RawOrderValidator)
     extends EventExtractor[PRingMinedEvent] {
 
   val ringSubmitterAddress =

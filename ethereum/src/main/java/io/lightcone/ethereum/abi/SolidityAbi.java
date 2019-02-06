@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.ethereum.solidity;
+package io.lightcone.ethereum.abi;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,9 +37,9 @@ import static org.apache.commons.lang3.ArrayUtils.subarray;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.StringUtils.stripEnd;
 
-import static io.lightcone.ethereum.solidity.SolidityHashUtil.sha3;
-import static io.lightcone.ethereum.solidity.SolidityType.IntType.decodeInt;
-import static io.lightcone.ethereum.solidity.SolidityType.IntType.encodeInt;
+import static io.lightcone.ethereum.abi.SolidityHashUtil.sha3;
+import static io.lightcone.ethereum.abi.SolidityType.IntType.decodeInt;
+import static io.lightcone.ethereum.abi.SolidityType.IntType.encodeInt;
 
 @SuppressWarnings("unchecked")
 public class SolidityAbi extends ArrayList<SolidityAbi.Entry> {

@@ -19,7 +19,7 @@ package io.lightcone.ethereum.abi
 import java.util
 
 import org.apache.commons.collections4.Predicate
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
 
 import scala.annotation.StaticAnnotation
@@ -32,22 +32,22 @@ case class ContractAnnotation(
     extends StaticAnnotation
 
 trait AbiFunction[P, R] {
-  val entry: SABI.Function
+  val entry: Abi.Function
 
   //与原函数区分，使用pack与unpack
-  def pack(t: P)(implicit mf: Manifest[P]): String = {
+  def pack(t: P)(implicit m: Manifest[P]): String = {
     val inputs = Serialization.serialize(t)
     Numeric.toHexString(entry.encode(inputs: _*))
   }
 
-  def unpackInput(data: String)(implicit mf: Manifest[P]): Option[P] = {
+  def unpackInput(data: String)(implicit m: Manifest[P]): Option[P] = {
     val dataBytes = Numeric.hexStringToByteArray(data)
     val list = entry.decode(dataBytes).asScala.toList
     if (list.isEmpty) None
     else Some(Deserialization.deserialize[P](list))
   }
 
-  def unpackResult(data: String)(implicit mf: Manifest[R]): Option[R] = {
+  def unpackResult(data: String)(implicit m: Manifest[R]): Option[R] = {
     val dataBytes = Numeric.hexStringToByteArray(data)
     val list = entry.decodeResult(dataBytes).asScala.toList
     if (list.isEmpty) None
@@ -56,14 +56,14 @@ trait AbiFunction[P, R] {
 }
 
 trait AbiEvent[R] {
-  val entry: SABI.Event
+  val entry: Abi.Event
 
   def unpack(
       data: String,
       topics: Array[String]
     )(
       implicit
-      mf: Manifest[R]
+      m: Manifest[R]
     ): Option[R] = {
     val dataBytes = Numeric.hexStringToByteArray(data)
     val topicBytes = topics.map(Numeric.hexStringToByteArray)
@@ -76,16 +76,16 @@ trait AbiEvent[R] {
 // TODO:最好是再彻底重写Abi,不再使用SolidityAbi
 abstract class AbiWrap(abiJson: String) {
 
-  protected var abi = SABI.fromJson(abiJson)
+  protected val abi = Abi.fromJson(abiJson)
 
   def getTransactionHeader(txInput: String): BigInt =
     Numeric.decodeQuantity(txInput)
 
-  private[abi] def searchByName[T <: SABI.Entry](name: String): Predicate[T] =
+  private[abi] def searchByName[T <: Abi.Entry](name: String): Predicate[T] =
     x => x.name.equals(name)
 
   // TODO: test 字节数组的相等
-  private[abi] def searchBySignature[T <: SABI.Entry](
+  private[abi] def searchBySignature[T <: Abi.Entry](
       signature: Array[Byte]
     ): Predicate[T] =
     x => util.Arrays.equals(x.encodeSignature(), signature)

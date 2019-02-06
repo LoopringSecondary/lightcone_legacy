@@ -21,7 +21,6 @@ import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress
 import com.google.protobuf.ByteString
 
-import io.lightcone.proto._
 import io.lightcone.core._
 
 trait RingBatchGenerator {
@@ -30,6 +29,7 @@ trait RingBatchGenerator {
       orders: Seq[Seq[RawOrder]]
     )(
       implicit
+      rawOrderValidator: RawOrderValidator,
       context: RingBatchContext
     ): RingBatch
 
@@ -41,7 +41,7 @@ trait RingBatchGenerator {
     ): String
 }
 
-object Protocol2RingBatchGenerator extends RingBatchGenerator {
+class Protocol2RingBatchGenerator extends RingBatchGenerator {
 
   val OrderVersion = 0
   val SerializationVersion = 0
@@ -50,14 +50,14 @@ object Protocol2RingBatchGenerator extends RingBatchGenerator {
       orders: Seq[Seq[RawOrder]]
     )(
       implicit
+      rawOrderValidator: RawOrderValidator,
       context: RingBatchContext
     ): RingBatch = {
-    val orderValidator = RawOrderValidatorDefault
 
     val ordersWithHash = orders.map(
       ordersOfRing =>
         ordersOfRing.map(order => {
-          val hash = orderValidator.calculateOrderHash(order)
+          val hash = rawOrderValidator.calculateOrderHash(order)
           order.copy(hash = hash)
         })
     )

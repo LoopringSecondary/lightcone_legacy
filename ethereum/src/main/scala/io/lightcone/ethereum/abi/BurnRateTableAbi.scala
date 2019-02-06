@@ -16,7 +16,7 @@
 
 package io.lightcone.ethereum.abi
 
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -28,8 +28,8 @@ class BurnRateTableAbi(abiJson: String) extends AbiWrap(abiJson) {
     abi.findFunction(searchByName(GetBurnRateFunction.name))
   )
 
-  val burn_BASE_PERCENTAGE = BURN_BASE_PERCENTAGEFunction(
-    abi.findFunction(searchByName(BURN_BASE_PERCENTAGEFunction.name))
+  val burn_BASE_PERCENTAGE = BurnBasePercentageFunction(
+    abi.findFunction(searchByName(BurnBasePercentageFunction.name))
   )
 
   val tokenTierUpgradedEvent = TokenTierUpgradedEvent(
@@ -41,13 +41,13 @@ class BurnRateTableAbi(abiJson: String) extends AbiWrap(abiJson) {
       topics: Array[String]
     ): Option[Any] = {
     try {
-      val event: SABI.Event = abi.findEvent(
+      val event: Abi.Event = abi.findEvent(
         searchBySignature(
           Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
         )
       )
       event match {
-        case _: SABI.Event =>
+        case _: Abi.Event =>
           event.name match {
             case TokenTierUpgradedEvent.name =>
               tokenTierUpgradedEvent.unpack(data, topics)
@@ -67,13 +67,13 @@ class BurnRateTableAbi(abiJson: String) extends AbiWrap(abiJson) {
 object BurnRateTableAbi {
 
   val jsonStr: String =
-    Source.fromResource("version20/IBurnRateTable.abi").mkString
+    Source.fromResource("version2.0/IBurnRateTable.abi").mkString
   def apply(abiJson: String): BurnRateTableAbi = new BurnRateTableAbi(abiJson)
 
   def apply(): BurnRateTableAbi = new BurnRateTableAbi(jsonStr)
 }
 
-class GetBurnRateFunction(val entry: SABI.Function)
+class GetBurnRateFunction(val entry: Abi.Function)
     extends AbiFunction[GetBurnRateFunction.Params, GetBurnRateFunction.Result]
 
 object GetBurnRateFunction {
@@ -85,17 +85,17 @@ object GetBurnRateFunction {
   case class Result(
       @(ContractAnnotation @field)("burnRate", 0) burnRate: BigInt)
 
-  def apply(entry: SABI.Function): GetBurnRateFunction =
+  def apply(entry: Abi.Function): GetBurnRateFunction =
     new GetBurnRateFunction(entry)
 }
 
-class BURN_BASE_PERCENTAGEFunction(val entry: SABI.Function)
+class BurnBasePercentageFunction(val entry: Abi.Function)
     extends AbiFunction[
-      BURN_BASE_PERCENTAGEFunction.Params,
-      BURN_BASE_PERCENTAGEFunction.Result
+      BurnBasePercentageFunction.Params,
+      BurnBasePercentageFunction.Result
     ]
 
-object BURN_BASE_PERCENTAGEFunction {
+object BurnBasePercentageFunction {
 
   val name = "BURN_BASE_PERCENTAGE"
 
@@ -103,11 +103,11 @@ object BURN_BASE_PERCENTAGEFunction {
 
   case class Result(@(ContractAnnotation @field)("base", 0) burnRate: BigInt)
 
-  def apply(entry: SABI.Function): BURN_BASE_PERCENTAGEFunction =
-    new BURN_BASE_PERCENTAGEFunction(entry)
+  def apply(entry: Abi.Function): BurnBasePercentageFunction =
+    new BurnBasePercentageFunction(entry)
 }
 
-class TokenTierUpgradedEvent(val entry: SABI.Event)
+class TokenTierUpgradedEvent(val entry: Abi.Event)
     extends AbiEvent[TokenTierUpgradedEvent.Result]
 
 object TokenTierUpgradedEvent {
@@ -118,6 +118,6 @@ object TokenTierUpgradedEvent {
       @(ContractAnnotation @field)("add", 0) add: String,
       @(ContractAnnotation @field)("tier", 1) tier: BigInt)
 
-  def apply(entry: SABI.Event): TokenTierUpgradedEvent =
+  def apply(entry: Abi.Event): TokenTierUpgradedEvent =
     new TokenTierUpgradedEvent(entry)
 }
