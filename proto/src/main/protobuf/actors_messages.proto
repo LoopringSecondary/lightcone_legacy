@@ -21,7 +21,7 @@ package io.lightcone.proto;
 
 import "actors_data.proto";
 import "core.proto";
-import "ethereum.proto";
+import "actors_ethereum2.proto";
 
 /////////////////////////////////////////////////////////////////////
 // ONE WAY MESSAGES

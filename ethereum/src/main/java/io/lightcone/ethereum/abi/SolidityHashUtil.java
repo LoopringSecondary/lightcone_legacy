@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.lightcone.ethereum.solidity;
+package io.lightcone.ethereum.abi;
 
 import org.ethereum.crypto.jce.SpongyCastleProvider;
 import org.ethereum.util.RLP;

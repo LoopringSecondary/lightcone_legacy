@@ -19,7 +19,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 package io.lightcone.proto;
 
-import "ethereum.proto";
+import "actors_ethereum2.proto";
 // import "core.proto";
 
 /////////////////////////////////////////////////////////////////////

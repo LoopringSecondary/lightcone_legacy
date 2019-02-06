@@ -20,9 +20,7 @@ option java_multiple_files = true;
 package io.lightcone.proto;
 
 import "core.proto";
-
-
-
+import "ethereum.proto";
 
 message OrderState {
     bytes amount_s          = 1;
@@ -78,33 +76,6 @@ message EthereumProxySettings {
     int32 check_interval_seconds    = 2;
     float healthy_threshold         = 3;
     repeated Node nodes             = 4;
-}
-
-
-
-
-
-message RingBatch {
-    message Ring {
-        repeated int32 order_indexes = 1;
-    }
-
-    string fee_recipient            = 1;
-    string miner                    = 2;
-    string sig                      = 3;
-    repeated Ring rings             = 4;
-    repeated io.lightcone.core.RawOrder  orders        = 5;
-    io.lightcone.core.SigningAlgorithm sign_algorithm = 6;
-    string hash                     = 7;
-    string transaction_origin       = 8;
-}
-
-message RingBatchContext {
-    string fee_recipient            = 1;
-    string miner                    = 2;
-    string transaction_origin       = 3;
-    string miner_private_key        = 4;
-    string lrc_address              = 5;
 }
 
 message Ring {

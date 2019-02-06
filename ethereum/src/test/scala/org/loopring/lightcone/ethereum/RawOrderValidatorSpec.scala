@@ -20,7 +20,6 @@ import scala.util.Properties
 import org.scalatest._
 import com.google.protobuf.ByteString
 import io.lightcone.core._
-import io.lightcone.proto._
 
 class RawOrderValidatorSpec extends FlatSpec with Matchers {
   import ErrorCode._

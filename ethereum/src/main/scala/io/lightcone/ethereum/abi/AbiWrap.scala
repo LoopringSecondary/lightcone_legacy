@@ -19,7 +19,7 @@ package io.lightcone.ethereum.abi
 import java.util
 
 import org.apache.commons.collections4.Predicate
-import org.ethereum.solidity.{Abi => Abi}
+import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
 
 import scala.annotation.StaticAnnotation

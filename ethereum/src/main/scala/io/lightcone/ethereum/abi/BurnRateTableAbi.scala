@@ -16,7 +16,7 @@
 
 package io.lightcone.ethereum.abi
 
-import org.ethereum.solidity.{Abi => SABI}
+import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
 
 import scala.annotation.meta.field
@@ -41,13 +41,13 @@ class BurnRateTableAbi(abiJson: String) extends AbiWrap(abiJson) {
       topics: Array[String]
     ): Option[Any] = {
     try {
-      val event: SABI.Event = abi.findEvent(
+      val event: Abi.Event = abi.findEvent(
         searchBySignature(
           Numeric.hexStringToByteArray(topics.headOption.getOrElse(""))
         )
       )
       event match {
-        case _: SABI.Event =>
+        case _: Abi.Event =>
           event.name match {
             case TokenTierUpgradedEvent.name =>
               tokenTierUpgradedEvent.unpack(data, topics)
@@ -73,7 +73,7 @@ object BurnRateTableAbi {
   def apply(): BurnRateTableAbi = new BurnRateTableAbi(jsonStr)
 }
 
-class GetBurnRateFunction(val entry: SABI.Function)
+class GetBurnRateFunction(val entry: Abi.Function)
     extends AbiFunction[GetBurnRateFunction.Params, GetBurnRateFunction.Result]
 
 object GetBurnRateFunction {
@@ -85,11 +85,11 @@ object GetBurnRateFunction {
   case class Result(
       @(ContractAnnotation @field)("burnRate", 0) burnRate: BigInt)
 
-  def apply(entry: SABI.Function): GetBurnRateFunction =
+  def apply(entry: Abi.Function): GetBurnRateFunction =
     new GetBurnRateFunction(entry)
 }
 
-class BurnBasePercentageFunction(val entry: SABI.Function)
+class BurnBasePercentageFunction(val entry: Abi.Function)
     extends AbiFunction[
       BurnBasePercentageFunction.Params,
       BurnBasePercentageFunction.Result
@@ -103,11 +103,11 @@ object BurnBasePercentageFunction {
 
   case class Result(@(ContractAnnotation @field)("base", 0) burnRate: BigInt)
 
-  def apply(entry: SABI.Function): BurnBasePercentageFunction =
+  def apply(entry: Abi.Function): BurnBasePercentageFunction =
     new BurnBasePercentageFunction(entry)
 }
 
-class TokenTierUpgradedEvent(val entry: SABI.Event)
+class TokenTierUpgradedEvent(val entry: Abi.Event)
     extends AbiEvent[TokenTierUpgradedEvent.Result]
 
 object TokenTierUpgradedEvent {
@@ -118,6 +118,6 @@ object TokenTierUpgradedEvent {
       @(ContractAnnotation @field)("add", 0) add: String,
       @(ContractAnnotation @field)("tier", 1) tier: BigInt)
 
-  def apply(entry: SABI.Event): TokenTierUpgradedEvent =
+  def apply(entry: Abi.Event): TokenTierUpgradedEvent =
     new TokenTierUpgradedEvent(entry)
 }

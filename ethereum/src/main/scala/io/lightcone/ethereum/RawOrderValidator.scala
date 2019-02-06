@@ -20,9 +20,7 @@ import org.web3j.crypto.Hash
 import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.utils.Numeric
 import com.google.protobuf.ByteString
-import io.lightcone.proto._
 import io.lightcone.core._
-import io.lightcone.ethereum._
 
 trait RawOrderValidator {
   def calculateOrderHash(order: RawOrder): String
