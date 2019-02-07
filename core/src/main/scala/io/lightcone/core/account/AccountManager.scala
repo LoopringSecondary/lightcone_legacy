@@ -28,9 +28,9 @@ object AccountManager {
 
 trait AccountManager {
   def hasTokenManager(token: String): Boolean
-  def addTokenManager(tm: AccountTokenManager): AccountTokenManager
-  def getTokenManager(token: String): AccountTokenManager
-  def getOrUpdateTokenManager(tm: AccountTokenManager): AccountTokenManager
+  def addTokenManager(tm: SpendableManager): SpendableManager
+  def getTokenManager(token: String): SpendableManager
+  def getOrUpdateTokenManager(tm: SpendableManager): SpendableManager
 
   def submitOrder(order: Matchable): Boolean
 

@@ -18,14 +18,14 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-class AccountTokenManagerImpl(
+class SpendableManagerImpl(
     val token: String,
     val maxNumOrders: Int = 1000
   )(
     implicit
     orderPool: AccountOrderPool,
     dustEvaluator: DustOrderEvaluator)
-    extends AccountTokenManager
+    extends SpendableManager
     with Logging {
 
   case class Reservation(
