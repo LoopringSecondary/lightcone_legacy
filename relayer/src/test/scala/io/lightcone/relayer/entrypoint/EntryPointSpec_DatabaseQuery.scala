@@ -21,8 +21,8 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.actors.RingAndTradePersistenceActor
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
-import io.lightcone.proto.Trade.Fee
-import io.lightcone.proto._
+import io.lightcone.relayer.data.Trade.Fee
+import io.lightcone.relayer.data._
 import io.lightcone.persistence._
 import io.lightcone.core._
 import scala.concurrent.Await

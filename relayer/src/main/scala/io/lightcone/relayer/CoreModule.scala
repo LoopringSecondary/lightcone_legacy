@@ -37,7 +37,7 @@ import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
 import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}

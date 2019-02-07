@@ -17,8 +17,6 @@
 package io.lightcone.core
 import io.lightcone.core.implicits._
 
-/// import io.lightcone.proto._
-
 // import io.lightcone.core.CommonSpec
 import org.scalatest._
 

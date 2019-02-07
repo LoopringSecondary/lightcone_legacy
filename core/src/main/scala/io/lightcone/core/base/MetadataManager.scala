@@ -18,7 +18,7 @@ package io.lightcone.core
 
 import com.google.inject.Inject
 import com.typesafe.config.Config
-import io.lightcone.proto.TokenBurnRateChangedEvent._
+import io.lightcone.relayer.data.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
 import scala.collection.JavaConverters._
 

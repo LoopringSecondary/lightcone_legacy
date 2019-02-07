@@ -27,7 +27,7 @@ import io.lightcone.relayer.ethereum._
 import io.lightcone.ethereum.abi._
 import io.lightcone.core._
 
-import io.lightcone.proto.{TransferEvent => _, _}
+import io.lightcone.relayer.data.{TransferEvent => _, _}
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable.ListBuffer

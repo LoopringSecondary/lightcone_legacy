@@ -20,7 +20,7 @@ import akka.actor._
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
-import io.lightcone.proto.Notify
+import io.lightcone.relayer.data.Notify
 
 abstract class InitializationRetryActor
     extends Actor

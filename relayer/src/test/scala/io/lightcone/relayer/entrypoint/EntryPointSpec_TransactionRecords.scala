@@ -20,8 +20,8 @@ import com.google.protobuf.ByteString
 import io.lightcone.relayer.data._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator.TransactionRecordMessageValidator
-import io.lightcone.proto.TransactionRecord.EventData
-import io.lightcone.proto._
+import io.lightcone.relayer.data.TransactionRecord.EventData
+import io.lightcone.relayer.data._
 import io.lightcone.persistence._
 import io.lightcone.core._
 import io.lightcone.relayer.base._

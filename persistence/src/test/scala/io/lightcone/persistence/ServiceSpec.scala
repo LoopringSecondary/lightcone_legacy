@@ -21,7 +21,7 @@ import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
 import io.lightcone.lib._
 import io.lightcone.core._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric

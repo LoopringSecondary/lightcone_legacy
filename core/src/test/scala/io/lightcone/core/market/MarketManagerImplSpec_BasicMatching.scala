@@ -17,7 +17,6 @@
 package io.lightcone.core
 import io.lightcone.core.implicits._
 import io.lightcone.core.implicits._
-/// import io.lightcone.proto._
 
 import OrderStatus._
 import ErrorCode._

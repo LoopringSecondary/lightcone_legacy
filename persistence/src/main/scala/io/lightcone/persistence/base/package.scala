@@ -19,7 +19,7 @@ package io.lightcone.persistence
 import slick.jdbc.MySQLProfile.api._
 import scala.reflect.ClassTag
 import com.google.protobuf.ByteString
-import io.lightcone.proto.{Ring, TransactionRecord}
+import io.lightcone.relayer.data.{Ring, TransactionRecord}
 
 package object base {
 

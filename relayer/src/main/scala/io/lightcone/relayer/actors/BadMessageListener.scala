@@ -21,7 +21,7 @@ import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.core.ErrorCode._
 

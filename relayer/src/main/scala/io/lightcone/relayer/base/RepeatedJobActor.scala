@@ -19,7 +19,7 @@ package io.lightcone.relayer.base
 import akka.actor._
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import io.lightcone.proto.Notify
+import io.lightcone.relayer.data.Notify
 
 // Owner: Hongyu
 final case class Job(

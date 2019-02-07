@@ -18,7 +18,7 @@ package io.lightcone.relayer.support
 
 import java.util.concurrent.TimeUnit
 import io.lightcone.relayer.actors._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables

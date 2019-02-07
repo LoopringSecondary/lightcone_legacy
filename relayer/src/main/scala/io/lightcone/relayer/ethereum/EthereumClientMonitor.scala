@@ -25,7 +25,7 @@ import com.typesafe.config.Config
 
 import io.lightcone.relayer.base._
 import io.lightcone.lib.TimeProvider
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.ethereum._
 import org.web3j.utils.Numeric

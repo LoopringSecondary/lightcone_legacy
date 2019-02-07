@@ -19,8 +19,6 @@ import io.lightcone.core.implicits._
 
 // import io.lightcone.core.OrderAwareSpec
 
-/// import io.lightcone.proto._
-
 import org.scalatest._
 
 class AccountManagerImplSpec_Initialization extends OrderAwareSpec {

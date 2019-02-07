@@ -28,7 +28,7 @@ import io.lightcone.relayer.base.Lookup
 import io.lightcone.relayer.base._
 import io.lightcone.core._
 
-import io.lightcone.proto.{TransferEvent => _, _}
+import io.lightcone.relayer.data.{TransferEvent => _, _}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent._

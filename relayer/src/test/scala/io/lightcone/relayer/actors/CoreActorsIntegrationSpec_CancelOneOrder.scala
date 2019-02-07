@@ -19,7 +19,7 @@ package io.lightcone.relayer.actors
 import akka.pattern._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator.MultiAccountManagerMessageValidator
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 
 import scala.concurrent.Await

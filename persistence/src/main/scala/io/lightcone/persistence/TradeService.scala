@@ -17,7 +17,7 @@
 package io.lightcone.persistence
 
 import io.lightcone.core._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import scala.concurrent.Future
 
 trait TradeService {

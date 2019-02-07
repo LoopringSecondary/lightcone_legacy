@@ -18,13 +18,14 @@ package io.lightcone.relayer.event
 
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.support._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 import io.lightcone.relayer.data._
 import scala.concurrent.Await
 
+// TODO(yadong): this test fail if you run `sbt relayer/test` but will success if you run it alone.
 class RingMinedAndOrderFilledEventExtractorSpec
     extends CommonSpec
     with EthereumEventExtractorSupport

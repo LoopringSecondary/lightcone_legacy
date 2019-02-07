@@ -18,8 +18,6 @@ package io.lightcone.core
 
 import io.lightcone.lib._
 
-/// import io.lightcone.proto._
-
 import org.web3j.utils.Numeric
 
 import scala.collection.mutable.Map

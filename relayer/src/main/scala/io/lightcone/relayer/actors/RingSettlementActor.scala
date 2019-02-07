@@ -33,7 +33,7 @@ import io.lightcone.persistence.DatabaseModule
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 
-import io.lightcone.proto.{RingMinedEvent => PRingMinedEvent, _}
+import io.lightcone.relayer.data.{RingMinedEvent => PRingMinedEvent, _}
 
 import scala.collection.mutable.{ListBuffer, Queue}
 import scala.concurrent._

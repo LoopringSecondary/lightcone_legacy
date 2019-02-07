@@ -19,8 +19,8 @@ syntax = "proto3";
 option java_multiple_files = true;
 package io.lightcone.persistence;
 
-import "core.proto";
-import "ethereum.proto";
+// import "core.proto";
+// import "ethereum.proto";
 
 enum SortingType {
     ASC  = 0;

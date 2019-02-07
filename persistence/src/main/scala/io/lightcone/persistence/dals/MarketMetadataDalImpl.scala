@@ -19,7 +19,7 @@ package io.lightcone.persistence.dals
 import com.google.inject.name.Named
 
 import io.lightcone.core._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._

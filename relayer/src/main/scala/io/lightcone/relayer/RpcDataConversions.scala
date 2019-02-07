@@ -16,7 +16,7 @@
 
 package io.lightcone.relayer
 
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 
 object RpcDataConversions {

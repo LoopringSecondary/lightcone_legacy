@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.proto._
-
 trait OrderbookManager {
   def processUpdate(update: Orderbook.Update): Unit
 

@@ -35,7 +35,7 @@ import io.lightcone.relayer.validator._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.proto.{JsonRpc, Notify}
+import io.lightcone.relayer.data.{JsonRpc, Notify}
 import org.slf4s.Logging
 
 import scala.concurrent.duration._

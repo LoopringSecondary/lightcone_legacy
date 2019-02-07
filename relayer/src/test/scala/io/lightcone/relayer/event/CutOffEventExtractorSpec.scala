@@ -17,11 +17,12 @@
 package io.lightcone.relayer.event
 
 import io.lightcone.relayer.support._
-import io.lightcone.proto.SubmitOrder
+import io.lightcone.relayer.data.SubmitOrder
 import io.lightcone.relayer.base._
 
 import scala.concurrent.Await
 
+// TODO(yadong): this test fail if you run `sbt relayer/test` but will success if you run it alone.
 class CutOffEventExtractorSpec
     extends CommonSpec
     with EthereumEventExtractorSupport

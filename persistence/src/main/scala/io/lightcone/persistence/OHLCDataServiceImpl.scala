@@ -22,7 +22,7 @@ import io.lightcone.core._
 import scala.concurrent.{ExecutionContext, Future}
 
 // TODO(yongfeng): remove this dependency
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 
 class OHLCDataServiceImpl @Inject()(
     implicit

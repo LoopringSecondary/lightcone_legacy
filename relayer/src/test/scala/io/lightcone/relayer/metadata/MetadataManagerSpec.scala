@@ -23,7 +23,7 @@ import io.lightcone.core._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator.MetadataManagerValidator
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import akka.pattern._

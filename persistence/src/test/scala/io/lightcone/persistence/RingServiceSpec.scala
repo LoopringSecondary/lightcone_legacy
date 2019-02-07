@@ -18,9 +18,9 @@ package io.lightcone.persistence
 
 import com.google.protobuf.ByteString
 import io.lightcone.persistence.dals._
-import io.lightcone.proto.GetRings._
+import io.lightcone.relayer.data.GetRings._
 import io.lightcone.core._
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import scala.concurrent._
 import scala.concurrent.duration._
 

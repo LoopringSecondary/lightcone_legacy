@@ -17,7 +17,7 @@
 package io.lightcone.relayer
 
 import io.lightcone.relayer.jsonrpc.JsonRpcModule
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 
 // Owner: Hongyu

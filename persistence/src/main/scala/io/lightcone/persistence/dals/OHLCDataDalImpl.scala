@@ -24,7 +24,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.google.protobuf.any.Any
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}

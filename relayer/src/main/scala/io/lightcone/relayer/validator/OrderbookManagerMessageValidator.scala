@@ -19,7 +19,7 @@ package io.lightcone.relayer.validator
 import com.typesafe.config.Config
 import io.lightcone.relayer.data._
 import io.lightcone.core.MetadataManager
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 
 import scala.concurrent._

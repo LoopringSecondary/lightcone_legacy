@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.proto._
-
 import spire.math.Rational
 
 class Token(val meta: TokenMetadata) {

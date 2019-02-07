@@ -28,7 +28,7 @@ import io.lightcone.ethereum._
 import io.lightcone.relayer.validator._
 
 import io.lightcone.ethereum.getSignedTxData
-import io.lightcone.proto.{Transaction => XTransaction, _}
+import io.lightcone.relayer.data.{Transaction => XTransaction, _}
 import io.lightcone.core._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables

@@ -22,7 +22,7 @@ import io.lightcone.core._
 import scala.concurrent._
 
 // TODO(yongfeng): remove this dependency
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 
 trait OrderService {
   // Save order to database, if the order already exist, return an error code.

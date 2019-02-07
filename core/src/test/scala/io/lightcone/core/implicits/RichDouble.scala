@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.proto._
-
 private[core] class RichDouble(v: Double) {
 
   def toWei(tokenAddr: String)(implicit tm: MetadataManager) = {

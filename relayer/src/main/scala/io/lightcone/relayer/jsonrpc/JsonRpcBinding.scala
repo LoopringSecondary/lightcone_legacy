@@ -17,7 +17,7 @@
 package io.lightcone.relayer.jsonrpc
 
 import io.lightcone.lib.ProtoSerializer
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scalapb.json4s.JsonFormat
 import scala.reflect.runtime.universe._

@@ -26,7 +26,7 @@ import io.lightcone.relayer.data._
 import io.lightcone.relayer.validator._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import scala.concurrent._
 
 // Owner: Yongfeng
