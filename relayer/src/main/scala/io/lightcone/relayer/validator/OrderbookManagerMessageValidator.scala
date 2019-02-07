@@ -21,7 +21,6 @@ import io.lightcone.relayer.data._
 import io.lightcone.core.MetadataManager
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-
 import scala.concurrent._
 
 // Owner: Hongyu

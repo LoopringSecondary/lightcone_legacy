@@ -17,12 +17,10 @@
 package io.lightcone.relayer.order
 
 import akka.pattern._
-import io.lightcone.relayer.actors.OrderCutoffHandlerActor
+import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
-
 import scala.concurrent.{Await, Future}
 
 class OrderCutoffSpec

@@ -17,9 +17,6 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.core.ErrorCode._
-import slick.basic.DatabaseConfig
-import slick.lifted.TableQuery
-
 import scala.concurrent.{Await, ExecutionContext, Future}
 import com.google.inject.Inject
 import com.google.inject.name.Named
@@ -28,7 +25,8 @@ import io.lightcone.relayer.data._
 import io.lightcone.core._
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
-
+import slick.basic.DatabaseConfig
+import slick.lifted.TableQuery
 import scala.concurrent.duration._
 import scala.util._
 

@@ -17,7 +17,7 @@
 package io.lightcone.persistence.dals
 
 import com.google.inject.name.Named
-
+import com.google.inject.Inject
 import io.lightcone.core._
 import io.lightcone.relayer.data._
 import slick.jdbc.MySQLProfile.api._
@@ -25,7 +25,6 @@ import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 import org.slf4s.Logging
-import com.google.inject.Inject
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence.base.enumColumnType

@@ -17,10 +17,8 @@
 package io.lightcone.relayer
 
 import akka.actor._
-
 import io.lightcone.core._
 import io.lightcone.core.ErrorCode._
-
 import scala.concurrent._
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}

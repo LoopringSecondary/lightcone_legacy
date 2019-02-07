@@ -18,7 +18,6 @@ package io.lightcone.persistence
 
 import io.lightcone.persistence.dals.OrderDal
 import io.lightcone.core._
-
 import scala.concurrent._
 
 // TODO(yongfeng): remove this dependency

@@ -32,7 +32,7 @@ trait OrderbookManagerSupport
     extends MetadataManagerSupport
     with DatabaseModuleSupport
     with MarketManagerSupport {
-  my: CommonSpec with EthereumSupport =>
+  me: CommonSpec with EthereumSupport =>
 
   def startOrderbookSupport() = {
     actors.add(OrderbookManagerActor.name, OrderbookManagerActor.start)

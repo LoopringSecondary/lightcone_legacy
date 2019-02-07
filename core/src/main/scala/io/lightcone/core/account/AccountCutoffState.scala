@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-//
-
 trait AccountCutoffState {
 
   def setTradingPairCutoff(

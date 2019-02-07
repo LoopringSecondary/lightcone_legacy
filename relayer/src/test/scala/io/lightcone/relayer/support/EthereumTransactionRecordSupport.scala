@@ -16,16 +16,13 @@
 
 package io.lightcone.relayer.support
 
-import com.typesafe.config.{Config, ConfigFactory}
-import io.lightcone.relayer.DatabaseConfigManager
+import com.typesafe.config._
+import io.lightcone.relayer._
 import io.lightcone.relayer.actors._
-import io.lightcone.relayer.validator.{
-  MessageValidationActor,
-  TransactionRecordMessageValidator
-}
+import io.lightcone.relayer.validator._
 
 trait EthereumTransactionRecordSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
 
   override def afterAll: Unit = {
     dcm.close()

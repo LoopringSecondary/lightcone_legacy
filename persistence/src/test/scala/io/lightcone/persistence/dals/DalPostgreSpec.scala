@@ -22,7 +22,6 @@ import io.lightcone.persistence.base.BaseDal
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-
 import scala.concurrent.ExecutionContext
 
 trait DalPostgreSpec[D <: BaseDal[_, _]]

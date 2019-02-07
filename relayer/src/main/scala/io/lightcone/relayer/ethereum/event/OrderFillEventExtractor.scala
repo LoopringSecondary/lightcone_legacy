@@ -19,7 +19,6 @@ package io.lightcone.relayer.ethereum.event
 import com.google.inject.Inject
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class OrderFillEventExtractor @Inject()(

@@ -31,7 +31,7 @@ import org.testcontainers.containers.ContainerLaunchException
 import scala.concurrent.{Await, Future}
 
 trait JsonrpcSupport extends JsonSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
   actors.add(
     EntryPointActor.name,
     system.actorOf(Props(new EntryPointActor()), EntryPointActor.name)

@@ -20,7 +20,6 @@ import akka.util.Timeout
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 

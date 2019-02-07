@@ -24,11 +24,9 @@ import io.lightcone.core._
 import io.lightcone.persistence._
 import akka.pattern._
 import akka.util.Timeout
-
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import org.web3j.utils.Numeric
-
 import scala.util.{Failure, Success}
 
 trait EventExtraction {

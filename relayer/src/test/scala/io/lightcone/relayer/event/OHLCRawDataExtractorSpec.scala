@@ -23,7 +23,6 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.actors.OHLCDataHandlerActor
 import org.web3j.crypto.Credentials
 import akka.pattern._
-
 import scala.concurrent.Await
 
 class OHLCRawDataExtractorSpec

@@ -16,7 +16,6 @@
 
 package io.lightcone.core
 import io.lightcone.core.implicits._
-
 import com.typesafe.config.ConfigFactory
 import io.lightcone.lib._
 

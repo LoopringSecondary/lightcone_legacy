@@ -20,7 +20,7 @@ import akka.actor.Props
 import io.lightcone.relayer.actors.OrderStatusMonitorActor
 
 trait OrderStatusMonitorSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
 
   actors.add(
     OrderStatusMonitorActor.name,

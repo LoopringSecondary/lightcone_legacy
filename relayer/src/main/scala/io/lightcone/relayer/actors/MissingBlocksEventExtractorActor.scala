@@ -27,7 +27,6 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent.duration._
-
 import scala.concurrent.{ExecutionContext, Future}
 
 object MissingBlocksEventExtractorActor extends DeployedAsSingleton {

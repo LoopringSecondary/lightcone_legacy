@@ -25,7 +25,6 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.core.ErrorCode._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-
 import scala.concurrent.ExecutionContext
 
 object OHLCDataHandlerActor extends DeployedAsSingleton {

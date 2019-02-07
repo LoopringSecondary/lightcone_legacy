@@ -17,13 +17,10 @@
 package io.lightcone.relayer.support
 
 import io.lightcone.relayer.actors.DatabaseQueryActor
-import io.lightcone.relayer.validator.{
-  DatabaseQueryMessageValidator,
-  MessageValidationActor
-}
+import io.lightcone.relayer.validator._
 
 trait DatabaseQueryMessageSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
 
   actors.add(
     DatabaseQueryMessageValidator.name,

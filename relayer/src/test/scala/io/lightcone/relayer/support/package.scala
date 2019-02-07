@@ -17,11 +17,9 @@
 package io.lightcone.relayer
 
 import java.util.concurrent.atomic.AtomicInteger
-
 import com.dimafeng.testcontainers._
 import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
-
 import io.lightcone.lib._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
@@ -29,7 +27,6 @@ import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-
 import scala.math.BigInt
 
 package object support {

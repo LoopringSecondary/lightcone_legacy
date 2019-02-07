@@ -16,11 +16,10 @@
 
 package io.lightcone.persistence
 
-import io.lightcone.persistence.dals.{OHLCDataDal, OHLCDataDalImpl}
+import io.lightcone.persistence.dals._
 import io.lightcone.relayer.data.GetOHLCData.Interval
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 

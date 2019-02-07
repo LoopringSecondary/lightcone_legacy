@@ -17,10 +17,8 @@
 package io.lightcone.relayer.jsonrpc
 
 import io.lightcone.relayer.support._
-
 import io.lightcone.core._
 import io.lightcone.relayer.data._
-
 import scala.concurrent.Await
 
 class JrpcSpec

@@ -17,15 +17,12 @@
 package io.lightcone.relayer.support
 
 import io.lightcone.relayer.actors._
-import io.lightcone.relayer.validator.{
-  MessageValidationActor,
-  MultiAccountManagerMessageValidator
-}
+import io.lightcone.relayer.validator._
 
 trait MultiAccountManagerSupport
     extends DatabaseModuleSupport
     with EthereumSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
   actors.add(MultiAccountManagerActor.name, MultiAccountManagerActor.start)
 
   actors.add(

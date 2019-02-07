@@ -21,9 +21,7 @@ import io.lightcone.relayer.ethereum.event._
 import io.lightcone.ethereum._
 import io.lightcone.relayer.support._
 import io.lightcone.core._
-
 import io.lightcone.relayer.data.AddressBalanceUpdated
-
 import scala.concurrent._
 
 class BasicEventExtractorSpec

@@ -15,13 +15,13 @@
  */
 
 package io.lightcone.core
-import io.lightcone.core.implicits._
-import io.lightcone.core.implicits._
 
-import OrderStatus._
-import ErrorCode._
+import io.lightcone.core.implicits._
 
 class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
+
+  import OrderStatus._
+  import ErrorCode._
 
   "MarketManager" should "not generate ring when ring matcher returns ERR_MATCHING_INCOME_TOO_SMALL error " +
     "and should put order inside the orderbook" in {

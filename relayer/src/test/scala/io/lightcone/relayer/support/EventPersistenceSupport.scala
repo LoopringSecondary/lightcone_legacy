@@ -16,13 +16,10 @@
 
 package io.lightcone.relayer.support
 
-import io.lightcone.relayer.actors.{
-  DatabaseQueryActor,
-  RingAndTradePersistenceActor
-}
+import io.lightcone.relayer.actors._
 
 trait RingAndTradePersistenceSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
 
   actors.add(
     RingAndTradePersistenceActor.name,

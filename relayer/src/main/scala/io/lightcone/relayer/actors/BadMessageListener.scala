@@ -23,7 +23,6 @@ import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-import io.lightcone.core.ErrorCode._
 
 // Owner: Daniel
 object BadMessageListener {

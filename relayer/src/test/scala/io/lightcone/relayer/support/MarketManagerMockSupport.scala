@@ -22,7 +22,7 @@ import io.lightcone.relayer.data._
 import io.lightcone.core._
 
 trait MarketManagerMockSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
 
   val marketManagerProbe = new TestProbe(system, MarketManagerActor.name) {
 

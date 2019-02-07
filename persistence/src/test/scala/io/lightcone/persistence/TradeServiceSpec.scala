@@ -21,11 +21,12 @@ import io.lightcone.lib._
 import io.lightcone.core._
 import io.lightcone.persistence.dals._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.data.GetTrades._
 import scala.concurrent._
 import scala.concurrent.duration._
 
 class TradeServiceSpec extends ServiceSpec[TradeService] {
+
+  import GetTrades._
 
   implicit var dal: TradeDal = _
 

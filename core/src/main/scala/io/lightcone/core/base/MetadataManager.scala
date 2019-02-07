@@ -22,9 +22,9 @@ import io.lightcone.relayer.data.TokenBurnRateChangedEvent._
 import org.slf4s.Logging
 import scala.collection.JavaConverters._
 
-import ErrorCode._
-
 object MetadataManager {
+
+  import ErrorCode._
 
   def normalizeToken(token: TokenMetadata): TokenMetadata =
     token.copy(
@@ -59,6 +59,8 @@ object MetadataManager {
 
 final class MetadataManager @Inject()(implicit val config: Config)
     extends Logging {
+
+  import ErrorCode._
 
   val loopringConfig = config.getConfig("loopring_protocol")
 

@@ -23,7 +23,6 @@ import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum.event.EventExtractor
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-
 import scala.concurrent.ExecutionContext
 
 object Dispatchers {

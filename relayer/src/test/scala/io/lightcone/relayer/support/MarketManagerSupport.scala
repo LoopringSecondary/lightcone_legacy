@@ -29,7 +29,7 @@ import akka.pattern.ask
 trait MarketManagerSupport
     extends DatabaseModuleSupport
     with MetadataManagerSupport {
-  my: CommonSpec with EthereumSupport =>
+  me: CommonSpec with EthereumSupport =>
 
   actors.add(MarketManagerActor.name, MarketManagerActor.start)
 

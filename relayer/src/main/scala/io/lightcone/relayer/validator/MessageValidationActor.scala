@@ -24,7 +24,6 @@ import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.relayer.base._
-
 import scala.concurrent._
 
 // Owner: Daniel

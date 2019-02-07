@@ -16,7 +16,7 @@
 
 package io.lightcone.ethereum.abi
 
-import java.util
+import java.util.Arrays
 
 import org.apache.commons.collections4.Predicate
 import org.ethereum.solidity.Abi
@@ -88,7 +88,7 @@ abstract class AbiWrap(abiJson: String) {
   private[abi] def searchBySignature[T <: Abi.Entry](
       signature: Array[Byte]
     ): Predicate[T] =
-    x => util.Arrays.equals(x.encodeSignature(), signature)
+    x => Arrays.equals(x.encodeSignature(), signature)
 
   def unpackEvent(
       data: String,

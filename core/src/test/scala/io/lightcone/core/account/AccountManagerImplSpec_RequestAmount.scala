@@ -16,9 +16,6 @@
 
 package io.lightcone.core
 import io.lightcone.core.implicits._
-
-// import io.lightcone.core.OrderAwareSpec
-
 import org.scalatest._
 
 class AccountManagerImplSpec_RequestAmount extends OrderAwareSpec {

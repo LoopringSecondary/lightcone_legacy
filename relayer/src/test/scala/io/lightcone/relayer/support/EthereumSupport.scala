@@ -23,12 +23,10 @@ import akka.pattern._
 import com.typesafe.config.ConfigFactory
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum._
+import io.lightcone.relayer.validator._
+import io.lightcone.relayer.data._
 import io.lightcone.ethereum.abi._
 import io.lightcone.ethereum._
-import io.lightcone.relayer.validator._
-
-import io.lightcone.ethereum.getSignedTxData
-import io.lightcone.relayer.data.{Transaction => XTransaction, _}
 import io.lightcone.core._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
@@ -40,7 +38,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Await
 
 trait EthereumSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
 
   implicit val rb = new EthereumCallRequestBuilder
   implicit val brb = new EthereumBatchCallRequestBuilder

@@ -27,7 +27,6 @@ import io.lightcone.core._
 import io.lightcone.lib.SystemTimeProvider
 import org.scalatest._
 import org.slf4s.Logging
-
 import scala.concurrent.duration._
 import scala.math.BigInt
 

@@ -15,12 +15,14 @@
  */
 
 package io.lightcone.core
+
 import io.lightcone.core.implicits._
 
-import OrderStatus._
-import ErrorCode._
-
 class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
+
+  import OrderStatus._
+  import ErrorCode._
+
   "MarketManager" should "stop matching on the first price mismatch" in {
     val buy1 = actualNotDust(buyGTO(100, 100050)) // best price
     val buy2 = actualNotDust(buyGTO(100, 100040))

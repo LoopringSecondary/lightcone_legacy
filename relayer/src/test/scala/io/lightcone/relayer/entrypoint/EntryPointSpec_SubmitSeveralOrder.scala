@@ -19,7 +19,6 @@ package io.lightcone.relayer.entrypoint
 import io.lightcone.relayer.support._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
-
 import scala.concurrent.{Await, Future}
 
 class EntryPointSpec_SubmitSeveralOrder

@@ -16,8 +16,6 @@
 
 package io.lightcone.lib
 
-import scala.reflect.runtime.universe._
-
 import scalapb.json4s.JsonFormat
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox

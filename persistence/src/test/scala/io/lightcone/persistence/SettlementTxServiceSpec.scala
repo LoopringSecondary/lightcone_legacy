@@ -20,7 +20,6 @@ import io.lightcone.lib._
 import io.lightcone.persistence.dals._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
-
 import scala.concurrent._
 import scala.concurrent.duration._
 

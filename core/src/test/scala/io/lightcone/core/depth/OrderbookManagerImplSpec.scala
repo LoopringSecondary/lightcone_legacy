@@ -15,9 +15,8 @@
  */
 
 package io.lightcone.core
-import io.lightcone.core.implicits._
 
-// import io.lightcone.core.CommonSpec
+import io.lightcone.core.implicits._
 import org.scalatest._
 
 class OrderbookManagerImplSpec extends CommonSpec {

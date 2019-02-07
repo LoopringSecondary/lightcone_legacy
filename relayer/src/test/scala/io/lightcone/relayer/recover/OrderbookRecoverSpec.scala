@@ -23,8 +23,7 @@ import akka.pattern._
 import akka.util.Timeout
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
-import io.lightcone.relayer.validator.OrderbookManagerMessageValidator
-
+import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent.duration._

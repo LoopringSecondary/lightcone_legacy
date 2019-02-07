@@ -19,12 +19,10 @@ package io.lightcone.relayer.validator
 import com.typesafe.config.Config
 import io.lightcone.core._
 import io.lightcone.ethereum._
-
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import org.web3j.utils._
-
 import scala.concurrent._
 import scala.util.Try
 

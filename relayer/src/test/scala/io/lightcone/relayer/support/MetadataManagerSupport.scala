@@ -31,7 +31,7 @@ import io.lightcone.core.MetadataManager
 import scala.concurrent.Await
 
 trait MetadataManagerSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
 
   actors.add(MetadataManagerActor.name, MetadataManagerActor.start)
   actors.add(

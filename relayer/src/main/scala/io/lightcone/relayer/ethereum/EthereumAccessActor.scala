@@ -27,7 +27,6 @@ import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.relayer.base._
 import akka.pattern._
-
 import scala.concurrent._
 import scala.util.{Failure, Random, Success}
 

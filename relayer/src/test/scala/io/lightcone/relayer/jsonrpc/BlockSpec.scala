@@ -16,12 +16,11 @@
 
 package io.lightcone.relayer.jsonrpc
 
-import io.lightcone.relayer.ethereum.EthereumAccessActor
-import io.lightcone.relayer.support.{CommonSpec, EthereumSupport}
-import io.lightcone.relayer.data.GetBlockWithTxObjectByNumber
+import io.lightcone.relayer.ethereum._
+import io.lightcone.relayer.support._
+import io.lightcone.relayer.data._
 import akka.pattern._
 import io.lightcone.relayer.base._
-
 import scala.concurrent.Await
 
 class BlockSpec extends CommonSpec with EthereumSupport {

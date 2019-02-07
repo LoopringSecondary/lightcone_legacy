@@ -17,7 +17,6 @@
 package io.lightcone
 
 import java.math.BigInteger
-
 import io.lightcone.core._
 import org.web3j.crypto._
 import org.web3j.utils.Numeric

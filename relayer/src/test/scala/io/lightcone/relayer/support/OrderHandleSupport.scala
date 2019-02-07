@@ -19,7 +19,7 @@ package io.lightcone.relayer.support
 import io.lightcone.relayer.actors._
 
 trait OrderHandleSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
 
   actors.add(OrderPersistenceActor.name, OrderPersistenceActor.start)
 

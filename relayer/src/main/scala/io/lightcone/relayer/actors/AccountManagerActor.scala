@@ -26,13 +26,10 @@ import com.google.protobuf.ByteString
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-import io.lightcone.core.MarketManager.MatchResult
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-
 import io.lightcone.relayer.data._
 import org.web3j.utils.Numeric
-
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -354,7 +351,7 @@ class AccountManagerActor(
                 for {
                   matchRes <- (marketManagerActor ? SubmitSimpleOrder(
                     order = Some(order_)
-                  )).mapAs[MatchResult]
+                  )).mapAs[MarketManager.MatchResult]
                   _ = matchRes.taker.status match {
                     case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES =>
                       self ! CancelOrder.Req(

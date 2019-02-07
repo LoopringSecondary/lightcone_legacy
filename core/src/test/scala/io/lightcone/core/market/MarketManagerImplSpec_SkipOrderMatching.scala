@@ -15,12 +15,14 @@
  */
 
 package io.lightcone.core
+
 import io.lightcone.core.implicits._
 
-import OrderStatus._
-import ErrorCode._
-
 class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
+
+  import OrderStatus._
+  import ErrorCode._
+
   "MarketManager" should "skip non-profitable orders" in {
     val buy1 = actualNotDust(buyGTO(100 !, 100050 !, 0 !))
     val buy2 = actualNotDust(buyGTO(100 !, 100040 !, 0 !))

@@ -28,7 +28,6 @@ import io.lightcone.persistence._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import org.web3j.utils.Numeric
-
 import scala.concurrent._
 import scala.util._
 

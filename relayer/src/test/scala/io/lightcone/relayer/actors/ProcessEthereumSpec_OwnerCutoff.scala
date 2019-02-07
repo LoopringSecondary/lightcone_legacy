@@ -18,11 +18,9 @@ package io.lightcone.relayer.actors
 
 import akka.pattern._
 import io.lightcone.relayer.support._
-
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import org.web3j.utils.Numeric
-
 import scala.concurrent.{Await, Future}
 
 class ProcessEthereumSpec_OwnerCutoff

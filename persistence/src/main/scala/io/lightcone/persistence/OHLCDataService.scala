@@ -17,7 +17,6 @@
 package io.lightcone.persistence
 
 import io.lightcone.core._
-
 import scala.concurrent.Future
 
 // TODO(yongfeng): remove this dependency

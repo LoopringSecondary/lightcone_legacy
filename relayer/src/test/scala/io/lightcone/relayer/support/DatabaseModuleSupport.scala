@@ -18,8 +18,7 @@ package io.lightcone.relayer.support
 
 import com.google.inject.name.Named
 import com.typesafe.config.ConfigFactory
-import io.lightcone.relayer.actors.DatabaseQueryActor
-import io.lightcone.persistence._
+import io.lightcone.relayer.actors._
 import io.lightcone.persistence.dals._
 import io.lightcone.persistence._
 import org.scalatest.BeforeAndAfterAll
@@ -29,7 +28,7 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.ExecutionContext
 
 trait DatabaseModuleSupport extends BeforeAndAfterAll {
-  my: CommonSpec =>
+  me: CommonSpec =>
 
   implicit val dbConfig = dbConfig1
 

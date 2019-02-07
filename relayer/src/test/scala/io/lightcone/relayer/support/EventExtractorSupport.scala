@@ -19,7 +19,6 @@ package io.lightcone.relayer.support
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.native.JsonMethods.parse
-
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scalapb.json4s.JsonFormat

@@ -15,11 +15,9 @@
  */
 
 package io.lightcone.core
+
 import io.lightcone.core.implicits._
-
 import io.lightcone.lib._
-// import io.lightcone.core.OrderAwareSpec
-
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 

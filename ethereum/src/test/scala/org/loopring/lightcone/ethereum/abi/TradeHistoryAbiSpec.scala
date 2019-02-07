@@ -17,7 +17,7 @@
 package io.lightcone.ethereum.abi
 
 import org.web3j.utils.Numeric
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest._
 
 class TradeHistoryAbiSpec
     extends FlatSpec

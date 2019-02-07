@@ -16,7 +16,6 @@
 
 package io.lightcone.core
 
-import scala.collection.SortedMap
 import org.slf4s.Logging
 
 class OrderbookManagerImpl(metadata: MarketMetadata)

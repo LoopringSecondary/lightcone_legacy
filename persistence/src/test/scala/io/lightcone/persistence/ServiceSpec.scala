@@ -16,20 +16,18 @@
 
 package io.lightcone.persistence
 
-import com.dimafeng.testcontainers.{ForAllTestContainer, MySQLContainer}
+import com.dimafeng.testcontainers._
 import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
 import io.lightcone.lib._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest._
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.math.BigInt
+import scala.concurrent._
 
 trait ServiceSpec[S]
     extends FlatSpec

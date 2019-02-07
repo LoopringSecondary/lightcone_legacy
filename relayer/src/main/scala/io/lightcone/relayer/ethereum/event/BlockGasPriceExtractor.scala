@@ -20,7 +20,6 @@ import akka.util.Timeout
 import com.google.inject.Inject
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-
 import org.web3j.utils.Numeric
 import scala.concurrent.{ExecutionContext, Future}
 

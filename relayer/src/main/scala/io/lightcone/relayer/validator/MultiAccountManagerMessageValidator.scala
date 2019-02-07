@@ -21,13 +21,11 @@ import io.lightcone.relayer.actors._
 import io.lightcone.relayer.data._
 import io.lightcone.core.MetadataManager
 import io.lightcone.ethereum._
-
 import io.lightcone.lib._
 import io.lightcone.core._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.core.ErrorCode._
 import io.lightcone.relayer.data._
-
 import scala.concurrent._
 
 // Owner: Hongyu

@@ -21,7 +21,7 @@ import akka.cluster.singleton._
 import io.lightcone.relayer.actors._
 
 trait RecoverSupport extends DatabaseModuleSupport {
-  my: CommonSpec =>
+  me: CommonSpec =>
 
   actors.add(OrderRecoverActor.name, OrderRecoverActor.start)
 

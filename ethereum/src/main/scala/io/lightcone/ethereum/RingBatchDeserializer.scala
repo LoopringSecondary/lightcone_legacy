@@ -17,7 +17,6 @@
 package io.lightcone.ethereum
 
 import io.lightcone.core._
-
 import com.google.protobuf.ByteString
 import org.web3j.utils.Numeric
 

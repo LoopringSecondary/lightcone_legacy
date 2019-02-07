@@ -18,7 +18,6 @@ package io.lightcone.relayer.ethereum.event
 
 import com.google.inject.Inject
 import io.lightcone.core._
-
 import io.lightcone.relayer.data._
 import org.web3j.utils.Numeric
 

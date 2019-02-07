@@ -15,12 +15,13 @@
  */
 
 package io.lightcone.core
+
 import io.lightcone.core.implicits._
 
-import OrderStatus._
-import ErrorCode._
-
 class MarketManagerImplSpec_Cancellation extends MarketAwareSpec {
+
+  import OrderStatus._
+  import ErrorCode._
 
   "MarketManager" should "not throw error if cancel unexist orders" in {
     marketManager.cancelOrder("1234") should be(None)
