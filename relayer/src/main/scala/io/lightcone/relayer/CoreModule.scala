@@ -45,7 +45,9 @@ import slick.jdbc.JdbcProfile
 import org.slf4s.Logging
 
 // Owner: Daniel
-class CoreModule(config: Config)
+class CoreModule(
+    config: Config,
+    deployActorsIgnoringRoles: Boolean = false)
     extends AbstractModule
     with ScalaModule
     with Logging {
@@ -169,7 +171,7 @@ class CoreModule(config: Config)
 
     bind[Boolean]
       .annotatedWithName("deploy-actors-ignoring-roles")
-      .toInstance(false)
+      .toInstance(deployActorsIgnoringRoles)
   }
 
   @Provides
