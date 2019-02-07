@@ -25,6 +25,7 @@ import org.web3j.utils.Numeric
 import io.lightcone.relayer.data._
 import scala.concurrent.Await
 
+// TODO(yadong): this test fail if you run `sbt relayer/test` but will success if you run it alone.
 class RingMinedAndOrderFilledEventExtractorSpec
     extends CommonSpec
     with EthereumEventExtractorSupport
