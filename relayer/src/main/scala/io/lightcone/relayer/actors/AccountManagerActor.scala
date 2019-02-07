@@ -397,7 +397,7 @@ class AccountManagerActor(
 
   private def getTokenManagers(
       tokens: Seq[String]
-    ): Future[Seq[AccountTokenManager]] = {
+    ): Future[Seq[SpendableManager]] = {
     val tokensWithoutMaster =
       tokens.filterNot(token => manager.hasTokenManager(token))
     for {
@@ -411,7 +411,7 @@ class AccountManagerActor(
       }
       tms = tokensWithoutMaster.map(
         token =>
-          new AccountTokenManagerImpl(
+          new SpendableManagerImpl(
             token,
             config.getInt("account_manager.max_order_num")
           )

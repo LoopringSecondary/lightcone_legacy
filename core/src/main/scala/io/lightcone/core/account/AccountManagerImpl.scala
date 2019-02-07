@@ -27,24 +27,24 @@ final private[core] class AccountManagerImpl(
   import OrderStatus._
 
   private[core] implicit var tokens =
-    Map.empty[String, AccountTokenManager]
+    Map.empty[String, SpendableManager]
 
   def hasTokenManager(token: String): Boolean = {
     tokens.contains(token)
   }
 
-  def addTokenManager(tm: AccountTokenManager) = {
+  def addTokenManager(tm: SpendableManager) = {
     assert(!hasTokenManager(tm.token))
     tokens += tm.token -> tm
     tm
   }
 
-  def getTokenManager(token: String): AccountTokenManager = {
+  def getTokenManager(token: String): SpendableManager = {
     assert(hasTokenManager(token))
     tokens(token)
   }
 
-  def getOrUpdateTokenManager(tm: AccountTokenManager): AccountTokenManager = {
+  def getOrUpdateTokenManager(tm: SpendableManager): SpendableManager = {
     if (!hasTokenManager(tm.token))
       tokens += tm.token -> tm
     tokens(tm.token)
@@ -161,10 +161,10 @@ final private[core] class AccountManagerImpl(
 
   implicit private class MagicOrder(order: Matchable) {
 
-    def callOnTokenS[R](method: AccountTokenManager => R) =
+    def callOnTokenS[R](method: SpendableManager => R) =
       method(tokens(order.tokenS))
 
-    def callOnTokenFee[R](method: AccountTokenManager => R) =
+    def callOnTokenFee[R](method: SpendableManager => R) =
       method(tokens(order.tokenFee))
 
     // 删除订单应该有以下几种情况:
@@ -175,7 +175,7 @@ final private[core] class AccountManagerImpl(
     // tokenManager的release动作不能由tokenManager本身调用,
     // 只能由orderManager根据并汇总tokenS&tokenFee情况后删除,
     // 删除时tokenS&tokenFee都要删,不能只留一个
-    def callOnTokenSAndTokenFee(method: AccountTokenManager => Set[String]) = {
+    def callOnTokenSAndTokenFee(method: SpendableManager => Set[String]) = {
       val ordersToDelete = callOnTokenS(method) ++ callOnTokenFee(method)
       ordersToDelete.map { orderId =>
         callOnTokenS(_.release(orderId))
