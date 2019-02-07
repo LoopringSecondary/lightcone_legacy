@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.relayer.data._
-
 import com.google.inject.Inject
 import spire.math.Rational
 

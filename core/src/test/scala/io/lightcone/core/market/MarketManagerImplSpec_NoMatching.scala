@@ -17,8 +17,6 @@
 package io.lightcone.core
 import io.lightcone.core.implicits._
 
-/// import io.lightcone.relayer.data._
-
 import OrderStatus._
 
 class MarketManagerImplSpec_NoMatching extends MarketAwareSpec {

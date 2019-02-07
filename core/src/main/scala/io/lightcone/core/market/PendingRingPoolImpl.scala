@@ -18,8 +18,6 @@ package io.lightcone.core
 
 import io.lightcone.lib._
 
-/// import io.lightcone.relayer.data._
-
 import org.slf4s.Logging
 
 final case class OrderInfo(

@@ -19,8 +19,6 @@ import io.lightcone.core.implicits._
 
 // import io.lightcone.core.OrderAwareSpec
 
-/// import io.lightcone.relayer.data._
-
 import org.scalatest._
 
 class AccountManagerImplSpec_Performance extends OrderAwareSpec {

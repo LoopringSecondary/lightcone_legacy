@@ -17,7 +17,6 @@
 package io.lightcone.core
 
 //
-/// import io.lightcone.relayer.data._
 
 trait AccountCutoffState {
 

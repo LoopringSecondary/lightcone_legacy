@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.relayer.data._
-
 import org.slf4s.Logging
 import scala.annotation.tailrec
 import scala.collection.mutable.{Map, SortedSet}

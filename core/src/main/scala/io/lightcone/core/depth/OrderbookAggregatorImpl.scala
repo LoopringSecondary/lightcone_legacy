@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.relayer.data._
-
 class OrderbookAggregatorImpl(
     priceDecimals: Int,
     precisionForAmount: Int,
