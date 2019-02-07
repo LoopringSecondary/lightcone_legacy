@@ -22,12 +22,6 @@ lazy val core = (project in file("core"))
   .settings(basicSettings, libraryDependencies ++= dependency4Core)
   .dependsOn(proto)
 
-lazy val core2 = (project in file("core2"))
-  .enablePlugins(AutomateHeaderPlugin)
-  .dependsOn(proto, lib)
-  .settings(basicSettings, libraryDependencies ++= dependency4Core)
-  .dependsOn(proto)
-
 lazy val ethereum = (project in file("ethereum"))
   .enablePlugins(AutomateHeaderPlugin)
   .dependsOn(lib, core)
@@ -73,5 +67,5 @@ lazy val all = (project in file("."))
     (docker in relayer).value
     // (docker in indexer).value
   }, DockerComposeKeys.dockerImageCreationTask := docker.value)
-  .aggregate(proto, lib, ethereum, persistence, core, core2, relayer)
+  .aggregate(proto, lib, ethereum, persistence, core, relayer)
   .withId("lightcone")
