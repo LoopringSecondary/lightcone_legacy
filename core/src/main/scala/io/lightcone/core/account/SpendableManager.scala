@@ -17,12 +17,12 @@
 package io.lightcone.core
 
 /*
- * AccountTokenManagerImpl manages reserving balance and allowance for orders.
+ * SpendableManagerImpl manages reserving balance and allowance for orders.
  * An order can be 'reserved' if and only if the available (unservered) balance
  * is no less than the order's size.
  */
 
-trait AccountTokenManager {
+trait SpendableManager {
   val token: String
   val maxNumOrders: Int
 
