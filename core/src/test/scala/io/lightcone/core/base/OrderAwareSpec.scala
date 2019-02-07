@@ -135,10 +135,10 @@ trait OrderAwareSpec extends CommonSpec {
     dai = new SpendableManagerImpl(DAI)
     weth = new SpendableManagerImpl(WETH)
 
-    accountManager.addTokenManager(lrc)
-    accountManager.addTokenManager(gto)
-    accountManager.addTokenManager(dai)
-    accountManager.addTokenManager(weth)
+    accountManager.addSpendableManager(lrc)
+    accountManager.addSpendableManager(gto)
+    accountManager.addSpendableManager(dai)
+    accountManager.addSpendableManager(weth)
   }
 
   def sellLRC(
