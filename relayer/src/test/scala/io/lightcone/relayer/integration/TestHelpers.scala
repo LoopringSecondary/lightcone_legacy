@@ -21,9 +21,11 @@ import akka.actor.ActorRef
 import akka.pattern.ask
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import org.scalatest._
 
-trait OrderHelper extends IntegrationConstants {
+trait TestHelpers extends IntegrationConstants with Matchers {
   implicit val timeout = akka.util.Timeout(10 seconds)
+  def entrypoint: ActorRef
 
   case class _SomeToken(
       amount: Double,
@@ -57,13 +59,23 @@ trait OrderHelper extends IntegrationConstants {
 
   implicit class _RichActorRef(actor: ActorRef) {
 
-    // def ??(msg: Any): Any = {
-    //   Await.result(actor ? msg, 10 seconds)
-    // }
-
     def ??[T](msg: Any): T = {
-      Await.result(actor ? msg, 10 seconds).asInstanceOf[T]
+      Await.result(actor ? msg, timeout.duration).asInstanceOf[T]
     }
   }
+
+  def send(req: Any) = Request(req)
+
+  def testRpc(req: => Any)(res: => Any) = send(req).expects(res)
+
+  case class Request(req: Any) {
+
+    def expects(res: Any) = {
+      Await.result(entrypoint ? req, timeout.duration) should be(res)
+    }
+  }
+
+  // TODO
+  def killActors(name: String) = {}
 
 }

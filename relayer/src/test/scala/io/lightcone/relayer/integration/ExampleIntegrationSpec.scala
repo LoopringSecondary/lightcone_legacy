@@ -43,7 +43,12 @@ import org.slf4s.Logging
 class ExampleIntegrationSpec extends IntegrationTesting {
 
   "foo" must "bar" in {
-    val order: RawOrder = Addr(1) >> 12.1.lrc -> 23.0.weth -- 10.0.lrc
-    val req = entrypoint ?? [SubmitOrder.Res] SubmitOrder.Req(Some(order))
+    testRpc {
+      val order: RawOrder = Addr(0) >> 12.1.lrc -> 23.0.weth -- 10.0.lrc
+      SubmitOrder.Req(Some(order))
+    } {
+      SubmitOrder.Res()
+    }
   }
+
 }

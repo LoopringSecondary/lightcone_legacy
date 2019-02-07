@@ -50,8 +50,7 @@ class IntegrationTesting
     with BeforeAndAfterAll
     with Matchers
     with Logging
-    with OrderHelper
-    with IntegrationConstants {
+    with TestHelpers {
 
   import IntegrationTesting._
 
