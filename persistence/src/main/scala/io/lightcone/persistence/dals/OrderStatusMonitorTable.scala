@@ -16,8 +16,8 @@
 
 package io.lightcone.persistence.dals
 
-import io.lightcone.persistence.base.{enumColumnType, BaseTable}
-import io.lightcone.proto._
+import io.lightcone.persistence.base._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 import slick.jdbc.MySQLProfile.api._
 

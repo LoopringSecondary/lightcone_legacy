@@ -1,0 +1,335 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+package io.lightcone.relayer.data;
+
+import "core.proto";
+import "persistence.proto";
+import "relayer_common.proto";
+// import "relayer_ethereum.proto";
+
+/////////////////////////////////////////////////////////////////////
+// ONE WAY MESSAGES
+/////////////////////////////////////////////////////////////////////
+
+message Notify {
+    string message = 1;
+    string param = 2;
+}
+
+message SubmitSimpleOrder {
+    string owner = 1;
+    Order order = 2;
+}
+
+message TriggerRematch {
+    bool sell_order_as_taker = 1;
+    int32 offset = 2;
+}
+
+message SettleRings {
+    repeated OrderRing rings = 1;
+    bytes gas_limit = 2;
+    bytes gas_price = 3;
+}
+
+message AddressBalanceUpdated {
+    string address = 1;
+    string token = 2;
+    bytes balance = 3;
+}
+
+message AddressAllowanceUpdated {
+    string address = 1;
+    string token = 2;
+    bytes allowance = 3;
+}
+
+message GasPriceUpdated {
+    int64 gas_price = 1;
+}
+
+message OrderStatusMonitor {
+    string monitoring_type = 1;
+    int64 process_time = 2;
+
+    enum MonitoringType {
+        MONITORING_ACTIVATE = 0;
+        MONITORING_EXPIRE = 1;
+    }
+}
+
+/////////////////////////////////////////////////////////////////////
+// TWO WAY REQUEST-RESPONSES (DB RELATD NOT INCLUDED)
+/////////////////////////////////////////////////////////////////////
+
+message SubmitOrder {
+    message Req {
+        io.lightcone.core.RawOrder raw_order = 1;
+    }
+
+    message Res {
+        Order order = 1;
+    }
+}
+
+message CancelOrder {
+    message Req {
+        string id = 1;
+        string owner = 2;
+        io.lightcone.core.OrderStatus status = 3; //取消的类型
+        io.lightcone.core.MarketPair market_pair = 4;
+        string sig = 5;
+    }
+
+    message Res {
+        io.lightcone.core.ErrorCode error = 1;
+        io.lightcone.core.OrderStatus status = 2; //取消的类型
+    }
+}
+
+message RetrieveOrdersToCancel {
+    string broker       = 1;
+    string owner        = 2;
+    string market_hash  = 3;
+    int64  cutoff       = 4; // in seconds.
+}
+
+message GetOrderbook {
+    message Req {
+        int32 level = 2;
+        int32 size = 1;
+        io.lightcone.core.MarketPair market_pair = 3;
+    }
+
+    message Res {
+        io.lightcone.core.Orderbook orderbook = 1;
+    }
+}
+
+message GetOrderFilledAmount {
+    message Req {
+        string order_id = 1;
+    }
+
+    message Res {
+        string order_id = 1;
+        bytes filled_amount_s = 2;
+    }
+}
+
+message GetBalanceAndAllowances {
+    message Req {
+        string address = 1;
+        repeated string tokens = 2;
+        string tag = 3;
+    }
+
+    message Res {
+        string address = 1;
+        map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
+        io.lightcone.core.Error error = 3;
+    }
+}
+
+message GetBalance {
+    message Req{
+        string address = 1;
+        repeated string tokens = 2;
+        string tag = 3;
+    }
+    message Res {
+        string address = 1;
+        map<string, bytes> balance_map = 2;
+        io.lightcone.core.Error error = 3;
+    }
+}
+
+message GetAllowance {
+    message Req{
+        string address = 1;
+        repeated string tokens = 2;
+        string tag = 3;
+    }
+    message Res {
+        string address = 1;
+        map<string, bytes> allowance_map = 2;
+        io.lightcone.core.Error error = 3;
+    }
+}
+
+message UpdateFilledAmount {
+    message Req {
+        string id = 1;
+        bytes order_filled_amount_s = 2;
+    }
+
+    message Res {
+        io.lightcone.core.ErrorCode error = 1;
+    }
+}
+
+message GetFilledAmount {
+    message Req {
+        repeated string order_ids = 1;
+        string tag = 2;
+    }
+
+    message Res {
+        map<string, bytes> filled_amount_s_map = 1;
+    }
+}
+
+message GetOrderCancellation {
+    message Req {
+        string broker = 1;
+        string order_hash = 2;
+        string tag = 3;
+    }
+
+    message Res {
+       bool  cancelled = 1;
+    }
+}
+
+message GetCutoff {
+    message Req {
+        string broker = 1;
+        string owner = 2;
+        string market_hash = 3;
+        string tag = 4;
+    }
+    message Res {
+        string broker = 1;
+        string owner = 2;
+        string market_hash = 3;
+        bytes cutoff = 4;
+    }
+}
+
+message BatchGetCutoffs {
+    message Req {
+        repeated GetCutoff.Req reqs = 1;
+    }
+
+    message Res {
+        repeated GetCutoff.Res resps = 1;
+    }
+}
+
+message GetBurnRate {
+    message Req {
+        string token = 1;
+        string tag  = 2;
+    }
+    message Res {
+        double for_market = 1;
+        double for_p2p = 2;
+    }
+}
+
+message UpdateBalanceAndAllowance {
+    message Req {
+        string address = 1;
+        string token = 2;
+        BalanceAndAllowance balance_and_allowance = 3;
+    }
+
+    message Res {
+        io.lightcone.core.ErrorCode error = 1;
+        BalanceAndAllowance balance_and_allowance = 2;
+    }
+}
+
+message SendRawTx {
+    message Req {
+        bytes data = 1;
+    }
+
+    message Res {
+        SendStatus status = 1;
+        enum SendStatus {
+            SEND_STATUS_UNKNOW = 0;
+            SEND_STATUS_SUCCESS = 1;
+        }
+    }
+}
+
+message GetGasPrice {
+    message Req {}
+
+    message Res {
+        bytes gas_price = 1;
+    }
+}
+
+message SetGasPrice {
+    message Req {
+        bytes gas_price = 1;
+    }
+
+    message Res {
+        bytes gas_price = 1;
+    }
+}
+
+message SaveBlock {
+    message Req {
+        io.lightcone.persistence.BlockData block_data = 1;
+    }
+
+    message Res {
+        io.lightcone.core.Error error = 1;
+    }
+}
+
+message GetNodeBlockHeight {
+    message Req{}
+
+    message Res{
+        repeated NodeBlockHeight nodes = 1;
+    }
+}
+
+message MetadataChanged {
+
+}
+
+message SubscribeMetadataChanged {
+}
+
+message GetMetadatas {
+    message Req {}
+
+    message Res {
+        repeated io.lightcone.core.TokenMetadata  tokens  = 1;
+        repeated io.lightcone.core.MarketMetadata markets = 2;
+    }
+}
+
+message GetOrderbookSlots {
+    message Req {
+        io.lightcone.core.MarketPair market_pair      = 1;
+        int32 num_of_slots      = 2;
+    }
+
+    message Res {
+        io.lightcone.core.Orderbook.Update update = 1;
+    }
+}

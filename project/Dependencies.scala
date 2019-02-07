@@ -94,7 +94,7 @@ object Dependencies {
     json4sDependency ++
     testDependency
 
-  lazy val dependency4Actors = dependency4Persistence ++
+  lazy val dependency4Relayer = dependency4Persistence ++
     httpDependency ++
     akkaDependency ++
     json4sDependency ++

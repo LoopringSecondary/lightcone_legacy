@@ -20,7 +20,7 @@ import slick.jdbc.MySQLProfile.api._
 import slick.ast.ColumnOption
 import com.google.protobuf.ByteString
 
-abstract class BaseTable[T](
+private[persistence] abstract class BaseTable[T](
     tag: Tag,
     name: String)
     extends Table[T](tag, name) {

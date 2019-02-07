@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.proto._
-
 trait PendingRingPool {
   // This reset method should be used only by tests.
   def reset(): Unit

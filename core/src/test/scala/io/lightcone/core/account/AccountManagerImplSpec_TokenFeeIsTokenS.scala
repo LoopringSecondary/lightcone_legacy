@@ -16,11 +16,6 @@
 
 package io.lightcone.core
 import io.lightcone.core.implicits._
-
-// import io.lightcone.core.OrderAwareSpec
-
-/// import io.lightcone.proto._
-
 import org.scalatest._
 
 class AccountManagerImplSpec_TokenFeeIsTokenS extends OrderAwareSpec {

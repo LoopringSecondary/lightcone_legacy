@@ -1,0 +1,324 @@
+/*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+package io.lightcone.relayer.data;
+
+/////////////////////////////////////////////////////////////////////
+// ETHEREUM RAW DATA TYPES
+/////////////////////////////////////////////////////////////////////
+
+message Transaction {
+    string hash = 1;
+    string nonce = 2;
+    string blockHash = 3;
+    string blockNumber = 4;
+    string transactionIndex = 5;
+    string from = 6;
+    string to = 7;
+    string value = 8;
+    string gasPrice = 9;
+    string gas = 10;
+    string input = 11;
+    string r = 12;
+    string s = 13;
+    string v = 14;
+}
+
+message TransactionLog {
+    string logIndex = 1;
+    string blockNumber = 2;
+    string blockHash = 3;
+    string transactionHash = 4;
+    string transactionIndex = 5;
+    string address = 6;
+    string data = 7;
+    repeated string topics = 8;
+    bool removed = 9;
+}
+
+message TransactionReceipt {
+    string blockHash = 1;
+    string blockNumber = 2;
+    string transactionHash = 3;
+    string transactionIndex = 4;
+    string from = 5;
+    string to = 6;
+    string contractAddress = 7;
+    string cumulativeGasUsed = 8;
+    string gasUsed = 9;
+    repeated TransactionLog logs = 10;
+    string logsBloom = 11;
+    string root = 12;
+    string status = 13;
+}
+
+message BlockWithTxHash {
+    string number = 1;
+    string hash = 2;
+    string parentHash = 3;
+    string nonce = 4;
+    string sha3Uncles = 5;
+    string logsBloom = 6;
+    string transactionsRoot = 7;
+    string stateRoot = 8;
+    string receiptRoot = 9;
+    string miner = 10;
+    string difficulty = 11;
+    string totalDifficulty = 12;
+    string extraData = 13;
+    string size = 14;
+    string gasLimit = 15;
+    string gasUsed = 16;
+    string timestamp = 17;
+    repeated string transactions = 18;
+    repeated string uncles = 19;
+}
+
+message BlockWithTxObject {
+    string number = 1;
+    string hash = 2;
+    string parentHash = 3;
+    string nonce = 4;
+    string sha3Uncles = 5;
+    string logsBloom = 6;
+    string transactionsRoot = 7;
+    string stateRoot = 8;
+    string receiptRoot = 9;
+    string miner = 10;
+    string difficulty = 11;
+    string totalDifficulty = 12;
+    string extraData = 13;
+    string size = 14;
+    string gasLimit = 15;
+    string gasUsed = 16;
+    string timestamp = 17;
+    repeated Transaction transactions = 18;
+    repeated string uncles = 19;
+}
+
+message TraceCall {
+    string from = 1;
+    string to = 2;
+    string input = 3;
+    string output = 4;
+    string gas = 5;
+    string gasUsed = 6;
+    string type = 7;
+    string value = 8;
+}
+
+message TransactionTracing {
+    string from = 1;
+    string to = 2;
+    string input = 3;
+    string output = 4;
+    string gas = 5;
+    string gasUsed = 6;
+    string type = 7;
+    string value = 8;
+    repeated TraceCall calls = 9;
+}
+
+message TransactionParams {
+    string from = 1;
+    string to = 2;
+    string gas = 3;
+    string gasPrice = 4;
+    string value = 5;
+    string data = 6;
+}
+
+//message BlockWithTxAndReceipt {
+//    Block block = 1;
+//    repeated Transaction        transactions = 2;
+//    repeated TransactionReceipt receipts = 3;
+//}
+
+
+
+
+message TokenTransferData {
+    string id                   = 1;
+    int64  height               = 2;
+    string tx_hash              = 3;
+    int64  timestamp            = 4;
+    string from                 = 5;
+    string to                   = 6;
+    bytes  amount               = 7;
+    string token                = 8;
+}
+
+message EventLogData {
+    string id                   = 1;
+    int64  height               = 2;
+    string tx_hash              = 3;
+    int64  timestamp            = 4;
+    string address              = 5;
+    string name                 = 6;
+    bytes  data                 = 7;
+    bytes  topics               = 8;
+}
+
+message TransactionData {
+    // string id                = 1;
+    string hash                 = 2;
+    int64  height               = 3;
+    string block_hash           = 4;
+    int64  timestamp            = 5;
+    string from                 = 6;
+    string to                   = 7;
+    bytes  amount               = 8;
+    int32  tx_receipt_status    = 9;
+    bytes  gas_used             = 10;
+    bytes  gas_limit            = 11;
+    int64  gas_price            = 12;
+    bytes  tx_fee               = 13;
+    int64  nonce                = 14;
+    bytes  input_data           = 15;
+}
+
+message AddressData {
+    string address              = 1;
+    bytes  balance              = 2;
+    int64  num_tx               = 3;
+    string creator_address      = 4;
+    string creator_tx           = 5;
+    int64  updated_at_block     = 6;
+}
+
+// // TODO(kongliang): for 2.0, we should add some other fields.
+// message TradeData {
+//     string id                   = 1;
+//     int64  height               = 2;
+//     string block_hash           = 3;
+//     string tx_hash              = 4;
+//     string order_hash           = 5;
+//     int64  timestamp            = 6;
+//     // bytes amount_s              = 7;
+//     // bytes amount_b              = 8;
+//     // bytes amount_fee            = 9;
+// }
+
+message TokenBalance {
+    string address              = 1;
+    string token                = 2;
+    bytes  balance              = 3;
+    bytes  allowance            = 4;
+    int64  updated_at_block     = 5;
+}
+
+
+
+
+/////////////////////////////////////////////////////////////////////
+// ETHEREUM EVENT
+/////////////////////////////////////////////////////////////////////
+
+enum TxStatus {
+    TX_STATUS_PENDING = 0;
+    TX_STATUS_SUCCESS = 1;
+    TX_STATUS_FAILED = 2;
+}
+
+message EventHeader {
+    string tx_hash = 1;
+    TxStatus tx_status = 2;
+    string block_hash = 3;
+    int64  block_number = 4;
+    int64  block_timestamp   = 5;
+    string tx_from = 6;
+    string tx_to = 7;
+    bytes  tx_value = 8;
+    int32  tx_index = 9;
+    int32  log_index = 10;
+    int32  event_index = 11; // ringMinedEvent解析出所有filled事件的固定顺序
+    int64  gas_price = 12;
+    int32  gas_limit = 13;
+    int32  gas_used = 14;
+}
+
+message TransferEvent {
+    EventHeader header = 1;
+    string owner = 2;
+    string from = 3;
+    string to = 4;
+    string token = 5;
+    bytes amount = 6;
+}
+
+//LOOPRING Cutoff
+
+message OrdersCancelledEvent {
+    EventHeader header = 1;
+    string owner  = 2;
+    string broker = 3;
+    repeated string order_hashes = 4;
+}
+
+message CutoffEvent {
+    EventHeader header  = 1;
+    string broker       = 2;
+    string owner        = 3;
+    string market_hash   = 4;
+    int64  cutoff       = 5; // in seconds.
+}
+
+//LOOPRING RINGMINED
+message OrderFilledEvent {
+    EventHeader header = 1;
+    string owner = 2;
+    string order_hash = 3;
+    string delegate_address  = 4;
+    string ring_hash         = 5;
+    int64  ring_index        = 6;
+    int32  fill_index        = 7;
+    bytes  filled_amount_s     = 8;
+    bytes  filled_amount_b     = 9;
+    bytes  split = 10;
+    string token_s = 11;
+    string token_b = 12;
+    string wallet = 13;
+    int32  waive_fee_percentage    = 14; // miner waive
+    int32  wallet_split_percentage = 15;
+    // fee for market
+    string token_fee  = 16;
+    bytes  filled_amount_fee = 17;
+    // fee for p2p
+    bytes  fee_amount_s = 18;
+    bytes  fee_amount_b = 19;
+}
+
+message TokenBurnRateChangedEvent {
+    message BurnRate {
+        double for_market = 1;
+        double for_p2p = 2;
+    }
+    EventHeader header = 1;
+    string      token = 2;
+    BurnRate    burn_rate = 3;
+}
+
+message RingMinedEvent {   //include InvalidRing and RingMined and failed tx
+    EventHeader header = 1;
+    int64       ring_index = 2;
+    string      ring_hash = 3;
+    string      fee_recipient = 4;
+    repeated    OrderFilledEvent fills = 5;
+    string      miner = 6;
+}

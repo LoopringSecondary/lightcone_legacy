@@ -16,11 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.proto._
-
-import org.slf4s.Logging
-import OrderStatus._
-
 /*
  * AccountTokenManagerImpl manages reserving balance and allowance for orders.
  * An order can be 'reserved' if and only if the available (unservered) balance

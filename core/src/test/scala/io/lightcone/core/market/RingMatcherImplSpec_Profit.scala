@@ -15,14 +15,13 @@
  */
 
 package io.lightcone.core
+
 import io.lightcone.core.implicits._
-
-/// import io.lightcone.proto._
-
 import org.scalatest._
-import ErrorCode._
 
 class RingMatcherImplSpec_Profit extends OrderAwareSpec {
+
+  import ErrorCode._
 
   val nonProfitable = new RingIncomeEvaluator {
     def getRingIncome(ring: MatchableRing) = 0

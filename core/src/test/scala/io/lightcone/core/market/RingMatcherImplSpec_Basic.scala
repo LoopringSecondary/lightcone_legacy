@@ -15,14 +15,13 @@
  */
 
 package io.lightcone.core
+
 import io.lightcone.core.implicits._
-
-/// import io.lightcone.proto._
-
 import org.scalatest._
-import ErrorCode._
 
 class RingMatcherImplSpec_Basic extends OrderAwareSpec {
+
+  import ErrorCode._
 
   implicit val alwaysProfitable = new RingIncomeEvaluator {
     def getRingIncome(ring: MatchableRing) = Long.MaxValue

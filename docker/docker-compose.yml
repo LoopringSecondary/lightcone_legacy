@@ -1,7 +1,7 @@
 version: '2'
 services:
   seed:
-    image: org.loopring/lightcone_actors:latest
+    image: org.loopring/lightcone_relayer:latest
     shm_size: 800m  #shm_size指定
     ports:    #端口映射
       - "2552:2552"
@@ -28,7 +28,7 @@ services:
         "transaction_record"
       ]'
   ethereum:
-    image: org.loopring/lightcone_actors:latest
+    image: org.loopring/lightcone_relayer:latest
     shm_size: 500m
     volumes:
       - "./ethereum_log:/log"
@@ -41,7 +41,7 @@ services:
         "ethereum_client_monitor"
       ]'
   entrypoint:
-    image: org.loopring/lightcone_actors:latest
+    image: org.loopring/lightcone_relayer:latest
     shm_size: 500m
     volumes:
       - "./entrypoint_log:/log"

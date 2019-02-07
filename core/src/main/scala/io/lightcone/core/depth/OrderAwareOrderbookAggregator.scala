@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.proto._
-
 trait OrderAwareOrderbookAggregator extends OrderbookAggregator {
   def addOrder(order: Matchable): Unit
   def deleteOrder(order: Matchable): Unit

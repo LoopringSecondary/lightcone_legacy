@@ -21,9 +21,9 @@ import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import io.lightcone.lib._
 import io.lightcone.core._
+import io.lightcone.persistence._
 import io.lightcone.persistence.base._
-import io.lightcone.proto._
-import io.lightcone.proto.GetTrades._
+import io.lightcone.relayer.data._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
@@ -37,6 +37,9 @@ class TradeDalImpl @Inject()(
     @Named("dbconfig-dal-trade") val dbConfig: DatabaseConfig[JdbcProfile],
     timeProvider: TimeProvider)
     extends TradeDal {
+
+  import GetTrades._
+
   val query = TableQuery[TradeTable]
 
   def saveTrade(trade: Trade): Future[ErrorCode] = {

@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.proto._
-
 class OrderAwareOrderbookAggregatorImpl(
     priceDecimals: Int,
     precisionForAmount: Int,

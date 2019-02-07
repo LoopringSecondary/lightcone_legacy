@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.proto._
-
 object MarketManager {
   case class MatchResult(
       taker: Matchable,

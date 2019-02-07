@@ -15,16 +15,14 @@
  */
 
 package io.lightcone.core
-import io.lightcone.core.implicits._
 
+import io.lightcone.core.implicits._
 import io.lightcone.lib._
 
-/// import io.lightcone.proto._
-
-import OrderStatus._
-import ErrorCode._
-
 class MarketManagerImplSpec_Performance extends OrderAwareSpec {
+
+  import OrderStatus._
+  import ErrorCode._
 
   implicit var timeProvider = new TimeProvider {
     def getTimeMillis = -1

@@ -17,7 +17,6 @@
 package io.lightcone
 
 import java.math.BigInteger
-
 import io.lightcone.core._
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
@@ -88,6 +87,7 @@ package object ethereum {
   }
 
   // ----- implicit methods -----
+  // TODO(hongyu): create implicit classes instead of methods.
   implicit def int2BigInt(x: Int): BigInt = BigInt(x)
 
   implicit def string2BigInt(x: String): BigInt = x match {

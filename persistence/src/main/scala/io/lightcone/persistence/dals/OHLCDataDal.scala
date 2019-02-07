@@ -17,9 +17,8 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base.BaseDalImpl
-
 import scala.concurrent.Future
-import io.lightcone.proto._
+import io.lightcone.relayer.data._
 import io.lightcone.core._
 
 trait OHLCDataDal extends BaseDalImpl[OHLCDataTable, OHLCRawData] {

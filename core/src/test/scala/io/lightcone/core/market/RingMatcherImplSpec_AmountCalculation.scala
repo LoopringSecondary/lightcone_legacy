@@ -15,12 +15,8 @@
  */
 
 package io.lightcone.core
+
 import io.lightcone.core.implicits._
-
-// import io.lightcone.core.OrderAwareSpec
-
-/// import io.lightcone.proto._
-
 import spire.math.Rational
 
 class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {

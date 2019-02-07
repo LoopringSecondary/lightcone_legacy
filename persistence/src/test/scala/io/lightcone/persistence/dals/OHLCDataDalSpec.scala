@@ -17,10 +17,11 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.core._
-import io.lightcone.proto._
-
 import scala.concurrent.Await
 import scala.concurrent.duration._
+
+// TODO(yongfeng): remove dependency to relayer.data._
+import io.lightcone.relayer.data._
 
 class OHLCDataDalSpec extends DalPostgreSpec[OHLCDataDal] {
   def getDal = new OHLCDataDalImpl()

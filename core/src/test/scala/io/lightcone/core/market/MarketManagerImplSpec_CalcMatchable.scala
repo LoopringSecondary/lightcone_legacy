@@ -15,14 +15,13 @@
  */
 
 package io.lightcone.core
+
 import io.lightcone.core.implicits._
 
-/// import io.lightcone.proto._
-
-import OrderStatus._
-import ErrorCode._
-
 class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
+
+  import OrderStatus._
+  import ErrorCode._
 
   "MarketManager" should "generate a ring for buy order as taker" in {
     var buyOrder = actualNotDust(buyGTO(BigInt(100000), BigInt(100), 0)) // price =  100000/100.0 = 1000.00

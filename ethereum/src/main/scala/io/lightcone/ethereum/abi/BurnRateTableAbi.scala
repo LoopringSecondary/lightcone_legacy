@@ -18,7 +18,6 @@ package io.lightcone.ethereum.abi
 
 import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
-
 import scala.annotation.meta.field
 import scala.io.Source
 

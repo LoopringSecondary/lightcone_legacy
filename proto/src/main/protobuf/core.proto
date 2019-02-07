@@ -84,7 +84,7 @@ enum ErrorCode{
     // submitRings param deserialize error
     ERR_SERIALIZATION_ENCODED_DATA_INVALID                  = 2101;
 
-    //3001 -- 4000 core actors error
+    //3001 -- 4000 relayer error
     ERR_ORDER_ALREADY_EXIST             = 3001;
     ERR_ORDER_NOT_EXIST                 = 3002;
     ERR_ORDER_INVALID_AMOUNT_S          = 3003;

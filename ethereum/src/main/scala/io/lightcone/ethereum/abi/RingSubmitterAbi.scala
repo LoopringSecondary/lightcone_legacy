@@ -19,7 +19,6 @@ package io.lightcone.ethereum.abi
 import scala.io.Source
 import org.ethereum.solidity.Abi
 import org.web3j.utils.Numeric
-
 import scala.annotation.meta.field
 
 class RingSubmitterAbi(abiJson: String) extends AbiWrap(abiJson) {

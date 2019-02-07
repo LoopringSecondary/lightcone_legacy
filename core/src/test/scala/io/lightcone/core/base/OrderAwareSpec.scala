@@ -16,11 +16,8 @@
 
 package io.lightcone.core
 import io.lightcone.core.implicits._
-
 import com.typesafe.config.ConfigFactory
 import io.lightcone.lib._
-
-/// import io.lightcone.proto._
 
 trait OrderAwareSpec extends CommonSpec {
   var nextId = 1

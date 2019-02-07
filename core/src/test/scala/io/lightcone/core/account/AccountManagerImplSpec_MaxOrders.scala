@@ -15,16 +15,13 @@
  */
 
 package io.lightcone.core
+
 import io.lightcone.core.implicits._
-
-// import io.lightcone.core.OrderAwareSpec
-
-/// import io.lightcone.proto._
-
 import org.scalatest._
-import OrderStatus._
 
 class AccountManagerImplSpec_MaxOrders extends OrderAwareSpec {
+  import OrderStatus._
+
   "submit order" should "fail when max orders received for tokenS" in {
     dai.setBalanceAndAllowance(
       (dai.maxNumOrders * 10) !,

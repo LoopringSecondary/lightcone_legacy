@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-/// import io.lightcone.proto._
-
 import org.slf4s.Logging
 
 final private[core] class AccountManagerImpl(

@@ -20,10 +20,9 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import io.lightcone.core._
+import io.lightcone.persistence._
 import io.lightcone.lib._
-import io.lightcone.proto.GetTrades._
-import io.lightcone.proto._
-import io.lightcone.proto.GetRings.Req.Ring._
+import io.lightcone.relayer.data._
 import slick.basic._
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile.api._
@@ -37,6 +36,10 @@ class RingDalImpl @Inject()(
     @Named("dbconfig-dal-ring") val dbConfig: DatabaseConfig[JdbcProfile],
     timeProvider: TimeProvider)
     extends RingDal {
+
+  import GetTrades._
+  import GetRings.Req.Ring._
+
   val query = TableQuery[RingTable]
 
   def saveRing(ring: Ring): Future[ErrorCode] = {
