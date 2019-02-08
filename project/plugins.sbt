@@ -6,8 +6,7 @@ resolvers += Resolver.bintrayRepo("hseeberger", "maven")
 resolvers += Resolver.bintrayIvyRepo("kamon-io", "sbt-plugins")
 resolvers += Resolver.url(
   "scoverage-bintray",
-  url("https://dl.bintray.com/sksamuel/sbt-plugins/")
-)(Resolver.ivyStylePatterns)
+  url("https://dl.bintray.com/sksamuel/sbt-plugins/"))(Resolver.ivyStylePatterns)
 
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.8.2"
 
@@ -25,3 +24,4 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.4.0")
 addSbtPlugin("se.marcuslonnberg" % "sbt-docker" % "1.5.0")
 addSbtPlugin("com.tapad" % "sbt-docker-compose" % "1.0.34")
 addSbtPlugin("io.kamon" % "sbt-aspectj-runner" % "1.1.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.4")

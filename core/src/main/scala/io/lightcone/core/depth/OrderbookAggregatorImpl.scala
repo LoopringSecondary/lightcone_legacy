@@ -58,7 +58,7 @@ class OrderbookAggregatorImpl(
     }
   }
 
-  def reset() {
+  def reset(): Unit = {
     sells.reset()
     buys.reset()
   }

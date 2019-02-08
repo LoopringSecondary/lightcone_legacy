@@ -231,7 +231,7 @@ class MarketManagerImpl(
     )
 
   // Add an order to its side.
-  private def addOrder(order: Matchable) {
+  private def addOrder(order: Matchable): Unit = {
     assert(order._actual.isDefined)
     assert(order._matchable.isDefined)
 

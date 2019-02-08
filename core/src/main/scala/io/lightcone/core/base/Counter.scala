@@ -50,5 +50,5 @@ class SimpleCounter[T] extends Counter[T] {
     ) = incr(key, -delta)
   def get(key: T) = counts.getOrElse(key, 0)
   def remove(key: T) = { counts -= key }
-  def clear() { counts = Map.empty }
+  def clear(): Unit = { counts = Map.empty }
 }
