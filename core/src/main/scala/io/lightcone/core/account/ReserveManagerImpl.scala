@@ -18,7 +18,7 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-class ReserveManagerImpl2(
+class ReserveManagerImpl(
     val token: String,
     val maxNumOrders: Int = 1000
   )(
@@ -66,7 +66,7 @@ class ReserveManagerImpl2(
   def setBalanceAndAllowance(
       balance: BigInt,
       allowance: BigInt
-    ): Set[String] = this.synchronized {
+    ) = this.synchronized {
     val cursor1 =
       if (balance >= this.balance) cursor
       else {

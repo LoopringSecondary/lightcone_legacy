@@ -33,13 +33,13 @@ trait ReserveManager {
 
   def hasTooManyOrders(): Boolean
 
-  def setBalance(balance: BigInt): Set[String]
-  def setAllowance(allowance: BigInt): Set[String]
+  def setBalance(balance: BigInt): Unit
+  def setAllowance(allowance: BigInt): Unit
 
   def setBalanceAndAllowance(
       balance: BigInt,
       allowance: BigInt
-    ): Set[String]
+    ): Unit
 
   // Reserve balance/allowance for an order.
   def reserve(orderId: String): Set[String]
