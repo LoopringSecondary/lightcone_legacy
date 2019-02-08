@@ -15,10 +15,7 @@
  */
 
 package io.lightcone.core
-import io.lightcone.core.implicits._
 import io.lightcone.lib._
-import OrderStatus._
-import ErrorCode._
 
 trait MarketAwareSpec extends OrderAwareSpec {
   type MR = MarketManager.MatchResult
@@ -35,7 +32,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
   var fakeAggregator: OrderAwareOrderbookAggregator = _
   var marketManager: MarketManager = _
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     nextId = 1
     fackRingMatcher = stub[RingMatcher]
     fakeDustOrderEvaluator = stub[DustOrderEvaluator]

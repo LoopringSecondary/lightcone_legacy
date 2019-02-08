@@ -26,11 +26,8 @@
 package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
-import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
 import io.lightcone.relayer.data._
-import io.lightcone.core._
-import com.google.protobuf.ByteString
 
 class TokenBalanceTable(tag: Tag)
     extends BaseTable[TokenBalance](tag, "T_TOKEN_BALANCES") {

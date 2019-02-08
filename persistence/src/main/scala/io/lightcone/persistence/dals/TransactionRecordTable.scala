@@ -19,7 +19,6 @@ package io.lightcone.persistence.dals
 import com.google.protobuf.ByteString
 import io.lightcone.persistence.base._
 import io.lightcone.relayer.data._
-import io.lightcone.core._
 import slick.jdbc.MySQLProfile.api._
 
 class TransactionRecordTable(shardId: String)(tag: Tag)

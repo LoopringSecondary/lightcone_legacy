@@ -19,7 +19,6 @@ package io.lightcone.relayer.support
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
-import io.lightcone.lib._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.Config

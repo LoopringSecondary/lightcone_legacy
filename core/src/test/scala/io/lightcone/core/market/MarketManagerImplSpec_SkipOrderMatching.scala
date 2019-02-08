@@ -20,7 +20,6 @@ import io.lightcone.core.implicits._
 
 class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
 
-  import OrderStatus._
   import ErrorCode._
 
   "MarketManager" should "skip non-profitable orders" in {

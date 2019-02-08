@@ -16,11 +16,8 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.implicits._
-
 class MarketManagerImplSpec_StopMatching extends MarketAwareSpec {
 
-  import OrderStatus._
   import ErrorCode._
 
   "MarketManager" should "stop matching on the first price mismatch" in {

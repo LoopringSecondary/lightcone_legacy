@@ -22,7 +22,7 @@ import com.google.protobuf.ByteString
 
 class AddressSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 

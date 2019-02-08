@@ -18,7 +18,6 @@ package io.lightcone.relayer.base
 
 import akka.actor._
 import akka.cluster.singleton._
-import com.typesafe.config.Config
 
 // Owner: Daniel
 

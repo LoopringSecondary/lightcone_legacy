@@ -22,7 +22,6 @@ import com.typesafe.config.ConfigFactory
 import org.junit.runner.Description
 import io.lightcone.lib._
 import io.lightcone.core._
-import io.lightcone.relayer.data._
 import org.testcontainers.containers.wait.strategy.Wait
 import org.web3j.crypto.Credentials
 import slick.basic.DatabaseConfig

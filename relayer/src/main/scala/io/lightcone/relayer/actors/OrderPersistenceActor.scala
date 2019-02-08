@@ -17,13 +17,11 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.core._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
-import io.lightcone.relayer.validator._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._

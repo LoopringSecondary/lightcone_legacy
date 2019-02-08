@@ -17,7 +17,6 @@
 package io.lightcone.core
 import io.lightcone.core.implicits._
 import com.typesafe.config.ConfigFactory
-import io.lightcone.lib._
 
 trait OrderAwareSpec extends CommonSpec {
   var nextId = 1
@@ -119,7 +118,7 @@ trait OrderAwareSpec extends CommonSpec {
 
   var updatedOrders = Map.empty[String, Matchable]
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     nextId = 1
     orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
     updatedOrders = Map.empty[String, Matchable]
@@ -273,7 +272,7 @@ trait OrderAwareSpec extends CommonSpec {
     accountManager.adjustOrder(orderId, outstandingAmountS)
   }
 
-  def resetUpdatedOrders() {
+  def resetUpdatedOrders(): Unit = {
     updatedOrders = Map.empty[String, Matchable]
   }
 

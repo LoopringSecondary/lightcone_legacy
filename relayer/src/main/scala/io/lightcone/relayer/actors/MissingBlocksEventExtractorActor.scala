@@ -17,7 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.cluster.singleton._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
@@ -25,7 +24,6 @@ import io.lightcone.relayer.ethereum._
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
-import io.lightcone.core._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 

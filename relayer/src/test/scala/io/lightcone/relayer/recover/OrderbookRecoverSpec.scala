@@ -17,18 +17,13 @@
 package io.lightcone.relayer.recover
 
 import akka.actor.PoisonPill
-import akka.cluster.Cluster
-import akka.cluster.sharding.{ClusterSharding, ShardRegion}
 import akka.pattern._
-import akka.util.Timeout
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.math.BigInt
 
 class OrderbookRecoverSpec
     extends CommonSpec

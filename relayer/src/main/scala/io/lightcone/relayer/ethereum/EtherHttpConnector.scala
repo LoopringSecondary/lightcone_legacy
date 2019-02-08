@@ -35,7 +35,6 @@ import io.lightcone.relayer.actors.KeepAliveActor
 import io.lightcone.lib.TimeProvider
 import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
-import io.lightcone.core._
 import scalapb.json4s.JsonFormat
 
 import scala.collection.JavaConverters._

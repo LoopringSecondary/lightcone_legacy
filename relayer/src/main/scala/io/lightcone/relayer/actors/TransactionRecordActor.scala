@@ -17,7 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor.{Address => _, _}
-import akka.cluster.sharding._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.lib._
@@ -29,9 +28,6 @@ import io.lightcone.persistence.dals._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import scala.concurrent._
-import slick.jdbc.MySQLProfile.api._
-import slick.jdbc.JdbcProfile
-import slick.basic.DatabaseConfig
 
 // main owner: 杜永丰
 object TransactionRecordActor extends DeployedAsShardedByAddress {
@@ -73,8 +69,6 @@ class TransactionRecordActor(
     val databaseConfigManager: DatabaseConfigManager)
     extends InitializationRetryActor
     with ShardingEntityAware {
-
-  import ErrorCode._
 
   import TransactionRecord.RecordType._
   import TransactionRecord.EventData.Event

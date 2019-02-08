@@ -28,8 +28,6 @@ import akka.pattern.ask
 import com.typesafe.config.Config
 import org.json4s.jackson.Serialization
 import com.typesafe.config.Config
-import scala.reflect.runtime.universe._
-import scala.concurrent.duration._
 import scala.concurrent._
 import scala.util.{Failure, Success}
 

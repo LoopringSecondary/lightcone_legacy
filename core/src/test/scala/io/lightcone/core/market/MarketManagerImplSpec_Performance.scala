@@ -16,13 +16,9 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.implicits._
 import io.lightcone.lib._
 
 class MarketManagerImplSpec_Performance extends OrderAwareSpec {
-
-  import OrderStatus._
-  import ErrorCode._
 
   implicit var timeProvider = new TimeProvider {
     def getTimeMillis = -1
@@ -34,7 +30,7 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
   implicit var fackRingIncomeEvaluator: RingIncomeEvaluator = _
   var marketManager: MarketManager = _
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     nextId = 1
     fackRingIncomeEvaluator = stub[RingIncomeEvaluator]

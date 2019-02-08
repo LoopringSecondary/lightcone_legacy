@@ -124,7 +124,7 @@ final class TransactionRecordMessageValidator(
   private def validate(
       headerOpt: Option[EventHeader],
       owner: String
-    ) {
+    ): Unit = {
     if (headerOpt.isEmpty || owner.isEmpty)
       throw ErrorException(
         ErrorCode.ERR_INVALID_ARGUMENT,

@@ -17,9 +17,6 @@
 package io.lightcone.persistence.dals
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
-import com.typesafe.config.Config
-import com.typesafe.scalalogging.Logger
-import io.lightcone.lib._
 import io.lightcone.persistence.base._
 import io.lightcone.persistence._
 import slick.jdbc.MySQLProfile.api._

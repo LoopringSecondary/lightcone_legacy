@@ -51,7 +51,7 @@ trait DeployedAsSharded[T] extends Object with Logging {
   }
 
   // This method is used in tests to load configs.
-  def loadConfig()(implicit config: Config) {
+  def loadConfig()(implicit config: Config): Unit = {
     val numOfShardsPath = s"${name}.num-of-shards"
     assert(
       config.hasPath(numOfShardsPath),

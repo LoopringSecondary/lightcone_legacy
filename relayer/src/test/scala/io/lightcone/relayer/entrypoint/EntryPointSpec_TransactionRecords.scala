@@ -25,7 +25,7 @@ import io.lightcone.relayer.data._
 import io.lightcone.persistence._
 import io.lightcone.core._
 import io.lightcone.relayer.base._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import TransactionRecord.EventData.Event
 import TransactionRecord.RecordType._
 

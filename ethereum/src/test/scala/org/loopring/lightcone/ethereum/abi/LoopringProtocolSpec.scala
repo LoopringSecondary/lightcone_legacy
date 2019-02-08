@@ -26,7 +26,7 @@ class LoopringProtocolSpec
 
   val loopringProtocolAbi = LoopringProtocolAbi()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 

@@ -17,7 +17,6 @@
 package io.lightcone.ethereum.abi
 
 import org.scalatest._
-import org.web3j.utils.Numeric
 
 class WETHAbiSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 

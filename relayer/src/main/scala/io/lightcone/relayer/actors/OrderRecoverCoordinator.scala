@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.actors
 import akka.actor._
-import akka.cluster.singleton._
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
@@ -125,7 +124,7 @@ class OrderRecoverCoordinator(
 
   }
 
-  private def startBatchTimer() {
+  private def startBatchTimer(): Unit = {
     if (batchTimer.isEmpty) {
       batchTimer = Some(
         context.system.scheduler
@@ -134,7 +133,7 @@ class OrderRecoverCoordinator(
     }
   }
 
-  private def cancelBatchTimer() {
+  private def cancelBatchTimer(): Unit = {
     batchTimer.foreach(_.cancel)
     batchTimer = None
   }

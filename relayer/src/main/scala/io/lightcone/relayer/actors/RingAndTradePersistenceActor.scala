@@ -17,7 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import com.typesafe.config.Config

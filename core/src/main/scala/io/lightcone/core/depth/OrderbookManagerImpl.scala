@@ -81,7 +81,7 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
         false
       ) with ConverstionSupport
 
-    def processUpdate(update: Orderbook.Update) {
+    def processUpdate(update: Orderbook.Update): Unit = {
       update.sells.foreach(sellSide.increase)
       update.buys.foreach(buySide.increase)
     }
@@ -131,7 +131,7 @@ class OrderbookManagerImpl(metadata: MarketMetadata)
       Orderbook(latestPrice, sells, buys)
     }
 
-    def reset() {
+    def reset(): Unit = {
       sellSide.reset()
       buySide.reset()
     }

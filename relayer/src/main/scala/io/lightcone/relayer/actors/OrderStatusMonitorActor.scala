@@ -19,7 +19,6 @@ package io.lightcone.relayer.actors
 import akka.actor._
 import akka.pattern._
 import akka.util.Timeout
-import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
@@ -65,7 +64,6 @@ class OrderStatusMonitorActor(
     extends Actor
     with ActorLogging
     with RepeatedJobActor {
-  import OrderStatusMonitor.MonitoringType._
   import OrderStatus._
 
   val selfConfig = config.getConfig(OrderStatusMonitorActor.name)

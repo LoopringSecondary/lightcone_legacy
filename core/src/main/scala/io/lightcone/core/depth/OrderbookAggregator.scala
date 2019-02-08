@@ -51,7 +51,7 @@ trait OrderbookAggregator {
       price: Double,
       amount: Double,
       total: Double
-    )
+    ): Unit
 
   def reset(): Unit
 }

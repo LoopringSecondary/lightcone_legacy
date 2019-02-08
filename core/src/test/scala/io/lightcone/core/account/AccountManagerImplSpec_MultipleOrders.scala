@@ -17,7 +17,6 @@
 package io.lightcone.core
 
 import io.lightcone.core.implicits._
-import org.scalatest._
 
 class AccountManagerImplSpec_MultipleOrders extends OrderAwareSpec {
   "last order" should "fail when available balance for tokenS is smaller than required" in {

@@ -16,24 +16,17 @@
 
 package io.lightcone.relayer
 
-import io.lightcone.relayer.support._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.actors._
-import io.lightcone.core._
 import scala.concurrent.Await
 import scala.concurrent.duration._
-
-import java.io.File
 
 import akka.actor._
 import com.google.inject.Guice
 import com.google.inject.Injector
 import com.typesafe.config.ConfigFactory
-import kamon.Kamon
 import net.codingwell.scalaguice.InjectorExtensions._
 import org.slf4s.Logging
-import scala.io.StdIn
 import scala.util.Try
 
 import org.scalatest._
@@ -61,9 +54,9 @@ class IntegrationTesting
 
   override def beforeEach() = {}
 
-  override def afterEach() {}
+  override def afterEach(): Unit = {}
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     val params = "characterEncoding=UTF-8&useSSL=false"
     val databaseUrls = s"""
     db.default.db.url:"jdbc:mysql://127.0.0.1:3306/lightcone_${databaseIndex}?${params}"
@@ -84,7 +77,7 @@ class IntegrationTesting
     log.info(s"database url: ${databaseUrls}")
   }
 
-  override def afterAll() {
+  override def afterAll(): Unit = {
     Try(Await.result(injector.instance[ActorSystem].terminate(), 10.seconds))
     Try(injector.instance[DatabaseConfigManager].close())
     log.info("<--- akka system shut down, database closed")

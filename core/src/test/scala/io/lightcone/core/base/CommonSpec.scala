@@ -16,7 +16,6 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.implicits._
 import org.scalatest._
 import org.scalamock.scalatest._
 import org.slf4s.Logging
@@ -29,7 +28,7 @@ trait CommonSpec
     with MockFactory
     with Logging {
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     println(
       s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
     )

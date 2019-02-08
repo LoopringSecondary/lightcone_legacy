@@ -17,7 +17,6 @@
 package io.lightcone.relayer
 
 import io.lightcone.relayer.data._
-import io.lightcone.core._
 
 object RpcDataConversions {
   implicit def convertGetOrderbookReq(

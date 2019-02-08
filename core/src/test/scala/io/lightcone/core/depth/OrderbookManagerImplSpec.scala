@@ -16,9 +16,6 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.implicits._
-import org.scalatest._
-
 class OrderbookManagerImplSpec extends CommonSpec {
   var obm: OrderbookManager = _
 
@@ -29,7 +26,7 @@ class OrderbookManagerImplSpec extends CommonSpec {
     precisionForTotal = 1
   )
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     obm = new OrderbookManagerImpl(metadata)
   }
 

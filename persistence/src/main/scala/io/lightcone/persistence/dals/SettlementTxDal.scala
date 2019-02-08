@@ -16,21 +16,9 @@
 
 package io.lightcone.persistence.dals
 
-import com.google.inject.Inject
-import com.google.inject.name.Named
-import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
-import com.typesafe.scalalogging.Logger
-import io.lightcone.lib._
 import io.lightcone.persistence.base._
-import io.lightcone.core.ErrorCode._
 import io.lightcone.relayer.data._
-import io.lightcone.core._
-import slick.jdbc.MySQLProfile.api._
-import slick.jdbc.{GetResult, JdbcProfile}
-import slick.basic._
-import slick.lifted.Query
 import scala.concurrent._
-import scala.util.{Failure, Success}
 
 trait SettlementTxDal extends BaseDalImpl[SettlementTxTable, SettlementTx] {
   def saveTx(tx: SettlementTx): Future[PersistSettlementTx.Res]

@@ -16,14 +16,10 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.implicits._
-import io.lightcone.lib._
-import org.scalatest._
-
 class OrderbookAggregatorImplSpec extends CommonSpec {
   var agg: OrderbookAggregator = _
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     agg = new OrderbookAggregatorImpl(5, 4, 4)
   }
 

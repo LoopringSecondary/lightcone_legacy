@@ -23,7 +23,7 @@ class OrderBookAbiSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
   val orderBookAbi = OrderBookAbi()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 

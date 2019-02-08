@@ -17,10 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
-import akka.cluster.sharding._
-import akka.event.LoggingReceive
 import akka.util.Timeout
 import akka.pattern.ask
 import com.typesafe.config.Config
@@ -31,7 +27,6 @@ import io.lightcone.core._
 import org.slf4s.Logging
 
 import scala.concurrent._
-import scala.util.{Failure, Success}
 
 // Owner: Hongyu
 object OrderbookManagerActor extends DeployedAsShardedByMarket with Logging {

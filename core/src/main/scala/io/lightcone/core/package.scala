@@ -16,7 +16,6 @@
 
 package io.lightcone
 
-import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
 import spire.math.Rational
 import com.google.protobuf.ByteString
