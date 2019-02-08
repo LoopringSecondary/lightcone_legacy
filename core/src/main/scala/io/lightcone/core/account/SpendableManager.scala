@@ -17,7 +17,7 @@
 package io.lightcone.core
 
 /*
- * ReserveManagerImpl manages reserving balance and allowance for orders.
+ * ReserveManager manages reserving balance and allowance for orders.
  * An order can be 'reserved' if and only if the available (unservered) balance
  * is no less than the order's size.
  */
