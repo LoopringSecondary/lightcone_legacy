@@ -5,7 +5,8 @@ import Dependencies._
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.tapad.docker.DockerComposeKeys
 
-addCommandAlias("fix", "all compile:scalafix test:scalafix")
+addCommandAlias("fix", "all compile:scalafix RemoveUnused")
+addCommandAlias("fixtest", "all test:scalafix RemoveUnused")
 
 lazy val proto = (project in file("proto"))
   .settings(

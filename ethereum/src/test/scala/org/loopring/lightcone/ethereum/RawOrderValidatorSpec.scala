@@ -16,7 +16,6 @@
 
 package io.lightcone.ethereum
 
-import scala.util.Properties
 import org.scalatest._
 import com.google.protobuf.ByteString
 import io.lightcone.core._

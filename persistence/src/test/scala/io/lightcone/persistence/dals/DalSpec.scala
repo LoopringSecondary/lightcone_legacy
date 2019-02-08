@@ -18,11 +18,8 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
 import org.scalatest._
-import scala.concurrent.duration._
 import scala.concurrent._
-import slick.jdbc.meta._
 import slick.basic._
-import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import com.dimafeng.testcontainers._
 import com.typesafe.config._

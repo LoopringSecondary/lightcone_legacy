@@ -21,11 +21,9 @@ import akka.pattern._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
-import io.lightcone.core._
 import org.rnorth.ducttape.TimeoutException
 import org.rnorth.ducttape.unreliables.Unreliables
 import org.testcontainers.containers.ContainerLaunchException
-import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
 
 trait OrderbookManagerSupport

@@ -16,24 +16,17 @@
 
 package io.lightcone.relayer
 
-import io.lightcone.relayer.support._
-import io.lightcone.relayer.data._
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.actors._
-import io.lightcone.core._
 import scala.concurrent.Await
 import scala.concurrent.duration._
-
-import java.io.File
 
 import akka.actor._
 import com.google.inject.Guice
 import com.google.inject.Injector
 import com.typesafe.config.ConfigFactory
-import kamon.Kamon
 import net.codingwell.scalaguice.InjectorExtensions._
 import org.slf4s.Logging
-import scala.io.StdIn
 import scala.util.Try
 
 import org.scalatest._

@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.implicits._
-
 class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
 
   import OrderStatus._

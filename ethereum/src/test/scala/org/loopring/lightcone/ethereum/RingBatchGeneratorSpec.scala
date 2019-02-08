@@ -19,8 +19,6 @@ package io.lightcone.ethereum
 import org.scalatest._
 import com.google.protobuf.ByteString
 import io.lightcone.core._
-import org.web3j.crypto._
-import org.web3j.utils.Numeric
 
 class RingBatchGeneratorSpec extends FlatSpec with Matchers {
 

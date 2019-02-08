@@ -15,10 +15,7 @@
  */
 
 package io.lightcone.core
-import io.lightcone.core.implicits._
 import io.lightcone.lib._
-import OrderStatus._
-import ErrorCode._
 
 trait MarketAwareSpec extends OrderAwareSpec {
   type MR = MarketManager.MatchResult

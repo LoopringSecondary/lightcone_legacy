@@ -25,7 +25,7 @@ import io.lightcone.relayer.support._
 import io.lightcone.relayer.validator._
 import io.lightcone.relayer.data._
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import akka.pattern._
 
 class MetadataManagerSpec

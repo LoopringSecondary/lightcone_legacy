@@ -21,7 +21,6 @@ import io.lightcone.relayer.data._
 import io.lightcone.core._
 import akka.pattern._
 import io.lightcone.core.MarketHash
-import org.web3j.utils.Numeric
 import scala.concurrent.{Await, Future}
 
 class ProcessEthereumSpec_OwnerCutoffTradingPair

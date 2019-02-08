@@ -5,6 +5,8 @@
 ## Compile
 
 * Compile all, run `sbt test:compile`
+* Remove all unused imports, run `sbt fix fixtest`
+
 * Compile subproject, run `sbt $projectName/test:compile`
 > Make sure to use `test:compile` instead of `compile` so all tests compile.
 

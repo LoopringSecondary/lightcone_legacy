@@ -20,7 +20,6 @@ import com.google.protobuf.ByteString
 import io.lightcone.relayer.actors._
 import io.lightcone.ethereum._
 import io.lightcone.core._
-import io.lightcone.relayer.data._
 import org.web3j.crypto.Credentials
 import org.web3j.utils.Numeric
 

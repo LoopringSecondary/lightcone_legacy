@@ -20,8 +20,6 @@ import org.scalatest._
 import com.google.protobuf.ByteString
 
 import io.lightcone.core._
-import org.web3j.crypto._
-import org.web3j.utils.Numeric
 
 class RingBatchDeserializerSpec extends FlatSpec with Matchers {
   "RingBatchDeserializerSpec" should "be able to deserialize encoded data to a ringBatch object" in {

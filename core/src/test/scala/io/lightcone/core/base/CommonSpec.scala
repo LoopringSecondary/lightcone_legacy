@@ -16,7 +16,6 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.implicits._
 import org.scalatest._
 import org.scalamock.scalatest._
 import org.slf4s.Logging
