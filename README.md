@@ -10,6 +10,8 @@
 * Compile subproject, run `sbt $projectName/test:compile`
 > Make sure to use `test:compile` instead of `compile` so all tests compile.
 
+Note that before comming to git, use `sbt check`.
+
 ## Dockerize
 
 You must have Docker and Docker-Compose installed.
