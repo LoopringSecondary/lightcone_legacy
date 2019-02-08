@@ -27,29 +27,29 @@ trait TestHelpers extends IntegrationConstants with Matchers {
   implicit val timeout = akka.util.Timeout(10 seconds)
   def entrypoint: ActorRef
 
-  case class _SomeToken(
+  case class AmountToken(
       amount: Double,
       tokenAddress: String) {
-    def ->(another: _SomeToken) = _OrderRep(this, another, None)
+    def ->(another: AmountToken) = OrderRep(this, another, None)
   }
 
-  case class _OrderRep(
-      sell: _SomeToken,
-      buy: _SomeToken,
-      fee: Option[_SomeToken]) {
-    def --(fee: _SomeToken) = copy(fee = Some(fee))
+  case class OrderRep(
+      sell: AmountToken,
+      buy: AmountToken,
+      fee: Option[AmountToken]) {
+    def --(fee: AmountToken) = copy(fee = Some(fee))
   }
 
-  implicit class _RichDoubleAmount(v: Double) {
-    def ^(str: String) = _SomeToken(v, str)
-    def lrc = _SomeToken(v, LRC)
-    def gto = _SomeToken(v, GTO)
-    def weth = _SomeToken(v, WETH)
+  implicit class Rich_DoubleAmount(v: Double) {
+    def ^(str: String) = AmountToken(v, str)
+    def lrc = AmountToken(v, LRC)
+    def gto = AmountToken(v, GTO)
+    def weth = AmountToken(v, WETH)
   }
 
-  implicit class _RichStringAddress(owner: String) {
+  implicit class Rich_StringAddress(owner: String) {
 
-    def >>(or: _OrderRep): RawOrder =
+    def >>(or: OrderRep): RawOrder =
       RawOrder(
         owner = owner,
         tokenS = or.sell.tokenAddress,
@@ -57,7 +57,7 @@ trait TestHelpers extends IntegrationConstants with Matchers {
       )
   }
 
-  implicit class _RichActorRef(actor: ActorRef) {
+  implicit class Rich_ActorRef(actor: ActorRef) {
 
     def ??[T](msg: Any): T = {
       Await.result(actor ? msg, timeout.duration).asInstanceOf[T]

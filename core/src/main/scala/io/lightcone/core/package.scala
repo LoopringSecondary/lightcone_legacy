@@ -51,16 +51,16 @@ package object core {
     ByteString.copyFrom(bytes)
 
   /// -----implicit classes -----
-  implicit class _RichOrderbookSlot(raw: Orderbook.Slot)
+  implicit class Rich_OrderbookSlot(raw: Orderbook.Slot)
       extends RichOrderbookSlot(raw)
 
-  implicit class _RichBigInt(raw: BigInt) extends RichBigInt(raw)
+  implicit class Rich_BigInt(raw: BigInt) extends RichBigInt(raw)
 
-  implicit class _RichExpectedFill(raw: ExpectedMatchableFill)
+  implicit class Rich_ExpectedFill(raw: ExpectedMatchableFill)
       extends RichExpectedFill(raw)
 
-  implicit class _RichMatchable(raw: Matchable) extends RichMatchable(raw)
+  implicit class Rich_Matchable(raw: Matchable) extends RichMatchable(raw)
 
-  implicit class _RichMatchableRing(raw: MatchableRing)
+  implicit class Rich_MatchableRing(raw: MatchableRing)
       extends RichMatchableRing(raw)
 }
