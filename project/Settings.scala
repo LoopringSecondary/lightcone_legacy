@@ -14,7 +14,26 @@ import org.scalafmt.sbt.ScalafmtPlugin.autoImport.scalafmtOnCompile
 import scalafix.sbt.ScalafixPlugin.autoImport._
 
 object Settings {
-  lazy val basicSettings: Seq[Setting[_]] = Seq(
+
+  lazy val myScalafixSettings: Seq[Setting[_]] = Seq(
+    addCompilerPlugin(scalafixSemanticdb), // enable SemanticDB
+    javacOptions := Seq( //"-source", Globals.jvmVersion,
+    ),
+    scalacOptions := Seq(
+      "-encoding", "utf8", // Option and arguments on same line
+      "-Yrangepos", // required by SemanticDB compiler plugin
+      "-Ywarn-unused-import", // required by `RemoveUnused` rule
+      "-language:implicitConversions",
+      "-language:higherKinds",
+      "-language:existentials",
+      "-language:postfixOps",
+      "-g:vars",
+      "-unchecked",
+      "-deprecation",
+      "-Yresolve-term-conflict:package",
+      "-feature"))
+
+  lazy val basicSettings: Seq[Setting[_]] = myScalafixSettings ++ Seq(
     scalaVersion := Globals.scalaVersion,
     organization := "org.loopring",
     organizationName := "Loopring Foundation",
@@ -34,25 +53,9 @@ object Settings {
     resolvers += Resolver.bintrayRepo("hseeberger", "maven"),
     resolvers += Opts.resolver.sonatypeSnapshots,
     resolvers += Opts.resolver.sonatypeReleases,
-    addCompilerPlugin(scalafixSemanticdb), // enable SemanticDB
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"),
-    javacOptions := Seq( //"-source", Globals.jvmVersion,
-    ),
-    scalacOptions := Seq(
-      "-encoding", "utf8", // Option and arguments on same line
-      "-Yrangepos", // required by SemanticDB compiler plugin
-      "-Ywarn-unused-import", // required by `RemoveUnused` rule
-      "-language:implicitConversions",
-      "-language:higherKinds",
-      "-language:existentials",
-      "-language:postfixOps",
-      "-g:vars",
-      "-unchecked",
-      "-deprecation",
-      "-Yresolve-term-conflict:package",
-      "-feature"),
     fork in Test := false,
     parallelExecution in Test := false,
     startYear := Some(2018),

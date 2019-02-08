@@ -34,7 +34,7 @@ trait JsonRpcBinding {
       C <: Proto[C]: TypeTag, //
       D <: Proto[D]: TypeTag //
     ](reply: Reply[A, B, C, D]
-    ) {
+    ): Unit = {
     assert(
       !bindings.contains(reply.method),
       s"method ${reply.method} already bound"

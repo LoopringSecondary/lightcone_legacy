@@ -143,7 +143,7 @@ class Protocol2RingBatchGenerator extends RingBatchGenerator {
       xRingBatch: RingBatch,
       data: Bitstream,
       tables: Bitstream
-    ) {
+    ): Unit = {
     val feeRecipient =
       if (isValidAddress(xRingBatch.feeRecipient)) xRingBatch.feeRecipient
       else xRingBatch.transactionOrigin
@@ -177,7 +177,7 @@ class Protocol2RingBatchGenerator extends RingBatchGenerator {
       order: RawOrder,
       tokenSpendables: Map[String, Int],
       context: RingBatchContext
-    ) {
+    ): Unit = {
     val orderParams = order.getParams
     val orderFeeParams = order.getFeeParams
     val orderErc1400Params = order.getErc1400Params
@@ -302,7 +302,7 @@ class Protocol2RingBatchGenerator extends RingBatchGenerator {
   private def insertOffset(
       tables: Bitstream,
       offset: Int
-    ) {
+    ): Unit = {
     assert(offset % 4 == 0)
     val slot = offset / 4
     tables.addUint16(slot)
@@ -310,7 +310,7 @@ class Protocol2RingBatchGenerator extends RingBatchGenerator {
 
   private def insertDefault(tables: Bitstream) = tables.addUint16(0)
 
-  private def addPadding(data: Bitstream) {
+  private def addPadding(data: Bitstream): Unit = {
     val paddingLength = data.length % 4
     if (paddingLength > 0) {
       data.addNumber(BigInt(0), 4 - paddingLength)

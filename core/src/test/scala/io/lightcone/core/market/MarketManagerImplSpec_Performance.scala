@@ -30,7 +30,7 @@ class MarketManagerImplSpec_Performance extends OrderAwareSpec {
   implicit var fackRingIncomeEvaluator: RingIncomeEvaluator = _
   var marketManager: MarketManager = _
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     nextId = 1
     fackRingIncomeEvaluator = stub[RingIncomeEvaluator]

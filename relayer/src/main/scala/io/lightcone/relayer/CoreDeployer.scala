@@ -66,7 +66,7 @@ class CoreDeployer @Inject()(
     extends Object
     with Logging {
 
-  def deploy() {
+  def deploy(): Unit = {
 
     //-----------deploy local actors-----------
     actors.add(BadMessageListener.name, BadMessageListener.start)

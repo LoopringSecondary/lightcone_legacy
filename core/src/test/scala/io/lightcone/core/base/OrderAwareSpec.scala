@@ -118,7 +118,7 @@ trait OrderAwareSpec extends CommonSpec {
 
   var updatedOrders = Map.empty[String, Matchable]
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     nextId = 1
     orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
     updatedOrders = Map.empty[String, Matchable]
@@ -272,7 +272,7 @@ trait OrderAwareSpec extends CommonSpec {
     accountManager.adjustOrder(orderId, outstandingAmountS)
   }
 
-  def resetUpdatedOrders() {
+  def resetUpdatedOrders(): Unit = {
     updatedOrders = Map.empty[String, Matchable]
   }
 

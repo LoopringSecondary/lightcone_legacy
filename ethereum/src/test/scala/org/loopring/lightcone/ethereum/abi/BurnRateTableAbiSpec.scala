@@ -25,7 +25,7 @@ class BurnRateTableAbiSpec
 
   val burnRateTableAbi = BurnRateTableAbi()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 

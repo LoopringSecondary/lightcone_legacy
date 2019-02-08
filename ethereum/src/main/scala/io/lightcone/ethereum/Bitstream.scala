@@ -94,7 +94,7 @@ class Bitstream(initData: String = "") {
   def addBytes32(
       str: String,
       forceAppend: Boolean = true
-    ) {
+    ): Unit = {
     val strWithoutPrefix = Numeric.cleanHexPrefix(str)
     if (strWithoutPrefix.length > 64) {
       throw new IllegalArgumentException(

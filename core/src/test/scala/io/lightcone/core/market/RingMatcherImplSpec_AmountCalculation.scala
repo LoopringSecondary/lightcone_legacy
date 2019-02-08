@@ -55,7 +55,7 @@ class RingMatcherImplSpec_AmountCalculation extends OrderAwareSpec {
   // }
 
   "price just match" should "part fill if both matchables are half raw amount" in {
-    def testScale(scale: Rational) {
+    def testScale(scale: Rational): Unit = {
       val res = matcher.matchOrders(
         taker.copy(_matchable = Some(taker.original.scaleBy(scale))),
         maker.copy(_matchable = Some(maker.original.scaleBy(scale)))

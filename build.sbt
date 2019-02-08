@@ -5,8 +5,8 @@ import Dependencies._
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.tapad.docker.DockerComposeKeys
 
-addCommandAlias("fix", "all compile:scalafix RemoveUnused")
-addCommandAlias("fixtest", "all test:scalafix RemoveUnused")
+addCommandAlias("fix", "all compile:scalafix RemoveUnused ProcedureSyntax")
+addCommandAlias("fixtest", "all test:scalafix RemoveUnused ProcedureSyntax")
 
 lazy val proto = (project in file("proto"))
   .settings(
@@ -65,6 +65,7 @@ lazy val relayer = (project in file("relayer"))
 //     libraryDependencies ++= dependency4Indexer)
 
 lazy val all = (project in file("."))
+  .settings(myScalafixSettings)
   .enablePlugins(DockerComposePlugin)
   .settings(docker := {
     (docker in relayer).value

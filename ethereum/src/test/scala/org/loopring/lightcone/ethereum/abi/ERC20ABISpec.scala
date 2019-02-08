@@ -23,7 +23,7 @@ class ERC20AbiSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
   val erc20abi = ERC20Abi()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 

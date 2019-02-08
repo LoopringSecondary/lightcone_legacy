@@ -242,7 +242,7 @@ class MetadataManagerActor(
   private def checkAndPublish(
       tokensOpt: Option[Seq[TokenMetadata]],
       marketsOpt: Option[Seq[MarketMetadata]]
-    ) {
+    ): Unit = {
     var notify = false
     tokensOpt foreach { tokens_ =>
       if (tokens_ != tokens) {

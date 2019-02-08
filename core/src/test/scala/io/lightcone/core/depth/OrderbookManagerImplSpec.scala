@@ -26,7 +26,7 @@ class OrderbookManagerImplSpec extends CommonSpec {
     precisionForTotal = 1
   )
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     obm = new OrderbookManagerImpl(metadata)
   }
 

@@ -54,9 +54,9 @@ class IntegrationTesting
 
   override def beforeEach() = {}
 
-  override def afterEach() {}
+  override def afterEach(): Unit = {}
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     val params = "characterEncoding=UTF-8&useSSL=false"
     val databaseUrls = s"""
     db.default.db.url:"jdbc:mysql://127.0.0.1:3306/lightcone_${databaseIndex}?${params}"
@@ -77,7 +77,7 @@ class IntegrationTesting
     log.info(s"database url: ${databaseUrls}")
   }
 
-  override def afterAll() {
+  override def afterAll(): Unit = {
     Try(Await.result(injector.instance[ActorSystem].terminate(), 10.seconds))
     Try(injector.instance[DatabaseConfigManager].close())
     log.info("<--- akka system shut down, database closed")

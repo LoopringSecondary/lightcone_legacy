@@ -32,7 +32,7 @@ trait MarketAwareSpec extends OrderAwareSpec {
   var fakeAggregator: OrderAwareOrderbookAggregator = _
   var marketManager: MarketManager = _
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     nextId = 1
     fackRingMatcher = stub[RingMatcher]
     fakeDustOrderEvaluator = stub[DustOrderEvaluator]

@@ -19,7 +19,7 @@ package io.lightcone.core
 class OrderbookAggregatorImplSpec extends CommonSpec {
   var agg: OrderbookAggregator = _
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     agg = new OrderbookAggregatorImpl(5, 4, 4)
   }
 

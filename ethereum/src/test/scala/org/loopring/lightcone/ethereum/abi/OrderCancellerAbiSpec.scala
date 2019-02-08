@@ -26,7 +26,7 @@ class OrderCancellerAbiSpec
 
   val orderCancellerAbi = OrderCancellerAbi()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 

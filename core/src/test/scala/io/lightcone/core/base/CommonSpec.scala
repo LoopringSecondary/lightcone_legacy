@@ -28,7 +28,7 @@ trait CommonSpec
     with MockFactory
     with Logging {
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     println(
       s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
     )

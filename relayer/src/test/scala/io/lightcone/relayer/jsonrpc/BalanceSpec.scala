@@ -36,7 +36,7 @@ class BalanceSpec
     with OrderGenerateSupport
     with HttpSupport {
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 

@@ -25,7 +25,7 @@ class AuthorizableAbiSpec
 
   val authorizableAbi = AuthorizableAbi()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     info(s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`")
   }
 
