@@ -129,7 +129,7 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
     ) = {
     orderMap.get(orderId) foreach { orderInfo =>
       val updated = orderInfo - OrderInfo(pendingAmountS, Set(ringId))
-      if (updated.pendingAmountS == 0) orderMap -= orderId
+      if (updated.pendingAmountS == BigInt(0)) orderMap -= orderId
       else orderMap += orderId -> updated
     }
   }

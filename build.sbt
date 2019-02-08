@@ -66,6 +66,8 @@ lazy val relayer = (project in file("relayer"))
 
 lazy val all = (project in file("."))
   .settings(myScalafixSettings)
+  .enablePlugins(GitBranchPrompt)
+  .enablePlugins(GitVersioning)
   .enablePlugins(DockerComposePlugin)
   .settings(docker := {
     (docker in relayer).value

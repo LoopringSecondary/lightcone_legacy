@@ -10,7 +10,8 @@
 * Compile subproject, run `sbt $projectName/test:compile`
 > Make sure to use `test:compile` instead of `compile` so all tests compile.
 
-Note that before comming to git, use `sbt check`.
+* Before committing to git, use `sbt check`.
+* Check scala styles for optimization and refactoring, use `sbt scapegoat`.
 
 ## Dockerize
 
