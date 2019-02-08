@@ -322,7 +322,7 @@ class MarketManagerActor(
     tve.getValue(wethTokenAddress, costinEth)
   }
 
-  private def updateOrderbookAndSettleRings(matchResult: MatchResult) {
+  private def updateOrderbookAndSettleRings(matchResult: MatchResult): Unit = {
     // Settle rings
     if (matchResult.rings.nonEmpty) {
       settlementActor ! SettleRings(

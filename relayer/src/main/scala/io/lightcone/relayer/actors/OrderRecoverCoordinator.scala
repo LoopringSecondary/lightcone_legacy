@@ -125,7 +125,7 @@ class OrderRecoverCoordinator(
 
   }
 
-  private def startBatchTimer() {
+  private def startBatchTimer(): Unit = {
     if (batchTimer.isEmpty) {
       batchTimer = Some(
         context.system.scheduler
@@ -134,7 +134,7 @@ class OrderRecoverCoordinator(
     }
   }
 
-  private def cancelBatchTimer() {
+  private def cancelBatchTimer(): Unit = {
     batchTimer.foreach(_.cancel)
     batchTimer = None
   }
