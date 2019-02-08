@@ -17,5 +17,5 @@
 package io.lightcone.core
 
 package object implicits {
-  implicit class _RichDouble(v: Double) extends RichDouble(v)
+  implicit class Rich_Double(v: Double) extends RichDouble(v)
 }
