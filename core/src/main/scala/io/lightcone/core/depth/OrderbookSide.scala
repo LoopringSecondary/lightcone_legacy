@@ -20,8 +20,6 @@ import scala.collection.SortedMap
 
 private[core] object OrderbookSide {
 
-  import ErrorCode._
-
   class Sells(
       val priceDecimals: Int,
       val aggregationLevel: Int,

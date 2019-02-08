@@ -17,7 +17,6 @@
 package io.lightcone.ethereum
 
 import org.web3j.utils.Numeric
-import com.google.protobuf.ByteString
 
 class Bitstream(initData: String = "") {
   private val ADDRESS_LENGTH = 20

@@ -19,7 +19,6 @@ package io.lightcone.ethereum
 import org.web3j.crypto.Hash
 import org.web3j.crypto.WalletUtils.isValidAddress
 import org.web3j.utils.Numeric
-import com.google.protobuf.ByteString
 import io.lightcone.core._
 
 trait RawOrderValidator {

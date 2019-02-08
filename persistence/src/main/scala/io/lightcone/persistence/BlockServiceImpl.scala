@@ -17,18 +17,16 @@
 package io.lightcone.persistence
 
 import com.google.inject.Inject
-import com.google.inject.name.Named
 import io.lightcone.persistence.dals._
 import io.lightcone.core._
 import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
-class BlockServiceImpl @Inject()(
-    implicit
-    blockDal: BlockDal,
-    val ec: ExecutionContext)
-    extends BlockService {
+class BlockServiceImpl @Inject() (
+  implicit blockDal: BlockDal,
+  val ec: ExecutionContext)
+  extends BlockService {
 
   def saveBlock(block: BlockData): Future[ErrorCode] =
     blockDal.saveBlock(block)
@@ -42,9 +40,8 @@ class BlockServiceImpl @Inject()(
   def findMaxHeight(): Future[Option[Long]] = blockDal.findMaxHeight()
 
   def findBlocksInHeightRange(
-      heightFrom: Long,
-      heightTo: Long
-    ): Future[Seq[(Long, String)]] =
+    heightFrom: Long,
+    heightTo: Long): Future[Seq[(Long, String)]] =
     blockDal.findBlocksInHeightRange(heightFrom, heightTo)
 
   def count(): Future[Int] = blockDal.count()

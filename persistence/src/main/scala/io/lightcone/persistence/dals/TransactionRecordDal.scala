@@ -16,37 +16,31 @@
 
 package io.lightcone.persistence.dals
 
-import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException
 import com.typesafe.config.Config
-import com.typesafe.scalalogging.Logger
 import io.lightcone.lib._
 import io.lightcone.persistence.base._
 import io.lightcone.persistence._
-import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
 import scala.concurrent._
 import io.lightcone.core.ErrorCode._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 trait TransactionRecordDal
-    extends BaseDalImpl[TransactionRecordTable, TransactionRecord] {
+  extends BaseDalImpl[TransactionRecordTable, TransactionRecord] {
 
   def saveRecord(
-      record: TransactionRecord
-    ): Future[PersistTransactionRecord.Res]
+    record: TransactionRecord): Future[PersistTransactionRecord.Res]
 
   def getRecordsByOwner(
-      owner: String,
-      queryType: Option[GetTransactionRecords.QueryType],
-      sort: SortingType,
-      paging: CursorPaging
-    ): Future[Seq[TransactionRecord]]
+    owner: String,
+    queryType: Option[GetTransactionRecords.QueryType],
+    sort: SortingType,
+    paging: CursorPaging): Future[Seq[TransactionRecord]]
 
   def getRecordsCountByOwner(
-      owner: String,
-      queryType: Option[GetTransactionRecords.QueryType]
-    ): Future[Int]
+    owner: String,
+    queryType: Option[GetTransactionRecords.QueryType]): Future[Int]
 }

@@ -27,9 +27,8 @@ import io.lightcone.core._
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.JdbcProfile
 import slick.basic._
-import slick.lifted.Query
 import scala.concurrent._
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 trait TradeDal extends BaseDalImpl[TradeTable, Trade] {
   def saveTrade(trade: Trade): Future[ErrorCode]

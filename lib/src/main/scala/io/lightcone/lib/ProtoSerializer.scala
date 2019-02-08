@@ -16,10 +16,8 @@
 
 package io.lightcone.lib
 
-import scalapb.json4s.JsonFormat
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
-import scala.reflect.runtime.universe._
 import org.json4s.JsonAST.JValue
 
 class ProtoSerializer {
