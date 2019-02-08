@@ -17,12 +17,12 @@
 package io.lightcone.core
 
 /*
- * SpendableManagerImpl manages reserving balance and allowance for orders.
+ * ReserveManager manages reserving balance and allowance for orders.
  * An order can be 'reserved' if and only if the available (unservered) balance
  * is no less than the order's size.
  */
 
-trait SpendableManager {
+trait ReserveManager {
   val token: String
   val maxNumOrders: Int
 
@@ -33,13 +33,13 @@ trait SpendableManager {
 
   def hasTooManyOrders(): Boolean
 
-  def setBalance(balance: BigInt): Set[String]
-  def setAllowance(allowance: BigInt): Set[String]
+  def setBalance(balance: BigInt): Unit
+  def setAllowance(allowance: BigInt): Unit
 
   def setBalanceAndAllowance(
       balance: BigInt,
       allowance: BigInt
-    ): Set[String]
+    ): Unit
 
   // Reserve balance/allowance for an order.
   def reserve(orderId: String): Set[String]

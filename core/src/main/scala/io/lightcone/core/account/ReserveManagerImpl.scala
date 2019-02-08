@@ -18,14 +18,14 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-class SpendableManagerImpl2(
+class ReserveManagerImpl(
     val token: String,
     val maxNumOrders: Int = 1000
   )(
     implicit
     orderPool: AccountOrderPool,
     dustEvaluator: DustOrderEvaluator)
-    extends SpendableManager
+    extends ReserveManager
     with Logging {
 
   case class Reservation(
@@ -66,7 +66,7 @@ class SpendableManagerImpl2(
   def setBalanceAndAllowance(
       balance: BigInt,
       allowance: BigInt
-    ): Set[String] = this.synchronized {
+    ) = this.synchronized {
     val cursor1 =
       if (balance >= this.balance) cursor
       else {

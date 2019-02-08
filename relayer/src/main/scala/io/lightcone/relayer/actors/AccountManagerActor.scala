@@ -125,7 +125,7 @@ class AccountManagerActor(
     case GetBalanceAndAllowances.Req(addr, tokens, _) =>
       assert(addr == address)
       (for {
-        managers <- getSpendableManagers(tokens)
+        managers <- getReserveManagers(tokens)
         _ = assert(tokens.size == managers.size)
         balanceAndAllowanceMap = tokens.zip(managers).toMap.map {
           case (token, manager) =>
@@ -211,7 +211,7 @@ class AccountManagerActor(
       assert(req.address == address)
 
       updateBalanceOrAllowance(req.token) {
-        val tm = manager.getSpendableManager(req.token)
+        val tm = manager.getReserveManager(req.token)
         manager.synchronized {
           tm.setBalance(BigInt(req.balance.toByteArray))
           orderPool.takeUpdatedOrdersAsMap
@@ -222,7 +222,7 @@ class AccountManagerActor(
       assert(req.address == address)
 
       updateBalanceOrAllowance(req.token) {
-        val tm = manager.getSpendableManager(req.token)
+        val tm = manager.getReserveManager(req.token)
         manager.synchronized {
           tm.setAllowance(BigInt(req.allowance.toByteArray))
           orderPool.takeUpdatedOrdersAsMap
@@ -273,9 +273,9 @@ class AccountManagerActor(
     log.debug(s"### submitOrder ${order}")
     for {
       _ <- if (matchable.amountFee > 0 && matchable.tokenS != matchable.tokenFee)
-        getSpendableManagers(Seq(matchable.tokenS, matchable.tokenFee))
+        getReserveManagers(Seq(matchable.tokenS, matchable.tokenFee))
       else
-        getSpendableManagers(Seq(matchable.tokenS))
+        getReserveManagers(Seq(matchable.tokenS))
 
       getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmount.Req(
         Seq(matchable.id)
@@ -394,11 +394,11 @@ class AccountManagerActor(
       }
     }
 
-  private def getSpendableManagers(
+  private def getReserveManagers(
       tokens: Seq[String]
-    ): Future[Seq[SpendableManager]] = {
+    ): Future[Seq[ReserveManager]] = {
     val tokensWithoutMaster =
-      tokens.filterNot(token => manager.hasSpendableManager(token))
+      tokens.filterNot(token => manager.hasReserveManager(token))
     for {
       res <- if (tokensWithoutMaster.nonEmpty) {
         (ethereumQueryActor ? GetBalanceAndAllowances.Req(
@@ -410,7 +410,7 @@ class AccountManagerActor(
       }
       tms = tokensWithoutMaster.map(
         token =>
-          new SpendableManagerImpl(
+          new ReserveManagerImpl(
             token,
             config.getInt("account_manager.max_order_num")
           )
@@ -418,9 +418,9 @@ class AccountManagerActor(
       _ = tms.foreach { tm =>
         val ba = res.balanceAndAllowanceMap(tm.token)
         tm.setBalanceAndAllowance(ba.balance, ba.allowance)
-        manager.getOrUpdateSpendableManager(tm)
+        manager.getOrUpdateReserveManager(tm)
       }
-      tokenMangers = tokens.map(manager.getSpendableManager)
+      tokenMangers = tokens.map(manager.getReserveManager)
     } yield tokenMangers
   }
 
@@ -429,7 +429,7 @@ class AccountManagerActor(
     )(retrieveUpdatedOrders: => Map[String, Matchable]
     ) =
     for {
-      _ <- getSpendableManagers(Seq(token))
+      _ <- getReserveManagers(Seq(token))
       updatedOrders = retrieveUpdatedOrders
       _ <- Future.sequence {
         updatedOrders.values.map { order =>

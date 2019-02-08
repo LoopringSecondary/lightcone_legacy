@@ -111,10 +111,10 @@ trait OrderAwareSpec extends CommonSpec {
 
   implicit var orderPool: AccountOrderPool with UpdatedOrdersTracing = _
   var accountManager: AccountManager = _
-  var lrc: SpendableManager = _
-  var gto: SpendableManager = _
-  var dai: SpendableManager = _
-  var weth: SpendableManager = _
+  var lrc: ReserveManager = _
+  var gto: ReserveManager = _
+  var dai: ReserveManager = _
+  var weth: ReserveManager = _
 
   var updatedOrders = Map.empty[String, Matchable]
 
@@ -129,15 +129,15 @@ trait OrderAwareSpec extends CommonSpec {
     }
     accountManager = AccountManager.default()
 
-    lrc = new SpendableManagerImpl(LRC)
-    gto = new SpendableManagerImpl(GTO)
-    dai = new SpendableManagerImpl(DAI)
-    weth = new SpendableManagerImpl(WETH)
+    lrc = new ReserveManagerImpl(LRC)
+    gto = new ReserveManagerImpl(GTO)
+    dai = new ReserveManagerImpl(DAI)
+    weth = new ReserveManagerImpl(WETH)
 
-    accountManager.addSpendableManager(lrc)
-    accountManager.addSpendableManager(gto)
-    accountManager.addSpendableManager(dai)
-    accountManager.addSpendableManager(weth)
+    accountManager.addReserveManager(lrc)
+    accountManager.addReserveManager(gto)
+    accountManager.addReserveManager(dai)
+    accountManager.addReserveManager(weth)
   }
 
   def sellLRC(

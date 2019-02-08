@@ -12,6 +12,7 @@ import sbtdocker.{ BuildOptions, DockerPlugin, ImageName }
 import sbtdocker.DockerKeys._
 import org.scalafmt.sbt.ScalafmtPlugin.autoImport.scalafmtOnCompile
 import scalafix.sbt.ScalafixPlugin.autoImport._
+import com.sksamuel.scapegoat.sbt.ScapegoatSbtPlugin.autoImport._
 
 object Settings {
 
@@ -58,6 +59,7 @@ object Settings {
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"),
     fork in Test := false,
     parallelExecution in Test := false,
+    scapegoatVersion in ThisBuild := "1.3.8",
     startYear := Some(2018),
     licenses += ("Apache-2.0", new URL(
       "https://www.apache.org/licenses/LICENSE-2.0.txt")),
