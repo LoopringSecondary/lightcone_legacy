@@ -21,7 +21,7 @@ import io.lightcone.core.implicits._
 class AccountManagerImplSpec_Performance extends OrderAwareSpec {
   "submit order" should "fail when tokenS balance is low" in {
 
-    val _lrc = lrc.asInstanceOf[SpendableManagerImpl]
+    val _lrc = lrc.asInstanceOf[ReserveManagerImpl]
     lrc.setBalanceAndAllowance(100000 !, 100000 !)
 
     (1 to lrc.maxNumOrders) foreach { i =>
