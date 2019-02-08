@@ -18,18 +18,14 @@ package io.lightcone.relayer
 
 import akka.actor._
 import akka.cluster._
-import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.google.inject._
 import com.typesafe.config.Config
 import net.codingwell.scalaguice.ScalaModule
 import io.lightcone.relayer.base._
-import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum.Dispatchers._
 import io.lightcone.relayer.ethereum.{EventDispatcher, _}
-import io.lightcone.relayer.jsonrpc.JsonRpcServer
-import io.lightcone.relayer.validator._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule

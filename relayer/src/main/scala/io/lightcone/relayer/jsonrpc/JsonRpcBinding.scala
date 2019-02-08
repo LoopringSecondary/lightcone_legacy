@@ -17,15 +17,7 @@
 package io.lightcone.relayer.jsonrpc
 
 import io.lightcone.lib.ProtoSerializer
-import io.lightcone.relayer.data._
-import io.lightcone.core._
-import scalapb.json4s.JsonFormat
 import scala.reflect.runtime.universe._
-import akka.actor._
-import akka.util.Timeout
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import akka.pattern.ask
 
 // Owner: Daniel
 trait JsonRpcBinding {

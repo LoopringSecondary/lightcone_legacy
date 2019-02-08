@@ -20,7 +20,6 @@ import akka.actor.{Address => _, _}
 import akka.util.Timeout
 import com.typesafe.config.Config
 import io.lightcone.relayer.base._
-import akka.cluster.singleton._
 import io.lightcone.lib._
 import io.lightcone.persistence._
 import io.lightcone.relayer.data._

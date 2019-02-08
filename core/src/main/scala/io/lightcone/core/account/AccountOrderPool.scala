@@ -16,8 +16,6 @@
 
 package io.lightcone.core
 
-import org.slf4s.Logging
-
 trait AccountOrderPool {
 
   type Callback = Matchable => Unit

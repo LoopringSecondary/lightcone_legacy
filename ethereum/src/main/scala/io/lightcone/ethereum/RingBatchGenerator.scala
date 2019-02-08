@@ -19,7 +19,6 @@ package io.lightcone.ethereum
 import org.web3j.crypto._
 import org.web3j.utils.Numeric
 import org.web3j.crypto.WalletUtils.isValidAddress
-import com.google.protobuf.ByteString
 import io.lightcone.core._
 
 trait RingBatchGenerator {

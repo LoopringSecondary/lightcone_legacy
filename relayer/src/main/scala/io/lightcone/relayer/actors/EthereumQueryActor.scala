@@ -17,7 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.cluster.sharding._
 import akka.event.LoggingReceive
 import akka.pattern._
 import akka.util.Timeout

@@ -17,9 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor.{Address => _, _}
-import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Publish
-import akka.cluster.sharding._
 import akka.pattern.ask
 import akka.serialization.Serialization
 import akka.util.Timeout
@@ -28,7 +25,6 @@ import io.lightcone.relayer.base._
 import io.lightcone.relayer.data._
 import io.lightcone.core._
 import io.lightcone.lib._
-import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
 

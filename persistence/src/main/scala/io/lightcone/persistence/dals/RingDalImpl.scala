@@ -37,7 +37,6 @@ class RingDalImpl @Inject()(
     timeProvider: TimeProvider)
     extends RingDal {
 
-  import GetTrades._
   import GetRings.Req.Ring._
 
   val query = TableQuery[RingTable]

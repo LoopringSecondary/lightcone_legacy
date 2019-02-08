@@ -22,13 +22,11 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.google.protobuf.any.Any
 import io.lightcone.relayer.data._
-import io.lightcone.core._
 import slick.jdbc.PostgresProfile.api._
 import slick.jdbc.{GetResult, JdbcProfile}
 import slick.basic.DatabaseConfig
 import slick.lifted.TableQuery
 import scala.concurrent.duration._
-import scala.util._
 
 class OHLCDataDalImpl @Inject()(
     implicit

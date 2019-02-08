@@ -17,13 +17,9 @@
 package io.lightcone.persistence
 
 import com.google.inject.Inject
-import com.google.inject.name.Named
-import io.lightcone.lib._
 import io.lightcone.persistence.dals._
 import io.lightcone.core._
 import io.lightcone.relayer.data._
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
 import scala.concurrent._
 
 class OrderServiceImpl @Inject()(

@@ -17,7 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.cluster.singleton._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.Config

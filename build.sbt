@@ -5,6 +5,8 @@ import Dependencies._
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.tapad.docker.DockerComposeKeys
 
+addCommandAlias("fix", "all compile:scalafix test:scalafix")
+
 lazy val proto = (project in file("proto"))
   .settings(
     libraryDependencies ++= scalapbDependency,

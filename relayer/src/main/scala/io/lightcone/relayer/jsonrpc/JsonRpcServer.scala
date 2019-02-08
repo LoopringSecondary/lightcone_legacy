@@ -16,12 +16,10 @@
 
 package io.lightcone.relayer.jsonrpc
 
-import io.lightcone.relayer.base.Lookup
 import com.typesafe.config.Config
 import akka.http.scaladsl.server.HttpApp
 import akka.actor._
 import akka.util.Timeout
-import scala.io.StdIn
 import scala.concurrent.ExecutionContext
 
 // Owner: Daniel

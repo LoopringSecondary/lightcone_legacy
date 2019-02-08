@@ -16,7 +16,6 @@
 
 package io.lightcone.relayer.base
 
-import akka.cluster.sharding._
 import akka.actor._
 
 // Owner: Daniel

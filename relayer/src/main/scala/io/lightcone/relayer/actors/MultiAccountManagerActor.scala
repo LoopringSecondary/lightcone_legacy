@@ -17,7 +17,6 @@
 package io.lightcone.relayer.actors
 import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor._
-import akka.cluster.sharding._
 import akka.pattern.ask
 import akka.serialization.Serialization
 import akka.util.Timeout

@@ -11,6 +11,7 @@ import sbtdocker.mutable.Dockerfile
 import sbtdocker.{ BuildOptions, DockerPlugin, ImageName }
 import sbtdocker.DockerKeys._
 import org.scalafmt.sbt.ScalafmtPlugin.autoImport.scalafmtOnCompile
+import scalafix.sbt.ScalafixPlugin.autoImport._
 
 object Settings {
   lazy val basicSettings: Seq[Setting[_]] = Seq(
@@ -24,8 +25,7 @@ object Settings {
         name = "Loopring Developers",
         email = "foundation@loopring.org",
         url = url("https://loopring.org"))),
-    scmInfo := Some(
-      ScmInfo(url(Globals.projectGitHttpUrl), "scm:" + Globals.projectGitUrl)),
+    scmInfo := Some(ScmInfo(url(Globals.projectGitHttpUrl), "scm:" + Globals.projectGitUrl)),
     autoScalaLibrary := false,
     resolvers += "mvnrepository" at "http://mvnrepository.com/artifact/",
     resolvers += "ethereumlibrepository" at "https://dl.bintray.com/ethereum/maven/",
@@ -34,6 +34,7 @@ object Settings {
     resolvers += Resolver.bintrayRepo("hseeberger", "maven"),
     resolvers += Opts.resolver.sonatypeSnapshots,
     resolvers += Opts.resolver.sonatypeReleases,
+    addCompilerPlugin(scalafixSemanticdb), // enable SemanticDB
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"),
@@ -41,6 +42,8 @@ object Settings {
     ),
     scalacOptions := Seq(
       "-encoding", "utf8", // Option and arguments on same line
+      "-Yrangepos", // required by SemanticDB compiler plugin
+      "-Ywarn-unused-import", // required by `RemoveUnused` rule
       "-language:implicitConversions",
       "-language:higherKinds",
       "-language:existentials",
@@ -49,10 +52,8 @@ object Settings {
       "-unchecked",
       "-deprecation",
       "-Yresolve-term-conflict:package",
-      "-feature",
-      "-Xfatal-warnings"),
+      "-feature"),
     fork in Test := false,
-    // conflictManager := ConflictManager.strict,
     parallelExecution in Test := false,
     startYear := Some(2018),
     licenses += ("Apache-2.0", new URL(

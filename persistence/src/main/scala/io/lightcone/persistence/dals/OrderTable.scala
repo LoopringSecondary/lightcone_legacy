@@ -18,7 +18,6 @@ package io.lightcone.persistence.dals
 
 import io.lightcone.persistence.base._
 import slick.jdbc.MySQLProfile.api._
-import io.lightcone.relayer.data._
 import io.lightcone.core._
 
 class OrderTable(tag: Tag) extends BaseTable[RawOrder](tag, "T_ORDERS") {

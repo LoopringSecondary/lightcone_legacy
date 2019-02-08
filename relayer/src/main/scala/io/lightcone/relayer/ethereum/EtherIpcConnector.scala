@@ -23,7 +23,6 @@ import java.nio.channels.Channels
 import akka.actor._
 import jnr.unixsocket._
 import io.lightcone.relayer.data._
-import io.lightcone.core._
 import scalapb.json4s.JsonFormat
 
 // Owner: Yadong

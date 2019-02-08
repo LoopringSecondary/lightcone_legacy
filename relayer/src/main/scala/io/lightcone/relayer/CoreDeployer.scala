@@ -19,13 +19,11 @@ package io.lightcone.relayer
 import akka.actor._
 import akka.pattern._
 import akka.cluster._
-import akka.cluster.singleton._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.google.inject._
 import com.google.inject.name.Named
 import com.typesafe.config.Config
-import net.codingwell.scalaguice.ScalaModule
 import io.lightcone.relayer.base._
 import io.lightcone.relayer.actors._
 import io.lightcone.relayer.ethereum._
@@ -35,13 +33,10 @@ import io.lightcone.relayer.validator._
 import io.lightcone.core._
 import io.lightcone.lib._
 import io.lightcone.persistence.DatabaseModule
-import io.lightcone.relayer.data.{JsonRpc, Notify}
+import io.lightcone.relayer.data.Notify
 import org.slf4s.Logging
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
 
 import scala.concurrent._
 

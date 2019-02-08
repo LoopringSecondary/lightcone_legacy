@@ -17,12 +17,6 @@
 package io.lightcone.relayer.actors
 
 import akka.actor._
-import akka.cluster.sharding._
-import akka.event.LoggingReceive
-import akka.pattern._
-import akka.util.Timeout
-import io.lightcone.relayer.data._
-import io.lightcone.core._
 
 // Owner: Daniel
 object BadMessageListener {

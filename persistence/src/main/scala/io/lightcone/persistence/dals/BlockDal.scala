@@ -16,14 +16,9 @@
 
 package io.lightcone.persistence.dals
 
-import com.google.inject.Inject
-import com.google.inject.name.Named
 import io.lightcone.persistence.base._
 import io.lightcone.persistence._
 import io.lightcone.core._
-import slick.jdbc.MySQLProfile.api._
-import slick.jdbc.JdbcProfile
-import slick.basic._
 import scala.concurrent._
 
 trait BlockDal extends BaseDalImpl[BlockTable, BlockData] {
