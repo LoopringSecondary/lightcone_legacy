@@ -11,8 +11,11 @@ import sbtdocker.mutable.Dockerfile
 import sbtdocker.{ BuildOptions, DockerPlugin, ImageName }
 import sbtdocker.DockerKeys._
 import org.scalafmt.sbt.ScalafmtPlugin.autoImport.scalafmtOnCompile
+import scalafix.sbt.ScalafixPlugin.autoImport.scalafixSemanticdb
 
 object Settings {
+  def shouldDisableSemanticdb: Boolean = false
+
   lazy val basicSettings: Seq[Setting[_]] = Seq(
     scalaVersion := Globals.scalaVersion,
     organization := "org.loopring",
@@ -39,7 +42,10 @@ object Settings {
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"),
     javacOptions := Seq( //"-source", Globals.jvmVersion,
     ),
+
     scalacOptions := Seq(
+      "-Yrangepos", // required by SemanticDB compiler plugin
+      "-Ywarn-unused-import", // required by `RemoveUnused` rule
       "-encoding", "utf8", // Option and arguments on same line
       "-language:implicitConversions",
       "-language:higherKinds",
@@ -51,6 +57,14 @@ object Settings {
       "-Yresolve-term-conflict:package",
       "-feature",
       "-Xfatal-warnings"),
+    libraryDependencies ++= {
+      if (shouldDisableSemanticdb) List()
+      else List(compilerPlugin(scalafixSemanticdb))
+    },
+    scalacOptions ++= {
+      if (shouldDisableSemanticdb) List()
+      else List("-Yrangepos")
+    },
     fork in Test := false,
     // conflictManager := ConflictManager.strict,
     parallelExecution in Test := false,
