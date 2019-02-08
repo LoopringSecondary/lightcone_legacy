@@ -20,33 +20,31 @@ import io.lightcone.lib._
 import org.slf4s.Logging
 
 final case class OrderInfo(
-    pendingAmountS: BigInt = 0,
-    ringIds: Set[String] = Set.empty) {
+  pendingAmountS: BigInt = 0,
+  ringIds: Set[String] = Set.empty) {
   assert(pendingAmountS >= 0)
 
   def +(another: OrderInfo) =
     OrderInfo(
       (pendingAmountS + another.pendingAmountS).max(0),
-      ringIds ++ another.ringIds
-    )
+      ringIds ++ another.ringIds)
 
   def -(another: OrderInfo) =
     OrderInfo(
       (pendingAmountS - another.pendingAmountS).max(0),
-      ringIds -- another.ringIds
-    )
+      ringIds -- another.ringIds)
 }
 
 final case class RingInfo(
-    takerId: String,
-    takerPendingAmountS: BigInt,
-    makerId: String,
-    makerPendingAmountS: BigInt,
-    timestamp: Long)
+  takerId: String,
+  takerPendingAmountS: BigInt,
+  makerId: String,
+  makerPendingAmountS: BigInt,
+  timestamp: Long)
 
 class PendingRingPoolImpl()(implicit time: TimeProvider)
-    extends PendingRingPool
-    with Logging {
+  extends PendingRingPool
+  with Logging {
 
   private[core] var orderMap = Map.empty[String, OrderInfo]
   private[core] var ringMap = Map.empty[String, RingInfo]
@@ -70,20 +68,17 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
           ring.taker.pending.amountS,
           ring.maker.id,
           ring.maker.pending.amountS,
-          time.getTimeMillis()
-        )
+          time.getTimeMillis())
 
         incrementOrderPendingAmountS(
           ring.taker.id,
           ring.id,
-          ring.taker.pending.amountS
-        )
+          ring.taker.pending.amountS)
 
         incrementOrderPendingAmountS(
           ring.maker.id,
           ring.id,
-          ring.maker.pending.amountS
-        )
+          ring.maker.pending.amountS)
         true
     }
   }
@@ -96,14 +91,12 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
         decrementOrderPendingAmountS(
           ringInfo.takerId,
           ringId,
-          ringInfo.takerPendingAmountS
-        )
+          ringInfo.takerPendingAmountS)
 
         decrementOrderPendingAmountS(
           ringInfo.makerId,
           ringId,
-          ringInfo.makerPendingAmountS
-        )
+          ringInfo.makerPendingAmountS)
         Set(ringInfo.takerId, ringInfo.makerId)
 
       case None =>
@@ -123,22 +116,20 @@ class PendingRingPoolImpl()(implicit time: TimeProvider)
   // Private methods
   // Private methods
   private def decrementOrderPendingAmountS(
-      orderId: String,
-      ringId: String,
-      pendingAmountS: BigInt
-    ) = {
+    orderId: String,
+    ringId: String,
+    pendingAmountS: BigInt) = {
     orderMap.get(orderId) foreach { orderInfo =>
       val updated = orderInfo - OrderInfo(pendingAmountS, Set(ringId))
-      if (updated.pendingAmountS == 0) orderMap -= orderId
+      if (updated.pendingAmountS == BigInt(0)) orderMap -= orderId
       else orderMap += orderId -> updated
     }
   }
 
   private def incrementOrderPendingAmountS(
-      orderId: String,
-      ringId: String,
-      pendingAmountS: BigInt
-    ) = {
+    orderId: String,
+    ringId: String,
+    pendingAmountS: BigInt) = {
     orderMap += orderId ->
       (orderMap.getOrElse(orderId, OrderInfo()) +
         OrderInfo(pendingAmountS, Set(ringId)))

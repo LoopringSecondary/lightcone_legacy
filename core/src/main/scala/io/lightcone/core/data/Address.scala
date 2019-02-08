@@ -25,8 +25,8 @@ class Address(val value: BigInt) {
 
   def toBigInt: BigInt = value
 
-  def isZero = (value == 0)
-  def isEmpty = (value == 0)
+  def isZero = (value == BigInt(0))
+  def isEmpty = (value == BigInt(0))
 
   def toBytes: Array[Byte] = {
     Numeric.toBytesPadded(value.bigInteger, 20)
