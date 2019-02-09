@@ -18,39 +18,6 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-case class ReserveStats(
-    balance: BigInt,
-    allowance: BigInt,
-    availableBalance: BigInt,
-    availableAllowance: BigInt,
-    numOfOrders: Int)
-
-trait ReserveManager2 {
-  val token: String
-
-  def getReserveStats(): ReserveStats
-
-  def setBalance(balance: BigInt): Set[String]
-  def setAllowance(allowance: BigInt): Set[String]
-
-  def setBalanceAndAllowance(
-      balance: BigInt,
-      allowance: BigInt
-    ): Set[String]
-
-  // Reserve or adjust the reserve of the balance/allowance for an order, returns the order ids to cancel.
-  def reserve(
-      orderId: String,
-      requestedAmount: BigInt
-    ): Set[String]
-
-  // Release balance/allowance for an order, returns the order ids to cancel.
-  def release(orderIds: Seq[String]): Set[String]
-  def release(orderId: String): Set[String] = release(Seq(orderId))
-
-  def clearOrders(): Unit
-}
-
 final class ReserveManager2Impl(implicit val token: String)
     extends ReserveManager2
     with Logging {
