@@ -165,7 +165,7 @@ class AccountManagerActor(
         (res, updatedOrders) = manager.synchronized {
           (manager.cancelAllOrders(), orderPool.takeUpdatedOrders)
         }
-        _ <- processUpdatedOrders(updatedOrders)
+        _ <- processOrders(updatedOrders)
       } yield CancelOrder.Res(ERR_NONE)
       f.sendTo(sender)
 
@@ -179,7 +179,7 @@ class AccountManagerActor(
             orderPool.takeUpdatedOrders
           )
         }
-        _ <- processUpdatedOrders(updatedOrders)
+        _ <- processOrders(updatedOrders)
       } yield CancelOrder.Res(ERR_NONE)
       f.sendTo(sender)
 
@@ -195,7 +195,7 @@ class AccountManagerActor(
           (manager.cancelOrder(req.id), orderPool.takeUpdatedOrders())
         }
 
-        _ <- processUpdatedOrders(updatedOrders - req.id)
+        _ <- processOrders(updatedOrders - req.id)
         _ = if (res) {
           marketManagerActor.tell(req, originalSender)
         } else {
@@ -239,7 +239,7 @@ class AccountManagerActor(
         manager.handleCutoff(cutoff)
         orderPool.takeUpdatedOrders
       }
-      processUpdatedOrders(updatedOrders)
+      processOrders(updatedOrders)
 
     //ownerTokenPairCutoff  tokenPair ！= ""
     case req @ CutoffEvent(Some(header), broker, owner, marketHash, cutoff)
@@ -252,7 +252,7 @@ class AccountManagerActor(
         manager.handleCutoff(cutoff, marketHash)
         orderPool.takeUpdatedOrders
       }
-      processUpdatedOrders(updatedOrders)
+      processOrders(updatedOrders)
 
     //Currently we do not support broker-level cutoff
     case req @ CutoffEvent(Some(header), broker, owner, _, cutoff)
@@ -316,14 +316,14 @@ class AccountManagerActor(
         s"updated matchable ${_matchable}\nfound ${updatedOrders.size} updated orders"
       )
 
-      res <- processUpdatedOrders(updatedOrders)
+      res <- processOrders(updatedOrders)
 
       matchable_ = updatedOrders.getOrElse(matchable.id, _matchable)
       order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
     } yield order_
   }
 
-  private def processUpdatedOrders(updatedOrders: Map[String, Matchable]) =
+  private def processOrders(updatedOrders: Map[String, Matchable]) =
     Future.sequence {
       updatedOrders.map {
         case (id, order) =>
@@ -451,7 +451,7 @@ class AccountManagerActor(
           }
         }
       }
-      _ <- processUpdatedOrders(updatedOrders)
+      _ <- processOrders(updatedOrders)
     } yield Unit
 
   def checkOrderCanceled(rawOrder: RawOrder) =

@@ -28,7 +28,13 @@ trait BalanceAndAllowanceProvider {
 }
 
 trait UpdatedOrdersProcessor {
-  def processUpdatedOrders(updatedOrders: Map[String, Matchable]): Future[Unit]
+  implicit val ec: ExecutionContext
+  def processOrder(order: Matchable): Future[Any]
+
+  def processOrders(orders: Map[String, Matchable]): Future[Any] = {
+    val futures = orders.values.map(processOrder)
+    Future.sequence(futures)
+  }
 }
 
 final class AccountManager2Impl(
@@ -90,7 +96,7 @@ final class AccountManager2Impl(
         orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
       }
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- processor.processUpdatedOrders(updatedOrders)
+      _ <- processor.processOrders(updatedOrders)
     } yield (successful, updatedOrders)
   }
 
@@ -170,7 +176,7 @@ final class AccountManager2Impl(
         ordersToDelete
       )
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- processor.processUpdatedOrders(updatedOrders)
+      _ <- processor.processOrders(updatedOrders)
     } yield updatedOrders
 
   private def cancelOrderInternal(
@@ -183,7 +189,7 @@ final class AccountManager2Impl(
         callOnToken(order.tokenS, _.release(order.id))
       })
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- processor.processUpdatedOrders(updatedOrders)
+      _ <- processor.processOrders(updatedOrders)
     } yield updatedOrders
 
   private def callOnToken(
