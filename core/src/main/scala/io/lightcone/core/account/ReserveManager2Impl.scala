@@ -18,7 +18,7 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-final class ReserveManager2Impl(implicit val token: String)
+final class ReserveManager2Impl()(implicit val token: String)
     extends ReserveManager2
     with Logging {
 
@@ -36,8 +36,8 @@ final class ReserveManager2Impl(implicit val token: String)
 
   def getReserves() = reserves
 
-  def getReserveStats() =
-    ReserveStats(
+  def getAccountInfo() =
+    AccountInfo(
       balance,
       allowance,
       balance - reserved,

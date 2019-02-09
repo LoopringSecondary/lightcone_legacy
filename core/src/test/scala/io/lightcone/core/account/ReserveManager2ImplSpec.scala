@@ -32,19 +32,19 @@ class ReserveManager2ImplSpec extends CommonSpec {
   "ReserveManager2Impl" should "not reserve in 0 balance or allowance" in {
     var result = manager.reserve("order1", 100)
     result should be(Set("order1"))
-    manager.getReserveStats should be(ReserveStats(0, 0, 0, 0, 0))
+    manager.getAccountInfo should be(AccountInfo(0, 0, 0, 0, 0))
 
     // Set balance big enought, but allowance a bit smaller than 100
     manager.setBalanceAndAllowance(100, 99)
     result = manager.reserve("order1", 100)
     result should be(Set("order1"))
-    manager.getReserveStats should be(ReserveStats(100, 99, 100, 99, 0))
+    manager.getAccountInfo should be(AccountInfo(100, 99, 100, 99, 0))
 
     // Set allowance big enought, but balance a bit smaller than 100
     manager.setBalanceAndAllowance(99, 100)
     result = manager.reserve("order1", 100)
     result should be(Set("order1"))
-    manager.getReserveStats should be(ReserveStats(99, 100, 99, 100, 0))
+    manager.getAccountInfo should be(AccountInfo(99, 100, 99, 100, 0))
   }
 
   "ReserveManager2Impl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
@@ -52,19 +52,19 @@ class ReserveManager2ImplSpec extends CommonSpec {
 
     var result = manager.reserve("order1", 50)
     result should be(Set.empty[String])
-    manager.getReserveStats should be(ReserveStats(100, 110, 50, 60, 1))
+    manager.getAccountInfo should be(AccountInfo(100, 110, 50, 60, 1))
 
     result = manager.reserve("order2", 50)
     result should be(Set.empty[String])
-    manager.getReserveStats should be(ReserveStats(100, 110, 0, 10, 2))
+    manager.getAccountInfo should be(AccountInfo(100, 110, 0, 10, 2))
 
     result = manager.release("order1")
     result should be(Set("order1"))
-    manager.getReserveStats should be(ReserveStats(100, 110, 50, 60, 1))
+    manager.getAccountInfo should be(AccountInfo(100, 110, 50, 60, 1))
 
     result = manager.release("order2")
     result should be(Set("order2"))
-    manager.getReserveStats should be(ReserveStats(100, 110, 100, 110, 0))
+    manager.getAccountInfo should be(AccountInfo(100, 110, 100, 110, 0))
     manager.getReserves should be(Seq.empty)
   }
 
@@ -76,18 +76,18 @@ class ReserveManager2ImplSpec extends CommonSpec {
     orderIds.foreach { orderId =>
       manager.reserve(orderId, 10)
     }
-    manager.getReserveStats should be(ReserveStats(100, 100, 0, 0, 10))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 0, 0, 10))
 
     // release 5 orders first
     var result = manager.release(orderIds.take(5))
 
     result should be(orderIds.take(5).toSet)
-    manager.getReserveStats should be(ReserveStats(100, 100, 50, 50, 5))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 50, 50, 5))
 
     // release the other five
     result = manager.release(orderIds)
     result should be(orderIds.drop(5).toSet)
-    manager.getReserveStats should be(ReserveStats(100, 100, 100, 100, 0))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 100, 100, 0))
     manager.getReserves should be(Seq.empty)
   }
 
@@ -98,14 +98,14 @@ class ReserveManager2ImplSpec extends CommonSpec {
     orderIds.foreach { orderId =>
       manager.reserve(orderId, 10)
     }
-    manager.getReserveStats should be(ReserveStats(100, 100, 0, 0, 10))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 0, 0, 10))
 
     var result = manager.reserve("order11", 101)
     result should be(Set("order11"))
 
     result = manager.reserve("order11", 40)
     result should be(orderIds.take(4).toSet)
-    manager.getReserveStats should be(ReserveStats(100, 100, 0, 0, 7))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 0, 0, 7))
 
     // now the reserve is like:
     // List(Reserve(order5,10),
@@ -117,7 +117,7 @@ class ReserveManager2ImplSpec extends CommonSpec {
     //      Reserve(order11,40))
     result = manager.reserve("order12", 70)
     result should be((5 to 11).map("order" + _).toSet)
-    manager.getReserveStats should be(ReserveStats(100, 100, 30, 30, 1))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 30, 30, 1))
   }
 
   "an existing order" should "not reserve if the new size is greater than its origin reserved amount plus all orders prior to this order" in {
@@ -128,22 +128,22 @@ class ReserveManager2ImplSpec extends CommonSpec {
     orderIds.foreach { orderId =>
       manager.reserve(orderId, 10)
     }
-    manager.getReserveStats should be(ReserveStats(100, 100, 0, 0, 10))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 0, 0, 10))
 
     info("enlarge the oldest order will make it fail to reserve")
     var result = manager.reserve("order1", 11)
     result should be(Set("order1"))
-    manager.getReserveStats should be(ReserveStats(100, 100, 10, 10, 9))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 10, 10, 9))
 
     info("enlarge the oldest order will make it reserve more")
     result = manager.reserve("order2", 11)
     result should be(Set.empty)
-    manager.getReserveStats should be(ReserveStats(100, 100, 9, 9, 9))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 9, 9, 9))
 
     info("enlarge the newest order will make it fail to reserve")
     result = manager.reserve("order10", 101)
     result should be(Set("order10"))
-    manager.getReserveStats should be(ReserveStats(100, 100, 19, 19, 8))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 19, 19, 8))
 
     // List(Reserve(order2,11), Reserve(order3,10), Reserve(order4,10), Reserve(order5,10),
     //      Reserve(order6,10), Reserve(order7,10), Reserve(order8,10), Reserve(order9,10))
@@ -152,22 +152,22 @@ class ReserveManager2ImplSpec extends CommonSpec {
     result = manager.reserve("order9", 50)
     result should be(Set("order2", "order3"))
 
-    manager.getReserveStats should be(ReserveStats(100, 100, 0, 0, 6))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 0, 0, 6))
 
     // List(Reserve(order4,10), Reserve(order5,10), Reserve(order6,10), Reserve(order7,10),
     //      Reserve(order8,10), Reserve(order9,50))
 
     result = manager.reserve("order9", 99)
     result should be(Set("order4", "order5", "order6", "order7", "order8"))
-    manager.getReserveStats should be(ReserveStats(100, 100, 1, 1, 1))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 1, 1, 1))
 
     result = manager.reserve("order9", 100)
     result should be(Set.empty[String])
-    manager.getReserveStats should be(ReserveStats(100, 100, 0, 0, 1))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 0, 0, 1))
 
     result = manager.reserve("order9", 101)
     result should be(Set("order9"))
-    manager.getReserveStats should be(ReserveStats(100, 100, 100, 100, 0))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 100, 100, 0))
   }
 
   "setting allowance/balance to larger values" should "not affect existing reserves" in {
@@ -178,23 +178,23 @@ class ReserveManager2ImplSpec extends CommonSpec {
     orderIds.foreach { orderId =>
       manager.reserve(orderId, 10)
     }
-    manager.getReserveStats should be(ReserveStats(100, 100, 0, 0, 10))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 0, 0, 10))
 
     var result = manager.setBalanceAndAllowance(101, 101)
     result should be(Set.empty[String])
-    manager.getReserveStats should be(ReserveStats(101, 101, 1, 1, 10))
+    manager.getAccountInfo should be(AccountInfo(101, 101, 1, 1, 10))
 
     result = manager.setBalance(102)
     result should be(Set.empty[String])
-    manager.getReserveStats should be(ReserveStats(102, 101, 2, 1, 10))
+    manager.getAccountInfo should be(AccountInfo(102, 101, 2, 1, 10))
 
     result = manager.setAllowance(102)
     result should be(Set.empty[String])
-    manager.getReserveStats should be(ReserveStats(102, 102, 2, 2, 10))
+    manager.getAccountInfo should be(AccountInfo(102, 102, 2, 2, 10))
 
     result = manager.setBalanceAndAllowance(103, 103)
     result should be(Set.empty[String])
-    manager.getReserveStats should be(ReserveStats(103, 103, 3, 3, 10))
+    manager.getAccountInfo should be(AccountInfo(103, 103, 3, 3, 10))
   }
 
   "setting allowanxe/balance to smaller values" should "drop old orders" in {
@@ -205,22 +205,22 @@ class ReserveManager2ImplSpec extends CommonSpec {
     orderIds.foreach { orderId =>
       manager.reserve(orderId, 10)
     }
-    manager.getReserveStats should be(ReserveStats(100, 100, 0, 0, 10))
+    manager.getAccountInfo should be(AccountInfo(100, 100, 0, 0, 10))
 
     var result = manager.setBalance(99)
     result should be(Set("order1"))
-    manager.getReserveStats should be(ReserveStats(99, 100, 9, 10, 9))
+    manager.getAccountInfo should be(AccountInfo(99, 100, 9, 10, 9))
 
     result = manager.setAllowance(90)
     result should be(Set.empty[String])
-    manager.getReserveStats should be(ReserveStats(99, 90, 9, 0, 9))
+    manager.getAccountInfo should be(AccountInfo(99, 90, 9, 0, 9))
 
     result = manager.setAllowance(89)
     result should be(Set("order2"))
-    manager.getReserveStats should be(ReserveStats(99, 89, 19, 9, 8))
+    manager.getAccountInfo should be(AccountInfo(99, 89, 19, 9, 8))
 
     result = manager.setAllowance(0)
     result should be((3 to 10).map("order" + _).toSet)
-    manager.getReserveStats should be(ReserveStats(99, 0, 99, 0, 0))
+    manager.getAccountInfo should be(AccountInfo(99, 0, 99, 0, 0))
   }
 }

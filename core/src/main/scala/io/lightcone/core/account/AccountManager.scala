@@ -21,7 +21,6 @@ object AccountManager {
   def default(
     )(
       implicit
-      dustEvaluator: DustOrderEvaluator,
       orderPool: AccountOrderPool with UpdatedOrdersTracing
     ): AccountManager = new AccountManagerImpl()
 }
