@@ -58,6 +58,5 @@ trait AccountManager2 {
       cutoff: Long,
       marketHash: String
     ): Future[Int]
-
   def purgeOrders(marketPair: MarketPair): Future[Int]
 }
