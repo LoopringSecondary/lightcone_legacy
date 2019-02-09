@@ -19,24 +19,6 @@ package io.lightcone.core
 import org.slf4s.Logging
 import scala.concurrent._
 
-trait BalanceAndAllowanceProvider {
-
-  def getBalanceAndALlowance(
-      address: String,
-      token: String
-    ): Future[(BigInt, BigInt)]
-}
-
-trait UpdatedOrdersProcessor {
-  implicit val ec: ExecutionContext
-  def processOrder(order: Matchable): Future[Any]
-
-  def processOrders(orders: Map[String, Matchable]): Future[Any] = {
-    val futures = orders.values.map(processOrder)
-    Future.sequence(futures)
-  }
-}
-
 final class AccountManager2Impl(
     val address: String
   )(
