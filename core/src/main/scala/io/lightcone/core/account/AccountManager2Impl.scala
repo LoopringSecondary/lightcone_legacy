@@ -129,7 +129,7 @@ final class AccountManager2Impl(
     )
 
   def purgeOrders(marketPair: MarketPair) =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET) {
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET, true) {
       orderPool.orders.filter { order =>
         (order.tokenS == marketPair.quoteToken && order.tokenB == marketPair.baseToken) ||
         (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
@@ -180,7 +180,8 @@ final class AccountManager2Impl(
     } yield updatedOrders
 
   private def cancelOrderInternal(
-      status: OrderStatus
+      status: OrderStatus,
+      skipProcessingUpdatedOrders: Boolean = false
     )(orders: Iterable[Matchable]
     ) =
     for {
@@ -189,7 +190,10 @@ final class AccountManager2Impl(
         callOnToken(order.tokenS, _.release(order.id))
       })
       updatedOrders = orderPool.takeUpdatedOrders
-      _ <- processor.processOrders(updatedOrders)
+      _ <- {
+        if (skipProcessingUpdatedOrders) Future.unit
+        else processor.processOrders(updatedOrders)
+      }
     } yield updatedOrders
 
   private def callOnToken(

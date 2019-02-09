@@ -254,12 +254,15 @@ class AccountManagerActor2(
         .getOrElse(orderId, ByteString.copyFrom("0".getBytes))
 
       adjusted = matchable.withFilledAmountS(filledAmountS)
-
       (successful, updatedOrders) <- manager.resubmitOrder(adjusted)
-
       updatedOrder = updatedOrders.getOrElse(orderId, adjusted)
-
       status = updatedOrder.status
+
+      _ = log.debug(
+        s"submit order result:  ${updatedOrder}",
+        s"with ${updatedOrders.size} updated orders"
+      )
+
       _ = if (!successful) {
         val error = status match {
           case STATUS_SOFT_CANCELLED_LOW_BALANCE => ERR_LOW_BALANCE
@@ -271,11 +274,6 @@ class AccountManagerActor2(
       }
 
       result: Order = updatedOrder.copy(_reserved = None, _outstanding = None)
-
-      _ = log.debug(
-        s"submit order result:  ${result}",
-        s"with ${updatedOrders.size} updated orders"
-      )
     } yield result
   }
 
@@ -290,8 +288,6 @@ class AccountManagerActor2(
           s"this order has been canceled."
         )
     } yield Unit
-
-  // TODO:terminate market则需要将订单从内存中删除,但是不从数据库删除
 
   private def swap[T](o: Option[Future[T]]): Future[Option[T]] =
     o.map(_.map(Some(_))).getOrElse(Future.successful(None))
