@@ -182,27 +182,24 @@ class AccountManagerActor2(
         }
       } yield result).sendTo(sender)
 
-    // case req @ CancelOrder.Req(id, owner, status, _, _) =>
-    //   val originalSender = sender
-    //   (for {
-    //     _ <- Future.successful(assert(req.owner == address))
-    //     // Make sure PENDING-ACTIVE orders can be cancelled.
-    //     persistenceRes <- (orderPersistenceActor ? req)
-    //       .mapAs[CancelOrder.Res]
-
-    //     (res, updatedOrders) = manager.synchronized {
-    //       (manager.cancelOrder(req.id), orderPool.takeUpdatedOrders())
-    //     }
-
-    //     _ <- processUpdatedOrders(updatedOrders - req.id)
-    //     _ = if (res) {
-    //       marketManagerActor.tell(req, originalSender)
-    //     } else {
-    //       throw ErrorException(
-    //         ERR_FAILED_HANDLE_MSG,
-    //         s"no order found with id: ${req.id}")
-    //     }
-    //   } yield persistenceRes) sendTo sender
+    case req @ CancelOrder.Req(id, owner, status, _, _) =>
+      val originalSender = sender
+      (for {
+        _ <- Future.successful(assert(req.owner == address))
+        // Make sure PENDING-ACTIVE orders can be cancelled.
+        result <- (orderPersistenceActor ? req).mapAs[CancelOrder.Res]
+        (successful, updatedOrders) <- manager.cancelOrder(req.id)
+        _ = {
+          if (successful) {
+            marketManagerActor.tell(req, originalSender)
+          } else {
+            throw ErrorException(
+              ERR_FAILED_HANDLE_MSG,
+              s"no order found with id: ${req.id}"
+            )
+          }
+        }
+      } yield result) sendTo sender
 
     // //为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
     case req: AddressBalanceUpdated =>
