@@ -24,6 +24,7 @@ object AccountManager2 {
       address: String
     )(
       implicit
+      processor: UpdatedOrdersProcessor,
       provider: BalanceAndAllowanceProvider,
       ec: ExecutionContext,
       orderPool: AccountOrderPool with UpdatedOrdersTracing

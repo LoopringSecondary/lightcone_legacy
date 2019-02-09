@@ -27,10 +27,15 @@ trait BalanceAndAllowanceProvider {
     ): Future[(BigInt, BigInt)]
 }
 
+trait UpdatedOrdersProcessor {
+  def processUpdatedOrders(updatedOrders: Map[String, Matchable]): Future[Unit]
+}
+
 final class AccountManager2Impl(
     val address: String
   )(
     implicit
+    processor: UpdatedOrdersProcessor,
     provider: BalanceAndAllowanceProvider,
     ec: ExecutionContext,
     orderPool: AccountOrderPool with UpdatedOrdersTracing)
@@ -84,8 +89,9 @@ final class AccountManager2Impl(
       _ = if (successful) {
         orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
       }
-      result = orderPool.takeUpdatedOrders
-    } yield (successful, result)
+      updatedOrders = orderPool.takeUpdatedOrders
+      _ <- processor.processUpdatedOrders(updatedOrders)
+    } yield (successful, updatedOrders)
   }
 
   def cancelOrder(orderId: String) =
@@ -163,8 +169,9 @@ final class AccountManager2Impl(
       _ <- cancelOrderInternal(STATUS_SOFT_CANCELLED_LOW_BALANCE)(
         ordersToDelete
       )
-      result = orderPool.takeUpdatedOrders
-    } yield result
+      updatedOrders = orderPool.takeUpdatedOrders
+      _ <- processor.processUpdatedOrders(updatedOrders)
+    } yield updatedOrders
 
   private def cancelOrderInternal(
       status: OrderStatus
@@ -175,8 +182,9 @@ final class AccountManager2Impl(
         orderPool += order.copy(status = status)
         callOnToken(order.tokenS, _.release(order.id))
       })
-      result = orderPool.takeUpdatedOrders
-    } yield result
+      updatedOrders = orderPool.takeUpdatedOrders
+      _ <- processor.processUpdatedOrders(updatedOrders)
+    } yield updatedOrders
 
   private def callOnToken(
       token: String,

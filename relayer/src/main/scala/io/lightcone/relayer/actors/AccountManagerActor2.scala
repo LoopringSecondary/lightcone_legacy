@@ -47,6 +47,7 @@ class AccountManagerActor2(
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager,
+    val processor: UpdatedOrdersProcessor,
     val provider: BalanceAndAllowanceProvider)
     extends Actor
     with Stash
@@ -208,100 +209,90 @@ class AccountManagerActor2(
       assert(req.address == address)
       manager
         .setBalance(req.token, BigInt(req.balance.toByteArray))
-        .map(processUpdatedOrders)
 
     case req: AddressAllowanceUpdated =>
       assert(req.address == address)
       manager
         .setAllowance(req.token, BigInt(req.allowance.toByteArray))
-        .map(processUpdatedOrders)
 
     // //ownerCutoff
-    // case req @ CutoffEvent(Some(header), broker, owner, "", cutoff) if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
-    //   log.debug(s"received OwnerCutoffEvent $req")
-    //   accountCutoffState.setCutoff(cutoff)
-
-    //   val updatedOrders = manager.synchronized {
-    //     manager.handleCutoff(cutoff)
-    //     orderPool.takeUpdatedOrders
-    //   }
-    //   processUpdatedOrders(updatedOrders)
+    case req @ CutoffEvent(Some(header), broker, owner, "", cutoff) //
+        if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+      accountCutoffState.setCutoff(cutoff)
+      manager.handleCutoff(cutoff)
 
     // //ownerTokenPairCutoff  tokenPair ！= ""
-    // case req @ CutoffEvent(Some(header), broker, owner, marketHash, cutoff) if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
-    //   log.debug(s"received OwnerTokenPairCutoffEvent $req")
-    //   accountCutoffState
-    //     .setTradingPairCutoff(marketHash, req.cutoff)
+    case req @ CutoffEvent(Some(header), broker, owner, marketHash, cutoff) //
+        if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+      accountCutoffState.setTradingPairCutoff(marketHash, req.cutoff)
+      manager.handleCutoff(cutoff, marketHash)
 
-    //   val updatedOrders = manager.synchronized {
-    //     manager.handleCutoff(cutoff, marketHash)
-    //     orderPool.takeUpdatedOrders
-    //   }
-    //   processUpdatedOrders(updatedOrders)
+    // Currently we do not support broker-level cutoff
+    case req @ CutoffEvent(Some(header), broker, owner, _, cutoff) //
+        if broker != owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+      log.debug(s"received BrokerCutoffEvent $req")
 
-    // //Currently we do not support broker-level cutoff
-    // case req @ CutoffEvent(Some(header), broker, owner, _, cutoff) if broker != owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
-    //   log.debug(s"received BrokerCutoffEvent $req")
-
-    // case req: OrderFilledEvent if req.header.nonEmpty && req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS =>
-    //   log.debug(s"received OrderFilledEvent ${req}")
-    //   for {
-    //     orderOpt <- dbModule.orderService.getOrder(req.orderHash)
-    //   } yield orderOpt.map(o => submitOrder(o))
+    case req: OrderFilledEvent //
+        if req.header.nonEmpty && req.getHeader.txStatus == TxStatus.TX_STATUS_SUCCESS =>
+      for {
+        orderOpt <- dbModule.orderService.getOrder(req.orderHash)
+        _ <- swap(orderOpt.map(submitOrder))
+      } yield Unit
   }
 
-  // private def submitOrder(rawOrder: RawOrder): Future[Order] = {
-  //   val order = rawOrder.toOrder
-  //   val matchable: Matchable = order
-  //   log.debug(s"### submitOrder ${order}")
-  //   for {
-  //     _ <- if (matchable.amountFee > 0 && matchable.tokenS != matchable.tokenFee)
-  //       getReserveManagers(Seq(matchable.tokenS, matchable.tokenFee))
-  //     else
-  //       getReserveManagers(Seq(matchable.tokenS))
+  private def submitOrder(rawOrder: RawOrder): Future[Order] = {
+    null
+    //   val order = rawOrder.toOrder
+    //   val matchable: Matchable = order
+    //   log.debug(s"### submitOrder ${order}")
+    //   for {
+    //     _ <- if (matchable.amountFee > 0 && matchable.tokenS != matchable.tokenFee)
+    //       getReserveManagers(Seq(matchable.tokenS, matchable.tokenFee))
+    //     else
+    //       getReserveManagers(Seq(matchable.tokenS))
 
-  //     getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmount.Req(
-  //       Seq(matchable.id))).mapAs[GetFilledAmount.Res]
+    //     getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmount.Req(
+    //       Seq(matchable.id))).mapAs[GetFilledAmount.Res]
 
-  //     filledAmountS = getFilledAmountRes.filledAmountSMap
-  //       .getOrElse(matchable.id, ByteString.copyFrom("0".getBytes))
+    //     filledAmountS = getFilledAmountRes.filledAmountSMap
+    //       .getOrElse(matchable.id, ByteString.copyFrom("0".getBytes))
 
-  //     _matchable = matchable.withFilledAmountS(filledAmountS)
+    //     _matchable = matchable.withFilledAmountS(filledAmountS)
 
-  //     (successful, updatedOrders) = manager.synchronized {
-  //       val res = if (orderPool.contains(order.id)) {
-  //         manager.adjustOrder(_matchable.id, _matchable.outstanding.amountS)
-  //       } else {
-  //         manager.submitOrder(_matchable)
-  //       }
-  //       (res, orderPool.takeUpdatedOrders)
-  //     }
+    //     (successful, updatedOrders) = manager.synchronized {
+    //       val res = if (orderPool.contains(order.id)) {
+    //         manager.adjustOrder(_matchable.id, _matchable.outstanding.amountS)
+    //       } else {
+    //         manager.submitOrder(_matchable)
+    //       }
+    //       (res, orderPool.takeUpdatedOrders)
+    //     }
 
-  //     _ = if (!successful) {
-  //       val error = updatedOrders(matchable.id).status match {
-  //         case STATUS_INVALID_DATA => ERR_INVALID_ORDER_DATA
-  //         case STATUS_UNSUPPORTED_MARKET => ERR_INVALID_MARKET
-  //         case STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS => ERR_TOO_MANY_ORDERS
-  //         case STATUS_SOFT_CANCELLED_DUPLICIATE => ERR_ORDER_ALREADY_EXIST
-  //         case other =>
-  //           log.error(s"unexpected failure order status $other")
-  //           ERR_INTERNAL_UNKNOWN
-  //       }
+    //     _ = if (!successful) {
+    //       val error = updatedOrders(matchable.id).status match {
+    //         case STATUS_INVALID_DATA => ERR_INVALID_ORDER_DATA
+    //         case STATUS_UNSUPPORTED_MARKET => ERR_INVALID_MARKET
+    //         case STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS => ERR_TOO_MANY_ORDERS
+    //         case STATUS_SOFT_CANCELLED_DUPLICIATE => ERR_ORDER_ALREADY_EXIST
+    //         case other =>
+    //           log.error(s"unexpected failure order status $other")
+    //           ERR_INTERNAL_UNKNOWN
+    //       }
 
-  //       throw ErrorException(
-  //         error,
-  //         s"failed to submit order with status:${matchable.status} in AccountManagerActor.")
-  //     }
+    //       throw ErrorException(
+    //         error,
+    //         s"failed to submit order with status:${matchable.status} in AccountManagerActor.")
+    //     }
 
-  //     _ = log.debug(
-  //       s"updated matchable ${_matchable}\nfound ${updatedOrders.size} updated orders")
+    //     _ = log.debug(
+    //       s"updated matchable ${_matchable}\nfound ${updatedOrders.size} updated orders")
 
-  //     res <- processUpdatedOrders(updatedOrders)
+    //     res <- processUpdatedOrders(updatedOrders)
 
-  //     matchable_ = updatedOrders.getOrElse(matchable.id, _matchable)
-  //     order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
-  //   } yield order_
-  // }
+    //     matchable_ = updatedOrders.getOrElse(matchable.id, _matchable)
+    //     order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
+    //   } yield order_
+  }
 
   private def processUpdatedOrders(updatedOrders: Map[String, Matchable]) =
     Future.sequence(updatedOrders.map {
@@ -407,4 +398,6 @@ class AccountManagerActor2(
 
   // TODO:terminate market则需要将订单从内存中删除,但是不从数据库删除
 
+  private def swap[T](o: Option[Future[T]]): Future[Option[T]] =
+    o.map(_.map(Some(_))).getOrElse(Future.successful(None))
 }
