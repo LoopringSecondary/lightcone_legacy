@@ -18,26 +18,17 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-// TODO(dongw): cancel all orders
-// TODO(dongw): cancel all orders in a market
-// TODO(dongw): optimize timing
-// TODO(dongw): 时间借位？？？
-
 case class ReserveStats(
     balance: BigInt,
     allowance: BigInt,
     availableBalance: BigInt,
     availableAllowance: BigInt,
-    numOfOrders: Int,
-    maxNumOrders: Int)
+    numOfOrders: Int)
 
 trait ReserveManager2 {
   val token: String
-  val maxNumOrders: Int
 
   def getReserveStats(): ReserveStats
-
-  def hasTooManyOrders(): Boolean
 
   def setBalance(balance: BigInt): Set[String]
   def setAllowance(allowance: BigInt): Set[String]
@@ -48,19 +39,19 @@ trait ReserveManager2 {
     ): Set[String]
 
   // Reserve or adjust the reserve of the balance/allowance for an order, returns the order ids to cancel.
-  def reserve(orderId: String): Set[String]
+  def reserve(
+      orderId: String,
+      requestedAmount: BigInt
+    ): Set[String]
 
   // Release balance/allowance for an order, returns the order ids to cancel.
-  def release(orderId: String): Set[String]
+  def release(orderIds: Seq[String]): Set[String]
+  def release(orderId: String): Set[String] = release(Seq(orderId))
+
+  def clearOrders(): Unit
 }
 
-abstract class ReserveManagerImpl2(
-    val token: String,
-    val maxNumOrders: Int = 1000
-  )(
-    implicit
-    orderPool: AccountOrderPool,
-    dustEvaluator: DustOrderEvaluator)
+final class ReserveManager2Impl(implicit val token: String)
     extends ReserveManager2
     with Logging {
 
@@ -68,13 +59,15 @@ abstract class ReserveManagerImpl2(
       orderId: String,
       reserved: BigInt)
 
-  private var allowance: BigInt = _
-  private var balance: BigInt = _
-  private var spendable: BigInt = _
-  private var reserved: BigInt = _
+  private var allowance: BigInt = 0
+  private var balance: BigInt = 0
+  private var spendable: BigInt = 0
+  private var reserved: BigInt = 0
 
   private var reserves = List.empty[Reserve]
   private var firstWaiting = 0
+
+  def getReserves() = reserves
 
   def getReserveStats() =
     ReserveStats(
@@ -82,11 +75,8 @@ abstract class ReserveManagerImpl2(
       allowance,
       balance - reserved,
       allowance - reserved,
-      reserves.size,
-      maxNumOrders
+      reserves.size
     )
-
-  def hasTooManyOrders() = reserves.size > maxNumOrders
 
   def setBalance(balance: BigInt) =
     setBalanceAndAllowance(balance, this.allowance)
@@ -103,65 +93,86 @@ abstract class ReserveManagerImpl2(
     spendable = balance.min(allowance)
 
     var ordersToDelete = Set.empty[String]
+
     // we cancel older orders, not newer orders.
     while (spendable < reserved) {
-      val one = reserves.head
-      ordersToDelete += one.orderId
-      spendable += one.reserved
-      reserves = reserves.drop(1)
+      val first = reserves.head
+      ordersToDelete += first.orderId
+      reserved -= first.reserved
+      reserves = reserves.tail
     }
     ordersToDelete
   }
 
   // Release balance/allowance for an order.
   def release(orderIds: Seq[String]): Set[String] = this.synchronized {
-
-    val (toDelete, toKeep) = reserves.span(orderIds.contains)
-    reserved += toDelete.map(_.reserved).sum
+    val (toDelete, toKeep) = reserves.partition { r =>
+      orderIds.contains(r.orderId)
+    }
+    reserved -= toDelete.map(_.reserved).sum
     reserves = toKeep
-
-    // re-reserve the last one.
-
     toDelete.map(_.orderId).toSet
   }
 
-  // def reserve(orderId: String): Set[String] = this.synchronized {
-  //   if (!orderPool.contains(orderId)) Set.empty[String]
-  //   else {
-  //     indexMap.get(orderId) match {
-  //       case Some(_) =>
-  //         // in case tokenS == tokenB
-  //         Set.empty[String]
-  //       case None =>
-  //         reservations :+= Reservation(orderId, 0, 0)
-  //         rebalance()
-  //     }
-  //   }
-  // }
+  def reserve(
+      orderId: String,
+      requestedAmount: BigInt
+    ): Set[String] = this.synchronized {
+    var ordersToDelete = Set.empty[String]
+    var idx = reserves.indexWhere(_.orderId == orderId)
 
-  // // Release balance/allowance for an order.
-  // def release(orderId: String): Set[String] = this.synchronized {
-  //   indexMap.get(orderId) match {
-  //     case None => Set.empty
-  //     case Some(idx) =>
-  //       reservations = reservations.patch(idx, Nil, 1)
-  //       indexMap -= orderId
-  //       // TODO(dongw): optimize cursor
-  //       cursor = idx - 1 // Performance issue
-  //       rebalance()
-  //   }
-  // }
+    def insuffcient(additonal: BigInt = 0) =
+      spendable - reserved + additonal < requestedAmount
 
-  // // Rebalance due to change of an order.
-  // def adjust(orderId: String): Set[String] = this.synchronized {
-  //   indexMap.get(orderId) match {
-  //     case None => Set.empty
-  //     case Some(idx) =>
-  //       assert(orderPool.contains(orderId))
-  //       val order = orderPool(orderId)
-  //       cursor = idx - 1
-  //       rebalance()
-  //   }
-  // }
+    if (idx >= 0) {
+      // this is an existing order to scale down/up
+      // we release the old reserve first
+      val reserve = reserves(idx)
+      reserved -= reserve.reserved
 
+      val sum = reserves.take(idx).map(_.reserved).sum
+
+      // println("=======", idx, reserved, sum)
+      if (insuffcient(sum)) {
+        // releaseing all orders prior to this order still ends up low reserve
+        ordersToDelete += orderId
+        reserves = reserves.patch(idx, Nil, 1)
+      } else {
+        while (insuffcient()) {
+          ordersToDelete += reserves.head.orderId
+          reserved -= reserves.head.reserved
+          reserves = reserves.tail
+          idx -= 1
+        }
+
+        assert(idx >= 0)
+        reserved += requestedAmount
+        val reserve = Reserve(orderId, requestedAmount)
+        reserves = reserves.patch(idx, Seq(reserve), 1)
+      }
+
+    } else {
+      // this is a new order
+      if (spendable < requestedAmount) {
+        // not enough spendable for this order
+        ordersToDelete += orderId
+      } else {
+        while (insuffcient()) {
+          val first = reserves.head
+          ordersToDelete += first.orderId
+          reserved -= first.reserved
+          reserves = reserves.tail
+        }
+        reserved += requestedAmount
+        reserves = reserves :+ Reserve(orderId, requestedAmount)
+      }
+    }
+
+    ordersToDelete
+  }
+
+  def clearOrders(): Unit = this.synchronized {
+    reserved = 0
+    reserves = Nil
+  }
 }
