@@ -16,16 +16,18 @@
 
 package io.lightcone.core
 
-import scala.concurrent.Future
+import scala.concurrent._
 
 object AccountManager2 {
 
-  // def default(
-  //   )(
-  //     implicit
-  //     dustEvaluator: DustOrderEvaluator,
-  //     orderPool: AccountOrderPool with UpdatedOrdersTracing
-  //   ): AccountManager2 = new AccountManagerImpl2()
+  def default(
+      address: String
+    )(
+      implicit
+      provider: BalanceAndAllowanceProvider,
+      ec: ExecutionContext,
+      orderPool: AccountOrderPool with UpdatedOrdersTracing
+    ): AccountManager2 = new AccountManager2Impl(address)
 }
 
 trait AccountManager2 {

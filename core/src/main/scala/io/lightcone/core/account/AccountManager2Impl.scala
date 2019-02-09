@@ -17,8 +17,7 @@
 package io.lightcone.core
 
 import org.slf4s.Logging
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext
+import scala.concurrent._
 
 trait BalanceAndAllowanceProvider {
 
@@ -34,7 +33,6 @@ final class AccountManager2Impl(
     implicit
     provider: BalanceAndAllowanceProvider,
     ec: ExecutionContext,
-    dustEvaluator: DustOrderEvaluator,
     orderPool: AccountOrderPool with UpdatedOrdersTracing)
     extends AccountManager2
     with Logging {

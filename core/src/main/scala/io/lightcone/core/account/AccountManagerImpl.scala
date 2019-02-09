@@ -20,7 +20,6 @@ import org.slf4s.Logging
 
 final private[core] class AccountManagerImpl(
     implicit
-    dustEvaluator: DustOrderEvaluator,
     orderPool: AccountOrderPool with UpdatedOrdersTracing)
     extends AccountManager
     with Logging {
