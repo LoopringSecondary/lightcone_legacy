@@ -31,8 +31,16 @@ object AccountManager2 {
 trait AccountManager2 {
   val address: String
 
+  def setBalanceAndAllowance(
+      token: String,
+      balance: BigInt,
+      allowance: BigInt
+    ): Future[Int]
+
   def resubmitOrder(order: Matchable): Future[Boolean]
 
+  // cancel an order based on onchain cancel event
+  def hardCancelOrder(orderId: String): Future[Boolean]
   // soft cancel an order
   def cancelOrder(orderId: String): Future[Boolean]
   def cancelOrders(orderIds: Seq[String]): Future[Int]

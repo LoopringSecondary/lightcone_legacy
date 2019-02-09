@@ -44,6 +44,20 @@ final class AccountManager2Impl(
   type ReserveManagerMethod = ReserveManager2 => Set[String]
   private implicit var tokens = Map.empty[String, ReserveManager2]
 
+  def setBalanceAndAllowance(
+      token: String,
+      balance: BigInt,
+      allowance: BigInt
+    ): Future[Int] =
+    for {
+      manager <- getReserveManager(token)
+      orderIdsToDelete = manager.setBalanceAndAllowance(balance, allowance)
+      ordersToDelete = orderIdsToDelete.map(orderPool.apply)
+      size <- cancelOrderInternal(STATUS_SOFT_CANCELLED_LOW_BALANCE)(
+        ordersToDelete
+      )
+    } yield size
+
   def resubmitOrder(order: Matchable): Future[Boolean] = {
     val order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
     orderPool += order_.as(STATUS_NEW)
@@ -62,6 +76,11 @@ final class AccountManager2Impl(
       }
     } yield result
   }
+
+  def hardCancelOrder(orderId: String): Future[Boolean] =
+    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER)(
+      orderPool.getOrder(orderId).toSeq
+    ).map(_ > 0)
 
   def cancelOrder(orderId: String): Future[Boolean] =
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(
