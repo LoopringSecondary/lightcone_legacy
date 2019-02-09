@@ -33,30 +33,42 @@ object AccountManager2 {
 trait AccountManager2 {
   val address: String
 
+  def getAccountInfo(token: String): Future[AccountInfo]
+
   def setBalanceAndAllowance(
       token: String,
       balance: BigInt,
       allowance: BigInt
-    ): Future[Int]
+    ): Future[Map[String, Matchable]]
 
-  def getAccountInfo(token: String): Future[AccountInfo]
+  def setBalance(
+      token: String,
+      balance: BigInt
+    ): Future[Map[String, Matchable]]
 
-  def resubmitOrder(order: Matchable): Future[Boolean]
+  def setAllowance(
+      token: String,
+      allowance: BigInt
+    ): Future[Map[String, Matchable]]
+
+  def resubmitOrder(order: Matchable): Future[(Boolean, Map[String, Matchable])]
+
+  // soft cancel an order
+  def cancelOrder(orderId: String): Future[(Boolean, Map[String, Matchable])]
+  def cancelOrders(orderIds: Seq[String]): Future[Map[String, Matchable]]
+  def cancelOrders(marketPair: MarketPair): Future[Map[String, Matchable]]
+  def cancelAllOrders(): Future[Map[String, Matchable]]
 
   // cancel an order based on onchain cancel event
-  def hardCancelOrder(orderId: String): Future[Boolean]
-  // soft cancel an order
-  def cancelOrder(orderId: String): Future[Boolean]
-  def cancelOrders(orderIds: Seq[String]): Future[Int]
-  def cancelOrders(marketPair: MarketPair): Future[Int]
-  def cancelAllOrders(): Future[Int]
+  def hardCancelOrder(orderId: String): Future[Map[String, Matchable]]
 
   // hard cancel multiple orders
-  def handleCutoff(cutoff: Long): Future[Int]
+  def handleCutoff(cutoff: Long): Future[Map[String, Matchable]]
 
   def handleCutoff(
       cutoff: Long,
       marketHash: String
-    ): Future[Int]
-  def purgeOrders(marketPair: MarketPair): Future[Int]
+    ): Future[Map[String, Matchable]]
+
+  def purgeOrders(marketPair: MarketPair): Future[Map[String, Matchable]]
 }

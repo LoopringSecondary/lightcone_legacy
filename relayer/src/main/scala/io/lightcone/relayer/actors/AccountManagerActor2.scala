@@ -127,7 +127,9 @@ class AccountManagerActor2(
       (for {
         accountInfos <- Future.sequence(tokens.map(manager.getAccountInfo))
         _ = assert(tokens.size == accountInfos.size)
-        balanceAndAllowanceMap = accountInfos.map(i => i.token -> i).toMap.map {
+        balanceAndAllowanceMap = accountInfos.map { i =>
+          i.token -> i
+        }.toMap.map {
           case (token, ai) =>
             token -> BalanceAndAllowance(
               ai.balance,
@@ -158,28 +160,26 @@ class AccountManagerActor2(
     //     }).mapAs[Order]
     // //   } yield SubmitOrder.Res(Some(resOrder))) sendTo sender
 
-    // case req @ CancelOrder.Req("", owner, _, None, _) => //按照Owner取消订单
-    //   val f = for {
-    //     _ <- Future { assert(req.owner == address) }
-    //     (res, updatedOrders) = manager.synchronized {
-    //       (manager.cancelAllOrders(), orderPool.takeUpdatedOrders)
-    //     }
-    //     _ <- processUpdatedOrders(updatedOrders)
-    //   } yield CancelOrder.Res(ERR_NONE)
-    // f.sendTo(sender)
+    case req @ CancelOrder.Req("", owner, _, None, _) => //按照Owner取消订单
+      (for {
+        updatedOrders <- manager.cancelAllOrders()
+        _ <- processUpdatedOrders(updatedOrders)
+        result = {
+          if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
+          else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
+        }
+      } yield result).sendTo(sender)
 
-    // case req @ CancelOrder
-    //   .Req("", owner, _, Some(marketPair), _) => //按照Owner-MarketPair取消订单
-    //   val f = for {
-    //     _ <- Future { assert(req.owner == address) }
-    //     (res, updatedOrders) = manager.synchronized {
-    //       (
-    //         manager.cancelOrdersInMarket(MarketHash(marketPair).toString),
-    //         orderPool.takeUpdatedOrders)
-    //     }
-    //     _ <- processUpdatedOrders(updatedOrders)
-    //   } yield CancelOrder.Res(ERR_NONE)
-    //   f.sendTo(sender)
+    case req @ CancelOrder
+          .Req("", owner, _, Some(marketPair), _) => //按照Owner-MarketPair取消订单
+      (for {
+        updatedOrders <- manager.cancelOrders(marketPair)
+        _ <- processUpdatedOrders(updatedOrders)
+        result = {
+          if (updatedOrders.nonEmpty) CancelOrder.Res(ERR_NONE)
+          else CancelOrder.Res(ERR_ORDER_NOT_EXIST)
+        }
+      } yield result).sendTo(sender)
 
     // case req @ CancelOrder.Req(id, owner, status, _, _) =>
     //   val originalSender = sender
@@ -204,27 +204,17 @@ class AccountManagerActor2(
     //   } yield persistenceRes) sendTo sender
 
     // //为了减少以太坊的查询量，需要每个block汇总后再批量查询，因此不使用TransferEvent
-    // case req: AddressBalanceUpdated =>
-    //   assert(req.address == address)
+    case req: AddressBalanceUpdated =>
+      assert(req.address == address)
+      manager
+        .setBalance(req.token, BigInt(req.balance.toByteArray))
+        .map(processUpdatedOrders)
 
-    //   updateBalanceOrAllowance(req.token) {
-    //     val tm = manager.getReserveManager(req.token)
-    //     manager.synchronized {
-    //       tm.setBalance(BigInt(req.balance.toByteArray))
-    //       orderPool.takeUpdatedOrders
-    //     }
-    //   }
-
-    // case req: AddressAllowanceUpdated =>
-    //   assert(req.address == address)
-
-    //   updateBalanceOrAllowance(req.token) {
-    //     val tm = manager.getReserveManager(req.token)
-    //     manager.synchronized {
-    //       tm.setAllowance(BigInt(req.allowance.toByteArray))
-    //       orderPool.takeUpdatedOrders
-    //     }
-    //   }
+    case req: AddressAllowanceUpdated =>
+      assert(req.address == address)
+      manager
+        .setAllowance(req.token, BigInt(req.allowance.toByteArray))
+        .map(processUpdatedOrders)
 
     // //ownerCutoff
     // case req @ CutoffEvent(Some(header), broker, owner, "", cutoff) if broker == owner && header.txStatus == TxStatus.TX_STATUS_SUCCESS =>
@@ -313,70 +303,69 @@ class AccountManagerActor2(
   //   } yield order_
   // }
 
-  // private def processUpdatedOrders(updatedOrders: Map[String, Matchable]) =
-  //   Future.sequence {
-  //     updatedOrders.map {
-  //       case (id, order) =>
-  //         val state = RawOrder.State(
-  //           actualAmountS = order.actual.amountS,
-  //           actualAmountB = order.actual.amountB,
-  //           actualAmountFee = order.actual.amountFee,
-  //           outstandingAmountS = order.outstanding.amountS,
-  //           outstandingAmountB = order.outstanding.amountB,
-  //           outstandingAmountFee = order.outstanding.amountFee,
-  //           status = order.status)
+  private def processUpdatedOrders(updatedOrders: Map[String, Matchable]) =
+    Future.sequence(updatedOrders.map {
+      case (id, order) =>
+        Future.unit
+      //         val state = RawOrder.State(
+      //           actualAmountS = order.actual.amountS,
+      //           actualAmountB = order.actual.amountB,
+      //           actualAmountFee = order.actual.amountFee,
+      //           outstandingAmountS = order.outstanding.amountS,
+      //           outstandingAmountB = order.outstanding.amountB,
+      //           outstandingAmountFee = order.outstanding.amountFee,
+      //           status = order.status)
 
-  //         for {
-  //           //需要更新到数据库
-  //           //TODO(yongfeng): 暂时添加接口，需要永丰根据目前的使用优化dal的接口
-  //           _ <- dbModule.orderService.updateOrderState(order.id, state)
-  //           _ <- order.status match {
-  //             case STATUS_NEW | //
-  //               STATUS_PENDING | //
-  //               STATUS_PARTIALLY_FILLED =>
-  //               log.debug(s"submitting order id=${order.id} to MMA")
-  //               val order_ = order.copy(_reserved = None, _outstanding = None)
-  //               for {
-  //                 matchRes <- (marketManagerActor ? SubmitSimpleOrder(
-  //                   order = Some(order_))).mapAs[MarketManager.MatchResult]
-  //                 _ = matchRes.taker.status match {
-  //                   case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES =>
-  //                     self ! CancelOrder.Req(
-  //                       matchRes.taker.id,
-  //                       address,
-  //                       matchRes.taker.status,
-  //                       Some(MarketPair(order.tokenS, order.tokenB)))
-  //                   case _ =>
-  //                 }
-  //               } yield Unit
+      //         for {
+      //           //需要更新到数据库
+      //           //TODO(yongfeng): 暂时添加接口，需要永丰根据目前的使用优化dal的接口
+      //           _ <- dbModule.orderService.updateOrderState(order.id, state)
+      //           _ <- order.status match {
+      //             case STATUS_NEW | //
+      //               STATUS_PENDING | //
+      //               STATUS_PARTIALLY_FILLED =>
+      //               log.debug(s"submitting order id=${order.id} to MMA")
+      //               val order_ = order.copy(_reserved = None, _outstanding = None)
+      //               for {
+      //                 matchRes <- (marketManagerActor ? SubmitSimpleOrder(
+      //                   order = Some(order_))).mapAs[MarketManager.MatchResult]
+      //                 _ = matchRes.taker.status match {
+      //                   case STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES =>
+      //                     self ! CancelOrder.Req(
+      //                       matchRes.taker.id,
+      //                       address,
+      //                       matchRes.taker.status,
+      //                       Some(MarketPair(order.tokenS, order.tokenB)))
+      //                   case _ =>
+      //                 }
+      //               } yield Unit
 
-  //             case STATUS_EXPIRED | //
-  //               STATUS_DUST_ORDER | //
-  //               STATUS_COMPLETELY_FILLED | //
-  //               STATUS_SOFT_CANCELLED_BY_USER | //
-  //               STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR | //
-  //               STATUS_ONCHAIN_CANCELLED_BY_USER | //
-  //               STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR | //
-  //               STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES | //
-  //               STATUS_SOFT_CANCELLED_LOW_BALANCE | //
-  //               STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | //
-  //               STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS | //
-  //               STATUS_SOFT_CANCELLED_DUPLICIATE =>
-  //               log.debug(
-  //                 s"cancelling order id=${order.id} status=${order.status}")
-  //               val marketPair = MarketPair(order.tokenS, order.tokenB)
-  //               marketManagerActor ? CancelOrder.Req(
-  //                 id = order.id,
-  //                 marketPair = Some(marketPair))
+      //             case STATUS_EXPIRED | //
+      //               STATUS_DUST_ORDER | //
+      //               STATUS_COMPLETELY_FILLED | //
+      //               STATUS_SOFT_CANCELLED_BY_USER | //
+      //               STATUS_SOFT_CANCELLED_BY_USER_TRADING_PAIR | //
+      //               STATUS_ONCHAIN_CANCELLED_BY_USER | //
+      //               STATUS_ONCHAIN_CANCELLED_BY_USER_TRADING_PAIR | //
+      //               STATUS_SOFT_CANCELLED_TOO_MANY_RING_FAILURES | //
+      //               STATUS_SOFT_CANCELLED_LOW_BALANCE | //
+      //               STATUS_SOFT_CANCELLED_LOW_FEE_BALANCE | //
+      //               STATUS_SOFT_CANCELLED_TOO_MANY_ORDERS | //
+      //               STATUS_SOFT_CANCELLED_DUPLICIATE =>
+      //               log.debug(
+      //                 s"cancelling order id=${order.id} status=${order.status}")
+      //               val marketPair = MarketPair(order.tokenS, order.tokenB)
+      //               marketManagerActor ? CancelOrder.Req(
+      //                 id = order.id,
+      //                 marketPair = Some(marketPair))
 
-  //             case status =>
-  //               throw ErrorException(
-  //                 ERR_INVALID_ORDER_DATA,
-  //                 s"unexpected order status: $status in: $order")
-  //           }
-  //         } yield Unit
-  //     }
-  //   }
+      //             case status =>
+      //               throw ErrorException(
+      //                 ERR_INVALID_ORDER_DATA,
+      //                 s"unexpected order status: $status in: $order")
+      //           }
+
+    })
 
   // // TODO(hongyu): this is a bug here - if a order reservers two tokens, A, and B, if A's allowance
   // // becomes very small, then we also need to release all reserved token B for this order.
