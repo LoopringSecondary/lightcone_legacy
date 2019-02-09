@@ -38,6 +38,7 @@ final class ReserveManager2Impl()(implicit val token: String)
 
   def getAccountInfo() =
     AccountInfo(
+      token,
       balance,
       allowance,
       balance - reserved,

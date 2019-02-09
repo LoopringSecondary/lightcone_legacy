@@ -163,7 +163,7 @@ class AccountManagerActor(
       val f = for {
         _ <- Future { assert(req.owner == address) }
         (res, updatedOrders) = manager.synchronized {
-          (manager.cancelAllOrders(), orderPool.takeUpdatedOrdersAsMap)
+          (manager.cancelAllOrders(), orderPool.takeUpdatedOrders)
         }
         _ <- processUpdatedOrders(updatedOrders)
       } yield CancelOrder.Res(ERR_NONE)
@@ -176,7 +176,7 @@ class AccountManagerActor(
         (res, updatedOrders) = manager.synchronized {
           (
             manager.cancelOrdersInMarket(MarketHash(marketPair).toString),
-            orderPool.takeUpdatedOrdersAsMap
+            orderPool.takeUpdatedOrders
           )
         }
         _ <- processUpdatedOrders(updatedOrders)
@@ -192,7 +192,7 @@ class AccountManagerActor(
           .mapAs[CancelOrder.Res]
 
         (res, updatedOrders) = manager.synchronized {
-          (manager.cancelOrder(req.id), orderPool.takeUpdatedOrdersAsMap())
+          (manager.cancelOrder(req.id), orderPool.takeUpdatedOrders())
         }
 
         _ <- processUpdatedOrders(updatedOrders - req.id)
@@ -214,7 +214,7 @@ class AccountManagerActor(
         val tm = manager.getReserveManager(req.token)
         manager.synchronized {
           tm.setBalance(BigInt(req.balance.toByteArray))
-          orderPool.takeUpdatedOrdersAsMap
+          orderPool.takeUpdatedOrders
         }
       }
 
@@ -225,7 +225,7 @@ class AccountManagerActor(
         val tm = manager.getReserveManager(req.token)
         manager.synchronized {
           tm.setAllowance(BigInt(req.allowance.toByteArray))
-          orderPool.takeUpdatedOrdersAsMap
+          orderPool.takeUpdatedOrders
         }
       }
 
@@ -237,7 +237,7 @@ class AccountManagerActor(
 
       val updatedOrders = manager.synchronized {
         manager.handleCutoff(cutoff)
-        orderPool.takeUpdatedOrdersAsMap
+        orderPool.takeUpdatedOrders
       }
       processUpdatedOrders(updatedOrders)
 
@@ -250,7 +250,7 @@ class AccountManagerActor(
 
       val updatedOrders = manager.synchronized {
         manager.handleCutoff(cutoff, marketHash)
-        orderPool.takeUpdatedOrdersAsMap
+        orderPool.takeUpdatedOrders
       }
       processUpdatedOrders(updatedOrders)
 
@@ -292,7 +292,7 @@ class AccountManagerActor(
         } else {
           manager.submitOrder(_matchable)
         }
-        (res, orderPool.takeUpdatedOrdersAsMap)
+        (res, orderPool.takeUpdatedOrders)
       }
 
       _ = if (!successful) {
