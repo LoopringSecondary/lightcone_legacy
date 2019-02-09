@@ -29,37 +29,23 @@ object AccountManager2 {
 }
 
 trait AccountManager2 {
+  val address: String
 
-  // def setTokenManagerInitializer(f: (String, String) => Future[(BigInt, BigInt)])
-
-  // def hasReserveManager(token: String): Boolean
-  // def addReserveManager(tm: ReserveManager): ReserveManager
-  // def getReserveManager(token: String): ReserveManager
-  // def getOrUpdateReserveManager(tm: ReserveManager): ReserveManager
-
-  def submitOrder(order: Matchable): Future[Boolean]
+  def resubmitOrder(order: Matchable): Future[Boolean]
 
   // soft cancel an order
   def cancelOrder(orderId: String): Future[Boolean]
+  def cancelOrders(orderIds: Seq[String]): Future[Int]
+  def cancelOrders(marketPair: MarketPair): Future[Int]
+  def cancelAllOrders(): Future[Int]
 
   // hard cancel multiple orders
   def handleCutoff(cutoff: Long): Future[Int]
-
-  def purgeOrders(marketPair: MarketPair): Future[Int]
 
   def handleCutoff(
       cutoff: Long,
       marketHash: String
     ): Future[Int]
 
-  def adjustOrder(
-      orderId: String,
-      outstandingAmountS: BigInt
-    ): Future[Boolean]
-
-  //TODO: 需要实现cancelOrdersInMarket与cancelAllOrders
-  //由用户由前端请求，按照address和市场取消订单
-  def cancelOrdersInMarket(marketHash: String): Future[Int]
-
-  def cancelAllOrders(): Future[Int]
+  def purgeOrders(marketPair: MarketPair): Future[Int]
 }

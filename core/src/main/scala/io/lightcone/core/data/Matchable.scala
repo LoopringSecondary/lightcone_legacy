@@ -72,7 +72,7 @@ case class Matchable(
     withOutstandingAmountS((amountS - filledAmountS).max(0))
 
   // Advance methods with implicit contextual arguments
-  private[core] def requestedAmount()(implicit token: String): BigInt =
+  private[core] def requestedAmount(implicit token: String): BigInt =
     if (token == tokenS && tokenFee == tokenS) {
       outstanding.amountS + outstanding.amountFee
     } else if (token == tokenS && tokenFee != tokenS) {
