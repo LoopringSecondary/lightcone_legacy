@@ -19,18 +19,11 @@ package io.lightcone.core
 import org.slf4s.Logging
 import scala.concurrent._
 
-trait BalanceAndAllowanceProvider {
-
-  def getBalanceAndALlowance(
-      address: String,
-      token: String
-    ): Future[(BigInt, BigInt)]
-}
-
 final class AccountManager2Impl(
     val address: String
   )(
     implicit
+    processor: UpdatedOrdersProcessor,
     provider: BalanceAndAllowanceProvider,
     ec: ExecutionContext,
     orderPool: AccountOrderPool with UpdatedOrdersTracing)
@@ -42,58 +35,66 @@ final class AccountManager2Impl(
   type ReserveManagerMethod = ReserveManager2 => Set[String]
   private implicit var tokens = Map.empty[String, ReserveManager2]
 
+  def getAccountInfo(token: String): Future[AccountInfo] =
+    getReserveManager(token).map(_.getAccountInfo)
+
   def setBalanceAndAllowance(
       token: String,
       balance: BigInt,
       allowance: BigInt
-    ): Future[Int] =
-    for {
-      manager <- getReserveManager(token)
-      orderIdsToDelete = manager.setBalanceAndAllowance(balance, allowance)
-      ordersToDelete = orderIdsToDelete.map(orderPool.apply)
-      size <- cancelOrderInternal(STATUS_SOFT_CANCELLED_LOW_BALANCE)(
-        ordersToDelete
-      )
-    } yield size
+    ) =
+    setBalanceAndAllowanceInternal(token) {
+      _.setBalanceAndAllowance(balance, allowance)
+    }
 
-  def getAccountInfo(token: String): Future[AccountInfo] =
-    getReserveManager(token).map(_.getAccountInfo)
+  def setBalance(
+      token: String,
+      balance: BigInt
+    ) = setBalanceAndAllowanceInternal(token) {
+    _.setBalance(balance)
+  }
 
-  def resubmitOrder(order: Matchable): Future[Boolean] = {
+  def setAllowance(
+      token: String,
+      allowance: BigInt
+    ) = setBalanceAndAllowanceInternal(token) {
+    _.setAllowance(allowance)
+  }
+
+  def resubmitOrder(order: Matchable) = {
     val order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
     orderPool += order_.as(STATUS_NEW)
     for {
       orderIdsToDelete <- order_.callOnTokenSAndTokenFee(
         m => m.reserve(order_.id, order.requestedAmount(m.token))
       )
-      result = !orderIdsToDelete.contains(order_.id)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ = ordersToDelete.map { order =>
         orderPool +=
           orderPool(order.id).copy(status = STATUS_SOFT_CANCELLED_LOW_BALANCE)
       }
-      _ = if (result) {
+      successful = !orderIdsToDelete.contains(order.id)
+      _ = if (successful) {
         orderPool += orderPool(order_.id).copy(status = STATUS_PENDING)
       }
-    } yield result
+      updatedOrders = orderPool.takeUpdatedOrders
+      _ <- processor.processOrders(updatedOrders)
+    } yield (successful, updatedOrders)
   }
 
-  def hardCancelOrder(orderId: String): Future[Boolean] =
-    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER)(
-      orderPool.getOrder(orderId).toSeq
-    ).map(_ > 0)
+  def cancelOrder(orderId: String) =
+    for {
+      orders <- cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(
+        orderPool.getOrder(orderId).toSeq
+      )
+    } yield (orders.size > 0, orders)
 
-  def cancelOrder(orderId: String): Future[Boolean] =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(
-      orderPool.getOrder(orderId).toSeq
-    ).map(_ > 0)
-
-  def cancelOrders(orderIds: Seq[String]): Future[Int] =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(
+  def cancelOrders(orderIds: Seq[String]) =
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER) {
       orderPool.orders.filter(o => orderIds.contains(o.id))
-    )
+    }
 
-  def cancelOrders(marketPair: MarketPair): Future[Int] =
+  def cancelOrders(marketPair: MarketPair) =
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER) {
       orderPool.orders.filter { order =>
         (order.tokenS == marketPair.quoteToken && order.tokenB == marketPair.baseToken) ||
@@ -101,18 +102,23 @@ final class AccountManager2Impl(
       }
     }
 
-  def cancelAllOrders(): Future[Int] =
+  def cancelAllOrders() =
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(orderPool.orders)
 
-  def purgeOrders(marketPair: MarketPair): Future[Int] =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET) {
+  def hardCancelOrder(orderId: String) =
+    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
+      orderPool.getOrder(orderId).toSeq
+    }
+
+  def purgeOrders(marketPair: MarketPair) =
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET, true) {
       orderPool.orders.filter { order =>
         (order.tokenS == marketPair.quoteToken && order.tokenB == marketPair.baseToken) ||
         (order.tokenB == marketPair.quoteToken && order.tokenS == marketPair.baseToken)
       }
     }
 
-  def handleCutoff(cutoff: Long): Future[Int] =
+  def handleCutoff(cutoff: Long) =
     cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
       orderPool.orders.filter(_.validSince <= cutoff)
     }
@@ -120,7 +126,7 @@ final class AccountManager2Impl(
   def handleCutoff(
       cutoff: Long,
       marketHash: String
-    ): Future[Int] = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
+    ) = cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
     orderPool.orders.filter { order =>
       order.validSince <= cutoff &&
       MarketHash(MarketPair(order.tokenS, order.tokenB)).toString == marketHash
@@ -140,17 +146,37 @@ final class AccountManager2Impl(
         }
     }
 
+  private def setBalanceAndAllowanceInternal(
+      token: String
+    )(method: ReserveManager2 => Set[String]
+    ): Future[Map[String, Matchable]] =
+    for {
+      manager <- getReserveManager(token)
+      orderIdsToDelete = method(manager)
+      ordersToDelete = orderIdsToDelete.map(orderPool.apply)
+      _ <- cancelOrderInternal(STATUS_SOFT_CANCELLED_LOW_BALANCE)(
+        ordersToDelete
+      )
+      updatedOrders = orderPool.takeUpdatedOrders
+      _ <- processor.processOrders(updatedOrders)
+    } yield updatedOrders
+
   private def cancelOrderInternal(
-      status: OrderStatus
+      status: OrderStatus,
+      skipProcessingUpdatedOrders: Boolean = false
     )(orders: Iterable[Matchable]
-    ): Future[Int] =
+    ) =
     for {
       _ <- Future.sequence(orders.map { order =>
         orderPool += order.copy(status = status)
         callOnToken(order.tokenS, _.release(order.id))
       })
-      result = orders.size
-    } yield result
+      updatedOrders = orderPool.takeUpdatedOrders
+      _ <- {
+        if (skipProcessingUpdatedOrders) Future.unit
+        else processor.processOrders(updatedOrders)
+      }
+    } yield updatedOrders
 
   private def callOnToken(
       token: String,

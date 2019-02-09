@@ -16,10 +16,12 @@
 
 package io.lightcone.core
 
-case class AccountInfo(
-    token: String,
-    balance: BigInt,
-    allowance: BigInt,
-    availableBalance: BigInt,
-    availableAllowance: BigInt,
-    numOfOrders: Int)
+import scala.concurrent._
+
+trait BalanceAndAllowanceProvider {
+
+  def getBalanceAndALlowance(
+      address: String,
+      token: String
+    ): Future[(BigInt, BigInt)]
+}

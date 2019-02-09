@@ -38,8 +38,7 @@ trait UpdatedOrdersTracing {
 
   addCallback((order: Matchable) => updatedOrders += order.id -> order)
 
-  def getUpdatedOrdersAsMap() = updatedOrders
-  def getUpdatedOrders() = updatedOrders.values
+  def getUpdatedOrders() = updatedOrders
 
   def clearUpdatedOrders() = this.synchronized {
     updatedOrders = Map.empty
@@ -47,12 +46,6 @@ trait UpdatedOrdersTracing {
 
   def takeUpdatedOrders() = this.synchronized {
     val orders = getUpdatedOrders
-    clearUpdatedOrders()
-    orders
-  }
-
-  def takeUpdatedOrdersAsMap() = this.synchronized {
-    val orders = getUpdatedOrdersAsMap
     clearUpdatedOrders()
     orders
   }

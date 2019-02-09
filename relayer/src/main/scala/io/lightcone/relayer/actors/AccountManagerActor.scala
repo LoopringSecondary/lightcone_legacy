@@ -163,9 +163,9 @@ class AccountManagerActor(
       val f = for {
         _ <- Future { assert(req.owner == address) }
         (res, updatedOrders) = manager.synchronized {
-          (manager.cancelAllOrders(), orderPool.takeUpdatedOrdersAsMap)
+          (manager.cancelAllOrders(), orderPool.takeUpdatedOrders)
         }
-        _ <- processUpdatedOrders(updatedOrders)
+        _ <- processOrders(updatedOrders)
       } yield CancelOrder.Res(ERR_NONE)
       f.sendTo(sender)
 
@@ -176,10 +176,10 @@ class AccountManagerActor(
         (res, updatedOrders) = manager.synchronized {
           (
             manager.cancelOrdersInMarket(MarketHash(marketPair).toString),
-            orderPool.takeUpdatedOrdersAsMap
+            orderPool.takeUpdatedOrders
           )
         }
-        _ <- processUpdatedOrders(updatedOrders)
+        _ <- processOrders(updatedOrders)
       } yield CancelOrder.Res(ERR_NONE)
       f.sendTo(sender)
 
@@ -192,10 +192,10 @@ class AccountManagerActor(
           .mapAs[CancelOrder.Res]
 
         (res, updatedOrders) = manager.synchronized {
-          (manager.cancelOrder(req.id), orderPool.takeUpdatedOrdersAsMap())
+          (manager.cancelOrder(req.id), orderPool.takeUpdatedOrders())
         }
 
-        _ <- processUpdatedOrders(updatedOrders - req.id)
+        _ <- processOrders(updatedOrders - req.id)
         _ = if (res) {
           marketManagerActor.tell(req, originalSender)
         } else {
@@ -214,7 +214,7 @@ class AccountManagerActor(
         val tm = manager.getReserveManager(req.token)
         manager.synchronized {
           tm.setBalance(BigInt(req.balance.toByteArray))
-          orderPool.takeUpdatedOrdersAsMap
+          orderPool.takeUpdatedOrders
         }
       }
 
@@ -225,7 +225,7 @@ class AccountManagerActor(
         val tm = manager.getReserveManager(req.token)
         manager.synchronized {
           tm.setAllowance(BigInt(req.allowance.toByteArray))
-          orderPool.takeUpdatedOrdersAsMap
+          orderPool.takeUpdatedOrders
         }
       }
 
@@ -237,9 +237,9 @@ class AccountManagerActor(
 
       val updatedOrders = manager.synchronized {
         manager.handleCutoff(cutoff)
-        orderPool.takeUpdatedOrdersAsMap
+        orderPool.takeUpdatedOrders
       }
-      processUpdatedOrders(updatedOrders)
+      processOrders(updatedOrders)
 
     //ownerTokenPairCutoff  tokenPair ！= ""
     case req @ CutoffEvent(Some(header), broker, owner, marketHash, cutoff)
@@ -250,9 +250,9 @@ class AccountManagerActor(
 
       val updatedOrders = manager.synchronized {
         manager.handleCutoff(cutoff, marketHash)
-        orderPool.takeUpdatedOrdersAsMap
+        orderPool.takeUpdatedOrders
       }
-      processUpdatedOrders(updatedOrders)
+      processOrders(updatedOrders)
 
     //Currently we do not support broker-level cutoff
     case req @ CutoffEvent(Some(header), broker, owner, _, cutoff)
@@ -292,7 +292,7 @@ class AccountManagerActor(
         } else {
           manager.submitOrder(_matchable)
         }
-        (res, orderPool.takeUpdatedOrdersAsMap)
+        (res, orderPool.takeUpdatedOrders)
       }
 
       _ = if (!successful) {
@@ -316,14 +316,14 @@ class AccountManagerActor(
         s"updated matchable ${_matchable}\nfound ${updatedOrders.size} updated orders"
       )
 
-      res <- processUpdatedOrders(updatedOrders)
+      res <- processOrders(updatedOrders)
 
       matchable_ = updatedOrders.getOrElse(matchable.id, _matchable)
       order_ : Order = matchable_.copy(_reserved = None, _outstanding = None)
     } yield order_
   }
 
-  private def processUpdatedOrders(updatedOrders: Map[String, Matchable]) =
+  private def processOrders(updatedOrders: Map[String, Matchable]) =
     Future.sequence {
       updatedOrders.map {
         case (id, order) =>
@@ -451,7 +451,7 @@ class AccountManagerActor(
           }
         }
       }
-      _ <- processUpdatedOrders(updatedOrders)
+      _ <- processOrders(updatedOrders)
     } yield Unit
 
   def checkOrderCanceled(rawOrder: RawOrder) =

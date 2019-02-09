@@ -16,10 +16,14 @@
 
 package io.lightcone.core
 
-case class AccountInfo(
-    token: String,
-    balance: BigInt,
-    allowance: BigInt,
-    availableBalance: BigInt,
-    availableAllowance: BigInt,
-    numOfOrders: Int)
+import scala.concurrent._
+
+trait UpdatedOrdersProcessor {
+  implicit val ec: ExecutionContext
+  def processOrder(order: Matchable): Future[Any]
+
+  def processOrders(orders: Map[String, Matchable]): Future[Any] = {
+    val futures = orders.values.map(processOrder)
+    Future.sequence(futures)
+  }
+}
