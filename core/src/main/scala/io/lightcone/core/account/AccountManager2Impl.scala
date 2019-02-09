@@ -56,6 +56,9 @@ final class AccountManager2Impl(
       )
     } yield size
 
+  def getAccountInfo(token: String): Future[AccountInfo] =
+    getReserveManager(token).map(_.getAccountInfo)
+
   def resubmitOrder(order: Matchable): Future[Boolean] = {
     val order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
     orderPool += order_.as(STATUS_NEW)
@@ -129,8 +132,9 @@ final class AccountManager2Impl(
       if (tokens.contains(token)) Future.successful(tokens(token))
       else
         provider.getBalanceAndALlowance(address, token).map { result =>
+          val (balance, allowance) = result
           val manager = new ReserveManager2Impl()(token)
-          manager.setBalanceAndAllowance(result._1, result._2)
+          manager.setBalanceAndAllowance(balance, allowance)
           tokens += token -> manager
           manager
         }

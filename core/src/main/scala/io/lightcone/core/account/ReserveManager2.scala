@@ -16,17 +16,10 @@
 
 package io.lightcone.core
 
-case class ReserveStats(
-    balance: BigInt,
-    allowance: BigInt,
-    availableBalance: BigInt,
-    availableAllowance: BigInt,
-    numOfOrders: Int)
-
 trait ReserveManager2 {
   val token: String
 
-  def getReserveStats(): ReserveStats
+  def getAccountInfo(): AccountInfo
 
   def setBalance(balance: BigInt): Set[String]
   def setAllowance(allowance: BigInt): Set[String]

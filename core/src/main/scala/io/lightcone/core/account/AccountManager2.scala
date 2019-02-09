@@ -39,6 +39,8 @@ trait AccountManager2 {
       allowance: BigInt
     ): Future[Int]
 
+  def getAccountInfo(token: String): Future[AccountInfo]
+
   def resubmitOrder(order: Matchable): Future[Boolean]
 
   // cancel an order based on onchain cancel event
