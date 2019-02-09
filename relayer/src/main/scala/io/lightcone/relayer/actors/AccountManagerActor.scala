@@ -424,6 +424,8 @@ class AccountManagerActor(
     } yield tokenMangers
   }
 
+  // TODO(hongyu): this is a bug here - if a order reservers two tokens, A, and B, if A's allowance
+  // becomes very small, then we also need to release all reserved token B for this order.
   private def updateBalanceOrAllowance(
       token: String
     )(retrieveUpdatedOrders: => Map[String, Matchable]

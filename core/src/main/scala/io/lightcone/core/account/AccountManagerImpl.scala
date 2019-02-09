@@ -175,7 +175,9 @@ final private[core] class AccountManagerImpl(
     // reserveManager的release动作不能由reserveManager本身调用,
     // 只能由orderManager根据并汇总tokenS&tokenFee情况后删除,
     // 删除时tokenS&tokenFee都要删,不能只留一个
-    def callOnTokenSAndTokenFee(method: ReserveManager => Set[String]) = {
+    def callOnTokenSAndTokenFee(
+        method: ReserveManager => Set[String]
+      ): Boolean = {
       val ordersToDelete = callOnTokenS(method) ++ callOnTokenFee(method)
       ordersToDelete.map { orderId =>
         callOnTokenS(_.release(orderId))
