@@ -108,9 +108,9 @@ final class AccountManager2Impl(
     } yield (orders.size > 0, orders)
 
   def cancelOrders(orderIds: Seq[String]) =
-    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(
+    cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER) {
       orderPool.orders.filter(o => orderIds.contains(o.id))
-    )
+    }
 
   def cancelOrders(marketPair: MarketPair) =
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER) {
@@ -124,9 +124,9 @@ final class AccountManager2Impl(
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_USER)(orderPool.orders)
 
   def hardCancelOrder(orderId: String) =
-    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER)(
+    cancelOrderInternal(STATUS_ONCHAIN_CANCELLED_BY_USER) {
       orderPool.getOrder(orderId).toSeq
-    )
+    }
 
   def purgeOrders(marketPair: MarketPair) =
     cancelOrderInternal(STATUS_SOFT_CANCELLED_BY_DISABLED_MARKET, true) {
