@@ -117,6 +117,8 @@ class MultiAccountManagerActor(
 
   var autoSwitchBackToReady: Option[Cancellable] = None
 
+  def ethereumQueryActor = actors.get(EthereumQueryActor.name)
+
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
   // TODO: 完成recovery后，需要再次测试异常恢复情况
   override val supervisorStrategy =
@@ -194,6 +196,24 @@ class MultiAccountManagerActor(
         ERR_UNEXPECTED_ACTOR_MSG,
         s"$req cannot be handled by ${getClass.getName}"
       )
+  }
+
+  implicit private val baProvider = new BalanceAndAllowanceProvider {
+
+    def getBalanceAndALlowance(
+        address: String,
+        token: String
+      ): Future[(BigInt, BigInt)] =
+      for {
+        res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
+          address,
+          Seq(token)
+        )).mapAs[GetBalanceAndAllowances.Res]
+        ba = res.balanceAndAllowanceMap.getOrElse(token, BalanceAndAllowance())
+        balance = BigInt(ba.balance.toByteArray)
+        allowance = BigInt(ba.allowance.toByteArray)
+      } yield (balance, allowance)
+
   }
 
   protected def accountManagerActorFor(address: String): ActorRef =
