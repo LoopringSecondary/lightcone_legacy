@@ -65,11 +65,7 @@ final class AccountManager2Impl(
     val order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
     orderPool += order_.as(STATUS_NEW) // potentially replace the old one.
     for {
-      orderIdsToDelete <- callOnOrder(
-        order_,
-        manager =>
-          manager.reserve(order_.id, order.requestedAmount(manager.token))
-      )
+      orderIdsToDelete <- reserveForOder(order_)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ = ordersToDelete.map { order =>
         orderPool +=
@@ -171,7 +167,7 @@ final class AccountManager2Impl(
     for {
       _ <- Future.sequence(orders.map { order =>
         orderPool += order.copy(status = status)
-        callOnToken(order.tokenS, _.release(order.id))
+        onToken(order.tokenS, _.release(order.id))
       })
       updatedOrders = orderPool.takeUpdatedOrders
       _ <- {
@@ -180,17 +176,21 @@ final class AccountManager2Impl(
       }
     } yield updatedOrders
 
-  private def callOnOrder(
-      order: Matchable,
-      invoke: ReserveManagerMethod
-    ): Future[Set[String]] =
-    for {
-      r1 <- callOnToken(order.tokenS, invoke)
-      r2 <- callOnToken(order.tokenFee, invoke)
-      orderIdsToDelete = r1 ++ r2
-    } yield orderIdsToDelete
+  private def reserveForOder(order: Matchable): Future[Set[String]] = {
+    val requestedAmountS = order.requestedAmount(order.tokenS)
+    val requestedAmountFee = order.requestedAmount(order.tokenFee)
+    if (requestedAmountS == 0 && requestedAmountFee == 0) {
+      orderPool += order.copy(status = STATUS_INVALID_DATA)
+      Future.successful(Set(order.id))
+    } else
+      for {
+        r1 <- onToken(order.tokenS, _.reserve(order.id, requestedAmountS))
+        r2 <- onToken(order.tokenFee, _.reserve(order.id, requestedAmountFee))
+        orderIdsToDelete = r1 ++ r2
+      } yield orderIdsToDelete
+  }
 
-  private def callOnToken(
+  private def onToken(
       token: String,
       invoke: ReserveManagerMethod
     ): Future[Set[String]] =

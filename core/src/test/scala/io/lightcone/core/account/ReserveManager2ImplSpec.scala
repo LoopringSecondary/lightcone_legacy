@@ -68,6 +68,22 @@ class ReserveManager2ImplSpec extends CommonSpec {
     manager.getReserves should be(Seq.empty)
   }
 
+  "ReserveManager2Impl" should "reserve 0 amount and succeed" in {
+    manager.setBalanceAndAllowance(100, 100)
+
+    var result = manager.reserve("order1", 0)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 100, 100, 0))
+  }
+
+  "ReserveManager2Impl" should "not throw exception when reserve amount < 0 but should indicate the reserve fails" in {
+    manager.setBalanceAndAllowance(100, 100)
+
+    var result = manager.reserve("order1", -10)
+    result should be(Set("order1"))
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 100, 100, 0))
+  }
+
   "ReserveManager2Impl" should "release multiple orders in one operation" in {
     manager.setBalanceAndAllowance(100, 100)
 
