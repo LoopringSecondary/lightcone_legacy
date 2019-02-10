@@ -117,8 +117,6 @@ class MultiAccountManagerActor(
 
   var autoSwitchBackToReady: Option[Cancellable] = None
 
-  def ethereumQueryActor = actors.get(EthereumQueryActor.name)
-
   //shardingActor对所有的异常都会重启自己，根据策略，也会重启下属所有的Actor
   // TODO: 完成recovery后，需要再次测试异常恢复情况
   override val supervisorStrategy =
@@ -203,7 +201,8 @@ class MultiAccountManagerActor(
     def getBalanceAndALlowance(
         address: String,
         token: String
-      ): Future[(BigInt, BigInt)] =
+      ): Future[(BigInt, BigInt)] = {
+      val ethereumQueryActor = actors.get(EthereumQueryActor.name)
       for {
         res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
           address,
@@ -213,10 +212,10 @@ class MultiAccountManagerActor(
         balance = BigInt(ba.balance.toByteArray)
         allowance = BigInt(ba.allowance.toByteArray)
       } yield (balance, allowance)
-
+    }
   }
 
-  protected def accountManagerActorFor(address: String): ActorRef =
+  private def accountManagerActorFor(address: String): ActorRef =
     this.synchronized {
       if (!accountManagerActors.contains(address)) {
         log.info(s"created new account manager for address $address")
