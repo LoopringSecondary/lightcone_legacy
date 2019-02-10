@@ -46,8 +46,7 @@ class AccountManagerActor2(
     val actors: Lookup[ActorRef],
     val dustEvaluator: DustOrderEvaluator,
     val dbModule: DatabaseModule,
-    val metadataManager: MetadataManager,
-    val provider: BalanceAndAllowanceProvider)
+    val metadataManager: MetadataManager)
     extends Actor
     with AccountManagerUpdatedOrdersProcessor
     with Stash
@@ -57,16 +56,27 @@ class AccountManagerActor2(
   import OrderStatus._
   import TxStatus._
 
-  implicit val processor: UpdatedOrdersProcessor = this
-
-  override val supervisorStrategy =
-    AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
-      case e: Exception =>
-        log.error(e.getMessage)
-        Escalate
-    }
-
+  implicit val uoProcessor: UpdatedOrdersProcessor = this
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
+
+  implicit private val baProvider = new BalanceAndAllowanceProvider {
+
+    def getBalanceAndALlowance(
+        address: String,
+        token: String
+      ): Future[(BigInt, BigInt)] =
+      for {
+        res <- (ethereumQueryActor ? GetBalanceAndAllowances.Req(
+          address,
+          Seq(token)
+        )).mapAs[GetBalanceAndAllowances.Res]
+        ba = res.balanceAndAllowanceMap.getOrElse(token, BalanceAndAllowance())
+        balance = BigInt(ba.balance.toByteArray)
+        allowance = BigInt(ba.allowance.toByteArray)
+      } yield (balance, allowance)
+
+  }
+
   val manager = AccountManager2.default(owner)
   val accountCutoffState = new AccountCutoffStateImpl()
 
@@ -77,6 +87,13 @@ class AccountManagerActor2(
   override def preStart() = {
     self ! Notify("initialize")
   }
+
+  override val supervisorStrategy =
+    AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 5 second) {
+      case e: Exception =>
+        log.error(e.getMessage)
+        Escalate
+    }
 
   def receive: Receive = initialReceive
 

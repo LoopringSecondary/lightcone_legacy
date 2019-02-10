@@ -196,15 +196,16 @@ class MultiAccountManagerActor(
       )
   }
 
-  protected def accountManagerActorFor(address: String): ActorRef = {
-    if (!accountManagerActors.contains(address)) {
-      log.info(s"created new account manager for address $address")
-      accountManagerActors.add(
-        address,
-        context.actorOf(Props(new AccountManagerActor(address)), address)
-      )
+  protected def accountManagerActorFor(address: String): ActorRef =
+    this.synchronized {
+      if (!accountManagerActors.contains(address)) {
+        log.info(s"created new account manager for address $address")
+        accountManagerActors.add(
+          address,
+          context.actorOf(Props(new AccountManagerActor2(address)), address)
+        )
+      }
+      accountManagerActors.get(address)
     }
-    accountManagerActors.get(address)
-  }
 
 }
