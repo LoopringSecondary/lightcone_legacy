@@ -18,7 +18,20 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-final class ReserveManager2Impl()(implicit val token: String)
+trait ReserveEventHandler {
+
+  def onTokenReservedForOrder(
+      orderId: String,
+      token: String,
+      amount: BigInt
+    ): Unit
+}
+
+final class ReserveManager2Impl(
+    val token: String
+  )(
+    implicit
+    eventHandler: ReserveEventHandler)
     extends ReserveManager2
     with Logging {
 
@@ -121,6 +134,8 @@ final class ReserveManager2Impl()(implicit val token: String)
           reserved += requestedAmount
           val reserve = Reserve(orderId, requestedAmount)
           reserves = reserves.patch(idx, Seq(reserve), 1)
+
+          eventHandler.onTokenReservedForOrder(orderId, token, requestedAmount)
         }
 
       } else {
@@ -137,6 +152,8 @@ final class ReserveManager2Impl()(implicit val token: String)
           }
           reserved += requestedAmount
           reserves = reserves :+ Reserve(orderId, requestedAmount)
+
+          eventHandler.onTokenReservedForOrder(orderId, token, requestedAmount)
         }
       }
     }

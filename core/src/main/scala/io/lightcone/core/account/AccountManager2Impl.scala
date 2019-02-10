@@ -131,13 +131,26 @@ final class AccountManager2Impl(
     }
   }
 
+  implicit private val reserveEventHandler = new ReserveEventHandler {
+
+    def onTokenReservedForOrder(
+        orderId: String,
+        token: String,
+        amount: BigInt
+      ) = {
+      val order = orderPool(orderId)
+      orderPool += order.withReservedAmount(amount)(token)
+    }
+  }
+
   private def getReserveManager(token: String): Future[ReserveManager2] =
     this.synchronized {
       if (tokens.contains(token)) Future.successful(tokens(token))
       else
         provider.getBalanceAndALlowance(address, token).map { result =>
           val (balance, allowance) = result
-          val manager = new ReserveManager2Impl()(token)
+          val manager =
+            new ReserveManager2Impl(token)
           manager.setBalanceAndAllowance(balance, allowance)
           tokens += token -> manager
           manager

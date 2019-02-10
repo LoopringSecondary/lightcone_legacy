@@ -20,13 +20,24 @@ package io.lightcone.core
 
 class ReserveManager2ImplSpec extends CommonSpec {
 
-  implicit val token = "ABC"
+  val token = "ABC"
   var manager: ReserveManager2Impl = _
 
   implicit def int2bigInt(i: Int) = BigInt(i)
 
+  implicit val reh = new ReserveEventHandler {
+
+    def onTokenReservedForOrder(
+        orderId: String,
+        token: String,
+        amount: BigInt
+      ) = {
+      println(s"reserved $amount@$token for order: $orderId")
+    }
+  }
+
   override def beforeEach(): Unit = {
-    manager = new ReserveManager2Impl
+    manager = new ReserveManager2Impl(token)
   }
 
   "ReserveManager2Impl" should "not reserve in 0 balance or allowance" in {
