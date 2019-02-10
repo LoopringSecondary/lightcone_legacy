@@ -36,7 +36,7 @@ final class AccountManager2Impl(
   private implicit var tokens = Map.empty[String, ReserveManager2]
 
   def getAccountInfo(token: String): Future[AccountInfo] =
-    getReserveManager(token).map(_.getAccountInfo)
+    getReserveManagerOption(token, true).map(_.get.getAccountInfo)
 
   def setBalanceAndAllowance(
       token: String,
@@ -65,7 +65,7 @@ final class AccountManager2Impl(
     val order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
     orderPool += order_.as(STATUS_NEW) // potentially replace the old one.
     for {
-      orderIdsToDelete <- reserveForOder(order_)
+      orderIdsToDelete <- reserveForOrder(order_)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ = ordersToDelete.map { order =>
         orderPool +=
@@ -143,18 +143,23 @@ final class AccountManager2Impl(
     }
   }
 
-  private def getReserveManager(token: String): Future[ReserveManager2] =
+  private def getReserveManagerOption(
+      token: String,
+      mustReturn: Boolean
+    ): Future[Option[ReserveManager2]] =
     this.synchronized {
-      if (tokens.contains(token)) Future.successful(tokens(token))
-      else
+      if (tokens.contains(token)) Future.successful(Some(tokens(token)))
+      else if (!mustReturn) Future.successful(None)
+      else {
         provider.getBalanceAndALlowance(address, token).map { result =>
           val (balance, allowance) = result
           val manager =
             new ReserveManager2Impl(token)
           manager.setBalanceAndAllowance(balance, allowance)
           tokens += token -> manager
-          manager
+          Some(manager)
         }
+      }
     }
 
   private def setBalanceAndAllowanceInternal(
@@ -162,7 +167,8 @@ final class AccountManager2Impl(
     )(method: ReserveManager2 => Set[String]
     ): Future[Map[String, Matchable]] =
     for {
-      manager <- getReserveManager(token)
+      managerOpt <- getReserveManagerOption(token, true)
+      manager = managerOpt.get
       orderIdsToDelete = method(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ <- cancelOrderInternal(STATUS_SOFT_CANCELLED_LOW_BALANCE)(
@@ -189,16 +195,22 @@ final class AccountManager2Impl(
       }
     } yield updatedOrders
 
-  private def reserveForOder(order: Matchable): Future[Set[String]] = {
+  private def reserveForOrder(order: Matchable): Future[Set[String]] = {
     val requestedAmountS = order.requestedAmount(order.tokenS)
     val requestedAmountFee = order.requestedAmount(order.tokenFee)
-    if (requestedAmountS == 0 && requestedAmountFee == 0) {
+
+    if (requestedAmountS <= 0 || requestedAmountFee < 0) {
       orderPool += order.copy(status = STATUS_INVALID_DATA)
       Future.successful(Set(order.id))
     } else
       for {
         r1 <- onToken(order.tokenS, _.reserve(order.id, requestedAmountS))
-        r2 <- onToken(order.tokenFee, _.reserve(order.id, requestedAmountFee))
+        r2 <- {
+          if (order.tokenFee == order.tokenS || requestedAmountFee == 0)
+            Future.successful(Set.empty[String])
+          else
+            onToken(order.tokenFee, _.reserve(order.id, requestedAmountFee))
+        }
         orderIdsToDelete = r1 ++ r2
       } yield orderIdsToDelete
   }
@@ -208,19 +220,22 @@ final class AccountManager2Impl(
       invoke: ReserveManagerMethod
     ): Future[Set[String]] =
     for {
-      manager <- getReserveManager(token)
+      managerOpt <- getReserveManagerOption(token, true)
+      manager = managerOpt.get
       orderIdsToDelete = invoke(manager)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
-      _ <- Future.sequence(ordersToDelete.map { order =>
-        val f1 =
-          if (order.tokenS == token) Future.unit
-          else getReserveManager(order.tokenS).map(_.release(order.id))
+      _ <- Future.sequence {
+        ordersToDelete.map { order =>
+          Seq(order.tokenS, order.tokenFee)
+            .filter(_ != token)
+            .map { t =>
+              getReserveManagerOption(t, false).map { managerOpt =>
+                managerOpt.foreach(_.release(order.id))
+              }
+            }
 
-        val f2 =
-          if (order.tokenFee == token) Future.unit
-          else getReserveManager(order.tokenFee).map(_.release(order.id))
-        Seq(f1, f2)
-      }.flatten)
+        }.flatten
+      }
     } yield orderIdsToDelete
 
 }
