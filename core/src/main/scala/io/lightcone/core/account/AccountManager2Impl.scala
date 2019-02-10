@@ -63,10 +63,12 @@ final class AccountManager2Impl(
 
   def resubmitOrder(order: Matchable) = {
     val order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
-    orderPool += order_.as(STATUS_NEW)
+    orderPool += order_.as(STATUS_NEW) // potentially replace the old one.
     for {
-      orderIdsToDelete <- order_.callOnTokenSAndTokenFee(
-        m => m.reserve(order_.id, order.requestedAmount(m.token))
+      orderIdsToDelete <- callOnOrder(
+        order_,
+        manager =>
+          manager.reserve(order_.id, order.requestedAmount(manager.token))
       )
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ = ordersToDelete.map { order =>
@@ -178,6 +180,16 @@ final class AccountManager2Impl(
       }
     } yield updatedOrders
 
+  private def callOnOrder(
+      order: Matchable,
+      invoke: ReserveManagerMethod
+    ): Future[Set[String]] =
+    for {
+      r1 <- callOnToken(order.tokenS, invoke)
+      r2 <- callOnToken(order.tokenFee, invoke)
+      orderIdsToDelete = r1 ++ r2
+    } yield orderIdsToDelete
+
   private def callOnToken(
       token: String,
       invoke: ReserveManagerMethod
@@ -198,15 +210,4 @@ final class AccountManager2Impl(
       }.flatten)
     } yield orderIdsToDelete
 
-  implicit private class MagicOrder(order: Matchable) {
-
-    def callOnTokenSAndTokenFee(
-        invoke: ReserveManagerMethod
-      ): Future[Set[String]] =
-      for {
-        r1 <- callOnToken(order.tokenS, invoke)
-        r2 <- callOnToken(order.tokenFee, invoke)
-        orderIdsToDelete = r1 ++ r2
-      } yield orderIdsToDelete
-  }
 }
