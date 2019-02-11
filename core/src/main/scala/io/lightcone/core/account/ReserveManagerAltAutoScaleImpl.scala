@@ -18,15 +18,6 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-trait ReserveEventHandler {
-
-  def onTokenReservedForOrder(
-      orderId: String,
-      token: String,
-      amount: BigInt
-    ): Unit
-}
-
 // TODO(dongw): this is not impolemented yet
 private[core] final class ReserveManagerAltAutoScaleImpl(
     val token: String
