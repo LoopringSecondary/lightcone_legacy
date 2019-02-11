@@ -18,7 +18,6 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-// TODO(dongw): this is not impolemented yet
 private[core] final class ReserveManagerAltAutoScaleImpl(
     val token: String
   )(
@@ -58,7 +57,6 @@ private[core] final class ReserveManagerAltAutoScaleImpl(
   def setAllowance(allowance: BigInt) =
     setBalanceAndAllowance(this.balance, allowance)
 
-  // TODO(dongw): reserve for existing orders.
   def setBalanceAndAllowance(
       balance: BigInt,
       allowance: BigInt
@@ -66,15 +64,31 @@ private[core] final class ReserveManagerAltAutoScaleImpl(
     this.balance = balance
     this.allowance = allowance
     spendable = balance.min(allowance)
+    rebalance()
+  }
 
+  def rebalance(needed: BigInt = 0): Set[String] = {
     var ordersToDelete = Set.empty[String]
 
-    // we cancel older orders, not newer orders.
-    while (spendable < reserved) {
-      val first = reserves.head
-      ordersToDelete += first.orderId
-      reserved -= first.reserved
-      reserves = reserves.tail
+    while (spendable - reserved < needed) {
+      reserves match {
+        case head :: tail =>
+          reserved -= head.reserved
+          if (spendable - reserved <= needed) {
+            ordersToDelete += head.orderId
+            reserves = tail
+          } else {
+            val available = head.requested.min(spendable - reserved - needed)
+            val first = head.copy(reserved = available)
+            eventHandler.onTokenReservedForOrder(
+              first.orderId,
+              token,
+              first.reserved
+            )
+            reserves = first :: tail
+          }
+        case Nil =>
+      }
     }
     ordersToDelete
   }
@@ -86,6 +100,8 @@ private[core] final class ReserveManagerAltAutoScaleImpl(
     }
     reserved -= toDelete.map(_.reserved).sum
     reserves = toKeep
+
+    rebalance()
     toDelete.map(_.orderId).toSet
   }
 
@@ -93,27 +109,14 @@ private[core] final class ReserveManagerAltAutoScaleImpl(
       orderId: String,
       requestedAmount: BigInt
     ): Set[String] = this.synchronized {
+    assert(requestedAmount > 0)
+
     var ordersToDelete = Set.empty[String]
     def available = requestedAmount.min(spendable - reserved)
 
     var idx = reserves.indexWhere(_.orderId == orderId)
-    if (idx >= 0) {
-      // this is an existing order to scale down/up
-      // we release the old reserve first
-      val reserve = reserves(idx)
-      reserved -= reserve.reserved
 
-      if (available == 0) {
-        ordersToDelete += orderId
-        reserves = reserves.patch(idx, Nil, 1)
-      } else {
-        reserved += available
-        val reserve = Reserve(orderId, requestedAmount, available)
-        reserves = reserves.patch(idx, Seq(reserve), 1)
-        eventHandler.onTokenReservedForOrder(orderId, token, available)
-      }
-
-    } else {
+    if (idx < 0) {
       // this is a new order
       if (available == 0) {
         ordersToDelete += orderId
@@ -122,6 +125,29 @@ private[core] final class ReserveManagerAltAutoScaleImpl(
         reserves = reserves :+ Reserve(orderId, requestedAmount, available)
         eventHandler.onTokenReservedForOrder(orderId, token, available)
       }
+    } else {
+      // this is an existing order to scale down/up
+      val reserve = reserves(idx)
+
+      // if (reserve.requested != requestedAmount) {
+
+      //   val head = reserves.head
+
+      //   while (head.orderId != orderId && spendable - reserved < requestedAmount) {
+      //     //
+
+      //   }
+
+      //   while (reserves.nonEmpty && reserves.head.orderId !=) if (available == 0) {
+      //     ordersToDelete += orderId
+      //     reserves = reserves.patch(idx, Nil, 1)
+      //   } else {
+      //     reserved += available
+      //     val reserve = Reserve(orderId, requestedAmount, available)
+      //     reserves = reserves.patch(idx, Seq(reserve), 1)
+      //     eventHandler.onTokenReservedForOrder(orderId, token, available)
+      //   }
+
     }
     ordersToDelete
   }

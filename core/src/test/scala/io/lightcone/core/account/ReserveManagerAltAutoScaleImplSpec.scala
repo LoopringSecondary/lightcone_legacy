@@ -40,23 +40,23 @@ class ReserveManagerAltAutoScaleImplSpec extends CommonSpec {
     manager = new ReserveManagerAltAutoScaleImpl(token)
   }
 
-  // "ReserveManagerAltAutoScaleImpl" should "not reserve in 0 balance or allowance" in {
-  //   var result = manager.reserve("order1", 100)
-  //   result should be(Set("order1"))
-  //   manager.getAccountInfo should be(AccountInfo(token, 0, 0, 0, 0, 0))
+  "ReserveManagerAltAutoScaleImpl" should "not reserve in 0 balance or allowance" in {
+    var result = manager.reserve("order1", 100)
+    result should be(Set("order1"))
+    manager.getAccountInfo should be(AccountInfo(token, 0, 0, 0, 0, 0))
 
-  //   // Set balance big enought, but allowance a bit smaller than 100
-  //   manager.setBalanceAndAllowance(100, 99)
-  //   result = manager.reserve("order1", 100)
-  //   result should be(Set("order1"))
-  //   manager.getAccountInfo should be(AccountInfo(token, 100, 99, 100, 99, 0))
+    // Set balance big enought, but allowance a bit smaller than 100
+    manager.setBalanceAndAllowance(100, 99)
+    result = manager.reserve("order1", 100)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 100, 99, 1, 0, 1))
 
-  //   // Set allowance big enought, but balance a bit smaller than 100
-  //   manager.setBalanceAndAllowance(99, 100)
-  //   result = manager.reserve("order1", 100)
-  //   result should be(Set("order1"))
-  //   manager.getAccountInfo should be(AccountInfo(token, 99, 100, 99, 100, 0))
-  // }
+    // Set allowance big enought, but balance a bit smaller than 100
+    manager.setBalanceAndAllowance(99, 100)
+    result = manager.reserve("order2", 100)
+    result should be(Set("order2"))
+    manager.getAccountInfo should be(AccountInfo(token, 99, 100, 0, 1, 1))
+  }
 
   // "ReserveManagerAltAutoScaleImpl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
   //   manager.setBalanceAndAllowance(100, 110)
