@@ -16,7 +16,8 @@
 
 package io.lightcone.core
 
-import io.lightcone.core.implicits._
+import io.lightcone.core.testing._
+import io.lightcone.core.testing._
 
 class MarketManagerImplSpec_SkipOrderMatching extends MarketAwareSpec {
 

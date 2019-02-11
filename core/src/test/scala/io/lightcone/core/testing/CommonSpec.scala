@@ -14,8 +14,23 @@
  * limitations under the License.
  */
 
-package io.lightcone.core
+package io.lightcone.core.testing
 
-package object implicits {
-  implicit class Rich_Double(v: Double) extends RichDouble(v)
+import org.scalatest._
+import org.scalamock.scalatest._
+import org.slf4s.Logging
+
+trait CommonSpec
+    extends FlatSpec
+    with BeforeAndAfterEach
+    with BeforeAndAfterAll
+    with Matchers
+    with MockFactory
+    with Logging {
+
+  override def beforeAll(): Unit = {
+    println(
+      s">>>>>> To run this spec, use `testOnly *${getClass.getSimpleName}`"
+    )
+  }
 }

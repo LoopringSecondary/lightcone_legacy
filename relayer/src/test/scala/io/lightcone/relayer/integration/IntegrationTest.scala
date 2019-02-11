@@ -32,20 +32,21 @@ import scala.util.Try
 import org.scalatest._
 import org.slf4s.Logging
 
-object IntegrationTesting {
+object IntegrationTest {
   var databaseIndex = 0L
+  // import testing.Constants._
 }
 
 // Please make sure in `mysql.conf` all database dals use the same database configuration.
-class IntegrationTesting
+class IntegrationTest
     extends FlatSpec
     with BeforeAndAfterEach
     with BeforeAndAfterAll
     with Matchers
     with Logging
-    with TestHelpers {
+    with IntegrationTestHelper {
 
-  import IntegrationTesting._
+  import IntegrationTest._
 
   private var injector: Injector = _
   private var entrypointActor: ActorRef = _

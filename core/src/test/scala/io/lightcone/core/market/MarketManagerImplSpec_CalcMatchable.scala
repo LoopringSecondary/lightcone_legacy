@@ -16,6 +16,8 @@
 
 package io.lightcone.core
 
+import io.lightcone.core.testing._
+
 class MarketManagerImplSpec_CalcMatchable extends MarketAwareSpec {
 
   "MarketManager" should "generate a ring for buy order as taker" in {

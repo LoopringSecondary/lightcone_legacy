@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-// import io.lightcone.core.implicits._
+import io.lightcone.core.testing._
 
 class ReserveManager2ImplSpec extends CommonSpec {
 
@@ -32,7 +32,7 @@ class ReserveManager2ImplSpec extends CommonSpec {
         token: String,
         amount: BigInt
       ) = {
-      println(s"reserved $amount@$token for order: $orderId")
+      // println(s"reserved $amount@$token for order: $orderId")
     }
   }
 

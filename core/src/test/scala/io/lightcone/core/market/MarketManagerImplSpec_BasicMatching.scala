@@ -16,6 +16,8 @@
 
 package io.lightcone.core
 
+import io.lightcone.core.testing._
+
 class MarketManagerImplSpec_BasicMatching extends MarketAwareSpec {
 
   import OrderStatus._

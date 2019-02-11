@@ -16,6 +16,8 @@
 
 package io.lightcone.core
 
+import io.lightcone.core.testing._
+
 class MarketManagerImplSpec_MultipleMatches extends MarketAwareSpec {
 
   "MarketManager" should "skip non-profitable orders" in {

@@ -17,6 +17,7 @@
 package io.lightcone.core
 
 import io.lightcone.lib._
+import io.lightcone.core.testing._
 
 class MarketManagerImplSpec_Performance extends OrderAwareSpec {
 
