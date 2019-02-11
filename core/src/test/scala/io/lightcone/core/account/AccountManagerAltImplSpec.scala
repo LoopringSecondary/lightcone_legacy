@@ -19,10 +19,10 @@ package io.lightcone.core
 import scala.concurrent._
 import io.lightcone.core.testing._
 
-abstract class AccountManager2ImplSpec_Base extends CommonSpec {
+abstract class AccountManagerAltImplSpec extends CommonSpec {
 
   var owner = "owning_address"
-  var manager: AccountManager2 = _
+  var manager: AccountManagerAlt = _
 
   var balanceMap =
     Map.empty[String, (BigInt /*balance*/, BigInt /*allowance*/ )]
@@ -54,6 +54,6 @@ abstract class AccountManager2ImplSpec_Base extends CommonSpec {
   }
 
   override def beforeEach(): Unit = {
-    manager = AccountManager2.default(owner)
+    manager = AccountManagerAlt.default(owner)
   }
 }

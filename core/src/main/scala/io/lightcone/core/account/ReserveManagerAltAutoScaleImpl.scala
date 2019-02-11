@@ -27,25 +27,27 @@ trait ReserveEventHandler {
     ): Unit
 }
 
-final class ReserveManager2Impl(
+// TODO(dongw): this is not impolemented yet
+private[core] final class ReserveManagerAltAutoScaleImpl(
     val token: String
   )(
     implicit
     eventHandler: ReserveEventHandler)
-    extends ReserveManager2
+    extends ReserveManagerAlt
     with Logging {
+  implicit private val t = token
 
   case class Reserve(
       orderId: String,
+      requested: BigInt,
       reserved: BigInt)
 
-  private var allowance: BigInt = 0
-  private var balance: BigInt = 0
-  private var spendable: BigInt = 0
-  private var reserved: BigInt = 0
+  protected var allowance: BigInt = 0
+  protected var balance: BigInt = 0
+  protected var spendable: BigInt = 0
+  protected var reserved: BigInt = 0
 
-  private var reserves = List.empty[Reserve]
-  private var firstWaiting = 0
+  protected var reserves = List.empty[Reserve]
 
   def getReserves() = reserves
 
@@ -65,6 +67,7 @@ final class ReserveManager2Impl(
   def setAllowance(allowance: BigInt) =
     setBalanceAndAllowance(this.balance, allowance)
 
+  // TODO(dongw): reserve for existing orders.
   def setBalanceAndAllowance(
       balance: BigInt,
       allowance: BigInt
@@ -100,61 +103,33 @@ final class ReserveManager2Impl(
       requestedAmount: BigInt
     ): Set[String] = this.synchronized {
     var ordersToDelete = Set.empty[String]
+    def available = requestedAmount.min(spendable - reserved)
 
-    if (requestedAmount < 0) {
-      ordersToDelete += orderId
-    } else if (requestedAmount > 0) {
-      var idx = reserves.indexWhere(_.orderId == orderId)
+    var idx = reserves.indexWhere(_.orderId == orderId)
+    if (idx >= 0) {
+      // this is an existing order to scale down/up
+      // we release the old reserve first
+      val reserve = reserves(idx)
+      reserved -= reserve.reserved
 
-      def insuffcient(additonal: BigInt = 0) =
-        spendable - reserved + additonal < requestedAmount
-
-      if (idx >= 0) {
-        // this is an existing order to scale down/up
-        // we release the old reserve first
-        val reserve = reserves(idx)
-        reserved -= reserve.reserved
-
-        val sum = reserves.take(idx).map(_.reserved).sum
-
-        // println("=======", idx, reserved, sum)
-        if (insuffcient(sum)) {
-          // releaseing all orders prior to this order still ends up low reserve
-          ordersToDelete += orderId
-          reserves = reserves.patch(idx, Nil, 1)
-        } else {
-          while (insuffcient()) {
-            ordersToDelete += reserves.head.orderId
-            reserved -= reserves.head.reserved
-            reserves = reserves.tail
-            idx -= 1
-          }
-
-          assert(idx >= 0)
-          reserved += requestedAmount
-          val reserve = Reserve(orderId, requestedAmount)
-          reserves = reserves.patch(idx, Seq(reserve), 1)
-
-          eventHandler.onTokenReservedForOrder(orderId, token, requestedAmount)
-        }
-
+      if (available == 0) {
+        ordersToDelete += orderId
+        reserves = reserves.patch(idx, Nil, 1)
       } else {
-        // this is a new order
-        if (spendable < requestedAmount) {
-          // not enough spendable for this order
-          ordersToDelete += orderId
-        } else {
-          while (insuffcient()) {
-            val first = reserves.head
-            ordersToDelete += first.orderId
-            reserved -= first.reserved
-            reserves = reserves.tail
-          }
-          reserved += requestedAmount
-          reserves = reserves :+ Reserve(orderId, requestedAmount)
+        reserved += available
+        val reserve = Reserve(orderId, requestedAmount, available)
+        reserves = reserves.patch(idx, Seq(reserve), 1)
+        eventHandler.onTokenReservedForOrder(orderId, token, available)
+      }
 
-          eventHandler.onTokenReservedForOrder(orderId, token, requestedAmount)
-        }
+    } else {
+      // this is a new order
+      if (available == 0) {
+        ordersToDelete += orderId
+      } else {
+        reserved += available
+        reserves = reserves :+ Reserve(orderId, requestedAmount, available)
+        eventHandler.onTokenReservedForOrder(orderId, token, available)
       }
     }
     ordersToDelete

@@ -19,7 +19,7 @@ package io.lightcone.core
 import org.slf4s.Logging
 import scala.concurrent._
 
-final class AccountManager2Impl(
+final class AccountManagerAltImpl(
     val owner: String
   )(
     implicit
@@ -27,13 +27,13 @@ final class AccountManager2Impl(
     provider: BalanceAndAllowanceProvider,
     ec: ExecutionContext,
     orderPool: AccountOrderPool with UpdatedOrdersTracing)
-    extends AccountManager2
+    extends AccountManagerAlt
     with Logging {
 
   import OrderStatus._
 
-  type ReserveManagerMethod = ReserveManager2 => Set[String]
-  private implicit var tokens = Map.empty[String, ReserveManager2]
+  type ReserveManagerMethod = ReserveManagerAlt => Set[String]
+  private implicit var tokens = Map.empty[String, ReserveManagerAlt]
 
   def getAccountInfo(token: String): Future[AccountInfo] =
     getReserveManagerOption(token, true).map(_.get.getAccountInfo)
@@ -146,15 +146,14 @@ final class AccountManager2Impl(
   private def getReserveManagerOption(
       token: String,
       mustReturn: Boolean
-    ): Future[Option[ReserveManager2]] =
+    ): Future[Option[ReserveManagerAlt]] =
     this.synchronized {
       if (tokens.contains(token)) Future.successful(Some(tokens(token)))
       else if (!mustReturn) Future.successful(None)
       else {
         provider.getBalanceAndALlowance(owner, token).map { result =>
           val (balance, allowance) = result
-          val manager =
-            new ReserveManager2Impl(token)
+          val manager = new ReserveManagerAltClassicImpl(token)
           manager.setBalanceAndAllowance(balance, allowance)
           tokens += token -> manager
           Some(manager)
@@ -164,7 +163,7 @@ final class AccountManager2Impl(
 
   private def setBalanceAndAllowanceInternal(
       token: String
-    )(method: ReserveManager2 => Set[String]
+    )(method: ReserveManagerAlt => Set[String]
     ): Future[Map[String, Matchable]] =
     for {
       managerOpt <- getReserveManagerOption(token, true)

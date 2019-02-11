@@ -16,7 +16,7 @@
 
 package io.lightcone.core
 
-trait ReserveManager2 {
+private[core] trait ReserveManagerAlt {
   val token: String
 
   def getAccountInfo(): AccountInfo
