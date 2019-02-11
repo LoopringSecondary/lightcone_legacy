@@ -18,4 +18,7 @@ package io.lightcone.core
 
 // import scala.concurrent._
 
-abstract class AccountManager2ImplSpec1 extends AccountManager2ImplSpec_Base {}
+abstract class AccountManager2ImplSpec1 extends AccountManager2ImplSpec_Base {
+
+  // TODO(dongw):
+}
