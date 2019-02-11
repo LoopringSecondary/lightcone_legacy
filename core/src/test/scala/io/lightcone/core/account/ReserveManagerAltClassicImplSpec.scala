@@ -18,18 +18,18 @@ package io.lightcone.core
 
 // import io.lightcone.core.implicits._
 
-class ReserveManagerAltClassicImplSpec extends CommonSpec {
+class ReserveManagerAltAutoScaleImplSpec extends CommonSpec {
 
   implicit val token = "ABC"
-  var manager: ReserveManagerAltClassicImpl = _
+  var manager: ReserveManagerAltAutoCancelImpl = _
 
   implicit def int2bigInt(i: Int) = BigInt(i)
 
   override def beforeEach(): Unit = {
-    manager = new ReserveManagerAltClassicImpl
+    manager = new ReserveManagerAltAutoCancelImpl
   }
 
-  "ReserveManagerAltClassicImpl" should "not reserve in 0 balance or allowance" in {
+  "ReserveManagerAltAutoCancelImpl" should "not reserve in 0 balance or allowance" in {
     var result = manager.reserve("order1", 100)
     result should be(Set("order1"))
     manager.getAccountInfo should be(AccountInfo(token, 0, 0, 0, 0, 0))
@@ -47,7 +47,7 @@ class ReserveManagerAltClassicImplSpec extends CommonSpec {
     manager.getAccountInfo should be(AccountInfo(token, 99, 100, 99, 100, 0))
   }
 
-  "ReserveManagerAltClassicImpl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
+  "ReserveManagerAltAutoCancelImpl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
     manager.setBalanceAndAllowance(100, 110)
 
     var result = manager.reserve("order1", 50)
@@ -68,7 +68,7 @@ class ReserveManagerAltClassicImplSpec extends CommonSpec {
     manager.getReserves should be(Seq.empty)
   }
 
-  "ReserveManagerAltClassicImpl" should "release multiple orders in one operation" in {
+  "ReserveManagerAltAutoCancelImpl" should "release multiple orders in one operation" in {
     manager.setBalanceAndAllowance(100, 100)
 
     // create 10 orders
