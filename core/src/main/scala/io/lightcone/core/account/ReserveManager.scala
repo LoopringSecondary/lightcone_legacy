@@ -22,6 +22,7 @@ package io.lightcone.core
  * is no less than the order's size.
  */
 
+@deprecated("use ReserveManagerAlt", "02-11-2019")
 trait ReserveManager {
   val token: String
   val maxNumOrders: Int

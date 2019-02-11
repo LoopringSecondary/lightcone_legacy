@@ -64,8 +64,7 @@ private[core] final class ReserveManagerAltImpl(
   def setBalanceAndAllowance(
       balance: BigInt,
       allowance: BigInt
-    ) = this.synchronized {
-
+    ) = {
     this.balance = balance
     this.allowance = allowance
     spendable = balance.min(allowance)
@@ -108,7 +107,7 @@ private[core] final class ReserveManagerAltImpl(
     reserveMe(orderId, requestedAmount, prevReservedOpt)
   }
 
-  def clearOrders(): Unit = this.synchronized {
+  def clearOrders(): Unit = {
     reserved = 0
     reserves = Nil
   }

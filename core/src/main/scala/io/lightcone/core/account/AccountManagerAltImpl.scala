@@ -62,9 +62,10 @@ final class AccountManagerAltImpl(
   }
 
   def resubmitOrder(order: Matchable) = {
-    val order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
-    orderPool += order_.as(STATUS_NEW) // potentially replace the old one.
     for {
+      _ <- Future.unit
+      order_ = order.copy(_reserved = None, _actual = None, _matchable = None)
+      _ = { orderPool += order_.as(STATUS_NEW) } // potentially replace the old one.
       orderIdsToDelete <- reserveForOrder(order_)
       ordersToDelete = orderIdsToDelete.map(orderPool.apply)
       _ = ordersToDelete.map { order =>
@@ -146,25 +147,24 @@ final class AccountManagerAltImpl(
   private def getReserveManagerOption(
       token: String,
       mustReturn: Boolean
-    ): Future[Option[ReserveManagerAlt]] =
-    this.synchronized {
-      if (tokens.contains(token)) Future.successful(Some(tokens(token)))
-      else if (!mustReturn) Future.successful(None)
-      else {
-        provider.getBalanceAndALlowance(owner, token).map { result =>
-          val (balance, allowance) = result
-          val manager = ReserveManagerAlt.default(token)
-          manager.setBalanceAndAllowance(balance, allowance)
-          tokens += token -> manager
-          Some(manager)
-        }
+    ): Future[Option[ReserveManagerAlt]] = {
+    if (tokens.contains(token)) Future.successful(Some(tokens(token)))
+    else if (!mustReturn) Future.successful(None)
+    else {
+      provider.getBalanceAndALlowance(owner, token).map { result =>
+        val (balance, allowance) = result
+        val manager = ReserveManagerAlt.default(token)
+        manager.setBalanceAndAllowance(balance, allowance)
+        tokens += token -> manager
+        Some(manager)
       }
     }
+  }
 
   private def setBalanceAndAllowanceInternal(
       token: String
     )(method: ReserveManagerAlt => Set[String]
-    ): Future[Map[String, Matchable]] =
+    ): Future[Map[String, Matchable]] = {
     for {
       managerOpt <- getReserveManagerOption(token, true)
       manager = managerOpt.get
@@ -176,12 +176,13 @@ final class AccountManagerAltImpl(
       updatedOrders = orderPool.takeUpdatedOrders
       _ <- processor.processOrders(updatedOrders)
     } yield updatedOrders
+  }
 
   private def cancelOrderInternal(
       status: OrderStatus,
       skipProcessingUpdatedOrders: Boolean = false
     )(orders: Iterable[Matchable]
-    ) =
+    ) = {
     for {
       _ <- Future.sequence(orders.map { order =>
         orderPool += order.copy(status = status)
@@ -193,6 +194,7 @@ final class AccountManagerAltImpl(
         else processor.processOrders(updatedOrders)
       }
     } yield updatedOrders
+  }
 
   private def reserveForOrder(order: Matchable): Future[Set[String]] = {
     val requestedAmountS = order.requestedAmount(order.tokenS)
@@ -203,13 +205,16 @@ final class AccountManagerAltImpl(
       Future.successful(Set(order.id))
     } else
       for {
-        r1 <- onToken(order.tokenS, _.reserve(order.id, requestedAmountS))
-        r2 <- {
+        _ <- Future.unit
+        f1 = onToken(order.tokenS, _.reserve(order.id, requestedAmountS))
+        f2 = {
           if (order.tokenFee == order.tokenS || requestedAmountFee == 0)
             Future.successful(Set.empty[String])
           else
             onToken(order.tokenFee, _.reserve(order.id, requestedAmountFee))
         }
+        r1 <- f1
+        r2 <- f2
         orderIdsToDelete = r1 ++ r2
       } yield orderIdsToDelete
   }

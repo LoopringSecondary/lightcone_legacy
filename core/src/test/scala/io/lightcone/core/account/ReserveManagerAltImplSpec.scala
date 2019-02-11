@@ -30,9 +30,10 @@ class ReserveManagerAltImplSpec extends CommonSpec {
   implicit val reh = new ReserveEventHandler {
 
     def onTokenReservedForOrder(
-      orderId: String,
-      token: String,
-      reserved: BigInt) = {
+        orderId: String,
+        token: String,
+        reserved: BigInt
+      ) = {
       proccssedOrderIds :+= orderId -> reserved
       // println(s"order: $orderId --> ${reserved.longValue} {$token} ")
     }
@@ -69,28 +70,32 @@ class ReserveManagerAltImplSpec extends CommonSpec {
     result should be(Set.empty[String])
     manager.getAccountInfo should be(AccountInfo(token, 110, 100, 10, 0, 1))
     proccssedOrderIds should be(
-      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100))
+      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100)
+    )
 
     manager.setBalanceAndAllowance(110, 110)
     result = manager.reserve("order1", 100)
     result should be(Set.empty[String])
     manager.getAccountInfo should be(AccountInfo(token, 110, 110, 10, 10, 1))
     proccssedOrderIds should be(
-      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100))
+      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100)
+    )
 
     manager.setBalanceAndAllowance(100, 110)
     result = manager.reserve("order1", 100)
     result should be(Set.empty[String])
     manager.getAccountInfo should be(AccountInfo(token, 100, 110, 0, 10, 1))
     proccssedOrderIds should be(
-      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100))
+      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100)
+    )
 
     manager.setBalanceAndAllowance(90, 110)
     result = manager.reserve("order1", 100)
     result should be(Set.empty[String])
     manager.getAccountInfo should be(AccountInfo(token, 90, 110, 0, 20, 1))
     proccssedOrderIds should be(
-      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100, "order1" -> 90))
+      Seq("order1" -> 80, "order1" -> 90, "order1" -> 100, "order1" -> 90)
+    )
 
     manager.setBalanceAndAllowance(80, 110)
     result = manager.reserve("order1", 100)
@@ -102,7 +107,9 @@ class ReserveManagerAltImplSpec extends CommonSpec {
         "order1" -> 90,
         "order1" -> 100,
         "order1" -> 90,
-        "order1" -> 80))
+        "order1" -> 80
+      )
+    )
 
     manager.setBalanceAndAllowance(0, 110)
     result = manager.reserve("order1", 100)
@@ -114,7 +121,9 @@ class ReserveManagerAltImplSpec extends CommonSpec {
         "order1" -> 90,
         "order1" -> 100,
         "order1" -> 90,
-        "order1" -> 80))
+        "order1" -> 80
+      )
+    )
   }
 
   "ReserveManagerAltImpl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {

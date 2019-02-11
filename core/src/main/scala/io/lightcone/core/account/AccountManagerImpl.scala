@@ -18,6 +18,7 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
+@deprecated("use AccountManagerAltImpl", "02-11-2019")
 final private[core] class AccountManagerImpl(
     implicit
     orderPool: AccountOrderPool with UpdatedOrdersTracing)
