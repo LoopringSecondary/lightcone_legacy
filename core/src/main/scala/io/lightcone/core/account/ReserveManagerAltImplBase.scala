@@ -18,7 +18,7 @@ package io.lightcone.core
 
 import org.slf4s.Logging
 
-private[core] abstract class ReserveManagerAltImplBase
+private[core] trait ReserveManagerAltImplBase
     extends ReserveManagerAlt
     with Logging {
 

@@ -16,6 +16,28 @@
 
 package io.lightcone.core
 
+import scala.concurrent._
+
+trait UpdatedOrdersProcessor {
+  implicit val ec: ExecutionContext
+
+  def processOrder(order: Matchable): Future[Any]
+
+  def processOrders(orders: Map[String, Matchable]): Future[Any] = {
+    val futures = orders.values.map(processOrder)
+    Future.sequence(futures)
+  }
+}
+
+trait ReserveEventHandler {
+
+  def onTokenReservedForOrder(
+      orderId: String,
+      token: String,
+      amount: BigInt
+    ): Unit
+}
+
 private[core] trait ReserveManagerAlt {
   val token: String
 
