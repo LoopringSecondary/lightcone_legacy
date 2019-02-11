@@ -20,8 +20,7 @@ import akka.actor._
 import io.lightcone.relayer.data._
 import scala.concurrent._
 
-// Owner: Hongyu
-// TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
+// Owner: dongw
 trait BlockingReceive { me: Actor with Stash =>
   implicit val ec: ExecutionContext
 
