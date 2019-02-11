@@ -31,15 +31,13 @@ import io.lightcone.persistence.DatabaseModule
 import io.lightcone.relayer.data._
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 // Owner: Hongyu
 // TODO:如果刷新时间太长，或者读取次数超过一个值，就重新从以太坊读取balance/allowance，并reset这个时间和读取次数。
-class AccountManagerActor2(
-    val owner: String
-  )(
-    implicit
-    val config: Config,
+class AccountManagerAltActor(
+  val owner: String)(
+    implicit val config: Config,
     val ec: ExecutionContext,
     val timeProvider: TimeProvider,
     val timeout: Timeout,
@@ -48,10 +46,10 @@ class AccountManagerActor2(
     val dbModule: DatabaseModule,
     val metadataManager: MetadataManager,
     val provider: BalanceAndAllowanceProvider)
-    extends Actor
-    with AccountManagerUpdatedOrdersProcessor
-    with Stash
-    with ActorLogging {
+  extends Actor
+  with AccountManagerUpdatedOrdersProcessor
+  with Stash
+  with ActorLogging {
 
   import ErrorCode._
   import OrderStatus._
@@ -67,7 +65,7 @@ class AccountManagerActor2(
     }
 
   implicit val orderPool = new AccountOrderPoolImpl() with UpdatedOrdersTracing
-  val manager = AccountManager2.default(owner)
+  val manager = AccountManagerAlt.default(owner)
   val accountCutoffState = new AccountCutoffStateImpl()
 
   def ethereumQueryActor = actors.get(EthereumQueryActor.name)
@@ -99,8 +97,7 @@ class AccountManagerActor2(
           } else {
             accountCutoffState.setTradingPairCutoff(
               cutoffRes.marketHash,
-              cutoff.toLong
-            )
+              cutoff.toLong)
           }
         }
       }
@@ -139,8 +136,7 @@ class AccountManagerActor2(
               ai.balance,
               ai.allowance,
               ai.availableBalance,
-              ai.availableAllowance
-            )
+              ai.availableAllowance)
         }
         result = GetBalanceAndAllowances.Res(addr, balanceAndAllowanceMap)
       } yield result).sendTo(sender)
@@ -177,7 +173,7 @@ class AccountManagerActor2(
       } yield result).sendTo(sender)
 
     case req @ CancelOrder
-          .Req("", owner, _, Some(marketPair), _) => //按照Owner-MarketPair取消订单
+      .Req("", owner, _, Some(marketPair), _) => //按照Owner-MarketPair取消订单
       (for {
         updatedOrders <- manager.cancelOrders(marketPair)
         result = {
@@ -199,8 +195,7 @@ class AccountManagerActor2(
           } else {
             throw ErrorException(
               ERR_FAILED_HANDLE_MSG,
-              s"no order found with id: ${req.id}"
-            )
+              s"no order found with id: ${req.id}")
           }
         }
       } yield result) sendTo sender
@@ -217,23 +212,23 @@ class AccountManagerActor2(
 
     // ownerCutoff
     case req @ CutoffEvent(Some(header), broker, owner, "", cutoff) //
-        if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
+    if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
       accountCutoffState.setCutoff(cutoff)
       manager.handleCutoff(cutoff)
 
     // ownerTokenPairCutoff  tokenPair ！= ""
     case req @ CutoffEvent(Some(header), broker, owner, marketHash, cutoff) //
-        if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
+    if broker == owner && header.txStatus == TX_STATUS_SUCCESS =>
       accountCutoffState.setTradingPairCutoff(marketHash, req.cutoff)
       manager.handleCutoff(cutoff, marketHash)
 
     // Currently we do not support broker-level cutoff
     case req @ CutoffEvent(Some(header), broker, owner, _, cutoff) //
-        if broker != owner && header.txStatus == TX_STATUS_SUCCESS =>
+    if broker != owner && header.txStatus == TX_STATUS_SUCCESS =>
       log.warning(s"not support this event yet: $req")
 
     case req: OrderFilledEvent //
-        if req.header.nonEmpty && req.getHeader.txStatus == TX_STATUS_SUCCESS =>
+    if req.header.nonEmpty && req.getHeader.txStatus == TX_STATUS_SUCCESS =>
       for {
         orderOpt <- dbModule.orderService.getOrder(req.orderHash)
         _ <- swap(orderOpt.map(resubmitOrder))
@@ -247,8 +242,7 @@ class AccountManagerActor2(
     log.debug(s"### submitOrder ${order}")
     for {
       getFilledAmountRes <- (ethereumQueryActor ? GetFilledAmount.Req(
-        Seq(orderId)
-      )).mapAs[GetFilledAmount.Res]
+        Seq(orderId))).mapAs[GetFilledAmount.Res]
 
       filledAmountS = getFilledAmountRes.filledAmountSMap
         .getOrElse(orderId, ByteString.copyFrom("0".getBytes))
@@ -260,8 +254,7 @@ class AccountManagerActor2(
 
       _ = log.debug(
         s"submit order result:  ${updatedOrder}",
-        s"with ${updatedOrders.size} updated orders"
-      )
+        s"with ${updatedOrders.size} updated orders")
 
       _ = if (!successful) {
         val error = status match {
@@ -280,13 +273,11 @@ class AccountManagerActor2(
   private def checkOrderCanceled(rawOrder: RawOrder) =
     for {
       res <- (ethereumQueryActor ? GetOrderCancellation.Req(
-        orderHash = rawOrder.hash
-      )).mapAs[GetOrderCancellation.Res]
+        orderHash = rawOrder.hash)).mapAs[GetOrderCancellation.Res]
       _ = if (res.cancelled)
         throw ErrorException(
           ERR_ORDER_VALIDATION_INVALID_CANCELED,
-          s"this order has been canceled."
-        )
+          s"this order has been canceled.")
     } yield Unit
 
   private def swap[T](o: Option[Future[T]]): Future[Option[T]] =

@@ -18,18 +18,18 @@ package io.lightcone.core
 
 // import io.lightcone.core.implicits._
 
-class ReserveManagerAltImplClassicSpec extends CommonSpec {
+class ReserveManagerAltAutoCancelImplSpec extends CommonSpec {
 
   implicit val token = "ABC"
-  var manager: ReserveManagerAltImplClassic = _
+  var manager: ReserveManagerAltAutoCancelImpl = _
 
   implicit def int2bigInt(i: Int) = BigInt(i)
 
   override def beforeEach(): Unit = {
-    manager = new ReserveManagerAltImplClassic
+    manager = new ReserveManagerAltAutoCancelImpl
   }
 
-  "ReserveManagerAltImplClassic" should "not reserve in 0 balance or allowance" in {
+  "ReserveManagerAltAutoCancelImpl" should "not reserve in 0 balance or allowance" in {
     var result = manager.reserve("order1", 100)
     result should be(Set("order1"))
     manager.getAccountInfo should be(AccountInfo(token, 0, 0, 0, 0, 0))
@@ -47,7 +47,7 @@ class ReserveManagerAltImplClassicSpec extends CommonSpec {
     manager.getAccountInfo should be(AccountInfo(token, 99, 100, 99, 100, 0))
   }
 
-  "ReserveManagerAltImplClassic" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
+  "ReserveManagerAltAutoCancelImpl" should "reserve multiple orders if balance/allowance are both suffcient and these orders can be released" in {
     manager.setBalanceAndAllowance(100, 110)
 
     var result = manager.reserve("order1", 50)
@@ -68,7 +68,7 @@ class ReserveManagerAltImplClassicSpec extends CommonSpec {
     manager.getReserves should be(Seq.empty)
   }
 
-  "ReserveManagerAltImplClassic" should "release multiple orders in one operation" in {
+  "ReserveManagerAltAutoCancelImpl" should "release multiple orders in one operation" in {
     manager.setBalanceAndAllowance(100, 100)
 
     // create 10 orders
@@ -91,25 +91,36 @@ class ReserveManagerAltImplClassicSpec extends CommonSpec {
     manager.getReserves should be(Seq.empty)
   }
 
-  "a new order" should "NOT kick off old orders" in {
+  "a new order" should "kick off one or more old orders only if those old orders will release enought spendable" in {
     manager.setBalanceAndAllowance(100, 100)
     // create 10 orders
-    val orderIds = (1 to 9).map("order" + _).toSeq
+    val orderIds = (1 to 10).map("order" + _).toSeq
     orderIds.foreach { orderId =>
       manager.reserve(orderId, 10)
     }
-    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 10, 10, 9))
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 10))
 
-    var result = manager.reserve("order10", 101)
-    result should be(Set("order10"))
-    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 10, 10, 9))
+    var result = manager.reserve("order11", 101)
+    result should be(Set("order11"))
 
     result = manager.reserve("order11", 40)
-    result should be(Set("order11"))
-    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 10, 10, 9))
+    result should be(orderIds.take(4).toSet)
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 7))
+
+    // now the reserve is like:
+    // List(Reserve(order5,10),
+    //      Reserve(order6,10),
+    //      Reserve(order7,10),
+    //      Reserve(order8,10),
+    //      Reserve(order9,10),
+    //      Reserve(order10,10),
+    //      Reserve(order11,40))
+    result = manager.reserve("order12", 70)
+    result should be((5 to 11).map("order" + _).toSet)
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 30, 30, 1))
   }
 
-  "an existing order" should "NOT reserve if the new size is greater than the available" in {
+  "an existing order" should "NOT reserve if the new size is greater than its origin reserved amount plus all orders prior to this order" in {
     manager.setBalanceAndAllowance(100, 100)
 
     // create 10 orders
@@ -120,12 +131,46 @@ class ReserveManagerAltImplClassicSpec extends CommonSpec {
     manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 10))
 
     info("enlarge the oldest order will make it fail to reserve")
-    var result = manager.reserve("order2", 11)
-    result should be(Set("order2"))
+    var result = manager.reserve("order1", 11)
+    result should be(Set("order1"))
     manager.getAccountInfo should be(AccountInfo(token, 100, 100, 10, 10, 9))
+
+    info("enlarge the oldest order will make it reserve more")
+    result = manager.reserve("order2", 11)
+    result should be(Set.empty)
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 9, 9, 9))
+
+    info("enlarge the newest order will make it fail to reserve")
+    result = manager.reserve("order10", 101)
+    result should be(Set("order10"))
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 19, 19, 8))
+
+    // List(Reserve(order2,11), Reserve(order3,10), Reserve(order4,10), Reserve(order5,10),
+    //      Reserve(order6,10), Reserve(order7,10), Reserve(order8,10), Reserve(order9,10))
+
+    info("enlarge the newest order will make kick out the oldest orders")
+    result = manager.reserve("order9", 50)
+    result should be(Set("order2", "order3"))
+
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 6))
+
+    // List(Reserve(order4,10), Reserve(order5,10), Reserve(order6,10), Reserve(order7,10),
+    //      Reserve(order8,10), Reserve(order9,50))
+
+    result = manager.reserve("order9", 99)
+    result should be(Set("order4", "order5", "order6", "order7", "order8"))
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 1, 1, 1))
+
+    result = manager.reserve("order9", 100)
+    result should be(Set.empty[String])
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 0, 0, 1))
+
+    result = manager.reserve("order9", 101)
+    result should be(Set("order9"))
+    manager.getAccountInfo should be(AccountInfo(token, 100, 100, 100, 100, 0))
   }
 
-  "setting allowance/balance to larger values" should "NOT affect existing reserves" in {
+  "setting allowance/balance to larger values" should "not affect existing reserves" in {
     manager.setBalanceAndAllowance(100, 100)
 
     // create 10 orders

@@ -16,16 +16,13 @@
 
 package io.lightcone.core
 
-private[core] final class ReserveManagerAltImplWithAutoCancelling(
-  )(
-    implicit
-    token: String)
-    extends ReserveManagerAltImplBase {
+private[core] final class ReserveManagerAltAutoCancelImpl()(
+  implicit token: String)
+  extends ReserveManagerAltImplBase {
 
   def reserve(
-      orderId: String,
-      requestedAmount: BigInt
-    ): Set[String] = this.synchronized {
+    orderId: String,
+    requestedAmount: BigInt): Set[String] = this.synchronized {
     var ordersToDelete = Set.empty[String]
     var idx = reserves.indexWhere(_.orderId == orderId)
 
