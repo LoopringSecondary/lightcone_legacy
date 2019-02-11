@@ -87,7 +87,6 @@ class AccountManagerImplSpec_Cancellation extends OrderAwareSpec {
     lrc.setBalanceAndAllowance(200 !, 100 !)
 
     val order1 = Addr() |> 1000.0.dai --> 10.0.weth -- 100.lrc
-    // val order1 = sellDAI(1000 !, 10 !, 100 !)
     val order2 = sellDAI(500 !, 5 !, 0 !)
     val order3 = sellLRC(50 !, 20 !, 0)
 
