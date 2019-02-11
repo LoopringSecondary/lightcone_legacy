@@ -153,7 +153,7 @@ final class AccountManagerAltImpl(
       else {
         provider.getBalanceAndALlowance(owner, token).map { result =>
           val (balance, allowance) = result
-          val manager = new ReserveManagerAltClassicImpl(token)
+          val manager = ReserveManagerAlt.default(token)
           manager.setBalanceAndAllowance(balance, allowance)
           tokens += token -> manager
           Some(manager)
